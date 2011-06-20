@@ -6,12 +6,15 @@ Utilities to extract features from images.
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD
 
+
+from itertools import product
+
 import numpy as np
 from scipy import sparse
-from itertools import product
 from ..utils.fixes import in1d
 from ..utils import check_random_state
 from ..base import BaseEstimator
+
 
 ###############################################################################
 # From an image to a graph
@@ -29,10 +32,11 @@ def _make_edges_3d(n_x, n_y, n_z=1):
     n_z: integer, optional
         The size of the grid in the z direction, defaults to 1
     """
-    vertices = np.arange(n_x*n_y*n_z).reshape((n_x, n_y, n_z))
+    vertices = np.arange(n_x * n_y * n_z).reshape((n_x, n_y, n_z))
     edges_deep = np.vstack((vertices[:, :, :-1].ravel(),
                             vertices[:, :, 1:].ravel()))
-    edges_right = np.vstack((vertices[:, :-1].ravel(), vertices[:, 1:].ravel()))
+    edges_right = np.vstack((vertices[:, :-1].ravel(),
+                             vertices[:, 1:].ravel()))
     edges_down = np.vstack((vertices[:-1].ravel(), vertices[1:].ravel()))
     edges = np.hstack((edges_deep, edges_right, edges_down))
     return edges
@@ -40,12 +44,12 @@ def _make_edges_3d(n_x, n_y, n_z=1):
 
 def _compute_gradient_3d(edges, img):
     n_x, n_y, n_z = img.shape
-    gradient = np.abs(img[edges[0]/(n_y*n_z),
-                                (edges[0] % (n_y*n_z))/n_z,
-                                (edges[0] % (n_y*n_z))%n_z] -
-                           img[edges[1]/(n_y*n_z),
-                                (edges[1] % (n_y*n_z))/n_z,
-                                (edges[1] % (n_y*n_z)) % n_z])
+    gradient = np.abs(img[edges[0] / (n_y * n_z),
+                                (edges[0] % (n_y * n_z)) / n_z,
+                                (edges[0] % (n_y * n_z)) % n_z] -
+                                img[edges[1] / (n_y * n_z),
+                                (edges[1] % (n_y * n_z)) / n_z,
+                                (edges[1] % (n_y * n_z)) % n_z])
     return gradient
 
 
@@ -64,7 +68,7 @@ def _mask_edges_weights(mask, edges, weights=None):
         maxval = edges.max()
     else:
         maxval = 0
-    order = np.searchsorted(np.unique(edges.ravel()), np.arange(maxval+1))
+    order = np.searchsorted(np.unique(edges.ravel()), np.arange(maxval + 1))
     edges = order[edges]
     if weights is None:
         return edges
@@ -164,25 +168,23 @@ def grid_to_graph(n_x, n_y, n_z=1, mask=None, return_as=sparse.coo_matrix,
     dtype: dtype, optional, default int
         The data of the returned sparse matrix. By default it is int
     """
-    return _to_graph(n_x, n_y, n_z, mask=mask, return_as=return_as, dtype=dtype)
+    return _to_graph(n_x, n_y, n_z, mask=mask, return_as=return_as,
+                     dtype=dtype)
 
 
-################################################################################
+###############################################################################
 # From an image to a set of small image patches
 
-def extract_patches_2d(image, image_size, patch_size, max_patches=None,
-                       seed=None):
+
+def extract_patches_2d(image, patch_size, max_patches=None, seed=None):
     """Reshape a 2D image into a collection of patches
 
     The resulting patches are allocated in a dedicated array.
 
     Parameters
     ----------
-    image: array with shape (i_h, i_w) or (i_h * i_w)
+    image: array with shape (i_h, i_w)
         the original image data
-
-    image_size: tuple of ints (i_h, i_w)
-        the dimensions of the images
 
     patch_size: tuple of ints (p_h, p_w)
         the dimensions of one patch
@@ -191,7 +193,7 @@ def extract_patches_2d(image, image_size, patch_size, max_patches=None,
         The maximum number of patches to extract. If max_patches is a float
         between 0 and 1, it is taken to be a proportion of the total number
         of patches.
-    
+
     seed: int or RandomState
         Seed for the random number generator used in case max_patches is used.
 
@@ -228,7 +230,7 @@ def extract_patches_2d(image, image_size, patch_size, max_patches=None,
            [14, 15]])
 
     """
-    i_h, i_w = image_size[:2]
+    i_h, i_w = image.shape[:2]
     p_h, p_w = patch_size
 
     image = np.atleast_2d(image)
@@ -240,7 +242,7 @@ def extract_patches_2d(image, image_size, patch_size, max_patches=None,
     n_h = i_h - p_h + 1
     n_w = i_w - p_w + 1
     all_patches = n_h * n_w
-    
+
     if max_patches:
         if isinstance(max_patches, int) and max_patches < all_patches:
             n_patches = max_patches
@@ -248,13 +250,13 @@ def extract_patches_2d(image, image_size, patch_size, max_patches=None,
             n_patches = max_patches * n_patches
         else:
             raise ValueError("Invalid value for max_patches!")
-        
+
         rng = check_random_state(seed)
         patches = np.zeros((n_patches, p_h, p_w, n_colors), dtype=image.dtype)
         i_s = rng.randint(n_h, size=n_patches)
         j_s = rng.randint(n_w, size=n_patches)
         for offset, (i, j) in enumerate(zip(i_s, j_s)):
-            patches[offset] = image[i:i + p_h, j:j + p_w, :] 
+            patches[offset] = image[i:i + p_h, j:j + p_w, :]
     else:
         n_patches = all_patches
         patches = np.zeros((n_patches, p_h, p_w, n_colors), dtype=image.dtype)
@@ -270,12 +272,31 @@ def extract_patches_2d(image, image_size, patch_size, max_patches=None,
     else:
         return patches
 
-def reconstruct_patches(patches, image_size, patch_size):
-    """Reconstruct the image from all of its patches"""
 
-    # XXX: make it work with colour images too!
+def reconstruct_from_patches_2d(patches, image_size):
+    """Reconstruct the image from all of its patches.
+
+    Patches are assumed to overlap and the image is constructed by filling in
+    the patches from left to right, top to bottom, averaging the overlapping
+    regions.
+
+    Parameters
+    ----------
+    patches: array with shape (n_patches, p_h, p_w) or (n_patches, p_h, p_w,
+        n_colors)
+        the complete set of patches
+
+    image_size: tuple of ints (i_h, i_w, n_colors) or (i_h, i_w)
+        the size of the image that will be reconstructed.
+
+    Returns
+    -------
+    image: array with shape    
+
+
+    """
     i_h, i_w = image_size[:2]
-    p_h, p_w = patch_size
+    p_h, p_w = patches.shape[1:3]
     img = np.zeros(image_size)
     # compute the dimensions of the patches array
     n_h = i_h - p_h + 1
@@ -284,9 +305,12 @@ def reconstruct_patches(patches, image_size, patch_size):
         img[i:i + p_h, j:j + p_w] += patches[offset]
     for i in xrange(i_h):
         for j in xrange(i_w):
-            img[i, j] /= float(min(i + 1, p_h, i_h - i) * 
+            # divide by the amount of overlap
+            # XXX: is this the most efficient way? memory-wise yes, cpu wise?
+            img[i, j] /= float(min(i + 1, p_h, i_h - i) *
                                min(j + 1, p_w, i_w - j))
     return img
+
 
 class PatchExtractor(BaseEstimator):
     """Extracts patches from a collection of images
@@ -297,10 +321,10 @@ class PatchExtractor(BaseEstimator):
         the dimensions of one patch
 
     max_patches: integer or float, optional default is None
-        The maximum number of patches per image to extract. If max_patches is a 
+        The maximum number of patches per image to extract. If max_patches is a
         float in (0, 1), it is taken to mean a proportion of the total number
         of patches.
-    
+
     seed: int or RandomState
         Seed for the random number generator used in case max_patches is used.
     """
@@ -309,14 +333,14 @@ class PatchExtractor(BaseEstimator):
         self.patch_size = patch_size
         self.max_patches = max_patches
         self.seed = seed
-    
+
     def fit(self, X, y=None):
         return self
 
     def transform(self, X):
-        patches = np.empty((0,) + patch_size)
+        patches = np.empty((0,) + self.patch_size)
         for image in X:
-            partial_patches = extract_patches_2d(image, image.shape,
-                              self.patch_size, self.max_patches, self.seed)
+            partial_patches = extract_patches_2d(image, self.patch_size,
+                                                 self.max_patches, self.seed)
             patches = np.r_[patches, partial_patches]
         return patches

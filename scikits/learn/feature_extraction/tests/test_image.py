@@ -9,7 +9,8 @@ from scipy import ndimage
 from nose.tools import assert_equal
 
 from ..image import img_to_graph, grid_to_graph
-from ..image import extract_patches_2d, reconstruct_patches
+from ..image import extract_patches_2d, reconstruct_from_patches_2d, \
+                    PatchExtractor
 from ...utils.graph import cs_graph_components
 
 
@@ -54,19 +55,21 @@ def test_connect_regions():
 def test_connect_regions_with_grid():
     lena = sp.lena()
     mask = lena > 50
-    graph = grid_to_graph(*lena.shape, **{'mask' : mask})
+    graph = grid_to_graph(*lena.shape, **{'mask': mask})
     assert_equal(ndimage.label(mask)[1], cs_graph_components(graph)[0])
 
     mask = lena > 150
-    graph = grid_to_graph(*lena.shape, **{'mask' : mask, 'dtype' : None})
+    graph = grid_to_graph(*lena.shape, **{'mask': mask, 'dtype': None})
     assert_equal(ndimage.label(mask)[1], cs_graph_components(graph)[0])
 
 
 def _downsampled_lena():
     lena = sp.lena()
-    lena = lena[::2, ::2] + lena[1::2, ::2] + lena[::2, 1::2] + lena[1::2, 1::2]
+    lena = lena[::2, ::2] + lena[1::2, ::2] + lena[::2, 1::2] + \
+           lena[1::2, 1::2]
     lena /= 4.0
     return lena
+
 
 def _orange_lena():
     lena = _downsampled_lena()
@@ -76,9 +79,9 @@ def _orange_lena():
     lena_color[:, :, 2] = 256 - lena / 4
     return lena_color
 
+
 def _make_images():
     lena = _downsampled_lena()
-
     # make a collection of lenas
     images = np.zeros((3,) + lena.shape)
     images[0] = lena
@@ -92,8 +95,7 @@ def test_extract_patches_all():
     i_h, i_w = lena.shape
     p_h, p_w = 16, 16
     expected_n_patches = (i_h - p_h + 1) * (i_w - p_w + 1)
-
-    patches = extract_patches_2d(lena, (i_h, i_w), (p_h, p_w))
+    patches = extract_patches_2d(lena, (p_h, p_w))
     assert_equal(patches.shape, (expected_n_patches, p_h, p_w))
 
 
@@ -102,8 +104,7 @@ def test_extract_patches_all_color():
     i_h, i_w = lena.shape[:2]
     p_h, p_w = 16, 16
     expected_n_patches = (i_h - p_h + 1) * (i_w - p_w + 1)
-
-    patches = extract_patches_2d(lena, (i_h, i_w, 3), (p_h, p_w))
+    patches = extract_patches_2d(lena, (p_h, p_w))
     assert_equal(patches.shape, (expected_n_patches, p_h, p_w, 3))
 
 
@@ -111,10 +112,10 @@ def test_extract_patches_all_rect():
     lena = _downsampled_lena()
     lena = lena[:, 32:97]
     i_h, i_w = lena.shape
-    p_h, p_w = 16, 12    
+    p_h, p_w = 16, 12
     expected_n_patches = (i_h - p_h + 1) * (i_w - p_w + 1)
 
-    patches = extract_patches_2d(lena, (i_h, i_w), (p_h, p_w))
+    patches = extract_patches_2d(lena, (p_h, p_w))
     assert_equal(patches.shape, (expected_n_patches, p_h, p_w))
 
 
@@ -123,7 +124,7 @@ def test_extract_patches_max_patches():
     i_h, i_w = lena.shape
     p_h, p_w = 16, 16
 
-    patches = extract_patches_2d(lena, (i_h, i_w), (p_h, p_w), max_patches=100)
+    patches = extract_patches_2d(lena, (p_h, p_w), max_patches=100)
     assert_equal(patches.shape, (100, p_h, p_w))
 
 
@@ -132,14 +133,30 @@ def test_reconstruct_patches_perfect():
     i_h, i_w = lena.shape
     p_h, p_w = 16, 16
 
-    patches = extract_patches_2d(lena, (i_h, i_w), (p_h, p_w))
-    lena_reconstructed = reconstruct_patches(patches, (i_h, i_w), (p_h, p_w))
+    patches = extract_patches_2d(lena, (p_h, p_w))
+    lena_reconstructed = reconstruct_from_patches_2d(patches, (i_h, i_w))
     np.testing.assert_array_equal(lena, lena_reconstructed)
+
 
 def test_reconstruct_patches_perfect_color():
     lena = _orange_lena()
     p_h, p_w = 16, 16
 
-    patches = extract_patches_2d(lena, lena.shape, (p_h, p_w))
-    lena_reconstructed = reconstruct_patches(patches, lena.shape, (p_h, p_w))
+    patches = extract_patches_2d(lena, (p_h, p_w))
+    lena_reconstructed = reconstruct_from_patches_2d(patches, lena.shape)
     np.testing.assert_array_equal(lena, lena_reconstructed)
+
+def test_patch_extractor_max_patches():
+    lenas = _make_images()
+    extr = PatchExtractor(patch_size=(8, 8), max_patches=100, seed=0)
+    patches = extr.transform(lenas)
+    assert patches.shape == (len(lenas) * 100, 8, 8)
+
+def test_patch_extractor_all_patches():
+    lenas = _make_images()
+    i_h, i_w = lenas.shape[1:3]
+    p_h, p_w = 8, 8
+    expected_n_patches = len(lenas) * (i_h - p_h + 1) * (i_w - p_w + 1)
+    extr = PatchExtractor(patch_size=(p_h, p_w), seed=0)
+    patches = extr.transform(lenas)
+    assert patches.shape == (expected_n_patches, p_h, p_w)
