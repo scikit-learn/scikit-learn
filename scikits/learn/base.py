@@ -269,6 +269,17 @@ class TransformerMixin(object):
 
         y : numpy array of shape [n_samples]
             Target values.
+
+        Returns
+        -------
+        X_new : numpy array of shape [n_samples, n_features_new]
+            Transformed array.
+
+        Note
+        -----
+        This method just calls fit and transform consecutively, i.e., it is not
+        an optimized implementation of fit_transform, unlike other transformers
+        such as PCA.
         """
         if y is None:
             # fit method of arity 1 (unsupervised transformation)
