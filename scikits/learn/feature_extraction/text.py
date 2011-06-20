@@ -287,7 +287,8 @@ class CountVectorizer(BaseEstimator):
         max_df = self.max_df
         max_features = self.max_features
 
-        # TODO: parallelize the following loop with joblib
+        # TODO: parallelize the following loop with joblib?
+        # (see XXX up ahead)
         for doc in raw_documents:
             term_count_dict = {}  # term => count in doc
 
@@ -344,7 +345,8 @@ class CountVectorizer(BaseEstimator):
         # result of document conversion to term_count_dict
         term_counts_per_doc = []
 
-        # TODO: parallelize the following loop with joblib
+        # XXX @larsmans tried to parallelize the following loop with joblib.
+        # The result was some 20% slower than the serial version.
         for doc in raw_documents:
             term_count_dict = {}  # term => count in doc
 
