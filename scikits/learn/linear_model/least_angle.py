@@ -538,6 +538,8 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
                             overwrite_X=True, overwrite_Gram=True,
                             method=method, verbose=verbose,
                             max_iter=max_iter)
+    if normalize:
+        coefs /= norms[:, np.newaxis]
     residues = np.array([(np.dot(X_test, coef) - y_test)
                          for coef in coefs.T])
     return alphas, active, coefs, residues
