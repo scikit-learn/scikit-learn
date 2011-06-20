@@ -414,6 +414,8 @@ class LARS(LinearModel):
                   method=self.method, verbose=self.verbose,
                   max_features=max_features, max_iter=self.max_iter)
 
+        if self.normalize:
+            self.coef_path_ /= norms[:, np.newaxis]
         self.coef_ = self.coef_path_[:, -1]
 
         self._set_intercept(Xmean, ymean)
