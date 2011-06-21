@@ -69,7 +69,7 @@ def _ridge_regression(X, y, alpha):
         return linalg.solve(A, np.dot(X.T, y), sym_pos=True, overwrite_a=True)
 
 
-def _update_V(U, Y, V, alpha, Gram=None, method='lars', tol=1e-8):
+def _update_V(U, Y, alpha, V, Gram=None, method='lars', tol=1e-8):
     """ Update the sparse factor V in sparse_pca loop.
     Each column of V is the solution to a Lasso problem.
 
@@ -81,11 +81,11 @@ def _update_V(U, Y, V, alpha, Gram=None, method='lars', tol=1e-8):
     Y: array of shape (n_samples, n_features)
         data matrix
 
-    V: array of shape (n_components, n_features)
-        previous iteration of V
-
     alpha: float
         regularization parameter for the Lasso problem
+
+    V: array of shape (n_components, n_features)
+        previous iteration of V
 
     Gram: array of shape (n_features, n_features)
         precomputed Gram matrix, (Y^T * Y)
@@ -102,6 +102,8 @@ def _update_V(U, Y, V, alpha, Gram=None, method='lars', tol=1e-8):
     """
     coef = np.empty_like(V)
     if method == 'lars':
+        if Gram is None:
+            Gram = np.dot(U.T, U)
         err_mgt = np.seterr()
         np.seterr(all='ignore')
         #alpha = alpha * n_samples
@@ -122,6 +124,58 @@ def _update_V(U, Y, V, alpha, Gram=None, method='lars', tol=1e-8):
             clf.fit(U, Y[:, k], max_iter=1000, tol=tol)
             coef[:, k] = clf.coef_
     return coef
+
+
+def _update_V_parallel(U, Y, alpha, V=None, Gram=None, method='lars',
+                       n_jobs=1, tol=1e-8):
+    """ Update the sparse factor V in sparse_pca loop by efficiently
+    spreading the load over the available cores.
+
+    Parameters
+    ----------
+    U: array of shape (n_samples, n_components)
+        previous iteration of U
+
+    Y: array of shape (n_samples, n_features)
+        data matrix
+
+    alpha: float
+        regularization parameter for the Lasso problem
+
+    V: array of shape (n_components, n_features)
+        previous iteration of V
+    Gram: array of shape (n_features, n_features)
+        precomputed Gram matrix, (Y^T * Y)
+
+    method: 'lars' | 'lasso'
+        lars: uses the least angle regression method (linear_model.lars_path)
+        lasso: uses the stochastic gradient descent method to compute the
+            lasso solution (linear_model.Lasso)
+
+    n_jobs: int
+        number of parallel jobs to run
+
+    tol: float
+        numerical tolerance for Lasso convergence.
+        Ignored if `method='lars'`
+
+    """
+    n_samples, n_features = Y.shape
+    if Gram is None:
+        Gram = np.dot(U.T, U)
+    if n_jobs == 1:
+        return _update_V(U, Y, alpha, V=V, Gram=Gram, method=method)
+    n_atoms = U.shape[1]
+    if V is None:
+        V = np.empty((n_atoms, n_features))
+    slices = list(_gen_even_slices(n_features, n_jobs))
+    V_views = Parallel(n_jobs=n_jobs)(
+                delayed(_update_V)(U, Y[:, this_slice], V=V[:, this_slice],
+                                alpha=alpha, Gram=Gram, method=method, tol=tol)
+                for this_slice in slices)
+    for this_slice, this_view in zip(slices, V_views):
+        V[:, this_slice] = this_view
+    return V
 
 
 def _update_U(U, Y, V, verbose=False, return_r2=False):
@@ -267,7 +321,6 @@ def sparse_pca(Y, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
     if verbose == 1:
         print '[sparse_pca]',
 
-    slices = list(_gen_even_slices(V.shape[1], n_jobs))
     for ii in xrange(max_iter):
         dt = (time.time() - t0)
         if verbose == 1:
@@ -279,15 +332,8 @@ def sparse_pca(Y, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
                     (ii, dt, dt / 60, current_cost))
 
         # Update V
-        Gram = np.dot(U.T, U)
-        slices = list(_gen_even_slices(V.shape[1], n_jobs))
-        V_views = Parallel(n_jobs=n_jobs)(
-                    delayed(_update_V)(U, Y[:, this_slice], V[:, this_slice],
-                                    alpha=alpha / n_samples,
-                                    Gram=Gram, method=method, tol=tol)
-                    for this_slice in slices)
-        for this_slice, this_view in zip(slices, V_views):
-            V[:, this_slice] = this_view
+        V = _update_V_parallel(U, Y, alpha / n_samples, V=V, method=method,
+                               n_jobs=n_jobs)
 
         # Update U
         U, residuals = _update_U(U, Y, V, verbose=verbose, return_r2=True)
