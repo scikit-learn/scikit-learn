@@ -6,10 +6,12 @@
 # License: BSD, (C) INRIA
 
 import numpy as np
+from scipy.sparse import issparse
 
 from .base import BaseEstimator, ClassifierMixin, RegressorMixin
 from .ball_tree import BallTree
 from .metrics import euclidean_distances
+from .utils import safe_asanyarray, atleast2d_or_csr
 
 
 class NeighborsClassifier(BaseEstimator, ClassifierMixin):
@@ -67,12 +69,14 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
         params : list of keyword, optional
             Overwrite keywords from __init__
         """
-        X = np.asanyarray(X)
+        X = safe_asanyarray(X)
         if y is None:
             raise ValueError("y must not be None")
         self._y = np.asanyarray(y)
         self._set_params(**params)
 
+        if issparse(X):
+            self.algorithm = 'brute'
         if self.algorithm == 'ball_tree' or \
            (self.algorithm == 'auto' and X.shape[1] < 20):
             self.ball_tree = BallTree(X, self.window_size)
@@ -133,7 +137,7 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
 
         """
         self._set_params(**params)
-        X = np.atleast_2d(X)
+        X = atleast2d_or_csr(X)
         if self.ball_tree is None:
             dist = euclidean_distances(X, self._fit_X, squared=True)
             # XXX: should be implemented with a partial sort
@@ -163,7 +167,7 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
         labels: array
             List of class labels (one for each data sample).
         """
-        X = np.atleast_2d(X)
+        X = atleast2d_or_csr(X)
         self._set_params(**params)
 
         # get neighbors

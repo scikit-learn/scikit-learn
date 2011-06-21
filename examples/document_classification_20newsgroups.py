@@ -46,6 +46,7 @@ from scikits.learn.linear_model import RidgeClassifier
 from scikits.learn.svm.sparse import LinearSVC
 from scikits.learn.linear_model.sparse import SGDClassifier
 from scikits.learn.naive_bayes import BernoulliNB, MultinomialNB
+from scikits.learn.neighbors import NeighborsClassifier
 from scikits.learn import metrics
 
 
@@ -146,7 +147,8 @@ def benchmark(clf):
     print
     return score, train_time, test_time
 
-for clf, name in ((RidgeClassifier(), "Ridge Classifier"),):
+for clf, name in ((RidgeClassifier(), "Ridge Classifier"),
+                  (NeighborsClassifier(), "kNN")):
     print 80*'='
     print name
     results = benchmark(clf)
