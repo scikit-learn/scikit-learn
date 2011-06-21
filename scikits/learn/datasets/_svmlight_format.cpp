@@ -205,8 +205,9 @@ public:
 
 /*
  * Parse single line. Throws exception on failure.
+ * Return false if line was a comment, true otherwise.
  */
-void parse_line(const std::string& line,
+bool parse_line(const std::string& line,
                 std::vector<double> &data,
                 std::vector<int> &indices,
                 std::vector<int> &indptr,
@@ -220,6 +221,11 @@ void parse_line(const std::string& line,
   // so we don't need to read the lines into strings first and get better
   // error handling.
   const char *in_string = line.c_str();
+
+  // Line is a comment.
+  if (*in_string == '#')
+    return false;
+
   double y;
 
   if (!std::sscanf(in_string, "%lf", &y))
@@ -234,14 +240,14 @@ void parse_line(const std::string& line,
 
   // Parse feature-value pairs.
   for ( ;
-       (position
-      && position < in_string + line.length()
+       (position < in_string + line.length()
+      && position - 1 != NULL
       && position[0] != '#');
-       position = std::strchr(position, ' ')) {
+       position = std::strchr(position, ' ') + 1) {
 
     // Consume multiple spaces, if needed.
-    while (std::isspace(*position))
-      position++;
+    if (std::isspace(*position))
+      continue;
 
     // Parse the feature-value pair.
     int id = std::atoi(position);
@@ -250,6 +256,8 @@ void parse_line(const std::string& line,
     indices.push_back(id);
     data.push_back(value);
   }
+
+  return true;
 }
 
 /*
