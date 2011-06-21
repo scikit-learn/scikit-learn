@@ -269,6 +269,9 @@ void parse_file(char const *file_path,
   file_stream.rdbuf()->pubsetbuf(&buffer[0], buffer_size);
   file_stream.open(file_path);
 
+  if (!file_stream)
+    throw std::ios_base::failure("File doesn't exist!");
+
   std::string line;
   while (std::getline(file_stream, line))
     parse_line(line, data, indices, indptr, labels);
