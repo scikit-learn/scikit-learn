@@ -25,11 +25,8 @@
 #include <Python.h>
 #include <numpy/arrayobject.h>
 
-#include <cctype>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
 #include <fstream>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -197,17 +194,16 @@ static PyObject *to_csr(std::vector<double> &data,
 
 class SyntaxError : public std::runtime_error {
 public:
-  SyntaxError(char const *msg)
-   : std::runtime_error(std::string(msg) + " in SVMlight/libSVM file")
+  SyntaxError(std::string const &msg)
+   : std::runtime_error(msg + " in SVMlight/libSVM file")
   {
   }
 };
 
 /*
  * Parse single line. Throws exception on failure.
- * Return false if line was a comment, true otherwise.
  */
-bool parse_line(const std::string& line,
+void parse_line(const std::string& line,
                 std::vector<double> &data,
                 std::vector<int> &indices,
                 std::vector<int> &indptr,
@@ -216,48 +212,32 @@ bool parse_line(const std::string& line,
   if (line.length() == 0)
     throw SyntaxError("empty line");
 
-  // Parse label
-  // FIXME: this should be done using standard C++ IOstream facilities,
-  // so we don't need to read the lines into strings first and get better
-  // error handling.
-  const char *in_string = line.c_str();
+  if (line[0] == '#')
+    return;
 
-  // Line is a comment.
-  if (*in_string == '#')
-    return false;
+  // FIXME: we shouldn't be parsing line-by-line.
+  // Also, we might catch more syntax errors with failbit.
+  std::istringstream in(line);
+  in.exceptions(std::ios::badbit);
 
   double y;
-
-  if (!std::sscanf(in_string, "%lf", &y))
+  if (!(in >> y)) {
     throw SyntaxError("non-numeric or missing label");
-
-  labels.push_back(y);
-
-  const char* position;
-  position = std::strchr(in_string, ' ') + 1;
-
-  indptr.push_back(data.size());
-
-  // Parse feature-value pairs.
-  for ( ;
-       (position < in_string + line.length()
-      && position - 1 != NULL
-      && position[0] != '#');
-       position = std::strchr(position, ' ') + 1) {
-
-    // Consume multiple spaces, if needed.
-    if (std::isspace(*position))
-      continue;
-
-    // Parse the feature-value pair.
-    int id = std::atoi(position);
-    position = std::strchr(position, ':') + 1;
-    double value = std::atof(position);
-    indices.push_back(id);
-    data.push_back(value);
   }
 
-  return true;
+  labels.push_back(y);
+  indptr.push_back(data.size());
+
+  char c;
+  double x;
+  unsigned idx;
+
+  while (in >> idx >> c >> x) {
+    if (c != ':')
+      throw SyntaxError(std::string("expected ':', got '") + c + "'");
+    indices.push_back(int(idx));
+    data.push_back(x);
+  }
 }
 
 /*
