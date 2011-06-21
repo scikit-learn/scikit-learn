@@ -28,11 +28,16 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, CoefSelectTransformerMixin):
         optimization problem.
 
     tol: float, optional
-         tolerance for stopping criteria
+         Tolerance for stopping criteria
 
     multi_class: boolean, optional
-         perform multi-class SVM by Cramer and Singer. If active,
+         Perform multi-class SVM by Cramer and Singer. If active,
          options loss, penalty and dual will be ignored.
+
+    fit_intercept : boolean, optional
+        Whether to calculate the intercept for this model. If set
+        to false, no intercept will be used in calculations
+        (e.g. data is expected to be already centered).
 
     intercept_scaling : float, default: 1
         when self.fit_intercept is True, instance vector x becomes
