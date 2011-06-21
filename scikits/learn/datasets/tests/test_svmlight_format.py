@@ -67,3 +67,7 @@ def test_load_invalid_file():
 @raises(TypeError)
 def test_not_a_filename():
     load_svmlight_file(1)
+
+@raises(IOError)
+def test_invalid_filename():
+    load_svmlight_file("trou pic nic douille")
