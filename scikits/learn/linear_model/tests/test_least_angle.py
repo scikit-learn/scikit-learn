@@ -104,6 +104,8 @@ def test_lasso_lars_vs_lasso_cd(verbose=False):
     Test that LassoLars and Lasso using coordinate descent give the
     same results
     """
+    X = 3 * diabetes.data
+    
     alphas, _, lasso_path = linear_model.lars_path(X, y, method='lasso')
     lasso_cd = linear_model.Lasso(fit_intercept=False)
     for (c, a) in zip(lasso_path.T, alphas):
