@@ -221,9 +221,8 @@ void parse_line(const std::string& line,
   in.exceptions(std::ios::badbit);
 
   double y;
-  if (!(in >> y)) {
+  if (!(in >> y))
     throw SyntaxError("non-numeric or missing label");
-  }
 
   labels.push_back(y);
   indptr.push_back(data.size());
