@@ -371,7 +371,7 @@ def dict_learning(Y, n_atoms, alpha, n_iter=100, return_code=True,
         dict_init=None, callback=None, chunk_size=3, verbose=False,
         shuffle=True, n_jobs=1, coding_method='lars'):
     """
-    Online dictionary learning for sparse coding 
+    Online dictionary learning for sparse coding
 
     (U^*,V^*) = argmin 0.5 || Y - U V ||_2^2 + alpha * || V ||_1
                  (U,V)
@@ -419,18 +419,18 @@ def dict_learning(Y, n_atoms, alpha, n_iter=100, return_code=True,
             sys.stdout.write(".")
             sys.stdout.flush()
         elif verbose:
-            if verbose > 10 or ii % ceil(100./verbose) == 0:
-                print ("Iteration % 3i (elapsed time: % 3is, % 4.1fmn)" % 
-                    (ii, dt, dt/60))
-        
+            if verbose > 10 or ii % ceil(100. / verbose) == 0:
+                print ("Iteration % 3i (elapsed time: % 3is, % 4.1fmn)" %
+                    (ii, dt, dt / 60))
+
         this_U = _update_V(V, this_Y.T, alpha)
 
         # Update the auxiliary variables
         if ii < chunk_size - 1:
-            theta = float((ii+1)*chunk_size)
+            theta = float((ii + 1) * chunk_size)
         else:
-            theta = float(chunk_size**2 + ii + 1 - chunk_size)
-        beta = (theta + 1 - chunk_size)/(theta + 1)
+            theta = float(chunk_size ** 2 + ii + 1 - chunk_size)
+        beta = (theta + 1 - chunk_size) / (theta + 1)
 
         A *= beta
         A += np.dot(this_U, this_U.T)
@@ -450,14 +450,14 @@ def dict_learning(Y, n_atoms, alpha, n_iter=100, return_code=True,
         if verbose > 1:
             print 'Learning code...',
         elif verbose == 1:
-            print '|', 
-        code = _update_V_parallel(V, Y.T, alpha, n_jobs=n_jobs, 
+            print '|',
+        code = _update_V_parallel(V, Y.T, alpha, n_jobs=n_jobs,
                     method=coding_method)
         if verbose > 1:
             dt = (time.time() - t0)
-            print 'done (total time: % 3is, % 4.1fmn)' % (dt, dt/60)
+            print 'done (total time: % 3is, % 4.1fmn)' % (dt, dt / 60)
         return V.T, code.T
-        
+
     return V.T
 
 
