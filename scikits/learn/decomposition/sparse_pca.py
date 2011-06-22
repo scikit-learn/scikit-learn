@@ -5,12 +5,14 @@
 
 import time
 import sys
-from math import sqrt
+import itertools
+from math import sqrt, floor, ceil
 
 import numpy as np
 from numpy.lib.stride_tricks import as_strided
 from scipy import linalg
 
+from ..utils.extmath import fast_svd
 from ..linear_model import Lasso, lars_path
 from ..externals.joblib import Parallel, delayed
 from ..base import BaseEstimator, TransformerMixin
@@ -74,7 +76,7 @@ def _ridge_regression(X, y, alpha):
         return linalg.solve(A, np.dot(X.T, y), sym_pos=True, overwrite_a=True)
 
 
-def _update_V(U, Y, alpha, V, Gram=None, method='lars', tol=1e-8):
+def _update_V(U, Y, alpha, V=None, Gram=None, method='lars', tol=1e-8):
     """ Update the sparse factor V in sparse_pca loop.
     Each column of V is the solution to a Lasso problem.
 
@@ -105,7 +107,9 @@ def _update_V(U, Y, alpha, V, Gram=None, method='lars', tol=1e-8):
         Ignored if `method='lars'`
 
     """
-    coef = np.empty_like(V)
+    n_features = Y.shape[1]
+    n_atoms = U.shape[1]
+    coef = np.empty((n_atoms, n_features))
     if method == 'lars':
         if Gram is None:
             Gram = np.dot(U.T, U)
@@ -113,7 +117,7 @@ def _update_V(U, Y, alpha, V, Gram=None, method='lars', tol=1e-8):
         np.seterr(all='ignore')
         #alpha = alpha * n_samples
         XY = np.dot(U.T, Y)
-        for k in range(V.shape[1]):
+        for k in range(n_features):
             # A huge amount of time is spent in this loop. It needs to be
             # tight.
             _, _, coef_path_ = lars_path(U, Y[:, k], Xy=XY[:, k], Gram=Gram,
@@ -122,10 +126,11 @@ def _update_V(U, Y, alpha, V, Gram=None, method='lars', tol=1e-8):
         np.seterr(**err_mgt)
     else:
         clf = Lasso(alpha=alpha, fit_intercept=False)
-        for k in range(V.shape[1]):
+        for k in range(n_features):
             # A huge amount of time is spent in this loop. It needs to be
             # tight.
-            clf.coef_ = V[:, k]  # Init with previous value of Vk
+            if V is not None:
+                clf.coef_ = V[:, k]  # Init with previous value of Vk
             clf.fit(U, Y[:, k], max_iter=1000, tol=tol)
             coef[:, k] = clf.coef_
     return coef
@@ -360,6 +365,100 @@ def sparse_pca(Y, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
             callback(locals())
 
     return U, V, E
+
+
+def dict_learning(Y, n_atoms, alpha, n_iter=100, return_code=True,
+        dict_init=None, callback=None, chunk_size=3, verbose=False,
+        shuffle=True, n_jobs=1, coding_method='lars'):
+    """
+    Online dictionary learning for sparse coding 
+
+    (U^*,V^*) = argmin 0.5 || Y - U V ||_2^2 + alpha * || V ||_1
+                 (U,V)
+                with || U_k ||_2 = 1 for all  0<= k < n_atoms
+
+    """
+    t0 = time.time()
+    n_samples, n_features = Y.shape
+    # Avoid integer division problems
+    alpha = float(alpha)
+
+    if n_jobs == -1:
+        n_jobs = cpu_count()
+
+    # Init V with SVD of Y
+    if dict_init is not None:
+        V = dict_init
+    else:
+        _, S, V = fast_svd(Y, n_atoms)
+        V = S[:, np.newaxis] * V
+    V = V[:n_atoms, :]
+    V = np.ascontiguousarray(V.T)
+
+    if verbose == 1:
+        print '[dict_learning]',
+
+    n_batches = floor(float(len(Y)) / chunk_size)
+    if shuffle:
+        Y_train = Y.copy()
+        np.random.shuffle(Y_train)
+    else:
+        Y_train = Y
+    batches = np.array_split(Y_train, n_batches)
+    batches = itertools.cycle(batches)
+
+    # The covariance of the dictionary
+    A = np.zeros((n_atoms, n_atoms))
+    # The data approximation
+    B = np.zeros((n_features, n_atoms))
+
+    for ii, this_Y in itertools.izip(xrange(n_iter), batches):
+        #this_Y = this_Y.squeeze()
+        dt = (time.time() - t0)
+        if verbose == 1:
+            sys.stdout.write(".")
+            sys.stdout.flush()
+        elif verbose:
+            if verbose > 10 or ii % ceil(100./verbose) == 0:
+                print ("Iteration % 3i (elapsed time: % 3is, % 4.1fmn)" % 
+                    (ii, dt, dt/60))
+        
+        this_U = _update_V(V, this_Y.T, alpha)
+
+        # Update the auxiliary variables
+        if ii < chunk_size - 1:
+            theta = float((ii+1)*chunk_size)
+        else:
+            theta = float(chunk_size**2 + ii + 1 - chunk_size)
+        beta = (theta + 1 - chunk_size)/(theta + 1)
+
+        A *= beta
+        A += np.dot(this_U, this_U.T)
+        B *= beta
+        B += np.dot(this_Y.T, this_U.T)
+
+        # Update dictionary
+        V = _update_U(V, B, A, verbose=verbose)
+        # XXX: Can the residuals be of any use?
+
+        # Maybe we need a stopping criteria based on the amount of
+        # modification in the dictionary
+        if callback is not None:
+            callback(locals())
+
+    if return_code:
+        if verbose > 1:
+            print 'Learning code...',
+        elif verbose == 1:
+            print '|', 
+        code = _update_V_parallel(V, Y.T, alpha, n_jobs=n_jobs, 
+                    method=coding_method)
+        if verbose > 1:
+            dt = (time.time() - t0)
+            print 'done (total time: % 3is, % 4.1fmn)' % (dt, dt/60)
+        return V.T, code.T
+        
+    return V.T
 
 
 class SparsePCA(BaseEstimator, TransformerMixin):
