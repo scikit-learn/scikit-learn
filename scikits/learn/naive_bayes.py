@@ -217,9 +217,9 @@ class BaseDiscreteNB(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             Training vectors, where n_samples is the number of samples and
-            n_features is the number of features. X may be a sparse matrix.
+            n_features is the number of features.
 
         y : array-like, shape = [n_samples]
             Target values.
@@ -270,7 +270,7 @@ class BaseDiscreteNB(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
 
         Returns
         -------
@@ -287,7 +287,7 @@ class BaseDiscreteNB(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
 
         Returns
         -------
@@ -304,7 +304,7 @@ class BaseDiscreteNB(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
 
         Returns
         -------
@@ -327,9 +327,6 @@ class MultinomialNB(BaseDiscreteNB):
     discrete features (e.g., word counts for text classification). The
     multinomial distribution normally requires integer feature counts. However,
     in practice, fractional counts such as tf-idf may also work.
-
-    This class is designed to handle both dense and sparse data; it will enter
-    "sparse mode" if its training matrix (X) is a sparse matrix.
 
     Parameters
     ----------
