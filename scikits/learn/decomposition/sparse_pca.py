@@ -5,14 +5,12 @@
 
 import time
 import sys
-import itertools
-from math import sqrt, floor, ceil
+from math import sqrt
 
 import numpy as np
 from numpy.lib.stride_tricks import as_strided
 from scipy import linalg
 
-from ..utils.extmath import fast_svd
 from ..linear_model import Lasso, lars_path
 from ..externals.joblib import Parallel, delayed
 from ..base import BaseEstimator, TransformerMixin
@@ -76,7 +74,7 @@ def _ridge_regression(X, y, alpha):
         return linalg.solve(A, np.dot(X.T, y), sym_pos=True, overwrite_a=True)
 
 
-def _update_V(U, Y, alpha, V=None, Gram=None, method='lars', tol=1e-8):
+def _update_V(U, Y, alpha, V, Gram=None, method='lars', tol=1e-8):
     """ Update the sparse factor V in sparse_pca loop.
     Each column of V is the solution to a Lasso problem.
 
@@ -107,9 +105,7 @@ def _update_V(U, Y, alpha, V=None, Gram=None, method='lars', tol=1e-8):
         Ignored if `method='lars'`
 
     """
-    n_features = Y.shape[1]
-    n_atoms = U.shape[1]
-    coef = np.empty((n_atoms, n_features))
+    coef = np.empty_like(V)
     if method == 'lars':
         if Gram is None:
             Gram = np.dot(U.T, U)
@@ -117,7 +113,7 @@ def _update_V(U, Y, alpha, V=None, Gram=None, method='lars', tol=1e-8):
         np.seterr(all='ignore')
         #alpha = alpha * n_samples
         XY = np.dot(U.T, Y)
-        for k in range(n_features):
+        for k in range(V.shape[1]):
             # A huge amount of time is spent in this loop. It needs to be
             # tight.
             _, _, coef_path_ = lars_path(U, Y[:, k], Xy=XY[:, k], Gram=Gram,
@@ -126,11 +122,10 @@ def _update_V(U, Y, alpha, V=None, Gram=None, method='lars', tol=1e-8):
         np.seterr(**err_mgt)
     else:
         clf = Lasso(alpha=alpha, fit_intercept=False)
-        for k in range(n_features):
+        for k in range(V.shape[1]):
             # A huge amount of time is spent in this loop. It needs to be
             # tight.
-            if V is not None:
-                clf.coef_ = V[:, k]  # Init with previous value of Vk
+            clf.coef_ = V[:, k]  # Init with previous value of Vk
             clf.fit(U, Y[:, k], max_iter=1000, tol=tol)
             coef[:, k] = clf.coef_
     return coef
