@@ -9,7 +9,8 @@ from scipy import ndimage
 from nose.tools import assert_equal
 
 from ..image import img_to_graph, grid_to_graph
-from ..image import extract_patches_2d, reconstruct_from_patches
+from ..image import extract_patches_2d, reconstruct_from_patches_2d, \
+                    PatchExtractor
 from ...utils.graph import cs_graph_components
 
 
@@ -115,8 +116,7 @@ def test_reconstruct_patches_perfect():
     p_h, p_w = 16, 16
 
     patches = extract_patches_2d(lena, (p_h, p_w))
-    lena_reconstructed = reconstruct_from_patches(patches, (i_h, i_w),
-                                                 (p_h, p_w))
+    lena_reconstructed = reconstruct_from_patches_2d(patches, (i_h, i_w))
     np.testing.assert_array_equal(lena, lena_reconstructed)
 
 
@@ -125,6 +125,20 @@ def test_reconstruct_patches_perfect_color():
     p_h, p_w = 16, 16
 
     patches = extract_patches_2d(lena, (p_h, p_w))
-    lena_reconstructed = reconstruct_from_patches(patches, lena.shape,
-                                                 (p_h, p_w))
+    lena_reconstructed = reconstruct_from_patches_2d(patches, lena.shape)
     np.testing.assert_array_equal(lena, lena_reconstructed)
+
+def test_patch_extractor_max_patches():
+    lenas = _make_images()
+    extr = PatchExtractor(patch_size=(8, 8), max_patches=100, seed=0)
+    patches = extr.transform(lenas)
+    assert patches.shape == (len(lenas) * 100, 8, 8)
+
+def test_patch_extractor_all_patches():
+    lenas = _make_images()
+    i_h, i_w = lenas.shape[1:3]
+    p_h, p_w = 8, 8
+    expected_n_patches = len(lenas) * (i_h - p_h + 1) * (i_w - p_w + 1)
+    extr = PatchExtractor(patch_size=(p_h, p_w), seed=0)
+    patches = extr.transform(lenas)
+    assert patches.shape == (expected_n_patches, p_h, p_w)

@@ -6,9 +6,11 @@ Utilities to extract features from images.
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD
 
+
+from itertools import product
+
 import numpy as np
 from scipy import sparse
-from itertools import product
 from ..utils.fixes import in1d
 from ..utils import check_random_state
 from ..base import BaseEstimator
@@ -264,12 +266,30 @@ def extract_patches_2d(image, patch_size, max_patches=None, seed=None):
         return patches
 
 
-def reconstruct_from_patches(patches, image_size, patch_size):
-    """Reconstruct the image from all of its patches"""
+def reconstruct_from_patches_2d(patches, image_size):
+    """Reconstruct the image from all of its patches.
 
-    # XXX: make it work with colour images too!
+    Patches are assumed to overlap and the image is constructed by filling in
+    the patches from left to right, top to bottom, averaging the overlapping
+    regions.
+
+    Parameters
+    ----------
+    patches: array with shape (n_patches, p_h, p_w) or (n_patches, p_h, p_w,
+        n_colors)
+        the complete set of patches
+
+    image_size: tuple of ints (i_h, i_w, n_colors) or (i_h, i_w)
+        the size of the image that will be reconstructed.
+
+    Returns
+    -------
+    image: array with shape    
+
+
+    """
     i_h, i_w = image_size[:2]
-    p_h, p_w = patch_size
+    p_h, p_w = patches.shape[1:3]
     img = np.zeros(image_size)
     # compute the dimensions of the patches array
     n_h = i_h - p_h + 1
@@ -278,6 +298,8 @@ def reconstruct_from_patches(patches, image_size, patch_size):
         img[i:i + p_h, j:j + p_w] += patches[offset]
     for i in xrange(i_h):
         for j in xrange(i_w):
+            # divide by the amount of overlap
+            # XXX: is this the most efficient way? memory-wise yes, cpu wise?
             img[i, j] /= float(min(i + 1, p_h, i_h - i) *
                                min(j + 1, p_w, i_w - j))
     return img
@@ -309,9 +331,9 @@ class PatchExtractor(BaseEstimator):
         return self
 
     def transform(self, X):
-        patches = np.empty((0,) + patch_size)
+        patches = np.empty((0,) + self.patch_size)
         for image in X:
-            partial_patches = extract_patches_2d(image, image.shape,
-                              self.patch_size, self.max_patches, self.seed)
+            partial_patches = extract_patches_2d(image, self.patch_size,
+                                                 self.max_patches, self.seed)
             patches = np.r_[patches, partial_patches]
         return patches
