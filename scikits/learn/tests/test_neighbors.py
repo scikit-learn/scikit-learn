@@ -1,5 +1,7 @@
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
+from scipy.sparse import (bsr_matrix, coo_matrix, csc_matrix, csr_matrix,
+                          dok_matrix, lil_matrix)
 
 from scikits.learn import neighbors, datasets, ball_tree
 
@@ -55,6 +57,17 @@ def test_neighbors_high_dimension():
     for s in ('auto', 'ball_tree', 'brute', 'inplace'):
         knn = neighbors.NeighborsClassifier(n_neighbors=1, algorithm=s)
         knn.fit(X, Y)
+        for i, (x, y) in enumerate(zip(X[:10], Y[:10])):
+            epsilon = 1e-5 * (2 * np.random.random(size=p) - 1)
+            assert_array_equal(knn.predict(x + epsilon), y)
+            dist, idxs = knn.kneighbors(x + epsilon, n_neighbors=1)
+
+    # Repeat the test with sparse data
+    for sparsemat in (bsr_matrix, coo_matrix, csc_matrix, csr_matrix,
+                      dok_matrix, lil_matrix):
+        Xsp = sparsemat(X)
+        knn = neighbors.NeighborsClassifier(n_neighbors=1)
+        knn.fit(Xsp, Y)
         for i, (x, y) in enumerate(zip(X[:10], Y[:10])):
             epsilon = 1e-5 * (2 * np.random.random(size=p) - 1)
             assert_array_equal(knn.predict(x + epsilon), y)

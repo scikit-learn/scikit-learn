@@ -5,7 +5,7 @@
 # License: BSD Style.
 
 import numpy as np
-from scipy.sparse import issparse
+from scipy.sparse import csr_matrix, issparse
 from ..utils import safe_asanyarray, atleast2d_or_csr
 from ..utils.extmath import safe_sparse_dot
 
@@ -65,7 +65,9 @@ def euclidean_distances(X, Y, Y_norm_squared=None, squared=False):
         YY = XX.T
     elif Y_norm_squared is None:
         if issparse(Y):
-            YY = Y.copy()
+            # scipy.sparse matrices don't have element-wise scalar
+            # exponentiation, and tocsr has a copy kwarg only on CSR matrices.
+            YY = Y.copy() if isinstance(Y, csr_matrix) else Y.tocsr()
             YY.data **= 2
             YY = YY.sum(axis=1).T
         else:
