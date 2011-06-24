@@ -16,7 +16,8 @@ large number of classification problems, including handwritten digits
 or satellite image scenes. It is often successful in situation where
 the decision boundary is very irregular.
 
-This module handles `scipy.sparse` matrices as input.
+The `NeighborsClassifier` can handle either Numpy arrays and `scipy.sparse`
+matrices as input.
 It currently supports only the Euclidean distance metric.
 
 Classification
