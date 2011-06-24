@@ -62,16 +62,30 @@ def test_neighbors_high_dimension():
             assert_array_equal(knn.predict(x + epsilon), y)
             dist, idxs = knn.kneighbors(x + epsilon, n_neighbors=1)
 
-    # Repeat the test with sparse data
-    for sparsemat in (bsr_matrix, coo_matrix, csc_matrix, csr_matrix,
-                      dok_matrix, lil_matrix):
-        Xsp = sparsemat(X)
-        knn = neighbors.NeighborsClassifier(n_neighbors=1)
-        knn.fit(Xsp, Y)
-        for i, (x, y) in enumerate(zip(X[:10], Y[:10])):
+
+def test_neighbors_sparse():
+    """Test k-NN on sparse matrices"""
+
+    # Like the above, but with various types of sparse matrices
+    n = 10
+    p = 30
+    X = 2 * np.random.random(size=(n, p)) - 1
+    Y = ((X ** 2).sum(axis=1) < .25).astype(np.int)
+
+    SPARSE_TYPES = (bsr_matrix, coo_matrix, csc_matrix, csr_matrix,
+                    dok_matrix, lil_matrix)
+    for sparsemat in SPARSE_TYPES:
+        # 'ball_tree' option should be overridden automatically
+        knn = neighbors.NeighborsClassifier(n_neighbors=1,
+                                            algorithm='ball_tree')
+        knn.fit(sparsemat(X), Y)
+
+        for i, (x, y) in enumerate(zip(X[:5], Y[:5])):
             epsilon = 1e-5 * (2 * np.random.random(size=p) - 1)
-            assert_array_equal(knn.predict(x + epsilon), y)
-            dist, idxs = knn.kneighbors(x + epsilon, n_neighbors=1)
+            for sparsev in SPARSE_TYPES + (np.asarray,):
+                x_eps = sparsev(np.atleast_2d(x) + epsilon)
+                assert_array_equal(knn.predict(x_eps), y)
+                dist, idxs = knn.kneighbors(x_eps, n_neighbors=1)
 
 
 def test_neighbors_iris():
