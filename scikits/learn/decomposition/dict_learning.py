@@ -69,7 +69,7 @@ class DictionaryLearning(BaseEstimator, TransformerMixin):
 
     """
     def __init__(self, n_atoms, alpha=1, max_iter=1000, tol=1e-8,
-                 method='batch', coding_method='lars', n_jobs='1', U_init=None,
+                 method='batch', coding_method='lars', n_jobs=1, U_init=None,
                  V_init=None, verbose=False):
         self.n_atoms = n_atoms
         self.alpha = alpha
@@ -78,11 +78,11 @@ class DictionaryLearning(BaseEstimator, TransformerMixin):
         self.method = method
         self.coding_method = coding_method
         self.n_jobs = n_jobs
-        self.U_init = U_init
-        self.V_init = V_init
+        self.U_init = V_init.T if V_init else None
+        self.V_init = U_init.T if U_init else None
         self.verbose = verbose
 
-    def fit(X, y=None, **params):
+    def fit(self, X, y=None, **params):
         """Fit the model from data in X.
 
         Parameters
@@ -98,11 +98,11 @@ class DictionaryLearning(BaseEstimator, TransformerMixin):
         """
         self._set_params(**params)
         X = np.asanyarray(X)
-        if method='batch':
-            U, _, E = sparse_pca(X.T, self.n_components, self.alpha,
+        if self.method == 'batch':
+            U, _, E = sparse_pca(X.T, self.n_atoms, self.alpha,
                                  tol=self.tol, max_iter=self.max_iter, 
                                  method=self.coding_method, n_jobs=self.n_jobs,
-                                 U_init=self.V_init.T, V_init=self.U_init.T,
+                                 U_init=self.U_init, V_init=self.V_init,
                                  verbose=self.verbose)
             self.components_ = U.T
             self.error_ = E
@@ -111,7 +111,7 @@ class DictionaryLearning(BaseEstimator, TransformerMixin):
 
         return self
 
-    def transform(X, y=None, method='omp', **kwargs):
+    def transform(self, X, y=None, method='omp', **kwargs):
         """Apply the projection onto the learned sparse components
         to new data.
 
@@ -132,7 +132,7 @@ class DictionaryLearning(BaseEstimator, TransformerMixin):
         """
 
         # XXX: parameters should be made explicit so we can have defaults
-        if method='omp':
+        if method == 'omp':
             return orthogonal_mp(self.components_, X.T, **kwargs)
         else:
             return _update_V_parallel(self.components_.T, X.T, **kwargs)
