@@ -6,7 +6,7 @@
 
 import numpy as np
 
-from .sparse_pca import dict_learning, sparse_pca
+from .sparse_pca import dict_learning, sparse_pca, _update_V_parallel
 from ..base import BaseEstimator, TransformerMixin
 
 
