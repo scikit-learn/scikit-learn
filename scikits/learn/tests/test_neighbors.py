@@ -11,6 +11,10 @@ perm = np.random.permutation(iris.target.size)
 iris.data = iris.data[perm]
 iris.target = iris.target[perm]
 
+SPARSE_TYPES = (bsr_matrix, coo_matrix, csc_matrix, csr_matrix, dok_matrix,
+                lil_matrix)
+SPARSE_OR_DENSE = SPARSE_TYPES + (np.asarray,)
+
 
 def test_neighbors_1D():
     """
@@ -63,8 +67,8 @@ def test_neighbors_high_dimension():
             dist, idxs = knn.kneighbors(x + epsilon, n_neighbors=1)
 
 
-def test_neighbors_sparse():
-    """Test k-NN on sparse matrices"""
+def test_neighbors_sparse_classification():
+    """Test k-NN classifier on sparse matrices"""
 
     # Like the above, but with various types of sparse matrices
     n = 10
@@ -109,6 +113,23 @@ def test_neighbors_iris():
             rgs.fit(iris.data, iris.target, mode=m, algorithm=s)
             assert np.mean(
                 rgs.predict(iris.data).round() == iris.target) > 0.95
+
+
+# Test disabled because sparse regression is not yet supported.
+# Remove the leading _ to enable it.
+def _test_neighbors_sparse_regression():
+    """Test k-NN regression on sparse matrices
+
+    Repeats part of the iris test.
+    """
+
+    for sparse1 in SPARSE_TYPES:
+        for m in ('barycenter', 'mean'):
+            rgs = neighbors.NeighborsRegressor()
+            rgs.fit(sparse1(iris.data), iris.target, mode=m)
+            for sparse2 in SPARSE_OR_DENSE:
+                data2 = sparse2(iris.data)
+                assert np.mean(rgs.predict(data2).round() == iris.target) > 0.95
 
 
 def test_kneighbors_graph():

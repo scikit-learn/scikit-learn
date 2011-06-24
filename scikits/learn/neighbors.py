@@ -79,8 +79,9 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
         self._set_params(**params)
 
         if issparse(X):
-            self.algorithm = 'brute'
-        if self.algorithm == 'ball_tree' or \
+            self.ball_tree = None
+            self._fit_X = X.tocsr()
+        elif self.algorithm == 'ball_tree' or \
            (self.algorithm == 'auto' and X.shape[1] < 20):
             self.ball_tree = BallTree(X, self.window_size)
         else:
@@ -255,7 +256,7 @@ class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
         y: array
             List of target values (one for each data sample).
         """
-        X = np.atleast_2d(np.asanyarray(X))
+        X = atleast2d_or_csr(X)
         self._set_params(**params)
 
         # compute nearest neighbors

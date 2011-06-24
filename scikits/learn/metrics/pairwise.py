@@ -69,7 +69,7 @@ def euclidean_distances(X, Y, Y_norm_squared=None, squared=False):
             # exponentiation, and tocsr has a copy kwarg only on CSR matrices.
             YY = Y.copy() if isinstance(Y, csr_matrix) else Y.tocsr()
             YY.data **= 2
-            YY = YY.sum(axis=1).T
+            YY = np.asarray(YY.sum(axis=1)).T
         else:
             YY = np.sum(Y ** 2, axis=1)[np.newaxis, :]
     else:
