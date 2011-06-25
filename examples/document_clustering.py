@@ -22,8 +22,6 @@ from scikits.learn.feature_extraction.text import Vectorizer
 from scikits.learn import metrics
 
 from scikits.learn.cluster import MiniBatchKMeans
-from scikits.learn.cluster import KMeans
-from scikits.learn.cluster import SpectralClustering
 from scikits.learn.cluster import randindex
 
 from scikits.learn.preprocessing import Normalizer
@@ -33,7 +31,7 @@ from scikits.learn.preprocessing import Normalizer
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(message)s')
 
-################################################################################
+###############################################################################
 # Load some categories from the training set
 categories = [
     'alt.atheism',
@@ -76,8 +74,7 @@ print
 
 chunk_size = 1000
 
-
-################################################################################
+###############################################################################
 # Now sparse MiniBatchKmeans
 
 print "_" * 80
@@ -89,65 +86,13 @@ print "Clustering sparse data with %s" % str(mbkm)
 print
 
 t0 = time()
-
 mbkm.fit(X)
+print "done in %0.3fs" % (time() - t0)
+
 ri = randindex(labels, mbkm.labels_)
 vmeasure = metrics.v_measure_score(labels, mbkm.labels_)
-print "done in %0.3fs" % (time() - t0)
 print "Homogeneity: %0.3f" % metrics.homogeneity_score(labels, mbkm.labels_)
 print "Completeness: %0.3f" % metrics.completeness_score(labels, mbkm.labels_)
 print "V-measure: %0.3f" % vmeasure
 print "Rand-Index: %.3f" % ri
-print "center norms", np.sum(mbkm.cluster_centers_ ** 2.0, axis=1)
 print
-
-
-################################################################################
-# Now dense MiniBatchKmeans
-
-print "_" * 80
-
-mbkm = MiniBatchKMeans(init="random", k=true_k, max_iter=10, random_state=13,
-                       chunk_size=chunk_size, tol=0.0, n_init=1)
-
-print "Clustering dense data with %s" % str(mbkm)
-print
-
-X_dense = X.toarray()
-t0 = time()
-mbkm.fit(X_dense)
-ri = randindex(labels, mbkm.labels_)
-vmeasure = metrics.v_measure_score(labels, mbkm.labels_)
-print "done in %0.3fs" % (time() - t0)
-print "Homogeneity: %0.3f" % metrics.homogeneity_score(labels, mbkm.labels_)
-print "Completeness: %0.3f" % metrics.completeness_score(labels, mbkm.labels_)
-print "V-measure: %0.3f" % vmeasure
-print "Rand-Index: %.3f" % ri
-print "center norms", np.sum(mbkm.cluster_centers_ ** 2.0, axis=1)
-print
-
-
-
-################################################################################
-# Now sectral clustering
-
-print "_" * 80
-sc = SpectralClustering(k=true_k, mode='amg', random_state=13)
-
-t0 = time()
-A = (X * X.T).toarray()
-print "computed A in %0.3fs" % (time() - t0)
-
-print "Clustering data with %s" % str(sc)
-print
-
-t0 = time()
-
-sc.fit(A)
-
-print "done in %0.3fs" % (time() - t0)
-print "Homogeneity: %0.3f" % metrics.homogeneity_score(labels, sc.labels_)
-print "Completeness: %0.3f" % metrics.completeness_score(labels, sc.labels_)
-print "V-measure: %0.3f" % metrics.v_measure_score(labels, sc.labels_)
-print "Rand-Index: %.3f" % randindex(labels, sc.labels_)
-print 

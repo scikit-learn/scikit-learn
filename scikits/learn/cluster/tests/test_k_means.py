@@ -3,6 +3,8 @@
 import numpy as np
 from scipy import sparse as sp
 from numpy.testing import assert_equal
+from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_warns
 from nose.tools import assert_raises
 
 from ..k_means_ import KMeans, MiniBatchKMeans
@@ -89,6 +91,45 @@ def test_k_means_fixed_array_init():
 
     # check error on dataset being too small
     assert_raises(ValueError, k_means.fit, [[0., 1.]], k=n_clusters)
+
+    # print warning since n_init is ignored if init_array is given
+    k_means = KMeans(init=init_array, n_init=10)
+    assert_warns(UserWarning, k_means.fit, X, k=n_clusters)
+
+
+def test_k_means_invalid_init():
+    np.random.seed(1)
+    k_means = KMeans(init="invalid", n_init=1)
+    assert_raises(ValueError, k_means.fit, X, k=n_clusters)
+
+
+def test_k_means_copyx():
+    """Check if copy_x=False returns nearly equal X after de-centering."""
+    np.random.seed(1)
+    my_X = X.copy()
+    k_means = KMeans(copy_x=False).fit(my_X, k=n_clusters)
+    centers = k_means.cluster_centers_
+    assert_equal(centers.shape, (n_clusters, 2))
+
+    labels = k_means.labels_
+    assert_equal(np.unique(labels).size, 3)
+    assert_equal(np.unique(labels[:20]).size, 1)
+    assert_equal(np.unique(labels[20:40]).size, 1)
+    assert_equal(np.unique(labels[40:]).size, 1)
+
+    # check if my_X is centered
+    assert_array_almost_equal(my_X, X)
+
+
+def test_k_means_singleton():
+    """Check k_means with bad initialization and singleton clustering."""
+    np.random.seed(1)
+    my_X = np.array([[1.1, 1.1], [0.9, 1.1], [1.1, 0.9], [0.9, 0.9]])
+    array_init = np.array([[1.0, 1.0], [5.0, 5.0]])
+    k_means = KMeans(init=array_init).fit(my_X, k=2)
+
+    # must be singleton clustering
+    assert_equal(np.unique(k_means.labels_).size, 1)
 
 
 def test_mbk_means_fixed_array_init():
