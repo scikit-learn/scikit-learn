@@ -48,7 +48,7 @@ cdef class BallTree:
     """
     Ball Tree for fast nearest-neighbor searches :
 
-    BallTree(M, leafsize=20)
+    BallTree(M, leaf_size=20)
 
     Parameters
     ----------
@@ -59,13 +59,11 @@ cdef class BallTree:
             necessarily contiguous) then data will not be
             copied. Otherwise, an internal copy will be made.
 
-    leafsize : positive integer (default = 20)
-        number of points at which to switch to brute-force. Currently not
-        implemented.
-
-    Notes
-    -----
-    brute-force search was removed. docs should be accordingly.
+    leaf_size : positive integer (default = 20)
+            Number of points at which to switch to brute-force.
+	    Changing leaf_size will not affect the returned neighbors,
+	    but can significantly impact the speed of a query.  See
+	    discussion in the NeighborsClassifier documentation.
     """
     cdef cBallTree *bt_ptr
     cdef vector[Point_p] *ptdata
@@ -73,7 +71,7 @@ cdef class BallTree:
     cdef size_t num_dims
     cdef public object data
 
-    def __cinit__(self, arr, size_t leafsize=20):
+    def __cinit__(self, arr, size_t leaf_size=20):
         # copy points into ptdata
         arr = np.atleast_2d(arr).astype(np.double)
         assert arr.ndim == 2, "input points must be 2 dimensional (points x dimensions)"
@@ -81,7 +79,7 @@ cdef class BallTree:
         self.ptdata = new vector[Point_p]()
         for i in range(num_points):
             self.ptdata.push_back(make_point(arr[i, :]))
-        self.bt_ptr = new cBallTree(self.ptdata, leafsize)
+        self.bt_ptr = new cBallTree(self.ptdata, leaf_size)
         self.data = arr.copy()
 
     def __dealloc__(self):

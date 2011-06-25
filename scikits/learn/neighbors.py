@@ -18,15 +18,19 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
     Parameters
     ----------
     n_neighbors : int, optional
-        Default number of neighbors. Defaults to 5.
+       Default number of neighbors. Defaults to 5.
 
-    window_size : int, optional
-        Window size passed to BallTree
+    leaf_size : int, optional
+       Leaf size passed to BallTree.  This can affect the speed of
+       the nearest neighbors query.  The optimal value depends on the
+       nature of the problem (see Discussion below).  Defaults to 20.
 
     algorithm : {'auto', 'ball_tree', 'brute'}, optional
        Algorithm used to compute the nearest neighbors. 'ball_tree' will
        construct a BallTree while 'brute'will perform brute-force
-       search. 'auto' will guess the most appropriate based on current dataset.
+       search. 'auto' will guess the most appropriate based on current 
+       dataset.  See Discussion below for notes on choosing the optimal 
+       method.
 
     Examples
     --------
@@ -35,7 +39,7 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
     >>> from scikits.learn.neighbors import NeighborsClassifier
     >>> neigh = NeighborsClassifier(n_neighbors=1)
     >>> neigh.fit(samples, labels)
-    NeighborsClassifier(n_neighbors=1, window_size=1, algorithm='auto')
+    NeighborsClassifier(n_neighbors=1, leaf_size=20, algorithm='auto')
     >>> print neigh.predict([[0,0,0]])
     [1]
 
@@ -43,14 +47,60 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
     --------
     BallTree
 
+    Discussion
+    ----------
+    The optimal algorithm for a given dataset is a complicated choice, and
+    depends on a number of factors:
+     - number of samples N (n_samples).
+        'brute' query time grows as O[N], while
+        'ball_tree' query time grows as O[log(N)]
+     - dimensionality D (n_features)
+        Intrinsic dimensionality refers to the dimension of a manifold which
+        is linearly or nonlinearly embedded within the parameter space
+        'brute' query time grows as O[D], and is unaffected by the value of d.
+        'ball_tree' query time may grow faster or slower than this, depending
+        on the structure of the data.
+     - data structure: intrinsic dimensionality of the data and/or sparsity
+        of the data. Intrinsic dimensionality refers to the dimension d<=D
+        of a manifold on which the data lies, which can be linearly or
+        nonlinearly embedded in the parameter space. Sparsity refers to the
+        degree to which the data fills the parameter space.
+        'brute' query time is unchanged by data structure.
+        'ball_tree' query time is greatly influenced by data structure.
+        In general, the more sparse the data is, and the smaller the intrinsic
+        dimension d, the faster the ball_tree algorithm will be compared to
+        a brute-force search.  For data which densely fills the parameter
+        space, brute-force is generally a better choice.
+     - number of query points.
+        The ball_tree algorithm requires a one-time building phase.  For very
+        few queries, the time to build the tree may overwhelm any gain during
+        the query time.
+     - number of neighbors k requested for a query point.
+        'brute' query time is unaffected by the value of k
+        'ball_tree' query time is slower for k>1, mainly due to the internal
+        queueing and sorting that takes place during the query.
+     - leaf_size of the ball_tree
+        The leaf_size parameter controls the point at which the ball_tree
+        algorithm switches from a tree-based query to a brute-force search.
+        As the number of points 'n' in a node becomes smaller, the difference
+        between a brute-force query time O[n] and a ball-tree query time
+        O[log(n)] becomes less significant.  At some point, depending on all
+        the above-mentioned factors, brute-force becomes more efficient.
+        The parameter leaf_size sets this threshold.
+
+    Currently, the algorithm='auto' option chooses between 'brute' and
+    'ball_tree' using an unsophisticated rubric.  In practice, it is
+    suggested that the user experiment with different choices of 
+    algorithm and leaf_size to determine the optimal configuration.
+
     References
     ----------
     http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
-    def __init__(self, n_neighbors=5, algorithm='auto', window_size=1):
+    def __init__(self, n_neighbors=5, algorithm='auto', leaf_size=20):
         self.n_neighbors = n_neighbors
-        self.window_size = window_size
+        self.leaf_size = leaf_size
         self.algorithm = algorithm
 
     def fit(self, X, y, **params):
@@ -75,7 +125,7 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
 
         if self.algorithm == 'ball_tree' or \
            (self.algorithm == 'auto' and X.shape[1] < 20):
-            self.ball_tree = BallTree(X, self.window_size)
+            self.ball_tree = BallTree(X, self.leaf_size)
         else:
             self.ball_tree = None
             self._fit_X = X
@@ -118,7 +168,7 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
         >>> from scikits.learn.neighbors import NeighborsClassifier
         >>> neigh = NeighborsClassifier(n_neighbors=1)
         >>> neigh.fit(samples, labels)
-        NeighborsClassifier(n_neighbors=1, window_size=1, algorithm='auto')
+        NeighborsClassifier(n_neighbors=1, leaf_size=20, algorithm='auto')
         >>> print neigh.kneighbors([1., 1., 1.]) # doctest: +ELLIPSIS
         (array([[ 0.5]]), array([[2]]...))
 
@@ -193,19 +243,21 @@ class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
     Parameters
     ----------
     n_neighbors : int, optional
-        Default number of neighbors. Defaults to 5.
+       Default number of neighbors. Defaults to 5.
 
-    window_size : int, optional
-        Window size passed to BallTree
+    leaf_size : int, optional
+       Leaf size passed to BallTree.  This can affect the speed of
+       the nearest neighbors query.  The optimal value depends on the
+       nature of the problem.  Defaults to 20.
 
     mode : {'mean', 'barycenter'}, optional
-        Weights to apply to labels.
+       Weights to apply to labels.
 
     algorithm : {'auto', 'ball_tree', 'brute'}, optional
-        Algorithm used to compute the nearest neighbors. 'ball_tree' will
-        construct a BallTree, while 'brute' will perform brute-force
-        search. 'auto' will guess the most appropriate based on current
-        dataset.
+       Algorithm used to compute the nearest neighbors. 'ball_tree' will
+       construct a BallTree, while 'brute' will perform brute-force
+       search. 'auto' will guess the most appropriate based on current
+       dataset.
 
     Examples
     --------
@@ -214,20 +266,22 @@ class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
     >>> from scikits.learn.neighbors import NeighborsRegressor
     >>> neigh = NeighborsRegressor(n_neighbors=2)
     >>> neigh.fit(X, y)
-    NeighborsRegressor(n_neighbors=2, window_size=1, mode='mean',
+    NeighborsRegressor(n_neighbors=2, leaf_size=20, mode='mean',
               algorithm='auto')
     >>> print neigh.predict([[1.5]])
     [ 0.5]
 
     Notes
     -----
+    See Discussion in NeighborsClassifier docstring regarding the optimal
+    choice of algorithm and leaf_size.
     http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
     def __init__(self, n_neighbors=5, mode='mean', algorithm='auto',
-                 window_size=1):
+                 leaf_size=20):
         self.n_neighbors = n_neighbors
-        self.window_size = window_size
+        self.leaf_size = leaf_size
         self.mode = mode
         self.algorithm = algorithm
 
