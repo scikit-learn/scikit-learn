@@ -42,15 +42,12 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto'):
     """
     Solve the ridge equation by the method of normal equations.
 
-    This is a low-leve routine, assumes X, y are centered and given as
-    np.arrays or sparse matrices.
-
     Parameters
     ----------
-    X : array-like or sparse matrix, shape [n_samples,n_features]
+    X : {array-like, sparse matrix}, shape = [n_samples,n_features]
         Training data
 
-    y : array-like, shape [n_samples]
+    y : array-like, shape = [n_samples]
         Target values
 
     sample_weight : float or numpy array of shape [n_samples]
@@ -62,6 +59,10 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto'):
         will use the a conjugate gradient solver as found in
         scipy.sparse.linalg.cg while 'auto' will chose the most
         appropiate depending on the matrix X.
+
+    Notes
+    -----
+    This function won't compute the intercept.
     """
 
     n_samples, n_features = X.shape
@@ -142,10 +143,10 @@ class Ridge(LinearModel):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape [n_samples,n_features]
+        X : {array-like, sparse matrix}, shape = [n_samples,n_features]
             Training data
 
-        y : array-like, shape [n_samples]
+        y : array-like, shape = [n_samples]
             Target values
 
         sample_weight : float or numpy array of shape [n_samples]
@@ -204,10 +205,10 @@ class RidgeClassifier(Ridge):
 
         Parameters
         ----------
-        X : ndarray or sparse matrix, shape [n_samples,n_features]
+        X : {array-like, sparse matrix}, shape = [n_samples,n_features]
             Training data
 
-        y : numpy array of shape [n_samples]
+        y : array-like, shape = [n_samples]
             Target values
 
         solver : {'auto', 'dense_cholesky', 'sparse_cg'}
@@ -332,13 +333,13 @@ class _RidgeGCV(LinearModel):
 
         Parameters
         ----------
-        X : numpy array of shape [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             Training data
 
-        y : numpy array of shape [n_samples] or [n_samples, n_responses]
+        y : array-like, shape = [n_samples] or [n_samples, n_responses]
             Target values
 
-        sample_weight : float or numpy array of shape [n_samples]
+        sample_weight : float or array-like of shape [n_samples]
             Sample weight
 
         Returns
@@ -433,13 +434,13 @@ class RidgeCV(LinearModel):
 
         Parameters
         ----------
-        X : numpy array of shape [n_samples, n_features]
+        X : array-like, shape = [n_samples, n_features]
             Training data
 
-        y : numpy array of shape [n_samples] or [n_samples, n_responses]
+        y : array-like, shape = [n_samples] or [n_samples, n_responses]
             Target values
 
-        sample_weight : float or numpy array of shape [n_samples]
+        sample_weight : float or array-like of shape [n_samples]
             Sample weight
 
         cv : cross-validation generator, optional
