@@ -111,22 +111,21 @@ def locally_linear_embedding(
         maximum number of iterations for the lobpcg solver.
 
     method : string ['standard' | 'hessian' | 'modified']
-        standard : use the standard locally linear embedding algorithm.
-                   see reference [1]
-        hessian  : use the hessian eigenmap method.  This method requires
-                   n_neighbors > out_dim * (1 + (out_dim + 1) / 2.
-                   see reference [2]
-        modified : use the modified locally linear embedding algorithm.
-                   see reference [3]
-        ltsa     : use local tangent space alignment algorithm
-                   see reference [4]
+        'standard' : use the standard locally linear embedding algorithm.
+                     see reference [1]
+        'hessian'  : use the hessian eigenmap method.  This method requires
+                     n_neighbors > out_dim * (1 + (out_dim + 1) / 2.
+                     see reference [2]
+        'modified' : use the modified locally linear embedding algorithm.
+                     see reference [3]
+        'ltsa'     : use local tangent space alignment algorithm
+                     see reference [4]
 
-    hessian_tol : tolerance used for hessian eigenmapping method
-                  only referenced if method == 'hessian'
+    H_tol : tolerance used for hessian eigenmapping method
+            only referenced if method == 'hessian'
 
-    modified_tol : tolerance used for modified LLE method
-                  only referenced if method == 'modified'
-
+    M_tol : tolerance used for modified LLE method
+            only referenced if method == 'modified'
 
     Returns
     -------
@@ -193,7 +192,7 @@ def locally_linear_embedding(
 
         if n_neighbors <= out_dim + dp:
             raise ValueError("for method='hessian', n_neighbors must be "
-                             "greater than out_dim*[1+(out_dim+1)/2]")
+                             "greater than [out_dim * (out_dim + 3) / 2]")
 
         neighbors = balltree.query(X, k=n_neighbors + 1, return_distance=False)
         neighbors = neighbors[:, 1:]
