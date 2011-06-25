@@ -59,7 +59,7 @@ Main features
    inputs and  outputs: Python functions. Joblib can save their
    computation to disk and rerun it only if necessary::
 
-      >>> from joblib import Memory
+      >>> from scikits.learn.externals.joblib import Memory
       >>> mem = Memory(cachedir='/tmp/joblib')
       >>> import numpy as np
       >>> a = np.vander(np.arange(3))
@@ -78,7 +78,7 @@ Main features
 2) **Embarrassingly parallel helper:** to make is easy to write readable 
    parallel code and debug it quickly:
 
-      >>> from joblib import Parallel, delayed
+      >>> from scikits.learn.externals.joblib import Parallel, delayed
       >>> from math import sqrt
       >>> Parallel(n_jobs=1)(delayed(sqrt)(i**2) for i in range(10))
       [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]
@@ -96,12 +96,12 @@ Main features
 
 """
 
-__version__ = '0.5.2'
+__version__ = '0.5.3'
 
 
 from .memory import Memory
 from .logger import PrintTime, Logger
 from .hashing import hash
 from .numpy_pickle import dump, load
-from .parallel import Parallel, delayed
+from .parallel import Parallel, delayed, cpu_count
 
