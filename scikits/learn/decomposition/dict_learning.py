@@ -8,6 +8,7 @@ import numpy as np
 
 from .sparse_pca import dict_learning, sparse_pca, _update_V_parallel
 from ..base import BaseEstimator, TransformerMixin
+from ..linear_model import orthogonal_mp
 
 
 class DictionaryLearning(BaseEstimator, TransformerMixin):
@@ -19,7 +20,7 @@ class DictionaryLearning(BaseEstimator, TransformerMixin):
     Solves the optimization problem:
     (U^*,V^*) = argmin 0.5 || Y - U V ||_2^2 + alpha * || U ||_1
                  (U,V)
-                with || V_k ||_2 = 1 for all  0<= k < n_atoms
+                with || V_k ||_2 = 1 for all  0 <= k < n_atoms
 
     Parameters
     ----------
@@ -130,6 +131,7 @@ class DictionaryLearning(BaseEstimator, TransformerMixin):
         X_new array, shape (n_samples, n_components)
             Transformed data
         """
+        # XXX : kwargs is not documented
 
         # XXX: parameters should be made explicit so we can have defaults
         if method == 'omp':
