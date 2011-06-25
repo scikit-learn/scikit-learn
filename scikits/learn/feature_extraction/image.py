@@ -6,13 +6,11 @@ Utilities to extract features from images.
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD
 
-
-from itertools import product
-
 import numpy as np
 from scipy import sparse
 from ..utils.fixes import in1d
 from ..utils import check_random_state
+from ..utils.fixes import product
 from ..base import BaseEstimator
 
 
@@ -284,7 +282,7 @@ def reconstruct_from_patches_2d(patches, image_size):
 
     Returns
     -------
-    image: array with shape    
+    image: array with shape
 
 
     """
