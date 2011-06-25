@@ -29,7 +29,7 @@ def euclidean_distances(X, Y, Y_norm_squared=None, squared=False):
 
     Returns
     -------
-    distances: array, shape = [n_samples_1, n_samples_2]
+    distances: {array, sparse matrix}, shape = [n_samples_1, n_samples_2]
 
     Examples
     --------

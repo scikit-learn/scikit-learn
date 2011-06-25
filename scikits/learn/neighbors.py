@@ -403,5 +403,5 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', reg=1e-3):
             'Unsupported mode, must be one of "connectivity", '
             '"distance" or "barycenter" but got %s instead' % mode)
 
-    return csr_matrix((A_data.flatten(), A_ind.flatten(), A_indptr),
+    return csr_matrix((A_data.ravel(), A_ind.ravel(), A_indptr),
                       shape=(n_samples, n_samples))
