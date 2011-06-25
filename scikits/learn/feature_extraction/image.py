@@ -203,23 +203,18 @@ def extract_patches_2d(image, patch_size, max_patches=None, seed=None):
            [ 4,  5,  6,  7],
            [ 8,  9, 10, 11],
            [12, 13, 14, 15]])
-
-    >>> patches = extract_patches_2d(one_image, (4, 4), (2, 2))
+    >>> patches = extract_patches_2d(one_image, (2, 2))
     >>> patches.shape
     (9, 2, 2)
-
     >>> patches[0]
     array([[0, 1],
            [4, 5]])
-
     >>> patches[1]
     array([[1, 2],
            [5, 6]])
-
     >>> patches[8]
     array([[10, 11],
            [14, 15]])
-
     """
     i_h, i_w = image.shape[:2]
     p_h, p_w = patch_size
@@ -243,19 +238,16 @@ def extract_patches_2d(image, patch_size, max_patches=None, seed=None):
             raise ValueError("Invalid value for max_patches!")
 
         rng = check_random_state(seed)
-        patches = np.zeros((n_patches, p_h, p_w, n_colors), dtype=image.dtype)
+        patches = np.empty((n_patches, p_h, p_w, n_colors), dtype=image.dtype)
         i_s = rng.randint(n_h, size=n_patches)
         j_s = rng.randint(n_w, size=n_patches)
-        for offset, (i, j) in enumerate(zip(i_s, j_s)):
-            patches[offset] = image[i:i + p_h, j:j + p_w, :]
+        for p, i, j in zip(patches, i_s, j_s):
+            p[:] = image[i:i + p_h, j:j + p_w, :]
     else:
         n_patches = all_patches
-        patches = np.zeros((n_patches, p_h, p_w, n_colors), dtype=image.dtype)
-        offset = 0
-        for i in xrange(n_h):
-            for j in xrange(n_w):
-                patches[offset] = image[i:i + p_h, j:j + p_w, :]
-                offset += 1
+        patches = np.empty((n_patches, p_h, p_w, n_colors), dtype=image.dtype)
+        for p, (i, j) in zip(patches, product(xrange(n_h), xrange(n_w))):
+            p[:] = image[i:i + p_h, j:j + p_w, :]
 
     # remove the color dimension if useless
     if patches.shape[-1] == 1:
@@ -292,8 +284,9 @@ def reconstruct_from_patches_2d(patches, image_size):
     # compute the dimensions of the patches array
     n_h = i_h - p_h + 1
     n_w = i_w - p_w + 1
-    for offset, (i, j) in enumerate(product(xrange(n_h), xrange(n_w))):
-        img[i:i + p_h, j:j + p_w] += patches[offset]
+    for p, (i, j) in zip(patches, product(xrange(n_h), xrange(n_w))):
+        img[i:i + p_h, j:j + p_w] += p
+
     for i in xrange(i_h):
         for j in xrange(i_w):
             # divide by the amount of overlap
@@ -319,19 +312,29 @@ class PatchExtractor(BaseEstimator):
     seed: int or RandomState
         Seed for the random number generator used in case max_patches is used.
     """
-
     def __init__(self, patch_size, max_patches=None, seed=None):
         self.patch_size = patch_size
         self.max_patches = max_patches
         self.seed = seed
 
     def fit(self, X, y=None):
+        """
+
+        XXX : docstring is missing
+
+        """
         return self
 
     def transform(self, X):
+        """
+
+        XXX : docstring is missing
+
+        """
         patches = np.empty((0,) + self.patch_size)
         for image in X:
             partial_patches = extract_patches_2d(image, self.patch_size,
                                                  self.max_patches, self.seed)
+            # XXX : would be better to avoid a realloc for each image
             patches = np.r_[patches, partial_patches]
         return patches
