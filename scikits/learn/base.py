@@ -257,11 +257,10 @@ class TransformerMixin(object):
     """
 
     def fit_transform(self, X, y=None, **fit_params):
-        """Fit model to data and subsequently transform the data
+        """Fit to data, then transform it
 
-        Sometimes, fit and transform can be implemented more efficiently
-        jointly than separately. In those cases, the estimator will typically
-        override the method.
+        Fits transformer to X and y with optional parameters fit_params
+        and returns a transformed version of X.
 
         Parameters
         ----------
@@ -273,7 +272,14 @@ class TransformerMixin(object):
 
         Returns
         -------
-        self : returns an instance of self.
+        X_new : numpy array of shape [n_samples, n_features_new]
+            Transformed array.
+
+        Note
+        -----
+        This method just calls fit and transform consecutively, i.e., it is not
+        an optimized implementation of fit_transform, unlike other transformers
+        such as PCA.
         """
         if y is None:
             # fit method of arity 1 (unsupervised transformation)

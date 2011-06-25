@@ -150,6 +150,7 @@ Naive Bayes
 
    naive_bayes.GaussianNB
    naive_bayes.MultinomialNB
+   naive_bayes.BernoulliNB
 
 
 Nearest Neighbors
@@ -437,6 +438,7 @@ Cross Validation
    cross_val.LeaveOneLabelOut
    cross_val.LeavePLabelOut
    cross_val.Bootstrap
+   cross_val.ShuffleSplit
 
 
 Grid Search

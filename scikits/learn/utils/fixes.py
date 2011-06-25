@@ -128,3 +128,17 @@ def arpack_eigsh(A, **kwargs):
         return arpack.eigsh(A, **kwargs)
     else:
         return arpack.eigen_symmetric(A, **kwargs)
+
+
+def savemat(file_name, mdict, oned_as="column", **kwargs):
+    """MATLAB-format output routine that is compatible with SciPy 0.7's.
+
+    0.7.2 (or .1?) added the oned_as keyword arg with 'column' as the default
+    value. It issues a warning if this is not provided, stating that "This will
+    change to 'row' in future versions."
+    """
+    import scipy.io
+    try:
+        return scipy.io.savemat(file_name, mdict, oned_as=oned_as, **kwargs)
+    except TypeError:
+        return scipy.io.savemat(file_name, mdict, **kwargs)
