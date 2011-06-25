@@ -100,7 +100,7 @@ class DictionaryLearning(BaseEstimator, TransformerMixin):
         X = np.asanyarray(X)
         if self.method == 'batch':
             U, _, E = sparse_pca(X.T, self.n_atoms, self.alpha,
-                                 tol=self.tol, max_iter=self.max_iter, 
+                                 tol=self.tol, max_iter=self.max_iter,
                                  method=self.coding_method, n_jobs=self.n_jobs,
                                  U_init=self.U_init, V_init=self.V_init,
                                  verbose=self.verbose)
