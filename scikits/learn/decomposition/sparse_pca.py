@@ -5,16 +5,14 @@
 
 import time
 import sys
-import itertools
-from math import sqrt, floor, ceil
+from math import sqrt
 
 import numpy as np
 from numpy.lib.stride_tricks import as_strided
 from scipy import linalg
 
-from ..utils.extmath import fast_svd
 from ..linear_model import Lasso, lars_path
-from ..externals.joblib import Parallel, delayed
+from ..externals.joblib import Parallel, delayed, cpu_count
 from ..base import BaseEstimator, TransformerMixin
 
 
@@ -46,17 +44,6 @@ def _gen_even_slices(n, n_packs):
             end = start + this_n
             yield slice(start, end, None)
             start = end
-
-
-def cpu_count():
-    """ Return the number of CPUs.
-    """
-    # XXX: should be in joblib
-    try:
-        import multiprocessing
-    except ImportError:
-        return 1
-    return multiprocessing.cpu_count()
 
 
 # a short preview of what will be in fabian's pull request
