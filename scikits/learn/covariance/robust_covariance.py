@@ -5,10 +5,6 @@ Here are implemented estimators that are resistant to outliers.
 
 """
 # Author: Virgile Fritsch <virgile.fritsch@inria.fr>
-#         implementing a method by Rousseeuw & Van Driessen described in
-#         (A Fast Algorithm for the Minimum Covariance Determinant Estimator,
-#         1999, American Statistical Association and the American Society
-#         for Quality, TECHNOMETRICS)
 #
 # License: BSD Style.
 import warnings
@@ -18,6 +14,13 @@ from scipy.stats import chi2
 from scikits.learn.covariance import empirical_covariance, EmpiricalCovariance
 from ..utils.extmath import fast_logdet as exact_logdet
 
+###############################################################################
+### Minimum Covariance Determinant
+#   Implementing of an algorithm by Rousseeuw & Van Driessen described in
+#   (A Fast Algorithm for the Minimum Covariance Determinant Estimator,
+#   1999, American Statistical Association and the American Society
+#   for Quality, TECHNOMETRICS)
+###############################################################################
 
 def c_step(X, h, remaining_iterations=30, initial_estimates=None,
            verbose=False):
@@ -63,23 +66,21 @@ def c_step(X, h, remaining_iterations=30, initial_estimates=None,
     # Initialisation
     if initial_estimates is None:
         # compute initial robust estimates from a random subset
-        support_aux = np.zeros(n_samples).astype(bool)
-        support_aux[np.random.permutation(n_samples)[:h]] = True
-        support = support_aux
+        support = np.zeros(n_samples).astype(bool)
+        support[np.random.permutation(n_samples)[:h]] = True
         T = X[support].mean(0)
         S = empirical_covariance(X[support])
     else:
         # get initial robust estimates from the function parameters
         T = initial_estimates[0]
         S = initial_estimates[1]
-        # run a special iteration for that case (to get a initial support)
+        # run a special iteration for that case (to get an initial support)
         inv_S = linalg.pinv(S)
         X_centered = X - T
         dist = (np.dot(X_centered, inv_S) * X_centered).sum(1)
         # compute new estimates
-        support_aux = np.zeros(n_samples).astype(bool)
-        support_aux[np.argsort(dist)[:h]] = True
-        support = support_aux
+        support = np.zeros(n_samples).astype(bool)
+        support[np.argsort(dist)[:h]] = True
         T = X[support].mean(0)
         S = empirical_covariance(X[support])
         detS = exact_logdet(S)
@@ -98,9 +99,8 @@ def c_step(X, h, remaining_iterations=30, initial_estimates=None,
         previous_detS = detS
         previous_support = support
         # compute new estimates
-        support_aux = np.zeros(n_samples).astype(bool)
-        support_aux[np.argsort(dist)[:h]] = True
-        support = support_aux
+        support = np.zeros(n_samples).astype(bool)
+        support[np.argsort(dist)[:h]] = True
         T = X[support].mean(0)
         S = empirical_covariance(X[support])
         detS = np.log(linalg.det(S))
@@ -379,9 +379,8 @@ def fast_mcd(X, correction="empirical", reweight="rousseeuw"):
         mask = dist < chi2(n_features).isf(0.025)
         T_reweighted = X[mask].mean(0)
         S_reweighted = empirical_covariance(X[mask])
-        support_aux = np.zeros(n_samples).astype(bool)
-        support_aux[mask] = True
-        support = support_aux
+        support = np.zeros(n_samples).astype(bool)
+        support[mask] = True
     else:
         T_reweighted = T
         S_reweighted = S_corrected

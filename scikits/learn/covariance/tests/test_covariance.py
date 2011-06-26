@@ -27,6 +27,16 @@ def test_covariance():
     assert_almost_equal(cov.error_norm(empirical_covariance(X)), 0)
     assert_almost_equal(
         cov.error_norm(empirical_covariance(X), norm='spectral'), 0)
+    assert_almost_equal(
+        cov.error_norm(empirical_covariance(X), norm='frobenius'), 0)
+    assert_almost_equal(
+        cov.error_norm(empirical_covariance(X), scaling=False), 0)
+    assert_almost_equal(
+        cov.error_norm(empirical_covariance(X), squared=False), 0)
+    # Mahalanobis distances computation test
+    mahal_dist = cov.mahalanobis(X)
+    assert(np.amax(mahal_dist) < 250)
+    assert(np.amin(mahal_dist) > 50)
 
     # test with n_features = 1
     X_1d = X[:,0]
@@ -257,14 +267,15 @@ def launch_mcd_on_dataset(n_samples, n_features, n_outliers,
     error_location = np.sum((pure_data.mean(0) - T)**2)
     assert(error_location < tol_loc)
     emp_cov = EmpiricalCovariance().fit(pure_data)
-    assert(emp_cov.error(S) < tol_cov)
+    #print emp_cov.error_norm(S)
+    assert(emp_cov.error_norm(S) < tol_cov)
     assert(np.sum(H) > tol_support)
     # check improvement
     if (n_outliers/float(n_samples) > 0.1) and (n_features > 1):
         error_bad_location = np.sum((data.mean(0) - T)**2)
         assert(error_bad_location > error_location)
         bad_emp_cov = EmpiricalCovariance().fit(data)
-        assert(emp_cov.error(S) < bad_emp_cov.error(S))
+        assert(emp_cov.error_norm(S) < bad_emp_cov.error_norm(S))
     
     # compute MCD by fitting an object
     mcd_fit = MCD().fit(data)
@@ -274,11 +285,11 @@ def launch_mcd_on_dataset(n_samples, n_features, n_outliers,
     # compare with the estimates learnt from the inliers
     error_location = np.sum((pure_data.mean(0) - T)**2)
     assert(error_location < tol_loc)
-    assert(emp_cov.error(S) < tol_cov)
+    assert(emp_cov.error_norm(S) < tol_cov)
     assert(np.sum(H) > tol_support)
     # check improvement
     if (n_outliers/float(n_samples) > 0.1) and (n_features > 1):
         error_bad_location = np.sum((data.mean(0) - T)**2)
         assert(error_bad_location > error_location)
         bad_emp_cov = EmpiricalCovariance().fit(data)
-        assert(emp_cov.error(S) < bad_emp_cov.error(S))
+        assert(emp_cov.error_norm(S) < bad_emp_cov.error_norm(S))
