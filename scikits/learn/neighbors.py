@@ -383,16 +383,16 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', reg=1e-3):
     A_indptr = np.arange(0, n_nonzero + 1, n_neighbors)
 
     # construct CSR matrix representation of the k-NN graph
-    if mode is 'connectivity':
+    if mode == 'connectivity':
         A_data = np.ones((n_samples, n_neighbors))
         A_ind = ball_tree.query(
             X, k=n_neighbors, return_distance=False)
 
-    elif mode is 'distance':
+    elif mode == 'distance':
         data, ind = ball_tree.query(X, k=n_neighbors + 1)
         A_data, A_ind = data[:, 1:], ind[:, 1:]
 
-    elif mode is 'barycenter':
+    elif mode == 'barycenter':
         ind = ball_tree.query(
             X, k=n_neighbors + 1, return_distance=False)
         A_ind = ind[:, 1:]
