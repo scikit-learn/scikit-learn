@@ -128,11 +128,13 @@ def test_reconstruct_patches_perfect_color():
     lena_reconstructed = reconstruct_from_patches_2d(patches, lena.shape)
     np.testing.assert_array_equal(lena, lena_reconstructed)
 
+
 def test_patch_extractor_max_patches():
     lenas = _make_images()
     extr = PatchExtractor(patch_size=(8, 8), max_patches=100, seed=0)
     patches = extr.transform(lenas)
     assert patches.shape == (len(lenas) * 100, 8, 8)
+
 
 def test_patch_extractor_all_patches():
     lenas = _make_images()
