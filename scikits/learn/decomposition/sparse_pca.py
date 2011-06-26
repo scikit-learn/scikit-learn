@@ -5,25 +5,16 @@
 
 import time
 import sys
-<<<<<<< HEAD
 import itertools
-from math import sqrt, floor, ceil
-=======
+
 from math import sqrt
->>>>>>> cad248cee00534c7bf85bcbf5b6de691de4e8d74
 
 import numpy as np
 from numpy.lib.stride_tricks import as_strided
 from scipy import linalg
 
-<<<<<<< HEAD
-from ..utils.extmath import fast_svd
-from ..linear_model import Lasso, lars_path
-from ..externals.joblib import Parallel, delayed
-=======
 from ..linear_model import Lasso, lars_path
 from ..externals.joblib import Parallel, delayed, cpu_count
->>>>>>> cad248cee00534c7bf85bcbf5b6de691de4e8d74
 from ..base import BaseEstimator, TransformerMixin
 
 
@@ -57,20 +48,6 @@ def _gen_even_slices(n, n_packs):
             start = end
 
 
-<<<<<<< HEAD
-def cpu_count():
-    """ Return the number of CPUs.
-    """
-    # XXX: should be in joblib
-    try:
-        import multiprocessing
-    except ImportError:
-        return 1
-    return multiprocessing.cpu_count()
-
-
-=======
->>>>>>> cad248cee00534c7bf85bcbf5b6de691de4e8d74
 # a short preview of what will be in fabian's pull request
 def _ridge_regression(X, y, alpha):
     n_samples, n_features = np.shape(X)
