@@ -127,7 +127,7 @@ applications including denoising, compression and structured prediction
 Sparse Principal Components Analysis (SparsePCA)
 ------------------------------------------------
 :class:`SparsePCA` is a variant of the PCA optimization problem, with the goal
-on extracting the set of sparse components that best reconstruct the data:
+of extracting the set of sparse components that best reconstruct the data:
 
 .. math::
    (U^*, V^*) = \underset{U, V}{\operatorname{arg\,min\,}} & \frac{1}{2}
@@ -135,10 +135,10 @@ on extracting the set of sparse components that best reconstruct the data:
                 \text{subject to\,} & ||U_k||_2 = 1 \text{ for all }
                 0 \leq k < n_{atoms}
 
-An inconvenient of principal component analysis (:class:`PCA`) is that the
-components extracter by this method have dense expressions, i. e. they have
+Principal component analysis (:class:`PCA`) has the disadvantage that the
+components extracted by this method have dense expressions, i. e. they have
 many non-zero coefficients when expressed as linear combinations of the original
-variables. This makes interpretation difficult in high dimensional settings.
+variables. This makes interpretation difficult in high-dimensional settings.
 Also, in many cases, the real underlying components can be more naturally
 imagined as sparse vectors. For example in face recognition, components should
 map to parts of faces.
