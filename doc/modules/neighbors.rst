@@ -10,7 +10,7 @@ using a majority vote among the k neighbors.
 
 Despite its simplicity, nearest neighbors has been successful in a
 large number of classification problems, including handwritten digits
-or satellite image scenes. It is ofter successful in situation where
+or satellite image scenes. It is often successful in situation where
 the decision boundary is very irregular.
 
 Classification

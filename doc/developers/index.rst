@@ -99,7 +99,7 @@ request. This will send an email to the commiters, but might also send an
 email to the mailing list in order to get more visibility.
 
 It is recommented to check that your contribution complies with the following
-rules before submitting a pull request::
+rules before submitting a pull request:
 
     * Follow the `coding-guidelines`_ (see below).
 
@@ -127,7 +127,7 @@ rules before submitting a pull request::
 
       To build the documentation see `documentation`_ below.
 
-You can also check for common programming errors with the following tools::
+You can also check for common programming errors with the following tools:
 
     * Code with a good unittest coverage (at least 80%), check with::
 

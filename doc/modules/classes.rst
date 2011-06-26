@@ -440,6 +440,7 @@ Cross Validation
    cross_val.LeaveOneLabelOut
    cross_val.LeavePLabelOut
    cross_val.Bootstrap
+   cross_val.ShuffleSplit
 
 
 Grid Search
