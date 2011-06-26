@@ -37,6 +37,7 @@ for i, comp in enumerate(model.components_):
                vmin=-span, vmax=span, cmap=pl.cm.PuOr)
     pl.xticks(())
     pl.yticks(())
+
 pl.subplots_adjust(0.01, 0.15, 0.99, 0.99, 0.04, 0.)
 cax = fig.add_axes([0.1, 0.06, 0.8, 0.04])
 pl.colorbar(cax=cax, orientation='horizontal')
