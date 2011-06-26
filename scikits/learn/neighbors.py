@@ -2,18 +2,22 @@
 
 # Author: Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #         Alexandre Gramfort <alexandre.gramfort@inria.fr>
+#         Sparseness support by Lars Buitinck <L.J.Buitinck@uva.nl>
 #
-# License: BSD, (C) INRIA
+# License: BSD, (C) INRIA, University of Amsterdam
 
 import numpy as np
+from scipy import linalg
+from scipy.sparse import csr_matrix, issparse
 
 from .base import BaseEstimator, ClassifierMixin, RegressorMixin
 from .ball_tree import BallTree
 from .metrics import euclidean_distances
+from .utils import safe_asanyarray, atleast2d_or_csr
 
 
 class NeighborsClassifier(BaseEstimator, ClassifierMixin):
-    """Classifier implementing k-Nearest Neighbor Algorithm.
+    """Classifier implementing the k-nearest neighbors (k-NN) algorithm.
 
     Parameters
     ----------
@@ -25,8 +29,9 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
 
     algorithm : {'auto', 'ball_tree', 'brute'}, optional
        Algorithm used to compute the nearest neighbors. 'ball_tree' will
-       construct a BallTree while 'brute'will perform brute-force
+       construct a BallTree while 'brute' will perform brute-force
        search. 'auto' will guess the most appropriate based on current dataset.
+       Fitting on sparse input will override the setting of this parameter.
 
     Examples
     --------
@@ -58,22 +63,25 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             Training data.
 
-        y : array-like, shape = [n_samples]
+        y : {array-like, sparse matrix}, shape = [n_samples]
             Target values, array of integer values.
 
         params : list of keyword, optional
             Overwrite keywords from __init__
         """
-        X = np.asanyarray(X)
+        X = safe_asanyarray(X)
         if y is None:
             raise ValueError("y must not be None")
         self._y = np.asanyarray(y)
         self._set_params(**params)
 
-        if self.algorithm == 'ball_tree' or \
+        if issparse(X):
+            self.ball_tree = None
+            self._fit_X = X.tocsr()
+        elif self.algorithm == 'ball_tree' or \
            (self.algorithm == 'auto' and X.shape[1] < 20):
             self.ball_tree = BallTree(X, self.window_size)
         else:
@@ -133,7 +141,7 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
 
         """
         self._set_params(**params)
-        X = np.atleast_2d(X)
+        X = atleast2d_or_csr(X)
         if self.ball_tree is None:
             dist = euclidean_distances(X, self._fit_X, squared=True)
             # XXX: should be implemented with a partial sort
@@ -163,7 +171,7 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
         labels: array
             List of class labels (one for each data sample).
         """
-        X = np.atleast_2d(X)
+        X = atleast2d_or_csr(X)
         self._set_params(**params)
 
         # get neighbors
@@ -248,7 +256,7 @@ class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
         y: array
             List of target values (one for each data sample).
         """
-        X = np.atleast_2d(np.asanyarray(X))
+        X = atleast2d_or_csr(X)
         self._set_params(**params)
 
         # compute nearest neighbors
@@ -299,7 +307,6 @@ def barycenter_weights(X, Z, reg=1e-3):
     -----
     See developers note for more information.
     """
-    from scipy import linalg
     X, Z = map(np.asanyarray, (X, Z))
     n_samples, n_neighbors = X.shape[0], Z.shape[1]
     if X.dtype.kind == 'i':
@@ -364,8 +371,6 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', reg=1e-3):
             [ 0.,  1.,  1.],
             [ 1.,  0.,  1.]])
     """
-    from scipy import sparse
-
     if isinstance(X, BallTree):
         ball_tree = X
         X = ball_tree.data
@@ -378,16 +383,16 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', reg=1e-3):
     A_indptr = np.arange(0, n_nonzero + 1, n_neighbors)
 
     # construct CSR matrix representation of the k-NN graph
-    if mode is 'connectivity':
+    if mode == 'connectivity':
         A_data = np.ones((n_samples, n_neighbors))
         A_ind = ball_tree.query(
             X, k=n_neighbors, return_distance=False)
 
-    elif mode is 'distance':
+    elif mode == 'distance':
         data, ind = ball_tree.query(X, k=n_neighbors + 1)
         A_data, A_ind = data[:, 1:], ind[:, 1:]
 
-    elif mode is 'barycenter':
+    elif mode == 'barycenter':
         ind = ball_tree.query(
             X, k=n_neighbors + 1, return_distance=False)
         A_ind = ind[:, 1:]
@@ -398,8 +403,5 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', reg=1e-3):
             'Unsupported mode, must be one of "connectivity", '
             '"distance" or "barycenter" but got %s instead' % mode)
 
-    A = sparse.csr_matrix(
-        (A_data.reshape(-1), A_ind.reshape(-1), A_indptr),
-        shape=(n_samples, n_samples))
-
-    return A
+    return csr_matrix((A_data.ravel(), A_ind.ravel(), A_indptr),
+                      shape=(n_samples, n_samples))
