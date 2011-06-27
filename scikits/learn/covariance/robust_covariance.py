@@ -22,6 +22,7 @@ from ..utils.extmath import fast_logdet as exact_logdet
 #   for Quality, TECHNOMETRICS)
 ###############################################################################
 
+
 def c_step(X, h, remaining_iterations=30, initial_estimates=None,
            verbose=False):
     """C_step procedure described in [1] aiming at computing the MCD
@@ -59,10 +60,10 @@ def c_step(X, h, remaining_iterations=30, initial_estimates=None,
     H: array-like, shape (n_samples,)
       A mask for the `h` observations whose scatter matrix has minimum
       determinant
-    
+
     """
     n_samples, n_features = X.shape
-    
+
     # Initialisation
     if initial_estimates is None:
         # compute initial robust estimates from a random subset
@@ -85,7 +86,7 @@ def c_step(X, h, remaining_iterations=30, initial_estimates=None,
         S = empirical_covariance(X[support])
         detS = exact_logdet(S)
     previous_detS = np.inf
-    
+
     # Iterative procedure for Minimum Covariance Determinant computation
     detS = exact_logdet(S)
     while (detS < previous_detS) and (remaining_iterations > 0):
@@ -273,7 +274,7 @@ def fast_mcd(X, correction="empirical", reweight="rousseeuw"):
     """
     X = np.asanyarray(X)
     if X.ndim <= 1:
-        X = X.reshape((-1,1))
+        X = X.reshape((-1, 1))
     n_samples, n_features = X.shape
 
     # minimum breakdown value
@@ -315,7 +316,8 @@ def fast_mcd(X, correction="empirical", reweight="rousseeuw"):
             high_bound = low_bound + n_samples_subsets
             current_subset = X[samples_shuffle[low_bound:high_bound]]
             best_T_sub, best_S_sub, _ = select_candidates(
-                current_subset, h_subset, n_trials, select=n_best_sub, n_iter=2)
+                current_subset, h_subset, n_trials,
+                select=n_best_sub, n_iter=2)
             subset_slice = np.arange(i * n_best_sub, (i+1) * n_best_sub)
             all_best_T[subset_slice] = best_T_sub
             all_best_S[subset_slice] = best_S_sub
@@ -375,7 +377,8 @@ def fast_mcd(X, correction="empirical", reweight="rousseeuw"):
     ## 5. Reweight estimate
     if reweight == "rousseeuw":
         X_centered = X - T
-        dist = (np.dot(X_centered, linalg.inv(S_corrected)) * X_centered).sum(1)
+        dist = (np.dot(X_centered, linalg.inv(S_corrected)) * \
+                    X_centered).sum(1)
         mask = dist < chi2(n_features).isf(0.025)
         T_reweighted = X[mask].mean(0)
         S_reweighted = empirical_covariance(X[mask])

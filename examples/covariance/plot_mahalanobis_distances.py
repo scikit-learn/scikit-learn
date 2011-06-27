@@ -56,11 +56,11 @@ n_features = 2
 
 # generate data
 gen_cov = np.eye(n_features)
-gen_cov[0,0] = 2.
+gen_cov[0, 0] = 2.
 X = np.dot(np.random.randn(n_samples, n_features), gen_cov)
 # add some outliers
 outliers_cov = np.eye(n_features)
-outliers_cov[np.arange(1,n_features),np.arange(1,n_features)] = 7.
+outliers_cov[np.arange(1, n_features), np.arange(1, n_features)] = 7.
 X[-n_outliers:] = np.dot(np.random.randn(n_outliers, n_features), outliers_cov)
 
 # fit a Minimum Covariance Determinant (MCD) robust estimator to data
@@ -76,13 +76,13 @@ fig = pl.figure()
 offset_left = fig.subplotpars.left
 offset_bottom = fig.subplotpars.bottom
 width = fig.subplotpars.right - offset_left
-subfig1 = pl.subplot(3,1,1)
-subfig2 = pl.subplot(3,1,2)
-subfig3 = pl.subplot(3,1,3)
+subfig1 = pl.subplot(3, 1, 1)
+subfig2 = pl.subplot(3, 1, 2)
+subfig3 = pl.subplot(3, 1, 3)
 
 # Show data set
-subfig1.scatter(X[:,0], X[:,1], color='black', label='inliers')
-subfig1.scatter(X[:,0][-n_outliers:], X[:,1][-n_outliers:],
+subfig1.scatter(X[:, 0], X[:, 1], color='black', label='inliers')
+subfig1.scatter(X[:, 0][-n_outliers:], X[:, 1][-n_outliers:],
            color='red', label='outliers')
 subfig1.set_xlim(subfig1.get_xlim()[0], 11.)
 subfig1.set_title("Mahalanobis distances of a contaminated data set:")
@@ -96,7 +96,7 @@ subfig2.scatter(np.arange(n_samples)[-n_outliers:],
            color='red', label='outliers')
 subfig2.set_ylabel("Mahal. dist.")
 subfig2.set_title("1. from empirical estimates")
-subfig2.axes.set_position(pos=[offset_left,0.39,width,.2])
+subfig2.axes.set_position(pos=[offset_left, 0.39, width, .2])
 
 # MCD-based Mahalanobis distances
 subfig3.scatter(np.arange(n_samples), robust_cov.mahalanobis(X),
@@ -106,6 +106,6 @@ subfig3.scatter(np.arange(n_samples)[-n_outliers:],
            color='red', label='outliers')
 subfig3.set_ylabel("Mahal. dist.")
 subfig3.set_title("2. from robust estimates (Minimum Covariance Determinant)")
-subfig3.axes.set_position(pos=[offset_left,offset_bottom,width,.2])
+subfig3.axes.set_position(pos=[offset_left, offset_bottom, width, .2])
 
 pl.show()

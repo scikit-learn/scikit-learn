@@ -16,6 +16,7 @@ from scikits.learn import datasets
 X = datasets.load_iris().data
 n_samples, n_features = X.shape
 
+
 def test_covariance():
     """Tests Covariance module on a simple dataset.
 
@@ -39,7 +40,7 @@ def test_covariance():
     assert(np.amin(mahal_dist) > 50)
 
     # test with n_features = 1
-    X_1d = X[:,0]
+    X_1d = X[:, 0]
     cov = EmpiricalCovariance()
     cov.fit(X_1d)
     assert_array_almost_equal(empirical_covariance(X_1d), cov.covariance_, 4)
@@ -48,8 +49,8 @@ def test_covariance():
         cov.error_norm(empirical_covariance(X_1d), norm='spectral'), 0)
 
     # test integer type
-    X_integer = np.asarray([[0,1],[1,0]])
-    result = np.asarray([[0.25,-0.25],[-0.25,0.25]])
+    X_integer = np.asarray([[0, 1], [1, 0]])
+    result = np.asarray([[0.25, -0.25], [-0.25, 0.25]])
     assert_array_almost_equal(empirical_covariance(X_integer), result)
 
 
@@ -62,8 +63,7 @@ def test_shrunk_covariance():
     cov.fit(X)
     assert_array_almost_equal(
         shrunk_covariance(empirical_covariance(X), shrinkage=0.5),
-        cov.covariance_, 4
-        )
+        cov.covariance_, 4)
 
     # same test with shrinkage not provided
     cov = ShrunkCovariance()
@@ -77,7 +77,7 @@ def test_shrunk_covariance():
     assert_array_almost_equal(empirical_covariance(X), cov.covariance_, 4)
 
     # test with n_features = 1
-    X_1d = X[:,0]
+    X_1d = X[:, 0]
     cov = ShrunkCovariance(shrinkage=0.3)
     cov.fit(X_1d)
     assert_array_almost_equal(empirical_covariance(X_1d), cov.covariance_, 4)
@@ -98,7 +98,8 @@ def test_ledoit_wolf():
     assert_almost_equal(lw.shrinkage_, 0.00192, 4)
     assert_almost_equal(lw.score(X, assume_centered=True), -2.89795, 4)
     # compare shrunk covariance obtained from data and from MLE estimate
-    lw_cov_from_mle, lw_shinkrage_from_mle = ledoit_wolf(X,assume_centered=True)
+    lw_cov_from_mle, lw_shinkrage_from_mle = ledoit_wolf(
+        X, assume_centered=True)
     assert_array_almost_equal(lw_cov_from_mle, lw.covariance_, 4)
     assert_almost_equal(lw_shinkrage_from_mle, lw.shrinkage_)
     # compare estimates given by LW and ShrunkCovariance
@@ -107,14 +108,14 @@ def test_ledoit_wolf():
     assert_array_almost_equal(scov.covariance_, lw.covariance_, 4)
 
     # test with n_features = 1
-    X_1d = X[:,0]
+    X_1d = X[:, 0]
     lw = LedoitWolf()
     lw.fit(X_1d, assume_centered=True)
     lw_cov_from_mle, lw_shinkrage_from_mle = ledoit_wolf(X_1d,
                                                          assume_centered=True)
     assert_array_almost_equal(lw_cov_from_mle, lw.covariance_, 4)
     assert_almost_equal(lw_shinkrage_from_mle, lw.shrinkage_)
-    assert_array_almost_equal((X_1d**2).sum()/n_samples, lw.covariance_, 4)
+    assert_array_almost_equal((X_1d ** 2).sum() / n_samples, lw.covariance_, 4)
 
     # test shrinkage coeff on a simple data set (without saving precision)
     lw = LedoitWolf(store_precision=False)
@@ -138,7 +139,7 @@ def test_ledoit_wolf():
     assert_array_almost_equal(scov.covariance_, lw.covariance_, 4)
 
     # test with n_features = 1
-    X_1d = X[:,0]
+    X_1d = X[:, 0]
     lw = LedoitWolf()
     lw.fit(X_1d)
     lw_cov_from_mle, lw_shinkrage_from_mle = ledoit_wolf(X_1d)
@@ -172,13 +173,13 @@ def test_oas():
     assert_array_almost_equal(scov.covariance_, oa.covariance_, 4)
 
     # test with n_features = 1
-    X_1d = X[:,0]
+    X_1d = X[:, 0]
     oa = OAS()
     oa.fit(X_1d, assume_centered=True)
     oa_cov_from_mle, oa_shinkrage_from_mle = oas(X_1d, assume_centered=True)
     assert_array_almost_equal(oa_cov_from_mle, oa.covariance_, 4)
     assert_almost_equal(oa_shinkrage_from_mle, oa.shrinkage_)
-    assert_array_almost_equal((X_1d**2).sum()/n_samples, oa.covariance_, 4)
+    assert_array_almost_equal((X_1d ** 2).sum() / n_samples, oa.covariance_, 4)
 
     # test shrinkage coeff on a simple data set (without saving precision)
     oa = OAS(store_precision=False)
@@ -202,7 +203,7 @@ def test_oas():
     assert_array_almost_equal(scov.covariance_, oa.covariance_, 4)
 
     # test with n_features = 1
-    X_1d = X[:,0]
+    X_1d = X[:, 0]
     oa = OAS()
     oa.fit(X_1d)
     oa_cov_from_mle, oa_shinkrage_from_mle = oas(X_1d)
@@ -223,7 +224,8 @@ def test_mcd():
     """
     yield generator_mcd, "empirical"
     yield generator_mcd, "theoretical"
-    
+
+
 def generator_mcd(correction):
     """Tests the fastMCD algorithm implementation with a given correction type
 
@@ -255,7 +257,7 @@ def launch_mcd_on_dataset(n_samples, n_features, n_outliers,
     # add some outliers
     outliers_index = np.random.permutation(n_samples)[:n_outliers]
     outliers_offset = 10. * \
-        (np.random.randint(2, size=(n_outliers,n_features)) - 0.5)
+        (np.random.randint(2, size=(n_outliers, n_features)) - 0.5)
     data[outliers_index] += outliers_offset
     inliers_mask = np.ones(n_samples).astype(bool)
     inliers_mask[outliers_index] = False
@@ -264,15 +266,15 @@ def launch_mcd_on_dataset(n_samples, n_features, n_outliers,
     T, S, H = fast_mcd(data, correction=correction)
     # compare with the estimates learnt from the inliers
     pure_data = data[inliers_mask]
-    error_location = np.sum((pure_data.mean(0) - T)**2)
+    error_location = np.sum((pure_data.mean(0) - T) ** 2)
     assert(error_location < tol_loc)
     emp_cov = EmpiricalCovariance().fit(pure_data)
     #print emp_cov.error_norm(S)
     assert(emp_cov.error_norm(S) < tol_cov)
     assert(np.sum(H) > tol_support)
     # check improvement
-    if (n_outliers/float(n_samples) > 0.1) and (n_features > 1):
-        error_bad_location = np.sum((data.mean(0) - T)**2)
+    if (n_outliers / float(n_samples) > 0.1) and (n_features > 1):
+        error_bad_location = np.sum((data.mean(0) - T) ** 2)
         assert(error_bad_location > error_location)
         bad_emp_cov = EmpiricalCovariance().fit(data)
         assert(emp_cov.error_norm(S) < bad_emp_cov.error_norm(S))
@@ -283,13 +285,13 @@ def launch_mcd_on_dataset(n_samples, n_features, n_outliers,
     S = mcd_fit.covariance_
     H = mcd_fit.support_
     # compare with the estimates learnt from the inliers
-    error_location = np.sum((pure_data.mean(0) - T)**2)
+    error_location = np.sum((pure_data.mean(0) - T) ** 2)
     assert(error_location < tol_loc)
     assert(emp_cov.error_norm(S) < tol_cov)
     assert(np.sum(H) > tol_support)
     # check improvement
-    if (n_outliers/float(n_samples) > 0.1) and (n_features > 1):
-        error_bad_location = np.sum((data.mean(0) - T)**2)
+    if (n_outliers / float(n_samples) > 0.1) and (n_features > 1):
+        error_bad_location = np.sum((data.mean(0) - T) ** 2)
         assert(error_bad_location > error_location)
         bad_emp_cov = EmpiricalCovariance().fit(data)
         assert(emp_cov.error_norm(S) < bad_emp_cov.error_norm(S))

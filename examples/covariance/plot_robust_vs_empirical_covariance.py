@@ -78,7 +78,7 @@ for i, n_outliers in enumerate(range_n_outliers):
         # add some outliers
         outliers_index = np.random.permutation(n_samples)[:n_outliers]
         outliers_offset = 10. * \
-            (np.random.randint(2, size=(n_outliers,n_features)) - 0.5)
+            (np.random.randint(2, size=(n_outliers, n_features)) - 0.5)
         X[outliers_index] += outliers_offset
         inliers_mask = np.ones(n_samples).astype(bool)
         inliers_mask[outliers_index] = False
@@ -86,45 +86,45 @@ for i, n_outliers in enumerate(range_n_outliers):
         # fit a Minimum Covariance Determinant (MCD) robust estimator to data
         S = MCD().fit(X, reweight=None)
         # compare robust estimates with the true location and covariance
-        err_loc_mcd[i,j] = np.sum(S.location_ ** 2)
-        err_cov_mcd[i,j] = S.error_norm(np.eye(n_features))
+        err_loc_mcd[i, j] = np.sum(S.location_ ** 2)
+        err_cov_mcd[i, j] = S.error_norm(np.eye(n_features))
         # fit a reweighted MCD robust estimator to data
         S = MCD().fit(X)
         # compare robust estimates with the true location and covariance
-        err_loc_mcd_reweighted[i,j] = np.sum(S.location_ ** 2)
-        err_cov_mcd_reweighted[i,j] = S.error_norm(np.eye(n_features))
+        err_loc_mcd_reweighted[i, j] = np.sum(S.location_ ** 2)
+        err_cov_mcd_reweighted[i, j] = S.error_norm(np.eye(n_features))
         # compare estimators learnt from the full data set with true parameters
-        err_loc_emp_full[i,j] = np.sum(X.mean(0) ** 2)
-        err_cov_emp_full[i,j] = EmpiricalCovariance().fit(X).error_norm(
+        err_loc_emp_full[i, j] = np.sum(X.mean(0) ** 2)
+        err_cov_emp_full[i, j] = EmpiricalCovariance().fit(X).error_norm(
             np.eye(n_features))
         # compare with an empirical covariance learnt from a pure data set
         # (i.e. "perfect" MCD)
         pure_X = X[inliers_mask]
         pure_location = pure_X.mean(0)
         pure_emp_cov = EmpiricalCovariance().fit(pure_X)
-        err_loc_emp_pure[i,j] = np.sum(pure_location ** 2)
-        err_cov_emp_pure[i,j] = pure_emp_cov.error_norm(np.eye(n_features))    
+        err_loc_emp_pure[i, j] = np.sum(pure_location ** 2)
+        err_cov_emp_pure[i, j] = pure_emp_cov.error_norm(np.eye(n_features))    
 
 # Display results
 font_prop = matplotlib.font_manager.FontProperties(size=11)
-pl.subplot(2,1,1)
+pl.subplot(2, 1, 1)
 pl.errorbar(range_n_outliers, err_loc_mcd.mean(1),
-            yerr=err_loc_mcd.std(1)/np.sqrt(repeat),
+            yerr=err_loc_mcd.std(1) / np.sqrt(repeat),
             label="Robust location", color='cyan')
 pl.errorbar(range_n_outliers, err_loc_mcd_reweighted.mean(1),
-            yerr=err_loc_mcd_reweighted.std(1)/np.sqrt(repeat),
+            yerr=err_loc_mcd_reweighted.std(1) / np.sqrt(repeat),
             label="Robust location (reweighted)", color='blue')
 pl.errorbar(range_n_outliers, err_loc_emp_full.mean(1),
-            yerr=err_loc_emp_full.std(1)/np.sqrt(repeat),
+            yerr=err_loc_emp_full.std(1) / np.sqrt(repeat),
             label="Full data set mean", color='green')
 pl.errorbar(range_n_outliers, err_loc_emp_pure.mean(1),
-            yerr=err_loc_emp_pure.std(1)/np.sqrt(repeat),
+            yerr=err_loc_emp_pure.std(1) / np.sqrt(repeat),
             label="Pure data set mean", color='black')
 pl.title("Influence of outliers on the location estimation")
 pl.ylabel(r"Error ($||\mu - \hat{\mu}||_2^2$)")
 pl.legend(loc="upper left", prop=font_prop)
 
-pl.subplot(2,1,2)
+pl.subplot(2, 1, 2)
 x_size = range_n_outliers.size
 pl.errorbar(range_n_outliers, err_cov_mcd.mean(1),
             yerr=err_cov_mcd.std(1),
@@ -132,12 +132,12 @@ pl.errorbar(range_n_outliers, err_cov_mcd.mean(1),
 pl.errorbar(range_n_outliers, err_cov_mcd_reweighted.mean(1),
             yerr=err_cov_mcd_reweighted.std(1),
             label="Robust covariance (reweighted MCD)", color='blue')
-pl.errorbar(range_n_outliers[:(x_size/5 + 1)],
-            err_cov_emp_full.mean(1)[:(x_size/5 + 1)],
-            yerr=err_cov_emp_full.std(1)[:(x_size/5 + 1)],
+pl.errorbar(range_n_outliers[:(x_size / 5 + 1)],
+            err_cov_emp_full.mean(1)[:(x_size / 5 + 1)],
+            yerr=err_cov_emp_full.std(1)[:(x_size / 5 + 1)],
             label="Full data set empirical covariance", color='green')
-pl.plot(range_n_outliers[(x_size/5):(x_size/2 - 1)],
-         err_cov_emp_full.mean(1)[(x_size/5):(x_size/2 - 1)],
+pl.plot(range_n_outliers[(x_size / 5):(x_size / 2 - 1)],
+         err_cov_emp_full.mean(1)[(x_size / 5):(x_size / 2 - 1)],
          color='green', ls='--')
 pl.errorbar(range_n_outliers, err_cov_emp_pure.mean(1),
             yerr=err_cov_emp_pure.std(1),

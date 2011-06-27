@@ -213,8 +213,7 @@ class EmpiricalCovariance(BaseEstimator):
             result = np.sqrt(squared_norm)
         
         return result
-    
-    
+        
     def mahalanobis(self, observations):
         """Computes the mahalanobis distances of given observations.
         
