@@ -2,7 +2,7 @@
 # License: BSD
 
 import numpy as np
-from .. import SparsePCA
+from .. import SparsePCA, dict_learning_online
 from numpy.testing import assert_array_almost_equal, assert_equal
 
 
@@ -56,3 +56,12 @@ def test_lasso_lars():
     SPCALasso = SparsePCA(n_components=3, method='lasso').fit(Y)
     SPCALars = SparsePCA(n_components=3, method='lars').fit(Y)
     assert_array_almost_equal(SPCALasso.components_, SPCALars.components_)
+
+
+def test_dict_learning_online_shapes():
+    np.random.seed(0)
+    X = np.random.randn(12, 10)
+    codeT, dictionaryT = dict_learning_online(X.T, n_atoms=8, alpha=1)
+    assert_equal(codeT.shape, (8, 12))
+    assert_equal(dictionaryT.shape, (10, 8))
+    assert_equal(np.dot(codeT.T, dictionaryT.T).shape, X.shape)

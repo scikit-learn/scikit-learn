@@ -6,7 +6,8 @@
 
 import numpy as np
 
-from .sparse_pca import dict_learning, sparse_pca, _update_V_parallel
+from .sparse_pca import dict_learning, dict_learning_online, \
+                        _update_code_parallel
 from ..base import BaseEstimator, TransformerMixin
 from ..linear_model import orthogonal_mp
 
@@ -70,8 +71,8 @@ class DictionaryLearning(BaseEstimator, TransformerMixin):
 
     """
     def __init__(self, n_atoms, alpha=1, max_iter=1000, tol=1e-8,
-                 method='batch', coding_method='lars', n_jobs=1, U_init=None,
-                 V_init=None, verbose=False):
+                 method='batch', coding_method='lars', n_jobs=1,
+                 code_init=None, dict_init=None, verbose=False):
         self.n_atoms = n_atoms
         self.alpha = alpha
         self.max_iter = max_iter
@@ -79,8 +80,8 @@ class DictionaryLearning(BaseEstimator, TransformerMixin):
         self.method = method
         self.coding_method = coding_method
         self.n_jobs = n_jobs
-        self.U_init = V_init.T if V_init else None
-        self.V_init = U_init.T if U_init else None
+        self.code_init = code_init
+        self.dict_init = dict_init
         self.verbose = verbose
 
     def fit(self, X, y=None, **params):
@@ -100,12 +101,14 @@ class DictionaryLearning(BaseEstimator, TransformerMixin):
         self._set_params(**params)
         X = np.asanyarray(X)
         if self.method == 'batch':
-            U, _, E = sparse_pca(X.T, self.n_atoms, self.alpha,
-                                 tol=self.tol, max_iter=self.max_iter,
-                                 method=self.coding_method, n_jobs=self.n_jobs,
-                                 U_init=self.U_init, V_init=self.V_init,
-                                 verbose=self.verbose)
-            self.components_ = U.T
+            U, _, E = dict_learning(X, self.n_atoms, self.alpha,
+                                    tol=self.tol, max_iter=self.max_iter,
+                                    method=self.coding_method,
+                                    n_jobs=self.n_jobs,
+                                    code_init=self.code_init,
+                                    dict_init=self.dict_init,
+                                    verbose=self.verbose)
+            self.components_ = U
             self.error_ = E
         else:
             raise NotImplemented('Online version will be integrated soon')
@@ -137,4 +140,4 @@ class DictionaryLearning(BaseEstimator, TransformerMixin):
         if method == 'omp':
             return orthogonal_mp(self.components_, X.T, **kwargs)
         else:
-            return _update_V_parallel(self.components_.T, X.T, **kwargs)
+            return _update_code_parallel(self.components_.T, X.T, **kwargs)
