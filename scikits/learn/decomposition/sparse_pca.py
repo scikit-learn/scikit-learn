@@ -242,22 +242,27 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False):
     return dictionary
 
 
-def sparse_pca(Y, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
-        n_jobs=1, U_init=None, V_init=None, callback=None, verbose=False):
-    """
-    Compute sparse matrix decomposition (PCA) with n_atoms components.
+def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
+                  n_jobs=1, dict_init=None, code_init=None, callback=None,
+                  verbose=False):
+    """Solves a dictionary learning matrix factorization problem.
 
-    (U^*,V^*) = argmin 0.5 || Y - U V ||_2^2 + alpha * || V ||_1
+    Finds the best dictionary and the corresponding sparse code for
+    approximating the data matrix X by solving:
+
+    (U^*, V^*) = argmin 0.5 || X - U V ||_2^2 + alpha * || U ||_1
                  (U,V)
-                with || U_k ||_2 = 1 for all  0<= k < n_atoms
+                with || V_k ||_2 = 1 for all  0 <= k < n_atoms
+    
+    where V is the dictionary and U is the sparse code.
 
     Parameters
     ----------
-    Y: array of shape (n_samples, n_features)
+    X: array of shape (n_samples, n_features)
         data matrix
 
     n_atoms: int,
-        number of sparse atoms to extract
+        number of dictionary atoms to extract
 
     alpha: int,
         sparsity controlling parameter
@@ -269,13 +274,13 @@ def sparse_pca(Y, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
         tolerance for numerical error
 
     method: 'lars' | 'lasso',
-        method to use for solving the lasso problem
+        method to use for solving the lasso sparse coding problem
 
     n_jobs: int,
-        number of parallel jobs to run
+        number of parallel jobs to run, or -1 to autodetect.
 
-    U_init: array of shape (n_samples, n_atoms),
-    V_init: array of shape (n_atoms, n_features),
+    dict_init: array of shape (n_atoms, n_features),
+    code_init: array of shape (n_samples, n_atoms),
         initial values for the decomposition for warm restart scenarios
 
     callback:
@@ -286,14 +291,15 @@ def sparse_pca(Y, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
 
     Returns
     -------
-    U: array of shape (n_samples, n_atoms),
-    V: array of shape (n_atoms, n_features),
-        the solutions to the sparse PCA decomposition
-    E: array
+    code: array of shape (n_samples, n_atoms),
+    dictionary: array of shape (n_atoms, n_features),
+        the solutions to the dictionary learning problem
+
+    errors: array
         vector of errors at each iteration
     """
     t0 = time.time()
-    n_samples = Y.shape[0]
+    n_features = X.shape[1]
     # Avoid integer division problems
     alpha = float(alpha)
 
@@ -301,29 +307,30 @@ def sparse_pca(Y, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
         n_jobs = cpu_count()
 
     # Init U and V with SVD of Y
-    if U_init is not None and V_init is not None:
-        U = np.array(U_init, order='F')
+    if code_init is not None and code_init is not None:
+        code = np.array(code_init, order='F')
         # Don't copy V, it will happen below
-        V = V_init
+        dictionary = dict_init
     else:
-        U, S, V = linalg.svd(Y, full_matrices=False)
-        V = S[:, np.newaxis] * V
-    U = U[:, :n_atoms]
-    V = V[:n_atoms, :]
+        code, S, dictionary = linalg.svd(X, full_matrices=False)
+        dictionary = S[:, np.newaxis] * dictionary
+    code = code[:, :n_atoms]
+    dictionary = dictionary[:n_atoms, :]
 
-    # Fortran-order V, as we are going to access its row vectors
-    V = np.array(V, order='F')
+    # Fortran-order dict, as we are going to access its row vectors
+    #code = np.array(code, order='F')
+    dictionary = np.array(dictionary, order='F')
 
     residuals = 0
 
     def cost_function():
-        return 0.5 * residuals + alpha * np.sum(np.abs(V))
+        return 0.5 * residuals + alpha * np.sum(np.abs(code))
 
-    E = []
+    errors = []
     current_cost = np.nan
 
     if verbose == 1:
-        print '[sparse_pca]',
+        print '[dict_learning]',
 
     for ii in xrange(max_iter):
         dt = (time.time() - t0)
@@ -335,20 +342,22 @@ def sparse_pca(Y, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
                 "(elapsed time: % 3is, % 4.1fmn, current cost % 7.3f)" %
                     (ii, dt, dt / 60, current_cost))
 
-        # Update V
-        V = _update_code_parallel(U, Y, alpha / n_samples, code=V,
-                                  method=method, n_jobs=n_jobs)
-
-        # Update U
-        U, residuals = _update_dict(U, Y, V, verbose=verbose, return_r2=True)
+        # Update code
+        code = _update_code_parallel(dictionary.T, X.T, alpha / n_features,
+                                     code.T, method=method, n_jobs=n_jobs)
+        code = code.T
+        # Update dictionary
+        dictionary, residuals = _update_dict(dictionary.T, X.T, code.T, 
+                                             verbose=verbose, return_r2=True)
+        dictionary = dictionary.T
 
         current_cost = cost_function()
-        E.append(current_cost)
+        errors.append(current_cost)
 
         if ii > 0:
-            dE = E[-2] - E[-1]
-            assert(dE >= -tol * E[-1])
-            if dE < tol * E[-1]:
+            dE = errors[-2] - errors[-1]
+            assert(dE >= -tol * errors[-1])
+            if dE < tol * errors[-1]:
                 if verbose == 1:
                     # A line return
                     print ""
@@ -358,7 +367,7 @@ def sparse_pca(Y, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
         if ii % 5 == 0 and callback is not None:
             callback(locals())
 
-    return U, V, E
+    return code, dictionary, errors
 
 
 class SparsePCA(BaseEstimator, TransformerMixin):
@@ -437,12 +446,13 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         self._set_params(**params)
         X = np.asanyarray(X)
 
-        U, V, E = sparse_pca(X, self.n_components, self.alpha, tol=self.tol,
-                             max_iter=self.max_iter, method=self.method,
-                             n_jobs=self.n_jobs, verbose=self.verbose)
-        self.components_ = V
+        U, V, E = dict_learning(X.T, self.n_components, self.alpha,
+                                tol=self.tol, max_iter=self.max_iter,
+                                method=self.method, n_jobs=self.n_jobs,
+                                verbose=self.verbose)
+        self.components_ = U.T
         self.error_ = E
-        return U
+        return V.T
 
     def fit(self, X, y=None, **params):
         """Fit the model from data in X.
