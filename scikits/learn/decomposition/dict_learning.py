@@ -101,7 +101,7 @@ class DictionaryLearning(BaseEstimator, TransformerMixin):
         self._set_params(**params)
         X = np.asanyarray(X)
         if self.method == 'batch':
-            U, _, E = dict_learning(X, self.n_atoms, self.alpha,
+            _, U, E = dict_learning(X, self.n_atoms, self.alpha,
                                     tol=self.tol, max_iter=self.max_iter,
                                     method=self.coding_method,
                                     n_jobs=self.n_jobs,
