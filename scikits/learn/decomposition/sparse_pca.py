@@ -356,9 +356,10 @@ def sparse_pca(Y, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
     return U, V, E
 
 
-def dict_learning(Y, n_atoms, alpha, n_iter=100, return_code=True,
-        dict_init=None, callback=None, chunk_size=3, verbose=False,
-        shuffle=True, n_jobs=1, coding_method='lars'):
+def dict_learning_online(Y, n_atoms, alpha, n_iter=100, return_code=True,
+                         dict_init=None, callback=None, chunk_size=3,
+                         verbose=False, shuffle=True, n_jobs=1,
+                         coding_method='lars'):
     """
     Online dictionary learning for sparse coding
 
