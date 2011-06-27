@@ -187,7 +187,7 @@ def test_oas():
     assert_almost_equal(oa.score(X, assume_centered=True), -5.03605, 4)
     assert(oa.precision_ is None)
 
-    ### Same tests without assuming centered data
+    # Same tests without assuming centered data
     # test shrinkage coeff on a simple data set
     oa = OAS()
     oa.fit(X)
@@ -230,7 +230,7 @@ def generator_mcd(correction):
     """Tests the fastMCD algorithm implementation with a given correction type
 
     """
-    ### Small data set
+    # Small data set
     # test without outliers (random independant normal data)
     launch_mcd_on_dataset(100, 5, 0, 0.3, 0.2, 70, correction)
     # test with a contaminated data set (medium contamination)
@@ -238,20 +238,48 @@ def generator_mcd(correction):
     # test with a contaminated data set (strong contamination)
     launch_mcd_on_dataset(100, 5, 40, 0.1, 0.1, 50, correction)
     
-    ### Medium data set
+    # Medium data set
     launch_mcd_on_dataset(1000, 5, 450, 1e-3, 0.01, 540, correction)
     
-    ### Large data set
+    # Large data set
     launch_mcd_on_dataset(1700, 5, 800, 1e-3, 1e-3, 870, correction)
     
-    ### 1D data set
+    # 1D data set
     launch_mcd_on_dataset(500, 1, 100, 0.1, 0.1, 350, correction)
     
 
 def launch_mcd_on_dataset(n_samples, n_features, n_outliers,
                           tol_loc, tol_cov, tol_support, correction):
-    """
-
+    """Runs a serie of tests on the MCD with given parameters
+    
+    The tests consist in estimating the covariance of a data set using
+    the Minimum Covariance Determinant estimator. The correctness of
+    the estimation is determined form a comparison with the real
+    covariance of the data set, using an user-defined threshold.  The
+    same serie of tests is run for the location estimate.  The number
+    of subjects found as normal (i.e. in the MCD's support) is also
+    tested.
+    
+    Parameters
+    ----------
+    n_samples: int, n_samples > 0
+      Number of samples in the data set
+    n_features: int, n_features > 0
+      Number of features of the data set
+    n_outliers: int, n_outliers >= 0
+      Number of outliers in the data set
+    tol_loc: float
+      A tolerance for comparing the estimated and real locations
+    tol_cov: float
+      A tolerance factor for comparing the estimated and real covariances
+    tol_support: int
+      A tolerance factor for comparing the number of observations that
+      are and should be in the MCD support
+    correction: str, correction = "empirical" or "theoretical"
+      Correction type for the MCD estimator:
+        - "empirical" (default), empirical correction factor
+        - "theoretical", theoretical correction factor
+    
     """
     data = np.random.randn(n_samples, n_features)
     # add some outliers

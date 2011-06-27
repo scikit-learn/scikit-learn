@@ -12,8 +12,8 @@ set.
 The Minimum Covariance Determinant estimator is a robust,
 high-breakdown point (i.e. it can be used to estimate the covariance
 matrix of highly contaminated datasets, up to
-$\frac{n_samples-n_features-1}{2}$ outliers) estimator of
-covariance. The idea is to find $\frac{n_samples+n_features+1}{2}$
+:math:`\frac{n_samples-n_features-1}{2}` outliers) estimator of
+covariance. The idea is to find :math:`\frac{n_samples+n_features+1}{2}`
 observations whose empirical covariance has the smallest determinant,
 yielding a "pure" subset of observations from which to compute
 standards estimates of location and covariance. After a correction

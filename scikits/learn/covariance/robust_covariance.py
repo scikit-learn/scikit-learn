@@ -295,7 +295,7 @@ def fast_mcd(X, correction="empirical", reweight="rousseeuw"):
         S = np.asarray([[np.var(X[support])]])
         T = np.array([T])
 
-    ### Starting FastMCD algorithm for p-dimensional case
+    # Starting FastMCD algorithm for p-dimensional case
     if (n_samples > 500) and (n_features > 1):
         ## 1. Find candidate supports on subsets
         # a. split the set in subsets of size ~ 300
