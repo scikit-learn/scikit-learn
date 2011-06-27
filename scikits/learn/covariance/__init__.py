@@ -13,5 +13,5 @@ to the theory of Gaussian Graphical Models.
 from .empirical_covariance_ import empirical_covariance, EmpiricalCovariance, \
     log_likelihood
 from .shrunk_covariance_ import shrunk_covariance, ShrunkCovariance, \
-    ledoit_wolf, LedoitWolf, oas, OAS
-from .robust_covariance import fast_mcd, MCD
+    ledoit_wolf, LedoitWolf, oracle_approx_shrinkage, OracleApproxShrinkage
+from .robust_covariance import fast_mcd, MinCovDet

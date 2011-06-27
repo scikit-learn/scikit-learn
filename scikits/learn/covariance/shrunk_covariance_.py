@@ -271,7 +271,7 @@ class LedoitWolf(EmpiricalCovariance):
 ###############################################################################
 # OAS estimator
 
-def oas(X, assume_centered=False):
+def oracle_approx_shrinkage(X, assume_centered=False):
     """Estimate covariance with the Oracle Approximating Shrinkage algorithm.
 
     Parameters
@@ -298,7 +298,7 @@ def oas(X, assume_centered=False):
     -----
     The regularised (shrunk) covariance is:
 
-    (1 - shrinkage)*cov
+    (1 - shrinkage) * cov
       + shrinkage * mu * np.identity(n_features)
 
     where mu = trace(cov) / n_features
@@ -327,7 +327,7 @@ def oas(X, assume_centered=False):
     return shrunk_cov, shrinkage
 
 
-class OAS(EmpiricalCovariance):
+class OracleApproxShrinkage(EmpiricalCovariance):
     """
     Oracle Approximating Shrinkage Estimator
 
@@ -395,7 +395,8 @@ class OAS(EmpiricalCovariance):
             Returns self.
 
         """
-        covariance, shrinkage = oas(X, assume_centered=assume_centered)
+        covariance, shrinkage = oracle_approx_shrinkage(
+            X, assume_centered=assume_centered)
         self.shrinkage_ = shrinkage
         self._set_estimates(covariance)
 

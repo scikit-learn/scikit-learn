@@ -42,8 +42,8 @@ X_test = np.dot(base_X_test, coloring_matrix)
 ###############################################################################
 # Compute Ledoit-Wolf and Covariances on a grid of shrinkages
 
-from scikits.learn.covariance import LedoitWolf, OAS, ShrunkCovariance, \
-    log_likelihood, empirical_covariance
+from scikits.learn.covariance import LedoitWolf, OracleApproxShrinkage, \
+    ShrunkCovariance, log_likelihood, empirical_covariance
 
 # Ledoit-Wolf optimal shrinkage coefficient estimate
 lw = LedoitWolf()
@@ -51,7 +51,7 @@ loglik_lw = lw.fit(X_train, assume_centered=True).score(
     X_test, assume_centered=True)
 
 # OAS coefficient estimate
-oa = OAS()
+oa = OracleApproxShrinkage()
 loglik_oa = oa.fit(X_train, assume_centered=True).score(
     X_test, assume_centered=True)
 

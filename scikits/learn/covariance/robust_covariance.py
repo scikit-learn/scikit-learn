@@ -392,7 +392,7 @@ def fast_mcd(X, correction="empirical", reweight="rousseeuw"):
     return T_reweighted, S_reweighted, support
 
 
-class MCD(EmpiricalCovariance):
+class MinCovDet(EmpiricalCovariance):
     """Minimum Covariance Determinant (MCD) robust estimator of covariance
     
     The Minimum Covariance Determinant estimator is a robust estimator

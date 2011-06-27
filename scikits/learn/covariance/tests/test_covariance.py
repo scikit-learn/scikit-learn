@@ -7,8 +7,9 @@
 from numpy.testing import assert_almost_equal, assert_array_almost_equal
 
 from .. import empirical_covariance, EmpiricalCovariance, \
-    ShrunkCovariance, shrunk_covariance, LedoitWolf, ledoit_wolf, OAS, oas, \
-    fast_mcd, MCD
+    ShrunkCovariance, shrunk_covariance, LedoitWolf, ledoit_wolf, \
+    OracleApproxShrinkage, oracle_approx_shrinkage as oas, \
+    fast_mcd, MinCovDet
 
 import numpy as np
 from scikits.learn import datasets
@@ -159,7 +160,7 @@ def test_oas():
 
     """
     # test shrinkage coeff on a simple data set
-    oa = OAS()
+    oa = OracleApproxShrinkage()
     oa.fit(X, assume_centered=True)
     assert_almost_equal(oa.shrinkage_, 0.018740, 4)
     assert_almost_equal(oa.score(X, assume_centered=True), -5.03605, 4)
@@ -174,7 +175,7 @@ def test_oas():
 
     # test with n_features = 1
     X_1d = X[:, 0]
-    oa = OAS()
+    oa = OracleApproxShrinkage()
     oa.fit(X_1d, assume_centered=True)
     oa_cov_from_mle, oa_shinkrage_from_mle = oas(X_1d, assume_centered=True)
     assert_array_almost_equal(oa_cov_from_mle, oa.covariance_, 4)
@@ -182,14 +183,14 @@ def test_oas():
     assert_array_almost_equal((X_1d ** 2).sum() / n_samples, oa.covariance_, 4)
 
     # test shrinkage coeff on a simple data set (without saving precision)
-    oa = OAS(store_precision=False)
+    oa = OracleApproxShrinkage(store_precision=False)
     oa.fit(X, assume_centered=True)
     assert_almost_equal(oa.score(X, assume_centered=True), -5.03605, 4)
     assert(oa.precision_ is None)
 
     # Same tests without assuming centered data
     # test shrinkage coeff on a simple data set
-    oa = OAS()
+    oa = OracleApproxShrinkage()
     oa.fit(X)
     assert_almost_equal(oa.shrinkage_, 0.020236, 4)
     assert_almost_equal(oa.score(X), 2.079025, 4)
@@ -204,7 +205,7 @@ def test_oas():
 
     # test with n_features = 1
     X_1d = X[:, 0]
-    oa = OAS()
+    oa = OracleApproxShrinkage()
     oa.fit(X_1d)
     oa_cov_from_mle, oa_shinkrage_from_mle = oas(X_1d)
     assert_array_almost_equal(oa_cov_from_mle, oa.covariance_, 4)
@@ -212,7 +213,7 @@ def test_oas():
     assert_array_almost_equal(empirical_covariance(X_1d), oa.covariance_, 4)
 
     # test shrinkage coeff on a simple data set (without saving precision)
-    oa = OAS(store_precision=False)
+    oa = OracleApproxShrinkage(store_precision=False)
     oa.fit(X)
     assert_almost_equal(oa.score(X), 2.079025, 4)
     assert(oa.precision_ is None)
@@ -259,6 +260,8 @@ def launch_mcd_on_dataset(n_samples, n_features, n_outliers,
     same serie of tests is run for the location estimate.  The number
     of subjects found as normal (i.e. in the MCD's support) is also
     tested.
+    That serie of tests is done both by fitting a MinCovDet object and
+    also by directly using a call to the fast_mcd method.
     
     Parameters
     ----------
@@ -308,7 +311,7 @@ def launch_mcd_on_dataset(n_samples, n_features, n_outliers,
         assert(emp_cov.error_norm(S) < bad_emp_cov.error_norm(S))
     
     # compute MCD by fitting an object
-    mcd_fit = MCD().fit(data)
+    mcd_fit = MinCovDet().fit(data)
     T = mcd_fit.location_
     S = mcd_fit.covariance_
     H = mcd_fit.support_
