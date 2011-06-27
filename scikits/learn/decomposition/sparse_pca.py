@@ -5,7 +5,6 @@
 
 import time
 import sys
-import itertools
 
 from math import sqrt
 
@@ -65,14 +64,15 @@ def _ridge_regression(X, y, alpha):
         return linalg.solve(A, np.dot(X.T, y), sym_pos=True, overwrite_a=True)
 
 
-def _update_V(U, Y, alpha, V=None, Gram=None, method='lars', tol=1e-8):
-    """ Update the sparse factor V in sparse_pca loop.
-    Each column of V is the solution to a Lasso problem.
+def _update_code(dictionary, Y, alpha, code=None, Gram=None, method='lars',
+                 tol=1e-8):
+    """ Update the sparse code factor in sparse_pca loop.
+    Each column of the result is the solution to a Lasso problem.
 
     Parameters
     ----------
-    U: array of shape (n_samples, n_components)
-        previous iteration of U
+    dictionary: array of shape (n_samples, n_components)
+        dictionary against which to optimize the sparse code
 
     Y: array of shape (n_samples, n_features)
         data matrix
@@ -80,8 +80,8 @@ def _update_V(U, Y, alpha, V=None, Gram=None, method='lars', tol=1e-8):
     alpha: float
         regularization parameter for the Lasso problem
 
-    V: array of shape (n_components, n_features)
-        previous iteration of V
+    code: array of shape (n_components, n_features)
+        previous iteration of the sparse code
 
     Gram: array of shape (n_features, n_features)
         precomputed Gram matrix, (Y^T * Y)
@@ -97,43 +97,43 @@ def _update_V(U, Y, alpha, V=None, Gram=None, method='lars', tol=1e-8):
 
     """
     n_features = Y.shape[1]
-    n_atoms = U.shape[1]
-    coef = np.empty((n_atoms, n_features))
+    n_atoms = dictionary.shape[1]
+    new_code = np.empty((n_atoms, n_features))
     if method == 'lars':
         if Gram is None:
-            Gram = np.dot(U.T, U)
+            Gram = np.dot(dictionary.T, dictionary)
         err_mgt = np.seterr()
         np.seterr(all='ignore')
         #alpha = alpha * n_samples
-        XY = np.dot(U.T, Y)
+        XY = np.dot(dictionary.T, Y)
         for k in range(n_features):
             # A huge amount of time is spent in this loop. It needs to be
             # tight.
-            _, _, coef_path_ = lars_path(U, Y[:, k], Xy=XY[:, k], Gram=Gram,
-                                         alpha_min=alpha, method='lasso')
-            coef[:, k] = coef_path_[:, -1]
+            _, _, coef_path_ = lars_path(dictionary, Y[:, k], Xy=XY[:, k],
+                                    Gram=Gram, alpha_min=alpha, method='lasso')
+            new_code[:, k] = coef_path_[:, -1]
         np.seterr(**err_mgt)
     else:
         clf = Lasso(alpha=alpha, fit_intercept=False)
         for k in range(n_features):
             # A huge amount of time is spent in this loop. It needs to be
             # tight.
-            if V is not None:
-                clf.coef_ = V[:, k]  # Init with previous value of Vk
-            clf.fit(U, Y[:, k], max_iter=1000, tol=tol)
-            coef[:, k] = clf.coef_
-    return coef
+            if code is not None:
+                clf.coef_ = code[:, k]  # Init with previous value of Vk
+            clf.fit(dictionary, Y[:, k], max_iter=1000, tol=tol)
+            new_code[:, k] = clf.coef_
+    return new_code
 
 
-def _update_V_parallel(U, Y, alpha, V=None, Gram=None, method='lars',
-                       n_jobs=1, tol=1e-8):
+def _update_code_parallel(dictionary, Y, alpha, code=None, Gram=None,
+                          method='lars', n_jobs=1, tol=1e-8):
     """ Update the sparse factor V in sparse_pca loop by efficiently
     spreading the load over the available cores.
 
     Parameters
     ----------
-    U: array of shape (n_samples, n_components)
-        previous iteration of U
+    dictionary: array of shape (n_samples, n_components)
+        dictionary against which to optimize the sparse code
 
     Y: array of shape (n_samples, n_features)
         data matrix
@@ -141,8 +141,9 @@ def _update_V_parallel(U, Y, alpha, V=None, Gram=None, method='lars',
     alpha: float
         regularization parameter for the Lasso problem
 
-    V: array of shape (n_components, n_features)
-        previous iteration of V
+    code: array of shape (n_components, n_features)
+        previous iteration of the sparse code
+
     Gram: array of shape (n_features, n_features)
         precomputed Gram matrix, (Y^T * Y)
 
@@ -155,76 +156,80 @@ def _update_V_parallel(U, Y, alpha, V=None, Gram=None, method='lars',
         number of parallel jobs to run
 
     tol: float
-        numerical tolerance for Lasso convergence.
-        Ignored if `method='lars'`
+        numerical tolerance for coordinate descent Lasso convergence.
+        Only used if `method='lasso`.
 
     """
     n_samples, n_features = Y.shape
+    n_atoms = dictionary.shape[1]
     if Gram is None:
-        Gram = np.dot(U.T, U)
+        Gram = np.dot(dictionary.T, dictionary)
     if n_jobs == 1:
-        return _update_V(U, Y, alpha, V=V, Gram=Gram, method=method)
-    n_atoms = U.shape[1]
-    if V is None:
-        V = np.empty((n_atoms, n_features))
+        return _update_code(dictionary, Y, alpha, code=code, Gram=Gram,
+                            method=method)
+    if code is None:
+        code = np.empty((n_atoms, n_features))
     slices = list(_gen_even_slices(n_features, n_jobs))
-    V_views = Parallel(n_jobs=n_jobs)(
-                delayed(_update_V)(U, Y[:, this_slice], V=V[:, this_slice],
-                                alpha=alpha, Gram=Gram, method=method, tol=tol)
+    code_views = Parallel(n_jobs=n_jobs)(
+                delayed(_update_code)(dictionary, Y[:, this_slice], 
+                                      code=code[:, this_slice], alpha=alpha,
+                                      Gram=Gram, method=method, tol=tol)
                 for this_slice in slices)
     for this_slice, this_view in zip(slices, V_views):
-        V[:, this_slice] = this_view
-    return V
+        code[:, this_slice] = this_view
+    return code
 
 
-def _update_U(U, Y, V, verbose=False, return_r2=False):
-    """ Update the dense factor U in sparse_pca loop in place.
+def _update_dict(dictionary, Y, code, verbose=False, return_r2=False):
+    """ Update the dense dictionary factor in place. 
 
     Parameters
     ----------
-    U: array of shape (n_samples, n_components)
-        previous iteration of U
+    dictionary: array of shape (n_samples, n_components)
+        value of the dictionary at the previous iteration
 
     Y: array of shape (n_samples, n_features)
         data matrix
 
-    V: array of shape (n_components, n_features)
-        previous iteration of V
+    code: array of shape (n_components, n_features)
+        sparse coding of the data against which to optimize the dictionary
 
     verbose:
         degree of output the procedure will print
 
     return_r2: bool
-        compute and return the residual sum of squares corresponding
+        whether to compute and return the residual sum of squares corresponding
         to the computed solution
 
     """
-    n_atoms = len(V)
+    n_atoms = len(code)
     n_samples = Y.shape[0]
-    R = -np.dot(U, V)  # Residuals, computed 'in-place' for efficiency
+    # Residuals, computed 'in-place' for efficiency
+    R = -np.dot(dictionary, code)
     R += Y
     R = np.asfortranarray(R)
-    ger, = linalg.get_blas_funcs(('ger',), (U, V))
+    ger, = linalg.get_blas_funcs(('ger',), (dictionary, code))
     for k in xrange(n_atoms):
         # R <- 1.0 * U_k * V_k^T + R
-        R = ger(1.0, U[:, k], V[k, :], a=R, overwrite_a=True)
-        U[:, k] = np.dot(R, V[k, :].T)
-        # Scale Uk
-        norm_square_U = np.dot(U[:, k], U[:, k])
-        if norm_square_U < 1e-20:
+        R = ger(1.0, dictionary[:, k], code[k, :], a=R, overwrite_a=True)
+        dictionary[:, k] = np.dot(R, code[k, :].T)
+        # Scale k'th atom
+        atom_norm_square = np.dot(dictionary[:, k], dictionary[:, k])
+        if atom_norm_square < 1e-20:
             if verbose == 1:
                 sys.stdout.write("+")
                 sys.stdout.flush()
             elif verbose:
                 print "Adding new random atom"
-            U[:, k] = np.random.randn(n_samples)
+            dictionary[:, k] = np.random.randn(n_samples)
             # Setting corresponding coefs to 0
-            V[k, :] = 0.0
-            U[:, k] /= sqrt(np.dot(U[:, k], U[:, k]))
+            code[k, :] = 0.0
+            dictionary[:, k] /= sqrt(np.dot(dictionary[:, k],
+                                            dictionary[:, k]))
         else:
-            U[:, k] /= sqrt(norm_square_U)
+            dictionary[:, k] /= sqrt(atom_norm_square)
             # R <- -1.0 * U_k * V_k^T + R
-            R = ger(-1.0, U[:, k], V[k, :], a=R, overwrite_a=True)
+            R = ger(-1.0, dictionary[:, k], code[k, :], a=R, overwrite_a=True)
     if return_r2:
         R **= 2
         # R is fortran-ordered. For numpy version < 1.6, sum does not
@@ -233,26 +238,31 @@ def _update_U(U, Y, V, verbose=False, return_r2=False):
         # striding
         R = as_strided(R, shape=(R.size, ), strides=(R.dtype.itemsize,))
         R = np.sum(R)
-        return U, R
-    return U
+        return dictionary, R
+    return dictionary
 
 
-def sparse_pca(Y, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
-        n_jobs=1, U_init=None, V_init=None, callback=None, verbose=False):
-    """
-    Compute sparse matrix decomposition (PCA) with n_atoms components.
+def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
+                  n_jobs=1, dict_init=None, code_init=None, callback=None,
+                  verbose=False):
+    """Solves a dictionary learning matrix factorization problem.
 
-    (U^*,V^*) = argmin 0.5 || Y - U V ||_2^2 + alpha * || V ||_1
+    Finds the best dictionary and the corresponding sparse code for
+    approximating the data matrix X by solving:
+
+    (U^*, V^*) = argmin 0.5 || X - U V ||_2^2 + alpha * || U ||_1
                  (U,V)
-                with || U_k ||_2 = 1 for all  0<= k < n_atoms
+                with || V_k ||_2 = 1 for all  0 <= k < n_atoms
+    
+    where V is the dictionary and U is the sparse code.
 
     Parameters
     ----------
-    Y: array of shape (n_samples, n_features)
+    X: array of shape (n_samples, n_features)
         data matrix
 
     n_atoms: int,
-        number of sparse atoms to extract
+        number of dictionary atoms to extract
 
     alpha: int,
         sparsity controlling parameter
@@ -264,13 +274,13 @@ def sparse_pca(Y, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
         tolerance for numerical error
 
     method: 'lars' | 'lasso',
-        method to use for solving the lasso problem
+        method to use for solving the lasso sparse coding problem
 
     n_jobs: int,
-        number of parallel jobs to run
+        number of parallel jobs to run, or -1 to autodetect.
 
-    U_init: array of shape (n_samples, n_atoms),
-    V_init: array of shape (n_atoms, n_features),
+    dict_init: array of shape (n_atoms, n_features),
+    code_init: array of shape (n_samples, n_atoms),
         initial values for the decomposition for warm restart scenarios
 
     callback:
@@ -281,14 +291,15 @@ def sparse_pca(Y, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
 
     Returns
     -------
-    U: array of shape (n_samples, n_atoms),
-    V: array of shape (n_atoms, n_features),
-        the solutions to the sparse PCA decomposition
-    E: array
+    code: array of shape (n_samples, n_atoms),
+    dictionary: array of shape (n_atoms, n_features),
+        the solutions to the dictionary learning problem
+
+    errors: array
         vector of errors at each iteration
     """
     t0 = time.time()
-    n_samples = Y.shape[0]
+    n_features = X.shape[1]
     # Avoid integer division problems
     alpha = float(alpha)
 
@@ -296,29 +307,30 @@ def sparse_pca(Y, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
         n_jobs = cpu_count()
 
     # Init U and V with SVD of Y
-    if U_init is not None and V_init is not None:
-        U = np.array(U_init, order='F')
+    if code_init is not None and code_init is not None:
+        code = np.array(code_init, order='F')
         # Don't copy V, it will happen below
-        V = V_init
+        dictionary = dict_init
     else:
-        U, S, V = linalg.svd(Y, full_matrices=False)
-        V = S[:, np.newaxis] * V
-    U = U[:, :n_atoms]
-    V = V[:n_atoms, :]
+        code, S, dictionary = linalg.svd(X, full_matrices=False)
+        dictionary = S[:, np.newaxis] * dictionary
+    code = code[:, :n_atoms]
+    dictionary = dictionary[:n_atoms, :]
 
-    # Fortran-order V, as we are going to access its row vectors
-    V = np.array(V, order='F')
+    # Fortran-order dict, as we are going to access its row vectors
+    #code = np.array(code, order='F')
+    dictionary = np.array(dictionary, order='F')
 
     residuals = 0
 
     def cost_function():
-        return 0.5 * residuals + alpha * np.sum(np.abs(V))
+        return 0.5 * residuals + alpha * np.sum(np.abs(code))
 
-    E = []
+    errors = []
     current_cost = np.nan
 
     if verbose == 1:
-        print '[sparse_pca]',
+        print '[dict_learning]',
 
     for ii in xrange(max_iter):
         dt = (time.time() - t0)
@@ -330,20 +342,22 @@ def sparse_pca(Y, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
                 "(elapsed time: % 3is, % 4.1fmn, current cost % 7.3f)" %
                     (ii, dt, dt / 60, current_cost))
 
-        # Update V
-        V = _update_V_parallel(U, Y, alpha / n_samples, V=V, method=method,
-                               n_jobs=n_jobs)
-
-        # Update U
-        U, residuals = _update_U(U, Y, V, verbose=verbose, return_r2=True)
+        # Update code
+        code = _update_code_parallel(dictionary.T, X.T, alpha / n_features,
+                                     code.T, method=method, n_jobs=n_jobs)
+        code = code.T
+        # Update dictionary
+        dictionary, residuals = _update_dict(dictionary.T, X.T, code.T, 
+                                             verbose=verbose, return_r2=True)
+        dictionary = dictionary.T
 
         current_cost = cost_function()
-        E.append(current_cost)
+        errors.append(current_cost)
 
         if ii > 0:
-            dE = E[-2] - E[-1]
-            assert(dE >= -tol * E[-1])
-            if dE < tol * E[-1]:
+            dE = errors[-2] - errors[-1]
+            assert(dE >= -tol * errors[-1])
+            if dE < tol * errors[-1]:
                 if verbose == 1:
                     # A line return
                     print ""
@@ -353,7 +367,7 @@ def sparse_pca(Y, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
         if ii % 5 == 0 and callback is not None:
             callback(locals())
 
-    return U, V, E
+    return code, dictionary, errors
 
 
 def dict_learning_online(Y, n_atoms, alpha, n_iter=100, return_code=True,
@@ -527,12 +541,13 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         self._set_params(**params)
         X = np.asanyarray(X)
 
-        U, V, E = sparse_pca(X, self.n_components, self.alpha, tol=self.tol,
-                             max_iter=self.max_iter, method=self.method,
-                             n_jobs=self.n_jobs, verbose=self.verbose)
-        self.components_ = V
+        U, V, E = dict_learning(X.T, self.n_components, self.alpha,
+                                tol=self.tol, max_iter=self.max_iter,
+                                method=self.method, n_jobs=self.n_jobs,
+                                verbose=self.verbose)
+        self.components_ = U.T
         self.error_ = E
-        return U
+        return V.T
 
     def fit(self, X, y=None, **params):
         """Fit the model from data in X.
