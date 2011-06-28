@@ -12,8 +12,7 @@ import numpy as np
 from numpy.lib.stride_tricks import as_strided
 from scipy import linalg
 
-from ..linear_model import Lasso, lars_path
-from ..linear_model.ridge import ridge_regression
+from ..linear_model import Lasso, lars_path, ridge_regression
 from ..externals.joblib import Parallel, delayed, cpu_count
 from ..base import BaseEstimator, TransformerMixin
 
