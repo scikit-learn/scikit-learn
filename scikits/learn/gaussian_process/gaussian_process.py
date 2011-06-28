@@ -46,14 +46,15 @@ def compute_componentwise_l1_cross_distances(X):
     X = np.atleast_2d(X)
     n_samples, n_features = X.shape
     n_nonzero_cross_dist = n_samples * (n_samples - 1) / 2
-    ij = np.zeros([n_nonzero_cross_dist, 2])
-    D = np.zeros([n_nonzero_cross_dist, n_features])
-    ll = np.array([-1])
+    ij = np.zeros((n_nonzero_cross_dist, 2), np.int)
+    D = np.zeros((n_nonzero_cross_dist, n_features))
+    ll_1 = 0
     for k in range(n_samples - 1):
-        ll = ll[-1] + 1 + range(n_samples - k - 1)
-        ij[ll] = np.concatenate([[np.repeat(k, n_samples - k - 1, 0)],
-                                 [np.array(range(k + 1, n_samples)).T]]).T
-        D[ll] = np.abs(X[k] - X[(k + 1):n_samples])
+        ll_0 = ll_1
+        ll_1 = ll_0 + n_samples - k -1
+        ij[ll_0:ll_1, 0] = k
+        ij[ll_0:ll_1, 1] = np.arange(k + 1, n_samples)
+        D[ll_0:ll_1] = np.abs(X[k] - X[(k + 1):n_samples])
 
     return D, ij.astype(np.int)
 
@@ -85,11 +86,7 @@ def compute_componentwise_l1_pairwise_distances(X, Y):
         raise Exception("X and Y should have the same number of features!")
     else:
         n_features = n_features_X
-    D = np.zeros([n_samples_X * n_samples_Y, n_features])
-    kk = np.arange(n_samples_Y).astype(np.int)
-    for k in range(n_samples_X):
-        D[kk] = X[k] - Y
-        kk = kk + n_samples_Y
+    D = (X[:,None,:] - Y[None,:,:]).reshape((n_samples_X * n_samples_Y, n_features))
 
     return D
 
@@ -309,7 +306,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         # Calculate matrix of distances D between samples
         D, ij = compute_componentwise_l1_cross_distances(X)
-        if np.min(np.sum(np.abs(D), axis=1)) == 0. \
+        if np.min(np.sum(D, axis=1)) == 0. \
                                     and self.corr != correlation.pure_nugget:
             raise Exception("Multiple X are not allowed")
 
@@ -579,7 +576,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         if D is None:
             # Light storage mode (need to recompute D, ij and F)
             D, ij = compute_componentwise_l1_cross_distances(self.X)
-            if np.min(np.sum(np.abs(D), axis=1)) == 0. \
+            if np.min(np.sum(D, axis=1)) == 0. \
                                     and self.corr != correlation.pure_nugget:
                 raise Exception("Multiple X are not allowed")
             F = self.regr(self.X)
