@@ -64,7 +64,8 @@ def test_find_permutation():
     A = np.random.random((10, 100))
     B = A[::-1]
     np.testing.assert_array_equal(find_permutation(B, A),
-                                  np.arange(10)[::-1])
+                                  zip(np.arange(10),
+                                      np.arange(10)[::-1]))
 
 
 if __name__ == '__main__' :
