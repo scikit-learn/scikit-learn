@@ -1,4 +1,3 @@
-
 import numpy as np
 import scipy.sparse as sp
 
@@ -9,6 +8,14 @@ def safe_asanyarray(X, dtype=None, order=None):
         #return type(X)(X, dtype)
     else:
         return np.asanyarray(X, dtype, order)
+
+
+def atleast2d_or_csr(X):
+    """Like numpy.atleast_2d, but converts sparse matrices to CSR format"""
+    if sp.issparse(X):
+        return X.tocsr()
+    else:
+        return np.atleast_2d(X)
 
 
 def check_random_state(seed):

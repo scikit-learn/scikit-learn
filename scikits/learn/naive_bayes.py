@@ -22,11 +22,10 @@ complete documentation.
 
 from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize, LabelBinarizer
-from .utils import safe_asanyarray
+from .utils import safe_asanyarray, atleast2d_or_csr
 from .utils.extmath import safe_sparse_dot
 from .utils.fixes import unique
 import numpy as np
-from scipy.sparse import issparse
 
 
 class GaussianNB(BaseEstimator, ClassifierMixin):
@@ -195,20 +194,6 @@ class GaussianNB(BaseEstimator, ClassifierMixin):
         return log_proba
 
 
-def asanyarray_or_csr(X):
-    if issparse(X):
-        return X.tocsr()
-    else:
-        return np.asanyarray(X)
-
-
-def atleast2d_or_csr(X):
-    if issparse(X):
-        return X.tocsr()
-    else:
-        return np.atleast_2d(X)
-
-
 class BaseDiscreteNB(BaseEstimator, ClassifierMixin):
     """Abstract base class for Naive Bayes on discrete/categorical data.
 
@@ -248,7 +233,7 @@ class BaseDiscreteNB(BaseEstimator, ClassifierMixin):
         self : object
             Returns self.
         """
-        X = asanyarray_or_csr(X)
+        X = atleast2d_or_csr(X)
         y = safe_asanyarray(y)
 
         self.unique_y, inv_y_ind = unique(y, return_inverse=True)

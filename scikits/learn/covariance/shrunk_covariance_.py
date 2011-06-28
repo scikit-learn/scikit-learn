@@ -196,13 +196,13 @@ def ledoit_wolf(X, assume_centered=False):
 
 
 class LedoitWolf(EmpiricalCovariance):
-    """LedoitWolf Estimator
+    """Ledoit-Wolf shrinkage estimator
 
     Ledoit-Wolf is a particular form of shrinkage, where the shrinkage
-    coefficient is computed using O.Ledoit and M.Wolf's formula as
+    coefficient is computed using O. Ledoit and M. Wolf's formula as
     described in "A Well-Conditioned Estimator for Large-Dimensional
-    Covariance Matrices", Ledoit and Wolf, Journal of Multivariate
-    Analysis, Volume 88, Issue 2, February 2004, pages 365-411.
+    Covariance Matrices", Journal of Multivariate Analysis, Volume 88,
+    Issue 2, February 2004, pages 365-411.
 
     Parameters
     ----------

@@ -30,7 +30,7 @@ Several new modules where introduced during this release:
 
   - :ref:`NMF` module `Vlad Niculae`_
 
-  - Implementation of the :ref:`oracle_apprroximating_shrinkage` algorithm by
+  - Implementation of the :ref:`oracle_approximating_shrinkage` algorithm by
     `Virgile Fritsch`_ in the :ref:`covariance` module.
 
 
