@@ -2,12 +2,13 @@
 #          Mathieu Blondel
 #
 # License: BSD Style.
-"""Utilities to build dense feature vectors from text documents"""
+"""Utilities to build feature vectors from text documents"""
 
 from operator import itemgetter
 import re
 import unicodedata
 import numpy as np
+import scipy.sparse as sp
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import Normalizer
 
@@ -209,14 +210,10 @@ class CountVectorizer(BaseEstimator):
     This implementation produces a sparse representation of the counts using
     scipy.sparse.coo_matrix.
 
-    If you do not provide an a-priori dictionary and you do not use
-    an analyzer that does some kind of feature selection then the number of
-    features (the vocabulary size found by analysing the data) might be very
-    large and the count vectors might not fit in memory.
-
-    For this case it is either recommended to use the sparse.CountVectorizer
-    variant of this class or a HashingVectorizer that will reduce the
-    dimensionality to an arbitrary number by using random projection.
+    If you do not provide an a-priori dictionary and you do not use an analyzer
+    that does some kind of feature selection then the number of features will
+    be equal to the vocabulary size found by analysing the data. The default
+    analyzer does simple stop word filtering for English.
 
     Parameters
     ----------
@@ -253,8 +250,6 @@ class CountVectorizer(BaseEstimator):
         self.max_features = max_features
 
     def _term_count_dicts_to_matrix(self, term_count_dicts, vocabulary):
-
-        import scipy.sparse as sp
         i_indices = []
         j_indices = []
         values = []
@@ -476,7 +471,6 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         -------
         vectors: sparse matrix, [n_samples, n_features]
         """
-        import scipy.sparse as sp
         X = sp.csr_matrix(X, dtype=np.float64, copy=copy)
         n_samples, n_features = X.shape
 
