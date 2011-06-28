@@ -173,8 +173,8 @@ def orthogonal_mp(X, y, n_atoms=None, eps=None, compute_gram=False):
         raise ValueError('OMP needs either a target number of atoms (n_atoms) \
                          or a target residual error (eps)')
     if eps != None and eps < 0:
-        raise ValueError("Epsilon must be positive")
-    if eps == None and n_atoms < 0:
+        raise ValueError("Epsilon cannot be negative")
+    if eps == None and n_atoms <= 0:
         raise ValueError("The number of atoms must be positive")
     if eps == None and n_atoms > X.shape[1]:
         raise ValueError("The number of atoms cannot be more than the number \
@@ -237,8 +237,8 @@ def orthogonal_mp_gram(G, Xy, n_atoms=None, eps=None, norms_squared=None):
         raise ValueError('Gram OMP needs the precomputed norms in order \
                           to evaluate the error sum of squares.')
     if eps != None and eps < 0:
-        raise ValueError("Epsilon must be positive")
-    if eps == None and n_atoms < 0:
+        raise ValueError("Epsilon cennot be negative")
+    if eps == None and n_atoms <= 0:
         raise ValueError("The number of atoms must be positive")
     if eps == None and n_atoms > len(G):
         raise ValueError("The number of atoms cannot be more than the number \
