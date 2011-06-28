@@ -271,7 +271,7 @@ def hungarian(cost_matrix):
     # Make sure the array is 2D with 2 columns.
     # This is needed when dealing with an empty list
     indices.shape = (-1, 2)
-    return indices.T[1]
+    return indices
 
 
 def find_permutation(vectors, reference):
