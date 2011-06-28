@@ -45,8 +45,8 @@ class _Hungarian(object):
 
         Parameters
         ===========
-        cost_matrix: 2D square matrix
-                The cost matrix. 
+        cost_matrix: 2D matrix
+                The cost matrix. Does not have to be square.
 
         Returns
         ========
@@ -54,7 +54,18 @@ class _Hungarian(object):
             The pairs of (col, row) indices in the original array giving
             the original ordering.
         """
-        self.C = cost_matrix.copy()
+        cost_matrix = np.atleast_2d(cost_matrix)
+
+        # If there are more rows than columns, then the algorithm
+        # will not be able to work correctly. Therefore, we
+        # transpose the cost function when needed. Just have to
+        # remember to swap the result columns later in this function.
+        doTranspose = (cost_matrix.shape[1] < cost_matrix.shape[0])
+        if doTranspose :
+            self.C = (cost_matrix.T).copy()
+        else :
+            self.C = cost_matrix.copy()
+
         self.n = n = self.C.shape[0]
         self.m = m = self.C.shape[1]
         self.row_uncovered = np.ones(n, dtype=np.bool)
@@ -87,6 +98,11 @@ class _Hungarian(object):
 
         # Look for the starred columns
         results = np.array(np.where(self.marked == 1)).T
+
+        # We need to swap the columns because we originally
+        # did a transpose on the input cost matrix.
+        if doTranspose :
+            results = results[:, ::-1]
 
         return results.tolist()
 
