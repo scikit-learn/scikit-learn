@@ -141,9 +141,16 @@ def orthogonal_mp(X, y, n_atoms=None, eps=None, compute_gram=False):
     """Orthogonal Matching Pursuit (OMP)
 
     Solves n_targets Orthogonal Matching Pursuit problems.
+    An instance of the problem has the form:
 
-    Parameters:
-    -----------
+    When parametrized by number of non-zero elements using `n_atoms`:
+    argmin ||y - X\gamma||^2 subject to ||\gamma||_0 <= n_{atoms}
+
+    When parametrized by error using the parameter `eps`:
+    argmin ||\gamma||_0 subject to ||y-X\gamma||^2 <= \epsilon
+
+    Parameters
+    ----------
     X: array of shape (n_samples, n_features)
         Input dictionary
 
@@ -160,10 +167,16 @@ def orthogonal_mp(X, y, n_atoms=None, eps=None, compute_gram=False):
         Whether to perform precomputations. Improves performance when n_targets
         or n_samples is very large.
 
-    Returns:
-    --------
+    Returns
+    -------
     coef: array of shape: n_features or (n_features, n_targets)
         Coefficients of the OMP solution
+
+    See also
+    --------
+    orthogonal_mp_gram
+    lars_path
+
     """
     X = np.asanyarray(X)
     y = np.asanyarray(y)
@@ -201,9 +214,8 @@ def orthogonal_mp_gram(G, Xy, n_atoms=None, eps=None, norms_squared=None):
     Solves n_targets Orthogonal Matching Pursuit problems using only
     the Gram matrix X.T * X and the product X * y.
 
-    Parameters:
-    -----------
-
+    Parameters
+    ----------
     G: array of shape (n_features, n_features)
         Gram matrix of the input data: X.T * X
 
@@ -219,10 +231,15 @@ def orthogonal_mp_gram(G, Xy, n_atoms=None, eps=None, norms_squared=None):
     norms_squared: array, shape: n_targets
         Squared L2 norms of the lines of y. Required if eps is not None.
 
-    Returns:
-    --------
+    Returns
+    -------
     coef: array of shape: n_features or (n_features, n_targets)
         Coefficients of the OMP solution
+
+    See also
+    --------
+    orthogonal_mp
+    lars_path
 
     """
     G = np.asanyarray(G)
