@@ -13,14 +13,14 @@ import numpy as np
 from numpy.lib.stride_tricks import as_strided
 from scipy import linalg
 
-from ..linear_model import Lasso, lars_path
+from ..linear_model import Lasso, lars_path, ridge_regression
 from ..externals.joblib import Parallel, delayed, cpu_count
 from ..base import BaseEstimator, TransformerMixin
 from ..utils.extmath import fast_svd
 
 
 ##################################
-# Utilities to spread load on CPUs
+# Utility to spread load on CPUs
 # XXX: where should this be?
 def _gen_even_slices(n, n_packs):
     """Generator to create n_packs slices going up to n.
@@ -47,23 +47,6 @@ def _gen_even_slices(n, n_packs):
             end = start + this_n
             yield slice(start, end, None)
             start = end
-
-
-# a short preview of what will be in fabian's pull request
-def _ridge_regression(X, y, alpha):
-    n_samples, n_features = np.shape(X)
-    if n_features > n_samples:
-        # kernel ridge
-        # w = X.T * inv(X X^t + alpha*Id) y
-        A = np.dot(X, X.T)
-        A.flat[::n_samples + 1] += alpha
-        return np.dot(X.T, linalg.solve(A, y, sym_pos=True, overwrite_a=True))
-    else:
-        # ridge
-        # w = inv(X^t X + alpha*Id) * X.T y
-        A = np.dot(X.T, X)
-        A.flat[::n_features + 1] += alpha
-        return linalg.solve(A, np.dot(X.T, y), sym_pos=True, overwrite_a=True)
 
 
 def _update_code(dictionary, Y, alpha, code=None, Gram=None, method='lars',
@@ -636,14 +619,10 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         X_new array, shape (n_samples, n_components)
             Transformed data
         """
-
-#        if alpha != 0:
-#            raise NotImplemented('SparsePCA.transform only does OLS for now')
-        # TODO: Ridge regression with controllable shrinkage
         n_samples = len(X)
         U = np.zeros((n_samples, self.n_components))
         for k in xrange(n_samples):
-            U[k, :] = _ridge_regression(self.components_.T, X[k, :], alpha)
-        # U = linalg.lstsq(self.components_.T, X.T)[0].T
+            U[k, :] = ridge_regression(self.components_.T, X[k, :], alpha,
+                                       solver='dense_cholesky')
         U /= np.sqrt((U ** 2).sum(axis=0))
         return U
