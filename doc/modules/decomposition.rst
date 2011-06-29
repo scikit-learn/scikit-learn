@@ -263,3 +263,43 @@ of the data.
       C. Boutsidis, E. Gallopoulos, 2008
 
 
+
+.. _DictionaryLearning:
+
+Dictionary Learning
+===================
+
+Dictionary learning is a matrix factorization problem that amounts to finding a
+(usually overcomplete) dictionary that will perform good at sparsely encoding 
+the fitted data.
+
+Representing data as sparse combinations of atoms from an overcomplete
+dictionary is suggested to be the way the mammal primary visual cortex works.
+Consequently, dictionary learning applied on image patches has been shown to 
+give good results in image processing tasks such as image completion,
+inpainting and denoising.
+
+Dictionary learning is an optimization problem solved by alternatively updating
+the sparse code, as a solution to multiple Lasso problems, considering the
+dictionary fixed, and then updating the dictionary to best fit the sparse code.
+
+After using such a procedure to fit the dictionary, transforming the data can
+be done using :class:`Lasso` or :ref:`OMP`. 
+
+
+.. figure:: ../auto_examples/decomposition/images/plot_dict_learning_1.png
+    :target: ../auto_examples/decomposition/plot_dict_learning.html
+    :align: center
+    :scale: 50%
+
+
+.. topic:: Examples:
+
+  * :ref:`example_decomposition_plot_dict_learning_py`
+
+
+.. topic:: References:
+
+  * `"Online dictionary learning for sparse coding" 
+    <http://www.di.ens.fr/sierra/pdfs/icml09.pdf>`_
+    J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009
