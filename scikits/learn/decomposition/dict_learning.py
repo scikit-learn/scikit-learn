@@ -55,7 +55,7 @@ class DictionaryLearning(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    components_: array, [n_components, n_features]
+    components_: array, [n_atoms, n_features]
         sparse components extracted from the data
 
     error_: array
@@ -63,7 +63,9 @@ class DictionaryLearning(BaseEstimator, TransformerMixin):
 
     References
     ----------
-        XXX: Todo
+    J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009: Online dictionary learning
+    for sparse coding (http://www.di.ens.fr/sierra/pdfs/icml09.pdf)
+    
 
     See also
     --------
@@ -140,4 +142,4 @@ class DictionaryLearning(BaseEstimator, TransformerMixin):
         if method == 'omp':
             return orthogonal_mp(self.components_, X.T, **kwargs)
         else:
-            return _update_code_parallel(self.components_.T, X.T, **kwargs)
+            return _update_code_parallel(self.components_.T, X.T, **kwargs).T
