@@ -46,12 +46,12 @@ def compute_componentwise_l1_cross_distances(X):
     X = np.atleast_2d(X)
     n_samples, n_features = X.shape
     n_nonzero_cross_dist = n_samples * (n_samples - 1) / 2
-    ij = np.zeros((n_nonzero_cross_dist, 2), np.int)
+    ij = np.zeros((n_nonzero_cross_dist, 2), dtype=np.int)
     D = np.zeros((n_nonzero_cross_dist, n_features))
     ll_1 = 0
     for k in range(n_samples - 1):
         ll_0 = ll_1
-        ll_1 = ll_0 + n_samples - k -1
+        ll_1 = ll_0 + n_samples - k - 1
         ij[ll_0:ll_1, 0] = k
         ij[ll_0:ll_1, 1] = np.arange(k + 1, n_samples)
         D[ll_0:ll_1] = np.abs(X[k] - X[(k + 1):n_samples])
@@ -86,7 +86,8 @@ def compute_componentwise_l1_pairwise_distances(X, Y):
         raise Exception("X and Y should have the same number of features!")
     else:
         n_features = n_features_X
-    D = (X[:,None,:] - Y[None,:,:]).reshape((n_samples_X * n_samples_Y, n_features))
+    D = (X[:, np.newaxis, :] - Y[np.newaxis, :, :])
+    D = D.reshape((n_samples_X * n_samples_Y, n_features))
 
     return D
 
