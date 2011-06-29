@@ -68,7 +68,7 @@ def strip_accents(s):
 def to_ascii(s):
     """Transform accentuated unicode symbols into ascii or nothing
 
-    Warning: this solution is only suited for roman languages that have a direct
+    Warning: this solution is only suited for languages that have a direct
     transliteration to ASCII symbols.
 
     A better solution would be to use transliteration based on a precomputed
@@ -87,7 +87,7 @@ def strip_tags(s):
 
 
 class RomanPreprocessor(object):
-    """Fast preprocessor suitable for roman languages"""
+    """Fast preprocessor suitable for Latin alphabet text"""
 
     def preprocess(self, unicode_text):
         """Preprocess strings"""
@@ -367,7 +367,6 @@ class CountVectorizer(BaseEstimator):
 
         Parameters
         ----------
-
         raw_documents: iterable
             an iterable which yields either str, unicode or file objects
 
@@ -385,7 +384,6 @@ class CountVectorizer(BaseEstimator):
 
         Parameters
         ----------
-
         raw_documents: iterable
             an iterable which yields either str, unicode or file objects
 
@@ -401,7 +399,6 @@ class CountVectorizer(BaseEstimator):
 
         Parameters
         ----------
-
         raw_documents: iterable
             an iterable which yields either str, unicode or file objects
 
@@ -515,7 +512,6 @@ class Vectorizer(BaseEstimator):
 
         Parameters
         ----------
-
         raw_documents: iterable
             an iterable which yields either str, unicode or file objects
 
@@ -534,7 +530,6 @@ class Vectorizer(BaseEstimator):
 
         Parameters
         ----------
-
         raw_documents: iterable
             an iterable which yields either str, unicode or file objects
 
