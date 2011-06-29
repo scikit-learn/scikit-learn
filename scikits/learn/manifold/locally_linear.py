@@ -227,7 +227,7 @@ def locally_linear_embedding(
             w = Q[:, out_dim + 1:]
             S = w.sum(0)
 
-            S[np.where(abs(S) < H_tol)] = 1
+            S[np.where(abs(S) < hessian_tol)] = 1
             w /= S
 
             nbrs_x, nbrs_y = np.meshgrid(neighbors[i], neighbors[i])
@@ -298,7 +298,7 @@ def locally_linear_embedding(
             h = alpha_i * np.ones(s_i) - np.dot(Vi.T, np.ones(n_neighbors))
 
             norm_h = np.linalg.norm(h)
-            if norm_h < M_tol:
+            if norm_h < modified_tol:
                 h *= 0
             else:
                 h /= norm_h
