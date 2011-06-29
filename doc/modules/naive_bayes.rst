@@ -58,6 +58,7 @@ estimated using maximum likelihood.
 
  * :ref:`example_naive_bayes.py`,
 
+
 Multinomial Naive Bayes
 -----------------------
 
@@ -91,3 +92,37 @@ where :math:`N_{ci}` is the number of times word :math:`i` appears in a document
 of class :math:`c` and :math:`N_{c}` is the total count of words in a document
 of class :math:`c`. The smoothness priors :math:`\alpha_i` and their sum 
 :math:`\alpha` account for words not seen in the learning samples.
+
+
+Bernoulli Naive Bayes
+---------------------
+
+:class:`BernoulliNB` implements the naive Bayes training and classification
+algorithms for data that is distributed according to multivariate Bernoulli
+distributions. It requires samples to be represented as binary-valued/boolean
+feature vectors; if handed any other kind of data, it binarizes it (depending
+on the ``binarize`` parameter).
+
+In the case of text classification, word occurrence vectors (rather than word
+count vectors) may be used to train and use this classifier. `BernoulliNB`
+might perform better on some datasets, especially those with shorter documents,
+because it explicitly penalizes the non-occurrence of words/features in a
+dataset where `MultinomialNB` would only notice a zero count, but for text
+classification `MultinomialNB` will generally be better. It is advisable to
+evaluate both models, if time permits.
+
+.. topic:: References:
+
+ * C.D. Manning, P. Raghavan and H. Schütze (2008). Introduction to
+   Information Retrieval. Cambridge University Press, pp. 234-265.
+
+ * A. McCallum and K. Nigam (1998).
+   `A comparison of event models for naive Bayes text classification.
+   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.46.1529>`_
+   Proc. AAAI/ICML-98 Workshop on Learning for Text Categorization, pp. 41-48.
+
+ * V. Metsis, I. Androutsopoulos and G. Paliouras (2006).
+   `Spam filtering with naive Bayes -- Which naive Bayes?
+   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.61.5542>`_
+   3rd Conf. on Email and Anti-Spam (CEAS).
+

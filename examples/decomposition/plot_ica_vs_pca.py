@@ -37,28 +37,28 @@ from scikits.learn.decomposition import PCA, FastICA
 
 ###############################################################################
 # Generate sample data
-S = np.random.standard_t(1.5, size=(2, 10000))
+S = np.random.standard_t(1.5, size=(10000, 2))
 S[0] *= 2.
 
 # Mix data
-A = [[1, 1], [0, 2]]  # Mixing matrix
+A = np.array([[1, 1], [0, 2]])  # Mixing matrix
 
-X = np.dot(A, S)  # Generate observations
+X = np.dot(S, A.T)  # Generate observations
 
 pca = PCA()
-S_pca_ = pca.fit(X.T).transform(X.T).T
+S_pca_ = pca.fit(X).transform(X)
 
 ica = FastICA()
 S_ica_ = ica.fit(X).transform(X)  # Estimate the sources
 
-S_ica_ /= S_ica_.std(axis=1)[:, np.newaxis]
+S_ica_ /= S_ica_.std(axis=0)
 
 
 ###############################################################################
 # Plot results
 
 def plot_samples(S, axis_list=None):
-    pl.scatter(S[0], S[1], s=2, marker='o', linewidths=0, zorder=10)
+    pl.scatter(S[:,0], S[:,1], s=2, marker='o', linewidths=0, zorder=10)
     if axis_list is not None:
         colors = [(0, 0.6, 0), (0.6, 0, 0)]
         for color, axis in zip(colors, axis_list):
@@ -74,12 +74,12 @@ def plot_samples(S, axis_list=None):
     pl.vlines(0, -3, 3)
     pl.xlim(-3, 3)
     pl.ylim(-3, 3)
-    pl.xlabel('$x$')
-    pl.ylabel('$y$')
+    pl.xlabel('x')
+    pl.ylabel('y')
 
 pl.subplot(2, 2, 1)
 plot_samples(S / S.std())
-pl.title('True Independant Sources')
+pl.title('True Independent Sources')
 
 axis_list = [pca.components_.T, ica.get_mixing_matrix()]
 pl.subplot(2, 2, 2)
@@ -88,7 +88,7 @@ pl.legend(['PCA', 'ICA'], loc='upper left')
 pl.title('Observations')
 
 pl.subplot(2, 2, 3)
-plot_samples(S_pca_ / np.std(S_pca_, axis=-1)[:, np.newaxis])
+plot_samples(S_pca_ / np.std(S_pca_, axis=0))
 pl.title('PCA scores')
 
 pl.subplot(2, 2, 4)

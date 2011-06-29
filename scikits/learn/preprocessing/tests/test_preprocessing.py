@@ -7,18 +7,15 @@ from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_equal
 
+from nose.tools import assert_raises
+
 from scikits.learn.preprocessing import Binarizer
 from scikits.learn.preprocessing import KernelCenterer
 from scikits.learn.preprocessing import LabelBinarizer
-from scikits.learn.preprocessing import LengthNormalizer
 from scikits.learn.preprocessing import Normalizer
+from scikits.learn.preprocessing import normalize
 from scikits.learn.preprocessing import Scaler
 from scikits.learn.preprocessing import scale
-
-from scikits.learn.preprocessing.sparse import Normalizer as SparseNormalizer
-from scikits.learn.preprocessing.sparse import LengthNormalizer as \
-                                               SparseLengthNormalizer
-from scikits.learn.preprocessing.sparse import Binarizer as SparseBinarizer
 
 from scikits.learn import datasets
 from scikits.learn.linear_model.stochastic_gradient import SGDClassifier
@@ -44,98 +41,195 @@ def test_scaler():
     assert_array_almost_equal(X_scaled.mean(axis=0), 0.0)
     assert_array_almost_equal(X_scaled.std(axis=0), 1.0)
 
-    X = np.random.randn(4, 5)
-
+    # Test with 1D list
+    X = [0., 1., 2, 0.4, 1.]
     scaler = Scaler()
     X_scaled = scaler.fit(X).transform(X, copy=False)
-    assert_array_almost_equal(X_scaled.mean(axis=0), 5 * [0.0])
-    assert_array_almost_equal(X_scaled.std(axis=0), 5 * [1.0])
-    # Check that X has not been copied
-    assert X_scaled is X
+    assert_array_almost_equal(X_scaled.mean(axis=0), 0.0)
+    assert_array_almost_equal(X_scaled.std(axis=0), 1.0)
 
+    X_scaled = scale(X)
+    assert_array_almost_equal(X_scaled.mean(axis=0), 0.0)
+    assert_array_almost_equal(X_scaled.std(axis=0), 1.0)
+
+    # Test with 2D data
+    X = np.random.randn(4, 5)
+    X[:, 0] = 0.0  # first feature is always of zero
+
+    scaler = Scaler()
     X_scaled = scaler.fit(X).transform(X, copy=True)
+    assert not np.any(np.isnan(X_scaled))
+
     assert_array_almost_equal(X_scaled.mean(axis=0), 5 * [0.0])
-    assert_array_almost_equal(X_scaled.std(axis=0), 5 * [1.0])
+    assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
     # Check that X has not been copied
     assert X_scaled is not X
 
     X_scaled = scale(X, axis=1, with_std=False)
+    assert not np.any(np.isnan(X_scaled))
     assert_array_almost_equal(X_scaled.mean(axis=1), 4 * [0.0])
     X_scaled = scale(X, axis=1, with_std=True)
+    assert not np.any(np.isnan(X_scaled))
+    assert_array_almost_equal(X_scaled.mean(axis=1), 4 * [0.0])
     assert_array_almost_equal(X_scaled.std(axis=1), 4 * [1.0])
     # Check that the data hasn't been modified
     assert X_scaled is not X
 
+    X_scaled = scaler.fit(X).transform(X, copy=False)
+    assert not np.any(np.isnan(X_scaled))
+    assert_array_almost_equal(X_scaled.mean(axis=0), 5 * [0.0])
+    assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
+    # Check that X has not been copied
+    assert X_scaled is X
 
-def test_normalizer():
-    X_ = np.random.randn(4, 5)
+    X = np.random.randn(4, 5)
+    X[:, 0] = 1.0  # first feature is a constant, non zero feature
+    scaler = Scaler()
+    X_scaled = scaler.fit(X).transform(X, copy=True)
+    assert not np.any(np.isnan(X_scaled))
+    assert_array_almost_equal(X_scaled.mean(axis=0), 5 * [0.0])
+    assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
+    # Check that X has not been copied
+    assert X_scaled is not X
 
-    for klass, init in ((Normalizer, np.array),
-                        (SparseNormalizer, sp.csr_matrix)):
 
-        X = init(X_.copy())
+def test_scaler_without_centering():
+    rng = np.random.RandomState(42)
+    X = rng.randn(4, 5)
+    X[:, 0] = 0.0  # first feature is always of zero
 
-        normalizer = klass()
-        X_norm = normalizer.transform(X, copy=True)
+    scaler = Scaler(with_mean=False)
+    X_scaled = scaler.fit(X).transform(X, copy=True)
+    assert not np.any(np.isnan(X_scaled))
+
+    assert_array_almost_equal(
+        X_scaled.mean(axis=0), [0., -0.01,  2.24, -0.35, -0.78], 2)
+    assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
+    # Check that X has not been copied
+    assert X_scaled is not X
+
+    X_scaled = scale(X, with_mean=False)
+    assert not np.any(np.isnan(X_scaled))
+
+    assert_array_almost_equal(
+        X_scaled.mean(axis=0), [0., -0.01,  2.24, -0.35, -0.78], 2)
+    assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
+    # Check that X has not been copied
+    assert X_scaled is not X
+
+
+def test_normalizer_l1():
+    np.random.seed(0)
+    X_orig = np.random.randn(4, 5)
+    X_orig[3, :] = 0.0
+
+    # check inputs that support the no-copy optim
+    for init in (np.array, sp.csr_matrix):
+
+        X = init(X_orig.copy())
+
+        normalizer = Normalizer(norm='l1', copy=True)
+        X_norm = normalizer.transform(X)
         assert X_norm is not X
-        X_norm = toarray(X_norm)
-        assert_array_almost_equal(
-            np.abs(X_norm).sum(axis=1), np.ones(X.shape[0]))
+        X_norm1 = toarray(X_norm)
 
-        normalizer = klass()
-        X_norm = normalizer.transform(X, copy=False)
+        normalizer = Normalizer(norm='l1', copy=False)
+        X_norm = normalizer.transform(X)
         assert X_norm is X
+        X_norm2 = toarray(X_norm)
+
+        for X_norm in (X_norm1, X_norm2):
+            row_sums = np.abs(X_norm).sum(axis=1)
+            for i in range(3):
+                assert_almost_equal(row_sums[i], 1.0)
+            assert_almost_equal(row_sums[3], 0.0)
+
+    # check input for which copy=False won't prevent a copy
+    for init in (sp.coo_matrix, sp.csc_matrix, sp.lil_matrix):
+        X = init(X_orig.copy())
+        X_norm = normalizer = Normalizer(norm='l2', copy=False).transform(X)
+
+        assert X_norm is not X
+        assert isinstance(X_norm, sp.csr_matrix)
+
         X_norm = toarray(X_norm)
-        assert_array_almost_equal(
-            np.abs(X_norm).sum(axis=1), np.ones(X.shape[0]))
+        for i in xrange(3):
+            assert_almost_equal(row_sums[i], 1.0)
+        assert_almost_equal(la.norm(X_norm[3]), 0.0)
 
 
-def test_length_normalizer():
-    X_ = np.random.randn(4, 5)
+def test_normalizer_l2():
+    np.random.seed(0)
+    X_orig = np.random.randn(4, 5)
+    X_orig[3, :] = 0.0
 
-    for klass, init in ((LengthNormalizer, np.array),
-                        (SparseLengthNormalizer, sp.csr_matrix)):
+    # check inputs that support the no-copy optim
+    for init in (np.array, sp.csr_matrix):
 
-        X = init(X_.copy())
+        X = init(X_orig.copy())
 
-        normalizer = klass()
-        X_norm1 = normalizer.transform(X, copy=True)
+        normalizer = Normalizer(norm='l2', copy=True)
+        X_norm1 = normalizer.transform(X)
         assert X_norm1 is not X
         X_norm1 = toarray(X_norm1)
 
-        normalizer = klass()
-        X_norm2 = normalizer.transform(X, copy=False)
+        normalizer = Normalizer(norm='l2', copy=False)
+        X_norm2 = normalizer.transform(X)
         assert X_norm2 is X
         X_norm2 = toarray(X_norm2)
 
         for X_norm in (X_norm1, X_norm2):
-            for i in xrange(len(X_norm)):
+            for i in xrange(3):
                 assert_almost_equal(la.norm(X_norm[i]), 1.0)
+            assert_almost_equal(la.norm(X_norm[3]), 0.0)
+
+    # check input for which copy=False won't prevent a copy
+    for init in (sp.coo_matrix, sp.csc_matrix, sp.lil_matrix):
+        X = init(X_orig.copy())
+        X_norm = normalizer = Normalizer(norm='l2', copy=False).transform(X)
+
+        assert X_norm is not X
+        assert isinstance(X_norm, sp.csr_matrix)
+
+        X_norm = toarray(X_norm)
+        for i in xrange(3):
+            assert_almost_equal(la.norm(X_norm[i]), 1.0)
+        assert_almost_equal(la.norm(X_norm[3]), 0.0)
+
+
+def test_normalize_errors():
+    """Check that invalid arguments yield ValueError"""
+    assert_raises(ValueError, normalize, [[0]], axis=2)
+    assert_raises(ValueError, normalize, [[0]], norm='l3')
 
 
 def test_binarizer():
-    X_ = np.array([[1, 0, 5],
-                  [2, 3, 0]])
+    X_ = np.array([[1, 0, 5], [2, 3, 0]])
 
-    for klass, init in ((Binarizer, np.array),
-                        (SparseBinarizer, sp.csr_matrix)):
+    for init in (np.array, sp.csr_matrix):
 
         X = init(X_.copy())
 
-        binarizer = klass(threshold=2.0)
-        X_bin = toarray(binarizer.transform(X, copy=True))
+        binarizer = Binarizer(threshold=2.0, copy=True)
+        X_bin = toarray(binarizer.transform(X))
         assert_equal(np.sum(X_bin == 0), 4)
         assert_equal(np.sum(X_bin == 1), 2)
 
-        binarizer = klass()
-        X_bin = binarizer.transform(X, copy=True)
+        binarizer = Binarizer(copy=True).fit(X)
+        X_bin = toarray(binarizer.transform(X))
+        assert X_bin is not X
+        assert_equal(np.sum(X_bin == 0), 2)
+        assert_equal(np.sum(X_bin == 1), 4)
+
+        binarizer = Binarizer(copy=True)
+        X_bin = binarizer.transform(X)
         assert X_bin is not X
         X_bin = toarray(X_bin)
         assert_equal(np.sum(X_bin == 0), 2)
         assert_equal(np.sum(X_bin == 1), 4)
 
-        binarizer = klass()
-        X_bin = binarizer.transform(X, copy=False)
+        binarizer = Binarizer(copy=False)
+        X_bin = binarizer.transform(X)
         assert X_bin is X
         X_bin = toarray(X_bin)
         assert_equal(np.sum(X_bin == 0), 2)
@@ -174,6 +268,15 @@ def test_label_binarizer_multilabel():
     got = lb.fit_transform(inp)
     assert_array_equal(expected, got)
     assert_equal(lb.inverse_transform(got), inp)
+
+
+def test_label_binarizer_errors():
+    """Check that invalid arguments yield ValueError"""
+    one_class = np.array([0, 0, 0, 0])
+    lb = LabelBinarizer().fit(one_class)
+
+    multi_label = [(2, 3), (0,), (0, 2)]
+    assert_raises(ValueError, lb.transform, multi_label)
 
 
 def test_label_binarizer_iris():

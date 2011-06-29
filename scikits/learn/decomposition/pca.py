@@ -178,12 +178,12 @@ class PCA(BaseEstimator, TransformerMixin):
         self.whiten = whiten
 
     def fit(self, X, y=None, **params):
-        """Fit the model from data in X.
+        """Fit the model with X.
 
         Parameters
         ----------
         X: array-like, shape (n_samples, n_features)
-            Training vector, where n_samples in the number of samples
+            Training data, where n_samples in the number of samples
             and n_features is the number of features.
 
         Returns
@@ -195,12 +195,12 @@ class PCA(BaseEstimator, TransformerMixin):
         return self
 
     def fit_transform(self, X, y=None, **params):
-        """Fit the model from data in X.
+        """Fit the model with X and apply the dimensionality reduction on X.
 
         Parameters
         ----------
         X: array-like, shape (n_samples, n_features)
-            Training vector, where n_samples in the number of samples
+            Training data, where n_samples in the number of samples
             and n_features is the number of features.
 
         Returns
@@ -259,13 +259,35 @@ class PCA(BaseEstimator, TransformerMixin):
         return (U, S, V)
 
     def transform(self, X):
-        """Apply the dimension reduction learned on the train data."""
+        """Apply the dimensionality reduction on X.
+
+        Parameters
+        ----------
+        X: array-like, shape (n_samples, n_features)
+            New data, where n_samples in the number of samples
+            and n_features is the number of features.
+
+        Returns
+        -------
+        X_new array-like, shape (n_samples, n_components)
+        """
         X_transformed = X - self.mean_
         X_transformed = np.dot(X_transformed, self.components_.T)
         return X_transformed
 
     def inverse_transform(self, X):
-        """Return an input X_original whose transform would be X
+        """Transform data back to its original space, i.e.,
+        return an input X_original whose transform would be X
+
+        Parameters
+        ----------
+        X: array-like, shape (n_samples, n_components)
+            New data, where n_samples in the number of samples
+            and n_components is the number of components.
+
+        Returns
+        -------
+        X_original array-like, shape (n_samples, n_features)
 
         Note: if whitening is enabled, inverse_transform does not compute the
         exact inverse operation as transform.
@@ -455,7 +477,18 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        """Apply the dimension reduction learned on the training data."""
+        """Apply the dimensionality reduction on X.
+
+        Parameters
+        ----------
+        X: array-like or scipy.sparse matrix, shape (n_samples, n_features)
+            New data, where n_samples in the number of samples
+            and n_features is the number of features.
+
+        Returns
+        -------
+        X_new array-like, shape (n_samples, n_components)
+        """
         if self.mean_ is not None:
             X = X - self.mean_
 
@@ -463,7 +496,22 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         return X
 
     def inverse_transform(self, X):
-        """Return an reconstructed input whose transform would be X"""
+        """Transform data back to its original space, i.e.,
+        return an input X_original whose transform would be X
+
+        Parameters
+        ----------
+        X: array-like or scipy.sparse matrix, shape (n_samples, n_components)
+            New data, where n_samples in the number of samples
+            and n_components is the number of components.
+
+        Returns
+        -------
+        X_original array-like, shape (n_samples, n_features)
+
+        Note: if whitening is enabled, inverse_transform does not compute the
+        exact inverse operation as transform.
+        """
         X_original = safe_sparse_dot(X, self.components_)
         if self.mean_ is not None:
             X_original = X_original + self.mean_

@@ -111,6 +111,13 @@ def test_lasso_lars_vs_lasso_cd(verbose=False):
         error = np.linalg.norm(c - lasso_cd.coef_)
         assert error < 0.01
 
+    # similar test, with the classifiers
+    for alpha in np.linspace(1e-2, 1 - 1e-2):
+       clf1 = linear_model.LassoLARS(alpha=alpha).fit(X, y)
+       clf2 = linear_model.Lasso(alpha=alpha).fit(X, y, tol=1e-8)
+       err = np.linalg.norm(clf1.coef_ - clf2.coef_)
+       assert err < 1e-3
+
 def test_lasso_lars_vs_lasso_cd_early_stopping(verbose=False):
     """
     Test that LassoLars and Lasso using coordinate descent give the

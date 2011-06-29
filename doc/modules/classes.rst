@@ -150,6 +150,7 @@ Naive Bayes
 
    naive_bayes.GaussianNB
    naive_bayes.MultinomialNB
+   naive_bayes.BernoulliNB
 
 
 Nearest Neighbors
@@ -266,6 +267,7 @@ Classification metrics
    metrics.precision_recall_curve
    metrics.zero_one_score
    metrics.zero_one
+   metrics.hinge_loss
 
 
 Regression metrics
@@ -436,6 +438,7 @@ Cross Validation
    cross_val.LeaveOneLabelOut
    cross_val.LeavePLabelOut
    cross_val.Bootstrap
+   cross_val.ShuffleSplit
 
 
 Grid Search
@@ -526,6 +529,37 @@ From text
    feature_extraction.text.CountVectorizer
    feature_extraction.text.TfidfTransformer
    feature_extraction.text.Vectorizer
+
+
+Preprocessing and normalization
+===============================
+
+.. automodule:: scikits.learn.preprocessing
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: scikits.learn
+
+.. autosummary::
+
+   :toctree: generated/
+   :template: class.rst
+
+   preprocessing.Scaler
+   preprocessing.Normalizer
+   preprocessing.Binarizer
+   preprocessing.LabelBinarizer
+   preprocessing.KernelCenterer
+
+
+.. autosummary::
+
+   :toctree: generated/
+   :template: function.rst
+
+   preprocessing.scale
+   preprocessing.normalize
+   preprocessing.binarize
 
 
 Manifold learning

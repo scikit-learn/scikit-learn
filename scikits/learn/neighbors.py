@@ -2,18 +2,22 @@
 
 # Author: Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #         Alexandre Gramfort <alexandre.gramfort@inria.fr>
+#         Sparseness support by Lars Buitinck <L.J.Buitinck@uva.nl>
 #
-# License: BSD, (C) INRIA
+# License: BSD, (C) INRIA, University of Amsterdam
 
 import numpy as np
+from scipy import linalg
+from scipy.sparse import csr_matrix, issparse
 
 from .base import BaseEstimator, ClassifierMixin, RegressorMixin
 from .ball_tree import BallTree
 from .metrics import euclidean_distances
+from .utils import safe_asanyarray, atleast2d_or_csr
 
 
 class NeighborsClassifier(BaseEstimator, ClassifierMixin):
-    """Classifier implementing k-Nearest Neighbor Algorithm.
+    """Classifier implementing the k-nearest neighbors (k-NN) algorithm.
 
     Parameters
     ----------
@@ -30,7 +34,8 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
         construct a BallTree while 'brute'will perform brute-force
         search. 'auto' will guess the most appropriate based on current
         dataset.  See Discussion below for notes on choosing the optimal
-        method.
+        method. Fitting on sparse input will override the setting of this
+        parameter.
 
     Examples
     --------
@@ -52,33 +57,32 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
     The optimal algorithm for a given dataset is a complicated choice, and
     depends on a number of factors:
     * number of samples N (n_samples).
-      'brute' query time grows as O[N], while
-      'ball_tree' query time grows as O[log(N)]
+      * 'brute' query time grows as O[N], while
+      * 'ball_tree' query time grows as O[log(N)]
     * dimensionality D (n_features)
       Intrinsic dimensionality refers to the dimension of a manifold which
       is linearly or nonlinearly embedded within the parameter space
-      'brute' query time grows as O[D], and is unaffected by the value of d.
-      'ball_tree' query time may grow faster or slower than this, depending
-      on the structure of the data.
+      * 'brute' query time grows as O[D], and is unaffected by the value of d.
+      * 'ball_tree' query time may grow faster or slower than this, depending
+        on the structure of the data.
     * data structure: intrinsic dimensionality of the data and/or sparsity
       of the data. Intrinsic dimensionality refers to the dimension d<=D
       of a manifold on which the data lies, which can be linearly or
       nonlinearly embedded in the parameter space. Sparsity refers to the
-      degree to which the data fills the parameter space.
-      'brute' query time is unchanged by data structure.
-      'ball_tree' query time is greatly influenced by data structure.
-      In general, the more sparse the data is, and the smaller the intrinsic
-      dimension d, the faster the ball_tree algorithm will be compared to
-      a brute-force search.  For data which densely fills the parameter
+      degree to which the data fills the parameter space (this is to be
+      distinguished from the concept as used in "sparse" matrices.  The data
+      matrix may have no zero entries, but the structure can still be
+      "sparse" in this sense).
+      * 'brute' query time is unchanged by data structure.
+      * 'ball_tree' query time is greatly influenced by data structure.
+        In general, the more sparse the data is, and the smaller the intrinsic
+        dimension d, the faster the ball_tree algorithm will be compared to
+        a brute-force search.  For data which densely fills the parameter
       space, brute-force is generally a better choice.
-    * number of query points.
-      The ball_tree algorithm requires a one-time building phase.  For very
-      few queries, the time to build the tree may overwhelm any gain during
-      the query time.
     * number of neighbors k requested for a query point.
-      'brute' query time is unaffected by the value of k
-      'ball_tree' query time is slower for k>1, mainly due to the internal
-      queueing and sorting that takes place during the query.
+      * 'brute' query time is unaffected by the value of k
+      * 'ball_tree' query time is slower for k>1, mainly due to the internal
+        queueing and sorting that takes place during the query.
     * leaf_size of the ball_tree
       The leaf_size parameter controls the point at which the ball_tree
       algorithm switches from a tree-based query to a brute-force search.
@@ -87,11 +91,15 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
       O[log(n)] becomes less significant.  At some point, depending on all
       the above-mentioned factors, brute-force becomes more efficient.
       The parameter leaf_size sets this threshold.
+    * number of query points.
+      The ball_tree algorithm requires a one-time building phase.  For very
+      few queries, the time to build the tree may overwhelm any gain during
+      the query time.
 
     Currently, the algorithm='auto' option chooses between 'brute' and
     'ball_tree' using an unsophisticated rubric.  In practice, it is
     suggested that the user experiment with different choices of
-    algorithm and leaf_size to determine the optimal configuration.
+    `algorithm` and `leaf_size` to determine the optimal configuration.
 
     References
     ----------
@@ -108,22 +116,25 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             Training data.
 
-        y : array-like, shape = [n_samples]
+        y : {array-like, sparse matrix}, shape = [n_samples]
             Target values, array of integer values.
 
         params : list of keyword, optional
             Overwrite keywords from __init__
         """
-        X = np.asanyarray(X)
+        X = safe_asanyarray(X)
         if y is None:
             raise ValueError("y must not be None")
         self._y = np.asanyarray(y)
         self._set_params(**params)
 
-        if self.algorithm == 'ball_tree' or \
+        if issparse(X):
+            self.ball_tree = None
+            self._fit_X = X.tocsr()
+        elif self.algorithm == 'ball_tree' or \
            (self.algorithm == 'auto' and X.shape[1] < 20):
             self.ball_tree = BallTree(X, self.leaf_size)
         else:
@@ -183,7 +194,7 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
 
         """
         self._set_params(**params)
-        X = np.atleast_2d(X)
+        X = atleast2d_or_csr(X)
         if self.ball_tree is None:
             dist = euclidean_distances(X, self._fit_X, squared=True)
             # XXX: should be implemented with a partial sort
@@ -213,7 +224,7 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
         labels: array
             List of class labels (one for each data sample).
         """
-        X = np.atleast_2d(X)
+        X = atleast2d_or_csr(X)
         self._set_params(**params)
 
         # get neighbors
@@ -302,7 +313,7 @@ class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
         y: array
             List of target values (one for each data sample).
         """
-        X = np.atleast_2d(np.asanyarray(X))
+        X = atleast2d_or_csr(X)
         self._set_params(**params)
 
         # compute nearest neighbors
@@ -353,7 +364,6 @@ def barycenter_weights(X, Z, reg=1e-3):
     -----
     See developers note for more information.
     """
-    from scipy import linalg
     X, Z = map(np.asanyarray, (X, Z))
     n_samples, n_neighbors = X.shape[0], Z.shape[1]
     if X.dtype.kind == 'i':
@@ -418,8 +428,6 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', reg=1e-3):
             [ 0.,  1.,  1.],
             [ 1.,  0.,  1.]])
     """
-    from scipy import sparse
-
     if isinstance(X, BallTree):
         ball_tree = X
         X = ball_tree.data
@@ -432,16 +440,16 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', reg=1e-3):
     A_indptr = np.arange(0, n_nonzero + 1, n_neighbors)
 
     # construct CSR matrix representation of the k-NN graph
-    if mode is 'connectivity':
+    if mode == 'connectivity':
         A_data = np.ones((n_samples, n_neighbors))
         A_ind = ball_tree.query(
             X, k=n_neighbors, return_distance=False)
 
-    elif mode is 'distance':
+    elif mode == 'distance':
         data, ind = ball_tree.query(X, k=n_neighbors + 1)
         A_data, A_ind = data[:, 1:], ind[:, 1:]
 
-    elif mode is 'barycenter':
+    elif mode == 'barycenter':
         ind = ball_tree.query(
             X, k=n_neighbors + 1, return_distance=False)
         A_ind = ind[:, 1:]
@@ -452,8 +460,5 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', reg=1e-3):
             'Unsupported mode, must be one of "connectivity", '
             '"distance" or "barycenter" but got %s instead' % mode)
 
-    A = sparse.csr_matrix(
-        (A_data.reshape(-1), A_ind.reshape(-1), A_indptr),
-        shape=(n_samples, n_samples))
-
-    return A
+    return csr_matrix((A_data.ravel(), A_ind.ravel(), A_indptr),
+                      shape=(n_samples, n_samples))

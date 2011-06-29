@@ -1,4 +1,3 @@
-
 import numpy as np
 import scipy.sparse as sp
 
@@ -9,6 +8,14 @@ def safe_asanyarray(X, dtype=None, order=None):
         #return type(X)(X, dtype)
     else:
         return np.asanyarray(X, dtype, order)
+
+
+def atleast2d_or_csr(X):
+    """Like numpy.atleast_2d, but converts sparse matrices to CSR format"""
+    if sp.issparse(X):
+        return X.tocsr()
+    else:
+        return np.atleast_2d(X)
 
 
 def check_random_state(seed):
@@ -38,11 +45,18 @@ def check_arrays(*arrays, **options):
         Python lists or tuples occurring in arrays are converted to 1D numpy
         arrays.
 
-    force_csr : boolean, False by default
-        If force_csr is True, any scipy.sparse matrix is converted to
-        Compressed Sparse Row representation.
+    sparse_format : 'csr' or 'csc', None by default
+        If not None, any scipy.sparse matrix is converted to
+        Compressed Sparse Rows or Compressed Sparse Columns representations.
+
+    copy : boolean, False by default
+        If copy is True, ensure that returned arrays are copies of the original
+        (if not already converted to another format earlier in the process).
     """
-    force_csr = options.pop('force_csr', False)
+    sparse_format = options.pop('sparse_format', None)
+    if sparse_format not in (None, 'csr', 'csc'):
+        raise ValueError('Unexpected sparse format: %r' % sparse_format)
+    copy = options.pop('copy', False)
     if options:
         raise ValueError("Unexpected kw arguments: %r" % options.keys())
 
@@ -56,6 +70,7 @@ def check_arrays(*arrays, **options):
 
     checked_arrays = []
     for array in arrays:
+        array_orig = array
         if array is None:
             # special case: ignore optional y=None kwarg pattern
             checked_arrays.append(array)
@@ -70,12 +85,16 @@ def check_arrays(*arrays, **options):
             raise ValueError("Found array with dim %d. Expected %d" % (
                 size, n_samples))
 
-        if hasattr(array, 'tocsr'):
-            if force_csr:
+        if sp.issparse(array):
+            if sparse_format == 'csr':
                 array = array.tocsr()
+            elif sparse_format == 'csc':
+                array = array.tocsc()
         else:
             array = np.asanyarray(array)
 
+        if copy and array is array_orig:
+            array = array.copy()
         checked_arrays.append(array)
 
     return checked_arrays
@@ -117,6 +136,7 @@ def resample(*arrays, **options):
       >>> from scipy.sparse import coo_matrix
       >>> X_sparse = coo_matrix(X)
 
+      >>> from scikits.learn.utils import resample
       >>> X, X_sparse, y = resample(X, X_sparse, y, random_state=0)
       >>> X
       array([[ 1.,  0.],
@@ -163,7 +183,9 @@ def resample(*arrays, **options):
         raise ValueError("Cannot sample %d out of arrays with dim %d" % (
             max_n_samples, n_samples))
 
-    arrays = check_arrays(*arrays, force_csr=True)
+    # To cope with Python 2.5 syntax limitations
+    kwargs = dict(sparse_format='csr')
+    arrays = check_arrays(*arrays, **kwargs)
 
     if replace:
         indices = random_state.randint(0, n_samples, size=(max_n_samples,))
@@ -217,6 +239,7 @@ def shuffle(*arrays, **options):
       >>> from scipy.sparse import coo_matrix
       >>> X_sparse = coo_matrix(X)
 
+      >>> from scikits.learn.utils import shuffle
       >>> X, X_sparse, y = shuffle(X, X_sparse, y, random_state=0)
       >>> X
       array([[ 0.,  0.],

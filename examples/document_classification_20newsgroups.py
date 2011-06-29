@@ -45,7 +45,8 @@ from scikits.learn.feature_extraction.text import Vectorizer
 from scikits.learn.linear_model import RidgeClassifier
 from scikits.learn.svm.sparse import LinearSVC
 from scikits.learn.linear_model.sparse import SGDClassifier
-from scikits.learn.naive_bayes import MultinomialNB
+from scikits.learn.naive_bayes import BernoulliNB, MultinomialNB
+from scikits.learn.neighbors import NeighborsClassifier
 from scikits.learn import metrics
 
 
@@ -146,7 +147,8 @@ def benchmark(clf):
     print
     return score, train_time, test_time
 
-for clf, name in ((RidgeClassifier(), "Ridge Classifier"),):
+for clf, name in ((RidgeClassifier(), "Ridge Classifier"),
+                  (NeighborsClassifier(n_neighbors=10), "kNN")):
     print 80*'='
     print name
     results = benchmark(clf)
@@ -168,7 +170,8 @@ print "Elastic-Net penalty"
 sgd_results = benchmark(SGDClassifier(alpha=.0001, n_iter=50,
                                       penalty="elasticnet"))
 
-# Train sparse MultinomialNB
+# Train sparse Naive Bayes classifiers
 print 80 * '='
-print "MultinomialNB penalty"
+print "Naive Bayes"
 mnnb_results = benchmark(MultinomialNB(alpha=.01))
+bnb_result = benchmark(BernoulliNB(alpha=.01))

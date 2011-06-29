@@ -81,7 +81,7 @@ def locally_linear_embedding(
     elif eigen_solver == 'lobpcg':
         from scipy.sparse import linalg, eye
         # M = (I-W)' (I-W)
-        A = eye(*W.shape, format=W.format) - W
+        A = eye(W.shape[0], W.shape[1], format=W.format) - W
         A = np.dot(A.T, A).tocsr()
 
         # initial approximation to the eigenvectors

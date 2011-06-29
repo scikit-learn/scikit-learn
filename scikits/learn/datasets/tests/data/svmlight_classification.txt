@@ -1,0 +1,6 @@
+# comment
+# note: the next line contains a tab
+1.0 2:2.5 	   10:-5.2 15:1.5 # and an inline comment
+2.0 5:1.0 12:-3 
+# another comment
+3.0 20:27

@@ -34,6 +34,7 @@ def test_check_arrays_value_errors():
     assert_raises(ValueError, check_arrays, 0, [0, 1])
     assert_raises(ValueError, check_arrays, [0], 0)
     assert_raises(ValueError, check_arrays, [0, 1], [0, 1], meaning_of_life=42)
+    assert_raises(ValueError, check_arrays, [0], [0], sparse_format='fake')
 
 
 def test_resample_value_errors():
