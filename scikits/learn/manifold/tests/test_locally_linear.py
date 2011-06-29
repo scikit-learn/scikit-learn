@@ -17,7 +17,7 @@ def test_lle_simple_grid():
     reconstruction_error = np.linalg.norm(np.dot(N, X) - X, 'fro')
     assert reconstruction_error < tol
 
-    for solver in ('dense', 'lobpcg'):
+    for solver in ('dense', 'lobpcg', 'arpack'):
         clf.fit(X, eigen_solver=solver)
         reconstruction_error = np.linalg.norm(
             np.dot(N, clf.embedding_) - clf.embedding_, 'fro') ** 2
@@ -38,7 +38,7 @@ def test_lle_manifold():
     reconstruction_error = np.linalg.norm(np.dot(N, X) - X)
     assert reconstruction_error < tol
 
-    for solver in ('dense', 'lobpcg'):
+    for solver in ('dense', 'lobpcg', 'arpack'):
         clf.fit(X, eigen_solver=solver)
         reconstruction_error = np.linalg.norm(
             np.dot(N, clf.embedding_) - clf.embedding_, 'fro') ** 2
