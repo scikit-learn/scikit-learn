@@ -281,7 +281,7 @@ column is always zero.
 Orthogonal Matching Pursuit (OMP)
 =================================
 `OMP` is an algorithm for approximating the fit of a linear model with
-constraints imposed on the number of non-zero coefficients (ie. the L0
+constraints imposed on the number of non-zero coefficients (ie. the L:sub:`0`
 pseudo-norm). 
 
 While :ref:`Lasso`-style penalties do tend to shrink coefficients towards zero,
@@ -294,11 +294,14 @@ the optimum solution vector with a fixed number of non-zero elements:
 Alternatively, orthogonal matching pursuit can target a specific error instead
 of a specific number of non-zero coefficients. This can be expressed as:
 
-.. math:: \text{arg,min} ||\gamma||_0 subject to ||y-X\gamma||^2 \leq \epsilon
+.. math:: \text{arg\,min} ||\gamma||_0 \text{ subject to } ||y-X\gamma||_2^2 \leq \vareps
 
 
 OMP is based on a greedy algorithm that includes at each step the atom most
-highly correlated with the current residual.
+highly correlated with the current residual. It is similar to the simpler
+matching pursuit (MP) method, but better in that at each iteration, the
+residual is recomputed using an orthogonal projection on the space of the
+chosen dictionary elements. 
 
 
 .. topic:: Examples:
@@ -309,9 +312,9 @@ highly correlated with the current residual.
 
  * http://www.cs.technion.ac.il/~ronrubin/Publications/KSVX-OMP-v2.pdf
 
- * S. G. Mallat, Z. Zhang, Matching pursuits with time-frequency dictionaries,
- IEEE Transactions on Signal Processing, Vol. 41, No. 12. (December 1993), pp. 
- 3397-3415. http://blanche.polytechnique.fr/~mallat/papiers/MallatPursuit93.pdf
+ * `Matching pursuits with time-frequency dictionaries
+   <http://blanche.polytechnique.fr/~mallat/papiers/MallatPursuit93.pdf>`_,
+   S. G. Mallat, Z. Zhang, 
 
 Bayesian Regression
 ===================
