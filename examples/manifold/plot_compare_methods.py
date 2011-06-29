@@ -16,6 +16,7 @@ from time import time
 import numpy
 import pylab
 from mpl_toolkits.mplot3d import Axes3D
+from matplotlib.ticker import NullFormatter
 
 from scikits.learn import manifold, datasets
 
@@ -52,5 +53,7 @@ for i, method in enumerate(methods):
     ax = fig.add_subplot(323 + i)
     ax.scatter(Y[:, 0], Y[:, 1], c=color)
     ax.set_title("method = %s" % methods[i])
+    ax.xaxis.set_major_formatter(NullFormatter())
+    ax.yaxis.set_major_formatter(NullFormatter())
 
 pylab.show()

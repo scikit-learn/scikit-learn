@@ -2,14 +2,15 @@
 #          Mathieu Blondel
 #
 # License: BSD Style.
-"""Utilities to build dense feature vectors from text documents"""
+"""Utilities to build feature vectors from text documents"""
 
 from operator import itemgetter
 import re
 import unicodedata
 import numpy as np
-from ..base import BaseEstimator
-from ..preprocessing.sparse import Normalizer
+import scipy.sparse as sp
+from ..base import BaseEstimator, TransformerMixin
+from ..preprocessing import Normalizer
 
 ENGLISH_STOP_WORDS = set([
     "a", "about", "above", "across", "after", "afterwards", "again", "against",
@@ -209,14 +210,10 @@ class CountVectorizer(BaseEstimator):
     This implementation produces a sparse representation of the counts using
     scipy.sparse.coo_matrix.
 
-    If you do not provide an a-priori dictionary and you do not use
-    an analyzer that does some kind of feature selection then the number of
-    features (the vocabulary size found by analysing the data) might be very
-    large and the count vectors might not fit in memory.
-
-    For this case it is either recommended to use the sparse.CountVectorizer
-    variant of this class or a HashingVectorizer that will reduce the
-    dimensionality to an arbitrary number by using random projection.
+    If you do not provide an a-priori dictionary and you do not use an analyzer
+    that does some kind of feature selection then the number of features will
+    be equal to the vocabulary size found by analysing the data. The default
+    analyzer does simple stop word filtering for English.
 
     Parameters
     ----------
@@ -253,8 +250,6 @@ class CountVectorizer(BaseEstimator):
         self.max_features = max_features
 
     def _term_count_dicts_to_matrix(self, term_count_dicts, vocabulary):
-
-        import scipy.sparse as sp
         i_indices = []
         j_indices = []
         values = []
@@ -287,7 +282,8 @@ class CountVectorizer(BaseEstimator):
         max_df = self.max_df
         max_features = self.max_features
 
-        # TODO: parallelize the following loop with joblib
+        # TODO: parallelize the following loop with joblib?
+        # (see XXX up ahead)
         for doc in raw_documents:
             term_count_dict = {}  # term => count in doc
 
@@ -344,7 +340,8 @@ class CountVectorizer(BaseEstimator):
         # result of document conversion to term_count_dict
         term_counts_per_doc = []
 
-        # TODO: parallelize the following loop with joblib
+        # XXX @larsmans tried to parallelize the following loop with joblib.
+        # The result was some 20% slower than the serial version.
         for doc in raw_documents:
             term_count_dict = {}  # term => count in doc
 
@@ -412,7 +409,7 @@ class CountVectorizer(BaseEstimator):
         return self._build_vectors(raw_documents)
 
 
-class TfidfTransformer(BaseEstimator):
+class TfidfTransformer(BaseEstimator, TransformerMixin):
     """Transform a count matrix to a TF or TF-IDF representation
 
     TF means term-frequency while TF-IDF means term-frequency times inverse
@@ -474,12 +471,11 @@ class TfidfTransformer(BaseEstimator):
         -------
         vectors: sparse matrix, [n_samples, n_features]
         """
-        import scipy.sparse as sp
         X = sp.csr_matrix(X, dtype=np.float64, copy=copy)
         n_samples, n_features = X.shape
 
         if self.use_tf:
-            X = Normalizer().transform(X)
+            X = Normalizer(norm='l1').transform(X)
 
         if self.use_idf:
             d = sp.lil_matrix((len(self.idf), len(self.idf)))

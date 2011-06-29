@@ -22,6 +22,7 @@ from ..metrics import precision_score
 from ..metrics import recall_score
 from ..metrics import roc_curve
 from ..metrics import zero_one
+from ..metrics import hinge_loss
 
 
 def make_prediction(dataset=None, binary=False):
@@ -266,6 +267,13 @@ def test_losses():
     assert_almost_equal(r2_score(y_true, y_true), 1.00, 2)
 
 
+def test_losses_at_limits():
+    # test limit cases
+    assert_almost_equal(mean_square_error([0.], [0.]), 0.00, 2)
+    assert_almost_equal(explained_variance_score([0.], [0.]), 1.00, 2)
+    assert_almost_equal(r2_score([0.], [0.]), 1.00, 2)
+
+
 def test_symmetry():
     """Test the symmetry of score and loss functions"""
     y_true, y_pred, _ = make_prediction(binary=True)
@@ -281,3 +289,14 @@ def test_symmetry():
     assert_true(r2_score(y_true, y_pred) != \
             r2_score(y_pred, y_true))
     # FIXME: precision and recall aren't symmetric either
+
+
+def test_hinge_loss_binary():
+    y_true = np.array([-1, 1, 1, -1])
+    pred_decision = np.array([-8.5, 0.5, 1.5, -0.3])
+    assert_equal(1.2/4, hinge_loss(y_true, pred_decision))
+
+    y_true = np.array([0, 2, 2, 0])
+    pred_decision = np.array([-8.5, 0.5, 1.5, -0.3])
+    assert_equal(1.2/4,
+                 hinge_loss(y_true, pred_decision, pos_label=2, neg_label=0))

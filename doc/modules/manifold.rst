@@ -7,6 +7,8 @@
 Manifold learning
 =================
 
+.. rst-class:: quote
+
                  | Look for the bare necessities
                  | The simple bare necessities
                  | Forget about your worries and your strife
@@ -35,7 +37,7 @@ These take as input a set of points in a high-dimensional space and return
 those points embedded in a manifold of dimension specified by parameter
 ``out_dim``.
 
-.. figure:: ../auto_examples/manifold/images/plot_lle_digits_1.png
+.. figure:: ../auto_examples/manifold/images/plot_lle_digits_3.png
    :target: ../auto_examples/manifold/plot_lle_digits.html
    :align: center
 
@@ -52,13 +54,11 @@ those points embedded in a manifold of dimension specified by parameter
 Complexity
 ----------
 
-The complete algorithm scales using the `dense` eigensolver scales as::
-
-..math:: O(N log(N)) + O(D N K^3) + O(d N^2)
-
-where N is the number of samples, D is the input dimension, d the output
-dimension and K the number of neighbors. If the `lobcpg` solver is used, the
-last term can be reduced to sub-quadratic in N.
+The complete algorithm scales using the `dense` eigensolver scales as
+:math:`O(N log(N)) + O(D N K^3) + O(d N^2)`, where N is the number of samples,
+D is the input dimension, d the output dimension and K the number of
+neighbors. If the `lobcpg` solver is used, the last term can be reduced to
+sub-quadratic in N.
 
 
 Tips on practical use
@@ -68,4 +68,4 @@ Tips on practical use
   nearest-neighbors method it will behave poorly otherwise.
 
 * On certain problems, the `lobcpg` solver might converge slowly. Supply a
-generous value for `max_iter` if big oscillations are detected between runs.
+  generous value for `max_iter` if big oscillations are detected between runs.

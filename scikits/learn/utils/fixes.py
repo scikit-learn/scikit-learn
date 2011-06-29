@@ -1,10 +1,22 @@
-"""Compatibility fixes for older version of numpy and scipy"""
+"""Compatibility fixes for older version of python, numpy and scipy"""
 # Authors: Emmanuelle Gouillart <emmanuelle.gouillart@normalesup.org>
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>
 #          Fabian Pedregosa <fpedregosa@acm.org>
 # License: BSD
 
 import numpy as np
+
+try:
+    from itertools import product
+except ImportError:
+    def product(*args, **kwds):
+        pools = map(tuple, args) * kwds.get('repeat', 1)
+        result = [[]]
+        for pool in pools:
+            result = [x + [y] for x in result for y in pool]
+        for prod in result:
+            yield tuple(prod)
+
 
 
 def _unique(ar, return_index=False, return_inverse=False):
@@ -116,3 +128,17 @@ def arpack_eigsh(A, **kwargs):
         return arpack.eigsh(A, **kwargs)
     else:
         return arpack.eigen_symmetric(A, **kwargs)
+
+
+def savemat(file_name, mdict, oned_as="column", **kwargs):
+    """MATLAB-format output routine that is compatible with SciPy 0.7's.
+
+    0.7.2 (or .1?) added the oned_as keyword arg with 'column' as the default
+    value. It issues a warning if this is not provided, stating that "This will
+    change to 'row' in future versions."
+    """
+    import scipy.io
+    try:
+        return scipy.io.savemat(file_name, mdict, oned_as=oned_as, **kwargs)
+    except TypeError:
+        return scipy.io.savemat(file_name, mdict, **kwargs)

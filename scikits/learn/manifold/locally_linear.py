@@ -9,6 +9,7 @@ from scipy.sparse import linalg, eye, csr_matrix
 from scipy.sparse.linalg import LinearOperator
 from scipy_future import eigsh
 from ..base import BaseEstimator
+from ..utils import check_random_state
 from ..neighbors import kneighbors_graph, BallTree, barycenter_weights
 
 try:
@@ -83,7 +84,8 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack',
 
 def locally_linear_embedding(
     X, n_neighbors, out_dim, reg=1e-3, eigen_solver='arpack',
-    tol=1e-6, max_iter=100, method='standard', H_tol=1E-4, M_tol=1E-12):
+    tol=1e-6, max_iter=100, random_state=0, method='standard', 
+    H_tol=1E-4, M_tol=1E-12):
     """
     Perform a Locally Linear Embedding analysis on the data.
 
@@ -109,6 +111,11 @@ def locally_linear_embedding(
 
     max_iter : integer
         maximum number of iterations for the lobpcg solver.
+
+    
+    random_state : int or RandomState instance
+        Pseudo number generator used for init the eigenvectors when using
+        the lobpcg method.
 
     method : string ['standard' | 'hessian' | 'modified']
         'standard' : use the standard locally linear embedding algorithm.
@@ -150,6 +157,7 @@ def locally_linear_embedding(
           reduction via tangent space alignment. Journal of Shanghai Univ.
           8:406 (2004)
     """
+    random_state = check_random_state(random_state)
 
     if eigen_solver not in ('arpack', 'lobpcg', 'dense'):
         raise ValueError("unrecognized eigen_solver '%s'" % eigen_solver)
@@ -440,5 +448,5 @@ class LocallyLinearEmbedding(BaseEstimator):
         weights = barycenter_weights(X, self.ball_tree.data[ind], reg=reg)
         X_new = np.empty((X.shape[0], self.out_dim))
         for i in range(X.shape[0]):
-            X_new[i] = np.dot(weights[i], self.embedding_[ind[i]])
+            X_new[i] = np.dot(self.embedding_[ind[i]].T, weights[i])
         return X_new

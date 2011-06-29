@@ -17,7 +17,7 @@ Liblinear while being two orders of magnitude faster to train::
     Classifier   train-time test-time error-rate
     --------------------------------------------
     Liblinear     9.4471s    0.0184s     0.2305
-    GNB           2.5426s    0.1725s     0.3633
+    GaussianNB           2.5426s    0.1725s     0.3633
     SGD           0.2137s    0.0047s     0.2300
 
 
@@ -57,7 +57,7 @@ import numpy as np
 
 from scikits.learn.svm import LinearSVC
 from scikits.learn.linear_model import SGDClassifier
-from scikits.learn.naive_bayes import GNB
+from scikits.learn.naive_bayes import GaussianNB
 from scikits.learn import metrics
 
 ######################################################################
@@ -158,8 +158,8 @@ liblinear_res = benchmark(LinearSVC(**liblinear_parameters))
 liblinear_err, liblinear_train_time, liblinear_test_time = liblinear_res
 
 ######################################################################
-## Train GNB model
-gnb_err, gnb_train_time, gnb_test_time = benchmark(GNB())
+## Train GaussianNB model
+gnb_err, gnb_train_time, gnb_test_time = benchmark(GaussianNB())
 
 ######################################################################
 ## Train SGD model
@@ -189,7 +189,7 @@ print("%s %s %s %s" % ("Classifier  ", "train-time", "test-time",
 print("-" * 44)
 print_row("Liblinear", liblinear_train_time, liblinear_test_time,
           liblinear_err)
-print_row("GNB", gnb_train_time, gnb_test_time, gnb_err)
+print_row("GaussianNB", gnb_train_time, gnb_test_time, gnb_err)
 print_row("SGD", sgd_train_time, sgd_test_time, sgd_err)
 print("")
 print("")

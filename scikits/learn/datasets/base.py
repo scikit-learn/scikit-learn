@@ -168,7 +168,7 @@ def load_filenames(container_path, description=None, categories=None,
 ###############################################################################
 
 def load_iris():
-    """load the iris dataset and returns it.
+    """Load and return the iris dataset (classification).
 
     Returns
     -------
@@ -209,7 +209,7 @@ def load_iris():
 
 
 def load_digits(n_class=10):
-    """load the digits dataset and returns it.
+    """Load and return the digits dataset (classification).
 
     Parameters
     ----------
@@ -258,7 +258,7 @@ def load_digits(n_class=10):
 
 
 def load_diabetes():
-    """ Load the diabetes dataset and returns it.
+    """ Load and return the diabetes dataset (regression).
 
     Returns
     -------
@@ -276,7 +276,7 @@ def load_diabetes():
 
 
 def load_linnerud():
-    """ Load the linnerud dataset and returns it.
+    """ Load and return the linnerud dataset (multivariate regression).
 
     Returns
     -------

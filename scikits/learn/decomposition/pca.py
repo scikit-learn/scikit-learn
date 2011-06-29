@@ -14,7 +14,10 @@ from ..utils.extmath import fast_logdet
 from ..utils.extmath import fast_svd
 from ..utils.extmath import safe_sparse_dot
 from ..preprocessing import KernelCenterer
-from ..metrics.pairwise import linear_kernel, polynomial_kernel, rbf_kernel
+from ..metrics.pairwise import linear_kernel
+from ..metrics.pairwise import polynomial_kernel
+from ..metrics.pairwise import rbf_kernel
+from ..metrics.pairwise import sigmoid_kernel
 
 
 def _assess_dimension_(spectrum, rank, n_samples, dim):
@@ -175,12 +178,12 @@ class PCA(BaseEstimator, TransformerMixin):
         self.whiten = whiten
 
     def fit(self, X, y=None, **params):
-        """Fit the model from data in X.
+        """Fit the model with X.
 
         Parameters
         ----------
         X: array-like, shape (n_samples, n_features)
-            Training vector, where n_samples in the number of samples
+            Training data, where n_samples in the number of samples
             and n_features is the number of features.
 
         Returns
@@ -192,12 +195,12 @@ class PCA(BaseEstimator, TransformerMixin):
         return self
 
     def fit_transform(self, X, y=None, **params):
-        """Fit the model from data in X.
+        """Fit the model with X and apply the dimensionality reduction on X.
 
         Parameters
         ----------
         X: array-like, shape (n_samples, n_features)
-            Training vector, where n_samples in the number of samples
+            Training data, where n_samples in the number of samples
             and n_features is the number of features.
 
         Returns
@@ -256,13 +259,35 @@ class PCA(BaseEstimator, TransformerMixin):
         return (U, S, V)
 
     def transform(self, X):
-        """Apply the dimension reduction learned on the train data."""
+        """Apply the dimensionality reduction on X.
+
+        Parameters
+        ----------
+        X: array-like, shape (n_samples, n_features)
+            New data, where n_samples in the number of samples
+            and n_features is the number of features.
+
+        Returns
+        -------
+        X_new array-like, shape (n_samples, n_components)
+        """
         X_transformed = X - self.mean_
         X_transformed = np.dot(X_transformed, self.components_.T)
         return X_transformed
 
     def inverse_transform(self, X):
-        """Return an input X_original whose transform would be X
+        """Transform data back to its original space, i.e.,
+        return an input X_original whose transform would be X
+
+        Parameters
+        ----------
+        X: array-like, shape (n_samples, n_components)
+            New data, where n_samples in the number of samples
+            and n_components is the number of components.
+
+        Returns
+        -------
+        X_original array-like, shape (n_samples, n_features)
 
         Note: if whitening is enabled, inverse_transform does not compute the
         exact inverse operation as transform.
@@ -327,7 +352,7 @@ class ProbabilisticPCA(PCA):
         return log_like
 
 
-class RandomizedPCA(BaseEstimator):
+class RandomizedPCA(BaseEstimator, TransformerMixin):
     """Principal component analysis (PCA) using randomized SVD
 
     Linear dimensionality reduction using approximated Singular Value
@@ -452,7 +477,18 @@ class RandomizedPCA(BaseEstimator):
         return self
 
     def transform(self, X):
-        """Apply the dimension reduction learned on the training data."""
+        """Apply the dimensionality reduction on X.
+
+        Parameters
+        ----------
+        X: array-like or scipy.sparse matrix, shape (n_samples, n_features)
+            New data, where n_samples in the number of samples
+            and n_features is the number of features.
+
+        Returns
+        -------
+        X_new array-like, shape (n_samples, n_components)
+        """
         if self.mean_ is not None:
             X = X - self.mean_
 
@@ -460,7 +496,22 @@ class RandomizedPCA(BaseEstimator):
         return X
 
     def inverse_transform(self, X):
-        """Return an reconstructed input whose transform would be X"""
+        """Transform data back to its original space, i.e.,
+        return an input X_original whose transform would be X
+
+        Parameters
+        ----------
+        X: array-like or scipy.sparse matrix, shape (n_samples, n_components)
+            New data, where n_samples in the number of samples
+            and n_components is the number of components.
+
+        Returns
+        -------
+        X_original array-like, shape (n_samples, n_features)
+
+        Note: if whitening is enabled, inverse_transform does not compute the
+        exact inverse operation as transform.
+        """
         X_original = safe_sparse_dot(X, self.components_)
         if self.mean_ is not None:
             X_original = X_original + self.mean_
@@ -477,25 +528,28 @@ class KernelPCA(BaseEstimator, TransformerMixin):
     n_components: int or None
         Number of components. If None, all non-zero components are kept.
 
-    kernel: "linear" | "poly" | "rbf" | "precomputed"
-        kernel
+    kernel: "linear" | "poly" | "rbf" | "sigmoid" | "precomputed"
+        Kernel.
         Default: "linear"
 
-    sigma: float
-        width of the rbf kernel
-        Default: 1.0
+    degree : int, optional
+        Degree for poly, rbf and sigmoid kernels.
+        Default: 3.
 
-    degree: int
-        degree of the polynomial kernel
-        Default: 3
+    gamma : float, optional
+        Kernel coefficient for rbf and poly kernels.
+        Default: 1/n_features.
+
+    coef0 : float, optional
+        Independent term in poly and sigmoid kernels.
 
     alpha: int
-        hyperparameter of the ridge regression that learns the
-        inverse transform (when fit_inverse_transform=True)
+        Hyperparameter of the ridge regression that learns the
+        inverse transform (when fit_inverse_transform=True).
         Default: 1.0
 
     fit_inverse_transform: bool
-        learn the inverse transform
+        Learn the inverse transform.
         (i.e. learn to find the pre-image of a point)
         Default: False
 
@@ -520,12 +574,13 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         MIT Press, Cambridge, MA, USA 327-352.
     """
 
-    def __init__(self, n_components=None, kernel="linear", sigma=1.0, degree=3,
-                alpha=1.0, fit_inverse_transform=False):
+    def __init__(self, n_components=None, kernel="linear", gamma=0, degree=3,
+                 coef0=1, alpha=1.0, fit_inverse_transform=False):
         self.n_components = n_components
         self.kernel = kernel.lower()
-        self.sigma = sigma
+        self.gamma = gamma
         self.degree = degree
+        self.coef0 = coef0
         self.alpha = alpha
         self.fit_inverse_transform = fit_inverse_transform
         self.centerer = KernelCenterer()
@@ -537,14 +592,21 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         if self.kernel == "precomputed":
             return X
         elif self.kernel == "rbf":
-            return rbf_kernel(X, Y, self.sigma)
+            return rbf_kernel(X, Y, gamma=self.gamma)
         elif self.kernel == "poly":
-            return polynomial_kernel(X, Y, self.degree)
+            return polynomial_kernel(X, Y,
+                                     gamma=self.gamma,
+                                     degree=self.degree,
+                                     coef0=self.coef0)
+        elif self.kernel == "sigmoid":
+            return sigmoid_kernel(X, Y,
+                                  gamma=self.gamma,
+                                  coef0=self.coef0)
         elif self.kernel == "linear":
             return linear_kernel(X, Y)
         else:
             raise ValueError("%s is not a valid kernel. Valid kernels are: "
-                             "rbf, poly, linear and precomputed."
+                             "rbf, poly, sigmoid, linear and precomputed."
                              % self.kernel)
 
     def _fit_transform(self, X):

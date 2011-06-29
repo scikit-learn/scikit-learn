@@ -1,15 +1,15 @@
-import itertools
 import numpy as np
 
 from numpy.testing import assert_array_almost_equal
 from scikits.learn import neighbors, manifold
+from scikits.learn.utils.fixes import product
 
 #----------------------------------------------------------------------
 # Test LLE by computing the reconstruction error on some manifolds.
 
 def test_lle_simple_grid():
     # grid of equidistant points in 2D, out_dim = n_dim
-    X = np.array(list(itertools.product(range(5), repeat=2)))
+    X = np.array(list(product(range(5), repeat=2)))
     clf = manifold.LocallyLinearEmbedding(n_neighbors=5, out_dim=2)
     tol = .1
 
@@ -22,14 +22,14 @@ def test_lle_simple_grid():
         reconstruction_error = np.linalg.norm(
             np.dot(N, clf.embedding_) - clf.embedding_, 'fro') ** 2
         assert reconstruction_error < tol
-        assert_array_almost_equal(clf.reconstruction_error_, reconstruction_error)
+        assert_array_almost_equal(clf.reconstruction_error_, reconstruction_error, decimal=4)
     noise = np.random.randn(*X.shape) / 100
     assert np.linalg.norm(clf.transform(X + noise) - clf.embedding_) < tol
 
 
 def test_lle_manifold():
     # similar test on a slightly more complex manifold
-    X = np.array(list(itertools.product(range(20), repeat=2)))
+    X = np.array(list(product(range(20), repeat=2)))
     X = np.c_[X, X[:, 0]**2 / 20]
     clf = manifold.LocallyLinearEmbedding(n_neighbors=5, out_dim=2)
     tol = .5
