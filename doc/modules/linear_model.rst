@@ -281,7 +281,7 @@ column is always zero.
 Orthogonal Matching Pursuit (OMP)
 =================================
 `OMP` is an algorithm for approximating the fit of a linear model with
-constraints imposed on the number of non-zero coefficients (ie. the L:sub:`0`
+constraints imposed on the number of non-zero coefficients (ie. the L :sub:`0`
 pseudo-norm). 
 
 While :ref:`Lasso`-style penalties do tend to shrink coefficients towards zero,
@@ -294,7 +294,7 @@ the optimum solution vector with a fixed number of non-zero elements:
 Alternatively, orthogonal matching pursuit can target a specific error instead
 of a specific number of non-zero coefficients. This can be expressed as:
 
-.. math:: \text{arg\,min} ||\gamma||_0 \text{ subject to } ||y-X\gamma||_2^2 \leq \vareps
+.. math:: \text{arg\,min} ||\gamma||_0 \text{ subject to } ||y-X\gamma||_2^2 \leq \varepsilon
 
 
 OMP is based on a greedy algorithm that includes at each step the atom most
