@@ -35,21 +35,22 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack',
 
     eigen_solver : string ['arpack' | 'lobpcg' | 'dense']
         arpack : use arnoldi iteration in shift-invert mode.
-                 For this method, M may be a dense matrix, sparse matrix,
-                 or general linear operator.
+                    For this method, M may be a dense matrix, sparse matrix,
+                    or general linear operator.
         lobpcg : use locally optimized block-preconditioned conjugate gradient.
-                 For this method, M may be a dense or sparse matrix.
-                 A dense matrix M will be converted internally to a
-                 csr sparse format.
+                    For this method, M may be a dense or sparse matrix.
+                    A dense matrix M will be converted internally to a
+                    csr sparse format.
         dense  : use standard dense matrix operations for the eigenvalue
-                 decomposition.  For this method, M must be an array or matrix
-                 type.  This method should be avoided for large problems.
+                    decomposition.  For this method, M must be an array
+                    or matrix type.  This method should be avoided for
+                    large problems.
 
     tol : tolerance for 'arpack' or 'lobpcg' methods.
-          not used if eigen_solver=='dense'
+            not used if eigen_solver=='dense'
 
     max_iter : maximum number of iterations for 'arpack' or 'lobpcg' methods
-          not used if eigen_solver=='dense'
+            not used if eigen_solver=='dense'
     """
 
     if eigen_solver == 'arpack':
@@ -84,7 +85,7 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack',
 
 def locally_linear_embedding(
     X, n_neighbors, out_dim, reg=1e-3, eigen_solver='arpack',
-    tol=1e-6, max_iter=100, random_state=0, method='standard', 
+    tol=1e-6, max_iter=100, random_state=0, method='standard',
     H_tol=1E-4, M_tol=1E-12):
     """
     Perform a Locally Linear Embedding analysis on the data.
@@ -112,7 +113,6 @@ def locally_linear_embedding(
     max_iter : integer
         maximum number of iterations for the lobpcg solver.
 
-    
     random_state : int or RandomState instance
         Pseudo number generator used for init the eigenvectors when using
         the lobpcg method.
@@ -140,8 +140,8 @@ def locally_linear_embedding(
         Embedding vectors.
 
     squared_error : float
-       Reconstruction error for the embedding vectors. Equivalent to
-       norm(Y - W Y, 'fro')**2, where W are the reconstruction weights.
+        Reconstruction error for the embedding vectors. Equivalent to
+        norm(Y - W Y, 'fro')**2, where W are the reconstruction weights.
 
     References
     ----------
