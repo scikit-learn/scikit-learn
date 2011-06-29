@@ -7,9 +7,9 @@ import numpy as np
 from scipy.linalg import eigh, svd, qr
 from scipy.sparse import linalg, eye, csr_matrix
 from scipy.sparse.linalg import LinearOperator
-from scipy_future import eigsh
 from ..base import BaseEstimator
 from ..utils import check_random_state
+from ..utils.arpack import eigsh
 from ..neighbors import kneighbors_graph, BallTree, barycenter_weights
 
 try:
@@ -315,7 +315,7 @@ def locally_linear_embedding(
             # >> W_hat = np.zeros( (N,s_i) )
             # >> W_hat[neighbors[i],:] = Wi
             # >> W_hat[i] -= 1
-            # >> M += np.dot(W_hat,W_hat.T)
+            # >> M += np.dot(W_hat,W_hat.T)
             #We can do this much more efficiently:
             nbrs_x, nbrs_y = np.meshgrid(neighbors[i], neighbors[i])
             M[nbrs_x, nbrs_y] += np.dot(Wi, Wi.T)
