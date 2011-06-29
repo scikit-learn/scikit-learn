@@ -86,7 +86,7 @@ def compute_componentwise_l1_pairwise_distances(X, Y):
         raise Exception("X and Y should have the same number of features!")
     else:
         n_features = n_features_X
-    D = (X[:, np.newaxis, :] - Y[np.newaxis, :, :])
+    D = X[:, np.newaxis, :] - Y[np.newaxis, :, :]
     D = D.reshape((n_samples_X * n_samples_Y, n_features))
 
     return D
