@@ -49,7 +49,6 @@ X_lda = lda.LDA(n_components=2).fit_transform(X2, y)
 
 #----------------------------------------------------------------------
 # Locally linear embedding of the digits dataset
-
 print "Computing LLE embedding"
 X_lle, err = manifold.locally_linear_embedding(X, 30, 2, reg=1e-2)
 print "Done. Reconstruction error: %g" % err
