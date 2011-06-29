@@ -1,6 +1,7 @@
 """Locally Linear Embedding"""
 
 # Author: Fabian Pedregosa -- <fabian.pedregosa@inria.fr>
+#         Jake Vanderplas  -- <vanderplas@astro.washington.edu>
 # License: BSD, (C) INRIA 2011
 
 import numpy as np
