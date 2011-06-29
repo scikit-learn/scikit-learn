@@ -4,7 +4,7 @@ Dictionary learning on image patches
 ====================================
 
 Computes and displays a dictionary learned using :ref:`DictionaryLearning` from
-a subset of 8x8 patches extracted from the picture of Lena.
+a subset of 4x4 patches extracted from the picture of Lena.
 
 """
 print __doc__
@@ -20,8 +20,8 @@ from scikits.learn.feature_extraction.image import extract_patches_2d
 ###############################################################################
 # Load Lena image and extract patches
 lena = sp.lena()
-data = extract_patches_2d(lena, (8, 8), max_patches=500, seed=0)
-data = data.reshape(data.shape[0], 64)
+data = extract_patches_2d(lena, (4, 4), max_patches=2000, seed=0)
+data = data.reshape(data.shape[0], 16)
 data -= np.mean(data, 0)
 data /= np.std(data, 0)
 
@@ -30,16 +30,16 @@ data /= np.std(data, 0)
 #V = dict_learning(data, n_atoms=36, alpha=1e-2, n_iter=3000, return_code=False,
 #                  verbose=True)
 
-dico = DictionaryLearning(n_atoms=12, alpha=1e-2, verbose=True, tol=1e-5,
+dico = DictionaryLearning(n_atoms=20, alpha=1e-2, verbose=True, tol=1e-5,
                           max_iter=15)
 dico = dico.fit(data)
 
 ###############################################################################
 # Plot dictionary atoms
-pl.figure(figsize=(4.5, 6))
+pl.figure(figsize=(4.4, 5.5))
 for i, comp in enumerate(dico.components_):
-    pl.subplot(4, 3, i + 1)
-    pl.imshow(comp.reshape((8, 8)), cmap=pl.cm.gray_r)
+    pl.subplot(5, 4, i + 1)
+    pl.imshow(comp.reshape((4, 4)), cmap=pl.cm.gray_r)
     pl.xticks(())
     pl.yticks(())
 pl.suptitle("Dictionary learned from Lena patches", fontsize=16)

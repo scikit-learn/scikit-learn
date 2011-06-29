@@ -13,7 +13,6 @@ def test_dict_learning_shapes():
 
 
 def test_dict_learning_overcomplete():
-    raise SkipTest
     n_samples, n_features = 10, 8
     n_atoms = 12
     X = np.random.randn(n_samples, n_features)

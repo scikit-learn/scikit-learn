@@ -299,8 +299,14 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
     else:
         code, S, dictionary = linalg.svd(X, full_matrices=False)
         dictionary = S[:, np.newaxis] * dictionary
-    code = code[:, :n_atoms]
-    dictionary = dictionary[:n_atoms, :]
+    r = len(dictionary)
+    if n_atoms <= r:
+        code = code[:, :n_atoms]
+        dictionary = dictionary[:n_atoms, :]
+    else:
+        code = np.c_[code, np.zeros((len(code), n_atoms - r))]
+        dictionary = np.r_[dictionary, 
+                           np.zeros((n_atoms - r, dictionary.shape[1]))]
 
     # Fortran-order dict, as we are going to access its row vectors
     #code = np.array(code, order='F')
@@ -431,7 +437,11 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
     else:
         _, S, dictionary = fast_svd(X, n_atoms)
         dictionary = S[:, np.newaxis] * dictionary
-    dictionary = dictionary[:n_atoms, :]
+    if n_atoms <= r:
+        dictionary = dictionary[:n_atoms, :]
+    else:
+        dictionary = np.r_[dictionary, 
+                           np.zeros((n_atoms - r, dictionary.shape[1]))]
     dictionary = np.ascontiguousarray(dictionary.T)
 
     if verbose == 1:
