@@ -278,6 +278,41 @@ column is always zero.
 
 
 
+Orthogonal Matching Pursuit (OMP)
+=================================
+`OMP` is an algorithm for approximating the fit of a linear model with
+constraints imposed on the number of non-zero coefficients (ie. the L0
+pseudo-norm). 
+
+While :ref:`Lasso`-style penalties do tend to shrink coefficients towards zero,
+there is no direct relationship between the Lasso penalty coefficient and the
+sparseness of the solution vector. Orthogonal matching pursuit can approximate
+the optimum solution vector with a fixed number of non-zero elements:
+
+.. math:: \text{arg\,min} ||y - X\gamma||_2^2 \text{ subject to } ||\gamma||_0 \leq n_{atoms}
+
+Alternatively, orthogonal matching pursuit can target a specific error instead
+of a specific number of non-zero coefficients. This can be expressed as:
+
+.. math:: \text{arg,min} ||\gamma||_0 subject to ||y-X\gamma||^2 \leq \epsilon
+
+
+OMP is based on a greedy algorithm that includes at each step the atom most
+highly correlated with the current residual.
+
+
+.. topic:: Examples:
+
+ * :ref:`example_linear_model_plot_omp.py`
+
+.. topic:: References:
+
+ * http://www.cs.technion.ac.il/~ronrubin/Publications/KSVX-OMP-v2.pdf
+
+ * S. G. Mallat, Z. Zhang, Matching pursuits with time-frequency dictionaries,
+ IEEE Transactions on Signal Processing, Vol. 41, No. 12. (December 1993), pp. 
+ 3397-3415. http://blanche.polytechnique.fr/~mallat/papiers/MallatPursuit93.pdf
+
 Bayesian Regression
 ===================
 

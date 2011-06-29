@@ -31,7 +31,8 @@ data /= np.std(data, 0)
 #                  verbose=True)
 
 dico = DictionaryLearning(n_atoms=12, alpha=1e-2, verbose=True, tol=1e-5,
-                          max_iter=15).fit(data)
+                          max_iter=15)
+dico = dico.fit(data)
 
 ###############################################################################
 # Plot dictionary atoms
