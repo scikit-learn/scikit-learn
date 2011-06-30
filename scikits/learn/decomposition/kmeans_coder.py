@@ -4,8 +4,9 @@
 
 import numpy as np
 
-from scikits.learn.decomposition import PCA
-from scikits.learn.cluster import KMeans
+from ..decomposition import PCA
+from ..cluster import KMeans
+from ..metrics.pairwise import euclidean_distances
 
 class KMeansCoder():
     def __init__(self, n_centers=400, whiten=True, n_components=None,
@@ -113,53 +114,25 @@ class KMeansCoder():
         return self
 
     def transform(self, X):
-        """Map a collection of 2D images into the feature space"""
-        raise NotImplemented("Ignore the stuff below for now")
+        """Map a collection of patches into the feature space
 
-        X = self._check_images(X)
-        n_samples, n_rows, n_cols, n_channels = X.shape
-        n_filters = self.filters_.shape[0]
-        ps = (8, 8) #self.patch_size
+        This uses a soft triangle k-means method
+        """
+        if self.local_contrast:
+            # TODO: make it inplace by default explictly
+            X = self.local_contrast_normalization(X)
+        if self.whiten:
+            # TODO: make it possible to pass pre-allocated array
+            X = self.pca.transform(X)
 
-        pooled_features = np.zeros((X.shape[0], self.n_pools, self.n_pools,
-                                    n_filters), dtype=X.dtype)
+        # extract distance from each patch to each cluster center
+        # TODO: make it possible to reuse pre-allocated distance array
+        filters = self.kmeans.cluster_centers_
+        distances = euclidean_distances(X, filters)
 
-        n_rows_adjusted = n_rows - self.patch_size + 1
-        n_cols_adjusted = n_cols - self.patch_size + 1
-
-        # TODO: the following is really slow: profile me, optimize me and then
-        # parallelize me by using joblib.Parallel.map on the toplevel loop:
-
-        for r in xrange(n_rows_adjusted):
-            if self.verbose:
-                print "Extracting features for row #%d/%d" % (
-                    r + 1, n_rows_adjusted)
-
-            for c in xrange(n_cols_adjusted):
-
-                patches = X[:, r:r + ps, c:c + ps, :].reshape((n_samples, -1))
-
-                if self.local_contrast:
-                    # TODO: make it inplace by default explictly
-                    patches = self.local_contrast_normalization(patches)
-
-                if self.whiten:
-                    # TODO: make it possible to pass pre-allocated array
-                    patches = self.pca.transform(patches)
-
-                # extract distance from each patch to each cluster center
-                # TODO: make it possible to reuse pre-allocated distance array
-                filters = self.kmeans.cluster_centers_
-                distances = euclidean_distances(patches, filters)
-
-                # triangle features
-                distance_means = distances.mean(axis=1)[:, None]
-                features = np.maximum(0, distance_means - distances)
-
-                # features are pooled over image regions
-                out_r = r * self.n_pools / n_rows_adjusted
-                out_c = c * self.n_pools / n_cols_adjusted
-                pooled_features[:, out_r, out_c, :] += features
+        # triangle features
+        distance_means = distances.mean(axis=1)[:, None]
+        features = np.maximum(0, distance_means - distances)
 
         # downstream classifiers expect a 2 dim shape
-        return pooled_features.reshape(pooled_features.shape[0], -1)
+        return features.reshape(features.shape[0], -1)

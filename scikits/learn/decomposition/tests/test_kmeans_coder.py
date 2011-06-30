@@ -12,3 +12,5 @@ def test_kmeans_coder_shape():
     encoder = KMeansCoder(n_centers=12, n_pools=2, max_iter=3)
     encoder.fit(patches)
     assert_equal(encoder.filters_.shape, (12, 4 * 4))
+    code = encoder.transform(patches)
+    assert_equal(code.shape, (len(patches), 12))
