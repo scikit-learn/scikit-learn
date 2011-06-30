@@ -277,8 +277,7 @@ class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
     >>> from scikits.learn.neighbors import NeighborsRegressor
     >>> neigh = NeighborsRegressor(n_neighbors=2)
     >>> neigh.fit(X, y)
-    NeighborsRegressor(n_neighbors=2, leaf_size=20, mode='mean',
-              algorithm='auto')
+    NeighborsRegressor(n_neighbors=2, mode='mean', algorithm='auto', leaf_size=20)
     >>> print neigh.predict([[1.5]])
     [ 0.5]
 
