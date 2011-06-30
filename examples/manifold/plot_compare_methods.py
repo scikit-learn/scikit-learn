@@ -33,25 +33,24 @@ fig = pylab.figure(figsize=(8, 12))
 try:
     # compatibility matplotlib < 1.0
     ax = fig.add_axes((0.25, 0.66, 0.4, 0.3), projection='3d')
-    ax.scatter(X[:, 0], X[:, 1], X[:, 2], c=color)
+    ax.scatter(X[:, 0], X[:, 1], X[:, 2], c=color, cmap=pylab.cm.Spectral)
     ax.view_init(4, -72)
 except:
     ax = fig.add_axes((0.25, 0.66, 0.5, 0.3))
-    ax.scatter(X[:, 0], X[:, 2], c=color)
+    ax.scatter(X[:, 0], X[:, 2], c=color, cmap=pylab.cm.Spectral)
 
 ax.set_title('Original Data')
 
 for i, method in enumerate(methods):
     t0 = time()
-    Y, err = manifold.locally_linear_embedding(X, n_neighbors, out_dim,
-                                               eigen_solver='arpack',
-                                               method=method)
+    Y, err = manifold.locally_linear_embedding(
+        X, n_neighbors, out_dim, eigen_solver='arpack', method=method)
     t1 = time()
     print "%s: %.2g sec" % (methods[i], t1 - t0)
     print ' err = %.2e' % err
 
     ax = fig.add_subplot(323 + i)
-    ax.scatter(Y[:, 0], Y[:, 1], c=color)
+    ax.scatter(Y[:, 0], Y[:, 1], c=color, cmap=pylab.cm.Spectral)
     ax.set_title("method = %s" % methods[i])
     ax.xaxis.set_major_formatter(NullFormatter())
     ax.yaxis.set_major_formatter(NullFormatter())
