@@ -39,7 +39,7 @@ class _Hungarian(object):
 
     def compute(self, cost_matrix):
         """
-        Compute the indexes for the lowest-cost pairings between rows and
+        Compute the indices for the lowest-cost pairings between rows and
         columns in the database. Returns a list of (row, column) tuples
         that can be used to traverse the matrix.
 
@@ -51,12 +51,12 @@ class _Hungarian(object):
         Returns
         ========
         indices: 2D array of indices
-            The pairs of (col, row) indices in the original array giving
+            The pairs of (row, col) indices in the original array giving
             the original ordering.
         """
         cost_matrix = np.atleast_2d(cost_matrix)
 
-        # If there are more rows than columns, then the algorithm
+        # If there are more rows (n) than columns (m), then the algorithm
         # will not be able to work correctly. Therefore, we
         # transpose the cost function when needed. Just have to
         # remember to swap the result columns later in this function.
@@ -66,6 +66,7 @@ class _Hungarian(object):
         else :
             self.C = cost_matrix.copy()
 
+        # At this point, m >= n.
         self.n = n = self.C.shape[0]
         self.m = m = self.C.shape[1]
         self.row_uncovered = np.ones(n, dtype=np.bool)
@@ -133,7 +134,7 @@ class _Hungarian(object):
         marked = (self.marked == 1)
         self.col_uncovered[np.any(marked, axis=0)] = False
 
-        if marked.sum() >= min(self.m, self.n) :
+        if marked.sum() >= self.n :
             return 7 # done
         else:
             return 4
