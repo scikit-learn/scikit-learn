@@ -8,6 +8,7 @@ from ..decomposition import PCA
 from ..cluster import KMeans
 from ..metrics.pairwise import euclidean_distances
 
+
 class KMeansCoder():
     def __init__(self, n_centers=400, whiten=True, n_components=None,
                  n_pools=2, max_iter=100, n_init=1, n_prefit=5, tol=1e-4,
@@ -131,7 +132,7 @@ class KMeansCoder():
         distances = euclidean_distances(X, filters)
 
         # triangle features
-        distance_means = distances.mean(axis=1)[:, None]
+        distance_means = distances.mean(axis=1)[:, np.newaxis]
         features = np.maximum(0, distance_means - distances)
 
         # downstream classifiers expect a 2 dim shape

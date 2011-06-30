@@ -4,6 +4,7 @@ from nose.tools import assert_equal
 from ..kmeans_coder import KMeansCoder
 from ...feature_extraction.image import PatchExtractor
 
+
 def test_kmeans_coder_shape():
     lena = sp.lena()[np.newaxis, :, :]
     patches = PatchExtractor(patch_size=(4, 4),
