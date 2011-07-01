@@ -222,7 +222,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
 
         if n_iter >= coefs.shape[0]:
             # resize the coefs and alphas array
-            add_features = 2 * (max_features - n_active)
+            add_features = 2 * max(1, (max_features - n_active))
             coefs.resize((n_iter + add_features, n_features))
             alphas.resize(n_iter + add_features)
 
