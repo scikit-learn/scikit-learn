@@ -136,7 +136,6 @@ class SVC(BaseLibSVM, ClassifierMixin):
     `intercept_` : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
 
-
     Examples
     --------
     >>> import numpy as np
@@ -575,6 +574,11 @@ class OneClassSVM(BaseLibSVM):
         -------
         self : object
             Returns self.
+
+        Notes
+        ------
+        If X is not a C-ordered contiguous array, it is copied.
+
         """
         super(OneClassSVM, self).fit(
             X, [], class_weight=class_weight, sample_weight=sample_weight,
