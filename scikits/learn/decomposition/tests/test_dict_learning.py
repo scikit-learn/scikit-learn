@@ -4,6 +4,7 @@ from nose.plugins.skip import SkipTest
 
 from .. import DictionaryLearning
 
+
 def test_dict_learning_shapes():
     n_samples, n_features = 10, 8
     n_atoms = 5

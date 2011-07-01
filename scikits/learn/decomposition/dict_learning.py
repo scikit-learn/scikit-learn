@@ -47,7 +47,7 @@ class BaseDictionaryLearning(BaseEstimator, TransformerMixin):
             return _update_code_parallel(self.components_.T, X.T, **kwargs).T
         # XXX: add tresholding and others
         else:
-            raise NotImplemented('Coding method %s is not implemented' % 
+            raise NotImplemented('Coding method %s is not implemented' %
                                  self.transform_method)
 
 
@@ -107,7 +107,7 @@ class DictionaryLearning(BaseDictionaryLearning):
     ----------
     J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009: Online dictionary learning
     for sparse coding (http://www.di.ens.fr/sierra/pdfs/icml09.pdf)
-    
+
 
     See also
     --------
@@ -156,7 +156,7 @@ class DictionaryLearning(BaseDictionaryLearning):
         self.components_ = U
         self.error_ = E
         return V
-    
+
     def fit(self, X, y=None, **params):
         """Fit the model from data in X.
 
@@ -228,7 +228,7 @@ class DictionaryLearningOnline(BaseDictionaryLearning):
     ----------
     J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009: Online dictionary learning
     for sparse coding (http://www.di.ens.fr/sierra/pdfs/icml09.pdf)
-    
+
 
     See also
     --------

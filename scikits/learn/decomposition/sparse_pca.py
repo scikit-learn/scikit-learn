@@ -373,7 +373,7 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
     (U^*, V^*) = argmin 0.5 || X - U V ||_2^2 + alpha * || U ||_1
                  (U,V)
                  with || V_k ||_2 = 1 for all  0 <= k < n_atoms
-    
+
     where V is the dictionary and U is the sparse code. This is accomplished
     by repeatedly iterating over mini-batches of the input data.
 
@@ -419,7 +419,7 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
     -------
     dictionary: array of shape (n_atoms, n_features),
         the solutions to the dictionary learning problem
-    
+
     code: array of shape (n_samples, n_atoms),
         the sparse code (only returned if `return_code=True`)
     """
@@ -440,7 +440,7 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
     if n_atoms <= r:
         dictionary = dictionary[:n_atoms, :]
     else:
-        dictionary = np.r_[dictionary, 
+        dictionary = np.r_[dictionary,
                            np.zeros((n_atoms - r, dictionary.shape[1]))]
     dictionary = np.ascontiguousarray(dictionary.T)
 
