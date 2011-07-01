@@ -154,7 +154,7 @@ def _update_code_parallel(dictionary, Y, alpha, code=None, Gram=None,
         code = np.empty((n_atoms, n_features))
     slices = list(_gen_even_slices(n_features, n_jobs))
     code_views = Parallel(n_jobs=n_jobs)(
-                delayed(_update_code)(dictionary, Y[:, this_slice], 
+                delayed(_update_code)(dictionary, Y[:, this_slice],
                                       code=code[:, this_slice], alpha=alpha,
                                       Gram=Gram, method=method, tol=tol)
                 for this_slice in slices)
@@ -164,7 +164,7 @@ def _update_code_parallel(dictionary, Y, alpha, code=None, Gram=None,
 
 
 def _update_dict(dictionary, Y, code, verbose=False, return_r2=False):
-    """ Update the dense dictionary factor in place. 
+    """ Update the dense dictionary factor in place.
 
     Parameters
     ----------
@@ -236,7 +236,7 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
     (U^*, V^*) = argmin 0.5 || X - U V ||_2^2 + alpha * || U ||_1
                  (U,V)
                 with || V_k ||_2 = 1 for all  0 <= k < n_atoms
-    
+
     where V is the dictionary and U is the sparse code.
 
     Parameters
@@ -303,7 +303,7 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
         dictionary = dictionary[:n_atoms, :]
     else:
         code = np.c_[code, np.zeros((len(code), n_atoms - r))]
-        dictionary = np.r_[dictionary, 
+        dictionary = np.r_[dictionary,
                            np.zeros((n_atoms - r, dictionary.shape[1]))]
 
     # Fortran-order dict, as we are going to access its row vectors
@@ -336,7 +336,7 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
                                      code.T, method=method, n_jobs=n_jobs)
         code = code.T
         # Update dictionary
-        dictionary, residuals = _update_dict(dictionary.T, X.T, code.T, 
+        dictionary, residuals = _update_dict(dictionary.T, X.T, code.T,
                                              verbose=verbose, return_r2=True)
         dictionary = dictionary.T
 
