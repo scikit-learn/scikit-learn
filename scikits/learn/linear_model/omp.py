@@ -24,7 +24,7 @@ def _cholesky_omp(X, y, n_atoms, eps=None):
     Parameters:
     -----------
     X: array, shape (n_samples, n_features)
-        Input dictionary
+        Input dictionary. Columns are assumed to have unit norm.
 
     y: array, shape: n_samples
         Input targets
@@ -152,7 +152,7 @@ def orthogonal_mp(X, y, n_atoms=None, eps=None, compute_gram=False):
     Parameters
     ----------
     X: array of shape (n_samples, n_features)
-        Input dictionary
+        Input dictionary. Columns are assumed to have unit norm.
 
     y: array, shape: n_samples or (n_samples, n_targets)
         Input targets
