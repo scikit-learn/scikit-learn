@@ -1,3 +1,9 @@
+scikit-learn (0.8.1.dfsg-1) unstable; urgency=low
+
+  * New upstream maintenance release
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Fri, 01 Jul 2011 14:37:28 -0400
+
 scikit-learn (0.8.0.dfsg-1) unstable; urgency=low
 
   * New upstream release
