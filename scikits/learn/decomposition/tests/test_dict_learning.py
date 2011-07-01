@@ -19,7 +19,9 @@ def test_dict_learning_overcomplete():
     dico = DictionaryLearning(n_atoms).fit(X)
     assert dico.components_.shape == (n_atoms, n_features)
 
+
 def test_dict_learning_reconstruction():
+    np.random.seed(0)
     n_samples, n_features = 10, 8
     n_atoms = 5
     U = np.zeros((n_samples, n_atoms)).ravel()
@@ -28,7 +30,16 @@ def test_dict_learning_reconstruction():
     V = np.random.randn(n_atoms, n_features)
 
     X = np.dot(U, V)
-    dico = DictionaryLearning(n_atoms)
-    code = dico.fit(X).transform(X, method='lars', alpha=0.01)
+    dico = DictionaryLearning(n_atoms, transform_method='omp')
+    code = dico.fit(X).transform(X, eps=0.01)
 
+    assert_array_almost_equal(np.dot(code, dico.components_), X)
+
+    dico.transform_method = 'lasso_lars'
+    code = dico.transform(X, alpha=0.01)
+    # decimal=1 because lars is sensitive to roundup errors
     assert_array_almost_equal(np.dot(code, dico.components_), X, decimal=1)
+
+
+def test_dict_learning_online():
+    pass
