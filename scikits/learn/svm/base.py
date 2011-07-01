@@ -99,11 +99,17 @@ class BaseLibSVM(BaseEstimator):
         -------
         self : object
             Returns self.
+
+        Notes
+        ------
+        If X and y are not C-ordered and contiguous arrays, they are
+        copied.
+
         """
         self._set_params(**params)
 
         X = np.asanyarray(X, dtype=np.float64, order='C')
-        y = np.asanyarray(y, dtype=np.float64)
+        y = np.asanyarray(y, dtype=np.float64, order='C')
         sample_weight = np.asanyarray(sample_weight, dtype=np.float64)
 
         if hasattr(self, 'kernel_function'):
@@ -132,8 +138,8 @@ class BaseLibSVM(BaseEstimator):
 
         self.support_, self.support_vectors_, self.n_support_, \
         self.dual_coef_, self.intercept_, self.label_, self.probA_, \
-        self.probB_ = libsvm.fit(
-            X, y, svm_type=solver_type, sample_weight=sample_weight,
+        self.probB_ = libsvm.fit(X, y, 
+            svm_type=solver_type, sample_weight=sample_weight,
             class_weight=class_weight,
             class_weight_label=class_weight_label,
             **self._get_params())
