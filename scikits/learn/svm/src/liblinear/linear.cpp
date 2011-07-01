@@ -5,21 +5,21 @@
    
  */
 
+#include <algorithm>
+#include <functional>
 #include <math.h>
+#include <memory>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <vector>
 #include "linear.h"
+#include "scoped_array.h"
 #include "tron.h"
+
 typedef signed char schar;
-template <class T> static inline void swap(T& x, T& y) { T t=x; x=y; y=t; }
-#ifndef min
-template <class T> static inline T min(T x,T y) { return (x<y)?x:y; }
-#endif
-#ifndef max
-template <class T> static inline T max(T x,T y) { return (x>y)?x:y; }
-#endif
+
 template <class S, class T> static inline void clone(T*& dst, S* src, int n)
 {   
 	dst = new T[n];
@@ -63,28 +63,25 @@ public:
 	int get_nr_variable(void);
 
 private:
+	l2r_lr_fun(l2r_lr_fun const &);			// non-copyable
+	void operator=(l2r_lr_fun const &);		// non-assignable
+
 	void Xv(double *v, double *Xv);
 	void XTv(double *v, double *XTv);
 
-	double *C;
-	double *z;
-	double *D;
-	const problem *prob;
+	const problem &prob;
+	scoped_array<double> C, z, D;
 };
 
 l2r_lr_fun::l2r_lr_fun(const problem *prob, double Cp, double Cn)
+  : prob(*prob),
+    C(new double[prob->l]),
+    z(new double[prob->l]),
+    D(new double[prob->l])
 {
-	int i;
-	int l=prob->l;
 	int *y=prob->y;
 
-	this->prob = prob;
-
-	z = new double[l];
-	D = new double[l];
-	C = new double[l];
-
-	for (i=0; i<l; i++)
+	for (int i=0; i < prob->l; i++)
 	{
 		if (y[i] == 1)
 			C[i] = Cp;
@@ -93,23 +90,16 @@ l2r_lr_fun::l2r_lr_fun(const problem *prob, double Cp, double Cn)
 	}
 }
 
-l2r_lr_fun::~l2r_lr_fun()
-{
-	delete[] z;
-	delete[] D;
-	delete[] C;
-}
-
 
 double l2r_lr_fun::fun(double *w)
 {
 	int i;
 	double f=0;
-	int *y=prob->y;
-	int l=prob->l;
+	int *y=prob.y;
+	int l=prob.l;
 	int w_size=get_nr_variable();
 
-	Xv(w, z);
+	Xv(w, z.get());
 	for(i=0;i<l;i++)
 	{
 		double yz = y[i]*z[i];
@@ -129,8 +119,8 @@ double l2r_lr_fun::fun(double *w)
 void l2r_lr_fun::grad(double *w, double *g)
 {
 	int i;
-	int *y=prob->y;
-	int l=prob->l;
+	int *y=prob.y;
+	int l=prob.l;
 	int w_size=get_nr_variable();
 
 	for(i=0;i<l;i++)
@@ -139,7 +129,7 @@ void l2r_lr_fun::grad(double *w, double *g)
 		D[i] = z[i]*(1-z[i]);
 		z[i] = C[i]*(z[i]-1)*y[i];
 	}
-	XTv(z, g);
+	XTv(z.get(), g);
 
 	for(i=0;i<w_size;i++)
 		g[i] = w[i] + g[i];
@@ -147,13 +137,13 @@ void l2r_lr_fun::grad(double *w, double *g)
 
 int l2r_lr_fun::get_nr_variable(void)
 {
-	return prob->n;
+	return prob.n;
 }
 
 void l2r_lr_fun::Hv(double *s, double *Hs)
 {
 	int i;
-	int l=prob->l;
+	int l=prob.l;
 	int w_size=get_nr_variable();
 	double *wa = new double[l];
 
@@ -170,8 +160,8 @@ void l2r_lr_fun::Hv(double *s, double *Hs)
 void l2r_lr_fun::Xv(double *v, double *Xv)
 {
 	int i;
-	int l=prob->l;
-	feature_node **x=prob->x;
+	int l=prob.l;
+	feature_node **x=prob.x;
 
 	for(i=0;i<l;i++)
 	{
@@ -188,9 +178,9 @@ void l2r_lr_fun::Xv(double *v, double *Xv)
 void l2r_lr_fun::XTv(double *v, double *XTv)
 {
 	int i;
-	int l=prob->l;
+	int l=prob.l;
 	int w_size=get_nr_variable();
-	feature_node **x=prob->x;
+	feature_node **x=prob.x;
 
 	for(i=0;i<w_size;i++)
 		XTv[i]=0;
@@ -218,57 +208,46 @@ public:
 	int get_nr_variable(void);
 
 private:
+	l2r_l2_svc_fun(l2r_l2_svc_fun const &);		// non-copyable
+	void operator=(l2r_l2_svc_fun const &);		// non-assignable
+
 	void Xv(double *v, double *Xv);
 	void subXv(double *v, double *Xv);
 	void subXTv(double *v, double *XTv);
 
-	double *C;
-	double *z;
-	double *D;
-	int *I;
+	const problem &prob;
 	int sizeI;
-	const problem *prob;
+	scoped_array<double> C, z, D;
+	scoped_array<int> I;
 };
 
 l2r_l2_svc_fun::l2r_l2_svc_fun(const problem *prob, double Cp, double Cn)
+  : prob(*prob),
+	sizeI(0),
+    C(new double[prob->l]),
+    z(new double[prob->l]),
+    D(new double[prob->l]),
+    I(new int[prob->l])
 {
-	int i;
-	int l=prob->l;
-	int *y=prob->y;
-
-	this->prob = prob;
-
-	z = new double[l];
-	D = new double[l];
-	C = new double[l];
-	I = new int[l];
-
-	for (i=0; i<l; i++)
+	for (int i=0; i < prob->l; i++)
 	{
-		if (y[i] == 1)
+		if (prob->y[i] == 1)
 			C[i] = Cp;
 		else
 			C[i] = Cn;
 	}
 }
 
-l2r_l2_svc_fun::~l2r_l2_svc_fun()
-{
-	delete[] z;
-	delete[] D;
-	delete[] C;
-	delete[] I;
-}
 
 double l2r_l2_svc_fun::fun(double *w)
 {
 	int i;
 	double f=0;
-	int *y=prob->y;
-	int l=prob->l;
+	int *y=prob.y;
+	int l=prob.l;
 	int w_size=get_nr_variable();
 
-	Xv(w, z);
+	Xv(w, z.get());
 	for(i=0;i<l;i++)
 	{
 		z[i] = y[i]*z[i];
@@ -287,8 +266,8 @@ double l2r_l2_svc_fun::fun(double *w)
 void l2r_l2_svc_fun::grad(double *w, double *g)
 {
 	int i;
-	int *y=prob->y;
-	int l=prob->l;
+	int *y=prob.y;
+	int l=prob.l;
 	int w_size=get_nr_variable();
 
 	sizeI = 0;
@@ -299,7 +278,7 @@ void l2r_l2_svc_fun::grad(double *w, double *g)
 			I[sizeI] = i;
 			sizeI++;
 		}
-	subXTv(z, g);
+	subXTv(z.get(), g);
 
 	for(i=0;i<w_size;i++)
 		g[i] = w[i] + 2*g[i];
@@ -307,13 +286,13 @@ void l2r_l2_svc_fun::grad(double *w, double *g)
 
 int l2r_l2_svc_fun::get_nr_variable(void)
 {
-	return prob->n;
+	return prob.n;
 }
 
 void l2r_l2_svc_fun::Hv(double *s, double *Hs)
 {
 	int i;
-	int l=prob->l;
+	int l=prob.l;
 	int w_size=get_nr_variable();
 	double *wa = new double[l];
 
@@ -330,8 +309,8 @@ void l2r_l2_svc_fun::Hv(double *s, double *Hs)
 void l2r_l2_svc_fun::Xv(double *v, double *Xv)
 {
 	int i;
-	int l=prob->l;
-	feature_node **x=prob->x;
+	int l=prob.l;
+	feature_node **x=prob.x;
 
 	for(i=0;i<l;i++)
 	{
@@ -348,7 +327,7 @@ void l2r_l2_svc_fun::Xv(double *v, double *Xv)
 void l2r_l2_svc_fun::subXv(double *v, double *Xv)
 {
 	int i;
-	feature_node **x=prob->x;
+	feature_node **x=prob.x;
 
 	for(i=0;i<sizeI;i++)
 	{
@@ -366,7 +345,7 @@ void l2r_l2_svc_fun::subXTv(double *v, double *XTv)
 {
 	int i;
 	int w_size=get_nr_variable();
-	feature_node **x=prob->x;
+	feature_node **x=prob.x;
 
 	for(i=0;i<w_size;i++)
 		XTv[i]=0;
@@ -401,65 +380,55 @@ void l2r_l2_svc_fun::subXTv(double *v, double *XTv)
 //
 // See Appendix of LIBLINEAR paper, Fan et al. (2008)
 
-#define GETI(i) (prob->y[i])
+#define GETI(i) (prob.y[i])
 // To support weights for instances, use GETI(i) (i)
 
 class Solver_MCSVM_CS
 {
-	public:
-		Solver_MCSVM_CS(const problem *prob, int nr_class, double *C, double eps=0.1, int max_iter=100000);
-		~Solver_MCSVM_CS();
-		void Solve(double *w);
-	private:
-		void solve_sub_problem(double A_i, int yi, double C_yi, int active_i, double *alpha_new);
-		bool be_shrunk(int i, int m, int yi, double alpha_i, double minG);
-		double *B, *C, *G;
-		int w_size, l;
-		int nr_class;
-		int max_iter;
-		double eps;
-		const problem *prob;
+	double *C;
+	scoped_array<double> B, G;
+	int w_size, l;
+	int nr_class;
+	int max_iter;
+	double eps;
+	const problem &prob;
+
+public:
+	Solver_MCSVM_CS(const problem *prob, int nr_class, double *C, double eps=0.1, int max_iter=100000);
+	~Solver_MCSVM_CS();
+	void Solve(double *w);
+
+private:
+	Solver_MCSVM_CS(Solver_MCSVM_CS const &);	// non-copyable
+	void operator=(Solver_MCSVM_CS const &);	// non-assignable
+
+	void solve_sub_problem(double A_i, int yi, double C_yi, int active_i, double *alpha_new);
+	bool be_shrunk(int i, int m, int yi, double alpha_i, double minG);
 };
 
 Solver_MCSVM_CS::Solver_MCSVM_CS(const problem *prob, int nr_class, double *weighted_C, double eps, int max_iter)
+  : C(weighted_C),
+    B(new double[nr_class]),
+	G(new double[nr_class]),
+	w_size(prob->n),
+	l(prob->l),
+	nr_class(nr_class),
+	max_iter(max_iter),
+	eps(eps),
+	prob(*prob)
 {
-	this->w_size = prob->n;
-	this->l = prob->l;
-	this->nr_class = nr_class;
-	this->eps = eps;
-	this->max_iter = max_iter;
-	this->prob = prob;
-	this->B = new double[nr_class];
-	this->G = new double[nr_class];
-	this->C = weighted_C;
 }
 
-Solver_MCSVM_CS::~Solver_MCSVM_CS()
-{
-	delete[] B;
-	delete[] G;
-}
-
-int compare_double(const void *a, const void *b)
-{
-	if(*(double *)a > *(double *)b)
-		return -1;
-	if(*(double *)a < *(double *)b)
-		return 1;
-	return 0;
-}
 
 void Solver_MCSVM_CS::solve_sub_problem(double A_i, int yi, double C_yi, int active_i, double *alpha_new)
 {
-	int r;
-	double *D;
-
-	clone(D, B, active_i);
+	std::vector<double> D(B.get(), B.get() + active_i);
 	if(yi < active_i)
 		D[yi] += A_i*C_yi;
-	qsort(D, active_i, sizeof(double), compare_double);
+	std::sort(D.begin(), D.end(), std::greater<double>());
 
 	double beta = D[0] - A_i*C_yi;
+	int r;
 	for(r=1;r<active_i && beta<r*D[r];r++)
 		beta += D[r];
 
@@ -467,11 +436,10 @@ void Solver_MCSVM_CS::solve_sub_problem(double A_i, int yi, double C_yi, int act
 	for(r=0;r<active_i;r++)
 	{
 		if(r == yi)
-			alpha_new[r] = min(C_yi, (beta-B[r])/A_i);
+			alpha_new[r] = std::min(C_yi, (beta-B[r])/A_i);
 		else
-			alpha_new[r] = min((double)0, (beta - B[r])/A_i);
+			alpha_new[r] = std::min((double)0, (beta - B[r])/A_i);
 	}
-	delete[] D;
 }
 
 bool Solver_MCSVM_CS::be_shrunk(int i, int m, int yi, double alpha_i, double minG)
@@ -498,7 +466,7 @@ void Solver_MCSVM_CS::Solve(double *w)
 	int *y_index = new int[l];
 	int active_size = l;
 	int *active_size_i = new int[l];
-	double eps_shrink = max(10.0*eps, 1.0); // stopping tolerance for shrinking
+	double eps_shrink = std::max(10.0*eps, 1.0); // stopping tolerance for shrinking
 	bool start_from_all = true;
 	// initial
 	for(i=0;i<l*nr_class;i++)
@@ -509,7 +477,7 @@ void Solver_MCSVM_CS::Solve(double *w)
 	{
 		for(m=0;m<nr_class;m++)
 			alpha_index[i*nr_class+m] = m;
-		feature_node *xi = prob->x[i];
+		feature_node *xi = prob.x[i];
 		QD[i] = 0;
 		while(xi->index != -1)
 		{
@@ -517,7 +485,7 @@ void Solver_MCSVM_CS::Solve(double *w)
 			xi++;
 		}
 		active_size_i[i] = nr_class;
-		y_index[i] = prob->y[i];
+		y_index[i] = prob.y[i];
 		index[i] = i;
 	}
 
@@ -527,7 +495,7 @@ void Solver_MCSVM_CS::Solve(double *w)
 		for(i=0;i<active_size;i++)
 		{
 			int j = i+rand()%(active_size-i);
-			swap(index[i], index[j]);
+            std::swap(index[i], index[j]);
 		}
 		for(s=0;s<active_size;s++)
 		{
@@ -543,7 +511,7 @@ void Solver_MCSVM_CS::Solve(double *w)
 				if(y_index[i] < active_size_i[i])
 					G[y_index[i]] = 0;
 
-				feature_node *xi = prob->x[i];
+				feature_node *xi = prob.x[i];
 				while(xi->index!= -1)
 				{
 					double *w_i = &w[(xi->index-1)*nr_class];
@@ -562,7 +530,7 @@ void Solver_MCSVM_CS::Solve(double *w)
 						maxG = G[m];
 				}
 				if(y_index[i] < active_size_i[i])
-					if(alpha_i[prob->y[i]] < C[GETI(i)] && G[y_index[i]] < minG)
+					if(alpha_i[prob.y[i]] < C[GETI(i)] && G[y_index[i]] < minG)
 						minG = G[y_index[i]];
 
 				for(m=0;m<active_size_i[i];m++)
@@ -575,8 +543,8 @@ void Solver_MCSVM_CS::Solve(double *w)
 							if(!be_shrunk(i, active_size_i[i], y_index[i], 
 											alpha_i[alpha_index_i[active_size_i[i]]], minG))
 							{
-								swap(alpha_index_i[m], alpha_index_i[active_size_i[i]]);
-								swap(G[m], G[active_size_i[i]]);
+                                std::swap(alpha_index_i[m], alpha_index_i[active_size_i[i]]);
+                                std::swap(G[m], G[active_size_i[i]]);
 								if(y_index[i] == active_size_i[i])
 									y_index[i] = m;
 								else if(y_index[i] == m) 
@@ -591,15 +559,15 @@ void Solver_MCSVM_CS::Solve(double *w)
 				if(active_size_i[i] <= 1)
 				{
 					active_size--;
-					swap(index[s], index[active_size]);
-					s--;	
+                    std::swap(index[s], index[active_size]);
+					s--;
 					continue;
 				}
 
 				if(maxG-minG <= 1e-12)
 					continue;
 				else
-					stopping = max(maxG - minG, stopping);
+					stopping = std::max(maxG - minG, stopping);
 
 				for(m=0;m<active_size_i[i];m++)
 					B[m] = G[m] - Ai*alpha_i[alpha_index_i[m]] ;
@@ -618,7 +586,7 @@ void Solver_MCSVM_CS::Solve(double *w)
 					}
 				}
 
-				xi = prob->x[i];
+				xi = prob.x[i];
 				while(xi->index != -1)
 				{
 					double *w_i = &w[(xi->index-1)*nr_class];
@@ -645,7 +613,7 @@ void Solver_MCSVM_CS::Solve(double *w)
 				for(i=0;i<l;i++)
 					active_size_i[i] = nr_class;
 				info("*");
-				eps_shrink = max(eps_shrink/2, eps);
+				eps_shrink = std::max(eps_shrink/2, eps);
 				start_from_all = true;
 			}
 		}
@@ -670,7 +638,7 @@ void Solver_MCSVM_CS::Solve(double *w)
 			nSV++;
 	}
 	for(i=0;i<l;i++)
-		v -= alpha[i*nr_class+prob->y[i]];
+		v -= alpha[i * nr_class + prob.y[i]];
 	info("Objective value = %lf\n",v);
 	info("nSV = %d\n",nSV);
 
@@ -779,7 +747,7 @@ static void solve_l2r_l1l2_svc(
 		for (i=0; i<active_size; i++)
 		{
 			int j = i+rand()%(active_size-i);
-			swap(index[i], index[j]);
+            std::swap(index[i], index[j]);
 		}
 
 		for (s=0; s<active_size; s++)
@@ -805,7 +773,7 @@ static void solve_l2r_l1l2_svc(
 				if (G > PGmax_old)
 				{
 					active_size--;
-					swap(index[s], index[active_size]);
+                    std::swap(index[s], index[active_size]);
 					s--;
 					continue;
 				}
@@ -817,7 +785,7 @@ static void solve_l2r_l1l2_svc(
 				if (G < PGmin_old)
 				{
 					active_size--;
-					swap(index[s], index[active_size]);
+                    std::swap(index[s], index[active_size]);
 					s--;
 					continue;
 				}
@@ -827,13 +795,13 @@ static void solve_l2r_l1l2_svc(
 			else
 				PG = G;
 
-			PGmax_new = max(PGmax_new, PG);
-			PGmin_new = min(PGmin_new, PG);
+			PGmax_new = std::max(PGmax_new, PG);
+			PGmin_new = std::min(PGmin_new, PG);
 
 			if(fabs(PG) > 1.0e-12)
 			{
 				double alpha_old = alpha[i];
-				alpha[i] = min(max(alpha[i] - G/QD[i], 0.0), C);
+				alpha[i] = std::min(std::max(alpha[i] - G/QD[i], 0.0), C);
 				d = (alpha[i] - alpha_old)*yi;
 				xi = prob->x[i];
 				while (xi->index != -1)
@@ -928,7 +896,7 @@ void solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, do
 	schar *y = new schar[l];	
 	int max_inner_iter = 100; // for inner Newton
 	double innereps = 1e-2; 
-	double innereps_min = min(1e-8, eps);
+	double innereps_min = std::min(1e-8, eps);
 	double upper_bound[3] = {Cn, 0, Cp};
 
 	for(i=0; i<w_size; i++)
@@ -943,7 +911,7 @@ void solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, do
 		{
 			y[i] = -1;
 		}
-		alpha[2*i] = min(0.001*upper_bound[GETI(i)], 1e-8);
+		alpha[2*i] = std::min(0.001*upper_bound[GETI(i)], 1e-8);
 		alpha[2*i+1] = upper_bound[GETI(i)] - alpha[2*i];
 
 		xTx[i] = 0;
@@ -962,7 +930,7 @@ void solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, do
 		for (i=0; i<l; i++)
 		{
 			int j = i+rand()%(l-i);
-			swap(index[i], index[j]);
+            std::swap(index[i], index[j]);
 		}
 		int newton_iter = 0;
 		double Gmax = 0;
@@ -996,7 +964,7 @@ void solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, do
 			if(C - z < 0.5 * C) 
 				z = 0.1*z;
 			double gp = a*(z-alpha_old)+sign*b+log(z/(C-z));
-			Gmax = max(Gmax, fabs(gp));
+			Gmax = std::max(Gmax, fabs(gp));
 
 			// Newton method on the sub-problem
 			const double eta = 0.1; // xi in the paper
@@ -1037,7 +1005,7 @@ void solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, do
 			break;
 
 		if(newton_iter < l/10) 
-			innereps = max(innereps_min, 0.1*innereps);
+			innereps = std::max(innereps_min, 0.1*innereps);
 
 	}
 
@@ -1138,7 +1106,7 @@ static void solve_l1r_l2_svc(
 		for(j=0; j<active_size; j++)
 		{
 			int i = j+rand()%(active_size-j);
-			swap(index[i], index[j]);
+            std::swap(index[i], index[j]);
 		}
 
 		for(s=0; s<active_size; s++)
@@ -1164,7 +1132,7 @@ static void solve_l1r_l2_svc(
 
 			G = G_loss;
 			H *= 2;
-			H = max(H, 1e-12);
+			H = std::max(H, 1e-12);
 
 			double Gp = G+1;
 			double Gn = G-1;
@@ -1178,7 +1146,7 @@ static void solve_l1r_l2_svc(
 				else if(Gp>Gmax_old/l && Gn<-Gmax_old/l)
 				{
 					active_size--;
-					swap(index[s], index[active_size]);
+                    std::swap(index[s], index[active_size]);
 					s--;
 					continue;
 				}
@@ -1188,7 +1156,7 @@ static void solve_l1r_l2_svc(
 			else
 				violation = fabs(Gn);
 
-			Gmax_new = max(Gmax_new, violation);
+			Gmax_new = std::max(Gmax_new, violation);
 
 			// obtain Newton direction d
 			if(Gp <= H*w[j])
@@ -1381,14 +1349,23 @@ static void solve_l1r_lr(
 	double sum2, appxcond2;
 	double cond;
 
-	int *index = new int[w_size];
-	schar *y = new schar[l];
-	double *exp_wTx = new double[l];
-	double *exp_wTx_new = new double[l];
-	double *xj_max = new double[w_size];
-	double *C_sum = new double[w_size];
-	double *xjneg_sum = new double[w_size];
-	double *xjpos_sum = new double[w_size];
+	std::vector<int> v_index(w_size);
+	std::vector<schar> v_y(l);
+	std::vector<double> v_exp_wTx(l);
+	std::vector<double> v_exp_wTx_new(l);
+	std::vector<double> v_xj_max(w_size);
+	std::vector<double> v_C_sum(w_size);
+	std::vector<double> v_xjneg_sum(w_size);
+	std::vector<double> v_xjpos_sum(w_size);
+
+	int *index = &v_index[0];
+	schar *y = &v_y[0];
+	double *exp_wTx = &v_exp_wTx[0];
+	double *exp_wTx_new = &v_exp_wTx_new[0];
+	double *xj_max = &v_xj_max[0];
+	double *C_sum = &v_C_sum[0];
+	double *xjneg_sum = &v_xjneg_sum[0];
+	double *xjpos_sum = &v_xjpos_sum[0];
 	feature_node *x;
 
 	double C[3] = {Cn,0,Cp};
@@ -1414,8 +1391,8 @@ static void solve_l1r_lr(
 		{
 			int ind = x->index-1;
 			double val = x->value;
-			x_min = min(x_min, val);
-			xj_max[j] = max(xj_max[j], val);
+			x_min = std::min(x_min, val);
+			xj_max[j] = std::max(xj_max[j], val);
 			C_sum[j] += C[GETI(ind)];
 			if(y[ind] == -1)
 				xjneg_sum[j] += C[GETI(ind)]*val;
@@ -1432,7 +1409,7 @@ static void solve_l1r_lr(
 		for(j=0; j<active_size; j++)
 		{
 			int i = j+rand()%(active_size-j);
-			swap(index[i], index[j]);
+            std::swap(index[i], index[j]);
 		}
 
 		for(s=0; s<active_size; s++)
@@ -1470,7 +1447,7 @@ static void solve_l1r_lr(
 				else if(Gp>Gmax_old/l && Gn<-Gmax_old/l)
 				{
 					active_size--;
-					swap(index[s], index[active_size]);
+                    std::swap(index[s], index[active_size]);
 					s--;
 					continue;
 				}
@@ -1480,7 +1457,7 @@ static void solve_l1r_lr(
 			else
 				violation = fabs(Gn);
 
-			Gmax_new = max(Gmax_new, violation);
+			Gmax_new = std::max(Gmax_new, violation);
 
 			// obtain Newton direction d
 			if(Gp <= H*w[j])
@@ -1493,7 +1470,7 @@ static void solve_l1r_lr(
 			if(fabs(d) < 1.0e-12)
 				continue;
 
-			d = min(max(d,-10.0),10.0);
+			d = std::min(std::max(d,-10.0),10.0);
 
 			double delta = fabs(w[j]+d)-fabs(w[j]) + G*d;
 			int num_linesearch;
@@ -1506,7 +1483,7 @@ static void solve_l1r_lr(
 					double tmp = exp(d*xj_max[j]);
 					appxcond1 = log(1+sum1*(tmp-1)/xj_max[j]/C_sum[j])*C_sum[j] + cond - d*xjpos_sum[j];
 					appxcond2 = log(1+sum2*(1/tmp-1)/xj_max[j]/C_sum[j])*C_sum[j] + cond + d*xjneg_sum[j];
-					if(min(appxcond1,appxcond2) <= 0)
+					if(std::min(appxcond1,appxcond2) <= 0)
 					{
 						x = prob_col->x[j];
 						while(x->index != -1)
@@ -1619,15 +1596,6 @@ static void solve_l1r_lr(
 
 	info("Objective value = %lf\n", v);
 	info("#nonzeros/#features = %d/%d\n", nnz, w_size);
-
-	delete [] index;
-	delete [] y;
-	delete [] exp_wTx;
-	delete [] exp_wTx_new;
-	delete [] xj_max;
-	delete [] C_sum;
-	delete [] xjneg_sum;
-	delete [] xjpos_sum;
 }
 
 // transpose matrix X from row format to column format
@@ -1637,7 +1605,8 @@ static void transpose(const problem *prob, feature_node **x_space_ret, problem *
 	int l = prob->l;
 	int n = prob->n;
 	int nnz = 0;
-	int *col_ptr = new int[n+1];
+	std::vector<int> v_col_ptr(n+1);
+	int *col_ptr = &v_col_ptr[0];
 	feature_node *x_space;
 	prob_col->l = l;
 	prob_col->n = n;
@@ -1682,8 +1651,6 @@ static void transpose(const problem *prob, feature_node **x_space_ret, problem *
 		x_space[col_ptr[i]].index = -1;
 
 	*x_space_ret = x_space;
-
-	delete [] col_ptr;
 }
 
 // label: label name, start: begin of each class, count: #data of classes, perm: indices to the original data
@@ -1786,25 +1753,22 @@ static void train_one(const problem *prob, const parameter *param, double *w, do
 			pos++;
 	neg = prob->l - pos;
 
-	function *fun_obj=NULL;
 	switch(param->solver_type)
 	{
 		case L2R_LR:
 		{
-			fun_obj=new l2r_lr_fun(prob, Cp, Cn);
-			TRON tron_obj(fun_obj, eps*min(pos,neg)/prob->l);
+			l2r_lr_fun fun(prob, Cp, Cn);
+			TRON tron_obj(fun, eps*std::min(pos,neg)/prob->l);
 			tron_obj.set_print_string(liblinear_print_string);
 			tron_obj.tron(w);
-			delete fun_obj;
 			break;
 		}
 		case L2R_L2LOSS_SVC:
 		{
-			fun_obj=new l2r_l2_svc_fun(prob, Cp, Cn);
-			TRON tron_obj(fun_obj, eps*min(pos,neg)/prob->l);
+			l2r_l2_svc_fun fun(prob, Cp, Cn);
+			TRON tron_obj(fun, eps*std::min(pos,neg)/prob->l);
 			tron_obj.set_print_string(liblinear_print_string);
 			tron_obj.tron(w);
-			delete fun_obj;
 			break;
 		}
 		case L2R_L2LOSS_SVC_DUAL:
@@ -1818,7 +1782,7 @@ static void train_one(const problem *prob, const parameter *param, double *w, do
 			problem prob_col;
 			feature_node *x_space = NULL;
 			transpose(prob, &x_space ,&prob_col);
-			solve_l1r_l2_svc(&prob_col, w, eps*min(pos,neg)/prob->l, Cp, Cn);
+			solve_l1r_l2_svc(&prob_col, w, eps*std::min(pos,neg)/prob->l, Cp, Cn);
 			delete [] prob_col.y;
 			delete [] prob_col.x;
 			delete [] x_space;
@@ -1829,7 +1793,7 @@ static void train_one(const problem *prob, const parameter *param, double *w, do
 			problem prob_col;
 			feature_node *x_space = NULL;
 			transpose(prob, &x_space ,&prob_col);
-			solve_l1r_lr(&prob_col, w, eps*min(pos,neg)/prob->l, Cp, Cn);
+			solve_l1r_lr(&prob_col, w, eps*std::min(pos,neg)/prob->l, Cp, Cn);
 			delete [] prob_col.y;
 			delete [] prob_col.x;
 			delete [] x_space;
@@ -1972,15 +1936,17 @@ model* train(const problem *prob, const parameter *param)
 void cross_validation(const problem *prob, const parameter *param, int nr_fold, int *target)
 {
 	int i;
-	int *fold_start = Malloc(int,nr_fold+1);
 	int l = prob->l;
-	int *perm = Malloc(int,l);
+	std::vector<int> v_fold_start(nr_fold+1),
+					 v_perm(l);
+	int *fold_start = &v_fold_start[0];
+	int *perm = &v_perm[0];
 
 	for(i=0;i<l;i++) perm[i]=i;
 	for(i=0;i<l;i++)
 	{
 		int j = i+rand()%(l-i);
-		swap(perm[i],perm[j]);
+        std::swap(perm[i],perm[j]);
 	}
 	for(i=0;i<=nr_fold;i++)
 		fold_start[i]=i*l/nr_fold;
@@ -2018,8 +1984,6 @@ void cross_validation(const problem *prob, const parameter *param, int nr_fold, 
 		free(subprob.x);
 		free(subprob.y);
 	}
-	free(fold_start);
-	free(perm);
 }
 
 int predict_values(const struct model *model_, const struct feature_node *x, double *dec_values)
@@ -2068,9 +2032,8 @@ int predict_values(const struct model *model_, const struct feature_node *x, dou
 
 int predict(const model *model_, const feature_node *x)
 {
-	double *dec_values = Malloc(double, model_->nr_class);
-	int label=predict_values(model_, x, dec_values);
-	free(dec_values);
+	std::vector<double> dec_values(model_->nr_class);
+	int label=predict_values(model_, x, &dec_values[0]);
 	return label;
 }
 
@@ -2335,4 +2298,3 @@ void set_print_string_function(void (*print_func)(const char*))
 	else
 		liblinear_print_string = print_func;
 }
-
