@@ -13,22 +13,29 @@ from ..utils import safe_asanyarray
 from ..preprocessing import LabelBinarizer
 from ..grid_search import GridSearchCV
 
-def _solve(A, b, solver):
+def _solve(A, b, solver, tol):
     # helper method for ridge_regression, A is symmetric positive
 
     if solver == 'auto':
-        # sparse_cg cannot handle a 2-d b.
-        if hasattr(A, 'todense') and b.ndim < 2:
+        if hasattr(A, 'todense'):
             solver = 'sparse_cg'
         else:
             solver = 'dense_cholesky'
 
     if solver == 'sparse_cg':
-        from scipy.sparse import linalg as sp_linalg
-        sol, error = sp_linalg.cg(A, b)
-        if error:
-            raise ValueError("Failed with error code %d" % error)
-        return sol
+        if b.ndim < 2:
+            from scipy.sparse import linalg as sp_linalg
+            sol, error = sp_linalg.cg(A, b, tol=tol)
+            if error:
+                raise ValueError("Failed with error code %d" % error)
+            return sol
+        else:
+            # sparse_cg cannot handle a 2-d b.
+            sol = []
+            for j in range(b.shape[1]):
+                sol.append(_solve(A, b[:, j], solver="sparse_cg", tol=tol))
+            return np.array(sol).T
+
     elif solver == 'dense_cholesky':
         from scipy import linalg
         if hasattr(A, 'todense'):
@@ -38,7 +45,7 @@ def _solve(A, b, solver):
         raise NotImplementedError('Solver %s not implemented' % solver)
 
 
-def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto'):
+def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto', tol=1e-3):
     """
     Solve the ridge equation by the method of normal equations.
 
@@ -60,6 +67,9 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto'):
         scipy.sparse.linalg.cg while 'auto' will chose the most
         appropiate depending on the matrix X.
 
+    tol: float
+        Precision of the solution.
+
     Notes
     -----
     This function won't compute the intercept.
@@ -79,12 +89,12 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto'):
 
             I = sparse.lil_matrix((n_samples, n_samples))
             I.setdiag(np.ones(n_samples) * alpha * sample_weight)
-            c = _solve(X * X.T + I, y, solver)
+            c = _solve(X * X.T + I, y, solver, tol)
             return X.T * c
         else:
             I = sparse.lil_matrix((n_features, n_features))
             I.setdiag(np.ones(n_features) * alpha)
-            return _solve(X.T * X + I, X.T * y, solver)
+            return _solve(X.T * X + I, X.T * y, solver, tol)
     else:
         if n_features > n_samples or \
            isinstance(sample_weight, np.ndarray) or \
@@ -94,13 +104,13 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto'):
             # w = X.T * inv(X X^t + alpha*Id) y
             A = np.dot(X, X.T)
             A.flat[::n_samples + 1] += alpha * sample_weight
-            return np.dot(X.T, _solve(A, y, solver))
+            return np.dot(X.T, _solve(A, y, solver, tol))
         else:
             # ridge
             # w = inv(X^t X + alpha*Id) * X.T y
             A = np.dot(X.T, X)
             A.flat[::n_features + 1] += alpha
-            return _solve(A, np.dot(X.T, y), solver)
+            return _solve(A, np.dot(X.T, y), solver, tol)
 
 
 class Ridge(LinearModel):
@@ -120,6 +130,9 @@ class Ridge(LinearModel):
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
+    tol: float
+        Precision of the solution.
+
     Examples
     --------
     >>> from scikits.learn.linear_model import Ridge
@@ -130,12 +143,13 @@ class Ridge(LinearModel):
     >>> X = np.random.randn(n_samples, n_features)
     >>> clf = Ridge(alpha=1.0)
     >>> clf.fit(X, y)
-    Ridge(alpha=1.0, fit_intercept=True)
+    Ridge(alpha=1.0, tol=0.001, fit_intercept=True)
     """
 
-    def __init__(self, alpha=1.0, fit_intercept=True):
+    def __init__(self, alpha=1.0, fit_intercept=True, tol=1e-3):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
+        self.tol = tol
 
     def fit(self, X, y, sample_weight=1.0, solver='auto', **params):
         """
@@ -172,7 +186,8 @@ class Ridge(LinearModel):
         X, y, X_mean, y_mean = \
            LinearModel._center_data(X, y, self.fit_intercept)
 
-        self.coef_ = ridge_regression(X, y, self.alpha, sample_weight, solver)
+        self.coef_ = ridge_regression(X, y, self.alpha, sample_weight,
+                                      solver, self.tol)
         self._set_intercept(X_mean, y_mean)
         return self
 
