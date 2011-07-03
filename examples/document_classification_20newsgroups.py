@@ -147,7 +147,7 @@ def benchmark(clf):
     print
     return score, train_time, test_time
 
-for clf, name in ((RidgeClassifier(), "Ridge Classifier"),
+for clf, name in ((RidgeClassifier(tol=1e-1), "Ridge Classifier"),
                   (NeighborsClassifier(n_neighbors=10), "kNN")):
     print 80*'='
     print name

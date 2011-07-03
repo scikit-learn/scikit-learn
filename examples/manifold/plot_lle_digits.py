@@ -26,7 +26,6 @@ n_samples, n_features = X.shape
 
 #----------------------------------------------------------------------
 # Random 2D projection using a random unitary matrix
-
 print "Computing random projection"
 rng = np.random.RandomState(42)
 Q, _ = qr_economic(rng.normal(size=(n_features, 2)))
@@ -50,11 +49,9 @@ X_lda = lda.LDA(n_components=2).fit_transform(X2, y)
 
 #----------------------------------------------------------------------
 # Locally linear embedding of the digits dataset
-
 print "Computing LLE embedding"
 X_lle, err = manifold.locally_linear_embedding(X, 30, 2, reg=1e-2)
 print "Done. Reconstruction error: %g" % err
-
 
 #----------------------------------------------------------------------
 # Scale and visualize the embedding vectors
