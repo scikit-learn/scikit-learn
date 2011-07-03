@@ -5,15 +5,18 @@
 import numpy as np
 
 from ..decomposition import PCA
+from ..decomposition.dict_learning import BaseDictionaryLearning
 from ..cluster import KMeans
 from ..metrics.pairwise import euclidean_distances
 
 
-class KMeansCoder():
-    def __init__(self, n_centers=400, whiten=True, n_components=None,
+class KMeansCoder(BaseDictionaryLearning):
+    """K-means based dictionary learning"""
+    def __init__(self, n_atoms, whiten=True, n_components=None,
                  n_pools=2, max_iter=100, n_init=1, n_prefit=5, tol=1e-4,
-                 local_contrast=True, n_drop_components=0, verbose=False):
-        self.n_centers = n_centers
+                 local_contrast=True, n_drop_components=0, verbose=False,
+                 transform_method='omp', split_sign=False):
+        self.n_atoms = n_atoms
         self.whiten = whiten
         self.n_pools = n_pools
         self.max_iter = max_iter
@@ -24,9 +27,12 @@ class KMeansCoder():
         self.verbose = verbose
         self.tol = tol
         self.n_drop_components = n_drop_components
+        self.transform_method = transform_method
+        self.split_sign = split_sign
 
     def local_contrast_normalization(self, patches):
         """Normalize the patch-wise variance of the signal"""
+        # XXX: this should probably be extracted somewhere more general
         # center all colour channels together
         patches = patches.reshape((patches.shape[0], -1))
         patches -= patches.mean(axis=1)[:, None]
@@ -61,7 +67,7 @@ class KMeansCoder():
         # kmeans model to find the filters
         if self.verbose:
             print "About to extract filters from %d patches" % n_patches
-        kmeans = KMeans(k=self.n_centers, init='k-means++',
+        kmeans = KMeans(k=self.n_atoms, init='k-means++',
                         max_iter=self.max_iter, n_init=self.n_init,
                         tol=self.tol, verbose=self.verbose)
 
@@ -88,7 +94,7 @@ class KMeansCoder():
 
                 # warm restart by padding previous centroids with zeros
                 # with full dimensionality this time
-                kmeans.init = np.zeros((self.n_centers, patches.shape[1]),
+                kmeans.init = np.zeros((self.n_atoms, patches.shape[1]),
                                        dtype=kmeans.cluster_centers_.dtype)
                 kmeans.init[:, :self.n_prefit] = kmeans.cluster_centers_
                 if self.verbose:
@@ -102,19 +108,20 @@ class KMeansCoder():
 
             # project back the centers in original, non-whitened space (useful
             # for qualitative inspection of the filters)
-            self.filters_ = self.pca.inverse_transform(kmeans.cluster_centers_)
+            self.components_ = self.pca.inverse_transform(
+                                                       kmeans.cluster_centers_)
         else:
             # find the kernel in the raw original dimensional space
             # TODO: experiment with component wise scaling too
             self.pca = None
             kmeans.fit(patches)
-            self.filters_ = kmeans.cluster_centers_
+            self.components_ = kmeans.cluster_centers_
 
         self.kmeans = kmeans
         self.inertia_ = kmeans.inertia_
         return self
 
-    def transform(self, X):
+    def transform(self, X, y=None, **kwargs):
         """Map a collection of patches into the feature space
 
         This uses a soft triangle k-means method
@@ -122,18 +129,5 @@ class KMeansCoder():
         if self.local_contrast:
             # TODO: make it inplace by default explictly
             X = self.local_contrast_normalization(X)
-        if self.whiten:
-            # TODO: make it possible to pass pre-allocated array
-            X = self.pca.transform(X)
 
-        # extract distance from each patch to each cluster center
-        # TODO: make it possible to reuse pre-allocated distance array
-        filters = self.kmeans.cluster_centers_
-        distances = euclidean_distances(X, filters)
-
-        # triangle features
-        distance_means = distances.mean(axis=1)[:, np.newaxis]
-        features = np.maximum(0, distance_means - distances)
-
-        # downstream classifiers expect a 2 dim shape
-        return features.reshape(features.shape[0], -1)
+        return BaseDictionaryLearning.transform(self, X, y, **kwargs)
