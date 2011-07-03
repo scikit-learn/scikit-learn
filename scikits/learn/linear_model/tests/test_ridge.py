@@ -217,12 +217,24 @@ def _test_ridge_classifiers(filter_):
     y_pred = clf.predict(filter_(X_iris))
     assert np.mean(y_iris == y_pred) >= 0.8
 
+def _test_tolerance(filter_):
+    ridge = Ridge(tol=1e-5)
+    ridge.fit(filter_(X_diabetes), y_diabetes)
+    score = ridge.score(filter_(X_diabetes), y_diabetes)
+
+    ridge2 = Ridge(tol=1e-3)
+    ridge2.fit(filter_(X_diabetes), y_diabetes)
+    score2 = ridge2.score(filter_(X_diabetes), y_diabetes)
+
+    assert score >= score2
+
 def test_dense_sparse():
     for test_func in (_test_ridge_loo,
                       _test_ridge_cv,
                       _test_ridge_diabetes,
-                     _test_multi_ridge_diabetes,
-                     _test_ridge_classifiers):
+                      _test_multi_ridge_diabetes,
+                      _test_ridge_classifiers,
+                      _test_tolerance):
         # test dense matrix
         ret_dense = test_func(DENSE_FILTER)
         # test sparse matrix
