@@ -184,6 +184,27 @@ def test_kneighbors_graph():
         [[1, 1, 1], [1, 1, 1], [1, 1, 1]])
 
 
+def test_radius_neighbors_graph():
+    """
+    Test radius_neighbors_graph to build the Nearest Neighbor graph.
+    """
+    X = np.array([[0, 1], [1.01, 1.], [2, 0]])
+
+    A = neighbors.radius_neighbors_graph(X, 1.5, mode='connectivity')
+    assert_array_equal(
+        A.todense(),
+        [[ 1.,  1.,  0.],
+         [ 1.,  1.,  1.],
+         [ 0.,  1.,  1.]])
+
+    A = neighbors.radius_neighbors_graph(X, 1.5, mode='distance')
+    assert_array_almost_equal(
+        A.todense(),
+        [[ 0.        ,  1.01      ,  0.        ],
+         [ 1.01      ,  0.        ,  1.40716026],
+         [ 0.        ,  1.40716026,  0.        ]])
+
+
 def test_kneighbors_iris():
 
     # make sure reconstruction error is kept small using a real datasets
