@@ -16,13 +16,13 @@ cdef extern from "math.h":
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def _mini_batch_update(np.ndarray[DOUBLE, ndim=1] X_data,
-                       np.ndarray[INT, ndim=1] X_indices,
-                       np.ndarray[INT, ndim=1] X_indptr,
-                       np.ndarray[INT, ndim=1] batch,
-                       np.ndarray[DOUBLE, ndim=2] centers,
-                       np.ndarray[INT, ndim=1] counts,
-                       np.ndarray[INT, ndim=1] cache):
+def _mini_batch_update_sparse(np.ndarray[DOUBLE, ndim=1] X_data,
+                              np.ndarray[INT, ndim=1] X_indices,
+                              np.ndarray[INT, ndim=1] X_indptr,
+                              batch_slice,
+                              np.ndarray[DOUBLE, ndim=2] centers,
+                              np.ndarray[INT, ndim=1] counts,
+                              np.ndarray[INT, ndim=1] cache):
     """Incremental update of the centers for sparse MiniBatchKMeans.
 
     Parameters
@@ -37,8 +37,8 @@ def _mini_batch_update(np.ndarray[DOUBLE, ndim=1] X_data,
     X_indptr: array, dtype int32
         index pointer array of CSR matrix.
 
-    batch: array, shape (n_samples)
-        The indices of the samples belonging to the batch.
+    batch_slice: slice
+        The row slice of the mini batch.
 
     centers: array, shape (k, n_features)
         The cluster centers
@@ -62,11 +62,12 @@ def _mini_batch_update(np.ndarray[DOUBLE, ndim=1] X_data,
                                                             dtype=np.float64)
     cdef DOUBLE *center_scales_ptr = <DOUBLE *> center_scales.data
 
-    cdef int n_samples = batch.shape[0]
+    cdef int n_samples = batch_slice.stop - batch_slice.start
     cdef int n_clusters = centers.shape[0]
     cdef int n_features = centers.shape[1]
 
     cdef int i = 0
+    cdef int batch_slice_start = batch_slice.start
     cdef int sample_idx = -1
     cdef int offset = -1
     cdef int xnnz = -1
@@ -74,7 +75,7 @@ def _mini_batch_update(np.ndarray[DOUBLE, ndim=1] X_data,
     cdef double eta = 0.0, u = 0.0
 
     for i from 0 <= i < n_samples:
-        sample_idx = batch[i]
+        sample_idx = batch_slice_start + i  #batch[i]
         offset = X_indptr_ptr[sample_idx]
         xnnz = X_indptr_ptr[sample_idx + 1] - offset
         c = cache[i]

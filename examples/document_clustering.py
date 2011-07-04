@@ -72,7 +72,6 @@ print "done in %fs" % (time() - t0)
 print "n_samples: %d, n_features: %d" % X.shape
 print
 
-chunk_size = 1000
 
 ###############################################################################
 # Now sparse MiniBatchKmeans
@@ -80,7 +79,7 @@ chunk_size = 1000
 print "_" * 80
 
 mbkm = MiniBatchKMeans(init="random", k=true_k, max_iter=10, random_state=13,
-                       chunk_size=chunk_size, tol=0.0, n_init=1)
+                       chunk_size=1000, tol=0.0, n_init=1)
 
 print "Clustering sparse data with %s" % str(mbkm)
 print
