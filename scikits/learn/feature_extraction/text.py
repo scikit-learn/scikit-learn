@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Authors: Olivier Grisel <olivier.grisel@ensta.org>
 #          Mathieu Blondel
 #
@@ -10,7 +11,7 @@ import unicodedata
 import numpy as np
 import scipy.sparse as sp
 from ..base import BaseEstimator, TransformerMixin
-from ..preprocessing import Normalizer
+from ..preprocessing import normalize
 
 ENGLISH_STOP_WORDS = set([
     "a", "about", "above", "across", "after", "afterwards", "again", "against",
@@ -68,7 +69,7 @@ def strip_accents(s):
 def to_ascii(s):
     """Transform accentuated unicode symbols into ascii or nothing
 
-    Warning: this solution is only suited for roman languages that have a direct
+    Warning: this solution is only suited for languages that have a direct
     transliteration to ASCII symbols.
 
     A better solution would be to use transliteration based on a precomputed
@@ -87,7 +88,7 @@ def strip_tags(s):
 
 
 class RomanPreprocessor(object):
-    """Fast preprocessor suitable for roman languages"""
+    """Fast preprocessor suitable for Latin alphabet text"""
 
     def preprocess(self, unicode_text):
         """Preprocess strings"""
@@ -361,7 +362,6 @@ class CountVectorizer(BaseEstimator):
 
         Parameters
         ----------
-
         raw_documents: iterable
             an iterable which yields either str, unicode or file objects
 
@@ -379,7 +379,6 @@ class CountVectorizer(BaseEstimator):
 
         Parameters
         ----------
-
         raw_documents: iterable
             an iterable which yields either str, unicode or file objects
 
@@ -395,7 +394,6 @@ class CountVectorizer(BaseEstimator):
 
         Parameters
         ----------
-
         raw_documents: iterable
             an iterable which yields either str, unicode or file objects
 
@@ -410,38 +408,35 @@ class CountVectorizer(BaseEstimator):
 
 
 class TfidfTransformer(BaseEstimator, TransformerMixin):
-    """Transform a count matrix to a TF or TF-IDF representation
+    """Transform a count matrix to a normalized tf or tf–idf representation
 
-    TF means term-frequency while TF-IDF means term-frequency times inverse
+    Tf means term-frequency while tf–idf means term-frequency times inverse
     document-frequency:
 
-      http://en.wikipedia.org/wiki/TF-IDF
+      http://en.wikipedia.org/wiki/Tf–idf
 
-    The goal of using TF-IDF instead of the raw frequencies of occurrence of a
+    The goal of using Tf–idf instead of the raw frequencies of occurrence of a
     token in a given document is to scale down the impact of tokens that occur
     very frequently in a given corpus and that are hence empirically less
     informative than feature that occur in a small fraction of the training
     corpus.
 
-    TF-IDF can be seen as a smooth alternative to the stop words filtering.
-
     Parameters
     ----------
+    norm : 'l1', 'l2' or None, optional
+        Norm used to normalize term vectors. None for no normalization.
 
-    use_tf: boolean
-        enable term-frequency normalization
-
-    use_idf: boolean
-        enable inverse-document-frequency reweighting
+    use_idf : boolean
+        Enable inverse-document-frequency reweighting.
     """
 
-    def __init__(self, use_tf=True, use_idf=True):
-        self.use_tf = use_tf
+    def __init__(self, norm='l2', use_idf=True):
+        self.norm = norm
         self.use_idf = use_idf
-        self.idf = None
+        self.idf_ = None
 
     def fit(self, X, y=None):
-        """Learn the IDF vector (global term weights)
+        """Learn the idf vector (global term weights)
 
         Parameters
         ----------
@@ -455,12 +450,12 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
             idc = np.zeros(n_features, dtype=np.float64)
             for doc, token in zip(*X.nonzero()):
                 idc[token] += 1
-            self.idf = np.log(float(X.shape[0]) / idc)
+            self.idf_ = np.log(float(X.shape[0]) / idc)
 
         return self
 
     def transform(self, X, copy=True):
-        """Transform a count matrix to a TF or TF-IDF representation
+        """Transform a count matrix to a tf or tf–idf representation
 
         Parameters
         ----------
@@ -474,14 +469,14 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         X = sp.csr_matrix(X, dtype=np.float64, copy=copy)
         n_samples, n_features = X.shape
 
-        if self.use_tf:
-            X = Normalizer(norm='l1').transform(X)
-
         if self.use_idf:
-            d = sp.lil_matrix((len(self.idf), len(self.idf)))
-            d.setdiag(self.idf)
+            d = sp.lil_matrix((len(self.idf_), len(self.idf_)))
+            d.setdiag(self.idf_)
             # *= doesn't work
             X = X * d
+
+        if self.norm:
+            X = normalize(X, norm=self.norm, copy=False)
 
         return X
 
@@ -493,11 +488,11 @@ class Vectorizer(BaseEstimator):
     """
 
     def __init__(self, analyzer=DEFAULT_ANALYZER, max_df=1.0,
-                 max_features=None, use_tf=True, use_idf=True):
+                 max_features=None, norm='l2', use_idf=True):
         self.tc = CountVectorizer(analyzer, max_df=max_df,
                                   max_features=max_features,
                                   dtype=np.float64)
-        self.tfidf = TfidfTransformer(use_tf, use_idf)
+        self.tfidf = TfidfTransformer(norm=norm, use_idf=use_idf)
 
     def fit(self, raw_documents):
         """Learn a conversion law from documents to array data"""
@@ -511,7 +506,6 @@ class Vectorizer(BaseEstimator):
 
         Parameters
         ----------
-
         raw_documents: iterable
             an iterable which yields either str, unicode or file objects
 
@@ -530,7 +524,6 @@ class Vectorizer(BaseEstimator):
 
         Parameters
         ----------
-
         raw_documents: iterable
             an iterable which yields either str, unicode or file objects
 

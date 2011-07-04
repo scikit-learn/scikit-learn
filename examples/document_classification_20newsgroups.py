@@ -5,16 +5,14 @@ Classification of text documents using sparse features
 
 This is an example showing how the scikit-learn can be used to classify
 documents by topics using a bag-of-words approach. This example uses
-a scipy.sparse matrix to store the features instead of standard numpy arrays.
+a scipy.sparse matrix to store the features instead of standard numpy arrays
+and demos various classifiers that can efficiently handle sparse matrices.
 
 The dataset used in this example is the 20 newsgroups dataset which will be
 automatically downloaded and then cached.
 
 You can adjust the number of categories by giving there name to the dataset
 loader or setting them to None to get the 20 of them.
-
-This example demos various linear classifiers with different training
-strategies.
 
 To run this example use::
 
@@ -75,10 +73,10 @@ categories = [
     'sci.space',
 ]
 # Uncomment the following to do the analysis on all the categories
-#categories = None
+categories = None
 
 print "Loading 20 newsgroups dataset for categories:"
-print categories
+print categories if categories else "all"
 
 data_train = fetch_20newsgroups(subset='train', categories=categories,
                                shuffle=True, random_state=42)
