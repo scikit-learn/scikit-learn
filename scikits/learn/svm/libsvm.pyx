@@ -33,6 +33,7 @@ Authors
 import  numpy as np
 cimport numpy as np
 cimport libsvm
+from stdlib cimport free
 
 
 ################################################################################
@@ -120,8 +121,8 @@ def fit(
         probability estimates, empty array for probability=False
     """
 
-    cdef svm_parameter *param
-    cdef svm_problem *problem
+    cdef svm_parameter param
+    cdef svm_problem problem
     cdef svm_model *model
     cdef char *error_msg
     cdef np.npy_intp SV_len
@@ -138,24 +139,20 @@ def fit(
 
     # set libsvm problem
     kernel_index = LIBSVM_KERNEL_TYPES.index(kernel)
-    problem = set_problem(
-        X.data, Y.data, sample_weight.data, X.shape, kernel_index)
-    param = set_parameter(
-        svm_type, kernel_index, degree, gamma, coef0, nu, cache_size,
+    set_problem(
+        &problem, X.data, Y.data, sample_weight.data, X.shape, kernel_index)
+    set_parameter(
+        &param, svm_type, kernel_index, degree, gamma, coef0, nu, cache_size,
         C, tol, epsilon, shrinking, probability, <int> class_weight.shape[0],
         class_weight_label.data, class_weight.data)
 
     # check parameters
-    if (param == NULL or problem == NULL):
-        raise MemoryError("Seems we've run out of of memory")
-    error_msg = svm_check_parameter(problem, param);
+    error_msg = svm_check_parameter(&problem, &param);
     if error_msg:
-        free_problem(problem)
-        free_param(param)
         raise ValueError(error_msg)
 
     # this does the real work
-    model = svm_train(problem, param)
+    model = svm_train(&problem, &param)
 
     # from here until the end, we just copy the data returned by
     # svm_train
@@ -214,9 +211,7 @@ def fit(
 
     # memory deallocation
     svm_free_and_destroy_model(&model)
-    free_problem(problem)
-    free_param(param)
-
+    free(problem.x)
     return support, support_vectors, n_class_SV, sv_coef, intercept, label, \
            probA, probB
 
@@ -283,16 +278,16 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     cache_size or weights.
     """
     cdef np.ndarray[np.float64_t, ndim=1, mode='c'] dec_values
-    cdef svm_parameter *param
+    cdef svm_parameter param
     cdef svm_model *model
 
     kernel_index = LIBSVM_KERNEL_TYPES.index(kernel)
-    param = set_parameter(svm_type, kernel_index, degree, gamma, coef0,
+    set_parameter(&param, svm_type, kernel_index, degree, gamma, coef0,
                           nu, cache_size, C, tol, epsilon, shrinking,
                           probability, <int> class_weight.shape[0],
                           class_weight_label.data, class_weight.data)
 
-    model = set_model(param, <int> nSV.shape[0], SV.data, SV.shape,
+    model = set_model(&param, <int> nSV.shape[0], SV.data, SV.shape,
                       support.data, support.shape, sv_coef.strides,
                       sv_coef.data, intercept.data, nSV.data,
                       label.data, probA.data, probB.data)
@@ -302,7 +297,6 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     if copy_predict(X.data, model, X.shape, dec_values.data) < 0:
         raise MemoryError("We've run out of of memory")
     free_model(model)
-    free_param(param)
     return dec_values
 
 
@@ -358,16 +352,16 @@ def predict_proba(
         predicted values.
     """
     cdef np.ndarray[np.float64_t, ndim=2, mode='c'] dec_values
-    cdef svm_parameter *param
+    cdef svm_parameter param
     cdef svm_model *model
 
     kernel_index = LIBSVM_KERNEL_TYPES.index(kernel)
-    param = set_parameter(svm_type, kernel_index, degree, gamma,
+    set_parameter(&param, svm_type, kernel_index, degree, gamma,
                           coef0, nu, cache_size, C, tol, epsilon, shrinking,
                           probability, <int> class_weight.shape[0], class_weight_label.data,
                           class_weight.data)
 
-    model = set_model(param, <int> nSV.shape[0], SV.data, SV.shape,
+    model = set_model(&param, <int> nSV.shape[0], SV.data, SV.shape,
                       support.data, support.shape, sv_coef.strides,
                       sv_coef.data, intercept.data, nSV.data,
                       label.data, probA.data, probB.data)
@@ -378,7 +372,6 @@ def predict_proba(
         raise MemoryError("We've run out of of memory")
     # free model and param
     free_model(model)
-    free_param(param)
     return dec_values
 
 
@@ -410,17 +403,17 @@ def decision_function(
     in sync with the python object.
     """
     cdef np.ndarray[np.float64_t, ndim=2, mode='c'] dec_values
-    cdef svm_parameter *param
+    cdef svm_parameter param
     cdef svm_model *model
     cdef np.npy_intp n_class
 
     kernel_index = LIBSVM_KERNEL_TYPES.index(kernel)
-    param = set_parameter(svm_type, kernel_index, degree, gamma,
+    set_parameter(&param, svm_type, kernel_index, degree, gamma,
                           coef0, nu, cache_size, C, tol, epsilon, shrinking,
                           probability, <int> class_weight.shape[0], class_weight_label.data,
                           class_weight.data)
 
-    model = set_model(param, <int> nSV.shape[0], SV.data, SV.shape,
+    model = set_model(&param, <int> nSV.shape[0], SV.data, SV.shape,
                       support.data, support.shape, sv_coef.strides,
                       sv_coef.data, intercept.data, nSV.data,
                       label.data, probA.data, probB.data)
@@ -436,7 +429,6 @@ def decision_function(
         raise MemoryError("We've run out of of memory")
     # free model and param
     free_model(model)
-    free_param(param)
     return dec_values
 
 
@@ -498,8 +490,8 @@ def cross_validation(
 
     """
 
-    cdef svm_parameter *param
-    cdef svm_problem *problem
+    cdef svm_parameter param
+    cdef svm_problem problem
     cdef svm_model *model
     cdef char *error_msg
     cdef np.npy_intp SV_len
@@ -518,27 +510,23 @@ def cross_validation(
 
     # set libsvm problem
     kernel_index = LIBSVM_KERNEL_TYPES.index(kernel)
-    problem = set_problem(
-        X.data, Y.data, sample_weight.data, X.shape, kernel_index)
-    param = set_parameter(
-        svm_type, kernel_index, degree, gamma, coef0, nu, cache_size,
+    set_problem(
+        &problem, X.data, Y.data, sample_weight.data, X.shape, kernel_index)
+    set_parameter(
+        &param, svm_type, kernel_index, degree, gamma, coef0, nu, cache_size,
         C, tol, tol, shrinking, probability, <int>
         class_weight.shape[0], class_weight_label.data,
         class_weight.data)
 
-    # check parameters
-    if (param == NULL or problem == NULL):
-        raise MemoryError("Seems we've run out of of memory")
-    error_msg = svm_check_parameter(problem, param);
+    error_msg = svm_check_parameter(&problem, &param);
     if error_msg:
-        free_problem(problem)
-        free_param(param)
         raise ValueError(error_msg)
 
     cdef np.ndarray[np.float64_t, ndim=1, mode='c'] target
     target = np.empty((X.shape[0]), dtype=np.float64)
-    svm_cross_validation(problem, param, n_fold, <double *> target.data)
+    svm_cross_validation(&problem, &param, n_fold, <double *> target.data)
 
+    free(problem.x)
     return target
 
 def set_verbosity_wrap(int verbosity):
