@@ -269,6 +269,9 @@ of the data.
 Dictionary Learning
 ===================
 
+Generic dictionary learning
+-------------------------
+
 Dictionary learning is a matrix factorization problem that amounts to finding a
 (usually overcomplete) dictionary that will perform good at sparsely encoding 
 the fitted data.
@@ -283,8 +286,40 @@ Dictionary learning is an optimization problem solved by alternatively updating
 the sparse code, as a solution to multiple Lasso problems, considering the
 dictionary fixed, and then updating the dictionary to best fit the sparse code.
 
-After using such a procedure to fit the dictionary, transforming the data can
-be done using :class:`Lasso` or :ref:`OMP`. 
+After using such a procedure to fit the dictionary, the fitted object can be 
+used to transform new data. The transformation amounts to a sparse coding
+problem: finding a representation of the data as a linear combination of as few
+dictionary atoms as possible. All variations of dictionary learning implement
+the following transform methods, controllable via the `transform_method` 
+initialization parameter:
+
+
+* Orthogonal matching pursuit (:ref:`OMP`)
+
+* Lasso using least-angle regression (:ref:`least_angle_regression`)
+
+* Lasso using coordinate descent (:ref:`lasso`)
+
+* Tresholding
+
+* Triangle k-means
+
+
+The dictionary learning objects offer, via the `split_code` parameter, the
+possibility to separate the positive and negative values in the results of 
+sparse coding. This is useful when dictionary learning is used for 
+classification or regression tasks, because it allows the learning algorithm to assign different weights to negative loadings of a particular atom, than to the
+corresponding positive loading.
+
+The split code for a single sample has length `2 * n_atoms`
+and is constructed using the following rule: First, the regular code of length
+`n_atoms` is computed. Then, the first `n_atoms` entries of the split_code are
+filled with the positive part of the regular code vector. The second half of
+the split code is filled with the negative part of the code vector, only with
+a positive sign. Therefore, the split_code is non-negative. 
+
+The following image shows how a dictionary learned from 4x4 pixel image patches
+extracted from the image of Lena looks like.
 
 
 .. figure:: ../auto_examples/decomposition/images/plot_dict_learning_1.png
@@ -303,3 +338,11 @@ be done using :class:`Lasso` or :ref:`OMP`.
   * `"Online dictionary learning for sparse coding" 
     <http://www.di.ens.fr/sierra/pdfs/icml09.pdf>`_
     J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009
+
+.. _DictionaryLearningOnline
+
+Online dictionary learning
+--------------------------
+
+:class:`DictionaryLearningOnline` implements a fast, optimized version of the
+dictionary learning algorithm that is more suited for large datasets.
