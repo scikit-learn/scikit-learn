@@ -11,9 +11,73 @@ from ..metrics.pairwise import euclidean_distances
 
 
 class KMeansCoder(BaseDictionaryLearning):
-    """K-means based dictionary learning"""
+    """K-means based dictionary learning
+
+    The fit method receives an array of signals, whitens them using
+    a PCA transform and run a KMeans algorithm to extract the patch
+    cluster centers.
+
+    The input is then correlated with each individual "patch-center"
+    treated as a convolution kernel. The transformation can be done
+    using various sparse coding methods, tresholding or the triangle
+    k-means non-linearity.
+
+    This estimator only implements the unsupervised feature extraction
+    part of the referenced paper. Image classification can then be
+    performed by training a linear SVM model on the output of this
+    estimator.
+
+    Parameters
+    ----------
+    n_atoms: int,
+        number of centers extracted by the kmeans algorithm
+
+    whiten: boolean, optional: default True
+        perform a whitening PCA on the patches at feature extraction time
+
+    n_components: int, optional: default None
+        number of components to keep after whitening individual patches
+
+    max_iter: int, default 100
+        maximum number of iterations to run the k-means algorithm
+
+    n_init, int, default 1
+        number of times to initialize the k-means algorithm in order to
+        avoid convergence to local optima
+
+    n_prefit: int, default 5
+        dimension of reduced curriculum space in which to prefit the k-means
+        algorithm for increased performance.
+        This is used only when `whiten=True`.
+
+    tol: float, default 1e-4
+        tolerance for numerical errors
+    
+    local_contrast: boolean, optional: default True
+        perform local contrast normalization on the extracted patch
+
+    verbose: bool, default False
+        whether to display verbose output
+
+    transform_method: string, default 'omp'
+        method to use for transforming the data after the dictionary has been
+        learned
+
+    split_sign: bool, default False
+        whether to split the transformed feature vectors into positive and
+        negative components, such that the downstream classification algorithms
+        can assign different weights depending on the sign
+
+    Reference
+    ---------
+    An Analysis of Single-Layer Networks in Unsupervised Feature Learning
+    Adam Coates, Honglak Lee and Andrew Ng. In NIPS*2010 Workshop on
+    Deep Learning and Unsupervised Feature Learning.
+    http://robotics.stanford.edu/~ang/papers/nipsdlufl10-AnalysisSingleLayerUnsupervisedFeatureLearning.pdf
+
+    """
     def __init__(self, n_atoms, whiten=True, n_components=None,
-                 n_pools=2, max_iter=100, n_init=1, n_prefit=5, tol=1e-4,
+                 max_iter=100, n_init=1, n_prefit=5, tol=1e-4,
                  local_contrast=True, n_drop_components=0, verbose=False,
                  transform_method='omp', split_sign=False):
         self.n_atoms = n_atoms
@@ -124,7 +188,8 @@ class KMeansCoder(BaseDictionaryLearning):
     def transform(self, X, y=None, **kwargs):
         """Map a collection of patches into the feature space
 
-        This uses a soft triangle k-means method
+        This uses the method specified in the `transform_method` object
+        parameter.
         """
         if self.local_contrast:
             # TODO: make it inplace by default explictly
