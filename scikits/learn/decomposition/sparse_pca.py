@@ -437,6 +437,7 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
     else:
         _, S, dictionary = fast_svd(X, n_atoms)
         dictionary = S[:, np.newaxis] * dictionary
+    r = len(dictionary)
     if n_atoms <= r:
         dictionary = dictionary[:n_atoms, :]
     else:

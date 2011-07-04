@@ -258,7 +258,7 @@ class DictionaryLearningOnline(BaseDictionaryLearning):
     `scikits.learn.decomposition.SparsePCA`
 
     """
-    def __init__(self, n_atoms, alpha=1, max_iter=1000, coding_method='lars',
+    def __init__(self, n_atoms, alpha=1, n_iter=1000, coding_method='lars',
                  n_jobs=1, chunk_size=3, shuffle=True, dict_init=None,
                  transform_method='omp', verbose=False, split_sign=False):
         self.n_atoms = n_atoms
