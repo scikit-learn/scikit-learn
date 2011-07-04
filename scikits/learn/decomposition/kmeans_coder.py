@@ -68,6 +68,11 @@ class KMeansCoder(BaseDictionaryLearning):
         negative components, such that the downstream classification algorithms
         can assign different weights depending on the sign
 
+    Attributes
+    ----------
+    components_: array of shape n_atoms, n_features
+        centers extracted by k-means from the patch space
+
     Reference
     ---------
     An Analysis of Single-Layer Networks in Unsupervised Feature Learning
@@ -95,7 +100,18 @@ class KMeansCoder(BaseDictionaryLearning):
         self.split_sign = split_sign
 
     def local_contrast_normalization(self, patches):
-        """Normalize the patch-wise variance of the signal"""
+        """Normalize the patch-wise variance of the signal
+
+        Parameters
+        ----------
+        patches: array-like, shape n_samples, n_features
+            Data to be normalized
+        
+        Returns
+        -------
+        patches:
+            Data after individual normalization of the samples
+        """
         # XXX: this should probably be extracted somewhere more general
         # center all colour channels together
         patches = patches.reshape((patches.shape[0], -1))
@@ -118,6 +134,11 @@ class KMeansCoder(BaseDictionaryLearning):
         ----------
         X: array-like, shape: n_samples, *patch_size
             the patch data to be fitted
+        
+        Returns
+        -------
+        self: object
+            Returns the object itself
         """
         patches = np.atleast_2d(X)
         n_patches = len(patches)
@@ -188,9 +209,7 @@ class KMeansCoder(BaseDictionaryLearning):
     def transform(self, X, y=None, **kwargs):
         """Map a collection of patches into the feature space
 
-        This uses the method specified in the `transform_method` object
-        parameter.
-        """
+        """ + BaseDictionaryLearning.transform.__doc__
         if self.local_contrast:
             # TODO: make it inplace by default explictly
             X = self.local_contrast_normalization(X)
