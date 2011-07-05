@@ -252,10 +252,11 @@ class CountVectorizer(BaseEstimator):
         self.max_df = max_df
         self.max_features = max_features
 
-    def _term_count_dicts_to_matrix(self, term_count_dicts, vocabulary):
+    def _term_count_dicts_to_matrix(self, term_count_dicts):
         i_indices = []
         j_indices = []
         values = []
+        vocabulary = self.vocabulary
 
         for i, term_count_dict in enumerate(term_count_dicts):
             for term, count in term_count_dict.iteritems():
@@ -271,12 +272,35 @@ class CountVectorizer(BaseEstimator):
         return sp.coo_matrix((values, (i_indices, j_indices)),
                              shape=shape, dtype=self.dtype)
 
-    def _build_vectors_and_vocab(self, raw_documents):
-        """Analyze documents, build vocabulary and vectorize.
+    def fit(self, raw_documents, y=None):
+        """Learn a vocabulary dictionary of all tokens in the raw documents
 
-        Main part of the fit_transform implementation.
+        Parameters
+        ----------
+        raw_documents: iterable
+            an iterable which yields either str, unicode or file objects
+
+        Returns
+        -------
+        self
         """
+        self.fit_transform(raw_documents)
+        return self
 
+    def fit_transform(self, raw_documents, y=None):
+        """Learn the vocabulary dictionary and return the count vectors
+
+        This is more efficient than calling fit followed by transform.
+
+        Parameters
+        ----------
+        raw_documents: iterable
+            an iterable which yields either str, unicode or file objects
+
+        Returns
+        -------
+        vectors: array, [n_samples, n_features]
+        """
         # result of document conversion to term count dicts
         term_counts_per_doc = []
         term_counts = defaultdict(int)
@@ -326,15 +350,13 @@ class CountVectorizer(BaseEstimator):
                     break
 
         # convert to a document-token matrix
-        vocabulary = dict(((t, i) for i, t in enumerate(terms)))  # token: idx
+        self.vocabulary = dict(((t, i) for i, t in enumerate(terms)))
 
         # the term_counts and document_counts might be useful statistics, are
         # we really sure want we want to drop them? They take some memory but
         # can be useful for corpus introspection
 
-        matrix = self._term_count_dicts_to_matrix(term_counts_per_doc,
-                                                  vocabulary)
-        return matrix, vocabulary
+        return self._term_count_dicts_to_matrix(term_counts_per_doc)
 
     def _build_vectors(self, raw_documents):
         """Analyze documents and vectorize using existing vocabulary"""
@@ -356,40 +378,7 @@ class CountVectorizer(BaseEstimator):
         # now that we know the document we can allocate the vectors matrix at
         # once and fill it with the term counts collected as a temporary list
         # of dict
-        return self._term_count_dicts_to_matrix(
-            term_counts_per_doc, self.vocabulary)
-
-    def fit(self, raw_documents, y=None):
-        """Learn a vocabulary dictionary of all tokens in the raw documents
-
-        Parameters
-        ----------
-        raw_documents: iterable
-            an iterable which yields either str, unicode or file objects
-
-        Returns
-        -------
-        self
-        """
-        self.fit_transform(raw_documents)
-        return self
-
-    def fit_transform(self, raw_documents, y=None):
-        """Learn the vocabulary dictionary and return the count vectors
-
-        This is more efficient than calling fit followed by transform.
-
-        Parameters
-        ----------
-        raw_documents: iterable
-            an iterable which yields either str, unicode or file objects
-
-        Returns
-        -------
-        vectors: array, [n_samples, n_features]
-        """
-        vectors, self.vocabulary = self._build_vectors_and_vocab(raw_documents)
-        return vectors
+        return self._term_count_dicts_to_matrix(term_counts_per_doc)
 
     def transform(self, raw_documents):
         """Extract token counts out of raw text documents
