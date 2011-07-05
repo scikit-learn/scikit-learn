@@ -5,6 +5,7 @@
 # License: BSD Style.
 """Utilities to build feature vectors from text documents"""
 
+from collections import defaultdict
 from operator import itemgetter
 import re
 import unicodedata
@@ -270,15 +271,18 @@ class CountVectorizer(BaseEstimator):
                              shape=shape, dtype=self.dtype)
 
     def _build_vectors_and_vocab(self, raw_documents):
-        """Analyze documents, build vocabulary and vectorize"""
+        """Analyze documents, build vocabulary and vectorize.
+        
+        Main part of the fit_transform implementation.
+        """
 
-        # result of document conversion to term_count_dict
+        # result of document conversion to term count dicts
         term_counts_per_doc = []
-        term_counts = {}
+        term_counts = defaultdict(int)
 
         # term counts across entire corpus (count each term maximum once per
         # document)
-        document_counts = {}
+        document_counts = defaultdict(int)
 
         max_df = self.max_df
         max_features = self.max_features
@@ -286,32 +290,31 @@ class CountVectorizer(BaseEstimator):
         # TODO: parallelize the following loop with joblib?
         # (see XXX up ahead)
         for doc in raw_documents:
-            term_count_dict = {}  # term => count in doc
+            term_count_current = defaultdict(int)
 
             for term in self.analyzer.analyze(doc):
-                term_count_dict[term] = term_count_dict.get(term, 0) + 1
-                term_counts[term] = term_counts.get(term, 0) + 1
+                term_count_current[term] += 1
+                term_counts[term] += 1
 
             if max_df is not None:
-                for term in term_count_dict.iterkeys():
-                    document_counts[term] = document_counts.get(term, 0) + 1
+                for term in term_count_current:
+                    document_counts[term] += 1
 
-            term_counts_per_doc.append(term_count_dict)
+            term_counts_per_doc.append(term_count_current)
 
         n_doc = len(term_counts_per_doc)
 
         # filter out stop words: terms that occur in almost all documents
-        stop_words = set()
         if max_df is not None:
             max_document_count = max_df * n_doc
-            for t, dc in sorted(document_counts.iteritems(), key=itemgetter(1),
-                                reverse=True):
-                if dc <= max_document_count:
-                    break
-                stop_words.add(t)
+            stop_words = set(t for t, dc in document_counts.iteritems()
+                             if dc > max_document_count)
 
         # list the terms that should be part of the vocabulary
-        if max_features is not None:
+        if max_features is None:
+            terms = set(term_counts)
+            terms -= stop_words
+        else:
             # extract the most frequent terms for the vocabulary
             terms = set()
             for t, tc in sorted(term_counts.iteritems(), key=itemgetter(1),
@@ -320,9 +323,6 @@ class CountVectorizer(BaseEstimator):
                     terms.add(t)
                 if len(terms) >= max_features:
                     break
-        else:
-            terms = set(term_counts.keys())
-            terms -= stop_words
 
         # convert to a document-token matrix
         vocabulary = dict(((t, i) for i, t in enumerate(terms)))  # token: idx
@@ -344,12 +344,12 @@ class CountVectorizer(BaseEstimator):
         # XXX @larsmans tried to parallelize the following loop with joblib.
         # The result was some 20% slower than the serial version.
         for doc in raw_documents:
-            term_count_dict = {}  # term => count in doc
+            term_count_current = defaultdict(int)
 
             for term in self.analyzer.analyze(doc):
-                term_count_dict[term] = term_count_dict.get(term, 0) + 1
+                term_count_current[term] += 1
 
-            term_counts_per_doc.append(term_count_dict)
+            term_counts_per_doc.append(term_count_current)
 
         # now that we know the document we can allocate the vectors matrix at
         # once and fill it with the term counts collected as a temporary list

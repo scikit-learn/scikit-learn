@@ -214,19 +214,13 @@ def test_vectorizer_max_features():
         Vectorizer,
     )
 
-    expected_vocabulary = {
-        'celeri': 0,
-        'burger': 1,
-        'beer': 2,
-        'salad': 3,
-        'pizza': 4,
-    }
+    expected_vocabulary = set(['burger', 'beer', 'salad', 'pizza'])
 
     for vec_factory in vec_factories:
         # test bounded number of extracted features
-        vectorizer = vec_factory(max_df=0.6, max_features=5)
+        vectorizer = vec_factory(max_df=0.6, max_features=4)
         vectorizer.fit(ALL_FOOD_DOCS)
-        assert_equals(vectorizer.vocabulary, expected_vocabulary)
+        assert_equals(set(vectorizer.vocabulary), expected_vocabulary)
 
 
 def test_vectorizer_max_df():
