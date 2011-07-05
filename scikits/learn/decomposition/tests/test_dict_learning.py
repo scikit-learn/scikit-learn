@@ -2,7 +2,7 @@ import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 from nose.plugins.skip import SkipTest
 
-from .. import DictionaryLearning
+from .. import DictionaryLearning, DictionaryLearningOnline
 
 
 def test_dict_learning_shapes():
@@ -60,5 +60,17 @@ def test_dict_learning_split():
     assert_array_equal(split_code[:, :n_atoms] - split_code[:, n_atoms:], code)
 
 
-def test_dict_learning_online():
-    pass
+def test_dict_learning_online_shapes():
+    n_samples, n_features = 10, 8
+    n_atoms = 5
+    X = np.random.randn(n_samples, n_features)
+    dico = DictionaryLearningOnline(n_atoms, n_iter=20).fit(X)
+    assert dico.components_.shape == (n_atoms, n_features)
+
+
+def test_dict_learning_online_overcomplete():
+    n_samples, n_features = 10, 8
+    n_atoms = 12
+    X = np.random.randn(n_samples, n_features)
+    dico = DictionaryLearningOnline(n_atoms, n_iter=20).fit(X)
+    assert dico.components_.shape == (n_atoms, n_features)

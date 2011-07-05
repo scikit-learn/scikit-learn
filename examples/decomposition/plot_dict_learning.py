@@ -13,7 +13,7 @@ import numpy as np
 import pylab as pl
 import scipy as sp
 
-from scikits.learn.decomposition.dict_learning import DictionaryLearningOnline
+from scikits.learn.decomposition import DictionaryLearningOnline
 from scikits.learn.feature_extraction.image import extract_patches_2d
 
 ###############################################################################
@@ -26,9 +26,6 @@ data /= np.std(data, 0)
 
 ###############################################################################
 # Learn dictionary
-#V = dict_learning(data, n_atoms=36, alpha=1e-2, n_iter=3000, return_code=False,
-#                  verbose=True)
-
 dico = DictionaryLearningOnline(n_atoms=100, alpha=1e-2, verbose=True)
 dico = dico.fit(data)
 
