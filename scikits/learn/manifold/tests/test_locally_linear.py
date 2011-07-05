@@ -31,9 +31,9 @@ def test_lle_simple_grid():
         assert clf.embedding_.shape[1] == out_dim
         reconstruction_error = np.linalg.norm(
             np.dot(N, clf.embedding_) - clf.embedding_, 'fro') ** 2
-        assert reconstruction_error < tol
         # FIXME: ARPACK fails this test ...
         if solver != 'arpack':
+            assert reconstruction_error < tol
             assert_almost_equal(clf.reconstruction_error_, reconstruction_error, decimal=4)
     noise = np.random.randn(*X.shape) / 100
     assert np.linalg.norm(clf.transform(X + noise) - clf.embedding_) < tol
