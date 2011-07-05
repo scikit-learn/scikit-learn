@@ -289,12 +289,42 @@ class DictionaryLearningOnline(BaseDictionaryLearning):
         """
         self._set_params(**params)
         X = np.asanyarray(X)
-        U = dict_learning_online(X, self.n_atoms, self.alpha,
+        U = dict_learning_online(X, self.n_atoms, self.alpha, 
                                  n_iter=self.n_iter,
                                  coding_method=self.coding_method,
                                  n_jobs=self.n_jobs, dict_init=self.dict_init,
                                  chunk_size=self.chunk_size,
                                  shuffle=self.shuffle, verbose=self.verbose,
                                  return_code=False)
+        self.components_ = U
+        return self
+
+    def partial_fit(self, X, y=None, **params):
+        """Updates the model using the data in X as a mini-batch.
+
+        Parameters
+        ----------
+        X: array-like, shape (n_samples, n_features)
+            Training vector, where n_samples in the number of samples
+            and n_features is the number of features.
+
+        Returns
+        -------
+        self : object
+            Returns the instance itself.
+        """
+        self._set_params(**params)
+        X = np.atleast_2d(X)
+        if hasattr(self, 'components_'):
+            dict_init = self.components_
+        else:
+            dict_init = None
+        U = dict_learning_online(X, self.n_atoms, self.alpha,
+                                 n_iter=self.n_iter,
+                                 coding_method=self.coding_method,
+                                 n_jobs=self.n_jobs,
+                                 dict_init=dict_init,
+                                 chunk_size=len(X), shuffle=False,
+                                 verbose=self.verbose, return_code=False)
         self.components_ = U
         return self
