@@ -13,11 +13,6 @@ from ..utils import check_random_state
 from ..utils.arpack import eigsh
 from ..neighbors import kneighbors_graph, BallTree, barycenter_weights
 
-try:
-    import pyamg
-    pyamg_available = True
-except ImportError:
-    pyamg_available = False
 
 
 def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
@@ -61,6 +56,11 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
 
         return eigen_vectors[:, k_skip:], np.sum(eigen_values[k_skip:])
     elif eigen_solver == 'lobpcg':
+        try:
+            import pyamg
+        except ImportError:
+            raise ImportError("PyAMG is not installed, cannot use lobcpg solver")
+
         # initial vectors for iteration
         X = np.random.rand(M.shape[0], k + k_skip)
         try:
