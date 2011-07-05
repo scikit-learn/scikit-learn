@@ -1,0 +1,86 @@
+"""
+=========================================
+Image denoising using dictionary learning
+=========================================
+An example comparing the effect of reconstructing noisy fragments
+of Lena using a dictionary learned from the clear image.
+"""
+print __doc__
+
+from time import time
+
+import pylab as pl
+import scipy as sp
+import numpy as np
+
+from scikits.learn.decomposition import DictionaryLearningOnline
+from scikits.learn.feature_extraction.image import extract_patches_2d, \
+                                                   reconstruct_from_patches_2d
+
+###############################################################################
+# Load Lena image and extract patches
+lena = sp.lena()
+lenb = lena.copy()
+
+print "Extracting clean patches..."
+data = extract_patches_2d(lena, (6, 6), max_patches=int(1e4), seed=0)
+data = data.reshape(data.shape[0], -1)
+intercept = np.mean(data, 0)
+data -= intercept
+
+###############################################################################
+# Learn the dictionary from clean patches
+dico = DictionaryLearningOnline(n_atoms=100, alpha=0.01, n_iter=100,
+                                verbose=True, transform_method='omp')
+V = dico.fit(data).components_
+
+###############################################################################
+# Generate noisy data and reconstruct using various methods
+print ""  # a line break
+print "Distorting image fragments..."
+fragments = [(slice(200, 300), slice(200, 300)), 
+             (slice(200, 300), slice(300, 400)),
+             (slice(300, 400), slice(200, 300)),
+             (slice(300, 400), slice(300, 400))]
+
+for i, fragment in enumerate(fragments):
+    lena[fragment] += 50 * np.random.randn(100, 100)
+    img = lena[fragment]
+    data = extract_patches_2d(img, (6, 6))
+    data = data.reshape(len(data), -1)
+    data -= intercept
+    print "Reconstructing image fragment %d..." % (i + 1),
+    t0 = time()
+    if i == 0:
+        code = dico.transform(data, n_atoms=1, compute_gram=True)
+    elif i == 1:
+        code = dico.transform(data, n_atoms=2, compute_gram=True)
+    elif i == 2:
+        dico.transform_method = "lasso_lars"
+        code = dico.transform(data, alpha=1.8)
+    elif i == 3:
+        dico.transform_method = "treshold"
+        code = dico.transform(data, alpha=1.0)
+    dt = time() - t0
+    print " done in %.2fs" % dt
+    data = np.dot(code, V) + intercept
+    data = data.reshape(len(data), 6, 6)
+
+    lenb[fragment] = reconstruct_from_patches_2d(data, (100, 100))
+    if i == 3:
+        lenb[fragment] -= lenb[fragment].min()
+        lenb[fragment] = lenb[fragment] / float(lenb.max()) * 256.0
+
+###############################################################################
+# Display the results
+vmin, vmax = 0, 256
+pl.figure()
+pl.subplot(1, 2, 1)
+pl.imshow(lena, vmin=vmin, vmax=vmax, cmap=pl.cm.gray, interpolation='nearest')
+pl.xticks(())
+pl.yticks(())
+pl.subplot(1, 2, 2)
+pl.imshow(lenb, vmin=vmin, vmax=vmax, cmap=pl.cm.gray, interpolation='nearest')
+pl.xticks(())
+pl.yticks(())
+pl.show()
