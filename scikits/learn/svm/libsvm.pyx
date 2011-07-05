@@ -137,17 +137,21 @@ def fit(
                "sample_weight has %s samples while X has %s" % \
                (sample_weight.shape[0], X.shape[0])
 
-    # set libsvm problem
+    # set problem
     kernel_index = LIBSVM_KERNEL_TYPES.index(kernel)
     set_problem(
         &problem, X.data, Y.data, sample_weight.data, X.shape, kernel_index)
+    if problem.x == NULL:
+        raise MemoryError("Seems we've run out of of memory")
+
+    # set parameters
     set_parameter(
         &param, svm_type, kernel_index, degree, gamma, coef0, nu, cache_size,
         C, tol, epsilon, shrinking, probability, <int> class_weight.shape[0],
         class_weight_label.data, class_weight.data)
 
     # check parameters
-    error_msg = svm_check_parameter(&problem, &param);
+    error_msg = svm_check_parameter(&problem, &param)
     if error_msg:
         raise ValueError(error_msg)
 
@@ -508,10 +512,14 @@ def cross_validation(
     if X.shape[0] < n_fold:
         raise ValueError("Number of samples is less than number of folds")
 
-    # set libsvm problem
+    # set problem
     kernel_index = LIBSVM_KERNEL_TYPES.index(kernel)
     set_problem(
         &problem, X.data, Y.data, sample_weight.data, X.shape, kernel_index)
+    if problem.x == NULL:
+        raise MemoryError("Seems we've run out of of memory")
+
+    # set parameters
     set_parameter(
         &param, svm_type, kernel_index, degree, gamma, coef0, nu, cache_size,
         C, tol, tol, shrinking, probability, <int>
