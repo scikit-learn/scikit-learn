@@ -58,6 +58,7 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
     if eigen_solver == 'arpack':
         eigen_values, eigen_vectors = eigsh(M, k + k_skip, sigma=0.0,
                                             tol=tol, maxiter=max_iter)
+
         return eigen_vectors[:, k_skip:], np.sum(eigen_values[k_skip:])
     elif eigen_solver == 'lobpcg':
         # initial vectors for iteration
@@ -78,7 +79,7 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
     elif eigen_solver == 'dense':
         M = np.asarray(M)
         eigen_values, eigen_vectors = eigh(
-            M, eigvals=(k_skip, k + k_skip), overwrite_a=True)
+            M, eigvals=(k_skip, k + k_skip - 1), overwrite_a=True)
         index = np.argsort(np.abs(eigen_values))
         return eigen_vectors[:, index], np.sum(eigen_values)
     else:
