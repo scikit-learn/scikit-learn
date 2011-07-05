@@ -326,6 +326,7 @@ class CountVectorizer(BaseEstimator):
                     break
 
         # convert to a document-token matrix
+
         vocabulary = dict(((t, i) for i, t in enumerate(terms)))  # token: idx
 
         # the term_counts and document_counts might be useful statistics, are
@@ -407,6 +408,20 @@ class CountVectorizer(BaseEstimator):
             raise ValueError("No vocabulary dictionary available.")
 
         return self._build_vectors(raw_documents)
+
+    def inverse_transform(self, X):
+        """
+        Return matrix containing terms with nonzero
+        entries in X.
+        """
+        terms = np.array(self.vocabulary.keys())
+        indices = np.array(self.vocabulary.values())
+        inverse_vocabulary = terms[np.argsort(indices)]
+
+        inverse_transformed_X = []
+        for i in xrange(X.shape[0]):
+            inverse_transformed_X.append(inverse_vocabulary[X[i,:].nonzero()[1]])
+        return inverse_transformed_X
 
 
 class TfidfTransformer(BaseEstimator, TransformerMixin):
@@ -535,6 +550,13 @@ class Vectorizer(BaseEstimator):
         """
         X = self.tc.transform(raw_documents)
         return self.tfidf.transform(X, copy)
+
+    def inverse_transform(self, X):
+        """
+        Return matrix containing terms with nonzero
+        entries in X.
+        """
+        return self.tc.inverse_transform(X)
 
     def _get_vocab(self):
         return self.tc.vocabulary
