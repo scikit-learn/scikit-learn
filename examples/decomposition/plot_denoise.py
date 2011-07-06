@@ -67,7 +67,7 @@ for i, fragment in enumerate(fragments):
     data = data.reshape(len(data), 6, 6)
 
     lenb[fragment] = reconstruct_from_patches_2d(data, (100, 100))
-    if i == 3:
+    if i == 3:  # tresholding is not a reconstruction
         lenb[fragment] -= lenb[fragment].min()
         lenb[fragment] = lenb[fragment] / float(lenb.max()) * 256.0
 
@@ -76,11 +76,20 @@ for i, fragment in enumerate(fragments):
 vmin, vmax = 0, 256
 pl.figure()
 pl.subplot(1, 2, 1)
+pl.title("Noisy image")
 pl.imshow(lena, vmin=vmin, vmax=vmax, cmap=pl.cm.gray, interpolation='nearest')
 pl.xticks(())
 pl.yticks(())
 pl.subplot(1, 2, 2)
+pl.title("Reconstructed image")
 pl.imshow(lenb, vmin=vmin, vmax=vmax, cmap=pl.cm.gray, interpolation='nearest')
 pl.xticks(())
 pl.yticks(())
+bbox_props = dict(boxstyle="round", fc="w", ec="0.5", alpha=0.9)
+params = dict(ha="center", va="center", size=12, bbox=bbox_props)
+pl.text(150, 100, "OMP-1", **params)
+pl.text(400, 100, "OMP-2", **params)
+pl.text(150, 450, "LARS", **params)
+pl.text(400, 450, "Treshold", **params)
+pl.suptitle("Image denoising with dictionary learning", fontsize=16)
 pl.show()
