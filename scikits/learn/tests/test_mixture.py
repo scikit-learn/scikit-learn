@@ -20,23 +20,6 @@ def _generate_random_spd_matrix(ndim):
     return randspd
 
 
-def test_logsum_1D():
-    A = np.random.rand(2) + 1.0
-    for axis in range(1):
-        Asum = mixture.logsum(A, axis)
-        assert_array_almost_equal(np.exp(Asum), np.sum(np.exp(A), axis))
-
-
-def test_logsum_3D():
-    """
-    Test also on a 3D matrix
-    """
-    A = np.random.rand(2, 2, 2) + 1.0
-    for axis in range(3):
-        Asum = mixture.logsum(A, axis)
-        assert_array_almost_equal(np.exp(Asum), np.sum(np.exp(A), axis))
-
-
 def test_normalize_1D():
     A = np.random.rand(2) + 1.0
     for axis in range(1):
