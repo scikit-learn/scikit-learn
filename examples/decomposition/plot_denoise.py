@@ -67,7 +67,7 @@ for i, fragment in enumerate(fragments):
     data = data.reshape(len(data), 6, 6)
 
     lenb[fragment] = reconstruct_from_patches_2d(data, (100, 100))
-    if i == 3:  # tresholding is not a reconstruction
+    if i == 3:  # tresholding breaks the range
         lenb[fragment] -= lenb[fragment].min()
         lenb[fragment] = lenb[fragment] / float(lenb.max()) * 256.0
 

@@ -81,16 +81,17 @@ def test_dict_learning_online_partial_fit():
     n_samples, n_features = 10, 8
     n_atoms = 12
     X = np.random.randn(n_samples, n_features)
-    dico1 = DictionaryLearningOnline(n_atoms, n_iter=20,
-                                     transform_method='lasso_lars',
-                                     chunk_size=1, shuffle=False).fit(X)
-    dico2 = DictionaryLearningOnline(n_atoms, n_iter=20,
-                                     transform_method='lasso_lars')
-    for sample in X:
-        dico2.partial_fit(sample)
+    V = np.random.randn(n_atoms, n_features)  # random init
+    dico1 = DictionaryLearningOnline(n_atoms, n_iter=10, chunk_size=1,
+                                     shuffle=False, dict_init=V,
+                                     transform_method='treshold').fit(X)
+    dico2 = DictionaryLearningOnline(n_atoms, n_iter=1, dict_init=V,
+                                     transform_method='treshold')
+    for ii, sample in enumerate(X):
+        dico2.partial_fit(sample, iter_offset=ii * dico2.n_iter)
     
-    code1 = dico1.transform(X, alpha=0.1)
-    code2 = dico2.transform(X, alpha=0.1)
+    code1 = dico1.transform(X, alpha=1)
+    code2 = dico2.transform(X, alpha=1)
     X1 = np.dot(code1, dico1.components_)
     X2 = np.dot(code2, dico2.components_)
     assert_array_equal(X1, X2)

@@ -364,7 +364,7 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
 def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
                          dict_init=None, callback=None, chunk_size=3,
                          verbose=False, shuffle=True, n_jobs=1,
-                         coding_method='lars'):
+                         coding_method='lars', iter_offset=0):
     """Solves a dictionary learning matrix factorization problem online.
 
     Finds the best dictionary and the corresponding sparse code for
@@ -415,6 +415,10 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
     method: 'lars' | 'lasso',
         method to use for solving the lasso sparse coding problem
 
+    iter_offset: int, default 0
+        number of previous iterations completed on the dictionary used for
+        initialization
+
     Returns
     -------
     dictionary: array of shape (n_atoms, n_features),
@@ -462,7 +466,8 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
     # The data approximation
     B = np.zeros((n_features, n_atoms))
 
-    for ii, this_X in itertools.izip(xrange(n_iter), batches):
+    for ii, this_X in itertools.izip(xrange(iter_offset, iter_offset + n_iter),
+                                     batches):
         #this_Y = this_Y.squeeze()
         dt = (time.time() - t0)
         if verbose == 1:

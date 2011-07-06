@@ -299,7 +299,7 @@ class DictionaryLearningOnline(BaseDictionaryLearning):
         self.components_ = U
         return self
 
-    def partial_fit(self, X, y=None, **params):
+    def partial_fit(self, X, y=None, iter_offset=0, **params):
         """Updates the model using the data in X as a mini-batch.
 
         Parameters
@@ -318,13 +318,14 @@ class DictionaryLearningOnline(BaseDictionaryLearning):
         if hasattr(self, 'components_'):
             dict_init = self.components_
         else:
-            dict_init = None
+            dict_init = self.dict_init
         U = dict_learning_online(X, self.n_atoms, self.alpha,
                                  n_iter=self.n_iter,
                                  coding_method=self.coding_method,
                                  n_jobs=self.n_jobs,
                                  dict_init=dict_init,
                                  chunk_size=len(X), shuffle=False,
-                                 verbose=self.verbose, return_code=False)
+                                 verbose=self.verbose, return_code=False,
+                                 iter_offset=iter_offset)
         self.components_ = U
         return self
