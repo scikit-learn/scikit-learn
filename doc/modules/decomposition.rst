@@ -346,3 +346,13 @@ Online dictionary learning
 
 :class:`DictionaryLearningOnline` implements a fast, optimized version of the
 dictionary learning algorithm that is more suited for large datasets.
+
+.. _KMeansCoder
+
+K-Means coder
+-------------
+
+:class:`KMeansCoder` is a dictionary learning method that fills the dictionary
+with centers found by the k-means clustering algorithm. It also implements some
+optimizations for the case when a whitening PCA transform is desired prior to
+decomposition.
