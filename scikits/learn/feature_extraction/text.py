@@ -5,14 +5,13 @@
 # License: BSD Style.
 """Utilities to build feature vectors from text documents"""
 
-from collections import defaultdict
-from operator import itemgetter
 import re
 import unicodedata
 import numpy as np
 import scipy.sparse as sp
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import normalize
+from ..utils.fixes import Counter
 
 ENGLISH_STOP_WORDS = set([
     "a", "about", "above", "across", "after", "afterwards", "again", "against",
@@ -303,11 +302,11 @@ class CountVectorizer(BaseEstimator):
         """
         # result of document conversion to term count dicts
         term_counts_per_doc = []
-        term_counts = defaultdict(int)
+        term_counts = Counter()
 
         # term counts across entire corpus (count each term maximum once per
         # document)
-        document_counts = defaultdict(int)
+        document_counts = Counter()
 
         max_df = self.max_df
         max_features = self.max_features
@@ -315,7 +314,7 @@ class CountVectorizer(BaseEstimator):
         # TODO: parallelize the following loop with joblib?
         # (see XXX up ahead)
         for doc in raw_documents:
-            term_count_current = defaultdict(int)
+            term_count_current = Counter()
 
             for term in self.analyzer.analyze(doc):
                 term_count_current[term] += 1
@@ -333,7 +332,7 @@ class CountVectorizer(BaseEstimator):
         if max_df is not None:
             max_document_count = max_df * n_doc
             stop_words = set(t for t, dc in document_counts.iteritems()
-                             if dc > max_document_count)
+                               if dc > max_document_count)
 
         # list the terms that should be part of the vocabulary
         if max_features is None:
@@ -342,8 +341,7 @@ class CountVectorizer(BaseEstimator):
         else:
             # extract the most frequent terms for the vocabulary
             terms = set()
-            for t, tc in sorted(term_counts.iteritems(), key=itemgetter(1),
-                                reverse=True):
+            for t, tc in term_counts.most_common():
                 if t not in stop_words:
                     terms.add(t)
                 if len(terms) >= max_features:
@@ -368,7 +366,7 @@ class CountVectorizer(BaseEstimator):
         # XXX @larsmans tried to parallelize the following loop with joblib.
         # The result was some 20% slower than the serial version.
         for doc in raw_documents:
-            term_count_current = defaultdict(int)
+            term_count_current = Counter()
 
             for term in self.analyzer.analyze(doc):
                 term_count_current[term] += 1
