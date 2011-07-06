@@ -59,7 +59,8 @@ class KMeansCoder(BaseDictionaryLearning):
     verbose: bool, default False
         whether to display verbose output
 
-    transform_method: string, default 'omp'
+    transform_method: 'lasso_lars' | 'lasso_cd' | 'omp' | 'threshold' | 
+                      'triangle'
         method to use for transforming the data after the dictionary has been
         learned
 
