@@ -48,8 +48,8 @@ class BaseDictionaryLearning(BaseEstimator, TransformerMixin):
         elif self.transform_method in ('lasso_cd', 'lasso_lars'):
             code = _update_code_parallel(self.components_.T, X.T, **kwargs).T
         
-        # XXX: treshold and triangle are not verified to be correct
-        elif self.transform_method == 'treshold':
+        # XXX: threshold and triangle are not verified to be correct
+        elif self.transform_method == 'threshold':
             alpha = float(kwargs['alpha'])
             code = np.dot(X, self.components_.T)
             code = np.sign(code) * np.maximum(np.abs(code) - alpha, 0)
@@ -97,7 +97,8 @@ class DictionaryLearning(BaseDictionaryLearning):
     tol: float,
         tolerance for numerical error
 
-    transform_method: 'lasso_lars' | 'lasso_cd' | 'omp'
+    transform_method: 'lasso_lars' | 'lasso_cd' | 'omp' | 'threshold' | 
+                      'triangle'
         method to use for transforming the data after the dictionary has been
         learned
 
@@ -220,7 +221,8 @@ class DictionaryLearningOnline(BaseDictionaryLearning):
     n_iter: int,
         total number of iterations to perform
 
-    transform_method: 'lasso_lars' | 'lasso_cd' | 'omp'
+    transform_method: 'lasso_lars' | 'lasso_cd' | 'omp' | 'threshold' | 
+                      'triangle'
         method to use for transforming the data after the dictionary has been
         learned
 

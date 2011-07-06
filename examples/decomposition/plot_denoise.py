@@ -59,7 +59,7 @@ for i, fragment in enumerate(fragments):
         dico.transform_method = "lasso_lars"
         code = dico.transform(data, alpha=1.8)
     elif i == 3:
-        dico.transform_method = "treshold"
+        dico.transform_method = "threshold"
         code = dico.transform(data, alpha=1.0)
     dt = time() - t0
     print " done in %.2fs" % dt
@@ -90,6 +90,6 @@ params = dict(ha="center", va="center", size=12, bbox=bbox_props)
 pl.text(150, 100, "OMP-1", **params)
 pl.text(400, 100, "OMP-2", **params)
 pl.text(150, 450, "LARS", **params)
-pl.text(400, 450, "Treshold", **params)
+pl.text(400, 450, "Threshold", **params)
 pl.suptitle("Image denoising with dictionary learning", fontsize=16)
 pl.show()

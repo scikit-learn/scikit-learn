@@ -300,7 +300,7 @@ initialization parameter:
 
 * Lasso using coordinate descent (:ref:`lasso`)
 
-* Tresholding
+* Thresholding
 
 * Triangle k-means
 
