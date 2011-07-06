@@ -2,7 +2,7 @@ import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 from nose.plugins.skip import SkipTest
 
-from .. import DictionaryLearning
+from .. import DictionaryLearning, DictionaryLearningOnline
 
 
 def test_dict_learning_shapes():
@@ -60,5 +60,38 @@ def test_dict_learning_split():
     assert_array_equal(split_code[:, :n_atoms] - split_code[:, n_atoms:], code)
 
 
-def test_dict_learning_online():
-    pass
+def test_dict_learning_online_shapes():
+    n_samples, n_features = 10, 8
+    n_atoms = 5
+    X = np.random.randn(n_samples, n_features)
+    dico = DictionaryLearningOnline(n_atoms, n_iter=20).fit(X)
+    assert dico.components_.shape == (n_atoms, n_features)
+
+
+def test_dict_learning_online_overcomplete():
+    n_samples, n_features = 10, 8
+    n_atoms = 12
+    X = np.random.randn(n_samples, n_features)
+    dico = DictionaryLearningOnline(n_atoms, n_iter=20).fit(X)
+    assert dico.components_.shape == (n_atoms, n_features)
+
+
+def test_dict_learning_online_partial_fit():
+    raise SkipTest
+    n_samples, n_features = 10, 8
+    n_atoms = 12
+    X = np.random.randn(n_samples, n_features)
+    V = np.random.randn(n_atoms, n_features)  # random init
+    dico1 = DictionaryLearningOnline(n_atoms, n_iter=10, chunk_size=1,
+                                     shuffle=False, dict_init=V,
+                                     transform_method='treshold').fit(X)
+    dico2 = DictionaryLearningOnline(n_atoms, n_iter=1, dict_init=V,
+                                     transform_method='treshold')
+    for ii, sample in enumerate(X):
+        dico2.partial_fit(sample, iter_offset=ii * dico2.n_iter)
+    
+    code1 = dico1.transform(X, alpha=1)
+    code2 = dico2.transform(X, alpha=1)
+    X1 = np.dot(code1, dico1.components_)
+    X2 = np.dot(code2, dico2.components_)
+    assert_array_equal(X1, X2)

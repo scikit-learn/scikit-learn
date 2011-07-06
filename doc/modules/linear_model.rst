@@ -127,6 +127,8 @@ as GridSearchCV except that it defaults to Generalized Cross-Validation
       `course slides
       <http://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf>`_).
 
+:: _lasso:
+
 Lasso
 =====
 
@@ -276,13 +278,13 @@ column is always zero.
    <http://www-stat.stanford.edu/~hastie/Papers/LARS/LeastAngle_2002.pdf>`_
    by Hastie et al.
 
-
+.. OMP:
 
 Orthogonal Matching Pursuit (OMP)
 =================================
-`OMP` is an algorithm for approximating the fit of a linear model with
-constraints imposed on the number of non-zero coefficients (ie. the L :sub:`0`
-pseudo-norm). 
+:func:`orthogonal_mp` implements the OMP algorithm for approximating the fit of
+a linear model with constraints imposed on the number of non-zero coefficients
+(ie. the L :sub:`0` pseudo-norm). 
 
 While :ref:`Lasso`-style penalties do tend to shrink coefficients towards zero,
 there is no direct relationship between the Lasso penalty coefficient and the

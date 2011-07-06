@@ -258,7 +258,7 @@ class DictionaryLearningOnline(BaseDictionaryLearning):
     `scikits.learn.decomposition.SparsePCA`
 
     """
-    def __init__(self, n_atoms, alpha=1, max_iter=1000, coding_method='lars',
+    def __init__(self, n_atoms, alpha=1, n_iter=1000, coding_method='lars',
                  n_jobs=1, chunk_size=3, shuffle=True, dict_init=None,
                  transform_method='omp', verbose=False, split_sign=False):
         self.n_atoms = n_atoms
@@ -289,12 +289,43 @@ class DictionaryLearningOnline(BaseDictionaryLearning):
         """
         self._set_params(**params)
         X = np.asanyarray(X)
-        U = dict_learning_online(X, self.n_atoms, self.alpha,
+        U = dict_learning_online(X, self.n_atoms, self.alpha, 
                                  n_iter=self.n_iter,
                                  coding_method=self.coding_method,
                                  n_jobs=self.n_jobs, dict_init=self.dict_init,
                                  chunk_size=self.chunk_size,
                                  shuffle=self.shuffle, verbose=self.verbose,
                                  return_code=False)
+        self.components_ = U
+        return self
+
+    def partial_fit(self, X, y=None, iter_offset=0, **params):
+        """Updates the model using the data in X as a mini-batch.
+
+        Parameters
+        ----------
+        X: array-like, shape (n_samples, n_features)
+            Training vector, where n_samples in the number of samples
+            and n_features is the number of features.
+
+        Returns
+        -------
+        self : object
+            Returns the instance itself.
+        """
+        self._set_params(**params)
+        X = np.atleast_2d(X)
+        if hasattr(self, 'components_'):
+            dict_init = self.components_
+        else:
+            dict_init = self.dict_init
+        U = dict_learning_online(X, self.n_atoms, self.alpha,
+                                 n_iter=self.n_iter,
+                                 coding_method=self.coding_method,
+                                 n_jobs=self.n_jobs,
+                                 dict_init=dict_init,
+                                 chunk_size=len(X), shuffle=False,
+                                 verbose=self.verbose, return_code=False,
+                                 iter_offset=iter_offset)
         self.components_ = U
         return self
