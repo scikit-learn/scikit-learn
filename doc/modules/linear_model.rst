@@ -32,6 +32,7 @@ responses predicted by the linear approximation.
 
 .. figure:: ../auto_examples/linear_model/images/plot_ols_1.png
    :target: ../auto_examples/linear_model/plot_ols.html
+   :align: center
    :scale: 50%
 
 :class:`LinearRegression` will take in its `fit` method arrays X, y
