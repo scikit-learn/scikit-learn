@@ -388,7 +388,7 @@ class CountVectorizer(BaseEstimator):
 
         Returns
         -------
-        vectors: array, [n_samples, n_features]
+        vectors: sparse matrix, [n_samples, n_features]
         """
         if len(self.vocabulary) == 0:
             raise ValueError("No vocabulary dictionary available.")
@@ -396,15 +396,26 @@ class CountVectorizer(BaseEstimator):
         return self._build_vectors(raw_documents)
 
     def inverse_transform(self, X):
-        """Return terms per document with nonzero entries in X."""
+        """Return terms per document with nonzero entries in X.
+
+        Parameters
+        ----------
+        X : {array, sparse matrix}, shape = [n_samples, n_features]
+        
+        Returns
+        -------
+        X_inv : list of arrays, len = n_samples
+            List of arrays of terms.
+        """
+        if type(X) is sp.coo_matrix:    # COO matrix is not indexable
+            X = X.tocsr()
+
         terms = np.array(self.vocabulary.keys())
         indices = np.array(self.vocabulary.values())
         inverse_vocabulary = terms[np.argsort(indices)]
 
-        inverse_transformed_X = []
-        for i in xrange(X.shape[0]):
-            inverse_transformed_X.append(inverse_vocabulary[X[i, :].nonzero()[1]])
-        return inverse_transformed_X
+        return [inverse_vocabulary[X[i, :].nonzero()[1]]
+                for i in xrange(X.shape[0])]
 
 
 class TfidfTransformer(BaseEstimator, TransformerMixin):
@@ -442,7 +453,6 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         ----------
         X: sparse matrix, [n_samples, n_features]
             a matrix of term/token counts
-
         """
         n_samples, n_features = X.shape
         if self.use_idf:
@@ -519,8 +529,7 @@ class Vectorizer(BaseEstimator):
         return self.tfidf.fit(X).transform(X, copy=False)
 
     def transform(self, raw_documents, copy=True):
-        """
-        Return the vectors.
+        """Transform raw text documents to tf–idf vectors
 
         Parameters
         ----------
@@ -529,12 +538,24 @@ class Vectorizer(BaseEstimator):
 
         Returns
         -------
-        vectors: array, [n_samples, n_features]
+        vectors: sparse matrix, [n_samples, n_features]
         """
         X = self.tc.transform(raw_documents)
         return self.tfidf.transform(X, copy)
 
-    def _get_vocab(self):
-        return self.tc.vocabulary
+    def inverse_transform(self, X):
+        """Return terms per document with nonzero entries in X.
 
-    vocabulary = property(_get_vocab)
+        Parameters
+        ----------
+        X : {array, sparse matrix}, shape = [n_samples, n_features]
+        
+        Returns
+        -------
+        X_inv : list of arrays, len = n_samples
+            List of arrays of terms.
+        """
+        return self.tc.inverse_transform(X)
+
+    vocabulary = property(lambda self: self.tc.vocabulary)
+    analyzer = property(lambda self: self.tc.analyzer)
