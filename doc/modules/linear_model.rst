@@ -12,18 +12,18 @@ the target value is expected to be a linear combination of the input
 variables. In mathematical notion, if :math:`\hat{y}` is the predicted
 value.
 
-.. math::    \hat{y}(\beta, x) = \beta_0 + \beta_1 x_1 + ... + \beta_D x_D
+.. math::    \hat{y}(w, x) = w_0 + w_1 x_1 + ... + w_n x_n
 
-Across the module, we designate the vector :math:`\beta = (\beta_1,
-..., \beta_D)` as ``coef_`` and :math:`\beta_0` as ``intercept_``.
+Across the module, we designate the vector :math:`w = (w_1,
+..., w_n)` as ``coef_`` and :math:`w_0` as ``intercept_``.
 
 To perform classification with generalized linear models, see
 :ref:`Logistic_regression`.
 
 .. _ordinary_least_squares:
 
-Ordinary Least Squares (OLS)
-==============================
+Ordinary Least Squares
+=======================
 
 :class:`LinearRegression` fits a linear model with coefficients
 :math:`\beta = (\beta_1, ..., \beta_D)` to minimize the residual sum
@@ -61,12 +61,13 @@ example, when data are collected without an experimental design.
    * :ref:`example_linear_model_plot_ols.py`
 
 
-OLS Complexity
---------------
+Ordinary Least Squares Complexity
+---------------------------------
 
 This method computes the least squares solution using a singular value
 decomposition of X. If X is a matrix of size (n, p ) this method has a
 cost of :math:`O(n p^2)`, assuming that :math:`n \geq p`.
+
 
 Ridge Regression
 ================
@@ -79,9 +80,8 @@ of squares,
 
 .. math::
 
-   \beta^{ridge} = \underset{\beta}{argmin} { \sum_{i=1}{N} (y_i -
-                 \beta_0 - \sum_{j=1}{p} x_ij \beta_j)^2 + \alpha
-                 \sum_{j=1}{p} \beta_{j}^2}
+   \underset{x}{min} {{|| X w - y||_2}^2 + \alpha {||w||_2}^2}
+
 
 Here, :math:`\alpha \geq 0` is a complexity parameter that controls
 the amount of shrinkage: the larger the value of :math:`\alpha`, the
@@ -133,7 +133,7 @@ Lasso
 The :class:`Lasso` is a linear model trained with L1 prior as
 regularizer. The objective function to minimize is:
 
-.. math::  0.5 * ||y - X w||_2 ^ 2 + \alpha * ||w||_1
+.. math::  0.5 * ||X w - y||_2 ^ 2 + \alpha * ||w||_1
 
 The lasso estimate thus solves the minimization of the
 least-squares penalty with :math:`\alpha * ||w||_1` added, where
@@ -171,11 +171,15 @@ Elastic Net
 :class:`ElasticNet` is a linear model trained with L1 and L2 prior as
 regularizer.
 
-
 The objective function to minimize is in this case
 
-.. math::        0.5 * ||y - X w||_2 ^ 2 + \alpha * \rho * ||w||_1 + \alpha * (1-\rho) * 0.5 * ||w||_2 ^ 2
+.. math::        0.5 * ||X w - y||_2 ^ 2 + \alpha * \rho * ||w||_1 + \alpha * (1-\rho) * 0.5 * ||w||_2 ^ 2
 
+
+.. figure:: ../auto_examples/linear_model/images/plot_lasso_coordinate_descent_path_1.png
+   :target: ../auto_examples/linear_model/plot_lasso_coordinate_descent_path.html
+   :align: center
+   :scale: 50%
 
 .. topic:: Examples:
 
