@@ -49,9 +49,8 @@ class LinearModel(BaseEstimator, RegressorMixin):
     @staticmethod
     def _center_data(X, y, fit_intercept):
         """
-        Centers data to have mean zero along axis 0. This is here
-        because nearly all Linear Models will want it's data to be
-        centered.
+        Centers data to have mean zero along axis 0. This is here because
+        nearly all linear models will want their data to be centered.
         """
         import scipy.sparse  # importing scipy.sparse just for this is overkill
         if fit_intercept:
