@@ -80,7 +80,8 @@ class SphinxDocString(NumpyDocString):
             if autosum:
                 # GAEL: Toctree commented out below because it creates
                 # hundreds of sphinx warnings
-                out += ['.. autosummary::', ]#'   :toctree:', '']
+                # out += ['.. autosummary::', '   :toctree:', '']
+                out += ['.. autosummary::', '']
                 out += autosum
 
             if others:
