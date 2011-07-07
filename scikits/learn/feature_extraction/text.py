@@ -243,10 +243,10 @@ class CountVectorizer(BaseEstimator):
         Type of the matrix returned by fit_transform() or transform().
     """
 
-    def __init__(self, analyzer=DEFAULT_ANALYZER, vocabulary={}, max_df=1.0,
+    def __init__(self, analyzer=DEFAULT_ANALYZER, vocabulary=None, max_df=1.0,
                  max_features=None, dtype=long):
         self.analyzer = analyzer
-        self.vocabulary = vocabulary
+        self.vocabulary = vocabulary if vocabulary is not None else {}
         self.dtype = dtype
         self.max_df = max_df
         self.max_features = max_features
@@ -336,8 +336,7 @@ class CountVectorizer(BaseEstimator):
 
         # list the terms that should be part of the vocabulary
         if max_features is None:
-            terms = set(term_counts)
-            terms -= stop_words
+            terms = [t for t in term_counts if t not in stop_words]
         else:
             # extract the most frequent terms for the vocabulary
             terms = set()
