@@ -81,7 +81,7 @@ of squares,
 
 .. math::
 
-   \underset{x}{min} {{|| X w - y||_2}^2 + \alpha {||w||_2}^2}
+   \underset{w}{min} {{|| X w - y||_2}^2 + \alpha {||w||_2}^2}
 
 
 Here, :math:`\alpha \geq 0` is a complexity parameter that controls
