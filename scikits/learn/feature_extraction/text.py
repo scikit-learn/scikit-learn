@@ -395,6 +395,17 @@ class CountVectorizer(BaseEstimator):
 
         return self._build_vectors(raw_documents)
 
+    def inverse_transform(self, X):
+        """Return terms per document with nonzero entries in X."""
+        terms = np.array(self.vocabulary.keys())
+        indices = np.array(self.vocabulary.values())
+        inverse_vocabulary = terms[np.argsort(indices)]
+
+        inverse_transformed_X = []
+        for i in xrange(X.shape[0]):
+            inverse_transformed_X.append(inverse_vocabulary[X[i, :].nonzero()[1]])
+        return inverse_transformed_X
+
 
 class TfidfTransformer(BaseEstimator, TransformerMixin):
     """Transform a count matrix to a normalized tf or tf–idf representation
