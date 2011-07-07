@@ -426,6 +426,10 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', reg=1e-3):
     matrix([[ 1.,  0.,  1.],
             [ 0.,  1.,  1.],
             [ 1.,  0.,  1.]])
+
+    See also
+    --------
+    radius_neighbors_graph
     """
     if isinstance(X, BallTree):
         ball_tree = X
@@ -497,6 +501,10 @@ def radius_neighbors_graph(X, radius, mode='connectivity'):
     matrix([[ 1.,  0.,  1.],
             [ 0.,  1.,  0.],
             [ 1.,  0.,  1.]])
+
+    See also
+    --------
+    kneighbors_graph
     """
     if isinstance(X, BallTree):
         ball_tree = X
