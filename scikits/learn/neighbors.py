@@ -415,7 +415,7 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', reg=1e-3):
     Returns
     -------
     A : sparse matrix in CSR format, shape = [n_samples, n_samples]
-        A[i,j] is assigned the weight of edge that connects i to j.
+        A[i, j] is assigned the weight of edge that connects i to j.
 
     Examples
     --------
@@ -490,7 +490,7 @@ def radius_neighbors_graph(X, radius, mode='connectivity'):
     Returns
     -------
     A : sparse matrix in CSR format, shape = [n_samples, n_samples]
-        A[i,j] is assigned the weight of edge that connects i to j.
+        A[i, j] is assigned the weight of edge that connects i to j.
 
     Examples
     --------
