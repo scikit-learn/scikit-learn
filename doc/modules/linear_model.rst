@@ -84,9 +84,19 @@ of squares,
    \underset{w}{min} {{|| X w - y||_2}^2 + \alpha {||w||_2}^2}
 
 
-Here, :math:`\alpha \geq 0` is a complexity parameter that controls
-the amount of shrinkage: the larger the value of :math:`\alpha`, the
-greater the amount of shrinkage::
+Here, :math:`\alpha \geq 0` is a complexity parameter that controls the amount
+of shrinkage: the larger the value of :math:`\alpha`, the greater the amount
+of shrinkage and thus the coefficients become more robust to collinearity.
+
+.. figure:: ../auto_examples/linear_model/images/plot_ridge_path_1.png
+   :target: ../auto_examples/linear_model/plot_ridge_path.html
+   :align: center
+   :scale: 50%
+
+
+As with other linear models, :class:`Ridge` will take in its `fit` method
+arrays X, y and will store the coefficients :math:`w` of the linear model in
+its `coef\_` member.
 
     >>> from scikits.learn import linear_model
     >>> clf = linear_model.Ridge (alpha = .5)
@@ -98,11 +108,21 @@ greater the amount of shrinkage::
     0.13636...
 
 
+.. topic:: Examples:
+
+   * :ref:`example_linear_model_plot_ridge_path.py`
+
+
 Ridge Complexity
 ----------------
 
 This method has the same order of complexity than an
 :ref:`ordinary_least_squares`.
+
+.. FIXME:
+.. Not completely true: OLS is solved by an SVD, while Ridge is solved by
+.. the method of normal equations (Cholesky), there is a big flop difference
+.. between these
 
 
 Generalized Cross-Validation
