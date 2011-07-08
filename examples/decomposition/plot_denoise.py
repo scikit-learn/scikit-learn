@@ -74,7 +74,7 @@ for i, fragment in enumerate(fragments):
 ###############################################################################
 # Display the results
 vmin, vmax = 0, 256
-pl.figure()
+pl.figure(figsize=(9, 5))
 pl.subplot(1, 2, 1)
 pl.title("Noisy image")
 pl.imshow(lena, vmin=vmin, vmax=vmax, cmap=pl.cm.gray, interpolation='nearest')
@@ -92,4 +92,5 @@ pl.text(400, 100, "OMP-2", **params)
 pl.text(150, 450, "LARS", **params)
 pl.text(400, 450, "Threshold", **params)
 pl.suptitle("Image denoising with dictionary learning", fontsize=16)
+pl.subplots_adjust(0.02, 0.1, 0.98, 0.84, 0.02, 0.2)
 pl.show()
