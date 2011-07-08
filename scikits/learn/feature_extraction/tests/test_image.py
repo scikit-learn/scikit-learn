@@ -22,6 +22,17 @@ def test_img_to_graph():
     np.testing.assert_array_equal(grad_x.data[grad_x.data > 0],
                                   grad_y.data[grad_y.data > 0])
 
+def test_grid_to_graph():
+    #Checking that the function works with graphs containing no edges
+    size = 2
+    roi_size = 1
+    # Generating two convex parts with one vertex
+    mask = np.zeros((size, size), dtype=bool)
+    mask[0:roi_size, 0:roi_size] = True
+    mask[-roi_size:, -roi_size:] = True
+    mask = mask.reshape(size**2)
+    A = grid_to_graph(n_x=size, n_y=size, mask=mask, return_as=np.ndarray)
+
 
 def test_connect_regions():
     lena = sp.lena()
