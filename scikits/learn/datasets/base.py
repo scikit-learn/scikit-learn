@@ -100,34 +100,32 @@ def load_filenames(container_path, description=None, categories=None,
     ----------
 
     container_path : string or unicode
-      the path to the main folder holding one subfolder per category
+        Path to the main folder holding one subfolder per category
 
     description: string or unicode
-      a paragraph describing the characteristic of the dataset, its source,
-      reference, ...
+        A paragraph describing the characteristic of the dataset: its source,
+        reference, etc.
 
     categories : None or collection of string or unicode
-      if None (default), load all the categories.
-      if not Non, list of category names to load (other categories ignored)
+        If None (default), load all the categories.
+        If not None, list of category names to load (other categories ignored).
 
-    shuffle : True by default
-      whether or not to shuffle the data: might be important for models that
-      make the assumption that the samples are independent and identically
-      distributed (i.i.d.) such as stochastic gradient descent for instance.
+    shuffle : bool, optional
+        Whether or not to shuffle the data: might be important for models that
+        make the assumption that the samples are independent and identically
+        distributed (i.i.d.), such as stochastic gradient descent.
 
-    random_state : a numpy random number generator or a seed integer, 42 by default
-      used to shuffle the dataset
+    random_state : numpy random number generator or seed integer, optional
+        Used to shuffle the dataset.
 
     Returns
     -------
-
     data : Bunch
         Dictionary-like object, the interesting attributes are:
         'filenames', the files holding the raw to learn, 'target', the
         classification labels (integer index), 'target_names',
         the meaning of the labels, and 'DESCR', the full description of the
         dataset.
-
     """
     target = []
     target_names = []

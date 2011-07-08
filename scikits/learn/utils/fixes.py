@@ -4,7 +4,10 @@
 #          Fabian Pedregosa <fpedregosa@acm.org>
 # License: BSD
 
+import collections
 import numpy as np
+from operator import itemgetter
+
 
 try:
     from itertools import product
@@ -17,6 +20,17 @@ except ImportError:
         for prod in result:
             yield tuple(prod)
 
+
+try:
+    Counter = collections.Counter
+except AttributeError:
+    # Partial replacement for Python 2.7 Counter
+    class Counter(collections.defaultdict):
+        def __init__(self, **kwargs):
+            super(Counter, self).__init__(int, **kwargs)
+
+        def most_common(self):
+            return sorted(self.iteritems(), key=itemgetter(1), reverse=True)
 
 
 def _unique(ar, return_index=False, return_inverse=False):
