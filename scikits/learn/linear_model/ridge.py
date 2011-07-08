@@ -51,10 +51,10 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto', tol=1e-3):
 
     Parameters
     ----------
-    X : {array-like, sparse matrix}, shape = [n_samples,n_features]
+    X : {array-like, sparse matrix}, shape = [n_samples, n_features]
         Training data
 
-    y : array-like, shape = [n_samples]
+    y : array-like, shape = [n_samples] or [n_samples, n_responses]
         Target values
 
     sample_weight : float or numpy array of shape [n_samples]
@@ -69,6 +69,11 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto', tol=1e-3):
 
     tol: float
         Precision of the solution.
+
+    Returns
+    -------
+    coef: array, shape = [n_features] or [n_responses, n_features]
+        Weight vector(s).
 
     Notes
     -----
@@ -90,11 +95,11 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto', tol=1e-3):
             I = sparse.lil_matrix((n_samples, n_samples))
             I.setdiag(np.ones(n_samples) * alpha * sample_weight)
             c = _solve(X * X.T + I, y, solver, tol)
-            return X.T * c
+            coef = X.T * c
         else:
             I = sparse.lil_matrix((n_features, n_features))
             I.setdiag(np.ones(n_features) * alpha)
-            return _solve(X.T * X + I, X.T * y, solver, tol)
+            coef = _solve(X.T * X + I, X.T * y, solver, tol)
     else:
         if n_features > n_samples or \
            isinstance(sample_weight, np.ndarray) or \
@@ -104,13 +109,15 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto', tol=1e-3):
             # w = X.T * inv(X X^t + alpha*Id) y
             A = np.dot(X, X.T)
             A.flat[::n_samples + 1] += alpha * sample_weight
-            return np.dot(X.T, _solve(A, y, solver, tol))
+            coef = np.dot(X.T, _solve(A, y, solver, tol))
         else:
             # ridge
             # w = inv(X^t X + alpha*Id) * X.T y
             A = np.dot(X.T, X)
             A.flat[::n_features + 1] += alpha
-            return _solve(A, np.dot(X.T, y), solver, tol)
+            coef = _solve(A, np.dot(X.T, y), solver, tol)
+
+    return coef.T
 
 
 class Ridge(LinearModel):
@@ -132,6 +139,12 @@ class Ridge(LinearModel):
 
     tol: float
         Precision of the solution.
+
+    Attributes
+    ----------
+
+    coef_: array, shape = [n_features] or [n_responses, n_features]
+        Weight vector(s).
 
     Examples
     --------
@@ -157,10 +170,10 @@ class Ridge(LinearModel):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples,n_features]
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             Training data
 
-        y : array-like, shape = [n_samples]
+        y : array-like, shape = [n_samples] or [n_samples, n_responses]
             Target values
 
         sample_weight : float or numpy array of shape [n_samples]
@@ -207,6 +220,12 @@ class RidgeClassifier(Ridge):
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
+
+    Attributes
+    ----------
+
+    coef_: array, shape = [n_features] or [n_classes, n_features]
+        Weight vector(s).
 
     Note
     ----
@@ -392,7 +411,7 @@ class _RidgeGCV(LinearModel):
 
         self.best_alpha = self.alphas[best]
         self.dual_coef_ = C[best]
-        self.coef_ = safe_sparse_dot(X.T, self.dual_coef_)
+        self.coef_ = safe_sparse_dot(self.dual_coef_.T, X)
 
         self._set_intercept(Xmean, ymean)
 

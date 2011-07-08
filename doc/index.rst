@@ -56,7 +56,7 @@
   * **Solid**: :ref:`supervised-learning`: :ref:`svm`, :ref:`linear_model`.
 
   * **Work in progress**: :ref:`unsupervised-learning`:
-    :ref:`clustering`, :ref:`mixture`, :ref:`manifold learning <manifold>`, :ref:`ICA
+    :ref:`clustering`, :ref:`mixture`, :ref:`Manifold learning <manifold>`, :ref:`ICA
     <ICA>`, :ref:`gaussian_process`
 
   * **Planned**: Gaussian graphical models, matrix factorization

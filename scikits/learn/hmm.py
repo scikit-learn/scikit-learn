@@ -7,10 +7,13 @@ import string
 import numpy as np
 
 from .base import BaseEstimator
-from .mixture import (GMM, lmvnpdf, logsum, normalize, sample_gaussian,
+from .mixture import (GMM, lmvnpdf, normalize, sample_gaussian,
                  _distribute_covar_matrix_to_match_cvtype, _validate_covars)
 from . import cluster
 ZEROLOGPROB = -1e200
+
+
+logsum = np.logaddexp.reduce
 
 
 class _BaseHMM(BaseEstimator):
