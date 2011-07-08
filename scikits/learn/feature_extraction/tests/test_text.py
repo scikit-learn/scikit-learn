@@ -7,10 +7,6 @@ from scikits.learn.feature_extraction.text import CountVectorizer
 from scikits.learn.feature_extraction.text import TfidfTransformer
 from scikits.learn.feature_extraction.text import Vectorizer
 
-SparseCountVectorizer = CountVectorizer
-SparseTfidfTransformer = TfidfTransformer
-SparseVectorizer = Vectorizer
-
 from scikits.learn.grid_search import GridSearchCV
 from scikits.learn.pipeline import Pipeline
 from scikits.learn.svm.sparse import LinearSVC as LinearSVC
@@ -132,7 +128,7 @@ def toarray(a):
     return a
 
 
-def _test_vectorizer(cv_class, tf_class, v_class):
+def test_vectorizer():
     # results to be compared
     res = []
 
@@ -142,14 +138,14 @@ def _test_vectorizer(cv_class, tf_class, v_class):
     n_train = len(ALL_FOOD_DOCS) - 1
 
     # test without vocabulary
-    v1 = cv_class(max_df=0.5)
+    v1 = CountVectorizer(max_df=0.5)
     counts_train = v1.fit_transform(train_data)
     if hasattr(counts_train, 'tocsr'):
         counts_train = counts_train.tocsr()
     assert_equal(counts_train[0, v1.vocabulary[u"pizza"]], 2)
 
     # build a vectorizer v1 with the same vocabulary as the one fitted by v1
-    v2 = cv_class(vocabulary=v1.vocabulary)
+    v2 = CountVectorizer(vocabulary=v1.vocabulary)
 
     # compare that the two vectorizer give the same output on the test sample
     for v in (v1, v2):
@@ -177,30 +173,30 @@ def _test_vectorizer(cv_class, tf_class, v_class):
         assert_equal(counts_test[0, v.vocabulary[u"pizza"]], 0)
 
     # test tf-idf
-    t1 = tf_class()
+    t1 = TfidfTransformer(norm='l1')
     tfidf = toarray(t1.fit(counts_train).transform(counts_train))
-    assert_equal(len(t1.idf), len(v1.vocabulary))
+    assert_equal(len(t1.idf_), len(v1.vocabulary))
     assert_equal(tfidf.shape, (n_train, len(v1.vocabulary)))
 
     res.append(tfidf)
-    res.append(t1.idf)
+    res.append(t1.idf_)
 
     # test tf-idf with new data
     tfidf_test = toarray(t1.transform(counts_test))
     assert_equal(tfidf_test.shape, (len(test_data), len(v1.vocabulary)))
 
     # test tf alone
-    t2 = tf_class(use_idf=False)
+    t2 = TfidfTransformer(norm='l1', use_idf=False)
     tf = toarray(t2.fit(counts_train).transform(counts_train))
-    assert_equal(t2.idf, None)
+    assert_equal(t2.idf_, None)
 
-    # term frequencies sum to one
+    # L1-normalized term frequencies sum to one
     assert_array_almost_equal(np.sum(tf, axis=1), [1.0] * n_train)
 
     # test the direct tfidf vectorizer
     # (equivalent to term count vectorizer + tfidf transformer)
     train_data = iter(ALL_FOOD_DOCS[:-1])
-    tv = v_class()
+    tv = Vectorizer(norm='l1')
     tv.tc.max_df = v1.max_df
     tfidf2 = toarray(tv.fit_transform(train_data))
     assert_array_almost_equal(tfidf, tfidf2)
@@ -212,41 +208,19 @@ def _test_vectorizer(cv_class, tf_class, v_class):
     return res
 
 
-def test_vectorizer():
-    res_dense = _test_vectorizer(CountVectorizer,
-                                 TfidfTransformer,
-                                 Vectorizer)
-    res_sparse = _test_vectorizer(SparseCountVectorizer,
-                                  SparseTfidfTransformer,
-                                  SparseVectorizer)
-
-    for i in xrange(len(res_sparse)):
-        # check that the dense and sparse implementations
-        # return the same results
-        assert_array_equal(res_dense[i], res_sparse[i])
-
-
 def test_vectorizer_max_features():
     vec_factories = (
         CountVectorizer,
         Vectorizer,
-        SparseCountVectorizer,
-        SparseVectorizer,
     )
 
-    expected_vocabulary = {
-        'celeri': 0,
-        'burger': 1,
-        'beer': 2,
-        'salad': 3,
-        'pizza': 4,
-    }
+    expected_vocabulary = set(['burger', 'beer', 'salad', 'pizza'])
 
     for vec_factory in vec_factories:
         # test bounded number of extracted features
-        vectorizer = vec_factory(max_df=0.6, max_features=5)
+        vectorizer = vec_factory(max_df=0.6, max_features=4)
         vectorizer.fit(ALL_FOOD_DOCS)
-        assert_equals(vectorizer.vocabulary, expected_vocabulary)
+        assert_equals(set(vectorizer.vocabulary), expected_vocabulary)
 
 
 def test_vectorizer_max_df():
@@ -300,9 +274,6 @@ def test_dense_vectorizer_pipeline_grid_selection():
 
 
 def test_pickle():
-    for obj in (CountVectorizer(), SparseCountVectorizer(),
-                TfidfTransformer(), SparseTfidfTransformer(),
-                Vectorizer(), SparseVectorizer()):
-
+    for obj in (CountVectorizer(), TfidfTransformer(), Vectorizer()):
         s = pickle.dumps(obj)
         assert_equal(type(pickle.loads(s)), obj.__class__)

@@ -51,6 +51,7 @@ def test_ridge():
 
     ridge = Ridge(alpha=alpha)
     ridge.fit(X, y)
+    assert_equal(ridge.coef_.shape, (X.shape[1], ))
     assert ridge.score(X, y) > 0.5
 
     ridge.fit(X, y, sample_weight=np.ones(n_samples))
@@ -195,9 +196,11 @@ def _test_ridge_diabetes(filter_):
 def _test_multi_ridge_diabetes(filter_):
     # simulate several responses
     Y = np.vstack((y_diabetes,y_diabetes)).T
+    n_features = X_diabetes.shape[1]
 
     ridge = Ridge(fit_intercept=False)
     ridge.fit(filter_(X_diabetes), Y)
+    assert_equal(ridge.coef_.shape, (2, n_features))
     Y_pred = ridge.predict(filter_(X_diabetes))
     ridge.fit(filter_(X_diabetes), y_diabetes)
     y_pred = ridge.predict(filter_(X_diabetes))
@@ -205,8 +208,11 @@ def _test_multi_ridge_diabetes(filter_):
                               Y_pred, decimal=3)
 
 def _test_ridge_classifiers(filter_):
+    n_classes = np.unique(y_iris).shape[0]
+    n_features = X_iris.shape[1]
     for clf in (RidgeClassifier(), RidgeClassifierCV()):
         clf.fit(filter_(X_iris), y_iris)
+        assert_equal(clf.coef_.shape, (n_classes, n_features))
         y_pred = clf.predict(filter_(X_iris))
         assert np.mean(y_iris == y_pred) >= 0.8
 

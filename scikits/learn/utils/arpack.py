@@ -4,12 +4,50 @@ scipy.sparse.linalg.eigen.arpack.eigsh
 It's an upgraded wrapper of the ARPACK library which
 allows the use of shift-invert mode for symmetric matrices.
 
-This module should be removed in favor of the scipy version
-when it is available.
-"""
 
-import numpy as np
+Find a few eigenvectors and eigenvalues of a matrix.
+
+
+Uses ARPACK: http://www.caam.rice.edu/software/ARPACK/
+
+"""
+# Wrapper implementation notes
+#
+# ARPACK Entry Points
+# -------------------
+# The entry points to ARPACK are
+# - (s,d)seupd : single and double precision symmetric matrix
+# - (s,d,c,z)neupd: single,double,complex,double complex general matrix
+# This wrapper puts the *neupd (general matrix) interfaces in eigs()
+# and the *seupd (symmetric matrix) in eigsh().
+# There is no Hermetian complex/double complex interface.
+# To find eigenvalues of a Hermetian matrix you
+# must use eigs() and not eigsh()
+# It might be desirable to handle the Hermetian case differently
+# and, for example, return real eigenvalues.
+
+# Number of eigenvalues returned and complex eigenvalues
+# ------------------------------------------------------
+# The ARPACK nonsymmetric real and double interface (s,d)naupd return
+# eigenvalues and eigenvectors in real (float,double) arrays.
+# Since the eigenvalues and eigenvectors are, in general, complex
+# ARPACK puts the real and imaginary parts in consecutive entries
+# in real-valued arrays.   This wrapper puts the real entries
+# into complex data types and attempts to return the requested eigenvalues
+# and eigenvectors.
+
+
+# Solver modes
+# ------------
+# ARPACK and handle shifted and shift-inverse computations
+# for eigenvalues by providing a shift (sigma) and a solver.
+
+__docformat__ = "restructuredtext en"
+
+__all__ = ['eigs', 'eigsh', 'svds', 'ArpackError', 'ArpackNoConvergence']
+
 from scipy.sparse.linalg.eigen.arpack import _arpack
+import numpy as np
 from scipy.sparse.linalg.interface import aslinearoperator, LinearOperator
 from scipy.sparse import identity, csc_matrix, csr_matrix, \
     isspmatrix, isspmatrix_csr
@@ -17,6 +55,7 @@ from scipy.linalg import lu_factor, lu_solve
 from scipy.sparse.sputils import isdense
 from scipy.sparse.linalg import gmres, splu
 from scipy.linalg.lapack import get_lapack_funcs
+
 
 _type_conv = {'f': 's', 'd': 'd', 'F': 'c', 'D': 'z'}
 _ndigits = {'f': 5, 'd': 12, 'F': 5, 'D': 12}
@@ -849,7 +888,6 @@ def _aslinearoperator_with_dtype(m):
         m.dtype = (m * x).dtype
     return m
 
-
 class SpLuInv(LinearOperator):
     """
     SpLuInv:
@@ -858,12 +896,7 @@ class SpLuInv(LinearOperator):
     """
     def __init__(self, M):
         self.M_lu = splu(M)
-        if hasattr(M, 'dtype'):
-            dtype = M.dtype
-        else:
-            x = np.zeros(M.shape[1])
-            dtype = (M * x).dtype
-        LinearOperator.__init__(self, M.shape, self._matvec, dtype=dtype)
+        LinearOperator.__init__(self, M.shape, self._matvec, dtype=M.dtype)
         self.isreal = not np.issubdtype(self.dtype, np.complexfloating)
 
     def _matvec(self, x):
@@ -875,7 +908,6 @@ class SpLuInv(LinearOperator):
         else:
             return self.M_lu.solve(x)
 
-
 class LuInv(LinearOperator):
     """
     LuInv:
@@ -884,12 +916,7 @@ class LuInv(LinearOperator):
     """
     def __init__(self, M):
         self.M_lu = lu_factor(M)
-        if hasattr(M, 'dtype'):
-            dtype = M.dtype
-        else:
-            x = np.zeros(M.shape[1])
-            dtype = (M * x).dtype
-        LinearOperator.__init__(self, M.shape, self._matvec, dtype=dtype)
+        LinearOperator.__init__(self, M.shape, self._matvec, dtype=M.dtype)
 
     def _matvec(self, x):
         return lu_solve(self.M_lu, x)
@@ -905,9 +932,7 @@ class IterInv(LinearOperator):
         if tol <= 0:
             # when tol=0, ARPACK uses machine tolerance as calculated
             # by LAPACK's _LAMCH function.  We should match this
-            typ = M.dtype.char.lower()
-            lamch, = get_lapack_funcs(('lamch',), (np.array(0, dtype=typ),))
-            tol = lamch('e')
+            tol = np.finfo(M.dtype).eps
         self.M = M
         self.ifunc = ifunc
         self.tol = tol
@@ -937,9 +962,7 @@ class IterOpInv(LinearOperator):
         if tol <= 0:
             # when tol=0, ARPACK uses machine tolerance as calculated
             # by LAPACK's _LAMCH function.  We should match this
-            typ = A.dtype.char.lower()
-            lamch, = get_lapack_funcs(('lamch',), (np.array(0, dtype=typ),))
-            tol = lamch('e')
+            tol = np.finfo(A.dtype).eps
         self.A = A
         self.M = M
         self.sigma = sigma
@@ -973,12 +996,11 @@ class IterOpInv(LinearOperator):
                              % (self.ifunc.__name__, info))
         return b
 
-
-def get_inv_matvec(M, tol=0):
+def get_inv_matvec(M, symmetric=False, tol=0):
     if isdense(M):
         return LuInv(M).matvec
     elif isspmatrix(M):
-        if isspmatrix_csr(M):
+        if isspmatrix_csr(M) and symmetric:
             M = M.T
         return SpLuInv(M).matvec
     else:
@@ -987,7 +1009,7 @@ def get_inv_matvec(M, tol=0):
 
 def get_OPinv_matvec(A, M, sigma, symmetric=False, tol=0):
     if sigma == 0:
-        return get_inv_matvec(A, tol=tol)
+        return get_inv_matvec(A, symmetric=symmetric, tol=tol)
 
     if M is None:
         #M is the identity matrix
@@ -1120,7 +1142,7 @@ def eigs(A, k=6, M=None, sigma=None, which='LM', v0=None,
     Raises
     ------
     ArpackNoConvergence
-        When the requested convergence is obtained.
+        When the requested convergence is not obtained.
 
         The currently converged eigenvalues and eigenvectors can be found
         as ``eigenvalues`` and ``eigenvectors`` attributes of the exception
@@ -1192,7 +1214,7 @@ def eigs(A, k=6, M=None, sigma=None, which='LM', v0=None,
             #general eigenvalue problem
             mode = 2
             if Minv is None:
-                Minv_matvec = get_inv_matvec(M, tol=tol)
+                Minv_matvec = get_inv_matvec(M, symmetric=True, tol=tol)
             else:
                 Minv = _aslinearoperator_with_dtype(Minv)
                 Minv_matvec = Minv.matvec
@@ -1380,7 +1402,7 @@ def eigsh(A, k=6, M=None, sigma=None, which='LM', v0=None,
     --------
     >>> id = np.identity(13)
     >>> vals, vecs = eigsh(id, k=6)
-    >>> vals
+    >>> vals # doctest: +SKIP
     array([ 1.+0.j,  1.+0.j,  1.+0.j,  1.+0.j,  1.+0.j,  1.+0.j])
     >>> vecs.shape
     (13, 6)
@@ -1447,7 +1469,7 @@ def eigsh(A, k=6, M=None, sigma=None, which='LM', v0=None,
             #general eigenvalue problem
             mode = 2
             if Minv is None:
-                Minv_matvec = get_inv_matvec(M, tol=tol)
+                Minv_matvec = get_inv_matvec(M, symmetric=True, tol=tol)
             else:
                 Minv = _aslinearoperator_with_dtype(Minv)
                 Minv_matvec = Minv.matvec
