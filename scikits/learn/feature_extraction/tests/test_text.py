@@ -122,6 +122,13 @@ def test_char_ngram_analyzer():
     assert_equal(cnga.analyze(text)[-5:], expected)
 
 
+def test_countvectorizer_custom_vocabulary():
+    what_we_like = ["pizza", "beer"]
+    vect = CountVectorizer(vocabulary=what_we_like)
+    vect.fit(JUNK_FOOD_DOCS)
+    assert set(vect.vocabulary) == set(what_we_like)
+
+
 def toarray(a):
     if hasattr(a, "toarray"):
         a = a.toarray()
@@ -224,7 +231,7 @@ def test_vectorizer_max_features():
 
 
 def test_vectorizer_max_df():
-    test_data = [u'abc', u'dea']  # the letter a occurs in all strings
+    test_data = [u'abc', u'dea']  # the letter a occurs in both strings
     vect = CountVectorizer(CharNGramAnalyzer(min_n=1, max_n=1), max_df=1.0)
     vect.fit(test_data)
     assert u'a' in vect.vocabulary.keys()

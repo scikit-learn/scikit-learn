@@ -221,9 +221,10 @@ class CountVectorizer(BaseEstimator):
     ----------
     analyzer: WordNGramAnalyzer or CharNGramAnalyzer, optional
 
-    vocabulary: dict, optional
-        A dictionary where keys are tokens and values are indices in the
-        matrix.
+    vocabulary: dict or iterable, optional
+        Either a dictionary where keys are tokens and values are indices in
+        the matrix, or an iterable over terms (in which case the indices are
+        determined by the iteration order as per enumerate).
 
         This is useful in order to fix the vocabulary in advance.
 
@@ -246,7 +247,9 @@ class CountVectorizer(BaseEstimator):
     def __init__(self, analyzer=DEFAULT_ANALYZER, vocabulary=None, max_df=1.0,
                  max_features=None, dtype=long):
         self.analyzer = analyzer
-        self.vocabulary = vocabulary if vocabulary is not None else {}
+        if vocabulary is not None and not isinstance(vocabulary, dict):
+            vocabulary = dict((t, i) for i, t in enumerate(vocabulary))
+        self.vocabulary = vocabulary
         self.dtype = dtype
         self.max_df = max_df
         self.max_features = max_features
@@ -300,6 +303,9 @@ class CountVectorizer(BaseEstimator):
         -------
         vectors: array, [n_samples, n_features]
         """
+        if self.vocabulary is not None:
+            return self.transform(raw_documents)
+
         # result of document conversion to term count dicts
         term_counts_per_doc = []
         term_counts = Counter()
@@ -400,7 +406,7 @@ class CountVectorizer(BaseEstimator):
         Parameters
         ----------
         X : {array, sparse matrix}, shape = [n_samples, n_features]
-        
+
         Returns
         -------
         X_inv : list of arrays, len = n_samples
@@ -548,7 +554,7 @@ class Vectorizer(BaseEstimator):
         Parameters
         ----------
         X : {array, sparse matrix}, shape = [n_samples, n_features]
-        
+
         Returns
         -------
         X_inv : list of arrays, len = n_samples
