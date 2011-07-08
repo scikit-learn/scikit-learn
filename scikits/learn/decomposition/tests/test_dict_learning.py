@@ -89,7 +89,7 @@ def test_dict_learning_online_partial_fit():
                                      transform_method='threshold')
     for ii, sample in enumerate(X):
         dico2.partial_fit(sample, iter_offset=ii * dico2.n_iter)
-    
+
     code1 = dico1.transform(X, alpha=1)
     code2 = dico2.transform(X, alpha=1)
     X1 = np.dot(code1, dico1.components_)
