@@ -27,6 +27,7 @@ def test_grid_to_graph():
     size = 2
     roi_size = 1
     # Generating two convex parts with one vertex
+    # Thus, edges will be empty in _to_graph
     mask = np.zeros((size, size), dtype=bool)
     mask[0:roi_size, 0:roi_size] = True
     mask[-roi_size:, -roi_size:] = True
