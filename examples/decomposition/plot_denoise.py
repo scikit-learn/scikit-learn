@@ -38,7 +38,7 @@ V = dico.fit(data).components_
 # Generate noisy data and reconstruct using various methods
 print ""  # a line break
 print "Distorting image fragments..."
-fragments = [(slice(200, 300), slice(200, 300)), 
+fragments = [(slice(200, 300), slice(200, 300)),
              (slice(200, 300), slice(300, 400)),
              (slice(300, 400), slice(200, 300)),
              (slice(300, 400), slice(300, 400))]
