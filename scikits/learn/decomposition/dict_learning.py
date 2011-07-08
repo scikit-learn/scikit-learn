@@ -47,7 +47,7 @@ class BaseDictionaryLearning(BaseEstimator, TransformerMixin):
             code = orthogonal_mp(self.components_.T, X.T, **kwargs).T
         elif self.transform_method in ('lasso_cd', 'lasso_lars'):
             code = _update_code_parallel(self.components_.T, X.T, **kwargs).T
-        
+
         # XXX: threshold and triangle are not verified to be correct
         elif self.transform_method == 'threshold':
             alpha = float(kwargs['alpha'])
@@ -97,7 +97,7 @@ class DictionaryLearning(BaseDictionaryLearning):
     tol: float,
         tolerance for numerical error
 
-    transform_method: 'lasso_lars' | 'lasso_cd' | 'omp' | 'threshold' | 
+    transform_method: 'lasso_lars' | 'lasso_cd' | 'omp' | 'threshold' |
                       'triangle'
         method to use for transforming the data after the dictionary has been
         learned
@@ -221,7 +221,7 @@ class DictionaryLearningOnline(BaseDictionaryLearning):
     n_iter: int,
         total number of iterations to perform
 
-    transform_method: 'lasso_lars' | 'lasso_cd' | 'omp' | 'threshold' | 
+    transform_method: 'lasso_lars' | 'lasso_cd' | 'omp' | 'threshold' |
                       'triangle'
         method to use for transforming the data after the dictionary has been
         learned
@@ -291,7 +291,7 @@ class DictionaryLearningOnline(BaseDictionaryLearning):
         """
         self._set_params(**params)
         X = np.asanyarray(X)
-        U = dict_learning_online(X, self.n_atoms, self.alpha, 
+        U = dict_learning_online(X, self.n_atoms, self.alpha,
                                  n_iter=self.n_iter,
                                  coding_method=self.coding_method,
                                  n_jobs=self.n_jobs, dict_init=self.dict_init,

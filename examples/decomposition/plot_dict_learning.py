@@ -39,5 +39,4 @@ for i, comp in enumerate(dico.components_):
     pl.yticks(())
 pl.suptitle("Dictionary learned from Lena patches", fontsize=16)
 pl.subplots_adjust(0.02, 0.05, 0.98, 0.92, 0.08, 0.01)
-
 pl.show()
