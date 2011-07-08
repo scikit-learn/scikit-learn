@@ -52,14 +52,14 @@ class KMeansCoder(BaseDictionaryLearning):
 
     tol: float, default 1e-4
         tolerance for numerical errors
-    
+
     local_contrast: boolean, optional: default True
         perform local contrast normalization on the extracted patch
 
     verbose: bool, default False
         whether to display verbose output
 
-    transform_method: 'lasso_lars' | 'lasso_cd' | 'omp' | 'threshold' | 
+    transform_method: 'lasso_lars' | 'lasso_cd' | 'omp' | 'threshold' |
                       'triangle'
         method to use for transforming the data after the dictionary has been
         learned
@@ -107,7 +107,7 @@ class KMeansCoder(BaseDictionaryLearning):
         ----------
         patches: array-like, shape n_samples, n_features
             Data to be normalized
-        
+
         Returns
         -------
         patches:
@@ -135,7 +135,7 @@ class KMeansCoder(BaseDictionaryLearning):
         ----------
         X: array-like, shape: n_samples, *patch_size
             the patch data to be fitted
-        
+
         Returns
         -------
         self: object
