@@ -6,6 +6,7 @@
 
 import numpy as np
 
+from ..utils import check_random_state
 from .sparse_pca import dict_learning, dict_learning_online, \
                         _update_code_parallel
 from ..base import BaseEstimator, TransformerMixin
@@ -102,8 +103,10 @@ class DictionaryLearning(BaseDictionaryLearning):
         method to use for transforming the data after the dictionary has been
         learned
 
-    coding_method: 'lars' | 'cd',
-        method to use for solving the lasso problem
+    coding_method: 'lars' | 'cd'
+        lars: uses the least angle regression method (linear_model.lars_path)
+        cd: uses the stochastic gradient descent method to compute the
+            lasso solution (linear_model.Lasso)
 
     n_jobs: int,
         number of parallel jobs to run
@@ -116,6 +119,9 @@ class DictionaryLearning(BaseDictionaryLearning):
 
     verbose:
         degree of verbosity of the printed output
+
+    random_state: int or RandomState
+        Pseudo number generator state used for random sampling.
 
     Attributes
     ----------
@@ -139,7 +145,7 @@ class DictionaryLearning(BaseDictionaryLearning):
     def __init__(self, n_atoms, alpha=1, max_iter=1000, tol=1e-8,
                  transform_method='omp', coding_method='lars', n_jobs=1,
                  code_init=None, dict_init=None, verbose=False,
-                 split_sign=False):
+                 split_sign=False, random_state=None):
         self.n_atoms = n_atoms
         self.alpha = alpha
         self.max_iter = max_iter
@@ -151,6 +157,7 @@ class DictionaryLearning(BaseDictionaryLearning):
         self.dict_init = dict_init
         self.verbose = verbose
         self.split_sign = split_sign
+        self.random_state = random_state
 
     def fit_transform(self, X, y=None, **params):
         """Fit the model from data in X.
@@ -169,6 +176,7 @@ class DictionaryLearning(BaseDictionaryLearning):
             technique such as `OMP`, see the `transform` method.
         """
         self._set_params(**params)
+        self.random_state = check_random_state(self.random_state)
         X = np.asanyarray(X)
         V, U, E = dict_learning(X, self.n_atoms, self.alpha,
                                 tol=self.tol, max_iter=self.max_iter,
@@ -176,7 +184,8 @@ class DictionaryLearning(BaseDictionaryLearning):
                                 n_jobs=self.n_jobs,
                                 code_init=self.code_init,
                                 dict_init=self.dict_init,
-                                verbose=self.verbose)
+                                verbose=self.verbose,
+                                random_state=self.random_state)
         self.components_ = U
         self.error_ = E
         return V
@@ -226,8 +235,10 @@ class DictionaryLearningOnline(BaseDictionaryLearning):
         method to use for transforming the data after the dictionary has been
         learned
 
-    coding_method: 'lars' | 'cd',
-        method to use for solving the lasso problem
+    coding_method: 'lars' | 'cd'
+        lars: uses the least angle regression method (linear_model.lars_path)
+        cd: uses the stochastic gradient descent method to compute the
+            lasso solution (linear_model.Lasso)
 
     n_jobs: int,
         number of parallel jobs to run
@@ -243,6 +254,9 @@ class DictionaryLearningOnline(BaseDictionaryLearning):
 
     shuffle: bool,
         whether to shuffle the samples before forming batches
+
+    random_state: int or RandomState
+        Pseudo number generator state used for random sampling.
 
     Attributes
     ----------
@@ -262,7 +276,8 @@ class DictionaryLearningOnline(BaseDictionaryLearning):
     """
     def __init__(self, n_atoms, alpha=1, n_iter=1000, coding_method='lars',
                  n_jobs=1, chunk_size=3, shuffle=True, dict_init=None,
-                 transform_method='omp', verbose=False, split_sign=False):
+                 transform_method='omp', verbose=False, split_sign=False,
+                 random_state=None):
         self.n_atoms = n_atoms
         self.alpha = alpha
         self.n_iter = n_iter
@@ -274,6 +289,7 @@ class DictionaryLearningOnline(BaseDictionaryLearning):
         self.shuffle = shuffle
         self.chunk_size = chunk_size
         self.split_sign = split_sign
+        self.random_state = random_state
 
     def fit(self, X, y=None, **params):
         """Fit the model from data in X.
@@ -290,14 +306,15 @@ class DictionaryLearningOnline(BaseDictionaryLearning):
             Returns the instance itself.
         """
         self._set_params(**params)
+        self.random_state = check_random_state(self.random_state)
         X = np.asanyarray(X)
         U = dict_learning_online(X, self.n_atoms, self.alpha,
-                                 n_iter=self.n_iter,
-                                 coding_method=self.coding_method,
-                                 n_jobs=self.n_jobs, dict_init=self.dict_init,
+                                 n_iter=self.n_iter, return_code=False,
+                                 method=self.coding_method, n_jobs=self.n_jobs,
+                                 dict_init=self.dict_init,
                                  chunk_size=self.chunk_size,
                                  shuffle=self.shuffle, verbose=self.verbose,
-                                 return_code=False)
+                                 random_state=self.random_state)
         self.components_ = U
         return self
 
@@ -316,18 +333,18 @@ class DictionaryLearningOnline(BaseDictionaryLearning):
             Returns the instance itself.
         """
         self._set_params(**params)
+        self.random_state = check_random_state(self.random_state)
         X = np.atleast_2d(X)
         if hasattr(self, 'components_'):
             dict_init = self.components_
         else:
             dict_init = self.dict_init
         U = dict_learning_online(X, self.n_atoms, self.alpha,
-                                 n_iter=self.n_iter,
-                                 coding_method=self.coding_method,
-                                 n_jobs=self.n_jobs,
-                                 dict_init=dict_init,
+                                 n_iter=self.n_iter, method=self.coding_method,
+                                 n_jobs=self.n_jobs, dict_init=dict_init,
                                  chunk_size=len(X), shuffle=False,
                                  verbose=self.verbose, return_code=False,
-                                 iter_offset=iter_offset)
+                                 iter_offset=iter_offset,
+                                 random_state=self.random_state)
         self.components_ = U
         return self
