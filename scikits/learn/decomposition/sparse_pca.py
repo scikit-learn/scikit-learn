@@ -72,9 +72,9 @@ def _update_code(dictionary, Y, alpha, code=None, Gram=None, method='lars',
     Gram: array of shape (n_features, n_features)
         precomputed Gram matrix, (Y^T * Y)
 
-    method: 'lars' | 'lasso'
+    method: 'lars' | 'cd'
         lars: uses the least angle regression method (linear_model.lars_path)
-        lasso: uses the stochastic gradient descent method to compute the
+        cd: uses the stochastic gradient descent method to compute the
             lasso solution (linear_model.Lasso)
 
     tol: float
@@ -99,7 +99,7 @@ def _update_code(dictionary, Y, alpha, code=None, Gram=None, method='lars',
                                     Gram=Gram, alpha_min=alpha, method='lasso')
             new_code[:, k] = coef_path_[:, -1]
         np.seterr(**err_mgt)
-    else:
+    elif method == 'cd':
         clf = Lasso(alpha=alpha, fit_intercept=False)
         for k in range(n_features):
             # A huge amount of time is spent in this loop. It needs to be
@@ -108,6 +108,8 @@ def _update_code(dictionary, Y, alpha, code=None, Gram=None, method='lars',
                 clf.coef_ = code[:, k]  # Init with previous value of Vk
             clf.fit(dictionary, Y[:, k], max_iter=1000, tol=tol)
             new_code[:, k] = clf.coef_
+    else:
+        raise NotImplemented("Lasso method %s is not implemented." % method)
     return new_code
 
 
@@ -133,9 +135,9 @@ def _update_code_parallel(dictionary, Y, alpha, code=None, Gram=None,
     Gram: array of shape (n_features, n_features)
         precomputed Gram matrix, (Y^T * Y)
 
-    method: 'lars' | 'lasso'
+    method: 'lars' | 'cd'
         lars: uses the least angle regression method (linear_model.lars_path)
-        lasso: uses the stochastic gradient descent method to compute the
+        cd: uses the stochastic gradient descent method to compute the
             lasso solution (linear_model.Lasso)
 
     n_jobs: int
@@ -269,15 +271,19 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
     tol: float,
         tolerance for numerical error
 
-    method: 'lars' | 'lasso',
-        method to use for solving the lasso sparse coding problem
+    method: 'lars' | 'cd'
+        lars: uses the least angle regression method (linear_model.lars_path)
+        cd: uses the stochastic gradient descent method to compute the
+            lasso solution (linear_model.Lasso)
 
     n_jobs: int,
         number of parallel jobs to run, or -1 to autodetect.
 
     dict_init: array of shape (n_atoms, n_features),
+        initial value for the dictionary for warm restart scenarios
+
     code_init: array of shape (n_samples, n_atoms),
-        initial values for the decomposition for warm restart scenarios
+        initial value for the sparse code for warm restart scenarios
 
     callback:
         callable that gets invoked every five iterations
@@ -561,8 +567,10 @@ class SparsePCA(BaseEstimator, TransformerMixin):
     tol: float,
         tolerance for numerical error
 
-    method: 'lars' | 'lasso',
-        method to use for solving the lasso problem
+    method: 'lars' | 'cd'
+        lars: uses the least angle regression method (linear_model.lars_path)
+        cd: uses the stochastic gradient descent method to compute the
+            lasso solution (linear_model.Lasso)
 
     n_jobs: int,
         number of parallel jobs to run
