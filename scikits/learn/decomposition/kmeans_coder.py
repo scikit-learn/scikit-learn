@@ -88,7 +88,6 @@ class KMeansCoder(BaseDictionaryLearning):
                  transform_method='omp', split_sign=False):
         self.n_atoms = n_atoms
         self.whiten = whiten
-        self.n_pools = n_pools
         self.max_iter = max_iter
         self.n_init = n_init
         self.n_components = n_components

@@ -10,7 +10,7 @@ def test_kmeans_coder_shape():
     patches = PatchExtractor(patch_size=(4, 4),
                              max_patches=int(1e2)).transform(lena)
 
-    encoder = KMeansCoder(n_atoms=12, n_pools=2, max_iter=3,
+    encoder = KMeansCoder(n_atoms=12, max_iter=3,
                           transform_method='triangle')
     encoder.fit(patches)
     assert_equal(encoder.components_.shape, (12, 4 * 4))
