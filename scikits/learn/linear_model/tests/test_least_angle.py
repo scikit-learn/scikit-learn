@@ -113,7 +113,7 @@ def test_lasso_lars_vs_lasso_cd(verbose=False):
 
     # similar test, with the classifiers
     for alpha in np.linspace(1e-2, 1 - 1e-2):
-        clf1 = linear_model.LassoLARS(alpha=alpha).fit(X, y)
+        clf1 = linear_model.LassoLARS(alpha=alpha, normalize=False).fit(X, y)
         clf2 = linear_model.Lasso(alpha=alpha).fit(X, y, tol=1e-8)
         err = np.linalg.norm(clf1.coef_ - clf2.coef_)
         assert err < 1e-3
