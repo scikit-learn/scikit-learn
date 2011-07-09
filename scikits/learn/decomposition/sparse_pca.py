@@ -13,6 +13,7 @@ import numpy as np
 from numpy.lib.stride_tricks import as_strided
 from scipy import linalg
 
+from ..utils import check_random_state
 from ..linear_model import Lasso, lars_path, ridge_regression
 from ..externals.joblib import Parallel, delayed, cpu_count
 from ..base import BaseEstimator, TransformerMixin
@@ -165,7 +166,8 @@ def _update_code_parallel(dictionary, Y, alpha, code=None, Gram=None,
     return code
 
 
-def _update_dict(dictionary, Y, code, verbose=False, return_r2=False):
+def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
+                 random_state=None):
     """ Update the dense dictionary factor in place.
 
     Parameters
@@ -186,9 +188,18 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False):
         whether to compute and return the residual sum of squares corresponding
         to the computed solution
 
+    random_state: int or RandomState
+        Pseudo number generator state used for random sampling.
+
+    Returns
+    -------
+    dictionary: array of shape (n_samples, n_components)
+        updated dictionary
+
     """
     n_atoms = len(code)
     n_samples = Y.shape[0]
+    random_state = check_random_state(random_state)
     # Residuals, computed 'in-place' for efficiency
     R = -np.dot(dictionary, code)
     R += Y
@@ -206,7 +217,7 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False):
                 sys.stdout.flush()
             elif verbose:
                 print "Adding new random atom"
-            dictionary[:, k] = np.random.randn(n_samples)
+            dictionary[:, k] = random_state.randn(n_samples)
             # Setting corresponding coefs to 0
             code[k, :] = 0.0
             dictionary[:, k] /= sqrt(np.dot(dictionary[:, k],
@@ -229,7 +240,7 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False):
 
 def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
                   n_jobs=1, dict_init=None, code_init=None, callback=None,
-                  verbose=False):
+                  verbose=False, random_state=None):
     """Solves a dictionary learning matrix factorization problem.
 
     Finds the best dictionary and the corresponding sparse code for
@@ -274,11 +285,16 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
     verbose:
         degree of output the procedure will print
 
+    random_state: int or RandomState
+        Pseudo number generator state used for random sampling.
+
     Returns
     -------
-    code: array of shape (n_samples, n_atoms),
+    code: array of shape (n_samples, n_atoms)
+        the sparse code factor in the matrix factorization
+
     dictionary: array of shape (n_atoms, n_features),
-        the solutions to the dictionary learning problem
+        the dictionary factor in the matrix factorization
 
     errors: array
         vector of errors at each iteration
@@ -287,6 +303,7 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
     n_features = X.shape[1]
     # Avoid integer division problems
     alpha = float(alpha)
+    random_state = check_random_state(random_state)
 
     if n_jobs == -1:
         n_jobs = cpu_count()
@@ -339,7 +356,8 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
         code = code.T
         # Update dictionary
         dictionary, residuals = _update_dict(dictionary.T, X.T, code.T,
-                                             verbose=verbose, return_r2=True)
+                                             verbose=verbose, return_r2=True,
+                                             random_state=random_state)
         dictionary = dictionary.T
 
         current_cost = cost_function()
@@ -544,11 +562,16 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         number of parallel jobs to run
 
     U_init: array of shape (n_samples, n_atoms),
+        initial values for the loadings for warm restart scenarios
+
     V_init: array of shape (n_atoms, n_features),
-        initial values for the decomposition for warm restart scenarios
+        initial values for the components for warm restart scenarios
 
     verbose:
         degree of verbosity of the printed output
+
+    random_state: int or RandomState
+        Pseudo number generator state used for random sampling.
 
     Attributes
     ----------
@@ -565,7 +588,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
     """
     def __init__(self, n_components=None, alpha=1, max_iter=1000, tol=1e-8,
                  method='lars', n_jobs=1, U_init=None, V_init=None,
-                 verbose=False):
+                 verbose=False, random_state=None):
         self.n_components = n_components
         self.alpha = alpha
         self.max_iter = max_iter
@@ -575,6 +598,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         self.U_init = U_init
         self.V_init = V_init
         self.verbose = verbose
+        self.random_state = random_state
 
     def fit_transform(self, X, y=None, **params):
         """Fit the model from data in X.
@@ -590,12 +614,14 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         X_new array-like, shape (n_samples, n_components)
         """
         self._set_params(**params)
+        self.random_state = check_random_state(self.random_state)
         X = np.asanyarray(X)
 
         U, V, E = dict_learning(X.T, self.n_components, self.alpha,
                                 tol=self.tol, max_iter=self.max_iter,
                                 method=self.method, n_jobs=self.n_jobs,
-                                verbose=self.verbose)
+                                verbose=self.verbose,
+                                random_state=self.random_state)
         self.components_ = U.T
         self.error_ = E
         return V.T
