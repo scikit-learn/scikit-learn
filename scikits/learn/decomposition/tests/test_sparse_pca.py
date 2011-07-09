@@ -53,6 +53,6 @@ def test_fit_transform_tall():
 
 def test_lasso_lars():
     Y, _, _ = generate_toy_data(3, 10, (8, 8))
-    SPCALasso = SparsePCA(n_components=3, method='lasso').fit(Y)
+    SPCALasso = SparsePCA(n_components=3, method='cd').fit(Y)
     SPCALars = SparsePCA(n_components=3, method='lars').fit(Y)
     assert_array_almost_equal(SPCALasso.components_, SPCALars.components_)
