@@ -18,13 +18,13 @@ def test_simple():
         diabetes.data, diabetes.target, method="lar")
 
     for (i, coef_) in enumerate(coef_path_.T):
-        res =  y - np.dot(X, coef_)
+        res = y - np.dot(X, coef_)
         cov = np.dot(X.T, res)
         C = np.max(abs(cov))
         eps = 1e-3
-        ocur = len(cov[ C - eps < abs(cov)])
+        ocur = len(cov[C - eps < abs(cov)])
         if i < X.shape[1]:
-            assert ocur == i+1
+            assert ocur == i + 1
         else:
             # no more than max_pred variables can go into the active set
             assert ocur == X.shape[1]
@@ -35,18 +35,18 @@ def test_simple_precomputed():
     The same, with precomputed Gram matrix
     """
 
-    G = np.dot (diabetes.data.T, diabetes.data)
+    G = np.dot(diabetes.data.T, diabetes.data)
     alphas_, active, coef_path_ = linear_model.lars_path(
         diabetes.data, diabetes.target, Gram=G, method="lar")
 
-    for (i, coef_) in enumerate(coef_path_.T):
-        res =  y - np.dot(X, coef_)
+    for i, coef_ in enumerate(coef_path_.T):
+        res = y - np.dot(X, coef_)
         cov = np.dot(X.T, res)
         C = np.max(abs(cov))
         eps = 1e-3
-        ocur = len(cov[ C - eps < abs(cov)])
+        ocur = len(cov[C - eps < abs(cov)])
         if i < X.shape[1]:
-            assert ocur == i+1
+            assert ocur == i + 1
         else:
             # no more than max_pred variables can go into the active set
             assert ocur == X.shape[1]
@@ -57,8 +57,7 @@ def test_lars_lstsq():
     Test that LARS gives least square solution at the end
     of the path
     """
-
-    X1 = 3 * diabetes.data # use un-normalized dataset
+    X1 = 3 * diabetes.data  # use un-normalized dataset
     clf = linear_model.LassoLARS(alpha=0.)
     clf.fit(X1, y)
     coef_lstsq = np.linalg.lstsq(X1, y)[0]
@@ -70,15 +69,13 @@ def test_lasso_gives_lstsq_solution():
     Test that LARS Lasso gives least square solution at the end
     of the path
     """
-
     alphas_, active, coef_path_ = linear_model.lars_path(X, y, method="lasso")
     coef_lstsq = np.linalg.lstsq(X, y)[0]
-    assert_array_almost_equal(coef_lstsq , coef_path_[:,-1])
+    assert_array_almost_equal(coef_lstsq, coef_path_[:, -1])
 
 
 def test_collinearity():
     """Check that lars_path is robust to collinearity in input"""
-
     X = np.array([[3., 3., 1.],
                   [2., 2., 0.],
                   [1., 1., 0]])
@@ -86,7 +83,7 @@ def test_collinearity():
 
     _, _, coef_path_ = linear_model.lars_path(X, y)
     assert (not np.isnan(coef_path_).any())
-    assert_array_almost_equal(np.dot(X, coef_path_[:,-1]), y)
+    assert_array_almost_equal(np.dot(X, coef_path_[:, -1]), y)
 
 
 def test_singular_matrix():
@@ -105,7 +102,7 @@ def test_lasso_lars_vs_lasso_cd(verbose=False):
     same results
     """
     X = 3 * diabetes.data
-    
+
     alphas, _, lasso_path = linear_model.lars_path(X, y, method='lasso')
     lasso_cd = linear_model.Lasso(fit_intercept=False)
     for (c, a) in zip(lasso_path.T, alphas):
@@ -116,10 +113,11 @@ def test_lasso_lars_vs_lasso_cd(verbose=False):
 
     # similar test, with the classifiers
     for alpha in np.linspace(1e-2, 1 - 1e-2):
-       clf1 = linear_model.LassoLARS(alpha=alpha).fit(X, y)
-       clf2 = linear_model.Lasso(alpha=alpha).fit(X, y, tol=1e-8)
-       err = np.linalg.norm(clf1.coef_ - clf2.coef_)
-       assert err < 1e-3
+        clf1 = linear_model.LassoLARS(alpha=alpha).fit(X, y)
+        clf2 = linear_model.Lasso(alpha=alpha).fit(X, y, tol=1e-8)
+        err = np.linalg.norm(clf1.coef_ - clf2.coef_)
+        assert err < 1e-3
+
 
 def test_lasso_lars_vs_lasso_cd_early_stopping(verbose=False):
     """
@@ -134,8 +132,9 @@ def test_lasso_lars_vs_lasso_cd_early_stopping(verbose=False):
         lasso_cd = linear_model.Lasso(fit_intercept=False)
         lasso_cd.alpha = alphas[-1]
         lasso_cd.fit(X, y, tol=1e-8)
-        error = np.linalg.norm(lasso_path[:,-1] - lasso_cd.coef_)
+        error = np.linalg.norm(lasso_path[:, -1] - lasso_cd.coef_)
         assert error < 0.01
+
 
 def test_lars_add_features(verbose=False):
     """
@@ -158,7 +157,7 @@ def test_lars_add_features(verbose=False):
                   [-0.12951744,  0.21978613, -0.04762174, -0.27227304, -0.02722684, 0.57449581]]),
         np.array([0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]))
 
+
 if __name__ == '__main__':
     import nose
     nose.runmodule()
-
