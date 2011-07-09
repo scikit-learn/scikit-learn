@@ -103,8 +103,10 @@ class DictionaryLearning(BaseDictionaryLearning):
         method to use for transforming the data after the dictionary has been
         learned
 
-    coding_method: 'lars' | 'cd',
-        method to use for solving the lasso problem
+    coding_method: 'lars' | 'cd'
+        lars: uses the least angle regression method (linear_model.lars_path)
+        cd: uses the stochastic gradient descent method to compute the
+            lasso solution (linear_model.Lasso)
 
     n_jobs: int,
         number of parallel jobs to run
@@ -233,8 +235,10 @@ class DictionaryLearningOnline(BaseDictionaryLearning):
         method to use for transforming the data after the dictionary has been
         learned
 
-    coding_method: 'lars' | 'cd',
-        method to use for solving the lasso problem
+    coding_method: 'lars' | 'cd'
+        lars: uses the least angle regression method (linear_model.lars_path)
+        cd: uses the stochastic gradient descent method to compute the
+            lasso solution (linear_model.Lasso)
 
     n_jobs: int,
         number of parallel jobs to run
@@ -306,8 +310,8 @@ class DictionaryLearningOnline(BaseDictionaryLearning):
         X = np.asanyarray(X)
         U = dict_learning_online(X, self.n_atoms, self.alpha,
                                  n_iter=self.n_iter, return_code=False,
-                                 coding_method=self.coding_method,
-                                 n_jobs=self.n_jobs, dict_init=self.dict_init,
+                                 method=self.coding_method, n_jobs=self.n_jobs,
+                                 dict_init=self.dict_init,
                                  chunk_size=self.chunk_size,
                                  shuffle=self.shuffle, verbose=self.verbose,
                                  random_state=self.random_state)
@@ -336,10 +340,8 @@ class DictionaryLearningOnline(BaseDictionaryLearning):
         else:
             dict_init = self.dict_init
         U = dict_learning_online(X, self.n_atoms, self.alpha,
-                                 n_iter=self.n_iter,
-                                 coding_method=self.coding_method,
-                                 n_jobs=self.n_jobs,
-                                 dict_init=dict_init,
+                                 n_iter=self.n_iter, method=self.coding_method,
+                                 n_jobs=self.n_jobs, dict_init=dict_init,
                                  chunk_size=len(X), shuffle=False,
                                  verbose=self.verbose, return_code=False,
                                  iter_offset=iter_offset,

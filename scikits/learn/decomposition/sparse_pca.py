@@ -388,8 +388,7 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
 def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
                          dict_init=None, callback=None, chunk_size=3,
                          verbose=False, shuffle=True, n_jobs=1,
-                         coding_method='lars', iter_offset=0,
-                         random_state=None):
+                         method='lars', iter_offset=0, random_state=None):
     """Solves a dictionary learning matrix factorization problem online.
 
     Finds the best dictionary and the corresponding sparse code for
@@ -437,8 +436,10 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
     n_jobs: int,
         number of parallel jobs to run, or -1 to autodetect.
 
-    method: 'lars' | 'lasso',
-        method to use for solving the lasso sparse coding problem
+    method: 'lars' | 'cd'
+        lars: uses the least angle regression method (linear_model.lars_path)
+        cd: uses the stochastic gradient descent method to compute the
+            lasso solution (linear_model.Lasso)
 
     iter_offset: int, default 0
         number of previous iterations completed on the dictionary used for
@@ -507,7 +508,7 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
                 print ("Iteration % 3i (elapsed time: % 3is, % 4.1fmn)" %
                     (ii, dt, dt / 60))
 
-        this_code = _update_code(dictionary, this_X.T, alpha)
+        this_code = _update_code(dictionary, this_X.T, alpha, method=method)
 
         # Update the auxiliary variables
         if ii < chunk_size - 1:
@@ -537,7 +538,7 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
         elif verbose == 1:
             print '|',
         code = _update_code_parallel(dictionary, X.T, alpha, n_jobs=n_jobs,
-                    method=coding_method)
+                    method=method)
         if verbose > 1:
             dt = (time.time() - t0)
             print 'done (total time: % 3is, % 4.1fmn)' % (dt, dt / 60)
