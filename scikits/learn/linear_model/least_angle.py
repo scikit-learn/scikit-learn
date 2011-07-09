@@ -114,6 +114,8 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None, max_iter=500,
     if verbose:
         print "Step\t\tAdded\t\tDropped\t\tActive set size\t\tC"
 
+    gamma_, eq_dir, least_squares = None, None, None
+
     while 1:
 
         if Cov.size:
