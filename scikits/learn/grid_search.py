@@ -134,10 +134,11 @@ class GridSearchCV(BaseEstimator):
     Parameters
     ----------
     estimator: object type that implements the "fit" and "predict" methods
-        A object of that type is instanciated for each grid point
+        A object of that type is instantiated for each grid point.
 
     param_grid: dict
-        a dictionary of parameters that are used the generate the grid
+        Dictionary with parameters names (string) as keys and list of
+        parameter settings to try as values.
 
     loss_func: callable, optional
         function that takes 2 arguments and compares them in
@@ -145,9 +146,9 @@ class GridSearchCV(BaseEstimator):
         if None is passed, the score of the estimator is maximized
 
     score_func: callable, optional
-        function that takes 2 arguments and compares them in
-        order to evaluate the performance of prediciton (big is good)
-        if None is passed, the score of the estimator is maximized
+        A function that takes 2 arguments and compares them in
+        order to evaluate the performance of prediction (high is good).
+        If None is passed, the score of the estimator is maximized.
 
     fit_params : dict, optional
         parameters to pass to the fit method
@@ -210,9 +211,9 @@ class GridSearchCV(BaseEstimator):
     """
 
     def __init__(self, estimator, param_grid, loss_func=None, score_func=None,
-                 fit_params={}, n_jobs=1, iid=True, refit=True, cv=None,
+                 fit_params=None, n_jobs=1, iid=True, refit=True, cv=None,
                  verbose=0, pre_dispatch='2*n_jobs',
-                 ):
+                ):
         assert hasattr(estimator, 'fit') and (hasattr(estimator, 'predict')
                         or hasattr(estimator, 'score')), (
             "estimator should a be an estimator implementing 'fit' and "
@@ -229,7 +230,7 @@ class GridSearchCV(BaseEstimator):
         self.loss_func = loss_func
         self.score_func = score_func
         self.n_jobs = n_jobs
-        self.fit_params = fit_params
+        self.fit_params = fit_params if fit_params is not None else {}
         self.iid = iid
         self.refit = refit
         self.cv = cv
