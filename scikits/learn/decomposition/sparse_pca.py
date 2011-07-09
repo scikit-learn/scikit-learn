@@ -382,7 +382,8 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
 def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
                          dict_init=None, callback=None, chunk_size=3,
                          verbose=False, shuffle=True, n_jobs=1,
-                         coding_method='lars', iter_offset=0):
+                         coding_method='lars', iter_offset=0,
+                         random_state=None):
     """Solves a dictionary learning matrix factorization problem online.
 
     Finds the best dictionary and the corresponding sparse code for
@@ -437,6 +438,9 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
         number of previous iterations completed on the dictionary used for
         initialization
 
+    random_state: int or RandomState
+        Pseudo number generator state used for random sampling.
+
     Returns
     -------
     dictionary: array of shape (n_atoms, n_features),
@@ -449,6 +453,7 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
     n_samples, n_features = X.shape
     # Avoid integer division problems
     alpha = float(alpha)
+    random_state = check_random_state(random_state)
 
     if n_jobs == -1:
         n_jobs = cpu_count()
@@ -473,7 +478,7 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
     n_batches = floor(float(len(X)) / chunk_size)
     if shuffle:
         X_train = X.copy()
-        np.random.shuffle(X_train)
+        random_state.shuffle(X_train)
     else:
         X_train = X
     batches = np.array_split(X_train, n_batches)
@@ -511,7 +516,8 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
         B += np.dot(this_X.T, this_code.T)
 
         # Update dictionary
-        dictionary = _update_dict(dictionary, B, A, verbose=verbose)
+        dictionary = _update_dict(dictionary, B, A, verbose=verbose,
+                                  random_state=random_state)
         # XXX: Can the residuals be of any use?
 
         # Maybe we need a stopping criteria based on the amount of
