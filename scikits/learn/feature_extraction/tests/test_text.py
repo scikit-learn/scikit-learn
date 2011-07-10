@@ -230,6 +230,7 @@ def test_vectorizer_max_df():
     vect.fit(test_data)
     assert u'a' in vect.vocabulary.keys()
     assert_equals(len(vect.vocabulary.keys()), 5)
+    vect.vocabulary = None
     vect.max_df = 0.5
     vect.fit(test_data)
     assert u'a' not in vect.vocabulary.keys()  # 'a' is ignored
