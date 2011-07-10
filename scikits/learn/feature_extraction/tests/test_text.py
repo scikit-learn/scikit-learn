@@ -126,7 +126,9 @@ def test_countvectorizer_custom_vocabulary():
     what_we_like = ["pizza", "beer"]
     vect = CountVectorizer(vocabulary=what_we_like)
     vect.fit(JUNK_FOOD_DOCS)
-    assert set(vect.vocabulary) == set(what_we_like)
+    assert_equal(set(vect.vocabulary), set(what_we_like))
+    X = vect.transform(JUNK_FOOD_DOCS)
+    assert_equal(X.shape[1], len(what_we_like))
 
 
 def toarray(a):
@@ -136,9 +138,6 @@ def toarray(a):
 
 
 def test_vectorizer():
-    # results to be compared
-    res = []
-
     # raw documents as an iterator
     train_data = iter(ALL_FOOD_DOCS[:-1])
     test_data = [ALL_FOOD_DOCS[-1]]
@@ -185,9 +184,6 @@ def test_vectorizer():
     assert_equal(len(t1.idf_), len(v1.vocabulary))
     assert_equal(tfidf.shape, (n_train, len(v1.vocabulary)))
 
-    res.append(tfidf)
-    res.append(t1.idf_)
-
     # test tf-idf with new data
     tfidf_test = toarray(t1.transform(counts_test))
     assert_equal(tfidf_test.shape, (len(test_data), len(v1.vocabulary)))
@@ -211,8 +207,6 @@ def test_vectorizer():
     # test the direct tfidf vectorizer with new data
     tfidf_test2 = toarray(tv.transform(test_data))
     assert_array_almost_equal(tfidf_test, tfidf_test2)
-
-    return res
 
 
 def test_vectorizer_max_features():
