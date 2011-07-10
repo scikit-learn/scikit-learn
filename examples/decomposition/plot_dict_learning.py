@@ -19,7 +19,7 @@ from scikits.learn.feature_extraction.image import extract_patches_2d
 ###############################################################################
 # Load Lena image and extract patches
 lena = sp.lena()
-data = extract_patches_2d(lena, (4, 4), max_patches=int(1e5), seed=0)
+data = extract_patches_2d(lena, (4, 4), max_patches=int(1e5), random_state=0)
 data = data.reshape(data.shape[0], 16)
 data -= np.mean(data, 0)
 data /= np.std(data, 0)
