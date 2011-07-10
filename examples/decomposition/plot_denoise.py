@@ -23,7 +23,7 @@ lena = sp.lena()
 lenb = lena.copy()
 
 print "Extracting clean patches..."
-data = extract_patches_2d(lena, (6, 6), max_patches=int(1e4), seed=0)
+data = extract_patches_2d(lena, (6, 6), max_patches=int(1e4), random_state=0)
 data = data.reshape(data.shape[0], -1)
 intercept = np.mean(data, 0)
 data -= intercept
