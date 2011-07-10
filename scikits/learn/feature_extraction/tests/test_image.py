@@ -131,7 +131,7 @@ def test_reconstruct_patches_perfect_color():
 
 def test_patch_extractor_max_patches():
     lenas = _make_images()
-    extr = PatchExtractor(patch_size=(8, 8), max_patches=100, seed=0)
+    extr = PatchExtractor(patch_size=(8, 8), max_patches=100, random_state=0)
     patches = extr.transform(lenas)
     assert patches.shape == (len(lenas) * 100, 8, 8)
 
@@ -141,6 +141,6 @@ def test_patch_extractor_all_patches():
     i_h, i_w = lenas.shape[1:3]
     p_h, p_w = 8, 8
     expected_n_patches = len(lenas) * (i_h - p_h + 1) * (i_w - p_w + 1)
-    extr = PatchExtractor(patch_size=(p_h, p_w), seed=0)
+    extr = PatchExtractor(patch_size=(p_h, p_w), random_state=0)
     patches = extr.transform(lenas)
     assert patches.shape == (expected_n_patches, p_h, p_w)

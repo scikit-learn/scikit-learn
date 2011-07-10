@@ -167,7 +167,7 @@ def grid_to_graph(n_x, n_y, n_z=1, mask=None, return_as=sparse.coo_matrix,
 # From an image to a set of small image patches
 
 
-def extract_patches_2d(image, patch_size, max_patches=None, seed=None):
+def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
     """Reshape a 2D image into a collection of patches
 
     The resulting patches are allocated in a dedicated array.
@@ -185,8 +185,8 @@ def extract_patches_2d(image, patch_size, max_patches=None, seed=None):
         between 0 and 1, it is taken to be a proportion of the total number
         of patches.
 
-    seed: int or RandomState
-        Seed for the random number generator used in case max_patches is used.
+    random_state: int or RandomState
+        Pseudo number generator state used for random sampling.
 
     Returns
     -------
@@ -237,7 +237,7 @@ def extract_patches_2d(image, patch_size, max_patches=None, seed=None):
         else:
             raise ValueError("Invalid value for max_patches!")
 
-        rng = check_random_state(seed)
+        rng = check_random_state(random_state)
         patches = np.empty((n_patches, p_h, p_w, n_colors), dtype=image.dtype)
         i_s = rng.randint(n_h, size=n_patches)
         j_s = rng.randint(n_w, size=n_patches)
@@ -274,7 +274,7 @@ def reconstruct_from_patches_2d(patches, image_size):
 
     Returns
     -------
-    image: array with shape
+    image: array with shape (*image_size)
 
 
     """
@@ -309,32 +309,46 @@ class PatchExtractor(BaseEstimator):
         float in (0, 1), it is taken to mean a proportion of the total number
         of patches.
 
-    seed: int or RandomState
-        Seed for the random number generator used in case max_patches is used.
+    random_state: int or RandomState
+        Pseudo number generator state used for random sampling.
     """
-    def __init__(self, patch_size, max_patches=None, seed=None):
+    def __init__(self, patch_size, max_patches=None, random_state=None):
         self.patch_size = patch_size
         self.max_patches = max_patches
-        self.seed = seed
+        self.random_state = random_state
 
     def fit(self, X, y=None):
-        """
+        """Do nothing and return the estimator unchanged
 
-        XXX : docstring is missing
-
+        This method is just there to implement the usual API and hence
+        work in pipelines.
         """
         return self
 
     def transform(self, X):
-        """
+        """Boolean thresholding of array-like or scipy.sparse matrix
 
-        XXX : docstring is missing
+        Parameters
+        ----------
+        X : array of shape (n_samples, *image_shape)
+            Array of images from which to extract patches
 
+        Returns
+        -------
+        patches: array
+             shape is (n_patches, patch_height, patch_width, n_colors)
+             or (n_patches, patch_height, patch_width) if n_colors is 1
         """
-        patches = np.empty((0,) + self.patch_size)
-        for image in X:
-            partial_patches = extract_patches_2d(image, self.patch_size,
-                                                 self.max_patches, self.seed)
-            # XXX : would be better to avoid a realloc for each image
-            patches = np.r_[patches, partial_patches]
+        self.random_state = check_random_state(self.random_state)
+        n_images = len(X)
+        if self.max_patches:
+            n_patches = self.max_patches
+        else:
+            p_h, p_w = self.patch_size
+            i_h, i_w = X.shape[1], X.shape[2]
+            n_patches = (i_h - p_h + 1) * (i_w - p_w + 1)
+        patches = np.empty((n_images * n_patches,) + self.patch_size)
+        for ii, image in enumerate(X):
+            patches[ii * n_patches:(ii + 1) * n_patches] = extract_patches_2d(
+                image, self.patch_size, self.max_patches, self.random_state)
         return patches
