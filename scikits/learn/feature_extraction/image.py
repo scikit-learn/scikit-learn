@@ -274,7 +274,7 @@ def reconstruct_from_patches_2d(patches, image_size):
 
     Returns
     -------
-    image: array with shape
+    image: array with shape (*image_size)
 
 
     """
@@ -318,18 +318,26 @@ class PatchExtractor(BaseEstimator):
         self.random_state = random_state
 
     def fit(self, X, y=None):
-        """
+        """Do nothing and return the estimator unchanged
 
-        XXX : docstring is missing
-
+        This method is just there to implement the usual API and hence
+        work in pipelines.
         """
         return self
 
     def transform(self, X):
-        """
+        """Boolean thresholding of array-like or scipy.sparse matrix
 
-        XXX : docstring is missing
+        Parameters
+        ----------
+        X : array of shape (n_samples, *image_shape)
+            Array of images from which to extract patches
 
+        Returns
+        -------
+        patches: array
+             shape is (n_patches, patch_height, patch_width, n_colors)
+             or (n_patches, patch_height, patch_width) if n_colors is 1
         """
         self.random_state = check_random_state(self.random_state)
         patches = np.empty((0,) + self.patch_size)
