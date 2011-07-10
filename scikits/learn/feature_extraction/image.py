@@ -167,7 +167,7 @@ def grid_to_graph(n_x, n_y, n_z=1, mask=None, return_as=sparse.coo_matrix,
 # From an image to a set of small image patches
 
 
-def extract_patches_2d(image, patch_size, max_patches=None, seed=None):
+def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
     """Reshape a 2D image into a collection of patches
 
     The resulting patches are allocated in a dedicated array.
@@ -185,8 +185,8 @@ def extract_patches_2d(image, patch_size, max_patches=None, seed=None):
         between 0 and 1, it is taken to be a proportion of the total number
         of patches.
 
-    seed: int or RandomState
-        Seed for the random number generator used in case max_patches is used.
+    random_state: int or RandomState
+        Pseudo number generator state used for random sampling.
 
     Returns
     -------
@@ -237,7 +237,7 @@ def extract_patches_2d(image, patch_size, max_patches=None, seed=None):
         else:
             raise ValueError("Invalid value for max_patches!")
 
-        rng = check_random_state(seed)
+        rng = check_random_state(random_state)
         patches = np.empty((n_patches, p_h, p_w, n_colors), dtype=image.dtype)
         i_s = rng.randint(n_h, size=n_patches)
         j_s = rng.randint(n_w, size=n_patches)
@@ -309,13 +309,13 @@ class PatchExtractor(BaseEstimator):
         float in (0, 1), it is taken to mean a proportion of the total number
         of patches.
 
-    seed: int or RandomState
-        Seed for the random number generator used in case max_patches is used.
+    random_state: int or RandomState
+        Pseudo number generator state used for random sampling.
     """
-    def __init__(self, patch_size, max_patches=None, seed=None):
+    def __init__(self, patch_size, max_patches=None, random_state=None):
         self.patch_size = patch_size
         self.max_patches = max_patches
-        self.seed = seed
+        self.random_state = random_state
 
     def fit(self, X, y=None):
         """
@@ -331,10 +331,12 @@ class PatchExtractor(BaseEstimator):
         XXX : docstring is missing
 
         """
+        self.random_state = check_random_state(self.random_state)
         patches = np.empty((0,) + self.patch_size)
         for image in X:
             partial_patches = extract_patches_2d(image, self.patch_size,
-                                                 self.max_patches, self.seed)
+                                                 self.max_patches,
+                                                 self.random_state)
             # XXX : would be better to avoid a realloc for each image
             patches = np.r_[patches, partial_patches]
         return patches
