@@ -80,7 +80,7 @@ n_atoms = 400
 
 print "Extracting image patches from %d faces" % len(X_train)
 t0 = time()
-extr = PatchExtractor(patch_size=(6, 6), max_patches=100, seed=0)
+extr = PatchExtractor(patch_size=(6, 6), max_patches=100, random_state=0)
 patches = extr.transform(X_train)
 print "done in %0.3fs" % (time() - t0)
 
