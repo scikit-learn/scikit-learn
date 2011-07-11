@@ -233,7 +233,7 @@ class BaseDiscreteNB(BaseEstimator, ClassifierMixin):
         self : object
             Returns self.
         """
-        X = safe_atleast2d(X)
+        X = safe_atleast2d(X, 'csr')
         y = safe_asanyarray(y)
 
         self.unique_y, inv_y_ind = unique(y, return_inverse=True)
@@ -401,7 +401,7 @@ class MultinomialNB(BaseDiscreteNB):
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
 
-        X = safe_atleast2d(X)
+        X = safe_atleast2d(X, 'csr')
 
         jll = safe_sparse_dot(self.coef_, X.T)
         return jll + np.atleast_2d(self.intercept_).T
@@ -500,7 +500,7 @@ class BernoulliNB(BaseDiscreteNB):
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
 
-        X = safe_atleast2d(X)
+        X = safe_atleast2d(X, 'csr')
 
         if self.binarize is not None:
             X = binarize(X, threshold=self.binarize)
@@ -513,9 +513,11 @@ class BernoulliNB(BaseDiscreteNB):
                              % (n_features, n_features_X))
 
         neg_coef = np.log(1 - np.exp(self.coef_))
+        XT = X.T    # entails CSR->CSC conversion in sparse case
+
         # Compute  neg_coef · (1 - X).T  as  ∑neg_coef - X · neg_coef
         X_neg_coef = (neg_coef.sum(axis=1).reshape(-1, 1)
-                    - safe_sparse_dot(neg_coef, X.T))
-        jll = safe_sparse_dot(self.coef_, X.T) + X_neg_coef
+                    - safe_sparse_dot(neg_coef, XT))
+        jll = safe_sparse_dot(self.coef_, XT) + X_neg_coef
 
         return jll + np.atleast_2d(self.intercept_).T
