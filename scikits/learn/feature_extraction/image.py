@@ -10,8 +10,9 @@ import numpy as np
 from scipy import sparse
 from ..utils.fixes import in1d
 
-################################################################################
+###############################################################################
 # From an image to a graph
+
 
 def _make_edges_3d(n_x, n_y, n_z=1):
     """Returns a list of edges for a 3D image.
@@ -59,7 +60,7 @@ def _mask_edges_weights(mask, edges, weights=None):
     if len(edges.ravel()):
         maxval = edges.max()
     else:
-        maxval=0
+        maxval = 0
     order = np.searchsorted(np.unique(edges.ravel()), np.arange(maxval+1))
     edges = order[edges]
     if weights is None:
@@ -73,7 +74,7 @@ def _to_graph(n_x, n_y, n_z, mask=None, img=None,
     """Auxiliary function for img_to_graph and grid_to_graph
     """
     edges = _make_edges_3d(n_x, n_y, n_z)
-    
+
     if dtype is None:
         if img is None:
             dtype = np.int
@@ -160,5 +161,3 @@ def grid_to_graph(n_x, n_y, n_z=1, mask=None, return_as=sparse.coo_matrix,
         The data of the returned sparse matrix. By default it is int
     """
     return _to_graph(n_x, n_y, n_z, mask=mask, return_as=return_as, dtype=dtype)
-
-

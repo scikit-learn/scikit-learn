@@ -11,6 +11,7 @@ import nose
 from ..image import img_to_graph, grid_to_graph
 from ...utils.graph import cs_graph_components
 
+
 def test_img_to_graph():
     x, y = np.mgrid[:4, :4] - 10
     grad_x = img_to_graph(x)
@@ -22,13 +23,14 @@ def test_img_to_graph():
     np.testing.assert_array_equal(grad_x.data[grad_x.data > 0],
                                   grad_y.data[grad_y.data > 0])
 
+
 def test_grid_to_graph():
     #Checking that the function works with graphs containing no edges
     size = 2
     roi_size = 1
     # Generating two convex parts with one vertex
     # Thus, edges will be empty in _to_graph
-    mask = np.zeros((size, size), dtype=bool)
+    mask = np.zeros((size, size), dtype=np.bool)
     mask[0:roi_size, 0:roi_size] = True
     mask[-roi_size:, -roi_size:] = True
     mask = mask.reshape(size**2)
@@ -55,4 +57,3 @@ def test_connect_regions_with_grid():
     graph = grid_to_graph(*lena.shape, **{'mask' : mask, 'dtype' : None})
     nose.tools.assert_equal(ndimage.label(mask)[1],
                             cs_graph_components(graph)[0])
-
