@@ -39,6 +39,12 @@ NOTJUNK_FOOD_DOCS = (
 ALL_FOOD_DOCS = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS
 
 
+def toarray(a):
+    if hasattr(a, "toarray"):
+        a = a.toarray()
+    return a
+
+
 def test_strip_accents():
     # check some classical latin accentuated symbols
     a = u'\xe0\xe1\xe2\xe3\xe4\xe5\xe7\xe8\xe9\xea\xeb'
@@ -130,12 +136,21 @@ def test_countvectorizer_custom_vocabulary():
     X = vect.transform(JUNK_FOOD_DOCS)
     assert_equal(X.shape[1], len(what_we_like))
 
+def test_countvectorizer_custom_vocabulary_pipeline():
+    what_we_like = ["pizza", "beer"]
+    pipe = Pipeline([
+        ('count', CountVectorizer(vocabulary=what_we_like)),
+        ('tfidf', TfidfTransformer())])
+    X = pipe.fit_transform(ALL_FOOD_DOCS)
+    assert_equal(set(pipe.named_steps['count'].vocabulary), set(what_we_like))
+    assert_equal(X.shape[1], len(what_we_like))
 
-def toarray(a):
-    if hasattr(a, "toarray"):
-        a = a.toarray()
-    return a
 
+def test_fit_countvectorizer_twice():
+    cv = CountVectorizer()
+    X1 = cv.fit_transform(ALL_FOOD_DOCS[:5])
+    X2 = cv.fit_transform(ALL_FOOD_DOCS[5:])
+    assert_not_equal(X1.shape[1], X2.shape[1])
 
 def test_vectorizer():
     # raw documents as an iterator
@@ -230,7 +245,6 @@ def test_vectorizer_max_df():
     vect.fit(test_data)
     assert u'a' in vect.vocabulary.keys()
     assert_equals(len(vect.vocabulary.keys()), 5)
-    vect.vocabulary = None
     vect.max_df = 0.5
     vect.fit(test_data)
     assert u'a' not in vect.vocabulary.keys()  # 'a' is ignored

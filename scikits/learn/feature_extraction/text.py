@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Authors: Olivier Grisel <olivier.grisel@ensta.org>
-#          Mathieu Blondel
+#          Mathieu Blondel <mathieu@mblondel.org>
+#          Lars Buitinck <L.J.Buitinck@uva.nl>
 #
 # License: BSD Style.
 """Utilities to build feature vectors from text documents"""
@@ -247,6 +248,7 @@ class CountVectorizer(BaseEstimator):
     def __init__(self, analyzer=DEFAULT_ANALYZER, vocabulary=None, max_df=1.0,
                  max_features=None, dtype=long):
         self.analyzer = analyzer
+        self.fit_vocabulary = vocabulary is None
         if vocabulary is not None and not isinstance(vocabulary, dict):
             vocabulary = dict((t, i) for i, t in enumerate(vocabulary))
         self.vocabulary = vocabulary
@@ -303,7 +305,7 @@ class CountVectorizer(BaseEstimator):
         -------
         vectors: array, [n_samples, n_features]
         """
-        if self.vocabulary is not None:
+        if not self.fit_vocabulary:
             return self.transform(raw_documents)
 
         # result of document conversion to term count dicts
