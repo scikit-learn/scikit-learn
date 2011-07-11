@@ -13,7 +13,7 @@ from scipy.sparse import csr_matrix, issparse
 from .base import BaseEstimator, ClassifierMixin, RegressorMixin
 from .ball_tree import BallTree
 from .metrics import euclidean_distances
-from .utils import safe_asanyarray, atleast2d_or_csr
+from .utils import safe_asanyarray, safe_atleast2d
 
 
 class NeighborsClassifier(BaseEstimator, ClassifierMixin):
@@ -194,7 +194,7 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
 
         """
         self._set_params(**params)
-        X = atleast2d_or_csr(X)
+        X = safe_atleast2d(X, 'csr')
         if self.ball_tree is None:
             dist = euclidean_distances(X, self._fit_X, squared=True)
             # XXX: should be implemented with a partial sort
@@ -224,7 +224,7 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
         labels: array
             List of class labels (one for each data sample).
         """
-        X = atleast2d_or_csr(X)
+        X = safe_atleast2d(X, 'csr')
         self._set_params(**params)
 
         # get neighbors
@@ -312,7 +312,7 @@ class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
         y: array
             List of target values (one for each data sample).
         """
-        X = atleast2d_or_csr(X)
+        X = safe_atleast2d(X, 'csr')
         self._set_params(**params)
 
         # compute nearest neighbors

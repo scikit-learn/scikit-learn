@@ -14,6 +14,8 @@ from scikits.learn.preprocessing import KernelCenterer
 from scikits.learn.preprocessing import LabelBinarizer
 from scikits.learn.preprocessing import Normalizer
 from scikits.learn.preprocessing import normalize
+from scikits.learn.preprocessing import OneHotTransformer
+from scikits.learn.preprocessing import one_hot
 from scikits.learn.preprocessing import Scaler
 from scikits.learn.preprocessing import scale
 
@@ -290,6 +292,29 @@ def test_label_binarizer_iris():
     y_pred2 = SGDClassifier().fit(iris.data, iris.target).predict(iris.data)
     accuracy2 = np.mean(iris.target == y_pred2)
     assert_almost_equal(accuracy, accuracy2)
+
+
+def test_onehot():
+    n_samples = 3
+    n_features = 4
+    X = np.arange(12).reshape((n_samples, n_features))
+
+    Xt = one_hot(X).toarray()
+    assert_equal(Xt, np.array([[1, 0, 0] * n_features,
+                               [0, 1, 0] * n_features,
+                               [0, 0, 1] * n_features]))
+
+    # Binary features should not be "blown up" to several features
+    oh = OneHotTransformer()
+    X[:, 1] = [1, 0, 0]
+    oh.fit(X)
+    X_test = oh.transform(np.array([[0, 1, 6, 11]]))
+    assert_equal(X_test.shape, (1, 10))
+
+    oh_dense = OneHotTransformer(sparse_output=False)
+    oh_dense.fit(X)
+    X_test_dense = oh_dense.transform(np.array([[0, 1, 6, 11]]))
+    assert_equal(X_test.toarray(), X_test_dense)
 
 
 def test_center_kernel():

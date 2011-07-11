@@ -22,7 +22,7 @@ complete documentation.
 
 from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize, LabelBinarizer
-from .utils import safe_asanyarray, atleast2d_or_csr
+from .utils import safe_asanyarray, safe_atleast2d
 from .utils.extmath import safe_sparse_dot
 from .utils.fixes import unique
 import numpy as np
@@ -233,7 +233,7 @@ class BaseDiscreteNB(BaseEstimator, ClassifierMixin):
         self : object
             Returns self.
         """
-        X = atleast2d_or_csr(X)
+        X = safe_atleast2d(X)
         y = safe_asanyarray(y)
 
         self.unique_y, inv_y_ind = unique(y, return_inverse=True)
@@ -401,7 +401,7 @@ class MultinomialNB(BaseDiscreteNB):
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
 
-        X = atleast2d_or_csr(X)
+        X = safe_atleast2d(X)
 
         jll = safe_sparse_dot(self.coef_, X.T)
         return jll + np.atleast_2d(self.intercept_).T
@@ -500,7 +500,7 @@ class BernoulliNB(BaseDiscreteNB):
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
 
-        X = atleast2d_or_csr(X)
+        X = safe_atleast2d(X)
 
         if self.binarize is not None:
             X = binarize(X, threshold=self.binarize)

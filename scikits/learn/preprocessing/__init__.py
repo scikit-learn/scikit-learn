@@ -9,7 +9,7 @@
 import numpy as np
 import scipy.sparse as sp
 
-from ..utils import check_arrays
+from ..utils import check_arrays, safe_asanyarray, safe_atleast2d
 from ..base import BaseEstimator, TransformerMixin
 
 from ._preprocessing import inplace_csr_row_normalize_l1
@@ -416,7 +416,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     Several regression and binary classification algorithms are
     available in the scikit. A simple way to extend these algorithms
     to the multi-class classification case is to use the so-called
-    one-vs-all scheme.
+    one-vs-all scheme, also known as the 1-of-K scheme.
 
     At learning time, this simply consists in learning one regressor
     or binary classifier per class. In doing so, one needs to convert
@@ -450,6 +450,10 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
            [ 0.,  0.,  1.]])
     >>> clf.classes_
     array([1, 2, 3])
+
+    See also
+    --------
+    OneHotTransformer, which performs a similar operation on feature vectors.
     """
 
     def fit(self, y):
@@ -475,9 +479,6 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
     def transform(self, y):
         """Transform multi-class labels to binary labels
-
-        The output of transform is sometimes referred to by some authors as the
-        1-of-K coding scheme.
 
         Parameters
         ----------
@@ -556,6 +557,98 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
             y = Y.argmax(axis=1)
 
         return self.classes_[y]
+
+
+def _toarray(a):
+    return a.toarray() if hasattr(a, "toarray") else a
+
+
+class OneHotTransformer(BaseEstimator, TransformerMixin):
+    """Binarize feature vectors in a one-hot (1-of-K) fashion.
+
+    This transformation is useful when dealing with discrete feature spaces.
+
+    Parameters
+    ----------
+    sparse_output : bool, optional
+        Determines whether output should be in sparse matrix format.
+
+    Attributes
+    ----------
+    n_features_in_ : int
+        Dimensionality of input space.
+    n_features_out_ : int
+        Dimensionality of output space. Features with n>2 possible values
+        become n separate features.
+
+    See also
+    --------
+    LabelBinarizer, which performs a similar operation on class labels.
+    """
+    def __init__(self, sparse_output=True):
+        self.sparse_output = sparse_output
+
+    def fit(self, X, y=None):
+        """Fit transformer; learns number of input features and their ranges
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features_in_]
+
+        Returns
+        -------
+        self
+        """
+        X = safe_atleast2d(X)
+        n_samples, n_features = X.shape
+        self._binarizers = [LabelBinarizer().fit(X[:, i])
+                            for i in xrange(n_features)]
+        return self
+
+    def transform(self, X):
+        """Transform X to one-hot/1-of-K representation.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features_in_]
+
+        Returns
+        -------
+        Xt : {array, sparse matrix}, shape = [n_samples, n_features_out_]
+            Exact type depends on sparse_output parameter.
+        """
+        X = safe_asanyarray(X)
+
+        if self.sparse_output:
+            # Very simple solution to get sparse output;
+            # TODO benchmark and optimize if necessary
+            return sp.hstack([sp.csr_matrix(b.transform(X[:, i]))
+                              for i, b in enumerate(self._binarizers)])
+        else:
+            return np.concatenate([b.transform(X[:, i])
+                                   for i, b in enumerate(self._binarizers)],
+                                  axis=1)
+
+    n_features_in_ = property(lambda self: len(self._binarizers))
+    n_features_out_ = property(lambda self: sum(len(b.classes_) for b in self._binarizers))
+
+
+def one_hot(X, sparse_output=True):
+    """Transform array X to one-hot/1-of-K representation.
+
+    Convenience wrapper for OneHot Transformer.
+
+    Parameters
+    ----------
+    X : array-like, shape = [n_samples, n_features_in]
+    sparse_output : bool, optional
+
+    Returns
+    -------
+    Xt : {array, sparse matrix}, shape = [n_samples, n_features_out_]
+        Exact type depends on sparse_output parameter.
+    """
+    return OneHotTransformer(sparse_output=sparse_output).fit_transform(X)
 
 
 class KernelCenterer(BaseEstimator, TransformerMixin):
