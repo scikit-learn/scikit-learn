@@ -558,31 +558,6 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         return self.classes_[y]
 
 
-def one_hot(X, format='array'):
-    """Returns the one-hot (aka one-vs-all, OVA) representation of an array.
-
-    Parameters
-    ----------
-    X : array-like, shape = [n_samples, n_features]
-
-    format : string, optional
-        If 'array', returns a numpy array.
-        If 'sparse', return a sparse matrix in the default format for
-        scipy.sparse.hstack. All other values are passed to that function.
-    """
-    if format == 'array':
-        X = np.asanyarray(X)
-        return np.concatenate([LabelBinarizer().fit_transform(X[i])
-                               for i in xrange(X.shape[0])])
-    elif format == 'sparse':
-        format = None   # to get default from hstack
-
-    # Cheap solution; we should support sparse output in a more direct way
-    return sp.hstack([sp.csr_matrix(LabelBinarizer().fit_transform(X[i]))
-                      for i in xrange(X.shape[0])],
-                     format=format)
-
-
 class KernelCenterer(BaseEstimator, TransformerMixin):
     """Center a kernel matrix
 
