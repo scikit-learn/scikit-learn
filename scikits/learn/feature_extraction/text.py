@@ -363,8 +363,22 @@ class CountVectorizer(BaseEstimator):
 
         return self._term_count_dicts_to_matrix(term_counts_per_doc)
 
-    def _build_vectors(self, raw_documents):
-        """Analyze documents and vectorize using existing vocabulary"""
+    def transform(self, raw_documents):
+        """Extract token counts out of raw text documents using the vocabulary
+        fitted with fit or the one provided in the constructor.
+
+        Parameters
+        ----------
+        raw_documents: iterable
+            an iterable which yields either str, unicode or file objects
+
+        Returns
+        -------
+        vectors: sparse matrix, [n_samples, n_features]
+        """
+        if not self.vocabulary:
+            raise ValueError("Vocabulary wasn't fitted or is empty!")
+
         # raw_documents is an iterable so we don't know its size in advance
 
         # result of document conversion to term_count_dict
@@ -384,23 +398,6 @@ class CountVectorizer(BaseEstimator):
         # once and fill it with the term counts collected as a temporary list
         # of dict
         return self._term_count_dicts_to_matrix(term_counts_per_doc)
-
-    def transform(self, raw_documents):
-        """Extract token counts out of raw text documents
-
-        Parameters
-        ----------
-        raw_documents: iterable
-            an iterable which yields either str, unicode or file objects
-
-        Returns
-        -------
-        vectors: sparse matrix, [n_samples, n_features]
-        """
-        if len(self.vocabulary) == 0:
-            raise ValueError("No vocabulary dictionary available.")
-
-        return self._build_vectors(raw_documents)
 
     def inverse_transform(self, X):
         """Return terms per document with nonzero entries in X.

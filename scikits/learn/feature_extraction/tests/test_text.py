@@ -136,6 +136,7 @@ def test_countvectorizer_custom_vocabulary():
     X = vect.transform(JUNK_FOOD_DOCS)
     assert_equal(X.shape[1], len(what_we_like))
 
+
 def test_countvectorizer_custom_vocabulary_pipeline():
     what_we_like = ["pizza", "beer"]
     pipe = Pipeline([
