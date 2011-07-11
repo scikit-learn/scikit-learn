@@ -161,7 +161,7 @@ def _update_code_parallel(dictionary, Y, alpha, code=None, Gram=None,
                                       code=code[:, this_slice], alpha=alpha,
                                       Gram=Gram, method=method, tol=tol)
                 for this_slice in slices)
-    for this_slice, this_view in zip(slices, V_views):
+    for this_slice, this_view in zip(slices, code_views):
         code[:, this_slice] = this_view
     return code
 
@@ -335,9 +335,6 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
 
     residuals = 0
 
-    def cost_function():
-        return 0.5 * residuals + alpha * np.sum(np.abs(code))
-
     errors = []
     current_cost = np.nan
 
@@ -364,7 +361,8 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
                                              random_state=random_state)
         dictionary = dictionary.T
 
-        current_cost = cost_function()
+        # Cost function
+        current_cost = 0.5 * residuals + alpha * np.sum(np.abs(code))
         errors.append(current_cost)
 
         if ii > 0:
