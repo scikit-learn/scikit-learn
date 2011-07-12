@@ -23,9 +23,9 @@ def logsum(A, axis=None):
      """
      Amax = A.max(axis)
      if axis and A.ndim > 1:
-         shape = list(A.shape)
-         shape[axis] = 1
-         Amax.shape = shape
+          shape = list(A.shape)
+          shape[axis] = 1
+          Amax.shape = shape
      Asum = np.log(np.sum(np.exp(A - Amax), axis))
      Asum += Amax.reshape(Asum.shape)
      if axis:
