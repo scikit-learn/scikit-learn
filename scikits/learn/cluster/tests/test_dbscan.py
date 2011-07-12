@@ -4,7 +4,7 @@ Testing for Clustering methods
 """
 
 import numpy as np
-from numpy.testing import assert_equal, assert_array_equal
+from numpy.testing import assert_equal
 from scipy.spatial import distance
 
 from ..dbscan_ import DBSCAN, dbscan
@@ -35,9 +35,7 @@ def test_dbscan():
 
     db = DBSCAN()
     labels = db.fit(S, eps=0.85, min_points=10).labels_
-    print labels
     core_points = db.core_points_
 
     n_clusters_2 = len(set(labels)) - (1 if -1 in labels else 0)
     assert_equal(n_clusters, n_clusters_2)
-

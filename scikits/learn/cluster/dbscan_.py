@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-""" Algorithms for clustering : Meanshift,  Affinity propagation and spectral
-clustering.
+""" Algorithms for clustering : DBSCAN
 
+    DBSCAN: (Density-Based Spatial Clustering of Applications with Noise)
 """
 # Author: Robert Layton robertlayton@gmail.com
 #
@@ -14,7 +14,7 @@ from ..base import BaseEstimator
 
 def dbscan(S, eps=0.5, min_points=5, index_order=None,
            verbose=False):
-    """Perform Affinity Propagation Clustering of data
+    """Perform DBSCAN Clustering of data
 
     Parameters
     ----------
@@ -28,7 +28,8 @@ def dbscan(S, eps=0.5, min_points=5, index_order=None,
         The number of points in a neighbourhood for a point to be considered
         as a core point.
     index_order: [n_points] or None
-        Order to observe points for clustering. If None, a random order is given.
+        Order to observe points for clustering.
+        If None, a random order is given.
         To look at points in order, use range(n).
     verbose: boolean, optional
         The verbosity level
@@ -56,47 +57,49 @@ def dbscan(S, eps=0.5, min_points=5, index_order=None,
 
     """
     n = S.shape[0]
-    # if index order not given, create random order
+    # If index order not given, create random order.
     if index_order is None:
         index_order = np.arange(n)
         np.random.shuffle(index_order)
     assert len(index_order) == n, ("Index order must be of length n"
                                    " (%d expected, %d given)"
-                                   % (n, len(index_order)))                                   
+                                   % (n, len(index_order)))
     # Calculate neighbourhood for all points. This leaves the original point
-    # in which needs to be considered later (i.e. point i is the the neighbourhood
-    # of point i. While True, its useless information)
+    # in, which needs to be considered later (i.e. point i is the
+    # neighbourhood of point i. While True, its useless information)
     neighbourhoods = [np.where(x >= eps)[0] for x in S]
-    # Initially, all points are noise
+    # Initially, all points are noise.
     labels = np.zeros((n,), dtype='int') - 1
-    # list of all core points found
+    # A list of all core points found.
     core_points = []
-    # main DBSCAN loop: look at all points, consider if they are core, then
-    # build a cluster from them if they are
+    # Look at all points and determine if they are core.
+    # If they are then build a new cluster from them.
     for index in index_order:
         if labels[index] != -1 or len(neighbourhoods[index]) < min_points:
-            # point already classified, or not enough for a core point
+            # This point is already classified, or not enough for a core point.
             continue
         core_points.append(index)
-        label_num = np.max(labels) + 1 # new cluster number
-        labels[index] = label_num # start of new cluster
-        candidates = [index,] # candidate points
+        # label_num is the label given to the new cluster
+        label_num = np.max(labels) + 1
+        labels[index] = label_num
+        # candidates for new core points in the cluster.
+        candidates = [index]
         while len(candidates) > 0:
             new_candidates = []
-            # a candidate is a core point in the current cluster that has
-            # not yet been used to expand the current cluster
+            # A candidate is a core point in the current cluster that has
+            # not yet been used to expand the current cluster.
             for c in candidates:
                 for neighbour in neighbourhoods[c]:
                     if labels[neighbour] == -1:
-                        # neighbour is part of cluster iff its not part of another
-                        # cluster already
+                        # neighbour is part of the current cluster iff
+                        # it is not part of another cluster already.
                         labels[neighbour] = label_num
                         # check if its a core point as well
                         if len(neighbourhoods[neighbour]) >= min_points:
                             # is new core point
                             new_candidates.append(neighbour)
                             core_points.append(neighbour)
-            # update candidates for next round of cluster expansion
+            # Update candidates for next round of cluster expansion.
             candidates = new_candidates
     return core_points, labels
 
@@ -105,6 +108,10 @@ def dbscan(S, eps=0.5, min_points=5, index_order=None,
 
 class DBSCAN(BaseEstimator):
     """Perform DBSCAN Clustering of data
+
+    DBSCAN - Density-Based Spatial Clustering of Applications with Noise.
+    Finds core points of high density and expands clusters from them.
+    Good for data which contains clusters of similar density.
 
     Parameters
     ----------
@@ -140,7 +147,6 @@ class DBSCAN(BaseEstimator):
     Algorithm for Discovering Clusters in Large Spatial Databases with Noise”.
     In: Proceedings of the 2nd International Conference on Knowledge Discovery
     and Data Mining, Portland, OR, AAAI Press, pp. 226–231. 2006
-    
     """
 
     def __init__(self, eps=0.5, min_points=5, verbose=False):
@@ -148,9 +154,8 @@ class DBSCAN(BaseEstimator):
         self.min_points = min_points
         self.verbose = verbose
 
-
     def fit(self, S, **params):
-        """compute DBSCAN
+        """Compute DBSCAN labels for points, using similarity matrix S.
 
         Parameters
         ----------
@@ -158,10 +163,11 @@ class DBSCAN(BaseEstimator):
         S: array [n_points, n_points]
             Matrix of similarities between points
         eps: float, optional
-            The distance for two points to be considered in the same neighbourhood
+            The distance for two points to be considered
+            in the same neighbourhood.
         min_points: int, optional
-            The number of points in a neighbourhood for a point to be considered
-            as a core point.
+            The number of points in a neighbourhood
+            for a point to be considered as a core point.
         verbose: boolean, optional
             The verbosity level
 
