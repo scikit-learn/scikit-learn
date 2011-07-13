@@ -280,7 +280,8 @@ class BaseDiscreteNB(BaseEstimator, ClassifierMixin):
         C : array, shape = [n_samples]
         """
         joint_log_likelihood = self._joint_log_likelihood(X)
-        y_pred = self.unique_y[np.argmax(joint_log_likelihood, axis=0)]
+        argopt = np.argmin if getattr(self, 'complement', False) else np.argmax
+        y_pred = self.unique_y[argopt(joint_log_likelihood, axis=0)]
 
         return y_pred
 
@@ -336,6 +337,10 @@ class MultinomialNB(BaseDiscreteNB):
     alpha: float, optional (default=1.0)
         Additive (Laplace/Lidstone) smoothing parameter
         (0 for no smoothing).
+    complement: boolean
+        If True, fit a complement naive Bayes model (see References).
+        Currently, predict_proba and predict_log_proba should not be used
+        with complement models.
     fit_prior: boolean
         Whether to learn class prior probabilities or not.
         If false, a uniform prior will be used.
@@ -373,7 +378,7 @@ class MultinomialNB(BaseDiscreteNB):
     >>> from scikits.learn.naive_bayes import MultinomialNB
     >>> clf = MultinomialNB()
     >>> clf.fit(X, Y)
-    MultinomialNB(alpha=1.0, fit_prior=True)
+    MultinomialNB(alpha=1.0, complement=False, fit_prior=True)
     >>> print clf.predict(X[2])
     [3]
 
@@ -384,12 +389,28 @@ class MultinomialNB(BaseDiscreteNB):
     Tackling the poor assumptions of naive Bayes text classifiers, ICML.
     """
 
-    def __init__(self, alpha=1.0, fit_prior=True):
+    def __init__(self, alpha=1.0, complement=False, fit_prior=True):
         self.alpha = alpha
+        self.complement = complement
         self.fit_prior = fit_prior
 
     intercept_ = property(lambda self: self.class_log_prior_)
     coef_ = property(lambda self: self.feature_log_prob_)
+
+    def _count(self, X, Y):
+        """Count feature occurrences.
+
+        Returns (N_c, N_c_i), where
+            N_c is the count of all features in all samples of class c;
+            N_c_i is the count of feature i in all samples of class c.
+        """
+        N_c_i = safe_sparse_dot(Y.T, X)
+        if self.complement:
+            N_c_i_sum = np.atleast_2d(N_c_i.sum(axis=0))
+            N_c_i = np.concatenate([N_c_i_sum] * N_c_i.shape[0]) - N_c_i
+        N_c = np.sum(N_c_i, axis=1)
+
+        return N_c, N_c_i
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
