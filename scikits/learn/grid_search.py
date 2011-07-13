@@ -21,15 +21,15 @@ class IterGrid(object):
 
     Parameters
     -----------
-    kwargs: keyword arguments, lists
-        Each keyword argument must be a list of values that should
-        be explored.
+    param_grid: dict of string to sequence
+        The parameter grid to explore, as a dictionary mapping estimator
+        parameters to sequences of allowed values.
 
-    Returns
-    --------
-    params: dictionary
-        Dictionnary with the input parameters taking the various
-        values succesively.
+    Yields
+    ------
+    params: dict of string to any
+        Dictionaries mapping each estimator parameter to one of its allowed
+        values.
 
     Examples
     ---------
@@ -38,8 +38,8 @@ class IterGrid(object):
     >>> list(IterGrid(param_grid)) #doctest: +NORMALIZE_WHITESPACE
     [{'a': 1, 'b': True}, {'a': 1, 'b': False},
      {'a': 2, 'b': True}, {'a': 2, 'b': False}]
-
     """
+
     def __init__(self, param_grid):
         self.param_grid = param_grid
 
@@ -129,7 +129,7 @@ class GridSearchCV(BaseEstimator):
 
     GridSearchCV implements a "fit" method and a "predict" method like
     any classifier except that the parameters of the classifier
-    used to predict is optimized by cross-validation
+    used to predict is optimized by cross-validation.
 
     Parameters
     ----------
@@ -137,7 +137,7 @@ class GridSearchCV(BaseEstimator):
         A object of that type is instantiated for each grid point.
 
     param_grid: dict
-        Dictionary with parameters names (string) as keys and list of
+        Dictionary with parameters names (string) as keys and lists of
         parameter settings to try as values.
 
     loss_func: callable, optional
@@ -161,7 +161,7 @@ class GridSearchCV(BaseEstimator):
         execution. Reducing this number can be useful to avoid an
         explosion of memory consumption when more jobs get dispatched
         than CPUs can process. This parameter can be:
-            
+
             - None, in which case all the jobs are immediatly
               created and spawned. Use this for lightweight and
               fast-running jobs, to avoid delays due to on-demand
@@ -202,12 +202,10 @@ class GridSearchCV(BaseEstimator):
 
     Notes
     ------
-
     The parameters selected are those that maximize the score of the
     left out data, unless an explicit score_func is passed in which
     case it is used instead. If a loss function loss_func is passed,
     it overrides the score functions and is minimized.
-
     """
 
     def __init__(self, estimator, param_grid, loss_func=None, score_func=None,
@@ -331,7 +329,8 @@ class GridSearchCV(BaseEstimator):
         # XXX: the name is too specific, it shouldn't have
         # 'grid' in it. Also, we should be retrieving/storing variance
         self.grid_scores_ = [
-            (clf_params, score) for clf_params, (score, _) in zip(grid, scores)]
+            (clf_params, score) for clf_params, (score, _)
+                                in zip(grid, scores)]
         return self
 
     def score(self, X, y=None):
