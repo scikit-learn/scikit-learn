@@ -83,9 +83,10 @@ def _update_code(dictionary, Y, alpha, code=None, Gram=None, method='lars',
     n_features = Y.shape[1]
     n_atoms = dictionary.shape[1]
     new_code = np.empty((n_atoms, n_features))
+    # XXX: should we always do this?
+    if Gram is None:
+        Gram = np.dot(dictionary.T, dictionary)
     if method == 'lars':
-        if Gram is None:
-            Gram = np.dot(dictionary.T, dictionary)
         err_mgt = np.seterr()
         np.seterr(all='ignore')
         #alpha = alpha * n_samples
@@ -98,7 +99,7 @@ def _update_code(dictionary, Y, alpha, code=None, Gram=None, method='lars',
             new_code[:, k] = coef_path_[:, -1]
         np.seterr(**err_mgt)
     elif method == 'cd':
-        clf = Lasso(alpha=alpha, fit_intercept=False)
+        clf = Lasso(alpha=alpha, fit_intercept=False, precompute=Gram)
         for k in range(n_features):
             # A huge amount of time is spent in this loop. It needs to be
             # tight.
