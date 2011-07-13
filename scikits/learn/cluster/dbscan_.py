@@ -162,14 +162,8 @@ class DBSCAN(BaseEstimator):
 
         S: array [n_points, n_points]
             Matrix of similarities between points
-        eps: float, optional
-            The distance for two points to be considered
-            in the same neighbourhood.
-        min_points: int, optional
-            The number of points in a neighbourhood
-            for a point to be considered as a core point.
-        verbose: boolean, optional
-            The verbosity level
+
+        params: Overwrite keywords from __init__
 
         """
         self._set_params(**params)
