@@ -166,7 +166,10 @@ class BaseLibSVM(BaseEstimator):
         -------
         C : array, shape = [n_samples]
         """
-        X = np.atleast_2d(np.asanyarray(X, dtype=np.float64, order='C'))
+        X = np.asanyarray(X, dtype=np.float64, order='C')
+        if X.ndim == 1:
+            # don't use np.atleast_2d, it doesn't guarantee C-contiguity
+            X = np.reshape(X, (1, -1), order='C')
         n_samples, n_features = X.shape
         X = self._compute_kernel(X)
 
@@ -211,7 +214,10 @@ class BaseLibSVM(BaseEstimator):
         if not self.probability:
             raise ValueError(
                     "probability estimates must be enabled to use this method")
-        X = np.atleast_2d(np.asanyarray(X, dtype=np.float64, order='C'))
+        X = np.asanyarray(X, dtype=np.float64, order='C')
+        if X.ndim == 1:
+            # don't use np.atleast_2d, it doesn't guarantee C-contiguity
+            X = np.reshape(X, (1, -1), order='C')
         X = self._compute_kernel(X)
         if self.impl not in ('c_svc', 'nu_svc'):
             raise NotImplementedError("predict_proba only implemented for SVC "
@@ -265,7 +271,10 @@ class BaseLibSVM(BaseEstimator):
             Returns the decision function of the sample for each class
             in the model.
         """
-        X = np.atleast_2d(np.asanyarray(X, dtype=np.float64, order='C'))
+        X = np.asanyarray(X, dtype=np.float64, order='C')
+        if X.ndim == 1:
+            # don't use np.atleast_2d, it doesn't guarantee C-contiguity
+            X = np.reshape(X, (1, -1), order='C')
         X = self._compute_kernel(X)
 
         dec_func = libsvm.decision_function(
@@ -412,7 +421,10 @@ class BaseLibLinear(BaseEstimator):
             Returns the decision function of the sample for each class
             in the model.
         """
-        X = np.atleast_2d(np.asanyarray(X, dtype=np.float64, order='C'))
+        X = np.asanyarray(X, dtype=np.float64, order='C')
+        if X.ndim == 1:
+            # don't use np.atleast_2d, it doesn't guarantee C-contiguity
+            X = np.reshape(X, (1, -1), order='C')
         self._check_n_features(X)
 
         dec_func = liblinear.decision_function_wrap(

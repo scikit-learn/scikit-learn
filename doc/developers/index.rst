@@ -170,6 +170,7 @@ that are labeled as EasyFix. This means that the knowledge needed to solve
 the issue is low, but still you are helping the project and letting more
 experienced developers concentrate on other issues.
 
+.. _contribute_documentation:
 
 Documentation
 -------------

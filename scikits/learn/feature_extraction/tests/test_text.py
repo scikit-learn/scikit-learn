@@ -39,6 +39,12 @@ NOTJUNK_FOOD_DOCS = (
 ALL_FOOD_DOCS = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS
 
 
+def toarray(a):
+    if hasattr(a, "toarray"):
+        a = a.toarray()
+    return a
+
+
 def test_strip_accents():
     # check some classical latin accentuated symbols
     a = u'\xe0\xe1\xe2\xe3\xe4\xe5\xe7\xe8\xe9\xea\xeb'
@@ -122,16 +128,32 @@ def test_char_ngram_analyzer():
     assert_equal(cnga.analyze(text)[-5:], expected)
 
 
-def toarray(a):
-    if hasattr(a, "toarray"):
-        a = a.toarray()
-    return a
+def test_countvectorizer_custom_vocabulary():
+    what_we_like = ["pizza", "beer"]
+    vect = CountVectorizer(vocabulary=what_we_like)
+    vect.fit(JUNK_FOOD_DOCS)
+    assert_equal(set(vect.vocabulary), set(what_we_like))
+    X = vect.transform(JUNK_FOOD_DOCS)
+    assert_equal(X.shape[1], len(what_we_like))
 
+
+def test_countvectorizer_custom_vocabulary_pipeline():
+    what_we_like = ["pizza", "beer"]
+    pipe = Pipeline([
+        ('count', CountVectorizer(vocabulary=what_we_like)),
+        ('tfidf', TfidfTransformer())])
+    X = pipe.fit_transform(ALL_FOOD_DOCS)
+    assert_equal(set(pipe.named_steps['count'].vocabulary), set(what_we_like))
+    assert_equal(X.shape[1], len(what_we_like))
+
+
+def test_fit_countvectorizer_twice():
+    cv = CountVectorizer()
+    X1 = cv.fit_transform(ALL_FOOD_DOCS[:5])
+    X2 = cv.fit_transform(ALL_FOOD_DOCS[5:])
+    assert_not_equal(X1.shape[1], X2.shape[1])
 
 def test_vectorizer():
-    # results to be compared
-    res = []
-
     # raw documents as an iterator
     train_data = iter(ALL_FOOD_DOCS[:-1])
     test_data = [ALL_FOOD_DOCS[-1]]
@@ -178,9 +200,6 @@ def test_vectorizer():
     assert_equal(len(t1.idf_), len(v1.vocabulary))
     assert_equal(tfidf.shape, (n_train, len(v1.vocabulary)))
 
-    res.append(tfidf)
-    res.append(t1.idf_)
-
     # test tf-idf with new data
     tfidf_test = toarray(t1.transform(counts_test))
     assert_equal(tfidf_test.shape, (len(test_data), len(v1.vocabulary)))
@@ -205,8 +224,6 @@ def test_vectorizer():
     tfidf_test2 = toarray(tv.transform(test_data))
     assert_array_almost_equal(tfidf_test, tfidf_test2)
 
-    return res
-
 
 def test_vectorizer_max_features():
     vec_factories = (
@@ -224,7 +241,7 @@ def test_vectorizer_max_features():
 
 
 def test_vectorizer_max_df():
-    test_data = [u'abc', u'dea']  # the letter a occurs in all strings
+    test_data = [u'abc', u'dea']  # the letter a occurs in both strings
     vect = CountVectorizer(CharNGramAnalyzer(min_n=1, max_n=1), max_df=1.0)
     vect.fit(test_data)
     assert u'a' in vect.vocabulary.keys()
@@ -233,6 +250,18 @@ def test_vectorizer_max_df():
     vect.fit(test_data)
     assert u'a' not in vect.vocabulary.keys()  # 'a' is ignored
     assert_equals(len(vect.vocabulary.keys()), 4)  # the others remain
+
+
+def test_vectorizer_inverse_transform():
+    # raw documents
+    data = ALL_FOOD_DOCS
+    for vectorizer in (Vectorizer(), CountVectorizer()):
+        transformed_data = vectorizer.fit_transform(data)
+        inversed_data = vectorizer.inverse_transform(transformed_data)
+        for i, doc in enumerate(data):
+            data_vec = np.sort(np.unique(vectorizer.analyzer.analyze(data[0])))
+            inversed_data_vec = np.sort(np.unique(inversed_data[0]))
+            assert((data_vec == inversed_data_vec).all())
 
 
 def test_dense_vectorizer_pipeline_grid_selection():
