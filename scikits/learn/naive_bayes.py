@@ -254,15 +254,17 @@ class BaseDiscreteNB(BaseEstimator, ClassifierMixin):
 
         return self
 
-    @staticmethod
-    def _count(X, Y):
-        """Count feature occurrences.
+    def _count(self, X, Y):
+        """Count raw feature occurrences.
 
         Returns (N_c, N_c_i), where
             N_c is the count of all features in all samples of class c;
             N_c_i is the count of feature i in all samples of class c.
         """
         N_c_i = safe_sparse_dot(Y.T, X)
+        if self.complement:
+            N_c_i_sum = np.atleast_2d(N_c_i.sum(axis=0))
+            N_c_i = np.concatenate([N_c_i_sum] * N_c_i.shape[0]) - N_c_i
         N_c = np.sum(N_c_i, axis=1)
 
         return N_c, N_c_i
@@ -280,7 +282,7 @@ class BaseDiscreteNB(BaseEstimator, ClassifierMixin):
         C : array, shape = [n_samples]
         """
         joint_log_likelihood = self._joint_log_likelihood(X)
-        argopt = np.argmin if getattr(self, 'complement', False) else np.argmax
+        argopt = np.argmin if self.complement else np.argmax
         y_pred = self.unique_y[argopt(joint_log_likelihood, axis=0)]
 
         return y_pred
@@ -438,6 +440,10 @@ class BernoulliNB(BaseDiscreteNB):
     binarize: float or None, optional
         Threshold for binarizing (mapping to booleans) of sample features.
         If None, input is presumed to already consist of binary vectors.
+    complement: boolean
+        If True, fit a complement naive Bayes model (see References).
+        Currently, predict_proba and predict_log_proba should not be used
+        with complement models.
     fit_prior: boolean
         Whether to learn class prior probabilities or not.
         If false, a uniform prior will be used.
@@ -472,7 +478,7 @@ class BernoulliNB(BaseDiscreteNB):
     >>> from scikits.learn.naive_bayes import BernoulliNB
     >>> clf = BernoulliNB()
     >>> clf.fit(X, Y)
-    BernoulliNB(binarize=0.0, alpha=1.0, fit_prior=True)
+    BernoulliNB(binarize=0.0, alpha=1.0, complement=False, fit_prior=True)
     >>> print clf.predict(X[2])
     [3]
 
@@ -489,9 +495,11 @@ class BernoulliNB(BaseDiscreteNB):
     naive Bayes -- Which naive Bayes? 3rd Conf. on Email and Anti-Spam (CEAS).
     """
 
-    def __init__(self, alpha=1.0, binarize=.0, fit_prior=True):
+    def __init__(self, alpha=1.0, binarize=.0, complement=False,
+                 fit_prior=True):
         self.alpha = alpha
         self.binarize = binarize
+        self.complement = complement
         self.fit_prior = fit_prior
 
     def _count(self, X, Y):
