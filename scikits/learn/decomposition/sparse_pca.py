@@ -65,7 +65,7 @@ def _update_code(dictionary, Y, alpha, code=None, Gram=None, method='lars',
         regularization parameter for the Lasso problem
 
     code: array of shape (n_components, n_features)
-        previous iteration of the sparse code
+        Value of the sparse codes at the previous iteration
 
     Gram: array of shape (n_features, n_features)
         precomputed Gram matrix, (Y^T * Y)
