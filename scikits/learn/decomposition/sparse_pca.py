@@ -95,13 +95,16 @@ def _update_code(dictionary, Y, alpha, code=None, Gram=None, method='lars',
         np.seterr(all='ignore')
         #alpha = alpha * n_samples
         XY = np.dot(dictionary.T, Y)
-        for k in range(n_features):
-            # A huge amount of time is spent in this loop. It needs to be
-            # tight.
-            _, _, coef_path_ = lars_path(dictionary, Y[:, k], Xy=XY[:, k],
-                                    Gram=Gram, alpha_min=alpha, method='lasso')
-            new_code[:, k] = coef_path_[:, -1]
-        np.seterr(**err_mgt)
+        try:
+            for k in range(n_features):
+                # A huge amount of time is spent in this loop. It needs to be
+                # tight.
+                _, _, coef_path_ = lars_path(dictionary, Y[:, k], Xy=XY[:, k],
+                                             Gram=Gram, alpha_min=alpha,
+                                             method='lasso')
+                new_code[:, k] = coef_path_[:, -1]
+        finally:
+            np.seterr(**err_mgt)
     elif method == 'cd':
         clf = Lasso(alpha=alpha, fit_intercept=False, precompute=Gram)
         for k in range(n_features):
