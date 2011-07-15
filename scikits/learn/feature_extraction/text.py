@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Authors: Olivier Grisel <olivier.grisel@ensta.org>
-#          Mathieu Blondel
+#          Mathieu Blondel <mathieu@mblondel.org>
+#          Lars Buitinck <L.J.Buitinck@uva.nl>
 #
 # License: BSD Style.
 """Utilities to build feature vectors from text documents"""
@@ -221,9 +222,10 @@ class CountVectorizer(BaseEstimator):
     ----------
     analyzer: WordNGramAnalyzer or CharNGramAnalyzer, optional
 
-    vocabulary: dict, optional
-        A dictionary where keys are tokens and values are indices in the
-        matrix.
+    vocabulary: dict or iterable, optional
+        Either a dictionary where keys are tokens and values are indices in
+        the matrix, or an iterable over terms (in which case the indices are
+        determined by the iteration order as per enumerate).
 
         This is useful in order to fix the vocabulary in advance.
 
@@ -246,7 +248,10 @@ class CountVectorizer(BaseEstimator):
     def __init__(self, analyzer=DEFAULT_ANALYZER, vocabulary=None, max_df=1.0,
                  max_features=None, dtype=long):
         self.analyzer = analyzer
-        self.vocabulary = vocabulary if vocabulary is not None else {}
+        self.fit_vocabulary = vocabulary is None
+        if vocabulary is not None and not isinstance(vocabulary, dict):
+            vocabulary = dict((t, i) for i, t in enumerate(vocabulary))
+        self.vocabulary = vocabulary
         self.dtype = dtype
         self.max_df = max_df
         self.max_features = max_features
@@ -300,6 +305,9 @@ class CountVectorizer(BaseEstimator):
         -------
         vectors: array, [n_samples, n_features]
         """
+        if not self.fit_vocabulary:
+            return self.transform(raw_documents)
+
         # result of document conversion to term count dicts
         term_counts_per_doc = []
         term_counts = Counter()
@@ -355,8 +363,22 @@ class CountVectorizer(BaseEstimator):
 
         return self._term_count_dicts_to_matrix(term_counts_per_doc)
 
-    def _build_vectors(self, raw_documents):
-        """Analyze documents and vectorize using existing vocabulary"""
+    def transform(self, raw_documents):
+        """Extract token counts out of raw text documents using the vocabulary
+        fitted with fit or the one provided in the constructor.
+
+        Parameters
+        ----------
+        raw_documents: iterable
+            an iterable which yields either str, unicode or file objects
+
+        Returns
+        -------
+        vectors: sparse matrix, [n_samples, n_features]
+        """
+        if not self.vocabulary:
+            raise ValueError("Vocabulary wasn't fitted or is empty!")
+
         # raw_documents is an iterable so we don't know its size in advance
 
         # result of document conversion to term_count_dict
@@ -377,22 +399,27 @@ class CountVectorizer(BaseEstimator):
         # of dict
         return self._term_count_dicts_to_matrix(term_counts_per_doc)
 
-    def transform(self, raw_documents):
-        """Extract token counts out of raw text documents
+    def inverse_transform(self, X):
+        """Return terms per document with nonzero entries in X.
 
         Parameters
         ----------
-        raw_documents: iterable
-            an iterable which yields either str, unicode or file objects
+        X : {array, sparse matrix}, shape = [n_samples, n_features]
 
         Returns
         -------
-        vectors: array, [n_samples, n_features]
+        X_inv : list of arrays, len = n_samples
+            List of arrays of terms.
         """
-        if len(self.vocabulary) == 0:
-            raise ValueError("No vocabulary dictionary available.")
+        if type(X) is sp.coo_matrix:    # COO matrix is not indexable
+            X = X.tocsr()
 
-        return self._build_vectors(raw_documents)
+        terms = np.array(self.vocabulary.keys())
+        indices = np.array(self.vocabulary.values())
+        inverse_vocabulary = terms[np.argsort(indices)]
+
+        return [inverse_vocabulary[X[i, :].nonzero()[1]]
+                for i in xrange(X.shape[0])]
 
 
 class TfidfTransformer(BaseEstimator, TransformerMixin):
@@ -430,7 +457,6 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         ----------
         X: sparse matrix, [n_samples, n_features]
             a matrix of term/token counts
-
         """
         n_samples, n_features = X.shape
         if self.use_idf:
@@ -507,8 +533,7 @@ class Vectorizer(BaseEstimator):
         return self.tfidf.fit(X).transform(X, copy=False)
 
     def transform(self, raw_documents, copy=True):
-        """
-        Return the vectors.
+        """Transform raw text documents to tf–idf vectors
 
         Parameters
         ----------
@@ -517,12 +542,24 @@ class Vectorizer(BaseEstimator):
 
         Returns
         -------
-        vectors: array, [n_samples, n_features]
+        vectors: sparse matrix, [n_samples, n_features]
         """
         X = self.tc.transform(raw_documents)
         return self.tfidf.transform(X, copy)
 
-    def _get_vocab(self):
-        return self.tc.vocabulary
+    def inverse_transform(self, X):
+        """Return terms per document with nonzero entries in X.
 
-    vocabulary = property(_get_vocab)
+        Parameters
+        ----------
+        X : {array, sparse matrix}, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        X_inv : list of arrays, len = n_samples
+            List of arrays of terms.
+        """
+        return self.tc.inverse_transform(X)
+
+    vocabulary = property(lambda self: self.tc.vocabulary)
+    analyzer = property(lambda self: self.tc.analyzer)

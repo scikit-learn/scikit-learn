@@ -415,7 +415,7 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', reg=1e-3):
     Returns
     -------
     A : sparse matrix in CSR format, shape = [n_samples, n_samples]
-        A[i,j] is assigned the weight of edge that connects i to j.
+        A[i, j] is assigned the weight of edge that connects i to j.
 
     Examples
     --------
@@ -426,6 +426,10 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', reg=1e-3):
     matrix([[ 1.,  0.,  1.],
             [ 0.,  1.,  1.],
             [ 1.,  0.,  1.]])
+
+    See also
+    --------
+    radius_neighbors_graph
     """
     if isinstance(X, BallTree):
         ball_tree = X
@@ -461,3 +465,74 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', reg=1e-3):
 
     return csr_matrix((A_data.ravel(), A_ind.ravel(), A_indptr),
                       shape=(n_samples, n_samples))
+
+
+def radius_neighbors_graph(X, radius, mode='connectivity'):
+    """Computes the (weighted) graph of Neighbors for points in X
+
+    Neighborhoods are restricted the points at a distance lower than
+    radius.
+
+    Parameters
+    ----------
+    X : array-like or BallTree, shape = [n_samples, n_features]
+        Sample data, in the form of a numpy array or a precomputed
+        :class:`BallTree`.
+
+    radius : float
+        Radius of neighborhoods.
+
+    mode : {'connectivity', 'distance'}, optional
+        Type of returned matrix: 'connectivity' will return the
+        connectivity matrix with ones and zeros, in 'distance' the
+        edges are euclidian distance between points.
+
+    Returns
+    -------
+    A : sparse matrix in CSR format, shape = [n_samples, n_samples]
+        A[i, j] is assigned the weight of edge that connects i to j.
+
+    Examples
+    --------
+    >>> X = [[0], [3], [1]]
+    >>> from scikits.learn.neighbors import radius_neighbors_graph
+    >>> A = radius_neighbors_graph(X, 1.5)
+    >>> A.todense()
+    matrix([[ 1.,  0.,  1.],
+            [ 0.,  1.,  0.],
+            [ 1.,  0.,  1.]])
+
+    See also
+    --------
+    kneighbors_graph
+    """
+    if isinstance(X, BallTree):
+        ball_tree = X
+        X = ball_tree.data
+    else:
+        X = np.asanyarray(X)
+        ball_tree = BallTree(X)
+
+    n_samples = X.shape[0]
+
+    # construct CSR matrix representation of the NN graph
+    if mode == 'connectivity':
+        A_ind = ball_tree.query_radius(X, radius, return_distance=False)
+        A_data = None
+    elif mode == 'distance':
+        A_ind, dist = ball_tree.query_radius(X, radius, return_distance=True)
+        A_data = np.concatenate(list(dist))
+    else:
+        raise ValueError(
+            'Unsupported mode, must be one of "connectivity", '
+            'or "distance" but got %s instead' % mode)
+
+    n_neighbors = np.array([len(a) for a in A_ind])
+    n_nonzero = np.sum(n_neighbors)
+    A_ind = np.concatenate(list(A_ind))
+    A_indptr = np.concatenate((np.zeros(1), np.cumsum(n_neighbors)))
+
+    if A_data is None:
+        A_data = np.ones(n_nonzero)
+
+    return csr_matrix((A_data, A_ind, A_indptr), shape=(n_samples, n_samples))

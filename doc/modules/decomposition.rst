@@ -137,23 +137,48 @@ of extracting the set of sparse components that best reconstruct the data:
 
 Principal component analysis (:class:`PCA`) has the disadvantage that the
 components extracted by this method have dense expressions, i. e. they have
-many non-zero coefficients when expressed as linear combinations of the original
-variables. This makes interpretation difficult in high-dimensional settings.
-Also, in many cases, the real underlying components can be more naturally
-imagined as sparse vectors. For example in face recognition, components should
-map to parts of faces.
+non-zero coefficients when expressed as linear combinations of the original
+variables. This makes interpretation difficult, because it's difficult to see
+the big picture by seeing simple and important patterns. Also, in many cases,
+the real underlying components can be more naturally imagined as sparse
+vectors. For example in face recognition, components could naturally map to
+parts of faces.
 
 Sparse principal components gives a more parsimonious, and therefore a more 
 useful idea on which of the original features contribute to the differences
 between the samples.
 
-There are many different formulations for the Sparse PCA problem. The one
-implemented here is based on [Mrl09]_ .
+The sparity inducing :math:`\ell_1` norm also leads to a more robust estimation
+of the components, and the degree of penalization can be adjusted through
+the hyperparameter `alpha`. Small values lead to a slightly regularized
+factorization, while larger values shrink more coefficients to zero.
+
+For example, this is how the 12 components extracted using Sparse PCA look like
+for a value of `alpha=5`. The digits dataset is used, and only the images of
+the digit 3 were considered. It can be seen how the regularization induces many
+zeros. Furthermore, the natural structure of the data causes the non-zero
+coefficients to be adjacent even "vertically". The model does not enforce this
+matematically: each component is a vector :math:`h \in \mathbf{R}^{64}`; there
+is no notion of vertical adjacency except during the human-friendly 
+visualisation as 8x8 pixel images. Horizontal adjacency exists, but it is not
+considered by this model. The fact that the components shown below appear local
+is the effect of the inherent structure of the data, which makes such local
+patterns minimize reconstruction error. There exist sparsity-inducing norms
+thattake into account adjacency and different kinds of structure, but such
+methods are not currently implemented in the scikit. To read more about such
+norms, see [Jen09]. For more details on how to use Sparse PCA, see the
+`Examples` section below.
+
 
 .. figure:: ../auto_examples/decomposition/images/plot_sparse_pca_1.png
    :target: ../auto_examples/decomposition/plot_sparse_pca.html
    :align: center
    :scale: 50%
+
+
+There are many different formulations for the Sparse PCA problem. The one
+implemented here is based on [Mrl09]_ .
+
 
 .. topic:: Examples:
 
@@ -164,6 +189,10 @@ implemented here is based on [Mrl09]_ .
    * [Mrl09] `"Online Dictionary Learning for Sparse Coding"
      <http://www.di.ens.fr/sierra/pdfs/icml09.pdf>`_
      J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009
+   * [Jen09] `"Structured Sparse Principal Component Analysis"
+     <www.di.ens.fr/~fbach/sspca_AISTATS2010.pdf>`_
+     R. Jenatton, G. Obozinski, F. Bach, 2009
+
 
 .. _ICA:
 
