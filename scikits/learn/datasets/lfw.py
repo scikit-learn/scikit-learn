@@ -23,12 +23,6 @@ detector from various online websites.
 # Copyright (c) 2011 Olivier Grisel <olivier.grisel@ensta.org>
 # License: Simplified BSD
 
-from os.path import join, exists, isdir
-from os import listdir, makedirs, remove
-
-import urllib
-import logging
-
 try:
     try:
         from scipy.misc import imread
@@ -36,12 +30,18 @@ try:
         from scipy.misc.pilutil import imread
     from scipy.misc import imresize
 except ImportError:
-    imread, imresize = None, None
-import numpy as np
+    raise ImportError("The Python Imaging Library (PIL)"
+                      "is required to load data from jpeg files")
 
-from scikits.learn.externals.joblib import Memory
-from .base import get_data_home
-from .base import Bunch
+from os import listdir, makedirs, remove
+from os.path import join, exists, isdir
+
+import logging
+import numpy as np
+import urllib
+
+from .base import get_data_home, Bunch
+from ..externals.joblib import Memory
 
 
 logger = logging.getLogger(__name__)
@@ -120,7 +120,7 @@ def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
 
 
 def _load_imgs(file_paths, slice_, color, resize):
-    """Internaly used to load images"""
+    """Internally used to load images"""
     # compute the portion of the images to load to respect the slice_ parameter
     # given by the caller
     default_slice = (slice(0, 250), slice(0, 250))
@@ -145,8 +145,6 @@ def _load_imgs(file_paths, slice_, color, resize):
     else:
         faces = np.zeros((n_faces, h, w, 3), dtype=np.float32)
 
-    if imread is None or imresize is None:
-        raise ImportError("PIL is required to load data from jpeg files")
     # iterate over the collected file path to load the jpeg files as numpy
     # arrays
     for i, file_path in enumerate(file_paths):
