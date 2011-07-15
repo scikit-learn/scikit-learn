@@ -30,6 +30,7 @@ def generate_toy_data(n_atoms, n_samples, image_size):
 # SparsePCA can be a bit slow. To avoid having test times go up, we
 # test different aspects of the code in the same test
 
+
 def test_correct_shapes():
     np.random.seed(0)
     X = np.random.randn(12, 10)
@@ -46,8 +47,14 @@ def test_fit_transform():
     U2 = spca_lars.transform(Y)
     assert_array_almost_equal(U1, U2)
     # Smoke test multiple CPUs
-    U2 = SparsePCA(n_components=3, n_jobs=2).fit(Y).transform(Y)
-    assert_array_almost_equal(U1, U2)
+    import scikits.learn.externals.joblib.parallel as joblib_par
+    _mp = joblib_par.multiprocessing
+    joblib_par.multiprocessing = None  # fake parallelism
+    try:
+        U2 = SparsePCA(n_components=3, n_jobs=2).fit(Y).transform(Y)
+        assert_array_almost_equal(U1, U2)
+    finally:
+        joblib_par.multiprocessing = _mp
     # Test that CD gives similar results
     spca_lasso = SparsePCA(n_components=3, method='cd').fit(Y)
     assert_array_almost_equal(spca_lasso.components_, spca_lars.components_)
@@ -58,4 +65,3 @@ def test_fit_transform_tall():
     U1 = SparsePCA(n_components=3).fit_transform(Y)
     U2 = SparsePCA(n_components=3).fit(Y).transform(Y)
     assert_array_almost_equal(U1, U2)
-
