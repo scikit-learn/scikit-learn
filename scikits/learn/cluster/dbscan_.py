@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-""" Algorithms for clustering : DBSCAN
-
-    DBSCAN: (Density-Based Spatial Clustering of Applications with Noise)
 """
-# Author: Robert Layton robertlayton@gmail.com
+DBSCAN: Density-Based Spatial Clustering of Applications with Noise
+"""
+
+# Author: Robert Layton <robertlayton@gmail.com>
 #
 # License: BSD
 
@@ -19,7 +19,6 @@ def dbscan(S, eps=0.5, min_points=5, metric='euclidean',
 
     Parameters
     ----------
-
     S: array [n_points, n_points] or [n_points, n_features]
         Matrix of similarities between points, or a feature matrix.
         If the matrix is square, it is treated as a similarity matrix,
@@ -27,9 +26,9 @@ def dbscan(S, eps=0.5, min_points=5, metric='euclidean',
         override this pattern.
     eps: float, optional
         The minimum similarity for two points to be considered
-        in the same neighbourhood.
+        in the same neighborhood.
     min_points: int, optional
-        The number of points in a neighbourhood for a point to be considered
+        The number of points in a neighborhood for a point to be considered
         as a core point.
     metric: string, or callable
         The metric to use when calculating distance between instances in a
@@ -54,7 +53,6 @@ def dbscan(S, eps=0.5, min_points=5, metric='euclidean',
 
     Returns
     -------
-
     core_points: array [n_core_points]
         index of core points
 
@@ -82,19 +80,19 @@ def dbscan(S, eps=0.5, min_points=5, metric='euclidean',
     assert len(index_order) == n, ("Index order must be of length n"
                                    " (%d expected, %d given)"
                                    % (n, len(index_order)))
-    S = calculateSimilarity(S, metric=metric, is_similarity=is_similarity)
-    # Calculate neighbourhood for all points. This leaves the original point
+    S = calculate_similarity(S, metric=metric, is_similarity=is_similarity)
+    # Calculate neighborhood for all points. This leaves the original point
     # in, which needs to be considered later (i.e. point i is the
-    # neighbourhood of point i. While True, its useless information)
-    neighbourhoods = [np.where(x >= eps)[0] for x in S]
+    # neighborhood of point i. While True, its useless information)
+    neighborhoods = [np.where(x >= eps)[0] for x in S]
     # Initially, all points are noise.
-    labels = np.zeros((n,), dtype='int') - 1
+    labels = np.array([-1] * n)
     # A list of all core points found.
     core_points = []
     # Look at all points and determine if they are core.
     # If they are then build a new cluster from them.
     for index in index_order:
-        if labels[index] != -1 or len(neighbourhoods[index]) < min_points:
+        if labels[index] != -1 or len(neighborhoods[index]) < min_points:
             # This point is already classified, or not enough for a core point.
             continue
         core_points.append(index)
@@ -108,26 +106,26 @@ def dbscan(S, eps=0.5, min_points=5, metric='euclidean',
             # A candidate is a core point in the current cluster that has
             # not yet been used to expand the current cluster.
             for c in candidates:
-                for neighbour in neighbourhoods[c]:
-                    if labels[neighbour] == -1:
-                        # neighbour is part of the current cluster iff
+                for neighbor in neighborhoods[c]:
+                    if labels[neighbor] == -1:
+                        # neighbor is part of the current cluster iff
                         # it is not part of another cluster already.
-                        labels[neighbour] = label_num
+                        labels[neighbor] = label_num
                         # check if its a core point as well
-                        if len(neighbourhoods[neighbour]) >= min_points:
+                        if len(neighborhoods[neighbor]) >= min_points:
                             # is new core point
-                            new_candidates.append(neighbour)
-                            core_points.append(neighbour)
+                            new_candidates.append(neighbor)
+                            core_points.append(neighbor)
             # Update candidates for next round of cluster expansion.
             candidates = new_candidates
     return core_points, labels
 
 
-def calculateSimilarity(S, metric=None, is_similarity=None):
+def calculate_similarity(S, metric=None, is_similarity=None):
     n, d = S.shape
     # If the matrix looks square, it may be a similarity matrix.
     if n == d:
-        if is_similarity is None or is_similarity:
+        if is_similarity in (None, True):
             return S
     else:
         # Matrix is not square, so it cannot be a similarity matrix.
@@ -141,8 +139,6 @@ def calculateSimilarity(S, metric=None, is_similarity=None):
     return S
 
 
-###############################################################################
-
 class DBSCAN(BaseEstimator):
     """Perform DBSCAN Clustering of data
 
@@ -152,11 +148,10 @@ class DBSCAN(BaseEstimator):
 
     Parameters
     ----------
-
     eps: float, optional
-        The distance for two points to be considered in the same neighbourhood
+        The distance for two points to be considered in the same neighborhood
     min_points: int, optional
-        The number of points in a neighbourhood for a point to be considered
+        The number of points in a neighborhood for a point to be considered
         as a core point.
     metric: string, or callable
         The metric to use when calculating distance between instances in a
@@ -181,13 +176,11 @@ class DBSCAN(BaseEstimator):
 
     Methods
     -------
-
     fit:
         Compute the clustering
 
     Attributes
     ----------
-
     core_points: array [n_core_points]
         index of core points
 
@@ -223,7 +216,6 @@ class DBSCAN(BaseEstimator):
 
         Parameters
         ----------
-
         S: array [n_points, n_points] or [n_points, n_features]
             Matrix of similarities between points, or a feature matrix.
             If the matrix is square, it is treated as a similarity matrix,
@@ -233,11 +225,5 @@ class DBSCAN(BaseEstimator):
 
         """
         self._set_params(**params)
-        self.core_points_, self.labels_ = dbscan(S, eps=self.eps,
-                                                 min_points=self.min_points,
-                                                 verbose=self.verbose,
-                                                 metric=self.metric,
-                                                 index_order=self.index_order,
-                                                 is_similarity=\
-                                                 self.is_similarity)
+        self.core_points_, self.labels_ = dbscan(S, **self._get_params())
         return self
