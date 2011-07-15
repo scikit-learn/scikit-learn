@@ -589,6 +589,9 @@ def _lmvnpdftied(obs, means, covars):
 def _lmvnpdffull(obs, means, covars):
     """
     Log probability for full covariance matrices.
+
+    WARNING: In certain cases, this function will modify in-place
+    some of the covariance matrices
     """
     from scipy import linalg
     import itertools
@@ -602,7 +605,13 @@ def _lmvnpdffull(obs, means, covars):
     nmix = len(means)
     log_prob = np.empty((n_obs, nmix))
     for c, (mu, cv) in enumerate(itertools.izip(means, covars)):
-        cv_chol = linalg.cholesky(cv, lower=True)
+        try:
+            cv_chol = linalg.cholesky(cv, lower=True)
+        except linalg.LinAlgError:
+            # The model is most probabily stuck in a component with too
+            # few observations, we need to reinitialize this components
+            cv[:] = 10*np.eye(cv.shape[0])
+            cv_chol = cv
         cv_log_det = 2 * np.sum(np.log(np.diagonal(cv_chol)))
         cv_sol = solve_triangular(cv_chol, (obs - mu).T, lower=True).T
         log_prob[:, c] = -.5 * (np.sum(cv_sol ** 2, axis=1) + \

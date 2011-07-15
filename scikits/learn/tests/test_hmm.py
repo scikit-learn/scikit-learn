@@ -317,7 +317,7 @@ class GaussianHMMTester(GaussianHMMParams):
         samples = h.rvs(n)
         self.assertEquals(samples.shape, (n, self.n_features))
 
-    def test_fit(self, params='stmc', n_iter=15, verbose=False, **kwargs):
+    def test_fit(self, params='stmc', n_iter=25, verbose=False, **kwargs):
         h = hmm.GaussianHMM(self.n_states, self.cvtype)
         h.startprob = self.startprob
         h.transmat = hmm.normalize(self.transmat
@@ -497,6 +497,7 @@ class TestMultinomialHMM(MultinomialHMMParams,
         self.assertEquals(len(np.unique(samples)), self.n_symbols)
 
     def test_fit(self, params='ste', n_iter=15, verbose=False, **kwargs):
+        np.random.seed(0)
         h = hmm.MultinomialHMM(self.n_states,
                                startprob=self.startprob,
                                transmat=self.transmat)
