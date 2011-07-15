@@ -7,11 +7,11 @@
 
 import numpy as np
 from scipy import linalg, optimize, rand
+
 from ..base import BaseEstimator, RegressorMixin
 from . import regression_models as regression
 from . import correlation_models as correlation
-from ..cross_val import LeaveOneOut
-from ..externals.joblib import Parallel, delayed
+
 MACHINE_EPSILON = np.finfo(np.double).eps
 if hasattr(linalg, 'solve_triangular'):
     # only in scipy since 0.9
