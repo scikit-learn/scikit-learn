@@ -164,10 +164,9 @@ visualisation as 8x8 pixel images.
 The fact that the components shown below appear local
 is the effect of the inherent structure of the data, which makes such local
 patterns minimize reconstruction error. There exist sparsity-inducing norms
-thattake into account adjacency and different kinds of structure, but such
-methods are not currently implemented in the scikit. To read more about such
-norms, see [Jen09]. For more details on how to use Sparse PCA, see the
-`Examples` section below.
+that take into account adjacency and different kinds of structure; see
+see [Jen09] for a review of such methods. For more details on how to use
+Sparse PCA, see the `Examples` section below.
 
 
 .. figure:: ../auto_examples/decomposition/images/plot_sparse_pca_1.png
