@@ -15,14 +15,14 @@ from ..base import BaseEstimator
 
 def dbscan(S, eps=0.5, min_points=5, metric='euclidean',
            index_order=None, verbose=False, is_similarity=None,):
-    """Perform DBSCAN Clustering of data
+    """Perform DBSCAN clustering of data.
 
     Parameters
     ----------
     S: array [n_points, n_points] or [n_points, n_features]
-        Matrix of similarities between points, or a feature matrix.
-        If the matrix is square, it is treated as a similarity matrix,
-        otherwise it is treated as a feature matrix. Use is_similarity to
+        Array of similarities between points, or a feature array.
+        If the array is square, it is treated as a similarity array,
+        otherwise it is treated as a feature array. Use is_similarity to
         override this pattern.
     eps: float, optional
         The minimum similarity for two points to be considered
@@ -32,7 +32,7 @@ def dbscan(S, eps=0.5, min_points=5, metric='euclidean',
         as a core point.
     metric: string, or callable
         The metric to use when calculating distance between instances in a
-        feature matrix. If metric is a string, it must be one of the options
+        feature array. If metric is a string, it must be one of the options
         allowed by scipy.spatial.distance.pdist for its metric parameter.
         Alternatively, if metric is a callable function, it is called on each
         pair of instances (rows) and the resulting value recorded.
@@ -43,22 +43,21 @@ def dbscan(S, eps=0.5, min_points=5, metric='euclidean',
     verbose: boolean, optional
         The verbosity level
     is_similarity: boolean, optional (default=None)
-        Overrides the behaviour of the matrix handling of S.
-        If is_similarity is None, any square matrix is handled as a similarity
-        matrix and any non-square matrix is a feature matrix.
-        If is_similarity is True, any matrix is handled as a similarity matrix,
-        and the procedure will raise a ValueError if the matrix is not square.
-        If is_similarity is False, any matrix will be handled as a feature
-        matrix, including square matrices.
+        Overrides the behaviour of the array handling of S.
+        If is_similarity is None, any square array is handled as a similarity
+        array and any non-square array is a feature array.
+        If is_similarity is True, any array is handled as a similarity array,
+        and the procedure will raise a ValueError if the array is not square.
+        If is_similarity is False, any array will be handled as a feature
+        array, including square matrices.
 
     Returns
     -------
     core_points: array [n_core_points]
-        index of core points
+        Indices of core points.
 
     labels : array [n_points]
-        cluster labels for each point
-        Noisey points are given the label -1
+        Cluster labels for each point.  Noisy points are given the label -1.
 
     Notes
     -----
@@ -69,9 +68,8 @@ def dbscan(S, eps=0.5, min_points=5, metric='euclidean',
     Algorithm for Discovering Clusters in Large Spatial Databases with Noise”.
     In: Proceedings of the 2nd International Conference on Knowledge Discovery
     and Data Mining, Portland, OR, AAAI Press, pp. 226–231. 1996
-
-
     """
+
     n = S.shape[0]
     # If index order not given, create random order.
     if index_order is None:
@@ -122,17 +120,15 @@ def dbscan(S, eps=0.5, min_points=5, metric='euclidean',
 
 def calculate_similarity(S, metric=None, is_similarity=None):
     n, d = S.shape
-    # If the matrix looks square, it may be a similarity matrix.
+    # If the array looks square, it may be a similarity array.
     if n == d:
         if is_similarity in (None, True):
             return S
-    else:
-        # Matrix is not square, so it cannot be a similarity matrix.
-        if is_similarity:
-            raise ValueError("Matrix not square, "
-                             "cannot be a similarity matrix."
-                             " Size: %d x %d." % (n, d))
-    # In all other cases, the matrix is to be considered as a feature matrix.
+    elif is_similarity:
+        # Array is not square, so it cannot be a similarity array.
+        raise ValueError("Array not square, cannot be a similarity array."
+                         " Shape = %s" % repr((n, d))
+    # In all other cases, the array is to be considered as a feature array.
     D = distance.squareform(distance.pdist(S, metric=metric))
     S = 1. - (D / np.max(D))
     return S
@@ -154,7 +150,7 @@ class DBSCAN(BaseEstimator):
         as a core point.
     metric: string, or callable
         The metric to use when calculating distance between instances in a
-        feature matrix. If metric is a string, it must be one of the options
+        feature array. If metric is a string, it must be one of the options
         allowed by scipy.spatial.distance.pdist for its metric parameter.
         Alternatively, if metric is a callable function, it is called on each
         pair of instances (rows) and the resulting value recorded.
@@ -165,13 +161,13 @@ class DBSCAN(BaseEstimator):
     verbose: boolean, optional
         The verbosity level
     is_similarity: boolean, optional (default=None)
-        Overrides the behaviour of the matrix handling of S.
-        If is_similarity is None, any square matrix is handled as a similarity
-        matrix and any non-square matrix is a feature matrix.
-        If is_similarity is True, any matrix is handled as a similarity matrix,
-        and the procedure will raise a ValueError if the matrix is not square.
-        If is_similarity is False, any matrix will be handled as a feature
-        matrix, including square matrices.
+        Overrides the behaviour of the array handling of S.
+        If is_similarity is None, any square array is handled as a similarity
+        array and any non-square array is a feature array.
+        If is_similarity is True, any array is handled as a similarity array,
+        and the procedure will raise a ValueError if the array is not square.
+        If is_similarity is False, any array will be handled as a feature
+        array, including square matrices.
 
     Methods
     -------
@@ -180,13 +176,11 @@ class DBSCAN(BaseEstimator):
 
     Attributes
     ----------
-    core_points: array [n_core_points]
-        index of core points
+    core_points: array, shape = [n_core_points]
+        Indices of core points.
 
-    labels : array [n_points]
-        cluster labels for each point
-        Noisey points are given the label -1
-
+    labels : array, shape = [n_points]
+        Cluster labels for each point. Noisy points are given the label -1.
 
     Notes
     -----
@@ -211,18 +205,19 @@ class DBSCAN(BaseEstimator):
         self.is_similarity = is_similarity
 
     def fit(self, S, **params):
-        """Compute DBSCAN labels for points, using similarity matrix S.
+        """Compute DBSCAN labels for points, using similarity array S.
 
         Parameters
         ----------
         S: array [n_points, n_points] or [n_points, n_features]
-            Matrix of similarities between points, or a feature matrix.
-            If the matrix is square, it is treated as a similarity matrix,
-            otherwise it is treated as a feature matrix. Use is_similarity to
+            Array of similarities between points, or a feature array.
+            If the array is square, it is treated as a similarity array,
+            otherwise it is treated as a feature array. Use is_similarity to
             override this pattern.
-        params: Overwrite keywords from __init__
-
+        params: dict
+            Overwrite keywords from __init__.
         """
+
         self._set_params(**params)
         self.core_points_, self.labels_ = dbscan(S, **self._get_params())
         return self
