@@ -19,7 +19,7 @@ n_samples, n_features = X.shape
 
 
 def test_covariance():
-    """Tests Covariance module on a simple dataset.
+    """Tests Covariance module on a simple data set.
 
     """
     # test covariance fit from data
@@ -56,7 +56,7 @@ def test_covariance():
 
 
 def test_shrunk_covariance():
-    """Tests ShrunkCovariance module on a simple dataset.
+    """Tests ShrunkCovariance module on a simple data set.
 
     """
     # compare shrunk covariance obtained from data and from MLE estimate
@@ -90,7 +90,7 @@ def test_shrunk_covariance():
 
 
 def test_ledoit_wolf():
-    """Tests LedoitWolf module on a simple dataset.
+    """Tests LedoitWolf module on a simple data set.
 
     """
     # test shrinkage coeff on a simple data set
@@ -251,7 +251,7 @@ def generator_mcd(correction):
 
 def launch_mcd_on_dataset(n_samples, n_features, n_outliers,
                           tol_loc, tol_cov, tol_support, correction):
-    """Runs a serie of tests on the MCD with given parameters
+    """Run a serie of tests of MCD performed on random data
     
     The tests consist in estimating the covariance of a data set using
     the Minimum Covariance Determinant estimator. The correctness of
@@ -284,9 +284,10 @@ def launch_mcd_on_dataset(n_samples, n_features, n_outliers,
         - "theoretical", theoretical correction factor
     
     """
-    data = np.random.randn(n_samples, n_features)
+    prng = np.random.RandomState(0)
+    data = prng.randn(n_samples, n_features)
     # add some outliers
-    outliers_index = np.random.permutation(n_samples)[:n_outliers]
+    outliers_index = prng.permutation(n_samples)[:n_outliers]
     outliers_offset = 10. * \
         (np.random.randint(2, size=(n_outliers, n_features)) - 0.5)
     data[outliers_index] += outliers_offset

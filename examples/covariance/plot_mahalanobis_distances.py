@@ -3,24 +3,24 @@
 Robust covariance estimation and Mahalanobis distances relevance
 ================================================================
 
-For Gaussian ditributed data, the distance of an observation $x_i$ to
+For Gaussian distributed data, the distance of an observation $x_i$ to
 the mode of the distribution can be computed using its Mahalanobis
 distance: :math:`d_{(\mu,\Sigma)}(x_i)^2 = (x_i - \mu)'\Sigma^{-1}(x_i
 - \mu)` where :math:`\mu` and :math:`\Sigma` are the location and the
-covariance of the underlying gaussian distribution.
+covariance of the underlying Gaussian distribution.
 
 In practice, :math:`\mu` and :math:`\Sigma` are replaced by some
 estimates.  The usual covariance maximum likelihood estimate is very
 sensitive to the presence of outliers in the data set and therefore,
-the corresponding Mahalanobis distances are. One would better have to
-use a robust estimator of covariance to garanty that the estimation is
-resistant to "errorneous" observations in the data set and that the
+the corresponding Mahalanobis distances are. It's recommended to
+use a robust estimator of covariance to guaranty that the estimation is
+resistant to "erroneous" observations in the data set and that the
 associated Mahalanobis distances accurately reflect the true
 organisation of the observations.
 
 The Minimum Covariance Determinant estimator is a robust,
 high-breakdown point (i.e. it can be used to estimate the covariance
-matrix of highly contaminated datasets, up to
+matrix of highly contaminated data sets, up to
 :math:`\frac{n_samples-n_features-1}{2}` outliers) estimator of
 covariance. The idea is to find :math:`\frac{n_samples+n_features+1}{2}`
 observations whose empirical covariance has the smallest determinant,
@@ -32,7 +32,7 @@ by P.J.Rousseuw in [1].
 
 This example illustrates how the Mahalanobis distances are affected by
 outlying data: observations drawn from a contaminating distribution
-are not distinguishable from the observations comming from the real,
+are not distinguishable from the observations coming from the real,
 Gaussian distribution that one may want to work with. Using MCD-based
 Mahalanobis distances, the two populations become
 distinguishable. Associated applications are outliers detection,

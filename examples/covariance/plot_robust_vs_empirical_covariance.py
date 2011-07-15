@@ -4,36 +4,37 @@ Robust vs Empirical covariance estimate
 =======================================
 
 The usual covariance maximum likelihood estimate is very sensitive to
-the presence of outliers in the data set. In such a case, one would
-have better to use a robust estimator of covariance to garanty that
-the estimation is resistant to "errorneous" observations in the data
+the presence of outliers in the data set. In such a case, it's
+recommended to use a robust estimator of covariance to guaranty that
+the estimation is resistant to "erroneous" observations in the data
 set.
 
 The Minimum Covariance Determinant estimator is a robust,
 high-breakdown point (i.e. it can be used to estimate the covariance
-matrix of highly contaminated datasets, up to
+matrix of highly contaminated data sets, up to
 :math:`\frac{n_samples-n_features-1}{2}` outliers) estimator of
-covariance. The idea is to find :math:`\frac{n_samples+n_features+1}{2}`
-observations whose empirical covariance has the smallest determinant,
-yielding a "pure" subset of observations from which to compute
-standards estimates of location and covariance. After a correction
-step aiming at compensating the fact the the estimates were learnt
-from only a portion of the initial data, we end up with robust
-estimates of the data set location and covariance.
+covariance. The idea is to find
+:math:`\frac{n_samples+n_features+1}{2}` observations whose empirical
+covariance has the smallest determinant, yielding a "pure" subset of
+observations from which to compute standards estimates of location and
+covariance. After a correction step aiming at compensating the fact
+the the estimates were learnt from only a portion of the initial data,
+we end up with robust estimates of the data set location and
+covariance.
 
 The Minimum Covariance Determinant estimator (MCD) has been introduced
 by P.J.Rousseuw in [1].
 
 In this example, we compare the estimation errors that are made when
 using four types of location and covariance estimates on contaminated
-gaussian distributed data sets:
- - The mean and the empirical covariance of the full dataset, which break
+Gaussian distributed data sets:
+ - The mean and the empirical covariance of the full data set, which break
    down as soon as there are outliers in the data set
  - The robust MCD, that has a low error provided n_samples > 5 * n_features
- - The robust MCD reweighted according to Rousseeuw's recommandations:
+ - The robust MCD re-weighted according to Rousseeuw's recommendations:
    observations are given a 0 weight if they are found to be outlying
    according to their MCD-based Mahalanobis distance. Doing so improve the
-   efficiency of the estimators at gaussian models but it assumes that
+   efficiency of the estimators at Gaussian models but it assumes that
    we perfectly know the distribution of the mahalanobis distances computed
    from the MCD estimate (see [2] for further details).
  - The mean and the empirical covariance of the observations that are known

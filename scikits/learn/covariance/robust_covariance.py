@@ -37,7 +37,7 @@ def c_step(X, h, remaining_iterations=30, initial_estimates=None,
       Data set in which we look for the h observations whose scatter matrix
       has minimum determinant
     h: int, > n_samples / 2
-      Number of observations to compute the ribust estimates of location
+      Number of observations to compute the robust estimates of location
       and covariance from.
     remaining_iterations: int
       Number of iterations to perform.
@@ -48,7 +48,7 @@ def c_step(X, h, remaining_iterations=30, initial_estimates=None,
       procedure:
       - initial_estimates[0]: an initial location estimate
       - initial_estimates[1]: an initial covariance estimate
-    verbose: boolean
+    verbose: Boolean
       Verbose mode
 
     Returns
@@ -245,9 +245,9 @@ def fast_mcd(X, correction="empirical", reweight="rousseeuw"):
         - "rousseeuw" (default): Reweight observations using Rousseeuw's
           method (equivalent to deleting outlying observations from the
           data set before computing location and covariance estimates)
-        - else: no reweighting
+        - else: no re-weighting
     correction: str
-      Improve the covariance estimator consistency at gaussian models
+      Improve the covariance estimator consistency at Gaussian models
         - "empirical" (default): correction using the empirical correction
           factor suggested by Rousseeuw and Van Driessen in [1]
         - "theoretical": correction using the theoretical correction factor
@@ -434,7 +434,7 @@ class MinCovDet(EmpiricalCovariance):
         the robust estimates of location and shape.
         
     `correction`: str
-        Improve the covariance estimator consistency at gaussian models
+        Improve the covariance estimator consistency at Gaussian models
           - "empirical" (default): correction using the empirical correction
             factor suggested by Rousseeuw and Van Driessen in [2]
           - "theoretical": correction using the theoretical correction factor
@@ -442,11 +442,11 @@ class MinCovDet(EmpiricalCovariance):
           - else: no correction
     
     `reweight`: str
-        Computation of a reweighted MCD estimator:
+        Computation of a re-weighted MCD estimator:
           - "rousseeuw" (default): Reweight observations using Rousseeuw's
             method (equivalent to deleting outlying observations from the
             data set before computing location and covariance estimates)
-          - else: no reweighting
+          - else: no re-weighting
     
     [1] P. J. Rousseeuw. Least median of squares regression. J. Am
         Stat Ass, 79:871, 1984.
@@ -472,7 +472,7 @@ class MinCovDet(EmpiricalCovariance):
           If True, the support of robust location and covariance estimates
           is computed, and a covariance estimate is recomputed from it,
           without centering the data.
-          Usefull to work with data whose mean is significantly equal to
+          Useful to work with data whose mean is significantly equal to
           zero but is not exactly zero.
           If False, the robust location and covariance are directly computed
           with the FastMCD algorithm without additional treatment.
