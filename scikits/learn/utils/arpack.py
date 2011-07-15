@@ -49,12 +49,10 @@ __all__ = ['eigs', 'eigsh', 'svds', 'ArpackError', 'ArpackNoConvergence']
 from scipy.sparse.linalg.eigen.arpack import _arpack
 import numpy as np
 from scipy.sparse.linalg.interface import aslinearoperator, LinearOperator
-from scipy.sparse import identity, csc_matrix, csr_matrix, \
-    isspmatrix, isspmatrix_csr
+from scipy.sparse import identity, isspmatrix, isspmatrix_csr
 from scipy.linalg import lu_factor, lu_solve
 from scipy.sparse.sputils import isdense
 from scipy.sparse.linalg import gmres, splu
-from scipy.linalg.lapack import get_lapack_funcs
 
 
 _type_conv = {'f': 's', 'd': 'd', 'F': 'c', 'D': 'z'}

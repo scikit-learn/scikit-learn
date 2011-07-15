@@ -5,8 +5,6 @@ loader for the svmlight / libsvm sparse dataset format.  """
 #          Lars Buitinck <L.J.Buitinck@uva.nl>
 # License: Simple BSD.
 
-import os.path
-
 import scipy.sparse as sp
 
 from _svmlight_format import _load_svmlight_file

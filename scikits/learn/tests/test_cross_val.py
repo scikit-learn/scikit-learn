@@ -4,7 +4,6 @@
 import numpy as np
 from scipy.sparse import coo_matrix
 
-import nose
 from nose.tools import assert_true
 from nose.tools import assert_raises
 
