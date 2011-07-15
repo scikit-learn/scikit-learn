@@ -1,6 +1,5 @@
 """
-Testing for Clustering methods
-
+Tests for DBSCAN clustering algorithm
 """
 
 import numpy as np
@@ -17,7 +16,7 @@ X = generate_clustered_data(n_clusters=n_clusters)
 
 def test_dbscan_similarity():
     """
-    Tests the DBSCAN algorithm with a similarity matrix
+    Tests the DBSCAN algorithm with a similarity array
 
     """
     # Compute similarities
@@ -36,13 +35,13 @@ def test_dbscan_similarity():
     db = DBSCAN()
     labels = db.fit(S, eps=0.85, min_points=10).labels_
 
-    n_clusters_2 = len(set(labels)) - (1 if -1 in labels else 0)
+    n_clusters_2 = len(set(labels)) - int(-1 in labels)
     assert_equal(n_clusters, n_clusters_2)
 
 
 def test_dbscan_feature():
     """
-    Tests the DBSCAN algorithm with a features matrix
+    Tests the DBSCAN algorithm with a feature vector array
 
     """
     metric = 'euclidean'
@@ -52,12 +51,12 @@ def test_dbscan_feature():
                                  eps=0.85, min_points=10)
 
     # number of clusters, ignoring noise if present
-    n_clusters_1 = len(set(labels)) - (1 if -1 in labels else 0)
+    n_clusters_1 = len(set(labels)) - int(-1 in labels)
     assert_equal(n_clusters, n_clusters_1)
 
     db = DBSCAN()
     labels = db.fit(X, metric=metric,
                     eps=0.85, min_points=10).labels_
 
-    n_clusters_2 = len(set(labels)) - (1 if -1 in labels else 0)
+    n_clusters_2 = len(set(labels)) - int(-1 in labels)
     assert_equal(n_clusters, n_clusters_2)
