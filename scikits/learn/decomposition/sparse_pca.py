@@ -72,8 +72,8 @@ def _update_code(dictionary, Y, alpha, code=None, Gram=None, method='lars',
 
     method: 'lars' | 'cd'
         lars: uses the least angle regression method (linear_model.lars_path)
-        cd: uses the stochastic gradient descent method to compute the
-            lasso solution (linear_model.Lasso)
+        cd: uses the stochastic coordinate descent method to compute the
+            Lasso solution (linear_model.Lasso)
 
     tol: float
         numerical tolerance for Lasso convergence.
