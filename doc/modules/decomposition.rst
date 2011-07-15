@@ -175,8 +175,8 @@ Sparse PCA, see the `Examples` section below.
    :scale: 50%
 
 
-There are many different formulations for the Sparse PCA problem. The one
-implemented here is based on [Mrl09]_ .
+Note that there are many different formulations for the Sparse PCA problem. The
+one implemented here is based on [Mrl09]_ .
 
 
 .. topic:: Examples:
