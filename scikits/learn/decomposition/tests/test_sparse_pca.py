@@ -49,15 +49,17 @@ def test_fit_transform():
     U2 = spca_lars.transform(Y)
     assert_array_almost_equal(U1, U2)
     # Smoke test multiple CPUs
-    import scikits.learn.externals.joblib.parallel as joblib_par
-    _mp = joblib_par.multiprocessing
-    if sys.platform == 'win32':
-        joblib_par.multiprocessing = None  # fake parallelism
-    try:
+    if sys.platform == 'win32':  # fake parallelism for win32
+        import scikits.learn.externals.joblib.parallel as joblib_par
+        _mp = joblib_par.multiprocessing
+        joblib_par.multiprocessing = None
+        try:
+            U2 = SparsePCA(n_components=3, n_jobs=2).fit(Y).transform(Y)
+        finally:
+            joblib_par.multiprocessing = _mp
+    else:  # we can efficiently use parallelism
         U2 = SparsePCA(n_components=3, n_jobs=2).fit(Y).transform(Y)
-        assert_array_almost_equal(U1, U2)
-    finally:
-        joblib_par.multiprocessing = _mp
+    assert_array_almost_equal(U1, U2)
     # Test that CD gives similar results
     spca_lasso = SparsePCA(n_components=3, method='cd').fit(Y)
     assert_array_almost_equal(spca_lasso.components_, spca_lars.components_)
