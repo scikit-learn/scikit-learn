@@ -79,6 +79,10 @@ def _update_code(dictionary, Y, alpha, code=None, Gram=None, method='lars',
         numerical tolerance for Lasso convergence.
         Ignored if `method='lars'`
 
+    Returns
+    -------
+    new_code : array of shape (n_components, n_features)
+        The sparse codes recomputed using this iteration's dictionary
     """
     n_features = Y.shape[1]
     n_atoms = dictionary.shape[1]
