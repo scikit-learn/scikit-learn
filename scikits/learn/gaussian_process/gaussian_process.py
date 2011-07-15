@@ -9,6 +9,7 @@ import numpy as np
 from scipy import linalg, optimize, rand
 
 from ..base import BaseEstimator, RegressorMixin
+from ..metrics.pairwise import l1_distances
 from . import regression_models as regression
 from . import correlation_models as correlation
 
@@ -22,7 +23,7 @@ else:
         return linalg.solve(x, y)
 
 
-def compute_componentwise_l1_cross_distances(X):
+def l1_cross_distances(X):
     """
     Computes the nonzero componentwise L1 cross-distances between the vectors
     in X.
@@ -58,38 +59,6 @@ def compute_componentwise_l1_cross_distances(X):
 
     return D, ij.astype(np.int)
 
-
-def compute_componentwise_l1_pairwise_distances(X, Y):
-    """
-    Computes the componentwise L1 pairwise-distances between the vectors
-    in X and Y.
-
-    Parameters
-    ----------
-
-    X: array_like
-        An array with shape (n_samples_X, n_features)
-
-    Y: array_like, optional
-        An array with shape (n_samples_Y, n_features).
-
-    Returns
-    -------
-
-    D: array with shape (n_samples_X * n_samples_Y, n_features)
-        The array of componentwise L1 pairwise-distances.
-    """
-    X, Y = np.atleast_2d(X), np.atleast_2d(Y)
-    n_samples_X, n_features_X = X.shape
-    n_samples_Y, n_features_Y = Y.shape
-    if n_features_X != n_features_Y:
-        raise Exception("X and Y should have the same number of features!")
-    else:
-        n_features = n_features_X
-    D = X[:, np.newaxis, :] - Y[np.newaxis, :, :]
-    D = D.reshape((n_samples_X * n_samples_Y, n_features))
-
-    return D
 
 
 class GaussianProcess(BaseEstimator, RegressorMixin):
@@ -306,7 +275,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             y_std = np.ones(1)
 
         # Calculate matrix of distances D between samples
-        D, ij = compute_componentwise_l1_cross_distances(X)
+        D, ij = l1_cross_distances(X)
         if np.min(np.sum(D, axis=1)) == 0. \
                                     and self.corr != correlation.pure_nugget:
             raise Exception("Multiple X are not allowed")
@@ -442,7 +411,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                 MSE = np.zeros(n_eval)
 
             # Get pairwise componentwise L1-distances to the input training set
-            dx = compute_componentwise_l1_pairwise_distances(X, self.X)
+            dx = l1_distances(X, self.X)
 
             # Get regression function and correlation
             f = self.regr(X)
@@ -576,7 +545,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         if D is None:
             # Light storage mode (need to recompute D, ij and F)
-            D, ij = compute_componentwise_l1_cross_distances(self.X)
+            D, ij = l1_cross_distances(self.X)
             if np.min(np.sum(D, axis=1)) == 0. \
                                     and self.corr != correlation.pure_nugget:
                 raise Exception("Multiple X are not allowed")
