@@ -70,10 +70,11 @@ def _update_code(dictionary, Y, alpha, code=None, Gram=None, method='lars',
     Gram: array of shape (n_features, n_features)
         precomputed Gram matrix, (Y^T * Y)
 
-    method: 'lars' | 'cd'
+    method: {'lars', 'cd'}
         lars: uses the least angle regression method (linear_model.lars_path)
-        cd: uses the stochastic coordinate descent method to compute the
-            Lasso solution (linear_model.Lasso)
+        cd: uses the coordinate descent method to compute the
+        Lasso solution (linear_model.Lasso). Lars will be faster if
+        the estimated components are sparse.
 
     tol: float
         numerical tolerance for Lasso convergence.
@@ -82,7 +83,7 @@ def _update_code(dictionary, Y, alpha, code=None, Gram=None, method='lars',
     Returns
     -------
     new_code : array of shape (n_components, n_features)
-        The sparse codes recomputed using this iteration's dictionary
+        The sparse codes precomputed using this iteration's dictionary
     """
     n_features = Y.shape[1]
     n_atoms = dictionary.shape[1]

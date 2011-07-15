@@ -374,6 +374,7 @@ Signal Decomposition
 
    decomposition.PCA
    decomposition.ProbabilisticPCA
+   decomposition.ProjectedGradientNMF
    decomposition.RandomizedPCA
    decomposition.KernelPCA
    decomposition.FastICA
@@ -386,7 +387,7 @@ Signal Decomposition
    :template: function.rst
 
    decomposition.fastica
-   decomposition.sparse_pca
+   decomposition.dict_learning
 
 
 Linear Discriminant Analysis
