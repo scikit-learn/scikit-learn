@@ -126,14 +126,9 @@ applications including denoising, compression and structured prediction
 
 Sparse Principal Components Analysis (SparsePCA)
 ------------------------------------------------
-:class:`SparsePCA` is a variant of the PCA optimization problem, with the goal
-of extracting the set of sparse components that best reconstruct the data:
 
-.. math::
-   (U^*, V^*) = \underset{U, V}{\operatorname{arg\,min\,}} & \frac{1}{2}
-                ||X-UV||_2^2+\alpha||V||_1 \\
-                \text{subject to\,} & ||U_k||_2 = 1 \text{ for all }
-                0 \leq k < n_{components}
+:class:`SparsePCA` is a variant of PCA, with the goal of extracting the
+set of sparse components that best reconstruct the data.
 
 Principal component analysis (:class:`PCA`) has the disadvantage that the
 components extracted by this method have exclusively dense expressions, i.e.
@@ -147,12 +142,6 @@ Sparse principal components yields a more parsimonious, interpretable
 representation, clearly emphasizing which of the original features contribute
 to the differences between samples.
 
-The sparsity inducing :math:`\ell_1` norm also leads to a more robust estimation
-of the components; the degree of penalization can be adjusted through
-the hyperparameter `alpha`. Small values lead to a genttly regularized
-factorization, while larger values shrink many coefficients to zero.
-
-
 The following example illustrates 12 components extracted using sparse PCA
 with a value of `alpha=5` on the digits dataset. Only images if the digit 3
 were considered.  It can be seen how the regularization term induces many
@@ -160,7 +149,7 @@ zeros. Furthermore, the natural structure of the data causes the non-zero
 coefficients to be vertically adjacent. The model does not enforce this
 mathematically: each component is a vector :math:`h \in \mathbf{R}^{64}`, and there
 is no notion of vertical adjacency except during the human-friendly
-visualisation as 8x8 pixel images.
+visualization as 8x8 pixel images.
 The fact that the components shown below appear local
 is the effect of the inherent structure of the data, which makes such local
 patterns minimize reconstruction error. There exist sparsity-inducing norms
@@ -175,8 +164,23 @@ Sparse PCA, see the `Examples` section below.
    :scale: 50%
 
 
-Note that there are many different formulations for the Sparse PCA problem. The
-one implemented here is based on [Mrl09]_ .
+Note that there are many different formulations for the Sparse PCA
+problem. The one implemented here is based on [Mrl09]_ . The optimization
+problem solved is a PCA problem (dictionary learning) with an
+:math:`\ell_1` penalty on the components:
+
+.. math::
+   (U^*, V^*) = \underset{U, V}{\operatorname{arg\,min\,}} & \frac{1}{2}
+                ||X-UV||_2^2+\alpha||V||_1 \\
+                \text{subject to\,} & ||U_k||_2 = 1 \text{ for all }
+                0 \leq k < n_{components}
+
+
+The sparsity inducing :math:`\ell_1` norm also prevents learning
+components from noise when few training samples are available. The degree
+of penalization (and thus sparsity) can be adjusted through the
+hyperparameter `alpha`. Small values lead to a gently regularized
+factorization, while larger values shrink many coefficients to zero.
 
 
 .. topic:: Examples:
@@ -191,7 +195,6 @@ one implemented here is based on [Mrl09]_ .
    * [Jen09] `"Structured Sparse Principal Component Analysis"
      <www.di.ens.fr/~fbach/sspca_AISTATS2010.pdf>`_
      R. Jenatton, G. Obozinski, F. Bach, 2009
-
 
 .. _ICA:
 
