@@ -204,35 +204,27 @@ class GMM(BaseEstimator):
     --------
     >>> import numpy as np
     >>> from scikits.learn import mixture
+    >>> np.random.seed(1)
     >>> g = mixture.GMM(n_states=2)
 
     >>> # Generate random observations with two modes centered on 0
     >>> # and 10 to use for training.
-    >>> np.random.seed(0)
     >>> obs = np.concatenate((np.random.randn(100, 1),
     ...                       10 + np.random.randn(300, 1)))
     >>> g.fit(obs)
     GMM(cvtype='diag', n_states=2)
-    >>> g.weights
-    array([ 0.25,  0.75])
-    >>> g.means
-    array([[ 0.05980802],
-           [ 9.94199467]])
-    >>> g.covars
-    [array([[ 1.01682662]]), array([[ 0.96080513]])]
     >>> np.round(g.weights, 2)
-    array([ 0.25,  0.75])
+    array([ 0.75,  0.25])
     >>> np.round(g.means, 2)
-    array([[ 0.06],
-           [ 9.94]])
-    >>> np.round(g.covars, 2)
-    ... #doctest: +NORMALIZE_WHITESPACE
+    array([[ 10.05],
+           [  0.06]])
+    >>> np.round(g.covars, 2) #doctest: +SKIP
     array([[[ 1.02]],
            [[ 0.96]]])
     >>> g.predict([[0], [2], [9], [10]])
-    array([0, 0, 1, 1])
+    array([1, 1, 0, 0])
     >>> np.round(g.score([[0], [2], [9], [10]]), 2)
-    array([-2.32, -4.16, -1.65, -1.19])
+    array([-2.19, -4.58, -1.75, -1.21])
 
     >>> # Refit the model on new data (initial parameters remain the
     >>> # same), this time with an even split between the two modes.
@@ -353,7 +345,7 @@ class GMM(BaseEstimator):
         if not return_log:
             posteriors = np.exp(posteriors)
             posteriors += np.finfo(np.float32).eps
-            posteriors /= np.sum(posteriors, axis=1)
+            posteriors /= np.sum(posteriors, axis=1)[:, np.newaxis]
         return logprob, posteriors
 
     def score(self, obs):
