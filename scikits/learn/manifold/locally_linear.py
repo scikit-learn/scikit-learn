@@ -62,7 +62,7 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
             raise ImportError("PyAMG is not installed, cannot use lobcpg solver")
 
         # initial vectors for iteration
-        X = np.random.rand(M.shape[0], k + k_skip)
+        X = random_state.rand(M.shape[0], k + k_skip)
         try:
             ml = pyamg.smoothed_aggregation_solver(M, symmetry='symmetric')
         except TypeError:

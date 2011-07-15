@@ -190,7 +190,7 @@ def normalize(X, norm='l2', axis=1, copy=True):
     Parameters
     ----------
     X : array or scipy.sparse matrix with shape [n_samples, n_features]
-        The data to binarize, element by element.
+        The data to normalize, element by element.
         scipy.sparse matrices should be in CSR format to avoid an
         un-necessary copy.
 

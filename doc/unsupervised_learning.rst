@@ -12,5 +12,6 @@ Unsupervised learning
     modules/clustering
     modules/decomposition
     modules/covariance
+    modules/hmm
 
 

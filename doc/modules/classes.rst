@@ -177,6 +177,7 @@ Nearest Neighbors
    :template: function.rst
 
    neighbors.kneighbors_graph
+   neighbors.radius_neighbors_graph
 
 
 Gaussian Mixture Models
