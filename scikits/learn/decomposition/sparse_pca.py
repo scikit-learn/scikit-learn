@@ -143,8 +143,9 @@ def _update_code_parallel(dictionary, Y, alpha, code=None, Gram=None,
 
     method: 'lars' | 'cd'
         lars: uses the least angle regression method (linear_model.lars_path)
-        cd: uses the stochastic gradient descent method to compute the
-            lasso solution (linear_model.Lasso)
+        cd: uses the coordinate descent method to compute the
+        lasso solution (linear_model.Lasso). Lars will be faster if
+        the components extracted are sparse.
 
     n_jobs: int
         number of parallel jobs to run
