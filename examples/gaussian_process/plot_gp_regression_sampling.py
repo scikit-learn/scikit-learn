@@ -3,19 +3,20 @@
 
 """
 =========================================================
-Gaussian Processes regression: basic introductory example
+Gaussian Processes regression: sampling from the GP
 =========================================================
 
 A simple one-dimensional regression exercise with a cubic correlation
 model whose parameters are estimated using the maximum likelihood principle.
 
-The figure illustrates the interpolating property of the Gaussian Process
-model as well as its probabilistic nature in the form of a pointwise 95%
-confidence interval.
+The figure illustrates the stochastic nature of the Gaussian Processes,
+it shows the estimated mean function, which is also the predictor,
+a set of functions sampled from the GP stochastic process,
+the predicted covariance matrix the predicted 95% variance range.
 """
 print __doc__
 
-# Author: Vincent Dubourg <vincent.dubourg@gmail.com>
+# Author: Demian Wassermann <demian@bwh.harvard.edu>
 # License: BSD style
 
 import numpy as np
@@ -45,23 +46,33 @@ gp = GaussianProcess(corr='cubic', theta0=1e-2, thetaL=1e-4, thetaU=1e-1, \
 gp.fit(X, y)
 
 # Make the prediction on the meshed x-axis (ask for MSE as well)
-y_pred, MSE = gp.predict(x, eval_MSE=True)
-sigma = np.sqrt(MSE)
+y_pred = gp.predict(x)
+covariance_pred = gp.predict_covariance_matrix(x)
+sigma_pred = np.sqrt(covariance_pred.diagonal())
+y_samples = gp.sample(x, size=10)
 
-# Plot the function, the prediction and the 95% confidence interval based on
-# the MSE
+# Plot the function, the prediction and the 95% predictive variance
 fig = pl.figure()
+
 pl.hold(True)
-pl.plot(x, f(x), 'r:', lw=2, label=u'$f(x) = x\,\sin(x)$')
-pl.plot(X, y, 'r.', markersize=10, label=u'Observations')
+
+pl.plot(X, y, 'r.', markersize=15, label=u'Observations')
 pl.plot(x, y_pred, 'b-', lw=2, label=u'Prediction')
+pl.plot(x, f(x), 'r:', lw=3, label=u'$f(x) = x\,\sin(x)$')
+
 pl.fill(np.concatenate([x, x[::-1]]), \
-        np.concatenate([y_pred - 1.9600 * sigma,
-                       (y_pred + 1.9600 * sigma)[::-1]]), \
-        alpha=.5, fc='b', ec='None', label='95\% confidence interval')
+        np.concatenate([y_pred - 1.9600 * sigma_pred,
+                       (y_pred + 1.9600 * sigma_pred)[::-1]]), \
+        alpha=.5, fc='b', ec='None', label='95\% predicted variance')
+
+#Plot the samples
+pl.plot(x, y_samples[0], '--', c=pl.cm.spring(0.), label=u'Sampled function')
+for i, y_sample in enumerate(y_samples[1:]):
+    pl.plot(x, y_sample, '--', c=pl.cm.spring((i + 1.) / len(y_samples)))
+
+
 pl.xlabel('$x$')
 pl.ylabel('$f(x)$')
 pl.ylim(-10, 20)
 pl.legend(loc='upper left')
-
 pl.show()

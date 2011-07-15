@@ -10,8 +10,6 @@ from scipy import linalg, optimize, rand
 from ..base import BaseEstimator, RegressorMixin
 from . import regression_models as regression
 from . import correlation_models as correlation
-from ..cross_val import LeaveOneOut
-from ..externals.joblib import Parallel, delayed
 MACHINE_EPSILON = np.finfo(np.double).eps
 if hasattr(linalg, 'solve_triangular'):
     # only in scipy since 0.9
@@ -333,13 +331,13 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                 raise Exception("Shapes of beta0 and F do not match.")
 
         # Set attributes
-        self.X = X
-        self.y = y
-        self.D = D
-        self.ij = ij
-        self.F = F
-        self.X_mean, self.X_std = X_mean, X_std
-        self.y_mean, self.y_std = y_mean, y_std
+        self._X = X
+        self._y = y
+        self._D = D
+        self._ij = ij
+        self._F = F
+        self._X_mean, self._X_std = X_mean, X_std
+        self._y_mean, self._y_std = y_mean, y_std
 
         # Determine Gaussian Process model parameters
         if self.thetaL is not None and self.thetaU is not None:
@@ -347,7 +345,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             if self.verbose:
                 print("Performing Maximum Likelihood Estimation of the "
                     + "autocorrelation parameters...")
-            self.theta, self.reduced_likelihood_function_value, par = \
+            self._theta, self.reduced_likelihood_function_value, par = \
                 self.arg_max_reduced_likelihood_function()
             if np.isinf(self.reduced_likelihood_function_value):
                 raise Exception("Bad parameter region. "
@@ -358,18 +356,18 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             if self.verbose:
                 print("Given autocorrelation parameters. "
                     + "Computing Gaussian Process model parameters...")
-            self.theta = self.theta0
+            self._theta = self.theta0
             self.reduced_likelihood_function_value, par = \
                 self.reduced_likelihood_function()
             if np.isinf(self.reduced_likelihood_function_value):
                 raise Exception("Bad point. Try increasing theta0.")
 
-        self.beta = par['beta']
-        self.gamma = par['gamma']
-        self.sigma2 = par['sigma2']
-        self.C = par['C']
-        self.Ft = par['Ft']
-        self.G = par['G']
+        self._beta = par['beta']
+        self._gamma = par['gamma']
+        self._sigma2 = par['sigma2']
+        self._C = par['C']
+        self._Ft = par['Ft']
+        self._G = par['G']
 
         if self.storage_mode == 'light':
             # Delete heavy data (it will be computed again if required)
@@ -377,12 +375,12 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             if self.verbose:
                 print("Light storage mode specified. "
                     + "Flushing autocorrelation matrix...")
-            self.D = None
-            self.ij = None
-            self.F = None
-            self.C = None
-            self.Ft = None
-            self.G = None
+            self._D = None
+            self._ij = None
+            self._F = None
+            self._C = None
+            self._Ft = None
+            self._G = None
 
         return self
 
@@ -424,7 +422,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         # Check input shapes
         X = np.atleast_2d(X)
         n_eval, n_features_X = X.shape
-        n_samples, n_features = self.X.shape
+        n_samples, n_features = self._X.shape
 
         if n_features_X != n_features:
             raise ValueError(("The number of features in X (X.shape[1] = %d) "
@@ -436,7 +434,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             # (evaluates all given points in a single batch run)
 
             # Normalize input
-            X = (X - self.X_mean) / self.X_std
+            X = (X - self._X_mean) / self._X_std
 
             # Initialize output
             y = np.zeros(n_eval)
@@ -444,21 +442,21 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                 MSE = np.zeros(n_eval)
 
             # Get pairwise componentwise L1-distances to the input training set
-            dx = compute_componentwise_l1_pairwise_distances(X, self.X)
+            dx = compute_componentwise_l1_pairwise_distances(X, self._X)
 
             # Get regression function and correlation
             f = self.regr(X)
-            r = self.corr(self.theta, dx).reshape(n_eval, n_samples)
+            r = self.corr(self._theta, dx).reshape(n_eval, n_samples)
 
             # Scaled predictor
-            y_ = np.dot(f, self.beta) + np.dot(r, self.gamma)
+            y_ = np.dot(f, self._beta) + np.dot(r, self._gamma)
 
             # Predictor
-            y = (self.y_mean + self.y_std * y_).ravel()
+            y = (self._y_mean + self._y_std * y_).ravel()
 
             # Mean Squared Error
             if eval_MSE:
-                C = self.C
+                C = self._C
                 if C is None:
                     # Light storage mode (need to recompute C, F, Ft and G)
                     if self.verbose:
@@ -467,21 +465,21 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                             + "autocorrelation matrix...")
                     reduced_likelihood_function_value, par = \
                         self.reduced_likelihood_function()
-                    self.C = par['C']
-                    self.Ft = par['Ft']
-                    self.G = par['G']
+                    self._C = par['C']
+                    self._Ft = par['Ft']
+                    self._G = par['G']
 
-                rt = solve_triangular(self.C, r.T, lower=True)
+                rt = solve_triangular(self._C, r.T, lower=True)
 
                 if self.beta0 is None:
                     # Universal Kriging
-                    u = solve_triangular(self.G.T,
-                                         np.dot(self.Ft.T, rt) - f.T)
+                    u = solve_triangular(self._G.T,
+                                         np.dot(self._Ft.T, rt) - f.T)
                 else:
                     # Ordinary Kriging
                     u = np.zeros(y.shape)
 
-                MSE = self.sigma2 * (1. - (rt ** 2.).sum(axis=0)
+                MSE = self._sigma2 * (1. - (rt ** 2.).sum(axis=0)
                                         + (u ** 2.).sum(axis=0))
 
                 # Mean Squared Error might be slightly negative depending on
@@ -491,7 +489,6 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                 return y, MSE
 
             else:
-
                 return y
 
         else:
@@ -524,6 +521,173 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
                 return y
 
+    def predict_covariance_matrix(self, X):
+        """
+        This function returns the covariance matrix corresponding to the
+        Gaussian Process model at x.
+
+        Parameters
+        ----------
+        X : array_like
+            An array with shape (n_eval, n_features) giving the point(s) at
+            which the covariance is calculated
+
+        returns
+        -------
+        C : array_like
+            an array with shape (n_eval, n_eval) with the predicted covariance
+            matrix at x.
+        """
+
+        # run input checks
+        self._check_params()
+
+        # check input shapes
+        X = np.atleast_2d(X)
+        n_eval, n_features_X = X.shape
+        n_samples, n_features = self._X.shape
+
+        if n_features_X != n_features:
+            raise ValueError(("The number of features in X (X.shape[1] = %d) "
+                           + "should match the sample size used for fit() "
+                           + "which is %d.") % (n_features_X, n_features))
+
+        # Normalize input
+        X = (X - self._X_mean) / self._X_std
+
+        covariance, _ = \
+                self._compute_covariance_matrix_from_centered_distribution(X)
+
+        return covariance
+
+    def _compute_covariance_matrix_from_centered_distribution(self, X):
+        """
+        This function returns the covariance matrix corresponding to the
+        Gaussian Process model at x, where x MUST be centered.
+
+        This function is intended to be a helper in computing the
+        covariance matrix avoiding code duplication.
+
+        Parameters
+        ----------
+        X : array_like
+            An array with shape (n_eval, n_features) giving the point(s) at
+            which the covariance is calculated
+
+        returns
+        -------
+        C : array_like
+            an array with shape (n_eval, n_eval) with the predicted covariance
+            matrix at x.
+
+        r : array_like
+            an array with shape (n_eval, n_samples) with the correlation
+            between the provided X evaluations and the samples used to fit
+            the Gaussian Process
+        """
+        n_eval, n_features_X = X.shape
+        n_samples, n_features = self._X.shape
+
+        # Get pairwise componentwise L1-distances to the input training set
+        dx = compute_componentwise_l1_pairwise_distances(X, self._X)
+
+        # Get correlations
+        r = self.corr(self._theta, dx).reshape(n_eval, n_samples)
+
+        C = self._C
+        if C is None:
+            # Light storage mode (need to recompute C, F, Ft and G)
+            if self.verbose:
+                print("This GaussianProcess used 'light' storage mode "
+                    + "at instanciation. Need to recompute "
+                    + "autocorrelation matrix...")
+            reduced_likelihood_function_value, par = \
+                self.reduced_likelihood_function()
+            C = par['C']
+
+        rt = solve_triangular(C, r.T, lower=True)
+
+        D, ij = compute_componentwise_l1_cross_distances(X)
+
+        r_samples = self.corr(self._theta, D)
+        R = np.eye(n_eval)
+        R[ij[:, 0], ij[:, 1]] = r_samples
+        R[ij[:, 1], ij[:, 0]] = r_samples
+
+        covariance = self._sigma2 * (R - np.dot(rt.T, rt))
+
+        return covariance, r
+
+    def sample(self, X, size=1, rng=None):
+        """
+        This function returns functions sampled from the
+        Gaussian Process model at x.
+
+        Parameters
+        ----------
+        X : array_like
+            An array with shape (n_eval, n_features) giving the point(s) at
+            which the prediction(s) should be made.
+
+        size : integer, optional
+            An integer specifying how many samples to draw from the
+            distribution.
+
+        rng: RandomState or an int seed (0 by default)
+            A random number generator instance to make behavior
+            deterministic.
+
+
+
+        Returns
+        -------
+        y : array_like or list of array_like
+            An array with shape (n_eval, size) with the samples
+            drawn from the fitted Gaussian Process at x
+        """
+        if rng is None:
+            rng = np.random.RandomState()
+        elif isinstance(rng, int):
+            rng = np.random.RandomState(rng)
+
+        
+        # Run input checks
+        self._check_params()
+
+        # Check input shapes
+        X = np.atleast_2d(X)
+        n_eval, n_features_X = X.shape
+        n_samples, n_features = self._X.shape
+
+        if n_features_X != n_features:
+            raise ValueError(("The number of features in X (X.shape[1] = %d) "
+                           + "should match the sample size used for fit() "
+                           + "which is %d.") % (n_features_X, n_features))
+
+        # Normalize input
+        X = (X - self._X_mean) / self._X_std
+
+        covariance, r =\
+                self._compute_covariance_matrix_from_centered_distribution(X)
+
+        HACKY_EPSILON_ADDED_TO_STABILIZE_CHOLESKY = covariance.diagonal().mean() * 1e-6
+
+        y = np.zeros(n_eval)
+
+        # Scaled predictor
+        f = self.regr(X)
+        y_ = np.dot(f, self._beta) + np.dot(r, self._gamma)
+
+        # Predictor
+        y = (self._y_mean + self._y_std * y_).ravel()
+
+        #Adding a small constant to the diagonal in order to stabilize cholesky
+        covariance.flat[::n_eval + 1] += \
+                                    HACKY_EPSILON_ADDED_TO_STABILIZE_CHOLESKY
+        L = linalg.cholesky(covariance)
+
+        return y + np.dot(L.T, rng.randn(n_eval, n_features_X * size)).reshape(n_eval, n_features_X, size).squeeze().T
+
     def reduced_likelihood_function(self, theta=None):
         """
         This function determines the BLUP parameters and evaluates the reduced
@@ -540,7 +704,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             An array containing the autocorrelation parameters at which the
             Gaussian Process model parameters should be determined.
             Default uses the built-in autocorrelation parameters
-            (ie theta = self.theta).
+            (ie theta = self._theta).
 
         Returns
         -------
@@ -564,25 +728,25 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         if theta is None:
             # Use built-in autocorrelation parameters
-            theta = self.theta
+            theta = self._theta
 
         # Initialize output
         reduced_likelihood_function_value = - np.inf
         par = {}
 
         # Retrieve data
-        n_samples = self.X.shape[0]
-        D = self.D
-        ij = self.ij
-        F = self.F
+        n_samples = self._X.shape[0]
+        D = self._D
+        ij = self._ij
+        F = self._F
 
         if D is None:
             # Light storage mode (need to recompute D, ij and F)
-            D, ij = compute_componentwise_l1_cross_distances(self.X)
+            D, ij = compute_componentwise_l1_cross_distances(self._X)
             if np.min(np.sum(np.abs(D), axis=1)) == 0. \
                                     and self.corr != correlation.pure_nugget:
                 raise Exception("Multiple X are not allowed")
-            F = self.regr(self.X)
+            F = self.regr(self._X)
 
         # Set up R
         r = self.corr(theta, D)
@@ -621,7 +785,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                 # Ft is too ill conditioned, get out (try different theta)
                 return reduced_likelihood_function_value, par
 
-        Yt = solve_triangular(C, self.y, lower=True)
+        Yt = solve_triangular(C, self._y, lower=True)
         if self.beta0 is None:
             # Universal Kriging
             beta = solve_triangular(G, np.dot(Q.T, Yt))
@@ -637,7 +801,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         # Compute/Organize output
         reduced_likelihood_function_value = - sigma2.sum() * detR
-        par['sigma2'] = sigma2 * self.y_std ** 2.
+        par['sigma2'] = sigma2 * self._y_std ** 2.
         par['beta'] = beta
         par['gamma'] = solve_triangular(C.T, rho)
         par['C'] = C
