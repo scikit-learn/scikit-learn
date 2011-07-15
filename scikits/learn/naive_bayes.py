@@ -78,10 +78,6 @@ class GaussianNB(BaseEstimator, ClassifierMixin):
     GaussianNB()
     >>> print clf.predict([[-0.8, -1]])
     [1]
-
-    See also
-    --------
-
     """
 
     def fit(self, X, y):
@@ -200,9 +196,6 @@ class BaseDiscreteNB(BaseEstimator, ClassifierMixin):
     Any estimator based on this class should provide:
 
     __init__
-    _count(X, Y)
-        Count feature occurrences per class; see MultinomialNB._count
-        for an example.
     _joint_log_likelihood(X)
         Compute the unnormalized posterior log probability of X,
         i.e. log P(c) + log P(x|c) for all rows x of X,
@@ -242,12 +235,12 @@ class BaseDiscreteNB(BaseEstimator, ClassifierMixin):
         if class_prior:
             assert len(class_prior) == n_classes, \
                    'Number of priors must match number of classs'
-            self.intercept_ = np.log(class_prior)
+            self.class_log_prior_ = np.log(class_prior)
         elif self.fit_prior:
             y_count = np.bincount(inv_y_ind)
-            self.intercept_ = np.log(y_count) - np.log(len(y))
+            self.class_log_prior_ = np.log(y_count) - np.log(len(y))
         else:
-            self.intercept_ = np.zeros(n_classes) - np.log(n_classes)
+            self.class_log_prior_ = np.zeros(n_classes) - np.log(n_classes)
 
         Y = LabelBinarizer().fit_transform(y)
         if Y.shape[1] == 1:
@@ -255,14 +248,24 @@ class BaseDiscreteNB(BaseEstimator, ClassifierMixin):
 
         N_c, N_c_i = self._count(X, Y)
 
-        self.coef_ = (np.log(N_c_i + self.alpha)
+        self.feature_log_prob_ = (np.log(N_c_i + self.alpha)
                     - np.log(N_c.reshape(-1, 1)
                            + self.alpha * X.shape[1]))
 
         return self
 
-    class_log_prior_ = property(lambda self: self.intercept_)
-    feature_log_prob_ = property(lambda self: self.coef_)
+    @staticmethod
+    def _count(X, Y):
+        """Count feature occurrences.
+
+        Returns (N_c, N_c_i), where
+            N_c is the count of all features in all samples of class c;
+            N_c_i is the count of feature i in all samples of class c.
+        """
+        N_c_i = safe_sparse_dot(Y.T, X)
+        N_c = np.sum(N_c_i, axis=1)
+
+        return N_c, N_c_i
 
     def predict(self, X):
         """
@@ -353,14 +356,14 @@ class MultinomialNB(BaseDiscreteNB):
 
     Attributes
     ----------
-    `class_log_prior_`, `intercept_` : array, shape = [n_classes]
+    `intercept_`, `class_log_prior_` : array, shape = [n_classes]
         Log probability of each class (smoothed).
 
     `feature_log_prob_`, `coef_` : array, shape = [n_classes, n_features]
         Empirical log probability of features given a class, P(x_i|y).
 
-        (`class_log_prior_` and `feature_log_prob_` are properties referring to
-        `intercept_` and `coef_`, respectively.)
+        (`intercept_` and `coef_` are properties referring to
+        `class_log_prior_` and `feature_log_prob_`, respectively.)
 
     Examples
     --------
@@ -385,26 +388,16 @@ class MultinomialNB(BaseDiscreteNB):
         self.alpha = alpha
         self.fit_prior = fit_prior
 
-    @staticmethod
-    def _count(X, Y):
-        """Count feature occurrences.
-
-        Returns (N_c, N_c_i), where
-            N_c is the count of all features in all samples of class c;
-            N_c_i is the count of feature i in all samples of class c.
-        """
-        N_c_i = safe_sparse_dot(Y.T, X)
-        N_c = np.sum(N_c_i, axis=1)
-
-        return N_c, N_c_i
+    intercept_ = property(lambda self: self.class_log_prior_)
+    coef_ = property(lambda self: self.feature_log_prob_)
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
 
         X = atleast2d_or_csr(X)
 
-        jll = safe_sparse_dot(self.coef_, X.T)
-        return jll + np.atleast_2d(self.intercept_).T
+        jll = safe_sparse_dot(self.feature_log_prob_, X.T)
+        return jll + np.atleast_2d(self.class_log_prior_).T
 
 
 class BernoulliNB(BaseDiscreteNB):
@@ -444,14 +437,11 @@ class BernoulliNB(BaseDiscreteNB):
 
     Attributes
     ----------
-    `class_log_prior_`, `intercept_` : array, shape = [n_classes]
+    `class_log_prior_` : array, shape = [n_classes]
         Log probability of each class (smoothed).
 
-    `feature_log_prob_`, `coef_` : array, shape = [n_classes, n_features]
+    `feature_log_prob_` : array, shape = [n_classes, n_features]
         Empirical log probability of features given a class, P(x_i|y).
-
-        (`class_log_prior_` and `feature_log_prob_` are properties referring to
-        `intercept_` and `coef_`, respectively.)
 
     Examples
     --------
@@ -484,18 +474,9 @@ class BernoulliNB(BaseDiscreteNB):
         self.fit_prior = fit_prior
 
     def _count(self, X, Y):
-        """Count feature occurrences.
-
-        Returns (N_c, N_c_i), where
-            N_c is the count of all features in all samples of class c;
-            N_c_i is the count of feature i in all samples of class c.
-        """
         if self.binarize is not None:
             X = binarize(X, threshold=self.binarize)
-        N_c_i = safe_sparse_dot(Y.T, X)
-        N_c = np.sum(N_c_i, axis=1)
-
-        return N_c, N_c_i
+        return super(BernoulliNB, self)._count(X, Y)
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
@@ -505,17 +486,17 @@ class BernoulliNB(BaseDiscreteNB):
         if self.binarize is not None:
             X = binarize(X, threshold=self.binarize)
 
-        n_classes, n_features = self.coef_.shape
+        n_classes, n_features = self.feature_log_prob_.shape
         n_samples, n_features_X = X.shape
 
         if n_features_X != n_features:
             raise ValueError("Expected input with %d features, got %d instead"
                              % (n_features, n_features_X))
 
-        neg_coef = np.log(1 - np.exp(self.coef_))
-        # Compute  neg_coef · (1 - X).T  as  ∑neg_coef - X · neg_coef
-        X_neg_coef = (neg_coef.sum(axis=1).reshape(-1, 1)
-                    - safe_sparse_dot(neg_coef, X.T))
-        jll = safe_sparse_dot(self.coef_, X.T) + X_neg_coef
+        neg_prob = np.log(1 - np.exp(self.feature_log_prob_))
+        # Compute  neg_prob · (1 - X).T  as  ∑neg_prob - X · neg_prob
+        X_neg_prob = (neg_prob.sum(axis=1).reshape(-1, 1)
+                    - safe_sparse_dot(neg_prob, X.T))
+        jll = safe_sparse_dot(self.feature_log_prob_, X.T) + X_neg_prob
 
-        return jll + np.atleast_2d(self.intercept_).T
+        return jll + np.atleast_2d(self.class_log_prior_).T
