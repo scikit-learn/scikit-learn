@@ -27,6 +27,8 @@ def generate_toy_data(n_atoms, n_samples, image_size):
     Y += 0.1 * np.random.randn(Y.shape[0], Y.shape[1])  # Add noise
     return Y, U, V
 
+# SparsePCA can be a bit slow. To avoid having test times go up, we
+# test different aspects of the code in the same test
 
 def test_correct_shapes():
     np.random.seed(0)
@@ -39,9 +41,16 @@ def test_correct_shapes():
 
 def test_fit_transform():
     Y, _, _ = generate_toy_data(3, 10, (8, 8))  # wide array
-    U1 = SparsePCA(n_components=3).fit_transform(Y)
-    U2 = SparsePCA(n_components=3).fit(Y).transform(Y)
+    U1 = SparsePCA(n_components=3, method='lars').fit_transform(Y)
+    spca_lars = SparsePCA(n_components=3, method='lars').fit(Y)
+    U2 = spca_lars.transform(Y)
     assert_array_almost_equal(U1, U2)
+    # Smoke test multiple CPUs
+    U2 = SparsePCA(n_components=3, n_jobs=2).fit(Y).transform(Y)
+    assert_array_almost_equal(U1, U2)
+    # Test that CD gives similar results
+    spca_lasso = SparsePCA(n_components=3, method='cd').fit(Y)
+    assert_array_almost_equal(spca_lasso.components_, spca_lars.components_)
 
 
 def test_fit_transform_tall():
@@ -50,9 +59,3 @@ def test_fit_transform_tall():
     U2 = SparsePCA(n_components=3).fit(Y).transform(Y)
     assert_array_almost_equal(U1, U2)
 
-
-def test_lasso_lars():
-    Y, _, _ = generate_toy_data(3, 10, (8, 8))
-    SPCALasso = SparsePCA(n_components=3, method='cd').fit(Y)
-    SPCALars = SparsePCA(n_components=3, method='lars').fit(Y)
-    assert_array_almost_equal(SPCALasso.components_, SPCALars.components_)
