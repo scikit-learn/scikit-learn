@@ -78,10 +78,10 @@ def _update_code(dictionary, Y, alpha, code=None, Gram=None, method='lars',
         Regularization parameter for the Lasso problem.
 
     code: array of shape (n_components, n_features)
-        Value of the sparse codes at the previous iteration
+        Value of the sparse codes at the previous iteration.
 
     Gram: array of shape (n_features, n_features)
-        precomputed Gram matrix, (Y^T * Y)
+        Precomputed Gram matrix, (Y^T * Y).
 
     method: {'lars', 'cd'}
         lars: uses the least angle regression method (linear_model.lars_path)
@@ -511,12 +511,13 @@ class SparsePCA(BaseEstimator, TransformerMixin):
             features as the data used to train the model.
 
         ridge_alpha: float
-            Amount of ridge shrinkage to apply in order to improve conditioning
+            Amount of ridge shrinkage to apply in order to improve
+            conditioning.
 
         Returns
         -------
         X_new array, shape (n_samples, n_components)
-            Transformed data
+            Transformed data.
         """
         U = ridge_regression(self.components_.T, X.T, ridge_alpha,
                              solver='dense_cholesky')
