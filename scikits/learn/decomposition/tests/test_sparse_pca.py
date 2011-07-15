@@ -1,6 +1,8 @@
 # Author: Vlad Niculae
 # License: BSD
 
+import sys
+
 import numpy as np
 from .. import SparsePCA
 from numpy.testing import assert_array_almost_equal, assert_equal
@@ -49,7 +51,8 @@ def test_fit_transform():
     # Smoke test multiple CPUs
     import scikits.learn.externals.joblib.parallel as joblib_par
     _mp = joblib_par.multiprocessing
-    joblib_par.multiprocessing = None  # fake parallelism
+    if sys.platform == 'win32':
+        joblib_par.multiprocessing = None  # fake parallelism
     try:
         U2 = SparsePCA(n_components=3, n_jobs=2).fit(Y).transform(Y)
         assert_array_almost_equal(U1, U2)
