@@ -495,7 +495,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         X_new array, shape (n_samples, n_components)
             Transformed data
         """
-        U = ridge_regression(self.components_.T, X.T, ridge_alpha, 
+        U = ridge_regression(self.components_.T, X.T, ridge_alpha,
                              solver='dense_cholesky')
         U /= np.sqrt((U ** 2).sum(axis=0))
         return U
