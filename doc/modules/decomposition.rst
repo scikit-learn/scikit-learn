@@ -143,24 +143,25 @@ the real underlying components can be more naturally imagined as sparse
 vectors; for example in face recognition, components might naturally map to
 parts of faces.
 
-Sparse principal components gives a more parsimonious, and therefore a more 
-useful idea on which of the original features contribute to the differences
-between the samples.
+Sparse principal components yields a more parsimonious, interpretable
+representation, clearly emphasizing which of the original features contribute
+to the differences between samples.
 
-The sparity inducing :math:`\ell_1` norm also leads to a more robust estimation
-of the components, and the degree of penalization can be adjusted through
-the hyperparameter `alpha`. Small values lead to a slightly regularized
-factorization, while larger values shrink more coefficients to zero.
+The sparsity inducing :math:`\ell_1` norm also leads to a more robust estimation
+of the components; the degree of penalization can be adjusted through
+the hyperparameter `alpha`. Small values lead to a genttly regularized
+factorization, while larger values shrink many coefficients to zero.
 
-For example, this is how the 12 components extracted using Sparse PCA look like
-for a value of `alpha=5`. The digits dataset is used, and only the images of
-the digit 3 were considered. It can be seen how the regularization induces many
+
+The following example illustrates 12 components extracted using sparse PCA
+with a value of `alpha=5` on the digits dataset. Only images if the digit 3
+were considered.  It can be seen how the regularization term induces many
 zeros. Furthermore, the natural structure of the data causes the non-zero
-coefficients to be adjacent even "vertically". The model does not enforce this
-matematically: each component is a vector :math:`h \in \mathbf{R}^{64}`; there
-is no notion of vertical adjacency except during the human-friendly 
-visualisation as 8x8 pixel images. Horizontal adjacency exists, but it is not
-considered by this model. The fact that the components shown below appear local
+coefficients to be vertically adjacent. The model does not enforce this
+mathematically: each component is a vector :math:`h \in \mathbf{R}^{64}`, and there
+is no notion of vertical adjacency except during the human-friendly
+visualisation as 8x8 pixel images.
+The fact that the components shown below appear local
 is the effect of the inherent structure of the data, which makes such local
 patterns minimize reconstruction error. There exist sparsity-inducing norms
 thattake into account adjacency and different kinds of structure, but such
