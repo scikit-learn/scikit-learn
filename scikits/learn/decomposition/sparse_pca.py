@@ -24,8 +24,21 @@ from ..base import BaseEstimator, TransformerMixin
 def _gen_even_slices(n, n_packs):
     """Generator to create n_packs slices going up to n.
 
+    Parameters
+    ----------
+    n: int,
+        Upper bound of the range of indices to include.
+
+    n_packs: int,
+        Number of slices to generate.
+
+    Returns
+    -------
+    slices: generator object,
+        Generator object producing n_packs equal slices going up to n.
+
     Examples
-    ========
+    --------
 
     >>> list(_gen_even_slices(10, 1))
     [slice(0, 10, None)]
@@ -56,13 +69,13 @@ def _update_code(dictionary, Y, alpha, code=None, Gram=None, method='lars',
     Parameters
     ----------
     dictionary: array of shape (n_samples, n_components)
-        dictionary against which to optimize the sparse code
+        Dictionary against which to optimize the sparse code.
 
     Y: array of shape (n_samples, n_features)
-        data matrix
+        Data matrix.
 
     alpha: float
-        regularization parameter for the Lasso problem
+        Regularization parameter for the Lasso problem.
 
     code: array of shape (n_components, n_features)
         Value of the sparse codes at the previous iteration
@@ -77,8 +90,8 @@ def _update_code(dictionary, Y, alpha, code=None, Gram=None, method='lars',
         the estimated components are sparse.
 
     tol: float
-        numerical tolerance for Lasso convergence.
-        Ignored if `method='lars'`
+        Numerical tolerance for coordinate descent Lasso convergence.
+        Only used if `method='cd'`
 
     Returns
     -------
@@ -128,19 +141,19 @@ def _update_code_parallel(dictionary, Y, alpha, code=None, Gram=None,
     Parameters
     ----------
     dictionary: array of shape (n_samples, n_components)
-        dictionary against which to optimize the sparse code
+        Dictionary against which to optimize the sparse code.
 
     Y: array of shape (n_samples, n_features)
-        data matrix
+        Data matrix.
 
     alpha: float
-        regularization parameter for the Lasso problem
+        Regularization parameter for the Lasso problem.
 
     code: array of shape (n_components, n_features)
-        previous iteration of the sparse code
+        Previous iteration of the sparse code.
 
     Gram: array of shape (n_features, n_features)
-        precomputed Gram matrix, (Y^T * Y)
+        Precomputed Gram matrix, (Y^T * Y).
 
     method: 'lars' | 'cd'
         lars: uses the least angle regression method (linear_model.lars_path)
@@ -149,11 +162,11 @@ def _update_code_parallel(dictionary, Y, alpha, code=None, Gram=None,
         the components extracted are sparse.
 
     n_jobs: int
-        number of parallel jobs to run
+        Number of parallel jobs to run.
 
     tol: float
-        numerical tolerance for coordinate descent Lasso convergence.
-        Only used if `method='lasso`.
+        Numerical tolerance for coordinate descent Lasso convergence.
+        Only used if `method='cd`.
 
     """
     n_samples, n_features = Y.shape
@@ -183,20 +196,20 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
     Parameters
     ----------
     dictionary: array of shape (n_samples, n_components)
-        value of the dictionary at the previous iteration
+        Value of the dictionary at the previous iteration.
 
     Y: array of shape (n_samples, n_features)
-        data matrix
+        Data matrix.
 
     code: array of shape (n_components, n_features)
-        sparse coding of the data against which to optimize the dictionary
+        Sparse coding of the data against which to optimize the dictionary.
 
     verbose:
-        degree of output the procedure will print
+        Degree of output the procedure will print.
 
     return_r2: bool
-        whether to compute and return the residual sum of squares corresponding
-        to the computed solution
+        Whether to compute and return the residual sum of squares corresponding
+        to the computed solution.
 
     random_state: int or RandomState
         Pseudo number generator state used for random sampling.
@@ -204,7 +217,7 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
     Returns
     -------
     dictionary: array of shape (n_samples, n_components)
-        updated dictionary
+        Updated dictionary.
 
     """
     n_atoms = len(code)
@@ -265,19 +278,19 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
     Parameters
     ----------
     X: array of shape (n_samples, n_features)
-        data matrix
+        Data matrix.
 
     n_atoms: int,
-        number of dictionary atoms to extract
+        Number of dictionary atoms to extract.
 
     alpha: int,
-        sparsity controlling parameter
+        Sparsity controlling parameter.
 
     max_iter: int,
-        maximum number of iterations to perform
+        Maximum number of iterations to perform.
 
     tol: float,
-        tolerance for numerical error
+        Tolerance for the stopping condition.
 
     method: 'lars' | 'cd'
         lars: uses the least angle regression method (linear_model.lars_path)
@@ -285,19 +298,19 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
             lasso solution (linear_model.Lasso)
 
     n_jobs: int,
-        number of parallel jobs to run, or -1 to autodetect.
+        Number of parallel jobs to run, or -1 to autodetect.
 
     dict_init: array of shape (n_atoms, n_features),
-        initial value for the dictionary for warm restart scenarios
+        Initial value for the dictionary for warm restart scenarios.
 
     code_init: array of shape (n_samples, n_atoms),
-        initial value for the sparse code for warm restart scenarios
+        Initial value for the sparse code for warm restart scenarios.
 
     callback:
-        callable that gets invoked every five iterations
+        Callable that gets invoked every five iterations.
 
     verbose:
-        degree of output the procedure will print
+        Degree of output the procedure will print.
 
     random_state: int or RandomState
         Pseudo number generator state used for random sampling.
@@ -305,13 +318,14 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
     Returns
     -------
     code: array of shape (n_samples, n_atoms)
-        the sparse code factor in the matrix factorization
+        The sparse code factor in the matrix factorization.
 
     dictionary: array of shape (n_atoms, n_features),
-        the dictionary factor in the matrix factorization
+        The dictionary factor in the matrix factorization.
 
     errors: array
-        vector of errors at each iteration
+        Vector of errors at each iteration.
+
     """
     t0 = time.time()
     n_features = X.shape[1]
@@ -401,16 +415,16 @@ class SparsePCA(BaseEstimator, TransformerMixin):
     Parameters
     ----------
     n_components: int,
-        number of sparse atoms to extract
+        Number of sparse atoms to extract.
 
     alpha: int,
-        sparsity controlling parameter
+        Sparsity controlling parameter.
 
     max_iter: int,
-        maximum number of iterations to perform
+        Maximum number of iterations to perform.
 
     tol: float,
-        tolerance for numerical error
+        Tolerance for the stopping condition.
 
     method: 'lars' | 'cd'
         lars: uses the least angle regression method (linear_model.lars_path)
@@ -418,16 +432,16 @@ class SparsePCA(BaseEstimator, TransformerMixin):
             lasso solution (linear_model.Lasso)
 
     n_jobs: int,
-        number of parallel jobs to run
+        Number of parallel jobs to run.
 
     U_init: array of shape (n_samples, n_atoms),
-        initial values for the loadings for warm restart scenarios
+        Initial values for the loadings for warm restart scenarios.
 
     V_init: array of shape (n_atoms, n_features),
-        initial values for the components for warm restart scenarios
+        Initial values for the components for warm restart scenarios.
 
     verbose:
-        degree of verbosity of the printed output
+        Degree of verbosity of the printed output.
 
     random_state: int or RandomState
         Pseudo number generator state used for random sampling.
@@ -435,10 +449,10 @@ class SparsePCA(BaseEstimator, TransformerMixin):
     Attributes
     ----------
     components_: array, [n_components, n_features]
-        sparse components extracted from the data
+        Sparse components extracted from the data.
 
     error_: array
-        vector of errors at each iteration
+        Vector of errors at each iteration.
 
     See also
     --------
