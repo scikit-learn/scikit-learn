@@ -143,7 +143,7 @@ representation, clearly emphasizing which of the original features contribute
 to the differences between samples.
 
 The following example illustrates 12 components extracted using sparse PCA
-with a value of `alpha=5` on the digits dataset. Only images if the digit 3
+with a value of `alpha=5` on the digits dataset. Only images of the digit 3
 were considered.  It can be seen how the regularization term induces many
 zeros. Furthermore, the natural structure of the data causes the non-zero
 coefficients to be vertically adjacent. The model does not enforce this
