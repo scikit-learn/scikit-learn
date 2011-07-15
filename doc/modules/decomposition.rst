@@ -136,12 +136,11 @@ of extracting the set of sparse components that best reconstruct the data:
                 0 \leq k < n_{atoms}
 
 Principal component analysis (:class:`PCA`) has the disadvantage that the
-components extracted by this method have dense expressions, i. e. they have
-non-zero coefficients when expressed as linear combinations of the original
-variables. This makes interpretation difficult, because it's difficult to see
-the big picture by seeing simple and important patterns. Also, in many cases,
+components extracted by this method have exclusively dense expressions, i.e.
+they have non-zero coefficients when expressed as linear combinations of the
+original variables. This can make interpretation difficult. In many cases,
 the real underlying components can be more naturally imagined as sparse
-vectors. For example in face recognition, components could naturally map to
+vectors; for example in face recognition, components might naturally map to
 parts of faces.
 
 Sparse principal components gives a more parsimonious, and therefore a more 
