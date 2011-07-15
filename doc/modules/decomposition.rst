@@ -133,7 +133,7 @@ of extracting the set of sparse components that best reconstruct the data:
    (U^*, V^*) = \underset{U, V}{\operatorname{arg\,min\,}} & \frac{1}{2}
                 ||X-UV||_2^2+\alpha||V||_1 \\
                 \text{subject to\,} & ||U_k||_2 = 1 \text{ for all }
-                0 \leq k < n_{atoms}
+                0 \leq k < n_{components}
 
 Principal component analysis (:class:`PCA`) has the disadvantage that the
 components extracted by this method have exclusively dense expressions, i.e.
