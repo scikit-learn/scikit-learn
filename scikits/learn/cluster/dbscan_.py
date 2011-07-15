@@ -106,16 +106,15 @@ def dbscan(S, eps=0.5, min_points=5, metric='euclidean',
             # A candidate is a core point in the current cluster that has
             # not yet been used to expand the current cluster.
             for c in candidates:
-                for neighbor in neighborhoods[c]:
-                    if labels[neighbor] == -1:
-                        # neighbor is part of the current cluster iff
-                        # it is not part of another cluster already.
-                        labels[neighbor] = label_num
-                        # check if its a core point as well
-                        if len(neighborhoods[neighbor]) >= min_points:
-                            # is new core point
-                            new_candidates.append(neighbor)
-                            core_points.append(neighbor)
+                noise = np.where(labels[neighborhoods[c]] == -1)[0]
+                noise = neighborhoods[c][noise]
+                labels[noise] = label_num
+                for neighbor in noise:
+                    # check if its a core point as well
+                    if len(neighborhoods[neighbor]) >= min_points:
+                        # is new core point
+                        new_candidates.append(neighbor)
+                        core_points.append(neighbor)
             # Update candidates for next round of cluster expansion.
             candidates = new_candidates
     return core_points, labels
