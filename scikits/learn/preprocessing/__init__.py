@@ -9,7 +9,7 @@
 import numpy as np
 import scipy.sparse as sp
 
-from ..utils import check_arrays
+from ..utils import check_arrays, safe_asanyarray, safe_atleast2d
 from ..base import BaseEstimator, TransformerMixin
 
 from ._preprocessing import inplace_csr_row_normalize_l1
@@ -406,17 +406,47 @@ class Binarizer(BaseEstimator):
         return binarize(X, threshold=self.threshold, copy=copy)
 
 
+class Base1ofK(BaseEstimator, TransformerMixin):
+    """Helper class for transformers that produce a 1-of-K representation,
+    i.e. LabelBinarizer and OneHotTransformer."""
+
+    def __init__(self, sparse_output):
+        self.sparse_output = sparse_output
+
+    def fit(self, X):
+        self.classes_ = np.unique(X)
+        return self
+
+    def transform(self, x):
+        x = safe_asanyarray(x)
+
+        if len(x.shape) > 1 and x.shape[1] != 1:
+            raise ValueError, "argument must be one-dimensional"
+
+        zeros = sp.lil_matrix if self.sparse_output else np.zeros
+
+        if len(self.classes_) == 2:
+            X = zeros((x.shape[0], 1))
+            X[x == self.classes_[1], 0] = 1
+        else:
+            X = zeros((x.shape[0], self.classes_.shape[0]))
+            for i, k in enumerate(self.classes_):
+                X[x == k, i] = 1
+
+        return X
+
+
 def _is_multilabel(y):
     return isinstance(y[0], tuple) or isinstance(y[0], list)
 
 
-class LabelBinarizer(BaseEstimator, TransformerMixin):
+class LabelBinarizer(Base1ofK):
     """Binarize labels in a one-vs-all fashion.
 
     Several regression and binary classification algorithms are
     available in the scikit. A simple way to extend these algorithms
     to the multi-class classification case is to use the so-called
-    one-vs-all scheme.
+    one-vs-all scheme, also known as the 1-of-K scheme.
 
     At learning time, this simply consists in learning one regressor
     or binary classifier per class. In doing so, one needs to convert
@@ -450,7 +480,13 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
            [ 0.,  0.,  1.]])
     >>> clf.classes_
     array([1, 2, 3])
+
+    See also
+    --------
+    OneHotTransformer, which performs a similar operation on feature vectors.
     """
+    def __init__(self):
+        super(LabelBinarizer, self).__init__(sparse_output=False)
 
     def fit(self, y):
         """Fit label binarizer
@@ -468,16 +504,11 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         self.multilabel = _is_multilabel(y)
         if self.multilabel:
             # concatenation of the sub-sequences
-            self.classes_ = np.unique(reduce(lambda a, b: a + b, y))
-        else:
-            self.classes_ = np.unique(y)
-        return self
+            y = reduce(lambda a, b: a + b, y)
+        return super(LabelBinarizer, self).fit(y)
 
     def transform(self, y):
         """Transform multi-class labels to binary labels
-
-        The output of transform is sometimes referred to by some authors as the
-        1-of-K coding scheme.
 
         Parameters
         ----------
@@ -490,15 +521,19 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         Y : numpy array of shape [n_samples, n_classes]
         """
 
-        if len(self.classes_) == 2:
-            Y = np.zeros((len(y), 1))
-        else:
-            Y = np.zeros((len(y), len(self.classes_)))
+        if len(self.classes_) == 1:
+            raise ValueError("Wrong number of classes: %d"
+                             % len(self.classes_))
 
         if self.multilabel:
             if not _is_multilabel(y):
                 raise ValueError("y should be a list of label lists/tuples,"
                                  "got %r" % (y,))
+
+            if len(self.classes_) == 2:
+                Y = np.zeros((len(y), 1))
+            else:
+                Y = np.zeros((len(y), len(self.classes_)))
 
             # inverse map: label => column index
             imap = dict((v, k) for k, v in enumerate(self.classes_))
@@ -507,20 +542,10 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
                 for label in label_tuple:
                     Y[i, imap[label]] = 1
 
-            return Y
-
-        elif len(self.classes_) == 2:
-            Y[y == self.classes_[1], 0] = 1
-            return Y
-
-        elif len(self.classes_) >= 2:
-            for i, k in enumerate(self.classes_):
-                Y[y == k, i] = 1
-            return Y
-
         else:
-            raise ValueError("Wrong number of classes: %d"
-                             % len(self.classes_))
+            Y = super(LabelBinarizer, self).transform(y)
+
+        return Y
 
     def inverse_transform(self, Y):
         """Transform binary labels back to multi-class labels
@@ -556,6 +581,97 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
             y = Y.argmax(axis=1)
 
         return self.classes_[y]
+
+
+def _toarray(a):
+    return a.toarray() if hasattr(a, "toarray") else a
+
+
+class OneHotTransformer(BaseEstimator, TransformerMixin):
+    """Binarize feature vectors in a one-hot (1-of-K) fashion.
+
+    This transformation is useful when dealing with discrete feature spaces.
+
+    Parameters
+    ----------
+    sparse_output : bool, optional
+        Determines whether output should be in sparse matrix format.
+
+    Attributes
+    ----------
+    n_features_in_ : int
+        Dimensionality of input space.
+    n_features_out_ : int
+        Dimensionality of output space. Features with n>2 possible values
+        become n separate features.
+
+    See also
+    --------
+    LabelBinarizer, which performs a similar operation on class labels.
+    """
+    def __init__(self, sparse_output=True):
+        self.sparse_output = sparse_output
+
+    def fit(self, X, y=None):
+        """Fit transformer; learns number of input features and their ranges
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features_in_]
+
+        Returns
+        -------
+        self
+        """
+        X = safe_atleast2d(X)
+        n_samples, n_features = X.shape
+        self._binarizers = [Base1ofK(self.sparse_output).fit(X[:, i])
+                            for i in xrange(n_features)]
+        return self
+
+    def transform(self, X):
+        """Transform X to one-hot/1-of-K representation.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features_in_]
+
+        Returns
+        -------
+        Xt : {array, sparse matrix}, shape = [n_samples, n_features_out_]
+            Exact type depends on sparse_output parameter.
+        """
+        X = safe_asanyarray(X)
+
+        if self.sparse_output:
+            return sp.hstack([b.transform(X[:, i])
+                              for i, b in enumerate(self._binarizers)])
+        else:
+            return np.concatenate([b.transform(X[:, i])
+                                   for i, b in enumerate(self._binarizers)],
+                                  axis=1)
+
+    n_features_in_ = property(lambda self: len(self._binarizers))
+    n_features_out_ = property(lambda self: sum(len(b.classes_)
+                               for b in self._binarizers))
+
+
+def one_hot(X, sparse_output=True):
+    """Transform array X to one-hot/1-of-K representation.
+
+    Convenience wrapper for OneHot Transformer.
+
+    Parameters
+    ----------
+    X : array-like, shape = [n_samples, n_features_in]
+    sparse_output : bool, optional
+
+    Returns
+    -------
+    Xt : {array, sparse matrix}, shape = [n_samples, n_features_out_]
+        Exact type depends on sparse_output parameter.
+    """
+    return OneHotTransformer(sparse_output=sparse_output).fit_transform(X)
 
 
 class KernelCenterer(BaseEstimator, TransformerMixin):

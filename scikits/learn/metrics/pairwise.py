@@ -6,7 +6,7 @@
 
 import numpy as np
 from scipy.sparse import csr_matrix, issparse
-from ..utils import safe_asanyarray, atleast2d_or_csr
+from ..utils import safe_asanyarray, safe_atleast2d
 from ..utils.extmath import safe_sparse_dot
 
 
@@ -73,7 +73,7 @@ def euclidean_distances(X, Y, Y_norm_squared=None, squared=False):
         else:
             YY = np.sum(Y ** 2, axis=1)[np.newaxis, :]
     else:
-        YY = atleast2d_or_csr(Y_norm_squared)
+        YY = safe_atleast2d(Y_norm_squared, 'csr')
         if YY.shape != (1, Y.shape[0]):
             raise ValueError(
                         "Incompatible dimensions for Y and Y_norm_squared")

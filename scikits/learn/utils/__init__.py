@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.sparse as sp
 
+
 def safe_asanyarray(X, dtype=None, order=None):
     if sp.issparse(X):
         return X
@@ -9,10 +10,11 @@ def safe_asanyarray(X, dtype=None, order=None):
         return np.asanyarray(X, dtype, order)
 
 
-def atleast2d_or_csr(X):
-    """Like numpy.atleast_2d, but converts sparse matrices to CSR format"""
+def safe_atleast2d(X, format=None):
+    """Like numpy.asleast_2d, but works on sparse matrices as well
+       and converts those to a specific format if needed."""
     if sp.issparse(X):
-        return X.tocsr()
+        return X.asformat(format) if format else X
     else:
         return np.atleast_2d(X)
 
