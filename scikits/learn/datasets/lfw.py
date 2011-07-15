@@ -146,7 +146,7 @@ def _load_imgs(file_paths, slice_, color, resize):
         faces = np.zeros((n_faces, h, w, 3), dtype=np.float32)
 
     if imread is None or imresize is None:
-        raise ImporError("PIL is required to load data from jpeg files")
+        raise ImportError("PIL is required to load data from jpeg files")
     # iterate over the collected file path to load the jpeg files as numpy
     # arrays
     for i, file_path in enumerate(file_paths):
