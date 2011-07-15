@@ -450,32 +450,6 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         self.verbose = verbose
         self.random_state = random_state
 
-    def fit_transform(self, X, y=None, **params):
-        """Fit the model from data in X.
-
-        Parameters
-        ----------
-        X: array-like, shape (n_samples, n_features)
-            Training vector, where n_samples in the number of samples
-            and n_features is the number of features.
-
-        Returns
-        -------
-        X_new array-like, shape (n_samples, n_components)
-        """
-        self._set_params(**params)
-        self.random_state = check_random_state(self.random_state)
-        X = np.asanyarray(X)
-
-        U, V, E = dict_learning(X.T, self.n_components, self.alpha,
-                                tol=self.tol, max_iter=self.max_iter,
-                                method=self.method, n_jobs=self.n_jobs,
-                                verbose=self.verbose,
-                                random_state=self.random_state)
-        self.components_ = U.T
-        self.error_ = E
-        return V.T
-
     def fit(self, X, y=None, **params):
         """Fit the model from data in X.
 
@@ -490,10 +464,20 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         self : object
             Returns the instance itself.
         """
-        self.fit_transform(X, y, **params)
+        self._set_params(**params)
+        self.random_state = check_random_state(self.random_state)
+        X = np.asanyarray(X)
+
+        U, V, E = dict_learning(X.T, self.n_components, self.alpha,
+                                tol=self.tol, max_iter=self.max_iter,
+                                method=self.method, n_jobs=self.n_jobs,
+                                verbose=self.verbose,
+                                random_state=self.random_state)
+        self.components_ = U.T
+        self.error_ = E
         return self
 
-    def transform(self, X, alpha=0):
+    def transform(self, X, ridge_alpha=0.01):
         """Apply the projection onto the learned sparse components
         to new data.
 
@@ -503,7 +487,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
             Test data to be transformed, must have the same number of
             features as the data used to train the model.
 
-        alpha: float
+        ridge_alpha: float
             Amount of ridge shrinkage to apply in order to improve conditioning
 
         Returns
@@ -511,7 +495,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         X_new array, shape (n_samples, n_components)
             Transformed data
         """
-        U = ridge_regression(self.components_.T, X.T, alpha, 
+        U = ridge_regression(self.components_.T, X.T, ridge_alpha, 
                              solver='dense_cholesky')
         U /= np.sqrt((U ** 2).sum(axis=0))
         return U
