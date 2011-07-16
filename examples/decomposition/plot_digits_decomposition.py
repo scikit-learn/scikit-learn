@@ -89,6 +89,6 @@ km.fit(threes_centered)
 print "done in %0.3fs" % (time() - t0)
 
 kmeans_digits = km.cluster_centers_
-plot_digit_gallery('K-Means cluter centers', kmeans_digits)
+plot_digit_gallery('K-Means cluster centers', kmeans_digits)
 
 pl.show()
