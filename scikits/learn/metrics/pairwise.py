@@ -9,6 +9,8 @@ from scipy.sparse import csr_matrix, issparse
 from ..utils import safe_asanyarray, atleast2d_or_csr
 from ..utils.extmath import safe_sparse_dot
 
+################################################################################
+# Distances 
 
 def euclidean_distances(X, Y, Y_norm_squared=None, squared=False):
     """
@@ -89,6 +91,58 @@ def euclidean_distances(X, Y, Y_norm_squared=None, squared=False):
 
 euclidian_distances = euclidean_distances  # both spelling for backward compat
 
+def l1_distances(X, Y):
+    """
+    Computes the componentwise L1 pairwise-distances between the vectors
+    in X and Y.
+
+    Parameters
+    ----------
+
+    X: array_like
+        An array with shape (n_samples_X, n_features)
+
+    Y: array_like, optional
+        An array with shape (n_samples_Y, n_features).
+
+    Returns
+    -------
+
+    D: array with shape (n_samples_X * n_samples_Y, n_features)
+        The array of componentwise L1 pairwise-distances.
+
+    Examples
+    --------
+
+    >>> l1_distances(3, 3)
+    array([[0]])
+    >>> l1_distances(3, 2)
+    array([[1]])
+    >>> l1_distances(2, 3)
+    array([[1]])
+    >>> import numpy as np
+    >>> X = np.ones((1, 2))
+    >>> y = 2*np.ones((2, 2))
+    >>> l1_distances(X, y)
+    array([[ 1.,  1.],
+           [ 1.,  1.]])
+    """
+    X, Y = np.atleast_2d(X), np.atleast_2d(Y)
+    n_samples_X, n_features_X = X.shape
+    n_samples_Y, n_features_Y = Y.shape
+    if n_features_X != n_features_Y:
+        raise Exception("X and Y should have the same number of features!")
+    else:
+        n_features = n_features_X
+    D = np.abs(X[:, np.newaxis, :] - Y[np.newaxis, :, :])
+    D = D.reshape((n_samples_X * n_samples_Y, n_features))
+
+    return D
+
+
+
+################################################################################
+# Kernels
 
 def linear_kernel(X, Y):
     """
