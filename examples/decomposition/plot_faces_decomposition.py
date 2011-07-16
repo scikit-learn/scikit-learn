@@ -1,10 +1,10 @@
 """
-=================================
-Handwritten digits decompositions
-=================================
+============================
+Faces dataset decompositions
+============================
 
 This example compares different unsupervised matrix decomposition (dimension
-reduction) methods on the digits dataset.
+reduction) methods on the Olivetti faces dataset.
 
 """
 print __doc__
@@ -12,23 +12,29 @@ print __doc__
 # Authors: Vlad Niculae, Alexandre Gramfort
 # License: BSD
 
+import logging
 from time import time
 
 import pylab as pl
 
 from scikits.learn.decomposition import RandomizedPCA, NMF, SparsePCA, FastICA
 from scikits.learn.cluster import KMeans
-from scikits.learn.datasets import load_digits
+from scikits.learn.datasets import fetch_olivetti_faces
 
+
+# Display progress logs on stdout
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s %(levelname)s %(message)s')
 n_row, n_col = 4, 4
 n_components = n_row * n_col
+image_shape = (64, 64)
 
 ###############################################################################
 # Load digits data
-digits = load_digits()
-threes = digits.data[digits.target == 3]
-threes_centered = threes - threes.mean(axis=0)
-print "Dataset consists of %d images" % len(threes)
+dataset = fetch_olivetti_faces()
+faces = dataset.data
+faces_centered = faces - faces.mean(axis=0)
+print "Dataset consists of %d images" % len(faces)
 
 
 ###############################################################################
@@ -38,7 +44,7 @@ def plot_digit_gallery(title, images):
     vmax = max(images.max(), -images.min())
     for i, comp in enumerate(images):
         pl.subplot(n_row, n_col, i + 1)
-        pl.imshow(comp.reshape((8, 8)), cmap=pl.cm.BrBG,
+        pl.imshow(comp.reshape(image_shape), cmap=pl.cm.BrBG,
                   interpolation='nearest',
                   vmin=-vmax, vmax=vmax)
         pl.xticks(())
@@ -53,16 +59,17 @@ estimators = [
                                         whiten=True),
                           True, False, False),
     ('non-negative components (NMF)', NMF(n_components=n_components,
-                                          init='nndsvd', beta=5, tol=1e-2,
+                                          init='nndsvda', beta=1, tol=1e-3,
                                           sparseness='components'),
                                       False, False, False),
     ('independent components (ICA)', FastICA(n_components=n_components,
                                              whiten=True),
                                      True, True, False),
     ('sparse components (SparsePCA)', SparsePCA(n_components=n_components,
-                                                alpha=5, tol=1e-4),
+                                                alpha=1, tol=1e-4,
+                                                verbose=True, max_iter=3),
                                       True, False, False),
-    ('cluster centers (KMeans)', KMeans(k=n_components),
+    ('cluster centers (KMeans)', KMeans(k=n_components, tol=1e-2, max_iter=3),
                                  True, False, True)
     ]
 
@@ -71,9 +78,9 @@ estimators = [
 for name, estimator, center, transpose, cluster in estimators:
     print "Extracting the top %d %s..." % (n_components, name)
     t0 = time()
-    data = threes
+    data = faces
     if center:
-        data = threes_centered
+        data = faces_centered
     if transpose:
         data = data.T
     estimator.fit(data)
