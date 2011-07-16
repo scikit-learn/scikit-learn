@@ -122,10 +122,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None, max_iter=500,
             C = np.fabs(C_)
             # to match a for computing gamma_
         else:
-            if Gram is None:
-                C -= gamma_ * np.abs(np.dot(X.T[0], eq_dir))
-            else:
-                C -= gamma_ * np.abs(np.dot(Gram[0], least_squares))
+            C = 0.
 
         alphas[n_iter] = C / n_samples
 
