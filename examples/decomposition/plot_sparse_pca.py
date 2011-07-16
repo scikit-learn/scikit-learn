@@ -24,7 +24,7 @@ rows, cols = 4, 3
 digits = load_digits()
 threes = digits.data[digits.target == 3]
 threes -= threes.mean(axis=0)  # XXX: use preprocessors
-model = SparsePCA(n_components=rows * cols, alpha=5, verbose=True)
+model = SparsePCA(n_components=rows * cols, alpha=5, tol=1e-4, verbose=True)
 model.fit(threes)
 span = np.max(np.abs(model.components_))
 
