@@ -90,10 +90,3 @@ def fetch_olivetti_faces(data_home=None, download_if_missing=True):
                  images=faces,
                  target=target,
                  DESCR="64x64 rescaled Olivetti faces dataset")
-
-def load_olivetti_faces(data_home=None):
-    """Alias for fetch_olivetti_faces(download_if_missing=True).
-
-    See the fetch_olivetti_faces docstring for more details.
-    """
-    return fetch_olivetti_faces(data_home=data_home, download_if_missing=True)
