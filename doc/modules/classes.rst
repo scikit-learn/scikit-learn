@@ -17,7 +17,6 @@ Support Vector Machines
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
@@ -29,7 +28,6 @@ Support Vector Machines
    svm.OneClassSVM
 
 .. autosummary::
-
    :toctree: generated/
    :template: function.rst
 
@@ -46,7 +44,6 @@ For sparse data
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
@@ -63,7 +60,6 @@ Low-level methods
 -----------------
 
 .. autosummary::
-
    :toctree: generated
    :template: function.rst
 
@@ -84,7 +80,6 @@ Generalized Linear Models
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
@@ -105,7 +100,6 @@ Generalized Linear Models
 
 
 .. autosummary::
-
    :toctree: generated/
    :template: function.rst
 
@@ -123,7 +117,6 @@ For sparse data
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
@@ -144,7 +137,6 @@ Naive Bayes
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
@@ -163,7 +155,6 @@ Nearest Neighbors
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
@@ -172,7 +163,6 @@ Nearest Neighbors
    ball_tree.BallTree
 
 .. autosummary::
-
    :toctree: generated/
    :template: function.rst
 
@@ -190,7 +180,6 @@ Gaussian Mixture Models
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
@@ -207,7 +196,6 @@ Hidden Markov Models
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
@@ -226,7 +214,6 @@ Clustering
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
@@ -252,7 +239,6 @@ Classification metrics
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: function.rst
 
@@ -281,7 +267,6 @@ Regression metrics
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: function.rst
 
@@ -299,7 +284,6 @@ Clustering metrics
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: function.rst
 
@@ -318,7 +302,6 @@ Pairwise metrics
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: function.rst
 
@@ -339,7 +322,6 @@ Covariance Estimators
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
@@ -349,7 +331,6 @@ Covariance Estimators
    covariance.OAS
 
 .. autosummary::
-
    :toctree: generated/
    :template: function.rst
 
@@ -369,10 +350,9 @@ Signal Decomposition
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
-
+ 
    decomposition.PCA
    decomposition.ProbabilisticPCA
    decomposition.ProjectedGradientNMF
@@ -383,10 +363,9 @@ Signal Decomposition
    decomposition.SparsePCA
 
 .. autosummary::
-
    :toctree: generated/
    :template: function.rst
-
+ 
    decomposition.fastica
    decomposition.dict_learning
 
@@ -395,7 +374,6 @@ Linear Discriminant Analysis
 ============================
 
 .. autosummary::
-
    :toctree: generated
    :template: class.rst
 
@@ -412,7 +390,6 @@ Partial Least Squares
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
@@ -432,7 +409,6 @@ Cross Validation
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
@@ -456,7 +432,6 @@ Grid Search
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
@@ -476,7 +451,6 @@ Feature Selection
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
@@ -506,7 +480,6 @@ From images
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: function.rst
 
@@ -524,7 +497,6 @@ From text
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
@@ -546,7 +518,6 @@ Preprocessing and normalization
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
@@ -558,7 +529,6 @@ Preprocessing and normalization
 
 
 .. autosummary::
-
    :toctree: generated/
    :template: function.rst
 
@@ -571,7 +541,6 @@ Manifold learning
 =================
 
 .. autosummary::
-
     :toctree: generated
     :template: class.rst
 
@@ -579,7 +548,6 @@ Manifold learning
 
 
 .. autosummary::
-
     :toctree: generated
     :template: function.rst
 
@@ -596,7 +564,6 @@ Pipeline
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
@@ -613,7 +580,6 @@ Utilities
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: function.rst
 

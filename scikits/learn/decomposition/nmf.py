@@ -240,13 +240,13 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         Data the model will be fit to.
 
     n_components: int or None
-        Number of components
-        if n_components is not set all components are kept
+        Number of components, if n_components is not set all components
+        are kept
 
     init:  'nndsvd' |  'nndsvda' | 'nndsvdar' | int | RandomState
         Method used to initialize the procedure.
         Default: 'nndsvdar'
-        Valid options:
+        Valid options::
             'nndsvd': Nonnegative Double Singular Value Decomposition (NNDSVD)
                 initialization (better for sparseness)
             'nndsvda': NNDSVD with zeros filled with the average of X
@@ -256,36 +256,31 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
                 for when sparsity is not desired)
             int seed or RandomState: non-negative random matrices
 
-    sparseness: 'data' | 'components' | None
+    sparseness: 'data' | 'components' | None, default: None
         Where to enforce sparsity in the model.
-        Default: None
 
-    beta: double
+    beta: double, default: 1
         Degree of sparseness, if sparseness is not None. Larger values mean
         more sparseness.
-        Default: 1
 
-    eta: double
+    eta: double, default: 0.1
         Degree of correctness to mantain, if sparsity is not None. Smaller
         values mean larger error.
-        Default: 0.1
 
-    tol: double
+    tol: double, default: 1e-4
         Tolerance value used in stopping conditions.
-        Default: 1e-4
 
-    max_iter: int
+    max_iter: int, default: 200
         Number of iterations to compute.
-        Default: 200
 
-    nls_max_iter: int
+    nls_max_iter: int, default: 2000
         Number of iterations in NLS subproblem.
-        Default: 2000
 
     Attributes
     ----------
     components_: array, [n_components, n_features]
         Non-negative components of the data
+
     reconstruction_err_: number
         Frobenius norm of the matrix difference between the
         training data and the reconstructed data from the
