@@ -30,15 +30,37 @@ import urllib2
 import numpy as np
 from scipy.io.matlab import loadmat
 
-from .base import get_data_home
-from .base import Bunch
+from .base import get_data_home, Bunch
+from .utils import check_random_state
+
 
 DATA_URL = "http://cs.nyu.edu/~roweis/data/olivettifaces.mat"
 TARGET_FILENAME = "olivetti.npy"
 
-def fetch_olivetti_faces(data_home=None, shuffle=False,
+def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
                          download_if_missing=True):
     """Loader for the Olivetti faces data-set from AT&T.
+
+    Parameters
+    ----------
+    data_home : optional, default: None
+        Specify another download and cache folder for the datasets. By default
+        all scikit learn data is stored in '~/scikit_learn_data' subfolders.
+
+    shuffle : boolean, optional
+        If True the order of the dataset is shuffled to avoid having 
+        images of the same person grouped.
+
+    download_if_missing: optional, True by default
+        If False, raise a IOError if the data is not locally available
+        instead of trying to download the data from the source site.
+
+    random_state : optional, integer or RandomState object
+        The seed or the random number generator used to shuffle the
+        data.
+
+    Notes
+    ------
 
     This dataset consists of 10 pictures each of 40 individuals. The original
     database was available from (now defunct)
@@ -50,21 +72,13 @@ def fetch_olivetti_faces(data_home=None, shuffle=False,
 
         http://www.cs.nyu.edu/~roweis/
 
-    Parameters
-    ----------
-    data_home : optional, default: None
-        Specify another download and cache folder for the datasets. By default
-        all scikit learn data is stored in '~/scikit_learn_data' subfolders.
-
-    download_if_missing: optional, True by default
-        If False, raise a IOError if the data is not locally available
-        instead of trying to download the data from the source site.
     """
     data_home = get_data_home(data_home=data_home)
     if not exists(data_home):
         makedirs(data_home)
     if not exists(join(data_home, TARGET_FILENAME)):
-        print 'Not found; downloading Olivetti faces from %s' % DATA_URL
+        print 'downloading Olivetti faces from %s to %s' % (DATA_URL,
+                            data_home)
         fhandle = urllib2.urlopen(DATA_URL)
         buf = StringIO(fhandle.read())
         mfile = loadmat(buf)
@@ -82,7 +96,8 @@ def fetch_olivetti_faces(data_home=None, shuffle=False,
     # 10 images per class, 400 images total, each class is contiguous.
     target = np.array([i // 10 for i in range(400)])
     if shuffle:
-        order = np.random.permutation(len(faces))
+        random_state = check_random_state(random_state)
+        order = random_state.permutation(len(faces))
         faces = faces[order]
         target = target[order]
     return Bunch(data=faces.reshape(len(faces), -1),
