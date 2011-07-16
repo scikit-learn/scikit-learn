@@ -90,3 +90,11 @@ def test_sparse_code():
     assert_equal(est_code_1.shape, real_code.shape)
     assert_equal(est_code_1, est_code_2)
     assert_equal(est_code_1.nonzero(), real_code.nonzero())
+
+
+def test_initialization():
+    U_init = np.random.randn(5, 3)
+    V_init = np.random.randn(3, 4)
+    model = SparsePCA(n_components=3, U_init=U_init, V_init=V_init, max_iter=0)
+    model.fit(np.random.randn(5, 4))
+    assert_equal(model.components_, V_init)
