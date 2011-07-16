@@ -21,6 +21,7 @@ from ..externals.joblib import Memory
 from . import _inertia
 from ._feature_agglomeration import AgglomerationTransform
 
+
 ###############################################################################
 # Ward's algorithm
 
@@ -162,7 +163,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
 
     # Separate leaves in children (empty lists up to now)
     n_leaves = n_samples
-    children = np.array(children) # return as numpy array for efficient caching
+    children = np.array(children)  # return numpy array for efficient caching
 
     return children, n_components, n_leaves
 
@@ -317,6 +318,7 @@ class Ward(BaseEstimator):
         # Cut the tree
         self.labels_ = _hc_cut(self.n_clusters, self.children_, self.n_leaves_)
         return self
+
 
 ###############################################################################
 # Ward-based feature agglomeration

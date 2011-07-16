@@ -8,7 +8,10 @@ Unsupervised learning
 .. toctree::
 
     modules/mixture
+    modules/manifold
     modules/clustering
     modules/decomposition
+    modules/covariance
+    modules/hmm
 
 

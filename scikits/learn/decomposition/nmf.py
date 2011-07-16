@@ -247,8 +247,8 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         Method used to initialize the procedure.
         Default: 'nndsvdar'
         Valid options:
-            'nndsvd': default Nonnegative Double Singular Value
-                Decomposition (NNDSVD) initialization (better for sparseness)
+            'nndsvd': Nonnegative Double Singular Value Decomposition (NNDSVD)
+                initialization (better for sparseness)
             'nndsvda': NNDSVD with zeros filled with the average of X
                 (better when sparsity is not desired)
             'nndsvdar': NNDSVD with zeros filled with small random values

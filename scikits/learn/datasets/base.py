@@ -9,6 +9,7 @@ Base IO code for all datasets
 
 import csv
 import shutil
+import textwrap
 from os import environ
 from os.path import dirname
 from os.path import join
@@ -20,6 +21,8 @@ from os import makedirs
 
 import numpy as np
 
+
+###############################################################################
 
 class Bunch(dict):
     """ Container object for datasets: dictionnary-like object that
@@ -97,34 +100,32 @@ def load_filenames(container_path, description=None, categories=None,
     ----------
 
     container_path : string or unicode
-      the path to the main folder holding one subfolder per category
+        Path to the main folder holding one subfolder per category
 
     description: string or unicode
-      a paragraph describing the characteristic of the dataset, its source,
-      reference, ...
+        A paragraph describing the characteristic of the dataset: its source,
+        reference, etc.
 
     categories : None or collection of string or unicode
-      if None (default), load all the categories.
-      if not Non, list of category names to load (other categories ignored)
+        If None (default), load all the categories.
+        If not None, list of category names to load (other categories ignored).
 
-    shuffle : True by default
-      whether or not to shuffle the data: might be important for models that
-      make the assumption that the samples are independent and identically
-      distributed (i.i.d.) such as stochastic gradient descent for instance.
+    shuffle : bool, optional
+        Whether or not to shuffle the data: might be important for models that
+        make the assumption that the samples are independent and identically
+        distributed (i.i.d.), such as stochastic gradient descent.
 
-    random_state : a numpy random number generator or a seed integer, 42 by default
-      used to shuffle the dataset
+    random_state : numpy random number generator or seed integer, optional
+        Used to shuffle the dataset.
 
     Returns
     -------
-
     data : Bunch
         Dictionary-like object, the interesting attributes are:
         'filenames', the files holding the raw to learn, 'target', the
         classification labels (integer index), 'target_names',
         the meaning of the labels, and 'DESCR', the full description of the
         dataset.
-
     """
     target = []
     target_names = []
@@ -165,7 +166,7 @@ def load_filenames(container_path, description=None, categories=None,
 ###############################################################################
 
 def load_iris():
-    """load the iris dataset and returns it.
+    """Load and return the iris dataset (classification).
 
     Returns
     -------
@@ -206,8 +207,7 @@ def load_iris():
 
 
 def load_digits(n_class=10):
-    """load the digits dataset and returns it.
-
+    """Load and return the digits dataset (classification).
 
     Parameters
     ----------
@@ -256,6 +256,17 @@ def load_digits(n_class=10):
 
 
 def load_diabetes():
+    """ Load and return the diabetes dataset (regression).
+
+    Returns
+    -------
+    data : Bunch
+        Dictionnary-like object, the interesting attributes are:
+        'data', the data to learn and 'target', the labels for each
+        sample.
+
+
+    """
     base_dir = join(dirname(__file__), 'data')
     data = np.loadtxt(join(base_dir, 'diabetes_data.csv.gz'))
     target = np.loadtxt(join(base_dir, 'diabetes_target.csv.gz'))
@@ -263,6 +274,17 @@ def load_diabetes():
 
 
 def load_linnerud():
+    """ Load and return the linnerud dataset (multivariate regression).
+
+    Returns
+    -------
+    data : Bunch
+        Dictionnary-like object, the interesting attributes are:
+        'data_exercise' and 'data_physiological', the two multivariate
+        datasets, as well as 'header_exercise' and
+        'header_physiological', the corresponding headers.
+
+    """
     base_dir = join(dirname(__file__), 'data/')
     # Read data
     data_exercise = np.loadtxt(base_dir + 'linnerud_exercise.csv', skiprows=1)
@@ -280,3 +302,29 @@ def load_linnerud():
                  data_physiological=data_physiological,
                  header_physiological=header_physiological,
                  DESCR=fdescr.read())
+
+
+###############################################################################
+# Add the description in the docstring
+
+def _add_notes(function, filename):
+    """Add a notes section to the docstring of a function reading it from a
+    file"""
+    fdescr = open(join(dirname(__file__), 'descr', filename), 'r')
+    # Dedent the docstring
+    doc = function.__doc__.split('\n')
+    doc = '%s\n%s' % (textwrap.dedent(doc[0]),
+                      textwrap.dedent('\n'.join(doc[1:])))
+    # Remove the first line of the description, which contains the
+    # dataset's name
+    descr = '\n'.join(fdescr.read().split('\n')[1:])
+    function.__doc__ = doc + descr
+
+
+for function, filename in ((load_iris, 'iris.rst'),
+                           (load_linnerud, 'linnerud.rst'),
+                           (load_digits, 'digits.rst')):
+    #try:
+        _add_notes(function, filename)
+    #except:
+    #    pass

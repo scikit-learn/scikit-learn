@@ -75,7 +75,7 @@ struct svm_parameter * set_parameter(int svm_type, int kernel_type, int degree,
  * TODO: precomputed kernel.
  */
 struct svm_csr_problem * csr_set_problem (char *values, npy_intp *n_indices,
-		char *indices, npy_intp *n_indptr, char *indptr, char *Y, 
+		char *indices, npy_intp *n_indptr, char *indptr, char *Y,
                 char *sample_weight, int kernel_type) {
 
     struct svm_csr_problem *problem;
@@ -83,7 +83,7 @@ struct svm_csr_problem * csr_set_problem (char *values, npy_intp *n_indices,
     if (problem == NULL) return NULL;
     problem->l = (int) n_indptr[0] - 1;
     problem->y = (double *) Y;
-    problem->x = csr_to_libsvm((double *) values, (int *) indices, 
+    problem->x = csr_to_libsvm((double *) values, (int *) indices,
                                (int *) indptr, problem->l);
     /* should be removed once we implement weighted samples */
     problem->W = (double *) sample_weight;
@@ -124,7 +124,7 @@ struct svm_csr_model *csr_set_model(struct svm_parameter *param, int nr_class,
        dense_to_precomputed because we don't want the leading 0. As
        indices start at 1 (not at 0) this will work */
     model->l = (int) SV_indptr_dims[0] - 1;
-    model->SV = csr_to_libsvm((double *) SV_data, (int *) SV_indices, 
+    model->SV = csr_to_libsvm((double *) SV_data, (int *) SV_indices,
                               (int *) SV_intptr, model->l);
     model->nr_class = nr_class;
     model->param = *param;
@@ -248,7 +248,7 @@ int csr_copy_predict (npy_intp *data_size, char *data, npy_intp *index_size,
     struct svm_csr_node **predict_nodes;
     npy_intp i;
 
-    predict_nodes = csr_to_libsvm((double *) data, (int *) index, 
+    predict_nodes = csr_to_libsvm((double *) data, (int *) index,
                                   (int *) intptr, intptr_size[0]-1);
 
     if (predict_nodes == NULL)
@@ -261,6 +261,30 @@ int csr_copy_predict (npy_intp *data_size, char *data, npy_intp *index_size,
     free(predict_nodes);
     return 0;
 }
+
+
+int csr_copy_predict_proba (npy_intp *data_size, char *data, npy_intp *index_size,
+		char *index, npy_intp *intptr_size, char *intptr, struct svm_csr_model *model,
+		char *dec_values) {
+
+    struct svm_csr_node **predict_nodes;
+    npy_intp i;
+    int m = model->nr_class;
+
+    predict_nodes = csr_to_libsvm((double *) data, (int *) index,
+                                  (int *) intptr, intptr_size[0]-1);
+
+    if (predict_nodes == NULL)
+        return -1;
+    for(i=0; i < intptr_size[0] - 1; ++i) {
+        svm_csr_predict_probability(
+		model, predict_nodes[i], ((double *) dec_values) + i*m);
+        free(predict_nodes[i]);
+    }
+    free(predict_nodes);
+    return 0;
+}
+
 
 npy_intp get_nr(struct svm_csr_model *model)
 {
@@ -282,7 +306,7 @@ void copy_intercept(char *data, struct svm_csr_model *model, npy_intp *dims)
 
 
 /*
- * Some helpers to convert from libsvm sparse data structures 
+ * Some helpers to convert from libsvm sparse data structures
  * model->sv_coef is a double **, whereas data is just a double *,
  * so we have to do some stupid copying.
  */
@@ -310,9 +334,9 @@ void copy_nSV(char *data, struct svm_csr_model *model)
     memcpy(data, model->nSV, model->nr_class * sizeof(int));
 }
 
-/* 
+/*
  * same as above with model->label
- * TODO: maybe merge into the previous?
+ * TODO: merge in the cython layer
  */
 void copy_label(char *data, struct svm_csr_model *model)
 {
@@ -331,7 +355,7 @@ void copy_probB(char *data, struct svm_csr_model *model, npy_intp * dims)
 }
 
 
-/* 
+/*
  * Some free routines. Some of them are nontrivial since a lot of
  * sharing happens across objects (they *must* be called in the
  * correct order)

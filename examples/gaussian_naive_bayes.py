@@ -3,7 +3,7 @@
 Gaussian Naive Bayes
 ============================
 
-A classification example using Gaussian Naive Bayes (GNB).
+A classification example using Gaussian Naive Bayes (GaussianNB).
 
 """
 
@@ -18,9 +18,9 @@ X = iris.data
 y = iris.target
 
 ################################################################################
-# GNB
-from scikits.learn.naive_bayes import GNB
-gnb = GNB()
+# GaussianNB
+from scikits.learn.naive_bayes import GaussianNB
+gnb = GaussianNB()
 
 y_pred = gnb.fit(X, y).predict(X)
 

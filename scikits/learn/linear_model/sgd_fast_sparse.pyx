@@ -180,9 +180,9 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
                 sample_weight_data[sample_idx]
             if update != 0.0:
                 add(w_data_ptr, wscale, X_data_ptr, X_indices_ptr,
-                    offset, xnnz, update)
+                    offset, xnnz, -update)
                 if fit_intercept == 1:
-                    intercept += update * 0.01
+                    intercept -= update * 0.01
             if penalty_type != L1:
                 wscale *= (1.0 - (rho * eta * alpha))
                 if wscale < 1e-9:

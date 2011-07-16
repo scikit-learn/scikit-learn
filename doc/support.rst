@@ -21,10 +21,11 @@ https://github.com/scikit-learn/scikit-learn/issues
 
 IRC
 ===
-Some devs like to hang out on channel #learn on irc.freenode.net
+
+Some devs like to hang out on channel #scikit-learn on irc.freenode.net
 
 If you do not have an irc client or are behind a firewall this web
-client works fine: http://webchat.freenode.net 
+client works fine: http://webchat.freenode.net
 
 
 .. _documentation_resources:
@@ -36,6 +37,7 @@ This documentation is relative to |release|. Documentation for other
 versions can be found here:
 
     * `Development version <http://scikit-learn.sf.net/dev/>`_
+    * `0.8 <http://scikit-learn.sf.net/0.8/>`_
     * `0.7 <http://scikit-learn.sf.net/0.7/>`_
     * `0.6 <http://scikit-learn.sf.net/0.6/>`_
     * `0.5 <http://scikit-learn.sf.net/0.5/>`_

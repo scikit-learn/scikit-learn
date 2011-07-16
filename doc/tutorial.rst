@@ -1,3 +1,5 @@
+.. _getting_started:
+
 Getting started: an introduction to machine learning with scikits.learn
 =======================================================================
 
@@ -67,7 +69,9 @@ the `digits dataset
 A dataset is a dictionary-like object that holds all the data and some
 metadata about the data. This data is stored in the `.data` member, which
 is a `n_samples, n_features` array. In the case of supervised problem,
-explanatory variables are stored in the `.target` member.
+explanatory variables are stored in the `.target` member. More details on
+the different datasets can be found in the 
+:ref:`dedicated section <datasets>`.
 
 For instance, in the case of the digits dataset, `digits.data` gives
 access to the features that can be used to classify the digits samples::
@@ -147,7 +151,7 @@ set, let us use all the images of our dataset apart from the last
 one:
 
 >>> clf.fit(digits.data[:-1], digits.target[:-1])
-SVC(kernel='rbf', C=1.0, probability=False, degree=3, coef0=0.0, eps=0.001,
+SVC(kernel='rbf', C=1.0, probability=False, degree=3, coef0=0.0, tol=0.001,
   cache_size=100.0, shrinking=True, gamma=0.000556792873051)
 
 Now you can predict new values, in particular, we can ask to the
@@ -182,7 +186,7 @@ persistence model, namely `pickle <http://docs.python.org/library/pickle.html>`_
 >>> iris = datasets.load_iris()
 >>> X, y = iris.data, iris.target
 >>> clf.fit(X, y)
-SVC(kernel='rbf', C=1.0, probability=False, degree=3, coef0=0.0, eps=0.001,
+SVC(kernel='rbf', C=1.0, probability=False, degree=3, coef0=0.0, tol=0.001,
   cache_size=100.0, shrinking=True, gamma=0.00666666666667)
 >>> import pickle
 >>> s = pickle.dumps(clf)

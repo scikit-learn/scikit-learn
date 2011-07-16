@@ -31,8 +31,8 @@ def test_error_messages_on_wrong_input():
                          completeness_score, [0, 1, 0], [[1, 1], [0, 0]])
 
 
-def test_homogenous_but_not_complete_labeling():
-    # homogenous but not complete clustering
+def test_homogeneous_but_not_complete_labeling():
+    # homogeneous but not complete clustering
     h, c, v = homogeneity_completeness_v_measure(
         [0, 0, 0, 1, 1, 1],
         [0, 0, 0, 1, 2, 2])
@@ -41,8 +41,8 @@ def test_homogenous_but_not_complete_labeling():
     assert_almost_equal(v, 0.81, 2)
 
 
-def test_complete_but_not_homogenous_labeling():
-    # complete but not homogenous clustering
+def test_complete_but_not_homogeneous_labeling():
+    # complete but not homogeneous clustering
     h, c, v = homogeneity_completeness_v_measure(
         [0, 0, 1, 1, 2, 2],
         [0, 0, 1, 1, 1, 1])
@@ -51,11 +51,28 @@ def test_complete_but_not_homogenous_labeling():
     assert_almost_equal(v, 0.73, 2)
 
 
-def test_not_complete_and_not_homogenous_labeling():
-    # neither complete nor homogenous but not so bad either
+def test_not_complete_and_not_homogeneous_labeling():
+    # neither complete nor homogeneous but not so bad either
     h, c, v = homogeneity_completeness_v_measure(
         [0, 0, 0, 1, 1, 1],
         [0, 1, 0, 1, 2, 2])
+    assert_almost_equal(h, 0.67, 2)
+    assert_almost_equal(c, 0.42, 2)
+    assert_almost_equal(v, 0.52, 2)
+
+
+def test_non_consicutive_labels():
+    # regression tests for labels with gaps
+    h, c, v = homogeneity_completeness_v_measure(
+        [0, 0, 0, 2, 2, 2],
+        [0, 1, 0, 1, 2, 2])
+    assert_almost_equal(h, 0.67, 2)
+    assert_almost_equal(c, 0.42, 2)
+    assert_almost_equal(v, 0.52, 2)
+
+    h, c, v = homogeneity_completeness_v_measure(
+        [0, 0, 0, 1, 1, 1],
+        [0, 4, 0, 4, 2, 2])
     assert_almost_equal(h, 0.67, 2)
     assert_almost_equal(c, 0.42, 2)
     assert_almost_equal(v, 0.52, 2)

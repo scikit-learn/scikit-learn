@@ -14,9 +14,8 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, CoefSelectTransformerMixin):
     Parameters
     ----------
     loss : string, 'l1' or 'l2' (default 'l2')
-        Specifies the loss function. With 'l1' it is the standard SVM
-        loss (a.k.a. hinge Loss) while with 'l2' it is the squared loss.
-        (a.k.a. squared hinge Loss)
+        Specifies the loss function. 'l1' is the hinge loss (standard SVM)
+        while 'l2' is the squared hinge loss.
 
     penalty : string, 'l1' or 'l2' (default 'l2')
         Specifies the norm used in the penalization. The 'l2'
@@ -28,11 +27,16 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, CoefSelectTransformerMixin):
         optimization problem.
 
     tol: float, optional
-         tolerance for stopping criteria
+        Tolerance for stopping criteria
 
     multi_class: boolean, optional
-         perform multi-class SVM by Cramer and Singer. If active,
-         options loss, penalty and dual will be ignored.
+        Perform multi-class SVM as per Cramer and Singer. If active,
+        the options loss, penalty and dual will be ignored.
+
+    fit_intercept : boolean, optional
+        Whether to calculate the intercept for this model. If set
+        to false, no intercept will be used in calculations
+        (e.g. data is expected to be already centered).
 
     intercept_scaling : float, default: 1
         when self.fit_intercept is True, instance vector x becomes
@@ -102,17 +106,14 @@ class SVC(BaseLibSVM, ClassifierMixin):
         in poly/sigmoid.
 
     probability: boolean, optional (False by default)
-        enable probability estimates. This must be enabled prior
+        Whether to enable probability estimates. This must be enabled prior
         to calling prob_predict.
 
     shrinking: boolean, optional
-         wether to use the shrinking heuristic.
+        Whether to use the shrinking heuristic.
 
     tol: float, optional
-         precision for stopping criteria
-
-    cache_size: float, optional
-         specify the size of the cache (in MB)
+        Tolerance for stopping criterion.
 
 
     Attributes
@@ -136,7 +137,6 @@ class SVC(BaseLibSVM, ClassifierMixin):
     `intercept_` : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
 
-
     Examples
     --------
     >>> import numpy as np
@@ -146,7 +146,7 @@ class SVC(BaseLibSVM, ClassifierMixin):
     >>> clf = SVC()
     >>> clf.fit(X, y)
     SVC(kernel='rbf', C=1.0, probability=False, degree=3, coef0=0.0, tol=0.001,
-      cache_size=100.0, shrinking=True, gamma=0.25)
+      shrinking=True, gamma=0.25)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
 
@@ -157,11 +157,10 @@ class SVC(BaseLibSVM, ClassifierMixin):
 
     def __init__(self, C=1.0, kernel='rbf', degree=3, gamma=0.0,
                  coef0=0.0, shrinking=True, probability=False,
-                 tol=1e-3, cache_size=100.0):
+                 tol=1e-3):
 
         BaseLibSVM.__init__(self, 'c_svc', kernel, degree, gamma, coef0,
-                         cache_size, tol, C, 0., 0.,
-                         shrinking, probability)
+                         tol, C, 0., 0., shrinking, probability)
 
 
 class NuSVC(BaseLibSVM, ClassifierMixin):
@@ -188,21 +187,18 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
         will be taken.
 
     probability: boolean, optional (False by default)
-        enable probability estimates. This must be enabled prior
-        to calling prob_predict.
+        Whether to enable probability estimates. This must be enabled prior
+        to calling predict_proba.
 
     coef0 : float, optional
         independent term in kernel function. It is only significant
         in poly/sigmoid.
 
     shrinking: boolean, optional
-         wether to use the shrinking heuristic.
+        Whether to use the shrinking heuristic.
 
     tol: float, optional
-         precision for stopping criteria
-
-    cache_size: float, optional
-         specify the size of the cache (in MB)
+        Tolerance for stopping criterion.
 
 
     Attributes
@@ -253,7 +249,7 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
     >>> clf = NuSVC()
     >>> clf.fit(X, y)
     NuSVC(kernel='rbf', probability=False, degree=3, coef0=0.0, tol=0.001,
-       cache_size=100.0, shrinking=True, nu=0.5, gamma=0.25)
+       shrinking=True, nu=0.5, gamma=0.25)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
 
@@ -264,10 +260,10 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
 
     def __init__(self, nu=0.5, kernel='rbf', degree=3, gamma=0.0,
                  coef0=0.0, shrinking=True, probability=False,
-                 tol=1e-3, cache_size=100.0):
+                 tol=1e-3):
 
         BaseLibSVM.__init__(self, 'nu_svc', kernel, degree, gamma,
-                         coef0, cache_size, tol, 0., nu, 0.,
+                         coef0, tol, 0., nu, 0.,
                          shrinking, probability)
 
 
@@ -303,21 +299,18 @@ class SVR(BaseLibSVM, RegressorMixin):
         penalty parameter C of the error term.
 
     probability: boolean, optional (False by default)
-        enable probability estimates. This must be enabled prior
-        to calling prob_predict.
+        Whether to enable probability estimates. This must be enabled prior
+        to calling predict_proba.
 
     tol: float, optional
-         precision for stopping criteria
+        Tolerance for stopping criterion.
 
     coef0 : float, optional
         independent term in kernel function. It is only significant
         in poly/sigmoid.
 
-    cache_size: float, optional
-         specify the size of the cache (in MB)
-
     shrinking: boolean, optional
-         wether to use the shrinking heuristic.
+        Whether to use the shrinking heuristic.
 
     Attributes
     ----------
@@ -348,19 +341,18 @@ class SVR(BaseLibSVM, RegressorMixin):
     >>> clf = SVR(C=1.0, epsilon=0.2)
     >>> clf.fit(X, y)
     SVR(kernel='rbf', C=1.0, probability=False, degree=3, epsilon=0.2,
-      shrinking=True, tol=0.001, cache_size=100.0, coef0=0.0, nu=0.5,
-      gamma=0.1)
+      shrinking=True, tol=0.001, coef0=0.0, nu=0.5, gamma=0.1)
 
     See also
     --------
     NuSVR
     """
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
-                 cache_size=100.0, tol=1e-3, C=1.0, nu=0.5, epsilon=0.1,
+                 tol=1e-3, C=1.0, nu=0.5, epsilon=0.1,
                  shrinking=True, probability=False):
 
         BaseLibSVM.__init__(self, 'epsilon_svr', kernel, degree,
-                         gamma, coef0, cache_size, tol, C, nu,
+                         gamma, coef0, tol, C, nu,
                          epsilon, shrinking, probability)
 
     def fit(self, X, y, sample_weight=[], **params):
@@ -387,9 +379,9 @@ class SVR(BaseLibSVM, RegressorMixin):
 class NuSVR(BaseLibSVM, RegressorMixin):
     """Nu Support Vector Regression.
 
-    Similar to NuSVC, for regression, uses a paramter nu to control
+    Similar to NuSVC, for regression, uses a parameter nu to control
     the number of support vectors. However, unlike NuSVC, where nu
-    replaces with C, here nu replaces with the parameter epsilon of SVR.
+    replaces C, here nu replaces with the parameter epsilon of SVR.
 
     Parameters
     ----------
@@ -418,21 +410,18 @@ class NuSVR(BaseLibSVM, RegressorMixin):
         epsilon in the epsilon-SVR model.
 
     tol: float, optional
-         precision for stopping criteria
+        Tolerance for stopping criterion.
 
     probability: boolean, optional (False by default)
-        enable probability estimates. This must be enabled prior
-        to calling prob_predict.
+        Whether to enable probability estimates. This must be enabled prior
+        to calling predict_proba.
 
     coef0 : float, optional
         independent term in kernel function. It is only significant
         in poly/sigmoid.
 
     shrinking: boolean, optional
-         wether to use the shrinking heuristic.
-
-    cache_size: float, optional
-         specify the size of the cache (in MB)
+        Whether to use the shrinking heuristic.
 
     Attributes
     ----------
@@ -463,7 +452,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     >>> clf = NuSVR(nu=0.1, C=1.0)
     >>> clf.fit(X, y)
     NuSVR(kernel='rbf', C=1.0, probability=False, degree=3, shrinking=True,
-       tol=0.001, epsilon=0.1, cache_size=100.0, coef0=0.0, nu=0.1, gamma=0.1)
+       tol=0.001, epsilon=0.1, coef0=0.0, nu=0.1, gamma=0.1)
 
     See also
     --------
@@ -472,10 +461,10 @@ class NuSVR(BaseLibSVM, RegressorMixin):
 
     def __init__(self, nu=0.5, C=1.0, kernel='rbf', degree=3,
                  gamma=0.0, coef0=0.0, shrinking=True, epsilon=0.1,
-                 probability=False, cache_size=100.0, tol=1e-3):
+                 probability=False, tol=1e-3):
 
         BaseLibSVM.__init__(self, 'epsilon_svr', kernel, degree,
-                         gamma, coef0, cache_size, tol, C, nu,
+                         gamma, coef0, tol, C, nu,
                          epsilon, shrinking, probability)
 
     def fit(self, X, y, sample_weight=[], **params):
@@ -529,13 +518,10 @@ class OneClassSVM(BaseLibSVM):
         poly/sigmoid.
 
     tol: float, optional
-         precision for stopping criteria
+        Tolerance for stopping criterion.
 
     shrinking: boolean, optional
-         wether to use the shrinking heuristic.
-
-    cache_size: float, optional
-         specify the size of the cache (in MB)
+        Whether to use the shrinking heuristic.
 
     Attributes
     ----------
@@ -557,9 +543,9 @@ class OneClassSVM(BaseLibSVM):
 
     """
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
-                 cache_size=100.0, tol=1e-3, nu=0.5, shrinking=True):
+                 tol=1e-3, nu=0.5, shrinking=True):
         BaseLibSVM.__init__(self, 'one_class', kernel, degree, gamma, coef0,
-                             cache_size, tol, 0.0, nu, 0.0, shrinking, False)
+                             tol, 0.0, nu, 0.0, shrinking, False)
 
     def fit(self, X, class_weight={}, sample_weight=[], **params):
         """
@@ -575,6 +561,11 @@ class OneClassSVM(BaseLibSVM):
         -------
         self : object
             Returns self.
+
+        Notes
+        ------
+        If X is not a C-ordered contiguous array, it is copied.
+
         """
         super(OneClassSVM, self).fit(
             X, [], class_weight=class_weight, sample_weight=sample_weight,

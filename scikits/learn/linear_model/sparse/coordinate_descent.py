@@ -85,7 +85,7 @@ class ElasticNet(LinearModel):
 
         if self.dual_gap_ > self.eps_:
             warnings.warn('Objective did not converge, you might want'
-                                'to increase the number of interations')
+                                'to increase the number of iterations')
 
         # XXX TODO: implement intercept_ fitting
 

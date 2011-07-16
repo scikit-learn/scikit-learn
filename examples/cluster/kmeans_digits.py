@@ -15,9 +15,7 @@ print __doc__
 from time import time
 import numpy as np
 
-from scikits.learn.metrics import v_measure_score
-from scikits.learn.metrics import homogeneity_score
-from scikits.learn.metrics import completeness_score
+from scikits.learn import metrics
 from scikits.learn.cluster import KMeans
 from scikits.learn.datasets import load_digits
 from scikits.learn.decomposition import PCA
@@ -30,6 +28,7 @@ data = scale(digits.data)
 
 n_samples, n_features = data.shape
 n_digits = len(np.unique(digits.target))
+labels = digits.target
 
 print "n_digits: %d" % n_digits
 print "n_features: %d" % n_features
@@ -41,9 +40,9 @@ t0 = time()
 km = KMeans(init='k-means++', k=n_digits, n_init=10).fit(data)
 print "done in %0.3fs" % (time() - t0)
 print "Inertia: %f" % km.inertia_
-print "Homogeneity: %0.3f" % homogeneity_score(digits.target, km.labels_)
-print "Completeness: %0.3f" % completeness_score(digits.target, km.labels_)
-print "V-measure: %0.3f" % v_measure_score(digits.target, km.labels_)
+print "Homogeneity: %0.3f" % metrics.homogeneity_score(labels, km.labels_)
+print "Completeness: %0.3f" % metrics.completeness_score(labels, km.labels_)
+print "V-measure: %0.3f" % metrics.v_measure_score(labels, km.labels_)
 print
 
 print "Raw k-means with random centroid init..."
@@ -51,9 +50,9 @@ t0 = time()
 km = KMeans(init='random', k=n_digits, n_init=10).fit(data)
 print "done in %0.3fs" % (time() - t0)
 print "Inertia: %f" % km.inertia_
-print "Homogeneity: %0.3f" % homogeneity_score(digits.target, km.labels_)
-print "Completeness: %0.3f" % completeness_score(digits.target, km.labels_)
-print "V-measure: %0.3f" % v_measure_score(digits.target, km.labels_)
+print "Homogeneity: %0.3f" % metrics.homogeneity_score(labels, km.labels_)
+print "Completeness: %0.3f" % metrics.completeness_score(labels, km.labels_)
+print "V-measure: %0.3f" % metrics.v_measure_score(labels, km.labels_)
 print
 
 print "Raw k-means with PCA-based centroid init..."
@@ -64,8 +63,7 @@ pca = PCA(n_components=n_digits).fit(data)
 km = KMeans(init=pca.components_, k=n_digits, n_init=1).fit(data)
 print "done in %0.3fs" % (time() - t0)
 print "Inertia: %f" % km.inertia_
-print "Homogeneity: %0.3f" % homogeneity_score(digits.target, km.labels_)
-print "Completeness: %0.3f" % completeness_score(digits.target, km.labels_)
-print "V-measure: %0.3f" % v_measure_score(digits.target, km.labels_)
+print "Homogeneity: %0.3f" % metrics.homogeneity_score(labels, km.labels_)
+print "Completeness: %0.3f" % metrics.completeness_score(labels, km.labels_)
+print "V-measure: %0.3f" % metrics.v_measure_score(labels, km.labels_)
 print
-

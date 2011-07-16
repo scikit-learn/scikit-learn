@@ -44,14 +44,13 @@ class LinearModel(BaseEstimator, RegressorMixin):
             Returns predicted values.
         """
         X = safe_asanyarray(X)
-        return safe_sparse_dot(X, self.coef_) + self.intercept_
+        return safe_sparse_dot(X, self.coef_.T) + self.intercept_
 
     @staticmethod
     def _center_data(X, y, fit_intercept):
         """
-        Centers data to have mean zero along axis 0. This is here
-        because nearly all Linear Models will want it's data to be
-        centered.
+        Centers data to have mean zero along axis 0. This is here because
+        nearly all linear models will want their data to be centered.
         """
         import scipy.sparse  # importing scipy.sparse just for this is overkill
         if fit_intercept:
@@ -71,7 +70,7 @@ class LinearModel(BaseEstimator, RegressorMixin):
         """Set the intercept_
         """
         if self.fit_intercept:
-            self.intercept_ = ymean - np.dot(Xmean, self.coef_)
+            self.intercept_ = ymean - np.dot(Xmean, self.coef_.T)
         else:
             self.intercept_ = 0
 

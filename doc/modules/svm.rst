@@ -37,6 +37,13 @@ The disadvantages of Support Vector Machines include:
 
 .. TODO: add reference to probability estimates
 
+.. note:: **Avoiding data copy**
+
+    If the data passed to certain methods is not C-ordered and
+    contiguous, it will be copied before calling the underlying C
+    implementation. You can check whether a give numpy array is
+    C-contiguous by inspecting its `flags` dictionnary.
+
 .. _svm_classification:
 
 Classification
@@ -73,7 +80,7 @@ training samples::
     >>> clf = svm.SVC()
     >>> clf.fit(X, Y)
     SVC(kernel='rbf', C=1.0, probability=False, degree=3, coef0=0.0, tol=0.001,
-      cache_size=100.0, shrinking=True, gamma=0.5)
+      shrinking=True, gamma=0.5)
 
 After being fitted, the model can then be used to predict new values::
 
@@ -103,24 +110,21 @@ Multi-class classification
 :class:`SVC` and :class:`NuSVC` implement the "one-against-one"
 approach (Knerr et al., 1990) for multi- class classification. If
 n_class is the number of classes, then n_class * (n_class - 1)/2
-classifiers are constructed and each one trains data from two classes.
-
+classifiers are constructed and each one trains data from two classes::
 
     >>> X = [[0], [1], [2], [3]]
     >>> Y = [0, 1, 2, 3]
     >>> clf = svm.SVC()
     >>> clf.fit(X, Y)
     SVC(kernel='rbf', C=1.0, probability=False, degree=3, coef0=0.0, tol=0.001,
-      cache_size=100.0, shrinking=True, gamma=0.25)
+      shrinking=True, gamma=0.25)
     >>> dec = clf.decision_function([[1]])
     >>> dec.shape[1] # 4 classes: 4*3/2 = 6
     6
 
-
 On the other hand, :class:`LinearSVC` implements "one-vs-the-rest"
 multi-class strategy, thus training n_class models. If there are only
-two classes, only one model is trained.
-
+two classes, only one model is trained::
 
     >>> lin_clf = svm.LinearSVC()
     >>> lin_clf.fit(X, Y)
@@ -195,7 +199,7 @@ There are two flavors of Support Vector Regression: :class:`SVR` and
 
 As with classification classes, the fit method will take as
 argument vectors X, y, only that in this case y is expected to have
-floating point values instead of integer values.
+floating point values instead of integer values::
 
     >>> from scikits.learn import svm
     >>> X = [[0, 0], [2, 2]]
@@ -203,8 +207,7 @@ floating point values instead of integer values.
     >>> clf = svm.SVR()
     >>> clf.fit(X, y)
     SVR(kernel='rbf', C=1.0, probability=False, degree=3, epsilon=0.1,
-      shrinking=True, tol=0.001, cache_size=100.0, coef0=0.0, nu=0.5,
-      gamma=0.5)
+      shrinking=True, tol=0.001, coef0=0.0, nu=0.5, gamma=0.5)
     >>> clf.predict([[1, 1]])
     array([ 1.5])
 

@@ -12,44 +12,22 @@ print __doc__
 
 import numpy as np
 from scikits.learn.cluster import AffinityPropagation
-from scikits.learn.metrics import v_measure_score
-from scikits.learn.metrics import homogeneity_score
-from scikits.learn.metrics import completeness_score
+from scikits.learn import metrics
+from scikits.learn.datasets.samples_generator import make_blobs
 
 ##############################################################################
 # Generate sample data
-##############################################################################
-np.random.seed(0)
-
-means = (
-    [1, 1],
-    [-1, -1],
-    [1, -1]
-)
-std = .5
-n_clusters = len(means)
-n_samples_per_cluster = 100
-
-clusters = []
-labels_true = []
-for i, mean in enumerate(means):
-    clusters.append(np.random.normal(
-        loc=mean, scale=std, size=(n_samples_per_cluster, 2)))
-    labels_true += [i] * n_samples_per_cluster
-
-X = np.concatenate(clusters)
+centers = [[1, 1], [-1, -1], [1, -1]]
+X, labels_true = make_blobs(n_samples=300, centers=centers, cluster_std=0.5)
 
 ##############################################################################
 # Compute similarities
-##############################################################################
-X_norms = np.sum(X * X, axis=1)
+X_norms = np.sum(X ** 2, axis=1)
 S = - X_norms[:, np.newaxis] - X_norms[np.newaxis, :] + 2 * np.dot(X, X.T)
 p = 10 * np.median(S)
 
 ##############################################################################
 # Compute Affinity Propagation
-##############################################################################
-
 af = AffinityPropagation().fit(S, p)
 cluster_centers_indices = af.cluster_centers_indices_
 labels = af.labels_
@@ -57,15 +35,12 @@ labels = af.labels_
 n_clusters_ = len(cluster_centers_indices)
 
 print 'Estimated number of clusters: %d' % n_clusters_
-print "Homogeneity: %0.3f" % homogeneity_score(labels_true, labels)
-print "Completeness: %0.3f" % completeness_score(labels_true, labels)
-print "V-measure: %0.3f" % v_measure_score(labels_true, labels)
-
+print "Homogeneity: %0.3f" % metrics.homogeneity_score(labels_true, labels)
+print "Completeness: %0.3f" % metrics.completeness_score(labels_true, labels)
+print "V-measure: %0.3f" % metrics.v_measure_score(labels_true, labels)
 
 ##############################################################################
 # Plot result
-##############################################################################
-
 import pylab as pl
 from itertools import cycle
 

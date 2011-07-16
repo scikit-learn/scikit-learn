@@ -9,6 +9,7 @@ else:
 
 import warnings
 
+
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
     from numpy.distutils.system_info import get_info, get_standard_file, \
@@ -62,7 +63,7 @@ def configuration(parent_package='', top_path=None):
 
     config.add_extension('liblinear',
                          sources=liblinear_sources,
-                         libraries = blas_info.pop('libraries', ['blas']),
+                         libraries=blas_info.pop('libraries', ['blas']),
                          include_dirs=['src',
                                        numpy.get_include(),
                                        blas_info.pop('include_dirs', [])],
@@ -75,11 +76,9 @@ def configuration(parent_package='', top_path=None):
     # this should go *after* libsvm-skl
     config.add_subpackage('sparse')
 
-
     return config
 
 
 if __name__ == '__main__':
     from numpy.distutils.core import setup
     setup(**configuration(top_path='').todict())
-

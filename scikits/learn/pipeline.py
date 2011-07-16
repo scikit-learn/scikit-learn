@@ -75,15 +75,15 @@ class Pipeline(BaseEstimator):
         >>> # and a parameter 'C' of the svn
         >>> anova_svm.fit(X, y, anova__k=10, svc__C=.1) #doctest: +ELLIPSIS
         Pipeline(steps=[('anova', SelectKBest(k=10, score_func=<function f_regression at ...>)), ('svc', SVC(kernel='linear', C=0.1, probability=False, degree=3, coef0=0.0, tol=0.001,
-          cache_size=100.0, shrinking=True, gamma=0.0))])
+          shrinking=True, gamma=0.0))])
 
         >>> prediction = anova_svm.predict(X)
         >>> score = anova_svm.score(X)
     """
 
-    #---------------------------------------------------------------------------
+    #--------------------------------------------------------------------------
     # BaseEstimator interface
-    #---------------------------------------------------------------------------
+    #--------------------------------------------------------------------------
 
     def __init__(self, steps):
         """
@@ -123,10 +123,9 @@ class Pipeline(BaseEstimator):
                     out['%s__%s' % (name, key)] = value
             return out
 
-    #---------------------------------------------------------------------------
+    #--------------------------------------------------------------------------
     # Estimator interface
-    #---------------------------------------------------------------------------
-
+    #--------------------------------------------------------------------------
 
     def _pre_transform(self, X, y=None, **params):
         self._set_params(**params)

@@ -12,6 +12,7 @@ from scipy import linalg
 from .base import LinearModel
 from ..utils.extmath import fast_logdet
 
+
 ###############################################################################
 # BayesianRidge regression
 
@@ -30,7 +31,7 @@ class BayesianRidge(LinearModel):
         Target values for training vectors
 
     n_iter : int, optional
-        Maximum number of interations.  Default is 300.
+        Maximum number of iterations.  Default is 300.
 
     eps : float, optional
         Stop the algorithm if w has converged. Default is 1.e-3.
@@ -101,7 +102,7 @@ class BayesianRidge(LinearModel):
     See examples/linear_model/plot_bayesian_ridge.py for an example.
     """
 
-    def __init__(self, n_iter=300, eps=1.e-3, alpha_1 = 1.e-6, alpha_2 = 1.e-6,
+    def __init__(self, n_iter=300, eps=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
                 lambda_1=1.e-6, lambda_2=1.e-6, compute_score=False,
                 fit_intercept=True, verbose=False):
         self.n_iter = n_iter
@@ -149,7 +150,7 @@ class BayesianRidge(LinearModel):
 
         XT_y = np.dot(X.T, y)
         U, S, Vh = linalg.svd(X, full_matrices=False)
-        eigen_vals_ = S**2
+        eigen_vals_ = S ** 2
 
         ### Convergence loop of the bayesian ridge regression
         for iter_ in range(self.n_iter):
@@ -159,14 +160,14 @@ class BayesianRidge(LinearModel):
             # coef_ = sigma_^-1 * XT * y
             if n_samples > n_features:
                 coef_ = np.dot(Vh.T,
-                               Vh / (eigen_vals_ + lambda_ / alpha_)[:,None])
+                               Vh / (eigen_vals_ + lambda_ / alpha_)[:, None])
                 coef_ = np.dot(coef_, XT_y)
                 if self.compute_score:
                     logdet_sigma_ = - np.sum(
-                        np.log(lambda_ + alpha_* eigen_vals_))
+                        np.log(lambda_ + alpha_ * eigen_vals_))
             else:
                 coef_ = np.dot(X.T, np.dot(
-                        U / (eigen_vals_ + lambda_ / alpha_)[None,:], U.T))
+                        U / (eigen_vals_ + lambda_ / alpha_)[None, :], U.T))
                 coef_ = np.dot(coef_, y)
                 if self.compute_score:
                     logdet_sigma_ = lambda_ * np.ones(n_features)
@@ -174,11 +175,11 @@ class BayesianRidge(LinearModel):
                     logdet_sigma_ = - np.sum(np.log(logdet_sigma_))
 
             ### Update alpha and lambda
-            rmse_ = np.sum((y - np.dot(X, coef_))**2)
-            gamma_ =  np.sum((alpha_ * eigen_vals_) \
+            rmse_ = np.sum((y - np.dot(X, coef_)) ** 2)
+            gamma_ = np.sum((alpha_ * eigen_vals_) \
                             / (lambda_ + alpha_ * eigen_vals_))
-            lambda_ =  (gamma_ + 2 * lambda_1) \
-                            / (np.sum(coef_**2) + 2 * lambda_2)
+            lambda_ = (gamma_ + 2 * lambda_1) \
+                            / (np.sum(coef_ ** 2) + 2 * lambda_2)
             alpha_ = (n_samples - gamma_ + 2 * alpha_1) \
                             / (rmse_ + 2 * alpha_2)
 
@@ -188,8 +189,8 @@ class BayesianRidge(LinearModel):
                 s += alpha_1 * log(alpha_) - alpha_2 * alpha_
                 s += 0.5 * n_features * log(lambda_) \
                                + 0.5 * n_samples * log(alpha_) \
-                               - 0.5 * alpha_ *  rmse_ \
-                               - 0.5 * (lambda_ * np.sum(coef_**2)) \
+                               - 0.5 * alpha_ * rmse_ \
+                               - 0.5 * (lambda_ * np.sum(coef_ ** 2)) \
                                - 0.5 * logdet_sigma_ \
                                - 0.5 * n_samples * log(2 * np.pi)
                 self.scores_.append(s)
@@ -231,7 +232,7 @@ class ARDRegression(LinearModel):
         Target values for training vectors
 
     n_iter : int, optional
-        Maximum number of interations. Default is 300
+        Maximum number of iterations. Default is 300
 
     eps : float, optional
         Stop the algorithm if w has converged. Default is 1.e-3.
@@ -311,7 +312,7 @@ class ARDRegression(LinearModel):
     """
 
     def __init__(self, n_iter=300, eps=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
-                  lambda_1=1.e-6, lambda_2 = 1.e-6, compute_score=False,
+                  lambda_1=1.e-6, lambda_2=1.e-6, compute_score=False,
                   threshold_lambda=1.e+4, fit_intercept=True, verbose=False):
         self.n_iter = n_iter
         self.eps = eps
@@ -372,24 +373,24 @@ class ARDRegression(LinearModel):
         for iter_ in range(self.n_iter):
             ### Compute mu and sigma (using Woodbury matrix identity)
             sigma_ = linalg.pinv(np.eye(n_samples) / alpha_ +
-                          np.dot(X[:,keep_lambda] *
+                          np.dot(X[:, keep_lambda] *
                           np.reshape(1. / lambda_[keep_lambda], [1, -1]),
-                          X[:,keep_lambda].T))
-            sigma_ = np.dot(sigma_, X[:,keep_lambda]
+                          X[:, keep_lambda].T))
+            sigma_ = np.dot(sigma_, X[:, keep_lambda]
                           * np.reshape(1. / lambda_[keep_lambda], [1, -1]))
-            sigma_ = - np.dot(np.reshape( 1. / lambda_[keep_lambda], [-1, 1])
-                                                * X[:,keep_lambda].T, sigma_)
+            sigma_ = - np.dot(np.reshape(1. / lambda_[keep_lambda], [-1, 1])
+                                                * X[:, keep_lambda].T, sigma_)
             sigma_.flat[::(sigma_.shape[1] + 1)] += \
                           1. / lambda_[keep_lambda]
             coef_[keep_lambda] = alpha_ * np.dot(
-                                        sigma_,np.dot(X[:,keep_lambda].T, y))
+                                        sigma_, np.dot(X[:, keep_lambda].T, y))
 
             ### Update alpha and lambda
-            rmse_ = np.sum((y - np.dot(X, coef_))**2)
-            gamma_ =  1. - lambda_[keep_lambda] * np.diag(sigma_)
+            rmse_ = np.sum((y - np.dot(X, coef_)) ** 2)
+            gamma_ = 1. - lambda_[keep_lambda] * np.diag(sigma_)
             lambda_[keep_lambda] = (gamma_ + 2. * lambda_1) \
-                            / ((coef_[keep_lambda])**2 + 2. * lambda_2)
-            alpha_ = (n_samples - gamma_.sum() +  2. * alpha_1) \
+                            / ((coef_[keep_lambda]) ** 2 + 2. * lambda_2)
+            alpha_ = (n_samples - gamma_.sum() + 2. * alpha_1) \
                             / (rmse_ + 2. * alpha_2)
 
             ### Prune the weights with a precision over a threshold
@@ -402,7 +403,7 @@ class ARDRegression(LinearModel):
                 s += alpha_1 * log(alpha_) - alpha_2 * alpha_
                 s += 0.5 * (fast_logdet(sigma_) + n_samples * log(alpha_)
                                                 + np.sum(np.log(lambda_)))
-                s -= 0.5 * (alpha_ * rmse_ + (lambda_ * coef_**2).sum())
+                s -= 0.5 * (alpha_ * rmse_ + (lambda_ * coef_ ** 2).sum())
                 self.scores_.append(s)
 
             ### Check for convergence

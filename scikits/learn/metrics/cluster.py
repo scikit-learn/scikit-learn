@@ -27,6 +27,14 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred):
     Both scores have positive values between 0.0 and 1.0, larger values
     being desirable.
 
+    Those 3 metrics are independent of the absolute values of the labels:
+    a permutation of the class or cluster label values won't change the
+    score values in any way.
+
+    V-Measure is furthermore symmetric: swapping `labels_true` and
+    `label_pred` will give the same score. This does not hold for
+    homogeneity and completeness.
+
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
@@ -38,7 +46,7 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred):
     Returns
     -------
     homogeneity: float
-       score between 0.0 and 1.0. 1.0 stands for perfectly homogenous labeling
+       score between 0.0 and 1.0. 1.0 stands for perfectly homogeneous labeling
 
     completeness: float
        score between 0.0 and 1.0. 1.0 stands for perfectly complete labeling
@@ -80,21 +88,21 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred):
     n_C = [float(np.sum(labels_true == c)) for c in classes]
     n_K = [float(np.sum(labels_pred == k)) for k in clusters]
 
-    for c in classes:
-        entropy_C -= n_C[c] / n_samples * log(n_C[c] / n_samples)
+    for i, _ in enumerate(classes):
+        entropy_C -= n_C[i] / n_samples * log(n_C[i] / n_samples)
 
-    for k in clusters:
-        entropy_K -= n_K[k] / n_samples * log(n_K[k] / n_samples)
+    for j, _ in enumerate(clusters):
+        entropy_K -= n_K[j] / n_samples * log(n_K[j] / n_samples)
 
-    for c in classes:
-        for k in clusters:
+    for i, c in enumerate(classes):
+        for j, k in enumerate(clusters):
             # count samples at the intersection of class c and cluster k
             n_CK = float(np.sum((labels_true == c) * (labels_pred == k)))
 
             if n_CK != 0.0:
-                # turn label assignements into contribution to entropies
-                entropy_C_given_K -= n_CK / n_samples * log(n_CK / n_K[k])
-                entropy_K_given_C -= n_CK / n_samples * log(n_CK / n_C[c])
+                # turn label assignments into contribution to entropies
+                entropy_C_given_K -= n_CK / n_samples * log(n_CK / n_K[j])
+                entropy_K_given_C -= n_CK / n_samples * log(n_CK / n_C[i])
 
     homogeneity = 1.0 - entropy_C_given_K / entropy_C if entropy_C else 1.0
     completeness = 1.0 - entropy_K_given_C / entropy_K if entropy_K else 1.0
@@ -114,6 +122,13 @@ def homogeneity_score(labels_true, labels_pred):
     A clustering result satisfies homogeneity if all of its clusters
     contain only data points which are members of a single class.
 
+    This metric is independent of the absolute values of the labels:
+    a permutation of the class or cluster label values won't change the
+    score value in any way.
+
+    This metric is not symmetric: switching `label_true` with `label_pred`
+    will return the completeness_score which will be different in general.
+
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
@@ -125,7 +140,7 @@ def homogeneity_score(labels_true, labels_pred):
     Returns
     -------
     homogeneity: float
-       score between 0.0 and 1.0. 1.0 stands for perfectly homogenous labeling
+       score between 0.0 and 1.0. 1.0 stands for perfectly homogeneous labeling
 
     References
     ----------
@@ -143,11 +158,12 @@ def homogeneity_score(labels_true, labels_pred):
 
     Perfect labelings are homegenous::
 
+      >>> from scikits.learn.metrics.cluster import homogeneity_score
       >>> homogeneity_score([0, 0, 1, 1], [1, 1, 0, 0])
       1.0
 
     Non-pefect labelings that futher split classes into more clusters can be
-    perfectly homogenous:
+    perfectly homogeneous:
 
       >>> homogeneity_score([0, 0, 1, 1], [0, 0, 1, 2])
       1.0
@@ -155,7 +171,7 @@ def homogeneity_score(labels_true, labels_pred):
       1.0
 
     Clusters that include samples from different classes do not make for an
-    homogenous labeling::
+    homogeneous labeling::
 
       >>> homogeneity_score([0, 0, 1, 1], [0, 1, 0, 1])
       0.0
@@ -171,6 +187,13 @@ def completeness_score(labels_true, labels_pred):
 
     A clustering result satisfies completeness if all the data points
     that are members of a given class are elements of the same cluster.
+
+    This metric is independent of the absolute values of the labels:
+    a permutation of the class or cluster label values won't change the
+    score value in any way.
+
+    This metric is not symmetric: switching `label_true` with `label_pred`
+    will return the homogeneity_score which will be different in general.
 
     Parameters
     ----------
@@ -201,6 +224,7 @@ def completeness_score(labels_true, labels_pred):
 
     Perfect labelings are complete::
 
+      >>> from scikits.learn.metrics.cluster import completeness_score
       >>> completeness_score([0, 0, 1, 1], [1, 1, 0, 0])
       1.0
 
@@ -213,7 +237,7 @@ def completeness_score(labels_true, labels_pred):
       1.0
 
     If classes members are splitted accross different clusters, the
-    assignement cannot be complete::
+    assignment cannot be complete::
 
       >>> completeness_score([0, 0, 1, 1], [0, 1, 0, 1])
       0.0
@@ -230,6 +254,15 @@ def v_measure_score(labels_true, labels_pred):
     The V-Measure is the hormonic mean between homogeneity and completeness:
 
       v = 2 * (homogeneity * completeness) / (homogeneity + completeness)
+
+    This metric is independent of the absolute values of the labels:
+    a permutation of the class or cluster label values won't change the
+    score value in any way.
+
+    This metric is furthermore symmetric: switching `label_true` with
+    `label_pred` will return the same score value. This can be useful to
+    measure the agreement of two independent label assignments strategies
+    on the same dataset when the real ground truth is not known.
 
     Parameters
     ----------
@@ -258,30 +291,33 @@ def v_measure_score(labels_true, labels_pred):
     Examples
     --------
 
-    Perfect labelings are both homogenous and complete, hence have score 1.0::
+    Perfect labelings are both homogeneous and complete, hence have score 1.0::
 
+      >>> from scikits.learn.metrics.cluster import v_measure_score
       >>> v_measure_score([0, 0, 1, 1], [0, 0, 1, 1])
       1.0
       >>> v_measure_score([0, 0, 1, 1], [1, 1, 0, 0])
       1.0
 
     Labelings that assign all classes members to the same clusters
-    are complete be not homogenous, hence penalized::
+    are complete be not homogeneous, hence penalized::
 
-      >>> round(v_measure_score([0, 1, 2, 3], [0, 0, 1, 1]), 2)
-      0.67
+      >>> v_measure_score([0, 0, 1, 2], [0, 0, 1, 1])     # doctest: +ELLIPSIS
+      0.8...
+      >>> v_measure_score([0, 1, 2, 3], [0, 0, 1, 1])     # doctest: +ELLIPSIS
+      0.66...
 
-    Labelings that have pure clusters with members comming from the same
-    classes are homogenous but un-necessary splitts harms completeness
+    Labelings that have pure clusters with members coming from the same
+    classes are homogeneous but un-necessary splits harms completeness
     and thus penalize V-measure as well::
 
-      >>> v_measure_score([0, 0, 1, 1], [0, 0, 1, 2])
-      0.8
-      >>> round(v_measure_score([0, 0, 1, 1], [0, 1, 2, 3]), 2)
-      0.67
+      >>> v_measure_score([0, 0, 1, 1], [0, 0, 1, 2])     # doctest: +ELLIPSIS
+      0.8...
+      >>> v_measure_score([0, 0, 1, 1], [0, 1, 2, 3])     # doctest: +ELLIPSIS
+      0.66...
 
     If classes members are completly splitted accross different clusters,
-    the assignement is totally in-complete, hence the v-measure is null::
+    the assignment is totally in-complete, hence the v-measure is null::
 
       >>> v_measure_score([0, 0, 0, 0], [0, 1, 2, 3])
       0.0

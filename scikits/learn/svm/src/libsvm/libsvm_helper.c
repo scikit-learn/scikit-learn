@@ -56,14 +56,11 @@ struct svm_node *dense_to_libsvm (double *x, npy_intp *dims)
  * Create a svm_parameter struct and return it. It is up to the user to
  * free the resulting object.
  */
-struct svm_parameter * set_parameter(int svm_type, int kernel_type, int degree,
+void set_parameter(struct svm_parameter *param, int svm_type, int kernel_type, int degree,
 		double gamma, double coef0, double nu, double cache_size, double C,
 		double eps, double p, int shrinking, int probability, int nr_weight,
 		char *weight_label, char *weight)
 {
-    struct svm_parameter *param;
-    param = malloc(sizeof(struct svm_parameter));
-    if (param == NULL) return NULL;
     param->svm_type = svm_type;
     param->kernel_type = kernel_type;
     param->degree = degree;
@@ -79,29 +76,19 @@ struct svm_parameter * set_parameter(int svm_type, int kernel_type, int degree,
     param->weight_label = (int *) weight_label;
     param->weight = (double *) weight;
     param->gamma = gamma;
-    return param;
 }
 
 /*
  * Create and return a svm_problem struct. It is up to the user to free resulting
  * structure.
  */
-struct svm_problem * set_problem(char *X, char *Y, char *sample_weight, npy_intp *dims, int kernel_type)
+void set_problem(struct svm_problem *problem, char *X, char *Y, char *sample_weight, npy_intp *dims, int kernel_type)
 {
-    struct svm_problem *problem;
-
-    problem = malloc(sizeof(struct svm_problem));
     if (problem == NULL) return NULL;
     problem->l = (int) dims[0]; /* number of samples */
     problem->y = (double *) Y;
-    problem->x = dense_to_libsvm((double *) X, dims);
+    problem->x = dense_to_libsvm((double *) X, dims); /* implicit call to malloc */
     problem->W = (double *) sample_weight;
-
-    if (problem->x == NULL) { 
-        free(problem);
-        return NULL;
-    }
-    return problem;
 }
 
 /*
@@ -109,19 +96,19 @@ struct svm_problem * set_problem(char *X, char *Y, char *sample_weight, npy_intp
  *
  * The copy of model->sv_coef should be straightforward, but
  * unfortunately to represent a matrix numpy and libsvm use different
- * approaches, so it requires some iteration.  
+ * approaches, so it requires some iteration.
  *
- * Possible issue: on 64 bits, the number of columns that numpy can 
+ * Possible issue: on 64 bits, the number of columns that numpy can
  * store is a long, but libsvm enforces this number (model->l) to be
  * an int, so we might have numpy matrices that do not fit into libsvm's
  * data structure.
  *
  */
 struct svm_model *set_model(struct svm_parameter *param, int nr_class,
-                            char *SV, npy_intp *SV_dims, 
+                            char *SV, npy_intp *SV_dims,
                             char *support, npy_intp *support_dims,
                             npy_intp *sv_coef_strides,
-                            char *sv_coef, char *rho, char *nSV, char *label, 
+                            char *sv_coef, char *rho, char *nSV, char *label,
                             char *probA, char *probB)
 {
     struct svm_model *model;
@@ -155,7 +142,7 @@ struct svm_model *set_model(struct svm_parameter *param, int nr_class,
     } else {
         model->SV = dense_to_libsvm((double *) SV, SV_dims);
     }
-    /* 
+    /*
      * regression and one-class does not use nSV, label.
      * TODO: does this provoke memory leaks (we just malloc'ed them)?
      */
@@ -172,7 +159,7 @@ struct svm_model *set_model(struct svm_parameter *param, int nr_class,
         (model->rho)[i] = -((double *) rho)[i];
     }
 
-    /* 
+    /*
      * just to avoid segfaults, these features are not wrapped but
      * svm_destroy_model will try to free them.
      */
@@ -231,7 +218,7 @@ npy_intp get_nr(struct svm_model *model)
 }
 
 /*
- * Some helpers to convert from libsvm sparse data structures 
+ * Some helpers to convert from libsvm sparse data structures
  * model->sv_coef is a double **, whereas data is just a double *,
  * so we have to do some stupid copying.
  */
@@ -258,7 +245,7 @@ void copy_intercept(char *data, struct svm_model *model, npy_intp *dims)
     }
 }
 
-/* 
+/*
  * This is a bit more complex since SV are stored as sparse
  * structures, so we have to do the conversion on the fly and also
  * iterate fast over data.
@@ -279,8 +266,8 @@ void copy_support (char *data, struct svm_model *model)
     memcpy (data, model->sv_ind, (model->l) * sizeof(int));
 }
 
-/* 
- * copy svm_model.nSV, an array with the number of SV for each class 
+/*
+ * copy svm_model.nSV, an array with the number of SV for each class
  * will be NULL in the case of SVR, OneClass
  */
 void copy_nSV(char *data, struct svm_model *model)
@@ -289,7 +276,7 @@ void copy_nSV(char *data, struct svm_model *model)
     memcpy(data, model->nSV, model->nr_class * sizeof(int));
 }
 
-/* 
+/*
  * same as above with model->label
  * TODO: maybe merge into the previous?
  */
@@ -309,7 +296,7 @@ void copy_probB(char *data, struct svm_model *model, npy_intp * dims)
     memcpy(data, model->probB, dims[0] * sizeof(double));
 }
 
-/* 
+/*
  * Predict using model.
  *
  *  It will return -1 if we run out of memory.
@@ -333,7 +320,7 @@ int copy_predict(char *predict, struct svm_model *model, npy_intp *predict_dims,
     return 0;
 }
 
-int copy_predict_values(char *predict, struct svm_model *model, 
+int copy_predict_values(char *predict, struct svm_model *model,
                         npy_intp *predict_dims, char *dec_values, int nr_class)
 {
     npy_intp i;
@@ -342,7 +329,7 @@ int copy_predict_values(char *predict, struct svm_model *model,
     if (predict_nodes == NULL)
         return -1;
     for(i=0; i<predict_dims[0]; ++i) {
-        svm_predict_values(model, &predict_nodes[i], 
+        svm_predict_values(model, &predict_nodes[i],
                                 ((double *) dec_values) + i*nr_class);
     }
 
@@ -371,18 +358,11 @@ int copy_predict_proba(char *predict, struct svm_model *model, npy_intp *predict
 }
 
 
-/* 
+/*
  * Some free routines. Some of them are nontrivial since a lot of
  * sharing happens across objects (they *must* be called in the
  * correct order)
  */
-int free_problem(struct svm_problem *problem)
-{
-    if (problem == NULL) return -1;
-    free (problem->x);
-    free (problem);
-    return 0;
-}
 
 int free_model(struct svm_model *model)
 {
@@ -410,7 +390,7 @@ int free_param(struct svm_parameter *param)
     free(param);
     return 0;
 }
-       
+
 
 /* rely on built-in facility to control verbose output
  * in the versions of libsvm >= 2.89

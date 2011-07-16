@@ -3,7 +3,7 @@ from numpy import linalg
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 
 from ..pairwise import euclidean_distances, linear_kernel, polynomial_kernel, \
-                       rbf_kernel
+                       rbf_kernel, sigmoid_kernel
 
 np.random.seed(0)
 
@@ -18,7 +18,7 @@ def test_euclidean_distances():
 def test_kernel_symmetry():
     """valid kernels should be symmetric"""
     X = np.random.random((5, 4))
-    for kernel in (linear_kernel, polynomial_kernel, rbf_kernel):
+    for kernel in (linear_kernel, polynomial_kernel, rbf_kernel, sigmoid_kernel):
         K = kernel(X, X)
         assert_array_equal(K, K.T)
 

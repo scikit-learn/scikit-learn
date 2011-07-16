@@ -12,7 +12,7 @@ extern int libsvm_version;
 struct svm_node
 {
 	int dim;
-        int ind; /* index. A bit redundanat, but needed if using a
+	int ind; /* index. A bit redundanat, but needed if using a
                     precomputed kernel */
 	double *values;
 };
@@ -22,7 +22,7 @@ struct svm_problem
 	int l;
 	double *y;
 	struct svm_node *x;
-        double *W; /* instance weights */
+	double *W; /* instance weights */
 };
 
 
@@ -67,7 +67,7 @@ struct svm_parameter
 
 //
 // svm_model
-// 
+//
 struct svm_model
 {
 	struct svm_parameter param;	/* parameter */
@@ -76,7 +76,7 @@ struct svm_model
 	struct svm_node *SV;		/* SVs (SV[l]) */
 	double **sv_coef;	/* coefficients for SVs in decision functions (sv_coef[k-1][l]) */
 
-        int *sv_ind;            /* index of support vectors */
+	int *sv_ind;            /* index of support vectors */
 
 	double *rho;		/* constants in decision functions (rho[k*(k-1)/2]) */
 	double *probA;		/* pariwise probability information */
@@ -144,7 +144,7 @@ void svm_set_print_string_function(void (*print_func)(const char *));
 
 // deprecated
 // this function will be removed in future release
-void svm_destroy_model(struct svm_model *model_ptr); 
+void svm_destroy_model(struct svm_model *model_ptr);
 
 
 /* sparse version */

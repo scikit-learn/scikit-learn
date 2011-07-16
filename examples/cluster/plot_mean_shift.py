@@ -12,21 +12,12 @@ print __doc__
 
 import numpy as np
 from scikits.learn.cluster import MeanShift, estimate_bandwidth
+from scikits.learn.datasets.samples_generator import make_blobs
 
 ################################################################################
 # Generate sample data
-np.random.seed(0)
-
-n_points_per_cluster = 250
-n_clusters = 3
-n_points = n_points_per_cluster*n_clusters
-means = np.array([[1,1],[-1,-1],[1,-1]])
-std = .6
-clustMed = []
-
-X = np.empty((0, 2))
-for i in range(n_clusters):
-    X = np.r_[X, means[i] + std * np.random.randn(n_points_per_cluster, 2)]
+centers = [[1, 1], [-1, -1], [1, -1]]
+X, _ = make_blobs(n_samples=750, centers=centers, cluster_std=0.6)
 
 ################################################################################
 # Compute clustering with MeanShift
