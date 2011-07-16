@@ -33,13 +33,11 @@ from scipy.io.matlab import loadmat
 from .base import get_data_home
 from .base import Bunch
 
-logger = logging.getLogger(__name__)
-
-
 DATA_URL = "http://cs.nyu.edu/~roweis/data/olivettifaces.mat"
 TARGET_FILENAME = "olivetti.npy"
 
-def fetch_olivetti_faces(data_home=None, download_if_missing=True):
+def fetch_olivetti_faces(data_home=None, shuffle=False,
+                         download_if_missing=True):
     """Loader for the Olivetti faces data-set from AT&T.
 
     This dataset consists of 10 pictures each of 40 individuals. The original
@@ -83,6 +81,10 @@ def fetch_olivetti_faces(data_home=None, download_if_missing=True):
     faces = faces.reshape((400, 64, 64)).transpose(0, 2, 1)
     # 10 images per class, 400 images total, each class is contiguous.
     target = np.array([i // 10 for i in range(400)])
+    if shuffle:
+        order = np.random.permutation(len(faces))
+        faces = faces[order]
+        target = target[order]
     return Bunch(data=faces.reshape(len(faces), -1),
                  images=faces,
                  target=target,
