@@ -164,3 +164,20 @@ def test_sparse_mbk_means_pp_init():
     np.random.seed(1)
     mbk_means = MiniBatchKMeans(init="k-means++", n_init=1)
     assert_raises(ValueError, mbk_means.fit, S, k=n_clusters)
+
+
+def test_sparse_mbk_means_callable_init():
+    np.random.seed(1)
+    def test_init(Xbar,k,random_state):
+        return np.vstack([X[5], X[25], X[45]])
+    mbk_means = MiniBatchKMeans(init=test_init, n_init=1).fit(S)
+
+    centers = mbk_means.cluster_centers_
+    assert_equal(centers.shape, (n_clusters, 2))
+
+    labels = mbk_means.labels_
+    assert_equal(np.unique(labels).size, 3)
+
+    assert_raises(ValueError, mbk_means.fit, [[0., 1.]], k=n_clusters)
+
+

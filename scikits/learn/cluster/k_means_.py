@@ -20,6 +20,7 @@ from ..metrics.pairwise import euclidean_distances
 from ..utils import check_random_state
 from ..utils import check_arrays
 from ..utils import shuffle
+from ..utils import _gen_even_slices
 
 from . import _k_means
 
@@ -510,33 +511,6 @@ class KMeans(BaseEstimator):
             max_iter=self.max_iter, verbose=self.verbose,
             tol=self.tol, random_state=self.random_state, copy_x=self.copy_x)
         return self
-
-
-def _gen_even_slices(n, n_packs):
-    """Generator to create n_packs slices going up to n.
-
-    Examples
-    ========
-
-    >>> list(_gen_even_slices(10, 1))
-    [slice(0, 10, None)]
-    >>> list(_gen_even_slices(10, 10))
-    [slice(0, 1, None), slice(1, 2, None), slice(2, 3, None), slice(3, 4, None), slice(4, 5, None), slice(5, 6, None), slice(6, 7, None), slice(7, 8, None), slice(8, 9, None), slice(9, 10, None)]
-    >>> list(_gen_even_slices(10, 5))
-    [slice(0, 2, None), slice(2, 4, None), slice(4, 6, None), slice(6, 8, None), slice(8, 10, None)]
-    >>> list(_gen_even_slices(10, 3))
-    [slice(0, 4, None), slice(4, 7, None), slice(7, 10, None)]
-
-    """
-    start = 0
-    for pack_num in range(n_packs):
-        this_n = n // n_packs
-        if pack_num < n % n_packs:
-            this_n += 1
-        if this_n > 0:
-            end = start + this_n
-            yield slice(start, end, None)
-            start = end
 
 
 def _mini_batch_step_dense(X, batch_slice, centers, counts, x_squared_norms):
