@@ -15,6 +15,7 @@ from .twenty_newsgroups import load_20newsgroups
 from .mldata import fetch_mldata, mldata_filename
 from .samples_generator import swiss_roll
 from .svmlight_format import load_svmlight_file
+from .olivetti_faces import fetch_olivetti_faces
 
 # backward compatibility
 def load_files(*args, **kwargs):
