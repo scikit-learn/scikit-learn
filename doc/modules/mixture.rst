@@ -61,20 +61,24 @@ to a local optimum. In the `scikits.learn` this algorithm in
 implemented in the :class:`GMM` class.
 
 Advantages of expectation-maximization:
- - **Speed**: it is the fastest algorithm for learning mixture models
- - **Agnostic**: as this algorithm maximizes only the likelihood, it
-  will not bias the means towards zero, or bias the cluster sizes to
-  have specific structures that might or might not apply.
+
+:Speed: it is the fastest algorithm for learning mixture models
+
+:Agnostic: as this algorithm maximizes only the likelihood, it
+   will not bias the means towards zero, or bias the cluster sizes to
+   have specific structures that might or might not apply.
 
 Disadvantages of expectation-maximization:
- - **Singularities**: when one has insufficiently many points per
-     mixture, estimating the covariance matrices becomes difficult,
-     and the algorithm is known to diverge and find solutions with
-     infinite likelihood unless one regularizes the covariances artificially.
- - **Number of components**: this algorithm will always use all the
-     components it has access to, needing complex held-out data
-     criteria to decide how many components to use in the absence of
-     external cues.
+
+:Singularities: when one has insufficiently many points per
+   mixture, estimating the covariance matrices becomes difficult,
+   and the algorithm is known to diverge and find solutions with
+   infinite likelihood unless one regularizes the covariances artificially.
+
+:Number of components: this algorithm will always use all the
+   components it has access to, needing complex held-out data
+   criteria to decide how many components to use in the absence of
+   external cues.
 
 Variational inference
 ---------------------
@@ -103,23 +107,26 @@ points.
 
 Simply switching from expectation-maximization to variational
 inference has the main following advantage:
- - **Regularization**: due to the incorporation of prior information,
-     variational solutions have less pathological special cases than
-     expectation-maximization solutions. One can then use full
-     covariance matrices in high dimensions or in cases where some
-     components might be centered around a single point without
-     risking divergence.
+
+:Regularization: due to the incorporation of prior information,
+   variational solutions have less pathological special cases than
+   expectation-maximization solutions. One can then use full
+   covariance matrices in high dimensions or in cases where some
+   components might be centered around a single point without
+   risking divergence.
 
 But brings with it the following disadvantage:
- - **Bias**: to regularize a model one has to add biases. The
-     variational algorithm will bias all the means towards the origin
-     (part of the prior information adds a "ghost point" in the origin
-     to every mixture component) and it will bias the covariances to
-     be more spherical. It will also, depending on the concentration
-     parameter, bias the cluster structure either towards uniformity
-     or towards a rich-get-richer scenario.
- - **Hyperparameters**: this algorithm needs an extra hyperparameter
-     that might need experimental tuning via cross-validation.
+
+:Bias: to regularize a model one has to add biases. The
+   variational algorithm will bias all the means towards the origin
+   (part of the prior information adds a "ghost point" in the origin
+   to every mixture component) and it will bias the covariances to
+   be more spherical. It will also, depending on the concentration
+   parameter, bias the cluster structure either towards uniformity
+   or towards a rich-get-richer scenario.
+
+:Hyperparameters: this algorithm needs an extra hyperparameter
+   that might need experimental tuning via cross-validation.
 
 The Dirichlet Process
 ---------------------
@@ -165,29 +172,34 @@ higher than the "true" number of components, affects only algorithmic
 complexity, not the actual number of components used).
 
 The advantages of using a dirichlet process mixture model are:
- - **Less sensitivity to the number of parameters**: unlike finite
-     models, which will almost always use all components as much as
-     they can, and hence will produce wildly different solutions for
-     different numbers of components, the dirichlet process solution
-     won't change much with changes to the parameters, leading to more
-     stability and less tuning.
- - **No need to specify the number of components**
- - **Implicit strong regularization**: when learning finite mixtures
-     with expectation-maximization or variational inference it might
-     be that the structure found during learning will not fit held-out
-     data very well (specially when using bad parameters). As the
-     dirichlet process automatically performs model selection it tends
-     to fit structures that generalize better to unseen data.
+
+:Less sensitivity to the number of parameters: unlike finite
+   models, which will almost always use all components as much as
+   they can, and hence will produce wildly different solutions for
+   different numbers of components, the dirichlet process solution
+   won't change much with changes to the parameters, leading to more
+   stability and less tuning.
+   
+:No need to specify the number of components:
+
+:Implicit strong regularization: when learning finite mixtures
+   with expectation-maximization or variational inference it might
+   be that the structure found during learning will not fit held-out
+   data very well (specially when using bad parameters). As the
+   dirichlet process automatically performs model selection it tends
+   to fit structures that generalize better to unseen data.
 
 The main disadvantages of using the dirichlet process are:
- - **Speed** the extra parametrization necessary for variational
-     inference and for the structure of the dirichlet process can and
-     will make inference slower, although not by much.
- - **Bias**: as in variational techniques, but only more so, there are
-     many implicit biases in the dirichlet process and the inference
-     algorithms, and whenever there is a mismatch between these biases
-     and the data it might be possible to fit better models using a
-     finite mixture.
+
+:Speed: the extra parametrization necessary for variational
+   inference and for the structure of the dirichlet process can and
+   will make inference slower, although not by much.
+
+:Bias: as in variational techniques, but only more so, there are
+   many implicit biases in the dirichlet process and the inference
+   algorithms, and whenever there is a mismatch between these biases
+   and the data it might be possible to fit better models using a
+   finite mixture.
     
 GMM classifier
 ==============
