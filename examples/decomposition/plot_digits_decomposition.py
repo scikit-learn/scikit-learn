@@ -30,6 +30,7 @@ threes = digits.data[digits.target == 3]
 threes_centered = threes - threes.mean(axis=0)
 print "Dataset consists of %d images" % len(threes)
 
+
 ###############################################################################
 def plot_digit_gallery(title, images):
     pl.figure(figsize=(1. * n_col, 1.13 * n_row))
@@ -45,20 +46,20 @@ def plot_digit_gallery(title, images):
     pl.subplots_adjust(0.01, 0.05, 0.99, 0.93, 0.04, 0.)
 
 ###############################################################################
-# Dictionary of the different estimators, and whether to center and 
+# Dictionary of the different estimators, and whether to center and
 # transpose the problem
 estimators = {
     'eigendigits (PCA)': (RandomizedPCA(n_components=n_components,
                                        whiten=True),
                           True, False),
     'non-negative components (NMF)': (NMF(n_components=n_components,
-                                init='nndsvd', beta=5, tol=1e-2,
-                                sparseness='components'),
-                            False, False),
-    'independent components (ICA)': (FastICA(n_components=n_components, 
+                                          init='nndsvd', beta=5, tol=1e-2,
+                                          sparseness='components'),
+                                      False, False),
+    'independent components (ICA)': (FastICA(n_components=n_components,
                                              whiten=True),
                                      True, True),
-    'sparse components (SparsePCA)': (SparsePCA(n_components=n_components, 
+    'sparse components (SparsePCA)': (SparsePCA(n_components=n_components,
                                                 alpha=5, tol=1e-4),
                                       True, False),
     }
