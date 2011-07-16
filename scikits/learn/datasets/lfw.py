@@ -23,16 +23,6 @@ detector from various online websites.
 # Copyright (c) 2011 Olivier Grisel <olivier.grisel@ensta.org>
 # License: Simplified BSD
 
-try:
-    try:
-        from scipy.misc import imread
-    except ImportError:
-        from scipy.misc.pilutil import imread
-    from scipy.misc import imresize
-except ImportError:
-    raise ImportError("The Python Imaging Library (PIL)"
-                      "is required to load data from jpeg files")
-
 from os import listdir, makedirs, remove
 from os.path import join, exists, isdir
 
@@ -121,6 +111,19 @@ def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
 
 def _load_imgs(file_paths, slice_, color, resize):
     """Internally used to load images"""
+
+    # Try to import imread and imresize from PIL. We do this here to prevent
+    # the whole scikits.learn.datasets module from depending on PIL.
+    try:
+        try:
+            from scipy.misc import imread
+        except ImportError:
+            from scipy.misc.pilutil import imread
+        from scipy.misc import imresize
+    except ImportError:
+        raise ImportError("The Python Imaging Library (PIL)"
+                          "is required to load data from jpeg files")
+
     # compute the portion of the images to load to respect the slice_ parameter
     # given by the caller
     default_slice = (slice(0, 250), slice(0, 250))
