@@ -93,7 +93,7 @@ The variational bound is
     \end{array}
   
   
-**The bound for :math:`\phi_k` :**
+**The bound for** :math:`\phi_k` 
 
 .. math::
 
@@ -112,7 +112,7 @@ The variational bound is
     \end{array}
   
 
-**The bound for :math:`\mu_k` :**
+**The bound for** :math:`\mu_k` 
 
 .. math::
 
@@ -127,7 +127,7 @@ The variational bound is
   \end{array}
 
 
-**The bound for :math:`\sigma_k` :**
+**The bound for** :math:`\sigma_k` 
 
 Here I'll use the inverse scale parametrization of the gamma
 distribution.
@@ -154,7 +154,7 @@ distribution.
   \end{array}
 
 
-**The bound for :math:`X` :**
+**The bound for** :math:`X` 
 
 Recall that there is no need for a :math:`Q(X)` so this bound is just
 
@@ -206,9 +206,9 @@ so the update is
 
 
 For some odd reason it doesn't really work when you derive the updates
-for a and b using the gradients of the lower bound (it beats me why,
-but some weird terms involving the :math:`\Psi'` function show up and it
-gets really hard to isolate :math:`a`). However, we can use the other formula,
+for a and b using the gradients of the lower bound (terms involving the
+:math:`\Psi'` function show up and :math:`a` is hard to isolate).
+However, we can use the other formula,
 
 .. math::
 
@@ -274,12 +274,13 @@ The lower bound
 ...................
 
 The changes in this lower bound from the previous model are in the
-distributions of :math:`\sigma` (as there are a lot more :math:`\sigma`s now) and :math:`X`.
+distributions of :math:`\sigma` (as there are a lot more :math:`\sigma` s
+now) and :math:`X`.
 
 The bound for :math:`\sigma_{k,d}` is the same bound for :math:`\sigma_k` and can
 be safelly ommited.
 
-**The bound for :math:`X` :**
+**The bound for* :math:`X` :
 
 The main difference here is that the precision matrix :math:`\bm{\sigma_k}`
 scales the norm, so we have an extra term after computing the
@@ -364,7 +365,7 @@ The lower bound
 
 There are two changes in the lower-bound: for :math:`\Sigma` and for :math:`X`.
 
-**The bound for :math:`\Sigma`**
+**The bound for** :math:`\Sigma`
 
 .. math::
 
