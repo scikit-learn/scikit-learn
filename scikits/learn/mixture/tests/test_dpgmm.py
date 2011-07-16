@@ -9,7 +9,6 @@ from scikits.learn.mixture.dpgmm import log_normalize
 from .test_gmm import GMMTester
 
 np.seterr(all='warn')
-#np.random.seed(1)
 
 
 def test_log_normalize():

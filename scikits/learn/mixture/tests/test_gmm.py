@@ -2,14 +2,15 @@ import itertools
 import unittest
 
 import nose
+
+import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal, \
      assert_raises
-import numpy as np
 from scipy import stats
 
 from scikits.learn import mixture
 from scikits.learn.datasets.samples_generator import generate_random_spd_matrix
-from scikits.learn.mixture import GMM, DPGMM, VBGMM
+from scikits.learn.mixture import GMM
 
 
 rng = np.random.RandomState(0)
@@ -25,7 +26,7 @@ def test_logsum_3D():
     """
     Test also on a 3D matrix
     """
-    A = rng.rand(2, 2, 2) + 1.0
+    A = rng.rand(2, 3, 4) + 1.0
     for axis in range(3):
         Asum = mixture.logsum(A, axis)
         assert_array_almost_equal(np.exp(Asum), np.sum(np.exp(A), axis))

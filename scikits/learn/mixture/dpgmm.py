@@ -33,7 +33,10 @@ def gammaln(x):
 def log_normalize(v, axis=0):
     """Normalized probabilities from unnormalized log-probabilites"""
     v = np.rollaxis(v, axis)
-    v = np.exp(v - np.logaddexp.reduce(v, axis=0))
+    v = v.copy()
+    v -= v.max(axis=0)
+    out = np.log(np.sum(np.exp(v), axis=0))
+    v = np.exp(v - out)
     v += np.finfo(np.float32).eps
     v /= np.sum(v, axis=0)
     return np.swapaxes(v, 0, axis)

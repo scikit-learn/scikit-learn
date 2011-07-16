@@ -19,11 +19,18 @@ def logsum(A, axis=0):
     Returns log(sum(exp(A), axis)) while minimizing the possibility of
     over/underflow.
     """
-    return np.logaddexp.reduce(A, axis=axis)
+    A = np.rollaxis(A, axis)
+    # Use the max to normalize, as with the log this is what accumulates
+    # the less errors
+    A_max = A.max(axis=0)
+    out = A_max + np.log(np.sum(np.exp(A - A_max), axis=0))
+    return out
 
-
-# TODO: this lacks a docstring
 def normalize(A, axis=None):
+    """ Normalize the input array so that it sums to 1.
+
+        WARNING: Modifies inplace the array
+    """
     A += np.finfo(float).eps
     Asum = A.sum(axis)
     if axis and A.ndim > 1:
