@@ -41,7 +41,7 @@
 
     ``scikits.learn`` is a Python module integrating classic machine
     learning algorithms in the tightly-knit world of scientific Python
-    packages (`numpy <http://www.scipy.org>`_, `scipy
+    packages (`numpy <http://numpy.scipy.org>`_, `scipy
     <http://www.scipy.org>`_, `matplotlib
     <http://matplotlib.sourceforge.net/>`_).
 
@@ -56,10 +56,10 @@
   * **Solid**: :ref:`supervised-learning`: :ref:`svm`, :ref:`linear_model`.
 
   * **Work in progress**: :ref:`unsupervised-learning`:
-    :ref:`clustering`, :ref:`mixture`, :ref:`manifold learning <manifold>`, :ref:`ICA
+    :ref:`clustering`, :ref:`mixture`, :ref:`Manifold learning <manifold>`, :ref:`ICA
     <ICA>`, :ref:`gaussian_process`
 
-  * **Planed**: Gaussian graphical models, matrix factorization
+  * **Planned**: Gaussian graphical models, matrix factorization
 
 :License:
   Open source, commercially usable: **BSD license** (3 clause)

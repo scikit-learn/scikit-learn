@@ -242,12 +242,12 @@ void parse_line(const std::string& line,
 /*
  * Parse entire file. Throws exception on failure.
  */
-void parse_file(char const *file_path,
-                size_t buffer_size,
-                std::vector<double> &data,
-                std::vector<int> &indices,
-                std::vector<int> &indptr,
-                std::vector<double> &labels)
+static void parse_file(char const *file_path,
+                       size_t buffer_size,
+                       std::vector<double> &data,
+                       std::vector<int> &indices,
+                       std::vector<int> &indptr,
+                       std::vector<double> &labels)
 {
   std::vector<char> buffer(buffer_size);
 

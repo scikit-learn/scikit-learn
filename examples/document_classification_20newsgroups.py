@@ -5,16 +5,14 @@ Classification of text documents using sparse features
 
 This is an example showing how the scikit-learn can be used to classify
 documents by topics using a bag-of-words approach. This example uses
-a scipy.sparse matrix to store the features instead of standard numpy arrays.
+a scipy.sparse matrix to store the features instead of standard numpy arrays
+and demos various classifiers that can efficiently handle sparse matrices.
 
 The dataset used in this example is the 20 newsgroups dataset which will be
 automatically downloaded and then cached.
 
 You can adjust the number of categories by giving there name to the dataset
 loader or setting them to None to get the 20 of them.
-
-This example demos various linear classifiers with different training
-strategies.
 
 To run this example use::
 
@@ -26,6 +24,8 @@ Options are:
       Print a detailed classification report.
   --confusion-matrix
       Print the confusion matrix.
+  --top10
+      Print ten most discriminative terms per class for every classifier.
 
 """
 print __doc__
@@ -37,7 +37,8 @@ print __doc__
 
 from time import time
 import logging
-import os
+import numpy as np
+from operator import itemgetter
 import sys
 
 from scikits.learn.datasets import fetch_20newsgroups
@@ -46,6 +47,7 @@ from scikits.learn.linear_model import RidgeClassifier
 from scikits.learn.svm.sparse import LinearSVC
 from scikits.learn.linear_model.sparse import SGDClassifier
 from scikits.learn.naive_bayes import BernoulliNB, MultinomialNB
+from scikits.learn.neighbors import NeighborsClassifier
 from scikits.learn import metrics
 
 
@@ -56,14 +58,9 @@ logging.basicConfig(level=logging.INFO,
 
 # parse commandline arguments
 argv = sys.argv[1:]
-if "--report" in argv:
-    print_report = True
-else:
-    print_report = False
-if "--confusion-matrix" in argv:
-    print_cm = True
-else:
-    print_cm = False
+print_report = "--report" in argv
+print_cm = "--confusion-matrix" in argv
+print_top10 = "--top10" in argv
 
 ################################################################################
 # Load some categories from the training set
@@ -77,7 +74,7 @@ categories = [
 #categories = None
 
 print "Loading 20 newsgroups dataset for categories:"
-print categories
+print categories if categories else "all"
 
 data_train = fetch_20newsgroups(subset='train', categories=categories,
                                shuffle=True, random_state=42)
@@ -85,9 +82,11 @@ data_train = fetch_20newsgroups(subset='train', categories=categories,
 data_test = fetch_20newsgroups(subset='test', categories=categories,
                               shuffle=True, random_state=42)
 
+categories = data_train.target_names    # for case categories == None
+
 print "%d documents (training set)" % len(data_train.filenames)
 print "%d documents (testing set)" % len(data_test.filenames)
-print "%d categories" % len(data_train.target_names)
+print "%d categories" % len(categories)
 print
 
 # split a training set and a test set
@@ -108,6 +107,14 @@ X_test = vectorizer.transform((open(f).read() for f in filenames_test))
 print "done in %fs" % (time() - t0)
 print "n_samples: %d, n_features: %d" % X_test.shape
 print
+
+vocabulary = np.array([t for t, i in sorted(vectorizer.vocabulary.iteritems(),
+                                            key=itemgetter(1))])
+
+
+def trim(s):
+    """Trim string to fit on terminal (assuming 80-column display)"""
+    return s if len(s) <= 80 else s[:77] + "..."
 
 
 ################################################################################
@@ -132,6 +139,12 @@ def benchmark(clf):
     if hasattr(clf, 'coef_'):
         nnz = clf.coef_.nonzero()[0].shape[0]
         print "non-zero coef: %d" % nnz
+
+        if print_top10:
+            print "top 10 keywords per class:"
+            for i, category in enumerate(categories):
+                top10 = np.argsort(clf.coef_[i, :])[-10:]
+                print trim("%s: %s" % (category, " ".join(vocabulary[top10])))
         print
 
     if print_report:
@@ -146,7 +159,8 @@ def benchmark(clf):
     print
     return score, train_time, test_time
 
-for clf, name in ((RidgeClassifier(), "Ridge Classifier"),):
+for clf, name in ((RidgeClassifier(tol=1e-1), "Ridge Classifier"),
+                  (NeighborsClassifier(n_neighbors=10), "kNN")):
     print 80*'='
     print name
     results = benchmark(clf)

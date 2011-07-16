@@ -97,6 +97,7 @@ parameters = {
 #    'vect__max_features': (None, 5000, 10000, 50000),
     'vect__analyzer__max_n': (1, 2), # words or bigrams
 #    'tfidf__use_idf': (True, False),
+#    'tfidf__norm': ('l1', 'l2'),
     'clf__alpha': (0.00001, 0.000001),
     'clf__penalty': ('l2', 'elasticnet'),
 #    'clf__n_iter': (10, 50, 80),

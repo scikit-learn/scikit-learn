@@ -401,6 +401,12 @@ div.highlight-python pre {
     overflow-y: hidden;
 }
 
+.align-center {
+    /* override default value clear: both,
+       it conflicts with the left sidebar */
+    clear: right !important;
+}
+
 tt {
     background-color: #ecf0f3;
     color: #222;

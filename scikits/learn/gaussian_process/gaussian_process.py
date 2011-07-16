@@ -7,11 +7,12 @@
 
 import numpy as np
 from scipy import linalg, optimize, rand
+
 from ..base import BaseEstimator, RegressorMixin
+from ..metrics.pairwise import l1_distances
 from . import regression_models as regression
 from . import correlation_models as correlation
-from ..cross_val import LeaveOneOut
-from ..externals.joblib import Parallel, delayed
+
 MACHINE_EPSILON = np.finfo(np.double).eps
 if hasattr(linalg, 'solve_triangular'):
     # only in scipy since 0.9
@@ -22,7 +23,7 @@ else:
         return linalg.solve(x, y)
 
 
-def compute_componentwise_l1_cross_distances(X):
+def l1_cross_distances(X):
     """
     Computes the nonzero componentwise L1 cross-distances between the vectors
     in X.
@@ -46,52 +47,18 @@ def compute_componentwise_l1_cross_distances(X):
     X = np.atleast_2d(X)
     n_samples, n_features = X.shape
     n_nonzero_cross_dist = n_samples * (n_samples - 1) / 2
-    ij = np.zeros([n_nonzero_cross_dist, 2])
-    D = np.zeros([n_nonzero_cross_dist, n_features])
-    ll = np.array([-1])
+    ij = np.zeros((n_nonzero_cross_dist, 2), dtype=np.int)
+    D = np.zeros((n_nonzero_cross_dist, n_features))
+    ll_1 = 0
     for k in range(n_samples - 1):
-        ll = ll[-1] + 1 + range(n_samples - k - 1)
-        ij[ll] = np.concatenate([[np.repeat(k, n_samples - k - 1, 0)],
-                                 [np.array(range(k + 1, n_samples)).T]]).T
-        D[ll] = np.abs(X[k] - X[(k + 1):n_samples])
+        ll_0 = ll_1
+        ll_1 = ll_0 + n_samples - k - 1
+        ij[ll_0:ll_1, 0] = k
+        ij[ll_0:ll_1, 1] = np.arange(k + 1, n_samples)
+        D[ll_0:ll_1] = np.abs(X[k] - X[(k + 1):n_samples])
 
     return D, ij.astype(np.int)
 
-
-def compute_componentwise_l1_pairwise_distances(X, Y):
-    """
-    Computes the componentwise L1 pairwise-distances between the vectors
-    in X and Y.
-
-    Parameters
-    ----------
-
-    X: array_like
-        An array with shape (n_samples_X, n_features)
-
-    Y: array_like, optional
-        An array with shape (n_samples_Y, n_features).
-
-    Returns
-    -------
-
-    D: array with shape (n_samples_X * n_samples_Y, n_features)
-        The array of componentwise L1 pairwise-distances.
-    """
-    X, Y = np.atleast_2d(X), np.atleast_2d(Y)
-    n_samples_X, n_features_X = X.shape
-    n_samples_Y, n_features_Y = Y.shape
-    if n_features_X != n_features_Y:
-        raise Exception("X and Y should have the same number of features!")
-    else:
-        n_features = n_features_X
-    D = np.zeros([n_samples_X * n_samples_Y, n_features])
-    kk = np.arange(n_samples_Y).astype(np.int)
-    for k in range(n_samples_X):
-        D[kk] = X[k] - Y
-        kk = kk + n_samples_Y
-
-    return D
 
 
 class GaussianProcess(BaseEstimator, RegressorMixin):
@@ -308,8 +275,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             y_std = np.ones(1)
 
         # Calculate matrix of distances D between samples
-        D, ij = compute_componentwise_l1_cross_distances(X)
-        if np.min(np.sum(np.abs(D), axis=1)) == 0. \
+        D, ij = l1_cross_distances(X)
+        if np.min(np.sum(D, axis=1)) == 0. \
                                     and self.corr != correlation.pure_nugget:
             raise Exception("Multiple X are not allowed")
 
@@ -444,7 +411,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                 MSE = np.zeros(n_eval)
 
             # Get pairwise componentwise L1-distances to the input training set
-            dx = compute_componentwise_l1_pairwise_distances(X, self.X)
+            dx = l1_distances(X, self.X)
 
             # Get regression function and correlation
             f = self.regr(X)
@@ -578,8 +545,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         if D is None:
             # Light storage mode (need to recompute D, ij and F)
-            D, ij = compute_componentwise_l1_cross_distances(self.X)
-            if np.min(np.sum(np.abs(D), axis=1)) == 0. \
+            D, ij = l1_cross_distances(self.X)
+            if np.min(np.sum(D, axis=1)) == 0. \
                                     and self.corr != correlation.pure_nugget:
                 raise Exception("Multiple X are not allowed")
             F = self.regr(self.X)
