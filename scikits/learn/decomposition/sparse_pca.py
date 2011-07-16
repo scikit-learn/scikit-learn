@@ -101,13 +101,11 @@ def _update_code(dictionary, Y, alpha, code=None, Gram=None, method='lars',
     n_features = Y.shape[1]
     n_atoms = dictionary.shape[1]
     new_code = np.empty((n_atoms, n_features))
-    # XXX: should we always do this?
     if Gram is None:
         Gram = np.dot(dictionary.T, dictionary)
     if method == 'lars':
         err_mgt = np.seterr()
         np.seterr(all='ignore')
-        #alpha = alpha * n_samples
         XY = np.dot(dictionary.T, Y)
         try:
             for k in range(n_features):
