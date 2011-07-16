@@ -501,8 +501,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, ridge_alpha=0.01):
-        """Apply the projection onto the learned sparse components
-        to new data.
+        """Orthogonally projects the data onto the learned sparse components.
 
         Parameters
         ----------
