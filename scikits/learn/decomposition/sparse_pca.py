@@ -501,7 +501,15 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, ridge_alpha=0.01):
-        """Orthogonally projects the data onto the learned sparse components.
+        """Least Squares projection of the data onto the learned sparse
+        components.
+
+        To avoid instability issues in case the system is under-determined,
+        regularization can be applied (Ridge regression) via the 
+        `ridge_alpha` parameter.
+
+        Note that Sparse PCA components orthogonality is not enforced as in PCA
+        hence one cannot use a simple linear projection.
 
         Parameters
         ----------
@@ -509,7 +517,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
             Test data to be transformed, must have the same number of
             features as the data used to train the model.
 
-        ridge_alpha: float
+        ridge_alpha: float, default: 0.01
             Amount of ridge shrinkage to apply in order to improve
             conditioning.
 
