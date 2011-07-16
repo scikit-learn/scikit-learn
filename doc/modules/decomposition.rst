@@ -159,7 +159,7 @@ see [Jen09] for a review of such methods. For more details on how to use
 Sparse PCA, see the `Examples` section below.
 
 
-.. figure:: ../auto_examples/decomposition/images/plot_digits_decomposition_5.png
+.. figure:: ../auto_examples/decomposition/images/plot_digits_decomposition_1.png
    :target: ../auto_examples/decomposition/plot_digits_decomposition.html
    :align: center
    :scale: 50%
@@ -243,11 +243,11 @@ resulting in interpretable models. The following example displays 16
 sparse components found by :class:`NMF` on the images of the digit 3 from the
 digits dataset.
 
-.. |pca_img| image:: ../auto_examples/decomposition/images/plot_digits_decomposition_1.png
+.. |pca_img| image:: ../auto_examples/decomposition/images/plot_digits_decomposition_3.png
     :target: ../auto_examples/decomposition/plot_digits_decomposition.html
     :scale: 50%
 
-.. |nmf_img| image:: ../auto_examples/decomposition/images/plot_digits_decomposition_3.png
+.. |nmf_img| image:: ../auto_examples/decomposition/images/plot_digits_decomposition_4.png
     :target: ../auto_examples/decomposition/plot_digits_decomposition.html
     :scale: 50%
 
