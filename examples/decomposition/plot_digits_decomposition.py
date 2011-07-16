@@ -46,27 +46,29 @@ def plot_digit_gallery(title, images):
     pl.subplots_adjust(0.01, 0.05, 0.99, 0.93, 0.04, 0.)
 
 ###############################################################################
-# Dictionary of the different estimators, and whether to center and
-# transpose the problem
-estimators = {
-    'eigendigits (PCA)': (RandomizedPCA(n_components=n_components,
-                                       whiten=True),
-                          True, False),
-    'non-negative components (NMF)': (NMF(n_components=n_components,
+# List of the different estimators, whether to center and transpose the
+# problem, and whether the transformer uses the clustering API.
+estimators = [
+    ('eigendigits (PCA)', RandomizedPCA(n_components=n_components,
+                                        whiten=True),
+                          True, False, False),
+    ('non-negative components (NMF)', NMF(n_components=n_components,
                                           init='nndsvd', beta=5, tol=1e-2,
                                           sparseness='components'),
-                                      False, False),
-    'independent components (ICA)': (FastICA(n_components=n_components,
+                                      False, False, False),
+    ('independent components (ICA)', FastICA(n_components=n_components,
                                              whiten=True),
-                                     True, True),
-    'sparse components (SparsePCA)': (SparsePCA(n_components=n_components,
+                                     True, True, False),
+    ('sparse components (SparsePCA)', SparsePCA(n_components=n_components,
                                                 alpha=5, tol=1e-4),
-                                      True, False),
-    }
+                                      True, False, False),
+    ('cluster centers (KMeans)', KMeans(k=n_components),
+                                 True, False, True)
+    ]
 
 ###############################################################################
 # Do the estimation and plot it
-for name, (estimator, center, transpose) in sorted(estimators.items()):
+for name, estimator, center, transpose, cluster in estimators:
     print "Extracting the top %d %s..." % (n_components, name)
     t0 = time()
     data = threes
@@ -76,20 +78,12 @@ for name, (estimator, center, transpose) in sorted(estimators.items()):
         data = data.T
     estimator.fit(data)
     print "done in %0.3fs" % (time() - t0)
-    components_ = estimator.components_
+    if cluster:
+        components_ = estimator.cluster_centers_
+    else:
+        components_ = estimator.components_
     if transpose:
         components_ = components_.T
     plot_digit_gallery(name, components_)
-
-######################################################################
-# Compute a K-Means (cluster centers) on the digit dataset
-print "Extracting %d cluster centers..." % n_components,
-t0 = time()
-km = KMeans(k=n_components)
-km.fit(threes_centered)
-print "done in %0.3fs" % (time() - t0)
-
-kmeans_digits = km.cluster_centers_
-plot_digit_gallery('K-Means cluster centers', kmeans_digits)
 
 pl.show()

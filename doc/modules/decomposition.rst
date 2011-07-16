@@ -247,7 +247,7 @@ digits dataset.
     :target: ../auto_examples/decomposition/plot_digits_decomposition.html
     :scale: 50%
 
-.. |nmf_img| image:: ../auto_examples/decomposition/images/plot_digits_decomposition_3.png
+.. |nmf_img| image:: ../auto_examples/decomposition/images/plot_digits_decomposition_2.png
     :target: ../auto_examples/decomposition/plot_digits_decomposition.html
     :scale: 50%
 
