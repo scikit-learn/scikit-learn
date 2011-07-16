@@ -318,6 +318,7 @@ class GaussianHMMTester(GaussianHMMParams):
         self.assertEquals(samples.shape, (n, self.n_features))
 
     def test_fit(self, params='stmc', n_iter=25, verbose=False, **kwargs):
+        np.random.seed(0)
         h = hmm.GaussianHMM(self.n_states, self.cvtype)
         h.startprob = self.startprob
         h.transmat = hmm.normalize(self.transmat
