@@ -94,6 +94,7 @@ is not the exact inverse transform of `transform` even when
 .. topic:: Examples:
 
     * :ref:`example_applications_face_recognition.py`
+    * :ref:`example_decomposition_plot_digits_decomposition.py`
 
 .. topic:: References:
 
@@ -158,8 +159,8 @@ see [Jen09] for a review of such methods. For more details on how to use
 Sparse PCA, see the `Examples` section below.
 
 
-.. figure:: ../auto_examples/decomposition/images/plot_sparse_pca_1.png
-   :target: ../auto_examples/decomposition/plot_sparse_pca.html
+.. figure:: ../auto_examples/decomposition/images/plot_digits_decomposition_5.png
+   :target: ../auto_examples/decomposition/plot_digits_decomposition.html
    :align: center
    :scale: 50%
 
@@ -185,7 +186,7 @@ factorization, while larger values shrink many coefficients to zero.
 
 .. topic:: Examples:
 
-   * :ref:`example_decomposition_plot_sparse_pca.py`
+   * :ref:`example_decomposition_plot_digits_decomposition.py`
 
 .. topic:: References:
 
@@ -219,6 +220,7 @@ It is classically used to separate mixed signals (a problem known as
 
     * :ref:`example_decomposition_plot_ica_blind_source_separation.py`
     * :ref:`example_decomposition_plot_ica_vs_pca.py`
+    * :ref:`example_decomposition_plot_digits_decomposition.py`
 
 
 .. _NMF:
@@ -238,14 +240,15 @@ models are efficient for representing images and text.
 It has been observed in [Hoyer, 04] that, when carefully constrained,
 :class:`NMF` can produce a parts-based representation of the dataset,
 resulting in interpretable models. The following example displays 16
-sparse components found by :class:`NMF` on the digits dataset.
+sparse components found by :class:`NMF` on the images of the digit 3 from the
+digits dataset.
 
-.. |pca_img| image:: ../auto_examples/decomposition/images/plot_nmf_1.png
-    :target: ../auto_examples/decomposition/plot_nmf.html
+.. |pca_img| image:: ../auto_examples/decomposition/images/plot_digits_decomposition_1.png
+    :target: ../auto_examples/decomposition/plot_digits_decomposition.html
     :scale: 50%
 
-.. |nmf_img| image:: ../auto_examples/decomposition/images/plot_nmf_2.png
-    :target: ../auto_examples/decomposition/plot_nmf.html
+.. |nmf_img| image:: ../auto_examples/decomposition/images/plot_digits_decomposition_3.png
+    :target: ../auto_examples/decomposition/plot_digits_decomposition.html
     :scale: 50%
 
 .. centered:: |pca_img| |nmf_img|
@@ -272,7 +275,7 @@ of the data.
 
 .. topic:: Examples:
 
-    * :ref:`example_decomposition_plot_nmf.py`
+    * :ref:`example_decomposition_plot_digits_decomposition.py`
 
 .. topic:: References:
 
@@ -292,5 +295,3 @@ of the data.
       matrix factorization"
       <http://www.cs.rpi.edu/~boutsc/files/nndsvd.pdf>`_
       C. Boutsidis, E. Gallopoulos, 2008
-
-
