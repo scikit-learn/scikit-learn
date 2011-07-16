@@ -323,6 +323,7 @@ Pairwise metrics
    :template: function.rst
 
    metrics.pairwise.euclidean_distances
+   metrics.pairwise.l1_distances
    metrics.pairwise.linear_kernel
    metrics.pairwise.polynomial_kernel
    metrics.pairwise.rbf_kernel
@@ -374,10 +375,12 @@ Signal Decomposition
 
    decomposition.PCA
    decomposition.ProbabilisticPCA
+   decomposition.ProjectedGradientNMF
    decomposition.RandomizedPCA
    decomposition.KernelPCA
    decomposition.FastICA
    decomposition.NMF
+   decomposition.SparsePCA
 
 .. autosummary::
 
@@ -385,6 +388,7 @@ Signal Decomposition
    :template: function.rst
 
    decomposition.fastica
+   decomposition.dict_learning
 
 
 Linear Discriminant Analysis
