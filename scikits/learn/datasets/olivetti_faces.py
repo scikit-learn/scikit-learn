@@ -22,7 +22,6 @@ consists of 64x64 images.
 # Copyright (c) 2011 David Warde-Farley <wardefar at iro dot umontreal dot ca>
 # License: Simplified BSD
 
-import logging
 from os.path import join, exists
 from os import makedirs
 from cStringIO import StringIO
@@ -64,12 +63,10 @@ def fetch_olivetti_faces(data_home=None, download_if_missing=True):
         instead of trying to download the data from the source site.
     """
     data_home = get_data_home(data_home=data_home)
-    logger.info('Loading Olivetti faces from %s' % data_home)
     if not exists(data_home):
         makedirs(data_home)
     if not exists(join(data_home, TARGET_FILENAME)):
-        logger.info('Not found; downloading Olivetti faces from %s' %
-                    DATA_URL)
+        print 'Not found; downloading Olivetti faces from %s' % DATA_URL
         fhandle = urllib2.urlopen(DATA_URL)
         buf = StringIO(fhandle.read())
         mfile = loadmat(buf)
