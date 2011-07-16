@@ -51,11 +51,9 @@ def test_correct_shapes():
 
 def test_fit_transform():
     Y, _, _ = generate_toy_data(3, 10, (8, 8))  # wide array
-    U1 = SparsePCA(n_components=3, method='lars').fit_transform(Y)
     spca_lars = SparsePCA(n_components=3, method='lars').fit(Y)
-    U2 = spca_lars.transform(Y)
-    assert_array_almost_equal(U1, U2)
-    # Smoke test multiple CPUs
+    U1 = spca_lars.transform(Y)
+    # Test multiple CPUs
     if sys.platform == 'win32':  # fake parallelism for win32
         import scikits.learn.externals.joblib.parallel as joblib_par
         _mp = joblib_par.multiprocessing
@@ -74,8 +72,8 @@ def test_fit_transform():
 
 def test_fit_transform_tall():
     Y, _, _ = generate_toy_data(3, 65, (8, 8))  # tall array
-    U1 = SparsePCA(n_components=3).fit_transform(Y)
-    U2 = SparsePCA(n_components=3).fit(Y).transform(Y)
+    U1 = SparsePCA(n_components=3, method='lars').fit_transform(Y)
+    U2 = SparsePCA(n_components=3, method='cd').fit(Y).transform(Y)
     assert_array_almost_equal(U1, U2)
 
 
