@@ -292,10 +292,11 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
     tol: float,
         Tolerance for the stopping condition.
 
-    method: 'lars' | 'cd'
+    method: {'lars', 'cd'}
         lars: uses the least angle regression method (linear_model.lars_path)
-        cd: uses the stochastic gradient descent method to compute the
-            lasso solution (linear_model.Lasso)
+        cd: uses the coordinate descent method to compute the
+        Lasso solution (linear_model.Lasso). Lars will be faster if
+        the estimated components are sparse.
 
     n_jobs: int,
         Number of parallel jobs to run, or -1 to autodetect.
@@ -426,10 +427,11 @@ class SparsePCA(BaseEstimator, TransformerMixin):
     tol: float,
         Tolerance for the stopping condition.
 
-    method: 'lars' | 'cd'
+    method: {'lars', 'cd'}
         lars: uses the least angle regression method (linear_model.lars_path)
-        cd: uses the stochastic gradient descent method to compute the
-            lasso solution (linear_model.Lasso)
+        cd: uses the coordinate descent method to compute the
+        Lasso solution (linear_model.Lasso). Lars will be faster if
+        the estimated components are sparse.
 
     n_jobs: int,
         Number of parallel jobs to run.
