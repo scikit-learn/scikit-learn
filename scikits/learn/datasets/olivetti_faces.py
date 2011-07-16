@@ -1,4 +1,4 @@
-"""Loader for the modified Olivetti faces dataset.
+"""Modified Olivetti faces dataset.
 
 The original database was available from (now defunct)
 
@@ -31,11 +31,15 @@ import numpy as np
 from scipy.io.matlab import loadmat
 
 from .base import get_data_home, Bunch
-from .utils import check_random_state
+from ..utils import check_random_state
 
 
 DATA_URL = "http://cs.nyu.edu/~roweis/data/olivettifaces.mat"
 TARGET_FILENAME = "olivetti.npy"
+
+# Grab the module-level docstring to use as a description of the
+# dataset
+MODULE_DOCS = __doc__
 
 def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
                          download_if_missing=True):
@@ -103,4 +107,4 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
     return Bunch(data=faces.reshape(len(faces), -1),
                  images=faces,
                  target=target,
-                 DESCR="64x64 rescaled Olivetti faces dataset")
+                 DESCR=MODULE_DOCS)
