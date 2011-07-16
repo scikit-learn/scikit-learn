@@ -162,28 +162,34 @@ class DPGMM(GMM):
         of clusters is alpha*log(N). Defaults to 1.
 
     thresh : float, optional
-            Convergence threshold.
+        Convergence threshold.
 
     Attributes
     ----------
     cvtype : string (read-only)
         String describing the type of covariance parameters used by
         the DP-GMM.  Must be one of 'spherical', 'tied', 'diag', 'full'.
+
     n_features : int
         Dimensionality of the Gaussians.
+
     n_states : int (read-only)
         Number of mixture components.
+
     weights : array, shape (`n_states`,)
         Mixing weights for each mixture component.
+
     means : array, shape (`n_states`, `n_features`)
         Mean parameters for each mixture component.
+
     precisions : array
         Precision (inverse covariance) parameters for each mixture
-        component.  The shape depends on `cvtype`:
+        component.  The shape depends on `cvtype`::
             (`n_states`,)                             if 'spherical',
             (`n_features`, `n_features`)              if 'tied',
             (`n_states`, `n_features`)                if 'diag',
             (`n_states`, `n_features`, `n_features`)  if 'full'
+
     converged_ : bool
         True when convergence was reached in fit(), False
         otherwise.

@@ -4,6 +4,8 @@
 Gaussian mixture models
 ===================================================
 
+.. currentmodule:: scikits.learn.mixture
+
 `scikits.learn.mixture` is a package which enables one to learn
 Gaussian Mixture Models (diagonal, spherical, tied and full covariance
 matrices supported), sample them, and estimate them from
@@ -245,11 +247,8 @@ and :class:`DPGMM`, as it has some of the properties of the dirichlet
 process.
 
 
-
 Infinite Gaussian mixtures: DPGMM classifier
 =============================================
-
-.. currentmodule:: scikits.learn.mixture
 
 The :class:`DPGMM` object implements a variant of the Gaussian mixture
 model with a variable (but bounded) number of components using the

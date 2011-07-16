@@ -191,6 +191,8 @@ Gaussian Mixture Models
    :template: class.rst
 
    mixture.GMM
+   mixture.DPGMM
+   mixture.VBGMM
 
 
 Hidden Markov Models
