@@ -66,7 +66,7 @@ estimators = {
 
 ###############################################################################
 # Do the estimation and plot it
-for name, (estimator, center, transpose) in estimators.iteritems():
+for name, (estimator, center, transpose) in sorted(estimators.items()):
     print "Extracting the top %d %s..." % (n_components, name)
     t0 = time()
     data = threes
