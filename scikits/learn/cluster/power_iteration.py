@@ -11,8 +11,9 @@ import numpy as np
 
 from .k_means_ import k_means
 from ..utils.extmath import safe_sparse_dot
-from ..utils import inplace_row_normalize
+from ..utils import safe_asanyarray
 from ..utils import check_random_state
+from ..preprocessing import normalize
 
 
 def make_plot(title):
@@ -101,13 +102,8 @@ def power_iteration_clustering(affinity, k=8, n_vectors=1, tol=1e-5,
 
     """
     random_state = check_random_state(random_state)
-
-    if not hasattr(affinity, 'todense'):
-        # this is not a sparse matrix: check that this is an array like
-        affinity = np.asanyarray(affinity)
-
-    normalized = inplace_row_normalize(affinity.copy())
-
+    affinity = safe_asanyarray(affinity)
+    normalized = normalize(affinity, norm='l1', copy=True)
     n_samples = affinity.shape[0]
 
     if n_vectors == 1:

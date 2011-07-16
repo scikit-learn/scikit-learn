@@ -10,10 +10,10 @@ from ..utils import safe_asanyarray, atleast2d_or_csr
 from ..utils.extmath import safe_sparse_dot
 
 ################################################################################
-# Distances 
+# Distances
 
 from ..utils.extmath import safe_sparse_dot
-from ..utils import inplace_row_normalize
+from ..utils import safe_asanyarray
 
 
 def euclidean_distances(X, Y, Y_norm_squared=None, squared=False):
@@ -309,14 +309,12 @@ def cosine_similarity(X, Y, copy=True):
            [-0.87415728],
            [ 0.        ]])
     """
-    if not hasattr(X, 'todense'):
-        X = np.asanyarray(X)
-    if not hasattr(Y, 'todense'):
-        Y = np.asanyarray(Y)
+    # XXX: delayed import to avoid cyclic dependency between base, metrics
+    # and preprocessing
+    from ..preprocessing import normalize
+    X = safe_asanyarray(X)
+    Y = safe_asanyarray(Y)
 
-    if copy:
-        X, Y = X.copy(), Y.copy()
-
-    inplace_row_normalize(X, norm=2)
-    inplace_row_normalize(Y, norm=2)
+    X = normalize(X, norm='l2', copy=copy)
+    Y = normalize(Y, norm='l2', copy=copy)
     return safe_sparse_dot(X, Y.T)
