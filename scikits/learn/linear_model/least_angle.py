@@ -344,7 +344,7 @@ class LARS(LinearModel):
     LARS(normalize=True, precompute='auto', max_iter=500, verbose=False,
        fit_intercept=True)
     >>> print clf.coef_
-    [ 0.         -0.81649658]
+    [ 0. -1.]
 
     References
     ----------
@@ -467,7 +467,7 @@ class LassoLARS (LARS):
     LassoLARS(normalize=True, verbose=False, fit_intercept=True, max_iter=500,
          precompute='auto', alpha=0.01)
     >>> print clf.coef_
-    [ 0.         -0.78649658]
+    [ 0.         -0.96325765]
 
     References
     ----------
