@@ -508,7 +508,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         components.
 
         To avoid instability issues in case the system is under-determined,
-        regularization can be applied (Ridge regression) via the 
+        regularization can be applied (Ridge regression) via the
         `ridge_alpha` parameter.
 
         Note that Sparse PCA components orthogonality is not enforced as in PCA
