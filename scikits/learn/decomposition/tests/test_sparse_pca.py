@@ -5,6 +5,8 @@ import sys
 
 import numpy as np
 from .. import SparsePCA
+from ..sparse_pca import _update_code, _update_code_parallel
+
 from numpy.testing import assert_array_almost_equal, assert_equal
 
 
@@ -40,6 +42,11 @@ def test_correct_shapes():
     U = pca.fit_transform(X)
     assert_equal(pca.components_.shape, (8, 10))
     assert_equal(U.shape, (12, 8))
+    # test overcomplete decomposition
+    pca = SparsePCA(n_components=13)
+    U = pca.fit_transform(X)
+    assert_equal(pca.components_.shape, (13, 10))
+    assert_equal(U.shape, (12, 13))
 
 
 def test_fit_transform():
@@ -70,3 +77,16 @@ def test_fit_transform_tall():
     U1 = SparsePCA(n_components=3).fit_transform(Y)
     U2 = SparsePCA(n_components=3).fit(Y).transform(Y)
     assert_array_almost_equal(U1, U2)
+
+
+def test_sparse_code():
+    np.random.seed(0)
+    dictionary = np.random.randn(10, 3)
+    real_code = np.zeros((3, 5))
+    real_code.ravel()[np.random.randint(15, size=6)] = 1.0
+    Y = np.dot(dictionary, real_code)
+    est_code_1 = _update_code(dictionary, Y, alpha=1.0)
+    est_code_2 = _update_code_parallel(dictionary, Y, alpha=1.0)
+    assert_equal(est_code_1.shape, real_code.shape)
+    assert_equal(est_code_1, est_code_2)
+    assert_equal(est_code_1.nonzero(), real_code.nonzero())
