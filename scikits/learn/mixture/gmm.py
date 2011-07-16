@@ -610,7 +610,7 @@ def _lmvnpdffull(obs, means, covars):
         except linalg.LinAlgError:
             # The model is most probabily stuck in a component with too
             # few observations, we need to reinitialize this components
-            cv[:] = 10*np.eye(cv.shape[0])
+            cv[:] = 10 * np.eye(cv.shape[0])
             cv_chol = cv
         cv_log_det = 2 * np.sum(np.log(np.diagonal(cv_chol)))
         cv_sol = solve_triangular(cv_chol, (obs - mu).T, lower=True).T
