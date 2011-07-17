@@ -104,10 +104,9 @@ def _update_code(dictionary, Y, alpha, code=None, Gram=None, method='lars',
     if Gram is None:
         Gram = np.dot(dictionary.T, dictionary)
     if method == 'lars':
-        err_mgt = np.seterr()
-        np.seterr(all='ignore')
         XY = np.dot(dictionary.T, Y)
         try:
+            err_mgt = np.seterr(all='ignore')
             for k in range(n_features):
                 # A huge amount of time is spent in this loop. It needs to be
                 # tight.
