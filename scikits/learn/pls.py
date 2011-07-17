@@ -399,21 +399,25 @@ class PLSRegression(_PLS):
         Training vectors, where n_samples in the number of samples and
         q is the number of response variables.
 
-    n_components: int, number of components to keep. (default 2).
+    n_components: int, (default 2).
+        number of components to keep. 
 
-    scale: boolean, scale data? (default True)
+    scale: boolean, (default True)
+        whether to scale the data
 
-    algorithm: str "nipals" or "svd" the algorithm used to estimate the
-        weights, it will be called "n_components" time ie.: for each iteration
-        of the outer loop.
+    algorithm: str "nipals" or "svd" 
+        the algorithm used to estimate the weights, it will be called
+        "n_components" time ie.: for each iteration of the outer loop.
 
-    max_iter: an integer, the maximum number of iterations (default 500) of the
-        NIPALS inner loop (used only if algorithm="nipals")
+    max_iter: an integer, (default 500) 
+        the maximum number of iterations of the NIPALS inner loop (used
+        only if algorithm="nipals")
 
-    tol: a not negative real, the tolerance used in the iterative algorithm
-         default 1e-06.
+    tol: a not negative real, 
+        the tolerance used in the iterative algorithm default 1e-06.
 
-    copy: boolean, should the deflation been made on a copy? Let the default
+    copy: boolean, 
+        Whether the deflation should been made on a copy. Let the default
         value to True unless you don't care about side effect
 
     Attributes
@@ -508,17 +512,19 @@ class PLSCanonical(_PLS):
 
     scale: boolean, scale data? (default True)
 
-    algorithm: str "nipals" or "svd" the algorithm used to estimate the
-        weights, it will be called "n_components" time ie.: for each iteration
-        of the outer loop.
+    algorithm: str "nipals" or "svd" 
+        the algorithm used to estimate the weights, it will be called
+        "n_components" time ie.: for each iteration of the outer loop.
 
-    max_iter: an integer, the maximum number of iterations (default 500) of the
-        NIPALS inner loop (used only if algorithm="nipals")
+    max_iter: an integer, (default 500) 
+        the maximum number of iterations of the NIPALS inner loop (used
+        only if algorithm="nipals")
 
-    tol: a not negative real, the tolerance used in the iterative algorithm
-         default 1e-06.
+    tol: a not negative real, default 1e-06.
+        the tolerance used in the iterative algorithm
 
-    copy: boolean, should the deflation been made on a copy? Let the default
+    copy: boolean, 
+        Whether the deflation should been made on a copy. Let the default
         value to True unless you don't care about side effect
 
     Attributes
@@ -612,22 +618,26 @@ class CCA(_PLS):
         Training vectors, where n_samples in the number of samples and
         q is the number of response variables.
 
-    n_components: int, number of components to keep. (default 2).
+    n_components: int, (default 2).
+        number of components to keep. 
 
-    scale: boolean, scale data? (default True)
+    scale: boolean, (default True)
+        whether to scale the data? 
 
-    algorithm: str "nipals" or "svd" the algorithm used to estimate the
-        weights, it will be called "n_components" time ie.: for each iteration
-        of the outer loop.
+    algorithm: str "nipals" or "svd" 
+        the algorithm used to estimate the weights, it will be called
+        "n_components" time ie.: for each iteration of the outer loop.
 
-    max_iter: an integer, the maximum number of iterations (default 500) of the
-        NIPALS inner loop (used only if algorithm="nipals")
+    max_iter: an integer, (default 500) 
+        the maximum number of iterations of the NIPALS inner loop (used
+        only if algorithm="nipals")
 
-    tol: a not negative real, the tolerance used in the iterative algorithm
-         default 1e-06.
+    tol: a not negative real, default 1e-06.
+        the tolerance used in the iterative algorithm
 
-    copy: boolean, should the deflation been made on a copy? Let the default
-        value to True unless you don't care about side effect
+    copy: boolean, 
+        should the deflation been made on a copy? Let the default value
+        to True unless you don't care about side effect
 
     Attributes
     ----------
@@ -720,9 +730,11 @@ class PLSSVD(BaseEstimator):
         q is the number of response variables. X will be centered before any
         analysis.
 
-    n_components: int, number of components to keep. (default 2).
+    n_components: int, (default 2).
+        number of components to keep. 
 
-    scale: boolean, scale X and Y (default True)
+    scale: boolean, (default True)
+        scale X and Y 
 
     Attributes
     ----------

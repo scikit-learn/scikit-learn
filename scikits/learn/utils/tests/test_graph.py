@@ -4,8 +4,6 @@
 import numpy as np
 from scipy import sparse
 
-import nose
-
 from ..graph import graph_laplacian
 
 def test_graph_laplacian():

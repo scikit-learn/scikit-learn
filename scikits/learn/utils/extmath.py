@@ -4,14 +4,12 @@ Extended math utilities.
 # Authors: G. Varoquaux, A. Gramfort, A. Passos, O. Grisel
 # License: BSD
 
-import sys
 import math
 
 from . import check_random_state
 import numpy as np
 
 
-#XXX: We should have a function with numpy's slogdet API
 def _fast_logdet(A):
     """
     Compute log(det(A)) for A symmetric
@@ -21,7 +19,6 @@ def _fast_logdet(A):
     """
     # XXX: Should be implemented as in numpy, using ATLAS
     # http://projects.scipy.org/numpy/browser/trunk/numpy/linalg/linalg.py#L1559
-    from scipy import linalg
     ld = np.sum(np.log(np.diag(A)))
     a = np.exp(ld / A.shape[0])
     d = np.linalg.det(A / a)
@@ -38,7 +35,6 @@ def _fast_logdet_numpy(A):
     but more robust
     It returns -Inf if det(A) is non positive or is not defined.
     """
-    from scipy import linalg
     sign, ld = np.linalg.slogdet(A)
     if not sign > 0:
         return -np.inf
@@ -149,9 +145,6 @@ def fast_svd(M, k, p=None, q=0, transpose='auto', random_state=0):
     A randomized algorithm for the decomposition of matrices
     Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
     """
-    # lazy import of scipy sparse, because it is very slow.
-    from scipy import sparse
-
     if p == None:
         p = k
 

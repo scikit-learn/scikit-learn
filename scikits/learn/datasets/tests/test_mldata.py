@@ -11,6 +11,7 @@ import shutil
 import tempfile
 import scipy as sp
 
+tmpdir = None
 
 def setup_tmpdata():
     # create temporary dir
@@ -21,7 +22,8 @@ def setup_tmpdata():
 
 def teardown_tmpdata():
     # remove temporary dir
-    shutil.rmtree(tmpdir)
+    if tmpdir is not None:
+        shutil.rmtree(tmpdir)
 
 
 def test_mldata_filename():

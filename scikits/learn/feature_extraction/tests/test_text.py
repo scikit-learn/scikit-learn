@@ -12,8 +12,8 @@ from scikits.learn.pipeline import Pipeline
 from scikits.learn.svm.sparse import LinearSVC as LinearSVC
 
 import numpy as np
-import numpy.linalg as la
-from nose.tools import *
+from nose.tools import assert_equal, assert_equals, \
+            assert_false, assert_not_equal
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 
