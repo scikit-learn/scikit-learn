@@ -8,6 +8,7 @@ Scalable alternative to Spectral Clustering for small number of centers.
 
 import os
 import numpy as np
+import scipy.sparse as sp
 
 from .k_means_ import k_means
 from ..utils.extmath import safe_sparse_dot
@@ -103,8 +104,15 @@ def power_iteration_clustering(affinity, k=8, n_vectors=1, tol=1e-5,
     """
     random_state = check_random_state(random_state)
     affinity = safe_asanyarray(affinity)
-    normalized = normalize(affinity, norm='l1', copy=True)
+
+    # the diagonal elements must be zeroed before row normalization
+    affinity = affinity.copy()
     n_samples = affinity.shape[0]
+    if sp.issparse(affinity):
+        affinity.setdiag(np.zeros(n_samples))
+    else:
+        affinity[np.eye(n_samples, dtype=np.bool)] = 0.0
+    normalized = normalize(affinity, norm='l1', copy=False)
 
     if n_vectors == 1:
         # initialize a single vector deterministically
