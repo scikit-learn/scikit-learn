@@ -16,22 +16,22 @@ ZEROLOGPROB = -1e200
 # XXX Replacing this with logaddexp.reduce, as in mixture.py, causes a test to
 # fail. Find out why this is.
 def logsum(A, axis=None):
-     """Computes the sum of A assuming A is in the log domain.
+    """Computes the sum of A assuming A is in the log domain.
 
-     Returns log(sum(exp(A), axis)) while minimizing the possibility of
-     over/underflow.
-     """
-     Amax = A.max(axis)
-     if axis and A.ndim > 1:
-          shape = list(A.shape)
-          shape[axis] = 1
-          Amax.shape = shape
-     Asum = np.log(np.sum(np.exp(A - Amax), axis))
-     Asum += Amax.reshape(Asum.shape)
-     if axis:
-         # Look out for underflow.
-         Asum[np.isnan(Asum)] = - np.Inf
-     return Asum
+    Returns log(sum(exp(A), axis)) while minimizing the possibility of
+    over/underflow.
+    """
+    Amax = A.max(axis)
+    if axis and A.ndim > 1:
+        shape = list(A.shape)
+        shape[axis] = 1
+        Amax.shape = shape
+    Asum = np.log(np.sum(np.exp(A - Amax), axis))
+    Asum += Amax.reshape(Asum.shape)
+    if axis:
+        # Look out for underflow.
+        Asum[np.isnan(Asum)] = - np.Inf
+    return Asum
 
 
 class _BaseHMM(BaseEstimator):
