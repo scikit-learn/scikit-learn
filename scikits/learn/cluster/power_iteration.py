@@ -155,5 +155,4 @@ def power_iteration_clustering(affinity, k=8, n_vectors=1, tol=1e-5,
         print "Converged at iteration: %04d/%04d with delta=%f" % (
             i + 1, max_iter, delta.max())
 
-    return k_means(vectors.T, k, verbose=verbose,
-                   random_state=random_state)[1]
+    return k_means(vectors.T, k, random_state=random_state)[1]
