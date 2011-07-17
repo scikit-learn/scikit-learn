@@ -128,3 +128,11 @@ def test_discretenb_uniform_prior():
         prior = np.exp(clf.class_log_prior_)
         assert prior[0] == prior[1]
         assert prior[0] == .5
+
+
+def test_complement_nb():
+    """Test MultinomialNB in complement naive Bayes mode"""
+
+    # Synthetic dataset from Rennie et al.
+    X1 = np.array([[0, 1]] * 3, [[1, 0]] * 3)
+    X2 = np.array([[0, 2]] * 2, [[1, 1]] * 2, [[2, 0]] * 2)

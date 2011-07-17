@@ -21,7 +21,7 @@ complete documentation.
 # License: BSD Style.
 
 from .base import BaseEstimator, ClassifierMixin
-from .preprocessing import binarize, LabelBinarizer
+from .preprocessing import binarize, LabelBinarizer, normalize
 from .utils import safe_asanyarray, atleast2d_or_csr
 from .utils.extmath import safe_sparse_dot
 from .utils.fixes import unique
@@ -241,12 +241,12 @@ class BaseDiscreteNB(BaseEstimator, ClassifierMixin):
         if class_prior:
             assert len(class_prior) == n_classes, \
                    'Number of priors must match number of classs'
-            self.class_log_prior_ = np.log(class_prior)
+            self.intercept_ = np.log(class_prior)
         elif self.fit_prior:
             y_count = np.bincount(inv_y_ind)
-            self.class_log_prior_ = np.log(y_count) - np.log(len(y))
+            self.intercept_ = np.log(y_count) - np.log(len(y))
         else:
-            self.class_log_prior_ = np.zeros(n_classes) - np.log(n_classes)
+            self.intercept_ = np.zeros(n_classes) - np.log(n_classes)
 
         Y = LabelBinarizer().fit_transform(y)
         if Y.shape[1] == 1:
@@ -254,9 +254,12 @@ class BaseDiscreteNB(BaseEstimator, ClassifierMixin):
 
         N_c, N_c_i = self._count(X, Y)
 
-        self.feature_log_prob_ = (np.log(N_c_i + self.alpha)
+        self.coef_ = (np.log(N_c_i + self.alpha)
                     - np.log(N_c.reshape(-1, 1)
                            + self.alpha * X.shape[1]))
+
+        if self.multiclass == 'complement':
+            normalize(self.coef_, norm='l1', copy=False)
 
         return self
 
@@ -370,14 +373,12 @@ class MultinomialNB(BaseDiscreteNB):
 
     Attributes
     ----------
-    `intercept_`, `class_log_prior_` : array, shape = [n_classes]
+    `intercept_` : array, shape = [n_classes]
         Log probability of each class (smoothed).
 
-    `feature_log_prob_`, `coef_` : array, shape = [n_classes, n_features]
-        Empirical log probability of features given a class, P(x_i|y).
-
-        (`intercept_` and `coef_` are properties referring to
-        `class_log_prior_` and `feature_log_prob_`, respectively.)
+    `coef_` : array, shape = [n_classes, n_features]
+        Feature weights for class; these correspond to smoothed empirical log
+        probabilities of features in the ordinary MultinomialNB model.
 
     Examples
     --------
@@ -401,9 +402,6 @@ class MultinomialNB(BaseDiscreteNB):
     def __init__(self, alpha=1.0, fit_prior=True, multiclass='ordinary'):
         super(MultinomialNB, self).__init__(alpha, fit_prior, multiclass)
 
-    intercept_ = property(lambda self: self.class_log_prior_)
-    coef_ = property(lambda self: self.feature_log_prob_)
-
     def _count(self, X, Y):
         """Count feature occurrences.
 
@@ -424,8 +422,8 @@ class MultinomialNB(BaseDiscreteNB):
 
         X = atleast2d_or_csr(X)
 
-        jll = safe_sparse_dot(self.feature_log_prob_, X.T)
-        return jll + np.atleast_2d(self.class_log_prior_).T
+        jll = safe_sparse_dot(self.coef_, X.T)
+        return jll + np.atleast_2d(self.intercept_).T
 
 
 class BernoulliNB(BaseDiscreteNB):
@@ -470,10 +468,10 @@ class BernoulliNB(BaseDiscreteNB):
 
     Attributes
     ----------
-    `class_log_prior_` : array, shape = [n_classes]
+    `intercept_` : array, shape = [n_classes]
         Log probability of each class (smoothed).
 
-    `feature_log_prob_` : array, shape = [n_classes, n_features]
+    `coef_` : array, shape = [n_classes, n_features]
         Empirical log probability of features given a class, P(x_i|y).
 
     Examples
@@ -519,17 +517,17 @@ class BernoulliNB(BaseDiscreteNB):
         if self.binarize is not None:
             X = binarize(X, threshold=self.binarize)
 
-        n_classes, n_features = self.feature_log_prob_.shape
+        n_classes, n_features = self.coef_.shape
         n_samples, n_features_X = X.shape
 
         if n_features_X != n_features:
             raise ValueError("Expected input with %d features, got %d instead"
                              % (n_features, n_features_X))
 
-        neg_prob = np.log(1 - np.exp(self.feature_log_prob_))
+        neg_prob = np.log(1 - np.exp(self.coef_))
         # Compute  neg_prob · (1 - X).T  as  ∑neg_prob - X · neg_prob
         X_neg_prob = (neg_prob.sum(axis=1).reshape(-1, 1)
                     - safe_sparse_dot(neg_prob, X.T))
-        jll = safe_sparse_dot(self.feature_log_prob_, X.T) + X_neg_prob
+        jll = safe_sparse_dot(self.coef_, X.T) + X_neg_prob
 
-        return jll + np.atleast_2d(self.class_log_prior_).T
+        return jll + np.atleast_2d(self.intercept_).T
