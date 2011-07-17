@@ -1,4 +1,4 @@
-""" Partial Least Square
+""" Partial Least Squares regression
 """
 
 # Author: Edouard Duchesnay <edouard.duchesnay@cea.fr>
@@ -12,8 +12,8 @@ from scipy import linalg
 
 
 def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06):
-    """Inner loop of the iterative NIPALS algorithm. provide an alternative
-    of the svd(X'Y) ie. return the first left and rigth singular vectors of X'Y
+    """Inner loop of the iterative NIPALS algorithm. Provides an alternative
+    to the svd(X'Y); returns the first left and rigth singular vectors of X'Y.
     See PLS for the meaning of the parameters.
     It is similar to the Power method for determining the eigenvectors and
     eigenvalues of a X'Y
@@ -93,7 +93,7 @@ def _center_scale_xy(X, Y, scale=True):
 
 
 class _PLS(BaseEstimator):
-    """Partial Least Square (PLS)
+    """Partial Least Squares (PLS)
 
     We use the terminology defined by [Wegelin et al. 2000].
     This implementation uses the PLS Wold 2 blocks algorithm or NIPALS which is
@@ -104,18 +104,18 @@ class _PLS(BaseEstimator):
         SVD on residuals cross-covariance matrices.
 
     This implementation provides:
-    - PLS regression, ie., PLS 2 blocks, mode A, with asymmetric deflation.
+    - PLS regression, i.e., PLS 2 blocks, mode A, with asymmetric deflation.
       A.k.a. PLS2, with multivariate response or PLS1 with univariate response.
-    - PLS canonical, ie., PLS 2 blocks, mode A, with symetric deflation.
-    - CCA, ie.,  PLS 2 blocks, mode B, with symetric deflation.
+    - PLS canonical, i.e., PLS 2 blocks, mode A, with symetric deflation.
+    - CCA, i.e., PLS 2 blocks, mode B, with symetric deflation.
 
     Parameters
     ----------
-    X: array-like of predictors, shape (n_samples, p)
+    X: array-like of predictors, shape = [n_samples, p]
         Training vectors, where n_samples in the number of samples and
         p is the number of predictors.
 
-    Y: array-like of response, shape (n_samples, q)
+    Y: array-like of response, shape = [n_samples, q]
         Training vectors, where n_samples in the number of samples and
         q is the number of response variables.
 
@@ -127,18 +127,19 @@ class _PLS(BaseEstimator):
 
     scale: boolean, scale data? (default True)
 
-    algorithm: str "nipals" or "svd" the algorithm used to estimate the
-        weights, it will be called "n_components" time ie.: for each iteration
-        of the outer loop.
+    algorithm: string, "nipals" or "svd"
+        The algorithm used to estimate the weights. It will be called
+        n_components times, i.e. once for each iteration of the outer loop.
 
     max_iter: an integer, the maximum number of iterations (default 500) of the
         NIPALS inner loop (used only if algorithm="nipals")
 
-    tol: a not negative real, the tolerance used in the iterative algorithm
-         default 1e-06.
+    tol: non-negative real, default 1e-06
+        The tolerance used in the iterative algorithm.
 
-    copy: boolean, should the deflation been made on a copy? Let the default
-        value to True unless you don't care about side effect
+    copy: boolean
+        Whether the deflation should be done on a copy. Let the default
+        value to True unless you don't care about side effects.
 
     Attributes
     ----------
@@ -320,16 +321,16 @@ class _PLS(BaseEstimator):
         """Apply the dimension reduction learned on the train data.
             Parameters
             ----------
-            X: array-like of predictors, shape (n_samples, p)
+            X: array-like of predictors, shape = [n_samples, p]
                 Training vectors, where n_samples in the number of samples and
                 p is the number of predictors.
 
-            Y: array-like of response, shape (n_samples, q), optional
+            Y: array-like of response, shape = [n_samples, q], optional
                 Training vectors, where n_samples in the number of samples and
                 q is the number of response variables.
 
-            copy: X and Y have to be normalize, do it on a copy or in place
-                with side effect!
+            copy: boolean
+                Whether to copy X and Y, or perform in-place normalization.
 
             Returns
             -------
@@ -361,12 +362,12 @@ class _PLS(BaseEstimator):
         """Apply the dimension reduction learned on the train data.
             Parameters
             ----------
-            X: array-like of predictors, shape (n_samples, p)
+            X: array-like of predictors, shape = [n_samples, p]
                 Training vectors, where n_samples in the number of samples and
                 p is the number of predictors.
 
-            copy: X has to be normalize, do it on a copy or in place
-                with side effect!
+            copy: boolean
+                Whether to copy X and Y, or perform in-place normalization.
 
             Notes
             -----
@@ -385,39 +386,41 @@ class _PLS(BaseEstimator):
 
 
 class PLSRegression(_PLS):
-    """PLS regression (Also known PLS2 or PLS in case of one dimensional
-    response). PLSregression inherits from PLS with mode="A" and
+    """PLS regression
+
+    PLSRegression inherits from PLS with mode="A" and
     deflation_mode="regression".
+    Also known PLS2 or PLS in case of one dimensional response.
 
     Parameters
     ----------
-    X: array-like of predictors, shape (n_samples, p)
+    X: array-like of predictors, shape = [n_samples, p]
         Training vectors, where n_samples in the number of samples and
         p is the number of predictors.
 
-    Y: array-like of response, shape (n_samples, q)
+    Y: array-like of response, shape = [n_samples, q]
         Training vectors, where n_samples in the number of samples and
         q is the number of response variables.
 
-    n_components: int, (default 2).
-        number of components to keep. 
+    n_components: int, (default 2)
+        Number of components to keep.
 
     scale: boolean, (default True)
         whether to scale the data
 
-    algorithm: str "nipals" or "svd" 
-        the algorithm used to estimate the weights, it will be called
-        "n_components" time ie.: for each iteration of the outer loop.
+    algorithm: string, "nipals" or "svd"
+        The algorithm used to estimate the weights. It will be called
+        n_components times, i.e. once for each iteration of the outer loop.
 
-    max_iter: an integer, (default 500) 
+    max_iter: an integer, (default 500)
         the maximum number of iterations of the NIPALS inner loop (used
         only if algorithm="nipals")
 
-    tol: a not negative real, 
-        the tolerance used in the iterative algorithm default 1e-06.
+    tol: non-negative real
+        Tolerance used in the iterative algorithm default 1e-06.
 
-    copy: boolean, 
-        Whether the deflation should been made on a copy. Let the default
+    copy: boolean, default True
+        Whether the deflation should be done on a copy. Let the default
         value to True unless you don't care about side effect
 
     Attributes
@@ -500,11 +503,11 @@ class PLSCanonical(_PLS):
 
     Parameters
     ----------
-    X: array-like of predictors, shape (n_samples, p)
+    X: array-like of predictors, shape = [n_samples, p]
         Training vectors, where n_samples in the number of samples and
         p is the number of predictors.
 
-    Y: array-like of response, shape (n_samples, q)
+    Y: array-like of response, shape = [n_samples, q]
         Training vectors, where n_samples in the number of samples and
         q is the number of response variables.
 
@@ -512,50 +515,50 @@ class PLSCanonical(_PLS):
 
     scale: boolean, scale data? (default True)
 
-    algorithm: str "nipals" or "svd" 
-        the algorithm used to estimate the weights, it will be called
-        "n_components" time ie.: for each iteration of the outer loop.
+    algorithm: string, "nipals" or "svd"
+        The algorithm used to estimate the weights. It will be called
+        n_components times, i.e. once for each iteration of the outer loop.
 
-    max_iter: an integer, (default 500) 
+    max_iter: an integer, (default 500)
         the maximum number of iterations of the NIPALS inner loop (used
         only if algorithm="nipals")
 
-    tol: a not negative real, default 1e-06.
+    tol: non-negative real, default 1e-06
         the tolerance used in the iterative algorithm
 
-    copy: boolean, 
-        Whether the deflation should been made on a copy. Let the default
+    copy: boolean, default True
+        Whether the deflation should be done on a copy. Let the default
         value to True unless you don't care about side effect
 
     Attributes
     ----------
-    x_weights_: array, [p, n_components]
+    x_weights_: array, shape = [p, n_components]
         X block weights vectors.
 
-    y_weights_: array, [q, n_components]
+    y_weights_: array, shape = [q, n_components]
         Y block weights vectors.
 
-    x_loadings_: array, [p, n_components]
+    x_loadings_: array, shape = [p, n_components]
         X block loadings vectors.
 
-    y_loadings_: array, [q, n_components]
+    y_loadings_: array, shape = [q, n_components]
         Y block loadings vectors.
 
-    x_scores_: array, [n_samples, n_components]
+    x_scores_: array, shape = [n_samples, n_components]
         X scores.
 
-    y_scores_: array, [n_samples, n_components]
+    y_scores_: array, shape = [n_samples, n_components]
         Y scores.
 
-    x_rotations_: array, [p, n_components]
+    x_rotations_: array, shape = [p, n_components]
         X block to latents rotations.
 
-    y_rotations_: array, [q, n_components]
+    y_rotations_: array, shape = [q, n_components]
         Y block to latents rotations.
 
     Notes
     -----
-    For each component k, find weights u, v that optimizes:
+    For each component k, find weights u, v that optimize::
     max corr(Xk u, Yk v) * var(Xk u) var(Yk u), such that |u| = |v| = 1
 
     Note that it maximizes both the correlations between the scores and the
@@ -567,7 +570,7 @@ class PLSCanonical(_PLS):
     The residual matrix of Y (Yk+1) block is obtained by deflation on the
     current Y score. This performs a canonical symetric version of the PLS
     regression. But slightly different than the CCA. This is mode mostly used
-    for modeling
+    for modeling.
 
     Examples
     --------
@@ -586,7 +589,6 @@ class PLSCanonical(_PLS):
     emphasis on the two-block case. Technical Report 371, Department of
     Statistics, University of Washington, Seattle, 2000.
 
-    In french but still a reference:
     Tenenhaus, M. (1998). La regression PLS: theorie et pratique. Paris:
     Editions Technic.
 
@@ -610,34 +612,34 @@ class CCA(_PLS):
 
     Parameters
     ----------
-    X: array-like of predictors, shape (n_samples, p)
+    X: array-like of predictors, shape = [n_samples, p]
         Training vectors, where n_samples in the number of samples and
         p is the number of predictors.
 
-    Y: array-like of response, shape (n_samples, q)
+    Y: array-like of response, shape = [n_samples, q]
         Training vectors, where n_samples in the number of samples and
         q is the number of response variables.
 
     n_components: int, (default 2).
-        number of components to keep. 
+        number of components to keep.
 
     scale: boolean, (default True)
-        whether to scale the data? 
+        whether to scale the data?
 
-    algorithm: str "nipals" or "svd" 
-        the algorithm used to estimate the weights, it will be called
-        "n_components" time ie.: for each iteration of the outer loop.
+    algorithm: str, "nipals" or "svd"
+        The algorithm used to estimate the weights. It will be called
+        n_components times, i.e. once for each iteration of the outer loop.
 
-    max_iter: an integer, (default 500) 
+    max_iter: an integer, (default 500)
         the maximum number of iterations of the NIPALS inner loop (used
         only if algorithm="nipals")
 
-    tol: a not negative real, default 1e-06.
+    tol: non-negative real, default 1e-06.
         the tolerance used in the iterative algorithm
 
-    copy: boolean, 
-        should the deflation been made on a copy? Let the default value
-        to True unless you don't care about side effect
+    copy: boolean
+        Whether the deflation be done on a copy. Let the default value
+        to True unless you don't care about side effects
 
     Attributes
     ----------
@@ -721,20 +723,20 @@ class PLSSVD(BaseEstimator):
 
     Parameters
     ----------
-    X: array-like of predictors, shape (n_samples, p)
+    X: array-like of predictors, shape = [n_samples, p]
         Training vector, where n_samples in the number of samples and
         p is the number of predictors. X will be centered before any analysis.
 
-    Y: array-like of response, shape (n_samples, q)
+    Y: array-like of response, shape = [n_samples, q]
         Training vector, where n_samples in the number of samples and
         q is the number of response variables. X will be centered before any
         analysis.
 
     n_components: int, (default 2).
-        number of components to keep. 
+        number of components to keep.
 
     scale: boolean, (default True)
-        scale X and Y 
+        scale X and Y
 
     Attributes
     ----------
