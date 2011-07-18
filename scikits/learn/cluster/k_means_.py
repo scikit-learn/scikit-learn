@@ -20,7 +20,7 @@ from ..metrics.pairwise import euclidean_distances
 from ..utils import check_random_state
 from ..utils import check_arrays
 from ..utils import shuffle
-from ..utils import _gen_even_slices
+from ..utils import gen_even_slices
 
 from . import _k_means
 
@@ -708,7 +708,7 @@ class MiniBatchKMeans(KMeans):
         self.counts = np.zeros(self.k, dtype=np.int32)
 
         n_batches = int(floor(float(n_samples) / self.chunk_size))
-        batch_slices = list(_gen_even_slices(n_samples, n_batches))
+        batch_slices = list(gen_even_slices(n_samples, n_batches))
 
         n_iterations = xrange(int(self.max_iter * n_batches))
         if sp.issparse(X_shuffled):

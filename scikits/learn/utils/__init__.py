@@ -268,19 +268,19 @@ def shuffle(*arrays, **options):
     return resample(*arrays, **options)
 
 
-def _gen_even_slices(n, n_packs):
+def gen_even_slices(n, n_packs):
     """Generator to create n_packs slices going up to n.
 
     Examples
     ========
 
-    >>> list(_gen_even_slices(10, 1))
+    >>> list(gen_even_slices(10, 1))
     [slice(0, 10, None)]
-    >>> list(_gen_even_slices(10, 10))
-    [slice(0, 1, None), slice(1, 2, None), slice(2, 3, None), slice(3, 4, None), slice(4, 5, None), slice(5, 6, None), slice(6, 7, None), slice(7, 8, None), slice(8, 9, None), slice(9, 10, None)]
-    >>> list(_gen_even_slices(10, 5))
-    [slice(0, 2, None), slice(2, 4, None), slice(4, 6, None), slice(6, 8, None), slice(8, 10, None)]
-    >>> list(_gen_even_slices(10, 3))
+    >>> list(gen_even_slices(10, 10))                     #doctest: +ELLIPSIS
+    [slice(0, 1, None), slice(1, 2, None), ..., slice(9, 10, None)]
+    >>> list(gen_even_slices(10, 5))                      #doctest: +ELLIPSIS
+    [slice(0, 2, None), slice(2, 4, None), ..., slice(8, 10, None)]
+    >>> list(gen_even_slices(10, 3))
     [slice(0, 4, None), slice(4, 7, None), slice(7, 10, None)]
 
     """
@@ -293,4 +293,3 @@ def _gen_even_slices(n, n_packs):
             end = start + this_n
             yield slice(start, end, None)
             start = end
-

@@ -13,52 +13,10 @@ from numpy.lib.stride_tricks import as_strided
 from scipy import linalg
 
 from ..utils import check_random_state
+from ..utils import gen_even_slices
 from ..linear_model import Lasso, lars_path, ridge_regression
 from ..externals.joblib import Parallel, delayed, cpu_count
 from ..base import BaseEstimator, TransformerMixin
-
-
-##################################
-# Utility to spread load on CPUs
-# XXX: where should this be?
-def _gen_even_slices(n, n_packs):
-    """Generator to create n_packs slices going up to n.
-
-    Parameters
-    ----------
-    n: int,
-        Upper bound of the range of indices to include.
-
-    n_packs: int,
-        Number of slices to generate.
-
-    Returns
-    -------
-    slices: generator object,
-        Generator object producing n_packs equal slices going up to n.
-
-    Examples
-    --------
-
-    >>> list(_gen_even_slices(10, 1))
-    [slice(0, 10, None)]
-    >>> list(_gen_even_slices(10, 10)) #doctest: +ELLIPSIS
-    [slice(0, 1, None), slice(1, 2, None), ..., slice(9, 10, None)]
-    >>> list(_gen_even_slices(10, 5)) #doctest: +ELLIPSIS
-    [slice(0, 2, None), slice(2, 4, None), ..., slice(8, 10, None)]
-    >>> list(_gen_even_slices(10, 3))
-    [slice(0, 4, None), slice(4, 7, None), slice(7, 10, None)]
-
-    """
-    start = 0
-    for pack_num in range(n_packs):
-        this_n = n // n_packs
-        if pack_num < n % n_packs:
-            this_n += 1
-        if this_n > 0:
-            end = start + this_n
-            yield slice(start, end, None)
-            start = end
 
 
 def _update_code(dictionary, Y, alpha, code=None, Gram=None, method='lars',
@@ -175,7 +133,7 @@ def _update_code_parallel(dictionary, Y, alpha, code=None, Gram=None,
                             method=method)
     if code is None:
         code = np.empty((n_atoms, n_features))
-    slices = list(_gen_even_slices(n_features, n_jobs))
+    slices = list(gen_even_slices(n_features, n_jobs))
     code_views = Parallel(n_jobs=n_jobs)(
                 delayed(_update_code)(dictionary, Y[:, this_slice],
                                       code=code[:, this_slice], alpha=alpha,
