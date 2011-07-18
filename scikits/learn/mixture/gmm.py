@@ -12,7 +12,6 @@ from ..base import BaseEstimator
 from ..utils import check_random_state
 from .. import cluster
 
-
 # TODO: this lacks a docstring
 def normalize(A, axis=None):
     """ Normalize the input array so that it sums to 1.

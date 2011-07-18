@@ -1,12 +1,10 @@
-
 import numpy as np
 
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 from unittest import TestCase
 
 from scikits.learn.datasets.samples_generator import generate_random_spd_matrix
-
-from .. import hmm
+from scikits.learn import hmm
 
 np.seterr(all='warn')
 
@@ -155,7 +153,7 @@ class TestBaseHMM(SeedRandomNumberGeneratorTestCase):
 
         assert_array_almost_equal(hmmposteriors.sum(axis=1), np.ones(nobs))
 
-        norm = hmm.logsum(framelogprob, axis=1)[:, np.newaxis]
+        norm = np.logaddexp.reduce(framelogprob, axis=1)[:, np.newaxis]
         gmmposteriors = np.exp(framelogprob - np.tile(norm, (1, n_states)))
         assert_array_almost_equal(hmmposteriors, gmmposteriors)
 
@@ -174,7 +172,7 @@ class TestBaseHMM(SeedRandomNumberGeneratorTestCase):
         # posteriors, not likelihoods).
         viterbi_ll, state_sequence = h.decode([])
 
-        norm = hmm.logsum(framelogprob, axis=1)[:, np.newaxis]
+        norm = np.logaddexp.reduce(framelogprob, axis=1)[:, np.newaxis]
         gmmposteriors = np.exp(framelogprob - np.tile(norm, (1, n_states)))
         gmmstate_sequence = gmmposteriors.argmax(axis=1)
         assert_array_equal(state_sequence, gmmstate_sequence)
@@ -183,7 +181,7 @@ class TestBaseHMM(SeedRandomNumberGeneratorTestCase):
         n_states = 20
         startprob = self.prng.rand(n_states)
         startprob = startprob / startprob.sum()
-        transmat = np.random.rand(n_states, n_states)
+        transmat = prng.rand(n_states, n_states)
         transmat /= np.tile(transmat.sum(axis=1)[:, np.newaxis], (1, n_states))
 
         h = self.StubHMM(n_states)
@@ -225,13 +223,13 @@ class GaussianHMMParams(object):
     startprob = startprob / startprob.sum()
     transmat = np.random.rand(n_states, n_states)
     transmat /= np.tile(transmat.sum(axis=1)[:, np.newaxis], (1, n_states))
-    means = np.random.randint(-20, 20, (n_states, n_features))
-    covars = {'spherical': (1.0 + 2 * np.random.rand(n_states)) ** 2,
-              'tied': (_generate_random_spd_matrix(n_features)
+    means = prng.randint(-20, 20, (n_states, n_features))
+    covars = {'spherical': (1.0 + 2 * prng.rand(n_states)) ** 2,
+              'tied': (generate_random_spd_matrix(n_features)
                        + np.eye(n_features)),
-              'diag': (1.0 + 2 * np.random.rand(n_states, n_features)) ** 2,
+              'diag': (1.0 + 2 * prng.rand(n_states, n_features)) ** 2,
               'full': np.array(
-                  [_generate_random_spd_matrix(n_features) + np.eye(n_features)
+                  [generate_random_spd_matrix(n_features) + np.eye(n_features)
                    for x in xrange(n_states)])}
     expanded_covars = {'spherical': [np.eye(n_features) * cov
                                      for cov in covars['spherical']],
@@ -329,7 +327,7 @@ class GaussianHMMTester(GaussianHMMParams):
         h.fit(train_obs, n_iter=0)
 
         trainll = train_hmm_and_keep_track_of_log_likelihood(
-            h, train_obs, n_iter=n_iter, params=params, **kwargs)
+            h, train_obs, n_iter=n_iter, params=params, **kwargs)[1:]
         if not np.all(np.diff(trainll) > 0) and verbose:
             print
             print ('Test train: %s (%s)\n  %s\n  %s'
@@ -338,7 +336,7 @@ class GaussianHMMTester(GaussianHMMParams):
         self.assertTrue(
             delta_min > -0.8,
             "The min nll increase is %f which is lower than the admissible"
-            " threshold of %f, for model %s. The likelihoods are %s." 
+            " threshold of %f, for model %s. The likelihoods are %s."
                 % (delta_min, -0.8, self.cvtype, trainll))
 
     def test_fit_works_on_sequences_of_different_length(self):
@@ -382,7 +380,7 @@ class GaussianHMMTester(GaussianHMMParams):
         h.fit(train_obs[:1], n_iter=0)
 
         trainll = train_hmm_and_keep_track_of_log_likelihood(
-            h, train_obs, n_iter=n_iter, params=params)
+            h, train_obs, n_iter=n_iter, params=params)[1:]
         if not np.all(np.diff(trainll) > 0) and verbose:
             print
             print ('Test MAP train: %s (%s)\n  %s\n  %s'
@@ -511,7 +509,7 @@ class TestMultinomialHMM(MultinomialHMMParams,
             self.prng.rand(self.n_states, self.n_symbols), axis=1)
 
         trainll = train_hmm_and_keep_track_of_log_likelihood(
-            h, train_obs, n_iter=n_iter, params=params, **kwargs)
+            h, train_obs, n_iter=n_iter, params=params, **kwargs)[1:]
         if not np.all(np.diff(trainll) > 0) and verbose:
             print
             print 'Test train: (%s)\n  %s\n  %s' % (params, trainll,
@@ -549,7 +547,7 @@ class GMMHMMParams(object):
     cvtype = 'diag'
     startprob = prng.rand(n_states)
     startprob = startprob / startprob.sum()
-    transmat = np.random.rand(n_states, n_states)
+    transmat = prng.rand(n_states, n_states)
     transmat /= np.tile(transmat.sum(axis=1)[:, np.newaxis], (1, n_states))
 
 
@@ -627,7 +625,7 @@ class TestGMMHMM(GMMHMMParams, SeedRandomNumberGeneratorTestCase):
 
         trainll = train_hmm_and_keep_track_of_log_likelihood(
             h, train_obs, n_iter=n_iter, params=params,
-            covars_prior=1.0, **kwargs)
+            covars_prior=1.0, **kwargs)[1:]
         if not np.all(np.diff(trainll) > 0) and verbose:
             print
             print 'Test train: (%s)\n  %s\n  %s' % (params, trainll,
