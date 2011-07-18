@@ -87,6 +87,8 @@ def dbscan(S, eps=0.5, min_points=5, metric='euclidean',
     labels = np.array([-1] * n)
     # A list of all core points found.
     core_points = []
+    # label_num is the label given to the new cluster
+    label_num = 0
     # Look at all points and determine if they are core.
     # If they are then build a new cluster from them.
     for index in index_order:
@@ -94,8 +96,6 @@ def dbscan(S, eps=0.5, min_points=5, metric='euclidean',
             # This point is already classified, or not enough for a core point.
             continue
         core_points.append(index)
-        # label_num is the label given to the new cluster
-        label_num = np.max(labels) + 1
         labels[index] = label_num
         # candidates for new core points in the cluster.
         candidates = [index]
@@ -115,6 +115,9 @@ def dbscan(S, eps=0.5, min_points=5, metric='euclidean',
                         core_points.append(neighbor)
             # Update candidates for next round of cluster expansion.
             candidates = new_candidates
+        # Current cluster finished.
+        # Next core point found will start a new cluster.
+        label_num += 1
     return core_points, labels
 
 
