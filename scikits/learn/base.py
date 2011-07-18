@@ -5,6 +5,7 @@
 import copy
 import inspect
 import numpy as np
+from scipy import linalg
 from .metrics import r2_score
 
 
