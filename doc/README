@@ -31,7 +31,7 @@ First of, generate the html documentation::
 
     make html
 
-This should create a directory _build/html with the documentation in html fornmat. 
+This should create a directory _build/html with the documentation in html fornmat.
 
 
 Now can upload the generated html documentation using scp or some other SFTP clients.
@@ -39,11 +39,11 @@ Now can upload the generated html documentation using scp or some other SFTP cli
     * Project web Hostname: web.sourceforge.net
     * Path: htdocs/
     * Username: Combine your SourceForge.net Username with your SourceForge.net project UNIX name using a comma ( "," ) See Example
-    * Password: Your SourceForge.net Password 
+    * Password: Your SourceForge.net Password
 
 An example session might look like the following for Username "jsmith" uploading a file for this project, using rsync with the right switch for the permissions:
 
-[jsmith@linux ~]$ rsync -rltvz _build/html/ jsmith,scikit-learn@web.sourceforge.net:htdocs/ -essh
+[jsmith@linux ~]$ rsync -rltvz --delete _build/html/ jsmith,scikit-learn@web.sourceforge.net:htdocs/dev -essh
 Connecting to web.sourceforge.net...
 The authenticity of host 'web.sourceforge.net (216.34.181.57)' can't be established.
 RSA key fingerprint is 68:b3:26:02:a0:07:e4:78:d4:ec:7f:2f:6a:4d:32:c5.
