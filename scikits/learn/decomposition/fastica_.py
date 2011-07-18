@@ -9,7 +9,6 @@ Independent Component Analysis, by  Hyvarinen et al.
 #         Bertrand Thirion, Alexandre Gramfort
 # License: BSD 3 clause
 
-import types
 import warnings
 import numpy as np
 from scipy import linalg
@@ -128,7 +127,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     n_components : int, optional
         Number of components to extract. If None no dimension reduction
         is performed.
-    algorithm : {'parallel','deflation'}, optional
+    algorithm : {'parallel', 'deflation'}, optional
         Apply an parallel or deflational FASTICA algorithm.
     whiten: boolean, optional
         If true perform an initial whitening of the data. Do not set to
@@ -144,7 +143,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         derivative should be provided via argument fun_prime
     fun_prime : empty string ('') or function, optional
         See fun.
-    fun_args: dictionnary, optional
+    fun_args: dictionary, optional
         If empty and if fun='logcosh', fun_args will take value
         {'alpha' : 1.0}
     max_iter: int, optional
@@ -207,7 +206,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     if (alpha < 1) or (alpha > 2):
         raise ValueError("alpha must be in [1,2]")
 
-    if type(fun) is types.StringType:
+    if isinstance(fun, str):
         # Some standard nonlinear functions
         # XXX: these should be optimized, as they can be a bottleneck.
         if fun == 'logcosh':
