@@ -2,6 +2,7 @@ import numpy as np
 
 from . import libsvm, liblinear
 from ..base import BaseEstimator
+from ..utils import safe_asanyarray
 
 
 LIBSVM_IMPL = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
@@ -372,7 +373,7 @@ class BaseLibLinear(BaseEstimator):
         self.class_weight, self.class_weight_label = \
                      _get_class_weight(class_weight, y)
 
-        X = np.asanyarray(X, dtype=np.float64, order='C')
+        X = safe_asanyarray(X, dtype=np.float64, order='C')
         y = np.asanyarray(y, dtype=np.int32, order='C')
 
         self.raw_coef_, self.label_ = liblinear.train_wrap(X, y,

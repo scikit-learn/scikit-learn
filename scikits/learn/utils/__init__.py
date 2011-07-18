@@ -1,7 +1,20 @@
 import numpy as np
 import scipy.sparse as sp
 
+
+def assert_all_finite(X):
+    """Throw a ValueError if X contains NaN or infinity."""
+    if sp.issparse(X):
+        X = X.data()
+    # O(n) time, O(1) solution. XXX: will fail if the sum over X is
+    # *extremely* large. A proper solution would be a C-level loop to check
+    # each element.
+    if not np.isfinite(np.sum(X)):
+        raise ValueError("array contains NaN or infinity")
+
+
 def safe_asanyarray(X, dtype=None, order=None):
+    assert_all_finite(X)
     if sp.issparse(X):
         return X
         #return type(X)(X, dtype)
@@ -10,6 +23,7 @@ def safe_asanyarray(X, dtype=None, order=None):
 
 
 def atleast2d_or_csr(X):
+    assert_all_finite(X)
     """Like numpy.atleast_2d, but converts sparse matrices to CSR format"""
     if sp.issparse(X):
         return X.tocsr()
