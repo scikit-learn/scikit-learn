@@ -4,7 +4,6 @@ import numpy as np
 from scipy import sparse as sp
 from numpy.testing import assert_equal
 from numpy.testing import assert_array_almost_equal
-from numpy.testing import assert_warns
 from nose.tools import assert_raises
 
 from ..k_means_ import KMeans, MiniBatchKMeans
@@ -92,10 +91,6 @@ def test_k_means_fixed_array_init():
     # check error on dataset being too small
     assert_raises(ValueError, k_means.fit, [[0., 1.]], k=n_clusters)
 
-    # print warning since n_init is ignored if init_array is given
-    k_means = KMeans(init=init_array, n_init=10)
-    assert_warns(UserWarning, k_means.fit, X, k=n_clusters)
-
 
 def test_k_means_invalid_init():
     np.random.seed(1)
@@ -168,7 +163,8 @@ def test_sparse_mbk_means_pp_init():
 
 def test_sparse_mbk_means_callable_init():
     np.random.seed(1)
-    def test_init(Xbar,k,random_state):
+
+    def test_init(Xbar, k, random_state):
         return np.vstack([X[5], X[25], X[45]])
     mbk_means = MiniBatchKMeans(init=test_init, n_init=1).fit(S)
 
@@ -179,5 +175,3 @@ def test_sparse_mbk_means_callable_init():
     assert_equal(np.unique(labels).size, 3)
 
     assert_raises(ValueError, mbk_means.fit, [[0., 1.]], k=n_clusters)
-
-
