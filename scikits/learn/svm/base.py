@@ -374,6 +374,9 @@ class BaseLibLinear(BaseEstimator):
                      _get_class_weight(class_weight, y)
 
         X = safe_asanyarray(X, dtype=np.float64, order='C')
+        if not isinstance(X, np.ndarray):   # sparse X passed in by user
+            raise ValueError("Training vectors should be array-like, not %s"
+                             % type(X))
         y = np.asanyarray(y, dtype=np.int32, order='C')
 
         self.raw_coef_, self.label_ = liblinear.train_wrap(X, y,
