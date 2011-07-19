@@ -195,8 +195,8 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
 
     """
     # make interface compatible with other decompositions
-    warnings.warn("The interface of fastica changed: X is now\
-        assumed to be of shape [n_samples, n_features]")
+    warnings.warn("Please note: the interface of fastica has changed: "
+                  "X is now assumed to be of shape [n_samples, n_features]")
     X = X.T
 
     algorithm_funcs = {'parallel': _ica_par,
@@ -235,14 +235,14 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
             raise ValueError(
                         'fun argument should be one of logcosh, exp or cube')
     elif callable(fun):
-        raise ValueError('fun argument should be either a string '
-                         '(one of logcosh, exp or cube) or a function')
-    else:
         def g(x, fun_args):
             return fun(x, **fun_args)
 
         def gprime(x, fun_args):
             return fun_prime(x, **fun_args)
+    else:
+        raise ValueError('fun argument should be either a string '
+                         '(one of logcosh, exp or cube) or a function')
 
     n, p = X.shape
 
