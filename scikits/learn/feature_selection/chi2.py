@@ -18,6 +18,11 @@ class Chi2(BaseEstimator, TransformerMixin):
 
     Note that this class does not perform a significance test.
 
+    Parameters
+    ----------
+    n_features : int
+        Number of features to select.
+
     Attributes
     ----------
     top_features_ : array, dtype = int, shape = [n_features]
@@ -34,7 +39,20 @@ class Chi2(BaseEstimator, TransformerMixin):
         self.n_features = n_features
 
     def fit(self, X, y):
-        """Find the best features in a training set."""
+        """Find the best features in a training set.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features_in]
+            Sample vectors.
+
+        y : array-like, shape = n_samples
+            Target vector (class labels).
+
+        Returns
+        -------
+        self
+        """
 
         # XXX: we might want to do some of the following in logspace instead
         # for numerical stability.
@@ -58,6 +76,18 @@ class Chi2(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, y=None):
-        """Pass through the features of X with the highest χ² in training."""
+        """Pass through the features of X with the highest χ² in training.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features_in]
+            Sample vectors. If X is a sparse matrix, it must be in a format
+            that supports "fancy indexing" (slicing).
+
+        Returns
+        -------
+        Xsel : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Sample vectors with all but the top n_features columns removed.
+        """
         X = safe_asanyarray(X)
         return X[:, self.top_features_]
