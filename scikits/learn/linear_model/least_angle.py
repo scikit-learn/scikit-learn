@@ -122,10 +122,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None, max_iter=500,
             C = np.fabs(C_)
             # to match a for computing gamma_
         else:
-            if Gram is None:
-                C -= gamma_ * np.abs(np.dot(X.T[0], eq_dir))
-            else:
-                C -= gamma_ * np.abs(np.dot(Gram[0], least_squares))
+            C = 0.
 
         alphas[n_iter] = C / n_samples
 
@@ -347,7 +344,7 @@ class LARS(LinearModel):
     LARS(normalize=True, precompute='auto', max_iter=500, verbose=False,
        fit_intercept=True)
     >>> print clf.coef_
-    [ 0.         -0.81649658]
+    [ 0. -1.]
 
     References
     ----------
@@ -414,6 +411,8 @@ class LARS(LinearModel):
                   method=self.method, verbose=self.verbose,
                   max_features=max_features, max_iter=self.max_iter)
 
+        if self.normalize:
+            self.coef_path_ /= norms[:, np.newaxis]
         self.coef_ = self.coef_path_[:, -1]
 
         self._set_intercept(Xmean, ymean)
@@ -468,7 +467,7 @@ class LassoLARS (LARS):
     LassoLARS(normalize=True, verbose=False, fit_intercept=True, max_iter=500,
          precompute='auto', alpha=0.01)
     >>> print clf.coef_
-    [ 0.         -0.78649658]
+    [ 0.         -0.96325765]
 
     References
     ----------

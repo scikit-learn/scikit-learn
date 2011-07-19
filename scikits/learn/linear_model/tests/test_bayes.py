@@ -13,6 +13,7 @@ from ..bayes import BayesianRidge, ARDRegression
 
 from scikits.learn import datasets
 
+
 def test_bayesian_on_diabetes():
     """
     Test BayesianRidge on diabetes
@@ -29,7 +30,7 @@ def test_bayesian_on_diabetes():
     assert_array_equal(np.diff(clf.scores_) > 0, True)
 
     # Test with more features than samples
-    X = X[:5,:]
+    X = X[:5, :]
     y = y[:5]
     clf.fit(X, y)
     # Test that scores are increasing at each iteration
@@ -45,7 +46,7 @@ def test_toy_bayesian_ridge_object():
     clf = BayesianRidge(compute_score=True)
     clf.fit(X, Y)
     X_test = [[1], [3], [4]]
-    assert(np.abs(clf.predict(X_test)-[1, 3, 4]).sum() < 1.e-2) # identity
+    assert(np.abs(clf.predict(X_test) - [1, 3, 4]).sum() < 1.e-2)  # identity
 
 
 def test_toy_ard_object():
@@ -54,7 +55,7 @@ def test_toy_ard_object():
     """
     X = np.array([[1], [2], [3]])
     Y = np.array([1, 2, 3])
-    clf = ARDRegression(compute_score = True)
+    clf = ARDRegression(compute_score=True)
     clf.fit(X, Y)
-    Test = [[1], [3], [4]]
-    assert(np.abs(clf.predict(Test)-[1, 3, 4]).sum() < 1.e-3) # identity
+    test = [[1], [3], [4]]
+    assert(np.abs(clf.predict(test) - [1, 3, 4]).sum() < 1.e-3)  # identity
