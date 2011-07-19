@@ -250,7 +250,7 @@ class _AbstractUnivariateFilter(BaseEstimator, TransformerMixin):
         Transform a new matrix using the selected features
         """
         self._set_params(**params)
-        return X[:, self.get_support(issparse(X))]
+        return safe_asanyarray(X)[:, self.get_support(indices=issparse(X))]
 
     def inverse_transform(self, X, **params):
         """
