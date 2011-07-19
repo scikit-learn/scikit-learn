@@ -16,8 +16,8 @@ high-dimensional datasets.
 
 The :class:`Chi2` transformer class will pass through a user-selected number
 of features from a vector of samples, selecting those for which the Ï<87>Â²
-statistic yields the highest degree of independence from their target
-values/classes.
+statistic yields the highest degree of dependence between them and the target
+value/class label, regarded as a stochastic variable.
 
 :class:`Chi2` must be ``fit`` on a training set before use. It is designed for
 binary or multinomial data, i.e. arrays of either boolean

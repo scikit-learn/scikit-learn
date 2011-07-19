@@ -4,6 +4,7 @@
 import numpy as np
 from scipy.stats import chisquare
 
+from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import LabelBinarizer
 from ..utils import safe_asanyarray
 from ..utils.extmath import safe_sparse_dot
@@ -14,9 +15,13 @@ class Chi2(BaseEstimator, TransformerMixin):
 
     This transformer can be used to select the n_features features with the
     highest values for the χ² (chi-square) statistic from multinomially
-    distributed data (e.g., term counts in document classification).
+    distributed data (e.g., term counts in document classification) relative
+    to the classes.
 
-    Note that this class does not perform a significance test.
+    Recall that the χ² statistic measures dependence between stochastic
+    variables, so this transformer "weeds out" the features that are the most
+    likely to be independent of class and therefore irrelevant for
+    classification.
 
     Parameters
     ----------
@@ -63,13 +68,13 @@ class Chi2(BaseEstimator, TransformerMixin):
 
         observed = safe_sparse_dot(Y.T, X)      # n_classes * n_features
 
-        #N = observed.sum(dtype=np.float64)
         feature_count = np.atleast_2d(X.sum(axis=0))
+        feature_count = np.asarray(feature_count)   # stupid numpy.matrix!
         class_prob = np.atleast_2d(Y.sum(axis=0) / Y.sum())
         expected = safe_sparse_dot(class_prob.T, feature_count)
 
-        # We lied in the docstring: we do perform a significance test,
-        # only to then throw the result away.
+        # The p-values (probabilities of independence) are monotonically
+        # decreasing in χ², so we need only one of both values.
         ch2, _ = chisquare(observed, expected)
 
         self.top_features_ = np.argsort(ch2)[-self.n_features:]
