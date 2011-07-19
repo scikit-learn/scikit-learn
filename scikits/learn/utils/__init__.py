@@ -4,8 +4,11 @@ import scipy.sparse as sp
 
 def assert_all_finite(X):
     """Throw a ValueError if X contains NaN or infinity."""
+
     if sp.issparse(X):
         X = X.data()
+    if isinstance(X, np.ndarray) and X.dtype.name[:5] != 'float':
+        return
     # O(n) time, O(1) solution. XXX: will fail if the sum over X is
     # *extremely* large. A proper solution would be a C-level loop to check
     # each element.
