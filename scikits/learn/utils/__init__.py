@@ -1,20 +1,32 @@
 import numpy as np
 import scipy.sparse as sp
 
+_FLOAT_CODES = np.typecodes['AllFloat']
+
+
+def assert_all_finite(X):
+    """Throw a ValueError if X contains NaN or infinity.
+    Input MUST be an np.ndarray instance or a scipy.sparse matrix."""
+
+    # O(n) time, O(1) solution. XXX: will fail if the sum over X is
+    # *extremely* large. A proper solution would be a C-level loop to check
+    # each element.
+    if X.dtype.char in _FLOAT_CODES and not np.isfinite(X.sum()):
+        raise ValueError("array contains NaN or infinity")
+
+
 def safe_asanyarray(X, dtype=None, order=None):
-    if sp.issparse(X):
-        return X
-        #return type(X)(X, dtype)
-    else:
-        return np.asanyarray(X, dtype, order)
+    if not sp.issparse(X):
+        X = np.asanyarray(X, dtype, order)
+    assert_all_finite(X)
+    return X
 
 
 def atleast2d_or_csr(X):
     """Like numpy.atleast_2d, but converts sparse matrices to CSR format"""
-    if sp.issparse(X):
-        return X.tocsr()
-    else:
-        return np.atleast_2d(X)
+    X = X.tocsr() if sp.issparse(X) else np.atleast_2d(X)
+    assert_all_finite(X)
+    return X
 
 
 def check_random_state(seed):
