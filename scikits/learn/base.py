@@ -9,13 +9,6 @@ from scipy import sparse
 
 from .metrics import r2_score
 
-def _cheap_array_eq(arr1, arr2):
-    """ A fast but approximate test for equality of numpy arrays.
-    """
-    return (arr1.shape == arr2.shape and arr1.dtype == arr2.dtype 
-            and arr1[0] == arr2[0] and arr1[-1] == arr2[-1])
-
-
 
 ###############################################################################
 def clone(estimator, safe=True):
