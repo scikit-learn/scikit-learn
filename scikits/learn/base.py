@@ -56,12 +56,14 @@ def clone(estimator, safe=True):
     for name in new_object_params:
         param1 = new_object_params[name]
         param2 = params_set[name]
-        if isinstance(param1, np.array):
+        if isinstance(param1, np.ndarray):
+            # For ndarrays, we do not test for complete equality
             equality_test = (param1.shape == param2.shape 
                              and param1.dtype == param2.dtype 
                              and param1[0] == param2[0] 
                              and param1[-1] == param2[-1])
         elif sparse.issparse(param1):
+            # For sparse matrices equality doesn't work 
             equality_test = (param1.__class__ == param2.__class__
                              and param1.data[0] == param2.data[0]
                              and param1.data[-1] == param2.data[-1]
