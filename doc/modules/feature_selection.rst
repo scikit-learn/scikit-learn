@@ -5,6 +5,10 @@
 Feature selection
 =================
 
+The classes in the ``scikits.learn.feature_selection`` module can be used
+for feature selection/dimensionality reduction on sample sets, either to
+improve estimators' accuracy scores or to boost their performance on very
+high-dimensional datasets.
 
 
 Univariate feature selection
@@ -46,6 +50,7 @@ Feature scoring functions
 For classification
 ..................
 
+.. autofunction:: scikits.learn.feature_selection.univariate_selection.f_chi2
 .. autofunction:: scikits.learn.feature_selection.univariate_selection.f_classif
 
 For regression
