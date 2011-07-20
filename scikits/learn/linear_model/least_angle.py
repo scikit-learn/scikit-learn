@@ -499,6 +499,36 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
                      fit_intercept=True, normalize=True, max_iter=500):
     """Compute the residues on left-out data for a full LARS path
 
+    Parameters
+    -----------
+    X_train: array, shape (n_samples, n_features)
+        The data to fit the LARS on
+    y_train: array, shape (n_samples)
+        The target variable to fit LARS on
+    X_test: array, shape (n_samples, n_features)
+        The data to compute the residues on
+    y_test: array, shape (n_samples)
+        The target variable to compute the residues on
+    Gram: None, 'auto', array, shape: (n_features, n_features), optional
+        Precomputed Gram matrix (X' * X), if 'auto', the Gram
+        matrix is precomputed from the given X, if there are more samples 
+        than features
+    overwrite_data: boolean, optional
+        Whether X_train, X_test, y_train and y_test get overriden
+    method: 'lar' | 'lasso'
+        Specifies the returned model. Select 'lar' for Least Angle
+        Regression, 'lasso' for the Lasso.
+    verbose: integer, optional
+        Sets the amount of verbosity
+    fit_intercept : boolean
+        whether to calculate the intercept for this model. If set
+        to false, no intercept will be used in calculations
+        (e.g. data is expected to be already centered).
+    normalize : boolean, optional
+        If True, the regressors X are normalized
+    max_iter: integer, optional
+        Maximum number of iterations to perform.
+
     Returns
     --------
     alphas: array, shape: (max_features + 1,)
@@ -642,10 +672,7 @@ class LarsCV(LARS):
         all_alphas.sort()
 
         mse_path = list()
-        #coef_path = list()
         for alphas, active, coefs, residues in cv_paths:
-            #this_coefs = interpolate.interp1d(alphas, coefs)(all_alphas)
-            #coef_path.append(this_coefs)
             this_residues = interpolate.interp1d(alphas[::-1], 
                                                  residues[::-1], 
                                                  bounds_error=False,
