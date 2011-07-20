@@ -4,8 +4,6 @@ Test the pipeline module.
 
 from nose.tools import assert_raises, assert_equal, assert_false
 
-import numpy as np
-
 from ..base import BaseEstimator, clone
 from ..pipeline import Pipeline
 from ..svm import SVC

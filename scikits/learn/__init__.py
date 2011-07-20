@@ -15,6 +15,7 @@ See http://scikit-learn.sourceforge.net for complete documentation.
 
 from .base import clone
 
+from . import mixture
 
 try:
     from numpy.testing import nosetester

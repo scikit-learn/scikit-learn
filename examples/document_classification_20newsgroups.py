@@ -24,6 +24,8 @@ Options are:
       Print a detailed classification report.
   --confusion-matrix
       Print the confusion matrix.
+  --top10
+      Print ten most discriminative terms per class for every classifier.
 
 """
 print __doc__
@@ -35,7 +37,8 @@ print __doc__
 
 from time import time
 import logging
-import os
+import numpy as np
+from operator import itemgetter
 import sys
 
 from scikits.learn.datasets import fetch_20newsgroups
@@ -55,14 +58,9 @@ logging.basicConfig(level=logging.INFO,
 
 # parse commandline arguments
 argv = sys.argv[1:]
-if "--report" in argv:
-    print_report = True
-else:
-    print_report = False
-if "--confusion-matrix" in argv:
-    print_cm = True
-else:
-    print_cm = False
+print_report = "--report" in argv
+print_cm = "--confusion-matrix" in argv
+print_top10 = "--top10" in argv
 
 ################################################################################
 # Load some categories from the training set
@@ -84,9 +82,11 @@ data_train = fetch_20newsgroups(subset='train', categories=categories,
 data_test = fetch_20newsgroups(subset='test', categories=categories,
                               shuffle=True, random_state=42)
 
+categories = data_train.target_names    # for case categories == None
+
 print "%d documents (training set)" % len(data_train.filenames)
 print "%d documents (testing set)" % len(data_test.filenames)
-print "%d categories" % len(data_train.target_names)
+print "%d categories" % len(categories)
 print
 
 # split a training set and a test set
@@ -107,6 +107,14 @@ X_test = vectorizer.transform((open(f).read() for f in filenames_test))
 print "done in %fs" % (time() - t0)
 print "n_samples: %d, n_features: %d" % X_test.shape
 print
+
+vocabulary = np.array([t for t, i in sorted(vectorizer.vocabulary.iteritems(),
+                                            key=itemgetter(1))])
+
+
+def trim(s):
+    """Trim string to fit on terminal (assuming 80-column display)"""
+    return s if len(s) <= 80 else s[:77] + "..."
 
 
 ################################################################################
@@ -131,6 +139,12 @@ def benchmark(clf):
     if hasattr(clf, 'coef_'):
         nnz = clf.coef_.nonzero()[0].shape[0]
         print "non-zero coef: %d" % nnz
+
+        if print_top10:
+            print "top 10 keywords per class:"
+            for i, category in enumerate(categories):
+                top10 = np.argsort(clf.coef_[i, :])[-10:]
+                print trim("%s: %s" % (category, " ".join(vocabulary[top10])))
         print
 
     if print_report:

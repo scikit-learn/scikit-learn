@@ -14,9 +14,8 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, CoefSelectTransformerMixin):
     Parameters
     ----------
     loss : string, 'l1' or 'l2' (default 'l2')
-        Specifies the loss function. With 'l1' it is the standard SVM
-        loss (a.k.a. hinge Loss) while with 'l2' it is the squared loss.
-        (a.k.a. squared hinge Loss)
+        Specifies the loss function. 'l1' is the hinge loss (standard SVM)
+        while 'l2' is the squared hinge loss.
 
     penalty : string, 'l1' or 'l2' (default 'l2')
         Specifies the norm used in the penalization. The 'l2'
@@ -28,11 +27,11 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, CoefSelectTransformerMixin):
         optimization problem.
 
     tol: float, optional
-         Tolerance for stopping criteria
+        Tolerance for stopping criteria
 
     multi_class: boolean, optional
-         Perform multi-class SVM by Cramer and Singer. If active,
-         options loss, penalty and dual will be ignored.
+        Perform multi-class SVM as per Cramer and Singer. If active,
+        the options loss, penalty and dual will be ignored.
 
     fit_intercept : boolean, optional
         Whether to calculate the intercept for this model. If set
@@ -107,14 +106,14 @@ class SVC(BaseLibSVM, ClassifierMixin):
         in poly/sigmoid.
 
     probability: boolean, optional (False by default)
-        enable probability estimates. This must be enabled prior
+        Whether to enable probability estimates. This must be enabled prior
         to calling prob_predict.
 
     shrinking: boolean, optional
-         wether to use the shrinking heuristic.
+        Whether to use the shrinking heuristic.
 
     tol: float, optional
-         precision for stopping criteria
+        Tolerance for stopping criterion.
 
 
     Attributes
@@ -188,18 +187,18 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
         will be taken.
 
     probability: boolean, optional (False by default)
-        enable probability estimates. This must be enabled prior
-        to calling prob_predict.
+        Whether to enable probability estimates. This must be enabled prior
+        to calling predict_proba.
 
     coef0 : float, optional
         independent term in kernel function. It is only significant
         in poly/sigmoid.
 
     shrinking: boolean, optional
-         wether to use the shrinking heuristic.
+        Whether to use the shrinking heuristic.
 
     tol: float, optional
-         precision for stopping criteria
+        Tolerance for stopping criterion.
 
 
     Attributes
@@ -300,18 +299,18 @@ class SVR(BaseLibSVM, RegressorMixin):
         penalty parameter C of the error term.
 
     probability: boolean, optional (False by default)
-        enable probability estimates. This must be enabled prior
-        to calling prob_predict.
+        Whether to enable probability estimates. This must be enabled prior
+        to calling predict_proba.
 
     tol: float, optional
-         precision for stopping criteria
+        Tolerance for stopping criterion.
 
     coef0 : float, optional
         independent term in kernel function. It is only significant
         in poly/sigmoid.
 
     shrinking: boolean, optional
-         wether to use the shrinking heuristic.
+        Whether to use the shrinking heuristic.
 
     Attributes
     ----------
@@ -380,9 +379,9 @@ class SVR(BaseLibSVM, RegressorMixin):
 class NuSVR(BaseLibSVM, RegressorMixin):
     """Nu Support Vector Regression.
 
-    Similar to NuSVC, for regression, uses a paramter nu to control
+    Similar to NuSVC, for regression, uses a parameter nu to control
     the number of support vectors. However, unlike NuSVC, where nu
-    replaces with C, here nu replaces with the parameter epsilon of SVR.
+    replaces C, here nu replaces with the parameter epsilon of SVR.
 
     Parameters
     ----------
@@ -411,18 +410,18 @@ class NuSVR(BaseLibSVM, RegressorMixin):
         epsilon in the epsilon-SVR model.
 
     tol: float, optional
-         precision for stopping criteria
+        Tolerance for stopping criterion.
 
     probability: boolean, optional (False by default)
-        enable probability estimates. This must be enabled prior
-        to calling prob_predict.
+        Whether to enable probability estimates. This must be enabled prior
+        to calling predict_proba.
 
     coef0 : float, optional
         independent term in kernel function. It is only significant
         in poly/sigmoid.
 
     shrinking: boolean, optional
-         wether to use the shrinking heuristic.
+        Whether to use the shrinking heuristic.
 
     Attributes
     ----------
@@ -519,10 +518,10 @@ class OneClassSVM(BaseLibSVM):
         poly/sigmoid.
 
     tol: float, optional
-         precision for stopping criteria
+        Tolerance for stopping criterion.
 
     shrinking: boolean, optional
-         wether to use the shrinking heuristic.
+        Whether to use the shrinking heuristic.
 
     Attributes
     ----------

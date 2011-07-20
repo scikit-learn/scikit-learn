@@ -391,21 +391,27 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None):
         false_neg[i] = np.sum(y_pred[y_true == label_i] != label_i)
         support[i] = np.sum(y_true == label_i)
 
-    # precision and recall
-    precision = true_pos / (true_pos + false_pos)
-    recall = true_pos / (true_pos + false_neg)
+    try:
+        # oddly, we may get an "invalid" rather than a "divide" error here
+        old_err_settings = np.seterr(divide='ignore', invalid='ignore')
 
-    # handle division by 0.0 in precision and recall
-    precision[(true_pos + false_pos) == 0.0] = 0.0
-    recall[(true_pos + false_neg) == 0.0] = 0.0
+        # precision and recall
+        precision = true_pos / (true_pos + false_pos)
+        recall = true_pos / (true_pos + false_neg)
 
-    # fbeta score
-    beta2 = beta ** 2
-    fscore = (1 + beta2) * (precision * recall) / (
-        beta2 * precision + recall)
+        # handle division by 0.0 in precision and recall
+        precision[(true_pos + false_pos) == 0.0] = 0.0
+        recall[(true_pos + false_neg) == 0.0] = 0.0
 
-    # handle division by 0.0 in fscore
-    fscore[(precision + recall) == 0.0] = 0.0
+        # fbeta score
+        beta2 = beta ** 2
+        fscore = (1 + beta2) * (precision * recall) / (
+            beta2 * precision + recall)
+
+        # handle division by 0.0 in fscore
+        fscore[(precision + recall) == 0.0] = 0.0
+    finally:
+        np.seterr(**old_err_settings)
 
     return precision, recall, fscore, support
 

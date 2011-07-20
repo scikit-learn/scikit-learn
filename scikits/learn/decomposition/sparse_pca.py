@@ -14,40 +14,11 @@ from numpy.lib.stride_tricks import as_strided
 from scipy import linalg
 
 from ..utils import check_random_state
+from ..utils import gen_even_slices
 from ..linear_model import Lasso, lars_path, ridge_regression
 from ..externals.joblib import Parallel, delayed, cpu_count
 from ..base import BaseEstimator, TransformerMixin
 from ..utils.extmath import fast_svd
-
-
-##################################
-# Utility to spread load on CPUs
-# XXX: where should this be?
-def _gen_even_slices(n, n_packs):
-    """Generator to create n_packs slices going up to n.
-
-    Examples
-    ========
-
-    >>> list(_gen_even_slices(10, 1))
-    [slice(0, 10, None)]
-    >>> list(_gen_even_slices(10, 10)) #doctest: +ELLIPSIS
-    [slice(0, 1, None), slice(1, 2, None), ..., slice(9, 10, None)]
-    >>> list(_gen_even_slices(10, 5)) #doctest: +ELLIPSIS
-    [slice(0, 2, None), slice(2, 4, None), ..., slice(8, 10, None)]
-    >>> list(_gen_even_slices(10, 3))
-    [slice(0, 4, None), slice(4, 7, None), slice(7, 10, None)]
-
-    """
-    start = 0
-    for pack_num in range(n_packs):
-        this_n = n // n_packs
-        if pack_num < n % n_packs:
-            this_n += 1
-        if this_n > 0:
-            end = start + this_n
-            yield slice(start, end, None)
-            start = end
 
 
 def _update_code(dictionary, Y, alpha, code=None, Gram=None, method='lars',
@@ -58,48 +29,53 @@ def _update_code(dictionary, Y, alpha, code=None, Gram=None, method='lars',
     Parameters
     ----------
     dictionary: array of shape (n_samples, n_components)
-        dictionary against which to optimize the sparse code
+        Dictionary against which to optimize the sparse code.
 
     Y: array of shape (n_samples, n_features)
-        data matrix
+        Data matrix.
 
     alpha: float
-        regularization parameter for the Lasso problem
+        Regularization parameter for the Lasso problem.
 
     code: array of shape (n_components, n_features)
-        previous iteration of the sparse code
+        Value of the sparse codes at the previous iteration.
 
     Gram: array of shape (n_features, n_features)
-        precomputed Gram matrix, (Y^T * Y)
+        Precomputed Gram matrix, (Y^T * Y).
 
-    method: 'lars' | 'cd'
+    method: {'lars', 'cd'}
         lars: uses the least angle regression method (linear_model.lars_path)
-        cd: uses the stochastic gradient descent method to compute the
-            lasso solution (linear_model.Lasso)
+        cd: uses the coordinate descent method to compute the
+        Lasso solution (linear_model.Lasso). Lars will be faster if
+        the estimated components are sparse.
 
     tol: float
-        numerical tolerance for Lasso convergence.
-        Ignored if `method='lars'`
+        Numerical tolerance for coordinate descent Lasso convergence.
+        Only used if `method='cd'`
 
+    Returns
+    -------
+    new_code : array of shape (n_components, n_features)
+        The sparse codes precomputed using this iteration's dictionary
     """
     n_features = Y.shape[1]
     n_atoms = dictionary.shape[1]
     new_code = np.empty((n_atoms, n_features))
-    # XXX: should we always do this?
     if Gram is None:
         Gram = np.dot(dictionary.T, dictionary)
     if method == 'lars':
-        err_mgt = np.seterr()
-        np.seterr(all='ignore')
-        #alpha = alpha * n_samples
         XY = np.dot(dictionary.T, Y)
-        for k in range(n_features):
-            # A huge amount of time is spent in this loop. It needs to be
-            # tight.
-            _, _, coef_path_ = lars_path(dictionary, Y[:, k], Xy=XY[:, k],
-                                    Gram=Gram, alpha_min=alpha, method='lasso')
-            new_code[:, k] = coef_path_[:, -1]
-        np.seterr(**err_mgt)
+        try:
+            err_mgt = np.seterr(all='ignore')
+            for k in range(n_features):
+                # A huge amount of time is spent in this loop. It needs to be
+                # tight.
+                _, _, coef_path_ = lars_path(dictionary, Y[:, k], Xy=XY[:, k],
+                                             Gram=Gram, alpha_min=alpha,
+                                             method='lasso')
+                new_code[:, k] = coef_path_[:, -1]
+        finally:
+            np.seterr(**err_mgt)
     elif method == 'cd':
         clf = Lasso(alpha=alpha, fit_intercept=False, precompute=Gram)
         for k in range(n_features):
@@ -122,31 +98,32 @@ def _update_code_parallel(dictionary, Y, alpha, code=None, Gram=None,
     Parameters
     ----------
     dictionary: array of shape (n_samples, n_components)
-        dictionary against which to optimize the sparse code
+        Dictionary against which to optimize the sparse code.
 
     Y: array of shape (n_samples, n_features)
-        data matrix
+        Data matrix.
 
     alpha: float
-        regularization parameter for the Lasso problem
+        Regularization parameter for the Lasso problem.
 
     code: array of shape (n_components, n_features)
-        previous iteration of the sparse code
+        Previous iteration of the sparse code.
 
     Gram: array of shape (n_features, n_features)
-        precomputed Gram matrix, (Y^T * Y)
+        Precomputed Gram matrix, (Y^T * Y).
 
     method: 'lars' | 'cd'
         lars: uses the least angle regression method (linear_model.lars_path)
-        cd: uses the stochastic gradient descent method to compute the
-            lasso solution (linear_model.Lasso)
+        cd: uses the coordinate descent method to compute the
+        lasso solution (linear_model.Lasso). Lars will be faster if
+        the components extracted are sparse.
 
     n_jobs: int
-        number of parallel jobs to run
+        Number of parallel jobs to run.
 
     tol: float
-        numerical tolerance for coordinate descent Lasso convergence.
-        Only used if `method='lasso`.
+        Numerical tolerance for coordinate descent Lasso convergence.
+        Only used if `method='cd`.
 
     """
     n_samples, n_features = Y.shape
@@ -158,7 +135,7 @@ def _update_code_parallel(dictionary, Y, alpha, code=None, Gram=None,
                             method=method)
     if code is None:
         code = np.empty((n_atoms, n_features))
-    slices = list(_gen_even_slices(n_features, n_jobs))
+    slices = list(gen_even_slices(n_features, n_jobs))
     code_views = Parallel(n_jobs=n_jobs)(
                 delayed(_update_code)(dictionary, Y[:, this_slice],
                                       code=code[:, this_slice], alpha=alpha,
@@ -176,20 +153,20 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
     Parameters
     ----------
     dictionary: array of shape (n_samples, n_components)
-        value of the dictionary at the previous iteration
+        Value of the dictionary at the previous iteration.
 
     Y: array of shape (n_samples, n_features)
-        data matrix
+        Data matrix.
 
     code: array of shape (n_components, n_features)
-        sparse coding of the data against which to optimize the dictionary
+        Sparse coding of the data against which to optimize the dictionary.
 
     verbose:
-        degree of output the procedure will print
+        Degree of output the procedure will print.
 
     return_r2: bool
-        whether to compute and return the residual sum of squares corresponding
-        to the computed solution
+        Whether to compute and return the residual sum of squares corresponding
+        to the computed solution.
 
     random_state: int or RandomState
         Pseudo number generator state used for random sampling.
@@ -197,7 +174,7 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
     Returns
     -------
     dictionary: array of shape (n_samples, n_components)
-        updated dictionary
+        Updated dictionary.
 
     """
     n_atoms = len(code)
@@ -247,7 +224,7 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
     """Solves a dictionary learning matrix factorization problem.
 
     Finds the best dictionary and the corresponding sparse code for
-    approximating the data matrix X by solving:
+    approximating the data matrix X by solving::
 
     (U^*, V^*) = argmin 0.5 || X - U V ||_2^2 + alpha * || U ||_1
                  (U,V)
@@ -258,39 +235,40 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
     Parameters
     ----------
     X: array of shape (n_samples, n_features)
-        data matrix
+        Data matrix.
 
     n_atoms: int,
-        number of dictionary atoms to extract
+        Number of dictionary atoms to extract.
 
     alpha: int,
-        sparsity controlling parameter
+        Sparsity controlling parameter.
 
     max_iter: int,
-        maximum number of iterations to perform
+        Maximum number of iterations to perform.
 
     tol: float,
-        tolerance for numerical error
+        Tolerance for the stopping condition.
 
-    method: 'lars' | 'cd'
+    method: {'lars', 'cd'}
         lars: uses the least angle regression method (linear_model.lars_path)
-        cd: uses the stochastic gradient descent method to compute the
-            lasso solution (linear_model.Lasso)
+        cd: uses the coordinate descent method to compute the
+        Lasso solution (linear_model.Lasso). Lars will be faster if
+        the estimated components are sparse.
 
     n_jobs: int,
-        number of parallel jobs to run, or -1 to autodetect.
+        Number of parallel jobs to run, or -1 to autodetect.
 
     dict_init: array of shape (n_atoms, n_features),
-        initial value for the dictionary for warm restart scenarios
+        Initial value for the dictionary for warm restart scenarios.
 
     code_init: array of shape (n_samples, n_atoms),
-        initial value for the sparse code for warm restart scenarios
+        Initial value for the sparse code for warm restart scenarios.
 
     callback:
-        callable that gets invoked every five iterations
+        Callable that gets invoked every five iterations.
 
     verbose:
-        degree of output the procedure will print
+        Degree of output the procedure will print.
 
     random_state: int or RandomState
         Pseudo number generator state used for random sampling.
@@ -298,13 +276,14 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
     Returns
     -------
     code: array of shape (n_samples, n_atoms)
-        the sparse code factor in the matrix factorization
+        The sparse code factor in the matrix factorization.
 
     dictionary: array of shape (n_atoms, n_features),
-        the dictionary factor in the matrix factorization
+        The dictionary factor in the matrix factorization.
 
     errors: array
-        vector of errors at each iteration
+        Vector of errors at each iteration.
+
     """
     t0 = time.time()
     n_features = X.shape[1]
@@ -556,33 +535,34 @@ class SparsePCA(BaseEstimator, TransformerMixin):
     Parameters
     ----------
     n_components: int,
-        number of sparse atoms to extract
+        Number of sparse atoms to extract.
 
     alpha: int,
-        sparsity controlling parameter
+        Sparsity controlling parameter.
 
     max_iter: int,
-        maximum number of iterations to perform
+        Maximum number of iterations to perform.
 
     tol: float,
-        tolerance for numerical error
+        Tolerance for the stopping condition.
 
-    method: 'lars' | 'cd'
+    method: {'lars', 'cd'}
         lars: uses the least angle regression method (linear_model.lars_path)
-        cd: uses the stochastic gradient descent method to compute the
-            lasso solution (linear_model.Lasso)
+        cd: uses the coordinate descent method to compute the
+        Lasso solution (linear_model.Lasso). Lars will be faster if
+        the estimated components are sparse.
 
     n_jobs: int,
-        number of parallel jobs to run
+        Number of parallel jobs to run.
 
     U_init: array of shape (n_samples, n_atoms),
-        initial values for the loadings for warm restart scenarios
+        Initial values for the loadings for warm restart scenarios.
 
     V_init: array of shape (n_atoms, n_features),
-        initial values for the components for warm restart scenarios
+        Initial values for the components for warm restart scenarios.
 
     verbose:
-        degree of verbosity of the printed output
+        Degree of verbosity of the printed output.
 
     random_state: int or RandomState
         Pseudo number generator state used for random sampling.
@@ -590,10 +570,10 @@ class SparsePCA(BaseEstimator, TransformerMixin):
     Attributes
     ----------
     components_: array, [n_components, n_features]
-        sparse components extracted from the data
+        Sparse components extracted from the data.
 
     error_: array
-        vector of errors at each iteration
+        Vector of errors at each iteration.
 
     See also
     --------
@@ -631,19 +611,29 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         self._set_params(**params)
         self.random_state = check_random_state(self.random_state)
         X = np.asanyarray(X)
-
-        U, V, E = dict_learning(X.T, self.n_components, self.alpha,
+        code_init = self.V_init.T if self.V_init != None else None
+        dict_init = self.U_init.T if self.U_init != None else None
+        Vt, _, E = dict_learning(X.T, self.n_components, self.alpha,
                                 tol=self.tol, max_iter=self.max_iter,
                                 method=self.method, n_jobs=self.n_jobs,
                                 verbose=self.verbose,
-                                random_state=self.random_state)
-        self.components_ = U.T
+                                random_state=self.random_state,
+                                code_init=code_init,
+                                dict_init=dict_init)
+        self.components_ = Vt.T
         self.error_ = E
         return self
 
     def transform(self, X, ridge_alpha=0.01):
-        """Apply the projection onto the learned sparse components
-        to new data.
+        """Least Squares projection of the data onto the learned sparse
+        components.
+
+        To avoid instability issues in case the system is under-determined,
+        regularization can be applied (Ridge regression) via the
+        `ridge_alpha` parameter.
+
+        Note that Sparse PCA components orthogonality is not enforced as in PCA
+        hence one cannot use a simple linear projection.
 
         Parameters
         ----------
@@ -651,15 +641,16 @@ class SparsePCA(BaseEstimator, TransformerMixin):
             Test data to be transformed, must have the same number of
             features as the data used to train the model.
 
-        ridge_alpha: float
-            Amount of ridge shrinkage to apply in order to improve conditioning
+        ridge_alpha: float, default: 0.01
+            Amount of ridge shrinkage to apply in order to improve
+            conditioning.
 
         Returns
         -------
         X_new array, shape (n_samples, n_components)
-            Transformed data
+            Transformed data.
         """
-        U = ridge_regression(self.components_.T, X.T, ridge_alpha, 
+        U = ridge_regression(self.components_.T, X.T, ridge_alpha,
                              solver='dense_cholesky')
         U /= np.sqrt((U ** 2).sum(axis=0))
         return U

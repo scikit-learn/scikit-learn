@@ -14,7 +14,6 @@ from ..utils.arpack import eigsh
 from ..neighbors import kneighbors_graph, BallTree, barycenter_weights
 
 
-
 def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
               random_state=None):
     """
@@ -22,14 +21,16 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
 
     Parameters
     ----------
-    M : array, matrix, sparse matrix, or LinearOperator
+    M : {array, matrix, sparse matrix, LinearOperator}
         Input covariance matrix: should be symmetric positive semi-definite
 
-    k : number of eigenvalues/vectors to return
+    k : integer
+        Number of eigenvalues/vectors to return
 
-    k_skip : number of low eigenvalues to skip.
+    k_skip : integer, optional
+        Number of low eigenvalues to skip.
 
-    eigen_solver : string ['arpack' | 'lobpcg' | 'dense']
+    eigen_solver : string, {'arpack', 'lobpcg', 'dense'}
         arpack : use arnoldi iteration in shift-invert mode.
                     For this method, M may be a dense matrix, sparse matrix,
                     or general linear operator.
@@ -42,8 +43,9 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
                     or matrix type.  This method should be avoided for
                     large problems.
 
-    tol : tolerance for 'arpack' or 'lobpcg' methods.
-            not used if eigen_solver=='dense'
+    tol : float, optional
+        Tolerance for 'arpack' or 'lobpcg' methods.
+        Not used if eigen_solver=='dense'.
 
     max_iter : maximum number of iterations for 'arpack' or 'lobpcg' methods
             not used if eigen_solver=='dense'
@@ -59,7 +61,8 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
         try:
             import pyamg
         except ImportError:
-            raise ImportError("PyAMG is not installed, cannot use lobcpg solver")
+            raise ImportError("PyAMG is not installed,"
+                              " cannot use lobcpg solver")
 
         # initial vectors for iteration
         X = random_state.rand(M.shape[0], k + k_skip)
@@ -119,7 +122,7 @@ def locally_linear_embedding(
     method : string ['standard' | 'hessian' | 'modified']
         standard : use the standard locally linear embedding algorithm.
                    see reference [1]
-        hessian  : use the hessian eigenmap method.  This method requires
+        hessian  : use the Hessian eigenmap method.  This method requires
                    n_neighbors > out_dim * (1 + (out_dim + 1) / 2.
                    see reference [2]
         modified : use the modified locally linear embedding algorithm.
@@ -127,11 +130,13 @@ def locally_linear_embedding(
         ltsa     : use local tangent space alignment algorithm
                    see reference [4]
 
-    hessian_tol : tolerance used for hessian eigenmapping method
-                  only referenced if method == 'hessian'
+    hessian_tol : float, optional
+        Tolerance for Hessian eigenmapping method.
+        Only used if method == 'hessian'
 
-    modified_tol : tolerance used for modified LLE method
-                  only referenced if method == 'modified'
+    modified_tol : float, optional
+        Tolerance for modified LLE method.
+        Only used if method == 'modified'
 
     Returns
     -------
@@ -215,7 +220,7 @@ def locally_linear_embedding(
             Gi = X[neighbors[i]]
             Gi -= Gi.mean(0)
 
-            #build hessian estimator
+            #build Hessian estimator
             U, sig, VT = svd(Gi, full_matrices=0)
             Yi[:, 1:1 + out_dim] = U[:, :out_dim]
 
