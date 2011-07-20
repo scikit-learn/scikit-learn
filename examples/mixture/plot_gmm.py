@@ -40,20 +40,20 @@ X = np.r_[np.dot(np.random.randn(n_samples, 2), C),
           .7*np.random.randn(n_samples, 2) + np.array([-6, 3])]
 
 # Fit a mixture of gaussians with EM using five components
-gmm = mixture.GMM(n_states=5, cvtype='full')
+gmm = mixture.GMM(n_components=5, cvtype='full')
 gmm.fit(X)
 
 # Fit a dirichlet process mixture of gaussians using five components
-dpgmm = mixture.DPGMM(n_states=5, cvtype='full')
+dpgmm = mixture.DPGMM(n_components=5, cvtype='full')
 dpgmm.fit(X)
 
 color_iter = itertools.cycle (['r', 'g', 'b', 'c', 'm'])
 
-for i, (clf, title) in enumerate([(gmm, 'GMM'), 
+for i, (clf, title) in enumerate([(gmm, 'GMM'),
                                   (dpgmm, 'Dirichlet Process GMM')]):
     splot = pl.subplot(2, 1, 1+i)
     Y_ = clf.predict(X)
-    for i, (mean, covar, color) in enumerate(zip(clf.means, clf.covars, 
+    for i, (mean, covar, color) in enumerate(zip(clf.means, clf.covars,
                                                  color_iter)):
         v, w = linalg.eigh(covar)
         u = w[0] / linalg.norm(w[0])

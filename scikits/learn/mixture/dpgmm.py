@@ -67,22 +67,22 @@ def wishart_logz(v, s, dets, n_features):
 # Variational bound on the log likelihood of each class
 
 def _bound_state_loglik_spherical(X, initial_bound, bound_prec, precs, means):
-    n_states, n_features = means.shape
+    n_components, n_features = means.shape
     n_samples = X.shape[0]
-    bound = np.empty((n_samples, n_states))
+    bound = np.empty((n_samples, n_components))
     bound[:] = bound_prec + initial_bound
-    for k in xrange(n_states):
+    for k in xrange(n_components):
         bound[:, k] -= 0.5 * precs[k] * (((X - means[k]) ** 2).sum(axis=-1)
                                          + n_features)
     return bound
 
 
 def _bound_state_loglik_diag(X, initial_bound, bound_prec, precs, means):
-    n_states, n_features = means.shape
+    n_components, n_features = means.shape
     n_samples = X.shape[0]
-    bound = np.empty((n_samples, n_states))
+    bound = np.empty((n_samples, n_components))
     bound[:] = bound_prec + initial_bound
-    for k in xrange(n_states):
+    for k in xrange(n_components):
         d = X - means[k]
         d **= 2
         bound[:, k] -= 0.5 * np.sum(d * precs[k], axis=1)
@@ -90,9 +90,9 @@ def _bound_state_loglik_diag(X, initial_bound, bound_prec, precs, means):
 
 
 def _bound_state_loglik_tied(X, initial_bound, bound_prec, precs, means):
-    n_states, n_features = means.shape
+    n_components, n_features = means.shape
     n_samples = X.shape[0]
-    bound = np.empty((n_samples, n_states))
+    bound = np.empty((n_samples, n_components))
     bound[:] = bound_prec + initial_bound
     # Transform the data to be able to apply standard Euclidean distance,
     # rather than Mahlanobis distance
@@ -104,11 +104,11 @@ def _bound_state_loglik_tied(X, initial_bound, bound_prec, precs, means):
 
 
 def _bound_state_loglik_full(X, initial_bound, bound_prec, precs, means):
-    n_states, n_features = means.shape
+    n_components, n_features = means.shape
     n_samples = X.shape[0]
-    bound = np.empty((n_samples, n_states))
+    bound = np.empty((n_samples, n_components))
     bound[:] = bound_prec + initial_bound
-    for k in xrange(n_states):
+    for k in xrange(n_components):
         d = X - means[k]
         sqrt_cov = linalg.cholesky(precs[k])
         d = np.dot(d, sqrt_cov.T)
@@ -138,14 +138,14 @@ class DPGMM(GMM):
     probability distribution. This class allows for easy and efficient
     inference of an approximate posterior distribution over the
     parameters of a gaussian mixture model with a variable number of
-    components (smaller than the truncation parameter n_states).
+    components (smaller than the truncation parameter n_components).
 
     Initialization is with normally-distributed means and identity
     covariance, for proper convergence.
 
     Parameters
     ----------
-    n_states: int, optional
+    n_components: int, optional
         Number of mixture components. Defaults to 1.
 
     cvtype: string (read-only), optional
@@ -173,22 +173,22 @@ class DPGMM(GMM):
     n_features : int
         Dimensionality of the Gaussians.
 
-    n_states : int (read-only)
+    n_components : int (read-only)
         Number of mixture components.
 
-    weights : array, shape (`n_states`,)
+    weights : array, shape (`n_components`,)
         Mixing weights for each mixture component.
 
-    means : array, shape (`n_states`, `n_features`)
+    means : array, shape (`n_components`, `n_features`)
         Mean parameters for each mixture component.
 
     precisions : array
         Precision (inverse covariance) parameters for each mixture
         component.  The shape depends on `cvtype`::
-            (`n_states`,)                             if 'spherical',
+            (`n_components`,)                             if 'spherical',
             (`n_features`, `n_features`)              if 'tied',
-            (`n_states`, `n_features`)                if 'diag',
-            (`n_states`, `n_features`, `n_features`)  if 'full'
+            (`n_components`, `n_features`)                if 'diag',
+            (`n_components`, `n_features`, `n_features`)  if 'full'
 
     converged_ : bool
         True when convergence was reached in fit(), False
@@ -222,12 +222,12 @@ class DPGMM(GMM):
 
     """
 
-    def __init__(self, n_states=1, cvtype='diag', alpha=1.0,
+    def __init__(self, n_components=1, cvtype='diag', alpha=1.0,
                  random_state=None, thresh=1e-2, verbose=False,
                  min_covar=None):
         self.alpha = alpha
         self.verbose = verbose
-        super(DPGMM, self).__init__(n_states, cvtype,
+        super(DPGMM, self).__init__(n_components, cvtype,
                                     random_state=random_state,
                                     thresh=thresh, min_covar=min_covar)
 
@@ -238,7 +238,7 @@ class DPGMM(GMM):
         elif self.cvtype == 'diag':
             return [np.diag(cov) for cov in self._precs]
         elif self.cvtype == 'tied':
-            return [self._precs] * self._n_states
+            return [self._precs] * self.n_components
         elif self.cvtype == 'spherical':
             return [np.eye(self.n_features) * f for f in self._precs]
 
@@ -272,7 +272,7 @@ class DPGMM(GMM):
         -------
         logprob : array_like, shape (n_samples,)
             Log probabilities of each data point in `obs`
-        posteriors: array_like, shape (n_samples, n_states)
+        posteriors: array_like, shape (n_samples, n_components)
             Posterior probabilities of each mixture component for each
             observation
         """
@@ -280,14 +280,14 @@ class DPGMM(GMM):
             z = self._z
             obs = self._X
         else:
-            z = np.zeros((obs.shape[0], self.n_states))
+            z = np.zeros((obs.shape[0], self.n_components))
         obs = np.asanyarray(obs)
         sd = digamma(self._gamma.T[1] + self._gamma.T[2])
         dgamma1 = digamma(self._gamma.T[1]) - sd
-        dgamma2 = np.zeros(self.n_states)
+        dgamma2 = np.zeros(self.n_components)
         dgamma2[0] = digamma(self._gamma[0, 2]) - digamma(self._gamma[0, 1] +
                                                           self._gamma[0, 2])
-        for j in xrange(1, self._n_states):
+        for j in xrange(1, self.n_components):
             dgamma2[j] = dgamma2[j - 1] + digamma(self._gamma[j - 1, 2])
             dgamma2[j] -= sd[j - 1]
         dgamma = dgamma1 + dgamma2
@@ -312,13 +312,13 @@ class DPGMM(GMM):
         sz = np.sum(self._z, axis=0)
         self._gamma.T[1] = 1. + sz
         self._gamma.T[2].fill(0)
-        for i in xrange(self.n_states - 2, -1, -1):
+        for i in xrange(self.n_components - 2, -1, -1):
             self._gamma[i, 2] = self._gamma[i + 1, 2] + sz[i]
         self._gamma.T[2] += self.alpha
 
     def _update_means(self):
         """Update the variational distributions for the means"""
-        for k in xrange(self.n_states):
+        for k in xrange(self.n_components):
             if self.cvtype == 'spherical' or self.cvtype == 'diag':
                 num = np.sum(self._z.T[k].reshape((-1, 1)) * self._X, axis=0)
                 num *= self._precs[k]
@@ -338,7 +338,7 @@ class DPGMM(GMM):
         """Update the variational distributions for the precisions"""
         if self.cvtype == 'spherical':
             self._a = 0.5 * self.n_features * np.sum(self._z, axis=0)
-            for k in xrange(self.n_states):
+            for k in xrange(self.n_components):
                 # XXX: how to avoid this huge temporary matrix in memory
                 dif = (self._X - self._means[k])
                 self._b[k] = 1.
@@ -351,7 +351,7 @@ class DPGMM(GMM):
             self._precs = self._a / self._b
 
         elif self.cvtype == 'diag':
-            for k in xrange(self.n_states):
+            for k in xrange(self.n_components):
                 self._a[k].fill(1. + 0.5 * np.sum(self._z.T[k], axis=0))
                 ddif = (self._X - self._means[k])  # see comment above
                 for d in xrange(self.n_features):
@@ -367,7 +367,7 @@ class DPGMM(GMM):
             self._a = 2 + self._X.shape[0] + self.n_features
             self._B = (self._X.shape[0] + 1) * np.identity(self.n_features)
             for i in xrange(self._X.shape[0]):
-                for k in xrange(self.n_states):
+                for k in xrange(self.n_components):
                     dif = self._X[i] - self._means[k]
                     self._B += self._z[i, k] * np.dot(dif.reshape((-1, 1)),
                                                       dif.reshape((1, -1)))
@@ -379,7 +379,7 @@ class DPGMM(GMM):
             self._bound_prec -= 0.5 * self._a * np.trace(self._B)
 
         elif self.cvtype == 'full':
-            for k in xrange(self.n_states):
+            for k in xrange(self.n_components):
                 T = np.sum(self._z.T[k])
                 self._a[k] = 2 + T + self.n_features
                 self._B[k] = (T + 1) * np.identity(self.n_features)
@@ -425,12 +425,12 @@ class DPGMM(GMM):
 
     def _initialize_gamma(self):
         "Initializes the concentration parameters"
-        self._gamma = self.alpha * np.ones((self.n_states, 3))
+        self._gamma = self.alpha * np.ones((self.n_components, 3))
 
     def _bound_concentration(self):
         "The variational lower bound for the concentration parameter."
         logprior = 0.
-        for k in xrange(self.n_states):
+        for k in xrange(self.n_components):
             logprior = gammaln(self.alpha)
             logprior += (self.alpha - 1) * (digamma(self._gamma[k, 2]) -
                                             digamma(self._gamma[k, 1] +
@@ -449,7 +449,7 @@ class DPGMM(GMM):
         "The variational lower bound for the mean parameters"
         logprior = 0.
         logprior -= 0.5 * sqnorm(self._means)
-        logprior -= 0.5 * self.n_features * self.n_states
+        logprior -= 0.5 * self.n_features * self.n_components
         return logprior
 
     def _bound_wishart(self, a, B, detB):
@@ -464,12 +464,12 @@ class DPGMM(GMM):
     def _bound_precisions(self):
         logprior = 0.
         if self.cvtype == 'spherical':
-            for k in xrange(self.n_states):
+            for k in xrange(self.n_components):
                 logprior += gammaln(self._a[k])
                 logprior -= (self._a[k] - 1) * digamma(max(0.5, self._a[k]))
                 logprior += - np.log(self._b[k]) + self._a[k] - self._precs[k]
         elif self.cvtype == 'diag':
-            for k in xrange(self.n_states):
+            for k in xrange(self.n_components):
                 for d in xrange(self.n_features):
                     logprior += gammaln(self._a[k, d])
                     logprior -= (self._a[k, d] - 1) * digamma(self._a[k, d])
@@ -478,7 +478,7 @@ class DPGMM(GMM):
         elif self.cvtype == 'tied':
             logprior += self._bound_wishart(self._a, self._B, self._detB)
         elif self.cvtype == 'full':
-            for k in xrange(self.n_states):
+            for k in xrange(self.n_components):
                 logprior += self._bound_wishart(self._a[k],
                                                 self._B[k],
                                                 self._detB[k])
@@ -555,8 +555,8 @@ class DPGMM(GMM):
                                               self.n_features))
 
         self.n_features = self._X.shape[1]
-        self._z = np.ones((self._X.shape[0], self.n_states))
-        self._z /= self.n_states
+        self._z = np.ones((self._X.shape[0], self.n_components))
+        self._z /= self.n_components
 
         self._initial_bound = -0.5 * self.n_features * np.log(2 * np.pi)
         self._initial_bound -= np.log(2 * np.pi * np.e)
@@ -566,27 +566,27 @@ class DPGMM(GMM):
 
         if 'm' in init_params or not hasattr(self, 'means'):
             self._means = cluster.KMeans(
-                k=self._n_states, random_state=self.random_state
+                k=self.n_components, random_state=self.random_state
             ).fit(X).cluster_centers_[::-1]
 
         if 'w' in init_params or not hasattr(self, 'weights'):
-            self.weights = np.tile(1.0 / self._n_states, self._n_states)
+            self.weights = np.tile(1.0 / self.n_components, self.n_components)
 
         if 'c' in init_params or not hasattr(self, 'covars'):
             if self.cvtype == 'spherical':
-                self._a = np.ones(self.n_states)
-                self._b = np.ones(self.n_states)
-                self._precs = np.ones(self.n_states)
+                self._a = np.ones(self.n_components)
+                self._b = np.ones(self.n_components)
+                self._precs = np.ones(self.n_components)
                 self._bound_prec = (0.5 * self.n_features *
                                      (digamma(self._a) -
                                       np.log(self._b)))
             elif self.cvtype == 'diag':
                 self._a = 1 + 0.5 * self.n_features
-                self._a *= np.ones((self.n_states, self.n_features))
-                self._b = np.ones((self.n_states, self.n_features))
-                self._precs = np.ones((self.n_states, self.n_features))
-                self._bound_prec = np.zeros(self.n_states)
-                for k in xrange(self.n_states):
+                self._a *= np.ones((self.n_components, self.n_features))
+                self._b = np.ones((self.n_components, self.n_features))
+                self._precs = np.ones((self.n_components, self.n_features))
+                self._bound_prec = np.zeros(self.n_components)
+                for k in xrange(self.n_components):
                     self._bound_prec[k] = 0.5 * np.sum(digamma(self._a[k])
                                                         - np.log(self._b[k]))
                     self._bound_prec[k] -= 0.5 * np.sum(self._precs[k])
@@ -599,15 +599,15 @@ class DPGMM(GMM):
                     self._a, self._B, self._detB, self.n_features)
                 self._bound_prec -= 0.5 * self._a * np.trace(self._B)
             elif self.cvtype == 'full':
-                self._a = (1 + self.n_states + self._X.shape[0])
-                self._a *= np.ones(self.n_states)
+                self._a = (1 + self.n_components + self._X.shape[0])
+                self._a *= np.ones(self.n_components)
                 self._B = [2 * np.identity(self.n_features)
-                           for i in xrange(self.n_states)]
+                           for i in xrange(self.n_components)]
                 self._precs = [np.identity(self.n_features)
-                                for i in xrange(self.n_states)]
-                self._detB = np.ones(self.n_states)
-                self._bound_prec = np.zeros(self.n_states)
-                for k in xrange(self.n_states):
+                                for i in xrange(self.n_components)]
+                self._detB = np.ones(self.n_components)
+                self._bound_prec = np.zeros(self.n_components)
+                for k in xrange(self.n_components):
                     self._bound_prec[k] = detlog_wishart(
                         self._a[k], self._B[k], self._detB[k], self.n_features)
                     self._bound_prec[k] -= self._a[k] * np.trace(self._B[k])
@@ -645,7 +645,7 @@ class VBGMM(DPGMM):
 
     Parameters
     ----------
-    n_states: int, optional
+    n_components: int, optional
         Number of mixture components. Defaults to 1.
 
     cvtype: string (read-only), optional
@@ -668,19 +668,19 @@ class VBGMM(DPGMM):
         the DP-GMM.  Must be one of 'spherical', 'tied', 'diag', 'full'.
     n_features : int
         Dimensionality of the Gaussians.
-    n_states : int (read-only)
+    n_components : int (read-only)
         Number of mixture components.
-    weights : array, shape (`n_states`,)
+    weights : array, shape (`n_components`,)
         Mixing weights for each mixture component.
-    means : array, shape (`n_states`, `n_features`)
+    means : array, shape (`n_components`, `n_features`)
         Mean parameters for each mixture component.
     precisions : array
         Precision (inverse covariance) parameters for each mixture
         component.  The shape depends on `cvtype`:
-            (`n_states`,)                             if 'spherical',
+            (`n_components`,)                             if 'spherical',
             (`n_features`, `n_features`)              if 'tied',
-            (`n_states`, `n_features`)                if 'diag',
-            (`n_states`, `n_features`, `n_features`)  if 'full'
+            (`n_components`, `n_features`)                if 'diag',
+            (`n_components`, `n_features`, `n_features`)  if 'full'
     converged_ : bool
         True when convergence was reached in fit(), False
         otherwise.
@@ -712,13 +712,13 @@ class VBGMM(DPGMM):
     process, fit with a variational algorithm
     """
 
-    def __init__(self, n_states=1, cvtype='diag', alpha=1.0,
+    def __init__(self, n_components=1, cvtype='diag', alpha=1.0,
                  random_state=None, thresh=1e-2, verbose=False,
                  min_covar=None):
         super(VBGMM, self).__init__(
-            n_states, cvtype, random_state=random_state, thresh=thresh,
+            n_components, cvtype, random_state=random_state, thresh=thresh,
             verbose=verbose, min_covar=min_covar)
-        self.alpha = float(alpha) / n_states
+        self.alpha = float(alpha) / n_components
 
     def eval(self, obs=None):
         """Evaluate the model on data
@@ -740,7 +740,7 @@ class VBGMM(DPGMM):
         -------
         logprob : array_like, shape (n_samples,)
             Log probabilities of each data point in `obs`
-        posteriors: array_like, shape (n_samples, n_states)
+        posteriors: array_like, shape (n_samples, n_components)
             Posterior probabilities of each mixture component for each
             observation
         """
@@ -748,9 +748,9 @@ class VBGMM(DPGMM):
             z = self._z
             obs = self._X
         else:
-            z = np.zeros((obs.shape[0], self.n_states))
+            z = np.zeros((obs.shape[0], self.n_components))
         obs = np.asanyarray(obs)
-        p = np.zeros(self.n_states)
+        p = np.zeros(self.n_components)
         bound = np.zeros(obs.shape[0])
         dg = digamma(self._gamma) - digamma(np.sum(self._gamma))
         try:
@@ -767,11 +767,11 @@ class VBGMM(DPGMM):
         return bound, z
 
     def _update_concentration(self):
-        for i in xrange(self.n_states):
+        for i in xrange(self.n_components):
             self._gamma[i] = self.alpha + np.sum(self._z.T[i])
 
     def _initialize_gamma(self):
-        self._gamma = self.alpha * np.ones(self.n_states)
+        self._gamma = self.alpha * np.ones(self.n_components)
 
     def _bound_proportions(self):
         logprior = 0.
@@ -784,7 +784,7 @@ class VBGMM(DPGMM):
 
     def _bound_concentration(self):
         logprior = 0.
-        logprior = gammaln(np.sum(self._gamma)) - gammaln(self.n_states
+        logprior = gammaln(np.sum(self._gamma)) - gammaln(self.n_components
                                                           * self.alpha)
         logprior -= np.sum(gammaln(self._gamma) - gammaln(self.alpha))
         sg = digamma(np.sum(self._gamma))

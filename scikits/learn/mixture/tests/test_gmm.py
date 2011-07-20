@@ -75,9 +75,9 @@ def test_lmvnpdf_diag():
     compare it to the vectorized version (mixture.lmvnpdf) to test
     for correctness
     """
-    n_features, n_states, n_obs = 2, 3, 10
-    mu = rng.randint(10) * rng.rand(n_states, n_features)
-    cv = (rng.rand(n_states, n_features) + 1.0) ** 2
+    n_features, n_components, n_obs = 2, 3, 10
+    mu = rng.randint(10) * rng.rand(n_components, n_features)
+    cv = (rng.rand(n_components, n_features) + 1.0) ** 2
     obs = rng.randint(10) * rng.rand(n_obs, n_features)
 
     ref = _naive_lmvnpdf_diag(obs, mu, cv)
@@ -86,10 +86,10 @@ def test_lmvnpdf_diag():
 
 
 def test_lmvnpdf_spherical():
-    n_features, n_states, n_obs = 2, 3, 10
+    n_features, n_components, n_obs = 2, 3, 10
 
-    mu = rng.randint(10) * rng.rand(n_states, n_features)
-    spherecv = rng.rand(n_states, 1) ** 2 + 1
+    mu = rng.randint(10) * rng.rand(n_components, n_features)
+    spherecv = rng.rand(n_components, 1) ** 2 + 1
     obs = rng.randint(10) * rng.rand(n_obs, n_features)
 
     cv = np.tile(spherecv, (n_features, 1))
@@ -99,10 +99,10 @@ def test_lmvnpdf_spherical():
 
 
 def test_lmvnpdf_full():
-    n_features, n_states, n_obs = 2, 3, 10
+    n_features, n_components, n_obs = 2, 3, 10
 
-    mu = rng.randint(10) * rng.rand(n_states, n_features)
-    cv = (rng.rand(n_states, n_features) + 1.0) ** 2
+    mu = rng.randint(10) * rng.rand(n_components, n_features)
+    cv = (rng.rand(n_components, n_features) + 1.0) ** 2
     obs = rng.randint(10) * rng.rand(n_obs, n_features)
 
     fullcv = np.array([np.diag(x) for x in cv])
@@ -113,14 +113,14 @@ def test_lmvnpdf_full():
 
 
 def test_GMM_attributes():
-    n_states, n_features = 10, 4
+    n_components, n_features = 10, 4
     cvtype = 'diag'
-    g = mixture.GMM(n_states, cvtype, random_state=rng)
-    weights = rng.rand(n_states)
+    g = mixture.GMM(n_components, cvtype, random_state=rng)
+    weights = rng.rand(n_components)
     weights = weights / weights.sum()
-    means = rng.randint(-20, 20, (n_states, n_features))
+    means = rng.randint(-20, 20, (n_components, n_features))
 
-    assert g.n_states == n_states
+    assert g.n_components == n_components
     assert g.cvtype == cvtype
 
     g.weights = weights
@@ -129,38 +129,38 @@ def test_GMM_attributes():
                       2 * weights)
     assert_raises(ValueError, g.__setattr__, 'weights', [])
     assert_raises(ValueError, g.__setattr__, 'weights',
-                      np.zeros((n_states - 2, n_features)))
+                      np.zeros((n_components - 2, n_features)))
 
     g.means = means
     assert_array_almost_equal(g.means, means)
     assert_raises(ValueError, g.__setattr__, 'means', [])
     assert_raises(ValueError, g.__setattr__, 'means',
-                      np.zeros((n_states - 2, n_features)))
+                      np.zeros((n_components - 2, n_features)))
 
-    covars = (0.1 + 2 * rng.rand(n_states, n_features)) ** 2
+    covars = (0.1 + 2 * rng.rand(n_components, n_features)) ** 2
     g._covars = covars
     assert_array_almost_equal(g._covars, covars)
     assert_raises(ValueError, g.__setattr__, 'covars', [])
     assert_raises(ValueError, g.__setattr__, 'covars',
-                      np.zeros((n_states - 2, n_features)))
+                      np.zeros((n_components - 2, n_features)))
 
-    assert_raises(ValueError, mixture.GMM, n_states=20, cvtype='badcvtype')
+    assert_raises(ValueError, mixture.GMM, n_components=20, cvtype='badcvtype')
 
 
 class GMMTester():
     do_test_eval = True
-    n_states = 10
+    n_components = 10
     n_features = 4
-    weights = rng.rand(n_states)
+    weights = rng.rand(n_components)
     weights = weights / weights.sum()
-    means = rng.randint(-20, 20, (n_states, n_features))
+    means = rng.randint(-20, 20, (n_components, n_features))
     threshold = -0.5
     I = np.eye(n_features)
-    covars = {'spherical': (0.1 + 2 * rng.rand(n_states)) ** 2,
+    covars = {'spherical': (0.1 + 2 * rng.rand(n_components)) ** 2,
               'tied': generate_random_spd_matrix(n_features) + 5 * I,
-              'diag': (0.1 + 2 * rng.rand(n_states, n_features)) ** 2,
+              'diag': (0.1 + 2 * rng.rand(n_components, n_features)) ** 2,
               'full': np.array([generate_random_spd_matrix(n_features) + 5 * I
-                                for x in xrange(n_states)])}
+                                for x in xrange(n_components)])}
 
     def test_eval(self):
         if not self.do_test_eval:
@@ -168,7 +168,7 @@ class GMMTester():
         # covariances before fitting There is no way of fixing this
         # due to the variational parameters being more expressive than
         # covariance matrices
-        g = self.model(n_states=self.n_states, cvtype=self.cvtype,
+        g = self.model(n_components=self.n_components, cvtype=self.cvtype,
                        random_state=rng)
         # Make sure the means are far apart so posteriors.argmax()
         # picks the actual component used to generate the observations.
@@ -176,19 +176,19 @@ class GMMTester():
         g._covars = self.covars[self.cvtype]
         g.weights = self.weights
 
-        gaussidx = np.repeat(range(self.n_states), 5)
+        gaussidx = np.repeat(range(self.n_components), 5)
         nobs = len(gaussidx)
         obs = rng.randn(nobs, self.n_features) + g.means[gaussidx]
 
         ll, posteriors = g.eval(obs)
 
         self.assertEqual(len(ll), nobs)
-        self.assertEqual(posteriors.shape, (nobs, self.n_states))
+        self.assertEqual(posteriors.shape, (nobs, self.n_components))
         assert_array_almost_equal(posteriors.sum(axis=1), np.ones(nobs))
         assert_array_equal(posteriors.argmax(axis=1), gaussidx)
 
     def test_rvs(self, n=100):
-        g = self.model(n_states=self.n_states, cvtype=self.cvtype,
+        g = self.model(n_components=self.n_components, cvtype=self.cvtype,
                        random_state=rng)
         # Make sure the means are far apart so posteriors.argmax()
         # picks the actual component used to generate the observations.
@@ -200,14 +200,14 @@ class GMMTester():
         self.assertEquals(samples.shape, (n, self.n_features))
 
     def test_train(self, params='wmc'):
-        g = mixture.GMM(n_states=self.n_states, cvtype=self.cvtype)
+        g = mixture.GMM(n_components=self.n_components, cvtype=self.cvtype)
         g.weights = self.weights
         g.means = self.means
         g._covars = 20 * self.covars[self.cvtype]
 
         # Create a training set by sampling from the predefined distribution.
         train_obs = g.rvs(n_samples=100)
-        g = self.model(n_states=self.n_states, cvtype=self.cvtype,
+        g = self.model(n_components=self.n_components, cvtype=self.cvtype,
                        random_state=rng, min_covar=1e-1)
         g.fit(train_obs, n_iter=1, init_params=params)
 
