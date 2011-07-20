@@ -8,9 +8,9 @@ DBSCAN: Density-Based Spatial Clustering of Applications with Noise
 # License: BSD
 
 import numpy as np
-from scipy.spatial import distance
 
 from ..base import BaseEstimator
+from . import calculate_similarity
 
 
 def dbscan(S, eps=0.5, min_points=5, metric='euclidean',
@@ -119,22 +119,6 @@ def dbscan(S, eps=0.5, min_points=5, metric='euclidean',
         # Next core point found will start a new cluster.
         label_num += 1
     return core_points, labels
-
-
-def calculate_similarity(S, metric=None, is_similarity=None):
-    n, d = S.shape
-    # If the array looks square, it may be a similarity array.
-    if n == d:
-        if is_similarity in (None, True):
-            return S
-    elif is_similarity:
-        # Array is not square, so it cannot be a similarity array.
-        raise ValueError("Array not square, cannot be a similarity array."
-                         " Shape = %s" % repr((n, d))
-    # In all other cases, the array is to be considered as a feature array.
-    D = distance.squareform(distance.pdist(S, metric=metric))
-    S = 1. - (D / np.max(D))
-    return S
 
 
 class DBSCAN(BaseEstimator):
