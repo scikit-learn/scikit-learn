@@ -411,7 +411,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                 MSE = np.zeros(n_eval)
 
             # Get pairwise componentwise L1-distances to the input training set
-            dx = l1_distances(X, self.X)
+            dx = l1_distances(X, self.X, sum_over_features=False)
+            dx = dx.reshape((n_eval * n_samples, n_features))
 
             # Get regression function and correlation
             f = self.regr(X)
