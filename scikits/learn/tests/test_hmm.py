@@ -5,6 +5,8 @@ from unittest import TestCase
 
 from scikits.learn.datasets.samples_generator import generate_random_spd_matrix
 from scikits.learn import hmm
+from scikits.learn.utils.extmath import logsum
+
 
 np.seterr(all='warn')
 
@@ -153,7 +155,7 @@ class TestBaseHMM(SeedRandomNumberGeneratorTestCase):
 
         assert_array_almost_equal(hmmposteriors.sum(axis=1), np.ones(nobs))
 
-        norm = np.logaddexp.reduce(framelogprob, axis=1)[:, np.newaxis]
+        norm = logsum(framelogprob, axis=1)[:, np.newaxis]
         gmmposteriors = np.exp(framelogprob - np.tile(norm, (1, n_components)))
         assert_array_almost_equal(hmmposteriors, gmmposteriors)
 
@@ -172,7 +174,7 @@ class TestBaseHMM(SeedRandomNumberGeneratorTestCase):
         # posteriors, not likelihoods).
         viterbi_ll, state_sequence = h.decode([])
 
-        norm = np.logaddexp.reduce(framelogprob, axis=1)[:, np.newaxis]
+        norm = logsum(framelogprob, axis=1)[:, np.newaxis]
         gmmposteriors = np.exp(framelogprob - np.tile(norm, (1, n_components)))
         gmmstate_sequence = gmmposteriors.argmax(axis=1)
         assert_array_equal(state_sequence, gmmstate_sequence)

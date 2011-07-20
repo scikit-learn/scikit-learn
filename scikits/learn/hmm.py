@@ -7,6 +7,7 @@ import string
 import numpy as np
 
 from .utils import check_random_state
+from .utils.extmath import logsum
 from .base import BaseEstimator
 from .mixture import (GMM, lmvnpdf, normalize, sample_gaussian,
                  _distribute_covar_matrix_to_match_cvtype, _validate_covars)
@@ -129,7 +130,7 @@ class _BaseHMM(BaseEstimator):
         # all frames, unless we do approximate inference using pruning.
         # So, we will normalize each frame explicitly in case we
         # pruned too aggressively.
-        posteriors = np.exp(gamma.T - np.logaddexp.reduce(gamma, axis=1)).T
+        posteriors = np.exp(gamma.T - logsum(gamma, axis=1)).T
         posteriors += np.finfo(np.float32).eps
         posteriors /= np.sum(posteriors, axis=1).reshape((-1,1))
         return logprob, posteriors
@@ -346,7 +347,7 @@ class _BaseHMM(BaseEstimator):
                 bwdlattice = self._do_backward_pass(framelogprob, fwdlattice,
                                                    maxrank, beamlogprob)
                 gamma = fwdlattice + bwdlattice
-                posteriors = np.exp(gamma.T - np.logaddexp.reduce(gamma, axis=1)).T
+                posteriors = np.exp(gamma.T - logsum(gamma, axis=1)).T
                 curr_logprob += lpr
                 self._accumulate_sufficient_statistics(
                     stats, seq, framelogprob, posteriors, fwdlattice,
@@ -425,12 +426,12 @@ class _BaseHMM(BaseEstimator):
         fwdlattice[0] = self._log_startprob + framelogprob[0]
         for n in xrange(1, nobs):
             idx = self._prune_states(fwdlattice[n - 1], maxrank, beamlogprob)
-            fwdlattice[n] = (np.logaddexp.reduce(self._log_transmat[idx].T
+            fwdlattice[n] = (logsum(self._log_transmat[idx].T
                                     + fwdlattice[n - 1, idx], axis=1)
                              + framelogprob[n])
         fwdlattice[fwdlattice <= ZEROLOGPROB] = -np.Inf
 
-        return np.logaddexp.reduce(fwdlattice[-1]), fwdlattice
+        return logsum(fwdlattice[-1]), fwdlattice
 
     def _do_backward_pass(self, framelogprob, fwdlattice, maxrank=None,
                           beamlogprob=-np.Inf):
@@ -446,7 +447,7 @@ class _BaseHMM(BaseEstimator):
                                      -50)
                                      #beamlogprob)
                                      #-np.Inf)
-            bwdlattice[n - 1] = np.logaddexp.reduce(self._log_transmat[:, idx] +
+            bwdlattice[n - 1] = logsum(self._log_transmat[:, idx] +
                                        bwdlattice[n, idx] +
                                        framelogprob[n, idx],
                                        axis=1)
@@ -459,7 +460,7 @@ class _BaseHMM(BaseEstimator):
         after rank and beam pruning.
         """
         # Beam pruning
-        threshlogprob = np.logaddexp.reduce(lattice_frame) + beamlogprob
+        threshlogprob = logsum(lattice_frame) + beamlogprob
         # Rank pruning
         if maxrank:
             # How big should our rank pruning histogram be?
@@ -513,7 +514,7 @@ class _BaseHMM(BaseEstimator):
             for t in xrange(len(framelogprob)):
                 zeta = (fwdlattice[t - 1][:, np.newaxis] + self._log_transmat
                         + framelogprob[t] + bwdlattice[t])
-                stats['trans'] += np.exp(zeta - np.logaddexp.reduce(zeta))
+                stats['trans'] += np.exp(zeta - logsum(zeta))
 
     def _do_mstep(self, stats, params, **kwargs):
         # Based on Huang, Acero, Hon, "Spoken Language Processing",
@@ -827,8 +828,8 @@ class MultinomialHMM(_BaseHMM):
     ... #doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     MultinomialHMM(transmat=array([[ 0.5,  0.5],
            [ 0.5,  0.5]]),
-            startprob_prior=1.0, startprob=array([ 0.5,  0.5]), n_components=2,
-           transmat_prior=1.0)
+            transmat_prior=1.0, startprob_prior=1.0,
+            startprob=array([ 0.5,  0.5]), n_components=2)
 
     See Also
     --------
