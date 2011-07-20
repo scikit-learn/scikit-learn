@@ -51,6 +51,9 @@ class ElasticNet(LinearModel):
     -----
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a fortran contiguous numpy array.
+
+    The parameter rho corresponds to alpha in the glmnet R package
+    while alpha corresponds to the lambda parameter in glmnet.
     """
 
     def __init__(self, alpha=1.0, rho=0.5, fit_intercept=True,
@@ -331,7 +334,7 @@ class LinearModelCV(LinearModel):
     """Base class for iterative model fitting along a regularization path"""
 
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None,
-                 fit_intercept=True, precompute='auto', max_iter=1000, 
+                 fit_intercept=True, precompute='auto', max_iter=1000,
                  tol=1e-4, cv=None):
         self.eps = eps
         self.n_alphas = n_alphas
@@ -504,13 +507,16 @@ class ElasticNetCV(LinearModelCV):
 
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a fortran contiguous numpy array.
+
+    The parameter rho corresponds to alpha in the glmnet R package
+    while alpha corresponds to the lambda parameter in glmnet.
     """
 
     path = staticmethod(enet_path)
     estimator = ElasticNet
 
     def __init__(self, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
-                 fit_intercept=True, precompute='auto', max_iter=1000, 
+                 fit_intercept=True, precompute='auto', max_iter=1000,
                  tol=1e-4, cv=None):
         self.rho = rho
         self.eps = eps
