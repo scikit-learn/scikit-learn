@@ -25,13 +25,11 @@ Kernel:
 
 References
 ----------
-[1] Yoshua Bengio, Olivier Delalleau, Nicolas Le Roux. In Semi-Supervised Learning (2006), pp. 193-216
+[1] Yoshua Bengio, Olivier Delalleau, Nicolas Le Roux. In Semi-Supervised 
+    Learning (2006), pp. 193-216
 """
 import numpy as np
-try:
-    from .base import BaseEstimator, ClassifierMixin
-except ValueError:
-    from base import BaseEstimator, ClassifierMixin
+from .base import BaseEstimator, ClassifierMixin
 
 # really low epsilon (we don't really want machine eps)
 EPSILON = 1e-7
@@ -163,9 +161,9 @@ class LabelPropagation(BaseLabelPropagation):
     """
     def _build_graph(self):
         affinity_matrix = compute_affinity_matrix(self._X)
-        degree_matrix = map(sum, affinity_matrix) * np.identity(affinity_matrix.shape[0])
+        degree_matrix = np.map(np.sum, affinity_matrix) * np.identity(affinity_matrix.shape[0])
         deg_inv = np.linalg.inv(degree_matrix)
-        self.affinity_matrix = affinity_matrix
+        
         aff_ideg = deg_inv * np.matrix(affinity_matrix)
         self._graph_matrix = aff_ideg
 
@@ -186,7 +184,7 @@ class LabelSpreading(BaseLabelPropagation):
         Graph matrix for Label Spreading uses the Graph Laplacian!
         """
         affinity_matrix = compute_affinity_matrix(self._X, diagonal=0)
-        degree_matrix = map(sum, affinity_matrix) * np.identity(affinity_matrix.shape[0])
+        degree_matrix = np.map(np.sum, affinity_matrix) * np.identity(affinity_matrix.shape[0])
         deg_invsq = np.sqrt(np.linalg.inv(degree_matrix))
 
         laplacian = deg_invsq * np.matrix(affinity_matrix) * deg_invsq
@@ -221,8 +219,4 @@ def compute_affinity_matrix(X, kernel=gaussian_kernel, diagonal=1):
 
 def not_converged(y, y_hat, threshold=1e-3):
     """basic convergence check"""
-    return sum(sum(abs(np.asarray(y-y_hat)))) > threshold
-
-if __name__ == '__main__':
-    import doctest
-    doctest.testmod()
+    return np.sum(np.sum(np.abs(np.asarray(y-y_hat)))) > threshold
