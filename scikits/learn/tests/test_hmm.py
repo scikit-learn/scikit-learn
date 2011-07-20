@@ -607,7 +607,7 @@ class TestGMMHMM(GMMHMMParams, SeedRandomNumberGeneratorTestCase):
         samples = h.rvs(n)
         self.assertEquals(samples.shape, (n, self.n_features))
 
-    def test_fit(self, params='stmwc', n_iter=5, verbose=True, **kwargs):
+    def test_fit(self, params='stmwc', n_iter=5, verbose=False, **kwargs):
         h = hmm.GMMHMM(self.n_components)
         h.startprob = self.startprob
         h.transmat = hmm.normalize(
