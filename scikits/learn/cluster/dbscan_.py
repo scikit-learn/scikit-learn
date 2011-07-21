@@ -13,7 +13,7 @@ from ..base import BaseEstimator
 from . import calculate_similarity
 
 
-def dbscan(S, eps=0.5, min_points=5, metric='euclidean',
+def dbscan(X, eps=0.5, min_points=5, metric='euclidean',
            index_order=None, verbose=False):
     """Perform DBSCAN clustering of data from vector array or similarity matrix.
 
