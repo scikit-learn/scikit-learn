@@ -274,7 +274,8 @@ class SelectKBest(_AbstractUnivariateFilter):
 
 class SelectFpr(_AbstractUnivariateFilter):
     """
-    Filter : Select the pvalues below alpha
+    Filter : Select the pvalues below alpha based on a FPR test: False
+    Positive Rate: controlling the total amount of false detections.
     """
 
     def __init__(self, score_func, alpha=5e-2):
@@ -325,7 +326,8 @@ class SelectFdr(_AbstractUnivariateFilter):
 
 class SelectFwe(_AbstractUnivariateFilter):
     """
-    Filter : Select the p-values corresponding to a corrected p-value of alpha
+    Filter : Select the p-values corresponding to Family-wise error rate: a 
+    corrected p-value of alpha
     """
 
     def __init__(self, score_func, alpha=5e-2):
