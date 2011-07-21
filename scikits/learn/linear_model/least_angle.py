@@ -113,7 +113,6 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
         print "Step\t\tAdded\t\tDropped\t\tActive set size\t\tC"
 
     while 1:
-
         if Cov.size:
             C_idx = np.argmax(np.abs(Cov))
             C_ = Cov[C_idx]
@@ -211,7 +210,6 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
         z = - coefs[n_iter, active] / least_squares
         z_pos = arrayfuncs.min_pos(z)
         if z_pos < gamma_:
-
             # some coefficients have changed sign
             idx = np.where(z == z_pos)[0]
 
@@ -569,7 +567,7 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
                             method=method, verbose=verbose,
                             max_iter=max_iter)
     if normalize:
-        coefs /= norms[:, np.newaxis]
+        coefs[nonzeros] /= norms[nonzeros][:, np.newaxis]
     residues = np.array([(np.dot(X_test, coef) - y_test)
                          for coef in coefs.T])
     return alphas, active, coefs, residues
