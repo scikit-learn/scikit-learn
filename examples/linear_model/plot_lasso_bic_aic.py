@@ -48,7 +48,7 @@ K_bic = log(n_samples) # BIC
 R = y[:, np.newaxis] - np.dot(X, coefs)  # residuals
 mse = np.sum(R ** 2, axis=0)  # MSE ie. mean square error
 
-df = np.empty(coefs.shape[1], dtype=np.int) # Degrees of freedom
+df = np.zeros(coefs.shape[1], dtype=np.int) # Degrees of freedom
 for k, coef in enumerate(coefs.T):
     mask = coef != 0
     if not np.any(mask):
