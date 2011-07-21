@@ -603,7 +603,7 @@ def _euclidean_distances_sparse(X, Y, y_squared_norms=None, squared=False):
 
 class MiniBatchKMeans(KMeans):
     """
-    Batch K-Means clustering
+    Mini-Batch K-Means clustering
 
     Parameters
     ----------
@@ -661,8 +661,8 @@ class MiniBatchKMeans(KMeans):
         The value of the inertia criterion associated with the chosen
         partition.
 
-    Reference
-    ---------
+    References
+    ----------
     http://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf
     """
 
