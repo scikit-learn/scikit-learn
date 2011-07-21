@@ -15,15 +15,14 @@ from . import calculate_similarity
 
 def dbscan(S, eps=0.5, min_points=5, metric='euclidean',
            index_order=None, verbose=False):
-    """Perform DBSCAN clustering of data.
+    """Perform DBSCAN clustering of data from vector array or similarity matrix.
 
     Parameters
     ----------
-    S: array [n_points, n_points] or [n_points, n_features]
+    X: array [n_points, n_points] or [n_points, n_features]
         Array of similarities between points, or a feature array.
-        If the array is square, it is treated as a similarity array,
-        otherwise it is treated as a feature array. Use is_similarity to
-        override this pattern.
+        The array is treated as a feature array unless the metric is given as
+        'precomputed'.
     eps: float, optional
         The minimum similarity for two points to be considered
         in the same neighborhood.
@@ -34,6 +33,8 @@ def dbscan(S, eps=0.5, min_points=5, metric='euclidean',
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
         allowed by scipy.spatial.distance.pdist for its metric parameter.
+        If metric is "precomputed", X is assumed to be a similarity matrix and
+        must be square.
         Alternatively, if metric is a callable function, it is called on each
         pair of instances (rows) and the resulting value recorded.
     index_order: [n_points] or None
@@ -42,15 +43,7 @@ def dbscan(S, eps=0.5, min_points=5, metric='euclidean',
         To look at points in order, use range(n).
     verbose: boolean, optional
         The verbosity level
-    is_similarity: boolean, optional (default=None)
-        Overrides the behaviour of the array handling of S.
-        If is_similarity is None, any square array is handled as a similarity
-        array and any non-square array is a feature array.
-        If is_similarity is True, any array is handled as a similarity array,
-        and the procedure will raise a ValueError if the array is not square.
-        If is_similarity is False, any array will be handled as a feature
-        array, including square matrices.
-
+    
     Returns
     -------
     core_points: array [n_core_points]
@@ -70,7 +63,7 @@ def dbscan(S, eps=0.5, min_points=5, metric='euclidean',
     and Data Mining, Portland, OR, AAAI Press, pp. 226–231. 1996
     """
 
-    n = S.shape[0]
+    n = X.shape[0]
     # If index order not given, create random order.
     if index_order is None:
         index_order = np.arange(n)
@@ -78,7 +71,7 @@ def dbscan(S, eps=0.5, min_points=5, metric='euclidean',
     assert len(index_order) == n, ("Index order must be of length n"
                                    " (%d expected, %d given)"
                                    % (n, len(index_order)))
-    S = calculate_similarity(S, metric=metric)
+    S = calculate_similarity(X, metric=metric)
     # Calculate neighborhood for all points. This leaves the original point
     # in, which needs to be considered later (i.e. point i is the
     # neighborhood of point i. While True, its useless information)
@@ -122,7 +115,7 @@ def dbscan(S, eps=0.5, min_points=5, metric='euclidean',
 
 
 class DBSCAN(BaseEstimator):
-    """Perform DBSCAN Clustering of data
+    """Perform DBSCAN clustering of data from vector array or similarity matrix.
 
     DBSCAN - Density-Based Spatial Clustering of Applications with Noise.
     Finds core points of high density and expands clusters from them.
@@ -183,20 +176,19 @@ class DBSCAN(BaseEstimator):
         self.index_order = index_order
         self.verbose = verbose
 
-    def fit(self, S, **params):
+    def fit(self, X, **params):
         """Compute DBSCAN labels for points, using similarity array S.
 
         Parameters
         ----------
-        S: array [n_points, n_points] or [n_points, n_features]
+        X: array [n_points, n_points] or [n_points, n_features]
             Array of similarities between points, or a feature array.
-            If the array is square, it is treated as a similarity array,
-            otherwise it is treated as a feature array. Use is_similarity to
-            override this pattern.
+            The array is treated as a feature array unless the metric is given as
+            'precomputed'.
         params: dict
             Overwrite keywords from __init__.
         """
 
         self._set_params(**params)
-        self.core_points_, self.labels_ = dbscan(S, **self._get_params())
+        self.core_points_, self.labels_ = dbscan(X, **self._get_params())
         return self

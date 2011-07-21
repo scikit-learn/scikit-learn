@@ -30,6 +30,8 @@ def calculate_similarity(X, metric="euclidean"):
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
         allowed by scipy.spatial.distance.pdist for its metric parameter.
+        If metric is "precomputed", X is assumed to be a similarity matrix and
+        must be square.
         Alternatively, if metric is a callable function, it is called on each
         pair of instances (rows) and the resulting value recorded.
 
