@@ -10,7 +10,7 @@ from .affinity_propagation_ import affinity_propagation, AffinityPropagation
 from .hierarchical import ward_tree, Ward, WardAgglomeration
 from .k_means_ import k_means, KMeans, MiniBatchKMeans
 
-def calculate_similarity(X, metric=None, is_similarity=None):
+def calculate_similarity(X, metric="euclidean"):
     """ Calculates the similarity matrix from a vector matrix X.
 
     This method takes either a vector array or a similarity matrix, and returns
@@ -23,25 +23,15 @@ def calculate_similarity(X, metric=None, is_similarity=None):
 
     Parameters
     ----------
-    X: array [n_points, n_points] or [n_points, n_features]
+    X: array [n_points, n_points] if metric == "precomputed", or,
+             [n_points, n_features] otherwise
         Array of similarities between points, or a feature array.
-        If the array is square, it is treated as a similarity array,
-        otherwise it is treated as a feature array. Use is_similarity to
-        override this pattern.
     metric: string, or callable
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
         allowed by scipy.spatial.distance.pdist for its metric parameter.
         Alternatively, if metric is a callable function, it is called on each
         pair of instances (rows) and the resulting value recorded.
-    is_similarity: boolean, optional (default=None)
-        Overrides the behaviour of the array handling of S.
-        If is_similarity is None, any square array is handled as a similarity
-        array and any non-square array is a feature array.
-        If is_similarity is True, any array is handled as a similarity array,
-        and the procedure will raise a ValueError if the array is not square.
-        If is_similarity is False, any array will be handled as a feature
-        array, including square matrices.
 
     Returns
     -------
@@ -50,17 +40,14 @@ def calculate_similarity(X, metric=None, is_similarity=None):
         ith and jth vectors of the given matrix X.
 
     """
-    n, d = X.shape
-    # If the array looks square, it may be a similarity array.
-    if n == d:
-        if is_similarity in (None, True):
-            return X
-    elif is_similarity:
-        # Array is not square, so it cannot be a similarity array.
-        raise ValueError("Array not square, cannot be a similarity array."
-                         " Shape = %s" % repr((n, d)))
+    if metric == "precomputed":
+        if X.shape[0] != X.shape[1]:
+            raise ValueError("X is not square!")
+        return X
+
     # In all other cases, the array is to be considered as a feature array.
     D = distance.squareform(distance.pdist(X, metric=metric))
+    # Convert distance to similarity (FIXME: use heat kernel?)
     S = 1. - (D / np.max(D))
     return S
 

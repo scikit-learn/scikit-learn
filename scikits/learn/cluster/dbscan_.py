@@ -14,7 +14,7 @@ from . import calculate_similarity
 
 
 def dbscan(S, eps=0.5, min_points=5, metric='euclidean',
-           index_order=None, verbose=False, is_similarity=None,):
+           index_order=None, verbose=False):
     """Perform DBSCAN clustering of data.
 
     Parameters
@@ -78,7 +78,7 @@ def dbscan(S, eps=0.5, min_points=5, metric='euclidean',
     assert len(index_order) == n, ("Index order must be of length n"
                                    " (%d expected, %d given)"
                                    % (n, len(index_order)))
-    S = calculate_similarity(S, metric=metric, is_similarity=is_similarity)
+    S = calculate_similarity(S, metric=metric)
     # Calculate neighborhood for all points. This leaves the original point
     # in, which needs to be considered later (i.e. point i is the
     # neighborhood of point i. While True, its useless information)
@@ -139,6 +139,8 @@ class DBSCAN(BaseEstimator):
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
         allowed by scipy.spatial.distance.pdist for its metric parameter.
+        If metric is "precomputed", X is assumed to be a similarity matrix and
+        must be square.
         Alternatively, if metric is a callable function, it is called on each
         pair of instances (rows) and the resulting value recorded.
     index_order: [n_points] or None
@@ -147,14 +149,6 @@ class DBSCAN(BaseEstimator):
         To look at points in order, use range(n).
     verbose: boolean, optional
         The verbosity level
-    is_similarity: boolean, optional (default=None)
-        Overrides the behaviour of the array handling of S.
-        If is_similarity is None, any square array is handled as a similarity
-        array and any non-square array is a feature array.
-        If is_similarity is True, any array is handled as a similarity array,
-        and the procedure will raise a ValueError if the array is not square.
-        If is_similarity is False, any array will be handled as a feature
-        array, including square matrices.
 
     Methods
     -------
@@ -181,15 +175,13 @@ class DBSCAN(BaseEstimator):
     """
 
     def __init__(self, eps=0.5, min_points=5, metric='euclidean',
-                 verbose=False, index_order=None,
-                 is_similarity=None):
+                 verbose=False, index_order=None):
         self.eps = eps
         self.min_points = min_points
         self.metric = metric
         self.verbose = verbose
         self.index_order = index_order
         self.verbose = verbose
-        self.is_similarity = is_similarity
 
     def fit(self, S, **params):
         """Compute DBSCAN labels for points, using similarity array S.

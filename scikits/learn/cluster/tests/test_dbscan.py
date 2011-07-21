@@ -25,14 +25,15 @@ def test_dbscan_similarity():
 
     # Compute DBSCAN
     # parameters chosen for task
-    core_points, labels = dbscan(S, eps=0.85, min_points=10)
+    core_points, labels = dbscan(S, metric="precomputed",
+                                 eps=0.85, min_points=10)
 
     # number of clusters, ignoring noise if present
     n_clusters_1 = len(set(labels)) - (1 if -1 in labels else 0)
 
     assert_equal(n_clusters, n_clusters_1)
 
-    db = DBSCAN()
+    db = DBSCAN(metric="precomputed")
     labels = db.fit(S, eps=0.85, min_points=10).labels_
 
     n_clusters_2 = len(set(labels)) - int(-1 in labels)
