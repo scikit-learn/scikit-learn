@@ -15,7 +15,7 @@ from . import calculate_similarity
 
 def dbscan(X, eps=0.5, min_points=5, metric='euclidean',
            index_order=None, verbose=False):
-    """Perform DBSCAN clustering of data from vector array or similarity matrix.
+    """Perform DBSCAN clustering from vector array or similarity matrix.
 
     Parameters
     ----------
@@ -43,7 +43,7 @@ def dbscan(X, eps=0.5, min_points=5, metric='euclidean',
         To look at points in order, use range(n).
     verbose: boolean, optional
         The verbosity level
-    
+
     Returns
     -------
     core_points: array [n_core_points]
@@ -115,7 +115,7 @@ def dbscan(X, eps=0.5, min_points=5, metric='euclidean',
 
 
 class DBSCAN(BaseEstimator):
-    """Perform DBSCAN clustering of data from vector array or similarity matrix.
+    """Perform DBSCAN clustering from vector array or similarity matrix.
 
     DBSCAN - Density-Based Spatial Clustering of Applications with Noise.
     Finds core points of high density and expands clusters from them.
@@ -183,8 +183,8 @@ class DBSCAN(BaseEstimator):
         ----------
         X: array [n_points, n_points] or [n_points, n_features]
             Array of similarities between points, or a feature array.
-            The array is treated as a feature array unless the metric is given as
-            'precomputed'.
+            The array is treated as a feature array unless the metric is
+            given as 'precomputed'.
         params: dict
             Overwrite keywords from __init__.
         """

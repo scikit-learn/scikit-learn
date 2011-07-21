@@ -10,6 +10,7 @@ from .affinity_propagation_ import affinity_propagation, AffinityPropagation
 from .hierarchical import ward_tree, Ward, WardAgglomeration
 from .k_means_ import k_means, KMeans, MiniBatchKMeans
 
+
 def calculate_similarity(X, metric="euclidean"):
     """ Calculates the similarity matrix from a vector matrix X.
 
