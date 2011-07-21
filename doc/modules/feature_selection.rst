@@ -25,6 +25,11 @@ occurrence/non-occurrence indicators or occurence counts for each sample.
 It handles ``scipy.sparse`` matrices as well as instances of ``numpy.array``.
 
 
+.. topic:: Examples:
+
+   * :ref:`example_document_classification_20newsgroups.py`
+
+
 Univariate feature selection
 ============================
 

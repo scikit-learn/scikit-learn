@@ -14,6 +14,9 @@ automatically downloaded and then cached.
 You can adjust the number of categories by giving there name to the dataset
 loader or setting them to None to get the 20 of them.
 
+If the option --chi2-select is given, Chi2 is used for feature selection,
+which may greatly reduce the memory usage.
+
 """
 
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
@@ -50,10 +53,10 @@ op = OptionParser()
 op.add_option("--report",
               action="store_true", dest="print_report",
               help="Print a detailed classification report.")
-op.add_option("--chi2_select",
-              action="store", type="int", dest="select_chi2",
-              help="Select some number of features using a chi-squared test")
-op.add_option("--confusion_matrix",
+op.add_option("--chi2-select",
+              action="store", type="int", dest="chi2_n_features",
+              help="Select some number of features using a chi-squared test.")
+op.add_option("--confusion-matrix",
               action="store_true", dest="print_cm",
               help="Print the confusion matrix.")
 op.add_option("--top10",
@@ -117,11 +120,12 @@ print "done in %fs" % (time() - t0)
 print "n_samples: %d, n_features: %d" % X_test.shape
 print
 
-if opts.select_chi2:
+if opts.chi2_n_features is not None:
+    n_feat = opts.chi2_n_features
     print ("Extracting %d best features by a chi-squared test" %
-           opts.select_chi2)
+           n_feat)
     t0 = time()
-    ch2 = Chi2(n_features=opts.select_chi2)
+    ch2 = Chi2(n_features=n_feat)
     X_train = ch2.fit_transform(X_train, y_train)
     X_test = ch2.transform(X_test)
     print "done in %fs" % (time() - t0)

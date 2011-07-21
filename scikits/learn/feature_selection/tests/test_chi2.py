@@ -1,5 +1,5 @@
 import numpy as np
-from numpy.testing import assert_equal
+from numpy.testing import assert_, assert_equal
 from scipy.sparse import csr_matrix
 
 from .. import Chi2
@@ -10,8 +10,9 @@ from .. import Chi2
 X = ([[2, 1, 2],
       [9, 1, 1],
       [6, 1, 2],
-      [0, 1, 2]])
+      [0, 1, 3]])
 y = [0, 1, 2, 2]
+
 
 def test_chi2():
     """Test Chi2 feature extraction"""
@@ -33,3 +34,17 @@ def test_chi2():
     Xtrans = Xtrans.toarray()
     Xtrans2 = Chi2(n_features=2).fit_transform(Xsp, y).toarray()
     assert_equal(Xtrans, Xtrans2)
+
+
+def test_chi2_boolean():
+    """Test Chi2 on boolean data
+    
+    Or, assert that X.sum() on a boolean array yields an int array."""
+
+    #Xb = np.asanyarray(X) > 2
+    Xb = np.array([[0, 0, 0],
+                   [0, 0, 1],
+                   [1, 0, 1],
+                   [1, 0, 0]], dtype=bool)
+    chi2 = Chi2(n_features=1).fit(Xb, y)
+    assert_equal(chi2.top_features_, [0])

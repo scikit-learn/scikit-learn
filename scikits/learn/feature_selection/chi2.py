@@ -14,9 +14,9 @@ class Chi2(BaseEstimator, TransformerMixin):
     """Select best features by the χ² statistic
 
     This transformer can be used to select the n_features features with the
-    highest values for the χ² (chi-square) statistic from multinomially
-    distributed data (e.g., term counts in document classification) relative
-    to the classes.
+    highest values for the χ² (chi-square) statistic from either boolean or
+    multinomially distributed data (e.g., term counts in document
+    classification) relative to the classes.
 
     Recall that the χ² statistic measures dependence between stochastic
     variables, so this transformer "weeds out" the features that are the most
@@ -31,7 +31,7 @@ class Chi2(BaseEstimator, TransformerMixin):
     Attributes
     ----------
     top_features_ : array, dtype = int, shape = [n_features]
-        The top n_features features by χ² value.
+        The top n_features feature (column) indices by χ² value.
 
     References
     ----------
@@ -76,6 +76,9 @@ class Chi2(BaseEstimator, TransformerMixin):
         # The p-values (probabilities of independence) are monotonically
         # decreasing in χ², so we need only one of both values.
         ch2, _ = chisquare(observed, expected)
+        # NaN may occur due to zeros in the feature counts; change it to -inf
+        # to get the right sorting order.
+        ch2[np.where(np.isnan(ch2))] = -np.inf
 
         self.top_features_ = np.argsort(ch2)[-self.n_features:]
         return self
