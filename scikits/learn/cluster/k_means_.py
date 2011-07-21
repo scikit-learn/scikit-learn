@@ -616,11 +616,6 @@ class MiniBatchKMeans(KMeans):
         Maximum number of iterations of the k-means algorithm for a
         single run.
 
-    n_init: int, optional, default: 10
-        Number of time the k-means algorithm will be run with different
-        centroid seeds. The final results will be the best output of
-        n_init consecutive runs in terms of inertia.
-
     chunk_size: int, optional, default: 1000
         Size of the mini batches
 
@@ -666,10 +661,10 @@ class MiniBatchKMeans(KMeans):
     http://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf
     """
 
-    def __init__(self, k=8, init='random', n_init=10, max_iter=100,
+    def __init__(self, k=8, init='random', max_iter=100,
                  chunk_size=1000, tol=1e-4, verbose=0, random_state=None):
 
-        super(MiniBatchKMeans, self).__init__(k, init, n_init,
+        super(MiniBatchKMeans, self).__init__(k, init, 1,
               max_iter, tol, verbose, random_state)
 
         self.counts = None
