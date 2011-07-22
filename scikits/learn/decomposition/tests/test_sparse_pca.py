@@ -4,8 +4,9 @@
 import sys
 
 import numpy as np
-from .. import SparsePCA
+from .. import SparsePCA, dict_learning_online
 from ..sparse_pca import _update_code, _update_code_parallel
+
 
 from numpy.testing import assert_array_almost_equal, assert_equal
 
@@ -96,3 +97,12 @@ def test_initialization():
     model = SparsePCA(n_components=3, U_init=U_init, V_init=V_init, max_iter=0)
     model.fit(np.random.randn(5, 4))
     assert_equal(model.components_, V_init)
+
+
+def test_dict_learning_online_shapes():
+    np.random.seed(0)
+    X = np.random.randn(12, 10)
+    codeT, dictionaryT = dict_learning_online(X.T, n_atoms=8, alpha=1)
+    assert_equal(codeT.shape, (8, 12))
+    assert_equal(dictionaryT.shape, (10, 8))
+    assert_equal(np.dot(codeT.T, dictionaryT.T).shape, X.shape)
