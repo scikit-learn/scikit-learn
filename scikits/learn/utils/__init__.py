@@ -284,8 +284,8 @@ def gen_even_slices(n, n_packs):
     """Generator to create n_packs slices going up to n.
 
     Examples
-    ========
-
+    --------
+    >>> from scikits.learn.utils import gen_even_slices
     >>> list(gen_even_slices(10, 1))
     [slice(0, 10, None)]
     >>> list(gen_even_slices(10, 10))                     #doctest: +ELLIPSIS
@@ -294,7 +294,6 @@ def gen_even_slices(n, n_packs):
     [slice(0, 2, None), slice(2, 4, None), ..., slice(8, 10, None)]
     >>> list(gen_even_slices(10, 3))
     [slice(0, 4, None), slice(4, 7, None), slice(7, 10, None)]
-
     """
     start = 0
     for pack_num in range(n_packs):

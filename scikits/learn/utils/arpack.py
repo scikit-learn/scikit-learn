@@ -1161,6 +1161,7 @@ def eigs(A, k=6, M=None, sigma=None, which='LM', v0=None,
     --------
     Find 6 eigenvectors of the identity matrix:
 
+    >>> from scikits.learn.utils.arpack import eigs
     >>> id = np.identity(13)
     >>> vals, vecs = eigs(id, k=6)
     >>> vals
@@ -1398,6 +1399,7 @@ def eigsh(A, k=6, M=None, sigma=None, which='LM', v0=None,
 
     Examples
     --------
+    >>> from scikits.learn.utils.arpack import eigsh
     >>> id = np.identity(13)
     >>> vals, vecs = eigsh(id, k=6)
     >>> vals # doctest: +SKIP
