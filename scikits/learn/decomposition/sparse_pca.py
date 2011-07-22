@@ -6,7 +6,8 @@
 import time
 import sys
 
-from math import sqrt
+from math import sqrt, floor, ceil
+import itertools
 
 import numpy as np
 from numpy.lib.stride_tricks import as_strided
@@ -14,6 +15,7 @@ from scipy import linalg
 
 from ..utils import check_random_state
 from ..utils import gen_even_slices
+from ..utils.extmath import fast_svd
 from ..linear_model import Lasso, lars_path, ridge_regression
 from ..externals.joblib import Parallel, delayed, cpu_count
 from ..base import BaseEstimator, TransformerMixin
@@ -359,6 +361,168 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
             callback(locals())
 
     return code, dictionary, errors
+
+
+def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
+                         dict_init=None, callback=None, chunk_size=3,
+                         verbose=False, shuffle=True, n_jobs=1,
+                         method='lars', iter_offset=0, random_state=None):
+    """Solves a dictionary learning matrix factorization problem online.
+
+    Finds the best dictionary and the corresponding sparse code for
+    approximating the data matrix X by solving:
+
+    (U^*, V^*) = argmin 0.5 || X - U V ||_2^2 + alpha * || U ||_1
+                 (U,V)
+                 with || V_k ||_2 = 1 for all  0 <= k < n_atoms
+
+    where V is the dictionary and U is the sparse code. This is accomplished
+    by repeatedly iterating over mini-batches of the input data.
+
+    Parameters
+    ----------
+    X: array of shape (n_samples, n_features)
+        data matrix
+
+    n_atoms: int,
+        number of dictionary atoms to extract
+
+    alpha: int,
+        sparsity controlling parameter
+
+    n_iter: int,
+        number of iterations to perform
+
+    return_code: boolean,
+        whether to also return the code U or just the dictionary V
+
+    dict_init: array of shape (n_atoms, n_features),
+        initial value for the dictionary for warm restart scenarios
+
+    callback:
+        callable that gets invoked every five iterations
+
+    chunk_size: int,
+        the number of samples to take in each batch
+
+    verbose:
+        degree of output the procedure will print
+
+    shuffle: boolean,
+        whether to shuffle the data before splitting it in batches
+
+    n_jobs: int,
+        number of parallel jobs to run, or -1 to autodetect.
+
+    method: 'lars' | 'cd'
+        lars: uses the least angle regression method (linear_model.lars_path)
+        cd: uses the stochastic gradient descent method to compute the
+            lasso solution (linear_model.Lasso)
+
+    iter_offset: int, default 0
+        number of previous iterations completed on the dictionary used for
+        initialization
+
+    random_state: int or RandomState
+        Pseudo number generator state used for random sampling.
+
+    Returns
+    -------
+    dictionary: array of shape (n_atoms, n_features),
+        the solutions to the dictionary learning problem
+
+    code: array of shape (n_samples, n_atoms),
+        the sparse code (only returned if `return_code=True`)
+    """
+    t0 = time.time()
+    n_samples, n_features = X.shape
+    # Avoid integer division problems
+    alpha = float(alpha)
+    random_state = check_random_state(random_state)
+
+    if n_jobs == -1:
+        n_jobs = cpu_count()
+
+    # Init V with SVD of X
+    if dict_init is not None:
+        dictionary = dict_init
+    else:
+        _, S, dictionary = fast_svd(X, n_atoms)
+        dictionary = S[:, np.newaxis] * dictionary
+    r = len(dictionary)
+    if n_atoms <= r:
+        dictionary = dictionary[:n_atoms, :]
+    else:
+        dictionary = np.r_[dictionary,
+                           np.zeros((n_atoms - r, dictionary.shape[1]))]
+    dictionary = np.ascontiguousarray(dictionary.T)
+
+    if verbose == 1:
+        print '[dict_learning]',
+
+    n_batches = floor(float(len(X)) / chunk_size)
+    if shuffle:
+        X_train = X.copy()
+        random_state.shuffle(X_train)
+    else:
+        X_train = X
+    batches = np.array_split(X_train, n_batches)
+    batches = itertools.cycle(batches)
+
+    # The covariance of the dictionary
+    A = np.zeros((n_atoms, n_atoms))
+    # The data approximation
+    B = np.zeros((n_features, n_atoms))
+
+    for ii, this_X in itertools.izip(xrange(iter_offset, iter_offset + n_iter),
+                                     batches):
+        #this_Y = this_Y.squeeze()
+        dt = (time.time() - t0)
+        if verbose == 1:
+            sys.stdout.write(".")
+            sys.stdout.flush()
+        elif verbose:
+            if verbose > 10 or ii % ceil(100. / verbose) == 0:
+                print ("Iteration % 3i (elapsed time: % 3is, % 4.1fmn)" %
+                    (ii, dt, dt / 60))
+
+        this_code = _update_code(dictionary, this_X.T, alpha, method=method)
+
+        # Update the auxiliary variables
+        if ii < chunk_size - 1:
+            theta = float((ii + 1) * chunk_size)
+        else:
+            theta = float(chunk_size ** 2 + ii + 1 - chunk_size)
+        beta = (theta + 1 - chunk_size) / (theta + 1)
+
+        A *= beta
+        A += np.dot(this_code, this_code.T)
+        B *= beta
+        B += np.dot(this_X.T, this_code.T)
+
+        # Update dictionary
+        dictionary = _update_dict(dictionary, B, A, verbose=verbose,
+                                  random_state=random_state)
+        # XXX: Can the residuals be of any use?
+
+        # Maybe we need a stopping criteria based on the amount of
+        # modification in the dictionary
+        if callback is not None:
+            callback(locals())
+
+    if return_code:
+        if verbose > 1:
+            print 'Learning code...',
+        elif verbose == 1:
+            print '|',
+        code = _update_code_parallel(dictionary, X.T, alpha, n_jobs=n_jobs,
+                    method=method)
+        if verbose > 1:
+            dt = (time.time() - t0)
+            print 'done (total time: % 3is, % 4.1fmn)' % (dt, dt / 60)
+        return dictionary.T, code.T
+
+    return dictionary.T
 
 
 class SparsePCA(BaseEstimator, TransformerMixin):
