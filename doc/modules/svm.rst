@@ -207,7 +207,7 @@ floating point values instead of integer values::
     >>> clf = svm.SVR()
     >>> clf.fit(X, y)
     SVR(kernel='rbf', C=1.0, probability=False, degree=3, epsilon=0.1,
-      shrinking=True, tol=0.001, coef0=0.0, nu=0.5, gamma=0.5)
+      shrinking=True, tol=0.001, coef0=0.0, gamma=0.5)
     >>> clf.predict([[1, 1]])
     array([ 1.5])
 

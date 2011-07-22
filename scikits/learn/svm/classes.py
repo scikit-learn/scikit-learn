@@ -246,7 +246,7 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
     >>> clf = NuSVC()
     >>> clf.fit(X, y)
     NuSVC(kernel='rbf', probability=False, degree=3, coef0=0.0, tol=0.001,
-      shrinking=True, nu=0.5, gamma=0.25)
+       shrinking=True, nu=0.5, gamma=0.25)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
 
@@ -444,7 +444,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     >>> clf = NuSVR(C=1.0, nu=0.1)
     >>> clf.fit(X, y)
     NuSVR(kernel='rbf', C=1.0, probability=False, degree=3, shrinking=True,
-      tol=0.001, coef0=0.0, nu=0.1, gamma=0.1)
+       tol=0.001, coef0=0.0, nu=0.1, gamma=0.1)
 
     See also
     --------
