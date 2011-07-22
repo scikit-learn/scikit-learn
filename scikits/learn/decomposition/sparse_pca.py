@@ -661,15 +661,54 @@ class MiniBatchSparsePCA(BaseEstimator, TransformerMixin):
 
     Finds the set of sparse components that can optimally reconstruct the data.
     The amount of sparseness is controllable by the coefficient of the \ell_1
-    penalty, given by the parameter alpha. 
+    penalty, given by the parameter alpha.
+
+    Parameters
+    ----------
+    X: array of shape (n_samples, n_features)
+        data matrix
+
+    n_components: int,
+        number of sparse atoms to extract
+
+    alpha: int,
+        sparsity controlling parameter
+
+    n_iter: int,
+        number of iterations to perform for each mini batch
+
+    callback: callable,
+        callable that gets invoked every five iterations
+
+    chunk_size: int,
+        the number of samples to take in each mini batch
+
+    verbose:
+        degree of output the procedure will print
+
+    shuffle: boolean,
+        whether to shuffle the data before splitting it in batches
+
+    n_jobs: int,
+        number of parallel jobs to run, or -1 to autodetect.
+
+    method: {'lars', 'cd'}
+        lars: uses the least angle regression method (linear_model.lars_path)
+        cd: uses the coordinate descent method to compute the
+        Lasso solution (linear_model.Lasso). Lars will be faster if
+        the estimated components are sparse.
+
+    random_state: int or RandomState
+        Pseudo number generator state used for random sampling.
+
+
     """
-    def __init__(self, n_components, alpha=1, n_iter=100, U_init=None,
-                 callback=None, chunk_size=3, verbose=False, shuffle=True,
-                 n_jobs=1, method='lars', random_state=None):
+    def __init__(self, n_components, alpha=1, n_iter=100, callback=None,
+                 chunk_size=3, verbose=False, shuffle=True, n_jobs=1,
+                 method='lars', random_state=None):
         self.n_components = n_components
         self.alpha = alpha
         self.n_iter = n_iter
-        self.U_init = U_init
         self.callback = callback
         self.chunk_size = chunk_size
         self.verbose = verbose
@@ -695,10 +734,9 @@ class MiniBatchSparsePCA(BaseEstimator, TransformerMixin):
         self._set_params(**params)
         self.random_state = check_random_state(self.random_state)
         X = np.asanyarray(X)
-        dict_init = self.U_init.T if self.U_init != None else None
         _, Vt = dict_learning_online(X.T, self.n_components, alpha=self.alpha, 
                                      n_iter=self.n_iter, return_code=True,
-                                     dict_init=dict_init, verbose=self.verbose, 
+                                     dict_init=None, verbose=self.verbose, 
                                      callback=self.callback, 
                                      chunk_size=self.chunk_size,
                                      shuffle=self.shuffle, 
