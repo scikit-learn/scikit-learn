@@ -656,7 +656,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         return U
 
 
-class MiniBatchSparsePCA(BaseEstimator, TransformerMixin):
+class MiniBatchSparsePCA(SparsePCA):
     """Mini-batch Sparse Principal Components Analysis (MiniBatchSparsePCA)
 
     Finds the set of sparse components that can optimally reconstruct the data.
@@ -734,44 +734,13 @@ class MiniBatchSparsePCA(BaseEstimator, TransformerMixin):
         self._set_params(**params)
         self.random_state = check_random_state(self.random_state)
         X = np.asanyarray(X)
-        _, Vt = dict_learning_online(X.T, self.n_components, alpha=self.alpha, 
+        _, Vt = dict_learning_online(X.T, self.n_components, alpha=self.alpha,
                                      n_iter=self.n_iter, return_code=True,
-                                     dict_init=None, verbose=self.verbose, 
-                                     callback=self.callback, 
+                                     dict_init=None, verbose=self.verbose,
+                                     callback=self.callback,
                                      chunk_size=self.chunk_size,
-                                     shuffle=self.shuffle, 
+                                     shuffle=self.shuffle,
                                      n_jobs=self.n_jobs, method=self.method,
                                      random_state=self.random_state)
         self.components_ = Vt.T
         return self
-
-    def transform(self, X, ridge_alpha=0.01):
-        """Least Squares projection of the data onto the learned sparse
-        components.
-
-        To avoid instability issues in case the system is under-determined,
-        regularization can be applied (Ridge regression) via the
-        `ridge_alpha` parameter.
-
-        Note that Sparse PCA components orthogonality is not enforced as in PCA
-        hence one cannot use a simple linear projection.
-
-        Parameters
-        ----------
-        X: array of shape (n_samples, n_features)
-            Test data to be transformed, must have the same number of
-            features as the data used to train the model.
-
-        ridge_alpha: float, default: 0.01
-            Amount of ridge shrinkage to apply in order to improve
-            conditioning.
-
-        Returns
-        -------
-        X_new array, shape (n_samples, n_components)
-            Transformed data.
-        """
-        U = ridge_regression(self.components_.T, X.T, ridge_alpha,
-                             solver='dense_cholesky')
-        U /= np.sqrt((U ** 2).sum(axis=0))
-        return U
