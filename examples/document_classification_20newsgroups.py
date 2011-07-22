@@ -31,7 +31,7 @@ from time import time
 
 from scikits.learn.datasets import fetch_20newsgroups
 from scikits.learn.feature_extraction.text import Vectorizer
-from scikits.learn.feature_selection import SelectKBest, f_chi2
+from scikits.learn.feature_selection import SelectKBest, chi2
 from scikits.learn.linear_model import RidgeClassifier
 from scikits.learn.svm.sparse import LinearSVC
 from scikits.learn.linear_model.sparse import SGDClassifier
@@ -121,7 +121,7 @@ if opts.select_chi2:
     print ("Extracting %d best features by a chi-squared test" %
            opts.select_chi2)
     t0 = time()
-    ch2 = SelectKBest(f_chi2, k=opts.select_chi2)
+    ch2 = SelectKBest(chi2, k=opts.select_chi2)
     X_train = ch2.fit_transform(X_train, y_train)
     X_test = ch2.transform(X_test)
     print "done in %fs" % (time() - t0)
