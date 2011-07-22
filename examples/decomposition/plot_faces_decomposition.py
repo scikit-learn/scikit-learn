@@ -17,8 +17,9 @@ from time import time
 
 import pylab as pl
 
-from scikits.learn.decomposition import RandomizedPCA, NMF, SparsePCA, FastICA
-from scikits.learn.cluster import KMeans
+from scikits.learn.decomposition import RandomizedPCA, NMF, \
+                                        MiniBatchSparsePCA, FastICA
+from scikits.learn.cluster import MiniBatchKMeans
 from scikits.learn.datasets import fetch_olivetti_faces
 
 
@@ -55,21 +56,23 @@ def plot_digit_gallery(title, images):
 # List of the different estimators, whether to center and transpose the
 # problem, and whether the transformer uses the clustering API.
 estimators = [
-    ('eigendigits (PCA)', RandomizedPCA(n_components=n_components,
+    ('Eigenfaces (PCA)', RandomizedPCA(n_components=n_components,
                                         whiten=True),
                           True, False, False),
-    ('non-negative components (NMF)', NMF(n_components=n_components,
+    ('Non-negative components (NMF)', NMF(n_components=n_components,
                                           init='nndsvda', beta=1, tol=1e-3,
                                           sparseness='components'),
                                       False, False, False),
-    ('independent components (ICA)', FastICA(n_components=n_components,
-                                             whiten=True),
+    ('Independent components (FastICA)', FastICA(n_components=n_components,
+                                             whiten=True, max_iter=10),
                                      True, True, False),
-    ('sparse components (SparsePCA)', SparsePCA(n_components=n_components,
-                                                alpha=1, tol=1e-4,
-                                                verbose=True, max_iter=3),
+    ('Sparse components (SparsePCA)', MiniBatchSparsePCA(
+                                                n_components=n_components,
+                                                alpha=1e-3, n_iter=100,
+                                                verbose=True, chunk_size=3),
                                       True, False, False),
-    ('cluster centers (KMeans)', KMeans(k=n_components, tol=1e-2, max_iter=3),
+    ('Cluster centers (KMeans)', MiniBatchKMeans(k=n_components, tol=1e-2,
+                                                 chunk_size=20, max_iter=10),
                                  True, False, True)
     ]
 
