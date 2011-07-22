@@ -54,7 +54,7 @@ from scikits.learn.naive_bayes import MultinomialNB
 
 
 if 'MLCOMP_DATASETS_HOME' not in os.environ:
-    print "Please follow those instructions to get started:"
+    print "MLCOMP_DATASETS_HOME not set; please follow the above instructions"
     sys.exit(0)
 
 # Load the training set
