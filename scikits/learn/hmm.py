@@ -828,8 +828,8 @@ class MultinomialHMM(_BaseHMM):
     ... #doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     MultinomialHMM(transmat=array([[ 0.5,  0.5],
            [ 0.5,  0.5]]),
-            startprob_prior=1.0, startprob=array([ 0.5,  0.5]), n_components=2,
-            transmat_prior=1.0)
+            transmat_prior=1.0, startprob_prior=1.0,
+            startprob=array([ 0.5,  0.5]), n_components=2)
 
     See Also
     --------
