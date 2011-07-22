@@ -9,8 +9,9 @@ from scipy.sparse import csr_matrix, issparse
 from ..utils import safe_asanyarray, atleast2d_or_csr
 from ..utils.extmath import safe_sparse_dot
 
-################################################################################
-# Distances 
+
+###############################################################################
+# Distances
 
 def euclidean_distances(X, Y, Y_norm_squared=None, squared=False):
     """
@@ -91,10 +92,12 @@ def euclidean_distances(X, Y, Y_norm_squared=None, squared=False):
 
 euclidian_distances = euclidean_distances  # both spelling for backward compat
 
-def l1_distances(X, Y):
-    """
-    Computes the componentwise L1 pairwise-distances between the vectors
-    in X and Y.
+
+def l1_distances(X, Y, sum_over_features=True):
+    """Computes the L1 distances between the vectors in X and Y
+
+    With sum_over_features equal to False it returns the componentwise
+    distances.
 
     Parameters
     ----------
@@ -105,11 +108,19 @@ def l1_distances(X, Y):
     Y: array_like, optional
         An array with shape (n_samples_Y, n_features).
 
+    sum_over_features: bool
+        If True the function returns the pairwise distance matrix
+        else it returns the componentwise L1 pairwise-distances.
+
     Returns
     -------
 
-    D: array with shape (n_samples_X * n_samples_Y, n_features)
-        The array of componentwise L1 pairwise-distances.
+    D: array
+        If sum_over_features is False shape is
+        (n_samples_X, n_samples_Y, n_features) and D contains the
+        componentwise L1 pairwise-distances (ie. absolute difference),
+        else shape is (n_samples_X, n_samples_Y) and D contains
+        the pairwise l1 distances.
 
     Examples
     --------
@@ -122,26 +133,25 @@ def l1_distances(X, Y):
     array([[1]])
     >>> import numpy as np
     >>> X = np.ones((1, 2))
-    >>> y = 2*np.ones((2, 2))
+    >>> y = 2 * np.ones((2, 2))
     >>> l1_distances(X, y)
-    array([[ 1.,  1.],
-           [ 1.,  1.]])
+    array([[ 2.,  2.]])
+    >>> l1_distances(X, y, sum_over_features=False)
+    array([[[ 1.,  1.],
+            [ 1.,  1.]]])
     """
     X, Y = np.atleast_2d(X), np.atleast_2d(Y)
     n_samples_X, n_features_X = X.shape
     n_samples_Y, n_features_Y = Y.shape
     if n_features_X != n_features_Y:
         raise Exception("X and Y should have the same number of features!")
-    else:
-        n_features = n_features_X
     D = np.abs(X[:, np.newaxis, :] - Y[np.newaxis, :, :])
-    D = D.reshape((n_samples_X * n_samples_Y, n_features))
-
+    if sum_over_features:
+        D = np.sum(D, axis=2)
     return D
 
 
-
-################################################################################
+###############################################################################
 # Kernels
 
 def linear_kernel(X, Y):
