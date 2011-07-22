@@ -108,7 +108,7 @@ def test_dict_learning_online_shapes():
     assert_equal(np.dot(codeT.T, dictionaryT.T).shape, X.shape)
 
 
-def test_mini_batch_sparse_pca_correct_shapes():
+def test_mini_batch_correct_shapes():
     np.random.seed(0)
     X = np.random.randn(12, 10)
     pca = MiniBatchSparsePCA(n_components=8)
@@ -120,3 +120,25 @@ def test_mini_batch_sparse_pca_correct_shapes():
     U = pca.fit_transform(X)
     assert_equal(pca.components_.shape, (13, 10))
     assert_equal(U.shape, (12, 13))
+
+
+def test_mini_batch_fit_transform():
+    Y, _, _ = generate_toy_data(3, 10, (8, 8))  # wide array
+    spca_lars = MiniBatchSparsePCA(n_components=3, method='lars').fit(Y)
+    U1 = spca_lars.transform(Y)
+    # Test multiple CPUs
+    if sys.platform == 'win32':  # fake parallelism for win32
+        import scikits.learn.externals.joblib.parallel as joblib_par
+        _mp = joblib_par.multiprocessing
+        joblib_par.multiprocessing = None
+        try:
+            U2 = MiniBatchSparsePCA(n_components=3, n_jobs=2).fit(Y) \
+                                                             .transform(Y)
+        finally:
+            joblib_par.multiprocessing = _mp
+    else:  # we can efficiently use parallelism
+        U2 = SparsePCA(n_components=3, n_jobs=2).fit(Y).transform(Y)
+    assert_array_almost_equal(U1, U2)
+    # Test that CD gives similar results
+    spca_lasso = MiniBatchSparsePCA(n_components=3, method='cd').fit(Y)
+    assert_array_almost_equal(spca_lasso.components_, spca_lars.components_)
