@@ -654,3 +654,86 @@ class SparsePCA(BaseEstimator, TransformerMixin):
                              solver='dense_cholesky')
         U /= np.sqrt((U ** 2).sum(axis=0))
         return U
+
+
+class MiniBatchSparsePCA(BaseEstimator, TransformerMixin):
+    """Mini-batch Sparse Principal Components Analysis (MiniBatchSparsePCA)
+
+    Finds the set of sparse components that can optimally reconstruct the data.
+    The amount of sparseness is controllable by the coefficient of the \ell_1
+    penalty, given by the parameter alpha. 
+    """
+    def __init__(self, n_components, alpha=1, n_iter=100, U_init=None,
+                 callback=None, chunk_size=3, verbose=False, shuffle=True,
+                 n_jobs=1, method='lars', random_state=None):
+        self.n_components = n_components
+        self.alpha = alpha
+        self.n_iter = n_iter
+        self.U_init = U_init
+        self.callback = callback
+        self.chunk_size = chunk_size
+        self.verbose = verbose
+        self.shuffle = shuffle
+        self.n_jobs = n_jobs
+        self.method = method
+        self.random_state = random_state
+
+    def fit(self, X, y=None, **params):
+        """Fit the model from data in X.
+
+        Parameters
+        ----------
+        X: array-like, shape (n_samples, n_features)
+            Training vector, where n_samples in the number of samples
+            and n_features is the number of features.
+
+        Returns
+        -------
+        self : object
+            Returns the instance itself.
+        """
+        self._set_params(**params)
+        self.random_state = check_random_state(self.random_state)
+        X = np.asanyarray(X)
+        dict_init = self.U_init.T if self.U_init != None else None
+        _, Vt = dict_learning_online(X.T, self.n_components, alpha=self.alpha, 
+                                     n_iter=self.n_iter, return_code=True,
+                                     dict_init=dict_init, verbose=self.verbose, 
+                                     callback=self.callback, 
+                                     chunk_size=self.chunk_size,
+                                     shuffle=self.shuffle, 
+                                     n_jobs=self.n_jobs, method=self.method,
+                                     random_state=self.random_state)
+        self.components_ = Vt.T
+        return self
+
+    def transform(self, X, ridge_alpha=0.01):
+        """Least Squares projection of the data onto the learned sparse
+        components.
+
+        To avoid instability issues in case the system is under-determined,
+        regularization can be applied (Ridge regression) via the
+        `ridge_alpha` parameter.
+
+        Note that Sparse PCA components orthogonality is not enforced as in PCA
+        hence one cannot use a simple linear projection.
+
+        Parameters
+        ----------
+        X: array of shape (n_samples, n_features)
+            Test data to be transformed, must have the same number of
+            features as the data used to train the model.
+
+        ridge_alpha: float, default: 0.01
+            Amount of ridge shrinkage to apply in order to improve
+            conditioning.
+
+        Returns
+        -------
+        X_new array, shape (n_samples, n_components)
+            Transformed data.
+        """
+        U = ridge_regression(self.components_.T, X.T, ridge_alpha,
+                             solver='dense_cholesky')
+        U /= np.sqrt((U ** 2).sum(axis=0))
+        return U

@@ -4,7 +4,7 @@
 import sys
 
 import numpy as np
-from .. import SparsePCA, dict_learning_online
+from .. import SparsePCA, MiniBatchSparsePCA, dict_learning_online
 from ..sparse_pca import _update_code, _update_code_parallel
 
 
@@ -106,3 +106,17 @@ def test_dict_learning_online_shapes():
     assert_equal(codeT.shape, (8, 12))
     assert_equal(dictionaryT.shape, (10, 8))
     assert_equal(np.dot(codeT.T, dictionaryT.T).shape, X.shape)
+
+
+def test_mini_batch_sparse_pca_correct_shapes():
+    np.random.seed(0)
+    X = np.random.randn(12, 10)
+    pca = MiniBatchSparsePCA(n_components=8)
+    U = pca.fit_transform(X)
+    assert_equal(pca.components_.shape, (8, 10))
+    assert_equal(U.shape, (12, 8))
+    # test overcomplete decomposition
+    pca = MiniBatchSparsePCA(n_components=13)
+    U = pca.fit_transform(X)
+    assert_equal(pca.components_.shape, (13, 10))
+    assert_equal(U.shape, (12, 13))
