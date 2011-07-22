@@ -153,7 +153,7 @@ class DBSCAN(BaseEstimator):
     core_points: array, shape = [n_core_points]
         Indices of core points.
 
-    labels : array, shape = [n_points]
+    labels_ : array, shape = [n_points]
         Cluster labels for each point. Noisy points are given the label -1.
 
     Notes
