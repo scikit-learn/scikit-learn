@@ -1,5 +1,5 @@
 """
-Tests for f_chi2, currently the only feature selection function designed
+Tests for chi2, currently the only feature selection function designed
 specifically to work with sparse matrices.
 """
 
@@ -7,7 +7,7 @@ import numpy as np
 from numpy.testing import assert_equal
 from scipy.sparse import csr_matrix
 
-from .. import SelectKBest, f_chi2
+from .. import SelectKBest, chi2
 
 # Feature 0 is highly informative for class 1;
 # feature 1 is the same everywhere;
@@ -21,7 +21,7 @@ y = [0, 1, 2, 2]
 
 def mkchi2(k):
     """Make k-best chi2 selector"""
-    return SelectKBest(f_chi2, k=k)
+    return SelectKBest(chi2, k=k)
 
 
 def test_chi2():

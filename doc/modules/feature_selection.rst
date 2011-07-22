@@ -50,7 +50,7 @@ Feature scoring functions
 For classification
 ..................
 
-.. autofunction:: scikits.learn.feature_selection.univariate_selection.f_chi2
+.. autofunction:: scikits.learn.feature_selection.univariate_selection.chi2
 .. autofunction:: scikits.learn.feature_selection.univariate_selection.f_classif
 
 For regression

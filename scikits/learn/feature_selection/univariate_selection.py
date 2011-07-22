@@ -118,7 +118,7 @@ def f_classif(X, y):
     return f_oneway(*args)
 
 
-def f_chi2(X, y):
+def chi2(X, y):
     """Compute χ² (chi-squared) statistic for each class/feature combination.
 
     This transformer can be used to select the n_features features with the
