@@ -143,20 +143,18 @@ Sparse principal components yields a more parsimonious, interpretable
 representation, clearly emphasizing which of the original features contribute
 to the differences between samples.
 
-The following example illustrates 12 components extracted using sparse PCA
-with a value of `alpha=5` on the digits dataset. Only images of the digit 3
-were considered.  It can be seen how the regularization term induces many
-zeros. Furthermore, the natural structure of the data causes the non-zero
+The following example illustrates 16 components extracted using sparse PCA from
+the Olivetti faces dataset.  It can be seen how the regularization term induces
+many zeros. Furthermore, the natural structure of the data causes the non-zero
 coefficients to be vertically adjacent. The model does not enforce this
-mathematically: each component is a vector :math:`h \in \mathbf{R}^{64}`, and there
-is no notion of vertical adjacency except during the human-friendly
-visualization as 8x8 pixel images.
-The fact that the components shown below appear local
-is the effect of the inherent structure of the data, which makes such local
-patterns minimize reconstruction error. There exist sparsity-inducing norms
-that take into account adjacency and different kinds of structure; see
-see [Jen09] for a review of such methods. For more details on how to use
-Sparse PCA, see the `Examples` section below.
+mathematically: each component is a vector :math:`h \in \mathbf{R}^{4096}`, and
+there is no notion of vertical adjacency except during the human-friendly
+visualization as 64x64 pixel images. The fact that the components shown below
+appear local is the effect of the inherent structure of the data, which makes
+such local patterns minimize reconstruction error. There exist sparsity-inducing
+norms that take into account adjacency and different kinds of structure; see see
+[Jen09] for a review of such methods. For more details on how to use Sparse PCA,
+see the `Examples` section below.
 
 
 .. figure:: ../auto_examples/decomposition/images/plot_faces_decomposition_4.png
@@ -266,8 +264,8 @@ models are efficient for representing images and text.
 It has been observed in [Hoyer, 04] that, when carefully constrained,
 :class:`NMF` can produce a parts-based representation of the dataset,
 resulting in interpretable models. The following example displays 16
-sparse components found by :class:`NMF` on the images of the digit 3 from the
-digits dataset.
+sparse components found by :class:`NMF` from the images in the Olivetti
+faces dataset, in comparison with the PCA eigenfaces.
 
 .. |pca_img| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_1.png
     :target: ../auto_examples/decomposition/plot_faces_decomposition.html
