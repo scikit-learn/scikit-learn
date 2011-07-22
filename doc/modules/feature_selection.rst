@@ -5,6 +5,29 @@
 Feature selection
 =================
 
+The classes in the ``scikits.learn.feature_selection`` module can be used
+for feature selection/dimensionality reduction on sample sets, either to
+improve estimators' accuracy scores or to boost their performance on very
+high-dimensional datasets.
+
+
+Ï<87>Â² (chi squared) feature selection
+=======================================
+
+The :class:`Chi2` transformer class will pass through a user-selected number
+of features from a vector of samples, selecting those for which the Ï<87>Â²
+statistic yields the highest degree of dependence between them and the target
+value/class label, regarded as a stochastic variable.
+
+:class:`Chi2` must be ``fit`` on a training set before use. It is designed for
+binary or multinomial data, i.e. arrays of either boolean
+occurrence/non-occurrence indicators or occurence counts for each sample.
+It handles ``scipy.sparse`` matrices as well as instances of ``numpy.array``.
+
+
+.. topic:: Examples:
+
+   * :ref:`example_document_classification_20newsgroups.py`
 
 
 Univariate feature selection
