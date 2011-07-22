@@ -123,8 +123,9 @@ def test_mini_batch_correct_shapes():
 
 
 def test_mini_batch_fit_transform():
-    Y, _, _ = generate_toy_data(3, 10, (8, 8))  # wide array
-    spca_lars = MiniBatchSparsePCA(n_components=3, method='lars').fit(Y)
+#    Y, _, _ = generate_toy_data(3, 10, (8, 8))  # wide array
+    Y = np.random.randn(10, 12)
+    spca_lars = MiniBatchSparsePCA(n_components=3).fit(Y)
     U1 = spca_lars.transform(Y)
     # Test multiple CPUs
     if sys.platform == 'win32':  # fake parallelism for win32
@@ -137,7 +138,8 @@ def test_mini_batch_fit_transform():
         finally:
             joblib_par.multiprocessing = _mp
     else:  # we can efficiently use parallelism
-        U2 = SparsePCA(n_components=3, n_jobs=2).fit(Y).transform(Y)
+        U2 = MiniBatchSparsePCA(n_components=3, n_jobs=2).fit(Y)\
+                                                         .transform(Y)
     assert_array_almost_equal(U1, U2)
     # Test that CD gives similar results
     spca_lasso = MiniBatchSparsePCA(n_components=3, method='cd').fit(Y)
