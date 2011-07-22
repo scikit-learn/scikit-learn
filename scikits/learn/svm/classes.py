@@ -350,7 +350,7 @@ class SVR(BaseLibSVM, RegressorMixin):
                          gamma, coef0, tol, C, 0.0,
                          epsilon, shrinking, probability)
 
-    def fit(self, X, y, sample_weight=[], **params):
+    def fit(self, X, y, sample_weight=None, **params):
         """
         Fit the SVM model according to the given training data and parameters.
 
@@ -459,7 +459,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
                          gamma, coef0, tol, C, nu,
                          0.0, shrinking, probability)
 
-    def fit(self, X, y, sample_weight=[], **params):
+    def fit(self, X, y, sample_weight=None, **params):
         """
         Fit the SVM model according to the given training data and parameters.
 
@@ -539,7 +539,7 @@ class OneClassSVM(BaseLibSVM):
         BaseLibSVM.__init__(self, 'one_class', kernel, degree, gamma, coef0,
                              tol, 0.0, nu, 0.0, shrinking, False)
 
-    def fit(self, X, class_weight={}, sample_weight=[], **params):
+    def fit(self, X, class_weight={}, sample_weight=None, **params):
         """
         Detects the soft boundary of the set of samples X.
 
