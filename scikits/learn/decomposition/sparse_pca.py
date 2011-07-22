@@ -414,10 +414,11 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
     n_jobs: int,
         number of parallel jobs to run, or -1 to autodetect.
 
-    method: 'lars' | 'cd'
+    method: {'lars', 'cd'}
         lars: uses the least angle regression method (linear_model.lars_path)
-        cd: uses the stochastic gradient descent method to compute the
-            lasso solution (linear_model.Lasso)
+        cd: uses the coordinate descent method to compute the
+        Lasso solution (linear_model.Lasso). Lars will be faster if
+        the estimated components are sparse.
 
     iter_offset: int, default 0
         number of previous iterations completed on the dictionary used for
@@ -681,7 +682,7 @@ class MiniBatchSparsePCA(SparsePCA):
         callable that gets invoked every five iterations
 
     chunk_size: int,
-        the number of samples to take in each mini batch
+        the number of features to take in each mini batch
 
     verbose:
         degree of output the procedure will print
