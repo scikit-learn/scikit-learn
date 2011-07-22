@@ -252,6 +252,21 @@ enable only merging of neighboring pixels on an image, as in the
    Example of dimensionality reduction with feature agglomeration based on
    Ward hierarchical clustering.
 
+.. _dbscan:
+
+DBSCAN
+=======
+
+The :class:`DBSCAN` algorithm clusters data by finding core points which have
+many neighbours within a given radius. After a core point is found, the cluster
+is expanded by adding its neighbours to the current cluster and recusively
+checking if any are core points. Formally, a point is considered a core 
+point if it has more than min_points points which are of a similarity greater
+than the given threshold eps.
+
+.. topic:: Examples:
+
+ * :ref:`example_cluster_plot_dbscan.py`: Clustering synthetic data with DBSCAN
 
 Clustering performance evaluation
 =================================

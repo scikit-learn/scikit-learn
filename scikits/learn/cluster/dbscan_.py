@@ -62,7 +62,6 @@ def dbscan(X, eps=0.5, min_points=5, metric='euclidean',
     In: Proceedings of the 2nd International Conference on Knowledge Discovery
     and Data Mining, Portland, OR, AAAI Press, pp. 226–231. 1996
     """
-
     n = X.shape[0]
     # If index order not given, create random order.
     if index_order is None:
