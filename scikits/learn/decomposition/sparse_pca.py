@@ -365,7 +365,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
     """Sparse Principal Components Analysis (SparsePCA)
 
     Finds the set of sparse components that can optimally reconstruct the data.
-    The amount of sparseness is controllable by the coefficient of the \ell_1
+    The amount of sparseness is controllable by the coefficient of the L1
     penalty, given by the parameter alpha.
 
     Parameters
