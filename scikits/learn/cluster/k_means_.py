@@ -512,6 +512,46 @@ class KMeans(BaseEstimator):
             tol=self.tol, random_state=self.random_state, copy_x=self.copy_x)
         return self
 
+    def transform(self, Y, method='dot'):
+        """ Transforms Y based on the learnt cluster centroids
+
+            Parameters
+            ----------
+            Y : array, shape (n_points, n_features)
+                The data to be transformed using the k-means centers.
+                n_points is the number of new points to be transformed,
+                while n_features is the same as that of X given to the fit()
+                method. Any different size will raise a ValueError.
+            method: {'dot', 'vq'}
+                Method for transforming the points in Y.
+                dot performs a dot product of the centroids and the
+                transpose of Y.
+                vq performs vector quantization, returning the index
+                of the nearest centroid for each point.
+
+            Returns
+            -------
+            Z : array, shape dependent on method
+                The resulting transformation of Y given the cluster centers.
+                If the method is 'dot', the shape will be (n_points, k).
+                If the method is 'vq', the shape will be (n_points,)
+        """
+        if not hasattr(self, 'cluster_centers_'):
+            raise AttributeError("No cluster centroids found. Please train "
+                                 "using fit(X) before attempting a transform.")
+        cluster_shape = self.cluster_centers_.shape[1]
+        if not Y.shape[1] == cluster_shape:
+            raise ValueError("Incorrect number of features for points. "
+                             "Got %d features, expected %d" % (Y.shape[1],
+                                                               cluster_shape))
+        if method == 'dot':
+            return np.dot(Y, self.cluster_centers_.transform())
+        elif method == 'vq':
+            return _e_step(Y, self.cluster_centers_)[0]
+        else:
+            raise AttributeError("Invalid method given to transform. Value "
+                                 "given was %s" % method)
+
 
 def _mini_batch_step_dense(X, batch_slice, centers, counts, x_squared_norms):
     """Incremental update of the centers for the Minibatch K-Means algorithm
