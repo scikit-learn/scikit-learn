@@ -39,6 +39,7 @@ import os
 import urllib
 import logging
 import tarfile
+import warnings
 
 import numpy as np
 
@@ -144,4 +145,6 @@ def load_20newsgroups(download_if_missing=False, **kwargs):
     Check out fetch_20newsgroups.__doc__ for the documentation and parameters
     list.
     """
+    warnings.warn('load_20newsgroups is depreciated. Use fetch_20newsgroups',
+                  DeprecationWarning)
     return fetch_20newsgroups(download_if_missing=download_if_missing, **kwargs)
