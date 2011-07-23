@@ -661,7 +661,7 @@ class MiniBatchSparsePCA(SparsePCA):
     """Mini-batch Sparse Principal Components Analysis (MiniBatchSparsePCA)
 
     Finds the set of sparse components that can optimally reconstruct the data.
-    The amount of sparseness is controllable by the coefficient of the \ell_1
+    The amount of sparseness is controllable by the coefficient of the L1
     penalty, given by the parameter alpha.
 
     Parameters
