@@ -264,6 +264,12 @@ checking if any are core points. Formally, a point is considered a core
 point if it has more than min_points points which are of a similarity greater
 than the given threshold eps.
 
+.. |dbscan_results| image:: ../auto_examples/cluster/images/plot_dbscan_1.png
+        :target: ../auto_examples/cluster/plot_dbscan.html
+        :scale: 50
+
+.. centered:: |dbscan_results|
+
 .. topic:: Examples:
 
  * :ref:`example_cluster_plot_dbscan.py`: Clustering synthetic data with DBSCAN
