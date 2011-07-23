@@ -23,6 +23,10 @@ Kernel:
   A function which projects a vector into some higher dimensional space. See the
   documentation for SVMs for more info on kernels.
 
+Example
+-------
+
+
 References
 ----------
 [1] Yoshua Bengio, Olivier Delalleau, Nicolas Le Roux. In Semi-Supervised 
@@ -57,12 +61,15 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
 
     _default_alpha = 1
 
-    def __init__(self, kernel=None, sigma=None, alpha=None, max_iters=1000, convergence_threshold=1e-3):
+    def __init__(self, kernel=None, sigma=None, alpha=None, unlabeled_identifier=None, max_iters=1000, convergence_threshold=1e-3):
         self.max_iters, self.convergence_threshold = max_iters, convergence_threshold
         if sigma is None:
             self.sigma = DEFAULT_SIGMA
         else:
             self.sigma = sigma
+
+        # object referring to a point that is unlabeled
+        self.unlabeled_type = unlabeled_type
 
         if kernel is None:
             self.kernel = gen_gaussian_kernel(sigma=self.sigma)
@@ -115,7 +122,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         Examples
         --------
         >>> samples = [[1,0,0], [0,1,1], [0,1,0], [1,1,0], [0,0,1]]
-        >>> labels = [1, -1, -1]
+        >>> labels = [1, -1, -1, None, None]
         >>> label_prop_model = BaseLabelPropagation()
         >>> label_prop_model.fit(samples, labels)
 

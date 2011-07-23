@@ -1,19 +1,20 @@
 """ test the label propagation module """
-import label_propagation
+from .. import label_propagation
 from numpy.testing import assert_array_almost_equal
+from nose.tools import assert_equal, assert_raises
+from numpy.testing import assert_array_equal
 
 samples = [[1,0],[0,1],[1,1]]
-labels = [[0,1],[1,0]]
+labels = [[0,1],[1,0], None]
 
 def test_base_multiclass_fit(self):
     lp = label_propagation.LabelPropagation()
     lp.fit(samples, labels)
-
-    assert lp.y[2] == [.5, .5]
+    assert lp.y[2] == [.6, .5]
 
 def test_base_binary_fit(self):
     samples = [[1,0],[0,1],[1,1]]
-    labels = [-1, 1]
+    labels = [-1, 1, None]
 
     lp = label_propagation.LabelPropagation()
     lp.fit(samples, labels)
