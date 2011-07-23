@@ -319,7 +319,7 @@ setting Gaussian priors on the weights.
         - It adapts to the data at hand.
 
         - It can be used to include regularization parameters in the
-        estimation procedure.
+          estimation procedure.
 
     The disadvantages of *Bayesian Regression* include:
 
