@@ -186,6 +186,20 @@ of possible values.
   * :ref:`example_linear_model_lasso_and_elasticnet.py`,
   * :ref:`example_linear_model_lasso_path_with_crossvalidation.py`
 
+Setting `alpha`
+-----------------
+
+The scikit exposes objects that set the Lasso `alpha` parameter by
+cross-validation: :class:`LassoCV` and :class:`LassoLarsCV`.
+:class:`LassoLarsCV` is based on the _least_angle_regression algorithm
+explained below.
+
+For high-dimensional datasets with many collinear regressors,
+:class:`LassoCV` is most often preferrable. How, :class:`LassoLarsCV` has
+the advantage of exploring more relevant values of `alpha` parameter, and 
+if the number of samples is very small compared to the number of
+observations, it is often faster than :class:`LassoCV`.
+
 
 Elastic Net
 ===========

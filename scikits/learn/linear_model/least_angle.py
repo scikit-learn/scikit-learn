@@ -792,11 +792,23 @@ class LassoLarsCV(LarsCV):
         the mean square error on left-out for each fold along the path
         (alpha values given by cv_alphas)
 
+
+    Notes
+    -----
+
+    The object solves the same problem as the LassoCV object. However,
+    unlike the LassoCV, it find the relevent alphas values by itself.
+    In general, because of this property, it will be more stable.
+    However, it is more fragile to heavily multicollinear datasets.
+    
+    It is more efficient than the LassoCV if only a small number of
+    features are selected compared to the total number, for instance if
+    there are very few samples compared to the number of features.
+
     See also
     --------
-    lars_path, LassoLARS, LarsCV
+    lars_path, LassoLARS, LarsCV, LassoCV
     """
-
 
     method = 'lasso'
 
