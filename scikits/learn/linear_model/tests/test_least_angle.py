@@ -165,22 +165,20 @@ def test_lars_n_nonzero_coefs(verbose=False):
 
 
 def test_lars_cv():
-    """ Test the LarsCV object by checking that the optimal alpha
+    """ Test the LassoLarsCV object by checking that the optimal alpha
         increases as the number of samples increases.
 
         This property is not actualy garantied in general and is just a
         property of the given dataset, with the given steps chosen.
     """
-    X = diabetes.data[:200]
-    y = diabetes.target[:200]
-    old_alpha = np.inf
-    lars_cv = linear_model.LarsCV()
-    for i in range(len(X)//80 - 2):
+    old_alpha = 0
+    lars_cv = linear_model.LassoLarsCV()
+    for length in (400, 200, 100):
+        X = diabetes.data[:length]
+        y = diabetes.target[:length]
         lars_cv.fit(X, y)
-        np.testing.assert_array_less(lars_cv.alpha, old_alpha, )
+        np.testing.assert_array_less(old_alpha, lars_cv.alpha)
         old_alpha = lars_cv.alpha
-        X = X[80:]
-        y = y[80:]
 
 
 if __name__ == '__main__':
