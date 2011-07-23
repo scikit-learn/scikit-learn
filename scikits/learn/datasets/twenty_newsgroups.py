@@ -40,6 +40,8 @@ import urllib
 import logging
 import tarfile
 
+import numpy as np
+
 from .base import get_data_home
 from .base import load_filenames
 
@@ -60,9 +62,9 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
 
     Parameters
     ----------
-    subset: 'train' or 'test', optional
+    subset: 'train' or 'test', 'all', optional
         Select the dataset to load: 'train' for the training set, 'test'
-        for the test set.
+        for the test set, 'all' for both, with shuffled ordering.
 
     data_home: optional, default: None
         Specify an download and cache folder for the datasets. If None,
@@ -96,7 +98,6 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
         os.makedirs(twenty_home)
 
     if not os.path.exists(train_path) or not os.path.exists(test_path):
-
         if not os.path.exists(archive_path):
             if download_if_missing:
                 logger.warn("Downloading dataset from %s (14 MB)", URL)
@@ -109,17 +110,32 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
         tarfile.open(archive_path, "r:gz").extractall(path=twenty_home)
         os.remove(archive_path)
 
-    if subset == 'train':
-        folder_path = train_path
-    elif subset == 'test':
-        folder_path = test_path
-    else:
+    if subset in ('train', 'test'):
+        if subset == 'train':
+            folder_path = train_path
+        elif subset == 'test':
+            folder_path = test_path
+        description = subset + ' subset of the 20 newsgroups by date dataset'
+        return load_filenames(folder_path, description=description,
+                            categories=categories, shuffle=shuffle, 
+                            random_state=random_state)
+    elif not subset == 'all':
         raise ValueError(
-            "subset can only be 'train' or 'test', got '%s'" % subset)
+            "subset can only be 'train', 'test' or 'all', got '%s'" % subset)
 
-    description = subset + ' subset of the 20 newsgroups by date dataset'
-    return load_filenames(folder_path, description=description,
-                          categories=categories, shuffle=shuffle, random_state=random_state)
+    filenames = list()
+    target = list()
+    for folder_path in (train_path, test_path):
+        data = load_filenames(folder_path, categories=categories,
+                              shuffle=shuffle,
+                              random_state=random_state)
+        filenames.extend(data.filenames)
+        target.extend(data.target)
+
+    data.filenames = np.array(filenames)
+    data.target = np.array(target)
+    data.description = 'the 20 newsgroups by date dataset'
+    return data
 
 
 def load_20newsgroups(download_if_missing=False, **kwargs):
