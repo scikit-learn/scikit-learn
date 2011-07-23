@@ -307,10 +307,12 @@ Bayesian Regression
 ===================
 
 Bayesian regression techniques can be used to include regularization
-parameters in the estimation procedure. This can be done by
-introducing some prior knowledge over the parameters.  For example,
-penalization by weighted :math:`\ell_{2}` norm is equivalent to
-setting Gaussian priors on the weights.
+parameters in the estimation procedure: the regularization parameter is
+not set in a hard sens but tuned to the data at hand. 
+
+This can be done by introducing some prior knowledge over the parameters.
+For example, penalization by weighted :math:`\ell_{2}` norm is equivalent
+to setting Gaussian priors on the weights.
 
 .. topic:: **Pros and cons of Bayesian regression**
 
