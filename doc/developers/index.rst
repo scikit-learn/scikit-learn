@@ -189,6 +189,13 @@ For building the documentation, you will need `sphinx
 <http://sphinx.pocoo.org/>`_ and `matplotlib
 <http://matplotlib.sourceforge.net/>`_.
 
+When you are writing documentation, it is important to keep a good
+compromise between mathematical and algorithmic details, and giving
+intuitions to the reader on what the algorithm does. It is best to always
+start with a small paragraph with a hand waiving explanation of what the
+method does to the data and a figure (coming from an example) ilustrating
+it.
+
 .. warning:: **Sphinx version**
 
    While we do our best to have the documentation build under as many
