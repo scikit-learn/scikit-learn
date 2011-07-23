@@ -358,11 +358,16 @@ class FastICA(BaseEstimator):
 
     def fit(self, X, **params):
         self._set_params(**params)
-        whitening_, unmixing_, sources_ = fastica(X, self.n_components,
+        decomposition_ = fastica(X, self.n_components,
                         self.algorithm, self.whiten,
                         self.fun, self.fun_prime, self.fun_args, self.max_iter,
                         self.tol, self.w_init)
-        self.unmixing_matrix_ = np.dot(unmixing_, whitening_)
+        if self.whiten:
+            whitening_, unmixing_, sources_ = decomposition_    
+            self.unmixing_matrix_ = np.dot(unmixing_, whitening_)            
+        else:
+            unmixing_, sources_ = decomposition_    
+            self.unmixing_matrix_ = unmixing_   
         self.components_ = sources_
         return self
 
