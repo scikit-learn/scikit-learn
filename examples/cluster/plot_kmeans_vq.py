@@ -1,14 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-===================================
-Demo of DBSCAN clustering algorithm
-===================================
-
-Reference:
-Ester, M., H. P. Kriegel, J. Sander, and X. Xu, “A Density-Based
-Algorithm for Discovering Clusters in Large Spatial Databases with Noise”.
-In: Proceedings of the 2nd International Conference on Knowledge Discovery
-and Data Mining, Portland, OR, AAAI Press, pp. 226–231. 2006
+=============================================================
+Demo of K-means clustering algorithm with Vector Quantisation
+=============================================================
 
 """
 print __doc__
@@ -27,7 +21,7 @@ X, labels_true = make_blobs(n_samples=300, centers=centers, cluster_std=0.5)
 
 
 ##############################################################################
-# Compute DBSCAN
+# Compute k-means model
 km = KMeans().fit(X, k=3)
 centroids = km.cluster_centers_
 labels = km.labels_
