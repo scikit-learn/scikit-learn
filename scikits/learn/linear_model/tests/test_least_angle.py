@@ -164,6 +164,25 @@ def test_lars_n_nonzero_coefs(verbose=False):
     assert len(lars.coef_.nonzero()[0]) == 6
 
 
+def test_lars_cv():
+    """ Test the LarsCV object by checking that the optimal alpha
+        increases as the number of samples increases.
+
+        This property is not actualy garantied in general and is just a
+        property of the given dataset, with the given steps chosen.
+    """
+    X = diabetes.data[:200]
+    y = diabetes.target[:200]
+    old_alpha = np.inf
+    lars_cv = linear_model.LarsCV()
+    for i in range(len(X)//80 - 2):
+        lars_cv.fit(X, y)
+        np.testing.assert_array_less(lars_cv.alpha, old_alpha, )
+        old_alpha = lars_cv.alpha
+        X = X[80:]
+        y = y[80:]
+
+
 if __name__ == '__main__':
     import nose
     nose.runmodule()
