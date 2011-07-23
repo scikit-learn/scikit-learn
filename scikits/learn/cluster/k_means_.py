@@ -617,8 +617,8 @@ def _mini_batch_step_sparse(X, batch_slice, centers, counts, x_squared_norms):
     cache = _euclidean_distances_sparse(centers, X[batch_slice],
               x_squared_norms[batch_slice]).argmin(axis=0).astype(np.int32)
 
-    _k_means._mini_batch_update_sparse(X.data, X.indices, X.indptr, batch_slice,
-                                       centers, counts, cache)
+    _k_means._mini_batch_update_sparse(X.data, X.indices, X.indptr,
+                                       batch_slice, centers, counts, cache)
 
 
 def _euclidean_distances_sparse(X, Y, y_squared_norms=None, squared=False):
