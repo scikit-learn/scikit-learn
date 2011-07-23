@@ -98,7 +98,6 @@ def l1_distances(X, Y):
 
     Parameters
     ----------
-
     X: array_like
         An array with shape (n_samples_X, n_features)
 
@@ -107,13 +106,12 @@ def l1_distances(X, Y):
 
     Returns
     -------
-
     D: array with shape (n_samples_X * n_samples_Y, n_features)
         The array of componentwise L1 pairwise-distances.
 
     Examples
     --------
-
+    >>> from scikits.learn.metrics.pairwise import l1_distances
     >>> l1_distances(3, 3)
     array([[0]])
     >>> l1_distances(3, 2)

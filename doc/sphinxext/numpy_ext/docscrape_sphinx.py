@@ -4,6 +4,7 @@ from docscrape import NumpyDocString, FunctionDoc, ClassDoc
 
 class SphinxDocString(NumpyDocString):
     def __init__(self, docstring, config={}):
+        config = {} if config is None else config
         self.use_plots = config.get('use_plots', False)
         NumpyDocString.__init__(self, docstring, config=config)
 

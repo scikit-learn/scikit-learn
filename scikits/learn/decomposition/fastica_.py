@@ -343,7 +343,7 @@ class FastICA(BaseEstimator):
     """
 
     def __init__(self, n_components=None, algorithm='parallel', whiten=True,
-                 fun='logcosh', fun_prime='', fun_args={}, max_iter=200,
+                 fun='logcosh', fun_prime='', fun_args=None, max_iter=200,
                  tol=1e-4, w_init=None):
         super(FastICA, self).__init__()
         self.n_components = n_components
@@ -351,7 +351,7 @@ class FastICA(BaseEstimator):
         self.whiten = whiten
         self.fun = fun
         self.fun_prime = fun_prime
-        self.fun_args = fun_args
+        self.fun_args = {} if fun_args is None else fun_args
         self.max_iter = max_iter
         self.tol = tol
         self.w_init = w_init
