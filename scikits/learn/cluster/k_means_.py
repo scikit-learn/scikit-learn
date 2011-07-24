@@ -517,9 +517,9 @@ class KMeans(BaseEstimator):
 
             Parameters
             ----------
-            Y : array, shape (n_points, n_features)
+            Y : array, shape (n_samples, n_features)
                 The data to be transformed using the k-means centers.
-                n_points is the number of new points to be transformed,
+                n_samples is the number of new points to be transformed,
                 while n_features is the same as that of X given to the fit()
                 method. Any different size will raise a ValueError.
             method: {'vq', 'dot'}
@@ -535,8 +535,8 @@ class KMeans(BaseEstimator):
             -------
             Z : array, shape dependent on method
                 The resulting transformation of Y given the cluster centers.
-                If the method is 'dot', the shape will be (n_points, k).
-                If the method is 'vq', the shape will be (n_points,)
+                If the method is 'dot', the shape will be (n_samples, k).
+                If the method is 'vq', the shape will be (n_samples,)
         """
         if not hasattr(self, 'cluster_centers_'):
             raise AttributeError("No cluster centroids found. Please train "
