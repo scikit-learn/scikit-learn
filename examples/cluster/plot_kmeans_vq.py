@@ -8,71 +8,54 @@ Demo of K-means clustering algorithm with Vector Quantisation
 print __doc__
 
 import numpy as np
-from scipy.spatial import distance
-from scikits.learn.cluster import KMeans
+import pylab as pl
+from scikits.learn import datasets
 from scikits.learn import metrics
-from scikits.learn.datasets.samples_generator import make_blobs
+from scikits.learn.cluster import KMeans
 
+# Sample data taken from the Iris dataset.
+iris = datasets.load_iris()
+# These two features provide good basic separation of Iris.
+# Features (0, 3) is better, but this graph looks better as an example of VQ.
+X = iris.data[:, (1, 3)]
+Y = iris.target
+# Step size of the mesh.
+h = .02
 
-##############################################################################
-# Generate sample data
-centers = [[1, 1], [-1, -1], [1, -1]]
-X, labels_true = make_blobs(n_samples=300, centers=centers, cluster_std=0.5)
-
-
-##############################################################################
-# Compute k-means model
+# Compute a k-means model on the data.
 km = KMeans().fit(X, k=3)
 centroids = km.cluster_centers_
 labels = km.labels_
 
-# Number of clusters in labels
+# Number of clusters in labels.
 n_clusters_ = len(set(labels))
 
+# Print some descriptive statistics about the quality of the clusters.
 print 'Estimated number of clusters: %d' % n_clusters_
-print "Homogeneity: %0.3f" % metrics.homogeneity_score(labels_true, labels)
-print "Completeness: %0.3f" % metrics.completeness_score(labels_true, labels)
-print "V-measure: %0.3f" % metrics.v_measure_score(labels_true, labels)
-
-##############################################################################
-# Plot result
-import pylab as pl
-from itertools import cycle
-
-pl.close('all')
-pl.figure(1)
-pl.clf()
-
-colors = 'bgrcmybgrcmybgrcmybgrcmy'
-
-# Plot the background image
-# make these smaller to increase the resolution
-dx, dy = 0.1, 0.1
-x_values = np.arange(-3.0, 3.0, dx)
-y_values = np.arange(-3.0, 3.0, dy)
-markersize = 9
-for x in x_values:
-    for y in y_values:
-        point = np.array([[x, y],])
-        label = km.transform(point, method='vq')[0]
-        pl.plot(x, y, 'o', markerfacecolor=colors[label],
-                markeredgecolor=colors[label], markersize=markersize)
-        
+print "Homogeneity: %0.3f" % metrics.homogeneity_score(Y, labels)
+print "Completeness: %0.3f" % metrics.completeness_score(Y, labels)
+print "V-measure: %0.3f" % metrics.v_measure_score(Y, labels)
 
 
-# Overlay the original points
-markersize = 6
-for k, col in zip(set(labels), colors):
-    class_members = [index[0] for index in np.argwhere(labels == k)]
-    for index in class_members:
-        x = X[index]
-        pl.plot(x[0], x[1], 'o', markerfacecolor=col,
-                markeredgecolor='k', markersize=markersize)
+# Plot the decision boundary. For that, we will asign a color to each
+# point in the mesh [x_min, m_max]x[y_min, y_max].
+x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
+y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
+xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
+Z = km.transform(np.c_[xx.ravel(), yy.ravel()], method='vq')
 
-# Overlay the centroids
-markersize = 12
-for center in km.cluster_centers_:
-    pl.plot(center[0], center[1], 'o', markerfacecolor='k',
-            markeredgecolor='k', markersize=markersize)
-pl.title('Estimated number of clusters: %d' % n_clusters_)
+# Put the result into a color plot
+Z = Z.reshape(xx.shape)
+pl.set_cmap(pl.cm.Paired)
+pl.pcolormesh(xx, yy, Z)
+
+# Plot also the training points
+pl.scatter(X[:, 0], X[:, 1], c=Y, marker='o', s=72)
+# Plot the centroids a bit larger, only as an X
+pl.scatter(centroids[:, 0], centroids[:, 1],
+           marker='x', s=169, linewidths=3,
+           color='w')
+pl.title('K-means clustering algorithm with Vector Quantisation\n'
+         'Centroids are marked with white cross')
+pl.axis('tight')
 pl.show()
