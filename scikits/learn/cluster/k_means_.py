@@ -522,12 +522,14 @@ class KMeans(BaseEstimator):
                 n_points is the number of new points to be transformed,
                 while n_features is the same as that of X given to the fit()
                 method. Any different size will raise a ValueError.
-            method: {'dot', 'vq'}
+            method: {'vq', 'dot'}
                 Method for transforming the points in Y.
+                vq (default) performs vector quantization, returning the index
+                of the nearest centroid for each point. This action corresponds
+                to running the kmeans._e_step function on the given data and
+                the existing centroids and returning the labels.
                 dot performs a dot product of the centroids and the
                 transpose of Y.
-                vq performs vector quantization, returning the index
-                of the nearest centroid for each point.
 
             Returns
             -------
