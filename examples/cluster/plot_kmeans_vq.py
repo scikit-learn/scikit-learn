@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 =============================================================
-Demo of K-means clustering algorithm with Vector Quantisation
+Demo of K-means clustering algorithm with Vector Quantization
 =============================================================
 
 """
@@ -55,7 +55,7 @@ pl.scatter(X[:, 0], X[:, 1], c=Y, marker='o', s=72)
 pl.scatter(centroids[:, 0], centroids[:, 1],
            marker='x', s=169, linewidths=3,
            color='w')
-pl.title('K-means clustering algorithm with Vector Quantisation\n'
+pl.title('K-means clustering algorithm with Vector Quantization\n'
          'Centroids are marked with white cross')
 pl.axis('tight')
 pl.show()
