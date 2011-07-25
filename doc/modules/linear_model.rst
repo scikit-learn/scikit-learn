@@ -148,6 +148,8 @@ as GridSearchCV except that it defaults to Generalized Cross-Validation
       `course slides
       <http://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf>`_).
 
+:: _lasso:
+
 Lasso
 =====
 
@@ -301,7 +303,45 @@ column is always zero.
    <http://www-stat.stanford.edu/~hastie/Papers/LARS/LeastAngle_2002.pdf>`_
    by Hastie et al.
 
+.. OMP:
 
+Orthogonal Matching Pursuit (OMP)
+=================================
+:func:`orthogonal_mp` implements the OMP algorithm for approximating the fit of
+a linear model with constraints imposed on the number of non-zero coefficients
+(ie. the L :sub:`0` pseudo-norm). 
+
+While :ref:`Lasso`-style penalties do tend to shrink coefficients towards zero,
+there is no direct relationship between the Lasso penalty coefficient and the
+sparseness of the solution vector. Orthogonal matching pursuit can approximate
+the optimum solution vector with a fixed number of non-zero elements:
+
+.. math:: \text{arg\,min} ||y - X\gamma||_2^2 \text{ subject to } ||\gamma||_0 \leq n_{atoms}
+
+Alternatively, orthogonal matching pursuit can target a specific error instead
+of a specific number of non-zero coefficients. This can be expressed as:
+
+.. math:: \text{arg\,min} ||\gamma||_0 \text{ subject to } ||y-X\gamma||_2^2 \leq \varepsilon
+
+
+OMP is based on a greedy algorithm that includes at each step the atom most
+highly correlated with the current residual. It is similar to the simpler
+matching pursuit (MP) method, but better in that at each iteration, the
+residual is recomputed using an orthogonal projection on the space of the
+chosen dictionary elements. 
+
+
+.. topic:: Examples:
+
+ * :ref:`example_linear_model_plot_omp.py`
+
+.. topic:: References:
+
+ * http://www.cs.technion.ac.il/~ronrubin/Publications/KSVX-OMP-v2.pdf
+
+ * `Matching pursuits with time-frequency dictionaries
+   <http://blanche.polytechnique.fr/~mallat/papiers/MallatPursuit93.pdf>`_,
+   S. G. Mallat, Z. Zhang, 
 
 Bayesian Regression
 ===================
@@ -312,39 +352,24 @@ introducing some prior knowledge over the parameters.  For example,
 penalization by weighted :math:`\ell_{2}` norm is equivalent to
 setting Gaussian priors on the weights.
 
-.. topic:: **Pros and cons of Bayesian regression**
+The advantages of *Bayesian Regression* are:
 
-    The advantages of *Bayesian Regression* are:
+    - It adapts to the data at hand.
 
-        - It adapts to the data at hand.
+    - It can be used to include regularization parameters in the
+      estimation procedure.
 
-        - It can be used to include regularization parameters in the
-          estimation procedure.
+The disadvantages of *Bayesian Regression* include:
 
-    The disadvantages of *Bayesian Regression* include:
+    - Inference of the model can be time consuming.
 
-        - Inference of the model can be time consuming.
-
-
-.. _bayesian_ridge_regression:
 
 Bayesian Ridge Regression
 -------------------------
 
-:class:`BayesianRidge` is a ridge estimator: a shrinks the coefficients
-(model weights) toward 0. The amount of shrinking is set from the data
-and controlled by a soft prior:
-
-.. figure:: ../auto_examples/linear_model/images/plot_bayesian_ridge_1.png
-   :target: ../auto_examples/linear_model/plot_bayesian_ridge.html
-   :align: center
-   :scale: 80
-
-   Weights: a comparison of ground truth, ordinary least square and 
-   bayesian ridge estimates.
-
-It tries to avoid the overfit issue of :ref:`ordinary_least_squares`, by
-adding the following prior on :math:`\beta`:
+:class:`BayesianRidge` tries to avoid the overfit issue of
+:ref:`ordinary_least_squares`, by adding the following prior on
+:math:`\beta`:
 
 .. math:: p(\beta|\lambda) =
     \mathcal{N}(\beta|0,\lambda^{-1}\bold{I_{p}})
@@ -358,10 +383,8 @@ Gaussian is narrowed around 0 which does not allow large values of
 :math:`\beta`, and with low value of :math:`\lambda`, the Gaussian is
 very flattened which allows values of :math:`\beta`.  Here, we use a
 *non-informative* prior for :math:`\lambda`.
-
-The parameters are estimated by iteratively maximizing the *marginal log
-likelihood*. There is also a Gamma prior for :math:`\lambda` and
-:math:`\alpha`:
+The parameters are estimated by maximizing the *marginal log likelihood*.
+There is also a Gamma prior for :math:`\lambda` and :math:`\alpha`:
 
 .. math:: g(\alpha|\alpha_1,\alpha_2) = \frac{\alpha_2^{\alpha_1}}
     {\Gamma(\alpha_1)} \alpha^{\alpha_1-1} e^{-\alpha_2 {\alpha}}
@@ -370,11 +393,17 @@ likelihood*. There is also a Gamma prior for :math:`\lambda` and
 .. math:: g(\lambda|\lambda_1,\lambda_2) = \frac{\lambda_2^{\lambda_1}}
     {\Gamma(\lambda_1)} \lambda^{\lambda_1-1} e^{-\lambda_2 {\lambda}}
 
-By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e^{-6}`, 
-*i.e.* very slightly informative priors.
+By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e^{-6}`, *i.e.*
+ very slightly informative priors.
 
 
-*Bayesian Ridge Regression* is used for regression::
+
+.. figure:: ../auto_examples/linear_model/images/plot_bayesian_ridge_1.png
+   :target: ../auto_examples/linear_model/plot_bayesian_ridge.html
+   :align: center
+
+
+*Bayesian Ridge Regression* is used for regression:
 
     >>> from scikits.learn import linear_model
     >>> X = [[0., 0.], [1., 1.], [2., 2.], [3., 3.]]
@@ -409,23 +438,13 @@ Regression* is more robust to ill-posed problem.
   * More details can be found in the article `Bayesian Interpolation <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.27.9072&rep=rep1&type=pdf>`_
     by MacKay, David J. C.
 
-.. _automatic_relevance_determination:
+
 
 Automatic Relevance Determination - ARD
 =======================================
 
-:class:`ARDRegression` adds a more sophisticated prior on the
-coefficients :math:`\beta` that tends to make them sparse.
-
-.. figure:: ../auto_examples/linear_model/images/plot_ard_1.png
-   :target: ../auto_examples/linear_model/plot_ard.html
-   :align: center
-   :scale: 80
-
-   Weights: a comparison of ground truth, ordinary least square and 
-   ARD estimates.
-
-Techinally, each weight :math:`\beta_{i}` is assumed to be drawn in a
+:class:`ARDRegression` adds a more sophisticated prior :math:`\beta`,
+where we assume that each weight :math:`\beta_{i}` is drawn in a
 Gaussian distribution, centered on zero and with a precision
 :math:`\lambda_{i}`:
 
@@ -441,8 +460,13 @@ There is also a Gamma prior for :math:`\lambda` and :math:`\alpha`:
 .. math:: g(\lambda|\lambda_1,\lambda_2) = \frac{\lambda_2^{\lambda_1}}
     {\Gamma(\lambda_1)} \lambda^{\lambda_1-1} e^{-\lambda_2 {\lambda}}
 
-By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e-6`, 
-*i.e.* very slightly informative priors.
+By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e-6`, *i.e.*
+ very slightly informative priors.
+
+
+.. figure:: ../auto_examples/linear_model/images/plot_ard_1.png
+   :target: ../auto_examples/linear_model/plot_ard.html
+   :align: center
 
 
 .. topic:: Examples:
