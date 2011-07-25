@@ -403,7 +403,7 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', reg=1e-3):
     mode : {'connectivity', 'distance', 'barycenter'}, optional
         Type of returned matrix: 'connectivity' will return the
         connectivity matrix with ones and zeros, in 'distance' the
-        edges are euclidian distance between points. In 'barycenter'
+        edges are Euclidean distance between points. In 'barycenter'
         they are the weights that best reconstruncts the point from
         its nearest neighbors.
 
@@ -485,7 +485,7 @@ def radius_neighbors_graph(X, radius, mode='connectivity'):
     mode : {'connectivity', 'distance'}, optional
         Type of returned matrix: 'connectivity' will return the
         connectivity matrix with ones and zeros, in 'distance' the
-        edges are euclidian distance between points.
+        edges are Euclidean distance between points.
 
     Returns
     -------

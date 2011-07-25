@@ -6,7 +6,7 @@
 
 import numpy as np
 from scipy.sparse import csr_matrix, issparse
-from ..utils import safe_asanyarray, atleast2d_or_csr
+from ..utils import safe_asanyarray, atleast2d_or_csr, deprecated
 from ..utils.extmath import safe_sparse_dot
 
 ################################################################################
@@ -89,7 +89,11 @@ def euclidean_distances(X, Y, Y_norm_squared=None, squared=False):
     distances = np.maximum(distances, 0)
     return distances if squared else np.sqrt(distances)
 
-euclidian_distances = euclidean_distances  # both spelling for backward compat
+
+@deprecated("use euclidean_distances instead")
+def euclidian_distances(*args, **kwargs):
+    return euclidean_distances(*args, **kwargs)
+
 
 def l1_distances(X, Y):
     """
@@ -98,7 +102,6 @@ def l1_distances(X, Y):
 
     Parameters
     ----------
-
     X: array_like
         An array with shape (n_samples_X, n_features)
 
@@ -107,13 +110,12 @@ def l1_distances(X, Y):
 
     Returns
     -------
-
     D: array with shape (n_samples_X * n_samples_Y, n_features)
         The array of componentwise L1 pairwise-distances.
 
     Examples
     --------
-
+    >>> from scikits.learn.metrics.pairwise import l1_distances
     >>> l1_distances(3, 3)
     array([[0]])
     >>> l1_distances(3, 2)

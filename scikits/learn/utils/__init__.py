@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.sparse as sp
+import warnings
 
 _FLOAT_CODES = np.typecodes['AllFloat']
 
@@ -109,6 +110,70 @@ def check_arrays(*arrays, **options):
         checked_arrays.append(array)
 
     return checked_arrays
+
+
+class deprecated(object):
+    """Decorator to mark a function as deprecated.
+
+    Prints a warning when the function fun is called and adds a warning to the
+    docstring. Can be used on methods; applying this to a class's __init__
+    deprecates the entire class.
+
+    The optional extra argument will be appended to the deprecation message
+    and the docstring. Note: to use this with the default value for extra, put
+    in an empty of parentheses:
+
+    >>> from scikits.learn.utils import deprecated
+    >>> @deprecated()
+    ... def some_function(): pass
+    """
+
+    # Adapted from http://wiki.python.org/moin/PythonDecoratorLibrary,
+    # but with many changes.
+
+    def __init__(self, extra=''):
+        self.extra = extra
+
+    def __call__(self, fun):
+        """Decorate function fun"""
+
+        is_method = hasattr(fun, "im_class")
+        is_init = is_method and name == "__init__"
+
+        if is_init:
+            what = "Class %s" % fun.im_class
+        elif is_method:
+            what = "Method %s.%s" % (fun.im_class, fun.__name__)
+        else:
+            what = "Function %s" % fun.__name__
+
+        msg = "%s is deprecated" % what
+        if self.extra:
+            msg += "; %s" % self.extra
+
+        def wrapped(*args, **kwargs):
+            warnings.warn(msg, category=DeprecationWarning)
+            return fun(*args, **kwargs)
+
+        wrapped.__name__ = fun.__name__
+        wrapped.__dict__ = fun.__dict__
+
+        newdoc = self._update_docstring(fun, is_init)
+        if is_init:
+            wrapped.im_class.__doc__ = newdoc
+        else:
+            wrapped.__doc__ = newdoc
+
+        return wrapped
+
+    def _update_docstring(self, fun, is_init):
+        olddoc = fun.im_class.__doc__ if is_init else fun.__doc__
+        newdoc = "DEPRECATED"
+        if self.extra:
+            newdoc = "%s: %s" % (newdoc, self.extra)
+        if olddoc:
+            newdoc = "%s\n\n%s" % (newdoc, olddoc)
+        return newdoc
 
 
 def resample(*arrays, **options):
@@ -284,8 +349,8 @@ def gen_even_slices(n, n_packs):
     """Generator to create n_packs slices going up to n.
 
     Examples
-    ========
-
+    --------
+    >>> from scikits.learn.utils import gen_even_slices
     >>> list(gen_even_slices(10, 1))
     [slice(0, 10, None)]
     >>> list(gen_even_slices(10, 10))                     #doctest: +ELLIPSIS
@@ -294,7 +359,6 @@ def gen_even_slices(n, n_packs):
     [slice(0, 2, None), slice(2, 4, None), ..., slice(8, 10, None)]
     >>> list(gen_even_slices(10, 3))
     [slice(0, 4, None), slice(4, 7, None), slice(7, 10, None)]
-
     """
     start = 0
     for pack_num in range(n_packs):
