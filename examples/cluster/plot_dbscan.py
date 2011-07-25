@@ -23,7 +23,7 @@ from scikits.learn.datasets.samples_generator import make_blobs
 ##############################################################################
 # Generate sample data
 centers = [[1, 1], [-1, -1], [1, -1]]
-X, labels_true = make_blobs(n_samples=300, centers=centers, cluster_std=0.4)
+X, labels_true = make_blobs(n_samples=750, centers=centers, cluster_std=0.4)
 
 ##############################################################################
 # Compute similarities
@@ -32,7 +32,7 @@ S = 1 - (D / np.max(D))
 
 ##############################################################################
 # Compute DBSCAN
-db = DBSCAN().fit(S, eps=0.95, min_points=5)
+db = DBSCAN().fit(S, eps=0.95, min_points=10)
 core_points = db.core_points_
 labels = db.labels_
 
