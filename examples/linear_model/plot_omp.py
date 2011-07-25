@@ -42,9 +42,7 @@ pl.stem(idx, gamma[idx])
 # plot the noise-free reconstruction
 ####################################
 x_r = orthogonal_mp(X, y, n_atoms)
-idx_r = np.where(x_r != 0)[0]
-print idx_r
-print x_r[idx_r]
+idx_r, = np.where(x_r != 0)
 pl.subplot(3, 1, 2)
 pl.title("Recovered signal from noise-free measurements")
 pl.stem(idx_r, x_r[idx_r])
@@ -52,7 +50,7 @@ pl.stem(idx_r, x_r[idx_r])
 # plot the noisy reconstruction
 ###############################
 x_r = orthogonal_mp(X, y_noisy, n_atoms)
-idx_r = np.where(x_r != 0)[0]
+idx_r, = np.where(x_r != 0)
 pl.subplot(3, 1, 3)
 pl.title("Recovered signal from noisy measurements")
 pl.stem(idx_r, x_r[idx_r])
