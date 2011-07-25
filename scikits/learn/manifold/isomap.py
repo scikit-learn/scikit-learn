@@ -72,8 +72,8 @@ def isomap(X, n_neighbors, out_dim, eigen_solver='dense',
 
     # now compute tau = -0.5 * H.(G^2).H where H = (I - 1/N)
     G **= 2
-    HG = G - G.mean(0)[:, None]
-    HGH = HG - HG.mean(1)
+    HG = G - G.mean(0)
+    HGH = HG - HG.mean(1)[:,None]
     tau = -0.5 * HGH
 
     # compute the out_dim largest eigenvalues and vectors of tau
