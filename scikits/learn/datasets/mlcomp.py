@@ -3,7 +3,6 @@
 """Glue code to load http://mlcomp.org data as a scikit.learn dataset"""
 
 import os
-import numpy as np
 from scikits.learn.datasets.base import load_filenames
 
 

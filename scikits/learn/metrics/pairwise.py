@@ -6,7 +6,7 @@
 
 import numpy as np
 from scipy.sparse import csr_matrix, issparse
-from ..utils import safe_asanyarray, atleast2d_or_csr
+from ..utils import safe_asanyarray, atleast2d_or_csr, deprecated
 from ..utils.extmath import safe_sparse_dot
 
 ################################################################################
@@ -89,7 +89,11 @@ def euclidean_distances(X, Y, Y_norm_squared=None, squared=False):
     distances = np.maximum(distances, 0)
     return distances if squared else np.sqrt(distances)
 
-euclidian_distances = euclidean_distances  # both spelling for backward compat
+
+@deprecated("use euclidean_distances instead")
+def euclidian_distances(*args, **kwargs):
+    return euclidean_distances(*args, **kwargs)
+
 
 def l1_distances(X, Y):
     """
