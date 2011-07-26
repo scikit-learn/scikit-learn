@@ -188,11 +188,11 @@ class BayesianRidge(LinearModel):
                 s = lambda_1 * log(lambda_) - lambda_2 * lambda_
                 s += alpha_1 * log(alpha_) - alpha_2 * alpha_
                 s += 0.5 * (n_features * log(lambda_)
-                               + 0.5 * n_samples * log(alpha_)
-                               - 0.5 * alpha_ * rmse_
-                               - 0.5 * (lambda_ * np.sum(coef_ ** 2))
-                               - 0.5 * logdet_sigma_
-                               - 0.5 * n_samples * log(2 * np.pi))
+                               + n_samples * log(alpha_)
+                               - alpha_ * rmse_
+                               - (lambda_ * np.sum(coef_ ** 2))
+                               - logdet_sigma_
+                               - n_samples * log(2 * np.pi))
                 self.scores_.append(s)
 
             ### Check for convergence
