@@ -37,7 +37,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None, max_iter=500,
 
     Gram: None, 'auto', array, shape: (n_features, n_features), optional
         Precomputed Gram matrix (X' * X), if 'auto', the Gram
-        matrix is precomputed from the given X, if there are more samples 
+        matrix is precomputed from the given X, if there are more samples
         than features
 
     alpha_min: float, optional
@@ -132,10 +132,10 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None, max_iter=500,
             if n_iter > 0:
                 # In the first iteration, all alphas are zero, the formula
                 # below would make ss a NaN
-                ss = (alphas[n_iter-1] - alpha_min) / (alphas[n_iter-1] -
+                ss = (alphas[n_iter - 1] - alpha_min) / (alphas[n_iter - 1] -
                                                     alphas[n_iter])
-                coefs[n_iter] = coefs[n_iter-1] + ss*(coefs[n_iter] -
-                                coefs[n_iter-1])
+                coefs[n_iter] = coefs[n_iter - 1] + ss * (coefs[n_iter] -
+                                coefs[n_iter - 1])
             alphas[n_iter] = alpha_min
             break
 
@@ -298,7 +298,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None, max_iter=500,
     return alphas, active, coefs.T
 
 
-################################################################################
+###############################################################################
 # Estimator classes
 
 class Lars(LinearModel):
@@ -354,14 +354,14 @@ class Lars(LinearModel):
     --------
     lars_path, LassoLars
     """
-    def __init__(self, fit_intercept=True, verbose=False, normalize=True, 
+    def __init__(self, fit_intercept=True, verbose=False, normalize=True,
                  precompute='auto', max_iter=500):
         self.fit_intercept = fit_intercept
         self.max_iter = max_iter
         self.verbose = verbose
         self.normalize = normalize
         self.method = 'lar'
-        self.precompute = precompute 
+        self.precompute = precompute
 
     def fit(self, X, y, max_features=None, overwrite_X=False, **params):
         """Fit the model using X, y as training data.
@@ -478,7 +478,7 @@ class LassoLars (Lars):
     lars_path, Lasso
     """
 
-    def __init__(self, alpha=1.0, fit_intercept=True, verbose=False, 
+    def __init__(self, alpha=1.0, fit_intercept=True, verbose=False,
                  normalize=True, precompute='auto', max_iter=500):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
@@ -486,6 +486,4 @@ class LassoLars (Lars):
         self.verbose = verbose
         self.normalize = normalize
         self.method = 'lasso'
-        self.precompute = precompute 
-
-
+        self.precompute = precompute
