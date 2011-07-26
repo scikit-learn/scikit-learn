@@ -1,5 +1,4 @@
-""" Matrix factorization with Sparse PCA
-"""
+"""Matrix factorization with Sparse PCA"""
 # Author: Vlad Niculae, Gael Varoquaux, Alexandre Gramfort
 # License: BSD
 
@@ -617,12 +616,12 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         code_init = self.V_init.T if self.V_init != None else None
         dict_init = self.U_init.T if self.U_init != None else None
         Vt, _, E = dict_learning(X.T, self.n_components, self.alpha,
-                                tol=self.tol, max_iter=self.max_iter,
-                                method=self.method, n_jobs=self.n_jobs,
-                                verbose=self.verbose,
-                                random_state=self.random_state,
-                                code_init=code_init,
-                                dict_init=dict_init)
+                                 tol=self.tol, max_iter=self.max_iter,
+                                 method=self.method, n_jobs=self.n_jobs,
+                                 verbose=self.verbose,
+                                 random_state=self.random_state,
+                                 code_init=code_init,
+                                 dict_init=dict_init)
         self.components_ = Vt.T
         self.error_ = E
         return self
