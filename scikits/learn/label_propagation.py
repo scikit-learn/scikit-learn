@@ -61,7 +61,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
 
     _default_alpha = 1
 
-    def __init__(self, kernel=None, sigma=None, alpha=None, unlabeled_identifier=None, max_iters=1000, convergence_threshold=1e-3):
+    def __init__(self, kernel=None, sigma=None, alpha=None, unlabeled_identifier=0, max_iters=1000, convergence_threshold=1e-3):
         self.max_iters, self.convergence_threshold = max_iters, convergence_threshold
         if sigma is None:
             self.sigma = DEFAULT_SIGMA
@@ -69,7 +69,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
             self.sigma = sigma
 
         # object referring to a point that is unlabeled
-        self.unlabeled_type = unlabeled_type
+        self.unlabeled_identifier = unlabeled_identifier
 
         if kernel is None:
             self.kernel = gen_gaussian_kernel(sigma=self.sigma)
@@ -121,10 +121,14 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
 
         Examples
         --------
-        >>> samples = [[1,0,0], [0,1,1], [0,1,0], [1,1,0], [0,0,1]]
-        >>> labels = [1, -1, -1, None, None]
+        >>> from scikits.learn import datasets
         >>> label_prop_model = BaseLabelPropagation()
-        >>> label_prop_model.fit(samples, labels)
+        >>> iris = datasets.load_iris() # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+        >>> label_prop_model.fit(iris.names, iris.target)
+        LabelPropagation(kernel=<function gaussian_kernel at ...>,
+                 convergence_threshold=0.001, max_iters=1000,
+                 unlabeled_identifier=0, alpha=1, sigma=0.5 ...
+                 ...
 
         Warning
         -------
@@ -138,26 +142,37 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         # actual graph construction (implementations should override this)
         self._build_graph()
 
-        # how many labels
+        # label construction
         if len(self._y.shape) > 1:
+            # assumes labels already passed in as categorical probability distribution
             (num_labels, num_classes) = self._y.shape 
         else:
-            # this handles binary class input
-            num_labels, num_classes = self._y.shape[0], 1
+            if (self._y<0).any(): # is binary? (-1 -> 1)
+                num_labels, num_classes = self._y.shape[0], 1
+            else: # assume multiclass (convert to categorical distribution
+                labels = np.unique(self._y)
+                num_labels, num_classes = self._y.shape[0], len(labels)
+                _y2 = np.zeros((num_labels, num_classes))
+                for label in labels:
+                    if label != self.unlabeled_identifier:
+                        _y2[np.where(self._y == label), label] = 1
+                self._y = _y2
 
+        Y_orig = np.copy(self._y)
+
+        self.unlabels = map(lambda vec: 0 if np.array_equal(vec, self.unlabeled_identifier) else 2, self._y)
         y_p = np.zeros((self._X.shape[0], num_classes))
         self._y.resize((self._X.shape[0], num_classes))
 
-        Y_orig = np.asanyarray(y)
-        Y_orig.resize((num_labels, num_classes))
 
-        # main loop (minor optimization for hard clamp: put if statement outside of for loop)
         max_iters = self.max_iters
-        while not_converged(self._y, y_p, self.convergence_threshold) and max_iters > 0:
+        print y_p
+        while not_converged(self._y, y_p, self.convergence_threshold) and max_iters > 1:
             y_p = self._y
             self._y = np.dot(self._graph_matrix, self._y)
             # clamp
-            self._y[:num_labels] = self.alpha * Y_orig - (1 - self.alpha) * self._y[:num_labels]
+            self._y = self.alpha * Y_orig - (1 - self.alpha) * self._y
+            print self._y
             max_iters -= 1
         return self
 
@@ -168,9 +183,8 @@ class LabelPropagation(BaseLabelPropagation):
     """
     def _build_graph(self):
         affinity_matrix = compute_affinity_matrix(self._X)
-        degree_matrix = np.map(np.sum, affinity_matrix) * np.identity(affinity_matrix.shape[0])
+        degree_matrix = map(lambda x: (np.sum(x, axis=0)), affinity_matrix) * np.identity(affinity_matrix.shape[0])
         deg_inv = np.linalg.inv(degree_matrix)
-        
         aff_ideg = deg_inv * np.matrix(affinity_matrix)
         self._graph_matrix = aff_ideg
 
@@ -191,7 +205,8 @@ class LabelSpreading(BaseLabelPropagation):
         Graph matrix for Label Spreading uses the Graph Laplacian!
         """
         affinity_matrix = compute_affinity_matrix(self._X, diagonal=0)
-        degree_matrix = np.map(np.sum, affinity_matrix) * np.identity(affinity_matrix.shape[0])
+        degree_matrix = map(lambda x: (np.sum(x, axis=0)), affinity_matrix) * np.identity(affinity_matrix.shape[0])
+        #degree_matrix = map(np.sum, affinity_matrix) * np.identity(affinity_matrix.shape[0])
         deg_invsq = np.sqrt(np.linalg.inv(degree_matrix))
 
         laplacian = deg_invsq * np.matrix(affinity_matrix) * deg_invsq
@@ -226,4 +241,4 @@ def compute_affinity_matrix(X, kernel=gaussian_kernel, diagonal=1):
 
 def not_converged(y, y_hat, threshold=1e-3):
     """basic convergence check"""
-    return np.sum(np.sum(np.abs(np.asarray(y-y_hat)))) > threshold
+    return np.sum(np.abs(np.asarray(y-y_hat))) > threshold
