@@ -23,7 +23,8 @@ from ..base import BaseEstimator, TransformerMixin
 
 def _update_code(dictionary, Y, alpha, code=None, Gram=None, method='lars',
                  tol=1e-8):
-    """ Update the sparse code factor in sparse_pca loop.
+    """Update the sparse code factor in the sparse_pca loop.
+
     Each column of the result is the solution to a Lasso problem.
 
     Parameters
@@ -92,8 +93,9 @@ def _update_code(dictionary, Y, alpha, code=None, Gram=None, method='lars',
 
 def _update_code_parallel(dictionary, Y, alpha, code=None, Gram=None,
                           method='lars', n_jobs=1, tol=1e-8):
-    """ Update the sparse factor V in sparse_pca loop by efficiently
-    spreading the load over the available cores.
+    """Update the sparse factor V in the sparse_pca loop in parallel.
+
+    The computation is spread over all the available cores.
 
     Parameters
     ----------
@@ -148,7 +150,7 @@ def _update_code_parallel(dictionary, Y, alpha, code=None, Gram=None,
 
 def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
                  random_state=None):
-    """ Update the dense dictionary factor in place.
+    """Update the dense dictionary factor in place.
 
     Parameters
     ----------
@@ -312,7 +314,6 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
                            np.zeros((n_atoms - r, dictionary.shape[1]))]
 
     # Fortran-order dict, as we are going to access its row vectors
-    #code = np.array(code, order='F')
     dictionary = np.array(dictionary, order='F')
 
     residuals = 0
@@ -376,8 +377,9 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
                  (U,V)
                  with || V_k ||_2 = 1 for all  0 <= k < n_atoms
 
-    where V is the dictionary and U is the sparse code. This is accomplished
-    by repeatedly iterating over mini-batches of the input data.
+    where V is the dictionary and U is the sparse code. This is
+    accomplished by repeatedly iterating over mini-batches by slicing
+    the input data in the features direction.
 
     Parameters
     ----------
@@ -477,7 +479,6 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
 
     for ii, this_X in itertools.izip(xrange(iter_offset, iter_offset + n_iter),
                                      batches):
-        #this_Y = this_Y.squeeze()
         dt = (time.time() - t0)
         if verbose == 1:
             sys.stdout.write(".")
@@ -529,9 +530,9 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
 class SparsePCA(BaseEstimator, TransformerMixin):
     """Sparse Principal Components Analysis (SparsePCA)
 
-    Finds the set of sparse components that can optimally reconstruct the data.
-    The amount of sparseness is controllable by the coefficient of the L1
-    penalty, given by the parameter alpha.
+    Finds the set of sparse components that can optimally reconstruct
+    the data.  The amount of sparseness is controllable by the coefficient
+    of the L1 penalty, given by the parameter alpha.
 
     Parameters
     ----------
@@ -539,7 +540,8 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         Number of sparse atoms to extract.
 
     alpha: int,
-        Sparsity controlling parameter.
+        Sparsity controlling parameter. Higher values lead to sparser
+        components.
 
     max_iter: int,
         Maximum number of iterations to perform.
@@ -626,8 +628,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, ridge_alpha=0.01):
-        """Least Squares projection of the data onto the learned sparse
-        components.
+        """Least Squares projection of the data onto the sparse components.
 
         To avoid instability issues in case the system is under-determined,
         regularization can be applied (Ridge regression) via the
@@ -658,11 +659,11 @@ class SparsePCA(BaseEstimator, TransformerMixin):
 
 
 class MiniBatchSparsePCA(SparsePCA):
-    """Mini-batch Sparse Principal Components Analysis (MiniBatchSparsePCA)
+    """Mini-batch Sparse Principal Components Analysis
 
-    Finds the set of sparse components that can optimally reconstruct the data.
-    The amount of sparseness is controllable by the coefficient of the L1
-    penalty, given by the parameter alpha.
+    Finds the set of sparse components that can optimally reconstruct
+    the data.  The amount of sparseness is controllable by the coefficient
+    of the L1 penalty, given by the parameter alpha.
 
     Parameters
     ----------
@@ -673,7 +674,8 @@ class MiniBatchSparsePCA(SparsePCA):
         number of sparse atoms to extract
 
     alpha: int,
-        sparsity controlling parameter
+        Sparsity controlling parameter. Higher values lead to sparser
+        components.
 
     n_iter: int,
         number of iterations to perform for each mini batch
