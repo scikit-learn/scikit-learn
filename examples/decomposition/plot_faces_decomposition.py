@@ -33,10 +33,18 @@ image_shape = (64, 64)
 
 ###############################################################################
 # Load faces data
-dataset = fetch_olivetti_faces()
+dataset = fetch_olivetti_faces(shuffle=True)
 faces = dataset.data
+
+n_samples, n_features = faces.shape
+
+# global centering
 faces_centered = faces - faces.mean(axis=0)
-print "Dataset consists of %d images" % len(faces)
+
+# local centering
+faces_centered -= faces_centered.mean(axis=1).reshape(n_samples, -1)
+
+print "Dataset consists of %d faces" % n_samples
 
 
 ###############################################################################
@@ -62,7 +70,7 @@ estimators = [
      True, False, False),
 
     ('Non-negative components (NMF)',
-     NMF(n_components=n_components, init='nndsvda', beta=1, tol=1e-3,
+     NMF(n_components=n_components, init='nndsvda', beta=1.0, tol=1e-3,
          sparseness='components'),
      False, False, False),
 
@@ -71,17 +79,23 @@ estimators = [
      True, True, False),
 
     ('Sparse components (SparsePCA)',
-     MiniBatchSparsePCA(n_components=n_components, alpha=1e-3, n_iter=100,
-                        verbose=True, chunk_size=3),
+     MiniBatchSparsePCA(n_components=n_components, alpha=5e-4, n_iter=100,
+                        verbose=False, chunk_size=3),
      True, False, False),
 
     ('Cluster centers (KMeans)',
-     MiniBatchKMeans(k=n_components, tol=1e-2, chunk_size=20, max_iter=10),
+     MiniBatchKMeans(k=n_components, tol=1e-3, chunk_size=20, max_iter=50),
      True, False, True)
 ]
 
 ###############################################################################
+# Plot a sample of the input data
+
+plot_gallery("First centered faces", faces_centered[:n_components])
+
+###############################################################################
 # Do the estimation and plot it
+
 for name, estimator, center, transpose, cluster in estimators:
     print "Extracting the top %d %s..." % (n_components, name)
     t0 = time()
