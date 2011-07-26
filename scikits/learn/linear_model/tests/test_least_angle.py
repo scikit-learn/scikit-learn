@@ -159,10 +159,15 @@ def test_lars_add_features(verbose=False):
 
 
 def test_lars_n_features(verbose=False):
-    lars = linear_model.Lars(n_features=6, alpha=0.1).fit(X, y)
-    assert len(lars.coef_.nonzero()) == 6
-    lars = linear_model.Lars(n_features=6, alpha=1.0).fit(X, y)
-    assert len(lars.coef_.nonzero()) < 6
+    lars = linear_model.LARS(n_features=6, verbose=verbose)
+    lars.fit(X, y)
+    assert len(lars.coef_.nonzero()[0]) == 6
+    lars = linear_model.LassoLARS(n_features=6, alpha=0.1, verbose=verbose)
+    lars.fit(X, y)
+    assert len(lars.coef_.nonzero()[0]) == 6
+    lars = linear_model.LassoLARS(n_features=6, alpha=1.0, verbose=verbose)
+    lars.fit(X, y)
+    assert len(lars.coef_.nonzero()[0]) == 6
 
 
 if __name__ == '__main__':

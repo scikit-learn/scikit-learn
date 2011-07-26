@@ -355,13 +355,14 @@ class LARS(LinearModel):
     lars_path, LassoLARS
     """
     def __init__(self, fit_intercept=True, verbose=False, normalize=True, 
-                 precompute='auto', max_iter=500):
+                 precompute='auto', max_iter=500, n_features=None):
         self.fit_intercept = fit_intercept
         self.max_iter = max_iter
         self.verbose = verbose
         self.normalize = normalize
         self.method = 'lar'
         self.precompute = precompute 
+        self.n_features = n_features
 
     def fit(self, X, y, max_features=None, overwrite_X=False, **params):
         """Fit the model using X, y as training data.
@@ -386,6 +387,12 @@ class LARS(LinearModel):
 
         X, y, Xmean, ymean = LinearModel._center_data(X, y, self.fit_intercept)
         alpha = getattr(self, 'alpha', 0.)
+
+        if self.n_features:  # n_features parametrization takes priority
+            alpha = 0.
+
+        if not max_features:
+            max_features = self.n_features
 
         if self.normalize:
             norms = np.sqrt(np.sum(X ** 2, axis=0))
@@ -479,13 +486,13 @@ class LassoLARS (LARS):
     """
 
     def __init__(self, alpha=1.0, fit_intercept=True, verbose=False, 
-                 normalize=True, precompute='auto', max_iter=500):
+                 normalize=True, precompute='auto', max_iter=500,
+                 n_features=None):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
         self.max_iter = max_iter
         self.verbose = verbose
         self.normalize = normalize
         self.method = 'lasso'
-        self.precompute = precompute 
-
-
+        self.precompute = precompute
+        self.n_features = n_features
