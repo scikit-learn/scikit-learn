@@ -704,7 +704,6 @@ class MiniBatchSparsePCA(SparsePCA):
     random_state: int or RandomState
         Pseudo number generator state used for random sampling.
 
-
     """
     def __init__(self, n_components, alpha=1, n_iter=100, callback=None,
                  chunk_size=3, verbose=False, shuffle=True, n_jobs=1,
