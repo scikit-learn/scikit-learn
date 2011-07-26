@@ -176,23 +176,23 @@ class BayesianRidge(LinearModel):
 
             ### Update alpha and lambda
             rmse_ = np.sum((y - np.dot(X, coef_)) ** 2)
-            gamma_ = np.sum((alpha_ * eigen_vals_) \
-                            / (lambda_ + alpha_ * eigen_vals_))
-            lambda_ = (gamma_ + 2 * lambda_1) \
-                            / (np.sum(coef_ ** 2) + 2 * lambda_2)
-            alpha_ = (n_samples - gamma_ + 2 * alpha_1) \
-                            / (rmse_ + 2 * alpha_2)
+            gamma_ = (np.sum((alpha_ * eigen_vals_)
+                            / (lambda_ + alpha_ * eigen_vals_)))
+            lambda_ = ((gamma_ + 2 * lambda_1)
+                            / (np.sum(coef_ ** 2) + 2 * lambda_2))
+            alpha_ = ((n_samples - gamma_ + 2 * alpha_1)
+                            / (rmse_ + 2 * alpha_2))
 
             ### Compute the objective function
             if self.compute_score:
                 s = lambda_1 * log(lambda_) - lambda_2 * lambda_
                 s += alpha_1 * log(alpha_) - alpha_2 * alpha_
-                s += 0.5 * n_features * log(lambda_) \
-                               + 0.5 * n_samples * log(alpha_) \
-                               - 0.5 * alpha_ * rmse_ \
-                               - 0.5 * (lambda_ * np.sum(coef_ ** 2)) \
-                               - 0.5 * logdet_sigma_ \
-                               - 0.5 * n_samples * log(2 * np.pi)
+                s += 0.5 * (n_features * log(lambda_)
+                               + n_samples * log(alpha_)
+                               - alpha_ * rmse_
+                               - (lambda_ * np.sum(coef_ ** 2))
+                               - logdet_sigma_
+                               - n_samples * log(2 * np.pi))
                 self.scores_.append(s)
 
             ### Check for convergence

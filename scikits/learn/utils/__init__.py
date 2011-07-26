@@ -113,11 +113,10 @@ def check_arrays(*arrays, **options):
 
 
 class deprecated(object):
-    """Decorator to mark a function as deprecated.
+    """Decorator to mark a function or class as deprecated.
 
-    Prints a warning when the function fun is called and adds a warning to the
-    docstring. Can be used on methods; applying this to a class's __init__
-    deprecates the entire class.
+    Prints a warning when the function is called/the class is instantiated and
+    adds a warning to the docstring.
 
     The optional extra argument will be appended to the deprecation message
     and the docstring. Note: to use this with the default value for extra, put
@@ -126,6 +125,13 @@ class deprecated(object):
     >>> from scikits.learn.utils import deprecated
     >>> @deprecated()
     ... def some_function(): pass
+
+    Deprecating a class takes some work, since we want to run on Python
+    versions that do not have class decorators:
+
+    >>> class Foo(object): pass
+    ...
+    >>> Foo = deprecated("Use Bar instead")(Foo)
     """
 
     # Adapted from http://wiki.python.org/moin/PythonDecoratorLibrary,
@@ -134,18 +140,33 @@ class deprecated(object):
     def __init__(self, extra=''):
         self.extra = extra
 
-    def __call__(self, fun):
+    def __call__(self, obj):
+        if isinstance(obj, type):
+            return self._decorate_class(obj)
+        else:
+            return self._decorate_fun(obj)
+
+    def _decorate_class(self, cls):
+        msg = "Class %s is deprecated" % cls.__name__
+        if self.extra:
+            msg += "; %s" % self.extra
+
+        # FIXME: we should probably reset __new__ for full generality
+        init = cls.__init__
+        def wrapped(*args, **kwargs):
+            warnings.warn(msg, category=DeprecationWarning)
+            return init(*args, **kwargs)
+        cls.__init__ = wrapped
+
+        wrapped.__name__ = '__init__'
+        wrapped.__doc__ = self._update_doc(init.__doc__)
+
+        return cls
+
+    def _decorate_fun(self, fun):
         """Decorate function fun"""
 
-        is_method = hasattr(fun, "im_class")
-        is_init = is_method and name == "__init__"
-
-        if is_init:
-            what = "Class %s" % fun.im_class
-        elif is_method:
-            what = "Method %s.%s" % (fun.im_class, fun.__name__)
-        else:
-            what = "Function %s" % fun.__name__
+        what = "Function %s" % fun.__name__
 
         msg = "%s is deprecated" % what
         if self.extra:
@@ -157,17 +178,11 @@ class deprecated(object):
 
         wrapped.__name__ = fun.__name__
         wrapped.__dict__ = fun.__dict__
-
-        newdoc = self._update_docstring(fun, is_init)
-        if is_init:
-            wrapped.im_class.__doc__ = newdoc
-        else:
-            wrapped.__doc__ = newdoc
+        wrapped.__doc__ = self._update_doc(fun.__doc__)
 
         return wrapped
 
-    def _update_docstring(self, fun, is_init):
-        olddoc = fun.im_class.__doc__ if is_init else fun.__doc__
+    def _update_doc(self, olddoc):
         newdoc = "DEPRECATED"
         if self.extra:
             newdoc = "%s: %s" % (newdoc, self.extra)
