@@ -341,8 +341,8 @@ class LARS(LinearModel):
     >>> from scikits.learn import linear_model
     >>> clf = linear_model.LARS()
     >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1], max_features=1)
-    LARS(normalize=True, precompute='auto', max_iter=500, verbose=False,
-       fit_intercept=True)
+    LARS(normalize=True, verbose=False, fit_intercept=True, max_iter=500,
+       precompute='auto', n_features=None)
     >>> print clf.coef_
     [ 0. -1.]
 
@@ -472,7 +472,7 @@ class LassoLARS (LARS):
     >>> clf = linear_model.LassoLARS(alpha=0.01)
     >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1])
     LassoLARS(normalize=True, verbose=False, fit_intercept=True, max_iter=500,
-         precompute='auto', alpha=0.01)
+         precompute='auto', alpha=0.01, n_features=None)
     >>> print clf.coef_
     [ 0.         -0.96325765]
 
