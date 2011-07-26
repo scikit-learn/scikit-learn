@@ -14,6 +14,7 @@ from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
 from ..utils import arrayfuncs
+from ..utils import deprecated
 
 
 def lars_path(X, y, Xy=None, Gram=None, max_features=None, max_iter=500,
@@ -420,7 +421,7 @@ class Lars(LinearModel):
         return self
 
 
-class LassoLars (Lars):
+class LassoLars(Lars):
     """Lasso model fit with Least Angle Regression a.k.a. Lars
 
     It is a Linear Model trained with an L1 prior as regularizer.
@@ -487,3 +488,14 @@ class LassoLars (Lars):
         self.normalize = normalize
         self.method = 'lasso'
         self.precompute = precompute
+
+
+# Deprecated classes
+class LARS(Lars):
+    pass
+LARS = deprecated("Use Lars instead")(LARS)
+
+
+class LassoLARS(LassoLars):
+    pass
+LassoLARS = deprecated("Use LassoLars instead")(LassoLARS)
