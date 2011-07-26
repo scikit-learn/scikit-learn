@@ -346,8 +346,8 @@ New classes
 
     - New, more efficient LARS algorithm implementation. The Lasso
       variant of the algorithm is also implemented. See
-      :class:`linear_model.lars_path`, :class:`linear_model.LARS` and
-      :class:`linear_model.LassoLARS`.
+      :class:`linear_model.lars_path`, :class:`linear_model.Lars` and
+      :class:`linear_model.LassoLars`.
 
     - New Hidden Markov Models module (see classes
       :class:`hmm.GaussianHMM`, :class:`hmm.MultinomialHMM`,

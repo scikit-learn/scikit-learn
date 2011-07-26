@@ -195,7 +195,7 @@ class Lasso(ElasticNet):
 
     See also
     --------
-    LassoLARS
+    LassoLars
 
     Notes
     -----
