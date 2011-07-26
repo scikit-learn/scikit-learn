@@ -116,8 +116,7 @@ class deprecated(object):
     """Decorator to mark a function as deprecated.
 
     Prints a warning when the function fun is called and adds a warning to the
-    docstring. Can be used on methods; applying this to a class's __init__
-    deprecates the entire class.
+    docstring.
 
     The optional extra argument will be appended to the deprecation message
     and the docstring. Note: to use this with the default value for extra, put
@@ -137,15 +136,7 @@ class deprecated(object):
     def __call__(self, fun):
         """Decorate function fun"""
 
-        is_method = hasattr(fun, "im_class")
-        is_init = is_method and name == "__init__"
-
-        if is_init:
-            what = "Class %s" % fun.im_class
-        elif is_method:
-            what = "Method %s.%s" % (fun.im_class, fun.__name__)
-        else:
-            what = "Function %s" % fun.__name__
+        what = "Function %s" % fun.__name__
 
         msg = "%s is deprecated" % what
         if self.extra:
@@ -158,22 +149,15 @@ class deprecated(object):
         wrapped.__name__ = fun.__name__
         wrapped.__dict__ = fun.__dict__
 
-        newdoc = self._update_docstring(fun, is_init)
-        if is_init:
-            wrapped.im_class.__doc__ = newdoc
-        else:
-            wrapped.__doc__ = newdoc
-
-        return wrapped
-
-    def _update_docstring(self, fun, is_init):
-        olddoc = fun.im_class.__doc__ if is_init else fun.__doc__
+        olddoc = fun.__doc__
         newdoc = "DEPRECATED"
         if self.extra:
             newdoc = "%s: %s" % (newdoc, self.extra)
         if olddoc:
             newdoc = "%s\n\n%s" % (newdoc, olddoc)
-        return newdoc
+        wrapped.__doc__ = newdoc
+
+        return wrapped
 
 
 def resample(*arrays, **options):
