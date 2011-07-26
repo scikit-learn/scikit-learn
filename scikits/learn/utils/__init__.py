@@ -147,7 +147,7 @@ class deprecated(object):
             return self._decorate_fun(obj)
 
     def _decorate_class(self, cls):
-        msg = "Function %s is deprecated" % cls.__name__
+        msg = "Class %s is deprecated" % cls.__name__
         if self.extra:
             msg += "; %s" % self.extra
 
