@@ -363,6 +363,7 @@ Signal Decomposition
    decomposition.FastICA
    decomposition.NMF
    decomposition.SparsePCA
+   decomposition.MiniBatchSparsePCA
 
 .. autosummary::
    :toctree: generated/
@@ -370,6 +371,7 @@ Signal Decomposition
  
    decomposition.fastica
    decomposition.dict_learning
+   decomposition.dict_learning_online
 
 
 Linear Discriminant Analysis
