@@ -65,25 +65,25 @@ def plot_gallery(title, images):
 # List of the different estimators, whether to center and transpose the
 # problem, and whether the transformer uses the clustering API.
 estimators = [
-    ('Eigenfaces (PCA)',
+    ('Eigenfaces - RandomizedPCA',
      RandomizedPCA(n_components=n_components, whiten=True),
      True, False),
 
-    ('Non-negative components (NMF)',
+    ('Non-negative components - NMF',
      NMF(n_components=n_components, init='nndsvda', beta=1.0, tol=1e-3,
          sparseness='components'),
      False, False),
 
-    ('Independent components (FastICA)',
+    ('Independent components - FastICA',
      FastICA(n_components=n_components, whiten=True, max_iter=10),
      True, True),
 
-    ('Sparse components (SparsePCA)',
+    ('Sparse comp. - MiniBatchSparsePCA',
      MiniBatchSparsePCA(n_components=n_components, alpha=5e-4, n_iter=100,
-                        verbose=False, chunk_size=3),
+                        chunk_size=3),
      True, False),
 
-    ('Cluster centers (KMeans)',
+    ('Cluster centers - MiniBatchKMeans',
      MiniBatchKMeans(k=n_components, tol=1e-3, chunk_size=20, max_iter=50),
      True, False)
 ]
@@ -91,7 +91,7 @@ estimators = [
 ###############################################################################
 # Plot a sample of the input data
 
-plot_gallery("First centered faces", faces_centered[:n_components])
+plot_gallery("First centered Olivetti faces", faces_centered[:n_components])
 
 ###############################################################################
 # Do the estimation and plot it
