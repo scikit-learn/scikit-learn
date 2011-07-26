@@ -67,25 +67,25 @@ def plot_gallery(title, images):
 estimators = [
     ('Eigenfaces (PCA)',
      RandomizedPCA(n_components=n_components, whiten=True),
-     True, False, False),
+     True, False),
 
     ('Non-negative components (NMF)',
      NMF(n_components=n_components, init='nndsvda', beta=1.0, tol=1e-3,
          sparseness='components'),
-     False, False, False),
+     False, False),
 
     ('Independent components (FastICA)',
      FastICA(n_components=n_components, whiten=True, max_iter=10),
-     True, True, False),
+     True, True),
 
     ('Sparse components (SparsePCA)',
      MiniBatchSparsePCA(n_components=n_components, alpha=5e-4, n_iter=100,
                         verbose=False, chunk_size=3),
-     True, False, False),
+     True, False),
 
     ('Cluster centers (KMeans)',
      MiniBatchKMeans(k=n_components, tol=1e-3, chunk_size=20, max_iter=50),
-     True, False, True)
+     True, False)
 ]
 
 ###############################################################################
@@ -96,7 +96,7 @@ plot_gallery("First centered faces", faces_centered[:n_components])
 ###############################################################################
 # Do the estimation and plot it
 
-for name, estimator, center, transpose, cluster in estimators:
+for name, estimator, center, transpose in estimators:
     print "Extracting the top %d %s..." % (n_components, name)
     t0 = time()
     data = faces
@@ -106,7 +106,7 @@ for name, estimator, center, transpose, cluster in estimators:
         data = data.T
     estimator.fit(data)
     print "done in %0.3fs" % (time() - t0)
-    if cluster:
+    if hasattr(estimator, 'cluster_centers_'):
         components_ = estimator.cluster_centers_
     else:
         components_ = estimator.components_
