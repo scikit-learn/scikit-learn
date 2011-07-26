@@ -21,6 +21,7 @@ from os import makedirs
 
 import numpy as np
 
+from ..utils import check_random_state
 
 ###############################################################################
 
@@ -145,13 +146,12 @@ def load_filenames(container_path, description=None, categories=None,
         target.extend(len(documents) * [label])
         filenames.extend(documents)
 
-    # convert as array for fancy indexing
+    # convert to array for fancy indexing
     filenames = np.array(filenames)
     target = np.array(target)
 
     if shuffle:
-        if isinstance(random_state, int):
-            random_state = np.random.RandomState(random_state)
+        random_state = check_random_state(random_state)
         indices = np.arange(filenames.shape[0])
         random_state.shuffle(indices)
         filenames = filenames[indices]
