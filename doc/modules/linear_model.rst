@@ -316,7 +316,7 @@ there is no direct relationship between the Lasso penalty coefficient and the
 sparseness of the solution vector. Orthogonal matching pursuit can approximate
 the optimum solution vector with a fixed number of non-zero elements:
 
-.. math:: \text{arg\,min} ||y - X\gamma||_2^2 \text{ subject to } ||\gamma||_0 \leq n_{atoms}
+.. math:: \text{arg\,min} ||y - X\gamma||_2^2 \text{ subject to } ||\gamma||_0 \leq n_{features}
 
 Alternatively, orthogonal matching pursuit can target a specific error instead
 of a specific number of non-zero coefficients. This can be expressed as:
@@ -328,7 +328,7 @@ OMP is based on a greedy algorithm that includes at each step the atom most
 highly correlated with the current residual. It is similar to the simpler
 matching pursuit (MP) method, but better in that at each iteration, the
 residual is recomputed using an orthogonal projection on the space of the
-chosen dictionary elements. 
+previously chosen dictionary elements. 
 
 
 .. topic:: Examples:
