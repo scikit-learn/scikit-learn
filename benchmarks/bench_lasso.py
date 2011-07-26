@@ -1,5 +1,5 @@
 """
-Benchmarks of Lasso vs LassoLARS
+Benchmarks of Lasso vs LassoLars
 
 First, we fix a training set and increase the number of
 samples. Then we plot the computation time as function of
@@ -48,8 +48,8 @@ def compute_bench(alpha, n_samples, n_features, precompute):
             lasso_results.append(time() - tstart)
 
             gc.collect()
-            print "- benching LassoLARS"
-            clf = LassoLARS(alpha=alpha, fit_intercept=False)
+            print "- benching LassoLars"
+            clf = LassoLars(alpha=alpha, fit_intercept=False)
             tstart = time()
             clf.fit(X, Y, normalize=False, precompute=precompute)
             larslasso_results.append(time() - tstart)
@@ -58,7 +58,7 @@ def compute_bench(alpha, n_samples, n_features, precompute):
 
 
 if __name__ == '__main__':
-    from scikits.learn.linear_model import Lasso, LassoLARS
+    from scikits.learn.linear_model import Lasso, LassoLars
     import pylab as pl
 
     alpha = 0.01 # regularization parameter
@@ -73,7 +73,7 @@ if __name__ == '__main__':
     pl.plot(list_n_samples, lasso_results, 'b-',
                             label='Lasso (with precomputed Gram matrix)')
     pl.plot(list_n_samples, larslasso_results, 'r-',
-                            label='LassoLARS (with precomputed Gram matrix)')
+                            label='LassoLars (with precomputed Gram matrix)')
     pl.title('Lasso benchmark (%d features - alpha=%s)' % (n_features, alpha))
     pl.legend(loc='upper left')
     pl.xlabel('number of samples')
@@ -86,7 +86,7 @@ if __name__ == '__main__':
                                            list_n_features, precompute=False)
     pl.subplot(212)
     pl.plot(list_n_features, lasso_results, 'b-', label='Lasso')
-    pl.plot(list_n_features, larslasso_results, 'r-', label='LassoLARS')
+    pl.plot(list_n_features, larslasso_results, 'r-', label='LassoLars')
     pl.title('Lasso benchmark (%d samples - alpha=%s)' % (n_samples, alpha))
     pl.legend(loc='upper left')
     pl.xlabel('number of features')

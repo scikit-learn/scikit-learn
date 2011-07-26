@@ -62,7 +62,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None, max_iter=500,
 
     See also
     --------
-    :ref:`LassoLARS`, :ref:`LARS`
+    :ref:`LassoLars`, :ref:`Lars`
 
     Notes
     ------
@@ -301,7 +301,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None, max_iter=500,
 ################################################################################
 # Estimator classes
 
-class LARS(LinearModel):
+class Lars(LinearModel):
     """Least Angle Regression model a.k.a. LAR
 
     Parameters
@@ -339,9 +339,9 @@ class LARS(LinearModel):
     Examples
     --------
     >>> from scikits.learn import linear_model
-    >>> clf = linear_model.LARS()
+    >>> clf = linear_model.Lars()
     >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1], max_features=1)
-    LARS(normalize=True, precompute='auto', max_iter=500, verbose=False,
+    Lars(normalize=True, precompute='auto', max_iter=500, verbose=False,
        fit_intercept=True)
     >>> print clf.coef_
     [ 0. -1.]
@@ -352,7 +352,7 @@ class LARS(LinearModel):
 
     See also
     --------
-    lars_path, LassoLARS
+    lars_path, LassoLars
     """
     def __init__(self, fit_intercept=True, verbose=False, normalize=True, 
                  precompute='auto', max_iter=500):
@@ -420,8 +420,8 @@ class LARS(LinearModel):
         return self
 
 
-class LassoLARS (LARS):
-    """Lasso model fit with Least Angle Regression a.k.a. LARS
+class LassoLars (Lars):
+    """Lasso model fit with Least Angle Regression a.k.a. Lars
 
     It is a Linear Model trained with an L1 prior as regularizer.
     lasso).
@@ -462,9 +462,9 @@ class LassoLARS (LARS):
     Examples
     --------
     >>> from scikits.learn import linear_model
-    >>> clf = linear_model.LassoLARS(alpha=0.01)
+    >>> clf = linear_model.LassoLars(alpha=0.01)
     >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1])
-    LassoLARS(normalize=True, verbose=False, fit_intercept=True, max_iter=500,
+    LassoLars(normalize=True, verbose=False, fit_intercept=True, max_iter=500,
          precompute='auto', alpha=0.01)
     >>> print clf.coef_
     [ 0.         -0.96325765]
