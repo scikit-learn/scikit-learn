@@ -145,11 +145,17 @@ applications including denoising, compression and structured prediction
 
 .. _SparsePCA:
 
-Sparse Principal Components Analysis (SparsePCA)
-------------------------------------------------
+Sparse Principal Components Analysis (SparsePCA and MiniBatchSparsePCA)
+-----------------------------------------------------------------------
 
 :class:`SparsePCA` is a variant of PCA, with the goal of extracting the
 set of sparse components that best reconstruct the data.
+
+Mini Batch Sparse PCA (:class:`MiniBatchSparsePCA`) is a variant of
+:class:`SparsePCA` that is faster but less accurate. The increased speed is
+reached by iterating over small chunks of the set of features, for a given
+number of iterations.
+
 
 Principal component analysis (:class:`PCA`) has the disadvantage that the
 components extracted by this method have exclusively dense expressions, i.e.
@@ -205,6 +211,12 @@ of penalization (and thus sparsity) can be adjusted through the
 hyperparameter `alpha`. Small values lead to a gently regularized
 factorization, while larger values shrink many coefficients to zero.
 
+.. note::
+
+  While in the spirit of an online algorithm, the class
+  :class:`MiniBatchSparsePCA` does not implement `partial_fit` because
+  the algorithm is online along the features direction, not the samples
+  direction.
 
 .. topic:: Examples:
 
@@ -218,33 +230,6 @@ factorization, while larger values shrink many coefficients to zero.
    * [Jen09] `"Structured Sparse Principal Component Analysis"
      <www.di.ens.fr/~fbach/sspca_AISTATS2010.pdf>`_
      R. Jenatton, G. Obozinski, F. Bach, 2009
-
-
-.. _MiniBatchSparsePCA:
-
-Mini Batch Sparse Principal Components Analysis (MiniBatchSparsePCA)
---------------------------------------------------------------------
-
-Mini Batch Sparse PCA (:class:`MiniBatchSparsePCA`) is a variant of
-:class:`SparsePCA` that is faster but less accurate. The increased speed is
-reached by iterating over small chunks of the set of features, for a given
-number of iterations.
-
-Note that while this is in the spirit of an online algorithm, the class
-:class:`MiniBatchSparsePCA` does not implement `partial_fit` because the
-algorithm is online along the features direction, not the samples direction.
-
-
-.. topic:: Examples:
-
-   * :ref:`example_decomposition_plot_faces_decomposition.py`
-
-
-.. topic:: References:
-
-   * [Mrl09] `"Online Dictionary Learning for Sparse Coding"
-     <http://www.di.ens.fr/sierra/pdfs/icml09.pdf>`_
-     J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009
 
 
 .. _ICA:
