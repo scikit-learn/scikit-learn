@@ -53,13 +53,13 @@ def shortest_path(neighbors, distances, method='best'):
     assert neighbors.shape == distances.shape
     N, k = neighbors.shape
 
+    graph = np.empty((N,N), dtype=DTYPE, order='C')
+
     if method=='best':
         if k < N/2:
             method = 'FW'
         else:
             method = 'D'
-
-    graph = np.empty((N,N), dtype=DTYPE, order='C')
 
     if method == 'FW':
         FloydWarshall(neighbors, distances, graph)
@@ -78,8 +78,8 @@ cdef void FloydWarshall(np.ndarray[ITYPE_t, ndim=2, mode='c'] neighbors,
                         np.ndarray[DTYPE_t, ndim=2, mode='c'] distances,
                         np.ndarray[DTYPE_t, ndim=2, mode='c'] graph):
     cdef int N = graph.shape[0]
-    cdef int k = neighbors.shape[1]
-    cdef int i, j, m
+    cdef int n_neighbors = neighbors.shape[1]
+    cdef unsigned int i, j, k, m
 
     cdef DTYPE_t infinity = np.inf
     cdef DTYPE_t sum_ijk
@@ -92,7 +92,7 @@ cdef void FloydWarshall(np.ndarray[ITYPE_t, ndim=2, mode='c'] neighbors,
 
     #first populate the graph with the given distances
     for i from 0 <= i < N:
-        for j from 0 <= j < k:
+        for j from 0 <= j < n_neighbors:
             m = neighbors[i,j]
             graph[i, m] = distances[i, j]
             graph[m, i] = distances[i, j]
