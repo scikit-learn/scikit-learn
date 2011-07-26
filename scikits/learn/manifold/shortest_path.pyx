@@ -8,15 +8,22 @@ Routines for performing shortest-path graph searches
 import numpy as np
 cimport numpy as np
 
+cimport cython
+
 DTYPE = np.float64
 ctypedef np.float64_t DTYPE_t
 
 ITYPE = np.int32
 ctypedef np.int32_t ITYPE_t
 
+cdef inline DTYPE_t fmin(DTYPE_t a, DTYPE_t b):
+   if a <= b:
+       return a
+   else:
+       return b
 
-def graph_search(neighbors, distances, method='best'):
-    """graph_search(N, neighbors, distances)
+def shortest_path(neighbors, distances, method='best'):
+    """shortest_path(N, neighbors, distances)
     
     Perform a shortest-path graph search on data
 
@@ -40,8 +47,8 @@ def graph_search(neighbors, distances, method='best'):
         G[i,j] gives the shortest distance from point i to point j
         along the graph.
     """
-    neighbors = np.asarray(neighbors, dtype=ITYPE)
-    distances = np.asarray(distances, dtype=DTYPE)
+    neighbors = np.asarray(neighbors, dtype=ITYPE, order='C')
+    distances = np.asarray(distances, dtype=DTYPE, order='C')
 
     assert neighbors.shape == distances.shape
     N, k = neighbors.shape
@@ -52,7 +59,7 @@ def graph_search(neighbors, distances, method='best'):
         else:
             method = 'D'
 
-    graph = np.empty((N,N), dtype=DTYPE)
+    graph = np.empty((N,N), dtype=DTYPE, order='C')
 
     if method == 'FW':
         FloydWarshall(neighbors, distances, graph)
@@ -66,15 +73,22 @@ def graph_search(neighbors, distances, method='best'):
     return graph
 
 
-cdef void FloydWarshall(np.ndarray[ITYPE_t, ndim=2] neighbors,
-                        np.ndarray[DTYPE_t, ndim=2] distances,
-                        np.ndarray[DTYPE_t, ndim=2] graph):
+@cython.boundscheck(False)
+cdef void FloydWarshall(np.ndarray[ITYPE_t, ndim=2, mode='c'] neighbors,
+                        np.ndarray[DTYPE_t, ndim=2, mode='c'] distances,
+                        np.ndarray[DTYPE_t, ndim=2, mode='c'] graph):
     cdef int N = graph.shape[0]
     cdef int k = neighbors.shape[1]
     cdef int i, j, m
 
+    cdef DTYPE_t infinity = np.inf
+    cdef DTYPE_t sum_ijk
+
     #initialize all distances to infinity
     graph[:,:] = np.inf
+
+    #graph[i,i] should be zero
+    graph.flat[::N+1] = 0
 
     #first populate the graph with the given distances
     for i from 0 <= i < N:
@@ -86,9 +100,15 @@ cdef void FloydWarshall(np.ndarray[ITYPE_t, ndim=2] neighbors,
     #now perform the Floyd-Warshall algorithm
     for k from 0 <= k < N:
         for i from 0 <= i < N:
+            if graph[i,k] == infinity:
+                continue
             for j from 0 <= j < N:
-                graph[i, j] = min(graph[i, j], graph[i, k] + graph[k, j])
-                
+                sum_ijk = graph[i, k] + graph[k, j]
+                if sum_ijk < graph[i,j]:
+                    graph[i,j] = sum_ijk
+
+
+@cython.boundscheck(False)
 cdef void Dijkstra(np.ndarray[ITYPE_t, ndim=2] neighbors,
                    np.ndarray[DTYPE_t, ndim=2] distances,
                    np.ndarray[DTYPE_t, ndim=2] graph):

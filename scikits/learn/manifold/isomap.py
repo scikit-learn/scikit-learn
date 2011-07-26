@@ -9,7 +9,7 @@ from scipy.sparse import linalg
 from ..base import BaseEstimator
 from ..utils.arpack import eigsh
 from ..neighbors import BallTree
-from .graph_search import graph_search
+from .shortest_path import shortest_path
 
 
 def isomap(X, n_neighbors, out_dim, eigen_solver='dense',
@@ -59,7 +59,7 @@ def isomap(X, n_neighbors, out_dim, eigen_solver='dense',
     #Create a matrix of distances between points.
     # G[i,j] is the shortest distance from i to j via
     # the connected neighborhoods
-    G = graph_search(neighbors, distances)
+    G = shortest_path(neighbors, distances)
 
     # now compute tau = -0.5 * H.(G^2).H where H = (I - 1/N)
     G **= 2
