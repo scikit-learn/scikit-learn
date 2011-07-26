@@ -378,7 +378,7 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
 
     where V is the dictionary and U is the sparse code. This is
     accomplished by repeatedly iterating over mini-batches by slicing
-    the input data in the features direction.
+    the input data.
 
     Parameters
     ----------
