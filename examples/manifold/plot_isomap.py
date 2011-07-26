@@ -1,6 +1,6 @@
 """
 ===========================================
- Isomap example with swissroll dataset
+ Isomap example with s-curve dataset
 ===========================================
 
 An illustration of dimensionality reduction
@@ -21,41 +21,36 @@ from matplotlib.ticker import NullFormatter
 
 from scikits.learn import manifold, datasets
 
-N = 200
-n_neighbors = 4
+N = 500
+n_neighbors = 15
 out_dim = 2
 
 #X, color = datasets.samples_generator.swiss_roll(N)
 X, color = datasets.samples_generator.s_curve(N)
 
+print "Computing Isomap embedding on %i points" % N
+
 t0 = time()
-Y1 = manifold.isomap(X, n_neighbors, out_dim, 'dense')
+Y = manifold.isomap(X, n_neighbors, out_dim)
 t1 = time()
-Y2 = manifold.isomap(X, n_neighbors, out_dim, 'arpack')
-t2 = time()
 
-print "dense : %.2g sec" % (t1 - t0)
-print "arpack: %.2g sec" % (t2 - t1)
+print " - completed in %.2g sec" % (t1 - t0)
 
-fig = pylab.figure(figsize=(10, 10))
+fig = pylab.figure(figsize=(6, 10))
 
 try:
     # compatibility matplotlib < 1.0
-    ax = fig.add_subplot(221, projection='3d')
+    ax = fig.add_subplot(211, projection='3d')
     ax.scatter(X[:, 0], X[:, 1], X[:, 2], c=color, cmap=pylab.cm.Spectral)
     ax.view_init(4, -72)
 except:
-    ax = fig.add_subplot(221)
+    ax = fig.add_subplot(211)
     ax.scatter(X[:, 0], X[:, 2], c=color, cmap=pylab.cm.Spectral)
 
 ax.set_title('Original Data')
 
-pylab.subplot(223)
-pylab.scatter(Y1[:, 0], Y1[:, 1], c=color, cmap=pylab.cm.Spectral)
-pylab.title("dense eigensolver")
-
-pylab.subplot(224)
-pylab.scatter(Y2[:, 0], Y2[:, 1], c=color, cmap=pylab.cm.Spectral)
-pylab.title("arpack eigensolver")
+pylab.subplot(212)
+pylab.scatter(Y[:, 0], Y[:, 1], c=color, cmap=pylab.cm.Spectral)
+pylab.title("Isomap Embedding")
 
 pylab.show()

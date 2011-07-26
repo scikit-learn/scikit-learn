@@ -1,14 +1,15 @@
 """Isomap for manifold learning"""
 
 # Author: Jake Vanderplas  -- <vanderplas@astro.washington.edu>
-# License: BSD, (C) JV 2011
+# License: BSD, (C) 2011
 
 import numpy as np
 from scipy.linalg import eigh
 from scipy.sparse import linalg
 from ..base import BaseEstimator
 from ..utils.arpack import eigsh
-from ..neighbors import kneighbors_graph
+from ..neighbors import BallTree
+from .graph_search import graph_search
 
 
 def isomap(X, n_neighbors, out_dim, eigen_solver='dense',
@@ -49,26 +50,16 @@ def isomap(X, n_neighbors, out_dim, eigen_solver='dense',
         framework for nonlinear dimensionality reduction.
         Science 290 (5500)
     """
-    # Construct the distance graph of the data
-    G = kneighbors_graph(X, n_neighbors, mode='distance')
-    G = G.toarray()
-    G[np.where(G == 0)] = np.inf
-    # note: this could be made faster by converting to coo and
-    #  calling the utility routine coo_todense with B a matrix
-    #  of infinities rather than a matrix of zeros.
+    n_samples = X.shape[0]
+    
+    balltree = BallTree(X)
+    distances, neighbors = balltree.query(X, n_neighbors + 1,
+                                          return_distance=True)
 
-    n_samples = G.shape[0]
-
-    # make sure G is symmetric.
-    G = np.minimum(G, G.T)
-    # note: there's probably a more efficient way to do this
-
-    # find the matrix of minimum paths between points
-    for k in xrange(n_samples):
-        for i in xrange(n_samples):
-            G[i] = np.minimum(G[i], G[i, k] + G[k])
-    # note: as written this is an N^3 process with slow python for-loops.
-    #  We should use Dijkstra's algorithm or some variant to speed this up.
+    #Create a matrix of distances between points.
+    # G[i,j] is the shortest distance from i to j via
+    # the connected neighborhoods
+    G = graph_search(neighbors, distances)
 
     # now compute tau = -0.5 * H.(G^2).H where H = (I - 1/N)
     G **= 2
@@ -90,7 +81,6 @@ def isomap(X, n_neighbors, out_dim, eigen_solver='dense',
     else:
         raise ValueError("Unrecognized eigen_solver '%s'" % eigen_solver)
 
-    print eigen_values
     return eigen_vectors * np.sqrt(eigen_values)
 
 
