@@ -5,6 +5,7 @@ from scipy import sparse as sp
 from numpy.testing import assert_equal
 from numpy.testing import assert_array_almost_equal
 from nose.tools import assert_raises
+from nose.tools import assert_true
 
 from ..k_means_ import KMeans, MiniBatchKMeans
 from .common import generate_clustered_data
@@ -175,3 +176,27 @@ def test_sparse_mbk_means_callable_init():
     assert_equal(np.unique(labels).size, 3)
 
     assert_raises(ValueError, mbk_means.fit, [[0., 1.]], k=n_clusters)
+
+
+def test_k_means_fixed_array_init_fit():
+    np.random.seed(1)
+    init_array = np.vstack([X[5], X[25], X[45]])
+    k_means = KMeans(init=init_array, n_init=1).fit(X, k=n_clusters)
+
+    another_init_array = np.vstack([X[1], X[30], X[50]])
+    other_k_means = KMeans(init=init_array, n_init=1)
+    other_k_means.fit(X, init=another_init_array, k=n_clusters)
+    assert_true(not np.allclose(k_means.init, other_k_means.init),
+                "init attributes must be different")
+
+
+def test_mbkm_fixed_array_init_fit():
+    np.random.seed(1)
+    init_array = np.vstack([X[5], X[25], X[45]])
+    k_means = MiniBatchKMeans(init=init_array).fit(X, k=n_clusters)
+
+    another_init_array = np.vstack([X[1], X[30], X[50]])
+    other_k_means = MiniBatchKMeans(init=init_array)
+    other_k_means.fit(X, init=another_init_array, k=n_clusters)
+    assert_true(not np.allclose(k_means.init, other_k_means.init),
+                "init attributes must be different")

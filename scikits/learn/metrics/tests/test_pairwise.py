@@ -8,7 +8,7 @@ from ..pairwise import euclidean_distances, linear_kernel, polynomial_kernel, \
 np.random.seed(0)
 
 def test_euclidean_distances():
-    """Check that the pairwise euclidian distances computation"""
+    """Check the pairwise Euclidean distances computation"""
     X = [[0]]
     Y = [[1], [2]]
     D = euclidean_distances(X, Y)

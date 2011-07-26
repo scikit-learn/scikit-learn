@@ -680,6 +680,7 @@ class MiniBatchKMeans(KMeans):
         X: array, [n_samples, n_features]
             Coordinates of the data points to cluster
         """
+        self._set_params(**params)
         self.random_state = check_random_state(self.random_state)
         X = check_arrays(X, sparse_format="csr", copy=False)[0]
         n_samples, n_features = X.shape
