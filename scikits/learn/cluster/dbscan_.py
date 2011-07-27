@@ -10,33 +10,32 @@ DBSCAN: Density-Based Spatial Clustering of Applications with Noise
 import numpy as np
 
 from ..base import BaseEstimator
-from . import calculate_similarity
+from ..metrics.pairwise import calculate_distance
 
 
 def dbscan(X, eps=0.5, min_points=5, metric='euclidean',
            index_order=None, verbose=False):
-    """Perform DBSCAN clustering from vector array or similarity matrix.
+    """Perform DBSCAN clustering from vector array or distance matrix.
 
     Parameters
     ----------
     X: array [n_points, n_points] or [n_points, n_features]
-        Array of similarities between points, or a feature array.
+        Array of distances between points, or a feature array.
         The array is treated as a feature array unless the metric is given as
         'precomputed'.
     eps: float, optional
-        The minimum similarity for two points to be considered
-        in the same neighborhood.
+        The maximum distance between two points for them to be considered
+        as in the same neighborhood.
     min_points: int, optional
         The number of points in a neighborhood for a point to be considered
         as a core point.
     metric: string, or callable
         The metric to use when calculating distance between instances in a
-        feature array. If metric is a string, it must be one of the options
-        allowed by scipy.spatial.distance.pdist for its metric parameter.
-        If metric is "precomputed", X is assumed to be a similarity matrix and
+        feature array. If metric is a string or callable, it must be one of
+        the options allowed by metrics.pairwise.calculate_distance for its
+        metric parameter.
+        If metric is "precomputed", X is assumed to be a distance matrix and
         must be square.
-        Alternatively, if metric is a callable function, it is called on each
-        pair of instances (rows) and the resulting value recorded.
     index_order: [n_points] or None
         Order to observe points for clustering.
         If None, a random order is given.
@@ -70,11 +69,11 @@ def dbscan(X, eps=0.5, min_points=5, metric='euclidean',
     assert len(index_order) == n, ("Index order must be of length n"
                                    " (%d expected, %d given)"
                                    % (n, len(index_order)))
-    S = calculate_similarity(X, metric=metric)
+    D = calculate_distance(X, metric=metric)
     # Calculate neighborhood for all points. This leaves the original point
     # in, which needs to be considered later (i.e. point i is the
     # neighborhood of point i. While True, its useless information)
-    neighborhoods = [np.where(x >= eps)[0] for x in S]
+    neighborhoods = [np.where(x <= eps)[0] for x in D]
     # Initially, all points are noise.
     labels = np.array([-1] * n)
     # A list of all core points found.
@@ -114,7 +113,7 @@ def dbscan(X, eps=0.5, min_points=5, metric='euclidean',
 
 
 class DBSCAN(BaseEstimator):
-    """Perform DBSCAN clustering from vector array or similarity matrix.
+    """Perform DBSCAN clustering from vector array or distance matrix.
 
     DBSCAN - Density-Based Spatial Clustering of Applications with Noise.
     Finds core points of high density and expands clusters from them.
@@ -123,18 +122,18 @@ class DBSCAN(BaseEstimator):
     Parameters
     ----------
     eps: float, optional
-        The distance for two points to be considered in the same neighborhood
+        The maximum distance between two points for them to be considered
+        as in the same neighborhood.
     min_points: int, optional
         The number of points in a neighborhood for a point to be considered
         as a core point.
     metric: string, or callable
         The metric to use when calculating distance between instances in a
-        feature array. If metric is a string, it must be one of the options
-        allowed by scipy.spatial.distance.pdist for its metric parameter.
-        If metric is "precomputed", X is assumed to be a similarity matrix and
+        feature array. If metric is a string or callable, it must be one of
+        the options allowed by metrics.pairwise.calculate_distance for its
+        metric parameter.
+        If metric is "precomputed", X is assumed to be a distance matrix and
         must be square.
-        Alternatively, if metric is a callable function, it is called on each
-        pair of instances (rows) and the resulting value recorded.
     index_order: [n_points] or None
         Order to observe points for clustering.
         If None, a random order is given.
@@ -176,12 +175,12 @@ class DBSCAN(BaseEstimator):
         self.verbose = verbose
 
     def fit(self, X, **params):
-        """Compute DBSCAN labels for points, using similarity array S.
+        """Perform DBSCAN clustering from vector array or distance matrix.
 
         Parameters
         ----------
         X: array [n_points, n_points] or [n_points, n_features]
-            Array of similarities between points, or a feature array.
+            Array of distances between points, or a feature array.
             The array is treated as a feature array unless the metric is
             given as 'precomputed'.
         params: dict
