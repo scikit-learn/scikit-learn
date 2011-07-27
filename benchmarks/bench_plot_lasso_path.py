@@ -1,4 +1,4 @@
-"""Benchmarks of Lasso regularization path computation using LARS and CD
+"""Benchmarks of Lasso regularization path computation using Lars and CD
 
 The input data is mostly low rank but is a fat infinite tail.
 """
