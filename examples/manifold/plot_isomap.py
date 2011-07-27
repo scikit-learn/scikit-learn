@@ -21,7 +21,7 @@ from matplotlib.ticker import NullFormatter
 
 from scikits.learn import manifold, datasets
 
-N = 500
+N = 1000
 n_neighbors = 15
 out_dim = 2
 
@@ -31,9 +31,8 @@ X, color = datasets.samples_generator.s_curve(N)
 print "Computing Isomap embedding on %i points" % N
 
 t0 = time()
-Y = manifold.isomap(X, n_neighbors, out_dim)
+Y = manifold.isomap(X, n_neighbors, out_dim, path_method='best', directed=True)
 t1 = time()
-
 print " - completed in %.2g sec" % (t1 - t0)
 
 fig = pylab.figure(figsize=(6, 10))

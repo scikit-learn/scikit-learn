@@ -13,7 +13,7 @@ from .shortest_path import shortest_path
 
 
 def isomap(X, n_neighbors, out_dim, eigen_solver='dense',
-           tol=0, max_iter=None):
+           tol=0, max_iter=None, path_method='best', directed=False):
     """Perform an Isomap analysis of the data
 
     Parameters
@@ -39,6 +39,18 @@ def isomap(X, n_neighbors, out_dim, eigen_solver='dense',
         maximum number of iterations for the arpack solver.
         only used if eigen_solver == 'arpack'
 
+    path_method : string ['FW'|'D'|'best']
+        method to use in finding shortest path.
+        'FW' : Floyd-Warshall algorithm
+        'D' : Dijkstra algorithm with Fibonacci Heaps
+        'best' : attempt to choose the best algorithm automatically
+
+    directed : boolean, default = False
+        specify whether to use a directed path.  If a directed path is used,
+        then geodesics are approximated using only paths from point i to
+        its k neighbors, not to points of which i is one of the k neighbors.
+        Using directed graphs leads to fewer possible paths.
+
     Returns
     -------
     Y : array-like, shape [n_samples, out_dim]
@@ -59,7 +71,9 @@ def isomap(X, n_neighbors, out_dim, eigen_solver='dense',
     #Create a matrix of distances between points.
     # G[i,j] is the shortest distance from i to j via
     # the connected neighborhoods
-    G = shortest_path(neighbors, distances)
+    G = shortest_path(neighbors, distances, 
+                      directed=directed,
+                      method=path_method)
 
     # now compute tau = -0.5 * H.(G^2).H where H = (I - 1/N)
     G **= 2
