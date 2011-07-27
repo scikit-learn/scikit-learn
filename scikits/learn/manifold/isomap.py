@@ -37,7 +37,7 @@ def isomap(X, n_neighbors, out_dim, eigen_solver='dense',
 
     max_iter : integer
         maximum number of iterations for the arpack solver.
-        only used if eigen_solver == 'arpack'
+        not used if eigen_solver == 'dense'
 
     path_method : string ['FW'|'D'|'best']
         method to use in finding shortest path.
@@ -64,7 +64,7 @@ def isomap(X, n_neighbors, out_dim, eigen_solver='dense',
     # G[i,j] is the shortest distance from i to j via
     # the connected neighborhoods
     #Note that isomap requires a symmetric distance matrix in order to
-    # gurantee a real projection, so we must use directed=False
+    # gurantee a real-valued embedding, so we must use directed=False
     G = shortest_path(dist_matrix,
                       method=path_method,
                       directed=False)
@@ -72,7 +72,7 @@ def isomap(X, n_neighbors, out_dim, eigen_solver='dense',
     # now compute tau = -0.5 * H.(G^2).H where H = (I - 1/N)
     G **= 2
     HG = G - G.mean(0)
-    HGH = HG - HG.mean(1)[:,None]
+    HGH = HG - HG.mean(1)[:, None]
     tau = -0.5 * HGH
 
     # compute the out_dim largest eigenvalues and vectors of tau
@@ -115,7 +115,7 @@ class Isomap(BaseEstimator):
         self.random_state = random_state
 
     def fit(self, X, Y=None, eigen_solver='dense', tol=0,
-            max_iter=None, **params):
+            max_iter=None, path_method='best', **params):
         """Compute the embedding vectors for data X
 
         Parameters
@@ -123,15 +123,28 @@ class Isomap(BaseEstimator):
         X : array-like of shape [n_samples, n_features]
             training set.
 
+        n_neighbors : integer
+            number of neighbors to consider for each point.
+
         out_dim : integer
-            number of coordinates for the manifold
+            number of coordinates for the manifold.
 
         eigen_solver : {'arpack', 'dense'}
-            use the arpack eigensolver or a dense eigensolver based on LAPACK
-            routines.
+            arpack can handle both dense and sparse data efficiently
+
+        tol : float
+            convergence tolerance passed to arpack or lobpcg.
+            not used if eigen_solver == 'dense'
 
         max_iter : integer
-            maximum number of iterations for the lobpcg solver.
+            maximum number of iterations for the arpack solver.
+            not used if eigen_solver == 'dense'
+
+        path_method : string ['FW'|'D'|'best']
+            method to use in finding shortest path.
+            'FW' : Floyd-Warshall algorithm
+            'D' : Dijkstra algorithm with Fibonacci Heaps
+            'best' : attempt to choose the best algorithm automatically
 
         Returns
         -------
@@ -142,5 +155,8 @@ class Isomap(BaseEstimator):
         self.embedding_, = \
             isomap(X, self.n_neighbors, self.out_dim,
                    eigen_solver=eigen_solver, tol=tol,
-                   max_iter=max_iter)
+                   max_iter=max_iter, path_method=path_method)
         return self
+
+    def transform(self, X, **params):
+        raise NotImplemented("Isomap transform is not implemented")

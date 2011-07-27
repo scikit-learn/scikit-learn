@@ -24,15 +24,9 @@ ctypedef np.float64_t DTYPE_t
 ITYPE = np.int32
 ctypedef np.int32_t ITYPE_t
 
-cdef inline DTYPE_t fmin(DTYPE_t a, DTYPE_t b):
-   if a <= b:
-       return a
-   else:
-       return b
 
 def shortest_path(dist_matrix, directed=True, method='best'):
-    """shortest_path(N, neighbors, distances)
-    
+    """
     Perform a shortest-path graph search on data
 
     Parameters
@@ -48,9 +42,9 @@ def shortest_path(dist_matrix, directed=True, method='best'):
         algorithm can progress from a point to its neighbors and vice versa.
     method : string
         method to use.  Options are
-	'best' : attempt to choose the best method
-	'FW' : Floyd-Warshall algorithm.  O[N^3]
-	'D' : Dijkstra's algorithm with Fibonacci stacks.  O[(k+log(N))N^2]
+        'best' : attempt to choose the best method
+        'FW' : Floyd-Warshall algorithm.  O[N^3]
+        'D' : Dijkstra's algorithm with Fibonacci stacks.  O[(k+log(N))N^2]
 
     Returns
     -------
@@ -60,12 +54,12 @@ def shortest_path(dist_matrix, directed=True, method='best'):
     """
     if not isspmatrix_csr(dist_matrix):
         dist_matrix = csr_matrix(dist_matrix)
-        
+
     N = dist_matrix.shape[0]
     Nk = len(dist_matrix.data)
 
-    if method=='best':
-        if Nk < N*N/4:
+    if method == 'best':
+        if Nk < N * N / 4:
             method = 'D'
         else:
             method = 'FW'
@@ -74,7 +68,7 @@ def shortest_path(dist_matrix, directed=True, method='best'):
         graph = np.asarray(dist_matrix.toarray(), dtype=DTYPE, order='C')
         FloydWarshall(graph, directed)
     elif method == 'D':
-        graph = np.zeros((N,N), dtype=DTYPE, order='C')
+        graph = np.zeros((N, N), dtype=DTYPE, order='C')
         Dijkstra(dist_matrix, graph, directed)
     else:
         raise ValueError("unrecognized method '%s'" % method)
@@ -84,7 +78,7 @@ def shortest_path(dist_matrix, directed=True, method='best'):
 
 @cython.boundscheck(False)
 cdef np.ndarray FloydWarshall(np.ndarray[DTYPE_t, ndim=2, mode='c'] graph,
-                              int directed = 0):
+                              int directed=0):
     """
     FloydWarshall algorithm
 
@@ -93,50 +87,51 @@ cdef np.ndarray FloydWarshall(np.ndarray[DTYPE_t, ndim=2, mode='c'] graph,
     graph : ndarray
         on input, graph is the matrix of distances betweeen connected points.
         unconnected points have distance=0
-        on exit, graph is overwritten with the matrix of shortest paths 
-        between points.  If no path exists, the path length is zero
+        on exit, graph is overwritten with the output
     directed : bool, default = False
         if True, then the algorithm will only traverse from a point to
-        its neighbors when finding the shortest path.  
+        its neighbors when finding the shortest path.
         if False, then the algorithm will traverse all paths in both
         directions.
 
     Returns
     -------
-    graph
+    graph : ndarray
+        the matrix of shortest paths between points.
+        If no path exists, the path length is zero
     """
     cdef int N = graph.shape[0]
     assert graph.shape[1] == N
-    
+
     cdef unsigned int i, j, k, m
 
     cdef DTYPE_t infinity = np.inf
     cdef DTYPE_t sum_ijk
 
     #initialize all distances to infinity
-    graph[np.where(graph==0)] = infinity
+    graph[np.where(graph == 0)] = infinity
 
     #graph[i,i] should be zero
-    graph.flat[::N+1] = 0
+    graph.flat[::N + 1] = 0
 
     # for a non-directed graph, we need to symmetrize the distances
     if not directed:
         for i from 0 <= i < N:
-            for j from i+1 <= j < N:
-                if graph[j,i] <= graph[i,j]:
-                    graph[i,j] = graph[j,i]
+            for j from i + 1 <= j < N:
+                if graph[j, i] <= graph[i, j]:
+                    graph[i, j] = graph[j, i]
                 else:
-                    graph[j,i] = graph[i,j]
+                    graph[j, i] = graph[i, j]
 
     #now perform the Floyd-Warshall algorithm
     for k from 0 <= k < N:
         for i from 0 <= i < N:
-            if graph[i,k] == infinity:
+            if graph[i, k] == infinity:
                 continue
             for j from 0 <= j < N:
                 sum_ijk = graph[i, k] + graph[k, j]
-                if sum_ijk < graph[i,j]:
-                    graph[i,j] = sum_ijk
+                if sum_ijk < graph[i, j]:
+                    graph[i, j] = sum_ijk
 
     graph[np.where(np.isinf(graph))] = 0
 
@@ -162,26 +157,26 @@ cdef np.ndarray Dijkstra(dist_matrix,
     graph : ndarray
         on input, graph is the matrix of distances betweeen connected points.
         unconnected points have distance=0
-        on exit, graph is overwritten with the matrix of shortest paths 
-        between points.  If no path exists, the path length is zero
+        on exit, graph is overwritten with the output
     directed : bool, default = False
         if True, then the algorithm will only traverse from a point to
-        its neighbors when finding the shortest path.  
+        its neighbors when finding the shortest path.
         if False, then the algorithm will traverse all paths in both
         directions.
 
     Returns
     -------
-    graph
-        
+    graph : array
+        the matrix of shortest paths between points.
+        If no path exists, the path length is zero
     """
     cdef unsigned int N = graph.shape[0]
     cdef unsigned int i
 
     cdef FibonacciHeap heap
 
-    cdef FibonacciNode* nodes = \
-        <FibonacciNode*> malloc(N * sizeof(FibonacciNode))
+    cdef FibonacciNode* nodes = <FibonacciNode*> malloc(N *
+                                                        sizeof(FibonacciNode))
 
     cdef np.ndarray distances, neighbors, indptr
     cdef np.ndarray distances2, neighbors2, indptr2
@@ -247,20 +242,20 @@ cdef struct FibonacciNode:
 cdef FibonacciNode* initialize_node(FibonacciNode* node,
                                     unsigned int index,
                                     DTYPE_t val=0):
-     global UNLABELED
+    global UNLABELED
 
-     node.index = index
-     node.val = val
-     node.rank = 0
-     node.state = 0
-     
-     node.parent = NULL
-     node.left_sibling = NULL
-     node.right_sibling = NULL
-     node.children = NULL
-     
-     return node
-     
+    node.index = index
+    node.val = val
+    node.rank = 0
+    node.state = 0
+
+    node.parent = NULL
+    node.left_sibling = NULL
+    node.right_sibling = NULL
+    node.children = NULL
+
+    return node
+
 
 cdef FibonacciNode* rightmost_sibling(FibonacciNode* node):
     cdef FibonacciNode* temp = node
@@ -311,7 +306,7 @@ cdef FibonacciNode* remove(FibonacciNode* node):
             node.parent.children = node.right_sibling
         else:
             node.parent.children = NULL
-    
+
     if node.left_sibling:
         node.left_sibling.right_sibling = node.right_sibling
     if node.right_sibling:
@@ -326,7 +321,7 @@ cdef FibonacciNode* remove(FibonacciNode* node):
 
 ######################################################################
 # FibonacciHeap structure
-#  This structure and operations on it use the FibonacciNode 
+#  This structure and operations on it use the FibonacciNode
 #  routines to implement a Fibonacci heap
 
 ctypedef FibonacciNode* pFibonacciNode
@@ -352,7 +347,6 @@ cdef FibonacciNode* insert_node(FibonacciHeap* heap,
             heap.min_node = node
     else:
         heap.min_node = node
-    
     return node
 
 
@@ -382,7 +376,7 @@ cdef FibonacciNode* link(FibonacciHeap* heap, FibonacciNode* node):
         else:
             tmp_parent = linknode
             tmp_child = node
-        
+
         remove(tmp_child)
         add_child(tmp_parent, tmp_child)
         if heap.roots_by_rank[tmp_parent.rank]:
@@ -396,10 +390,10 @@ cdef FibonacciNode* link(FibonacciHeap* heap, FibonacciNode* node):
 cdef FibonacciNode* remove_min(FibonacciHeap* heap):
     cdef FibonacciNode *temp, *next_temp, *out
     cdef unsigned int i
-    
+
     if heap.min_node == NULL:
         return NULL
-    
+
     if heap.min_node.children:
         temp = leftmost_sibling(heap.min_node.children)
         next_temp = NULL
@@ -409,9 +403,9 @@ cdef FibonacciNode* remove_min(FibonacciHeap* heap):
             remove(temp)
             add_sibling(heap.min_node, temp)
             temp = next_temp
-        
+
     temp = leftmost_sibling(heap.min_node)
-    
+
     if temp == heap.min_node:
         if heap.min_node.right_sibling:
             temp = heap.min_node.right_sibling
@@ -423,18 +417,16 @@ cdef FibonacciNode* remove_min(FibonacciHeap* heap):
     out = heap.min_node
     remove(heap.min_node)
     heap.min_node = temp
-    
+
     for i from 0 <= i < 100:
         heap.roots_by_rank[i] = NULL
 
     while temp:
         if temp.val < heap.min_node.val:
             heap.min_node = temp
-                
         next_temp = temp.right_sibling
         link(heap, temp)
         temp = next_temp
-        
     return out
 
 
@@ -443,10 +435,8 @@ cdef FibonacciNode* remove_min(FibonacciHeap* heap):
 
 cdef void print_node(FibonacciNode* node, int level=0):
     print '%s(%i,%i) %i' % (level*'   ', node.index, node.val, node.rank)
-
     if node.children:
         print_node(leftmost_sibling(node.children), level+1)
-    
     if node.right_sibling:
         print_node(node.right_sibling, level)
 
@@ -480,10 +470,10 @@ cdef void DijkstraDirectedOneRow(
     distances : array, shape = [N,]
         lengths of edges to each neighbor
     indptr : array, shape = (N+1,)
-        the neighbors of point i are given by 
+        the neighbors of point i are given by
         neighbors[indptr[i]:indptr[i+1]]
     graph : array, shape = (N,N)
-        on return, graph[i_node] contains the path lengths from 
+        on return, graph[i_node] contains the path lengths from
         i_node to each target
     heap: the Fibonacci heap object to use
     nodes : the array of nodes to use
@@ -519,7 +509,6 @@ cdef void DijkstraDirectedOneRow(
                 elif current_neighbor.val > v.val + dist:
                     decrease_val(heap, current_neighbor,
                                  v.val + dist)
-        
         if heap.min_node == NULL:
             break
 
@@ -551,7 +540,7 @@ cdef void DijkstraOneRow(
     distances[1,2] : array, shape = [N,]
         lengths of edges to each neighbor
     indptr[1,2] : array, shape = (N+1,)
-        the neighbors of point i are given by 
+        the neighbors of point i are given by
         neighbors1[indptr1[i]:indptr1[i+1]] and
         neighbors2[indptr2[i]:indptr2[i+1]]
     graph : array, shape = (N,)
@@ -603,10 +592,9 @@ cdef void DijkstraOneRow(
                 elif current_neighbor.val > v.val + dist:
                     decrease_val(heap, current_neighbor,
                                  v.val + dist)
-        
+
         if heap.min_node == NULL:
             break
 
     for i from 0 <= i < N:
         graph[i_node, i] = nodes[i].val
-
