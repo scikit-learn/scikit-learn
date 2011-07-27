@@ -14,6 +14,7 @@ from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
 from ..utils import arrayfuncs
+from ..utils import deprecated
 
 
 def lars_path(X, y, Xy=None, Gram=None, max_features=None, max_iter=500,
@@ -62,7 +63,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None, max_iter=500,
 
     See also
     --------
-    :ref:`LassoLARS`, :ref:`LARS`
+    :ref:`LassoLars`, :ref:`Lars`
 
     Notes
     ------
@@ -301,16 +302,16 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None, max_iter=500,
 ###############################################################################
 # Estimator classes
 
-class LARS(LinearModel):
+class Lars(LinearModel):
     """Least Angle Regression model a.k.a. LAR
 
     Parameters
     ----------
-    n_features : int, optional
-        Number of selected active features
+    n_nonzero_coefs : int, optional
+        Target number of non-zero coefficients. 
 
     fit_intercept : boolean
-        whether to calculate the intercept for this model. If set
+        Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
@@ -339,9 +340,9 @@ class LARS(LinearModel):
     Examples
     --------
     >>> from scikits.learn import linear_model
-    >>> clf = linear_model.LARS()
+    >>> clf = linear_model.Lars()
     >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1], max_features=1)
-    LARS(normalize=True, verbose=False, fit_intercept=True, max_iter=500,
+    Lars(normalize=True, verbose=False, fit_intercept=True, max_iter=500,
        precompute='auto', n_features=None)
     >>> print clf.coef_
     [ 0. -1.]
@@ -352,17 +353,17 @@ class LARS(LinearModel):
 
     See also
     --------
-    lars_path, LassoLARS
+    lars_path, LassoLars
     """
     def __init__(self, fit_intercept=True, verbose=False, normalize=True,
-                 precompute='auto', max_iter=500, n_features=None):
+                 precompute='auto', max_iter=500, n_nonzero_coefs=None):
         self.fit_intercept = fit_intercept
         self.max_iter = max_iter
         self.verbose = verbose
         self.normalize = normalize
         self.method = 'lar'
         self.precompute = precompute
-        self.n_features = n_features
+        self.n_nonzero_coefs = n_nonzero_coefs
 
     def fit(self, X, y, max_features=None, overwrite_X=False, **params):
         """Fit the model using X, y as training data.
@@ -387,12 +388,13 @@ class LARS(LinearModel):
 
         X, y, Xmean, ymean = LinearModel._center_data(X, y, self.fit_intercept)
         alpha = getattr(self, 'alpha', 0.)
+        n_nonzero_coefs = getattr(self, 'n_nonzero_coefs', None)
 
-        if self.n_features:  # n_features parametrization takes priority
+        if n_nonzero_coefs:  # n_nonzero_coefs parametrization takes priority
             alpha = 0.
 
         if not max_features:
-            max_features = self.n_features
+            max_features = n_nonzero_coefs
 
         if self.normalize:
             norms = np.sqrt(np.sum(X ** 2, axis=0))
@@ -427,17 +429,14 @@ class LARS(LinearModel):
         return self
 
 
-class LassoLARS (LARS):
-    """Lasso model fit with Least Angle Regression a.k.a. LARS
+class LassoLars(Lars):
+    """Lasso model fit with Least Angle Regression a.k.a. Lars
 
     It is a Linear Model trained with an L1 prior as regularizer.
     lasso).
 
     Parameters
     ----------
-    n_features : int, optional
-        Number of selected active features
-
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
@@ -469,10 +468,10 @@ class LassoLARS (LARS):
     Examples
     --------
     >>> from scikits.learn import linear_model
-    >>> clf = linear_model.LassoLARS(alpha=0.01)
+    >>> clf = linear_model.LassoLars(alpha=0.01)
     >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1])
-    LassoLARS(normalize=True, verbose=False, fit_intercept=True, max_iter=500,
-         precompute='auto', alpha=0.01, n_features=None)
+    LassoLars(normalize=True, verbose=False, fit_intercept=True, max_iter=500,
+         precompute='auto', alpha=0.01)
     >>> print clf.coef_
     [ 0.         -0.96325765]
 
@@ -486,8 +485,7 @@ class LassoLARS (LARS):
     """
 
     def __init__(self, alpha=1.0, fit_intercept=True, verbose=False,
-                 normalize=True, precompute='auto', max_iter=500,
-                 n_features=None):
+                 normalize=True, precompute='auto', max_iter=500):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
         self.max_iter = max_iter
@@ -495,4 +493,14 @@ class LassoLARS (LARS):
         self.normalize = normalize
         self.method = 'lasso'
         self.precompute = precompute
-        self.n_features = n_features
+
+
+# Deprecated classes
+class LARS(Lars):
+    pass
+LARS = deprecated("Use Lars instead")(LARS)
+
+
+class LassoLARS(LassoLars):
+    pass
+LassoLARS = deprecated("Use LassoLars instead")(LassoLARS)
