@@ -31,7 +31,7 @@ X, color = datasets.samples_generator.s_curve(N)
 print "Computing Isomap embedding on %i points" % N
 
 t0 = time()
-Y = manifold.isomap(X, n_neighbors, out_dim, path_method='best', directed=True)
+Y = manifold.isomap(X, n_neighbors, out_dim, path_method='best')
 t1 = time()
 print " - completed in %.2g sec" % (t1 - t0)
 

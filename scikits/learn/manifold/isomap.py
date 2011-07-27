@@ -8,12 +8,12 @@ from scipy.linalg import eigh
 from scipy.sparse import linalg
 from ..base import BaseEstimator
 from ..utils.arpack import eigsh
-from ..neighbors import BallTree
+from ..neighbors import kneighbors_graph
 from .shortest_path import shortest_path
 
 
 def isomap(X, n_neighbors, out_dim, eigen_solver='dense',
-           tol=0, max_iter=None, path_method='best', directed=False):
+           tol=0, max_iter=None, path_method='best'):
     """Perform an Isomap analysis of the data
 
     Parameters
@@ -45,12 +45,6 @@ def isomap(X, n_neighbors, out_dim, eigen_solver='dense',
         'D' : Dijkstra algorithm with Fibonacci Heaps
         'best' : attempt to choose the best algorithm automatically
 
-    directed : boolean, default = False
-        specify whether to use a directed path.  If a directed path is used,
-        then geodesics are approximated using only paths from point i to
-        its k neighbors, not to points of which i is one of the k neighbors.
-        Using directed graphs leads to fewer possible paths.
-
     Returns
     -------
     Y : array-like, shape [n_samples, out_dim]
@@ -63,17 +57,17 @@ def isomap(X, n_neighbors, out_dim, eigen_solver='dense',
         Science 290 (5500)
     """
     n_samples = X.shape[0]
-    
-    balltree = BallTree(X)
-    distances, neighbors = balltree.query(X, n_neighbors + 1,
-                                          return_distance=True)
+
+    dist_matrix = kneighbors_graph(X, n_neighbors, mode='distance')
 
     #Create a matrix of distances between points.
     # G[i,j] is the shortest distance from i to j via
     # the connected neighborhoods
-    G = shortest_path(neighbors, distances, 
-                      directed=directed,
-                      method=path_method)
+    #Note that isomap requires a symmetric distance matrix in order to
+    # gurantee a real projection, so we must use directed=False
+    G = shortest_path(dist_matrix,
+                      method=path_method,
+                      directed=False)
 
     # now compute tau = -0.5 * H.(G^2).H where H = (I - 1/N)
     G **= 2
