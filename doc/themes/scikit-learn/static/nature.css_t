@@ -110,7 +110,7 @@ div.navbar ul li a:hover {
     display: none;
 }
 
-.quote blockquote {
+.quote {
     text-align: right;
     line-height: 1.5em;
     font-style: italic;
@@ -399,6 +399,12 @@ pre {
 
 div.highlight-python pre {
     overflow-y: hidden;
+}
+
+.align-center {
+    /* override default value clear: both,
+       it conflicts with the left sidebar */
+    clear: right !important;
 }
 
 tt {

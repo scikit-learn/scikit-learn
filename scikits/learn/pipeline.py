@@ -13,7 +13,7 @@ from .base import BaseEstimator
 class Pipeline(BaseEstimator):
     """ Pipeline of transforms with a final estimator
 
-        Sequentialy apply a list of transforms and a final estimator
+        Sequentialy apply a list of transforms and a final estimator.
         Intermediate steps of the pipeline must be 'transforms', that
         is that they must implements fit & transform methods
         The final estimator need only implements fit.

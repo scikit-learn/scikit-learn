@@ -4,14 +4,21 @@ Nearest Neighbors
 
 .. currentmodule:: scikits.learn.neighbors
 
-The principle behind nearest neighbor methods is to find the k
-training points closest in euclidean distance to x0, and then classify
-using a majority vote among the k neighbors.
+The principle behind nearest neighbor methods (*k*-NN) is to find the *k*
+training samples closest in Euclidean distance to the sample to be classified,
+the perform a majority vote among these *k* neighbors' classes.
+This method is known as a non-generalizing machine learning method, since it
+simply "remembers" all of its training data (possibly transformed into a fast
+:ref:`indexing structure <ball_tree>`).
 
 Despite its simplicity, nearest neighbors has been successful in a
 large number of classification problems, including handwritten digits
-or satellite image scenes. It is ofter successful in situation where
+or satellite image scenes. It is often successful in situation where
 the decision boundary is very irregular.
+
+The `NeighborsClassifier` can handle either Numpy arrays and `scipy.sparse`
+matrices as input.
+It currently supports only the Euclidean distance metric.
 
 Classification
 ==============
@@ -68,9 +75,9 @@ both classifier for a simple regression task.
 Efficient implementation: the ball tree
 ==========================================
 
-Behind the scenes, nearest neighbor search is done by the object
-:class:`BallTree`. This algorithm makes it possible to rapidly find
-the nearest neighbors of a point in N-dimensional spaces.
+In the case of low-dimensional (<20), dense input, nearest neighbor search
+is done by the object :class:`BallTree`. This algorithm makes it possible to
+rapidly find the nearest neighbors of a point in N-dimensional space.
 
 The optimal neighbor search algorithm for any problem
 depends on a few factors: the number of candidate points (N),

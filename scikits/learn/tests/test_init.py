@@ -7,8 +7,7 @@ __author__ = 'Yaroslav Halchenko'
 __license__ = 'BSD'
 
 
-from nose.tools import assert_true, assert_false, assert_equal, \
-    assert_raises
+from nose.tools import assert_equal
 
 try:
     from scikits.learn import *

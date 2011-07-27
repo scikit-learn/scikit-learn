@@ -13,9 +13,9 @@ theorem states the following relationship:
 
 .. math::
 
-   p(c \mid f_1,\dots,f_n) \propto p(c) p(\mid f_1,\dots,f_n \mid c)
+   p(c \mid f_1,\dots,f_n) \propto p(c) p(f_1,\dots,f_n \mid c)
 
-Using the naive assumption this relationship is simplified:
+Using the naive independence assumption this relationship is simplified to:
 
 .. math::
 
@@ -25,20 +25,31 @@ Using the naive assumption this relationship is simplified:
 
    \hat{c} = \arg\max_c p(c) \prod_{i=1}^{n} p(f_i \mid c),
 
-where we used the Maximum a Posteriori estimator.
+so we can use Maximum A Posteriori (MAP) estimation to estimate
+:math:`p(c)` and :math:`p(f_i \mid c)`.
 
 The different naive Bayes classifiers differ by the assumption on the
-distribution of :math:`p(f_i \mid c)`:
+distribution of :math:`p(f_i \mid c)`.
 
-In spite of their naive design and apparently over-simplified assumptions,
-naive Bayes classifiers have worked quite well in many real-world situations,
-famously document classification and spam filtering. They requires a small
-amount of training data to estimate the necessary parameters.
+In spite of their apparently over-simplified assumptions, naive Bayes
+classifiers have worked quite well in many real-world situations, famously
+document classification and spam filtering. They requires a small amount
+of training data to estimate the necessary parameters. (For theoretical
+reasons why naive Bayes works well, and on which types of data it does, see
+the references below.)
 
+Naive Bayes learners and classifiers can be extremely fast compared to more
+sophisticated methods.
 The decoupling of the class conditional feature distributions means that each
 distribution can be independently estimated as a one dimensional distribution.
 This in turn helps to alleviate problems stemming from the curse of
 dimensionality.
+
+.. topic:: References:
+
+ * H. Zhang (2004). `The optimality of naive Bayes.
+   <http://www.cs.unb.ca/profs/hzhang/publications/FLAIRS04ZhangH.pdf>`_
+   Proc. FLAIRS.
 
 
 Gaussian Naive Bayes
@@ -57,6 +68,7 @@ estimated using maximum likelihood.
 .. topic:: Examples:
 
  * :ref:`example_naive_bayes.py`,
+
 
 Multinomial Naive Bayes
 -----------------------
@@ -91,3 +103,37 @@ where :math:`N_{ci}` is the number of times word :math:`i` appears in a document
 of class :math:`c` and :math:`N_{c}` is the total count of words in a document
 of class :math:`c`. The smoothness priors :math:`\alpha_i` and their sum 
 :math:`\alpha` account for words not seen in the learning samples.
+
+
+Bernoulli Naive Bayes
+---------------------
+
+:class:`BernoulliNB` implements the naive Bayes training and classification
+algorithms for data that is distributed according to multivariate Bernoulli
+distributions. It requires samples to be represented as binary-valued/boolean
+feature vectors; if handed any other kind of data, it binarizes it (depending
+on the ``binarize`` parameter).
+
+In the case of text classification, word occurrence vectors (rather than word
+count vectors) may be used to train and use this classifier. ``BernoulliNB``
+might perform better on some datasets, especially those with shorter documents,
+because it explicitly penalizes the non-occurrence of words/features in a
+dataset where ``MultinomialNB`` would only notice a zero count, but for text
+classification ``MultinomialNB`` will generally be better. It is advisable to
+evaluate both models, if time permits.
+
+.. topic:: References:
+
+ * C.D. Manning, P. Raghavan and H. Schütze (2008). Introduction to
+   Information Retrieval. Cambridge University Press, pp. 234-265.
+
+ * A. McCallum and K. Nigam (1998).
+   `A comparison of event models for naive Bayes text classification.
+   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.46.1529>`_
+   Proc. AAAI/ICML-98 Workshop on Learning for Text Categorization, pp. 41-48.
+
+ * V. Metsis, I. Androutsopoulos and G. Paliouras (2006).
+   `Spam filtering with naive Bayes -- Which naive Bayes?
+   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.61.5542>`_
+   3rd Conf. on Email and Anti-Spam (CEAS).
+

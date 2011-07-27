@@ -11,5 +11,6 @@
    supervised_learning.rst
    unsupervised_learning.rst
    model_selection.rst
-   Dataset loading utilities <modules/datasets.rst>
+   Dataset loading utilities <datasets/index.rst>
+   Preprocessing data <modules/preprocessing.rst>
    Class Reference <modules/classes.rst>

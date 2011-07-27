@@ -17,7 +17,6 @@ Support Vector Machines
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
@@ -29,7 +28,6 @@ Support Vector Machines
    svm.OneClassSVM
 
 .. autosummary::
-
    :toctree: generated/
    :template: function.rst
 
@@ -46,7 +44,6 @@ For sparse data
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
@@ -63,7 +60,6 @@ Low-level methods
 -----------------
 
 .. autosummary::
-
    :toctree: generated
    :template: function.rst
 
@@ -84,7 +80,6 @@ Generalized Linear Models
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
@@ -105,7 +100,6 @@ Generalized Linear Models
 
 
 .. autosummary::
-
    :toctree: generated/
    :template: function.rst
 
@@ -123,7 +117,6 @@ For sparse data
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
@@ -144,12 +137,12 @@ Naive Bayes
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
    naive_bayes.GaussianNB
    naive_bayes.MultinomialNB
+   naive_bayes.BernoulliNB
 
 
 Nearest Neighbors
@@ -162,7 +155,6 @@ Nearest Neighbors
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
@@ -171,11 +163,11 @@ Nearest Neighbors
    ball_tree.BallTree
 
 .. autosummary::
-
    :toctree: generated/
    :template: function.rst
 
    neighbors.kneighbors_graph
+   neighbors.radius_neighbors_graph
 
 
 Gaussian Mixture Models
@@ -188,11 +180,12 @@ Gaussian Mixture Models
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
    mixture.GMM
+   mixture.DPGMM
+   mixture.VBGMM
 
 
 Hidden Markov Models
@@ -205,7 +198,6 @@ Hidden Markov Models
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
@@ -224,7 +216,6 @@ Clustering
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
@@ -250,7 +241,6 @@ Classification metrics
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: function.rst
 
@@ -266,6 +256,7 @@ Classification metrics
    metrics.precision_recall_curve
    metrics.zero_one_score
    metrics.zero_one
+   metrics.hinge_loss
 
 
 Regression metrics
@@ -278,7 +269,6 @@ Regression metrics
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: function.rst
 
@@ -296,7 +286,6 @@ Clustering metrics
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: function.rst
 
@@ -315,11 +304,11 @@ Pairwise metrics
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: function.rst
 
    metrics.pairwise.euclidean_distances
+   metrics.pairwise.l1_distances
    metrics.pairwise.linear_kernel
    metrics.pairwise.polynomial_kernel
    metrics.pairwise.rbf_kernel
@@ -335,7 +324,6 @@ Covariance Estimators
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
@@ -345,7 +333,6 @@ Covariance Estimators
    covariance.OAS
 
 .. autosummary::
-
    :toctree: generated/
    :template: function.rst
 
@@ -365,30 +352,30 @@ Signal Decomposition
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
-
+ 
    decomposition.PCA
    decomposition.ProbabilisticPCA
+   decomposition.ProjectedGradientNMF
    decomposition.RandomizedPCA
    decomposition.KernelPCA
    decomposition.FastICA
    decomposition.NMF
+   decomposition.SparsePCA
 
 .. autosummary::
-
    :toctree: generated/
    :template: function.rst
-
+ 
    decomposition.fastica
+   decomposition.dict_learning
 
 
 Linear Discriminant Analysis
 ============================
 
 .. autosummary::
-
    :toctree: generated
    :template: class.rst
 
@@ -405,7 +392,6 @@ Partial Least Squares
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
@@ -425,7 +411,6 @@ Cross Validation
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
@@ -436,6 +421,7 @@ Cross Validation
    cross_val.LeaveOneLabelOut
    cross_val.LeavePLabelOut
    cross_val.Bootstrap
+   cross_val.ShuffleSplit
 
 
 Grid Search
@@ -448,7 +434,6 @@ Grid Search
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
@@ -468,7 +453,6 @@ Feature Selection
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
@@ -498,7 +482,6 @@ From images
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: function.rst
 
@@ -516,7 +499,6 @@ From text
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
@@ -528,11 +510,39 @@ From text
    feature_extraction.text.Vectorizer
 
 
+Preprocessing and normalization
+===============================
+
+.. automodule:: scikits.learn.preprocessing
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: scikits.learn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   preprocessing.Scaler
+   preprocessing.Normalizer
+   preprocessing.Binarizer
+   preprocessing.LabelBinarizer
+   preprocessing.KernelCenterer
+
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   preprocessing.scale
+   preprocessing.normalize
+   preprocessing.binarize
+
+
 Manifold learning
 =================
 
 .. autosummary::
-
     :toctree: generated
     :template: class.rst
 
@@ -540,7 +550,6 @@ Manifold learning
 
 
 .. autosummary::
-
     :toctree: generated
     :template: function.rst
 
@@ -557,7 +566,6 @@ Pipeline
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
@@ -574,7 +582,6 @@ Utilities
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: function.rst
 

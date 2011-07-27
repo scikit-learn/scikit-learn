@@ -2,31 +2,40 @@
 
 # Author: Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #         Alexandre Gramfort <alexandre.gramfort@inria.fr>
+#         Sparseness support by Lars Buitinck <L.J.Buitinck@uva.nl>
 #
-# License: BSD, (C) INRIA
+# License: BSD, (C) INRIA, University of Amsterdam
 
 import numpy as np
+from scipy import linalg
+from scipy.sparse import csr_matrix, issparse
 
 from .base import BaseEstimator, ClassifierMixin, RegressorMixin
 from .ball_tree import BallTree
 from .metrics import euclidean_distances
+from .utils import safe_asanyarray, atleast2d_or_csr
 
 
 class NeighborsClassifier(BaseEstimator, ClassifierMixin):
-    """Classifier implementing k-Nearest Neighbor Algorithm.
+    """Classifier implementing the k-nearest neighbors (k-NN) algorithm.
 
     Parameters
     ----------
     n_neighbors : int, optional
         Default number of neighbors. Defaults to 5.
 
-    window_size : int, optional
-        Window size passed to BallTree
+    leaf_size : int, optional
+        Leaf size passed to BallTree.  This can affect the speed of
+        the nearest neighbors query.  The optimal value depends on the
+        nature of the problem (see Discussion below).  Defaults to 20.
 
     algorithm : {'auto', 'ball_tree', 'brute'}, optional
-       Algorithm used to compute the nearest neighbors. 'ball_tree' will
-       construct a BallTree while 'brute'will perform brute-force
-       search. 'auto' will guess the most appropriate based on current dataset.
+        Algorithm used to compute the nearest neighbors. 'ball_tree' will
+        construct a BallTree while 'brute'will perform brute-force
+        search. 'auto' will guess the most appropriate based on current
+        dataset.  See Discussion below for notes on choosing the optimal
+        method. Fitting on sparse input will override the setting of this
+        parameter.
 
     Examples
     --------
@@ -35,7 +44,7 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
     >>> from scikits.learn.neighbors import NeighborsClassifier
     >>> neigh = NeighborsClassifier(n_neighbors=1)
     >>> neigh.fit(samples, labels)
-    NeighborsClassifier(n_neighbors=1, window_size=1, algorithm='auto')
+    NeighborsClassifier(n_neighbors=1, leaf_size=20, algorithm='auto')
     >>> print neigh.predict([[0,0,0]])
     [1]
 
@@ -43,14 +52,63 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
     --------
     BallTree
 
+    Discussion
+    ----------
+    The optimal algorithm for a given dataset is a complicated choice, and
+    depends on a number of factors:
+    * number of samples N (n_samples).
+      * 'brute' query time grows as O[N], while
+      * 'ball_tree' query time grows as O[log(N)]
+    * dimensionality D (n_features)
+      Intrinsic dimensionality refers to the dimension of a manifold which
+      is linearly or nonlinearly embedded within the parameter space
+      * 'brute' query time grows as O[D], and is unaffected by the value of d.
+      * 'ball_tree' query time may grow faster or slower than this, depending
+        on the structure of the data.
+    * data structure: intrinsic dimensionality of the data and/or sparsity
+      of the data. Intrinsic dimensionality refers to the dimension d<=D
+      of a manifold on which the data lies, which can be linearly or
+      nonlinearly embedded in the parameter space. Sparsity refers to the
+      degree to which the data fills the parameter space (this is to be
+      distinguished from the concept as used in "sparse" matrices.  The data
+      matrix may have no zero entries, but the structure can still be
+      "sparse" in this sense).
+      * 'brute' query time is unchanged by data structure.
+      * 'ball_tree' query time is greatly influenced by data structure.
+        In general, the more sparse the data is, and the smaller the intrinsic
+        dimension d, the faster the ball_tree algorithm will be compared to
+        a brute-force search.  For data which densely fills the parameter
+      space, brute-force is generally a better choice.
+    * number of neighbors k requested for a query point.
+      * 'brute' query time is unaffected by the value of k
+      * 'ball_tree' query time is slower for k>1, mainly due to the internal
+        queueing and sorting that takes place during the query.
+    * leaf_size of the ball_tree
+      The leaf_size parameter controls the point at which the ball_tree
+      algorithm switches from a tree-based query to a brute-force search.
+      As the number of points 'n' in a node becomes smaller, the difference
+      between a brute-force query time O[n] and a ball-tree query time
+      O[log(n)] becomes less significant.  At some point, depending on all
+      the above-mentioned factors, brute-force becomes more efficient.
+      The parameter leaf_size sets this threshold.
+    * number of query points.
+      The ball_tree algorithm requires a one-time building phase.  For very
+      few queries, the time to build the tree may overwhelm any gain during
+      the query time.
+
+    Currently, the algorithm='auto' option chooses between 'brute' and
+    'ball_tree' using an unsophisticated rubric.  In practice, it is
+    suggested that the user experiment with different choices of
+    `algorithm` and `leaf_size` to determine the optimal configuration.
+
     References
     ----------
     http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
-    def __init__(self, n_neighbors=5, algorithm='auto', window_size=1):
+    def __init__(self, n_neighbors=5, algorithm='auto', leaf_size=20):
         self.n_neighbors = n_neighbors
-        self.window_size = window_size
+        self.leaf_size = leaf_size
         self.algorithm = algorithm
 
     def fit(self, X, y, **params):
@@ -58,24 +116,27 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             Training data.
 
-        y : array-like, shape = [n_samples]
+        y : {array-like, sparse matrix}, shape = [n_samples]
             Target values, array of integer values.
 
         params : list of keyword, optional
             Overwrite keywords from __init__
         """
-        X = np.asanyarray(X)
+        X = safe_asanyarray(X)
         if y is None:
             raise ValueError("y must not be None")
         self._y = np.asanyarray(y)
         self._set_params(**params)
 
-        if self.algorithm == 'ball_tree' or \
+        if issparse(X):
+            self.ball_tree = None
+            self._fit_X = X.tocsr()
+        elif self.algorithm == 'ball_tree' or \
            (self.algorithm == 'auto' and X.shape[1] < 20):
-            self.ball_tree = BallTree(X, self.window_size)
+            self.ball_tree = BallTree(X, self.leaf_size)
         else:
             self.ball_tree = None
             self._fit_X = X
@@ -96,7 +157,7 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
             passed to the constructor).
 
         return_distance : boolean, optional. Defaults to True.
-           If False, distances will not be returned
+            If False, distances will not be returned
 
         Returns
         -------
@@ -118,7 +179,7 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
         >>> from scikits.learn.neighbors import NeighborsClassifier
         >>> neigh = NeighborsClassifier(n_neighbors=1)
         >>> neigh.fit(samples, labels)
-        NeighborsClassifier(n_neighbors=1, window_size=1, algorithm='auto')
+        NeighborsClassifier(n_neighbors=1, leaf_size=20, algorithm='auto')
         >>> print neigh.kneighbors([1., 1., 1.]) # doctest: +ELLIPSIS
         (array([[ 0.5]]), array([[2]]...))
 
@@ -133,7 +194,7 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
 
         """
         self._set_params(**params)
-        X = np.atleast_2d(X)
+        X = atleast2d_or_csr(X)
         if self.ball_tree is None:
             dist = euclidean_distances(X, self._fit_X, squared=True)
             # XXX: should be implemented with a partial sort
@@ -163,7 +224,7 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
         labels: array
             List of class labels (one for each data sample).
         """
-        X = np.atleast_2d(X)
+        X = atleast2d_or_csr(X)
         self._set_params(**params)
 
         # get neighbors
@@ -195,8 +256,10 @@ class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
     n_neighbors : int, optional
         Default number of neighbors. Defaults to 5.
 
-    window_size : int, optional
-        Window size passed to BallTree
+    leaf_size : int, optional
+        Leaf size passed to BallTree.  This can affect the speed of
+        the nearest neighbors query.  The optimal value depends on the
+        nature of the problem.  Defaults to 20.
 
     mode : {'mean', 'barycenter'}, optional
         Weights to apply to labels.
@@ -214,20 +277,21 @@ class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
     >>> from scikits.learn.neighbors import NeighborsRegressor
     >>> neigh = NeighborsRegressor(n_neighbors=2)
     >>> neigh.fit(X, y)
-    NeighborsRegressor(n_neighbors=2, window_size=1, mode='mean',
-              algorithm='auto')
+    NeighborsRegressor(n_neighbors=2, mode='mean', algorithm='auto', leaf_size=20)
     >>> print neigh.predict([[1.5]])
     [ 0.5]
 
     Notes
     -----
+    See Discussion in NeighborsClassifier docstring regarding the optimal
+    choice of algorithm and leaf_size.
     http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
     def __init__(self, n_neighbors=5, mode='mean', algorithm='auto',
-                 window_size=1):
+                 leaf_size=20):
         self.n_neighbors = n_neighbors
-        self.window_size = window_size
+        self.leaf_size = leaf_size
         self.mode = mode
         self.algorithm = algorithm
 
@@ -248,7 +312,7 @@ class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
         y: array
             List of target values (one for each data sample).
         """
-        X = np.atleast_2d(np.asanyarray(X))
+        X = atleast2d_or_csr(X)
         self._set_params(**params)
 
         # compute nearest neighbors
@@ -299,7 +363,6 @@ def barycenter_weights(X, Z, reg=1e-3):
     -----
     See developers note for more information.
     """
-    from scipy import linalg
     X, Z = map(np.asanyarray, (X, Z))
     n_samples, n_neighbors = X.shape[0], Z.shape[1]
     if X.dtype.kind == 'i':
@@ -352,7 +415,7 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', reg=1e-3):
     Returns
     -------
     A : sparse matrix in CSR format, shape = [n_samples, n_samples]
-        A[i,j] is assigned the weight of edge that connects i to j.
+        A[i, j] is assigned the weight of edge that connects i to j.
 
     Examples
     --------
@@ -363,9 +426,11 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', reg=1e-3):
     matrix([[ 1.,  0.,  1.],
             [ 0.,  1.,  1.],
             [ 1.,  0.,  1.]])
-    """
-    from scipy import sparse
 
+    See also
+    --------
+    radius_neighbors_graph
+    """
     if isinstance(X, BallTree):
         ball_tree = X
         X = ball_tree.data
@@ -378,16 +443,16 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', reg=1e-3):
     A_indptr = np.arange(0, n_nonzero + 1, n_neighbors)
 
     # construct CSR matrix representation of the k-NN graph
-    if mode is 'connectivity':
+    if mode == 'connectivity':
         A_data = np.ones((n_samples, n_neighbors))
         A_ind = ball_tree.query(
             X, k=n_neighbors, return_distance=False)
 
-    elif mode is 'distance':
+    elif mode == 'distance':
         data, ind = ball_tree.query(X, k=n_neighbors + 1)
         A_data, A_ind = data[:, 1:], ind[:, 1:]
 
-    elif mode is 'barycenter':
+    elif mode == 'barycenter':
         ind = ball_tree.query(
             X, k=n_neighbors + 1, return_distance=False)
         A_ind = ind[:, 1:]
@@ -398,8 +463,76 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', reg=1e-3):
             'Unsupported mode, must be one of "connectivity", '
             '"distance" or "barycenter" but got %s instead' % mode)
 
-    A = sparse.csr_matrix(
-        (A_data.reshape(-1), A_ind.reshape(-1), A_indptr),
-        shape=(n_samples, n_samples))
+    return csr_matrix((A_data.ravel(), A_ind.ravel(), A_indptr),
+                      shape=(n_samples, n_samples))
 
-    return A
+
+def radius_neighbors_graph(X, radius, mode='connectivity'):
+    """Computes the (weighted) graph of Neighbors for points in X
+
+    Neighborhoods are restricted the points at a distance lower than
+    radius.
+
+    Parameters
+    ----------
+    X : array-like or BallTree, shape = [n_samples, n_features]
+        Sample data, in the form of a numpy array or a precomputed
+        :class:`BallTree`.
+
+    radius : float
+        Radius of neighborhoods.
+
+    mode : {'connectivity', 'distance'}, optional
+        Type of returned matrix: 'connectivity' will return the
+        connectivity matrix with ones and zeros, in 'distance' the
+        edges are euclidian distance between points.
+
+    Returns
+    -------
+    A : sparse matrix in CSR format, shape = [n_samples, n_samples]
+        A[i, j] is assigned the weight of edge that connects i to j.
+
+    Examples
+    --------
+    >>> X = [[0], [3], [1]]
+    >>> from scikits.learn.neighbors import radius_neighbors_graph
+    >>> A = radius_neighbors_graph(X, 1.5)
+    >>> A.todense()
+    matrix([[ 1.,  0.,  1.],
+            [ 0.,  1.,  0.],
+            [ 1.,  0.,  1.]])
+
+    See also
+    --------
+    kneighbors_graph
+    """
+    if isinstance(X, BallTree):
+        ball_tree = X
+        X = ball_tree.data
+    else:
+        X = np.asanyarray(X)
+        ball_tree = BallTree(X)
+
+    n_samples = X.shape[0]
+
+    # construct CSR matrix representation of the NN graph
+    if mode == 'connectivity':
+        A_ind = ball_tree.query_radius(X, radius, return_distance=False)
+        A_data = None
+    elif mode == 'distance':
+        A_ind, dist = ball_tree.query_radius(X, radius, return_distance=True)
+        A_data = np.concatenate(list(dist))
+    else:
+        raise ValueError(
+            'Unsupported mode, must be one of "connectivity", '
+            'or "distance" but got %s instead' % mode)
+
+    n_neighbors = np.array([len(a) for a in A_ind])
+    n_nonzero = np.sum(n_neighbors)
+    A_ind = np.concatenate(list(A_ind))
+    A_indptr = np.concatenate((np.zeros(1), np.cumsum(n_neighbors)))
+
+    if A_data is None:
+        A_data = np.ones(n_nonzero)
+
+    return csr_matrix((A_data, A_ind, A_indptr), shape=(n_samples, n_samples))
