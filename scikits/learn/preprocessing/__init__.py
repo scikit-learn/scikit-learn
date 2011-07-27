@@ -163,7 +163,7 @@ class Scaler(BaseEstimator):
             X, axis=0, with_mean=self.with_mean, with_std=self.with_std)
         return self
 
-    def transform(self, X, y=None, copy=True):
+    def transform(self, X, y=None, copy=None):
         """Perform standardization by centering and scaling
 
         Parameters
