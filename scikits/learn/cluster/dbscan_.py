@@ -10,7 +10,7 @@ DBSCAN: Density-Based Spatial Clustering of Applications with Noise
 import numpy as np
 
 from ..base import BaseEstimator
-from ..metrics.pairwise import calculate_distance
+from ..metrics import calculate_distance
 
 
 def dbscan(X, eps=0.5, min_points=5, metric='euclidean',
