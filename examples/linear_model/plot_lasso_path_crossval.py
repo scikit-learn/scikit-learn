@@ -28,7 +28,7 @@ diabetes = datasets.load_diabetes()
 X = diabetes.data
 y = diabetes.target
 
-# normalize data as done by LARS to allow for comparison
+# normalize data as done by Lars to allow for comparison
 X /= np.sqrt(np.sum(X ** 2, axis=0))
 
 ##############################################################################

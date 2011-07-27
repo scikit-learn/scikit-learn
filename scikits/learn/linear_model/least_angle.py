@@ -14,6 +14,7 @@ from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
 from ..utils import arrayfuncs
+from ..utils import deprecated
 
 
 def lars_path(X, y, Xy=None, Gram=None, max_features=None, max_iter=500,
@@ -37,7 +38,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None, max_iter=500,
 
     Gram: None, 'auto', array, shape: (n_features, n_features), optional
         Precomputed Gram matrix (X' * X), if 'auto', the Gram
-        matrix is precomputed from the given X, if there are more samples 
+        matrix is precomputed from the given X, if there are more samples
         than features
 
     alpha_min: float, optional
@@ -62,7 +63,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None, max_iter=500,
 
     See also
     --------
-    :ref:`LassoLARS`, :ref:`LARS`
+    :ref:`LassoLars`, :ref:`Lars`
 
     Notes
     ------
@@ -132,10 +133,10 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None, max_iter=500,
             if n_iter > 0:
                 # In the first iteration, all alphas are zero, the formula
                 # below would make ss a NaN
-                ss = (alphas[n_iter-1] - alpha_min) / (alphas[n_iter-1] -
+                ss = (alphas[n_iter - 1] - alpha_min) / (alphas[n_iter - 1] -
                                                     alphas[n_iter])
-                coefs[n_iter] = coefs[n_iter-1] + ss*(coefs[n_iter] -
-                                coefs[n_iter-1])
+                coefs[n_iter] = coefs[n_iter - 1] + ss * (coefs[n_iter] -
+                                coefs[n_iter - 1])
             alphas[n_iter] = alpha_min
             break
 
@@ -298,10 +299,10 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None, max_iter=500,
     return alphas, active, coefs.T
 
 
-################################################################################
+###############################################################################
 # Estimator classes
 
-class LARS(LinearModel):
+class Lars(LinearModel):
     """Least Angle Regression model a.k.a. LAR
 
     Parameters
@@ -339,9 +340,9 @@ class LARS(LinearModel):
     Examples
     --------
     >>> from scikits.learn import linear_model
-    >>> clf = linear_model.LARS()
+    >>> clf = linear_model.Lars()
     >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1], max_features=1)
-    LARS(normalize=True, precompute='auto', max_iter=500, verbose=False,
+    Lars(normalize=True, precompute='auto', max_iter=500, verbose=False,
        fit_intercept=True)
     >>> print clf.coef_
     [ 0. -1.]
@@ -352,16 +353,16 @@ class LARS(LinearModel):
 
     See also
     --------
-    lars_path, LassoLARS
+    lars_path, LassoLars
     """
-    def __init__(self, fit_intercept=True, verbose=False, normalize=True, 
+    def __init__(self, fit_intercept=True, verbose=False, normalize=True,
                  precompute='auto', max_iter=500):
         self.fit_intercept = fit_intercept
         self.max_iter = max_iter
         self.verbose = verbose
         self.normalize = normalize
         self.method = 'lar'
-        self.precompute = precompute 
+        self.precompute = precompute
 
     def fit(self, X, y, max_features=None, overwrite_X=False, **params):
         """Fit the model using X, y as training data.
@@ -420,8 +421,8 @@ class LARS(LinearModel):
         return self
 
 
-class LassoLARS (LARS):
-    """Lasso model fit with Least Angle Regression a.k.a. LARS
+class LassoLars(Lars):
+    """Lasso model fit with Least Angle Regression a.k.a. Lars
 
     It is a Linear Model trained with an L1 prior as regularizer.
     lasso).
@@ -462,9 +463,9 @@ class LassoLARS (LARS):
     Examples
     --------
     >>> from scikits.learn import linear_model
-    >>> clf = linear_model.LassoLARS(alpha=0.01)
+    >>> clf = linear_model.LassoLars(alpha=0.01)
     >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1])
-    LassoLARS(normalize=True, verbose=False, fit_intercept=True, max_iter=500,
+    LassoLars(normalize=True, verbose=False, fit_intercept=True, max_iter=500,
          precompute='auto', alpha=0.01)
     >>> print clf.coef_
     [ 0.         -0.96325765]
@@ -478,7 +479,7 @@ class LassoLARS (LARS):
     lars_path, Lasso
     """
 
-    def __init__(self, alpha=1.0, fit_intercept=True, verbose=False, 
+    def __init__(self, alpha=1.0, fit_intercept=True, verbose=False,
                  normalize=True, precompute='auto', max_iter=500):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
@@ -486,6 +487,15 @@ class LassoLARS (LARS):
         self.verbose = verbose
         self.normalize = normalize
         self.method = 'lasso'
-        self.precompute = precompute 
+        self.precompute = precompute
 
 
+# Deprecated classes
+class LARS(Lars):
+    pass
+LARS = deprecated("Use Lars instead")(LARS)
+
+
+class LassoLARS(LassoLars):
+    pass
+LassoLARS = deprecated("Use LassoLars instead")(LassoLARS)
