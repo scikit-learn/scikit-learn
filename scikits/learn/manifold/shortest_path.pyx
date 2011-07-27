@@ -300,10 +300,6 @@ cdef FibonacciNode* decrease_val(FibonacciHeap* heap,
     return node
 
 
-cdef FibonacciNode* find_min(FibonacciHeap* heap):
-    return heap.min_node
-
-
 cdef FibonacciNode* link(FibonacciHeap* heap, FibonacciNode* node):
     cdef FibonacciNode *linknode, *tmp_parent, *tmp_child
     if heap.roots_by_rank[node.rank] == NULL:
@@ -328,7 +324,7 @@ cdef FibonacciNode* link(FibonacciHeap* heap, FibonacciNode* node):
     return node
 
 
-cdef FibonacciNode* delete_min(FibonacciHeap* heap):
+cdef FibonacciNode* remove_min(FibonacciHeap* heap):
     cdef FibonacciNode *temp, *next_temp, *out
     cdef unsigned int i
     
@@ -437,7 +433,7 @@ cdef void DijkstraDirectedOneRow(
     insert_node(heap, &nodes[i_node])
 
     while True:
-        v = delete_min(heap)
+        v = remove_min(heap)
         v.state = SCANNED
 
         for i from 0 <= i < k:
@@ -484,6 +480,8 @@ cdef void DijkstraDirected(np.ndarray[ITYPE_t, ndim=2, mode='c'] neighbors,
                                graph,
                                &heap,
                                nodes)
+    
+    free(nodes)
 
 
 @cython.boundscheck(False)
@@ -536,7 +534,7 @@ cdef void DijkstraOneRow(
     insert_node(heap, &nodes[i_node])
 
     while True:
-        v = delete_min(heap)
+        v = remove_min(heap)
         v.state = SCANNED
 
         for i from indptr1[v.index] <= i < indptr1[v.index + 1]:
@@ -611,3 +609,5 @@ cdef void Dijkstra(np.ndarray[ITYPE_t, ndim=2] neighbors,
                        graph,
                        &heap,
                        nodes)
+
+    free(nodes)
