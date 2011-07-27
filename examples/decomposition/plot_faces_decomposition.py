@@ -17,11 +17,12 @@ from time import time
 
 import pylab as pl
 
-from scikits.learn.decomposition import RandomizedPCA, NMF, \
-                                        MiniBatchSparsePCA, FastICA
 from scikits.learn.cluster import MiniBatchKMeans
 from scikits.learn.datasets import fetch_olivetti_faces
-
+from scikits.learn.decomposition import FastICA
+from scikits.learn.decomposition import MiniBatchSparsePCA
+from scikits.learn.decomposition import NMF
+from scikits.learn.decomposition import RandomizedPCA
 
 # Display progress logs on stdout
 logging.basicConfig(level=logging.INFO,
@@ -31,15 +32,23 @@ n_components = n_row * n_col
 image_shape = (64, 64)
 
 ###############################################################################
-# Load digits data
-dataset = fetch_olivetti_faces()
+# Load faces data
+dataset = fetch_olivetti_faces(shuffle=True)
 faces = dataset.data
+
+n_samples, n_features = faces.shape
+
+# global centering
 faces_centered = faces - faces.mean(axis=0)
-print "Dataset consists of %d images" % len(faces)
+
+# local centering
+faces_centered -= faces_centered.mean(axis=1).reshape(n_samples, -1)
+
+print "Dataset consists of %d faces" % n_samples
 
 
 ###############################################################################
-def plot_digit_gallery(title, images):
+def plot_gallery(title, images):
     pl.figure(figsize=(1. * n_col, 1.13 * n_row))
     pl.suptitle(title, size=16)
     vmax = max(images.max(), -images.min())
@@ -56,29 +65,38 @@ def plot_digit_gallery(title, images):
 # List of the different estimators, whether to center and transpose the
 # problem, and whether the transformer uses the clustering API.
 estimators = [
-    ('Eigenfaces (PCA)', RandomizedPCA(n_components=n_components,
-                                        whiten=True),
-                          True, False, False),
-    ('Non-negative components (NMF)', NMF(n_components=n_components,
-                                          init='nndsvda', beta=1, tol=1e-3,
-                                          sparseness='components'),
-                                      False, False, False),
-    ('Independent components (FastICA)', FastICA(n_components=n_components,
-                                             whiten=True, max_iter=10),
-                                     True, True, False),
-    ('Sparse components (SparsePCA)', MiniBatchSparsePCA(
-                                                n_components=n_components,
-                                                alpha=1e-3, n_iter=100,
-                                                verbose=True, chunk_size=3),
-                                      True, False, False),
-    ('Cluster centers (KMeans)', MiniBatchKMeans(k=n_components, tol=1e-2,
-                                                 chunk_size=20, max_iter=10),
-                                 True, False, True)
-    ]
+    ('Eigenfaces - RandomizedPCA',
+     RandomizedPCA(n_components=n_components, whiten=True),
+     True, False),
+
+    ('Non-negative components - NMF',
+     NMF(n_components=n_components, init='nndsvda', beta=1.0, tol=1e-3,
+         sparseness='components'),
+     False, False),
+
+    ('Independent components - FastICA',
+     FastICA(n_components=n_components, whiten=True, max_iter=10),
+     True, True),
+
+    ('Sparse comp. - MiniBatchSparsePCA',
+     MiniBatchSparsePCA(n_components=n_components, alpha=5e-4, n_iter=100,
+                        chunk_size=3),
+     True, False),
+
+    ('Cluster centers - MiniBatchKMeans',
+     MiniBatchKMeans(k=n_components, tol=1e-3, chunk_size=20, max_iter=50),
+     True, False)
+]
+
+###############################################################################
+# Plot a sample of the input data
+
+plot_gallery("First centered Olivetti faces", faces_centered[:n_components])
 
 ###############################################################################
 # Do the estimation and plot it
-for name, estimator, center, transpose, cluster in estimators:
+
+for name, estimator, center, transpose in estimators:
     print "Extracting the top %d %s..." % (n_components, name)
     t0 = time()
     data = faces
@@ -88,12 +106,12 @@ for name, estimator, center, transpose, cluster in estimators:
         data = data.T
     estimator.fit(data)
     print "done in %0.3fs" % (time() - t0)
-    if cluster:
+    if hasattr(estimator, 'cluster_centers_'):
         components_ = estimator.cluster_centers_
     else:
         components_ = estimator.components_
     if transpose:
         components_ = components_.T
-    plot_digit_gallery(name, components_)
+    plot_gallery(name, components_)
 
 pl.show()
