@@ -304,7 +304,7 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
         code, S, dictionary = linalg.svd(X, full_matrices=False)
         dictionary = S[:, np.newaxis] * dictionary
     r = len(dictionary)
-    if n_atoms <= r:
+    if n_atoms <= r:  # True even if n_atoms=None
         code = code[:, :n_atoms]
         dictionary = dictionary[:n_atoms, :]
     else:
@@ -582,7 +582,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
     PCA
 
     """
-    def __init__(self, n_components=None, alpha=1, max_iter=1000, tol=1e-8,
+    def __init__(self, n_components, alpha=1, max_iter=1000, tol=1e-8,
                  method='lars', n_jobs=1, U_init=None, V_init=None,
                  verbose=False, random_state=None):
         self.n_components = n_components
