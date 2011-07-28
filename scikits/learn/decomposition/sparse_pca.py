@@ -613,8 +613,8 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         self._set_params(**params)
         self.random_state = check_random_state(self.random_state)
         X = np.asanyarray(X)
-        code_init = self.V_init.T if self.V_init != None else None
-        dict_init = self.U_init.T if self.U_init != None else None
+        code_init = self.V_init.T if self.V_init is not None else None
+        dict_init = self.U_init.T if self.U_init is not None else None
         Vt, _, E = dict_learning(X.T, self.n_components, self.alpha,
                                  tol=self.tol, max_iter=self.max_iter,
                                  method=self.method, n_jobs=self.n_jobs,
