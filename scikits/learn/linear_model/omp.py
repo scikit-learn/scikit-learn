@@ -287,7 +287,7 @@ class OrthogonalMatchingPursuit(LinearModel):
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
-    
+
     normalize: boolean, optional
         If False, the regressors X are assumed to be already normalized.
 
@@ -342,7 +342,7 @@ class OrthogonalMatchingPursuit(LinearModel):
             norms = np.sqrt(np.sum(X ** 2, axis=0))
             nonzeros = np.flatnonzero(norms)
             X[:, nonzeros] /= norms[nonzeros]
-        
+
         self.coef_ = orthogonal_mp(X, y, self.n_nonzero_coefs, self.eps,
                                    self.precompute).T
 
