@@ -342,8 +342,8 @@ class Lars(LinearModel):
     >>> from scikits.learn import linear_model
     >>> clf = linear_model.Lars()
     >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1], max_features=1)
-    Lars(normalize=True, verbose=False, fit_intercept=True, max_iter=500,
-       precompute='auto', n_features=None)
+    Lars(normalize=True, n_nonzero_coefs=None, verbose=False, fit_intercept=True,
+       max_iter=500, precompute='auto')
     >>> print clf.coef_
     [ 0. -1.]
 
