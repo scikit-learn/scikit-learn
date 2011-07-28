@@ -521,7 +521,7 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
         if verbose > 1:
             dt = (time.time() - t0)
             print 'done (total time: % 3is, % 4.1fmn)' % (dt, dt / 60)
-        return dictionary.T, code.T
+        return code.T, dictionary.T
 
     return dictionary.T
 
@@ -735,7 +735,7 @@ class MiniBatchSparsePCA(SparsePCA):
         self._set_params(**params)
         self.random_state = check_random_state(self.random_state)
         X = np.asanyarray(X)
-        _, Vt = dict_learning_online(X.T, self.n_components, alpha=self.alpha,
+        Vt, _ = dict_learning_online(X.T, self.n_components, alpha=self.alpha,
                                      n_iter=self.n_iter, return_code=True,
                                      dict_init=None, verbose=self.verbose,
                                      callback=self.callback,

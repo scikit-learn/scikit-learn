@@ -112,7 +112,7 @@ def test_initialization():
 def test_dict_learning_online_shapes():
     rng = np.random.RandomState(0)
     X = rng.randn(12, 10)
-    codeT, dictionaryT = dict_learning_online(X.T, n_atoms=8, alpha=1,
+    dictionaryT, codeT = dict_learning_online(X.T, n_atoms=8, alpha=1,
                                               random_state=rng)
     assert_equal(codeT.shape, (8, 12))
     assert_equal(dictionaryT.shape, (10, 8))
