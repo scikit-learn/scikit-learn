@@ -15,6 +15,8 @@ http://blanche.polytechnique.fr/~mallat/papiers/MallatPursuit93.pdf
 import numpy as np
 from scipy import linalg
 
+from .base import LinearModel
+
 
 def _cholesky_omp(X, y, n_nonzero_coefs, eps=None):
     """
@@ -148,7 +150,7 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, eps=None, compute_gram=False):
     argmin ||y - X\gamma||^2 subject to ||\gamma||_0 <= n_{nonzero coefs}
 
     When parametrized by error using the parameter `eps`:
-    argmin ||\gamma||_0 subject to ||y-X\gamma||^2 <= \epsilon
+    argmin ||\gamma||_0 subject to ||y - X\gamma||^2 <= \epsilon
 
     Parameters
     ----------
@@ -170,7 +172,7 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, eps=None, compute_gram=False):
 
     Returns
     -------
-    coef: array of shape: n_nonzero_coefs or (n_nonzero_coefs, n_targets)
+    coef: array of shape: n_features or (n_features, n_targets)
         Coefficients of the OMP solution
 
     See also
@@ -235,7 +237,7 @@ def orthogonal_mp_gram(G, Xy, n_nonzero_coefs=None, eps=None,
 
     Returns
     -------
-    coef: array of shape: n_nonzero_coefs or (n_nonzero_coefs, n_targets)
+    coef: array of shape: n_features or (n_features, n_targets)
         Coefficients of the OMP solution
 
     See also
@@ -268,3 +270,83 @@ def orthogonal_mp_gram(G, Xy, n_nonzero_coefs=None, eps=None,
                            norms_squared[k] if eps else None, eps)
         coef[idx, k] = x
     return np.squeeze(coef)
+
+
+class OrthogonalMatchingPursuit(LinearModel):
+    """Orthogonal Mathching Pursuit model (OMP)
+
+    Parameters
+    ----------
+    n_nonzero_coefs: int, optional
+        number of selected active features
+
+    eps: float, optional
+        Maximum norm of the residual. If not None, overrides n_nonzero_coefs.
+
+    fit_intercept: boolean, optional
+        whether to calculate the intercept for this model. If set
+        to false, no intercept will be used in calculations
+        (e.g. data is expected to be already centered).
+    
+    normalize: boolean, optional
+        If False, the regressors X are assumed to be already normalized.
+
+    precompute : True | False | array-like, optional
+        Whether to use a precomputed Gram matrix to speed up
+        calculations. The Gram matrix can also be passed as argument.
+
+    Attributes
+    ----------
+    `coef_` : array, shape = [n_features]
+        parameter vector (w in the fomulation formula)
+
+    `intercept_` : float
+        independent term in decision function.
+
+    References
+    ----------
+    TODO
+    """
+
+    def __init__(self, n_nonzero_coefs=None, eps=None, fit_intercept=True,
+                 normalize=True, precompute=False):
+        self.n_nonzero_coefs = n_nonzero_coefs
+        self.eps = eps
+        self.fit_intercept = fit_intercept
+        self.normalize = normalize
+        self.precompute = precompute
+
+    def fit(self, X, y, **params):
+        """Fit the model using X, y as training data.
+
+        Parameters
+        ----------
+        X : array-like, shape = (n_samples, n_features)
+            Training data.
+
+        y : array-like, shape = (n_samples,) or (n_samples, n_targets)
+            Target values.
+
+        Returns
+        -------
+        self : object
+            returns an instance of self.
+        """
+        self._set_params(**params)
+
+        X = np.atleast_2d(X)
+        y = np.atleast_1d(y)
+
+        X, y, Xmean, ymean = LinearModel._center_data(X, y, self.fit_intercept)
+        if self.normalize:
+            norms = np.sqrt(np.sum(X ** 2, axis=0))
+            nonzeros = np.flatnonzero(norms)
+            X[:, nonzeros] /= norms[nonzeros]
+        
+        self.coef_ = orthogonal_mp(X, y, self.n_nonzero_coefs, self.eps,
+                                   self.precompute).T
+
+        if self.normalize:
+            self.coef_ /= norms
+        self._set_intercept(Xmean, ymean)
+        return self

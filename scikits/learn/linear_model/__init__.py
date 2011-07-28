@@ -23,7 +23,7 @@ from .stochastic_gradient import SGDClassifier, SGDRegressor
 from .ridge import Ridge, RidgeCV, RidgeClassifier, RidgeClassifierCV, \
                    ridge_regression
 from .logistic import LogisticRegression
-from .omp import orthogonal_mp, orthogonal_mp_gram
+from .omp import orthogonal_mp, orthogonal_mp_gram, OrthogonalMatchingPursuit
 
 from . import sparse
 

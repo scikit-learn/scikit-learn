@@ -93,6 +93,7 @@ Generalized Linear Models
    linear_model.LARS
    linear_model.LassoLARS
    linear_model.LogisticRegression
+   linear_model.OrthogonalMatchingPursuit
    linear_model.SGDClassifier
    linear_model.SGDRegressor
    linear_model.BayesianRidge

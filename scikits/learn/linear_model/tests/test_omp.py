@@ -6,7 +6,7 @@ from nose.tools import assert_raises
 from numpy.testing import assert_equal, assert_array_almost_equal
 from nose.plugins.skip import SkipTest
 
-from .. import orthogonal_mp, orthogonal_mp_gram
+from .. import orthogonal_mp, orthogonal_mp_gram, OrthogonalMatchingPursuit
 
 
 def generate_data(n_samples, n_features):
@@ -105,3 +105,18 @@ def test_perfect_signal_recovery():
     assert_array_almost_equal(orthogonal_mp(X, y, n_atoms), gamma, decimal=1)
     assert_array_almost_equal(orthogonal_mp_gram(G, Xy, n_atoms), gamma,
                               decimal=1)
+
+
+def test_estimator_shapes():
+    X = np.random.randn(10, 15)
+    y1 = np.random.randn(10)
+    y2 = np.random.randn(10, 3)
+
+    OMP = OrthogonalMatchingPursuit(n_nonzero_coefs=5)
+    OMP.fit(X, y1)
+    assert_equal((15,), OMP.coef_.shape)
+    assert_equal((), OMP.intercept_.shape)
+
+    OMP.fit(X, y2)
+    assert_equal((3, 15), OMP.coef_.shape)
+    assert_equal((3,), OMP.intercept_.shape)
