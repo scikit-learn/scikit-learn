@@ -143,8 +143,8 @@ def sparse_uncorrelated(n_samples=100, n_features=10):
     y : numpy array of shape (n_samples) for labels
     """
     X = np.random.normal(loc=0, scale=1, size=(n_samples, n_features))
-    y = np.random.normal(loc=X[:, 0] + 2 * X[:, 1] - 2 * X[:, 2] - 1.5 * X[:, 3],
-                  scale=np.ones(n_samples))
+    y = np.random.normal(loc=X[:, 0] + 2 * X[:, 1] - 2 * X[:, 2] - 1.5 *
+                         X[:, 3], scale=np.ones(n_samples))
     return X, y
 
 
@@ -383,6 +383,7 @@ def swiss_roll(n_samples, noise=0.0):
     t = np.squeeze(t)
     return X, t
 
+
 def s_curve(n_samples, noise=0.0):
     """Generate S curve dataset
 
@@ -401,15 +402,16 @@ def s_curve(n_samples, noise=0.0):
     """
     np.random.seed(0)
 
-    t = 3*np.pi * (np.random.rand(1,n_samples) - 0.5)
+    t = 3 * np.pi * (np.random.rand(1, n_samples) - 0.5)
     x = np.sin(t)
-    y = np.random.rand(1,n_samples)*2.0
-    z = np.sign(t)*(np.cos(t)-1)
+    y = np.random.rand(1, n_samples) * 2.0
+    z = np.sign(t) * (np.cos(t) - 1)
 
-    X = np.concatenate((x,y,z)).T
+    X = np.concatenate((x, y, z)).T
     t = np.squeeze(t)
 
     return X, t
+
 
 def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
                center_box=(-10.0, 10.0), shuffle=True, random_state=0):
@@ -520,7 +522,7 @@ def generate_sparse_coded_signal(n_samples, n_components, n_features,
         number of active (non-zero) coefficients in each sample
 
     random_state: int or RandomState instance (default 0)
-        Seed used by the pseudo random number generator 
+        Seed used by the pseudo random number generator
 
     Returns:
     --------
