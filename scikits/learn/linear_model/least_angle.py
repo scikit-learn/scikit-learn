@@ -17,7 +17,7 @@ from ..utils import arrayfuncs
 from ..utils import deprecated
 
 
-def lars_path(X, y, Xy=None, Gram=None, max_features=None, max_iter=500,
+def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
               alpha_min=0, method='lar', overwrite_X=False,
               overwrite_Gram=False, verbose=False):
     """Compute Least Angle Regression and LASSO path
@@ -30,11 +30,8 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None, max_iter=500,
     y: array, shape: (n_samples)
         Input targets
 
-    max_features: integer, optional
-        Maximum number of selected features.
-
     max_iter: integer, optional
-        Maximum number of iterations to perform.
+        Maximum number of iterations to perform, set to infinity for no limit.
 
     Gram: None, 'auto', array, shape: (n_features, n_features), optional
         Precomputed Gram matrix (X' * X), if 'auto', the Gram
@@ -45,20 +42,20 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None, max_iter=500,
         Minimum correlation along the path. It corresponds to the
         regularization parameter alpha parameter in the Lasso.
 
-    method: 'lar' | 'lasso'
+    method: {'lar', 'lasso'}
         Specifies the returned model. Select 'lar' for Least Angle
         Regression, 'lasso' for the Lasso.
 
     Returns
     --------
-    alphas: array, shape: (max_features + 1,)
+    alphas: array, shape: (max_iter,)
         Maximum of covariances (in absolute value) at each
         iteration.
 
     active: array, shape (max_features,)
         Indices of active variables at the end of the path.
 
-    coefs: array, shape (n_features, max_features+1)
+    coefs: array, shape (n_features, max_iter)
         Coefficients along the path
 
     See also
@@ -74,9 +71,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None, max_iter=500,
 
     n_features = X.shape[1]
     n_samples = y.size
-
-    if max_features is None:
-        max_features = min(n_samples, n_features)
+    max_features = min(max_iter, n_features)
 
     coefs = np.zeros((max_features + 1, n_features))
     alphas = np.zeros(max_features + 1)
@@ -121,14 +116,11 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None, max_iter=500,
             C_idx = np.argmax(np.abs(Cov))
             C_ = Cov[C_idx]
             C = np.fabs(C_)
-            # to match a for computing gamma_
         else:
             C = 0.
 
         alphas[n_iter] = C / n_samples
-
-        # Check for early stopping
-        if alphas[n_iter] < alpha_min:  # interpolate
+        if alphas[n_iter] < alpha_min:  # early stopping
             # interpolation factor 0 <= ss < 1
             if n_iter > 0:
                 # In the first iteration, all alphas are zero, the formula
@@ -140,7 +132,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None, max_iter=500,
             alphas[n_iter] = alpha_min
             break
 
-        if n_active == max_features or n_iter == max_iter:
+        if n_iter >= max_iter or n_active >= n_features:
             break
 
         if not drop:
@@ -242,9 +234,6 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None, max_iter=500,
         # update correlations
         Cov -= gamma_ * corr_eq_dir
 
-        if n_active > n_features:
-            break
-
         # See if any coefficient has changed sign
         if drop and method == 'lasso':
 
@@ -308,7 +297,7 @@ class Lars(LinearModel):
     Parameters
     ----------
     n_nonzero_coefs : int, optional
-        Target number of non-zero coefficients. 
+        Target number of non-zero coefficients.
 
     fit_intercept : boolean
         Whether to calculate the intercept for this model. If set
@@ -326,8 +315,6 @@ class Lars(LinearModel):
         calculations. If set to 'auto' let us decide. The Gram
         matrix can also be passed as argument.
 
-    max_iter: integer, optional
-        Maximum number of iterations to perform.
 
     Attributes
     ----------
@@ -340,10 +327,10 @@ class Lars(LinearModel):
     Examples
     --------
     >>> from scikits.learn import linear_model
-    >>> clf = linear_model.Lars()
-    >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1], max_features=1)
-    Lars(normalize=True, n_nonzero_coefs=None, verbose=False, fit_intercept=True,
-       max_iter=500, precompute='auto')
+    >>> clf = linear_model.Lars(n_nonzero_coefs=1)
+    >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1])
+    Lars(normalize=True, precompute='auto', n_nonzero_coefs=1, verbose=False,
+       fit_intercept=True)
     >>> print clf.coef_
     [ 0. -1.]
 
@@ -356,16 +343,15 @@ class Lars(LinearModel):
     lars_path, LassoLars
     """
     def __init__(self, fit_intercept=True, verbose=False, normalize=True,
-                 precompute='auto', max_iter=500, n_nonzero_coefs=None):
+                 precompute='auto', n_nonzero_coefs=None):
         self.fit_intercept = fit_intercept
-        self.max_iter = max_iter
         self.verbose = verbose
         self.normalize = normalize
         self.method = 'lar'
         self.precompute = precompute
         self.n_nonzero_coefs = n_nonzero_coefs
 
-    def fit(self, X, y, max_features=None, overwrite_X=False, **params):
+    def fit(self, X, y, overwrite_X=False, **params):
         """Fit the model using X, y as training data.
 
         Parameters
@@ -388,13 +374,13 @@ class Lars(LinearModel):
 
         X, y, Xmean, ymean = LinearModel._center_data(X, y, self.fit_intercept)
         alpha = getattr(self, 'alpha', 0.)
-        n_nonzero_coefs = getattr(self, 'n_nonzero_coefs', None)
-
-        if n_nonzero_coefs:  # n_nonzero_coefs parametrization takes priority
-            alpha = 0.
-
-        if not max_features:
-            max_features = n_nonzero_coefs
+        if getattr(self, 'n_nonzero_coefs', None) is not None:
+            alpha = 0. # n_nonzero_coefs parametrization takes priority
+            max_iter = self.n_nonzero_coefs
+        elif hasattr(self, 'max_iter'):
+            max_iter = self.max_iter
+        else:
+            max_iter = np.inf # no limit
 
         if self.normalize:
             norms = np.sqrt(np.sum(X ** 2, axis=0))
@@ -418,7 +404,7 @@ class Lars(LinearModel):
                   Gram=Gram, overwrite_X=overwrite_X,
                   overwrite_Gram=True, alpha_min=alpha,
                   method=self.method, verbose=self.verbose,
-                  max_features=max_features, max_iter=self.max_iter)
+                  max_iter=max_iter)
 
         if self.normalize:
             self.coef_path_ /= norms[:, np.newaxis]
