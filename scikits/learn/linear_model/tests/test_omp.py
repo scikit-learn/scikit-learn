@@ -20,26 +20,26 @@ def generate_data(n_samples, n_features):
 def test_correct_shapes():
     n_samples, n_features = 10, 15
     X, y = generate_data(n_samples, n_features)
-    assert_equal(orthogonal_mp(X, y, n_features=6).shape, (n_features,))
+    assert_equal(orthogonal_mp(X, y, n_nonzero_features=6).shape, (n_features,))
     y = np.random.randn(len(y), 3)
-    assert_equal(orthogonal_mp(X, y, n_features=6).shape, (n_features, 3))
+    assert_equal(orthogonal_mp(X, y, n_nonzero_features=6).shape, (n_features, 3))
 
 
 def test_correct_shapes_gram():
     n_samples, n_features = 10, 15
     X, y = generate_data(n_samples, n_features)
     G, Xy = np.dot(X.T, X), np.dot(X.T, y)
-    assert_equal(orthogonal_mp_gram(G, Xy, n_features=6).shape, (n_features,))
+    assert_equal(orthogonal_mp_gram(G, Xy, n_nonzero_features=6).shape, (n_features,))
     y = np.random.randn(n_samples, 3)
     Xy = np.dot(X.T, y)
-    assert_equal(orthogonal_mp_gram(G, Xy, n_features=6).shape, (n_features, 3))
+    assert_equal(orthogonal_mp_gram(G, Xy, n_nonzero_features=6).shape, (n_features, 3))
 
 
 def test_n_features():
     n_samples, n_features = 10, 15
     X, y = generate_data(n_samples, n_features)
-    assert_equal(np.sum(orthogonal_mp(X, y, n_features=6) != 0), 6)
-    assert_equal(np.sum(orthogonal_mp(X, y, n_features=6, compute_gram=True)
+    assert_equal(np.sum(orthogonal_mp(X, y, n_nonzero_features=6) != 0), 6)
+    assert_equal(np.sum(orthogonal_mp(X, y, n_nonzero_features=6, compute_gram=True)
                  != 0), 6)
 
 
@@ -56,8 +56,8 @@ def test_eps():
 def test_with_without_gram():
     n_samples, n_features = 10, 15
     X, y = generate_data(n_samples, n_features)
-    assert_array_almost_equal(orthogonal_mp(X, y, n_features=6),
-                              orthogonal_mp(X, y, n_features=6,
+    assert_array_almost_equal(orthogonal_mp(X, y, n_nonzero_features=6),
+                              orthogonal_mp(X, y, n_nonzero_features=6,
                                             compute_gram=True))
 
 
@@ -72,7 +72,7 @@ def test_unreachable_accuracy():
     n_samples, n_features = 10, 15
     X, y = generate_data(n_samples, n_features)
     assert_array_almost_equal(orthogonal_mp(X, y, eps=0),
-                              orthogonal_mp(X, y, n_features=n_features))
+                              orthogonal_mp(X, y, n_nonzero_features=n_features))
 
 
 def test_bad_input():
@@ -80,12 +80,12 @@ def test_bad_input():
     X, y = generate_data(n_samples, n_features)
     G, Xy = np.dot(X.T, X), np.dot(X.T, y)
     assert_raises(ValueError, orthogonal_mp, X, y, eps=-1)
-    assert_raises(ValueError, orthogonal_mp, X, y, n_features=-1)
-    assert_raises(ValueError, orthogonal_mp, X, y, n_features=n_features + 1)
+    assert_raises(ValueError, orthogonal_mp, X, y, n_nonzero_features=-1)
+    assert_raises(ValueError, orthogonal_mp, X, y, n_nonzero_features=n_features + 1)
     assert_raises(ValueError, orthogonal_mp_gram, G, Xy, eps=-1)
-    assert_raises(ValueError, orthogonal_mp_gram, G, Xy, n_features=-1)
+    assert_raises(ValueError, orthogonal_mp_gram, G, Xy, n_nonzero_features=-1)
     assert_raises(ValueError, orthogonal_mp_gram, G, Xy,
-                  n_features=n_features + 1)
+                  n_nonzero_features=n_features + 1)
 
 
 def test_perfect_signal_recovery():
