@@ -25,6 +25,15 @@ Kernel:
 
 Example
 -------
+>>> from scikits.learn import datasets
+>>> label_prop_model = BaseLabelPropagation()
+>>> iris = datasets.load_iris()
+>>> random_unlabeled_points = np.where(np.random.random_integers(0, 1, size=len(iris.target)))
+>>> labels = np.copy(iris.target)
+>>> labels[random_unlabeled_points] = -999
+>>> label_prop_model.fit(iris.data, labels, unlabeled_identifier=-999) 
+... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+BaseLabelPropagation(...)
 
 
 References
@@ -59,7 +68,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
       threshold to consider the system at steady state
     """
 
-    _default_alpha = 1
+    _default_alpha = 1.
 
     def __init__(self, kernel=None, sigma=None, alpha=None, unlabeled_identifier=0, max_iters=1000, convergence_threshold=1e-3):
         self.max_iters, self.convergence_threshold = max_iters, convergence_threshold
@@ -123,12 +132,13 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         --------
         >>> from scikits.learn import datasets
         >>> label_prop_model = BaseLabelPropagation()
-        >>> iris = datasets.load_iris() # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-        >>> label_prop_model.fit(iris.names, iris.target)
-        LabelPropagation(kernel=<function gaussian_kernel at ...>,
-                 convergence_threshold=0.001, max_iters=1000,
-                 unlabeled_identifier=0, alpha=1, sigma=0.5 ...
-                 ...
+        >>> iris = datasets.load_iris()
+        >>> random_unlabeled_points = np.where(np.random.random_integers(0, 1, size=len(iris.target)))
+        >>> labels = np.copy(iris.target)
+        >>> labels[random_unlabeled_points] = -1
+        >>> label_prop_model.fit(iris.data, labels, unlabeled_identifier=-1) 
+        ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+        BaseLabelPropagation(...)
 
         Warning
         -------
@@ -142,37 +152,31 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         # actual graph construction (implementations should override this)
         self._build_graph()
 
-        # label construction
-        if len(self._y.shape) > 1:
-            # assumes labels already passed in as categorical probability distribution
-            (num_labels, num_classes) = self._y.shape 
-        else:
-            if (self._y<0).any(): # is binary? (-1 -> 1)
-                num_labels, num_classes = self._y.shape[0], 1
-            else: # assume multiclass (convert to categorical distribution
-                labels = np.unique(self._y)
-                num_labels, num_classes = self._y.shape[0], len(labels)
-                _y2 = np.zeros((num_labels, num_classes))
-                for label in labels:
-                    if label != self.unlabeled_identifier:
-                        _y2[np.where(self._y == label), label] = 1
-                self._y = _y2
+        # label construction 
+        # construct a categorical distribution for classification only (TODO: implement regression)
+        unq_labels = set(self._y)
+        unq_labels.remove(self.unlabeled_identifier)
+
+        num_labels, num_classes = self._y.shape[0], len(unq_labels)
+        self.label_map = dict(zip(unq_labels, range(num_classes)))
+
+        _y2 = np.zeros((num_labels, num_classes))
+        for label in unq_labels:
+            _y2[np.where(self._y == label), self.label_map[label]] = 1
+        self._y = _y2
 
         Y_orig = np.copy(self._y)
 
-        self.unlabels = map(lambda vec: 0 if np.array_equal(vec, self.unlabeled_identifier) else 2, self._y)
         y_p = np.zeros((self._X.shape[0], num_classes))
         self._y.resize((self._X.shape[0], num_classes))
 
 
         max_iters = self.max_iters
-        print y_p
         while not_converged(self._y, y_p, self.convergence_threshold) and max_iters > 1:
             y_p = self._y
             self._y = np.dot(self._graph_matrix, self._y)
             # clamp
-            self._y = self.alpha * Y_orig - (1 - self.alpha) * self._y
-            print self._y
+            self._y = self.alpha * self._y + (1 - self.alpha) * Y_orig
             max_iters -= 1
         return self
 
@@ -206,7 +210,7 @@ class LabelSpreading(BaseLabelPropagation):
         """
         affinity_matrix = compute_affinity_matrix(self._X, diagonal=0)
         degree_matrix = map(lambda x: (np.sum(x, axis=0)), affinity_matrix) * np.identity(affinity_matrix.shape[0])
-        #degree_matrix = map(np.sum, affinity_matrix) * np.identity(affinity_matrix.shape[0])
+        #degree_matrix = map(np.sum, affinity_matrix) * np.identity(affinity_matrix.shape[4])
         deg_invsq = np.sqrt(np.linalg.inv(degree_matrix))
 
         laplacian = deg_invsq * np.matrix(affinity_matrix) * deg_invsq
