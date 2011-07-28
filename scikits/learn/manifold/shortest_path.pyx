@@ -27,14 +27,16 @@ ctypedef np.int32_t ITYPE_t
 
 def shortest_path(dist_matrix, directed=True, method='best'):
     """
-    Perform a shortest-path graph search on data
+    Perform a shortest-path graph search on a positive directed or
+    undirected graph.
 
     Parameters
     ----------
     dist_matrix : arraylike or sparse matrix, shape = (N,N)
-        if point i is connected to point j, then dist_matrix[i,j] gives
-        the distance.  If point i is not connected to point j, then
-        dist_matrix[i,j] == 0
+        Array of positive distances.
+        If vertex i is connected to vertex j, then dist_matrix[i,j] gives
+        the distance between the vertices.
+        If vertex i is not connected to vertex j, then dist_matrix[i,j] = 0
     directed : boolean
         if True, then find the shortest path on a directed graph: only
         progress from a point to its neighbors, not the other way around.
@@ -51,6 +53,18 @@ def shortest_path(dist_matrix, directed=True, method='best'):
     G : np.ndarray, float, shape = [N,N]
         G[i,j] gives the shortest distance from point i to point j
         along the graph.
+
+    Notes
+    -----
+    As currently implemented, Dijkstra's algorithm does not work for
+    graphs with direction-dependent distances when directed == False.
+    i.e., if dist_matrix[i,j] and dist_matrix[j,i] are not equal and
+    both are nonzero, method='D' will not necessarily yield the correct
+    result.
+
+    Also, these routines have not been tested for graphs with negative
+    distances.  Negative distances can lead to infinite cycles that must
+    be handled by specialized algorithms.
     """
     if not isspmatrix_csr(dist_matrix):
         dist_matrix = csr_matrix(dist_matrix)
