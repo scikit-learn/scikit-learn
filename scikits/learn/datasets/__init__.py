@@ -14,6 +14,7 @@ from .twenty_newsgroups import fetch_20newsgroups
 from .twenty_newsgroups import load_20newsgroups
 from .mldata import fetch_mldata, mldata_filename
 from .samples_generator import swiss_roll
+from .samples_generator import generate_sparse_coded_signal
 from .svmlight_format import load_svmlight_file
 from .olivetti_faces import fetch_olivetti_faces
 from ..utils import deprecated

@@ -497,3 +497,55 @@ def generate_random_spd_matrix(ndim, random_state=0):
     rand_spd = np.dot(np.dot(U, 1.0 + np.diag(prng.rand(ndim))), V)
     return rand_spd
 
+
+def generate_sparse_coded_signal(n_samples, n_components, n_features,
+                                 n_nonzero_coefs, random_state=0):
+    """Generate a signal as a sparse combination of dictionary elements
+    Returns a matrix X = WH, such as H is (n_components, n_features),
+    W is (n_samples, n_components) and each line of W has exactly
+    n_nonzero_coefs non-zero elements.
+
+    Parameters:
+    ----------
+    n_samples: int,
+        number of samples to generate
+
+    n_components: int,
+        number of components in the dictionary
+
+    n_features: int,
+        number of features of the dataset to generate
+
+    n_nonzero_coefs: int,
+        number of active (non-zero) coefficients in each sample
+
+    random_state: int or RandomState instance (default 0)
+        Seed used by the pseudo random number generator 
+
+    Returns:
+    --------
+    data: array (n_samples, n_features):
+        the encoded signal
+
+    code: array (n_samples, n_components):
+        the sparse code such that each line of this matrix has exactly
+        n_nonzero_coefs non-zero items.
+
+    dictionary: array(n_components, n_features):
+        the dictionary with normalized components
+
+    """
+
+    rng = check_random_state(random_state)
+
+    H = np.random.randn(n_components, n_features)
+    H /= np.sqrt(np.sum((H ** 2), axis=1))[:, np.newaxis]
+    W = np.zeros((n_samples, n_components))
+    for i in xrange(n_samples):
+        idx = np.arange(n_components)
+        rng.shuffle(idx)
+        idx = idx[:n_nonzero_coefs]
+        W[i, idx] = rng.randn(n_nonzero_coefs)
+    X = np.dot(W, H)
+
+    return map(np.squeeze, (X, W, H))
