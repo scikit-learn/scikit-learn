@@ -158,6 +158,12 @@ def test_lars_add_features(verbose=False):
         np.array([0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]))
 
 
+def test_lars_n_nonzero_coefs(verbose=False):
+    lars = linear_model.Lars(n_nonzero_coefs=6, verbose=verbose)
+    lars.fit(X, y)
+    assert len(lars.coef_.nonzero()[0]) == 6
+
+
 if __name__ == '__main__':
     import nose
     nose.runmodule()

@@ -307,11 +307,11 @@ class Lars(LinearModel):
 
     Parameters
     ----------
-    n_features : int, optional
-        Number of selected active features
+    n_nonzero_coefs : int, optional
+        Target number of non-zero coefficients. 
 
     fit_intercept : boolean
-        whether to calculate the intercept for this model. If set
+        Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
@@ -342,8 +342,8 @@ class Lars(LinearModel):
     >>> from scikits.learn import linear_model
     >>> clf = linear_model.Lars()
     >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1], max_features=1)
-    Lars(normalize=True, precompute='auto', max_iter=500, verbose=False,
-       fit_intercept=True)
+    Lars(normalize=True, verbose=False, fit_intercept=True, max_iter=500,
+       precompute='auto', n_features=None)
     >>> print clf.coef_
     [ 0. -1.]
 
@@ -356,13 +356,14 @@ class Lars(LinearModel):
     lars_path, LassoLars
     """
     def __init__(self, fit_intercept=True, verbose=False, normalize=True,
-                 precompute='auto', max_iter=500):
+                 precompute='auto', max_iter=500, n_nonzero_coefs=None):
         self.fit_intercept = fit_intercept
         self.max_iter = max_iter
         self.verbose = verbose
         self.normalize = normalize
         self.method = 'lar'
         self.precompute = precompute
+        self.n_nonzero_coefs = n_nonzero_coefs
 
     def fit(self, X, y, max_features=None, overwrite_X=False, **params):
         """Fit the model using X, y as training data.
@@ -387,6 +388,13 @@ class Lars(LinearModel):
 
         X, y, Xmean, ymean = LinearModel._center_data(X, y, self.fit_intercept)
         alpha = getattr(self, 'alpha', 0.)
+        n_nonzero_coefs = getattr(self, 'n_nonzero_coefs', None)
+
+        if n_nonzero_coefs:  # n_nonzero_coefs parametrization takes priority
+            alpha = 0.
+
+        if not max_features:
+            max_features = n_nonzero_coefs
 
         if self.normalize:
             norms = np.sqrt(np.sum(X ** 2, axis=0))
@@ -429,9 +437,6 @@ class LassoLars(Lars):
 
     Parameters
     ----------
-    n_features : int, optional
-        Number of selected active features
-
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
