@@ -44,7 +44,7 @@ cv = StratifiedKFold(y, 2)
 
 score, permutation_scores, pvalue = permutation_test_score(svm, X, y,
                                             zero_one_score, cv=cv,
-                                            n_permutations=100, n_jobs=1)
+                                            n_permutations=100)
 
 print "Classification score %s (pvalue : %s)" % (score, pvalue)
 
