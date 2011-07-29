@@ -48,28 +48,36 @@ def _cholesky_omp(X, y, n_nonzero_coefs, eps=None):
 
     """
 
+    min_float = np.finfo(X.dtype).eps
+
     alpha = np.dot(X.T, y)
     residual = y
-    it = 0
+    n_active = 0
     idx = []
-    L = np.ones((1, 1))
 
-    for it in xrange(X.shape[1]):
+    max_features = X.shape[1] if eps is not None else n_nonzero_coefs
+    L = np.empty((max_features, max_features), dtype=X.dtype)
+    L[0, 0] = 1.
+
+    while True:
         lam = np.abs(np.dot(X.T, residual)).argmax()
         if len(idx) > 0:
-            w = linalg.solve_triangular(L, np.dot(X[:, idx].T, X[:, lam]),
-                                        lower=True, unit_diagonal=True)
+            w = linalg.solve_triangular(L[:n_active, :n_active], np.dot(X[:, idx].T, X[:, lam]),
+                                        lower=True)
             # Updates the Cholesky decomposition of X' X
-            L = np.r_[np.c_[L, np.zeros(len(L))],
-                      np.atleast_2d(np.append(w, np.sqrt(1 - np.dot(w.T, w))))]
+            L[n_active, :n_active] = w
+            L[n_active, n_active] = max(np.sqrt(np.abs(1 - np.dot(w.T, w))), min_float)
         idx.append(lam)
+        n_active += 1
         # solves LL'x = y as a composition of two triangular systems
-        Lc = linalg.solve_triangular(L, alpha[idx], lower=True)
-        gamma = linalg.solve_triangular(L, Lc, trans=1, lower=True)
+        Lc = linalg.solve_triangular(L[:n_active, :n_active], alpha[idx], lower=True)
+        gamma = linalg.solve_triangular(L[:n_active, :n_active], Lc, trans=1, lower=True)
         residual = y - np.dot(X[:, idx], gamma)
         if eps != None and np.dot(residual.T, residual) <= eps:
             break
-        elif n_nonzero_coefs != None and it == n_nonzero_coefs - 1:
+        # elif n_nonzero_coefs != None and n_active == n_nonzero_coefs:
+        #     break
+        elif n_active == max_features:  # cred
             break
 
     return gamma, idx
@@ -109,23 +117,30 @@ def _gram_omp(G, Xy, n_nonzero_coefs, eps_0=None, eps=None):
 
     """
 
+    min_float = np.finfo(G.dtype).eps
+
     idx = []
-    L = np.ones((1, 1))
     alpha = Xy
     eps_curr = eps_0
     delta = 0
-    it = 0
+    n_active = 0
 
-    for it in xrange(len(G)):
+    max_features = len(G) if eps is not None else n_nonzero_coefs
+    L = np.empty((max_features, max_features), dtype=G.dtype)
+    L[0, 0] = 1.
+
+    while True:
         lam = np.abs(alpha).argmax()
         if len(idx) > 0:
-            w = linalg.solve_triangular(L, G[idx, lam],
-                                        lower=True, unit_diagonal=True)
-            L = np.r_[np.c_[L, np.zeros(len(L))],
-                      np.atleast_2d(np.append(w, np.sqrt(1 - np.inner(w, w))))]
+            w = linalg.solve_triangular(L[:n_active, :n_active], G[idx, lam],
+                                        lower=True)
+            L[n_active, :n_active] = w
+            L[n_active, n_active] = max(np.sqrt(np.abs(1 - np.dot(w.T, w))), min_float)
         idx.append(lam)
-        Lc = linalg.solve_triangular(L, Xy[idx], lower=True)
-        gamma = linalg.solve_triangular(L, Lc, trans=1, lower=True)
+        n_active += 1
+        # solves LL'x = y as a composition of two triangular systems
+        Lc = linalg.solve_triangular(L[:n_active, :n_active], Xy[idx], lower=True)
+        gamma = linalg.solve_triangular(L[:n_active, :n_active], Lc, trans=1, lower=True)
         beta = np.dot(G[:, idx], gamma)
         alpha = Xy - beta
         if eps != None:
@@ -134,8 +149,11 @@ def _gram_omp(G, Xy, n_nonzero_coefs, eps_0=None, eps=None):
             eps_curr -= delta
             if eps_curr <= eps:
                 break
-        elif n_nonzero_coefs != None and it == n_nonzero_coefs - 1:
+        #elif n_nonzero_coefs != None and it == n_nonzero_coefs - 1:
+        #    break
+        elif n_active == max_features:
             break
+
     return gamma, idx
 
 
