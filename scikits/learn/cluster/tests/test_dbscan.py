@@ -19,25 +19,25 @@ def test_dbscan_similarity():
     Tests the DBSCAN algorithm with a similarity array
 
     """
+    # Parameters chosen specifically for this task.
+    eps = 0.15
+    min_points = 10
     # Compute similarities
     D = distance.squareform(distance.pdist(X))
-    S = 1 - (D / np.max(D))
-
+    D /= np.max(D)
     # Compute DBSCAN
-    # parameters chosen for task
-    core_points, labels = dbscan(S, metric="precomputed",
-                                 eps=0.85, min_points=10)
-
+    core_points, labels = dbscan(D, metric="precomputed",
+                                 eps=eps, min_points=min_points)
     # number of clusters, ignoring noise if present
     n_clusters_1 = len(set(labels)) - (1 if -1 in labels else 0)
 
-    assert_equal(n_clusters, n_clusters_1)
+    assert_equal(n_clusters_1, n_clusters)
 
     db = DBSCAN(metric="precomputed")
-    labels = db.fit(S, eps=0.85, min_points=10).labels_
+    labels = db.fit(D, eps=eps, min_points=min_points).labels_
 
     n_clusters_2 = len(set(labels)) - int(-1 in labels)
-    assert_equal(n_clusters, n_clusters_2)
+    assert_equal(n_clusters_2, n_clusters)
 
 
 def test_dbscan_feature():
@@ -45,19 +45,23 @@ def test_dbscan_feature():
     Tests the DBSCAN algorithm with a feature vector array
 
     """
+    # Parameters chosen specifically for this task.
+    # Different eps to other test, because distance is not normalised.
+    eps = 0.8
+    min_points = 10
     metric = 'euclidean'
     # Compute DBSCAN
     # parameters chosen for task
     core_points, labels = dbscan(X, metric=metric,
-                                 eps=0.85, min_points=10)
+                                 eps=eps, min_points=min_points)
 
     # number of clusters, ignoring noise if present
     n_clusters_1 = len(set(labels)) - int(-1 in labels)
-    assert_equal(n_clusters, n_clusters_1)
+    assert_equal(n_clusters_1, n_clusters)
 
     db = DBSCAN()
     labels = db.fit(X, metric=metric,
-                    eps=0.85, min_points=10).labels_
+                    eps=eps, min_points=min_points).labels_
 
     n_clusters_2 = len(set(labels)) - int(-1 in labels)
-    assert_equal(n_clusters, n_clusters_2)
+    assert_equal(n_clusters_2, n_clusters)
