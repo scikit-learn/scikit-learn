@@ -26,14 +26,14 @@ Kernel:
 Example
 -------
 >>> from scikits.learn import datasets
->>> label_prop_model = BaseLabelPropagation()
+>>> label_prop_model = LabelPropagation()
 >>> iris = datasets.load_iris()
 >>> random_unlabeled_points = np.where(np.random.random_integers(0, 1, size=len(iris.target)))
 >>> labels = np.copy(iris.target)
->>> labels[random_unlabeled_points] = -999
->>> label_prop_model.fit(iris.data, labels, unlabeled_identifier=-999) 
+>>> labels[random_unlabeled_points] = -1
+>>> label_prop_model.fit(iris.data, labels, unlabeled_identifier=-1) 
 ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-BaseLabelPropagation(...)
+LabelPropagation(...)
 
 
 References
@@ -68,20 +68,17 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
       threshold to consider the system at steady state
     """
 
-    _default_alpha = 1.
+    _default_alpha = 1
 
-    def __init__(self, kernel=None, sigma=None, alpha=None, unlabeled_identifier=0, max_iters=1000, convergence_threshold=1e-3):
+    def __init__(self, kernel='gaussian', sigma=DEFAULT_SIGMA, alpha=None, unlabeled_identifier=-1, max_iters=100, convergence_threshold=1e-3):
         self.max_iters, self.convergence_threshold = max_iters, convergence_threshold
-        if sigma is None:
-            self.sigma = DEFAULT_SIGMA
-        else:
-            self.sigma = sigma
+        self.sigma = sigma
 
         # object referring to a point that is unlabeled
         self.unlabeled_identifier = unlabeled_identifier
 
-        if kernel is None:
-            self.kernel = gen_gaussian_kernel(sigma=self.sigma)
+        if kernel == 'gaussian':
+            self.kernel = gaussian_kernel
         elif hasattr(kernel, '__call__'):
             self.kernel = kernel
 
@@ -99,16 +96,15 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         This basic implementation creates a non-stochastic affinity matrix, so 
         class probability distributions will exceed 1 (normalization may be desired)
         """
-        self._graph_matrix = compute_affinity_matrix(self._X, kernel=self.kernel)
+        self._graph_matrix = compute_affinity_matrix(self._X, kernel=self.kernel, sigma=self.sigma)
 
     def predict(self, X):
         return [np.argmax(self.predict_proba(x)) for x in X]
 
     def predict_proba(self, x):
-        s = 0
+        """ returns a probability distribution over labels for a given input point """
+        s = 0.
         ary = np.asanyarray(x)
-        if len(ary.shape) == 1:
-            ary.resize((ary.shape[0], 1))
         for xj, yj in zip(self._X, self._y):
             Wx = self.kernel(xj, ary)
             s += Wx * yj / (Wx + EPSILON)
@@ -125,7 +121,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
           A {n_samples by n_samples} size matrix will be created from this 
           (keep dataset fewer than 2000 points)
         y : array, shape = [n_labeled_samples]
-          n_labeled_samples <= n_samples
+          n_labeled_samples (unlabeled points marked with a special identifier)
           All unlabeled samples will be transductively assigned labels
 
         Examples
@@ -147,36 +143,42 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         """
         self._set_params(**params)
         self._X = np.asanyarray(X)
-        self._y = np.asanyarray(y)
 
         # actual graph construction (implementations should override this)
         self._build_graph()
 
         # label construction 
         # construct a categorical distribution for classification only (TODO: implement regression)
-        unq_labels = set(self._y)
+        unq_labels = set(y)
         unq_labels.remove(self.unlabeled_identifier)
 
-        num_labels, num_classes = self._y.shape[0], len(unq_labels)
+        num_labels, num_classes = len(y), len(unq_labels)
         self.label_map = dict(zip(unq_labels, range(num_classes)))
 
-        _y2 = np.zeros((num_labels, num_classes))
-        for label in unq_labels:
-            _y2[np.where(self._y == label), self.label_map[label]] = 1
-        self._y = _y2
+        y_st = np.asanyarray(y)
+        self.unlabeled_points = np.where(y_st == self.unlabeled_identifier)
+        alpha_ary = np.ones((num_labels,1))
+        alpha_ary[self.unlabeled_points,0] = self.alpha
 
-        Y_orig = np.copy(self._y)
+        self._y = np.zeros((num_labels, num_classes))
+        for label in unq_labels:
+            self._y[np.where(y_st == label), self.label_map[label]] = 1
+
+        # this should do elementwise multiplication between the two arrays
+        # Y_alpha = self._y * (1 - alpha_ary)
+        Y_alpha = np.copy(self._y)
+        Y_alpha = Y_alpha * (1-self.alpha)
+        Y_alpha[self.unlabeled_points] = 0
 
         y_p = np.zeros((self._X.shape[0], num_classes))
         self._y.resize((self._X.shape[0], num_classes))
-
 
         max_iters = self.max_iters
         while not_converged(self._y, y_p, self.convergence_threshold) and max_iters > 1:
             y_p = self._y
             self._y = np.dot(self._graph_matrix, self._y)
             # clamp
-            self._y = self.alpha * self._y + (1 - self.alpha) * Y_orig
+            self._y = np.multiply(alpha_ary, self._y) + Y_alpha
             max_iters -= 1
         return self
 
@@ -186,7 +188,7 @@ class LabelPropagation(BaseLabelPropagation):
     uses hard clamping.
     """
     def _build_graph(self):
-        affinity_matrix = compute_affinity_matrix(self._X)
+        self._graph_matrix = compute_affinity_matrix(self._X, kernel=self.kernel, sigma=self.sigma)
         degree_matrix = map(lambda x: (np.sum(x, axis=0)), affinity_matrix) * np.identity(affinity_matrix.shape[0])
         deg_inv = np.linalg.inv(degree_matrix)
         aff_ideg = deg_inv * np.matrix(affinity_matrix)
@@ -202,13 +204,13 @@ class LabelSpreading(BaseLabelPropagation):
     alpha : float
       "clamping factor" or how much of the original labels you want to keep
     """
-    _default_alpha = 0.8
+    _default_alpha = 0.2
 
     def _build_graph(self):
         """
         Graph matrix for Label Spreading uses the Graph Laplacian!
         """
-        affinity_matrix = compute_affinity_matrix(self._X, diagonal=0)
+        affinity_matrix = compute_affinity_matrix(self._X, kernel=self.kernel, sigma=self.sigma, diagonal=0)
         degree_matrix = map(lambda x: (np.sum(x, axis=0)), affinity_matrix) * np.identity(affinity_matrix.shape[0])
         #degree_matrix = map(np.sum, affinity_matrix) * np.identity(affinity_matrix.shape[4])
         deg_invsq = np.sqrt(np.linalg.inv(degree_matrix))
@@ -218,18 +220,11 @@ class LabelSpreading(BaseLabelPropagation):
 
 ### Helper functions        
 
-def gen_gaussian_kernel(sigma=DEFAULT_SIGMA):
+def gaussian_kernel(x1, x2, sigma=DEFAULT_SIGMA):
     """ generate a basic gaussian kernel function """
-    def gaussian_kernel(x1, x2):
-        """
-        computes the gaussian kernel between two input vectors
-        """
-        return np.exp( -np.linalg.norm(x1 - x2) ** 2 / sigma )
-    return gaussian_kernel
-# default gaussian
-gaussian_kernel = gen_gaussian_kernel()
+    return np.exp( -np.linalg.norm(x1 - x2) ** 2 / sigma )
 
-def compute_affinity_matrix(X, kernel=gaussian_kernel, diagonal=1):
+def compute_affinity_matrix(X, kernel, sigma, diagonal=1):
     """
     affinity matrix from input matrix (representing a fully connected graph)
     """
@@ -238,7 +233,7 @@ def compute_affinity_matrix(X, kernel=gaussian_kernel, diagonal=1):
     for i in xrange(height):
         aff_mat[i,i] = diagonal
         for j in xrange(i+1, height):
-            aff = kernel(X[i], X[j])
+            aff = kernel(X[i], X[j], sigma)
             aff_mat[i,j] = aff
             aff_mat[j,i] = aff
     return aff_mat
