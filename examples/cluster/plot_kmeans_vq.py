@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-=============================================================
-Demo of K-means clustering algorithm with Vector Quantization
-=============================================================
+=====================================================================
+Demo of K-means clustering algorithm of Iris with Vector Quantization
+=====================================================================
 
 """
 print __doc__
@@ -23,9 +23,9 @@ Y = iris.target
 h = .02
 
 # Compute a k-means model on the data.
-km = KMeans().fit(X, k=3)
-centroids = km.cluster_centers_
-labels = km.labels_
+kmeans = KMeans().fit(X, k=3)
+centroids = kmeans.cluster_centers_
+labels = kmeans.labels_
 
 # Number of clusters in labels.
 n_clusters_ = len(set(labels))
@@ -42,7 +42,7 @@ print "V-measure: %0.3f" % metrics.v_measure_score(Y, labels)
 x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
 y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
 xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
-Z = km.transform(np.c_[xx.ravel(), yy.ravel()], method='vq')
+Z = kmeans.transform(np.c_[xx.ravel(), yy.ravel()])
 
 # Put the result into a color plot
 Z = Z.reshape(xx.shape)
@@ -55,7 +55,8 @@ pl.scatter(X[:, 0], X[:, 1], c=Y, marker='o', s=72)
 pl.scatter(centroids[:, 0], centroids[:, 1],
            marker='x', s=169, linewidths=3,
            color='w')
-pl.title('K-means clustering algorithm with Vector Quantization\n'
+pl.title('K-means clustering algorithm of the Iris dataset '
+         'with Vector Quantization\n'
          'Centroids are marked with white cross')
 pl.axis('tight')
 pl.show()

@@ -436,6 +436,15 @@ class KMeans(BaseEstimator):
 
     tol: float, optional default: 1e-4
         Relative tolerance w.r.t. inertia to declare convergence
+        
+    transform_method: {'vq', 'dot'}
+        Method for transforming the points in Y.
+        vq (default) performs vector quantization, returning the index
+        of the nearest centroid for each point. This action corresponds
+        to running the kmeans._e_step function on the given data and
+        the existing centroids and returning the labels.
+        dot performs a dot product of the centroids and the
+        transpose of Y.
 
     Methods
     -------
@@ -474,7 +483,8 @@ class KMeans(BaseEstimator):
     """
 
     def __init__(self, k=8, init='k-means++', n_init=10, max_iter=300,
-                 tol=1e-4, verbose=0, random_state=None, copy_x=True):
+                 tol=1e-4, verbose=0, random_state=None, copy_x=True,
+                 transform_method='vq'):
 
         if hasattr(init, '__array__'):
             k = init.shape[0]
@@ -487,6 +497,7 @@ class KMeans(BaseEstimator):
         self.verbose = verbose
         self.random_state = random_state
         self.copy_x = copy_x
+        self.transform_method = transform_method
 
     def _check_data(self, X, **params):
         """
@@ -512,7 +523,7 @@ class KMeans(BaseEstimator):
             tol=self.tol, random_state=self.random_state, copy_x=self.copy_x)
         return self
 
-    def transform(self, Y, method='dot'):
+    def transform(self, Y, **params):
         """ Transforms Y based on the learnt cluster centroids
 
             Parameters
@@ -522,37 +533,30 @@ class KMeans(BaseEstimator):
                 n_samples is the number of new points to be transformed,
                 while n_features is the same as that of X given to the fit()
                 method. Any different size will raise a ValueError.
-            method: {'vq', 'dot'}
-                Method for transforming the points in Y.
-                vq (default) performs vector quantization, returning the index
-                of the nearest centroid for each point. This action corresponds
-                to running the kmeans._e_step function on the given data and
-                the existing centroids and returning the labels.
-                dot performs a dot product of the centroids and the
-                transpose of Y.
-
+            
             Returns
             -------
-            Z : array, shape dependent on method
+            Z : array, shape dependent on self.transform_method
                 The resulting transformation of Y given the cluster centers.
-                If the method is 'dot', the shape will be (n_samples, k).
-                If the method is 'vq', the shape will be (n_samples,)
+                If transform_method is 'dot', the shape will be (n_samples, k).
+                If transform_method is 'vq', the shape will be (n_samples,)
         """
         if not hasattr(self, 'cluster_centers_'):
             raise AttributeError("No cluster centroids found. Please train "
                                  "using fit(X) before attempting a transform.")
+        self._set_params(**params)
         cluster_shape = self.cluster_centers_.shape[1]
         if not Y.shape[1] == cluster_shape:
             raise ValueError("Incorrect number of features for points. "
                              "Got %d features, expected %d" % (Y.shape[1],
                                                                cluster_shape))
-        if method == 'dot':
+        if self.transform_method == 'dot':
             return np.dot(Y, self.cluster_centers_.transform())
-        elif method == 'vq':
+        elif self.transform_method == 'vq':
             return _e_step(Y, self.cluster_centers_)[0]
         else:
             raise AttributeError("Invalid method given to transform. Value "
-                                 "given was %s" % method)
+                                 "given was %s" % self.transform_method)
 
 
 def _mini_batch_step_dense(X, batch_slice, centers, counts, x_squared_norms):
