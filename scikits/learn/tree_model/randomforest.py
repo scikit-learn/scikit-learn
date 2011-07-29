@@ -105,7 +105,7 @@ class BaseRandomForest(BaseEstimator):
                              (delayed(_train_tree)(X,y,i,self.r,self.base_tree) \
                               for i in range(self.n_trees))   
         else:
-            forest = [self._train_tree(X,y,i) for i in range(self.n_trees)]
+            forest = [self._train_tree(X,y,i,self.r,self.base_tree) for i in range(self.n_trees)]
 
 
             
@@ -151,10 +151,68 @@ class BaseRandomForest(BaseEstimator):
     
 
 class RandomForestClassifier(BaseRandomForest, ClassifierMixin):
-     
+    """Classify a multi-labeled dataset with a random forest.
+
+    Parameters
+    ----------
+    K : integer, mandatory 
+        number of classes    
+
+    criterion : string
+        function to measure goodness of split
+
+    max_depth : integer
+        maximum depth of the tree  
+              
+    min_split : integer
+        minimum size to split on
+        
+    F : integer, optional
+        if given, then, choose F features
+
+    seed : integer or array_like, optional
+        seed the random number generator
+
+    n_trees : integer, optional
+        the number of trees in the forest
+        
+    r : float, optional
+        the ratio of training samples used per tree 0 < r <= r
+    
+    n_jobs : integer, optional
+        the number of processes to use for parallel computation
+    
+    Example
+    -------
+
+    >>> import numpy as np
+    >>> from scikits.learn.datasets import load_iris
+    >>> from scikits.learn.cross_val import StratifiedKFold
+    >>> from scikits.learn import tree_model
+    >>> data = load_iris()
+    >>> skf = StratifiedKFold(data.target, 10)
+    >>> for train_index, test_index in skf:
+    ...     tree = tree_model.RandomForestClassifier(K=3)
+    ...     tree = tree.fit(data.data[train_index], data.target[train_index])
+    ...     print np.mean(tree.predict(data.data[test_index]) == data.target[test_index])
+    ... 
+    0.933333333333
+    0.866666666667
+    0.8
+    0.933333333333
+    0.866666666667
+    0.933333333333
+    0.933333333333
+    1.0
+    0.866666666667
+    1.0
+
+
+    
+    """     
     def __init__(self, K, criterion='gini', max_depth=10,\
-                  min_split=5, F=None, R=None, n_trees=10, r=0.7, \
-                  seed=None, n_jobs=2):
+                  min_split=5, F=None, seed=None, n_trees=10, r=0.7, \
+                  n_jobs=2):
         base_tree = DecisionTreeClassifier( K, criterion=criterion, \
             max_depth=max_depth, min_split=min_split, F=F, seed=seed)
         BaseRandomForest.__init__(self, seed, base_tree, n_trees, r, n_jobs)
@@ -209,10 +267,64 @@ class RandomForestClassifier(BaseRandomForest, ClassifierMixin):
         return np.log(self.predict_proba(X))    
     
 class RandomForestRegressor(BaseRandomForest, RegressorMixin):
+    """Perform regression on dataset with a random forest.
+
+    Parameters
+    ----------
+
+    criterion : string
+        function to measure goodness of split
+
+    max_depth : integer
+        maximum depth of the tree  
+              
+    min_split : integer
+        minimum size to split on
+        
+    F : integer, optional
+        if given, then, choose F features
+
+    seed : integer or array_like, optional
+        seed the random number generator
+
+    n_trees : integer, optional
+        the number of trees in the forest
+        
+    r : float, optional
+        the ratio of training samples used per tree 0 < r <= r
+    
+    n_jobs : integer, optional
+        the number of processes to use for parallel computation
+    
+    Example
+    -------
+    >>> import numpy as np
+    >>> from scikits.learn.datasets import load_boston
+    >>> from scikits.learn.cross_val import KFold
+    >>> from scikits.learn import tree_model
+    >>> data = load_boston()
+    >>> kf = KFold(len(data.target), 10)
+    >>> for train_index, test_index in kf:
+    ...     tree = tree_model.RandomForestRegressor(n_jobs=10)
+    ...     tree = tree.fit(data.data[train_index], data.target[train_index])
+    ...     print np.mean(np.power(tree.predict(data.data[test_index]) - data.target[test_index], 2))
+    ... 
+    9.21288888889
+    6.38866666667
+    3.47866666667
+    40.5302222222
+    29.3673333333
+    22.5306666667
+    9.34822222222
+    6.46688888889
+    117.789111111
+    15.775106383
+   
+    """ 
      
     def __init__(self, criterion='mse', max_depth=10,\
-                  min_split=5, F=None, R=None, n_trees=10, r=0.7, \
-                  seed=None, n_jobs=2):       
+                  min_split=5, F=None, seed=None, n_trees=10, r=0.7, \
+                   n_jobs=2):       
         base_tree = DecisionTreeRegressor(criterion=criterion, \
             max_depth=max_depth, min_split=min_split, F=F, seed=seed)
         BaseRandomForest.__init__(self, seed, base_tree, n_trees, r, n_jobs)

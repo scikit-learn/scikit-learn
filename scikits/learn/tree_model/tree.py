@@ -284,10 +284,6 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
     seed : integer or array_like, optional
         seed the random number generator
-        
-    Returns
-    -------
-    tree : Tree
 
     
     Example
@@ -376,6 +372,24 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     """Perform regression on dataset with a decision tree.
     
+    Parameters
+    ----------
+
+    criterion : string
+        function to measure goodness of split
+
+    max_depth : integer
+        maximum depth of the tree  
+              
+    min_split : integer
+        minimum size to split on
+        
+    F : integer, optional
+        if given, then, choose F features
+
+    seed : integer or array_like, optional
+        seed the random number generator    
+    
     Example
     -------
 
@@ -386,7 +400,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     >>> data = load_boston()
     >>> kf = KFold(len(data.target), 10)
     >>> for train_index, test_index in kf:
-    ...     tree = tree_model.DecisionTreeRegressor()
+    ...     tree = tree_model.RandomForestRegressor(n_jobs=10)
     ...     tree = tree.fit(data.data[train_index], data.target[train_index])
     ...     print np.mean(np.power(tree.predict(data.data[test_index]) - data.target[test_index], 2))
     ... 
