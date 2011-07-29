@@ -436,7 +436,7 @@ class KMeans(BaseEstimator):
 
     tol: float, optional default: 1e-4
         Relative tolerance w.r.t. inertia to declare convergence
-        
+
     transform_method: {'vq', 'dot'}
         Method for transforming the points in Y.
         vq (default) performs vector quantization, returning the index
@@ -533,7 +533,7 @@ class KMeans(BaseEstimator):
                 n_samples is the number of new points to be transformed,
                 while n_features is the same as that of X given to the fit()
                 method. Any different size will raise a ValueError.
-            
+
             Returns
             -------
             Z : array, shape dependent on self.transform_method
