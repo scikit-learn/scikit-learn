@@ -246,14 +246,14 @@ The disadvantages of the LARS method include:
     in the discussion section of the Efron et al. (2004) Annals of
     Statistics article.
 
-The LARS model can be used using estimator :class:`LARS`, or its
+The LARS model can be used using estimator :class:`Lars`, or its
 low-level implementation :func:`lars_path`.
 
 
 LARS Lasso
 ==========
 
-:class:`LassoLARS` is a lasso model implemented using the LARS
+:class:`LassoLars` is a lasso model implemented using the LARS
 algorithm, and unlike the implementation based on coordinate_descent,
 this yields the exact solution, which is piecewise linear as a
 function of the norm of its coefficients.
@@ -266,9 +266,9 @@ function of the norm of its coefficients.
 ::
 
    >>> from scikits.learn import linear_model
-   >>> clf = linear_model.LassoLARS(alpha=.1)
+   >>> clf = linear_model.LassoLars(alpha=.1)
    >>> clf.fit ([[0, 0], [1, 1]], [0, 1])
-   LassoLARS(normalize=True, verbose=False, fit_intercept=True, max_iter=500,
+   LassoLars(normalize=True, verbose=False, fit_intercept=True, max_iter=500,
         precompute='auto', alpha=0.1)
    >>> clf.coef_
    array([ 0.71715729,  0.        ])
@@ -278,7 +278,7 @@ function of the norm of its coefficients.
  * :ref:`example_linear_model_plot_lasso_lars.py`
 
 
-The LARS algorithm provides the full path of the coefficients along
+The Lars algorithm provides the full path of the coefficients along
 the regularization parameter almost for free, thus a common operation
 consist of retrieving the path with function :func:`lars_path`
 

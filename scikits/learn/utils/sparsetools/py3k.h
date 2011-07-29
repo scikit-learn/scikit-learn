@@ -17,7 +17,7 @@ static int __pyinstance_check_guard(PyObject *x)
     return 0;
 }
 #define PyInstance_Check(x) __pyinstance_check_guard((x))
-
+#include "npy_3kcompat.h"
 #endif
 
-#include "npy_3kcompat.h"
+

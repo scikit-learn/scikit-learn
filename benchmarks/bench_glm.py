@@ -42,7 +42,7 @@ if __name__ == '__main__':
         time_ols[i] = total_seconds(datetime.now() - start)
 
         start = datetime.now()
-        lasso = linear_model.LassoLARS()
+        lasso = linear_model.LassoLars()
         lasso.fit(X, Y)
         time_lasso[i] = total_seconds(datetime.now() - start)
 
@@ -53,6 +53,6 @@ if __name__ == '__main__':
     pl.plot(dimensions, time_ols, color='g')
     pl.plot(dimensions, time_lasso, color='b')
 
-    pl.legend(['Ridge', 'OLS', 'LassoLARS'])
+    pl.legend(['Ridge', 'OLS', 'LassoLars'])
     pl.axis('tight')
     pl.show()
