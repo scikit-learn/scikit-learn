@@ -297,7 +297,7 @@ class Lars(LinearModel):
     Parameters
     ----------
     n_nonzero_coefs : int, optional
-        Target number of non-zero coefficients.
+        Target number of non-zero coefficients. Use np.inf for no limit.
 
     fit_intercept : boolean
         Whether to calculate the intercept for this model. If set
@@ -343,7 +343,7 @@ class Lars(LinearModel):
     lars_path, LassoLars
     """
     def __init__(self, fit_intercept=True, verbose=False, normalize=True,
-                 precompute='auto', n_nonzero_coefs=None):
+                 precompute='auto', n_nonzero_coefs=500):
         self.fit_intercept = fit_intercept
         self.verbose = verbose
         self.normalize = normalize
@@ -374,13 +374,11 @@ class Lars(LinearModel):
 
         X, y, Xmean, ymean = LinearModel._center_data(X, y, self.fit_intercept)
         alpha = getattr(self, 'alpha', 0.)
-        if getattr(self, 'n_nonzero_coefs', None) is not None:
+        if hasattr(self, 'n_nonzero_coefs'):
             alpha = 0. # n_nonzero_coefs parametrization takes priority
             max_iter = self.n_nonzero_coefs
-        elif hasattr(self, 'max_iter'):
-            max_iter = self.max_iter
         else:
-            max_iter = np.inf # no limit
+            max_iter = self.max_iter
 
         if self.normalize:
             norms = np.sqrt(np.sum(X ** 2, axis=0))
