@@ -541,14 +541,19 @@ def generate_sparse_coded_signal(n_samples, n_components, n_features,
 
     rng = check_random_state(random_state)
 
-    H = np.random.randn(n_components, n_features)
-    H /= np.sqrt(np.sum((H ** 2), axis=1))[:, np.newaxis]
-    W = np.zeros((n_samples, n_components))
+    # generate dictionary
+    D = np.random.randn(n_components, n_features)
+    D /= np.sqrt(np.sum((D ** 2), axis=1))[:, np.newaxis]
+
+    # generate code
+    X = np.zeros((n_samples, n_components))
     for i in xrange(n_samples):
         idx = np.arange(n_components)
         rng.shuffle(idx)
         idx = idx[:n_nonzero_coefs]
-        W[i, idx] = rng.randn(n_nonzero_coefs)
-    X = np.dot(W, H)
+        X[i, idx] = rng.randn(n_nonzero_coefs)
 
-    return map(np.squeeze, (X, W, H))
+    # encode signal
+    Y = np.dot(X, D)
+
+    return map(np.squeeze, (Y, X, D))
