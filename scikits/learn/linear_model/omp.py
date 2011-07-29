@@ -205,17 +205,17 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, eps=None, compute_gram=False):
     if n_nonzero_coefs == None and eps == None:
         raise ValueError('OMP needs either a target number of atoms \
                          (n_nonzero_coefs) or a target residual error (eps)')
-    if eps != None and eps < 0:
+    if eps is not None and eps < 0:
         raise ValueError("Epsilon cannot be negative")
-    if eps == None and n_nonzero_coefs <= 0:
+    if eps is None and n_nonzero_coefs <= 0:
         raise ValueError("The number of atoms must be positive")
-    if eps == None and n_nonzero_coefs > X.shape[1]:
+    if eps is None and n_nonzero_coefs > X.shape[1]:
         raise ValueError("The number of atoms cannot be more than the number \
                           of features")
     if compute_gram:
         G = np.dot(X.T, X)
         Xy = np.dot(X.T, y)
-        if eps != None:
+        if eps is not None:
             norms_squared = np.sum((y ** 2), axis=0)
         else:
             norms_squared = None
