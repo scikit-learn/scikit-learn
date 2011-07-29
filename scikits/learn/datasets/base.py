@@ -270,3 +270,37 @@ def load_linnerud():
                  data_physiological=data_physiological,
                  header_physiological=header_physiological,
                  DESCR=fdescr.read())
+
+def load_boston():
+    """load the boston house prices dataset and returns it.
+
+    Returns
+    -------
+    data : Bunch
+        Dictionnary-like object, the interesting attributes are:
+        'data', the data to learn, 'target', the classification labels,
+        'target_names', the meaning of the labels, and 'DESCR', the
+        full description of the dataset.
+
+    Example
+    -------
+
+
+    """        
+    module_path = dirname(__file__)
+    data_file = csv.reader(open(join(module_path, 'data', 'boston_house_prices.csv')))
+    fdescr = open(join(module_path, 'descr', 'boston_house_prices.rst'))
+    temp = data_file.next()
+    n_samples = int(temp[0])
+    n_features = int(temp[1])
+    data = np.empty((n_samples, n_features))
+    target = np.empty((n_samples,) )
+    temp = data_file.next() # names of features
+    feature_names = np.array(temp)   
+    for i, d in enumerate(data_file):
+        data[i] = np.asanyarray(d[:-1], dtype=np.float)
+        target[i] = np.asanyarray(d[-1], dtype=np.float)    
+      
+    return Bunch(data=data, target=target,
+                 feature_names=feature_names,
+                 DESCR=fdescr.read())

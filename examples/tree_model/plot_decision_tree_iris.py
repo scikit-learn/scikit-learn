@@ -20,6 +20,7 @@ for pairidx, pair in enumerate([[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]]):
     X = iris.data[:, pair]  # we only take the first two features. We could
     # avoid this ugly slicing by using a two-dim dataset
     y = iris.target
+    K=3
     colors = "bry"
 
     # shuffle
@@ -36,7 +37,7 @@ for pairidx, pair in enumerate([[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]]):
 
     h = .02  # step size in the mesh
 
-    clf = DecisionTreeClassifier().fit(X, y)
+    clf = DecisionTreeClassifier(K).fit(X, y)
 
     # create a mesh to plot in
     x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
@@ -59,7 +60,7 @@ for pairidx, pair in enumerate([[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]]):
     pl.axis('tight')
 
     # Plot also the training points
-    for i, color in zip(clf.classes, colors):
+    for i, color in zip(xrange(K), colors):
         idx = np.where(y == i)
         pl.scatter(X[idx, 0], X[idx, 1], c=color, label=iris.target_names[i])
     pl.axis('tight')

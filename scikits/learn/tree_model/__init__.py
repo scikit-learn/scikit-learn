@@ -8,4 +8,6 @@ Random Forests ...
 """
 
 from .tree import DecisionTreeClassifier
-from .randomforest import RandomForest
+from .tree import DecisionTreeRegressor
+from .randomforest import RandomForestClassifier
+from .randomforest import RandomForestRegressor
