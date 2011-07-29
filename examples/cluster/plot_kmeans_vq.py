@@ -13,6 +13,9 @@ from scikits.learn import datasets
 from scikits.learn import metrics
 from scikits.learn.cluster import KMeans
 
+# Reset plot to allow multiple reruns of example.
+pl.clf()
+
 # Sample data taken from the Iris dataset.
 iris = datasets.load_iris()
 # These two features provide good basic separation of Iris.
