@@ -502,9 +502,10 @@ def generate_random_spd_matrix(ndim, random_state=0):
 
 def generate_sparse_coded_signal(n_samples, n_components, n_features,
                                  n_nonzero_coefs, random_state=0):
-    """Generate a signal as a sparse combination of dictionary elements
-    Returns a matrix X = WH, such as H is (n_components, n_features),
-    W is (n_samples, n_components) and each line of W has exactly
+    """Generate a signal as a sparse combination of dictionary elements.
+
+    Returns a matrix Y = XD, such as D is (n_components, n_features),
+    X is (n_samples, n_components) and each line of X has exactly
     n_nonzero_coefs non-zero elements.
 
     Parameters:
@@ -522,19 +523,19 @@ def generate_sparse_coded_signal(n_samples, n_components, n_features,
         number of active (non-zero) coefficients in each sample
 
     random_state: int or RandomState instance (default 0)
-        Seed used by the pseudo random number generator
+        seed used by the pseudo random number generator
 
     Returns:
     --------
     data: array (n_samples, n_features):
-        the encoded signal
+        The encoded signal (Y).
 
     code: array (n_samples, n_components):
-        the sparse code such that each line of this matrix has exactly
-        n_nonzero_coefs non-zero items.
+        The sparse code such that each line of this matrix has exactly
+        n_nonzero_coefs non-zero items (X).
 
     dictionary: array(n_components, n_features):
-        the dictionary with normalized components
+        The dictionary with normalized components (D).
 
     """
 

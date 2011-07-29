@@ -19,7 +19,7 @@ n_atoms = 17
 # generate the data
 ###################
 
-# y = D x
+# y = D.T x
 # |x|_0 = n_atoms
 
 y, x, D = generate_sparse_coded_signal(n_samples=1,
