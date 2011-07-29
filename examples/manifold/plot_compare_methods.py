@@ -38,7 +38,7 @@ n_points = 1000
 n_neighbors = 15
 out_dim = 2
 
-X, color = datasets.samples_generator.s_curve(1000)
+X, color = datasets.samples_generator.s_curve(n_points)
 
 methods = ['standard', 'ltsa', 'hessian', 'modified']
 labels = ['LLE', 'LTSA', 'Hessian LLE', 'Modified LLE']

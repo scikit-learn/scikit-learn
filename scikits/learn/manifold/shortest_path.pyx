@@ -256,8 +256,6 @@ cdef struct FibonacciNode:
 cdef FibonacciNode* initialize_node(FibonacciNode* node,
                                     unsigned int index,
                                     DTYPE_t val=0):
-    global UNLABELED
-
     node.index = index
     node.val = val
     node.rank = 0
@@ -503,8 +501,7 @@ cdef void DijkstraDirectedOneRow(
 
     # initialize nodes
     for i from 0 <= i < N:
-        nodes[i].state = UNLABELED
-        nodes[i].val = 0
+        initialize_node(&nodes[i], i)
 
     insert_node(heap, &nodes[i_node])
 
@@ -574,8 +571,7 @@ cdef void DijkstraOneRow(
 
     # initialize nodes
     for i from 0 <= i < N:
-        nodes[i].state = UNLABELED
-        nodes[i].val = 0
+        initialize_node(&nodes[i], i)
 
     insert_node(heap, &nodes[i_node])
 
