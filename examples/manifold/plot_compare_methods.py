@@ -35,7 +35,7 @@ from matplotlib.ticker import NullFormatter
 from scikits.learn import manifold, datasets
 
 n_points = 1000
-n_neighbors = 30
+n_neighbors = 15
 out_dim = 2
 
 X, color = datasets.samples_generator.s_curve(n_points)
