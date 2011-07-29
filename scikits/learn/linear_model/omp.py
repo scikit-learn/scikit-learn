@@ -14,9 +14,10 @@ http://blanche.polytechnique.fr/~mallat/papiers/MallatPursuit93.pdf
 
 import numpy as np
 from scipy import linalg
+from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
-
+from ..utils.arrayfuncs import solve_triangular
 
 def _cholesky_omp(X, y, n_nonzero_coefs, eps=None):
     """
@@ -62,13 +63,11 @@ def _cholesky_omp(X, y, n_nonzero_coefs, eps=None):
     while True:
         lam = np.abs(np.dot(X.T, residual)).argmax()
         if len(idx) > 0:
-            w = linalg.solve_triangular(L[:n_active, :n_active],
-                                        np.dot(X[:, idx].T, X[:, lam]),
-                                        lower=True)
+            L[n_active, :n_active] = np.dot(X[:, idx].T, X[:, lam])
+            v = np.dot(L[n_active, :n_active], L[n_active, :n_active])
+            solve_triangular(L[:n_active, :n_active], L[n_active, :n_active])
             # Updates the Cholesky decomposition of X' X
-            L[n_active, :n_active] = w
-            L[n_active, n_active] = max(np.sqrt(np.abs(1 - np.dot(w.T, w))),
-                                        min_float)
+            L[n_active, n_active] = max(np.sqrt(np.abs(1 - v)), min_float)
         idx.append(lam)
         n_active += 1
         # solves LL'x = y as a composition of two triangular systems
@@ -134,11 +133,10 @@ def _gram_omp(G, Xy, n_nonzero_coefs, eps_0=None, eps=None):
     while True:
         lam = np.abs(alpha).argmax()
         if len(idx) > 0:
-            w = linalg.solve_triangular(L[:n_active, :n_active], G[idx, lam],
-                                        lower=True)
-            L[n_active, :n_active] = w
-            L[n_active, n_active] = max(np.sqrt(np.abs(1 - np.dot(w.T, w))),
-                                        min_float)
+            L[n_active, :n_active] = G[idx, lam]
+            v = np.dot(L[n_active, :n_active], L[n_active, :n_active])
+            solve_triangular(L[:n_active, :n_active], L[n_active, :n_active])
+            L[n_active, n_active] = max(np.sqrt(np.abs(1 - v)), min_float)
         idx.append(lam)
         n_active += 1
         # solves LL'x = y as a composition of two triangular systems
@@ -271,6 +269,8 @@ def orthogonal_mp_gram(G, Xy, n_nonzero_coefs=None, eps=None,
     Xy = np.asanyarray(Xy)
     if Xy.ndim == 1:
         Xy = Xy[:, np.newaxis]
+        if eps is not None:
+            norms_squared = [norms_squared]
 
     if n_nonzero_coefs == None and eps == None:
         raise ValueError('OMP needs either a target number of atoms \
@@ -288,7 +288,7 @@ def orthogonal_mp_gram(G, Xy, n_nonzero_coefs=None, eps=None,
     coef = np.zeros((len(G), Xy.shape[1]))
     for k in range(Xy.shape[1]):
         x, idx = _gram_omp(G, Xy[:, k], n_nonzero_coefs,
-                           norms_squared[k] if eps else None, eps)
+                           norms_squared[k] if eps is not None else None, eps)
         coef[idx, k] = x
     return np.squeeze(coef)
 
