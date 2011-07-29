@@ -10,7 +10,7 @@ from .. import orthogonal_mp, orthogonal_mp_gram, OrthogonalMatchingPursuit
 from ...utils.fixes import count_nonzero
 from ...utils import check_random_state
 
-def generate_data(n_samples, n_features, random_state=None):
+def generate_data(n_samples, n_features, random_state=42):
     rng = check_random_state(random_state)
     X = rng.randn(n_samples, n_features)
     X /= np.sqrt(np.sum((X ** 2), axis=0))
