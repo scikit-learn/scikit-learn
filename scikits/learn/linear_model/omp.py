@@ -50,6 +50,7 @@ def _cholesky_omp(X, y, n_nonzero_coefs, eps=None):
     """
 
     min_float = np.finfo(X.dtype).eps
+    potrs, = get_lapack_funcs(('potrs',), (X,))
 
     alpha = np.dot(X.T, y)
     residual = y
@@ -71,12 +72,10 @@ def _cholesky_omp(X, y, n_nonzero_coefs, eps=None):
         idx.append(lam)
         n_active += 1
         # solves LL'x = y as a composition of two triangular systems
-        Lc = linalg.solve_triangular(L[:n_active, :n_active], alpha[idx],
-                                     lower=True)
-        gamma = linalg.solve_triangular(L[:n_active, :n_active], Lc, trans=1,
-                                        lower=True)
+        gamma, _ = potrs(L[:n_active, :n_active], alpha[idx], lower=True)
+
         residual = y - np.dot(X[:, idx], gamma)
-        if eps != None and np.dot(residual.T, residual) <= eps:
+        if eps is not None and np.dot(residual.T, residual) <= eps:
             break
         elif n_active == max_features:
             break
@@ -119,6 +118,7 @@ def _gram_omp(G, Xy, n_nonzero_coefs, eps_0=None, eps=None):
     """
 
     min_float = np.finfo(G.dtype).eps
+    potrs, = get_lapack_funcs(('potrs',), (G,))
 
     idx = []
     alpha = Xy
@@ -140,13 +140,11 @@ def _gram_omp(G, Xy, n_nonzero_coefs, eps_0=None, eps=None):
         idx.append(lam)
         n_active += 1
         # solves LL'x = y as a composition of two triangular systems
-        Lc = linalg.solve_triangular(L[:n_active, :n_active], Xy[idx],
-                                     lower=True)
-        gamma = linalg.solve_triangular(L[:n_active, :n_active], Lc, trans=1,
-                                        lower=True)
+        gamma, _ = potrs(L[:n_active, :n_active], Xy[idx], lower=True)
+
         beta = np.dot(G[:, idx], gamma)
         alpha = Xy - beta
-        if eps != None:
+        if eps is not None:
             eps_curr += delta
             delta = np.inner(gamma, beta[idx])
             eps_curr -= delta
@@ -272,17 +270,17 @@ def orthogonal_mp_gram(G, Xy, n_nonzero_coefs=None, eps=None,
         if eps is not None:
             norms_squared = [norms_squared]
 
-    if n_nonzero_coefs == None and eps == None:
+    if n_nonzero_coefs == None and eps is None:
         raise ValueError('OMP needs either a target number of atoms \
                          (n_nonzero_coefs) or a target residual error (eps)')
-    if eps != None and norms_squared == None:
+    if eps is not None and norms_squared == None:
         raise ValueError('Gram OMP needs the precomputed norms in order \
                           to evaluate the error sum of squares.')
-    if eps != None and eps < 0:
+    if eps is not None and eps < 0:
         raise ValueError("Epsilon cennot be negative")
-    if eps == None and n_nonzero_coefs <= 0:
+    if eps is None and n_nonzero_coefs <= 0:
         raise ValueError("The number of atoms must be positive")
-    if eps == None and n_nonzero_coefs > len(G):
+    if eps is None and n_nonzero_coefs > len(G):
         raise ValueError("The number of atoms cannot be more than the number \
                           of features")
     coef = np.zeros((len(G), Xy.shape[1]))
