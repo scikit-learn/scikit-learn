@@ -7,42 +7,43 @@ from numpy.testing import assert_equal, assert_array_almost_equal
 from nose.plugins.skip import SkipTest
 
 from .. import orthogonal_mp, orthogonal_mp_gram, OrthogonalMatchingPursuit
+from ...utils.fixes import count_nonzero
+from ...utils import check_random_state
 
-
-def generate_data(n_samples, n_features):
-    np.random.seed(0)
-    X = np.random.randn(n_samples, n_features)
+def generate_data(n_samples, n_features, random_state=None):
+    rng = check_random_state(random_state)
+    X = rng.randn(n_samples, n_features)
     X /= np.sqrt(np.sum((X ** 2), axis=0))
-    gamma = np.random.randn(n_features)
+    gamma = rng.randn(n_features)
     return X, np.dot(X, gamma)
 
 
 def test_correct_shapes():
     n_samples, n_features = 10, 15
     X, y = generate_data(n_samples, n_features)
-    assert_equal(orthogonal_mp(X, y, n_nonzero_coefs=6).shape, (n_features,))
+    assert_equal((n_features,), orthogonal_mp(X, y, n_nonzero_coefs=6).shape)
     y = np.random.randn(len(y), 3)
-    assert_equal(orthogonal_mp(X, y, n_nonzero_coefs=6).shape, (n_features, 3))
+    assert_equal((n_features, 3), orthogonal_mp(X, y, n_nonzero_coefs=6).shape)
 
 
 def test_correct_shapes_gram():
     n_samples, n_features = 10, 15
     X, y = generate_data(n_samples, n_features)
     G, Xy = np.dot(X.T, X), np.dot(X.T, y)
-    assert_equal(orthogonal_mp_gram(G, Xy, n_nonzero_coefs=6).shape,
-                 (n_features,))
+    assert_equal((n_features,), 
+                 orthogonal_mp_gram(G, Xy, n_nonzero_coefs=6).shape)
     y = np.random.randn(n_samples, 3)
     Xy = np.dot(X.T, y)
-    assert_equal(orthogonal_mp_gram(G, Xy, n_nonzero_coefs=6).shape,
-                 (n_features, 3))
+    assert_equal((n_features, 3), 
+                 orthogonal_mp_gram(G, Xy, n_nonzero_coefs=6).shape)
 
 
-def test_n_features():
+def test_n_nonzero_coefs():
     n_samples, n_features = 10, 15
     X, y = generate_data(n_samples, n_features)
-    assert_equal(np.sum(orthogonal_mp(X, y, n_nonzero_coefs=6) != 0), 6)
-    assert_equal(np.sum(orthogonal_mp(X, y, n_nonzero_coefs=6,
-                                      compute_gram=True) != 0), 6)
+    assert_equal(6, count_nonzero(orthogonal_mp(X, y, n_nonzero_coefs=6)))
+    assert_equal(6, count_nonzero(orthogonal_mp(X, y, n_nonzero_coefs=6,
+                                                   compute_gram=True)))
 
 
 def test_eps():
@@ -92,19 +93,26 @@ def test_bad_input():
 
 
 def test_perfect_signal_recovery():
+    # XXX: use signal generator
+    rng = np.random.RandomState(0)
     n_samples, n_features = 10, 15
     n_atoms = 4
-    X, _ = generate_data(n_samples, n_features)
+    X, _ = generate_data(n_samples, n_features, rng)
     gamma = np.zeros(n_features)
     idx = np.arange(n_features)
-    np.random.shuffle(idx)
+    rng.shuffle(idx)
     idx = idx[:n_atoms]
-    gamma[idx] = np.random.normal(0, 5, n_atoms)
+    idx = np.sort(idx)
+    gamma[idx] = rng.randn(n_atoms)
     y = np.dot(X, gamma)
     G, Xy = np.dot(X.T, X), np.dot(X.T, y)
-    assert_array_almost_equal(orthogonal_mp(X, y, n_atoms), gamma, decimal=1)
-    assert_array_almost_equal(orthogonal_mp_gram(G, Xy, n_atoms), gamma,
-                              decimal=1)
+
+    gamma_rec = orthogonal_mp(X, y, n_atoms)
+    gamma_gram = orthogonal_mp_gram(G, Xy, n_atoms)
+    assert_equal(idx, np.flatnonzero(gamma_rec))
+    assert_equal(idx, np.flatnonzero(gamma_gram))
+    assert_array_almost_equal(gamma, gamma_rec, decimal=2)
+    assert_array_almost_equal(gamma, gamma_gram, decimal=2)
 
 
 def test_estimator_shapes():
@@ -116,7 +124,9 @@ def test_estimator_shapes():
     OMP.fit(X, y1)
     assert_equal((15,), OMP.coef_.shape)
     assert_equal((), OMP.intercept_.shape)
+    assert_equal(5, count_nonzero(OMP.coef_))
 
     OMP.fit(X, y2)
     assert_equal((3, 15), OMP.coef_.shape)
     assert_equal((3,), OMP.intercept_.shape)
+    assert_equal(3 * 5, count_nonzero(OMP.coef_))

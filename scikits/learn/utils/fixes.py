@@ -156,3 +156,9 @@ def savemat(file_name, mdict, oned_as="column", **kwargs):
         return scipy.io.savemat(file_name, mdict, oned_as=oned_as, **kwargs)
     except TypeError:
         return scipy.io.savemat(file_name, mdict, **kwargs)
+
+try:
+    from numpy import count_nonzero
+except ImportError:
+    def count_nonzero(X):
+        return len(np.flatnonzero(X))
