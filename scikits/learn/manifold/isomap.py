@@ -12,7 +12,7 @@ from ..neighbors import kneighbors_graph
 from .shortest_path import shortest_path
 
 
-def isomap(X, n_neighbors, out_dim, eigen_solver='dense',
+def isomap(X, n_neighbors, out_dim, eigen_solver='arpack',
            tol=0, max_iter=None, path_method='best'):
     """Perform an Isomap analysis of the data
 

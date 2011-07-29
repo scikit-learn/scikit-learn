@@ -23,6 +23,7 @@ digits = datasets.load_digits(n_class=6)
 X = digits.data
 y = digits.target
 n_samples, n_features = X.shape
+n_neighbors = 30
 
 #----------------------------------------------------------------------
 # Random 2D projection using a random unitary matrix
@@ -50,8 +51,23 @@ X_lda = lda.LDA(n_components=2).fit_transform(X2, y)
 #----------------------------------------------------------------------
 # Locally linear embedding of the digits dataset
 print "Computing LLE embedding"
-X_lle, err = manifold.locally_linear_embedding(X, 30, 2, reg=1e-2)
+X_lle, err = manifold.locally_linear_embedding(X, n_neighbors, 2, reg=1e-2)
 print "Done. Reconstruction error: %g" % err
+
+
+#----------------------------------------------------------------------
+# Modified Locally linear embedding of the digits dataset
+print "Computing modified LLE embedding"
+X_mlle, err = manifold.locally_linear_embedding(X, n_neighbors, 2, reg=1e-2,
+                                                method='modified')
+print "Done. Reconstruction error: %g" % err
+
+
+#----------------------------------------------------------------------
+# Isomap projection of the digits dataset
+print "Computing isomap embedding"
+X_iso = manifold.isomap(X, n_neighbors, 2)
+print "Done."
 
 #----------------------------------------------------------------------
 # Scale and visualize the embedding vectors
@@ -88,5 +104,7 @@ plot_embedding(X_projected, "Random Projection of the digits")
 plot_embedding(X_pca, "Principal Components projection of the digits")
 plot_embedding(X_lda, "Linear Discriminant projection of the digits")
 plot_embedding(X_lle, "Locally Linear Embedding of the digits")
+plot_embedding(X_mlle, "Modified Locally Linear Embedding of the digits")
+plot_embedding(X_iso, "Isomap projection of the digits")
 
 pl.show()
