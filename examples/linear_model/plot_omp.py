@@ -18,11 +18,15 @@ n_atoms = 17
 
 # generate the data
 ###################
+
+# y = D x
+# |x|_0 = n_atoms
+
 y, x, D = generate_sparse_coded_signal(n_samples=1,
-                                           n_components=n_components,
-                                           n_features=n_features,
-                                           n_nonzero_coefs=n_atoms,
-                                           random_state=0)
+                                       n_components=n_components,
+                                       n_features=n_features,
+                                       n_nonzero_coefs=n_atoms,
+                                       random_state=0)
 
 idx, = x.nonzero()
 
