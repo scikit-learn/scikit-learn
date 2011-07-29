@@ -33,7 +33,6 @@ def FloydWarshallSlow(graph, directed=False):
 
 def generate_graph(N=20):
     #sparse grid of distances
-    N = 20
     dist_matrix = np.random.random((N, N))
     
     #make symmetric: distances are not direction-dependent
