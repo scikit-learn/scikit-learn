@@ -25,7 +25,7 @@ scikit_regressor_results = []
 mu_second = 0.0 + 10**6 # number of microseconds in a second
 
 
-def bench_scikit_tree_classifier(X, Y):
+def bench_scikit_tree_classifier(X, Y, K):
     """
     bench with scikit-learn decision tree classifier
     """
@@ -36,7 +36,7 @@ def bench_scikit_tree_classifier(X, Y):
 
     # start time
     tstart = datetime.now()
-    clf = DecisionTreeClassifier()
+    clf = DecisionTreeClassifier(K)
     clf.fit(X, Y).predict(X)
     delta = (datetime.now() - tstart)
     # stop time
@@ -64,8 +64,8 @@ def bench_scikit_tree_regressor(X, Y):
 if __name__ == '__main__':
 
     n = 10
-    step = 50
-    n_samples = 50
+    step = 100
+    n_samples = 100
     dim = 10
     K = 10 
     for i in range(n):
@@ -74,8 +74,8 @@ if __name__ == '__main__':
         print '============================================'
         n_samples += step
         X = np.random.randn(n_samples, dim)
-        Y = np.random.random_integers(0, K, (n_samples,))
-        bench_scikit_tree_classifier(X, Y)
+        Y = np.random.randint(0, K, (n_samples,))
+        bench_scikit_tree_classifier(X, Y, K)
         Y = np.random.randn(n_samples)
         bench_scikit_tree_regressor(X, Y)
 
@@ -117,8 +117,8 @@ if __name__ == '__main__':
         print '============================================'
         dim += step
         X = np.random.randn(100, dim)
-        Y = np.random.random_integers(0, K, (100,))
-        bench_scikit_tree_classifier(X, Y)
+        Y = np.random.randint(0, K, (100,))
+        bench_scikit_tree_classifier(X, Y, K)
         Y = np.random.randn(100)
         bench_scikit_tree_regressor(X, Y)
 
