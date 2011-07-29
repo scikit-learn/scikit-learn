@@ -63,7 +63,7 @@ def _cholesky_omp(X, y, n_nonzero_coefs, eps=None):
 
     while True:
         lam = np.abs(np.dot(X.T, residual)).argmax()
-        if len(idx) > 0:
+        if n_active > 0:
             L[n_active, :n_active] = np.dot(X[:, idx].T, X[:, lam])
             v = np.dot(L[n_active, :n_active], L[n_active, :n_active])
             solve_triangular(L[:n_active, :n_active], L[n_active, :n_active])
@@ -72,7 +72,8 @@ def _cholesky_omp(X, y, n_nonzero_coefs, eps=None):
         idx.append(lam)
         n_active += 1
         # solves LL'x = y as a composition of two triangular systems
-        gamma, _ = potrs(L[:n_active, :n_active], alpha[idx], lower=True)
+        gamma, _ = potrs(L[:n_active, :n_active], alpha[idx], lower=True,
+                         overwrite_b=False)
 
         residual = y - np.dot(X[:, idx], gamma)
         if eps is not None and np.dot(residual.T, residual) <= eps:
@@ -132,7 +133,7 @@ def _gram_omp(G, Xy, n_nonzero_coefs, eps_0=None, eps=None):
 
     while True:
         lam = np.abs(alpha).argmax()
-        if len(idx) > 0:
+        if n_active > 0:
             L[n_active, :n_active] = G[idx, lam]
             v = np.dot(L[n_active, :n_active], L[n_active, :n_active])
             solve_triangular(L[:n_active, :n_active], L[n_active, :n_active])
@@ -140,7 +141,8 @@ def _gram_omp(G, Xy, n_nonzero_coefs, eps_0=None, eps=None):
         idx.append(lam)
         n_active += 1
         # solves LL'x = y as a composition of two triangular systems
-        gamma, _ = potrs(L[:n_active, :n_active], Xy[idx], lower=True)
+        gamma, _ = potrs(L[:n_active, :n_active], Xy[idx], lower=True,
+                         overwrite_b=False)
 
         beta = np.dot(G[:, idx], gamma)
         alpha = Xy - beta
