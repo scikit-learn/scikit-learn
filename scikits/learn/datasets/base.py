@@ -65,9 +65,9 @@ def clear_data_home(data_home=None):
     shutil.rmtree(data_home)
 
 
-def load_filenames(container_path, description=None, categories=None,
-                   shuffle=True, random_state=42):
-    """Load filenames with categories as subfolder names
+def load_files(container_path, description=None, categories=None,
+               load_content=True, shuffle=True, random_state=42):
+    """Load text files with categories as subfolder names
 
     Individual samples are assumed to be files stored a two levels folder
     structure such as the following:
@@ -87,7 +87,8 @@ def load_filenames(container_path, description=None, categories=None,
     file names are not important.
 
     This function does not try to extract features into a numpy array or
-    scipy sparse matrix, nor does it try to load the files in memory.
+    scipy sparse matrix. In addition, if load_content is false it
+    does not try to load the files in memory.
 
     To use utf-8 text files in a scikit-learn classification or clustering
     algorithm you will first need to use the `scikits.learn.features.text`
@@ -100,7 +101,7 @@ def load_filenames(container_path, description=None, categories=None,
     Parameters
     ----------
 
-    container_path : string or unicode
+    container_path : string or unicode, or TarFile object
         Path to the main folder holding one subfolder per category
 
     description: string or unicode
@@ -110,6 +111,12 @@ def load_filenames(container_path, description=None, categories=None,
     categories : None or collection of string or unicode
         If None (default), load all the categories.
         If not None, list of category names to load (other categories ignored).
+
+    load_content : boolean
+        Whether to load or not the content of the different files. If
+        true a 'data' attribute containing the text information is present 
+        in the data structure returned. If not, a filenames attribute
+        gives the path to the files.
 
     shuffle : bool, optional
         Whether or not to shuffle the data: might be important for models that
@@ -122,11 +129,11 @@ def load_filenames(container_path, description=None, categories=None,
     Returns
     -------
     data : Bunch
-        Dictionary-like object, the interesting attributes are:
-        'filenames', the files holding the raw to learn, 'target', the
-        classification labels (integer index), 'target_names',
-        the meaning of the labels, and 'DESCR', the full description of the
-        dataset.
+        Dictionary-like object, the interesting attributes are: either
+        data, the raw text data to learn, or 'filenames', the files
+        holding it, 'target', the classification labels (integer index),
+        'target_names', the meaning of the labels, and 'DESCR', the full
+        description of the dataset.
     """
     target = []
     target_names = []
@@ -156,6 +163,13 @@ def load_filenames(container_path, description=None, categories=None,
         random_state.shuffle(indices)
         filenames = filenames[indices]
         target = target[indices]
+
+    if load_content:
+        data = [open(filename).read() for filename in filenames]
+        return Bunch(data=data,
+                     target_names=target_names,
+                     target=target,
+                     DESCR=description)
 
     return Bunch(filenames=filenames,
                  target_names=target_names,

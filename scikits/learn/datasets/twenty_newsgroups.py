@@ -44,7 +44,7 @@ import warnings
 import numpy as np
 
 from .base import get_data_home
-from .base import load_filenames
+from .base import load_files
 
 
 logger = logging.getLogger(__name__)
@@ -117,23 +117,23 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
         elif subset == 'test':
             folder_path = test_path
         description = subset + ' subset of the 20 newsgroups by date dataset'
-        return load_filenames(folder_path, description=description,
+        return load_files(folder_path, description=description,
                             categories=categories, shuffle=shuffle, 
                             random_state=random_state)
     elif not subset == 'all':
         raise ValueError(
             "subset can only be 'train', 'test' or 'all', got '%s'" % subset)
 
-    filenames = list()
+    data_lst = list()
     target = list()
     for folder_path in (train_path, test_path):
-        data = load_filenames(folder_path, categories=categories,
+        data = load_files(folder_path, categories=categories,
                               shuffle=shuffle,
                               random_state=random_state)
-        filenames.extend(data.filenames)
+        data_lst.extend(data.filenames)
         target.extend(data.target)
 
-    data.filenames = np.array(filenames)
+    data.data = data_lst
     data.target = np.array(target)
     data.description = 'the 20 newsgroups by date dataset'
     return data
