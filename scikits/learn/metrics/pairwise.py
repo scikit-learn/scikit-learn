@@ -11,7 +11,7 @@ from ..utils import safe_asanyarray, atleast2d_or_csr
 from ..utils.extmath import safe_sparse_dot
 
 
-def calculate_distance(X, metric="euclidean"):
+def calculate_distances(X, metric="euclidean"):
     """ Calculates the distance matrix from a vector matrix X.
 
     This method takes either a vector array or a distance matrix, and returns

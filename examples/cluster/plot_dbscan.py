@@ -8,7 +8,7 @@ Reference:
 Ester, M., H. P. Kriegel, J. Sander, and X. Xu, “A Density-Based
 Algorithm for Discovering Clusters in Large Spatial Databases with Noise”.
 In: Proceedings of the 2nd International Conference on Knowledge Discovery
-and Data Mining, Portland, OR, AAAI Press, pp. 226–231. 2006
+and Data Mining, Portland, OR, AAAI Press, pp. 226–231. 1996
 
 """
 print __doc__
