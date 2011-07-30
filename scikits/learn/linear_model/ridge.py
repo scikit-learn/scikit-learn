@@ -512,7 +512,7 @@ class RidgeCV(LinearModel):
 
 class RidgeClassifierCV(RidgeCV):
 
-    def fit(self, X, y, sample_weight=1.0, class_weight={}, **params):
+    def fit(self, X, y, sample_weight=1.0, class_weight=None, **params):
         """
         Fit the ridge classifier.
 
@@ -539,6 +539,8 @@ class RidgeClassifierCV(RidgeCV):
             Returns self.
         """
         self._set_params(**params)
+        if class_weight is None:
+            class_weight = {}
         sample_weight2 = np.array([class_weight.get(k, 1.0) for k in y])
         self.label_binarizer = LabelBinarizer()
         Y = self.label_binarizer.fit_transform(y)

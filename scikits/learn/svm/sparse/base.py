@@ -47,7 +47,8 @@ class SparseBaseLibSVM(BaseLibSVM):
         # only used in classification
         self.n_support_ = np.empty(0, dtype=np.int32, order='C')
 
-    def fit(self, X, y, class_weight={}, sample_weight=[], cache_size=100., **params):
+    def fit(self, X, y, class_weight=None, sample_weight=[], cache_size=100.,
+            **params):
         """
         Fit the SVM model according to the given training data and
         parameters.
@@ -221,7 +222,7 @@ class SparseBaseLibSVM(BaseLibSVM):
 
 class SparseBaseLibLinear(BaseLibLinear):
 
-    def fit(self, X, y, class_weight={}, **params):
+    def fit(self, X, y, class_weight=None, **params):
         """
         Fit the model using X, y as training data.
 
