@@ -45,7 +45,7 @@ import numpy as np
 from .base import BaseEstimator, ClassifierMixin
 
 # really low epsilon (we don't really want machine eps)
-EPSILON = 1e-7
+EPSILON = 1e-9
 DEFAULT_SIGMA = 0.5
 
 ### Main classes
@@ -99,10 +99,29 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         self._graph_matrix = compute_affinity_matrix(self._X, kernel=self.kernel, sigma=self.sigma)
 
     def predict(self, X):
+        """
+        Performs inductive inference across the model
+
+        Parameters
+        ----------
+        X : array_like, shape = [n_points, n_features]
+
+        Returns
+        -------
+        y : array_like
+            Predictions for input data
+        """
         return [np.argmax(self.predict_proba(x)) for x in X]
 
     def predict_proba(self, x):
-        """ returns a probability distribution over labels for a given input point """
+        """ 
+        Returns a probability distribution (categorical distribution)
+        over labels for a single input point.
+
+        Parameters
+        ----------
+        x : array_like, shape = (n_features)
+        """
         s = 0.
         ary = np.asanyarray(x)
         for xj, yj in zip(self._X, self._y):
@@ -180,6 +199,8 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
             # clamp
             self._y = np.multiply(alpha_ary, self._y) + Y_alpha
             max_iters -= 1
+        num_to_label = dict([reverse(itm) for itm in label_map.items()])
+        self.transduction = map(lambda x: num_to_label[np.argmax(x)], self._y)
         return self
 
 class LabelPropagation(BaseLabelPropagation):

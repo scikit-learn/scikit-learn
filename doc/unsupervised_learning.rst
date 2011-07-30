@@ -13,5 +13,6 @@ Unsupervised learning
     modules/decomposition
     modules/covariance
     modules/hmm
+    modules/label_propagation
 
 
