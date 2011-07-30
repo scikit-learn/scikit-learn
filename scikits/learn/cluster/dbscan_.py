@@ -10,7 +10,7 @@ DBSCAN: Density-Based Spatial Clustering of Applications with Noise
 import numpy as np
 
 from ..base import BaseEstimator
-from ..metrics import calculate_distance
+from ..metrics import calculate_distances
 
 
 def dbscan(X, eps=0.5, min_points=5, metric='euclidean',
@@ -69,7 +69,7 @@ def dbscan(X, eps=0.5, min_points=5, metric='euclidean',
     assert len(index_order) == n, ("Index order must be of length n"
                                    " (%d expected, %d given)"
                                    % (n, len(index_order)))
-    D = calculate_distance(X, metric=metric)
+    D = calculate_distances(X, metric=metric)
     # Calculate neighborhood for all points. This leaves the original point
     # in, which needs to be considered later (i.e. point i is the
     # neighborhood of point i. While True, its useless information)
