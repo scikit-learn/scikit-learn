@@ -1,6 +1,6 @@
 from .base import load_diabetes
 from .base import load_digits
-from .base import load_filenames
+from .base import load_files
 from .base import load_iris
 from .base import load_linnerud
 from .base import get_data_home
@@ -18,7 +18,9 @@ from .svmlight_format import load_svmlight_file
 from .olivetti_faces import fetch_olivetti_faces
 from ..utils import deprecated
 
+# backward compatibility
 @deprecated("to be removed in 0.9;"
-            " use scikits.learn.datasets.load_filenames instead")
-def load_files(*args, **kwargs):
-    return load_filenames(*args, **kwargs)
+            " use scikits.learn.datasets.load_files instead")
+def load_filenames(*args, **kwargs):
+    """Deprecated, use ``scikits.learn.datasets.load_files`` instead"""
+    return load_files(*args, **kwargs)
