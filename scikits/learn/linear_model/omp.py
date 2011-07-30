@@ -63,11 +63,16 @@ def _cholesky_omp(X, y, n_nonzero_coefs, eps=None):
 
     while True:
         lam = np.abs(np.dot(X.T, residual)).argmax()
+        if lam in idx or alpha[lam] ** 2 < min_float:
+            # atom already selected or inner product too small
+            break
         if n_active > 0:
+            # Updates the Cholesky decomposition of X' X
             L[n_active, :n_active] = np.dot(X[:, idx].T, X[:, lam])
             v = np.dot(L[n_active, :n_active], L[n_active, :n_active])
             solve_triangular(L[:n_active, :n_active], L[n_active, :n_active])
-            # Updates the Cholesky decomposition of X' X
+            if 1 - v <= min_float:  # selected atoms are dependent
+                break
             L[n_active, n_active] = max(np.sqrt(np.abs(1 - v)), min_float)
         idx.append(lam)
         n_active += 1
@@ -133,11 +138,16 @@ def _gram_omp(G, Xy, n_nonzero_coefs, eps_0=None, eps=None):
 
     while True:
         lam = np.abs(alpha).argmax()
+        if lam in idx or alpha[lam] ** 2 < min_float:
+            # selected same atom twice, or inner product too small
+            break
         if n_active > 0:
             L[n_active, :n_active] = G[idx, lam]
             v = np.dot(L[n_active, :n_active], L[n_active, :n_active])
             solve_triangular(L[:n_active, :n_active], L[n_active, :n_active])
-            L[n_active, n_active] = max(np.sqrt(np.abs(1 - v)), min_float)
+            if 1 - v <= min_float:  # selected atoms are dependent
+                break
+            L[n_active, n_active] = np.sqrt(1 - v)
         idx.append(lam)
         n_active += 1
         # solves LL'x = y as a composition of two triangular systems
