@@ -101,7 +101,7 @@ def load_files(container_path, description=None, categories=None,
     Parameters
     ----------
 
-    container_path : string or unicode, or TarFile object
+    container_path : string or unicode
         Path to the main folder holding one subfolder per category
 
     description: string or unicode
