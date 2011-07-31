@@ -215,8 +215,7 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, eps=None, compute_gram=False):
     if y.ndim == 1:
         y = y[:, np.newaxis]
     if n_nonzero_coefs == None and eps == None:
-        raise ValueError('OMP needs either a target number of atoms \
-                         (n_nonzero_coefs) or a target residual error (eps)')
+        n_nonzero_coefs = int(0.1 * X.shape[1])
     if eps is not None and eps < 0:
         raise ValueError("Epsilon cannot be negative")
     if eps is None and n_nonzero_coefs <= 0:
@@ -283,8 +282,7 @@ def orthogonal_mp_gram(G, Xy, n_nonzero_coefs=None, eps=None,
             norms_squared = [norms_squared]
 
     if n_nonzero_coefs == None and eps is None:
-        raise ValueError('OMP needs either a target number of atoms \
-                         (n_nonzero_coefs) or a target residual error (eps)')
+        n_nonzero_coefs = int(0.1 * len(G))
     if eps is not None and norms_squared == None:
         raise ValueError('Gram OMP needs the precomputed norms in order \
                           to evaluate the error sum of squares.')
