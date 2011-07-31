@@ -13,32 +13,32 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, CoefSelectTransformerMixin):
 
     Parameters
     ----------
-    loss : string, 'l1' or 'l2' (default 'l2')
+    loss : string, 'l1' or 'l2' (default='l2')
         Specifies the loss function. 'l1' is the hinge loss (standard SVM)
         while 'l2' is the squared hinge loss.
 
-    penalty : string, 'l1' or 'l2' (default 'l2')
+    penalty : string, 'l1' or 'l2' (default='l2')
         Specifies the norm used in the penalization. The 'l2'
         penalty is the standard used in SVC. The 'l1' leads to coef_
         vectors that are sparse.
 
-    dual : bool, (default True)
+    dual : bool, (default=True)
         Select the algorithm to either solve the dual or primal
         optimization problem.
 
-    tol: float, optional
+    tol: float, optional (default=1e-4)
         Tolerance for stopping criteria
 
-    multi_class: boolean, optional
+    multi_class: boolean, optional (default=False)
         Perform multi-class SVM as per Cramer and Singer. If active,
         the options loss, penalty and dual will be ignored.
 
-    fit_intercept : boolean, optional
+    fit_intercept : boolean, optional (default=True)
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
-    intercept_scaling : float, default: 1
+    intercept_scaling : float, optional (default=1)
         when self.fit_intercept is True, instance vector x becomes
         [x, self.intercept_scaling],
         i.e. a "synthetic" feature with constant value equals to
@@ -88,33 +88,32 @@ class SVC(BaseLibSVM, ClassifierMixin):
     C : float, optional (default=1.0)
         penalty parameter C of the error term.
 
-    kernel : string, optional
+    kernel : string, optional (default='rbf')
          Specifies the kernel type to be used in the algorithm.
          one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'.
          If none is given 'rbf' will be used.
 
-    degree : int, optional
+    degree : int, optional (default=3)
         degree of kernel function
         is significant only in poly, rbf, sigmoid
 
-    gamma : float, optional
-        kernel coefficient for rbf and poly, by default 1/n_features
+    gamma : float, optional (default=0.0)
+        kernel coefficient for rbf and poly, if gamma is 0.0 then 1/n_features
         will be taken.
 
-    coef0 : float, optional
+    coef0 : float, optional (default=0.0)
         independent term in kernel function. It is only significant
         in poly/sigmoid.
 
-    probability: boolean, optional (False by default)
+    probability: boolean, optional (default=False)
         Whether to enable probability estimates. This must be enabled prior
         to calling prob_predict.
 
-    shrinking: boolean, optional
+    shrinking: boolean, optional (default=True)
         Whether to use the shrinking heuristic.
 
-    tol: float, optional
+    tol: float, optional (default=1e-3)
         Tolerance for stopping criterion.
-
 
     Attributes
     ----------
@@ -168,38 +167,37 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
 
     Parameters
     ----------
-    nu : float, optional
+    nu : float, optional (default=0.5)
         An upper bound on the fraction of training errors and a lower
         bound of the fraction of support vectors. Should be in the
-        interval (0, 1].  By default 0.5 will be taken.
+        interval (0, 1].
 
-    kernel : string, optional
+    kernel : string, optional (default='rbf')
          Specifies the kernel type to be used in the algorithm.
          one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'.
          If none is given 'rbf' will be used.
 
-    degree : int, optional
+    degree : int, optional (default=3)
         degree of kernel function
         is significant only in poly, rbf, sigmoid
 
-    gamma : float, optional
-        kernel coefficient for rbf and poly, by default 1/n_features
+    gamma : float, optional (default=0.0)
+        kernel coefficient for rbf and poly, if gamma is 0.0 then 1/n_features
         will be taken.
 
-    probability: boolean, optional (False by default)
-        Whether to enable probability estimates. This must be enabled prior
-        to calling predict_proba.
-
-    coef0 : float, optional
+    coef0 : float, optional (default=0.0)
         independent term in kernel function. It is only significant
         in poly/sigmoid.
 
-    shrinking: boolean, optional
+    probability: boolean, optional (default=False)
+        Whether to enable probability estimates. This must be enabled prior
+        to calling prob_predict.
+
+    shrinking: boolean, optional (default=True)
         Whether to use the shrinking heuristic.
 
-    tol: float, optional
+    tol: float, optional (default=1e-3)
         Tolerance for stopping criterion.
-
 
     Attributes
     ----------
@@ -221,7 +219,6 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
 
     `intercept_` : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
-
 
     Methods
     -------
@@ -274,43 +271,41 @@ class SVR(BaseLibSVM, RegressorMixin):
 
     Parameters
     ----------
-    nu : float, optional
-        An upper bound on the fraction of training errors and a lower bound of
-        the fraction of support vectors. Should be in the interval (0, 1].  By
-        default 0.5 will be taken.  Only available if impl='nu_svc'
+    C : float, optional (default=1.0)
+        penalty parameter C of the error term.
 
-    kernel : string, optional
+    epsilon : float, optional (default=0.1)
+         epsilon in the epsilon-SVR model. It specifies the espilon-tube
+         within which no penalty is associated in the training loss function 
+         with points predicted within a distance epsilon from the actual 
+         value.
+
+    kernel : string, optional (default='rbf')
          Specifies the kernel type to be used in the algorithm.
          one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'.
          If none is given 'rbf' will be used.
 
-    epsilon : float
-        epsilon in the epsilon-SVR model.
-
-    degree : int, optional
+    degree : int, optional (default=3)
         degree of kernel function
         is significant only in poly, rbf, sigmoid
 
-    gamma : float, optional
-        kernel coefficient for rbf and poly, by default 1/n_features
+    gamma : float, optional (default=0.0)
+        kernel coefficient for rbf and poly, if gamma is 0.0 then 1/n_features
         will be taken.
 
-    C : float, optional (default=1.0)
-        penalty parameter C of the error term.
-
-    probability: boolean, optional (False by default)
-        Whether to enable probability estimates. This must be enabled prior
-        to calling predict_proba.
-
-    tol: float, optional
-        Tolerance for stopping criterion.
-
-    coef0 : float, optional
+    coef0 : float, optional (default=0.0)
         independent term in kernel function. It is only significant
         in poly/sigmoid.
 
-    shrinking: boolean, optional
+    probability: boolean, optional (default=False)
+        Whether to enable probability estimates. This must be enabled prior
+        to calling prob_predict.
+
+    shrinking: boolean, optional (default=True)
         Whether to use the shrinking heuristic.
+
+    tol: float, optional (default=1e-3)
+        Tolerance for stopping criterion.
 
     Attributes
     ----------
@@ -341,21 +336,21 @@ class SVR(BaseLibSVM, RegressorMixin):
     >>> clf = SVR(C=1.0, epsilon=0.2)
     >>> clf.fit(X, y)
     SVR(kernel='rbf', C=1.0, probability=False, degree=3, epsilon=0.2,
-      shrinking=True, tol=0.001, coef0=0.0, nu=0.5, gamma=0.1)
+      shrinking=True, tol=0.001, coef0=0.0, gamma=0.1)
 
     See also
     --------
     NuSVR
     """
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
-                 tol=1e-3, C=1.0, nu=0.5, epsilon=0.1,
-                 shrinking=True, probability=False):
+                 tol=1e-3, C=1.0, epsilon=0.1, shrinking=True, 
+                 probability=False):
 
         BaseLibSVM.__init__(self, 'epsilon_svr', kernel, degree,
-                         gamma, coef0, tol, C, nu,
+                         gamma, coef0, tol, C, 0.0,
                          epsilon, shrinking, probability)
 
-    def fit(self, X, y, sample_weight=[], **params):
+    def fit(self, X, y, sample_weight=None, **params):
         """
         Fit the SVM model according to the given training data and parameters.
 
@@ -385,43 +380,40 @@ class NuSVR(BaseLibSVM, RegressorMixin):
 
     Parameters
     ----------
-    nu : float, optional
-        An upper bound on the fraction of training errors and a lower bound of
-        the fraction of support vectors. Should be in the interval (0, 1].  By
-        default 0.5 will be taken.  Only available if impl='nu_svc'
-
     C : float, optional (default=1.0)
         penalty parameter C of the error term.
 
-    kernel : string, optional
+    nu : float, optional
+        An upper bound on the fraction of training errors and a lower bound of
+        the fraction of support vectors. Should be in the interval (0, 1].  By
+        default 0.5 will be taken.  Only available if impl='nu_svc'.
+
+    kernel : string, optional (default='rbf')
          Specifies the kernel type to be used in the algorithm.
          one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'.
          If none is given 'rbf' will be used.
 
-    degree : int, optional
+    degree : int, optional (default=3)
         degree of kernel function
         is significant only in poly, rbf, sigmoid
 
-    gamma : float, optional
-        kernel coefficient for rbf and poly, by default 1/n_features
+    gamma : float, optional (default=0.0)
+        kernel coefficient for rbf and poly, if gamma is 0.0 then 1/n_features
         will be taken.
 
-    epsilon : float
-        epsilon in the epsilon-SVR model.
-
-    tol: float, optional
-        Tolerance for stopping criterion.
-
-    probability: boolean, optional (False by default)
-        Whether to enable probability estimates. This must be enabled prior
-        to calling predict_proba.
-
-    coef0 : float, optional
+    coef0 : float, optional (default=0.0)
         independent term in kernel function. It is only significant
         in poly/sigmoid.
 
-    shrinking: boolean, optional
+    probability: boolean, optional (default=False)
+        Whether to enable probability estimates. This must be enabled prior
+        to calling prob_predict.
+
+    shrinking: boolean, optional (default=True)
         Whether to use the shrinking heuristic.
+
+    tol: float, optional (default=1e-3)
+        Tolerance for stopping criterion.
 
     Attributes
     ----------
@@ -449,25 +441,25 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     >>> np.random.seed(0)
     >>> y = np.random.randn(n_samples)
     >>> X = np.random.randn(n_samples, n_features)
-    >>> clf = NuSVR(nu=0.1, C=1.0)
+    >>> clf = NuSVR(C=1.0, nu=0.1)
     >>> clf.fit(X, y)
     NuSVR(kernel='rbf', C=1.0, probability=False, degree=3, shrinking=True,
-       tol=0.001, epsilon=0.1, coef0=0.0, nu=0.1, gamma=0.1)
+       tol=0.001, coef0=0.0, nu=0.1, gamma=0.1)
 
     See also
     --------
-    NuSVR
+    NuSVC, SVR
     """
 
     def __init__(self, nu=0.5, C=1.0, kernel='rbf', degree=3,
-                 gamma=0.0, coef0=0.0, shrinking=True, epsilon=0.1,
+                 gamma=0.0, coef0=0.0, shrinking=True,
                  probability=False, tol=1e-3):
 
         BaseLibSVM.__init__(self, 'epsilon_svr', kernel, degree,
                          gamma, coef0, tol, C, nu,
-                         epsilon, shrinking, probability)
+                         0.0, shrinking, probability)
 
-    def fit(self, X, y, sample_weight=[], **params):
+    def fit(self, X, y, sample_weight=None, **params):
         """
         Fit the SVM model according to the given training data and parameters.
 
@@ -509,8 +501,8 @@ class OneClassSVM(BaseLibSVM):
     degree : int, optional
         Degree of kernel function. Significant only in poly, rbf, sigmoid.
 
-    gamma : float, optional
-        kernel coefficient for rbf and poly, by default 1/n_features
+    gamma : float, optional (default=0.0)
+        kernel coefficient for rbf and poly, if gamma is 0.0 then 1/n_features
         will be taken.
 
     coef0 : float, optional
@@ -547,7 +539,7 @@ class OneClassSVM(BaseLibSVM):
         BaseLibSVM.__init__(self, 'one_class', kernel, degree, gamma, coef0,
                              tol, 0.0, nu, 0.0, shrinking, False)
 
-    def fit(self, X, class_weight={}, sample_weight=[], **params):
+    def fit(self, X, class_weight={}, sample_weight=None, **params):
         """
         Detects the soft boundary of the set of samples X.
 

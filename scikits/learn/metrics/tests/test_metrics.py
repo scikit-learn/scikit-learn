@@ -183,13 +183,20 @@ def test_precision_recall_f1_score_multiclass():
 
 
 def test_zero_precision_recall():
-    """Check that patological cases do not bring NaNs"""
-    y_true = np.array([0, 1, 2, 0, 1, 2])
-    y_pred = np.array([2, 0, 1, 1, 2, 0])
+    """Check that pathological cases do not bring NaNs"""
 
-    assert_almost_equal(precision_score(y_true, y_pred), 0.0, 2)
-    assert_almost_equal(recall_score(y_true, y_pred), 0.0, 2)
-    assert_almost_equal(f1_score(y_true, y_pred), 0.0, 2)
+    try:
+        old_error_settings = np.seterr(all='raise')
+
+        y_true = np.array([0, 1, 2, 0, 1, 2])
+        y_pred = np.array([2, 0, 1, 1, 2, 0])
+
+        assert_almost_equal(precision_score(y_true, y_pred), 0.0, 2)
+        assert_almost_equal(recall_score(y_true, y_pred), 0.0, 2)
+        assert_almost_equal(f1_score(y_true, y_pred), 0.0, 2)
+
+    finally:
+        np.seterr(**old_error_settings)
 
 
 def test_confusion_matrix_multiclass():

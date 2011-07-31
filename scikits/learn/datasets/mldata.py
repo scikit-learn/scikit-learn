@@ -75,10 +75,10 @@ def fetch_mldata(dataname, target_name='label', data_name='data',
         'DESCR', the full description of the dataset, and
         'COL_NAMES', the original names of the dataset columns.
 
-    Example
-    -------
-
+    Examples
+    --------
     Load the 'iris' dataset from mldata.org:
+    >>> from scikits.learn.datasets.mldata import fetch_mldata
     >>> iris = fetch_mldata('iris')
     >>> print iris.target[0]
     1

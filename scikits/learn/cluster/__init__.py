@@ -8,3 +8,4 @@ from .hierarchical import ward_tree, Ward, WardAgglomeration
 from .power_iteration import power_iteration_clustering
 from .k_means_ import k_means, KMeans, MiniBatchKMeans
 
+from ._k_means import randindex

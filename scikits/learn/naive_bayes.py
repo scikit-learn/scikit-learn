@@ -23,7 +23,7 @@ complete documentation.
 from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize, LabelBinarizer
 from .utils import safe_asanyarray, atleast2d_or_csr
-from .utils.extmath import safe_sparse_dot
+from .utils.extmath import safe_sparse_dot, logsum
 from .utils.fixes import unique
 import numpy as np
 
@@ -318,7 +318,7 @@ class BaseDiscreteNB(BaseEstimator, ClassifierMixin):
         """
         jll = self._joint_log_likelihood(X)
         # normalize by P(x) = P(f_1, ..., f_n)
-        log_prob_x = np.logaddexp.reduce(jll[:, np.newaxis])
+        log_prob_x = logsum(jll[:, np.newaxis])
         return (jll - log_prob_x).T
 
 

@@ -14,35 +14,24 @@ automatically downloaded and then cached.
 You can adjust the number of categories by giving there name to the dataset
 loader or setting them to None to get the 20 of them.
 
-To run this example use::
-
-  % python examples/document_classification_20newsgroups.py [options]
-
-Options are:
-
-  --report
-      Print a detailed classification report.
-  --confusion-matrix
-      Print the confusion matrix.
-  --top10
-      Print ten most discriminative terms per class for every classifier.
-
 """
-print __doc__
 
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #         Mathieu Blondel <mathieu@mblondel.org>
+#         Lars Buitinck <L.J.Buitinck@uva.nl>
 # License: Simplified BSD
 
-from time import time
 import logging
 import numpy as np
 from operator import itemgetter
+from optparse import OptionParser
 import sys
+from time import time
 
 from scikits.learn.datasets import fetch_20newsgroups
 from scikits.learn.feature_extraction.text import Vectorizer
+from scikits.learn.feature_selection import SelectKBest, chi2
 from scikits.learn.linear_model import RidgeClassifier
 from scikits.learn.svm.sparse import LinearSVC
 from scikits.learn.linear_model.sparse import SGDClassifier
@@ -57,12 +46,32 @@ logging.basicConfig(level=logging.INFO,
 
 
 # parse commandline arguments
-argv = sys.argv[1:]
-print_report = "--report" in argv
-print_cm = "--confusion-matrix" in argv
-print_top10 = "--top10" in argv
+op = OptionParser()
+op.add_option("--report",
+              action="store_true", dest="print_report",
+              help="Print a detailed classification report.")
+op.add_option("--chi2_select",
+              action="store", type="int", dest="select_chi2",
+              help="Select some number of features using a chi-squared test")
+op.add_option("--confusion_matrix",
+              action="store_true", dest="print_cm",
+              help="Print the confusion matrix.")
+op.add_option("--top10",
+              action="store_true", dest="print_top10",
+              help="Print ten most discriminative terms per class"
+                   " for every classifier.")
 
-################################################################################
+(opts, args) = op.parse_args()
+if len(args) > 0:
+    op.error("this script takes no arguments.")
+    sys.exit(1)
+
+print __doc__
+op.print_help()
+print
+
+
+###############################################################################
 # Load some categories from the training set
 categories = [
     'alt.atheism',
@@ -108,6 +117,16 @@ print "done in %fs" % (time() - t0)
 print "n_samples: %d, n_features: %d" % X_test.shape
 print
 
+if opts.select_chi2:
+    print ("Extracting %d best features by a chi-squared test" %
+           opts.select_chi2)
+    t0 = time()
+    ch2 = SelectKBest(chi2, k=opts.select_chi2)
+    X_train = ch2.fit_transform(X_train, y_train)
+    X_test = ch2.transform(X_test)
+    print "done in %fs" % (time() - t0)
+    print
+
 vocabulary = np.array([t for t, i in sorted(vectorizer.vocabulary.iteritems(),
                                             key=itemgetter(1))])
 
@@ -117,7 +136,8 @@ def trim(s):
     return s if len(s) <= 80 else s[:77] + "..."
 
 
-################################################################################
+
+###############################################################################
 # Benchmark classifiers
 def benchmark(clf):
     print 80 * '_'
@@ -140,19 +160,19 @@ def benchmark(clf):
         nnz = clf.coef_.nonzero()[0].shape[0]
         print "non-zero coef: %d" % nnz
 
-        if print_top10:
+        if opts.print_top10:
             print "top 10 keywords per class:"
             for i, category in enumerate(categories):
                 top10 = np.argsort(clf.coef_[i, :])[-10:]
                 print trim("%s: %s" % (category, " ".join(vocabulary[top10])))
         print
 
-    if print_report:
+    if opts.print_report:
         print "classification report:"
         print metrics.classification_report(y_test, pred,
                                             target_names=categories)
 
-    if print_cm:
+    if opts.print_cm:
         print "confusion matrix:"
         print metrics.confusion_matrix(y_test, pred)
 
@@ -161,7 +181,7 @@ def benchmark(clf):
 
 for clf, name in ((RidgeClassifier(tol=1e-1), "Ridge Classifier"),
                   (NeighborsClassifier(n_neighbors=10), "kNN")):
-    print 80*'='
+    print 80 * '='
     print name
     results = benchmark(clf)
 

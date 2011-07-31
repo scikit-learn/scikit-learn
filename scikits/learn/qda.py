@@ -13,6 +13,7 @@ import scipy.ndimage as ndimage
 
 from .base import BaseEstimator, ClassifierMixin
 
+
 # FIXME :
 # - in fit(X, y) method, many checks are common with other models
 #   (in particular LDA model) and should be factorized:
@@ -57,7 +58,6 @@ class QDA(BaseEstimator, ClassifierMixin):
     See also
     --------
     LDA
-
     """
 
     def __init__(self, priors=None):
@@ -75,13 +75,13 @@ class QDA(BaseEstimator, ClassifierMixin):
         y : array, shape = [n_samples]
             Target values (integers)
         store_covariances : boolean
-            If True the covariance matrices are computed and stored in
+            If True the covariance matrices are computed and stored in the
             self.covariances_ attribute.
         """
         self._set_params(**params)
         X = np.asanyarray(X)
         y = np.asanyarray(y)
-        if X.ndim!=2:
+        if X.ndim != 2:
             raise ValueError('X must be a 2D array')
         if X.shape[0] != y.shape[0]:
             raise ValueError(
@@ -139,17 +139,17 @@ class QDA(BaseEstimator, ClassifierMixin):
         return self
 
     def decision_function(self, X):
-        """
-        This function return the decision function values related to each
-        class on an array of test vectors X.
+        """Apply decision function to an array of samples.
 
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
+            Array of samples (test vectors).
 
         Returns
         -------
         C : array, shape = [n_samples, n_classes]
+            Decision function values related to each class, per sample.
         """
         X = np.asanyarray(X)
         norm2 = []
@@ -159,13 +159,12 @@ class QDA(BaseEstimator, ClassifierMixin):
             Xm = X - self.means_[i]
             X2 = np.dot(Xm, R * (S ** (-0.5)))
             norm2.append(np.sum(X2 ** 2, 1))
-        norm2 = np.array(norm2).T # shape : len(X), n_classes
-        return -0.5 * (norm2 + np.sum(np.log(self.scalings), 1)) + \
-               np.log(self.priors_)
+        norm2 = np.array(norm2).T   # shape = [len(X), n_classes]
+        return (-0.5 * (norm2 + np.sum(np.log(self.scalings), 1))
+                + np.log(self.priors_))
 
     def predict(self, X):
-        """
-        This function does classification on an array of test vectors X.
+        """Perform classification on an array of test vectors X.
 
         The predicted class C for each sample in X is returned.
 
@@ -182,17 +181,17 @@ class QDA(BaseEstimator, ClassifierMixin):
         return y_pred
 
     def predict_proba(self, X):
-        """
-        This function return posterior probabilities of classification
-        according to each class on an array of test vectors X.
+        """Return posterior probabilities of classification.
 
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
+            Array of samples/test vectors.
 
         Returns
         -------
         C : array, shape = [n_samples, n_classes]
+            Posterior probabilities of classification per class.
         """
         values = self.decision_function(X)
         # compute the likelihood of the underlying gaussian models
@@ -202,17 +201,17 @@ class QDA(BaseEstimator, ClassifierMixin):
         return likelihood / likelihood.sum(axis=1)[:, np.newaxis]
 
     def predict_log_proba(self, X):
-        """
-        This function return posterior log-probabilities of classification
-        according to each class on an array of test vectors X.
+        """Return posterior probabilities of classification.
 
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
+            Array of samples/test vectors.
 
         Returns
         -------
         C : array, shape = [n_samples, n_classes]
+            Posterior log-probabilities of classification per class.
         """
         # XXX : can do better to avoid precision overflows
         probas_ = self.predict_proba(X)

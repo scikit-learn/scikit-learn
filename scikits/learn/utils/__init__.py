@@ -1,20 +1,33 @@
 import numpy as np
 import scipy.sparse as sp
+import warnings
+
+_FLOAT_CODES = np.typecodes['AllFloat']
+
+
+def assert_all_finite(X):
+    """Throw a ValueError if X contains NaN or infinity.
+    Input MUST be an np.ndarray instance or a scipy.sparse matrix."""
+
+    # O(n) time, O(1) solution. XXX: will fail if the sum over X is
+    # *extremely* large. A proper solution would be a C-level loop to check
+    # each element.
+    if X.dtype.char in _FLOAT_CODES and not np.isfinite(X.sum()):
+        raise ValueError("array contains NaN or infinity")
+
 
 def safe_asanyarray(X, dtype=None, order=None):
-    if sp.issparse(X):
-        return X
-        #return type(X)(X, dtype)
-    else:
-        return np.asanyarray(X, dtype, order)
+    if not sp.issparse(X):
+        X = np.asanyarray(X, dtype, order)
+    assert_all_finite(X)
+    return X
 
 
 def atleast2d_or_csr(X):
     """Like numpy.atleast_2d, but converts sparse matrices to CSR format"""
-    if sp.issparse(X):
-        return X.tocsr()
-    else:
-        return np.atleast_2d(X)
+    X = X.tocsr() if sp.issparse(X) else np.atleast_2d(X)
+    assert_all_finite(X)
+    return X
 
 
 def check_random_state(seed):
@@ -97,6 +110,85 @@ def check_arrays(*arrays, **options):
         checked_arrays.append(array)
 
     return checked_arrays
+
+
+class deprecated(object):
+    """Decorator to mark a function or class as deprecated.
+
+    Prints a warning when the function is called/the class is instantiated and
+    adds a warning to the docstring.
+
+    The optional extra argument will be appended to the deprecation message
+    and the docstring. Note: to use this with the default value for extra, put
+    in an empty of parentheses:
+
+    >>> from scikits.learn.utils import deprecated
+    >>> @deprecated()
+    ... def some_function(): pass
+
+    Deprecating a class takes some work, since we want to run on Python
+    versions that do not have class decorators:
+
+    >>> class Foo(object): pass
+    ...
+    >>> Foo = deprecated("Use Bar instead")(Foo)
+    """
+
+    # Adapted from http://wiki.python.org/moin/PythonDecoratorLibrary,
+    # but with many changes.
+
+    def __init__(self, extra=''):
+        self.extra = extra
+
+    def __call__(self, obj):
+        if isinstance(obj, type):
+            return self._decorate_class(obj)
+        else:
+            return self._decorate_fun(obj)
+
+    def _decorate_class(self, cls):
+        msg = "Class %s is deprecated" % cls.__name__
+        if self.extra:
+            msg += "; %s" % self.extra
+
+        # FIXME: we should probably reset __new__ for full generality
+        init = cls.__init__
+        def wrapped(*args, **kwargs):
+            warnings.warn(msg, category=DeprecationWarning)
+            return init(*args, **kwargs)
+        cls.__init__ = wrapped
+
+        wrapped.__name__ = '__init__'
+        wrapped.__doc__ = self._update_doc(init.__doc__)
+
+        return cls
+
+    def _decorate_fun(self, fun):
+        """Decorate function fun"""
+
+        what = "Function %s" % fun.__name__
+
+        msg = "%s is deprecated" % what
+        if self.extra:
+            msg += "; %s" % self.extra
+
+        def wrapped(*args, **kwargs):
+            warnings.warn(msg, category=DeprecationWarning)
+            return fun(*args, **kwargs)
+
+        wrapped.__name__ = fun.__name__
+        wrapped.__dict__ = fun.__dict__
+        wrapped.__doc__ = self._update_doc(fun.__doc__)
+
+        return wrapped
+
+    def _update_doc(self, olddoc):
+        newdoc = "DEPRECATED"
+        if self.extra:
+            newdoc = "%s: %s" % (newdoc, self.extra)
+        if olddoc:
+            newdoc = "%s\n\n%s" % (newdoc, olddoc)
+        return newdoc
 
 
 def resample(*arrays, **options):
@@ -266,3 +358,29 @@ def shuffle(*arrays, **options):
     """
     options['replace'] = False
     return resample(*arrays, **options)
+
+
+def gen_even_slices(n, n_packs):
+    """Generator to create n_packs slices going up to n.
+
+    Examples
+    --------
+    >>> from scikits.learn.utils import gen_even_slices
+    >>> list(gen_even_slices(10, 1))
+    [slice(0, 10, None)]
+    >>> list(gen_even_slices(10, 10))                     #doctest: +ELLIPSIS
+    [slice(0, 1, None), slice(1, 2, None), ..., slice(9, 10, None)]
+    >>> list(gen_even_slices(10, 5))                      #doctest: +ELLIPSIS
+    [slice(0, 2, None), slice(2, 4, None), ..., slice(8, 10, None)]
+    >>> list(gen_even_slices(10, 3))
+    [slice(0, 4, None), slice(4, 7, None), slice(7, 10, None)]
+    """
+    start = 0
+    for pack_num in range(n_packs):
+        this_n = n // n_packs
+        if pack_num < n % n_packs:
+            this_n += 1
+        if this_n > 0:
+            end = start + this_n
+            yield slice(start, end, None)
+            start = end

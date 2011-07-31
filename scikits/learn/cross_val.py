@@ -8,10 +8,9 @@ from math import ceil
 import numpy as np
 
 from .base import is_classifier, clone
-from .utils import check_random_state
+from .utils import check_arrays, check_random_state
 from .utils.extmath import factorial, combinations
 from .utils.fixes import unique
-from .utils import check_arrays
 from .externals.joblib import Parallel, delayed
 
 
@@ -598,56 +597,54 @@ class Bootstrap(object):
 
 
 class ShuffleSplit(object):
-    """Random split cross-validation iterator
+    """Random split cross-validation iterator.
 
-    Provides train/test indices to split data in train test sets
+    Yields indices to split data into training and test sets.
+
+    Note: contrary to other cross-validation strategies, random splits do not
+    guarantee that all folds will be different, although this is still very
+    likely for sizeable datasets.
+
+    Parameters
+    ----------
+    n : int
+        Total number of elements in the dataset.
+
+    n_splits : int (default 20)
+        Number of splitting iterations.
+
+    test_fraction : float (default 0.1)
+        should be between 0.0 and 1.0 and represent the proportion of
+        the dataset to include in the test split.
+
+    indices : boolean, optional (default False)
+        Return train/test split with integer indices or boolean mask.
+        Integer indices are useful when dealing with sparse matrices
+        that cannot be indexed by boolean masks.
+
+    random_state : int or RandomState
+        Pseudo-random number generator state used for random sampling.
+
+    Examples
+    ----------
+    >>> from scikits.learn import cross_val
+    >>> rs = cross_val.ShuffleSplit(4, n_splits=3, test_fraction=.25,
+    ...                             random_state=0)
+    >>> len(rs)
+    3
+    >>> print rs
+    ... # doctest: +ELLIPSIS
+    ShuffleSplit(4, n_splits=3, test_fraction=0.25, indices=False, ...)
+    >>> for train_index, test_index in rs:
+    ...    print "TRAIN:", train_index, "TEST:", test_index
+    ...
+    TRAIN: [False  True  True  True] TEST: [ True False False False]
+    TRAIN: [ True  True  True False] TEST: [False False False  True]
+    TRAIN: [ True False  True  True] TEST: [False  True False False]
     """
 
-    def __init__(self, n, n_splits=20, test_fraction=0.1, 
+    def __init__(self, n, n_splits=20, test_fraction=0.1,
                  indices=False, random_state=None):
-        """Random split cross validation
-
-        Provides train/test indices to split data in .
-
-        Note: contrary to other cross-validation strategies, random
-        splits does not garanty that all folds will be different,
-        although this is unlikely for sizeable datasets
-
-        Parameters
-        ----------
-        n : int
-            Total number of elements in the dataset.
-
-        n_splits : int (default is 20)
-            Number of splitting iterations
-
-        test_fraction: float (default is 0.1)
-            should be between 0.0 and 1.0 and represent the proportion of 
-            the dataset to include in the test split.
-
-        indices: boolean, optional (default False)
-            Return train/test split with integer indices or boolean mask.
-            Integer indices are useful when dealing with sparse matrices
-            that cannot be indexed by boolean masks.
-
-        random_state : int or RandomState
-            Pseudo number generator state used for random sampling.
-
-        Examples
-        ----------
-        >>> from scikits.learn import cross_val
-        >>> rs = cross_val.ShuffleSplit(4, n_splits=3, test_fraction=.25, random_state=0)
-        >>> len(rs)
-        3
-        >>> print rs
-        ShuffleSplit(4, n_splits=3, test_fraction=0.25, indices=False, random_state=0)
-        >>> for train_index, test_index in rs:
-        ...    print "TRAIN:", train_index, "TEST:", test_index
-        ...
-        TRAIN: [False  True  True  True] TEST: [ True False False False]
-        TRAIN: [ True  True  True False] TEST: [False False False  True]
-        TRAIN: [ True False  True  True] TEST: [False  True False False]
-        """
         self.n = n
         self.n_splits = n_splits
         self.test_fraction = test_fraction

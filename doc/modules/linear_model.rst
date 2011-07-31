@@ -244,14 +244,14 @@ The disadvantages of the LARS method include:
     in the discussion section of the Efron et al. (2004) Annals of
     Statistics article.
 
-The LARS model can be used using estimator :class:`LARS`, or its
+The LARS model can be used using estimator :class:`Lars`, or its
 low-level implementation :func:`lars_path`.
 
 
 LARS Lasso
 ==========
 
-:class:`LassoLARS` is a lasso model implemented using the LARS
+:class:`LassoLars` is a lasso model implemented using the LARS
 algorithm, and unlike the implementation based on coordinate_descent,
 this yields the exact solution, which is piecewise linear as a
 function of the norm of its coefficients.
@@ -264,19 +264,19 @@ function of the norm of its coefficients.
 ::
 
    >>> from scikits.learn import linear_model
-   >>> clf = linear_model.LassoLARS(alpha=.1)
+   >>> clf = linear_model.LassoLars(alpha=.1)
    >>> clf.fit ([[0, 0], [1, 1]], [0, 1])
-   LassoLARS(normalize=True, verbose=False, fit_intercept=True, max_iter=500,
+   LassoLars(normalize=True, verbose=False, fit_intercept=True, max_iter=500,
         precompute='auto', alpha=0.1)
    >>> clf.coef_
-   array([ 0.50710678,  0.        ])
+   array([ 0.71715729,  0.        ])
 
 .. topic:: Examples:
 
  * :ref:`example_linear_model_plot_lasso_lars.py`
 
 
-The LARS algorithm provides the full path of the coefficients along
+The Lars algorithm provides the full path of the coefficients along
 the regularization parameter almost for free, thus a common operation
 consist of retrieving the path with function :func:`lars_path`
 
@@ -312,24 +312,39 @@ introducing some prior knowledge over the parameters.  For example,
 penalization by weighted :math:`\ell_{2}` norm is equivalent to
 setting Gaussian priors on the weights.
 
-The advantages of *Bayesian Regression* are:
+.. topic:: **Pros and cons of Bayesian regression**
 
-    - It adapts to the data at hand.
+    The advantages of *Bayesian Regression* are:
 
-    - It can be used to include regularization parameters in the
-      estimation procedure.
+        - It adapts to the data at hand.
 
-The disadvantages of *Bayesian Regression* include:
+        - It can be used to include regularization parameters in the
+          estimation procedure.
 
-    - Inference of the model can be time consuming.
+    The disadvantages of *Bayesian Regression* include:
 
+        - Inference of the model can be time consuming.
+
+
+.. _bayesian_ridge_regression:
 
 Bayesian Ridge Regression
 -------------------------
 
-:class:`BayesianRidge` tries to avoid the overfit issue of
-:ref:`ordinary_least_squares`, by adding the following prior on
-:math:`\beta`:
+:class:`BayesianRidge` is a ridge estimator: a shrinks the coefficients
+(model weights) toward 0. The amount of shrinking is set from the data
+and controlled by a soft prior:
+
+.. figure:: ../auto_examples/linear_model/images/plot_bayesian_ridge_1.png
+   :target: ../auto_examples/linear_model/plot_bayesian_ridge.html
+   :align: center
+   :scale: 80
+
+   Weights: a comparison of ground truth, ordinary least square and 
+   bayesian ridge estimates.
+
+It tries to avoid the overfit issue of :ref:`ordinary_least_squares`, by
+adding the following prior on :math:`\beta`:
 
 .. math:: p(\beta|\lambda) =
     \mathcal{N}(\beta|0,\lambda^{-1}\bold{I_{p}})
@@ -343,8 +358,10 @@ Gaussian is narrowed around 0 which does not allow large values of
 :math:`\beta`, and with low value of :math:`\lambda`, the Gaussian is
 very flattened which allows values of :math:`\beta`.  Here, we use a
 *non-informative* prior for :math:`\lambda`.
-The parameters are estimated by maximizing the *marginal log likelihood*.
-There is also a Gamma prior for :math:`\lambda` and :math:`\alpha`:
+
+The parameters are estimated by iteratively maximizing the *marginal log
+likelihood*. There is also a Gamma prior for :math:`\lambda` and
+:math:`\alpha`:
 
 .. math:: g(\alpha|\alpha_1,\alpha_2) = \frac{\alpha_2^{\alpha_1}}
     {\Gamma(\alpha_1)} \alpha^{\alpha_1-1} e^{-\alpha_2 {\alpha}}
@@ -353,17 +370,11 @@ There is also a Gamma prior for :math:`\lambda` and :math:`\alpha`:
 .. math:: g(\lambda|\lambda_1,\lambda_2) = \frac{\lambda_2^{\lambda_1}}
     {\Gamma(\lambda_1)} \lambda^{\lambda_1-1} e^{-\lambda_2 {\lambda}}
 
-By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e^{-6}`, *i.e.*
- very slightly informative priors.
+By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e^{-6}`, 
+*i.e.* very slightly informative priors.
 
 
-
-.. figure:: ../auto_examples/linear_model/images/plot_bayesian_ridge_1.png
-   :target: ../auto_examples/linear_model/plot_bayesian_ridge.html
-   :align: center
-
-
-*Bayesian Ridge Regression* is used for regression:
+*Bayesian Ridge Regression* is used for regression::
 
     >>> from scikits.learn import linear_model
     >>> X = [[0., 0.], [1., 1.], [2., 2.], [3., 3.]]
@@ -398,13 +409,23 @@ Regression* is more robust to ill-posed problem.
   * More details can be found in the article `Bayesian Interpolation <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.27.9072&rep=rep1&type=pdf>`_
     by MacKay, David J. C.
 
-
+.. _automatic_relevance_determination:
 
 Automatic Relevance Determination - ARD
 =======================================
 
-:class:`ARDRegression` adds a more sophisticated prior :math:`\beta`,
-where we assume that each weight :math:`\beta_{i}` is drawn in a
+:class:`ARDRegression` adds a more sophisticated prior on the
+coefficients :math:`\beta` that tends to make them sparse.
+
+.. figure:: ../auto_examples/linear_model/images/plot_ard_1.png
+   :target: ../auto_examples/linear_model/plot_ard.html
+   :align: center
+   :scale: 80
+
+   Weights: a comparison of ground truth, ordinary least square and 
+   ARD estimates.
+
+Techinally, each weight :math:`\beta_{i}` is assumed to be drawn in a
 Gaussian distribution, centered on zero and with a precision
 :math:`\lambda_{i}`:
 
@@ -420,13 +441,8 @@ There is also a Gamma prior for :math:`\lambda` and :math:`\alpha`:
 .. math:: g(\lambda|\lambda_1,\lambda_2) = \frac{\lambda_2^{\lambda_1}}
     {\Gamma(\lambda_1)} \lambda^{\lambda_1-1} e^{-\lambda_2 {\lambda}}
 
-By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e-6`, *i.e.*
- very slightly informative priors.
-
-
-.. figure:: ../auto_examples/linear_model/images/plot_ard_1.png
-   :target: ../auto_examples/linear_model/plot_ard.html
-   :align: center
+By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e-6`, 
+*i.e.* very slightly informative priors.
 
 
 .. topic:: Examples:
