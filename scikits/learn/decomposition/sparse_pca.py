@@ -538,9 +538,13 @@ class SparsePCA(BaseEstimator, TransformerMixin):
     n_components: int,
         Number of sparse atoms to extract.
 
-    alpha: int,
+    alpha: float,
         Sparsity controlling parameter. Higher values lead to sparser
         components.
+
+    ridge_alpha: float,
+        Amount of ridge shrinkage to apply in order to improve
+        conditioning when calling the transform method.
 
     max_iter: int,
         Maximum number of iterations to perform.
@@ -582,11 +586,12 @@ class SparsePCA(BaseEstimator, TransformerMixin):
     PCA
 
     """
-    def __init__(self, n_components, alpha=1, max_iter=1000, tol=1e-8,
-                 method='lars', n_jobs=1, U_init=None, V_init=None,
+    def __init__(self, n_components, alpha=1, ridge_alpha=0.01, max_iter=1000,
+                 tol=1e-8, method='lars', n_jobs=1, U_init=None, V_init=None,
                  verbose=False, random_state=None):
         self.n_components = n_components
         self.alpha = alpha
+        self.ridge_alpha = ridge_alpha
         self.max_iter = max_iter
         self.tol = tol
         self.method = method
@@ -626,7 +631,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         self.error_ = E
         return self
 
-    def transform(self, X, ridge_alpha=0.01):
+    def transform(self, X, ridge_alpha=None):
         """Least Squares projection of the data onto the sparse components.
 
         To avoid instability issues in case the system is under-determined,
@@ -651,6 +656,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         X_new array, shape (n_samples, n_components)
             Transformed data.
         """
+        ridge_alpha = self.ridge_alpha if ridge_alpha is None else ridge_alpha
         U = ridge_regression(self.components_.T, X.T, ridge_alpha,
                              solver='dense_cholesky')
         U /= np.sqrt((U ** 2).sum(axis=0))
@@ -675,6 +681,10 @@ class MiniBatchSparsePCA(SparsePCA):
     alpha: int,
         Sparsity controlling parameter. Higher values lead to sparser
         components.
+
+    ridge_alpha: float,
+        Amount of ridge shrinkage to apply in order to improve
+        conditioning when calling the transform method.
 
     n_iter: int,
         number of iterations to perform for each mini batch
@@ -704,11 +714,12 @@ class MiniBatchSparsePCA(SparsePCA):
         Pseudo number generator state used for random sampling.
 
     """
-    def __init__(self, n_components, alpha=1, n_iter=100, callback=None,
-                 chunk_size=3, verbose=False, shuffle=True, n_jobs=1,
-                 method='lars', random_state=None):
+    def __init__(self, n_components, alpha=1, ridge_alpha=0.01, n_iter=100,
+                 callback=None, chunk_size=3, verbose=False, shuffle=True,
+                 n_jobs=1, method='lars', random_state=None):
         self.n_components = n_components
         self.alpha = alpha
+        self.ridge_alpha = ridge_alpha
         self.n_iter = n_iter
         self.callback = callback
         self.chunk_size = chunk_size
