@@ -504,8 +504,8 @@ def generate_sparse_coded_signal(n_samples, n_components, n_features,
                                  n_nonzero_coefs, random_state=0):
     """Generate a signal as a sparse combination of dictionary elements.
 
-    Returns a matrix Y = XD, such as D is (n_components, n_features),
-    X is (n_samples, n_components) and each line of X has exactly
+    Returns a matrix Y = DX, such as D is (n_features, n_components),
+    X is (n_components, n_samples) and each column of X has exactly
     n_nonzero_coefs non-zero elements.
 
     Parameters:
@@ -527,33 +527,33 @@ def generate_sparse_coded_signal(n_samples, n_components, n_features,
 
     Returns:
     --------
-    data: array (n_samples, n_features):
+    data: array (n_features, n_samples):
         The encoded signal (Y).
 
-    code: array (n_samples, n_components):
-        The sparse code such that each line of this matrix has exactly
-        n_nonzero_coefs non-zero items (X).
-
-    dictionary: array(n_components, n_features):
+    dictionary: array (n_features, n_components):
         The dictionary with normalized components (D).
+
+    code: array (n_components, n_samples):
+        The sparse code such that each column of this matrix has exactly
+        n_nonzero_coefs non-zero items (X).
 
     """
 
     rng = check_random_state(random_state)
 
     # generate dictionary
-    D = np.random.randn(n_components, n_features)
-    D /= np.sqrt(np.sum((D ** 2), axis=1))[:, np.newaxis]
+    D = np.random.randn(n_features, n_components)
+    D /= np.sqrt(np.sum((D ** 2), axis=0))
 
     # generate code
-    X = np.zeros((n_samples, n_components))
+    X = np.zeros((n_components, n_samples))
     for i in xrange(n_samples):
         idx = np.arange(n_components)
         rng.shuffle(idx)
         idx = idx[:n_nonzero_coefs]
-        X[i, idx] = rng.randn(n_nonzero_coefs)
+        X[idx, i] = rng.randn(n_nonzero_coefs)
 
     # encode signal
-    Y = np.dot(X, D)
+    Y = np.dot(D, X)
 
-    return map(np.squeeze, (Y, X, D))
+    return map(np.squeeze, (Y, D, X))
