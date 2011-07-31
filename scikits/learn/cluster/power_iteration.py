@@ -143,7 +143,7 @@ def power_iteration_clustering(affinity, k=8, n_vectors=1, tol=1e-5,
             print "Power Iteration %04d/%04d: gap=%f" % (
                 i + 1, max_iter, stopping_gap)
 
-        if plot_vector and i % 10 ==0:
+        if plot_vector and i % 10 == 0:
             p = make_plot("First vector %04d" % (i + 1))
             p.plot(vectors[0])
             save_plot(p, "debug/power_iteration_%04d.png" % (i + 1))
