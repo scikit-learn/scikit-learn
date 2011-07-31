@@ -11,43 +11,32 @@ from ...utils.fixes import count_nonzero
 from ...utils import check_random_state
 from ...datasets import generate_sparse_coded_signal
 
-n_samples, n_features, n_nonzero_coefs = 10, 15, 6
+n_samples, n_features, n_nonzero_coefs = 20, 30, 5
 y, X, gamma = generate_sparse_coded_signal(3, n_features, n_samples,
                                            n_nonzero_coefs, random_state=0)
-
+G, Xy = np.dot(X.T, X), np.dot(X.T, y)
 # this makes X (n_samples, n_features)
-#        and y (n_samples, 3)
-
-def generate_data(n_samples, n_features, random_state=42):
-    rng = check_random_state(random_state)
-    X = rng.randn(n_samples, n_features)
-    X /= np.sqrt(np.sum((X ** 2), axis=0))
-    gamma = rng.randn(n_features)
-    return X, np.dot(X, gamma)
-
-# XXX: change samples_generator to the transpose problem, makes more sense
+# and y (n_samples, 3)
 
 
 def test_correct_shapes():
-    assert_equal(orthogonal_mp(X, y[:, 0], n_nonzero_coefs=6).shape,
+    assert_equal(orthogonal_mp(X, y[:, 0], n_nonzero_coefs=5).shape,
                  (n_features,))
-    assert_equal(orthogonal_mp(X, y, n_nonzero_coefs=6).shape,
+    assert_equal(orthogonal_mp(X, y, n_nonzero_coefs=5).shape,
                  (n_features, 3))
 
 
 def test_correct_shapes_gram():
-    G, Xy = np.dot(X.T, X), np.dot(X.T, y[:, 0])
-    assert_equal(orthogonal_mp_gram(G, Xy, n_nonzero_coefs=6).shape, 
+    assert_equal(orthogonal_mp_gram(G, Xy[:, 0], n_nonzero_coefs=6).shape, 
                  (n_features,))
-    Xy = np.dot(X.T, y)
     assert_equal(orthogonal_mp_gram(G, Xy, n_nonzero_coefs=6).shape,
                  (n_features, 3))
 
 
 def test_n_nonzero_coefs():
-    assert count_nonzero(orthogonal_mp(X, y[:, 0], n_nonzero_coefs=6)) <= 6
-    assert count_nonzero(orthogonal_mp(X, y[:, 0], n_nonzero_coefs=6,
-                                       compute_gram=True)) <= 6
+    assert count_nonzero(orthogonal_mp(X, y[:, 0], n_nonzero_coefs=5)) <= 5
+    assert count_nonzero(orthogonal_mp(X, y[:, 0], n_nonzero_coefs=5,
+                                       compute_gram=True)) <= 5
 
 
 def test_eps():
@@ -59,8 +48,8 @@ def test_eps():
 
 
 def test_with_without_gram():
-    assert_array_almost_equal(orthogonal_mp(X, y, n_nonzero_coefs=6),
-                              orthogonal_mp(X, y, n_nonzero_coefs=6,
+    assert_array_almost_equal(orthogonal_mp(X, y, n_nonzero_coefs=5),
+                              orthogonal_mp(X, y, n_nonzero_coefs=5,
                                             compute_gram=True))
 
 
@@ -75,7 +64,6 @@ def test_unreachable_accuracy():
 
 
 def test_bad_input():
-    G, Xy = np.dot(X.T, X), np.dot(X.T, y)
     assert_raises(ValueError, orthogonal_mp, X, y, eps=-1)
     assert_raises(ValueError, orthogonal_mp, X, y, n_nonzero_coefs=-1)
     assert_raises(ValueError, orthogonal_mp, X, y,
@@ -88,24 +76,23 @@ def test_bad_input():
 
 def test_perfect_signal_recovery():
     # XXX: use signal generator
-    G, Xy = np.dot(X.T, X), np.dot(X.T, y[:, 0])
     idx, = gamma[:, 0].nonzero()
-    gamma_rec = orthogonal_mp(X, y[:, 0], 6)
-    gamma_gram = orthogonal_mp_gram(G, Xy, 6)
+    gamma_rec = orthogonal_mp(X, y[:, 0], 5)
+    gamma_gram = orthogonal_mp_gram(G, Xy[:, 0], 5)
     assert_equal(idx, np.flatnonzero(gamma_rec))
     assert_equal(idx, np.flatnonzero(gamma_gram))
-    assert_array_almost_equal(gamma, gamma_rec, decimal=2)
-    assert_array_almost_equal(gamma, gamma_gram, decimal=2)
+    assert_array_almost_equal(gamma[:, 0], gamma_rec, decimal=2)
+    assert_array_almost_equal(gamma[:, 0], gamma_gram, decimal=2)
 
 
 def test_estimator_shapes():
-    OMP = OrthogonalMatchingPursuit(n_nonzero_coefs=6)
+    OMP = OrthogonalMatchingPursuit(n_nonzero_coefs=5)
     OMP.fit(X, y[:, 0])
-    assert_equal(OMP.coef_.shape, (15, ))
+    assert_equal(OMP.coef_.shape, (n_features, ))
     assert_equal(OMP.intercept_.shape, ())
-    assert count_nonzero(OMP.coef_) <= 6
+    assert count_nonzero(OMP.coef_) <= 5
 
     OMP.fit(X, y)
-    assert_equal(OMP.coef_.shape, (3, 15))
+    assert_equal(OMP.coef_.shape, (3, n_features))
     assert_equal(OMP.intercept_.shape, (3, ))
-    assert count_nonzero(OMP.coef_) <= 3 * 6
+    assert count_nonzero(OMP.coef_) <= 3 * 5

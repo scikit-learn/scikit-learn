@@ -513,7 +513,7 @@ def generate_sparse_coded_signal(n_samples, n_components, n_features,
     n_samples: int,
         number of samples to generate
 
-    n_components: int,
+    n_components: int, 
         number of components in the dictionary
 
     n_features: int,
@@ -542,7 +542,7 @@ def generate_sparse_coded_signal(n_samples, n_components, n_features,
     rng = check_random_state(random_state)
 
     # generate dictionary
-    D = np.random.randn(n_features, n_components)
+    D = rng.randn(n_features, n_components)
     D /= np.sqrt(np.sum((D ** 2), axis=0))
 
     # generate code
