@@ -63,28 +63,33 @@ print
 filenames_train = data_train.filenames
 y_train = data_train.target
 
-print "Extracting features from the training dataset using a sparse vectorizer"
-t0 = time()
-vectorizer = Vectorizer()
-X_train = vectorizer.fit_transform((open(f).read() for f in filenames_train))
+from scikits.learn.externals import joblib
+memory = joblib.Memory('.')
+
+@memory.cache
+def extract(filenames):
+    print "Extracting features from the training dataset using a vectorizer"
+    t0 = time()
+    vectorizer = Vectorizer()
+    X = vectorizer.fit_transform((open(f).read() for f in filenames))
+    print "done in %fs" % (time() - t0)
+    print
+    return X
+
+X_train = extract(filenames_train)
 X_train = X_train[:800] # try to reproduce the settings of the PIC paper
 labels_true = data_train.target[:800]
-print "done in %fs" % (time() - t0)
 print "n_samples: %d, n_features: %d" % X_train.shape
-print
 
 # Build the affinity matrix using the cosine similarity between documents
 
 print "Extracting the pairwise cosine similarity between documents"
 t0 = time()
 affinity = cosine_similarity(X_train, X_train)
-#affinity = kneighbors_graph(X_train, n_neighbors=10)
-#affinity = 0.5 * (affinity + affinity.T)  # make affinity symmetric
 print "done in %fs" % (time() - t0)
 print
 
 n_clusters = len(data_train.target_names)
-
 
 def report(labels_true, labels_pred, duration):
     """Print lustering report on stdout"""
@@ -99,12 +104,14 @@ def report(labels_true, labels_pred, duration):
 print "Clustering the documents using the Power Iteration Clustering method"
 t0 = time()
 labels_pred = power_iteration_clustering(affinity, k=n_clusters,
-                                         n_vectors=10, tol=1e-5)
+                                         n_vectors=10, tol=1e-5,
+                                         random_state=42)
 duration = time() - t0
 report(labels_true, labels_pred, duration)
 
 print "Clustering the documents using the Spectral Clustering method"
 t0 = time()
-labels_pred = spectral_clustering(affinity, k=n_clusters, mode='arpack')
+labels_pred = spectral_clustering(affinity, k=n_clusters, mode='arpack',
+                                  random_state=42)
 duration = time() - t0
 report(labels_true, labels_pred, duration)
