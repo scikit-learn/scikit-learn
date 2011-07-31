@@ -9,6 +9,9 @@ from nose.plugins.skip import SkipTest
 from .. import orthogonal_mp, orthogonal_mp_gram, OrthogonalMatchingPursuit
 from ...utils.fixes import count_nonzero
 from ...utils import check_random_state
+from ...datasets import generate_sparse_coded_signal
+
+n_samples, n_features, n_nonzero_coefs = 10, 15, 6
 
 def generate_data(n_samples, n_features, random_state=42):
     rng = check_random_state(random_state)
@@ -17,25 +20,29 @@ def generate_data(n_samples, n_features, random_state=42):
     gamma = rng.randn(n_features)
     return X, np.dot(X, gamma)
 
+# XXX: change samples_generator to the transpose problem, makes more sense
+
 
 def test_correct_shapes():
-    n_samples, n_features = 10, 15
-    X, y = generate_data(n_samples, n_features)
-    assert_equal((n_features,), orthogonal_mp(X, y, n_nonzero_coefs=6).shape)
-    y = np.random.randn(len(y), 3)
-    assert_equal((n_features, 3), orthogonal_mp(X, y, n_nonzero_coefs=6).shape)
+    y, _, X = generate_sparse_coded_signal(3, n_features, n_samples,
+                                           n_nonzero_coefs, random_state=0)
+    assert_equal(orthogonal_mp(X.T, y[0], n_nonzero_coefs=6).shape,
+                 (n_features,))
+
+    assert_equal(orthogonal_mp(X.T, y.T, n_nonzero_coefs=6).shape,
+                 (n_features, 3))
 
 
 def test_correct_shapes_gram():
-    n_samples, n_features = 10, 15
-    X, y = generate_data(n_samples, n_features)
-    G, Xy = np.dot(X.T, X), np.dot(X.T, y)
-    assert_equal((n_features,), 
-                 orthogonal_mp_gram(G, Xy, n_nonzero_coefs=6).shape)
-    y = np.random.randn(n_samples, 3)
-    Xy = np.dot(X.T, y)
-    assert_equal((n_features, 3), 
-                 orthogonal_mp_gram(G, Xy, n_nonzero_coefs=6).shape)
+    y, _, X = generate_sparse_coded_signal(3, n_features, n_samples,
+                                           n_nonzero_coefs, random_state=0)
+    G, Xy = np.dot(X, X.T), np.dot(X, y[0])
+    assert_equal(orthogonal_mp_gram(G, Xy, n_nonzero_coefs=6).shape, 
+                 (n_features,))
+
+    Xy = np.dot(X, y.T)
+    assert_equal(orthogonal_mp_gram(G, Xy, n_nonzero_coefs=6).shape,
+                 (n_features, 3))
 
 
 def test_n_nonzero_coefs():
