@@ -140,7 +140,7 @@ report("Spectral", labels_true, labels, duration + duration_affinity)
 # Power iteration
 t0 = time()
 labels = power_iteration_clustering(
-    affinity, k=3, n_vectors=10, tol=1e-5, random_state=random_state,
+    affinity, k=3, n_vectors=5, tol=1e-5, random_state=random_state,
     verbose=False, plot_vector=False)
 duration = time() - t0
 pl.subplot(338)
