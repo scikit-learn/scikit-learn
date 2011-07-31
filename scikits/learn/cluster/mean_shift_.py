@@ -7,6 +7,7 @@ Author: Alexandre Gramfort alexandre.gramfort@inria.fr
 
 from math import floor
 import numpy as np
+from scipy.spatial import cKDTree
 
 from ..base import BaseEstimator
 from ..metrics.pairwise import euclidean_distances
@@ -68,7 +69,6 @@ def mean_shift(X, bandwidth=None):
     n_points, n_features = X.shape
 
     n_clusters = 0
-    bandwidth_squared = bandwidth ** 2
     points_idx_init = np.arange(n_points)
     stop_thresh = 1e-3 * bandwidth  # when mean has converged
     cluster_centers = []  # center of clusters
@@ -79,6 +79,9 @@ def mean_shift(X, bandwidth=None):
     # used to resolve conflicts on cluster membership
     cluster_votes = []
 
+    # used to efficiently look up nearest neighbors (effective in lower dimensions)
+    KDTree = cKDTree(X)
+    
     random_state = np.random.RandomState(0)
 
     while n_points_init:
@@ -94,14 +97,16 @@ def mean_shift(X, bandwidth=None):
 
         while True:  # loop until convergence
 
-            # dist squared from mean to all points still active
-            sqrt_dist_to_all = np.sum((my_mean - X) ** 2, axis=1)
+            # select points within bandwidth (someone familiar with numpy could remove this for loop)
+            distances, indices = KDTree.query(my_mean, n_points, distance_upper_bound=bandwidth)
+            in_idx = within_bandwidth = np.zeros(n_points, dtype=np.bool)
+            for i in xrange(n_points):
+                if distances[i] <= bandwidth:
+                    in_idx[indices[i]] = 1
 
-            # points within bandwidth
-            in_idx = sqrt_dist_to_all < bandwidth_squared
             # add a vote for all the in points belonging to this cluster
             this_cluster_votes[in_idx] += 1
-
+            
             my_old_mean = my_mean  # save the old mean
             my_mean = np.mean(X[in_idx, :], axis=0)  # compute the new mean
             # add any point within bandwidth to the cluster
@@ -124,7 +129,7 @@ def mean_shift(X, bandwidth=None):
 
                 if merge_with >= 0:  # something to merge
                     # record the max as the mean of the two merged
-                    # (I know biased twoards new ones)
+                    # (I know biased towards new ones)
                     cluster_centers[merge_with] = 0.5 * (my_mean +
                                                 cluster_centers[merge_with])
                     # add these votes to the merged cluster
