@@ -27,7 +27,7 @@ from scikits.learn.decomposition import RandomizedPCA
 # Display progress logs on stdout
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(message)s')
-n_row, n_col = 4, 4
+n_row, n_col = 2, 3
 n_components = n_row * n_col
 image_shape = (64, 64)
 
@@ -49,12 +49,12 @@ print "Dataset consists of %d faces" % n_samples
 
 ###############################################################################
 def plot_gallery(title, images):
-    pl.figure(figsize=(1. * n_col, 1.13 * n_row))
+    pl.figure(figsize=(2. * n_col, 2.26 * n_row))
     pl.suptitle(title, size=16)
     vmax = max(images.max(), -images.min())
     for i, comp in enumerate(images):
         pl.subplot(n_row, n_col, i + 1)
-        pl.imshow(comp.reshape(image_shape), cmap=pl.cm.BrBG,
+        pl.imshow(comp.reshape(image_shape), cmap=pl.cm.gray,
                   interpolation='nearest',
                   vmin=-vmax, vmax=vmax)
         pl.xticks(())
@@ -70,7 +70,7 @@ estimators = [
      True, False),
 
     ('Non-negative components - NMF',
-     NMF(n_components=n_components, init='nndsvda', beta=1.0, tol=1e-3,
+     NMF(n_components=n_components, init='nndsvda', beta=5.0, tol=5e-3,
          sparseness='components'),
      False, False),
 
@@ -79,7 +79,7 @@ estimators = [
      True, True),
 
     ('Sparse comp. - MiniBatchSparsePCA',
-     MiniBatchSparsePCA(n_components=n_components, alpha=5e-4, n_iter=100,
+     MiniBatchSparsePCA(n_components=n_components, alpha=2e-3, n_iter=100,
                         chunk_size=3),
      True, False),
 
