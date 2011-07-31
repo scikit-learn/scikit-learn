@@ -36,7 +36,7 @@ def save_plot(plot, filename):
 
 
 def power_iteration_clustering(affinity, k=8, n_vectors=1, tol=1e-5,
-                               random_state=0, max_iter=1000, verbose=False,
+                               random_state=None, max_iter=1000, verbose=False,
                                plot_vector=False):
     """Power Iteration Clustering: simple variant of spectral clustering
 
@@ -71,7 +71,7 @@ def power_iteration_clustering(affinity, k=8, n_vectors=1, tol=1e-5,
     max_iter: int, optional, default is 1000
         Stops after max_iter even if the convergence criterion is not met.
 
-    random_state: a RandomState instance or an int seed (default is 0)
+    random_state: a RandomState instance or an int seed (default is None)
         Pseudo Random Number Generator used to initialize the random vectors
         and the K-Means algorithm.
 
@@ -112,11 +112,11 @@ def power_iteration_clustering(affinity, k=8, n_vectors=1, tol=1e-5,
         affinity.setdiag(np.zeros(n_samples))
     else:
         affinity[np.eye(n_samples, dtype=np.bool)] = 0.0
-    normalized = normalize(affinity, norm='l1', copy=False)
+    normalized = normalize(affinity, norm='l1', copy=False).T
 
     if n_vectors == 1:
         # initialize a single vector deterministically
-        sums = affinity.sum(axis=1)
+        sums = normalized.sum(axis=1)
         if hasattr(sums, 'A'):
             sums = sums.A.flatten()
         volume = sums.sum()
