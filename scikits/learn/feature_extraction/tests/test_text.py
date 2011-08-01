@@ -7,17 +7,13 @@ from scikits.learn.feature_extraction.text import CountVectorizer
 from scikits.learn.feature_extraction.text import TfidfTransformer
 from scikits.learn.feature_extraction.text import Vectorizer
 
-SparseCountVectorizer = CountVectorizer
-SparseTfidfTransformer = TfidfTransformer
-SparseVectorizer = Vectorizer
-
 from scikits.learn.grid_search import GridSearchCV
 from scikits.learn.pipeline import Pipeline
 from scikits.learn.svm.sparse import LinearSVC as LinearSVC
 
 import numpy as np
-import numpy.linalg as la
-from nose.tools import *
+from nose.tools import assert_equal, assert_equals, \
+            assert_false, assert_not_equal
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 
@@ -43,6 +39,12 @@ NOTJUNK_FOOD_DOCS = (
 ALL_FOOD_DOCS = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS
 
 
+def toarray(a):
+    if hasattr(a, "toarray"):
+        a = a.toarray()
+    return a
+
+
 def test_strip_accents():
     # check some classical latin accentuated symbols
     a = u'\xe0\xe1\xe2\xe3\xe4\xe5\xe7\xe8\xe9\xea\xeb'
@@ -54,8 +56,8 @@ def test_strip_accents():
     assert_equal(strip_accents(a), expected)
 
     # check some arabic
-    a = u'\u0625' # halef with a hamza below
-    expected = u'\u0627' # simple halef
+    a = u'\u0625'  # halef with a hamza below
+    expected = u'\u0627'  # simple halef
     assert_equal(strip_accents(a), expected)
 
     # mix letters accentuated and not
@@ -75,8 +77,8 @@ def test_to_ascii():
     assert_equal(to_ascii(a), expected)
 
     # check some arabic
-    a = u'\u0625' # halef with a hamza below
-    expected = u'' # halef has no direct ascii match
+    a = u'\u0625'  # halef with a hamza below
+    expected = u''  # halef has no direct ascii match
     assert_equal(to_ascii(a), expected)
 
     # mix letters accentuated and not
@@ -113,43 +115,59 @@ def test_word_analyzer_unigrams_and_bigrams():
 def test_char_ngram_analyzer():
     cnga = CharNGramAnalyzer(min_n=3, max_n=6)
 
-    text = u"J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon."
+    text = u"J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon"
     expected = [u"j'a", u"'ai", u'ai ', u'i m', u' ma']
     assert_equal(cnga.analyze(text)[:5], expected)
     expected = [u's tres', u' tres ', u'tres b', u'res bo', u'es bon']
     assert_equal(cnga.analyze(text)[-5:], expected)
 
-    text = "This \n\tis a test, really.\n\n I met Harry yesterday."
+    text = "This \n\tis a test, really.\n\n I met Harry yesterday"
     expected = [u'thi', u'his', u'is ', u's i', u' is']
     assert_equal(cnga.analyze(text)[:5], expected)
     expected = [u' yeste', u'yester', u'esterd', u'sterda', u'terday']
     assert_equal(cnga.analyze(text)[-5:], expected)
 
 
-def toarray(a):
-    if hasattr(a, "toarray"):
-        a = a.toarray()
-    return a
+def test_countvectorizer_custom_vocabulary():
+    what_we_like = ["pizza", "beer"]
+    vect = CountVectorizer(vocabulary=what_we_like)
+    vect.fit(JUNK_FOOD_DOCS)
+    assert_equal(set(vect.vocabulary), set(what_we_like))
+    X = vect.transform(JUNK_FOOD_DOCS)
+    assert_equal(X.shape[1], len(what_we_like))
 
 
-def _test_vectorizer(cv_class, tf_class, v_class):
-    # results to be compared
-    res = []
+def test_countvectorizer_custom_vocabulary_pipeline():
+    what_we_like = ["pizza", "beer"]
+    pipe = Pipeline([
+        ('count', CountVectorizer(vocabulary=what_we_like)),
+        ('tfidf', TfidfTransformer())])
+    X = pipe.fit_transform(ALL_FOOD_DOCS)
+    assert_equal(set(pipe.named_steps['count'].vocabulary), set(what_we_like))
+    assert_equal(X.shape[1], len(what_we_like))
 
+
+def test_fit_countvectorizer_twice():
+    cv = CountVectorizer()
+    X1 = cv.fit_transform(ALL_FOOD_DOCS[:5])
+    X2 = cv.fit_transform(ALL_FOOD_DOCS[5:])
+    assert_not_equal(X1.shape[1], X2.shape[1])
+
+def test_vectorizer():
     # raw documents as an iterator
     train_data = iter(ALL_FOOD_DOCS[:-1])
     test_data = [ALL_FOOD_DOCS[-1]]
     n_train = len(ALL_FOOD_DOCS) - 1
 
     # test without vocabulary
-    v1 = cv_class(max_df=0.5)
+    v1 = CountVectorizer(max_df=0.5)
     counts_train = v1.fit_transform(train_data)
     if hasattr(counts_train, 'tocsr'):
         counts_train = counts_train.tocsr()
     assert_equal(counts_train[0, v1.vocabulary[u"pizza"]], 2)
 
     # build a vectorizer v1 with the same vocabulary as the one fitted by v1
-    v2 = cv_class(vocabulary=v1.vocabulary)
+    v2 = CountVectorizer(vocabulary=v1.vocabulary)
 
     # compare that the two vectorizer give the same output on the test sample
     for v in (v1, v2):
@@ -177,30 +195,27 @@ def _test_vectorizer(cv_class, tf_class, v_class):
         assert_equal(counts_test[0, v.vocabulary[u"pizza"]], 0)
 
     # test tf-idf
-    t1 = tf_class()
+    t1 = TfidfTransformer(norm='l1')
     tfidf = toarray(t1.fit(counts_train).transform(counts_train))
-    assert_equal(len(t1.idf), len(v1.vocabulary))
+    assert_equal(len(t1.idf_), len(v1.vocabulary))
     assert_equal(tfidf.shape, (n_train, len(v1.vocabulary)))
-
-    res.append(tfidf)
-    res.append(t1.idf)
 
     # test tf-idf with new data
     tfidf_test = toarray(t1.transform(counts_test))
     assert_equal(tfidf_test.shape, (len(test_data), len(v1.vocabulary)))
 
     # test tf alone
-    t2 = tf_class(use_idf=False)
+    t2 = TfidfTransformer(norm='l1', use_idf=False)
     tf = toarray(t2.fit(counts_train).transform(counts_train))
-    assert_equal(t2.idf, None)
+    assert_equal(t2.idf_, None)
 
-    # term frequencies sum to one
+    # L1-normalized term frequencies sum to one
     assert_array_almost_equal(np.sum(tf, axis=1), [1.0] * n_train)
 
     # test the direct tfidf vectorizer
     # (equivalent to term count vectorizer + tfidf transformer)
     train_data = iter(ALL_FOOD_DOCS[:-1])
-    tv = v_class()
+    tv = Vectorizer(norm='l1')
     tv.tc.max_df = v1.max_df
     tfidf2 = toarray(tv.fit_transform(train_data))
     assert_array_almost_equal(tfidf, tfidf2)
@@ -209,43 +224,44 @@ def _test_vectorizer(cv_class, tf_class, v_class):
     tfidf_test2 = toarray(tv.transform(test_data))
     assert_array_almost_equal(tfidf_test, tfidf_test2)
 
-    return res
-
-
-def test_vectorizer():
-    res_dense = _test_vectorizer(CountVectorizer,
-                                 TfidfTransformer,
-                                 Vectorizer)
-    res_sparse = _test_vectorizer(SparseCountVectorizer,
-                                  SparseTfidfTransformer,
-                                  SparseVectorizer)
-
-    for i in xrange(len(res_sparse)):
-        # check that the dense and sparse implementations
-        # return the same results
-        assert_array_equal(res_dense[i], res_sparse[i])
 
 def test_vectorizer_max_features():
     vec_factories = (
         CountVectorizer,
         Vectorizer,
-        SparseCountVectorizer,
-        SparseVectorizer,
     )
 
-    expected_vocabulary = {
-        'celeri': 0,
-        'burger': 1,
-        'beer': 2,
-        'salad': 3,
-        'pizza': 4,
-    }
+    expected_vocabulary = set(['burger', 'beer', 'salad', 'pizza'])
 
     for vec_factory in vec_factories:
         # test bounded number of extracted features
-        vectorizer = vec_factory(max_df=0.6, max_features=5)
+        vectorizer = vec_factory(max_df=0.6, max_features=4)
         vectorizer.fit(ALL_FOOD_DOCS)
-        assert_equals(vectorizer.vocabulary, expected_vocabulary)
+        assert_equals(set(vectorizer.vocabulary), expected_vocabulary)
+
+
+def test_vectorizer_max_df():
+    test_data = [u'abc', u'dea']  # the letter a occurs in both strings
+    vect = CountVectorizer(CharNGramAnalyzer(min_n=1, max_n=1), max_df=1.0)
+    vect.fit(test_data)
+    assert u'a' in vect.vocabulary.keys()
+    assert_equals(len(vect.vocabulary.keys()), 5)
+    vect.max_df = 0.5
+    vect.fit(test_data)
+    assert u'a' not in vect.vocabulary.keys()  # 'a' is ignored
+    assert_equals(len(vect.vocabulary.keys()), 4)  # the others remain
+
+
+def test_vectorizer_inverse_transform():
+    # raw documents
+    data = ALL_FOOD_DOCS
+    for vectorizer in (Vectorizer(), CountVectorizer()):
+        transformed_data = vectorizer.fit_transform(data)
+        inversed_data = vectorizer.inverse_transform(transformed_data)
+        for i, doc in enumerate(data):
+            data_vec = np.sort(np.unique(vectorizer.analyzer.analyze(data[0])))
+            inversed_data_vec = np.sort(np.unique(inversed_data[0]))
+            assert((data_vec == inversed_data_vec).all())
 
 
 def test_dense_vectorizer_pipeline_grid_selection():
@@ -259,14 +275,14 @@ def test_dense_vectorizer_pipeline_grid_selection():
     y = np.ones(len(data))
     y[:6] = -1
     y_train = y[1:-1]
-    y_test = np.array([y[0],y[-1]])
+    y_test = np.array([y[0], y[-1]])
 
     pipeline = Pipeline([('vect', CountVectorizer()),
                          ('svc', LinearSVC())])
 
     parameters = {
         'vect__analyzer__max_n': (1, 2),
-        'svc__loss'  : ('l1', 'l2')
+        'svc__loss': ('l1', 'l2')
     }
 
     # find the best parameters for both the feature extraction and the
@@ -278,19 +294,15 @@ def test_dense_vectorizer_pipeline_grid_selection():
     pred = grid_search.fit(list(train_data), y_train).predict(list(test_data))
     assert_array_equal(pred, y_test)
 
-    # on this toy dataset bigram representation which is used in the last of the
-    # grid_search is considered the best estimator since they all converge to
-    # 100% accurracy models
+    # on this toy dataset bigram representation which is used in the last of
+    # the grid_search is considered the best estimator since they all converge
+    # to 100% accurracy models
     assert_equal(grid_search.best_score, 1.0)
     best_vectorizer = grid_search.best_estimator.named_steps['vect']
-    assert_equal(best_vectorizer.analyzer.max_n, 2)
+    assert_equal(best_vectorizer.analyzer.max_n, 1)
 
 
 def test_pickle():
-    for obj in (CountVectorizer(), SparseCountVectorizer(),
-                TfidfTransformer(), SparseTfidfTransformer(),
-                Vectorizer(), SparseVectorizer()):
-
+    for obj in (CountVectorizer(), TfidfTransformer(), Vectorizer()):
         s = pickle.dumps(obj)
         assert_equal(type(pickle.loads(s)), obj.__class__)
-

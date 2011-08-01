@@ -4,15 +4,15 @@ Hierarchical clustering: structured vs unstructured ward
 ===========================================================
 
 Example builds a swiss roll dataset and runs
-:ref:`hierarchical_clustering` on their position. 
+:ref:`hierarchical_clustering` on their position.
 
 In a first step, the hierarchical clustering without connectivity
 constraints on structure, solely based on distance, whereas in a second
 step clustering restricted to the k-Nearest Neighbors graph: it's a
-hierarchical clustering with structure prior. 
+hierarchical clustering with structure prior.
 
 Some of the clusters learned without connectivity constraints do not
-respect the structure of the swiss roll and extend across different folds of 
+respect the structure of the swiss roll and extend across different folds of
 the manifolds. On the opposite, when opposing connectivity constraints,
 the clusters form a nice parcellation of the swiss roll.
 """
@@ -35,7 +35,7 @@ from scikits.learn.datasets.samples_generator import swiss_roll
 # Generate data (swiss roll dataset)
 n_samples = 1000
 noise = 0.05
-X = swiss_roll(n_samples, noise)
+X, _ = swiss_roll(n_samples, noise)
 # Make it thinner
 X[:, 1] *= .5
 

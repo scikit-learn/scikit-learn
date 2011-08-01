@@ -1,15 +1,40 @@
-"""
-Fixes for older version of numpy and scipy.
-"""
+"""Compatibility fixes for older version of python, numpy and scipy"""
 # Authors: Emmanuelle Gouillart <emmanuelle.gouillart@normalesup.org>
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>
 #          Fabian Pedregosa <fpedregosa@acm.org>
 # License: BSD
 
+import collections
 import numpy as np
+from operator import itemgetter
+
+
+try:
+    from itertools import product
+except ImportError:
+    def product(*args, **kwds):
+        pools = map(tuple, args) * kwds.get('repeat', 1)
+        result = [[]]
+        for pool in pools:
+            result = [x + [y] for x in result for y in pool]
+        for prod in result:
+            yield tuple(prod)
+
+
+try:
+    Counter = collections.Counter
+except AttributeError:
+    # Partial replacement for Python 2.7 Counter
+    class Counter(collections.defaultdict):
+        def __init__(self, **kwargs):
+            super(Counter, self).__init__(int, **kwargs)
+
+        def most_common(self):
+            return sorted(self.iteritems(), key=itemgetter(1), reverse=True)
+
 
 def _unique(ar, return_index=False, return_inverse=False):
-    """ A replacement for the np.unique that appeared in numpy 1.4.
+    """A replacement for the np.unique that appeared in numpy 1.4.
 
     While np.unique existed long before, keyword return_inverse was
     only added in 1.4.
@@ -57,10 +82,8 @@ else:
     unique = np.unique
 
 
-def _copysign (x1, x2):
-    """
-    (slow) Replacement for np.copysign, which was introduced in numpy 1.4
-    """
+def _copysign(x1, x2):
+    """Slow replacement for np.copysign, which was introduced in numpy 1.4"""
     return np.abs(x1) * np.sign(x2)
 
 if not hasattr(np, 'copysign'):
@@ -70,20 +93,19 @@ else:
 
 
 def _in1d(ar1, ar2, assume_unique=False):
-    """ Replacement for in1d that is provided for numpy >= 1.4
-    """
+    """Replacement for in1d that is provided for numpy >= 1.4"""
     if not assume_unique:
         ar1, rev_idx = unique(ar1, return_inverse=True)
         ar2 = np.unique(ar2)
-    ar = np.concatenate( (ar1, ar2) )
+    ar = np.concatenate((ar1, ar2))
     # We need this to be a stable sort, so always use 'mergesort'
     # here. The values from the first array should always come before
     # the values from the second array.
     order = ar.argsort(kind='mergesort')
     sar = ar[order]
     equal_adj = (sar[1:] == sar[:-1])
-    flag = np.concatenate( (equal_adj, [False] ) )
-    indx = order.argsort(kind='mergesort')[:len( ar1 )]
+    flag = np.concatenate((equal_adj, [False]))
+    indx = order.argsort(kind='mergesort')[:len(ar1)]
 
     if assume_unique:
         return flag[indx]
@@ -97,7 +119,8 @@ else:
 
 
 def qr_economic(A, **kwargs):
-    """
+    """Compat function for the QR-decomposition in economic mode
+
     Scipy 0.9 changed the keyword econ=True to mode='economic'
     """
     import scipy.linalg
@@ -109,7 +132,8 @@ def qr_economic(A, **kwargs):
 
 
 def arpack_eigsh(A, **kwargs):
-    """
+    """Compat function for sparse symmetric eigen vectors decomposition
+
     Scipy 0.9 renamed eigen_symmetric to eigsh in
     scipy.sparse.linalg.eigen.arpack
     """
@@ -120,6 +144,15 @@ def arpack_eigsh(A, **kwargs):
         return arpack.eigen_symmetric(A, **kwargs)
 
 
+def savemat(file_name, mdict, oned_as="column", **kwargs):
+    """MATLAB-format output routine that is compatible with SciPy 0.7's.
 
-
-
+    0.7.2 (or .1?) added the oned_as keyword arg with 'column' as the default
+    value. It issues a warning if this is not provided, stating that "This will
+    change to 'row' in future versions."
+    """
+    import scipy.io
+    try:
+        return scipy.io.savemat(file_name, mdict, oned_as=oned_as, **kwargs)
+    except TypeError:
+        return scipy.io.savemat(file_name, mdict, **kwargs)

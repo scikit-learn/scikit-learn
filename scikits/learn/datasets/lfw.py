@@ -23,25 +23,18 @@ detector from various online websites.
 # Copyright (c) 2011 Olivier Grisel <olivier.grisel@ensta.org>
 # License: Simplified BSD
 
-from os.path import join, exists, isdir
 from os import listdir, makedirs, remove
+from os.path import join, exists, isdir
 
-import urllib
 import logging
-
-try:
-    try:
-        from scipy.misc import imread
-    except ImportError:
-        from scipy.misc.pilutil import imread
-    from scipy.misc import imresize
-except ImportError:
-    imread, imresize = None, None
 import numpy as np
+import urllib
 
-from scikits.learn.externals.joblib import Memory
-from .base import get_data_home
-from .base import Bunch
+from .base import get_data_home, Bunch
+from ..externals.joblib import Memory
+
+
+logger = logging.getLogger(__name__)
 
 
 BASE_URL = "http://vis-www.cs.umass.edu/lfw/"
@@ -89,9 +82,10 @@ def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
         if not exists(target_filepath):
             if download_if_missing:
                 url = BASE_URL + target_filename
-                logging.warn("Downloading LFW metadata: %s", url)
+                logger.warn("Downloading LFW metadata: %s", url)
                 downloader = urllib.urlopen(BASE_URL + target_filename)
-                open(target_filepath, 'wb').write(downloader.read())
+                data = downloader.read()
+                open(target_filepath, 'wb').write(data)
             else:
                 raise IOError("%s is missing" % target_filepath)
 
@@ -99,14 +93,16 @@ def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
 
         if not exists(archive_path):
             if download_if_missing:
-                logging.warn("Downloading LFW data (~200MB): %s", archive_url)
+                logger.warn("Downloading LFW data (~200MB): %s", archive_url)
                 downloader = urllib.urlopen(archive_url)
-                open(archive_path, 'wb').write(downloader.read())
+                data = downloader.read()
+                # don't open file until download is complete
+                open(archive_path, 'wb').write(data)
             else:
                 raise IOError("%s is missing" % target_filepath)
 
         import tarfile
-        logging.info("Decompressing the data archive to %s", data_folder_path)
+        logger.info("Decompressing the data archive to %s", data_folder_path)
         tarfile.open(archive_path, "r:gz").extractall(path=lfw_home)
         remove(archive_path)
 
@@ -114,7 +110,20 @@ def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
 
 
 def _load_imgs(file_paths, slice_, color, resize):
-    """Internaly used to load images"""
+    """Internally used to load images"""
+
+    # Try to import imread and imresize from PIL. We do this here to prevent
+    # the whole scikits.learn.datasets module from depending on PIL.
+    try:
+        try:
+            from scipy.misc import imread
+        except ImportError:
+            from scipy.misc.pilutil import imread
+        from scipy.misc import imresize
+    except ImportError:
+        raise ImportError("The Python Imaging Library (PIL)"
+                          "is required to load data from jpeg files")
+
     # compute the portion of the images to load to respect the slice_ parameter
     # given by the caller
     default_slice = (slice(0, 250), slice(0, 250))
@@ -139,13 +148,11 @@ def _load_imgs(file_paths, slice_, color, resize):
     else:
         faces = np.zeros((n_faces, h, w, 3), dtype=np.float32)
 
-    if imread is None or imresize is None:
-        raise ImporError("PIL is required to load data from jpeg files")
     # iterate over the collected file path to load the jpeg files as numpy
     # arrays
     for i, file_path in enumerate(file_paths):
         if i % 1000 == 0:
-            logging.info("Loading face #%05d / %05d", i + 1, n_faces)
+            logger.info("Loading face #%05d / %05d", i + 1, n_faces)
         face = np.asarray(imread(file_path)[slice_], dtype=np.float32)
         face /= 255.0  # scale uint8 coded colors to the [0.0, 1.0] floats
         if resize is not None:
@@ -257,7 +264,7 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
     lfw_home, data_folder_path = check_fetch_lfw(
         data_home=data_home, funneled=funneled,
         download_if_missing=download_if_missing)
-    logging.info('Loading LFW people faces from %s', lfw_home)
+    logger.info('Loading LFW people faces from %s', lfw_home)
 
     # wrap the loader in a memoizing function that will return memmaped data
     # arrays for optimal memory usage
@@ -395,7 +402,7 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
     lfw_home, data_folder_path = check_fetch_lfw(
         data_home=data_home, funneled=funneled,
         download_if_missing=download_if_missing)
-    logging.info('Loading %s LFW pairs from %s', subset, lfw_home)
+    logger.info('Loading %s LFW pairs from %s', subset, lfw_home)
 
     # wrap the loader in a memoizing function that will return memmaped data
     # arrays for optimal memory usage

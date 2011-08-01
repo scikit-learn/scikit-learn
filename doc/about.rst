@@ -10,7 +10,7 @@ Funding
 -------
 
 `INRIA <http://inria.fr>`_ actively supports this project. It has
-providen funding for Fabian Pedregosa to work on this project full
+provided funding for Fabian Pedregosa to work on this project full
 time in the period 2010-2012. It also hosts coding sprints and other
 events.
 

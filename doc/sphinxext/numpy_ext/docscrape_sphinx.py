@@ -3,7 +3,8 @@ import sphinx
 from docscrape import NumpyDocString, FunctionDoc, ClassDoc
 
 class SphinxDocString(NumpyDocString):
-    def __init__(self, docstring, config={}):
+    def __init__(self, docstring, config=None):
+        config = {} if config is None else config
         self.use_plots = config.get('use_plots', False)
         NumpyDocString.__init__(self, docstring, config=config)
 
@@ -78,7 +79,10 @@ class SphinxDocString(NumpyDocString):
                     others.append((param, param_type, desc))
 
             if autosum:
-                out += ['.. autosummary::', '   :toctree:', '']
+                # GAEL: Toctree commented out below because it creates
+                # hundreds of sphinx warnings
+                # out += ['.. autosummary::', '   :toctree:', '']
+                out += ['.. autosummary::', '']
                 out += autosum
 
             if others:
@@ -201,7 +205,7 @@ class SphinxClassDoc(SphinxDocString, ClassDoc):
         ClassDoc.__init__(self, obj, doc=doc, func_doc=None, config=config)
 
 class SphinxObjDoc(SphinxDocString):
-    def __init__(self, obj, doc=None, config={}):
+    def __init__(self, obj, doc=None, config=None):
         self._f = obj
         SphinxDocString.__init__(self, doc, config=config)
 

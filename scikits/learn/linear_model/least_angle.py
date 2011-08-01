@@ -14,63 +14,64 @@ from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
 from ..utils import arrayfuncs
+from ..utils import deprecated
 
-def lars_path(X, y, Xy=None, Gram=None, max_features=None,
+
+def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
               alpha_min=0, method='lar', overwrite_X=False,
               overwrite_Gram=False, verbose=False):
+    """Compute Least Angle Regression and LASSO path
 
-    """ Compute Least Angle Regression and LASSO path
+    Parameters
+    -----------
+    X: array, shape: (n_samples, n_features)
+        Input data
 
-        Parameters
-        -----------
-        X: array, shape: (n_samples, n_features)
-            Input data
+    y: array, shape: (n_samples)
+        Input targets
 
-        y: array, shape: (n_samples)
-            Input targets
+    max_iter: integer, optional
+        Maximum number of iterations to perform, set to infinity for no limit.
 
-        max_features: integer, optional
-            Maximum number of selected features.
+    Gram: None, 'auto', array, shape: (n_features, n_features), optional
+        Precomputed Gram matrix (X' * X), if 'auto', the Gram
+        matrix is precomputed from the given X, if there are more samples
+        than features
 
-        Gram: array, shape: (n_features, n_features), optional
-            Precomputed Gram matrix (X' * X)
+    alpha_min: float, optional
+        Minimum correlation along the path. It corresponds to the
+        regularization parameter alpha parameter in the Lasso.
 
-        alpha_min: float, optional
-            Minimum correlation along the path. It corresponds to the
-            regularization parameter alpha parameter in the Lasso.
+    method: {'lar', 'lasso'}
+        Specifies the returned model. Select 'lar' for Least Angle
+        Regression, 'lasso' for the Lasso.
 
-        method: 'lar' | 'lasso'
-            Specifies the returned model. Select 'lar' for Least Angle
-            Regression, 'lasso' for the Lasso.
+    Returns
+    --------
+    alphas: array, shape: (max_iter,)
+        Maximum of covariances (in absolute value) at each
+        iteration.
 
-        Returns
-        --------
-        alphas: array, shape: (max_features + 1,)
-            Maximum of covariances (in absolute value) at each
-            iteration.
+    active: array, shape (max_features,)
+        Indices of active variables at the end of the path.
 
-        active: array, shape (max_features,)
-            Indices of active variables at the end of the path.
+    coefs: array, shape (n_features, max_iter)
+        Coefficients along the path
 
-        coefs: array, shape (n_features, max_features+1)
-            Coefficients along the path
+    See also
+    --------
+    :ref:`LassoLars`, :ref:`Lars`
 
-        See also
-        --------
-        :ref:`LassoLARS`, :ref:`LARS`
+    Notes
+    ------
+    * http://en.wikipedia.org/wiki/Least-angle_regression
 
-        Notes
-        ------
-        * http://en.wikipedia.org/wiki/Least-angle_regression
-
-        * http://en.wikipedia.org/wiki/Lasso_(statistics)#LASSO_method
+    * http://en.wikipedia.org/wiki/Lasso_(statistics)#LASSO_method
     """
 
     n_features = X.shape[1]
     n_samples = y.size
-
-    if max_features is None:
-        max_features = min(n_samples, n_features)
+    max_features = min(max_iter, n_features)
 
     coefs = np.zeros((max_features + 1, n_features))
     alphas = np.zeros(max_features + 1)
@@ -93,6 +94,10 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
             # speeds up the calculation of the (partial) Gram matrix
             # and allows to easily swap columns
             X = X.copy('F')
+    elif Gram == 'auto':
+        Gram = None
+        if X.shape[0] > X.shape[1]:
+            Gram = np.dot(X.T, X)
     else:
         if not overwrite_Gram:
             Gram = Gram.copy()
@@ -111,26 +116,23 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
             C_idx = np.argmax(np.abs(Cov))
             C_ = Cov[C_idx]
             C = np.fabs(C_)
-            # to match a for computing gamma_
         else:
-            if Gram is None:
-                C -= gamma_ * np.abs(np.dot(X.T[0], eq_dir))
-            else:
-                C -= gamma_ * np.abs(np.dot(Gram[0], least_squares))
+            C = 0.
 
         alphas[n_iter] = C / n_samples
-
-        # Check for early stopping
-        if alphas[n_iter] < alpha_min: # interpolate
+        if alphas[n_iter] < alpha_min:  # early stopping
             # interpolation factor 0 <= ss < 1
-            ss = (alphas[n_iter-1] - alpha_min) / (alphas[n_iter-1] -
-                                                   alphas[n_iter])
-            coefs[n_iter] = coefs[n_iter-1] + ss*(coefs[n_iter] -
-                            coefs[n_iter-1])
+            if n_iter > 0:
+                # In the first iteration, all alphas are zero, the formula
+                # below would make ss a NaN
+                ss = (alphas[n_iter - 1] - alpha_min) / (alphas[n_iter - 1] -
+                                                    alphas[n_iter])
+                coefs[n_iter] = coefs[n_iter - 1] + ss * (coefs[n_iter] -
+                                coefs[n_iter - 1])
             alphas[n_iter] = alpha_min
             break
 
-        if n_active == max_features:
+        if n_iter >= max_iter or n_active >= n_features:
             break
 
         if not drop:
@@ -144,15 +146,15 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
             #   where u is the last added to the active set   #
 
             sign_active[n_active] = np.sign(C_)
-            m, n = n_active, C_idx+n_active
+            m, n = n_active, C_idx + n_active
 
             Cov[C_idx], Cov[0] = swap(Cov[C_idx], Cov[0])
             indices[n], indices[m] = indices[m], indices[n]
-            Cov = Cov[1:] # remove Cov[0]
+            Cov = Cov[1:]  # remove Cov[0]
 
             if Gram is None:
                 X.T[n], X.T[m] = swap(X.T[n], X.T[m])
-                c = nrm2(X.T[n_active])**2
+                c = nrm2(X.T[n_active]) ** 2
                 L[n_active, :n_active] = \
                     np.dot(X.T[n_active], X.T[:n_active].T)
             else:
@@ -198,10 +200,9 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
             corr_eq_dir = np.dot(Gram[:n_active, n_active:].T,
                                  least_squares)
 
-
         g1 = arrayfuncs.min_pos((C - Cov) / (AA - corr_eq_dir))
         g2 = arrayfuncs.min_pos((C + Cov) / (AA + corr_eq_dir))
-        gamma_ = min(g1, g2, C/AA)
+        gamma_ = min(g1, g2, C / AA)
 
         # TODO: better names for these variables: z
         drop = False
@@ -215,25 +216,23 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
             # update the sign, important for LAR
             sign_active[idx] = -sign_active[idx]
 
-            if method == 'lasso': gamma_ = z_pos
+            if method == 'lasso':
+                gamma_ = z_pos
             drop = True
 
         n_iter += 1
 
         if n_iter >= coefs.shape[0]:
             # resize the coefs and alphas array
-            add_features = 2 * (max_features - n_active)
+            add_features = 2 * max(1, (max_features - n_active))
             coefs.resize((n_iter + add_features, n_features))
             alphas.resize(n_iter + add_features)
 
-        coefs[n_iter, active] = coefs[n_iter-1, active] + \
+        coefs[n_iter, active] = coefs[n_iter - 1, active] + \
                                 gamma_ * least_squares
 
         # update correlations
         Cov -= gamma_ * corr_eq_dir
-
-        if n_active > n_features:
-            break
 
         # See if any coefficient has changed sign
         if drop and method == 'lasso':
@@ -247,9 +246,9 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
             if Gram is None:
                 # propagate dropped variable
                 for i in range(idx, n_active):
-                    X.T[i], X.T[i+1] = swap(X.T[i], X.T[i+1])
-                    indices[i], indices[i+1] =  \
-                                indices[i+1], indices[i] # yeah this is stupid
+                    X.T[i], X.T[i + 1] = swap(X.T[i], X.T[i + 1])
+                    indices[i], indices[i + 1] =  \
+                            indices[i + 1], indices[i]  # yeah this is stupid
 
                 # TODO: this could be updated
                 residual = y - np.dot(X[:, :n_active],
@@ -259,10 +258,11 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
                 Cov = np.r_[temp, Cov]
             else:
                 for i in range(idx, n_active):
-                    indices[i], indices[i+1] =  \
-                                indices[i+1], indices[i]
-                    Gram[i], Gram[i+1] = swap(Gram[i], Gram[i+1])
-                    Gram[:, i], Gram[:, i+1] = swap(Gram[:, i], Gram[:, i+1])
+                    indices[i], indices[i + 1] =  \
+                                indices[i + 1], indices[i]
+                    Gram[i], Gram[i + 1] = swap(Gram[i], Gram[i + 1])
+                    Gram[:, i], Gram[:, i + 1] = swap(Gram[:, i],
+                                                      Gram[:, i + 1])
 
                 # Cov_n = Cov_j + x_j * X + increment(betas) TODO:
                 # will this still work with multiple drops ?
@@ -276,30 +276,45 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
                 Cov = np.r_[temp, Cov]
 
             sign_active = np.delete(sign_active, idx)
-            sign_active = np.append(sign_active, 0.) # just to maintain size
+            sign_active = np.append(sign_active, 0.)  # just to maintain size
             if verbose:
                 print "%s\t\t%s\t\t%s\t\t%s\t\t%s" % (n_iter, '', drop_idx,
                                                       n_active, abs(temp))
 
     # resize coefs in case of early stop
-    alphas = alphas[:n_iter+1]
-    coefs = coefs[:n_iter+1]
+    alphas = alphas[:n_iter + 1]
+    coefs = coefs[:n_iter + 1]
 
     return alphas, active, coefs.T
 
 
-class LARS(LinearModel):
+###############################################################################
+# Estimator classes
+
+class Lars(LinearModel):
     """Least Angle Regression model a.k.a. LAR
 
     Parameters
     ----------
-    n_features : int, optional
-        Number of selected active features
+    n_nonzero_coefs : int, optional
+        Target number of non-zero coefficients. Use np.inf for no limit.
 
     fit_intercept : boolean
-        whether to calculate the intercept for this model. If set
+        Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
+
+    verbose : boolean or integer, optional
+        Sets the verbosity amount
+
+    normalize : boolean, optional
+        If True, the regressors X are normalized
+
+    precompute : True | False | 'auto' | array-like
+        Whether to use a precomputed Gram matrix to speed up
+        calculations. If set to 'auto' let us decide. The Gram
+        matrix can also be passed as argument.
+
 
     Attributes
     ----------
@@ -312,11 +327,12 @@ class LARS(LinearModel):
     Examples
     --------
     >>> from scikits.learn import linear_model
-    >>> clf = linear_model.LARS()
-    >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1], max_features=1)
-    LARS(verbose=False, fit_intercept=True)
+    >>> clf = linear_model.Lars(n_nonzero_coefs=1)
+    >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1])
+    Lars(normalize=True, precompute='auto', n_nonzero_coefs=1, verbose=False,
+       fit_intercept=True)
     >>> print clf.coef_
-    [ 0.         -0.81649658]
+    [ 0. -1.]
 
     References
     ----------
@@ -324,18 +340,19 @@ class LARS(LinearModel):
 
     See also
     --------
-    lars_path, LassoLARS
+    lars_path, LassoLars
     """
-    def __init__(self, fit_intercept=True, verbose=False):
+    def __init__(self, fit_intercept=True, verbose=False, normalize=True,
+                 precompute='auto', n_nonzero_coefs=500):
         self.fit_intercept = fit_intercept
         self.verbose = verbose
+        self.normalize = normalize
         self.method = 'lar'
+        self.precompute = precompute
+        self.n_nonzero_coefs = n_nonzero_coefs
 
-    def fit (self, X, y, normalize=True, max_features=None,
-             precompute='auto', overwrite_X=False, **params):
-
-        """
-        Fit the model using X, y as training data.
+    def fit(self, X, y, overwrite_X=False, **params):
+        """Fit the model using X, y as training data.
 
         Parameters
         ----------
@@ -344,11 +361,6 @@ class LARS(LinearModel):
 
         y : array-like, shape = [n_samples]
             Target values.
-
-        precompute : True | False | 'auto' | array-like
-            Whether to use a precomputed Gram matrix to speed up
-            calculations. If set to 'auto' let us decide. The Gram
-            matrix can also be passed as argument.
 
         Returns
         -------
@@ -361,26 +373,28 @@ class LARS(LinearModel):
         y = np.atleast_1d(y)
 
         X, y, Xmean, ymean = LinearModel._center_data(X, y, self.fit_intercept)
-
-        n_samples = X.shape[0]
-
-        if self.method == 'lasso':
-            alpha = self.alpha * n_samples # scale alpha with number of samples
+        alpha = getattr(self, 'alpha', 0.)
+        if hasattr(self, 'n_nonzero_coefs'):
+            alpha = 0. # n_nonzero_coefs parametrization takes priority
+            max_iter = self.n_nonzero_coefs
         else:
-            alpha = 0.
+            max_iter = self.max_iter
 
-        if normalize:
-            norms = np.sqrt(np.sum(X**2, axis=0))
+        if self.normalize:
+            norms = np.sqrt(np.sum(X ** 2, axis=0))
             nonzeros = np.flatnonzero(norms)
+            if not overwrite_X:
+                X = X.copy()
+                overwrite_X = True
             X[:, nonzeros] /= norms[nonzeros]
 
         # precompute if n_samples > n_features
+        precompute = self.precompute
         if hasattr(precompute, '__array__'):
             # copy as it's going to be modified
             Gram = precompute.copy()
-        elif precompute == True or \
-               (precompute == 'auto' and X.shape[0] > X.shape[1]):
-            Gram = np.dot(X.T, X)
+        elif precompute == 'auto':
+            Gram = 'auto'
         else:
             Gram = None
 
@@ -388,30 +402,44 @@ class LARS(LinearModel):
                   Gram=Gram, overwrite_X=overwrite_X,
                   overwrite_Gram=True, alpha_min=alpha,
                   method=self.method, verbose=self.verbose,
-                  max_features=max_features)
+                  max_iter=max_iter)
 
-        self.coef_ = self.coef_path_[:,-1]
+        if self.normalize:
+            self.coef_path_ /= norms[:, np.newaxis]
+        self.coef_ = self.coef_path_[:, -1]
 
         self._set_intercept(Xmean, ymean)
 
         return self
 
 
-class LassoLARS (LARS):
-    """ Lasso model fit with Least Angle Regression a.k.a. LARS
+class LassoLars(Lars):
+    """Lasso model fit with Least Angle Regression a.k.a. Lars
 
     It is a Linear Model trained with an L1 prior as regularizer.
     lasso).
 
     Parameters
     ----------
-    alpha : float, optional
-        Constant that multiplies the L1 term. Defaults to 1.0
-
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
+
+    verbose : boolean or integer, optional
+        Sets the verbosity amount
+
+    normalize : boolean, optional
+        If True, the regressors X are normalized
+
+    precompute : True | False | 'auto' | array-like
+        Whether to use a precomputed Gram matrix to speed up
+        calculations. If set to 'auto' let us decide. The Gram
+        matrix can also be passed as argument.
+
+    max_iter: integer, optional
+        Maximum number of iterations to perform.
+
 
     Attributes
     ----------
@@ -424,11 +452,12 @@ class LassoLARS (LARS):
     Examples
     --------
     >>> from scikits.learn import linear_model
-    >>> clf = linear_model.LassoLARS(alpha=0.01)
+    >>> clf = linear_model.LassoLars(alpha=0.01)
     >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1])
-    LassoLARS(alpha=0.01, verbose=False, fit_intercept=True)
+    LassoLars(normalize=True, verbose=False, fit_intercept=True, max_iter=500,
+         precompute='auto', alpha=0.01)
     >>> print clf.coef_
-    [ 0.         -0.72649658]
+    [ 0.         -0.96325765]
 
     References
     ----------
@@ -439,10 +468,23 @@ class LassoLARS (LARS):
     lars_path, Lasso
     """
 
-    def __init__(self, alpha=1.0, fit_intercept=True, verbose=False):
+    def __init__(self, alpha=1.0, fit_intercept=True, verbose=False,
+                 normalize=True, precompute='auto', max_iter=500):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
+        self.max_iter = max_iter
         self.verbose = verbose
+        self.normalize = normalize
         self.method = 'lasso'
+        self.precompute = precompute
 
 
+# Deprecated classes
+class LARS(Lars):
+    pass
+LARS = deprecated("Use Lars instead")(LARS)
+
+
+class LassoLARS(LassoLars):
+    pass
+LassoLARS = deprecated("Use LassoLars instead")(LassoLARS)

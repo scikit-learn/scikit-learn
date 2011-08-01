@@ -105,17 +105,17 @@ def test_enet_toy_explicit_sparse_input():
 
 
 def make_sparse_data(n_samples, n_features, n_informative, seed=42):
-    rng = np.random.RandomState(seed)
+    random_state = np.random.RandomState(seed)
 
     # build an ill-posed linear regression problem with many noisy features and
     # comparatively few samples
 
     # generate a ground truth model
-    w = rng.randn(n_features)
+    w = random_state.randn(n_features)
     w[n_informative:] = 0.0 # only the top features are impacting the model
 
-    X = rng.randn(n_samples, n_features)
-    rnd = rng.uniform(size=(n_samples, n_features))
+    X = random_state.randn(n_samples, n_features)
+    rnd = random_state.uniform(size=(n_samples, n_features))
     X[rnd > 0.5] = 0.0 # 50% of zeros in input signal
 
     # generate training ground truth labels

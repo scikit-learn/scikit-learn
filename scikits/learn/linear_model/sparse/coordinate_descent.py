@@ -34,6 +34,11 @@ class ElasticNet(LinearModel):
         data is assumed to be already centered.
 
         TODO: fit_intercept=True is not yet implemented
+
+    Notes
+    -----
+    The parameter rho corresponds to alpha in the glmnet R package
+    while alpha corresponds to the lambda parameter in glmnet.
     """
 
     def __init__(self, alpha=1.0, rho=0.5, fit_intercept=False):
@@ -85,7 +90,7 @@ class ElasticNet(LinearModel):
 
         if self.dual_gap_ > self.eps_:
             warnings.warn('Objective did not converge, you might want'
-                                'to increase the number of interations')
+                                'to increase the number of iterations')
 
         # XXX TODO: implement intercept_ fitting
 

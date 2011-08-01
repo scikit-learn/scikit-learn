@@ -25,10 +25,16 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('utils')
     config.add_subpackage('utils/tests')
     config.add_subpackage('externals')
+    config.add_subpackage('mixture')
+    config.add_subpackage('mixture/tests')
     config.add_subpackage('gaussian_process')
     config.add_subpackage('gaussian_process/tests')
+    config.add_subpackage('manifold')
     config.add_subpackage('metrics')
     config.add_subpackage('metrics/tests')
+
+    config.add_subpackage("ensemble")
+    config.add_subpackage("decisiontree")
 
     # some libs needs cblas, fortran-compiled BLAS will not be sufficient
     blas_info = get_info('blas_opt', 0)
@@ -42,7 +48,6 @@ def configuration(parent_package='', top_path=None):
                          sources=[join('src', 'ball_tree.cpp')],
                          depends=[join('src', 'BallTree.h'),
                                   join('src', 'BallTreePoint.h')],
-                         libraries=["stdc++"],
                          include_dirs=[numpy.get_include()])
 
     # the following packages depend on cblas, so they have to be build

@@ -51,6 +51,7 @@ def test_ridge():
 
     ridge = Ridge(alpha=alpha)
     ridge.fit(X, y)
+    assert_equal(ridge.coef_.shape, (X.shape[1], ))
     assert ridge.score(X, y) > 0.5
 
     ridge.fit(X, y, sample_weight=np.ones(n_samples))
@@ -166,7 +167,7 @@ def _test_ridge_loo(filter_):
     y_pred = ridge_gcv.predict(filter_(X_diabetes))
 
     assert_array_almost_equal(np.vstack((y_pred,y_pred)).T,
-                              Y_pred)
+                              Y_pred, decimal=5)
 
     return ret
 
@@ -195,18 +196,23 @@ def _test_ridge_diabetes(filter_):
 def _test_multi_ridge_diabetes(filter_):
     # simulate several responses
     Y = np.vstack((y_diabetes,y_diabetes)).T
+    n_features = X_diabetes.shape[1]
 
     ridge = Ridge(fit_intercept=False)
     ridge.fit(filter_(X_diabetes), Y)
+    assert_equal(ridge.coef_.shape, (2, n_features))
     Y_pred = ridge.predict(filter_(X_diabetes))
     ridge.fit(filter_(X_diabetes), y_diabetes)
     y_pred = ridge.predict(filter_(X_diabetes))
     assert_array_almost_equal(np.vstack((y_pred,y_pred)).T,
-                              Y_pred)
+                              Y_pred, decimal=3)
 
 def _test_ridge_classifiers(filter_):
+    n_classes = np.unique(y_iris).shape[0]
+    n_features = X_iris.shape[1]
     for clf in (RidgeClassifier(), RidgeClassifierCV()):
         clf.fit(filter_(X_iris), y_iris)
+        assert_equal(clf.coef_.shape, (n_classes, n_features))
         y_pred = clf.predict(filter_(X_iris))
         assert np.mean(y_iris == y_pred) >= 0.8
 
@@ -217,18 +223,31 @@ def _test_ridge_classifiers(filter_):
     y_pred = clf.predict(filter_(X_iris))
     assert np.mean(y_iris == y_pred) >= 0.8
 
+def _test_tolerance(filter_):
+    ridge = Ridge(tol=1e-5)
+    ridge.fit(filter_(X_diabetes), y_diabetes)
+    score = ridge.score(filter_(X_diabetes), y_diabetes)
+
+    ridge2 = Ridge(tol=1e-3)
+    ridge2.fit(filter_(X_diabetes), y_diabetes)
+    score2 = ridge2.score(filter_(X_diabetes), y_diabetes)
+
+    assert score >= score2
+
 def test_dense_sparse():
     for test_func in (_test_ridge_loo,
                       _test_ridge_cv,
                       _test_ridge_diabetes,
-                     _test_multi_ridge_diabetes,
-                     _test_ridge_classifiers):
+                      _test_multi_ridge_diabetes,
+                      _test_ridge_classifiers,
+                      _test_tolerance):
         # test dense matrix
         ret_dense = test_func(DENSE_FILTER)
         # test sparse matrix
-        ret_sp = test_func(SPARSE_FILTER)
+        ret_sparse = test_func(SPARSE_FILTER)
         # test that the outputs are the same
-        assert_array_equal(ret_dense, ret_sp)
+        if ret_dense != None and ret_sparse != None:
+            assert_array_almost_equal(ret_dense, ret_sparse, decimal=3)
 
 
 

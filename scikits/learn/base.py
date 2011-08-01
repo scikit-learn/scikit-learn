@@ -5,6 +5,8 @@
 import copy
 import inspect
 import numpy as np
+from scipy import sparse
+
 from .metrics import r2_score
 
 
@@ -43,10 +45,29 @@ def clone(estimator, safe=True):
     for name, param in new_object_params.iteritems():
         new_object_params[name] = clone(param, safe=False)
     new_object = klass(**new_object_params)
-    assert new_object._get_params(deep=False) == new_object_params, (
-            'Cannot clone object %s, as the constructor does not '
-            'seem to set parameters' % estimator
-        )
+    params_set = new_object._get_params(deep=False)
+    for name in new_object_params:
+        param1 = new_object_params[name]
+        param2 = params_set[name]
+        if isinstance(param1, np.ndarray):
+            # For ndarrays, we do not test for complete equality
+            equality_test = (param1.shape == param2.shape 
+                             and param1.dtype == param2.dtype 
+                             and param1[0] == param2[0] 
+                             and param1[-1] == param2[-1])
+        elif sparse.issparse(param1):
+            # For sparse matrices equality doesn't work 
+            equality_test = (param1.__class__ == param2.__class__
+                             and param1.data[0] == param2.data[0]
+                             and param1.data[-1] == param2.data[-1]
+                             and param1.nnz == param2.nnz
+                             and param1.shape == param2.shape)
+        else:
+            equality_test = new_object_params[name] == params_set[name]
+        assert equality_test, (
+                'Cannot clone object %s, as the constructor does not '
+                'seem to set parameter %s' % (estimator, name)
+            )
 
     return new_object
 
@@ -72,7 +93,7 @@ def _pprint(params, offset=0, printer=repr):
     np.set_printoptions(precision=5, threshold=64, edgeitems=2)
     params_list = list()
     this_line_length = offset
-    line_sep = ',\n' + (1 + offset / 2) * ' '
+    line_sep = ',\n' + (1 + offset // 2) * ' '
     for i, (k, v) in enumerate(params.iteritems()):
         if type(v) is float:
             # use str for representing floating point numbers
@@ -257,11 +278,10 @@ class TransformerMixin(object):
     """
 
     def fit_transform(self, X, y=None, **fit_params):
-        """Fit model to data and subsequently transform the data
+        """Fit to data, then transform it
 
-        Sometimes, fit and transform can be implemented more efficiently
-        jointly than separately. In those cases, the estimator will typically
-        override the method.
+        Fits transformer to X and y with optional parameters fit_params
+        and returns a transformed version of X.
 
         Parameters
         ----------
@@ -273,7 +293,14 @@ class TransformerMixin(object):
 
         Returns
         -------
-        self : returns an instance of self.
+        X_new : numpy array of shape [n_samples, n_features_new]
+            Transformed array.
+
+        Note
+        -----
+        This method just calls fit and transform consecutively, i.e., it is not
+        an optimized implementation of fit_transform, unlike other transformers
+        such as PCA.
         """
         if y is None:
             # fit method of arity 1 (unsupervised transformation)

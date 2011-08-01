@@ -9,6 +9,7 @@ Base IO code for all datasets
 
 import csv
 import shutil
+import textwrap
 from os import environ
 from os.path import dirname
 from os.path import join
@@ -20,6 +21,8 @@ from os import makedirs
 
 import numpy as np
 
+
+###############################################################################
 
 class Bunch(dict):
     """ Container object for datasets: dictionnary-like object that
@@ -62,7 +65,7 @@ def clear_data_home(data_home=None):
 
 
 def load_filenames(container_path, description=None, categories=None,
-                   shuffle=True, rng=42):
+                   shuffle=True, random_state=42):
     """Load filenames with categories as subfolder names
 
     Individual samples are assumed to be files stored a two levels folder
@@ -97,34 +100,32 @@ def load_filenames(container_path, description=None, categories=None,
     ----------
 
     container_path : string or unicode
-      the path to the main folder holding one subfolder per category
+        Path to the main folder holding one subfolder per category
 
     description: string or unicode
-      a paragraph describing the characteristic of the dataset, its source,
-      reference, ...
+        A paragraph describing the characteristic of the dataset: its source,
+        reference, etc.
 
     categories : None or collection of string or unicode
-      if None (default), load all the categories.
-      if not Non, list of category names to load (other categories ignored)
+        If None (default), load all the categories.
+        If not None, list of category names to load (other categories ignored).
 
-    shuffle : True by default
-      whether or not to shuffle the data: might be important for models that
-      make the assumption that the samples are independent and identically
-      distributed (i.i.d.) such as stochastic gradient descent for instance.
+    shuffle : bool, optional
+        Whether or not to shuffle the data: might be important for models that
+        make the assumption that the samples are independent and identically
+        distributed (i.i.d.), such as stochastic gradient descent.
 
-    rng : a numpy random number generator or a seed integer, 42 by default
-      used to shuffle the dataset
+    random_state : numpy random number generator or seed integer, optional
+        Used to shuffle the dataset.
 
     Returns
     -------
-
     data : Bunch
         Dictionary-like object, the interesting attributes are:
         'filenames', the files holding the raw to learn, 'target', the
         classification labels (integer index), 'target_names',
         the meaning of the labels, and 'DESCR', the full description of the
         dataset.
-
     """
     target = []
     target_names = []
@@ -149,10 +150,10 @@ def load_filenames(container_path, description=None, categories=None,
     target = np.array(target)
 
     if shuffle:
-        if isinstance(rng, int):
-            rng = np.random.RandomState(rng)
+        if isinstance(random_state, int):
+            random_state = np.random.RandomState(random_state)
         indices = np.arange(filenames.shape[0])
-        rng.shuffle(indices)
+        random_state.shuffle(indices)
         filenames = filenames[indices]
         target = target[indices]
 
@@ -165,7 +166,7 @@ def load_filenames(container_path, description=None, categories=None,
 ###############################################################################
 
 def load_iris():
-    """load the iris dataset and returns it.
+    """Load and return the iris dataset (classification).
 
     Returns
     -------
@@ -207,8 +208,13 @@ def load_iris():
                                 'petal length (cm)', 'petal width (cm)'])
 
 
-def load_digits():
-    """load the digits dataset and returns it.
+def load_digits(n_class=10):
+    """Load and return the digits dataset (classification).
+
+    Parameters
+    ----------
+    n_class : integer, between 0 and 10
+        Number of classes to return, defaults to 10
 
     Returns
     -------
@@ -239,6 +245,12 @@ def load_digits():
     flat_data = data[:, :-1]
     images = flat_data.view()
     images.shape = (-1, 8, 8)
+
+    if n_class < 10:
+        idx = target < n_class
+        flat_data, target = flat_data[idx], target[idx]
+        images = images[idx]
+
     return Bunch(data=flat_data, target=target.astype(np.int),
                  target_names=np.arange(10),
                  images=images,
@@ -246,6 +258,17 @@ def load_digits():
 
 
 def load_diabetes():
+    """ Load and return the diabetes dataset (regression).
+
+    Returns
+    -------
+    data : Bunch
+        Dictionnary-like object, the interesting attributes are:
+        'data', the data to learn and 'target', the labels for each
+        sample.
+
+
+    """
     base_dir = join(dirname(__file__), 'data')
     data = np.loadtxt(join(base_dir, 'diabetes_data.csv.gz'))
     target = np.loadtxt(join(base_dir, 'diabetes_target.csv.gz'))
@@ -253,6 +276,17 @@ def load_diabetes():
 
 
 def load_linnerud():
+    """ Load and return the linnerud dataset (multivariate regression).
+
+    Returns
+    -------
+    data : Bunch
+        Dictionnary-like object, the interesting attributes are:
+        'data_exercise' and 'data_physiological', the two multivariate
+        datasets, as well as 'header_exercise' and
+        'header_physiological', the corresponding headers.
+
+    """
     base_dir = join(dirname(__file__), 'data/')
     # Read data
     data_exercise = np.loadtxt(base_dir + 'linnerud_exercise.csv', skiprows=1)

@@ -44,6 +44,9 @@ from .base import get_data_home
 from .base import load_filenames
 
 
+logger = logging.getLogger(__name__)
+
+
 URL = ("http://people.csail.mit.edu/jrennie/"
             "20Newsgroups/20news-bydate.tar.gz")
 ARCHIVE_NAME = "20news-bydate.tar.gz"
@@ -52,36 +55,34 @@ TEST_FOLDER = "20news-bydate-test"
 
 
 def fetch_20newsgroups(data_home=None, subset='train', categories=None,
-                      shuffle=True, rng=42, download_if_missing=True):
+                      shuffle=True, random_state=42, download_if_missing=True):
     """Load the filenames of the 20 newsgroups dataset
 
     Parameters
     ----------
-    subset: optional, default: 'train'
+    subset: 'train' or 'test', optional
         Select the dataset to load: 'train' for the training set, 'test'
         for the test set.
 
     data_home: optional, default: None
-        Specify another download and cache folder for the datasets. By
-        default all scikit learn data is stored in '~/scikit_learn_data'
-        subfolders.
+        Specify an download and cache folder for the datasets. If None,
+        all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
     categories: None or collection of string or unicode
-        if None (default), load all the categories.
-        if not Non, list of category names to load (other categories
-        ignored)
+        If None (default), load all the categories.
+        If not None, list of category names to load (other categories
+        ignored).
 
-    shuffle: True by default
-        whether or not to shuffle the data: might be important for models
-        that make the assumption that the samples are independent and
-        identically distributed (i.i.d.) such as stochastic gradient
-        descent for instance.
+    shuffle: bool, optional
+        Whether or not to shuffle the data: might be important for models that
+        make the assumption that the samples are independent and identically
+        distributed (i.i.d.), such as stochastic gradient descent.
 
-    rng: a numpy random number generator or a seed integer, 42 by default
-        used to shuffle the dataset
+    random_state: numpy random number generator or seed integer
+        Used to shuffle the dataset.
 
     download_if_missing: optional, True by default
-        If False, raise a IOError if the data is not locally available
+        If False, raise an IOError if the data is not locally available
         instead of trying to download the data from the source site.
     """
 
@@ -98,13 +99,13 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
 
         if not os.path.exists(archive_path):
             if download_if_missing:
-                logging.warn("Downloading dataset from %s (14 MB)", URL)
+                logger.warn("Downloading dataset from %s (14 MB)", URL)
                 opener = urllib.urlopen(URL)
                 open(archive_path, 'wb').write(opener.read())
             else:
                 raise IOError("%s is missing" % archive_path)
 
-        logging.info("Decompressing %s", archive_path)
+        logger.info("Decompressing %s", archive_path)
         tarfile.open(archive_path, "r:gz").extractall(path=twenty_home)
         os.remove(archive_path)
 
@@ -118,7 +119,7 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
 
     description = subset + ' subset of the 20 newsgroups by date dataset'
     return load_filenames(folder_path, description=description,
-                          categories=categories, shuffle=shuffle, rng=rng)
+                          categories=categories, shuffle=shuffle, random_state=random_state)
 
 
 def load_20newsgroups(download_if_missing=False, **kwargs):

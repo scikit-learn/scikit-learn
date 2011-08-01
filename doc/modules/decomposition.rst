@@ -36,14 +36,14 @@ data based on the amount of variance it explains. As such it implements a
 Below is an example of the iris dataset, which is comprised of 4
 features, projected on the 2 dimensions that explain most variance:
 
-.. figure:: ../auto_examples/images/plot_pca_vs_lda_1.png
-    :target: ../auto_examples/plot_pca_vs_lda.html
+.. figure:: ../auto_examples/decomposition/images/plot_pca_vs_lda_1.png
+    :target: ../auto_examples/decomposition/plot_pca_vs_lda.html
     :align: center
     :scale: 75%
 
 .. topic:: Examples:
 
-    * :ref:`example_plot_pca_vs_lda.py`
+    * :ref:`example_decomposition_plot_pca_vs_lda.py`
 
 
 Approximate PCA
@@ -93,7 +93,8 @@ is not the exact inverse transform of `transform` even when
 
 .. topic:: Examples:
 
-    * :ref:`example_applications_plot_face_recognition.py`
+    * :ref:`example_applications_face_recognition.py`
+    * :ref:`example_decomposition_plot_digits_decomposition.py`
 
 .. topic:: References:
 
@@ -102,39 +103,124 @@ is not the exact inverse transform of `transform` even when
       <http://arxiv.org/abs/0909.4061>`_
       Halko, et al., 2009
 
+.. _kernel_PCA:
+
 Kernel PCA
 ----------
 
-Kernel PCA is an extension of PCA which achieves non-linear dimensionality
-reduction through the use of kernels. It has many applications including
-denoising, compression and structured prediction (kernel dependency estimation). 
-:class:`KernelPCA` supports both `transform` and `inverse_transform`.
+:class:`KernelPCA` is an extension of PCA which achieves non-linear
+dimensionality reduction through the use of kernels. It has many
+applications including denoising, compression and structured prediction
+(kernel dependency estimation). :class:`KernelPCA` supports both
+`transform` and `inverse_transform`.
 
-.. figure:: ../auto_examples/images/plot_kernel_pca_1.png
-    :target: ../auto_examples/plot_kernel_pca.html
+.. figure:: ../auto_examples/decomposition/images/plot_kernel_pca_1.png
+    :target: ../auto_examples/decomposition/plot_kernel_pca.html
     :align: center
     :scale: 75%
 
+.. topic:: Examples:
+
+    * :ref:`example_decomposition_plot_kernel_pca.py`
+
+.. _SparsePCA:
+
+Sparse Principal Components Analysis (SparsePCA)
+------------------------------------------------
+
+:class:`SparsePCA` is a variant of PCA, with the goal of extracting the
+set of sparse components that best reconstruct the data.
+
+Principal component analysis (:class:`PCA`) has the disadvantage that the
+components extracted by this method have exclusively dense expressions, i.e.
+they have non-zero coefficients when expressed as linear combinations of the
+original variables. This can make interpretation difficult. In many cases,
+the real underlying components can be more naturally imagined as sparse
+vectors; for example in face recognition, components might naturally map to
+parts of faces.
+
+Sparse principal components yields a more parsimonious, interpretable
+representation, clearly emphasizing which of the original features contribute
+to the differences between samples.
+
+The following example illustrates 12 components extracted using sparse PCA
+with a value of `alpha=5` on the digits dataset. Only images of the digit 3
+were considered.  It can be seen how the regularization term induces many
+zeros. Furthermore, the natural structure of the data causes the non-zero
+coefficients to be vertically adjacent. The model does not enforce this
+mathematically: each component is a vector :math:`h \in \mathbf{R}^{64}`, and there
+is no notion of vertical adjacency except during the human-friendly
+visualization as 8x8 pixel images.
+The fact that the components shown below appear local
+is the effect of the inherent structure of the data, which makes such local
+patterns minimize reconstruction error. There exist sparsity-inducing norms
+that take into account adjacency and different kinds of structure; see
+see [Jen09] for a review of such methods. For more details on how to use
+Sparse PCA, see the `Examples` section below.
+
+
+.. figure:: ../auto_examples/decomposition/images/plot_digits_decomposition_4.png
+   :target: ../auto_examples/decomposition/plot_digits_decomposition.html
+   :align: center
+   :scale: 50%
+
+
+Note that there are many different formulations for the Sparse PCA
+problem. The one implemented here is based on [Mrl09]_ . The optimization
+problem solved is a PCA problem (dictionary learning) with an
+:math:`\ell_1` penalty on the components:
+
+.. math::
+   (U^*, V^*) = \underset{U, V}{\operatorname{arg\,min\,}} & \frac{1}{2}
+                ||X-UV||_2^2+\alpha||V||_1 \\
+                \text{subject to\,} & ||U_k||_2 = 1 \text{ for all }
+                0 \leq k < n_{components}
+
+
+The sparsity inducing :math:`\ell_1` norm also prevents learning
+components from noise when few training samples are available. The degree
+of penalization (and thus sparsity) can be adjusted through the
+hyperparameter `alpha`. Small values lead to a gently regularized
+factorization, while larger values shrink many coefficients to zero.
+
+
+.. topic:: Examples:
+
+   * :ref:`example_decomposition_plot_digits_decomposition.py`
+
+.. topic:: References:
+
+   * [Mrl09] `"Online Dictionary Learning for Sparse Coding"
+     <http://www.di.ens.fr/sierra/pdfs/icml09.pdf>`_
+     J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009
+   * [Jen09] `"Structured Sparse Principal Component Analysis"
+     <www.di.ens.fr/~fbach/sspca_AISTATS2010.pdf>`_
+     R. Jenatton, G. Obozinski, F. Bach, 2009
 
 .. _ICA:
 
 Independent component analysis (ICA)
 ====================================
 
-ICA finds components that are maximally independent. It is classically
-used to separate mixed signals (a problem know as *blind source
-separation*), as in the example below:
+Independent component analysis separates a multivariate signal into
+additive subcomponents that are maximally independent. It is
+implemented in scikit-learn using the :class:`Fast ICA <FastICA>`
+algorithm.
 
-.. figure:: ../auto_examples/images/plot_ica_blind_source_separation_1.png
-    :target: ../auto_examples/plot_ica_blind_source_separation.html
+It is classically used to separate mixed signals (a problem known as
+*blind source separation*), as in the example below:
+
+.. figure:: ../auto_examples/decomposition/images/plot_ica_blind_source_separation_1.png
+    :target: ../auto_examples/decomposition/plot_ica_blind_source_separation.html
     :align: center
     :scale: 50%
 
 
 .. topic:: Examples:
 
-    * :ref:`example_plot_ica_blind_source_separation.py`
-    * :ref:`example_plot_ica_vs_pca.py`
+    * :ref:`example_decomposition_plot_ica_blind_source_separation.py`
+    * :ref:`example_decomposition_plot_ica_vs_pca.py`
+    * :ref:`example_decomposition_plot_digits_decomposition.py`
 
 
 .. _NMF:
@@ -154,28 +240,29 @@ models are efficient for representing images and text.
 It has been observed in [Hoyer, 04] that, when carefully constrained,
 :class:`NMF` can produce a parts-based representation of the dataset,
 resulting in interpretable models. The following example displays 16
-sparse components found by :class:`NMF` on the digits dataset.
+sparse components found by :class:`NMF` on the images of the digit 3 from the
+digits dataset.
 
-.. |pca_img| image:: ../auto_examples/images/plot_nmf_1.png
-    :target: ../auto_examples/plot_nmf.html
+.. |pca_img| image:: ../auto_examples/decomposition/images/plot_digits_decomposition_1.png
+    :target: ../auto_examples/decomposition/plot_digits_decomposition.html
     :scale: 50%
 
-.. |nmf_img| image:: ../auto_examples/images/plot_nmf_2.png
-    :target: ../auto_examples/plot_nmf.html
+.. |nmf_img| image:: ../auto_examples/decomposition/images/plot_digits_decomposition_2.png
+    :target: ../auto_examples/decomposition/plot_digits_decomposition.html
     :scale: 50%
 
 .. centered:: |pca_img| |nmf_img|
 
 
 The :attr:`init` attribute determines the initialization method applied, which
-has a great impact on the performance of the method. :class:`NMF` implements 
+has a great impact on the performance of the method. :class:`NMF` implements
 the method Nonnegative Double Singular Value Decomposition. NNDSVD is based on
-two SVD processes, one approximating the data matrix, the other approximating 
-positive sections of the resulting partial SVD factors utilizing an algebraic 
+two SVD processes, one approximating the data matrix, the other approximating
+positive sections of the resulting partial SVD factors utilizing an algebraic
 property of unit rank matrices. The basic NNDSVD algorithm is better fit for
-sparse factorization. Its variants NNDSVDa (in which all zeros are set equal to 
-the mean of all elements of the data), and NNDSVDar (in which the zeros are set 
-to random perturbations less than the mean of the data divided by 100) are 
+sparse factorization. Its variants NNDSVDa (in which all zeros are set equal to
+the mean of all elements of the data), and NNDSVDar (in which the zeros are set
+to random perturbations less than the mean of the data divided by 100) are
 recommended in the dense case.
 
 :class:`NMF` can also be initialized with random non-negative matrices, by
@@ -184,11 +271,11 @@ passing an integer seed or a `RandomState` to :attr:`init`.
 In :class:`NMF`, sparseness can be enforced by setting the attribute
 :attr:`sparseness` to `data` or `components`. Sparse components lead to
 localized features, and sparse data leads to a more efficient representation
-of the data. 
+of the data.
 
 .. topic:: Examples:
 
-    * :ref:`example_plot_nmf.py`
+    * :ref:`example_decomposition_plot_digits_decomposition.py`
 
 .. topic:: References:
 
@@ -207,4 +294,4 @@ of the data.
     * `"SVD based initialization: A head start for nonnegative
       matrix factorization"
       <http://www.cs.rpi.edu/~boutsc/files/nndsvd.pdf>`_
-      C. Boutsidis, E. Gallopoulos, 2008 
+      C. Boutsidis, E. Gallopoulos, 2008

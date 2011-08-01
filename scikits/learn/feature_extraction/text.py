@@ -1,15 +1,18 @@
+# -*- coding: utf-8 -*-
 # Authors: Olivier Grisel <olivier.grisel@ensta.org>
-#          Mathieu Blondel
+#          Mathieu Blondel <mathieu@mblondel.org>
+#          Lars Buitinck <L.J.Buitinck@uva.nl>
 #
 # License: BSD Style.
-"""Utilities to build dense feature vectors from text documents"""
+"""Utilities to build feature vectors from text documents"""
 
-from operator import itemgetter
 import re
 import unicodedata
 import numpy as np
-from ..base import BaseEstimator
-from ..preprocessing.sparse import Normalizer
+import scipy.sparse as sp
+from ..base import BaseEstimator, TransformerMixin
+from ..preprocessing import normalize
+from ..utils.fixes import Counter
 
 ENGLISH_STOP_WORDS = set([
     "a", "about", "above", "across", "after", "afterwards", "again", "against",
@@ -18,10 +21,10 @@ ENGLISH_STOP_WORDS = set([
     "any", "anyhow", "anyone", "anything", "anyway", "anywhere", "are",
     "around", "as", "at", "back", "be", "became", "because", "become",
     "becomes", "becoming", "been", "before", "beforehand", "behind", "being",
-    "below", "beside", "besides", "between", "beyond", "bill", "both", "bottom",
-    "but", "by", "call", "can", "cannot", "cant", "co", "computer", "con",
-    "could", "couldnt", "cry", "de", "describe", "detail", "do", "done", "down",
-    "due", "during", "each", "eg", "eight", "either", "eleven", "else",
+    "below", "beside", "besides", "between", "beyond", "bill", "both",
+    "bottom", "but", "by", "call", "can", "cannot", "cant", "co", "con",
+    "could", "couldnt", "cry", "de", "describe", "detail", "do", "done",
+    "down", "due", "during", "each", "eg", "eight", "either", "eleven", "else",
     "elsewhere", "empty", "enough", "etc", "even", "ever", "every", "everyone",
     "everything", "everywhere", "except", "few", "fifteen", "fify", "fill",
     "find", "fire", "first", "five", "for", "former", "formerly", "forty",
@@ -32,26 +35,27 @@ ENGLISH_STOP_WORDS = set([
     "interest", "into", "is", "it", "its", "itself", "keep", "last", "latter",
     "latterly", "least", "less", "ltd", "made", "many", "may", "me",
     "meanwhile", "might", "mill", "mine", "more", "moreover", "most", "mostly",
-    "move", "much", "must", "my", "myself", "name", "namely", "neither", "never",
-    "nevertheless", "next", "nine", "no", "nobody", "none", "noone", "nor",
-    "not", "nothing", "now", "nowhere", "of", "off", "often", "on", "once",
-    "one", "only", "onto", "or", "other", "others", "otherwise", "our", "ours",
-    "ourselves", "out", "over", "own", "part", "per", "perhaps", "please",
-    "put", "rather", "re", "same", "see", "seem", "seemed", "seeming", "seems",
-    "serious", "several", "she", "should", "show", "side", "since", "sincere",
-    "six", "sixty", "so", "some", "somehow", "someone", "something", "sometime",
-    "sometimes", "somewhere", "still", "such", "system", "take", "ten", "than",
-    "that", "the", "their", "them", "themselves", "then", "thence", "there",
-    "thereafter", "thereby", "therefore", "therein", "thereupon", "these",
-    "they", "thick", "thin", "third", "this", "those", "though", "three",
-    "through", "throughout", "thru", "thus", "to", "together", "too", "top",
-    "toward", "towards", "twelve", "twenty", "two", "un", "under", "until",
-    "up", "upon", "us", "very", "via", "was", "we", "well", "were", "what",
-    "whatever", "when", "whence", "whenever", "where", "whereafter", "whereas",
-    "whereby", "wherein", "whereupon", "wherever", "whether", "which", "while",
-    "whither", "who", "whoever", "whole", "whom", "whose", "why", "will",
-    "with", "within", "without", "would", "yet", "you", "your", "yours",
-    "yourself", "yourselves"])
+    "move", "much", "must", "my", "myself", "name", "namely", "neither",
+    "never", "nevertheless", "next", "nine", "no", "nobody", "none", "noone",
+    "nor", "not", "nothing", "now", "nowhere", "of", "off", "often", "on",
+    "once", "one", "only", "onto", "or", "other", "others", "otherwise", "our",
+    "ours", "ourselves", "out", "over", "own", "part", "per", "perhaps",
+    "please", "put", "rather", "re", "same", "see", "seem", "seemed",
+    "seeming", "seems", "serious", "several", "she", "should", "show", "side",
+    "since", "sincere", "six", "sixty", "so", "some", "somehow", "someone",
+    "something", "sometime", "sometimes", "somewhere", "still", "such",
+    "system", "take", "ten", "than", "that", "the", "their", "them",
+    "themselves", "then", "thence", "there", "thereafter", "thereby",
+    "therefore", "therein", "thereupon", "these", "they", "thick", "thin",
+    "third", "this", "those", "though", "three", "through", "throughout",
+    "thru", "thus", "to", "together", "too", "top", "toward", "towards",
+    "twelve", "twenty", "two", "un", "under", "until", "up", "upon", "us",
+    "very", "via", "was", "we", "well", "were", "what", "whatever", "when",
+    "whence", "whenever", "where", "whereafter", "whereas", "whereby",
+    "wherein", "whereupon", "wherever", "whether", "which", "while", "whither",
+    "who", "whoever", "whole", "whom", "whose", "why", "will", "with",
+    "within", "without", "would", "yet", "you", "your", "yours", "yourself",
+    "yourselves"])
 
 
 def strip_accents(s):
@@ -67,7 +71,7 @@ def strip_accents(s):
 def to_ascii(s):
     """Transform accentuated unicode symbols into ascii or nothing
 
-    Warning: this solution is only suited for roman languages that have a direct
+    Warning: this solution is only suited for languages that have a direct
     transliteration to ASCII symbols.
 
     A better solution would be to use transliteration based on a precomputed
@@ -86,9 +90,10 @@ def strip_tags(s):
 
 
 class RomanPreprocessor(object):
-    """Fast preprocessor suitable for roman languages"""
+    """Fast preprocessor suitable for Latin alphabet text"""
 
     def preprocess(self, unicode_text):
+        """Preprocess strings"""
         return to_ascii(strip_tags(unicode_text.lower()))
 
     def __repr__(self):
@@ -99,8 +104,9 @@ DEFAULT_PREPROCESSOR = RomanPreprocessor()
 
 DEFAULT_TOKEN_PATTERN = r"\b\w\w+\b"
 
+
 class WordNGramAnalyzer(BaseEstimator):
-    """Simple analyzer: transform a text document into a sequence of word tokens
+    """Simple analyzer: transform text document into a sequence of word tokens
 
     This simple implementation does:
       - lower case conversion
@@ -122,6 +128,7 @@ class WordNGramAnalyzer(BaseEstimator):
         self.token_pattern = token_pattern
 
     def analyze(self, text_document):
+        """From documents to token"""
         if hasattr(text_document, 'read'):
             # ducktype for file-like objects
             text_document = text_document.read()
@@ -174,6 +181,7 @@ class CharNGramAnalyzer(BaseEstimator):
         self.preprocessor = preprocessor
 
     def analyze(self, text_document):
+        """From documents to token"""
         if hasattr(text_document, 'read'):
             # ducktype for file-like objects
             text_document = text_document.read()
@@ -191,7 +199,7 @@ class CharNGramAnalyzer(BaseEstimator):
         for n in xrange(self.min_n, self.max_n + 1):
             if text_len < n:
                 continue
-            for i in xrange(text_len - n):
+            for i in xrange(text_len - n + 1):
                 ngrams.append(text_document[i: i + n])
         return ngrams
 
@@ -205,28 +213,25 @@ class CountVectorizer(BaseEstimator):
     This implementation produces a sparse representation of the counts using
     scipy.sparse.coo_matrix.
 
-    If you do not provide an a-priori dictionary and you do not use
-    an analyzer that does some kind of feature selection then the number of
-    features (the vocabulary size found by analysing the data) might be very
-    large and the count vectors might not fit in memory.
-
-    For this case it is either recommended to use the sparse.CountVectorizer
-    variant of this class or a HashingVectorizer that will reduce the
-    dimensionality to an arbitrary number by using random projection.
+    If you do not provide an a-priori dictionary and you do not use an analyzer
+    that does some kind of feature selection then the number of features will
+    be equal to the vocabulary size found by analysing the data. The default
+    analyzer does simple stop word filtering for English.
 
     Parameters
     ----------
     analyzer: WordNGramAnalyzer or CharNGramAnalyzer, optional
 
-    vocabulary: dict, optional
-        A dictionary where keys are tokens and values are indices in the
-        matrix.
+    vocabulary: dict or iterable, optional
+        Either a dictionary where keys are tokens and values are indices in
+        the matrix, or an iterable over terms (in which case the indices are
+        determined by the iteration order as per enumerate).
 
         This is useful in order to fix the vocabulary in advance.
 
-    max_df : float in range [0.0, 1.0], optional, 0.5 by default
+    max_df : float in range [0.0, 1.0], optional, 1.0 by default
         When building the vocabulary ignore terms that have a term frequency
-        high than the given threshold (corpus specific stop words).
+        strictly higher than the given threshold (corpus specific stop words).
 
         This parameter is ignored if vocabulary is not None.
 
@@ -240,20 +245,22 @@ class CountVectorizer(BaseEstimator):
         Type of the matrix returned by fit_transform() or transform().
     """
 
-    def __init__(self, analyzer=DEFAULT_ANALYZER, vocabulary={}, max_df=1.0,
+    def __init__(self, analyzer=DEFAULT_ANALYZER, vocabulary=None, max_df=1.0,
                  max_features=None, dtype=long):
         self.analyzer = analyzer
+        self.fit_vocabulary = vocabulary is None
+        if vocabulary is not None and not isinstance(vocabulary, dict):
+            vocabulary = dict((t, i) for i, t in enumerate(vocabulary))
         self.vocabulary = vocabulary
         self.dtype = dtype
         self.max_df = max_df
         self.max_features = max_features
 
-    def _term_count_dicts_to_matrix(self, term_count_dicts, vocabulary):
-
-        import scipy.sparse as sp
+    def _term_count_dicts_to_matrix(self, term_count_dicts):
         i_indices = []
         j_indices = []
         values = []
+        vocabulary = self.vocabulary
 
         for i, term_count_dict in enumerate(term_count_dicts):
             for term, count in term_count_dict.iteritems():
@@ -269,99 +276,11 @@ class CountVectorizer(BaseEstimator):
         return sp.coo_matrix((values, (i_indices, j_indices)),
                              shape=shape, dtype=self.dtype)
 
-
-    def _build_vectors_and_vocab(self, raw_documents):
-        """Analyze documents, build vocabulary and vectorize"""
-
-        # result of document conversion to term_count_dict
-        term_counts_per_doc = []
-        term_counts = {}
-
-        # term counts across entire corpus (count each term maximum once per
-        # document)
-        document_counts = {}
-
-        max_df = self.max_df
-        max_features = self.max_features
-
-        # TODO: parallelize the following loop with joblib
-        for doc in raw_documents:
-            term_count_dict = {} # term => count in doc
-
-            for term in self.analyzer.analyze(doc):
-                term_count_dict[term] = term_count_dict.get(term, 0) + 1
-                term_counts[term] = term_counts.get(term, 0) + 1
-
-            if max_df is not None:
-                for term in term_count_dict.iterkeys():
-                    document_counts[term] = document_counts.get(term, 0) + 1
-
-            term_counts_per_doc.append(term_count_dict)
-
-        n_doc = len(term_counts_per_doc)
-
-        # filter out stop words: terms that occur in almost all documents
-        stop_words = set()
-        if max_df is not None:
-            max_document_count = max_df * n_doc
-            for t, dc in sorted(document_counts.iteritems(), key=itemgetter(1),
-                                reverse=True):
-                if dc < max_document_count:
-                    break
-                stop_words.add(t)
-
-        # list the terms that should be part of the vocabulary
-        if max_features is not None:
-            # extract the most frequent terms for the vocabulary
-            terms = set()
-            for t, tc in sorted(term_counts.iteritems(), key=itemgetter(1),
-                                reverse=True):
-                if t not in stop_words:
-                    terms.add(t)
-                if len(terms) >= max_features:
-                    break
-        else:
-            terms = set(term_counts.keys())
-            terms -= stop_words
-
-        # convert to a document-token matrix
-        vocabulary = dict(((t, i) for i, t in enumerate(terms))) # token => idx
-
-        # the term_counts and document_counts might be useful statistics, are
-        # we really sure want we want to drop them? They take some memory but
-        # can be useful for corpus introspection
-
-        matrix = self._term_count_dicts_to_matrix(term_counts_per_doc, vocabulary)
-        return matrix, vocabulary
-
-    def _build_vectors(self, raw_documents):
-        """Analyze documents and vectorize using existing vocabulary"""
-        # raw_documents is an iterable so we don't know its size in advance
-
-        # result of document conversion to term_count_dict
-        term_counts_per_doc = []
-
-        # TODO: parallelize the following loop with joblib
-        for doc in raw_documents:
-            term_count_dict = {} # term => count in doc
-
-            for term in self.analyzer.analyze(doc):
-                term_count_dict[term] = term_count_dict.get(term, 0) + 1
-
-            term_counts_per_doc.append(term_count_dict)
-
-        # now that we know the document we can allocate the vectors matrix at
-        # once and fill it with the term counts collected as a temporary list
-        # of dict
-        return self._term_count_dicts_to_matrix(
-            term_counts_per_doc, self.vocabulary)
-
     def fit(self, raw_documents, y=None):
         """Learn a vocabulary dictionary of all tokens in the raw documents
 
         Parameters
         ----------
-
         raw_documents: iterable
             an iterable which yields either str, unicode or file objects
 
@@ -379,7 +298,6 @@ class CountVectorizer(BaseEstimator):
 
         Parameters
         ----------
-
         raw_documents: iterable
             an iterable which yields either str, unicode or file objects
 
@@ -387,67 +305,158 @@ class CountVectorizer(BaseEstimator):
         -------
         vectors: array, [n_samples, n_features]
         """
-        vectors, self.vocabulary = self._build_vectors_and_vocab(raw_documents)
-        return vectors
+        if not self.fit_vocabulary:
+            return self.transform(raw_documents)
+
+        # result of document conversion to term count dicts
+        term_counts_per_doc = []
+        term_counts = Counter()
+
+        # term counts across entire corpus (count each term maximum once per
+        # document)
+        document_counts = Counter()
+
+        max_df = self.max_df
+        max_features = self.max_features
+
+        # TODO: parallelize the following loop with joblib?
+        # (see XXX up ahead)
+        for doc in raw_documents:
+            term_count_current = Counter()
+
+            for term in self.analyzer.analyze(doc):
+                term_count_current[term] += 1
+                term_counts[term] += 1
+
+            if max_df is not None:
+                for term in term_count_current:
+                    document_counts[term] += 1
+
+            term_counts_per_doc.append(term_count_current)
+
+        n_doc = len(term_counts_per_doc)
+
+        # filter out stop words: terms that occur in almost all documents
+        if max_df is not None:
+            max_document_count = max_df * n_doc
+            stop_words = set(t for t, dc in document_counts.iteritems()
+                               if dc > max_document_count)
+
+        # list the terms that should be part of the vocabulary
+        if max_features is None:
+            terms = [t for t in term_counts if t not in stop_words]
+        else:
+            # extract the most frequent terms for the vocabulary
+            terms = set()
+            for t, tc in term_counts.most_common():
+                if t not in stop_words:
+                    terms.add(t)
+                if len(terms) >= max_features:
+                    break
+
+        # convert to a document-token matrix
+        self.vocabulary = dict(((t, i) for i, t in enumerate(terms)))
+
+        # the term_counts and document_counts might be useful statistics, are
+        # we really sure want we want to drop them? They take some memory but
+        # can be useful for corpus introspection
+
+        return self._term_count_dicts_to_matrix(term_counts_per_doc)
 
     def transform(self, raw_documents):
-        """Extract token counts out of raw text documents
+        """Extract token counts out of raw text documents using the vocabulary
+        fitted with fit or the one provided in the constructor.
 
         Parameters
         ----------
-
         raw_documents: iterable
             an iterable which yields either str, unicode or file objects
 
         Returns
         -------
-        vectors: array, [n_samples, n_features]
+        vectors: sparse matrix, [n_samples, n_features]
         """
-        if len(self.vocabulary) == 0:
-            raise ValueError, "No vocabulary dictionary available..."
+        if not self.vocabulary:
+            raise ValueError("Vocabulary wasn't fitted or is empty!")
 
-        return self._build_vectors(raw_documents)
+        # raw_documents is an iterable so we don't know its size in advance
+
+        # result of document conversion to term_count_dict
+        term_counts_per_doc = []
+
+        # XXX @larsmans tried to parallelize the following loop with joblib.
+        # The result was some 20% slower than the serial version.
+        for doc in raw_documents:
+            term_count_current = Counter()
+
+            for term in self.analyzer.analyze(doc):
+                term_count_current[term] += 1
+
+            term_counts_per_doc.append(term_count_current)
+
+        # now that we know the document we can allocate the vectors matrix at
+        # once and fill it with the term counts collected as a temporary list
+        # of dict
+        return self._term_count_dicts_to_matrix(term_counts_per_doc)
+
+    def inverse_transform(self, X):
+        """Return terms per document with nonzero entries in X.
+
+        Parameters
+        ----------
+        X : {array, sparse matrix}, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        X_inv : list of arrays, len = n_samples
+            List of arrays of terms.
+        """
+        if type(X) is sp.coo_matrix:    # COO matrix is not indexable
+            X = X.tocsr()
+
+        terms = np.array(self.vocabulary.keys())
+        indices = np.array(self.vocabulary.values())
+        inverse_vocabulary = terms[np.argsort(indices)]
+
+        return [inverse_vocabulary[X[i, :].nonzero()[1]]
+                for i in xrange(X.shape[0])]
 
 
-class TfidfTransformer(BaseEstimator):
-    """Transform a count matrix to a TF or TF-IDF representation
+class TfidfTransformer(BaseEstimator, TransformerMixin):
+    """Transform a count matrix to a normalized tf or tf–idf representation
 
-    TF means term-frequency while TF-IDF means term-frequency times inverse
+    Tf means term-frequency while tf–idf means term-frequency times inverse
     document-frequency:
 
-      http://en.wikipedia.org/wiki/TF-IDF
+      http://en.wikipedia.org/wiki/Tf–idf
 
-    The goal of using TF-IDF instead of the raw frequencies of occurrence of a
+    The goal of using Tf–idf instead of the raw frequencies of occurrence of a
     token in a given document is to scale down the impact of tokens that occur
     very frequently in a given corpus and that are hence empirically less
     informative than feature that occur in a small fraction of the training
     corpus.
 
-    TF-IDF can be seen as a smooth alternative to the stop words filtering.
-
     Parameters
     ----------
+    norm : 'l1', 'l2' or None, optional
+        Norm used to normalize term vectors. None for no normalization.
 
-    use_tf: boolean
-        enable term-frequency normalization
-
-    use_idf: boolean
-        enable inverse-document-frequency reweighting
+    use_idf : boolean
+        Enable inverse-document-frequency reweighting.
     """
 
-    def __init__(self, use_tf=True, use_idf=True):
-        self.use_tf = use_tf
+    def __init__(self, norm='l2', use_idf=True):
+        self.norm = norm
         self.use_idf = use_idf
-        self.idf = None
+        self.idf_ = None
 
     def fit(self, X, y=None):
-        """Learn the IDF vector (global term weights)
+        """Learn the idf vector (global term weights)
 
         Parameters
         ----------
         X: sparse matrix, [n_samples, n_features]
             a matrix of term/token counts
-
         """
         n_samples, n_features = X.shape
         if self.use_idf:
@@ -455,12 +464,12 @@ class TfidfTransformer(BaseEstimator):
             idc = np.zeros(n_features, dtype=np.float64)
             for doc, token in zip(*X.nonzero()):
                 idc[token] += 1
-            self.idf = np.log(float(X.shape[0]) / idc)
+            self.idf_ = np.log(float(X.shape[0]) / idc)
 
         return self
 
     def transform(self, X, copy=True):
-        """Transform a count matrix to a TF or TF-IDF representation
+        """Transform a count matrix to a tf or tf–idf representation
 
         Parameters
         ----------
@@ -471,18 +480,17 @@ class TfidfTransformer(BaseEstimator):
         -------
         vectors: sparse matrix, [n_samples, n_features]
         """
-        import scipy.sparse as sp
         X = sp.csr_matrix(X, dtype=np.float64, copy=copy)
         n_samples, n_features = X.shape
 
-        if self.use_tf:
-            X = Normalizer().transform(X)
-
         if self.use_idf:
-            d = sp.lil_matrix((len(self.idf), len(self.idf)))
-            d.setdiag(self.idf)
+            d = sp.lil_matrix((len(self.idf_), len(self.idf_)))
+            d.setdiag(self.idf_)
             # *= doesn't work
             X = X * d
+
+        if self.norm:
+            X = normalize(X, norm=self.norm, copy=False)
 
         return X
 
@@ -494,13 +502,14 @@ class Vectorizer(BaseEstimator):
     """
 
     def __init__(self, analyzer=DEFAULT_ANALYZER, max_df=1.0,
-                 max_features=None, use_tf=True, use_idf=True):
+                 max_features=None, norm='l2', use_idf=True):
         self.tc = CountVectorizer(analyzer, max_df=max_df,
                                   max_features=max_features,
                                   dtype=np.float64)
-        self.tfidf = TfidfTransformer(use_tf, use_idf)
+        self.tfidf = TfidfTransformer(norm=norm, use_idf=use_idf)
 
     def fit(self, raw_documents):
+        """Learn a conversion law from documents to array data"""
         X = self.tc.fit_transform(raw_documents)
         self.tfidf.fit(X)
         return self
@@ -511,7 +520,6 @@ class Vectorizer(BaseEstimator):
 
         Parameters
         ----------
-
         raw_documents: iterable
             an iterable which yields either str, unicode or file objects
 
@@ -525,23 +533,33 @@ class Vectorizer(BaseEstimator):
         return self.tfidf.fit(X).transform(X, copy=False)
 
     def transform(self, raw_documents, copy=True):
-        """
-        Return the vectors.
+        """Transform raw text documents to tf–idf vectors
 
         Parameters
         ----------
-
         raw_documents: iterable
             an iterable which yields either str, unicode or file objects
 
         Returns
         -------
-        vectors: array, [n_samples, n_features]
+        vectors: sparse matrix, [n_samples, n_features]
         """
         X = self.tc.transform(raw_documents)
         return self.tfidf.transform(X, copy)
 
-    def _get_vocab(self):
-        return self.tc.vocabulary
+    def inverse_transform(self, X):
+        """Return terms per document with nonzero entries in X.
 
-    vocabulary = property(_get_vocab)
+        Parameters
+        ----------
+        X : {array, sparse matrix}, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        X_inv : list of arrays, len = n_samples
+            List of arrays of terms.
+        """
+        return self.tc.inverse_transform(X)
+
+    vocabulary = property(lambda self: self.tc.vocabulary)
+    analyzer = property(lambda self: self.tc.analyzer)

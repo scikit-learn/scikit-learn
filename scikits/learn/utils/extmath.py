@@ -4,12 +4,18 @@ Extended math utilities.
 # Authors: G. Varoquaux, A. Gramfort, A. Passos, O. Grisel
 # License: BSD
 
-import sys
 import math
 
+from . import check_random_state
 import numpy as np
 
-#XXX: We should have a function with numpy's slogdet API
+from scipy import linalg
+
+def norm(v):
+    v = np.asarray(v)
+    __nrm2, = linalg.get_blas_funcs(['nrm2'], [v])
+    return __nrm2(v)
+
 def _fast_logdet(A):
     """
     Compute log(det(A)) for A symmetric
@@ -19,14 +25,14 @@ def _fast_logdet(A):
     """
     # XXX: Should be implemented as in numpy, using ATLAS
     # http://projects.scipy.org/numpy/browser/trunk/numpy/linalg/linalg.py#L1559
-    from scipy import linalg
     ld = np.sum(np.log(np.diag(A)))
-    a = np.exp(ld/A.shape[0])
-    d = np.linalg.det(A/a)
+    a = np.exp(ld / A.shape[0])
+    d = np.linalg.det(A / a)
     ld += np.log(d)
     if not np.isfinite(ld):
         return -np.inf
     return ld
+
 
 def _fast_logdet_numpy(A):
     """
@@ -35,7 +41,6 @@ def _fast_logdet_numpy(A):
     but more robust
     It returns -Inf if det(A) is non positive or is not defined.
     """
-    from scipy import linalg
     sign, ld = np.linalg.slogdet(A)
     if not sign > 0:
         return -np.inf
@@ -48,17 +53,19 @@ if hasattr(np.linalg, 'slogdet'):
 else:
     fast_logdet = _fast_logdet
 
-if sys.version_info[1] < 6:
-    # math.factorial is only available in 2.6
-    def factorial(x) :
-        # simple recursive implementation
-        if x == 0: return 1
-        return x * factorial(x-1)
-else:
+try:
     factorial = math.factorial
+except AttributeError:
+    # math.factorial is only available in Python >= 2.6
+    import operator
+    def factorial(x):
+        return reduce(operator.mul, xrange(2, x+1), 1)
 
 
-if sys.version_info[1] < 6:
+try:
+    import itertools
+    combinations = itertools.combinations
+except AttributeError:
     def combinations(seq, r=None):
         """Generator returning combinations of items from sequence <seq>
         taken <r> at a time. Order is not significant. If <r> is not given,
@@ -72,10 +79,6 @@ if sys.version_info[1] < 6:
             for i in xrange(len(seq)):
                 for cc in combinations(seq[i+1:], r-1):
                     yield [seq[i]]+cc
-
-else:
-    import itertools
-    combinations = itertools.combinations
 
 
 def density(w, **kwargs):
@@ -99,7 +102,7 @@ def safe_sparse_dot(a, b, dense_output=False):
         return np.dot(a,b)
 
 
-def fast_svd(M, k, p=None, q=0, transpose='auto', rng=0):
+def fast_svd(M, k, p=None, q=0, transpose='auto', random_state=0):
     """Computes the k-truncated randomized SVD
 
     Parameters
@@ -125,7 +128,7 @@ def fast_svd(M, k, p=None, q=0, transpose='auto', rng=0):
         implementation of randomized SVD tend to be a little faster in that
         case).
 
-    rng: RandomState or an int seed (0 by default)
+    random_state: RandomState or an int seed (0 by default)
         A random number generator instance to make behavior
 
     Notes
@@ -148,17 +151,10 @@ def fast_svd(M, k, p=None, q=0, transpose='auto', rng=0):
     A randomized algorithm for the decomposition of matrices
     Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
     """
-    # lazy import of scipy sparse, because it is very slow.
-    from scipy import sparse
-
     if p == None:
         p = k
 
-    if rng is None:
-        rng = np.random.RandomState()
-    elif isinstance(rng, int):
-        rng = np.random.RandomState(rng)
-
+    random_state = check_random_state(random_state)
     n_samples, n_features = M.shape
 
     if transpose == 'auto' and n_samples > n_features:
@@ -168,7 +164,7 @@ def fast_svd(M, k, p=None, q=0, transpose='auto', rng=0):
         M = M.T
 
    # generating random gaussian vectors r with shape: (M.shape[1], k + p)
-    r = rng.normal(size=(M.shape[1], k + p))
+    r = random_state.normal(size=(M.shape[1], k + p))
 
     # sampling the range of M using by linear projection of r
     Y = safe_sparse_dot(M, r)
@@ -198,4 +194,30 @@ def fast_svd(M, k, p=None, q=0, transpose='auto', rng=0):
         return V[:k, :].T, s[:k], U[:, :k].T
     else:
         return U[:, :k], s[:k], V[:k, :]
+
+
+def logsum(arr, axis=0):
+    """ Computes the sum of arr assuming arr is in the log domain.
+
+    Returns log(sum(exp(arr))) while minimizing the possibility of
+    over/underflow.
+
+    Examples
+    ========
+
+    >>> import numpy as np
+    >>> from scikits.learn.utils.extmath import logsum
+    >>> a = np.arange(10)
+    >>> np.log(np.sum(np.exp(a)))
+    9.4586297444267107
+    >>> logsum(a)
+    9.4586297444267107
+    """
+    arr = np.rollaxis(arr, axis)
+    # Use the max to normalize, as with the log this is what accumulates
+    # the less errors
+    vmax = arr.max(axis=0)
+    out = np.log(np.sum(np.exp(arr - vmax), axis=0))
+    out += vmax
+    return out
 

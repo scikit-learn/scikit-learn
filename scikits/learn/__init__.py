@@ -2,8 +2,8 @@
 Machine Learning module in python
 =================================
 
-scikits.learn is a Python module integrating classique machine
-learning algorithms in the tightly-nit world of scientific Python
+scikits.learn is a Python module integrating classical machine
+learning algorithms in the tightly-knit world of scientific Python
 packages (numpy, scipy, matplotlib).
 
 It aims to provide simple and efficient solutions to learning problems
@@ -15,6 +15,7 @@ See http://scikit-learn.sourceforge.net for complete documentation.
 
 from .base import clone
 
+from . import mixture
 
 try:
     from numpy.testing import nosetester
@@ -38,7 +39,7 @@ except:
 __all__ = ['cross_val', 'ball_tree', 'cluster', 'covariance', 'datasets',
            'decomposition', 'feature_extraction', 'feature_selection',
            'gaussian_process', 'grid_search', 'hmm', 'lda', 'linear_model',
-           'metrics', 'mixture', 'naive_bayes', 'neighbors', 'pipeline', 
+           'metrics', 'mixture', 'naive_bayes', 'neighbors', 'pipeline',
            'preprocessing', 'qda', 'svm', 'test', 'clone', 'pls', 'tree_model']
 
-__version__ = '0.8.git'
+__version__ = '0.9-git'

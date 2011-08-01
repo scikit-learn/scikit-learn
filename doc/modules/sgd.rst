@@ -20,20 +20,20 @@ SGD has been successfully applied to large-scale and sparse machine
 learning problems often encountered in text classification and natural
 language processing.  Given that the data is sparse, the classifiers
 in this module easily scale to problems with more than 10^5 training
-examples and more than 10^4 features.
+examples and more than 10^5 features.
 
 The advantages of Stochastic Gradient Descent are:
 
-    - Efficiency.
+    + Efficiency.
 
-    - Ease of implementation (lots of opportunities for code tuning).
+    + Ease of implementation (lots of opportunities for code tuning).
 
 The disadvantages of Stochastic Gradient Descent include:
 
-    - SGD requires a number of hyperparameters including the regularization
+    + SGD requires a number of hyperparameters such as the regularization
       parameter and the number of iterations.
 
-    - SGD is sensitive to feature scaling.
+    + SGD is sensitive to feature scaling.
 
 Classification
 ==============
@@ -60,7 +60,8 @@ for the training samples::
     >>> clf = SGDClassifier(loss="hinge", penalty="l2")
     >>> clf.fit(X, y)
     SGDClassifier(loss='hinge', n_jobs=1, shuffle=False, verbose=0, n_iter=5,
-           fit_intercept=True, penalty='l2', seed=0, rho=1.0, alpha=0.0001)
+           learning_rate='optimal', fit_intercept=True, penalty='l2',
+           power_t=0.5, seed=0, eta0=0.0, rho=1.0, alpha=0.0001)
 
 After being fitted, the model can then be used to predict new values::
 
@@ -75,8 +76,8 @@ the model parameters::
 
 Member `intercept_` holds the intercept (aka offset or bias)::
 
-    >>> clf.intercept_
-    array(-9.9900299301496904)
+    >>> clf.intercept_                                    # doctest: +ELLIPSIS
+    array(-9.990...)
 
 Whether or not the model should use an intercept, i.e. a biased
 hyperplane, is controlled by the parameter `fit_intercept`.
@@ -89,9 +90,9 @@ To get the signed distance to the hyperplane use `decision_function`::
 The concrete loss function can be set via the `loss`
 parameter. :class:`SGDClassifier` supports the following loss functions:
 
-  - `loss="hinge"`: (soft-margin) linear Support Vector Machine.
-  - `loss="modified_huber"`: smoothed hinge loss.
-  - `loss="log"`: Logistic Regression
+  * `loss="hinge"`: (soft-margin) linear Support Vector Machine.
+  * `loss="modified_huber"`: smoothed hinge loss.
+  * `loss="log"`: Logistic Regression
 
 The first two loss functions are lazy, they only update the model
 parameters if an example violates the margin constraint, which makes
@@ -109,9 +110,9 @@ largest class label::
 The concrete penalty can be set via the `penalty` parameter. `SGD`
 supports the following penalties:
 
-  - `penalty="l2"`: L2 norm penalty on `coef_`.
-  - `penalty="l1"`: L1 norm penalty on `coef_`.
-  - `penalty="elasticnet"`: Convex combination of L2 and L1; `rho * L2 + (1 - rho) * L1`.
+  * `penalty="l2"`: L2 norm penalty on `coef_`.
+  * `penalty="l1"`: L1 norm penalty on `coef_`.
+  * `penalty="elasticnet"`: Convex combination of L2 and L1; `rho * L2 + (1 - rho) * L1`.
 
 The default setting is `penalty="l2"`. The L1 penalty leads to sparse
 solutions, driving most coefficients to zero. The Elastic Net solves
@@ -146,10 +147,10 @@ further information.
 
 .. topic:: Examples:
 
- * :ref:`example_linear_model_plot_sgd_separating_hyperplane.py`,
- * :ref:`example_linear_model_plot_sgd_iris.py`
- * :ref:`example_linear_model_plot_sgd_weighted_classes.py`
- * :ref:`example_linear_model_plot_sgd_weighted_samples.py`
+ - :ref:`example_linear_model_plot_sgd_separating_hyperplane.py`,
+ - :ref:`example_linear_model_plot_sgd_iris.py`
+ - :ref:`example_linear_model_plot_sgd_weighted_classes.py`
+ - :ref:`example_linear_model_plot_sgd_weighted_samples.py`
 
 Regression
 ==========
@@ -169,8 +170,8 @@ samples (> 10.000), for other problems we recommend :class:`Ridge`,
 The concrete loss function can be set via the `loss`
 parameter. :class:`SGDRegressor` supports the following loss functions:
 
-  - `loss="squared_loss"`: Ordinary least squares.
-  - `loss="huber"`: Huber loss for robust regression.
+  * `loss="squared_loss"`: Ordinary least squares.
+  * `loss="huber"`: Huber loss for robust regression.
 
 The Huber loss function is an epsilon insensitive loss function for 
 robust regression. The width of the insensitive region has to be 
@@ -178,7 +179,7 @@ specified via the parameter `epsilon`.
 
 .. topic:: Examples:
 
- * :ref:`example_linear_model_plot_sgd_ols.py`,
+ - :ref:`example_linear_model_plot_sgd_ols.py`,
 
 
 .. currentmodule:: scikits.learn.linear_model.sparse
@@ -207,7 +208,7 @@ of the model parameters via the attribute `sparse_coef_`.
 
 .. topic:: Examples:
 
- * :ref:`example_document_classification_20newsgroups.py`
+ - :ref:`example_document_classification_20newsgroups.py`
 
 Complexity
 ==========
@@ -230,11 +231,12 @@ Tips on Practical Use
     it to have mean 0 and variance 1. Note that the *same* scaling
     must be applied to the test vector to obtain meaningful
     results. This can be easily done using :class:`Scaler`::
+
       from scikits.learn.preprocessing import Scaler
       scaler = Scaler()
       scaler.fit(X_train)  # Don't cheat - fit only on training data
-      scaler.transform(X_train)
-      scaler.transform(X_test)  # apply same transformation to test data
+      X_train = scaler.transform(X_train)
+      X_test = scaler.transform(X_test)  # apply same transformation to test data
 
     If your attributes have an intrinsic scale (e.g. word frequencies or 
     indicator features) scaling is not needed.
@@ -247,6 +249,11 @@ Tips on Practical Use
     approx. 10^6 training samples. Thus, a reasonable first guess
     for the number of iterations is `n_iter = np.ceil(10**6 / n)`,
     where `n` is the size of the training set.
+
+  * If you apply SGD to features extracted using PCA we found that
+    it is often wise to scale the feature values by some constant `c`
+    such that the average L2 norm of the training data equals one.
+    
 
 .. topic:: References:
 
@@ -322,6 +329,29 @@ example updates the model parameters according to the update rule given by
 where :math:`\eta` is the learning rate which controls the step-size in
 the parameter space.  The intercept :math:`b` is updated similarly but
 without regularization.
+
+The learning rate :math:`\eta` can be either constant or gradually decaying. For
+classification, the default learning rate schedule (`learning_rate='optimal'`) 
+is given by
+
+.. math::
+
+    \eta^{(t)} = \frac {1.0}{t+t0}
+
+where :math:`t0` is the time step (there are a total of `n_samples*epochs` 
+time steps), :math:`t0` is choosen automatically assuming that the norm of
+the training samples is approx. 1. 
+For regression, the default learning rate schedule, inverse scaling 
+(`learning_rate='invscaling'`), is given by
+
+.. math::
+
+    \eta^{(t)} = \frac{eta_0}{t^{power\_t}}
+
+where :math:`eta_0` and :math:`power\_t` are hyperparameters choosen by the
+user.
+For a constant learning rate use `learning_rate='constant'` and use `eta0`
+to specify the learning rate. 
 
 The model parameters can be accessed through the members coef\_ and
 intercept\_:

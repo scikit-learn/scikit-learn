@@ -97,6 +97,7 @@ parameters = {
 #    'vect__max_features': (None, 5000, 10000, 50000),
     'vect__analyzer__max_n': (1, 2), # words or bigrams
 #    'tfidf__use_idf': (True, False),
+#    'tfidf__norm': ('l1', 'l2'),
     'clf__alpha': (0.00001, 0.000001),
     'clf__penalty': ('l2', 'elasticnet'),
 #    'clf__n_iter': (10, 50, 80),
@@ -104,7 +105,7 @@ parameters = {
 
 # find the best parameters for both the feature extraction and the
 # classifier
-grid_search = GridSearchCV(pipeline, parameters, n_jobs=-1)
+grid_search = GridSearchCV(pipeline, parameters)
 
 # cross-validation doesn't work if the length of the data is not known,
 # hence use lists instead of iterators

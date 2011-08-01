@@ -6,7 +6,9 @@ Generate samples of synthetic data sets.
 # License: BSD 3 clause
 
 import numpy as np
-import numpy.random as nr
+from scipy import linalg
+
+from ..utils import check_random_state
 
 
 def test_dataset_classif(n_samples=100, n_features=100, param=[1, 1],
@@ -123,8 +125,9 @@ def sparse_uncorrelated(n_samples=100, n_features=10):
 
     cf.Celeux et al. 2009,  Bayesian regularization in regression)
 
-    X = NR.normal(0, 1)
-    Y = NR.normal(X[:, 0] + 2 * X[:, 1] - 2 * X[:, 2] - 1.5 * X[:, 3])
+    import numpy as np
+    X = np.random.normal(0, 1)
+    Y = np.random.normal(X[:, 0] + 2 * X[:, 1] - 2 * X[:, 2] - 1.5 * X[:, 3])
     The number of features is at least 10.
 
     Parameters
@@ -139,8 +142,8 @@ def sparse_uncorrelated(n_samples=100, n_features=10):
     X : numpy array of shape (n_samples, n_features) for input samples
     y : numpy array of shape (n_samples) for labels
     """
-    X = nr.normal(loc=0, scale=1, size=(n_samples, n_features))
-    y = nr.normal(loc=X[:, 0] + 2 * X[:, 1] - 2 * X[:, 2] - 1.5 * X[:, 3],
+    X = np.random.normal(loc=0, scale=1, size=(n_samples, n_features))
+    y = np.random.normal(loc=X[:, 0] + 2 * X[:, 1] - 2 * X[:, 2] - 1.5 * X[:, 3],
                   scale=np.ones(n_samples))
     return X, y
 
@@ -166,17 +169,17 @@ def friedman(n_samples=100, n_features=10, noise_std=1):
         number of features (default is 10).
 
     noise_std : float
-        std of the noise, which is added as noise_std*NR.normal(0,1)
+        std of the noise, which is added as noise_std*np.random.normal(0,1)
 
     Returns
     -------
     X : numpy array of shape (n_samples, n_features) for input samples
     y : numpy array of shape (n_samples,) for labels
     """
-    X = nr.normal(loc=0, scale=1, size=(n_samples, n_features))
+    X = np.random.normal(loc=0, scale=1, size=(n_samples, n_features))
     y = 10 * np.sin(X[:, 0] * X[:, 1]) + 20 * (X[:, 2] - 0.5) ** 2 \
             + 10 * X[:, 3] + 5 * X[:, 4]
-    y += noise_std * nr.normal(loc=0, scale=1, size=n_samples)
+    y += noise_std * np.random.normal(loc=0, scale=1, size=n_samples)
     return X, y
 
 
@@ -362,6 +365,10 @@ def swiss_roll(n_samples, noise=0.0):
     X : array of shape [n_samples, 3]
         The points.
 
+    t : array of shape [n_samples]
+        The univariate possition of the sample according to the main dimension
+        of the points in the manifold.
+
     Notes
     -----
     Original code from:
@@ -374,4 +381,119 @@ def swiss_roll(n_samples, noise=0.0):
            + noise * np.random.randn(3, n_samples)
     X = np.transpose(X)
     t = np.squeeze(t)
-    return X
+    return X, t
+
+def s_curve(n_samples, noise=0.0):
+    """Generate S curve dataset
+
+    Parameters
+    ----------
+    n_samples : int
+        Number of points on the S curve
+
+    noise : float (optional)
+        Noise level. By default no noise.
+
+    Returns
+    -------
+    X : array of shape [n_samples, 3]
+        The points.
+    """
+    np.random.seed(0)
+
+    t = 3*np.pi * (np.random.rand(1,n_samples) - 0.5)
+    x = np.sin(t)
+    y = np.random.rand(1,n_samples)*2.0
+    z = np.sign(t)*(np.cos(t)-1)
+
+    X = np.concatenate((x,y,z)).T
+    t = np.squeeze(t)
+
+    return X, t
+
+def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
+               center_box=(-10.0, 10.0), shuffle=True, random_state=0):
+    """Generate isotropic Gaussian blobs for clustering
+
+    Parameters
+    ----------
+    n_samples : int (default 100)
+        Total number of points equally divided among clusters
+
+    n_features : int (default 2)
+        Number of dimensions for each sample
+
+    centers : int or array of shape [n_centers, n_features] (default 3)
+        Number of centers to generate or fixed center location
+
+    cluster_std: float or sequace of floats
+        Standard deviation of the clusters
+
+    center_box: pair of floats (min, max)
+        Bounding box for each cluster center when randomly generated
+        positions
+
+    shuffle: boolean (default True)
+        Shuffle the order of the sample
+
+    random_state: int or RandomState instance (default 0)
+        Seed used by the pseudo random number generator
+
+    Return
+    ------
+    samples : array of shape [n_samples, n_features]
+        The generated samples
+
+    labels : array of shape [n_samples]
+        The integer labels for class membership of each sample
+
+    Example
+    -------
+
+      >>> from scikits.learn.datasets.samples_generator import make_blobs
+      >>> samples, labels = make_blobs(n_samples=10, centers=3, n_features=2)
+      >>> samples.shape
+      (10, 2)
+      >>> labels
+      array([0, 0, 1, 0, 2, 2, 2, 1, 1, 0])
+
+    """
+    random_state = check_random_state(random_state)
+
+    if isinstance(centers, int):
+        centers = random_state.uniform(center_box[0], center_box[1],
+                                       size=(centers, n_features))
+    else:
+        centers = np.atleast_2d(centers)
+        n_features = centers.shape[1]
+
+    blobs = []
+    labels = []
+
+    n_centers = centers.shape[0]
+    n_samples_per_center = [n_samples / n_centers] * n_centers
+    n_samples_per_center[0] += n_samples % n_centers
+
+    for i, n in enumerate(n_samples_per_center):
+        blobs.append(centers[i] + random_state.normal(scale=cluster_std,
+                                                      size=(n, n_features)))
+        labels += [i] * n
+
+    samples = np.concatenate(blobs)
+    labels = np.array(labels)
+    if shuffle:
+        indices = np.arange(samples.shape[0])
+        random_state.shuffle(indices)
+        samples = samples[indices]
+        labels = labels[indices]
+    return samples, labels
+
+
+def generate_random_spd_matrix(ndim, random_state=0):
+    """Return a random symmetric, positive-definite matrix."""
+    prng = check_random_state(random_state)
+    A = prng.rand(ndim, ndim)
+    U, s, V = linalg.svd(np.dot(A.T, A))
+    rand_spd = np.dot(np.dot(U, 1.0 + np.diag(prng.rand(ndim))), V)
+    return rand_spd
+

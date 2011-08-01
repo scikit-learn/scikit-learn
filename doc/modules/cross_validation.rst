@@ -20,113 +20,93 @@ can  be computationally expensive, but does not waste too much data (as it is th
 case when fixing an arbitrary test set), which is a major advantage in problem
 such as inverse inference where the number of samples is very small.
 
-
-
-
-
 Examples
 --------
 
-:ref:`example_plot_roc_crossval.py`,
-:ref:`example_grid_search_digits.py`,
-:ref:`example_rfe_with_cross_validation.py`,
-
-
-
-
-
+* :ref:`example_plot_roc_crossval.py`,
+* :ref:`example_plot_rfe_with_cross_validation.py`,
+* :ref:`example_grid_search_digits.py`,
+* :ref:`example_grid_search_text_feature_extraction.py`,
 
 
 Leave-One-Out - LOO
 ===================
 
-:class:`LeaveOneOut`
-The *Leave-One-Out* (or LOO) is a simple cross-validation. Each learning
-set is created by taking all the samples except one, the test set being the
-sample left out. Thus, for *n* samples, we have *n* different learning sets and
-*n* different tests set. This cross-validation procedure does not waste much
-data as only one sample is removed from the learning set.
+:class:`LeaveOneOut` The *Leave-One-Out* (or LOO) is a simple
+cross-validation. Each learning set is created by taking all the samples
+except one, the test set being the sample left out. Thus, for `n` samples,
+we have `n` different learning sets and `n` different tests set. This
+cross-validation procedure does not waste much data as only one sample
+is removed from the learning set::
 
-
-
-    >>> import numpy as np
-    >>> from scikits.learn.cross_val import LeaveOneOut
-    >>> X = np.array([[0., 0.], [1., 1.], [-1., -1.], [2., 2.]])
-    >>> Y = np.array([0, 1, 0, 1])
-    >>> loo = LeaveOneOut(len(Y))
-    >>> print loo
-    scikits.learn.cross_val.LeaveOneOut(n=4)
-    >>> for train, test in loo: print train, test
-    [False  True  True  True] [ True False False False]
-    [ True False  True  True] [False  True False False]
-    [ True  True False  True] [False False  True False]
-    [ True  True  True False] [False False False  True]
+  >>> import numpy as np
+  >>> from scikits.learn.cross_val import LeaveOneOut
+  >>> X = np.array([[0., 0.], [1., 1.], [-1., -1.], [2., 2.]])
+  >>> Y = np.array([0, 1, 0, 1])
+  >>> loo = LeaveOneOut(len(Y))
+  >>> print loo
+  scikits.learn.cross_val.LeaveOneOut(n=4)
+  >>> for train, test in loo: print train, test
+  [False  True  True  True] [ True False False False]
+  [ True False  True  True] [False  True False False]
+  [ True  True False  True] [False False  True False]
+  [ True  True  True False] [False False False  True]
 
 
 Each fold is constituted by two arrays: the first one is related to the
 *training set*, and the second one to the *test set*.
-Thus, one can create the training/test sets using:
+Thus, one can create the training/test sets using::
 
-    >>> X_train, X_test, y_train, y_test = X[train], X[test], Y[train], Y[test]
+  >>> X_train, X_test, y_train, y_test = X[train], X[test], Y[train], Y[test]
 
 If X or Y are `scipy.sparse` matrices, train and test need to be
 integer indices. It can be obtained by setting the parameter indices to True
-when creating the cross-validation procedure.
+when creating the cross-validation procedure::
 
-    >>> import numpy as np
-    >>> from scikits.learn.cross_val import LeaveOneOut
-    >>> X = np.array([[0., 0.], [1., 1.], [-1., -1.], [2., 2.]])
-    >>> Y = np.array([0, 1, 0, 1])
-    >>> loo = LeaveOneOut(len(Y), indices=True)
-    >>> print loo
-    scikits.learn.cross_val.LeaveOneOut(n=4)
-    >>> for train, test in loo: print train, test
-    [1 2 3] [0]
-    [0 2 3] [1]
-    [0 1 3] [2]
-    [0 1 2] [3]
+  >>> import numpy as np
+  >>> from scikits.learn.cross_val import LeaveOneOut
+  >>> X = np.array([[0., 0.], [1., 1.], [-1., -1.], [2., 2.]])
+  >>> Y = np.array([0, 1, 0, 1])
+  >>> loo = LeaveOneOut(len(Y), indices=True)
+  >>> print loo
+  scikits.learn.cross_val.LeaveOneOut(n=4)
+  >>> for train, test in loo: print train, test
+  [1 2 3] [0]
+  [0 2 3] [1]
+  [0 1 3] [2]
+  [0 1 2] [3]
 
 
 Leave-P-Out - LPO
 =================
 
-
 :class:`LeavePOut`
 *Leave-P-Out* is very similar to *Leave-One-Out*, as it creates all the
 possible training/test sets by removing *P* samples from the complete set.
 
+Example of Leave-2-Out::
 
-Example of Leave-2-Out:
-
->>> from scikits.learn.cross_val import LeavePOut
->>> X = [[0., 0.], [1., 1.], [-1., -1.], [2., 2.]]
->>> Y = [0, 1, 0, 1]
->>> loo = LeavePOut(len(Y), 2)
->>> print loo
-scikits.learn.cross_val.LeavePOut(n=4, p=2)
->>> for train, test in loo: print train,test
-[False False  True  True] [ True  True False False]
-[False  True False  True] [ True False  True False]
-[False  True  True False] [ True False False  True]
-[ True False False  True] [False  True  True False]
-[ True False  True False] [False  True False  True]
-[ True  True False False] [False False  True  True]
+  >>> from scikits.learn.cross_val import LeavePOut
+  >>> X = [[0., 0.], [1., 1.], [-1., -1.], [2., 2.]]
+  >>> Y = [0, 1, 0, 1]
+  >>> loo = LeavePOut(len(Y), 2)
+  >>> print loo
+  scikits.learn.cross_val.LeavePOut(n=4, p=2)
+  >>> for train, test in loo: print train,test
+  [False False  True  True] [ True  True False False]
+  [False  True False  True] [ True False  True False]
+  [False  True  True False] [ True False False  True]
+  [ True False False  True] [False  True  True False]
+  [ True False  True False] [False  True False  True]
+  [ True  True False False] [False False  True  True]
 
 All the possible folds are created, and again, one can create the training/test
-sets using:
+sets using::
 
->>> import numpy as np
->>> X = np.asanyarray(X)
->>> Y = np.asanyarray(Y)
->>> X_train, X_test, y_train, y_test = X[train], X[test], Y[train], Y[test]
-
-
-
-
-
-
-
-
+  >>> import numpy as np
+  >>> X = np.asanyarray(X)
+  >>> Y = np.asanyarray(Y)
+  >>> X_train, X_test, y_train, y_test = X[train], X[test], Y[train], Y[test]
 
 
 K-fold
@@ -134,33 +114,26 @@ K-fold
 
 :class:`KFold`
 
-The *K-fold* divides all the samples in *K* groups of samples, called folds (if
-:math:`K = n`, we retrieve the *LOO*), of equal sizes (if possible). The
-prediction function is learned using *K - 1* folds, and the fold left out is
-used for test.
+The *K-fold* divides all the samples in *K* groups of samples, called
+folds (if :math:`K = n`, we retrieve the *LOO*), of equal sizes (if
+possible). The prediction function is learned using *K - 1* folds,
+and the fold left out is used for test.
 
+Example of 2-fold::
 
-Example of 2-fold:
-
->>> from scikits.learn.cross_val import KFold
->>> X = [[0., 0.], [1., 1.], [-1., -1.], [2., 2.]]
->>> Y = [0, 1, 0, 1]
->>> loo = KFold(len(Y), 2)
->>> print loo
-scikits.learn.cross_val.KFold(n=4, k=2)
->>> for train, test in loo: print train,test
-[False False  True  True] [ True  True False False]
-[ True  True False False] [False False  True  True]
-
-
-
-
-
+  >>> from scikits.learn.cross_val import KFold
+  >>> X = [[0., 0.], [1., 1.], [-1., -1.], [2., 2.]]
+  >>> Y = [0, 1, 0, 1]
+  >>> loo = KFold(len(Y), 2)
+  >>> print loo
+  scikits.learn.cross_val.KFold(n=4, k=2)
+  >>> for train, test in loo: print train,test
+  [False False  True  True] [ True  True False False]
+  [ True  True False False] [False False  True  True]
 
 
 Stratified K-Fold
 =================
-
 
 :class:`StratifiedKFold`
 
@@ -169,27 +142,17 @@ folds, *i.e* which creates folds by preserving the same percentage for each
 class as in the complete set.
 
 
-Example of stratified 2-fold:
+Example of stratified 2-fold::
 
->>> from scikits.learn.cross_val import StratifiedKFold
->>> X = [[0., 0.], [1., 1.], [-1., -1.], [2., 2.], [3., 3.], [4., 4.], [0., 1.]]
->>> Y = [0, 0, 0, 1, 1, 1, 0]
->>> skf = StratifiedKFold(Y, 2)
->>> print skf
-scikits.learn.cross_val.StratifiedKFold(labels=[0 0 0 1 1 1 0], k=2)
->>> for train, test in skf: print train, test
-[False  True False False  True False  True] [ True False  True  True False  True False]
-[ True False  True  True False  True False] [False  True False False  True False  True]
-
-
-
-
-
-
-
-
-
-
+  >>> from scikits.learn.cross_val import StratifiedKFold
+  >>> X = [[0., 0.], [1., 1.], [-1., -1.], [2., 2.], [3., 3.], [4., 4.], [0., 1.]]
+  >>> Y = [0, 0, 0, 1, 1, 1, 0]
+  >>> skf = StratifiedKFold(Y, 2)
+  >>> print skf
+  scikits.learn.cross_val.StratifiedKFold(labels=[0 0 0 1 1 1 0], k=2)
+  >>> for train, test in skf: print train, test
+  [False  True False False  True False  True] [ True False  True  True False  True False]
+  [ True False  True  True False  True False] [False  True False False  True False  True]
 
 
 Leave-One-Label-Out - LOLO
@@ -204,48 +167,74 @@ to a specific label.
 
 For example, in the cases of multiple experiments, *LOLO* can be used to
 create a cross-validation based on the different experiments: we create a
-training set using the samples of all the experiments except one.
+training set using the samples of all the experiments except one::
 
-
->>> from scikits.learn.cross_val import LeaveOneLabelOut
->>> X = [[0., 0.], [1., 1.], [-1., -1.], [2., 2.]]
->>> Y = [0, 1, 0, 1]
->>> labels = [1, 1, 2, 2]
->>> loo = LeaveOneLabelOut(labels)
->>> print loo
-scikits.learn.cross_val.LeaveOneLabelOut(labels=[1, 1, 2, 2])
->>> for train, test in loo: print train,test
-[False False  True  True] [ True  True False False]
-[ True  True False False] [False False  True  True]
-
-
-
-
+  >>> from scikits.learn.cross_val import LeaveOneLabelOut
+  >>> X = [[0., 0.], [1., 1.], [-1., -1.], [2., 2.]]
+  >>> Y = [0, 1, 0, 1]
+  >>> labels = [1, 1, 2, 2]
+  >>> loo = LeaveOneLabelOut(labels)
+  >>> print loo
+  scikits.learn.cross_val.LeaveOneLabelOut(labels=[1, 1, 2, 2])
+  >>> for train, test in loo: print train,test
+  [False False  True  True] [ True  True False False]
+  [ True  True False False] [False False  True  True]
 
 
 Leave-P-Label-Out
 =================
-
 
 :class:`LeavePLabelOut`
 
 *Leave-P-Label-Out* is similar as *Leave-One-Label-Out*, but removes samples
 related to *P* labels for each training/test set.
 
+Example of Leave-2-Label Out::
 
-Example of Leave-2-Label Out:
+  >>> from scikits.learn.cross_val import LeavePLabelOut
+  >>> X = [[0., 0.], [1., 1.], [-1., -1.], [2., 2.], [3., 3.], [4., 4.]]
+  >>> Y = [0, 1, 0, 1, 0, 1]
+  >>> labels = [1, 1, 2, 2, 3, 3]
+  >>> loo = LeavePLabelOut(labels, 2)
+  >>> print loo
+  scikits.learn.cross_val.LeavePLabelOut(labels=[1, 1, 2, 2, 3, 3], p=2)
+  >>> for train, test in loo: print train,test
+  [False False False False  True  True] [ True  True  True  True False False]
+  [False False  True  True False False] [ True  True False False  True  True]
+  [ True  True False False False False] [False False  True  True  True  True]
 
 
->>> from scikits.learn.cross_val import LeavePLabelOut
->>> X = [[0., 0.], [1., 1.], [-1., -1.], [2., 2.], [3., 3.], [4., 4.]]
->>> Y = [0, 1, 0, 1, 0, 1]
->>> labels = [1, 1, 2, 2, 3, 3]
->>> loo = LeavePLabelOut(labels, 2)
->>> print loo
-scikits.learn.cross_val.LeavePLabelOut(labels=[1, 1, 2, 2, 3, 3], p=2)
->>> for train, test in loo: print train,test
-[False False False False  True  True] [ True  True  True  True False False]
-[False False  True  True False False] [ True  True False False  True  True]
-[ True  True False False False False] [False False  True  True  True  True]
+Bootstrapping cross-validation
+==============================
 
+:class:`Bootstrap`
+
+Bootstrapping_ is a general statistics technique that iterates the
+computation of an estimator on a resampled dataset.
+
+The :class:`Bootstrap` iterator will generate a user defined number
+of independent train / test dataset splits. Samples are then drawn
+(with replacement) on each side of the split. It furthermore possible
+to control the size of the train and test subset to make their union
+smaller than the total dataset if it is very large.
+
+.. note::
+
+  Contrary to other cross-validation strategies, bootstrapping
+  will allow some samples to occur several times in each splits.
+
+.. _Bootstrapping: http://en.wikipedia.org/wiki/Bootstrapping_%28statistics%29
+
+  >>> from scikits.learn import cross_val
+  >>> bs = cross_val.Bootstrap(9, random_state=0)
+  >>> len(bs)
+  3
+  >>> print bs
+  Bootstrap(9, n_bootstraps=3, n_train=5, n_test=4, random_state=0)
+  >>> for train_index, test_index in bs:
+  ...    print train_index, test_index
+  ...
+  [1 8 7 7 8] [0 3 0 5]
+  [5 4 2 4 2] [6 7 1 0]
+  [4 7 0 1 1] [5 3 6 5]
 
