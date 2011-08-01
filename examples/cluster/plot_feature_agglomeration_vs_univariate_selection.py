@@ -67,7 +67,7 @@ ward = WardAgglomeration(n_clusters=10, connectivity=A, memory=mem,
                          n_components=1)
 clf = Pipeline([('ward', ward), ('ridge', ridge)])
 # Select the optimal number of parcels with grid search
-clf = GridSearchCV(clf, {'ward__n_clusters': [10, 20, 30]})
+clf = GridSearchCV(clf, {'ward__n_clusters': [10, 20, 30]}, n_jobs=1)
 clf.fit(X, y, cv=cv) # set the best parameters
 coef_ = clf.best_estimator.steps[-1][1].coef_
 coef_ = clf.best_estimator.steps[0][1].inverse_transform(coef_)
