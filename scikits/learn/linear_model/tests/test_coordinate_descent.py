@@ -115,10 +115,10 @@ def test_lasso_path():
     # build an ill-posed linear regression problem with many noisy features and
     # comparatively few samples
     n_samples, n_features, max_iter = 50, 200, 30
-    np.random.seed(0)
-    w = np.random.randn(n_features)
+    random_state = np.random.RandomState(0)
+    w = random_state.randn(n_features)
     w[10:] = 0.0 # only the top 10 features are impacting the model
-    X = np.random.randn(n_samples, n_features)
+    X = random_state.randn(n_samples, n_features)
     y = np.dot(X, w)
 
     clf = LassoCV(n_alphas=100, eps=1e-3).fit(X, y, max_iter=max_iter)
@@ -129,7 +129,7 @@ def test_lasso_path():
     assert_almost_equal(clf.alpha, 0.011, 2)
 
     # test set
-    X_test = np.random.randn(n_samples, n_features)
+    X_test = random_state.randn(n_samples, n_features)
     y_test = np.dot(X_test, w)
     assert clf.score(X_test, y_test) > 0.85
 
@@ -139,10 +139,10 @@ def test_enet_path():
     # build an ill-posed linear regression problem with many noisy features and
     # comparatively few samples
     n_samples, n_features, max_iter = 50, 200, 50
-    np.random.seed(0)
-    w = np.random.randn(n_features)
+    random_state = np.random.RandomState(0)
+    w = random_state.randn(n_features)
     w[10:] = 0.0 # only the top 10 features are impacting the model
-    X = np.random.randn(n_samples, n_features)
+    X = random_state.randn(n_samples, n_features)
     y = np.dot(X, w)
 
     clf = ElasticNetCV(n_alphas=100, eps=1e-3, rho=0.95)
@@ -154,7 +154,7 @@ def test_enet_path():
     assert_almost_equal(clf.alpha, 0.00779, 2)
 
     # test set
-    X_test = np.random.randn(n_samples, n_features)
+    X_test = random_state.randn(n_samples, n_features)
     y_test = np.dot(X_test, w)
     assert clf.score(X_test, y_test) > 0.99
     
@@ -162,10 +162,10 @@ def test_path_parameters():
     # build an ill-posed linear regression problem with many noisy features and
     # comparatively few samples
     n_samples, n_features, max_iter = 50, 200, 50
-    np.random.seed(0)
-    w = np.random.randn(n_features)
+    random_state = np.random.RandomState(0)
+    w = random_state.randn(n_features)
     w[10:] = 0.0 # only the top 10 features are impacting the model
-    X = np.random.randn(n_samples, n_features)
+    X = random_state.randn(n_samples, n_features)
     y = np.dot(X, w)
     
     clf = ElasticNetCV(n_alphas=100, eps=1e-3, rho=0.95)
