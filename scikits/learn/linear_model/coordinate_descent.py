@@ -297,6 +297,7 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
     -----
     See examples/plot_lasso_coordinate_descent_path.py for an example.
     """
+   
     X, y, Xmean, ymean = LinearModel._center_data(X, y, fit_intercept)
     X = np.asfortranarray(X)  # make data contiguous in memory
 
@@ -370,32 +371,26 @@ class LinearModelCV(LinearModel):
         n_samples = X.shape[0]
 
         # Start to compute path on full data
-        path_params = fit_params.copy()
+        path_params = dict()
         acceptable_params = self.estimator._get_param_names()
         for param, value in self._get_params().iteritems():
             if param in acceptable_params:
                 path_params[param] = value
         models = self.path(X, y, **path_params)
 
+        # Path params update
         alphas = [model.alpha for model in models]
         n_alphas = len(alphas)
+        path_params.update({'alphas':alphas, 'n_alphas':n_alphas})
 
         # init cross-validation generator
         cv = self.cv if self.cv else KFold(n_samples, 5)
 
-        params = dict()
-        for param, value in self._get_params().iteritems():
-            if param in acceptable_params:
-                params[param] = value
-        params['alphas'] = alphas
-        params['n_alphas'] = n_alphas
-
         # Compute path for all folds and compute MSE to get the best alpha
         folds = list(cv)
         mse_alphas = np.zeros((len(folds), n_alphas))
-        fit_params.update(params)
         for i, (train, test) in enumerate(folds):
-            models_train = self.path(X[train], y[train], **fit_params)
+            models_train = self.path(X[train], y[train], **path_params)
             for i_alpha, model in enumerate(models_train):
                 y_ = model.predict(X[test])
                 mse_alphas[i, i_alpha] += ((y_ - y[test]) ** 2).mean()
