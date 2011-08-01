@@ -68,100 +68,77 @@ cpdef bincount_k(np.ndarray[np.int_t, ndim=1] X, int K):
           
     be the proportion of class k observations in node m   
 """  
-cpdef double eval_gini(np.ndarray[np.int_t, ndim=1] left_labels, 
-                       np.ndarray[np.int_t, ndim=1] right_labels)  except * :
+cpdef double eval_gini(np.ndarray[np.int_t, ndim=1] labels)  except * :
     """
         
         Gini index = \sum_{k=0}^{K-1} pmk (1 - pmk)
                    = 1 - \sum_{k=0}^{K-1} pmk ** 2
             
     """
-    cdef int K = max(int(left_labels.max()), int(right_labels.max())) + 1
-    N0 = float(left_labels.shape[0])
-    N1 = float(right_labels.shape[0])      
+    cdef int K = int(labels.max()) + 1
+    N = float(labels.shape[0])
     
-    cdef np.ndarray[np.float64_t, ndim=1] pm_left = \
-        bincount_k(left_labels, K) / N0
-    cdef np.ndarray[np.float64_t, ndim=1] pm_right = \
-        bincount_k(right_labels, K) / N1
+    cdef np.ndarray[np.float64_t, ndim=1] pm = \
+        bincount_k(labels, K) / N
         
-    cdef double H = 2.
+    cdef double H = 1.
     cdef Py_ssize_t k
     for k in range(K):    
-        H += -1. * pow(pm_left[k],2)  + -1. * pow(pm_right[k],2)
+        H -=  pow(pm[k],2) 
          
-    return H     
+    return H   
 
-cpdef double eval_entropy(np.ndarray[np.int_t, ndim=1] left_labels, 
-                          np.ndarray[np.int_t, ndim=1] right_labels)  except * :
+cpdef double eval_entropy(np.ndarray[np.int_t, ndim=1] labels)  except * :
     """
         
         Cross Entropy = - \sum_{k=0}^{K-1} pmk log(pmk)
             
     """
-    cdef int K = max(int(left_labels.max()), int(right_labels.max())) + 1
-    N0 = float(left_labels.shape[0])
-    N1 = float(right_labels.shape[0])      
+    cdef int K = int(labels.max()) + 1
+    N = float(labels.shape[0])
     
-    cdef np.ndarray[np.float64_t, ndim=1] pm_left = \
-        bincount_k(left_labels, K) / N0
-    cdef np.ndarray[np.float64_t, ndim=1] pm_right = \
-        bincount_k(right_labels, K) / N1
+    cdef np.ndarray[np.float64_t, ndim=1] pm = \
+        bincount_k(labels, K) / N
         
-    cdef double H = 2.
+    cdef double H = 0.
     cdef Py_ssize_t k
     for k in range(K):
-        if pm_left[k] > 0: 
-            H += -1 * (pm_left[k] * log(pm_left[k]))  
-        if pm_right[k] > 0:     
-            H += -1 * (pm_right[k] * log(pm_right[k])) 
+        if pm[k] > 0 :    
+            H +=  -pm[k] * log(pm[k])
          
-    return H 
+    return H   
 
-cpdef double eval_miss(np.ndarray[np.int_t, ndim=1] left_labels, 
-                       np.ndarray[np.int_t, ndim=1] right_labels)  except * :
+cpdef double eval_miss(np.ndarray[np.int_t, ndim=1] labels)  except * :
     """
         
         Misclassification error = (1 - pmk)
             
     """
-    cdef int K = max(int(left_labels.max()), int(right_labels.max())) + 1
-    N0 = float(left_labels.shape[0])
-    N1 = float(right_labels.shape[0])      
+    cdef int K = int(labels.max()) + 1
+    N = float(labels.shape[0])
     
-    cdef np.ndarray[np.float64_t, ndim=1] pm_left = \
-        bincount_k(left_labels, K) / N0
-    cdef np.ndarray[np.float64_t, ndim=1] pm_right = \
-        bincount_k(right_labels, K) / N1
+    cdef np.ndarray[np.float64_t, ndim=1] pm = \
+        bincount_k(labels, K) / N
         
-    cdef double H = 2. - pm_left.max() - pm_right.max() 
-             
-    return H 
-    
+    cdef double H = 1. - pm.max()
     
 """
  Regression entropy measures
  
 """      
-cpdef double eval_mse(np.ndarray[np.float64_t, ndim=1] left_labels, 
-                      np.ndarray[np.float64_t, ndim=1] right_labels)  except * :
+cpdef double eval_mse(np.ndarray[np.float64_t, ndim=1] labels)  except * :
     """             
-        MSE =  \sum_i (y_ileft - c0)^2 + \sum_i (y_iright - c1)^2 / N
+        MSE =  \sum_i (y_i - c0)^2  / N
             
     """   
     
-    cdef float c0 = np.mean(left_labels)
-    cdef int N0 = int(left_labels.shape[0])        
-    cdef float c1 = np.mean(right_labels)
-    cdef int N1 = int(right_labels.shape[0])  
-    cdef float N = N0 + N1  
+    cdef float c0 = np.mean(labels)
+    cdef int N = int(labels.shape[0])        
                        
     cdef double H = 0.
     cdef Py_ssize_t i
-    for i in range(N0):
-        H += pow(left_labels[i] - c0, 2) 
-    for i in range(N1):
-        H += pow(right_labels[i] - c1, 2) 
+    for i in range(N):
+        H += pow(labels[i] - c0, 2) 
     H /= N
         
     return H

@@ -49,32 +49,39 @@ class Leaf(object):
         return 'Leaf(%s)' % (self.v)
 
 class Node(object):
-    def __init__(self, featid, featval, left, right):
+    def __init__(self, featid, featval, error, left, right):
         self.featid = featid
         self.featval = featval
+        self.error = error
         self.left = left
         self.right = right
     def __str__(self):
-        return 'Node(%s,%s)' % (self.featid, self.featval)
-"""    
+        return 'x[%s] < %s, \\n error = %s' % (self.featid, self.featval, self.error)
+"""
+
 @TODO Profiling shows that this function is the bottleneck
       now that the intensive evaluation functions have been optimised.
       Consider moving this to _tree.pyx 
 """
-def _split(features, labels, criterion):
+def _find_best_split(features, labels, criterion):
 
     n_samples, n_features = features.shape
         
     best = None
-    split_error = np.inf
+    split_error = criterion(labels)
+    print split_error
     for i in xrange(n_features):
         domain_i = sorted(set(features[:,i]))
-        for d in domain_i[1:]:
-            cur_split = (features[:,i] < d)
-            error = criterion(labels[cur_split], labels[~cur_split])
+        for d1, d2 in zip(domain_i[:-1],domain_i[1:]):
+            t = (d1 + d2) / 2. 
+            cur_split = (features[:,i] < t)
+            e1 = len(labels[cur_split]) / n_samples * criterion(labels[cur_split])
+            e2 = len(labels[~cur_split]) / n_samples * criterion(labels[~cur_split])
+            #print 'i = ', i, 'e1 = ', e1, 'e2 = ', e2
+            error =  e1 + e2
             if error < split_error:
                 split_error = error
-                best = i,d
+                best = i, t, error
     return best
 
 
@@ -107,22 +114,30 @@ def _build_tree(is_classification, features, labels, criterion, \
 
 
     def recursive_partition(features, labels, depth):
-        N = float(len(labels))
-        if N < min_split or depth >= max_depth:
+        is_split_valid = True
+        
+        if depth >= max_depth:
+            is_split_valid = False
+        
+        S = _find_best_split(features, labels, criterion)
+        if S is not None:
+            dim, thresh, error  = S
+            split = features[:,dim] < thresh
+            if len(features[split]) < min_split or \
+                len(features[~split]) < min_split:
+                is_split_valid = False            
+        else:
+            is_split_valid = False
+        
+        if is_split_valid == False:
             if is_classification:
-                return Leaf(bincount_k(labels, K) / N ) 
+                return Leaf(bincount_k(labels, K) ) 
             else:
-                return Leaf(np.mean(labels))
-        S = _split(features, labels, criterion)
-        if S is None:
-            if is_classification:
-                return Leaf(bincount_k(labels, K) / N ) 
-            else:
-                return Leaf(np.mean(labels))        
-        dim,thresh = S
-        split = features[:,dim] < thresh
+                return Leaf(np.mean(labels))            
+            
         return Node(featid=sample_dims[dim],
                     featval=thresh,
+                    error=error,
                     left =recursive_partition(features[ split], \
                                               labels[ split], depth+1),
                     right=recursive_partition(features[~split], \
@@ -142,13 +157,15 @@ def _apply_tree(tree, features):
         return _apply_tree(tree.left, features)
     return _apply_tree(tree.right, features)
 
-"""    
-@TODO Print the tree to a .dot file using graphViz
-"""
-def print_tree(tree):
-    '''Print decision tree
+def _graphviz(tree):
+    '''Print decision tree in .dot format
     '''
-    pass
+    if type(tree) is Leaf:
+        return ""
+    left = "\"" + str(tree)  + "\" -> \"" + str(tree.left) + "\";\n"
+    right= "\"" + str(tree) + "\" -> \"" + str(tree.right) + "\";\n"
+
+    return left + _graphviz(tree.left) +  right + _graphviz(tree.right)
 
 class BaseDecisionTree(BaseEstimator):
     '''
@@ -181,8 +198,11 @@ class BaseDecisionTree(BaseEstimator):
         self.n_features = None
         self.tree = None
 
-    def __str__(self):
-        print_tree(self.tree)
+    def export_to_graphviz(self):
+        with open("tree.dot", 'w') as f:
+            f.write("digraph Tree {\n")
+            f.write(_graphviz(self.tree))
+            f.write("\n}\n")        
 
     def fit(self, X, y):
         """
@@ -313,7 +333,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     
     """
     def __init__(self, K, criterion='gini', max_depth=10,\
-                  min_split=5, F=None, seed=None):
+                  min_split=1, F=None, seed=None):
         BaseDecisionTree.__init__(self, K, 'classification', criterion, \
                                   max_depth, min_split, F, seed)
     
@@ -348,7 +368,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         P = np.zeros((n_samples, self.K))
         for idx, sample in enumerate(X):
             P[idx,:] = _apply_tree(self.tree, sample)
-        return P        
+            P[idx,:] /= np.sum(P[idx,:]) 
+        return P    
 
     def predict_log_proba(self, X):
         """
@@ -417,7 +438,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
 
     """
     def __init__(self, criterion='mse', max_depth=10,\
-                  min_split=5, F=None, seed=None):       
+                  min_split=1, F=None, seed=None):       
         BaseDecisionTree.__init__(self, None, 'regression', criterion, \
                                   max_depth, min_split, F, seed)
         

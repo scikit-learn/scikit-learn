@@ -211,7 +211,7 @@ class RandomForestClassifier(BaseRandomForest, ClassifierMixin):
     
     """     
     def __init__(self, K, criterion='gini', max_depth=10,\
-                  min_split=5, F=None, seed=None, n_trees=10, r=0.7, \
+                  min_split=1, F=None, seed=None, n_trees=10, r=0.7, \
                   n_jobs=2):
         base_tree = DecisionTreeClassifier( K, criterion=criterion, \
             max_depth=max_depth, min_split=min_split, F=F, seed=seed)
@@ -323,7 +323,7 @@ class RandomForestRegressor(BaseRandomForest, RegressorMixin):
     """ 
      
     def __init__(self, criterion='mse', max_depth=10,\
-                  min_split=5, F=None, seed=None, n_trees=10, r=0.7, \
+                  min_split=1, F=None, seed=None, n_trees=10, r=0.7, \
                    n_jobs=2):       
         base_tree = DecisionTreeRegressor(criterion=criterion, \
             max_depth=max_depth, min_split=min_split, F=F, seed=seed)
