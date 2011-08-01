@@ -363,7 +363,7 @@ class LinearModelCV(LinearModel):
             keyword arguments passed to the Lasso fit method
 
         """
-
+        self._set_params(**fit_params)
         X = np.asfortranarray(X, dtype=np.float64)
         y = np.asanyarray(y, dtype=np.float64)
 
