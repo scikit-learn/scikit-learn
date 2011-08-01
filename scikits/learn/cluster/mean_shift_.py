@@ -8,6 +8,7 @@ Author: Alexandre Gramfort alexandre.gramfort@inria.fr
 from math import floor
 import numpy as np
 from scipy.spatial import cKDTree
+from collections import defaultdict
 
 from ..base import BaseEstimator
 from ..metrics.pairwise import euclidean_distances
@@ -96,7 +97,6 @@ def mean_shift(X, bandwidth=None):
         this_cluster_votes = np.zeros(n_points, dtype=np.uint16)
 
         while True:  # loop until convergence
-
             # select points within bandwidth (someone familiar with numpy could remove this for loop)
             distances, indices = KDTree.query(my_mean, n_points, distance_upper_bound=bandwidth)
             in_idx = within_bandwidth = np.zeros(n_points, dtype=np.bool)
@@ -106,7 +106,6 @@ def mean_shift(X, bandwidth=None):
 
             # add a vote for all the in points belonging to this cluster
             this_cluster_votes[in_idx] += 1
-            
             my_old_mean = my_mean  # save the old mean
             my_mean = np.mean(X[in_idx, :], axis=0)  # compute the new mean
             # add any point within bandwidth to the cluster
@@ -150,6 +149,88 @@ def mean_shift(X, bandwidth=None):
 
     return cluster_centers, labels
 
+def mean_shift_grid(X, grid_width, min_grid_intensity, bandwidth=None):
+    """
+    As in mean_shift, but seed using a bucketing/binning/discretizing
+    technique for scalability
+    """
+    if bandwidth is None:
+        bandwidth = estimate_bandwidth(X)
+
+    n_points, n_features = X.shape
+    n_clusters = 0
+    stop_thresh = 1e-3 * bandwidth  # when mean has converged
+    cluster_centers = []  # center of clusters
+
+    # used to resolve conflicts on cluster membership
+    cluster_votes = []
+
+    # used to efficiently look up nearest neighbors (effective in lower dimensions)
+    KDTree = cKDTree(X)
+    
+    random_state = np.random.RandomState(0)
+
+    # Discretize (i.e., quantize, bin) points to grid locations, select grid
+    # coordiantes with more than min_grid_intensity members as seeds 
+    bin_sizes = defaultdict(int)
+    grid_factor = 1./grid_width
+    for point in X:
+        discretized_point = tuple([int(grid_factor * v) for v in point]) 
+        bin_sizes[discretized_point] += 1
+    grid_seeds = [point for point, freq in bin_sizes.iteritems() if freq >= min_grid_intensity]
+    grid_seeds = [[v / grid_factor for v in point] for point in grid_seeds]
+    print grid_seeds
+    for my_mean in grid_seeds:
+        # points that will get added to this cluster
+        my_members = np.zeros(n_points, dtype=np.bool)
+        # used to resolve conflicts on cluster membership
+        this_cluster_votes = np.zeros(n_points, dtype=np.uint16)
+
+        while True:  # loop until convergence
+            # select points within bandwidth (someone familiar with numpy could
+            # remove this for loop)
+            distances, indices = KDTree.query(my_mean, n_points, distance_upper_bound=bandwidth)
+            in_idx = within_bandwidth = np.zeros(n_points, dtype=np.bool)
+            for i in xrange(n_points):
+                if distances[i] <= bandwidth:
+                    in_idx[indices[i]] = 1
+
+            # add a vote for all the in points belonging to this cluster
+            this_cluster_votes[in_idx] += 1
+            my_old_mean = my_mean  # save the old mean
+            my_mean = np.mean(X[in_idx, :], axis=0)  # compute the new mean
+
+            if np.linalg.norm(my_mean - my_old_mean) < stop_thresh:
+
+                # check for merge possibilities
+                merge_with = -1
+                for c in range(n_clusters):
+                    # distance from possible new clust max to old clust max
+                    dist_to_other = np.linalg.norm(my_mean -
+                                                        cluster_centers[c])
+                    # if its within bandwidth/2 merge new and old
+                    if dist_to_other < bandwidth / 2:
+                        merge_with = c
+                        break
+
+                if merge_with >= 0:  # something to merge
+                    # record the max as the mean of the two merged
+                    # (I know biased towards new ones)
+                    cluster_centers[merge_with] = 0.5 * (my_mean +
+                                                cluster_centers[merge_with])
+                    # add these votes to the merged cluster
+                    cluster_votes[merge_with] += this_cluster_votes
+                else:  # its a new cluster
+                    n_clusters += 1  # increment clusters
+                    cluster_centers.append(my_mean)  # record the mean
+                    cluster_votes.append(this_cluster_votes)
+
+                break
+
+    # a point belongs to the cluster with the most votes
+    labels = np.argmax(cluster_votes, axis=0)
+
+    return cluster_centers, labels
 
 ##############################################################################
 
@@ -207,4 +288,25 @@ class MeanShift(BaseEstimator):
         """
         self._set_params(**params)
         self.cluster_centers_, self.labels_ = mean_shift(X, self.bandwidth)
+        return self
+
+
+class MeanShiftGrid(BaseEstimator):
+    def __init__(self, grid_width, min_grid_intensity, bandwidth=None):
+        self.bandwidth = bandwidth
+        self.grid_width = grid_width
+        self.min_grid_intensity = min_grid_intensity
+    def fit(self, X, **params):
+        """ Compute MeanShift
+
+            Parameters
+            -----------
+            X : array [n_samples, n_features]
+                Input points
+
+        """
+        self._set_params(**params)
+        self.cluster_centers_, self.labels_ = mean_shift_grid(X, self.grid_width,
+                                                                      self.min_grid_intensity,
+                                                                      self.bandwidth)
         return self
