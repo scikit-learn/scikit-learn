@@ -56,6 +56,8 @@ def _cholesky_omp(X, y, n_nonzero_coefs, eps=None):
 
     """
 
+    X = X.copy('F')
+
     min_float = np.finfo(X.dtype).eps
     potrs, = get_lapack_funcs(('potrs',), (X,))
 
@@ -152,7 +154,7 @@ def _gram_omp(G, Xy, n_nonzero_coefs, eps_0=None, eps=None):
             warn(premature)
             break
         if n_active > 0:
-            L[n_active, :n_active] = G[idx, lam]
+            L[n_active, :n_active] = G[lam, idx]
             v = np.dot(L[n_active, :n_active], L[n_active, :n_active])
             solve_triangular(L[:n_active, :n_active], L[n_active, :n_active])
             if 1 - v <= min_float:  # selected atoms are dependent
@@ -165,7 +167,7 @@ def _gram_omp(G, Xy, n_nonzero_coefs, eps_0=None, eps=None):
         gamma, _ = potrs(L[:n_active, :n_active], Xy[idx], lower=True,
                          overwrite_b=False)
 
-        beta = np.dot(G[:, idx], gamma)
+        beta = np.dot(gamma, G[idx])
         alpha = Xy - beta
         if eps is not None:
             eps_curr += delta
