@@ -44,21 +44,21 @@ X_pca = decomposition.RandomizedPCA(n_components=2).fit_transform(X)
 
 print "Computing LDA projection"
 X2 = X.copy()
-X2.flat[::X.shape[1] + 1] += 0.01 # Make X invertible
+X2.flat[::X.shape[1] + 1] += 0.01  # Make X invertible
 X_lda = lda.LDA(n_components=2).fit_transform(X2, y)
 
 
 #----------------------------------------------------------------------
 # Locally linear embedding of the digits dataset
 print "Computing LLE embedding"
-X_lle, err = manifold.locally_linear_embedding(X, n_neighbors, 2, reg=1e-2)
+X_lle, err = manifold.locally_linear_embedding(X, n_neighbors, 2)
 print "Done. Reconstruction error: %g" % err
 
 
 #----------------------------------------------------------------------
 # Modified Locally linear embedding of the digits dataset
 print "Computing modified LLE embedding"
-X_mlle, err = manifold.locally_linear_embedding(X, n_neighbors, 2, reg=1e-2,
+X_mlle, err = manifold.locally_linear_embedding(X, n_neighbors, 2,
                                                 method='modified')
 print "Done. Reconstruction error: %g" % err
 
@@ -69,9 +69,9 @@ print "Computing isomap embedding"
 X_iso = manifold.isomap(X, n_neighbors, 2)
 print "Done."
 
+
 #----------------------------------------------------------------------
 # Scale and visualize the embedding vectors
-
 def plot_embedding(X, title=None):
     x_min, x_max = np.min(X, 0), np.max(X, 0)
     X = (X - x_min) / (x_max - x_min)

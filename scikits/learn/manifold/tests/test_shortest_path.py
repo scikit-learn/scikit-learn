@@ -20,7 +20,7 @@ def FloydWarshallSlow(graph, directed=False):
 
     if not directed:
         graph = np.minimum(graph, graph.T)
-        
+
     for k in range(N):
         for i in range(N):
             for j in range(N):
@@ -34,7 +34,7 @@ def FloydWarshallSlow(graph, directed=False):
 def generate_graph(N=20):
     #sparse grid of distances
     dist_matrix = np.random.random((N, N))
-    
+
     #make symmetric: distances are not direction-dependent
     dist_matrix += dist_matrix.T
 
@@ -47,11 +47,11 @@ def generate_graph(N=20):
     dist_matrix.flat[::N + 1] = 0
 
     return dist_matrix
-    
+
 
 def test_FloydWarshall():
     dist_matrix = generate_graph(20)
-    
+
     for directed in (True, False):
         graph_FW = shortest_path(dist_matrix, directed, 'FW')
         graph_py = FloydWarshallSlow(dist_matrix.copy(), directed)
@@ -65,7 +65,7 @@ def test_Dijkstra():
     for directed in (True, False):
         graph_D = shortest_path(dist_matrix, directed, 'D')
         graph_py = FloydWarshallSlow(dist_matrix.copy(), directed)
-        
+
         assert_array_almost_equal(graph_D, graph_py)
 
 

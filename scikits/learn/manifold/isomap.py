@@ -5,15 +5,14 @@
 
 import numpy as np
 from scipy.linalg import eigh
-from scipy.sparse import linalg
 from ..base import BaseEstimator
 from ..utils.arpack import eigsh
 from ..neighbors import kneighbors_graph
 from .shortest_path import shortest_path
 
 
-def isomap(X, n_neighbors, out_dim, eigen_solver='arpack',
-           tol=0, max_iter=None, path_method='best'):
+def isomap(X, n_neighbors, out_dim, eigen_solver='auto',
+           tol=0, max_iter=None, path_method='auto'):
     """Perform an Isomap analysis of the data
 
     Parameters
@@ -28,8 +27,14 @@ def isomap(X, n_neighbors, out_dim, eigen_solver='arpack',
     out_dim : integer
         number of coordinates for the manifold.
 
-    eigen_solver : {'arpack', 'dense'}
-        arpack can handle both dense and sparse data efficiently
+    eigen_solver : {'auto', 'arpack', 'dense'}
+        'auto' : attempt to choose the most efficient solver
+            for the given problem.
+        'arpack' : use Arnoldi decomposition to find the eigenvalues and
+            eigenvectors.  Note that arpack can handle both dense and sparse
+            data efficiently
+        'dense' : use a direct solver (i.e. LAPACK)
+            for the eigenvalue decomposition.
 
     tol : float
         convergence tolerance passed to arpack or lobpcg.
@@ -39,11 +44,11 @@ def isomap(X, n_neighbors, out_dim, eigen_solver='arpack',
         maximum number of iterations for the arpack solver.
         not used if eigen_solver == 'dense'
 
-    path_method : string ['FW'|'D'|'best']
+    path_method : string ['auto'|'FW'|'D']
         method to use in finding shortest path.
+        'auto' : attempt to choose the best algorithm automatically
         'FW' : Floyd-Warshall algorithm
         'D' : Dijkstra algorithm with Fibonacci Heaps
-        'best' : attempt to choose the best algorithm automatically
 
     Returns
     -------
@@ -76,6 +81,12 @@ def isomap(X, n_neighbors, out_dim, eigen_solver='arpack',
     tau = -0.5 * HGH
 
     # compute the out_dim largest eigenvalues and vectors of tau
+    if eigen_solver == 'auto':
+        if n_samples > 200:
+            eigen_solver = 'arpack'
+        else:
+            eigen_solver = 'dense'
+
     if eigen_solver == 'arpack':
         eigen_values, eigen_vectors = eigsh(tau, out_dim, which='LM',
                                             tol=tol, maxiter=max_iter)
@@ -109,13 +120,12 @@ class Isomap(BaseEstimator):
         Stores the embedding vectors
     """
 
-    def __init__(self, n_neighbors=5, out_dim=2, random_state=None):
+    def __init__(self, n_neighbors=5, out_dim=2):
         self.n_neighbors = n_neighbors
         self.out_dim = out_dim
-        self.random_state = random_state
 
     def fit(self, X, Y=None, eigen_solver='dense', tol=0,
-            max_iter=None, path_method='best', **params):
+            max_iter=None, path_method='auto', **params):
         """Compute the embedding vectors for data X
 
         Parameters
@@ -123,14 +133,14 @@ class Isomap(BaseEstimator):
         X : array-like of shape [n_samples, n_features]
             training set.
 
-        n_neighbors : integer
-            number of neighbors to consider for each point.
-
-        out_dim : integer
-            number of coordinates for the manifold.
-
-        eigen_solver : {'arpack', 'dense'}
-            arpack can handle both dense and sparse data efficiently
+        eigen_solver : {'auto', 'arpack', 'dense'}
+            'auto' : attempt to choose the most efficient solver
+                for the given problem.
+            'arpack' : use Arnoldi decomposition to find the eigenvalues
+                and eigenvectors.  Note that arpack can handle both dense
+                and sparse data efficiently
+            'dense' : use a direct solver (i.e. LAPACK)
+                for the eigenvalue decomposition.
 
         tol : float
             convergence tolerance passed to arpack or lobpcg.
@@ -140,19 +150,18 @@ class Isomap(BaseEstimator):
             maximum number of iterations for the arpack solver.
             not used if eigen_solver == 'dense'
 
-        path_method : string ['FW'|'D'|'best']
+        path_method : string ['auto'|'FW'|'D']
             method to use in finding shortest path.
+            'auto' : attempt to choose the best algorithm automatically
             'FW' : Floyd-Warshall algorithm
             'D' : Dijkstra algorithm with Fibonacci Heaps
-            'best' : attempt to choose the best algorithm automatically
 
         Returns
         -------
         self : returns an instance of self.
         """
-        self.random_state = check_random_state(self.random_state)
         self._set_params(**params)
-        self.embedding_, = \
+        self.embedding_ = \
             isomap(X, self.n_neighbors, self.out_dim,
                    eigen_solver=eigen_solver, tol=tol,
                    max_iter=max_iter, path_method=path_method)

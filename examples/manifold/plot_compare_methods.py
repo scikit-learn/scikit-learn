@@ -78,7 +78,7 @@ t1 = time()
 print "Isomap: %.2g sec" % (t1 - t0)
 ax = fig.add_subplot(326)
 ax.scatter(Y[:, 0], Y[:, 1], c=color, cmap=pylab.cm.Spectral)
-ax.set_title("Isomap (%.2g sec)" % (t1-t0))
+ax.set_title("Isomap (%.2g sec)" % (t1 - t0))
 ax.xaxis.set_major_formatter(NullFormatter())
 ax.yaxis.set_major_formatter(NullFormatter())
 
