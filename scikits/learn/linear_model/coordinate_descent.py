@@ -297,7 +297,6 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
     -----
     See examples/plot_lasso_coordinate_descent_path.py for an example.
     """
-   
     X, y, Xmean, ymean = LinearModel._center_data(X, y, fit_intercept)
     X = np.asfortranarray(X)  # make data contiguous in memory
 
@@ -370,15 +369,14 @@ class LinearModelCV(LinearModel):
 
         n_samples = X.shape[0]
 
+        # All LinearModelCV parameters except 'cv' are acceptable
+        path_params = self._get_params()
+        del path_params['cv']
+
         # Start to compute path on full data
-        path_params = dict()
-        acceptable_params = self.estimator._get_param_names()
-        for param, value in self._get_params().iteritems():
-            if param in acceptable_params:
-                path_params[param] = value
         models = self.path(X, y, **path_params)
 
-        # Path params update
+        # Update the alphas list
         alphas = [model.alpha for model in models]
         n_alphas = len(alphas)
         path_params.update({'alphas':alphas, 'n_alphas':n_alphas})
