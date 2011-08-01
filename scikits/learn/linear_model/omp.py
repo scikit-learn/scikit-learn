@@ -12,12 +12,19 @@ http://blanche.polytechnique.fr/~mallat/papiers/MallatPursuit93.pdf
 #
 # License: BSD Style.
 
+from warnings import warn
+
 import numpy as np
 from scipy import linalg
 from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
 from ..utils.arrayfuncs import solve_triangular
+
+premature = """ Orthogonal matching pursuit ended prematurely due to linear
+dependence in the dictionary. The requested precision might not have been met.
+"""
+
 
 def _cholesky_omp(X, y, n_nonzero_coefs, eps=None):
     """
@@ -65,6 +72,7 @@ def _cholesky_omp(X, y, n_nonzero_coefs, eps=None):
         lam = np.abs(np.dot(X.T, residual)).argmax()
         if lam in idx or alpha[lam] ** 2 < min_float:
             # atom already selected or inner product too small
+            warn(premature)
             break
         if n_active > 0:
             # Updates the Cholesky decomposition of X' X
@@ -72,6 +80,7 @@ def _cholesky_omp(X, y, n_nonzero_coefs, eps=None):
             v = np.dot(L[n_active, :n_active], L[n_active, :n_active])
             solve_triangular(L[:n_active, :n_active], L[n_active, :n_active])
             if 1 - v <= min_float:  # selected atoms are dependent
+                warn(premature)
                 break
             L[n_active, n_active] = max(np.sqrt(np.abs(1 - v)), min_float)
         idx.append(lam)
@@ -140,12 +149,14 @@ def _gram_omp(G, Xy, n_nonzero_coefs, eps_0=None, eps=None):
         lam = np.abs(alpha).argmax()
         if lam in idx or alpha[lam] ** 2 < min_float:
             # selected same atom twice, or inner product too small
+            warn(premature)
             break
         if n_active > 0:
             L[n_active, :n_active] = G[idx, lam]
             v = np.dot(L[n_active, :n_active], L[n_active, :n_active])
             solve_triangular(L[:n_active, :n_active], L[n_active, :n_active])
             if 1 - v <= min_float:  # selected atoms are dependent
+                warn(premature)
                 break
             L[n_active, n_active] = np.sqrt(1 - v)
         idx.append(lam)
