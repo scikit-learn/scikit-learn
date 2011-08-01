@@ -82,7 +82,7 @@ def _cholesky_omp(X, y, n_nonzero_coefs, eps=None):
             if 1 - v <= min_float:  # selected atoms are dependent
                 warn(premature)
                 break
-            L[n_active, n_active] = max(np.sqrt(np.abs(1 - v)), min_float)
+            L[n_active, n_active] = np.sqrt(1 - v)
         idx.append(lam)
         n_active += 1
         # solves LL'x = y as a composition of two triangular systems
