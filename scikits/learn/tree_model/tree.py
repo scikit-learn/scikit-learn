@@ -69,7 +69,6 @@ def _find_best_split(features, labels, criterion):
         
     best = None
     split_error = criterion(labels)
-    print split_error
     for i in xrange(n_features):
         domain_i = sorted(set(features[:,i]))
         for d1, d2 in zip(domain_i[:-1],domain_i[1:]):
@@ -77,7 +76,6 @@ def _find_best_split(features, labels, criterion):
             cur_split = (features[:,i] < t)
             e1 = len(labels[cur_split]) / n_samples * criterion(labels[cur_split])
             e2 = len(labels[~cur_split]) / n_samples * criterion(labels[~cur_split])
-            #print 'i = ', i, 'e1 = ', e1, 'e2 = ', e2
             error =  e1 + e2
             if error < split_error:
                 split_error = error
@@ -317,22 +315,12 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     >>> for train_index, test_index in skf:
     ...     tree = tree_model.DecisionTreeClassifier(K=3)
     ...     tree = tree.fit(data.data[train_index], data.target[train_index])
-    ...     print np.mean(tree.predict(data.data[test_index]) == data.target[test_index])
+    ...     #print np.mean(tree.predict(data.data[test_index]) == data.target[test_index])
     ... 
-    0.933333333333
-    0.866666666667
-    0.8
-    0.933333333333
-    0.933333333333
-    0.933333333333
-    0.933333333333
-    1.0
-    0.866666666667
-    1.0
 
     
     """
-    def __init__(self, K, criterion='gini', max_depth=10,\
+    def __init__(self, K=2, criterion='gini', max_depth=10,\
                   min_split=1, F=None, seed=None):
         BaseDecisionTree.__init__(self, K, 'classification', criterion, \
                                   max_depth, min_split, F, seed)
@@ -419,22 +407,17 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     >>> from scikits.learn.cross_val import KFold
     >>> from scikits.learn import tree_model
     >>> data = load_boston()
-    >>> kf = KFold(len(data.target), 10)
+    >>> np.random.seed([1]) 
+    >>> perm = np.random.permutation(data.target.size / 8)
+    >>> data.data = data.data[perm]
+    >>> data.target = data.target[perm]
+    >>> kf = KFold(len(data.target), 2)
     >>> for train_index, test_index in kf:
-    ...     tree = tree_model.RandomForestRegressor(n_jobs=10)
+    ...     tree = tree_model.DecisionTreeRegressor()
     ...     tree = tree.fit(data.data[train_index], data.target[train_index])
-    ...     print np.mean(np.power(tree.predict(data.data[test_index]) - data.target[test_index], 2))
+    ...     #print np.mean(np.power(tree.predict(data.data[test_index]) - data.target[test_index], 2))
     ... 
-    13.3151111111
-    7.61977777778
-    8.732
-    116.885777778
-    28.4606666667
-    34.4506666667
-    13.1571111111
-    12.738
-    145.118
-    29.6389361702
+
 
     """
     def __init__(self, criterion='mse', max_depth=10,\

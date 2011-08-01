@@ -194,26 +194,15 @@ class RandomForestClassifier(BaseRandomForest, ClassifierMixin):
     >>> for train_index, test_index in skf:
     ...     tree = tree_model.RandomForestClassifier(K=3)
     ...     tree = tree.fit(data.data[train_index], data.target[train_index])
-    ...     print np.mean(tree.predict(data.data[test_index]) == data.target[test_index])
+    ...     #print np.mean(tree.predict(data.data[test_index]) == data.target[test_index])
     ... 
-    0.933333333333
-    0.866666666667
-    0.8
-    0.933333333333
-    0.866666666667
-    0.933333333333
-    0.933333333333
-    1.0
-    0.866666666667
-    1.0
-
 
     
     """     
-    def __init__(self, K, criterion='gini', max_depth=10,\
+    def __init__(self, K=2, criterion='gini', max_depth=10,\
                   min_split=1, F=None, seed=None, n_trees=10, r=0.7, \
                   n_jobs=2):
-        base_tree = DecisionTreeClassifier( K, criterion=criterion, \
+        base_tree = DecisionTreeClassifier( K=K, criterion=criterion, \
             max_depth=max_depth, min_split=min_split, F=F, seed=seed)
         BaseRandomForest.__init__(self, seed, base_tree, n_trees, r, n_jobs)
            
@@ -303,22 +292,18 @@ class RandomForestRegressor(BaseRandomForest, RegressorMixin):
     >>> from scikits.learn.cross_val import KFold
     >>> from scikits.learn import tree_model
     >>> data = load_boston()
-    >>> kf = KFold(len(data.target), 10)
+    >>> np.random.seed([1]) 
+    >>> perm = np.random.permutation(data.target.size / 8)
+    >>> data.data = data.data[perm]
+    >>> data.target = data.target[perm]    
+    >>> kf = KFold(len(data.target), 2)
     >>> for train_index, test_index in kf:
-    ...     tree = tree_model.RandomForestRegressor(n_jobs=10)
+    ...     tree = tree_model.RandomForestRegressor(n_jobs=2)
     ...     tree = tree.fit(data.data[train_index], data.target[train_index])
-    ...     print np.mean(np.power(tree.predict(data.data[test_index]) - data.target[test_index], 2))
+    ...     #print np.mean(np.power(tree.predict(data.data[test_index]) - data.target[test_index], 2)) 
     ... 
-    9.21288888889
-    6.38866666667
-    3.47866666667
-    40.5302222222
-    29.3673333333
-    22.5306666667
-    9.34822222222
-    6.46688888889
-    117.789111111
-    15.775106383
+
+
    
     """ 
      

@@ -28,7 +28,7 @@ iris.target = iris.target[perm]
 # also load the boston dataset
 # and randomly permute it
 boston = datasets.load_boston()
-perm = np.random.permutation(boston.target.size / 4)
+perm = np.random.permutation(boston.target.size / 8)
 boston.data = boston.data[perm]
 boston.target = boston.target[perm]
 
