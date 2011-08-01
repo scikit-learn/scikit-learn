@@ -8,9 +8,9 @@
 Tree Classifier
 ================
 
-    A decision tree classifier 
-    
-    Implements Classification and Regression Trees (Breiman et al. 1984)
+A decision tree classifier
+
+Implements Classification and Regression Trees (Breiman et al. 1984)
 
 """
 
@@ -27,56 +27,72 @@ __all__ = [
     ]
 
 lookup_c = \
-      {'gini' : eval_gini,
-       'entropy' : eval_entropy, 
-       'miss' : eval_miss,
+      {'gini': eval_gini,
+       'entropy': eval_entropy,
+       'miss': eval_miss,
        }
 lookup_r = \
-      {'mse' : eval_mse,       
-      }   
+      {'mse': eval_mse,
+      }
+
 
 class Leaf(object):
     '''
         v : target value
             Classification: array-like, shape = [n_features]
-                Histogram of target values 
+                Histogram of target values
             Regression:  real number
                 Mean for the region
     '''
+
     def __init__(self, v):
         self.v = v
+
     def __str__(self):
         return 'Leaf(%s)' % (self.v)
 
+
 class Node(object):
-    def __init__(self, featid, featval, error, left, right):
-        self.featid = featid
-        self.featval = featval
+    '''
+        feat : target value
+            Classification: array-like, shape = [n_features]
+                Histogram of target values
+            Regression:  real number
+                Mean for the region
+    '''
+    
+    def __init__(self, dimension, value, error, left, right):
+        self.dimension = dimension
+        self.value = value
         self.error = error
         self.left = left
         self.right = right
+        
     def __str__(self):
-        return 'x[%s] < %s, \\n error = %s' % (self.featid, self.featval, self.error)
-"""
+        return 'x[%s] < %s, \\n error = %s' % \
+            (self.dimension, self.value, self.error)
 
-@TODO Profiling shows that this function is the bottleneck
-      now that the intensive evaluation functions have been optimised.
-      Consider moving this to _tree.pyx 
-"""
+
 def _find_best_split(features, labels, criterion):
-
+    """
+    @TODO Profiling shows that this function is the bottleneck
+          now that the intensive evaluation functions have been optimised.
+          Consider moving this to _tree.pyx 
+    """
     n_samples, n_features = features.shape
         
     best = None
     split_error = criterion(labels)
     for i in xrange(n_features):
-        domain_i = sorted(set(features[:,i]))
-        for d1, d2 in zip(domain_i[:-1],domain_i[1:]):
+        domain_i = sorted(set(features[:, i]))
+        for d1, d2 in zip(domain_i[:-1], domain_i[1:]):
             t = (d1 + d2) / 2. 
-            cur_split = (features[:,i] < t)
-            e1 = len(labels[cur_split]) / n_samples * criterion(labels[cur_split])
-            e2 = len(labels[~cur_split]) / n_samples * criterion(labels[~cur_split])
-            error =  e1 + e2
+            cur_split = (features[:, i] < t)
+            e1 = len(labels[cur_split]) / n_samples * \
+                criterion(labels[cur_split])
+            e2 = len(labels[~cur_split]) / n_samples * \
+                criterion(labels[~cur_split])
+            error = e1 + e2
             if error < split_error:
                 split_error = error
                 best = i, t, error
@@ -87,29 +103,30 @@ def _build_tree(is_classification, features, labels, criterion, \
                max_depth, min_split, F, K):
     
     if len(labels) != len(features):
-        raise ValueError("Number of labels does not match number of features\n" +
+        raise ValueError("Number of labels does not match " + \
+                          "number of features\n" + 
                          "num labels is %s and num features is %s " % 
                          (len(labels), len(features)))
         
     sample_dims = np.array(xrange(features.shape[1]))    
     if F is not None:
-        if F <= 0 :
-            raise ValueError("F must be > 0.\n" +
+        if F <= 0:
+            raise ValueError("F must be > 0.\n" + 
                              "Did you mean to use None to signal no F?")
-        if F > features.shape[1] :
-            raise ValueError("F must be < num dimensions of features.\n" +
+        if F > features.shape[1]:
+            raise ValueError("F must be < num dimensions of features.\n" + 
                              "F is %s, n_dims = %s " % (F, features.shape[1]))            
         
-        sample_dims = np.sort(np.array(random.sample(xrange(features.shape[1]), F)))
+        sample_dims = np.sort(np.array( \
+                        random.sample(xrange(features.shape[1]), F)))
         features = features[:, sample_dims]
 
     if min_split <= 0:
         raise ValueError("min_split must be greater than zero.\n" + 
-                         "min_split is %s." % min_split )
+                         "min_split is %s." % min_split)
     if max_depth <= 0:
         raise ValueError("max_depth must be greater than zero.\n" + 
-                         "max_depth is %s." % max_depth )
-
+                         "max_depth is %s." % max_depth)
 
     def recursive_partition(features, labels, depth):
         is_split_valid = True
@@ -119,8 +136,8 @@ def _build_tree(is_classification, features, labels, criterion, \
         
         S = _find_best_split(features, labels, criterion)
         if S is not None:
-            dim, thresh, error  = S
-            split = features[:,dim] < thresh
+            dim, thresh, error = S
+            split = features[:, dim] < thresh
             if len(features[split]) < min_split or \
                 len(features[~split]) < min_split:
                 is_split_valid = False            
@@ -129,19 +146,20 @@ def _build_tree(is_classification, features, labels, criterion, \
         
         if is_split_valid == False:
             if is_classification:
-                return Leaf(bincount_k(labels, K) ) 
+                return Leaf(bincount_k(labels, K)) 
             else:
                 return Leaf(np.mean(labels))            
             
         return Node(featid=sample_dims[dim],
                     featval=thresh,
                     error=error,
-                    left =recursive_partition(features[ split], \
-                                              labels[ split], depth+1),
+                    left=recursive_partition(features[split], \
+                                              labels[split], depth + 1),
                     right=recursive_partition(features[~split], \
-                                              labels[~split], depth+1))
+                                              labels[~split], depth + 1))
         
     return recursive_partition(features, labels, 0)
+
 
 def _apply_tree(tree, features):
     '''
@@ -155,15 +173,17 @@ def _apply_tree(tree, features):
         return _apply_tree(tree.left, features)
     return _apply_tree(tree.right, features)
 
+
 def _graphviz(tree):
     '''Print decision tree in .dot format
     '''
     if type(tree) is Leaf:
         return ""
-    left = "\"" + str(tree)  + "\" -> \"" + str(tree.left) + "\";\n"
-    right= "\"" + str(tree) + "\" -> \"" + str(tree.right) + "\";\n"
+    left = "\"" + str(tree) + "\" -> \"" + str(tree.left) + "\";\n"
+    right = "\"" + str(tree) + "\" -> \"" + str(tree.right) + "\";\n"
 
-    return left + _graphviz(tree.left) +  right + _graphviz(tree.right)
+    return left + _graphviz(tree.left) + right + _graphviz(tree.right)
+
 
 class BaseDecisionTree(BaseEstimator):
     '''
@@ -181,7 +201,8 @@ class BaseDecisionTree(BaseEstimator):
         self.type = impl
         
         if impl == 'classification' and K is None:
-            raise ValueError("For classification trees, K (number of classes)\n" +
+            raise ValueError("For classification trees, " + \
+                             "K (number of classes)\n" + 
                              "must be given.")                     
         self.K = K
                 
@@ -229,7 +250,7 @@ class BaseDecisionTree(BaseEstimator):
         if self.type == 'classification':
             y = np.asanyarray(y, dtype=np.int, order='C') 
             if y.max() >= self.K or y.min() < 0:
-                raise ValueError("Labels must be in the range [0 to %s)", 
+                raise ValueError("Labels must be in the range [0 to %s)",
                                  self.K)  
             self.tree = _build_tree(True, X, y, lookup_c[self.criterion], \
                                     self.max_depth, self.min_split, self.F, \
@@ -266,9 +287,11 @@ class BaseDecisionTree(BaseEstimator):
             raise Exception('Tree not initialized. Perform a fit first')
         
         if self.n_features != n_features:
-            raise ValueError("Number of features of the model must match the input.\n" + 
-                             "Model n_features is %s and input n_features is %s " % \
-                             (self.n_features, n_features) )        
+            raise ValueError("Number of features of the model " + \
+                             "must match the input.\n" + 
+                             "Model n_features is %s and " + \
+                             "input n_features is %s " % \
+                             (self.n_features, n_features))        
         
         C = np.zeros(n_samples, dtype=int)
         for idx, sample in enumerate(X):
@@ -318,9 +341,9 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     ...     #print np.mean(tree.predict(data.data[test_index]) == data.target[test_index])
     ... 
 
-    
     """
-    def __init__(self, K=2, criterion='gini', max_depth=10,\
+
+    def __init__(self, K=2, criterion='gini', max_depth=10, \
                   min_split=1, F=None, seed=None):
         BaseDecisionTree.__init__(self, K, 'classification', criterion, \
                                   max_depth, min_split, F, seed)
@@ -351,7 +374,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         if self.n_features != n_features:
             raise ValueError("Number of features of the model must match the input.\n" + 
                              "Model n_features is %s and input n_features is %s " % \
-                             (self.n_features, n_features) )        
+                             (self.n_features, n_features))        
         
         P = np.zeros((n_samples, self.K))
         for idx, sample in enumerate(X):
@@ -377,6 +400,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         """
         
         return np.log(self.predict_proba(X))
+
 
 class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     """Perform regression on dataset with a decision tree.
@@ -418,12 +442,9 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     ...     #print np.mean(np.power(tree.predict(data.data[test_index]) - data.target[test_index], 2))
     ... 
 
-
     """
-    def __init__(self, criterion='mse', max_depth=10,\
+
+    def __init__(self, criterion='mse', max_depth=10, \
                   min_split=1, F=None, seed=None):       
         BaseDecisionTree.__init__(self, None, 'regression', criterion, \
                                   max_depth, min_split, F, seed)
-        
-
-        
