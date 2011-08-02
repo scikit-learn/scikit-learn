@@ -308,7 +308,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     #>>> data = load_iris()
     #>>> skf = StratifiedKFold(data.target, 10)
     #>>> for train_index, test_index in skf:
-    #...     tree = tree_model.DecisionTreeClassifier(K=3)
+    #...     tree = tree.DecisionTreeClassifier(K=3)
     #...     tree.fit(data.data[train_index], data.target[train_index])
     #...     #print np.mean(tree.predict(data.data[test_index]) == data.target[test_index])
     #... 

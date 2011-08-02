@@ -30,7 +30,7 @@ def bench_scikit_tree_classifier(X, Y, K):
     bench with scikit-learn decision tree classifier
     """
     import scikits.learn
-    from scikits.learn.tree_model import DecisionTreeClassifier
+    from scikits.learn.tree import DecisionTreeClassifier
 
     gc.collect()
 
@@ -48,7 +48,7 @@ def bench_scikit_tree_regressor(X, Y):
     bench with scikit-learn decision tree regressor
     """
     import scikits.learn
-    from scikits.learn.tree_model import DecisionTreeRegressor
+    from scikits.learn.tree import DecisionTreeRegressor
 
     gc.collect()
 

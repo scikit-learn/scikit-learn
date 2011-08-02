@@ -2,7 +2,7 @@
 Tree-based models
 =================
 
-scikits.learn.tree_model is a module to fit data to decision trees. 
+scikits.learn.tree is a module to fit data to decision trees. 
 
 """
 from .decision_tree import DecisionTree

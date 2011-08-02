@@ -1,5 +1,5 @@
 """
-Testing for Tree module (scikits.learn.tree_model)
+Testing for Tree module (scikits.learn.tree)
 
 """
 
