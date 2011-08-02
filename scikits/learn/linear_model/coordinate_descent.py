@@ -8,7 +8,7 @@ import warnings
 import numpy as np
 
 from .base import LinearModel
-from ..cross_val import KFold
+from ..cross_val import _check_cv
 from . import cd_fast
 
 
@@ -384,8 +384,6 @@ class LinearModelCV(LinearModel):
         X = np.asfortranarray(X, dtype=np.float64)
         y = np.asanyarray(y, dtype=np.float64)
 
-        n_samples = X.shape[0]
-
         # All LinearModelCV parameters except 'cv' are acceptable
         path_params = self._get_params()
         del path_params['cv']
@@ -399,7 +397,7 @@ class LinearModelCV(LinearModel):
         path_params.update({'alphas': alphas, 'n_alphas': n_alphas})
 
         # init cross-validation generator
-        cv = self.cv if self.cv else KFold(n_samples, 5)
+        cv = _check_cv(self.cv, X)
 
         # Compute path for all folds and compute MSE to get the best alpha
         folds = list(cv)
@@ -454,9 +452,10 @@ class LassoCV(LinearModelCV):
         dual gap for optimality and continues until it is smaller
         than tol.
 
-    cv : crossvalidation generator
-        see scikits.learn.cross_val module
-
+    cv : integer or crossvalidation generator, optional
+        If an integer is passed, it is the number of fold (default 3).
+        Specific crossvalidation objects can be passed, see 
+        scikits.learn.cross_val module for the list of possible objects
 
     Notes
     -----
@@ -509,8 +508,11 @@ class ElasticNetCV(LinearModelCV):
         dual gap for optimality and continues until it is smaller
         than tol.
 
-    cv : crossvalidation generator
-        see scikits.learn.cross_val module
+    cv : integer or crossvalidation generator, optional
+        If an integer is passed, it is the number of fold (default 3).
+        Specific crossvalidation objects can be passed, see 
+        scikits.learn.cross_val module for the list of possible objects
+
 
     Notes
     -----
