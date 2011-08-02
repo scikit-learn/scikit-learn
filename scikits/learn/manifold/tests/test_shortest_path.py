@@ -1,11 +1,5 @@
 import numpy as np
-
-from scipy.sparse import csr_matrix
-
-from numpy.testing import assert_array_almost_equal, assert_almost_equal
-from scikits.learn import neighbors, manifold
-from scikits.learn.utils.fixes import product
-
+from numpy.testing import assert_array_almost_equal
 from scikits.learn.manifold.shortest_path import shortest_path
 
 
