@@ -10,6 +10,8 @@ from ..utils.arpack import eigsh
 from ..neighbors import kneighbors_graph
 from .shortest_path import shortest_path
 
+from ..decomposition import KernelPCA
+
 
 def isomap(X, n_neighbors, out_dim, eigen_solver='auto',
            tol=0, max_iter=None, path_method='auto'):
@@ -73,34 +75,48 @@ def isomap(X, n_neighbors, out_dim, eigen_solver='auto',
     G = shortest_path(dist_matrix,
                       method=path_method,
                       directed=False)
+    
+    use_kernel_pca = True
 
-    # now compute tau = -0.5 * H.(G^2).H where H = (I - 1/N)
-    G **= 2
-    HG = G - G.mean(0)
-    HGH = HG - HG.mean(1)[:, None]
-    tau = -0.5 * HGH
+    if use_kernel_pca:
+        G **= 2
+        G *= -0.5
 
-    # compute the out_dim largest eigenvalues and vectors of tau
-    if eigen_solver == 'auto':
-        if n_samples > 200:
-            eigen_solver = 'arpack'
-        else:
-            eigen_solver = 'dense'
+        kernelpca = KernelPCA(n_components=out_dim,
+                              kernel="precomputed")
 
-    if eigen_solver == 'arpack':
-        eigen_values, eigen_vectors = eigsh(tau, out_dim, which='LM',
-                                            tol=tol, maxiter=max_iter)
-    elif eigen_solver == 'dense':
-        eigen_values, eigen_vectors = eigh(
-            tau, eigvals=(n_samples - out_dim, n_samples - 1),
-            overwrite_a=True)
-        index = np.argsort(eigen_values)
-        eigen_values = eigen_values[index]
-        eigen_vectors = eigen_vectors[:, index]
+        X_fit = kernelpca.fit_transform(G)
+
+        return X_fit[:,::-1]
+
     else:
-        raise ValueError("Unrecognized eigen_solver '%s'" % eigen_solver)
+        # now compute tau = -0.5 * H.(G^2).H where H = (I - 1/N)
+        G **= 2
+        HG = G - G.mean(0)
+        HGH = HG - HG.mean(1)[:, None]
+        tau = -0.5 * HGH
 
-    return eigen_vectors * np.sqrt(eigen_values)
+        # compute the out_dim largest eigenvalues and vectors of tau
+        if eigen_solver == 'auto':
+            if n_samples > 200:
+                eigen_solver = 'arpack'
+            else:
+                eigen_solver = 'dense'
+
+        if eigen_solver == 'arpack':
+            eigen_values, eigen_vectors = eigsh(tau, out_dim, which='LM',
+                                                tol=tol, maxiter=max_iter)
+        elif eigen_solver == 'dense':
+            eigen_values, eigen_vectors = eigh(
+                tau, eigvals=(n_samples - out_dim, n_samples - 1),
+                overwrite_a=True)
+            index = np.argsort(eigen_values)
+            eigen_values = eigen_values[index]
+            eigen_vectors = eigen_vectors[:, index]
+        else:
+            raise ValueError("Unrecognized eigen_solver '%s'" % eigen_solver)
+
+        return eigen_vectors * np.sqrt(eigen_values)
 
 
 class Isomap(BaseEstimator):
