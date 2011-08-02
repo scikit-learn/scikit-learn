@@ -24,10 +24,14 @@ class ElasticNet(LinearModel):
     Parameters
     ----------
     alpha : float
-        Constant that multiplies the L1 term. Defaults to 1.0
+        Constant that multiplies the penalty terms. Defaults to 1.0
+        See the notes for the exact mathematical meaning of this
+        parameter
 
     rho : float
-        The ElasticNet mixing parameter, with 0 < rho <= 1.
+        The ElasticNet mixing parameter, with 0 < rho <= 1. For rho = 0
+        the penalty is an L1 penalty. For rho = 1 it is an L2 penalty. 
+        For 0 < rho < 1, the penalty is a combination of L1 and L2
 
     fit_intercept: bool
         Whether the intercept should be estimated or not. If False, the
@@ -54,6 +58,19 @@ class ElasticNet(LinearModel):
 
     The parameter rho corresponds to alpha in the glmnet R package
     while alpha corresponds to the lambda parameter in glmnet.
+    More specifically, the penalty is::
+
+        alpha*rho*L1 + alpha*(1-rho)*L2
+
+    If you are interested in controlling the L1 and L2 penalty
+    separately, keep in mind that this is equivalent to::
+
+        a*L1 + b*L2
+
+    for::
+        
+        alpha = a + b and rho = a/(a+b)
+
     """
 
     def __init__(self, alpha=1.0, rho=0.5, fit_intercept=True,
@@ -463,7 +480,9 @@ class ElasticNetCV(LinearModelCV):
     ----------
     rho : float, optional
         float between 0 and 1 passed to ElasticNet (scaling between
-        l1 and l2 penalties)
+        l1 and l2 penalties). For rho = 0
+        the penalty is an L1 penalty. For rho = 1 it is an L2 penalty. 
+        For 0 < rho < 1, the penalty is a combination of L1 and L2
 
     eps : float, optional
         Length of the path. eps=1e-3 means that
@@ -503,6 +522,19 @@ class ElasticNetCV(LinearModelCV):
 
     The parameter rho corresponds to alpha in the glmnet R package
     while alpha corresponds to the lambda parameter in glmnet.
+    More specifically, the penalty is::
+
+        alpha*rho*L1 + alpha*(1-rho)*L2
+
+    If you are interested in controlling the L1 and L2 penalty
+    separately, keep in mind that this is equivalent to::
+
+        a*L1 + b*L2
+
+    for::
+        
+        alpha = a + b and rho = a/(a+b)
+
     """
 
     path = staticmethod(enet_path)
