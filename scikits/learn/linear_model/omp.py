@@ -59,6 +59,7 @@ def _cholesky_omp(X, y, n_nonzero_coefs, eps=None):
     X = np.asfortranarray(X)
 
     min_float = np.finfo(X.dtype).eps
+    nrm2, = linalg.get_blas_funcs(('nrm2',), (X,))
     potrs, = get_lapack_funcs(('potrs',), (X,))
 
     alpha = np.dot(X.T, y)
@@ -79,7 +80,7 @@ def _cholesky_omp(X, y, n_nonzero_coefs, eps=None):
         if n_active > 0:
             # Updates the Cholesky decomposition of X' X
             L[n_active, :n_active] = np.dot(X[:, idx].T, X[:, lam])
-            v = np.dot(L[n_active, :n_active], L[n_active, :n_active])
+            v = nrm2(L[n_active, :n_active]) ** 2
             solve_triangular(L[:n_active, :n_active], L[n_active, :n_active])
             if 1 - v <= min_float:  # selected atoms are dependent
                 warn(premature)
@@ -92,7 +93,7 @@ def _cholesky_omp(X, y, n_nonzero_coefs, eps=None):
                          overwrite_b=False)
 
         residual = y - np.dot(X[:, idx], gamma)
-        if eps is not None and np.dot(residual.T, residual) <= eps:
+        if eps is not None and nrm2(residual) ** 2 <= eps:
             break
         elif n_active == max_features:
             break
@@ -135,6 +136,7 @@ def _gram_omp(G, Xy, n_nonzero_coefs, eps_0=None, eps=None):
     """
 
     min_float = np.finfo(G.dtype).eps
+    nrm2, = linalg.get_blas_funcs(('nrm2',), (G,))
     potrs, = get_lapack_funcs(('potrs',), (G,))
 
     idx = []
@@ -155,7 +157,7 @@ def _gram_omp(G, Xy, n_nonzero_coefs, eps_0=None, eps=None):
             break
         if n_active > 0:
             L[n_active, :n_active] = G[lam, idx]
-            v = np.dot(L[n_active, :n_active], L[n_active, :n_active])
+            v = nrm2(L[n_active, :n_active]) ** 2
             solve_triangular(L[:n_active, :n_active], L[n_active, :n_active])
             if 1 - v <= min_float:  # selected atoms are dependent
                 warn(premature)
