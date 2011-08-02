@@ -33,7 +33,7 @@ def estimate_bandwidth(X, quantile=0.3):
     return bandwidth
 
 
-def mean_shift(X, bandwidth=None, bin_size=None, min_bin_freq=1, cluster_all_points=True, max_per_kernel=15000, max_iterations=300):
+def mean_shift(X, bandwidth=None, seeds=None, cluster_all_points=True, max_iterations=300):
     """Perform MeanShift Clustering of data using a flat kernel
 
     Seed using a bucketing/binning/discretizing technique for scalability.
@@ -79,71 +79,56 @@ def mean_shift(X, bandwidth=None, bin_size=None, min_bin_freq=1, cluster_all_poi
     """
     if bandwidth is None:
         bandwidth = estimate_bandwidth(X)
-    if bin_size is None:
-        bin_size  = bandwidth / 2.
+    if seeds is None:
+        seeds = get_bucket_seeds(X, bandwidth)
         
     n_points, n_features = X.shape
-    n_clusters = 0
     stop_thresh = 0.1 * bandwidth  # when mean has converged
-    cluster_centers = []  # center of clusters
-    cluster_intensities = [] # intensities of clusters used in case of merging
+    cluster_center_intensity_dict = {}
 
     # used to efficiently look up nearest neighbors (effective in lower dimensions)
     kd_tree = cKDTree(X)
-    
-    # Discretize (i.e., quantize, bin) points to bins
-    bin_sizes = defaultdict(int)
-    discretized_points = X.copy() / bin_size
-    discretized_points = np.cast[np.int32](discretized_points)
-    for discretized_point in discretized_points:
-        bin_sizes[tuple(discretized_point)] += 1
-    # Select only those bins as seeds which have enough members
-    bin_seeds = np.array([point for point, freq in bin_sizes.iteritems() if \
-                          freq >= min_bin_freq], dtype=np.float32)
-    bin_seeds = bin_seeds * bin_size
 
     # For each seed, climb gradient until convergence
-    for my_mean in bin_seeds:
+    for my_mean in seeds:
         completed_iterations = 0
         while True:  
             # Find mean of points within bandwidth
-            distances, indices = kd_tree.query(my_mean, max_per_kernel,
-                                               distance_upper_bound=bandwidth+0.000001)
-            points_within = np.array(list(finite_point_generator(distances, indices, X, max_per_kernel)))
+            points_within = [X[idx] for idx in get_points_within_range(kd_tree, my_mean, bandwidth)]
             if completed_iterations == 0 and len(points_within) == 0:
                 break
             my_old_mean = my_mean  # save the old mean
             my_mean = np.mean(points_within, axis=0)
 
-            # If converged or at max_iterations, check if cluster is or better
+            # If converged or at max_iterations, add the cluster ---
+            # we deal with duplicates below
             if np.linalg.norm(my_mean - my_old_mean) < stop_thresh or \
                    completed_iterations == max_iterations:
-                # check for nearby (duplicate) clusters
-                merge_with = -1
-                closest_distance = np.inf
-                for c in range(n_clusters):
-                    dist_to_other = np.linalg.norm(my_mean -
-                                                        cluster_centers[c])
-                    # if its within the bandwidth mark it
-                    if dist_to_other <= bandwidth and dist_to_other < closest_distance:
-                        merge_with = c
-                        closest_distance = dist_to_other
-                if merge_with >= 0:  # In case of duplicates
-                    # use cluster which has higher kernel value
-                    if len(points_within) > cluster_intensities[merge_with]:
-                        cluster_centers[merge_with] = my_mean
-                        cluster_intensities[merge_with] = len(points_within)
-                else:  # If there's no duplicate than accepted it
-                    n_clusters += 1  # increment clusters
-                    cluster_centers.append(my_mean)  # record the mean
-                    cluster_intensities.append(len(points_within))
+                # record the point and intensity, duplicates implicitly ignored
+                cluster_center_intensity_dict[tuple(my_mean)] = len(points_within)
                 break
             completed_iterations += 1
             if completed_iterations == max_iterations:
                 print "Max iterations reached"
-    # a point belongs to the cluster that it is closest to
+
+    # POST PROCESSING: remove near duplicate points
+    # If the distance between two kernels is less than the bandwidth,
+    # then we have to remove one because it is a duplicate. Remove the
+    # one with fewer points.
+    sorted_by_intensity = sorted(cluster_center_intensity_dict.items() , key=lambda tup: tup[1], reverse=True)
+    sorted_centers = [center for center, intensity in sorted_by_intensity]
+    is_unique = np.ones(len(sorted_centers), dtype=np.bool)
+    cluster_center_kd_tree = cKDTree(sorted_centers)
+    for i, center in enumerate(sorted_centers):
+        if is_unique[i]:
+            neighbor_idxs = get_points_within_range(cluster_center_kd_tree, center, bandwidth)
+            for neighbor_idx in neighbor_idxs[1:]: # skip nearest point because it is the current point
+                is_unique[neighbor_idx] = 0
+    cluster_centers = [center for center, unique in zip(sorted_centers, is_unique) if unique]
+
+    # ASSIGN LABELS: a point belongs to the cluster that it is closest to
     centers_tree = cKDTree(cluster_centers)
-    if n_clusters < 65535:
+    if len(cluster_centers) < 65535:  # Every point is assigned a label, so keep these as small as possible
         labels = np.zeros(n_points, dtype=np.uint16)
     else:
         labels = np.zeros(n_points, dtype=np.uint32)
@@ -159,15 +144,64 @@ def mean_shift(X, bandwidth=None, bin_size=None, min_bin_freq=1, cluster_all_poi
                 labels[point_idx] = -1
     return cluster_centers, labels
 
-def finite_point_generator(distances, indices, X, max_per_kernel):
-    i = 0
-    for distance, index in izip(distances, indices):
-        if distance == np.inf:
-            break
-        yield X[index]
-        i += 1
-        if i == max_per_kernel:
-            print "\t\tmore points should have been returned but max_per_kernel kicked in"
+def get_bucket_seeds(X, bin_size, min_bin_freq=1):
+    
+    # Discretize (i.e., quantize, bin) points to bins
+    bin_sizes = defaultdict(int)
+    discretized_points = X.copy() / bin_size
+    discretized_points = np.cast[np.int32](discretized_points)
+    for discretized_point in discretized_points:
+        bin_sizes[tuple(discretized_point)] += 1
+        
+    # Select only those bins as seeds which have enough members
+    bin_seeds = np.array([point for point, freq in bin_sizes.iteritems() if \
+                          freq >= min_bin_freq], dtype=np.float32)
+    bin_seeds = bin_seeds * bin_size
+    return bin_seeds
+
+def get_points_within_range(kd_tree, query_point, max_distance):
+    """
+    This function adds a feature to the cKDTree that is missing:
+    efficiently query all points within a given range of a coordinate.
+    Instead of doing this, cKDTree efficiently queries the k-nearest
+    points.
+    
+    Parameters
+    ----------
+
+    kd_tree : a cKDTree object from scipy.spatial, required
+        Should contain all n-dimensional points of interest
+
+    query_point : n-dimensional point (e.g., tuple, list, np array)
+        The coordinate of interest. All points within max_distance
+        of this coordinate will be returned.
+
+    max_distance: float
+        All points within max_distance of the query_point will
+        be returned
+       
+    Returns
+    -------
+
+    cluster_centers : array [n_matchin_points]
+        Contains the indices of the points used to create
+        kd_tree which are within max_distance of query_point
+    """
+    max_neighbors = min(kd_tree.n, 100)
+    # Because we don't want the kd_tree to return a list with all distances,
+    # we start wtih a low value of max_neighbors and increase it until it
+    # is sufficient to contain all points within max_distance
+    while True:
+        distances, indices = kd_tree.query(query_point, max_neighbors,
+                                           distance_upper_bound=max_distance)
+        max_distance_idx = distances.argmax()
+        # If max distance is infinite, then we've found all neighbors within the
+        # distance upper bound. Otherwise we haven't gone out far enough and need
+        # to requery with more max results
+        if distances[max_distance_idx] == np.inf or max_neighbors == kd_tree.n:
+            return indices[:max_distance_idx]
+        max_neighbors = min(max_neighbors*5, kd_tree.n)
+        
 ##############################################################################
 
 class MeanShift(BaseEstimator):
@@ -210,10 +244,9 @@ class MeanShift(BaseEstimator):
     not adviced for a large number of samples.
     """
 
-    def __init__(self, bandwidth=None, bin_size=None, min_bin_freq=None, cluster_all_points=True):
+    def __init__(self, bandwidth=None, seeds=None, cluster_all_points=True):
         self.bandwidth = bandwidth
-        self.bin_size = bin_size
-        self.min_bin_freq = min_bin_freq
+        self.seeds = seeds
         self.cluster_all_points = cluster_all_points
         
     def fit(self, X, **params):
@@ -227,29 +260,7 @@ class MeanShift(BaseEstimator):
         """
         self._set_params(**params)
         self.cluster_centers_, self.labels_ = mean_shift(X,
+                                                         seeds = self.seeds,
                                                          bandwidth = self.bandwidth,
-                                                         bin_size = self.bin_size,
-                                                         min_bin_freq = self.min_bin_freq,
                                                          cluster_all_points = self.cluster_all_points)
-        return self
-
-
-class MeanShiftGrid(BaseEstimator):
-    def __init__(self, bin_size, min_bin_freq, bandwidth=None):
-        self.bandwidth = bandwidth
-        self.bin_size = bin_size
-        self.min_bin_freq = min_bin_freq
-    def fit(self, X, **params):
-        """ Compute MeanShift
-
-            Parameters
-            -----------
-            X : array [n_samples, n_features]
-                Input points
-
-        """
-        self._set_params(**params)
-        self.cluster_centers_, self.labels_ = mean_shift_grid(X, self.bin_size,
-                                                              self.min_bin_freq,
-                                                              self.bandwidth)
         return self
