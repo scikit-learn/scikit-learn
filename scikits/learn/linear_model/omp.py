@@ -56,7 +56,7 @@ def _cholesky_omp(X, y, n_nonzero_coefs, eps=None):
 
     """
 
-    X = X.copy('F')
+    X = np.asfortranarray(X)
 
     min_float = np.finfo(X.dtype).eps
     potrs, = get_lapack_funcs(('potrs',), (X,))

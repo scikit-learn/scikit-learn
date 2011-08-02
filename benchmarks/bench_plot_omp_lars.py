@@ -41,6 +41,7 @@ def compute_bench(samples_range, features_range):
             print "n_samples: %d" % n_samples
             print "n_features: %d" % n_features
             X, y, _, _, _ = make_regression_dataset(**dataset_kwargs)
+            X = np.asfortranarray(X)
             X /= np.sqrt((X**2).sum(axis=0))
 
             gc.collect()
