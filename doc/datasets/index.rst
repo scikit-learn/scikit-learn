@@ -82,9 +82,11 @@ features::
  _`Public datasets in svmlight / libsvm format`: http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/
 
 
-.. include:: mldata.rst
+.. include:: olivetti_faces.rst 
 
 .. include:: twenty_newsgroups.rst
+
+.. include:: mldata.rst
 
 .. include:: labeled_faces.rst
 
