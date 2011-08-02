@@ -1,5 +1,5 @@
 import numpy as np
-from numpy.testing import assert_equal
+from numpy.testing import assert_equal, assert_array_almost_equal
 
 from .. import generate_sparse_coded_signal
 
@@ -14,3 +14,5 @@ def test_generate_sparse_coded_signal():
     for col in X.T:
         assert_equal(len(np.flatnonzero(col)), 3, 'Non-zero coefs mismatch')
     assert_equal(np.dot(D, X), Y)
+    assert_array_almost_equal(np.sqrt((D ** 2).sum(axis=0)),
+                              np.ones(D.shape[1]))

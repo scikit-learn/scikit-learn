@@ -1,6 +1,9 @@
 # Author: Vlad Niculae
 # License: BSD style
 
+import warnings
+warnings.simplefilter("always")
+
 import numpy as np
 from nose.tools import assert_raises
 from numpy.testing import assert_equal, assert_array_almost_equal
@@ -27,9 +30,9 @@ def test_correct_shapes():
 
 
 def test_correct_shapes_gram():
-    assert_equal(orthogonal_mp_gram(G, Xy[:, 0], n_nonzero_coefs=6).shape, 
+    assert_equal(orthogonal_mp_gram(G, Xy[:, 0], n_nonzero_coefs=5).shape, 
                  (n_features,))
-    assert_equal(orthogonal_mp_gram(G, Xy, n_nonzero_coefs=6).shape,
+    assert_equal(orthogonal_mp_gram(G, Xy, n_nonzero_coefs=5).shape,
                  (n_features, 3))
 
 
@@ -59,8 +62,15 @@ def test_with_without_gram_eps():
 
 
 def test_unreachable_accuracy():
-    assert_array_almost_equal(orthogonal_mp(X, y, eps=0),
-                              orthogonal_mp(X, y, n_nonzero_coefs=n_features))
+    with warnings.catch_warnings(record=True) as w:
+        assert_array_almost_equal(orthogonal_mp(X, y, eps=0),
+                                  orthogonal_mp(X, y, 
+                                              n_nonzero_coefs=n_features))                                                
+        assert_array_almost_equal(orthogonal_mp(X, y, eps=0, 
+                                                compute_gram=True),
+                                  orthogonal_mp(X, y, compute_gram=True,
+                                                n_nonzero_coefs=n_features))
+        assert len(w) > 0  # warnings should be raised
 
 
 def test_bad_input():
@@ -96,3 +106,14 @@ def test_estimator_shapes():
     assert_equal(OMP.coef_.shape, (3, n_features))
     assert_equal(OMP.intercept_.shape, (3, ))
     assert count_nonzero(OMP.coef_) <= 3 * 5
+
+
+def test_identical_regressors():
+  newX = X.copy()
+  newX[:, 1] = newX[:, 0]
+  gamma = np.zeros(n_features)
+  gamma[0] = gamma[1] = 1.
+  newy = np.dot(newX, gamma)
+  with warnings.catch_warnings(record=True) as w:
+    orthogonal_mp(newX, newy, 2)
+    assert len(w) == 1
