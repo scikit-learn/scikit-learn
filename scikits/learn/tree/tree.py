@@ -17,6 +17,7 @@ Implements Classification and Regression Trees (Breiman et al. 1984)
 from __future__ import division
 import numpy as np
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
+from ._tree import _find_best_split
 from ._tree import bincount_k
 from ._tree import eval_gini, eval_entropy, eval_miss, eval_mse
 import random
@@ -71,33 +72,6 @@ class Node(object):
     def __str__(self):
         return 'x[%s] < %s, \\n error = %s' % \
             (self.dimension, self.value, self.error)
-
-
-def _find_best_split(features, labels, criterion):
-    """
-    @TODO Profiling shows that this function is the bottleneck
-          now that the intensive evaluation functions have been optimised.
-          Consider moving this to _tree.pyx 
-    """
-    n_samples, n_features = features.shape
-        
-    best = None
-    split_error = criterion(labels)
-    for i in xrange(n_features):
-        domain_i = sorted(set(features[:, i]))
-        for d1, d2 in zip(domain_i[:-1], domain_i[1:]):
-            t = (d1 + d2) / 2. 
-            cur_split = (features[:, i] < t)
-            e1 = len(labels[cur_split]) / n_samples * \
-                criterion(labels[cur_split])
-            e2 = len(labels[~cur_split]) / n_samples * \
-                criterion(labels[~cur_split])
-            error = e1 + e2
-            if error < split_error:
-                split_error = error
-                best = i, t, error
-    return best
-
 
 def _build_tree(is_classification, features, labels, criterion, \
                max_depth, min_split, F, K):

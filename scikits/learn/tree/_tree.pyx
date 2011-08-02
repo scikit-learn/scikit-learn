@@ -1,5 +1,6 @@
 # encoding: utf-8
 # cython: cdivision=True
+# cython: profile=True
 # cython: boundscheck=False
 # cython: wraparound=False
 #
@@ -20,6 +21,42 @@ cimport cython
 cdef extern from "math.h":
     cdef extern double log(double x)
     cdef extern double pow(double base, double exponent)
+
+
+def _find_best_split(features, labels, criterion):
+    """
+    @TODO Profiling shows that this function is the bottleneck
+          now that the intensive evaluation functions have been optimised.
+          2/8/2011: It turns out that inlining is ignored for functions 
+          that accept a buffer argument. 
+          See http://stackoverflow.com/questions/4641200/
+          cython-inline-function-with-numpy-array-as-parameter
+          for more information. 
+    """
+    cdef double n_samples = features.shape[0]
+    cdef int n_features = features.shape[1]
+        
+    best = None
+    cdef double split_error = criterion(labels)
+    cdef double e1 = 0.
+    cdef double e2 = 0.
+    cdef double error = 0.
+    cdef int i
+    for i in xrange(n_features):
+        domain_i = sorted(set(features[:, i]))
+        for d1, d2 in zip(domain_i[:-1], domain_i[1:]):
+            t = (d1 + d2) / 2. 
+            cur_split = (features[:, i] < t)
+            e1 = len(labels[cur_split]) / n_samples * \
+                criterion(labels[cur_split])
+            e2 = len(labels[~cur_split]) / n_samples * \
+                criterion(labels[~cur_split])            
+            error = e1 + e2
+            if error < split_error:
+                split_error = error
+                best = i, t, error
+    return best
+
 
 """
  Helper function
@@ -68,7 +105,8 @@ cpdef bincount_k(np.ndarray[np.int_t, ndim=1] X, int K):
           
     be the proportion of class k observations in node m   
 """  
-cpdef double eval_gini(np.ndarray[np.int_t, ndim=1] labels)  except * :
+@cython.profile(False)
+cpdef inline double eval_gini(np.ndarray[np.int_t, ndim=1] labels)  except * :
     """
         
         Gini index = \sum_{k=0}^{K-1} pmk (1 - pmk)
@@ -88,7 +126,7 @@ cpdef double eval_gini(np.ndarray[np.int_t, ndim=1] labels)  except * :
          
     return H   
 
-cpdef double eval_entropy(np.ndarray[np.int_t, ndim=1] labels)  except * :
+cpdef inline double eval_entropy(np.ndarray[np.int_t, ndim=1] labels)  except * :
     """
         
         Cross Entropy = - \sum_{k=0}^{K-1} pmk log(pmk)
@@ -108,7 +146,7 @@ cpdef double eval_entropy(np.ndarray[np.int_t, ndim=1] labels)  except * :
          
     return H   
 
-cpdef double eval_miss(np.ndarray[np.int_t, ndim=1] labels)  except * :
+cpdef inline double eval_miss(np.ndarray[np.int_t, ndim=1] labels)  except * :
     """
         
         Misclassification error = (1 - pmk)
@@ -126,7 +164,7 @@ cpdef double eval_miss(np.ndarray[np.int_t, ndim=1] labels)  except * :
  Regression entropy measures
  
 """      
-cpdef double eval_mse(np.ndarray[np.float64_t, ndim=1] labels)  except * :
+cpdef inline double eval_mse(np.ndarray[np.float64_t, ndim=1] labels)  except * :
     """             
         MSE =  \sum_i (y_i - c0)^2  / N
             
