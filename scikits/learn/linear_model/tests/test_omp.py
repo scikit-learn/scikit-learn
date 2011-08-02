@@ -2,7 +2,6 @@
 # License: BSD style
 
 import warnings
-warnings.simplefilter("always")
 
 import numpy as np
 from nose.tools import assert_raises
@@ -63,6 +62,7 @@ def test_with_without_gram_eps():
 
 def test_unreachable_accuracy():
     with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter('always')
         assert_array_almost_equal(orthogonal_mp(X, y, eps=0),
                                   orthogonal_mp(X, y, 
                                               n_nonzero_coefs=n_features))                                                
@@ -115,5 +115,6 @@ def test_identical_regressors():
   gamma[0] = gamma[1] = 1.
   newy = np.dot(newX, gamma)
   with warnings.catch_warnings(record=True) as w:
+    warnings.simplefilter('always')
     orthogonal_mp(newX, newy, 2)
     assert len(w) == 1
