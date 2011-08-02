@@ -150,8 +150,8 @@ def _build_tree(is_classification, features, labels, criterion, \
             else:
                 return Leaf(np.mean(labels))            
             
-        return Node(featid=sample_dims[dim],
-                    featval=thresh,
+        return Node(dimension=sample_dims[dim],
+                    value=thresh,
                     error=error,
                     left=recursive_partition(features[split], \
                                               labels[split], depth + 1),
@@ -169,7 +169,7 @@ def _apply_tree(tree, features):
     '''
     if type(tree) is Leaf:
         return tree.v
-    if features[tree.featid] < tree.featval:
+    if features[tree.dimension] < tree.value:
         return _apply_tree(tree.left, features)
     return _apply_tree(tree.right, features)
 
@@ -287,10 +287,8 @@ class BaseDecisionTree(BaseEstimator):
             raise Exception('Tree not initialized. Perform a fit first')
         
         if self.n_features != n_features:
-            raise ValueError("Number of features of the model " + \
-                             "must match the input.\n" + 
-                             "Model n_features is %s and " + \
-                             "input n_features is %s " % \
+            raise ValueError("Number of features of the model must match the input.\n" + 
+                             "Model n_features is %s and input n_features is %s " % \
                              (self.n_features, n_features))        
         
         C = np.zeros(n_samples, dtype=int)
@@ -327,19 +325,19 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         seed the random number generator
 
     
-    Example
-    -------
-    >>> import numpy as np
-    >>> from scikits.learn.datasets import load_iris
-    >>> from scikits.learn.cross_val import StratifiedKFold
-    >>> from scikits.learn import tree_model
-    >>> data = load_iris()
-    >>> skf = StratifiedKFold(data.target, 10)
-    >>> for train_index, test_index in skf:
-    ...     tree = tree_model.DecisionTreeClassifier(K=3)
-    ...     tree = tree.fit(data.data[train_index], data.target[train_index])
-    ...     #print np.mean(tree.predict(data.data[test_index]) == data.target[test_index])
-    ... 
+    #Example
+    #-------
+    #>>> import numpy as np
+    #>>> from scikits.learn.datasets import load_iris
+    #>>> from scikits.learn.cross_val import StratifiedKFold
+    #>>> from scikits.learn import tree
+    #>>> data = load_iris()
+    #>>> skf = StratifiedKFold(data.target, 10)
+    #>>> for train_index, test_index in skf:
+    #...     tree = tree_model.DecisionTreeClassifier(K=3)
+    #...     tree.fit(data.data[train_index], data.target[train_index])
+    #...     #print np.mean(tree.predict(data.data[test_index]) == data.target[test_index])
+    #... 
 
     """
 
@@ -423,24 +421,23 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     seed : integer or array_like, optional
         seed the random number generator    
     
-    Example
-    -------
-
-    >>> import numpy as np
-    >>> from scikits.learn.datasets import load_boston
-    >>> from scikits.learn.cross_val import KFold
-    >>> from scikits.learn import tree_model
-    >>> data = load_boston()
-    >>> np.random.seed([1]) 
-    >>> perm = np.random.permutation(data.target.size / 8)
-    >>> data.data = data.data[perm]
-    >>> data.target = data.target[perm]
-    >>> kf = KFold(len(data.target), 2)
-    >>> for train_index, test_index in kf:
-    ...     tree = tree_model.DecisionTreeRegressor()
-    ...     tree = tree.fit(data.data[train_index], data.target[train_index])
-    ...     #print np.mean(np.power(tree.predict(data.data[test_index]) - data.target[test_index], 2))
-    ... 
+    #Example
+    #-------
+    #>>> import numpy as np
+    #>>> from scikits.learn.datasets import load_boston
+    #>>> from scikits.learn.cross_val import KFold
+    #>>> from scikits.learn import tree
+    #>>> data = load_boston()
+    #>>> np.random.seed([1]) 
+    #>>> perm = np.random.permutation(data.target.size / 8)
+    #>>> data.data = data.data[perm]
+    #>>> data.target = data.target[perm]
+    #>>> kf = KFold(len(data.target), 2)
+    #>>> for train_index, test_index in kf:
+    #...     tree = tree.DecisionTreeRegressor()
+    #...     tree.fit(data.data[train_index], data.target[train_index])
+    #...     #print np.mean(np.power(tree.predict(data.data[test_index]) - data.target[test_index], 2))
+    #... 
 
     """
 

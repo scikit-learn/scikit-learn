@@ -1,13 +1,9 @@
 from os.path import join
+import warnings
 import sys
 import numpy
 
-if sys.version_info[0] < 3:
-    from ConfigParser import ConfigParser
-else:
-    from configparser import ConfigParser
-
-import warnings
+from ConfigParser import ConfigParser
 
 def configuration(parent_package='', top_path=None):
     
@@ -15,7 +11,7 @@ def configuration(parent_package='', top_path=None):
     from numpy.distutils.system_info import get_info, get_standard_file, \
          BlasNotFoundError
 
-    config = Configuration('decisiontree', parent_package, top_path)
+    config = Configuration('tree', parent_package, top_path)
 
     #config.add_subpackage('tests')
 
@@ -31,6 +27,13 @@ def configuration(parent_package='', top_path=None):
                          depends = libdecisiontree_depends,
                          language="c++"
                          )
+
+    config.add_extension('_tree',
+                         sources=['_tree.c'],
+                         include_dirs=[numpy.get_include()]
+                         )
+
+    config.add_subpackage('tests')
 
     return config
 

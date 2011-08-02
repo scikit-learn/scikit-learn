@@ -18,7 +18,7 @@ from __future__ import division
 import numpy as np
 import copy
 import random
-from .tree import DecisionTreeClassifier, DecisionTreeRegressor
+from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..externals.joblib import Parallel, delayed
 
@@ -182,20 +182,19 @@ class RandomForestClassifier(BaseRandomForest, ClassifierMixin):
     n_jobs : integer, optional
         the number of processes to use for parallel computation
     
-    Example
-    -------
-
-    >>> import numpy as np
-    >>> from scikits.learn.datasets import load_iris
-    >>> from scikits.learn.cross_val import StratifiedKFold
-    >>> from scikits.learn import tree_model
-    >>> data = load_iris()
-    >>> skf = StratifiedKFold(data.target, 10)
-    >>> for train_index, test_index in skf:
-    ...     tree = tree_model.RandomForestClassifier(K=3)
-    ...     tree = tree.fit(data.data[train_index], data.target[train_index])
-    ...     #print np.mean(tree.predict(data.data[test_index]) == data.target[test_index])
-    ... 
+    #Example
+    #-------
+    #>>> import numpy as np
+    #>>> from scikits.learn.datasets import load_iris
+    #>>> from scikits.learn.cross_val import StratifiedKFold
+    #>>> from scikits.learn import ensemble
+    #>>> data = load_iris()
+    #>>> skf = StratifiedKFold(data.target, 10)
+    #>>> for train_index, test_index in skf:
+    #...     rf = ensemble.RandomForestClassifier(K=3)
+    #...     rf.fit(data.data[train_index], data.target[train_index])
+    #...     #print np.mean(tree.predict(data.data[test_index]) == data.target[test_index])
+    #... 
 
     
     """     
@@ -285,23 +284,23 @@ class RandomForestRegressor(BaseRandomForest, RegressorMixin):
     n_jobs : integer, optional
         the number of processes to use for parallel computation
     
-    Example
-    -------
-    >>> import numpy as np
-    >>> from scikits.learn.datasets import load_boston
-    >>> from scikits.learn.cross_val import KFold
-    >>> from scikits.learn import tree_model
-    >>> data = load_boston()
-    >>> np.random.seed([1]) 
-    >>> perm = np.random.permutation(data.target.size / 8)
-    >>> data.data = data.data[perm]
-    >>> data.target = data.target[perm]    
-    >>> kf = KFold(len(data.target), 2)
-    >>> for train_index, test_index in kf:
-    ...     tree = tree_model.RandomForestRegressor(n_jobs=2)
-    ...     tree = tree.fit(data.data[train_index], data.target[train_index])
-    ...     #print np.mean(np.power(tree.predict(data.data[test_index]) - data.target[test_index], 2)) 
-    ... 
+    #Example
+    #-------
+    #>>> import numpy as np
+    #>>> from scikits.learn.datasets import load_boston
+    #>>> from scikits.learn.cross_val import KFold
+    #>>> from scikits.learn import ensemble
+    #>>> data = load_boston()
+    #>>> np.random.seed([1]) 
+    #>>> perm = np.random.permutation(data.target.size / 8)
+    #>>> data.data = data.data[perm]
+    #>>> data.target = data.target[perm]    
+    #>>> kf = KFold(len(data.target), 2)
+    #>>> for train_index, test_index in kf:
+    #...     rf = ensemble.RandomForestRegressor(n_jobs=2)
+    #...     rf.fit(data.data[train_index], data.target[train_index])
+    #...     #print np.mean(np.power(tree.predict(data.data[test_index]) - data.target[test_index], 2)) 
+    #... 
 
 
    

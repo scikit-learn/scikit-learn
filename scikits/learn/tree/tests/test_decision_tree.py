@@ -3,7 +3,7 @@ Simple tests to demonstrate usage.
 Proper test module will come.
 """
 
-from scikits.learn.decisiontree import DecisionTree
+from scikits.learn.tree import DecisionTree
 from scikits.learn.ensemble.boosting import AdaBoost
 from scikits.learn.ensemble.bagging import Bagged
 import numpy as np
