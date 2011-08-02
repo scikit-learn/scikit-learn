@@ -458,13 +458,11 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         X: sparse matrix, [n_samples, n_features]
             a matrix of term/token counts
         """
-        n_samples, n_features = X.shape
         if self.use_idf:
+            n_samples, n_features = X.shape
             # how many documents include each token?
-            idc = np.zeros(n_features, dtype=np.float64)
-            for doc, token in zip(*X.nonzero()):
-                idc[token] += 1
-            self.idf_ = np.log(float(X.shape[0]) / idc)
+            df = np.bincount(X.nonzero()[1])
+            self.idf_ = np.log(float(X.shape[0]) / df)
 
         return self
 
