@@ -690,8 +690,9 @@ class LarsCV(LARS):
             returns an instance of self.
         """
         self._set_params(**params)
+        X = np.asanyarray(X)
 
-        n_samples = len(X)
+        n_samples, n_features = X.shape
         # init cross-validation generator
         cv = self.cv if self.cv else KFold(n_samples, 5)
 
@@ -710,18 +711,16 @@ class LarsCV(LARS):
         all_alphas = np.concatenate(zip(*cv_paths)[0])
         all_alphas.sort()
 
-        mse_path = list()
-        for alphas, active, coefs, residues in cv_paths:
+        mse_path = np.empty((len(all_alphas), len(cv_paths)))
+        for index, (alphas, active, coefs, residues) in enumerate(cv_paths):
             this_residues = interpolate.interp1d(alphas[::-1],
                                                  residues[::-1],
                                                  bounds_error=False,
                                                  fill_value=residues.max(),
                                                  axis=0)(all_alphas)
             this_residues **= 2
-            this_residues = this_residues.sum(axis=-1)
-            mse_path.append(this_residues)
+            mse_path[:, index] = this_residues.sum(axis=-1)
 
-        mse_path = np.array(mse_path).T
         mask = np.all(np.isfinite(mse_path), axis=-1)
         all_alphas = all_alphas[mask]
         mse_path = mse_path[mask]
