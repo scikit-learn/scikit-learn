@@ -80,12 +80,14 @@ def euclidean_distances(X, Y, Y_norm_squared=None, squared=False):
             raise ValueError(
                         "Incompatible dimensions for Y and Y_norm_squared")
 
-    # TODO:
-    # a faster cython implementation would do the dot product first,
-    # and then add XX, add YY, and do the clipping of negative values in
-    # a single pass over the output matrix.
-    distances = XX + YY  # Using broadcasting
-    distances -= 2 * safe_sparse_dot(X, Y.T)
+    # TODO: a faster Cython implementation would do the clipping of negative
+    # values in a single pass over the output matrix.
+    distances = safe_sparse_dot(X, Y.T)
+    distances *= -2
+    if issparse(distances):
+        distances = distances.toarray()
+    distances += XX
+    distances += YY
     distances = np.maximum(distances, 0)
     return distances if squared else np.sqrt(distances)
 
