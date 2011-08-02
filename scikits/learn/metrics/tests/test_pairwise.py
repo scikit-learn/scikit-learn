@@ -1,6 +1,7 @@
 import numpy as np
 from numpy import linalg
 from numpy.testing import assert_array_almost_equal, assert_array_equal
+from scipy.sparse import csr_matrix
 
 from ..pairwise import euclidean_distances, linear_kernel, polynomial_kernel, \
                        rbf_kernel, sigmoid_kernel
@@ -11,6 +12,11 @@ def test_euclidean_distances():
     """Check the pairwise Euclidean distances computation"""
     X = [[0]]
     Y = [[1], [2]]
+    D = euclidean_distances(X, Y)
+    assert_array_almost_equal(D, [[1., 2.]])
+
+    X = csr_matrix(X)
+    Y = csr_matrix(Y)
     D = euclidean_distances(X, Y)
     assert_array_almost_equal(D, [[1., 2.]])
 

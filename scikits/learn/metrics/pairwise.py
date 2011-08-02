@@ -19,9 +19,9 @@ def euclidean_distances(X, Y, Y_norm_squared=None, squared=False):
 
     Parameters
     ----------
-    X: array-like, shape = [n_samples_1, n_features]
+    X: {array-like, sparse matrix}, shape = [n_samples_1, n_features]
 
-    Y: array-like, shape = [n_samples_2, n_features]
+    Y: {array-like, sparse matrix}, shape = [n_samples_2, n_features]
 
     Y_norm_squared: array-like, shape = [n_samples_2], optional
         Pre-computed (Y**2).sum(axis=1)
