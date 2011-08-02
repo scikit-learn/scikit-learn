@@ -21,7 +21,6 @@ import numpy as np
 import pylab as pl
 
 from scikits.learn.linear_model import LassoCV
-from scikits.learn.cross_val import KFold
 from scikits.learn import datasets
 
 diabetes = datasets.load_diabetes()
@@ -37,7 +36,7 @@ X /= np.sqrt(np.sum(X ** 2, axis=0))
 eps = 1e-3 # the smaller it is the longer is the path
 
 print "Computing regularization path using the lasso..."
-model = LassoCV(eps=eps, cv=KFold(len(y), 20)).fit(X, y)
+model = LassoCV(eps=eps, cv=20).fit(X, y)
 
 ##############################################################################
 # Display results
