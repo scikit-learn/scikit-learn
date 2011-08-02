@@ -775,22 +775,22 @@ def _shuffle(y, labels, random_state):
 
 
 def _check_cv(cv, X=None, y=None, classifier=False):
-    """ Creates a valid and usable cv generator
+    """Creates a valid and usable cv generator
 
-        Parameters
-        ===========
-        cv: an integer, a cv generator instance, or None
-            The input specifying which cv generator to use. It can be an 
-            integer, in which case it is the number of folds in a KFold,
-            None, in which case 3 fold is used, or another object, that
-            will then be used as a cv generator.
-        X: 2D ndarray
-            the data the cross-val object will be applied on
-        y: 1D ndarray
-            the target variable for a supervised learning problem
-        classifier: boolean optional
-            whether the task is a classification task, in which case 
-            stratified KFold will be used.
+    Parameters
+    ===========
+    cv: an integer, a cv generator instance, or None
+        The input specifying which cv generator to use. It can be an 
+        integer, in which case it is the number of folds in a KFold,
+        None, in which case 3 fold is used, or another object, that
+        will then be used as a cv generator.
+    X: 2D ndarray
+        the data the cross-val object will be applied on
+    y: 1D ndarray
+        the target variable for a supervised learning problem
+    classifier: boolean optional
+        whether the task is a classification task, in which case 
+        stratified KFold will be used.
     """
     if cv is None:
         cv = 3
