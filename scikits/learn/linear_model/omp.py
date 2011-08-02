@@ -70,7 +70,7 @@ def _cholesky_omp(X, y, n_nonzero_coefs, eps=None):
     L = np.empty((max_features, max_features), dtype=X.dtype)
     L[0, 0] = 1.
 
-    while True:
+    while 1:
         lam = np.argmax(np.abs(np.dot(X.T, residual)))
         if lam in idx or alpha[lam] ** 2 < min_float:
             # atom already selected or inner product too small
@@ -147,7 +147,7 @@ def _gram_omp(G, Xy, n_nonzero_coefs, eps_0=None, eps=None):
     L = np.empty((max_features, max_features), dtype=G.dtype)
     L[0, 0] = 1.
 
-    while True:
+    while 1:
         lam = np.argmax(np.abs(alpha))
         if lam in idx or alpha[lam] ** 2 < min_float:
             # selected same atom twice, or inner product too small

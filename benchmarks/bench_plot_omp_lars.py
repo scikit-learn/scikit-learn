@@ -12,7 +12,8 @@ from collections import defaultdict
 
 from scikits.learn.linear_model import lars_path, orthogonal_mp, \
                                        orthogonal_mp_gram
-from scikits.learn.datasets.samples_generator import make_regression_dataset
+from scikits.learn.datasets.samples_generator import make_regression_dataset, \
+                                                   generate_sparse_coded_signal
 
 
 def compute_bench(samples_range, features_range):
@@ -29,20 +30,28 @@ def compute_bench(samples_range, features_range):
             print '===================='
             print 'Iteration %03d of %03d' % (it, max_it)
             print '===================='
+            # dataset_kwargs = {
+            #     'n_train_samples': n_samples,
+            #     'n_test_samples': 2,
+            #     'n_features': n_features,
+            #     'n_informative': n_informative,
+            #     'effective_rank': min(n_samples, n_features) / 10,
+            #     #'effective_rank': None,
+            #     'bias': 0.0,
+            # }
             dataset_kwargs = {
-                'n_train_samples': n_samples,
-                'n_test_samples': 2,
-                'n_features': n_features,
-                'n_informative': n_informative,
-                'effective_rank': min(n_samples, n_features) / 10,
-                #'effective_rank': None,
-                'bias': 0.0,
+                'n_samples': 1,
+                'n_components': n_features,
+                'n_features': n_samples,
+                'n_nonzero_coefs': n_informative,
+                'random_state': 0
             }
             print "n_samples: %d" % n_samples
             print "n_features: %d" % n_features
-            X, y, _, _, _ = make_regression_dataset(**dataset_kwargs)
+            #X, y, _, _, _ = make_regression_dataset(**dataset_kwargs)
+            y, X, _ = generate_sparse_coded_signal(**dataset_kwargs)
             X = np.asfortranarray(X)
-            X /= np.sqrt((X**2).sum(axis=0))
+            #X /= np.sqrt((X**2).sum(axis=0))
 
             gc.collect()
             print "benching lars_path (with Gram):",
