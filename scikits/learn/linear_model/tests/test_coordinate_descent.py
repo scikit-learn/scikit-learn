@@ -90,13 +90,13 @@ def test_enet_toy():
     assert_array_almost_equal(pred, [1.0163, 1.5245, 2.0327], decimal=3)
     assert_almost_equal(clf.dual_gap_, 0)
 
-    clf.fit(X, Y, max_iter=1000, precompute=True) # with Gram
+    clf.fit(X, Y, max_iter=1000, precompute=True)  # with Gram
     pred = clf.predict(T)
     assert_array_almost_equal(clf.coef_, [0.50819], decimal=3)
     assert_array_almost_equal(pred, [1.0163, 1.5245, 2.0327], decimal=3)
     assert_almost_equal(clf.dual_gap_, 0)
 
-    clf.fit(X, Y, max_iter=1000, precompute=np.dot(X.T, X)) # with Gram
+    clf.fit(X, Y, max_iter=1000, precompute=np.dot(X.T, X))  # with Gram
     pred = clf.predict(T)
     assert_array_almost_equal(clf.coef_, [0.50819], decimal=3)
     assert_array_almost_equal(pred, [1.0163, 1.5245, 2.0327], decimal=3)
@@ -117,7 +117,7 @@ def test_lasso_path():
     n_samples, n_features, max_iter = 50, 200, 30
     random_state = np.random.RandomState(0)
     w = random_state.randn(n_features)
-    w[10:] = 0.0 # only the top 10 features are impacting the model
+    w[10:] = 0.0  # only the top 10 features are impacting the model
     X = random_state.randn(n_samples, n_features)
     y = np.dot(X, w)
 
@@ -141,7 +141,7 @@ def test_enet_path():
     n_samples, n_features, max_iter = 50, 200, 50
     random_state = np.random.RandomState(0)
     w = random_state.randn(n_features)
-    w[10:] = 0.0 # only the top 10 features are impacting the model
+    w[10:] = 0.0  # only the top 10 features are impacting the model
     X = random_state.randn(n_samples, n_features)
     y = np.dot(X, w)
 
@@ -157,22 +157,21 @@ def test_enet_path():
     X_test = random_state.randn(n_samples, n_features)
     y_test = np.dot(X_test, w)
     assert clf.score(X_test, y_test) > 0.99
-    
+
+
 def test_path_parameters():
+
     # build an ill-posed linear regression problem with many noisy features and
     # comparatively few samples
     n_samples, n_features, max_iter = 50, 200, 50
     random_state = np.random.RandomState(0)
     w = random_state.randn(n_features)
-    w[10:] = 0.0 # only the top 10 features are impacting the model
+    w[10:] = 0.0  # only the top 10 features are impacting the model
     X = random_state.randn(n_samples, n_features)
     y = np.dot(X, w)
-    
+
     clf = ElasticNetCV(n_alphas=100, eps=1e-3, rho=0.95)
-    clf.fit(X, y, max_iter=max_iter, rho=0.5, n_alphas=50) # new params
+    clf.fit(X, y, max_iter=max_iter, rho=0.5, n_alphas=50)  # new params
     assert_almost_equal(0.5, clf.rho)
     assert_equal(50, clf.n_alphas)
     assert_equal(50, len(clf.alphas))
-
-    
-    

@@ -379,7 +379,7 @@ class LinearModelCV(LinearModel):
         # Update the alphas list
         alphas = [model.alpha for model in models]
         n_alphas = len(alphas)
-        path_params.update({'alphas':alphas, 'n_alphas':n_alphas})
+        path_params.update({'alphas': alphas, 'n_alphas': n_alphas})
 
         # init cross-validation generator
         cv = self.cv if self.cv else KFold(n_samples, 5)
@@ -520,5 +520,3 @@ class ElasticNetCV(LinearModelCV):
         self.max_iter = max_iter
         self.tol = tol
         self.cv = cv
-
-
