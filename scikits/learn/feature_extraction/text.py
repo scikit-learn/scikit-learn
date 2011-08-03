@@ -444,10 +444,10 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     norm : 'l1', 'l2' or None, optional
         Norm used to normalize term vectors. None for no normalization.
 
-    use_idf : boolean
+    use_idf : boolean, optional
         Enable inverse-document-frequency reweighting.
 
-    smooth_idf : boolean
+    smooth_idf : boolean, optional
         Smooth idf weights by adding one to document frequencies, as if an
         extra document was seen containing every term in the collection
         exactly once. Prevents zero divisions.
@@ -519,13 +519,12 @@ class Vectorizer(BaseEstimator):
     """
 
     def __init__(self, analyzer=DEFAULT_ANALYZER, max_df=1.0,
-                 max_features=None, norm='l2', use_idf=True):
+                 max_features=None, norm='l2', use_idf=True, smooth_idf=True):
         self.tc = CountVectorizer(analyzer, max_df=max_df,
                                   max_features=max_features,
                                   dtype=np.float64)
-        # no need for idf smoothing since we've just learned the vocabulary
         self.tfidf = TfidfTransformer(norm=norm, use_idf=use_idf,
-                                      smooth_idf=False)
+                                      smooth_idf=smooth_idf)
 
     def fit(self, raw_documents):
         """Learn a conversion law from documents to array data"""
