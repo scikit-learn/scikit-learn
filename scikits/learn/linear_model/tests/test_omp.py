@@ -38,13 +38,13 @@ def test_correct_shapes_gram():
 def test_n_nonzero_coefs():
     assert count_nonzero(orthogonal_mp(X, y[:, 0], n_nonzero_coefs=5)) <= 5
     assert count_nonzero(orthogonal_mp(X, y[:, 0], n_nonzero_coefs=5,
-                                       compute_gram=True)) <= 5
+                                       precompute_gram=True)) <= 5
 
 
 def test_eps():
     eps = 0.5
     gamma = orthogonal_mp(X, y[:, 0], eps=eps)
-    gamma_gram = orthogonal_mp(X, y[:, 0], eps=eps, compute_gram=True)
+    gamma_gram = orthogonal_mp(X, y[:, 0], eps=eps, precompute_gram=True)
     assert np.sum((y[:, 0] - np.dot(X, gamma)) ** 2) <= eps
     assert np.sum((y[:, 0] - np.dot(X, gamma_gram)) ** 2) <= eps
 
@@ -52,12 +52,13 @@ def test_eps():
 def test_with_without_gram():
     assert_array_almost_equal(orthogonal_mp(X, y, n_nonzero_coefs=5),
                               orthogonal_mp(X, y, n_nonzero_coefs=5,
-                                            compute_gram=True))
+                                            precompute_gram=True))
 
 
 def test_with_without_gram_eps():
     assert_array_almost_equal(orthogonal_mp(X, y, eps=1.),
-                              orthogonal_mp(X, y, eps=1., compute_gram=True))
+                              orthogonal_mp(X, y, eps=1., precompute_gram=True)
+                              )
 
 
 def test_unreachable_accuracy():
@@ -67,8 +68,8 @@ def test_unreachable_accuracy():
                                   orthogonal_mp(X, y, 
                                               n_nonzero_coefs=n_features))                                                
         assert_array_almost_equal(orthogonal_mp(X, y, eps=0, 
-                                                compute_gram=True),
-                                  orthogonal_mp(X, y, compute_gram=True,
+                                                precompute_gram=True),
+                                  orthogonal_mp(X, y, precompute_gram=True,
                                                 n_nonzero_coefs=n_features))
         assert len(w) > 0  # warnings should be raised
 

@@ -26,7 +26,7 @@ dependence in the dictionary. The requested precision might not have been met.
 """
 
 
-def _cholesky_omp(X, y, n_nonzero_coefs, eps=None, overwrite_X=False):
+def _cholesky_omp(X, y, n_nonzero_coefs, eps=None, overwrite_x=False):
     """
     Solves a single Orthogonal Matching Pursuit problem using
     the Cholesky decomposition.
@@ -45,6 +45,11 @@ def _cholesky_omp(X, y, n_nonzero_coefs, eps=None, overwrite_X=False):
     eps: float
         Targeted squared error, if not None overrides n_nonzero_coefs.
 
+    overwrite_x: bool,
+        Whether the design matrix X can be overwritten by the algorithm. This
+        is only helpful if X is already Fortran-ordered, otherwise a copy
+        is made anyway.
+
     Returns:
     --------
     gamma: array, shape n_nonzero_coefs
@@ -55,7 +60,7 @@ def _cholesky_omp(X, y, n_nonzero_coefs, eps=None, overwrite_X=False):
         vector
 
     """
-    if not overwrite_X:
+    if not overwrite_x:
         X = X.copy('F')
     else:  # even if we are allowed to overwrite, still copy it if bad order
         X = np.asfortranarray(X)
@@ -105,7 +110,8 @@ def _cholesky_omp(X, y, n_nonzero_coefs, eps=None, overwrite_X=False):
     return gamma, idx
 
 
-def _gram_omp(G, Xy, n_nonzero_coefs, eps_0=None, eps=None):
+def _gram_omp(Gram, Xy, n_nonzero_coefs, eps_0=None, eps=None,
+              overwrite_gram=False, overwrite_xy=False):
     """
     Solves a single Orthogonal Matching Pursuit problem using
     the Cholesky decomposition, based on the Gram matrix and more
@@ -113,7 +119,7 @@ def _gram_omp(G, Xy, n_nonzero_coefs, eps_0=None, eps=None):
 
     Parameters:
     -----------
-    G: array, shape (n_features, n_features)
+    Gram: array, shape (n_features, n_features)
         Gram matrix of the input data matrix
 
     Xy: array, shape: n_features
@@ -128,6 +134,14 @@ def _gram_omp(G, Xy, n_nonzero_coefs, eps_0=None, eps=None):
     eps: float
         Targeted squared error, if not None overrides n_nonzero_coefs.
 
+    overwrite_gram: bool,
+        Whether the gram matrix can be overwritten by the algorithm. This
+        is only helpful if it is already Fortran-ordered, otherwise a copy
+        is made anyway.
+
+    overwrite_xy: bool,
+        Whether the covariance vector Xy can be overwritten by the algorithm.
+
     Returns:
     --------
     gamma: array, shape n_nonzero_coefs
@@ -138,10 +152,17 @@ def _gram_omp(G, Xy, n_nonzero_coefs, eps_0=None, eps=None):
         vector
 
     """
+    if not overwrite_gram:
+        Gram = Gram.copy('F')
+    else:
+        Gram = np.asfortranarray(Gram)
 
-    min_float = np.finfo(G.dtype).eps
-    nrm2, = linalg.get_blas_funcs(('nrm2',), (G,))
-    potrs, = get_lapack_funcs(('potrs',), (G,))
+    if not overwrite_xy:
+        Xy = Xy.copy()
+
+    min_float = np.finfo(Gram.dtype).eps
+    nrm2, swap = linalg.get_blas_funcs(('nrm2', 'swap'), (Gram,))
+    potrs, = get_lapack_funcs(('potrs',), (Gram,))
 
     idx = []
     alpha = Xy
@@ -149,18 +170,18 @@ def _gram_omp(G, Xy, n_nonzero_coefs, eps_0=None, eps=None):
     delta = 0
     n_active = 0
 
-    max_features = len(G) if eps is not None else n_nonzero_coefs
-    L = np.empty((max_features, max_features), dtype=G.dtype)
+    max_features = len(Gram) if eps is not None else n_nonzero_coefs
+    L = np.empty((max_features, max_features), dtype=Gram.dtype)
     L[0, 0] = 1.
 
     while 1:
         lam = np.argmax(np.abs(alpha))
-        if lam in idx or alpha[lam] ** 2 < min_float:
+        if lam < n_active or alpha[lam] ** 2 < min_float:
             # selected same atom twice, or inner product too small
             warn(premature)
             break
         if n_active > 0:
-            L[n_active, :n_active] = G[lam, idx]
+            L[n_active, :n_active] = Gram[lam, :n_active]
             v = nrm2(L[n_active, :n_active]) ** 2
             solve_triangular(L[:n_active, :n_active], L[n_active, :n_active])
             if 1 - v <= min_float:  # selected atoms are dependent
@@ -168,16 +189,19 @@ def _gram_omp(G, Xy, n_nonzero_coefs, eps_0=None, eps=None):
                 break
             L[n_active, n_active] = np.sqrt(1 - v)
         idx.append(lam)
+        Gram[n_active], Gram[lam] = swap(Gram[n_active], Gram[lam])
+        Gram.T[n_active], Gram.T[lam] = swap(Gram.T[n_active], Gram.T[lam])
+        Xy[n_active], Xy[lam] = Xy[lam], Xy[n_active]
         n_active += 1
         # solves LL'x = y as a composition of two triangular systems
-        gamma, _ = potrs(L[:n_active, :n_active], Xy[idx], lower=True,
+        gamma, _ = potrs(L[:n_active, :n_active], Xy[:n_active], lower=True,
                          overwrite_b=False)
 
-        beta = np.dot(gamma, G[idx])
+        beta = np.dot(Gram[:, :n_active], gamma)
         alpha = Xy - beta
         if eps is not None:
             eps_curr += delta
-            delta = np.inner(gamma, beta[idx])
+            delta = np.inner(gamma, beta[:n_active])
             eps_curr -= delta
             if eps_curr <= eps:
                 break
@@ -187,7 +211,8 @@ def _gram_omp(G, Xy, n_nonzero_coefs, eps_0=None, eps=None):
     return gamma, idx
 
 
-def orthogonal_mp(X, y, n_nonzero_coefs=None, eps=None, compute_gram=False):
+def orthogonal_mp(X, y, n_nonzero_coefs=None, eps=None, precompute_gram=False,
+                  overwrite_x=False):
     """Orthogonal Matching Pursuit (OMP)
 
     Solves n_targets Orthogonal Matching Pursuit problems.
@@ -214,9 +239,14 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, eps=None, compute_gram=False):
     eps: float
         Maximum norm of the residual. If not None, overrides n_nonzero_coefs.
 
-    compute_gram, bool:
+    precompute_gram, bool:
         Whether to perform precomputations. Improves performance when n_targets
         or n_samples is very large.
+
+    overwrite_x: bool,
+        Whether the design matrix X can be overwritten by the algorithm. This
+        is only helpful if X is already Fortran-ordered, otherwise a copy
+        is made anyway.
 
     Returns
     -------
@@ -242,24 +272,27 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, eps=None, compute_gram=False):
     if eps is None and n_nonzero_coefs > X.shape[1]:
         raise ValueError("The number of atoms cannot be more than the number \
                           of features")
-    if compute_gram:
+    if precompute_gram:
         G = np.dot(X.T, X)
         Xy = np.dot(X.T, y)
         if eps is not None:
             norms_squared = np.sum((y ** 2), axis=0)
         else:
             norms_squared = None
-        return orthogonal_mp_gram(G, Xy, n_nonzero_coefs, eps, norms_squared)
+        return orthogonal_mp_gram(G, Xy, n_nonzero_coefs, eps, norms_squared,
+                                  overwrite_gram=True, overwrite_xy=True)
 
     coef = np.zeros((X.shape[1], y.shape[1]))
     for k in xrange(y.shape[1]):
-        x, idx = _cholesky_omp(X, y[:, k], n_nonzero_coefs, eps)
+        x, idx = _cholesky_omp(X, y[:, k], n_nonzero_coefs, eps,
+                               overwrite_x=overwrite_x)
         coef[idx, k] = x
     return np.squeeze(coef)
 
 
-def orthogonal_mp_gram(G, Xy, n_nonzero_coefs=None, eps=None,
-                       norms_squared=None):
+def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, eps=None,
+                       norms_squared=None, overwrite_gram=False,
+                       overwrite_xy=False):
     """Gram Orthogonal Matching Pursuit (OMP)
 
     Solves n_targets Orthogonal Matching Pursuit problems using only
@@ -267,7 +300,7 @@ def orthogonal_mp_gram(G, Xy, n_nonzero_coefs=None, eps=None,
 
     Parameters
     ----------
-    G: array of shape (n_features, n_features)
+    Gram: array of shape (n_features, n_features)
         Gram matrix of the input data: X.T * X
 
     Xy: array, shape: n_features or (n_features, n_targets)
@@ -282,6 +315,14 @@ def orthogonal_mp_gram(G, Xy, n_nonzero_coefs=None, eps=None,
     norms_squared: array, shape: n_targets
         Squared L2 norms of the lines of y. Required if eps is not None.
 
+    overwrite_gram: bool,
+        Whether the gram matrix can be overwritten by the algorithm. This
+        is only helpful if it is already Fortran-ordered, otherwise a copy
+        is made anyway.
+
+    overwrite_xy: bool,
+        Whether the covariance vector Xy can be overwritten by the algorithm.
+
     Returns
     -------
     coef: array of shape: n_features or (n_features, n_targets)
@@ -293,7 +334,7 @@ def orthogonal_mp_gram(G, Xy, n_nonzero_coefs=None, eps=None,
     lars_path
 
     """
-    G = np.asanyarray(G)
+    Gram = np.asanyarray(Gram)
     Xy = np.asanyarray(Xy)
     if Xy.ndim == 1:
         Xy = Xy[:, np.newaxis]
@@ -301,7 +342,7 @@ def orthogonal_mp_gram(G, Xy, n_nonzero_coefs=None, eps=None,
             norms_squared = [norms_squared]
 
     if n_nonzero_coefs == None and eps is None:
-        n_nonzero_coefs = int(0.1 * len(G))
+        n_nonzero_coefs = int(0.1 * len(Gram))
     if eps is not None and norms_squared == None:
         raise ValueError('Gram OMP needs the precomputed norms in order \
                           to evaluate the error sum of squares.')
@@ -309,13 +350,15 @@ def orthogonal_mp_gram(G, Xy, n_nonzero_coefs=None, eps=None,
         raise ValueError("Epsilon cennot be negative")
     if eps is None and n_nonzero_coefs <= 0:
         raise ValueError("The number of atoms must be positive")
-    if eps is None and n_nonzero_coefs > len(G):
+    if eps is None and n_nonzero_coefs > len(Gram):
         raise ValueError("The number of atoms cannot be more than the number \
                           of features")
-    coef = np.zeros((len(G), Xy.shape[1]))
+    coef = np.zeros((len(Gram), Xy.shape[1]))
     for k in range(Xy.shape[1]):
-        x, idx = _gram_omp(G, Xy[:, k], n_nonzero_coefs,
-                           norms_squared[k] if eps is not None else None, eps)
+        x, idx = _gram_omp(Gram, Xy[:, k], n_nonzero_coefs,
+                           norms_squared[k] if eps is not None else None, eps,
+                           overwrite_gram=overwrite_gram,
+                           overwrite_xy=overwrite_xy)
         coef[idx, k] = x
     return np.squeeze(coef)
 
@@ -339,9 +382,10 @@ class OrthogonalMatchingPursuit(LinearModel):
     normalize: boolean, optional
         If False, the regressors X are assumed to be already normalized.
 
-    precompute : True | False | array-like, optional
-        Whether to use a precomputed Gram matrix to speed up
-        calculations. The Gram matrix can also be passed as argument.
+    precompute_gram : True | False | 'auto'
+        Whether to use a precomputed Gram and Xy matrix to speed up
+        calculations. Note that if you already have such matrices, you
+        can pass them directly to the fit method.
 
     Attributes
     ----------
@@ -357,14 +401,14 @@ class OrthogonalMatchingPursuit(LinearModel):
     """
 
     def __init__(self, n_nonzero_coefs=None, eps=None, fit_intercept=True,
-                 normalize=True, precompute=False):
+                 normalize=True, precompute_gram=False):
         self.n_nonzero_coefs = n_nonzero_coefs
         self.eps = eps
         self.fit_intercept = fit_intercept
         self.normalize = normalize
-        self.precompute = precompute
+        self.precompute_gram = precompute_gram
 
-    def fit(self, X, y, **params):
+    def fit(self, X, y, Gram=None, Xy=None, **params):
         """Fit the model using X, y as training data.
 
         Parameters
@@ -390,9 +434,11 @@ class OrthogonalMatchingPursuit(LinearModel):
             norms = np.sqrt(np.sum(X ** 2, axis=0))
             nonzeros = np.flatnonzero(norms)
             X[:, nonzeros] /= norms[nonzeros]
+        if Gram is not None:
+            raise NotImplemented('working on it')
 
         self.coef_ = orthogonal_mp(X, y, self.n_nonzero_coefs, self.eps,
-                                   self.precompute).T
+                                   self.precompute_gram).T
 
         if self.normalize:
             self.coef_ /= norms
