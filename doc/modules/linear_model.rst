@@ -125,8 +125,8 @@ This method has the same order of complexity than an
 .. between these
 
 
-Generalized Cross-Validation
-----------------------------
+Setting alpha: generalized Cross-Validation
+---------------------------------------------
 
 :class:`RidgeCV` implements ridge regression with built-in
 cross-validation of the alpha parameter.  The object works in the same way
@@ -147,6 +147,8 @@ as GridSearchCV except that it defaults to Generalized Cross-Validation
       <http://cbcl.mit.edu/projects/cbcl/publications/ps/MIT-CSAIL-TR-2007-025.pdf>`_,
       `course slides
       <http://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf>`_).
+
+.. _lasso:
 
 Lasso
 =====
@@ -184,14 +186,13 @@ of possible values.
 .. topic:: Examples:
 
   * :ref:`example_linear_model_lasso_and_elasticnet.py`,
-  * :ref:`example_linear_model_lasso_path_with_crossvalidation.py`
 
 Setting `alpha`
 -----------------
 
 The scikit exposes objects that set the Lasso `alpha` parameter by
 cross-validation: :class:`LassoCV` and :class:`LassoLarsCV`.
-:class:`LassoLarsCV` is based on the _least_angle_regression algorithm
+:class:`LassoLarsCV` is based on the :ref:`least_angle_regression` algorithm
 explained below.
 
 For high-dimensional datasets with many collinear regressors,
@@ -199,6 +200,10 @@ For high-dimensional datasets with many collinear regressors,
 the advantage of exploring more relevant values of `alpha` parameter, and 
 if the number of samples is very small compared to the number of
 observations, it is often faster than :class:`LassoCV`.
+
+.. topic:: Examples:
+
+  * :ref:`example_linear_model_plot_lasso_path_crossval.py`
 
 
 Elastic Net
@@ -233,6 +238,10 @@ Johnstone and Robert Tibshirani.
 
 The advantages of LARS are:
 
+  - It is numerical effecient in contexts where p >> n (i.e., when the
+    number of dimensions is significantly greater than the number of
+    points)
+
   - It is computationally just as fast as forward selection and has
     the same order of complexity as an ordinary least squares.
 
@@ -246,9 +255,6 @@ The advantages of LARS are:
 
   - It is easily modified to produce solutions for other estimators,
     like the Lasso.
-
-  - It is effective in contexts where p >> n (i.e., when the number of
-    dimensions is significantly greater than the number of points)
 
 The disadvantages of the LARS method include:
 
@@ -289,11 +295,14 @@ function of the norm of its coefficients.
 
  * :ref:`example_linear_model_plot_lasso_lars.py`
 
+ * :ref:`example_linear_model_plot_lasso_path_crossval.py`
+
+The class :class:`LassoLarsCV` can be used to set the `alpha` parameter
+of the Lasso by cross-validation with the Lars algorithm.
 
 The Lars algorithm provides the full path of the coefficients along
 the regularization parameter almost for free, thus a common operation
 consist of retrieving the path with function :func:`lars_path`
-
 
 Mathematical formulation
 ------------------------
