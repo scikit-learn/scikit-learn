@@ -437,14 +437,6 @@ class KMeans(BaseEstimator):
     tol: float, optional default: 1e-4
         Relative tolerance w.r.t. inertia to declare convergence
 
-    transform_method: {'vq', 'dot'}
-        Method for transforming the points in Y.
-        vq (default) performs vector quantization, returning the index
-        of the nearest centroid for each point. This action corresponds
-        to running the kmeans._e_step function on the given data and
-        the existing centroids and returning the labels.
-        dot performs a dot product of the centroids and the
-        transpose of Y.
 
     Methods
     -------
@@ -483,8 +475,7 @@ class KMeans(BaseEstimator):
     """
 
     def __init__(self, k=8, init='k-means++', n_init=10, max_iter=300,
-                 tol=1e-4, verbose=0, random_state=None, copy_x=True,
-                 transform_method='vq'):
+                 tol=1e-4, verbose=0, random_state=None, copy_x=True):
 
         if hasattr(init, '__array__'):
             k = init.shape[0]
@@ -497,7 +488,6 @@ class KMeans(BaseEstimator):
         self.verbose = verbose
         self.random_state = random_state
         self.copy_x = copy_x
-        self.transform_method = transform_method
 
     def _check_data(self, X, **params):
         """
@@ -523,8 +513,11 @@ class KMeans(BaseEstimator):
             tol=self.tol, random_state=self.random_state, copy_x=self.copy_x)
         return self
 
-    def transform(self, X, **params):
-        """ Transforms X based on the learnt cluster centroids
+    def transform(self, X):
+        """ Transforms X based on the learnt cluster centroids.
+
+            The transformation is performed using the euclidean distance of
+            each sample in X to each of the cluster clusters.
 
             Parameters
             ----------
@@ -536,28 +529,46 @@ class KMeans(BaseEstimator):
 
             Returns
             -------
-            Z : array, shape dependent on self.transform_method
-                The resulting transformation of X given the cluster centers.
-                If transform_method is 'dot', the shape will be (n_samples, k).
-                If transform_method is 'vq', the shape will be (n_samples,)
+            Z : array, shape (n_samples, k)
+                The transformation of X using the learnt clusters.
         """
-        if not hasattr(self, 'cluster_centers_'):
-            raise AttributeError("No cluster centroids found. Please train "
-                                 "using fit(X) before attempting a transform.")
-        self._set_params(**params)
+        if not hasattr(self, "cluster_centers_"):
+            raise AttributeError("Model has not been trained. "
+                                 "Train k-means before using transform.")
         cluster_shape = self.cluster_centers_.shape[1]
         if not X.shape[1] == cluster_shape:
             raise ValueError("Incorrect number of features for points. "
                              "Got %d features, expected %d" % (X.shape[1],
                                                                cluster_shape))
-        if self.transform_method == 'dot':
-            return np.dot(X, self.cluster_centers_.transpose())
-        elif self.transform_method == 'vq':
-            return _e_step(X, self.cluster_centers_)[0]
-        else:
-            raise AttributeError("Invalid method given to transform. Value "
-                                 "given was %s" % self.transform_method)
+        return euclidean_distance(X, self.cluster_centers_)
 
+    def predict(self, X):
+        """ Predict which of the learnt cluster each sample belongs to.
+
+            Parameters
+            ----------
+            X : array, shape (n_samples, n_features)
+                The data to assigned to the learnt clusters. n_samples is the
+                number of new points to be transformed, while n_features is the
+                same as that given to the fit(). Any different size will raise
+                a ValueError.
+
+            Returns
+            -------
+            Z : array, shape (n_samples,)
+                Cluster index with closest centroid to each of the given
+                samples.
+        """
+        if not hasattr(self, "cluster_centers_"):
+            raise AttributeError("Model has not been trained. "
+                                 "Train k-means before using predict.")
+        cluster_shape = self.cluster_centers_.shape[1]
+        if not X.shape[1] == cluster_shape:
+            raise ValueError("Incorrect number of features for points. "
+                             "Got %d features, expected %d" % (X.shape[1],
+                                                               cluster_shape))
+        return _e_step(X, self.cluster_centers_)[0]
+    
 
 def _mini_batch_step_dense(X, batch_slice, centers, counts, x_squared_norms):
     """Incremental update of the centers for the Minibatch K-Means algorithm
