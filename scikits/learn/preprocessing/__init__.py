@@ -582,8 +582,8 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
         self : returns an instance of self.
         """
         n_samples = K.shape[0]
-        self.K_fit_rows = np.sum(K, axis=0) / n_samples
-        self.K_fit_all = self.K_fit_rows.sum() / n_samples
+        self.K_fit_rows_ = np.sum(K, axis=0) / n_samples
+        self.K_fit_all_ = self.K_fit_rows_.sum() / n_samples
         return self
 
     def transform(self, K, copy=True):
@@ -603,10 +603,10 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
             K = K.copy()
 
         K_pred_cols = (np.sum(K, axis=1) /
-                       self.K_fit_rows.shape[0])[:, np.newaxis]
+                       self.K_fit_rows_.shape[0])[:, np.newaxis]
 
-        K -= self.K_fit_rows
+        K -= self.K_fit_rows_
         K -= K_pred_cols
-        K += self.K_fit_all
+        K += self.K_fit_all_
 
         return K
