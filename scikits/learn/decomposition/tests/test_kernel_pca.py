@@ -9,10 +9,9 @@ from .. import PCA, KernelPCA
 
 
 def test_kernel_pca():
-    np.random.seed(0)
-
-    X_fit = np.random.random((5, 4))
-    X_pred = np.random.random((2, 4))
+    rng = np.random.RandomState(0)
+    X_fit = rng.random_sample((5, 4))
+    X_pred = rng.random_sample((2, 4))
 
     for eigen_solver in ("auto", "dense", "arpack"):
         for kernel in ("linear", "rbf", "poly"):
@@ -35,10 +34,9 @@ def test_kernel_pca():
 
 
 def test_kernel_pca_linear_kernel():
-    np.random.seed(0)
-
-    X_fit = np.random.random((5, 4))
-    X_pred = np.random.random((2, 4))
+    rng = np.random.RandomState(0)
+    X_fit = rng.random_sample((5, 4))
+    X_pred = rng.random_sample((2, 4))
 
     # for a linear kernel, kernel PCA should find the same projection as PCA
     # modulo the sign (direction)
@@ -50,10 +48,9 @@ def test_kernel_pca_linear_kernel():
 
 
 def test_kernel_pca_n_components():
-    np.random.seed(0)
-
-    X_fit = np.random.random((5, 4))
-    X_pred = np.random.random((2, 4))
+    rng = np.random.RandomState(0)
+    X_fit = rng.random_sample((5, 4))
+    X_pred = rng.random_sample((2, 4))
 
     for eigen_solver in ("dense", "arpack"):
         for c in [1, 2, 4]:
@@ -64,10 +61,9 @@ def test_kernel_pca_n_components():
 
 
 def test_kernel_pca_precomputed():
-    np.random.seed(0)
-
-    X_fit = np.random.random((5, 4))
-    X_pred = np.random.random((2, 4))
+    rng = np.random.RandomState(0)
+    X_fit = rng.random_sample((5, 4))
+    X_pred = rng.random_sample((2, 4))
 
     for eigen_solver in ("dense", "arpack"):
         X_kpca = KernelPCA(4, eigen_solver=eigen_solver).\
@@ -82,7 +78,8 @@ def test_kernel_pca_precomputed():
 
 
 def test_kernel_pca_invalid_kernel():
-    X_fit = np.random.random((2, 4))
+    rng = np.random.RandomState(0)
+    X_fit = rng.random_sample((2, 4))
     kpca = KernelPCA(kernel="tototiti")
     assert_raises(ValueError, kpca.fit, X_fit)
 
