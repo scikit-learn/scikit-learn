@@ -523,21 +523,21 @@ class KMeans(BaseEstimator):
             tol=self.tol, random_state=self.random_state, copy_x=self.copy_x)
         return self
 
-    def transform(self, Y, **params):
-        """ Transforms Y based on the learnt cluster centroids
+    def transform(self, X, **params):
+        """ Transforms X based on the learnt cluster centroids
 
             Parameters
             ----------
-            Y : array, shape (n_samples, n_features)
+            X : array, shape (n_samples, n_features)
                 The data to be transformed using the k-means centers.
                 n_samples is the number of new points to be transformed,
-                while n_features is the same as that of X given to the fit()
+                while n_features is the same as that given to the fit()
                 method. Any different size will raise a ValueError.
 
             Returns
             -------
             Z : array, shape dependent on self.transform_method
-                The resulting transformation of Y given the cluster centers.
+                The resulting transformation of X given the cluster centers.
                 If transform_method is 'dot', the shape will be (n_samples, k).
                 If transform_method is 'vq', the shape will be (n_samples,)
         """
@@ -546,14 +546,14 @@ class KMeans(BaseEstimator):
                                  "using fit(X) before attempting a transform.")
         self._set_params(**params)
         cluster_shape = self.cluster_centers_.shape[1]
-        if not Y.shape[1] == cluster_shape:
+        if not X.shape[1] == cluster_shape:
             raise ValueError("Incorrect number of features for points. "
-                             "Got %d features, expected %d" % (Y.shape[1],
+                             "Got %d features, expected %d" % (X.shape[1],
                                                                cluster_shape))
         if self.transform_method == 'dot':
-            return np.dot(Y, self.cluster_centers_.transform())
+            return np.dot(X, self.cluster_centers_.transpose())
         elif self.transform_method == 'vq':
-            return _e_step(Y, self.cluster_centers_)[0]
+            return _e_step(X, self.cluster_centers_)[0]
         else:
             raise AttributeError("Invalid method given to transform. Value "
                                  "given was %s" % self.transform_method)

@@ -75,17 +75,23 @@ t0 = time()
 reduced_data = PCA(n_components=2).fit_transform(data)
 kmeans = KMeans(init='k-means++', k=n_digits, n_init=10).fit(reduced_data)
 print "done in %0.3fs" % (time() - t0)
-# Plot the decision boundary. For that, we will asign a color to each
-# Step size of the mesh.
+
+# Step size of the mesh. Decrease to increase the quality of the VQ.
 h = .02# point in the mesh [x_min, m_max]x[y_min, y_max].
+
+# Plot the decision boundary. For that, we will asign a color to each
 x_min, x_max = reduced_data[:, 0].min() - 1, reduced_data[:, 0].max() + 1
 y_min, y_max = reduced_data[:, 1].min() - 1, reduced_data[:, 1].max() + 1
 xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
+
+# Obtain labels for each point in mesh. Use last trained model.
 Z = kmeans.transform(np.c_[xx.ravel(), yy.ravel()])
+
 # Put the result into a color plot
 Z = Z.reshape(xx.shape)
 pl.set_cmap(pl.cm.Paired)
 pl.pcolormesh(xx, yy, Z)
+
 # Plot the centroids as a white X
 centroids = kmeans.cluster_centers_
 pl.scatter(centroids[:, 0], centroids[:, 1],
