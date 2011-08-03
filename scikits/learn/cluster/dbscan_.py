@@ -11,10 +11,11 @@ import numpy as np
 
 from ..base import BaseEstimator
 from ..metrics import calculate_distances
+from ..utils import check_random_state
 
 
 def dbscan(X, eps=0.5, min_samples=5, metric='euclidean',
-           index_order=None, verbose=False):
+           random_state=None, verbose=False):
     """Perform DBSCAN clustering from vector array or distance matrix.
 
     Parameters
@@ -36,10 +37,8 @@ def dbscan(X, eps=0.5, min_samples=5, metric='euclidean',
         metric parameter.
         If metric is "precomputed", X is assumed to be a distance matrix and
         must be square.
-    index_order: [n_samples] or None
-        Order to observe samples for clustering.
-        If None, a random order is given.
-        To look at samples in order, use range(n).
+    random_state: numpy.RandomState, optional
+        The generator used to initialize the centers. Defaults to numpy.random.
     verbose: boolean, optional
         The verbosity level
 
@@ -63,9 +62,9 @@ def dbscan(X, eps=0.5, min_samples=5, metric='euclidean',
     """
     n = X.shape[0]
     # If index order not given, create random order.
-    if index_order is None:
-        index_order = np.arange(n)
-        np.random.shuffle(index_order)
+    random_state = check_random_state(random_state)
+    index_order = np.arange(n)
+    random_state.shuffle(index_order)
     assert len(index_order) == n, ("Index order must be of length n"
                                    " (%d expected, %d given)"
                                    % (n, len(index_order)))
@@ -134,10 +133,8 @@ class DBSCAN(BaseEstimator):
         metric parameter.
         If metric is "precomputed", X is assumed to be a distance matrix and
         must be square.
-    index_order: [n_samples] or None
-        Order to observe samples for clustering.
-        If None, a random order is given.
-        To look at samples in order, use range(n).
+    random_state: numpy.RandomState, optional
+        The generator used to initialize the centers. Defaults to numpy.random.
     verbose: boolean, optional
         The verbosity level
 
@@ -169,12 +166,12 @@ class DBSCAN(BaseEstimator):
     """
 
     def __init__(self, eps=0.5, min_samples=5, metric='euclidean',
-                 verbose=False, index_order=None):
+                 verbose=False, random_state=None):
         self.eps = eps
         self.min_samples = min_samples
         self.metric = metric
         self.verbose = verbose
-        self.index_order = index_order
+        self.random_state = check_random_state(random_state)
         self.verbose = verbose
 
     def fit(self, X, **params):
