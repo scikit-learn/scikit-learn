@@ -265,10 +265,16 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, eps=None, precompute_gram=False,
     http://www.cs.technion.ac.il/~ronrubin/Publications/KSVX-OMP-v2.pdf
 
     """
-    X = np.asanyarray(X)
-    y = np.asanyarray(y)
+    X, y = map(np.asanyarray, (X, y))
     if y.ndim == 1:
         y = y[:, np.newaxis]
+    if not overwrite_x:
+        X = X.copy('F')
+        overwrite_x = True
+    else:
+        X = np.asfortranarray(X)
+    if y.shape[1] > 1:  # subsequent targets will be affected
+        overwrite_x = False
     if n_nonzero_coefs == None and eps == None:
         n_nonzero_coefs = int(0.1 * X.shape[1])
     if eps is not None and eps < 0:
@@ -355,8 +361,7 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, eps=None,
     http://www.cs.technion.ac.il/~ronrubin/Publications/KSVX-OMP-v2.pdf
 
     """
-    Gram = np.asanyarray(Gram)
-    Xy = np.asanyarray(Xy)
+    Gram, Xy = map(np.asanyarray, (Gram, Xy))
     if Xy.ndim == 1:
         Xy = Xy[:, np.newaxis]
         if eps is not None:
@@ -499,9 +504,13 @@ class OrthogonalMatchingPursuit(LinearModel):
             Gram = np.atleast_2d(Gram)
 
             if not overwrite_gram:
+                overwrite_gram = True
                 Gram = Gram.copy('F')
             else:
                 Gram = np.asfortranarray(Gram)
+
+            if y.shape[1] > 1:  # subsequent targets will be affected
+                overwrite_gram = False
 
             if Xy is None:
                 Xy = np.dot(X.T, y)
@@ -517,7 +526,8 @@ class OrthogonalMatchingPursuit(LinearModel):
 
             norms_sq = np.sum((y ** 2), axis=0) if eps is not None else None
             self.coef_ = orthogonal_mp_gram(Gram, Xy, self.n_nonzero_coefs,
-                                            self.eps, norms_sq, True, True).T
+                                            self.eps, norms_sq,
+                                            overwrite_gram, True).T
         else:
             precompute_gram = self.precompute_gram
             if precompute_gram == 'auto':
