@@ -11,7 +11,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from .externals.joblib import Parallel, delayed, logger
-from .cross_val import _check_cv
+from .cross_val import check_cv
 from .base import BaseEstimator, is_classifier, clone
 from .utils.fixes import product
 
@@ -266,7 +266,7 @@ class GridSearchCV(BaseEstimator):
             raise ValueError('Target variable (y) has a different number '
                     'of samples (%i) than data (X: %i samples)' %
                         (len(y), n_samples))
-        cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
+        cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
 
         grid = IterGrid(self.param_grid)
         base_clf = clone(self.estimator)

@@ -736,7 +736,7 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, iid=False,
         The verbosity level
     """
     X, y = check_arrays(X, y, sparse_format='csr')
-    cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
+    cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
     if score_func is None:
         assert hasattr(estimator, 'score'), ValueError(
                 "If no score_func is specified, the estimator passed "
@@ -774,7 +774,7 @@ def _shuffle(y, labels, random_state):
     return y[ind]
 
 
-def _check_cv(cv, X=None, y=None, classifier=False):
+def check_cv(cv, X=None, y=None, classifier=False):
     """Creates a valid and usable cv generator
 
     Parameters
@@ -858,7 +858,7 @@ def permutation_test_score(estimator, X, y, score_func, cv=None,
     The Journal of Machine Learning Research (2010) vol. 11
     """
     X, y = check_arrays(X, y, sparse_format='csr')
-    cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
+    cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
 
     random_state = check_random_state(random_state)
 

@@ -8,7 +8,7 @@ import warnings
 import numpy as np
 
 from .base import LinearModel
-from ..cross_val import _check_cv
+from ..cross_val import check_cv
 from . import cd_fast
 
 
@@ -397,7 +397,7 @@ class LinearModelCV(LinearModel):
         path_params.update({'alphas': alphas, 'n_alphas': n_alphas})
 
         # init cross-validation generator
-        cv = _check_cv(self.cv, X)
+        cv = check_cv(self.cv, X)
 
         # Compute path for all folds and compute MSE to get the best alpha
         folds = list(cv)
