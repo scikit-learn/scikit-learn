@@ -279,9 +279,9 @@ function of the norm of its coefficients.
 
    >>> from scikits.learn import linear_model
    >>> clf = linear_model.LassoLars(alpha=.1)
-   >>> clf.fit ([[0, 0], [1, 1]], [0, 1])
+   >>> clf.fit ([[0, 0], [1, 1]], [0, 1]) # doctest: +ELLIPSIS
    LassoLars(normalize=True, verbose=False, fit_intercept=True, max_iter=500,
-        precompute='auto', alpha=0.1)
+        eps=..., precompute='auto', alpha=0.1)
    >>> clf.coef_
    array([ 0.71715729,  0.        ])
 
