@@ -238,7 +238,7 @@ Johnstone and Robert Tibshirani.
 
 The advantages of LARS are:
 
-  - It is numerical effecient in contexts where p >> n (i.e., when the
+  - It is numerically efficient in contexts where p >> n (i.e., when the
     number of dimensions is significantly greater than the number of
     points)
 
