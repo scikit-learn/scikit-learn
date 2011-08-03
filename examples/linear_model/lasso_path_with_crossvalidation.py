@@ -32,12 +32,9 @@ X_test, y_test = X[n_samples/2:], y[n_samples/2:]
 from scikits.learn.linear_model import LassoCV
 from scikits.learn.cross_val import KFold
 
-cv = KFold(n_samples/2, 5)
-lasso_cv = LassoCV()
+lasso_cv = LassoCV(cv=KFold(n_samples/2, 5))
 
-# fit_params = {'max_iter':100}
-
-y_ = lasso_cv.fit(X_train, y_train, cv=cv, max_iter=100).predict(X_test)
+y_ = lasso_cv.fit(X_train, y_train, max_iter=100).predict(X_test)
 
 print "Optimal regularization parameter  = %s" % lasso_cv.alpha
 
