@@ -43,7 +43,7 @@ pl.stem(idx, x[idx])
 
 # plot the noise-free reconstruction
 ####################################
-x_r = orthogonal_mp(D, y, n_atoms, compute_gram=True)
+x_r = orthogonal_mp(D, y, n_atoms)
 idx_r, = x_r.nonzero()
 pl.subplot(3, 1, 2)
 pl.xlim(0, 512)
@@ -52,7 +52,7 @@ pl.stem(idx_r, x_r[idx_r])
 
 # plot the noisy reconstruction
 ###############################
-x_r = orthogonal_mp(D, y_noisy, n_atoms, compute_gram=True)
+x_r = orthogonal_mp(D, y_noisy, n_atoms)
 idx_r, = x_r.nonzero()
 pl.subplot(3, 1, 3)
 pl.xlim(0, 512)
