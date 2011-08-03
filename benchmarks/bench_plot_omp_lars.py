@@ -21,6 +21,7 @@ def compute_bench(samples_range, features_range):
     it = 0
 
     results = defaultdict(lambda: [])
+    lars, lars_gram, omp, omp_gram = [], [], [], []
 
     max_it = len(samples_range) * len(features_range)
     for n_samples in samples_range:
@@ -62,7 +63,7 @@ def compute_bench(samples_range, features_range):
             lars_path(X, y, Xy=Xy, Gram=G, max_iter=n_informative)
             delta = time() - tstart
             print "%0.3fs" % delta
-            results['lars_path (with Gram)'].append(delta)
+            lars_gram.append(delta)
 
             gc.collect()
             print "benching lars_path (without Gram):",
@@ -71,7 +72,7 @@ def compute_bench(samples_range, features_range):
             lars_path(X, y, Gram=None, max_iter=n_informative)
             delta = time() - tstart
             print "%0.3fs" % delta
-            results['lars_path (without Gram)'].append(delta)
+            lars.append(delta)
 
             gc.collect()
             print "benching orthogonal_mp (with Gram):",
@@ -81,7 +82,7 @@ def compute_bench(samples_range, features_range):
                           n_nonzero_coefs=n_informative)
             delta = time() - tstart
             print "%0.3fs" % delta
-            results['orthogonal_mp (with Gram)'].append(delta)
+            omp_gram.append(delta)
 
             gc.collect()
             print "benching orthogonal_mp (without Gram):",
@@ -92,8 +93,13 @@ def compute_bench(samples_range, features_range):
                           n_nonzero_coefs=n_informative)
             delta = time() - tstart
             print "%0.3fs" % delta
-            results['orthogonal_mp (without Gram)'].append(delta)
-
+            omp.append(delta)
+    results['ratio of OMP versus LARS \n timing improvement \n (w/ Gram)'] = (
+        np.array(lars_gram) / 
+        np.array(omp_gram))
+    results['ratio of OMP versus LARS \n timing improvement \n (w/o Gram)'] = (
+        np.array(lars) / 
+        np.array(omp))
     return results
 
 
@@ -101,8 +107,8 @@ if __name__ == '__main__':
     from mpl_toolkits.mplot3d import axes3d  # register the 3d projection
     import matplotlib.pyplot as plt
 
-    samples_range = np.linspace(20, 2000, 4).astype(np.int)
-    features_range = np.linspace(20, 2000, 4).astype(np.int)
+    samples_range = np.linspace(1000, 3000, 5).astype(np.int)
+    features_range = np.linspace(1000, 3000, 5).astype(np.int)
     results = compute_bench(samples_range, features_range)
 
     max_time = max(max(t) for t in results.itervalues())
@@ -110,7 +116,7 @@ if __name__ == '__main__':
     fig = plt.figure()
     i = 1
     for c, (label, timings) in zip('bcry', sorted(results.iteritems())):
-        ax = fig.add_subplot(2, 2, i, projection='3d')
+        ax = fig.add_subplot(1, 2, i, projection='3d')
         X, Y = np.meshgrid(samples_range, features_range)
         Z = np.asarray(timings).reshape(samples_range.shape[0],
                                         features_range.shape[0])
