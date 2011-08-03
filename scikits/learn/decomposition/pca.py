@@ -240,9 +240,8 @@ class PCA(BaseEstimator, TransformerMixin):
         elif 0 < self.n_components and self.n_components < 1.0:
             # number of components for which the cumulated explained variance
             # percentage is superior to the desired threshold
-            n_remove = np.sum(self.explained_variance_ratio_.cumsum() >=
-                              self.n_components) - 1
-            self.n_components = n_features - n_remove
+            ratio_cumsum = self.explained_variance_ratio_.cumsum()
+            self.n_components = np.sum(ratio_cumsum < self.n_components) + 1
 
         if self.n_components is not None:
             self.components_ = self.components_[:self.n_components, :]
