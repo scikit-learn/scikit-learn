@@ -145,10 +145,11 @@ class DBSCAN(BaseEstimator):
 
     Attributes
     ----------
-    core_samples_: array, shape = [n_core_samples]
+    core_sample_indices_: array, shape = [n_core_samples]
         Indices of core samples.
 
     components_: array, shape = [n_core_samples, n_features]
+        Copy of each core sample found by training.
 
     labels_ : array, shape = [n_samples]
         Cluster labels for each point in the dataset given to fit().
@@ -188,6 +189,7 @@ class DBSCAN(BaseEstimator):
         """
 
         self._set_params(**params)
-        self.core_samples_, self.labels_ = dbscan(X, **self._get_params())
-        self.components_ = X[self.core_samples_].copy()
+        self.core_samples_indices_, self.labels_ = dbscan(X,
+                                                          **self._get_params())
+        self.components_ = X[self.core_samples_indices_].copy()
         return self
