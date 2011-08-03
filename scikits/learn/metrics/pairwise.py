@@ -24,9 +24,9 @@ def calculate_distances(X, metric="euclidean"):
 
     Parameters
     ----------
-    X: array [n_points, n_points] if metric == "precomputed", or,
-             [n_points, n_features] otherwise
-        Array of pairwise distances between points, or a feature array.
+    X: array [n_samples, n_samples] if metric == "precomputed", or,
+             [n_samples, n_features] otherwise
+        Array of pairwise distances between samples, or a feature array.
     metric: string, or callable
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
@@ -40,7 +40,7 @@ def calculate_distances(X, metric="euclidean"):
 
     Returns
     -------
-    D: array [n_points, n_points]
+    D: array [n_samples, n_samples]
         A distance matrix D such that D_{i, j} is the distance between the
         ith and jth vectors of the given matrix X.
 

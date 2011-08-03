@@ -134,7 +134,7 @@ class DBSCAN(BaseEstimator):
         metric parameter.
         If metric is "precomputed", X is assumed to be a distance matrix and
         must be square.
-    index_order: [n_points] or None
+    index_order: [n_samples] or None
         Order to observe points for clustering.
         If None, a random order is given.
         To look at points in order, use range(n).
@@ -148,11 +148,14 @@ class DBSCAN(BaseEstimator):
 
     Attributes
     ----------
-    core_points: array, shape = [n_core_points]
+    core_points_: array, shape = [n_core_points]
         Indices of core points.
 
-    labels_ : array, shape = [n_points]
-        Cluster labels for each point. Noisy points are given the label -1.
+    components_: array, shape = [n_core_points, n_features]
+
+    labels_ : array, shape = [n_samples]
+        Cluster labels for each point in the dataset given to fit().
+        Noisy points are given the label -1.
 
     Notes
     -----
@@ -189,4 +192,5 @@ class DBSCAN(BaseEstimator):
 
         self._set_params(**params)
         self.core_points_, self.labels_ = dbscan(X, **self._get_params())
+        self.components_ = X[self.core_points_].copy()
         return self

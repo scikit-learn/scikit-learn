@@ -15,10 +15,7 @@ X = generate_clustered_data(n_clusters=n_clusters)
 
 
 def test_dbscan_similarity():
-    """
-    Tests the DBSCAN algorithm with a similarity array
-
-    """
+    """Tests the DBSCAN algorithm with a similarity array."""
     # Parameters chosen specifically for this task.
     eps = 0.15
     min_points = 10
@@ -41,10 +38,7 @@ def test_dbscan_similarity():
 
 
 def test_dbscan_feature():
-    """
-    Tests the DBSCAN algorithm with a feature vector array
-
-    """
+    """Tests the DBSCAN algorithm with a feature vector array."""
     # Parameters chosen specifically for this task.
     # Different eps to other test, because distance is not normalised.
     eps = 0.8
@@ -68,10 +62,7 @@ def test_dbscan_feature():
 
 
 def test_dbscan_callable():
-    """
-    Tests the DBSCAN algorithm with a callable metric
-
-    """
+    """Tests the DBSCAN algorithm with a callable metric."""
     # Parameters chosen specifically for this task.
     # Different eps to other test, because distance is not normalised.
     eps = 0.8
