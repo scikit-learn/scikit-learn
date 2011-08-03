@@ -296,7 +296,7 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, eps=None,
     """Gram Orthogonal Matching Pursuit (OMP)
 
     Solves n_targets Orthogonal Matching Pursuit problems using only
-    the Gram matrix X.T * X and the product X * y.
+    the Gram matrix X.T * X and the product X.T * y.
 
     Parameters
     ----------
@@ -304,7 +304,7 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, eps=None,
         Gram matrix of the input data: X.T * X
 
     Xy: array, shape: n_features or (n_features, n_targets)
-        Input targets multiplied by X: X * y
+        Input targets multiplied by X: X.T * y
 
     n_nonzero_coefs: int
         Desired number of non-zero entries in the solution
@@ -382,17 +382,17 @@ class OrthogonalMatchingPursuit(LinearModel):
     normalize: boolean, optional
         If False, the regressors X are assumed to be already normalized.
 
-    precompute_gram : True | False | 'auto'
+    precompute_gram: True | False | 'auto'
         Whether to use a precomputed Gram and Xy matrix to speed up
         calculations. Note that if you already have such matrices, you
         can pass them directly to the fit method.
 
     Attributes
     ----------
-    `coef_` : array, shape = [n_features]
+    coef_: array, shape = [n_features]
         parameter vector (w in the fomulation formula)
 
-    `intercept_` : float
+    intercept_: float
         independent term in decision function.
 
     References
@@ -414,15 +414,35 @@ class OrthogonalMatchingPursuit(LinearModel):
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples, n_features)
+        X: array-like, shape = (n_samples, n_features)
             Training data.
 
-        y : array-like, shape = (n_samples,) or (n_samples, n_targets)
+        y: array-like, shape = (n_samples,) or (n_samples, n_targets)
             Target values.
+        
+        Gram: array of shape (n_features, n_features) (optional)
+            Gram matrix of the input data: X.T * X
+
+        Xy: array, shape: n_features or (n_features, n_targets) (optional)
+            Input targets multiplied by X: X.T * y
+
+        overwrite_x: bool,
+            Whether the design matrix X can be overwritten by the algorithm.
+            This is only helpful if X is already Fortran-ordered, otherwise a
+            copy is made anyway.
+
+        overwrite_gram: bool,
+            Whether the gram matrix can be overwritten by the algorithm. This
+            is only helpful if it is already Fortran-ordered, otherwise a copy
+            is made anyway.
+
+        overwrite_xy: bool,
+            Whether the covariance vector Xy can be overwritten by the
+            algorithm.
 
         Returns
         -------
-        self : object
+        self: object
             returns an instance of self.
         """
         self._set_params(**params)
