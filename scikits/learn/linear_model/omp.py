@@ -1,11 +1,4 @@
-"""
-Orthogonal matching pursuit algorithms based on
-http://www.cs.technion.ac.il/~ronrubin/Publications/KSVX-OMP-v2.pdf
-
-OMP introduced in S. G. Mallat, Z. Zhang, Matching pursuits with time-frequency
-dictionaries, IEEE Transactions on Signal Processing, Vol. 41, No. 12.
-(December 1993), pp. 3397-3415.
-http://blanche.polytechnique.fr/~mallat/papiers/MallatPursuit93.pdf
+"""Orthogonal matching pursuit algorithms
 """
 
 # Author: Vlad Niculae
@@ -33,10 +26,10 @@ def _cholesky_omp(X, y, n_nonzero_coefs, eps=None, overwrite_x=False):
 
     Parameters:
     -----------
-    X: array, shape (n_samples, n_features)
+    X: array, shape = (n_samples, n_features)
         Input dictionary. Columns are assumed to have unit norm.
 
-    y: array, shape: n_samples
+    y: array, shape = (n_samples,)
         Input targets
 
     n_nonzero_coefs: int
@@ -52,10 +45,10 @@ def _cholesky_omp(X, y, n_nonzero_coefs, eps=None, overwrite_x=False):
 
     Returns:
     --------
-    gamma: array, shape n_nonzero_coefs
+    gamma: array, shape = (n_nonzero_coefs,)
         Non-zero elements of the solution
 
-    idx: array, shape n_nonzero_coefs
+    idx: array, shape = (n_nonzero_coefs,)
         Indices of the positions of the elements in gamma within the solution
         vector
 
@@ -119,10 +112,10 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, eps_0=None, eps=None,
 
     Parameters:
     -----------
-    Gram: array, shape (n_features, n_features)
+    Gram: array, shape = (n_features, n_features)
         Gram matrix of the input data matrix
 
-    Xy: array, shape: n_features
+    Xy: array, shape = (n_features,)
         Input targets
 
     n_nonzero_coefs: int
@@ -144,10 +137,10 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, eps_0=None, eps=None,
 
     Returns:
     --------
-    gamma: array, shape n_nonzero_coefs
+    gamma: array, shape = (n_nonzero_coefs,)
         Non-zero elements of the solution
 
-    idx: array, shape n_nonzero_coefs
+    idx: array, shape = (n_nonzero_coefs,)
         Indices of the positions of the elements in gamma within the solution
         vector
 
@@ -227,10 +220,10 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, eps=None, precompute_gram=False,
 
     Parameters
     ----------
-    X: array of shape (n_samples, n_features)
-        Input dictionary. Columns are assumed to have unit norm.
+    X: array, shape = (n_samples, n_features)
+        Input data. Columns are assumed to have unit norm.
 
-    y: array, shape: n_samples or (n_samples, n_targets)
+    y: array, shape = (n_samples,) or (n_samples, n_targets)
         Input targets
 
     n_nonzero_coefs: int
@@ -239,7 +232,7 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, eps=None, precompute_gram=False,
     eps: float
         Maximum norm of the residual. If not None, overrides n_nonzero_coefs.
 
-    precompute_gram, bool:
+    precompute_gram: {True, False, 'auto'},
         Whether to perform precomputations. Improves performance when n_targets
         or n_samples is very large.
 
@@ -250,13 +243,26 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, eps=None, precompute_gram=False,
 
     Returns
     -------
-    coef: array of shape: n_features or (n_features, n_targets)
+    coef: array, shape = (n_features,) or (n_features, n_targets)
         Coefficients of the OMP solution
 
     See also
     --------
+    OrthogonalMatchingPursuit
     orthogonal_mp_gram
     lars_path
+
+    Notes
+    -----
+    Orthogonal matching pursuit was introduced in G. Mallat, Z. Zhang,
+    Matching pursuits with time-frequency dictionaries, IEEE Transactions on
+    Signal Processing, Vol. 41, No. 12. (December 1993), pp. 3397-3415.
+    (http://blanche.polytechnique.fr/~mallat/papiers/MallatPursuit93.pdf)
+
+    This implementation is based on Rubinstein, R., Zibulevsky, M. and Elad,
+    M., Efficient Implementation of the K-SVD Algorithm using Batch Orthogonal
+    Matching Pursuit Technical Report - CS Technion, April 2008.
+    http://www.cs.technion.ac.il/~ronrubin/Publications/KSVX-OMP-v2.pdf
 
     """
     X = np.asanyarray(X)
@@ -272,6 +278,8 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, eps=None, precompute_gram=False,
     if eps is None and n_nonzero_coefs > X.shape[1]:
         raise ValueError("The number of atoms cannot be more than the number \
                           of features")
+    if precompute_gram == 'auto':
+        precompute_gram = X.shape[0] > X.shape[1]
     if precompute_gram:
         G = np.dot(X.T, X)
         Xy = np.dot(X.T, y)
@@ -300,10 +308,10 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, eps=None,
 
     Parameters
     ----------
-    Gram: array of shape (n_features, n_features)
+    Gram: array, shape = (n_features, n_features)
         Gram matrix of the input data: X.T * X
 
-    Xy: array, shape: n_features or (n_features, n_targets)
+    Xy: array, shape = (n_features,) or (n_features, n_targets)
         Input targets multiplied by X: X.T * y
 
     n_nonzero_coefs: int
@@ -312,7 +320,7 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, eps=None,
     eps: float
         Maximum norm of the residual. If not None, overrides n_nonzero_coefs.
 
-    norms_squared: array, shape: n_targets
+    norms_squared: array-like, shape = (n_targets,)
         Squared L2 norms of the lines of y. Required if eps is not None.
 
     overwrite_gram: bool,
@@ -325,13 +333,26 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, eps=None,
 
     Returns
     -------
-    coef: array of shape: n_features or (n_features, n_targets)
+    coef: array, shape = (n_features,) or (n_features, n_targets)
         Coefficients of the OMP solution
 
     See also
     --------
+    OrthogonalMatchingPursuit
     orthogonal_mp
     lars_path
+
+    Notes
+    -----
+    Orthogonal matching pursuit was introduced in G. Mallat, Z. Zhang,
+    Matching pursuits with time-frequency dictionaries, IEEE Transactions on
+    Signal Processing, Vol. 41, No. 12. (December 1993), pp. 3397-3415.
+    (http://blanche.polytechnique.fr/~mallat/papiers/MallatPursuit93.pdf)
+
+    This implementation is based on Rubinstein, R., Zibulevsky, M. and Elad,
+    M., Efficient Implementation of the K-SVD Algorithm using Batch Orthogonal
+    Matching Pursuit Technical Report - CS Technion, April 2008.
+    http://www.cs.technion.ac.il/~ronrubin/Publications/KSVX-OMP-v2.pdf
 
     """
     Gram = np.asanyarray(Gram)
@@ -382,22 +403,40 @@ class OrthogonalMatchingPursuit(LinearModel):
     normalize: boolean, optional
         If False, the regressors X are assumed to be already normalized.
 
-    precompute_gram: True | False | 'auto'
+    precompute_gram: {True, False, 'auto'},
         Whether to use a precomputed Gram and Xy matrix to speed up
-        calculations. Note that if you already have such matrices, you
-        can pass them directly to the fit method.
+        calculations. Improves performance when `n_targets` or `n_samples` is
+        very large. Note that if you already have such matrices, you can pass
+        them directly to the fit method.
 
     Attributes
     ----------
-    coef_: array, shape = [n_features]
+    coef_: array, shape = (n_features,) or (n_features, n_targets)
         parameter vector (w in the fomulation formula)
 
-    intercept_: float
+    intercept_: float or array, shape =(n_targets,)
         independent term in decision function.
 
-    References
-    ----------
-    TODO
+    Notes
+    -----
+    Orthogonal matching pursuit was introduced in G. Mallat, Z. Zhang,
+    Matching pursuits with time-frequency dictionaries, IEEE Transactions on
+    Signal Processing, Vol. 41, No. 12. (December 1993), pp. 3397-3415.
+    (http://blanche.polytechnique.fr/~mallat/papiers/MallatPursuit93.pdf)
+
+    This implementation is based on Rubinstein, R., Zibulevsky, M. and Elad,
+    M., Efficient Implementation of the K-SVD Algorithm using Batch Orthogonal
+    Matching Pursuit Technical Report - CS Technion, April 2008.
+    http://www.cs.technion.ac.il/~ronrubin/Publications/KSVX-OMP-v2.pdf
+
+    See also
+    --------
+    orthogonal_mp
+    orthogonal_mp_gram
+    lars_path
+    Lars
+    LassoLars
+
     """
 
     def __init__(self, n_nonzero_coefs=None, eps=None, fit_intercept=True,
@@ -420,10 +459,11 @@ class OrthogonalMatchingPursuit(LinearModel):
         y: array-like, shape = (n_samples,) or (n_samples, n_targets)
             Target values.
 
-        Gram: array of shape (n_features, n_features) (optional)
+        Gram: array-like, shape = (n_features, n_features) (optional)
             Gram matrix of the input data: X.T * X
 
-        Xy: array, shape: n_features or (n_features, n_targets) (optional)
+        Xy: array-like, shape = (n_features,) or (n_features, n_targets)
+            (optional)
             Input targets multiplied by X: X.T * y
 
         overwrite_x: bool,
