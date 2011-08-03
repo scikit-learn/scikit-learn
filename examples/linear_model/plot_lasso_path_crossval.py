@@ -1,10 +1,29 @@
 """
-==================================================
-Cross validated Lasso path with coordinate descent
-==================================================
+==========================
+Cross validated Lasso path
+==========================
 
-Compute a 20-fold cross-validated Lasso path with coordinate descent to 
-find the optimal value of alpha.
+Compute a 20-fold cross-validated :ref:`lasso` path to find the optimal value of
+alpha. 
+
+This example uses two different algorithm to compute the Lasso path:
+coordinate descent, as implemented by the LassoCV class, and Lars (least
+angle regression) as implemented by the LassoLarsCV class. Both
+algorithms give roughly the same results. They differ with regards to
+their execution speed and sources of numerical errors. 
+
+Lars computes a path solution only for each kink in the path. As a
+result, it is very efficient when there are only of few kinks, which is
+the case if there are few features or samples. Also, it is able to
+compute the full path without setting any meta parameter. On the
+opposite, coordinate descent compute the path points on a pre-specified
+grid (here we use the default). Thus it is more efficient if the number
+of grid points is smaller than the number of kinks in the path. Such a
+strategy can be interesting if the number of features is really large
+and there are enough samples to select a large amount. In terms of
+numerical errors, for heavily correlated variables, Lars will accumulate
+more erros, while the coordinate descent algorithm will only sample the
+path on a grid.
 
 Note how the optimal value of alpha varies for each fold. This
 illustrates why nested-cross validation is necessary when trying to
@@ -14,13 +33,15 @@ data.
 """
 print __doc__
 
-# Author: Olivier Grisel
+# Author: Olivier Grisel, Gael Varoquaux
 # License: BSD Style.
+
+import time
 
 import numpy as np
 import pylab as pl
 
-from scikits.learn.linear_model import LassoCV
+from scikits.learn.linear_model import LassoCV, LassoLarsCV
 from scikits.learn import datasets
 
 diabetes = datasets.load_diabetes()
@@ -31,42 +52,55 @@ y = diabetes.target
 X /= np.sqrt(np.sum(X ** 2, axis=0))
 
 ##############################################################################
+# LassoCV: coordinate descent
+
 # Compute paths
+print "Computing regularization path using the coordinate descent lasso..."
+t1 = time.time()
+model = LassoCV(cv=20).fit(X, y)
+t_lasso_cv = time.time() - t1
 
-eps = 1e-3 # the smaller it is the longer is the path
-
-print "Computing regularization path using the lasso..."
-model = LassoCV(eps=eps, cv=20).fit(X, y)
-
-##############################################################################
 # Display results
 m_log_alphas = -np.log10(model.alphas)
-m_log_alpha = -np.log10(model.alpha)
 
-ax = pl.gca()
-ax.set_color_cycle(2 * ['b', 'r', 'g', 'c', 'k'])
-pl.subplot(2, 1, 1)
-pl.plot(m_log_alphas, model.coef_path_)
-
-ymin, ymax = pl.ylim()
-pl.vlines([m_log_alpha], ymin, ymax, linestyle='dashed')
-
-pl.xticks(())
-pl.ylabel('weights')
-pl.title('Lasso paths')
-pl.axis('tight')
-
-pl.subplot(2, 1, 2)
+pl.figure()
 ymin, ymax = 2300, 3800
 pl.plot(m_log_alphas, model.mse_path_, '--')
 pl.plot(m_log_alphas, model.mse_path_.mean(axis=-1), 'k', 
-        label='Average accross the folds')
-pl.vlines([m_log_alpha], ymin, ymax, linestyle='dashed')
-pl.legend(loc='best')
+        label='Average accross the folds', linewidth=2)
+pl.axvline(-np.log10(model.alpha), linestyle='dashed', color='k')
+pl.legend()
 
 pl.xlabel('-log(lambda)')
-pl.ylabel('MSE')
-pl.title('Mean Square Errors on each CV fold')
+pl.ylabel('Mean square error')
+pl.title('Mean square error on each fold: coordinate descent (train time: %.2fs)' % 
+            t_lasso_cv)
+pl.axis('tight')
+pl.ylim(ymin, ymax)
+
+##############################################################################
+# LassoLarsCV: least angle regression
+
+# Compute paths
+print "Computing regularization path using the Lars lasso..."
+t1 = time.time()
+model = LassoLarsCV(cv=20).fit(X, y)
+t_lasso_lars_cv = time.time() - t1
+
+# Display results
+m_log_alphas = -np.log10(model.cv_alphas)
+
+pl.figure()
+pl.plot(m_log_alphas, model.cv_mse_path_, '--')
+pl.plot(m_log_alphas, model.cv_mse_path_.mean(axis=-1), 'k', 
+        label='Average accross the folds', linewidth=2)
+pl.axvline(-np.log10(model.alpha), linestyle='dashed', color='k')
+pl.legend()
+
+pl.xlabel('-log(lambda)')
+pl.ylabel('Mean square error')
+pl.title('Mean square error on each fold: Lars (train time: %.2fs)' % 
+            t_lasso_lars_cv)
 pl.axis('tight')
 pl.ylim(ymin, ymax)
 
