@@ -419,7 +419,7 @@ class OrthogonalMatchingPursuit(LinearModel):
 
         y: array-like, shape = (n_samples,) or (n_samples, n_targets)
             Target values.
-        
+
         Gram: array of shape (n_features, n_features) (optional)
             Gram matrix of the input data: X.T * X
 
@@ -476,7 +476,7 @@ class OrthogonalMatchingPursuit(LinearModel):
                 Gram /= norms[:, np.newaxis]
 
             norms_sq = np.sum((y ** 2), axis=0) if eps is not None else None
-            self.coef_ = orthogonal_mp_gram(Gram, Xy, self.n_nonzero_coefs, 
+            self.coef_ = orthogonal_mp_gram(Gram, Xy, self.n_nonzero_coefs,
                                             self.eps, norms_sq, True, True).T
         else:
             precompute_gram = self.precompute_gram

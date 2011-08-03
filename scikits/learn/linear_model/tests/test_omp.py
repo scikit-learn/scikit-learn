@@ -29,7 +29,7 @@ def test_correct_shapes():
 
 
 def test_correct_shapes_gram():
-    assert_equal(orthogonal_mp_gram(G, Xy[:, 0], n_nonzero_coefs=5).shape, 
+    assert_equal(orthogonal_mp_gram(G, Xy[:, 0], n_nonzero_coefs=5).shape,
                  (n_features,))
     assert_equal(orthogonal_mp_gram(G, Xy, n_nonzero_coefs=5).shape,
                  (n_features, 3))
@@ -65,9 +65,9 @@ def test_unreachable_accuracy():
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter('always')
         assert_array_almost_equal(orthogonal_mp(X, y, eps=0),
-                                  orthogonal_mp(X, y, 
-                                              n_nonzero_coefs=n_features))                                                
-        assert_array_almost_equal(orthogonal_mp(X, y, eps=0, 
+                                  orthogonal_mp(X, y,
+                                              n_nonzero_coefs=n_features))
+        assert_array_almost_equal(orthogonal_mp(X, y, eps=0,
                                                 precompute_gram=True),
                                   orthogonal_mp(X, y, precompute_gram=True,
                                                 n_nonzero_coefs=n_features))
@@ -110,12 +110,12 @@ def test_estimator_shapes():
 
 
 def test_identical_regressors():
-  newX = X.copy()
-  newX[:, 1] = newX[:, 0]
-  gamma = np.zeros(n_features)
-  gamma[0] = gamma[1] = 1.
-  newy = np.dot(newX, gamma)
-  with warnings.catch_warnings(record=True) as w:
-    warnings.simplefilter('always')
-    orthogonal_mp(newX, newy, 2)
-    assert len(w) == 1
+    newX = X.copy()
+    newX[:, 1] = newX[:, 0]
+    gamma = np.zeros(n_features)
+    gamma[0] = gamma[1] = 1.
+    newy = np.dot(newX, gamma)
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter('always')
+        orthogonal_mp(newX, newy, 2)
+        assert len(w) == 1
