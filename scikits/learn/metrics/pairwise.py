@@ -10,7 +10,7 @@ from ..utils import safe_asanyarray, atleast2d_or_csr, deprecated
 from ..utils.extmath import safe_sparse_dot
 
 ################################################################################
-# Distances 
+# Distances
 
 def euclidean_distances(X, Y, Y_norm_squared=None, squared=False):
     """
@@ -82,10 +82,8 @@ def euclidean_distances(X, Y, Y_norm_squared=None, squared=False):
 
     # TODO: a faster Cython implementation would do the clipping of negative
     # values in a single pass over the output matrix.
-    distances = safe_sparse_dot(X, Y.T)
+    distances = safe_sparse_dot(X, Y.T, dense_output=True)
     distances *= -2
-    if issparse(distances):
-        distances = distances.toarray()
     distances += XX
     distances += YY
     distances = np.maximum(distances, 0)
