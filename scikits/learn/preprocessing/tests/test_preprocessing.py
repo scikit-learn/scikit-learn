@@ -119,8 +119,8 @@ def test_scaler_without_centering():
 
 
 def test_normalizer_l1():
-    np.random.seed(0)
-    X_orig = np.random.randn(4, 5)
+    rng = np.random.RandomState(0)
+    X_orig = rng.randn(4, 5)
     X_orig[3, :] = 0.0
 
     # check inputs that support the no-copy optim
@@ -159,8 +159,8 @@ def test_normalizer_l1():
 
 
 def test_normalizer_l2():
-    np.random.seed(0)
-    X_orig = np.random.randn(4, 5)
+    rng = np.random.RandomState(0)
+    X_orig = rng.randn(4, 5)
     X_orig[3, :] = 0.0
 
     # check inputs that support the no-copy optim
