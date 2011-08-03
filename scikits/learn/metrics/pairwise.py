@@ -160,7 +160,7 @@ def linear_kernel(X, Y):
     -------
     Gram matrix: array of shape (n_samples_1, n_samples_2)
     """
-    return np.dot(X, Y.T)
+    return safe_sparse_dot(X, Y.T, dense_output=True)
 
 
 def polynomial_kernel(X, Y, degree=3, gamma=0, coef0=1):
