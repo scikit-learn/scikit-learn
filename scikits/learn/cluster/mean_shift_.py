@@ -96,7 +96,7 @@ def mean_shift(X, bandwidth=None, seeds=None, cluster_all_points=True, max_itera
             # Find mean of points within bandwidth
             points_within = [X[idx] for idx in get_points_within_range(kd_tree, my_mean, bandwidth)]
             if completed_iterations == 0 and len(points_within) == 0:
-                break
+                break # Depending on seeding strategy, this condition may occur
             my_old_mean = my_mean  # save the old mean
             my_mean = np.mean(points_within, axis=0)
 
@@ -124,11 +124,12 @@ def mean_shift(X, bandwidth=None, seeds=None, cluster_all_points=True, max_itera
             neighbor_idxs = get_points_within_range(cluster_center_kd_tree, center, bandwidth)
             for neighbor_idx in neighbor_idxs[1:]: # skip nearest point because it is the current point
                 is_unique[neighbor_idx] = 0
-    cluster_centers = [center for center, unique in zip(sorted_centers, is_unique) if unique]
+    cluster_centers = [center for center, unique in izip(sorted_centers, is_unique) if unique]
 
     # ASSIGN LABELS: a point belongs to the cluster that it is closest to
     centers_tree = cKDTree(cluster_centers)
-    if len(cluster_centers) < 65535:  # Every point is assigned a label, so keep these as small as possible
+    # Every point is assigned a label, so keep these small using 4byte ints if possible
+    if len(cluster_centers) < 65535:  
         labels = np.zeros(n_points, dtype=np.uint16)
     else:
         labels = np.zeros(n_points, dtype=np.uint32)
@@ -136,15 +137,42 @@ def mean_shift(X, bandwidth=None, seeds=None, cluster_all_points=True, max_itera
         if cluster_all_points:
             distance, idx = centers_tree.query(X[point_idx], 1)
             labels[point_idx] = idx
+        # If not forced to cluster all points, put those that are not within a kernel in cluster -1
         else:
             distance, idx = centers_tree.query(X[point_idx], 1, distance_upper_bound=bandwidth)
-            if distance <= bandwidth: # make sure distance is not inf
+            if distance <= bandwidth:
                 labels[point_idx] = idx
             else:
                 labels[point_idx] = -1
     return cluster_centers, labels
 
 def get_bucket_seeds(X, bin_size, min_bin_freq=1):
+    """
+    Finds seeds for clustering.mean_shift by first bucketing/discretizing
+    data onto a grid whose lines are spaced bin_size apart, and then
+    choosing those buckets with at least min_bin_freq points.
+    Parameters
+    ----------
+
+    X : array [n_samples, n_features]
+        Input points, the same points that will be used in mean_shift
+
+    bin_size: float
+        Controls the coarseness of the discretization. Smaller values lead
+        to more seeding (which is computationally more expensive). If you're
+        not sure how to set this, set it to the value of the bandwidth used
+        in clustering.mean_shift
+
+    min_bin_freq: integer, default 1
+        Only bins with at least min_bin_freq will be selected as seeds.
+        Raising this value decreases the number of seeds found, which
+        makes mean_shift computationally cheaper.
+    Returns
+    -------
+
+    bin_seeds : array [n_samples, n_features]
+        points used as initial kernel posistions in clustering.mean_shift
+    """
     
     # Discretize (i.e., quantize, bin) points to bins
     bin_sizes = defaultdict(int)
@@ -216,6 +244,16 @@ class MeanShift(BaseEstimator):
         If not set, the bandwidth is estimated.
         See clustering.estimate_bandwidth
 
+    seeds: array [n_samples, n_features], optional
+        Seeds used to initialize kernels. If not set,
+        the seeds are calculated by clustering.get_bucket_seeds
+        with bandwidth as the grid size and default values for
+        other parameters.
+
+    cluster_all_points: boolean, default True
+        If true, then all points are clustered, even those orphans that are
+        not within any kernel. Orphans are assigned to the nearest kernel.
+        If false, then orphans are given cluster label -1.
     Methods
     -------
 
