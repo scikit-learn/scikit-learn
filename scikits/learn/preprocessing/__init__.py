@@ -583,7 +583,7 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
         """
         n_samples = K.shape[0]
         self.K_fit_rows = np.sum(K, axis=0) / n_samples
-        self.K_fit_all = K.sum() / (n_samples ** 2)
+        self.K_fit_all = self.K_fit_rows.sum() / n_samples
         return self
 
     def transform(self, K, copy=True):
