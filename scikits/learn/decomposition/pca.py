@@ -113,8 +113,9 @@ class PCA(BaseEstimator, TransformerMixin):
         if n_components == 'mle', Minka's MLE is used to guess the dimension
 
         if 0 < n_components < 1, select the number of components such that
-                                 the explained variance ratio is greater
-                                 than n_components
+                                 the amount of variance that needs to be
+                                 explained is greater than the percentage
+                                 specified by n_components
 
     copy: bool
         If False, data passed to fit are overwritten
