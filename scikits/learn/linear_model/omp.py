@@ -459,7 +459,11 @@ class OrthogonalMatchingPursuit(LinearModel):
             self.coef_ = orthogonal_mp_gram(Gram, Xy, self.n_nonzero_coefs, 
                                             self.eps, norms_sq, True, True).T
         else:
+            precompute_gram = self.precompute_gram
+            if precompute_gram == 'auto':
+                precompute_gram = X.shape[0] > X.shape[1]
             self.coef_ = orthogonal_mp(X, y, self.n_nonzero_coefs, self.eps,
+                                       precompute_gram=precompute_gram,
                                        overwrite_x=overwrite_x).T
 
         if self.normalize:
