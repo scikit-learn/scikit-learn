@@ -408,7 +408,8 @@ class OrthogonalMatchingPursuit(LinearModel):
         self.normalize = normalize
         self.precompute_gram = precompute_gram
 
-    def fit(self, X, y, Gram=None, Xy=None, **params):
+    def fit(self, X, y, Gram=None, Xy=None, overwrite_x=False,
+            overwrite_gram=False, overwrite_xy=False, **params):
         """Fit the model using X, y as training data.
 
         Parameters
@@ -435,10 +436,31 @@ class OrthogonalMatchingPursuit(LinearModel):
             nonzeros = np.flatnonzero(norms)
             X[:, nonzeros] /= norms[nonzeros]
         if Gram is not None:
-            raise NotImplemented('working on it')
+            Gram = np.atleast_2d(Gram)
 
-        self.coef_ = orthogonal_mp(X, y, self.n_nonzero_coefs, self.eps,
-                                   self.precompute_gram).T
+            if not overwrite_gram:
+                Gram = Gram.copy('F')
+            else:
+                Gram = np.asfortranarray(Gram)
+
+            if Xy is None:
+                Xy = np.dot(X.T, y)
+            else:
+                if not overwrite_xy:
+                    Xy = Xy.copy()
+                if self.normalize:
+                    Xy /= norms
+
+            if self.normalize:
+                Gram /= norms
+                Gram /= norms[:, np.newaxis]
+
+            norms_sq = np.sum((y ** 2), axis=0) if eps is not None else None
+            self.coef_ = orthogonal_mp_gram(Gram, Xy, self.n_nonzero_coefs, 
+                                            self.eps, norms_sq, True, True).T
+        else:
+            self.coef_ = orthogonal_mp(X, y, self.n_nonzero_coefs, self.eps,
+                                       overwrite_x=overwrite_x).T
 
         if self.normalize:
             self.coef_ /= norms
