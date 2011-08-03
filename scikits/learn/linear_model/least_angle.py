@@ -15,7 +15,7 @@ from scipy.linalg.lapack import get_lapack_funcs
 from .base import LinearModel
 from ..utils import arrayfuncs
 from ..utils import deprecated
-from ..cross_val import KFold
+from ..cross_val import _check_cv
 from ..externals.joblib import Parallel, delayed
 
 
@@ -694,7 +694,7 @@ class LarsCV(LARS):
 
         n_samples, n_features = X.shape
         # init cross-validation generator
-        cv = self.cv if self.cv else KFold(n_samples, 5)
+        cv = _check_cv(self.cv, X, y, classifier=False)
 
         Gram = 'auto' if self.precompute else None
 
