@@ -11,9 +11,10 @@ from scipy import linalg
 from ..utils import check_random_state
 
 def make_classification(n_samples=100, n_features=20, n_informative=2, 
-                        n_redundant=2, n_repeated=2, n_classes=2, 
-                        n_clusters_per_class=2, flip_y=0.01, class_sep=1.0,
-                        hypercube=True, shift=0.0, scale=1.0, seed=0):
+                        n_redundant=2, n_repeated=0, n_classes=2, 
+                        n_clusters_per_class=2, weights=None, flip_y=0.01, 
+                        class_sep=1.0, hypercube=True, shift=0.0, scale=1.0, 
+                        seed=0):
     """
     Generate a random n-class classification problem.
 
@@ -49,6 +50,10 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
 
     n_clusters_per_class : int, optional (default=2)
         The number of clusters per class.
+
+    weights : list of floats or None (default=None)
+        The proportions of samples assigned to each class. If None, then
+        classes are balanced.
 
     flip_y : float, optional (default=0.01)
         The fraction of samples whose class are randomly exchanged. 
@@ -95,13 +100,27 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     # Count features, clusters and samples
     assert n_informative + n_redundant + n_repeated <= n_features
     assert 2 ** n_informative >= n_classes * n_clusters_per_class
+    assert weights is None or (len(weights) == n_classes or 
+                               len(weights) == (n_classes - 1))
 
     n_useless = n_features - n_informative - n_redundant - n_repeated
     n_clusters = n_classes * n_clusters_per_class
-    n_samples_per_cluster = [n_samples / n_clusters] * n_clusters
 
-    for i in xrange(n_samples % n_clusters):
-        n_samples_per_cluster[i] += 1
+    if weights and len(weights) == (n_classes - 1):
+        weights.append(1.0 - sum(weights))
+
+    if weights is None:
+        weights = [1.0 / n_classes] * n_classes
+        weights[-1] = 1.0 - sum(weights[:-1])
+
+    n_samples_per_cluster = []
+
+    for k in xrange(n_clusters):
+        n_samples_per_cluster.append(int(n_samples * weights[k % n_classes] 
+                                     / n_clusters_per_class))
+
+    for i in xrange(n_samples - sum(n_samples_per_cluster)):
+        n_samples_per_cluster[i % n_clusters] += 1
 
     # Intialize X and y
     X = np.zeros((n_samples, n_features))
@@ -672,7 +691,7 @@ def make_spd_matrix(n_dim, seed=0):
 
     A = generator.rand(n_dim, n_dim)
     U, s, V = linalg.svd(np.dot(A.T, A))
-    X = np.dot(np.dot(U, 1.0 + np.diag(generator.rand(ndim))), V)
+    X = np.dot(np.dot(U, 1.0 + np.diag(generator.rand(n_dim))), V)
 
     return X
 
