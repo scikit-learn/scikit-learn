@@ -719,7 +719,7 @@ class LarsCV(LARS):
                                                  fill_value=residues.max(),
                                                  axis=0)(all_alphas)
             this_residues **= 2
-            mse_path[:, index] = this_residues.sum(axis=-1)
+            mse_path[:, index] = np.mean(this_residues, axis=-1)
 
         mask = np.all(np.isfinite(mse_path), axis=-1)
         all_alphas = all_alphas[mask]
