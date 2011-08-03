@@ -32,8 +32,8 @@ S = 1 - (D / np.max(D))
 
 ##############################################################################
 # Compute DBSCAN
-db = DBSCAN().fit(S, eps=0.95, min_points=10)
-core_points = db.core_points_
+db = DBSCAN().fit(S, eps=0.95, min_samples=10)
+core_samples = db.core_samples_
 labels = db.labels_
 
 # Number of clusters in labels, ignoring noise if present.
@@ -61,11 +61,11 @@ for k, col in zip(set(labels), colors):
         col = 'k'
         markersize = 6
     class_members = [index[0] for index in np.argwhere(labels == k)]
-    cluster_core_points = [index for index in core_points
-                           if labels[index] == k]
+    cluster_core_samples = [index for index in core_samples
+                            if labels[index] == k]
     for index in class_members:
         x = X[index]
-        if index in core_points and k != -1:
+        if index in core_samples and k != -1:
             markersize = 14
         else:
             markersize = 6

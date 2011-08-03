@@ -13,21 +13,21 @@ from ..base import BaseEstimator
 from ..metrics import calculate_distances
 
 
-def dbscan(X, eps=0.5, min_points=5, metric='euclidean',
+def dbscan(X, eps=0.5, min_samples=5, metric='euclidean',
            index_order=None, verbose=False):
     """Perform DBSCAN clustering from vector array or distance matrix.
 
     Parameters
     ----------
-    X: array [n_points, n_points] or [n_points, n_features]
-        Array of distances between points, or a feature array.
+    X: array [n_samples, n_samples] or [n_samples, n_features]
+        Array of distances between samples, or a feature array.
         The array is treated as a feature array unless the metric is given as
         'precomputed'.
     eps: float, optional
-        The maximum distance between two points for them to be considered
+        The maximum distance between two samples for them to be considered
         as in the same neighborhood.
-    min_points: int, optional
-        The number of points in a neighborhood for a point to be considered
+    min_samples: int, optional
+        The number of samples in a neighborhood for a point to be considered
         as a core point.
     metric: string, or callable
         The metric to use when calculating distance between instances in a
@@ -36,20 +36,20 @@ def dbscan(X, eps=0.5, min_points=5, metric='euclidean',
         metric parameter.
         If metric is "precomputed", X is assumed to be a distance matrix and
         must be square.
-    index_order: [n_points] or None
-        Order to observe points for clustering.
+    index_order: [n_samples] or None
+        Order to observe samples for clustering.
         If None, a random order is given.
-        To look at points in order, use range(n).
+        To look at samples in order, use range(n).
     verbose: boolean, optional
         The verbosity level
 
     Returns
     -------
-    core_points: array [n_core_points]
-        Indices of core points.
+    core_samples: array [n_core_samples]
+        Indices of core samples.
 
-    labels : array [n_points]
-        Cluster labels for each point.  Noisy points are given the label -1.
+    labels : array [n_samples]
+        Cluster labels for each point.  Noisy samples are given the label -1.
 
     Notes
     -----
@@ -70,25 +70,25 @@ def dbscan(X, eps=0.5, min_points=5, metric='euclidean',
                                    " (%d expected, %d given)"
                                    % (n, len(index_order)))
     D = calculate_distances(X, metric=metric)
-    # Calculate neighborhood for all points. This leaves the original point
+    # Calculate neighborhood for all samples. This leaves the original point
     # in, which needs to be considered later (i.e. point i is the
     # neighborhood of point i. While True, its useless information)
     neighborhoods = [np.where(x <= eps)[0] for x in D]
-    # Initially, all points are noise.
+    # Initially, all samples are noise.
     labels = np.array([-1] * n)
-    # A list of all core points found.
-    core_points = []
+    # A list of all core samples found.
+    core_samples = []
     # label_num is the label given to the new cluster
     label_num = 0
-    # Look at all points and determine if they are core.
+    # Look at all samples and determine if they are core.
     # If they are then build a new cluster from them.
     for index in index_order:
-        if labels[index] != -1 or len(neighborhoods[index]) < min_points:
+        if labels[index] != -1 or len(neighborhoods[index]) < min_samples:
             # This point is already classified, or not enough for a core point.
             continue
-        core_points.append(index)
+        core_samples.append(index)
         labels[index] = label_num
-        # candidates for new core points in the cluster.
+        # candidates for new core samples in the cluster.
         candidates = [index]
         while len(candidates) > 0:
             new_candidates = []
@@ -100,32 +100,32 @@ def dbscan(X, eps=0.5, min_points=5, metric='euclidean',
                 labels[noise] = label_num
                 for neighbor in noise:
                     # check if its a core point as well
-                    if len(neighborhoods[neighbor]) >= min_points:
+                    if len(neighborhoods[neighbor]) >= min_samples:
                         # is new core point
                         new_candidates.append(neighbor)
-                        core_points.append(neighbor)
+                        core_samples.append(neighbor)
             # Update candidates for next round of cluster expansion.
             candidates = new_candidates
         # Current cluster finished.
         # Next core point found will start a new cluster.
         label_num += 1
-    return core_points, labels
+    return core_samples, labels
 
 
 class DBSCAN(BaseEstimator):
     """Perform DBSCAN clustering from vector array or distance matrix.
 
     DBSCAN - Density-Based Spatial Clustering of Applications with Noise.
-    Finds core points of high density and expands clusters from them.
+    Finds core samples of high density and expands clusters from them.
     Good for data which contains clusters of similar density.
 
     Parameters
     ----------
     eps: float, optional
-        The maximum distance between two points for them to be considered
+        The maximum distance between two samples for them to be considered
         as in the same neighborhood.
-    min_points: int, optional
-        The number of points in a neighborhood for a point to be considered
+    min_samples: int, optional
+        The number of samples in a neighborhood for a point to be considered
         as a core point.
     metric: string, or callable
         The metric to use when calculating distance between instances in a
@@ -135,9 +135,9 @@ class DBSCAN(BaseEstimator):
         If metric is "precomputed", X is assumed to be a distance matrix and
         must be square.
     index_order: [n_samples] or None
-        Order to observe points for clustering.
+        Order to observe samples for clustering.
         If None, a random order is given.
-        To look at points in order, use range(n).
+        To look at samples in order, use range(n).
     verbose: boolean, optional
         The verbosity level
 
@@ -148,14 +148,14 @@ class DBSCAN(BaseEstimator):
 
     Attributes
     ----------
-    core_points_: array, shape = [n_core_points]
-        Indices of core points.
+    core_samples_: array, shape = [n_core_samples]
+        Indices of core samples.
 
-    components_: array, shape = [n_core_points, n_features]
+    components_: array, shape = [n_core_samples, n_features]
 
     labels_ : array, shape = [n_samples]
         Cluster labels for each point in the dataset given to fit().
-        Noisy points are given the label -1.
+        Noisy samples are given the label -1.
 
     Notes
     -----
@@ -168,10 +168,10 @@ class DBSCAN(BaseEstimator):
     and Data Mining, Portland, OR, AAAI Press, pp. 226–231. 1996
     """
 
-    def __init__(self, eps=0.5, min_points=5, metric='euclidean',
+    def __init__(self, eps=0.5, min_samples=5, metric='euclidean',
                  verbose=False, index_order=None):
         self.eps = eps
-        self.min_points = min_points
+        self.min_samples = min_samples
         self.metric = metric
         self.verbose = verbose
         self.index_order = index_order
@@ -182,8 +182,8 @@ class DBSCAN(BaseEstimator):
 
         Parameters
         ----------
-        X: array [n_points, n_points] or [n_points, n_features]
-            Array of distances between points, or a feature array.
+        X: array [n_samples, n_samples] or [n_samples, n_features]
+            Array of distances between samples, or a feature array.
             The array is treated as a feature array unless the metric is
             given as 'precomputed'.
         params: dict
@@ -191,6 +191,6 @@ class DBSCAN(BaseEstimator):
         """
 
         self._set_params(**params)
-        self.core_points_, self.labels_ = dbscan(X, **self._get_params())
-        self.components_ = X[self.core_points_].copy()
+        self.core_samples_, self.labels_ = dbscan(X, **self._get_params())
+        self.components_ = X[self.core_samples_].copy()
         return self
