@@ -288,13 +288,15 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, eps=None, precompute_gram=False,
         precompute_gram = X.shape[0] > X.shape[1]
     if precompute_gram:
         G = np.dot(X.T, X)
+        G = np.asfortranarray(G)
         Xy = np.dot(X.T, y)
         if eps is not None:
             norms_squared = np.sum((y ** 2), axis=0)
         else:
             norms_squared = None
         return orthogonal_mp_gram(G, Xy, n_nonzero_coefs, eps, norms_squared,
-                                  overwrite_gram=True, overwrite_xy=True)
+                                  overwrite_gram=overwrite_x,
+                                  overwrite_xy=True)
 
     coef = np.zeros((X.shape[1], y.shape[1]))
     for k in xrange(y.shape[1]):
@@ -532,6 +534,8 @@ class OrthogonalMatchingPursuit(LinearModel):
             precompute_gram = self.precompute_gram
             if precompute_gram == 'auto':
                 precompute_gram = X.shape[0] > X.shape[1]
+            if y.shape[1] > 1:  # subsequent targets will be affected
+                overwrite_x = False
             self.coef_ = orthogonal_mp(X, y, self.n_nonzero_coefs, self.eps,
                                        precompute_gram=precompute_gram,
                                        overwrite_x=overwrite_x).T
