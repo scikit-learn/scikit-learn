@@ -26,7 +26,7 @@ dependence in the dictionary. The requested precision might not have been met.
 """
 
 
-def _cholesky_omp(X, y, n_nonzero_coefs, eps=None):
+def _cholesky_omp(X, y, n_nonzero_coefs, eps=None, overwrite_X=False):
     """
     Solves a single Orthogonal Matching Pursuit problem using
     the Cholesky decomposition.
@@ -55,11 +55,13 @@ def _cholesky_omp(X, y, n_nonzero_coefs, eps=None):
         vector
 
     """
-
-    X = np.asfortranarray(X)
+    if not overwrite_X:
+        X = X.copy('F')
+    else:  # even if we are allowed to overwrite, still copy it if bad order
+        X = np.asfortranarray(X)
 
     min_float = np.finfo(X.dtype).eps
-    nrm2, = linalg.get_blas_funcs(('nrm2',), (X,))
+    nrm2, swap = linalg.get_blas_funcs(('nrm2', 'swap'), (X,))
     potrs, = get_lapack_funcs(('potrs',), (X,))
 
     alpha = np.dot(X.T, y)
@@ -73,13 +75,13 @@ def _cholesky_omp(X, y, n_nonzero_coefs, eps=None):
 
     while 1:
         lam = np.argmax(np.abs(np.dot(X.T, residual)))
-        if lam in idx or alpha[lam] ** 2 < min_float:
+        if lam < n_active or alpha[lam] ** 2 < min_float:
             # atom already selected or inner product too small
             warn(premature)
             break
         if n_active > 0:
             # Updates the Cholesky decomposition of X' X
-            L[n_active, :n_active] = np.dot(X[:, idx].T, X[:, lam])
+            L[n_active, :n_active] = np.dot(X[:, :n_active].T, X[:, lam])
             v = nrm2(L[n_active, :n_active]) ** 2
             solve_triangular(L[:n_active, :n_active], L[n_active, :n_active])
             if 1 - v <= min_float:  # selected atoms are dependent
@@ -87,12 +89,14 @@ def _cholesky_omp(X, y, n_nonzero_coefs, eps=None):
                 break
             L[n_active, n_active] = np.sqrt(1 - v)
         idx.append(lam)
+        X.T[n_active], X.T[lam] = swap(X.T[n_active], X.T[lam])
+        alpha[n_active], alpha[lam] = alpha[lam], alpha[n_active]
         n_active += 1
         # solves LL'x = y as a composition of two triangular systems
-        gamma, _ = potrs(L[:n_active, :n_active], alpha[idx], lower=True,
+        gamma, _ = potrs(L[:n_active, :n_active], alpha[:n_active], lower=True,
                          overwrite_b=False)
 
-        residual = y - np.dot(X[:, idx], gamma)
+        residual = y - np.dot(X[:, :n_active], gamma)
         if eps is not None and nrm2(residual) ** 2 <= eps:
             break
         elif n_active == max_features:
