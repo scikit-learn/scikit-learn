@@ -271,7 +271,8 @@ def test_weight():
     assert_array_almost_equal(clf.predict(X), [2] * 6)
 
     X_, y_ = make_classification(n_samples=200, n_features=100, 
-                                 weights=[5.0/6.0], seed=0)
+                                 weights=[0.833, 0.167], seed=0)
+                                 
     for clf in (linear_model.LogisticRegression(), svm.LinearSVC(), svm.SVC()):
         clf.fit(X_[: 180], y_[: 180], class_weight={0: 5})
         y_pred = clf.predict(X_[180:])

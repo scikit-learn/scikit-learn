@@ -14,7 +14,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
                         n_redundant=2, n_repeated=0, n_classes=2, 
                         n_clusters_per_class=2, weights=None, flip_y=0.01, 
                         class_sep=1.0, hypercube=True, shift=0.0, scale=1.0, 
-                        seed=0):
+                        shuffle=True, seed=0):
     """
     Generate a random n-class classification problem.
 
@@ -73,6 +73,9 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
         Multiply all features by the specified value. If None, then features
         are scaled by a random value drawn in [1, 100]. Note that scaling 
         happens after shifting. 
+
+    shuffle: boolean, optional (default=True)
+        Shuffle the samples and the features.
 
     seed : int, RandomState instance or None, optional (default=0)
         The seed used by the pseudo random number generator.
@@ -199,20 +202,21 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
         X[:, f] *= scale
 
     # Randomly permute samples and features
-    indices = range(n_samples)
-    generator.shuffle(indices)
-    X = X[indices]
-    y = y[indices]
+    if shuffle:
+        indices = range(n_samples)
+        generator.shuffle(indices)
+        X = X[indices]
+        y = y[indices]
 
-    indices = range(n_features)
-    generator.shuffle(indices)
-    X[:, :] = X[:, indices]
+        indices = range(n_features)
+        generator.shuffle(indices)
+        X[:, :] = X[:, indices]
 
     return X, y
 
 def make_regression(n_samples=100, n_features=100, n_informative=10, bias=0.0,
                     effective_rank=None, tail_strength=0.5, noise=0.0, 
-                    seed=0):
+                    shuffle=True, seed=0):
     """
     Generate a random regression problem.
 
@@ -257,6 +261,9 @@ def make_regression(n_samples=100, n_features=100, n_informative=10, bias=0.0,
     noise : float, optional (default=0.0)
         The standard deviation of the gaussian noise applied to the output.
 
+    shuffle: boolean, optional (default=True)
+        Shuffle the samples and the features.
+
     seed : int, RandomState instance or None, optional (default=0)
         The seed used by the pseudo random number generator.
 
@@ -286,15 +293,24 @@ def make_regression(n_samples=100, n_features=100, n_informative=10, bias=0.0,
     # zeros (the other features are not correlated to y and should be ignored
     # by a sparsifying regularizers such as L1 or elastic net)
     ground_truth = np.zeros(n_features)
-    ground_truth[:n_informative] = generator.randn(n_informative)
-    generator.shuffle(ground_truth)
+    ground_truth[:n_informative] = 100 * generator.rand(n_informative)
 
-    # Generate y
     y = np.dot(X, ground_truth) + bias
 
     # Add noise
     if noise > 0.0:
         y += generator.normal(scale=noise, size=y.shape)
+
+    # Randomly permute samples and features
+    if shuffle:
+        indices = range(n_samples)
+        generator.shuffle(indices)
+        X = X[indices]
+        y = y[indices]
+
+        indices = range(n_features)
+        generator.shuffle(indices)
+        X[:, :] = X[:, indices]
 
     return X, y
 
