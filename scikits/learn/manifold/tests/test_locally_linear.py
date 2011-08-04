@@ -1,6 +1,6 @@
 import numpy as np
 
-from numpy.testing import assert_array_almost_equal, assert_almost_equal
+from numpy.testing import assert_almost_equal
 from scikits.learn import neighbors, manifold
 from scikits.learn.utils.fixes import product
 
@@ -63,7 +63,8 @@ def test_lle_manifold():
         reconstruction_error = np.linalg.norm(
             np.dot(N, clf.embedding_) - clf.embedding_, 'fro') ** 2
         assert reconstruction_error < tol
-        assert_almost_equal(clf.reconstruction_error_, reconstruction_error)
+        assert (np.abs(clf.reconstruction_error_ - reconstruction_error) <
+                tol*reconstruction_error)
 
 
 def test_pipeline():
