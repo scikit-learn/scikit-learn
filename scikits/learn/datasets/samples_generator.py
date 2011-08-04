@@ -216,7 +216,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
 
 def make_regression(n_samples=100, n_features=100, n_informative=10, bias=0.0,
                     effective_rank=None, tail_strength=0.5, noise=0.0, 
-                    shuffle=True, seed=0):
+                    shuffle=True, coef=False, seed=0):
     """
     Generate a random regression problem.
 
@@ -261,8 +261,11 @@ def make_regression(n_samples=100, n_features=100, n_informative=10, bias=0.0,
     noise : float, optional (default=0.0)
         The standard deviation of the gaussian noise applied to the output.
 
-    shuffle: boolean, optional (default=True)
+    shuffle : boolean, optional (default=True)
         Shuffle the samples and the features.
+
+    coef : boolean, optional (default=False)
+        If True, the coefficients of the underlying linear model are returned.
 
     seed : int, RandomState instance or None, optional (default=0)
         The seed used by the pseudo random number generator.
@@ -274,6 +277,10 @@ def make_regression(n_samples=100, n_features=100, n_informative=10, bias=0.0,
 
     y : array of shape [n_samples]
         The output values.
+
+    coef : array of shape [n_features], optional
+        The coefficient of the underlying linear model. It is returned only if 
+        coef is True.
     """
     generator = check_random_state(seed)
 
@@ -311,8 +318,13 @@ def make_regression(n_samples=100, n_features=100, n_informative=10, bias=0.0,
         indices = range(n_features)
         generator.shuffle(indices)
         X[:, :] = X[:, indices]
+        ground_truth = ground_truth[indices]
 
-    return X, y
+    if coef:
+        return X, y, ground_truth
+
+    else:
+        return X, y
 
 def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
                center_box=(-10.0, 10.0), shuffle=True, seed=0):

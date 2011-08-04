@@ -19,7 +19,7 @@ In both cases, only 10% of the features are informative.
 import numpy as np
 import gc
 from time import time
-from scikits.learn.datasets.samples_generator import make_regression_dataset
+from scikits.learn.datasets.samples_generator import make_regression
 
 alpha = 0.1
 # alpha = 0.01
@@ -61,14 +61,20 @@ if __name__ == '__main__':
         print '=================='
         print 'Iteration %s of %s' % (i, n)
         print '=================='
-        X, Y, X_test, Y_test, coef = make_regression_dataset(
-            n_train_samples=(i * step), n_test_samples=n_test_samples,
-            n_features=n_features, noise=0.1, n_informative=n_informative)
+
+        X, Y, coef_ = make_regression(
+            n_samples=(i * step) + n_test_samples, n_features=n_features, 
+            noise=0.1, n_informative=n_informative, coef=True)
+
+        X_test = X[-n_test_samples:]
+        Y_test = Y[-n_test_samples:]
+        X = X[:(i * step)]
+        Y = Y[:(i * step)]
 
         print "benching scikit: "
-        scikit_results.append(bench(ScikitLasso, X, Y, X_test, Y_test, coef))
+        scikit_results.append(bench(ScikitLasso, X, Y, X_test, Y_test, coef_))
         print "benching glmnet: "
-        glmnet_results.append(bench(GlmnetLasso, X, Y, X_test, Y_test, coef))
+        glmnet_results.append(bench(GlmnetLasso, X, Y, X_test, Y_test, coef_))
 
     pl.clf()
     xx = range(0, n*step, step)
@@ -95,9 +101,15 @@ if __name__ == '__main__':
         print '=================='
         n_features = i * step
         n_informative = n_features / 10
-        X, Y, X_test, Y_test, coef_ = make_regression_dataset(
-            n_train_samples=n_samples, n_test_samples=n_test_samples,
-            n_features=n_features, noise=0.1, n_informative=n_informative)
+
+        X, Y, coef_ = make_regression(
+            n_samples=(i * step) + n_test_samples, n_features=n_features, 
+            noise=0.1, n_informative=n_informative, coef=True)
+
+        X_test = X[-n_test_samples:]
+        Y_test = Y[-n_test_samples:]
+        X = X[:n_samples]
+        Y = Y[:n_samples]
 
         print "benching scikit: "
         scikit_results.append(bench(ScikitLasso, X, Y, X_test, Y_test, coef_))
