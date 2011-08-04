@@ -307,14 +307,13 @@ column is always zero.
 
 Orthogonal Matching Pursuit (OMP)
 =================================
-:func:`orthogonal_mp` implements the OMP algorithm for approximating the fit of
-a linear model with constraints imposed on the number of non-zero coefficients
-(ie. the L :sub:`0` pseudo-norm). 
+:class:`OrthogonalMatchingPursuit` and :func:`orthogonal_mp` implements the OMP
+algorithm for approximating the fit of a linear model with constraints imposed
+on the number of non-zero coefficients (ie. the L :sub:`0` pseudo-norm). 
 
-While :ref:`Lasso`-style penalties do tend to shrink coefficients towards zero,
-there is no direct relationship between the Lasso penalty coefficient and the
-sparseness of the solution vector. Orthogonal matching pursuit can approximate
-the optimum solution vector with a fixed number of non-zero elements:
+Being a forward feature selection method like :ref:`least_angle_regression`, 
+orthogonal matching pursuit can approximate the optimum solution vector with a
+fixed number of non-zero elements:
 
 .. math:: \text{arg\,min} ||y - X\gamma||_2^2 \text{ subject to } ||\gamma||_0 \leq n_{features}
 
