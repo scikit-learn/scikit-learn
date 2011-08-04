@@ -14,7 +14,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
                         n_redundant=2, n_repeated=0, n_classes=2, 
                         n_clusters_per_class=2, weights=None, flip_y=0.01, 
                         class_sep=1.0, hypercube=True, shift=0.0, scale=1.0, 
-                        shuffle=True, seed=0):
+                        shuffle=True, random_state=None):
     """
     Generate a random n-class classification problem.
 
@@ -77,8 +77,11 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     shuffle : boolean, optional (default=True)
         Shuffle the samples and the features.
 
-    seed : int, RandomState instance or None, optional (default=0)
-        The seed used by the pseudo random number generator.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Return
     ------
@@ -98,7 +101,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     .. [1] I. Guyon, "Design of experiments for the NIPS 2003 variable 
            selection benchmark", 2003.
     """
-    generator = check_random_state(seed)
+    generator = check_random_state(random_state)
 
     # Count features, clusters and samples
     assert n_informative + n_redundant + n_repeated <= n_features
@@ -216,7 +219,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
 
 def make_regression(n_samples=100, n_features=100, n_informative=10, bias=0.0,
                     effective_rank=None, tail_strength=0.5, noise=0.0, 
-                    shuffle=True, coef=False, seed=0):
+                    shuffle=True, coef=False, random_state=None):
     """
     Generate a random regression problem.
 
@@ -267,8 +270,11 @@ def make_regression(n_samples=100, n_features=100, n_informative=10, bias=0.0,
     coef : boolean, optional (default=False)
         If True, the coefficients of the underlying linear model are returned.
 
-    seed : int, RandomState instance or None, optional (default=0)
-        The seed used by the pseudo random number generator.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Returns
     -------
@@ -282,7 +288,7 @@ def make_regression(n_samples=100, n_features=100, n_informative=10, bias=0.0,
         The coefficient of the underlying linear model. It is returned only if 
         coef is True.
     """
-    generator = check_random_state(seed)
+    generator = check_random_state(random_state)
 
     if effective_rank is None:
         # Randomly generate a well conditioned input set
@@ -327,7 +333,7 @@ def make_regression(n_samples=100, n_features=100, n_informative=10, bias=0.0,
         return X, y
 
 def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
-               center_box=(-10.0, 10.0), shuffle=True, seed=0):
+               center_box=(-10.0, 10.0), shuffle=True, random_state=None):
     """
     Generate isotropic Gaussian blobs for clustering.
 
@@ -349,11 +355,14 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
         The bounding box for each cluster center when centers are
         generated at random.
 
-    shuffle: boolean, optional (default=True)
+    shuffle : boolean, optional (default=True)
         Shuffle the samples.
 
-    seed : int, RandomState instance or None, optional (default=0)
-        The seed used by the pseudo random number generator.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Return
     ------
@@ -366,13 +375,13 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
     Examples
     --------
     >>> from scikits.learn.datasets.samples_generator import make_blobs
-    >>> X, y = make_blobs(n_samples=10, centers=3, n_features=2)
+    >>> X, y = make_blobs(n_samples=10, centers=3, n_features=2, random_state=0)
     >>> X.shape
     (10, 2)
     >>> y
     array([0, 0, 1, 0, 2, 2, 2, 1, 1, 0])
     """
-    generator = check_random_state(seed)
+    generator = check_random_state(random_state)
 
     if isinstance(centers, int):
         centers = generator.uniform(center_box[0], center_box[1],
@@ -406,7 +415,7 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
 
     return X, y
 
-def make_friedman1(n_samples=100, n_features=10, noise=0.0, seed=0):
+def make_friedman1(n_samples=100, n_features=10, noise=0.0, random_state=None):
     """
     Generate the "Friedman #1" regression problem as described in Friedman [1]
     and Breiman [2].
@@ -433,8 +442,11 @@ def make_friedman1(n_samples=100, n_features=10, noise=0.0, seed=0):
     noise : float, optional (default=0.0)
         The standard deviation of the gaussian noise applied to the output.
 
-    seed : int, RandomState instance or None, optional (default=0)
-        The seed used by the pseudo random number generator.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Returns
     -------
@@ -454,7 +466,7 @@ def make_friedman1(n_samples=100, n_features=10, noise=0.0, seed=0):
     """
     assert n_features >= 5
 
-    generator = check_random_state(seed)
+    generator = check_random_state(random_state)
 
     X = generator.rand(n_samples, n_features)
     y = 10 * np.sin(np.pi * X[:, 0] * X[:, 1]) + 20 * (X[:, 2] - 0.5) ** 2 \
@@ -462,7 +474,7 @@ def make_friedman1(n_samples=100, n_features=10, noise=0.0, seed=0):
 
     return X, y
 
-def make_friedman2(n_samples=100, noise=0.0, seed=0):
+def make_friedman2(n_samples=100, noise=0.0, random_state=None):
     """
     Generate the "Friedman #2" regression problem as described in Friedman [1]
     and Breiman [2].
@@ -490,8 +502,11 @@ def make_friedman2(n_samples=100, noise=0.0, seed=0):
     noise : float, optional (default=0.0)
         The standard deviation of the gaussian noise applied to the output.
 
-    seed : int, RandomState instance or None, optional (default=0)
-        The seed used by the pseudo random number generator.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Returns
     -------
@@ -509,7 +524,7 @@ def make_friedman2(n_samples=100, noise=0.0, seed=0):
     .. [2] L. Breiman, "Bagging predictors", Machine Learning 24, 
            pages 123-140, 1996.
     """
-    generator = check_random_state(seed)
+    generator = check_random_state(random_state)
 
     X = generator.rand(n_samples, 4)
     X[:, 0] *= 100
@@ -524,7 +539,7 @@ def make_friedman2(n_samples=100, noise=0.0, seed=0):
 
     return X, y
 
-def make_friedman3(n_samples=100, noise=0.0, seed=0):
+def make_friedman3(n_samples=100, noise=0.0, random_state=None):
     """
     Generate the "Friedman #3" regression problem as described in Friedman [1]
     and Breiman [2].
@@ -552,8 +567,11 @@ def make_friedman3(n_samples=100, noise=0.0, seed=0):
     noise : float, optional (default=0.0)
         The standard deviation of the gaussian noise applied to the output.
 
-    seed : int, RandomState instance or None, optional (default=0)
-        The seed used by the pseudo random number generator.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Returns
     -------
@@ -571,7 +589,7 @@ def make_friedman3(n_samples=100, noise=0.0, seed=0):
     .. [2] L. Breiman, "Bagging predictors", Machine Learning 24, 
            pages 123-140, 1996.
     """
-    generator = check_random_state(seed)
+    generator = check_random_state(random_state)
 
     X = generator.rand(n_samples, 4)
     X[:, 0] *= 100
@@ -586,7 +604,7 @@ def make_friedman3(n_samples=100, noise=0.0, seed=0):
     return X, y
 
 def make_low_rank_matrix(n_samples=100, n_features=100, effective_rank=10, 
-                         tail_strength=0.5, seed=0):
+                         tail_strength=0.5, random_state=None):
     """
     Generate a mostly low rank random matrix with bell-shaped singular
     values profile.
@@ -625,15 +643,18 @@ def make_low_rank_matrix(n_samples=100, n_features=100, effective_rank=10,
         The relative importance of the fat noisy tail of the singular values
         profile.
 
-    seed : int, RandomState instance or None, optional (default=0)
-        The seed used by the pseudo random number generator.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Returns
     -------
     X : array of shape [n_samples, n_features]
         The matrix.
     """
-    generator = check_random_state(seed)
+    generator = check_random_state(random_state)
     n = min(n_samples, n_features)
 
     # Random (ortho normal) vectors
@@ -652,7 +673,7 @@ def make_low_rank_matrix(n_samples=100, n_features=100, effective_rank=10,
 
     return np.dot(np.dot(u, s), v.T)
 
-def make_sparse_uncorrelated(n_samples=100, n_features=10, seed=0):
+def make_sparse_uncorrelated(n_samples=100, n_features=10, random_state=None):
     """
     Generate a random regression problem with sparse uncorrelated design as
     described in Celeux et al [1].::
@@ -671,8 +692,11 @@ def make_sparse_uncorrelated(n_samples=100, n_features=10, seed=0):
     n_features : int, optional (default=10)
         The number of features.
 
-    seed : int, RandomState instance or None, optional (default=0)
-        The seed used by the pseudo random number generator.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Returns
     -------
@@ -688,7 +712,7 @@ def make_sparse_uncorrelated(n_samples=100, n_features=10, seed=0):
            "Regularization in regression: comparing Bayesian and frequentist
            methods in a poorly informative situation", 2009.
     """
-    generator = check_random_state(seed)
+    generator = check_random_state(random_state)
 
     X = generator.normal(loc=0, scale=1, size=(n_samples, n_features))
     y = generator.normal(loc=(X[:, 0] + 
@@ -698,7 +722,7 @@ def make_sparse_uncorrelated(n_samples=100, n_features=10, seed=0):
 
     return X, y
 
-def make_spd_matrix(n_dim, seed=0):
+def make_spd_matrix(n_dim, random_state=None):
     """
     Generate a random symmetric, positive-definite matrix.
 
@@ -707,15 +731,18 @@ def make_spd_matrix(n_dim, seed=0):
     n_dim : int
         The matrix dimension.
 
-    seed : int, RandomState instance or None, optional (default=0)
-        Seed used by the pseudo random number generator.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Returns
     -------
     X : array of shape [n_dim, n_dim]
         The random symmetric, positive-definite matrix.
     """
-    generator = check_random_state(seed)
+    generator = check_random_state(random_state)
 
     A = generator.rand(n_dim, n_dim)
     U, s, V = linalg.svd(np.dot(A.T, A))
@@ -723,7 +750,7 @@ def make_spd_matrix(n_dim, seed=0):
 
     return X
 
-def make_swiss_roll(n_samples=100, noise=0.0, seed=0):
+def make_swiss_roll(n_samples=100, noise=0.0, random_state=None):
     """
     Generate a swiss roll dataset.
 
@@ -735,8 +762,11 @@ def make_swiss_roll(n_samples=100, noise=0.0, seed=0):
     noise : float, optional (default=0.0)
         The standard deviation of the gaussian noise.
 
-    seed : int, RandomState instance or None, optional (default=0)
-        The seed used by the pseudo random number generator.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Returns
     -------
@@ -757,7 +787,7 @@ def make_swiss_roll(n_samples=100, noise=0.0, seed=0):
            Chapter 10, 2009. 
            http://www-ist.massey.ac.nz/smarsland/Code/10/lle.py
     """
-    generator = check_random_state(seed)
+    generator = check_random_state(random_state)
 
     t = 1.5 * np.pi * (1 + 2 * generator.rand(1, n_samples))
     x = t * np.cos(t)
@@ -771,7 +801,7 @@ def make_swiss_roll(n_samples=100, noise=0.0, seed=0):
 
     return X, t
 
-def make_s_curve(n_samples=100, noise=0.0, seed=0):
+def make_s_curve(n_samples=100, noise=0.0, random_state=None):
     """
     Generate an S curve dataset.
 
@@ -783,8 +813,11 @@ def make_s_curve(n_samples=100, noise=0.0, seed=0):
     noise : float, optional (default=0.0)
         The standard deviation of the gaussian noise.
 
-    seed : int, RandomState instance or None, optional (default=0)
-        The seed used by the pseudo random number generator.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Returns
     -------
@@ -795,7 +828,7 @@ def make_s_curve(n_samples=100, noise=0.0, seed=0):
         The univariate position of the sample according to the main dimension
         of the points in the manifold.
     """
-    generator = check_random_state(seed)
+    generator = check_random_state(random_state)
 
     t = 3 * np.pi * (generator.rand(1, n_samples) - 0.5)
     x = np.sin(t)

@@ -54,7 +54,7 @@ def test_grid_search():
 def test_grid_search_error():
     """Test that grid search will capture errors on data with different
     length"""
-    X_, y_ = make_classification(n_samples=200, n_features=100, seed=0)
+    X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
 
     clf = LinearSVC()
     cv = GridSearchCV(clf, {'C': [0.1, 1.0]})
@@ -63,7 +63,7 @@ def test_grid_search_error():
 
 def test_grid_search_sparse():
     """Test that grid search works with both dense and sparse matrices"""
-    X_, y_ = make_classification(n_samples=200, n_features=100, seed=0)
+    X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
 
     clf = LinearSVC()
     cv = GridSearchCV(clf, {'C': [0.1, 1.0]})
@@ -83,7 +83,7 @@ def test_grid_search_sparse():
 
 
 def test_grid_search_sparse_score_func():
-    X_, y_ = make_classification(n_samples=200, n_features=100, seed=0)
+    X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
 
     clf = LinearSVC()
     cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, score_func=f1_score)

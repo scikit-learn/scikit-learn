@@ -34,7 +34,7 @@ def test_f_classif():
                                n_informative=3, n_redundant=2, 
                                n_repeated=0, n_classes=8, 
                                n_clusters_per_class=1, flip_y=0.0,
-                               class_sep=10, shuffle=False, seed=0)
+                               class_sep=10, shuffle=False, random_state=0)
 
     F, pv = f_classif(X, Y)
     assert(F>0).all()
@@ -50,7 +50,7 @@ def test_f_regression():
     on a simple simulated regression problem
     """
     X, Y = make_regression(n_samples=200, n_features=20, 
-                           n_informative=5, shuffle=False, seed=0)
+                           n_informative=5, shuffle=False, random_state=0)
 
     F, pv = f_regression(X, Y)
     assert(F>0).all()
@@ -69,7 +69,7 @@ def test_f_classif_multi_class():
                                n_informative=3, n_redundant=2, 
                                n_repeated=0, n_classes=8, 
                                n_clusters_per_class=1, flip_y=0.0,
-                               class_sep=10, shuffle=False, seed=0)
+                               class_sep=10, shuffle=False, random_state=0)
 
     F, pv = f_classif(X, Y)
     assert(F>0).all()
@@ -89,7 +89,7 @@ def test_select_percentile_classif():
                                n_informative=3, n_redundant=2, 
                                n_repeated=0, n_classes=8, 
                                n_clusters_per_class=1, flip_y=0.0,
-                               class_sep=10, shuffle=False, seed=0)
+                               class_sep=10, shuffle=False, random_state=0)
 
     univariate_filter = SelectPercentile(f_classif, percentile=25)
     X_r = univariate_filter.fit(X, Y).transform(X)
@@ -114,7 +114,7 @@ def test_select_kbest_classif():
                                n_informative=3, n_redundant=2, 
                                n_repeated=0, n_classes=8, 
                                n_clusters_per_class=1, flip_y=0.0,
-                               class_sep=10, shuffle=False, seed=0)
+                               class_sep=10, shuffle=False, random_state=0)
 
     univariate_filter = SelectKBest(f_classif, k=5)
     X_r = univariate_filter.fit(X, Y).transform(X)
@@ -137,7 +137,7 @@ def test_select_fpr_classif():
                                n_informative=3, n_redundant=2, 
                                n_repeated=0, n_classes=8, 
                                n_clusters_per_class=1, flip_y=0.0,
-                               class_sep=10, shuffle=False, seed=0)
+                               class_sep=10, shuffle=False, random_state=0)
 
     univariate_filter = SelectFpr(f_classif, alpha=0.0001)
     X_r = univariate_filter.fit(X, Y).transform(X)
@@ -160,7 +160,7 @@ def test_select_fdr_classif():
                                n_informative=3, n_redundant=2, 
                                n_repeated=0, n_classes=8, 
                                n_clusters_per_class=1, flip_y=0.0,
-                               class_sep=10, shuffle=False, seed=0)
+                               class_sep=10, shuffle=False, random_state=0)
 
     univariate_filter = SelectFdr(f_classif, alpha=0.0001)
     X_r = univariate_filter.fit(X, Y).transform(X)
@@ -183,7 +183,7 @@ def test_select_fwe_classif():
                                n_informative=3, n_redundant=2, 
                                n_repeated=0, n_classes=8, 
                                n_clusters_per_class=1, flip_y=0.0,
-                               class_sep=10, shuffle=False, seed=0)
+                               class_sep=10, shuffle=False, random_state=0)
 
     univariate_filter = SelectFwe(f_classif, alpha=0.01)
     X_r = univariate_filter.fit(X, Y).transform(X)
@@ -206,7 +206,7 @@ def test_select_percentile_regression():
     with the percentile heuristic
     """
     X, Y = make_regression(n_samples=200, n_features=20, 
-                           n_informative=5, shuffle=False, seed=0)
+                           n_informative=5, shuffle=False, random_state=0)
 
     univariate_filter = SelectPercentile(f_regression, percentile=25)
     X_r = univariate_filter.fit(X, Y).transform(X)
@@ -228,7 +228,7 @@ def test_select_percentile_regression_full():
     selects all features when '100%' is asked.
     """
     X, Y = make_regression(n_samples=200, n_features=20, 
-                           n_informative=5, shuffle=False, seed=0)
+                           n_informative=5, shuffle=False, random_state=0)
 
     univariate_filter = SelectPercentile(f_regression, percentile=100)
     X_r = univariate_filter.fit(X, Y).transform(X)
@@ -247,7 +247,7 @@ def test_select_kbest_regression():
     with the k best heuristic
     """
     X, Y = make_regression(n_samples=200, n_features=20, 
-                           n_informative=5, shuffle=False, seed=0)
+                           n_informative=5, shuffle=False, random_state=0)
 
     univariate_filter = SelectKBest(f_regression, k=5)
     X_r = univariate_filter.fit(X, Y).transform(X)
@@ -267,7 +267,7 @@ def test_select_fpr_regression():
     with the fpr heuristic
     """
     X, Y = make_regression(n_samples=200, n_features=20, 
-                           n_informative=5, shuffle=False, seed=0)
+                           n_informative=5, shuffle=False, random_state=0)
 
     univariate_filter = SelectFpr(f_regression, alpha=0.01)
     X_r = univariate_filter.fit(X, Y).transform(X)
@@ -288,7 +288,7 @@ def test_select_fdr_regression():
     with the fdr heuristic
     """
     X, Y = make_regression(n_samples=200, n_features=20, 
-                           n_informative=5, shuffle=False, seed=0)
+                           n_informative=5, shuffle=False, random_state=0)
 
     univariate_filter = SelectFdr(f_regression, alpha=0.01)
     X_r = univariate_filter.fit(X, Y).transform(X)
@@ -308,7 +308,7 @@ def test_select_fwe_regression():
     with the fwe heuristic
     """
     X, Y = make_regression(n_samples=200, n_features=20, 
-                           n_informative=5, shuffle=False, seed=0)
+                           n_informative=5, shuffle=False, random_state=0)
 
     univariate_filter = SelectFwe(f_regression, alpha=0.01)
     X_r = univariate_filter.fit(X, Y).transform(X)

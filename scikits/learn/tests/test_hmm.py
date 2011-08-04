@@ -227,10 +227,10 @@ class GaussianHMMParams(object):
     transmat /= np.tile(transmat.sum(axis=1)[:, np.newaxis], (1, n_components))
     means = prng.randint(-20, 20, (n_components, n_features))
     covars = {'spherical': (1.0 + 2 * prng.rand(n_components)) ** 2,
-              'tied': (make_spd_matrix(n_features) + np.eye(n_features)),
+              'tied': (make_spd_matrix(n_features, random_state=0) + np.eye(n_features)),
               'diag': (1.0 + 2 * prng.rand(n_components, n_features)) ** 2,
               'full': np.array(
-                  [make_spd_matrix(n_features) + np.eye(n_features)
+                  [make_spd_matrix(n_features, random_state=0) + np.eye(n_features)
                    for x in xrange(n_components)])}
     expanded_covars = {'spherical': [np.eye(n_features) * cov
                                      for cov in covars['spherical']],
@@ -529,11 +529,11 @@ def create_random_gmm(n_mix, n_features, cvtype, prng=prng):
     mincv = 0.1
     g.covars = {
         'spherical': (mincv + mincv * prng.rand(n_mix)) ** 2,
-        'tied': (make_spd_matrix(n_features, seed=prng)
+        'tied': (make_spd_matrix(n_features, random_state=prng)
                  + mincv * np.eye(n_features)),
         'diag': (mincv + mincv * prng.rand(n_mix, n_features)) ** 2,
         'full': np.array(
-            [make_spd_matrix(n_features, seed=prng)
+            [make_spd_matrix(n_features, random_state=prng)
              + mincv * np.eye(n_features) for x in xrange(n_mix)])
     }[cvtype]
     g.weights = hmm.normalize(prng.rand(n_mix))

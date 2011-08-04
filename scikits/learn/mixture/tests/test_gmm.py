@@ -157,9 +157,9 @@ class GMMTester():
     threshold = -0.5
     I = np.eye(n_features)
     covars = {'spherical': (0.1 + 2 * rng.rand(n_components)) ** 2,
-              'tied': make_spd_matrix(n_features) + 5 * I,
+              'tied': make_spd_matrix(n_features, random_state=0) + 5 * I,
               'diag': (0.1 + 2 * rng.rand(n_components, n_features)) ** 2,
-              'full': np.array([make_spd_matrix(n_features) + 5 * I
+              'full': np.array([make_spd_matrix(n_features, random_state=0) + 5 * I
                                 for x in xrange(n_components)])}
 
     def test_eval(self):

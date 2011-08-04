@@ -134,7 +134,7 @@ def test_weight():
     """
 
     X_, y_ = make_classification(n_samples=200, n_features=100, 
-                                 weights=[0.833, 0.167], seed=0)
+                                 weights=[0.833, 0.167], random_state=0)
 
     X_ = scipy.sparse.csr_matrix(X_)
     for clf in (linear_model.sparse.LogisticRegression(),
