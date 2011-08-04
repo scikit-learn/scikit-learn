@@ -9,17 +9,20 @@ Generalized Linear Model for a complete discussion.
 # License: BSD Style.
 
 import numpy as np
-from scipy import linalg
+from scipy import linalg, interpolate
 from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
 from ..utils import arrayfuncs
 from ..utils import deprecated
+from ..cross_val import check_cv
+from ..externals.joblib import Parallel, delayed
 
 
 def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
               alpha_min=0, method='lar', overwrite_X=False,
-              overwrite_Gram=False, verbose=False):
+              eps=np.finfo(np.float).eps,
+              overwrite_Gram=False, verbose=False, ):
     """Compute Least Angle Regression and LASSO path
 
     Parameters
@@ -46,16 +49,20 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
         Specifies the returned model. Select 'lar' for Least Angle
         Regression, 'lasso' for the Lasso.
 
+    eps: float, optional
+        The machine-precision regularization in the computation of the
+        Cholesky diagonal factors. Increase this for very ill-conditioned
+        systems.
+
     Returns
     --------
-    alphas: array, shape: (max_iter,)
-        Maximum of covariances (in absolute value) at each
-        iteration.
+    alphas: array, shape: (max_features + 1,)
+        Maximum of covariances (in absolute value) at each iteration.
 
     active: array, shape (max_features,)
         Indices of active variables at the end of the path.
 
-    coefs: array, shape (n_features, max_iter)
+    coefs: array, shape (n_features, max_features + 1)
         Coefficients along the path
 
     See also
@@ -80,7 +87,6 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
     # holds the sign of covariance
     sign_active = np.empty(max_features, dtype=np.int8)
     drop = False
-    eps = np.finfo(X.dtype).eps
 
     # will hold the cholesky factorization. Only lower part is
     # referenced.
@@ -111,7 +117,6 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
         print "Step\t\tAdded\t\tDropped\t\tActive set size\t\tC"
 
     while 1:
-
         if Cov.size:
             C_idx = np.argmax(np.abs(Cov))
             C_ = Cov[C_idx]
@@ -209,7 +214,6 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
         z = - coefs[n_iter, active] / least_squares
         z_pos = arrayfuncs.min_pos(z)
         if z_pos < gamma_:
-
             # some coefficients have changed sign
             idx = np.where(z == z_pos)[0]
 
@@ -316,6 +320,14 @@ class Lars(LinearModel):
         matrix can also be passed as argument.
 
 
+    eps: float, optional
+        The machine-precision regularization in the computation of the
+        Cholesky diagonal factors. Increase this for very ill-conditioned
+        systems. Unlike the 'tol' parameter in some iterative 
+        optimization-based algorithms, this parameter does not control
+        the tolerance of the optimization.
+
+
     Attributes
     ----------
     `coef_` : array, shape = [n_features]
@@ -328,9 +340,9 @@ class Lars(LinearModel):
     --------
     >>> from scikits.learn import linear_model
     >>> clf = linear_model.Lars(n_nonzero_coefs=1)
-    >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1])
-    Lars(normalize=True, precompute='auto', n_nonzero_coefs=1, verbose=False,
-       fit_intercept=True)
+    >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1]) # doctest: +ELLIPSIS
+    Lars(normalize=True, n_nonzero_coefs=1, verbose=False, fit_intercept=True,
+       eps=..., precompute='auto')
     >>> print clf.coef_
     [ 0. -1.]
 
@@ -340,29 +352,31 @@ class Lars(LinearModel):
 
     See also
     --------
-    lars_path, LassoLars
+    lars_path, LassoLARS, LarsCV, LassoLarsCV
     """
     def __init__(self, fit_intercept=True, verbose=False, normalize=True,
-                 precompute='auto', n_nonzero_coefs=500):
+                 precompute='auto', n_nonzero_coefs=500,
+                 eps=np.finfo(np.float).eps):
         self.fit_intercept = fit_intercept
         self.verbose = verbose
         self.normalize = normalize
         self.method = 'lar'
         self.precompute = precompute
         self.n_nonzero_coefs = n_nonzero_coefs
+        self.eps = eps
 
     def fit(self, X, y, overwrite_X=False, **params):
         """Fit the model using X, y as training data.
 
-        Parameters
+        parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
-            Training data.
+        x : array-like, shape = [n_samples, n_features]
+            training data.
 
         y : array-like, shape = [n_samples]
-            Target values.
+            target values.
 
-        Returns
+        returns
         -------
         self : object
             returns an instance of self.
@@ -402,7 +416,7 @@ class Lars(LinearModel):
                   Gram=Gram, overwrite_X=overwrite_X,
                   overwrite_Gram=True, alpha_min=alpha,
                   method=self.method, verbose=self.verbose,
-                  max_iter=max_iter)
+                  max_iter=max_iter, eps=self.eps)
 
         if self.normalize:
             self.coef_path_ /= norms[:, np.newaxis]
@@ -440,6 +454,13 @@ class LassoLars(Lars):
     max_iter: integer, optional
         Maximum number of iterations to perform.
 
+    eps: float, optional
+        The machine-precision regularization in the computation of the
+        Cholesky diagonal factors. Increase this for very ill-conditioned
+        systems. Unlike the 'tol' parameter in some iterative 
+        optimization-based algorithms, this parameter does not control
+        the tolerance of the optimization.
+
 
     Attributes
     ----------
@@ -453,9 +474,9 @@ class LassoLars(Lars):
     --------
     >>> from scikits.learn import linear_model
     >>> clf = linear_model.LassoLars(alpha=0.01)
-    >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1])
+    >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1]) # doctest: +ELLIPSIS
     LassoLars(normalize=True, verbose=False, fit_intercept=True, max_iter=500,
-         precompute='auto', alpha=0.01)
+         eps=..., precompute='auto', alpha=0.01)
     >>> print clf.coef_
     [ 0.         -0.96325765]
 
@@ -469,7 +490,8 @@ class LassoLars(Lars):
     """
 
     def __init__(self, alpha=1.0, fit_intercept=True, verbose=False,
-                 normalize=True, precompute='auto', max_iter=500):
+                 normalize=True, precompute='auto', max_iter=500,
+                 eps=np.finfo(np.float).eps):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
         self.max_iter = max_iter
@@ -477,6 +499,7 @@ class LassoLars(Lars):
         self.normalize = normalize
         self.method = 'lasso'
         self.precompute = precompute
+        self.eps = eps
 
 
 # Deprecated classes
@@ -488,3 +511,308 @@ LARS = deprecated("Use Lars instead")(LARS)
 class LassoLARS(LassoLars):
     pass
 LassoLARS = deprecated("Use LassoLars instead")(LassoLARS)
+
+
+###############################################################################
+# Cross-validated estimator classes
+
+def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
+                     overwrite_data=False, method='lars', verbose=False,
+                     fit_intercept=True, normalize=True, max_iter=500,
+                     eps=np.finfo(np.float).eps):
+    """Compute the residues on left-out data for a full LARS path
+
+    Parameters
+    -----------
+    X_train: array, shape (n_samples, n_features)
+        The data to fit the LARS on
+    y_train: array, shape (n_samples)
+        The target variable to fit LARS on
+    X_test: array, shape (n_samples, n_features)
+        The data to compute the residues on
+    y_test: array, shape (n_samples)
+        The target variable to compute the residues on
+    Gram: None, 'auto', array, shape: (n_features, n_features), optional
+        Precomputed Gram matrix (X' * X), if 'auto', the Gram
+        matrix is precomputed from the given X, if there are more samples
+        than features
+    overwrite_data: boolean, optional
+        Whether X_train, X_test, y_train and y_test get overriden
+    method: 'lar' | 'lasso'
+        Specifies the returned model. Select 'lar' for Least Angle
+        Regression, 'lasso' for the Lasso.
+    verbose: integer, optional
+        Sets the amount of verbosity
+    fit_intercept : boolean
+        whether to calculate the intercept for this model. If set
+        to false, no intercept will be used in calculations
+        (e.g. data is expected to be already centered).
+    normalize : boolean, optional
+        If True, the regressors X are normalized
+    max_iter: integer, optional
+        Maximum number of iterations to perform.
+    eps: float, optional
+            The machine-precision regularization in the computation of the
+        Cholesky diagonal factors. Increase this for very ill-conditioned
+        systems. Unlike the 'tol' parameter in some iterative 
+        optimization-based algorithms, this parameter does not control
+        the tolerance of the optimization.
+
+
+    Returns
+    --------
+    alphas: array, shape: (max_features + 1,)
+        Maximum of covariances (in absolute value) at each
+        iteration.
+
+    active: array, shape (max_features,)
+        Indices of active variables at the end of the path.
+
+    coefs: array, shape (n_features, max_features + 1)
+        Coefficients along the path
+
+    residues: array, shape (n_features, max_features + 1)
+        Residues of the prediction on the test data
+    """
+    if not overwrite_data:
+        X_train = X_train.copy()
+        y_train = y_train.copy()
+        X_test = X_test.copy()
+        y_test = y_test.copy()
+
+    if normalize:
+        norms = np.sqrt(np.sum(X_train ** 2, axis=0))
+        nonzeros = np.flatnonzero(norms)
+        if not overwrite_data:
+            X_train = X_train.copy()
+        X_train[:, nonzeros] /= norms[nonzeros]
+
+    if fit_intercept:
+        X_mean = X_train.mean(axis=0)
+        X_train -= X_mean
+        X_test -= X_mean
+        y_mean = y_train.mean(axis=0)
+        y_train -= y_mean
+        y_test -= y_mean
+    alphas, active, coefs = lars_path(X_train, y_train, Gram=Gram,
+                            overwrite_X=True, overwrite_Gram=True,
+                            method=method, verbose=verbose,
+                            max_iter=max_iter, eps=eps)
+    if normalize:
+        coefs[nonzeros] /= norms[nonzeros][:, np.newaxis]
+    residues = np.array([(np.dot(X_test, coef) - y_test)
+                         for coef in coefs.T])
+    return alphas, active, coefs, residues
+
+
+class LarsCV(LARS):
+    """Cross-validated Least Angle Regression model
+
+    Parameters
+    ----------
+    fit_intercept : boolean
+        whether to calculate the intercept for this model. If set
+        to false, no intercept will be used in calculations
+        (e.g. data is expected to be already centered).
+
+    verbose : boolean or integer, optional
+        Sets the verbosity amount
+
+    normalize : boolean, optional
+        If True, the regressors X are normalized
+
+    precompute : True | False | 'auto' | array-like
+        Whether to use a precomputed Gram matrix to speed up
+        calculations. If set to 'auto' let us decide. The Gram
+        matrix can also be passed as argument.
+
+    max_iter: integer, optional
+        Maximum number of iterations to perform.
+
+    cv : crossvalidation generator, optional
+        see scikits.learn.cross_val module. If None is passed, default to
+        a 5-fold strategy
+
+    n_jobs : integer, optional
+        Number of CPUs to use during the cross validation. If '-1', use
+        all the CPUs
+
+    eps: float, optional
+        The machine-precision regularization in the computation of the
+        Cholesky diagonal factors. Increase this for very ill-conditioned
+        systems.
+
+
+    Attributes
+    ----------
+    `coef_` : array, shape = [n_features]
+        parameter vector (w in the fomulation formula)
+
+    `intercept_` : float
+        independent term in decision function.
+
+    `coef_path`: array, shape = [n_features, n_alpha]
+        the varying values of the coefficients along the path
+
+    See also
+    --------
+    lars_path, LassoLARS, LassoLarsCV
+    """
+
+    method = 'lar'
+
+    def __init__(self, fit_intercept=True, verbose=False, max_iter=500,
+                 normalize=True, precompute='auto', cv=None, n_jobs=1,
+                 eps=np.finfo(np.float).eps):
+        self.fit_intercept = fit_intercept
+        self.max_iter = max_iter
+        self.verbose = verbose
+        self.normalize = normalize
+        self.precompute = precompute
+        self.cv = cv
+        self.n_jobs = n_jobs
+        self.eps = eps
+
+    def fit(self, X, y, **params):
+        """Fit the model using X, y as training data.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training data.
+
+        y : array-like, shape = [n_samples]
+            Target values.
+
+        Returns
+        -------
+        self : object
+            returns an instance of self.
+        """
+        self._set_params(**params)
+        X = np.asanyarray(X)
+
+        n_samples, n_features = X.shape
+        # init cross-validation generator
+        cv = check_cv(self.cv, X, y, classifier=False)
+
+        Gram = 'auto' if self.precompute else None
+
+        cv_paths = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
+                    delayed(_lars_path_residues)(X[train], y[train],
+                            X[test], y[test], Gram=Gram,
+                            overwrite_data=True, method=self.method,
+                            verbose=max(0, self.verbose - 1),
+                            normalize=self.normalize,
+                            fit_intercept=self.fit_intercept,
+                            max_iter=self.max_iter,
+                            eps=self.eps)
+                    for train, test in cv)
+        all_alphas = np.concatenate(zip(*cv_paths)[0])
+        all_alphas.sort()
+
+        mse_path = np.empty((len(all_alphas), len(cv_paths)))
+        for index, (alphas, active, coefs, residues) in enumerate(cv_paths):
+            this_residues = interpolate.interp1d(alphas[::-1],
+                                                 residues[::-1],
+                                                 bounds_error=False,
+                                                 fill_value=residues.max(),
+                                                 axis=0)(all_alphas)
+            this_residues **= 2
+            mse_path[:, index] = np.mean(this_residues, axis=-1)
+
+        mask = np.all(np.isfinite(mse_path), axis=-1)
+        all_alphas = all_alphas[mask]
+        mse_path = mse_path[mask]
+        # Select the alpha that minimizes left-out error
+        i_best_alpha = np.argmin(mse_path.mean(axis=-1))
+        best_alpha = all_alphas[i_best_alpha]
+
+        # Store our parameters
+        self.alpha = best_alpha
+        self.cv_alphas = all_alphas
+        self.cv_mse_path_ = mse_path
+
+        # Now compute the full model
+        LARS.fit(self, X, y)
+        return self
+
+
+class LassoLarsCV(LarsCV):
+    """Cross-validated Lasso, using the LARS algorithm
+
+    Parameters
+    ----------
+    fit_intercept : boolean
+        whether to calculate the intercept for this model. If set
+        to false, no intercept will be used in calculations
+        (e.g. data is expected to be already centered).
+
+    verbose : boolean or integer, optional
+        Sets the verbosity amount
+
+    normalize : boolean, optional
+        If True, the regressors X are normalized
+
+    precompute : True | False | 'auto' | array-like
+        Whether to use a precomputed Gram matrix to speed up
+        calculations. If set to 'auto' let us decide. The Gram
+        matrix can also be passed as argument.
+
+    max_iter: integer, optional
+        Maximum number of iterations to perform.
+
+    cv : crossvalidation generator, optional
+        see scikits.learn.cross_val module. If None is passed, default to
+        a 5-fold strategy
+
+    n_jobs : integer, optional
+        Number of CPUs to use during the cross validation. If '-1', use
+        all the CPUs
+
+    eps: float, optional
+        The machine-precision regularization in the computation of the
+        Cholesky diagonal factors. Increase this for very ill-conditioned
+        systems.
+
+
+    Attributes
+    ----------
+    `coef_` : array, shape = [n_features]
+        parameter vector (w in the fomulation formula)
+
+    `intercept_` : float
+        independent term in decision function.
+
+    `coef_path`: array, shape = [n_features, n_alpha]
+        the varying values of the coefficients along the path
+
+    `alphas_`: array, shape = [n_alpha]
+        the different values of alpha along the path
+
+    `cv_alphas`: array, shape = [n_cv_alphas]
+        all the values of alpha along the path for the different folds
+
+    `cv_mse_path_`: array, shape = [n_folds, n_cv_alphas]
+        the mean square error on left-out for each fold along the path
+        (alpha values given by cv_alphas)
+
+
+    Notes
+    -----
+
+    The object solves the same problem as the LassoCV object. However,
+    unlike the LassoCV, it find the relevent alphas values by itself.
+    In general, because of this property, it will be more stable.
+    However, it is more fragile to heavily multicollinear datasets.
+
+    It is more efficient than the LassoCV if only a small number of
+    features are selected compared to the total number, for instance if
+    there are very few samples compared to the number of features.
+
+    See also
+    --------
+    lars_path, LassoLARS, LarsCV, LassoCV
+    """
+
+    method = 'lasso'
