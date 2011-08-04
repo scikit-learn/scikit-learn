@@ -7,7 +7,6 @@ import numpy as np
 from scipy import linalg
 
 from ..utils.arpack import eigsh
-from ..linear_model.ridge import _solve
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import KernelCenterer
 from ..metrics.pairwise import linear_kernel
