@@ -11,11 +11,11 @@ from nose.plugins.skip import SkipTest
 from .. import orthogonal_mp, orthogonal_mp_gram, OrthogonalMatchingPursuit
 from ...utils.fixes import count_nonzero
 from ...utils import check_random_state
-from ...datasets import generate_sparse_coded_signal
+from ...datasets import make_sparse_coded_signal
 
 n_samples, n_features, n_nonzero_coefs = 20, 30, 5
-y, X, gamma = generate_sparse_coded_signal(3, n_features, n_samples,
-                                           n_nonzero_coefs, random_state=0)
+y, X, gamma = make_sparse_coded_signal(3, n_features, n_samples,
+                                       n_nonzero_coefs, random_state=0)
 G, Xy = np.dot(X.T, X), np.dot(X.T, y)
 # this makes X (n_samples, n_features)
 # and y (n_samples, 3)
@@ -66,7 +66,7 @@ def test_unreachable_accuracy():
         warnings.simplefilter('always')
         assert_array_almost_equal(orthogonal_mp(X, y, eps=0),
                                   orthogonal_mp(X, y,
-                                              n_nonzero_coefs=n_features))
+                                                n_nonzero_coefs=n_features))
         assert_array_almost_equal(orthogonal_mp(X, y, eps=0,
                                                 precompute_gram=True),
                                   orthogonal_mp(X, y, precompute_gram=True,

@@ -11,7 +11,7 @@ print __doc__
 import pylab as pl
 import numpy as np
 from scikits.learn.linear_model import orthogonal_mp
-from scikits.learn.datasets import generate_sparse_coded_signal
+from scikits.learn.datasets import make_sparse_coded_signal
 
 n_components, n_features = 512, 100
 n_atoms = 17
@@ -22,11 +22,11 @@ n_atoms = 17
 # y = Dx
 # |x|_0 = n_atoms
 
-y, D, x = generate_sparse_coded_signal(n_samples=1,
-                                       n_components=n_components,
-                                       n_features=n_features,
-                                       n_nonzero_coefs=n_atoms,
-                                       random_state=0)
+y, D, x = make_sparse_coded_signal(n_samples=1,
+                                   n_components=n_components,
+                                   n_features=n_features,
+                                   n_nonzero_coefs=n_atoms,
+                                   random_state=0)
 
 idx, = x.nonzero()
 

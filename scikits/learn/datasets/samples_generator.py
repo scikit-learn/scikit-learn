@@ -500,8 +500,8 @@ def generate_random_spd_matrix(ndim, random_state=0):
     return rand_spd
 
 
-def generate_sparse_coded_signal(n_samples, n_components, n_features,
-                                 n_nonzero_coefs, random_state=0):
+def make_sparse_coded_signal(n_samples, n_components, n_features,
+                             n_nonzero_coefs, random_state=None):
     """Generate a signal as a sparse combination of dictionary elements.
 
     Returns a matrix Y = DX, such as D is (n_features, n_components),
@@ -522,7 +522,7 @@ def generate_sparse_coded_signal(n_samples, n_components, n_features,
     n_nonzero_coefs: int,
         number of active (non-zero) coefficients in each sample
 
-    random_state: int or RandomState instance (default 0)
+    random_state: int or RandomState instance (default None)
         seed used by the pseudo random number generator
 
     Returns:

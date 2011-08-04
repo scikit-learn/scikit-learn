@@ -10,8 +10,7 @@ import sys
 import numpy as np
 
 from scikits.learn.linear_model import lars_path, orthogonal_mp
-from scikits.learn.datasets.samples_generator import \
-                                                   generate_sparse_coded_signal
+from scikits.learn.datasets.samples_generator import make_sparse_coded_signal
 
 
 def compute_bench(samples_range, features_range):
@@ -50,7 +49,7 @@ def compute_bench(samples_range, features_range):
             }
             print "n_samples: %d" % n_samples
             print "n_features: %d" % n_features
-            y, X, _ = generate_sparse_coded_signal(**dataset_kwargs)
+            y, X, _ = make_sparse_coded_signal(**dataset_kwargs)
             X = np.asfortranarray(X)
 
             gc.collect()
