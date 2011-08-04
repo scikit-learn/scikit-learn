@@ -51,9 +51,9 @@ print "Dataset consists of %d faces" % n_samples
 def plot_gallery(title, images):
     pl.figure(figsize=(2. * n_col, 2.26 * n_row))
     pl.suptitle(title, size=16)
-    vmax = max(images.max(), -images.min())
     for i, comp in enumerate(images):
         pl.subplot(n_row, n_col, i + 1)
+        vmax = max(comp.max(), -comp.min())
         pl.imshow(comp.reshape(image_shape), cmap=pl.cm.gray,
                   interpolation='nearest',
                   vmin=-vmax, vmax=vmax)
@@ -79,7 +79,7 @@ estimators = [
      True, True),
 
     ('Sparse comp. - MiniBatchSparsePCA',
-     MiniBatchSparsePCA(n_components=n_components, alpha=2e-3, n_iter=100,
+     MiniBatchSparsePCA(n_components=n_components, alpha=1e-3, n_iter=100,
                         chunk_size=3),
      True, False),
 
@@ -105,13 +105,14 @@ for name, estimator, center, transpose in estimators:
     if transpose:
         data = data.T
     estimator.fit(data)
-    print "done in %0.3fs" % (time() - t0)
+    train_time = (time() - t0)
+    print "done in %0.3fs" % train_time
     if hasattr(estimator, 'cluster_centers_'):
         components_ = estimator.cluster_centers_
     else:
         components_ = estimator.components_
     if transpose:
         components_ = components_.T
-    plot_gallery(name, components_)
+    plot_gallery('%s - Train time %.1fs' % (name, train_time), components_)
 
 pl.show()
