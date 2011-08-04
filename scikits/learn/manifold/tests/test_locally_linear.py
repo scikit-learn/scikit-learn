@@ -13,8 +13,11 @@ except ImportError:
     pass
 
 
-def assert_lower(a, b):
-    assert a < b, "%r is not lower than %r" % (a, b)
+def assert_lower(a, b, details=None):
+    message = "%r is not lower than %r" % (a, b)
+    if details is not None:
+        message += ": " + details
+    assert a < b, message
 
 
 #----------------------------------------------------------------------
@@ -71,9 +74,10 @@ def test_lle_manifold():
         assert clf.embedding_.shape[1] == out_dim
         reconstruction_error = np.linalg.norm(
             np.dot(N, clf.embedding_) - clf.embedding_, 'fro') ** 2
-        assert_lower(reconstruction_error, tol)
+        details = "solver: " + solver
+        assert_lower(reconstruction_error, tol, details=details)
         assert_lower(np.abs(clf.reconstruction_error_ - reconstruction_error),
-                     tol * reconstruction_error)
+                     tol * reconstruction_error, details=details)
 
 
 def test_pipeline():
