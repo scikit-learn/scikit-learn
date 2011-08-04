@@ -7,6 +7,7 @@ import numpy as np
 from scipy import linalg
 
 from ..utils.arpack import eigsh
+from ..linear_model.ridge import _solve
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import KernelCenterer
 from ..metrics.pairwise import linear_kernel
@@ -164,6 +165,10 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         return K
 
     def _fit_inverse_transform(self, X_transformed, X):
+        if hasattr(X, "tocsr"):
+            raise NotImplementedError("Inverse transform not implemented for "
+                                      "sparse matrices!")
+
         n_samples = X_transformed.shape[0]
         K = self._get_kernel(X_transformed)
         K.flat[::n_samples + 1] += self.alpha

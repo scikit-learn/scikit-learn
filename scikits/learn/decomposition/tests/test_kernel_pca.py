@@ -1,4 +1,5 @@
 import numpy as np
+import scipy.sparse as sp
 
 from numpy.testing import assert_array_almost_equal
 from nose.tools import assert_equal
@@ -31,6 +32,30 @@ def test_kernel_pca():
             # inverse transform
             X_pred2 = kpca.inverse_transform(X_pred_transformed)
             assert_equal(X_pred2.shape, X_pred.shape)
+
+def test_kernel_pca_sparse():
+    rng = np.random.RandomState(0)
+    X_fit = sp.csr_matrix(rng.random_sample((5, 4)))
+    X_pred = sp.csr_matrix(rng.random_sample((2, 4)))
+
+    for eigen_solver in ("auto", "arpack"):
+        for kernel in ("linear", "rbf", "poly"):
+            # transform fit data
+            kpca = KernelPCA(4, kernel=kernel, eigen_solver=eigen_solver,
+                             fit_inverse_transform=False)
+            X_fit_transformed = kpca.fit_transform(X_fit)
+            X_fit_transformed2 = kpca.fit(X_fit).transform(X_fit)
+            assert_array_almost_equal(np.abs(X_fit_transformed),
+                                      np.abs(X_fit_transformed2))
+
+            # transform new data
+            X_pred_transformed = kpca.transform(X_pred)
+            assert_equal(X_pred_transformed.shape[1],
+                         X_fit_transformed.shape[1])
+
+            # inverse transform
+            #X_pred2 = kpca.inverse_transform(X_pred_transformed)
+            #assert_equal(X_pred2.shape, X_pred.shape)
 
 
 def test_kernel_pca_linear_kernel():
