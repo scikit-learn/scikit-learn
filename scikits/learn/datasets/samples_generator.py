@@ -74,7 +74,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
         are scaled by a random value drawn in [1, 100]. Note that scaling 
         happens after shifting. 
 
-    shuffle: boolean, optional (default=True)
+    shuffle : boolean, optional (default=True)
         Shuffle the samples and the features.
 
     seed : int, RandomState instance or None, optional (default=0)
