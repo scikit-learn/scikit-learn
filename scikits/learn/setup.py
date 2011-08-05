@@ -33,6 +33,9 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('metrics')
     config.add_subpackage('metrics/tests')
 
+    config.add_subpackage("ensemble")
+    config.add_subpackage("decisiontree")
+
     # some libs needs cblas, fortran-compiled BLAS will not be sufficient
     blas_info = get_info('blas_opt', 0)
     if (not blas_info) or (
@@ -50,6 +53,7 @@ def configuration(parent_package='', top_path=None):
     # the following packages depend on cblas, so they have to be build
     # after the above.
     config.add_subpackage('linear_model')
+    config.add_subpackage('tree_model')
     config.add_subpackage('utils')
 
     # add the test directory
