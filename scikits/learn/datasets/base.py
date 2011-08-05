@@ -332,7 +332,8 @@ def load_boston():
 
     Example
     -------
-
+    >>> from scikits.learn.datasets import load_boston
+    >>> data = load_boston()
 
     """        
     module_path = dirname(__file__)
