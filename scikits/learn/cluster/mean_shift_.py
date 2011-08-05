@@ -8,12 +8,12 @@ Authors: Conrad Lee conradlee@gmail.com
 
 from math import floor
 import numpy as np
-from scipy.spatial import cKDTree
 from collections import defaultdict
 from itertools import izip
 
 from ..base import BaseEstimator
 from ..metrics.pairwise import euclidean_distances
+from ..ball_tree import BallTree
 
 
 def estimate_bandwidth(X, quantile=0.3):
@@ -34,8 +34,8 @@ def estimate_bandwidth(X, quantile=0.3):
     return bandwidth
 
 
-def mean_shift(X, bandwidth=None, seeds=None, cluster_all=True,
-               max_iterations=300):
+def mean_shift(X, bandwidth=None, seeds=None, bucket_seeding=False,
+               cluster_all=True, max_iterations=300):
     """Perform MeanShift Clustering of data using a flat kernel
 
     Seed using a bucketing/binning/discretizing technique for scalability.
@@ -51,11 +51,17 @@ def mean_shift(X, bandwidth=None, seeds=None, cluster_all=True,
         If bandwidth is not defined, it is set using
         a heuristic given by the median of all pairwise distances
 
-    bin_size: float, optional
-        The algorithm is seeded using points in a bucketed (discretized)
-        version of the points. bin_size controls the coarseness of the
-        discretization. If not defined, it is set to one half of the
-        bandwidth (this is rather arbitrary).
+    seeds: array [n_seeds, n_features]
+        point used as initial kernel locations
+
+    bucket_seeding: boolean
+        If true, initial kernel locations are not locations of all
+        points, but rather the location of the discretized version of
+        points, where points are discretized onto a grid whose coarseness
+        corresponds to the bandwidth. Setting this option to True will speed
+        up the algorithm because fewer seeds will be initialized.
+        default value: False
+        Ignored in seeds argument is not none
 
     min_bin_freq: int, optional
        To speed up the algorithm, accept only those bins with at least
@@ -75,25 +81,28 @@ def mean_shift(X, bandwidth=None, seeds=None, cluster_all=True,
     See examples/plot_meanshift.py for an example.
 
     """
+
     if bandwidth is None:
         bandwidth = estimate_bandwidth(X)
     if seeds is None:
-        seeds = get_bucket_seeds(X, bandwidth)
+        if bucket_seeding:
+            seeds = get_bucket_seeds(X, bandwidth)
+        else:
+            seeds = X
 
     n_points, n_features = X.shape
     stop_thresh = 0.1 * bandwidth  # when mean has converged
     center_intensity_dict = {}
 
     # used to efficiently look up nearest neighbors
-    kd_tree = cKDTree(X)
+    ball_tree = BallTree(X)
 
     # For each seed, climb gradient until convergence
     for my_mean in seeds:
         completed_iterations = 0
         while True:
             # Find mean of points within bandwidth
-            points_within = [X[idx] for idx in get_points_within_range(
-                kd_tree, my_mean, bandwidth)]
+            points_within = X[ball_tree.query_radius([my_mean], bandwidth)[0]]
             if completed_iterations == 0 and len(points_within) == 0:
                 break  # Depending on seeding strategy this condition may occur
             my_old_mean = my_mean  # save the old mean
@@ -117,33 +126,30 @@ def mean_shift(X, bandwidth=None, seeds=None, cluster_all=True,
     sorted_by_intensity = sorted(center_intensity_dict.items(),
                                  key=lambda tup: tup[1], reverse=True)
     sorted_centers = [center for center, intensity in sorted_by_intensity]
-    is_unique = np.ones(len(sorted_centers), dtype=np.bool)
-    cluster_center_kd_tree = cKDTree(sorted_centers)
+    unique = np.ones(len(sorted_centers), dtype=np.bool)
+    cc_tree = BallTree(sorted_centers)
     for i, center in enumerate(sorted_centers):
         if unique[i]:
-            neighbor_idxs = get_points_within_range(cluster_center_kd_tree,
-                                                    center, bandwidth)
+            neighbor_idxs = cc_tree.query_radius([center], bandwidth)[0]
              # skip nearest result because it is the current point
-            for neighbor_idx in neighbor_idxs[1:]:
-                unique[neighbor_idx] = 0
+            unique[neighbor_idxs] = 0
+            unique[i] = 1
     cluster_centers = [c for c, uniq in izip(sorted_centers, unique) if uniq]
 
     # ASSIGN LABELS: a point belongs to the cluster that it is closest to
-    centers_tree = cKDTree(cluster_centers)
+    centers_tree = BallTree(cluster_centers)
     # Every point is assigned a label, try to keep these small using uint16
     if len(cluster_centers) < 65535:
         labels = np.zeros(n_points, dtype=np.uint16)
     else:
         labels = np.zeros(n_points, dtype=np.uint32)
     for point_idx in xrange(len(X)):
+        distances, idxs = centers_tree.query(X[point_idx], k=1)
         if cluster_all:
-            distance, idx = centers_tree.query(X[point_idx], 1)
-            labels[point_idx] = idx
+            labels[point_idx] = idxs[0]
         else:
-            distance, idx = centers_tree.query(X[point_idx], 1,
-                                               distance_upper_bound=bandwidth)
-            if distance <= bandwidth:
-                labels[point_idx] = idx
+            if distances[0] <= bandwidth:
+                labels[point_idx] = idxs[0]
             else:
                 labels[point_idx] = -1
     return cluster_centers, labels
@@ -189,50 +195,6 @@ def get_bucket_seeds(X, bin_size, min_bin_freq=1):
                           freq >= min_bin_freq], dtype=np.float32)
     bin_seeds = bin_seeds * bin_size
     return bin_seeds
-
-
-def get_points_within_range(kd_tree, query_point, max_distance):
-    """
-    This function adds a feature to the cKDTree that is missing:
-    efficiently query all points within a given range of a coordinate.
-    Instead of doing this, cKDTree efficiently queries the k-nearest
-    points.
-
-    Parameters
-    ----------
-
-    kd_tree : a cKDTree object from scipy.spatial, required
-        Should contain all n-dimensional points of interest
-
-    query_point : n-dimensional point (e.g., tuple, list, np array)
-        The coordinate of interest. All points within max_distance
-        of this coordinate will be returned.
-
-    max_distance: float
-        All points within max_distance of the query_point will
-        be returned
-
-    Returns
-    -------
-
-    cluster_centers : array [n_matchin_points]
-        Contains the indices of the points used to create
-        kd_tree which are within max_distance of query_point
-    """
-    max_neighbors = min(kd_tree.n, 100)
-    # Because we don't want the kd_tree to return a list with all distances,
-    # we start wtih a low value of max_neighbors and increase it until it
-    # is sufficient to contain all points within max_distance
-    while True:
-        distances, indices = kd_tree.query(query_point, max_neighbors,
-                                           distance_upper_bound=max_distance)
-        max_distance_idx = distances.argmax()
-        # If max distance is infinite, then we've found all neighbors within
-        # distance upper bound. Otherwise we haven't gone out far enough and
-        # need to requery with more max results
-        if distances[max_distance_idx] == np.inf or max_neighbors == kd_tree.n:
-            return indices[:max_distance_idx]
-        max_neighbors = min(max_neighbors * 5, kd_tree.n)
 
 ##############################################################################
 
@@ -302,9 +264,11 @@ class MeanShift(BaseEstimator):
 
     """
 
-    def __init__(self, bandwidth=None, seeds=None, cluster_all=True):
+    def __init__(self, bandwidth=None, seeds=None, bucket_seeding=False,
+                 cluster_all=True):
         self.bandwidth = bandwidth
         self.seeds = seeds
+        self.bucket_seeding = bucket_seeding
         self.cluster_all = cluster_all
         self.cluster_centers_ = None
         self.labels_ = None
@@ -321,7 +285,8 @@ class MeanShift(BaseEstimator):
         self._set_params(**params)
         self.cluster_centers_, self.labels_ = \
                                mean_shift(X,
-                                          seeds=self.seeds,
                                           bandwidth=self.bandwidth,
+                                          seeds=self.seeds,
+                                          bucket_seeding=self.bucket_seeding,
                                           cluster_all=self.cluster_all)
         return self
