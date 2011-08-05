@@ -185,7 +185,7 @@ def load_iris():
     Returns
     -------
     data : Bunch
-        Dictionnary-like object, the interesting attributes are:
+        Dictionary-like object, the interesting attributes are:
         'data', the data to learn, 'target', the classification labels,
         'target_names', the meaning of the labels, and 'DESCR', the
         full description of the dataset.
@@ -233,7 +233,7 @@ def load_digits(n_class=10):
     Returns
     -------
     data : Bunch
-        Dictionnary-like object, the interesting attributes are:
+        Dictionary-like object, the interesting attributes are:
         'data', the data to learn, `images`, the images corresponding
         to each sample, 'target', the classification labels for each
         sample, 'target_names', the meaning of the labels, and 'DESCR',
@@ -277,7 +277,7 @@ def load_diabetes():
     Returns
     -------
     data : Bunch
-        Dictionnary-like object, the interesting attributes are:
+        Dictionary-like object, the interesting attributes are:
         'data', the data to learn and 'target', the labels for each
         sample.
 
@@ -295,7 +295,7 @@ def load_linnerud():
     Returns
     -------
     data : Bunch
-        Dictionnary-like object, the interesting attributes are:
+        Dictionary-like object, the interesting attributes are:
         'data_exercise' and 'data_physiological', the two multivariate
         datasets, as well as 'header_exercise' and
         'header_physiological', the corresponding headers.
@@ -325,14 +325,10 @@ def load_boston():
     Returns
     -------
     data : Bunch
-        Dictionnary-like object, the interesting attributes are:
+        Dictionary-like object, the interesting attributes are:
         'data', the data to learn, 'target', the classification labels,
         'target_names', the meaning of the labels, and 'DESCR', the
         full description of the dataset.
-
-    Example
-    -------
-
 
     """        
     module_path = dirname(__file__)
