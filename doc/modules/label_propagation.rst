@@ -36,14 +36,14 @@ can be relaxed, to say :math:`\alpha=0.8`, which means that we will always
 retain 80 percent of our original label distribution, but the algorithm gets to
 change it's confidence of the distribution within 20 percent.
 
-Affinity Matrix
-===============
-Todo.
+Mathematical Details
+====================
+
 
 Examples
 ========
 
-  * :ref:`example_label_propagation_versus_svm.py`
+  * :ref:`example_label_propagation_plot_label_propagation_versus_svm_iris.py`
 
   * :ref:`example_label_propagation_structure.py`
 
