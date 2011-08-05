@@ -46,6 +46,6 @@ gp.thetaL, gp.thetaU = None, None # None bounds deactivate MLE
 # Perform a cross-validation estimate of the coefficient of determination using
 # the cross_val module using all CPUs available on the machine
 K = 20 # folds
-R2 = cross_val_score(gp, X, y=y, cv=KFold(y.size, K), n_jobs=-1).mean()
+R2 = cross_val_score(gp, X, y=y, cv=KFold(y.size, K), n_jobs=1).mean()
 print("The %d-Folds estimate of the coefficient of determination is R2 = %s"
     % (K, R2))

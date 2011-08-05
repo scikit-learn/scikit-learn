@@ -16,7 +16,8 @@ from .base import LinearRegression, Log, ModifiedHuber, Hinge, \
      SquaredLoss, Huber
 
 from .bayes import BayesianRidge, ARDRegression
-from .least_angle import Lars, LassoLars, lars_path, LARS, LassoLARS
+from .least_angle import Lars, LassoLars, lars_path, LARS, LassoLARS, \
+                LarsCV, LassoLarsCV
 from .coordinate_descent import Lasso, ElasticNet, LassoCV, ElasticNetCV, \
                                 lasso_path, enet_path
 from .stochastic_gradient import SGDClassifier, SGDRegressor

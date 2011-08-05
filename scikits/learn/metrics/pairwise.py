@@ -10,7 +10,7 @@ from ..utils import safe_asanyarray, atleast2d_or_csr, deprecated
 from ..utils.extmath import safe_sparse_dot
 
 ################################################################################
-# Distances 
+# Distances
 
 def euclidean_distances(X, Y, Y_norm_squared=None, squared=False):
     """
@@ -19,9 +19,9 @@ def euclidean_distances(X, Y, Y_norm_squared=None, squared=False):
 
     Parameters
     ----------
-    X: array-like, shape = [n_samples_1, n_features]
+    X: {array-like, sparse matrix}, shape = [n_samples_1, n_features]
 
-    Y: array-like, shape = [n_samples_2, n_features]
+    Y: {array-like, sparse matrix}, shape = [n_samples_2, n_features]
 
     Y_norm_squared: array-like, shape = [n_samples_2], optional
         Pre-computed (Y**2).sum(axis=1)
@@ -80,12 +80,12 @@ def euclidean_distances(X, Y, Y_norm_squared=None, squared=False):
             raise ValueError(
                         "Incompatible dimensions for Y and Y_norm_squared")
 
-    # TODO:
-    # a faster cython implementation would do the dot product first,
-    # and then add XX, add YY, and do the clipping of negative values in
-    # a single pass over the output matrix.
-    distances = XX + YY  # Using broadcasting
-    distances -= 2 * safe_sparse_dot(X, Y.T)
+    # TODO: a faster Cython implementation would do the clipping of negative
+    # values in a single pass over the output matrix.
+    distances = safe_sparse_dot(X, Y.T, dense_output=True)
+    distances *= -2
+    distances += XX
+    distances += YY
     distances = np.maximum(distances, 0)
     return distances if squared else np.sqrt(distances)
 
@@ -160,7 +160,7 @@ def linear_kernel(X, Y):
     -------
     Gram matrix: array of shape (n_samples_1, n_samples_2)
     """
-    return np.dot(X, Y.T)
+    return safe_sparse_dot(X, Y.T, dense_output=True)
 
 
 def polynomial_kernel(X, Y, degree=3, gamma=0, coef0=1):
