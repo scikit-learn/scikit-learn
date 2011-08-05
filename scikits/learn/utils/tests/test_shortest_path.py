@@ -1,6 +1,6 @@
 import numpy as np
 from numpy.testing import assert_array_almost_equal
-from scikits.learn.manifold.shortest_path import shortest_path
+from scikits.learn.utils.graph_shortest_path import graph_shortest_path
 
 
 def FloydWarshallSlow(graph, directed=False):
@@ -47,7 +47,7 @@ def test_FloydWarshall():
     dist_matrix = generate_graph(20)
 
     for directed in (True, False):
-        graph_FW = shortest_path(dist_matrix, directed, 'FW')
+        graph_FW = graph_shortest_path(dist_matrix, directed, 'FW')
         graph_py = FloydWarshallSlow(dist_matrix.copy(), directed)
 
         assert_array_almost_equal(graph_FW, graph_py)
@@ -57,7 +57,7 @@ def test_Dijkstra():
     dist_matrix = generate_graph(20)
 
     for directed in (True, False):
-        graph_D = shortest_path(dist_matrix, directed, 'D')
+        graph_D = graph_shortest_path(dist_matrix, directed, 'D')
         graph_py = FloydWarshallSlow(dist_matrix.copy(), directed)
 
         assert_array_almost_equal(graph_D, graph_py)

@@ -8,7 +8,7 @@ from scipy.linalg import eigh
 from ..base import BaseEstimator
 from ..utils.arpack import eigsh
 from ..neighbors import kneighbors_graph
-from .shortest_path import shortest_path
+from ..utils.graph_shortest_path import graph_shortest_path
 
 from ..decomposition import KernelPCA
 
@@ -72,9 +72,9 @@ def isomap(X, n_neighbors, out_dim, eigen_solver='auto',
     # the connected neighborhoods
     #Note that isomap requires a symmetric distance matrix in order to
     # gurantee a real-valued embedding, so we must use directed=False
-    G = shortest_path(dist_matrix,
-                      method=path_method,
-                      directed=False)
+    G = graph_shortest_path(dist_matrix,
+                            method=path_method,
+                            directed=False)
     
     use_kernel_pca = True
 
