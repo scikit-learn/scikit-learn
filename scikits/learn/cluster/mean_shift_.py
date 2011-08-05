@@ -4,7 +4,6 @@ clustering.
 Authors: Conrad Lee conradlee@gmail.com
          Alexandre Gramfort alexandre.gramfort@inria.fr
          Gael Varoquaux gael.varoquaux@normalesup.org
-        
 """
 
 from math import floor
@@ -40,7 +39,7 @@ def mean_shift(X, bandwidth=None, seeds=None, cluster_all=True,
     """Perform MeanShift Clustering of data using a flat kernel
 
     Seed using a bucketing/binning/discretizing technique for scalability.
-    
+
     Parameters
     ----------
 
@@ -61,7 +60,7 @@ def mean_shift(X, bandwidth=None, seeds=None, cluster_all=True,
     min_bin_freq: int, optional
        To speed up the algorithm, accept only those bins with at least
        min_bin_freq points as seeds. If not defined, set to 1.
-       
+
     Returns
     -------
 
@@ -80,7 +79,7 @@ def mean_shift(X, bandwidth=None, seeds=None, cluster_all=True,
         bandwidth = estimate_bandwidth(X)
     if seeds is None:
         seeds = get_bucket_seeds(X, bandwidth)
-        
+
     n_points, n_features = X.shape
     stop_thresh = 0.1 * bandwidth  # when mean has converged
     center_intensity_dict = {}
@@ -91,12 +90,12 @@ def mean_shift(X, bandwidth=None, seeds=None, cluster_all=True,
     # For each seed, climb gradient until convergence
     for my_mean in seeds:
         completed_iterations = 0
-        while True:  
+        while True:
             # Find mean of points within bandwidth
             points_within = [X[idx] for idx in get_points_within_range(
                 kd_tree, my_mean, bandwidth)]
             if completed_iterations == 0 and len(points_within) == 0:
-                break # Depending on seeding strategy, this condition may occur
+                break  # Depending on seeding strategy this condition may occur
             my_old_mean = my_mean  # save the old mean
             my_mean = np.mean(points_within, axis=0)
 
@@ -121,18 +120,18 @@ def mean_shift(X, bandwidth=None, seeds=None, cluster_all=True,
     is_unique = np.ones(len(sorted_centers), dtype=np.bool)
     cluster_center_kd_tree = cKDTree(sorted_centers)
     for i, center in enumerate(sorted_centers):
-        if is_unique[i]:
+        if unique[i]:
             neighbor_idxs = get_points_within_range(cluster_center_kd_tree,
                                                     center, bandwidth)
              # skip nearest result because it is the current point
             for neighbor_idx in neighbor_idxs[1:]:
-                is_unique[neighbor_idx] = 0
-    cluster_centers = [c for c, uniq in izip(sorted_centers, is_unique) if uniq]
+                unique[neighbor_idx] = 0
+    cluster_centers = [c for c, uniq in izip(sorted_centers, unique) if uniq]
 
     # ASSIGN LABELS: a point belongs to the cluster that it is closest to
     centers_tree = cKDTree(cluster_centers)
     # Every point is assigned a label, try to keep these small using uint16
-    if len(cluster_centers) < 65535:  
+    if len(cluster_centers) < 65535:
         labels = np.zeros(n_points, dtype=np.uint16)
     else:
         labels = np.zeros(n_points, dtype=np.uint32)
@@ -148,6 +147,7 @@ def mean_shift(X, bandwidth=None, seeds=None, cluster_all=True,
             else:
                 labels[point_idx] = -1
     return cluster_centers, labels
+
 
 def get_bucket_seeds(X, bin_size, min_bin_freq=1):
     """
@@ -176,19 +176,20 @@ def get_bucket_seeds(X, bin_size, min_bin_freq=1):
     bin_seeds : array [n_samples, n_features]
         points used as initial kernel posistions in clustering.mean_shift
     """
-    
+
     # Discretize (i.e., quantize, bin) points to bins
     bin_sizes = defaultdict(int)
     discretized_points = X.copy() / bin_size
     discretized_points = np.cast[np.int32](discretized_points)
     for discretized_point in discretized_points:
         bin_sizes[tuple(discretized_point)] += 1
-        
+
     # Select only those bins as seeds which have enough members
     bin_seeds = np.array([point for point, freq in bin_sizes.iteritems() if \
                           freq >= min_bin_freq], dtype=np.float32)
     bin_seeds = bin_seeds * bin_size
     return bin_seeds
+
 
 def get_points_within_range(kd_tree, query_point, max_distance):
     """
@@ -196,7 +197,7 @@ def get_points_within_range(kd_tree, query_point, max_distance):
     efficiently query all points within a given range of a coordinate.
     Instead of doing this, cKDTree efficiently queries the k-nearest
     points.
-    
+
     Parameters
     ----------
 
@@ -210,7 +211,7 @@ def get_points_within_range(kd_tree, query_point, max_distance):
     max_distance: float
         All points within max_distance of the query_point will
         be returned
-       
+
     Returns
     -------
 
@@ -226,14 +227,15 @@ def get_points_within_range(kd_tree, query_point, max_distance):
         distances, indices = kd_tree.query(query_point, max_neighbors,
                                            distance_upper_bound=max_distance)
         max_distance_idx = distances.argmax()
-        # If max distance is infinite, then we've found all neighbors within the
+        # If max distance is infinite, then we've found all neighbors within
         # distance upper bound. Otherwise we haven't gone out far enough and
         # need to requery with more max results
         if distances[max_distance_idx] == np.inf or max_neighbors == kd_tree.n:
             return indices[:max_distance_idx]
-        max_neighbors = min(max_neighbors*5, kd_tree.n)
-        
+        max_neighbors = min(max_neighbors * 5, kd_tree.n)
+
 ##############################################################################
+
 
 class MeanShift(BaseEstimator):
     """MeanShift clustering
@@ -282,7 +284,7 @@ class MeanShift(BaseEstimator):
     Machine Intelligence. 2002. pp. 603-619.
 
     Scalability:
-    
+
     In general, the algorithmic complexity of the mean shift algorithm
     is O(T n^2) with n the number of samples and T the number of
     points.
@@ -306,7 +308,7 @@ class MeanShift(BaseEstimator):
         self.cluster_all = cluster_all
         self.cluster_centers_ = None
         self.labels_ = None
-        
+
     def fit(self, X, **params):
         """ Compute MeanShift
 
