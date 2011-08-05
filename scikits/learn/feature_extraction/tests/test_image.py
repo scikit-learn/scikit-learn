@@ -8,8 +8,8 @@ from scipy import ndimage
 
 import nose
 
-from ..image import img_to_graph, grid_to_graph
-from ...utils.graph import cs_graph_components
+from scikits.learn.feature_extraction import img_to_graph, grid_to_graph
+from scikits.learn.utils._csgraph import cs_graph_components
 
 
 def test_img_to_graph():
@@ -62,3 +62,7 @@ def test_connect_regions_with_grid():
     graph = grid_to_graph(*lena.shape, **{'mask' : mask, 'dtype' : None})
     nose.tools.assert_equal(ndimage.label(mask)[1],
                             cs_graph_components(graph)[0])
+
+if __name__ == '__main__':
+    import nose
+    nose.runmodule()
