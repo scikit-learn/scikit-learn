@@ -132,6 +132,14 @@ class Isomap(BaseEstimator):
     def transform(self, X, **params):
         """Transform X.
 
+        This is implemented by linking the points X into the graph of geodesic
+        distances of the training data. First the `n_neighbors` nearest
+        neighbors of X are found in the training data, and from these the
+        shortest geodesic distances from each point in X to each point in
+        the training data are computed in order to construct the kernel.
+        The embedding of X is the projection of this kernel onto the
+        embedding vectors of the training set.
+
         Parameters
         ----------
         X: array-like, shape (n_samples, n_features)
