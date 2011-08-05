@@ -65,8 +65,8 @@ print "Done. Reconstruction error: %g" % err
 
 #----------------------------------------------------------------------
 # Isomap projection of the digits dataset
-print "Computing isomap embedding"
-X_iso = manifold.isomap(X, n_neighbors, 2)
+print "Computing Isomap embedding"
+X_iso = manifold.Isomap(n_neighbors, 2).fit_transform(X)
 print "Done."
 
 

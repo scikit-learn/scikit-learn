@@ -15,7 +15,7 @@ with various manifold learning methods.  The methods are as follows:
 * Modified LLE : Modified Locally Linear Embedding with multiple weights.
   :func:`scikits.learn.manifold.locally_linear`, ``method = 'modified'``
 * Isomap : Isometric Mapping.
-  :func:`scikits.learn.manifold.isomap`
+  :func:`scikits.learn.manifold.Isomap`
 
 For a discussion and comparison of these algorithms, see the
 :ref:`manifold module page <manifold>`
@@ -73,7 +73,7 @@ for i, method in enumerate(methods):
     ax.yaxis.set_major_formatter(NullFormatter())
 
 t0 = time()
-Y = manifold.isomap(X, n_neighbors, out_dim)
+Y = manifold.Isomap(n_neighbors, out_dim).fit_transform(X)
 t1 = time()
 print "Isomap: %.2g sec" % (t1 - t0)
 ax = fig.add_subplot(326)

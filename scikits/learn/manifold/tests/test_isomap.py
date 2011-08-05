@@ -1,11 +1,18 @@
 import numpy as np
 
 from numpy.testing import assert_array_almost_equal
-from scikits.learn import neighbors, manifold
+from scikits.learn import neighbors, manifold, datasets
 from scikits.learn.utils.fixes import product
 
 eigen_solvers = ['auto', 'dense', 'arpack']
 path_methods = ['auto', 'FW', 'D']
+
+
+def assert_lower(a, b, details=None):
+    message = "%r is not lower than %r" % (a, b)
+    if details is not None:
+        message += ": " + details
+    assert a < b, message
 
 
 def test_isomap_simple_grid():
@@ -21,17 +28,49 @@ def test_isomap_simple_grid():
     G = neighbors.kneighbors_graph(X, n_neighbors,
                                    mode='distance').toarray()
 
-    clf = manifold.Isomap(n_neighbors=n_neighbors, out_dim=2)
-
     for eigen_solver in eigen_solvers:
         for path_method in path_methods:
-            clf.fit(X, eigen_solver=eigen_solver,
-                    path_method=path_method)
+            clf = manifold.Isomap(n_neighbors=n_neighbors, out_dim=2,
+                                  eigen_solver=eigen_solver,
+                                  path_method=path_method)
+            clf.fit(X)
 
             G_iso = neighbors.kneighbors_graph(clf.embedding_,
                                                n_neighbors,
                                                mode='distance').toarray()
             assert_array_almost_equal(G, G_iso)
+
+
+def test_transform():
+    N = 200
+    k = 10
+    eps = 0.01
+
+    # Create S-curve dataset
+    X, y = datasets.samples_generator.s_curve(N)
+
+    # Compute isomap embedding
+    iso = manifold.Isomap(k, 2)
+    X_iso = iso.fit_transform(X)
+
+    # Re-embed a noisy version of the points
+    rng = np.random.RandomState(0)
+    noise = eps * rng.randn(*X.shape)
+    X_iso2 = iso.transform(X + noise)
+
+    # Make sure the rms error on re-embedding is comparable to eps
+    assert np.sqrt(np.mean((X_iso - X_iso2) ** 2)) < 2 * eps
+
+
+def test_pipeline():
+    # check that LocallyLinearEmbedding works fine as a Pipeline
+    from scikits.learn import pipeline, datasets
+    iris = datasets.load_iris()
+    clf = pipeline.Pipeline(
+        [('filter', manifold.Isomap()),
+         ('clf', neighbors.NeighborsClassifier())])
+    clf.fit(iris.data, iris.target)
+    assert_lower(.7, clf.score(iris.data, iris.target))
 
 
 if __name__ == '__main__':
