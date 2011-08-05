@@ -17,14 +17,14 @@ from scikits.learn.datasets.samples_generator import make_blobs
 ###############################################################################
 # Generate sample data
 centers = [[1, 1], [-1, -1], [1, -1]]
-X, _ = make_blobs(n_samples=5000, centers=centers, cluster_std=0.6)
+X, _ = make_blobs(n_samples=50000, centers=centers, cluster_std=0.6)
 
 ###############################################################################
 # Compute clustering with MeanShift
-print "Estimating bandwidth"
-bandwidth = estimate_bandwidth(X, quantile=0.3)
-print "Done estimating bandwidth"
-ms = MeanShift(bandwidth=bandwidth)
+
+bandwidth = 1.30
+
+ms = MeanShift(bandwidth=bandwidth, bucket_seeding=True)
 ms.fit(X)
 labels = ms.labels_
 cluster_centers = ms.cluster_centers_
