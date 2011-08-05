@@ -8,12 +8,14 @@ Authors: Conrad Lee conradlee@gmail.com
 
 from math import floor
 import numpy as np
+import scipy
 from collections import defaultdict
 from itertools import izip
 
 from ..base import BaseEstimator
 from ..metrics.pairwise import euclidean_distances
 from ..ball_tree import BallTree
+
 
 
 def estimate_bandwidth(X, quantile=0.3):
@@ -97,6 +99,8 @@ def mean_shift(X, bandwidth=None, seeds=None, bucket_seeding=False,
     # used to efficiently look up nearest neighbors
     ball_tree = BallTree(X)
 
+    nrm2, = scipy.linalg.get_blas_funcs(("nrm2",), (X,))
+
     # For each seed, climb gradient until convergence
     for my_mean in seeds:
         completed_iterations = 0
@@ -110,7 +114,7 @@ def mean_shift(X, bandwidth=None, seeds=None, bucket_seeding=False,
 
             # If converged or at max_iterations, add the cluster ---
             # we deal with duplicates below
-            if np.linalg.norm(my_mean - my_old_mean) < stop_thresh or \
+            if nrm2(my_mean - my_old_mean) < stop_thresh or \
                    completed_iterations == max_iterations:
                 # record the point and intensity, duplicates ignored
                 center_intensity_dict[tuple(my_mean)] = len(points_within)
