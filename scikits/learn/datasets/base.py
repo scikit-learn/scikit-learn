@@ -23,7 +23,6 @@ import numpy as np
 
 from ..utils import check_random_state
 
-###############################################################################
 
 class Bunch(dict):
     """ Container object for datasets: dictionnary-like object that
@@ -114,7 +113,7 @@ def load_files(container_path, description=None, categories=None,
 
     load_content : boolean
         Whether to load or not the content of the different files. If
-        true a 'data' attribute containing the text information is present 
+        true a 'data' attribute containing the text information is present
         in the data structure returned. If not, a filenames attribute
         gives the path to the files.
 
@@ -319,8 +318,9 @@ def load_linnerud():
                  header_physiological=header_physiological,
                  DESCR=fdescr.read())
 
+
 def load_boston():
-    """load the boston house prices dataset and returns it.
+    """Load the Boston house prices dataset and return it.
 
     Returns
     -------
@@ -330,21 +330,22 @@ def load_boston():
         'target_names', the meaning of the labels, and 'DESCR', the
         full description of the dataset.
 
-    """        
+    """
     module_path = dirname(__file__)
-    data_file = csv.reader(open(join(module_path, 'data', 'boston_house_prices.csv')))
+    data_file = csv.reader(open(join(module_path, 'data',
+                                     'boston_house_prices.csv')))
     fdescr = open(join(module_path, 'descr', 'boston_house_prices.rst'))
     temp = data_file.next()
     n_samples = int(temp[0])
     n_features = int(temp[1])
     data = np.empty((n_samples, n_features))
-    target = np.empty((n_samples,) )
-    temp = data_file.next() # names of features
-    feature_names = np.array(temp)   
+    target = np.empty((n_samples,))
+    temp = data_file.next()  # names of features
+    feature_names = np.array(temp)
     for i, d in enumerate(data_file):
         data[i] = np.asanyarray(d[:-1], dtype=np.float)
-        target[i] = np.asanyarray(d[-1], dtype=np.float)    
-      
+        target[i] = np.asanyarray(d[-1], dtype=np.float)
+
     return Bunch(data=data, target=target,
                  feature_names=feature_names,
                  DESCR=fdescr.read())
