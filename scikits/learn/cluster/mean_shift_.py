@@ -33,7 +33,8 @@ def estimate_bandwidth(X, quantile=0.3):
     return bandwidth
 
 
-def mean_shift(X, bandwidth=None, seeds=None, cluster_all_points=True, max_iterations=300):
+def mean_shift(X, bandwidth=None, seeds=None, cluster_all=True,
+               max_iterations=300):
     """Perform MeanShift Clustering of data using a flat kernel
 
     Seed using a bucketing/binning/discretizing technique for scalability.
@@ -84,9 +85,9 @@ def mean_shift(X, bandwidth=None, seeds=None, cluster_all_points=True, max_itera
         
     n_points, n_features = X.shape
     stop_thresh = 0.1 * bandwidth  # when mean has converged
-    cluster_center_intensity_dict = {}
+    center_intensity_dict = {}
 
-    # used to efficiently look up nearest neighbors (effective in lower dimensions)
+    # used to efficiently look up nearest neighbors
     kd_tree = cKDTree(X)
 
     # For each seed, climb gradient until convergence
@@ -94,7 +95,8 @@ def mean_shift(X, bandwidth=None, seeds=None, cluster_all_points=True, max_itera
         completed_iterations = 0
         while True:  
             # Find mean of points within bandwidth
-            points_within = [X[idx] for idx in get_points_within_range(kd_tree, my_mean, bandwidth)]
+            points_within = [X[idx] for idx in get_points_within_range(
+                kd_tree, my_mean, bandwidth)]
             if completed_iterations == 0 and len(points_within) == 0:
                 break # Depending on seeding strategy, this condition may occur
             my_old_mean = my_mean  # save the old mean
@@ -104,8 +106,8 @@ def mean_shift(X, bandwidth=None, seeds=None, cluster_all_points=True, max_itera
             # we deal with duplicates below
             if np.linalg.norm(my_mean - my_old_mean) < stop_thresh or \
                    completed_iterations == max_iterations:
-                # record the point and intensity, duplicates implicitly ignored
-                cluster_center_intensity_dict[tuple(my_mean)] = len(points_within)
+                # record the point and intensity, duplicates ignored
+                center_intensity_dict[tuple(my_mean)] = len(points_within)
                 break
             completed_iterations += 1
             if completed_iterations == max_iterations:
@@ -115,31 +117,34 @@ def mean_shift(X, bandwidth=None, seeds=None, cluster_all_points=True, max_itera
     # If the distance between two kernels is less than the bandwidth,
     # then we have to remove one because it is a duplicate. Remove the
     # one with fewer points.
-    sorted_by_intensity = sorted(cluster_center_intensity_dict.items() , key=lambda tup: tup[1], reverse=True)
+    sorted_by_intensity = sorted(center_intensity_dict.items(),
+                                 key=lambda tup: tup[1], reverse=True)
     sorted_centers = [center for center, intensity in sorted_by_intensity]
     is_unique = np.ones(len(sorted_centers), dtype=np.bool)
     cluster_center_kd_tree = cKDTree(sorted_centers)
     for i, center in enumerate(sorted_centers):
         if is_unique[i]:
-            neighbor_idxs = get_points_within_range(cluster_center_kd_tree, center, bandwidth)
-            for neighbor_idx in neighbor_idxs[1:]: # skip nearest point because it is the current point
+            neighbor_idxs = get_points_within_range(cluster_center_kd_tree,
+                                                    center, bandwidth)
+             # skip nearest result because it is the current point
+            for neighbor_idx in neighbor_idxs[1:]:
                 is_unique[neighbor_idx] = 0
-    cluster_centers = [center for center, unique in izip(sorted_centers, is_unique) if unique]
+    cluster_centers = [c for c, uniq in izip(sorted_centers, is_unique) if uniq]
 
     # ASSIGN LABELS: a point belongs to the cluster that it is closest to
     centers_tree = cKDTree(cluster_centers)
-    # Every point is assigned a label, so keep these small using 4byte ints if possible
+    # Every point is assigned a label, try to keep these small using uint16
     if len(cluster_centers) < 65535:  
         labels = np.zeros(n_points, dtype=np.uint16)
     else:
         labels = np.zeros(n_points, dtype=np.uint32)
     for point_idx in xrange(len(X)):
-        if cluster_all_points:
+        if cluster_all:
             distance, idx = centers_tree.query(X[point_idx], 1)
             labels[point_idx] = idx
-        # If not forced to cluster all points, put those that are not within a kernel in cluster -1
         else:
-            distance, idx = centers_tree.query(X[point_idx], 1, distance_upper_bound=bandwidth)
+            distance, idx = centers_tree.query(X[point_idx], 1,
+                                               distance_upper_bound=bandwidth)
             if distance <= bandwidth:
                 labels[point_idx] = idx
             else:
@@ -224,8 +229,8 @@ def get_points_within_range(kd_tree, query_point, max_distance):
                                            distance_upper_bound=max_distance)
         max_distance_idx = distances.argmax()
         # If max distance is infinite, then we've found all neighbors within the
-        # distance upper bound. Otherwise we haven't gone out far enough and need
-        # to requery with more max results
+        # distance upper bound. Otherwise we haven't gone out far enough and
+        # need to requery with more max results
         if distances[max_distance_idx] == np.inf or max_neighbors == kd_tree.n:
             return indices[:max_distance_idx]
         max_neighbors = min(max_neighbors*5, kd_tree.n)
@@ -250,7 +255,7 @@ class MeanShift(BaseEstimator):
         with bandwidth as the grid size and default values for
         other parameters.
 
-    cluster_all_points: boolean, default True
+    cluster_all: boolean, default True
         If true, then all points are clustered, even those orphans that are
         not within any kernel. Orphans are assigned to the nearest kernel.
         If false, then orphans are given cluster label -1.
@@ -277,15 +282,32 @@ class MeanShift(BaseEstimator):
     K. Funkunaga and L.D. Hosteler, "The Estimation of the Gradient of a
     Density Function, with Applications in Pattern Recognition"
 
-    The algorithmic complexity of the mean shift algorithm is O(T n^2)
-    with n the number of samples and T the number of iterations. It is
-    not adviced for a large number of samples.
+
+    Scalability:
+    
+    In general, the algorithmic complexity of the mean shift algorithm
+    is O(T n^2) with n the number of samples and T the number of
+    points.
+
+    Because this implementation uses a flat kernel and
+    a KD-Tree to look up members of each kernel, the complexity will tend
+    to O(T n*log(n)). In higher dimensions,  finding nearest neighbors
+    using the KD-Tree may become more expensive.
+
+    Scalability can be boosted by using fewer seeds, for examply by using
+    a higher value of min_bin_freq in the get_bucket_seeds function.
+
+    Note that the estimate_bandwidth function is much less scalable than
+    the mean shift algorithm and will be the bottleneck if it is used.
+
     """
 
-    def __init__(self, bandwidth=None, seeds=None, cluster_all_points=True):
+    def __init__(self, bandwidth=None, seeds=None, cluster_all=True):
         self.bandwidth = bandwidth
         self.seeds = seeds
-        self.cluster_all_points = cluster_all_points
+        self.cluster_all = cluster_all
+        self.cluster_centers_ = None
+        self.labels_ = None
         
     def fit(self, X, **params):
         """ Compute MeanShift
@@ -297,8 +319,9 @@ class MeanShift(BaseEstimator):
 
         """
         self._set_params(**params)
-        self.cluster_centers_, self.labels_ = mean_shift(X,
-                                                         seeds = self.seeds,
-                                                         bandwidth = self.bandwidth,
-                                                         cluster_all_points = self.cluster_all_points)
+        self.cluster_centers_, self.labels_ = \
+                               mean_shift(X,
+                                          seeds=self.seeds,
+                                          bandwidth=self.bandwidth,
+                                          cluster_all=self.cluster_all)
         return self
