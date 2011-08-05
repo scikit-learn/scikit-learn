@@ -73,10 +73,6 @@ def mean_shift(X, bandwidth=None, seeds=None, cluster_all=True,
     -----
     See examples/plot_meanshift.py for an example.
 
-    Dorin Comaniciu and Peter Meer, "Mean Shift: A robust approach toward
-    feature space analysis". IEEE Transactions on Pattern Analysis and
-    Machine Intelligence. 2002. pp. 603-619.
-
     """
     if bandwidth is None:
         bandwidth = estimate_bandwidth(X)
@@ -279,9 +275,9 @@ class MeanShift(BaseEstimator):
 
     Reference:
 
-    K. Funkunaga and L.D. Hosteler, "The Estimation of the Gradient of a
-    Density Function, with Applications in Pattern Recognition"
-
+    Dorin Comaniciu and Peter Meer, "Mean Shift: A robust approach toward
+    feature space analysis". IEEE Transactions on Pattern Analysis and
+    Machine Intelligence. 2002. pp. 603-619.
 
     Scalability:
     
