@@ -592,7 +592,7 @@ Loaders
 Samples generator
 -----------------
 
-.. automodule:: scikits.learn.datasets.samples_generator
+.. automodule:: scikits.learn.datasets
    :no-members:
    :no-inherited-members:
 
