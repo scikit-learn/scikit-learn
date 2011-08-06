@@ -3,6 +3,8 @@ from numpy import linalg
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_equal
+from nose.tools import assert_raises
+from nose.tools import assert_true
 from scipy.sparse import csr_matrix
 
 from ..pairwise import euclidean_distances, linear_kernel, polynomial_kernel, \
@@ -29,6 +31,11 @@ def test_pairwise_distances():
     S = pairwise_distances(X, X2, metric="cityblock")
     assert_equal(S.shape[0], X.shape[0])
     assert_equal(S.shape[1], X2.shape[0])
+
+    S = np.dot(X, X.T)
+    S2 = pairwise_distances(S, metric="precomputed")
+    assert_true(S is S2)
+    assert_raises(ValueError, pairwise_distances, X, None, "precomputed")
 
 
 def test_euclidean_distances():
