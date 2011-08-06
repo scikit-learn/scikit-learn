@@ -74,7 +74,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='euclidean',
     # neighborhood of point i. While True, its useless information)
     neighborhoods = [np.where(x <= eps)[0] for x in D]
     # Initially, all samples are noise.
-    labels = np.array([-1] * n)
+    labels = -np.zeros(n)
     # A list of all core samples found.
     core_samples = []
     # label_num is the label given to the new cluster
