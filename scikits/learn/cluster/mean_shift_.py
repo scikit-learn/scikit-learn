@@ -90,35 +90,28 @@ def mean_shift(X, bandwidth=None, seeds=None, bucket_seeding=False,
             seeds = get_bucket_seeds(X, bandwidth)
         else:
             seeds = X
-
     n_points, n_features = X.shape
     stop_thresh = 0.1 * bandwidth  # when mean has converged
     center_intensity_dict = {}
-
-    # used to efficiently look up nearest neighbors
-    ball_tree = BallTree(X)
-
+    ball_tree = BallTree(X)  # to efficiently look up nearby points
     nrm2, = scipy.linalg.get_blas_funcs(("nrm2",), (X,))
 
-    # For each seed, climb gradient until convergence
+    # For each seed, climb gradient until convergence or max_iterations
     for my_mean in seeds:
         completed_iterations = 0
         while True:
             # Find mean of points within bandwidth
             points_within = X[ball_tree.query_radius([my_mean], bandwidth)[0]]
-            if completed_iterations == 0 and len(points_within) == 0:
+            if len(points_within) == 0:
                 break  # Depending on seeding strategy this condition may occur
             my_old_mean = my_mean  # save the old mean
             my_mean = np.mean(points_within, axis=0)
-
             # If converged or at max_iterations, add the cluster
             if nrm2(my_mean - my_old_mean) < stop_thresh or \
                    completed_iterations == max_iterations:
                 center_intensity_dict[tuple(my_mean)] = len(points_within)
                 break
             completed_iterations += 1
-            if completed_iterations == max_iterations:
-                print "Max iterations reached"
 
     # POST PROCESSING: remove near duplicate points
     # If the distance between two kernels is less than the bandwidth,
@@ -126,17 +119,16 @@ def mean_shift(X, bandwidth=None, seeds=None, bucket_seeding=False,
     # one with fewer points.
     sorted_by_intensity = sorted(center_intensity_dict.items(),
                                  key=lambda tup: tup[1], reverse=True)
-    sorted_centers = np.array([center for center, intensity in sorted_by_intensity])
+    sorted_centers = np.array([tup[0] for tup in sorted_by_intensity])
     unique = np.ones(len(sorted_centers), dtype=np.bool)
     cc_tree = BallTree(sorted_centers)
     for i, center in enumerate(sorted_centers):
         if unique[i]:
             neighbor_idxs = cc_tree.query_radius([center], bandwidth)[0]
-             # skip nearest result because it is the current point
             unique[neighbor_idxs] = 0
-            unique[i] = 1
+            unique[i] = 1  # leave the current point as uniuqe
     cluster_centers = sorted_centers[unique]
-    
+
     # ASSIGN LABELS: a point belongs to the cluster that it is closest to
     centers_tree = BallTree(cluster_centers)
     if len(cluster_centers) < 65535:
