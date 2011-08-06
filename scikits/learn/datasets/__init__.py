@@ -20,6 +20,7 @@ from .samples_generator import make_friedman1
 from .samples_generator import make_friedman2
 from .samples_generator import make_friedman3
 from .samples_generator import make_low_rank_matrix
+from .samples_generator import make_sparse_coded_signal
 from .samples_generator import make_sparse_uncorrelated
 from .samples_generator import make_spd_matrix
 from .samples_generator import make_swiss_roll

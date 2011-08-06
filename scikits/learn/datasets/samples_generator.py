@@ -673,6 +673,64 @@ def make_low_rank_matrix(n_samples=100, n_features=100, effective_rank=10,
 
     return np.dot(np.dot(u, s), v.T)
 
+def make_sparse_coded_signal(n_samples, n_components, n_features,
+                             n_nonzero_coefs, random_state=None):
+    """
+    Generate a signal as a sparse combination of dictionary elements.
+
+    Returns a matrix Y = DX, such as D is (n_features, n_components),
+    X is (n_components, n_samples) and each column of X has exactly
+    n_nonzero_coefs non-zero elements.
+
+    Parameters
+    ----------
+    n_samples : int
+        number of samples to generate
+
+    n_components:  int,
+        number of components in the dictionary
+
+    n_features : int
+        number of features of the dataset to generate
+
+    n_nonzero_coefs : int
+        number of active (non-zero) coefficients in each sample
+
+    random_state: int or RandomState instance, optional (default=None)
+        seed used by the pseudo random number generator
+
+    Returns
+    -------
+    data: array of shape [n_features, n_samples]
+        The encoded signal (Y).
+
+    dictionary: array of shape [n_features, n_components]
+        The dictionary with normalized components (D).
+
+    code: array of shape [n_components, n_samples]
+        The sparse code such that each column of this matrix has exactly
+        n_nonzero_coefs non-zero items (X).
+
+    """
+    generator = check_random_state(random_state)
+
+    # generate dictionary
+    D = generator.randn(n_features, n_components)
+    D /= np.sqrt(np.sum((D ** 2), axis=0))
+
+    # generate code
+    X = np.zeros((n_components, n_samples))
+    for i in xrange(n_samples):
+        idx = np.arange(n_components)
+        rng.shuffle(idx)
+        idx = idx[:n_nonzero_coefs]
+        X[idx, i] = generator.randn(n_nonzero_coefs)
+
+    # encode signal
+    Y = np.dot(D, X)
+
+    return map(np.squeeze, (Y, D, X))
+
 def make_sparse_uncorrelated(n_samples=100, n_features=10, random_state=None):
     """
     Generate a random regression problem with sparse uncorrelated design as

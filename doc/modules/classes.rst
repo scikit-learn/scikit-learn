@@ -95,6 +95,7 @@ Generalized Linear Models
    linear_model.LarsCV
    linear_model.LassoLarsCV
    linear_model.LogisticRegression
+   linear_model.OrthogonalMatchingPursuit
    linear_model.SGDClassifier
    linear_model.SGDRegressor
    linear_model.BayesianRidge
@@ -107,6 +108,8 @@ Generalized Linear Models
 
    linear_model.lasso_path
    linear_model.lars_path
+   linear_model.orthogonal_mp
+   linear_model.orthogonal_mp_gram
 
 
 For sparse data
@@ -606,6 +609,7 @@ Samples generator
    datasets.make_friedman2
    datasets.make_friedman3
    datasets.make_low_rank_matrix
+   datasets.make_sparse_coded_signal
    datasets.make_sparse_uncorrelated
    datasets.make_spd_matrix
    datasets.make_swiss_roll
