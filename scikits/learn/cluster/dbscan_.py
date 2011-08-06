@@ -189,7 +189,7 @@ class DBSCAN(BaseEstimator):
         """
 
         self._set_params(**params)
-        self.core_samples_indices_, self.labels_ = dbscan(X,
-                                                          **self._get_params())
-        self.components_ = X[self.core_samples_indices_].copy()
+        self.core_sample_indices_, self.labels_ = dbscan(X,
+                                                         **self._get_params())
+        self.components_ = X[self.core_sample_indices_].copy()
         return self

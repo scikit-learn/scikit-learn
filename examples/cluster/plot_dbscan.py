@@ -4,11 +4,7 @@
 Demo of DBSCAN clustering algorithm
 ===================================
 
-Reference:
-Ester, M., H. P. Kriegel, J. Sander, and X. Xu, “A Density-Based
-Algorithm for Discovering Clusters in Large Spatial Databases with Noise”.
-In: Proceedings of the 2nd International Conference on Knowledge Discovery
-and Data Mining, Portland, OR, AAAI Press, pp. 226–231. 1996
+Finds core samples of high density and expands clusters from them.
 
 """
 print __doc__
@@ -33,7 +29,7 @@ S = 1 - (D / np.max(D))
 ##############################################################################
 # Compute DBSCAN
 db = DBSCAN().fit(S, eps=0.95, min_samples=10)
-core_samples = db.core_samples_
+core_samples = db.core_sample_indices_
 labels = db.labels_
 
 # Number of clusters in labels, ignoring noise if present.
