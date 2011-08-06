@@ -722,7 +722,7 @@ def make_sparse_coded_signal(n_samples, n_components, n_features,
     X = np.zeros((n_components, n_samples))
     for i in xrange(n_samples):
         idx = np.arange(n_components)
-        rng.shuffle(idx)
+        generator.shuffle(idx)
         idx = idx[:n_nonzero_coefs]
         X[idx, i] = generator.randn(n_nonzero_coefs)
 
