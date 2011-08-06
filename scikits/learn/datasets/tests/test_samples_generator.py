@@ -1,11 +1,11 @@
 import numpy as np
 from numpy.testing import assert_equal, assert_array_almost_equal
 
-from .. import generate_sparse_coded_signal
+from .. import make_sparse_coded_signal
 
 
-def test_generate_sparse_coded_signal():
-    Y, D, X = generate_sparse_coded_signal(n_samples=5, n_components=8,
+def test_make_sparse_coded_signal():
+    Y, D, X = make_sparse_coded_signal(n_samples=5, n_components=8,
                                            n_features=10, n_nonzero_coefs=3,
                                            random_state=0)
     assert_equal(Y.shape, (10, 5), 'Data shape mismatch')
