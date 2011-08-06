@@ -2,11 +2,13 @@
 Tests for DBSCAN clustering algorithm
 """
 
+import pickle
+
 import numpy as np
 from numpy.testing import assert_equal
 from scipy.spatial import distance
 
-from ..dbscan_ import DBSCAN, dbscan
+from scikits.learn.cluster.dbscan_ import DBSCAN, dbscan
 from .common import generate_clustered_data
 
 
@@ -84,3 +86,9 @@ def test_dbscan_callable():
 
     n_clusters_2 = len(set(labels)) - int(-1 in labels)
     assert_equal(n_clusters_2, n_clusters)
+
+
+def test_pickle():
+    obj = DBSCAN()
+    s = pickle.dumps(obj)
+    assert_equal(type(pickle.loads(s)), obj.__class__)
