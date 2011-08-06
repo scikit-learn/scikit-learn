@@ -4,8 +4,10 @@ A demo of the mean-shift clustering algorithm
 =============================================
 
 Reference:
-K. Funkunaga and L.D. Hosteler, "The Estimation of the Gradient of a
-Density Function, with Applications in Pattern Recognition"
+
+Dorin Comaniciu and Peter Meer, "Mean Shift: A robust approach toward
+feature space analysis". IEEE Transactions on Pattern Analysis and
+Machine Intelligence. 2002. pp. 603-619.
 
 """
 print __doc__
@@ -22,6 +24,8 @@ X, _ = make_blobs(n_samples=50000, centers=centers, cluster_std=0.6)
 ###############################################################################
 # Compute clustering with MeanShift
 
+# The following bandwidth can be automatically detected using
+# bandwidth = estimate_bandwidth(X)
 bandwidth = 1.30
 
 ms = MeanShift(bandwidth=bandwidth, bucket_seeding=True)
