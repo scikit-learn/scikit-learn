@@ -143,8 +143,8 @@ def sparse_uncorrelated(n_samples=100, n_features=10):
     y : numpy array of shape (n_samples) for labels
     """
     X = np.random.normal(loc=0, scale=1, size=(n_samples, n_features))
-    y = np.random.normal(loc=X[:, 0] + 2 * X[:, 1] - 2 * X[:, 2] - 1.5 * X[:, 3],
-                  scale=np.ones(n_samples))
+    y = np.random.normal(loc=X[:, 0] + 2 * X[:, 1] - 2 * X[:, 2] - 1.5 *
+                         X[:, 3], scale=np.ones(n_samples))
     return X, y
 
 
@@ -383,6 +383,7 @@ def swiss_roll(n_samples, noise=0.0):
     t = np.squeeze(t)
     return X, t
 
+
 def s_curve(n_samples, noise=0.0):
     """Generate S curve dataset
 
@@ -401,15 +402,16 @@ def s_curve(n_samples, noise=0.0):
     """
     np.random.seed(0)
 
-    t = 3*np.pi * (np.random.rand(1,n_samples) - 0.5)
+    t = 3 * np.pi * (np.random.rand(1, n_samples) - 0.5)
     x = np.sin(t)
-    y = np.random.rand(1,n_samples)*2.0
-    z = np.sign(t)*(np.cos(t)-1)
+    y = np.random.rand(1, n_samples) * 2.0
+    z = np.sign(t) * (np.cos(t) - 1)
 
-    X = np.concatenate((x,y,z)).T
+    X = np.concatenate((x, y, z)).T
     t = np.squeeze(t)
 
     return X, t
+
 
 def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
                center_box=(-10.0, 10.0), shuffle=True, random_state=0):
@@ -497,3 +499,61 @@ def generate_random_spd_matrix(ndim, random_state=0):
     rand_spd = np.dot(np.dot(U, 1.0 + np.diag(prng.rand(ndim))), V)
     return rand_spd
 
+
+def make_sparse_coded_signal(n_samples, n_components, n_features,
+                             n_nonzero_coefs, random_state=None):
+    """Generate a signal as a sparse combination of dictionary elements.
+
+    Returns a matrix Y = DX, such as D is (n_features, n_components),
+    X is (n_components, n_samples) and each column of X has exactly
+    n_nonzero_coefs non-zero elements.
+
+    Parameters:
+    ----------
+    n_samples: int,
+        number of samples to generate
+
+    n_components: int, 
+        number of components in the dictionary
+
+    n_features: int,
+        number of features of the dataset to generate
+
+    n_nonzero_coefs: int,
+        number of active (non-zero) coefficients in each sample
+
+    random_state: int or RandomState instance (default None)
+        seed used by the pseudo random number generator
+
+    Returns:
+    --------
+    data: array (n_features, n_samples):
+        The encoded signal (Y).
+
+    dictionary: array (n_features, n_components):
+        The dictionary with normalized components (D).
+
+    code: array (n_components, n_samples):
+        The sparse code such that each column of this matrix has exactly
+        n_nonzero_coefs non-zero items (X).
+
+    """
+
+    rng = check_random_state(random_state)
+
+    # generate dictionary
+    D = rng.randn(n_features, n_components)
+    D /= np.sqrt(np.sum((D ** 2), axis=0))
+
+    # generate code
+    X = np.zeros((n_components, n_samples))
+    for i in xrange(n_samples):
+        idx = np.arange(n_components)
+        rng.shuffle(idx)
+        idx = idx[:n_nonzero_coefs]
+        X[idx, i] = rng.randn(n_nonzero_coefs)
+
+    # encode signal
+    Y = np.dot(D, X)
+
+    return map(np.squeeze, (Y, D, X))
