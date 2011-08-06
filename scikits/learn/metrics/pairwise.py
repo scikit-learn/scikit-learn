@@ -13,7 +13,7 @@ from ..utils.extmath import safe_sparse_dot
 ################################################################################
 # Distances
 
-def calculate_distances(X, metric="euclidean"):
+def pairwise_distances(X, Y=None, metric="euclidean"):
     """ Calculates the distance matrix from a vector matrix X.
 
     This method takes either a vector array or a distance matrix, and returns
@@ -29,6 +29,10 @@ def calculate_distances(X, metric="euclidean"):
     X: array [n_samples, n_samples] if metric == "precomputed", or,
              [n_samples, n_features] otherwise
         Array of pairwise distances between samples, or a feature array.
+
+    X: array [n_samples, n_features]
+        A second feature array only if X has shape [n_samples, n_features].
+
     metric: string, or callable
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
@@ -51,13 +55,20 @@ def calculate_distances(X, metric="euclidean"):
         if X.shape[0] != X.shape[1]:
             raise ValueError("X is not square!")
         return X
-    # In all other cases, the array is to be considered as a feature array.
-    D = distance.squareform(distance.pdist(X, metric=metric))
-    return D
+
+    elif metric == "euclidean":
+        return euclidean_distances(X, Y)
+
+    else:
+        # FIXME: the distance module doesn't support sparse matrices!
+        if Y is None:
+            return distance.squareform(distance.pdist(X, metric=metric))
+        else:
+            return distance.cdist(X, Y, metric=metric)
 
 
 # Distances
-def euclidean_distances(X, Y, Y_norm_squared=None, squared=False):
+def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     """
     Considering the rows of X (and Y=X) as vectors, compute the
     distance matrix between each pair of vectors.
@@ -94,7 +105,7 @@ def euclidean_distances(X, Y, Y_norm_squared=None, squared=False):
     # should not need X_norm_squared because if you could precompute that as
     # well as Y, then you should just pre-compute the output and not even
     # call this function.
-    if X is Y:
+    if Y is X or Y is None:
         X = Y = safe_asanyarray(X)
     else:
         X = safe_asanyarray(X)
@@ -287,3 +298,4 @@ def rbf_kernel(X, Y, gamma=0):
     K *= -gamma
     np.exp(K, K)    # exponentiate K in-place
     return K
+
