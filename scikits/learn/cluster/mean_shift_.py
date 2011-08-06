@@ -8,7 +8,7 @@ Authors: Conrad Lee conradlee@gmail.com
 
 from math import floor
 import numpy as np
-import scipy
+from ..utils import extmath
 from collections import defaultdict
 from itertools import izip
 
@@ -94,7 +94,6 @@ def mean_shift(X, bandwidth=None, seeds=None, bucket_seeding=False,
     stop_thresh = 0.1 * bandwidth  # when mean has converged
     center_intensity_dict = {}
     ball_tree = BallTree(X)  # to efficiently look up nearby points
-    nrm2, = scipy.linalg.get_blas_funcs(("nrm2",), (X,))
 
     # For each seed, climb gradient until convergence or max_iterations
     for my_mean in seeds:
@@ -107,7 +106,7 @@ def mean_shift(X, bandwidth=None, seeds=None, bucket_seeding=False,
             my_old_mean = my_mean  # save the old mean
             my_mean = np.mean(points_within, axis=0)
             # If converged or at max_iterations, add the cluster
-            if nrm2(my_mean - my_old_mean) < stop_thresh or \
+            if extmath.norm(my_mean - my_old_mean) < stop_thresh or \
                    completed_iterations == max_iterations:
                 center_intensity_dict[tuple(my_mean)] = len(points_within)
                 break
