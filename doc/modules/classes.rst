@@ -92,6 +92,8 @@ Generalized Linear Models
    linear_model.ElasticNetCV
    linear_model.Lars
    linear_model.LassoLars
+   linear_model.LarsCV
+   linear_model.LassoLarsCV
    linear_model.LogisticRegression
    linear_model.SGDClassifier
    linear_model.SGDRegressor

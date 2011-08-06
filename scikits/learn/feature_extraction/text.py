@@ -426,28 +426,44 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     """Transform a count matrix to a normalized tf or tf–idf representation
 
     Tf means term-frequency while tf–idf means term-frequency times inverse
-    document-frequency:
+    document-frequency. This is a common term weighting scheme in information
+    retrieval, that has also found good use in document classification.
 
-      http://en.wikipedia.org/wiki/Tf–idf
-
-    The goal of using Tf–idf instead of the raw frequencies of occurrence of a
+    The goal of using tf–idf instead of the raw frequencies of occurrence of a
     token in a given document is to scale down the impact of tokens that occur
     very frequently in a given corpus and that are hence empirically less
-    informative than feature that occur in a small fraction of the training
+    informative than features that occur in a small fraction of the training
     corpus.
+
+    In the SMART notation used in IR, this class implements several tf–idf
+    variants. Tf is always "n" (natural), idf is "t" iff use_idf is given,
+    "n" otherwise, and normalization is "c" iff norm='l2', "n" iff norm=None.
 
     Parameters
     ----------
     norm : 'l1', 'l2' or None, optional
         Norm used to normalize term vectors. None for no normalization.
 
-    use_idf : boolean
+    use_idf : boolean, optional
         Enable inverse-document-frequency reweighting.
+
+    smooth_idf : boolean, optional
+        Smooth idf weights by adding one to document frequencies, as if an
+        extra document was seen containing every term in the collection
+        exactly once. Prevents zero divisions.
+
+    References
+    ----------
+    R. Baeza-Yates and B. Ribeiro-Neto (2011). Modern Information Retrieval.
+        Addison Wesley, pp. 68–74.
+    C.D. Manning, H. Schütze and P. Raghavan (2008). Introduction to
+        Information Retrieval. Cambridge University Press, pp. 121–125.
     """
 
-    def __init__(self, norm='l2', use_idf=True):
+    def __init__(self, norm='l2', use_idf=True, smooth_idf=True):
         self.norm = norm
         self.use_idf = use_idf
+        self.smooth_idf = smooth_idf
         self.idf_ = None
 
     def fit(self, X, y=None):
@@ -458,13 +474,14 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         X: sparse matrix, [n_samples, n_features]
             a matrix of term/token counts
         """
-        n_samples, n_features = X.shape
         if self.use_idf:
-            # how many documents include each token?
-            idc = np.zeros(n_features, dtype=np.float64)
-            for doc, token in zip(*X.nonzero()):
-                idc[token] += 1
-            self.idf_ = np.log(float(X.shape[0]) / idc)
+            n_samples, n_features = X.shape
+            df = np.bincount(X.nonzero()[1])
+            if df.shape[0] < n_features:
+                # bincount might return fewer bins than there are features
+                df = np.concatenate([df, np.zeros(n_features - df.shape[0])])
+            df += int(self.smooth_idf)
+            self.idf_ = np.log(float(n_samples) / df)
 
         return self
 
@@ -502,11 +519,12 @@ class Vectorizer(BaseEstimator):
     """
 
     def __init__(self, analyzer=DEFAULT_ANALYZER, max_df=1.0,
-                 max_features=None, norm='l2', use_idf=True):
+                 max_features=None, norm='l2', use_idf=True, smooth_idf=True):
         self.tc = CountVectorizer(analyzer, max_df=max_df,
                                   max_features=max_features,
                                   dtype=np.float64)
-        self.tfidf = TfidfTransformer(norm=norm, use_idf=use_idf)
+        self.tfidf = TfidfTransformer(norm=norm, use_idf=use_idf,
+                                      smooth_idf=smooth_idf)
 
     def fit(self, raw_documents):
         """Learn a conversion law from documents to array data"""

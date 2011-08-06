@@ -158,6 +158,29 @@ def test_lars_add_features(verbose=False):
         np.array([0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]))
 
 
+def test_lars_n_nonzero_coefs(verbose=False):
+    lars = linear_model.Lars(n_nonzero_coefs=6, verbose=verbose)
+    lars.fit(X, y)
+    assert len(lars.coef_.nonzero()[0]) == 6
+
+
+def test_lars_cv():
+    """ Test the LassoLarsCV object by checking that the optimal alpha
+        increases as the number of samples increases.
+
+        This property is not actualy garantied in general and is just a
+        property of the given dataset, with the given steps chosen.
+    """
+    old_alpha = 0
+    lars_cv = linear_model.LassoLarsCV()
+    for length in (400, 200, 100):
+        X = diabetes.data[:length]
+        y = diabetes.target[:length]
+        lars_cv.fit(X, y)
+        np.testing.assert_array_less(old_alpha, lars_cv.alpha)
+        old_alpha = lars_cv.alpha
+
+
 if __name__ == '__main__':
     import nose
     nose.runmodule()

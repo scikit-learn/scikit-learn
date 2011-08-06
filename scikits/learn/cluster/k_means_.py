@@ -257,12 +257,7 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
 
 def _calculate_labels_inertia(X, centers, x_squared_norms=None):
     """Compute the inertia and the labels of the given samples and centers"""
-    if sp.issparse(X):
-        distance = _euclidean_distances_sparse(centers, X,
-                                              x_squared_norms, squared=True)
-    else:
-        distance = euclidean_distances(centers, X, x_squared_norms,
-                                       squared=True)
+    distance = euclidean_distances(centers, X, x_squared_norms, squared=True)
     return distance.min(axis=0).sum(), distance.argmin(axis=0)
 
 
@@ -574,31 +569,11 @@ def _mini_batch_step_sparse(X, batch_slice, centers, counts, x_squared_norms):
     x_squared_norms: array, shape (n_samples,)
          The squared norms of each sample in `X`.
     """
-    cache = _euclidean_distances_sparse(centers, X[batch_slice],
+    cache = euclidean_distances(centers, X[batch_slice],
               x_squared_norms[batch_slice]).argmin(axis=0).astype(np.int32)
 
     _k_means._mini_batch_update_sparse(X.data, X.indices, X.indptr, batch_slice,
                                        centers, counts, cache)
-
-
-def _euclidean_distances_sparse(X, Y, y_squared_norms=None, squared=False):
-    """euclidean distances for dense X and sparse Y.
-    """
-    XX = np.sum(X * X, axis=1)[:, np.newaxis]
-
-    # If added same as compute dot
-    # XX = np.ones((X.shape[0],))[:, np.newaxis]
-
-    if y_squared_norms == None:
-        y_squared_norms = _k_means.csr_row_norm_l2(Y, squared)
-    YY = y_squared_norms[np.newaxis, :]
-
-    distances = XX + YY
-    distances -= 2 * (X * Y.T)
-    distances = np.maximum(distances, 0)
-    if not squared:
-        distances = np.sqrt(distances)
-    return distances
 
 
 class MiniBatchKMeans(KMeans):
