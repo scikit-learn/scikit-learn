@@ -17,7 +17,6 @@ from ..metrics.pairwise import euclidean_distances
 from ..ball_tree import BallTree
 
 
-
 def estimate_bandwidth(X, quantile=0.3):
     """Estimate the bandwith ie the radius to use with an RBF kernel
     in the MeanShift algorithm
@@ -112,11 +111,9 @@ def mean_shift(X, bandwidth=None, seeds=None, bucket_seeding=False,
             my_old_mean = my_mean  # save the old mean
             my_mean = np.mean(points_within, axis=0)
 
-            # If converged or at max_iterations, add the cluster ---
-            # we deal with duplicates below
+            # If converged or at max_iterations, add the cluster
             if nrm2(my_mean - my_old_mean) < stop_thresh or \
                    completed_iterations == max_iterations:
-                # record the point and intensity, duplicates ignored
                 center_intensity_dict[tuple(my_mean)] = len(points_within)
                 break
             completed_iterations += 1
@@ -129,7 +126,7 @@ def mean_shift(X, bandwidth=None, seeds=None, bucket_seeding=False,
     # one with fewer points.
     sorted_by_intensity = sorted(center_intensity_dict.items(),
                                  key=lambda tup: tup[1], reverse=True)
-    sorted_centers = [center for center, intensity in sorted_by_intensity]
+    sorted_centers = np.array([center for center, intensity in sorted_by_intensity])
     unique = np.ones(len(sorted_centers), dtype=np.bool)
     cc_tree = BallTree(sorted_centers)
     for i, center in enumerate(sorted_centers):
@@ -138,24 +135,21 @@ def mean_shift(X, bandwidth=None, seeds=None, bucket_seeding=False,
              # skip nearest result because it is the current point
             unique[neighbor_idxs] = 0
             unique[i] = 1
-    cluster_centers = [c for c, uniq in izip(sorted_centers, unique) if uniq]
-
+    cluster_centers = sorted_centers[unique]
+    
     # ASSIGN LABELS: a point belongs to the cluster that it is closest to
     centers_tree = BallTree(cluster_centers)
-    # Every point is assigned a label, try to keep these small using uint16
     if len(cluster_centers) < 65535:
         labels = np.zeros(n_points, dtype=np.uint16)
     else:
         labels = np.zeros(n_points, dtype=np.uint32)
-    for point_idx in xrange(len(X)):
-        distances, idxs = centers_tree.query(X[point_idx], k=1)
-        if cluster_all:
-            labels[point_idx] = idxs[0]
-        else:
-            if distances[0] <= bandwidth:
-                labels[point_idx] = idxs[0]
-            else:
-                labels[point_idx] = -1
+    distances, idxs = centers_tree.query(X, 1)
+    if cluster_all:
+        labels = idxs.flatten()
+    else:
+        labels[:] = -1
+        ind = np.where(distances.flatten() < bandwidth)[0]
+        labels[ind] = idxs.flatten()[ind]
     return cluster_centers, labels
 
 
