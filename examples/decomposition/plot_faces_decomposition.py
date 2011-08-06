@@ -4,7 +4,8 @@ Faces dataset decompositions
 ============================
 
 This example compares different unsupervised matrix decomposition (dimension
-reduction) methods on the Olivetti faces dataset.
+reduction) methods  from the module :py:mod:`scikits.learn.decomposition` on
+:doc:`/datasets/olivetti_faces`.
 
 """
 print __doc__
