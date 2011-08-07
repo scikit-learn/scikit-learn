@@ -80,8 +80,8 @@ def _cholesky_omp(X, y, n_nonzero_coefs, eps=None, overwrite_x=False):
         if n_active > 0:
             # Updates the Cholesky decomposition of X' X
             L[n_active, :n_active] = np.dot(X[:, :n_active].T, X[:, lam])
-            v = nrm2(L[n_active, :n_active]) ** 2
             solve_triangular(L[:n_active, :n_active], L[n_active, :n_active])
+            v = nrm2(L[n_active, :n_active]) ** 2
             if 1 - v <= min_float:  # selected atoms are dependent
                 warn(premature)
                 break
@@ -175,8 +175,8 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, eps_0=None, eps=None,
             break
         if n_active > 0:
             L[n_active, :n_active] = Gram[lam, :n_active]
-            v = nrm2(L[n_active, :n_active]) ** 2
             solve_triangular(L[:n_active, :n_active], L[n_active, :n_active])
+            v = nrm2(L[n_active, :n_active]) ** 2
             if 1 - v <= min_float:  # selected atoms are dependent
                 warn(premature)
                 break
