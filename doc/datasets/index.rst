@@ -26,9 +26,8 @@ This package also features helpers to fetch larger datasets commonly
 used by the machine learning community to benchmark algorithm on data
 that comes from the 'real world'.
 
-
-Datasets shipped with scikit-learn and samples generators
-=========================================================
+Toy datasets
+============
 
 scikit-learn comes with a few small standard datasets that do not
 require to download any file from some external website.
@@ -47,7 +46,10 @@ These datasets are useful to quickly illustrate the behavior of the
 various algorithms implemented in the scikit. They are however often too
 small to be representative of real world machine learning tasks.
 
-In addition, scikit-learn includes various random samples generators that
+Sample generators
+=================
+
+In addition, scikit-learn includes various random sample generators that
 can be used to build artifical datasets of controled size and complexity.
 
 .. autosummary::
@@ -110,13 +112,4 @@ features::
 .. include:: mldata.rst
 
 .. include:: labeled_faces.rst
-
-.. todo::
-
-  Dataset generators
-  ==================
-
-  Please write some narrative documentation on how to best use the most common
-  utility functions from the ``samples_generator`` module.
-
 
