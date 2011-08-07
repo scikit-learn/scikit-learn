@@ -561,6 +561,61 @@ Manifold learning
     manifold.locally_linear_embedding
 
 
+Datasets
+========
+
+Loaders
+-------
+
+.. automodule:: scikits.learn.datasets
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: scikits.learn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   datasets.load_files
+   datasets.load_diabetes
+   datasets.load_digits
+   datasets.load_iris
+   datasets.load_linnerud
+   datasets.load_lfw_pairs
+   datasets.fetch_lfw_pairs
+   datasets.load_lfw_people
+   datasets.fetch_lfw_people
+   datasets.load_20newsgroups
+   datasets.fetch_20newsgroups
+
+Samples generator
+-----------------
+
+.. automodule:: scikits.learn.datasets
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: scikits.learn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   datasets.make_classification
+   datasets.make_regression
+   datasets.make_blobs
+   datasets.make_friedman1
+   datasets.make_friedman2
+   datasets.make_friedman3
+   datasets.make_low_rank_matrix
+   datasets.make_sparse_coded_signal
+   datasets.make_sparse_uncorrelated
+   datasets.make_spd_matrix
+   datasets.make_swiss_roll
+   datasets.make_s_curve
+
+
 Pipeline
 ========
 

@@ -11,7 +11,7 @@ from collections import defaultdict
 
 from scikits.learn.linear_model import lars_path
 from scikits.learn.linear_model import lasso_path
-from scikits.learn.datasets.samples_generator import make_regression_dataset
+from scikits.learn.datasets.samples_generator import make_regression
 
 
 def compute_bench(samples_range, features_range):
@@ -28,8 +28,7 @@ def compute_bench(samples_range, features_range):
             print 'Iteration %03d of %03d' % (it, max_it)
             print '===================='
             dataset_kwargs = {
-                'n_train_samples': n_samples,
-                'n_test_samples': 2,
+                'n_samples': n_samples,
                 'n_features': n_features,
                 'n_informative': n_features / 10,
                 'effective_rank': min(n_samples, n_features) / 10,
@@ -38,7 +37,7 @@ def compute_bench(samples_range, features_range):
             }
             print "n_samples: %d" % n_samples
             print "n_features: %d" % n_features
-            X, y, _, _, _ = make_regression_dataset(**dataset_kwargs)
+            X, y = make_regression(**dataset_kwargs)
 
             gc.collect()
             print "benching lars_path (with Gram):",
