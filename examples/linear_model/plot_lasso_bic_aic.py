@@ -12,6 +12,8 @@ The estimation of the number of degrees of freedom is given by:
 "On the degrees of freedom of the lasso"
 Hui Zou, Trevor Hastie, and Robert Tibshirani
 Ann. Statist. Volume 35, Number 5 (2007), 2173-2192.
+
+See the linear_model.LassoLarsIC estimator.
 """
 print __doc__
 
