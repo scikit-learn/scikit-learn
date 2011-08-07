@@ -167,6 +167,7 @@ def load_files(container_path, description=None, categories=None,
     if load_content:
         data = [open(filename).read() for filename in filenames]
         return Bunch(data=data,
+                     filenames=filenames,
                      target_names=target_names,
                      target=target,
                      DESCR=description)
