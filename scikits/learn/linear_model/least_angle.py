@@ -8,6 +8,7 @@ Generalized Linear Model for a complete discussion.
 #
 # License: BSD Style.
 
+from math import log
 import numpy as np
 from scipy import linalg, interpolate
 from scipy.linalg.lapack import get_lapack_funcs
@@ -17,6 +18,17 @@ from ..utils import arrayfuncs
 from ..utils import deprecated
 from ..cross_val import check_cv
 from ..externals.joblib import Parallel, delayed
+
+
+def _safe_normalize(X, overwrite_X):
+    """Normalize X avoiding divisions by zero"""
+    norms = np.sqrt(np.sum(X ** 2, axis=0))
+    nonzeros = np.flatnonzero(norms)
+    if not overwrite_X:
+        X = X.copy()
+        overwrite_X = True
+    X[:, nonzeros] /= norms[nonzeros]
+    return X, norms
 
 
 def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
@@ -323,7 +335,7 @@ class Lars(LinearModel):
     eps: float, optional
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
-        systems. Unlike the 'tol' parameter in some iterative 
+        systems. Unlike the 'tol' parameter in some iterative
         optimization-based algorithms, this parameter does not control
         the tolerance of the optimization.
 
@@ -365,6 +377,18 @@ class Lars(LinearModel):
         self.n_nonzero_coefs = n_nonzero_coefs
         self.eps = eps
 
+    def _get_gram(self):
+        # precompute if n_samples > n_features
+        precompute = self.precompute
+        if hasattr(precompute, '__array__'):
+            # copy as it's going to be modified
+            Gram = precompute.copy()
+        elif precompute == 'auto':
+            Gram = 'auto'
+        else:
+            Gram = None
+        return Gram
+
     def fit(self, X, y, overwrite_X=False, **params):
         """Fit the model using X, y as training data.
 
@@ -389,28 +413,15 @@ class Lars(LinearModel):
         X, y, Xmean, ymean = LinearModel._center_data(X, y, self.fit_intercept)
         alpha = getattr(self, 'alpha', 0.)
         if hasattr(self, 'n_nonzero_coefs'):
-            alpha = 0. # n_nonzero_coefs parametrization takes priority
+            alpha = 0.  # n_nonzero_coefs parametrization takes priority
             max_iter = self.n_nonzero_coefs
         else:
             max_iter = self.max_iter
 
         if self.normalize:
-            norms = np.sqrt(np.sum(X ** 2, axis=0))
-            nonzeros = np.flatnonzero(norms)
-            if not overwrite_X:
-                X = X.copy()
-                overwrite_X = True
-            X[:, nonzeros] /= norms[nonzeros]
+            X, norms = _safe_normalize(X, overwrite_X)
 
-        # precompute if n_samples > n_features
-        precompute = self.precompute
-        if hasattr(precompute, '__array__'):
-            # copy as it's going to be modified
-            Gram = precompute.copy()
-        elif precompute == 'auto':
-            Gram = 'auto'
-        else:
-            Gram = None
+        Gram = self._get_gram()
 
         self.alphas_, self.active_, self.coef_path_ = lars_path(X, y,
                   Gram=Gram, overwrite_X=overwrite_X,
@@ -457,7 +468,7 @@ class LassoLars(Lars):
     eps: float, optional
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
-        systems. Unlike the 'tol' parameter in some iterative 
+        systems. Unlike the 'tol' parameter in some iterative
         optimization-based algorithms, this parameter does not control
         the tolerance of the optimization.
 
@@ -554,7 +565,7 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
     eps: float, optional
             The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
-        systems. Unlike the 'tol' parameter in some iterative 
+        systems. Unlike the 'tol' parameter in some iterative
         optimization-based algorithms, this parameter does not control
         the tolerance of the optimization.
 
@@ -815,3 +826,151 @@ class LassoLarsCV(LarsCV):
     """
 
     method = 'lasso'
+
+
+class LassoLarsIC(LassoLars):
+    """Lasso model fit with Lars using BIC or AIC for model selection
+
+    Parameters
+    ----------
+    criterion: 'bic' | 'aic'
+        The type of criterion to use.
+
+    fit_intercept : boolean
+        whether to calculate the intercept for this model. If set
+        to false, no intercept will be used in calculations
+        (e.g. data is expected to be already centered).
+
+    verbose : boolean or integer, optional
+        Sets the verbosity amount
+
+    normalize : boolean, optional
+        If True, the regressors X are normalized
+
+    precompute : True | False | 'auto' | array-like
+        Whether to use a precomputed Gram matrix to speed up
+        calculations. If set to 'auto' let us decide. The Gram
+        matrix can also be passed as argument.
+
+    max_iter: integer, optional
+        Maximum number of iterations to perform. Can be used for
+        early stopping.
+
+    eps: float, optional
+        The machine-precision regularization in the computation of the
+        Cholesky diagonal factors. Increase this for very ill-conditioned
+        systems. Unlike the 'tol' parameter in some iterative
+        optimization-based algorithms, this parameter does not control
+        the tolerance of the optimization.
+
+
+    Attributes
+    ----------
+    `coef_` : array, shape = [n_features]
+        parameter vector (w in the fomulation formula)
+
+    `intercept_` : float
+        independent term in decision function.
+
+    Examples
+    --------
+    >>> from scikits.learn import linear_model
+    >>> clf = linear_model.LassoLarsIC(criterion='bic')
+    >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1]) # doctest: +ELLIPSIS
+    LassoLarsIC(normalize=True, verbose=False, fit_intercept=True, max_iter=500,
+          eps=..., precompute='auto', criterion='bic')
+    >>> print clf.coef_
+    [ 0.         -0.81649658]
+
+    References
+    ----------
+    The estimation of the number of degrees of freedom is given by:
+
+    "On the degrees of freedom of the lasso"
+    Hui Zou, Trevor Hastie, and Robert Tibshirani
+    Ann. Statist. Volume 35, Number 5 (2007), 2173-2192.
+
+    http://en.wikipedia.org/wiki/Akaike_information_criterion
+    http://en.wikipedia.org/wiki/Bayesian_information_criterion
+
+    See also
+    --------
+    lars_path, LassoLars, LassoLarsCV
+    """
+    def __init__(self, criterion='bic', fit_intercept=True, verbose=False,
+                 normalize=True, precompute='auto', max_iter=500,
+                 eps=np.finfo(np.float).eps):
+        if criterion not in ['aic', 'bic']:
+            raise ValueError('criterion should be either bic or aic')
+        self.criterion = criterion
+        self.fit_intercept = fit_intercept
+        self.max_iter = max_iter
+        self.verbose = verbose
+        self.normalize = normalize
+        self.precompute = precompute
+        self.eps = eps
+
+    def fit(self, X, y, overwrite_X=False, **params):
+        """Fit the model using X, y as training data.
+
+        parameters
+        ----------
+        x : array-like, shape = [n_samples, n_features]
+            training data.
+
+        y : array-like, shape = [n_samples]
+            target values.
+
+        returns
+        -------
+        self : object
+            returns an instance of self.
+        """
+        self._set_params(**params)
+
+        X = np.atleast_2d(X)
+        y = np.atleast_1d(y)
+
+        X, y, Xmean, ymean = LinearModel._center_data(X, y, self.fit_intercept)
+        max_iter = self.max_iter
+
+        if self.normalize:
+            X, norms = _safe_normalize(X, overwrite_X)
+
+        Gram = self._get_gram()
+
+        alphas_, active_, coef_path_ = lars_path(X, y,
+                  Gram=Gram, overwrite_X=overwrite_X,
+                  overwrite_Gram=True, alpha_min=0.0,
+                  method='lasso', verbose=self.verbose,
+                  max_iter=max_iter, eps=self.eps)
+
+        n_samples = X.shape[0]
+
+        if self.criterion == 'aic':
+            K = 2  # AIC
+        elif self.criterion == 'bic':
+            K = log(n_samples)  # BIC
+        else:
+            raise ValueError('criterion should be either bic or aic')
+
+        R = y[:, np.newaxis] - np.dot(X, coef_path_)  # residuals
+        mse = np.sum(R ** 2, axis=0)  # MSE ie. mean square error
+
+        df = np.zeros(coef_path_.shape[1], dtype=np.int)  # Degrees of freedom
+        for k, coef in enumerate(coef_path_.T):
+            mask = coef != 0
+            if not np.any(mask):
+                continue
+            # get the number of degrees of freedom equal to:
+            # Xc = X[:, mask]
+            # Trace(Xc * inv(Xc.T, Xc) * Xc.T) ie the number of non-zero coefs
+            df[k] = np.sum(mask)
+
+        crit = np.log(mse) + K / float(n_samples) * df
+        n_best = np.argmin(crit)
+
+        self.alpha_ = alphas_[n_best]
+        self.coef_ = coef_path_[:, n_best]
+        self._set_intercept(Xmean, ymean)
+        return self

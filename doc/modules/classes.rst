@@ -94,6 +94,7 @@ Generalized Linear Models
    linear_model.LassoLars
    linear_model.LarsCV
    linear_model.LassoLarsCV
+   linear_model.LassoLarsIC
    linear_model.LogisticRegression
    linear_model.OrthogonalMatchingPursuit
    linear_model.SGDClassifier
