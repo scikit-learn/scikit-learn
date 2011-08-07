@@ -2,18 +2,20 @@
 Generate samples of synthetic data sets.
 """
 
-# Authors: B. Thirion, G. Varoquaux, A. Gramfort, V. Michel, O. Grisel, G. Louppe
+# Authors: B. Thirion, G. Varoquaux, A. Gramfort, V. Michel, O. Grisel,
+#          G. Louppe
 # License: BSD 3 clause
 
 import numpy as np
-from scipy import linalg 
+from scipy import linalg
 
 from ..utils import check_random_state
 
-def make_classification(n_samples=100, n_features=20, n_informative=2, 
-                        n_redundant=2, n_repeated=0, n_classes=2, 
-                        n_clusters_per_class=2, weights=None, flip_y=0.01, 
-                        class_sep=1.0, hypercube=True, shift=0.0, scale=1.0, 
+
+def make_classification(n_samples=100, n_features=20, n_informative=2,
+                        n_redundant=2, n_repeated=0, n_classes=2,
+                        n_clusters_per_class=2, weights=None, flip_y=0.01,
+                        class_sep=1.0, hypercube=True, shift=0.0, scale=1.0,
                         shuffle=True, random_state=None):
     """
     Generate a random n-class classification problem.
@@ -39,8 +41,8 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
 
     n_redundant : int, optional (default=2)
         The number of redundant features. These features are generated as
-        random linear combinations of the informative features. 
-        
+        random linear combinations of the informative features.
+
     n_repeated : int, optional (default=2)
         The number of dupplicated features, drawn randomly from the informative
         and the redundant features.
@@ -56,23 +58,23 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
         classes are balanced.
 
     flip_y : float, optional (default=0.01)
-        The fraction of samples whose class are randomly exchanged. 
+        The fraction of samples whose class are randomly exchanged.
 
     class_sep : float, optional (default=1.0)
         The factor multiplying the hypercube dimension.
 
     hypercube : boolean, optional (default=True)
-        If True, the clusters are put on the vertices of a hypercube. If 
+        If True, the clusters are put on the vertices of a hypercube. If
         False, the clusters are put on the vertices of a random polytope.
-        
+
     shift : float or None, optional (default=0.0)
         Shift all features by the specified value. If None, then features
-        are shifted by a random value drawn in [-class_sep, class_sep]. 
+        are shifted by a random value drawn in [-class_sep, class_sep].
 
     scale : float or None, optional (default=1.0)
         Multiply all features by the specified value. If None, then features
-        are scaled by a random value drawn in [1, 100]. Note that scaling 
-        happens after shifting. 
+        are scaled by a random value drawn in [1, 100]. Note that scaling
+        happens after shifting.
 
     shuffle : boolean, optional (default=True)
         Shuffle the samples and the features.
@@ -98,7 +100,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
 
     References
     ----------
-    .. [1] I. Guyon, "Design of experiments for the NIPS 2003 variable 
+    .. [1] I. Guyon, "Design of experiments for the NIPS 2003 variable
            selection benchmark", 2003.
     """
     generator = check_random_state(random_state)
@@ -106,7 +108,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     # Count features, clusters and samples
     assert n_informative + n_redundant + n_repeated <= n_features
     assert 2 ** n_informative >= n_classes * n_clusters_per_class
-    assert weights is None or (len(weights) == n_classes or 
+    assert weights is None or (len(weights) == n_classes or
                                len(weights) == (n_classes - 1))
 
     n_useless = n_features - n_informative - n_redundant - n_repeated
@@ -122,7 +124,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     n_samples_per_cluster = []
 
     for k in xrange(n_clusters):
-        n_samples_per_cluster.append(int(n_samples * weights[k % n_classes] 
+        n_samples_per_cluster.append(int(n_samples * weights[k % n_classes]
                                      / n_clusters_per_class))
 
     for i in xrange(n_samples - sum(n_samples_per_cluster)):
@@ -131,11 +133,11 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     # Intialize X and y
     X = np.zeros((n_samples, n_features))
     y = np.zeros(n_samples)
-    
+
     # Build the polytope
     from itertools import product
     C = np.array(list(product([-class_sep, class_sep], repeat=n_informative)))
-    
+
     if not hypercube:
         for k in xrange(n_clusters):
             C[k, :] *= generator.rand()
@@ -161,11 +163,13 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
         y[pos:pos_end] = k % n_classes
 
         # Draw features at random
-        X[pos:pos_end, :n_informative] = generator.randn(n_samples_k, n_informative)
+        X[pos:pos_end, :n_informative] = generator.randn(n_samples_k,
+                                                         n_informative)
 
         # Multiply by a random matrix to create co-variance of the features
         A = 2 * generator.rand(n_informative, n_informative) - 1
-        X[pos:pos_end, :n_informative] = np.dot(X[pos:pos_end, :n_informative], A)
+        X[pos:pos_end, :n_informative] = np.dot(X[pos:pos_end, :n_informative],
+                                                A)
 
         # Shift the cluster to a vertice
         X[pos:pos_end, :n_informative] += np.tile(C[k, :], (n_samples_k, 1))
@@ -173,7 +177,8 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     # Create redundant features
     if n_redundant > 0:
         B = 2 * generator.rand(n_informative, n_redundant) - 1
-        X[:, n_informative:n_informative + n_redundant] = np.dot(X[:, :n_informative], B)
+        X[:, n_informative:n_informative + n_redundant] = \
+                                            np.dot(X[:, :n_informative], B)
 
     # Repeat some features
     if n_repeated > 0:
@@ -182,7 +187,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
         X[:, n:n + n_repeated] = X[:, indices]
 
     # Fill useless features
-    X[:, n_features - n_useless:] = generator.randn(n_samples, n_useless) 
+    X[:, n_features - n_useless:] = generator.randn(n_samples, n_useless)
 
     # Randomly flip labels
     if flip_y >= 0.0:
@@ -190,10 +195,10 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
             if generator.rand() < flip_y:
                 y[i] = generator.randint(n_classes)
 
-    # Randomly shift and scale 
+    # Randomly shift and scale
     constant_shift = shift is not None
     constant_scale = scale is not None
-         
+
     for f in xrange(n_features):
         if not constant_shift:
             shift = (2 * generator.rand() - 1) * class_sep
@@ -217,8 +222,9 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
 
     return X, y
 
+
 def make_regression(n_samples=100, n_features=100, n_informative=10, bias=0.0,
-                    effective_rank=None, tail_strength=0.5, noise=0.0, 
+                    effective_rank=None, tail_strength=0.5, noise=0.0,
                     shuffle=True, coef=False, random_state=None):
     """
     Generate a random regression problem.
@@ -250,7 +256,7 @@ def make_regression(n_samples=100, n_features=100, n_informative=10, bias=0.0,
     effective_rank : int or None, optional (default=None)
         if not None:
             The approximate number of singular vectors required to explain most
-            of the input data by linear combinations. Using this kind of 
+            of the input data by linear combinations. Using this kind of
             singular spectrum in the input allows the generator to reproduce
             the correlations often observed in practice.
         if None:
@@ -285,7 +291,7 @@ def make_regression(n_samples=100, n_features=100, n_informative=10, bias=0.0,
         The output values.
 
     coef : array of shape [n_features], optional
-        The coefficient of the underlying linear model. It is returned only if 
+        The coefficient of the underlying linear model. It is returned only if
         coef is True.
     """
     generator = check_random_state(random_state)
@@ -296,8 +302,8 @@ def make_regression(n_samples=100, n_features=100, n_informative=10, bias=0.0,
 
     else:
         # Randomly generate a low rank, fat tail input set
-        X = make_low_rank_matrix(n_samples=n_samples, 
-                                 n_features=n_features, 
+        X = make_low_rank_matrix(n_samples=n_samples,
+                                 n_features=n_features,
                                  effective_rank=effective_rank,
                                  tail_strength=tail_strength,
                                  seed=generator)
@@ -331,6 +337,7 @@ def make_regression(n_samples=100, n_features=100, n_informative=10, bias=0.0,
 
     else:
         return X, y
+
 
 def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
                center_box=(-10.0, 10.0), shuffle=True, random_state=None):
@@ -415,6 +422,7 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
 
     return X, y
 
+
 def make_friedman1(n_samples=100, n_features=10, noise=0.0, random_state=None):
     """
     Generate the "Friedman #1" regression problem as described in Friedman [1]
@@ -426,7 +434,7 @@ def make_friedman1(n_samples=100, n_features=10, noise=0.0, random_state=None):
         y(X) = 10 * sin(pi * X[:, 0] * X[:, 1]) + 20 * (X[:, 2] - 0.5) ** 2 \
                + 10 * X[:, 3] + 5 * X[:, 4] + noise * N(0, 1).
 
-    Out of the `n_features` features, only 5 are actually used to compute 
+    Out of the `n_features` features, only 5 are actually used to compute
     `y`. The remaining features are independent of `y`.
 
     The number of features has to be >= 5.
@@ -453,15 +461,15 @@ def make_friedman1(n_samples=100, n_features=10, noise=0.0, random_state=None):
     X : array of shape [n_samples, n_features]
         The input samples.
 
-    y : array of shape [n_samples] 
+    y : array of shape [n_samples]
         The output values.
 
     References
     ----------
     .. [1] J. Friedman, "Multivariate adaptive regression splines", The Annals
            of Statistics 19 (1), pages 1-67, 1991.
-    
-    .. [2] L. Breiman, "Bagging predictors", Machine Learning 24, 
+
+    .. [2] L. Breiman, "Bagging predictors", Machine Learning 24,
            pages 123-140, 1996.
     """
     assert n_features >= 5
@@ -474,12 +482,13 @@ def make_friedman1(n_samples=100, n_features=10, noise=0.0, random_state=None):
 
     return X, y
 
+
 def make_friedman2(n_samples=100, noise=0.0, random_state=None):
     """
     Generate the "Friedman #2" regression problem as described in Friedman [1]
     and Breiman [2].
 
-    Inputs `X` are 4 independent features uniformly distributed on the 
+    Inputs `X` are 4 independent features uniformly distributed on the
     intervals::
 
         0 <= X[:, 0] <= 100,
@@ -513,15 +522,15 @@ def make_friedman2(n_samples=100, noise=0.0, random_state=None):
     X : array of shape [n_samples, 4]
         The input samples.
 
-    y : array of shape [n_samples] 
+    y : array of shape [n_samples]
         The output values.
 
     References
     ----------
     .. [1] J. Friedman, "Multivariate adaptive regression splines", The Annals
            of Statistics 19 (1), pages 1-67, 1991.
-    
-    .. [2] L. Breiman, "Bagging predictors", Machine Learning 24, 
+
+    .. [2] L. Breiman, "Bagging predictors", Machine Learning 24,
            pages 123-140, 1996.
     """
     generator = check_random_state(random_state)
@@ -533,18 +542,19 @@ def make_friedman2(n_samples=100, noise=0.0, random_state=None):
     X[:, 3] *= 10
     X[:, 3] += 1
 
-    y = (X[:, 0] ** 2 
+    y = (X[:, 0] ** 2
             + (X[:, 1] * X[:, 2] - 1 / (X[:, 1] * X[:, 3])) ** 2) ** 0.5 \
         + noise * generator.randn(n_samples)
 
     return X, y
+
 
 def make_friedman3(n_samples=100, noise=0.0, random_state=None):
     """
     Generate the "Friedman #3" regression problem as described in Friedman [1]
     and Breiman [2].
 
-    Inputs `X` are 4 independent features uniformly distributed on the 
+    Inputs `X` are 4 independent features uniformly distributed on the
     intervals::
 
         0 <= X[:, 0] <= 100,
@@ -578,15 +588,15 @@ def make_friedman3(n_samples=100, noise=0.0, random_state=None):
     X : array of shape [n_samples, 4]
         The input samples.
 
-    y : array of shape [n_samples] 
+    y : array of shape [n_samples]
         The output values.
 
     References
     ----------
     .. [1] J. Friedman, "Multivariate adaptive regression splines", The Annals
            of Statistics 19 (1), pages 1-67, 1991.
-    
-    .. [2] L. Breiman, "Bagging predictors", Machine Learning 24, 
+
+    .. [2] L. Breiman, "Bagging predictors", Machine Learning 24,
            pages 123-140, 1996.
     """
     generator = check_random_state(random_state)
@@ -603,7 +613,8 @@ def make_friedman3(n_samples=100, noise=0.0, random_state=None):
 
     return X, y
 
-def make_low_rank_matrix(n_samples=100, n_features=100, effective_rank=10, 
+
+def make_low_rank_matrix(n_samples=100, n_features=100, effective_rank=10,
                          tail_strength=0.5, random_state=None):
     """
     Generate a mostly low rank random matrix with bell-shaped singular
@@ -673,6 +684,7 @@ def make_low_rank_matrix(n_samples=100, n_features=100, effective_rank=10,
 
     return np.dot(np.dot(u, s), v.T)
 
+
 def make_sparse_coded_signal(n_samples, n_components, n_features,
                              n_nonzero_coefs, random_state=None):
     """
@@ -731,6 +743,7 @@ def make_sparse_coded_signal(n_samples, n_components, n_features,
 
     return map(np.squeeze, (Y, D, X))
 
+
 def make_sparse_uncorrelated(n_samples=100, n_features=10, random_state=None):
     """
     Generate a random regression problem with sparse uncorrelated design as
@@ -739,7 +752,7 @@ def make_sparse_uncorrelated(n_samples=100, n_features=10, random_state=None):
         X ~ N(0, 1)
         y(X) = X[:, 0] + 2 * X[:, 1] - 2 * X[:, 2] - 1.5 * X[:, 3]
 
-    Only the first 4 features are informative. The remaining features are 
+    Only the first 4 features are informative. The remaining features are
     useless.
 
     Parameters
@@ -766,19 +779,20 @@ def make_sparse_uncorrelated(n_samples=100, n_features=10, random_state=None):
 
     References
     ----------
-    .. [1] G. Celeux, M. El Anbari, J.-M. Marin, C. P. Robert, 
+    .. [1] G. Celeux, M. El Anbari, J.-M. Marin, C. P. Robert,
            "Regularization in regression: comparing Bayesian and frequentist
            methods in a poorly informative situation", 2009.
     """
     generator = check_random_state(random_state)
 
     X = generator.normal(loc=0, scale=1, size=(n_samples, n_features))
-    y = generator.normal(loc=(X[:, 0] + 
-                              2 * X[:, 1] - 
-                              2 * X[:, 2] - 
+    y = generator.normal(loc=(X[:, 0] +
+                              2 * X[:, 1] -
+                              2 * X[:, 2] -
                               1.5 * X[:, 3]), scale=np.ones(n_samples))
 
     return X, y
+
 
 def make_spd_matrix(n_dim, random_state=None):
     """
@@ -807,6 +821,7 @@ def make_spd_matrix(n_dim, random_state=None):
     X = np.dot(np.dot(U, 1.0 + np.diag(generator.rand(n_dim))), V)
 
     return X
+
 
 def make_swiss_roll(n_samples=100, noise=0.0, random_state=None):
     """
@@ -842,7 +857,7 @@ def make_swiss_roll(n_samples=100, noise=0.0, random_state=None):
     References
     ----------
     .. [1] S. Marsland, "Machine Learning: An Algorithmic Perpsective",
-           Chapter 10, 2009. 
+           Chapter 10, 2009.
            http://www-ist.massey.ac.nz/smarsland/Code/10/lle.py
     """
     generator = check_random_state(random_state)
@@ -852,12 +867,13 @@ def make_swiss_roll(n_samples=100, noise=0.0, random_state=None):
     y = 21 * generator.rand(1, n_samples)
     z = t * np.sin(t)
 
-    X = np.concatenate((x, y, z)) 
+    X = np.concatenate((x, y, z))
     X += noise * generator.randn(3, n_samples)
     X = X.T
     t = np.squeeze(t)
 
     return X, t
+
 
 def make_s_curve(n_samples=100, noise=0.0, random_state=None):
     """
