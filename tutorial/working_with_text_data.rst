@@ -47,8 +47,8 @@ categories out of the 20 available in the dataset::
 
 We can now load the list of files matching those categories as follows::
 
-  >>> from scikits.learn.datasets import load_filenames
-  >>> twenty_train = load_filenames('data/twenty_newsgroups/20news-bydate-train',
+  >>> from scikits.learn.datasets import load_files
+  >>> twenty_train = load_files('data/twenty_newsgroups/20news-bydate-train',
   ...                           categories=categories)
 
 
@@ -69,7 +69,7 @@ The files themselves are not loaded in memory yet::
 
 Let's print the first 2 lines of the first file::
 
-  >>> print "".join(open(twenty_train.filenames[0]).readlines()[:2]).strip()
+  >>> print "\n".join(twenty_train.data[0].split("\n")[:2])
   From: clipper@mccarthy.csd.uwo.ca (Khun Yee Fung)
   Subject: Re: looking for circle algorithm faster than Bresenhams
 
@@ -182,12 +182,12 @@ dictionary of features and transform documents to feature vectors::
   >>> docs_train = [open(f).read() for f in twenty_train.filenames]
   >>> X_train_counts = count_vect.fit_transform(docs_train)
   >>> X_train_counts.shape
-  (2257, 33881)
+  (2257, 33883)
 
 Once fitted, the vectorizer has built a dictionary of feature indices::
 
   >>> count_vect.vocabulary.get(u'algorithm')
-  1513
+  1520
 
 The index value of a word in the vocabulary is linked to its frequency
 in the whole training corpus.
@@ -231,12 +231,12 @@ Both tf and tf–idf can be computed as follows::
   >>> tf_transformer = TfidfTransformer(use_idf=False).fit(X_train_counts)
   >>> X_train_tf = tf_transformer.transform(X_train_counts)
   >>> X_train_tf.shape
-  (2257, 33881)
+  (2257, 33883)
 
   >>> tfidf_transformer = TfidfTransformer()
   >>> X_train_tfidf = tfidf_transformer.fit_transform(X_train_counts)
   >>> X_train_tfidf.shape
-  (2257, 33881)
+  (2257, 33883)
 
 
 Training a linear classifier
@@ -297,15 +297,15 @@ Evaluation of the performance on the test set
 Evaluating the predictive accuracy of the model is equally easy::
 
   >>> import numpy as np
-  >>> twenty_test = load_filenames('data/twenty_newsgroups/20news-bydate-test',
-  ...                              categories=categories)
+  >>> twenty_test = load_files('data/twenty_newsgroups/20news-bydate-test',
+  ...                          categories=categories)
   ...
-  >>> docs_test = [open(f).read() for f in twenty_test.filenames]
+  >>> docs_test = twenty_test.data
   >>> predicted = text_clf.predict(docs_test)
-  >>> np.mean(predicted == twenty_test.target)
-  0.86884154460719043
+  >>> np.mean(predicted == twenty_test.target)            # doctest: +ELLIPSIS
+  0.894...
 
-I.e., we achieved 86.9% accuracy. Let's see if we can do better with a
+I.e., we achieved 89.4% accuracy. Let's see if we can do better with a
 linear support vector machine (SVM), which is widely regarded as one of
 the best text classification algorithms (although it's also a bit slower
 than naïve Bayes). We can change the learner by just plugging a different
@@ -317,7 +317,10 @@ classifier object into our pipeline::
   ...     ('tfidf', TfidfTransformer()),
   ...     ('clf', LinearSVC()),
   ... ])
-  0.92410119840213045
+  >>> _ = text_clf.fit(docs_train, twenty_train.target)
+  >>> predicted = text_clf.predict(docs_test)
+  >>> np.mean(predicted == twenty_test.target)            # doctest: +ELLIPSIS
+  0.922...
 
 ``scikit-learn`` further provides utilities for more detailed performance
 analysis of the results::
@@ -326,23 +329,19 @@ analysis of the results::
   >>> print metrics.classification_report(
   ...     twenty_test.target, predicted,
   ...     target_names=twenty_test.target_names)
-  ...
-
+  ...                                         # doctest: +NORMALIZE_WHITESPACE
                           precision    recall  f1-score   support
-  
-             alt.atheism       0.95      0.80      0.87       319
-           comp.graphics       0.96      0.97      0.96       389
-                 sci.med       0.95      0.95      0.95       396
-  soc.religion.christian       0.86      0.96      0.90       398
-  
-             avg / total       0.93      0.92      0.92      1502
-  
-  >>> metrics.confusion_matrix(twenty_test.target, predicted)
-  array([[254,   4,  11,  50],
-         [  3, 376,   6,   4],
-         [  1,   9, 377,   9],
-         [  9,   4,   4, 381]])
+             alt.atheism       0.96      0.81      0.88       319
+           comp.graphics       0.90      0.99      0.94       389
+                 sci.med       0.95      0.93      0.94       396
+  soc.religion.christian       0.90      0.94      0.92       398
+             avg / total       0.92      0.92      0.92      1502
 
+  >>> metrics.confusion_matrix(twenty_test.target, predicted)
+  array([[259,  10,  13,  37],
+         [  2, 384,   2,   1],
+         [  2,  23, 367,   4],
+         [  8,   8,   6, 376]])
 
 .. note:
 
@@ -390,7 +389,7 @@ The result of calling ``fit`` on a ``GridSearchCV`` object is a classifier
 that we can use to ``predict``::
 
   >>> twenty_train.target_names[gs_clf.predict(['God is love'])]
-  'alt.atheism'
+  'soc.religion.christian'
 
 but otherwise, it's a pretty large and clumsy object. We can, however, get the
 optimal parameters out by inspecting the object's ``grid_scores_`` attribute,
@@ -403,9 +402,9 @@ we can do::
   ...
   clf__C: 100
   tfidf__use_idf: True
-  vect__analyzer__max_n: 2
-  >>> score
-  0.92507387872666735
+  vect__analyzer__max_n: 1
+  >>> score                                               # doctest: +ELLIPSIS
+  0.912...
 
 .. note:
 

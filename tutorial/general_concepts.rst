@@ -291,21 +291,22 @@ a good combination using either simple empirical rules or data
 driven selection::
 
   >>> clf
-  LinearSVC(loss='l2', C=1.0, intercept_scaling=1, fit_intercept=True,
-       eps=0.0001, penalty='l2', multi_class=False, dual=True)
+  LinearSVC(loss='l2', C=1.0, dual=True, fit_intercept=True, penalty='l2',
+       multi_class=False, tol=0.0001, intercept_scaling=1)
+
 
 By default the real model parameters are not initialized. They will be
 tuned automatically from the data by calling the ``fit`` method::
 
   >>> clf = clf.fit(X, y)
 
-  >>> clf.coef_
-  array([[ 0.18423474,  0.45122764, -0.80794654, -0.45071379],
-         [ 0.04864394, -0.88914385,  0.40540293, -0.93720122],
-         [-0.85086062, -0.98671553,  1.38098573,  1.8653574 ]])
+  >>> clf.coef_                         # doctest: +ELLIPSIS
+  array([[ 0.18...,  0.45..., -0.80..., -0.45...],
+         [ 0.05..., -0.89...,  0.40..., -0.93...],
+         [-0.85..., -0.98...,  1.38...,  1.86...]])
 
-  >>> clf.intercept_
-  array([ 0.10956015,  1.6738296 , -1.70973044])
+  >>> clf.intercept_                    # doctest: +ELLIPSIS
+  array([ 0.10...,  1.67..., -1.70...])
 
 Once the model is trained, it can be used to predict the most likely outcome on
 unseen data. For instance let us define a list of simple sample that looks
@@ -338,8 +339,9 @@ of the outcome.  This is the case of logistic regression models::
   >>> from scikits.learn.linear_model import LogisticRegression
   >>> clf2 = LogisticRegression().fit(X, y)
   >>> clf2
-  LogisticRegression(C=1.0, intercept_scaling=1, fit_intercept=True, eps=0.0001,
-            penalty='l2', dual=False)
+  LogisticRegression(C=1.0, intercept_scaling=1, dual=False, fit_intercept=True,
+            penalty='l2', tol=0.0001)
+
 
   >>> clf2.predict_proba(X_new)
   array([[  9.07512928e-01,   9.24770379e-02,   1.00343962e-05]])
@@ -488,22 +490,21 @@ so as to project the data onto a base of the top singular vectors.
 If the number of retained components is 2 or 3, PCA can be used to
 visualize the dataset::
 
-
-  >>> from scikits.learn.pca import PCA
+  >>> from scikits.learn.decomposition import PCA
   >>> pca = PCA(n_components=2, whiten=True).fit(X)
 
 Once fitted, the ``pca`` model exposes the singular vectors in the
 ``components_`` attribute::
 
-  >>> pca.components_.T
-  array([[ 0.17650757, -0.04015901,  0.41812992,  0.17516725],
-         [-1.33840478, -1.48757227,  0.35831476,  0.15229463]])
+  >>> pca.components_                                      # doctest: +ELLIPSIS
+  array([[ 0.17..., -0.04...,  0.41...,  0.17...],
+         [-1.33..., -1.48...,  0.35...,  0.15...]])
 
-  >>> pca.explained_variance_ratio_
-  array([ 0.92461621,  0.05301557])
+  >>> pca.explained_variance_ratio_                        # doctest: +ELLIPSIS
+  array([ 0.92...,  0.05...])
 
-  >>> pca.explained_variance_ratio_.sum()
-  0.97763177502480336
+  >>> pca.explained_variance_ratio_.sum()                  # doctest: +ELLIPSIS
+  0.97...
 
 Let us project the iris dataset along those first 3 dimensions::
 
@@ -512,8 +513,8 @@ Let us project the iris dataset along those first 3 dimensions::
 The dataset has been "normalized", which means that the data is now centered on
 both components with unit variance::
 
-  >>> X_pca.mean(axis=0)
-  array([ -1.42478621e-15,   1.71936539e-15])
+  >>> X_pca.mean(axis=0)                                   # doctest: +ELLIPSIS
+  array([ -1.44...e-15,   1.73...e-15])
 
   >>> X_pca.std(axis=0)
   array([ 1.,  1.])
@@ -522,9 +523,9 @@ Furthermore the samples components do no longer carry any linear
 correlation::
 
   >>> import numpy as np
-  >>> np.corrcoef(X_pca.T)
-  array([[  1.00000000e+00,   4.60742555e-16],
-         [  4.60742555e-16,   1.00000000e+00]])
+  >>> np.corrcoef(X_pca.T)                                 # doctest: +ELLIPSIS
+  array([[  1.00...e+00,  -7.58...e-16],
+         [ -7.58...e-16,   1.00...e+00]])
 
 
 And visualize the dataset using ``pylab``, for instance by defining the
@@ -563,7 +564,7 @@ display the following:
 
   If you are interested in a number of components that is much
   smaller than both ``n_samples`` and ``n_features``, consider using
-  ``scikits.learn.pca.RandomizedPCA`` instead.
+  ``scikits.learn.decomposition.RandomizedPCA`` instead.
 
 
 Other applications of dimensionality reduction
@@ -598,19 +599,18 @@ clustering algorithm (KMeans)::
   >>> from numpy.random import RandomState
   >>> rng = RandomState(42)
 
-  >>> kmeans = KMeans(3, rng=rng).fit(X_pca)
+  >>> kmeans = KMeans(3, random_state=rng).fit(X_pca)
 
-  >>> kmeans.cluster_centers_
-  array([[ 1.01505989, -0.70632886],
-         [ 0.33475124,  0.89126382],
-         [-1.287003  , -0.43512572]])
-
+  >>> kmeans.cluster_centers_                     # doctest: +ELLIPSIS
+  array([[ 0.33...,  0.90...],
+         [ 0.99..., -0.69...],
+         [-1.28..., -0.43...]])
 
   >>> kmeans.labels_[:10]
   array([2, 2, 2, 2, 2, 2, 2, 2, 2, 2])
 
   >>> kmeans.labels_[-10:]
-  array([0, 0, 1, 0, 0, 0, 1, 0, 0, 1])
+  array([1, 1, 0, 1, 1, 1, 0, 1, 1, 0])
 
 We can plot the assigned cluster labels instead of the target names
 with::
