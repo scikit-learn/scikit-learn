@@ -6,32 +6,44 @@ Authors: Conrad Lee conradlee@gmail.com
          Gael Varoquaux gael.varoquaux@normalesup.org
 """
 
-from math import floor
-import numpy as np
-from ..utils import extmath
 from collections import defaultdict
-from itertools import izip
+import numpy as np
 
+from ..utils import extmath, check_random_state
 from ..base import BaseEstimator
-from ..metrics.pairwise import euclidean_distances
 from ..ball_tree import BallTree
 
 
-def estimate_bandwidth(X, quantile=0.3):
-    """Estimate the bandwith ie the radius to use with an RBF kernel
-    in the MeanShift algorithm
+def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0):
+    """Estimate the bandwith to use with MeanShift algorithm
 
+    Parameters
+    ----------
     X: array [n_samples, n_features]
         Input points
 
     quantile: float, default 0.3
         should be between [0, 1]
         0.5 means that the median is all pairwise distances is used
+
+    n_samples: int
+        The number of samples to use. If None, all samples are used.
+
+    random_state: int or RandomState
+        Pseudo number generator state used for random sampling.
+
+    Returns
+    -------
+    bandwidth: float
+        The bandwidth parameter
     """
-    distances = euclidean_distances(X, X)
-    distances = np.triu(distances, 1)
-    distances_sorted = np.sort(distances[distances > 0])
-    bandwidth = distances_sorted[floor(quantile * len(distances_sorted))]
+    random_state = check_random_state(random_state)
+    if n_samples is not None:
+        idx = random_state.permutation(X.shape[0])[:n_samples]
+        X = X[idx]
+    d, _ = BallTree(X).query(X, int(X.shape[0] * quantile),
+                             return_distance=True)
+    bandwidth = np.mean(np.max(d, axis=1))
     return bandwidth
 
 
