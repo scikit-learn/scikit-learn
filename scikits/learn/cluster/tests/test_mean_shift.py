@@ -5,16 +5,13 @@ Testing for mean shift clustering methods
 
 import numpy as np
 from numpy.testing import assert_equal
+from nose.tools import assert_true
 
 from .. import MeanShift, mean_shift, estimate_bandwidth
 from ...datasets.samples_generator import make_blobs
 
 n_clusters = 3
-
-centers = np.array([[ 1,  1, 1, 0],
-                    [-1, -1, 0, 1],
-                    [ 1, -1, 1, 1]]) + 10
-
+centers = np.array([[1, 1], [-1, -1], [1, -1]]) + 10
 X, _ = make_blobs(n_samples=500, n_features=2, centers=centers,
                   cluster_std=0.4, shuffle=True, random_state=0)
 
@@ -25,7 +22,7 @@ def test_mean_shift():
     bandwidth = 1.2
 
     bandwidth_ = estimate_bandwidth(X, n_samples=300)
-    assert 1.1 <= bandwidth_ <= 1.5
+    assert_true(0.9 <= bandwidth_ <= 1.5)
 
     ms = MeanShift(bandwidth=bandwidth)
     labels = ms.fit(X).labels_
