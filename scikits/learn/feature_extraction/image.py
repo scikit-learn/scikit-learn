@@ -335,7 +335,7 @@ class PatchExtractor(BaseEstimator):
         return self
 
     def transform(self, X):
-        """Boolean thresholding of array-like or scipy.sparse matrix
+        """Transforms the image samples in X into a matrix of patch data.
 
         Parameters
         ----------
