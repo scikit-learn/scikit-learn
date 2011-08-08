@@ -244,7 +244,7 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
         elif isinstance(max_patches, float) and 0 < max_patches < 1:
             n_patches = max_patches * n_patches
         else:
-            raise ValueError("Invalid value for max_patches!")
+            raise ValueError("Invalid value for max_patches: %r" % max_patches)
 
         rng = check_random_state(random_state)
         patches = np.empty((n_patches, p_h, p_w, n_colors), dtype=image.dtype)
