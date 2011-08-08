@@ -1,7 +1,7 @@
 import numpy as np
 
-from numpy.testing import assert_array_almost_equal
-from scikits.learn import neighbors, manifold, datasets
+from numpy.testing import assert_almost_equal, assert_array_almost_equal
+from scikits.learn import neighbors, manifold, datasets, preprocessing
 from scikits.learn.utils.fixes import product
 
 eigen_solvers = ['auto', 'dense', 'arpack']
@@ -39,6 +39,47 @@ def test_isomap_simple_grid():
                                                n_neighbors,
                                                mode='distance').toarray()
             assert_array_almost_equal(G, G_iso)
+
+
+def test_isomap_reconstruction_error():
+    # Same setup as in test_isomap_simple_grid, with an added dimension
+    N_per_side = 5
+    Npts = N_per_side ** 2
+    n_neighbors = Npts - 1
+
+    # grid of equidistant points in 2D, out_dim = n_dim
+    X = np.array(list(product(range(N_per_side), repeat=2)))
+
+    # add noise in a third dimension
+    rng = np.random.RandomState(0)
+    noise = 0.1 * rng.randn(Npts, 1)
+    X = np.concatenate((X, noise), 1)
+
+    # compute input kernel
+    G = neighbors.kneighbors_graph(X, n_neighbors,
+                                   mode='distance').toarray()
+
+    centerer = preprocessing.KernelCenterer()
+    K = centerer.fit_transform(-0.5 * G ** 2)
+
+    for eigen_solver in eigen_solvers:
+        for path_method in path_methods:
+            clf = manifold.Isomap(n_neighbors=n_neighbors, out_dim=2,
+                                  eigen_solver=eigen_solver,
+                                  path_method=path_method)
+            clf.fit(X)
+
+            # compute output kernel
+            G_iso = neighbors.kneighbors_graph(clf.embedding_,
+                                               n_neighbors,
+                                               mode='distance').toarray()
+
+            K_iso = centerer.fit_transform(-0.5 * G_iso ** 2)
+
+            # make sure error agrees
+            reconstruction_error = np.linalg.norm(K - K_iso) / Npts
+            assert_almost_equal(reconstruction_error,
+                                clf.reconstruction_error())
 
 
 def test_transform():

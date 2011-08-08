@@ -7,8 +7,8 @@ import numpy as np
 from ..base import BaseEstimator
 from ..neighbors import kneighbors_graph, NeighborsClassifier
 from ..utils.graph_shortest_path import graph_shortest_path
-
 from ..decomposition import KernelPCA
+from ..preprocessing import KernelCenterer
 
 
 class Isomap(BaseEstimator):
@@ -96,7 +96,31 @@ class Isomap(BaseEstimator):
 
         self.embedding_ = self.kernel_pca_.fit_transform(G)
 
-    def fit(self, X, Y=None, **params):
+    def reconstruction_error(self):
+        """Compute the reconstruction error for the embedding.
+
+        Returns
+        -------
+        reconstruction_error : float
+
+        Details
+        -------
+        The cost function of an isomap embedding is
+
+            E = frobenius_norm[K(D) - K(D_fit)] / n_samples
+
+        Where D is the matrix of distances for the input data X,
+        D_fit is the matrix of distances for the output embedding X_fit,
+        and K is the isomap kernel:
+
+            K(D) = -0.5 * (I - 1/n_samples) * D^2 * (I - 1/n_samples)
+        """
+        G = -0.5 * self.dist_matrix_ ** 2
+        G_center = KernelCenterer().fit_transform(G)
+        evals = self.kernel_pca_.lambdas_
+        return np.sqrt(np.sum(G_center ** 2) - np.sum(evals ** 2)) / G.shape[0]
+
+    def fit(self, X, y=None, **params):
         """Compute the embedding vectors for data X
 
         Parameters
@@ -112,7 +136,7 @@ class Isomap(BaseEstimator):
         self._fit_transform(X)
         return self
 
-    def fit_transform(self, X, Y=None, **params):
+    def fit_transform(self, X, y=None, **params):
         """Fit the model from data in X and transform X.
 
         Parameters
@@ -129,7 +153,7 @@ class Isomap(BaseEstimator):
         self._fit_transform(X)
         return self.embedding_
 
-    def transform(self, X, **params):
+    def transform(self, X):
         """Transform X.
 
         This is implemented by linking the points X into the graph of geodesic
