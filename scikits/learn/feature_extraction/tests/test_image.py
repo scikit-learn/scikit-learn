@@ -35,9 +35,9 @@ def test_grid_to_graph():
     mask = np.zeros((size, size), dtype=np.bool)
     mask[0:roi_size, 0:roi_size] = True
     mask[-roi_size:, -roi_size:] = True
-    mask = mask.reshape(size**2)
+    mask = mask.reshape(size ** 2)
     A = grid_to_graph(n_x=size, n_y=size, mask=mask, return_as=np.ndarray)
-    
+
     # Checking that the function works whatever the type of mask is
     mask = np.ones((size, size), dtype=np.int16)
     A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask)
