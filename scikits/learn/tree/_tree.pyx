@@ -45,18 +45,12 @@ def _find_best_split(features, labels, criterion):
     for i in xrange(n_features):
         domain_i = np.unique(features[:, i])
         l = len(domain_i)
-        #print 'l=', l
         if l <= 2: continue
-        #print 'labels = ', labels
         for j in xrange(1,l):
             t = (domain_i[j-1] + domain_i[j]) / 2. 
             cur_split = (features[:, i] < t)
-            #print cur_split
-            #print 't = ', t, ' j = ', j
-            labels_left = labels[cur_split]
-            #print 'left labels = ', labels_left            
+            labels_left = labels[cur_split]          
             labels_right = labels[~cur_split]
-            #print 'right labels = ', labels_right   
             e1 = len(labels_left) / n_samples * criterion(labels_left)
             e2 = len(labels_right) / n_samples * criterion(labels_right)            
             error = e1 + e2
