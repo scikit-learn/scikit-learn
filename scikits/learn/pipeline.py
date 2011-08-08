@@ -127,24 +127,28 @@ class Pipeline(BaseEstimator):
     # Estimator interface
     #--------------------------------------------------------------------------
 
-    def _pre_transform(self, X, y=None, **params):
-        self._set_params(**params)
+    def _pre_transform(self, X, y=None, **fit_params):
+        fit_params_steps = {step: {} for step, _ in self.steps}
+        for pname, pval in fit_params.iteritems():
+            step, param = pname.split('__', 1)
+            fit_params_steps[step][param] = pval
         Xt = X
         for name, transform in self.steps[:-1]:
             if hasattr(transform, "fit_transform"):
-                Xt = transform.fit_transform(Xt, y)
+                Xt = transform.fit_transform(Xt, y, **fit_params_steps[name])
             else:
-                Xt = transform.fit(Xt, y).transform(Xt)
-        return Xt
+                Xt = transform.fit(Xt, y, **fit_params_steps[name]) \
+                              .transform(Xt)
+        return Xt, fit_params_steps[self.steps[-1][0]]
 
-    def fit(self, X, y=None, **params):
-        Xt = self._pre_transform(X, y, **params)
-        self.steps[-1][-1].fit(Xt, y)
+    def fit(self, X, y=None, **fit_params):
+        Xt, fit_params = self._pre_transform(X, y, **fit_params)
+        self.steps[-1][-1].fit(Xt, y, **fit_params)
         return self
 
-    def fit_transform(self, X, y=None, **params):
-        Xt = self._pre_transform(X, y, **params)
-        return self.steps[-1][-1].fit_transform(Xt, y)
+    def fit_transform(self, X, y=None, **fit_params):
+        Xt, fit_params = self._pre_transform(X, y, **fit_params)
+        return self.steps[-1][-1].fit_transform(Xt, y, **fit_params)
 
     def predict(self, X):
         Xt = X
