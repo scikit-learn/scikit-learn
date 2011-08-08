@@ -17,8 +17,6 @@ Implements Classification and Regression Trees (Breiman et al. 1984)
 from __future__ import division
 import numpy as np
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
-from ._tree import _find_best_split
-from ._tree import bincount_k
 from ._tree import eval_gini, eval_entropy, eval_miss, eval_mse
 import random
 
@@ -73,6 +71,28 @@ class Node(object):
         return 'x[%s] < %s, \\n error = %s' % \
             (self.dimension, self.value, self.error)
 
+def _find_best_split(features, labels, criterion):
+    n_samples, n_features = features.shape
+    K = labels.max() + 1
+    pm = np.zeros((K,), dtype=np.float64)
+        
+    best = None
+    split_error = criterion(labels, pm)
+    for i in xrange(n_features):
+        domain_i = sorted(set(features[:, i]))
+        for d1, d2 in zip(domain_i[:-1], domain_i[1:]):
+            t = (d1 + d2) / 2.
+            cur_split = (features[:, i] < t)
+            e1 = len(labels[cur_split]) / n_samples * \
+                criterion(labels[cur_split], pm)              
+            e2 = len(labels[~cur_split]) / n_samples * \
+                criterion(labels[~cur_split], pm)
+            error = e1 + e2
+            if error < split_error:
+                split_error = error
+                best = i, t, error
+    return best
+
 def _build_tree(is_classification, features, labels, criterion, \
                max_depth, min_split, F, K):
     
@@ -120,7 +140,10 @@ def _build_tree(is_classification, features, labels, criterion, \
         
         if is_split_valid == False:
             if is_classification:
-                return Leaf(bincount_k(labels, K)) 
+                a = np.zeros((K,))
+                t = labels.max() + 1
+                a[:t] = np.bincount(labels)
+                return Leaf(a) 
             else:
                 return Leaf(np.mean(labels))            
             

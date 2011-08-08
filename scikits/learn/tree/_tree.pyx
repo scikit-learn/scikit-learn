@@ -12,7 +12,6 @@
 #
 
 import numpy as np
-import sys
 
 cimport numpy as np
 cimport cython
@@ -21,79 +20,6 @@ cdef extern from "math.h":
     cdef extern double log(double x)
     cdef extern double pow(double base, double exponent)
 
-def _find_best_split(features, labels, criterion):
-    """
-    @TODO Profiling shows that this function is the bottleneck
-          now that the intensive evaluation functions have been optimised.
-          2/8/2011: It turns out that inlining is ignored for functions 
-          that accept a buffer argument. 
-          See http://stackoverflow.com/questions/4641200/
-          cython-inline-function-with-numpy-array-as-parameter
-          for more information. 
-    """
-    cdef double n_samples = features.shape[0]
-    cdef int n_features = features.shape[1] 
-        
-    best = None
-    cdef double split_error = criterion(labels)
-    cdef double t = 0., e1 = 0., e2 = 0. , error = 0.
-    cdef int i, j, l = 0
-    
-    cdef np.ndarray[np.float_t, ndim=1] domain_i
-    cdef np.ndarray[np.int_t, ndim=1] labels_left, labels_right
-    
-    for i in xrange(n_features):
-        domain_i = np.unique(features[:, i])
-        l = len(domain_i)
-        if l <= 2: continue
-        for j in xrange(1,l):
-            t = (domain_i[j-1] + domain_i[j]) / 2. 
-            cur_split = (features[:, i] < t)
-            labels_left = labels[cur_split]          
-            labels_right = labels[~cur_split]
-            e1 = len(labels_left) / n_samples * criterion(labels_left)
-            e2 = len(labels_right) / n_samples * criterion(labels_right)            
-            error = e1 + e2
-            if error < split_error:
-                split_error = error
-                best = i, t, error
-    return best
-
-
-"""
- Helper function
-""" 
-cpdef bincount_k(np.ndarray[np.int_t, ndim=1] X, int K): 
-    '''
-    a = bincount_k(X, K)
-
-    Returns numpy array consisting of a bincount of X, padded to length K
-    
-    np.bincount is efficient for computing the occurances of labels, but
-    there isn't an easy way to resize the array to size K (for K categories)
-
-    Parameters
-    ----------
-    X  : array-like, shape = (n,)
-    K  : integer, the number of categories
-
-    Returns
-    -------
-    Padded bincount
-    '''
-    
-    cdef np.ndarray[np.int_t, ndim=1] a = \
-        np.zeros((K,), dtype=np.int)
-    cdef np.ndarray[np.int_t, ndim=1] b = np.bincount(X)
-    
-    cdef int bins = len(b)
-    assert K >= bins
-    
-    cdef Py_ssize_t j
-    for j in range(0,bins):
-        a[j] = b[j]       
-    
-    return a
  
 """
  Classification entropy measures
@@ -108,40 +34,58 @@ cpdef bincount_k(np.ndarray[np.int_t, ndim=1] X, int K):
     be the proportion of class k observations in node m   
 """  
 
-
-
 #@cython.profile(False)
-cpdef double eval_gini(np.ndarray[np.int_t, ndim=1] labels)  except * :
+cpdef double eval_gini(np.ndarray labels, 
+                       np.ndarray[np.float_t, ndim=1] pm) except * :
     """
         
         Gini index = \sum_{k=0}^{K-1} pmk (1 - pmk)
                    = 1 - \sum_{k=0}^{K-1} pmk ** 2
             
-    """
-    cdef int K = labels.max() + 1
-    N = float(labels.shape[0])
+    """       
+    cdef int *_labels = <int *>labels.data
+    cdef int n_labels = labels.shape[0]
     
-    cdef np.ndarray[np.float64_t, ndim=1] pm = \
-        bincount_k(labels, K) / N
-        
+    cdef double *_pm = <double *>pm.data
+    cdef int K = pm.shape[0]    
+    
+    cdef int i = 0
+    for i in range(K):
+        _pm[i] = 0.
+    
+    cdef int value
+    for i in range(n_labels):
+        value = int(_labels[i])
+        _pm[value] += 1. / n_labels
+    
     cdef double H = 1.
     cdef Py_ssize_t k
     for k in range(K):    
-        H -=  pow(pm[k],2) 
+        H -=  pow(_pm[k],2) 
          
     return H   
 
-cpdef double eval_entropy(np.ndarray[np.int_t, ndim=1] labels)  except * :
+cpdef double eval_entropy(np.ndarray labels,
+                          np.ndarray[np.float_t, ndim=1] pm) except * :
     """
         
         Cross Entropy = - \sum_{k=0}^{K-1} pmk log(pmk)
             
     """
-    cdef int K = int(labels.max()) + 1
-    N = float(labels.shape[0])
+    cdef int *_labels = <int *>labels.data
+    cdef int n_labels = labels.shape[0]
     
-    cdef np.ndarray[np.float64_t, ndim=1] pm = \
-        bincount_k(labels, K) / N
+    cdef double *_pm = <double *>pm.data
+    cdef int K = pm.shape[0]    
+    
+    cdef int i = 0
+    for i in range(K):
+        _pm[i] = 0.
+    
+    cdef int value
+    for i in range(n_labels):
+        value = int(_labels[i])
+        _pm[value] += 1. / n_labels
         
     cdef double H = 0.
     cdef Py_ssize_t k
@@ -151,17 +95,27 @@ cpdef double eval_entropy(np.ndarray[np.int_t, ndim=1] labels)  except * :
          
     return H   
 
-cpdef double eval_miss(np.ndarray[np.int_t, ndim=1] labels)  except * :
+cpdef double eval_miss(np.ndarray labels,
+                       np.ndarray[np.float_t, ndim=1] pm) except * :
     """
         
         Misclassification error = (1 - pmk)
             
     """
-    cdef int K = int(labels.max()) + 1
-    N = float(labels.shape[0])
+    cdef int *_labels = <int *>labels.data
+    cdef int n_labels = labels.shape[0]
     
-    cdef np.ndarray[np.float64_t, ndim=1] pm = \
-        bincount_k(labels, K) / N
+    cdef double *_pm = <double *>pm.data
+    cdef int K = pm.shape[0]    
+    
+    cdef int i = 0
+    for i in range(K):
+        _pm[i] = 0.
+    
+    cdef int value
+    for i in range(n_labels):
+        value = int(_labels[i])
+        _pm[value] += 1. / n_labels
         
     cdef double H = 1. - pm.max()
     
@@ -169,10 +123,12 @@ cpdef double eval_miss(np.ndarray[np.int_t, ndim=1] labels)  except * :
  Regression entropy measures
  
 """      
-cpdef double eval_mse(np.ndarray[np.float64_t, ndim=1] labels)  except * :
+cpdef double eval_mse(np.ndarray labels,
+                      np.ndarray[np.float_t, ndim=1] pm) except * :
     """             
         MSE =  \sum_i (y_i - c0)^2  / N
-            
+        
+        pm is a redundant argument.    
     """   
     
     cdef float c0 = np.mean(labels)
