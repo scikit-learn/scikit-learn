@@ -129,6 +129,10 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
             s += Wx * yj / (Wx + EPSILON)
         return s
 
+    def transductions(self):
+        """ get transduction labels """
+        return [self.num_to_label[np.argmax(x)] for x in self._y]
+
     def fit(self, X, y, **params):
         """
         Fit a semi-supervised label propagation model based on input data 
@@ -199,8 +203,8 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
             # clamp
             self._y = np.multiply(alpha_ary, self._y) + Y_alpha
             max_iters -= 1
-        num_to_label = dict([reversed(itm) for itm in self.label_map.items()])
-        self.transduction = map(lambda x: num_to_label[np.argmax(x)], self._y)
+        self.num_to_label = dict([reversed(itm) for itm in self.label_map.items()])
+        self.transduction = map(lambda x: self.num_to_label[np.argmax(x)], self._y)
         return self
 
 class LabelPropagation(BaseLabelPropagation):
@@ -246,9 +250,7 @@ def gaussian_kernel(x1, x2, sigma=DEFAULT_SIGMA):
     return np.exp( -np.linalg.norm(x1 - x2) ** 2 / sigma )
 
 def compute_affinity_matrix(X, kernel, sigma, diagonal=1):
-    """
-    affinity matrix from input matrix (representing a fully connected graph)
-    """
+    """ affinity matrix from input matrix (fully connected graph) """
     height = X.shape[0]
     aff_mat = np.zeros((height,height)) # square matrix
     for i in xrange(height):

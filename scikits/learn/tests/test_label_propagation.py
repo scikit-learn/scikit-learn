@@ -40,12 +40,25 @@ def test_distribution():
     lp.fit(samples, labels, unlabeled_identifier=-1)
     assert_array_equal(lp._y[2], [.5,.5])
 
+def test_label_propagation_pickle():
+    """ test picklability of label propagation """
+    samples = [[1,0],[0,1],[1,1]]
+    labels = [0,1,-1]
+    lp_model = LabelPropagation().fit(samples, labels)
+    trans_y = lp_model._y
+
+    store = StringIO()
+    pickle.dump(lp_model, store)
+    lp_model = pickle.load(StringIO(store.getvalue())) 
+
+    assert_array_equal(trans_y, lp_model._y)
+
 def test_pipeline():
     """ make sure pipelining works """
     from scikits.learn import pipeline, datasets
     iris = datasets.load_iris()
- #   clf = pipeline.Pipeline(
-  #      [('filter', manifold.LocallyLinearEmbedding(random_state=42)),
+    clf = pipeline.Pipeline(
+        [('filter', manifold.LocallyLinearEmbedding(random_state=42)),
  #        ('clf', neighbors.NeighborsClassifier())])
  #   clf.fit(iris.data, iris.target)
  #   assert clf.score(iris.data, iris.target) > .7
