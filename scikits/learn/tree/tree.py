@@ -173,11 +173,7 @@ class BaseDecisionTree(BaseEstimator):
                 self._dtree_types, impl))                    
             
         self.type = impl
-        
-        if impl == 'classification' and K is None:
-            raise ValueError("For classification trees, " + \
-                             "K (number of classes)\n" + 
-                             "must be given.")                     
+                         
         self.K = K
                 
         self.criterion = criterion
@@ -223,6 +219,8 @@ class BaseDecisionTree(BaseEstimator):
         
         if self.type == 'classification':
             y = np.asanyarray(y, dtype=np.int, order='C') 
+            if self.K is None:
+                self.K = y.max() + 1
             if y.max() >= self.K or y.min() < 0:
                 raise ValueError("Labels must be in the range [0 to %s)",
                                  self.K)  
@@ -315,7 +313,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
     """
 
-    def __init__(self, K=2, criterion='gini', max_depth=10, \
+    def __init__(self, K=None, criterion='gini', max_depth=10, \
                   min_split=1, F=None, seed=None):
         BaseDecisionTree.__init__(self, K, 'classification', criterion, \
                                   max_depth, min_split, F, seed)

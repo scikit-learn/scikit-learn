@@ -99,6 +99,10 @@ class BaseRandomForest(BaseEstimator):
             Returns self.
         """             
 
+        if self.base_tree.K is None:
+            y = np.asanyarray(y, dtype=np.int, order='C') 
+            self.base_tree.K = y.max() + 1            
+
         forest = []
         if self.n_jobs > 1:
             forest = Parallel(self.n_jobs) \
@@ -198,7 +202,7 @@ class RandomForestClassifier(BaseRandomForest, ClassifierMixin):
 
     
     """     
-    def __init__(self, K=2, criterion='gini', max_depth=10,\
+    def __init__(self, K=None, criterion='gini', max_depth=10,\
                   min_split=1, F=None, seed=None, n_trees=10, r=0.7, \
                   n_jobs=2):
         base_tree = DecisionTreeClassifier( K=K, criterion=criterion, \

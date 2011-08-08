@@ -38,7 +38,7 @@ def test_classification_toy():
     Check classification on a toy dataset
     """
 
-    clf = tree.DecisionTreeClassifier(K=2)
+    clf = tree.DecisionTreeClassifier()
     clf.fit(X,Y)
     
     assert_array_equal(clf.predict(T), true_result)
@@ -46,7 +46,7 @@ def test_classification_toy():
     """
     With subsampling
     """
-    clf = tree.DecisionTreeClassifier(K=2, F=1)
+    clf = tree.DecisionTreeClassifier(F=1)
     clf.fit(X,Y)
     
     assert_array_equal(clf.predict(T), true_result)
@@ -76,12 +76,12 @@ def test_iris():
 
     for c in ('gini', \
               'entropy'):
-        clf = tree.DecisionTreeClassifier(K=3, criterion=c)\
+        clf = tree.DecisionTreeClassifier(criterion=c)\
               .fit(iris.data, iris.target)
             
         assert np.mean(clf.predict(iris.data) == iris.target) > 0.9
 
-        clf = tree.DecisionTreeClassifier(K=3, criterion=c, F=2)\
+        clf = tree.DecisionTreeClassifier(criterion=c, F=2)\
               .fit(iris.data, iris.target)
             
         assert np.mean(clf.predict(iris.data) == iris.target) > 0.5        
@@ -110,11 +110,11 @@ def test_boston():
 def test_sanity_checks_predict():
     Xt = np.array(X).T
 
-    clf = tree.DecisionTreeClassifier(K=2)
+    clf = tree.DecisionTreeClassifier()
     clf.fit(np.dot(X, Xt), Y)
     assert_raises(ValueError, clf.predict, X)
 
-    clf = tree.DecisionTreeClassifier(K=2)
+    clf = tree.DecisionTreeClassifier()
     clf.fit(X, Y)
     assert_raises(ValueError, clf.predict, Xt)
 
@@ -125,7 +125,7 @@ def test_probability():
     Predict probabilities using DecisionTreeClassifier
     """
 
-    clf = tree.DecisionTreeClassifier(K=3)
+    clf = tree.DecisionTreeClassifier()
     clf.fit(iris.data, iris.target)
 
     prob_predict = clf.predict_proba(iris.data)
@@ -143,36 +143,36 @@ def test_error():
     """
     # impossible value of min_split
     assert_raises(ValueError, \
-                  tree.DecisionTreeClassifier(K=2,min_split=-1).fit, X, Y)
+                  tree.DecisionTreeClassifier(min_split=-1).fit, X, Y)
 
     # impossible value of max_depth
     assert_raises(ValueError, \
-                  tree.DecisionTreeClassifier(K=2,max_depth=-1).fit, X, Y)
+                  tree.DecisionTreeClassifier(max_depth=-1).fit, X, Y)
 
-    clf = tree.DecisionTreeClassifier(K=2)
+    clf = tree.DecisionTreeClassifier()
 
     Y2 = Y[:-1]  # wrong dimensions for labels
     assert_raises(ValueError, clf.fit, X, Y2)
 
     # Test with arrays that are non-contiguous.
     Xf = np.asfortranarray(X)
-    clf = tree.DecisionTreeClassifier(K=2)
+    clf = tree.DecisionTreeClassifier()
     clf.fit(Xf, Y)
     assert_array_equal(clf.predict(T), true_result)
 
     # use values of F that are invalid
-    clf = tree.DecisionTreeClassifier(K=2, F=-1)
+    clf = tree.DecisionTreeClassifier(F=-1)
     assert_raises(ValueError, clf.fit, X, Y2)
     
-    clf = tree.DecisionTreeClassifier(K=2, F=10)
+    clf = tree.DecisionTreeClassifier(F=10)
     assert_raises(ValueError, clf.fit, X, Y2)
 
     # predict before fitting
-    clf = tree.DecisionTreeClassifier(K=2)
+    clf = tree.DecisionTreeClassifier()
     assert_raises(Exception, clf.predict, T)
 
     # predict on vector with different dims
-    clf = tree.DecisionTreeClassifier(K=2)
+    clf = tree.DecisionTreeClassifier()
     clf.fit(X, Y)
     t = np.asanyarray(T)
     assert_raises(ValueError, clf.predict, t[:,1:])    

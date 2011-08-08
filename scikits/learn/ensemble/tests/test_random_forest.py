@@ -37,7 +37,7 @@ def test_classification_toy():
     Check classification on a toy dataset
     """
 
-    clf = ensemble.RandomForestClassifier(K=2,r=0.9)
+    clf = ensemble.RandomForestClassifier(r=0.9)
     clf.fit(X,Y)
     
     assert_array_equal(clf.predict(T), true_result)
@@ -45,7 +45,7 @@ def test_classification_toy():
     """
     With subsampling
     """
-    clf = ensemble.RandomForestClassifier(K=2,r=0.9, F=1)
+    clf = ensemble.RandomForestClassifier(r=0.9, F=1)
     clf.fit(X,Y)
     
     assert_array_equal(clf.predict(T), true_result)
@@ -75,7 +75,7 @@ def test_iris():
 
     for c in ('gini', \
               'entropy'):
-        clf = ensemble.RandomForestClassifier(K=3,criterion=c)\
+        clf = ensemble.RandomForestClassifier(criterion=c)\
               .fit(iris.data, iris.target)
             
         assert np.mean(clf.predict(iris.data) == iris.target) > 0.9
@@ -108,11 +108,11 @@ def test_boston():
 def test_sanity_checks_predict():
     Xt = np.array(X).T
 
-    clf = ensemble.RandomForestClassifier(K=2)
+    clf = ensemble.RandomForestClassifier()
     clf.fit(np.dot(X, Xt), Y)
     assert_raises(ValueError, clf.predict, X)
 
-    clf = ensemble.RandomForestClassifier(K=2)
+    clf = ensemble.RandomForestClassifier()
     clf.fit(X, Y)
     assert_raises(ValueError, clf.predict, Xt)
 
@@ -123,7 +123,7 @@ def test_probability():
     Predict probabilities using RandomForestClassifier
     """
 
-    clf = ensemble.RandomForestClassifier(K=3)
+    clf = ensemble.RandomForestClassifier()
     clf.fit(iris.data, iris.target)
 
     prob_predict = clf.predict_proba(iris.data)
