@@ -48,7 +48,7 @@ K_aic = 2  # AIC
 K_bic = log(n_samples)  # BIC
 
 R = y[:, np.newaxis] - np.dot(X, coefs)  # residuals
-mse = np.sum(R ** 2, axis=0)  # MSE ie. mean square error
+mse = np.mean(R ** 2, axis=0)  # MSE ie. mean square error
 
 df = np.zeros(coefs.shape[1], dtype=np.int)  # Degrees of freedom
 for k, coef in enumerate(coefs.T):
@@ -60,8 +60,8 @@ for k, coef in enumerate(coefs.T):
     # Trace(Xc * inv(Xc.T, Xc) * Xc.T) ie the number of non-zero coefs
     df[k] = np.sum(mask)
 
-aic_criterion = np.log(mse) + K_aic / float(n_samples) * df
-bic_criterion = np.log(mse) + K_bic / float(n_samples) * df
+aic_criterion = n_samples * np.log(mse) + K_aic * df
+bic_criterion = n_samples * np.log(mse) + K_bic * df
 n_aic = np.argmin(aic_criterion)
 n_bic = np.argmin(bic_criterion)
 

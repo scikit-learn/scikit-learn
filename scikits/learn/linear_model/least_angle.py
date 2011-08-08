@@ -353,7 +353,7 @@ class Lars(LinearModel):
     --------
     >>> from scikits.learn import linear_model
     >>> clf = linear_model.Lars(n_nonzero_coefs=1)
-    >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1]) # doctest: +ELLIPSIS
+    >>> clf.fit([[-1, 1], [0, 0], [1, 1]], [-1, 0, -1]) # doctest: +ELLIPSIS
     Lars(normalize=True, n_nonzero_coefs=1, verbose=False, fit_intercept=True,
        eps=..., precompute='auto')
     >>> print clf.coef_
@@ -486,7 +486,7 @@ class LassoLars(Lars):
     --------
     >>> from scikits.learn import linear_model
     >>> clf = linear_model.LassoLars(alpha=0.01)
-    >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1]) # doctest: +ELLIPSIS
+    >>> clf.fit([[-1, 1], [0, 0], [1, 1]], [-1, 0, -1]) # doctest: +ELLIPSIS
     LassoLars(normalize=True, verbose=False, fit_intercept=True, max_iter=500,
          eps=..., precompute='auto', alpha=0.01)
     >>> print clf.coef_
@@ -832,6 +832,12 @@ class LassoLarsCV(LarsCV):
 class LassoLarsIC(LassoLars):
     """Lasso model fit with Lars using BIC or AIC for model selection
 
+    AIC is the Akaike information criterion and BIC is the Bayes Information
+    criterion. Such citeria are useful to select the value of the
+    regularization parameter by making a trade-off between
+    the goodness of fit and the complexity of the model. A good model
+    should explain well the data while being simple.
+
     Parameters
     ----------
     criterion: 'bic' | 'aic'
@@ -877,7 +883,7 @@ class LassoLarsIC(LassoLars):
     --------
     >>> from scikits.learn import linear_model
     >>> clf = linear_model.LassoLarsIC(criterion='bic')
-    >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1]) # doctest: +ELLIPSIS
+    >>> clf.fit([[-1, 1], [0, 0], [1, 1]], [-1, 0, -1]) # doctest: +ELLIPSIS
     LassoLarsIC(normalize=True, verbose=False, fit_intercept=True, max_iter=500,
           eps=..., precompute='auto', criterion='bic')
     >>> print clf.coef_
@@ -898,7 +904,7 @@ class LassoLarsIC(LassoLars):
     --------
     lars_path, LassoLars, LassoLarsCV
     """
-    def __init__(self, criterion='bic', fit_intercept=True, verbose=False,
+    def __init__(self, criterion='aic', fit_intercept=True, verbose=False,
                  normalize=True, precompute='auto', max_iter=500,
                  eps=np.finfo(np.float).eps):
         if criterion not in ['aic', 'bic']:
@@ -956,7 +962,7 @@ class LassoLarsIC(LassoLars):
             raise ValueError('criterion should be either bic or aic')
 
         R = y[:, np.newaxis] - np.dot(X, coef_path_)  # residuals
-        mse = np.sum(R ** 2, axis=0)  # MSE ie. mean square error
+        mean_squared_error = np.mean(R ** 2, axis=0)
 
         df = np.zeros(coef_path_.shape[1], dtype=np.int)  # Degrees of freedom
         for k, coef in enumerate(coef_path_.T):
@@ -968,7 +974,7 @@ class LassoLarsIC(LassoLars):
             # Trace(Xc * inv(Xc.T, Xc) * Xc.T) ie the number of non-zero coefs
             df[k] = np.sum(mask)
 
-        crit = np.log(mse) + K / float(n_samples) * df
+        crit = n_samples * np.log(mean_squared_error) + K * df
         n_best = np.argmin(crit)
 
         self.alpha_ = alphas_[n_best]
