@@ -14,11 +14,13 @@ from scikits.learn.feature_selection import SelectKBest, f_regression
 from scikits.learn.pipeline import Pipeline
 
 # import some data to play with
-X, y = samples_generator.test_dataset_classif(k=5)
+X, y = samples_generator.make_classification(
+	n_features=20, n_informative=3, n_redundant=0, 
+	n_classes=4, n_clusters_per_class=2)
 
 # ANOVA SVM-C
-# 1) anova filter, take 5 best ranked features
-anova_filter = SelectKBest(f_regression, k=5)
+# 1) anova filter, take 3 best ranked features
+anova_filter = SelectKBest(f_regression, k=3)
 # 2) svm
 clf = svm.SVC(kernel='linear')
 

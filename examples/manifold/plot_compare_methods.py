@@ -34,18 +34,16 @@ from matplotlib.ticker import NullFormatter
 
 from scikits.learn import manifold, datasets
 
-n_points = 1000
-n_neighbors = 15
+X, color = datasets.samples_generator.make_s_curve(1000)
+n_neighbors = 8
 out_dim = 2
-
-X, color = datasets.samples_generator.s_curve(n_points)
 
 methods = ['standard', 'ltsa', 'hessian', 'modified']
 labels = ['LLE', 'LTSA', 'Hessian LLE', 'Modified LLE']
 
 fig = pylab.figure(figsize=(8, 12))
 pylab.suptitle("Manifold Learning with %i points, %i neighbors"
-               % (n_points, n_neighbors), fontsize=14)
+               % (1000, n_neighbors), fontsize=14)
 
 try:
     # compatibility matplotlib < 1.0

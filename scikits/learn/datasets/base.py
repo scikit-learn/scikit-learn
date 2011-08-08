@@ -23,7 +23,6 @@ import numpy as np
 
 from ..utils import check_random_state
 
-###############################################################################
 
 class Bunch(dict):
     """ Container object for datasets: dictionnary-like object that
@@ -114,7 +113,7 @@ def load_files(container_path, description=None, categories=None,
 
     load_content : boolean
         Whether to load or not the content of the different files. If
-        true a 'data' attribute containing the text information is present 
+        true a 'data' attribute containing the text information is present
         in the data structure returned. If not, a filenames attribute
         gives the path to the files.
 
@@ -167,6 +166,7 @@ def load_files(container_path, description=None, categories=None,
     if load_content:
         data = [open(filename).read() for filename in filenames]
         return Bunch(data=data,
+                     filenames=filenames,
                      target_names=target_names,
                      target=target,
                      DESCR=description)
@@ -185,7 +185,7 @@ def load_iris():
     Returns
     -------
     data : Bunch
-        Dictionnary-like object, the interesting attributes are:
+        Dictionary-like object, the interesting attributes are:
         'data', the data to learn, 'target', the classification labels,
         'target_names', the meaning of the labels, and 'DESCR', the
         full description of the dataset.
@@ -217,7 +217,9 @@ def load_iris():
         data[i] = np.asanyarray(ir[:-1], dtype=np.float)
         target[i] = np.asanyarray(ir[-1], dtype=np.int)
     return Bunch(data=data, target=target, target_names=target_names,
-                 DESCR=fdescr.read())
+                 DESCR=fdescr.read(),
+                 feature_names=['sepal length (cm)', 'sepal width (cm)',
+                                'petal length (cm)', 'petal width (cm)'])
 
 
 def load_digits(n_class=10):
@@ -231,7 +233,7 @@ def load_digits(n_class=10):
     Returns
     -------
     data : Bunch
-        Dictionnary-like object, the interesting attributes are:
+        Dictionary-like object, the interesting attributes are:
         'data', the data to learn, `images`, the images corresponding
         to each sample, 'target', the classification labels for each
         sample, 'target_names', the meaning of the labels, and 'DESCR',
@@ -275,7 +277,7 @@ def load_diabetes():
     Returns
     -------
     data : Bunch
-        Dictionnary-like object, the interesting attributes are:
+        Dictionary-like object, the interesting attributes are:
         'data', the data to learn and 'target', the labels for each
         sample.
 
@@ -293,7 +295,7 @@ def load_linnerud():
     Returns
     -------
     data : Bunch
-        Dictionnary-like object, the interesting attributes are:
+        Dictionary-like object, the interesting attributes are:
         'data_exercise' and 'data_physiological', the two multivariate
         datasets, as well as 'header_exercise' and
         'header_physiological', the corresponding headers.
@@ -318,27 +320,39 @@ def load_linnerud():
                  DESCR=fdescr.read())
 
 
-###############################################################################
-# Add the description in the docstring
+def load_boston():
+    """Load and return the boston house-prices dataset (regression).
 
-def _add_notes(function, filename):
-    """Add a notes section to the docstring of a function reading it from a
-    file"""
-    fdescr = open(join(dirname(__file__), 'descr', filename), 'r')
-    # Dedent the docstring
-    doc = function.__doc__.split('\n')
-    doc = '%s\n%s' % (textwrap.dedent(doc[0]),
-                      textwrap.dedent('\n'.join(doc[1:])))
-    # Remove the first line of the description, which contains the
-    # dataset's name
-    descr = '\n'.join(fdescr.read().split('\n')[1:])
-    function.__doc__ = doc + descr
+    Returns
+    -------
+    data : Bunch
+        Dictionary-like object, the interesting attributes are:
+        'data', the data to learn, 'target', the classification labels,
+        'target_names', the meaning of the labels, and 'DESCR', the
+        full description of the dataset.
 
+    Example
+    -------
+    >>> from scikits.learn.datasets import load_boston
+    >>> data = load_boston()
 
-for function, filename in ((load_iris, 'iris.rst'),
-                           (load_linnerud, 'linnerud.rst'),
-                           (load_digits, 'digits.rst')):
-    #try:
-        _add_notes(function, filename)
-    #except:
-    #    pass
+    """
+
+    module_path = dirname(__file__)
+    data_file = csv.reader(open(join(module_path, 'data',
+                                     'boston_house_prices.csv')))
+    fdescr = open(join(module_path, 'descr', 'boston_house_prices.rst'))
+    temp = data_file.next()
+    n_samples = int(temp[0])
+    n_features = int(temp[1])
+    data = np.empty((n_samples, n_features))
+    target = np.empty((n_samples,))
+    temp = data_file.next()  # names of features
+    feature_names = np.array(temp)
+    for i, d in enumerate(data_file):
+        data[i] = np.asanyarray(d[:-1], dtype=np.float)
+        target[i] = np.asanyarray(d[-1], dtype=np.float)
+
+    return Bunch(data=data, target=target,
+                 feature_names=feature_names,
+                 DESCR=fdescr.read())
