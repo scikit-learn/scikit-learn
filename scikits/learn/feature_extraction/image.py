@@ -4,6 +4,8 @@ Utilities to extract features from images.
 
 # Authors: Emmanuelle Gouillart <emmanuelle.gouillart@normalesup.org>
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>
+#          Olivier Grisel
+#          Vlad Niculae
 # License: BSD
 
 import numpy as np
