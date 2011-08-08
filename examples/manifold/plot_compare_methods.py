@@ -20,7 +20,7 @@ from matplotlib.ticker import NullFormatter
 
 from scikits.learn import manifold, datasets
 
-X, color = datasets.samples_generator.s_curve(1000)
+X, color = datasets.samples_generator.make_s_curve(1000)
 n_neighbors = 8
 out_dim = 2
 

@@ -43,6 +43,11 @@ def inplace_csr_row_normalize_l1(X):
         for j in xrange(X_indptr[i], X_indptr[i + 1]):
             sum_ += fabs(X_data[j])
 
+        if sum_ == 0.0:
+            # do not normalize empty rows (can happen if CSR is not pruned
+            # correctly)
+            continue
+
         for j in xrange(X_indptr[i], X_indptr[i + 1]):
             X_data[j] /= sum_
 
@@ -68,6 +73,11 @@ def inplace_csr_row_normalize_l2(X):
 
         for j in xrange(X_indptr[i], X_indptr[i + 1]):
             sum_ += (X_data[j] * X_data[j])
+
+        if sum_ == 0.0:
+            # do not normalize empty rows (can happen if CSR is not pruned
+            # correctly)
+            continue
 
         sum_ = sqrt(sum_)
 

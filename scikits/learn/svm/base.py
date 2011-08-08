@@ -19,10 +19,13 @@ def _get_class_weight(class_weight, y):
                           dtype=np.float64, order='C')
         weight *= uy.shape[0] / np.sum(weight)
     else:
-        weight = np.asarray(class_weight.values(),
-                            dtype=np.float64, order='C')
-        weight_label = np.asarray(class_weight.keys(),
-                                  dtype=np.int32, order='C')
+        if class_weight is None:
+            keys = values = []
+        else:
+            keys = class_weight.keys()
+            values = class_weight.values()
+        weight = np.asarray(values, dtype=np.float64, order='C')
+        weight_label = np.asarray(keys, dtype=np.int32, order='C')
 
     return weight, weight_label
 
@@ -68,7 +71,7 @@ class BaseLibSVM(BaseEstimator):
                                dtype=np.float64, order='C')
         return X
 
-    def fit(self, X, y, class_weight={}, sample_weight=[], cache_size=100.,
+    def fit(self, X, y, class_weight=None, sample_weight=None, cache_size=100.,
             **params):
         """
         Fit the SVM model according to the given training data and
@@ -112,7 +115,8 @@ class BaseLibSVM(BaseEstimator):
 
         X = np.asanyarray(X, dtype=np.float64, order='C')
         y = np.asanyarray(y, dtype=np.float64, order='C')
-        sample_weight = np.asanyarray(sample_weight, dtype=np.float64)
+        sample_weight = np.asanyarray([] if sample_weight is None
+                                         else sample_weight, dtype=np.float64)
 
         if hasattr(self, 'kernel_function'):
             # you must store a reference to X to compute the kernel in predict
@@ -345,7 +349,7 @@ class BaseLibLinear(BaseEstimator):
                              + solver_type)
         return self._solver_type_dict[solver_type]
 
-    def fit(self, X, y, class_weight={}, **params):
+    def fit(self, X, y, class_weight=None, **params):
         """
         Fit the model according to the given training data and
         parameters.

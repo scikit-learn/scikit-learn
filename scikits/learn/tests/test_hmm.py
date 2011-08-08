@@ -3,8 +3,10 @@ import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 from unittest import TestCase
 
-from scikits.learn.datasets.samples_generator import generate_random_spd_matrix
+from scikits.learn.datasets.samples_generator import make_spd_matrix
 from scikits.learn import hmm
+from scikits.learn.utils.extmath import logsum
+
 
 np.seterr(all='warn')
 
@@ -153,7 +155,7 @@ class TestBaseHMM(SeedRandomNumberGeneratorTestCase):
 
         assert_array_almost_equal(hmmposteriors.sum(axis=1), np.ones(nobs))
 
-        norm = np.logaddexp.reduce(framelogprob, axis=1)[:, np.newaxis]
+        norm = logsum(framelogprob, axis=1)[:, np.newaxis]
         gmmposteriors = np.exp(framelogprob - np.tile(norm, (1, n_components)))
         assert_array_almost_equal(hmmposteriors, gmmposteriors)
 
@@ -172,7 +174,7 @@ class TestBaseHMM(SeedRandomNumberGeneratorTestCase):
         # posteriors, not likelihoods).
         viterbi_ll, state_sequence = h.decode([])
 
-        norm = np.logaddexp.reduce(framelogprob, axis=1)[:, np.newaxis]
+        norm = logsum(framelogprob, axis=1)[:, np.newaxis]
         gmmposteriors = np.exp(framelogprob - np.tile(norm, (1, n_components)))
         gmmstate_sequence = gmmposteriors.argmax(axis=1)
         assert_array_equal(state_sequence, gmmstate_sequence)
@@ -225,11 +227,10 @@ class GaussianHMMParams(object):
     transmat /= np.tile(transmat.sum(axis=1)[:, np.newaxis], (1, n_components))
     means = prng.randint(-20, 20, (n_components, n_features))
     covars = {'spherical': (1.0 + 2 * prng.rand(n_components)) ** 2,
-              'tied': (generate_random_spd_matrix(n_features)
-                       + np.eye(n_features)),
+              'tied': (make_spd_matrix(n_features, random_state=0) + np.eye(n_features)),
               'diag': (1.0 + 2 * prng.rand(n_components, n_features)) ** 2,
               'full': np.array(
-                  [generate_random_spd_matrix(n_features) + np.eye(n_features)
+                  [make_spd_matrix(n_features, random_state=0) + np.eye(n_features)
                    for x in xrange(n_components)])}
     expanded_covars = {'spherical': [np.eye(n_features) * cov
                                      for cov in covars['spherical']],
@@ -527,13 +528,12 @@ def create_random_gmm(n_mix, n_features, cvtype, prng=prng):
     g.means = prng.randint(-20, 20, (n_mix, n_features))
     mincv = 0.1
     g.covars = {
-        'spherical': (mincv
-                      + mincv * prng.rand(n_mix)) ** 2,
-        'tied': (generate_random_spd_matrix(n_features, random_state=prng)
+        'spherical': (mincv + mincv * prng.rand(n_mix)) ** 2,
+        'tied': (make_spd_matrix(n_features, random_state=prng)
                  + mincv * np.eye(n_features)),
         'diag': (mincv + mincv * prng.rand(n_mix, n_features)) ** 2,
         'full': np.array(
-            [generate_random_spd_matrix(n_features, random_state=prng)
+            [make_spd_matrix(n_features, random_state=prng)
              + mincv * np.eye(n_features) for x in xrange(n_mix)])
     }[cvtype]
     g.weights = hmm.normalize(prng.rand(n_mix))

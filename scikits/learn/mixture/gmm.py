@@ -10,6 +10,7 @@ import numpy as np
 
 from ..base import BaseEstimator
 from ..utils import check_random_state
+from ..utils.extmath import logsum
 from .. import cluster
 
 # FIXME this lacks a proper docstring
@@ -329,7 +330,7 @@ class GMM(BaseEstimator):
         obs = np.asanyarray(obs)
         lpr = (lmvnpdf(obs, self._means, self._covars, self._cvtype)
                + self._log_weights)
-        logprob = np.logaddexp.reduce(lpr, axis=1)
+        logprob = logsum(lpr, axis=1)
         posteriors = np.exp(lpr - logprob[:, np.newaxis])
         return logprob, posteriors
 

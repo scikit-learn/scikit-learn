@@ -257,12 +257,7 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
 
 def _calculate_labels_inertia(X, centers, x_squared_norms=None):
     """Compute the inertia and the labels of the given samples and centers"""
-    if sp.issparse(X):
-        distance = _euclidean_distances_sparse(centers, X,
-                                              x_squared_norms, squared=True)
-    else:
-        distance = euclidean_distances(centers, X, x_squared_norms,
-                                       squared=True)
+    distance = euclidean_distances(centers, X, x_squared_norms, squared=True)
     return distance.min(axis=0).sum(), distance.argmin(axis=0)
 
 
@@ -574,36 +569,16 @@ def _mini_batch_step_sparse(X, batch_slice, centers, counts, x_squared_norms):
     x_squared_norms: array, shape (n_samples,)
          The squared norms of each sample in `X`.
     """
-    cache = _euclidean_distances_sparse(centers, X[batch_slice],
+    cache = euclidean_distances(centers, X[batch_slice],
               x_squared_norms[batch_slice]).argmin(axis=0).astype(np.int32)
 
     _k_means._mini_batch_update_sparse(X.data, X.indices, X.indptr, batch_slice,
                                        centers, counts, cache)
 
 
-def _euclidean_distances_sparse(X, Y, y_squared_norms=None, squared=False):
-    """euclidean distances for dense X and sparse Y.
-    """
-    XX = np.sum(X * X, axis=1)[:, np.newaxis]
-
-    # If added same as compute dot
-    # XX = np.ones((X.shape[0],))[:, np.newaxis]
-
-    if y_squared_norms == None:
-        y_squared_norms = _k_means.csr_row_norm_l2(Y, squared)
-    YY = y_squared_norms[np.newaxis, :]
-
-    distances = XX + YY
-    distances -= 2 * (X * Y.T)
-    distances = np.maximum(distances, 0)
-    if not squared:
-        distances = np.sqrt(distances)
-    return distances
-
-
 class MiniBatchKMeans(KMeans):
     """
-    Batch K-Means clustering
+    Mini-Batch K-Means clustering
 
     Parameters
     ----------
@@ -615,11 +590,6 @@ class MiniBatchKMeans(KMeans):
     max_iter : int
         Maximum number of iterations of the k-means algorithm for a
         single run.
-
-    n_init: int, optional, default: 10
-        Number of time the k-means algorithm will be run with different
-        centroid seeds. The final results will be the best output of
-        n_init consecutive runs in terms of inertia.
 
     chunk_size: int, optional, default: 1000
         Size of the mini batches
@@ -661,15 +631,15 @@ class MiniBatchKMeans(KMeans):
         The value of the inertia criterion associated with the chosen
         partition.
 
-    Reference
-    ---------
+    References
+    ----------
     http://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf
     """
 
-    def __init__(self, k=8, init='random', n_init=10, max_iter=100,
+    def __init__(self, k=8, init='random', max_iter=100,
                  chunk_size=1000, tol=1e-4, verbose=0, random_state=None):
 
-        super(MiniBatchKMeans, self).__init__(k, init, n_init,
+        super(MiniBatchKMeans, self).__init__(k, init, 1,
               max_iter, tol, verbose, random_state)
 
         self.counts = None
@@ -685,6 +655,7 @@ class MiniBatchKMeans(KMeans):
         X: array, [n_samples, n_features]
             Coordinates of the data points to cluster
         """
+        self._set_params(**params)
         self.random_state = check_random_state(self.random_state)
         X = check_arrays(X, sparse_format="csr", copy=False)[0]
         n_samples, n_features = X.shape

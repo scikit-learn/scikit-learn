@@ -1,14 +1,20 @@
+# -*- coding: utf-8 -*-
 """
 Univariate features selection.
 """
 
-# Authors: V. Michel, B. Thirion, G. Varoquaux, A. Gramfort, E. Duchesnay
+# Authors: V. Michel, B. Thirion, G. Varoquaux, A. Gramfort, E. Duchesnay.
+#          L. Buitinck
 # License: BSD 3 clause
 
 import numpy as np
 from scipy import stats
+from scipy.sparse import issparse
 
 from ..base import BaseEstimator, TransformerMixin
+from ..preprocessing import LabelBinarizer
+from ..utils import safe_asanyarray
+from ..utils.extmath import safe_sparse_dot
 
 ######################################################################
 # Scoring functions
@@ -112,6 +118,49 @@ def f_classif(X, y):
     return f_oneway(*args)
 
 
+def chi2(X, y):
+    """Compute χ² (chi-squared) statistic for each class/feature combination.
+
+    This transformer can be used to select the n_features features with the
+    highest values for the χ² (chi-square) statistic from either boolean or
+    multinomially distributed data (e.g., term counts in document
+    classification) relative to the classes.
+
+    Recall that the χ² statistic measures dependence between stochastic
+    variables, so a transformer based on this function "weeds out" the features
+    that are the most likely to be independent of class and therefore
+    irrelevant for classification.
+
+    Parameters
+    ----------
+    X : {array-like, sparse matrix}, shape = [n_samples, n_features_in]
+        Sample vectors.
+
+    y : array-like, shape = n_samples
+        Target vector (class labels).
+
+    Complexity
+    ----------
+    O(n_classes * n_features) space.
+    """
+
+    # XXX: we might want to do some of the following in logspace instead for
+    # numerical stability.
+    X = safe_asanyarray(X)
+    Y = LabelBinarizer().fit_transform(y)
+    if Y.shape[1] == 1:
+        Y = np.concatenate((1 - Y, Y), axis=1)
+
+    observed = safe_sparse_dot(Y.T, X)          # n_classes * n_features
+
+    feature_count = np.atleast_2d(X.sum(axis=0))
+    feature_count = np.asarray(feature_count)   # stupid numpy.matrix!
+    class_prob = np.atleast_2d(Y.sum(axis=0) / Y.sum())
+    expected = safe_sparse_dot(class_prob.T, feature_count)
+
+    return stats.chisquare(observed, expected)
+
+
 def f_regression(X, y, center=True):
     """
     Quick linear model for testing the effect of a single regressor,
@@ -189,12 +238,19 @@ class _AbstractUnivariateFilter(BaseEstimator, TransformerMixin):
         self._pvalues = _scores[1]
         return self
 
+    def get_support(self, indices=False):
+        """
+        Return a mask, or list, of the features/indices selected.
+        """
+        mask = self._get_support_mask()
+        return mask if not indices else np.where(mask)[0]
+
     def transform(self, X, **params):
         """
         Transform a new matrix using the selected features
         """
         self._set_params(**params)
-        return X[:, self.get_support()]
+        return safe_asanyarray(X)[:, self.get_support(indices=issparse(X))]
 
     def inverse_transform(self, X, **params):
         """
@@ -232,7 +288,7 @@ class SelectPercentile(_AbstractUnivariateFilter):
         self.percentile = percentile
         _AbstractUnivariateFilter.__init__(self, score_func)
 
-    def get_support(self):
+    def _get_support_mask(self):
         percentile = self.percentile
         assert percentile<=100, ValueError('percentile should be \
                             between 0 and 100 (%f given)' %(percentile))
@@ -264,7 +320,7 @@ class SelectKBest(_AbstractUnivariateFilter):
         self.k = k
         _AbstractUnivariateFilter.__init__(self, score_func)
 
-    def get_support(self):
+    def _get_support_mask(self):
         k = self.k
         assert k<=len(self._pvalues), ValueError('cannot select %d features'
                                     ' among %d ' % (k, len(self._pvalues)))
@@ -274,7 +330,8 @@ class SelectKBest(_AbstractUnivariateFilter):
 
 class SelectFpr(_AbstractUnivariateFilter):
     """
-    Filter : Select the pvalues below alpha
+    Filter : Select the pvalues below alpha based on a FPR test: False
+    Positive Rate: controlling the total amount of false detections.
     """
 
     def __init__(self, score_func, alpha=5e-2):
@@ -291,7 +348,7 @@ class SelectFpr(_AbstractUnivariateFilter):
         self.alpha = alpha
         _AbstractUnivariateFilter.__init__(self, score_func)
 
-    def get_support(self):
+    def _get_support_mask(self):
         alpha = self.alpha
         return (self._pvalues < alpha)
 
@@ -316,16 +373,17 @@ class SelectFdr(_AbstractUnivariateFilter):
         self.alpha = alpha
         _AbstractUnivariateFilter.__init__(self, score_func)
 
-    def get_support(self):
+    def _get_support_mask(self):
         alpha = self.alpha
         sv = np.sort(self._pvalues)
         threshold = sv[sv < alpha*np.arange(len(self._pvalues))].max()
-        return (self._pvalues < threshold)
+        return (self._pvalues <= threshold)
 
 
 class SelectFwe(_AbstractUnivariateFilter):
     """
-    Filter : Select the p-values corresponding to a corrected p-value of alpha
+    Filter : Select the p-values corresponding to Family-wise error rate: a 
+    corrected p-value of alpha
     """
 
     def __init__(self, score_func, alpha=5e-2):
@@ -342,7 +400,7 @@ class SelectFwe(_AbstractUnivariateFilter):
         self.alpha = alpha
         _AbstractUnivariateFilter.__init__(self, score_func)
 
-    def get_support(self):
+    def _get_support_mask(self):
         alpha = self.alpha
         return (self._pvalues < alpha/len(self._pvalues))
 
@@ -384,7 +442,7 @@ class GenericUnivariateSelect(_AbstractUnivariateFilter):
         self.mode = mode
         self.param = param
 
-    def get_support(self):
+    def _get_support_mask(self):
         selector = self._selection_modes[self.mode](lambda x: x)
         selector._pvalues = self._pvalues
         selector._scores = self._scores
@@ -393,4 +451,4 @@ class GenericUnivariateSelect(_AbstractUnivariateFilter):
         possible_params = selector._get_param_names()
         possible_params.remove('score_func')
         selector._set_params(**{possible_params[0]: self.param})
-        return selector.get_support()
+        return selector._get_support_mask()

@@ -125,8 +125,8 @@ This method has the same order of complexity than an
 .. between these
 
 
-Generalized Cross-Validation
-----------------------------
+Setting alpha: generalized Cross-Validation
+---------------------------------------------
 
 :class:`RidgeCV` implements ridge regression with built-in
 cross-validation of the alpha parameter.  The object works in the same way
@@ -148,7 +148,8 @@ as GridSearchCV except that it defaults to Generalized Cross-Validation
       `course slides
       <http://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf>`_).
 
-:: _lasso:
+
+.. _lasso:
 
 Lasso
 =====
@@ -186,7 +187,24 @@ of possible values.
 .. topic:: Examples:
 
   * :ref:`example_linear_model_lasso_and_elasticnet.py`,
-  * :ref:`example_linear_model_lasso_path_with_crossvalidation.py`
+
+Setting `alpha`
+-----------------
+
+The scikit exposes objects that set the Lasso `alpha` parameter by
+cross-validation: :class:`LassoCV` and :class:`LassoLarsCV`.
+:class:`LassoLarsCV` is based on the :ref:`least_angle_regression` algorithm
+explained below.
+
+For high-dimensional datasets with many collinear regressors,
+:class:`LassoCV` is most often preferrable. How, :class:`LassoLarsCV` has
+the advantage of exploring more relevant values of `alpha` parameter, and 
+if the number of samples is very small compared to the number of
+observations, it is often faster than :class:`LassoCV`.
+
+.. topic:: Examples:
+
+  * :ref:`example_linear_model_plot_lasso_path_crossval.py`
 
 
 Elastic Net
@@ -221,6 +239,10 @@ Johnstone and Robert Tibshirani.
 
 The advantages of LARS are:
 
+  - It is numerically efficient in contexts where p >> n (i.e., when the
+    number of dimensions is significantly greater than the number of
+    points)
+
   - It is computationally just as fast as forward selection and has
     the same order of complexity as an ordinary least squares.
 
@@ -235,9 +257,6 @@ The advantages of LARS are:
   - It is easily modified to produce solutions for other estimators,
     like the Lasso.
 
-  - It is effective in contexts where p >> n (i.e., when the number of
-    dimensions is significantly greater than the number of points)
-
 The disadvantages of the LARS method include:
 
   - Because LARS is based upon an iterative refitting of the
@@ -246,14 +265,14 @@ The disadvantages of the LARS method include:
     in the discussion section of the Efron et al. (2004) Annals of
     Statistics article.
 
-The LARS model can be used using estimator :class:`LARS`, or its
+The LARS model can be used using estimator :class:`Lars`, or its
 low-level implementation :func:`lars_path`.
 
 
 LARS Lasso
 ==========
 
-:class:`LassoLARS` is a lasso model implemented using the LARS
+:class:`LassoLars` is a lasso model implemented using the LARS
 algorithm, and unlike the implementation based on coordinate_descent,
 this yields the exact solution, which is piecewise linear as a
 function of the norm of its coefficients.
@@ -266,10 +285,10 @@ function of the norm of its coefficients.
 ::
 
    >>> from scikits.learn import linear_model
-   >>> clf = linear_model.LassoLARS(alpha=.1)
-   >>> clf.fit ([[0, 0], [1, 1]], [0, 1])
-   LassoLARS(normalize=True, verbose=False, fit_intercept=True, max_iter=500,
-        precompute='auto', alpha=0.1)
+   >>> clf = linear_model.LassoLars(alpha=.1)
+   >>> clf.fit ([[0, 0], [1, 1]], [0, 1]) # doctest: +ELLIPSIS
+   LassoLars(normalize=True, verbose=False, fit_intercept=True, max_iter=500,
+        eps=..., precompute='auto', alpha=0.1)
    >>> clf.coef_
    array([ 0.71715729,  0.        ])
 
@@ -277,11 +296,14 @@ function of the norm of its coefficients.
 
  * :ref:`example_linear_model_plot_lasso_lars.py`
 
+ * :ref:`example_linear_model_plot_lasso_path_crossval.py`
 
-The LARS algorithm provides the full path of the coefficients along
+The class :class:`LassoLarsCV` can be used to set the `alpha` parameter
+of the Lasso by cross-validation with the Lars algorithm.
+
+The Lars algorithm provides the full path of the coefficients along
 the regularization parameter almost for free, thus a common operation
 consist of retrieving the path with function :func:`lars_path`
-
 
 Mathematical formulation
 ------------------------
@@ -307,16 +329,15 @@ column is always zero.
 
 Orthogonal Matching Pursuit (OMP)
 =================================
-:func:`orthogonal_mp` implements the OMP algorithm for approximating the fit of
-a linear model with constraints imposed on the number of non-zero coefficients
-(ie. the L :sub:`0` pseudo-norm). 
+:class:`OrthogonalMatchingPursuit` and :func:`orthogonal_mp` implements the OMP
+algorithm for approximating the fit of a linear model with constraints imposed
+on the number of non-zero coefficients (ie. the L :sub:`0` pseudo-norm). 
 
-While :ref:`Lasso`-style penalties do tend to shrink coefficients towards zero,
-there is no direct relationship between the Lasso penalty coefficient and the
-sparseness of the solution vector. Orthogonal matching pursuit can approximate
-the optimum solution vector with a fixed number of non-zero elements:
+Being a forward feature selection method like :ref:`least_angle_regression`, 
+orthogonal matching pursuit can approximate the optimum solution vector with a
+fixed number of non-zero elements:
 
-.. math:: \text{arg\,min} ||y - X\gamma||_2^2 \text{ subject to } ||\gamma||_0 \leq n_{atoms}
+.. math:: \text{arg\,min} ||y - X\gamma||_2^2 \text{ subject to } ||\gamma||_0 \leq n_{features}
 
 Alternatively, orthogonal matching pursuit can target a specific error instead
 of a specific number of non-zero coefficients. This can be expressed as:
@@ -328,7 +349,7 @@ OMP is based on a greedy algorithm that includes at each step the atom most
 highly correlated with the current residual. It is similar to the simpler
 matching pursuit (MP) method, but better in that at each iteration, the
 residual is recomputed using an orthogonal projection on the space of the
-chosen dictionary elements. 
+previously chosen dictionary elements. 
 
 
 .. topic:: Examples:
@@ -347,10 +368,12 @@ Bayesian Regression
 ===================
 
 Bayesian regression techniques can be used to include regularization
-parameters in the estimation procedure. This can be done by
-introducing some prior knowledge over the parameters.  For example,
-penalization by weighted :math:`\ell_{2}` norm is equivalent to
-setting Gaussian priors on the weights.
+parameters in the estimation procedure: the regularization parameter is
+not set in a hard sens but tuned to the data at hand. 
+
+This can be done by introducing some prior knowledge over the parameters.
+For example, penalization by weighted :math:`\ell_{2}` norm is equivalent
+to setting Gaussian priors on the weights.
 
 The advantages of *Bayesian Regression* are:
 
