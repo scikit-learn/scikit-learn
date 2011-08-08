@@ -163,6 +163,10 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         -------
         Base class works, but intended for instruction. It will generate a n
         onstochastic affinity matrix.
+
+        Returns
+        -------
+        The updated LabelPropagation object with a new variable called "transduction".
         """
         self._set_params(**params)
         self._X = np.asanyarray(X)
