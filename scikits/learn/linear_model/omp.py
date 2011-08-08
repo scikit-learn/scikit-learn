@@ -5,7 +5,6 @@
 #
 # License: BSD Style.
 
-
 from warnings import warn
 
 import numpy as np
