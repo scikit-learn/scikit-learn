@@ -202,6 +202,12 @@ the advantage of exploring more relevant values of `alpha` parameter, and
 if the number of samples is very small compared to the number of
 observations, it is often faster than :class:`LassoCV`.
 
+Alternatively, the estimator :class:`LassoLarsIC` proposes to use the
+Akaike information criterion (AIC) and the Bayes Information criterion (BIC).
+It is a computationally cheaper alternative to find the optimal value of alpha
+as the regularization path is computed only once instead of k+1 times
+when using k-fold cross-validation.
+
 .. topic:: Examples:
 
   * :ref:`example_linear_model_plot_lasso_path_crossval.py`
