@@ -13,7 +13,6 @@
 
 import numpy as np
 import sys
-from time import time
 
 cimport numpy as np
 cimport cython
@@ -21,7 +20,6 @@ cimport cython
 cdef extern from "math.h":
     cdef extern double log(double x)
     cdef extern double pow(double base, double exponent)
-
 
 def _find_best_split(features, labels, criterion):
     """
@@ -34,23 +32,33 @@ def _find_best_split(features, labels, criterion):
           for more information. 
     """
     cdef double n_samples = features.shape[0]
-    cdef int n_features = features.shape[1]
+    cdef int n_features = features.shape[1] 
         
     best = None
     cdef double split_error = criterion(labels)
-    cdef double e1 = 0.
-    cdef double e2 = 0.
-    cdef double error = 0.
-    cdef int i
+    cdef double t = 0., e1 = 0., e2 = 0. , error = 0.
+    cdef int i, j, l = 0
+    
+    cdef np.ndarray[np.float_t, ndim=1] domain_i
+    cdef np.ndarray[np.int_t, ndim=1] labels_left, labels_right
+    
     for i in xrange(n_features):
-        domain_i = sorted(set(features[:, i]))
-        for d1, d2 in zip(domain_i[:-1], domain_i[1:]):
-            t = (d1 + d2) / 2. 
+        domain_i = np.unique(features[:, i])
+        l = len(domain_i)
+        #print 'l=', l
+        if l <= 2: continue
+        #print 'labels = ', labels
+        for j in xrange(1,l):
+            t = (domain_i[j-1] + domain_i[j]) / 2. 
             cur_split = (features[:, i] < t)
-            e1 = len(labels[cur_split]) / n_samples * \
-                criterion(labels[cur_split])
-            e2 = len(labels[~cur_split]) / n_samples * \
-                criterion(labels[~cur_split])            
+            #print cur_split
+            #print 't = ', t, ' j = ', j
+            labels_left = labels[cur_split]
+            #print 'left labels = ', labels_left            
+            labels_right = labels[~cur_split]
+            #print 'right labels = ', labels_right   
+            e1 = len(labels_left) / n_samples * criterion(labels_left)
+            e2 = len(labels_right) / n_samples * criterion(labels_right)            
             error = e1 + e2
             if error < split_error:
                 split_error = error
@@ -105,15 +113,18 @@ cpdef bincount_k(np.ndarray[np.int_t, ndim=1] X, int K):
           
     be the proportion of class k observations in node m   
 """  
-@cython.profile(False)
-cpdef inline double eval_gini(np.ndarray[np.int_t, ndim=1] labels)  except * :
+
+
+
+#@cython.profile(False)
+cpdef double eval_gini(np.ndarray[np.int_t, ndim=1] labels)  except * :
     """
         
         Gini index = \sum_{k=0}^{K-1} pmk (1 - pmk)
                    = 1 - \sum_{k=0}^{K-1} pmk ** 2
             
     """
-    cdef int K = int(labels.max()) + 1
+    cdef int K = labels.max() + 1
     N = float(labels.shape[0])
     
     cdef np.ndarray[np.float64_t, ndim=1] pm = \
@@ -126,7 +137,7 @@ cpdef inline double eval_gini(np.ndarray[np.int_t, ndim=1] labels)  except * :
          
     return H   
 
-cpdef inline double eval_entropy(np.ndarray[np.int_t, ndim=1] labels)  except * :
+cpdef double eval_entropy(np.ndarray[np.int_t, ndim=1] labels)  except * :
     """
         
         Cross Entropy = - \sum_{k=0}^{K-1} pmk log(pmk)
@@ -146,7 +157,7 @@ cpdef inline double eval_entropy(np.ndarray[np.int_t, ndim=1] labels)  except * 
          
     return H   
 
-cpdef inline double eval_miss(np.ndarray[np.int_t, ndim=1] labels)  except * :
+cpdef double eval_miss(np.ndarray[np.int_t, ndim=1] labels)  except * :
     """
         
         Misclassification error = (1 - pmk)
@@ -164,7 +175,7 @@ cpdef inline double eval_miss(np.ndarray[np.int_t, ndim=1] labels)  except * :
  Regression entropy measures
  
 """      
-cpdef inline double eval_mse(np.ndarray[np.float64_t, ndim=1] labels)  except * :
+cpdef double eval_mse(np.ndarray[np.float64_t, ndim=1] labels)  except * :
     """             
         MSE =  \sum_i (y_i - c0)^2  / N
             
