@@ -7,7 +7,7 @@ Feature extraction
 
 .. currentmodule:: scikits.learn.feature_extraction
 
-The :py:mod`scikits.learn.feature_extraction` module can be used to extract
+The :mod:`scikits.learn.feature_extraction` module can be used to extract
 features in a format supported by machine learning algorithms from datasets
 consisting of formats such as text and image.
 
@@ -15,11 +15,15 @@ consisting of formats such as text and image.
 Text feature extraction
 =======================
 
+.. currentmodule:: scikits.learn.feature_extraction.text
+
 XXX: a lot to do here
 
 
 Image feature extraction
 ========================
+
+.. currentmodule:: scikits.learn.feature_extraction.image
 
 Patch extraction
 ----------------
