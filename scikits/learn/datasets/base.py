@@ -319,10 +319,7 @@ def load_linnerud():
                  DESCR=fdescr.read())
 
 def load_boston():
-    """load the boston house prices dataset and returns it.
-
-def load_boston():
-    """Load the Boston house prices dataset and return it.
+    """Load and return the boston house-prices dataset (regression).
 
     Returns
     -------
