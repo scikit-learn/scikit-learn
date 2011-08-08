@@ -43,6 +43,9 @@ References
 """
 import numpy as np
 from .base import BaseEstimator, ClassifierMixin
+from .externals.joblib.logger import Logger
+
+logger = Logger()
 
 # really low epsilon (we don't really want machine eps)
 EPSILON = 1e-9
@@ -70,9 +73,10 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
 
     _default_alpha = 1
 
-    def __init__(self, kernel='gaussian', sigma=DEFAULT_SIGMA, alpha=None, unlabeled_identifier=-1, max_iters=100, convergence_threshold=1e-3):
+    def __init__(self, kernel='gaussian', sigma=DEFAULT_SIGMA, alpha=None, unlabeled_identifier=-1, max_iters=100, convergence_threshold=1e-3, suppress_warning=False):
         self.max_iters, self.convergence_threshold = max_iters, convergence_threshold
         self.sigma = sigma
+        self.suppress_warning = suppress_warning
 
         # object referring to a point that is unlabeled
         self.unlabeled_identifier = unlabeled_identifier
@@ -168,8 +172,13 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
 
         # label construction 
         # construct a categorical distribution for classification only (TODO: implement regression)
+        #unq_labels = set(y)
         unq_labels = set(y)
-        unq_labels.remove(self.unlabeled_identifier)
+        try:
+            unq_labels.remove(self.unlabeled_identifier)
+        except KeyError:
+            if not self.suppress_warning:
+                logger.warn("No unlabeled data found. Check the unlabeled identifier.")
 
         num_labels, num_classes = len(y), len(unq_labels)
         self.label_map = dict(zip(unq_labels, range(num_classes)))
