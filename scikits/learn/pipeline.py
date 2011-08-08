@@ -131,7 +131,7 @@ class Pipeline(BaseEstimator):
         # deleted: self._set_params(**params)
         fit_params = {step: {} for step, _ in self.steps}
         for pname, pval in params.iteritems():
-            step.param = pname.split('__', 1)
+            step, param = pname.split('__', 1)
             fit_params[step][param] = pval
         Xt = X
         for name, transform in self.steps[:-1]:
