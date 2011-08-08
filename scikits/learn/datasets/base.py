@@ -320,7 +320,7 @@ def load_linnerud():
 
 
 def load_boston():
-    """Load the Boston house prices dataset and return it.
+    """Load and return the boston house-prices dataset (regression).
 
     Returns
     -------

@@ -38,6 +38,7 @@ require to download any file from some external website.
    :toctree: generated/
    :template: function.rst
 
+   load_boston
    load_iris
    load_diabetes
    load_digits
