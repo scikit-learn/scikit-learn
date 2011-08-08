@@ -687,8 +687,7 @@ def make_low_rank_matrix(n_samples=100, n_features=100, effective_rank=10,
 
 def make_sparse_coded_signal(n_samples, n_components, n_features,
                              n_nonzero_coefs, random_state=None):
-    """
-    Generate a signal as a sparse combination of dictionary elements.
+    """Generate a signal as a sparse combination of dictionary elements.
 
     Returns a matrix Y = DX, such as D is (n_features, n_components),
     X is (n_components, n_samples) and each column of X has exactly
