@@ -8,7 +8,7 @@ import warnings
 import numpy as np
 
 from .base import LinearModel
-from ..cross_val import KFold
+from ..cross_val import check_cv
 from . import cd_fast
 
 
@@ -24,10 +24,14 @@ class ElasticNet(LinearModel):
     Parameters
     ----------
     alpha : float
-        Constant that multiplies the L1 term. Defaults to 1.0
+        Constant that multiplies the penalty terms. Defaults to 1.0
+        See the notes for the exact mathematical meaning of this
+        parameter
 
     rho : float
-        The ElasticNet mixing parameter, with 0 < rho <= 1.
+        The ElasticNet mixing parameter, with 0 < rho <= 1. For rho = 0
+        the penalty is an L1 penalty. For rho = 1 it is an L2 penalty. 
+        For 0 < rho < 1, the penalty is a combination of L1 and L2
 
     fit_intercept: bool
         Whether the intercept should be estimated or not. If False, the
@@ -54,6 +58,19 @@ class ElasticNet(LinearModel):
 
     The parameter rho corresponds to alpha in the glmnet R package
     while alpha corresponds to the lambda parameter in glmnet.
+    More specifically, the penalty is::
+
+        alpha*rho*L1 + alpha*(1-rho)*L2
+
+    If you are interested in controlling the L1 and L2 penalty
+    separately, keep in mind that this is equivalent to::
+
+        a*L1 + b*L2
+
+    for::
+        
+        alpha = a + b and rho = a/(a+b)
+
     """
 
     def __init__(self, alpha=1.0, rho=0.5, fit_intercept=True,
@@ -195,7 +212,7 @@ class Lasso(ElasticNet):
 
     See also
     --------
-    LassoLARS
+    LassoLars
 
     Notes
     -----
@@ -363,39 +380,30 @@ class LinearModelCV(LinearModel):
             keyword arguments passed to the Lasso fit method
 
         """
-
+        self._set_params(**fit_params)
         X = np.asfortranarray(X, dtype=np.float64)
         y = np.asanyarray(y, dtype=np.float64)
 
-        n_samples = X.shape[0]
+        # All LinearModelCV parameters except 'cv' are acceptable
+        path_params = self._get_params()
+        del path_params['cv']
 
         # Start to compute path on full data
-        path_params = fit_params.copy()
-        acceptable_params = self.estimator._get_param_names()
-        for param, value in self._get_params().iteritems():
-            if param in acceptable_params:
-                path_params[param] = value
         models = self.path(X, y, **path_params)
 
+        # Update the alphas list
         alphas = [model.alpha for model in models]
         n_alphas = len(alphas)
+        path_params.update({'alphas': alphas, 'n_alphas': n_alphas})
 
         # init cross-validation generator
-        cv = self.cv if self.cv else KFold(n_samples, 5)
-
-        params = dict()
-        for param, value in self._get_params().iteritems():
-            if param in acceptable_params:
-                params[param] = value
-        params['alphas'] = alphas
-        params['n_alphas'] = n_alphas
+        cv = check_cv(self.cv, X)
 
         # Compute path for all folds and compute MSE to get the best alpha
         folds = list(cv)
         mse_alphas = np.zeros((len(folds), n_alphas))
-        fit_params.update(params)
         for i, (train, test) in enumerate(folds):
-            models_train = self.path(X[train], y[train], **fit_params)
+            models_train = self.path(X[train], y[train], **path_params)
             for i_alpha, model in enumerate(models_train):
                 y_ = model.predict(X[test])
                 mse_alphas[i, i_alpha] += ((y_ - y[test]) ** 2).mean()
@@ -444,9 +452,10 @@ class LassoCV(LinearModelCV):
         dual gap for optimality and continues until it is smaller
         than tol.
 
-    cv : crossvalidation generator
-        see scikits.learn.cross_val module
-
+    cv : integer or crossvalidation generator, optional
+        If an integer is passed, it is the number of fold (default 3).
+        Specific crossvalidation objects can be passed, see 
+        scikits.learn.cross_val module for the list of possible objects
 
     Notes
     -----
@@ -470,7 +479,9 @@ class ElasticNetCV(LinearModelCV):
     ----------
     rho : float, optional
         float between 0 and 1 passed to ElasticNet (scaling between
-        l1 and l2 penalties)
+        l1 and l2 penalties). For rho = 0
+        the penalty is an L1 penalty. For rho = 1 it is an L2 penalty. 
+        For 0 < rho < 1, the penalty is a combination of L1 and L2
 
     eps : float, optional
         Length of the path. eps=1e-3 means that
@@ -497,8 +508,11 @@ class ElasticNetCV(LinearModelCV):
         dual gap for optimality and continues until it is smaller
         than tol.
 
-    cv : crossvalidation generator
-        see scikits.learn.cross_val module
+    cv : integer or crossvalidation generator, optional
+        If an integer is passed, it is the number of fold (default 3).
+        Specific crossvalidation objects can be passed, see 
+        scikits.learn.cross_val module for the list of possible objects
+
 
     Notes
     -----
@@ -510,6 +524,19 @@ class ElasticNetCV(LinearModelCV):
 
     The parameter rho corresponds to alpha in the glmnet R package
     while alpha corresponds to the lambda parameter in glmnet.
+    More specifically, the penalty is::
+
+        alpha*rho*L1 + alpha*(1-rho)*L2
+
+    If you are interested in controlling the L1 and L2 penalty
+    separately, keep in mind that this is equivalent to::
+
+        a*L1 + b*L2
+
+    for::
+        
+        alpha = a + b and rho = a/(a+b)
+
     """
 
     path = staticmethod(enet_path)
@@ -527,5 +554,3 @@ class ElasticNetCV(LinearModelCV):
         self.max_iter = max_iter
         self.tol = tol
         self.cv = cv
-
-

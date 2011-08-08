@@ -1,7 +1,7 @@
 """
 Routines for performing shortest-path graph searches
 
-The main interface is in the function `shortest_path`.  This
+The main interface is in the function `graph_shortest_path`.  This
 calls cython routines that compute the shortest path using either
 the Floyd-Warshall algorithm, or Dykstra's algorithm with Fibonacci Heaps.
 """
@@ -25,7 +25,7 @@ ITYPE = np.int32
 ctypedef np.int32_t ITYPE_t
 
 
-def shortest_path(dist_matrix, directed=True, method='best'):
+def graph_shortest_path(dist_matrix, directed=True, method='auto'):
     """
     Perform a shortest-path graph search on a positive directed or
     undirected graph.
@@ -42,9 +42,9 @@ def shortest_path(dist_matrix, directed=True, method='best'):
         progress from a point to its neighbors, not the other way around.
         if False, then find the shortest path on an undirected graph: the
         algorithm can progress from a point to its neighbors and vice versa.
-    method : string
+    method : string ['auto'|'FW'|'D']
         method to use.  Options are
-        'best' : attempt to choose the best method
+        'auto' : attempt to choose the best method for the current problem
         'FW' : Floyd-Warshall algorithm.  O[N^3]
         'D' : Dijkstra's algorithm with Fibonacci stacks.  O[(k+log(N))N^2]
 
@@ -72,7 +72,7 @@ def shortest_path(dist_matrix, directed=True, method='best'):
     N = dist_matrix.shape[0]
     Nk = len(dist_matrix.data)
 
-    if method == 'best':
+    if method == 'auto':
         if Nk < N * N / 4:
             method = 'D'
         else:
@@ -157,7 +157,7 @@ cdef np.ndarray Dijkstra(dist_matrix,
                          np.ndarray[DTYPE_t, ndim=2] graph,
                          int directed=0):
     """
-    Dijkstra algorithm
+    Dijkstra algorithm using Fibonacci Heaps
 
     Parameters
     ----------
@@ -203,9 +203,9 @@ cdef np.ndarray Dijkstra(dist_matrix,
     indptr = np.asarray(dist_matrix.indptr, dtype=ITYPE, order='C')
 
     for i from 0 <= i < N:
-        initialize_node(&(nodes[i]), i)
+        initialize_node(&nodes[i], i)
 
-    initialize_heap(&heap)
+    heap.min_node = NULL
 
     if directed:
         for i from 0 <= i < N:
@@ -241,6 +241,7 @@ cdef np.ndarray Dijkstra(dist_matrix,
 # FibonacciNode structure
 #  This structure and the operations on it are the nodes of the
 #  Fibonacci heap.
+#
 
 cdef struct FibonacciNode:
     unsigned int index
@@ -253,23 +254,24 @@ cdef struct FibonacciNode:
     FibonacciNode* children
 
 
-cdef FibonacciNode* initialize_node(FibonacciNode* node,
-                                    unsigned int index,
-                                    DTYPE_t val=0):
+cdef void initialize_node(FibonacciNode* node,
+                          unsigned int index,
+                          DTYPE_t val=0):
+    # Assumptions: - node is a valid pointer
+    #              - node is not currently part of a heap
     node.index = index
     node.val = val
     node.rank = 0
-    node.state = 0
+    node.state = 0  # 0 -> NOT_IN_HEAP
 
     node.parent = NULL
     node.left_sibling = NULL
     node.right_sibling = NULL
     node.children = NULL
 
-    return node
-
 
 cdef FibonacciNode* rightmost_sibling(FibonacciNode* node):
+    # Assumptions: - node is a valid pointer
     cdef FibonacciNode* temp = node
     while(temp.right_sibling):
         temp = temp.right_sibling
@@ -277,39 +279,43 @@ cdef FibonacciNode* rightmost_sibling(FibonacciNode* node):
 
 
 cdef FibonacciNode* leftmost_sibling(FibonacciNode* node):
+    # Assumptions: - node is a valid pointer
     cdef FibonacciNode* temp = node
     while(temp.left_sibling):
         temp = temp.left_sibling
     return temp
 
 
-cdef FibonacciNode* add_child(FibonacciNode* node, FibonacciNode* child):
-    child.right_sibling = NULL
-    child.parent = node
+cdef void add_child(FibonacciNode* node, FibonacciNode* new_child):
+    # Assumptions: - node is a valid pointer
+    #              - new_child is a valid pointer
+    #              - new_child is not the sibling or child of another node
+    new_child.parent = node
 
     if node.children:
-        add_sibling(node.children, child)
+        add_sibling(node.children, new_child)
     else:
-        node.children = child
-        child.left_sibling = NULL
+        node.children = new_child
+        new_child.right_sibling = NULL
+        new_child.left_sibling = NULL
         node.rank = 1
 
-    return child
 
-
-cdef FibonacciNode* add_sibling(FibonacciNode* node, FibonacciNode* sibling):
+cdef void add_sibling(FibonacciNode* node, FibonacciNode* new_sibling):
+    # Assumptions: - node is a valid pointer
+    #              - new_sibling is a valid pointer
+    #              - new_sibling is not the child or sibling of another node
     cdef FibonacciNode* temp = rightmost_sibling(node)
-    temp.right_sibling = sibling
-    sibling.left_sibling = temp
-    sibling.right_sibling = NULL
-    sibling.parent = node.parent
-    if sibling.parent:
-        sibling.parent.rank += 1
-
-    return sibling
+    temp.right_sibling = new_sibling
+    new_sibling.left_sibling = temp
+    new_sibling.right_sibling = NULL
+    new_sibling.parent = node.parent
+    if new_sibling.parent:
+        new_sibling.parent.rank += 1
 
 
-cdef FibonacciNode* remove(FibonacciNode* node):
+cdef void remove(FibonacciNode* node):
+    # Assumptions: - node is a valid pointer
     if node.parent:
         node.parent.rank -= 1
         if node.left_sibling:
@@ -328,8 +334,6 @@ cdef FibonacciNode* remove(FibonacciNode* node):
     node.right_sibling = NULL
     node.parent = NULL
 
-    return node
-
 
 ######################################################################
 # FibonacciHeap structure
@@ -341,83 +345,79 @@ ctypedef FibonacciNode* pFibonacciNode
 
 cdef struct FibonacciHeap:
     FibonacciNode* min_node
-    pFibonacciNode[100] roots_by_rank
+    pFibonacciNode[100] roots_by_rank  # maximum number of nodes is ~2^100.
 
 
-cdef FibonacciHeap* initialize_heap(FibonacciHeap* heap):
-    heap.min_node = NULL
-    cdef unsigned int i
-    for i from 0 <= i < 100:
-        heap.roots_by_rank[i] = NULL
-
-
-cdef FibonacciNode* insert_node(FibonacciHeap* heap,
-                                FibonacciNode* node):
+cdef void insert_node(FibonacciHeap* heap,
+                      FibonacciNode* node):
+    # Assumptions: - heap is a valid pointer
+    #              - node is a valid pointer
+    #              - node is not the child or sibling of another node
     if heap.min_node:
         add_sibling(heap.min_node, node)
         if node.val < heap.min_node.val:
             heap.min_node = node
     else:
         heap.min_node = node
-    return node
 
 
-cdef FibonacciNode* decrease_val(FibonacciHeap* heap,
-                                 FibonacciNode* node,
-                                 DTYPE_t newval):
+cdef void decrease_val(FibonacciHeap* heap,
+                       FibonacciNode* node,
+                       DTYPE_t newval):
+    # Assumptions: - heap is a valid pointer
+    #              - newval <= node.val
+    #              - node is a valid pointer
+    #              - node is not the child or sibling of another node
     node.val = newval
-    if node.parent:
-        if node.parent.val >= newval:
-            remove(node)
-            add_sibling(heap.min_node, node)
-            if node.val < heap.min_node.val:
-                heap.min_node = node
-    return node
+    if node.parent and (node.parent.val >= newval):
+        remove(node)
+        insert_node(heap, node)
 
 
-cdef FibonacciNode* link(FibonacciHeap* heap, FibonacciNode* node):
-    cdef FibonacciNode *linknode, *tmp_parent, *tmp_child
+cdef void link(FibonacciHeap* heap, FibonacciNode* node):
+    # Assumptions: - heap is a valid pointer
+    #              - node is a valid pointer
+    #              - node is already within heap
+
+    cdef FibonacciNode *linknode, *parent, *child
+
     if heap.roots_by_rank[node.rank] == NULL:
         heap.roots_by_rank[node.rank] = node
     else:
         linknode = heap.roots_by_rank[node.rank]
         heap.roots_by_rank[node.rank] = NULL
-        if node.val < linknode.val:
-            tmp_parent = node
-            tmp_child = linknode
-        else:
-            tmp_parent = linknode
-            tmp_child = node
 
-        remove(tmp_child)
-        add_child(tmp_parent, tmp_child)
-        if heap.roots_by_rank[tmp_parent.rank]:
-            link(heap, tmp_parent)
+        if node.val < linknode.val or node == heap.min_node:
+            remove(linknode)
+            add_child(node, linknode)
+            link(heap, node)
         else:
-            heap.roots_by_rank[tmp_parent.rank] = tmp_parent
-
-    return node
+            remove(node)
+            add_child(linknode, node)
+            link(heap, linknode)
 
 
 cdef FibonacciNode* remove_min(FibonacciHeap* heap):
-    cdef FibonacciNode *temp, *next_temp, *out
+    # Assumptions: - heap is a valid pointer
+    #              - heap.min_node is a valid pointer
+    cdef FibonacciNode *temp, *temp_right, *out
     cdef unsigned int i
 
-    if heap.min_node == NULL:
-        return NULL
-
+    # make all min_node children into root nodes
     if heap.min_node.children:
         temp = leftmost_sibling(heap.min_node.children)
-        next_temp = NULL
+        temp_right = NULL
 
         while temp:
-            next_temp = temp.right_sibling
+            temp_right = temp.right_sibling
             remove(temp)
             add_sibling(heap.min_node, temp)
-            temp = next_temp
+            temp = temp_right
 
+        heap.min_node.children = NULL
+
+    # choose a root node other than min_node
     temp = leftmost_sibling(heap.min_node)
-
     if temp == heap.min_node:
         if heap.min_node.right_sibling:
             temp = heap.min_node.right_sibling
@@ -426,39 +426,42 @@ cdef FibonacciNode* remove_min(FibonacciHeap* heap):
             heap.min_node = NULL
             return out
 
+    # remove min_node, and point heap to the new min
     out = heap.min_node
     remove(heap.min_node)
     heap.min_node = temp
 
+    # re-link the heap
     for i from 0 <= i < 100:
         heap.roots_by_rank[i] = NULL
 
     while temp:
         if temp.val < heap.min_node.val:
             heap.min_node = temp
-        next_temp = temp.right_sibling
+        temp_right = temp.right_sibling
         link(heap, temp)
-        temp = next_temp
+        temp = temp_right
+
     return out
 
 
 ######################################################################
 # Debugging: Functions for printing the fibonacci heap
-
-cdef void print_node(FibonacciNode* node, int level=0):
-    print '%s(%i,%i) %i' % (level*'   ', node.index, node.val, node.rank)
-    if node.children:
-        print_node(leftmost_sibling(node.children), level+1)
-    if node.right_sibling:
-        print_node(node.right_sibling, level)
-
-
-cdef void print_heap(FibonacciHeap* heap):
-    print "---------------------------------"
-    if heap.min_node:
-        print_node(leftmost_sibling(heap.min_node))
-    else:
-        print "[empty heap]"
+#
+#cdef void print_node(FibonacciNode* node, int level=0):
+#    print '%s(%i,%i) %i' % (level*'   ', node.index, node.val, node.rank)
+#    if node.children:
+#        print_node(leftmost_sibling(node.children), level+1)
+#    if node.right_sibling:
+#        print_node(node.right_sibling, level)
+#
+#
+#cdef void print_heap(FibonacciHeap* heap):
+#    print "---------------------------------"
+#    if heap.min_node:
+#        print_node(leftmost_sibling(heap.min_node))
+#    else:
+#        print "[empty heap]"
 
 
 @cython.boundscheck(False)
@@ -490,10 +493,6 @@ cdef void DijkstraDirectedOneRow(
     heap: the Fibonacci heap object to use
     nodes : the array of nodes to use
     """
-    cdef int UNLABELED = 0
-    cdef int LABELED = 1
-    cdef int SCANNED = 2
-
     cdef unsigned int N = graph.shape[0]
     cdef unsigned int i
     cdef FibonacciNode *v, *current_neighbor
@@ -503,28 +502,27 @@ cdef void DijkstraDirectedOneRow(
     for i from 0 <= i < N:
         initialize_node(&nodes[i], i)
 
+    heap.min_node = NULL
     insert_node(heap, &nodes[i_node])
 
-    while True:
+    while heap.min_node:
         v = remove_min(heap)
-        v.state = SCANNED
+        v.state = 2  # 2 -> SCANNED
 
         for i from indptr[v.index] <= i < indptr[v.index + 1]:
             current_neighbor = &nodes[neighbors[i]]
-            dist = distances[i]
-            if current_neighbor.state != SCANNED:
-                if current_neighbor.state == UNLABELED:
-                    current_neighbor.state = LABELED
+            if current_neighbor.state != 2:      # 2 -> SCANNED
+                dist = distances[i]
+                if current_neighbor.state == 0:  # 0 -> NOT_IN_HEAP
+                    current_neighbor.state = 1   # 1 -> IN_HEAP
                     current_neighbor.val = v.val + dist
                     insert_node(heap, current_neighbor)
                 elif current_neighbor.val > v.val + dist:
                     decrease_val(heap, current_neighbor,
                                  v.val + dist)
-        if heap.min_node == NULL:
-            break
 
-    for i from 0 <= i < N:
-        graph[i_node, i] = nodes[i].val
+        #v has now been scanned: add the distance to the results
+        graph[i_node, v.index] = v.val
 
 
 @cython.boundscheck(False)
@@ -540,8 +538,8 @@ cdef void DijkstraOneRow(
     FibonacciHeap* heap,
     FibonacciNode* nodes):
     """
-    Calculate distances from a single point to all targets using a
-    directed graph.
+    Calculate distances from a single point to all targets using an
+    undirected graph.
 
     Parameters
     ----------
@@ -560,31 +558,31 @@ cdef void DijkstraOneRow(
     heap: the Fibonacci heap object to use
     nodes : the array of nodes to use
     """
-    cdef int UNLABELED = 0
-    cdef int LABELED = 1
-    cdef int SCANNED = 2
-
     cdef unsigned int N = graph.shape[0]
     cdef unsigned int i
     cdef FibonacciNode *v, *current_neighbor
     cdef DTYPE_t dist
 
-    # initialize nodes
+    # re-initialize nodes
+    # children, parent, left_sibling, right_sibling should already be NULL
+    # rank should already be 0, index will already be set
+    # we just need to re-set state and val
     for i from 0 <= i < N:
-        initialize_node(&nodes[i], i)
+        nodes[i].state = 0  # 0 -> NOT_IN_HEAP
+        nodes[i].val = 0
 
     insert_node(heap, &nodes[i_node])
 
-    while True:
+    while heap.min_node:
         v = remove_min(heap)
-        v.state = SCANNED
+        v.state = 2  # 2 -> SCANNED
 
         for i from indptr1[v.index] <= i < indptr1[v.index + 1]:
             current_neighbor = &nodes[neighbors1[i]]
-            dist = distances1[i]
-            if current_neighbor.state != SCANNED:
-                if current_neighbor.state == UNLABELED:
-                    current_neighbor.state = LABELED
+            if current_neighbor.state != 2:      # 2 -> SCANNED
+                dist = distances1[i]
+                if current_neighbor.state == 0:  # 0 -> NOT_IN_HEAP
+                    current_neighbor.state = 1   # 1 -> IN_HEAP
                     current_neighbor.val = v.val + dist
                     insert_node(heap, current_neighbor)
                 elif current_neighbor.val > v.val + dist:
@@ -593,18 +591,15 @@ cdef void DijkstraOneRow(
 
         for i from indptr2[v.index] <= i < indptr2[v.index + 1]:
             current_neighbor = &nodes[neighbors2[i]]
-            dist = distances2[i]
-            if current_neighbor.state != SCANNED:
-                if current_neighbor.state == UNLABELED:
-                    current_neighbor.state = LABELED
+            if current_neighbor.state != 2:      # 2 -> SCANNED
+                dist = distances2[i]
+                if current_neighbor.state == 0:  # 0 -> NOT_IN_HEAP
+                    current_neighbor.state = 1   # 1 -> IN_HEAP
                     current_neighbor.val = v.val + dist
                     insert_node(heap, current_neighbor)
                 elif current_neighbor.val > v.val + dist:
                     decrease_val(heap, current_neighbor,
                                  v.val + dist)
 
-        if heap.min_node == NULL:
-            break
-
-    for i from 0 <= i < N:
-        graph[i_node, i] = nodes[i].val
+        #v has now been scanned: add the distance to the results
+        graph[i_node, v.index] = v.val

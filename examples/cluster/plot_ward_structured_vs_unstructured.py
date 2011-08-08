@@ -29,13 +29,13 @@ import numpy as np
 import pylab as pl
 import mpl_toolkits.mplot3d.axes3d as p3
 from scikits.learn.cluster import Ward
-from scikits.learn.datasets.samples_generator import swiss_roll
+from scikits.learn.datasets.samples_generator import make_swiss_roll
 
 ###############################################################################
 # Generate data (swiss roll dataset)
 n_samples = 1000
 noise = 0.05
-X, _ = swiss_roll(n_samples, noise)
+X, _ = make_swiss_roll(n_samples, noise)
 # Make it thinner
 X[:, 1] *= .5
 

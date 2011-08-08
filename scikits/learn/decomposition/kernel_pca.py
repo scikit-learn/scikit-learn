@@ -6,6 +6,7 @@
 import numpy as np
 from scipy import linalg
 
+from ..utils.arpack import eigsh
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import KernelCenterer
 from ..metrics.pairwise import linear_kernel
@@ -49,6 +50,19 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         (i.e. learn to find the pre-image of a point)
         Default: False
 
+    eigen_solver: string ['auto'|'dense'|'arpack']
+        Select eigensolver to use.  If n_components is much less than
+        the number of training samples, arpack may be more efficient
+        than the dense eigensolver.
+
+    tol: float
+        convergence tolerance for arpack.
+        Default: 0 (optimal value will be chosen by arpack)
+
+    max_iter : int
+        maximum number of iterations for arpack
+        Default: None (optimal value will be chosen by arpack)
+
     Attributes
     ----------
 
@@ -71,7 +85,8 @@ class KernelPCA(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, n_components=None, kernel="linear", gamma=0, degree=3,
-                 coef0=1, alpha=1.0, fit_inverse_transform=False):
+                 coef0=1, alpha=1.0, fit_inverse_transform=False,
+                 eigen_solver='auto', tol=0, max_iter=None):
         self.n_components = n_components
         self.kernel = kernel.lower()
         self.gamma = gamma
@@ -79,6 +94,9 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         self.coef0 = coef0
         self.alpha = alpha
         self.fit_inverse_transform = fit_inverse_transform
+        self.eigen_solver = eigen_solver
+        self.tol = tol
+        self.max_iter = max_iter
         self.centerer = KernelCenterer()
 
     def _get_kernel(self, X, Y=None):
@@ -106,14 +124,34 @@ class KernelPCA(BaseEstimator, TransformerMixin):
                              % self.kernel)
 
     def _fit_transform(self, X):
-        # compute kernel and eigenvectors
+        # compute kernel
         K = self.centerer.fit_transform(self._get_kernel(X))
-        self.lambdas_, self.alphas_ = linalg.eigh(K)
+
+        if self.n_components is None:
+            n_components = K.shape[0]
+        else:
+            n_components = min(K.shape[0], self.n_components)
+
+        # compute eigenvectors
+        if self.eigen_solver == 'auto':
+            if K.shape[0] > 200 and n_components < 10:
+                eigen_solver = 'arpack'
+            else:
+                eigen_solver = 'dense'
+        else:
+            eigen_solver = self.eigen_solver
+
+        if eigen_solver == 'dense':
+            self.lambdas_, self.alphas_ = linalg.eigh(
+                K, eigvals=(K.shape[0] - n_components, K.shape[0] - 1))
+        elif eigen_solver == 'arpack':
+            self.lambdas_, self.alphas_ = eigsh(K, n_components,
+                                                which="LM",
+                                                tol=self.tol,
+                                                maxiter=self.max_iter)
 
         # sort eignenvectors in descending order
         indices = self.lambdas_.argsort()[::-1]
-        if self.n_components is not None:
-            indices = indices[:self.n_components]
         self.lambdas_ = self.lambdas_[indices]
         self.alphas_ = self.alphas_[:, indices]
 
@@ -126,6 +164,10 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         return K
 
     def _fit_inverse_transform(self, X_transformed, X):
+        if hasattr(X, "tocsr"):
+            raise NotImplementedError("Inverse transform not implemented for "
+                                      "sparse matrices!")
+
         n_samples = X_transformed.shape[0]
         K = self._get_kernel(X_transformed)
         K.flat[::n_samples + 1] += self.alpha

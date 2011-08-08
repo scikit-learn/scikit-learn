@@ -125,8 +125,8 @@ This method has the same order of complexity than an
 .. between these
 
 
-Generalized Cross-Validation
-----------------------------
+Setting alpha: generalized Cross-Validation
+---------------------------------------------
 
 :class:`RidgeCV` implements ridge regression with built-in
 cross-validation of the alpha parameter.  The object works in the same way
@@ -147,6 +147,9 @@ as GridSearchCV except that it defaults to Generalized Cross-Validation
       <http://cbcl.mit.edu/projects/cbcl/publications/ps/MIT-CSAIL-TR-2007-025.pdf>`_,
       `course slides
       <http://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf>`_).
+
+
+.. _lasso:
 
 Lasso
 =====
@@ -184,7 +187,24 @@ of possible values.
 .. topic:: Examples:
 
   * :ref:`example_linear_model_lasso_and_elasticnet.py`,
-  * :ref:`example_linear_model_lasso_path_with_crossvalidation.py`
+
+Setting `alpha`
+-----------------
+
+The scikit exposes objects that set the Lasso `alpha` parameter by
+cross-validation: :class:`LassoCV` and :class:`LassoLarsCV`.
+:class:`LassoLarsCV` is based on the :ref:`least_angle_regression` algorithm
+explained below.
+
+For high-dimensional datasets with many collinear regressors,
+:class:`LassoCV` is most often preferrable. How, :class:`LassoLarsCV` has
+the advantage of exploring more relevant values of `alpha` parameter, and 
+if the number of samples is very small compared to the number of
+observations, it is often faster than :class:`LassoCV`.
+
+.. topic:: Examples:
+
+  * :ref:`example_linear_model_plot_lasso_path_crossval.py`
 
 
 Elastic Net
@@ -219,6 +239,10 @@ Johnstone and Robert Tibshirani.
 
 The advantages of LARS are:
 
+  - It is numerically efficient in contexts where p >> n (i.e., when the
+    number of dimensions is significantly greater than the number of
+    points)
+
   - It is computationally just as fast as forward selection and has
     the same order of complexity as an ordinary least squares.
 
@@ -233,9 +257,6 @@ The advantages of LARS are:
   - It is easily modified to produce solutions for other estimators,
     like the Lasso.
 
-  - It is effective in contexts where p >> n (i.e., when the number of
-    dimensions is significantly greater than the number of points)
-
 The disadvantages of the LARS method include:
 
   - Because LARS is based upon an iterative refitting of the
@@ -244,14 +265,14 @@ The disadvantages of the LARS method include:
     in the discussion section of the Efron et al. (2004) Annals of
     Statistics article.
 
-The LARS model can be used using estimator :class:`LARS`, or its
+The LARS model can be used using estimator :class:`Lars`, or its
 low-level implementation :func:`lars_path`.
 
 
 LARS Lasso
 ==========
 
-:class:`LassoLARS` is a lasso model implemented using the LARS
+:class:`LassoLars` is a lasso model implemented using the LARS
 algorithm, and unlike the implementation based on coordinate_descent,
 this yields the exact solution, which is piecewise linear as a
 function of the norm of its coefficients.
@@ -264,10 +285,10 @@ function of the norm of its coefficients.
 ::
 
    >>> from scikits.learn import linear_model
-   >>> clf = linear_model.LassoLARS(alpha=.1)
-   >>> clf.fit ([[0, 0], [1, 1]], [0, 1])
-   LassoLARS(normalize=True, verbose=False, fit_intercept=True, max_iter=500,
-        precompute='auto', alpha=0.1)
+   >>> clf = linear_model.LassoLars(alpha=.1)
+   >>> clf.fit ([[0, 0], [1, 1]], [0, 1]) # doctest: +ELLIPSIS
+   LassoLars(normalize=True, verbose=False, fit_intercept=True, max_iter=500,
+        eps=..., precompute='auto', alpha=0.1)
    >>> clf.coef_
    array([ 0.71715729,  0.        ])
 
@@ -275,11 +296,14 @@ function of the norm of its coefficients.
 
  * :ref:`example_linear_model_plot_lasso_lars.py`
 
+ * :ref:`example_linear_model_plot_lasso_path_crossval.py`
 
-The LARS algorithm provides the full path of the coefficients along
+The class :class:`LassoLarsCV` can be used to set the `alpha` parameter
+of the Lasso by cross-validation with the Lars algorithm.
+
+The Lars algorithm provides the full path of the coefficients along
 the regularization parameter almost for free, thus a common operation
 consist of retrieving the path with function :func:`lars_path`
-
 
 Mathematical formulation
 ------------------------
@@ -301,50 +325,74 @@ column is always zero.
    <http://www-stat.stanford.edu/~hastie/Papers/LARS/LeastAngle_2002.pdf>`_
    by Hastie et al.
 
+.. OMP:
 
+Orthogonal Matching Pursuit (OMP)
+=================================
+:class:`OrthogonalMatchingPursuit` and :func:`orthogonal_mp` implements the OMP
+algorithm for approximating the fit of a linear model with constraints imposed
+on the number of non-zero coefficients (ie. the L :sub:`0` pseudo-norm). 
+
+Being a forward feature selection method like :ref:`least_angle_regression`, 
+orthogonal matching pursuit can approximate the optimum solution vector with a
+fixed number of non-zero elements:
+
+.. math:: \text{arg\,min} ||y - X\gamma||_2^2 \text{ subject to } ||\gamma||_0 \leq n_{features}
+
+Alternatively, orthogonal matching pursuit can target a specific error instead
+of a specific number of non-zero coefficients. This can be expressed as:
+
+.. math:: \text{arg\,min} ||\gamma||_0 \text{ subject to } ||y-X\gamma||_2^2 \leq \varepsilon
+
+
+OMP is based on a greedy algorithm that includes at each step the atom most
+highly correlated with the current residual. It is similar to the simpler
+matching pursuit (MP) method, but better in that at each iteration, the
+residual is recomputed using an orthogonal projection on the space of the
+previously chosen dictionary elements. 
+
+
+.. topic:: Examples:
+
+ * :ref:`example_linear_model_plot_omp.py`
+
+.. topic:: References:
+
+ * http://www.cs.technion.ac.il/~ronrubin/Publications/KSVX-OMP-v2.pdf
+
+ * `Matching pursuits with time-frequency dictionaries
+   <http://blanche.polytechnique.fr/~mallat/papiers/MallatPursuit93.pdf>`_,
+   S. G. Mallat, Z. Zhang, 
 
 Bayesian Regression
 ===================
 
 Bayesian regression techniques can be used to include regularization
-parameters in the estimation procedure. This can be done by
-introducing some prior knowledge over the parameters.  For example,
-penalization by weighted :math:`\ell_{2}` norm is equivalent to
-setting Gaussian priors on the weights.
+parameters in the estimation procedure: the regularization parameter is
+not set in a hard sens but tuned to the data at hand. 
 
-.. topic:: **Pros and cons of Bayesian regression**
+This can be done by introducing some prior knowledge over the parameters.
+For example, penalization by weighted :math:`\ell_{2}` norm is equivalent
+to setting Gaussian priors on the weights.
 
-    The advantages of *Bayesian Regression* are:
+The advantages of *Bayesian Regression* are:
 
-        - It adapts to the data at hand.
+    - It adapts to the data at hand.
 
-        - It can be used to include regularization parameters in the
-          estimation procedure.
+    - It can be used to include regularization parameters in the
+      estimation procedure.
 
-    The disadvantages of *Bayesian Regression* include:
+The disadvantages of *Bayesian Regression* include:
 
-        - Inference of the model can be time consuming.
+    - Inference of the model can be time consuming.
 
-
-.. _bayesian_ridge_regression:
 
 Bayesian Ridge Regression
 -------------------------
 
-:class:`BayesianRidge` is a ridge estimator: a shrinks the coefficients
-(model weights) toward 0. The amount of shrinking is set from the data
-and controlled by a soft prior:
-
-.. figure:: ../auto_examples/linear_model/images/plot_bayesian_ridge_1.png
-   :target: ../auto_examples/linear_model/plot_bayesian_ridge.html
-   :align: center
-   :scale: 80
-
-   Weights: a comparison of ground truth, ordinary least square and 
-   bayesian ridge estimates.
-
-It tries to avoid the overfit issue of :ref:`ordinary_least_squares`, by
-adding the following prior on :math:`\beta`:
+:class:`BayesianRidge` tries to avoid the overfit issue of
+:ref:`ordinary_least_squares`, by adding the following prior on
+:math:`\beta`:
 
 .. math:: p(\beta|\lambda) =
     \mathcal{N}(\beta|0,\lambda^{-1}\bold{I_{p}})
@@ -358,10 +406,8 @@ Gaussian is narrowed around 0 which does not allow large values of
 :math:`\beta`, and with low value of :math:`\lambda`, the Gaussian is
 very flattened which allows values of :math:`\beta`.  Here, we use a
 *non-informative* prior for :math:`\lambda`.
-
-The parameters are estimated by iteratively maximizing the *marginal log
-likelihood*. There is also a Gamma prior for :math:`\lambda` and
-:math:`\alpha`:
+The parameters are estimated by maximizing the *marginal log likelihood*.
+There is also a Gamma prior for :math:`\lambda` and :math:`\alpha`:
 
 .. math:: g(\alpha|\alpha_1,\alpha_2) = \frac{\alpha_2^{\alpha_1}}
     {\Gamma(\alpha_1)} \alpha^{\alpha_1-1} e^{-\alpha_2 {\alpha}}
@@ -370,11 +416,17 @@ likelihood*. There is also a Gamma prior for :math:`\lambda` and
 .. math:: g(\lambda|\lambda_1,\lambda_2) = \frac{\lambda_2^{\lambda_1}}
     {\Gamma(\lambda_1)} \lambda^{\lambda_1-1} e^{-\lambda_2 {\lambda}}
 
-By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e^{-6}`, 
-*i.e.* very slightly informative priors.
+By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e^{-6}`, *i.e.*
+ very slightly informative priors.
 
 
-*Bayesian Ridge Regression* is used for regression::
+
+.. figure:: ../auto_examples/linear_model/images/plot_bayesian_ridge_1.png
+   :target: ../auto_examples/linear_model/plot_bayesian_ridge.html
+   :align: center
+
+
+*Bayesian Ridge Regression* is used for regression:
 
     >>> from scikits.learn import linear_model
     >>> X = [[0., 0.], [1., 1.], [2., 2.], [3., 3.]]
@@ -409,23 +461,13 @@ Regression* is more robust to ill-posed problem.
   * More details can be found in the article `Bayesian Interpolation <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.27.9072&rep=rep1&type=pdf>`_
     by MacKay, David J. C.
 
-.. _automatic_relevance_determination:
+
 
 Automatic Relevance Determination - ARD
 =======================================
 
-:class:`ARDRegression` adds a more sophisticated prior on the
-coefficients :math:`\beta` that tends to make them sparse.
-
-.. figure:: ../auto_examples/linear_model/images/plot_ard_1.png
-   :target: ../auto_examples/linear_model/plot_ard.html
-   :align: center
-   :scale: 80
-
-   Weights: a comparison of ground truth, ordinary least square and 
-   ARD estimates.
-
-Techinally, each weight :math:`\beta_{i}` is assumed to be drawn in a
+:class:`ARDRegression` adds a more sophisticated prior :math:`\beta`,
+where we assume that each weight :math:`\beta_{i}` is drawn in a
 Gaussian distribution, centered on zero and with a precision
 :math:`\lambda_{i}`:
 
@@ -441,8 +483,13 @@ There is also a Gamma prior for :math:`\lambda` and :math:`\alpha`:
 .. math:: g(\lambda|\lambda_1,\lambda_2) = \frac{\lambda_2^{\lambda_1}}
     {\Gamma(\lambda_1)} \lambda^{\lambda_1-1} e^{-\lambda_2 {\lambda}}
 
-By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e-6`, 
-*i.e.* very slightly informative priors.
+By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e-6`, *i.e.*
+ very slightly informative priors.
+
+
+.. figure:: ../auto_examples/linear_model/images/plot_ard_1.png
+   :target: ../auto_examples/linear_model/plot_ard.html
+   :align: center
 
 
 .. topic:: Examples:
