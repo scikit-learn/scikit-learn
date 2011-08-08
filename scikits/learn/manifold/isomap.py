@@ -5,7 +5,7 @@
 
 import numpy as np
 from ..base import BaseEstimator
-from ..neighbors import kneighbors_graph, NeighborsClassifier
+from ..neighbors import BallTree, kneighbors_graph
 from ..utils.graph_shortest_path import graph_shortest_path
 from ..decomposition import KernelPCA
 from ..preprocessing import KernelCenterer
@@ -57,6 +57,9 @@ class Isomap(BaseEstimator):
     `training_data_` : array-like, shape (n_samples, n_features)
         Stores the training data
 
+    `ball_tree_` : scikits.learn.neighbors.BallTree instance
+        Stores ball tree of training data for faster transform
+
     `dist_matrix_` : array-like, shape (n_samples, n_samples)
         Stores the geodesic distance matrix of training data
 
@@ -83,9 +86,8 @@ class Isomap(BaseEstimator):
                                      eigen_solver=self.eigen_solver,
                                      tol=self.tol, max_iter=self.max_iter)
 
-        # it would be best to store the BallTree of X here, but there's no
-        # good way to do this without duplicating kneighbors_graph code.
-        kng = kneighbors_graph(X, self.n_neighbors,
+        self.ball_tree_ = BallTree(X)
+        kng = kneighbors_graph(self.ball_tree_, self.n_neighbors,
                                mode='distance')
 
         self.dist_matrix_ = graph_shortest_path(kng,
@@ -172,9 +174,7 @@ class Isomap(BaseEstimator):
         -------
         X_new: array-like, shape (n_samples, out_dim)
         """
-        neighbors = NeighborsClassifier(self.n_neighbors)
-        neighbors.fit(self.training_data_, 0)
-        distances, indices = neighbors.kneighbors(X)
+        distances, indices = self.ball_tree_.query(X, return_distance=True)
 
         #Create the graph of shortest distances from X to self.training_data_
         # via the nearest neighbors of X.
