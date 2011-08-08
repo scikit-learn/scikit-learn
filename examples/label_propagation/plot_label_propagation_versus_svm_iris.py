@@ -22,4 +22,3 @@ svc = svm.SVC(kernel='linear').fit(X, Y)
 titles = ['Label Propagation 20% labeled data',
           'Support Vector Machine 80% labeled data']
 
-

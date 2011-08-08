@@ -129,10 +129,6 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
             s += Wx * yj / (Wx + EPSILON)
         return s
 
-    def transductions(self):
-        """ get transduction labels """
-        return [self.num_to_label[np.argmax(x)] for x in self._y]
-
     def fit(self, X, y, **params):
         """
         Fit a semi-supervised label propagation model based on input data 
