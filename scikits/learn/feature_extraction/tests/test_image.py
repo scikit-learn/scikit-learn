@@ -67,12 +67,14 @@ def _downsampled_lena():
     lena = sp.lena()
     lena = lena[::2, ::2] + lena[1::2, ::2] + lena[::2, 1::2] + \
            lena[1::2, 1::2]
-    lena /= 4.0
+    lena = lena[::2, ::2] + lena[1::2, ::2] + lena[::2, 1::2] + \
+           lena[1::2, 1::2]
+    lena /= 16.0
     return lena
 
 
-def _orange_lena():
-    lena = _downsampled_lena()
+def _orange_lena(lena=None):
+    lena = _downsampled_lena() if lena is None else lena
     lena_color = np.zeros(lena.shape + (3,))
     lena_color[:, :, 0] = 256 - lena
     lena_color[:, :, 1] = 256 - lena / 2
@@ -80,8 +82,8 @@ def _orange_lena():
     return lena_color
 
 
-def _make_images():
-    lena = _downsampled_lena()
+def _make_images(lena=None):
+    lena = _downsampled_lena() if lena is None else lena
     # make a collection of lenas
     images = np.zeros((3,) + lena.shape)
     images[0] = lena
@@ -89,9 +91,13 @@ def _make_images():
     images[2] = lena + 2
     return images
 
+downsampled_lena = _downsampled_lena()
+orange_lena = _orange_lena(downsampled_lena)
+lena_collection = _make_images(downsampled_lena)
+
 
 def test_extract_patches_all():
-    lena = _downsampled_lena()
+    lena = downsampled_lena
     i_h, i_w = lena.shape
     p_h, p_w = 16, 16
     expected_n_patches = (i_h - p_h + 1) * (i_w - p_w + 1)
@@ -100,7 +106,7 @@ def test_extract_patches_all():
 
 
 def test_extract_patches_all_color():
-    lena = _orange_lena()
+    lena = orange_lena
     i_h, i_w = lena.shape[:2]
     p_h, p_w = 16, 16
     expected_n_patches = (i_h - p_h + 1) * (i_w - p_w + 1)
@@ -109,7 +115,7 @@ def test_extract_patches_all_color():
 
 
 def test_extract_patches_all_rect():
-    lena = _downsampled_lena()
+    lena = downsampled_lena
     lena = lena[:, 32:97]
     i_h, i_w = lena.shape
     p_h, p_w = 16, 12
@@ -120,7 +126,7 @@ def test_extract_patches_all_rect():
 
 
 def test_extract_patches_max_patches():
-    lena = _downsampled_lena()
+    lena = downsampled_lena
     i_h, i_w = lena.shape
     p_h, p_w = 16, 16
 
@@ -129,17 +135,16 @@ def test_extract_patches_max_patches():
 
 
 def test_reconstruct_patches_perfect():
-    lena = _downsampled_lena()
-    i_h, i_w = lena.shape
+    lena = downsampled_lena
     p_h, p_w = 16, 16
 
     patches = extract_patches_2d(lena, (p_h, p_w))
-    lena_reconstructed = reconstruct_from_patches_2d(patches, (i_h, i_w))
+    lena_reconstructed = reconstruct_from_patches_2d(patches, lena.shape)
     np.testing.assert_array_equal(lena, lena_reconstructed)
 
 
 def test_reconstruct_patches_perfect_color():
-    lena = _orange_lena()
+    lena = orange_lena
     p_h, p_w = 16, 16
 
     patches = extract_patches_2d(lena, (p_h, p_w))
@@ -148,14 +153,14 @@ def test_reconstruct_patches_perfect_color():
 
 
 def test_patch_extractor_max_patches():
-    lenas = _make_images()
+    lenas = lena_collection
     extr = PatchExtractor(patch_size=(8, 8), max_patches=100, random_state=0)
     patches = extr.transform(lenas)
     assert patches.shape == (len(lenas) * 100, 8, 8)
 
 
 def test_patch_extractor_all_patches():
-    lenas = _make_images()
+    lenas = lena_collection
     i_h, i_w = lenas.shape[1:3]
     p_h, p_w = 8, 8
     expected_n_patches = len(lenas) * (i_h - p_h + 1) * (i_w - p_w + 1)
