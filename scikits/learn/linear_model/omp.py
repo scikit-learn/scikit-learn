@@ -20,9 +20,7 @@ dependence in the dictionary. The requested precision might not have been met.
 
 
 def _cholesky_omp(X, y, n_nonzero_coefs, eps=None, overwrite_x=False):
-    """
-    Solves a single Orthogonal Matching Pursuit problem using
-    the Cholesky decomposition.
+    """Orthogonal Matching Pursuit step using the Cholesky decomposition.
 
     Parameters:
     -----------
@@ -71,7 +69,7 @@ def _cholesky_omp(X, y, n_nonzero_coefs, eps=None, overwrite_x=False):
     L = np.empty((max_features, max_features), dtype=X.dtype)
     L[0, 0] = 1.
 
-    while 1:
+    while True:
         lam = np.argmax(np.abs(np.dot(X.T, residual)))
         if lam < n_active or alpha[lam] ** 2 < min_float:
             # atom already selected or inner product too small
@@ -105,10 +103,9 @@ def _cholesky_omp(X, y, n_nonzero_coefs, eps=None, overwrite_x=False):
 
 def _gram_omp(Gram, Xy, n_nonzero_coefs, eps_0=None, eps=None,
               overwrite_gram=False, overwrite_xy=False):
-    """
-    Solves a single Orthogonal Matching Pursuit problem using
-    the Cholesky decomposition, based on the Gram matrix and more
-    precomputations.
+    """Orthogonal Matching Pursuit step on a precomputed Gram matrix.
+
+    This function uses the the Cholesky decomposition method.
 
     Parameters:
     -----------
@@ -167,7 +164,7 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, eps_0=None, eps=None,
     L = np.empty((max_features, max_features), dtype=Gram.dtype)
     L[0, 0] = 1.
 
-    while 1:
+    while True:
         lam = np.argmax(np.abs(alpha))
         if lam < n_active or alpha[lam] ** 2 < min_float:
             # selected same atom twice, or inner product too small
@@ -227,7 +224,8 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, eps=None, precompute_gram=False,
         Input targets
 
     n_nonzero_coefs: int
-        Desired number of non-zero entries in the solution
+        Desired number of non-zero entries in the solution. If None (by
+        default) this value is set to 10% of n_features.
 
     eps: float
         Maximum norm of the residual. If not None, overrides n_nonzero_coefs.
@@ -323,7 +321,8 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, eps=None,
         Input targets multiplied by X: X.T * y
 
     n_nonzero_coefs: int
-        Desired number of non-zero entries in the solution
+        Desired number of non-zero entries in the solution. If None (by
+        default) this value is set to 10% of n_features.
 
     eps: float
         Maximum norm of the residual. If not None, overrides n_nonzero_coefs.
@@ -397,7 +396,8 @@ class OrthogonalMatchingPursuit(LinearModel):
     Parameters
     ----------
     n_nonzero_coefs: int, optional
-        number of selected active features
+        Desired number of non-zero entries in the solution. If None (by
+        default) this value is set to 10% of n_features.
 
     eps: float, optional
         Maximum norm of the residual. If not None, overrides n_nonzero_coefs.
@@ -497,11 +497,18 @@ class OrthogonalMatchingPursuit(LinearModel):
         X = np.atleast_2d(X)
         y = np.atleast_1d(y)
 
-        X, y, Xmean, ymean = LinearModel._center_data(X, y, self.fit_intercept)
+        n_samples, n_features = X.shape
+
+        X, y, Xmean, ymean = self._center_data(X, y, self.fit_intercept)
+
         if self.normalize:
             norms = np.sqrt(np.sum(X ** 2, axis=0))
             nonzeros = np.flatnonzero(norms)
             X[:, nonzeros] /= norms[nonzeros]
+
+        if self.n_nonzero_coefs == None and self.eps is None:
+            self.n_nonzero_coefs = int(0.1 * n_features)
+
         if Gram is not None:
             Gram = np.atleast_2d(Gram)
 
@@ -520,13 +527,20 @@ class OrthogonalMatchingPursuit(LinearModel):
                 if not overwrite_xy:
                     Xy = Xy.copy()
                 if self.normalize:
-                    Xy /= norms
+                    if Xy.ndim > 1:
+                        Xy /= norms.reshape((n_features, -1))
+                    else:
+                        Xy /= norms
 
             if self.normalize:
                 Gram /= norms
                 Gram /= norms[:, np.newaxis]
 
-            norms_sq = np.sum((y ** 2), axis=0) if eps is not None else None
+            if self.eps is not None:
+                norms_sq = np.sum((y ** 2), axis=0)
+            else:
+                norms_sq = None
+
             self.coef_ = orthogonal_mp_gram(Gram, Xy, self.n_nonzero_coefs,
                                             self.eps, norms_sq,
                                             overwrite_gram, True).T

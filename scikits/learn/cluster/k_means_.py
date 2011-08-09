@@ -487,6 +487,8 @@ class KMeans(BaseEstimator):
         """
         Set parameters and check the sample given is larger than k
         """
+        if sp.issparse(X):
+            raise ValueError("K-Means does not support sparse input matrices.")
         X = np.asanyarray(X)
         if X.shape[0] < self.k:
             raise ValueError("n_samples=%d should be larger than k=%d" % (
@@ -650,9 +652,9 @@ class MiniBatchKMeans(KMeans):
         """
         Calculates the centroids on a batch X
 
-        params
-        ------
-        X: array, [n_samples, n_features]
+        Parameters
+        ----------
+        X: array-like, shape = [n_samples, n_features]
             Coordinates of the data points to cluster
         """
         self._set_params(**params)
@@ -705,7 +707,13 @@ class MiniBatchKMeans(KMeans):
         return self
 
     def partial_fit(self, X, y=None, **params):
-        """Update k means estimate on a single mini-batch X"""
+        """Update k means estimate on a single mini-batch X.
+
+        Parameters
+        ----------
+        X: array-like, shape = [n_samples, n_features]
+            Coordinates of the data points to cluster.
+        """
         self.random_state = check_random_state(self.random_state)
 
         X = check_arrays(X, sparse_format="csr", copy=False)[0]

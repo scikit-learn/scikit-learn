@@ -4,6 +4,8 @@ Utilities to extract features from images.
 
 # Authors: Emmanuelle Gouillart <emmanuelle.gouillart@normalesup.org>
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>
+#          Olivier Grisel
+#          Vlad Niculae
 # License: BSD
 
 import numpy as np
@@ -181,10 +183,12 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
 
     Parameters
     ----------
-    image: array with shape (i_h, i_w)
-        the original image data
+    image: array, shape = (image_height, image_width) or
+        (image_height, image_width, n_channels)
+        The original image data. For color images, the last dimension specifies
+        the channel: a RGB image would have `n_channels=3`.
 
-    patch_size: tuple of ints (p_h, p_w)
+    patch_size: tuple of ints (patch_height, patch_width)
         the dimensions of one patch
 
     max_patches: integer or float, optional default is None
@@ -193,13 +197,16 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
         of patches.
 
     random_state: int or RandomState
-        Pseudo number generator state used for random sampling.
+        Pseudo number generator state used for random sampling to use if
+        `max_patches` is not None.
 
     Returns
     -------
-    patches: array
-         shape is (n_patches, patch_height, patch_width, n_colors)
-         or (n_patches, patch_height, patch_width) if n_colors is 1
+    patches: array, shape = (n_patches, patch_height, patch_width) or
+         (n_patches, patch_height, patch_width, n_channels)
+         The collection of patches extracted from the image, where `n_patches`
+         is either `max_patches` or the total number of patches that can be
+         extracted.
 
     Examples
     --------
@@ -242,7 +249,7 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
         elif isinstance(max_patches, float) and 0 < max_patches < 1:
             n_patches = max_patches * n_patches
         else:
-            raise ValueError("Invalid value for max_patches!")
+            raise ValueError("Invalid value for max_patches: %r" % max_patches)
 
         rng = check_random_state(random_state)
         patches = np.empty((n_patches, p_h, p_w, n_colors), dtype=image.dtype)
@@ -272,17 +279,20 @@ def reconstruct_from_patches_2d(patches, image_size):
 
     Parameters
     ----------
-    patches: array with shape (n_patches, p_h, p_w) or (n_patches, p_h, p_w,
-        n_colors)
-        the complete set of patches
+    patches: array, shape = (n_patches, patch_height, patch_width) or
+        (n_patches, patch_height, patch_width, n_channels)
+        The complete set of patches. If the patches contain colour information,
+        channels are indexed along the last dimension: RGB patches would
+        have `n_channels=3`.
 
-    image_size: tuple of ints (i_h, i_w, n_colors) or (i_h, i_w)
-        the size of the image that will be reconstructed.
+    image_size: tuple of ints (image_height, image_width) or
+        (image_height, image_width, n_channels)
+        the size of the image that will be reconstructed
 
     Returns
     -------
-    image: array with shape (*image_size)
-
+    image: array, shape = image_size
+        the reconstructed image
 
     """
     i_h, i_w = image_size[:2]
@@ -308,7 +318,7 @@ class PatchExtractor(BaseEstimator):
 
     Parameters
     ----------
-    patch_size: tuple of ints (p_h, p_w)
+    patch_size: tuple of ints (patch_height, patch_width)
         the dimensions of one patch
 
     max_patches: integer or float, optional default is None
@@ -318,6 +328,7 @@ class PatchExtractor(BaseEstimator):
 
     random_state: int or RandomState
         Pseudo number generator state used for random sampling.
+
     """
     def __init__(self, patch_size, max_patches=None, random_state=None):
         self.patch_size = patch_size
@@ -333,28 +344,38 @@ class PatchExtractor(BaseEstimator):
         return self
 
     def transform(self, X):
-        """Boolean thresholding of array-like or scipy.sparse matrix
+        """Transforms the image samples in X into a matrix of patch data.
 
         Parameters
         ----------
-        X : array of shape (n_samples, *image_shape)
-            Array of images from which to extract patches
+        X : array, shape = (n_samples, image_height, image_width) or
+            (n_samples, image_height, image_width, n_channels)
+            Array of images from which to extract patches. For color images,
+            the last dimension specifies the channel: a RGB image would have
+            `n_channels=3`.
 
         Returns
         -------
-        patches: array
-             shape is (n_patches, patch_height, patch_width, n_colors)
-             or (n_patches, patch_height, patch_width) if n_colors is 1
+        patches: array, shape = (n_patches, patch_height, patch_width) or
+             (n_patches, patch_height, patch_width, n_channels)
+             The collection of patches extracted from the images, where
+             `n_patches` is either `n_samples * max_patches` or the total
+             number of patches that can be extracted.
+
         """
         self.random_state = check_random_state(self.random_state)
-        n_images = len(X)
+        n_images, i_h, i_w = X.shape[:3]
+        X = np.reshape(X, (n_images, i_h, i_w, -1))
+        n_channels = X.shape[-1]
         if self.max_patches:
             n_patches = self.max_patches
         else:
             p_h, p_w = self.patch_size
-            i_h, i_w = X.shape[1], X.shape[2]
             n_patches = (i_h - p_h + 1) * (i_w - p_w + 1)
-        patches = np.empty((n_images * n_patches,) + self.patch_size)
+        patches_shape = (n_images * n_patches,) + self.patch_size
+        if n_channels > 1:
+            patches_shape += (n_channels,)
+        patches = np.empty(patches_shape)
         for ii, image in enumerate(X):
             patches[ii * n_patches:(ii + 1) * n_patches] = extract_patches_2d(
                 image, self.patch_size, self.max_patches, self.random_state)
