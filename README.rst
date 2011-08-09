@@ -80,6 +80,17 @@ The example snippets in the rST source files can be tested with `nose`_::
 .. _`nose`: http://somethingaboutorange.com/mrl/projects/nose/
 
 
+Publishing a new version of the HTML tutorial
+=============================================
+
+If your are part of the the github repo admin team, you can further
+update the online HTML version using (in the ``tutorial/`` folder)::
+
+  $ make clean html github
+
+The PDF version is manually updated.
+
+
 Contact the developers
 ======================
 
