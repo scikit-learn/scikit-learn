@@ -465,7 +465,7 @@ Feature Selection
    feature_selection.rfe.RFECV
 
 
-.. _feature_extraction_ref:
+.. _feature_extraction:
 
 
 Feature Extraction
@@ -492,6 +492,12 @@ From images
 
    feature_extraction.image.img_to_graph
    feature_extraction.image.grid_to_graph
+   feature_extraction.image.extract_patches_2d
+   feature_extraction.image.reconstruct_from_patches_2d
+
+   :template: class.rst
+
+   feature_extraction.image.PatchExtractor
 
 
 From text
