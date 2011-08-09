@@ -69,8 +69,11 @@ the :class:`KMeans` algorithm.
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_mini_batch_kmeans.py`: Comparison of the KMeans and
-   BatchKMeans
+ * :ref:`example_cluster_plot_mini_batch_kmeans.py`: Comparison of KMeans and
+   MiniBatchKMeans
+
+ * :ref:`example_document_clustering.py`: Document clustering using sparse
+   MiniBatchKMeans
 
 
 .. topic:: References:
