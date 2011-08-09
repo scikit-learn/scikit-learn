@@ -49,7 +49,9 @@ We can now load the list of files matching those categories as follows::
 
   >>> from scikits.learn.datasets import load_files
   >>> twenty_train = load_files('data/twenty_newsgroups/20news-bydate-train',
-  ...                           categories=categories)
+  ...                           categories=categories, shuffle=True,
+  ...                           random_state=42)
+  ...
 
 
 The returned dataset is a ``scikit-learn`` "bunch": a simple holder
@@ -298,7 +300,8 @@ Evaluating the predictive accuracy of the model is equally easy::
 
   >>> import numpy as np
   >>> twenty_test = load_files('data/twenty_newsgroups/20news-bydate-test',
-  ...                          categories=categories)
+  ...                          categories=categories, shuffle=True,
+  ...                          random_state=42)
   ...
   >>> docs_test = twenty_test.data
   >>> predicted = text_clf.predict(docs_test)
