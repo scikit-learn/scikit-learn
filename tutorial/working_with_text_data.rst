@@ -62,14 +62,17 @@ keys or ``object`` attributes for convenience, for instance the
   >>> twenty_train.target_names
   ['alt.atheism', 'comp.graphics', 'sci.med', 'soc.religion.christian']
 
-The files themselves are not loaded in memory yet::
+The files themselves are loaded in memory in the ``data`` attribute. For
+reference the filenames are also available::
 
-  >>> twenty_train.filenames.shape
-  (2257,)
+  >>> len(twenty_train.data)
+  2257
+  >>> len(twenty_train.filenames)
+  2257
   >>> twenty_train.filenames[0]
   'data/twenty_newsgroups/20news-bydate-train/comp.graphics/38244'
 
-Let's print the first 2 lines of the first file::
+Let's print the first 2 lines of the first loaded file::
 
   >>> print "\n".join(twenty_train.data[0].split("\n")[:2])
   From: clipper@mccarthy.csd.uwo.ca (Khun Yee Fung)
@@ -138,7 +141,7 @@ If ``n_samples == 10000``, storing ``X`` as a numpy array of type
 float32 would require 10000 x 100000 x 4 bytes = **4GB in RAM** which
 is barely manageable on today's computers.
 
-Furtunately, **most values in X will be zeros** since for a given
+Fortunately, **most values in X will be zeros** since for a given
 document less than a couple thousands of distinct words will be
 used. For this reason we say that bags of words are typically
 **high-dimensional sparse datasets**. We can save a lot of memory by
@@ -181,8 +184,7 @@ dictionary of features and transform documents to feature vectors::
 
   >>> from scikits.learn.feature_extraction.text import CountVectorizer
   >>> count_vect = CountVectorizer()
-  >>> docs_train = [open(f).read() for f in twenty_train.filenames]
-  >>> X_train_counts = count_vect.fit_transform(docs_train)
+  >>> X_train_counts = count_vect.fit_transform(twenty_train.data)
   >>> X_train_counts.shape
   (2257, 33883)
 
@@ -199,9 +201,9 @@ in the whole training corpus.
   The method ``count_vect.fit_transform`` performs two actions:
   it learns the vocabulary and transforms the documents into count vectors.
   It's possible to separate these steps by calling
-  ``count_vect.fit(docs_train)`` followed by
-  ``X_train_counts = count_vect.transform(docs_train)``,
-  but doing so would read and tokenize each text file twice.
+  ``count_vect.fit(twenty_train.data)`` followed by
+  ``X_train_counts = count_vect.transform(twenty_train.data)``,
+  but doing so would tokenize and vectorize each text file twice.
 
 
 From occurrences to frequencies
@@ -290,7 +292,7 @@ The names ``vect``, ``tfidf`` and ``clf`` (classifier) are arbitrary.
 We shall see their use in the section on grid search, below.
 We can now train the model with a single command::
 
-  >>> _ = text_clf.fit(docs_train, twenty_train.target)
+  >>> _ = text_clf.fit(twenty_train.data, twenty_train.target)
 
 
 Evaluation of the performance on the test set
@@ -320,7 +322,7 @@ classifier object into our pipeline::
   ...     ('tfidf', TfidfTransformer()),
   ...     ('clf', LinearSVC()),
   ... ])
-  >>> _ = text_clf.fit(docs_train, twenty_train.target)
+  >>> _ = text_clf.fit(twenty_train.data, twenty_train.target)
   >>> predicted = text_clf.predict(docs_test)
   >>> np.mean(predicted == twenty_test.target)            # doctest: +ELLIPSIS
   0.922...
@@ -378,7 +380,8 @@ parameter of either 100 or 1000 for the linear SVM::
 Obviously, such an exhaustive search can be expensive. If we have multiple
 CPU cores at our disposal, we can tell the grid searcher to try these eight
 parameter combinations in parallel with the ``n_jobs`` parameter. If we give
-this parameter a value of ``-1``, grid search will detect how many cores are installed and uses them all::
+this parameter a value of ``-1``, grid search will detect how many cores
+are installed and uses them all::
 
   >>> gs_clf = GridSearchCV(text_clf, parameters, n_jobs=-1)
 
@@ -386,7 +389,7 @@ The grid search instance behaves like a normal ``scikit-learn``
 model. Let's perform the search on a smaller subset of the training data
 to speed up the computation::
 
-  >>> gs_clf = gs_clf.fit(docs_train[:400], twenty_train.target[:400])
+  >>> gs_clf = gs_clf.fit(twenty_train.data[:400], twenty_train.target[:400])
 
 The result of calling ``fit`` on a ``GridSearchCV`` object is a classifier
 that we can use to ``predict``::
@@ -414,5 +417,4 @@ we can do::
   A ``GridSearchCV`` object also stores the best classifier that it trained
   as its ``best_estimator`` attribute. In this case, that isn't much use as
   we trained on a small, 400-document subset of our full training set.
-
 
