@@ -24,7 +24,7 @@ import numpy as np
 from ..utils import check_random_state
 
 class Bunch(dict):
-    """Container object for datasets: dictionnary-like object that
+    """Container object for datasets: dictionary-like object that
        exposes its keys as attributes."""
 
     def __init__(self, **kwargs):
@@ -179,7 +179,7 @@ def load_iris():
     Return
     ------
     data : Bunch
-        Dictionnary-like object, the interesting attributes are:
+        Dictionary-like object, the interesting attributes are:
         'data', the data to learn, 'target', the classification labels,
         'target_names', the meaning of the labels, and 'DESCR', the
         full description of the dataset.
@@ -226,7 +226,7 @@ def load_digits(n_class=10):
     Return
     ------
     data : Bunch
-        Dictionnary-like object, the interesting attributes are:
+        Dictionary-like object, the interesting attributes are:
         'data', the data to learn, `images`, the images corresponding
         to each sample, 'target', the classification labels for each
         sample, 'target_names', the meaning of the labels, and 'DESCR',
@@ -269,7 +269,7 @@ def load_diabetes():
     Return
     ------
     data : Bunch
-        Dictionnary-like object, the interesting attributes are:
+        Dictionary-like object, the interesting attributes are:
         'data', the data to learn and 'target', the labels for each
         sample.
     """
@@ -284,7 +284,7 @@ def load_linnerud():
     Return
     ------
     data : Bunch
-        Dictionnary-like object, the interesting attributes are:
+        Dictionary-like object, the interesting attributes are:
         'data_exercise' and 'data_physiological', the two multivariate
         datasets, as well as 'header_exercise' and
         'header_physiological', the corresponding headers.
