@@ -47,7 +47,7 @@ class Leaf(object):
     def __init__(self, v):
         self.v = v
 
-    def __str__(self):
+    def _graphviz(self):
         return 'Leaf(%s)' % (self.v)
 
 
@@ -67,14 +67,14 @@ class Node(object):
         self.left = left
         self.right = right
 
-    def __str__(self):
-        return 'x[%s] < %s, \\n error = %s' % \
-            (self.dimension, self.value, self.error)
+    def _graphviz(self):
+        return "x[%s] < %s \\n error = %s" \
+               % (self.dimension, self.value, self.error)
 
 
 def _find_best_split(features, labels, criterion):
     n_samples, n_features = features.shape
-    K = int(np.abs(labels.max())) + 1            
+    K = int(np.abs(labels.max())) + 1
     pm = np.zeros((K,), dtype=np.float64)
 
     best = None
@@ -182,10 +182,17 @@ def _graphviz(tree):
     '''
     if type(tree) is Leaf:
         return ""
-    left = "\"" + str(tree) + "\" -> \"" + str(tree.left) + "\";\n"
-    right = "\"" + str(tree) + "\" -> \"" + str(tree.right) + "\";\n"
+    s = str(tree) + \
+        " [label=" + "\"" + tree._graphviz() + "\"" + "] ;\n"
+    s += str(tree.left) + \
+        " [label=" + "\"" + tree.left._graphviz() + "\"" + "] ;\n"
+    s += str(tree.right) + \
+        " [label=" + "\"" + tree.right._graphviz() + "\"" + "] ;\n"
 
-    return left + _graphviz(tree.left) + right + _graphviz(tree.right)
+    s += str(tree) + " -> " + str(tree.left) + " ;\n"
+    s += str(tree) + " -> " + str(tree.right) + " ;\n"
+
+    return s + _graphviz(tree.left) + _graphviz(tree.right)
 
 
 class BaseDecisionTree(BaseEstimator):
@@ -227,7 +234,7 @@ class BaseDecisionTree(BaseEstimator):
         """
         if self.tree is None:
             raise Exception('Tree not initialized. Perform a fit first')
-                
+
         with open(filename, 'w') as f:
             f.write("digraph Tree {\n")
             f.write(_graphviz(self.tree))
