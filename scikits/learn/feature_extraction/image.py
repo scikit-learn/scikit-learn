@@ -204,7 +204,9 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
     -------
     patches: array, shape = (n_patches, patch_height, patch_width) or
          (n_patches, patch_height, patch_width, n_channels)
-         The collection of patches extracted from the image.
+         The collection of patches extracted from the image, where `n_patches`
+         is either `max_patches` or the total number of patches that can be
+         extracted.
 
     Examples
     --------
@@ -285,11 +287,12 @@ def reconstruct_from_patches_2d(patches, image_size):
 
     image_size: tuple of ints (image_height, image_width) or
         (image_height, image_width, n_channels)
-        the size of the image that will be reconstructed.
+        the size of the image that will be reconstructed
 
     Returns
     -------
     image: array, shape = image_size
+        the reconstructed image
 
     """
     i_h, i_w = image_size[:2]
@@ -353,9 +356,12 @@ class PatchExtractor(BaseEstimator):
 
         Returns
         -------
-        patches: array
-             shape is (n_patches, patch_height, patch_width)
-             or (n_patches, patch_height, patch_width, n_channels)
+        patches: array, shape = (n_patches, patch_height, patch_width) or
+             (n_patches, patch_height, patch_width, n_channels)
+             The collection of patches extracted from the images, where
+             `n_patches` is either `n_samples * max_patches` or the total
+             number of patches that can be extracted.
+
 
         """
         self.random_state = check_random_state(self.random_state)
