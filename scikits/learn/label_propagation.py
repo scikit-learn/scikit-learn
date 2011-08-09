@@ -236,8 +236,7 @@ class LabelPropagation(BaseLabelPropagation):
     def _build_graph(self):
         affinity_matrix = self.kernel(self._X, kernel=self.kernel,
                 gamma=self.gamma)
-        degree_matrix = map(lambda x: (np.sum(x, axis=0)),
-                affinity_matrix) * np.identity(affinity_matrix.shape[0])
+        degree_matrix = np.diag(np.sum(affinity_matrix, axis=0))
         deg_inv = np.linalg.inv(degree_matrix)
         aff_ideg = deg_inv * np.matrix(affinity_matrix)
         self._graph_matrix = aff_ideg
