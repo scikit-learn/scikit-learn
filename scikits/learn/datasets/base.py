@@ -238,8 +238,9 @@ def load_digits(n_class=10):
     To load the data and visualize the images::
 
     >>> from scikits.learn.datasets import load_digits
-    >>> import pylab as pl
     >>> digits = load_digits()
+
+    >>> # import pylab as pl
     >>> # pl.gray()
     >>> # pl.matshow(digits.images[0]) # Visualize the first image
     >>> # pl.show()
