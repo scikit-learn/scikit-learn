@@ -91,10 +91,10 @@ class RFE(BaseEstimator):
         # Initialization
         n_features = X.shape[1]
 
-        if isinstance(self.step, int):
-            step = self.step
-        else:
+        if 0.0 < self.step < 1.0
             step = int(self.step * n_features)
+        else:
+            step = int(self.step)
         assert step > 0
 
         estimator = self.estimator
