@@ -97,7 +97,6 @@ class RFE(BaseEstimator):
             step = int(self.step)
         assert step > 0
 
-        estimator = self.estimator
         support_ = np.ones(n_features, dtype=np.bool)
         ranking_ = np.ones(n_features, dtype=np.int)
 
@@ -107,8 +106,8 @@ class RFE(BaseEstimator):
             features = np.arange(n_features)[support_]
 
             # Rank the remaining features
-            estimator.fit(X[:, features], y)
-            ranks = np.argsort(np.sum(estimator.coef_ ** 2, axis=0))
+            self.estimator.fit(X[:, features], y)
+            ranks = np.argsort(np.sum(self.estimator.coef_ ** 2, axis=0))
 
             # Eliminate the worse features
             threshold = min(step, np.sum(support_) - self.n_features_to_select)
