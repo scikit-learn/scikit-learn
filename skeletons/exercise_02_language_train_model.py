@@ -30,26 +30,23 @@ class LowerCasePreprocessor(object):
 # The real code starts here
 #
 
-
 # the training data folder must be passed as first argument
 languages_data_folder = sys.argv[1]
-dataset = load_files(languages_data_folder)
+dataset = load_files(languages_data_folder, shuffle=True, random_state=42)
 
 # split the dataset in training and test set:
 n_samples_total = dataset.filenames.shape[0]
+split = n_samples_total / 2
 
-docs_train = [open(f).read()
-              for f in dataset.filenames[:n_samples_total/2]]
-docs_test = [open(f).read()
-             for f in dataset.filenames[n_samples_total/2:]]
+docs_train = dataset.data[:split]
+docs_test = dataset.data[split:]
 
-
-y_train = dataset.target[:n_samples_total/2]
-y_test = dataset.target[n_samples_total/2:]
+y_train = dataset.target[:split]
+y_test = dataset.target[split:]
 
 
 # Build a an analyzer that split strings into sequence of 1 to 3 characters
-# after using the previous preprocessor
+# after using the previously introduced LowerCasePreprocessor
 
 # TODO
 
