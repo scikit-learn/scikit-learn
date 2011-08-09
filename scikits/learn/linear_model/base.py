@@ -103,8 +103,9 @@ class LinearRegression(LinearModel):
 
     """
 
-    def __init__(self, fit_intercept=True):
+    def __init__(self, fit_intercept=True, normalize=False):
         self.fit_intercept = fit_intercept
+        self.normalize = False
 
     def fit(self, X, y, **params):
         """
@@ -129,12 +130,12 @@ class LinearRegression(LinearModel):
         X = np.asanyarray(X)
         y = np.asanyarray(y)
 
-        X, y, Xmean, ymean = LinearModel._center_data(X, y, self.fit_intercept)
+        X, y, Xmean, ymean, Xstd = LinearModel._center_data(X, y, self.fit_intercept)
 
         self.coef_, self.residues_, self.rank_, self.singular_ = \
                 np.linalg.lstsq(X, y)
 
-        self._set_intercept(Xmean, ymean)
+        self._set_intercept(Xmean, ymean, Xstd)
         return self
 
 ##
