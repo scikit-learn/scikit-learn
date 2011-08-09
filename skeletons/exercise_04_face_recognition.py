@@ -19,7 +19,7 @@ import pylab as pl
 from scikits.learn.grid_search import GridSearchCV
 from scikits.learn.metrics import classification_report
 from scikits.learn.metrics import confusion_matrix
-from scikits.learn.pca import RandomizedPCA
+from scikits.learn.decomposition import RandomizedPCA
 from scikits.learn.svm import SVC
 
 # Load dataset in memory
