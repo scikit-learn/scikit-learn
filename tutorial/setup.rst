@@ -98,8 +98,8 @@ mentioned dependencies and your operating system.
 
 .. _`scikit-learn mailing list`: https://lists.sourceforge.net/lists/listinfo/scikit-learn-general
 
-In the rest of the tutorial, the path to the extracted archive folder
-``scikits.learn`` will be named ``$SKL_HOME``.
+In the rest of the tutorial, the path to the ``scikit-learn`` source
+folder will be named ``$SKL_HOME``.
 
 
 Download the datasets
