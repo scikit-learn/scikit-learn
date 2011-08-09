@@ -47,7 +47,7 @@ installed:
   * Under **MacOSX** you should probably use a scientific python distribution
     such as `Scipy Superpack`_
 
-  * Under Windows the `Python(x,y)`_ is probably your best bet to get a
+  * Under **Windows** the `Python(x,y)`_ is probably your best bet to get a
     working numpy / scipy environment up and running.
 
 Alternatively under Windows and MaxOSX you can use the EPD_ (Enthought
@@ -100,6 +100,11 @@ mentioned dependencies and your operating system.
 
 In the rest of the tutorial, the path to the ``scikit-learn`` source
 folder will be named ``$SKL_HOME``.
+
+As usual building from source under Windows is slightly more complicated.
+Checkout the `build instructions`_ on the scikit-learn website.
+
+.. _`build instructions`: http://scikit-learn.sourceforge.net/dev/install.html#building-on-windows
 
 
 Download the datasets
