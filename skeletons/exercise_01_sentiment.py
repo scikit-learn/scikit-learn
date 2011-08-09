@@ -18,15 +18,15 @@ from scikits.learn import metrics
 
 # the training data folder must be passed as first argument
 movie_reviews_data_folder = sys.argv[1]
-dataset = load_files(movie_reviews_data_folder)
+dataset = load_files(movie_reviews_data_folder, shuffle=True, random_state=42)
 
 # split the dataset in training and test set:
 n_samples_total = dataset.filenames.shape[0]
 
 split = (n_samples_total * 3) / 4
 
-docs_train = [open(f).read() for f in dataset.filenames[:split]]
-docs_test = [open(f).read() for f in dataset.filenames[split:]]
+docs_train = dataset.data[:split]
+docs_test = dataset.data[split:]
 
 y_train = dataset.target[:split]
 y_test = dataset.target[split:]
