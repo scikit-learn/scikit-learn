@@ -1,6 +1,5 @@
 # encoding: utf-8
 # cython: cdivision=True
-# cython: profile=True
 # cython: boundscheck=False
 # cython: wraparound=False
 #
@@ -10,8 +9,6 @@
 #
 # Adapted for CART by Brian Holt <bdholt1@gmail.com>
 #
-
-import numpy as np
 
 cimport numpy as np
 cimport cython
@@ -129,16 +126,20 @@ cpdef double eval_mse(np.ndarray labels,
         MSE =  \sum_i (y_i - c0)^2  / N
         
         pm is a redundant argument.    
-    """   
-    
-    cdef float c0 = np.mean(labels)
-    cdef int N = int(labels.shape[0])        
-                       
+    """     
+    cdef double *_labels = <double *>labels.data
+    cdef int n_labels = labels.shape[0]
+
+    cdef float c0
+    cdef Py_ssize_t i = 0
+    for i in range(n_labels):
+        c0 += _labels[i]
+    c0 /= n_labels
+
     cdef double H = 0.
-    cdef Py_ssize_t i
-    for i in range(N):
-        H += pow(labels[i] - c0, 2) 
-    H /= N
+    for i in range(n_labels):
+        H += pow(_labels[i] - c0, 2) 
+    H /= n_labels
         
     return H
     

@@ -79,14 +79,17 @@ def _find_best_split(features, labels, criterion):
     best = None
     split_error = criterion(labels, pm)
     for i in xrange(n_features):
-        domain_i = sorted(set(features[:, i]))
+        features_at_i = features[:, i]
+        domain_i = sorted(set(features_at_i))
         for d1, d2 in zip(domain_i[:-1], domain_i[1:]):
             t = (d1 + d2) / 2.
-            cur_split = (features[:, i] < t)
-            e1 = len(labels[cur_split]) / n_samples * \
-                criterion(labels[cur_split], pm)              
-            e2 = len(labels[~cur_split]) / n_samples * \
-                criterion(labels[~cur_split], pm)
+            cur_split = (features_at_i < t)
+            left_labels = labels[cur_split]
+            right_labels = labels[~cur_split]
+            e1 = len(left_labels) / n_samples * \
+                criterion(left_labels, pm)              
+            e2 = len(right_labels) / n_samples * \
+                criterion(right_labels, pm)
             error = e1 + e2
             if error < split_error:
                 split_error = error
