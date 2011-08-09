@@ -27,19 +27,15 @@ Image feature extraction
 
 Patch extraction
 ----------------
-.. testsetup:: *
-
-    import numpy as np
-    import from scikits.learn.feature_extraction.image import \
-        extract_patches_2d, reconstruct_from_patches_2d, PatchExtractor
 
 The :func:`extract_patches_2d` function extracts patches from an image stored
 as a two-dimensional array, or three-dimensional with color information along
 the third axis. For rebuilding an image from all its patches, use
-:func:`reconstruct_from_patches_2d`. For example:
+:func:`reconstruct_from_patches_2d`. For example::
 
-.. doctest::
-
+    >>> import numpy as np
+    >>> import from scikits.learn.feature_extraction.image import \
+            extract_patches_2d, reconstruct_from_patches_2d, PatchExtractor
     >>> one_image = np.arange(4 * 4 * 3).reshape((4, 4, 3))
     >>> one_image[:, :, 0]
     array([[ 0,  3,  6,  9],
@@ -66,10 +62,7 @@ the third axis. For rebuilding an image from all its patches, use
 
 The :class:`PatchExtractor` class works in the same way as
 :func:`extract_patches_2d`, only it supports multiple images as input. It is
-implemented as an estimator, so it can be used
-in pipelines.
-
-.. doctest::
+implemented as an estimator, so it can be used in pipelines. See::
 
     >>> five_images = np.arange(5 * 4 * 4 * 3).reshape(5, 4, 4, 3)
     >>> patches = PatchExtractor((2, 2)).transform(five_images)
