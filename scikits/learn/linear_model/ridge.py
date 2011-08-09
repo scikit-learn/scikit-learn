@@ -137,6 +137,9 @@ class Ridge(LinearModel):
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
+    normalize : boolean, optional
+        If True, the regressors X are normalized
+
     tol: float
         Precision of the solution.
 
@@ -159,9 +162,10 @@ class Ridge(LinearModel):
     Ridge(alpha=1.0, tol=0.001, fit_intercept=True)
     """
 
-    def __init__(self, alpha=1.0, fit_intercept=True, tol=1e-3):
+    def __init__(self, alpha=1.0, fit_intercept=True, normalize=False, tol=1e-3):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
+        self.normalize = normalize
         self.tol = tol
 
     def fit(self, X, y, sample_weight=1.0, solver='auto', **params):
@@ -196,12 +200,12 @@ class Ridge(LinearModel):
         X = safe_asanyarray(X, dtype=np.float)
         y = np.asanyarray(y, dtype=np.float)
 
-        X, y, X_mean, y_mean = \
-           LinearModel._center_data(X, y, self.fit_intercept)
+        X, y, X_mean, y_mean, Xstd = \
+           LinearModel._center_data(X, y, self.fit_intercept, self.normalize)
 
         self.coef_ = ridge_regression(X, y, self.alpha, sample_weight,
                                       solver, self.tol)
-        self._set_intercept(X_mean, y_mean)
+        self._set_intercept(X_mean, y_mean, Xstd)
         return self
 
 
@@ -220,6 +224,9 @@ class RidgeClassifier(Ridge):
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
+
+    normalize : boolean, optional
+        If True, the regressors X are normalized
 
     Attributes
     ----------
@@ -322,9 +329,10 @@ class _RidgeGCV(LinearModel):
     """
 
     def __init__(self, alphas=[0.1, 1.0, 10.0], fit_intercept=True,
-                       score_func=None, loss_func=None):
+                       normalize=False, score_func=None, loss_func=None):
         self.alphas = np.asanyarray(alphas)
         self.fit_intercept = fit_intercept
+        self.normalize = normalize
         self.score_func = score_func
         self.loss_func = loss_func
 
@@ -385,7 +393,8 @@ class _RidgeGCV(LinearModel):
 
         n_samples = X.shape[0]
 
-        X, y, Xmean, ymean = LinearModel._center_data(X, y, self.fit_intercept)
+        X, y, Xmean, ymean, Xstd = LinearModel._center_data(X, y,
+                self.fit_intercept, self.normalize)
 
         K, v, Q = self._pre_compute(X, y)
         n_y = 1 if len(y.shape) == 1 else y.shape[1]
@@ -413,7 +422,7 @@ class _RidgeGCV(LinearModel):
         self.dual_coef_ = C[best]
         self.coef_ = safe_sparse_dot(self.dual_coef_.T, X)
 
-        self._set_intercept(Xmean, ymean)
+        self._set_intercept(Xmean, ymean, Xstd)
 
         return self
 
@@ -440,6 +449,9 @@ class RidgeCV(LinearModel):
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
+    normalize : boolean, optional
+        If True, the regressors X are normalized
+
     loss_func: callable, optional
         function that takes 2 arguments and compares them in
         order to evaluate the performance of prediciton (small is good)
@@ -456,9 +468,10 @@ class RidgeCV(LinearModel):
     """
 
     def __init__(self, alphas=np.array([0.1, 1.0, 10.0]), fit_intercept=True,
-                       score_func=None, loss_func=None, cv=None):
+                   normalize=False, score_func=None, loss_func=None, cv=None):
         self.alphas = alphas
         self.fit_intercept = fit_intercept
+        self.normalize = normalize
         self.score_func = score_func
         self.loss_func = loss_func
         self.cv = cv
