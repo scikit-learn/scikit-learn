@@ -108,11 +108,11 @@ def test_transform():
 
 
 def test_pipeline():
-    # check that LocallyLinearEmbedding works fine as a Pipeline
+    # check that Isomap works fine as a transformer in a Pipeline
     iris = datasets.load_iris()
     clf = pipeline.Pipeline(
-        [('filter', manifold.Isomap()),
-         ('clf', neighbors.NeighborsClassifier())])
+        [('isomap', manifold.Isomap()),
+         ('neighbors_clf', neighbors.NeighborsClassifier())])
     clf.fit(iris.data, iris.target)
     assert_lower(.7, clf.score(iris.data, iris.target))
 
