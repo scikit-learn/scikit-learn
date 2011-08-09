@@ -359,14 +359,18 @@ class PatchExtractor(BaseEstimator):
 
         """
         self.random_state = check_random_state(self.random_state)
-        n_images = len(X)
+        n_images, i_h, i_w = X.shape[:3]
+        X = np.reshape(X, (n_images, i_h, i_w, -1))
+        n_channels = X.shape[-1]
         if self.max_patches:
             n_patches = self.max_patches
         else:
             p_h, p_w = self.patch_size
-            i_h, i_w = X.shape[1], X.shape[2]
             n_patches = (i_h - p_h + 1) * (i_w - p_w + 1)
-        patches = np.empty((n_images * n_patches,) + self.patch_size)
+        patches_shape = (n_images * n_patches,) + self.patch_size
+        if n_channels > 1:
+            patches_shape += (n_channels,)
+        patches = np.empty(patches_shape)
         for ii, image in enumerate(X):
             patches[ii * n_patches:(ii + 1) * n_patches] = extract_patches_2d(
                 image, self.patch_size, self.max_patches, self.random_state)

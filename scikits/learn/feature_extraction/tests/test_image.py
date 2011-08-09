@@ -167,3 +167,13 @@ def test_patch_extractor_all_patches():
     extr = PatchExtractor(patch_size=(p_h, p_w), random_state=0)
     patches = extr.transform(lenas)
     assert patches.shape == (expected_n_patches, p_h, p_w)
+
+
+def test_patch_extractor_color():
+    lenas = _make_images(orange_lena)
+    i_h, i_w = lenas.shape[1:3]
+    p_h, p_w = 8, 8
+    expected_n_patches = len(lenas) * (i_h - p_h + 1) * (i_w - p_w + 1)
+    extr = PatchExtractor(patch_size=(p_h, p_w), random_state=0)
+    patches = extr.transform(lenas)
+    assert patches.shape == (expected_n_patches, p_h, p_w, 3)
