@@ -75,7 +75,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
 
     _default_alpha = 1
 
-    def __init__(self, kernel='gaussian', gamma=0, alpha=None,
+    def __init__(self, kernel='gaussian', gamma=20, alpha=None,
             unlabeled_identifier=-1, max_iters=100,
             conv_threshold=1e-3, suppress_warning=False):
         self.max_iters = max_iters
@@ -105,7 +105,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         This basic implementation creates a non-stochastic affinity matrix, so
         class distributions will exceed 1 (normalization may be desired)
         """
-        self._graph_matrix = compute_affinity_matrix(self._X,
+        self._graph_matrix = self.kernel(self._X,
                 kernel=self.kernel, gamma=self.gamma)
 
     def predict(self, X):
@@ -223,7 +223,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         # set the transduction item
 
         num_to_label = dict([reversed(itm) for itm in self.label_map.items()])
-        transduction = map(lambda x: self.num_to_label[np.argmax(x)], self._y)
+        transduction = map(lambda x: num_to_label[np.argmax(x)], self._y)
         self.num_to_label, self.transduction = num_to_label, transduction
         return self
 
@@ -234,7 +234,7 @@ class LabelPropagation(BaseLabelPropagation):
     uses hard clamping.
     """
     def _build_graph(self):
-        affinity_matrix = compute_affinity_matrix(self._X, kernel=self.kernel,
+        affinity_matrix = self.kernel(self._X, kernel=self.kernel,
                 gamma=self.gamma)
         degree_matrix = map(lambda x: (np.sum(x, axis=0)),
                 affinity_matrix) * np.identity(affinity_matrix.shape[0])
@@ -257,30 +257,18 @@ class LabelSpreading(BaseLabelPropagation):
 
     def _build_graph(self):
         """
-        Graph matrix for Label Spreading uses the Graph Laplacian!
+        Graph matrix for Label Spreading uses the Graph Laplacian
         """
-        affinity_matrix = compute_affinity_matrix(self._X, kernel=self.kernel,
-                gamma=self.gamma, diagonal=0)
-        degree_matrix = map(lambda x: (np.sum(x, axis=0)),
-                affinity_matrix) * np.identity(affinity_matrix.shape[0])
+        # compute affinity matrix (or gram matrix)
+        n_samples = self._X.shape[0]
+        affinity_matrix = self.kernel(self._X, self._X, gamma=self.gamma)
+        affinity_matrix[np.diag_indices(n_samples)] = 0
+        degree_matrix = np.diag(np.sum(affinity_matrix, axis=0))
         deg_invsq = np.sqrt(np.linalg.inv(degree_matrix))
-
         laplacian = deg_invsq * np.matrix(affinity_matrix) * deg_invsq
         self._graph_matrix = laplacian
 
 ### Helper functions
-
-
-def compute_affinity_matrix(X, kernel, gamma, diagonal=1):
-    """ affinity matrix from input matrix (fully connected graph) """
-    height = X.shape[0]
-    aff_mat = np.zeros((height, height))
-    for i in xrange(height):
-        aff_mat[i, i] = diagonal
-        for j in xrange(i + 1, height):
-            aff = kernel(X[i], X[j], gamma)
-            aff_mat[i, j] = aff_mat[j, i] = aff
-    return aff_mat
 
 
 def not_converged(y, y_hat, threshold=1e-3):
