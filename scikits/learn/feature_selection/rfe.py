@@ -11,6 +11,7 @@ from ..base import BaseEstimator
 from ..base import is_classifier
 from ..cross_val import check_cv
 
+
 class RFE(BaseEstimator):
     """Feature ranking with recursive feature elimination.
 
@@ -41,15 +42,15 @@ class RFE(BaseEstimator):
     `support_` : array of shape [n_features]
         The mask of selected features.
 
-    `ranking_` : array-like of shape [n_features]
+    `ranking_` : array of shape [n_features]
         The feature ranking, such that `ranking_[i]` corresponds to the ranking
         position of the i-th feature. Selected (i.e., estimated best) features
         are assigned rank 1.
 
     Examples
     --------
-    The following example shows how to retrieve the 5 right informative features
-    in the Friedman #1 dataset.
+    The following example shows how to retrieve the 5 right informative
+    features in the Friedman #1 dataset.
 
     >>> from scikits.learn.datasets import make_friedman1
     >>> from scikits.learn.feature_selection import RFE
@@ -136,6 +137,7 @@ class RFE(BaseEstimator):
         X_r = X[:, self.support_]
         return X_r.copy() if copy else X_r
 
+
 class RFECV(RFE):
     """Feature ranking with recursive feature elimination and cross-validated
        selection of the best number of features.
@@ -174,7 +176,7 @@ class RFECV(RFE):
     `support_` : array of shape [n_features]
         The mask of selected features.
 
-    `ranking_` : array-like of shape [n_features]
+    `ranking_` : array of shape [n_features]
         The feature ranking, such that `ranking_[i]` corresponds to the ranking
         position of the i-th feature. Selected (i.e., estimated best) features
         are assigned rank 1.
