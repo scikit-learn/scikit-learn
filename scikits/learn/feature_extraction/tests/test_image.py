@@ -176,3 +176,4 @@ def test_patch_extractor_color():
     expected_n_patches = len(lenas) * (i_h - p_h + 1) * (i_w - p_w + 1)
     extr = PatchExtractor(patch_size=(p_h, p_w), random_state=0)
     patches = extr.transform(lenas)
+    assert patches.shape == (expected_n_patches, p_h, p_w, 3)
