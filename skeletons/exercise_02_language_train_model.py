@@ -70,7 +70,7 @@ y_test = dataset.target[n_samples_total/2:]
 
 ## Print the classification report
 #print metrics.classification_report(y_test, y_predicted,
-#                                    class_names=dataset.target_names)
+#                                    target_names=dataset.target_names)
 #
 ## Plot the confusion matrix
 #cm = metrics.confusion_matrix(y_test, y_predicted)

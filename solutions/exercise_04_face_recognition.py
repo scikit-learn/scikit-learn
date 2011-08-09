@@ -97,7 +97,7 @@ print clf.best_estimator
 
 y_pred = clf.predict(X_test_pca)
 print classification_report(y_test, y_pred, labels=selected_target,
-                            class_names=target_names[selected_target])
+                            target_names=target_names[selected_target])
 
 print confusion_matrix(y_test, y_pred, labels=selected_target)
 
