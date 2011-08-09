@@ -30,12 +30,15 @@ class ElasticNet(LinearModel):
 
     rho : float
         The ElasticNet mixing parameter, with 0 < rho <= 1. For rho = 0
-        the penalty is an L1 penalty. For rho = 1 it is an L2 penalty. 
+        the penalty is an L1 penalty. For rho = 1 it is an L2 penalty.
         For 0 < rho < 1, the penalty is a combination of L1 and L2
 
     fit_intercept: bool
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered.
+
+    normalize : boolean, optional
+        If True, the regressors X are normalized
 
     precompute : True | False | 'auto' | array-like
         Whether to use a precomputed Gram matrix to speed up
@@ -68,17 +71,18 @@ class ElasticNet(LinearModel):
         a*L1 + b*L2
 
     for::
-        
+
         alpha = a + b and rho = a/(a+b)
 
     """
 
     def __init__(self, alpha=1.0, rho=0.5, fit_intercept=True,
-                 precompute='auto', max_iter=1000, tol=1e-4):
+                 normalize=False, precompute='auto', max_iter=1000, tol=1e-4):
         self.alpha = alpha
         self.rho = rho
         self.coef_ = None
         self.fit_intercept = fit_intercept
+        self.normalize = normalize
         self.precompute = precompute
         self.max_iter = max_iter
         self.tol = tol
@@ -112,7 +116,8 @@ class ElasticNet(LinearModel):
         X = np.asanyarray(X, dtype=np.float64)
         y = np.asanyarray(y, dtype=np.float64)
 
-        X, y, Xmean, ymean = LinearModel._center_data(X, y, self.fit_intercept)
+        X, y, Xmean, ymean, Xstd = self._center_data(X, y, self.fit_intercept,
+                self.normalize)
 
         if coef_init is None:
             self.coef_ = np.zeros(X.shape[1], dtype=np.float64)
@@ -146,7 +151,7 @@ class ElasticNet(LinearModel):
                     cd_fast.enet_coordinate_descent_gram(self.coef_, alpha,
                                 beta, Gram, Xy, y, self.max_iter, self.tol)
 
-        self._set_intercept(Xmean, ymean)
+        self._set_intercept(Xmean, ymean, Xstd)
 
         if self.dual_gap_ > self.eps_:
             warnings.warn('Objective did not converge, you might want'
@@ -174,6 +179,9 @@ class Lasso(ElasticNet):
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
+
+    normalize : boolean, optional
+        If True, the regressors X are normalized
 
     precompute : True | False | 'auto' | array-like
         Whether to use a precomputed Gram matrix to speed up
@@ -222,7 +230,7 @@ class Lasso(ElasticNet):
     should be directly passed as a fortran contiguous numpy array.
     """
 
-    def __init__(self, alpha=1.0, fit_intercept=True,
+    def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  precompute='auto', max_iter=1000, tol=1e-4):
         super(Lasso, self).__init__(alpha=alpha, rho=1.0,
                             fit_intercept=fit_intercept,
@@ -234,7 +242,7 @@ class Lasso(ElasticNet):
 # Classes to store linear models along a regularization path
 
 def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
-               verbose=False, **fit_params):
+               normalize=False, verbose=False, **fit_params):
     """Compute Lasso path with coordinate descent
 
     Parameters
@@ -260,6 +268,9 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
     fit_params : kwargs
         keyword arguments passed to the Lasso fit method
 
+    normalize : boolean, optional
+        If True, the regressors X are normalized
+
     Returns
     -------
     models : a list of models along the regularization path
@@ -272,11 +283,12 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
     should be directly passed as a fortran contiguous numpy array.
     """
     return enet_path(X, y, rho=1., eps=eps, n_alphas=n_alphas, alphas=alphas,
-                  fit_intercept=fit_intercept, verbose=verbose, **fit_params)
+                  fit_intercept=fit_intercept, normalize=normalize,
+                  verbose=verbose, **fit_params)
 
 
 def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
-              fit_intercept=True, verbose=False, **fit_params):
+              fit_intercept=True, normalize=False, verbose=False, **fit_params):
     """Compute Elastic-Net path with coordinate descent
 
     Parameters
@@ -306,6 +318,9 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
     fit_params : kwargs
         keyword arguments passed to the Lasso fit method
 
+    normalize : boolean, optional
+        If True, the regressors X are normalized
+
     Returns
     -------
     models : a list of models along the regularization path
@@ -314,7 +329,8 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
     -----
     See examples/plot_lasso_coordinate_descent_path.py for an example.
     """
-    X, y, Xmean, ymean = LinearModel._center_data(X, y, fit_intercept)
+    X, y, Xmean, ymean, Xstd = LinearModel._center_data(X, y,
+            fit_intercept, normalize)
     X = np.asfortranarray(X)  # make data contiguous in memory
 
     n_samples = X.shape[0]
@@ -335,11 +351,12 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
             fit_params['Xy'] = np.dot(X.T, y)
 
     for alpha in alphas:
-        model = ElasticNet(alpha=alpha, rho=rho, fit_intercept=False)
+        model = ElasticNet(alpha=alpha, rho=rho, fit_intercept=False,
+                normalize=False)
         model.fit(X, y, coef_init=coef_, **fit_params)
         if fit_intercept:
             model.fit_intercept = True
-            model._set_intercept(Xmean, ymean)
+            model._set_intercept(Xmean, ymean, Xstd)
         if verbose:
             print model
         coef_ = model.coef_.copy()
@@ -350,13 +367,14 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
 class LinearModelCV(LinearModel):
     """Base class for iterative model fitting along a regularization path"""
 
-    def __init__(self, eps=1e-3, n_alphas=100, alphas=None,
-                 fit_intercept=True, precompute='auto', max_iter=1000,
+    def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
+            normalize=False, precompute='auto', max_iter=1000,
                  tol=1e-4, cv=None):
         self.eps = eps
         self.n_alphas = n_alphas
         self.alphas = alphas
         self.fit_intercept = fit_intercept
+        self.normalize = normalize
         self.precompute = precompute
         self.max_iter = max_iter
         self.tol = tol
@@ -534,7 +552,7 @@ class ElasticNetCV(LinearModelCV):
         a*L1 + b*L2
 
     for::
-        
+
         alpha = a + b and rho = a/(a+b)
 
     """
@@ -543,13 +561,14 @@ class ElasticNetCV(LinearModelCV):
     estimator = ElasticNet
 
     def __init__(self, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
-                 fit_intercept=True, precompute='auto', max_iter=1000,
-                 tol=1e-4, cv=None):
+                 fit_intercept=True, normalize=False, precompute='auto',
+                 max_iter=1000, tol=1e-4, cv=None):
         self.rho = rho
         self.eps = eps
         self.n_alphas = n_alphas
         self.alphas = alphas
         self.fit_intercept = fit_intercept
+        self.normalize = normalize
         self.precompute = precompute
         self.max_iter = max_iter
         self.tol = tol
