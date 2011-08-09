@@ -78,7 +78,7 @@ class LinearModel(BaseEstimator, RegressorMixin):
         """Set the intercept_
         """
         if self.fit_intercept:
-            w = w / Xstd
+            self.coef_ = self.coef_ / Xstd
             self.intercept_ = ymean - np.dot(Xmean, self.coef_.T)
         else:
             self.intercept_ = 0
@@ -121,6 +121,8 @@ class LinearRegression(LinearModel):
             wether to calculate the intercept for this model. If set
             to false, no intercept will be used in calculations
             (e.g. data is expected to be already centered).
+        normalize : boolean, optional
+            If True, the regressors X are normalized
 
         Returns
         -------
@@ -130,7 +132,7 @@ class LinearRegression(LinearModel):
         X = np.asanyarray(X)
         y = np.asanyarray(y)
 
-        X, y, Xmean, ymean, Xstd = LinearModel._center_data(X, y, self.fit_intercept)
+        X, y, Xmean, ymean, Xstd = LinearModel._center_data(X, y, self.fit_intercept, self.normalize)
 
         self.coef_, self.residues_, self.rank_, self.singular_ = \
                 np.linalg.lstsq(X, y)

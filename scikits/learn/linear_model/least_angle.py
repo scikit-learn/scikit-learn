@@ -323,7 +323,7 @@ class Lars(LinearModel):
     eps: float, optional
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
-        systems. Unlike the 'tol' parameter in some iterative 
+        systems. Unlike the 'tol' parameter in some iterative
         optimization-based algorithms, this parameter does not control
         the tolerance of the optimization.
 
