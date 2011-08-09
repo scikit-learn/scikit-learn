@@ -25,6 +25,22 @@ y = digits.target
 n_samples, n_features = X.shape
 n_neighbors = 30
 
+
+#----------------------------------------------------------------------
+# Plot images of the digits
+N = 20
+img = np.zeros((10 * N, 10 * N))
+for i in range(N):
+    ix = 10*i + 1
+    for j in range(N):
+        iy = 10 * j + 1
+        img[ix:ix + 8, iy:iy + 8] = X[i*N+j].reshape((8,8))
+pl.imshow(img, cmap=pl.cm.binary)
+pl.xticks([])
+pl.yticks([])
+pl.title('A selection from the 64-dimensional digits dataset')
+
+
 #----------------------------------------------------------------------
 # Random 2D projection using a random unitary matrix
 print "Computing random projection"
@@ -60,6 +76,22 @@ print "Done. Reconstruction error: %g" % err
 print "Computing modified LLE embedding"
 X_mlle, err = manifold.locally_linear_embedding(X, n_neighbors, 2,
                                                 method='modified')
+print "Done. Reconstruction error: %g" % err
+
+
+#----------------------------------------------------------------------
+# Hessian Locally linear embedding of the digits dataset
+print "Computing hessian LLE embedding"
+X_hessian, err = manifold.locally_linear_embedding(X, n_neighbors, 2,
+                                                   method='hessian')
+print "Done. Reconstruction error: %g" % err
+
+
+#----------------------------------------------------------------------
+# LTSA embedding of the digits dataset
+print "Computing LTSA embedding"
+X_ltsa, err = manifold.locally_linear_embedding(X, n_neighbors, 2,
+                                                method='ltsa')
 print "Done. Reconstruction error: %g" % err
 
 
@@ -103,8 +135,10 @@ def plot_embedding(X, title=None):
 plot_embedding(X_projected, "Random Projection of the digits")
 plot_embedding(X_pca, "Principal Components projection of the digits")
 plot_embedding(X_lda, "Linear Discriminant projection of the digits")
+plot_embedding(X_iso, "Isomap projection of the digits")
 plot_embedding(X_lle, "Locally Linear Embedding of the digits")
 plot_embedding(X_mlle, "Modified Locally Linear Embedding of the digits")
-plot_embedding(X_iso, "Isomap projection of the digits")
+plot_embedding(X_hessian, "Hessian Eigenmap Embedding of the digits")
+plot_embedding(X_ltsa, "Local Tangent Space Alignment of the digits")
 
 pl.show()
