@@ -1,7 +1,11 @@
 import numpy as np
 
 from numpy.testing import assert_almost_equal, assert_array_almost_equal
-from scikits.learn import neighbors, manifold, datasets, preprocessing
+from scikits.learn import datasets
+from scikits.learn import manifold
+from scikits.learn import neighbors
+from scikits.learn import pipeline
+from scikits.learn import preprocessing
 from scikits.learn.utils.fixes import product
 
 eigen_solvers = ['auto', 'dense', 'arpack']
@@ -83,29 +87,28 @@ def test_isomap_reconstruction_error():
 
 
 def test_transform():
-    N = 200
-    k = 10
-    eps = 0.01
+    n_samples = 200
+    n_components = 10
+    noise_scale = 0.01
 
     # Create S-curve dataset
-    X, y = datasets.samples_generator.s_curve(N)
+    X, y = datasets.samples_generator.make_s_curve(n_samples)
 
     # Compute isomap embedding
-    iso = manifold.Isomap(k, 2)
+    iso = manifold.Isomap(n_components, 2)
     X_iso = iso.fit_transform(X)
 
     # Re-embed a noisy version of the points
     rng = np.random.RandomState(0)
-    noise = eps * rng.randn(*X.shape)
+    noise = noise_scale * rng.randn(*X.shape)
     X_iso2 = iso.transform(X + noise)
 
-    # Make sure the rms error on re-embedding is comparable to eps
-    assert np.sqrt(np.mean((X_iso - X_iso2) ** 2)) < 2 * eps
+    # Make sure the rms error on re-embedding is comparable to noise_scale
+    assert np.sqrt(np.mean((X_iso - X_iso2) ** 2)) < 2 * noise_scale
 
 
 def test_pipeline():
     # check that LocallyLinearEmbedding works fine as a Pipeline
-    from scikits.learn import pipeline, datasets
     iris = datasets.load_iris()
     clf = pipeline.Pipeline(
         [('filter', manifold.Isomap()),
