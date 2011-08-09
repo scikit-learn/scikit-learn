@@ -183,10 +183,12 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
 
     Parameters
     ----------
-    image: array with shape (i_h, i_w)
-        the original image data
+    image: array, shape = (image_height, image_width) or
+        (image_height, image_width, n_channels)
+        The original image data. For color images, the last dimension specifies
+        the channel: a RGB image would have `n_channels=3`.
 
-    patch_size: tuple of ints (p_h, p_w)
+    patch_size: tuple of ints (patch_height, patch_width)
         the dimensions of one patch
 
     max_patches: integer or float, optional default is None
@@ -195,13 +197,14 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
         of patches.
 
     random_state: int or RandomState
-        Pseudo number generator state used for random sampling.
+        Pseudo number generator state used for random sampling to use if
+        `max_patches` is not None.
 
     Returns
     -------
-    patches: array
-         shape is (n_patches, patch_height, patch_width, n_colors)
-         or (n_patches, patch_height, patch_width) if n_colors is 1
+    patches: array, shape = (n_patches, patch_height, patch_width) or
+         (n_patches, patch_height, patch_width, n_channels)
+         The collection of patches extracted from the image.
 
     Examples
     --------
@@ -274,17 +277,19 @@ def reconstruct_from_patches_2d(patches, image_size):
 
     Parameters
     ----------
-    patches: array with shape (n_patches, p_h, p_w) or (n_patches, p_h, p_w,
-        n_colors)
-        the complete set of patches
+    patches: array, shape = (n_patches, patch_height, patch_width) or
+        (n_patches, patch_height, patch_width, n_channels)
+        The complete set of patches. If the patches contain colour information,
+        channels are indexed along the last dimension: RGB patches would
+        have `n_channels=3`.
 
-    image_size: tuple of ints (i_h, i_w, n_colors) or (i_h, i_w)
+    image_size: tuple of ints (image_height, image_width) or
+        (image_height, image_width, n_channels)
         the size of the image that will be reconstructed.
 
     Returns
     -------
-    image: array with shape (*image_size)
-
+    image: array, shape = image_size
 
     """
     i_h, i_w = image_size[:2]
@@ -310,7 +315,7 @@ class PatchExtractor(BaseEstimator):
 
     Parameters
     ----------
-    patch_size: tuple of ints (p_h, p_w)
+    patch_size: tuple of ints (patch_height, patch_width)
         the dimensions of one patch
 
     max_patches: integer or float, optional default is None
@@ -320,6 +325,7 @@ class PatchExtractor(BaseEstimator):
 
     random_state: int or RandomState
         Pseudo number generator state used for random sampling.
+
     """
     def __init__(self, patch_size, max_patches=None, random_state=None):
         self.patch_size = patch_size
@@ -339,14 +345,18 @@ class PatchExtractor(BaseEstimator):
 
         Parameters
         ----------
-        X : array of shape (n_samples, *image_shape)
-            Array of images from which to extract patches
+        X : array, shape = (n_samples, image_height, image_width) or
+            (n_samples, image_height, image_width, n_channels)
+            Array of images from which to extract patches. For color images,
+            the last dimension specifies the channel: a RGB image would have
+            `n_channels=3`.
 
         Returns
         -------
         patches: array
-             shape is (n_patches, patch_height, patch_width, n_colors)
-             or (n_patches, patch_height, patch_width) if n_colors is 1
+             shape is (n_patches, patch_height, patch_width)
+             or (n_patches, patch_height, patch_width, n_channels)
+
         """
         self.random_state = check_random_state(self.random_state)
         n_images = len(X)
