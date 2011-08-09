@@ -74,7 +74,7 @@ class Node(object):
 
 def _find_best_split(features, labels, criterion):
     n_samples, n_features = features.shape
-    K = np.abs(labels.max()) + 1
+    K = int(np.abs(labels.max())) + 1            
     pm = np.zeros((K,), dtype=np.float64)
 
     best = None
@@ -214,8 +214,21 @@ class BaseDecisionTree(BaseEstimator):
         self.n_features = None
         self.tree = None
 
-    def export_to_graphviz(self):
-        with open("tree.dot", 'w') as f:
+    def export_to_graphviz(self, filename="tree.dot"):
+        """
+        Export the tree in .dot format.  Render to PostScript using e.g.
+        $ dot -Tps tree.dot -o tree.ps
+
+        Parameters
+        ----------
+        filename : str
+            The name of the file to write to.
+
+        """
+        if self.tree is None:
+            raise Exception('Tree not initialized. Perform a fit first')
+                
+        with open(filename, 'w') as f:
             f.write("digraph Tree {\n")
             f.write(_graphviz(self.tree))
             f.write("\n}\n")
