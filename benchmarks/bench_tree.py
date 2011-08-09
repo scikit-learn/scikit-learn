@@ -25,7 +25,7 @@ scikit_regressor_results = []
 mu_second = 0.0 + 10**6 # number of microseconds in a second
 
 
-def bench_scikit_tree_classifier(X, Y, K):
+def bench_scikit_tree_classifier(X, Y):
     """
     bench with scikit-learn decision tree classifier
     """
@@ -36,7 +36,7 @@ def bench_scikit_tree_classifier(X, Y, K):
 
     # start time
     tstart = datetime.now()
-    clf = DecisionTreeClassifier(K)
+    clf = DecisionTreeClassifier()
     clf.fit(X, Y).predict(X)
     delta = (datetime.now() - tstart)
     # stop time
@@ -63,9 +63,13 @@ def bench_scikit_tree_regressor(X, Y):
 
 if __name__ == '__main__':
 
+    print '============================================'
+    print 'Warning: this is going to take a looong time'
+    print '============================================'
+
     n = 10
-    step = 100
-    n_samples = 100
+    step = 10000
+    n_samples = 10000
     dim = 10
     K = 10 
     for i in range(n):
@@ -75,7 +79,7 @@ if __name__ == '__main__':
         n_samples += step
         X = np.random.randn(n_samples, dim)
         Y = np.random.randint(0, K, (n_samples,))
-        bench_scikit_tree_classifier(X, Y, K)
+        bench_scikit_tree_classifier(X, Y)
         Y = np.random.randn(n_samples)
         bench_scikit_tree_regressor(X, Y)
 
@@ -100,15 +104,9 @@ if __name__ == '__main__':
     scikit_classifier_results = []
     scikit_regressor_results = []
     n = 10
-    step = 50
-    start_dim = 50
+    step = 500
+    start_dim = 500
     K = 10 
-
-
-
-    print '============================================'
-    print 'Warning: this is going to take a looong time'
-    print '============================================'
 
     dim = start_dim
     for i in range(0, n):
@@ -118,7 +116,7 @@ if __name__ == '__main__':
         dim += step
         X = np.random.randn(100, dim)
         Y = np.random.randint(0, K, (100,))
-        bench_scikit_tree_classifier(X, Y, K)
+        bench_scikit_tree_classifier(X, Y)
         Y = np.random.randn(100)
         bench_scikit_tree_regressor(X, Y)
 

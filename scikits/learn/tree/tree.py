@@ -73,7 +73,7 @@ class Node(object):
 
 def _find_best_split(features, labels, criterion):
     n_samples, n_features = features.shape
-    K = labels.max() + 1
+    K = np.abs(labels.max()) + 1
     pm = np.zeros((K,), dtype=np.float64)
         
     best = None
