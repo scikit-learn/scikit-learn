@@ -17,22 +17,22 @@ import pylab as pl
 
 from scikits.learn import svm, datasets
 
-label_spread = label_propagation.LabelSpreading(sigma=0.05, alpha=1.0)
+label_spread = label_propagation.LabelSpreading(gamma=0.05, alpha=1.0)
 
 # title for the plots
 titles = ["Test plot with unlabeled points"]
 
 # generate ring with inner box
-num_points = 100
-outer_circ_xs = [np.cos(2*np.pi*x/num_points) for x in range(0,num_points)]
-outer_circ_ys = [np.sin(2*np.pi*x/num_points) for x in range(0,num_points)]
-inner_circ_xs = [0.45*np.cos(2*np.pi*x/num_points) for x in range(0,num_points)]
-inner_circ_ys = [0.45*np.sin(2*np.pi*x/num_points) for x in range(0,num_points)]
+n_samples_per_circle = 100
+outer_circ_xs = np.cos(np.linspace(0, 2 * np.pi, n_samples_per_circle))
+outer_circ_ys = np.sin(np.linspace(0, 2 * np.pi, n_samples_per_circle))
+inner_circ_xs = np.cos(np.linspace(0, 2 * np.pi, n_samples_per_circle)) * 0.45
+inner_circ_ys = np.sin(np.linspace(0, 2 * np.pi, n_samples_per_circle)) * 0.45
 
 all_xs = np.array(outer_circ_xs + inner_circ_xs)
 all_ys = np.array(outer_circ_ys + inner_circ_ys)
 data = zip(outer_circ_xs, outer_circ_ys) + zip(inner_circ_xs, inner_circ_ys)
-labels = ['outer'] + ['unlabeled' for x in range(0,num_points-1)] + ['inner'] + ['unlabeled' for x in range(0, num_points-1)]
+labels = ['outer'] + ['unlabeled' for x in range(0,n_samples_per_circle-1)] + ['inner'] + ['unlabeled' for x in range(0, n_samples_per_circle-1)]
 
 label_spread.fit(data, labels, unlabeled_identifier='unlabeled') 
 

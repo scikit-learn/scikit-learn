@@ -279,8 +279,7 @@ def compute_affinity_matrix(X, kernel, gamma, diagonal=1):
         aff_mat[i, i] = diagonal
         for j in xrange(i + 1, height):
             aff = kernel(X[i], X[j], gamma)
-            aff_mat[i, j] = aff
-            aff_mat[j, i] = aff
+            aff_mat[i, j] = aff_mat[j, i] = aff
     return aff_mat
 
 
