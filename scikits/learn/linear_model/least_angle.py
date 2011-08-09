@@ -386,21 +386,13 @@ class Lars(LinearModel):
         X = np.atleast_2d(X)
         y = np.atleast_1d(y)
 
-        X, y, Xmean, ymean = LinearModel._center_data(X, y, self.fit_intercept)
+        X, y, Xmean, ymean, Xstd = self._center_data(X, y, self.fit_intercept, self.normalize)
         alpha = getattr(self, 'alpha', 0.)
         if hasattr(self, 'n_nonzero_coefs'):
             alpha = 0. # n_nonzero_coefs parametrization takes priority
             max_iter = self.n_nonzero_coefs
         else:
             max_iter = self.max_iter
-
-        if self.normalize:
-            norms = np.sqrt(np.sum(X ** 2, axis=0))
-            nonzeros = np.flatnonzero(norms)
-            if not overwrite_X:
-                X = X.copy()
-                overwrite_X = True
-            X[:, nonzeros] /= norms[nonzeros]
 
         # precompute if n_samples > n_features
         precompute = self.precompute
@@ -418,11 +410,9 @@ class Lars(LinearModel):
                   method=self.method, verbose=self.verbose,
                   max_iter=max_iter, eps=self.eps)
 
-        if self.normalize:
-            self.coef_path_ /= norms[:, np.newaxis]
         self.coef_ = self.coef_path_[:, -1]
 
-        self._set_intercept(Xmean, ymean)
+        self._set_intercept(Xmean, ymean, Xstd)
 
         return self
 
