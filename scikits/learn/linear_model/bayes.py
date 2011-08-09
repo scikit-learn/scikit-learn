@@ -64,6 +64,14 @@ class BayesianRidge(LinearModel):
         (e.g. data is expected to be already centered).
         Default is True.
 
+    normalize : boolean, optional
+            If True, the regressors X are normalized
+            Default is False
+
+    verbose : boolean, optional
+            Verbose mode when fitting the model. Default is False.
+
+
     Attributes
     ----------
     `coef_` : array, shape = (n_features)
@@ -104,7 +112,7 @@ class BayesianRidge(LinearModel):
 
     def __init__(self, n_iter=300, eps=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
                 lambda_1=1.e-6, lambda_2=1.e-6, compute_score=False,
-                fit_intercept=True, verbose=False):
+                fit_intercept=True, normalize=False, verbose=False):
         self.n_iter = n_iter
         self.eps = eps
         self.alpha_1 = alpha_1
@@ -113,6 +121,7 @@ class BayesianRidge(LinearModel):
         self.lambda_2 = lambda_2
         self.compute_score = compute_score
         self.fit_intercept = fit_intercept
+        self.normalize = normalize
         self.verbose = verbose
 
     def fit(self, X, y, **params):
@@ -132,7 +141,7 @@ class BayesianRidge(LinearModel):
         self._set_params(**params)
         X = np.asanyarray(X, dtype=np.float)
         y = np.asanyarray(y, dtype=np.float)
-        X, y, Xmean, ymean = LinearModel._center_data(X, y, self.fit_intercept)
+        X, y, Xmean, ymean, Xstd = LinearModel._center_data(X, y, self.fit_intercept, self.normalize)
         n_samples, n_features = X.shape
 
         ### Initialization of the values of the parameters
@@ -206,7 +215,7 @@ class BayesianRidge(LinearModel):
         self.lambda_ = lambda_
         self.coef_ = coef_
 
-        self._set_intercept(Xmean, ymean)
+        self._set_intercept(Xmean, ymean, Xstd)
         return self
 
 
@@ -267,6 +276,9 @@ class ARDRegression(LinearModel):
         (e.g. data is expected to be already centered).
         Default is True.
 
+    normalize : boolean, optional
+            If True, the regressors X are normalized
+
     verbose : boolean, optional
         Verbose mode when fitting the model. Default is False.
 
@@ -313,10 +325,11 @@ class ARDRegression(LinearModel):
 
     def __init__(self, n_iter=300, eps=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
                   lambda_1=1.e-6, lambda_2=1.e-6, compute_score=False,
-                  threshold_lambda=1.e+4, fit_intercept=True, verbose=False):
+                  threshold_lambda=1.e+4, fit_intercept=True, normalize=False, verbose=False):
         self.n_iter = n_iter
         self.eps = eps
         self.fit_intercept = fit_intercept
+        self.normalize = normalize
         self.alpha_1 = alpha_1
         self.alpha_2 = alpha_2
         self.lambda_1 = lambda_1
@@ -351,7 +364,7 @@ class ARDRegression(LinearModel):
         n_samples, n_features = X.shape
         coef_ = np.zeros(n_features)
 
-        X, y, Xmean, ymean = LinearModel._center_data(X, y, self.fit_intercept)
+        X, y, Xmean, ymean, Xstd = LinearModel._center_data(X, y, self.fit_intercept, self.normalize)
 
         ### Launch the convergence loop
         keep_lambda = np.ones(n_features, dtype=bool)
@@ -417,5 +430,5 @@ class ARDRegression(LinearModel):
         self.alpha_ = alpha_
         self.sigma_ = sigma_
 
-        self._set_intercept(Xmean, ymean)
+        self._set_intercept(Xmean, ymean, Xstd)
         return self
