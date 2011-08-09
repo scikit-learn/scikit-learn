@@ -2,7 +2,12 @@ Exercises
 =========
 
 To do the exercises, copy the content of the 'skeletons' folder as
-a new folder named 'workspace'.
+a new folder named 'workspace'::
+
+  % cp -r skeletons workspace
+
+You can then edit the content of the workspace without fear of loosing
+the original exercise instructions.
 
 Then fire an ipython shell and run the work-in-progress script with::
 
@@ -13,8 +18,25 @@ mortem ipdb session.
 
 Refine the implementation and iterate until the exercise is solved.
 
+**For each exercise, the skeleton file provides all the necessary import
+statements, boilerplate code to load the data and sample code to evaluate
+the predictive accurracy of the model.**
 
-Exercise 1: Sentiment Analysis on movie reviews
+
+Exercise 1: Language identification
+-----------------------------------
+
+- Write a text classification pipeline using a custom preprocessor and
+  ``CharNGramAnalyzer`` using data from Wikipedia articles as training set.
+
+- Evaluate the performance on some held out test set.
+
+ipython command line::
+
+  %run workspace/exercise_01_language_train_model.py data/languages/paragraphs/
+
+
+Exercise 2: Sentiment Analysis on movie reviews
 -----------------------------------------------
 
 - Write a text classification pipeline to classify movie reviews as either
@@ -26,20 +48,7 @@ Exercise 1: Sentiment Analysis on movie reviews
 
 ipython command line::
 
-  %run workspace/exercise_01_sentiment.py data/movie_reviews/txt_sentoken/
-
-
-Exercise 2: Language identification
------------------------------------
-
-- Write a text classification pipeline using a custom preprocessor and
-  ``CharNGramAnalyzer`` using data from Wikipedia articles as training set.
-
-- Evaluate the performance on some held out test set.
-
-ipython command line::
-
-  %run workspace/exercise_02_language_train_model.py data/languages/paragraphs/
+  %run workspace/exercise_02_sentiment.py data/movie_reviews/txt_sentoken/
 
 
 Exercise 3: CLI text classification utility
