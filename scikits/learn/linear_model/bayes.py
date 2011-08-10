@@ -65,11 +65,15 @@ class BayesianRidge(LinearModel):
         Default is True.
 
     normalize : boolean, optional
-            If True, the regressors X are normalized
-            Default is False
+        If True, the regressors X are normalized
+        Default is False
+
+    overwrite_X : boolean, optionnal
+        If True, X will not be copied
+        Default is False
 
     verbose : boolean, optional
-            Verbose mode when fitting the model. Default is False.
+        Verbose mode when fitting the model. Default is False.
 
 
     Attributes
@@ -99,9 +103,9 @@ class BayesianRidge(LinearModel):
     >>> from scikits.learn import linear_model
     >>> clf = linear_model.BayesianRidge()
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])
-    BayesianRidge(n_iter=300, verbose=False, lambda_1=1e-06, lambda_2=1e-06,
-           fit_intercept=True, eps=0.001, alpha_2=1e-06, alpha_1=1e-06,
-           compute_score=False)
+    BayesianRidge(normalize=False, n_iter=300, verbose=False, lambda_1=1e-06,
+       lambda_2=1e-06, fit_intercept=True, eps=0.001, alpha_2=1e-06,
+       alpha_1=1e-06, overwrite_X=False, compute_score=False)
     >>> clf.predict([[1, 1]])
     array([ 1.])
 
@@ -112,7 +116,8 @@ class BayesianRidge(LinearModel):
 
     def __init__(self, n_iter=300, eps=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
                 lambda_1=1.e-6, lambda_2=1.e-6, compute_score=False,
-                fit_intercept=True, normalize=False, verbose=False):
+                fit_intercept=True, normalize=False,
+                overwrite_X=False, verbose=False):
         self.n_iter = n_iter
         self.eps = eps
         self.alpha_1 = alpha_1
@@ -122,6 +127,7 @@ class BayesianRidge(LinearModel):
         self.compute_score = compute_score
         self.fit_intercept = fit_intercept
         self.normalize = normalize
+        self.overwrite_X = overwrite_X
         self.verbose = verbose
 
     def fit(self, X, y, **params):
@@ -141,7 +147,8 @@ class BayesianRidge(LinearModel):
         self._set_params(**params)
         X = np.asanyarray(X, dtype=np.float)
         y = np.asanyarray(y, dtype=np.float)
-        X, y, Xmean, ymean, Xstd = LinearModel._center_data(X, y, self.fit_intercept, self.normalize)
+        X, y, X_mean, y_mean, X_std = self._center_data(X, y,
+                self.fit_intercept, self.normalize, self.overwrite_X)
         n_samples, n_features = X.shape
 
         ### Initialization of the values of the parameters
@@ -215,7 +222,7 @@ class BayesianRidge(LinearModel):
         self.lambda_ = lambda_
         self.coef_ = coef_
 
-        self._set_intercept(Xmean, ymean, Xstd)
+        self._set_intercept(X_mean, y_mean, X_std)
         return self
 
 
@@ -277,7 +284,11 @@ class ARDRegression(LinearModel):
         Default is True.
 
     normalize : boolean, optional
-            If True, the regressors X are normalized
+        If True, the regressors X are normalized
+
+    overwrite_X : boolean, optionnal
+        If True, X will not be copied
+        Default is False
 
     verbose : boolean, optional
         Verbose mode when fitting the model. Default is False.
@@ -312,9 +323,10 @@ class ARDRegression(LinearModel):
     >>> from scikits.learn import linear_model
     >>> clf = linear_model.ARDRegression()
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])
-    ARDRegression(n_iter=300, verbose=False, lambda_1=1e-06, lambda_2=1e-06,
-           fit_intercept=True, eps=0.001, threshold_lambda=10000.0,
-           alpha_2=1e-06, alpha_1=1e-06, compute_score=False)
+    RDRegression(normalize=False, n_iter=300, verbose=False, lambda_1=1e-06,
+       lambda_2=1e-06, fit_intercept=True, eps=0.001,
+       threshold_lambda=10000.0, alpha_2=1e-06, alpha_1=1e-06,
+       overwrite_X=False, compute_score=False)
     >>> clf.predict([[1, 1]])
     array([ 1.])
 
@@ -325,7 +337,8 @@ class ARDRegression(LinearModel):
 
     def __init__(self, n_iter=300, eps=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
                   lambda_1=1.e-6, lambda_2=1.e-6, compute_score=False,
-                  threshold_lambda=1.e+4, fit_intercept=True, normalize=False, verbose=False):
+                  threshold_lambda=1.e+4, fit_intercept=True,
+                  normalize=False, overwrite_X=False, verbose=False):
         self.n_iter = n_iter
         self.eps = eps
         self.fit_intercept = fit_intercept
@@ -336,6 +349,7 @@ class ARDRegression(LinearModel):
         self.lambda_2 = lambda_2
         self.compute_score = compute_score
         self.threshold_lambda = threshold_lambda
+        self.overwrite_X = overwrite_X
         self.verbose = verbose
 
     def fit(self, X, y, **params):
@@ -364,7 +378,8 @@ class ARDRegression(LinearModel):
         n_samples, n_features = X.shape
         coef_ = np.zeros(n_features)
 
-        X, y, Xmean, ymean, Xstd = LinearModel._center_data(X, y, self.fit_intercept, self.normalize)
+        X, y, X_mean, y_mean, X_std = self._center_data(X, y, self.fit_intercept,
+                self.normalize, self.overwrite_X)
 
         ### Launch the convergence loop
         keep_lambda = np.ones(n_features, dtype=bool)
@@ -430,5 +445,5 @@ class ARDRegression(LinearModel):
         self.alpha_ = alpha_
         self.sigma_ = sigma_
 
-        self._set_intercept(Xmean, ymean, Xstd)
+        self._set_intercept(X_mean, y_mean, X_std)
         return self

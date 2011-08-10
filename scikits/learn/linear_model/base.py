@@ -48,7 +48,7 @@ class LinearModel(BaseEstimator, RegressorMixin):
         return safe_sparse_dot(X, self.coef_.T) + self.intercept_
 
     @staticmethod
-    def _center_data(X, y, fit_intercept, normalize=False, copy=False):
+    def _center_data(X, y, fit_intercept, normalize=False, overwrite_X=False):
         """
         Centers data to have mean zero along axis 0. This is here because
         nearly all linear models will want their data to be centered.
@@ -58,7 +58,7 @@ class LinearModel(BaseEstimator, RegressorMixin):
                 X_mean = np.zeros(X.shape[1])
                 X_std = np.ones(X.shape[1])
             else:
-                if copy:
+                if not overwrite_X:
                     X = X.copy()
 
                 X_mean = X.mean(axis=0)
@@ -106,9 +106,10 @@ class LinearRegression(LinearModel):
 
     """
 
-    def __init__(self, fit_intercept=True, normalize=False):
+    def __init__(self, fit_intercept=True, normalize=False, overwrite_X=False):
         self.fit_intercept = fit_intercept
-        self.normalize = False
+        self.normalize = normalize
+        self.overwrite_X = overwrite_X
 
     def fit(self, X, y, **params):
         """
@@ -135,8 +136,8 @@ class LinearRegression(LinearModel):
         X = np.asanyarray(X)
         y = np.asanyarray(y)
 
-        X, y, X_mean, y_mean, X_std = LinearModel._center_data(X, y,
-                self.fit_intercept, self.normalize)
+        X, y, X_mean, y_mean, X_std = self._center_data(X, y,
+                self.fit_intercept, self.normalize, self.overwrite_X)
 
         self.coef_, self.residues_, self.rank_, self.singular_ = \
                 np.linalg.lstsq(X, y)

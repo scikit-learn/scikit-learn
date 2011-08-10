@@ -48,6 +48,10 @@ class ElasticNet(LinearModel):
     max_iter: int, optional
         The maximum number of iterations
 
+    overwrite_X : boolean, optionnal
+        If True, X will not be copied
+        Default is False
+
     tol: float, optional
         The tolerance for the optimization: if the updates are
         smaller than 'tol', the optimization code checks the
@@ -77,7 +81,8 @@ class ElasticNet(LinearModel):
     """
 
     def __init__(self, alpha=1.0, rho=0.5, fit_intercept=True,
-                 normalize=False, precompute='auto', max_iter=1000, tol=1e-4):
+                 normalize=False, precompute='auto', max_iter=1000,
+                 overwrite_X=False, tol=1e-4):
         self.alpha = alpha
         self.rho = rho
         self.coef_ = None
@@ -85,6 +90,7 @@ class ElasticNet(LinearModel):
         self.normalize = normalize
         self.precompute = precompute
         self.max_iter = max_iter
+        self.overwrite_X = overwrite_X
         self.tol = tol
 
     def fit(self, X, y, Xy=None, coef_init=None, **params):
@@ -117,7 +123,7 @@ class ElasticNet(LinearModel):
         y = np.asanyarray(y, dtype=np.float64)
 
         X, y, Xmean, ymean, Xstd = self._center_data(X, y, self.fit_intercept,
-                self.normalize)
+                self.normalize, self.overwrite_X)
 
         if coef_init is None:
             self.coef_ = np.zeros(X.shape[1], dtype=np.float64)
@@ -183,6 +189,10 @@ class Lasso(ElasticNet):
     normalize : boolean, optional
         If True, the regressors X are normalized
 
+    overwrite_X : boolean, optionnal
+        If True, X will not be copied
+        Default is False
+
     precompute : True | False | 'auto' | array-like
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to 'auto' let us decide. The Gram
@@ -211,8 +221,8 @@ class Lasso(ElasticNet):
     >>> from scikits.learn import linear_model
     >>> clf = linear_model.Lasso(alpha=0.1)
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])
-    Lasso(precompute='auto', alpha=0.1, max_iter=1000, tol=0.0001,
-       fit_intercept=True)
+    Lasso(normalize=False, fit_intercept=True, max_iter=1000, precompute='auto',
+       tol=0.0001, alpha=0.1, overwrite_X=False)
     >>> print clf.coef_
     [ 0.85  0.  ]
     >>> print clf.intercept_
@@ -231,18 +241,17 @@ class Lasso(ElasticNet):
     """
 
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
-                 precompute='auto', max_iter=1000, tol=1e-4):
+                 precompute='auto', overwrite_X=False, max_iter=1000, tol=1e-4):
         super(Lasso, self).__init__(alpha=alpha, rho=1.0,
-                            fit_intercept=fit_intercept,
-                            precompute=precompute, max_iter=max_iter,
-                            tol=tol)
+                            fit_intercept=fit_intercept, precompute=precompute,
+                            max_iter=max_iter, overwrite_X=overwrite_X, tol=tol)
 
 
 ###############################################################################
 # Classes to store linear models along a regularization path
 
 def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
-               normalize=False, verbose=False, **fit_params):
+               normalize=False, overwrite_X=False, verbose=False, **fit_params):
     """Compute Lasso path with coordinate descent
 
     Parameters
@@ -271,6 +280,10 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
     normalize : boolean, optional
         If True, the regressors X are normalized
 
+    overwrite_X : boolean, optionnal
+        If True, X will not be copied
+        Default is False
+
     Returns
     -------
     models : a list of models along the regularization path
@@ -284,11 +297,12 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
     """
     return enet_path(X, y, rho=1., eps=eps, n_alphas=n_alphas, alphas=alphas,
                   fit_intercept=fit_intercept, normalize=normalize,
-                  verbose=verbose, **fit_params)
+                  verbose=verbose, overwrite_X=overwrite_X, **fit_params)
 
 
 def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
-              fit_intercept=True, normalize=False, verbose=False, **fit_params):
+              fit_intercept=True, normalize=False, verbose=False,
+              overwrite_X=False, **fit_params):
     """Compute Elastic-Net path with coordinate descent
 
     Parameters
@@ -321,6 +335,10 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
     normalize : boolean, optional
         If True, the regressors X are normalized
 
+    overwrite_X : boolean, optionnal
+        If True, X will not be copied
+        Default is False
+
     Returns
     -------
     models : a list of models along the regularization path
@@ -330,7 +348,7 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
     See examples/plot_lasso_coordinate_descent_path.py for an example.
     """
     X, y, Xmean, ymean, Xstd = LinearModel._center_data(X, y,
-            fit_intercept, normalize)
+            fit_intercept, normalize, overwrite_X)
     X = np.asfortranarray(X)  # make data contiguous in memory
 
     n_samples = X.shape[0]
@@ -368,8 +386,8 @@ class LinearModelCV(LinearModel):
     """Base class for iterative model fitting along a regularization path"""
 
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
-            normalize=False, precompute='auto', max_iter=1000,
-                 tol=1e-4, cv=None):
+            normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
+            overwrite_X=False, cv=None):
         self.eps = eps
         self.n_alphas = n_alphas
         self.alphas = alphas
@@ -378,6 +396,7 @@ class LinearModelCV(LinearModel):
         self.precompute = precompute
         self.max_iter = max_iter
         self.tol = tol
+        self.overwrite_X = overwrite_X
         self.cv = cv
 
     def fit(self, X, y, **fit_params):
@@ -472,7 +491,7 @@ class LassoCV(LinearModelCV):
 
     cv : integer or crossvalidation generator, optional
         If an integer is passed, it is the number of fold (default 3).
-        Specific crossvalidation objects can be passed, see 
+        Specific crossvalidation objects can be passed, see
         scikits.learn.cross_val module for the list of possible objects
 
     Notes
@@ -498,7 +517,7 @@ class ElasticNetCV(LinearModelCV):
     rho : float, optional
         float between 0 and 1 passed to ElasticNet (scaling between
         l1 and l2 penalties). For rho = 0
-        the penalty is an L1 penalty. For rho = 1 it is an L2 penalty. 
+        the penalty is an L1 penalty. For rho = 1 it is an L2 penalty.
         For 0 < rho < 1, the penalty is a combination of L1 and L2
 
     eps : float, optional
@@ -562,7 +581,7 @@ class ElasticNetCV(LinearModelCV):
 
     def __init__(self, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True, normalize=False, precompute='auto',
-                 max_iter=1000, tol=1e-4, cv=None):
+                 max_iter=1000, tol=1e-4, cv=None, overwrite_X=False):
         self.rho = rho
         self.eps = eps
         self.n_alphas = n_alphas
@@ -573,3 +592,4 @@ class ElasticNetCV(LinearModelCV):
         self.max_iter = max_iter
         self.tol = tol
         self.cv = cv
+        self.overwrite_X = overwrite_X

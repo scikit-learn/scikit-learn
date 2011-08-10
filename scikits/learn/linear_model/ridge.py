@@ -140,6 +140,10 @@ class Ridge(LinearModel):
     normalize : boolean, optional
         If True, the regressors X are normalized
 
+    overwrite_X : boolean, optionnal
+        If True, X will not be copied
+        Default is False
+
     tol: float
         Precision of the solution.
 
@@ -159,13 +163,16 @@ class Ridge(LinearModel):
     >>> X = np.random.randn(n_samples, n_features)
     >>> clf = Ridge(alpha=1.0)
     >>> clf.fit(X, y)
-    Ridge(alpha=1.0, tol=0.001, fit_intercept=True)
+    Ridge(normalize=False, alpha=1.0, overwrite_X=False, tol=0.001,
+       fit_intercept=True)
     """
 
-    def __init__(self, alpha=1.0, fit_intercept=True, normalize=False, tol=1e-3):
+    def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
+            overwrite_X=False, tol=1e-3):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
         self.normalize = normalize
+        self.overwrite_X = overwrite_X
         self.tol = tol
 
     def fit(self, X, y, sample_weight=1.0, solver='auto', **params):
@@ -200,12 +207,13 @@ class Ridge(LinearModel):
         X = safe_asanyarray(X, dtype=np.float)
         y = np.asanyarray(y, dtype=np.float)
 
-        X, y, X_mean, y_mean, Xstd = \
-           LinearModel._center_data(X, y, self.fit_intercept, self.normalize)
+        X, y, X_mean, y_mean, X_std = \
+           self._center_data(X, y, self.fit_intercept,
+                   self.normalize, self.overwrite_X)
 
         self.coef_ = ridge_regression(X, y, self.alpha, sample_weight,
                                       solver, self.tol)
-        self._set_intercept(X_mean, y_mean, Xstd)
+        self._set_intercept(X_mean, y_mean, X_std)
         return self
 
 
@@ -393,7 +401,7 @@ class _RidgeGCV(LinearModel):
 
         n_samples = X.shape[0]
 
-        X, y, Xmean, ymean, Xstd = LinearModel._center_data(X, y,
+        X, y, X_mean, y_mean, X_std = LinearModel._center_data(X, y,
                 self.fit_intercept, self.normalize)
 
         K, v, Q = self._pre_compute(X, y)
@@ -422,7 +430,7 @@ class _RidgeGCV(LinearModel):
         self.dual_coef_ = C[best]
         self.coef_ = safe_sparse_dot(self.dual_coef_.T, X)
 
-        self._set_intercept(Xmean, ymean, Xstd)
+        self._set_intercept(X_mean, y_mean, X_std)
 
         return self
 
