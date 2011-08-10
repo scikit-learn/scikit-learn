@@ -44,7 +44,7 @@ def test_pipeline_init():
                  dict(svc__a=None, svc__b=None, svc=clf))
 
     # Check that params are set
-    pipe._set_params(svc__a=0.1)
+    pipe.set_params(svc__a=0.1)
     assert_equal(clf.a, 0.1)
     # Smoke test the repr:
     repr(pipe)
@@ -55,13 +55,13 @@ def test_pipeline_init():
     pipe = Pipeline([('anova', filter1), ('svc', clf)])
 
     # Check that params are set
-    pipe._set_params(svc__C=0.1)
+    pipe.set_params(svc__C=0.1)
     assert_equal(clf.C, 0.1)
     # Smoke test the repr:
     repr(pipe)
 
     # Check that params are not set when naming them wrong
-    assert_raises(AssertionError, pipe._set_params, anova__C=0.1)
+    assert_raises(AssertionError, pipe.set_params, anova__C=0.1)
 
     # Test clone
     pipe2 = clone(pipe)
