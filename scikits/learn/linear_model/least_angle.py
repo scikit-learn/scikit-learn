@@ -581,13 +581,6 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
         X_test = X_test.copy()
         y_test = y_test.copy()
 
-    if normalize:
-        norms = np.sqrt(np.sum(X_train ** 2, axis=0))
-        nonzeros = np.flatnonzero(norms)
-        if not overwrite_data:
-            X_train = X_train.copy()
-        X_train[:, nonzeros] /= norms[nonzeros]
-
     if fit_intercept:
         X_mean = X_train.mean(axis=0)
         X_train -= X_mean
@@ -595,6 +588,12 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
         y_mean = y_train.mean(axis=0)
         y_train -= y_mean
         y_test -= y_mean
+
+    if normalize:
+        norms = np.sqrt(np.sum(X_train ** 2, axis=0))
+        nonzeros = np.flatnonzero(norms)
+        X_train[:, nonzeros] /= norms[nonzeros]
+
     alphas, active, coefs = lars_path(X_train, y_train, Gram=Gram,
                             overwrite_X=True, overwrite_Gram=True,
                             method=method, verbose=verbose,

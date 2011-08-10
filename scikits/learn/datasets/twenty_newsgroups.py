@@ -47,7 +47,7 @@ import numpy as np
 
 from .base import get_data_home
 from .base import load_files
-from ..utils import check_random_state
+from ..utils import check_random_state, deprecated
 from ..utils.fixes import in1d
 
 
@@ -188,12 +188,10 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
     return data
 
 
+@deprecated("Use fetch_20newsgroups instead with download_if_missing=False")
 def load_20newsgroups(download_if_missing=False, **kwargs):
-    """Alias for fetch_20newsgroups(download_if_missing=False)
+    """Alias for fetch_20newsgroups(download_if_missing=False).
 
-    Check out fetch_20newsgroups.__doc__ for the documentation and parameters
-    list.
+    See fetch_20newsgroups.__doc__ for documentation and parameter list.
     """
-    warnings.warn('load_20newsgroups is depreciated. Use fetch_20newsgroups',
-                  DeprecationWarning)
     return fetch_20newsgroups(download_if_missing=download_if_missing, **kwargs)
