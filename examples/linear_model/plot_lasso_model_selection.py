@@ -1,12 +1,15 @@
 """
-==========================
-Cross validated Lasso path
-==========================
+===================================================
+Lasso model selection: Cross-Validation / AIC / BIC
+===================================================
 
-Compute a 20-fold cross-validated :ref:`lasso` path to find the optimal value of
-alpha.
+Use the Akaike information criterion (AIC), the Bayes Information
+criterion (BIC) and cross-validation to select an optimal value
+of the regularization parameter alpha of the :ref:`lasso` estimator.
 
-This example uses two different algorithm to compute the Lasso path:
+Results obtained with LassoLarsIC are based on AIC/BIC criteria.
+
+A 20-fold cross-validation is used with 2 algorithms to compute the Lasso path:
 coordinate descent, as implemented by the LassoCV class, and Lars (least
 angle regression) as implemented by the LassoLarsCV class. Both
 algorithms give roughly the same results. They differ with regards to
@@ -30,9 +33,6 @@ illustrates why nested-cross validation is necessary when trying to
 evaluate the performance of a method for which a parameter is chosen by
 cross-validation: this choice of parameter may not be optimal for unseen
 data.
-
-Results obtained with LassoLarsIC which is based on AIC/BIC criteria
-are also compared.
 """
 print __doc__
 
@@ -67,6 +67,25 @@ alpha_bic_ = model_bic.alpha_
 model_aic = LassoLarsIC(criterion='aic')
 model_aic.fit(X, y)
 alpha_aic_ = model_aic.alpha_
+
+
+def plot_ic_criterion(model, name, color):
+    alpha_ = model.alpha_
+    alphas_ = model.alphas_
+    criterion_ = model.criterion_
+    idx = np.where(alphas_ == alpha_)[0]
+    line_prop = color + '--'
+    pl.plot(-np.log10(alphas_), criterion_, line_prop, label='%s crit.' % name)
+    pl.vlines(-np.log10(alpha_), pl.ylim()[0], criterion_[idx], color=color,
+              linewidth=3, label='%s estimate' % name)
+    pl.xlabel('-log(lambda)')
+    pl.ylabel('criterion')
+
+pl.figure()
+plot_ic_criterion(model_aic, 'AIC', 'b')
+plot_ic_criterion(model_bic, 'BIC', 'r')
+pl.legend()
+pl.show()
 
 ##############################################################################
 # LassoCV: coordinate descent

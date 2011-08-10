@@ -198,7 +198,7 @@ explained below.
 
 For high-dimensional datasets with many collinear regressors,
 :class:`LassoCV` is most often preferrable. How, :class:`LassoLarsCV` has
-the advantage of exploring more relevant values of `alpha` parameter, and 
+the advantage of exploring more relevant values of `alpha` parameter, and
 if the number of samples is very small compared to the number of
 observations, it is often faster than :class:`LassoCV`.
 
@@ -210,7 +210,22 @@ when using k-fold cross-validation.
 
 .. topic:: Examples:
 
-  * :ref:`example_linear_model_plot_lasso_path_crossval.py`
+  * :ref:`example_linear_model_plot_lasso_model_selection.py`
+
+.. figure:: ../auto_examples/linear_model/images/plot_lasso_model_selection_1.png
+    :target: ../auto_examples/linear_model/plot_lasso_model_selection.html
+    :align: center
+    :scale: 50%
+
+.. figure:: ../auto_examples/linear_model/images/plot_lasso_model_selection_2.png
+    :target: ../auto_examples/linear_model/plot_lasso_model_selection.html
+    :align: center
+    :scale: 50%
+
+.. figure:: ../auto_examples/linear_model/images/plot_lasso_model_selection_3.png
+    :target: ../auto_examples/linear_model/plot_lasso_model_selection.html
+    :align: center
+    :scale: 50%
 
 
 Elastic Net
@@ -302,11 +317,6 @@ function of the norm of its coefficients.
 
  * :ref:`example_linear_model_plot_lasso_lars.py`
 
- * :ref:`example_linear_model_plot_lasso_path_crossval.py`
-
-The class :class:`LassoLarsCV` can be used to set the `alpha` parameter
-of the Lasso by cross-validation with the Lars algorithm.
-
 The Lars algorithm provides the full path of the coefficients along
 the regularization parameter almost for free, thus a common operation
 consist of retrieving the path with function :func:`lars_path`
@@ -337,9 +347,9 @@ Orthogonal Matching Pursuit (OMP)
 =================================
 :class:`OrthogonalMatchingPursuit` and :func:`orthogonal_mp` implements the OMP
 algorithm for approximating the fit of a linear model with constraints imposed
-on the number of non-zero coefficients (ie. the L :sub:`0` pseudo-norm). 
+on the number of non-zero coefficients (ie. the L :sub:`0` pseudo-norm).
 
-Being a forward feature selection method like :ref:`least_angle_regression`, 
+Being a forward feature selection method like :ref:`least_angle_regression`,
 orthogonal matching pursuit can approximate the optimum solution vector with a
 fixed number of non-zero elements:
 
@@ -355,7 +365,7 @@ OMP is based on a greedy algorithm that includes at each step the atom most
 highly correlated with the current residual. It is similar to the simpler
 matching pursuit (MP) method, but better in that at each iteration, the
 residual is recomputed using an orthogonal projection on the space of the
-previously chosen dictionary elements. 
+previously chosen dictionary elements.
 
 
 .. topic:: Examples:
@@ -368,14 +378,14 @@ previously chosen dictionary elements.
 
  * `Matching pursuits with time-frequency dictionaries
    <http://blanche.polytechnique.fr/~mallat/papiers/MallatPursuit93.pdf>`_,
-   S. G. Mallat, Z. Zhang, 
+   S. G. Mallat, Z. Zhang,
 
 Bayesian Regression
 ===================
 
 Bayesian regression techniques can be used to include regularization
 parameters in the estimation procedure: the regularization parameter is
-not set in a hard sens but tuned to the data at hand. 
+not set in a hard sens but tuned to the data at hand.
 
 This can be done by introducing some prior knowledge over the parameters.
 For example, penalization by weighted :math:`\ell_{2}` norm is equivalent
