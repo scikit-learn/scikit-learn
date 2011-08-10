@@ -154,7 +154,13 @@ as GridSearchCV except that it defaults to Generalized Cross-Validation
 Lasso
 =====
 
-The :class:`Lasso` is a linear model trained with L1 prior as
+The :class:`Lasso` is a linear model that estimates sparse coefficients.
+It is useful in some contexts due to its tendency to prefer solutions
+with fewer parameter values, effectively reducing the number of variables
+upon which the given solution is dependent. For this reason, the Lasso
+and its variants are fundamental to the field of compressed sensing.
+
+Mathematically, it consists of a linear model trained with L1 prior as
 regularizer. The objective function to minimize is:
 
 .. math::  0.5 * ||X w - y||_2 ^ 2 + \alpha * ||w||_1
@@ -164,15 +170,9 @@ least-squares penalty with :math:`\alpha * ||w||_1` added, where
 :math:`\alpha` is a constant and :math:`||w||_1` is the L1-norm of the
 parameter vector.
 
-
-This formulation is useful in some contexts due to its tendency to
-prefer solutions with fewer parameter values, effectively reducing the
-number of variables upon which the given solution is dependent. For
-this reason, the Lasso and its variants are fundamental to the field
-of compressed sensing.
-
-This implementation uses coordinate descent as the algorithm to fit
-the coefficients. See :ref:`least_angle_regression` for another implementation.
+The implementation in the class :class:`Lasso` uses coordinate descent as
+the algorithm to fit the coefficients. See :ref:`least_angle_regression`
+for another implementation.
 
     >>> clf = linear_model.Lasso(alpha = 0.1)
     >>> clf.fit ([[0, 0], [1, 1]], [0, 1])
@@ -181,8 +181,8 @@ the coefficients. See :ref:`least_angle_regression` for another implementation.
     >>> clf.predict ([[1, 1]])
     array([ 0.8])
 
-The function :func:`lasso_path` computes the coefficients along the full path
-of possible values.
+Also useful for lower-level tasks is the function :func:`lasso_path` that
+computes the coefficients along the full path of possible values.
 
 .. topic:: Examples:
 
@@ -190,6 +190,9 @@ of possible values.
 
 Setting `alpha`
 -----------------
+
+The `alpha` parameter control the degree of sparsity of the coefficients
+estimated.
 
 Using cross-validation
 ^^^^^^^^^^^^^^^^^^^^^^^
