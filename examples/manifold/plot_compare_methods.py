@@ -58,11 +58,11 @@ ax.set_title('Original Data')
 
 for i, method in enumerate(methods):
     t0 = time()
-    Y, err = manifold.locally_linear_embedding(
-        X, n_neighbors, out_dim, eigen_solver='arpack', method=method)
+    Y = manifold.LocallyLinearEmbedding(n_neighbors, out_dim,
+                                        eigen_solver='arpack',
+                                        method=method).fit_transform(X)
     t1 = time()
     print "%s: %.2g sec" % (methods[i], t1 - t0)
-    print ' err = %.2e' % err
 
     ax = fig.add_subplot(322 + i)
     ax.scatter(Y[:, 0], Y[:, 1], c=color, cmap=pylab.cm.Spectral)
