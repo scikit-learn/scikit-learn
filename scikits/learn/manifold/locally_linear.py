@@ -237,7 +237,7 @@ def locally_linear_embedding(
                 U = svd(Gi, full_matrices=0)[0]
             else:
                 Ci = np.dot(Gi, Gi.T)
-                U = eigh(Ci)[1]
+                U = eigh(Ci)[1][:, ::-1]
 
             Yi[:, 1:1 + out_dim] = U[:, :out_dim]
 
