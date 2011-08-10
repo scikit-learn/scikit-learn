@@ -140,6 +140,10 @@ The Isomap algorithm comprises three stages:
 The overall complexity of Isomap is
 :math:`O[D \log(k) N \log(N)] + O[N^2(k + \log(N))] + O[d N^2]`.
 
+* :math:`N` : number of training data points
+* :math:`D` : input dimension
+* :math:`k` : number of nearest neighbors
+* :math:`d` : output dimension
 
 .. topic:: References:
 
@@ -182,6 +186,10 @@ The standard LLE algorithm comprises three stages:
 The overall complexity of standard LLE is
 :math:`O[D \log(k) N \log(N)] + O[D N k^3] + O[d N^2]`.
 
+* :math:`N` : number of training data points
+* :math:`D` : input dimension
+* :math:`k` : number of nearest neighbors
+* :math:`d` : output dimension
 
 .. topic:: References:
    
@@ -234,6 +242,10 @@ The MLLE algorithm comprises three stages:
 The overall complexity of MLLE is
 :math:`O[D \log(k) N \log(N)] + O[D N k^3] + O[N (k-D) k^2] + O[d N^2]`.
 
+* :math:`N` : number of training data points
+* :math:`D` : input dimension
+* :math:`k` : number of nearest neighbors
+* :math:`d` : output dimension
 
 .. topic:: References:
      
@@ -270,14 +282,18 @@ The HLLE algorithm comprises three stages:
 
 2. **Weight Matrix Construction**. Approximately
    :math:`O[D N k^3] + O[N d^6]`.  The first term reflects a similar
-   cost as standard LLE.  The second term comes from a QR decomposition
-   of the local hessian estimator.
+   cost to that of standard LLE.  The second term comes from a QR
+   decomposition of the local hessian estimator.
 
 3. **Partial Eigenvalue Decomposition**. Same as standard LLE
 
 The overall complexity of standard HLLE is
 :math:`O[D \log(k) N \log(N)] + O[D N k^3] + O[N d^6] + O[d N^2]`.
 
+* :math:`N` : number of training data points
+* :math:`D` : input dimension
+* :math:`k` : number of nearest neighbors
+* :math:`d` : output dimension
 
 .. topic:: References:
 
@@ -312,13 +328,17 @@ The LTSA algorithm comprises three stages:
 
 2. **Weight Matrix Construction**. Approximately
    :math:`O[D N k^3] + O[k^2 d]`.  The first term reflects a similar
-   cost as standard LLE.
+   cost to that of standard LLE.
 
 3. **Partial Eigenvalue Decomposition**. Same as standard LLE
 
 The overall complexity of standard LTSA is
 :math:`O[D \log(k) N \log(N)] + O[D N k^3] + O[k^2 d] + O[d N^2]`.
 
+* :math:`N` : number of training data points
+* :math:`D` : input dimension
+* :math:`k` : number of nearest neighbors
+* :math:`d` : output dimension
 
 .. topic:: References:
 
@@ -333,7 +353,8 @@ Tips on practical use
 
 * Make sure the same scale is used over all features. Because manifold
   learning methods are based on a nearest-neighbor search, the algorithm
-  may perform poorly otherwise.
+  may perform poorly otherwise.  See :ref:`Scaler <preprocessing_scaler>`
+  for convenient ways of scaling heterogeneous data.
 
 * On certain problems, the `lobcpg` solver available in the LLE variants
   might converge slowly. Supply a generous value for `max_iter` if big 
