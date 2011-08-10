@@ -446,9 +446,9 @@ class GenericUnivariateSelect(_AbstractUnivariateFilter):
         selector = self._selection_modes[self.mode](lambda x: x)
         selector._pvalues = self._pvalues
         selector._scores = self._scores
-        # Now make some acrobaties to set the right named parameter in
+        # Now perform some acrobatics to set the right named parameter in
         # the selector
         possible_params = selector._get_param_names()
         possible_params.remove('score_func')
-        selector._set_params(**{possible_params[0]: self.param})
+        selector.set_params(**{possible_params[0]: self.param})
         return selector._get_support_mask()

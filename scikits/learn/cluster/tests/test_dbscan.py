@@ -55,9 +55,8 @@ def test_dbscan_feature():
     n_clusters_1 = len(set(labels)) - int(-1 in labels)
     assert_equal(n_clusters_1, n_clusters)
 
-    db = DBSCAN()
-    labels = db.fit(X, metric=metric,
-                    eps=eps, min_samples=min_samples).labels_
+    db = DBSCAN(metric=metric)
+    labels = db.fit(X, eps=eps, min_samples=min_samples).labels_
 
     n_clusters_2 = len(set(labels)) - int(-1 in labels)
     assert_equal(n_clusters_2, n_clusters)
@@ -80,9 +79,8 @@ def test_dbscan_callable():
     n_clusters_1 = len(set(labels)) - int(-1 in labels)
     assert_equal(n_clusters_1, n_clusters)
 
-    db = DBSCAN()
-    labels = db.fit(X, metric=metric,
-                    eps=eps, min_samples=min_samples).labels_
+    db = DBSCAN(metric=metric)
+    labels = db.fit(X, eps=eps, min_samples=min_samples).labels_
 
     n_clusters_2 = len(set(labels)) - int(-1 in labels)
     assert_equal(n_clusters_2, n_clusters)

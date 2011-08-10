@@ -40,7 +40,7 @@ score_stds  = list()
 percentiles = (1, 3, 6, 10, 15, 20, 30, 40, 60, 80, 100)
 
 for percentile in percentiles:
-    clf._set_params(anova__percentile=percentile)
+    clf.set_params(anova__percentile=percentile)
     # Compute cross-validation score using all CPUs
     this_scores = cross_val.cross_val_score(clf, X, y, n_jobs=1)
     score_means.append(this_scores.mean())
