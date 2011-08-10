@@ -331,7 +331,7 @@ classifier or a regressor. All estimators implement the fit method::
 All built-in estimators also have a ``set_params`` method, which sets
 data-independent parameters (overriding previous parameter values passed
 to ``__init__``). This method is not required for an object to be an
-estimator, but is used by the :class:`grid_search.GridSearchCV` class.
+estimator.
 
 
 Instantiation
