@@ -48,7 +48,10 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
         Not used if eigen_solver=='dense'.
 
     max_iter : maximum number of iterations for 'arpack' or 'lobpcg' methods
-            not used if eigen_solver=='dense'
+        not used if eigen_solver=='dense'
+
+    random_state :
+        seed for random vector in 'lobpcg' solver
     """
     random_state = check_random_state(random_state)
 
@@ -116,6 +119,10 @@ def locally_linear_embedding(
         arpack can handle both dense and sparse data efficiently
         lobpcg solver is usually faster than dense but depends on PyAMG.
 
+    tol : float, optional
+        Tolerance for 'arpack' or 'lobpcg' methods.
+        Not used if eigen_solver=='dense'.
+
     max_iter : integer
         maximum number of iterations for the lobpcg solver.
 
@@ -137,6 +144,9 @@ def locally_linear_embedding(
     modified_tol : float, optional
         Tolerance for modified LLE method.
         Only used if method == 'modified'
+
+    random_state :
+        seed for random vector in 'lobpcg' solver
 
     Returns
     -------
@@ -216,12 +226,19 @@ def locally_linear_embedding(
 
         M = np.zeros((N, N), dtype=np.float)
 
+        use_svd = (n_neighbors > d_in)
+
         for i in range(N):
             Gi = X[neighbors[i]]
             Gi -= Gi.mean(0)
 
             #build Hessian estimator
-            U, sig, VT = svd(Gi, full_matrices=0)
+            if use_svd:
+                U = svd(Gi, full_matrices=0)[0]
+            else:
+                Ci = np.dot(Gi, Gi.T)
+                U = eigh(Ci)[1]
+
             Yi[:, 1:1 + out_dim] = U[:, :out_dim]
 
             j = 1 + out_dim
@@ -256,9 +273,23 @@ def locally_linear_embedding(
         V = np.zeros((N, n_neighbors, n_neighbors))
         nev = min(d_in, n_neighbors)
         evals = np.zeros([N, nev])
-        for i in range(N):
-            V[i], evals[i], tmp = np.linalg.svd(X[neighbors[i]] - X[i])
-        evals **= 2
+
+        #choose the most efficient way to find the eigenvectors
+        use_svd = (n_neighbors > d_in)
+
+        if use_svd:
+            for i in range(N):
+                X_nbrs = X[neighbors[i]] - X[i]
+                V[i], evals[i], _ = svd(X_nbrs,
+                                        full_matrices=True)
+            evals **= 2
+        else:
+            for i in range(N):
+                X_nbrs = X[neighbors[i]] - X[i]
+                C_nbrs = np.dot(X_nbrs, X_nbrs.T)
+                evi, vi = eigh(C_nbrs)
+                evals[i] = evi[::-1]
+                V[i] = vi[:, ::-1]
 
         #find regularized weights: this is like normal LLE.
         # because we've already computed the SVD of each covariance matrix,
@@ -340,11 +371,18 @@ def locally_linear_embedding(
 
         M = np.zeros((N, N))
 
+        use_svd = (n_neighbors > d_in)
+
         for i in range(N):
             Xi = X[neighbors[i]]
+            Xi -= Xi.mean(0)
 
             # compute out_dim largest eigenvalues of Xi * Xi^T
-            v = np.linalg.svd(Xi - Xi.mean(0), full_matrices=True)[0]
+            if use_svd:
+                v = svd(Xi, full_matrices=True)[0]
+            else:
+                Ci = np.dot(Xi, Xi.T)
+                v = eigh(Ci)[1][:, ::-1]
 
             Gi = np.zeros((n_neighbors, out_dim + 1))
             Gi[:, 1:] = v[:, :out_dim]
@@ -372,6 +410,43 @@ class LocallyLinearEmbedding(BaseEstimator):
     out_dim : integer
         number of coordinates for the manifold
 
+    reg : float
+        regularization constant, multiplies the trace of the local covariance
+        matrix of the distances.
+
+    eigen_solver : {'arpack', 'lobpcg', 'dense'}
+        arpack can handle both dense and sparse data efficiently
+        lobpcg solver is usually faster than dense but depends on PyAMG.
+
+    tol : float, optional
+        Tolerance for 'arpack' or 'lobpcg' methods.
+        Not used if eigen_solver=='dense'.
+
+    max_iter : integer
+        maximum number of iterations for the lobpcg solver.
+
+    method : string ['standard' | 'hessian' | 'modified']
+        standard : use the standard locally linear embedding algorithm.
+                   see reference [1]
+        hessian  : use the Hessian eigenmap method.  This method requires
+                   n_neighbors > out_dim * (1 + (out_dim + 1) / 2.
+                   see reference [2]
+        modified : use the modified locally linear embedding algorithm.
+                   see reference [3]
+        ltsa     : use local tangent space alignment algorithm
+                   see reference [4]
+
+    hessian_tol : float, optional
+        Tolerance for Hessian eigenmapping method.
+        Only used if method == 'hessian'
+
+    modified_tol : float, optional
+        Tolerance for modified LLE method.
+        Only used if method == 'modified'
+
+    random_state :
+        seed for random vector in 'lobpcg' solver
+
     Attributes
     ----------
     `embedding_vectors_` : array-like, shape [out_dim, n_samples]
@@ -379,15 +454,38 @@ class LocallyLinearEmbedding(BaseEstimator):
 
     `reconstruction_error_` : float
         Reconstruction error associated with `embedding_vectors_`
+
+    `ball_tree_` : BallTree object
+        Ball Tree used for nearest neighbors
     """
 
-    def __init__(self, n_neighbors=5, out_dim=2, random_state=None):
+    def __init__(self, n_neighbors=5, out_dim=2, reg=1E-3,
+                 eigen_solver='arpack', tol=1E-6, max_iter=100,
+                 method='standard', hessian_tol=1E-4, modified_tol=1E-12,
+                 random_state=None):
         self.n_neighbors = n_neighbors
         self.out_dim = out_dim
+        self.reg = reg
+        self.eigen_solver = eigen_solver
+        self.tol = tol
+        self.max_iter = max_iter
+        self.method = method
+        self.hessian_tol = hessian_tol
+        self.modified_tol = modified_tol
         self.random_state = random_state
 
-    def fit(self, X, Y=None, reg=1e-3, eigen_solver='arpack', tol=1e-6,
-            max_iter=100, **params):
+    def _fit_transform(self, X):
+        self.ball_tree_ = BallTree(X)
+        self.random_state = check_random_state(self.random_state)
+        self.embedding_, self.reconstruction_error_ = \
+            locally_linear_embedding(
+                self.ball_tree_, self.n_neighbors, self.out_dim,
+                eigen_solver=self.eigen_solver, tol=self.tol,
+                max_iter=self.max_iter, method=self.method,
+                hessian_tol=self.hessian_tol, modified_tol=self.modified_tol,
+                random_state=self.random_state)
+
+    def fit(self, X, y=None, **params):
         """Compute the embedding vectors for data X
 
         Parameters
@@ -395,45 +493,37 @@ class LocallyLinearEmbedding(BaseEstimator):
         X : array-like of shape [n_samples, n_features]
             training set.
 
-        out_dim : integer
-            number of coordinates for the manifold
-
-        reg : float
-            regularization constant, multiplies the trace of the local
-            covariance matrix of the distances
-
-        eigen_solver : {'lobpcg', 'dense'}
-            use the lobpcg eigensolver or a dense eigensolver based on LAPACK
-            routines. The lobpcg solver is usually faster but depends on PyAMG
-
-        max_iter : integer
-            maximum number of iterations for the lobpcg solver.
-
         Returns
         -------
         self : returns an instance of self.
         """
-        self.random_state = check_random_state(self.random_state)
         self._set_params(**params)
-        self.ball_tree = BallTree(X)
-        self.embedding_, self.reconstruction_error_ = \
-            locally_linear_embedding(
-                self.ball_tree, self.n_neighbors, self.out_dim, reg=reg,
-                eigen_solver=eigen_solver, tol=tol, max_iter=max_iter,
-                random_state=self.random_state)
+        self._fit_transform(X)
         return self
 
-    def transform(self, X, reg=1e-3, **params):
+    def fit_transform(self, X, y=None, **params):
+        """Compute the embedding vectors for data X and transform X.
+
+        Parameters
+        ----------
+        X : array-like of shape [n_samples, n_features]
+            training set.
+
+        Returns
+        -------
+        X_new: array-like, shape (n_samples, out_dim)
+        """
+        self._set_params(**params)
+        self._fit_transform(X)
+        return self.embedding_
+
+    def transform(self, X, **params):
         """
         Transform new points into embedding space.
 
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
-
-        reg : float
-            regularization constant, multiplies the trace of the local
-            covariance matrix of the distances
 
         Returns
         -------
@@ -446,11 +536,12 @@ class LocallyLinearEmbedding(BaseEstimator):
         """
         self._set_params(**params)
         X = np.atleast_2d(X)
-        if not hasattr(self, 'ball_tree'):
+        if not hasattr(self, 'ball_tree_'):
             raise ValueError('The model is not fitted')
-        ind = self.ball_tree.query(X, k=self.n_neighbors,
+        ind = self.ball_tree_.query(X, k=self.n_neighbors,
                                    return_distance=False)
-        weights = barycenter_weights(X, self.ball_tree.data[ind], reg=reg)
+        weights = barycenter_weights(X, self.ball_tree_.data[ind],
+                                     reg=self.reg)
         X_new = np.empty((X.shape[0], self.out_dim))
         for i in range(X.shape[0]):
             X_new[i] = np.dot(self.embedding_[ind[i]].T, weights[i])
