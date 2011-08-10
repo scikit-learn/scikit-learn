@@ -1,16 +1,19 @@
 """
-==========================
-Cross validated Lasso path
-==========================
+===================================================
+Lasso model selection: Cross-Validation / AIC / BIC
+===================================================
 
-Compute a 20-fold cross-validated :ref:`lasso` path to find the optimal value of
-alpha. 
+Use the Akaike information criterion (AIC), the Bayes Information
+criterion (BIC) and cross-validation to select an optimal value
+of the regularization parameter alpha of the :ref:`lasso` estimator.
 
-This example uses two different algorithm to compute the Lasso path:
+Results obtained with LassoLarsIC are based on AIC/BIC criteria.
+
+A 20-fold cross-validation is used with 2 algorithms to compute the Lasso path:
 coordinate descent, as implemented by the LassoCV class, and Lars (least
 angle regression) as implemented by the LassoLarsCV class. Both
 algorithms give roughly the same results. They differ with regards to
-their execution speed and sources of numerical errors. 
+their execution speed and sources of numerical errors.
 
 Lars computes a path solution only for each kink in the path. As a
 result, it is very efficient when there are only of few kinks, which is
@@ -33,7 +36,7 @@ data.
 """
 print __doc__
 
-# Author: Olivier Grisel, Gael Varoquaux
+# Author: Olivier Grisel, Gael Varoquaux, Alexandre Gramfort
 # License: BSD Style.
 
 import time
@@ -41,15 +44,48 @@ import time
 import numpy as np
 import pylab as pl
 
-from scikits.learn.linear_model import LassoCV, LassoLarsCV
+from scikits.learn.linear_model import LassoCV, LassoLarsCV, LassoLarsIC
 from scikits.learn import datasets
 
 diabetes = datasets.load_diabetes()
 X = diabetes.data
 y = diabetes.target
 
+rng = np.random.RandomState(42)
+X = np.c_[X, rng.randn(X.shape[0], 14)]  # add some bad features
+
 # normalize data as done by Lars to allow for comparison
 X /= np.sqrt(np.sum(X ** 2, axis=0))
+
+##############################################################################
+# LassoLarsIC: least angle regression with BIC/AIC criterion
+
+model_bic = LassoLarsIC(criterion='bic')
+model_bic.fit(X, y)
+alpha_bic_ = model_bic.alpha_
+
+model_aic = LassoLarsIC(criterion='aic')
+model_aic.fit(X, y)
+alpha_aic_ = model_aic.alpha_
+
+
+def plot_ic_criterion(model, name, color):
+    alpha_ = model.alpha_
+    alphas_ = model.alphas_
+    criterion_ = model.criterion_
+    idx = np.where(alphas_ == alpha_)[0]
+    line_prop = color + '--'
+    pl.plot(-np.log10(alphas_), criterion_, line_prop, label='%s crit.' % name)
+    pl.vlines(-np.log10(alpha_), pl.ylim()[0], criterion_[idx], color=color,
+              linewidth=3, label='%s estimate' % name)
+    pl.xlabel('-log(lambda)')
+    pl.ylabel('criterion')
+
+pl.figure()
+plot_ic_criterion(model_aic, 'AIC', 'b')
+plot_ic_criterion(model_bic, 'BIC', 'r')
+pl.legend()
+pl.show()
 
 ##############################################################################
 # LassoCV: coordinate descent
@@ -65,15 +101,21 @@ m_log_alphas = -np.log10(model.alphas)
 
 pl.figure()
 ymin, ymax = 2300, 3800
-pl.plot(m_log_alphas, model.mse_path_, '--')
-pl.plot(m_log_alphas, model.mse_path_.mean(axis=-1), 'k', 
+pl.plot(m_log_alphas, model.mse_path_, ':')
+pl.plot(m_log_alphas, model.mse_path_.mean(axis=-1), 'k',
         label='Average accross the folds', linewidth=2)
-pl.axvline(-np.log10(model.alpha), linestyle='dashed', color='k')
+pl.axvline(-np.log10(model.alpha), linestyle='--', color='k',
+           label='alpha CV')
+pl.axvline(-np.log10(alpha_bic_), linestyle='--', color='r',
+           label='alpha BIC')
+pl.axvline(-np.log10(alpha_aic_), linestyle='--', color='g',
+           label='alpha AIC')
+
 pl.legend()
 
 pl.xlabel('-log(lambda)')
 pl.ylabel('Mean square error')
-pl.title('Mean square error on each fold: coordinate descent (train time: %.2fs)' % 
+pl.title('Mean square error on each fold: coordinate descent (train time: %.2fs)' %
             t_lasso_cv)
 pl.axis('tight')
 pl.ylim(ymin, ymax)
@@ -91,15 +133,20 @@ t_lasso_lars_cv = time.time() - t1
 m_log_alphas = -np.log10(model.cv_alphas)
 
 pl.figure()
-pl.plot(m_log_alphas, model.cv_mse_path_, '--')
-pl.plot(m_log_alphas, model.cv_mse_path_.mean(axis=-1), 'k', 
+pl.plot(m_log_alphas, model.cv_mse_path_, ':')
+pl.plot(m_log_alphas, model.cv_mse_path_.mean(axis=-1), 'k',
         label='Average accross the folds', linewidth=2)
-pl.axvline(-np.log10(model.alpha), linestyle='dashed', color='k')
+pl.axvline(-np.log10(model.alpha), linestyle='--', color='k',
+           label='alpha CV')
+pl.axvline(-np.log10(alpha_bic_), linestyle='--', color='r',
+           label='alpha BIC')
+pl.axvline(-np.log10(alpha_aic_), linestyle='--', color='g',
+           label='alpha AIC')
 pl.legend()
 
 pl.xlabel('-log(lambda)')
 pl.ylabel('Mean square error')
-pl.title('Mean square error on each fold: Lars (train time: %.2fs)' % 
+pl.title('Mean square error on each fold: Lars (train time: %.2fs)' %
             t_lasso_lars_cv)
 pl.axis('tight')
 pl.ylim(ymin, ymax)
