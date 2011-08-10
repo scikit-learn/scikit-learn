@@ -51,7 +51,8 @@ X_lda = lda.LDA(n_components=2).fit_transform(X2, y)
 #----------------------------------------------------------------------
 # Locally linear embedding of the digits dataset
 print "Computing LLE embedding"
-clf = manifold.LocallyLinearEmbedding(n_neighbors, 2, method='standard')
+clf = manifold.LocallyLinearEmbedding(n_neighbors, out_dim=2,
+                                      method='standard')
 X_lle = clf.fit_transform(X)
 print "Done. Reconstruction error: %g" % clf.reconstruction_error_
 
@@ -59,7 +60,8 @@ print "Done. Reconstruction error: %g" % clf.reconstruction_error_
 #----------------------------------------------------------------------
 # Modified Locally linear embedding of the digits dataset
 print "Computing modified LLE embedding"
-clf = manifold.LocallyLinearEmbedding(n_neighbors, 2, method='modified')
+clf = manifold.LocallyLinearEmbedding(n_neighbors, out_dim=2,
+                                      method='modified')
 X_mlle = clf.fit_transform(X)
 print "Done. Reconstruction error: %g" % clf.reconstruction_error_
 
@@ -67,15 +69,25 @@ print "Done. Reconstruction error: %g" % clf.reconstruction_error_
 #----------------------------------------------------------------------
 # LTSA embedding of the digits dataset
 print "Computing LTSA embedding"
-clf = manifold.LocallyLinearEmbedding(n_neighbors, 2, method='ltsa')
+clf = manifold.LocallyLinearEmbedding(n_neighbors, out_dim=2,
+                                      method='ltsa')
 X_ltsa = clf.fit_transform(X)
+print "Done. Reconstruction error: %g" % clf.reconstruction_error_
+
+
+#----------------------------------------------------------------------
+# HLLE embedding of the digits dataset
+print "Computing Hessian LLE embedding"
+clf = manifold.LocallyLinearEmbedding(n_neighbors, out_dim=2,
+                                      method='hessian')
+X_hlle = clf.fit_transform(X)
 print "Done. Reconstruction error: %g" % clf.reconstruction_error_
 
 
 #----------------------------------------------------------------------
 # Isomap projection of the digits dataset
 print "Computing Isomap embedding"
-X_iso = manifold.Isomap(n_neighbors, 2).fit_transform(X)
+X_iso = manifold.Isomap(n_neighbors, out_dim=2).fit_transform(X)
 print "Done."
 
 
@@ -115,6 +127,7 @@ plot_embedding(X_lda, "Linear Discriminant projection of the digits")
 plot_embedding(X_lle, "Locally Linear Embedding of the digits")
 plot_embedding(X_mlle, "Modified Locally Linear Embedding of the digits")
 plot_embedding(X_ltsa, "Local Tangent Space Alignment of the digits")
+plot_embedding(X_hlle, "Hessian Locally Linear Embedding of the digits")
 plot_embedding(X_iso, "Isomap projection of the digits")
 
 pl.show()
