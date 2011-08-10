@@ -191,6 +191,9 @@ of possible values.
 Setting `alpha`
 -----------------
 
+Using cross-validation
+^^^^^^^^^^^^^^^^^^^^^^^
+
 The scikit exposes objects that set the Lasso `alpha` parameter by
 cross-validation: :class:`LassoCV` and :class:`LassoLarsCV`.
 :class:`LassoLarsCV` is based on the :ref:`least_angle_regression` algorithm
@@ -202,30 +205,36 @@ the advantage of exploring more relevant values of `alpha` parameter, and
 if the number of samples is very small compared to the number of
 observations, it is often faster than :class:`LassoCV`.
 
+.. |lasso_cv_1| image:: ../auto_examples/linear_model/images/plot_lasso_model_selection_2.png
+    :target: ../auto_examples/linear_model/plot_lasso_model_selection.html
+    :scale: 50%
+
+.. |lasso_cv_2| image:: ../auto_examples/linear_model/images/plot_lasso_model_selection_3.png
+    :target: ../auto_examples/linear_model/plot_lasso_model_selection.html
+    :scale: 50%
+
+|lasso_cv_1| |lasso_cv_2|
+
+
+Information-criteria based model selection
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 Alternatively, the estimator :class:`LassoLarsIC` proposes to use the
 Akaike information criterion (AIC) and the Bayes Information criterion (BIC).
 It is a computationally cheaper alternative to find the optimal value of alpha
 as the regularization path is computed only once instead of k+1 times
-when using k-fold cross-validation.
-
-.. topic:: Examples:
-
-  * :ref:`example_linear_model_plot_lasso_model_selection.py`
+when using k-fold cross-validation. However, it relies on assumptions on
+the degrees of freedom of the noise.
 
 .. figure:: ../auto_examples/linear_model/images/plot_lasso_model_selection_1.png
     :target: ../auto_examples/linear_model/plot_lasso_model_selection.html
     :align: center
     :scale: 50%
 
-.. figure:: ../auto_examples/linear_model/images/plot_lasso_model_selection_2.png
-    :target: ../auto_examples/linear_model/plot_lasso_model_selection.html
-    :align: center
-    :scale: 50%
 
-.. figure:: ../auto_examples/linear_model/images/plot_lasso_model_selection_3.png
-    :target: ../auto_examples/linear_model/plot_lasso_model_selection.html
-    :align: center
-    :scale: 50%
+.. topic:: Examples:
+
+  * :ref:`example_linear_model_plot_lasso_model_selection.py`
 
 
 Elastic Net

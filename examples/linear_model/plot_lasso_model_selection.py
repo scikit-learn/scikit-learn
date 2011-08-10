@@ -9,11 +9,14 @@ of the regularization parameter alpha of the :ref:`lasso` estimator.
 
 Results obtained with LassoLarsIC are based on AIC/BIC criteria.
 
-A 20-fold cross-validation is used with 2 algorithms to compute the Lasso path:
-coordinate descent, as implemented by the LassoCV class, and Lars (least
-angle regression) as implemented by the LassoLarsCV class. Both
-algorithms give roughly the same results. They differ with regards to
-their execution speed and sources of numerical errors.
+Information-criterion based model selection is very fast, but it
+relies on assumptions on the degrees of freedom of the noise.
+
+For cross-validation, we use 20-fold with 2 algorithms to compute the
+Lasso path: coordinate descent, as implemented by the LassoCV class, and
+Lars (least angle regression) as implemented by the LassoLarsCV class.
+Both algorithms give roughly the same results. They differ with regards
+to their execution speed and sources of numerical errors.
 
 Lars computes a path solution only for each kink in the path. As a
 result, it is very efficient when there are only of few kinks, which is
@@ -61,7 +64,9 @@ X /= np.sqrt(np.sum(X ** 2, axis=0))
 # LassoLarsIC: least angle regression with BIC/AIC criterion
 
 model_bic = LassoLarsIC(criterion='bic')
+t1 = time.time()
 model_bic.fit(X, y)
+t_bic = time.time() - t1
 alpha_bic_ = model_bic.alpha_
 
 model_aic = LassoLarsIC(criterion='aic')
@@ -73,11 +78,10 @@ def plot_ic_criterion(model, name, color):
     alpha_ = model.alpha_
     alphas_ = model.alphas_
     criterion_ = model.criterion_
-    idx = np.where(alphas_ == alpha_)[0]
-    line_prop = color + '--'
-    pl.plot(-np.log10(alphas_), criterion_, line_prop, label='%s crit.' % name)
-    pl.vlines(-np.log10(alpha_), pl.ylim()[0], criterion_[idx], color=color,
-              linewidth=3, label='%s estimate' % name)
+    pl.plot(-np.log10(alphas_), criterion_, '--', color=color, 
+            linewidth=3, label='%s criterion' % name)
+    pl.axvline(-np.log10(alpha_), color=color,
+              linewidth=3, label='alpha: %s estimate' % name)
     pl.xlabel('-log(lambda)')
     pl.ylabel('criterion')
 
@@ -85,7 +89,7 @@ pl.figure()
 plot_ic_criterion(model_aic, 'AIC', 'b')
 plot_ic_criterion(model_bic, 'BIC', 'r')
 pl.legend()
-pl.show()
+pl.title('Information-criterion for model selection (training time %.3fs)' % t_bic)
 
 ##############################################################################
 # LassoCV: coordinate descent
@@ -105,11 +109,7 @@ pl.plot(m_log_alphas, model.mse_path_, ':')
 pl.plot(m_log_alphas, model.mse_path_.mean(axis=-1), 'k',
         label='Average accross the folds', linewidth=2)
 pl.axvline(-np.log10(model.alpha), linestyle='--', color='k',
-           label='alpha CV')
-pl.axvline(-np.log10(alpha_bic_), linestyle='--', color='r',
-           label='alpha BIC')
-pl.axvline(-np.log10(alpha_aic_), linestyle='--', color='g',
-           label='alpha AIC')
+           label='alpha: CV estimate')
 
 pl.legend()
 
@@ -138,10 +138,6 @@ pl.plot(m_log_alphas, model.cv_mse_path_.mean(axis=-1), 'k',
         label='Average accross the folds', linewidth=2)
 pl.axvline(-np.log10(model.alpha), linestyle='--', color='k',
            label='alpha CV')
-pl.axvline(-np.log10(alpha_bic_), linestyle='--', color='r',
-           label='alpha BIC')
-pl.axvline(-np.log10(alpha_aic_), linestyle='--', color='g',
-           label='alpha AIC')
 pl.legend()
 
 pl.xlabel('-log(lambda)')
