@@ -7,7 +7,6 @@
 import numpy as np
 from scipy.linalg import eigh, svd, qr
 from scipy.sparse import linalg, eye, csr_matrix
-from scipy.sparse.linalg import LinearOperator
 from ..base import BaseEstimator
 from ..utils import check_random_state
 from ..utils.arpack import eigsh
