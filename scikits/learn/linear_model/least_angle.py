@@ -974,8 +974,9 @@ class LassoLarsIC(LassoLars):
             # Trace(Xc * inv(Xc.T, Xc) * Xc.T) ie the number of non-zero coefs
             df[k] = np.sum(mask)
 
-        crit = n_samples * np.log(mean_squared_error) + K * df
-        n_best = np.argmin(crit)
+        self.alphas_ = alphas_
+        self.criterion_ = n_samples * np.log(mean_squared_error) + K * df
+        n_best = np.argmin(self.criterion_)
 
         self.alpha_ = alphas_[n_best]
         self.coef_ = coef_path_[:, n_best]
