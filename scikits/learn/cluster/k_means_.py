@@ -701,8 +701,13 @@ class MiniBatchKMeans(KMeans):
                     print 'Converged to similar centers at iteration', i
                 break
 
-        self.inertia_, self.labels_ = _calculate_labels_inertia(
-            X, self.cluster_centers_)
+        self.inertia_ = 0
+        self.labels_ = np.empty((n_samples,), dtype=np.int)
+        for batch_slice in batch_slices:
+            batch_inertia, batch_labels = _calculate_labels_inertia(
+            X[batch_slice], self.cluster_centers_)
+            self.inertia_ += batch_inertia
+            self.labels_[batch_slice] = batch_labels
 
         return self
 
