@@ -489,7 +489,7 @@ class KMeans(BaseEstimator):
             raise ValueError("K-Means does not support sparse input matrices.")
         X = np.asanyarray(X)
         if X.shape[0] < self.k:
-            raise ValueError("n_samples=%d should be larger than k=%d" % (
+            raise ValueError("n_samples=%d should be >= k=%d" % (
                 X.shape[0], self.k))
         return X
 
@@ -498,7 +498,7 @@ class KMeans(BaseEstimator):
 
         self.random_state = check_random_state(self.random_state)
 
-        X = self._check_data(X, **params)
+        X = self._check_data(X)
         if k != None:
             self.k = k
         self._set_params(**params)
