@@ -345,7 +345,7 @@ class Lars(LinearModel):
     >>> clf = linear_model.Lars(n_nonzero_coefs=1)
     >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1]) # doctest: +ELLIPSIS
     Lars(normalize=True, n_nonzero_coefs=1, verbose=False, fit_intercept=True,
-       eps=..., precompute='auto')
+       eps=2.2204460492503131e-16, precompute='auto', overwrite_X=False)
     >>> print clf.coef_
     [ 0. -1.]
 
@@ -474,9 +474,9 @@ class LassoLars(Lars):
     >>> from scikits.learn import linear_model
     >>> clf = linear_model.LassoLars(alpha=0.01)
     >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1]) # doctest: +ELLIPSIS
-LassoLars(normalize=True, verbose=False, fit_intercept=True, max_iter=500,
-     eps=2.2204460492503131e-16, precompute='auto', alpha=0.01,
-     overwrite_X=False)
+    LassoLars(normalize=True, verbose=False, fit_intercept=True, max_iter=500,
+         eps=2.2204460492503131e-16, precompute='auto', alpha=0.01,
+         overwrite_X=False)
     >>> print clf.coef_
     [ 0.         -0.96325765]
 
@@ -622,6 +622,10 @@ class LarsCV(LARS):
     normalize : boolean, optional
         If True, the regressors X are normalized
 
+    overwrite_X : boolean, optionnal
+        If True, X will not be copied
+        Default is False
+
     precompute : True | False | 'auto' | array-like
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to 'auto' let us decide. The Gram
@@ -664,12 +668,13 @@ class LarsCV(LARS):
 
     def __init__(self, fit_intercept=True, verbose=False, max_iter=500,
                  normalize=True, precompute='auto', cv=None, n_jobs=1,
-                 eps=np.finfo(np.float).eps):
+                 eps=np.finfo(np.float).eps, overwrite_X=False):
         self.fit_intercept = fit_intercept
         self.max_iter = max_iter
         self.verbose = verbose
         self.normalize = normalize
         self.precompute = precompute
+        self.overwrite_X = overwrite_X
         self.cv = cv
         self.n_jobs = n_jobs
         self.eps = eps
@@ -775,6 +780,10 @@ class LassoLarsCV(LarsCV):
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems.
+
+    overwrite_X : boolean, optionnal
+        If True, X will not be copied
+        Default is False
 
 
     Attributes
