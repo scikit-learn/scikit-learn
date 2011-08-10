@@ -531,7 +531,6 @@ def _mini_batch_step_dense(X, batch_slice, centers, counts, x_squared_norms):
     x_squared_norms: array, shape (n_samples,)
         Squared euclidean norm of each data point.
     """
-    print "ministep batch_slice:", batch_slice
     # This is inefficient but saves mem and fits to sparse matrices.
     X = X[batch_slice]
     x_squared_norms = x_squared_norms[batch_slice]
@@ -571,7 +570,6 @@ def _mini_batch_step_sparse(X, batch_slice, centers, counts, x_squared_norms):
     x_squared_norms: array, shape (n_samples,)
          The squared norms of each sample in `X`.
     """
-    print "ministep batch_slice:", batch_slice
     cache = euclidean_distances(centers, X[batch_slice],
               x_squared_norms[batch_slice]).argmin(axis=0).astype(np.int32)
 
@@ -692,7 +690,6 @@ class MiniBatchKMeans(KMeans):
             tol = np.mean(np.var(X_shuffled, axis=0)) * self.tol
 
         for i, batch_slice in izip(n_iterations, cycle(batch_slices)):
-            print i, batch_slice
             old_centers = self.cluster_centers_.copy()
             _mini_batch_step(X_shuffled, batch_slice, self.cluster_centers_,
                              self.counts, x_squared_norms=x_squared_norms)
