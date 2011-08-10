@@ -49,6 +49,8 @@ from .metrics.pairwise import rbf_kernel
 
 logger = Logger()
 
+# Authors: Clay Woolam <clay@woolam.org>
+
 # really low epsilon (we don't really want machine eps)
 EPSILON = 1e-9
 # Main classes
@@ -105,8 +107,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         This basic implementation creates a non-stochastic affinity matrix, so
         class distributions will exceed 1 (normalization may be desired)
         """
-        self._graph_matrix = self.kernel(self._X,
-                kernel=self.kernel, gamma=self.gamma)
+        self._graph_matrix = self.kernel(self._X, self._X, gamma=self.gamma)
 
     def predict(self, X):
         """
@@ -118,10 +119,13 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
 
         Returns
         -------
-        y : array_like
+        y : array_like, shape = [n_points]
             Predictions for input data
         """
-        return [np.argmax(self.predict_proba(x)) for x in X]
+        ary = np.atleast_2d(X)
+        ym = self.kernel(self._X, ary).T * self._y
+        preds = np.argmax(ym, axis=1)
+        return [self.num_to_label[pred] for pred in preds.flat]
 
     def predict_proba(self, x):
         """
@@ -132,11 +136,8 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         ----------
         x : array_like, shape = (n_features)
         """
-        s = 0.
-        ary = np.asanyarray(x)
-        for xj, yj in zip(self._X, self._y):
-            Wx = self.kernel(xj, ary)
-            s += Wx * yj / (Wx + EPSILON)
+        ary = np.atleast_2d(x)
+        s = np.sum(self.kernel(self._X, ary), axis=0)
         return s
 
     def fit(self, X, y, **params):
@@ -234,8 +235,7 @@ class LabelPropagation(BaseLabelPropagation):
     uses hard clamping.
     """
     def _build_graph(self):
-        affinity_matrix = self.kernel(self._X, kernel=self.kernel,
-                gamma=self.gamma)
+        affinity_matrix = self.kernel(self._X, self._X, gamma=self.gamma)
         degree_matrix = np.diag(np.sum(affinity_matrix, axis=0))
         deg_inv = np.linalg.inv(degree_matrix)
         aff_ideg = deg_inv * np.matrix(affinity_matrix)
