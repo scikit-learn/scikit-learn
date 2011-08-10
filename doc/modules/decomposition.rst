@@ -342,7 +342,8 @@ initialization parameter:
 The dictionary learning objects offer, via the `split_code` parameter, the
 possibility to separate the positive and negative values in the results of 
 sparse coding. This is useful when dictionary learning is used for 
-classification or regression tasks, because it allows the learning algorithm to assign different weights to negative loadings of a particular atom, than to the
+classification or regression tasks, because it allows the learning algorithm to
+assign different weights to negative loadings of a particular atom, than to the
 corresponding positive loading.
 
 The split code for a single sample has length `2 * n_atoms`
