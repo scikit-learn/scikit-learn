@@ -122,23 +122,21 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         y : array_like, shape = [n_points]
             Predictions for input data
         """
-        ary = np.atleast_2d(X)
-        ym = self.kernel(self._X, ary).T * self._y
+        ym = self.predict_proba(X)
         preds = np.argmax(ym, axis=1)
         return [self.num_to_label[pred] for pred in preds.flat]
 
-    def predict_proba(self, x):
+    def predict_proba(self, X):
         """
         Returns a probability distribution (categorical distribution)
         over labels for a single input point.
 
         Parameters
         ----------
-        x : array_like, shape = (n_features)
+        X : array_like, shape = (n_features, n_features)
         """
-        ary = np.atleast_2d(x)
-        s = np.sum(self.kernel(self._X, ary), axis=0)
-        return s
+        ary = np.atleast_2d(X)
+        return self.kernel(self._X, ary).T * self._y
 
     def fit(self, X, y, **params):
         """
