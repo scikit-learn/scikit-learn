@@ -6,7 +6,8 @@
 
 import numpy as np
 from scipy.linalg import eigh, svd, qr
-from scipy.sparse import linalg, eye, csr_matrix
+from scipy.sparse import linalg, eye, csr_matrix, isspmatrix_csr, \
+                isspmatrix_bsr
 from ..base import BaseEstimator
 from ..utils import check_random_state
 from ..utils.arpack import eigsh
@@ -65,7 +66,8 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
         except ImportError:
             raise ImportError("PyAMG is not installed,"
                               " cannot use lobcpg solver")
-
+        if not isspmatrix_csr(M) or isspmatrix_bsr(M):
+            M = csr_matrix(M)
         # initial vectors for iteration
         X = random_state.rand(M.shape[0], k + k_skip)
         try:
