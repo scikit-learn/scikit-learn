@@ -497,11 +497,8 @@ class OrthogonalMatchingPursuit(LinearModel):
         X = np.atleast_2d(X)
         y = np.atleast_1d(y)
 
-        X, y, Xmean, ymean = LinearModel._center_data(X, y, self.fit_intercept)
-        if self.normalize:
-            norms = np.sqrt(np.sum(X ** 2, axis=0))
-            nonzeros = np.flatnonzero(norms)
-            X[:, nonzeros] /= norms[nonzeros]
+        X, y, X_mean, y_mean, X_std = self._center_data(X, y, self.fit_intercept,
+                self.normalize, not(overwrite_x))
         if Gram is not None:
             Gram = np.atleast_2d(Gram)
 
@@ -520,11 +517,11 @@ class OrthogonalMatchingPursuit(LinearModel):
                 if not overwrite_xy:
                     Xy = Xy.copy()
                 if self.normalize:
-                    Xy /= norms
+                    Xy /= X_std
 
             if self.normalize:
-                Gram /= norms
-                Gram /= norms[:, np.newaxis]
+                Gram /= X_std
+                Gram /= X_std[:, np.newaxis]
 
             norms_sq = np.sum((y ** 2), axis=0) if eps is not None else None
             self.coef_ = orthogonal_mp_gram(Gram, Xy, self.n_nonzero_coefs,
@@ -538,7 +535,5 @@ class OrthogonalMatchingPursuit(LinearModel):
                                        precompute_gram=precompute_gram,
                                        overwrite_x=overwrite_x).T
 
-        if self.normalize:
-            self.coef_ /= norms
-        self._set_intercept(Xmean, ymean)
+        self._set_intercept(X_mean, y_mean, X_std)
         return self

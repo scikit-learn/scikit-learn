@@ -12,6 +12,7 @@ Generalized Linear models.
 # License: BSD Style.
 
 import numpy as np
+import scipy.sparse
 
 from ..base import BaseEstimator, RegressorMixin, ClassifierMixin
 from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
@@ -47,39 +48,41 @@ class LinearModel(BaseEstimator, RegressorMixin):
         return safe_sparse_dot(X, self.coef_.T) + self.intercept_
 
     @staticmethod
-    def _center_data(X, y, fit_intercept, normalize=False):
+    def _center_data(X, y, fit_intercept, normalize=False, copy=False):
         """
         Centers data to have mean zero along axis 0. This is here because
         nearly all linear models will want their data to be centered.
         """
-        import scipy.sparse  # importing scipy.sparse just for this is overkill
         if fit_intercept:
             if scipy.sparse.issparse(X):
-                Xmean = np.zeros(X.shape[1])
-                Xstd = np.ones(X.shape[1])
+                X_mean = np.zeros(X.shape[1])
+                X_std = np.ones(X.shape[1])
             else:
-                Xmean = X.mean(axis=0)
-                X = X - Xmean
-                if normalize:
-                    Xstd = X.std(axis=0)
-                    Xstd[Xstd==0] = 1
-                    X = X / Xstd
-                else:
-                    Xstd = np.ones(X.shape[1])
-            ymean = y.mean()
-            y = y - ymean
-        else:
-            Xmean = np.zeros(X.shape[1])
-            Xstd = np.ones(X.shape[1])
-            ymean = 0.
-        return X, y, Xmean, ymean, Xstd
+                if copy:
+                    X = X.copy()
 
-    def _set_intercept(self, Xmean, ymean, Xstd):
+                X_mean = X.mean(axis=0)
+                X = X - X_mean
+                if normalize:
+                    X_std = np.sqrt(np.sum(X ** 2, axis=0))
+                    X_std[X_std==0] = 1
+                    X = X / X_std
+                else:
+                    X_std = np.ones(X.shape[1])
+            y_mean = y.mean()
+            y = y - y_mean
+        else:
+            X_mean = np.zeros(X.shape[1])
+            X_std = np.ones(X.shape[1])
+            y_mean = 0.
+        return X, y, X_mean, y_mean, X_std
+
+    def _set_intercept(self, X_mean, y_mean, X_std):
         """Set the intercept_
         """
         if self.fit_intercept:
-            self.coef_ = self.coef_ / Xstd
-            self.intercept_ = ymean - np.dot(Xmean, self.coef_.T)
+            self.coef_ = self.coef_ / X_std
+            self.intercept_ = y_mean - np.dot(X_mean, self.coef_.T)
         else:
             self.intercept_ = 0
 
@@ -132,12 +135,13 @@ class LinearRegression(LinearModel):
         X = np.asanyarray(X)
         y = np.asanyarray(y)
 
-        X, y, Xmean, ymean, Xstd = LinearModel._center_data(X, y, self.fit_intercept, self.normalize)
+        X, y, X_mean, y_mean, X_std = LinearModel._center_data(X, y,
+                self.fit_intercept, self.normalize)
 
         self.coef_, self.residues_, self.rank_, self.singular_ = \
                 np.linalg.lstsq(X, y)
 
-        self._set_intercept(Xmean, ymean, Xstd)
+        self._set_intercept(X_mean, y_mean, X_std)
         return self
 
 ##
