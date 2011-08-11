@@ -46,7 +46,7 @@ def test_classification_toy():
     """
     With subsampling
     """
-    clf = tree.DecisionTreeClassifier(F=1)
+    clf = tree.DecisionTreeClassifier(F=1, random_state=1)
     clf.fit(X,Y)
     
     assert_array_equal(clf.predict(T), true_result)
@@ -63,7 +63,7 @@ def test_regression_toy():
     """
     With subsampling
     """
-    clf = tree.DecisionTreeRegressor(F=1)
+    clf = tree.DecisionTreeRegressor(F=1, random_state=1)
     clf.fit(X,Y)
     
     assert_almost_equal(clf.predict(T), true_result)

@@ -57,13 +57,13 @@ Classification
     >>> X = [[0, 0], [1, 1]]
     >>> Y = [0, 1]
     >>> clf = tree.DecisionTreeClassifier()
-    >>> clf.fit(X, Y)
+    >>> clf = clf.fit(X, Y)
 
 
 After being fitted, the model can then be used to predict new values::
 
     >>> clf.predict([[2., 2.]])
-    array([ 1.])
+    array([1])
 
 Unbalanced problems
 --------------------
@@ -93,9 +93,9 @@ floating point values instead of integer values::
     >>> X = [[0, 0], [2, 2]]
     >>> y = [0.5, 2.5]
     >>> clf = tree.DecisionTreeRegressor()
-    >>> clf.fit(X, y)
+    >>> clf = clf.fit(X, y)
     >>> clf.predict([[1, 1]])
-    array([ 1.5])
+    array([ 2.5])
 
 
 .. topic:: Examples:
