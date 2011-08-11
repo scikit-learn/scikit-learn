@@ -152,10 +152,10 @@ class RFECV(RFE):
         Linear Models from the `svm` and `linear_model` modules.
 
     step : int or float, optional (default=1)
-        If int, then `step` corresponds to the number of features to remove
-        at each iteration.
-        If float, then `step` corresponds to the percentage (rounded down) of
-        features to remove at each iteration. This value should be in (0, 1].
+        If greater than or equal to 1, then `step` corresponds to the (interger)
+        number of features to remove at each iteration.
+        If within (0.0, 1.0), then `step` corresponds to the percentage
+        (rounded down) of features to remove at each iteration.
 
     cv : int or cross-validation generator, optional (default=None)
         If int, it is the number of folds.
