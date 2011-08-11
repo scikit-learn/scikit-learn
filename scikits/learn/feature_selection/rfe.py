@@ -207,7 +207,7 @@ class RFECV(RFE):
         self.estimator = estimator
         self.step = 1
         self.cv = cv
-        self.loss_func = None
+        self.loss_func = loss_func
 
     def fit(self, X, y):
         """Fit the RFE model and automatically tune the number of selected
