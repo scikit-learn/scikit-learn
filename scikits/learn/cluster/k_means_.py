@@ -431,6 +431,7 @@ class KMeans(BaseEstimator):
     tol: float, optional default: 1e-4
         Relative tolerance w.r.t. inertia to declare convergence
 
+
     Methods
     -------
 
@@ -507,6 +508,62 @@ class KMeans(BaseEstimator):
             max_iter=self.max_iter, verbose=self.verbose,
             tol=self.tol, random_state=self.random_state, copy_x=self.copy_x)
         return self
+
+    def transform(self, X):
+        """ Transforms X based on the learnt cluster centroids.
+
+            The transformation is performed using the euclidean distance of
+            each sample in X to each of the cluster clusters.
+
+            Parameters
+            ----------
+            X : array, shape (n_samples, n_features)
+                The data to be transformed using the k-means centers.
+                n_samples is the number of new points to be transformed,
+                while n_features is the same as that given to the fit()
+                method. Any different size will raise a ValueError.
+
+            Returns
+            -------
+            Z : array, shape (n_samples, k)
+                The transformation of X using the learnt clusters.
+        """
+        if not hasattr(self, "cluster_centers_"):
+            raise AttributeError("Model has not been trained. "
+                                 "Train k-means before using transform.")
+        cluster_shape = self.cluster_centers_.shape[1]
+        if not X.shape[1] == cluster_shape:
+            raise ValueError("Incorrect number of features for points. "
+                             "Got %d features, expected %d" % (X.shape[1],
+                                                               cluster_shape))
+        return euclidean_distance(X, self.cluster_centers_)
+
+    def predict(self, X):
+        """ Predict which of the learnt cluster each sample belongs to.
+
+            Parameters
+            ----------
+            X : array, shape (n_samples, n_features)
+                The data to assigned to the learnt clusters. n_samples is the
+                number of new points to be transformed, while n_features is the
+                same as that given to the fit(). Any different size will raise
+                a ValueError.
+
+            Returns
+            -------
+            Z : array, shape (n_samples,)
+                Cluster index with closest centroid to each of the given
+                samples.
+        """
+        if not hasattr(self, "cluster_centers_"):
+            raise AttributeError("Model has not been trained. "
+                                 "Train k-means before using predict.")
+        cluster_shape = self.cluster_centers_.shape[1]
+        if not X.shape[1] == cluster_shape:
+            raise ValueError("Incorrect number of features for points. "
+                             "Got %d features, expected %d" % (X.shape[1],
+                                                               cluster_shape))
+        return _e_step(X, self.cluster_centers_)[0]
 
 
 def _mini_batch_step_dense(X, batch_slice, centers, counts, x_squared_norms):
