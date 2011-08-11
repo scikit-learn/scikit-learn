@@ -177,3 +177,7 @@ def test_patch_extractor_color():
     extr = PatchExtractor(patch_size=(p_h, p_w), random_state=0)
     patches = extr.transform(lenas)
     assert patches.shape == (expected_n_patches, p_h, p_w, 3)
+
+if __name__ == '__main__':
+    import nose
+    nose.runmodule()
