@@ -377,7 +377,7 @@ class SelectFdr(_AbstractUnivariateFilter):
         alpha = self.alpha
         sv = np.sort(self._pvalues)
         threshold = sv[sv < alpha*np.arange(len(self._pvalues))].max()
-        return (self._pvalues < threshold)
+        return (self._pvalues <= threshold)
 
 
 class SelectFwe(_AbstractUnivariateFilter):

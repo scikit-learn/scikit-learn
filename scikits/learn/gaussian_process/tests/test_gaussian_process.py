@@ -5,6 +5,7 @@ Testing for Gaussian Process module (scikits.learn.gaussian_process)
 # Author: Vincent Dubourg <vincent.dubourg@gmail.com>
 # License: BSD style
 
+from nose.tools import raises
 import numpy as np
 
 from .. import GaussianProcess
@@ -58,6 +59,12 @@ def test_2d(regr=regression.constant, corr=correlation.squared_exponential,
     y_pred, MSE = gp.predict(X, eval_MSE=True)
 
     assert np.allclose(y_pred, y) and np.allclose(MSE, 0.)
+
+
+@raises(ValueError)
+def test_wrong_number_of_outputs():
+    gp = GaussianProcess()
+    gp.fit([[1, 2, 3], [4, 5, 6]], [1, 2, 3])
 
 
 def test_more_builtin_correlation_models(random_start=1):

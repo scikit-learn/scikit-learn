@@ -10,7 +10,7 @@ from numpy.testing import assert_array_equal, assert_array_almost_equal, \
 from nose.tools import assert_raises
 
 from scikits.learn import svm, linear_model, datasets, metrics
-from scikits.learn.datasets.samples_generator import test_dataset_classif
+from scikits.learn.datasets.samples_generator import make_classification
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -270,8 +270,9 @@ def test_weight():
     # so all predicted values belong to class 2
     assert_array_almost_equal(clf.predict(X), [2] * 6)
 
-    X_, y_ = test_dataset_classif(n_samples=200, n_features=100, param=[5, 1],
-                                  seed=0)
+    X_, y_ = make_classification(n_samples=200, n_features=100, 
+                                 weights=[0.833, 0.167], random_state=0)
+                                 
     for clf in (linear_model.LogisticRegression(), svm.LinearSVC(), svm.SVC()):
         clf.fit(X_[: 180], y_[: 180], class_weight={0: 5})
         y_pred = clf.predict(X_[180:])

@@ -5,6 +5,7 @@
 # License: BSD Style.
 
 import numpy as np
+from scipy.spatial import distance
 from scipy.sparse import csr_matrix, issparse
 from ..utils import safe_asanyarray, atleast2d_or_csr, deprecated
 from ..utils.extmath import safe_sparse_dot
@@ -12,7 +13,62 @@ from ..utils.extmath import safe_sparse_dot
 ################################################################################
 # Distances
 
-def euclidean_distances(X, Y, Y_norm_squared=None, squared=False):
+def pairwise_distances(X, Y=None, metric="euclidean"):
+    """ Calculates the distance matrix from a vector matrix X.
+
+    This method takes either a vector array or a distance matrix, and returns
+    a distance matrix. If the input is a vector array, the distances are
+    computed. If the input is a distances matrix, it is returned instead.
+
+    This method provides a safe way to take a distance matrix as input, while
+    preserving compatability with many other algorithms that take a vector
+    array.
+
+    Parameters
+    ----------
+    X: array [n_samples, n_samples] if metric == "precomputed", or,
+             [n_samples, n_features] otherwise
+        Array of pairwise distances between samples, or a feature array.
+
+    X: array [n_samples, n_features]
+        A second feature array only if X has shape [n_samples, n_features].
+
+    metric: string, or callable
+        The metric to use when calculating distance between instances in a
+        feature array. If metric is a string, it must be one of the options
+        allowed by scipy.spatial.distance.pdist for its metric parameter.
+        If metric is "precomputed", X is assumed to be a distance matrix and
+        must be square.
+        Alternatively, if metric is a callable function, it is called on each
+        pair of instances (rows) and the resulting value recorded. The callable
+        should take two arrays from X as input and return a value indicating
+        the distance between them.
+
+    Returns
+    -------
+    D: array [n_samples, n_samples]
+        A distance matrix D such that D_{i, j} is the distance between the
+        ith and jth vectors of the given matrix X.
+
+    """
+    if metric == "precomputed":
+        if X.shape[0] != X.shape[1]:
+            raise ValueError("X is not square!")
+        return X
+
+    elif metric == "euclidean":
+        return euclidean_distances(X, Y)
+
+    else:
+        # FIXME: the distance module doesn't support sparse matrices!
+        if Y is None:
+            return distance.squareform(distance.pdist(X, metric=metric))
+        else:
+            return distance.cdist(X, Y, metric=metric)
+
+
+# Distances
+def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     """
     Considering the rows of X (and Y=X) as vectors, compute the
     distance matrix between each pair of vectors.
@@ -49,7 +105,7 @@ def euclidean_distances(X, Y, Y_norm_squared=None, squared=False):
     # should not need X_norm_squared because if you could precompute that as
     # well as Y, then you should just pre-compute the output and not even
     # call this function.
-    if X is Y:
+    if Y is X or Y is None:
         X = Y = safe_asanyarray(X)
     else:
         X = safe_asanyarray(X)
@@ -93,6 +149,7 @@ def euclidean_distances(X, Y, Y_norm_squared=None, squared=False):
 @deprecated("use euclidean_distances instead")
 def euclidian_distances(*args, **kwargs):
     return euclidean_distances(*args, **kwargs)
+
 
 
 def l1_distances(X, Y):
@@ -142,10 +199,7 @@ def l1_distances(X, Y):
     return D
 
 
-
-################################################################################
 # Kernels
-
 def linear_kernel(X, Y):
     """
     Compute the linear kernel between X and Y.
@@ -244,3 +298,4 @@ def rbf_kernel(X, Y, gamma=0):
     K *= -gamma
     np.exp(K, K)    # exponentiate K in-place
     return K
+
