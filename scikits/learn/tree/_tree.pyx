@@ -132,4 +132,3 @@ cpdef double eval_mse(np.ndarray[np.float_t, ndim=1] labels,
         
     return H
     
-    
