@@ -8,6 +8,7 @@
 
 import numpy as np
 from ..base import BaseEstimator
+from ..base import clone
 from ..base import is_classifier
 from ..cross_val import check_cv
 
@@ -106,8 +107,9 @@ class RFE(BaseEstimator):
             features = np.arange(n_features)[support_]
 
             # Rank the remaining features
-            self.estimator.fit(X[:, features], y)
-            ranks = np.argsort(np.sum(self.estimator.coef_ ** 2, axis=0))
+            estimator = clone(self.estimator)
+            estimator.fit(X[:, features], y)
+            ranks = np.argsort(np.sum(estimator.coef_ ** 2, axis=0))
 
             # Eliminate the worse features
             threshold = min(step, np.sum(support_) - self.n_features_to_select)
@@ -120,7 +122,7 @@ class RFE(BaseEstimator):
 
         return self
 
-    def transform(self, X, copy=True):
+    def transform(self, X):
         """Reduce X to the features selected during the fit.
 
         Parameters
@@ -128,13 +130,8 @@ class RFE(BaseEstimator):
         X : array of shape [n_samples, n_features]
             Vector, where n_samples in the number of samples and
             n_features is the number of features.
-
-        copy : boolean, optional (default=True)
-            If True, return a new array whose values are copied from X.
-            If False, return a masked view of X.
         """
-        X_r = X[:, self.support_]
-        return X_r.copy() if copy else X_r
+        return X[:, self.support_]
 
 
 class RFECV(RFE):
@@ -239,16 +236,17 @@ class RFECV(RFE):
             # Score each subset of features
             for k in xrange(1, max(ranking_)):
                 mask = ranking_ <= k
-                self.estimator.fit(X[train][:, mask], y[train])
+                estimator = clone(self.estimator)
+                estimator.fit(X[train][:, mask], y[train])
 
                 if self.loss_func is None:
-                    score_k = 1.0 - self.estimator.score(
+                    score_k = 1.0 - estimator.score(
                                   X[test][:, mask],
                                   y[test])
                 else:
                     score_k = self.loss_func(
                                   y[test],
-                                  self.estimator.predict(X[test][:, mask]))
+                                  estimator.predict(X[test][:, mask]))
 
                 if not k in scores:
                     scores[k] = 0.0
@@ -259,7 +257,7 @@ class RFECV(RFE):
         best_score = np.inf
         best_k = None
 
-        for k, score in scores.iteritems():
+        for k, score in sorted(scores.iteritems()):
             if score < best_score:
                 best_score = score
                 best_k = k
