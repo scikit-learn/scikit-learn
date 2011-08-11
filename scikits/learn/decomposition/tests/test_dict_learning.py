@@ -31,12 +31,11 @@ def test_dict_learning_reconstruction():
     V = np.random.randn(n_atoms, n_features)
 
     X = np.dot(U, V)
-    dico = DictionaryLearning(n_atoms, transform_method='omp')
-    code = dico.fit(X).transform(X, eps=0.01)
+    dico = DictionaryLearning(n_atoms, transform_algorithm='omp')
+    code = dico.fit(X) # .transform(X, n_nonzero_coefs=3)
+    # assert_array_almost_equal(np.dot(code, dico.components_), X)
 
-    assert_array_almost_equal(np.dot(code, dico.components_), X)
-
-    dico.transform_method = 'lasso_lars'
+    dico.transform_algorithm = 'lasso_lars'
     code = dico.transform(X, alpha=0.01)
     # decimal=1 because lars is sensitive to roundup errors
     assert_array_almost_equal(np.dot(code, dico.components_), X, decimal=1)
@@ -52,7 +51,7 @@ def test_dict_learning_split():
     V = np.random.randn(n_atoms, n_features)
 
     X = np.dot(U, V)
-    dico = DictionaryLearning(n_atoms, transform_method='threshold')
+    dico = DictionaryLearning(n_atoms, transform_algorithm='threshold')
     code = dico.fit(X).transform(X, alpha=1)
     dico.split_sign = True
     split_code = dico.transform(X, alpha=1)
@@ -84,9 +83,9 @@ def test_dict_learning_online_partial_fit():
     V = np.random.randn(n_atoms, n_features)  # random init
     dico1 = DictionaryLearningOnline(n_atoms, n_iter=10, chunk_size=1,
                                      shuffle=False, dict_init=V,
-                                     transform_method='threshold').fit(X)
+                                     transform_algorithm='threshold').fit(X)
     dico2 = DictionaryLearningOnline(n_atoms, n_iter=1, dict_init=V,
-                                     transform_method='threshold')
+                                     transform_algorithm='threshold')
     for ii, sample in enumerate(X):
         dico2.partial_fit(sample, iter_offset=ii * dico2.n_iter)
 
