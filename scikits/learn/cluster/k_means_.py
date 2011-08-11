@@ -497,7 +497,7 @@ class KMeans(BaseEstimator):
         return X
 
     def fit(self, X, **params):
-        """Compute k-means"""
+        """Fit k-means"""
 
         self.random_state = check_random_state(self.random_state)
 
@@ -510,23 +510,21 @@ class KMeans(BaseEstimator):
         return self
 
     def transform(self, X):
-        """ Transforms X based on the learnt cluster centroids.
+        """ Transform the data to a cluster-distance space
 
-            The transformation is performed using the euclidean distance of
-            each sample in X to each of the cluster clusters.
+        In the new space, each dimension is the distance to the cluster centers.
+        Note that even if X is sparse, the array returned by `transform` will
+        typically be dense.
 
-            Parameters
-            ----------
-            X : array, shape (n_samples, n_features)
-                The data to be transformed using the k-means centers.
-                n_samples is the number of new points to be transformed,
-                while n_features is the same as that given to the fit()
-                method. Any different size will raise a ValueError.
+        Parameters
+        ----------
+        X: {array-like, sparse matrix}, shape = [n_samples, n_features]
+            New data to transform.
 
-            Returns
-            -------
-            Z : array, shape (n_samples, k)
-                The transformation of X using the learnt clusters.
+        Returns
+        -------
+        X_new : array, shape [n_samples, k]
+            X transformed in the new space.
         """
         if not hasattr(self, "cluster_centers_"):
             raise AttributeError("Model has not been trained. "
@@ -539,28 +537,28 @@ class KMeans(BaseEstimator):
         return euclidean_distances(X, self.cluster_centers_)
 
     def predict(self, X):
-        """ Predict which of the learnt cluster each sample belongs to.
+        """ Predict the closest cluster each sample belongs to
 
-            Parameters
-            ----------
-            X : array, shape (n_samples, n_features)
-                The data to assigned to the learnt clusters. n_samples is the
-                number of new points to be transformed, while n_features is the
-                same as that given to the fit(). Any different size will raise
-                a ValueError.
+        In the vector quantization literature, `cluster_centers_` is called
+        the code book and each value returned by `predict` is the index of
+        the closest code in the code book.
 
-            Returns
-            -------
-            Z : array, shape (n_samples,)
-                Cluster index with closest centroid to each of the given
-                samples.
+        Parameters
+        ----------
+        X: {array-like, sparse matrix}, shape = [n_samples, n_features]
+            New data to predict.
+
+        Returns
+        -------
+        Y : array, shape [n_samples, ]
+            Index of the closest center each sample belongs to.
         """
         if not hasattr(self, "cluster_centers_"):
-            raise AttributeError("Model has not been trained. "
-                                 "Train k-means before using predict.")
+            raise AttributeError("Model has not been trained yet. "
+                                 "Fit k-means before using predict.")
         cluster_shape = self.cluster_centers_.shape[1]
         if not X.shape[1] == cluster_shape:
-            raise ValueError("Incorrect number of features for points. "
+            raise ValueError("Incorrect number of features. "
                              "Got %d features, expected %d" % (X.shape[1],
                                                                cluster_shape))
         return _e_step(X, self.cluster_centers_)[0]
