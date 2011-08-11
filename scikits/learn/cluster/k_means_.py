@@ -536,7 +536,7 @@ class KMeans(BaseEstimator):
             raise ValueError("Incorrect number of features for points. "
                              "Got %d features, expected %d" % (X.shape[1],
                                                                cluster_shape))
-        return euclidean_distance(X, self.cluster_centers_)
+        return euclidean_distances(X, self.cluster_centers_)
 
     def predict(self, X):
         """ Predict which of the learnt cluster each sample belongs to.

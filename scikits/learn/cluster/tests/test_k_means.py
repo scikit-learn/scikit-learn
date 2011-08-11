@@ -3,6 +3,7 @@
 import numpy as np
 from scipy import sparse as sp
 from numpy.testing import assert_equal
+from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
 from nose.tools import assert_raises
 from nose.tools import assert_true
@@ -214,7 +215,7 @@ def test_mbk_means():
 
     # shuffle original data
     X_shuffled, S_shuffled, true_labels = shuffle(X, S, true_labels, random_state=1)
-    
+
     mbk_means = MiniBatchKMeans(init=init_array, chunk_size=chunk_size,
                                 k=n_clusters, random_state=1)
     mbk_means.fit(X_shuffled)
@@ -224,3 +225,22 @@ def test_mbk_means():
                                 k=n_clusters, random_state=1)
     mbk_means.fit(S_shuffled)
     assert_equal(true_labels, mbk_means.labels_)
+
+
+def test_predict():
+    k_means = KMeans(k=n_clusters)
+    k_means.fit(X)
+    pred = k_means.predict(k_means.cluster_centers_)
+    assert_array_equal(pred, np.arange(n_clusters))
+
+
+def test_transform():
+    k_means = KMeans(k=n_clusters)
+    k_means.fit(X)
+    X_new = k_means.transform(k_means.cluster_centers_)
+
+    for c in range(n_clusters):
+        assert_equal(X_new[c, c], 0)
+        for c2 in range(n_clusters):
+            if c != c2:
+                assert_true(X_new[c, c2] > 0)
