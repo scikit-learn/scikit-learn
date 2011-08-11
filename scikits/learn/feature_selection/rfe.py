@@ -33,10 +33,10 @@ class RFE(BaseEstimator):
         The number of features to select.
 
     step : int or float, optional (default=1)
-        If int, then `step` corresponds to the number of features to remove
-        at each iteration.
-        If float, then `step` corresponds to the percentage (rounded down) of
-        features to remove at each iteration. This value should be in (0, 1].
+        If greater than or equal to 1, then `step` corresponds to the (interger)
+        number of features to remove at each iteration.
+        If within (0.0, 1.0), then `step` corresponds to the percentage
+        (rounded down) of features to remove at each iteration.
 
     Attributes
     ----------
@@ -114,7 +114,7 @@ class RFE(BaseEstimator):
             # Eliminate the worse features
             threshold = min(step, np.sum(support_) - self.n_features_to_select)
             support_[features[ranks][:threshold]] = False
-            ranking_[~support_] += 1
+            ranking_[np.logical_not(support_)] += 1
 
         # Set final attributes
         self.support_ = support_
