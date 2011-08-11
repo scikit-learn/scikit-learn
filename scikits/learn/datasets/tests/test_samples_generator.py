@@ -1,5 +1,5 @@
 import numpy as np
-from numpy.testing import assert_equal, assert_almost_equal, \
+from numpy.testing import assert_equal, assert_approx_equal, \
                           assert_array_almost_equal, assert_array_less
 
 from .. import make_classification
@@ -32,15 +32,17 @@ def test_make_classification():
 
 
 def test_make_regression():
-    X, y, c = make_regression(n_samples=50, n_features=10, n_informative=3,
+    X, y, c = make_regression(n_samples=100, n_features=10, n_informative=3,
                               effective_rank=5, coef=True, bias=0.0,
-                              noise=1e-10, random_state=0)
+                              noise=1.0, random_state=0)
 
-    assert_equal(X.shape, (50, 10), "X shape mismatch")
-    assert_equal(y.shape, (50,), "y shape mismatch")
+    assert_equal(X.shape, (100, 10), "X shape mismatch")
+    assert_equal(y.shape, (100,), "y shape mismatch")
     assert_equal(c.shape, (10,), "coef shape mismatch")
     assert_equal(sum(c != 0.0), 3, "Unexpected number of informative features")
-    assert_array_almost_equal(y, np.dot(X, c))
+
+    # Test that y ~= np.dot(X, c) + bias + N(0, 1.0)
+    assert_approx_equal(np.std(y - np.dot(X, c)), 1.0, significant=2)
 
 
 def test_make_blobs():
