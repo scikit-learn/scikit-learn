@@ -34,6 +34,7 @@ class TransfT(T):
     def transform(self, X, y=None):
         return X
 
+
 class FitParamT(BaseEstimator):
     """Mock classifier
     """
@@ -157,6 +158,7 @@ def test_pipeline_methods_randomized_pca_svm():
     pipe.predict_proba(X)
     pipe.predict_log_proba(X)
     pipe.score(X, y)
+
 
 def test_pipeline_methods_scaler_svm():
     """Test the various methods of the pipeline (scaler + svm)."""
