@@ -18,8 +18,10 @@ from .. import make_s_curve
 
 def test_make_classification():
     X, y = make_classification(n_samples=100, n_features=20, n_informative=5,
-                               n_classes=3, n_clusters_per_class=1,
-                               weights=[0.1, 0.25, 0.65], random_state=0)
+                               n_redundant=1, n_repeated=1, n_classes=3,
+                               n_clusters_per_class=1, hypercube=False,
+                               shift=None, scale=None, weights=[0.1, 0.25],
+                               random_state=0)
 
     assert_equal(X.shape, (100, 20), "X shape mismatch")
     assert_equal(y.shape, (100,), "y shape mismatch")
@@ -31,7 +33,8 @@ def test_make_classification():
 
 def test_make_regression():
     X, y, c = make_regression(n_samples=50, n_features=10, n_informative=3,
-                              coef=True, bias=0.0, random_state=0)
+                              effective_rank=5, coef=True, bias=0.0,
+                              noise=1e-10, random_state=0)
 
     assert_equal(X.shape, (50, 10), "X shape mismatch")
     assert_equal(y.shape, (50,), "y shape mismatch")
@@ -41,9 +44,11 @@ def test_make_regression():
 
 
 def test_make_blobs():
-    X, y = make_blobs(n_samples=50, n_features=5, centers=3, random_state=0)
+    X, y = make_blobs(n_samples=50, n_features=2,
+                      centers=[[0.0, 0.0], [1.0, 1.0], [0.0, 1.0]],
+                      random_state=0)
 
-    assert_equal(X.shape, (50, 5), "X shape mismatch")
+    assert_equal(X.shape, (50, 2), "X shape mismatch")
     assert_equal(y.shape, (50,), "y shape mismatch")
     assert_equal(np.unique(y).shape, (3,), "Unexpected number of blobs")
 
