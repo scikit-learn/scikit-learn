@@ -2,6 +2,7 @@ import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 from nose.plugins.skip import SkipTest
 
+from ...datasets import make_sparse_coded_signal
 from .. import DictionaryLearning, DictionaryLearningOnline
 
 
@@ -22,23 +23,24 @@ def test_dict_learning_overcomplete():
 
 
 def test_dict_learning_reconstruction():
-    np.random.seed(0)
     n_samples, n_features = 10, 8
-    n_atoms = 5
-    U = np.zeros((n_samples, n_atoms)).ravel()
-    U[np.random.randint(len(U), size=len(U) / n_samples)] = 1.0
-    U = U.reshape((n_samples, n_atoms))
-    V = np.random.randn(n_atoms, n_features)
+    n_atoms = 12
+    n_nonzero_coefs = 4
+    Y, V, U = make_sparse_coded_signal(n_samples, n_atoms, n_features,
+                                       n_nonzero_coefs, random_state=0)
+    Y, V, U = Y.T, V.T, U.T  
 
-    X = np.dot(U, V)
+    # Y is U * V, U has n_nonzero_coefs per row, V has normalized rows
+
     dico = DictionaryLearning(n_atoms, transform_algorithm='omp')
-    code = dico.fit(X) # .transform(X, n_nonzero_coefs=3)
-    # assert_array_almost_equal(np.dot(code, dico.components_), X)
+    code = dico.fit(Y).transform(Y, n_nonzero_coefs=n_nonzero_coefs)
+    # not sure why it doesn't work without decimal=1, in the failure all
+    # elements are exactly equal
+    assert_array_almost_equal(np.dot(code, dico.components_), Y, decimal=1)
 
     dico.transform_algorithm = 'lasso_lars'
-    code = dico.transform(X, alpha=0.01)
-    # decimal=1 because lars is sensitive to roundup errors
-    assert_array_almost_equal(np.dot(code, dico.components_), X, decimal=1)
+    code = dico.transform(Y, alpha=0.01)
+    assert_array_almost_equal(np.dot(code, dico.components_), Y, decimal=1)
 
 
 def test_dict_learning_split():
