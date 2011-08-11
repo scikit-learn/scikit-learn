@@ -15,7 +15,7 @@ import gc
 from time import time
 import numpy as np
 
-from scikits.learn.datasets.samples_generator import make_regression_dataset
+from scikits.learn.datasets.samples_generator import make_regression
 
 
 def compute_bench(alpha, n_samples, n_features, precompute):
@@ -34,9 +34,9 @@ def compute_bench(alpha, n_samples, n_features, precompute):
                                           len(n_features)))
             print '=================='
             n_informative = nf // 10
-            X, Y, _, _, coef = make_regression_dataset(
-                n_train_samples=ns, n_test_samples=n_test_samples,
-                n_features=nf, noise=0.1, n_informative = n_informative)
+            X, Y, coef_ = make_regression(n_samples=ns, n_features=nf, 
+                                          n_informative=n_informative, 
+                                          noise=0.1, coef=True)
 
             X /= np.sqrt(np.sum(X**2, axis=0)) # Normalize data
 

@@ -253,7 +253,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         n_samples_y = y.shape[0]
 
         if n_samples_X != n_samples_y:
-            raise Exception("X and y must have the same number of rows.")
+            raise ValueError("X and y must have the same number of rows.")
         else:
             n_samples = n_samples_X
 

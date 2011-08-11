@@ -9,10 +9,8 @@ from ..univariate_selection import (f_classif, f_regression, f_oneway,
 import numpy as np
 from numpy.testing import assert_array_equal
 from scipy import stats
-from scikits.learn.datasets.samples_generator import test_dataset_classif, \
-                                                     test_dataset_reg
-
-seed = np.random.RandomState(0)
+from scikits.learn.datasets.samples_generator import make_classification, \
+                                                     make_regression
 
 ##############################################################################
 # Test the score functions
@@ -32,8 +30,12 @@ def test_f_classif():
     Test whether the F test yields meaningful results
     on a simple simulated classification problem
     """
-    X, Y = test_dataset_classif(n_samples=50, n_features=20, k=5,
-                                           seed=seed)
+    X, Y = make_classification(n_samples=200, n_features=20, 
+                               n_informative=3, n_redundant=2, 
+                               n_repeated=0, n_classes=8, 
+                               n_clusters_per_class=1, flip_y=0.0,
+                               class_sep=10, shuffle=False, random_state=0)
+
     F, pv = f_classif(X, Y)
     assert(F>0).all()
     assert(pv>0).all()
@@ -47,8 +49,9 @@ def test_f_regression():
     Test whether the F test yields meaningful results
     on a simple simulated regression problem
     """
-    X, Y = test_dataset_classif(n_samples=50, n_features=20, k=5,
-                                           seed=seed)
+    X, Y = make_regression(n_samples=200, n_features=20, 
+                           n_informative=5, shuffle=False, random_state=0)
+
     F, pv = f_regression(X, Y)
     assert(F>0).all()
     assert(pv>0).all()
@@ -62,8 +65,12 @@ def test_f_classif_multi_class():
     Test whether the F test yields meaningful results
     on a simple simulated classification problem
     """
-    X, Y = test_dataset_classif(n_samples=50, n_features=20, k=5,
-                                           seed=seed, param=[1, 1, 1])
+    X, Y = make_classification(n_samples=200, n_features=20, 
+                               n_informative=3, n_redundant=2, 
+                               n_repeated=0, n_classes=8, 
+                               n_clusters_per_class=1, flip_y=0.0,
+                               class_sep=10, shuffle=False, random_state=0)
+
     F, pv = f_classif(X, Y)
     assert(F>0).all()
     assert(pv>0).all()
@@ -78,9 +85,12 @@ def test_select_percentile_classif():
     gets the correct items in a simple classification problem
     with the percentile heuristic
     """
+    X, Y = make_classification(n_samples=200, n_features=20, 
+                               n_informative=3, n_redundant=2, 
+                               n_repeated=0, n_classes=8, 
+                               n_clusters_per_class=1, flip_y=0.0,
+                               class_sep=10, shuffle=False, random_state=0)
 
-    X, Y = test_dataset_classif(n_samples=50, n_features=20, k=5,
-                                           seed=seed)
     univariate_filter = SelectPercentile(f_classif, percentile=25)
     X_r = univariate_filter.fit(X, Y).transform(X)
     X_r2 = GenericUnivariateSelect(f_classif, mode='percentile',
@@ -100,8 +110,12 @@ def test_select_kbest_classif():
     gets the correct items in a simple classification problem
     with the k best heuristic
     """
-    X, Y = test_dataset_classif(n_samples=50, n_features=20, k=5,
-                                           seed=seed)
+    X, Y = make_classification(n_samples=200, n_features=20, 
+                               n_informative=3, n_redundant=2, 
+                               n_repeated=0, n_classes=8, 
+                               n_clusters_per_class=1, flip_y=0.0,
+                               class_sep=10, shuffle=False, random_state=0)
+
     univariate_filter = SelectKBest(f_classif, k=5)
     X_r = univariate_filter.fit(X, Y).transform(X)
     X_r2 = GenericUnivariateSelect(f_classif, mode='k_best',
@@ -119,8 +133,12 @@ def test_select_fpr_classif():
     gets the correct items in a simple classification problem
     with the fpr heuristic
     """
-    X, Y = test_dataset_classif(n_samples=50, n_features=20, k=5,
-                                           seed=seed)
+    X, Y = make_classification(n_samples=200, n_features=20, 
+                               n_informative=3, n_redundant=2, 
+                               n_repeated=0, n_classes=8, 
+                               n_clusters_per_class=1, flip_y=0.0,
+                               class_sep=10, shuffle=False, random_state=0)
+
     univariate_filter = SelectFpr(f_classif, alpha=0.0001)
     X_r = univariate_filter.fit(X, Y).transform(X)
     X_r2 = GenericUnivariateSelect(f_classif, mode='fpr',
@@ -138,12 +156,16 @@ def test_select_fdr_classif():
     gets the correct items in a simple classification problem
     with the fpr heuristic
     """
-    X, Y = test_dataset_classif(n_samples=50, n_features=20, k=5,
-                                           seed=3)
-    univariate_filter = SelectFdr(f_classif, alpha=0.01)
+    X, Y = make_classification(n_samples=200, n_features=20, 
+                               n_informative=3, n_redundant=2, 
+                               n_repeated=0, n_classes=8, 
+                               n_clusters_per_class=1, flip_y=0.0,
+                               class_sep=10, shuffle=False, random_state=0)
+
+    univariate_filter = SelectFdr(f_classif, alpha=0.0001)
     X_r = univariate_filter.fit(X, Y).transform(X)
     X_r2 = GenericUnivariateSelect(f_classif, mode='fdr',
-                    param=0.01).fit(X, Y).transform(X)
+                    param=0.0001).fit(X, Y).transform(X)
     assert_array_equal(X_r, X_r2)
     support = univariate_filter.get_support()
     gtruth = np.zeros(20)
@@ -157,8 +179,12 @@ def test_select_fwe_classif():
     gets the correct items in a simple classification problem
     with the fpr heuristic
     """
-    X, Y = test_dataset_classif(n_samples=50, n_features=20, k=5,
-                                           seed=seed)
+    X, Y = make_classification(n_samples=200, n_features=20, 
+                               n_informative=3, n_redundant=2, 
+                               n_repeated=0, n_classes=8, 
+                               n_clusters_per_class=1, flip_y=0.0,
+                               class_sep=10, shuffle=False, random_state=0)
+
     univariate_filter = SelectFwe(f_classif, alpha=0.01)
     X_r = univariate_filter.fit(X, Y).transform(X)
     X_r2 = GenericUnivariateSelect(f_classif, mode='fwe',
@@ -179,8 +205,9 @@ def test_select_percentile_regression():
     gets the correct items in a simple regression problem
     with the percentile heuristic
     """
-    X, Y = test_dataset_reg(n_samples=50, n_features=20, k=5,
-                                           seed=seed)
+    X, Y = make_regression(n_samples=200, n_features=20, 
+                           n_informative=5, shuffle=False, random_state=0)
+
     univariate_filter = SelectPercentile(f_regression, percentile=25)
     X_r = univariate_filter.fit(X, Y).transform(X)
     X_r2 = GenericUnivariateSelect(f_regression, mode='percentile',
@@ -200,8 +227,9 @@ def test_select_percentile_regression_full():
     Test whether the relative univariate feature selection
     selects all features when '100%' is asked.
     """
-    X, Y = test_dataset_reg(n_samples=50, n_features=20, k=5,
-                                           seed=seed)
+    X, Y = make_regression(n_samples=200, n_features=20, 
+                           n_informative=5, shuffle=False, random_state=0)
+
     univariate_filter = SelectPercentile(f_regression, percentile=100)
     X_r = univariate_filter.fit(X, Y).transform(X)
     X_r2 = GenericUnivariateSelect(f_regression, mode='percentile',
@@ -218,8 +246,9 @@ def test_select_kbest_regression():
     gets the correct items in a simple regression problem
     with the k best heuristic
     """
-    X, Y = test_dataset_reg(n_samples=50, n_features=20, k=5,
-                                           seed=seed)
+    X, Y = make_regression(n_samples=200, n_features=20, 
+                           n_informative=5, shuffle=False, random_state=0)
+
     univariate_filter = SelectKBest(f_regression, k=5)
     X_r = univariate_filter.fit(X, Y).transform(X)
     X_r2 = GenericUnivariateSelect(f_regression, mode='k_best',
@@ -237,8 +266,9 @@ def test_select_fpr_regression():
     gets the correct items in a simple regression problem
     with the fpr heuristic
     """
-    X, Y = test_dataset_reg(n_samples=50, n_features=20, k=5,
-                                           seed=seed)
+    X, Y = make_regression(n_samples=200, n_features=20, 
+                           n_informative=5, shuffle=False, random_state=0)
+
     univariate_filter = SelectFpr(f_regression, alpha=0.01)
     X_r = univariate_filter.fit(X, Y).transform(X)
     X_r2 = GenericUnivariateSelect(f_regression, mode='fpr',
@@ -255,10 +285,11 @@ def test_select_fdr_regression():
     """
     Test whether the relative univariate feature selection
     gets the correct items in a simple regression problem
-    with the fpr heuristic
+    with the fdr heuristic
     """
-    X, Y = test_dataset_reg(n_samples=50, n_features=20, k=5,
-                                           seed=2)
+    X, Y = make_regression(n_samples=200, n_features=20, 
+                           n_informative=5, shuffle=False, random_state=0)
+
     univariate_filter = SelectFdr(f_regression, alpha=0.01)
     X_r = univariate_filter.fit(X, Y).transform(X)
     X_r2 = GenericUnivariateSelect(f_regression, mode='fdr',
@@ -274,10 +305,11 @@ def test_select_fwe_regression():
     """
     Test whether the relative univariate feature selection
     gets the correct items in a simple regression problem
-    with the fpr heuristic
+    with the fwe heuristic
     """
-    X, Y = test_dataset_reg(n_samples=50, n_features=20, k=5,
-                                           seed=seed)
+    X, Y = make_regression(n_samples=200, n_features=20, 
+                           n_informative=5, shuffle=False, random_state=0)
+
     univariate_filter = SelectFwe(f_regression, alpha=0.01)
     X_r = univariate_filter.fit(X, Y).transform(X)
     X_r2 = GenericUnivariateSelect(f_regression, mode='fwe',
