@@ -33,7 +33,7 @@ class RFE(BaseEstimator):
         The number of features to select.
 
     step : int or float, optional (default=1)
-        If greater than or equal to 1, then `step` corresponds to the (interger)
+        If greater than or equal to 1, then `step` corresponds to the (integer)
         number of features to remove at each iteration.
         If within (0.0, 1.0), then `step` corresponds to the percentage
         (rounded down) of features to remove at each iteration.
@@ -152,7 +152,7 @@ class RFECV(RFE):
         Linear Models from the `svm` and `linear_model` modules.
 
     step : int or float, optional (default=1)
-        If greater than or equal to 1, then `step` corresponds to the (interger)
+        If greater than or equal to 1, then `step` corresponds to the (integer)
         number of features to remove at each iteration.
         If within (0.0, 1.0), then `step` corresponds to the percentage
         (rounded down) of features to remove at each iteration.
