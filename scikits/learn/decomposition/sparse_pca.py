@@ -1,5 +1,4 @@
-""" Matrix factorization with Sparse PCA
-"""
+"""Matrix factorization with Sparse PCA"""
 # Author: Vlad Niculae, Gael Varoquaux, Alexandre Gramfort
 # License: BSD
 
@@ -15,6 +14,7 @@ from scipy import linalg
 
 from ..utils import check_random_state
 from ..utils import gen_even_slices
+from ..utils.extmath import fast_svd
 from ..linear_model import Lasso, lars_path, ridge_regression
 from ..externals.joblib import Parallel, delayed, cpu_count
 from ..base import BaseEstimator, TransformerMixin
@@ -23,7 +23,8 @@ from ..utils.extmath import fast_svd
 
 def _update_code(dictionary, Y, alpha, code=None, Gram=None, method='lars',
                  tol=1e-8):
-    """ Update the sparse code factor in sparse_pca loop.
+    """Update the sparse code factor in the sparse_pca loop.
+
     Each column of the result is the solution to a Lasso problem.
 
     Parameters
@@ -92,8 +93,9 @@ def _update_code(dictionary, Y, alpha, code=None, Gram=None, method='lars',
 
 def _update_code_parallel(dictionary, Y, alpha, code=None, Gram=None,
                           method='lars', n_jobs=1, tol=1e-8):
-    """ Update the sparse factor V in sparse_pca loop by efficiently
-    spreading the load over the available cores.
+    """Update the sparse factor V in the sparse_pca loop in parallel.
+
+    The computation is spread over all the available cores.
 
     Parameters
     ----------
@@ -148,7 +150,7 @@ def _update_code_parallel(dictionary, Y, alpha, code=None, Gram=None,
 
 def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
                  random_state=None):
-    """ Update the dense dictionary factor in place.
+    """Update the dense dictionary factor in place.
 
     Parameters
     ----------
@@ -303,7 +305,7 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
         code, S, dictionary = linalg.svd(X, full_matrices=False)
         dictionary = S[:, np.newaxis] * dictionary
     r = len(dictionary)
-    if n_atoms <= r:
+    if n_atoms <= r:  # True even if n_atoms=None
         code = code[:, :n_atoms]
         dictionary = dictionary[:n_atoms, :]
     else:
@@ -312,7 +314,6 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
                            np.zeros((n_atoms - r, dictionary.shape[1]))]
 
     # Fortran-order dict, as we are going to access its row vectors
-    #code = np.array(code, order='F')
     dictionary = np.array(dictionary, order='F')
 
     residuals = 0
@@ -376,8 +377,9 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
                  (U,V)
                  with || V_k ||_2 = 1 for all  0 <= k < n_atoms
 
-    where V is the dictionary and U is the sparse code. This is accomplished
-    by repeatedly iterating over mini-batches of the input data.
+    where V is the dictionary and U is the sparse code. This is
+    accomplished by repeatedly iterating over mini-batches by slicing
+    the input data.
 
     Parameters
     ----------
@@ -414,10 +416,11 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
     n_jobs: int,
         number of parallel jobs to run, or -1 to autodetect.
 
-    method: 'lars' | 'cd'
+    method: {'lars', 'cd'}
         lars: uses the least angle regression method (linear_model.lars_path)
-        cd: uses the stochastic gradient descent method to compute the
-            lasso solution (linear_model.Lasso)
+        cd: uses the coordinate descent method to compute the
+        Lasso solution (linear_model.Lasso). Lars will be faster if
+        the estimated components are sparse.
 
     iter_offset: int, default 0
         number of previous iterations completed on the dictionary used for
@@ -476,7 +479,6 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
 
     for ii, this_X in itertools.izip(xrange(iter_offset, iter_offset + n_iter),
                                      batches):
-        #this_Y = this_Y.squeeze()
         dt = (time.time() - t0)
         if verbose == 1:
             sys.stdout.write(".")
@@ -520,7 +522,7 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
         if verbose > 1:
             dt = (time.time() - t0)
             print 'done (total time: % 3is, % 4.1fmn)' % (dt, dt / 60)
-        return dictionary.T, code.T
+        return code.T, dictionary.T
 
     return dictionary.T
 
@@ -528,17 +530,22 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
 class SparsePCA(BaseEstimator, TransformerMixin):
     """Sparse Principal Components Analysis (SparsePCA)
 
-    Finds the set of sparse components that can optimally reconstruct the data.
-    The amount of sparseness is controllable by the coefficient of the L1
-    penalty, given by the parameter alpha.
+    Finds the set of sparse components that can optimally reconstruct
+    the data.  The amount of sparseness is controllable by the coefficient
+    of the L1 penalty, given by the parameter alpha.
 
     Parameters
     ----------
     n_components: int,
         Number of sparse atoms to extract.
 
-    alpha: int,
-        Sparsity controlling parameter.
+    alpha: float,
+        Sparsity controlling parameter. Higher values lead to sparser
+        components.
+
+    ridge_alpha: float,
+        Amount of ridge shrinkage to apply in order to improve
+        conditioning when calling the transform method.
 
     max_iter: int,
         Maximum number of iterations to perform.
@@ -580,11 +587,12 @@ class SparsePCA(BaseEstimator, TransformerMixin):
     PCA
 
     """
-    def __init__(self, n_components=None, alpha=1, max_iter=1000, tol=1e-8,
-                 method='lars', n_jobs=1, U_init=None, V_init=None,
+    def __init__(self, n_components, alpha=1, ridge_alpha=0.01, max_iter=1000,
+                 tol=1e-8, method='lars', n_jobs=1, U_init=None, V_init=None,
                  verbose=False, random_state=None):
         self.n_components = n_components
         self.alpha = alpha
+        self.ridge_alpha = ridge_alpha
         self.max_iter = max_iter
         self.tol = tol
         self.method = method
@@ -611,22 +619,21 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         self._set_params(**params)
         self.random_state = check_random_state(self.random_state)
         X = np.asanyarray(X)
-        code_init = self.V_init.T if self.V_init != None else None
-        dict_init = self.U_init.T if self.U_init != None else None
+        code_init = self.V_init.T if self.V_init is not None else None
+        dict_init = self.U_init.T if self.U_init is not None else None
         Vt, _, E = dict_learning(X.T, self.n_components, self.alpha,
-                                tol=self.tol, max_iter=self.max_iter,
-                                method=self.method, n_jobs=self.n_jobs,
-                                verbose=self.verbose,
-                                random_state=self.random_state,
-                                code_init=code_init,
-                                dict_init=dict_init)
+                                 tol=self.tol, max_iter=self.max_iter,
+                                 method=self.method, n_jobs=self.n_jobs,
+                                 verbose=self.verbose,
+                                 random_state=self.random_state,
+                                 code_init=code_init,
+                                 dict_init=dict_init)
         self.components_ = Vt.T
         self.error_ = E
         return self
 
-    def transform(self, X, ridge_alpha=0.01):
-        """Least Squares projection of the data onto the learned sparse
-        components.
+    def transform(self, X, ridge_alpha=None):
+        """Least Squares projection of the data onto the sparse components.
 
         To avoid instability issues in case the system is under-determined,
         regularization can be applied (Ridge regression) via the
@@ -650,7 +657,100 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         X_new array, shape (n_samples, n_components)
             Transformed data.
         """
+        ridge_alpha = self.ridge_alpha if ridge_alpha is None else ridge_alpha
         U = ridge_regression(self.components_.T, X.T, ridge_alpha,
                              solver='dense_cholesky')
         U /= np.sqrt((U ** 2).sum(axis=0))
         return U
+
+
+class MiniBatchSparsePCA(SparsePCA):
+    """Mini-batch Sparse Principal Components Analysis
+
+    Finds the set of sparse components that can optimally reconstruct
+    the data.  The amount of sparseness is controllable by the coefficient
+    of the L1 penalty, given by the parameter alpha.
+
+    Parameters
+    ----------
+    n_components: int,
+        number of sparse atoms to extract
+
+    alpha: int,
+        Sparsity controlling parameter. Higher values lead to sparser
+        components.
+
+    ridge_alpha: float,
+        Amount of ridge shrinkage to apply in order to improve
+        conditioning when calling the transform method.
+
+    n_iter: int,
+        number of iterations to perform for each mini batch
+
+    callback: callable,
+        callable that gets invoked every five iterations
+
+    chunk_size: int,
+        the number of features to take in each mini batch
+
+    verbose:
+        degree of output the procedure will print
+
+    shuffle: boolean,
+        whether to shuffle the data before splitting it in batches
+
+    n_jobs: int,
+        number of parallel jobs to run, or -1 to autodetect.
+
+    method: {'lars', 'cd'}
+        lars: uses the least angle regression method (linear_model.lars_path)
+        cd: uses the coordinate descent method to compute the
+        Lasso solution (linear_model.Lasso). Lars will be faster if
+        the estimated components are sparse.
+
+    random_state: int or RandomState
+        Pseudo number generator state used for random sampling.
+
+    """
+    def __init__(self, n_components, alpha=1, ridge_alpha=0.01, n_iter=100,
+                 callback=None, chunk_size=3, verbose=False, shuffle=True,
+                 n_jobs=1, method='lars', random_state=None):
+        self.n_components = n_components
+        self.alpha = alpha
+        self.ridge_alpha = ridge_alpha
+        self.n_iter = n_iter
+        self.callback = callback
+        self.chunk_size = chunk_size
+        self.verbose = verbose
+        self.shuffle = shuffle
+        self.n_jobs = n_jobs
+        self.method = method
+        self.random_state = random_state
+
+    def fit(self, X, y=None, **params):
+        """Fit the model from data in X.
+
+        Parameters
+        ----------
+        X: array-like, shape (n_samples, n_features)
+            Training vector, where n_samples in the number of samples
+            and n_features is the number of features.
+
+        Returns
+        -------
+        self : object
+            Returns the instance itself.
+        """
+        self._set_params(**params)
+        self.random_state = check_random_state(self.random_state)
+        X = np.asanyarray(X)
+        Vt, _ = dict_learning_online(X.T, self.n_components, alpha=self.alpha,
+                                     n_iter=self.n_iter, return_code=True,
+                                     dict_init=None, verbose=self.verbose,
+                                     callback=self.callback,
+                                     chunk_size=self.chunk_size,
+                                     shuffle=self.shuffle,
+                                     n_jobs=self.n_jobs, method=self.method,
+                                     random_state=self.random_state)
+        self.components_ = Vt.T
+        return self

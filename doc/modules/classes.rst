@@ -94,6 +94,7 @@ Generalized Linear Models
    linear_model.LassoLars
    linear_model.LarsCV
    linear_model.LassoLarsCV
+   linear_model.LassoLarsIC
    linear_model.LogisticRegression
    linear_model.OrthogonalMatchingPursuit
    linear_model.SGDClassifier
@@ -368,6 +369,7 @@ Signal Decomposition
    decomposition.FastICA
    decomposition.NMF
    decomposition.SparsePCA
+   decomposition.MiniBatchSparsePCA
 
 .. autosummary::
    :toctree: generated/
@@ -375,6 +377,7 @@ Signal Decomposition
  
    decomposition.fastica
    decomposition.dict_learning
+   decomposition.dict_learning_online
 
 
 Linear Discriminant Analysis

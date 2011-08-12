@@ -27,7 +27,7 @@ def test_dict_learning_reconstruction():
     n_atoms = 12
     n_nonzero_coefs = 4
     Y, V, U = make_sparse_coded_signal(n_samples, n_atoms, n_features,
-                                       n_nonzero_coefs, random_state=0)
+                                       n_nonzero_coefs, random_state=1)
     Y, V, U = Y.T, V.T, U.T  
 
     # Y is U * V, U has n_nonzero_coefs per row, V has normalized rows

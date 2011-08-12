@@ -13,7 +13,6 @@ from itertools import cycle, izip
 
 import numpy as np
 import scipy.sparse as sp
-from math import floor
 
 from ..base import BaseEstimator
 from ..metrics.pairwise import euclidean_distances
@@ -574,8 +573,8 @@ def _mini_batch_step_sparse(X, batch_slice, centers, counts, x_squared_norms):
     cache = euclidean_distances(centers, X[batch_slice],
               x_squared_norms[batch_slice]).argmin(axis=0).astype(np.int32)
 
-    _k_means._mini_batch_update_sparse(X.data, X.indices, X.indptr, batch_slice,
-                                       centers, counts, cache)
+    _k_means._mini_batch_update_sparse(X.data, X.indices, X.indptr,
+                                       batch_slice, centers, counts, cache)
 
 
 class MiniBatchKMeans(KMeans):
@@ -680,9 +679,8 @@ class MiniBatchKMeans(KMeans):
             x_squared_norms=x_squared_norms)
         self.counts = np.zeros(self.k, dtype=np.int32)
 
-        n_batches = int(floor(float(n_samples) / self.chunk_size))
+        n_batches = int(np.ceil(float(n_samples) / self.chunk_size))
         batch_slices = list(gen_even_slices(n_samples, n_batches))
-
         n_iterations = xrange(int(self.max_iter * n_batches))
         if sp.issparse(X_shuffled):
             _mini_batch_step = _mini_batch_step_sparse
@@ -701,8 +699,13 @@ class MiniBatchKMeans(KMeans):
                     print 'Converged to similar centers at iteration', i
                 break
 
-        self.inertia_, self.labels_ = _calculate_labels_inertia(
-            X, self.cluster_centers_)
+        self.inertia_ = 0
+        self.labels_ = np.empty((n_samples,), dtype=np.int)
+        for batch_slice in batch_slices:
+            batch_inertia, batch_labels = _calculate_labels_inertia(
+            X[batch_slice], self.cluster_centers_)
+            self.inertia_ += batch_inertia
+            self.labels_[batch_slice] = batch_labels
 
         return self
 
