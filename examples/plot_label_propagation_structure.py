@@ -39,7 +39,7 @@ labels = ['outer'] +\
 
 label_spread.fit(data, labels, unlabeled_identifier='unlabeled')
 
-output_labels = label_spread.transduction
+output_labels = label_spread.transduction_
 
 pl.subplot(2, 1, 1)
 plot_outer_labeled, = pl.plot(outer_circ_xs[0], outer_circ_ys[0], 'rs-')

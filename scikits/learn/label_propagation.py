@@ -8,7 +8,7 @@ These algorithms perform very well in practice. The cost of running can be very
 expensive, at approximately O(N^3) where N is the number of (labeled and
 unlabeled) points. The theory (why they perform so well) is motivated by
 intuitions from random walk algorithms and geometric relationships in the data.
-For more information see [1].
+For more information see the references below.
 
 Model Features
 --------------
@@ -127,7 +127,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         X : array_like, shape = (n_features, n_features)
         """
         ary = np.atleast_2d(X)
-        return self._get_kernel(self._X, ary).T * self._y
+        return self._get_kernel(self._X, ary).T * self.y_
 
     def fit(self, X, y, **params):
         """
@@ -143,27 +143,9 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
           n_labeled_samples (unlabeled points marked with a special identifier)
           All unlabeled samples will be transductively assigned labels
 
-        Examples
-        --------
-        >>> from scikits.learn import datasets
-        >>> label_prop_model = BaseLabelPropagation()
-        >>> iris = datasets.load_iris()
-        >>> random_unlabeled_points = np.where(np.random.random_integers(0, 1,
-            size=len(iris.target)))
-        >>> labels = np.copy(iris.target)
-        >>> labels[random_unlabeled_points] = -1
-        >>> label_prop_model.fit(iris.data, labels, unlabeled_identifier=-1)
-        ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-        BaseLabelPropagation(...)
-
-        Warning
-        -------
-        Base class works, but intended for instruction. It will generate a n
-        onstochastic affinity matrix.
-
         Returns
         -------
-        updated LabelPropagation object with a new variable called transduction
+        updated LabelPropagation object with a new transduction results
         """
         self._set_params(**params)
         self._X = np.asanyarray(X)
@@ -185,40 +167,53 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         alpha_ary[self.unlabeled_points, 0] = self.alpha
 
         # initialize distributions
-        self._y = np.zeros((n_labels, n_classes))
+        self.y_ = np.zeros((n_labels, n_classes))
         for label in unq_labels:
-            self._y[np.where(y_st == label), np.where(unq_labels == label)] = 1
+            self.y_[np.where(y_st == label), np.where(unq_labels == label)] = 1
 
-        Y_alpha = np.copy(self._y)
+        Y_alpha = np.copy(self.y_)
         Y_alpha = Y_alpha * (1 - self.alpha)
         Y_alpha[self.unlabeled_points] = 0
 
         y_p = np.zeros((self._X.shape[0], n_classes))
-        self._y.resize((self._X.shape[0], n_classes))
+        self.y_.resize((self._X.shape[0], n_classes))
 
         max_iters = self.max_iters
         ct = self.conv_threshold
-        while not_converged(self._y, y_p, ct) and max_iters > 1:
-            y_p = self._y
-            self._y = np.dot(graph_matrix, self._y)
+        while not_converged(self.y_, y_p, ct) and max_iters > 1:
+            y_p = self.y_
+            self.y_ = np.dot(graph_matrix, self.y_)
             # clamp
-            self._y = np.multiply(alpha_ary, self._y) + Y_alpha
+            self.y_ = np.multiply(alpha_ary, self.y_) + Y_alpha
             max_iters -= 1
 
         # set the transduction item
-        transduction = self.unq_labels[np.argmax(self._y, axis=1)]
-        self.transduction = transduction.flatten()
+        transduction = self.unq_labels[np.argmax(self.y_, axis=1)]
+        self.transduction_ = transduction.flatten()
         return self
 
 
 class LabelPropagation(BaseLabelPropagation):
     """
-    Computes a basic stochastic affinity matrix and uses hard clamping.
+    Computes a stochastic affinity matrix and uses hard clamping.
+
+    Examples
+    --------
+    >>> from scikits.learn import datasets
+    >>> label_prop_model = LabelPropagation()
+    >>> iris = datasets.load_iris()
+    >>> random_unlabeled_points = np.where(np.random.random_integers(0, 1,
+        size=len(iris.target)))
+    >>> labels = np.copy(iris.target)
+    >>> labels[random_unlabeled_points] = -1
+    >>> label_prop_model.fit(iris.data, labels, unlabeled_identifier=-1)
+    ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+        LabelPropagation(...)
     """
     def _build_graph(self):
         """
         Builds a matrix representing a fully connected graph between each point
-        in the dataset
+        in the dataset.
 
         This basic implementation creates a non-stochastic affinity matrix, so
         class distributions will exceed 1 (normalization may be desired)
@@ -233,12 +228,13 @@ class LabelPropagation(BaseLabelPropagation):
 class LabelSpreading(BaseLabelPropagation):
     """
     Similar to the basic Label Propgation algorithm, but uses affinity matrix
-    based on the graph laplacian and uses soft clamping for labels.
+    based on the graph laplacian and soft clamping accross the labels.
 
     Parameters
     ----------
     alpha : float
       "clamping factor" or how much of the original labels you want to keep
+
     """
     
     def __init__(self, kernel='rbf', gamma=20, alpha=0.2,
