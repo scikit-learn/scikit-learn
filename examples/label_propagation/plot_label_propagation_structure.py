@@ -43,8 +43,8 @@ output_labels = label_spread.transduction
 
 pl.subplot(2, 1, 1)
 plot_outer_labeled, = pl.plot(outer_circ_xs[0], outer_circ_ys[0], 'rs-')
-plot_unlabeled, = pl.plot(outer_circ_xs[1:] + inner_circ_xs[1:], \
-        outer_circ_ys[1:] + inner_circ_ys[1:], 'g.')
+plot_unlabeled, = pl.plot(np.append(outer_circ_xs[1:], inner_circ_xs[1:]), \
+        np.append(outer_circ_ys[1:], inner_circ_ys[1:]), 'g.')
 plot_inner_labeled, = pl.plot(inner_circ_xs[0], inner_circ_ys[0], 'bs-')
 pl.legend((plot_outer_labeled, plot_inner_labeled, plot_unlabeled), \
         ('Outer Labeled', 'Inner Labeled', 'Unlabeled'), 'upper left', \

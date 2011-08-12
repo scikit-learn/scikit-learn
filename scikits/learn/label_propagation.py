@@ -100,7 +100,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         if self.kernel == "rbf":
             return rbf_kernel(X, Y, gamma=self.gamma)
         else:
-            raise ValueError("%s is not a valid kernel. Only rbf
+            raise ValueError("%s is not a valid kernel. Only rbf \
                              supported at this time" % self.kernel)
 
     def _build_graph(self):
@@ -237,7 +237,7 @@ class LabelPropagation(BaseLabelPropagation):
     uses hard clamping.
     """
     def _build_graph(self):
-        affinity_matrix = self._get_kernel(self._X, self._X, gamma=self.gamma)
+        affinity_matrix = self._get_kernel(self._X, self._X)
         degree_matrix = np.diag(np.sum(affinity_matrix, axis=0))
         deg_inv = np.linalg.inv(degree_matrix)
         aff_ideg = deg_inv * np.matrix(affinity_matrix)
@@ -262,7 +262,7 @@ class LabelSpreading(BaseLabelPropagation):
         """
         # compute affinity matrix (or gram matrix)
         n_samples = self._X.shape[0]
-        affinity_matrix = self._get_kernel(self._X, self._X, gamma=self.gamma)
+        affinity_matrix = self._get_kernel(self._X, self._X)
         affinity_matrix[np.diag_indices(n_samples)] = 0
         degree_matrix = np.diag(np.sum(affinity_matrix, axis=0))
         deg_invsq = np.sqrt(np.linalg.inv(degree_matrix))
