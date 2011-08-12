@@ -398,19 +398,18 @@ the second position that is just ignored byt the estimator.
 The method should return the object (``self``).
 
 Depending on the nature of the algorithm ``fit`` can sometimes also
-accept additional keywords arguments.
+accept additional keywords arguments. However any parameter that can
+have a value assigned prior having access to the data should be an
+``__init__`` keyword argument. **``fit`` parameters should be restricted
+to directly data dependent variables**. For instance a Gram matrix or
+an affinity matrix which are precomputed from the data matrix ``X`` are
+data dependent. A tolerance stopping criterion ``tol`` is not directly
+data dependent (although the optimal value according to some scoring
+function probably is).
 
-Any parameter that can have a value assigned prior having access to the
-data should be an ``__init__`` kwyword argument. ``fit`` parameters should
-be restricted to **directly** data dependent variables. For instance a
-Gram matrix or an affinity matrix which are precomputed from the data
-matrix ``X`` are data dependent. A tolerance stopping criterion ``tol``
-is not directly data dependent (although the optimal value according to
-some scoring function probably is).
-
-Any attribute that ends with ``_`` is expected to be overridden when you
-call ``fit`` a second time without taking any previous value into account
-(i.e. ``fit`` should be idempotent).
+Any attribute that ends with ``_`` is expected to be overridden when
+you call ``fit`` a second time without taking any previous value into
+account: **``fit`` should be idempotent**.
 
 
 Python tuples
