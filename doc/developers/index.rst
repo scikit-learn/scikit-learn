@@ -412,7 +412,7 @@ function probably is).
 
 Any attribute that ends with ``_`` is expected to be overridden when
 you call ``fit`` a second time without taking any previous value into
-account: **``fit`` should be idempotent**.
+account: **fit should be idempotent**.
 
 
 Python tuples
