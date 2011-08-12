@@ -383,7 +383,7 @@ X             array-like, with shape = [N, D], where N is the number
 y             array, with shape = [N], where N is the number of
               samples.
 
-kwargs        optional data dependant parameters.
+kwargs        optional data dependent parameters.
 ============= ======================================================
 
 ``X.shape[0]`` should be the same as ``y.shape[0]``. If this requisite
