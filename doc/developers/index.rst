@@ -403,7 +403,7 @@ to be able to implement quick one liners in an ipython session such as::
 Depending on the nature of the algorithm ``fit`` can sometimes also
 accept additional keywords arguments. However any parameter that can
 have a value assigned prior having access to the data should be an
-``__init__`` keyword argument. **``fit`` parameters should be restricted
+``__init__`` keyword argument. **fit parameters should be restricted
 to directly data dependent variables**. For instance a Gram matrix or
 an affinity matrix which are precomputed from the data matrix ``X`` are
 data dependent. A tolerance stopping criterion ``tol`` is not directly
