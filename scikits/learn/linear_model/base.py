@@ -63,8 +63,7 @@ class LinearModel(BaseEstimator, RegressorMixin):
                 X_mean = np.zeros(X.shape[1])
                 X_std = np.ones(X.shape[1])
             else:
-                X_mean = X.mean(axis=0, dtype=np.float)
-                X = X.astype(np.float)
+                X_mean = X.mean(axis=0)
                 X -= X_mean
                 if normalize:
                     X_std = np.sqrt(np.sum(X ** 2, axis=0))
