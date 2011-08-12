@@ -77,7 +77,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
 
     _default_alpha = 1
 
-    def __init__(self, kernel='gaussian', gamma=20, alpha=None,
+    def __init__(self, kernel='rbf', gamma=20, alpha=None,
             unlabeled_identifier=-1, max_iters=100,
             conv_threshold=1e-3, suppress_warning=False):
         self.max_iters = max_iters
@@ -88,16 +88,20 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         # object referring to a point that is unlabeled
         self.unlabeled_identifier = unlabeled_identifier
 
-        if kernel == 'gaussian':
-            self.kernel = rbf_kernel
-        elif hasattr(kernel, '__call__'):
-            self.kernel = kernel
+        self.kernel = kernel
 
         # clamping factor
         if alpha is None:
             self.alpha = self._default_alpha
         else:
             self.alpha = alpha
+
+    def _get_kernel(self, X, Y):
+        if self.kernel == "rbf":
+            return rbf_kernel(X, Y, gamma=self.gamma)
+        else:
+            raise ValueError("%s is not a valid kernel. Only rbf
+                             supported at this time" % self.kernel)
 
     def _build_graph(self):
         """
@@ -107,7 +111,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         This basic implementation creates a non-stochastic affinity matrix, so
         class distributions will exceed 1 (normalization may be desired)
         """
-        self._graph_matrix = self.kernel(self._X, self._X, gamma=self.gamma)
+        self._graph_matrix = self._get_kernel(self._X, self._X)
 
     def predict(self, X):
         """
@@ -136,7 +140,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         X : array_like, shape = (n_features, n_features)
         """
         ary = np.atleast_2d(X)
-        return self.kernel(self._X, ary).T * self._y
+        return self._get_kernel(self._X, ary).T * self._y
 
     def fit(self, X, y, **params):
         """
@@ -233,7 +237,7 @@ class LabelPropagation(BaseLabelPropagation):
     uses hard clamping.
     """
     def _build_graph(self):
-        affinity_matrix = self.kernel(self._X, self._X, gamma=self.gamma)
+        affinity_matrix = self._get_kernel(self._X, self._X, gamma=self.gamma)
         degree_matrix = np.diag(np.sum(affinity_matrix, axis=0))
         deg_inv = np.linalg.inv(degree_matrix)
         aff_ideg = deg_inv * np.matrix(affinity_matrix)
@@ -258,7 +262,7 @@ class LabelSpreading(BaseLabelPropagation):
         """
         # compute affinity matrix (or gram matrix)
         n_samples = self._X.shape[0]
-        affinity_matrix = self.kernel(self._X, self._X, gamma=self.gamma)
+        affinity_matrix = self._get_kernel(self._X, self._X, gamma=self.gamma)
         affinity_matrix[np.diag_indices(n_samples)] = 0
         degree_matrix = np.diag(np.sum(affinity_matrix, axis=0))
         deg_invsq = np.sqrt(np.linalg.inv(degree_matrix))
