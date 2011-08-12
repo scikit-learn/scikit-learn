@@ -672,9 +672,6 @@ class MiniBatchSparsePCA(SparsePCA):
 
     Parameters
     ----------
-    X: array of shape (n_samples, n_features)
-        data matrix
-
     n_components: int,
         number of sparse atoms to extract
 

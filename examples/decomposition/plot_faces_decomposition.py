@@ -3,9 +3,10 @@
 Faces dataset decompositions
 ============================
 
-This example compares different unsupervised matrix decomposition (dimension
-reduction) methods  from the module :py:mod:`scikits.learn.decomposition` on
-:doc:`/datasets/olivetti_faces`.
+This example applies to :doc:`/datasets/olivetti_faces` different
+unsupervised matrix decomposition (dimension reduction) methods  from the
+module :py:mod:`scikits.learn.decomposition` (see the documentation
+chapter :ref:`decompositions`) .
 
 """
 print __doc__
@@ -18,12 +19,9 @@ from time import time
 
 import pylab as pl
 
-from scikits.learn.cluster import MiniBatchKMeans
 from scikits.learn.datasets import fetch_olivetti_faces
-from scikits.learn.decomposition import FastICA
-from scikits.learn.decomposition import MiniBatchSparsePCA
-from scikits.learn.decomposition import NMF
-from scikits.learn.decomposition import RandomizedPCA
+from scikits.learn.cluster import MiniBatchKMeans
+from scikits.learn import decomposition
 
 # Display progress logs on stdout
 logging.basicConfig(level=logging.INFO,
@@ -67,21 +65,21 @@ def plot_gallery(title, images):
 # problem, and whether the transformer uses the clustering API.
 estimators = [
     ('Eigenfaces - RandomizedPCA',
-     RandomizedPCA(n_components=n_components, whiten=True),
+     decomposition.RandomizedPCA(n_components=n_components, whiten=True),
      True, False),
 
     ('Non-negative components - NMF',
-     NMF(n_components=n_components, init='nndsvda', beta=5.0, tol=5e-3,
-         sparseness='components'),
+     decomposition.NMF(n_components=n_components, init='nndsvda', beta=5.0, 
+                        tol=5e-3, sparseness='components'),
      False, False),
 
     ('Independent components - FastICA',
-     FastICA(n_components=n_components, whiten=True, max_iter=10),
+     decomposition.FastICA(n_components=n_components, whiten=True, max_iter=10),
      True, True),
 
     ('Sparse comp. - MiniBatchSparsePCA',
-     MiniBatchSparsePCA(n_components=n_components, alpha=1e-3, n_iter=100,
-                        chunk_size=3),
+     decomposition.MiniBatchSparsePCA(n_components=n_components, alpha=1e-3, 
+                                      n_iter=100, chunk_size=3),
      True, False),
 
     ('Cluster centers - MiniBatchKMeans',

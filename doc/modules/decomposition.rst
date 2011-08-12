@@ -1,3 +1,6 @@
+.. _decompositions:
+
+
 =================================================================
 Decomposing signals in components (matrix factorization problems)
 =================================================================
@@ -77,11 +80,11 @@ less than 1s:
 
 .. |orig_img| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_1.png
    :target: ../auto_examples/decomposition/plot_faces_decomposition.html
-   :scale: 50%
+   :scale: 60%
 
 .. |pca_img| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_2.png
    :target: ../auto_examples/decomposition/plot_faces_decomposition.html
-   :scale: 50%
+   :scale: 60%
 
 .. centered:: |orig_img| |pca_img|
 
@@ -185,11 +188,11 @@ see the `Examples` section below.
 
 .. |pca_img| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_2.png
    :target: ../auto_examples/decomposition/plot_faces_decomposition.html
-   :scale: 50%
+   :scale: 60%
 
 .. |spca_img| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_5.png
    :target: ../auto_examples/decomposition/plot_faces_decomposition.html
-   :scale: 50%
+   :scale: 60%
 
 .. centered:: |pca_img| |spca_img|
 
@@ -248,7 +251,7 @@ It is classically used to separate mixed signals (a problem known as
 .. figure:: ../auto_examples/decomposition/images/plot_ica_blind_source_separation_1.png
     :target: ../auto_examples/decomposition/plot_ica_blind_source_separation.html
     :align: center
-    :scale: 50%
+    :scale: 60%
 
 
 ICA can also be used as yet another non linear decomposition that finds
@@ -256,11 +259,11 @@ components with some sparsity:
 
 .. |pca_img| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_2.png
     :target: ../auto_examples/decomposition/plot_faces_decomposition.html
-    :scale: 50%
+    :scale: 60%
 
 .. |ica_img| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_4.png
     :target: ../auto_examples/decomposition/plot_faces_decomposition.html
-    :scale: 50%
+    :scale: 60%
 
 .. centered:: |pca_img| |ica_img|
 
@@ -293,11 +296,11 @@ faces dataset, in comparison with the PCA eigenfaces.
 
 .. |pca_img| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_2.png
     :target: ../auto_examples/decomposition/plot_faces_decomposition.html
-    :scale: 50%
+    :scale: 60%
 
 .. |nmf_img| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_3.png
     :target: ../auto_examples/decomposition/plot_faces_decomposition.html
-    :scale: 50%
+    :scale: 60%
 
 .. centered:: |pca_img| |nmf_img|
 
