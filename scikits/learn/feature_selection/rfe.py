@@ -137,7 +137,7 @@ class RFE(BaseEstimator):
 
         Parameters
         ----------
-        X : array of shape [n_samples, n_feautres]
+        X : array of shape [n_samples, n_features]
             The input samples.
 
         Return
@@ -153,7 +153,7 @@ class RFE(BaseEstimator):
 
         Parameters
         ----------
-        X : array of shape [n_samples, n_feautres]
+        X : array of shape [n_samples, n_features]
             The input samples.
 
         y : array of shape [n_samples]
