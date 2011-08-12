@@ -34,7 +34,7 @@ from matplotlib.ticker import NullFormatter
 from scikits.learn import manifold, datasets
 
 X, color = datasets.samples_generator.make_s_curve(1000)
-n_neighbors = 8
+n_neighbors = 10
 out_dim = 2
 
 methods = ['standard', 'ltsa', 'hessian', 'modified']
@@ -58,7 +58,7 @@ ax.set_title('Original Data')
 for i, method in enumerate(methods):
     t0 = time()
     Y = manifold.LocallyLinearEmbedding(n_neighbors, out_dim,
-                                        eigen_solver='arpack',
+                                        eigen_solver='auto',
                                         method=method).fit_transform(X)
     t1 = time()
     print "%s: %.2g sec" % (methods[i], t1 - t0)
