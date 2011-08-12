@@ -26,7 +26,8 @@ class BaseDictionaryLearning(BaseEstimator, TransformerMixin):
         """Encode the data as a sparse combination of the learned dictionary
         atoms.
 
-        Coding method is determined by the object parameter `transform_method`.
+        Coding method is determined by the object parameter
+        `transform_algorithm`.
 
         Parameters
         ----------
@@ -59,7 +60,7 @@ class BaseDictionaryLearning(BaseEstimator, TransformerMixin):
             distance_means = distances.mean(axis=1)[:, np.newaxis]
             code = np.maximum(0, distance_means - distances)
         else:
-            raise NotImplemented('Coding method %s is not implemented' %
+            raise NotImplemented('Coding algorithm %s is not implemented' %
                                  self.transform_method)
 
         if self.split_sign:
