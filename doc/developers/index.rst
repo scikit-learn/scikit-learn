@@ -393,7 +393,7 @@ is not met, an exception of type ``ValueError`` should be raised.
 make it possible to use the estimator as part of a pipeline that can
 mix both supervised and unsupervised transformers even unsupervised
 estimators are kindly ask to accept a ``y=None`` keyword argument in
-the second position that is just ignored byt the estimator.
+the second position that is just ignored by the estimator.
 
 The method should return the object (``self``). This pattern is useful
 to be able to implement quick one liners in an ipython session such as::
