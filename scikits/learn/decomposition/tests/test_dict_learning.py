@@ -25,22 +25,22 @@ def test_dict_learning_overcomplete():
 def test_dict_learning_reconstruction():
     n_samples, n_features = 10, 8
     n_atoms = 12
-    n_nonzero_coefs = 4
-    Y, V, U = make_sparse_coded_signal(n_samples, n_atoms, n_features,
-                                       n_nonzero_coefs, random_state=1)
-    Y, V, U = Y.T, V.T, U.T  
+    # n_nonzero_coefs = 4
+    # Y, V, U = make_sparse_coded_signal(n_samples, n_atoms, n_features,
+    #                                    n_nonzero_coefs, random_state=1)
+    # Y, V, U = Y.T, V.T, U.T  
 
     # Y is U * V, U has n_nonzero_coefs per row, V has normalized rows
 
+    rng = np.random.RandomState(0)
+    Y = rng.randn(n_samples, n_features)
     dico = DictionaryLearning(n_atoms, transform_algorithm='omp')
-    code = dico.fit(Y).transform(Y, n_nonzero_coefs=n_nonzero_coefs)
-    # not sure why it doesn't work without decimal=1, in the failure all
-    # elements are exactly equal
-    assert_array_almost_equal(np.dot(code, dico.components_), Y, decimal=1)
+    code = dico.fit(Y).transform(Y, eps=0.01)
+    assert_array_almost_equal(np.dot(code, dico.components_), Y)
 
     dico.transform_algorithm = 'lasso_lars'
-    code = dico.transform(Y, alpha=0.01)
-    assert_array_almost_equal(np.dot(code, dico.components_), Y, decimal=1)
+    code = dico.transform(Y, alpha=0.0001)
+    assert_array_almost_equal(np.dot(code, dico.components_), Y, decimal=3)
 
 
 def test_dict_learning_split():
