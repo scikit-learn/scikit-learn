@@ -21,9 +21,9 @@ class RFE(BaseEstimator):
        select features by recursively considering smaller and smaller sets of
        features.  First, the estimator is trained on the initial set of features
        and weights are assigned to each one of them. Then, features whose
-       absolute weights are the smallest are pruned from the set features. That
-       procedure is recursively repeated until the desired number of features to
-       selected is eventually reached.
+       absolute weights are the smallest are pruned from the current set
+       features. That procedure is recursively repeated until the desired number
+       of features to selected is eventually reached.
 
     Parameters
     ----------
