@@ -55,6 +55,13 @@ def test_dict_learning_online_overcomplete():
     assert dico.components_.shape == (n_atoms, n_features)
 
 
+def test_dict_learning_online_initialization():
+    n_atoms = 12
+    V = rng.randn(n_atoms, n_features)
+    dico = DictionaryLearningOnline(n_atoms, n_iter=0, dict_init=V).fit(X)
+    assert_array_equal(dico.components_, V)
+
+
 def test_dict_learning_online_partial_fit():
     raise SkipTest
     n_atoms = 12
