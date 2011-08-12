@@ -23,7 +23,7 @@ class RFE(BaseEstimator):
        and weights are assigned to each one of them. Then, features whose
        absolute weights are the smallest are pruned from the current set
        features. That procedure is recursively repeated until the desired number
-       of features to selected is eventually reached.
+       of features to select is eventually reached.
 
     Parameters
     ----------
