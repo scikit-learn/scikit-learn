@@ -6,8 +6,7 @@
 
 import numpy as np
 from scipy.linalg import eigh, svd, qr
-from scipy.sparse import linalg, eye, csr_matrix, isspmatrix_csr, \
-                isspmatrix_bsr
+from scipy.sparse import eye, csr_matrix
 from ..base import BaseEstimator
 from ..utils.arpack import eigsh
 from ..neighbors import kneighbors_graph, BallTree, barycenter_weights
