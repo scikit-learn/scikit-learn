@@ -383,11 +383,11 @@ X             array-like, with shape = [N, D], where N is the number
 y             array, with shape = [N], where N is the number of
               samples.
 
-args, kwargs  Parameters can also be set in the fit method.
+kwargs        optional data dependant parameters.
 ============= ======================================================
 
-X.shape[0] should be the same as y.shape[0]. If this requisite is not
-met, an exception should be raised.
+``X.shape[0]`` should be the same as ``y.shape[0]``. If this requisite
+is not met, an exception of type ``ValueError`` should be raised.
 
 ``y`` might be ignored in the case of unsupervised learning. However to
 make it possible to use the estimator as part of a pipeline that can
