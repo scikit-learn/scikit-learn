@@ -3,14 +3,13 @@
 """Glue code to load http://mlcomp.org data as a scikit.learn dataset"""
 
 import os
-import numpy as np
-from scikits.learn.datasets.base import load_filenames
+from scikits.learn.datasets.base import load_files
 
 
 def _load_document_classification(dataset_path, metadata, set_=None, **kwargs):
     if set_ is not None:
         dataset_path = os.path.join(dataset_path, set_)
-    return load_filenames(dataset_path, metadata.get('description'), **kwargs)
+    return load_files(dataset_path, metadata.get('description'), **kwargs)
 
 
 LOADERS = {

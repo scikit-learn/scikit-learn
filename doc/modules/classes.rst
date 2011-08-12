@@ -90,9 +90,13 @@ Generalized Linear Models
    linear_model.LassoCV
    linear_model.ElasticNet
    linear_model.ElasticNetCV
-   linear_model.LARS
-   linear_model.LassoLARS
+   linear_model.Lars
+   linear_model.LassoLars
+   linear_model.LarsCV
+   linear_model.LassoLarsCV
+   linear_model.LassoLarsIC
    linear_model.LogisticRegression
+   linear_model.OrthogonalMatchingPursuit
    linear_model.SGDClassifier
    linear_model.SGDRegressor
    linear_model.BayesianRidge
@@ -105,6 +109,8 @@ Generalized Linear Models
 
    linear_model.lasso_path
    linear_model.lars_path
+   linear_model.orthogonal_mp
+   linear_model.orthogonal_mp_gram
 
 
 For sparse data
@@ -363,6 +369,7 @@ Signal Decomposition
    decomposition.FastICA
    decomposition.NMF
    decomposition.SparsePCA
+   decomposition.MiniBatchSparsePCA
 
 .. autosummary::
    :toctree: generated/
@@ -370,6 +377,7 @@ Signal Decomposition
  
    decomposition.fastica
    decomposition.dict_learning
+   decomposition.dict_learning_online
 
 
 Linear Discriminant Analysis
@@ -460,7 +468,7 @@ Feature Selection
    feature_selection.rfe.RFECV
 
 
-.. _feature_extraction_ref:
+.. _feature_extraction:
 
 
 Feature Extraction
@@ -487,6 +495,12 @@ From images
 
    feature_extraction.image.img_to_graph
    feature_extraction.image.grid_to_graph
+   feature_extraction.image.extract_patches_2d
+   feature_extraction.image.reconstruct_from_patches_2d
+
+   :template: class.rst
+
+   feature_extraction.image.PatchExtractor
 
 
 From text
@@ -554,6 +568,61 @@ Manifold learning
     :template: function.rst
 
     manifold.locally_linear_embedding
+
+
+Datasets
+========
+
+Loaders
+-------
+
+.. automodule:: scikits.learn.datasets
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: scikits.learn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   datasets.load_files
+   datasets.load_diabetes
+   datasets.load_digits
+   datasets.load_iris
+   datasets.load_linnerud
+   datasets.load_lfw_pairs
+   datasets.fetch_lfw_pairs
+   datasets.load_lfw_people
+   datasets.fetch_lfw_people
+   datasets.load_20newsgroups
+   datasets.fetch_20newsgroups
+
+Samples generator
+-----------------
+
+.. automodule:: scikits.learn.datasets
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: scikits.learn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   datasets.make_classification
+   datasets.make_regression
+   datasets.make_blobs
+   datasets.make_friedman1
+   datasets.make_friedman2
+   datasets.make_friedman3
+   datasets.make_low_rank_matrix
+   datasets.make_sparse_coded_signal
+   datasets.make_sparse_uncorrelated
+   datasets.make_spd_matrix
+   datasets.make_swiss_roll
+   datasets.make_s_curve
 
 
 Pipeline

@@ -11,7 +11,7 @@ X, y = diabetes.data, diabetes.target
 
 def test_simple():
     """
-    Principle of LARS is to keep covariances tied and decreasing
+    Principle of Lars is to keep covariances tied and decreasing
     """
 
     alphas_, active, coef_path_ = linear_model.lars_path(
@@ -54,11 +54,11 @@ def test_simple_precomputed():
 
 def test_lars_lstsq():
     """
-    Test that LARS gives least square solution at the end
+    Test that Lars gives least square solution at the end
     of the path
     """
     X1 = 3 * diabetes.data  # use un-normalized dataset
-    clf = linear_model.LassoLARS(alpha=0.)
+    clf = linear_model.LassoLars(alpha=0.)
     clf.fit(X1, y)
     coef_lstsq = np.linalg.lstsq(X1, y)[0]
     assert_array_almost_equal(clf.coef_, coef_lstsq)
@@ -66,7 +66,7 @@ def test_lars_lstsq():
 
 def test_lasso_gives_lstsq_solution():
     """
-    Test that LARS Lasso gives least square solution at the end
+    Test that Lars Lasso gives least square solution at the end
     of the path
     """
     alphas_, active, coef_path_ = linear_model.lars_path(X, y, method="lasso")
@@ -113,7 +113,7 @@ def test_lasso_lars_vs_lasso_cd(verbose=False):
 
     # similar test, with the classifiers
     for alpha in np.linspace(1e-2, 1 - 1e-2):
-        clf1 = linear_model.LassoLARS(alpha=alpha, normalize=False).fit(X, y)
+        clf1 = linear_model.LassoLars(alpha=alpha, normalize=False).fit(X, y)
         clf2 = linear_model.Lasso(alpha=alpha).fit(X, y, tol=1e-8)
         err = np.linalg.norm(clf1.coef_ - clf2.coef_)
         assert err < 1e-3
@@ -142,7 +142,7 @@ def test_lars_add_features(verbose=False):
 
     test for 6d2b4c
     """
-    linear_model.LARS(verbose=verbose, fit_intercept=True).fit(
+    linear_model.Lars(verbose=verbose, fit_intercept=True).fit(
         np.array([[ 0.02863763,  0.88144085, -0.02052429, -0.10648066, -0.06396584, -0.18338974],
                   [ 0.02038287,  0.51463335, -0.31734681, -0.12830467,  0.16870657, 0.02169503],
                   [ 0.14411476,  0.37666599,  0.2764702 ,  0.0723859 , -0.03812009, 0.03663579],
@@ -156,6 +156,50 @@ def test_lars_add_features(verbose=False):
                   [-0.00586796,  0.04902901,  0.18020746,  0.04370165, -0.06686751, 0.50099547],
                   [-0.12951744,  0.21978613, -0.04762174, -0.27227304, -0.02722684, 0.57449581]]),
         np.array([0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]))
+
+
+def test_lars_n_nonzero_coefs(verbose=False):
+    lars = linear_model.Lars(n_nonzero_coefs=6, verbose=verbose)
+    lars.fit(X, y)
+    assert len(lars.coef_.nonzero()[0]) == 6
+
+
+def test_lars_cv():
+    """ Test the LassoLarsCV object by checking that the optimal alpha
+        increases as the number of samples increases.
+
+        This property is not actualy garantied in general and is just a
+        property of the given dataset, with the given steps chosen.
+    """
+    old_alpha = 0
+    lars_cv = linear_model.LassoLarsCV()
+    for length in (400, 200, 100):
+        X = diabetes.data[:length]
+        y = diabetes.target[:length]
+        lars_cv.fit(X, y)
+        np.testing.assert_array_less(old_alpha, lars_cv.alpha)
+        old_alpha = lars_cv.alpha
+
+
+def test_lasso_lars_ic():
+    """ Test the LassoLarsIC object by checking that
+        - some good features are selected.
+        - alpha_bic > alpha_aic
+        - n_nonzero_bic < n_nonzero_aic
+    """
+    lars_bic = linear_model.LassoLarsIC('bic')
+    lars_aic = linear_model.LassoLarsIC('aic')
+    rng = np.random.RandomState(42)
+    X = diabetes.data
+    y = diabetes.target
+    X = np.c_[X, rng.randn(X.shape[0], 4)]  # add 4 bad features
+    lars_bic.fit(X, y)
+    lars_aic.fit(X, y)
+    nonzero_bic = np.where(lars_bic.coef_)[0]
+    nonzero_aic = np.where(lars_aic.coef_)[0]
+    assert lars_bic.alpha_ > lars_aic.alpha_
+    assert len(nonzero_bic) < len(nonzero_aic)
+    assert np.max(nonzero_bic) < diabetes.data.shape[1]
 
 
 if __name__ == '__main__':

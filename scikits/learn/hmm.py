@@ -825,11 +825,11 @@ class MultinomialHMM(_BaseHMM):
     --------
     >>> from scikits.learn.hmm import MultinomialHMM
     >>> MultinomialHMM(n_components=2)
-    ... #doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+    ...                             #doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     MultinomialHMM(transmat=array([[ 0.5,  0.5],
-           [ 0.5,  0.5]]),
-            transmat_prior=1.0, startprob_prior=1.0,
-            startprob=array([ 0.5,  0.5]), n_components=2)
+      [ 0.5,  0.5]]),
+      startprob_prior=1.0, startprob=array([ 0.5,  0.5]), n_components=2,
+      transmat_prior=1.0)
 
     See Also
     --------

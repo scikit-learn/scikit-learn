@@ -4,18 +4,19 @@
 import sys
 
 import numpy as np
-from .. import SparsePCA
-from ..sparse_pca import _update_code, _update_code_parallel
-
 from numpy.testing import assert_array_almost_equal, assert_equal
 
+from .. import SparsePCA, MiniBatchSparsePCA, dict_learning_online
+from ..sparse_pca import _update_code, _update_code_parallel
+from ...utils import check_random_state
 
-def generate_toy_data(n_atoms, n_samples, image_size):
+
+def generate_toy_data(n_atoms, n_samples, image_size, random_state=None):
     n_features = image_size[0] * image_size[1]
 
-    np.random.seed(0)
-    U = np.random.randn(n_samples, n_atoms)
-    V = np.random.randn(n_atoms, n_features)
+    rng = check_random_state(random_state)
+    U = rng.randn(n_samples, n_atoms)
+    V = rng.randn(n_atoms, n_features)
 
     centers = [(3, 3), (6, 7), (8, 1)]
     sz = [1, 2, 1]
@@ -28,7 +29,7 @@ def generate_toy_data(n_atoms, n_samples, image_size):
 
     # Y is defined by : Y = UV + noise
     Y = np.dot(U, V)
-    Y += 0.1 * np.random.randn(Y.shape[0], Y.shape[1])  # Add noise
+    Y += 0.1 * rng.randn(Y.shape[0], Y.shape[1])  # Add noise
     return Y, U, V
 
 # SparsePCA can be a bit slow. To avoid having test times go up, we
@@ -36,22 +37,24 @@ def generate_toy_data(n_atoms, n_samples, image_size):
 
 
 def test_correct_shapes():
-    np.random.seed(0)
-    X = np.random.randn(12, 10)
-    pca = SparsePCA(n_components=8)
-    U = pca.fit_transform(X)
-    assert_equal(pca.components_.shape, (8, 10))
+    rng = np.random.RandomState(0)
+    X = rng.randn(12, 10)
+    spca = SparsePCA(n_components=8, random_state=rng)
+    U = spca.fit_transform(X)
+    assert_equal(spca.components_.shape, (8, 10))
     assert_equal(U.shape, (12, 8))
     # test overcomplete decomposition
-    pca = SparsePCA(n_components=13)
-    U = pca.fit_transform(X)
-    assert_equal(pca.components_.shape, (13, 10))
+    spca = SparsePCA(n_components=13, random_state=rng)
+    U = spca.fit_transform(X)
+    assert_equal(spca.components_.shape, (13, 10))
     assert_equal(U.shape, (12, 13))
 
 
 def test_fit_transform():
-    Y, _, _ = generate_toy_data(3, 10, (8, 8))  # wide array
-    spca_lars = SparsePCA(n_components=3, method='lars').fit(Y)
+    rng = np.random.RandomState(0)
+    Y, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)  # wide array
+    spca_lars = SparsePCA(n_components=3, method='lars', random_state=rng)
+    spca_lars.fit(Y)
     U1 = spca_lars.transform(Y)
     # Test multiple CPUs
     if sys.platform == 'win32':  # fake parallelism for win32
@@ -59,29 +62,35 @@ def test_fit_transform():
         _mp = joblib_par.multiprocessing
         joblib_par.multiprocessing = None
         try:
-            U2 = SparsePCA(n_components=3, n_jobs=2).fit(Y).transform(Y)
+            spca = SparsePCA(n_components=3, n_jobs=2, random_state=rng).fit(Y)
+            U2 = spca.transform(Y)
         finally:
             joblib_par.multiprocessing = _mp
     else:  # we can efficiently use parallelism
-        U2 = SparsePCA(n_components=3, n_jobs=2).fit(Y).transform(Y)
+        spca = SparsePCA(n_components=3, n_jobs=2, random_state=rng).fit(Y)
+        U2 = spca.transform(Y)
     assert_array_almost_equal(U1, U2)
     # Test that CD gives similar results
-    spca_lasso = SparsePCA(n_components=3, method='cd').fit(Y)
+    spca_lasso = SparsePCA(n_components=3, method='cd', random_state=rng)
+    spca_lasso.fit(Y)
     assert_array_almost_equal(spca_lasso.components_, spca_lars.components_)
 
 
 def test_fit_transform_tall():
-    Y, _, _ = generate_toy_data(3, 65, (8, 8))  # tall array
-    U1 = SparsePCA(n_components=3, method='lars').fit_transform(Y)
-    U2 = SparsePCA(n_components=3, method='cd').fit(Y).transform(Y)
+    rng = np.random.RandomState(0)
+    Y, _, _ = generate_toy_data(3, 65, (8, 8), random_state=rng)  # tall array
+    spca_lars = SparsePCA(n_components=3, method='lars', random_state=rng)
+    U1 = spca_lars.fit_transform(Y)
+    spca_lasso = SparsePCA(n_components=3, method='cd', random_state=rng)
+    U2 = spca_lasso.fit(Y).transform(Y)
     assert_array_almost_equal(U1, U2)
 
 
 def test_sparse_code():
-    np.random.seed(0)
-    dictionary = np.random.randn(10, 3)
+    rng = np.random.RandomState(0)
+    dictionary = rng.randn(10, 3)
     real_code = np.zeros((3, 5))
-    real_code.ravel()[np.random.randint(15, size=6)] = 1.0
+    real_code.ravel()[rng.randint(15, size=6)] = 1.0
     Y = np.dot(dictionary, real_code)
     est_code_1 = _update_code(dictionary, Y, alpha=1.0)
     est_code_2 = _update_code_parallel(dictionary, Y, alpha=1.0)
@@ -91,8 +100,59 @@ def test_sparse_code():
 
 
 def test_initialization():
-    U_init = np.random.randn(5, 3)
-    V_init = np.random.randn(3, 4)
-    model = SparsePCA(n_components=3, U_init=U_init, V_init=V_init, max_iter=0)
-    model.fit(np.random.randn(5, 4))
+    rng = np.random.RandomState(0)
+    U_init = rng.randn(5, 3)
+    V_init = rng.randn(3, 4)
+    model = SparsePCA(n_components=3, U_init=U_init, V_init=V_init, max_iter=0,
+                      random_state=rng)
+    model.fit(rng.randn(5, 4))
     assert_equal(model.components_, V_init)
+
+
+def test_dict_learning_online_shapes():
+    rng = np.random.RandomState(0)
+    X = rng.randn(12, 10)
+    dictionaryT, codeT = dict_learning_online(X.T, n_atoms=8, alpha=1,
+                                              random_state=rng)
+    assert_equal(codeT.shape, (8, 12))
+    assert_equal(dictionaryT.shape, (10, 8))
+    assert_equal(np.dot(codeT.T, dictionaryT.T).shape, X.shape)
+
+
+def test_mini_batch_correct_shapes():
+    rng = np.random.RandomState(0)
+    X = rng.randn(12, 10)
+    pca = MiniBatchSparsePCA(n_components=8, random_state=rng)
+    U = pca.fit_transform(X)
+    assert_equal(pca.components_.shape, (8, 10))
+    assert_equal(U.shape, (12, 8))
+    # test overcomplete decomposition
+    pca = MiniBatchSparsePCA(n_components=13, random_state=rng)
+    U = pca.fit_transform(X)
+    assert_equal(pca.components_.shape, (13, 10))
+    assert_equal(U.shape, (12, 13))
+
+
+def test_mini_batch_fit_transform():
+    rng = np.random.RandomState(0)
+    Y, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)  # wide array
+    spca_lars = MiniBatchSparsePCA(n_components=3, random_state=rng).fit(Y)
+    U1 = spca_lars.transform(Y)
+    # Test multiple CPUs
+    if sys.platform == 'win32':  # fake parallelism for win32
+        import scikits.learn.externals.joblib.parallel as joblib_par
+        _mp = joblib_par.multiprocessing
+        joblib_par.multiprocessing = None
+        try:
+            U2 = MiniBatchSparsePCA(n_components=3, n_jobs=2,
+                                    random_state=rng).fit(Y).transform(Y)
+        finally:
+            joblib_par.multiprocessing = _mp
+    else:  # we can efficiently use parallelism
+        U2 = MiniBatchSparsePCA(n_components=3, n_jobs=2,
+                                random_state=rng).fit(Y).transform(Y)
+    assert_array_almost_equal(U1, U2)
+    # Test that CD gives similar results
+    spca_lasso = MiniBatchSparsePCA(n_components=3, method='cd',
+                                    random_state=rng).fit(Y)
+    assert_array_almost_equal(spca_lasso.components_, spca_lars.components_)

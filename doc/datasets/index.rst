@@ -26,9 +26,8 @@ This package also features helpers to fetch larger datasets commonly
 used by the machine learning community to benchmark algorithm on data
 that comes from the 'real world'.
 
-
-Datasets shipped with the scikit learn
-========================================
+Toy datasets
+============
 
 scikit-learn comes with a few small standard datasets that do not
 require to download any file from some external website.
@@ -38,14 +37,39 @@ require to download any file from some external website.
    :toctree: generated/
    :template: function.rst
 
+   load_boston
    load_iris
    load_diabetes
    load_digits
    load_linnerud
 
 These datasets are useful to quickly illustrate the behavior of the
-various algorithms implemented in the scikit. They are however often to
+various algorithms implemented in the scikit. They are however often too
 small to be representative of real world machine learning tasks.
+
+Sample generators
+=================
+
+In addition, scikit-learn includes various random sample generators that
+can be used to build artifical datasets of controled size and complexity.
+
+.. autosummary::
+
+   :toctree: generated/
+   :template: function.rst
+
+   make_classification
+   make_regression
+   make_blobs
+   make_friedman1
+   make_friedman2
+   make_friedman3
+   make_low_rank_matrix
+   make_sparse_coded_signal
+   make_sparse_uncorrelated
+   make_spd_matrix
+   make_swiss_roll
+   make_s_curve
 
 
 Datasets in svmlight / libsvm format
@@ -82,18 +106,11 @@ features::
  _`Public datasets in svmlight / libsvm format`: http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/
 
 
-.. include:: mldata.rst
+.. include:: olivetti_faces.rst 
 
 .. include:: twenty_newsgroups.rst
 
+.. include:: mldata.rst
+
 .. include:: labeled_faces.rst
-
-.. todo::
-
-  Dataset generators
-  ==================
-
-  Please write some narrative documentation on how to best use the most common
-  utility functions from the ``samples_generator`` module.
-
 

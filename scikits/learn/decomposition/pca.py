@@ -113,8 +113,9 @@ class PCA(BaseEstimator, TransformerMixin):
         if n_components == 'mle', Minka's MLE is used to guess the dimension
 
         if 0 < n_components < 1, select the number of components such that
-                                 the explained variance ratio is greater
-                                 than n_components
+                                 the amount of variance that needs to be
+                                 explained is greater than the percentage
+                                 specified by n_components
 
     copy: bool
         If False, data passed to fit are overwritten
@@ -240,9 +241,8 @@ class PCA(BaseEstimator, TransformerMixin):
         elif 0 < self.n_components and self.n_components < 1.0:
             # number of components for which the cumulated explained variance
             # percentage is superior to the desired threshold
-            n_remove = np.sum(self.explained_variance_ratio_.cumsum() >=
-                              self.n_components) - 1
-            self.n_components = n_features - n_remove
+            ratio_cumsum = self.explained_variance_ratio_.cumsum()
+            self.n_components = np.sum(ratio_cumsum < self.n_components) + 1
 
         if self.n_components is not None:
             self.components_ = self.components_[:self.n_components, :]

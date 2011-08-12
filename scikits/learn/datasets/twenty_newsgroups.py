@@ -60,29 +60,31 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
 
     Parameters
     ----------
-    subset: 'train' or 'test', optional
+    subset: optional, default: 'train'
         Select the dataset to load: 'train' for the training set, 'test'
         for the test set.
 
     data_home: optional, default: None
-        Specify an download and cache folder for the datasets. If None,
-        all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
+        Specify another download and cache folder for the datasets. By
+        default all scikit learn data is stored in '~/scikit_learn_data'
+        subfolders.
 
     categories: None or collection of string or unicode
-        If None (default), load all the categories.
-        If not None, list of category names to load (other categories
-        ignored).
+        if None (default), load all the categories.
+        if not Non, list of category names to load (other categories
+        ignored)
 
-    shuffle: bool, optional
-        Whether or not to shuffle the data: might be important for models that
-        make the assumption that the samples are independent and identically
-        distributed (i.i.d.), such as stochastic gradient descent.
+    shuffle: True by default
+        whether or not to shuffle the data: might be important for models
+        that make the assumption that the samples are independent and
+        identically distributed (i.i.d.) such as stochastic gradient
+        descent for instance.
 
-    random_state: numpy random number generator or seed integer
-        Used to shuffle the dataset.
+    random_state: a numpy random number generator or a seed integer, 42 by default
+        used to shuffle the dataset
 
     download_if_missing: optional, True by default
-        If False, raise an IOError if the data is not locally available
+        If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
     """
 

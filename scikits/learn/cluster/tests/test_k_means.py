@@ -5,9 +5,11 @@ from scipy import sparse as sp
 from numpy.testing import assert_equal
 from numpy.testing import assert_array_almost_equal
 from nose.tools import assert_raises
+from nose.tools import assert_true
 
 from ..k_means_ import KMeans, MiniBatchKMeans
 from .common import generate_clustered_data
+from ...utils import shuffle
 
 n_clusters = 3
 X = generate_clustered_data(n_clusters=n_clusters, std=.1)
@@ -175,3 +177,50 @@ def test_sparse_mbk_means_callable_init():
     assert_equal(np.unique(labels).size, 3)
 
     assert_raises(ValueError, mbk_means.fit, [[0., 1.]], k=n_clusters)
+
+
+def test_k_means_fixed_array_init_fit():
+    np.random.seed(1)
+    init_array = np.vstack([X[5], X[25], X[45]])
+    k_means = KMeans(init=init_array, n_init=1).fit(X, k=n_clusters)
+
+    another_init_array = np.vstack([X[1], X[30], X[50]])
+    other_k_means = KMeans(init=init_array, n_init=1)
+    other_k_means.fit(X, init=another_init_array, k=n_clusters)
+    assert_true(not np.allclose(k_means.init, other_k_means.init),
+                "init attributes must be different")
+
+
+def test_mbkm_fixed_array_init_fit():
+    np.random.seed(1)
+    init_array = np.vstack([X[5], X[25], X[45]])
+    k_means = MiniBatchKMeans(init=init_array).fit(X, k=n_clusters)
+
+    another_init_array = np.vstack([X[1], X[30], X[50]])
+    other_k_means = MiniBatchKMeans(init=init_array)
+    other_k_means.fit(X, init=another_init_array, k=n_clusters)
+    assert_true(not np.allclose(k_means.init, other_k_means.init),
+                "init attributes must be different")
+
+
+def test_mbk_means():
+    n_samples = X.shape[0]
+    true_labels = np.zeros((n_samples,), dtype=np.int32)
+    true_labels[20:40] = 1
+    true_labels[40:] = 2
+    chunk_size = n_samples * 2
+    # make sure init clusters are in different clusters
+    init_array = np.vstack([X[5], X[25], X[45]])
+
+    # shuffle original data
+    X_shuffled, S_shuffled, true_labels = shuffle(X, S, true_labels, random_state=1)
+    
+    mbk_means = MiniBatchKMeans(init=init_array, chunk_size=chunk_size,
+                                k=n_clusters, random_state=1)
+    mbk_means.fit(X_shuffled)
+    assert_equal(true_labels, mbk_means.labels_)
+
+    mbk_means = MiniBatchKMeans(init=init_array, chunk_size=chunk_size,
+                                k=n_clusters, random_state=1)
+    mbk_means.fit(S_shuffled)
+    assert_equal(true_labels, mbk_means.labels_)

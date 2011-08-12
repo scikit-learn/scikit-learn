@@ -13,7 +13,6 @@ from itertools import cycle, izip
 
 import numpy as np
 import scipy.sparse as sp
-from math import floor
 
 from ..base import BaseEstimator
 from ..metrics.pairwise import euclidean_distances
@@ -257,12 +256,7 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
 
 def _calculate_labels_inertia(X, centers, x_squared_norms=None):
     """Compute the inertia and the labels of the given samples and centers"""
-    if sp.issparse(X):
-        distance = _euclidean_distances_sparse(centers, X,
-                                              x_squared_norms, squared=True)
-    else:
-        distance = euclidean_distances(centers, X, x_squared_norms,
-                                       squared=True)
+    distance = euclidean_distances(centers, X, x_squared_norms, squared=True)
     return distance.min(axis=0).sum(), distance.argmin(axis=0)
 
 
@@ -492,6 +486,8 @@ class KMeans(BaseEstimator):
         """
         Set parameters and check the sample given is larger than k
         """
+        if sp.issparse(X):
+            raise ValueError("K-Means does not support sparse input matrices.")
         X = np.asanyarray(X)
         if X.shape[0] < self.k:
             raise ValueError("n_samples=%d should be larger than k=%d" % (
@@ -574,31 +570,11 @@ def _mini_batch_step_sparse(X, batch_slice, centers, counts, x_squared_norms):
     x_squared_norms: array, shape (n_samples,)
          The squared norms of each sample in `X`.
     """
-    cache = _euclidean_distances_sparse(centers, X[batch_slice],
+    cache = euclidean_distances(centers, X[batch_slice],
               x_squared_norms[batch_slice]).argmin(axis=0).astype(np.int32)
 
-    _k_means._mini_batch_update_sparse(X.data, X.indices, X.indptr, batch_slice,
-                                       centers, counts, cache)
-
-
-def _euclidean_distances_sparse(X, Y, y_squared_norms=None, squared=False):
-    """euclidean distances for dense X and sparse Y.
-    """
-    XX = np.sum(X * X, axis=1)[:, np.newaxis]
-
-    # If added same as compute dot
-    # XX = np.ones((X.shape[0],))[:, np.newaxis]
-
-    if y_squared_norms == None:
-        y_squared_norms = _k_means.csr_row_norm_l2(Y, squared)
-    YY = y_squared_norms[np.newaxis, :]
-
-    distances = XX + YY
-    distances -= 2 * (X * Y.T)
-    distances = np.maximum(distances, 0)
-    if not squared:
-        distances = np.sqrt(distances)
-    return distances
+    _k_means._mini_batch_update_sparse(X.data, X.indices, X.indptr,
+                                       batch_slice, centers, counts, cache)
 
 
 class MiniBatchKMeans(KMeans):
@@ -675,11 +651,12 @@ class MiniBatchKMeans(KMeans):
         """
         Calculates the centroids on a batch X
 
-        params
-        ------
-        X: array, [n_samples, n_features]
+        Parameters
+        ----------
+        X: array-like, shape = [n_samples, n_features]
             Coordinates of the data points to cluster
         """
+        self._set_params(**params)
         self.random_state = check_random_state(self.random_state)
         X = check_arrays(X, sparse_format="csr", copy=False)[0]
         n_samples, n_features = X.shape
@@ -702,9 +679,8 @@ class MiniBatchKMeans(KMeans):
             x_squared_norms=x_squared_norms)
         self.counts = np.zeros(self.k, dtype=np.int32)
 
-        n_batches = int(floor(float(n_samples) / self.chunk_size))
+        n_batches = int(np.ceil(float(n_samples) / self.chunk_size))
         batch_slices = list(gen_even_slices(n_samples, n_batches))
-
         n_iterations = xrange(int(self.max_iter * n_batches))
         if sp.issparse(X_shuffled):
             _mini_batch_step = _mini_batch_step_sparse
@@ -723,13 +699,24 @@ class MiniBatchKMeans(KMeans):
                     print 'Converged to similar centers at iteration', i
                 break
 
-        self.inertia_, self.labels_ = _calculate_labels_inertia(
-            X, self.cluster_centers_)
+        self.inertia_ = 0
+        self.labels_ = np.empty((n_samples,), dtype=np.int)
+        for batch_slice in batch_slices:
+            batch_inertia, batch_labels = _calculate_labels_inertia(
+            X[batch_slice], self.cluster_centers_)
+            self.inertia_ += batch_inertia
+            self.labels_[batch_slice] = batch_labels
 
         return self
 
     def partial_fit(self, X, y=None, **params):
-        """Update k means estimate on a single mini-batch X"""
+        """Update k means estimate on a single mini-batch X.
+
+        Parameters
+        ----------
+        X: array-like, shape = [n_samples, n_features]
+            Coordinates of the data points to cluster.
+        """
         self.random_state = check_random_state(self.random_state)
 
         X = check_arrays(X, sparse_format="csr", copy=False)[0]

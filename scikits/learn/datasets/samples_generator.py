@@ -2,7 +2,8 @@
 Generate samples of synthetic data sets.
 """
 
-# Author: B. Thirion, G. Varoquaux, A. Gramfort, V. Michel, O. Grisel
+# Authors: B. Thirion, G. Varoquaux, A. Gramfort, V. Michel, O. Grisel,
+#          G. Louppe
 # License: BSD 3 clause
 
 import numpy as np
@@ -11,190 +12,622 @@ from scipy import linalg
 from ..utils import check_random_state
 
 
-def test_dataset_classif(n_samples=100, n_features=100, param=[1, 1],
-                         n_informative=0, k=0, seed=None):
-    """Generate an snp matrix
+def make_classification(n_samples=100, n_features=20, n_informative=2,
+                        n_redundant=2, n_repeated=0, n_classes=2,
+                        n_clusters_per_class=2, weights=None, flip_y=0.01,
+                        class_sep=1.0, hypercube=True, shift=0.0, scale=1.0,
+                        shuffle=True, random_state=None):
+    """
+    Generate a random n-class classification problem.
 
     Parameters
     ----------
-    n_samples : 100, int,
-        the number of observations
+    n_samples : int, optional (default=100)
+        The number of samples.
 
-    n_features : 100, int,
-        the number of features for each observation
+    n_features : int, optional (default=20)
+        The total number of features. These comprise `n_informative`
+        informative features, `n_redundant` redundant features, `n_repeated`
+        dupplicated features and `n_features-n_informative-n_redundant-
+        n_repeated` useless features drawn at random.
 
-    param : [1, 1], list,
-        parameter of a dirichlet density
-        that is used to generate multinomial densities
-        from which the n_features will be samples
+    n_informative : int, optional (default=2)
+        The number of informative features. Each class is composed of a number
+        of gaussian clusters each located around the vertices of a hypercube
+        in a subspace of dimension `n_informative`. For each cluster,
+        informative features are drawn independently from  N(0, 1) and then
+        randomly linearly combined in order to add covariance. The clusters
+        are then placed on the vertices of the hypercube.
 
-    n_informative: 0, int
-        number of informative features
+    n_redundant : int, optional (default=2)
+        The number of redundant features. These features are generated as
+        random linear combinations of the informative features.
 
-    k : 0, int
-        deprecated: use n_informative instead
+    n_repeated : int, optional (default=2)
+        The number of dupplicated features, drawn randomly from the informative
+        and the redundant features.
 
-    seed : None, int or np.random.RandomState
-        if seed is an instance of np.random.RandomState,
-        it is used to initialize the random generator
+    n_classes : int, optional (default=2)
+        The number of classes (or labels) of the classification problem.
 
-    Returns
-    -------
-    x : array of shape(n_samples, n_features),
-        the design matrix
+    n_clusters_per_class : int, optional (default=2)
+        The number of clusters per class.
 
-    y : array of shape (n_samples),
-        the subject labels
+    weights : list of floats or None (default=None)
+        The proportions of samples assigned to each class. If None, then
+        classes are balanced.
 
+    flip_y : float, optional (default=0.01)
+        The fraction of samples whose class are randomly exchanged.
+
+    class_sep : float, optional (default=1.0)
+        The factor multiplying the hypercube dimension.
+
+    hypercube : boolean, optional (default=True)
+        If True, the clusters are put on the vertices of a hypercube. If
+        False, the clusters are put on the vertices of a random polytope.
+
+    shift : float or None, optional (default=0.0)
+        Shift all features by the specified value. If None, then features
+        are shifted by a random value drawn in [-class_sep, class_sep].
+
+    scale : float or None, optional (default=1.0)
+        Multiply all features by the specified value. If None, then features
+        are scaled by a random value drawn in [1, 100]. Note that scaling
+        happens after shifting.
+
+    shuffle : boolean, optional (default=True)
+        Shuffle the samples and the features.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    Return
+    ------
+    X : array of shape [n_samples, n_features]
+        The generated samples.
+
+    y : array of shape [n_samples]
+        The integer labels for class membership of each sample.
+
+    Notes
+    -----
+    The algorithm is adapted from Guyon [1] and was designed to generate
+    the "Madelon" dataset.
+
+    References
+    ----------
+    .. [1] I. Guyon, "Design of experiments for the NIPS 2003 variable
+           selection benchmark", 2003.
     """
-    if k > 0 and n_informative == 0:
-        n_informative = k
+    generator = check_random_state(random_state)
 
-    if n_informative > n_features:
-        raise ValueError('cannot have %d informative features and'
-                         ' %d features' % (n_informative, n_features))
+    # Count features, clusters and samples
+    assert n_informative + n_redundant + n_repeated <= n_features
+    assert 2 ** n_informative >= n_classes * n_clusters_per_class
+    assert weights is None or (len(weights) == n_classes or
+                               len(weights) == (n_classes - 1))
 
-    if isinstance(seed, np.random.RandomState):
-        random = seed
-    elif seed is not None:
-        random = np.random.RandomState(seed)
-    else:
-        random = np.random
+    n_useless = n_features - n_informative - n_redundant - n_repeated
+    n_clusters = n_classes * n_clusters_per_class
 
-    x = random.randn(n_samples, n_features)
+    if weights and len(weights) == (n_classes - 1):
+        weights.append(1.0 - sum(weights))
+
+    if weights is None:
+        weights = [1.0 / n_classes] * n_classes
+        weights[-1] = 1.0 - sum(weights[:-1])
+
+    n_samples_per_cluster = []
+
+    for k in xrange(n_clusters):
+        n_samples_per_cluster.append(int(n_samples * weights[k % n_classes]
+                                     / n_clusters_per_class))
+
+    for i in xrange(n_samples - sum(n_samples_per_cluster)):
+        n_samples_per_cluster[i % n_clusters] += 1
+
+    # Intialize X and y
+    X = np.zeros((n_samples, n_features))
     y = np.zeros(n_samples)
-    param = np.ravel(np.array(param)).astype(np.float)
-    for n in range(n_samples):
-        y[n] = np.nonzero(random.multinomial(1, param / param.sum()))[0]
-    x[:, :k] += 3 * y[:, np.newaxis]
-    return x, y
+
+    # Build the polytope
+    from itertools import product
+    C = np.array(list(product([-class_sep, class_sep], repeat=n_informative)))
+
+    if not hypercube:
+        for k in xrange(n_clusters):
+            C[k, :] *= generator.rand()
+
+        for f in xrange(n_informative):
+            C[:, f] *= generator.rand()
+
+    generator.shuffle(C)
+
+    # Loop over all clusters
+    pos = 0
+    pos_end = 0
+
+    for k in xrange(n_clusters):
+        # Number of samples in cluster k
+        n_samples_k = n_samples_per_cluster[k]
+
+        # Define the range of samples
+        pos = pos_end
+        pos_end = pos + n_samples_k
+
+        # Assign labels
+        y[pos:pos_end] = k % n_classes
+
+        # Draw features at random
+        X[pos:pos_end, :n_informative] = generator.randn(n_samples_k,
+                                                         n_informative)
+
+        # Multiply by a random matrix to create co-variance of the features
+        A = 2 * generator.rand(n_informative, n_informative) - 1
+        X[pos:pos_end, :n_informative] = np.dot(X[pos:pos_end, :n_informative],
+                                                A)
+
+        # Shift the cluster to a vertice
+        X[pos:pos_end, :n_informative] += np.tile(C[k, :], (n_samples_k, 1))
+
+    # Create redundant features
+    if n_redundant > 0:
+        B = 2 * generator.rand(n_informative, n_redundant) - 1
+        X[:, n_informative:n_informative + n_redundant] = \
+                                            np.dot(X[:, :n_informative], B)
+
+    # Repeat some features
+    if n_repeated > 0:
+        n = n_informative + n_redundant
+        indices = ((n - 1) * generator.rand(n_repeated) + 0.5).astype(np.int)
+        X[:, n:n + n_repeated] = X[:, indices]
+
+    # Fill useless features
+    X[:, n_features - n_useless:] = generator.randn(n_samples, n_useless)
+
+    # Randomly flip labels
+    if flip_y >= 0.0:
+        for i in xrange(n_samples):
+            if generator.rand() < flip_y:
+                y[i] = generator.randint(n_classes)
+
+    # Randomly shift and scale
+    constant_shift = shift is not None
+    constant_scale = scale is not None
+
+    for f in xrange(n_features):
+        if not constant_shift:
+            shift = (2 * generator.rand() - 1) * class_sep
+
+        if not constant_scale:
+            scale = 1 + 100 * generator.rand()
+
+        X[:, f] += shift
+        X[:, f] *= scale
+
+    # Randomly permute samples and features
+    if shuffle:
+        indices = range(n_samples)
+        generator.shuffle(indices)
+        X = X[indices]
+        y = y[indices]
+
+        indices = range(n_features)
+        generator.shuffle(indices)
+        X[:, :] = X[:, indices]
+
+    return X, y
 
 
-def test_dataset_reg(n_samples=100, n_features=100, n_informative=0, k=0,
-                     seed=None):
-    """Generate an snp matrix
+def make_regression(n_samples=100, n_features=100, n_informative=10, bias=0.0,
+                    effective_rank=None, tail_strength=0.5, noise=0.0,
+                    shuffle=True, coef=False, random_state=None):
+    """
+    Generate a random regression problem.
+
+    The input set can either be well conditioned (by default) or have a low
+    rank-fat tail singular profile. See the `make_low_rank_matrix` for
+    more details.
+
+    The output is generated by applying a (potentially biased) random linear
+    regression model with `n_informative` nonzero regressors to the previously
+    generated input and some gaussian centered noise with some adjustable
+    scale.
 
     Parameters
     ----------
-    n_samples : 100, int
-        the number of subjects
+    n_samples : int, optional (default=100)
+        The number of samples.
 
-    n_features : 100, int
-        the number of features
+    n_features : int, optional (default=100)
+        The number of features.
 
-    n_informative: 0, int
-        number of informative features
+    n_informative : int, optional (default=10)
+        The number of informative features, i.e., the number of features used
+        to build the linear model used to generate the output.
 
-    k : 0, int
-        deprecated: use n_informative instead
+    bias : float, optional (default=0.0)
+        The bias term in the underlying linear model.
 
-    seed : None, int or np.random.RandomState
-        if seed is an instance of np.random.RandomState,
-        it is used to initialize the random generator
+    effective_rank : int or None, optional (default=None)
+        if not None:
+            The approximate number of singular vectors required to explain most
+            of the input data by linear combinations. Using this kind of
+            singular spectrum in the input allows the generator to reproduce
+            the correlations often observed in practice.
+        if None:
+            The input set is well conditioned, centered and gaussian with
+            unit variance.
+
+    tail_strength : float between 0.0 and 1.0, optional (default=0.5)
+        The relative importance of the fat noisy tail of the singular values
+        profile if `effective_rank` is not None.
+
+    noise : float, optional (default=0.0)
+        The standard deviation of the gaussian noise applied to the output.
+
+    shuffle : boolean, optional (default=True)
+        Shuffle the samples and the features.
+
+    coef : boolean, optional (default=False)
+        If True, the coefficients of the underlying linear model are returned.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Returns
     -------
-    x : array of shape(n_samples, n_features),
-        the design matrix
+    X : array of shape [n_samples, n_features]
+        The input samples.
 
-    y : array of shape (n_samples),
-        the subject data
+    y : array of shape [n_samples]
+        The output values.
+
+    coef : array of shape [n_features], optional
+        The coefficient of the underlying linear model. It is returned only if
+        coef is True.
     """
-    if k > 0 and n_informative == 0:
-        n_informative = k
+    generator = check_random_state(random_state)
 
-    if n_informative > n_features:
-        raise ValueError('cannot have %d informative features and'
-                         ' %d features' % (n_informative, n_features))
+    if effective_rank is None:
+        # Randomly generate a well conditioned input set
+        X = generator.randn(n_samples, n_features)
 
-    if isinstance(seed, np.random.RandomState):
-        random = seed
-    elif seed is not None:
-        random = np.random.RandomState(seed)
     else:
-        random = np.random
+        # Randomly generate a low rank, fat tail input set
+        X = make_low_rank_matrix(n_samples=n_samples,
+                                 n_features=n_features,
+                                 effective_rank=effective_rank,
+                                 tail_strength=tail_strength,
+                                 seed=generator)
 
-    x = random.randn(n_samples, n_features)
-    y = random.randn(n_samples)
-    x[:, :k] += y[:, np.newaxis]
-    return x, y
+    # Generate a ground truth model with only n_informative features being non
+    # zeros (the other features are not correlated to y and should be ignored
+    # by a sparsifying regularizers such as L1 or elastic net)
+    ground_truth = np.zeros(n_features)
+    ground_truth[:n_informative] = 100 * generator.rand(n_informative)
+
+    y = np.dot(X, ground_truth) + bias
+
+    # Add noise
+    if noise > 0.0:
+        y += generator.normal(scale=noise, size=y.shape)
+
+    # Randomly permute samples and features
+    if shuffle:
+        indices = range(n_samples)
+        generator.shuffle(indices)
+        X = X[indices]
+        y = y[indices]
+
+        indices = range(n_features)
+        generator.shuffle(indices)
+        X[:, :] = X[:, indices]
+        ground_truth = ground_truth[indices]
+
+    if coef:
+        return X, y, ground_truth
+
+    else:
+        return X, y
 
 
-def sparse_uncorrelated(n_samples=100, n_features=10):
-    """Function creating simulated data with sparse uncorrelated design
-
-    cf.Celeux et al. 2009,  Bayesian regularization in regression)
-
-    import numpy as np
-    X = np.random.normal(0, 1)
-    Y = np.random.normal(X[:, 0] + 2 * X[:, 1] - 2 * X[:, 2] - 1.5 * X[:, 3])
-    The number of features is at least 10.
+def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
+               center_box=(-10.0, 10.0), shuffle=True, random_state=None):
+    """
+    Generate isotropic Gaussian blobs for clustering.
 
     Parameters
     ----------
-    n_samples : int
-        number of samples (default is 100).
-    n_features : int
-        number of features (default is 10).
+    n_samples : int, optional (default=100)
+        The total number of points equally divided among clusters.
 
-    Returns
-    -------
-    X : numpy array of shape (n_samples, n_features) for input samples
-    y : numpy array of shape (n_samples) for labels
+    n_features : int, optional (default=2)
+        The number of features for each sample.
+
+    centers : int or array of shape [n_centers, n_features], optinal (default=3)
+        The number of centers to generate, or the fixed center locations.
+
+    cluster_std: float or sequence of floats, optional (default=1.0)
+        The standard deviation of the clusters.
+
+    center_box: pair of floats (min, max), optional (default=(-10.0, 10.0))
+        The bounding box for each cluster center when centers are
+        generated at random.
+
+    shuffle : boolean, optional (default=True)
+        Shuffle the samples.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    Return
+    ------
+    X : array of shape [n_samples, n_features]
+        The generated samples.
+
+    y : array of shape [n_samples]
+        The integer labels for cluster membership of each sample.
+
+    Examples
+    --------
+    >>> from scikits.learn.datasets.samples_generator import make_blobs
+    >>> X, y = make_blobs(n_samples=10, centers=3, n_features=2, random_state=0)
+    >>> X.shape
+    (10, 2)
+    >>> y
+    array([0, 0, 1, 0, 2, 2, 2, 1, 1, 0])
     """
-    X = np.random.normal(loc=0, scale=1, size=(n_samples, n_features))
-    y = np.random.normal(loc=X[:, 0] + 2 * X[:, 1] - 2 * X[:, 2] - 1.5 * X[:, 3],
-                  scale=np.ones(n_samples))
+    generator = check_random_state(random_state)
+
+    if isinstance(centers, int):
+        centers = generator.uniform(center_box[0], center_box[1],
+                                    size=(centers, n_features))
+    else:
+        centers = np.atleast_2d(centers)
+        n_features = centers.shape[1]
+
+    X = []
+    y = []
+
+    n_centers = centers.shape[0]
+    n_samples_per_center = [n_samples / n_centers] * n_centers
+
+    for i in xrange(n_samples % n_centers):
+        n_samples_per_center[i] += 1
+
+    for i, n in enumerate(n_samples_per_center):
+        X.append(centers[i] + generator.normal(scale=cluster_std,
+                                               size=(n, n_features)))
+        y += [i] * n
+
+    X = np.concatenate(X)
+    y = np.array(y)
+
+    if shuffle:
+        indices = np.arange(n_samples)
+        generator.shuffle(indices)
+        X = X[indices]
+        y = y[indices]
+
     return X, y
 
 
-def friedman(n_samples=100, n_features=10, noise_std=1):
-    """Function creating simulated data with non linearities
+def make_friedman1(n_samples=100, n_features=10, noise=0.0, random_state=None):
+    """
+    Generate the "Friedman #1" regression problem as described in Friedman [1]
+    and Breiman [2].
 
-    cf. Friedman 1993
+    Inputs `X` are independent features uniformly distributed on the interval
+    [0, 1]. The output `y` is created according to the formula::
 
-    X = np.random.normal(0, 1)
+        y(X) = 10 * sin(pi * X[:, 0] * X[:, 1]) + 20 * (X[:, 2] - 0.5) ** 2 \
+               + 10 * X[:, 3] + 5 * X[:, 4] + noise * N(0, 1).
 
-    y = 10 * sin(X[:, 0] * X[:, 1]) + 20 * (X[:, 2] - 0.5) ** 2 \
-            + 10 * X[:, 3] + 5 * X[:, 4]
+    Out of the `n_features` features, only 5 are actually used to compute
+    `y`. The remaining features are independent of `y`.
 
-    The number of features is at least 5.
+    The number of features has to be >= 5.
 
     Parameters
     ----------
-    n_samples : int
-        number of samples (default is 100).
+    n_samples : int, optional (default=100)
+        The number of samples.
 
-    n_features : int
-        number of features (default is 10).
+    n_features : int, optional (default=10)
+        The number of features. Should be at least 5.
 
-    noise_std : float
-        std of the noise, which is added as noise_std*np.random.normal(0,1)
+    noise : float, optional (default=0.0)
+        The standard deviation of the gaussian noise applied to the output.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Returns
     -------
-    X : numpy array of shape (n_samples, n_features) for input samples
-    y : numpy array of shape (n_samples,) for labels
+    X : array of shape [n_samples, n_features]
+        The input samples.
+
+    y : array of shape [n_samples]
+        The output values.
+
+    References
+    ----------
+    .. [1] J. Friedman, "Multivariate adaptive regression splines", The Annals
+           of Statistics 19 (1), pages 1-67, 1991.
+
+    .. [2] L. Breiman, "Bagging predictors", Machine Learning 24,
+           pages 123-140, 1996.
     """
-    X = np.random.normal(loc=0, scale=1, size=(n_samples, n_features))
-    y = 10 * np.sin(X[:, 0] * X[:, 1]) + 20 * (X[:, 2] - 0.5) ** 2 \
-            + 10 * X[:, 3] + 5 * X[:, 4]
-    y += noise_std * np.random.normal(loc=0, scale=1, size=n_samples)
+    assert n_features >= 5
+
+    generator = check_random_state(random_state)
+
+    X = generator.rand(n_samples, n_features)
+    y = 10 * np.sin(np.pi * X[:, 0] * X[:, 1]) + 20 * (X[:, 2] - 0.5) ** 2 \
+        + 10 * X[:, 3] + 5 * X[:, 4] + noise * generator.randn(n_samples)
+
     return X, y
 
 
-def low_rank_fat_tail(n_samples=100, n_features=100, effective_rank=10,
-                      tail_strength=0.5, seed=0):
-    """Mostly low rank random matrix with bell-shaped singular values profile
+def make_friedman2(n_samples=100, noise=0.0, random_state=None):
+    """
+    Generate the "Friedman #2" regression problem as described in Friedman [1]
+    and Breiman [2].
+
+    Inputs `X` are 4 independent features uniformly distributed on the
+    intervals::
+
+        0 <= X[:, 0] <= 100,
+        40 * pi <= X[:, 1] <= 560 * pi,
+        0 <= X[:, 2] <= 1,
+        1 <= X[:, 3] <= 11.
+
+    The output `y` is created according to the formula::
+
+        y(X) = (X[:, 0] ** 2 \
+                   + (X[:, 1] * X[:, 2] \
+                         - 1 / (X[:, 1] * X[:, 3])) ** 2) ** 0.5 \
+               + noise * N(0, 1).
+
+    Parameters
+    ----------
+    n_samples : int, optional (default=100)
+        The number of samples.
+
+    noise : float, optional (default=0.0)
+        The standard deviation of the gaussian noise applied to the output.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    Returns
+    -------
+    X : array of shape [n_samples, 4]
+        The input samples.
+
+    y : array of shape [n_samples]
+        The output values.
+
+    References
+    ----------
+    .. [1] J. Friedman, "Multivariate adaptive regression splines", The Annals
+           of Statistics 19 (1), pages 1-67, 1991.
+
+    .. [2] L. Breiman, "Bagging predictors", Machine Learning 24,
+           pages 123-140, 1996.
+    """
+    generator = check_random_state(random_state)
+
+    X = generator.rand(n_samples, 4)
+    X[:, 0] *= 100
+    X[:, 1] *= 520 * np.pi
+    X[:, 1] += 40 * np.pi
+    X[:, 3] *= 10
+    X[:, 3] += 1
+
+    y = (X[:, 0] ** 2
+            + (X[:, 1] * X[:, 2] - 1 / (X[:, 1] * X[:, 3])) ** 2) ** 0.5 \
+        + noise * generator.randn(n_samples)
+
+    return X, y
+
+
+def make_friedman3(n_samples=100, noise=0.0, random_state=None):
+    """
+    Generate the "Friedman #3" regression problem as described in Friedman [1]
+    and Breiman [2].
+
+    Inputs `X` are 4 independent features uniformly distributed on the
+    intervals::
+
+        0 <= X[:, 0] <= 100,
+        40 * pi <= X[:, 1] <= 560 * pi,
+        0 <= X[:, 2] <= 1,
+        1 <= X[:, 3] <= 11.
+
+    The output `y` is created according to the formula::
+
+        y(X) = arctan((X[:, 1] * X[:, 2] \
+                          - 1 / (X[:, 1] * X[:, 3])) \
+                      / X[:, 0]) \
+               + noise * N(0, 1).
+
+    Parameters
+    ----------
+    n_samples : int, optional (default=100)
+        The number of samples.
+
+    noise : float, optional (default=0.0)
+        The standard deviation of the gaussian noise applied to the output.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    Returns
+    -------
+    X : array of shape [n_samples, 4]
+        The input samples.
+
+    y : array of shape [n_samples]
+        The output values.
+
+    References
+    ----------
+    .. [1] J. Friedman, "Multivariate adaptive regression splines", The Annals
+           of Statistics 19 (1), pages 1-67, 1991.
+
+    .. [2] L. Breiman, "Bagging predictors", Machine Learning 24,
+           pages 123-140, 1996.
+    """
+    generator = check_random_state(random_state)
+
+    X = generator.rand(n_samples, 4)
+    X[:, 0] *= 100
+    X[:, 1] *= 520 * np.pi
+    X[:, 1] += 40 * np.pi
+    X[:, 3] *= 10
+    X[:, 3] += 1
+
+    y = np.arctan((X[:, 1] * X[:, 2] - 1 / (X[:, 1] * X[:, 3])) / X[:, 0]) \
+        + noise * generator.randn(n_samples)
+
+    return X, y
+
+
+def make_low_rank_matrix(n_samples=100, n_features=100, effective_rank=10,
+                         tail_strength=0.5, random_state=None):
+    """
+    Generate a mostly low rank random matrix with bell-shaped singular
+    values profile.
 
     Most of the variance can be explained by a bell-shaped curve of width
     effective_rank: the low rank part of the singular values profile is::
 
-      (1 - tail_strength) * exp(-1.0 * (i / effective_rank) ** 2)
+        (1 - tail_strength) * exp(-1.0 * (i / effective_rank) ** 2)
 
     The remaining singular values' tail is fat, decreasing as::
 
-      tail_strength * exp(-0.1 * i / effective_rank).
+        tail_strength * exp(-0.1 * i / effective_rank).
 
     The low rank part of the profile can be considered the structured
     signal part of the data while the tail can be considered the noisy
@@ -207,42 +640,43 @@ def low_rank_fat_tail(n_samples=100, n_features=100, effective_rank=10,
 
     Parameters
     ----------
-    n_samples : int
-        number of samples (default is 100)
+    n_samples : int, optional (default=100)
+        The number of samples.
 
-    n_features : int
-        number of features (default is 100)
+    n_features : int, optional (default=100)
+        The number of features.
 
-    effective_rank : int
-        approximate number of singular vectors required to explain most of the
-        data by linear combinations (default is 10)
+    effective_rank : int, optional (default=10)
+        The approximate number of singular vectors required to explain most of
+        the data by linear combinations.
 
-    tail_strength: float between 0.0 and 1.0
-        relative importance of the fat noisy tail of the singular values
-        profile (default is 0.5).
+    tail_strength : float between 0.0 and 1.0, optional (default=0.5)
+        The relative importance of the fat noisy tail of the singular values
+        profile.
 
-    seed: int or RandomState or None
-        how to seed the random number generator (default is 0)
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
+    Returns
+    -------
+    X : array of shape [n_samples, n_features]
+        The matrix.
     """
-    if isinstance(seed, np.random.RandomState):
-        random = seed
-    elif seed is not None:
-        random = np.random.RandomState(seed)
-    else:
-        random = np.random
-
+    generator = check_random_state(random_state)
     n = min(n_samples, n_features)
 
-    # random (ortho normal) vectors
+    # Random (ortho normal) vectors
     from ..utils.fixes import qr_economic
-    u, _ = qr_economic(random.randn(n_samples, n))
-    v, _ = qr_economic(random.randn(n_features, n))
+    u, _ = qr_economic(generator.randn(n_samples, n))
+    v, _ = qr_economic(generator.randn(n_features, n))
 
-    # index of the singular values
+    # Index of the singular values
     singular_ind = np.arange(n, dtype=np.float64)
 
-    # build the singular profile by assembling signal and noise components
+    # Build the singular profile by assembling signal and noise components
     low_rank = (1 - tail_strength) * \
                np.exp(-1.0 * (singular_ind / effective_rank) ** 2)
     tail = tail_strength * np.exp(-0.1 * singular_ind / effective_rank)
@@ -251,114 +685,160 @@ def low_rank_fat_tail(n_samples=100, n_features=100, effective_rank=10,
     return np.dot(np.dot(u, s), v.T)
 
 
-def make_regression_dataset(n_train_samples=100, n_test_samples=100,
-                            n_features=100, n_informative=10,
-                            effective_rank=None, tail_strength=0.5,
-                            bias=0., noise=0.05, seed=0):
-    """Generate a regression train + test set
+def make_sparse_coded_signal(n_samples, n_components, n_features,
+                             n_nonzero_coefs, random_state=None):
+    """Generate a signal as a sparse combination of dictionary elements.
 
-    The input set can be well conditioned (by default) or have a low rank-fat
-    tail singular profile. See the low_rank_fat_tail docstring for more
-    details.
-
-    The output is generated by applying a (potentially biased) random linear
-    regression model with n_informative nonzero regressors to the previously
-    generated input and some gaussian centered noise with some adjustable
-    scale.
-
-    Parameters
-    ----------
-    n_train_samples : int
-        number of samples for the training set (default is 100)
-
-    n_test_samples : int
-        number of samples for the testing set (default is 100)
-
-    n_features : int
-        number of features (default is 100)
-
-    n_informative: int or float between 0.0 and 1.0
-        Number of informative features (nonzero regressors in the ground truth
-        linear model used to generate the output).
-
-    effective_rank : int or None
-        if not None (default is 50):
-            approximate number of singular vectors required to explain most of
-            the data by linear combinations on the input sets. Using this kind
-            of singular spectrum in the input allow the datagenerator to
-            reproduce the kind of correlation often observed in practice.
-        if None:
-            the input sets are well conditioned centered gaussian with unit
-            variance
-
-    tail_strength: float between 0.0 and 1.0
-        relative importance of the fat noisy tail of the singular values
-        profile if effective_rank is not None
-
-    bias: float
-        bias for the ground truth model (default is 0.0)
-
-    noise:
-        variance of the gaussian noise applied to the output (default is 0.05)
-
-    seed: int or RandomState or None
-        how to seed the random number generator (default is 0)
-
-    """
-    # allow for reproducible samples generation by explicit random number
-    # generator seeding
-    if isinstance(seed, np.random.RandomState):
-        random = seed
-    elif seed is not None:
-        random = np.random.RandomState(seed)
-    else:
-        random = np.random
-
-    if effective_rank is None:
-        # randomly generate a well conditioned input set
-        X_train = random.randn(n_train_samples, n_features)
-        X_test = random.randn(n_test_samples, n_features)
-    else:
-        # randomly generate a low rank, fat tail input set
-        X_train = low_rank_fat_tail(
-            n_samples=n_train_samples, n_features=n_features,
-            effective_rank=effective_rank, tail_strength=tail_strength,
-            seed=random)
-
-        X_test = low_rank_fat_tail(
-            n_samples=n_test_samples, n_features=n_features,
-            effective_rank=effective_rank, tail_strength=tail_strength,
-            seed=random)
-
-    # generate a ground truth model with only n_informative features being non
-    # zeros (the other features are not correlated to Y and should be ignored
-    # by a sparsifying regularizers such as L1 or elastic net)
-    ground_truth = np.zeros(n_features)
-    ground_truth[:n_informative] = random.randn(n_informative)
-    random.shuffle(ground_truth)
-
-    # generate the ground truth Y from the reference model and X
-    Y_train = np.dot(X_train, ground_truth) + bias
-    Y_test = np.dot(X_test, ground_truth) + bias
-
-    if noise > 0.0:
-        # apply some gaussian noise to the output
-        Y_train += random.normal(scale=noise, size=Y_train.shape)
-        Y_test += random.normal(scale=noise, size=Y_test.shape)
-
-    return X_train, Y_train, X_test, Y_test, ground_truth
-
-
-def swiss_roll(n_samples, noise=0.0):
-    """Generate swiss roll dataset
+    Returns a matrix Y = DX, such as D is (n_features, n_components),
+    X is (n_components, n_samples) and each column of X has exactly
+    n_nonzero_coefs non-zero elements.
 
     Parameters
     ----------
     n_samples : int
-        Number of points on the swiss roll
+        number of samples to generate
 
-    noise : float (optional)
-        Noise level. By default no noise.
+    n_components:  int,
+        number of components in the dictionary
+
+    n_features : int
+        number of features of the dataset to generate
+
+    n_nonzero_coefs : int
+        number of active (non-zero) coefficients in each sample
+
+    random_state: int or RandomState instance, optional (default=None)
+        seed used by the pseudo random number generator
+
+    Returns
+    -------
+    data: array of shape [n_features, n_samples]
+        The encoded signal (Y).
+
+    dictionary: array of shape [n_features, n_components]
+        The dictionary with normalized components (D).
+
+    code: array of shape [n_components, n_samples]
+        The sparse code such that each column of this matrix has exactly
+        n_nonzero_coefs non-zero items (X).
+
+    """
+    generator = check_random_state(random_state)
+
+    # generate dictionary
+    D = generator.randn(n_features, n_components)
+    D /= np.sqrt(np.sum((D ** 2), axis=0))
+
+    # generate code
+    X = np.zeros((n_components, n_samples))
+    for i in xrange(n_samples):
+        idx = np.arange(n_components)
+        generator.shuffle(idx)
+        idx = idx[:n_nonzero_coefs]
+        X[idx, i] = generator.randn(n_nonzero_coefs)
+
+    # encode signal
+    Y = np.dot(D, X)
+
+    return map(np.squeeze, (Y, D, X))
+
+
+def make_sparse_uncorrelated(n_samples=100, n_features=10, random_state=None):
+    """
+    Generate a random regression problem with sparse uncorrelated design as
+    described in Celeux et al [1].::
+
+        X ~ N(0, 1)
+        y(X) = X[:, 0] + 2 * X[:, 1] - 2 * X[:, 2] - 1.5 * X[:, 3]
+
+    Only the first 4 features are informative. The remaining features are
+    useless.
+
+    Parameters
+    ----------
+    n_samples : int, optional (default=100)
+        The number of samples.
+
+    n_features : int, optional (default=10)
+        The number of features.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    Returns
+    -------
+    X : array of shape [n_samples, n_features]
+        The input samples.
+
+    y : array of shape [n_samples]
+        The output values.
+
+    References
+    ----------
+    .. [1] G. Celeux, M. El Anbari, J.-M. Marin, C. P. Robert,
+           "Regularization in regression: comparing Bayesian and frequentist
+           methods in a poorly informative situation", 2009.
+    """
+    generator = check_random_state(random_state)
+
+    X = generator.normal(loc=0, scale=1, size=(n_samples, n_features))
+    y = generator.normal(loc=(X[:, 0] +
+                              2 * X[:, 1] -
+                              2 * X[:, 2] -
+                              1.5 * X[:, 3]), scale=np.ones(n_samples))
+
+    return X, y
+
+
+def make_spd_matrix(n_dim, random_state=None):
+    """
+    Generate a random symmetric, positive-definite matrix.
+
+    Parameters
+    ----------
+    n_dim : int
+        The matrix dimension.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    Returns
+    -------
+    X : array of shape [n_dim, n_dim]
+        The random symmetric, positive-definite matrix.
+    """
+    generator = check_random_state(random_state)
+
+    A = generator.rand(n_dim, n_dim)
+    U, s, V = linalg.svd(np.dot(A.T, A))
+    X = np.dot(np.dot(U, 1.0 + np.diag(generator.rand(n_dim))), V)
+
+    return X
+
+
+def make_swiss_roll(n_samples=100, noise=0.0, random_state=None):
+    """
+    Generate a swiss roll dataset.
+
+    Parameters
+    ----------
+    n_samples : int, optional (default=100)
+        The number of sample points on the S curve.
+
+    noise : float, optional (default=0.0)
+        The standard deviation of the gaussian noise.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Returns
     -------
@@ -366,134 +846,71 @@ def swiss_roll(n_samples, noise=0.0):
         The points.
 
     t : array of shape [n_samples]
-        The univariate possition of the sample according to the main dimension
+        The univariate position of the sample according to the main dimension
         of the points in the manifold.
 
     Notes
     -----
-    Original code from:
-    http://www-ist.massey.ac.nz/smarsland/Code/10/lle.py
+    The algorithm is from Marsland [1].
+
+    References
+    ----------
+    .. [1] S. Marsland, "Machine Learning: An Algorithmic Perpsective",
+           Chapter 10, 2009.
+           http://www-ist.massey.ac.nz/smarsland/Code/10/lle.py
     """
-    np.random.seed(0)
-    t = 1.5 * np.pi * (1 + 2 * np.random.rand(1, n_samples))
-    h = 21 * np.random.rand(1, n_samples)
-    X = np.concatenate((t * np.cos(t), h, t * np.sin(t))) \
-           + noise * np.random.randn(3, n_samples)
-    X = np.transpose(X)
+    generator = check_random_state(random_state)
+
+    t = 1.5 * np.pi * (1 + 2 * generator.rand(1, n_samples))
+    x = t * np.cos(t)
+    y = 21 * generator.rand(1, n_samples)
+    z = t * np.sin(t)
+
+    X = np.concatenate((x, y, z))
+    X += noise * generator.randn(3, n_samples)
+    X = X.T
     t = np.squeeze(t)
+
     return X, t
 
-def s_curve(n_samples, noise=0.0):
-    """Generate S curve dataset
+
+def make_s_curve(n_samples=100, noise=0.0, random_state=None):
+    """
+    Generate an S curve dataset.
 
     Parameters
     ----------
-    n_samples : int
-        Number of points on the S curve
+    n_samples : int, optional (default=100)
+        The number of sample points on the S curve.
 
-    noise : float (optional)
-        Noise level. By default no noise.
+    noise : float, optional (default=0.0)
+        The standard deviation of the gaussian noise.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Returns
     -------
     X : array of shape [n_samples, 3]
         The points.
+
+    t : array of shape [n_samples]
+        The univariate position of the sample according to the main dimension
+        of the points in the manifold.
     """
-    np.random.seed(0)
+    generator = check_random_state(random_state)
 
-    t = 3*np.pi * (np.random.rand(1,n_samples) - 0.5)
+    t = 3 * np.pi * (generator.rand(1, n_samples) - 0.5)
     x = np.sin(t)
-    y = np.random.rand(1,n_samples)*2.0
-    z = np.sign(t)*(np.cos(t)-1)
+    y = 2.0 * generator.rand(1, n_samples)
+    z = np.sign(t) * (np.cos(t) - 1)
 
-    X = np.concatenate((x,y,z)).T
+    X = np.concatenate((x, y, z))
+    X += noise * generator.randn(3, n_samples)
+    X = X.T
     t = np.squeeze(t)
 
     return X, t
-
-def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
-               center_box=(-10.0, 10.0), shuffle=True, random_state=0):
-    """Generate isotropic Gaussian blobs for clustering
-
-    Parameters
-    ----------
-    n_samples : int (default 100)
-        Total number of points equally divided among clusters
-
-    n_features : int (default 2)
-        Number of dimensions for each sample
-
-    centers : int or array of shape [n_centers, n_features] (default 3)
-        Number of centers to generate or fixed center location
-
-    cluster_std: float or sequace of floats
-        Standard deviation of the clusters
-
-    center_box: pair of floats (min, max)
-        Bounding box for each cluster center when randomly generated
-        positions
-
-    shuffle: boolean (default True)
-        Shuffle the order of the sample
-
-    random_state: int or RandomState instance (default 0)
-        Seed used by the pseudo random number generator
-
-    Return
-    ------
-    samples : array of shape [n_samples, n_features]
-        The generated samples
-
-    labels : array of shape [n_samples]
-        The integer labels for class membership of each sample
-
-    Example
-    -------
-
-      >>> from scikits.learn.datasets.samples_generator import make_blobs
-      >>> samples, labels = make_blobs(n_samples=10, centers=3, n_features=2)
-      >>> samples.shape
-      (10, 2)
-      >>> labels
-      array([0, 0, 1, 0, 2, 2, 2, 1, 1, 0])
-
-    """
-    random_state = check_random_state(random_state)
-
-    if isinstance(centers, int):
-        centers = random_state.uniform(center_box[0], center_box[1],
-                                       size=(centers, n_features))
-    else:
-        centers = np.atleast_2d(centers)
-        n_features = centers.shape[1]
-
-    blobs = []
-    labels = []
-
-    n_centers = centers.shape[0]
-    n_samples_per_center = [n_samples / n_centers] * n_centers
-    n_samples_per_center[0] += n_samples % n_centers
-
-    for i, n in enumerate(n_samples_per_center):
-        blobs.append(centers[i] + random_state.normal(scale=cluster_std,
-                                                      size=(n, n_features)))
-        labels += [i] * n
-
-    samples = np.concatenate(blobs)
-    labels = np.array(labels)
-    if shuffle:
-        indices = np.arange(samples.shape[0])
-        random_state.shuffle(indices)
-        samples = samples[indices]
-        labels = labels[indices]
-    return samples, labels
-
-
-def generate_random_spd_matrix(ndim, random_state=0):
-    """Return a random symmetric, positive-definite matrix."""
-    prng = check_random_state(random_state)
-    A = prng.rand(ndim, ndim)
-    U, s, V = linalg.svd(np.dot(A.T, A))
-    rand_spd = np.dot(np.dot(U, 1.0 + np.diag(prng.rand(ndim))), V)
-    return rand_spd
-
