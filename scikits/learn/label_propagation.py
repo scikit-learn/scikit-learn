@@ -37,8 +37,9 @@ Example
 LabelPropagation(...)
 
 
-References
-----------
+Notes
+-----
+References:
 [1] Yoshua Bengio, Olivier Delalleau, Nicolas Le Roux. In Semi-Supervised
     Learning (2006), pp. 193-216
 """
@@ -51,9 +52,7 @@ logger = Logger()
 
 # Authors: Clay Woolam <clay@woolam.org>
 
-# really low epsilon (we don't really want machine eps)
 EPSILON = 1e-9
-# Main classes
 
 
 class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
@@ -99,18 +98,12 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
                              supported at this time" % self.kernel)
 
     def _build_graph(self):
-        """
-        Builds a matrix representing a fully connected graph between each point
-        in the dataset
-
-        This basic implementation creates a non-stochastic affinity matrix, so
-        class distributions will exceed 1 (normalization may be desired)
-        """
-        return self._get_kernel(self._X, self._X)
+        raise NotImplementedError("Graph construction must be implemented \
+                to fit a label propagation model.")
 
     def predict(self, X):
         """
-        Performs inductive inference across the model
+        Performs inductive inference across the model.
 
         Parameters
         ----------
@@ -122,8 +115,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
             Predictions for input data
         """
         ym = self.predict_proba(X)
-        preds = np.argmax(ym, axis=1)
-        return [self.num_to_label[pred] for pred in preds.flat]
+        return self.unq_labels[np.argmax(ym, axis=1)]
 
     def predict_proba(self, X):
         """
@@ -183,27 +175,26 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         # construct a categorical distribution for classification only
         unq_labels = np.unique(y)
         unq_labels = unq_labels[unq_labels != self.unlabeled_identifier]
+        self.unq_labels = unq_labels
         
-        num_labels, num_classes = len(y), len(unq_labels)
-        self.label_map = dict(zip(unq_labels, range(num_classes)))
+        n_labels, n_classes = len(y), len(unq_labels)
 
         y_st = np.asanyarray(y)
         self.unlabeled_points = np.where(y_st == self.unlabeled_identifier)
-        alpha_ary = np.ones((num_labels, 1))
+        alpha_ary = np.ones((n_labels, 1))
         alpha_ary[self.unlabeled_points, 0] = self.alpha
 
-        self._y = np.zeros((num_labels, num_classes))
+        # initialize distributions
+        self._y = np.zeros((n_labels, n_classes))
         for label in unq_labels:
-            self._y[np.where(y_st == label), self.label_map[label]] = 1
+            self._y[np.where(y_st == label), np.where(unq_labels == label)] = 1
 
-        # this should do elementwise multiplication between the two arrays
-        # Y_alpha = self._y * (1 - alpha_ary)
         Y_alpha = np.copy(self._y)
         Y_alpha = Y_alpha * (1 - self.alpha)
         Y_alpha[self.unlabeled_points] = 0
 
-        y_p = np.zeros((self._X.shape[0], num_classes))
-        self._y.resize((self._X.shape[0], num_classes))
+        y_p = np.zeros((self._X.shape[0], n_classes))
+        self._y.resize((self._X.shape[0], n_classes))
 
         max_iters = self.max_iters
         ct = self.conv_threshold
@@ -213,20 +204,25 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
             # clamp
             self._y = np.multiply(alpha_ary, self._y) + Y_alpha
             max_iters -= 1
-        # set the transduction item
 
-        num_to_label = dict([reversed(itm) for itm in self.label_map.items()])
-        transduction = map(lambda x: num_to_label[np.argmax(x)], self._y)
-        self.num_to_label, self.transduction = num_to_label, transduction
+        # set the transduction item
+        transduction = self.unq_labels[np.argmax(self._y, axis=1)]
+        self.transduction = transduction.flatten()
         return self
 
 
 class LabelPropagation(BaseLabelPropagation):
     """
-    Original label propagation algorithm. Computes a basic affinity matrix and
-    uses hard clamping.
+    Computes a basic stochastic affinity matrix and uses hard clamping.
     """
     def _build_graph(self):
+        """
+        Builds a matrix representing a fully connected graph between each point
+        in the dataset
+
+        This basic implementation creates a non-stochastic affinity matrix, so
+        class distributions will exceed 1 (normalization may be desired)
+        """
         affinity_matrix = self._get_kernel(self._X, self._X)
         degree_matrix = np.diag(np.sum(affinity_matrix, axis=0))
         deg_inv = np.linalg.inv(degree_matrix)
@@ -253,7 +249,7 @@ class LabelSpreading(BaseLabelPropagation):
 
     def _build_graph(self):
         """
-        Graph matrix for Label Spreading uses the Graph Laplacian
+        Graph matrix for Label Spreading computes the graph laplacian
         """
         # compute affinity matrix (or gram matrix)
         n_samples = self._X.shape[0]

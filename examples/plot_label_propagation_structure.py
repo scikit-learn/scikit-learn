@@ -31,7 +31,7 @@ inner_circ_ys = np.sin(np.linspace(0, 2 * np.pi, n_samples_per_circle)) * 0.45
 
 all_xs = np.append(outer_circ_xs, inner_circ_xs)
 all_ys = np.append(outer_circ_ys, inner_circ_ys)
-data = zip(outer_circ_xs, outer_circ_ys) + zip(inner_circ_xs, inner_circ_ys)
+data = np.vstack((np.append(outer_circ_xs, inner_circ_xs), np.append(outer_circ_ys, inner_circ_ys))).T
 labels = ['outer'] +\
          ['unlabeled' for x in range(0, n_samples_per_circle - 1)] +\
          ['inner'] +\
