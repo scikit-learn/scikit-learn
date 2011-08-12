@@ -63,19 +63,18 @@ def test_dict_learning_online_initialization():
 
 
 def test_dict_learning_online_partial_fit():
-    raise SkipTest
     n_atoms = 12
     V = rng.randn(n_atoms, n_features)  # random init
+    rng1 = np.random.RandomState(0)
+    rng2 = np.random.RandomState(0)
     dico1 = DictionaryLearningOnline(n_atoms, n_iter=10, chunk_size=1,
                                      shuffle=False, dict_init=V,
-                                     transform_algorithm='threshold').fit(X)
+                                     transform_algorithm='threshold',
+                                     random_state=rng1).fit(X)
     dico2 = DictionaryLearningOnline(n_atoms, n_iter=1, dict_init=V,
-                                     transform_algorithm='threshold')
+                                     transform_algorithm='threshold',
+                                     random_state=rng2)
     for ii, sample in enumerate(X):
         dico2.partial_fit(sample, iter_offset=ii * dico2.n_iter)
 
-    code1 = dico1.transform(X, alpha=1)
-    code2 = dico2.transform(X, alpha=1)
-    X1 = np.dot(code1, dico1.components_)
-    X2 = np.dot(code2, dico2.components_)
-    assert_array_equal(X1, X2)
+    assert_array_equal(dico1.components_, dico2.components_)

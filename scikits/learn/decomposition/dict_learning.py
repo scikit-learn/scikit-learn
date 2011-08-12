@@ -345,7 +345,7 @@ class DictionaryLearningOnline(BaseDictionaryLearning):
             dict_init = self.dict_init
         U = dict_learning_online(X, self.n_atoms, self.alpha,
                                  n_iter=self.n_iter,
-                                 method=self.coding_algorithm,
+                                 method=self.fit_algorithm,
                                  n_jobs=self.n_jobs, dict_init=dict_init,
                                  chunk_size=len(X), shuffle=False,
                                  verbose=self.verbose, return_code=False,
