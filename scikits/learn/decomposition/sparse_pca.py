@@ -18,7 +18,6 @@ from ..utils.extmath import fast_svd
 from ..linear_model import Lasso, lars_path, ridge_regression
 from ..externals.joblib import Parallel, delayed, cpu_count
 from ..base import BaseEstimator, TransformerMixin
-from ..utils.extmath import fast_svd
 
 
 def _update_code(dictionary, Y, alpha, code=None, Gram=None, method='lars',
