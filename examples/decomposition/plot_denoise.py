@@ -31,7 +31,7 @@ data -= intercept
 ###############################################################################
 # Learn the dictionary from clean patches
 dico = DictionaryLearningOnline(n_atoms=100, alpha=0.01, n_iter=100,
-                                verbose=True, transform_method='omp')
+                                verbose=True, transform_algorithm='omp')
 V = dico.fit(data).components_
 
 ###############################################################################
@@ -52,14 +52,14 @@ for i, fragment in enumerate(fragments):
     print "Reconstructing image fragment %d..." % (i + 1),
     t0 = time()
     if i == 0:
-        code = dico.transform(data, n_atoms=1, compute_gram=True)
+        code = dico.transform(data, n_nonzero_coefs=1, precompute_gram=True)
     elif i == 1:
-        code = dico.transform(data, n_atoms=2, compute_gram=True)
+        code = dico.transform(data, n_nonzero_coefs=2, precompute_gram=True)
     elif i == 2:
-        dico.transform_method = "lasso_lars"
+        dico.transform_algorithm = "lasso_lars"
         code = dico.transform(data, alpha=1.8)
     elif i == 3:
-        dico.transform_method = "threshold"
+        dico.transform_algorithm = "threshold"
         code = dico.transform(data, alpha=1.0)
     dt = time() - t0
     print " done in %.2fs" % dt
