@@ -8,6 +8,7 @@ import warnings
 import numpy as np
 
 from .base import LinearModel
+from ..utils import as_float_array
 from ..cross_val import check_cv
 from . import cd_fast
 
@@ -121,9 +122,10 @@ class ElasticNet(LinearModel):
         self._set_params(**params)
         X = np.asanyarray(X, dtype=np.float64)
         y = np.asanyarray(y, dtype=np.float64)
+        X = as_float_array(X, self.overwrite_X)
 
-        X, y, Xmean, ymean, Xstd = self._center_data(X, y, self.fit_intercept,
-                self.normalize, self.overwrite_X)
+        X, y, X_mean, y_mean, X_std = self._center_data(X, y, self.fit_intercept,
+                self.normalize)
 
         if coef_init is None:
             self.coef_ = np.zeros(X.shape[1], dtype=np.float64)
@@ -157,7 +159,7 @@ class ElasticNet(LinearModel):
                     cd_fast.enet_coordinate_descent_gram(self.coef_, alpha,
                                 beta, Gram, Xy, y, self.max_iter, self.tol)
 
-        self._set_intercept(Xmean, ymean, Xstd)
+        self._set_intercept(X_mean, y_mean, X_std)
 
         if self.dual_gap_ > self.eps_:
             warnings.warn('Objective did not converge, you might want'
@@ -347,8 +349,9 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
     -----
     See examples/plot_lasso_coordinate_descent_path.py for an example.
     """
-    X, y, Xmean, ymean, Xstd = LinearModel._center_data(X, y,
-            fit_intercept, normalize, overwrite_X)
+    X = as_float_array(X, overwrite_X)
+    X, y, X_mean, y_mean, X_std = LinearModel._center_data(X, y,
+            fit_intercept, normalize)
     X = np.asfortranarray(X)  # make data contiguous in memory
 
     n_samples = X.shape[0]
@@ -374,7 +377,7 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
         model.fit(X, y, coef_init=coef_, **fit_params)
         if fit_intercept:
             model.fit_intercept = True
-            model._set_intercept(Xmean, ymean, Xstd)
+            model._set_intercept(X_mean, y_mean, X_std)
         if verbose:
             print model
         coef_ = model.coef_.copy()

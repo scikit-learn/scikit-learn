@@ -9,7 +9,7 @@ import numpy as np
 
 from .base import LinearModel
 from ..utils.extmath import safe_sparse_dot
-from ..utils import safe_asanyarray
+from ..utils import safe_asanyarray, as_float_array
 from ..preprocessing import LabelBinarizer
 from ..grid_search import GridSearchCV
 
@@ -206,10 +206,11 @@ class Ridge(LinearModel):
 
         X = safe_asanyarray(X, dtype=np.float)
         y = np.asanyarray(y, dtype=np.float)
+        X = as_float_array(X, self.overwrite_X)
 
         X, y, X_mean, y_mean, X_std = \
            self._center_data(X, y, self.fit_intercept,
-                   self.normalize, self.overwrite_X)
+                   self.normalize)
 
         self.coef_ = ridge_regression(X, y, self.alpha, sample_weight,
                                       solver, self.tol)
@@ -336,13 +337,14 @@ class _RidgeGCV(LinearModel):
     http://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf
     """
 
-    def __init__(self, alphas=[0.1, 1.0, 10.0], fit_intercept=True,
-                       normalize=False, score_func=None, loss_func=None):
+    def __init__(self, alphas=[0.1, 1.0, 10.0], fit_intercept=True, normalize=False,
+            score_func=None, loss_func=None, overwrite_X=False):
         self.alphas = np.asanyarray(alphas)
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.score_func = score_func
         self.loss_func = loss_func
+        self.overwrite_X = overwrite_X
 
     def _pre_compute(self, X, y):
         # even if X is very sparse, K is usually very dense
@@ -400,6 +402,7 @@ class _RidgeGCV(LinearModel):
         y = np.asanyarray(y, dtype=np.float)
 
         n_samples = X.shape[0]
+        X = as_float_array(X, self.overwrite_X)
 
         X, y, X_mean, y_mean, X_std = LinearModel._center_data(X, y,
                 self.fit_intercept, self.normalize)

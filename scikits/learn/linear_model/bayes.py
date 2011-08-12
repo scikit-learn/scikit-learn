@@ -10,6 +10,7 @@ import numpy as np
 from scipy import linalg
 
 from .base import LinearModel
+from ..utils import as_float_array
 from ..utils.extmath import fast_logdet
 
 
@@ -147,8 +148,9 @@ class BayesianRidge(LinearModel):
         self._set_params(**params)
         X = np.asanyarray(X, dtype=np.float)
         y = np.asanyarray(y, dtype=np.float)
+        X = as_float_array(X, self.overwrite_X)
         X, y, X_mean, y_mean, X_std = self._center_data(X, y,
-                self.fit_intercept, self.normalize, self.overwrite_X)
+                self.fit_intercept, self.normalize)
         n_samples, n_features = X.shape
 
         ### Initialization of the values of the parameters
@@ -378,8 +380,10 @@ class ARDRegression(LinearModel):
         n_samples, n_features = X.shape
         coef_ = np.zeros(n_features)
 
+        X = as_float_array(X, self.overwrite_X)
+
         X, y, X_mean, y_mean, X_std = self._center_data(X, y, self.fit_intercept,
-                self.normalize, self.overwrite_X)
+                self.normalize)
 
         ### Launch the convergence loop
         keep_lambda = np.ones(n_features, dtype=bool)

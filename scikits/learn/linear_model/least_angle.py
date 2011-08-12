@@ -13,7 +13,7 @@ from scipy import linalg, interpolate
 from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
-from ..utils import arrayfuncs
+from ..utils import arrayfuncs, as_float_array
 from ..utils import deprecated
 from ..cross_val import check_cv
 from ..externals.joblib import Parallel, delayed
@@ -343,7 +343,7 @@ class Lars(LinearModel):
     --------
     >>> from scikits.learn import linear_model
     >>> clf = linear_model.Lars(n_nonzero_coefs=1)
-    >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1]) # doctest: +ELLIPSIS
+    >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1])  # doctest: +ELLIPSIS
     Lars(normalize=True, n_nonzero_coefs=1, verbose=False, fit_intercept=True,
        eps=2.2204460492503131e-16, precompute='auto', overwrite_X=False)
     >>> print clf.coef_
@@ -390,8 +390,10 @@ class Lars(LinearModel):
         X = np.atleast_2d(X)
         y = np.atleast_1d(y)
 
+        X = as_float_array(X, self.overwrite_X)
+
         X, y, X_mean, y_mean, X_std = self._center_data(X, y, self.fit_intercept,
-                self.normalize, self.overwrite_X)
+            self.normalize)
         alpha = getattr(self, 'alpha', 0.)
         if hasattr(self, 'n_nonzero_coefs'):
             alpha = 0. # n_nonzero_coefs parametrization takes priority
