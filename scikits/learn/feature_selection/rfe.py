@@ -16,6 +16,15 @@ from ..cross_val import check_cv
 class RFE(BaseEstimator):
     """Feature ranking with recursive feature elimination.
 
+       Given an external estimator that assigns weights to features (e.g., the
+       coefficients of a linear model), the goal of the RFE algorithm is to
+       select features by recursively considering smaller and smaller sets of
+       features.  First, the estimator is trained on the initial set of features
+       and weights are assigned to each one of them. Then, features whose
+       absolute weights are the smallest are pruned from the set features. That
+       procedure is recursively repeated until the desired number of features to
+       selected is eventually reached.
+
     Parameters
     ----------
     estimator : object
@@ -77,17 +86,16 @@ class RFE(BaseEstimator):
         self.step = step
 
     def fit(self, X, y):
-        """Fit the RFE model.
+        """Fit the RFE model and then the underlying estimator on the selected
+           features.
 
         Parameters
         ----------
         X : array of shape [n_samples, n_features]
-            Training vector, where `n_samples` is the number of samples and
-            `n_features` is the total number of features.
+            The training input samples.
 
         y : array of shape [n_samples]
-            Target values (integers for classification, real numbers for
-            regression).
+            The target values.
         """
         # Initialization
         n_features = X.shape[1]
@@ -117,19 +125,55 @@ class RFE(BaseEstimator):
             ranking_[np.logical_not(support_)] += 1
 
         # Set final attributes
+        self.estimator.fit(X[:, support_], y)
         self.support_ = support_
         self.ranking_ = ranking_
 
         return self
 
+    def predict(self, X):
+        """Reduce X to the selected features and then predict using the
+           underlying estimator.
+
+        Parameters
+        ----------
+        X : array of shape [n_samples, n_feautres]
+            The input samples.
+
+        Return
+        ------
+        y : array of shape [n_samples]
+            The predicted target values.
+        """
+        return self.estimator.predict(X[:, self.support_])
+
+    def score(self, X, y):
+        """Reduce X to the selected features and then return the score of the
+           underlying estimator.
+
+        Parameters
+        ----------
+        X : array of shape [n_samples, n_feautres]
+            The input samples.
+
+        y : array of shape [n_samples]
+            The target values.
+        """
+        return self.estimator.score(X[:, self.support_], y)
+
     def transform(self, X):
-        """Reduce X to the features selected during the fit.
+        """Reduce X to the selected features during the elimination.
 
         Parameters
         ----------
         X : array of shape [n_samples, n_features]
-            Vector, where n_samples in the number of samples and
-            n_features is the number of features.
+            The input samples.
+
+        Return
+        ------
+        X_r : array of shape [n_samples, n_selected_features]
+            The input samples with only the features selected during the
+            elimination.
         """
         return X[:, self.support_]
 
@@ -268,6 +312,9 @@ class RFECV(RFE):
                   step=self.step)
 
         rfe.fit(X, y)
+
+        # Set final attributes
+        self.estimator.fit(X[:, rfe.support_], y)
         self.support_ = rfe.support_
         self.ranking_ = rfe.ranking_
 
