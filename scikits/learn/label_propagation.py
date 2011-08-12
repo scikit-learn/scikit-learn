@@ -75,9 +75,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
       threshold to consider the system at steady state
     """
 
-    _default_alpha = 1
-
-    def __init__(self, kernel='rbf', gamma=20, alpha=None,
+    def __init__(self, kernel='rbf', gamma=20, alpha=1,
             unlabeled_identifier=-1, max_iters=100,
             conv_threshold=1e-3, suppress_warning=False):
         self.max_iters = max_iters
@@ -91,10 +89,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         self.kernel = kernel
 
         # clamping factor
-        if alpha is None:
-            self.alpha = self._default_alpha
-        else:
-            self.alpha = alpha
+        self.alpha = alpha
 
     def _get_kernel(self, X, Y):
         if self.kernel == "rbf":
@@ -111,7 +106,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         This basic implementation creates a non-stochastic affinity matrix, so
         class distributions will exceed 1 (normalization may be desired)
         """
-        self._graph_matrix = self._get_kernel(self._X, self._X)
+        return self._get_kernel(self._X, self._X)
 
     def predict(self, X):
         """
@@ -182,18 +177,13 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         self._X = np.asanyarray(X)
 
         # actual graph construction (implementations should override this)
-        self._build_graph()
+        graph_matrix = self._build_graph()
 
         # label construction
         # construct a categorical distribution for classification only
-        unq_labels = set(y)
-        try:
-            unq_labels.remove(self.unlabeled_identifier)
-        except KeyError:
-            if not self.suppress_warning:
-                msg = "No unlabeled data found, check unlabeled identifier."
-                logger.warn(msg)
-
+        unq_labels = np.unique(y)
+        unq_labels = unq_labels[unq_labels != self.unlabeled_identifier]
+        
         num_labels, num_classes = len(y), len(unq_labels)
         self.label_map = dict(zip(unq_labels, range(num_classes)))
 
@@ -219,7 +209,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         ct = self.conv_threshold
         while not_converged(self._y, y_p, ct) and max_iters > 1:
             y_p = self._y
-            self._y = np.dot(self._graph_matrix, self._y)
+            self._y = np.dot(graph_matrix, self._y)
             # clamp
             self._y = np.multiply(alpha_ary, self._y) + Y_alpha
             max_iters -= 1
@@ -241,7 +231,7 @@ class LabelPropagation(BaseLabelPropagation):
         degree_matrix = np.diag(np.sum(affinity_matrix, axis=0))
         deg_inv = np.linalg.inv(degree_matrix)
         aff_ideg = deg_inv * np.matrix(affinity_matrix)
-        self._graph_matrix = aff_ideg
+        return aff_ideg
 
 
 class LabelSpreading(BaseLabelPropagation):
@@ -254,7 +244,12 @@ class LabelSpreading(BaseLabelPropagation):
     alpha : float
       "clamping factor" or how much of the original labels you want to keep
     """
-    _default_alpha = 0.2
+    
+    def __init__(self, kernel='rbf', gamma=20, alpha=0.2,
+            unlabeled_identifier=-1, max_iters=100,
+            conv_threshold=1e-3, suppress_warning=False):
+        # this one has different base parameters
+        super(LabelSpreading, self).__init__()
 
     def _build_graph(self):
         """
@@ -267,7 +262,7 @@ class LabelSpreading(BaseLabelPropagation):
         degree_matrix = np.diag(np.sum(affinity_matrix, axis=0))
         deg_invsq = np.sqrt(np.linalg.inv(degree_matrix))
         laplacian = deg_invsq * np.matrix(affinity_matrix) * deg_invsq
-        self._graph_matrix = laplacian
+        return laplacian
 
 ### Helper functions
 
