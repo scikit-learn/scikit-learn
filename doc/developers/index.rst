@@ -395,7 +395,10 @@ mix both supervised and unsupervised transformers even unsupervised
 estimators are kindly ask to accept a ``y=None`` keyword argument in
 the second position that is just ignored byt the estimator.
 
-The method should return the object (``self``).
+The method should return the object (``self``). This pattern is useful
+to be able to implement quick one liners in an ipython session such as::
+
+  y_predicted = SVC(C=100).fit(X_train, y_train).predict(X_test)
 
 Depending on the nature of the algorithm ``fit`` can sometimes also
 accept additional keywords arguments. However any parameter that can
