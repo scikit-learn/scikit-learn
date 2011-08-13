@@ -18,7 +18,11 @@ from scikits.learn.metrics import zero_one
 ################################################################################
 # Loading a dataset
 
-X, y = samples_generator.test_dataset_classif(n_features=500, k=5, seed=0)
+X, y = samples_generator.make_classification(n_samples=1000, n_features=20,
+                                             n_informative=3, n_redundant=2,
+                                             n_repeated=0, n_classes=8,
+                                             n_clusters_per_class=1,
+                                             random_state=0)
 
 ################################################################################
 # Create the RFE object and compute a cross-validated score

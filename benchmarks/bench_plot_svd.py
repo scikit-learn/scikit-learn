@@ -9,7 +9,7 @@ from collections import defaultdict
 
 from scipy.linalg import svd
 from scikits.learn.utils.extmath import fast_svd
-from scikits.learn.datasets.samples_generator import low_rank_fat_tail
+from scikits.learn.datasets.samples_generator import make_low_rank_matrix
 
 
 def compute_bench(samples_range, features_range, q=3, rank=50):
@@ -25,7 +25,7 @@ def compute_bench(samples_range, features_range, q=3, rank=50):
             print '===================='
             print 'Iteration %03d of %03d' % (it, max_it)
             print '===================='
-            X = low_rank_fat_tail(n_samples, n_features, effective_rank=rank,
+            X = make_low_rank_matrix(n_samples, n_features, effective_rank=rank,
                                   tail_strength=0.2)
 
             gc.collect()

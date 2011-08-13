@@ -17,13 +17,14 @@ from .base import LinearRegression, Log, ModifiedHuber, Hinge, \
 
 from .bayes import BayesianRidge, ARDRegression
 from .least_angle import Lars, LassoLars, lars_path, LARS, LassoLARS, \
-                LarsCV, LassoLarsCV
+                LarsCV, LassoLarsCV, LassoLarsIC
 from .coordinate_descent import Lasso, ElasticNet, LassoCV, ElasticNetCV, \
                                 lasso_path, enet_path
 from .stochastic_gradient import SGDClassifier, SGDRegressor
 from .ridge import Ridge, RidgeCV, RidgeClassifier, RidgeClassifierCV, \
                    ridge_regression
 from .logistic import LogisticRegression
+from .omp import orthogonal_mp, orthogonal_mp_gram, OrthogonalMatchingPursuit
 
 from . import sparse
 
