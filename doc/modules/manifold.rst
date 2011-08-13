@@ -19,15 +19,11 @@ Manifold learning
                  |             -- Baloo's song [The Jungle Book]
 
 
-.. |s_input_img| image:: ../auto_examples/manifold/images/plot_compare_methods_1.png
-    :target: ../auto_examples/manifold/plot_compare_methods.html
-    :scale: 50
 
-.. |s_mlle_img| image:: ../auto_examples/manifold/images/plot_compare_methods_5.png
-    :target: ../auto_examples/manifold/plot_compare_methods.html
-    :scale: 50
-
-.. centered:: |s_input_img| |s_mlle_img|
+.. figure:: ../auto_examples/manifold/images/plot_compare_methods_1.png
+   :target: ../auto_examples/manifold/plot_compare_methods.html
+   :align: center
+   :scale: 60
 
 Manifold learning is an approach to nonlinear dimensionality reduction.
 Algorithms for this task are based on the idea that the dimensionality of
@@ -355,11 +351,6 @@ Tips on practical use
   learning methods are based on a nearest-neighbor search, the algorithm
   may perform poorly otherwise.  See :ref:`Scaler <preprocessing_scaler>`
   for convenient ways of scaling heterogeneous data.
-
-* On certain problems, the `lobcpg` solver available in the LLE variants
-  might converge slowly. Supply a generous value for `max_iter` if big 
-  oscillations are detected between runs.  ARPACK is generally a more stable
-  iterative solver.
 
 * The reconstruction error computed by each routine can be used to choose
   the optimal output dimension.  For a :math:`d`-dimensional manifold embedded

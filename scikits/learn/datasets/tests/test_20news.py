@@ -1,7 +1,6 @@
 """Test the 20news downloader, if the data is available."""
 import numpy as np
 from nose.tools import assert_equal
-from nose.tools import assert_true
 from nose.plugins.skip import SkipTest
 
 from scikits.learn import datasets
@@ -33,6 +32,3 @@ def test_20news():
     entry2 = data.data[np.where(data.target == label)[0][0]]
     assert_equal(entry1, entry2)
 
-    # check that the filenames are available too
-    assert_true(data.filenames[0].endswith(
-        "20news_home/20news-bydate-test/talk.politics.mideast/76560"))
