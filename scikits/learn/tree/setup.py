@@ -13,21 +13,6 @@ def configuration(parent_package='', top_path=None):
 
     config = Configuration('tree', parent_package, top_path)
 
-    #config.add_subpackage('tests')
-
-    libdecisiontree_sources = ['libdecisiontree.cpp', 'src/Node.cpp']
-    libdecisiontree_depends = ['libdecisiontree_helper.cpp',
-                               join('src', 'Histogram.h'),
-                               join('src', 'Node.h'),
-                               join('src', 'Node.cpp')]
-
-    config.add_extension('libdecisiontree',
-                         sources = libdecisiontree_sources,
-                         include_dirs = [numpy.get_include(), 'src'],
-                         depends = libdecisiontree_depends,
-                         language="c++"
-                         )
-
     config.add_extension('_tree',
                          sources=['_tree.c'],
                          include_dirs=[numpy.get_include()]

@@ -15,4 +15,4 @@ Supervised learning
     modules/gaussian_process
     modules/pls
     modules/naive_bayes
-
+    modules/tree

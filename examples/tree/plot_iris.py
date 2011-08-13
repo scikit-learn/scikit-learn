@@ -1,9 +1,9 @@
 """
-==================================================
-Plot multi-class Random Forest on the iris dataset
-==================================================
+=================================================
+Plot multi-class DecisionTree on the iris dataset
+=================================================
 
-Plot decision surface of multi-class Random Forest on iris dataset on pairwise
+Plot decision surface of multi-class DecisionTree on iris dataset on pairwise
 selection of features.
  
 """
@@ -12,7 +12,7 @@ print __doc__
 import numpy as np
 import pylab as pl
 from scikits.learn import datasets
-from scikits.learn.tree_model import RandomForestClassifier
+from scikits.learn.tree import DecisionTreeClassifier
 
 # import some data to play with
 iris = datasets.load_iris()
@@ -37,7 +37,7 @@ for pairidx, pair in enumerate([[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]]):
 
     h = .02  # step size in the mesh
 
-    clf = RandomForestClassifier(K, n_trees=10).fit(X, y)
+    clf = DecisionTreeClassifier().fit(X, y)
 
     # create a mesh to plot in
     x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
@@ -65,9 +65,7 @@ for pairidx, pair in enumerate([[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]]):
         pl.scatter(X[idx, 0], X[idx, 1], c=color, label=iris.target_names[i])
     pl.axis('tight')
 
-pl.suptitle("Decision surface of multi-class Random Forest using paired features")
-
-# TODO: Add tree diagram
+pl.suptitle("Decision surface of multi-class decision tree using paired features")
 
 pl.legend()
 pl.show()

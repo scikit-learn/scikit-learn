@@ -15,6 +15,7 @@ Implements Classification and Regression Trees (Breiman et al. 1984)
 """
 
 from __future__ import division
+from ..utils import check_random_state
 import numpy as np
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ._tree import eval_gini, eval_entropy, eval_miss, eval_mse
@@ -99,26 +100,34 @@ def _find_best_split(features, labels, criterion):
 
 
 def _build_tree(is_classification, features, labels, criterion,
-               max_depth, min_split, F, K):
+               max_depth, min_split, F, K, random_state):
 
+    n_samples, n_dims = features.shape
     if len(labels) != len(features):
         raise ValueError("Number of labels does not match "
                           "number of features\n"
                          "num labels is %s and num features is %s "
                          % (len(labels), len(features)))
 
-    sample_dims = np.array(xrange(features.shape[1]))
+    sample_dims = np.arange(n_dims)
     if F is not None:
         if F <= 0:
             raise ValueError("F must be > 0.\n"
                              "Did you mean to use None to signal no F?")
-        if F > features.shape[1]:
+        if F > n_dims:
             raise ValueError("F must be < num dimensions of features.\n"
                              "F is %s, n_dims = %s "
-                             % (F, features.shape[1]))
+                             % (F, n_dims))
 
-        sample_dims = np.sort(np.array( \
-                        random.sample(xrange(features.shape[1]), F)))
+        sample_dims = np.unique(random_state.randint(0, n_dims, F))
+        # This ugly construction is required because np.random
+        # does not have a sample(population, K) method that will
+        # return a subset of K elements from the population.
+        # In certain instances, random_state.randint() will return duplicates,
+        # meaning that len(sample_dims) < F.  This breaks the contract with 
+        # the user.
+        while len(sample_dims) != F:
+            sample_dims = np.unique(random_state.randint(0, n_dims, F))
         features = features[:, sample_dims]
 
     if min_split <= 0:
@@ -202,7 +211,8 @@ class BaseDecisionTree(BaseEstimator):
 
     _dtree_types = ['classification', 'regression']
 
-    def __init__(self, K, impl, criterion, max_depth, min_split, F, seed):
+    def __init__(self, K, impl, criterion, max_depth,
+                 min_split, F, random_state):
 
         if not impl in self._dtree_types:
             raise ValueError("impl should be one of %s, %s was given"
@@ -214,9 +224,7 @@ class BaseDecisionTree(BaseEstimator):
         self.max_depth = max_depth
         self.min_split = min_split
         self.F = F
-
-        if seed is not None:
-            random.seed(seed)
+        self.random_state = check_random_state(random_state)
 
         self.n_features = None
         self.tree = None
@@ -273,12 +281,12 @@ class BaseDecisionTree(BaseEstimator):
                                  self.K)
             self.tree = _build_tree(True, X, y, lookup_c[self.criterion],
                                     self.max_depth, self.min_split, self.F,
-                                    self.K)
+                                    self.K, self.random_state)
         else: # regression
             y = np.asanyarray(y, dtype=np.float64, order='C')
             self.tree = _build_tree(False, X, y, lookup_r[self.criterion],
                                     self.max_depth, self.min_split, self.F,
-                                    None)
+                                    None, self.random_state)
         return self
 
     def predict(self, X):
@@ -312,11 +320,13 @@ class BaseDecisionTree(BaseEstimator):
                              " input n_features is %s "
                              % (self.n_features, n_features))
 
-        C = np.zeros(n_samples, dtype=int)
-        for idx, sample in enumerate(X):
-            if self.type == 'classification':
+        if self.type == 'classification':
+            C = np.zeros(n_samples, dtype=int)
+            for idx, sample in enumerate(X):
                 C[idx] = np.argmax(_apply_tree(self.tree, sample))
-            else:
+        else:
+            C = np.zeros(n_samples, dtype=float)
+            for idx, sample in enumerate(X):            
                 C[idx] = _apply_tree(self.tree, sample)
 
         return C
@@ -342,31 +352,40 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     F : integer, optional
         if given, then, choose F features
 
-    seed : integer or array_like, optional
+    random_state : integer or array_like, optional
         seed the random number generator
 
 
-    #Example
-    #-------
-    #>>> import numpy as np
-    #>>> from scikits.learn.datasets import load_iris
-    #>>> from scikits.learn.cross_val import StratifiedKFold
-    #>>> from scikits.learn import tree
-    #>>> data = load_iris()
-    #>>> skf = StratifiedKFold(data.target, 10)
-    #>>> for train_index, test_index in skf:
-    #...     tree = tree.DecisionTreeClassifier(K=3)
-    #...     tree.fit(data.data[train_index], data.target[train_index])
-    #...     #print np.mean(tree.predict(data.data[test_index])
-    #...     # == data.target[test_index])
-    #...
+    Example
+    -------
+    >>> import numpy as np
+    >>> from scikits.learn.datasets import load_iris
+    >>> from scikits.learn.cross_val import StratifiedKFold
+    >>> from scikits.learn.tree import DecisionTreeClassifier
+    >>> data = load_iris()
+    >>> skf = StratifiedKFold(data.target, 10)
+    >>> for train_index, test_index in skf:
+    ...     clf = DecisionTreeClassifier()
+    ...     clf = clf.fit(data.data[train_index], data.target[train_index])
+    ...     print np.mean(clf.predict(data.data[test_index]) == data.target[test_index])
+    ...
+    1.0
+    0.933333333333
+    0.866666666667
+    0.933333333333
+    0.933333333333
+    0.933333333333
+    0.933333333333
+    1.0
+    0.933333333333
+    1.0
 
     """
 
     def __init__(self, K=None, criterion='gini', max_depth=10,
-                  min_split=1, F=None, seed=None):
+                  min_split=1, F=None, random_state=None):
         BaseDecisionTree.__init__(self, K, 'classification', criterion,
-                                  max_depth, min_split, F, seed)
+                                  max_depth, min_split, F, random_state)
 
     def predict_proba(self, X):
         """
@@ -441,31 +460,28 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     F : integer, optional
         if given, then, choose F features
 
-    seed : integer or array_like, optional
+    random_state : integer or array_like, optional
         seed the random number generator
 
-    #Example
-    #-------
-    #>>> import numpy as np
-    #>>> from scikits.learn.datasets import load_boston
-    #>>> from scikits.learn.cross_val import KFold
-    #>>> from scikits.learn import tree
-    #>>> data = load_boston()
-    #>>> np.random.seed([1])
-    #>>> perm = np.random.permutation(data.target.size / 8)
-    #>>> data.data = data.data[perm]
-    #>>> data.target = data.target[perm]
-    #>>> kf = KFold(len(data.target), 2)
-    #>>> for train_index, test_index in kf:
-    #...     tree = tree.DecisionTreeRegressor()
-    #...     tree.fit(data.data[train_index], data.target[train_index])
-    #...     #print np.mean(np.power(tree.predict(data.data[test_index])
-    #...     # - data.target[test_index], 2))
-    #...
+    Example
+    -------
+    >>> import numpy as np
+    >>> from scikits.learn.datasets import load_boston
+    >>> from scikits.learn.cross_val import KFold
+    >>> from scikits.learn.tree import DecisionTreeRegressor
+    >>> data = load_boston()
+    >>> kf = KFold(len(data.target), 2)
+    >>> for train_index, test_index in kf:
+    ...     clf = DecisionTreeRegressor()
+    ...     clf = clf.fit(data.data[train_index], data.target[train_index])
+    ...     print np.mean(np.power(clf.predict(data.data[test_index]) - data.target[test_index], 2))
+    ...
+    19.2264679543
+    41.2959435867
 
     """
 
     def __init__(self, criterion='mse', max_depth=10,
-                  min_split=1, F=None, seed=None):
+                  min_split=1, F=None, random_state=None):
         BaseDecisionTree.__init__(self, None, 'regression', criterion,
-                                  max_depth, min_split, F, seed)
+                                  max_depth, min_split, F, random_state)

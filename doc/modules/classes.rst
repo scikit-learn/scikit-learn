@@ -70,6 +70,28 @@ Low-level methods
    svm.libsvm.cross_validation
 
 
+Decision Trees
+==============
+
+
+.. automodule:: scikits.learn.tree
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: scikits.learn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   tree.DecisionTreeClassifier
+   tree.DecisionTreeRegressor
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+
 Generalized Linear Models
 =========================
 

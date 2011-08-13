@@ -9,7 +9,6 @@ from numpy.testing import assert_array_equal, assert_array_almost_equal, \
 from nose.tools import assert_raises
 
 from scikits.learn import tree, datasets, metrics
-from scikits.learn.datasets.samples_generator import test_dataset_classif
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -46,7 +45,7 @@ def test_classification_toy():
     """
     With subsampling
     """
-    clf = tree.DecisionTreeClassifier(F=1)
+    clf = tree.DecisionTreeClassifier(F=1, random_state=1)
     clf.fit(X,Y)
     
     assert_array_equal(clf.predict(T), true_result)
@@ -63,7 +62,7 @@ def test_regression_toy():
     """
     With subsampling
     """
-    clf = tree.DecisionTreeRegressor(F=1)
+    clf = tree.DecisionTreeRegressor(F=1, random_state=1)
     clf.fit(X,Y)
     
     assert_almost_equal(clf.predict(T), true_result)
