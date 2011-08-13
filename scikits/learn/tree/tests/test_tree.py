@@ -9,7 +9,6 @@ from numpy.testing import assert_array_equal, assert_array_almost_equal, \
 from nose.tools import assert_raises
 
 from scikits.learn import tree, datasets, metrics
-from scikits.learn.datasets.samples_generator import test_dataset_classif
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
