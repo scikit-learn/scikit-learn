@@ -109,7 +109,7 @@ def _build_tree(is_classification, features, labels, criterion,
                          "num labels is %s and num features is %s "
                          % (len(labels), len(features)))
 
-    sample_dims = np.array(xrange(n_dims))
+    sample_dims = np.arange(n_dims)
     if F is not None:
         if F <= 0:
             raise ValueError("F must be > 0.\n"
