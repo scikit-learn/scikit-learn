@@ -85,7 +85,7 @@ y_min, y_max = reduced_data[:, 1].min() - 1, reduced_data[:, 1].max() + 1
 xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
 
 # Obtain labels for each point in mesh. Use last trained model.
-Z = kmeans.transform(np.c_[xx.ravel(), yy.ravel()])
+Z = kmeans.predict(np.c_[xx.ravel(), yy.ravel()])
 
 # Put the result into a color plot
 Z = Z.reshape(xx.shape)
