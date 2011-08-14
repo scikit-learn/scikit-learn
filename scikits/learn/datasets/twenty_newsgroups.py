@@ -142,7 +142,7 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
                                           cache_path=cache_path)
         else:
             raise IOError('20Newsgroups dataset not found')
-
+        
     if subset in ('train', 'test'):
         data = cache[subset]
     elif subset == 'all':
@@ -195,4 +195,3 @@ def load_20newsgroups(download_if_missing=False, **kwargs):
     See fetch_20newsgroups.__doc__ for documentation and parameter list.
     """
     return fetch_20newsgroups(download_if_missing=download_if_missing, **kwargs)
-
