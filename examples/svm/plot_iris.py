@@ -11,9 +11,7 @@ print __doc__
 
 import numpy as np
 import pylab as pl
-from scikits.learn import datasets
-from scikits.learn import svm
-from scikits.learn import label_propagation
+from scikits.learn import svm, datasets
 
 # import some data to play with
 iris = datasets.load_iris()
