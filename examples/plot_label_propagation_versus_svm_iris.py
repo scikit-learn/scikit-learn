@@ -5,6 +5,10 @@ Plot Label Propagation versus SVM with iris dataset
 
 Comparison for decision boundary generated on iris dataset
 between Label Propagation and SVM.
+
+This demonstrates Label Propagation learning a good boundary
+even with a small amount of labeled data.
+
 """
 print __doc__
 
