@@ -36,7 +36,6 @@ Example
 ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
 LabelPropagation(...)
 
-
 Notes
 -----
 References:
@@ -45,10 +44,7 @@ References:
 """
 import numpy as np
 from .base import BaseEstimator, ClassifierMixin
-from .externals.joblib.logger import Logger
 from .metrics.pairwise import rbf_kernel
-
-logger = Logger()
 
 # Authors: Clay Woolam <clay@woolam.org>
 
