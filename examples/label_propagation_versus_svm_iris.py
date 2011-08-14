@@ -26,6 +26,7 @@ from scikits.learn import label_propagation
 from scikits.learn.metrics.metrics import precision_score
 from scikits.learn.metrics.metrics import recall_score
 from scikits.learn.metrics.metrics import f1_score
+
 iris = datasets.load_iris()
 
 X = iris.data
@@ -53,9 +54,10 @@ print "SVM 80.0pct\t%0.6f\t%0.6f\t%0.6f" %\
         (precision_score(svc.predict(X[test]), Y[test]),\
          recall_score(svc.predict(X[test]), Y[test]),\
          f1_score(svc.predict(X[test]), Y[test]))
+
 print "-------"
 
-for num in [0.2, 0.3, 0.4]:
+for num in [0.2, 0.3, 0.4, 1.0]:
     lp = label_propagation.LabelPropagation()
     hold_new = np.random.rand(len(train)) > num
     train_new, = np.where(hold_new)
@@ -67,16 +69,8 @@ for num in [0.2, 0.3, 0.4]:
              recall_score(lp.predict(X[test]), Y[test]),\
              f1_score(lp.predict(X[test]), Y[test]))
 
-lp = label_propagation.LabelPropagation()
-lp.fit(X_all, Y_all, suppress_warning=True)
-print "LP 80.0pct\t%0.6f\t%0.6f\t%0.6f" % \
-        (precision_score(lp.predict(X[test]), Y[test]),\
-         recall_score(lp.predict(X[test]), Y[test]),\
-         f1_score(lp.predict(X[test]), Y[test]))
-
-
 # label spreading
-for num in [0.2, 0.3, 0.4]:
+for num in [0.2, 0.3, 0.4, 1.0]:
     lspread = label_propagation.LabelSpreading()
     hold_new = np.random.rand(len(train)) > num
     train_new, = np.where(hold_new)
@@ -87,12 +81,6 @@ for num in [0.2, 0.3, 0.4]:
             (80 * num, precision_score(lspread.predict(X[test]), Y[test]),\
              recall_score(lspread.predict(X[test]), Y[test]), \
              f1_score(lspread.predict(X[test]), Y[test]))
-lspread = label_propagation.LabelSpreading(alpha=1)
-lspread.fit(X_all, Y_all, suppress_warning=True)
-print "LS 80.0pct\t%0.6f\t%0.6f\t%0.6f" % \
-        (precision_score(lspread.predict(X[test]), Y[test]),\
-         recall_score(lspread.predict(X[test]), Y[test]), \
-         f1_score(lspread.predict(X[test]), Y[test]))
 
 print "-------"
 lspread = label_propagation.LabelSpreading(alpha=0.8)
@@ -102,7 +90,7 @@ train_new, = np.where(hold_new)
 Y_dup = np.copy(Y)
 Y_dup[train_new] = -1
 lspread.fit(X, Y, suppress_warning=True)
-trans_result = np.asarray(lspread.transduction)
+trans_result = np.asarray(lspread.transduction_)
 print "LS 20tran\t%0.6f\t%0.6f\t%0.6f" % \
         (precision_score(trans_result[test], Y[test]),
          recall_score(trans_result[test], Y[test]), \

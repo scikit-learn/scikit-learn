@@ -115,7 +115,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
             Predictions for input data
         """
         ym = self.predict_proba(X)
-        return self.unq_labels[np.argmax(ym, axis=1)]
+        return self.unq_labels[np.argmax(ym, axis=1)].flatten()
 
     def predict_proba(self, X):
         """
