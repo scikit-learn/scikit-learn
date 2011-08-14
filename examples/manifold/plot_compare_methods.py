@@ -1,21 +1,10 @@
-r"""
+"""
 =========================================
  Comparison of Manifold Learning methods
 =========================================
 
 An illustration of dimensionality reduction on the S-curve dataset
-with various manifold learning methods.  The methods are as follows:
-
-* LLE : Standard Locally Linear Embedding.
-  :func:`scikits.learn.manifold.locally_linear`, ``method = 'standard'``
-* LTSA : Local Tangent Space Alignment.
-  :func:`scikits.learn.manifold.locally_linear`, ``method = 'ltsa'``
-* Hessian LLE : Hessian Eigenmapping.
-  :func:`scikits.learn.manifold.locally_linear`, ``method = 'hessian``
-* Modified LLE : Modified Locally Linear Embedding with multiple weights.
-  :func:`scikits.learn.manifold.locally_linear`, ``method = 'modified'``
-* Isomap : Isometric Mapping.
-  :func:`scikits.learn.manifold.Isomap`
+with various manifold learning methods.
 
 For a discussion and comparison of these algorithms, see the
 :ref:`manifold module page <manifold>`
@@ -33,12 +22,10 @@ from matplotlib.ticker import NullFormatter
 
 from scikits.learn import manifold, datasets
 
-X, color = datasets.samples_generator.make_s_curve(1000)
+n_points = 1000
+X, color = datasets.samples_generator.make_s_curve(n_points)
 n_neighbors = 10
 out_dim = 2
-
-methods = ['standard', 'ltsa', 'hessian', 'modified']
-labels = ['LLE', 'LTSA', 'Hessian LLE', 'Modified LLE']
 
 fig = pl.figure(figsize=(12, 8))
 pl.suptitle("Manifold Learning with %i points, %i neighbors"
@@ -53,7 +40,8 @@ except:
     ax = fig.add_subplot(231, projection='3d')
     pl.scatter(X[:, 0], X[:, 2], c=color, cmap=pl.cm.Spectral)
 
-ax.set_title('Original Data')
+methods = ['standard', 'ltsa', 'hessian', 'modified']
+labels = ['LLE', 'LTSA', 'Hessian LLE', 'Modified LLE']    
 
 for i, method in enumerate(methods):
     t0 = time()
@@ -79,5 +67,6 @@ pl.scatter(Y[:, 0], Y[:, 1], c=color, cmap=pl.cm.Spectral)
 pl.title("Isomap (%.2g sec)" % (t1 - t0))
 ax.xaxis.set_major_formatter(NullFormatter())
 ax.yaxis.set_major_formatter(NullFormatter())
+pl.axis('tight')
 
 pl.show()
