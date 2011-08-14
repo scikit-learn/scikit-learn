@@ -76,12 +76,13 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
             conv_threshold=1e-3):
         self.max_iters = max_iters
         self.conv_threshold = conv_threshold
-        self.gamma = gamma
 
         # object referring to a point that is unlabeled
         self.unlabeled_identifier = unlabeled_identifier
 
+        # kernel parameters
         self.kernel = kernel
+        self.gamma = gamma
 
         # clamping factor
         self.alpha = alpha
@@ -135,7 +136,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         X : array-like, shape = [n_samples, n_freatures]
           A {n_samples by n_samples} size matrix will be created from this
           (keep dataset fewer than 2000 points)
-        y : array, shape = [n_labeled_samples]
+        y : array_like, shape = [n_labeled_samples]
           n_labeled_samples (unlabeled points marked with a special identifier)
           All unlabeled samples will be transductively assigned labels
 
