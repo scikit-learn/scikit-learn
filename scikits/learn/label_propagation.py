@@ -76,11 +76,10 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
 
     def __init__(self, kernel='rbf', gamma=20, alpha=1,
             unlabeled_identifier=-1, max_iters=100,
-            conv_threshold=1e-3, suppress_warning=False):
+            conv_threshold=1e-3):
         self.max_iters = max_iters
         self.conv_threshold = conv_threshold
         self.gamma = gamma
-        self.suppress_warning = suppress_warning
 
         # object referring to a point that is unlabeled
         self.unlabeled_identifier = unlabeled_identifier
@@ -239,7 +238,7 @@ class LabelSpreading(BaseLabelPropagation):
     
     def __init__(self, kernel='rbf', gamma=20, alpha=0.2,
             unlabeled_identifier=-1, max_iters=100,
-            conv_threshold=1e-3, suppress_warning=False):
+            conv_threshold=1e-3):
         # this one has different base parameters
         super(LabelSpreading, self).__init__()
 
