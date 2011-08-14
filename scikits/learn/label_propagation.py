@@ -57,10 +57,11 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
 
     Parameters
     ----------
-    kernel : function (array_1, array_2) -> float
-      kernel function to use
+    kernel : string
+      string identifier for kernel function to use
+      only 'rbf' kernel is currently supported
     gamma : float
-      parameter to initialize the kernel function
+      parameter for rbf kernel
     alpha : float
       clamping factor
 
@@ -153,7 +154,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         unq_labels = np.unique(y)
         unq_labels = unq_labels[unq_labels != self.unlabeled_identifier]
         self.unq_labels = unq_labels
-        
+
         n_labels, n_classes = len(y), len(unq_labels)
 
         y_st = np.asanyarray(y)
@@ -192,6 +193,21 @@ class LabelPropagation(BaseLabelPropagation):
     """
     Computes a stochastic affinity matrix and uses hard clamping.
 
+    Parameters
+    ----------
+    kernel : string
+      string identifier for kernel function to use
+      only 'rbf' kernel is currently supported
+    gamma : float
+      parameter for rbf kernel
+    alpha : float
+      clamping factor
+
+    max_iters : float
+      change maximum number of iterations allowed
+    conv_threshold : float
+      threshold to consider the system at steady state
+
     Examples
     --------
     >>> from scikits.learn import datasets
@@ -227,11 +243,35 @@ class LabelSpreading(BaseLabelPropagation):
 
     Parameters
     ----------
+    kernel : string
+      string identifier for kernel function to use
+      only 'rbf' kernel is currently supported
+    gamma : float
+      parameter for rbf kernel
     alpha : float
-      "clamping factor" or how much of the original labels you want to keep
+      clamping factor
+
+    max_iters : float
+      change maximum number of iterations allowed
+    conv_threshold : float
+      threshold to consider the system at steady state
+
+    Examples
+    --------
+    >>> from scikits.learn import datasets
+    >>> label_prop_model = LabelSpreading()
+    >>> iris = datasets.load_iris()
+    >>> random_unlabeled_points = np.where(np.random.random_integers(0, 1,
+        size=len(iris.target)))
+    >>> labels = np.copy(iris.target)
+    >>> labels[random_unlabeled_points] = -1
+    >>> label_prop_model.fit(iris.data, labels, unlabeled_identifier=-1)
+    ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+        LabelSpreading(...)
+
 
     """
-    
+
     def __init__(self, kernel='rbf', gamma=20, alpha=0.2,
             unlabeled_identifier=-1, max_iters=100,
             conv_threshold=1e-3):
