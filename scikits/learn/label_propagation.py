@@ -65,6 +65,10 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
     alpha : float
       clamping factor
 
+    unlabeled_identifier : any object, same class as label objects
+      a special identifier label that represents unlabeled examples
+      in the training set
+
     max_iters : float
       change maximum number of iterations allowed
     conv_threshold : float
@@ -204,6 +208,10 @@ class LabelPropagation(BaseLabelPropagation):
     alpha : float
       clamping factor
 
+    unlabeled_identifier : any object, same class as label objects
+      a special identifier label that represents unlabeled examples
+      in the training set
+
     max_iters : float
       change maximum number of iterations allowed
     conv_threshold : float
@@ -252,6 +260,10 @@ class LabelSpreading(BaseLabelPropagation):
     alpha : float
       clamping factor
 
+    unlabeled_identifier : any object, same class as label objects
+      a special identifier label that represents unlabeled examples
+      in the training set
+
     max_iters : float
       change maximum number of iterations allowed
     conv_threshold : float
@@ -269,8 +281,6 @@ class LabelSpreading(BaseLabelPropagation):
     >>> label_prop_model.fit(iris.data, labels, unlabeled_identifier=-1)
     ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
         LabelSpreading(...)
-
-
     """
 
     def __init__(self, kernel='rbf', gamma=20, alpha=0.2,
