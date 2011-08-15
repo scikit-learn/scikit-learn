@@ -365,7 +365,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     >>> data = load_iris()
     >>> skf = StratifiedKFold(data.target, 10)
     >>> for train_index, test_index in skf:
-    ...     clf = DecisionTreeClassifier()
+    ...     clf = DecisionTreeClassifier(random_state=0)
     ...     clf = clf.fit(data.data[train_index], data.target[train_index])
     ...     print np.mean(clf.predict(data.data[test_index]) == data.target[test_index])
     ...
@@ -472,7 +472,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     >>> data = load_boston()
     >>> kf = KFold(len(data.target), 2)
     >>> for train_index, test_index in kf:
-    ...     clf = DecisionTreeRegressor()
+    ...     clf = DecisionTreeRegressor(random_state=0)
     ...     clf = clf.fit(data.data[train_index], data.target[train_index])
     ...     print np.mean(np.power(clf.predict(data.data[test_index]) - data.target[test_index], 2))
     ...
