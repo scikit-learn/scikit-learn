@@ -12,9 +12,9 @@ from scikits.learn import tree, datasets, metrics
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
-Y = [0, 0, 0, 1, 1, 1]
+Y = [-1, -1, -1, 1, 1, 1]
 T = [[-1, -1], [2, 2], [3, 2]]
-true_result = [0, 1, 1]
+true_result = [-1, 1, 1]
 
 # also load the iris dataset
 # and randomly permute it

@@ -124,7 +124,7 @@ def _build_tree(is_classification, features, labels, criterion,
         # does not have a sample(population, K) method that will
         # return a subset of K elements from the population.
         # In certain instances, random_state.randint() will return duplicates,
-        # meaning that len(sample_dims) < F.  This breaks the contract with 
+        # meaning that len(sample_dims) < F.  This breaks the contract with
         # the user.
         while len(sample_dims) != F:
             sample_dims = np.unique(random_state.randint(0, n_dims, F))
@@ -209,17 +209,19 @@ class BaseDecisionTree(BaseEstimator):
     Should not be used directly, use derived classes instead
     '''
 
-    _dtree_types = ['classification', 'regression']
+    _tree_types = ['classification', 'regression']
+    _classification_subtypes = ['binary', 'multiclass']
 
     def __init__(self, K, impl, criterion, max_depth,
                  min_split, F, random_state):
 
-        if not impl in self._dtree_types:
+        if not impl in self._tree_types:
             raise ValueError("impl should be one of %s, %s was given"
-                             % (self._dtree_types, impl))
+                             % (self._tree_types, impl))
 
         self.type = impl
         self.K = K
+        self.classification_subtype = None
         self.criterion = criterion
         self.max_depth = max_depth
         self.min_split = min_split
@@ -274,15 +276,34 @@ class BaseDecisionTree(BaseEstimator):
 
         if self.type == 'classification':
             y = np.asanyarray(y, dtype=np.int, order='C')
-            if self.K is None:
-                self.K = y.max() + 1
-            if y.max() >= self.K or y.min() < 0:
-                raise ValueError("Labels must be in the range [0 to %s)",
-                                 self.K)
+
+            labels = np.unique(y)
+            if tuple(labels) == (-1, 1):
+                if self.K is None:
+                    self.K = 2
+                else:
+                    if self.K != 2:
+                        raise ValueError("K must equal 2 for binary"
+                                         " classification")
+                self.classification_subtype = "binary"
+                y[y == -1] = 0  # normalise target
+            elif labels.min() >= 0:
+                if self.K is None:
+                    self.K = labels.max() + 1
+                else:
+                    if self.K != 2:
+                        raise ValueError("Labels must be in range"
+                                         "[0 to %s) " % self.K)
+                self.classification_subtype = "multiclass"
+            else:
+                raise ValueError("Labels must be [-1, 1] for binary and "
+                                 "in the range [0 to %s) for multiclass "
+                                 "classification " % self.K)
+
             self.tree = _build_tree(True, X, y, lookup_c[self.criterion],
                                     self.max_depth, self.min_split, self.F,
                                     self.K, self.random_state)
-        else: # regression
+        else:  # regression
             y = np.asanyarray(y, dtype=np.float64, order='C')
             self.tree = _build_tree(False, X, y, lookup_r[self.criterion],
                                     self.max_depth, self.min_split, self.F,
@@ -321,12 +342,19 @@ class BaseDecisionTree(BaseEstimator):
                              % (self.n_features, n_features))
 
         if self.type == 'classification':
-            C = np.zeros(n_samples, dtype=int)
-            for idx, sample in enumerate(X):
-                C[idx] = np.argmax(_apply_tree(self.tree, sample))
+            if self.classification_subtype == 'binary':
+                C = np.zeros(n_samples, dtype=int)
+                for idx, sample in enumerate(X):
+                    tmp = np.argmax(_apply_tree(self.tree, sample))
+                    assert tmp == 0 or tmp == 1
+                    C[idx] = -1 if tmp == 0 else 1
+            elif self.classification_subtype == 'multiclass':
+                C = np.zeros(n_samples, dtype=int)
+                for idx, sample in enumerate(X):
+                    C[idx] = np.argmax(_apply_tree(self.tree, sample))
         else:
             C = np.zeros(n_samples, dtype=float)
-            for idx, sample in enumerate(X):            
+            for idx, sample in enumerate(X):
                 C[idx] = _apply_tree(self.tree, sample)
 
         return C
