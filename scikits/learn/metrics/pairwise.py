@@ -10,61 +10,64 @@ from scipy.sparse import csr_matrix, issparse
 from ..utils import safe_asanyarray, atleast2d_or_csr, deprecated
 from ..utils.extmath import safe_sparse_dot
 
-################################################################################
-# Distances
+# Utility Functions
+def return_self_if_square(X):
+    """ Returns the argument iff it is a square numpy array
 
-def pairwise_distances(X, Y=None, metric="euclidean"):
-    """ Calculates the distance matrix from a vector matrix X.
+    If the argument is a square numpy array, it is returned.
+    Otherwise, raise a ValueError instead.
 
-    This method takes either a vector array or a distance matrix, and returns
-    a distance matrix. If the input is a vector array, the distances are
-    computed. If the input is a distances matrix, it is returned instead.
+    Examples
+    --------
+    >>> from scikits.learn.metrics.pairwise import return_self_if_square
+    >>> import numpy as np
+    >>> X = np.array([[0, 1], [1, 1]])
+    >>> Y = return_self_if_square(X)
+    array([[ 0.,  1.],
+           [ 1.,  1.]])
+    >>> X = np.array([[0, 1], [1, 1], [2, 2]])
+    >>> Y = return_self_if_square(X)
+    Traceback (most recent call last):
+        ...
+    ValueError: X is not square!
+    """
+    if X.shape[0] != X.shape[1]:
+            raise ValueError("X is not square!")
+    return X
 
-    This method provides a safe way to take a distance matrix as input, while
-    preserving compatability with many other algorithms that take a vector
-    array.
+def check_set_Y(X, Y):
+    """ Sets Y appropriately and checks inputs
+
+    If Y is None, it is set as a pointer to X (i.e. not a copy).
+    If Y is given, this does not happen.
+    All distance metrics should use this function first to assert that the
+    given parameters are correct and safe to use.
 
     Parameters
     ----------
-    X: array [n_samples, n_samples] if metric == "precomputed", or,
-             [n_samples, n_features] otherwise
-        Array of pairwise distances between samples, or a feature array.
+    X: {array-like, sparse matrix}, shape = [n_samples_1, n_features]
 
-    X: array [n_samples, n_features]
-        A second feature array only if X has shape [n_samples, n_features].
-
-    metric: string, or callable
-        The metric to use when calculating distance between instances in a
-        feature array. If metric is a string, it must be one of the options
-        allowed by scipy.spatial.distance.pdist for its metric parameter.
-        If metric is "precomputed", X is assumed to be a distance matrix and
-        must be square.
-        Alternatively, if metric is a callable function, it is called on each
-        pair of instances (rows) and the resulting value recorded. The callable
-        should take two arrays from X as input and return a value indicating
-        the distance between them.
+    Y: {array-like, sparse matrix}, shape = [n_samples_2, n_features]
 
     Returns
     -------
-    D: array [n_samples, n_samples]
-        A distance matrix D such that D_{i, j} is the distance between the
-        ith and jth vectors of the given matrix X.
-
+    safe_X: {array-like, sparse matrix}, shape = [n_samples_1, n_features]
+        An array equal to X, guarenteed to be a numpy array.
+        
+    safe_Y: {array-like, sparse matrix}, shape = [n_samples_2, n_features]
+        An array equal to Y if Y was not None, guarenteed to be a numpy array.
+        If Y was None, safe_Y will be a pointer to X.
+        
     """
-    if metric == "precomputed":
-        if X.shape[0] != X.shape[1]:
-            raise ValueError("X is not square!")
-        return X
-
-    elif metric == "euclidean":
-        return euclidean_distances(X, Y)
-
+    if Y is X or Y is None:
+        X = Y = safe_asanyarray(X)
     else:
-        # FIXME: the distance module doesn't support sparse matrices!
-        if Y is None:
-            return distance.squareform(distance.pdist(X, metric=metric))
-        else:
-            return distance.cdist(X, Y, metric=metric)
+        X = safe_asanyarray(X)
+        Y = safe_asanyarray(Y)
+
+    if X.shape[1] != Y.shape[1]:
+        raise ValueError("Incompatible dimension for X and Y matrices")
+    return X, Y
 
 
 # Distances
@@ -105,15 +108,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     # should not need X_norm_squared because if you could precompute that as
     # well as Y, then you should just pre-compute the output and not even
     # call this function.
-    if Y is X or Y is None:
-        X = Y = safe_asanyarray(X)
-    else:
-        X = safe_asanyarray(X)
-        Y = safe_asanyarray(Y)
-
-    if X.shape[1] != Y.shape[1]:
-        raise ValueError("Incompatible dimension for X and Y matrices")
-
+    X, Y = check_set_Y(X, Y)
     if issparse(X):
         XX = X.multiply(X).sum(axis=1)
     else:
@@ -152,7 +147,7 @@ def euclidian_distances(*args, **kwargs):
 
 
 
-def l1_distances(X, Y):
+def l1_distances(X, Y=None):
     """
     Computes the componentwise L1 pairwise-distances between the vectors
     in X and Y.
@@ -186,6 +181,7 @@ def l1_distances(X, Y):
     array([[ 1.,  1.],
            [ 1.,  1.]])
     """
+    X, Y = check_set_Y(X, Y)
     X, Y = np.atleast_2d(X), np.atleast_2d(Y)
     n_samples_X, n_features_X = X.shape
     n_samples_Y, n_features_Y = Y.shape
@@ -200,7 +196,7 @@ def l1_distances(X, Y):
 
 
 # Kernels
-def linear_kernel(X, Y):
+def linear_kernel(X, Y=None):
     """
     Compute the linear kernel between X and Y.
 
@@ -214,10 +210,11 @@ def linear_kernel(X, Y):
     -------
     Gram matrix: array of shape (n_samples_1, n_samples_2)
     """
+    X, Y = check_set_Y(X, Y)
     return safe_sparse_dot(X, Y.T, dense_output=True)
 
 
-def polynomial_kernel(X, Y, degree=3, gamma=0, coef0=1):
+def polynomial_kernel(X, Y=None, degree=3, gamma=0, coef0=1):
     """
     Compute the polynomial kernel between X and Y.
 
@@ -235,6 +232,7 @@ def polynomial_kernel(X, Y, degree=3, gamma=0, coef0=1):
     -------
     Gram matrix: array of shape (n_samples_1, n_samples_2)
     """
+    X, Y = check_set_Y(X, Y)
     if gamma == 0:
         gamma = 1.0 / X.shape[1]
 
@@ -245,7 +243,7 @@ def polynomial_kernel(X, Y, degree=3, gamma=0, coef0=1):
     return K
 
 
-def sigmoid_kernel(X, Y, gamma=0, coef0=1):
+def sigmoid_kernel(X, Y=None, gamma=0, coef0=1):
     """
     Compute the sigmoid kernel between X and Y.
 
@@ -263,6 +261,7 @@ def sigmoid_kernel(X, Y, gamma=0, coef0=1):
     -------
     Gram matrix: array of shape (n_samples_1, n_samples_2)
     """
+    X, Y = check_set_Y(X, Y)
     if gamma == 0:
         gamma = 1.0 / X.shape[1]
 
@@ -273,7 +272,7 @@ def sigmoid_kernel(X, Y, gamma=0, coef0=1):
     return K
 
 
-def rbf_kernel(X, Y, gamma=0):
+def rbf_kernel(X, Y=None, gamma=0):
     """
     Compute the rbf (gaussian) kernel between X and Y.
 
@@ -291,6 +290,7 @@ def rbf_kernel(X, Y, gamma=0):
     -------
     Gram matrix: array of shape (n_samples_1, n_samples_2)
     """
+    X, Y = check_set_Y(X, Y)
     if gamma == 0:
         gamma = 1.0 / X.shape[1]
 
