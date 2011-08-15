@@ -2,6 +2,7 @@
 Metrics module with score functions, performance metrics and
 pairwise metrics or distances computation
 """
+from scipy.spatial import distance
 
 from .metrics import confusion_matrix, roc_curve, auc, precision_score, \
                 recall_score, fbeta_score, f1_score, zero_one_score, \

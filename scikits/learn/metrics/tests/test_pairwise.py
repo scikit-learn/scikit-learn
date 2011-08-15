@@ -8,7 +8,8 @@ from nose.tools import assert_true
 from scipy.sparse import csr_matrix
 
 from ..pairwise import euclidean_distances, linear_kernel, polynomial_kernel, \
-                       rbf_kernel, sigmoid_kernel, pairwise_distances
+                       rbf_kernel, sigmoid_kernel
+from .. import pairwise_distances
 
 np.random.seed(0)
 
