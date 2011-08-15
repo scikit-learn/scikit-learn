@@ -88,9 +88,6 @@ def _to_graph(n_x, n_y, n_z, mask=None, img=None,
         else:
             dtype = img.dtype
 
-    if dtype == np.bool:
-        dtype = np.int
-
     if img is not None:
         img = np.atleast_3d(img)
         weights = _compute_gradient_3d(edges, img)
@@ -247,7 +244,7 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
         if isinstance(max_patches, int) and max_patches < all_patches:
             n_patches = max_patches
         elif isinstance(max_patches, float) and 0 < max_patches < 1:
-            n_patches = max_patches * n_patches
+            n_patches = int(max_patches * all_patches)
         else:
             raise ValueError("Invalid value for max_patches: %r" % max_patches)
 

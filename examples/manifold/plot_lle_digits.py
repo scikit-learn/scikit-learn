@@ -26,6 +26,7 @@ y = digits.target
 n_samples, n_features = X.shape
 n_neighbors = 30
 
+
 #----------------------------------------------------------------------
 # Scale and visualize the embedding vectors
 def plot_embedding(X, title=None):
@@ -55,6 +56,21 @@ def plot_embedding(X, title=None):
     pl.xticks([]), pl.yticks([])
     if title is not None:
         pl.title(title)
+
+
+#----------------------------------------------------------------------
+# Plot images of the digits
+N = 20
+img = np.zeros((10 * N, 10 * N))
+for i in range(N):
+    ix = 10*i + 1
+    for j in range(N):
+        iy = 10 * j + 1
+        img[ix:ix + 8, iy:iy + 8] = X[i*N+j].reshape((8,8))
+pl.imshow(img, cmap=pl.cm.binary)
+pl.xticks([])
+pl.yticks([])
+pl.title('A selection from the 64-dimensional digits dataset')
 
 
 #----------------------------------------------------------------------
@@ -90,6 +106,17 @@ plot_embedding(X_lda,
 
 
 #----------------------------------------------------------------------
+# Isomap projection of the digits dataset
+print "Computing Isomap embedding"
+t0 = time()
+X_iso = manifold.Isomap(n_neighbors, out_dim=2).fit_transform(X)
+print "Done."
+plot_embedding(X_iso, 
+    "Isomap projection of the digits (time %.2fs)" % 
+    (time() - t0))
+
+
+#----------------------------------------------------------------------
 # Locally linear embedding of the digits dataset
 print "Computing LLE embedding"
 clf = manifold.LocallyLinearEmbedding(n_neighbors, out_dim=2,
@@ -116,19 +143,6 @@ plot_embedding(X_mlle,
 
 
 #----------------------------------------------------------------------
-# LTSA embedding of the digits dataset
-print "Computing LTSA embedding"
-clf = manifold.LocallyLinearEmbedding(n_neighbors, out_dim=2,
-                                      method='ltsa')
-t0 = time()
-X_ltsa = clf.fit_transform(X)
-print "Done. Reconstruction error: %g" % clf.reconstruction_error_
-plot_embedding(X_ltsa, 
-    "Local Tangent Space Alignment of the digits (time %.2fs)" % 
-    (time() - t0))
-
-
-#----------------------------------------------------------------------
 # HLLE embedding of the digits dataset
 print "Computing Hessian LLE embedding"
 clf = manifold.LocallyLinearEmbedding(n_neighbors, out_dim=2,
@@ -142,15 +156,15 @@ plot_embedding(X_hlle,
 
 
 #----------------------------------------------------------------------
-# Isomap projection of the digits dataset
-print "Computing Isomap embedding"
+# LTSA embedding of the digits dataset
+print "Computing LTSA embedding"
+clf = manifold.LocallyLinearEmbedding(n_neighbors, out_dim=2,
+                                      method='ltsa')
 t0 = time()
-X_iso = manifold.Isomap(n_neighbors, out_dim=2).fit_transform(X)
-print "Done."
-plot_embedding(X_iso, 
-    "Isomap projection of the digits (time %.2fs)" % 
+X_ltsa = clf.fit_transform(X)
+print "Done. Reconstruction error: %g" % clf.reconstruction_error_
+plot_embedding(X_ltsa,
+    "Local Tangent Space Alignment of the digits (time %.2fs)" % 
     (time() - t0))
-
-
 
 pl.show()
