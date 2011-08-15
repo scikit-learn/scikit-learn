@@ -21,12 +21,12 @@ def return_self_if_square(X):
     --------
     >>> from scikits.learn.metrics.pairwise import return_self_if_square
     >>> import numpy as np
-    >>> X = np.array([[0, 1], [1, 1]])
-    >>> Y = return_self_if_square(X)
+    >>> X = np.array([[0., 1.], [1., 1.]])
+    >>> return_self_if_square(X)
     array([[ 0.,  1.],
            [ 1.,  1.]])
     >>> X = np.array([[0, 1], [1, 1], [2, 2]])
-    >>> Y = return_self_if_square(X)
+    >>> return_self_if_square(X)
     Traceback (most recent call last):
         ...
     ValueError: X is not square!
@@ -64,7 +64,7 @@ def check_set_Y(X, Y):
     else:
         X = safe_asanyarray(X)
         Y = safe_asanyarray(Y)
-
+    X, Y = np.atleast_2d(X), np.atleast_2d(Y)
     if X.shape[1] != Y.shape[1]:
         raise ValueError("Incompatible dimension for X and Y matrices")
     return X, Y
@@ -182,7 +182,6 @@ def l1_distances(X, Y=None):
            [ 1.,  1.]])
     """
     X, Y = check_set_Y(X, Y)
-    X, Y = np.atleast_2d(X), np.atleast_2d(Y)
     n_samples_X, n_features_X = X.shape
     n_samples_Y, n_features_Y = Y.shape
     if n_features_X != n_features_Y:
