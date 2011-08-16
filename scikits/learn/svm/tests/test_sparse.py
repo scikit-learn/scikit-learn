@@ -5,7 +5,7 @@ from numpy.testing import assert_array_almost_equal, \
      assert_array_equal, assert_equal
 
 from nose.tools import assert_raises
-from scikits.learn.datasets.samples_generator import test_dataset_classif
+from scikits.learn.datasets.samples_generator import make_classification
 from . import test_svm
 
 # test sample 1
@@ -133,8 +133,9 @@ def test_weight():
     Test class weights
     """
 
-    X_, y_ = test_dataset_classif(n_samples=200, n_features=100, param=[5, 1],
-                                  seed=0)
+    X_, y_ = make_classification(n_samples=200, n_features=100, 
+                                 weights=[0.833, 0.167], random_state=0)
+
     X_ = scipy.sparse.csr_matrix(X_)
     for clf in (linear_model.sparse.LogisticRegression(),
                 svm.sparse.LinearSVC(),

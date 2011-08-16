@@ -42,7 +42,7 @@ def _mean_and_std(X, axis=0, with_mean=True, with_std=True):
 
 
 def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
-    """Method to standardize a dataset along any axis
+    """Standardize a dataset along any axis
 
     Center to the mean and component wise scale to unit variance.
 
@@ -52,7 +52,9 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
         The data to center and scale.
 
     axis : int (0 by default)
-        axis used to compute the means and standard deviations along
+        axis used to compute the means and standard deviations along. If 0,
+        independently standardize each feature, otherwise (if 1) standardize
+        each sample.
 
     with_mean : boolean, True by default
         If True, center the data before scaling.
@@ -88,7 +90,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     return X
 
 
-class Scaler(BaseEstimator):
+class Scaler(BaseEstimator, TransformerMixin):
     """Standardize features by removing the mean and scaling to unit variance
 
     Centering and scaling happen indepently on each feature by computing
@@ -161,7 +163,7 @@ class Scaler(BaseEstimator):
             X, axis=0, with_mean=self.with_mean, with_std=self.with_std)
         return self
 
-    def transform(self, X, y=None, copy=True):
+    def transform(self, X, y=None, copy=None):
         """Perform standardization by centering and scaling
 
         Parameters
@@ -185,7 +187,7 @@ class Scaler(BaseEstimator):
 
 
 def normalize(X, norm='l2', axis=1, copy=True):
-    """Normalize rows of a 2D array or scipy.sparse matrix
+    """Normalize a dataset along any axis
 
     Parameters
     ----------
@@ -195,10 +197,12 @@ def normalize(X, norm='l2', axis=1, copy=True):
         un-necessary copy.
 
     norm : 'l1' or 'l2', optional ('l2' by default)
-        the norm to use to normalize each non zero sample
+        The norm to use to normalize each non zero sample (or each non-zero
+        feature if axis is 0).
 
     axis : 0 or 1, optional (1 by default)
-        if 1, normalize the columns instead of the rows
+        axis used to normalize the data along. If 1, independently normalize
+        each sample, otherwise (if 0) normalize each feature.
 
     copy : boolean, optional, default is True
         set to False to perform inplace row normalization and avoid a
@@ -245,7 +249,7 @@ def normalize(X, norm='l2', axis=1, copy=True):
     return X
 
 
-class Normalizer(BaseEstimator):
+class Normalizer(BaseEstimator, TransformerMixin):
     """Normalize samples individually to unit norm
 
     Each sample (i.e. each row of the data matrix) with at least one
@@ -265,7 +269,7 @@ class Normalizer(BaseEstimator):
     Parameters
     ----------
     norm : 'l1' or 'l2', optional ('l2' by default)
-        the norm to use to normalize each non zero sample
+        The norm to use to normalize each non zero sample.
 
     copy : boolean, optional, default is True
         set to False to perform inplace row normalization and avoid a
@@ -305,7 +309,7 @@ class Normalizer(BaseEstimator):
             in CSR format to avoid an un-necessary copy.
         """
         copy = copy if copy is not None else self.copy
-        return normalize(X, norm=self.norm, copy=copy)
+        return normalize(X, norm=self.norm, axis=1, copy=copy)
 
 
 def binarize(X, threshold=0.0, copy=True):
@@ -319,7 +323,7 @@ def binarize(X, threshold=0.0, copy=True):
         un-necessary copy.
 
     threshold : float, optional (0.0 by default)
-        The
+        The lower bound that triggers feature values to be replaced by 1.0.
 
     copy : boolean, optional, default is True
         set to False to perform inplace binarization and avoid a copy
@@ -348,7 +352,7 @@ def binarize(X, threshold=0.0, copy=True):
     return X
 
 
-class Binarizer(BaseEstimator):
+class Binarizer(BaseEstimator, TransformerMixin):
     """Binarize data (set feature values to 0 or 1) according to a threshold
 
     The default threshold is 0.0 so that any non-zero values are set to 1.0
@@ -365,7 +369,7 @@ class Binarizer(BaseEstimator):
     Parameters
     ----------
     threshold : float, optional (0.0 by default)
-        Lower bound that triggers feature values to be replaced by 1.0
+        The lower bound that triggers feature values to be replaced by 1.0.
 
     copy : boolean, optional, default is True
         set to False to perform inplace binarization and avoid a copy (if
@@ -393,7 +397,7 @@ class Binarizer(BaseEstimator):
         return self
 
     def transform(self, X, y=None, copy=None):
-        """Scale each non zero row of X to unit norm
+        """Binarize each element of X
 
         Parameters
         ----------
@@ -411,7 +415,7 @@ def _is_multilabel(y):
 
 
 class LabelBinarizer(BaseEstimator, TransformerMixin):
-    """Binarize labels in a one-vs-all fashion.
+    """Binarize labels in a one-vs-all fashion
 
     Several regression and binary classification algorithms are
     available in the scikit. A simple way to extend these algorithms
@@ -528,7 +532,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         Y : numpy array of shape [n_samples, n_classes]
-            Target values
+            Target values.
 
         Returns
         -------
@@ -571,15 +575,15 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         K : numpy array of shape [n_samples, n_samples]
-            Kernel matrix
+            Kernel matrix.
 
         Returns
         -------
         self : returns an instance of self.
         """
         n_samples = K.shape[0]
-        self.K_fit_rows = np.sum(K, axis=0) / n_samples
-        self.K_fit_all = K.sum() / (n_samples ** 2)
+        self.K_fit_rows_ = np.sum(K, axis=0) / n_samples
+        self.K_fit_all_ = self.K_fit_rows_.sum() / n_samples
         return self
 
     def transform(self, K, copy=True):
@@ -588,7 +592,7 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         K : numpy array of shape [n_samples1, n_samples2]
-            Kernel matrix
+            Kernel matrix.
 
         Returns
         -------
@@ -599,10 +603,10 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
             K = K.copy()
 
         K_pred_cols = (np.sum(K, axis=1) /
-                       self.K_fit_rows.shape[0])[:, np.newaxis]
+                       self.K_fit_rows_.shape[0])[:, np.newaxis]
 
-        K -= self.K_fit_rows
+        K -= self.K_fit_rows_
         K -= K_pred_cols
-        K += self.K_fit_all
+        K += self.K_fit_all_
 
         return K

@@ -459,7 +459,7 @@ class FunctionDoc(NumpyDocString):
 
 class ClassDoc(NumpyDocString):
     def __init__(self, cls, doc=None, modulename='', func_doc=FunctionDoc,
-                 config={}):
+                 config=None):
         if not inspect.isclass(cls) and cls is not None:
             raise ValueError("Expected a class or None, but got %r" % cls)
         self._cls = cls
@@ -475,7 +475,7 @@ class ClassDoc(NumpyDocString):
 
         NumpyDocString.__init__(self, doc)
 
-        if config.get('show_class_members', True):
+        if config is not None and config.get('show_class_members', True):
             if not self['Methods']:
                 self['Methods'] = [(name, '', '')
                                    for name in sorted(self.methods)]

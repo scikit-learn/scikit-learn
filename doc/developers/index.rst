@@ -189,6 +189,13 @@ For building the documentation, you will need `sphinx
 <http://sphinx.pocoo.org/>`_ and `matplotlib
 <http://matplotlib.sourceforge.net/>`_.
 
+When you are writing documentation, it is important to keep a good
+compromise between mathematical and algorithmic details, and giving
+intuitions to the reader on what the algorithm does. It is best to always
+start with a small paragraph with a hand waiving explanation of what the
+method does to the data and a figure (coming from an example) ilustrating
+it.
+
 .. warning:: **Sphinx version**
 
    While we do our best to have the documentation build under as many
@@ -323,7 +330,7 @@ classifier or a regressor. All estimators implement the fit method::
 
 
 Instantiation
-^^^^^^^^^^^^^^
+^^^^^^^^^^^^^
 
 This concerns the object creation. The object's ``__init__`` method might
 accept as arguments constants that determine the estimator behavior
@@ -342,9 +349,7 @@ an estimator without passing to it any arguments.
 
 The arguments in given at instanciation of an estimator should all
 correspond to hyper parameters describing the model or the optimisation
-problem that estimator tries to solve. They should however not be
-parameters of the estimation routine: these are passed directly to the
-``fit`` method.
+problem that estimator tries to solve.
 
 In addition, **every keyword argument given to the ``__init__`` should
 correspond to an attribute on the instance**. The scikit relies on this
@@ -375,22 +380,43 @@ Parameters
 X             array-like, with shape = [N, D], where N is the number
               of samples and D is the number of features.
 
-Y             array, with shape = [N], where N is the number of
+y             array, with shape = [N], where N is the number of
               samples.
 
-args, kwargs  Parameters can also be set in the fit method.
+kwargs        optional data dependent parameters.
 ============= ======================================================
 
-X.shape[0] should be the same as Y.shape[0]. If this requisite is not
-met, an exception should be raised.
+``X.shape[0]`` should be the same as ``y.shape[0]``. If this requisite
+is not met, an exception of type ``ValueError`` should be raised.
 
-Y might be dropped in the case of unsupervised learning.
+``y`` might be ignored in the case of unsupervised learning. However to
+make it possible to use the estimator as part of a pipeline that can
+mix both supervised and unsupervised transformers even unsupervised
+estimators are kindly ask to accept a ``y=None`` keyword argument in
+the second position that is just ignored by the estimator.
 
-The method should return the object (``self``).
+The method should return the object (``self``). This pattern is useful
+to be able to implement quick one liners in an ipython session such as::
+
+  y_predicted = SVC(C=100).fit(X_train, y_train).predict(X_test)
+
+Depending on the nature of the algorithm ``fit`` can sometimes also
+accept additional keywords arguments. However any parameter that can
+have a value assigned prior having access to the data should be an
+``__init__`` keyword argument. **fit parameters should be restricted
+to directly data dependent variables**. For instance a Gram matrix or
+an affinity matrix which are precomputed from the data matrix ``X`` are
+data dependent. A tolerance stopping criterion ``tol`` is not directly
+data dependent (although the optimal value according to some scoring
+function probably is).
+
+Any attribute that ends with ``_`` is expected to be overridden when
+you call ``fit`` a second time without taking any previous value into
+account: **fit should be idempotent**.
 
 
 Python tuples
-^^^^^^^^^^^^^^
+^^^^^^^^^^^^^
 
 In addition to numpy arrays, all methods should be able to accept
 Python tuples as arguments. In practice, this means you should call
@@ -399,7 +425,7 @@ arrays.
 
 
 Optional Arguments
-^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^
 
 In iterative algorithms, number of iterations should be specified by
 an int called ``n_iter``.

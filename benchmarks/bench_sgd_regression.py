@@ -19,7 +19,7 @@ from time import time
 
 from scikits.learn.linear_model import Ridge, SGDRegressor, ElasticNet
 from scikits.learn.metrics import mean_square_error
-from scikits.learn.datasets.samples_generator import make_regression_dataset
+from scikits.learn.datasets.samples_generator import make_regression
 
 if __name__ == "__main__":
     list_n_samples = np.linspace(100, 10000, 5).astype(np.int)
@@ -32,9 +32,15 @@ if __name__ == "__main__":
     ridge_results = np.zeros((len(list_n_samples), len(list_n_features), 2))
     for i, n_train in enumerate(list_n_samples):
         for j, n_features in enumerate(list_n_features):
-            X_train, y_train, X_test, y_test, coef = make_regression_dataset(
-                n_train_samples=n_train, n_test_samples=n_test,
-                n_features=n_features, noise=noise)
+            X, y, coef = make_regression(
+                n_samples=n_train + n_test, n_features=n_features, 
+                noise=noise, coef=True)
+            
+            X_train = X[:n_train]
+            y_train = y[:n_train]
+            X_test = X[n_train:]
+            y_test = y[n_train:]
+
             print "======================="
             print "Round %d %d" % (i, j)
             print "n_features:", n_features

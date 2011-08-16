@@ -1,5 +1,6 @@
 """Feature slection module for python"""
 
+from .univariate_selection import chi2
 from .univariate_selection import f_classif
 from .univariate_selection import f_regression
 from .univariate_selection import SelectPercentile

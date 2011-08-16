@@ -5,6 +5,8 @@
 # License: BSD Style.
 
 from math import ceil
+import operator
+
 import numpy as np
 
 from .base import is_classifier, clone
@@ -734,13 +736,7 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, iid=False,
         The verbosity level
     """
     X, y = check_arrays(X, y, sparse_format='csr')
-    n_samples = X.shape[0]
-    if cv is None:
-        indices = hasattr(X, 'tocsr')
-        if y is not None and is_classifier(estimator):
-            cv = StratifiedKFold(y, k=3, indices=indices)
-        else:
-            cv = KFold(n_samples, k=3, indices=indices)
+    cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
     if score_func is None:
         assert hasattr(estimator, 'score'), ValueError(
                 "If no score_func is specified, the estimator passed "
@@ -778,6 +774,41 @@ def _shuffle(y, labels, random_state):
     return y[ind]
 
 
+def check_cv(cv, X=None, y=None, classifier=False):
+    """Creates a valid and usable cv generator
+
+    Parameters
+    ===========
+    cv: an integer, a cv generator instance, or None
+        The input specifying which cv generator to use. It can be an 
+        integer, in which case it is the number of folds in a KFold,
+        None, in which case 3 fold is used, or another object, that
+        will then be used as a cv generator.
+    X: 2D ndarray
+        the data the cross-val object will be applied on
+    y: 1D ndarray
+        the target variable for a supervised learning problem
+    classifier: boolean optional
+        whether the task is a classification task, in which case 
+        stratified KFold will be used.
+    """
+    if cv is None:
+        cv = 3
+    if operator.isNumberType(cv):
+        is_sparse = hasattr(X, 'tocsr')
+        if classifier:
+            cv = StratifiedKFold(y, cv, indices=is_sparse)
+        else:
+            if not is_sparse:
+                n_samples = len(X)
+            else:
+                n_samples = X.shape[0]
+            cv = KFold(n_samples, cv, indices=is_sparse)
+    return cv
+
+
+
+
 def permutation_test_score(estimator, X, y, score_func, cv=None,
                       n_permutations=100, n_jobs=1, labels=None,
                       random_state=0, verbose=0):
@@ -795,10 +826,10 @@ def permutation_test_score(estimator, X, y, score_func, cv=None,
     score_func: callable, optional
         callable taking as arguments the test targets (y_test) and
         the predicted targets (y_pred). Returns a float.
-    cv: cross-validation generator, optional
-        A cross-validation generator. If None, a 3-fold cross
-        validation is used or 3-fold stratified cross-validation
-        when the estimator is a classifier.
+    cv : integer or crossvalidation generator, optional
+        If an integer is passed, it is the number of fold (default 3).
+        Specific crossvalidation objects can be passed, see 
+        scikits.learn.cross_val module for the list of possible objects 
     n_jobs: integer, optional
         The number of CPUs to use to do the computation. -1 means
         'all CPUs'.
@@ -827,13 +858,7 @@ def permutation_test_score(estimator, X, y, score_func, cv=None,
     The Journal of Machine Learning Research (2010) vol. 11
     """
     X, y = check_arrays(X, y, sparse_format='csr')
-    n_samples = X.shape[0]
-    if cv is None:
-        indices = hasattr(X, 'tocsr')
-        if is_classifier(estimator):
-            cv = StratifiedKFold(y, k=3, indices=indices)
-        else:
-            cv = KFold(n_samples, k=3, indices=indices)
+    cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
 
     random_state = check_random_state(random_state)
 

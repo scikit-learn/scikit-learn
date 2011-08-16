@@ -6,33 +6,13 @@ import string
 
 import numpy as np
 
+from .utils import check_random_state
+from .utils.extmath import logsum
 from .base import BaseEstimator
 from .mixture import (GMM, lmvnpdf, normalize, sample_gaussian,
                  _distribute_covar_matrix_to_match_cvtype, _validate_covars)
 from . import cluster
 ZEROLOGPROB = -1e200
-
-
-# XXX Replacing this with logaddexp.reduce, as in mixture.py, causes a test to
-# fail. Find out why this is.
-def logsum(A, axis=None):
-    """Computes the sum of A assuming A is in the log domain.
-
-    Returns log(sum(exp(A), axis)) while minimizing the possibility of
-    over/underflow.
-    """
-    Amax = A.max(axis)
-    if axis and A.ndim > 1:
-        shape = list(A.shape)
-        shape[axis] = 1
-        Amax.shape = shape
-    Asum = np.log(np.sum(np.exp(A - Amax), axis))
-    Asum += Amax.reshape(Asum.shape)
-    if axis:
-        # Look out for underflow.
-        Asum[np.isnan(Asum)] = - np.Inf
-    return Asum
-
 
 class _BaseHMM(BaseEstimator):
     """Hidden Markov Model base class.
@@ -46,11 +26,11 @@ class _BaseHMM(BaseEstimator):
 
     Attributes
     ----------
-    n_states : int (read-only)
+    n_components : int (read-only)
         Number of states in the model.
-    transmat : array, shape (`n_states`, `n_states`)
+    transmat : array, shape (`n_components`, `n_components`)
         Matrix of transition probabilities between states.
-    startprob : array, shape ('n_states`,)
+    startprob : array, shape ('n_components`,)
         Initial state occupation distribution.
 
     Methods
@@ -85,12 +65,12 @@ class _BaseHMM(BaseEstimator):
     # Subclasses will probably also want to implement properties for
     # the emission distribution parameters to expose them publically.
 
-    def __init__(self, n_states=1, startprob=None, transmat=None,
+    def __init__(self, n_components=1, startprob=None, transmat=None,
                  startprob_prior=None, transmat_prior=None):
-        self._n_states = n_states
+        self.n_components = n_components
 
         if startprob is None:
-            startprob = np.tile(1.0 / n_states, n_states)
+            startprob = np.tile(1.0 / n_components, n_components)
         self.startprob = startprob
 
         if startprob_prior is None:
@@ -98,7 +78,7 @@ class _BaseHMM(BaseEstimator):
         self.startprob_prior = startprob_prior
 
         if transmat is None:
-            transmat = np.tile(1.0 / n_states, (n_states, n_states))
+            transmat = np.tile(1.0 / n_components, (n_components, n_components))
         self.transmat = transmat
 
         if transmat_prior is None:
@@ -130,7 +110,7 @@ class _BaseHMM(BaseEstimator):
         -------
         logprob : array_like, shape (n,)
             Log probabilities of the sequence `obs`
-        posteriors: array_like, shape (n, n_states)
+        posteriors: array_like, shape (n, n_components)
             Posterior probabilities of each state for each
             observation
 
@@ -151,6 +131,8 @@ class _BaseHMM(BaseEstimator):
         # So, we will normalize each frame explicitly in case we
         # pruned too aggressively.
         posteriors = np.exp(gamma.T - logsum(gamma, axis=1)).T
+        posteriors += np.finfo(np.float32).eps
+        posteriors /= np.sum(posteriors, axis=1).reshape((-1,1))
         return logprob, posteriors
 
     def score(self, obs, maxrank=None, beamlogprob=-np.Inf):
@@ -264,13 +246,13 @@ class _BaseHMM(BaseEstimator):
 
         Returns
         -------
-        T : array-like, shape (n, n_states)
+        T : array-like, shape (n, n_components)
             Returns the probability of the sample for each state in the model.
         """
         logprob, posteriors = self.eval(obs, **kwargs)
         return posteriors
 
-    def rvs(self, n=1):
+    def rvs(self, n=1, random_state=None):
         """Generate random samples from the model.
 
         Parameters
@@ -283,6 +265,7 @@ class _BaseHMM(BaseEstimator):
         obs : array_like, length `n`
             List of samples
         """
+        random_state = check_random_state(random_state)
 
         startprob_pdf = self.startprob
         startprob_cdf = np.cumsum(startprob_pdf)
@@ -290,14 +273,16 @@ class _BaseHMM(BaseEstimator):
         transmat_cdf = np.cumsum(transmat_pdf, 1)
 
         # Initial state.
-        rand = np.random.rand()
+        rand = random_state.rand()
         currstate = (startprob_cdf > rand).argmax()
-        obs = [self._generate_sample_from_state(currstate)]
+        obs = [self._generate_sample_from_state(
+            currstate, random_state=random_state)]
 
         for x in xrange(n - 1):
-            rand = np.random.rand()
+            rand = random_state.rand()
             currstate = (transmat_cdf[currstate] > rand).argmax()
-            obs.append(self._generate_sample_from_state(currstate))
+            obs.append(self._generate_sample_from_state(
+                currstate, random_state=random_state))
 
         return np.array(obs)
 
@@ -378,18 +363,13 @@ class _BaseHMM(BaseEstimator):
 
         return self
 
-    @property
-    def n_states(self):
-        """Number of states in the model."""
-        return self._n_states
-
     def _get_startprob(self):
         """Mixing startprob for each state."""
         return np.exp(self._log_startprob)
 
     def _set_startprob(self, startprob):
-        if len(startprob) != self._n_states:
-            raise ValueError('startprob must have length n_states')
+        if len(startprob) != self.n_components:
+            raise ValueError('startprob must have length n_components')
         if not np.allclose(np.sum(startprob), 1.0):
             raise ValueError('startprob must sum to 1.0')
 
@@ -402,8 +382,8 @@ class _BaseHMM(BaseEstimator):
         return np.exp(self._log_transmat)
 
     def _set_transmat(self, transmat):
-        if np.asanyarray(transmat).shape != (self._n_states, self._n_states):
-            raise ValueError('transmat must have shape (n_states, n_states)')
+        if np.asanyarray(transmat).shape != (self.n_components, self.n_components):
+            raise ValueError('transmat must have shape (n_components, n_components)')
         if not np.all(np.allclose(np.sum(transmat, axis=1), 1.0)):
             raise ValueError('Rows of transmat must sum to 1.0')
 
@@ -416,8 +396,8 @@ class _BaseHMM(BaseEstimator):
     def _do_viterbi_pass(self, framelogprob, maxrank=None,
                          beamlogprob=-np.Inf):
         nobs = len(framelogprob)
-        lattice = np.zeros((nobs, self._n_states))
-        traceback = np.zeros((nobs, self._n_states), dtype=np.int)
+        lattice = np.zeros((nobs, self.n_components))
+        traceback = np.zeros((nobs, self.n_components), dtype=np.int)
 
         lattice[0] = self._log_startprob + framelogprob[0]
         for n in xrange(1, nobs):
@@ -441,7 +421,7 @@ class _BaseHMM(BaseEstimator):
     def _do_forward_pass(self, framelogprob, maxrank=None,
                          beamlogprob=-np.Inf):
         nobs = len(framelogprob)
-        fwdlattice = np.zeros((nobs, self._n_states))
+        fwdlattice = np.zeros((nobs, self.n_components))
 
         fwdlattice[0] = self._log_startprob + framelogprob[0]
         for n in xrange(1, nobs):
@@ -456,7 +436,7 @@ class _BaseHMM(BaseEstimator):
     def _do_backward_pass(self, framelogprob, fwdlattice, maxrank=None,
                           beamlogprob=-np.Inf):
         nobs = len(framelogprob)
-        bwdlattice = np.zeros((nobs, self._n_states))
+        bwdlattice = np.zeros((nobs, self.n_components))
 
         for n in xrange(nobs - 1, 0, -1):
             # Do HTK style pruning (p. 137 of HTK Book version 3.4).
@@ -481,7 +461,6 @@ class _BaseHMM(BaseEstimator):
         """
         # Beam pruning
         threshlogprob = logsum(lattice_frame) + beamlogprob
-
         # Rank pruning
         if maxrank:
             # How big should our rank pruning histogram be?
@@ -495,7 +474,7 @@ class _BaseHMM(BaseEstimator):
             hst = hst[::-1].cumsum()
             cdf = cdf[::-1]
 
-            rankthresh = cdf[hst >= min(maxrank, self._n_states)].max()
+            rankthresh = cdf[hst >= min(maxrank, self.n_components)].max()
 
             # Only change the threshold if it is stricter than the beam
             # threshold.
@@ -508,21 +487,21 @@ class _BaseHMM(BaseEstimator):
     def _compute_log_likelihood(self, obs):
         pass
 
-    def _generate_sample_from_state(self, state):
+    def _generate_sample_from_state(self, state, random_state=None):
         pass
 
     def _init(self, obs, params):
         if 's' in params:
-            self.startprob[:] = 1.0 / self._n_states
+            self.startprob[:] = 1.0 / self.n_components
         if 't' in params:
-            self.transmat[:] = 1.0 / self._n_states
+            self.transmat[:] = 1.0 / self.n_components
 
     # Methods used by self.fit()
 
     def _initialize_sufficient_statistics(self):
         stats = {'nobs': 0,
-                 'start': np.zeros(self._n_states),
-                 'trans': np.zeros((self._n_states, self._n_states))}
+                 'start': np.zeros(self.n_components),
+                 'trans': np.zeros((self.n_components, self.n_components))}
         return stats
 
     def _accumulate_sufficient_statistics(self, stats, seq, framelogprob,
@@ -563,21 +542,21 @@ class GaussianHMM(_BaseHMM):
         the model.  Must be one of 'spherical', 'tied', 'diag', 'full'.
     n_features : int (read-only)
         Dimensionality of the Gaussian emissions.
-    n_states : int (read-only)
+    n_components : int (read-only)
         Number of states in the model.
-    transmat : array, shape (`n_states`, `n_states`)
+    transmat : array, shape (`n_components`, `n_components`)
         Matrix of transition probabilities between states.
-    startprob : array, shape ('n_states`,)
+    startprob : array, shape ('n_components`,)
         Initial state occupation distribution.
-    means : array, shape (`n_states`, `n_features`)
+    means : array, shape (`n_components`, `n_features`)
         Mean parameters for each state.
     covars : array
         Covariance parameters for each state.  The shape depends on
         `cvtype`:
-            (`n_states`,)                   if 'spherical',
+            (`n_components`,)                   if 'spherical',
             (`n_features`, `n_features`)              if 'tied',
-            (`n_states`, `n_features`)           if 'diag',
-            (`n_states`, `n_features`, `n_features`)  if 'full'
+            (`n_components`, `n_features`)           if 'diag',
+            (`n_components`, `n_features`, `n_features`)  if 'full'
 
     Methods
     -------
@@ -600,20 +579,21 @@ class GaussianHMM(_BaseHMM):
     Examples
     --------
     >>> from scikits.learn.hmm import GaussianHMM
-    >>> GaussianHMM(n_states=2)
-    GaussianHMM(cvtype='diag', n_states=2, means_weight=0, startprob_prior=1.0,
+    >>> GaussianHMM(n_components=2)
+    GaussianHMM(cvtype='diag', means_weight=0, startprob_prior=1.0,
           startprob=array([ 0.5,  0.5]),
           transmat=array([[ 0.5,  0.5],
            [ 0.5,  0.5]]),
-          transmat_prior=1.0, means_prior=None, covars_weight=1,
-          covars_prior=0.01)
+          transmat_prior=1.0, means_prior=None, n_components=2,
+          covars_weight=1, covars_prior=0.01)
+
 
     See Also
     --------
     GMM : Gaussian mixture model
     """
 
-    def __init__(self, n_states=1, cvtype='diag', startprob=None,
+    def __init__(self, n_components=1, cvtype='diag', startprob=None,
                  transmat=None, startprob_prior=None, transmat_prior=None,
                  means_prior=None, means_weight=0,
                  covars_prior=1e-2, covars_weight=1):
@@ -624,14 +604,14 @@ class GaussianHMM(_BaseHMM):
 
         Parameters
         ----------
-        n_states : int
+        n_components : int
             Number of states.
         cvtype : string
             String describing the type of covariance parameters to
             use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
             Defaults to 'diag'.
         """
-        super(GaussianHMM, self).__init__(n_states, startprob, transmat,
+        super(GaussianHMM, self).__init__(n_components, startprob, transmat,
                                           startprob_prior=startprob_prior,
                                           transmat_prior=transmat_prior)
 
@@ -661,8 +641,8 @@ class GaussianHMM(_BaseHMM):
     def _set_means(self, means):
         means = np.asanyarray(means)
         if hasattr(self, 'n_features') and \
-               means.shape != (self._n_states, self.n_features):
-            raise ValueError('means must have shape (n_states, n_features)')
+               means.shape != (self.n_components, self.n_features):
+            raise ValueError('means must have shape (n_components, n_features)')
         self._means = means.copy()
         self.n_features = self._means.shape[1]
 
@@ -675,13 +655,13 @@ class GaussianHMM(_BaseHMM):
         elif self.cvtype == 'diag':
             return [np.diag(cov) for cov in self._covars]
         elif self.cvtype == 'tied':
-            return [self._covars] * self._n_states
+            return [self._covars] * self.n_components
         elif self.cvtype == 'spherical':
             return [np.eye(self.n_features) * f for f in self._covars]
 
     def _set_covars(self, covars):
         covars = np.asanyarray(covars)
-        _validate_covars(covars, self._cvtype, self._n_states, self.n_features)
+        _validate_covars(covars, self._cvtype, self.n_components, self.n_features)
         self._covars = covars.copy()
 
     covars = property(_get_covars, _set_covars)
@@ -689,12 +669,13 @@ class GaussianHMM(_BaseHMM):
     def _compute_log_likelihood(self, obs):
         return lmvnpdf(obs, self._means, self._covars, self._cvtype)
 
-    def _generate_sample_from_state(self, state):
+    def _generate_sample_from_state(self, state, random_state=None):
         if self._cvtype == 'tied':
             cv = self._covars
         else:
             cv = self._covars[state]
-        return sample_gaussian(self._means[state], cv, self._cvtype)
+        return sample_gaussian(self._means[state], cv, self._cvtype,
+                               random_state=random_state)
 
     def _init(self, obs, params='stmc'):
         super(GaussianHMM, self)._init(obs, params=params)
@@ -709,20 +690,20 @@ class GaussianHMM(_BaseHMM):
 
         if 'm' in params:
             self._means = cluster.KMeans(
-                k=self._n_states).fit(obs[0]).cluster_centers_
+                k=self.n_components).fit(obs[0]).cluster_centers_
         if 'c' in params:
             cv = np.cov(obs[0].T)
             if not cv.shape:
                 cv.shape = (1, 1)
             self._covars = _distribute_covar_matrix_to_match_cvtype(
-                cv, self._cvtype, self._n_states)
+                cv, self._cvtype, self.n_components)
 
     def _initialize_sufficient_statistics(self):
         stats = super(GaussianHMM, self)._initialize_sufficient_statistics()
-        stats['post'] = np.zeros(self._n_states)
-        stats['obs'] = np.zeros((self._n_states, self.n_features))
-        stats['obs**2'] = np.zeros((self._n_states, self.n_features))
-        stats['obs*obs.T'] = np.zeros((self._n_states, self.n_features,
+        stats['post'] = np.zeros(self.n_components)
+        stats['obs'] = np.zeros((self.n_components, self.n_features))
+        stats['obs**2'] = np.zeros((self.n_components, self.n_features))
+        stats['obs*obs.T'] = np.zeros((self.n_components, self.n_features,
                                        self.n_features))
         return stats
 
@@ -743,7 +724,7 @@ class GaussianHMM(_BaseHMM):
             elif self._cvtype in ('tied', 'full'):
                 for t, o in enumerate(obs):
                     obsobsT = np.outer(o, o)
-                    for c in xrange(self._n_states):
+                    for c in xrange(self.n_components):
                         stats['obs*obs.T'][c] += posteriors[t, c] * obsobsT
 
     def _do_mstep(self, stats, params, **kwargs):
@@ -786,9 +767,9 @@ class GaussianHMM(_BaseHMM):
                 elif self._cvtype == 'diag':
                     self._covars = (covars_prior + cv_num) / cv_den
             elif self._cvtype in ('tied', 'full'):
-                cvnum = np.empty((self._n_states, self.n_features,
+                cvnum = np.empty((self.n_components, self.n_features,
                                   self.n_features))
-                for c in xrange(self._n_states):
+                for c in xrange(self.n_components):
                     obsmean = np.outer(stats['obs'][c], self._means[c])
 
                     cvnum[c] = (means_weight * np.outer(meandiff[c],
@@ -811,15 +792,15 @@ class MultinomialHMM(_BaseHMM):
 
     Attributes
     ----------
-    n_states : int (read-only)
+    n_components : int (read-only)
         Number of states in the model.
     n_symbols : int
         Number of possible symbols emitted by the model (in the observations).
-    transmat : array, shape (`n_states`, `n_states`)
+    transmat : array, shape (`n_components`, `n_components`)
         Matrix of transition probabilities between states.
-    startprob : array, shape ('n_states`,)
+    startprob : array, shape ('n_components`,)
         Initial state occupation distribution.
-    emissionprob: array, shape ('n_states`, 'n_symbols`)
+    emissionprob: array, shape ('n_components`, 'n_symbols`)
         Probability of emitting a given symbol when in each state.
 
     Methods
@@ -843,28 +824,28 @@ class MultinomialHMM(_BaseHMM):
     Examples
     --------
     >>> from scikits.learn.hmm import MultinomialHMM
-    >>> MultinomialHMM(n_states=2)
-    ... #doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+    >>> MultinomialHMM(n_components=2)
+    ...                             #doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     MultinomialHMM(transmat=array([[ 0.5,  0.5],
-           [ 0.5,  0.5]]),
-            startprob_prior=1.0, n_states=2, startprob=array([ 0.5,  0.5]),
-           transmat_prior=1.0)
+      [ 0.5,  0.5]]),
+      startprob_prior=1.0, startprob=array([ 0.5,  0.5]), n_components=2,
+      transmat_prior=1.0)
 
     See Also
     --------
     GaussianHMM : HMM with Gaussian emissions
     """
 
-    def __init__(self, n_states=1, startprob=None, transmat=None,
+    def __init__(self, n_components=1, startprob=None, transmat=None,
                  startprob_prior=None, transmat_prior=None):
         """Create a hidden Markov model with multinomial emissions.
 
         Parameters
         ----------
-        n_states : int
+        n_components : int
             Number of states.
         """
-        super(MultinomialHMM, self).__init__(n_states, startprob, transmat,
+        super(MultinomialHMM, self).__init__(n_components, startprob, transmat,
                                              startprob_prior=startprob_prior,
                                              transmat_prior=transmat_prior)
 
@@ -875,9 +856,9 @@ class MultinomialHMM(_BaseHMM):
     def _set_emissionprob(self, emissionprob):
         emissionprob = np.asanyarray(emissionprob)
         if hasattr(self, 'n_symbols') and \
-               emissionprob.shape != (self._n_states, self.n_symbols):
+               emissionprob.shape != (self.n_components, self.n_symbols):
             raise ValueError('emissionprob must have shape '
-                             '(n_states, n_symbols)')
+                             '(n_components, n_symbols)')
 
         self._log_emissionprob = np.log(emissionprob)
         underflow_idx = np.isnan(self._log_emissionprob)
@@ -889,9 +870,10 @@ class MultinomialHMM(_BaseHMM):
     def _compute_log_likelihood(self, obs):
         return self._log_emissionprob[:, obs].T
 
-    def _generate_sample_from_state(self, state):
+    def _generate_sample_from_state(self, state, random_state=None):
         cdf = np.cumsum(self.emissionprob[state, :])
-        rand = np.random.rand()
+        random_state = check_random_state(random_state)
+        rand = random_state.rand()
         symbol = (cdf > rand).argmax()
         return symbol
 
@@ -899,13 +881,13 @@ class MultinomialHMM(_BaseHMM):
         super(MultinomialHMM, self)._init(obs, params=params)
 
         if 'e' in params:
-            emissionprob = normalize(np.random.rand(self._n_states,
+            emissionprob = normalize(np.random.rand(self.n_components,
                                                     self.n_symbols), 1)
             self.emissionprob = emissionprob
 
     def _initialize_sufficient_statistics(self):
         stats = super(MultinomialHMM, self)._initialize_sufficient_statistics()
-        stats['obs'] = np.zeros((self._n_states, self.n_symbols))
+        stats['obs'] = np.zeros((self.n_components, self.n_symbols))
         return stats
 
     def _accumulate_sufficient_statistics(self, stats, obs, framelogprob,
@@ -930,13 +912,13 @@ class GMMHMM(_BaseHMM):
 
     Attributes
     ----------
-    n_states : int (read-only)
+    n_components : int (read-only)
         Number of states in the model.
-    transmat : array, shape (`n_states`, `n_states`)
+    transmat : array, shape (`n_components`, `n_components`)
         Matrix of transition probabilities between states.
-    startprob : array, shape ('n_states`,)
+    startprob : array, shape ('n_components`,)
         Initial state occupation distribution.
-    gmms: array of GMM objects, length 'n_states`
+    gmms: array of GMM objects, length 'n_components`
         GMM emission distributions for each state
 
     Methods
@@ -960,32 +942,32 @@ class GMMHMM(_BaseHMM):
     Examples
     --------
     >>> from scikits.learn.hmm import GMMHMM
-    >>> GMMHMM(n_states=2, n_mix=10, cvtype='diag')
+    >>> GMMHMM(n_components=2, n_mix=10, cvtype='diag')
     ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    GMMHMM(n_mix=10, cvtype='diag', n_states=2, startprob_prior=1.0,
+    GMMHMM(n_mix=10, cvtype='diag', startprob_prior=1.0,
         startprob=array([ 0.5,  0.5]),
         transmat=array([[ 0.5,  0.5],
            [ 0.5,  0.5]]),
-        transmat_prior=1.0,
-        gmms=[GMM(cvtype='diag', n_states=10), GMM(cvtype='diag',
-              n_states=10)])
+        transmat_prior=1.0, n_components=2,
+        gmms=[GMM(cvtype='diag', n_components=10), GMM(cvtype='diag', n_components=10)])
+
 
     See Also
     --------
     GaussianHMM : HMM with Gaussian emissions
     """
 
-    def __init__(self, n_states=1, n_mix=1, startprob=None,
+    def __init__(self, n_components=1, n_mix=1, startprob=None,
                  transmat=None, startprob_prior=None, transmat_prior=None,
                  gmms=None, cvtype=None):
         """Create a hidden Markov model with GMM emissions.
 
         Parameters
         ----------
-        n_states : int
+        n_components : int
             Number of states.
         """
-        super(GMMHMM, self).__init__(n_states, startprob, transmat,
+        super(GMMHMM, self).__init__(n_components, startprob, transmat,
                                      startprob_prior=startprob_prior,
                                      transmat_prior=transmat_prior)
 
@@ -995,7 +977,7 @@ class GMMHMM(_BaseHMM):
         self.cvtype = cvtype
         if gmms is None:
             gmms = []
-            for x in xrange(self.n_states):
+            for x in xrange(self.n_components):
                 if cvtype is None:
                     g = GMM(n_mix)
                 else:
@@ -1006,8 +988,8 @@ class GMMHMM(_BaseHMM):
     def _compute_log_likelihood(self, obs):
         return np.array([g.score(obs) for g in self.gmms]).T
 
-    def _generate_sample_from_state(self, state):
-        return self.gmms[state].rvs(1).flatten()
+    def _generate_sample_from_state(self, state, random_state=None):
+        return self.gmms[state].rvs(1, random_state=random_state).flatten()
 
     def _init(self, obs, params='stwmc'):
         super(GMMHMM, self)._init(obs, params=params)
@@ -1031,26 +1013,31 @@ class GMMHMM(_BaseHMM):
             params)
 
         for state, g in enumerate(self.gmms):
-            gmm_logprob, gmm_posteriors = g.eval(obs)
-            gmm_posteriors *= posteriors[:, state][:, np.newaxis]
-            tmpgmm = GMM(g.n_states, cvtype=g.cvtype)
-            tmpgmm.n_features = g.n_features
-            tmpgmm.covars = _distribute_covar_matrix_to_match_cvtype(
-                np.eye(g.n_features), g.cvtype, g.n_states)
-            norm = tmpgmm._do_mstep(obs, gmm_posteriors, params)
+            _, lgmm_posteriors = g.eval(obs, return_log=True)
+            lgmm_posteriors += np.log(posteriors[:, state][:, np.newaxis]
+                                      + np.finfo(np.float).eps)
+            gmm_posteriors = np.exp(lgmm_posteriors)
+            tmp_gmm = GMM(g.n_components, cvtype=g.cvtype)
+            tmp_gmm.n_features = g.n_features
+            tmp_gmm.covars = _distribute_covar_matrix_to_match_cvtype(
+                                np.eye(g.n_features), g.cvtype, g.n_components)
+            norm = tmp_gmm._do_mstep(obs, gmm_posteriors, params)
+
+            if np.any(np.isnan(tmp_gmm.covars)):
+                raise ValueError
 
             stats['norm'][state] += norm
             if 'm' in params:
-                stats['means'][state] += tmpgmm.means * norm[:, np.newaxis]
+                stats['means'][state] += tmp_gmm.means * norm[:, np.newaxis]
             if 'c' in params:
-                if tmpgmm.cvtype == 'tied':
-                    stats['covars'][state] += tmpgmm._covars * norm.sum()
+                if tmp_gmm.cvtype == 'tied':
+                    stats['covars'][state] += tmp_gmm._covars * norm.sum()
                 else:
                     cvnorm = np.copy(norm)
-                    shape = np.ones(tmpgmm._covars.ndim)
-                    shape[0] = np.shape(tmpgmm._covars)[0]
+                    shape = np.ones(tmp_gmm._covars.ndim)
+                    shape[0] = np.shape(tmp_gmm._covars)[0]
                     cvnorm.shape = shape
-                    stats['covars'][state] += tmpgmm._covars * cvnorm
+                    stats['covars'][state] += tmp_gmm._covars * cvnorm
 
     def _do_mstep(self, stats, params, covars_prior=1e-2, **kwargs):
         super(GMMHMM, self)._do_mstep(stats, params)

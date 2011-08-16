@@ -4,28 +4,218 @@
 Gaussian mixture models
 ===================================================
 
-`scikits.learn.mixture` is a package which enables to create Mixture
-Models (diagonal, spherical, tied and full covariance matrices
-supported), to sample them, and to estimate them from data using
-Expectation Maximization algorithm.  It can also draw confidence
-ellipsoides for multivariate models, and compute the Bayesian
-Information Criterion to assess the number of clusters in the data.
-    
-For the moment, only Gaussian Mixture Models (GMM) are
-implemented. These are a class of probabilistic models describing the
-data as drawn from a mixture of Gaussian probability
-distributions. The challenge that is GMM tackles is to learn the
-parameters of these Gaussians from the data.
+.. currentmodule:: scikits.learn.mixture
 
+`scikits.learn.mixture` is a package which enables one to learn
+Gaussian Mixture Models (diagonal, spherical, tied and full covariance
+matrices supported), sample them, and estimate them from
+data. Facilities to help determine the appropriate number of
+components are also provided.
+
+ .. figure:: ../auto_examples/mixture/images/plot_gmm_pdf_1.png
+   :target: ../auto_examples/cluster/plot_gmm_pdf.html
+   :align: left
+   :scale: 75%
+
+   **Two-component Gaussian mixture model:** *data points, and equi-probability surfaces of 
+   the model.*
+
+A Gaussian mixture model is a probabilistic model that assumes all the
+data points are generated from a mixture of a finite number of
+Gaussian distributions with unknown parameters. One can think of
+mixture models as generalizing k-means clustering to incorporate
+information about the covariance structure of the data as well as the
+centers of the latent Gaussians.
+
+Unfortunately, fitting the best mixture of Gaussians possible on a
+given dataset (as measured by the likelihood criterion) is exponential
+in the assumed number of latent gaussian distributions. For this
+reason most of the time one uses approximate inference techniques in
+these models that, while not guaranteed to return the optimal
+solution, do converge quickly to a local optimum. To improve the
+quality it is usual to fit these models many times with different
+parameters and choose the best result, as measured by the likelihood
+or some other external criterion. Here in `scikits.learn` we implement
+two approximate inference algorithms for mixtures of gaussians:
+expectation-maximization and variational inference. We also implement
+a variant of the mixture model, known as the Dirichlet Process prior,
+that doesn't need cross-validation procedures to choose the number of
+components, and at the expense of extra computational time the user
+only needs to specify a loose upper bound on this number and a
+concentration parameter.
+
+Expectation-maximization
+-----------------------
+
+The main difficulty in learning gaussian mixture models from unlabeled
+data is that it is one usually doesn't know which points came from
+which latent mixtures (if one has access to this information it gets
+very easy to fit a separate gaussian distribution to each set of
+points). Expectation-maximization is a well-fundamented statistical
+algorithm to get around this problem by an iterative process. First
+one assumes random components (randomly centered on data points,
+learned from k-means, or even just normally distributed around the
+origin) and computes for each point a probability distribution on the
+components it could have been assigned to. Then, one tweaks the
+parameters to maximize the likelihood of the data given those
+assignments. Repeating this process is guaranteed to always converge
+to a local optimum. In the `scikits.learn` this algorithm in
+implemented in the :class:`GMM` class.
+
+Advantages of expectation-maximization:
+
+:Speed: it is the fastest algorithm for learning mixture models
+
+:Agnostic: as this algorithm maximizes only the likelihood, it
+   will not bias the means towards zero, or bias the cluster sizes to
+   have specific structures that might or might not apply.
+
+Disadvantages of expectation-maximization:
+
+:Singularities: when one has insufficiently many points per
+   mixture, estimating the covariance matrices becomes difficult,
+   and the algorithm is known to diverge and find solutions with
+   infinite likelihood unless one regularizes the covariances artificially.
+
+:Number of components: this algorithm will always use all the
+   components it has access to, needing complex held-out data
+   criteria to decide how many components to use in the absence of
+   external cues.
+
+Variational inference
+---------------------
+
+Variational inference is a more advanced extension to
+expectation-maximization that instead of maximizing the likelihood
+approximates full bayesian integration of the latent parameters. The
+principle behind variational methods is the same as
+expectation-maximization (that is both are iterative algorithms that
+alternate between finding the posterior probabilities for each point
+to be generated by each mixture and fitting the mixtures to these
+assigned points), but variational methods add regularization by
+integrating information from prior distributions. This avoids the
+singularities often found in expectation-maximization solutions but
+introduces some subtle biases to the model. Inference is often notably
+slower, but not usually as much so as to render usage unpractical.
+
+Due to its bayesian nature, the variational algorithm needs more
+hyperparameters than expectation-maximization, but the only actually
+important of these is the concentration parameter `alpha`. Specifying
+a high value of alpha leads more often to uniformly-sized mixture
+components, while specifying small (between 0 and 1) values will lead
+to some mixture components getting almost all the points while most
+mixture components will be centered on just a few of the remaining
+points.
+
+Simply switching from expectation-maximization to variational
+inference has the main following advantage:
+
+:Regularization: due to the incorporation of prior information,
+   variational solutions have less pathological special cases than
+   expectation-maximization solutions. One can then use full
+   covariance matrices in high dimensions or in cases where some
+   components might be centered around a single point without
+   risking divergence.
+
+But brings with it the following disadvantage:
+
+:Bias: to regularize a model one has to add biases. The
+   variational algorithm will bias all the means towards the origin
+   (part of the prior information adds a "ghost point" in the origin
+   to every mixture component) and it will bias the covariances to
+   be more spherical. It will also, depending on the concentration
+   parameter, bias the cluster structure either towards uniformity
+   or towards a rich-get-richer scenario.
+
+:Hyperparameters: this algorithm needs an extra hyperparameter
+   that might need experimental tuning via cross-validation.
+
+The Dirichlet Process
+---------------------
+
+Here we will talk only about using variational inference algorithms on
+dirichlet process mixtures, for reasons of simplicity.
+
+One of the main advantages of variational techniques is that they can
+incorporate prior information to the model in many different ways. The
+dirichlet process is a prior probability distribution on *clusterings
+with an infinite, unbounded, number of partitions*. Variational
+techniques let us incorporate this prior structure on gaussian mixture
+models at almost no penalty in inference time, comparing with a finite
+gaussian mixture model.
+
+An important question is how can the dirichlet process use an
+infinite, unbounded number of clusters and still be consistent. While
+a full explanation doesn't fit this manual, one can think of its
+chinese restaurant process analogy to help understanding it. The
+chinese restaurant process is a generative story for the dirichlet
+process. Imagine a chinese restaurant with an infinite number of
+tables, at first all empty. When the first customer of the day
+arrives, he sits at the first table. Every following customer will
+then either sit on an occupied table with probability proportional to
+the number of customers in that table or sit in an entirely new table
+with probability proportional to the concentration parameter
+`alpha`. After a finite number of customers has sat, it is easy to see
+that only finitely many of the infinite tables will ever be used, and
+the higher the value of alpha the more total tables will be used. So
+the dirichlet process does clustering with an unbounded number of
+mixture components by assuming a very assymmetrical prior structure
+over the assignments of points to components that is very concentrated
+(this property is known as rich-get-richer, as the full tables in the
+chinese restaurant process only tend to get fuller as the simulation
+progresses).
+
+Variational inference techniques for the dirichlet process still work
+with a finite approximation to this infinite mixture model, but
+instead of having to specify a priori how many components one wants to
+use, one just specifies the concentration parameter and an upper bound
+on the number of mixture components (this upper bound, assuming it is
+higher than the "true" number of components, affects only algorithmic
+complexity, not the actual number of components used).
+
+The advantages of using a dirichlet process mixture model are:
+
+:Less sensitivity to the number of parameters: unlike finite
+   models, which will almost always use all components as much as
+   they can, and hence will produce wildly different solutions for
+   different numbers of components, the dirichlet process solution
+   won't change much with changes to the parameters, leading to more
+   stability and less tuning.
+   
+:No need to specify the number of components:
+
+:Implicit strong regularization: when learning finite mixtures
+   with expectation-maximization or variational inference it might
+   be that the structure found during learning will not fit held-out
+   data very well (specially when using bad parameters). As the
+   dirichlet process automatically performs model selection it tends
+   to fit structures that generalize better to unseen data.
+
+The main disadvantages of using the dirichlet process are:
+
+:Speed: the extra parametrization necessary for variational
+   inference and for the structure of the dirichlet process can and
+   will make inference slower, although not by much.
+
+:Bias: as in variational techniques, but only more so, there are
+   many implicit biases in the dirichlet process and the inference
+   algorithms, and whenever there is a mismatch between these biases
+   and the data it might be possible to fit better models using a
+   finite mixture.
+    
 GMM classifier
 ==============
 
 .. currentmodule:: scikits.learn.mixture
 
-The :class:`GMM` object implements a :meth:`GMM.fit` method to learn a
-Gaussian Mixture Models from train data. Given test data, it can assign
-to each sample the class of the Gaussian it mostly probably belong to
-using the :meth:`GMM.predict` method. 
+The :class:`GMM` object implements the expectation-maximization (EM)
+algorithm for fitting mixture-of-gaussian models. It can also draw
+confidence ellipsoides for multivariate models, and compute the
+Bayesian Information Criterion to assess the number of clusters in the
+data. A :meth:`GMM.fit` method is provided that learns a Gaussian
+Mixture Model from train data. Given test data, it can assign to each
+sample the class of the Gaussian it mostly probably belong to using
+the :meth:`GMM.predict` method.
 
 ..  
     Alternatively, the probability of each
@@ -42,9 +232,50 @@ using the :meth:`GMM.predict` method.
     * See :ref:`example_mixture_plot_gmm_classifier.py` for an example of
       using a GMM as a classifier on the iris dataset.
 
-    * See :ref:`example_mixture_plot_gmm.py` for an example on plotting the
-      confidence ellipsoids.
-
     * See :ref:`example_mixture_plot_gmm_pdf.py` for an example on plotting the 
       density estimation.
 
+Variational Gaussian mixtures: VBGMM classifier
+=============================================
+
+.. currentmodule:: scikits.learn.mixture
+
+The :class:`VBGMM` object implements a variant of the Gaussian mixture
+model with variational inference algorithms. The API is identical to
+:class:`GMM`. It is essentially a middle-ground between :class:`GMM`
+and :class:`DPGMM`, as it has some of the properties of the dirichlet
+process.
+
+
+Infinite Gaussian mixtures: DPGMM classifier
+=============================================
+
+The :class:`DPGMM` object implements a variant of the Gaussian mixture
+model with a variable (but bounded) number of components using the
+Dirichlet Process. The API is identical to :class:`GMM`. 
+
+
+.. figure:: ../auto_examples/mixture/images/plot_gmm_1.png
+   :target: ../auto_examples/mixture/plot_gmm.html
+   :align: center
+   :scale: 70%
+
+The example above compares a Gaussian mixture model fitted with 5
+components on a dataset, to a DPGMM model. We can see that the DPGMM is
+able to limit itself to only 2 components. With very little observations,
+the DPGMM can take a conservative stand, and fit only one component.
+
+.. topic:: Examples:
+
+    * See :ref:`example_mixture_plot_gmm.py` for an example on plotting the
+      confidence ellipsoids for both :class:`GMM` and :class:`DPGMM`.
+
+.. topic:: Derivation:
+
+   * See `here <dp-derivation.html>`_ the full derivation of this
+     algorithm.
+
+.. toctree::
+    :hidden:
+
+    dp-derivation.rst
