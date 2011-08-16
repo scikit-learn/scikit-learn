@@ -32,10 +32,6 @@ iris = datasets.load_iris()
 X = iris.data
 Y = iris.target
 
-# title for the plots
-titles = ['Label Propagation 20% labeled data',
-          'Support Vector Machine 80% labeled data']
-
 # 80% data to keep
 hold_80 = np.random.rand(len(Y)) < 0.8
 train, = np.where(hold_80)
