@@ -29,7 +29,7 @@ Example
 >>> label_prop_model = LabelPropagation()
 >>> iris = datasets.load_iris()
 >>> random_unlabeled_points = np.where(np.random.random_integers(0, 1,
-        size=len(iris.target)))
+...        size=len(iris.target)))
 >>> labels = np.copy(iris.target)
 >>> labels[random_unlabeled_points] = -1
 >>> label_prop_model.fit(iris.data, labels, unlabeled_identifier=-1)
@@ -40,7 +40,7 @@ Notes
 -----
 References:
 [1] Yoshua Bengio, Olivier Delalleau, Nicolas Le Roux. In Semi-Supervised
-    Learning (2006), pp. 193-216
+Learning (2006), pp. 193-216
 """
 import numpy as np
 from .base import BaseEstimator, ClassifierMixin
@@ -223,12 +223,12 @@ class LabelPropagation(BaseLabelPropagation):
     >>> label_prop_model = LabelPropagation()
     >>> iris = datasets.load_iris()
     >>> random_unlabeled_points = np.where(np.random.random_integers(0, 1,
-        size=len(iris.target)))
+    ...    size=len(iris.target)))
     >>> labels = np.copy(iris.target)
     >>> labels[random_unlabeled_points] = -1
     >>> label_prop_model.fit(iris.data, labels, unlabeled_identifier=-1)
     ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-        LabelPropagation(...)
+    LabelPropagation(...)
     """
     def _build_graph(self):
         """
@@ -275,12 +275,12 @@ class LabelSpreading(BaseLabelPropagation):
     >>> label_prop_model = LabelSpreading()
     >>> iris = datasets.load_iris()
     >>> random_unlabeled_points = np.where(np.random.random_integers(0, 1,
-        size=len(iris.target)))
+    ...    size=len(iris.target)))
     >>> labels = np.copy(iris.target)
     >>> labels[random_unlabeled_points] = -1
     >>> label_prop_model.fit(iris.data, labels, unlabeled_identifier=-1)
     ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-        LabelSpreading(...)
+    LabelSpreading(...)
     """
 
     def __init__(self, kernel='rbf', gamma=20, alpha=0.2,

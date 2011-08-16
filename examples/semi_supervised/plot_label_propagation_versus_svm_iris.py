@@ -18,6 +18,8 @@ from scikits.learn import datasets
 from scikits.learn import svm
 from scikits.learn import label_propagation
 
+np.random.seed(0)
+
 iris = datasets.load_iris()
 
 X = iris.data[:, :2]
