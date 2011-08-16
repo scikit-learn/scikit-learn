@@ -45,4 +45,4 @@ Examples
 References
 ==========
 [1] Yoshua Bengio, Olivier Delalleau, Nicolas Le Roux. In Semi-Supervised
-    Learning (2006), pp. 193-216
+Learning (2006), pp. 193-216
