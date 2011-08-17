@@ -50,7 +50,7 @@ def as_float_array(X, overwrite_X=False):
     if not overwrite_X:
         X = X.astype(array_type)
     else:
-        X = np.asanyarray(X, array_type)
+        X.dtype = array_type
     return X
 
 
