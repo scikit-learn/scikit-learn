@@ -76,7 +76,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
     """
 
     def __init__(self, kernel='rbf', gamma=20, alpha=1,
-            unlabeled_identifier=-1, max_iters=100,
+            unlabeled_identifier=-1, max_iters=30,
             conv_threshold=1e-3):
         self.max_iters = max_iters
         self.conv_threshold = conv_threshold

@@ -27,6 +27,8 @@ from scikits.learn.metrics.metrics import precision_score
 from scikits.learn.metrics.metrics import recall_score
 from scikits.learn.metrics.metrics import f1_score
 
+np.random.RandomState(42)
+
 iris = datasets.load_iris()
 
 X = iris.data
