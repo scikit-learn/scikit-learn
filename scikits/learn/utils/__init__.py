@@ -43,7 +43,7 @@ def as_float_array(X, overwrite_X=False):
     -------
     An array X of type np.float
     """
-    if X.dtype == np.int32:
+    if (X.dtype == np.int32) or (X.dtype == np.float32):
         array_type = np.float32
     else:
         array_type = np.float64
