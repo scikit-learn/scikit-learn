@@ -61,7 +61,7 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
         corresponds to the bandwidth. Setting this option to True will speed
         up the algorithm because fewer seeds will be initialized.
         default value: False
-        Ignored in seeds argument is not none
+        Ignored if seeds argument is not None
 
     min_bin_freq: int, optional
        To speed up the algorithm, accept only those bins with at least
