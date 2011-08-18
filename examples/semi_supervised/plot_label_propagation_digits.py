@@ -32,8 +32,8 @@ from scikits.learn.metrics.metrics import confusion_matrix
 np.random.RandomState(42)
 
 digits = datasets.load_digits()
-X = digits.data
-Y = digits.target
+X = digits.data[:330]
+Y = digits.target[:330]
 
 n_total_samples = len(Y)
 n_labeled_points = 30

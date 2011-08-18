@@ -33,8 +33,8 @@ from scikits.learn.metrics.metrics import confusion_matrix
 np.random.RandomState(42)
 
 digits = datasets.load_digits()
-X = digits.data
-Y = digits.target
+X = digits.data[:330]
+Y = digits.target[:330]
 
 n_total_samples = len(Y)
 n_labeled_points = 10
@@ -69,7 +69,7 @@ for i in range(5):
     uncertain_idx = [x[1] for x in arg[-5:]]
     del_inds = np.array([])
 
-    f.text(.05, (1 - (i + 1) * .15), "model %d" % (i + 1))
+    f.text(.05, (1 - (i + 1) * .17), "model %d" % (i + 1))
     for index, im_ind in enumerate(uncertain_idx):
         image = digits.images[im_ind]
 

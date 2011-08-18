@@ -87,7 +87,7 @@ hold_new = np.random.rand(len(train)) > 0.3
 train_new, = np.where(hold_new)
 Y_dup = np.copy(Y)
 Y_dup[train_new] = -1
-lspread.fit(X, Y, suppress_warning=True)
+lspread.fit(X, Y)
 trans_result = np.asarray(lspread.transduction_)
 print "LS 20tran\t%0.6f\t%0.6f\t%0.6f" % \
         (precision_score(trans_result[test], Y[test]),
