@@ -13,8 +13,6 @@ in the form of a confusion matrix and a series of metrics over each
 class will be very good.
 
 At the end, the top 10 most uncertain predictions will be shown.
-
-It may take several minutes to finish.
 """
 print __doc__
 

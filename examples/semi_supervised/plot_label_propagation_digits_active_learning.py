@@ -14,8 +14,6 @@ four times to have a model trained with 30 labeled examples.
 A plot will appear showing the top 5 most uncertain digits for each iteration
 of training. These may or may not contain mistakes, but we will train the next
 model with their true labels.
-
-It may take several minutes to finish.
 """
 print __doc__
 
