@@ -10,7 +10,6 @@ from math import floor
 import numpy as np
 from ..utils import extmath
 from collections import defaultdict
-from itertools import izip
 
 from ..base import BaseEstimator
 from ..metrics.pairwise import euclidean_distances
@@ -91,7 +90,7 @@ def mean_shift(X, bandwidth=None, seeds=None, bucket_seeding=False,
         else:
             seeds = X
     n_points, n_features = X.shape
-    stop_thresh = 0.1 * bandwidth  # when mean has converged
+    stop_thresh = 1e-3 * bandwidth  # when mean has converged
     center_intensity_dict = {}
     ball_tree = BallTree(X)  # to efficiently look up nearby points
 
@@ -236,13 +235,11 @@ class MeanShift(BaseEstimator):
 
     Scalability:
 
-    In general, the algorithmic complexity of the mean shift algorithm
-    is O(T n^2) with n the number of samples and T the number of
-    points.
-
     Because this implementation uses a flat kernel and
-    a Ball Tree to look up members of each kernel, the complexity will tend
-    to O(T n*log(n)).
+    a Ball Tree to look up members of each kernel, the complexity will is
+    to O(T*n*log(n)) in lower dimensions, with n the number of samples
+    and T the number of points. In higher dimensions the complexity will
+    tend towards O(T*n^2).
 
     Scalability can be boosted by using fewer seeds, for examply by using
     a higher value of min_bin_freq in the get_bucket_seeds function.
