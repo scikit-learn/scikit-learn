@@ -34,11 +34,11 @@ def estimate_bandwidth(X, quantile=0.3):
     return bandwidth
 
 
-def mean_shift(X, bandwidth=None, seeds=None, bucket_seeding=False,
+def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
                cluster_all=True, max_iterations=300):
     """Perform MeanShift Clustering of data using a flat kernel
 
-    Seed using a bucketing/binning/discretizing technique for scalability.
+    Seed using a binning technique for scalability.
 
     Parameters
     ----------
@@ -54,10 +54,10 @@ def mean_shift(X, bandwidth=None, seeds=None, bucket_seeding=False,
     seeds: array [n_seeds, n_features]
         point used as initial kernel locations
 
-    bucket_seeding: boolean
+    bin_seeding: boolean
         If true, initial kernel locations are not locations of all
         points, but rather the location of the discretized version of
-        points, where points are discretized onto a grid whose coarseness
+        points, where points are binned onto a grid whose coarseness
         corresponds to the bandwidth. Setting this option to True will speed
         up the algorithm because fewer seeds will be initialized.
         default value: False
@@ -85,8 +85,8 @@ def mean_shift(X, bandwidth=None, seeds=None, bucket_seeding=False,
     if bandwidth is None:
         bandwidth = estimate_bandwidth(X)
     if seeds is None:
-        if bucket_seeding:
-            seeds = get_bucket_seeds(X, bandwidth)
+        if bin_seeding:
+            seeds = get_bin_seeds(X, bandwidth)
         else:
             seeds = X
     n_points, n_features = X.shape
@@ -143,11 +143,11 @@ def mean_shift(X, bandwidth=None, seeds=None, bucket_seeding=False,
     return cluster_centers, labels
 
 
-def get_bucket_seeds(X, bin_size, min_bin_freq=1):
+def get_bin_seeds(X, bin_size, min_bin_freq=1):
     """
-    Finds seeds for clustering.mean_shift by first bucketing/discretizing
+    Finds seeds for clustering.mean_shift by first binning
     data onto a grid whose lines are spaced bin_size apart, and then
-    choosing those buckets with at least min_bin_freq points.
+    choosing those bins with at least min_bin_freq points.
     Parameters
     ----------
 
@@ -155,7 +155,7 @@ def get_bucket_seeds(X, bin_size, min_bin_freq=1):
         Input points, the same points that will be used in mean_shift
 
     bin_size: float
-        Controls the coarseness of the discretization. Smaller values lead
+        Controls the coarseness of the binning. Smaller values lead
         to more seeding (which is computationally more expensive). If you're
         not sure how to set this, set it to the value of the bandwidth used
         in clustering.mean_shift
@@ -171,12 +171,12 @@ def get_bucket_seeds(X, bin_size, min_bin_freq=1):
         points used as initial kernel posistions in clustering.mean_shift
     """
 
-    # Discretize (i.e., quantize, bin) points to bins
+    # Bin points
     bin_sizes = defaultdict(int)
-    discretized_points = X.copy() / bin_size
-    discretized_points = np.cast[np.int32](discretized_points)
-    for discretized_point in discretized_points:
-        bin_sizes[tuple(discretized_point)] += 1
+    binned_points = X.copy() / bin_size
+    binned_points = np.cast[np.int32](binned_points)
+    for binned_point in binned_points:
+        bin_sizes[tuple(binned_point)] += 1
 
     # Select only those bins as seeds which have enough members
     bin_seeds = np.array([point for point, freq in bin_sizes.iteritems() if \
@@ -201,7 +201,7 @@ class MeanShift(BaseEstimator):
 
     seeds: array [n_samples, n_features], optional
         Seeds used to initialize kernels. If not set,
-        the seeds are calculated by clustering.get_bucket_seeds
+        the seeds are calculated by clustering.get_bin_seeds
         with bandwidth as the grid size and default values for
         other parameters.
 
@@ -242,18 +242,18 @@ class MeanShift(BaseEstimator):
     tend towards O(T*n^2).
 
     Scalability can be boosted by using fewer seeds, for examply by using
-    a higher value of min_bin_freq in the get_bucket_seeds function.
+    a higher value of min_bin_freq in the get_bin_seeds function.
 
     Note that the estimate_bandwidth function is much less scalable than
     the mean shift algorithm and will be the bottleneck if it is used.
 
     """
 
-    def __init__(self, bandwidth=None, seeds=None, bucket_seeding=False,
+    def __init__(self, bandwidth=None, seeds=None, bin_seeding=False,
                  cluster_all=True):
         self.bandwidth = bandwidth
         self.seeds = seeds
-        self.bucket_seeding = bucket_seeding
+        self.bin_seeding = bin_seeding
         self.cluster_all = cluster_all
         self.cluster_centers_ = None
         self.labels_ = None
@@ -272,6 +272,6 @@ class MeanShift(BaseEstimator):
                                mean_shift(X,
                                           bandwidth=self.bandwidth,
                                           seeds=self.seeds,
-                                          bucket_seeding=self.bucket_seeding,
+                                          bin_seeding=self.bin_seeding,
                                           cluster_all=self.cluster_all)
         return self

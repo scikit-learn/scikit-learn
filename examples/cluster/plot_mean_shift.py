@@ -28,7 +28,7 @@ X, _ = make_blobs(n_samples=50000, centers=centers, cluster_std=0.6)
 # bandwidth = estimate_bandwidth(X)
 bandwidth = 1.30
 
-ms = MeanShift(bandwidth=bandwidth, bucket_seeding=True)
+ms = MeanShift(bandwidth=bandwidth, bin_seeding=True)
 ms.fit(X)
 labels = ms.labels_
 cluster_centers = ms.cluster_centers_
