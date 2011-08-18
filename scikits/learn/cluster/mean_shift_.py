@@ -241,9 +241,8 @@ class MeanShift(BaseEstimator):
     points.
 
     Because this implementation uses a flat kernel and
-    a KD-Tree to look up members of each kernel, the complexity will tend
-    to O(T n*log(n)). In higher dimensions,  finding nearest neighbors
-    using the KD-Tree may become more expensive.
+    a Ball Tree to look up members of each kernel, the complexity will tend
+    to O(T n*log(n)).
 
     Scalability can be boosted by using fewer seeds, for examply by using
     a higher value of min_bin_freq in the get_bucket_seeds function.
