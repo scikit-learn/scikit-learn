@@ -8,10 +8,13 @@ from nose.tools import assert_raises
 from nose.tools import assert_true
 
 from ..k_means_ import KMeans, MiniBatchKMeans
-from .common import generate_clustered_data
+from ...datasets.samples_generator import make_blobs
 
 n_clusters = 3
-X = generate_clustered_data(n_clusters=n_clusters, std=.1)
+centers = np.array([[1, 1], [-1, -1], [1, -1]]) + 10
+X, _ = make_blobs(n_samples=60, n_features=2, centers=centers,
+                  cluster_std=0.1, shuffle=False, random_state=0)
+
 S = sp.csr_matrix(X)
 
 

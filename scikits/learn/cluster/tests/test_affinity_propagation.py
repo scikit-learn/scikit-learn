@@ -7,23 +7,22 @@ import numpy as np
 from numpy.testing import assert_equal, assert_array_equal
 
 from ..affinity_propagation_ import AffinityPropagation, \
-                        affinity_propagation
-from .common import generate_clustered_data
-
+                                    affinity_propagation
+from ...datasets.samples_generator import make_blobs
 
 n_clusters = 3
-X = generate_clustered_data(n_clusters=n_clusters)
+centers = np.array([[1, 1], [-1, -1], [1, -1]]) + 10
+X, _ = make_blobs(n_samples=60, n_features=2, centers=centers,
+                  cluster_std=0.4, shuffle=True, random_state=0)
 
 
 def test_affinity_propagation():
-    """
-    Affinity Propagation algorithm
-
+    """Affinity Propagation algorithm
     """
     # Compute similarities
-    X_norms = np.sum(X*X, axis=1)
+    X_norms = np.sum(X ** 2, axis=1)
     S = - X_norms[:, np.newaxis] - X_norms[np.newaxis, :] + 2 * np.dot(X, X.T)
-    p = 10*np.median(S)
+    p = 10 * np.median(S)
 
     # Compute Affinity Propagation
     cluster_centers_indices, labels = affinity_propagation(S, p)
