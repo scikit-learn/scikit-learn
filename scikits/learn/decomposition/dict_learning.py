@@ -51,10 +51,10 @@ class BaseDictionaryLearning(BaseEstimator, TransformerMixin):
             code = orthogonal_mp(self.components_.T, X.T, **kwargs).T
         elif self.transform_algorithm == 'lars':
             code = np.empty((n_samples, self.n_atoms))
-            for k in range(n_features):
-                _, _, coef_path_ = lars_path(self.components_.T, X[k],
+            for k in range(n_samples):
+                _, _, coef_path_ = lars_path(self.components_.T, X[k, :],
                                              method='lar', **kwargs)
-                code[k] = coef_path_[:, -1]
+                code[k, :] = coef_path_[:, -1]
         elif self.transform_algorithm in ('lasso_cd', 'lasso_lars'):
             code = _update_code_parallel(self.components_.T, X.T, **kwargs).T
 
@@ -69,7 +69,7 @@ class BaseDictionaryLearning(BaseEstimator, TransformerMixin):
             code = np.maximum(0, distance_means - distances)
         else:
             raise NotImplemented('Coding algorithm %s is not implemented' %
-                                 self.transform_method)
+                                 self.transform_algorithm)
 
         if self.split_sign:
             # feature vector is split into a positive and negative side

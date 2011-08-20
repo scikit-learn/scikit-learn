@@ -56,8 +56,8 @@ for i, fragment in enumerate(fragments):
     elif i == 1:
         code = dico.transform(data, n_nonzero_coefs=2, precompute_gram=True)
     elif i == 2:
-        dico.transform_algorithm = "lasso_lars"
-        code = dico.transform(data, alpha=1.8)
+        dico.transform_algorithm = "lars"
+        code = dico.transform(data, max_iter=5)
     elif i == 3:
         dico.transform_algorithm = "threshold"
         code = dico.transform(data, alpha=1.0)
