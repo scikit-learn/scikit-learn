@@ -10,7 +10,7 @@ from ..utils import check_random_state
 from .sparse_pca import dict_learning, dict_learning_online, \
                         _update_code_parallel
 from ..base import BaseEstimator, TransformerMixin
-from ..linear_model import orthogonal_mp
+from ..linear_model import orthogonal_mp, lars_path
 from ..metrics.pairwise import euclidean_distances
 
 
@@ -43,10 +43,18 @@ class BaseDictionaryLearning(BaseEstimator, TransformerMixin):
             Transformed data
         """
         # XXX : kwargs is not documented
+        X = np.atleast_2d(X)
+        n_samples, n_features = X.shape
 
         # XXX: parameters should be made explicit so we can have defaults
         if self.transform_algorithm == 'omp':
             code = orthogonal_mp(self.components_.T, X.T, **kwargs).T
+        elif self.transform_algorithm == 'lars':
+            code = np.empty((n_samples, self.n_atoms))
+            for k in range(n_features):
+                _, _, coef_path_ = lars_path(self.components_.T, X[k],
+                                             method='lar', **kwargs)
+                code[k] = coef_path_[:, -1]
         elif self.transform_algorithm in ('lasso_cd', 'lasso_lars'):
             code = _update_code_parallel(self.components_.T, X.T, **kwargs).T
 

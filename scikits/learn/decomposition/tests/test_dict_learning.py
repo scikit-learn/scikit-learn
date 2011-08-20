@@ -24,12 +24,17 @@ def test_dict_learning_overcomplete():
 
 def test_dict_learning_reconstruction():
     n_atoms = 12
-    dico = DictionaryLearning(n_atoms, transform_algorithm='omp')
+    dico = DictionaryLearning(n_atoms, transform_algorithm='omp',
+                              random_state=0)
     code = dico.fit(X).transform(X, eps=0.01)
     assert_array_almost_equal(np.dot(code, dico.components_), X)
 
     dico.transform_algorithm = 'lasso_lars'
     code = dico.transform(X, alpha=0.001)
+    assert_array_almost_equal(np.dot(code, dico.components_), X, decimal=2)
+
+    dico.transform_algorithm = 'lars'
+    code = dico.transform(X, alpha_min=0.001)
     assert_array_almost_equal(np.dot(code, dico.components_), X, decimal=2)
 
 
