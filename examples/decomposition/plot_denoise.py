@@ -57,17 +57,14 @@ transform_algorithms = [
      {'n_nonzero_coefs': 2, 'precompute_gram': True}),
 
     ('Least-angle regression', 'lars',
-     {'max_iter': 2}),
-
-    ('Threshold at 1', 'threshold',
-     {'alpha': 1.0})]
+     {'max_iter': 2})]
 
 ######################
 # Display the original
 i = 1
 vmin, vmax = 0, 1
 pl.figure(figsize=(10, 4))
-pl.subplot(1, 5, i)
+pl.subplot(2, 2, i)
 pl.title("Noisy image")
 pl.imshow(lena, vmin=vmin, vmax=vmax, cmap=pl.cm.gray, interpolation='nearest')
 pl.xticks(())
