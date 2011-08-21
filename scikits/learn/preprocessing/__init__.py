@@ -19,7 +19,7 @@ from ._preprocessing import inplace_csr_row_normalize_l2
 def _mean_and_std(X, axis=0, with_mean=True, with_std=True):
     """Compute mean and std dev for centering, scaling
 
-    Zero valued std components are reseted to 1.0 to avoid NaNs when scaling.
+    Zero valued std components are reset to 1.0 to avoid NaNs when scaling.
     """
     X = np.asanyarray(X)
     Xr = np.rollaxis(X, axis)
@@ -52,8 +52,8 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
         The data to center and scale.
 
     axis : int (0 by default)
-        axis used to compute the means and standard deviations along. If 0, 
-        independently standardize each feature, otherwise (if 1) standardize 
+        axis used to compute the means and standard deviations along. If 0,
+        independently standardize each feature, otherwise (if 1) standardize
         each sample.
 
     with_mean : boolean, True by default
@@ -90,7 +90,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     return X
 
 
-class Scaler(BaseEstimator):
+class Scaler(BaseEstimator, TransformerMixin):
     """Standardize features by removing the mean and scaling to unit variance
 
     Centering and scaling happen indepently on each feature by computing
@@ -197,11 +197,11 @@ def normalize(X, norm='l2', axis=1, copy=True):
         un-necessary copy.
 
     norm : 'l1' or 'l2', optional ('l2' by default)
-        The norm to use to normalize each non zero sample (or each non-zero 
+        The norm to use to normalize each non zero sample (or each non-zero
         feature if axis is 0).
 
     axis : 0 or 1, optional (1 by default)
-        axis used to normalize the data along. If 1, independently normalize 
+        axis used to normalize the data along. If 1, independently normalize
         each sample, otherwise (if 0) normalize each feature.
 
     copy : boolean, optional, default is True
@@ -249,7 +249,7 @@ def normalize(X, norm='l2', axis=1, copy=True):
     return X
 
 
-class Normalizer(BaseEstimator):
+class Normalizer(BaseEstimator, TransformerMixin):
     """Normalize samples individually to unit norm
 
     Each sample (i.e. each row of the data matrix) with at least one
@@ -352,7 +352,7 @@ def binarize(X, threshold=0.0, copy=True):
     return X
 
 
-class Binarizer(BaseEstimator):
+class Binarizer(BaseEstimator, TransformerMixin):
     """Binarize data (set feature values to 0 or 1) according to a threshold
 
     The default threshold is 0.0 so that any non-zero values are set to 1.0
@@ -582,8 +582,8 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
         self : returns an instance of self.
         """
         n_samples = K.shape[0]
-        self.K_fit_rows = np.sum(K, axis=0) / n_samples
-        self.K_fit_all = K.sum() / (n_samples ** 2)
+        self.K_fit_rows_ = np.sum(K, axis=0) / n_samples
+        self.K_fit_all_ = self.K_fit_rows_.sum() / n_samples
         return self
 
     def transform(self, K, copy=True):
@@ -603,10 +603,10 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
             K = K.copy()
 
         K_pred_cols = (np.sum(K, axis=1) /
-                       self.K_fit_rows.shape[0])[:, np.newaxis]
+                       self.K_fit_rows_.shape[0])[:, np.newaxis]
 
-        K -= self.K_fit_rows
+        K -= self.K_fit_rows_
         K -= K_pred_cols
-        K += self.K_fit_all
+        K += self.K_fit_all_
 
         return K

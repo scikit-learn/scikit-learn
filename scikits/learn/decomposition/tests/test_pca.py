@@ -274,6 +274,12 @@ def test_infer_dim_by_explained_variance():
     pca.fit(X)
     assert_equal(pca.n_components, 1)
 
+    rng = np.random.RandomState(0)
+    # more features than samples
+    X = rng.rand(5, 20)
+    pca = PCA(n_components=.5).fit(X)
+    assert_equal(pca.n_components, 2)
+
 
 def test_probabilistic_pca_1():
     """Test that probabilistic PCA yields a reasonable score"""

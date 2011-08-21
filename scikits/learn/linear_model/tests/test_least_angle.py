@@ -164,6 +164,44 @@ def test_lars_n_nonzero_coefs(verbose=False):
     assert len(lars.coef_.nonzero()[0]) == 6
 
 
+def test_lars_cv():
+    """ Test the LassoLarsCV object by checking that the optimal alpha
+        increases as the number of samples increases.
+
+        This property is not actualy garantied in general and is just a
+        property of the given dataset, with the given steps chosen.
+    """
+    old_alpha = 0
+    lars_cv = linear_model.LassoLarsCV()
+    for length in (400, 200, 100):
+        X = diabetes.data[:length]
+        y = diabetes.target[:length]
+        lars_cv.fit(X, y)
+        np.testing.assert_array_less(old_alpha, lars_cv.alpha)
+        old_alpha = lars_cv.alpha
+
+
+def test_lasso_lars_ic():
+    """ Test the LassoLarsIC object by checking that
+        - some good features are selected.
+        - alpha_bic > alpha_aic
+        - n_nonzero_bic < n_nonzero_aic
+    """
+    lars_bic = linear_model.LassoLarsIC('bic')
+    lars_aic = linear_model.LassoLarsIC('aic')
+    rng = np.random.RandomState(42)
+    X = diabetes.data
+    y = diabetes.target
+    X = np.c_[X, rng.randn(X.shape[0], 4)]  # add 4 bad features
+    lars_bic.fit(X, y)
+    lars_aic.fit(X, y)
+    nonzero_bic = np.where(lars_bic.coef_)[0]
+    nonzero_aic = np.where(lars_aic.coef_)[0]
+    assert lars_bic.alpha_ > lars_aic.alpha_
+    assert len(nonzero_bic) < len(nonzero_aic)
+    assert np.max(nonzero_bic) < diabetes.data.shape[1]
+
+
 if __name__ == '__main__':
     import nose
     nose.runmodule()
