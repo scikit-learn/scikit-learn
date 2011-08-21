@@ -16,8 +16,10 @@ from nose.tools import assert_equal, assert_equals, \
             assert_false, assert_not_equal
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
+from numpy.testing import assert_raises
 
 import pickle
+from StringIO import StringIO
 
 JUNK_FOOD_DOCS = (
     "the pizza pizza beer copyright",
@@ -100,6 +102,11 @@ def test_word_analyzer_unigrams():
                 u'yesterday']
     assert_equal(wa.analyze(text), expected)
 
+    text = StringIO("This is a test with a file-like object!")
+    expected = [u'this', u'is', u'test', u'with', u'file', u'like',
+                u'object']
+    assert_equal(wa.analyze(text), expected)
+
 
 def test_word_analyzer_unigrams_and_bigrams():
     wa = WordNGramAnalyzer(min_n=1, max_n=2, stop_words=None)
@@ -126,6 +133,10 @@ def test_char_ngram_analyzer():
     assert_equal(cnga.analyze(text)[:5], expected)
     expected = [u' yeste', u'yester', u'esterd', u'sterda', u'terday']
     assert_equal(cnga.analyze(text)[-5:], expected)
+
+    text = StringIO("This is a test with a file-like object!")
+    expected = [u'thi', u'his', u'is ', u's i', u' is']
+    assert_equal(cnga.analyze(text)[:5], expected)
 
 
 def test_countvectorizer_custom_vocabulary():
@@ -223,6 +234,10 @@ def test_vectorizer():
     # test the direct tfidf vectorizer with new data
     tfidf_test2 = toarray(tv.transform(test_data))
     assert_array_almost_equal(tfidf_test, tfidf_test2)
+
+    # test empty vocabulary
+    v3 = CountVectorizer(vocabulary=None)
+    assert_raises(ValueError, v3.transform, train_data)
 
 
 def test_vectorizer_max_features():

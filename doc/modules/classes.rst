@@ -561,6 +561,7 @@ Manifold learning
     :template: class.rst
 
     manifold.LocallyLinearEmbedding
+    manifold.Isomap
 
 
 .. autosummary::

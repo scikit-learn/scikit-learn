@@ -19,7 +19,7 @@ from ._preprocessing import inplace_csr_row_normalize_l2
 def _mean_and_std(X, axis=0, with_mean=True, with_std=True):
     """Compute mean and std dev for centering, scaling
 
-    Zero valued std components are reseted to 1.0 to avoid NaNs when scaling.
+    Zero valued std components are reset to 1.0 to avoid NaNs when scaling.
     """
     X = np.asanyarray(X)
     Xr = np.rollaxis(X, axis)
