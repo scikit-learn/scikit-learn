@@ -186,9 +186,8 @@ def get_bin_seeds(X, bin_size, min_bin_freq=1):
 
     # Bin points
     bin_sizes = defaultdict(int)
-    binned_points = X.copy() / bin_size
-    binned_points = np.cast[np.int32](binned_points)
-    for binned_point in binned_points:
+    for point in X:
+        binned_point = np.cast[np.int32](point / bin_size)
         bin_sizes[tuple(binned_point)] += 1
 
     # Select only those bins as seeds which have enough members
