@@ -31,6 +31,9 @@ def as_float_array(X, overwrite_X=False):
     depending on the original type.
     The function can create a copy or modify the argument depending
     of the argument overwrite_X
+    
+    WARNING : If X is not of type float, then a copy of X with the wright type
+              will be returned
 
     Parameters
     ----------
@@ -43,14 +46,15 @@ def as_float_array(X, overwrite_X=False):
     -------
     An array X of type np.float
     """
-    if (X.dtype == np.int32) or (X.dtype == np.float32):
-        array_type = np.float32
+    if X.dtype in [np.float32, np.float64]:
+        if overwrite_X:
+            return X
+        else:
+            return X.copy()
+    if X.dtype == np.int32:
+        X = X.astype(np.float32)
     else:
-        array_type = np.float64
-    if not overwrite_X:
-        X = X.astype(array_type)
-    else:
-        X.dtype = array_type
+        X = X.astype(np.float64)
     return X
 
 
