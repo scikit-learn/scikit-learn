@@ -78,9 +78,6 @@ for title, transform_algorithm, fit_params in transform_algorithms:
     patches = np.dot(code, V) # + intercept
     patches = patches.reshape(len(data), *patch_size)
     reconstructed_lena = reconstruct_from_patches_2d(patches, lena.shape)
-    if transform_algorithm == 'treshold':
-        reconstructed_lena -= reconstructed_lena.min()
-        reconstructed_lena /= reconstructed_lena.max()
     print time() - t0
 
     i += 1
