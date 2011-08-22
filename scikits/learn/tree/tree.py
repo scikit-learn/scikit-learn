@@ -365,22 +365,22 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
     Parameters
     ----------
-    K : integer, mandatory
-        number of classes
+    K : integer, optional
+        number of classes (computed at fit() if not provided)
 
-    criterion : string
+    criterion : string, optional (default='gini')
         function to measure goodness of split
 
-    max_depth : integer
+    max_depth : integer, optional (default=10)
         maximum depth of the tree
 
-    min_split : integer
+    min_split : integer, optional (default=1)
         minimum size to split on
 
-    F : integer, optional
-        if given, then, choose F features
+    F : integer, optional (default=None)
+        if given, then, choose F features, 0 < F <= n_dims
 
-    random_state : integer or array_like, optional
+    random_state : integer or array_like, optional (default=None)
         seed the random number generator
 
 
@@ -477,17 +477,17 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
 
     Parameters
     ----------
-    criterion : string
+    criterion : string, optional (default='mse')
         function to measure goodness of split
 
-    max_depth : integer
+    max_depth : integer, optional (default=10)
         maximum depth of the tree
 
-    min_split : integer
+    min_split : integer, optional (default=1)
         minimum size to split on
 
-    F : integer, optional
-        if given, then, choose F features
+    F : integer, optional (default=None)
+        if given, then, choose F features, 0 < F <= n_dims
 
     random_state : integer or array_like, optional
         seed the random number generator
