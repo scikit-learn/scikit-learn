@@ -39,7 +39,7 @@ data = data.reshape(data.shape[0], -1)
 
 ###############################################################################
 # Learn the dictionary from clean patches
-dico = DictionaryLearningOnline(n_atoms=100, alpha=1e-5, n_iter=100,
+dico = DictionaryLearningOnline(n_atoms=100, alpha=1e-5, n_iter=300,
                                 verbose=True, transform_algorithm='omp')
 V = dico.fit(data).components_
 
