@@ -90,29 +90,29 @@ data_train = fetch_20newsgroups(subset='train', categories=categories,
 
 data_test = fetch_20newsgroups(subset='test', categories=categories,
                               shuffle=True, random_state=42)
+print 'data loaded'
 
 categories = data_train.target_names    # for case categories == None
 
-print "%d documents (training set)" % len(data_train.filenames)
-print "%d documents (testing set)" % len(data_test.filenames)
+print "%d documents (training set)" % len(data_train.data)
+print "%d documents (testing set)" % len(data_test.data)
 print "%d categories" % len(categories)
 print
 
 # split a training set and a test set
-filenames_train, filenames_test = data_train.filenames, data_test.filenames
 y_train, y_test = data_train.target, data_test.target
 
 print "Extracting features from the training dataset using a sparse vectorizer"
 t0 = time()
 vectorizer = Vectorizer()
-X_train = vectorizer.fit_transform((open(f).read() for f in filenames_train))
+X_train = vectorizer.fit_transform(data_train.data)
 print "done in %fs" % (time() - t0)
 print "n_samples: %d, n_features: %d" % X_train.shape
 print
 
 print "Extracting features from the test dataset using the same vectorizer"
 t0 = time()
-X_test = vectorizer.transform((open(f).read() for f in filenames_test))
+X_test = vectorizer.transform(data_test.data)
 print "done in %fs" % (time() - t0)
 print "n_samples: %d, n_features: %d" % X_test.shape
 print

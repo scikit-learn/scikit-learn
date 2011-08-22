@@ -125,9 +125,6 @@ if __name__ == '__main__':
 
     # now do a bench where the number of points is fixed
     # and the variable is the number of dimensions
-    from scikits.learn.datasets.samples_generator import friedman, \
-                                                         sparse_uncorrelated
-
     scikit_results = []
     svm_results = []
     mvpa_results = []
