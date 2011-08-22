@@ -25,10 +25,14 @@ lena = lena[::2, ::2] + lena[1::2, ::2] + lena[::2, 1::2] + lena[1::2, 1::2]
 lena = lena[::2, ::2] + lena[1::2, ::2] + lena[::2, 1::2] + lena[1::2, 1::2]
 lena /= 16.0
 
+height, width = lena.shape
+print "Distorting image..."
+
+lena[:, height/2:] += 0.075 * np.random.randn(width, height/2)
+
 print "Extracting clean patches..."
 patch_size = (4, 4)
-data = extract_patches_2d(lena, patch_size, max_patches=int(1e4),
-                          random_state=0)
+data = extract_patches_2d(lena[:, :height/2], patch_size, random_state=0)
 data = data.reshape(data.shape[0], -1)
 #intercept = np.mean(data, 0)
 #data -= intercept
@@ -42,13 +46,6 @@ V = dico.fit(data).components_
 ###############################################################################
 # Generate noisy data and reconstruct using various methods
 print ""  # a line break
-print "Distorting image..."
-
-lena += 0.1 * np.random.randn(*lena.shape)
-
-print "Extracting patches..."
-data = extract_patches_2d(lena, patch_size)
-data = data.reshape(len(data), -1)
 
 transform_algorithms = [
     ('1-Orthogonal Matching Pursuit', 'omp',
@@ -71,20 +68,26 @@ pl.imshow(lena, vmin=vmin, vmax=vmax, cmap=pl.cm.gray, interpolation='nearest')
 pl.xticks(())
 pl.yticks(())
 
+print "Extracting noisy patches..."
+data = extract_patches_2d(lena[:, height/2:], patch_size, random_state=0)
+data = data.reshape(data.shape[0], -1)
+reconstructions = {}
 for title, transform_algorithm, fit_params in transform_algorithms:
     print title,
+    reconstructions[title] = lena.copy()
     t0 = time()
     dico.transform_algorithm = transform_algorithm
     code = dico.transform(data, **fit_params)
     patches = np.dot(code, V)  # + intercept
     patches = patches.reshape(len(data), *patch_size)
-    reconstructed_lena = reconstruct_from_patches_2d(patches, lena.shape)
+    reconstructions[title][:, height/2:] = reconstruct_from_patches_2d(patches,
+                                                           (width, height / 2))
     print time() - t0
 
     i += 1
     pl.subplot(2, 2, i)
     pl.title(title)
-    pl.imshow(reconstructed_lena, vmin=vmin, vmax=vmax, cmap=pl.cm.gray,
+    pl.imshow(reconstructions[title], vmin=vmin, vmax=vmax, cmap=pl.cm.gray,
     interpolation='nearest')
     pl.xticks(())
     pl.yticks(())
