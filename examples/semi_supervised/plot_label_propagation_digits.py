@@ -70,6 +70,6 @@ for index, im_ind in enumerate(uncertain_idx):
 
     pl.subplot(2, 5, index + 1)
     pl.imshow(image, cmap=pl.cm.gray_r)
-    pl.title('%i' % lp_model.transduction_[im_ind])
+    pl.title('predicted: %i\ntrue: %i' % (lp_model.transduction_[im_ind], Y[im_ind]))
 
 pl.show()
