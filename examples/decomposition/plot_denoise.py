@@ -27,7 +27,8 @@ lena /= 16.0
 
 print "Extracting clean patches..."
 patch_size = (4, 4)
-data = extract_patches_2d(lena, patch_size, max_patches=int(1e4), random_state=0)
+data = extract_patches_2d(lena, patch_size, max_patches=int(1e4),
+                          random_state=0)
 data = data.reshape(data.shape[0], -1)
 #intercept = np.mean(data, 0)
 #data -= intercept
@@ -63,7 +64,7 @@ transform_algorithms = [
 # Display the original
 i = 1
 vmin, vmax = 0, 1
-pl.figure(figsize=(10, 4))
+pl.figure(figsize=(6, 5))
 pl.subplot(2, 2, i)
 pl.title("Noisy image")
 pl.imshow(lena, vmin=vmin, vmax=vmax, cmap=pl.cm.gray, interpolation='nearest')
@@ -75,17 +76,19 @@ for title, transform_algorithm, fit_params in transform_algorithms:
     t0 = time()
     dico.transform_algorithm = transform_algorithm
     code = dico.transform(data, **fit_params)
-    patches = np.dot(code, V) # + intercept
+    patches = np.dot(code, V)  # + intercept
     patches = patches.reshape(len(data), *patch_size)
     reconstructed_lena = reconstruct_from_patches_2d(patches, lena.shape)
     print time() - t0
 
     i += 1
-    pl.subplot(1, 5, i)
+    pl.subplot(2, 2, i)
     pl.title(title)
     pl.imshow(reconstructed_lena, vmin=vmin, vmax=vmax, cmap=pl.cm.gray,
     interpolation='nearest')
     pl.xticks(())
     pl.yticks(())
 
+pl.subplots_adjust(0.09, 0.04, 0.92, 0.88, 0.18, 0.19)
+pl.suptitle('Reconstruction methods for image denoising')
 pl.show()
