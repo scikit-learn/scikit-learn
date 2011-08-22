@@ -347,3 +347,39 @@ def load_boston():
                  feature_names=feature_names,
                  DESCR=fdescr.read())
 
+
+def load_sample_images():
+    """ Load sample images for image manipulation.
+
+    Return
+    ------
+    data : Bunch
+        Dictionary-like object, the interesting attributes are:
+        'data', the data to learn, `images`, the images corresponding
+        to each sample, 'target', the classification labels for each
+        sample, 'target_names', the meaning of the labels, and 'DESCR',
+        the full description of the dataset.
+
+    Examples
+    --------
+    To load the data and visualize the images::
+
+    >>> from scikits.learn.datasets import load_sample_images
+    >>> images = load_sample_images()
+
+    >>> # import pylab as pl
+    >>> # pl.gray()
+    >>> # pl.matshow(images.images[0]) # Visualize the first image
+    >>> # pl.show()
+    """
+    module_path = join(dirname(__file__), "images")
+    descr = open(join(module_path, 'README.txt')).read()
+    filenames = [filename for filename in os.listdir(module_path)
+                 if filename.endswith(".jpg")]
+    # Load image data for each image in the source folder.
+    images = [np.asarray(Image.open(filename))
+              for filename in filenames]
+    return Bunch(images=images,
+                 filenames=filenames,
+                 DESCR=descr)
+    

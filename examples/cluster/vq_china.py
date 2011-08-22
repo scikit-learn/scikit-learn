@@ -10,15 +10,26 @@ number of colors required to show the image.
 print __doc__
 
 import numpy as np
-from PIL import Image
+import pylab as pl
 from scikits.learn.cluster import KMeans
-from pylab import figure, axes, imshow, show
+from scikits.learn.datasets import load_sample_images
+# Try to import Image and imresize from PIL. We do this here to prevent
+# this module from depending on PIL.
+try:
+    try:
+        from scipy.misc import Image
+    except ImportError:
+        from scipy.misc.pilutil import Image
+except ImportError:
+    raise ImportError("The Python Imaging Library (PIL)"
+                      "is required to load data from jpeg files")
 
-# Load Image
-filename = "/home/bob/Code/scikit-learn/scikits/learn/datasets/images/china.jpg"
+# Get all sample images and obtain just china.jpg
+sample_images = load_sample_images()
+index = sample_images.filenames.index("china.jpg")
+image_data = sample_images.images[index]
 
-# Transform to numpy array
-image_data = np.asarray(Image.open(filename))
+# Load Image and transform to a 2D numpy array.
 w, h, d = original_shape = tuple(image_data.shape)
 image_array = np.reshape(image_data, (w * h, 3))
 
@@ -28,7 +39,7 @@ np.random.shuffle(sample_indices)
 sample_indices = sample_indices[:int(len(image_array) * 0.5)]
 sample_data = image_array[sample_indices]
 
-# Perform Vector Quantisation with 256 clusters
+# Perform Vector Quantisation with 256 clusters.
 k = 256
 kmeans = KMeans(k=k)
 kmeans.fit(image_array)
@@ -50,11 +61,11 @@ def recreate_image(centroids, labels, w, h):
     return image
 
 # Display all results, alongside original image
-figure()
-ax = axes([0,0,1,1], frameon=False)
+pl.figure()
+ax = pl.axes([0,0,1,1], frameon=False)
 ax.set_axis_off()
 centroids, labels = reduced_image
-im = imshow(recreate_image(centroids, labels, w, h))
+im = pl.imshow(recreate_image(centroids, labels, w, h))
 
 show()
 

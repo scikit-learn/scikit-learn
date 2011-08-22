@@ -4,4 +4,5 @@ include scikits/__init__.py
 recursive-include doc *
 recursive-include examples *
 recursive-include scikits *.c *.h *.pyx
-recursive-include scikits/learn/datasets *.csv *.csv.gz *.TXT *.rst
+recursive-include scikits/learn/datasets *.csv *.csv.gz *.TXT *.rst 
+recursive-include scikits/learn/datasets/images *.jpg *.txt
