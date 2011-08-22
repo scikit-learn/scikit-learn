@@ -39,7 +39,7 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
 
     Examples
     --------
-    >>> samples = [[0, 0, 1], [1, 0, 0]]
+    >>> samples = [[0, 0, 2], [1, 0, 0]]
     >>> labels = [0, 1]
     >>> from scikits.learn.neighbors import NeighborsClassifier
     >>> neigh = NeighborsClassifier(n_neighbors=1)
