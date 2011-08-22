@@ -396,7 +396,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     ...     clf = DecisionTreeClassifier(random_state=0)
     ...     clf = clf.fit(data.data[train_index], data.target[train_index])
     ...     print np.mean(clf.predict(data.data[test_index]) == \
-    ...         data.target[test_index]) #doctest: +ELLIPSIS
+                data.target[test_index]) #doctest: +ELLIPSIS
     ...
     1.0
     0.933333333333
@@ -504,7 +504,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     ...     clf = DecisionTreeRegressor(random_state=0)
     ...     clf = clf.fit(data.data[train_index], data.target[train_index])
     ...     print np.mean(np.power(clf.predict(data.data[test_index]) - \
-    ...         data.target[test_index], 2)) #doctest: +ELLIPSIS
+                data.target[test_index], 2)) #doctest: +ELLIPSIS
     ...
     19.2264679543
     41.2959435867
