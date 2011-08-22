@@ -148,9 +148,7 @@ class WordNGramAnalyzer(BaseEstimator):
             original_tokens = tokens
             tokens = []
             n_original_tokens = len(original_tokens)
-            for n in xrange(self.min_n, self.max_n + 1):
-                if n_original_tokens < n:
-                    continue
+            for n in xrange(self.min_n, min(self.max_n + 1, n_original_tokens + 1)):
                 for i in xrange(n_original_tokens - n + 1):
                     tokens.append(u" ".join(original_tokens[i: i + n]))
 
@@ -196,9 +194,7 @@ class CharNGramAnalyzer(BaseEstimator):
 
         text_len = len(text_document)
         ngrams = []
-        for n in xrange(self.min_n, self.max_n + 1):
-            if text_len < n:
-                continue
+        for n in xrange(self.min_n, min(self.max_n + 1, text_len + 1)):
             for i in xrange(text_len - n + 1):
                 ngrams.append(text_document[i: i + n])
         return ngrams

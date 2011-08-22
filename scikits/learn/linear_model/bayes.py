@@ -33,7 +33,7 @@ class BayesianRidge(LinearModel):
     n_iter : int, optional
         Maximum number of iterations.  Default is 300.
 
-    eps : float, optional
+    tol : float, optional
         Stop the algorithm if w has converged. Default is 1.e-3.
 
     alpha_1 : float, optional
@@ -92,7 +92,7 @@ class BayesianRidge(LinearModel):
     >>> clf = linear_model.BayesianRidge()
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])
     BayesianRidge(n_iter=300, verbose=False, lambda_1=1e-06, lambda_2=1e-06,
-           fit_intercept=True, eps=0.001, alpha_2=1e-06, alpha_1=1e-06,
+           fit_intercept=True, alpha_2=1e-06, tol=0.001, alpha_1=1e-06,
            compute_score=False)
     >>> clf.predict([[1, 1]])
     array([ 1.])
@@ -102,11 +102,11 @@ class BayesianRidge(LinearModel):
     See examples/linear_model/plot_bayesian_ridge.py for an example.
     """
 
-    def __init__(self, n_iter=300, eps=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
+    def __init__(self, n_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
                 lambda_1=1.e-6, lambda_2=1.e-6, compute_score=False,
                 fit_intercept=True, verbose=False):
         self.n_iter = n_iter
-        self.eps = eps
+        self.tol = tol 
         self.alpha_1 = alpha_1
         self.alpha_2 = alpha_2
         self.lambda_1 = lambda_1
@@ -196,7 +196,7 @@ class BayesianRidge(LinearModel):
                 self.scores_.append(s)
 
             ### Check for convergence
-            if iter_ != 0 and np.sum(np.abs(coef_old_ - coef_)) < self.eps:
+            if iter_ != 0 and np.sum(np.abs(coef_old_ - coef_)) < self.tol:
                 if verbose:
                     print "Convergence after ", str(iter_), " iterations"
                 break
@@ -234,7 +234,7 @@ class ARDRegression(LinearModel):
     n_iter : int, optional
         Maximum number of iterations. Default is 300
 
-    eps : float, optional
+    tol : float, optional
         Stop the algorithm if w has converged. Default is 1.e-3.
 
     alpha_1 : float, optional
@@ -301,8 +301,8 @@ class ARDRegression(LinearModel):
     >>> clf = linear_model.ARDRegression()
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])
     ARDRegression(n_iter=300, verbose=False, lambda_1=1e-06, lambda_2=1e-06,
-           fit_intercept=True, eps=0.001, threshold_lambda=10000.0,
-           alpha_2=1e-06, alpha_1=1e-06, compute_score=False)
+           fit_intercept=True, threshold_lambda=10000.0, alpha_2=1e-06,
+           tol=0.001, alpha_1=1e-06, compute_score=False)
     >>> clf.predict([[1, 1]])
     array([ 1.])
 
@@ -311,11 +311,11 @@ class ARDRegression(LinearModel):
     See examples/linear_model/plot_ard.py for an example.
     """
 
-    def __init__(self, n_iter=300, eps=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
+    def __init__(self, n_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
                   lambda_1=1.e-6, lambda_2=1.e-6, compute_score=False,
                   threshold_lambda=1.e+4, fit_intercept=True, verbose=False):
         self.n_iter = n_iter
-        self.eps = eps
+        self.tol = tol
         self.fit_intercept = fit_intercept
         self.alpha_1 = alpha_1
         self.alpha_2 = alpha_2
@@ -407,7 +407,7 @@ class ARDRegression(LinearModel):
                 self.scores_.append(s)
 
             ### Check for convergence
-            if iter_ > 0 and np.sum(np.abs(coef_old_ - coef_)) < self.eps:
+            if iter_ > 0 and np.sum(np.abs(coef_old_ - coef_)) < self.tol:
                 if verbose:
                     print "Converged after %s iterations" % iter_
                 break

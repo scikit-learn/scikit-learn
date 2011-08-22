@@ -394,7 +394,7 @@ homogeneous but not complete::
 
 
 Mathematical formulation
-------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 Homogeneity and completeness scores are formally given by:
 

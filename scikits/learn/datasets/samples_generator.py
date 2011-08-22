@@ -55,7 +55,8 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
 
     weights : list of floats or None (default=None)
         The proportions of samples assigned to each class. If None, then
-        classes are balanced.
+        classes are balanced. Note that if `len(weights) == n_classes - 1`,
+        then the last class weight is automatically inferred.
 
     flip_y : float, optional (default=0.01)
         The fraction of samples whose class are randomly exchanged.
@@ -306,7 +307,7 @@ def make_regression(n_samples=100, n_features=100, n_informative=10, bias=0.0,
                                  n_features=n_features,
                                  effective_rank=effective_rank,
                                  tail_strength=tail_strength,
-                                 seed=generator)
+                                 random_state=generator)
 
     # Generate a ground truth model with only n_informative features being non
     # zeros (the other features are not correlated to y and should be ignored
@@ -352,7 +353,7 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
     n_features : int, optional (default=2)
         The number of features for each sample.
 
-    centers : int or array of shape [n_centers, n_features], optinal (default=3)
+    centers : int or array of shape [n_centers, n_features], optional (default=3)
         The number of centers to generate, or the fixed center locations.
 
     cluster_std: float or sequence of floats, optional (default=1.0)
