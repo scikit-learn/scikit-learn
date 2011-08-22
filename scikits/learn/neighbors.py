@@ -530,7 +530,7 @@ def radius_neighbors_graph(X, radius, mode='connectivity'):
     n_neighbors = np.array([len(a) for a in A_ind])
     n_nonzero = np.sum(n_neighbors)
     A_ind = np.concatenate(list(A_ind))
-    A_indptr = np.concatenate((np.zeros(1), np.cumsum(n_neighbors)))
+    A_indptr = np.concatenate((np.zeros(1, dtype=int), np.cumsum(n_neighbors)))
 
     if A_data is None:
         A_data = np.ones(n_nonzero)
