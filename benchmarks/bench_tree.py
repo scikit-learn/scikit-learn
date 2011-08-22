@@ -95,12 +95,6 @@ if __name__ == '__main__':
     pl.xlabel('number of samples')
     pl.ylabel('time (in microseconds)')
 
-
-    # now do a bench where the number of points is fixed
-    # and the variable is the number of dimensions
-    from scikits.learn.datasets.samples_generator import friedman, \
-                                                         sparse_uncorrelated
-
     scikit_classifier_results = []
     scikit_regressor_results = []
     n = 10
