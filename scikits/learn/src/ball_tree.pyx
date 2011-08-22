@@ -445,7 +445,7 @@ cdef class BallTree(object):
     data = property(get_data)
 
     def __init__(self, X, ITYPE_t leaf_size=20, DTYPE_t p=2):
-        self.data_ = np.asarray(X, dtype=DTYPE)
+        self.data_ = np.asarray(X, dtype=DTYPE, order='C')
         if self.data_.ndim != 2:
             raise ValueError("X should have two dimensions")
 
