@@ -103,41 +103,43 @@ pseudo-code to show the structure of the main functionality
 This certainly is not a complete description, but should give the basic idea
 of the form of the algorithm.  The implementation below is much faster than
 anything mirroring the pseudo-code above, but for that reason is much more
-opaque to understanding.  Here's the basic idea.
+opaque.  Here's the basic idea:
 
 BallTree Storage
 ~~~~~~~~~~~~~~~~
 The BallTree information is stored using a combination of
 "Array of Structures" and "Structure of Arrays" to maximize speed.
-Given input data of size `(n_samples, n_features)`, BallTree computes the
-expected number of nodes `n_nodes`, an allocates the following arrays:
+Given input data of size ``(n_samples, n_features)``, BallTree computes the
+expected number of nodes ``n_nodes`` (see below), and allocates the
+following arrays:
 
-* `data` : a float array of shape `(n_samples, n_features)`
+* ``data`` : a float array of shape ``(n_samples, n_features)``
     This is simply the input data.  If the input matrix is well-formed
     (contiguous, c-ordered, correct data type) then no copy is needed
-* `idx_array` : an integer array of size `n_samples`
-    This can be thought of as an array of pointers to the data in `data`.
+* ``idx_array`` : an integer array of size ``n_samples``
+    This can be thought of as an array of pointers to the data in ``data``.
     Rather than shuffling around the data itself, we shuffle around pointers
     to the rows in data.
-* `node_centroid_arr` : a float array of shape `(n_nodes, n_features)`
+* ``node_centroid_arr`` : a float array of shape ``(n_nodes, n_features)``
     This stores the centroid of the data in each node.
-* `node_info_arr` : a size-`n_nodes` array of `NodeInfo` structures.
-    This stores information associated with each node.  Each `NodeInfo`
+* ``node_info_arr`` : a size-``n_nodes`` array of ``NodeInfo`` structures.
+    This stores information associated with each node.  Each ``NodeInfo``
     instance has the following attributes:
-    - `idx_start`
-    - `idx_end` : `idx_start` and `idx_end` reference the part of `idx_array`
-      which point to the data associated with the node.  The data in node with
-      index `i_node` is given by `data[idx_array[idx_start:idx_end]]`
-    - `is_leaf` : a boolean value which tells whether this node is a leaf:
+    - ``idx_start``
+    - ``idx_end`` : ``idx_start`` and ``idx_end`` reference the part of
+      ``idx_array`` which point to the data associated with the node.
+      The data in node with index ``i_node`` is given by
+      ``data[idx_array[idx_start:idx_end]]``
+    - ``is_leaf`` : a boolean value which tells whether this node is a leaf:
       that is, whether or not it has children.
-    - `radius` : a floating-point value which gives the distance from
+    - ``radius`` : a floating-point value which gives the distance from
       the node centroid to the furthest point in the node.
 
 One feature here is that there are no stored pointers from parent nodes to
 child nodes and vice-versa.  These pointers are implemented implicitly:
-For a node with index `i`, the two children are found at indices `2 * i + 1`
-and `2 * i + 2`, while the parent is found at index `floor((i - 1) / 2)`.
-The root node has no parent.
+For a node with index ``i``, the two children are found at indices
+``2 * i + 1`` and ``2 * i + 2``, while the parent is found at index
+``floor((i - 1) / 2)``.  The root node has no parent.
 
 With this data structure in place, the functionality of the above BallTree
 pseudo-code can be implemented in a much more efficient manner.
@@ -170,6 +172,20 @@ O[log(k)log(N)] + O[k log(k)].  Tests show that for sufficiently large k,
 the max-heap approach out-performs the priority queue approach by a factor
 of a few.  In light of these tests, the code uses a priority queue for
 k < 5, and a max-heap otherwise.
+
+Memory Allocation
+~~~~~~~~~~~~~~~~~
+It is desirable to construct a tree in as balanced a way as possible.
+Given a training set with n_samples and a user-supplied leaf_size, if
+the points in each node are divided as evenly as possible between the
+two children, the maximum depth needed so that leaf nodes satisfy
+``leaf_size <= n_points <= 2 * leaf_size`` is given by
+``n_levels = 1 + max(0, floor(log2((n_samples - 1) / leaf_size)))``
+(with the exception of the special case where ``n_samples < leaf_size``)
+For a given number of levels, the number of points in a tree is given by
+``n_nodes = 2 ** n_levels - 1``.  Both of these results can be shown
+by induction.  Using them, the correct amount of memory can be pre-allocated
+for a given ``n_samples`` and ``leaf_size``.
 """
 
 import numpy as np
@@ -378,19 +394,22 @@ cdef class BallTree(object):
 
     Parameters
     ----------
-    X : array-like, shape = [N,D]
-        N is the number of points in the data set, and
-        D is the dimension of the parameter space.
-        Note: if M is an aligned array of doubles (not
-        necessarily contiguous) then data will not be
-        copied. Otherwise, an internal copy will be made.
+    X : array-like, shape = [n_samples, n_features]
+        n_samples is the number of points in the data set, and
+        n_features is the dimension of the parameter space.
+        Note: if X is a C-contiguous array of doubles then data will
+        not be copied. Otherwise, an internal copy will be made.
 
     leaf_size : positive integer (default = 20)
-        Number of points at which to switch to brute-force.
-        Changing leaf_size will not affect the returned neighbors,
-        but can significantly impact the speed of a query and the memory
-        required to store the built ball tree.  See discussion in the
-        NeighborsClassifier documentation.
+        Number of points at which to switch to brute-force. Changing
+        leaf_size will not affect the results of a query, but can
+        significantly impact the speed of a query and the memory required
+        to store the built ball tree.  The amount of memory needed to
+        store the tree scales as
+        2 ** (1 + floor(log2((n_samples - 1) / leaf_size))) - 1
+        For a specified ``leaf_size``, a leaf node is guaranteed to
+        satisfy ``leaf_size <= n_points <= 2 * leaf_size``, except in
+        the case that ``n_samples < leaf_size``.
 
     p : distance metric for the BallTree.  ``p`` encodes the Minkowski
         p-distance:
@@ -437,6 +456,7 @@ cdef class BallTree(object):
     cdef np.ndarray node_info_arr
     cdef DTYPE_t p
     cdef ITYPE_t leaf_size
+    cdef ITYPE_t n_levels
     cdef ITYPE_t n_nodes
 
     def get_data(self):
@@ -446,6 +466,10 @@ cdef class BallTree(object):
 
     def __init__(self, X, ITYPE_t leaf_size=20, DTYPE_t p=2):
         self.data_ = np.asarray(X, dtype=DTYPE, order='C')
+
+        if X.size == 0:
+            raise ValueError("X is an empty array")
+
         if self.data_.ndim != 2:
             raise ValueError("X should have two dimensions")
 
@@ -460,7 +484,10 @@ cdef class BallTree(object):
         cdef ITYPE_t n_samples = self.data_.shape[0]
         cdef ITYPE_t n_features = self.data_.shape[1]
 
-        self.n_nodes = self.estimate_num_nodes()
+        # determine number of levels in the ball tree, and from this
+        # the number of nodes in the ball tree
+        self.n_levels = np.log2(max(1, (n_samples - 1)/self.leaf_size)) + 1
+        self.n_nodes = (2 ** self.n_levels) - 1
 
         self.idx_array = np.arange(n_samples, dtype=ITYPE)
 
@@ -470,12 +497,6 @@ cdef class BallTree(object):
         self.node_info_arr = np.empty(self.n_nodes * sizeof(NodeInfo),
                                       dtype='c', order='C')
         self.build_tree_()
-
-        # Check that our estimate for the number of nodes is okay.
-        # This should never be a problem, but it's better to have
-        # this error than a Segmentation fault!
-        if not self.enough_space_allocated_():
-            raise ValueError("Fatal: not enough BallTree space allocated")
 
     def __getstate__(self):
         """
@@ -487,6 +508,7 @@ cdef class BallTree(object):
                 self.node_info_arr,
                 self.p,
                 self.leaf_size,
+                self.n_levels,
                 self.n_nodes)
 
     def __setstate__(self, state):
@@ -499,36 +521,13 @@ cdef class BallTree(object):
         self.node_info_arr = state[3]
         self.p = state[4]
         self.leaf_size = state[5]
-        self.n_nodes = state[6]
+        self.n_levels = state[6]
+        self.n_nodes = state[7]
 
-    ######################################################################
-    # estimate_num_nodes
-    #  This is an estimate of the number of nodes needed given the number
-    #  of input data samples and the size of a leaf node.  Though the exact
-    #  value could be calculated explicitly, this gives an empirically
-    #  determined upper-bound, as long as any node with an even number of
-    #  points puts exactly half in each child node, and any node with an odd
-    #  number of points puts (N+1)/2 in the first child (with index 2*i+1) and
-    #  (N-1)/2 in the second child (with index 2*i+2)
-    #
-    #  For leaf_size ~ 20, the estimate leads to very little wasted space.
-    #  For leaf_size near 1, and a nearly integer value of
-    #  log2(n_samples / leaf_size), the wasted space can be more significant.
     @cython.cdivision(True)
-    cdef inline ITYPE_t estimate_num_nodes(BallTree self):
+    cdef inline ITYPE_t compute_n_levels(BallTree self):
         cdef ITYPE_t n_samples = self.data_.shape[0]
-        return 2 ** (1 + np.ceil(np.log2((n_samples + self.leaf_size - 1)
-                                         / self.leaf_size))) - 1
-
-    @cython.cdivision(True)
-    cdef ITYPE_t enough_space_allocated_(BallTree self):
-        cdef ITYPE_t i
-        cdef NodeInfo* node_info = <NodeInfo*>self.node_info_arr.data
-        # all nodes in the second half of the tree should be leaves.
-        for i from (self.n_nodes - 1) / 2 <= i < self.n_nodes:
-            if not node_info[i].is_leaf:
-                return 0
-        return 1
+        return ITYPE(np.log2(max(1, (n_samples - 1)/self.leaf_size))) + 1
 
     def query(self, X, k=1, return_distance=True):
         """
@@ -765,7 +764,7 @@ cdef class BallTree(object):
                     sort_dist_idx(<DTYPE_t*>distances_i.data,
                                   <ITYPE_t*>idx_array_i.data,
                                   count_i)
-                
+
                 idx_array[pt_idx] = idx_array_i[:count_i].copy()
                 distances[pt_idx] = distances_i[:count_i].copy()
 
@@ -819,7 +818,7 @@ cdef class BallTree(object):
         node_info.radius = dist_from_dist_p(radius, p)
 
         # check if this is a leaf
-        if n_points <= self.leaf_size:
+        if self.n_nodes == 1:
             node_info.is_leaf = 1
 
         else:
@@ -844,11 +843,15 @@ cdef class BallTree(object):
             parent_info = node_info_arr + i_parent
 
             node_info = node_info_arr + i_node
-            node_info.is_leaf = 1
 
-            # if parent is a leaf then we stop here
             if parent_info.is_leaf:
-                continue
+                raise ValueError("Fatal: parent is a leaf. Memory "
+                                 "allocation is flawed")
+
+            if i_node < self.n_nodes / 2:
+                node_info.is_leaf = 0
+            else:
+                node_info.is_leaf = 1
 
             centroid = node_centroid_arr + i_node * n_features
 
@@ -895,13 +898,7 @@ cdef class BallTree(object):
                                          n_features, p))
                 node_info.radius = dist_from_dist_p(radius, p)
 
-                if n_points <= self.leaf_size:
-                    node_info.is_leaf = 1
-
-                else:
-                    # not a leaf
-                    node_info.is_leaf = 0
-
+                if not node_info.is_leaf:
                     # find dimension with largest spread
                     i_max = find_split_dim(data, idx_array + idx_start,
                                            n_features, n_points)
