@@ -1,7 +1,7 @@
 """
-===================================================
-Plot Label Propagation versus SVM with iris dataset
-===================================================
+=====================================================================
+Decision boundary of label propagation versus SVM on the Iris dataset
+=====================================================================
 
 Comparison for decision boundary generated on iris dataset
 between Label Propagation and SVM.

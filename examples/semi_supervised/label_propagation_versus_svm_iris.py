@@ -1,7 +1,7 @@
 """
-==================================================
-Plot Label Propagation versus SVM with iris dataset
-==================================================
+================================================
+Label Propagation versus SVM on the Iris dataset
+================================================
 
 Performance comparison between Label Propagation in the semi-supervised setting
 to SVM in the supervised setting in the iris dataset.

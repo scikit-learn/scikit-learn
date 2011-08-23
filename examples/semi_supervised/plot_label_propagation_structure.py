@@ -1,7 +1,7 @@
 """
-===================================================
-Plot Label Propagation learning a complex structure
-===================================================
+==============================================
+Label Propagation learning a complex structure
+==============================================
 
 Example of LabelPropagation learning a complex internal structure
 to demonstrate "manifold learning". The outer circle should be
