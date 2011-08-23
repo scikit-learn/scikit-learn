@@ -59,4 +59,5 @@ pl.legend((plot_outer, plot_inner), ('Outer Learned', 'Inner Learned'), \
         'upper left', numpoints=1, shadow=False)
 pl.title("Labels learned with Label Spreading")
 
+pl.subplots_adjust(0.12, 0.03, 0.9, 0.96, 0.2, 0.2)
 pl.show()
