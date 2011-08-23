@@ -357,9 +357,9 @@ Dictionary Learning
 Generic dictionary learning
 -------------------------
 
-Dictionary learning is a matrix factorization problem that amounts to finding a
-(usually overcomplete) dictionary that will perform good at sparsely encoding 
-the fitted data.
+Dictionary learning (:class:`DictionaryLearning`) is a matrix factorization
+problem that amounts to finding a (usually overcomplete) dictionary that will
+perform good at sparsely encoding the fitted data.
 
 Representing data as sparse combinations of atoms from an overcomplete
 dictionary is suggested to be the way the mammal primary visual cortex works.
@@ -389,6 +389,10 @@ initialization parameter:
 
 * Triangle k-means
 
+Thresholding and the triangle k-means nonlinearity are very fast but they do
+not yield accurate reconstructions. They have been shown useful in literature
+for classification tasks. For image reconstruction tasks, orthogonal matching
+pursuit yields the most accurate, unbiased reconstruction.
 
 The dictionary learning objects offer, via the `split_code` parameter, the
 possibility to separate the positive and negative values in the results of 
@@ -417,6 +421,7 @@ extracted from the image of Lena looks like.
 .. topic:: Examples:
 
   * :ref:`example_decomposition_plot_dict_learning.py`
+  * :ref:`example_decomposition_plot_denoise.py`
 
 
 .. topic:: References:
