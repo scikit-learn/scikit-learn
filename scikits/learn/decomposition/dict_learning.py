@@ -169,7 +169,7 @@ class DictionaryLearning(BaseDictionaryLearning):
         self.split_sign = split_sign
         self.random_state = random_state
 
-    def fit_transform(self, X, y=None, **params):
+    def fit_transform(self, X, y=None):
         """Fit the model from data in X.
 
         Parameters
@@ -185,7 +185,6 @@ class DictionaryLearning(BaseDictionaryLearning):
             in the fit. To transform data using a different sparse coding
             technique such as `OMP`, see the `transform` method.
         """
-        self._set_params(**params)
         self.random_state = check_random_state(self.random_state)
         X = np.asanyarray(X)
         V, U, E = dict_learning(X, self.n_atoms, self.alpha,
@@ -200,7 +199,7 @@ class DictionaryLearning(BaseDictionaryLearning):
         self.error_ = E
         return V
 
-    def fit(self, X, y=None, **params):
+    def fit(self, X, y=None):
         """Fit the model from data in X.
 
         Parameters
@@ -214,7 +213,7 @@ class DictionaryLearning(BaseDictionaryLearning):
         self: object
             Returns the object itself
         """
-        self.fit_transform(X, y, **params)
+        self.fit_transform(X, y)
         return self
 
 
@@ -302,7 +301,7 @@ class DictionaryLearningOnline(BaseDictionaryLearning):
         self.split_sign = split_sign
         self.random_state = random_state
 
-    def fit(self, X, y=None, **params):
+    def fit(self, X, y=None):
         """Fit the model from data in X.
 
         Parameters
@@ -316,7 +315,6 @@ class DictionaryLearningOnline(BaseDictionaryLearning):
         self : object
             Returns the instance itself.
         """
-        self._set_params(**params)
         self.random_state = check_random_state(self.random_state)
         X = np.asanyarray(X)
         U = dict_learning_online(X, self.n_atoms, self.alpha,
@@ -330,7 +328,7 @@ class DictionaryLearningOnline(BaseDictionaryLearning):
         self.components_ = U
         return self
 
-    def partial_fit(self, X, y=None, iter_offset=0, **params):
+    def partial_fit(self, X, y=None, iter_offset=0):
         """Updates the model using the data in X as a mini-batch.
 
         Parameters
@@ -344,7 +342,6 @@ class DictionaryLearningOnline(BaseDictionaryLearning):
         self : object
             Returns the instance itself.
         """
-        self._set_params(**params)
         self.random_state = check_random_state(self.random_state)
         X = np.atleast_2d(X)
         if hasattr(self, 'components_'):
