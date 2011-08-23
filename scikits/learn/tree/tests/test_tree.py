@@ -77,13 +77,17 @@ def test_iris():
               'entropy'):
         clf = tree.DecisionTreeClassifier(criterion=c)\
               .fit(iris.data, iris.target)
-            
-        assert np.mean(clf.predict(iris.data) == iris.target) > 0.9
+        
+        score = np.mean(clf.predict(iris.data) == iris.target) 
+        assert score > 0.9, "Failed with criterion " + c + \
+            " and score = " + str(score) 
 
         clf = tree.DecisionTreeClassifier(criterion=c, F=2)\
               .fit(iris.data, iris.target)
             
-        assert np.mean(clf.predict(iris.data) == iris.target) > 0.5        
+        score = np.mean(clf.predict(iris.data) == iris.target) 
+        assert score > 0.5, "Failed with criterion " + c + \
+            " and score = " + str(score)       
 
 def test_boston():
     """
@@ -92,19 +96,22 @@ def test_boston():
     for c in ('mse',):
         clf = tree.DecisionTreeRegressor(criterion=c)\
               .fit(boston.data, boston.target)
-            
-        assert np.mean(np.power(clf.predict(boston.data)-boston.target,2)) < 2.3
+        
+        score = np.mean(np.power(clf.predict(boston.data)-boston.target,2)) 
+        assert score < 1, "Failed with criterion " + c + \
+            " and score = " + str(score)             
 
         #  @TODO Find a way of passing in a pseudo-random generator
         #  so that each time this is called, it selects the same subset of
         #  dimensions to work on.  That will make the test below meaningful.
-        clf = tree.DecisionTreeRegressor(criterion=c, F=6)\
+        clf = tree.DecisionTreeRegressor(criterion=c, F=6, random_state=1)\
               .fit(boston.data, boston.target)
         
         #using fewer dimensions reduces the learning ability of this tree, 
         # but reduces training time.
-        assert np.mean(np.power(clf.predict(boston.data)-boston.target,2)) < 10
-
+        score = np.mean(np.power(clf.predict(boston.data)-boston.target,2)) 
+        assert score < 2, "Failed with criterion " + c + \
+            " and score = " + str(score)    
 
 def test_sanity_checks_predict():
     Xt = np.array(X).T

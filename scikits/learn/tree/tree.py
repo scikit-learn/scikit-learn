@@ -18,7 +18,7 @@ from __future__ import division
 from ..utils import check_random_state
 import numpy as np
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
-from ._tree import eval_gini, eval_entropy, eval_miss, eval_mse
+import _tree
 import random
 
 __all__ = [
@@ -27,12 +27,12 @@ __all__ = [
     ]
 
 lookup_c = \
-      {'gini': eval_gini,
-       'entropy': eval_entropy,
-       'miss': eval_miss,
+      {'gini': 0,
+       'entropy': 1,
+       'miss': 2,
        }
 lookup_r = \
-      {'mse': eval_mse,
+      {'mse': 0,
       }
 
 
@@ -71,32 +71,6 @@ class Node(object):
     def _graphviz(self):
         return "x[%s] < %s \\n error = %s" \
                % (self.dimension, self.value, self.error)
-
-
-def _find_best_split(features, labels, criterion):
-    n_samples, n_features = features.shape
-    K = int(np.abs(labels.max())) + 1
-    pm = np.zeros((K,), dtype=np.float64)
-
-    best = None
-    split_error = criterion(labels, pm)
-    for i in xrange(n_features):
-        features_at_i = features[:, i]
-        domain_i = sorted(set(features_at_i))
-        for d1, d2 in zip(domain_i[:-1], domain_i[1:]):
-            t = (d1 + d2) / 2.
-            cur_split = (features_at_i < t)
-            left_labels = labels[cur_split]
-            right_labels = labels[~cur_split]
-            e1 = len(left_labels) / n_samples * \
-                criterion(left_labels, pm)
-            e2 = len(right_labels) / n_samples * \
-                criterion(right_labels, pm)
-            error = e1 + e2
-            if error < split_error:
-                split_error = error
-                best = i, t, error
-    return best
 
 
 def _build_tree(is_classification, features, labels, criterion,
@@ -143,7 +117,13 @@ def _build_tree(is_classification, features, labels, criterion,
         if depth >= max_depth:
             is_split_valid = False
 
-        S = _find_best_split(features, labels, criterion)
+        if is_classification:
+            crit = lookup_c[criterion]
+            S = _tree._find_best_split_classification(features, labels, crit)
+        else:
+            crit = lookup_r[criterion]
+            S = _tree._find_best_split_regression(features, labels, crit)
+
         if S is not None:
             dim, thresh, error = S
             split = features[:, dim] < thresh
@@ -300,12 +280,12 @@ class BaseDecisionTree(BaseEstimator):
                                  "in the range [0 to %s) for multiclass "
                                  "classification " % self.K)
 
-            self.tree = _build_tree(True, X, y, lookup_c[self.criterion],
+            self.tree = _build_tree(True, X, y, self.criterion,
                                     self.max_depth, self.min_split, self.F,
                                     self.K, self.random_state)
         else:  # regression
             y = np.asanyarray(y, dtype=np.float64, order='C')
-            self.tree = _build_tree(False, X, y, lookup_r[self.criterion],
+            self.tree = _build_tree(False, X, y, self.criterion,
                                     self.max_depth, self.min_split, self.F,
                                     None, self.random_state)
         return self
