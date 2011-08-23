@@ -19,6 +19,7 @@ A few strong points of this model:
   * Uses kernel methods to project data into alternate dimensional spaces
 
 .. topic:: Input labels for semi-supervised learning
+
     It is important to assign an identifier to unlabeled points along with the
     labeled data when training the model with the `fit` method. 
 

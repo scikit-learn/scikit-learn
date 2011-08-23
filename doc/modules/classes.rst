@@ -242,7 +242,7 @@ Label propagation
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-   :toctree:generated/
+   :toctree: generated/
    :template: class.rst
    label_propagation.LabelPropagation
    label_propagation.LabelSpreading
