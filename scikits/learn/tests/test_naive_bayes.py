@@ -123,7 +123,8 @@ def test_discretenb_uniform_prior():
        when fit_prior=False and class_prior=None"""
 
     for cls in [BernoulliNB, MultinomialNB]:
-        clf = cls(fit_prior=False)
+        clf = cls()
+        clf.set_params(fit_prior=False)
         clf.fit([[0], [0], [1]], [0, 0, 1])
         prior = np.exp(clf.class_log_prior_)
         assert prior[0] == prior[1]
