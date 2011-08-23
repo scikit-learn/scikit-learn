@@ -13,6 +13,7 @@ import pylab as pl
 from scikits.learn.cluster import KMeans
 from scikits.learn.datasets import load_sample_images
 from scikits.learn.utils import shuffle
+from time import time
 
 # Get all sample images and obtain just china.jpg
 sample_image_name = "china.jpg"
@@ -31,15 +32,17 @@ w, h, d = original_shape = tuple(image_data.shape)
 assert d == 3
 image_array = np.reshape(image_data, (w * h, d))
 
-print "Fitting estimator on a sub sample of the data"
+print "Fitting estimator on a small sub-sample of the data"
+t0 = time()
 image_array_sample = shuffle(image_array, random_state=0)[:1000]
 kmeans = KMeans(k=10, max_iter=1000).fit(image_array_sample)
-print "done."
+print "done in %0.3fs." % (time() - t0)
 
 # Get labels for all points
-print "Predicting labels:"
+print "Predicting labels on the full image"
+t0 = time()
 labels = kmeans.predict(image_array)
-print "done."
+print "done in %0.3fs." % (time() - t0)
 
 def recreate_image(codebook, labels, w, h):
     # Recreates the (compressed) image from the code book, labels and dimensions
@@ -63,5 +66,4 @@ ax = pl.axes([0, 0, 1, 1], frameon=False)
 ax.set_axis_off()
 
 pl.imshow(recreate_image(kmeans.cluster_centers_, labels, w, h))
-
 pl.show()
