@@ -112,6 +112,15 @@ def check_arrays(*arrays, **options):
     return checked_arrays
 
 
+def warn_if_not_float(X, estimator='This algorithm'):
+    """Warning utility function to check that data type is floating point"""
+    if not isinstance(estimator, basestring):
+        estimator = estimator.__class__.__name__
+    if X.dtype.kind != 'f':
+        warnings.warn("%s assumes floating point values as input, "
+                      "got %s" % (estimator, X.dtype))
+
+
 class deprecated(object):
     """Decorator to mark a function or class as deprecated.
 

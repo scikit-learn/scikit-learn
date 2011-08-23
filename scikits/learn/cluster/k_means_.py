@@ -16,10 +16,11 @@ import scipy.sparse as sp
 
 from ..base import BaseEstimator
 from ..metrics.pairwise import euclidean_distances
-from ..utils import check_random_state
 from ..utils import check_arrays
-from ..utils import shuffle
+from ..utils import check_random_state
 from ..utils import gen_even_slices
+from ..utils import shuffle
+from ..utils import warn_if_not_float
 
 from . import _k_means
 
@@ -493,11 +494,12 @@ class KMeans(BaseEstimator):
                 X.shape[0], self.k))
         return X
 
-    def fit(self, X):
+    def fit(self, X, y=None):
         """Compute k-means"""
         self.random_state = check_random_state(self.random_state)
 
         X = self._check_data(X)
+        warn_if_not_float(X, self)
 
         self.cluster_centers_, self.labels_, self.inertia_ = k_means(
             X, k=self.k, init=self.init, n_init=self.n_init,
@@ -505,7 +507,7 @@ class KMeans(BaseEstimator):
             tol=self.tol, random_state=self.random_state, copy_x=self.copy_x)
         return self
 
-    def transform(self, X):
+    def transform(self, X, y=None):
         """ Transform the data to a cluster-distance space
 
         In the new space, each dimension is the distance to the cluster centers.
@@ -707,6 +709,7 @@ class MiniBatchKMeans(KMeans):
         """
         self.random_state = check_random_state(self.random_state)
         X = check_arrays(X, sparse_format="csr", copy=False)[0]
+        warn_if_not_float(X, self)
         n_samples, n_features = X.shape
         if n_samples < self.k:
             raise ValueError("Number of samples smaller than number "\
