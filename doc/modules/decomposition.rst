@@ -416,7 +416,7 @@ extracted from the image of Lena looks like.
 
 .. topic:: Examples:
 
-  * :ref:`example_decomposition_plot_dict_learning_py`
+  * :ref:`example_decomposition_plot_dict_learning.py`
 
 
 .. topic:: References:
