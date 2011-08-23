@@ -48,21 +48,24 @@ t0 = time()
 dico = DictionaryLearningOnline(n_atoms=100, alpha=1e-2, n_iter=300,
                                 verbose=True, transform_algorithm='omp')
 V = dico.fit(data).components_
-print time() - t0
+dt = time() - t0
+print dt
+
 pl.figure(figsize=(4.5, 5))
 for i, comp in enumerate(V):
     pl.subplot(10, 10, i + 1)
     pl.imshow(comp.reshape(patch_size), cmap=pl.cm.gray_r)
     pl.xticks(())
     pl.yticks(())
-pl.suptitle("Dictionary learned from Lena patches", fontsize=16)
-pl.subplots_adjust(0.02, 0.05, 0.98, 0.92, 0.08, 0.01)
+pl.suptitle("Dictionary learned from Lena patches\n Train time %.1fs" % dt,
+            fontsize=16)
+pl.subplots_adjust(0.02, 0.01, 0.98, 0.88, 0.08, 0.01)
 
 ###############################################################################
 # Display the distorted image
 i = 1
 vmin, vmax = 0, 1
-pl.figure(figsize=(6, 5))
+pl.figure(figsize=(7, 6))
 pl.subplot(2, 2, i)
 pl.title("Noisy image")
 pl.imshow(lena, vmin=vmin, vmax=vmax, cmap=pl.cm.gray, interpolation='nearest')
@@ -96,16 +99,16 @@ for title, transform_algorithm, fit_params in transform_algorithms:
     patches = patches.reshape(len(data), *patch_size)
     reconstructions[title][:, height/2:] = reconstruct_from_patches_2d(patches,
                                                            (width, height / 2))
-    print time() - t0
-
+    dt = time() - t0
+    print dt
     i += 1
     pl.subplot(2, 2, i)
-    pl.title(title)
+    pl.title(title + '\ntransform time: %.1f' % dt)
     pl.imshow(reconstructions[title], vmin=vmin, vmax=vmax, cmap=pl.cm.gray,
     interpolation='nearest')
     pl.xticks(())
     pl.yticks(())
 
-pl.subplots_adjust(0.09, 0.04, 0.92, 0.88, 0.18, 0.19)
+pl.subplots_adjust(0.11, 0.04, 0.89, 0.84, 0.18, 0.26)
 pl.suptitle('Transform methods for image denoising')
 pl.show()
