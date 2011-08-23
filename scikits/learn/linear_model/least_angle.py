@@ -24,7 +24,7 @@ from ..externals.joblib import Parallel, delayed
 def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
               alpha_min=0, method='lar', overwrite_X=False,
               eps=np.finfo(np.float).eps,
-              overwrite_Gram=False, verbose=False, ):
+              overwrite_Gram=False, verbose=False):
     """Compute Least Angle Regression and LASSO path
 
     Parameters
@@ -349,7 +349,7 @@ class Lars(LinearModel):
     Lars(normalize=True, n_nonzero_coefs=1, verbose=False, fit_intercept=True,
        eps=2.2204460492503131e-16, precompute='auto', overwrite_X=False)
     >>> print clf.coef_ # doctest : +ELLIPSIS
-    [ 0. -1.]
+    [ 0.         -1.00000015]
 
     References
     ----------
@@ -405,8 +405,9 @@ class Lars(LinearModel):
 
         X = as_float_array(X, self.overwrite_X)
 
-        X, y, X_mean, y_mean, X_std = self._center_data(X, y, self.fit_intercept,
-            self.normalize)
+        X, y, X_mean, y_mean, X_std = self._center_data(X, y,
+                                                        self.fit_intercept,
+                                                        self.normalize)
         alpha = getattr(self, 'alpha', 0.)
         if hasattr(self, 'n_nonzero_coefs'):
             alpha = 0.  # n_nonzero_coefs parametrization takes priority
@@ -485,7 +486,7 @@ class LassoLars(Lars):
          eps=2.2204460492503131e-16, precompute='auto', alpha=0.01,
          overwrite_X=False)
     >>> print clf.coef_ # doctest : +ELLIPSIS
-    [ 0.         -0.96325765]
+    [ 0.         -0.96325779]
 
     References
     ----------
@@ -896,7 +897,7 @@ class LassoLarsIC(LassoLars):
           eps=... precompute='auto', criterion='bic',
           overwrite_X=False)
     >>> print clf.coef_ # doctest: +ELLIPSIS
-    [ 0. -1.]
+    [ 0.         -1.00000015]
 
     References
     ----------
@@ -947,7 +948,9 @@ class LassoLarsIC(LassoLars):
         y = np.atleast_1d(y)
 
         X = as_float_array(X, self.overwrite_X)
-        X, y, Xmean, ymean, Xstd = LinearModel._center_data(X, y, self.fit_intercept, normalize=self.normalize)
+        X, y, Xmean, ymean, Xstd = LinearModel._center_data(X, y,
+                                                    self.fit_intercept,
+                                                    normalize=self.normalize)
         max_iter = self.max_iter
 
         Gram = self._get_gram()

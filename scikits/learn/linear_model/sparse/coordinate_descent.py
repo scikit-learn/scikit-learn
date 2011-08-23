@@ -40,9 +40,8 @@ class ElasticNet(LinearModel):
     The parameter rho corresponds to alpha in the glmnet R package
     while alpha corresponds to the lambda parameter in glmnet.
     """
-
     def __init__(self, alpha=1.0, rho=0.5, fit_intercept=False,
-                 max_iter=1000, tol=1e-4, normalize=True):
+                 normalize=False, max_iter=1000, tol=1e-4):
         if fit_intercept:
             raise NotImplementedError("fit_intercept=True is not implemented")
         self.alpha = alpha
@@ -135,8 +134,8 @@ class Lasso(ElasticNet):
         data is assumed to be already centered.
 
     """
-
-    def __init__(self, alpha=1.0, fit_intercept=False, normalize=False):
-        super(Lasso, self).__init__(alpha=alpha, rho=1.0,
-                                    fit_intercept=fit_intercept,
-                                    normalize=normalize)
+    def __init__(self, alpha=1.0, fit_intercept=False, normalize=False,
+                 max_iter=1000, tol=1e-4):
+        super(Lasso, self).__init__(
+            alpha=alpha, rho=1.0, fit_intercept=fit_intercept,
+            normalize=normalize, max_iter=max_iter, tol=tol)

@@ -461,7 +461,6 @@ class OrthogonalMatchingPursuit(LinearModel):
     LassoLars
 
     """
-
     def __init__(self, overwrite_X=False, overwrite_gram=False,
             overwrite_Xy=False, n_nonzero_coefs=None, eps=None,
             fit_intercept=True, normalize=True, precompute_gram=False):
@@ -475,8 +474,7 @@ class OrthogonalMatchingPursuit(LinearModel):
         self.overwrite_X = overwrite_X
         self.eps = eps
 
-    def fit(self, X, y, Gram=None, Xy=None, overwrite_x=False,
-            overwrite_gram=False, overwrite_xy=False):
+    def fit(self, X, y, Gram=None, Xy=None):
         """Fit the model using X, y as training data.
 
         Parameters
@@ -505,8 +503,9 @@ class OrthogonalMatchingPursuit(LinearModel):
         n_features = X.shape[1]
         X = as_float_array(X, self.overwrite_X)
 
-        X, y, X_mean, y_mean, X_std = self._center_data(X, y, self.fit_intercept,
-                self.normalize)
+        X, y, X_mean, y_mean, X_std = self._center_data(X, y,
+                                                        self.fit_intercept,
+                                                        self.normalize)
 
         if self.n_nonzero_coefs == None and self.eps is None:
             self.n_nonzero_coefs = int(0.1 * n_features)
@@ -520,6 +519,7 @@ class OrthogonalMatchingPursuit(LinearModel):
             else:
                 Gram = np.asfortranarray(Gram)
 
+            overwrite_gram = self.overwrite_gram
             if y.shape[1] > 1:  # subsequent targets will be affected
                 overwrite_gram = False
 
@@ -538,7 +538,7 @@ class OrthogonalMatchingPursuit(LinearModel):
                 Gram /= X_std
                 Gram /= X_std[:, np.newaxis]
 
-            norms_sq = np.sum((y ** 2), axis=0) if self.eps is not None else None
+            norms_sq = np.sum(y ** 2, axis=0) if self.eps is not None else None
             self.coef_ = orthogonal_mp_gram(Gram, Xy, self.n_nonzero_coefs,
                                             self.eps, norms_sq,
                                             overwrite_gram, True).T
@@ -547,7 +547,7 @@ class OrthogonalMatchingPursuit(LinearModel):
             if precompute_gram == 'auto':
                 precompute_gram = X.shape[0] > X.shape[1]
             self.coef_ = orthogonal_mp(X, y, self.n_nonzero_coefs, self.eps,
-                                       precompute_gram=precompute_gram,
+                                       precompute_gram=self.precompute_gram,
                                        overwrite_X=self.overwrite_X).T
 
         self._set_intercept(X_mean, y_mean, X_std)
