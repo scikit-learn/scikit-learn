@@ -23,8 +23,7 @@ class MockClassifier(BaseEstimator):
     def __init__(self, a=0):
         self.a = a
 
-    def fit(self, X, Y, **params):
-        self._set_params(**params)
+    def fit(self, X, Y):
         return self
 
     def predict(self, T):

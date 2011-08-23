@@ -41,7 +41,8 @@ class ElasticNet(LinearModel):
     while alpha corresponds to the lambda parameter in glmnet.
     """
 
-    def __init__(self, alpha=1.0, rho=0.5, fit_intercept=False, normalize=False):
+    def __init__(self, alpha=1.0, rho=0.5, fit_intercept=False,
+                 max_iter=1000, tol=1e-4, normalize=True):
         if fit_intercept:
             raise NotImplementedError("fit_intercept=True is not implemented")
         self.alpha = alpha
@@ -49,6 +50,8 @@ class ElasticNet(LinearModel):
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.intercept_ = 0.0
+        self.max_iter = max_iter
+        self.tol = tol
         self._set_coef(None)
 
     def _set_coef(self, coef_):
@@ -59,13 +62,12 @@ class ElasticNet(LinearModel):
             # sparse representation of the fitted coef for the predict method
             self.sparse_coef_ = sparse.csr_matrix(coef_)
 
-    def fit(self, X, y, max_iter=1000, tol=1e-4, **params):
+    def fit(self, X, y):
         """Fit current model with coordinate descent
 
         X is expected to be a sparse matrix. For maximum efficiency, use a
         sparse matrix in CSC format (scipy.sparse.csc_matrix)
         """
-        self._set_params(**params)
         X = sparse.csc_matrix(X)
         y = np.asanyarray(y, dtype=np.float64)
 
@@ -84,7 +86,7 @@ class ElasticNet(LinearModel):
         coef_, self.dual_gap_, self.eps_ = \
                 cd_fast_sparse.enet_coordinate_descent(
                     self.coef_, alpha, beta, X_data, X.indices, X.indptr, y,
-                    max_iter, tol)
+                    self.max_iter, self.tol)
 
         # update self.coef_ and self.sparse_coef_ consistently
         self._set_coef(coef_)

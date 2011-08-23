@@ -275,7 +275,7 @@ class SVR(BaseLibSVM, RegressorMixin):
         penalty parameter C of the error term.
 
     epsilon : float, optional (default=0.1)
-         epsilon in the epsilon-SVR model. It specifies the espilon-tube
+         epsilon in the epsilon-SVR model. It specifies the epsilon-tube
          within which no penalty is associated in the training loss function 
          with points predicted within a distance epsilon from the actual 
          value.
@@ -455,9 +455,9 @@ class NuSVR(BaseLibSVM, RegressorMixin):
                  gamma=0.0, coef0=0.0, shrinking=True,
                  probability=False, tol=1e-3):
 
-        BaseLibSVM.__init__(self, 'epsilon_svr', kernel, degree,
+        BaseLibSVM.__init__(self, 'nu_svr', kernel, degree,
                          gamma, coef0, tol, C, nu,
-                         0.0, shrinking, probability)
+                         None, shrinking, probability)
 
     def fit(self, X, y, sample_weight=None, **params):
         """

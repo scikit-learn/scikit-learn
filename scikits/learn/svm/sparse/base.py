@@ -47,8 +47,7 @@ class SparseBaseLibSVM(BaseLibSVM):
         # only used in classification
         self.n_support_ = np.empty(0, dtype=np.int32, order='C')
 
-    def fit(self, X, y, class_weight=None, sample_weight=[], cache_size=100.,
-            **params):
+    def fit(self, X, y, class_weight=None, sample_weight=[], cache_size=100.):
         """
         Fit the SVM model according to the given training data and
         parameters.
@@ -84,7 +83,6 @@ class SparseBaseLibSVM(BaseLibSVM):
         For maximum effiency, use a sparse matrix in csr format
         (scipy.sparse.csr_matrix)
         """
-        self._set_params(**params)
 
         import scipy.sparse
         X = scipy.sparse.csr_matrix(X)
@@ -222,7 +220,7 @@ class SparseBaseLibSVM(BaseLibSVM):
 
 class SparseBaseLibLinear(BaseLibLinear):
 
-    def fit(self, X, y, class_weight=None, **params):
+    def fit(self, X, y, class_weight=None):
         """
         Fit the model using X, y as training data.
 
@@ -239,7 +237,6 @@ class SparseBaseLibLinear(BaseLibLinear):
         self : object
             Returns an instance of self.
         """
-        self._set_params(**params)
 
         import scipy.sparse
         X = scipy.sparse.csr_matrix(X)

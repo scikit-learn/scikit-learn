@@ -67,9 +67,11 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
         msg = '%s' % (', '.join('%s=%s' % (k, v)
                                      for k, v in clf_params.iteritems()))
         print "[GridSearchCV] %s %s" % (msg, (64 - len(msg)) * '.')
+
     # update parameters of the classifier after a copy of its base structure
+    # FIXME we should be doing a clone here
     clf = copy.deepcopy(base_clf)
-    clf._set_params(**clf_params)
+    clf.set_params(**clf_params)
 
     if isinstance(X, list) or isinstance(X, tuple):
         X_train = [X[i] for i, cond in enumerate(train) if cond]

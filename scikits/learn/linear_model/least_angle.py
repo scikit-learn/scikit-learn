@@ -383,8 +383,7 @@ class Lars(LinearModel):
             Gram = None
         return Gram
 
-    #def fit(self, X, y, overwrite_X=False, **params):
-    def fit(self, X, y, **params):
+    def fit(self, X, y, overwrite_X=False):
         """Fit the model using X, y as training data.
 
         parameters
@@ -400,7 +399,6 @@ class Lars(LinearModel):
         self : object
             returns an instance of self.
         """
-        self._set_params(**params)
 
         X = np.atleast_2d(X)
         y = np.atleast_1d(y)
@@ -687,7 +685,7 @@ class LarsCV(LARS):
         self.n_jobs = n_jobs
         self.eps = eps
 
-    def fit(self, X, y, **params):
+    def fit(self, X, y):
         """Fit the model using X, y as training data.
 
         Parameters
@@ -703,7 +701,6 @@ class LarsCV(LARS):
         self : object
             returns an instance of self.
         """
-        self._set_params(**params)
         X = np.asanyarray(X)
 
         n_samples, n_features = X.shape
@@ -930,7 +927,7 @@ class LassoLarsIC(LassoLars):
         self.precompute = precompute
         self.eps = eps
 
-    def fit(self, X, y, overwrite_X=False, **params):
+    def fit(self, X, y, overwrite_X=False):
         """Fit the model using X, y as training data.
 
         parameters
@@ -946,8 +943,6 @@ class LassoLarsIC(LassoLars):
         self : object
             returns an instance of self.
         """
-        self._set_params(**params)
-
         X = np.atleast_2d(X)
         y = np.atleast_1d(y)
 

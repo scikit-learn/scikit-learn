@@ -142,7 +142,7 @@ class NuSVR (SparseBaseLibSVM, RegressorMixin):
                  gamma=0.0, coef0=0.0, shrinking=True, epsilon=0.1,
                  probability=False, tol=1e-3):
 
-        SparseBaseLibSVM.__init__(self, 'epsilon_svr', kernel,
+        SparseBaseLibSVM.__init__(self, 'nu_svr', kernel,
                          degree, gamma, coef0, tol, C, nu,
                          epsilon, shrinking, probability)
 

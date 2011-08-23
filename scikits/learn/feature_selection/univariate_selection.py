@@ -228,11 +228,10 @@ class _AbstractUnivariateFilter(BaseEstimator, TransformerMixin):
                 "was passed." % (score_func, type(score_func)))
         self.score_func = score_func
 
-    def fit(self, X, y, **params):
+    def fit(self, X, y):
         """
         Evaluate the function
         """
-        self._set_params(**params)
         _scores = self.score_func(X, y)
         self._scores = _scores[0]
         self._pvalues = _scores[1]
@@ -245,18 +244,16 @@ class _AbstractUnivariateFilter(BaseEstimator, TransformerMixin):
         mask = self._get_support_mask()
         return mask if not indices else np.where(mask)[0]
 
-    def transform(self, X, **params):
+    def transform(self, X):
         """
         Transform a new matrix using the selected features
         """
-        self._set_params(**params)
         return safe_asanyarray(X)[:, self.get_support(indices=issparse(X))]
 
-    def inverse_transform(self, X, **params):
+    def inverse_transform(self, X):
         """
         Transform a new matrix using the selected features
         """
-        self._set_params(**params)
         support_ = self.get_support()
         if X.ndim == 1:
             X = X[None, :]
@@ -446,9 +443,9 @@ class GenericUnivariateSelect(_AbstractUnivariateFilter):
         selector = self._selection_modes[self.mode](lambda x: x)
         selector._pvalues = self._pvalues
         selector._scores = self._scores
-        # Now make some acrobaties to set the right named parameter in
+        # Now perform some acrobatics to set the right named parameter in
         # the selector
         possible_params = selector._get_param_names()
         possible_params.remove('score_func')
-        selector._set_params(**{possible_params[0]: self.param})
+        selector.set_params(**{possible_params[0]: self.param})
         return selector._get_support_mask()

@@ -104,17 +104,17 @@ def test_lasso_lars_vs_lasso_cd(verbose=False):
     X = 3 * diabetes.data
 
     alphas, _, lasso_path = linear_model.lars_path(X, y, method='lasso')
-    lasso_cd = linear_model.Lasso(fit_intercept=False)
+    lasso_cd = linear_model.Lasso(fit_intercept=False, tol=1e-8)
     for (c, a) in zip(lasso_path.T, alphas):
         lasso_cd.alpha = a
-        lasso_cd.fit(X, y, tol=1e-8)
+        lasso_cd.fit(X, y)
         error = np.linalg.norm(c - lasso_cd.coef_)
         assert error < 0.01
 
     # similar test, with the classifiers
     for alpha in np.linspace(1e-2, 1 - 1e-2):
         clf1 = linear_model.LassoLars(alpha=alpha, normalize=False).fit(X, y)
-        clf2 = linear_model.Lasso(alpha=alpha).fit(X, y, tol=1e-8)
+        clf2 = linear_model.Lasso(alpha=alpha, tol=1e-8).fit(X, y)
         err = np.linalg.norm(clf1.coef_ - clf2.coef_)
         assert err < 1e-3
 
@@ -139,9 +139,9 @@ def test_lasso_lars_vs_lasso_cd_early_stopping(verbose=False):
     for alphas_min in alphas_min:
         alphas, _, lasso_path = linear_model.lars_path(X, y, method='lasso',
                                                     alpha_min=0.9)
-        lasso_cd = linear_model.Lasso(fit_intercept=False)
+        lasso_cd = linear_model.Lasso(fit_intercept=False, tol=1e-8)
         lasso_cd.alpha = alphas[-1]
-        lasso_cd.fit(X, y, tol=1e-8)
+        lasso_cd.fit(X, y)
         error = np.linalg.norm(lasso_path[:, -1] - lasso_cd.coef_)
         assert error < 0.01
 

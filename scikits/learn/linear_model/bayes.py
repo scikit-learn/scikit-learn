@@ -131,7 +131,7 @@ class BayesianRidge(LinearModel):
         self.overwrite_X = overwrite_X
         self.verbose = verbose
 
-    def fit(self, X, y, **params):
+    def fit(self, X, y):
         """Fit the model
 
         Parameters
@@ -145,7 +145,6 @@ class BayesianRidge(LinearModel):
         -------
         self : returns an instance of self.
         """
-        self._set_params(**params)
         X = np.asanyarray(X, dtype=np.float)
         y = np.asanyarray(y, dtype=np.float)
         X = as_float_array(X, self.overwrite_X)
@@ -354,7 +353,7 @@ class ARDRegression(LinearModel):
         self.overwrite_X = overwrite_X
         self.verbose = verbose
 
-    def fit(self, X, y, **params):
+    def fit(self, X, y):
         """Fit the ARDRegression model according to the given training data
         and parameters.
 
@@ -372,7 +371,6 @@ class ARDRegression(LinearModel):
         -------
         self : returns an instance of self.
         """
-        self._set_params(**params)
 
         X = np.asanyarray(X, dtype=np.float)
         y = np.asanyarray(y, dtype=np.float)

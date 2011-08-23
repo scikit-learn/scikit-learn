@@ -140,29 +140,13 @@ def test_SVR():
     Test Support Vector Regression
     """
 
-    clf = svm.SVR(kernel='linear')
-    clf.fit(X, Y)
-    pred = clf.predict(T)
-
-    assert_array_almost_equal(clf.dual_coef_, [[-0.1, 0.1]])
-    assert_array_almost_equal(clf.coef_, [[0.2, 0.2]])
-    assert_array_almost_equal(clf.support_vectors_, [[-1, -1], [1, 1]])
-    assert_array_equal(clf.support_, [1, 3])
-    assert_array_almost_equal(clf.intercept_, [1.5])
-    assert_array_almost_equal(pred, [1.1, 2.3, 2.5])
-
-    # the same with kernel='rbf'
-    clf = svm.SVR(kernel='rbf')
-    clf.fit(X, Y)
-    pred = clf.predict(T)
-
-    assert_array_almost_equal(clf.dual_coef_,
-                              [[-0.014, -0.515, -0.013, 0.515, 0.013, 0.013]],
-                              decimal=3)
-    assert_raises(NotImplementedError, lambda: clf.coef_)
-    assert_array_almost_equal(clf.support_vectors_, X)
-    assert_array_almost_equal(clf.intercept_, [1.49997261])
-    assert_array_almost_equal(pred, [1.10001274, 1.86682485, 1.73300377])
+    diabetes = datasets.load_diabetes()
+    for clf in (svm.NuSVR(kernel='linear', nu=.4),
+                svm.SVR(kernel='linear', C=10.),
+                svm.sparse.NuSVR(kernel='linear', nu=.4),
+                svm.sparse.SVR(kernel='linear', C=10.)):
+        clf.fit(diabetes.data, diabetes.target)
+        assert clf.score(diabetes.data, diabetes.target) > 0.02
 
 
 def test_oneclass():
