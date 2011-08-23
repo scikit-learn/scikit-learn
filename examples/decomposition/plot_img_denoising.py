@@ -72,7 +72,8 @@ def show_with_diff(image, reference, title):
     pl.yticks(())
     pl.subplot(1, 2, 2)
     pl.title("Difference")
-    pl.imshow(image - reference, cmap=pl.cm.PuOr, interpolation='nearest')
+    pl.imshow(image - reference, vmin=-1, vmax=1, cmap=pl.cm.PuOr,
+              interpolation='nearest')
     pl.xticks(())
     pl.yticks(())
     pl.suptitle(title, size=16)
@@ -95,8 +96,8 @@ transform_algorithms = [
     ('2-Orthogonal Matching Pursuit', 'omp',
      {'n_nonzero_coefs': 2, 'precompute_gram': True}),
 
-    ('5-Least-angle regression', 'lars',
-     {'max_iter': 5})]
+    ('6-Least-angle regression', 'lars',
+     {'max_iter': 6})]
 
 reconstructions = {}
 for title, transform_algorithm, fit_params in transform_algorithms:

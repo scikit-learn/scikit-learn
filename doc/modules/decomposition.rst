@@ -412,15 +412,15 @@ The following image shows how a dictionary learned from 4x4 pixel image patches
 extracted from part of the image of Lena looks like.
 
 
-.. figure:: ../auto_examples/decomposition/images/plot_denoise_1.png
-    :target: ../auto_examples/decomposition/plot_denoise.html
+.. figure:: ../auto_examples/decomposition/images/plot_img_denoising_1.png
+    :target: ../auto_examples/decomposition/plot_img_denoising.html
     :align: center
     :scale: 50%
 
 
 .. topic:: Examples:
 
-  * :ref:`example_decomposition_plot_denoise.py`
+  * :ref:`example_decomposition_plot_img_denoising.py`
 
 
 .. topic:: References:
