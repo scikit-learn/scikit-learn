@@ -12,7 +12,7 @@ Generalized Linear models.
 # License: BSD Style.
 
 import numpy as np
-import scipy.sparse
+import scipy.sparse as sp
 
 from ..base import BaseEstimator, RegressorMixin, ClassifierMixin
 from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
@@ -59,7 +59,7 @@ class LinearModel(BaseEstimator, RegressorMixin):
             You can specify an argument overwrite_X (default is False).
         """
         if fit_intercept:
-            if scipy.sparse.issparse(X):
+            if sp.issparse(X):
                 X_mean = np.zeros(X.shape[1])
                 X_std = np.ones(X.shape[1])
             else:

@@ -1,5 +1,5 @@
 import numpy as np
-from scipy import sparse
+import scipy.sparse as sp
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_almost_equal
 from numpy.testing import assert_equal
@@ -12,7 +12,7 @@ from scikits.learn.linear_model.coordinate_descent import ElasticNet as DenseENe
 
 def test_sparse_predict():
     """Check that the predict method works with dense coef_ and sparse X"""
-    X = sparse.lil_matrix((3, 2))
+    X = sp.lil_matrix((3, 2))
     X[0, 0] = 1
     X[0, 1] = 0.5
     X[1, 0] = -1
@@ -25,7 +25,7 @@ def test_sparse_predict():
 
 def test_lasso_zero():
     """Check that the sparse lasso can handle zero data without crashing"""
-    X = sparse.csc_matrix((3, 1))
+    X = sp.csc_matrix((3, 1))
     y = [0, 0, 0]
     T = np.array([[1], [2], [3]])
     clf = SparseLasso().fit(X, y)
@@ -69,14 +69,14 @@ def test_enet_toy_explicit_sparse_input():
     """Test ElasticNet for various parameters of alpha and rho with sparse X"""
 
     # training samples
-    X = sparse.lil_matrix((3, 1))
+    X = sp.lil_matrix((3, 1))
     X[0, 0] = -1
     # X[1, 0] = 0
     X[2, 0] = 1
     Y = [-1, 0, 1]       # just a straight line (the identity function)
 
     # test samples
-    T = sparse.lil_matrix((3, 1))
+    T = sp.lil_matrix((3, 1))
     T[0, 0] = 2
     T[1, 0] = 3
     T[2, 0] = 4

@@ -7,7 +7,7 @@
 
 import warnings
 import numpy as np
-from scipy import sparse
+import scipy.sparse as sp
 
 from ..base import LinearModel
 from . import cd_fast_sparse
@@ -59,7 +59,7 @@ class ElasticNet(LinearModel):
             self.sparse_coef_ = None
         else:
             # sparse representation of the fitted coef for the predict method
-            self.sparse_coef_ = sparse.csr_matrix(coef_)
+            self.sparse_coef_ = sp.csr_matrix(coef_)
 
     def fit(self, X, y):
         """Fit current model with coordinate descent
@@ -67,7 +67,7 @@ class ElasticNet(LinearModel):
         X is expected to be a sparse matrix. For maximum efficiency, use a
         sparse matrix in CSC format (scipy.sparse.csc_matrix)
         """
-        X = sparse.csc_matrix(X)
+        X = sp.csc_matrix(X)
         y = np.asanyarray(y, dtype=np.float64)
 
         # NOTE: we are explicitly not centering the data the naive way to
@@ -111,8 +111,8 @@ class ElasticNet(LinearModel):
         array, shape = [n_samples] with the predicted real values
         """
         # np.dot only works correctly if both arguments are sparse matrices
-        if not sparse.issparse(X):
-            X = sparse.csr_matrix(X)
+        if not sp.issparse(X):
+            X = sp.csr_matrix(X)
         return np.ravel(np.dot(self.sparse_coef_, X.T).todense()
                         + self.intercept_)
 
