@@ -282,7 +282,7 @@ class DictionaryLearningOnline(BaseDictionaryLearning):
 
     See also
     --------
-    `scikits.learn.decomposition.SparsePCA`
+    :class:`scikits.learn.decomposition.SparsePCA`
 
     """
     def __init__(self, n_atoms, alpha=1, n_iter=1000, fit_algorithm='lars',
