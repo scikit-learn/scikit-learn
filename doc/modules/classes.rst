@@ -370,6 +370,8 @@ Signal Decomposition
    decomposition.NMF
    decomposition.SparsePCA
    decomposition.MiniBatchSparsePCA
+   decomposition.DictionaryLearning
+   decomposition.DictionaryLearningOnline
 
 .. autosummary::
    :toctree: generated/
