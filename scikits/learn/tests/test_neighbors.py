@@ -101,16 +101,17 @@ def test_neighbors_iris():
     """
 
     for s in ('auto', 'ball_tree', 'brute', 'inplace'):
-        clf = neighbors.NeighborsClassifier()
-        clf.fit(iris.data, iris.target, n_neighbors=1, algorithm=s)
+        clf = neighbors.NeighborsClassifier(n_neighbors=1, algorithm=s)
+        clf.fit(iris.data, iris.target)
         assert_array_equal(clf.predict(iris.data), iris.target)
 
-        clf.fit(iris.data, iris.target, n_neighbors=9, algorithm=s)
+        clf.set_params(n_neighbors=9, algorithm=s)
+        clf.fit(iris.data, iris.target)
         assert np.mean(clf.predict(iris.data) == iris.target) > 0.95
 
         for m in ('barycenter', 'mean'):
-            rgs = neighbors.NeighborsRegressor()
-            rgs.fit(iris.data, iris.target, mode=m, algorithm=s)
+            rgs = neighbors.NeighborsRegressor(mode=m)
+            rgs.fit(iris.data, iris.target)
             assert np.mean(
                 rgs.predict(iris.data).round() == iris.target) > 0.95
 
@@ -125,8 +126,8 @@ def _test_neighbors_sparse_regression():
 
     for sparse1 in SPARSE_TYPES:
         for m in ('barycenter', 'mean'):
-            rgs = neighbors.NeighborsRegressor()
-            rgs.fit(sparse1(iris.data), iris.target, mode=m)
+            rgs = neighbors.NeighborsRegressor(mode=m)
+            rgs.fit(sparse1(iris.data), iris.target)
             for sparse2 in SPARSE_OR_DENSE:
                 data2 = sparse2(iris.data)
                 assert np.mean(rgs.predict(data2).round() == iris.target) > 0.95

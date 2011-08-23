@@ -483,25 +483,21 @@ class KMeans(BaseEstimator):
         self.random_state = random_state
         self.copy_x = copy_x
 
-    def _check_data(self, X, **params):
-        """
-        Set parameters and check the sample given is larger than k
-        """
+    def _check_data(self, X):
+        """Verify that the number of samples given is larger than k"""
         if sp.issparse(X):
             raise ValueError("K-Means does not support sparse input matrices.")
         X = np.asanyarray(X)
         if X.shape[0] < self.k:
-            raise ValueError("n_samples=%d should be larger than k=%d" % (
+            raise ValueError("n_samples=%d should be >= k=%d" % (
                 X.shape[0], self.k))
-        self._set_params(**params)
         return X
 
-    def fit(self, X, **params):
-        """Fit k-means"""
-
+    def fit(self, X):
+        """Compute k-means"""
         self.random_state = check_random_state(self.random_state)
 
-        X = self._check_data(X, **params)
+        X = self._check_data(X)
 
         self.cluster_centers_, self.labels_, self.inertia_ = k_means(
             X, k=self.k, init=self.init, n_init=self.n_init,
@@ -701,7 +697,7 @@ class MiniBatchKMeans(KMeans):
         self.cluster_centers_ = None
         self.chunk_size = chunk_size
 
-    def fit(self, X, y=None, **params):
+    def fit(self, X, y=None):
         """Compute the centroids on X by chunking it into mini-batches.
 
         Parameters
@@ -709,7 +705,6 @@ class MiniBatchKMeans(KMeans):
         X: array-like, shape = [n_samples, n_features]
             Coordinates of the data points to cluster
         """
-        self._set_params(**params)
         self.random_state = check_random_state(self.random_state)
         X = check_arrays(X, sparse_format="csr", copy=False)[0]
         n_samples, n_features = X.shape
@@ -762,7 +757,7 @@ class MiniBatchKMeans(KMeans):
 
         return self
 
-    def partial_fit(self, X, y=None, **params):
+    def partial_fit(self, X, y=None):
         """Update k means estimate on a single mini-batch X.
 
         Parameters

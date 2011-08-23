@@ -50,8 +50,8 @@ def test_enet_toy_list_input():
     assert_array_almost_equal(pred, [2, 3, 4])
     assert_almost_equal(clf.dual_gap_, 0)
 
-    clf = SparseENet(alpha=0.5, rho=0.3)
-    clf.fit(X, Y, max_iter=1000)
+    clf = SparseENet(alpha=0.5, rho=0.3, max_iter=1000)
+    clf.fit(X, Y)
     pred = clf.predict(T)
     assert_array_almost_equal(clf.coef_, [0.50819], decimal=3)
     assert_array_almost_equal(pred, [1.0163,  1.5245,  2.0327], decimal=3)
@@ -89,8 +89,8 @@ def test_enet_toy_explicit_sparse_input():
     assert_array_almost_equal(pred, [2, 3, 4])
     assert_almost_equal(clf.dual_gap_, 0)
 
-    clf = SparseENet(alpha=0.5, rho=0.3)
-    clf.fit(X, Y, max_iter=1000)
+    clf = SparseENet(alpha=0.5, rho=0.3, max_iter=1000)
+    clf.fit(X, Y)
     pred = clf.predict(T)
     assert_array_almost_equal(clf.coef_, [0.50819], decimal=3)
     assert_array_almost_equal(pred, [1.0163,  1.5245,  2.0327], decimal=3)
@@ -132,14 +132,16 @@ def test_sparse_enet_not_as_toy_dataset():
     X_train, X_test = X[n_samples / 2:], X[:n_samples / 2]
     y_train, y_test = y[n_samples / 2:], y[:n_samples / 2]
 
-    s_clf = SparseENet(alpha=0.1, rho=0.8, fit_intercept=False)
-    s_clf.fit(X_train, y_train, max_iter=max_iter, tol=1e-7)
+    s_clf = SparseENet(alpha=0.1, rho=0.8, fit_intercept=False,
+                       max_iter=max_iter, tol=1e-7)
+    s_clf.fit(X_train, y_train)
     assert_almost_equal(s_clf.dual_gap_, 0, 4)
     assert s_clf.score(X_test, y_test) > 0.85
 
     # check the convergence is the same as the dense version
-    d_clf = DenseENet(alpha=0.1, rho=0.8, fit_intercept=False)
-    d_clf.fit(X_train, y_train, max_iter=max_iter, tol=1e-7)
+    d_clf = DenseENet(alpha=0.1, rho=0.8, fit_intercept=False,
+                      max_iter=max_iter, tol=1e-7)
+    d_clf.fit(X_train, y_train)
     assert_almost_equal(d_clf.dual_gap_, 0, 4)
     assert d_clf.score(X_test, y_test) > 0.85
 
@@ -158,14 +160,15 @@ def test_sparse_lasso_not_as_toy_dataset():
     X_train, X_test = X[n_samples / 2:], X[:n_samples / 2]
     y_train, y_test = y[n_samples / 2:], y[:n_samples / 2]
 
-    s_clf = SparseLasso(alpha=0.1, fit_intercept=False)
-    s_clf.fit(X_train, y_train, max_iter=max_iter, tol=1e-7)
+    s_clf = SparseLasso(alpha=0.1, fit_intercept=False,
+                        max_iter=max_iter, tol=1e-7)
+    s_clf.fit(X_train, y_train)
     assert_almost_equal(s_clf.dual_gap_, 0, 4)
     assert s_clf.score(X_test, y_test) > 0.85
 
     # check the convergence is the same as the dense version
-    d_clf = DenseLasso(alpha=0.1, fit_intercept=False)
-    d_clf.fit(X_train, y_train, max_iter=max_iter, tol=1e-7)
+    d_clf = DenseLasso(alpha=0.1, fit_intercept=False, max_iter=max_iter, tol=1e-7)
+    d_clf.fit(X_train, y_train)
     assert_almost_equal(d_clf.dual_gap_, 0, 4)
     assert d_clf.score(X_test, y_test) > 0.85
 

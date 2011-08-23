@@ -215,8 +215,7 @@ class PCA(BaseEstimator, TransformerMixin):
 
         return U
 
-    def _fit(self, X, **params):
-        self._set_params(**params)
+    def _fit(self, X):
         X = np.atleast_2d(X)
         n_samples, n_features = X.shape
         if self.copy:
@@ -426,7 +425,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         self.whiten = whiten
         self.mean_ = None
 
-    def fit(self, X, y=None, **params):
+    def fit(self, X, y=None):
         """Fit the model to the data X.
 
         Parameters
@@ -440,7 +439,6 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         self : object
             Returns the instance itself.
         """
-        self._set_params(**params)
         if not hasattr(X, 'todense'):
             X = np.atleast_2d(X)
 

@@ -455,7 +455,7 @@ class OrthogonalMatchingPursuit(LinearModel):
         self.precompute_gram = precompute_gram
 
     def fit(self, X, y, Gram=None, Xy=None, overwrite_x=False,
-            overwrite_gram=False, overwrite_xy=False, **params):
+            overwrite_gram=False, overwrite_xy=False):
         """Fit the model using X, y as training data.
 
         Parameters
@@ -492,8 +492,6 @@ class OrthogonalMatchingPursuit(LinearModel):
         self: object
             returns an instance of self.
         """
-        self._set_params(**params)
-
         X = np.atleast_2d(X)
         y = np.atleast_1d(y)
 

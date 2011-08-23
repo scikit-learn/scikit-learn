@@ -458,7 +458,7 @@ class LocallyLinearEmbedding(BaseEstimator):
                 max_iter=self.max_iter, method=self.method,
                 hessian_tol=self.hessian_tol, modified_tol=self.modified_tol)
 
-    def fit(self, X, y=None, **params):
+    def fit(self, X, y=None):
         """Compute the embedding vectors for data X
 
         Parameters
@@ -470,11 +470,10 @@ class LocallyLinearEmbedding(BaseEstimator):
         -------
         self : returns an instance of self.
         """
-        self._set_params(**params)
         self._fit_transform(X)
         return self
 
-    def fit_transform(self, X, y=None, **params):
+    def fit_transform(self, X, y=None):
         """Compute the embedding vectors for data X and transform X.
 
         Parameters
@@ -486,11 +485,10 @@ class LocallyLinearEmbedding(BaseEstimator):
         -------
         X_new: array-like, shape (n_samples, out_dim)
         """
-        self._set_params(**params)
         self._fit_transform(X)
         return self.embedding_
 
-    def transform(self, X, **params):
+    def transform(self, X):
         """
         Transform new points into embedding space.
 
@@ -507,7 +505,6 @@ class LocallyLinearEmbedding(BaseEstimator):
         Because of scaling performed by this method, it is discouraged to use
         it together with methods that are not scale-invariant (like SVMs)
         """
-        self._set_params(**params)
         X = np.atleast_2d(X)
         if not hasattr(self, 'ball_tree_'):
             raise ValueError('The model is not fitted')

@@ -19,7 +19,7 @@ X_csr = sp.csr_matrix(X)
 
 def test_k_means_pp_init():
     np.random.seed(1)
-    k_means = KMeans(init="k-means++").fit(X, k=n_clusters)
+    k_means = KMeans(init="k-means++", k=n_clusters).fit(X)
 
     centers = k_means.cluster_centers_
     assert_equal(centers.shape, (n_clusters, 2))
@@ -31,7 +31,7 @@ def test_k_means_pp_init():
     assert_equal(np.unique(labels[40:]).size, 1)
 
     # check error on dataset being too small
-    assert_raises(ValueError, k_means.fit, [[0., 1.]], k=n_clusters)
+    assert_raises(ValueError, k_means.fit, [[0., 1.]])
 
 
 def test_mini_batch_k_means_pp_init():
@@ -62,7 +62,7 @@ def test_sparse_mini_batch_k_means_pp_init():
 
 def test_k_means_pp_random_init():
     np.random.seed(1)
-    k_means = KMeans(init="random").fit(X, k=n_clusters)
+    k_means = KMeans(init="random", k=n_clusters).fit(X)
 
     centers = k_means.cluster_centers_
     assert_equal(centers.shape, (n_clusters, 2))
@@ -74,13 +74,13 @@ def test_k_means_pp_random_init():
     assert_equal(np.unique(labels[40:]).size, 1)
 
     # check error on dataset being too small
-    assert_raises(ValueError, k_means.fit, [[0., 1.]], k=n_clusters)
+    assert_raises(ValueError, k_means.fit, [[0., 1.]])
 
 
 def test_k_means_fixed_array_init():
     np.random.seed(1)
     init_array = np.vstack([X[5], X[25], X[45]])
-    k_means = KMeans(init=init_array, n_init=1).fit(X, k=n_clusters)
+    k_means = KMeans(init=init_array, n_init=1, k=n_clusters).fit(X)
 
     centers = k_means.cluster_centers_
     assert_equal(centers.shape, (n_clusters, 2))
@@ -92,20 +92,20 @@ def test_k_means_fixed_array_init():
     assert_equal(np.unique(labels[40:]).size, 1)
 
     # check error on dataset being too small
-    assert_raises(ValueError, k_means.fit, [[0., 1.]], k=n_clusters)
+    assert_raises(ValueError, k_means.fit, [[0., 1.]])
 
 
 def test_k_means_invalid_init():
     np.random.seed(1)
-    k_means = KMeans(init="invalid", n_init=1)
-    assert_raises(ValueError, k_means.fit, X, k=n_clusters)
+    k_means = KMeans(init="invalid", n_init=1, k=n_clusters)
+    assert_raises(ValueError, k_means.fit, X)
 
 
 def test_k_means_copyx():
     """Check if copy_x=False returns nearly equal X after de-centering."""
     np.random.seed(1)
     my_X = X.copy()
-    k_means = KMeans(copy_x=False).fit(my_X, k=n_clusters)
+    k_means = KMeans(copy_x=False, k=n_clusters).fit(my_X)
     centers = k_means.cluster_centers_
     assert_equal(centers.shape, (n_clusters, 2))
 
@@ -124,7 +124,7 @@ def test_k_means_singleton():
     np.random.seed(1)
     my_X = np.array([[1.1, 1.1], [0.9, 1.1], [1.1, 0.9], [0.9, 0.9]])
     array_init = np.array([[1.0, 1.0], [5.0, 5.0]])
-    k_means = KMeans(init=array_init).fit(my_X, k=2)
+    k_means = KMeans(init=array_init, k=2).fit(my_X)
 
     # must be singleton clustering
     assert_equal(np.unique(k_means.labels_).size, 1)
@@ -133,7 +133,7 @@ def test_k_means_singleton():
 def test_mbk_means_fixed_array_init():
     np.random.seed(1)
     init_array = np.vstack([X[5], X[25], X[45]])
-    mbk_means = MiniBatchKMeans(init=init_array).fit(X)
+    mbk_means = MiniBatchKMeans(init=init_array, k=n_clusters).fit(X)
 
     centers = mbk_means.cluster_centers_
     assert_equal(centers.shape, (n_clusters, 2))
@@ -141,7 +141,7 @@ def test_mbk_means_fixed_array_init():
     labels = mbk_means.labels_
     assert_equal(np.unique(labels).size, 3)
 
-    assert_raises(ValueError, mbk_means.fit, [[0., 1.]], k=n_clusters)
+    assert_raises(ValueError, mbk_means.fit, [[0., 1.]])
 
 
 def test_sparse_mbk_means_fixed_array_init():
@@ -155,13 +155,13 @@ def test_sparse_mbk_means_fixed_array_init():
     labels = mbk_means.labels_
     assert_equal(np.unique(labels).size, 3)
 
-    assert_raises(ValueError, mbk_means.fit, [[0., 1.]], k=n_clusters)
+    assert_raises(ValueError, mbk_means.fit, [[0., 1.]])
 
 
 def test_sparse_mbk_means_pp_init():
     np.random.seed(1)
-    mbk_means = MiniBatchKMeans(init="k-means++")
-    assert_raises(ValueError, mbk_means.fit, X_csr, k=n_clusters)
+    mbk_means = MiniBatchKMeans(init="k-means++", k=n_clusters)
+    assert_raises(ValueError, mbk_means.fit, X_csr)
 
 
 def test_sparse_mbk_means_callable_init():
@@ -177,17 +177,18 @@ def test_sparse_mbk_means_callable_init():
     labels = mbk_means.labels_
     assert_equal(np.unique(labels).size, 3)
 
-    assert_raises(ValueError, mbk_means.fit, [[0., 1.]], k=n_clusters)
+    assert_raises(ValueError, mbk_means.fit, [[0., 1.]])
 
 
 def test_k_means_fixed_array_init_fit():
     np.random.seed(1)
     init_array = np.vstack([X[5], X[25], X[45]])
-    k_means = KMeans(init=init_array, n_init=1).fit(X, k=n_clusters)
+    k_means = KMeans(init=init_array, n_init=1, k=n_clusters).fit(X)
 
     another_init_array = np.vstack([X[1], X[30], X[50]])
-    other_k_means = KMeans(init=init_array, n_init=1)
-    other_k_means.fit(X, init=another_init_array, k=n_clusters)
+    other_k_means = KMeans(init=init_array, n_init=1, k=n_clusters)
+    other_k_means.set_params(init=another_init_array)
+    other_k_means.fit(X)
     assert_true(not np.allclose(k_means.init, other_k_means.init),
                 "init attributes must be different")
 
@@ -195,11 +196,11 @@ def test_k_means_fixed_array_init_fit():
 def test_mbkm_fixed_array_init_fit():
     np.random.seed(1)
     init_array = np.vstack([X[5], X[25], X[45]])
-    k_means = MiniBatchKMeans(init=init_array).fit(X, k=n_clusters)
+    k_means = MiniBatchKMeans(init=init_array, k=n_clusters).fit(X)
 
     another_init_array = np.vstack([X[1], X[30], X[50]])
-    other_k_means = MiniBatchKMeans(init=init_array)
-    other_k_means.fit(X, init=another_init_array, k=n_clusters)
+    other_k_means = MiniBatchKMeans(init=another_init_array, k=n_clusters)
+    other_k_means.fit(X)
     assert_true(not np.allclose(k_means.init, other_k_means.init),
                 "init attributes must be different")
 

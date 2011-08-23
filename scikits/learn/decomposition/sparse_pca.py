@@ -77,13 +77,14 @@ def _update_code(dictionary, Y, alpha, code=None, Gram=None, method='lars',
         finally:
             np.seterr(**err_mgt)
     elif method == 'cd':
-        clf = Lasso(alpha=alpha, fit_intercept=False, precompute=Gram)
+        clf = Lasso(alpha=alpha, fit_intercept=False, precompute=Gram,
+                    max_iter=1000, tol=tol)
         for k in range(n_features):
             # A huge amount of time is spent in this loop. It needs to be
             # tight.
             if code is not None:
                 clf.coef_ = code[:, k]  # Init with previous value of Vk
-            clf.fit(dictionary, Y[:, k], max_iter=1000, tol=tol)
+            clf.fit(dictionary, Y[:, k])
             new_code[:, k] = clf.coef_
     else:
         raise NotImplemented("Lasso method %s is not implemented." % method)
@@ -601,7 +602,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         self.verbose = verbose
         self.random_state = random_state
 
-    def fit(self, X, y=None, **params):
+    def fit(self, X, y=None):
         """Fit the model from data in X.
 
         Parameters
@@ -615,7 +616,6 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         self : object
             Returns the instance itself.
         """
-        self._set_params(**params)
         self.random_state = check_random_state(self.random_state)
         X = np.asanyarray(X)
         code_init = self.V_init.T if self.V_init is not None else None
@@ -726,7 +726,7 @@ class MiniBatchSparsePCA(SparsePCA):
         self.method = method
         self.random_state = random_state
 
-    def fit(self, X, y=None, **params):
+    def fit(self, X, y=None):
         """Fit the model from data in X.
 
         Parameters
@@ -740,7 +740,6 @@ class MiniBatchSparsePCA(SparsePCA):
         self : object
             Returns the instance itself.
         """
-        self._set_params(**params)
         self.random_state = check_random_state(self.random_state)
         X = np.asanyarray(X)
         Vt, _ = dict_learning_online(X.T, self.n_components, alpha=self.alpha,
