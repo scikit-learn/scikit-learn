@@ -32,12 +32,13 @@ height, width = lena.shape
 
 # Distort the right half of the image
 print "Distorting image..."
-lena[:, height/2:] += 0.075 * np.random.randn(width, height/2)
+distorted = lena.copy()
+distorted[:, height/2:] += 0.075 * np.random.randn(width, height/2)
 
 # Extract all clean patches from the left half of the image
 print "Extracting clean patches..."
 patch_size = (4, 4)
-data = extract_patches_2d(lena[:, :height/2], patch_size)
+data = extract_patches_2d(distorted[:, :height/2], patch_size)
 data = data.reshape(data.shape[0], -1)
 intercept = np.mean(data, 0)
 data -= intercept
@@ -57,25 +58,34 @@ for i, comp in enumerate(V):
     pl.imshow(comp.reshape(patch_size), cmap=pl.cm.gray_r)
     pl.xticks(())
     pl.yticks(())
-pl.suptitle("Dictionary learned from Lena patches\n Train time %.1fs" % dt,
+pl.suptitle("Dictionary learned from Lena patches\n" +
+            "Train time %.1fs on %d patches" % (dt, len(data)),
             fontsize=16)
 pl.subplots_adjust(0.02, 0.01, 0.98, 0.88, 0.08, 0.01)
 
+def show_with_diff(image, reference, title):
+    pl.figure(figsize=(5, 3.2))
+    pl.subplot(1, 2, 1)
+    pl.title("Image")
+    pl.imshow(image, vmin=0, vmax=1, cmap=pl.cm.gray, interpolation='nearest')
+    pl.xticks(())
+    pl.yticks(())
+    pl.subplot(1, 2, 2)
+    pl.title("Difference")
+    pl.imshow(image - reference, cmap=pl.cm.PuOr, interpolation='nearest')
+    pl.xticks(())
+    pl.yticks(())
+    pl.suptitle(title, size=16)
+    pl.subplots_adjust(0.02, 0.03, 0.98, 0.79, 0.02, 0.2)
+
 ###############################################################################
 # Display the distorted image
-i = 1
-vmin, vmax = 0, 1
-pl.figure(figsize=(7, 6))
-pl.subplot(2, 2, i)
-pl.title("Noisy image")
-pl.imshow(lena, vmin=vmin, vmax=vmax, cmap=pl.cm.gray, interpolation='nearest')
-pl.xticks(())
-pl.yticks(())
+show_with_diff(distorted, lena, "Distorted image")
 
 ###############################################################################
 # Extract noisy patches and reconstruct them using the dictionary
 print "Extracting noisy patches..."
-data = extract_patches_2d(lena[:, height/2:], patch_size, random_state=0)
+data = extract_patches_2d(distorted[:, height/2:], patch_size, random_state=0)
 data = data.reshape(data.shape[0], -1) - intercept
 
 transform_algorithms = [
@@ -101,14 +111,7 @@ for title, transform_algorithm, fit_params in transform_algorithms:
                                                            (width, height / 2))
     dt = time() - t0
     print dt
-    i += 1
-    pl.subplot(2, 2, i)
-    pl.title(title + '\ntransform time: %.1f' % dt)
-    pl.imshow(reconstructions[title], vmin=vmin, vmax=vmax, cmap=pl.cm.gray,
-    interpolation='nearest')
-    pl.xticks(())
-    pl.yticks(())
+    show_with_diff(reconstructions[title], lena,
+                   title + ' (time: %.1fs)' % dt)
 
-pl.subplots_adjust(0.11, 0.04, 0.89, 0.84, 0.18, 0.26)
-pl.suptitle('Transform methods for image denoising')
 pl.show()
