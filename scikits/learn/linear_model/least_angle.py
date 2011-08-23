@@ -348,7 +348,7 @@ class Lars(LinearModel):
     >>> clf.fit([[-1, 1], [0, 0], [1, 1]], [-1, 0, -1]) # doctest: +ELLIPSIS
     Lars(normalize=True, n_nonzero_coefs=1, verbose=False, fit_intercept=True,
        eps=2.2204460492503131e-16, precompute='auto', overwrite_X=False)
-    >>> print clf.coef_
+    >>> print clf.coef_ # doctest : +ELLIPSIS
     [ 0. -1.]
 
     References
@@ -486,7 +486,7 @@ class LassoLars(Lars):
     LassoLars(normalize=True, verbose=False, fit_intercept=True, max_iter=500,
          eps=2.2204460492503131e-16, precompute='auto', alpha=0.01,
          overwrite_X=False)
-    >>> print clf.coef_
+    >>> print clf.coef_ # doctest : +ELLIPSIS
     [ 0.         -0.96325765]
 
     References
@@ -898,7 +898,7 @@ class LassoLarsIC(LassoLars):
     LassoLarsIC(normalize=True, verbose=False, fit_intercept=True, max_iter=500,
           eps=... precompute='auto', criterion='bic',
           overwrite_X=False)
-    >>> print clf.coef_
+    >>> print clf.coef_ # doctest: +ELLIPSIS
     [ 0. -1.]
 
     References
