@@ -344,7 +344,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         self.max_iter = max_iter
         self.nls_max_iter = nls_max_iter
 
-    def fit_transform(self, X, y=None, **params):
+    def fit_transform(self, X, y=None):
         """Learn a NMF model for the data X and returns the transformed data.
 
         This is more efficient than calling fit followed by transform.
@@ -360,7 +360,6 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         data: array, [n_samples, n_components]
             Transformed data
         """
-        self._set_params(**params)
         X = np.atleast_2d(X)
         if (X < 0).any():
             raise ValueError("Negative data passed to NMF.fit.")

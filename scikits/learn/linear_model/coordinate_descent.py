@@ -83,7 +83,7 @@ class ElasticNet(LinearModel):
         self.max_iter = max_iter
         self.tol = tol
 
-    def fit(self, X, y, Xy=None, coef_init=None, **params):
+    def fit(self, X, y, Xy=None, coef_init=None):
         """Fit Elastic Net model with coordinate descent
 
         Parameters
@@ -108,7 +108,6 @@ class ElasticNet(LinearModel):
         To avoid memory re-allocation it is advised to allocate the
         initial data in memory directly using that format.
         """
-        self._set_params(**params)
         X = np.asanyarray(X, dtype=np.float64)
         y = np.asanyarray(y, dtype=np.float64)
 
@@ -326,17 +325,19 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
         alphas = np.sort(alphas)[::-1]  # make sure alphas are properly ordered
     coef_ = None  # init coef_
     models = []
+    Xy = None
 
     if not 'precompute' in fit_params \
         or fit_params['precompute'] is True \
         or (fit_intercept and hasattr(fit_params['precompute'], '__array__')):
         fit_params['precompute'] = np.dot(X.T, X)
         if not 'Xy' in fit_params or fit_params['Xy'] is None:
-            fit_params['Xy'] = np.dot(X.T, y)
+            Xy = np.dot(X.T, y)
 
     for alpha in alphas:
         model = ElasticNet(alpha=alpha, rho=rho, fit_intercept=False)
-        model.fit(X, y, coef_init=coef_, **fit_params)
+        model.set_params(**fit_params)
+        model.fit(X, y, coef_init=coef_, Xy=Xy)
         if fit_intercept:
             model.fit_intercept = True
             model._set_intercept(Xmean, ymean)
@@ -362,7 +363,7 @@ class LinearModelCV(LinearModel):
         self.tol = tol
         self.cv = cv
 
-    def fit(self, X, y, **fit_params):
+    def fit(self, X, y):
         """Fit linear model with coordinate descent along decreasing alphas
         using cross-validation
 
@@ -380,7 +381,6 @@ class LinearModelCV(LinearModel):
             keyword arguments passed to the Lasso fit method
 
         """
-        self._set_params(**fit_params)
         X = np.asfortranarray(X, dtype=np.float64)
         y = np.asanyarray(y, dtype=np.float64)
 

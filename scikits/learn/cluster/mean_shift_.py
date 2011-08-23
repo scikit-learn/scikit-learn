@@ -191,7 +191,7 @@ class MeanShift(BaseEstimator):
     def __init__(self, bandwidth=None):
         self.bandwidth = bandwidth
 
-    def fit(self, X, **params):
+    def fit(self, X):
         """ Compute MeanShift
 
             Parameters
@@ -200,6 +200,5 @@ class MeanShift(BaseEstimator):
                 Input points
 
         """
-        self._set_params(**params)
         self.cluster_centers_, self.labels_ = mean_shift(X, self.bandwidth)
         return self

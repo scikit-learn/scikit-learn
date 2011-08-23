@@ -492,13 +492,12 @@ class KMeans(BaseEstimator):
                 X.shape[0], self.k))
         return X
 
-    def fit(self, X, **params):
+    def fit(self, X):
         """Compute k-means"""
 
         self.random_state = check_random_state(self.random_state)
 
         X = self._check_data(X)
-        self._set_params(**params)
 
         self.cluster_centers_, self.labels_, self.inertia_ = k_means(
             X, k=self.k, init=self.init, n_init=self.n_init,

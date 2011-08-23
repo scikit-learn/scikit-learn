@@ -201,8 +201,7 @@ class _PLS(BaseEstimator):
         self.tol = tol
         self.copy = copy
 
-    def fit(self, X, Y, **params):
-        self._set_params(**params)
+    def fit(self, X, Y):
         # copy since this will contains the residuals (deflated) matrices
         if self.copy:
             X = np.asanyarray(X, dtype=np.float).copy()
@@ -472,8 +471,8 @@ class PLSRegression(_PLS):
     >>> from scikits.learn.pls import PLSCanonical, PLSRegression, CCA
     >>> X = [[0., 0., 1.], [1.,0.,0.], [2.,2.,2.], [2.,5.,4.]]
     >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
-    >>> pls2 = PLSRegression()
-    >>> pls2.fit(X, Y, n_components=2)
+    >>> pls2 = PLSRegression(n_components=2)
+    >>> pls2.fit(X, Y)
     PLSRegression(scale=True, algorithm='nipals', max_iter=500, n_components=2,
            tol=1e-06, copy=True)
     >>> Y_pred = pls2.predict(X)
@@ -577,8 +576,8 @@ class PLSCanonical(_PLS):
     >>> from scikits.learn.pls import PLSCanonical, PLSRegression, CCA
     >>> X = [[0., 0., 1.], [1.,0.,0.], [2.,2.,2.], [2.,5.,4.]]
     >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
-    >>> plsca = PLSCanonical()
-    >>> plsca.fit(X, Y, n_components=2)
+    >>> plsca = PLSCanonical(n_components=2)
+    >>> plsca.fit(X, Y)
     PLSCanonical(scale=True, algorithm='nipals', max_iter=500, n_components=2,
            tol=1e-06, copy=True)
     >>> X_c, Y_c = plsca.transform(X, Y)
@@ -685,8 +684,8 @@ class CCA(_PLS):
     >>> from scikits.learn.pls import PLSCanonical, PLSRegression, CCA
     >>> X = [[0., 0., 1.], [1.,0.,0.], [2.,2.,2.], [3.,5.,4.]]
     >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
-    >>> cca = CCA()
-    >>> cca.fit(X, Y, n_components=1)
+    >>> cca = CCA(n_components=1)
+    >>> cca.fit(X, Y)
     CCA(scale=True, algorithm='nipals', max_iter=500, n_components=1, tol=1e-06,
       copy=True)
     >>> X_c, Y_c = cca.transform(X, Y)
@@ -762,8 +761,7 @@ class PLSSVD(BaseEstimator):
         self.n_components = n_components
         self.scale = scale
 
-    def fit(self, X, Y, **params):
-        self._set_params(**params)
+    def fit(self, X, Y):
         # copy since this will contains the centered data
         if self.copy:
             X = np.asanyarray(X).copy()

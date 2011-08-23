@@ -186,7 +186,8 @@ def test_k_means_fixed_array_init_fit():
 
     another_init_array = np.vstack([X[1], X[30], X[50]])
     other_k_means = KMeans(init=init_array, n_init=1, k=n_clusters)
-    other_k_means.fit(X, init=another_init_array)
+    other_k_means.set_params(init=another_init_array)
+    other_k_means.fit(X)
     assert_true(not np.allclose(k_means.init, other_k_means.init),
                 "init attributes must be different")
 
