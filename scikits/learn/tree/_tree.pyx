@@ -205,7 +205,7 @@ cdef double call_regression_crit(int criterion,
     if criterion == 0:
         retval = eval_mse(targets)      
     else:
-        raise ValueError("Classification criterion %s invalid!"
+        raise ValueError("Regression criterion %s invalid!"
                          "Must be [0]" % (criterion))                    
                      
     return retval
