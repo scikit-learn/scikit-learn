@@ -44,10 +44,19 @@ data -= intercept
 
 ###############################################################################
 # Learn the dictionary from clean patches
-dico = DictionaryLearningOnline(n_atoms=100, alpha=1e-5, n_iter=300,
+t0 = time()
+dico = DictionaryLearningOnline(n_atoms=100, alpha=1e-2, n_iter=300,
                                 verbose=True, transform_algorithm='omp')
 V = dico.fit(data).components_
-print ""
+print time() - t0
+pl.figure(figsize=(4.5, 5))
+for i, comp in enumerate(V):
+    pl.subplot(10, 10, i + 1)
+    pl.imshow(comp.reshape(patch_size), cmap=pl.cm.gray_r)
+    pl.xticks(())
+    pl.yticks(())
+pl.suptitle("Dictionary learned from Lena patches", fontsize=16)
+pl.subplots_adjust(0.02, 0.05, 0.98, 0.92, 0.08, 0.01)
 
 ###############################################################################
 # Display the distorted image
