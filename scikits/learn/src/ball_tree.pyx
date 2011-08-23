@@ -1,4 +1,3 @@
-# cython: profile=True
 
 # Author: Jake Vanderplas <vanderplas@astro.washington.edu>
 # License: BSD
@@ -242,7 +241,7 @@ cdef inline DTYPE_t dabs(DTYPE_t x):
 #    dist = sum((x - y) ** p) ** (1 / p)
 #  To compare distances, the raising to the (1 / p) is not necessary
 #  therefore, for speed, we also define a function dist_p() given by
-#    dist = sum((x - y) ** p)
+#    dist_p = sum((x - y) ** p)
 #  there are also functions dist_from_dist_p() and dist_p_from_dist()
 #  which convert between these forms.
 @cython.cdivision(True)
@@ -524,26 +523,21 @@ cdef class BallTree(object):
         self.n_levels = state[6]
         self.n_nodes = state[7]
 
-    @cython.cdivision(True)
-    cdef inline ITYPE_t compute_n_levels(BallTree self):
-        cdef ITYPE_t n_samples = self.data_.shape[0]
-        return ITYPE(np.log2(max(1, (n_samples - 1)/self.leaf_size))) + 1
-
     def query(self, X, k=1, return_distance=True):
         """
-        query(x, k=1, return_distance=True)
+        query(X, k=1, return_distance=True)
 
         query the Ball Tree for the k nearest neighbors
 
         Parameters
         ----------
-        x : array-like, last dimension self.dim
-              An array of points to query
+        X : array-like, last dimension self.dim
+            An array of points to query
         k : integer  (default = 1)
-              The number of nearest neighbors to return
+            The number of nearest neighbors to return
         return_distance : boolean (default = True)
-              if True, return a tuple (d,i)
-              if False, return array i
+            if True, return a tuple (d,i)
+            if False, return array i
 
         Returns
         -------
@@ -590,8 +584,8 @@ cdef class BallTree(object):
         X = X.reshape((-1, X.shape[-1]))
 
         # for k less than 5, a priority queue is slightly faster
-        # for more neighbors, a max-heap implementation is better
-        cdef ITYPE_t use_max_heap = k >= 5
+        # for more neighbors, a max-heap implementation is faster
+        cdef ITYPE_t use_max_heap = (k >= 5)
 
         cdef ITYPE_t i
         cdef ITYPE_t n_neighbors = k
@@ -607,7 +601,7 @@ cdef class BallTree(object):
         cdef ITYPE_t* idx_ptr = <ITYPE_t*> idx_array.data
 
         cdef stack node_stack
-        stack_create(&node_stack, np.log2(self.n_nodes) + 1)
+        stack_create(&node_stack, self.n_levels + 1)
 
         for i, Xi in enumerate(X):
             self.query_one_(<DTYPE_t*>Xi.data, n_neighbors,
@@ -638,7 +632,7 @@ cdef class BallTree(object):
 
         Parameters
         ----------
-        x : array-like, last dimension self.dim
+        X : array-like, last dimension self.dim
             An array of points to query
         r : distance within which neighbors are returned
             r can be a single value, or an array of values of shape
@@ -729,14 +723,14 @@ cdef class BallTree(object):
         r = r.reshape(-1)
 
         cdef stack node_stack
-        stack_create(&node_stack, np.log2(self.n_nodes) + 1)
+        stack_create(&node_stack, self.n_levels + 1)
 
         if count_only:
             count = np.zeros(X.shape[0], ITYPE)
             for pt_idx, pt in enumerate(X):
                 count[pt_idx] = self.query_radius_count_(<DTYPE_t*>pt.data,
-                                                          r[pt_idx],
-                                                          &node_stack)
+                                                         r[pt_idx],
+                                                         &node_stack)
         elif not return_distance:
             idx_array = np.empty(X.shape[0], dtype='object')
             idx_array_i = np.empty(self.data_.shape[0], dtype=ITYPE)
@@ -938,6 +932,8 @@ cdef class BallTree(object):
                                         n_features, p)
         stack_push(node_stack, item)
 
+        # create pointers to the priority-queue/max-heap functions.
+        # they both can operate on near_set_dist and near_set_idx
         cdef DTYPE_t (*heapqueue_largest)(DTYPE_t*, ITYPE_t)
         cdef void (*heapqueue_insert)(DTYPE_t, ITYPE_t, DTYPE_t*,
                                       ITYPE_t*, ITYPE_t)
@@ -1253,7 +1249,8 @@ cdef ITYPE_t find_split_dim(DTYPE_t* data,
                             ITYPE_t* node_indices,
                             ITYPE_t n_features,
                             ITYPE_t n_points):
-    #i_max = np.argmax(np.max(data, 0) - np.min(data, 0))
+    # this computes the following
+    # j_max = np.argmax(np.max(data, 0) - np.min(data, 0))
     cdef DTYPE_t min_val, max_val, val, spread, max_spread
     cdef ITYPE_t i, j, j_max
 
@@ -1295,7 +1292,7 @@ cdef void partition_indices(DTYPE_t* data,
                             ITYPE_t n_features,
                             ITYPE_t n_points):
     # partition_indices will modify the array node_indices between
-    # indices 0 and n_points.  Upon return,
+    # indices 0 and n_points.  Upon return (assuming numpy-style slicing)
     #   data[node_indices[0:split_index], split_dim]
     #     <= data[node_indices[split_index], split_dim]
     # and
@@ -1471,6 +1468,22 @@ cdef void max_heap_insert(DTYPE_t val, ITYPE_t i_val,
     idx_array[i] = i_val
 
 
+######################################################################
+# sort_dist_idx :
+#  this is a quicksort implementation which sorts `dist` and
+#  simultaneously performs the same swaps on `idx`.
+cdef void sort_dist_idx(DTYPE_t* dist, ITYPE_t* idx, ITYPE_t k):
+    cdef ITYPE_t pivot_idx
+    if k > 1:
+        pivot_idx = partition_dist_idx(dist, idx, k)
+
+        sort_dist_idx(dist, idx, pivot_idx)
+
+        sort_dist_idx(dist + pivot_idx + 1,
+                      idx + pivot_idx + 1,
+                      k - pivot_idx - 1)
+
+
 cdef ITYPE_t partition_dist_idx(DTYPE_t* dist, ITYPE_t* idx, ITYPE_t k):
     cdef ITYPE_t pivot_idx = k / 2
     cdef DTYPE_t pivot_val = dist[pivot_idx]
@@ -1488,15 +1501,3 @@ cdef ITYPE_t partition_dist_idx(DTYPE_t* dist, ITYPE_t* idx, ITYPE_t k):
     dswap(dist, store_idx, k - 1)
     iswap(idx, store_idx, k - 1)
     return store_idx
-
-
-cdef void sort_dist_idx(DTYPE_t* dist, ITYPE_t* idx, ITYPE_t k):
-    cdef ITYPE_t pivot_idx
-    if k > 1:
-        pivot_idx = partition_dist_idx(dist, idx, k)
-
-        sort_dist_idx(dist, idx, pivot_idx)
-
-        sort_dist_idx(dist + pivot_idx + 1,
-                      idx + pivot_idx + 1,
-                      k - pivot_idx - 1)
