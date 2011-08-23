@@ -7,6 +7,7 @@ def configuration(parent_package='', top_path=None):
     config = Configuration('datasets', parent_package, top_path)
     config.add_data_dir('data')
     config.add_data_dir('descr')
+    config.add_data_dir('images')
 
 
     config.add_extension('_svmlight_format',

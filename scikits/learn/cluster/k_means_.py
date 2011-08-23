@@ -431,6 +431,7 @@ class KMeans(BaseEstimator):
     tol: float, optional default: 1e-4
         Relative tolerance w.r.t. inertia to declare convergence
 
+
     Methods
     -------
 
@@ -496,7 +497,7 @@ class KMeans(BaseEstimator):
         return X
 
     def fit(self, X, **params):
-        """Compute k-means"""
+        """Fit k-means"""
 
         self.random_state = check_random_state(self.random_state)
 
@@ -507,6 +508,60 @@ class KMeans(BaseEstimator):
             max_iter=self.max_iter, verbose=self.verbose,
             tol=self.tol, random_state=self.random_state, copy_x=self.copy_x)
         return self
+
+    def transform(self, X):
+        """ Transform the data to a cluster-distance space
+
+        In the new space, each dimension is the distance to the cluster centers.
+        Note that even if X is sparse, the array returned by `transform` will
+        typically be dense.
+
+        Parameters
+        ----------
+        X: {array-like, sparse matrix}, shape = [n_samples, n_features]
+            New data to transform.
+
+        Returns
+        -------
+        X_new : array, shape [n_samples, k]
+            X transformed in the new space.
+        """
+        if not hasattr(self, "cluster_centers_"):
+            raise AttributeError("Model has not been trained. "
+                                 "Train k-means before using transform.")
+        cluster_shape = self.cluster_centers_.shape[1]
+        if not X.shape[1] == cluster_shape:
+            raise ValueError("Incorrect number of features for points. "
+                             "Got %d features, expected %d" % (X.shape[1],
+                                                               cluster_shape))
+        return euclidean_distances(X, self.cluster_centers_)
+
+    def predict(self, X):
+        """ Predict the closest cluster each sample belongs to
+
+        In the vector quantization literature, `cluster_centers_` is called
+        the code book and each value returned by `predict` is the index of
+        the closest code in the code book.
+
+        Parameters
+        ----------
+        X: {array-like, sparse matrix}, shape = [n_samples, n_features]
+            New data to predict.
+
+        Returns
+        -------
+        Y : array, shape [n_samples, ]
+            Index of the closest center each sample belongs to.
+        """
+        if not hasattr(self, "cluster_centers_"):
+            raise AttributeError("Model has not been trained yet. "
+                                 "Fit k-means before using predict.")
+        cluster_shape = self.cluster_centers_.shape[1]
+        if not X.shape[1] == cluster_shape:
+            raise ValueError("Incorrect number of features. "
+                             "Got %d features, expected %d" % (X.shape[1],
+                                                               cluster_shape))
+        return _e_step(X, self.cluster_centers_)[0]
 
 
 def _mini_batch_step_dense(X, batch_slice, centers, counts, x_squared_norms):
