@@ -118,6 +118,16 @@ def test_lasso_lars_vs_lasso_cd(verbose=False):
         err = np.linalg.norm(clf1.coef_ - clf2.coef_)
         assert err < 1e-3
 
+    # same test, with normalization
+    alphas, _, lasso_path = linear_model.lars_path(X, y, method='lasso')
+    lasso_cd = linear_model.Lasso(fit_intercept=True, normalize=True)
+    for (c, a) in zip(lasso_path.T, alphas):
+        lasso_cd.alpha = a
+        lasso_cd.fit(X, y, tol=1e-8)
+        error = np.linalg.norm(c - lasso_cd.coef_)
+        assert error < 0.01
+
+
 
 def test_lasso_lars_vs_lasso_cd_early_stopping(verbose=False):
     """
@@ -134,6 +144,18 @@ def test_lasso_lars_vs_lasso_cd_early_stopping(verbose=False):
         lasso_cd.fit(X, y, tol=1e-8)
         error = np.linalg.norm(lasso_path[:, -1] - lasso_cd.coef_)
         assert error < 0.01
+
+    alphas_min = [10, 0.9, 1e-4]
+    # same test, with normalization
+    for alphas_min in alphas_min:
+        alphas, _, lasso_path = linear_model.lars_path(X, y, method='lasso',
+                                                    alpha_min=0.9)
+        lasso_cd = linear_model.Lasso(fit_intercept=True, normalize=True)
+        lasso_cd.alpha = alphas[-1]
+        lasso_cd.fit(X, y, tol=1e-8)
+        error = np.linalg.norm(lasso_path[:, -1] - lasso_cd.coef_)
+        assert error < 0.01
+
 
 
 def test_lars_add_features(verbose=False):
