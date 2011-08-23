@@ -181,7 +181,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
 
         max_iters = self.max_iters
         ct = self.conv_threshold
-        while not_converged(self.y_, y_p, ct) and max_iters > 1:
+        while _not_converged(self.y_, y_p, ct) and max_iters > 1:
             y_p = self.y_
             self.y_ = np.dot(graph_matrix, self.y_)
             # clamp
@@ -305,6 +305,6 @@ class LabelSpreading(BaseLabelPropagation):
 ### Helper functions
 
 
-def not_converged(y, y_hat, threshold=1e-3):
+def _not_converged(y, y_hat, threshold=1e-3):
     """basic convergence check"""
     return np.sum(np.abs(np.asarray(y - y_hat))) > threshold
