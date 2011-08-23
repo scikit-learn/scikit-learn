@@ -356,8 +356,7 @@ class FastICA(BaseEstimator):
         self.tol = tol
         self.w_init = w_init
 
-    def fit(self, X, **params):
-        self._set_params(**params)
+    def fit(self, X):
         whitening_, unmixing_, sources_ = fastica(X, self.n_components,
                         self.algorithm, self.whiten,
                         self.fun, self.fun_prime, self.fun_args, self.max_iter,

@@ -97,7 +97,7 @@ class LinearRegression(LinearModel):
     def __init__(self, fit_intercept=True):
         self.fit_intercept = fit_intercept
 
-    def fit(self, X, y, **params):
+    def fit(self, X, y):
         """
         Fit linear model.
 
@@ -116,7 +116,6 @@ class LinearRegression(LinearModel):
         -------
         self : returns an instance of self.
         """
-        self._set_params(**params)
         X = np.asanyarray(X)
         y = np.asanyarray(y)
 
@@ -299,7 +298,7 @@ class BaseSGDClassifier(BaseSGD, ClassifierMixin):
         self.class_weight = weight
 
     def fit(self, X, y, coef_init=None, intercept_init=None,
-            class_weight=None, sample_weight=None, **params):
+            class_weight=None, sample_weight=None):
         """Fit linear model with Stochastic Gradient Descent.
 
         Parameters
@@ -330,7 +329,6 @@ class BaseSGDClassifier(BaseSGD, ClassifierMixin):
         -------
         self : returns an instance of self.
         """
-        self._set_params(**params)
 
         # check only y because X might be dense or sparse
         y = np.asanyarray(y, dtype=np.float64, order='C')
@@ -443,7 +441,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
             raise ValueError("The loss %s is not supported. " % loss)
 
     def fit(self, X, y, coef_init=None, intercept_init=None,
-            sample_weight=None, **params):
+            sample_weight=None):
         """Fit linear model with Stochastic Gradient Descent.
 
         Parameters
@@ -467,7 +465,6 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         -------
         self : returns an instance of self.
         """
-        self._set_params(**params)
         y = np.asanyarray(y, dtype=np.float64, order="C")
 
         # make sure X has shape

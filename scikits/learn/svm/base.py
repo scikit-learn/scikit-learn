@@ -71,8 +71,7 @@ class BaseLibSVM(BaseEstimator):
                                dtype=np.float64, order='C')
         return X
 
-    def fit(self, X, y, class_weight=None, sample_weight=None, cache_size=100.,
-            **params):
+    def fit(self, X, y, class_weight=None, sample_weight=None, cache_size=100.):
         """
         Fit the SVM model according to the given training data and
         parameters.
@@ -111,7 +110,6 @@ class BaseLibSVM(BaseEstimator):
         copied.
 
         """
-        self._set_params(**params)
 
         X = np.asanyarray(X, dtype=np.float64, order='C')
         y = np.asanyarray(y, dtype=np.float64, order='C')
@@ -349,7 +347,7 @@ class BaseLibLinear(BaseEstimator):
                              + solver_type)
         return self._solver_type_dict[solver_type]
 
-    def fit(self, X, y, class_weight=None, **params):
+    def fit(self, X, y, class_weight=None):
         """
         Fit the model according to the given training data and
         parameters.
@@ -372,7 +370,6 @@ class BaseLibLinear(BaseEstimator):
         self : object
             Returns self.
         """
-        self._set_params(**params)
 
         self.class_weight, self.class_weight_label = \
                      _get_class_weight(class_weight, y)

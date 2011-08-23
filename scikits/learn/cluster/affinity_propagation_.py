@@ -210,7 +210,7 @@ class AffinityPropagation(BaseEstimator):
         self.convit = convit
         self.copy = copy
 
-    def fit(self, S, p=None, **params):
+    def fit(self, S, p=None):
         """compute MeanShift
 
         Parameters
@@ -227,7 +227,6 @@ class AffinityPropagation(BaseEstimator):
             algorithm, for memory efficiency
 
         """
-        self._set_params(**params)
         self.cluster_centers_indices_, self.labels_ = affinity_propagation(S,
                                 p, max_iter=self.max_iter, convit=self.convit,
                                 damping=self.damping,

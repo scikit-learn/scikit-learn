@@ -164,7 +164,7 @@ class Ridge(LinearModel):
         self.fit_intercept = fit_intercept
         self.tol = tol
 
-    def fit(self, X, y, sample_weight=1.0, solver='auto', **params):
+    def fit(self, X, y, sample_weight=1.0, solver='auto'):
         """
         Fit Ridge regression model
 
@@ -191,8 +191,6 @@ class Ridge(LinearModel):
         -------
         self : returns an instance of self.
         """
-        self._set_params(**params)
-
         X = safe_asanyarray(X, dtype=np.float)
         y = np.asanyarray(y, dtype=np.float)
 
@@ -463,7 +461,7 @@ class RidgeCV(LinearModel):
         self.loss_func = loss_func
         self.cv = cv
 
-    def fit(self, X, y, sample_weight=1.0, **params):
+    def fit(self, X, y, sample_weight=1.0):
         """Fit Ridge regression model
 
         Parameters
@@ -485,8 +483,6 @@ class RidgeCV(LinearModel):
         -------
         self : Returns self.
         """
-        self._set_params(**params)
-
         if self.cv is None:
             estimator = _RidgeGCV(self.alphas, self.fit_intercept,
                                   self.score_func, self.loss_func)
@@ -512,7 +508,7 @@ class RidgeCV(LinearModel):
 
 class RidgeClassifierCV(RidgeCV):
 
-    def fit(self, X, y, sample_weight=1.0, class_weight=None, **params):
+    def fit(self, X, y, sample_weight=1.0, class_weight=None):
         """
         Fit the ridge classifier.
 
@@ -538,15 +534,13 @@ class RidgeClassifierCV(RidgeCV):
         self : object
             Returns self.
         """
-        self._set_params(**params)
         if class_weight is None:
             class_weight = {}
         sample_weight2 = np.array([class_weight.get(k, 1.0) for k in y])
         self.label_binarizer = LabelBinarizer()
         Y = self.label_binarizer.fit_transform(y)
         RidgeCV.fit(self, X, Y,
-                    sample_weight=sample_weight * sample_weight2,
-                    cv=self.cv)
+                    sample_weight=sample_weight * sample_weight2)
         return self
 
     def decision_function(self, X):

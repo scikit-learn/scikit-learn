@@ -292,7 +292,7 @@ class Ward(BaseEstimator):
         self.n_components = n_components
         self.connectivity = connectivity
 
-    def fit(self, X, **params):
+    def fit(self, X):
         """Fit the hierarchical clustering on the data
 
         Parameters
@@ -304,8 +304,6 @@ class Ward(BaseEstimator):
         -------
         self
         """
-        self._set_params(**params)
-
         memory = self.memory
         if isinstance(memory, basestring):
             memory = Memory(cachedir=memory)
