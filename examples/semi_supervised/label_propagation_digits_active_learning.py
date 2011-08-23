@@ -1,7 +1,7 @@
 """
-==============================================
-Label Propagation digits active learning demo
-==============================================
+========================================
+Label Propagation digits active learning
+========================================
 
 Demonstrates an active learning technique to learn handwritten digits
 using label propagation.

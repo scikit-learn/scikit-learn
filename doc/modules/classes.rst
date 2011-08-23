@@ -1,4 +1,4 @@
-===============
+-===============
 Class reference
 ===============
 
@@ -232,6 +232,20 @@ Clustering
    cluster.AffinityPropagation
    cluster.Ward
 
+Label propagation
+=================
+
+.. automodule:: scikits.learn.label_propagation
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: scikits.learn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+   label_propagation.LabelPropagation
+   label_propagation.LabelSpreading
 
 Metrics
 =======
