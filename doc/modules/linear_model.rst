@@ -357,7 +357,7 @@ column is always zero.
    <http://www-stat.stanford.edu/~hastie/Papers/LARS/LeastAngle_2002.pdf>`_
    by Hastie et al.
 
-.. OMP:
+.. _omp:
 
 Orthogonal Matching Pursuit (OMP)
 =================================

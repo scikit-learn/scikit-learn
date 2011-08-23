@@ -379,7 +379,7 @@ the following transform methods, controllable via the `transform_method`
 initialization parameter:
 
 
-* Orthogonal matching pursuit (:ref:`OMP`)
+* Orthogonal matching pursuit (:ref:`omp`)
 
 * Least-angle regression and Lasso (:ref:`least_angle_regression`)
 
