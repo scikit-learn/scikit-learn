@@ -409,18 +409,17 @@ the split code is filled with the negative part of the code vector, only with
 a positive sign. Therefore, the split_code is non-negative. 
 
 The following image shows how a dictionary learned from 4x4 pixel image patches
-extracted from the image of Lena looks like.
+extracted from part of the image of Lena looks like.
 
 
-.. figure:: ../auto_examples/decomposition/images/plot_dict_learning_1.png
-    :target: ../auto_examples/decomposition/plot_dict_learning.html
+.. figure:: ../auto_examples/decomposition/images/plot_denoise_1.png
+    :target: ../auto_examples/decomposition/plot_denoise.html
     :align: center
     :scale: 50%
 
 
 .. topic:: Examples:
 
-  * :ref:`example_decomposition_plot_dict_learning.py`
   * :ref:`example_decomposition_plot_denoise.py`
 
 
