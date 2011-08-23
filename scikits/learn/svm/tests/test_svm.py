@@ -142,7 +142,9 @@ def test_SVR():
 
     diabetes = datasets.load_diabetes()
     for clf in (svm.NuSVR(kernel='linear', nu=.4),
-                svm.SVR(kernel='linear', C=10.)):
+                svm.SVR(kernel='linear', C=10.),
+                svm.sparse.NuSVR(kernel='linear', nu=.4),
+                svm.sparse.SVR(kernel='linear', C=10.)):
         clf.fit(diabetes.data, diabetes.target)
         assert clf.score(diabetes.data, diabetes.target) > 0.02
 
