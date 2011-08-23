@@ -27,24 +27,24 @@ def as_float_array(X, overwrite_X=False):
     """
     Converts a numpy array to type np.float
 
-    The new dtype will be float32 or np.float64,
-    depending on the original type.
+    The new dtype will be float32 or np.float64, depending on the original type.
     The function can create a copy or modify the argument depending
     of the argument overwrite_X
-    
-    WARNING : If X is not of type float, then a copy of X with the wright type
+
+    WARNING : If X is not of type float, then a copy of X with the right type
               will be returned
 
     Parameters
     ----------
-    X : numpy array
+    X : array
 
-    overwrite_X :  bool, optional
+    overwrite_X : bool, optional
         if False, a copy of X will be created
 
     Returns
     -------
-    An array X of type np.float
+    X : array
+        An array of type np.float
     """
     if X.dtype in [np.float32, np.float64]:
         if overwrite_X:
