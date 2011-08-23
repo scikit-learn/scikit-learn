@@ -10,7 +10,6 @@ Base IO code for all datasets
 import os
 import csv
 import shutil
-import textwrap
 from os import environ
 from os.path import dirname
 from os.path import join
@@ -348,9 +347,8 @@ def load_boston():
                  feature_names=feature_names,
                  DESCR=fdescr.read())
 
-
 def load_sample_images():
-    """ Load sample images for image manipulation.
+    """Load sample images for image manipulation.
 
     Return
     ------
@@ -366,11 +364,18 @@ def load_sample_images():
     To load the data and visualize the images::
 
     >>> from scikits.learn.datasets import load_sample_images
-    >>> images = load_sample_images()
+    >>> dataset = load_sample_images()
+    >>> len(dataset.images)
+    2
+    >>> first_img_data = dataset.images[0]
+    >>> first_img_data.shape  # height, width, channels
+    (427, 640, 3)
+    >>> first_img_data.dtype
+    dtype('uint8')
 
     >>> # import pylab as pl
     >>> # pl.gray()
-    >>> # pl.matshow(images.images[0]) # Visualize the first image
+    >>> # pl.matshow(dataset.images[0]) # Visualize the first image
     >>> # pl.show()
     """
     # Try to import Image and imresize from PIL. We do this here to prevent
@@ -391,7 +396,32 @@ def load_sample_images():
     # Load image data for each image in the source folder.
     images = [np.asarray(Image.open(filename))
               for filename in filenames]
+
     return Bunch(images=images,
                  filenames=filenames,
                  DESCR=descr)
-    
+
+def load_sample_image(image_name):
+    """Load the numpy array of a single sample image
+
+    >>> china = load_sample_image('china.jpg')
+    >>> china.dtype
+    dtype('uint8')
+    >>> china.shape
+    (427, 640, 3)
+
+    >>> flower = load_sample_image('flower.jpg')
+    >>> flower.dtype
+    dtype('uint8')
+    >>> flower.shape
+    (427, 640, 3)
+    """
+    images = load_sample_images()
+    index = None
+    for i, filename in enumerate(images.filenames):
+        if filename.endswith(image_name):
+            index = i
+            break
+    if index is None:
+        raise AttributeError("Cannot find sample image: %s" % image_name)
+    return images.images[index]
