@@ -149,7 +149,7 @@ class DictionaryLearning(BaseDictionaryLearning):
 
     See also
     --------
-    :class:`scikits.learn.decomposition.SparsePCA`
+    SparsePCA
 
     """
     def __init__(self, n_atoms, alpha=1, max_iter=1000, tol=1e-8,
@@ -282,7 +282,7 @@ class DictionaryLearningOnline(BaseDictionaryLearning):
 
     See also
     --------
-    :class:`scikits.learn.decomposition.SparsePCA`
+    SparsePCA
 
     """
     def __init__(self, n_atoms, alpha=1, n_iter=1000, fit_algorithm='lars',
