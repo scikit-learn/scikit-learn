@@ -8,25 +8,22 @@ Performs a Vector Quatization of an image, reducing the
 number of colors required to show the image.
 """
 print __doc__
-
+import os
 import numpy as np
 import pylab as pl
 from scikits.learn.cluster import KMeans
 from scikits.learn.datasets import load_sample_images
-# Try to import Image and imresize from PIL. We do this here to prevent
-# this module from depending on PIL.
-try:
-    try:
-        from scipy.misc import Image
-    except ImportError:
-        from scipy.misc.pilutil import Image
-except ImportError:
-    raise ImportError("The Python Imaging Library (PIL)"
-                      "is required to load data from jpeg files")
 
 # Get all sample images and obtain just china.jpg
+sample_image_name = "china.jpg"
 sample_images = load_sample_images()
-index = sample_images.filenames.index("china.jpg")
+index = None
+for i, filename in enumerate(sample_images.filenames):
+    if filename.endswith(sample_image_name):
+        index = i
+        break
+if index is None:
+    raise AttributeError("Cannot find sample image: %s" % sample_image_name)
 image_data = sample_images.images[index]
 
 # Load Image and transform to a 2D numpy array.
@@ -36,13 +33,13 @@ image_array = np.reshape(image_data, (w * h, 3))
 # Take a sample of the data.
 sample_indices = range(len(image_array))
 np.random.shuffle(sample_indices)
-sample_indices = sample_indices[:int(len(image_array) * 0.5)]
+sample_indices = sample_indices[:int(len(image_array) * 0.2)]
 sample_data = image_array[sample_indices]
 
 # Perform Vector Quantisation with 256 clusters.
 k = 256
 kmeans = KMeans(k=k)
-kmeans.fit(image_array)
+kmeans.fit(sample_data)
 # Get labels for all points
 labels = kmeans.predict(image_array)
 # Save the reduced dataset. Only the centroids and labels need to be saved.
@@ -56,8 +53,9 @@ def recreate_image(centroids, labels, w, h):
     for i in range(w):
         for j in range(h):
             image[i][j] = centroids[labels[label_num]]
-            print labels[label_num], label_num
             label_num += 1
+    print np.histogram(labels)
+    print set(labels)
     return image
 
 # Display all results, alongside original image
@@ -67,5 +65,5 @@ ax.set_axis_off()
 centroids, labels = reduced_image
 im = pl.imshow(recreate_image(centroids, labels, w, h))
 
-show()
+pl.show()
 

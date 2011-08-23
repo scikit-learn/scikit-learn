@@ -7,6 +7,7 @@ Base IO code for all datasets
 #               2010 Olivier Grisel <olivier.grisel@ensta.org>
 # License: Simplified BSD
 
+import os
 import csv
 import shutil
 import textwrap
@@ -372,9 +373,20 @@ def load_sample_images():
     >>> # pl.matshow(images.images[0]) # Visualize the first image
     >>> # pl.show()
     """
+    # Try to import Image and imresize from PIL. We do this here to prevent
+    # this module from depending on PIL.
+    try:
+        try:
+            from scipy.misc import Image
+        except ImportError:
+            from scipy.misc.pilutil import Image
+    except ImportError:
+        raise ImportError("The Python Imaging Library (PIL)"
+                          "is required to load data from jpeg files")
     module_path = join(dirname(__file__), "images")
     descr = open(join(module_path, 'README.txt')).read()
-    filenames = [filename for filename in os.listdir(module_path)
+    filenames = [join(module_path, filename)
+                 for filename in os.listdir(module_path)
                  if filename.endswith(".jpg")]
     # Load image data for each image in the source folder.
     images = [np.asarray(Image.open(filename))
