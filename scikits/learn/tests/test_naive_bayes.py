@@ -109,7 +109,7 @@ def test_discretenb_predict_proba():
     y = [0, 0, 2]   # 2 is regression test for binary case, 02e673
 
     for cls, X in ([BernoulliNB, MultinomialNB], [X_bernoulli, X_multinomial]):
-        clf = MultinomialNB().fit([[0, 1], [1, 3], [4, 0]], [0, 0, 2])
+        clf = MultinomialNB().fit([[0, 1], [1, 3], [4, 0]], y)
         assert clf.predict([4, 1]) == 2
         assert clf.predict_proba([0, 1]).shape == (1, 2)
         assert np.sum(clf.predict_proba([1, 5])) == 1
@@ -128,3 +128,11 @@ def test_discretenb_uniform_prior():
         prior = np.exp(clf.class_log_prior_)
         assert prior[0] == prior[1]
         assert prior[0] == .5
+
+
+def test_complement_nb():
+    """Test MultinomialNB in complement naive Bayes mode"""
+
+    # Synthetic dataset from Rennie et al.
+    X1 = np.array([[0, 1]] * 3, [[1, 0]] * 3)
+    X2 = np.array([[0, 2]] * 2, [[1, 1]] * 2, [[2, 0]] * 2)

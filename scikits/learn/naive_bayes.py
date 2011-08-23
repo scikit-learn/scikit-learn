@@ -21,7 +21,7 @@ complete documentation.
 # License: BSD Style.
 
 from .base import BaseEstimator, ClassifierMixin
-from .preprocessing import binarize, LabelBinarizer
+from .preprocessing import binarize, LabelBinarizer, normalize
 from .utils import safe_asanyarray, atleast2d_or_csr
 from .utils.extmath import safe_sparse_dot, logsum
 from .utils.fixes import unique
@@ -205,6 +205,12 @@ class BaseDiscreteNB(BaseEstimator, ClassifierMixin):
     method pattern.
     """
 
+    def __init__(self, alpha, fit_prior, multiclass):
+        """Perform common initialization"""
+        self.alpha = alpha
+        self.fit_prior = fit_prior
+        self.multiclass = multiclass
+
     def fit(self, X, y, class_prior=None):
         """Fit Naive Bayes classifier according to X, y
 
@@ -235,12 +241,12 @@ class BaseDiscreteNB(BaseEstimator, ClassifierMixin):
         if class_prior:
             assert len(class_prior) == n_classes, \
                    'Number of priors must match number of classs'
-            self.class_log_prior_ = np.log(class_prior)
+            self.intercept_ = np.log(class_prior)
         elif self.fit_prior:
             y_count = np.bincount(inv_y_ind)
-            self.class_log_prior_ = np.log(y_count) - np.log(len(y))
+            self.intercept_ = np.log(y_count) - np.log(len(y))
         else:
-            self.class_log_prior_ = np.zeros(n_classes) - np.log(n_classes)
+            self.intercept_ = np.zeros(n_classes) - np.log(n_classes)
 
         Y = LabelBinarizer().fit_transform(y)
         if Y.shape[1] == 1:
@@ -248,21 +254,26 @@ class BaseDiscreteNB(BaseEstimator, ClassifierMixin):
 
         N_c, N_c_i = self._count(X, Y)
 
-        self.feature_log_prob_ = (np.log(N_c_i + self.alpha)
+        self.coef_ = (np.log(N_c_i + self.alpha)
                     - np.log(N_c.reshape(-1, 1)
                            + self.alpha * X.shape[1]))
 
+        if self.multiclass == 'complement':
+            normalize(self.coef_, norm='l1', copy=False)
+
         return self
 
-    @staticmethod
-    def _count(X, Y):
-        """Count feature occurrences.
+    def _count(self, X, Y):
+        """Count raw feature occurrences.
 
         Returns (N_c, N_c_i), where
             N_c is the count of all features in all samples of class c;
             N_c_i is the count of feature i in all samples of class c.
         """
         N_c_i = safe_sparse_dot(Y.T, X)
+        if self.multiclass == 'complement':
+            N_c_i_sum = np.atleast_2d(N_c_i.sum(axis=0))
+            N_c_i = np.concatenate([N_c_i_sum] * N_c_i.shape[0]) - N_c_i
         N_c = np.sum(N_c_i, axis=1)
 
         return N_c, N_c_i
@@ -280,7 +291,8 @@ class BaseDiscreteNB(BaseEstimator, ClassifierMixin):
         C : array, shape = [n_samples]
         """
         joint_log_likelihood = self._joint_log_likelihood(X)
-        y_pred = self.unique_y[np.argmax(joint_log_likelihood, axis=0)]
+        argopt = np.argmin if self.multiclass == 'complement' else np.argmax
+        y_pred = self.unique_y[argopt(joint_log_likelihood, axis=0)]
 
         return y_pred
 
@@ -339,6 +351,11 @@ class MultinomialNB(BaseDiscreteNB):
     fit_prior: boolean
         Whether to learn class prior probabilities or not.
         If false, a uniform prior will be used.
+    multiclass: string
+        Strategy for multiclass (>2 classes) classification.  If set to
+        'complement', use the complement naive Bayes (CNB) strategy.
+        Currently, predict_proba and predict_log_proba should not be used
+        with CNB models.
 
     Methods
     -------
@@ -356,14 +373,12 @@ class MultinomialNB(BaseDiscreteNB):
 
     Attributes
     ----------
-    `intercept_`, `class_log_prior_` : array, shape = [n_classes]
+    `intercept_` : array, shape = [n_classes]
         Log probability of each class (smoothed).
 
-    `feature_log_prob_`, `coef_` : array, shape = [n_classes, n_features]
-        Empirical log probability of features given a class, P(x_i|y).
-
-        (`intercept_` and `coef_` are properties referring to
-        `class_log_prior_` and `feature_log_prob_`, respectively.)
+    `coef_` : array, shape = [n_classes, n_features]
+        Feature weights for class; these correspond to smoothed empirical log
+        probabilities of features in the ordinary MultinomialNB model.
 
     Examples
     --------
@@ -373,7 +388,7 @@ class MultinomialNB(BaseDiscreteNB):
     >>> from scikits.learn.naive_bayes import MultinomialNB
     >>> clf = MultinomialNB()
     >>> clf.fit(X, Y)
-    MultinomialNB(alpha=1.0, fit_prior=True)
+    MultinomialNB(alpha=1.0, fit_prior=True, multiclass='ordinary')
     >>> print clf.predict(X[2])
     [3]
 
@@ -384,20 +399,31 @@ class MultinomialNB(BaseDiscreteNB):
     Tackling the poor assumptions of naive Bayes text classifiers, ICML.
     """
 
-    def __init__(self, alpha=1.0, fit_prior=True):
-        self.alpha = alpha
-        self.fit_prior = fit_prior
+    def __init__(self, alpha=1.0, fit_prior=True, multiclass='ordinary'):
+        super(MultinomialNB, self).__init__(alpha, fit_prior, multiclass)
 
-    intercept_ = property(lambda self: self.class_log_prior_)
-    coef_ = property(lambda self: self.feature_log_prob_)
+    def _count(self, X, Y):
+        """Count feature occurrences.
+
+        Returns (N_c, N_c_i), where
+            N_c is the count of all features in all samples of class c;
+            N_c_i is the count of feature i in all samples of class c.
+        """
+        N_c_i = safe_sparse_dot(Y.T, X)
+        if self.multiclass == 'complement':
+            N_c_i_sum = np.atleast_2d(N_c_i.sum(axis=0))
+            N_c_i = np.concatenate([N_c_i_sum] * N_c_i.shape[0]) - N_c_i
+        N_c = np.sum(N_c_i, axis=1)
+
+        return N_c, N_c_i
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
 
         X = atleast2d_or_csr(X)
 
-        jll = safe_sparse_dot(self.feature_log_prob_, X.T)
-        return jll + np.atleast_2d(self.class_log_prior_).T
+        jll = safe_sparse_dot(self.coef_, X.T)
+        return jll + np.atleast_2d(self.intercept_).T
 
 
 class BernoulliNB(BaseDiscreteNB):
@@ -420,6 +446,11 @@ class BernoulliNB(BaseDiscreteNB):
     fit_prior: boolean
         Whether to learn class prior probabilities or not.
         If false, a uniform prior will be used.
+    multiclass: string
+        Strategy for multiclass (>2 classes) classification.  If set to
+        'complement', use the complement naive Bayes (CNB) strategy.
+        Currently, predict_proba and predict_log_proba should not be used
+        with CNB models.
 
     Methods
     -------
@@ -437,10 +468,10 @@ class BernoulliNB(BaseDiscreteNB):
 
     Attributes
     ----------
-    `class_log_prior_` : array, shape = [n_classes]
+    `intercept_` : array, shape = [n_classes]
         Log probability of each class (smoothed).
 
-    `feature_log_prob_` : array, shape = [n_classes, n_features]
+    `coef_` : array, shape = [n_classes, n_features]
         Empirical log probability of features given a class, P(x_i|y).
 
     Examples
@@ -451,7 +482,7 @@ class BernoulliNB(BaseDiscreteNB):
     >>> from scikits.learn.naive_bayes import BernoulliNB
     >>> clf = BernoulliNB()
     >>> clf.fit(X, Y)
-    BernoulliNB(binarize=0.0, alpha=1.0, fit_prior=True)
+    BernoulliNB(binarize=0.0, alpha=1.0, fit_prior=True, multiclass='ordinary')
     >>> print clf.predict(X[2])
     [3]
 
@@ -468,10 +499,10 @@ class BernoulliNB(BaseDiscreteNB):
     naive Bayes -- Which naive Bayes? 3rd Conf. on Email and Anti-Spam (CEAS).
     """
 
-    def __init__(self, alpha=1.0, binarize=.0, fit_prior=True):
-        self.alpha = alpha
+    def __init__(self, alpha=1.0, binarize=.0, fit_prior=True,
+                 multiclass='ordinary'):
+        super(BernoulliNB, self).__init__(alpha, fit_prior, multiclass)
         self.binarize = binarize
-        self.fit_prior = fit_prior
 
     def _count(self, X, Y):
         if self.binarize is not None:
@@ -486,17 +517,17 @@ class BernoulliNB(BaseDiscreteNB):
         if self.binarize is not None:
             X = binarize(X, threshold=self.binarize)
 
-        n_classes, n_features = self.feature_log_prob_.shape
+        n_classes, n_features = self.coef_.shape
         n_samples, n_features_X = X.shape
 
         if n_features_X != n_features:
             raise ValueError("Expected input with %d features, got %d instead"
                              % (n_features, n_features_X))
 
-        neg_prob = np.log(1 - np.exp(self.feature_log_prob_))
+        neg_prob = np.log(1 - np.exp(self.coef_))
         # Compute  neg_prob · (1 - X).T  as  ∑neg_prob - X · neg_prob
         X_neg_prob = (neg_prob.sum(axis=1).reshape(-1, 1)
                     - safe_sparse_dot(neg_prob, X.T))
-        jll = safe_sparse_dot(self.feature_log_prob_, X.T) + X_neg_prob
+        jll = safe_sparse_dot(self.coef_, X.T) + X_neg_prob
 
-        return jll + np.atleast_2d(self.class_log_prior_).T
+        return jll + np.atleast_2d(self.intercept_).T
