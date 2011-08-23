@@ -229,7 +229,7 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
         for i in range(max_iter):
             centers_old = centers.copy()
             labels, inertia = _e_step(X, centers,
-                                        x_squared_norms=x_squared_norms)
+                                      x_squared_norms=x_squared_norms)
             centers = _m_step(X, labels, k)
 
             if verbose:
@@ -537,7 +537,7 @@ class KMeans(BaseEstimator):
         return euclidean_distances(X, self.cluster_centers_)
 
     def predict(self, X):
-        """ Predict the closest cluster each sample belongs to
+        """Predict the closest cluster each sample in X belongs to.
 
         In the vector quantization literature, `cluster_centers_` is called
         the code book and each value returned by `predict` is the index of
@@ -550,17 +550,17 @@ class KMeans(BaseEstimator):
 
         Returns
         -------
-        Y : array, shape [n_samples, ]
+        Y : array, shape [n_samples,]
             Index of the closest center each sample belongs to.
         """
         if not hasattr(self, "cluster_centers_"):
             raise AttributeError("Model has not been trained yet. "
                                  "Fit k-means before using predict.")
-        cluster_shape = self.cluster_centers_.shape[1]
-        if not X.shape[1] == cluster_shape:
+        expected_n_features = self.cluster_centers_.shape[1]
+        if not X.shape[1] == expected_n_features:
             raise ValueError("Incorrect number of features. "
-                             "Got %d features, expected %d" % (X.shape[1],
-                                                               cluster_shape))
+                             "Got %d features, expected %d" % (
+                                 X.shape[1], expected_n_features))
         return _e_step(X, self.cluster_centers_)[0]
 
 
@@ -633,8 +633,7 @@ def _mini_batch_step_sparse(X, batch_slice, centers, counts, x_squared_norms):
 
 
 class MiniBatchKMeans(KMeans):
-    """
-    Mini-Batch K-Means clustering
+    """Mini-Batch K-Means clustering
 
     Parameters
     ----------
@@ -703,8 +702,7 @@ class MiniBatchKMeans(KMeans):
         self.chunk_size = chunk_size
 
     def fit(self, X, y=None, **params):
-        """
-        Calculates the centroids on a batch X
+        """Compute the centroids on X by chunking it into mini-batches.
 
         Parameters
         ----------

@@ -4,15 +4,15 @@
 Vector Quantization of Lena using k-means
 =========================================
 
-Performs a Vector Quatization of an image, reducing the 
-number of colors required to show the image.
+Performs a Vector Quantization of an image, reducing the number of colors
+required to show the image.
 """
 print __doc__
-import os
 import numpy as np
 import pylab as pl
 from scikits.learn.cluster import KMeans
 from scikits.learn.datasets import load_sample_images
+from scikits.learn.utils import shuffle
 
 # Get all sample images and obtain just china.jpg
 sample_image_name = "china.jpg"
@@ -28,42 +28,40 @@ image_data = sample_images.images[index]
 
 # Load Image and transform to a 2D numpy array.
 w, h, d = original_shape = tuple(image_data.shape)
-image_array = np.reshape(image_data, (w * h, 3))
+assert d == 3
+image_array = np.reshape(image_data, (w * h, d))
 
-# Take a sample of the data.
-sample_indices = range(len(image_array))
-np.random.shuffle(sample_indices)
-sample_indices = sample_indices[:int(len(image_array) * 0.2)]
-sample_data = image_array[sample_indices]
+print "Fitting estimator on a sub sample of the data"
+image_array_sample = shuffle(image_array, random_state=0)[:1000]
+kmeans = KMeans(k=10, max_iter=1000).fit(image_array_sample)
+print "done."
 
-# Perform Vector Quantisation with 256 clusters.
-k = 256
-kmeans = KMeans(k=k)
-kmeans.fit(sample_data)
 # Get labels for all points
+print "Predicting labels:"
 labels = kmeans.predict(image_array)
-# Save the reduced dataset. Only the centroids and labels need to be saved.
-reduced_image = (kmeans.cluster_centers_, labels)
+print "done."
 
-def recreate_image(centroids, labels, w, h):
-    # Recreates the (compressed) image from centroids, labels and dimensions
-    d = len(centroids[0])
+def recreate_image(codebook, labels, w, h):
+    # Recreates the (compressed) image from the code book, labels and dimensions
+    d = codebook.shape[1]
     image = np.zeros((w, h, d))
-    label_num = 0
+    label_idx = 0
     for i in range(w):
         for j in range(h):
-            image[i][j] = centroids[labels[label_num]]
-            label_num += 1
-    print np.histogram(labels)
-    print set(labels)
+            image[i][j] = codebook[labels[label_idx]]
+            label_idx += 1
     return image
 
 # Display all results, alongside original image
 pl.figure()
-ax = pl.axes([0,0,1,1], frameon=False)
+ax = pl.axes([0, 0, 1, 1], frameon=False)
 ax.set_axis_off()
-centroids, labels = reduced_image
-im = pl.imshow(recreate_image(centroids, labels, w, h))
+pl.imshow(image_data)
+
+pl.figure()
+ax = pl.axes([0, 0, 1, 1], frameon=False)
+ax.set_axis_off()
+
+pl.imshow(recreate_image(kmeans.cluster_centers_, labels, w, h))
 
 pl.show()
-
