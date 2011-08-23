@@ -365,7 +365,7 @@ Representing data as sparse combinations of atoms from an overcomplete
 dictionary is suggested to be the way the mammal primary visual cortex works.
 Consequently, dictionary learning applied on image patches has been shown to 
 give good results in image processing tasks such as image completion,
-inpainting and denoising.
+inpainting and denoising, as well as for supervised recognition tasks.
 
 Dictionary learning is an optimization problem solved by alternatively updating
 the sparse code, as a solution to multiple Lasso problems, considering the
@@ -381,7 +381,7 @@ initialization parameter:
 
 * Orthogonal matching pursuit (:ref:`OMP`)
 
-* Lasso using least-angle regression (:ref:`least_angle_regression`)
+* Least-angle regression and Lasso (:ref:`least_angle_regression`)
 
 * Lasso using coordinate descent (:ref:`lasso`)
 
@@ -392,10 +392,10 @@ initialization parameter:
 
 The dictionary learning objects offer, via the `split_code` parameter, the
 possibility to separate the positive and negative values in the results of 
-sparse coding. This is useful when dictionary learning is used for 
-classification or regression tasks, because it allows the learning algorithm to
-assign different weights to negative loadings of a particular atom, than to the
-corresponding positive loading.
+sparse coding. This is useful when dictionary learning is used for extracting
+features that will be used for supervised learning, because it allows the
+learning algorithm to assign different weights to negative loadings of a
+particular atom, from to the corresponding positive loading.
 
 The split code for a single sample has length `2 * n_atoms`
 and is constructed using the following rule: First, the regular code of length
@@ -430,5 +430,17 @@ extracted from the image of Lena looks like.
 Online dictionary learning
 --------------------------
 
-:class:`DictionaryLearningOnline` implements a fast, optimized version of the
-dictionary learning algorithm that is more suited for large datasets.
+:class:`DictionaryLearningOnline` implements a faster, but less accurate
+version of the dictionary learning algorithm that is better suited for large
+datasets. 
+
+By default, :class:`DictionaryLearningOnline` divides the data into
+mini-batches and optimizes in an online manner by cycling over the mini-batches
+for the specified number of iterations. However, at the moment it does not
+implement a stopping condition.
+
+The estimator also implements `partial_fit`, which updates the dictionary by
+iterating only once over a mini-batch. This can be used for online learning
+when the data is not readily available from the start, or for when the data
+does not fit into the memory.
+
