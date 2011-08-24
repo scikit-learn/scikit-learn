@@ -74,10 +74,8 @@ class Pipeline(BaseEstimator):
         >>> # For instance, fit using a k of 10 in the SelectKBest
         >>> # and a parameter 'C' of the svn
         >>> anova_svm.fit(X, y, anova__k=10, svc__C=.1) #doctest: +ELLIPSIS
-        Pipeline(steps=[('anova', SelectKBest(k=10, score_func=<function f_regression at ...>)), ('svc', SVC(kernel='linear', C=0.1, probability=False, degree=3, coef0=0.0, tol=0.001,
-          shrinking=True, gamma=0.0))])
-
-        >>> prediction = anova_svm.predict(X)
+        Pipeline(steps=[('anova', SelectKBest(k=10, score_func=<function f_regression at ...>)), ('svc', SVC(C=0.1, coef0=0.0, degree=3, gamma=0.0, kernel='linear', probability=False,
+          shrinking=True, tol=0.001))])
         >>> score = anova_svm.score(X)
     """
 
