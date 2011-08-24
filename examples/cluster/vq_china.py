@@ -41,7 +41,7 @@ labels = kmeans.predict(image_array)
 print "done in %0.3fs." % (time() - t0)
 
 def recreate_image(codebook, labels, w, h):
-    # Recreates the (compressed) image from the code book, labels and dimensions
+    """Recreate the (compressed) image from the code book & labels"""
     d = codebook.shape[1]
     image = np.zeros((w, h, d))
     label_idx = 0
