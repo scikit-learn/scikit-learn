@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-=========================================
-Vector Quantization of Lena using k-means
-=========================================
+============================================
+Vector Quantization of a photo using k-means
+============================================
 
-Performs a Vector Quantization of an image, reducing the number of colors
-required to show the image.
+Performs a pixel-wise Vector Quantization of an image, reducing the number of
+colors required to show the image while preserving the overall appearance.
 """
 print __doc__
 import numpy as np
@@ -52,13 +52,15 @@ def recreate_image(codebook, labels, w, h):
     return image
 
 # Display all results, alongside original image
-pl.figure()
-ax = pl.axes([0, 0, 1, 1], frameon=False)
-ax.set_axis_off()
+pl.figure(1)
+pl.clf()
+ax = pl.axes([0, 0, 1, 1])
+pl.axis('off')
 pl.imshow(china)
 
-pl.figure()
-ax = pl.axes([0, 0, 1, 1], frameon=False)
-ax.set_axis_off()
+pl.figure(2)
+pl.clf()
+ax = pl.axes([0, 0, 1, 1])
+pl.axis('off')
 pl.imshow(recreate_image(kmeans.cluster_centers_, labels, w, h))
 pl.show()
