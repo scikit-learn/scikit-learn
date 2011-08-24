@@ -23,6 +23,41 @@ def safe_asanyarray(X, dtype=None, order=None):
     return X
 
 
+def as_float_array(X, overwrite_X=False):
+    """
+    Converts a numpy array to type np.float
+
+    The new dtype will be float32 or np.float64, depending on the original type.
+    The function can create a copy or modify the argument depending
+    of the argument overwrite_X
+
+    WARNING : If X is not of type float, then a copy of X with the right type
+              will be returned
+
+    Parameters
+    ----------
+    X : array
+
+    overwrite_X : bool, optional
+        if False, a copy of X will be created
+
+    Returns
+    -------
+    X : array
+        An array of type np.float
+    """
+    if X.dtype in [np.float32, np.float64]:
+        if overwrite_X:
+            return X
+        else:
+            return X.copy()
+    if X.dtype == np.int32:
+        X = X.astype(np.float32)
+    else:
+        X = X.astype(np.float64)
+    return X
+
+
 def atleast2d_or_csr(X):
     """Like numpy.atleast_2d, but converts sparse matrices to CSR format"""
     X = X.tocsr() if sp.issparse(X) else np.atleast_2d(X)
