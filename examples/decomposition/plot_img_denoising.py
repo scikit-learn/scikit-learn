@@ -21,6 +21,11 @@ Frobenius norm.
 The result of :ref:`least_angle_regression` is much more strongly biased: the
 difference is reminiscent of the local intensity value of the original image.
 
+Thresholding is clearly not useful for denoising, but it is here to show that
+it can produce a suggestive output with very high speed, and thus be useful
+for other tasks such as object classification, where performance is not
+necessarily related to visualisation.
+
 """
 print __doc__
 
@@ -76,12 +81,12 @@ for i, comp in enumerate(V[:100]):
 pl.suptitle('Dictionary learned from Lena patches\n' +
             'Train time %.1fs on %d patches' % (dt, len(data)),
             fontsize=16)
-pl.subplots_adjust(0.02, 0.01, 0.98, 0.85, 0.08, 0.23)
+pl.subplots_adjust(0.08, 0.02, 0.92, 0.85, 0.08, 0.23)
 
 
 def show_with_diff(image, reference, title):
     """Helper function to display denoising"""
-    pl.figure(figsize=(5, 3.))
+    pl.figure(figsize=(5, 3.3))
     pl.subplot(1, 2, 1)
     pl.title('Image')
     pl.imshow(image, vmin=0, vmax=1, cmap=pl.cm.gray, interpolation='nearest')
@@ -96,7 +101,7 @@ def show_with_diff(image, reference, title):
     pl.xticks(())
     pl.yticks(())
     pl.suptitle(title, size=16)
-    pl.subplots_adjust(0.02, 0., 0.98, 0.79, 0.02, 0.2)
+    pl.subplots_adjust(0.02, 0.02, 0.98, 0.79, 0.02, 0.2)
 
 ###############################################################################
 # Display the distorted image
@@ -109,12 +114,12 @@ data = extract_patches_2d(distorted[:, height / 2:], patch_size)
 data = data.reshape(data.shape[0], -1) - intercept
 
 transform_algorithms = [
-    ('Orthogonal Matching Pursuit\n1 atom,', 'omp',
+    ('Orthogonal Matching Pursuit\n1 atom', 'omp',
      {'transform_n_nonzero_coefs': 1}),
-    ('Orthogonal Matching Pursuit\n2 atoms,', 'omp',
+    ('Orthogonal Matching Pursuit\n2 atoms', 'omp',
      {'transform_n_nonzero_coefs': 2}),
-    ('5-Least-angle regression', 'lars', {'transform_n_nonzero_coefs': 5}),
-    ('Thresholding', 'threshold', {'transform_alpha': 0.85})]
+    ('Least-angle regression\n5 atoms', 'lars', {'transform_n_nonzero_coefs': 5}),
+    ('Thresholding\n alpha=0.1', 'threshold', {'transform_alpha': .1})]
 
 reconstructions = {}
 for title, transform_algorithm, kwargs in transform_algorithms:
@@ -124,8 +129,17 @@ for title, transform_algorithm, kwargs in transform_algorithms:
     dico.set_params(transform_algorithm=transform_algorithm,
                     **kwargs)
     code = dico.transform(data)
-    patches = np.dot(code, V) + intercept
+    patches = np.dot(code, V)
+
+    if transform_algorithm == 'threshold':
+        patches -= patches.min()
+        patches /= patches.max()
+    
+    patches += intercept
     patches = patches.reshape(len(data), *patch_size)
+    if transform_algorithm == 'threshold':
+        patches -= patches.min()
+        patches /= patches.max()
     reconstructions[title][:, height / 2:] = reconstruct_from_patches_2d(
         patches, (width, height / 2))
     dt = time() - t0
