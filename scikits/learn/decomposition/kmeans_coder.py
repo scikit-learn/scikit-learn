@@ -184,7 +184,7 @@ class KMeansCoder(BaseDictionaryLearning):
                 kmeans.init[:, :self.n_prefit] = kmeans.cluster_centers_
                 if self.verbose:
                     print "Second KMeans in full whitened patch space"
-                kmeans.fit(patches, n_init=1)
+                kmeans.set_params(n_init=1).fit(patches)
             else:
                 if self.verbose:
                     print "KMeans in full original patch space"
