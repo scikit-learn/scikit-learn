@@ -59,6 +59,7 @@ data -= intercept
 
 ###############################################################################
 # Learn the dictionary from clean patches
+print "Learning the dictionary... ",
 t0 = time()
 dico = DictionaryLearningOnline(n_atoms=100, alpha=1e-2, n_iter=300)
 V = dico.fit(data).components_
@@ -100,7 +101,7 @@ show_with_diff(distorted, lena, "Distorted image")
 
 ###############################################################################
 # Extract noisy patches and reconstruct them using the dictionary
-print "Extracting noisy patches... ",
+print "Extracting noisy patches... "
 data = extract_patches_2d(distorted[:, height/2:], patch_size, random_state=0)
 data = data.reshape(data.shape[0], -1) - intercept
 
