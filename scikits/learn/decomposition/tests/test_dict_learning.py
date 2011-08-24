@@ -29,7 +29,7 @@ def test_dict_learning_reconstruction():
     n_atoms = 12
     dico = DictionaryLearning(n_atoms, transform_algorithm='omp',
                               random_state=0)
-    code = dico.fit(X).transform(X, eps=0.01)
+    code = dico.fit(X).transform(X, tol=0.01)
     assert_array_almost_equal(np.dot(code, dico.components_), X)
 
     dico.transform_algorithm = 'lasso_lars'

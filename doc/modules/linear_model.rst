@@ -369,12 +369,12 @@ Being a forward feature selection method like :ref:`least_angle_regression`,
 orthogonal matching pursuit can approximate the optimum solution vector with a
 fixed number of non-zero elements:
 
-.. math:: \text{arg\,min} ||y - X\gamma||_2^2 \text{ subject to } ||\gamma||_0 \leq n_{features}
+.. math:: \text{arg\,min} ||y - X\gamma||_2^2 \text{ subject to } ||\gamma||_0 \leq n_{nonzero_coefs}
 
 Alternatively, orthogonal matching pursuit can target a specific error instead
 of a specific number of non-zero coefficients. This can be expressed as:
 
-.. math:: \text{arg\,min} ||\gamma||_0 \text{ subject to } ||y-X\gamma||_2^2 \leq \varepsilon
+.. math:: \text{arg\,min} ||\gamma||_0 \text{ subject to } ||y-X\gamma||_2^2 \leq \text{tol}
 
 
 OMP is based on a greedy algorithm that includes at each step the atom most
