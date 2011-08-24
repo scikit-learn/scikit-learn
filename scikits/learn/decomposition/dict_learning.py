@@ -90,10 +90,10 @@ def sparse_encode(X, Y, gram=None, cov=None, algorithm='lasso_lars',
     n_features = Y.shape[1]
     # This will always use Gram
     if gram is None:
-        overwrite_gram=True  # it's a bit trickier than this
+        overwrite_gram = True  # it's a bit trickier than this
         gram = np.dot(X.T, X)
     if cov is None and algorithm != 'lasso_cd':
-        overwrite_cov=True
+        overwrite_cov = True
         cov = np.dot(X.T, Y)
 
     if algorithm == 'lasso_lars':
@@ -154,7 +154,7 @@ def sparse_encode(X, Y, gram=None, cov=None, algorithm='lasso_lars',
         new_code = orthogonal_mp_gram(gram, cov, n_nonzero_coefs, alpha,
                                       norms_squared)
     else:
-        raise NotImplemented('Sparse coding method %s not implemented' % 
+        raise NotImplemented('Sparse coding method %s not implemented' %
                              algorithm)
     return new_code
 
@@ -214,7 +214,7 @@ def sparse_encode_parallel(X, Y, gram=None, cov=None, algorithm='lasso_lars',
 
     overwrite_cov: boolean,
         Whether to overwrite the precomputed covariance matrix.
-    
+
     n_jobs: int,
         Number of parallel jobs to run.
 
@@ -232,7 +232,7 @@ def sparse_encode_parallel(X, Y, gram=None, cov=None, algorithm='lasso_lars',
         overwrite_cov = True
         cov = np.dot(X.T, Y)
     if n_jobs == 1 or algorithm == 'threshold':
-        return sparse_encode(X, Y, gram, cov, algorithm, n_nonzero_coefs, 
+        return sparse_encode(X, Y, gram, cov, algorithm, n_nonzero_coefs,
                              alpha, overwrite_gram, overwrite_cov, init)
     code = np.empty((n_components, n_features))
     slices = list(gen_even_slices(n_features, n_jobs))
@@ -714,16 +714,38 @@ class DictionaryLearning(BaseDictionaryLearning):
     tol: float,
         tolerance for numerical error
 
-    fit_algorithm: {'lars', 'cd'}
-        lars: uses the least angle regression method (linear_model.lars_path)
-        cd: uses the coordinate descent method to compute the
+    fit_algorithm: {'lasso_lars', 'lasso_cd'}
+        lasso_lars: uses the least angle regression method
+        (linear_model.lars_path)
+        lasso_cd: uses the coordinate descent method to compute the
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
 
-    transform_algorithm: {'lasso_lars', 'lasso_cd', 'omp', 'threshold',
-                         'triangle'}
-        method to use for transforming the data after the dictionary has been
-        learned
+    transform_algorithm: {'lasso_lars', 'lasso_cd', 'lars', 'omp', 'threshold'}
+        Algorithm used to transform the data
+        lars: uses the least angle regression method (linear_model.lars_path)
+        lasso_lars: uses Lars to compute the Lasso solution
+        lasso_cd: uses the coordinate descent method to compute the
+        Lasso solution (linear_model.Lasso). lasso_lars will be faster if
+        the estimated components are sparse.
+        omp: uses orthogonal matching pursuit to estimate the sparse solution
+        threshold: squashes to zero all coefficients less than alpha from
+        the projection X.T * Y
+
+    transform_n_nonzero_coefs: int, 0.1 * n_features by default
+        Number of nonzero coefficients to target in each column of the
+        solution. This is only used by `algorithm='lars'` and `algorithm='omp'`
+        and is overridden by `alpha` in the `omp` case.
+
+    transform_alpha: float, 1. by default
+        Overloaded parameter.
+        If `algorithm='lasso_lars'` or `algorithm='lasso_cd'`, `alpha` is the
+        penalty applied to the L1 norm.
+        If `algorithm='threhold'`, `alpha` is the absolute value of the
+        threshold below which coefficients will be squashed to zero.
+        If `algorithm='omp'`, `alpha` is the tolerance parameter: the value of
+        the reconstruction error targeted. In this case, it overrides
+        `n_nonzero_coefs`.
 
     n_jobs: int,
         number of parallel jobs to run
@@ -761,8 +783,8 @@ class DictionaryLearning(BaseDictionaryLearning):
     """
     def __init__(self, n_atoms, alpha=1, max_iter=1000, tol=1e-8,
                  fit_algorithm='lasso_lars', transform_algorithm='omp',
-                 transform_n_nonzero_coefs=None, transform_alpha=None, n_jobs=1,
-                 code_init=None, dict_init=None, verbose=False,
+                 transform_n_nonzero_coefs=None, transform_alpha=None,
+                 n_jobs=1, code_init=None, dict_init=None, verbose=False,
                  split_sign=False, random_state=None):
         BaseDictionaryLearning.__init__(self, n_atoms, transform_algorithm,
                  transform_n_nonzero_coefs, transform_alpha, split_sign,
@@ -852,10 +874,31 @@ class DictionaryLearningOnline(BaseDictionaryLearning):
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
 
-    transform_algorithm: {'lasso_lars', 'lasso_cd', 'omp', 'threshold',
-                         'triangle'}
-        method to use for transforming the data after the dictionary has been
-        learned
+    transform_algorithm: {'lasso_lars', 'lasso_cd', 'lars', 'omp', 'threshold'}
+        Algorithm used to transform the data.
+        lars: uses the least angle regression method (linear_model.lars_path)
+        lasso_lars: uses Lars to compute the Lasso solution
+        lasso_cd: uses the coordinate descent method to compute the
+        Lasso solution (linear_model.Lasso). lasso_lars will be faster if
+        the estimated components are sparse.
+        omp: uses orthogonal matching pursuit to estimate the sparse solution
+        threshold: squashes to zero all coefficients less than alpha from
+        the projection X.T * Y
+
+    transform_n_nonzero_coefs: int, 0.1 * n_features by default
+        Number of nonzero coefficients to target in each column of the
+        solution. This is only used by `algorithm='lars'` and `algorithm='omp'`
+        and is overridden by `alpha` in the `omp` case.
+
+    transform_alpha: float, 1. by default
+        Overloaded parameter.
+        If `algorithm='lasso_lars'` or `algorithm='lasso_cd'`, `alpha` is the
+        penalty applied to the L1 norm.
+        If `algorithm='threhold'`, `alpha` is the absolute value of the
+        threshold below which coefficients will be squashed to zero.
+        If `algorithm='omp'`, `alpha` is the tolerance parameter: the value of
+        the reconstruction error targeted. In this case, it overrides
+        `n_nonzero_coefs`.
 
     n_jobs: int,
         number of parallel jobs to run

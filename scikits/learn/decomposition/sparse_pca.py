@@ -9,6 +9,7 @@ from ..linear_model import ridge_regression
 from ..base import BaseEstimator, TransformerMixin
 from .dict_learning import dict_learning, dict_learning_online
 
+
 class SparsePCA(BaseEstimator, TransformerMixin):
     """Sparse Principal Components Analysis (SparsePCA)
 
@@ -35,9 +36,10 @@ class SparsePCA(BaseEstimator, TransformerMixin):
     tol: float,
         Tolerance for the stopping condition.
 
-    method: {'lars', 'cd'}
-        lars: uses the least angle regression method (linear_model.lars_path)
-        cd: uses the coordinate descent method to compute the
+    method: {'lasso_lars', 'lasso_cd'}
+        lasso_lars: uses the least angle regression method
+        (linear_model.lars_path)
+        lasso_cd: uses the coordinate descent method to compute the
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
 
@@ -183,9 +185,10 @@ class MiniBatchSparsePCA(SparsePCA):
     n_jobs: int,
         number of parallel jobs to run, or -1 to autodetect.
 
-    method: {'lars', 'cd'}
-        lars: uses the least angle regression method (linear_model.lars_path)
-        cd: uses the coordinate descent method to compute the
+    method: {'lasso_lars', 'lasso_cd'}
+        lasso_lars: uses the least angle regression method
+        (linear_model.lars_path)
+        lasso_cd: uses the coordinate descent method to compute the
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
 

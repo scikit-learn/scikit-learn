@@ -12,6 +12,7 @@ rng = np.random.RandomState(0)
 n_samples, n_features = 10, 8
 X = rng.randn(n_samples, n_features)
 
+
 def test_dict_learning_shapes():
     n_atoms = 5
     dico = DictionaryLearning(n_atoms).fit(X)
@@ -42,7 +43,7 @@ def test_dict_learning_reconstruction():
 
 
 def test_dict_learning_nonzero_coefs():
-    n_atoms=4
+    n_atoms = 4
     dico = DictionaryLearning(n_atoms, transform_algorithm='lars',
                               transform_n_nonzero_coefs=3, random_state=0)
     code = dico.fit(X).transform(X[0])
