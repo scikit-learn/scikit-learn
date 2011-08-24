@@ -142,17 +142,14 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
 
     # ASSIGN LABELS: a point belongs to the cluster that it is closest to
     centers_tree = BallTree(cluster_centers)
-    if len(cluster_centers) < 65535:
-        labels = np.zeros(n_points, dtype=np.uint16)
-    else:
-        labels = np.zeros(n_points, dtype=np.uint32)
+    labels = np.zeros(n_points, dtype=np.int)
     distances, idxs = centers_tree.query(X, 1)
     if cluster_all:
         labels = idxs.flatten()
     else:
         labels[:] = -1
-        ind = np.where(distances.flatten() < bandwidth)[0]
-        labels[ind] = idxs.flatten()[ind]
+        bool_selector = distances.flatten() <= bandwidth
+        labels[bool_selector] = idxs.flatten()[bool_selector]
     return cluster_centers, labels
 
 
