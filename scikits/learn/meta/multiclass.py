@@ -222,6 +222,8 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin):
         return predict_ovo(self.estimators_, self.classes_, X)
 
 def fit_ecoc(estimator, X, y, code_size):
+    check_estimator(estimator)
+
     classes = np.unique(y)
     n_classes = classes.shape[0]
     code_size = int(n_classes * code_size)
@@ -321,7 +323,7 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin):
     """
 
     def __init__(self, estimator, code_size=1.5):
-        if (code_size <= 0)
+        if (code_size <= 0):
             raise ValueError("code_size should be greater than 0!")
 
         self.estimator = estimator
