@@ -70,8 +70,8 @@ class SparsePCA(BaseEstimator, TransformerMixin):
 
     """
     def __init__(self, n_components, alpha=1, ridge_alpha=0.01, max_iter=1000,
-                 tol=1e-8, method='lars', n_jobs=1, U_init=None, V_init=None,
-                 verbose=False, random_state=None):
+                 tol=1e-8, method='lasso_lars', n_jobs=1, U_init=None,
+                 V_init=None, verbose=False, random_state=None):
         self.n_components = n_components
         self.alpha = alpha
         self.ridge_alpha = ridge_alpha
@@ -195,7 +195,7 @@ class MiniBatchSparsePCA(SparsePCA):
     """
     def __init__(self, n_components, alpha=1, ridge_alpha=0.01, n_iter=100,
                  callback=None, chunk_size=3, verbose=False, shuffle=True,
-                 n_jobs=1, method='lars', random_state=None):
+                 n_jobs=1, method='lasso_lars', random_state=None):
         self.n_components = n_components
         self.alpha = alpha
         self.ridge_alpha = ridge_alpha

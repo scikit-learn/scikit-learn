@@ -6,7 +6,7 @@ from nose.plugins.skip import SkipTest
 from ...datasets import make_sparse_coded_signal
 from .. import DictionaryLearning, DictionaryLearningOnline, \
                dict_learning_online
-from ..dict_learning import _update_code, _update_code_parallel
+from ..dict_learning import sparse_encode, sparse_encode_parallel
 
 rng = np.random.RandomState(0)
 n_samples, n_features = 10, 8
@@ -29,7 +29,7 @@ def test_dict_learning_reconstruction():
     n_atoms = 12
     dico = DictionaryLearning(n_atoms, transform_algorithm='omp',
                               random_state=0)
-    code = dico.fit(X).transform(X, tol=0.01)
+    code = dico.fit(X).transform(X, tol=0.001)
     assert_array_almost_equal(np.dot(code, dico.components_), X)
 
     dico.transform_algorithm = 'lasso_lars'
@@ -104,8 +104,8 @@ def test_sparse_code():
     real_code = np.zeros((3, 5))
     real_code.ravel()[rng.randint(15, size=6)] = 1.0
     Y = np.dot(dictionary, real_code)
-    est_code_1 = _update_code(dictionary, Y, alpha=1.0)
-    est_code_2 = _update_code_parallel(dictionary, Y, alpha=1.0)
+    est_code_1 = sparse_encode(dictionary, Y, alpha=1.0)
+    est_code_2 = sparse_encode_parallel(dictionary, Y, alpha=1.0)
     assert_equal(est_code_1.shape, real_code.shape)
     assert_equal(est_code_1, est_code_2)
     assert_equal(est_code_1.nonzero(), real_code.nonzero())
