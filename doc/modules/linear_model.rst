@@ -135,10 +135,10 @@ as GridSearchCV except that it defaults to Generalized Cross-Validation
 
     >>> from scikits.learn import linear_model
     >>> clf = linear_model.RidgeCV(alphas=[0.1, 1.0, 10.0])
-    >>> clf.fit([[0, 0], [0, 0], [1, 1]], [0, .1, 1])
+    >>> clf.fit([[0, 0], [0, 0], [1, 1]], [0, .1, 1])       # doctest: +SKIP
     RidgeCV(alphas=[0.1, 1.0, 10.0], cv=None, fit_intercept=True, loss_func=None,
         normalize=False, score_func=None)
-    >>> clf.best_alpha                                      # doctest: +ELLIPSIS
+    >>> clf.best_alpha                                      # doctest: +SKIP
     0.1...
 
 .. topic:: References
