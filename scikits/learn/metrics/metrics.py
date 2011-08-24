@@ -667,6 +667,7 @@ def mean_square_error(y_true, y_pred):
     y_true, y_pred = check_arrays(y_true, y_pred)
     return np.linalg.norm(y_pred - y_true) ** 2
 
+
 def hinge_loss(y_true, pred_decision, pos_label=1, neg_label=-1):
     """
     Cumulated hinge loss (non-regularized).
@@ -696,5 +697,70 @@ def hinge_loss(y_true, pred_decision, pos_label=1, neg_label=-1):
 
     margin = y_true * pred_decision
     losses = 1 - margin
-    losses[losses <= 0] = 0 # the hinge doesn't penalize good enough predictions
+    # The hinge doesn't penalize good enough predictions.
+    losses[losses <= 0] = 0
     return np.mean(losses)
+
+
+# Helper functions - distance
+pairwise_function_map = {}
+pairwise_function_map['euclidean'] = pairwise.euclidean_distances
+pairwise_function_map['precomputed'] = pairwise.return_self_if_square
+pairwise_function_map['l1'] = pairwise.l1_distances
+
+
+def pairwise_distances(XA, XB=None, metric="euclidean", **kwds):
+    """ Calculates the distance matrix from a vector matrix XA and optional XB.
+
+    This method takes either a vector array or a distance matrix, and returns
+    a distance matrix. If the input is a vector array, the distances are
+    computed. If the input is a distances matrix, it is returned instead.
+
+    This method provides a safe way to take a distance matrix as input, while
+    preserving compatability with many other algorithms that take a vector
+    array.
+
+    If XB is given (default is None), then the returned matrix is the pairwise
+    distance between the arrays from both XA and XB.
+
+    Parameters
+    ----------
+    XA: array [n_samples_a, n_samples_a] if metric == "precomputed", or,
+             [n_samples_a, n_features] otherwise
+        Array of pairwise distances between samples, or a feature array.
+
+    XB: array [n_samples_b, n_features]
+        A second feature array only if XA has shape [n_samples_a, n_features].
+
+    metric: string, or callable
+        The metric to use when calculating distance between instances in a
+        feature array. If metric is a string, it must be one of the options
+        allowed by scipy.spatial.distance.pdist for its metric parameter.
+        If metric is "precomputed", XA is assumed to be a distance matrix and
+        must be square.
+        Alternatively, if metric is a callable function, it is called on each
+        pair of instances (rows) and the resulting value recorded. The callable
+        should take two arrays from XA as input and return a value indicating
+        the distance between them.
+
+    **kwds: optional keyword parameters
+        Any further parameters are passed directly to the distance metric.
+
+    Returns
+    -------
+    D: array [n_samples_a, n_samples_a] or [n_samples_a, n_samples_b]
+        A distance matrix D such that D_{i, j} is the distance between the
+        ith and jth vectors of the given matrix XA, if XB is None.
+        If XB is not None, then D_{i, j} is the distance between the ith array
+        from XA and the jth array from XB.
+
+    """
+    if metric in pairwise_function_map:
+        return pairwise_function_map[metric](XA, XB, **kwds)
+    else:
+        # FIXME: the distance module doesn't support sparse matrices!
+        if XB is None:
+            return distance.squareform(distance.pdist(XA, metric=metric),
+                                       **kwds)
+        else:
+            return distance.cdist(XA, XB, metric=metric, **kwds)
