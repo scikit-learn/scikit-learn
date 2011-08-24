@@ -14,10 +14,10 @@ def test_pls():
     # ===========================================================
     # Compare 2 algo.: nipals vs. svd
     # ------------------------------
-    pls_bynipals = pls.PLSCanonical()
-    pls_bynipals.fit(X, Y, n_components=n_components)
-    pls_bysvd = pls.PLSCanonical(algorithm="svd")
-    pls_bysvd.fit(X, Y, n_components=n_components)
+    pls_bynipals = pls.PLSCanonical(n_components=n_components)
+    pls_bynipals.fit(X, Y)
+    pls_bysvd = pls.PLSCanonical(algorithm="svd", n_components=n_components)
+    pls_bysvd.fit(X, Y)
     # check that the loading vectors are highly correlated
     assert_array_almost_equal(
         [np.abs(np.corrcoef(pls_bynipals.x_loadings_[:, k],
@@ -35,8 +35,8 @@ def test_pls():
 
     # Check PLS properties (with n_components=X.shape[1])
     # ---------------------------------------------------
-    plsca = pls.PLSCanonical()
-    plsca.fit(X, Y, n_components=X.shape[1])
+    plsca = pls.PLSCanonical(n_components=X.shape[1])
+    plsca.fit(X, Y)
     T = plsca.x_scores_
     P = plsca.x_loadings_
     Wx = plsca.x_weights_
@@ -81,8 +81,8 @@ def test_pls():
 
     # "Non regression test" on canonical PLS
     # --------------------------------------
-    pls_bynipals = pls.PLSCanonical()
-    pls_bynipals.fit(X, Y, n_components=n_components)
+    pls_bynipals = pls.PLSCanonical(n_components=n_components)
+    pls_bynipals.fit(X, Y)
 
     pls_ca = pls_bynipals
     x_loadings = np.array(
@@ -111,8 +111,8 @@ def test_pls():
 
     # 2) Regression PLS (PLS2): "Non regression test"
     # ===============================================
-    pls2 = pls.PLSRegression()
-    pls2.fit(X, Y, n_components=n_components)
+    pls2 = pls.PLSRegression(n_components=n_components)
+    pls2.fit(X, Y)
 
     x_loadings = np.array(
           [[-0.66591531, -0.01976472],

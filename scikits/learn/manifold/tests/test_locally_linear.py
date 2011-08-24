@@ -31,7 +31,8 @@ def test_lle_simple_grid():
     assert_lower(reconstruction_error, tol)
 
     for solver in eigen_solvers:
-        clf.fit(X, eigen_solver=solver)
+        clf.set_params(eigen_solver=solver)
+        clf.fit(X)
         assert clf.embedding_.shape[1] == out_dim
         reconstruction_error = np.linalg.norm(
             np.dot(N, clf.embedding_) - clf.embedding_, 'fro') ** 2
@@ -53,7 +54,7 @@ def test_lle_manifold():
     X = np.c_[X, X[:, 0] ** 2 / 20]
     out_dim = 2
     clf = manifold.LocallyLinearEmbedding(n_neighbors=5, out_dim=out_dim)
-    tol = .5
+    tol = 1.5
 
     N = neighbors.kneighbors_graph(X, clf.n_neighbors,
                                    mode='barycenter').toarray()
@@ -61,7 +62,8 @@ def test_lle_manifold():
     assert_lower(reconstruction_error, tol)
 
     for solver in eigen_solvers:
-        clf.fit(X, eigen_solver=solver)
+        clf.set_params(eigen_solver=solver)        
+        clf.fit(X)
         assert clf.embedding_.shape[1] == out_dim
         reconstruction_error = np.linalg.norm(
             np.dot(N, clf.embedding_) - clf.embedding_, 'fro') ** 2

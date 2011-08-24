@@ -466,7 +466,7 @@ By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e^{-6}`, *i.e
     >>> clf = linear_model.BayesianRidge()
     >>> clf.fit (X, Y)
     BayesianRidge(n_iter=300, verbose=False, lambda_1=1e-06, lambda_2=1e-06,
-           fit_intercept=True, eps=0.001, alpha_2=1e-06, alpha_1=1e-06,
+           fit_intercept=True, alpha_2=1e-06, tol=0.001, alpha_1=1e-06,
            compute_score=False)
 
 After being fitted, the model can then be used to predict new values::
