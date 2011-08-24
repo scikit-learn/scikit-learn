@@ -72,7 +72,7 @@ def show_with_diff(image, reference, title):
     pl.yticks(())
     pl.subplot(1, 2, 2)
     pl.title("Difference")
-    pl.imshow(image - reference, vmin=-1, vmax=1, cmap=pl.cm.PuOr,
+    pl.imshow(image - reference, vmin=-0.5, vmax=0.5, cmap=pl.cm.PuOr,
               interpolation='nearest')
     pl.xticks(())
     pl.yticks(())
