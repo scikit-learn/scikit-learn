@@ -45,13 +45,10 @@ cdef double eval_gini(np.ndarray[np.float_t, ndim=1] pm):
     cdef Py_ssize_t k    
     for k in range(K): 
         sum += pm[k]
-  
-    for k in range(K): 
-        pm[k] /= sum    
          
     cdef double H = 1.
     for k in range(K): 
-        H -=  pm[k] * pm[k] 
+        H -=  (pm[k] / sum) * (pm[k] / sum) 
          
     return H   
 
@@ -66,15 +63,12 @@ cdef double eval_entropy(np.ndarray[np.float_t, ndim=1] pm):
     cdef double sum = 0.
     cdef Py_ssize_t k    
     for k in range(K): 
-        sum += pm[k]
-  
-    for k in range(K): 
-        pm[k] /= sum          
+        sum += pm[k]       
       
     cdef double H = 0.
     for k in range(K):
         if pm[k] > 0 :    
-            H +=  -pm[k] * log(pm[k])
+            H +=  (-pm[k] / sum) * log(pm[k] / sum)
          
     return H   
 
@@ -89,12 +83,9 @@ cdef double eval_miss(np.ndarray[np.float_t, ndim=1] pm):
     cdef double sum = 0.
     cdef Py_ssize_t k    
     for k in range(K): 
-        sum += pm[k]
-  
-    for k in range(K): 
-        pm[k] /= sum      
+        sum += pm[k]    
     
-    cdef double H = 1. - pm.max()
+    cdef double H = 1. - (pm.max() / sum)
     
     return H
     
@@ -183,9 +174,9 @@ def _find_best_split_classification(np.ndarray[np.float_t, ndim=2] features,
             pm_right[sorted_labels[j]] -= 1
             t = (sorted_features[j] + sorted_features[j + 1]) / 2. 
             e1 = (j + 1) / <double>n_samples * \
-                call_classification_crit(crit, pm_left.copy())
+                call_classification_crit(crit, pm_left)
             e2 = (n_samples - (j + 1)) / <double>n_samples * \
-                call_classification_crit(crit, pm_right.copy())              
+                call_classification_crit(crit, pm_right)              
             error = e1 + e2
             
             if error < split_error:
