@@ -15,16 +15,15 @@ from ..metrics.pairwise import euclidean_distances
 
 
 class BaseDictionaryLearning(BaseEstimator, TransformerMixin):
-    """ Dictionary learning base class
-    """
+    """Dictionary learning base class"""
+
     def __init__(self, n_atoms, transform_algorithm='omp', split_sign=False):
         self.n_atoms = n_atoms
         self.transform_algorithm = transform_algorithm
         self.split_sign = split_sign
 
     def transform(self, X, y=None, **kwargs):
-        """Encode the data as a sparse combination of the learned dictionary
-        atoms.
+        """Encode the data as a sparse combination of the dictionary atoms.
 
         Coding method is determined by the object parameter
         `transform_algorithm`.
