@@ -89,3 +89,11 @@ def test_ecoc_fit_predict():
     #ecoc = OutputCodeClassifier(MultinomialNB(), code_size=2)
     #pred = ecoc.fit(iris.data, iris.target).predict(iris.data)
     #assert_equal(len(ecoc.estimators_), n_classes * 2)
+
+def test_ecoc_gridsearch():
+    ecoc = OutputCodeClassifier(LinearSVC())
+    Cs = [0.1, 0.5, 0.8]
+    cv = GridSearchCV(ecoc, {'estimator__C': Cs})
+    cv.fit(iris.data, iris.target)
+    best_C = cv.best_estimator.estimators_[0].C
+    assert_true(best_C in Cs)
