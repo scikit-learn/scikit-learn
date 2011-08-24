@@ -16,10 +16,11 @@ import scipy.sparse as sp
 
 from ..base import BaseEstimator
 from ..metrics.pairwise import euclidean_distances
-from ..utils import check_random_state
 from ..utils import check_arrays
-from ..utils import shuffle
+from ..utils import check_random_state
 from ..utils import gen_even_slices
+from ..utils import shuffle
+from ..utils import warn_if_not_float
 
 from . import _k_means
 
@@ -229,7 +230,7 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
         for i in range(max_iter):
             centers_old = centers.copy()
             labels, inertia = _e_step(X, centers,
-                                        x_squared_norms=x_squared_norms)
+                                      x_squared_norms=x_squared_norms)
             centers = _m_step(X, labels, k)
 
             if verbose:
@@ -483,25 +484,22 @@ class KMeans(BaseEstimator):
         self.random_state = random_state
         self.copy_x = copy_x
 
-    def _check_data(self, X, **params):
-        """
-        Set parameters and check the sample given is larger than k
-        """
+    def _check_data(self, X):
+        """Verify that the number of samples given is larger than k"""
         if sp.issparse(X):
             raise ValueError("K-Means does not support sparse input matrices.")
         X = np.asanyarray(X)
         if X.shape[0] < self.k:
-            raise ValueError("n_samples=%d should be larger than k=%d" % (
+            raise ValueError("n_samples=%d should be >= k=%d" % (
                 X.shape[0], self.k))
-        self._set_params(**params)
         return X
 
-    def fit(self, X, **params):
-        """Fit k-means"""
-
+    def fit(self, X, y=None):
+        """Compute k-means"""
         self.random_state = check_random_state(self.random_state)
 
-        X = self._check_data(X, **params)
+        X = self._check_data(X)
+        warn_if_not_float(X, self)
 
         self.cluster_centers_, self.labels_, self.inertia_ = k_means(
             X, k=self.k, init=self.init, n_init=self.n_init,
@@ -509,7 +507,7 @@ class KMeans(BaseEstimator):
             tol=self.tol, random_state=self.random_state, copy_x=self.copy_x)
         return self
 
-    def transform(self, X):
+    def transform(self, X, y=None):
         """ Transform the data to a cluster-distance space
 
         In the new space, each dimension is the distance to the cluster centers.
@@ -537,7 +535,7 @@ class KMeans(BaseEstimator):
         return euclidean_distances(X, self.cluster_centers_)
 
     def predict(self, X):
-        """ Predict the closest cluster each sample belongs to
+        """Predict the closest cluster each sample in X belongs to.
 
         In the vector quantization literature, `cluster_centers_` is called
         the code book and each value returned by `predict` is the index of
@@ -550,17 +548,17 @@ class KMeans(BaseEstimator):
 
         Returns
         -------
-        Y : array, shape [n_samples, ]
+        Y : array, shape [n_samples,]
             Index of the closest center each sample belongs to.
         """
         if not hasattr(self, "cluster_centers_"):
             raise AttributeError("Model has not been trained yet. "
                                  "Fit k-means before using predict.")
-        cluster_shape = self.cluster_centers_.shape[1]
-        if not X.shape[1] == cluster_shape:
+        expected_n_features = self.cluster_centers_.shape[1]
+        if not X.shape[1] == expected_n_features:
             raise ValueError("Incorrect number of features. "
-                             "Got %d features, expected %d" % (X.shape[1],
-                                                               cluster_shape))
+                             "Got %d features, expected %d" % (
+                                 X.shape[1], expected_n_features))
         return _e_step(X, self.cluster_centers_)[0]
 
 
@@ -633,8 +631,7 @@ def _mini_batch_step_sparse(X, batch_slice, centers, counts, x_squared_norms):
 
 
 class MiniBatchKMeans(KMeans):
-    """
-    Mini-Batch K-Means clustering
+    """Mini-Batch K-Means clustering
 
     Parameters
     ----------
@@ -702,18 +699,17 @@ class MiniBatchKMeans(KMeans):
         self.cluster_centers_ = None
         self.chunk_size = chunk_size
 
-    def fit(self, X, y=None, **params):
-        """
-        Calculates the centroids on a batch X
+    def fit(self, X, y=None):
+        """Compute the centroids on X by chunking it into mini-batches.
 
         Parameters
         ----------
         X: array-like, shape = [n_samples, n_features]
             Coordinates of the data points to cluster
         """
-        self._set_params(**params)
         self.random_state = check_random_state(self.random_state)
         X = check_arrays(X, sparse_format="csr", copy=False)[0]
+        warn_if_not_float(X, self)
         n_samples, n_features = X.shape
         if n_samples < self.k:
             raise ValueError("Number of samples smaller than number "\
@@ -764,7 +760,7 @@ class MiniBatchKMeans(KMeans):
 
         return self
 
-    def partial_fit(self, X, y=None, **params):
+    def partial_fit(self, X, y=None):
         """Update k means estimate on a single mini-batch X.
 
         Parameters

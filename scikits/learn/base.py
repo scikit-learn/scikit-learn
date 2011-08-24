@@ -6,8 +6,10 @@ import copy
 import inspect
 import numpy as np
 from scipy import sparse
+import warnings
 
 from .metrics import r2_score
+from .utils import deprecated
 
 
 ###############################################################################
@@ -172,13 +174,17 @@ class BaseEstimator(object):
             out[key] = value
         return out
 
-    def _set_params(self, **params):
+    def set_params(self, **params):
         """ Set the parameters of the estimator.
 
         The method works on simple estimators as well as on nested
         objects (such as pipelines). The former have parameters of the
-        form <component>__<parameter> so that the its possible to
-        update each component of the nested object.
+        form <component>__<parameter> so that it's possible to update
+        each component of a nested object.
+
+        Returns
+        -------
+        self
         """
         if not params:
             # Simple optimisation to gain speed (inspect is slow)
@@ -198,7 +204,7 @@ class BaseEstimator(object):
                     'sub parameter %s' %
                         (sub_name, self.__class__.__name__, sub_name)
                     )
-                sub_object._set_params(**{sub_name: value})
+                sub_object.set_params(**{sub_name: value})
             else:
                 # simple objects case
                 assert key in valid_params, ('Invalid parameter %s '
@@ -206,6 +212,13 @@ class BaseEstimator(object):
                                              (key, self.__class__.__name__))
                 setattr(self, key, value)
         return self
+
+    def _set_params(self, **params):
+        if params != {}:
+            warnings.warn("Passing estimator parameters to fit is deprecated;"
+                          " use set_params instead",
+                          category=DeprecationWarning)
+        return self.set_params(**params)
 
     def __repr__(self):
         class_name = self.__class__.__name__

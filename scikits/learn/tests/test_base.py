@@ -93,9 +93,9 @@ def test_get_params():
     assert_true('a__d' in test._get_params(deep=True))
     assert_true('a__d' not in test._get_params(deep=False))
 
-    test._set_params(a__d=2)
+    test.set_params(a__d=2)
     assert test.a.d == 2
-    assert_raises(AssertionError, test._set_params, a__a=2)
+    assert_raises(AssertionError, test.set_params, a__a=2)
 
 
 def test_is_classifier():

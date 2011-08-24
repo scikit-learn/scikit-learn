@@ -10,6 +10,7 @@ The ``scikits.learn.preprocessing`` package provides several common
 utility functions and transformer classes to change raw feature vectors
 into a representation that is more suitable for the downstream estimators.
 
+.. _preprocessing_scaler:
 
 Standardization or Mean Removal and Variance Scaling
 ====================================================
