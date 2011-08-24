@@ -39,7 +39,7 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
 
     Examples
     --------
-    >>> samples = [[0, 0, 1], [1, 0, 0]]
+    >>> samples = [[0, 0, 2], [1, 0, 0]]
     >>> labels = [0, 1]
     >>> from scikits.learn.neighbors import NeighborsClassifier
     >>> neigh = NeighborsClassifier(n_neighbors=1)
@@ -526,7 +526,7 @@ def radius_neighbors_graph(X, radius, mode='connectivity'):
     n_neighbors = np.array([len(a) for a in A_ind])
     n_nonzero = np.sum(n_neighbors)
     A_ind = np.concatenate(list(A_ind))
-    A_indptr = np.concatenate((np.zeros(1), np.cumsum(n_neighbors)))
+    A_indptr = np.concatenate((np.zeros(1, dtype=int), np.cumsum(n_neighbors)))
 
     if A_data is None:
         A_data = np.ones(n_nonzero)
