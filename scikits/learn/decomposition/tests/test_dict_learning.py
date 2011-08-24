@@ -52,6 +52,7 @@ def test_dict_learning_nonzero_coefs():
     code = dico.transform(X[0])
     assert len(np.flatnonzero(code)) == 3
 
+
 def test_dict_learning_split():
     n_atoms = 5
     dico = DictionaryLearning(n_atoms, transform_algorithm='threshold')

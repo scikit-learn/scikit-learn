@@ -25,7 +25,64 @@ from ..metrics.pairwise import euclidean_distances
 def sparse_encode(X, Y, gram=None, cov=None, algorithm='lasso_lars',
                   n_nonzero_coefs=None, alpha=None,
                   overwrite_gram=False, overwrite_cov=False, init=None):
-    """Generic sparse coding method"""
+    """Generic sparse coding
+
+    Each column of the result is the solution to a Lasso problem.
+
+    Parameters
+    ----------
+    X: array of shape (n_samples, n_components)
+        Dictionary against which to optimize the sparse code.
+
+    Y: array of shape (n_samples, n_features)
+        Data matrix.
+
+    gram: array, shape=(n_components, n_components)
+        Precomputed Gram matrix, X^T * X
+
+    cov: array, shape=(n_components, n_features)
+        Precomputed covariance, X^T * Y
+
+    algorithm: {'lasso_lars', 'lasso_cd', 'lars', 'omp', 'threshold'}
+        lars: uses the least angle regression method (linear_model.lars_path)
+        lasso_lars: uses Lars to compute the Lasso solution
+        lasso_cd: uses the coordinate descent method to compute the
+        Lasso solution (linear_model.Lasso). lasso_lars will be faster if
+        the estimated components are sparse.
+        omp: uses orthogonal matching pursuit to estimate the sparse solution
+        threshold: squashes to zero all coefficients less than alpha from
+        the projection X.T * Y
+
+    n_nonzero_coefs: int, 0.1 * n_features by default
+        Number of nonzero coefficients to target in each column of the
+        solution. This is only used by `algorithm='lars'` and `algorithm='omp'`
+        and is overridden by `alpha` in the `omp` case.
+
+    alpha: float, 1. by default
+        Overloaded parameter.
+        If `algorithm='lasso_lars'` or `algorithm='lasso_cd'`, `alpha` is the
+        penalty applied to the L1 norm.
+        If `algorithm='threhold'`, `alpha` is the absolute value of the
+        threshold below which coefficients will be squashed to zero.
+        If `algorithm='omp'`, `alpha` is the tolerance parameter: the value of
+        the reconstruction error targeted. In this case, it overrides
+        `n_nonzero_coefs`.
+
+    init: array of shape (n_components, n_features)
+        Initialization value of the sparse codes. Only used if
+        `algorithm='lasso_cd'`.
+
+    overwrite_gram: boolean,
+        Whether to overwrite the precomputed Gram matrix.
+
+    overwrite_cov: boolean,
+        Whether to overwrite the precomputed covariance matrix.
+
+    Returns
+    -------
+    code: array of shape (n_components, n_features)
+        The sparse codes
+    """
     alpha = float(alpha) if alpha is not None else None
     X, Y = map(np.asanyarray, (X, Y))
     if Y.ndim == 1:
@@ -105,7 +162,67 @@ def sparse_encode(X, Y, gram=None, cov=None, algorithm='lasso_lars',
 def sparse_encode_parallel(X, Y, gram=None, cov=None, algorithm='lasso_lars',
                   n_nonzero_coefs=None, alpha=None, overwrite_gram=False,
                   overwrite_cov=False, init=None, n_jobs=1):
-    """Parallel sparse coding using joblib"""
+    """Parallel sparse coding using joblib
+
+    Each column of the result is the solution to a Lasso problem.
+
+    Parameters
+    ----------
+    X: array of shape (n_samples, n_components)
+        Dictionary against which to optimize the sparse code.
+
+    Y: array of shape (n_samples, n_features)
+        Data matrix.
+
+    gram: array, shape=(n_components, n_components)
+        Precomputed Gram matrix, X^T * X
+
+    cov: array, shape=(n_components, n_features)
+        Precomputed covariance, X^T * Y
+
+    algorithm: {'lasso_lars', 'lasso_cd', 'lars', 'omp', 'threshold'}
+        lars: uses the least angle regression method (linear_model.lars_path)
+        lasso_lars: uses Lars to compute the Lasso solution
+        lasso_cd: uses the coordinate descent method to compute the
+        Lasso solution (linear_model.Lasso). lasso_lars will be faster if
+        the estimated components are sparse.
+        omp: uses orthogonal matching pursuit to estimate the sparse solution
+        threshold: squashes to zero all coefficients less than alpha from
+        the projection X.T * Y
+
+    n_nonzero_coefs: int, 0.1 * n_features by default
+        Number of nonzero coefficients to target in each column of the
+        solution. This is only used by `algorithm='lars'` and `algorithm='omp'`
+        and is overridden by `alpha` in the `omp` case.
+
+    alpha: float, 1. by default
+        Overloaded parameter.
+        If `algorithm='lasso_lars'` or `algorithm='lasso_cd'`, `alpha` is the
+        penalty applied to the L1 norm.
+        If `algorithm='threhold'`, `alpha` is the absolute value of the
+        threshold below which coefficients will be squashed to zero.
+        If `algorithm='omp'`, `alpha` is the tolerance parameter: the value of
+        the reconstruction error targeted. In this case, it overrides
+        `n_nonzero_coefs`.
+
+    init: array of shape (n_components, n_features)
+        Initialization value of the sparse codes. Only used if
+        `algorithm='lasso_cd'`.
+
+    overwrite_gram: boolean,
+        Whether to overwrite the precomputed Gram matrix.
+
+    overwrite_cov: boolean,
+        Whether to overwrite the precomputed covariance matrix.
+    
+    n_jobs: int,
+        Number of parallel jobs to run.
+
+    Returns
+    -------
+    code: array of shape (n_components, n_features)
+        The sparse codes
+    """
     n_samples, n_features = Y.shape
     n_components = X.shape[1]
     if gram is None:
@@ -236,9 +353,10 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8,
     tol: float,
         Tolerance for the stopping condition.
 
-    method: {'lars', 'cd'}
-        lars: uses the least angle regression method (linear_model.lars_path)
-        cd: uses the coordinate descent method to compute the
+    method: {'lasso_lars', 'lasso_cd'}
+        lasso_lars: uses the least angle regression method
+        (linear_model.lars_path)
+        lasso_cd: uses the coordinate descent method to compute the
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
 
@@ -272,6 +390,8 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8,
         Vector of errors at each iteration.
 
     """
+    if method not in ('lasso_lars', 'lasso_cd'):
+        raise ValueError('Coding method not supported as a fit algorithm.')
     t0 = time.time()
     n_features = X.shape[1]
     # Avoid integer division problems
@@ -403,9 +523,10 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
     n_jobs: int,
         number of parallel jobs to run, or -1 to autodetect.
 
-    method: {'lars', 'cd'}
-        lars: uses the least angle regression method (linear_model.lars_path)
-        cd: uses the coordinate descent method to compute the
+    method: {'lasso_lars', 'lasso_cd'}
+        lasso_lars: uses the least angle regression method
+        (linear_model.lars_path)
+        lasso_cd: uses the coordinate descent method to compute the
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
 
@@ -424,6 +545,8 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
     code: array of shape (n_samples, n_atoms),
         the sparse code (only returned if `return_code=True`)
     """
+    if method not in ('lasso_lars', 'lasso_cd'):
+        raise ValueError('Coding method not supported as a fit algorithm.')
     t0 = time.time()
     n_samples, n_features = X.shape
     # Avoid integer division problems
