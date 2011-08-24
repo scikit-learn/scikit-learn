@@ -580,12 +580,12 @@ class GaussianHMM(_BaseHMM):
     --------
     >>> from scikits.learn.hmm import GaussianHMM
     >>> GaussianHMM(n_components=2)
-    GaussianHMM(cvtype='diag', means_weight=0, startprob_prior=1.0,
-          startprob=array([ 0.5,  0.5]),
+    GaussianHMM(covars_prior=0.01, covars_weight=1, cvtype='diag',
+          means_prior=None, means_weight=0, n_components=2,
+          startprob=array([ 0.5,  0.5]), startprob_prior=1.0,
           transmat=array([[ 0.5,  0.5],
            [ 0.5,  0.5]]),
-          transmat_prior=1.0, means_prior=None, n_components=2,
-          covars_weight=1, covars_prior=0.01)
+          transmat_prior=1.0)
 
 
     See Also
@@ -826,10 +826,11 @@ class MultinomialHMM(_BaseHMM):
     >>> from scikits.learn.hmm import MultinomialHMM
     >>> MultinomialHMM(n_components=2)
     ...                             #doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    MultinomialHMM(transmat=array([[ 0.5,  0.5],
-      [ 0.5,  0.5]]),
-      startprob_prior=1.0, startprob=array([ 0.5,  0.5]), n_components=2,
-      transmat_prior=1.0)
+    MultinomialHMM(n_components=2, startprob=array([ 0.5,  0.5]),
+            startprob_prior=1.0,
+            transmat=array([[ 0.5,  0.5],
+           [ 0.5,  0.5]]),
+            transmat_prior=1.0)
 
     See Also
     --------
@@ -944,12 +945,13 @@ class GMMHMM(_BaseHMM):
     >>> from scikits.learn.hmm import GMMHMM
     >>> GMMHMM(n_components=2, n_mix=10, cvtype='diag')
     ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    GMMHMM(n_mix=10, cvtype='diag', startprob_prior=1.0,
-        startprob=array([ 0.5,  0.5]),
+    GMMHMM(cvtype='diag',
+        gmms=[GMM(cvtype='diag', n_components=10), GMM(cvtype='diag', n_components=10)],
+        n_components=2, n_mix=10, startprob=array([ 0.5,  0.5]),
+        startprob_prior=1.0,
         transmat=array([[ 0.5,  0.5],
            [ 0.5,  0.5]]),
-        transmat_prior=1.0, n_components=2,
-        gmms=[GMM(cvtype='diag', n_components=10), GMM(cvtype='diag', n_components=10)])
+        transmat_prior=1.0)
 
 
     See Also

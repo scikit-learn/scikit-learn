@@ -201,7 +201,7 @@ as each sample is treated independently of others::
 
   >>> binarizer = preprocessing.Binarizer().fit(X)  # fit does nothing
   >>> binarizer
-  Binarizer(threshold=0.0, copy=True)
+  Binarizer(copy=True, threshold=0.0)
 
   >>> binarizer.transform(X)
   array([[ 1.,  0.,  1.],
