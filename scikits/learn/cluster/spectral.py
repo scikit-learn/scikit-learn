@@ -252,7 +252,7 @@ class SpectralClustering(BaseEstimator):
         self.mode = mode
         self.random_state = random_state
 
-    def fit(self, X, **params):
+    def fit(self, X):
         """Compute the spectral clustering from the affinity matrix
 
         Parameters
@@ -281,7 +281,6 @@ class SpectralClustering(BaseEstimator):
         speeds up computation.
         """
         self.random_state = check_random_state(self.random_state)
-        self._set_params(**params)
         self.labels_ = spectral_clustering(X, k=self.k, mode=self.mode,
                                            random_state=self.random_state)
         return self

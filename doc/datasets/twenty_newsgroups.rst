@@ -24,8 +24,8 @@ The ``scikits.learn.datasets.fetch_20newsgroups`` function is a data
 fetching / caching functions that downloads the data archive from
 the original `20 newsgroups website`_, extracts the archive contents
 in the ``~/scikit_learn_data/20news_home`` folder and calls the
-``scikits.learn.datasets.load_filenames`` on either the training or
-testing set folder::
+``scikits.learn.datasets.load_file`` on either the training or
+testing set folder, or both of them::
 
   >>> from scikits.learn.datasets import fetch_20newsgroups
   >>> newsgroups_train = fetch_20newsgroups(subset='train')

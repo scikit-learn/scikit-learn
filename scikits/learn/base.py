@@ -5,7 +5,11 @@
 import copy
 import inspect
 import numpy as np
+from scipy import sparse
+import warnings
+
 from .metrics import r2_score
+from .utils import deprecated
 
 
 ###############################################################################
@@ -43,10 +47,29 @@ def clone(estimator, safe=True):
     for name, param in new_object_params.iteritems():
         new_object_params[name] = clone(param, safe=False)
     new_object = klass(**new_object_params)
-    assert new_object._get_params(deep=False) == new_object_params, (
-            'Cannot clone object %s, as the constructor does not '
-            'seem to set parameters' % estimator
-        )
+    params_set = new_object._get_params(deep=False)
+    for name in new_object_params:
+        param1 = new_object_params[name]
+        param2 = params_set[name]
+        if isinstance(param1, np.ndarray):
+            # For ndarrays, we do not test for complete equality
+            equality_test = (param1.shape == param2.shape 
+                             and param1.dtype == param2.dtype 
+                             and param1[0] == param2[0] 
+                             and param1[-1] == param2[-1])
+        elif sparse.issparse(param1):
+            # For sparse matrices equality doesn't work 
+            equality_test = (param1.__class__ == param2.__class__
+                             and param1.data[0] == param2.data[0]
+                             and param1.data[-1] == param2.data[-1]
+                             and param1.nnz == param2.nnz
+                             and param1.shape == param2.shape)
+        else:
+            equality_test = new_object_params[name] == params_set[name]
+        assert equality_test, (
+                'Cannot clone object %s, as the constructor does not '
+                'seem to set parameter %s' % (estimator, name)
+            )
 
     return new_object
 
@@ -151,13 +174,17 @@ class BaseEstimator(object):
             out[key] = value
         return out
 
-    def _set_params(self, **params):
+    def set_params(self, **params):
         """ Set the parameters of the estimator.
 
         The method works on simple estimators as well as on nested
         objects (such as pipelines). The former have parameters of the
-        form <component>__<parameter> so that the its possible to
-        update each component of the nested object.
+        form <component>__<parameter> so that it's possible to update
+        each component of a nested object.
+
+        Returns
+        -------
+        self
         """
         if not params:
             # Simple optimisation to gain speed (inspect is slow)
@@ -177,7 +204,7 @@ class BaseEstimator(object):
                     'sub parameter %s' %
                         (sub_name, self.__class__.__name__, sub_name)
                     )
-                sub_object._set_params(**{sub_name: value})
+                sub_object.set_params(**{sub_name: value})
             else:
                 # simple objects case
                 assert key in valid_params, ('Invalid parameter %s '
@@ -185,6 +212,13 @@ class BaseEstimator(object):
                                              (key, self.__class__.__name__))
                 setattr(self, key, value)
         return self
+
+    def _set_params(self, **params):
+        if params != {}:
+            warnings.warn("Passing estimator parameters to fit is deprecated;"
+                          " use set_params instead",
+                          category=DeprecationWarning)
+        return self.set_params(**params)
 
     def __repr__(self):
         class_name = self.__class__.__name__

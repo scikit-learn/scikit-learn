@@ -77,7 +77,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase):
     @raises(ValueError)
     def test_sgd_bad_penalty(self):
         """Check whether expected ValueError on bad penalty"""
-        clf = self.factory(penalty='foobar', rho=0.85)
+        self.factory(penalty='foobar', rho=0.85)
 
     def test_sgd_losses(self):
         """Check whether losses and hyperparameters are set properly"""
@@ -93,35 +93,35 @@ class DenseSGDClassifierTestCase(unittest.TestCase):
     @raises(ValueError)
     def test_sgd_bad_loss(self):
         """Check whether expected ValueError on bad loss"""
-        clf = self.factory(loss="foobar")
+        self.factory(loss="foobar")
 
     @raises(ValueError)
     def test_sgd_n_iter_param(self):
         """Test parameter validity check"""
-        clf = self.factory(n_iter=-10000)
+        self.factory(n_iter=-10000)
 
     @raises(ValueError)
     def test_sgd_shuffle_param(self):
         """Test parameter validity check"""
-        clf = self.factory(shuffle="false")
+        self.factory(shuffle="false")
 
     @raises(TypeError)
     def test_arument_coef(self):
         """Checks coef_init not allowed as model argument (only fit)"""
         # Provided coef_ does not match dataset.
-        clf = self.factory(coef_init=np.zeros((3,))).fit(X, Y)
+        self.factory(coef_init=np.zeros((3,))).fit(X, Y)
 
     @raises(ValueError)
     def test_provide_coef(self):
         """Checks coef_init shape for the warm starts"""
         # Provided coef_ does not match dataset.
-        clf = self.factory().fit(X, Y, coef_init=np.zeros((3,)))
+        self.factory().fit(X, Y, coef_init=np.zeros((3,)))
 
     @raises(ValueError)
     def test_set_intercept(self):
         """Checks intercept_ shape for the warm starts"""
         # Provided intercept_ does not match dataset.
-        clf = self.factory().fit(X, Y, intercept_init=np.zeros((3,)))
+        self.factory().fit(X, Y, intercept_init=np.zeros((3,)))
 
     @raises(ValueError)
     def test_sgd_at_least_two_labels(self):
@@ -327,10 +327,8 @@ class SparseSGDClassifierTestCase(DenseSGDClassifierTestCase):
     factory = linear_model.sparse.SGDClassifier
 
 
-##
-## Regression Test Case
-##
-
+################################################################################
+# Regression Test Case
 
 class DenseSGDRegressorTestCase(unittest.TestCase):
     """Test suite for the dense representation variant of SGD"""
@@ -356,7 +354,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
     @raises(ValueError)
     def test_sgd_bad_penalty(self):
         """Check whether expected ValueError on bad penalty"""
-        clf = self.factory(penalty='foobar', rho=0.85)
+        self.factory(penalty='foobar', rho=0.85)
 
     def test_sgd_losses(self):
         """Check whether losses and hyperparameters are set properly"""
@@ -370,7 +368,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
     @raises(ValueError)
     def test_sgd_bad_loss(self):
         """Check whether expected ValueError on bad loss"""
-        clf = self.factory(loss="foobar")
+        self.factory(loss="foobar")
 
     def test_sgd_least_squares_fit(self):
         xmin, xmax = -5, 5

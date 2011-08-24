@@ -35,11 +35,16 @@ def test_scaler():
     """Test scaling of dataset along all axis"""
     # First test with 1D data
     X = np.random.randn(5)
+    X_orig_copy = X.copy()
 
     scaler = Scaler()
     X_scaled = scaler.fit(X).transform(X, copy=False)
     assert_array_almost_equal(X_scaled.mean(axis=0), 0.0)
     assert_array_almost_equal(X_scaled.std(axis=0), 1.0)
+
+    # check inverse transform
+    X_scaled_back = scaler.inverse_transform(X_scaled)
+    assert_array_almost_equal(X_scaled_back, X_orig_copy)
 
     # Test with 1D list
     X = [0., 1., 2, 0.4, 1.]
@@ -64,6 +69,12 @@ def test_scaler():
     assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
     # Check that X has not been copied
     assert X_scaled is not X
+
+    # check inverse transform
+    X_scaled_back = scaler.inverse_transform(X_scaled)
+    assert X_scaled_back is not X
+    assert X_scaled_back is not X_scaled
+    assert_array_almost_equal(X_scaled_back, X)
 
     X_scaled = scale(X, axis=1, with_std=False)
     assert not np.any(np.isnan(X_scaled))
@@ -108,6 +119,11 @@ def test_scaler_without_centering():
     # Check that X has not been copied
     assert X_scaled is not X
 
+    X_scaled_back = scaler.inverse_transform(X_scaled)
+    assert X_scaled_back is not X
+    assert X_scaled_back is not X_scaled
+    assert_array_almost_equal(X_scaled_back, X)
+
     X_scaled = scale(X, with_mean=False)
     assert not np.any(np.isnan(X_scaled))
 
@@ -117,16 +133,30 @@ def test_scaler_without_centering():
     # Check that X has not been copied
     assert X_scaled is not X
 
+    X_scaled_back = scaler.inverse_transform(X_scaled)
+    assert X_scaled_back is not X
+    assert X_scaled_back is not X_scaled
+    assert_array_almost_equal(X_scaled_back, X)
+
 
 def test_normalizer_l1():
-    np.random.seed(0)
-    X_orig = np.random.randn(4, 5)
-    X_orig[3, :] = 0.0
+    rng = np.random.RandomState(0)
+    X_dense = rng.randn(4, 5)
+    X_sparse_unpruned = sp.csr_matrix(X_dense)
+
+    # set the row number 3 to zero
+    X_dense[3, :] = 0.0
+
+    # set the row number 3 to zero without pruning (can happen in real life)
+    indptr_3 = X_sparse_unpruned.indptr[3]
+    indptr_4 = X_sparse_unpruned.indptr[4]
+    X_sparse_unpruned.data[indptr_3:indptr_4] = 0.0
+
+    # build the pruned variant using the regular constructor
+    X_sparse_pruned = sp.csr_matrix(X_dense)
 
     # check inputs that support the no-copy optim
-    for init in (np.array, sp.csr_matrix):
-
-        X = init(X_orig.copy())
+    for X in (X_dense, X_sparse_pruned, X_sparse_unpruned):
 
         normalizer = Normalizer(norm='l1', copy=True)
         X_norm = normalizer.transform(X)
@@ -146,7 +176,7 @@ def test_normalizer_l1():
 
     # check input for which copy=False won't prevent a copy
     for init in (sp.coo_matrix, sp.csc_matrix, sp.lil_matrix):
-        X = init(X_orig.copy())
+        X = init(X_dense)
         X_norm = normalizer = Normalizer(norm='l2', copy=False).transform(X)
 
         assert X_norm is not X
@@ -159,14 +189,23 @@ def test_normalizer_l1():
 
 
 def test_normalizer_l2():
-    np.random.seed(0)
-    X_orig = np.random.randn(4, 5)
-    X_orig[3, :] = 0.0
+    rng = np.random.RandomState(0)
+    X_dense = rng.randn(4, 5)
+    X_sparse_unpruned = sp.csr_matrix(X_dense)
+
+    # set the row number 3 to zero
+    X_dense[3, :] = 0.0
+
+    # set the row number 3 to zero without pruning (can happen in real life)
+    indptr_3 = X_sparse_unpruned.indptr[3]
+    indptr_4 = X_sparse_unpruned.indptr[4]
+    X_sparse_unpruned.data[indptr_3:indptr_4] = 0.0
+
+    # build the pruned variant using the regular constructor
+    X_sparse_pruned = sp.csr_matrix(X_dense)
 
     # check inputs that support the no-copy optim
-    for init in (np.array, sp.csr_matrix):
-
-        X = init(X_orig.copy())
+    for X in (X_dense, X_sparse_pruned, X_sparse_unpruned):
 
         normalizer = Normalizer(norm='l2', copy=True)
         X_norm1 = normalizer.transform(X)
@@ -185,7 +224,7 @@ def test_normalizer_l2():
 
     # check input for which copy=False won't prevent a copy
     for init in (sp.coo_matrix, sp.csc_matrix, sp.lil_matrix):
-        X = init(X_orig.copy())
+        X = init(X_dense)
         X_norm = normalizer = Normalizer(norm='l2', copy=False).transform(X)
 
         assert X_norm is not X
@@ -313,3 +352,10 @@ def test_center_kernel():
     K_pred_centered = np.dot(X_pred_centered, X_fit_centered.T)
     K_pred_centered2 = centerer.transform(K_pred)
     assert_array_almost_equal(K_pred_centered, K_pred_centered2)
+
+def test_fit_transform():
+    X = np.random.random((5, 4))
+    for obj in ((Scaler(), Normalizer(), Binarizer())):
+        X_transformed = obj.fit(X).transform(X)
+        X_transformed2 = obj.fit_transform(X)
+        assert_array_equal(X_transformed, X_transformed2)

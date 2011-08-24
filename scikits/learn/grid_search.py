@@ -11,7 +11,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from .externals.joblib import Parallel, delayed, logger
-from .cross_val import KFold, StratifiedKFold
+from .cross_val import check_cv
 from .base import BaseEstimator, is_classifier, clone
 from .utils.fixes import product
 
@@ -67,9 +67,11 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
         msg = '%s' % (', '.join('%s=%s' % (k, v)
                                      for k, v in clf_params.iteritems()))
         print "[GridSearchCV] %s %s" % (msg, (64 - len(msg)) * '.')
+
     # update parameters of the classifier after a copy of its base structure
+    # FIXME we should be doing a clone here
     clf = copy.deepcopy(base_clf)
-    clf._set_params(**clf_params)
+    clf.set_params(**clf_params)
 
     if isinstance(X, list) or isinstance(X, tuple):
         X_train = [X[i] for i, cond in enumerate(train) if cond]
@@ -178,8 +180,10 @@ class GridSearchCV(BaseEstimator):
         the folds, and the loss minimized is the total loss per sample,
         and not the mean loss across the folds.
 
-    cv : crossvalidation generator
-        see scikits.learn.cross_val module
+    cv : integer or crossvalidation generator, optional
+        If an integer is passed, it is the number of fold (default 3).
+        Specific crossvalidation objects can be passed, see 
+        scikits.learn.cross_val module for the list of possible objects
 
     refit: boolean
         refit the best estimator with the entire dataset
@@ -264,11 +268,7 @@ class GridSearchCV(BaseEstimator):
             raise ValueError('Target variable (y) has a different number '
                     'of samples (%i) than data (X: %i samples)' %
                         (len(y), n_samples))
-        if cv is None:
-            if y is not None and is_classifier(estimator):
-                cv = StratifiedKFold(y, k=3)
-            else:
-                cv = KFold(n_samples, k=3)
+        cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
 
         grid = IterGrid(self.param_grid)
         base_clf = clone(self.estimator)

@@ -1,6 +1,4 @@
-import gc
 from time import time
-import sys
 
 from collections import defaultdict
 

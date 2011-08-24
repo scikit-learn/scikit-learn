@@ -101,15 +101,15 @@ def test_ridge_vs_lstsq():
     y = np.random.randn(n_samples)
     X = np.random.randn(n_samples, n_features)
 
-    ridge = Ridge(alpha=0.)
-    ols = LinearRegression()
+    ridge = Ridge(alpha=0., fit_intercept=False)
+    ols = LinearRegression(fit_intercept=False)
 
     ridge.fit(X, y)
     ols.fit (X, y)
     assert_almost_equal(ridge.coef_, ols.coef_)
 
-    ridge.fit(X, y, fit_intercept=False)
-    ols.fit (X, y, fit_intercept=False)
+    ridge.fit(X, y)
+    ols.fit (X, y)
     assert_almost_equal(ridge.coef_, ols.coef_)
 
 def _test_ridge_loo(filter_):
@@ -182,7 +182,8 @@ def _test_ridge_cv(filter_):
     assert_equal(type(ridge_cv.intercept_), np.float64)
 
     cv = KFold(n_samples, 5)
-    ridge_cv.fit(filter_(X_diabetes), y_diabetes, cv=cv)
+    ridge_cv.set_params(cv=cv)
+    ridge_cv.fit(filter_(X_diabetes), y_diabetes)
     ridge_cv.predict(filter_(X_diabetes))
 
     assert_equal(len(ridge_cv.coef_.shape), 1)
@@ -216,10 +217,10 @@ def _test_ridge_classifiers(filter_):
         y_pred = clf.predict(filter_(X_iris))
         assert np.mean(y_iris == y_pred) >= 0.8
 
-    clf = RidgeClassifierCV()
     n_samples = X_iris.shape[0]
     cv = KFold(n_samples, 5)
-    clf.fit(filter_(X_iris), y_iris, cv=cv)
+    clf = RidgeClassifierCV(cv=cv)
+    clf.fit(filter_(X_iris), y_iris)
     y_pred = clf.predict(filter_(X_iris))
     assert np.mean(y_iris == y_pred) >= 0.8
 
@@ -244,9 +245,10 @@ def test_dense_sparse():
         # test dense matrix
         ret_dense = test_func(DENSE_FILTER)
         # test sparse matrix
-        ret_sp = test_func(SPARSE_FILTER)
+        ret_sparse = test_func(SPARSE_FILTER)
         # test that the outputs are the same
-        assert_array_equal(ret_dense, ret_sp)
+        if ret_dense != None and ret_sparse != None:
+            assert_array_almost_equal(ret_dense, ret_sparse, decimal=3)
 
 
 

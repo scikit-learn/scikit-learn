@@ -10,7 +10,7 @@ import scipy.sparse as sp
 
 from scikits.learn.base import BaseEstimator
 from scikits.learn.grid_search import GridSearchCV
-from scikits.learn.datasets.samples_generator import test_dataset_classif
+from scikits.learn.datasets.samples_generator import make_classification
 from scikits.learn.svm import LinearSVC
 from scikits.learn.svm.sparse import LinearSVC as SparseLinearSVC
 from scikits.learn.metrics import f1_score
@@ -21,8 +21,7 @@ class MockClassifier(BaseEstimator):
     def __init__(self, foo_param=0):
         self.foo_param = foo_param
 
-    def fit(self, X, Y, **params):
-        self._set_params(**params)
+    def fit(self, X, Y):
         return self
 
     def predict(self, T):
@@ -54,7 +53,7 @@ def test_grid_search():
 def test_grid_search_error():
     """Test that grid search will capture errors on data with different
     length"""
-    X_, y_ = test_dataset_classif(n_samples=200, n_features=100, seed=0)
+    X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
 
     clf = LinearSVC()
     cv = GridSearchCV(clf, {'C': [0.1, 1.0]})
@@ -63,7 +62,7 @@ def test_grid_search_error():
 
 def test_grid_search_sparse():
     """Test that grid search works with both dense and sparse matrices"""
-    X_, y_ = test_dataset_classif(n_samples=200, n_features=100, seed=0)
+    X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
 
     clf = LinearSVC()
     cv = GridSearchCV(clf, {'C': [0.1, 1.0]})
@@ -83,12 +82,12 @@ def test_grid_search_sparse():
 
 
 def test_grid_search_sparse_score_func():
-    X_, y_ = test_dataset_classif(n_samples=200, n_features=100, seed=0)
+    X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
 
     clf = LinearSVC()
     cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, score_func=f1_score)
     # XXX: set refit to False due to a random bug when True (default)
-    cv.fit(X_[:180], y_[:180], refit=False)
+    cv.set_params(refit=False).fit(X_[:180], y_[:180])
     y_pred = cv.predict(X_[180:])
     C = cv.best_estimator.C
 
@@ -96,7 +95,7 @@ def test_grid_search_sparse_score_func():
     clf = SparseLinearSVC()
     cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, score_func=f1_score)
     # XXX: set refit to False due to a random bug when True (default)
-    cv.fit(X_[:180], y_[:180], refit=False)
+    cv.set_params(refit=False).fit(X_[:180], y_[:180])
     y_pred2 = cv.predict(X_[180:])
     C2 = cv.best_estimator.C
 

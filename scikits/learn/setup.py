@@ -11,6 +11,7 @@ def configuration(parent_package='', top_path=None):
 
     config.add_subpackage('svm')
     config.add_subpackage('datasets')
+    config.add_subpackage('datasets/tests')
     config.add_subpackage('feature_extraction')
     config.add_subpackage('feature_extraction/tests')
     config.add_subpackage('cluster')
@@ -25,6 +26,8 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('utils')
     config.add_subpackage('utils/tests')
     config.add_subpackage('externals')
+    config.add_subpackage('mixture')
+    config.add_subpackage('mixture/tests')
     config.add_subpackage('gaussian_process')
     config.add_subpackage('gaussian_process/tests')
     config.add_subpackage('manifold')

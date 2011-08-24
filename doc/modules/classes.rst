@@ -17,7 +17,6 @@ Support Vector Machines
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
@@ -29,7 +28,6 @@ Support Vector Machines
    svm.OneClassSVM
 
 .. autosummary::
-
    :toctree: generated/
    :template: function.rst
 
@@ -46,7 +44,6 @@ For sparse data
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
@@ -63,7 +60,6 @@ Low-level methods
 -----------------
 
 .. autosummary::
-
    :toctree: generated
    :template: function.rst
 
@@ -84,7 +80,6 @@ Generalized Linear Models
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
@@ -95,9 +90,13 @@ Generalized Linear Models
    linear_model.LassoCV
    linear_model.ElasticNet
    linear_model.ElasticNetCV
-   linear_model.LARS
-   linear_model.LassoLARS
+   linear_model.Lars
+   linear_model.LassoLars
+   linear_model.LarsCV
+   linear_model.LassoLarsCV
+   linear_model.LassoLarsIC
    linear_model.LogisticRegression
+   linear_model.OrthogonalMatchingPursuit
    linear_model.SGDClassifier
    linear_model.SGDRegressor
    linear_model.BayesianRidge
@@ -105,12 +104,13 @@ Generalized Linear Models
 
 
 .. autosummary::
-
    :toctree: generated/
    :template: function.rst
 
    linear_model.lasso_path
    linear_model.lars_path
+   linear_model.orthogonal_mp
+   linear_model.orthogonal_mp_gram
 
 
 For sparse data
@@ -123,7 +123,6 @@ For sparse data
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
@@ -144,7 +143,6 @@ Naive Bayes
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
@@ -163,7 +161,6 @@ Nearest Neighbors
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
@@ -172,7 +169,6 @@ Nearest Neighbors
    ball_tree.BallTree
 
 .. autosummary::
-
    :toctree: generated/
    :template: function.rst
 
@@ -190,11 +186,12 @@ Gaussian Mixture Models
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
    mixture.GMM
+   mixture.DPGMM
+   mixture.VBGMM
 
 
 Hidden Markov Models
@@ -207,7 +204,6 @@ Hidden Markov Models
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
@@ -226,7 +222,6 @@ Clustering
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
@@ -252,7 +247,6 @@ Classification metrics
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: function.rst
 
@@ -281,7 +275,6 @@ Regression metrics
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: function.rst
 
@@ -299,7 +292,6 @@ Clustering metrics
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: function.rst
 
@@ -318,11 +310,11 @@ Pairwise metrics
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: function.rst
 
    metrics.pairwise.euclidean_distances
+   metrics.pairwise.l1_distances
    metrics.pairwise.linear_kernel
    metrics.pairwise.polynomial_kernel
    metrics.pairwise.rbf_kernel
@@ -338,7 +330,6 @@ Covariance Estimators
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
@@ -348,7 +339,6 @@ Covariance Estimators
    covariance.OAS
 
 .. autosummary::
-
    :toctree: generated/
    :template: function.rst
 
@@ -368,32 +358,34 @@ Signal Decomposition
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
-
+ 
    decomposition.PCA
    decomposition.ProbabilisticPCA
+   decomposition.ProjectedGradientNMF
    decomposition.RandomizedPCA
    decomposition.KernelPCA
    decomposition.FastICA
    decomposition.NMF
    decomposition.SparsePCA
+   decomposition.MiniBatchSparsePCA
+   decomposition.DictionaryLearning
+   decomposition.DictionaryLearningOnline
 
 .. autosummary::
-
    :toctree: generated/
    :template: function.rst
-
+ 
    decomposition.fastica
-   decomposition.sparse_pca
+   decomposition.dict_learning
+   decomposition.dict_learning_online
 
 
 Linear Discriminant Analysis
 ============================
 
 .. autosummary::
-
    :toctree: generated
    :template: class.rst
 
@@ -410,7 +402,6 @@ Partial Least Squares
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
@@ -430,7 +421,6 @@ Cross Validation
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
@@ -454,7 +444,6 @@ Grid Search
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
@@ -474,7 +463,6 @@ Feature Selection
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
@@ -482,7 +470,7 @@ Feature Selection
    feature_selection.rfe.RFECV
 
 
-.. _feature_extraction_ref:
+.. _feature_extraction:
 
 
 Feature Extraction
@@ -504,12 +492,17 @@ From images
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: function.rst
 
    feature_extraction.image.img_to_graph
    feature_extraction.image.grid_to_graph
+   feature_extraction.image.extract_patches_2d
+   feature_extraction.image.reconstruct_from_patches_2d
+
+   :template: class.rst
+
+   feature_extraction.image.PatchExtractor
 
 
 From text
@@ -522,7 +515,6 @@ From text
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
@@ -544,7 +536,6 @@ Preprocessing and normalization
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
@@ -556,7 +547,6 @@ Preprocessing and normalization
 
 
 .. autosummary::
-
    :toctree: generated/
    :template: function.rst
 
@@ -569,19 +559,73 @@ Manifold learning
 =================
 
 .. autosummary::
-
     :toctree: generated
     :template: class.rst
 
     manifold.LocallyLinearEmbedding
+    manifold.Isomap
 
 
 .. autosummary::
-
     :toctree: generated
     :template: function.rst
 
     manifold.locally_linear_embedding
+
+
+Datasets
+========
+
+Loaders
+-------
+
+.. automodule:: scikits.learn.datasets
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: scikits.learn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   datasets.load_files
+   datasets.load_diabetes
+   datasets.load_digits
+   datasets.load_iris
+   datasets.load_linnerud
+   datasets.load_lfw_pairs
+   datasets.fetch_lfw_pairs
+   datasets.load_lfw_people
+   datasets.fetch_lfw_people
+   datasets.load_20newsgroups
+   datasets.fetch_20newsgroups
+
+Samples generator
+-----------------
+
+.. automodule:: scikits.learn.datasets
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: scikits.learn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   datasets.make_classification
+   datasets.make_regression
+   datasets.make_blobs
+   datasets.make_friedman1
+   datasets.make_friedman2
+   datasets.make_friedman3
+   datasets.make_low_rank_matrix
+   datasets.make_sparse_coded_signal
+   datasets.make_sparse_uncorrelated
+   datasets.make_spd_matrix
+   datasets.make_swiss_roll
+   datasets.make_s_curve
 
 
 Pipeline
@@ -594,7 +638,6 @@ Pipeline
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: class.rst
 
@@ -611,7 +654,6 @@ Utilities
 .. currentmodule:: scikits.learn
 
 .. autosummary::
-
    :toctree: generated/
    :template: function.rst
 

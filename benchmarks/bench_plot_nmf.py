@@ -8,7 +8,7 @@ import numpy as np
 from collections import defaultdict
 
 from scikits.learn.decomposition.nmf import NMF, _initialize_nmf
-from scikits.learn.datasets.samples_generator import low_rank_fat_tail
+from scikits.learn.datasets.samples_generator import make_low_rank_matrix
 
 
 def alt_nnmf(V, r, max_iter=1000, tol=1e-3, R=None):
@@ -78,7 +78,7 @@ def compute_bench(samples_range, features_range, rank=50, tolerance=1e-7):
             print '===================='
             print 'Iteration %03d of %03d' % (it, max_it)
             print '===================='
-            X = np.abs(low_rank_fat_tail(n_samples, n_features,
+            X = np.abs(make_low_rank_matrix(n_samples, n_features,
                        effective_rank=rank,  tail_strength=0.2))
 
             gc.collect()

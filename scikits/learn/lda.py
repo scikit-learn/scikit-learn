@@ -10,6 +10,7 @@ import numpy as np
 from scipy import linalg, ndimage
 
 from .base import BaseEstimator, ClassifierMixin, TransformerMixin
+from .utils.extmath import logsum
 
 
 class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
@@ -65,7 +66,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
                 print 'warning: the priors do not sum to 1. Renormalizing'
                 self.priors = self.priors / self.priors.sum()
 
-    def fit(self, X, y, store_covariance=False, tol=1.0e-4, **params):
+    def fit(self, X, y, store_covariance=False, tol=1.0e-4):
         """
         Fit the LDA model according to the given training data and parameters.
 
@@ -80,7 +81,6 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
             If True the covariance matrix (shared by all classes) is computed
             and stored in self.covariance_ attribute.
         """
-        self._set_params(**params)
         X = np.asanyarray(X)
         y = np.asanyarray(y)
         if y.dtype.char.lower() not in ('b', 'h', 'i'):
@@ -263,5 +263,5 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         """
         values = self.decision_function(X)
         loglikelihood = (values - values.max(axis=1)[:, np.newaxis])
-        normalization = np.logaddexp.reduce(loglikelihood, axis=1)
+        normalization = logsum(loglikelihood, axis=1)
         return loglikelihood - normalization[:, np.newaxis]

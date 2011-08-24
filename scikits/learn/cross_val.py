@@ -5,13 +5,14 @@
 # License: BSD Style.
 
 from math import ceil
+import operator
+
 import numpy as np
 
 from .base import is_classifier, clone
-from .utils import check_random_state
+from .utils import check_arrays, check_random_state
 from .utils.extmath import factorial, combinations
 from .utils.fixes import unique
-from .utils import check_arrays
 from .externals.joblib import Parallel, delayed
 
 
@@ -598,56 +599,54 @@ class Bootstrap(object):
 
 
 class ShuffleSplit(object):
-    """Random split cross-validation iterator
+    """Random split cross-validation iterator.
 
-    Provides train/test indices to split data in train test sets
+    Yields indices to split data into training and test sets.
+
+    Note: contrary to other cross-validation strategies, random splits do not
+    guarantee that all folds will be different, although this is still very
+    likely for sizeable datasets.
+
+    Parameters
+    ----------
+    n : int
+        Total number of elements in the dataset.
+
+    n_splits : int (default 20)
+        Number of splitting iterations.
+
+    test_fraction : float (default 0.1)
+        should be between 0.0 and 1.0 and represent the proportion of
+        the dataset to include in the test split.
+
+    indices : boolean, optional (default False)
+        Return train/test split with integer indices or boolean mask.
+        Integer indices are useful when dealing with sparse matrices
+        that cannot be indexed by boolean masks.
+
+    random_state : int or RandomState
+        Pseudo-random number generator state used for random sampling.
+
+    Examples
+    ----------
+    >>> from scikits.learn import cross_val
+    >>> rs = cross_val.ShuffleSplit(4, n_splits=3, test_fraction=.25,
+    ...                             random_state=0)
+    >>> len(rs)
+    3
+    >>> print rs
+    ... # doctest: +ELLIPSIS
+    ShuffleSplit(4, n_splits=3, test_fraction=0.25, indices=False, ...)
+    >>> for train_index, test_index in rs:
+    ...    print "TRAIN:", train_index, "TEST:", test_index
+    ...
+    TRAIN: [False  True  True  True] TEST: [ True False False False]
+    TRAIN: [ True  True  True False] TEST: [False False False  True]
+    TRAIN: [ True False  True  True] TEST: [False  True False False]
     """
 
-    def __init__(self, n, n_splits=20, test_fraction=0.1, 
+    def __init__(self, n, n_splits=20, test_fraction=0.1,
                  indices=False, random_state=None):
-        """Random split cross validation
-
-        Provides train/test indices to split data in .
-
-        Note: contrary to other cross-validation strategies, random
-        splits does not garanty that all folds will be different,
-        although this is unlikely for sizeable datasets
-
-        Parameters
-        ----------
-        n : int
-            Total number of elements in the dataset.
-
-        n_splits : int (default is 20)
-            Number of splitting iterations
-
-        test_fraction: float (default is 0.1)
-            should be between 0.0 and 1.0 and represent the proportion of 
-            the dataset to include in the test split.
-
-        indices: boolean, optional (default False)
-            Return train/test split with integer indices or boolean mask.
-            Integer indices are useful when dealing with sparse matrices
-            that cannot be indexed by boolean masks.
-
-        random_state : int or RandomState
-            Pseudo number generator state used for random sampling.
-
-        Examples
-        ----------
-        >>> from scikits.learn import cross_val
-        >>> rs = cross_val.ShuffleSplit(4, n_splits=3, test_fraction=.25, random_state=0)
-        >>> len(rs)
-        3
-        >>> print rs
-        ShuffleSplit(4, n_splits=3, test_fraction=0.25, indices=False, random_state=0)
-        >>> for train_index, test_index in rs:
-        ...    print "TRAIN:", train_index, "TEST:", test_index
-        ...
-        TRAIN: [False  True  True  True] TEST: [ True False False False]
-        TRAIN: [ True  True  True False] TEST: [False False False  True]
-        TRAIN: [ True False  True  True] TEST: [False  True False False]
-        """
         self.n = n
         self.n_splits = n_splits
         self.test_fraction = test_fraction
@@ -737,13 +736,7 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, iid=False,
         The verbosity level
     """
     X, y = check_arrays(X, y, sparse_format='csr')
-    n_samples = X.shape[0]
-    if cv is None:
-        indices = hasattr(X, 'tocsr')
-        if y is not None and is_classifier(estimator):
-            cv = StratifiedKFold(y, k=3, indices=indices)
-        else:
-            cv = KFold(n_samples, k=3, indices=indices)
+    cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
     if score_func is None:
         assert hasattr(estimator, 'score'), ValueError(
                 "If no score_func is specified, the estimator passed "
@@ -781,6 +774,41 @@ def _shuffle(y, labels, random_state):
     return y[ind]
 
 
+def check_cv(cv, X=None, y=None, classifier=False):
+    """Creates a valid and usable cv generator
+
+    Parameters
+    ===========
+    cv: an integer, a cv generator instance, or None
+        The input specifying which cv generator to use. It can be an 
+        integer, in which case it is the number of folds in a KFold,
+        None, in which case 3 fold is used, or another object, that
+        will then be used as a cv generator.
+    X: 2D ndarray
+        the data the cross-val object will be applied on
+    y: 1D ndarray
+        the target variable for a supervised learning problem
+    classifier: boolean optional
+        whether the task is a classification task, in which case 
+        stratified KFold will be used.
+    """
+    if cv is None:
+        cv = 3
+    if operator.isNumberType(cv):
+        is_sparse = hasattr(X, 'tocsr')
+        if classifier:
+            cv = StratifiedKFold(y, cv, indices=is_sparse)
+        else:
+            if not is_sparse:
+                n_samples = len(X)
+            else:
+                n_samples = X.shape[0]
+            cv = KFold(n_samples, cv, indices=is_sparse)
+    return cv
+
+
+
+
 def permutation_test_score(estimator, X, y, score_func, cv=None,
                       n_permutations=100, n_jobs=1, labels=None,
                       random_state=0, verbose=0):
@@ -798,10 +826,10 @@ def permutation_test_score(estimator, X, y, score_func, cv=None,
     score_func: callable, optional
         callable taking as arguments the test targets (y_test) and
         the predicted targets (y_pred). Returns a float.
-    cv: cross-validation generator, optional
-        A cross-validation generator. If None, a 3-fold cross
-        validation is used or 3-fold stratified cross-validation
-        when the estimator is a classifier.
+    cv : integer or crossvalidation generator, optional
+        If an integer is passed, it is the number of fold (default 3).
+        Specific crossvalidation objects can be passed, see 
+        scikits.learn.cross_val module for the list of possible objects 
     n_jobs: integer, optional
         The number of CPUs to use to do the computation. -1 means
         'all CPUs'.
@@ -830,13 +858,7 @@ def permutation_test_score(estimator, X, y, score_func, cv=None,
     The Journal of Machine Learning Research (2010) vol. 11
     """
     X, y = check_arrays(X, y, sparse_format='csr')
-    n_samples = X.shape[0]
-    if cv is None:
-        indices = hasattr(X, 'tocsr')
-        if is_classifier(estimator):
-            cv = StratifiedKFold(y, k=3, indices=indices)
-        else:
-            cv = KFold(n_samples, k=3, indices=indices)
+    cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
 
     random_state = check_random_state(random_state)
 

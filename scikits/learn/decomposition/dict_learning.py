@@ -10,23 +10,24 @@ from ..utils import check_random_state
 from .sparse_pca import dict_learning, dict_learning_online, \
                         _update_code_parallel
 from ..base import BaseEstimator, TransformerMixin
-from ..linear_model import orthogonal_mp
+from ..linear_model import orthogonal_mp, lars_path
 from ..metrics.pairwise import euclidean_distances
 
 
 class BaseDictionaryLearning(BaseEstimator, TransformerMixin):
     """ Dictionary learning base class
     """
-    def __init__(self, n_atoms, transform_method='omp', split_sign=False):
+    def __init__(self, n_atoms, transform_algorithm='omp', split_sign=False):
         self.n_atoms = n_atoms
-        self.transform_method = transform_method
+        self.transform_algorithm = transform_algorithm
         self.split_sign = split_sign
 
     def transform(self, X, y=None, **kwargs):
         """Encode the data as a sparse combination of the learned dictionary
         atoms.
 
-        Coding method is determined by the object parameter `transform_method`.
+        Coding method is determined by the object parameter
+        `transform_algorithm`.
 
         Parameters
         ----------
@@ -42,25 +43,33 @@ class BaseDictionaryLearning(BaseEstimator, TransformerMixin):
             Transformed data
         """
         # XXX : kwargs is not documented
+        X = np.atleast_2d(X)
+        n_samples, n_features = X.shape
 
         # XXX: parameters should be made explicit so we can have defaults
-        if self.transform_method == 'omp':
+        if self.transform_algorithm == 'omp':
             code = orthogonal_mp(self.components_.T, X.T, **kwargs).T
-        elif self.transform_method in ('lasso_cd', 'lasso_lars'):
+        elif self.transform_algorithm == 'lars':
+            code = np.empty((n_samples, self.n_atoms))
+            for k in range(n_samples):
+                _, _, coef_path_ = lars_path(self.components_.T, X[k, :],
+                                             method='lar', **kwargs)
+                code[k, :] = coef_path_[:, -1]
+        elif self.transform_algorithm in ('lasso_cd', 'lasso_lars'):
             code = _update_code_parallel(self.components_.T, X.T, **kwargs).T
 
         # XXX: threshold and triangle are not verified to be correct
-        elif self.transform_method == 'threshold':
+        elif self.transform_algorithm == 'threshold':
             alpha = float(kwargs['alpha'])
             code = np.dot(X, self.components_.T)
             code = np.sign(code) * np.maximum(np.abs(code) - alpha, 0)
-        elif self.transform_method == 'triangle':
+        elif self.transform_algorithm == 'triangle':
             distances = euclidean_distances(X, self.components_)
             distance_means = distances.mean(axis=1)[:, np.newaxis]
             code = np.maximum(0, distance_means - distances)
         else:
-            raise NotImplemented('Coding method %s is not implemented' %
-                                 self.transform_method)
+            raise NotImplemented('Coding algorithm %s is not implemented' %
+                                 self.transform_algorithm)
 
         if self.split_sign:
             # feature vector is split into a positive and negative side
@@ -98,15 +107,16 @@ class DictionaryLearning(BaseDictionaryLearning):
     tol: float,
         tolerance for numerical error
 
-    transform_method: 'lasso_lars' | 'lasso_cd' | 'omp' | 'threshold' |
-                      'triangle'
+    fit_algorithm: {'lars', 'cd'}
+        lars: uses the least angle regression method (linear_model.lars_path)
+        cd: uses the coordinate descent method to compute the
+        Lasso solution (linear_model.Lasso). Lars will be faster if
+        the estimated components are sparse.
+
+    transform_algorithm: {'lasso_lars', 'lasso_cd', 'omp', 'threshold',
+                         'triangle'}
         method to use for transforming the data after the dictionary has been
         learned
-
-    coding_method: 'lars' | 'cd'
-        lars: uses the least angle regression method (linear_model.lars_path)
-        cd: uses the stochastic gradient descent method to compute the
-            lasso solution (linear_model.Lasso)
 
     n_jobs: int,
         number of parallel jobs to run
@@ -139,19 +149,19 @@ class DictionaryLearning(BaseDictionaryLearning):
 
     See also
     --------
-    `scikits.learn.decomposition.SparsePCA`
+    SparsePCA
 
     """
     def __init__(self, n_atoms, alpha=1, max_iter=1000, tol=1e-8,
-                 transform_method='omp', coding_method='lars', n_jobs=1,
+                 fit_algorithm='lars', transform_algorithm='omp', n_jobs=1,
                  code_init=None, dict_init=None, verbose=False,
                  split_sign=False, random_state=None):
         self.n_atoms = n_atoms
         self.alpha = alpha
         self.max_iter = max_iter
         self.tol = tol
-        self.transform_method = transform_method
-        self.coding_method = coding_method
+        self.transform_algorithm = transform_algorithm
+        self.fit_algorithm = fit_algorithm
         self.n_jobs = n_jobs
         self.code_init = code_init
         self.dict_init = dict_init
@@ -159,7 +169,7 @@ class DictionaryLearning(BaseDictionaryLearning):
         self.split_sign = split_sign
         self.random_state = random_state
 
-    def fit_transform(self, X, y=None, **params):
+    def fit_transform(self, X, y=None):
         """Fit the model from data in X.
 
         Parameters
@@ -175,12 +185,11 @@ class DictionaryLearning(BaseDictionaryLearning):
             in the fit. To transform data using a different sparse coding
             technique such as `OMP`, see the `transform` method.
         """
-        self._set_params(**params)
         self.random_state = check_random_state(self.random_state)
         X = np.asanyarray(X)
         V, U, E = dict_learning(X, self.n_atoms, self.alpha,
                                 tol=self.tol, max_iter=self.max_iter,
-                                method=self.coding_method,
+                                method=self.fit_algorithm,
                                 n_jobs=self.n_jobs,
                                 code_init=self.code_init,
                                 dict_init=self.dict_init,
@@ -190,7 +199,7 @@ class DictionaryLearning(BaseDictionaryLearning):
         self.error_ = E
         return V
 
-    def fit(self, X, y=None, **params):
+    def fit(self, X, y=None):
         """Fit the model from data in X.
 
         Parameters
@@ -204,7 +213,7 @@ class DictionaryLearning(BaseDictionaryLearning):
         self: object
             Returns the object itself
         """
-        self.fit_transform(X, y, **params)
+        self.fit_transform(X, y)
         return self
 
 
@@ -230,15 +239,16 @@ class DictionaryLearningOnline(BaseDictionaryLearning):
     n_iter: int,
         total number of iterations to perform
 
-    transform_method: 'lasso_lars' | 'lasso_cd' | 'omp' | 'threshold' |
-                      'triangle'
+    fit_algorithm: {'lars', 'cd'}
+        lars: uses the least angle regression method (linear_model.lars_path)
+        cd: uses the coordinate descent method to compute the
+        Lasso solution (linear_model.Lasso). Lars will be faster if
+        the estimated components are sparse.
+
+    transform_algorithm: {'lasso_lars', 'lasso_cd', 'omp', 'threshold',
+                         'triangle'}
         method to use for transforming the data after the dictionary has been
         learned
-
-    coding_method: 'lars' | 'cd'
-        lars: uses the least angle regression method (linear_model.lars_path)
-        cd: uses the stochastic gradient descent method to compute the
-            lasso solution (linear_model.Lasso)
 
     n_jobs: int,
         number of parallel jobs to run
@@ -271,18 +281,18 @@ class DictionaryLearningOnline(BaseDictionaryLearning):
 
     See also
     --------
-    `scikits.learn.decomposition.SparsePCA`
+    SparsePCA
 
     """
-    def __init__(self, n_atoms, alpha=1, n_iter=1000, coding_method='lars',
+    def __init__(self, n_atoms, alpha=1, n_iter=1000, fit_algorithm='lars',
                  n_jobs=1, chunk_size=3, shuffle=True, dict_init=None,
-                 transform_method='omp', verbose=False, split_sign=False,
+                 transform_algorithm='omp', verbose=False, split_sign=False,
                  random_state=None):
         self.n_atoms = n_atoms
         self.alpha = alpha
         self.n_iter = n_iter
-        self.coding_method = coding_method
-        self.transform_method = transform_method
+        self.fit_algorithm = fit_algorithm
+        self.transform_algorithm = transform_algorithm
         self.n_jobs = n_jobs
         self.dict_init = dict_init
         self.verbose = verbose
@@ -291,7 +301,7 @@ class DictionaryLearningOnline(BaseDictionaryLearning):
         self.split_sign = split_sign
         self.random_state = random_state
 
-    def fit(self, X, y=None, **params):
+    def fit(self, X, y=None):
         """Fit the model from data in X.
 
         Parameters
@@ -305,12 +315,12 @@ class DictionaryLearningOnline(BaseDictionaryLearning):
         self : object
             Returns the instance itself.
         """
-        self._set_params(**params)
         self.random_state = check_random_state(self.random_state)
         X = np.asanyarray(X)
         U = dict_learning_online(X, self.n_atoms, self.alpha,
                                  n_iter=self.n_iter, return_code=False,
-                                 method=self.coding_method, n_jobs=self.n_jobs,
+                                 method=self.fit_algorithm,
+                                 n_jobs=self.n_jobs,
                                  dict_init=self.dict_init,
                                  chunk_size=self.chunk_size,
                                  shuffle=self.shuffle, verbose=self.verbose,
@@ -318,7 +328,7 @@ class DictionaryLearningOnline(BaseDictionaryLearning):
         self.components_ = U
         return self
 
-    def partial_fit(self, X, y=None, iter_offset=0, **params):
+    def partial_fit(self, X, y=None, iter_offset=0):
         """Updates the model using the data in X as a mini-batch.
 
         Parameters
@@ -332,7 +342,6 @@ class DictionaryLearningOnline(BaseDictionaryLearning):
         self : object
             Returns the instance itself.
         """
-        self._set_params(**params)
         self.random_state = check_random_state(self.random_state)
         X = np.atleast_2d(X)
         if hasattr(self, 'components_'):
@@ -340,7 +349,8 @@ class DictionaryLearningOnline(BaseDictionaryLearning):
         else:
             dict_init = self.dict_init
         U = dict_learning_online(X, self.n_atoms, self.alpha,
-                                 n_iter=self.n_iter, method=self.coding_method,
+                                 n_iter=self.n_iter,
+                                 method=self.fit_algorithm,
                                  n_jobs=self.n_jobs, dict_init=dict_init,
                                  chunk_size=len(X), shuffle=False,
                                  verbose=self.verbose, return_code=False,

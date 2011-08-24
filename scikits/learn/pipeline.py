@@ -13,7 +13,7 @@ from .base import BaseEstimator
 class Pipeline(BaseEstimator):
     """ Pipeline of transforms with a final estimator
 
-        Sequentialy apply a list of transforms and a final estimator
+        Sequentialy apply a list of transforms and a final estimator.
         Intermediate steps of the pipeline must be 'transforms', that
         is that they must implements fit & transform methods
         The final estimator need only implements fit.
@@ -63,7 +63,7 @@ class Pipeline(BaseEstimator):
         >>> from scikits.learn.pipeline import Pipeline
 
         >>> # generate some data to play with
-        >>> X, y = samples_generator.test_dataset_classif(k=5)
+        >>> X, y = samples_generator.make_classification(n_informative=5, n_redundant=0)
 
         >>> # ANOVA SVM-C
         >>> anova_filter = SelectKBest(f_regression, k=5)

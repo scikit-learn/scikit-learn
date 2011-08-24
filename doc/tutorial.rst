@@ -58,9 +58,10 @@ Loading an example dataset
 --------------------------
 
 `scikits.learn` comes with a few standard datasets, for instance the
-`iris dataset <http://en.wikipedia.org/wiki/Iris_flower_data_set>`_, or
-the `digits dataset
-<http://archive.ics.uci.edu/ml/datasets/Pen-Based+Recognition+of+Handwritten+Digits>`_::
+`iris <http://en.wikipedia.org/wiki/Iris_flower_data_set>`_ and `digits
+<http://archive.ics.uci.edu/ml/datasets/Pen-Based+Recognition+of+Handwritten+Digits>`_ 
+datasets for classification and the `boston house prices dataset 
+<http://archive.ics.uci.edu/ml/datasets/Housing>`_ for regression.::
 
     >>> from scikits.learn import datasets
     >>> iris = datasets.load_iris()

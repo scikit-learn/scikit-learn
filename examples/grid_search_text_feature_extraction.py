@@ -105,7 +105,7 @@ parameters = {
 
 # find the best parameters for both the feature extraction and the
 # classifier
-grid_search = GridSearchCV(pipeline, parameters, n_jobs=-1)
+grid_search = GridSearchCV(pipeline, parameters, n_jobs=1)
 
 # cross-validation doesn't work if the length of the data is not known,
 # hence use lists instead of iterators
