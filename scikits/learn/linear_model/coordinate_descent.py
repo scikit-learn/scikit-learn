@@ -229,8 +229,8 @@ class Lasso(ElasticNet):
     >>> from scikits.learn import linear_model
     >>> clf = linear_model.Lasso(alpha=0.1)
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])
-    Lasso(normalize=False, fit_intercept=True, max_iter=1000, precompute='auto',
-       tol=0.0001, alpha=0.1, overwrite_X=False)
+    Lasso(alpha=0.1, fit_intercept=True, max_iter=1000, normalize=False,
+       overwrite_X=False, precompute='auto', tol=0.0001)
     >>> print clf.coef_
     [ 0.85  0.  ]
     >>> print clf.intercept_

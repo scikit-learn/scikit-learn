@@ -44,7 +44,7 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
     >>> from scikits.learn.neighbors import NeighborsClassifier
     >>> neigh = NeighborsClassifier(n_neighbors=1)
     >>> neigh.fit(samples, labels)
-    NeighborsClassifier(n_neighbors=1, leaf_size=20, algorithm='auto')
+    NeighborsClassifier(algorithm='auto', leaf_size=20, n_neighbors=1)
     >>> print neigh.predict([[0,0,0]])
     [1]
 
@@ -176,7 +176,7 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
         >>> from scikits.learn.neighbors import NeighborsClassifier
         >>> neigh = NeighborsClassifier(n_neighbors=1)
         >>> neigh.fit(samples, labels)
-        NeighborsClassifier(n_neighbors=1, leaf_size=20, algorithm='auto')
+        NeighborsClassifier(algorithm='auto', leaf_size=20, n_neighbors=1)
         >>> print neigh.kneighbors([1., 1., 1.]) # doctest: +ELLIPSIS
         (array([[ 0.5]]), array([[2]]...))
 
@@ -274,7 +274,7 @@ class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
     >>> from scikits.learn.neighbors import NeighborsRegressor
     >>> neigh = NeighborsRegressor(n_neighbors=2)
     >>> neigh.fit(X, y)
-    NeighborsRegressor(n_neighbors=2, mode='mean', algorithm='auto', leaf_size=20)
+    NeighborsRegressor(algorithm='auto', leaf_size=20, mode='mean', n_neighbors=2)
     >>> print neigh.predict([[1.5]])
     [ 0.5]
 
