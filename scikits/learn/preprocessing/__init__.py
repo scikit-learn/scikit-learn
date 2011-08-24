@@ -526,13 +526,18 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
             raise ValueError("Wrong number of classes: %d"
                              % len(self.classes_))
 
-    def inverse_transform(self, Y):
+    def inverse_transform(self, Y, threshold=0):
         """Transform binary labels back to multi-class labels
 
         Parameters
         ----------
         Y : numpy array of shape [n_samples, n_classes]
             Target values.
+
+        threshold : float
+            Threshold used to decide whether to assign the positive class or the
+            negative class in the binary case. Use 0.5 when Y contains
+            probabilities.
 
         Returns
         -------
@@ -554,7 +559,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
                     for i in range(Y.shape[0])]
 
         if len(Y.shape) == 1 or Y.shape[1] == 1:
-            y = np.array(Y.ravel() > 0, dtype=int)
+            y = np.array(Y.ravel() > threshold, dtype=int)
 
         else:
             y = Y.argmax(axis=1)

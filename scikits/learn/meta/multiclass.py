@@ -7,6 +7,10 @@ This module implements multiclass learning algorithms:
     - one-vs-the-rest
     - one-vs-one
     - error correcting output codes
+
+The algorithms can be used to turn a binary classifier into a multiclass
+classifier or to (possibly) improve the accuracy or runtime performance of
+multiclass classifiers.
 """
 
 # Author: Mathieu Blondel <mathieu@mblondel.org>
@@ -36,14 +40,15 @@ def fit_ovr(estimator, X, y):
     estimators = [fit_binary(estimator, X, Y[:, i]) for i in range(Y.shape[1])]
     return estimators, lb
 
-def predict_ovr(estimators, label_binarizer, X):
-    if hasattr(estimators[0], "decision_function"):
-        method = "decision_function"
+def predict_binary(estimator, X):
+    if hasattr(estimator, "decision_function"):
+        return estimator.decision_function(X)
     else:
-        method = "predict_proba"
+        # probabilities of the positive class
+        return estimator.predict_proba(X)[:, 1]
 
-    Y = np.array([getattr(e, method)(X) for e in estimators]).T
-
+def predict_ovr(estimators, label_binarizer, X):
+    Y = np.array([predict_binary(e, X) for e in estimators]).T
     return label_binarizer.inverse_transform(Y)
 
 
@@ -61,3 +66,4 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin):
             raise ValueError("The object hasn't been fitted yet!")
 
         return predict_ovr(self.estimators_, self.label_binarizer_, X)
+

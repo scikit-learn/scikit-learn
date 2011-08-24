@@ -9,6 +9,7 @@ from nose.tools import assert_raises
 
 from scikits.learn.meta import OneVsRestClassifier
 from scikits.learn.linear_model import SGDClassifier
+from scikits.learn.naive_bayes import MultinomialNB
 from scikits.learn.grid_search import GridSearchCV
 from scikits.learn import datasets
 
@@ -21,14 +22,21 @@ def test_ovr_exceptions():
     ovr = OneVsRestClassifier(SGDClassifier())
     assert_raises(ValueError, ovr.predict, [])
 
+
 def test_ovr_fit_predict():
+    # A classifier which implements decision_function.
     ovr = OneVsRestClassifier(SGDClassifier())
     pred = ovr.fit(iris.data, iris.target).predict(iris.data)
-    sgd = SGDClassifier()
-    pred2 = sgd.fit(iris.data, iris.target).predict(iris.data)
+    pred2 = SGDClassifier().fit(iris.data, iris.target).predict(iris.data)
     # Note: this is gonna become a circular test if SGDClassifier
     #       is rewritten to use fit_ovr.
     assert_equal(np.mean(iris.target == pred), np.mean(iris.target == pred2))
+
+    # A classifier which implements predict_proba.
+    ovr = OneVsRestClassifier(MultinomialNB())
+    pred = ovr.fit(iris.data, iris.target).predict(iris.data)
+    assert_true(np.mean(iris.target == pred) >= 0.65)
+
 
 def test_ovr_gridsearch():
     ovr = OneVsRestClassifier(SGDClassifier())
