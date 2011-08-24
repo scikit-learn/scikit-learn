@@ -295,9 +295,8 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
     >>> model = ProjectedGradientNMF(n_components=2, init=0)
     >>> model.fit(X) #doctest: +ELLIPSIS
     ProjectedGradientNMF(beta=1, eta=0.1,
-               init=<mtrand.RandomState object at 0x...>,
-               max_iter=200, n_components=2, nls_max_iter=2000,
-               sparseness=None, tol=0.0001)
+               init=<mtrand.RandomState object at 0x...>, max_iter=200,
+               n_components=2, nls_max_iter=2000, sparseness=None, tol=0.0001)
     >>> model.components_
     array([[ 0.77032744,  0.11118662],
            [ 0.38526873,  0.38228063]])
@@ -307,9 +306,9 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
     ...                              sparseness='components')
     >>> model.fit(X) #doctest: +ELLIPSIS
     ProjectedGradientNMF(beta=1, eta=0.1,
-               init=<mtrand.RandomState object at 0x...>,
-               max_iter=200, n_components=2, nls_max_iter=2000,
-               sparseness='components', tol=0.0001)
+               init=<mtrand.RandomState object at 0x...>, max_iter=200,
+               n_components=2, nls_max_iter=2000, sparseness='components',
+               tol=0.0001)
     >>> model.components_
     array([[ 1.67481991,  0.29614922],
            [-0.        ,  0.4681982 ]])
