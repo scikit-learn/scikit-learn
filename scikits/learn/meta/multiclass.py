@@ -25,12 +25,16 @@ from scikits.learn.metrics.pairwise import euclidean_distances
 
 
 def fit_binary(estimator, X, y):
+    """Fit a single binary estimator.
+    """
     estimator = clone(estimator)
     estimator.fit(X, y)
     return estimator
 
 
 def predict_binary(estimator, X):
+    """Make predictions using a single binary estimator.
+    """
     if hasattr(estimator, "decision_function"):
         return np.ravel(estimator.decision_function(X))
     else:
@@ -39,6 +43,8 @@ def predict_binary(estimator, X):
 
 
 def check_estimator(estimator):
+    """Make sure that an estimator implements the necessary methods.
+    """
     if not hasattr(estimator, "decision_function") and \
        not hasattr(estimator, "predict_proba"):
         raise ValueError("The base estimator should implement "
@@ -46,6 +52,8 @@ def check_estimator(estimator):
 
 
 def fit_ovr(estimator, X, y):
+    """Fit a one-vs-the-rest strategy.
+    """
     check_estimator(estimator)
 
     lb = LabelBinarizer()
@@ -55,6 +63,8 @@ def fit_ovr(estimator, X, y):
 
 
 def predict_ovr(estimators, label_binarizer, X):
+    """Make predictions using the one-vs-the-rest strategy.
+    """
     Y = np.array([predict_binary(e, X) for e in estimators]).T
     return label_binarizer.inverse_transform(Y)
 
@@ -129,6 +139,8 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin):
 
 
 def fit_ovo_binary(estimator, X, y, i, j):
+    """Fit a single binary estimator (one-vs-one).
+    """
     cond = np.logical_or(y == i, y == j)
     y = y[cond].copy()
     y[y == i] = 0
@@ -138,6 +150,8 @@ def fit_ovo_binary(estimator, X, y, i, j):
 
 
 def fit_ovo(estimator, X, y):
+    """Fit a one-vs-one strategy.
+    """
     classes = np.unique(y)
     n_classes = classes.shape[0]
     estimators = [fit_ovo_binary(estimator, X, y, classes[i], classes[j])
@@ -147,6 +161,8 @@ def fit_ovo(estimator, X, y):
 
 
 def predict_ovo(estimators, classes, X):
+    """Make predictions using the one-vs-one strategy.
+    """
     n_samples = X.shape[0]
     n_classes = classes.shape[0]
     votes = np.zeros((n_samples, n_classes))
@@ -231,6 +247,8 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin):
 
 
 def fit_ecoc(estimator, X, y, code_size):
+    """Fit an error-correcting output-code strategy.
+    """
     check_estimator(estimator)
 
     classes = np.unique(y)
@@ -258,6 +276,8 @@ def fit_ecoc(estimator, X, y, code_size):
 
 
 def predict_ecoc(estimators, classes, code_book, X):
+    """Make predictions using the error-correcting output-code strategy.
+    """
     Y = np.array([predict_binary(e, X) for e in estimators]).T
     pred = euclidean_distances(Y, code_book).argmin(axis=1)
     return classes[pred]
