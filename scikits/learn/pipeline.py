@@ -73,7 +73,11 @@ class Pipeline(BaseEstimator):
         >>> # You can set the parameters using the names issued
         >>> # For instance, fit using a k of 10 in the SelectKBest
         >>> # and a parameter 'C' of the svn
-        >>> anova_svm.fit(X, y, anova__k=10, svc__C=.1) #doctest: +ELLIPSIS
+        >>> anova_svm.set_params(anova__k=10, svc__C=.1)  #doctest: +ELLIPSIS
+        Pipeline(steps=[('anova', SelectKBest(k=10, score_func=<function f_regression at ...>)), ('svc', SVC(kernel='linear', C=0.1, probability=False, degree=3, coef0=0.0, tol=0.001,
+          shrinking=True, gamma=0.0))])
+        
+        >>> anova_svm.fit(X, y) #doctest: +ELLIPSIS
         Pipeline(steps=[('anova', SelectKBest(k=10, score_func=<function f_regression at ...>)), ('svc', SVC(kernel='linear', C=0.1, probability=False, degree=3, coef0=0.0, tol=0.001,
           shrinking=True, gamma=0.0))])
 
@@ -128,7 +132,7 @@ class Pipeline(BaseEstimator):
     #--------------------------------------------------------------------------
 
     def _pre_transform(self, X, y=None, **fit_params):
-        fit_params_steps = {step: {} for step, _ in self.steps}
+        fit_params_steps = dict((step, {}) for step, _ in self.steps)
         for pname, pval in fit_params.iteritems():
             step, param = pname.split('__', 1)
             fit_params_steps[step][param] = pval
