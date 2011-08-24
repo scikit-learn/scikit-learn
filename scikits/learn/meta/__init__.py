@@ -1,1 +1,1 @@
-from .multiclass import OneVsRestClassifier
+from .multiclass import OneVsRestClassifier, OneVsOneClassifier
