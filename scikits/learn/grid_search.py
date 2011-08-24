@@ -67,9 +67,11 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
         msg = '%s' % (', '.join('%s=%s' % (k, v)
                                      for k, v in clf_params.iteritems()))
         print "[GridSearchCV] %s %s" % (msg, (64 - len(msg)) * '.')
+
     # update parameters of the classifier after a copy of its base structure
+    # FIXME we should be doing a clone here
     clf = copy.deepcopy(base_clf)
-    clf._set_params(**clf_params)
+    clf.set_params(**clf_params)
 
     if isinstance(X, list) or isinstance(X, tuple):
         X_train = [X[i] for i, cond in enumerate(train) if cond]
@@ -197,10 +199,12 @@ class GridSearchCV(BaseEstimator):
     >>> svr = svm.SVR()
     >>> clf = grid_search.GridSearchCV(svr, parameters)
     >>> clf.fit(iris.data, iris.target) # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    GridSearchCV(n_jobs=1, verbose=0, fit_params={}, loss_func=None,
-                 refit=True, cv=None, iid=True,
-                 estimator=SVR(kernel='rbf', C=1.0, probability=False, ...
-                 ...
+    GridSearchCV(cv=None,
+           estimator=SVR(C=1.0, coef0=..., degree=..., epsilon=..., gamma=..., kernel='rbf',
+      probability=False, shrinking=True, tol=...),
+           fit_params={}, iid=True, loss_func=None, n_jobs=1,
+           param_grid=...,
+           ...)
 
     Notes
     ------

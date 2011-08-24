@@ -47,6 +47,31 @@ These datasets are useful to quickly illustrate the behavior of the
 various algorithms implemented in the scikit. They are however often too
 small to be representative of real world machine learning tasks.
 
+Sample images
+=============
+
+The scikit also embed a couple of sample JPEG images published under Creative
+Commons license by their authors. Those image can be useful to test algorithms
+and pipeline on 2D data.
+
+.. autosummary::
+
+   load_sample_images
+   load_sample_image
+
+.. note::
+
+  The default coding of images is based on the ``uint8`` dtype to
+  spare memory.  Often machine learning algorithms work best if the
+  input is converted to a floating point representation first.  Also,
+  if you plan to use ``pylab.imshow`` don't forget to scale to the range
+  0 - 1 as done in the following example.
+
+.. topic:: Examples:
+
+    * :ref:`example_cluster_plot_vq_china.py`
+
+
 Sample generators
 =================
 

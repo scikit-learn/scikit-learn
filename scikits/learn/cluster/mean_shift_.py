@@ -267,7 +267,7 @@ class MeanShift(BaseEstimator):
         self.cluster_centers_ = None
         self.labels_ = None
 
-    def fit(self, X, **params):
+    def fit(self, X):
         """ Compute MeanShift
 
             Parameters

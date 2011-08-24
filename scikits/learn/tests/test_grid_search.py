@@ -21,8 +21,7 @@ class MockClassifier(BaseEstimator):
     def __init__(self, foo_param=0):
         self.foo_param = foo_param
 
-    def fit(self, X, Y, **params):
-        self._set_params(**params)
+    def fit(self, X, Y):
         return self
 
     def predict(self, T):
@@ -88,7 +87,7 @@ def test_grid_search_sparse_score_func():
     clf = LinearSVC()
     cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, score_func=f1_score)
     # XXX: set refit to False due to a random bug when True (default)
-    cv.fit(X_[:180], y_[:180], refit=False)
+    cv.set_params(refit=False).fit(X_[:180], y_[:180])
     y_pred = cv.predict(X_[180:])
     C = cv.best_estimator.C
 
@@ -96,7 +95,7 @@ def test_grid_search_sparse_score_func():
     clf = SparseLinearSVC()
     cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, score_func=f1_score)
     # XXX: set refit to False due to a random bug when True (default)
-    cv.fit(X_[:180], y_[:180], refit=False)
+    cv.set_params(refit=False).fit(X_[:180], y_[:180])
     y_pred2 = cv.predict(X_[180:])
     C2 = cv.best_estimator.C
 

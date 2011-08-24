@@ -15,27 +15,16 @@ from scipy import linalg, interpolate
 from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
-from ..utils import arrayfuncs
+from ..utils import arrayfuncs, as_float_array
 from ..utils import deprecated
 from ..cross_val import check_cv
 from ..externals.joblib import Parallel, delayed
 
 
-def _safe_normalize(X, overwrite_X):
-    """Normalize X avoiding divisions by zero"""
-    norms = np.sqrt(np.sum(X ** 2, axis=0))
-    nonzeros = np.flatnonzero(norms)
-    if not overwrite_X:
-        X = X.copy()
-        overwrite_X = True
-    X[:, nonzeros] /= norms[nonzeros]
-    return X, norms
-
-
 def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
               alpha_min=0, method='lar', overwrite_X=False,
               eps=np.finfo(np.float).eps,
-              overwrite_Gram=False, verbose=False, ):
+              overwrite_Gram=False, verbose=False):
     """Compute Least Angle Regression and LASSO path
 
     Parameters
@@ -332,6 +321,9 @@ class Lars(LinearModel):
         calculations. If set to 'auto' let us decide. The Gram
         matrix can also be passed as argument.
 
+    overwrite_X : boolean, optionnal
+        If True, X will not be copied
+        Default is False
 
     eps: float, optional
         The machine-precision regularization in the computation of the
@@ -353,11 +345,11 @@ class Lars(LinearModel):
     --------
     >>> from scikits.learn import linear_model
     >>> clf = linear_model.Lars(n_nonzero_coefs=1)
-    >>> clf.fit([[-1, 1], [0, 0], [1, 1]], [-1, 0, -1]) # doctest: +ELLIPSIS
-    Lars(normalize=True, n_nonzero_coefs=1, verbose=False, fit_intercept=True,
-       eps=..., precompute='auto')
-    >>> print clf.coef_
-    [ 0. -1.]
+    >>> clf.fit([[-1, 1], [0, 0], [1, 1]], [-1.1111, 0, -1.1111]) # doctest: +ELLIPSIS
+    Lars(eps=..., fit_intercept=True, n_nonzero_coefs=1,
+       normalize=True, overwrite_X=False, precompute='auto', verbose=False)
+    >>> print clf.coef_ # doctest: +ELLIPSIS
+    [ 0. ... -1.1111...]
 
     References
     ----------
@@ -369,7 +361,7 @@ class Lars(LinearModel):
     """
     def __init__(self, fit_intercept=True, verbose=False, normalize=True,
                  precompute='auto', n_nonzero_coefs=500,
-                 eps=np.finfo(np.float).eps):
+                 eps=np.finfo(np.float).eps, overwrite_X=False):
         self.fit_intercept = fit_intercept
         self.verbose = verbose
         self.normalize = normalize
@@ -377,6 +369,7 @@ class Lars(LinearModel):
         self.precompute = precompute
         self.n_nonzero_coefs = n_nonzero_coefs
         self.eps = eps
+        self.overwrite_X = overwrite_X
 
     def _get_gram(self):
         # precompute if n_samples > n_features
@@ -390,7 +383,7 @@ class Lars(LinearModel):
             Gram = None
         return Gram
 
-    def fit(self, X, y, overwrite_X=False, **params):
+    def fit(self, X, y, overwrite_X=False):
         """Fit the model using X, y as training data.
 
         parameters
@@ -406,12 +399,15 @@ class Lars(LinearModel):
         self : object
             returns an instance of self.
         """
-        self._set_params(**params)
 
         X = np.atleast_2d(X)
         y = np.atleast_1d(y)
 
-        X, y, Xmean, ymean = LinearModel._center_data(X, y, self.fit_intercept)
+        X = as_float_array(X, self.overwrite_X)
+
+        X, y, X_mean, y_mean, X_std = self._center_data(X, y,
+                                                        self.fit_intercept,
+                                                        self.normalize)
         alpha = getattr(self, 'alpha', 0.)
         if hasattr(self, 'n_nonzero_coefs'):
             alpha = 0.  # n_nonzero_coefs parametrization takes priority
@@ -419,22 +415,17 @@ class Lars(LinearModel):
         else:
             max_iter = self.max_iter
 
-        if self.normalize:
-            X, norms = _safe_normalize(X, overwrite_X)
-
         Gram = self._get_gram()
 
         self.alphas_, self.active_, self.coef_path_ = lars_path(X, y,
-                  Gram=Gram, overwrite_X=overwrite_X,
+                  Gram=Gram, overwrite_X=self.overwrite_X,
                   overwrite_Gram=True, alpha_min=alpha,
                   method=self.method, verbose=self.verbose,
                   max_iter=max_iter, eps=self.eps)
 
-        if self.normalize:
-            self.coef_path_ /= norms[:, np.newaxis]
         self.coef_ = self.coef_path_[:, -1]
 
-        self._set_intercept(Xmean, ymean)
+        self._set_intercept(X_mean, y_mean, X_std)
 
         return self
 
@@ -457,6 +448,10 @@ class LassoLars(Lars):
 
     normalize : boolean, optional
         If True, the regressors X are normalized
+
+    overwrite_X : boolean, optionnal
+        If True, X will not be copied
+        Default is False
 
     precompute : True | False | 'auto' | array-like
         Whether to use a precomputed Gram matrix to speed up
@@ -487,10 +482,11 @@ class LassoLars(Lars):
     >>> from scikits.learn import linear_model
     >>> clf = linear_model.LassoLars(alpha=0.01)
     >>> clf.fit([[-1, 1], [0, 0], [1, 1]], [-1, 0, -1]) # doctest: +ELLIPSIS
-    LassoLars(normalize=True, verbose=False, fit_intercept=True, max_iter=500,
-         eps=..., precompute='auto', alpha=0.01)
-    >>> print clf.coef_
-    [ 0.         -0.96325765]
+    LassoLars(alpha=0.01, eps=..., fit_intercept=True,
+         max_iter=500, normalize=True, overwrite_X=False, precompute='auto',
+         verbose=False)
+    >>> print clf.coef_ # doctest: +ELLIPSIS
+    [ 0.         -0.963257...]
 
     References
     ----------
@@ -503,7 +499,7 @@ class LassoLars(Lars):
 
     def __init__(self, alpha=1.0, fit_intercept=True, verbose=False,
                  normalize=True, precompute='auto', max_iter=500,
-                 eps=np.finfo(np.float).eps):
+                 eps=np.finfo(np.float).eps, overwrite_X=False):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
         self.max_iter = max_iter
@@ -511,6 +507,7 @@ class LassoLars(Lars):
         self.normalize = normalize
         self.method = 'lasso'
         self.precompute = precompute
+        self.overwrite_X = overwrite_X
         self.eps = eps
 
 
@@ -632,6 +629,10 @@ class LarsCV(LARS):
     normalize : boolean, optional
         If True, the regressors X are normalized
 
+    overwrite_X : boolean, optionnal
+        If True, X will not be copied
+        Default is False
+
     precompute : True | False | 'auto' | array-like
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to 'auto' let us decide. The Gram
@@ -674,17 +675,18 @@ class LarsCV(LARS):
 
     def __init__(self, fit_intercept=True, verbose=False, max_iter=500,
                  normalize=True, precompute='auto', cv=None, n_jobs=1,
-                 eps=np.finfo(np.float).eps):
+                 eps=np.finfo(np.float).eps, overwrite_X=False):
         self.fit_intercept = fit_intercept
         self.max_iter = max_iter
         self.verbose = verbose
         self.normalize = normalize
         self.precompute = precompute
+        self.overwrite_X = overwrite_X
         self.cv = cv
         self.n_jobs = n_jobs
         self.eps = eps
 
-    def fit(self, X, y, **params):
+    def fit(self, X, y):
         """Fit the model using X, y as training data.
 
         Parameters
@@ -700,7 +702,6 @@ class LarsCV(LARS):
         self : object
             returns an instance of self.
         """
-        self._set_params(**params)
         X = np.asanyarray(X)
 
         n_samples, n_features = X.shape
@@ -786,6 +787,10 @@ class LassoLarsCV(LarsCV):
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems.
 
+    overwrite_X : boolean, optionnal
+        If True, X will not be copied
+        Default is False
+
 
     Attributes
     ----------
@@ -854,6 +859,10 @@ class LassoLarsIC(LassoLars):
     normalize : boolean, optional
         If True, the regressors X are normalized
 
+    overwrite_X : boolean, optionnal
+        Default is False.
+        If True, X will be overwritten
+
     precompute : True | False | 'auto' | array-like
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to 'auto' let us decide. The Gram
@@ -883,11 +892,12 @@ class LassoLarsIC(LassoLars):
     --------
     >>> from scikits.learn import linear_model
     >>> clf = linear_model.LassoLarsIC(criterion='bic')
-    >>> clf.fit([[-1, 1], [0, 0], [1, 1]], [-1, 0, -1]) # doctest: +ELLIPSIS
-    LassoLarsIC(normalize=True, verbose=False, fit_intercept=True, max_iter=500,
-          eps=..., precompute='auto', criterion='bic')
-    >>> print clf.coef_
-    [ 0.         -0.81649658]
+    >>> clf.fit([[-1, 1], [0, 0], [1, 1]], [-1.1111, 0, -1.1111]) # doctest: +ELLIPSIS
+    LassoLarsIC(criterion='bic', eps=..., fit_intercept=True,
+          max_iter=500, normalize=True, overwrite_X=False, precompute='auto',
+          verbose=False)
+    >>> print clf.coef_ # doctest: +ELLIPSIS
+    [ 0. ...  -1.1111...]
 
     References
     ----------
@@ -906,7 +916,7 @@ class LassoLarsIC(LassoLars):
     """
     def __init__(self, criterion='aic', fit_intercept=True, verbose=False,
                  normalize=True, precompute='auto', max_iter=500,
-                 eps=np.finfo(np.float).eps):
+                 eps=np.finfo(np.float).eps, overwrite_X=False):
         if criterion not in ['aic', 'bic']:
             raise ValueError('criterion should be either bic or aic')
         self.criterion = criterion
@@ -914,10 +924,11 @@ class LassoLarsIC(LassoLars):
         self.max_iter = max_iter
         self.verbose = verbose
         self.normalize = normalize
+        self.overwrite_X = overwrite_X
         self.precompute = precompute
         self.eps = eps
 
-    def fit(self, X, y, overwrite_X=False, **params):
+    def fit(self, X, y, overwrite_X=False):
         """Fit the model using X, y as training data.
 
         parameters
@@ -933,16 +944,14 @@ class LassoLarsIC(LassoLars):
         self : object
             returns an instance of self.
         """
-        self._set_params(**params)
-
         X = np.atleast_2d(X)
         y = np.atleast_1d(y)
 
-        X, y, Xmean, ymean = LinearModel._center_data(X, y, self.fit_intercept)
+        X = as_float_array(X, self.overwrite_X)
+        X, y, Xmean, ymean, Xstd = LinearModel._center_data(X, y,
+                                                    self.fit_intercept,
+                                                    normalize=self.normalize)
         max_iter = self.max_iter
-
-        if self.normalize:
-            X, norms = _safe_normalize(X, overwrite_X)
 
         Gram = self._get_gram()
 
@@ -980,5 +989,5 @@ class LassoLarsIC(LassoLars):
 
         self.alpha_ = alphas_[n_best]
         self.coef_ = coef_path_[:, n_best]
-        self._set_intercept(Xmean, ymean)
+        self._set_intercept(Xmean, ymean, Xstd)
         return self

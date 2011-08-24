@@ -451,7 +451,7 @@ class BernoulliNB(BaseDiscreteNB):
     >>> from scikits.learn.naive_bayes import BernoulliNB
     >>> clf = BernoulliNB()
     >>> clf.fit(X, Y)
-    BernoulliNB(binarize=0.0, alpha=1.0, fit_prior=True)
+    BernoulliNB(alpha=1.0, binarize=0.0, fit_prior=True)
     >>> print clf.predict(X[2])
     [3]
 

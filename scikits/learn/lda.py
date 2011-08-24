@@ -45,7 +45,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
     >>> y = np.array([1, 1, 1, 2, 2, 2])
     >>> clf = LDA()
     >>> clf.fit(X, y)
-    LDA(priors=None, n_components=None)
+    LDA(n_components=None, priors=None)
     >>> print clf.predict([[-0.8, -1]])
     [1]
 
@@ -66,7 +66,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
                 print 'warning: the priors do not sum to 1. Renormalizing'
                 self.priors = self.priors / self.priors.sum()
 
-    def fit(self, X, y, store_covariance=False, tol=1.0e-4, **params):
+    def fit(self, X, y, store_covariance=False, tol=1.0e-4):
         """
         Fit the LDA model according to the given training data and parameters.
 
@@ -81,7 +81,6 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
             If True the covariance matrix (shared by all classes) is computed
             and stored in self.covariance_ attribute.
         """
-        self._set_params(**params)
         X = np.asanyarray(X)
         y = np.asanyarray(y)
         if y.dtype.char.lower() not in ('b', 'h', 'i'):
