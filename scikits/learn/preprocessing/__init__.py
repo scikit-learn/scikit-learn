@@ -519,7 +519,12 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         else:
             Y = np.zeros((len(y), len(self.classes_)))
 
-        if self.multilabel:
+        y_is_multilabel = _is_multilabel(y)
+
+        if y_is_multilabel and not self.multilabel:
+            raise ValueError("The object was not fitted with multilabel input!")
+
+        elif self.multilabel:
             if not _is_multilabel(y):
                 raise ValueError("y should be a list of label lists/tuples,"
                                  "got %r" % (y,))
@@ -543,8 +548,8 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
             return Y
 
         else:
-            raise ValueError("Wrong number of classes: %d"
-                             % len(self.classes_))
+            # Only one class, returns a matrix with all 0s.
+            return Y
 
     def inverse_transform(self, Y, threshold=0):
         """Transform binary labels back to multi-class labels

@@ -89,10 +89,9 @@ def test_ecoc_fit_predict():
     assert_equal(len(ecoc.estimators_), n_classes * 2)
 
     # A classifier which implements predict_proba.
-    # FIXME: doesn't work... why?
-    #ecoc = OutputCodeClassifier(MultinomialNB(), code_size=2)
-    #pred = ecoc.fit(iris.data, iris.target).predict(iris.data)
-    #assert_equal(len(ecoc.estimators_), n_classes * 2)
+    ecoc = OutputCodeClassifier(MultinomialNB(), code_size=2)
+    pred = ecoc.fit(iris.data, iris.target).predict(iris.data)
+    assert_equal(len(ecoc.estimators_), n_classes * 2)
 
 
 def test_ecoc_gridsearch():
