@@ -2,11 +2,24 @@
 =========================================
 Image denoising using dictionary learning
 =========================================
+
 An example comparing the effect of reconstructing noisy fragments
 of Lena using online :ref:`DictionaryLearning` and various transform methods.
 
 The dictionary is fitted on the non-distorted left half of the image, and
 subsequently used to reconstruct the right half.
+
+A common practice for evaluating the results of image denoising is by looking
+at the difference between the reconstruction and the original image. If the
+reconstruction is perfect this will look like gaussian noise.
+
+It can be seen from the plots that the results of :ref:`omp` with two
+non-zero coefficients is a bit less biased than when keeping only one (the
+edges look less prominent). However, it is farther from the ground truth in
+Frobenius norm.
+
+The result of :ref:`least_angle_regression` is much more strongly biased: the
+difference is reminiscent of the local intensity value of the original image.
 
 """
 print __doc__
