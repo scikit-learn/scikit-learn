@@ -3,6 +3,7 @@
 import numpy as np
 from scipy import sparse as sp
 from numpy.testing import assert_equal
+from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
 from nose.tools import assert_raises
 from nose.tools import assert_true
@@ -13,7 +14,7 @@ from ...utils import shuffle
 
 n_clusters = 3
 X = generate_clustered_data(n_clusters=n_clusters, std=.1)
-S = sp.csr_matrix(X)
+X_csr = sp.csr_matrix(X)
 
 
 def test_k_means_pp_init():
@@ -48,14 +49,14 @@ def test_mini_batch_k_means_pp_init():
 
 def test_sparse_mini_batch_k_means_pp_init():
     np.random.seed(1)
-    sample = S[0:S.shape[0] / 2]
+    sample = X_csr[0:X_csr.shape[0] / 2]
     km = MiniBatchKMeans(init="random").partial_fit(sample)
     # Let's recalculate the inertia on the whole dataset
-    km.partial_fit(S)
+    km.partial_fit(X_csr)
     inertia = km.inertia_
-    km.partial_fit(S[S.shape[0] / 2:])
+    km.partial_fit(X_csr[X_csr.shape[0] / 2:])
     # And again
-    km.partial_fit(S)
+    km.partial_fit(X_csr)
     assert(km.inertia_ < inertia)
 
 
@@ -146,7 +147,7 @@ def test_mbk_means_fixed_array_init():
 def test_sparse_mbk_means_fixed_array_init():
     np.random.seed(1)
     init_array = np.vstack([X[5], X[25], X[45]])
-    mbk_means = MiniBatchKMeans(init=init_array).fit(S)
+    mbk_means = MiniBatchKMeans(init=init_array).fit(X_csr)
 
     centers = mbk_means.cluster_centers_
     assert_equal(centers.shape, (n_clusters, 2))
@@ -160,7 +161,7 @@ def test_sparse_mbk_means_fixed_array_init():
 def test_sparse_mbk_means_pp_init():
     np.random.seed(1)
     mbk_means = MiniBatchKMeans(init="k-means++", k=n_clusters)
-    assert_raises(ValueError, mbk_means.fit, S)
+    assert_raises(ValueError, mbk_means.fit, X_csr)
 
 
 def test_sparse_mbk_means_callable_init():
@@ -168,7 +169,7 @@ def test_sparse_mbk_means_callable_init():
 
     def test_init(Xbar, k, random_state):
         return np.vstack([X[5], X[25], X[45]])
-    mbk_means = MiniBatchKMeans(init=test_init).fit(S)
+    mbk_means = MiniBatchKMeans(init=test_init).fit(X_csr)
 
     centers = mbk_means.cluster_centers_
     assert_equal(centers.shape, (n_clusters, 2))
@@ -209,13 +210,14 @@ def test_mbk_means():
     true_labels = np.zeros((n_samples,), dtype=np.int32)
     true_labels[20:40] = 1
     true_labels[40:] = 2
-    chunk_size = n_samples * 2
+    chunk_size = n_samples / 10
     # make sure init clusters are in different clusters
     init_array = np.vstack([X[5], X[25], X[45]])
 
     # shuffle original data
-    X_shuffled, S_shuffled, true_labels = shuffle(X, S, true_labels, random_state=1)
-    
+    X_shuffled, X_csr_shuffled, true_labels = shuffle(X, X_csr, true_labels,
+                                                      random_state=1)
+
     mbk_means = MiniBatchKMeans(init=init_array, chunk_size=chunk_size,
                                 k=n_clusters, random_state=1)
     mbk_means.fit(X_shuffled)
@@ -223,5 +225,58 @@ def test_mbk_means():
 
     mbk_means = MiniBatchKMeans(init=init_array, chunk_size=chunk_size,
                                 k=n_clusters, random_state=1)
-    mbk_means.fit(S_shuffled)
+    mbk_means.fit(X_csr_shuffled)
     assert_equal(true_labels, mbk_means.labels_)
+
+
+def test_predict():
+    k_means = KMeans(k=n_clusters).fit(X)
+
+    # sanity check: predict centroid labels
+    pred = k_means.predict(k_means.cluster_centers_)
+    assert_array_equal(pred, np.arange(n_clusters))
+
+    # sanity check: re-predict labeling for training set samples
+    pred = k_means.predict(X)
+    assert_array_equal(k_means.predict(X), k_means.labels_)
+
+
+def test_predict_minibatch():
+    mbk_means = MiniBatchKMeans(k=n_clusters).fit(X)
+
+    # sanity check: predict centroid labels
+    pred = mbk_means.predict(mbk_means.cluster_centers_)
+    assert_array_equal(pred, np.arange(n_clusters))
+
+    # sanity check: re-predict labeling for training set samples
+    pred = mbk_means.predict(X)
+    assert_array_equal(mbk_means.predict(X), mbk_means.labels_)
+
+
+def test_predict_minibatch_sparse_input():
+    mbk_means = MiniBatchKMeans(k=n_clusters).fit(X_csr)
+
+    # sanity check: predict centroid labels
+    pred = mbk_means.predict(mbk_means.cluster_centers_)
+    assert_array_equal(pred, np.arange(n_clusters))
+
+    # sanity check: re-predict labeling for training set samples
+    pred = mbk_means.predict(X_csr)
+    assert_array_equal(mbk_means.predict(X), mbk_means.labels_)
+
+    # check that models trained on sparse input also works for dense input at
+    # predict time
+    pred = mbk_means.predict(X)
+    assert_array_equal(mbk_means.predict(X), mbk_means.labels_)
+
+
+def test_transform():
+    k_means = KMeans(k=n_clusters)
+    k_means.fit(X)
+    X_new = k_means.transform(k_means.cluster_centers_)
+
+    for c in range(n_clusters):
+        assert_equal(X_new[c, c], 0)
+        for c2 in range(n_clusters):
+            if c != c2:
+                assert_true(X_new[c, c2] > 0)

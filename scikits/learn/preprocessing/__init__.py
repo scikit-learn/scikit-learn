@@ -178,11 +178,31 @@ class Scaler(BaseEstimator, TransformerMixin):
         X = np.asanyarray(X)
         if copy:
             X = X.copy()
-        # We are taking a view of the X array and modifying it
         if self.with_mean:
             X -= self.mean_
         if self.with_std:
             X /= self.std_
+        return X
+
+    def inverse_transform(self, X, copy=None):
+        """Scale back the data to the original representation
+
+        Parameters
+        ----------
+        X : array-like with shape [n_samples, n_features]
+            The data used to scale along the features axis.
+        """
+        copy = copy if copy is not None else self.copy
+        if sp.issparse(X):
+            raise NotImplementedError(
+                "Scaling is not yet implement for sparse matrices")
+        X = np.asanyarray(X)
+        if copy:
+            X = X.copy()
+        if self.with_std:
+            X *= self.std_
+        if self.with_mean:
+            X += self.mean_
         return X
 
 
