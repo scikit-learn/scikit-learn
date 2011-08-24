@@ -29,6 +29,27 @@ class T(IncorrectT):
         return self
 
 
+class TransfT(T):
+
+    def transform(self, X, y=None):
+        return X
+
+
+class FitParamT(BaseEstimator):
+    """Mock classifier
+    """
+
+    def __init__(self):
+        self.successful = False
+        pass
+
+    def fit(self, X, y, should_succeed=False):
+        self.successful = should_succeed
+
+    def predict(self, X):
+        return self.successful
+
+
 def test_pipeline_init():
     """ Test the various init parameters of the pipeline.
     """
@@ -95,6 +116,18 @@ def test_pipeline_methods_anova():
     pipe.score(X, y)
 
 
+def test_pipeline_fit_params():
+    """Test that the pipeline can take fit parameters
+    """
+    pipe = Pipeline([('transf', TransfT()), ('clf', FitParamT())])
+    pipe.fit(X=None, y=None, clf__should_succeed=True)
+    # classifier should return True
+    assert pipe.predict(None)
+    # and transformer params should not be changed
+    assert pipe.named_steps['transf'].a is None
+    assert pipe.named_steps['transf'].b is None
+
+
 def test_pipeline_methods_pca_svm():
     """Test the various methods of the pipeline (pca + svm)."""
     iris = load_iris()
@@ -125,6 +158,7 @@ def test_pipeline_methods_randomized_pca_svm():
     pipe.predict_proba(X)
     pipe.predict_log_proba(X)
     pipe.score(X, y)
+
 
 def test_pipeline_methods_scaler_svm():
     """Test the various methods of the pipeline (scaler + svm)."""
