@@ -378,13 +378,13 @@ def load_sample_images():
     >>> # pl.matshow(dataset.images[0]) # Visualize the first image
     >>> # pl.show()
     """
-    # Try to import Image and imresize from PIL. We do this here to prevent
+    # Try to import imread from scipy. We do this lazily here to prevent
     # this module from depending on PIL.
     try:
         try:
-            from scipy.misc import Image
+            from scipy.misc import imread
         except ImportError:
-            from scipy.misc.pilutil import Image
+            from scipy.misc.pilutil import imread
     except ImportError:
         raise ImportError("The Python Imaging Library (PIL)"
                           "is required to load data from jpeg files")
@@ -394,8 +394,7 @@ def load_sample_images():
                  for filename in os.listdir(module_path)
                  if filename.endswith(".jpg")]
     # Load image data for each image in the source folder.
-    images = [np.asarray(Image.open(filename))
-              for filename in filenames]
+    images = [imread(filename) for filename in filenames]
 
     return Bunch(images=images,
                  filenames=filenames,
