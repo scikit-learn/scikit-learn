@@ -7,6 +7,7 @@ of Lena using online :ref:`DictionaryLearning` and various transform methods.
 
 The dictionary is fitted on the non-distorted left half of the image, and
 subsequently used to reconstruct the right half.
+
 """
 print __doc__
 
@@ -71,8 +72,10 @@ def show_with_diff(image, reference, title):
     pl.xticks(())
     pl.yticks(())
     pl.subplot(1, 2, 2)
-    pl.title("Difference")
-    pl.imshow(image - reference, vmin=-0.5, vmax=0.5, cmap=pl.cm.PuOr,
+    difference = image - reference
+
+    pl.title("Difference (norm: %.2f)" % np.sqrt(np.sum(difference ** 2)))
+    pl.imshow(difference, vmin=-0.5, vmax=0.5, cmap=pl.cm.PuOr,
               interpolation='nearest')
     pl.xticks(())
     pl.yticks(())
@@ -96,8 +99,8 @@ transform_algorithms = [
     ('2-Orthogonal Matching Pursuit', 'omp',
      {'n_nonzero_coefs': 2, 'precompute_gram': True}),
 
-    ('6-Least-angle regression', 'lars',
-     {'max_iter': 6})]
+    ('5-Least-angle regression', 'lars',
+     {'max_iter': 5})]
 
 reconstructions = {}
 for title, transform_algorithm, fit_params in transform_algorithms:
