@@ -10,35 +10,34 @@ required to show the image.
 print __doc__
 import numpy as np
 import pylab as pl
-from scikits.learn.preprocessing import Scaler
 from scikits.learn.cluster import KMeans
 from scikits.learn.datasets import load_sample_image
 from scikits.learn.utils import shuffle
 from time import time
 
-# Get all sample images and obtain just china.jpg
+# Load the Summer Palace photo
 china = load_sample_image("china.jpg")
 
-# Convert to floats instead of the default 8 bits integer coding
-china = np.array(china, dtype=np.float64)
+# Convert to floats instead of the default 8 bits integer coding. Dividing by
+# 255 is important so that pl.imshow behaves works well on foat data (need to be
+# in the range [0-1]
+china = np.array(china, dtype=np.float64) / 255
 
 # Load Image and transform to a 2D numpy array.
 w, h, d = original_shape = tuple(china.shape)
 assert d == 3
 image_array = np.reshape(china, (w * h, d))
-scaler = Scaler()
-image_scaled = scaler.fit_transform(image_array)
 
 print "Fitting estimator on a small sub-sample of the data"
 t0 = time()
-image_scaled_sample = shuffle(image_scaled, random_state=0)[:1000]
-kmeans = KMeans(k=10, max_iter=1000).fit(image_scaled_sample)
+image_array_sample = shuffle(image_array, random_state=0)[:1000]
+kmeans = KMeans(k=10, random_state=0).fit(image_array_sample)
 print "done in %0.3fs." % (time() - t0)
 
 # Get labels for all points
 print "Predicting labels on the full image"
 t0 = time()
-labels = kmeans.predict(image_scaled)
+labels = kmeans.predict(image_array)
 print "done in %0.3fs." % (time() - t0)
 
 def recreate_image(codebook, labels, w, h):
@@ -61,9 +60,5 @@ pl.imshow(china)
 pl.figure()
 ax = pl.axes([0, 0, 1, 1], frameon=False)
 ax.set_axis_off()
-
-# transform back the images in the original space
-codebook = scaler.inverse_transform(kmeans.cluster_centers_)
-
 pl.imshow(recreate_image(kmeans.cluster_centers_, labels, w, h))
 pl.show()
