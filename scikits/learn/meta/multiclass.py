@@ -36,11 +36,14 @@ def predict_binary(estimator, X):
         # probabilities of the positive class
         return estimator.predict_proba(X)[:, 1]
 
-def fit_ovr(estimator, X, y):
+def check_estimator(estimator):
     if not hasattr(estimator, "decision_function") and \
        not hasattr(estimator, "predict_proba"):
         raise ValueError("The base estimator should implement "
                          "decision_function or predict_proba!")
+
+def fit_ovr(estimator, X, y):
+    check_estimator(estimator)
 
     lb = LabelBinarizer()
     Y = lb.fit_transform(y)
@@ -76,11 +79,6 @@ def fit_ovo_binary(estimator, X, y, i, j):
     return fit_binary(estimator, X[ind[cond]], y)
 
 def fit_ovo(estimator, X, y):
-    if not hasattr(estimator, "decision_function") and \
-       not hasattr(estimator, "predict_proba"):
-        raise ValueError("The base estimator should implement "
-                         "decision_function or predict_proba!")
-
     classes = np.unique(y)
     n_classes = classes.shape[0]
     estimators = [fit_ovo_binary(estimator, X, y, classes[i], classes[j])
@@ -117,3 +115,49 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin):
             raise ValueError("The object hasn't been fitted yet!")
 
         return predict_ovo(self.estimators_, self.classes_, X)
+
+def fit_ecoc(estimator, X, y, code_size):
+    classes = np.unique(y)
+    n_classes = classes.shape[0]
+    code_size = int(n_classes * code_size)
+
+    # FIXME: there are more elaborate methods than generating the codebook
+    # randomly.
+    code_book = np.random.random((n_classes, code_size))
+    code_book[code_book > 0.5] = 1
+
+    if hasattr(estimator, "decision_function"):
+        code_book[code_book != 1] = -1
+    else:
+        code_book[code_book != 1] = 0
+
+    cls_idx = dict((c, i) for i, c in enumerate(classes))
+
+    Y = np.array([code_book[cls_idx[y[i]]] for i in xrange(X.shape[0])])
+
+    estimators = [fit_binary(estimator, X, Y[:, i])
+                                for i in range(Y.shape[1])]
+
+    return estimators, classes, code_book
+
+def predict_ecoc(estimators, classes, code_book, X):
+    Y = np.array([predict_binary(e, X) for e in estimators]).T
+    pred = euclidean_distances(Y, code_book).argmin(axis=1)
+    return classes[pred]
+
+class OutputCodeClassifier(BaseEstimator, ClassifierMixin):
+
+    def __init__(self, estimator, code_size=1.5):
+        self.estimator = estimator
+        self.code_size = code_size
+
+    def fit(self, X, y):
+        self.estimators_, self.classes_, self.code_book_ = \
+            fit_ecoc(self.estimator, X, y, self.code_size)
+        return self
+
+    def predict(self, X):
+        if not hasattr(self, "estimators_"):
+            raise ValueError("The object hasn't been fitted yet!")
+
+        return predict_ecoc(self.estimators_, self.classes_, self.code_book_, X)

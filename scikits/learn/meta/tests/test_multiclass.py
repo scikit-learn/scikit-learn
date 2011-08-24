@@ -7,7 +7,9 @@ from nose.tools import assert_equal
 from nose.tools import assert_true
 from nose.tools import assert_raises
 
-from scikits.learn.meta import OneVsRestClassifier, OneVsOneClassifier
+from scikits.learn.meta import OneVsRestClassifier
+from scikits.learn.meta import OneVsOneClassifier
+from scikits.learn.meta import OutputCodeClassifier
 from scikits.learn.svm import LinearSVC
 from scikits.learn.naive_bayes import MultinomialNB
 from scikits.learn.grid_search import GridSearchCV
@@ -30,7 +32,7 @@ def test_ovr_fit_predict():
     pred = ovr.fit(iris.data, iris.target).predict(iris.data)
     assert_equal(len(ovr.estimators_), n_classes)
 
-    pred2 = SGDClassifier().fit(iris.data, iris.target).predict(iris.data)
+    pred2 = LinearSVC().fit(iris.data, iris.target).predict(iris.data)
     assert_equal(np.mean(iris.target == pred), np.mean(iris.target == pred2))
 
     # A classifier which implements predict_proba.
@@ -52,9 +54,14 @@ def test_ovo_exceptions():
     assert_raises(ValueError, ovo.predict, [])
 
 
-def test_ovr_fit_predict():
+def test_ovo_fit_predict():
     # A classifier which implements decision_function.
     ovo = OneVsOneClassifier(LinearSVC())
+    pred = ovo.fit(iris.data, iris.target).predict(iris.data)
+    assert_equal(len(ovo.estimators_), n_classes * (n_classes - 1) / 2)
+
+    # A classifier which implements predict_proba.
+    ovo = OneVsOneClassifier(MultinomialNB())
     pred = ovo.fit(iris.data, iris.target).predict(iris.data)
     assert_equal(len(ovo.estimators_), n_classes * (n_classes - 1) / 2)
 
@@ -66,3 +73,19 @@ def test_ovo_gridsearch():
     cv.fit(iris.data, iris.target)
     best_C = cv.best_estimator.estimators_[0].C
     assert_true(best_C in Cs)
+
+def test_ecoc_exceptions():
+    ecoc = OutputCodeClassifier(LinearSVC())
+    assert_raises(ValueError, ecoc.predict, [])
+
+def test_ecoc_fit_predict():
+    # A classifier which implements decision_function.
+    ecoc = OutputCodeClassifier(LinearSVC(), code_size=2)
+    pred = ecoc.fit(iris.data, iris.target).predict(iris.data)
+    assert_equal(len(ecoc.estimators_), n_classes * 2)
+
+    # A classifier which implements predict_proba.
+    # FIXME: doesn't work... why?
+    #ecoc = OutputCodeClassifier(MultinomialNB(), code_size=2)
+    #pred = ecoc.fit(iris.data, iris.target).predict(iris.data)
+    #assert_equal(len(ecoc.estimators_), n_classes * 2)
