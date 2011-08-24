@@ -59,7 +59,6 @@ def sparse_encode(X, Y, gram=None, cov=None, algorithm='lasso_lars',
         and is overridden by `alpha` in the `omp` case.
 
     alpha: float, 1. by default
-        Overloaded parameter.
         If `algorithm='lasso_lars'` or `algorithm='lasso_cd'`, `alpha` is the
         penalty applied to the L1 norm.
         If `algorithm='threhold'`, `alpha` is the absolute value of the
@@ -196,7 +195,6 @@ def sparse_encode_parallel(X, Y, gram=None, cov=None, algorithm='lasso_lars',
         and is overridden by `alpha` in the `omp` case.
 
     alpha: float, 1. by default
-        Overloaded parameter.
         If `algorithm='lasso_lars'` or `algorithm='lasso_cd'`, `alpha` is the
         penalty applied to the L1 norm.
         If `algorithm='threhold'`, `alpha` is the absolute value of the
@@ -738,7 +736,6 @@ class DictionaryLearning(BaseDictionaryLearning):
         and is overridden by `alpha` in the `omp` case.
 
     transform_alpha: float, 1. by default
-        Overloaded parameter.
         If `algorithm='lasso_lars'` or `algorithm='lasso_cd'`, `alpha` is the
         penalty applied to the L1 norm.
         If `algorithm='threhold'`, `alpha` is the absolute value of the
@@ -798,36 +795,6 @@ class DictionaryLearning(BaseDictionaryLearning):
         self.verbose = verbose
         self.random_state = random_state
 
-    def fit_transform(self, X, y=None):
-        """Fit the model from data in X.
-
-        Parameters
-        ----------
-        X: array-like, shape (n_samples, n_features)
-            Training vector, where n_samples in the number of samples
-            and n_features is the number of features.
-
-        Returns
-        -------
-        code: array-like, shape (n_samples, n_atoms)
-            The sparse encoding of the data, coded using the same method used
-            in the fit. To transform data using a different sparse coding
-            technique such as `OMP`, see the `transform` method.
-        """
-        self.random_state = check_random_state(self.random_state)
-        X = np.asanyarray(X)
-        V, U, E = dict_learning(X, self.n_atoms, self.alpha,
-                                tol=self.tol, max_iter=self.max_iter,
-                                method=self.fit_algorithm,
-                                n_jobs=self.n_jobs,
-                                code_init=self.code_init,
-                                dict_init=self.dict_init,
-                                verbose=self.verbose,
-                                random_state=self.random_state)
-        self.components_ = U
-        self.error_ = E
-        return V
-
     def fit(self, X, y=None):
         """Fit the model from data in X.
 
@@ -842,7 +809,18 @@ class DictionaryLearning(BaseDictionaryLearning):
         self: object
             Returns the object itself
         """
-        self.fit_transform(X, y)
+        self.random_state = check_random_state(self.random_state)
+        X = np.asanyarray(X)
+        V, U, E = dict_learning(X, self.n_atoms, self.alpha,
+                                tol=self.tol, max_iter=self.max_iter,
+                                method=self.fit_algorithm,
+                                n_jobs=self.n_jobs,
+                                code_init=self.code_init,
+                                dict_init=self.dict_init,
+                                verbose=self.verbose,
+                                random_state=self.random_state)
+        self.components_ = U
+        self.error_ = E
         return self
 
 
@@ -891,7 +869,6 @@ class DictionaryLearningOnline(BaseDictionaryLearning):
         and is overridden by `alpha` in the `omp` case.
 
     transform_alpha: float, 1. by default
-        Overloaded parameter.
         If `algorithm='lasso_lars'` or `algorithm='lasso_cd'`, `alpha` is the
         penalty applied to the L1 norm.
         If `algorithm='threhold'`, `alpha` is the absolute value of the
