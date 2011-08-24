@@ -60,11 +60,10 @@ data -= intercept
 ###############################################################################
 # Learn the dictionary from clean patches
 t0 = time()
-dico = DictionaryLearningOnline(n_atoms=100, alpha=1e-2, n_iter=300,
-                                verbose=True, transform_algorithm='omp')
+dico = DictionaryLearningOnline(n_atoms=100, alpha=1e-2, n_iter=300)
 V = dico.fit(data).components_
 dt = time() - t0
-print dt
+print "done in %.2f." % dt
 
 pl.figure(figsize=(4.5, 5))
 for i, comp in enumerate(V):
@@ -101,7 +100,7 @@ show_with_diff(distorted, lena, "Distorted image")
 
 ###############################################################################
 # Extract noisy patches and reconstruct them using the dictionary
-print "Extracting noisy patches..."
+print "Extracting noisy patches... ",
 data = extract_patches_2d(distorted[:, height/2:], patch_size, random_state=0)
 data = data.reshape(data.shape[0], -1) - intercept
 
@@ -117,7 +116,7 @@ transform_algorithms = [
 
 reconstructions = {}
 for title, transform_algorithm, fit_params in transform_algorithms:
-    print title,
+    print title, '... ',
     reconstructions[title] = lena.copy()
     t0 = time()
     dico.transform_algorithm = transform_algorithm
@@ -127,7 +126,7 @@ for title, transform_algorithm, fit_params in transform_algorithms:
     reconstructions[title][:, height/2:] = reconstruct_from_patches_2d(patches,
                                                            (width, height / 2))
     dt = time() - t0
-    print dt
+    print "done in %.2f." % dt
     show_with_diff(reconstructions[title], lena,
                    title + ' (time: %.1fs)' % dt)
 
