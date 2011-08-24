@@ -43,9 +43,7 @@ def configuration(parent_package='', top_path=None):
         warnings.warn(BlasNotFoundError.__doc__)
 
     config.add_extension('ball_tree',
-                         sources=[join('src', 'ball_tree.cpp')],
-                         depends=[join('src', 'BallTree.h'),
-                                  join('src', 'BallTreePoint.h')],
+                         sources=[join('src', 'ball_tree.c')],
                          include_dirs=[numpy.get_include()])
 
     # the following packages depend on cblas, so they have to be build
