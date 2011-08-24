@@ -394,7 +394,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> pca = RandomizedPCA(n_components=2)
     >>> pca.fit(X)
-    RandomizedPCA(copy=True, n_components=2, iterated_power=3, whiten=False)
+    RandomizedPCA(copy=True, iterated_power=3, n_components=2, whiten=False)
     >>> print pca.explained_variance_ratio_
     [ 0.99244289  0.00755711]
 

@@ -104,9 +104,9 @@ class BayesianRidge(LinearModel):
     >>> from scikits.learn import linear_model
     >>> clf = linear_model.BayesianRidge()
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])
-    BayesianRidge(normalize=False, n_iter=300, verbose=False, lambda_1=1e-06,
-           lambda_2=1e-06, fit_intercept=True, alpha_2=1e-06, tol=0.001,
-           alpha_1=1e-06, overwrite_X=False, compute_score=False)
+    BayesianRidge(alpha_1=1e-06, alpha_2=1e-06, compute_score=False,
+           fit_intercept=True, lambda_1=1e-06, lambda_2=1e-06, n_iter=300,
+           normalize=False, overwrite_X=False, tol=0.001, verbose=False)
     >>> clf.predict([[1, 1]])
     array([ 1.])
 
@@ -324,10 +324,10 @@ class ARDRegression(LinearModel):
     >>> from scikits.learn import linear_model
     >>> clf = linear_model.ARDRegression()
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])
-    ARDRegression(normalize=False, n_iter=300, verbose=False, lambda_1=1e-06,
-           lambda_2=1e-06, fit_intercept=True, threshold_lambda=10000.0,
-           alpha_2=1e-06, tol=0.001, alpha_1=1e-06, overwrite_X=False,
-           compute_score=False)
+    ARDRegression(alpha_1=1e-06, alpha_2=1e-06, compute_score=False,
+           fit_intercept=True, lambda_1=1e-06, lambda_2=1e-06, n_iter=300,
+           normalize=False, overwrite_X=False, threshold_lambda=10000.0,
+           tol=0.001, verbose=False)
     >>> clf.predict([[1, 1]])
     array([ 1.])
 
