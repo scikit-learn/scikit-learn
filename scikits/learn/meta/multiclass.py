@@ -56,15 +56,68 @@ def predict_ovr(estimators, label_binarizer, X):
 
 
 class OneVsRestClassifier(BaseEstimator, ClassifierMixin):
+    """One-vs-the-rest multiclass strategy
+
+    Also known as one-vs-all, this strategy consists in fitting one classifier
+    per class. For each classifier, the class is fitted against all the other
+    classes. In addition to its computational efficiency (only `n_classes`
+    classifiers are needed), one advantage of this approach is its
+    interpretability. Since each class is represented by one and one classifier
+    only, it is possible to gain knowledge about the class by inspecting its
+    corresponding classifier. This is the most commonly used strategy and is a
+    fair default choice.
+
+    Parameters
+    ----------
+    estimator : estimator object
+        An estimator object implementing `fit` and one of `decision_function` or
+        `predict_proba`.
+
+    Attributes
+    ----------
+    estimators_ : list of `n_classes` estimators
+        Estimators used for predictions.
+
+    label_binarizer_ : LabelBinarizer object
+        Object used to transform multiclass labels to binary labels and
+        vice-versa.
+
+    """
 
     def __init__(self, estimator):
         self.estimator = estimator
 
     def fit(self, X, y):
+        """Fit underlying estimators.
+
+        Parameters
+        ----------
+        X: {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Data.
+
+        y : numpy array of shape [n_samples]
+            Multi-class targets.
+
+        Returns
+        -------
+        self
+        """
         self.estimators_, self.label_binarizer_ = fit_ovr(self.estimator, X, y)
         return self
 
     def predict(self, X):
+        """Predict multi-class targets using underlying estimators.
+
+        Parameters
+        ----------
+        X: {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Data.
+
+        Returns
+        -------
+        y : numpy array of shape [n_samples]
+            Predicted multi-class targets.
+        """
         if not hasattr(self, "estimators_"):
             raise ValueError("The object hasn't been fitted yet!")
 
@@ -102,15 +155,67 @@ def predict_ovo(estimators, classes, X):
     return classes[votes.argmax(axis=1)]
 
 class OneVsOneClassifier(BaseEstimator, ClassifierMixin):
+    """One-vs-one multiclass strategy
+
+    This strategy consists in fitting one classifier per class pair.
+    At prediction time, the class which received the most votes is selected.
+    Since it requires to fit `n_classes * (n_classes - 1) / 2` classifiers,
+    this method is usually slower than one-vs-the-rest, due to its
+    O(n_classes^2) complexity. However, this method may be advantageous for
+    algorithms such as kernel algorithms which don't scale well with
+    `n_samples`. This is because each individual learning problem only involves
+    a small subset of the data whereas, with one-vs-the-rest, the complete
+    dataset is used `n_classes` times.
+
+    Parameters
+    ----------
+    estimator : estimator object
+        An estimator object implementing `fit` and one of `decision_function` or
+        `predict_proba`.
+
+    Attributes
+    ----------
+    estimators_ : list of `n_classes * (n_classes - 1) / 2` estimators
+        Estimators used for predictions.
+
+    classes_ : numpy array of shape [n_classes]
+        Array containing labels.
+    """
 
     def __init__(self, estimator):
         self.estimator = estimator
 
     def fit(self, X, y):
+        """Fit underlying estimators.
+
+        Parameters
+        ----------
+        X: {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Data.
+
+        y : numpy array of shape [n_samples]
+            Multi-class targets.
+
+        Returns
+        -------
+        self
+        """
         self.estimators_, self.classes_ = fit_ovo(self.estimator, X, y)
         return self
 
     def predict(self, X):
+        """Predict multi-class targets using underlying estimators.
+
+        Parameters
+        ----------
+        X: {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Data.
+
+        Returns
+        -------
+        y : numpy array of shape [n_samples]
+            Predicted multi-class targets.
+        """
         if not hasattr(self, "estimators_"):
             raise ValueError("The object hasn't been fitted yet!")
 
@@ -146,17 +251,114 @@ def predict_ecoc(estimators, classes, code_book, X):
     return classes[pred]
 
 class OutputCodeClassifier(BaseEstimator, ClassifierMixin):
+    """(Error-Correcting) Output-Code multiclass strategy
+
+    Output-code based strategies are fairly different from one-vs-the-rest and
+    one-vs-one. With these strategies, each class is represented in a euclidean
+    space, where each dimension can only be 0 or 1. Another way to put it is
+    that each class is represented by a binary code (an array of 0 and 1). The
+    matrix which keeps track of the location/code of each class is called the
+    code book. The code size is the dimensionality of the aforementioned space.
+    Intuitively, each class should be represented by a code as unique as
+    possible and a good code book should be designed to optimize classification
+    accuracy. In this implementation, we simply use a randomly-generated code
+    book as advocated in [2] although more elaborate methods may be added in the
+    future.
+
+    At fitting time, one binary classifier per bit in the code book is fitted.
+    At prediction time, the classifiers are used to project new points in the
+    class space and the class closest to the points is chosen.
+
+    In this implementation, the `code_size` attribute allows the user to control
+    the number of classifiers which will be used. It is a percentage of the
+    total number of classes.
+
+    A number between 0 and 1 will require fewer classifiers than
+    one-vs-the-rest. In theory, log2(n_classes) / n_classes is sufficient to
+    represent each class unambiguously. However, in practice, it may not lead to
+    good accuracy since log2(n_classes) is much smaller than n_classes.
+
+    A number greater than than 1 will require more classifiers than
+    one-vs-the-rest. In this case, some classifiers will in theory correct for
+    the mistakes made by other classifiers, hence the name "error-correcting".
+    In practice, however, this may not happen as classifier mistakes will
+    typically be correlated. The error-correcting output codes have a similar
+    effect to bagging.
+
+    Parameters
+    ----------
+    estimator : estimator object
+        An estimator object implementing `fit` and one of `decision_function` or
+        `predict_proba`.
+
+    code_size: float
+        Percentage of the number of classes to be used to create the code book.
+        A number between 0 and 1 will require fewer classifiers than
+        one-vs-the-rest. A number greater than 1 will require more classifiers
+        than one-vs-the-rest.
+
+    Attributes
+    ----------
+    estimators_ : list of `n_classes * (n_classes - 1) / 2` estimators
+        Estimators used for predictions.
+
+    classes_ : numpy array of shape [n_classes]
+        Array containing labels.
+
+    code_book_: numpy array of shape [n_classes, code_size]
+        Binary array containing the code of each class.
+
+    References
+    ----------
+    [1] "Solving multiclass learning problems via error-correcting ouput codes",
+    Dietterich T., Bakiri G., Journal of Artificial Intelligence Research 2.
+
+    [2] "The error coding method and PICTs", James G., Hastie T., Journal of
+    Computational and Graphical statistics 7.
+
+    [3] "The Elements of Statistical Learning", Hastie T., Tibshirani R.,
+    Friedman J., page 606 (second-edition).
+    """
 
     def __init__(self, estimator, code_size=1.5):
+        if (code_size <= 0)
+            raise ValueError("code_size should be greater than 0!")
+
         self.estimator = estimator
         self.code_size = code_size
 
     def fit(self, X, y):
+        """Fit underlying estimators.
+
+        Parameters
+        ----------
+        X: {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Data.
+
+        y : numpy array of shape [n_samples]
+            Multi-class targets.
+
+        Returns
+        -------
+        self
+        """
         self.estimators_, self.classes_, self.code_book_ = \
             fit_ecoc(self.estimator, X, y, self.code_size)
         return self
 
     def predict(self, X):
+        """Predict multi-class targets using underlying estimators.
+
+        Parameters
+        ----------
+        X: {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Data.
+
+        Returns
+        -------
+        y : numpy array of shape [n_samples]
+            Predicted multi-class targets.
+        """
         if not hasattr(self, "estimators_"):
             raise ValueError("The object hasn't been fitted yet!")
 
