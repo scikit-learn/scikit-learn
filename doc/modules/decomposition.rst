@@ -381,18 +381,18 @@ initialization parameter:
 
 * Orthogonal matching pursuit (:ref:`omp`)
 
-* Least-angle regression and Lasso (:ref:`least_angle_regression`)
+* Least-angle regression (:ref:`least_angle_regression`)
+
+* Lasso computed by least-angle regression
 
 * Lasso using coordinate descent (:ref:`lasso`)
 
 * Thresholding
 
-* Triangle k-means
-
-Thresholding and the triangle k-means nonlinearity are very fast but they do
-not yield accurate reconstructions. They have been shown useful in literature
-for classification tasks. For image reconstruction tasks, orthogonal matching
-pursuit yields the most accurate, unbiased reconstruction.
+Thresholding is very fast but it does not yield accurate reconstructions.
+They have been shown useful in literature for classification tasks. For image
+reconstruction tasks, orthogonal matching pursuit yields the most accurate,
+unbiased reconstruction.
 
 The dictionary learning objects offer, via the `split_code` parameter, the
 possibility to separate the positive and negative values in the results of 
