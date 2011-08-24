@@ -1,9 +1,12 @@
 import numpy as np
-from numpy.testing import assert_array_almost_equal, assert_array_equal
+from numpy.testing import assert_array_almost_equal, assert_array_equal, \
+                          assert_equal
 from nose.plugins.skip import SkipTest
 
 from ...datasets import make_sparse_coded_signal
-from .. import DictionaryLearning, DictionaryLearningOnline
+from .. import DictionaryLearning, DictionaryLearningOnline, \
+               dict_learning_online
+from ..dict_learning import _update_code, _update_code_parallel
 
 rng = np.random.RandomState(0)
 n_samples, n_features = 10, 8
@@ -49,6 +52,16 @@ def test_dict_learning_split():
 
 
 def test_dict_learning_online_shapes():
+    rng = np.random.RandomState(0)
+    X = rng.randn(12, 10)
+    dictionaryT, codeT = dict_learning_online(X.T, n_atoms=8, alpha=1,
+                                              random_state=rng)
+    assert_equal(codeT.shape, (8, 12))
+    assert_equal(dictionaryT.shape, (10, 8))
+    assert_equal(np.dot(codeT.T, dictionaryT.T).shape, X.shape)
+
+
+def test_dict_learning_online_estimator_shapes():
     n_atoms = 5
     dico = DictionaryLearningOnline(n_atoms, n_iter=20).fit(X)
     assert dico.components_.shape == (n_atoms, n_features)
@@ -83,3 +96,16 @@ def test_dict_learning_online_partial_fit():
         dico2.partial_fit(sample, iter_offset=ii * dico2.n_iter)
 
     assert_array_equal(dico1.components_, dico2.components_)
+
+
+def test_sparse_code():
+    rng = np.random.RandomState(0)
+    dictionary = rng.randn(10, 3)
+    real_code = np.zeros((3, 5))
+    real_code.ravel()[rng.randint(15, size=6)] = 1.0
+    Y = np.dot(dictionary, real_code)
+    est_code_1 = _update_code(dictionary, Y, alpha=1.0)
+    est_code_2 = _update_code_parallel(dictionary, Y, alpha=1.0)
+    assert_equal(est_code_1.shape, real_code.shape)
+    assert_equal(est_code_1, est_code_2)
+    assert_equal(est_code_1.nonzero(), real_code.nonzero())

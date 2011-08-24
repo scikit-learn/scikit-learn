@@ -6,8 +6,7 @@ import sys
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_equal
 
-from .. import SparsePCA, MiniBatchSparsePCA, dict_learning_online
-from ..sparse_pca import _update_code, _update_code_parallel
+from .. import SparsePCA, MiniBatchSparsePCA
 from ...utils import check_random_state
 
 
@@ -86,19 +85,6 @@ def test_fit_transform_tall():
     assert_array_almost_equal(U1, U2)
 
 
-def test_sparse_code():
-    rng = np.random.RandomState(0)
-    dictionary = rng.randn(10, 3)
-    real_code = np.zeros((3, 5))
-    real_code.ravel()[rng.randint(15, size=6)] = 1.0
-    Y = np.dot(dictionary, real_code)
-    est_code_1 = _update_code(dictionary, Y, alpha=1.0)
-    est_code_2 = _update_code_parallel(dictionary, Y, alpha=1.0)
-    assert_equal(est_code_1.shape, real_code.shape)
-    assert_equal(est_code_1, est_code_2)
-    assert_equal(est_code_1.nonzero(), real_code.nonzero())
-
-
 def test_initialization():
     rng = np.random.RandomState(0)
     U_init = rng.randn(5, 3)
@@ -107,16 +93,6 @@ def test_initialization():
                       random_state=rng)
     model.fit(rng.randn(5, 4))
     assert_equal(model.components_, V_init)
-
-
-def test_dict_learning_online_shapes():
-    rng = np.random.RandomState(0)
-    X = rng.randn(12, 10)
-    dictionaryT, codeT = dict_learning_online(X.T, n_atoms=8, alpha=1,
-                                              random_state=rng)
-    assert_equal(codeT.shape, (8, 12))
-    assert_equal(dictionaryT.shape, (10, 8))
-    assert_equal(np.dot(codeT.T, dictionaryT.T).shape, X.shape)
 
 
 def test_mini_batch_correct_shapes():
