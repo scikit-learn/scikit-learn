@@ -255,37 +255,14 @@ def predict_ecoc(estimators, classes, code_book, X):
 class OutputCodeClassifier(BaseEstimator, ClassifierMixin):
     """(Error-Correcting) Output-Code multiclass strategy
 
-    Output-code based strategies are fairly different from one-vs-the-rest and
-    one-vs-one. With these strategies, each class is represented in a euclidean
-    space, where each dimension can only be 0 or 1. Another way to put it is
-    that each class is represented by a binary code (an array of 0 and 1). The
-    matrix which keeps track of the location/code of each class is called the
-    code book. The code size is the dimensionality of the aforementioned space.
-    Intuitively, each class should be represented by a code as unique as
-    possible and a good code book should be designed to optimize classification
-    accuracy. In this implementation, we simply use a randomly-generated code
-    book as advocated in [2] although more elaborate methods may be added in the
-    future.
-
-    At fitting time, one binary classifier per bit in the code book is fitted.
-    At prediction time, the classifiers are used to project new points in the
-    class space and the class closest to the points is chosen.
-
-    In this implementation, the `code_size` attribute allows the user to control
-    the number of classifiers which will be used. It is a percentage of the
-    total number of classes.
-
-    A number between 0 and 1 will require fewer classifiers than
-    one-vs-the-rest. In theory, log2(n_classes) / n_classes is sufficient to
-    represent each class unambiguously. However, in practice, it may not lead to
-    good accuracy since log2(n_classes) is much smaller than n_classes.
-
-    A number greater than than 1 will require more classifiers than
-    one-vs-the-rest. In this case, some classifiers will in theory correct for
-    the mistakes made by other classifiers, hence the name "error-correcting".
-    In practice, however, this may not happen as classifier mistakes will
-    typically be correlated. The error-correcting output codes have a similar
-    effect to bagging.
+    Output-code based strategies consist in representing each class with a
+    binary code (an array of 0s and 1s). At fitting time, one binary classifier
+    per bit in the code book is fitted.  At prediction time, the classifiers are
+    used to project new points in the class space and the class closest to the
+    points is chosen. The main advantage of these strategies is that the number
+    of classifiers used can be controlled by the user, either for compressing
+    the model (0 < code_size < 1) or for making the model more robust to errors
+    (code_size > 1). See the documentation for more details.
 
     Parameters
     ----------

@@ -11,6 +11,7 @@
    supervised_learning.rst
    unsupervised_learning.rst
    model_selection.rst
+   meta_learners.rst
    Dataset loading utilities <datasets/index.rst>
    Preprocessing data <modules/preprocessing.rst>
    modules/feature_extraction.rst
