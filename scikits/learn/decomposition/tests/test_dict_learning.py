@@ -28,25 +28,36 @@ def test_dict_learning_overcomplete():
 def test_dict_learning_reconstruction():
     n_atoms = 12
     dico = DictionaryLearning(n_atoms, transform_algorithm='omp',
-                              random_state=0)
-    code = dico.fit(X).transform(X, tol=0.001)
+                              transform_alpha=0.001, random_state=0)
+    code = dico.fit(X).transform(X)
     assert_array_almost_equal(np.dot(code, dico.components_), X)
 
-    dico.transform_algorithm = 'lasso_lars'
-    code = dico.transform(X, alpha=0.001)
+    dico.set_params(transform_algorithm='lasso_lars')
+    code = dico.transform(X)
     assert_array_almost_equal(np.dot(code, dico.components_), X, decimal=2)
 
-    dico.transform_algorithm = 'lars'
-    code = dico.transform(X, alpha_min=0.001)
+    dico.set_params(transform_algorithm='lars')
+    code = dico.transform(X)
     assert_array_almost_equal(np.dot(code, dico.components_), X, decimal=2)
 
+
+def test_dict_learning_nonzero_coefs():
+    n_atoms=4
+    dico = DictionaryLearning(n_atoms, transform_algorithm='lars',
+                              transform_n_nonzero_coefs=3, random_state=0)
+    code = dico.fit(X).transform(X[0])
+    assert len(np.flatnonzero(code)) == 3
+
+    dico.set_params(transform_algorithm='omp')
+    code = dico.transform(X[0])
+    assert len(np.flatnonzero(code)) == 3
 
 def test_dict_learning_split():
     n_atoms = 5
     dico = DictionaryLearning(n_atoms, transform_algorithm='threshold')
-    code = dico.fit(X).transform(X, alpha=1)
+    code = dico.fit(X).transform(X)
     dico.split_sign = True
-    split_code = dico.transform(X, alpha=1)
+    split_code = dico.transform(X)
 
     assert_array_equal(split_code[:, :n_atoms] - split_code[:, n_atoms:], code)
 

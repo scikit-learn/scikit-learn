@@ -108,22 +108,18 @@ data = extract_patches_2d(distorted[:, height / 2:], patch_size)
 data = data.reshape(data.shape[0], -1) - intercept
 
 transform_algorithms = [
-    ('1-Orthogonal Matching Pursuit', 'omp',
-     {'n_nonzero_coefs': 1, 'precompute_gram': True}),
-
-    ('2-Orthogonal Matching Pursuit', 'omp',
-     {'n_nonzero_coefs': 2, 'precompute_gram': True}),
-
-    ('5-Least-angle regression', 'lars',
-     {'max_iter': 5})]
+    ('1-Orthogonal Matching Pursuit', 'omp', 1),
+    ('2-Orthogonal Matching Pursuit', 'omp', 2),
+    ('5-Least-angle regression', 'lars', 5)]
 
 reconstructions = {}
-for title, transform_algorithm, fit_params in transform_algorithms:
+for title, transform_algorithm, n_nonzero_coefs in transform_algorithms:
     print title, '... ',
     reconstructions[title] = lena.copy()
     t0 = time()
-    dico.transform_algorithm = transform_algorithm
-    code = dico.transform(data, **fit_params)
+    dico.set_params(transform_algorithm=transform_algorithm,
+                    transform_n_nonzero_coefs=n_nonzero_coefs)
+    code = dico.transform(data)
     patches = np.dot(code, V) + intercept
     patches = patches.reshape(len(data), *patch_size)
     reconstructions[title][:, height / 2:] = reconstruct_from_patches_2d(

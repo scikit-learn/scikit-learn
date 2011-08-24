@@ -18,14 +18,15 @@ from ..externals.joblib import Parallel, delayed, cpu_count
 from ..utils import check_random_state
 from ..utils import gen_even_slices
 from ..utils.extmath import fast_svd
-from ..linear_model import Lasso, orthogonal_mp, lars_path
+from ..linear_model import Lasso, orthogonal_mp_gram, lars_path
 from ..metrics.pairwise import euclidean_distances
 
 
 def sparse_encode(X, Y, gram=None, cov=None, algorithm='lasso_lars',
-                  n_nonzero_coefs=None, alpha=1.,
+                  n_nonzero_coefs=None, alpha=None,
                   overwrite_gram=False, overwrite_cov=False, init=None):
     """Generic sparse coding method"""
+    alpha = float(alpha) if alpha is not None else None
     X, Y = map(np.asanyarray, (X, Y))
     if Y.ndim == 1:
         Y = Y[:, np.newaxis]
@@ -39,6 +40,8 @@ def sparse_encode(X, Y, gram=None, cov=None, algorithm='lasso_lars',
         cov = np.dot(X.T, Y)
 
     if algorithm == 'lasso_lars':
+        if alpha is None:
+            alpha = 1.
         try:
             new_code = np.empty((X.shape[1], n_features))
             err_mgt = np.seterr(all='ignore')
@@ -53,6 +56,8 @@ def sparse_encode(X, Y, gram=None, cov=None, algorithm='lasso_lars',
             np.seterr(**err_mgt)
 
     elif algorithm == 'lasso_cd':
+        if alpha is None:
+            alpha = 1.
         new_code = np.empty((X.shape[1], n_features))
         clf = Lasso(alpha=alpha, fit_intercept=False, precompute=gram,
                     max_iter=1000)
@@ -65,6 +70,8 @@ def sparse_encode(X, Y, gram=None, cov=None, algorithm='lasso_lars',
             new_code[:, k] = clf.coef_
 
     elif algorithm == 'lars':
+        if n_nonzero_coefs is None:
+            n_nonzero_coefs = n_features / 10
         try:
             new_code = np.empty((X.shape[1], n_features))
             err_mgt = np.seterr(all='ignore')
@@ -79,9 +86,13 @@ def sparse_encode(X, Y, gram=None, cov=None, algorithm='lasso_lars',
             np.seterr(**err_mgt)
 
     elif algorithm == 'threshold':
+        if alpha is None:
+            alpha = 1.
         new_code = np.sign(cov) * np.maximum(np.abs(cov) - alpha, 0)
 
     elif algorithm == 'omp':
+        if n_nonzero_coefs is None and alpha is None:
+            n_nonzero_coefs = n_features / 10
         norms_squared = np.sum((Y ** 2), axis=0)
         new_code = orthogonal_mp_gram(gram, cov, n_nonzero_coefs, alpha,
                                       norms_squared)
@@ -92,7 +103,7 @@ def sparse_encode(X, Y, gram=None, cov=None, algorithm='lasso_lars',
 
 
 def sparse_encode_parallel(X, Y, gram=None, cov=None, algorithm='lasso_lars',
-                  n_nonzero_coefs=None, alpha=1., overwrite_gram=False,
+                  n_nonzero_coefs=None, alpha=None, overwrite_gram=False,
                   overwrite_cov=False, init=None, n_jobs=1):
     """Parallel sparse coding using joblib"""
     n_samples, n_features = Y.shape
@@ -507,12 +518,17 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
 class BaseDictionaryLearning(BaseEstimator, TransformerMixin):
     """Dictionary learning base class"""
 
-    def __init__(self, n_atoms, transform_algorithm='omp', split_sign=False):
+    def __init__(self, n_atoms, transform_algorithm='omp',
+                 transform_n_nonzero_coefs=None, transform_alpha=None,
+                 split_sign=False, n_jobs=1):
         self.n_atoms = n_atoms
         self.transform_algorithm = transform_algorithm
+        self.transform_n_nonzero_coefs = transform_n_nonzero_coefs
+        self.transform_alpha = transform_alpha
         self.split_sign = split_sign
+        self.n_jobs = n_jobs
 
-    def transform(self, X, y=None, **kwargs):
+    def transform(self, X, y=None):
         """Encode the data as a sparse combination of the dictionary atoms.
 
         Coding method is determined by the object parameter
@@ -524,8 +540,6 @@ class BaseDictionaryLearning(BaseEstimator, TransformerMixin):
             Test data to be transformed, must have the same number of
             features as the data used to train the model.
 
-        TODO: document kwargs for each possible coding method
-
         Returns
         -------
         X_new array, shape (n_samples, n_components)
@@ -535,30 +549,11 @@ class BaseDictionaryLearning(BaseEstimator, TransformerMixin):
         X = np.atleast_2d(X)
         n_samples, n_features = X.shape
 
-        # XXX: parameters should be made explicit so we can have defaults
-        if self.transform_algorithm == 'omp':
-            code = orthogonal_mp(self.components_.T, X.T, **kwargs).T
-        elif self.transform_algorithm == 'lars':
-            code = np.empty((n_samples, self.n_atoms))
-            for k in range(n_samples):
-                _, _, coef_path_ = lars_path(self.components_.T, X[k, :],
-                                             method='lar', **kwargs)
-                code[k, :] = coef_path_[:, -1]
-        elif self.transform_algorithm in ('lasso_cd', 'lasso_lars'):
-            code = sparse_encode_parallel(self.components_.T, X.T, **kwargs).T
-
-        # XXX: threshold and triangle are not verified to be correct
-        elif self.transform_algorithm == 'threshold':
-            alpha = float(kwargs['alpha'])
-            code = np.dot(X, self.components_.T)
-            code = np.sign(code) * np.maximum(np.abs(code) - alpha, 0)
-        elif self.transform_algorithm == 'triangle':
-            distances = euclidean_distances(X, self.components_)
-            distance_means = distances.mean(axis=1)[:, np.newaxis]
-            code = np.maximum(0, distance_means - distances)
-        else:
-            raise NotImplemented('Coding algorithm %s is not implemented' %
-                                 self.transform_algorithm)
+        code = sparse_encode_parallel(
+            self.components_.T, X.T, algorithm=self.transform_algorithm,
+            n_nonzero_coefs=self.transform_n_nonzero_coefs,
+            alpha=self.transform_alpha, n_jobs=self.n_jobs)
+        code = code.T
 
         if self.split_sign:
             # feature vector is split into a positive and negative side
@@ -643,19 +638,19 @@ class DictionaryLearning(BaseDictionaryLearning):
     """
     def __init__(self, n_atoms, alpha=1, max_iter=1000, tol=1e-8,
                  fit_algorithm='lasso_lars', transform_algorithm='omp',
-                 n_jobs=1, code_init=None, dict_init=None, verbose=False,
+                 transform_n_nonzero_coefs=None, transform_alpha=None, n_jobs=1,
+                 code_init=None, dict_init=None, verbose=False,
                  split_sign=False, random_state=None):
-        self.n_atoms = n_atoms
+        BaseDictionaryLearning.__init__(self, n_atoms, transform_algorithm,
+                 transform_n_nonzero_coefs, transform_alpha, split_sign,
+                 n_jobs)
         self.alpha = alpha
         self.max_iter = max_iter
         self.tol = tol
-        self.transform_algorithm = transform_algorithm
         self.fit_algorithm = fit_algorithm
-        self.n_jobs = n_jobs
         self.code_init = code_init
         self.dict_init = dict_init
         self.verbose = verbose
-        self.split_sign = split_sign
         self.random_state = random_state
 
     def fit_transform(self, X, y=None):
@@ -776,13 +771,14 @@ class DictionaryLearningOnline(BaseDictionaryLearning):
     def __init__(self, n_atoms, alpha=1, n_iter=1000,
                  fit_algorithm='lasso_lars', n_jobs=1, chunk_size=3,
                  shuffle=True, dict_init=None, transform_algorithm='omp',
+                 transform_n_nonzero_coefs=None, transform_alpha=None,
                  verbose=False, split_sign=False, random_state=None):
-        self.n_atoms = n_atoms
+        BaseDictionaryLearning.__init__(self, n_atoms, transform_algorithm,
+                 transform_n_nonzero_coefs, transform_alpha, split_sign,
+                 n_jobs)
         self.alpha = alpha
         self.n_iter = n_iter
         self.fit_algorithm = fit_algorithm
-        self.transform_algorithm = transform_algorithm
-        self.n_jobs = n_jobs
         self.dict_init = dict_init
         self.verbose = verbose
         self.shuffle = shuffle
