@@ -29,6 +29,7 @@ def fit_binary(estimator, X, y):
     estimator.fit(X, y)
     return estimator
 
+
 def predict_binary(estimator, X):
     if hasattr(estimator, "decision_function"):
         return np.ravel(estimator.decision_function(X))
@@ -36,11 +37,13 @@ def predict_binary(estimator, X):
         # probabilities of the positive class
         return estimator.predict_proba(X)[:, 1]
 
+
 def check_estimator(estimator):
     if not hasattr(estimator, "decision_function") and \
        not hasattr(estimator, "predict_proba"):
         raise ValueError("The base estimator should implement "
                          "decision_function or predict_proba!")
+
 
 def fit_ovr(estimator, X, y):
     check_estimator(estimator)
@@ -49,6 +52,7 @@ def fit_ovr(estimator, X, y):
     Y = lb.fit_transform(y)
     estimators = [fit_binary(estimator, X, Y[:, i]) for i in range(Y.shape[1])]
     return estimators, lb
+
 
 def predict_ovr(estimators, label_binarizer, X):
     Y = np.array([predict_binary(e, X) for e in estimators]).T
@@ -70,8 +74,8 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin):
     Parameters
     ----------
     estimator : estimator object
-        An estimator object implementing `fit` and one of `decision_function` or
-        `predict_proba`.
+        An estimator object implementing `fit` and one of `decision_function`
+        or `predict_proba`.
 
     Attributes
     ----------
@@ -123,6 +127,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin):
 
         return predict_ovr(self.estimators_, self.label_binarizer_, X)
 
+
 def fit_ovo_binary(estimator, X, y, i, j):
     cond = np.logical_or(y == i, y == j)
     y = y[cond].copy()
@@ -131,6 +136,7 @@ def fit_ovo_binary(estimator, X, y, i, j):
     ind = np.arange(X.shape[0])
     return fit_binary(estimator, X[ind[cond]], y)
 
+
 def fit_ovo(estimator, X, y):
     classes = np.unique(y)
     n_classes = classes.shape[0]
@@ -138,6 +144,7 @@ def fit_ovo(estimator, X, y):
                     for i in range(n_classes) for j in range(i + 1, n_classes)]
 
     return estimators, classes
+
 
 def predict_ovo(estimators, classes, X):
     n_samples = X.shape[0]
@@ -153,6 +160,7 @@ def predict_ovo(estimators, classes, X):
             k += 1
 
     return classes[votes.argmax(axis=1)]
+
 
 class OneVsOneClassifier(BaseEstimator, ClassifierMixin):
     """One-vs-one multiclass strategy
@@ -170,8 +178,8 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin):
     Parameters
     ----------
     estimator : estimator object
-        An estimator object implementing `fit` and one of `decision_function` or
-        `predict_proba`.
+        An estimator object implementing `fit` and one of `decision_function`
+        or `predict_proba`.
 
     Attributes
     ----------
@@ -221,6 +229,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin):
 
         return predict_ovo(self.estimators_, self.classes_, X)
 
+
 def fit_ecoc(estimator, X, y, code_size):
     check_estimator(estimator)
 
@@ -247,28 +256,30 @@ def fit_ecoc(estimator, X, y, code_size):
 
     return estimators, classes, code_book
 
+
 def predict_ecoc(estimators, classes, code_book, X):
     Y = np.array([predict_binary(e, X) for e in estimators]).T
     pred = euclidean_distances(Y, code_book).argmin(axis=1)
     return classes[pred]
 
+
 class OutputCodeClassifier(BaseEstimator, ClassifierMixin):
     """(Error-Correcting) Output-Code multiclass strategy
 
     Output-code based strategies consist in representing each class with a
-    binary code (an array of 0s and 1s). At fitting time, one binary classifier
-    per bit in the code book is fitted.  At prediction time, the classifiers are
-    used to project new points in the class space and the class closest to the
-    points is chosen. The main advantage of these strategies is that the number
-    of classifiers used can be controlled by the user, either for compressing
-    the model (0 < code_size < 1) or for making the model more robust to errors
-    (code_size > 1). See the documentation for more details.
+    binary code (an array of 0s and 1s). At fitting time, one binary
+    classifier per bit in the code book is fitted.  At prediction time, the
+    classifiers are used to project new points in the class space and the class
+    closest to the points is chosen. The main advantage of these strategies is
+    that the number of classifiers used can be controlled by the user, either
+    for compressing the model (0 < code_size < 1) or for making the model more
+    robust to errors (code_size > 1). See the documentation for more details.
 
     Parameters
     ----------
     estimator : estimator object
-        An estimator object implementing `fit` and one of `decision_function` or
-        `predict_proba`.
+        An estimator object implementing `fit` and one of `decision_function`
+        or `predict_proba`.
 
     code_size: float
         Percentage of the number of classes to be used to create the code book.
@@ -289,8 +300,9 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin):
 
     References
     ----------
-    [1] "Solving multiclass learning problems via error-correcting ouput codes",
-    Dietterich T., Bakiri G., Journal of Artificial Intelligence Research 2.
+    [1] "Solving multiclass learning problems via error-correcting ouput
+        codes", Dietterich T., Bakiri G., Journal of Artificial Intelligence
+        Research 2.
 
     [2] "The error coding method and PICTs", James G., Hastie T., Journal of
     Computational and Graphical statistics 7.
@@ -341,4 +353,5 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin):
         if not hasattr(self, "estimators_"):
             raise ValueError("The object hasn't been fitted yet!")
 
-        return predict_ecoc(self.estimators_, self.classes_, self.code_book_, X)
+        return predict_ecoc(self.estimators_, self.classes_,
+                            self.code_book_, X)

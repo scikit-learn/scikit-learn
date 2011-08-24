@@ -21,6 +21,7 @@ iris.data = iris.data[perm]
 iris.target = iris.target[perm]
 n_classes = 3
 
+
 def test_ovr_exceptions():
     ovr = OneVsRestClassifier(LinearSVC())
     assert_raises(ValueError, ovr.predict, [])
@@ -49,6 +50,7 @@ def test_ovr_gridsearch():
     best_C = cv.best_estimator.estimators_[0].C
     assert_true(best_C in Cs)
 
+
 def test_ovo_exceptions():
     ovo = OneVsOneClassifier(LinearSVC())
     assert_raises(ValueError, ovo.predict, [])
@@ -74,9 +76,11 @@ def test_ovo_gridsearch():
     best_C = cv.best_estimator.estimators_[0].C
     assert_true(best_C in Cs)
 
+
 def test_ecoc_exceptions():
     ecoc = OutputCodeClassifier(LinearSVC())
     assert_raises(ValueError, ecoc.predict, [])
+
 
 def test_ecoc_fit_predict():
     # A classifier which implements decision_function.
@@ -89,6 +93,7 @@ def test_ecoc_fit_predict():
     #ecoc = OutputCodeClassifier(MultinomialNB(), code_size=2)
     #pred = ecoc.fit(iris.data, iris.target).predict(iris.data)
     #assert_equal(len(ecoc.estimators_), n_classes * 2)
+
 
 def test_ecoc_gridsearch():
     ecoc = OutputCodeClassifier(LinearSVC())
