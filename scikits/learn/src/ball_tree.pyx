@@ -383,6 +383,13 @@ cdef inline stack_item stack_pop(stack* self):
 
 
 ######################################################################
+# newObj function
+#  this is a helper function for pickling
+def newObj(obj):
+    return obj.__new__(obj)
+
+
+######################################################################
 # BallTree class
 #
 cdef class BallTree(object):
@@ -449,7 +456,7 @@ cdef class BallTree(object):
         >>> print dist  # distances to 3 closest neighbors
         [ 0.          0.19662693  0.29473397]
     """
-    cdef np.ndarray data_
+    cdef readonly np.ndarray data
     cdef np.ndarray idx_array
     cdef np.ndarray node_centroid_arr
     cdef np.ndarray node_info_arr
@@ -458,18 +465,23 @@ cdef class BallTree(object):
     cdef ITYPE_t n_levels
     cdef ITYPE_t n_nodes
 
-    def get_data(self):
-        return self.data_
-
-    data = property(get_data)
+    def __cinit__(self):
+        """
+        initialize all arrays to empty.  This will prevent memory errors
+        in rare cases where __init__ is not called
+        """
+        self.data = np.empty((0,0), dtype=DTYPE)
+        self.idx_array = np.empty(0, dtype=ITYPE)
+        self.node_centroid_arr = np.empty((0,0), dtype=DTYPE)
+        self.node_info_arr = np.empty(0, dtype='c')
 
     def __init__(self, X, ITYPE_t leaf_size=20, DTYPE_t p=2):
-        self.data_ = np.asarray(X, dtype=DTYPE, order='C')
+        self.data = np.asarray(X, dtype=DTYPE, order='C')
 
         if X.size == 0:
             raise ValueError("X is an empty array")
 
-        if self.data_.ndim != 2:
+        if self.data.ndim != 2:
             raise ValueError("X should have two dimensions")
 
         if p < 1:
@@ -480,8 +492,8 @@ cdef class BallTree(object):
             raise ValueError("leaf_size must be greater than or equal to 1")
         self.leaf_size = leaf_size
 
-        cdef ITYPE_t n_samples = self.data_.shape[0]
-        cdef ITYPE_t n_features = self.data_.shape[1]
+        cdef ITYPE_t n_samples = self.data.shape[0]
+        cdef ITYPE_t n_features = self.data.shape[1]
 
         # determine number of levels in the ball tree, and from this
         # the number of nodes in the ball tree
@@ -497,11 +509,17 @@ cdef class BallTree(object):
                                       dtype='c', order='C')
         self.build_tree_()
 
+    def __reduce__(self):
+        """
+        reduce method used for pickling
+        """
+        return (newObj, (BallTree,), self.__getstate__())
+
     def __getstate__(self):
         """
         get state for pickling
         """
-        return (self.data_,
+        return (self.data,
                 self.idx_array,
                 self.node_centroid_arr,
                 self.node_info_arr,
@@ -514,7 +532,7 @@ cdef class BallTree(object):
         """
         set state for pickling
         """
-        self.data_ = state[0]
+        self.data = state[0]
         self.idx_array = state[1]
         self.node_centroid_arr = state[2]
         self.node_info_arr = state[3]
@@ -571,11 +589,11 @@ cdef class BallTree(object):
         X = np.asarray(X, dtype=DTYPE, order='C')
         X = np.atleast_2d(X)
 
-        if X.shape[-1] != self.data_.shape[1]:
+        if X.shape[-1] != self.data.shape[1]:
             raise ValueError("query data dimension must match BallTree "
                              "data dimension")
 
-        if k > self.data_.shape[0]:
+        if k > self.data.shape[0]:
             raise ValueError("k must be less than or equal "
                              "to the number of training points")
 
@@ -704,7 +722,7 @@ cdef class BallTree(object):
         # prepare X for query
         X = np.asarray(X, dtype=DTYPE, order='C')
         X = np.atleast_2d(X)
-        if X.shape[-1] != self.data_.shape[1]:
+        if X.shape[-1] != self.data.shape[1]:
             raise ValueError("query data dimension must match BallTree "
                              "data dimension")
 
@@ -733,7 +751,7 @@ cdef class BallTree(object):
                                                          &node_stack)
         elif not return_distance:
             idx_array = np.empty(X.shape[0], dtype='object')
-            idx_array_i = np.empty(self.data_.shape[0], dtype=ITYPE)
+            idx_array_i = np.empty(self.data.shape[0], dtype=ITYPE)
             for pt_idx, pt in enumerate(X):
                 count_i = self.query_radius_idx_only_(
                     <DTYPE_t*>pt.data,
@@ -745,8 +763,8 @@ cdef class BallTree(object):
         else:
             idx_array = np.empty(X.shape[0], dtype='object')
             distances = np.empty(X.shape[0], dtype='object')
-            idx_array_i = np.empty(self.data_.shape[0], dtype=ITYPE)
-            distances_i = np.empty(self.data_.shape[0], dtype=DTYPE)
+            idx_array_i = np.empty(self.data.shape[0], dtype=ITYPE)
+            distances_i = np.empty(self.data.shape[0], dtype=DTYPE)
             for pt_idx, pt in enumerate(X):
                 count_i = self.query_radius_distances_(
                     <DTYPE_t*>pt.data,
@@ -775,14 +793,14 @@ cdef class BallTree(object):
 
     @cython.cdivision(True)
     cdef void build_tree_(BallTree self):
-        cdef DTYPE_t* data = <DTYPE_t*> self.data_.data
+        cdef DTYPE_t* data = <DTYPE_t*> self.data.data
         cdef ITYPE_t* idx_array = <ITYPE_t*> self.idx_array.data
         cdef DTYPE_t* node_centroid_arr = <DTYPE_t*>self.node_centroid_arr.data
         cdef NodeInfo* node_info_arr = <NodeInfo*> self.node_info_arr.data
 
         cdef DTYPE_t p = self.p
-        cdef ITYPE_t n_samples = self.data_.shape[0]
-        cdef ITYPE_t n_features = self.data_.shape[1]
+        cdef ITYPE_t n_samples = self.data.shape[0]
+        cdef ITYPE_t n_features = self.data.shape[1]
 
         cdef ITYPE_t idx_start, idx_end, n_points
         cdef DTYPE_t radius
@@ -912,14 +930,14 @@ cdef class BallTree(object):
                          ITYPE_t* near_set_indx,
                          stack* node_stack,
                          ITYPE_t use_max_heap):
-        cdef DTYPE_t* data = <DTYPE_t*> self.data_.data
+        cdef DTYPE_t* data = <DTYPE_t*> self.data.data
         cdef ITYPE_t* idx_array = <ITYPE_t*> self.idx_array.data
         cdef DTYPE_t* node_centroid_arr = <DTYPE_t*>self.node_centroid_arr.data
         cdef NodeInfo* node_info_arr = <NodeInfo*> self.node_info_arr.data
         cdef NodeInfo* node_info = node_info_arr
 
         cdef DTYPE_t p = self.p
-        cdef ITYPE_t n_features = self.data_.shape[1]
+        cdef ITYPE_t n_features = self.data.shape[1]
 
         cdef DTYPE_t dist_pt, dist_p_LB, dist_p_LB_1, dist_p_LB_2
         cdef ITYPE_t i, i1, i2, i_node
@@ -1009,14 +1027,14 @@ cdef class BallTree(object):
     cdef ITYPE_t query_radius_count_(BallTree self,
                                      DTYPE_t* pt, DTYPE_t r,
                                      stack* node_stack):
-        cdef DTYPE_t* data = <DTYPE_t*> self.data_.data
+        cdef DTYPE_t* data = <DTYPE_t*> self.data.data
         cdef ITYPE_t* idx_array = <ITYPE_t*> self.idx_array.data
         cdef DTYPE_t* node_centroid_arr = <DTYPE_t*>self.node_centroid_arr.data
         cdef NodeInfo* node_info_arr = <NodeInfo*> self.node_info_arr.data
         cdef NodeInfo* node_info = node_info_arr
 
         cdef DTYPE_t p = self.p
-        cdef ITYPE_t n_features = self.data_.shape[1]
+        cdef ITYPE_t n_features = self.data.shape[1]
         cdef ITYPE_t i, i_node
         cdef ITYPE_t count = 0
         cdef DTYPE_t r_p = dist_p_from_dist(r, p)
@@ -1073,14 +1091,14 @@ cdef class BallTree(object):
                                         DTYPE_t* pt, DTYPE_t r,
                                         ITYPE_t* indices,
                                         stack* node_stack):
-        cdef DTYPE_t* data = <DTYPE_t*> self.data_.data
+        cdef DTYPE_t* data = <DTYPE_t*> self.data.data
         cdef ITYPE_t* idx_array = <ITYPE_t*> self.idx_array.data
         cdef DTYPE_t* node_centroid_arr = <DTYPE_t*>self.node_centroid_arr.data
         cdef NodeInfo* node_info_arr = <NodeInfo*> self.node_info_arr.data
         cdef NodeInfo* node_info = node_info_arr
 
         cdef DTYPE_t p = self.p
-        cdef ITYPE_t n_features = self.data_.shape[1]
+        cdef ITYPE_t n_features = self.data.shape[1]
         cdef ITYPE_t i, i_node
         cdef ITYPE_t idx_i = 0
         cdef DTYPE_t r_p = dist_p_from_dist(r, p)
@@ -1141,14 +1159,14 @@ cdef class BallTree(object):
                                          ITYPE_t* indices,
                                          DTYPE_t* distances,
                                          stack* node_stack):
-        cdef DTYPE_t* data = <DTYPE_t*> self.data_.data
+        cdef DTYPE_t* data = <DTYPE_t*> self.data.data
         cdef ITYPE_t* idx_array = <ITYPE_t*> self.idx_array.data
         cdef DTYPE_t* node_centroid_arr = <DTYPE_t*>self.node_centroid_arr.data
         cdef NodeInfo* node_info_arr = <NodeInfo*> self.node_info_arr.data
         cdef NodeInfo* node_info = node_info_arr
 
         cdef DTYPE_t p = self.p
-        cdef ITYPE_t n_features = self.data_.shape[1]
+        cdef ITYPE_t n_features = self.data.shape[1]
         cdef ITYPE_t i, i_node
         cdef ITYPE_t idx_i = 0
         cdef DTYPE_t r_p = dist_p_from_dist(r, p)
