@@ -9,6 +9,7 @@ Scalable alternative to Spectral Clustering for small number of centers.
 import os
 import numpy as np
 import scipy.sparse as sp
+from time import time
 
 from .k_means_ import k_means
 from ..utils.extmath import safe_sparse_dot
@@ -109,11 +110,25 @@ def power_iteration_clustering(affinity, k=8, n_vectors=1, tol=1e-5,
     affinity = affinity.copy()
     n_samples = affinity.shape[0]
     if sp.issparse(affinity):
-        affinity.setdiag(np.zeros(n_samples))
+        t0 = time()
+        # Set the diagonal elements to zero. For some reason a naive:
+        #     affinity.setdiag(np.zeros(n_samples))
+        # is very slow on CSR / CSC matrices, hence the following
+        a = affinity
+        for i in xrange(n_samples):
+            indices_i = a.indices[a.indptr[i]: a.indptr[i + 1]]
+            data_i = a.data[a.indptr[i]: a.indptr[i + 1]]
+            data_i[:] = np.where(indices_i == i, 0.0, data_i)
     else:
         affinity[np.eye(n_samples, dtype=np.bool)] = 0.0
+    if verbose:
+        print "Null diagonal on affinity in %0.3fs" % (time() - t0)
+    t0 = time()
     normalized = normalize(affinity, norm='l1', copy=False).T
+    if verbose:
+        print "Normalized affinity in %0.3fs" % (time() - t0)
 
+    t0 = time()
     if n_vectors == 1:
         # initialize a single vector deterministically
         sums = normalized.sum(axis=1)
@@ -127,7 +142,10 @@ def power_iteration_clustering(affinity, k=8, n_vectors=1, tol=1e-5,
 
     previous_vectors = vectors.copy()
     delta = np.ones(vectors.size).reshape(vectors.shape)
+    if verbose:
+        print "Generated random vectors in %0.3fs" % (time() - t0)
 
+    t0 = time()
     for i in range(max_iter):
 
         previous_vectors[:] = vectors
@@ -152,7 +170,7 @@ def power_iteration_clustering(affinity, k=8, n_vectors=1, tol=1e-5,
             break
 
     if verbose:
-        print "Converged at iteration: %04d/%04d with delta=%f" % (
-            i + 1, max_iter, delta.max())
+        print "Converged at iteration: %04d/%04d with delta=%f in %0.3fs" % (
+            i + 1, max_iter, delta.max(), time() - t0)
 
     return k_means(vectors.T, k, random_state=random_state)[1]

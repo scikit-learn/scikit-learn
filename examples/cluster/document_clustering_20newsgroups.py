@@ -24,15 +24,12 @@ print __doc__
 
 from time import time
 import logging
-import os
-import sys
 
 from scikits.learn.datasets import fetch_20newsgroups
 from scikits.learn.feature_extraction.text import Vectorizer
 from scikits.learn.cluster import power_iteration_clustering
 from scikits.learn.cluster import spectral_clustering
 from scikits.learn.metrics.pairwise import cosine_similarity
-from scikits.learn.neighbors import kneighbors_graph
 from scikits.learn.metrics import homogeneity_completeness_v_measure
 
 # Display progress logs on stdout
@@ -60,25 +57,25 @@ print "%d documents (training set)" % len(data_train.filenames)
 print "%d categories" % len(data_train.target_names)
 print
 
-filenames_train = data_train.filenames
-y_train = data_train.target
-
 from scikits.learn.externals import joblib
 memory = joblib.Memory('.')
 
 @memory.cache
-def extract(filenames):
+def extract(documents):
     print "Extracting features from the training dataset using a vectorizer"
     t0 = time()
     vectorizer = Vectorizer()
-    X = vectorizer.fit_transform((open(f).read() for f in filenames))
+    X = vectorizer.fit_transform(documents)
     print "done in %fs" % (time() - t0)
     print
     return X
 
-X_train = extract(filenames_train)
-X_train = X_train[:800] # try to reproduce the settings of the PIC paper
-labels_true = data_train.target[:800]
+X_train = extract(data_train.data)
+labels_true = data_train.target
+
+# Smaller dataset to reproduce conditions similar to the PIC paper
+X_train = X_train[:800]
+labels_true = labels_true[:800]
 print "n_samples: %d, n_features: %d" % X_train.shape
 
 # Build the affinity matrix using the cosine similarity between documents
@@ -104,7 +101,8 @@ def report(labels_true, labels_pred, duration):
 print "Clustering the documents using the Power Iteration Clustering method"
 t0 = time()
 labels_pred = power_iteration_clustering(affinity, k=n_clusters,
-                                         n_vectors=10, tol=1e-5,
+                                         verbose=2,
+                                         n_vectors=1, tol=1e-5,
                                          random_state=42)
 duration = time() - t0
 report(labels_true, labels_pred, duration)
