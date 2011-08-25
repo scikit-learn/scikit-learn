@@ -27,12 +27,12 @@ __all__ = [
     ]
 
 lookup_c = \
-      {'gini': 0,
-       'entropy': 1,
-       'miss': 2,
+      {'gini': _tree.Gini,
+       'entropy': _tree.Entropy,
+       #'miss': _tree.eval_miss,
        }
 lookup_r = \
-      {'mse': 0,
+      {'mse': _tree.MSE,
       }
 
 
@@ -76,12 +76,13 @@ class Node(object):
 def _build_tree(is_classification, features, labels, criterion,
                max_depth, min_split, F, K, random_state):
 
-    n_samples, n_dims = features.shape
+    n_total_samples, n_dims = features.shape
     if len(labels) != len(features):
         raise ValueError("Number of labels does not match "
                           "number of features\n"
                          "num labels is %s and num features is %s "
                          % (len(labels), len(features)))
+    labels = np.array(labels, dtype=np.float64, order="c")
 
     sample_dims = np.arange(n_dims)
     if F is not None:
@@ -103,6 +104,16 @@ def _build_tree(is_classification, features, labels, criterion,
         while len(sample_dims) != F:
             sample_dims = np.unique(random_state.randint(0, n_dims, F))
         features = features[:, sample_dims]
+        n_total_samples, n_dims = features.shape
+
+    # make data fortran layout
+    if not features.flags["F_CONTIGUOUS"]:
+        features = np.array(features, order="F")
+
+    sorted_features = np.argsort(features, axis=0)
+    sorted_features = sorted_features.astype(np.int32)
+    if not sorted_features.flags["F_CONTIGUOUS"]:
+        sorted_features = np.array(sorted_features, order="F")
 
     if min_split <= 0:
         raise ValueError("min_split must be greater than zero.\n"
@@ -111,46 +122,63 @@ def _build_tree(is_classification, features, labels, criterion,
         raise ValueError("max_depth must be greater than zero.\n"
                          "max_depth is %s." % max_depth)
 
-    def recursive_partition(features, labels, depth):
-        is_split_valid = True
-
+    n_rec_part_called = np.zeros((1,), dtype=np.int)
+    def recursive_partition(sample_mask, depth, n_samples):
+        n_rec_part_called[0] += 1
+        is_leaf = False
+        # If current depth larger than max return leaf.
         if depth >= max_depth:
-            is_split_valid = False
-
-        if is_classification:
-            crit = lookup_c[criterion]
-            S = _tree._find_best_split_classification(features, labels, crit)
+            is_leaf = True
+        # else try to find a split point
         else:
-            crit = lookup_r[criterion]
-            S = _tree._find_best_split_regression(features, labels, crit)
+            dim, thresh, error, nll = _tree._find_best_split(sample_mask,
+                                                             features, 
+                                                             sorted_features,
+                                                             labels, 
+                                                             criterion, 
+                                                             K,
+                                                             n_samples)
+            if dim != -1:
+                # we found a split point
+                # check if num samples to the left and right of split point
+                # is larger than min_split
+                if nll <= min_split or n_samples - nll <= min_split:
+                    # splitting point does not suffice min_split
+                    is_leaf = True
+                else:
+                    is_leaf = False
+            else:
+                # could not find splitting point
+                is_leaf = True
 
-        if S is not None:
-            dim, thresh, error = S
-            split = features[:, dim] < thresh
-            if len(features[split]) < min_split or \
-                len(features[~split]) < min_split:
-                is_split_valid = False
-        else:
-            is_split_valid = False
-
-        if is_split_valid == False:
+        new_node = None
+        if is_leaf:
             if is_classification:
                 a = np.zeros((K, ))
-                t = labels.max() + 1
-                a[:t] = np.bincount(labels)
-                return Leaf(a)
+                _tree.fill_counts(a, labels, sample_mask)
+                new_node = Leaf(a)
             else:
-                return Leaf(np.mean(labels))
+                new_node = Leaf(np.mean(labels[sample_mask]))
+        else:
+            split = features[:, dim] < thresh
+            left_sample_mask = split & sample_mask
+            right_sample_mask = ~split & sample_mask
+            new_node = Node(dimension=sample_dims[dim],
+                            value=thresh, error=error,
+                            left=recursive_partition(left_sample_mask,
+                                                     depth + 1, 
+                                                     nll),
+                            right=recursive_partition(right_sample_mask,
+                                                      depth + 1,
+                                                      n_samples - nll))
+    
+        # assert new_node != None
+        return new_node
 
-        return Node(dimension=sample_dims[dim],
-                    value=thresh,
-                    error=error,
-                    left=recursive_partition(features[split],
-                                             labels[split], depth + 1),
-                    right=recursive_partition(features[~split],
-                                              labels[~split], depth + 1))
-
-    return recursive_partition(features, labels, 0)
+    root = recursive_partition(np.ones((n_total_samples,), dtype=np.bool),
+                               0, n_total_samples)
+    print "recursive_partition called %d times" % n_rec_part_called[0]
+    return root
 
 
 def _apply_tree(tree, features):
@@ -252,7 +280,7 @@ class BaseDecisionTree(BaseEstimator):
             Returns self.
         """
         X = np.asanyarray(X, dtype=np.float64, order='C')
-        _, self.n_features = X.shape
+        n_samples, self.n_features = X.shape
 
         if self.type == 'classification':
             y = np.asanyarray(y, dtype=np.int, order='C')
@@ -280,14 +308,24 @@ class BaseDecisionTree(BaseEstimator):
                                  "in the range [0 to %s) for multiclass "
                                  "classification " % self.K)
 
-            self.tree = _build_tree(True, X, y, self.criterion,
+            criterion_class = lookup_c[self.criterion]
+            pm_left = np.zeros((self.K,), dtype=np.int32)
+            pm_right = np.zeros((self.K,), dtype=np.int32)
+            criterion = criterion_class(self.K, pm_left, pm_right)
+
+            self.tree = _build_tree(True, X, y, criterion,
                                     self.max_depth, self.min_split, self.F,
                                     self.K, self.random_state)
         else:  # regression
             y = np.asanyarray(y, dtype=np.float64, order='C')
-            self.tree = _build_tree(False, X, y, self.criterion,
+            
+            criterion_class = lookup_r[self.criterion]
+            labels_temp = np.zeros((n_samples,), dtype=np.float64)
+            sample_mask_temp = np.zeros((n_samples,), dtype=np.int8) 
+            criterion = criterion_class(labels_temp, sample_mask_temp)            
+            self.tree = _build_tree(False, X, y, criterion,
                                     self.max_depth, self.min_split, self.F,
-                                    None, self.random_state)
+                                    0, self.random_state)
         return self
 
     def predict(self, X):
