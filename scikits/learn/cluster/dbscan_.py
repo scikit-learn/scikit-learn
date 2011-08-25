@@ -188,7 +188,7 @@ class DBSCAN(BaseEstimator):
             Overwrite keywords from __init__.
         """
 
-        self._set_params(**params)
+        self.set_params(**params)
         self.core_sample_indices_, self.labels_ = dbscan(X,
                                                          **self._get_params())
         self.components_ = X[self.core_sample_indices_].copy()

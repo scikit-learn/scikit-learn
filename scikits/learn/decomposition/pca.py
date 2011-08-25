@@ -215,8 +215,7 @@ class PCA(BaseEstimator, TransformerMixin):
 
         return U
 
-    def _fit(self, X, **params):
-        self._set_params(**params)
+    def _fit(self, X):
         X = np.atleast_2d(X)
         n_samples, n_features = X.shape
         if self.copy:
@@ -395,7 +394,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> pca = RandomizedPCA(n_components=2)
     >>> pca.fit(X)
-    RandomizedPCA(copy=True, n_components=2, iterated_power=3, whiten=False)
+    RandomizedPCA(copy=True, iterated_power=3, n_components=2, whiten=False)
     >>> print pca.explained_variance_ratio_
     [ 0.99244289  0.00755711]
 
@@ -426,7 +425,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         self.whiten = whiten
         self.mean_ = None
 
-    def fit(self, X, y=None, **params):
+    def fit(self, X, y=None):
         """Fit the model to the data X.
 
         Parameters
@@ -440,7 +439,6 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         self : object
             Returns the instance itself.
         """
-        self._set_params(**params)
         if not hasattr(X, 'todense'):
             X = np.atleast_2d(X)
 

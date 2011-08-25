@@ -122,7 +122,7 @@ class Isomap(BaseEstimator):
         evals = self.kernel_pca_.lambdas_
         return np.sqrt(np.sum(G_center ** 2) - np.sum(evals ** 2)) / G.shape[0]
 
-    def fit(self, X, y=None, **params):
+    def fit(self, X, y=None):
         """Compute the embedding vectors for data X
 
         Parameters
@@ -134,11 +134,10 @@ class Isomap(BaseEstimator):
         -------
         self : returns an instance of self.
         """
-        self._set_params(**params)
         self._fit_transform(X)
         return self
 
-    def fit_transform(self, X, y=None, **params):
+    def fit_transform(self, X, y=None):
         """Fit the model from data in X and transform X.
 
         Parameters
@@ -151,7 +150,6 @@ class Isomap(BaseEstimator):
         -------
         X_new: array-like, shape (n_samples, out_dim)
         """
-        self._set_params(**params)
         self._fit_transform(X)
         return self.embedding_
 

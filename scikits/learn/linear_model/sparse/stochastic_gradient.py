@@ -4,7 +4,7 @@
 """Implementation of Stochastic Gradient Descent (SGD) with sparse data."""
 
 import numpy as np
-from scipy import sparse
+import scipy.sparse as sp
 
 from ...externals.joblib import Parallel, delayed
 from ..base import BaseSGDClassifier, BaseSGDRegressor
@@ -110,9 +110,10 @@ class SGDClassifier(BaseSGDClassifier):
     >>> y = np.array([1, 1, 2, 2])
     >>> clf = linear_model.sparse.SGDClassifier()
     >>> clf.fit(X, y)
-    SGDClassifier(loss='hinge', n_jobs=1, shuffle=False, verbose=0, n_iter=5,
-           learning_rate='optimal', fit_intercept=True, penalty='l2',
-           power_t=0.5, seed=0, eta0=0.0, rho=1.0, alpha=0.0001)
+    SGDClassifier(alpha=0.0001, eta0=0.0, fit_intercept=True,
+           learning_rate='optimal', loss='hinge', n_iter=5, n_jobs=1,
+           penalty='l2', power_t=0.5, rho=1.0, seed=0, shuffle=False,
+           verbose=0)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
 
@@ -128,13 +129,13 @@ class SGDClassifier(BaseSGDClassifier):
             self.sparse_coef_ = None
         else:
             # sparse representation of the fitted coef for the predict method
-            self.sparse_coef_ = sparse.csr_matrix(coef_)
+            self.sparse_coef_ = sp.csr_matrix(coef_)
 
     def _fit_binary(self, X, y):
         """Fit a binary classifier.
         """
         # interprete X as CSR matrix
-        X = sparse.csr_matrix(X)
+        X = sp.csr_matrix(X)
 
         # encode original class labels as 1 (classes[1]) or -1 (classes[0]).
         y_new = np.ones(y.shape, dtype=np.float64, order="C") * -1.0
@@ -174,7 +175,7 @@ class SGDClassifier(BaseSGDClassifier):
         all others (OVA: One Versus All).
         """
         # interprete X as CSR matrix
-        X = sparse.csr_matrix(X)
+        X = sp.csr_matrix(X)
 
         # get sparse matrix datastructures
         X_data = np.array(X.data, dtype=np.float64, order="C")
@@ -217,8 +218,8 @@ class SGDClassifier(BaseSGDClassifier):
           The signed 'distances' to the hyperplane(s).
         """
         # np.dot only works correctly if both arguments are sparse matrices
-        if not sparse.issparse(X):
-            X = sparse.csr_matrix(X)
+        if not sp.issparse(X):
+            X = sp.csr_matrix(X)
         scores = np.asarray(np.dot(X, self.sparse_coef_.T).todense()
                             + self.intercept_)
         if self.classes.shape[0] == 2:
@@ -337,9 +338,10 @@ class SGDRegressor(BaseSGDRegressor):
     >>> X = np.random.randn(n_samples, n_features)
     >>> clf = linear_model.sparse.SGDRegressor()
     >>> clf.fit(X, y)
-    SGDRegressor(loss='squared_loss', power_t=0.25, shuffle=False, verbose=0,
-           n_iter=5, learning_rate='invscaling', fit_intercept=True,
-           penalty='l2', p=0.1, seed=0, eta0=0.01, rho=1.0, alpha=0.0001)
+    SGDRegressor(alpha=0.0001, eta0=0.01, fit_intercept=True,
+           learning_rate='invscaling', loss='squared_loss', n_iter=5, p=0.1,
+           penalty='l2', power_t=0.25, rho=1.0, seed=0, shuffle=False,
+           verbose=0)
 
     See also
     --------
@@ -353,11 +355,11 @@ class SGDRegressor(BaseSGDRegressor):
             self.sparse_coef_ = None
         else:
             # sparse representation of the fitted coef for the predict method
-            self.sparse_coef_ = sparse.csr_matrix(coef_)
+            self.sparse_coef_ = sp.csr_matrix(coef_)
 
     def _fit_regressor(self, X, y):
         # interprete X as CSR matrix
-        X = sparse.csr_matrix(X)
+        X = sp.csr_matrix(X)
 
         # get sparse matrix datastructures
         X_data = np.array(X.data, dtype=np.float64, order="C")
@@ -400,8 +402,8 @@ class SGDRegressor(BaseSGDRegressor):
            Array containing the predicted class labels.
         """
         # np.dot only works correctly if both arguments are sparse matrices
-        if not sparse.issparse(X):
-            X = sparse.csr_matrix(X)
+        if not sp.issparse(X):
+            X = sp.csr_matrix(X)
         scores = np.asarray(np.dot(X, self.sparse_coef_.T).todense()
                             + self.intercept_).ravel()
         return scores

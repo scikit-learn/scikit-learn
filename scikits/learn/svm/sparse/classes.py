@@ -23,8 +23,8 @@ class SVC(SparseBaseLibSVM, ClassifierMixin):
     >>> from scikits.learn.svm.sparse import SVC
     >>> clf = SVC()
     >>> clf.fit(X, y)
-    SVC(kernel='rbf', C=1.0, probability=False, degree=3, coef0=0.0, tol=0.001,
-      shrinking=True, gamma=0.25)
+    SVC(C=1.0, coef0=0.0, degree=3, gamma=0.25, kernel='rbf', probability=False,
+      shrinking=True, tol=0.001)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
     """
@@ -58,8 +58,8 @@ class NuSVC (SparseBaseLibSVM, ClassifierMixin):
     >>> from scikits.learn.svm.sparse import NuSVC
     >>> clf = NuSVC()
     >>> clf.fit(X, y)
-    NuSVC(kernel='rbf', probability=False, degree=3, coef0=0.0, tol=0.001,
-       shrinking=True, nu=0.5, gamma=0.25)
+    NuSVC(coef0=0.0, degree=3, gamma=0.25, kernel='rbf', nu=0.5,
+       probability=False, shrinking=True, tol=0.001)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
     """
@@ -97,8 +97,8 @@ class SVR (SparseBaseLibSVM, RegressorMixin):
     >>> X = np.random.randn(n_samples, n_features)
     >>> clf = SVR(C=1.0, epsilon=0.2)
     >>> clf.fit(X, y)
-    SVR(kernel='rbf', C=1.0, probability=False, degree=3, epsilon=0.2,
-      shrinking=True, tol=0.001, coef0=0.0, nu=0.5, gamma=0.1)
+    SVR(C=1.0, coef0=0.0, degree=3, epsilon=0.2, gamma=0.1, kernel='rbf', nu=0.5,
+      probability=False, shrinking=True, tol=0.001)
     """
 
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
@@ -134,15 +134,15 @@ class NuSVR (SparseBaseLibSVM, RegressorMixin):
     >>> X = np.random.randn(n_samples, n_features)
     >>> clf = NuSVR(nu=0.1, C=1.0)
     >>> clf.fit(X, y)
-    NuSVR(kernel='rbf', C=1.0, probability=False, degree=3, shrinking=True,
-       tol=0.001, epsilon=0.1, coef0=0.0, nu=0.1, gamma=0.1)
+    NuSVR(C=1.0, coef0=0.0, degree=3, epsilon=0.1, gamma=0.1, kernel='rbf',
+       nu=0.1, probability=False, shrinking=True, tol=0.001)
     """
 
     def __init__(self, nu=0.5, C=1.0, kernel='rbf', degree=3,
                  gamma=0.0, coef0=0.0, shrinking=True, epsilon=0.1,
                  probability=False, tol=1e-3):
 
-        SparseBaseLibSVM.__init__(self, 'epsilon_svr', kernel,
+        SparseBaseLibSVM.__init__(self, 'nu_svr', kernel,
                          degree, gamma, coef0, tol, C, nu,
                          epsilon, shrinking, probability)
 

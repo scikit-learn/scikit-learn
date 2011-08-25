@@ -1,5 +1,5 @@
 import numpy as np
-from scipy import sparse
+import scipy.sparse as sp
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_almost_equal
 from numpy.testing import assert_equal
@@ -12,7 +12,7 @@ from scikits.learn.linear_model.coordinate_descent import ElasticNet as DenseENe
 
 def test_sparse_predict():
     """Check that the predict method works with dense coef_ and sparse X"""
-    X = sparse.lil_matrix((3, 2))
+    X = sp.lil_matrix((3, 2))
     X[0, 0] = 1
     X[0, 1] = 0.5
     X[1, 0] = -1
@@ -25,7 +25,7 @@ def test_sparse_predict():
 
 def test_lasso_zero():
     """Check that the sparse lasso can handle zero data without crashing"""
-    X = sparse.csc_matrix((3, 1))
+    X = sp.csc_matrix((3, 1))
     y = [0, 0, 0]
     T = np.array([[1], [2], [3]])
     clf = SparseLasso().fit(X, y)
@@ -50,8 +50,8 @@ def test_enet_toy_list_input():
     assert_array_almost_equal(pred, [2, 3, 4])
     assert_almost_equal(clf.dual_gap_, 0)
 
-    clf = SparseENet(alpha=0.5, rho=0.3)
-    clf.fit(X, Y, max_iter=1000)
+    clf = SparseENet(alpha=0.5, rho=0.3, max_iter=1000)
+    clf.fit(X, Y)
     pred = clf.predict(T)
     assert_array_almost_equal(clf.coef_, [0.50819], decimal=3)
     assert_array_almost_equal(pred, [1.0163,  1.5245,  2.0327], decimal=3)
@@ -69,14 +69,14 @@ def test_enet_toy_explicit_sparse_input():
     """Test ElasticNet for various parameters of alpha and rho with sparse X"""
 
     # training samples
-    X = sparse.lil_matrix((3, 1))
+    X = sp.lil_matrix((3, 1))
     X[0, 0] = -1
     # X[1, 0] = 0
     X[2, 0] = 1
     Y = [-1, 0, 1]       # just a straight line (the identity function)
 
     # test samples
-    T = sparse.lil_matrix((3, 1))
+    T = sp.lil_matrix((3, 1))
     T[0, 0] = 2
     T[1, 0] = 3
     T[2, 0] = 4
@@ -89,8 +89,8 @@ def test_enet_toy_explicit_sparse_input():
     assert_array_almost_equal(pred, [2, 3, 4])
     assert_almost_equal(clf.dual_gap_, 0)
 
-    clf = SparseENet(alpha=0.5, rho=0.3)
-    clf.fit(X, Y, max_iter=1000)
+    clf = SparseENet(alpha=0.5, rho=0.3, max_iter=1000)
+    clf.fit(X, Y)
     pred = clf.predict(T)
     assert_array_almost_equal(clf.coef_, [0.50819], decimal=3)
     assert_array_almost_equal(pred, [1.0163,  1.5245,  2.0327], decimal=3)
@@ -132,14 +132,16 @@ def test_sparse_enet_not_as_toy_dataset():
     X_train, X_test = X[n_samples / 2:], X[:n_samples / 2]
     y_train, y_test = y[n_samples / 2:], y[:n_samples / 2]
 
-    s_clf = SparseENet(alpha=0.1, rho=0.8, fit_intercept=False)
-    s_clf.fit(X_train, y_train, max_iter=max_iter, tol=1e-7)
+    s_clf = SparseENet(alpha=0.1, rho=0.8, fit_intercept=False,
+                       max_iter=max_iter, tol=1e-7)
+    s_clf.fit(X_train, y_train)
     assert_almost_equal(s_clf.dual_gap_, 0, 4)
     assert s_clf.score(X_test, y_test) > 0.85
 
     # check the convergence is the same as the dense version
-    d_clf = DenseENet(alpha=0.1, rho=0.8, fit_intercept=False)
-    d_clf.fit(X_train, y_train, max_iter=max_iter, tol=1e-7)
+    d_clf = DenseENet(alpha=0.1, rho=0.8, fit_intercept=False,
+                      max_iter=max_iter, tol=1e-7)
+    d_clf.fit(X_train, y_train)
     assert_almost_equal(d_clf.dual_gap_, 0, 4)
     assert d_clf.score(X_test, y_test) > 0.85
 
@@ -158,14 +160,15 @@ def test_sparse_lasso_not_as_toy_dataset():
     X_train, X_test = X[n_samples / 2:], X[:n_samples / 2]
     y_train, y_test = y[n_samples / 2:], y[:n_samples / 2]
 
-    s_clf = SparseLasso(alpha=0.1, fit_intercept=False)
-    s_clf.fit(X_train, y_train, max_iter=max_iter, tol=1e-7)
+    s_clf = SparseLasso(alpha=0.1, fit_intercept=False,
+                        max_iter=max_iter, tol=1e-7)
+    s_clf.fit(X_train, y_train)
     assert_almost_equal(s_clf.dual_gap_, 0, 4)
     assert s_clf.score(X_test, y_test) > 0.85
 
     # check the convergence is the same as the dense version
-    d_clf = DenseLasso(alpha=0.1, fit_intercept=False)
-    d_clf.fit(X_train, y_train, max_iter=max_iter, tol=1e-7)
+    d_clf = DenseLasso(alpha=0.1, fit_intercept=False, max_iter=max_iter, tol=1e-7)
+    d_clf.fit(X_train, y_train)
     assert_almost_equal(d_clf.dual_gap_, 0, 4)
     assert d_clf.score(X_test, y_test) > 0.85
 

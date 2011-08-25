@@ -10,6 +10,7 @@ import numpy as np
 from scipy import linalg
 
 from .base import LinearModel
+from ..utils import as_float_array
 from ..utils.extmath import fast_logdet
 
 
@@ -64,6 +65,18 @@ class BayesianRidge(LinearModel):
         (e.g. data is expected to be already centered).
         Default is True.
 
+    normalize : boolean, optional
+        If True, the regressors X are normalized
+        Default is False
+
+    overwrite_X : boolean, optionnal
+        If True, X will not be copied
+        Default is False
+
+    verbose : boolean, optional
+        Verbose mode when fitting the model. Default is False.
+
+
     Attributes
     ----------
     `coef_` : array, shape = (n_features)
@@ -91,9 +104,9 @@ class BayesianRidge(LinearModel):
     >>> from scikits.learn import linear_model
     >>> clf = linear_model.BayesianRidge()
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])
-    BayesianRidge(n_iter=300, verbose=False, lambda_1=1e-06, lambda_2=1e-06,
-           fit_intercept=True, alpha_2=1e-06, tol=0.001, alpha_1=1e-06,
-           compute_score=False)
+    BayesianRidge(alpha_1=1e-06, alpha_2=1e-06, compute_score=False,
+           fit_intercept=True, lambda_1=1e-06, lambda_2=1e-06, n_iter=300,
+           normalize=False, overwrite_X=False, tol=0.001, verbose=False)
     >>> clf.predict([[1, 1]])
     array([ 1.])
 
@@ -104,7 +117,8 @@ class BayesianRidge(LinearModel):
 
     def __init__(self, n_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
                 lambda_1=1.e-6, lambda_2=1.e-6, compute_score=False,
-                fit_intercept=True, verbose=False):
+                fit_intercept=True, normalize=False,
+                overwrite_X=False, verbose=False):
         self.n_iter = n_iter
         self.tol = tol 
         self.alpha_1 = alpha_1
@@ -113,9 +127,11 @@ class BayesianRidge(LinearModel):
         self.lambda_2 = lambda_2
         self.compute_score = compute_score
         self.fit_intercept = fit_intercept
+        self.normalize = normalize
+        self.overwrite_X = overwrite_X
         self.verbose = verbose
 
-    def fit(self, X, y, **params):
+    def fit(self, X, y):
         """Fit the model
 
         Parameters
@@ -129,10 +145,11 @@ class BayesianRidge(LinearModel):
         -------
         self : returns an instance of self.
         """
-        self._set_params(**params)
         X = np.asanyarray(X, dtype=np.float)
         y = np.asanyarray(y, dtype=np.float)
-        X, y, Xmean, ymean = LinearModel._center_data(X, y, self.fit_intercept)
+        X = as_float_array(X, self.overwrite_X)
+        X, y, X_mean, y_mean, X_std = self._center_data(X, y,
+                self.fit_intercept, self.normalize)
         n_samples, n_features = X.shape
 
         ### Initialization of the values of the parameters
@@ -206,7 +223,7 @@ class BayesianRidge(LinearModel):
         self.lambda_ = lambda_
         self.coef_ = coef_
 
-        self._set_intercept(Xmean, ymean)
+        self._set_intercept(X_mean, y_mean, X_std)
         return self
 
 
@@ -267,6 +284,13 @@ class ARDRegression(LinearModel):
         (e.g. data is expected to be already centered).
         Default is True.
 
+    normalize : boolean, optional
+        If True, the regressors X are normalized
+
+    overwrite_X : boolean, optionnal
+        If True, X will not be copied
+        Default is False
+
     verbose : boolean, optional
         Verbose mode when fitting the model. Default is False.
 
@@ -300,9 +324,10 @@ class ARDRegression(LinearModel):
     >>> from scikits.learn import linear_model
     >>> clf = linear_model.ARDRegression()
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])
-    ARDRegression(n_iter=300, verbose=False, lambda_1=1e-06, lambda_2=1e-06,
-           fit_intercept=True, threshold_lambda=10000.0, alpha_2=1e-06,
-           tol=0.001, alpha_1=1e-06, compute_score=False)
+    ARDRegression(alpha_1=1e-06, alpha_2=1e-06, compute_score=False,
+           fit_intercept=True, lambda_1=1e-06, lambda_2=1e-06, n_iter=300,
+           normalize=False, overwrite_X=False, threshold_lambda=10000.0,
+           tol=0.001, verbose=False)
     >>> clf.predict([[1, 1]])
     array([ 1.])
 
@@ -313,19 +338,22 @@ class ARDRegression(LinearModel):
 
     def __init__(self, n_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
                   lambda_1=1.e-6, lambda_2=1.e-6, compute_score=False,
-                  threshold_lambda=1.e+4, fit_intercept=True, verbose=False):
+                  threshold_lambda=1.e+4, fit_intercept=True,
+                  normalize=False, overwrite_X=False, verbose=False):
         self.n_iter = n_iter
         self.tol = tol
         self.fit_intercept = fit_intercept
+        self.normalize = normalize
         self.alpha_1 = alpha_1
         self.alpha_2 = alpha_2
         self.lambda_1 = lambda_1
         self.lambda_2 = lambda_2
         self.compute_score = compute_score
         self.threshold_lambda = threshold_lambda
+        self.overwrite_X = overwrite_X
         self.verbose = verbose
 
-    def fit(self, X, y, **params):
+    def fit(self, X, y):
         """Fit the ARDRegression model according to the given training data
         and parameters.
 
@@ -343,7 +371,6 @@ class ARDRegression(LinearModel):
         -------
         self : returns an instance of self.
         """
-        self._set_params(**params)
 
         X = np.asanyarray(X, dtype=np.float)
         y = np.asanyarray(y, dtype=np.float)
@@ -351,7 +378,10 @@ class ARDRegression(LinearModel):
         n_samples, n_features = X.shape
         coef_ = np.zeros(n_features)
 
-        X, y, Xmean, ymean = LinearModel._center_data(X, y, self.fit_intercept)
+        X = as_float_array(X, self.overwrite_X)
+
+        X, y, X_mean, y_mean, X_std = self._center_data(X, y, self.fit_intercept,
+                self.normalize)
 
         ### Launch the convergence loop
         keep_lambda = np.ones(n_features, dtype=bool)
@@ -417,5 +447,5 @@ class ARDRegression(LinearModel):
         self.alpha_ = alpha_
         self.sigma_ = sigma_
 
-        self._set_intercept(Xmean, ymean)
+        self._set_intercept(X_mean, y_mean, X_std)
         return self
