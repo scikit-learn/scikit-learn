@@ -384,7 +384,7 @@ cdef int next_sample(int sample_idx,
     return -1
 
 
-def fill_counts(np.ndarray[np.float64_t, ndim=1, mode="c"] counts,
+def fill_counts(np.ndarray[np.int32_t, ndim=1, mode="c"] counts,
                 np.ndarray[np.float64_t, ndim=1, mode="c"] labels,
                 np.ndarray sample_mask):
     """The same as np.bincount but casts elements in `labels` to integers.

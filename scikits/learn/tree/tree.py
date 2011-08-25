@@ -61,16 +61,18 @@ class Node(object):
                 Mean for the region
     '''
 
-    def __init__(self, dimension, value, error, left, right):
+    def __init__(self, dimension, value, error, samples, v, left, right):
         self.dimension = dimension
         self.value = value
         self.error = error
+        self.samples = samples
+        self.v = v
         self.left = left
         self.right = right
 
     def _graphviz(self):
-        return "x[%s] < %s \\n error = %s" \
-               % (self.dimension, self.value, self.error)
+        return "x[%s] < %s \\n error = %s \\n samples = %s \\n v = %s" \
+               % (self.dimension, self.value, self.error, self.samples, self.v)
 
 
 def _build_tree(is_classification, features, labels, criterion,
@@ -144,7 +146,7 @@ def _build_tree(is_classification, features, labels, criterion,
                 # is larger than min_split
                 if nll <= min_split or n_samples - nll <= min_split:
                     # splitting point does not suffice min_split
-                    is_leaf = True
+                    is_leaf = True              
                 else:
                     is_leaf = False
             else:
@@ -154,7 +156,7 @@ def _build_tree(is_classification, features, labels, criterion,
         new_node = None
         if is_leaf:
             if is_classification:
-                a = np.zeros((K, ))
+                a = np.zeros((K, ), dtype=np.int32)
                 _tree.fill_counts(a, labels, sample_mask)
                 new_node = Leaf(a)
             else:
@@ -163,8 +165,13 @@ def _build_tree(is_classification, features, labels, criterion,
             split = features[:, dim] < thresh
             left_sample_mask = split & sample_mask
             right_sample_mask = ~split & sample_mask
+            a = np.zeros((K, ), dtype=np.int32)
+            _tree.fill_counts(a, labels, sample_mask)
             new_node = Node(dimension=sample_dims[dim],
-                            value=thresh, error=error,
+                            value=thresh, 
+                            error=error,
+                            samples=n_samples,
+                            v=a,
                             left=recursive_partition(left_sample_mask,
                                                      depth + 1, 
                                                      nll),
