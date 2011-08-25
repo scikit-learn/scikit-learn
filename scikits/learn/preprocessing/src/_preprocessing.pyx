@@ -83,31 +83,3 @@ def inplace_csr_row_normalize_l2(X):
 
         for j in xrange(X_indptr[i], X_indptr[i + 1]):
             X_data[j] /= sum_
-
-
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
-def sparse_dense_dot_nocheck(X, np.ndarray[DOUBLE, ndim=2] Y,
-                             np.ndarray[DOUBLE, ndim=2] Z):
-    """Optimized matrix product for Compressed Sparse Row / dense 2D array.
-
-    X is expected to be a CSR matrix.
-
-    TODO: describe parameters and their alignement assumptions.
-    """
-    cdef np.ndarray[DOUBLE, ndim=1] X_data = X.data
-    cdef np.ndarray[INTEGER, ndim=1] X_indices = X.indices
-    cdef np.ndarray[INTEGER, ndim=1] X_indptr = X.indptr
-
-    cdef unsigned int i
-    cdef unsigned int j
-    cdef unsigned int k
-
-    Z.fill(0.0)
-
-    for i in xrange(X.shape[0]):
-        for k in xrange(X_indptr[i], X_indptr[i + 1]):
-            for j in xrange(Y.shape[1]):
-                Z[i, j] += X_data[k] * Y[X_indices[k], j]
-
