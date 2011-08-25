@@ -1,5 +1,4 @@
-""" Algorithms for clustering : Meanshift,  Affinity propagation and spectral
-clustering.
+"""Meanshift clustering.
 
 Authors: Conrad Lee conradlee@gmail.com
          Alexandre Gramfort alexandre.gramfort@inria.fr
@@ -94,7 +93,6 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
     See examples/plot_meanshift.py for an example.
 
     """
-
     if bandwidth is None:
         bandwidth = estimate_bandwidth(X)
     if seeds is None:
@@ -137,7 +135,7 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
         if unique[i]:
             neighbor_idxs = cc_tree.query_radius([center], bandwidth)[0]
             unique[neighbor_idxs] = 0
-            unique[i] = 1  # leave the current point as uniuqe
+            unique[i] = 1  # leave the current point as unique
     cluster_centers = sorted_centers[unique]
 
     # ASSIGN LABELS: a point belongs to the cluster that it is closest to
@@ -154,10 +152,12 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
 
 
 def get_bin_seeds(X, bin_size, min_bin_freq=1):
-    """
-    Finds seeds for clustering.mean_shift by first binning
-    data onto a grid whose lines are spaced bin_size apart, and then
-    choosing those bins with at least min_bin_freq points.
+    """Finds seeds for mean_shift
+
+    Finds seeds by first binning data onto a grid whose lines are
+    spaced bin_size apart, and then choosing those bins with at least
+    min_bin_freq points.
+
     Parameters
     ----------
 
@@ -174,9 +174,9 @@ def get_bin_seeds(X, bin_size, min_bin_freq=1):
         Only bins with at least min_bin_freq will be selected as seeds.
         Raising this value decreases the number of seeds found, which
         makes mean_shift computationally cheaper.
+
     Returns
     -------
-
     bin_seeds : array [n_samples, n_features]
         points used as initial kernel posistions in clustering.mean_shift
     """
@@ -193,16 +193,12 @@ def get_bin_seeds(X, bin_size, min_bin_freq=1):
     bin_seeds = bin_seeds * bin_size
     return bin_seeds
 
-##############################################################################
-
 
 class MeanShift(BaseEstimator):
     """MeanShift clustering
 
-
     Parameters
     ----------
-
     bandwidth: float, optional
         Bandwith used in the RBF kernel
         If not set, the bandwidth is estimated.
@@ -218,15 +214,14 @@ class MeanShift(BaseEstimator):
         If true, then all points are clustered, even those orphans that are
         not within any kernel. Orphans are assigned to the nearest kernel.
         If false, then orphans are given cluster label -1.
+
     Methods
     -------
-
     fit(X):
         Compute MeanShift clustering
 
     Attributes
     ----------
-
     cluster_centers_: array, [n_clusters, n_features]
         Coordinates of cluster centers
 
@@ -255,9 +250,7 @@ class MeanShift(BaseEstimator):
 
     Note that the estimate_bandwidth function is much less scalable than
     the mean shift algorithm and will be the bottleneck if it is used.
-
     """
-
     def __init__(self, bandwidth=None, seeds=None, bin_seeding=False,
                  cluster_all=True):
         self.bandwidth = bandwidth
@@ -267,16 +260,14 @@ class MeanShift(BaseEstimator):
         self.cluster_centers_ = None
         self.labels_ = None
 
-    def fit(self, X, **params):
+    def fit(self, X):
         """ Compute MeanShift
 
-            Parameters
-            -----------
-            X : array [n_samples, n_features]
-                Input points
-
+        Parameters
+        -----------
+        X : array [n_samples, n_features]
+            Input points
         """
-        self._set_params(**params)
         self.cluster_centers_, self.labels_ = \
                                mean_shift(X,
                                           bandwidth=self.bandwidth,
