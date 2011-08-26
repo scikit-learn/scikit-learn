@@ -9,6 +9,7 @@ def configuration(parent_package='', top_path=None):
 
     config = Configuration('learn', parent_package, top_path)
 
+    config.add_subpackage('check_build')
     config.add_subpackage('svm')
     config.add_subpackage('datasets')
     config.add_subpackage('datasets/tests')

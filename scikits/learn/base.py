@@ -9,7 +9,6 @@ from scipy import sparse
 import warnings
 
 from .metrics import r2_score
-from .utils import deprecated
 
 
 ###############################################################################
@@ -96,7 +95,7 @@ def _pprint(params, offset=0, printer=repr):
     params_list = list()
     this_line_length = offset
     line_sep = ',\n' + (1 + offset // 2) * ' '
-    for i, (k, v) in enumerate(params.iteritems()):
+    for i, (k, v) in enumerate(sorted(params.iteritems())):
         if type(v) is float:
             # use str for representing floating point numbers
             # this way we get consistent representation across
@@ -154,6 +153,7 @@ class BaseEstimator(object):
         except TypeError:
             # No explicit __init__
             args = []
+        args.sort()
         return args
 
     def _get_params(self, deep=True):
