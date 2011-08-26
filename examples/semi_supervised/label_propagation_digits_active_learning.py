@@ -37,18 +37,18 @@ Y = digits.target[:330]
 n_total_samples = len(Y)
 n_labeled_points = 10
 
-unlabeled_indicies = np.arange(n_total_samples)[n_labeled_points:]
+unlabeled_indices = np.arange(n_total_samples)[n_labeled_points:]
 f = pl.figure()
 
 for i in range(5):
     Y_train = np.copy(Y)
-    Y_train[unlabeled_indicies] = -1
+    Y_train[unlabeled_indices] = -1
 
     lp_model = label_propagation.LabelSpreading()
     lp_model.fit(X, Y_train, gamma=0.25, max_iters=5)
 
-    y_pred = lp_model.transduction_[unlabeled_indicies]
-    y_true = Y[unlabeled_indicies]
+    y_pred = lp_model.transduction_[unlabeled_indices]
+    y_true = Y[unlabeled_indices]
 
     cm = confusion_matrix(y_true, y_pred, labels=lp_model.unq_labels)
 
@@ -77,10 +77,10 @@ for i in range(5):
         sub.axis('off')
 
         # labeling 5 points
-        del_ind, = np.where(unlabeled_indicies == im_ind)
+        del_ind, = np.where(unlabeled_indices == im_ind)
         del_inds = np.concatenate((del_inds, del_ind))
 
-    unlabeled_indicies = np.delete(unlabeled_indicies, del_inds)
+    unlabeled_indices = np.delete(unlabeled_indices, del_inds)
     n_labeled_points += 5
 
 pl.show()

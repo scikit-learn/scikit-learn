@@ -36,9 +36,9 @@ Y = digits.target[:330]
 n_total_samples = len(Y)
 n_labeled_points = 30
 
-indicies = np.arange(n_total_samples)
+indices = np.arange(n_total_samples)
 
-unlabeled_set = indicies[n_labeled_points:]
+unlabeled_set = indices[n_labeled_points:]
 
 # shuffle everything around
 Y_train = np.copy(Y)
