@@ -118,7 +118,7 @@ def power_iteration_clustering(affinity, k=8, n_vectors=1, tol=1e-5,
         for i in xrange(n_samples):
             indices_i = a.indices[a.indptr[i]: a.indptr[i + 1]]
             data_i = a.data[a.indptr[i]: a.indptr[i + 1]]
-            data_i[:] = np.where(indices_i == i, 0.0, data_i)
+            data_i[indices_i == i] = 0.0
     else:
         affinity[np.eye(n_samples, dtype=np.bool)] = 0.0
     if verbose:
