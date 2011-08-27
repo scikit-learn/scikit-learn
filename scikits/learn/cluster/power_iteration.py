@@ -109,8 +109,8 @@ def power_iteration_clustering(affinity, k=8, n_vectors=1, tol=1e-5,
     # the diagonal elements must be zeroed before row normalization
     affinity = affinity.copy()
     n_samples = affinity.shape[0]
+    t0 = time()
     if sp.issparse(affinity):
-        t0 = time()
         # Set the diagonal elements to zero. For some reason a naive:
         #     affinity.setdiag(np.zeros(n_samples))
         # is very slow on CSR / CSC matrices, hence the following
@@ -156,6 +156,9 @@ def power_iteration_clustering(affinity, k=8, n_vectors=1, tol=1e-5,
 
         delta = np.abs(previous_vectors - vectors)
         stopping_gap = np.abs(previous_delta - delta).max() * n_samples
+        # not part of the original paper but seems to make the number of vectors
+        # less impacting on the optimal value of tol:
+        stopping_gap /= n_vectors
 
         if verbose and i % 10 == 0:
             print "Power Iteration %04d/%04d: gap=%f" % (
