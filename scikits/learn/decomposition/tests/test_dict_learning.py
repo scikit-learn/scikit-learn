@@ -1,9 +1,7 @@
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal, \
                           assert_equal
-from nose.plugins.skip import SkipTest
 
-from ...datasets import make_sparse_coded_signal
 from .. import DictionaryLearning, DictionaryLearningOnline, \
                dict_learning_online
 from ..dict_learning import sparse_encode, sparse_encode_parallel

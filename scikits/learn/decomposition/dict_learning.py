@@ -19,7 +19,6 @@ from ..utils import check_random_state
 from ..utils import gen_even_slices
 from ..utils.extmath import fast_svd
 from ..linear_model import Lasso, orthogonal_mp_gram, lars_path
-from ..metrics.pairwise import euclidean_distances
 
 
 def sparse_encode(X, Y, gram=None, cov=None, algorithm='lasso_lars',
