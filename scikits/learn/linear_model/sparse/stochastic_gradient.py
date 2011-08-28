@@ -110,9 +110,10 @@ class SGDClassifier(BaseSGDClassifier):
     >>> y = np.array([1, 1, 2, 2])
     >>> clf = linear_model.sparse.SGDClassifier()
     >>> clf.fit(X, y)
-    SGDClassifier(loss='hinge', n_jobs=1, shuffle=False, verbose=0, n_iter=5,
-           learning_rate='optimal', fit_intercept=True, penalty='l2',
-           power_t=0.5, seed=0, eta0=0.0, rho=1.0, alpha=0.0001)
+    SGDClassifier(alpha=0.0001, eta0=0.0, fit_intercept=True,
+           learning_rate='optimal', loss='hinge', n_iter=5, n_jobs=1,
+           penalty='l2', power_t=0.5, rho=1.0, seed=0, shuffle=False,
+           verbose=0)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
 
@@ -337,9 +338,10 @@ class SGDRegressor(BaseSGDRegressor):
     >>> X = np.random.randn(n_samples, n_features)
     >>> clf = linear_model.sparse.SGDRegressor()
     >>> clf.fit(X, y)
-    SGDRegressor(loss='squared_loss', power_t=0.25, shuffle=False, verbose=0,
-           n_iter=5, learning_rate='invscaling', fit_intercept=True,
-           penalty='l2', p=0.1, seed=0, eta0=0.01, rho=1.0, alpha=0.0001)
+    SGDRegressor(alpha=0.0001, eta0=0.01, fit_intercept=True,
+           learning_rate='invscaling', loss='squared_loss', n_iter=5, p=0.1,
+           penalty='l2', power_t=0.25, rho=1.0, seed=0, shuffle=False,
+           verbose=0)
 
     See also
     --------

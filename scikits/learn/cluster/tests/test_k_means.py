@@ -9,6 +9,7 @@ from nose.tools import assert_raises
 from nose.tools import assert_true
 
 from ..k_means_ import KMeans, MiniBatchKMeans
+from ...datasets.samples_generator import make_blobs
 from .common import generate_clustered_data
 from ...utils import shuffle
 

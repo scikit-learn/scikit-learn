@@ -163,8 +163,8 @@ class Ridge(LinearModel):
     >>> X = np.random.randn(n_samples, n_features)
     >>> clf = Ridge(alpha=1.0)
     >>> clf.fit(X, y)
-    Ridge(normalize=False, alpha=1.0, overwrite_X=False, tol=0.001,
-       fit_intercept=True)
+    Ridge(alpha=1.0, fit_intercept=True, normalize=False, overwrite_X=False,
+       tol=0.001)
     """
 
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
