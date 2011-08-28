@@ -88,9 +88,12 @@ def sparse_encode(X, Y, gram=None, cov=None, algorithm='lasso_lars',
     n_features = Y.shape[1]
     # This will always use Gram
     if gram is None:
-        overwrite_gram = True  # it's a bit trickier than this
+        # I think it's never safe to overwrite Gram when n_features > 1
+        # but I'd like to avoid the complicated logic.
+        # The parameter could be removed in this case. Discuss.
         gram = np.dot(X.T, X)
     if cov is None and algorithm != 'lasso_cd':
+        # overwrite_cov is safe
         overwrite_cov = True
         cov = np.dot(X.T, Y)
 
@@ -150,7 +153,8 @@ def sparse_encode(X, Y, gram=None, cov=None, algorithm='lasso_lars',
             n_nonzero_coefs = n_features / 10
         norms_squared = np.sum((Y ** 2), axis=0)
         new_code = orthogonal_mp_gram(gram, cov, n_nonzero_coefs, alpha,
-                                      norms_squared)
+                                      norms_squared, overwrite_Xy=overwrite_cov
+                                      )
     else:
         raise NotImplemented('Sparse coding method %s not implemented' %
                              algorithm)
