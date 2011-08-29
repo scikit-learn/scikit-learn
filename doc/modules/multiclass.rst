@@ -2,7 +2,7 @@
 Multiclass algorithms
 =====================
 
-.. currentmodule:: scikits.learn.meta
+.. currentmodule:: scikits.learn.multiclass
 
 This module implements multiclass learning algorithms:
     - one-vs-the-rest / one-vs-all
