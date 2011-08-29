@@ -39,7 +39,7 @@ image_array = np.reshape(china, (w * h, d))
 print "Fitting estimator on a small sub-sample of the data"
 t0 = time()
 image_array_sample = shuffle(image_array, random_state=0)[:1000]
-kmeans = KMeans(k=10, random_state=0).fit(image_array_sample)
+kmeans = KMeans(k=256, random_state=0).fit(image_array_sample)
 print "done in %0.3fs." % (time() - t0)
 
 # Get labels for all points
@@ -65,11 +65,13 @@ pl.figure(1)
 pl.clf()
 ax = pl.axes([0, 0, 1, 1])
 pl.axis('off')
+pl.title('Original image (96,615 colors)')
 pl.imshow(china)
 
 pl.figure(2)
 pl.clf()
 ax = pl.axes([0, 0, 1, 1])
 pl.axis('off')
+pl.title('Quantized image (256 colors)')
 pl.imshow(recreate_image(kmeans.cluster_centers_, labels, w, h))
 pl.show()
