@@ -242,7 +242,33 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin):
 
 
 def fit_ecoc(estimator, X, y, code_size=1.5, random_state=None):
-    """Fit an error-correcting output-code strategy."""
+    """
+    Fit an error-correcting output-code strategy.
+
+    Parameters
+    ----------
+    estimator : estimator object
+        An estimator object implementing `fit` and one of `decision_function`
+        or `predict_proba`.
+
+    code_size: float, optional
+        Percentage of the number of classes to be used to create the code book.
+
+    random_state: numpy.RandomState, optional
+        The generator used to initialize the centers. Defaults to numpy.random.
+
+
+    Returns
+    --------
+    estimators : list of `int(n_classes * code_size)` estimators
+        Estimators used for predictions.
+
+    classes : numpy array of shape [n_classes]
+        Array containing labels.
+
+    code_book_: numpy array of shape [n_classes, code_size]
+        Binary array containing the code of each class.
+    """
     check_estimator(estimator)
     random_state = check_random_state(random_state)
 
@@ -301,9 +327,12 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin):
         one-vs-the-rest. A number greater than 1 will require more classifiers
         than one-vs-the-rest.
 
+    random_state: numpy.RandomState, optional
+        The generator used to initialize the centers. Defaults to numpy.random.
+
     Attributes
     ----------
-    estimators_ : list of `n_classes * (n_classes - 1) / 2` estimators
+    estimators_ : list of `int(n_classes * code_size)` estimators
         Estimators used for predictions.
 
     classes_ : numpy array of shape [n_classes]
