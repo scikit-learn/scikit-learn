@@ -1,6 +1,6 @@
-==============
-Meta-learners
-==============
+=====================
+Multiclass algorithms
+=====================
 
 .. currentmodule:: scikits.learn.meta
 
@@ -27,7 +27,7 @@ corresponding classifier. This is the most commonly used strategy and is a
 fair default choice. Below is an example::
 
   >>> from scikits.learn import datasets
-  >>> from scikits.learn.meta import OneVsRestClassifier
+  >>> from scikits.learn.multiclass import OneVsRestClassifier
   >>> from scikits.learn.svm import LinearSVC
   >>> iris = datasets.load_iris()
   >>> X, y = iris.data, iris.target
@@ -55,7 +55,7 @@ a small subset of the data whereas, with one-vs-the-rest, the complete
 dataset is used `n_classes` times. Below is an example::
 
   >>> from scikits.learn import datasets
-  >>> from scikits.learn.meta import OneVsOneClassifier
+  >>> from scikits.learn.multiclass import OneVsOneClassifier
   >>> from scikits.learn.svm import LinearSVC
   >>> iris = datasets.load_iris()
   >>> X, y = iris.data, iris.target
@@ -107,7 +107,7 @@ effect to bagging.
 Example::
 
   >>> from scikits.learn import datasets
-  >>> from scikits.learn.meta import OutputCodeClassifier
+  >>> from scikits.learn.multiclass import OutputCodeClassifier
   >>> from scikits.learn.svm import LinearSVC
   >>> iris = datasets.load_iris()
   >>> X, y = iris.data, iris.target
