@@ -190,7 +190,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin):
     Parameters
     ----------
     estimator : estimator object
-        An estimator object implementing `fit` and one of `predict`.
+        An estimator object implementing `fit` and `predict`.
 
     Attributes
     ----------
