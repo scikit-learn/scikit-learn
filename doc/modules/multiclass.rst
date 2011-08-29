@@ -9,9 +9,23 @@ This module implements multiclass learning algorithms:
     - one-vs-one
     - error correcting output codes
 
-The algorithms can be used to turn a binary classifier into a multiclass
-classifier or to (possibly) improve the accuracy or runtime performance of
-multiclass classifiers.
+The estimators provided in this module are meta-estimators: they require a base
+estimator to be provided in their constructor. For example, it is possible to
+use these estimators to turn a binary classifier or a regressor into a
+multiclass classifier. It is also possible to use these estimators with
+multiclass estimators in the hope that their accuracy or runtime performance
+improves.
+
+.. note::
+
+    You don't need to use these estimators unless you want to experiment with
+    different multiclass strategies: all classifiers in scikit-learn support
+    multiclass classification out-of-the-box. Below is a summary of the
+    classifiers supported in scikit-learn grouped by the strategy used.
+
+    - Inherently multiclass: Naive Bayes, LDA.
+    - One-Vs-One: SVC.
+    - One-Vs-All: LinearSVC, LogisticRegression, SGDClassifier, RidgeClassifier.
 
 
 One-Vs-The-Rest
@@ -128,10 +142,10 @@ Example::
     1995.
 
  * [2] "The error coding method and PICTs", 
-   James G., Hastie T., 
-   Journal of Computational and Graphical statistics 7, 
-   1998.
+    James G., Hastie T.,
+    Journal of Computational and Graphical statistics 7,
+    1998.
 
- * [3] "The Elements of Statistical Learning", 
-   Hastie T., Tibshirani R., Friedman J., page 606 (second-edition)
-   2008.
+ * [3] "The Elements of Statistical Learning",
+    Hastie T., Tibshirani R., Friedman J., page 606 (second-edition)
+    2008.

@@ -8,9 +8,12 @@ This module implements multiclass learning algorithms:
     - one-vs-one
     - error correcting output codes
 
-The algorithms can be used to turn a binary classifier into a multiclass
-classifier or to (possibly) improve the accuracy or runtime performance of
-multiclass classifiers.
+The estimators provided in this module are meta-estimators: they require a base
+estimator to be provided in their constructor. For example, it is possible to
+use these estimators to turn a binary classifier or a regressor into a
+multiclass classifier. It is also possible to use these estimators with
+multiclass estimators in the hope that their accuracy or runtime performance
+improves.
 """
 
 # Author: Mathieu Blondel <mathieu@mblondel.org>
@@ -186,8 +189,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin):
     Parameters
     ----------
     estimator : estimator object
-        An estimator object implementing `fit` and one of `decision_function`
-        or `predict_proba`.
+        An estimator object implementing `fit` and one of `predict`.
 
     Attributes
     ----------
@@ -310,15 +312,20 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin):
 
     References
     ----------
-    [1] "Solving multiclass learning problems via error-correcting ouput
-        codes", Dietterich T., Bakiri G., Journal of Artificial Intelligence
-        Research 2, 1995.
+     * [1] "Solving multiclass learning problems via error-correcting ouput
+        codes",
+        Dietterich T., Bakiri G.,
+        Journal of Artificial Intelligence Research 2,
+        1995.
 
-    [2] "The error coding method and PICTs", James G., Hastie T., Journal of
-    Computational and Graphical statistics 7, 1998.
+     * [2] "The error coding method and PICTs",
+        James G., Hastie T.,
+        Journal of Computational and Graphical statistics 7,
+        1998.
 
-    [3] "The Elements of Statistical Learning", Hastie T., Tibshirani R.,
-    Friedman J., page 606 (second-edition), 2008.
+     * [3] "The Elements of Statistical Learning",
+        Hastie T., Tibshirani R., Friedman J., page 606 (second-edition)
+        2008.
     """
 
     def __init__(self, estimator, code_size=1.5):
