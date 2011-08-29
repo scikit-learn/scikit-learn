@@ -5,7 +5,7 @@ Multiclass algorithms
 .. currentmodule:: scikits.learn.meta
 
 This module implements multiclass learning algorithms:
-    - one-vs-the-rest
+    - one-vs-the-rest / one-vs-all
     - one-vs-one
     - error correcting output codes
 
@@ -17,7 +17,7 @@ multiclass classifiers.
 One-Vs-The-Rest
 ===============
 
-Also known as one-vs-all, this strategy consists in fitting one classifier
+Also known as **one-vs-all**, this strategy consists in fitting one classifier
 per class. For each classifier, the class is fitted against all the other
 classes. In addition to its computational efficiency (only `n_classes`
 classifiers are needed), one advantage of this approach is its

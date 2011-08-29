@@ -4,7 +4,7 @@ Multiclass algorithms
 ======================
 
 This module implements multiclass learning algorithms:
-    - one-vs-the-rest
+    - one-vs-the-rest / one-vs-all
     - one-vs-one
     - error correcting output codes
 
