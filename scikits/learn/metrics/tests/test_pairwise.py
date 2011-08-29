@@ -12,6 +12,7 @@ from ..pairwise import euclidean_distances, linear_kernel, polynomial_kernel, \
 
 np.random.seed(0)
 
+
 def test_pairwise_distances():
     rng = np.random.RandomState(0)
     X = rng.random_sample((5, 4))
@@ -55,15 +56,18 @@ def test_kernel_symmetry():
     """valid kernels should be symmetric"""
     rng = np.random.RandomState(0)
     X = rng.random_sample((5, 4))
-    for kernel in (linear_kernel, polynomial_kernel, rbf_kernel, sigmoid_kernel):
+    for kernel in (linear_kernel, polynomial_kernel, rbf_kernel,
+                   sigmoid_kernel):
         K = kernel(X, X)
-        assert_array_equal(K, K.T)
+        assert_array_almost_equal(K, K.T, 15)
+
 
 def test_kernel_sparse():
     rng = np.random.RandomState(0)
     X = rng.random_sample((5, 4))
     X_sparse = csr_matrix(X)
-    for kernel in (linear_kernel, polynomial_kernel, rbf_kernel, sigmoid_kernel):
+    for kernel in (linear_kernel, polynomial_kernel, rbf_kernel,
+                   sigmoid_kernel):
         K = kernel(X, X)
         K2 = kernel(X_sparse, X_sparse)
         assert_array_almost_equal(K, K2)
