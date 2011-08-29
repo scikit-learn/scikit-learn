@@ -123,10 +123,15 @@ Example::
 .. topic:: References:
 
  * [1] "Solving multiclass learning problems via error-correcting ouput codes",
-    Dietterich T., Bakiri G., Journal of Artificial Intelligence Research 2.
+    Dietterich T., Bakiri G., 
+    Journal of Artificial Intelligence Research 2, 
+    1995.
 
- * [2] "The error coding method and PICTs", James G., Hastie T., Journal of
-    Computational and Graphical statistics 7.
+ * [2] "The error coding method and PICTs", 
+   James G., Hastie T., 
+   Journal of Computational and Graphical statistics 7, 
+   1998.
 
- * [3] "The Elements of Statistical Learning", Hastie T., Tibshirani R.,
-    Friedman J., page 606 (second-edition).
+ * [3] "The Elements of Statistical Learning", 
+   Hastie T., Tibshirani R., Friedman J., page 606 (second-edition)
+   2008.
