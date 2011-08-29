@@ -7,9 +7,9 @@ from nose.tools import assert_equal
 from nose.tools import assert_true
 from nose.tools import assert_raises
 
-from scikits.learn.meta import OneVsRestClassifier
-from scikits.learn.meta import OneVsOneClassifier
-from scikits.learn.meta import OutputCodeClassifier
+from scikits.learn.multiclass import OneVsRestClassifier
+from scikits.learn.multiclass import OneVsOneClassifier
+from scikits.learn.multiclass import OutputCodeClassifier
 from scikits.learn.svm import LinearSVC
 from scikits.learn.naive_bayes import MultinomialNB
 from scikits.learn.grid_search import GridSearchCV
