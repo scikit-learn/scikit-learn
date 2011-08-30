@@ -422,7 +422,7 @@ def _find_best_split(np.ndarray[np.float_t, ndim=2, mode="fortran"] features,
         while True:
             b = smallest_sample_larger_than(a, features_i, sorted_features_i,
                                             n_samples)
-            # if -1 there's none and we are fin
+            # if -1 there's none and we are finished
             if b == -1:
                 break
 
@@ -432,7 +432,7 @@ def _find_best_split(np.ndarray[np.float_t, ndim=2, mode="fortran"] features,
             error = criterion.eval()
             #print 'error = ', error
             
-            # check if current criterion smaller than parent criterion
+            # check if current error is smaller than previous best
             # if this is never true best_i is -1.
             if error < best_error:
                 t = (features_i[sorted_features_i[a]] +
