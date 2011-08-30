@@ -163,7 +163,9 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
     >>> y = (X * np.sin(X)).ravel()
     >>> gp = GaussianProcess(theta0=0.1, thetaL=.001, thetaU=1.)
     >>> gp.fit(X, y) # doctest: +ELLIPSIS
-    GaussianProcess(normalize=True, ...)
+    GaussianProcess(beta0=None, corr=...,
+            normalize=..., nugget=...,
+            ...
 
     Implementation details
     ----------------------

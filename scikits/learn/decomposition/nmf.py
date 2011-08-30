@@ -293,10 +293,10 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
     >>> X = np.array([[1,1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]])
     >>> from scikits.learn.decomposition import ProjectedGradientNMF
     >>> model = ProjectedGradientNMF(n_components=2, init=0)
-    >>> model.fit(X) #doctest: +ELLIPSIS
-    ProjectedGradientNMF(nls_max_iter=2000, eta=0.1, max_iter=200,
-               init=<mtrand.RandomState object at 0x...>, beta=1,
-               sparseness=None, n_components=2, tol=0.0001)
+    >>> model.fit(X) #doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+    ProjectedGradientNMF(beta=1, eta=0.1,
+               init=<mtrand.RandomState object at 0x...>, max_iter=200,
+               n_components=2, nls_max_iter=2000, sparseness=None, tol=0.0001)
     >>> model.components_
     array([[ 0.77032744,  0.11118662],
            [ 0.38526873,  0.38228063]])
@@ -304,10 +304,11 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
     0.00746...
     >>> model = ProjectedGradientNMF(n_components=2, init=0,
     ...                              sparseness='components')
-    >>> model.fit(X) #doctest: +ELLIPSIS
-    ProjectedGradientNMF(nls_max_iter=2000, eta=0.1, max_iter=200,
-               init=<mtrand.RandomState object at 0x...>, beta=1,
-               sparseness='components', n_components=2, tol=0.0001)
+    >>> model.fit(X) #doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+    ProjectedGradientNMF(beta=1, eta=0.1,
+               init=<mtrand.RandomState object at 0x...>, max_iter=200,
+               n_components=2, nls_max_iter=2000, sparseness='components',
+               tol=0.0001)
     >>> model.components_
     array([[ 1.67481991,  0.29614922],
            [-0.        ,  0.4681982 ]])
@@ -344,7 +345,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         self.max_iter = max_iter
         self.nls_max_iter = nls_max_iter
 
-    def fit_transform(self, X, y=None, **params):
+    def fit_transform(self, X, y=None):
         """Learn a NMF model for the data X and returns the transformed data.
 
         This is more efficient than calling fit followed by transform.
@@ -360,7 +361,6 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         data: array, [n_samples, n_components]
             Transformed data
         """
-        self._set_params(**params)
         X = np.atleast_2d(X)
         if (X < 0).any():
             raise ValueError("Negative data passed to NMF.fit.")

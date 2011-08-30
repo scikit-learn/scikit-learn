@@ -1,3 +1,5 @@
+.. _decompositions:
+
 
 =================================================================
 Decomposing signals in components (matrix factorization problems)
@@ -46,6 +48,8 @@ features, projected on the 2 dimensions that explain most variance:
     * :ref:`example_decomposition_plot_pca_vs_lda.py`
 
 
+.. _RandomizedPCA:
+
 Approximate PCA
 ---------------
 
@@ -66,6 +70,23 @@ The class :class:`RandomizedPCA` is very useful in that case: since we
 are going to drop most of the singular vectors it is much more efficient
 to limit the computation to an approximated estimate of the singular
 vectors we will keep to actually perform the transform.
+
+For instance, the following shows 16 sample portraits (centered around
+0.0) from the Olivetti dataset. On the right hand side are the first 16
+singular vectors reshaped as portraits. Since we only require the top
+16 singular vectors of a dataset with size :math:`n_{samples} = 400`
+and :math:`n_{features} = 64 \times 64 = 4096`, the computation time it
+less than 1s:
+
+.. |orig_img| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_1.png
+   :target: ../auto_examples/decomposition/plot_faces_decomposition.html
+   :scale: 60%
+
+.. |pca_img| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_2.png
+   :target: ../auto_examples/decomposition/plot_faces_decomposition.html
+   :scale: 60%
+
+.. centered:: |orig_img| |pca_img|
 
 :class:`RandomizedPCA` can hence be used as a drop in replacement for
 :class:`PCA` minor the exception that we need to give it the size of
@@ -94,7 +115,7 @@ is not the exact inverse transform of `transform` even when
 .. topic:: Examples:
 
     * :ref:`example_applications_face_recognition.py`
-    * :ref:`example_decomposition_plot_digits_decomposition.py`
+    * :ref:`example_decomposition_plot_faces_decomposition.py`
 
 .. topic:: References:
 
@@ -102,6 +123,7 @@ is not the exact inverse transform of `transform` even when
       constructing approximate matrix decompositions"
       <http://arxiv.org/abs/0909.4061>`_
       Halko, et al., 2009
+
 
 .. _kernel_PCA:
 
@@ -123,13 +145,20 @@ applications including denoising, compression and structured prediction
 
     * :ref:`example_decomposition_plot_kernel_pca.py`
 
+
 .. _SparsePCA:
 
-Sparse Principal Components Analysis (SparsePCA)
-------------------------------------------------
+Sparse Principal Components Analysis (SparsePCA and MiniBatchSparsePCA)
+-----------------------------------------------------------------------
 
 :class:`SparsePCA` is a variant of PCA, with the goal of extracting the
 set of sparse components that best reconstruct the data.
+
+Mini Batch Sparse PCA (:class:`MiniBatchSparsePCA`) is a variant of
+:class:`SparsePCA` that is faster but less accurate. The increased speed is
+reached by iterating over small chunks of the set of features, for a given
+number of iterations.
+
 
 Principal component analysis (:class:`PCA`) has the disadvantage that the
 components extracted by this method have exclusively dense expressions, i.e.
@@ -143,27 +172,29 @@ Sparse principal components yields a more parsimonious, interpretable
 representation, clearly emphasizing which of the original features contribute
 to the differences between samples.
 
-The following example illustrates 12 components extracted using sparse PCA
-with a value of `alpha=5` on the digits dataset. Only images of the digit 3
-were considered.  It can be seen how the regularization term induces many
-zeros. Furthermore, the natural structure of the data causes the non-zero
+The following example illustrates 16 components extracted using sparse PCA from
+the Olivetti faces dataset.  It can be seen how the regularization term induces
+many zeros. Furthermore, the natural structure of the data causes the non-zero
 coefficients to be vertically adjacent. The model does not enforce this
-mathematically: each component is a vector :math:`h \in \mathbf{R}^{64}`, and there
-is no notion of vertical adjacency except during the human-friendly
-visualization as 8x8 pixel images.
-The fact that the components shown below appear local
-is the effect of the inherent structure of the data, which makes such local
-patterns minimize reconstruction error. There exist sparsity-inducing norms
-that take into account adjacency and different kinds of structure; see
-see [Jen09] for a review of such methods. For more details on how to use
-Sparse PCA, see the `Examples` section below.
+mathematically: each component is a vector :math:`h \in \mathbf{R}^{4096}`, and
+there is no notion of vertical adjacency except during the human-friendly
+visualization as 64x64 pixel images. The fact that the components shown below
+appear local is the effect of the inherent structure of the data, which makes
+such local patterns minimize reconstruction error. There exist sparsity-inducing
+norms that take into account adjacency and different kinds of structure; see see
+[Jen09] for a review of such methods. For more details on how to use Sparse PCA,
+see the `Examples` section below.
 
 
-.. figure:: ../auto_examples/decomposition/images/plot_digits_decomposition_4.png
-   :target: ../auto_examples/decomposition/plot_digits_decomposition.html
-   :align: center
-   :scale: 50%
+.. |pca_img| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_2.png
+   :target: ../auto_examples/decomposition/plot_faces_decomposition.html
+   :scale: 60%
 
+.. |spca_img| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_5.png
+   :target: ../auto_examples/decomposition/plot_faces_decomposition.html
+   :scale: 60%
+
+.. centered:: |pca_img| |spca_img|
 
 Note that there are many different formulations for the Sparse PCA
 problem. The one implemented here is based on [Mrl09]_ . The optimization
@@ -183,10 +214,16 @@ of penalization (and thus sparsity) can be adjusted through the
 hyperparameter `alpha`. Small values lead to a gently regularized
 factorization, while larger values shrink many coefficients to zero.
 
+.. note::
+
+  While in the spirit of an online algorithm, the class
+  :class:`MiniBatchSparsePCA` does not implement `partial_fit` because
+  the algorithm is online along the features direction, not the samples
+  direction.
 
 .. topic:: Examples:
 
-   * :ref:`example_decomposition_plot_digits_decomposition.py`
+   * :ref:`example_decomposition_plot_faces_decomposition.py`
 
 .. topic:: References:
 
@@ -196,6 +233,7 @@ factorization, while larger values shrink many coefficients to zero.
    * [Jen09] `"Structured Sparse Principal Component Analysis"
      <www.di.ens.fr/~fbach/sspca_AISTATS2010.pdf>`_
      R. Jenatton, G. Obozinski, F. Bach, 2009
+
 
 .. _ICA:
 
@@ -213,20 +251,33 @@ It is classically used to separate mixed signals (a problem known as
 .. figure:: ../auto_examples/decomposition/images/plot_ica_blind_source_separation_1.png
     :target: ../auto_examples/decomposition/plot_ica_blind_source_separation.html
     :align: center
-    :scale: 50%
+    :scale: 60%
 
+
+ICA can also be used as yet another non linear decomposition that finds
+components with some sparsity:
+
+.. |pca_img| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_2.png
+    :target: ../auto_examples/decomposition/plot_faces_decomposition.html
+    :scale: 60%
+
+.. |ica_img| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_4.png
+    :target: ../auto_examples/decomposition/plot_faces_decomposition.html
+    :scale: 60%
+
+.. centered:: |pca_img| |ica_img|
 
 .. topic:: Examples:
 
     * :ref:`example_decomposition_plot_ica_blind_source_separation.py`
     * :ref:`example_decomposition_plot_ica_vs_pca.py`
-    * :ref:`example_decomposition_plot_digits_decomposition.py`
+    * :ref:`example_decomposition_plot_faces_decomposition.py`
 
 
 .. _NMF:
 
-Non-negative matrix factorization (NMF)
-=======================================
+Non-negative matrix factorization (NMF or NNMF)
+===============================================
 
 :class:`NMF` is an alternative approach to decomposition that assumes that the
 data and the components are non-negative. :class:`NMF` can be plugged in
@@ -240,16 +291,16 @@ models are efficient for representing images and text.
 It has been observed in [Hoyer, 04] that, when carefully constrained,
 :class:`NMF` can produce a parts-based representation of the dataset,
 resulting in interpretable models. The following example displays 16
-sparse components found by :class:`NMF` on the images of the digit 3 from the
-digits dataset.
+sparse components found by :class:`NMF` from the images in the Olivetti
+faces dataset, in comparison with the PCA eigenfaces.
 
-.. |pca_img| image:: ../auto_examples/decomposition/images/plot_digits_decomposition_1.png
-    :target: ../auto_examples/decomposition/plot_digits_decomposition.html
-    :scale: 50%
+.. |pca_img| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_2.png
+    :target: ../auto_examples/decomposition/plot_faces_decomposition.html
+    :scale: 60%
 
-.. |nmf_img| image:: ../auto_examples/decomposition/images/plot_digits_decomposition_2.png
-    :target: ../auto_examples/decomposition/plot_digits_decomposition.html
-    :scale: 50%
+.. |nmf_img| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_3.png
+    :target: ../auto_examples/decomposition/plot_faces_decomposition.html
+    :scale: 60%
 
 .. centered:: |pca_img| |nmf_img|
 
@@ -275,7 +326,8 @@ of the data.
 
 .. topic:: Examples:
 
-    * :ref:`example_decomposition_plot_digits_decomposition.py`
+    * :ref:`example_decomposition_plot_faces_decomposition.py`
+    * :ref:`example_applications_topics_extraction_with_nmf.py`
 
 .. topic:: References:
 

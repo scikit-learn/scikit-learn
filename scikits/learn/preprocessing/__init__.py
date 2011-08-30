@@ -19,7 +19,7 @@ from ._preprocessing import inplace_csr_row_normalize_l2
 def _mean_and_std(X, axis=0, with_mean=True, with_std=True):
     """Compute mean and std dev for centering, scaling
 
-    Zero valued std components are reseted to 1.0 to avoid NaNs when scaling.
+    Zero valued std components are reset to 1.0 to avoid NaNs when scaling.
     """
     X = np.asanyarray(X)
     Xr = np.rollaxis(X, axis)
@@ -52,8 +52,8 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
         The data to center and scale.
 
     axis : int (0 by default)
-        axis used to compute the means and standard deviations along. If 0, 
-        independently standardize each feature, otherwise (if 1) standardize 
+        axis used to compute the means and standard deviations along. If 0,
+        independently standardize each feature, otherwise (if 1) standardize
         each sample.
 
     with_mean : boolean, True by default
@@ -90,7 +90,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     return X
 
 
-class Scaler(BaseEstimator):
+class Scaler(BaseEstimator, TransformerMixin):
     """Standardize features by removing the mean and scaling to unit variance
 
     Centering and scaling happen indepently on each feature by computing
@@ -178,11 +178,31 @@ class Scaler(BaseEstimator):
         X = np.asanyarray(X)
         if copy:
             X = X.copy()
-        # We are taking a view of the X array and modifying it
         if self.with_mean:
             X -= self.mean_
         if self.with_std:
             X /= self.std_
+        return X
+
+    def inverse_transform(self, X, copy=None):
+        """Scale back the data to the original representation
+
+        Parameters
+        ----------
+        X : array-like with shape [n_samples, n_features]
+            The data used to scale along the features axis.
+        """
+        copy = copy if copy is not None else self.copy
+        if sp.issparse(X):
+            raise NotImplementedError(
+                "Scaling is not yet implement for sparse matrices")
+        X = np.asanyarray(X)
+        if copy:
+            X = X.copy()
+        if self.with_std:
+            X *= self.std_
+        if self.with_mean:
+            X += self.mean_
         return X
 
 
@@ -197,11 +217,11 @@ def normalize(X, norm='l2', axis=1, copy=True):
         un-necessary copy.
 
     norm : 'l1' or 'l2', optional ('l2' by default)
-        The norm to use to normalize each non zero sample (or each non-zero 
+        The norm to use to normalize each non zero sample (or each non-zero
         feature if axis is 0).
 
     axis : 0 or 1, optional (1 by default)
-        axis used to normalize the data along. If 1, independently normalize 
+        axis used to normalize the data along. If 1, independently normalize
         each sample, otherwise (if 0) normalize each feature.
 
     copy : boolean, optional, default is True
@@ -249,7 +269,7 @@ def normalize(X, norm='l2', axis=1, copy=True):
     return X
 
 
-class Normalizer(BaseEstimator):
+class Normalizer(BaseEstimator, TransformerMixin):
     """Normalize samples individually to unit norm
 
     Each sample (i.e. each row of the data matrix) with at least one
@@ -352,7 +372,7 @@ def binarize(X, threshold=0.0, copy=True):
     return X
 
 
-class Binarizer(BaseEstimator):
+class Binarizer(BaseEstimator, TransformerMixin):
     """Binarize data (set feature values to 0 or 1) according to a threshold
 
     The default threshold is 0.0 so that any non-zero values are set to 1.0
@@ -499,7 +519,12 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         else:
             Y = np.zeros((len(y), len(self.classes_)))
 
-        if self.multilabel:
+        y_is_multilabel = _is_multilabel(y)
+
+        if y_is_multilabel and not self.multilabel:
+            raise ValueError("The object was not fitted with multilabel input!")
+
+        elif self.multilabel:
             if not _is_multilabel(y):
                 raise ValueError("y should be a list of label lists/tuples,"
                                  "got %r" % (y,))
@@ -523,16 +548,21 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
             return Y
 
         else:
-            raise ValueError("Wrong number of classes: %d"
-                             % len(self.classes_))
+            # Only one class, returns a matrix with all 0s.
+            return Y
 
-    def inverse_transform(self, Y):
+    def inverse_transform(self, Y, threshold=0):
         """Transform binary labels back to multi-class labels
 
         Parameters
         ----------
         Y : numpy array of shape [n_samples, n_classes]
             Target values.
+
+        threshold : float
+            Threshold used to decide whether to assign the positive class or the
+            negative class in the binary case. Use 0.5 when Y contains
+            probabilities.
 
         Returns
         -------
@@ -554,7 +584,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
                     for i in range(Y.shape[0])]
 
         if len(Y.shape) == 1 or Y.shape[1] == 1:
-            y = np.array(Y.ravel() > 0, dtype=int)
+            y = np.array(Y.ravel() > threshold, dtype=int)
 
         else:
             y = Y.argmax(axis=1)

@@ -39,12 +39,12 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
 
     Examples
     --------
-    >>> samples = [[0, 0, 1], [1, 0, 0]]
+    >>> samples = [[0, 0, 2], [1, 0, 0]]
     >>> labels = [0, 1]
     >>> from scikits.learn.neighbors import NeighborsClassifier
     >>> neigh = NeighborsClassifier(n_neighbors=1)
     >>> neigh.fit(samples, labels)
-    NeighborsClassifier(n_neighbors=1, leaf_size=20, algorithm='auto')
+    NeighborsClassifier(algorithm='auto', leaf_size=20, n_neighbors=1)
     >>> print neigh.predict([[0,0,0]])
     [1]
 
@@ -111,7 +111,7 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
         self.leaf_size = leaf_size
         self.algorithm = algorithm
 
-    def fit(self, X, y, **params):
+    def fit(self, X, y):
         """Fit the model using X, y as training data
 
         Parameters
@@ -122,14 +122,11 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
         y : {array-like, sparse matrix}, shape = [n_samples]
             Target values, array of integer values.
 
-        params : list of keyword, optional
-            Overwrite keywords from __init__
         """
         X = safe_asanyarray(X)
         if y is None:
             raise ValueError("y must not be None")
         self._y = np.asanyarray(y)
-        self._set_params(**params)
 
         if issparse(X):
             self.ball_tree = None
@@ -142,7 +139,7 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
             self._fit_X = X
         return self
 
-    def kneighbors(self, X, return_distance=True, **params):
+    def kneighbors(self, X, n_neighbors=None, return_distance=True):
         """Finds the K-neighbors of a point.
 
         Returns distance
@@ -179,7 +176,7 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
         >>> from scikits.learn.neighbors import NeighborsClassifier
         >>> neigh = NeighborsClassifier(n_neighbors=1)
         >>> neigh.fit(samples, labels)
-        NeighborsClassifier(n_neighbors=1, leaf_size=20, algorithm='auto')
+        NeighborsClassifier(algorithm='auto', leaf_size=20, n_neighbors=1)
         >>> print neigh.kneighbors([1., 1., 1.]) # doctest: +ELLIPSIS
         (array([[ 0.5]]), array([[2]]...))
 
@@ -193,21 +190,22 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
                [2]]...)
 
         """
-        self._set_params(**params)
         X = atleast2d_or_csr(X)
+        if n_neighbors is None:
+            n_neighbors = self.n_neighbors
         if self.ball_tree is None:
             dist = euclidean_distances(X, self._fit_X, squared=True)
             # XXX: should be implemented with a partial sort
-            neigh_ind = dist.argsort(axis=1)[:, :self.n_neighbors]
+            neigh_ind = dist.argsort(axis=1)[:, :n_neighbors]
             if not return_distance:
                 return neigh_ind
             else:
                 return dist.T[neigh_ind], neigh_ind
         else:
-            return self.ball_tree.query(X, self.n_neighbors,
+            return self.ball_tree.query(X, n_neighbors,
                                         return_distance=return_distance)
 
-    def predict(self, X, **params):
+    def predict(self, X):
         """Predict the class labels for the provided data
 
         Parameters
@@ -225,7 +223,6 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
             List of class labels (one for each data sample).
         """
         X = atleast2d_or_csr(X)
-        self._set_params(**params)
 
         # get neighbors
         neigh_ind = self.kneighbors(X, return_distance=False)
@@ -277,7 +274,7 @@ class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
     >>> from scikits.learn.neighbors import NeighborsRegressor
     >>> neigh = NeighborsRegressor(n_neighbors=2)
     >>> neigh.fit(X, y)
-    NeighborsRegressor(n_neighbors=2, mode='mean', algorithm='auto', leaf_size=20)
+    NeighborsRegressor(algorithm='auto', leaf_size=20, mode='mean', n_neighbors=2)
     >>> print neigh.predict([[1.5]])
     [ 0.5]
 
@@ -295,7 +292,7 @@ class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
         self.mode = mode
         self.algorithm = algorithm
 
-    def predict(self, X, **params):
+    def predict(self, X):
         """Predict the target for the provided data
 
         Parameters
@@ -313,7 +310,6 @@ class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
             List of target values (one for each data sample).
         """
         X = atleast2d_or_csr(X)
-        self._set_params(**params)
 
         # compute nearest neighbors
         neigh_ind = self.kneighbors(X, return_distance=False)
@@ -530,7 +526,7 @@ def radius_neighbors_graph(X, radius, mode='connectivity'):
     n_neighbors = np.array([len(a) for a in A_ind])
     n_nonzero = np.sum(n_neighbors)
     A_ind = np.concatenate(list(A_ind))
-    A_indptr = np.concatenate((np.zeros(1), np.cumsum(n_neighbors)))
+    A_indptr = np.concatenate((np.zeros(1, dtype=int), np.cumsum(n_neighbors)))
 
     if A_data is None:
         A_data = np.ones(n_nonzero)

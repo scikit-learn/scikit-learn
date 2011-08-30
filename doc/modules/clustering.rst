@@ -43,9 +43,21 @@ be specified. It scales well to large number of samples, however its
 results may be dependent on an initialisation. As a result, the computation is
 often done several times, with different initialisation of the centroids.
 
+K-means is often referred to as Lloyd's algorithm. After initialization,
+k-means consists of looping between two major steps. First the Voronoi diagram 
+of the points is calculated using the current centroids. Each segment in the 
+Voronoi diagram becomes a separate cluster. Secondly, the centroids are updated
+to the mean of each segment. The algorithm then repeats this until a stopping 
+criteria is fulfilled. Usually, as in this implementation, the algorithm
+stops when the relative increment in the results between iterations is less than
+the given tolerance value.
+
+K-means can be used for vector quantization. This is achieved using the 
+transform method of a trained model of :class:`KMeans`.
+
 .. topic:: Examples:
 
- * :ref:`example_cluster_kmeans_digits.py`: Clustering handwritten digits
+ * :ref:`example_cluster_plot_kmeans_digits.py`: Clustering handwritten digits
 
 
 .. _mini_batch_kmeans:
@@ -394,7 +406,7 @@ homogeneous but not complete::
 
 
 Mathematical formulation
-------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 Homogeneity and completeness scores are formally given by:
 

@@ -6,12 +6,6 @@ from scikits.learn.utils.fixes import product
 
 eigen_solvers = ['dense', 'arpack']
 
-try:
-    import pyamg
-    eigen_solvers.append('lobpcg')
-except ImportError:
-    pass
-
 
 def assert_lower(a, b, details=None):
     message = "%r is not lower than %r" % (a, b)
@@ -24,13 +18,11 @@ def assert_lower(a, b, details=None):
 # Test LLE by computing the reconstruction error on some manifolds.
 
 def test_lle_simple_grid():
-    rng = np.random.RandomState(42)
-
+    rng = np.random.RandomState(0)
     # grid of equidistant points in 2D, out_dim = n_dim
     X = np.array(list(product(range(5), repeat=2)))
     out_dim = 2
-    clf = manifold.LocallyLinearEmbedding(n_neighbors=5, out_dim=out_dim,
-                                          random_state=rng)
+    clf = manifold.LocallyLinearEmbedding(n_neighbors=5, out_dim=out_dim)
     tol = .1
 
     N = neighbors.kneighbors_graph(
@@ -39,7 +31,8 @@ def test_lle_simple_grid():
     assert_lower(reconstruction_error, tol)
 
     for solver in eigen_solvers:
-        clf.fit(X, eigen_solver=solver)
+        clf.set_params(eigen_solver=solver)
+        clf.fit(X)
         assert clf.embedding_.shape[1] == out_dim
         reconstruction_error = np.linalg.norm(
             np.dot(N, clf.embedding_) - clf.embedding_, 'fro') ** 2
@@ -60,9 +53,8 @@ def test_lle_manifold():
     X = np.array(list(product(range(20), repeat=2)))
     X = np.c_[X, X[:, 0] ** 2 / 20]
     out_dim = 2
-    clf = manifold.LocallyLinearEmbedding(n_neighbors=5, out_dim=out_dim,
-                                          random_state=42)
-    tol = .5
+    clf = manifold.LocallyLinearEmbedding(n_neighbors=5, out_dim=out_dim)
+    tol = 1.5
 
     N = neighbors.kneighbors_graph(X, clf.n_neighbors,
                                    mode='barycenter').toarray()
@@ -70,7 +62,8 @@ def test_lle_manifold():
     assert_lower(reconstruction_error, tol)
 
     for solver in eigen_solvers:
-        clf.fit(X, eigen_solver=solver)
+        clf.set_params(eigen_solver=solver)        
+        clf.fit(X)
         assert clf.embedding_.shape[1] == out_dim
         reconstruction_error = np.linalg.norm(
             np.dot(N, clf.embedding_) - clf.embedding_, 'fro') ** 2
@@ -85,7 +78,7 @@ def test_pipeline():
     from scikits.learn import pipeline, datasets
     iris = datasets.load_iris()
     clf = pipeline.Pipeline(
-        [('filter', manifold.LocallyLinearEmbedding(random_state=42)),
+        [('filter', manifold.LocallyLinearEmbedding()),
          ('clf', neighbors.NeighborsClassifier())])
     clf.fit(iris.data, iris.target)
     assert_lower(.7, clf.score(iris.data, iris.target))

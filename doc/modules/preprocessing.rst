@@ -10,6 +10,7 @@ The ``scikits.learn.preprocessing`` package provides several common
 utility functions and transformer classes to change raw feature vectors
 into a representation that is more suitable for the downstream estimators.
 
+.. _preprocessing_scaler:
 
 Standardization or Mean Removal and Variance Scaling
 ====================================================
@@ -200,7 +201,7 @@ as each sample is treated independently of others::
 
   >>> binarizer = preprocessing.Binarizer().fit(X)  # fit does nothing
   >>> binarizer
-  Binarizer(threshold=0.0, copy=True)
+  Binarizer(copy=True, threshold=0.0)
 
   >>> binarizer.transform(X)
   array([[ 1.,  0.,  1.],

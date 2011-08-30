@@ -79,8 +79,8 @@ training samples::
     >>> Y = [0, 1]
     >>> clf = svm.SVC()
     >>> clf.fit(X, Y)
-    SVC(kernel='rbf', C=1.0, probability=False, degree=3, coef0=0.0, tol=0.001,
-      shrinking=True, gamma=0.5)
+    SVC(C=1.0, coef0=0.0, degree=3, gamma=0.5, kernel='rbf', probability=False,
+      shrinking=True, tol=0.001)
 
 After being fitted, the model can then be used to predict new values::
 
@@ -116,8 +116,8 @@ classifiers are constructed and each one trains data from two classes::
     >>> Y = [0, 1, 2, 3]
     >>> clf = svm.SVC()
     >>> clf.fit(X, Y)
-    SVC(kernel='rbf', C=1.0, probability=False, degree=3, coef0=0.0, tol=0.001,
-      shrinking=True, gamma=0.25)
+    SVC(C=1.0, coef0=0.0, degree=3, gamma=0.25, kernel='rbf', probability=False,
+      shrinking=True, tol=0.001)
     >>> dec = clf.decision_function([[1]])
     >>> dec.shape[1] # 4 classes: 4*3/2 = 6
     6
@@ -128,12 +128,11 @@ two classes, only one model is trained::
 
     >>> lin_clf = svm.LinearSVC()
     >>> lin_clf.fit(X, Y)
-    LinearSVC(loss='l2', C=1.0, dual=True, fit_intercept=True, penalty='l2',
-         multi_class=False, tol=0.0001, intercept_scaling=1)
+    LinearSVC(C=1.0, dual=True, fit_intercept=True, intercept_scaling=1,
+         loss='l2', multi_class=False, penalty='l2', tol=0.0001)
     >>> dec = lin_clf.decision_function([[1]])
     >>> dec.shape[1]
     4
-
 
 See :ref:`svm_mathematical_formulation` for a complete description of
 the decision function.
@@ -206,8 +205,8 @@ floating point values instead of integer values::
     >>> y = [0.5, 2.5]
     >>> clf = svm.SVR()
     >>> clf.fit(X, y)
-    SVR(kernel='rbf', C=1.0, probability=False, degree=3, epsilon=0.1,
-      shrinking=True, tol=0.001, coef0=0.0, gamma=0.5)
+    SVR(C=1.0, coef0=0.0, degree=3, epsilon=0.1, gamma=0.5, kernel='rbf',
+      probability=False, shrinking=True, tol=0.001)
     >>> clf.predict([[1, 1]])
     array([ 1.5])
 
