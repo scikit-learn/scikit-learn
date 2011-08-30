@@ -6,22 +6,28 @@ Vector Quantization of a photo using k-means
 
 Performs a pixel-wise Vector Quantization (VQ) of an image of the summer palace
 (China), reducing the number of colors required to show the image from 96,615
-unique colors to 256, while preserving the overall appearance quality.
+unique colors to 64, while preserving the overall appearance quality.
 
 In this example, pixels are represented in a 3D-space and K-means is used to
-find 256 clusters. In the image processing literature, the codebook obtained
-from K-means (the cluster centers) is called the color palette. Using a
-256-color palette, pixels can be encoded with a single byte (the index of the
-closest color in the palette) whereas an RGB encoding requires 3 bytes per
-pixel. The GIF file format, for example, uses such a palette.
+find 64 color clusters. In the image processing literature, the codebook
+obtained from K-means (the cluster centers) is called the color palette. Using a
+a single byte, up to 256 colors can be addressed, whereas an RGB encoding
+requires 3 bytes per pixel. The GIF file format, for example, uses such a
+palette.
+
+For comparison, a quantized image using a random codebook (colors picked up
+randomly) is also shown.
 """
 print __doc__
 import numpy as np
 import pylab as pl
 from scikits.learn.cluster import KMeans
+from scikits.learn.metrics import euclidean_distances
 from scikits.learn.datasets import load_sample_image
 from scikits.learn.utils import shuffle
 from time import time
+
+n_colors = 64
 
 # Load the Summer Palace photo
 china = load_sample_image("china.jpg")
@@ -39,13 +45,21 @@ image_array = np.reshape(china, (w * h, d))
 print "Fitting estimator on a small sub-sample of the data"
 t0 = time()
 image_array_sample = shuffle(image_array, random_state=0)[:1000]
-kmeans = KMeans(k=256, random_state=0).fit(image_array_sample)
+kmeans = KMeans(k=n_colors, random_state=0).fit(image_array_sample)
 print "done in %0.3fs." % (time() - t0)
 
 # Get labels for all points
-print "Predicting labels on the full image"
+print "Predicting color indices on the full image (k-means)"
 t0 = time()
 labels = kmeans.predict(image_array)
+print "done in %0.3fs." % (time() - t0)
+
+
+codebook_random = shuffle(image_array, random_state=0)[:n_colors+1]
+print "Predicting color indices on the full image (random)"
+t0 = time()
+dist = euclidean_distances(codebook_random, image_array, squared=True)
+labels_random = dist.argmin(axis=0)
 print "done in %0.3fs." % (time() - t0)
 
 
@@ -72,6 +86,13 @@ pl.figure(2)
 pl.clf()
 ax = pl.axes([0, 0, 1, 1])
 pl.axis('off')
-pl.title('Quantized image (256 colors)')
+pl.title('Quantized image (64 colors, K-Means)')
 pl.imshow(recreate_image(kmeans.cluster_centers_, labels, w, h))
+
+pl.figure(3)
+pl.clf()
+ax = pl.axes([0, 0, 1, 1])
+pl.axis('off')
+pl.title('Quantized image (64 colors, Random)')
+pl.imshow(recreate_image(codebook_random, labels_random, w, h))
 pl.show()
