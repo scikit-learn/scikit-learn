@@ -19,11 +19,11 @@ class RFE(BaseEstimator):
        Given an external estimator that assigns weights to features (e.g., the
        coefficients of a linear model), the goal of the RFE algorithm is to
        select features by recursively considering smaller and smaller sets of
-       features.  First, the estimator is trained on the initial set of features
-       and weights are assigned to each one of them. Then, features whose
-       absolute weights are the smallest are pruned from the current set
-       features. That procedure is recursively repeated until the desired number
-       of features to select is eventually reached.
+       features.  First, the estimator is trained on the initial set of
+       features and weights are assigned to each one of them. Then, features
+       whose absolute weights are the smallest are pruned from the current set
+       features. That procedure is recursively repeated until the desired
+       number of features to select is eventually reached.
 
     Parameters
     ----------
@@ -69,8 +69,9 @@ class RFE(BaseEstimator):
     >>> estimator = SVR(kernel="linear")
     >>> selector = RFE(estimator, 5, step=1)
     >>> selector = selector.fit(X, y)
-    >>> selector.support_
-    array([ True,  True,  True,  True,  True, False, False, False, False, False], dtype=bool)
+    >>> selector.support_ # doctest: +NORMALIZE_WHITESPACE
+    array([ True,  True,  True,  True,  True,
+            False, False, False, False, False], dtype=bool)
     >>> selector.ranking_
     array([1, 1, 1, 1, 1, 6, 4, 3, 2, 5])
 
@@ -233,8 +234,9 @@ class RFECV(RFE):
     >>> estimator = SVR(kernel="linear")
     >>> selector = RFECV(estimator, step=1, cv=5)
     >>> selector = selector.fit(X, y)
-    >>> selector.support_
-    array([ True,  True,  True,  True,  True, False, False, False, False, False], dtype=bool)
+    >>> selector.support_ # doctest: +NORMALIZE_WHITESPACE
+    array([ True,  True,  True,  True,  True,
+            False, False, False, False, False], dtype=bool)
     >>> selector.ranking_
     array([1, 1, 1, 1, 1, 6, 4, 3, 2, 5])
 
