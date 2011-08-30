@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-============================================
-Vector Quantization of a photo using k-means
-============================================
+==================================
+Color Quantization using K-Means
+==================================
 
 Performs a pixel-wise Vector Quantization (VQ) of an image of the summer palace
 (China), reducing the number of colors required to show the image from 96,615
@@ -18,6 +18,12 @@ palette.
 For comparison, a quantized image using a random codebook (colors picked up
 randomly) is also shown.
 """
+# Authors: Robert Layton <robertlayton@gmail.com>
+#          Olivier Grisel <olivier.grisel@ensta.org>
+#          Mathieu Blondel <mathieu@mblondel.org>
+#
+# License: BSD
+
 print __doc__
 import numpy as np
 import pylab as pl
