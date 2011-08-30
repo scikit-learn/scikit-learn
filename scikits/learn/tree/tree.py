@@ -124,9 +124,9 @@ def _build_tree(is_classification, features, labels, criterion,
         if depth >= max_depth:
             is_split_valid = False
 
-        dim, thresh, error = _tree._find_best_split(features, 
-                                                    labels, 
-                                                    criterion)
+        dim, thresh, error, init_error = _tree._find_best_split(features,
+                                                                labels,
+                                                                criterion)
 
         if dim != -1: 
             split = features[:, dim] < thresh
@@ -145,14 +145,11 @@ def _build_tree(is_classification, features, labels, criterion,
             a = np.mean(labels)
                 
         if is_split_valid == False:
-            if is_classification:
-                return Leaf(a)
-            else:
-                return Leaf(a)
+            return Leaf(a)
                 
         return Node(dimension=sample_dims[dim],
                     value=thresh,
-                    error=error,
+                    error=init_error,
                     samples=len(labels),
                     v=a,
                     left=recursive_partition(features[split],
