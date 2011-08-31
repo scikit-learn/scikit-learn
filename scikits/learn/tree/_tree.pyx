@@ -403,6 +403,15 @@ def _find_best_split(np.ndarray[np.float_t, ndim=2, mode="fortran"] features,
     cdef int sorted_features_col_stride = sorted_features.strides[1]
     cdef int sorted_features_stride = sorted_features_col_stride / sorted_features_elem_stride   
     
+    #compute the initial entropy in the node
+    sorted_features_i = (<int *>sorted_features.data)
+    criterion.init(labels, sorted_features_i)
+    initial_error = criterion.eval()
+    if initial_error == 0: # break early if the node is pure
+        return best_i, best_t, best_error, initial_error 
+    best_error = initial_error
+    #print 'at init, best error = ', best_error
+    
     for i from 0 <= i < n_features:
         # get i-th col of features and features_sorted
         features_i = (<np.float_t *>features.data) + features_stride * i
@@ -410,11 +419,6 @@ def _find_best_split(np.ndarray[np.float_t, ndim=2, mode="fortran"] features,
 
         # init the criterion for this feature
         criterion.init(labels, sorted_features_i)
-        initial_error = criterion.eval()
-        if initial_error == 0: # break early if the node is pure
-            return best_i, best_t, best_error, initial_error 
-        best_error = initial_error
-        #print 'at init, best error = ', best_error
 
         # get sample in mask with smallest value for i-th feature
         a = smallest_sample_larger_than(-1, features_i, sorted_features_i,
