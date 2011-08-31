@@ -256,6 +256,18 @@ def test_ball_tree_query_radius_distance(n_samples=100, n_features=10):
 
         assert_array_almost_equal(d, dist)
 
+def test_ball_tree_pickle():
+    import pickle
+    X = np.random.random(size=(10, 3))
+    bt = ball_tree.BallTree(X, 1)
+    s = pickle.dumps(bt)
+    bt2 = pickle.loads(s)
+
+    ind1, dist1 = bt.query(X)
+    ind2, dist2 = bt2.query(X)
+
+    assert_array_almost_equal(dist1, dist2)
+
 if __name__ == '__main__':
     import nose
     nose.runmodule()
