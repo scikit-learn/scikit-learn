@@ -7,7 +7,7 @@
 
 import warnings
 import numpy as np
-from scipy import sparse
+import scipy.sparse as sp
 
 from ..base import LinearModel
 from . import cd_fast_sparse
@@ -40,14 +40,14 @@ class ElasticNet(LinearModel):
     The parameter rho corresponds to alpha in the glmnet R package
     while alpha corresponds to the lambda parameter in glmnet.
     """
-
     def __init__(self, alpha=1.0, rho=0.5, fit_intercept=False,
-                 max_iter=1000, tol=1e-4):
+                 normalize=False, max_iter=1000, tol=1e-4):
         if fit_intercept:
             raise NotImplementedError("fit_intercept=True is not implemented")
         self.alpha = alpha
         self.rho = rho
         self.fit_intercept = fit_intercept
+        self.normalize = normalize
         self.intercept_ = 0.0
         self.max_iter = max_iter
         self.tol = tol
@@ -59,7 +59,7 @@ class ElasticNet(LinearModel):
             self.sparse_coef_ = None
         else:
             # sparse representation of the fitted coef for the predict method
-            self.sparse_coef_ = sparse.csr_matrix(coef_)
+            self.sparse_coef_ = sp.csr_matrix(coef_)
 
     def fit(self, X, y):
         """Fit current model with coordinate descent
@@ -67,7 +67,7 @@ class ElasticNet(LinearModel):
         X is expected to be a sparse matrix. For maximum efficiency, use a
         sparse matrix in CSC format (scipy.sparse.csc_matrix)
         """
-        X = sparse.csc_matrix(X)
+        X = sp.csc_matrix(X)
         y = np.asanyarray(y, dtype=np.float64)
 
         # NOTE: we are explicitly not centering the data the naive way to
@@ -111,8 +111,8 @@ class ElasticNet(LinearModel):
         array, shape = [n_samples] with the predicted real values
         """
         # np.dot only works correctly if both arguments are sparse matrices
-        if not sparse.issparse(X):
-            X = sparse.csr_matrix(X)
+        if not sp.issparse(X):
+            X = sp.csr_matrix(X)
         return np.ravel(np.dot(self.sparse_coef_, X.T).todense()
                         + self.intercept_)
 
@@ -134,8 +134,8 @@ class Lasso(ElasticNet):
         data is assumed to be already centered.
 
     """
-
-    def __init__(self, alpha=1.0, fit_intercept=False, max_iter=1000, tol=1e-4):
+    def __init__(self, alpha=1.0, fit_intercept=False, normalize=False,
+                 max_iter=1000, tol=1e-4):
         super(Lasso, self).__init__(
-            alpha=alpha, rho=1.0, fit_intercept=fit_intercept, max_iter=max_iter,
-            tol=tol)
+            alpha=alpha, rho=1.0, fit_intercept=fit_intercept,
+            normalize=normalize, max_iter=max_iter, tol=tol)

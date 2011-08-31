@@ -7,7 +7,6 @@ import numpy as np
 
 ################################################################################
 # Generate sample data
-################################################################################
 
 def generate_clustered_data(seed=0, n_clusters=3, n_features=2,
                             n_samples_per_cluster=20, std=.4):
@@ -26,4 +25,3 @@ def generate_clustered_data(seed=0, n_clusters=3, n_features=2,
         X = np.r_[X, means[i][:n_features]
                   + std * prng.randn(n_samples_per_cluster, n_features)]
     return X
-

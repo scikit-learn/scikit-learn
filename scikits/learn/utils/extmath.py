@@ -56,10 +56,24 @@ else:
 try:
     factorial = math.factorial
 except AttributeError:
-    # math.factorial is only available in Python >= 2.6
-    import operator
-    def factorial(x):
-        return reduce(operator.mul, xrange(2, x+1), 1)
+     # math.factorial is only available in Python >= 2.6
+     import operator
+     def factorial(x):
+         # don't use reduce operator or 2to3 will fail.
+         # ripped from http://www.joelbdalley.com/page.pl?38
+         # Ensure that n is a Natural number
+         n = abs(int(n))
+         if n < 1: n = 1
+
+         # Store n! in variable x
+         x = 1
+
+         # Compute n!
+         for i in range(1, n + 1):
+             x = i * x
+
+         # Return n!
+         return x
 
 
 try:

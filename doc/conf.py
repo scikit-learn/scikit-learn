@@ -59,8 +59,8 @@ plot_gallery = True
 master_doc = 'index'
 
 # General information about the project.
-project = u'scikits.learn'
-copyright = u'2010–2011, scikits.learn developers (BSD License)'
+project = u'scikit-learn'
+copyright = u'2010–2011, scikit-learn developers (BSD License)'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -129,7 +129,7 @@ html_theme_path = ['themes']
 #html_title = None
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
-html_short_title = 'scikits.learn'
+html_short_title = 'scikit-learn'
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
@@ -195,8 +195,8 @@ htmlhelp_basename = 'scikit-learndoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'user_guide.tex', u'scikits.learn user guide',
-   u'scikits.learn developers', 'manual'),
+  ('index', 'user_guide.tex', u'scikit-learn user guide',
+   u'scikit-learn developers', 'manual'),
 
 ]
 

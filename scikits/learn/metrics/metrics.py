@@ -21,6 +21,7 @@ def unique_labels(*list_of_labels):
     """Extract an ordered integer array of unique labels
 
     This implementation ignores any occurrence of NaNs.
+
     """
     list_of_labels = [np.unique(labels[np.isfinite(labels)].ravel())
                       for labels in list_of_labels]
@@ -51,6 +52,7 @@ def confusion_matrix(y_true, y_pred, labels=None):
     References
     ----------
     http://en.wikipedia.org/wiki/Confusion_matrix
+
     """
     if labels is None:
         labels = unique_labels(y_true, y_pred)
@@ -108,6 +110,7 @@ def roc_curve(y_true, y_score):
     References
     ----------
     http://en.wikipedia.org/wiki/Receiver_operating_characteristic
+
     """
     y_true = y_true.ravel()
     classes = np.unique(y_true)
@@ -164,6 +167,7 @@ def auc(x, y):
     >>> fpr, tpr, thresholds = metrics.roc_curve(y, pred)
     >>> metrics.auc(fpr, tpr)
     0.75
+
     """
     x, y = check_arrays(x, y)
     assert x.shape[0] == y.shape[0]
@@ -199,7 +203,9 @@ def precision_score(y_true, y_pred, pos_label=1):
 
     pos_label : int
         in the binary classification case, give the label of the
-        positive class (default is 1)
+        positive class (default is 1). Everything else but 'pos_label'
+        is considered to belong to the negative class.
+        Not used in the case of multiclass classification.
 
     Returns
     -------
@@ -235,13 +241,16 @@ def recall_score(y_true, y_pred, pos_label=1):
 
     pos_label : int
         in the binary classification case, give the label of the positive
-        class (default is 1)
+        class (default is 1). Everything else but 'pos_label'
+        is considered to belong to the negative class.
+        Not used in the case of multiclass classification.
 
     Returns
     -------
     recall : float
         recall of the positive class in binary classification or weighted
-        avergage of the recall of each class for the multiclass task
+        avergage of the recall of each class for the multiclass task.
+
     """
     _, r, _, s = precision_recall_fscore_support(y_true, y_pred)
     if r.shape[0] == 2:
@@ -273,13 +282,15 @@ def fbeta_score(y_true, y_pred, beta, pos_label=1):
 
     pos_label : int
         in the binary classification case, give the label of the positive
-        class (default is 1)
+        class (default is 1). Everything else but 'pos_label'
+        is considered to belong to the negative class.
+        Not used in the case of multiclass classification.
 
     Returns
     -------
     fbeta_score : float
         fbeta_score of the positive class in binary classification or weighted
-        avergage of the fbeta_score of each class for the multiclass task
+        avergage of the fbeta_score of each class for the multiclass task.
 
     """
     _, _, f, s = precision_recall_fscore_support(y_true, y_pred, beta=beta)
@@ -314,7 +325,9 @@ def f1_score(y_true, y_pred, pos_label=1):
 
     pos_label : int
         in the binary classification case, give the label of the positive class
-        (default is 1)
+        (default is 1). Everything else but 'pos_label'
+        is considered to belong to the negative class.
+        Not used in the case of multiclass classification.
 
     Returns
     -------
@@ -325,6 +338,7 @@ def f1_score(y_true, y_pred, pos_label=1):
     References
     ----------
     http://en.wikipedia.org/wiki/F1_score
+
     """
     return fbeta_score(y_true, y_pred, 1, pos_label=pos_label)
 
@@ -371,6 +385,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None):
     References
     ----------
     http://en.wikipedia.org/wiki/Precision_and_recall
+
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
     assert(beta > 0)
@@ -518,6 +533,7 @@ def precision_recall_curve(y_true, probas_pred):
 
     thresholds : array, shape = [n]
         Thresholds on proba_ used to compute precision and recall
+
     """
     y_true = y_true.ravel()
     labels = np.unique(y_true)
@@ -558,6 +574,7 @@ def explained_variance_score(y_true, y_pred):
     y_true : array-like
 
     y_pred : array-like
+
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
     numerator = np.var(y_true - y_pred)
@@ -586,6 +603,7 @@ def r2_score(y_true, y_pred):
     y_true : array-like
 
     y_pred : array-like
+
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
     numerator = ((y_true - y_pred) ** 2).sum()
@@ -617,6 +635,7 @@ def zero_one_score(y_true, y_pred):
     Returns
     -------
     score : integer
+
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
     return np.mean(y_pred == y_true)
@@ -642,6 +661,7 @@ def zero_one(y_true, y_pred):
     Returns
     -------
     loss : integer
+
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
     return np.sum(y_pred != y_true)
@@ -663,9 +683,11 @@ def mean_square_error(y_true, y_pred):
     Returns
     -------
     loss : float
+
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
     return np.linalg.norm(y_pred - y_true) ** 2
+
 
 def hinge_loss(y_true, pred_decision, pos_label=1, neg_label=-1):
     """
@@ -684,6 +706,7 @@ def hinge_loss(y_true, pred_decision, pos_label=1, neg_label=-1):
 
     pred_decision : array, shape = [n_samples] or [n_samples, n_classes]
         Predicted decisions, as output by decision_function (floats)
+
     """
     # TODO: multi-class hinge-loss
 
@@ -696,5 +719,5 @@ def hinge_loss(y_true, pred_decision, pos_label=1, neg_label=-1):
 
     margin = y_true * pred_decision
     losses = 1 - margin
-    losses[losses <= 0] = 0 # the hinge doesn't penalize good enough predictions
+    losses[losses <= 0] = 0  # hinge doesn't penalize good enough predictions
     return np.mean(losses)

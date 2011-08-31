@@ -178,11 +178,31 @@ class Scaler(BaseEstimator, TransformerMixin):
         X = np.asanyarray(X)
         if copy:
             X = X.copy()
-        # We are taking a view of the X array and modifying it
         if self.with_mean:
             X -= self.mean_
         if self.with_std:
             X /= self.std_
+        return X
+
+    def inverse_transform(self, X, copy=None):
+        """Scale back the data to the original representation
+
+        Parameters
+        ----------
+        X : array-like with shape [n_samples, n_features]
+            The data used to scale along the features axis.
+        """
+        copy = copy if copy is not None else self.copy
+        if sp.issparse(X):
+            raise NotImplementedError(
+                "Scaling is not yet implement for sparse matrices")
+        X = np.asanyarray(X)
+        if copy:
+            X = X.copy()
+        if self.with_std:
+            X *= self.std_
+        if self.with_mean:
+            X += self.mean_
         return X
 
 
@@ -499,7 +519,12 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         else:
             Y = np.zeros((len(y), len(self.classes_)))
 
-        if self.multilabel:
+        y_is_multilabel = _is_multilabel(y)
+
+        if y_is_multilabel and not self.multilabel:
+            raise ValueError("The object was not fitted with multilabel input!")
+
+        elif self.multilabel:
             if not _is_multilabel(y):
                 raise ValueError("y should be a list of label lists/tuples,"
                                  "got %r" % (y,))
@@ -523,16 +548,21 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
             return Y
 
         else:
-            raise ValueError("Wrong number of classes: %d"
-                             % len(self.classes_))
+            # Only one class, returns a matrix with all 0s.
+            return Y
 
-    def inverse_transform(self, Y):
+    def inverse_transform(self, Y, threshold=0):
         """Transform binary labels back to multi-class labels
 
         Parameters
         ----------
         Y : numpy array of shape [n_samples, n_classes]
             Target values.
+
+        threshold : float
+            Threshold used to decide whether to assign the positive class or the
+            negative class in the binary case. Use 0.5 when Y contains
+            probabilities.
 
         Returns
         -------
@@ -554,7 +584,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
                     for i in range(Y.shape[0])]
 
         if len(Y.shape) == 1 or Y.shape[1] == 1:
-            y = np.array(Y.ravel() > 0, dtype=int)
+            y = np.array(Y.ravel() > threshold, dtype=int)
 
         else:
             y = Y.argmax(axis=1)

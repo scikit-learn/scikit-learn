@@ -39,12 +39,12 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
 
     Examples
     --------
-    >>> samples = [[0, 0, 1], [1, 0, 0]]
+    >>> samples = [[0, 0, 2], [1, 0, 0]]
     >>> labels = [0, 1]
     >>> from scikits.learn.neighbors import NeighborsClassifier
     >>> neigh = NeighborsClassifier(n_neighbors=1)
     >>> neigh.fit(samples, labels)
-    NeighborsClassifier(n_neighbors=1, leaf_size=20, algorithm='auto')
+    NeighborsClassifier(algorithm='auto', leaf_size=20, n_neighbors=1)
     >>> print neigh.predict([[0,0,0]])
     [1]
 
@@ -176,7 +176,7 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
         >>> from scikits.learn.neighbors import NeighborsClassifier
         >>> neigh = NeighborsClassifier(n_neighbors=1)
         >>> neigh.fit(samples, labels)
-        NeighborsClassifier(n_neighbors=1, leaf_size=20, algorithm='auto')
+        NeighborsClassifier(algorithm='auto', leaf_size=20, n_neighbors=1)
         >>> print neigh.kneighbors([1., 1., 1.]) # doctest: +ELLIPSIS
         (array([[ 0.5]]), array([[2]]...))
 
@@ -274,7 +274,7 @@ class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
     >>> from scikits.learn.neighbors import NeighborsRegressor
     >>> neigh = NeighborsRegressor(n_neighbors=2)
     >>> neigh.fit(X, y)
-    NeighborsRegressor(n_neighbors=2, mode='mean', algorithm='auto', leaf_size=20)
+    NeighborsRegressor(algorithm='auto', leaf_size=20, mode='mean', n_neighbors=2)
     >>> print neigh.predict([[1.5]])
     [ 0.5]
 
@@ -526,7 +526,7 @@ def radius_neighbors_graph(X, radius, mode='connectivity'):
     n_neighbors = np.array([len(a) for a in A_ind])
     n_nonzero = np.sum(n_neighbors)
     A_ind = np.concatenate(list(A_ind))
-    A_indptr = np.concatenate((np.zeros(1), np.cumsum(n_neighbors)))
+    A_indptr = np.concatenate((np.zeros(1, dtype=int), np.cumsum(n_neighbors)))
 
     if A_data is None:
         A_data = np.ones(n_nonzero)

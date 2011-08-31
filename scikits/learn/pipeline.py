@@ -59,11 +59,13 @@ class Pipeline(BaseEstimator):
 
         >>> from scikits.learn import svm
         >>> from scikits.learn.datasets import samples_generator
-        >>> from scikits.learn.feature_selection import SelectKBest, f_regression
+        >>> from scikits.learn.feature_selection import SelectKBest
+        >>> from scikits.learn.feature_selection import f_regression
         >>> from scikits.learn.pipeline import Pipeline
 
         >>> # generate some data to play with
-        >>> X, y = samples_generator.make_classification(n_informative=5, n_redundant=0)
+        >>> X, y = samples_generator.make_classification(
+        ...     n_informative=5, n_redundant=0, random_state=42)
 
         >>> # ANOVA SVM-C
         >>> anova_filter = SelectKBest(f_regression, k=5)
@@ -73,12 +75,13 @@ class Pipeline(BaseEstimator):
         >>> # You can set the parameters using the names issued
         >>> # For instance, fit using a k of 10 in the SelectKBest
         >>> # and a parameter 'C' of the svn
-        >>> anova_svm.fit(X, y, anova__k=10, svc__C=.1) #doctest: +ELLIPSIS
-        Pipeline(steps=[('anova', SelectKBest(k=10, score_func=<function f_regression at ...>)), ('svc', SVC(kernel='linear', C=0.1, probability=False, degree=3, coef0=0.0, tol=0.001,
-          shrinking=True, gamma=0.0))])
+        >>> anova_svm.set_params(anova__k=10, svc__C=.1).fit(X, y)
+        ...                                              # doctest: +ELLIPSIS
+        Pipeline(steps=[...])
 
         >>> prediction = anova_svm.predict(X)
-        >>> score = anova_svm.score(X)
+        >>> anova_svm.score(X, y)
+        0.75
     """
 
     #--------------------------------------------------------------------------
@@ -127,24 +130,28 @@ class Pipeline(BaseEstimator):
     # Estimator interface
     #--------------------------------------------------------------------------
 
-    def _pre_transform(self, X, y=None, **params):
-        self._set_params(**params)
+    def _pre_transform(self, X, y=None, **fit_params):
+        fit_params_steps = dict((step, {}) for step, _ in self.steps)
+        for pname, pval in fit_params.iteritems():
+            step, param = pname.split('__', 1)
+            fit_params_steps[step][param] = pval
         Xt = X
         for name, transform in self.steps[:-1]:
             if hasattr(transform, "fit_transform"):
-                Xt = transform.fit_transform(Xt, y)
+                Xt = transform.fit_transform(Xt, y, **fit_params_steps[name])
             else:
-                Xt = transform.fit(Xt, y).transform(Xt)
-        return Xt
+                Xt = transform.fit(Xt, y, **fit_params_steps[name]) \
+                              .transform(Xt)
+        return Xt, fit_params_steps[self.steps[-1][0]]
 
-    def fit(self, X, y=None, **params):
-        Xt = self._pre_transform(X, y, **params)
-        self.steps[-1][-1].fit(Xt, y)
+    def fit(self, X, y=None, **fit_params):
+        Xt, fit_params = self._pre_transform(X, y, **fit_params)
+        self.steps[-1][-1].fit(Xt, y, **fit_params)
         return self
 
-    def fit_transform(self, X, y=None, **params):
-        Xt = self._pre_transform(X, y, **params)
-        return self.steps[-1][-1].fit_transform(Xt, y)
+    def fit_transform(self, X, y=None, **fit_params):
+        Xt, fit_params = self._pre_transform(X, y, **fit_params)
+        return self.steps[-1][-1].fit_transform(Xt, y, **fit_params)
 
     def predict(self, X):
         Xt = X
