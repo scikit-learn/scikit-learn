@@ -12,84 +12,62 @@ from ..utils.extmath import safe_sparse_dot
 
 
 # Utility Functions
-def return_self_if_square(X):
-    """ Returns the argument iff it is a square numpy array
+def check_pairwise_arrays(XA, XB):
+    """ Sets XA and XB appropriately and checks inputs
 
-    If the argument is a square numpy array, it is returned.
-    Otherwise, raise a ValueError instead.
-
-    Examples
-    --------
-    >>> from scikits.learn.metrics.pairwise import return_self_if_square
-    >>> import numpy as np
-    >>> X = np.array([[0., 1.], [1., 1.]])
-    >>> return_self_if_square(X)
-    array([[ 0.,  1.],
-           [ 1.,  1.]])
-    >>> X = np.array([[0, 1], [1, 1], [2, 2]])
-    >>> return_self_if_square(X)
-    Traceback (most recent call last):
-        ...
-    ValueError: X is not square!
-    """
-    if X.shape[0] != X.shape[1]:
-            raise ValueError("X is not square!")
-    return X
-
-
-def check_arrays(X, Y):
-    """ Sets Y appropriately and checks inputs
-
-    If Y is None, it is set as a pointer to X (i.e. not a copy).
-    If Y is given, this does not happen.
+    If XB is None, it is set as a pointer to XA (i.e. not a copy).
+    If XB is given, this does not happen.
     All distance metrics should use this function first to assert that the
     given parameters are correct and safe to use.
 
-    Specifically, this function first ensures that both X and Y are arrays,
+    Specifically, this function first ensures that both XA and XB are arrays,
     then checkes that they are at least two dimensional. Finally, the function
     checks that the size of the second dimension of the two arrays is equal.
 
     Parameters
     ----------
-    X: {array-like, sparse matrix}, shape = [n_samples_1, n_features]
+    XA: {array-like, sparse matrix}, shape = [n_samples_a, n_features]
 
-    Y: {array-like, sparse matrix}, shape = [n_samples_2, n_features]
+    XB: {array-like, sparse matrix}, shape = [n_samples_b, n_features]
 
     Returns
     -------
-    safe_X: {array-like, sparse matrix}, shape = [n_samples_1, n_features]
-        An array equal to X, guarenteed to be a numpy array.
+    safe_XA: {array-like, sparse matrix}, shape = [n_samples_a, n_features]
+        An array equal to XA, guarenteed to be a numpy array.
 
-    safe_Y: {array-like, sparse matrix}, shape = [n_samples_2, n_features]
-        An array equal to Y if Y was not None, guarenteed to be a numpy array.
-        If Y was None, safe_Y will be a pointer to X.
+    safe_XB: {array-like, sparse matrix}, shape = [n_samples_b, n_features]
+        An array equal to XB if XB was not None, guarenteed to be a numpy array.
+        If XB was None, safe_XB will be a pointer to XA.
 
     """
-    if Y is X or Y is None:
-        X = Y = safe_asanyarray(X)
+    if XB is XA or XB is None:
+        XA = XB = safe_asanyarray(XA)
     else:
-        X = safe_asanyarray(X)
-        Y = safe_asanyarray(Y)
-    X, Y = np.atleast_2d(X), np.atleast_2d(Y)
-    if X.shape[1] != Y.shape[1]:
-        raise ValueError("Incompatible dimension for X and Y matrices")
-    return X, Y
+        XA = safe_asanyarray(XA)
+        XB = safe_asanyarray(XB)
+    if len(XA.shape) < 2:
+        raise ValueError("XA is required to be at least two dimensional.")
+    if len(XB.shape) < 2:
+        raise ValueError("XB is required to be at least two dimensional.")
+    if XA.shape[1] != XB.shape[1]:
+        raise ValueError("Incompatible dimension for XA and XB matrices")
+    return XA, XB
 
 
 # Distances
-def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
+def euclidean_distances(XA, XB=None, Y_norm_squared=None, squared=False):
     """
-    Considering the rows of X (and Y=X) as vectors, compute the
+    Considering the rows of XA (and XB=XA) as vectors, compute the
     distance matrix between each pair of vectors.
 
     Parameters
     ----------
-    X: {array-like, sparse matrix}, shape = [n_samples_1, n_features]
+    XA: {array-like, sparse matrix}, shape = [n_samples_1, n_features]
 
-    Y: {array-like, sparse matrix}, shape = [n_samples_2, n_features]
+    XB: {array-like, sparse matrix}, shape = [n_samples_2, n_features]
 
     Y_norm_squared: array-like, shape = [n_samples_2], optional
-        Pre-computed (Y**2).sum(axis=1)
+        Pre-computed (XB**2).sum(axis=1)
 
     squared: boolean, optional
         Return squared Euclidean distances.
@@ -114,32 +92,32 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     # should not need X_norm_squared because if you could precompute that as
     # well as Y, then you should just pre-compute the output and not even
     # call this function.
-    X, Y = check_arrays(X, Y)
-    if issparse(X):
-        XX = X.multiply(X).sum(axis=1)
+    XA, XB = check_pairwise_arrays(XA, XB)
+    if issparse(XA):
+        XX = XA.multiply(XA).sum(axis=1)
     else:
-        XX = np.sum(X * X, axis=1)[:, np.newaxis]
+        XX = np.sum(XA * XA, axis=1)[:, np.newaxis]
 
-    if X is Y:  # shortcut in the common case euclidean_distances(X, X)
+    if XA is XB:  # shortcut in the common case euclidean_distances(X, X)
         YY = XX.T
     elif Y_norm_squared is None:
-        if issparse(Y):
+        if issparse(XB):
             # scipy.sparse matrices don't have element-wise scalar
             # exponentiation, and tocsr has a copy kwarg only on CSR matrices.
-            YY = Y.copy() if isinstance(Y, csr_matrix) else Y.tocsr()
+            YY = XB.copy() if isinstance(XB, csr_matrix) else XB.tocsr()
             YY.data **= 2
             YY = np.asarray(YY.sum(axis=1)).T
         else:
-            YY = np.sum(Y ** 2, axis=1)[np.newaxis, :]
+            YY = np.sum(XB ** 2, axis=1)[np.newaxis, :]
     else:
         YY = atleast2d_or_csr(Y_norm_squared)
-        if YY.shape != (1, Y.shape[0]):
+        if YY.shape != (1, XB.shape[0]):
             raise ValueError(
-                        "Incompatible dimensions for Y and Y_norm_squared")
+                        "Incompatible dimensions for XB and Y_norm_squared")
 
     # TODO: a faster Cython implementation would do the clipping of negative
     # values in a single pass over the output matrix.
-    distances = safe_sparse_dot(X, Y.T, dense_output=True)
+    distances = safe_sparse_dot(XA, XB.T, dense_output=True)
     distances *= -2
     distances += XX
     distances += YY
@@ -186,7 +164,7 @@ def l1_distances(X, Y=None):
     array([[ 1.,  1.],
            [ 1.,  1.]])
     """
-    X, Y = check_arrays(X, Y)
+    X, Y = check_pairwise_arrays(X, Y)
     n_samples_X, n_features_X = X.shape
     n_samples_Y, n_features_Y = Y.shape
     if n_features_X != n_features_Y:
@@ -214,7 +192,7 @@ def linear_kernel(X, Y=None):
     -------
     Gram matrix: array of shape (n_samples_1, n_samples_2)
     """
-    X, Y = check_arrays(X, Y)
+    X, Y = check_pairwise_arrays(X, Y)
     return safe_sparse_dot(X, Y.T, dense_output=True)
 
 
@@ -236,7 +214,7 @@ def polynomial_kernel(X, Y=None, degree=3, gamma=0, coef0=1):
     -------
     Gram matrix: array of shape (n_samples_1, n_samples_2)
     """
-    X, Y = check_arrays(X, Y)
+    X, Y = check_pairwise_arrays(X, Y)
     if gamma == 0:
         gamma = 1.0 / X.shape[1]
 
@@ -265,7 +243,7 @@ def sigmoid_kernel(X, Y=None, gamma=0, coef0=1):
     -------
     Gram matrix: array of shape (n_samples_1, n_samples_2)
     """
-    X, Y = check_arrays(X, Y)
+    X, Y = check_pairwise_arrays(X, Y)
     if gamma == 0:
         gamma = 1.0 / X.shape[1]
 
@@ -294,7 +272,7 @@ def rbf_kernel(X, Y=None, gamma=0):
     -------
     Gram matrix: array of shape (n_samples_1, n_samples_2)
     """
-    X, Y = check_arrays(X, Y)
+    X, Y = check_pairwise_arrays(X, Y)
     if gamma == 0:
         gamma = 1.0 / X.shape[1]
 
@@ -307,7 +285,6 @@ def rbf_kernel(X, Y=None, gamma=0):
 # Helper functions - distance
 pairwise_function_map = {}
 pairwise_function_map['euclidean'] = euclidean_distances
-pairwise_function_map['precomputed'] = return_self_if_square
 pairwise_function_map['l1'] = l1_distances
 
 
@@ -357,7 +334,11 @@ def pairwise_distances(XA, XB=None, metric="euclidean", **kwds):
         from XA and the jth array from XB.
 
     """
-    if metric in pairwise_function_map:
+    if metric == "precomputed":
+        if XA.shape[0] != XA.shape[1]:
+            raise ValueError("X is not square!")
+        return XA
+    elif metric in pairwise_function_map:
         return pairwise_function_map[metric](XA, XB, **kwds)
     else:
         # FIXME: the distance module doesn't support sparse matrices!
