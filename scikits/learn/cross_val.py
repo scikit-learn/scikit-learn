@@ -198,9 +198,9 @@ class KFold(object):
         -----
         All the folds have size trunc(n/k), the last one has the complementary
         """
-        assert k > 0, ValueError('cannot have k below 1')
-        assert k <= n, ValueError('cannot have k=%d greater than the number '
-                                  'of samples: %d' % (k, n))
+        assert k > 0, ValueError('Cannot have k below 1!')
+        assert k <= n, ValueError('Cannot have k=%d greater than the number '
+                                  'of samples: %d!' % (k, n))
         self.n = n
         self.k = k
         self.indices = indices
@@ -284,14 +284,14 @@ class StratifiedKFold(object):
         """
         y = np.asanyarray(y)
         n = y.shape[0]
-        assert k > 0, ValueError('cannot have k below 1')
-        assert k <= n, ValueError('cannot have k=%d greater than the number '
-                                  'of samples %d' % (k, n))
+        assert k > 0, ValueError('Cannot have k below 1!')
+        assert k <= n, ValueError('Cannot have k=%d greater than the number '
+                                  'of samples %d!' % (k, n))
         _, y_sorted = unique(y, return_inverse=True)
         min_labels = np.min(np.bincount(y_sorted))
-        assert k <= min_labels, ValueError('cannot have k=%d smaller than '
+        assert k <= min_labels, ValueError('Cannot have k=%d smaller than '
                                            'the minimum number of labels '
-                                           'for any class %d'
+                                           'for any class %d!'
                                            % (k, min_labels))
         self.y = y
         self.k = k
