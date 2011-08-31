@@ -149,8 +149,9 @@ def _find_best_split_classification(np.ndarray[np.float_t, ndim=2] features,
         np.zeros((K,), dtype=np.float)
 
     best = None
-    cdef double split_error = \
+    cdef double init_error = \
         call_classification_crit(crit, np.bincount(labels).astype(np.float))
+    cdef double split_error = init_error
     if split_error == 0:
         return best # short circuit
     
@@ -181,7 +182,7 @@ def _find_best_split_classification(np.ndarray[np.float_t, ndim=2] features,
             
             if error < split_error:
                 split_error = error
-                best = i, t, error
+                best = i, t, error, init_error
                 if split_error == 0:
                     return best # short circuit
     return best
@@ -217,8 +218,9 @@ def _find_best_split_regression(np.ndarray[np.float_t, ndim=2] features,
     cdef int n_features = features.shape[1]
 
     best = None
-    cdef double split_error = \
+    cdef double init_error = \
         call_regression_crit(crit, targets)
+    cdef double split_error = init_error        
     if split_error == 0:
         return best # short circuit
 
@@ -245,7 +247,7 @@ def _find_best_split_regression(np.ndarray[np.float_t, ndim=2] features,
             
             if error < split_error:
                 split_error = error
-                best = i, t, error
+                best = i, t, error, init_error
                 if split_error == 0:
                     return best # short circuit
     return best

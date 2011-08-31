@@ -61,16 +61,18 @@ class Node(object):
                 Mean for the region
     '''
 
-    def __init__(self, dimension, value, error, left, right):
+    def __init__(self, dimension, value, error, samples, v, left, right):
         self.dimension = dimension
         self.value = value
         self.error = error
+        self.samples = samples
+        self.v = v
         self.left = left
         self.right = right
 
     def _graphviz(self):
-        return "x[%s] < %s \\n error = %s" \
-               % (self.dimension, self.value, self.error)
+        return "x[%s] < %s \\n error = %s \\n samples = %s \\n v = %s" \
+               % (self.dimension, self.value, self.error, self.samples, self.v)
 
 
 def _build_tree(is_classification, features, labels, criterion,
@@ -125,7 +127,7 @@ def _build_tree(is_classification, features, labels, criterion,
             S = _tree._find_best_split_regression(features, labels, crit)
 
         if S is not None:
-            dim, thresh, error = S
+            dim, thresh, error, init_error = S
             split = features[:, dim] < thresh
             if len(features[split]) < min_split or \
                 len(features[~split]) < min_split:
@@ -133,18 +135,21 @@ def _build_tree(is_classification, features, labels, criterion,
         else:
             is_split_valid = False
 
+        if is_classification:
+            a = np.zeros((K, ))
+            t = labels.max() + 1
+            a[:t] = np.bincount(labels.astype(np.int))
+        else:
+            a = np.mean(labels)
+                
         if is_split_valid == False:
-            if is_classification:
-                a = np.zeros((K, ))
-                t = labels.max() + 1
-                a[:t] = np.bincount(labels)
-                return Leaf(a)
-            else:
-                return Leaf(np.mean(labels))
+            return Leaf(a)
 
         return Node(dimension=sample_dims[dim],
                     value=thresh,
-                    error=error,
+                    error=init_error,
+                    samples=len(labels),
+                    v=a,
                     left=recursive_partition(features[split],
                                              labels[split], depth + 1),
                     right=recursive_partition(features[~split],
