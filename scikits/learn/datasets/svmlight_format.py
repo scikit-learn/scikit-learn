@@ -1,13 +1,49 @@
-""" This module implements a fast and memory-efficient (no memory copying)
-loader for the svmlight / libsvm sparse dataset format.  """
+""" This module implements a loader for the svmlight / libsvm
+sparse dataset format.  """
 
 # Authors: Mathieu Blondel <mathieu@mblondel.org>
 #          Lars Buitinck <L.J.Buitinck@uva.nl>
 # License: Simple BSD.
 
+import numpy as np
 import scipy.sparse as sp
+import re
 
-from _svmlight_format import _load_svmlight_file
+def _load_svmlight_file(file_path, buffer_mb):
+    data = []
+    indptr = []
+    indices = []
+    labels = []
+
+    pattern = re.compile(r'\s+')
+
+    for line in open(file_path):
+        line = line.strip()
+
+        if line.startswith("#"):
+            continue
+
+        # Remove inline comments.
+        line = line.split("#")
+        line = line[0].strip()
+
+        line = re.sub(pattern, ' ', line)
+        y, features = line.split(" ", 1)
+
+        labels.append(float(y))
+        indptr.append(len(data))
+
+        for feat in features.split(" "):
+            idx, value = feat.split(":")
+            indices.append(int(idx))
+            data.append(float(value))
+
+    indptr.append(len(data))
+
+    return np.array(data, dtype=np.double), \
+           np.array(indices, dtype=np.int), \
+           np.array(indptr, dtype=np.int), \
+           np.array(labels, dtype=np.double)
 
 
 def load_svmlight_file(file_path, other_file_path=None,

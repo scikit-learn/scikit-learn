@@ -473,8 +473,8 @@ class PLSRegression(_PLS):
     >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
     >>> pls2 = PLSRegression(n_components=2)
     >>> pls2.fit(X, Y)
-    PLSRegression(scale=True, algorithm='nipals', max_iter=500, n_components=2,
-           tol=1e-06, copy=True)
+    PLSRegression(algorithm='nipals', copy=True, max_iter=500, n_components=2,
+           scale=True, tol=1e-06)
     >>> Y_pred = pls2.predict(X)
 
     References
@@ -578,8 +578,8 @@ class PLSCanonical(_PLS):
     >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
     >>> plsca = PLSCanonical(n_components=2)
     >>> plsca.fit(X, Y)
-    PLSCanonical(scale=True, algorithm='nipals', max_iter=500, n_components=2,
-           tol=1e-06, copy=True)
+    PLSCanonical(algorithm='nipals', copy=True, max_iter=500, n_components=2,
+           scale=True, tol=1e-06)
     >>> X_c, Y_c = plsca.transform(X, Y)
 
     References
@@ -686,8 +686,8 @@ class CCA(_PLS):
     >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
     >>> cca = CCA(n_components=1)
     >>> cca.fit(X, Y)
-    CCA(scale=True, algorithm='nipals', max_iter=500, n_components=1, tol=1e-06,
-      copy=True)
+    CCA(algorithm='nipals', copy=True, max_iter=500, n_components=1, scale=True,
+      tol=1e-06)
     >>> X_c, Y_c = cca.transform(X, Y)
 
     References

@@ -86,24 +86,24 @@ class SVC(BaseLibSVM, ClassifierMixin):
     Parameters
     ----------
     C : float, optional (default=1.0)
-        penalty parameter C of the error term.
+        Penalty parameter C of the error term.
 
     kernel : string, optional (default='rbf')
          Specifies the kernel type to be used in the algorithm.
-         one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'.
-         If none is given 'rbf' will be used.
+         It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'.
+         If none is given, 'rbf' will be used.
 
     degree : int, optional (default=3)
-        degree of kernel function
-        is significant only in poly, rbf, sigmoid
+        Degree of kernel function.
+        It is significant only in 'poly' and 'sigmoid'.
 
     gamma : float, optional (default=0.0)
-        kernel coefficient for rbf and poly, if gamma is 0.0 then 1/n_features
-        will be taken.
+        Kernel coefficient for 'rbf' and 'poly'. 
+        If gamma is 0.0 then 1/n_features will be used instead.
 
     coef0 : float, optional (default=0.0)
-        independent term in kernel function. It is only significant
-        in poly/sigmoid.
+        Independent term in kernel function. 
+        It is only significant in 'poly' and 'sigmoid'.
 
     probability: boolean, optional (default=False)
         Whether to enable probability estimates. This must be enabled prior
@@ -144,8 +144,8 @@ class SVC(BaseLibSVM, ClassifierMixin):
     >>> from scikits.learn.svm import SVC
     >>> clf = SVC()
     >>> clf.fit(X, y)
-    SVC(kernel='rbf', C=1.0, probability=False, degree=3, coef0=0.0, tol=0.001,
-      shrinking=True, gamma=0.25)
+    SVC(C=1.0, coef0=0.0, degree=3, gamma=0.25, kernel='rbf', probability=False,
+      shrinking=True, tol=0.001)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
 
@@ -245,8 +245,8 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
     >>> from scikits.learn.svm import NuSVC
     >>> clf = NuSVC()
     >>> clf.fit(X, y)
-    NuSVC(kernel='rbf', probability=False, degree=3, coef0=0.0, tol=0.001,
-       shrinking=True, nu=0.5, gamma=0.25)
+    NuSVC(coef0=0.0, degree=3, gamma=0.25, kernel='rbf', nu=0.5,
+       probability=False, shrinking=True, tol=0.001)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
 
@@ -335,8 +335,8 @@ class SVR(BaseLibSVM, RegressorMixin):
     >>> X = np.random.randn(n_samples, n_features)
     >>> clf = SVR(C=1.0, epsilon=0.2)
     >>> clf.fit(X, y)
-    SVR(kernel='rbf', C=1.0, probability=False, degree=3, epsilon=0.2,
-      shrinking=True, tol=0.001, coef0=0.0, gamma=0.1)
+    SVR(C=1.0, coef0=0.0, degree=3, epsilon=0.2, gamma=0.1, kernel='rbf',
+      probability=False, shrinking=True, tol=0.001)
 
     See also
     --------
@@ -443,8 +443,8 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     >>> X = np.random.randn(n_samples, n_features)
     >>> clf = NuSVR(C=1.0, nu=0.1)
     >>> clf.fit(X, y)
-    NuSVR(kernel='rbf', C=1.0, probability=False, degree=3, shrinking=True,
-       tol=0.001, coef0=0.0, nu=0.1, gamma=0.1)
+    NuSVR(C=1.0, coef0=0.0, degree=3, gamma=0.1, kernel='rbf', nu=0.1,
+       probability=False, shrinking=True, tol=0.001)
 
     See also
     --------

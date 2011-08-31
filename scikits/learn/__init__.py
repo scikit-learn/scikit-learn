@@ -13,6 +13,11 @@ machine-learning as a versatile tool for science and engineering.
 See http://scikit-learn.sourceforge.net for complete documentation.
 """
 
+try:
+    from . import check_build
+except ImportError:
+    raise ImportError("Please do not forget to run `make` first")
+
 from .base import clone
 
 from . import mixture
@@ -36,8 +41,9 @@ except:
     pass
 
 
-__all__ = ['cross_val', 'ball_tree', 'cluster', 'covariance', 'datasets',
-           'decomposition', 'feature_extraction', 'feature_selection',
+__all__ = ['check_build', 'cross_val', 'ball_tree', 'cluster', 'covariance',
+           'datasets', 'decomposition', 'feature_extraction',
+           'feature_selection',
            'gaussian_process', 'grid_search', 'hmm', 'lda', 'linear_model',
            'metrics', 'mixture', 'naive_bayes', 'neighbors', 'pipeline',
            'preprocessing', 'qda', 'svm', 'test', 'clone', 'pls', 'tree']

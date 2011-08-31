@@ -6,6 +6,8 @@ from .base import load_linnerud
 from .base import load_boston
 from .base import get_data_home
 from .base import clear_data_home
+from .base import load_sample_images
+from .base import load_sample_image
 from .mlcomp import load_mlcomp
 from .lfw import load_lfw_pairs
 from .lfw import load_lfw_people
