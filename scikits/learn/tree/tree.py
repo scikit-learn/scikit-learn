@@ -278,7 +278,7 @@ class BaseDecisionTree(BaseEstimator):
                 if self.K is None:
                     self.K = labels.max() + 1
                 else:
-                    if self.K != 2:
+                    if self.K < labels.max() + 1:
                         raise ValueError("Labels must be in range"
                                          "[0 to %s) " % self.K)
                 self.classification_subtype = "multiclass"
