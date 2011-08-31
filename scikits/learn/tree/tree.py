@@ -27,12 +27,12 @@ __all__ = [
     ]
 
 lookup_c = \
-      {'gini': 0,
-       'entropy': 1,
-       'miss': 2,
+      {'gini': _tree.Gini,
+       'entropy': _tree.Entropy,
+       #'miss': _tree.eval_miss,
        }
 lookup_r = \
-      {'mse': 0,
+      {'mse': _tree.MSE,
       }
 
 
@@ -84,6 +84,7 @@ def _build_tree(is_classification, features, labels, criterion,
                           "number of features\n"
                          "num labels is %s and num features is %s "
                          % (len(labels), len(features)))
+    labels = np.array(labels, dtype=np.float64, order="c")
 
     sample_dims = np.arange(n_dims)
     if F is not None:
@@ -106,6 +107,10 @@ def _build_tree(is_classification, features, labels, criterion,
             sample_dims = np.unique(random_state.randint(0, n_dims, F))
         features = features[:, sample_dims]
 
+    # make data fortran layout
+    if not features.flags["F_CONTIGUOUS"]:
+        features = np.array(features, order="F")
+
     if min_split <= 0:
         raise ValueError("min_split must be greater than zero.\n"
                          "min_split is %s." % min_split)
@@ -119,21 +124,18 @@ def _build_tree(is_classification, features, labels, criterion,
         if depth >= max_depth:
             is_split_valid = False
 
-        if is_classification:
-            crit = lookup_c[criterion]
-            S = _tree._find_best_split_classification(features, labels, crit)
-        else:
-            crit = lookup_r[criterion]
-            S = _tree._find_best_split_regression(features, labels, crit)
+        dim, thresh, error, init_error = _tree._find_best_split(features,
+                                                                labels,
+                                                                criterion)
 
-        if S is not None:
-            dim, thresh, error, init_error = S
+        if dim != -1: 
             split = features[:, dim] < thresh
             if len(features[split]) < min_split or \
-                len(features[~split]) < min_split:
+               len(features[~split]) < min_split:
                 is_split_valid = False
         else:
             is_split_valid = False
+
 
         if is_classification:
             a = np.zeros((K, ))
@@ -144,7 +146,7 @@ def _build_tree(is_classification, features, labels, criterion,
                 
         if is_split_valid == False:
             return Leaf(a)
-
+                
         return Node(dimension=sample_dims[dim],
                     value=thresh,
                     error=init_error,
@@ -257,7 +259,7 @@ class BaseDecisionTree(BaseEstimator):
             Returns self.
         """
         X = np.asanyarray(X, dtype=np.float64, order='C')
-        _, self.n_features = X.shape
+        n_samples, self.n_features = X.shape
 
         if self.type == 'classification':
             y = np.asanyarray(y, dtype=np.int, order='C')
@@ -276,7 +278,7 @@ class BaseDecisionTree(BaseEstimator):
                 if self.K is None:
                     self.K = labels.max() + 1
                 else:
-                    if self.K != 2:
+                    if self.K < labels.max() + 1:
                         raise ValueError("Labels must be in range"
                                          "[0 to %s) " % self.K)
                 self.classification_subtype = "multiclass"
@@ -285,12 +287,21 @@ class BaseDecisionTree(BaseEstimator):
                                  "in the range [0 to %s) for multiclass "
                                  "classification " % self.K)
 
-            self.tree = _build_tree(True, X, y, self.criterion,
+            criterion_class = lookup_c[self.criterion]
+            pm_left = np.zeros((self.K,), dtype=np.int)
+            pm_right = np.zeros((self.K,), dtype=np.int)
+            criterion = criterion_class(self.K, pm_left, pm_right)
+
+            self.tree = _build_tree(True, X, y, criterion,
                                     self.max_depth, self.min_split, self.F,
                                     self.K, self.random_state)
         else:  # regression
             y = np.asanyarray(y, dtype=np.float64, order='C')
-            self.tree = _build_tree(False, X, y, self.criterion,
+            
+            criterion_class = lookup_r[self.criterion]
+            labels_temp = np.zeros((n_samples,), dtype=np.float)
+            criterion = criterion_class(labels_temp)            
+            self.tree = _build_tree(False, X, y, criterion,
                                     self.max_depth, self.min_split, self.F,
                                     None, self.random_state)
         return self
