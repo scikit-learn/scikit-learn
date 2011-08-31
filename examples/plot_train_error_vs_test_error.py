@@ -39,7 +39,8 @@ enet = linear_model.ElasticNet(rho=0.7)
 train_errors = list()
 test_errors = list()
 for alpha in alphas:
-    enet.fit(X_train, y_train, alpha=alpha)
+    enet.set_params(alpha=alpha)
+    enet.fit(X_train, y_train)
     train_errors.append(enet.score(X_train, y_train))
     test_errors.append(enet.score(X_test, y_test))
 
@@ -48,7 +49,8 @@ alpha_optim = alphas[i_alpha_optim]
 print "Optimal regularization parameter : %s" % alpha_optim
 
 # Estimate the coef_ on full data with optimal regularization parameter
-coef_ = enet.fit(X, y, alpha=alpha_optim).coef_
+enet.set_params(alpha=alpha_optim)
+coef_ = enet.fit(X, y).coef_
 
 ###############################################################################
 # Plot results functions

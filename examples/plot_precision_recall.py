@@ -40,7 +40,6 @@ precision, recall, thresholds = precision_recall_curve(y[half:], probas_[:,1])
 area = auc(recall, precision)
 print "Area Under Curve: %0.2f" % area
 
-pl.figure(-1)
 pl.clf()
 pl.plot(recall, precision, label='Precision-Recall curve')
 pl.xlabel('Recall')
