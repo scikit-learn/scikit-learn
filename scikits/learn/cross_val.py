@@ -694,7 +694,7 @@ class ShuffleSplit(object):
 
 ##############################################################################
 
-def _cross_val_score(estimator, X, y, score_func, train, test, iid):
+def _cross_val_score(estimator, X, y, score_func, train, test):
     """Inner loop for cross validation"""
     if score_func is None:
         score_func = lambda self, *args: self.score(*args)
@@ -702,15 +702,10 @@ def _cross_val_score(estimator, X, y, score_func, train, test, iid):
         score = score_func(estimator.fit(X[train]), X[test])
     else:
         score = score_func(estimator.fit(X[train], y[train]), X[test], y[test])
-    if iid:
-        if y is not None:
-            score *= len(y[test])
-        else:
-            score *= len(X[test])
     return score
 
 
-def cross_val_score(estimator, X, y=None, score_func=None, cv=None, iid=False,
+def cross_val_score(estimator, X, y=None, score_func=None, cv=None,
                     n_jobs=1, verbose=0):
     """Evaluate a score by cross-validation
 
@@ -731,10 +726,6 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, iid=False,
         A cross-validation generator. If None, a 3-fold cross
         validation is used or 3-fold stratified cross-validation
         when y is supplied and estimator is a classifier.
-    iid: boolean, optional
-        If True, the data is assumed to be identically distributed across
-        the folds, and the loss minimized is the total loss per sample,
-        and not the mean loss across the folds.
     n_jobs: integer, optional
         The number of CPUs to use to do the computation. -1 means
         'all CPUs'.
@@ -752,7 +743,7 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, iid=False,
     # independent, and that it is pickle-able.
     scores = Parallel(n_jobs=n_jobs, verbose=verbose)(
                 delayed(_cross_val_score)(clone(estimator), X, y, score_func,
-                                          train, test, iid)
+                                          train, test)
                 for train, test in cv)
     return np.array(scores)
 
