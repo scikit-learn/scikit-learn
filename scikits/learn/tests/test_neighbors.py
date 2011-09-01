@@ -130,7 +130,8 @@ def _test_neighbors_sparse_regression():
             rgs.fit(sparse1(iris.data), iris.target)
             for sparse2 in SPARSE_OR_DENSE:
                 data2 = sparse2(iris.data)
-                assert np.mean(rgs.predict(data2).round() == iris.target) > 0.95
+                assert (np.mean(rgs.predict(data2).round() == iris.target)
+                        > 0.95)
 
 
 def test_kneighbors_graph():
@@ -256,17 +257,19 @@ def test_ball_tree_query_radius_distance(n_samples=100, n_features=10):
 
         assert_array_almost_equal(d, dist)
 
+
 def test_ball_tree_pickle():
     import pickle
     X = np.random.random(size=(10, 3))
-    bt = ball_tree.BallTree(X, 1)
-    s = pickle.dumps(bt)
-    bt2 = pickle.loads(s)
+    bt1 = ball_tree.BallTree(X, 1)
+    ind1, dist1 = bt1.query(X)
+    for protocol in (0, 1, 2):
+        s = pickle.dumps(bt1, protocol=protocol)
+        bt2 = pickle.loads(s)
+        ind2, dist2 = bt2.query(X)
+        assert np.all(ind1 == ind2)
+        assert_array_almost_equal(dist1, dist2)
 
-    ind1, dist1 = bt.query(X)
-    ind2, dist2 = bt2.query(X)
-
-    assert_array_almost_equal(dist1, dist2)
 
 if __name__ == '__main__':
     import nose
