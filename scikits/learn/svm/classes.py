@@ -86,24 +86,24 @@ class SVC(BaseLibSVM, ClassifierMixin):
     Parameters
     ----------
     C : float, optional (default=1.0)
-        penalty parameter C of the error term.
+        Penalty parameter C of the error term.
 
     kernel : string, optional (default='rbf')
          Specifies the kernel type to be used in the algorithm.
-         one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'.
-         If none is given 'rbf' will be used.
+         It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'.
+         If none is given, 'rbf' will be used.
 
     degree : int, optional (default=3)
-        degree of kernel function
-        is significant only in poly, rbf, sigmoid
+        Degree of kernel function.
+        It is significant only in 'poly' and 'sigmoid'.
 
     gamma : float, optional (default=0.0)
-        kernel coefficient for rbf and poly, if gamma is 0.0 then 1/n_features
-        will be taken.
+        Kernel coefficient for 'rbf' and 'poly'. 
+        If gamma is 0.0 then 1/n_features will be used instead.
 
     coef0 : float, optional (default=0.0)
-        independent term in kernel function. It is only significant
-        in poly/sigmoid.
+        Independent term in kernel function. 
+        It is only significant in 'poly' and 'sigmoid'.
 
     probability: boolean, optional (default=False)
         Whether to enable probability estimates. This must be enabled prior

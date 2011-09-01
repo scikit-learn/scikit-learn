@@ -908,6 +908,7 @@ void Solver::Solve(int l, const QMatrix& Q, const double *p_, const schar *y_,
 	delete[] active_set;
 	delete[] G;
 	delete[] G_bar;
+	delete[] C;
 }
 
 // return 1 if already optimal, return 0 otherwise
