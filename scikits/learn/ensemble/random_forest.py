@@ -67,10 +67,11 @@ class BaseRandomForest(BaseEstimator):
         self.base_tree = base_tree
         self.n_trees = n_trees
         self.r = r
-        self.F = None
-        self.criterion = None
-        self.max_depth = None
-        self.min_split = None
+        self.K = base_tree.K
+        self.criterion = base_tree.criterion
+        self.max_depth = base_tree.max_depth
+        self.min_split = base_tree.min_split
+        self.F = base_tree.F
 
         if n_jobs <= 0:
             raise ValueError("n_jobs must be >= 0")           
