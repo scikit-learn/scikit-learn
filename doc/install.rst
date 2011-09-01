@@ -1,18 +1,18 @@
 ===============================
-Installing `scikits.learn`
+Installing `scikit-learn`
 ===============================
 
-There are different ways to get scikits.learn installed:
+There are different ways to get scikit-learn installed:
 
-  * Install the version of scikits.learn provided by your
+  * Install the version of scikit-learn provided by your
     :ref:`operating system distribution <install_by_distribution>` . This
     is the quickest option for those who have operating systems that
-    distribute scikits.learn.
+    distribute scikit-learn.
 
   * :ref:`Install an official release <install_official_release>`. This
     is the best approach for users who want a stable version number
     and aren't concerned about running a slightly older version of
-    scikits.learn.
+    scikit-learn.
 
   * :ref:`Install the latest development version
     <install_bleeding_edge>`.  This is best for users who want the
@@ -93,7 +93,7 @@ This package is also expected to work with python(x,y) as of 2.6.5.5.
 Building on windows
 -------------------
 
-To build scikits.learn on windows you will need a C/C++ compiler in
+To build scikit-learn on windows you will need a C/C++ compiler in
 addition to numpy, scipy and setuptools. At least
 `MinGW <http://www.mingw.org>`_ (a port of GCC to Windows OS) and the
 Microsoft Visual C++ 2008 should work out of the box. To force the use
@@ -128,18 +128,18 @@ This will create an installable binary under directory ``dist/``.
 
 .. _install_by_distribution:
 
-Third party distributions of scikits.learn
+Third party distributions of scikit-learn
 ==========================================
 
 Some third-party distributions are now providing versions of
-scikits.learn integrated with their package-management systems.
+scikit-learn integrated with their package-management systems.
 
 These can make installation and upgrading much easier for users since
 the integration includes the ability to automatically install
-dependencies (numpy, scipy) that scikits.learn requires.
+dependencies (numpy, scipy) that scikit-learn requires.
 
 The following is a list of linux distributions that provide their own
-version of scikits.learn:
+version of scikit-learn:
 
 
 Debian and derivatives (Ubuntu)
@@ -178,7 +178,7 @@ by typing the following command::
 NetBSD
 ------
 
-scikits.learn is available via `pkgsrc-wip <http://pkgsrc-wip.sourceforge.net/>`_:
+scikit-learn is available via `pkgsrc-wip <http://pkgsrc-wip.sourceforge.net/>`_:
 
     http://pkgsrc.se/wip/py-scikits_learn
 
@@ -212,7 +212,7 @@ otherwise please consider posting an issue into the `bug tracker
 <https://github.com/scikit-learn/scikit-learn/issues>`_ or to the
 :ref:`mailing_lists`.
 
-scikits.learn can also be tested without having the package
+scikit-learn can also be tested without having the package
 installed. For this you must compile the sources inplace from the
 source directory::
 

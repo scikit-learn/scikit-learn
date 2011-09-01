@@ -1,12 +1,12 @@
 .. _getting_started:
 
-Getting started: an introduction to machine learning with scikits.learn
+Getting started: an introduction to machine learning with scikit-learn
 =======================================================================
 
 .. topic:: Section contents
 
     In this section, we introduce the machine learning vocabulary that we
-    use through-out `scikits.learn` and give a simple learning example.
+    use through-out `scikit-learn` and give a simple learning example.
 
 
 Machine learning: the problem setting
@@ -57,7 +57,7 @@ We can separate learning problems in a few large categories:
 Loading an example dataset
 --------------------------
 
-`scikits.learn` comes with a few standard datasets, for instance the
+`scikit-learn` comes with a few standard datasets, for instance the
 `iris <http://en.wikipedia.org/wiki/Iris_flower_data_set>`_ and `digits
 <http://archive.ics.uci.edu/ml/datasets/Pen-Based+Recognition+of+Handwritten+Digits>`_ 
 datasets for classification and the `boston house prices dataset 
@@ -112,7 +112,7 @@ array([0, 1, 2, ..., 8, 9, 8])
 
     The :ref:`simple example on this dataset <example_plot_digits_classification.py>`
     illustrates how starting from the original problem one can shape the
-    data for consumption in the `scikit.learn`.
+    data for consumption in the `scikit-learn`.
 
 
 ``scikits.learn`` also offers the possibility to reuse external datasets coming
@@ -132,7 +132,7 @@ hand-written digit from an image. We are given samples of each of the 10
 possible classes on which we *fit* an `estimator` to be able to *predict*
 the labels corresponding to new data.
 
-In `scikit.learn`, an *estimator* is just a plain Python class that
+In `scikit-learn`, an *estimator* is just a plain Python class that
 implements the methods `fit(X, Y)` and `predict(T)`.
 
 An example of estimator is the class ``scikits.learn.svm.SVC`` that

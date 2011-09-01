@@ -6,7 +6,7 @@
 0.8
 ===
 
-scikits.learn 0.8 was released on May 2011, one month after the first
+scikit-learn 0.8 was released on May 2011, one month after the first
 "international" `scikit-learn coding sprint
 <https://github.com/scikit-learn/scikit-learn/wiki/Upcoming-events>`_ and is
 marked by the inclusion of important modules: :ref:`hierarchical_clustering`,
@@ -105,7 +105,7 @@ People that made this release possible preceeded by number of commits:
 0.7
 ===
 
-scikits.learn 0.7 was released in March 2011, roughly three months
+scikit-learn 0.7 was released in March 2011, roughly three months
 after the 0.6 release. This release is marked by the speed
 improvements in existing algorithms like k-Nearest Neighbors and
 K-Means algorithm and by the inclusion of an efficient algorithm for
@@ -196,7 +196,7 @@ People that made this release possible preceeded by number of commits:
 0.6
 ===
 
-scikits.learn 0.6 was released on december 2010. It is marked by the
+scikit-learn 0.6 was released on december 2010. It is marked by the
 inclusion of several new modules and a general renaming of old
 ones. It is also marked by the inclusion of new example, including
 applications to real-world datasets.
