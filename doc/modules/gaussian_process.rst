@@ -14,7 +14,7 @@ been extended to *probabilistic classification*, but in the present
 implementation, this is only a post-processing of the *regression* exercise.
 
 The advantages of Gaussian Processes for Machine Learning are:
-      
+
     - The prediction interpolates the observations (at least for regular
       correlation models).
 
@@ -65,19 +65,19 @@ parameters or alternatively it uses the given parameters.
 
     >>> import numpy as np
     >>> from scikits.learn import gaussian_process
-    >>> def f(x): 
+    >>> def f(x):
     ...	    return x * np.sin(x)
     >>> X = np.atleast_2d([1., 3., 5., 6., 7., 8.]).T
     >>> y = f(X).ravel()
     >>> x = np.atleast_2d(np.linspace(0, 10, 1000)).T
     >>> gp = gaussian_process.GaussianProcess(theta0=1e-2, thetaL=1e-4, thetaU=1e-1)
-    >>> gp.fit(X, y) # doctest: +ELLIPSIS
-    GaussianProcess(normalize=True, theta0=array([[ 0.01]]),
-            optimizer='fmin_cobyla', verbose=False, storage_mode='full',
-            nugget=2.2204460492503131e-15, thetaU=array([[ 0.1]]),
-            regr=<function constant at 0x...>, random_start=1,
-            corr=<function squared_exponential at 0x...>, beta0=None,
-            thetaL=array([[ 0.0001]]))
+    >>> gp.fit(X, y)  # doctest: +ELLIPSIS
+    GaussianProcess(beta0=None, corr=<function squared_exponential at 0x...>,
+            normalize=True, nugget=2.22...-15,
+            optimizer='fmin_cobyla', random_start=1,
+            regr=<function constant at 0x...>, storage_mode='full',
+            theta0=array([[ 0.01]]), thetaL=array([[ 0.0001]]),
+            thetaU=array([[ 0.1]]), verbose=False)
     >>> y_pred, sigma2_pred = gp.predict(x, eval_MSE=True)
 
 .. topic:: Other examples
@@ -266,18 +266,18 @@ Processes for Machine Learning, please refer to the references below:
     * `DACE, A Matlab Kriging Toolbox
       <http://www2.imm.dtu.dk/~hbn/dace/>`_ S Lophaven, HB Nielsen, J
       Sondergaard 2002
-      
+
 
     * `Screening, predicting, and computer experiments
       <http://www.jstor.org/pss/1269548>`_ WJ Welch, RJ Buck, J Sacks,
       HP Wynn, TJ Mitchell, and MD Morris Technometrics 34(1) 15--25,
       1992
-      
+
 
     * `Gaussian Processes for Machine Learning
       <http://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_ CE
       Rasmussen, CKI Williams MIT Press, 2006 (Ed. T Diettrich)
-      
+
 
     * `The design and analysis of computer experiments
       <http://www.stat.osu.edu/~comp_exp/book.html>`_ TJ Santner, BJ
@@ -331,4 +331,4 @@ toolbox.
     * `DACE, A Matlab Kriging Toolbox
       <http://www2.imm.dtu.dk/~hbn/dace/>`_ S Lophaven, HB Nielsen, J
       Sondergaard 2002,
-      
+

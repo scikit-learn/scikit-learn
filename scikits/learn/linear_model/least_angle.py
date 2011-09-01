@@ -346,10 +346,10 @@ class Lars(LinearModel):
     >>> from scikits.learn import linear_model
     >>> clf = linear_model.Lars(n_nonzero_coefs=1)
     >>> clf.fit([[-1, 1], [0, 0], [1, 1]], [-1.1111, 0, -1.1111]) # doctest: +ELLIPSIS
-    Lars(normalize=True, n_nonzero_coefs=1, verbose=False, fit_intercept=True,
-       eps=2.2204460492503131e-16, precompute='auto', overwrite_X=False)
+    Lars(eps=..., fit_intercept=True, n_nonzero_coefs=1,
+       normalize=True, overwrite_X=False, precompute='auto', verbose=False)
     >>> print clf.coef_ # doctest: +ELLIPSIS
-    [ 0.     -1.1111...]
+    [ 0. ... -1.1111...]
 
     References
     ----------
@@ -482,9 +482,9 @@ class LassoLars(Lars):
     >>> from scikits.learn import linear_model
     >>> clf = linear_model.LassoLars(alpha=0.01)
     >>> clf.fit([[-1, 1], [0, 0], [1, 1]], [-1, 0, -1]) # doctest: +ELLIPSIS
-    LassoLars(normalize=True, verbose=False, fit_intercept=True, max_iter=500,
-         eps=2.2204460492503131e-16, precompute='auto', alpha=0.01,
-         overwrite_X=False)
+    LassoLars(alpha=0.01, eps=..., fit_intercept=True,
+         max_iter=500, normalize=True, overwrite_X=False, precompute='auto',
+         verbose=False)
     >>> print clf.coef_ # doctest: +ELLIPSIS
     [ 0.         -0.963257...]
 
@@ -893,11 +893,11 @@ class LassoLarsIC(LassoLars):
     >>> from scikits.learn import linear_model
     >>> clf = linear_model.LassoLarsIC(criterion='bic')
     >>> clf.fit([[-1, 1], [0, 0], [1, 1]], [-1.1111, 0, -1.1111]) # doctest: +ELLIPSIS
-    LassoLarsIC(normalize=True, verbose=False, fit_intercept=True, max_iter=500,
-          eps=... precompute='auto', criterion='bic',
-          overwrite_X=False)
+    LassoLarsIC(criterion='bic', eps=..., fit_intercept=True,
+          max_iter=500, normalize=True, overwrite_X=False, precompute='auto',
+          verbose=False)
     >>> print clf.coef_ # doctest: +ELLIPSIS
-    [ 0.     -1.1111...]
+    [ 0. ...  -1.1111...]
 
     References
     ----------

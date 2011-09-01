@@ -39,12 +39,12 @@ def test_n_nonzero_coefs():
                                        precompute_gram=True)) <= 5
 
 
-def test_eps():
-    eps = 0.5
-    gamma = orthogonal_mp(X, y[:, 0], eps=eps)
-    gamma_gram = orthogonal_mp(X, y[:, 0], eps=eps, precompute_gram=True)
-    assert np.sum((y[:, 0] - np.dot(X, gamma)) ** 2) <= eps
-    assert np.sum((y[:, 0] - np.dot(X, gamma_gram)) ** 2) <= eps
+def test_tol():
+    tol = 0.5
+    gamma = orthogonal_mp(X, y[:, 0], tol=tol)
+    gamma_gram = orthogonal_mp(X, y[:, 0], tol=tol, precompute_gram=True)
+    assert np.sum((y[:, 0] - np.dot(X, gamma)) ** 2) <= tol
+    assert np.sum((y[:, 0] - np.dot(X, gamma_gram)) ** 2) <= tol
 
 
 def test_with_without_gram():
@@ -53,32 +53,32 @@ def test_with_without_gram():
         orthogonal_mp(X, y, n_nonzero_coefs=5, precompute_gram=True))
 
 
-def test_with_without_gram_eps():
+def test_with_without_gram_tol():
     assert_array_almost_equal(
-        orthogonal_mp(X, y, eps=1.),
-        orthogonal_mp(X, y, eps=1., precompute_gram=True))
+        orthogonal_mp(X, y, tol=1.),
+        orthogonal_mp(X, y, tol=1., precompute_gram=True))
 
 
 def test_unreachable_accuracy():
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter('always')
         assert_array_almost_equal(
-            orthogonal_mp(X, y, eps=0),
+            orthogonal_mp(X, y, tol=0),
             orthogonal_mp(X, y, n_nonzero_coefs=n_features))
 
         assert_array_almost_equal(
-            orthogonal_mp(X, y, eps=0, precompute_gram=True),
+            orthogonal_mp(X, y, tol=0, precompute_gram=True),
             orthogonal_mp(X, y, precompute_gram=True,
                           n_nonzero_coefs=n_features))
         assert len(w) > 0  # warnings should be raised
 
 
 def test_bad_input():
-    assert_raises(ValueError, orthogonal_mp, X, y, eps=-1)
+    assert_raises(ValueError, orthogonal_mp, X, y, tol=-1)
     assert_raises(ValueError, orthogonal_mp, X, y, n_nonzero_coefs=-1)
     assert_raises(ValueError, orthogonal_mp, X, y,
                   n_nonzero_coefs=n_features + 1)
-    assert_raises(ValueError, orthogonal_mp_gram, G, Xy, eps=-1)
+    assert_raises(ValueError, orthogonal_mp_gram, G, Xy, tol=-1)
     assert_raises(ValueError, orthogonal_mp_gram, G, Xy, n_nonzero_coefs=-1)
     assert_raises(ValueError, orthogonal_mp_gram, G, Xy,
                   n_nonzero_coefs=n_features + 1)
