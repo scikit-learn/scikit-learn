@@ -67,7 +67,7 @@ estimated using maximum likelihood.
 
 .. topic:: Examples:
 
- * :ref:`example_naive_bayes.py`,
+ * :ref:`example_naive_bayes.py`
 
 
 Multinomial Naive Bayes
