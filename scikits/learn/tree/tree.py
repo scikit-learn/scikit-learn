@@ -394,15 +394,15 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     ...     print np.mean(clf.predict(data.data[test_index]) == \
                 data.target[test_index]) #doctest: +ELLIPSIS
     ...
-    0.933333333333
-    0.933333333333
-    0.733333333333
-    0.933333333333
-    0.933333333333
-    0.933333333333
-    0.933333333333
+    1.0
     0.933333333333
     0.866666666667
+    0.933333333333
+    0.933333333333
+    0.933333333333
+    0.933333333333
+    1.0
+    0.933333333333
     1.0
     """
 
@@ -494,15 +494,23 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     >>> from scikits.learn.cross_val import KFold
     >>> from scikits.learn.tree import DecisionTreeRegressor
     >>> data = load_boston()
-    >>> kf = KFold(len(data.target), 2)
+    >>> kf = KFold(len(data.target), 10)
     >>> for train_index, test_index in kf:
     ...     clf = DecisionTreeRegressor(random_state=0)
     ...     clf = clf.fit(data.data[train_index], data.target[train_index])
     ...     print np.mean(np.power(clf.predict(data.data[test_index]) - \
                 data.target[test_index], 2)) #doctest: +ELLIPSIS
     ...
-    19.8246021636
-    40.4481135756
+    19.0133
+    17.7946
+    9.10902222222
+    51.73465
+    17.7013611111
+    30.0680472222
+    11.96595
+    101.465894444
+    54.8160888889
+    53.4878174603
     """
 
     def __init__(self, criterion='mse', max_depth=10,
