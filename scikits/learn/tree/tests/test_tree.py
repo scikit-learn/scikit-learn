@@ -75,7 +75,7 @@ def test_iris():
 
     for c in ('gini', \
               'entropy'):
-        clf = tree.DecisionTreeClassifier(criterion=c)\
+        clf = tree.DecisionTreeClassifier(criterion=c, random_state=1)\
               .fit(iris.data, iris.target)
         
         score = np.mean(clf.predict(iris.data) == iris.target) 
@@ -101,9 +101,6 @@ def test_boston():
         assert score < 1, "Failed with criterion " + c + \
             " and score = " + str(score)             
 
-        #  @TODO Find a way of passing in a pseudo-random generator
-        #  so that each time this is called, it selects the same subset of
-        #  dimensions to work on.  That will make the test below meaningful.
         clf = tree.DecisionTreeRegressor(criterion=c, F=6, random_state=1)\
               .fit(boston.data, boston.target)
         

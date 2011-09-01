@@ -80,32 +80,25 @@ def _build_tree(is_classification, features, labels, criterion,
 
     n_samples, n_dims = features.shape
     if len(labels) != len(features):
-        raise ValueError("Number of labels does not match "
-                          "number of features\n"
-                         "num labels is %s and num features is %s "
+        raise ValueError("Number of labels=%d does not match "
+                          "number of features=%d\n"
                          % (len(labels), len(features)))
     labels = np.array(labels, dtype=np.float64, order="c")
 
+    feature_mask = np.ones(n_dims, dtype=np.bool)
     sample_dims = np.arange(n_dims)
     if F is not None:
-        if F <= 0:
-            raise ValueError("F must be > 0.\n"
-                             "Did you mean to use None to signal no F?")
-        if F > n_dims:
-            raise ValueError("F must be < num dimensions of features.\n"
-                             "F is %s, n_dims = %s "
+        if F <= 0 or F > n_dims:
+            raise ValueError("F=%d must be in range (0..%d].\n"
+                             "Did you mean to use None to signal no F?"
                              % (F, n_dims))
 
-        sample_dims = np.unique(random_state.randint(0, n_dims, F))
-        # This ugly construction is required because np.random
-        # does not have a sample(population, K) method that will
-        # return a subset of K elements from the population.
-        # In certain instances, random_state.randint() will return duplicates,
-        # meaning that len(sample_dims) < F.  This breaks the contract with
-        # the user.
-        while len(sample_dims) != F:
-            sample_dims = np.unique(random_state.randint(0, n_dims, F))
-        features = features[:, sample_dims]
+        permutation = random_state.permutation(n_dims)
+        sample_dims = np.sort(permutation[-F:])
+        feature_mask[sample_dims] = False
+        feature_mask = np.logical_not(feature_mask)
+
+    features = features[:, feature_mask]
 
     # make data fortran layout
     if not features.flags["F_CONTIGUOUS"]:
@@ -128,7 +121,7 @@ def _build_tree(is_classification, features, labels, criterion,
                                                                 labels,
                                                                 criterion)
 
-        if dim != -1: 
+        if dim != -1:
             split = features[:, dim] < thresh
             if len(features[split]) < min_split or \
                len(features[~split]) < min_split:
@@ -136,17 +129,16 @@ def _build_tree(is_classification, features, labels, criterion,
         else:
             is_split_valid = False
 
-
         if is_classification:
             a = np.zeros((K, ))
             t = labels.max() + 1
             a[:t] = np.bincount(labels.astype(np.int))
         else:
             a = np.mean(labels)
-                
+
         if is_split_valid == False:
             return Leaf(a)
-                
+
         return Node(dimension=sample_dims[dim],
                     value=thresh,
                     error=init_error,
@@ -297,7 +289,7 @@ class BaseDecisionTree(BaseEstimator):
                                     self.K, self.random_state)
         else:  # regression
             y = np.asanyarray(y, dtype=np.float64, order='C')
-            
+
             criterion_class = lookup_r[self.criterion]
             labels_temp = np.zeros((n_samples,), dtype=np.float64)
             criterion = criterion_class(labels_temp)            
