@@ -5,7 +5,7 @@
 
 .. raw:: html
 
-    <h1>scikits.learn: machine learning in Python</h1>
+    <h1>scikit-learn: machine learning in Python</h1>
 
 .. only:: html
 
@@ -39,7 +39,7 @@
 
 .. topic:: Easy-to-use and general-purpose machine learning in Python
 
-    ``scikits.learn`` is a Python module integrating classic machine
+    ``scikit-learn`` is a Python module integrating classic machine
     learning algorithms in the tightly-knit world of scientific Python
     packages (`numpy <http://numpy.scipy.org>`_, `scipy
     <http://www.scipy.org>`_, `matplotlib
@@ -67,7 +67,7 @@
 
 .. include:: includes/big_toc_css.rst
 
-.. note:: This document describes scikits.learn |release|. For other
+.. note:: This document describes scikit-learn |release|. For other
    versions and printable format, see :ref:`documentation_resources`.
 
 User Guide

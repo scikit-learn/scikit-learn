@@ -51,8 +51,8 @@ print np.round(np.corrcoef(Y.T), 2)
 
 # Transform data
 # ~~~~~~~~~~~~~~
-plsca = PLSCanonical()
-plsca.fit(X_train, Y_train, n_components=2)
+plsca = PLSCanonical(n_components=2)
+plsca.fit(X_train, Y_train)
 X_train_r, Y_train_r = plsca.transform(X_train, Y_train)
 X_test_r, Y_test_r = plsca.transform(X_test, Y_test)
 
@@ -106,8 +106,8 @@ B = np.array([[1, 2] + [0] * (p - 2)] * q).T
 # each Yj = 1*X1 + 2*X2 + noize
 Y = np.dot(X, B) + np.random.normal(size=n * q).reshape((n, q)) + 5
 
-pls2 = PLSRegression()
-pls2.fit(X, Y, n_components=3)
+pls2 = PLSRegression(n_components=3)
+pls2.fit(X, Y)
 print "True B (such that: Y = XB + Err)"
 print B
 # compare pls2.coefs with B
@@ -122,8 +122,8 @@ n = 1000
 p = 10
 X = np.random.normal(size=n*p).reshape((n, p))
 y = X[:, 0] + 2 * X[:, 1] + np.random.normal(size=n * 1) + 5
-pls1 = PLSRegression()
-pls1.fit(X, y, n_components=3)
+pls1 = PLSRegression(n_components=3)
+pls1.fit(X, y)
 # note that the number of compements exceeds 1 (the dimension of y)
 print "Estimated betas"
 print np.round(pls1.coefs, 1)
@@ -131,8 +131,8 @@ print np.round(pls1.coefs, 1)
 ################################################################################
 # CCA (PLS mode B with symetric deflation)
 
-cca = CCA()
-cca.fit(X_train, Y_train, n_components=2)
+cca = CCA(n_components=2)
+cca.fit(X_train, Y_train)
 X_train_r, Y_train_r = plsca.transform(X_train, Y_train)
 X_test_r, Y_test_r = plsca.transform(X_test, Y_test)
 

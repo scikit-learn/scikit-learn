@@ -110,6 +110,28 @@ def generate_example_rst(app):
     fhindex = file(os.path.join(root_dir, 'index.rst'), 'w')
     fhindex.write("""\
 
+.. raw:: html
+
+    <style type="text/css">
+    .figure {
+        float: left;
+        margin: 10px;
+        width: auto;
+        height: 220px;
+        width: 220px;
+    }
+
+    .figure img {
+        display: inline;
+        margin: 3px;
+        }
+
+    .figure .caption {
+        width: 170px;
+        text-align: center !important;
+    }
+    </style>
+
 Examples
 ========
 
@@ -119,8 +141,6 @@ Examples
     # better than nested.
     generate_dir_rst('.', fhindex, example_dir, root_dir, plot_gallery)
     for dir in sorted(os.listdir(example_dir)):
-        if dir == '.svn':
-            continue
         if os.path.isdir(os.path.join(example_dir, dir)):
             generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery)
     fhindex.flush()
@@ -144,9 +164,9 @@ def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery):
         return
     fhindex.write("""
 
+
 %s
 
-.. toctree::
 
 """ % file(os.path.join(src_dir, 'README.txt')).read())
     if not os.path.exists(target_dir):
@@ -154,7 +174,21 @@ def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery):
     for fname in sorted(os.listdir(src_dir)):
         if fname.endswith('py'):
             generate_file_rst(fname, target_dir, src_dir, plot_gallery)
-            fhindex.write('    %s\n' % (os.path.join(dir, fname[:-3])))
+            thumb = os.path.join(dir, 'images', 'thumb', fname[:-3] + '.png')
+            link_name = os.path.join(dir, fname).replace(os.path.sep, '_')
+            fhindex.write('.. figure:: %s\n' % thumb)
+            if link_name.startswith('._'):
+                link_name = link_name[2:]
+            if dir != '.':
+                fhindex.write('   :target: ./%s/%s.html\n\n' % (dir, fname[:-3]))
+            else:
+                fhindex.write('   :target: ./%s.html\n\n' % link_name[:-3])
+            fhindex.write('   :ref:`example_%s`\n\n' % link_name)
+    fhindex.write("""
+.. raw:: html
+
+    <div style="clear: both"></div>
+    """) # clear at the end of the section
 
 
 def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
@@ -178,15 +212,18 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
     # The following is a list containing all the figure names
     figure_list = []
 
+    image_dir = os.path.join(target_dir, 'images')
+    thumb_dir = os.path.join(image_dir, 'thumb')
+    if not os.path.exists(image_dir):
+        os.makedirs(image_dir)
+    if not os.path.exists(thumb_dir):
+        os.makedirs(thumb_dir)
+    image_path = os.path.join(image_dir, image_fname)
+    thumb_file = os.path.join(thumb_dir, fname[:-3] + '.png')
     if plot_gallery and fname.startswith('plot'):
         # generate the plot as png image if file name
         # starts with plot and if it is more recent than an
         # existing image.
-        image_dir = os.path.join(target_dir, 'images')
-        if not os.path.exists(image_dir):
-            os.makedirs(image_dir)
-
-        image_path = os.path.join(image_dir, image_fname)
         first_image_file = image_path % 1
 
         if (not os.path.exists(first_image_file) or
@@ -228,7 +265,16 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
             figure_list = [f[len(image_dir):]
                             for f in glob.glob(image_path % '[1-9]')]
                             #for f in glob.glob(image_path % '*')]
+
+        # generate thumb file
         this_template = plot_rst_template
+        from matplotlib import image
+        if os.path.exists(first_image_file):
+            image.thumbnail(first_image_file, thumb_file, 0.2)
+
+    if not os.path.exists(thumb_file):
+        # create something not to replace the thumbnail
+        shutil.copy('logos/scikit-learn-logo-thumb.png', thumb_file)
 
     docstring, short_desc, end_row = extract_docstring(example_file)
 
