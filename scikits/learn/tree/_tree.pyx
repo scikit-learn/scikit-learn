@@ -304,9 +304,14 @@ cdef class MSE(RegressionCriterion):
         MSE =  \sum_i (y_i - c0)^2  / N
         
         """
-        cdef double mean_left = self.sum_left / self.n_left
-        cdef double mean_right = self.sum_right / self.n_right
+        cdef double mean_left = 0
+        cdef double mean_right = 0
 
+        if self.n_left > 0:
+            mean_left = self.sum_left / self.n_left
+        if self.n_right > 0:
+            mean_right = self.sum_right / self.n_right
+            
         #print "MSE.eval: mean_left = ", mean_left
         #print "MSE.eval: mean_right = ", mean_right        
 
@@ -315,12 +320,12 @@ cdef class MSE(RegressionCriterion):
         cdef int j
         cdef double e1, e2
 
-        for j from 0 <= j < self.n_left:
+        for j from 0 <= j < self.n_samples:
             #print "labels[",j,"] = ", self.labels[j]
-            var_left += (self.labels[j] - mean_left) * (self.labels[j] - mean_left)
-        for j from self.n_left <= j < self.n_samples: 
-            #print "labels[",j,"] = ", self.labels[j]
-            var_right += (self.labels[j] - mean_right) * (self.labels[j] - mean_right)
+            if j < self.n_left:
+                var_left += (self.labels[j] - mean_left) * (self.labels[j] - mean_left)
+            else: 
+                var_right += (self.labels[j] - mean_right) * (self.labels[j] - mean_right)
 
         #print "MSE.eval: var_left = ", var_left, 
         #print "MSE.eval: var_right = ", var_right   
