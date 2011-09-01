@@ -68,7 +68,6 @@ loglik_real = -log_likelihood(emp_cov, linalg.inv(real_cov))
 
 ###############################################################################
 # Plot results
-pl.figure(-1)
 pl.title("Regularized covariance: likelihood and shrinkage coefficient")
 pl.xlabel('Shrinkage')
 pl.ylabel('Negative log-likelihood')

@@ -33,7 +33,8 @@ clf = linear_model.Ridge(fit_intercept=False)
 
 coefs = []
 for a in alphas:
-    clf.fit(X, y, alpha=a)
+    clf.set_params(alpha=a)
+    clf.fit(X, y)
     coefs.append(clf.coef_)
 
 ################################################################################
