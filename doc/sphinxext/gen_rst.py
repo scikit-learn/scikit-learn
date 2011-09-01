@@ -116,10 +116,9 @@ def generate_example_rst(app):
     .figure {
         float: left;
         margin: 10px;
-        height: auto;
         width: auto;
-        height: 200px;
-        width: 180px;
+        height: 220px;
+        width: 220px;
     }
 
     .figure img {
@@ -176,16 +175,20 @@ def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery):
         if fname.endswith('py'):
             generate_file_rst(fname, target_dir, src_dir, plot_gallery)
             thumb = os.path.join(dir, 'images', 'thumb', fname[:-3] + '.png')
-            fhindex.write('.. figure:: %s\n\n' % thumb)
             link_name = os.path.join(dir, fname).replace(os.path.sep, '_')
+            fhindex.write('.. figure:: %s\n' % thumb)
             if link_name.startswith('._'):
                 link_name = link_name[2:]
+            if dir != '.':
+                fhindex.write('   :target: ./%s/%s.html\n\n' % (dir, fname[:-3]))
+            else:
+                fhindex.write('   :target: ./%s.html\n\n' % link_name[:-3])
             fhindex.write('   :ref:`example_%s`\n\n' % link_name)
     fhindex.write("""
 .. raw:: html
 
     <div style="clear: both"></div>
-    """)
+    """) # clear at the end of the section
 
 
 def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
@@ -268,7 +271,7 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
         from matplotlib import image
         if os.path.exists(first_image_file):
             image.thumbnail(first_image_file, thumb_file, 0.2)
- 
+
     if not os.path.exists(thumb_file):
         # create something not to replace the thumbnail
         shutil.copy('logos/scikit-learn-logo-thumb.png', thumb_file)
