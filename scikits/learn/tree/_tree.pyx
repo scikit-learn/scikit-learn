@@ -37,7 +37,7 @@ cdef class Criterion:
     """Interface for splitting criteria, both regression and classification.
     """
     
-    cdef void init(self, np.ndarray[np.float_t, ndim=1] labels, 
+    cdef void init(self, np.ndarray[np.float64_t, ndim=1] labels, 
                    int *sorted_features_i):
         """Init the criteria for each feature `i`. """
         pass
@@ -75,17 +75,16 @@ cdef class ClassificationCriterion(Criterion):
 
     cdef int n_left, n_right, K, n_samples
     
-    def __init__(self, 
-                 int K, 
-                 np.ndarray[np.int_t, ndim=1] pm_left,
-                 np.ndarray[np.int_t, ndim=1] pm_right):
+    def __init__(self, int K, 
+                 np.ndarray[np.int32_t, ndim=1] pm_left,
+                 np.ndarray[np.int32_t, ndim=1] pm_right):
         self.K = K
         self.n_left = 0
         self.n_right = 0
         self.pm_left = <int*>pm_left.data
         self.pm_right = <int*>pm_right.data
 
-    cdef void init(self, np.ndarray[np.float_t, ndim=1] labels, 
+    cdef void init(self, np.ndarray[np.float64_t, ndim=1] labels, 
                    int *sorted_features_i):
         """
         Initializes the criterion for a new feature (col of `features`).
@@ -235,14 +234,14 @@ cdef class RegressionCriterion(Criterion):
 
     cdef int n_left, n_right, n_samples
     
-    def __init__(self, np.ndarray[np.float_t, ndim=1] labels):
+    def __init__(self, np.ndarray[np.float64_t, ndim=1] labels):
         self.sum_left = 0.0
         self.sum_right = 0.0
         self.n_left = 0
         self.n_right = 0
         self.labels = <double*> labels.data
         
-    cdef void init(self, np.ndarray[np.float_t, ndim=1] labels, 
+    cdef void init(self, np.ndarray[np.float64_t, ndim=1] labels, 
                    int *sorted_features_i):
         """Initializes the criterion for a new feature (col of `features`)."""
         
@@ -330,8 +329,10 @@ cdef class MSE(RegressionCriterion):
         #print "MSE.eval: var_left = ", var_left, 
         #print "MSE.eval: var_right = ", var_right   
 
-        var_left /= self.n_samples
-        var_right /= self.n_samples
+        if self.n_left > 0:
+            var_left /= self.n_left
+        if self.n_right > 0:
+            var_right /= self.n_right
 
         e1 = ((<double> self.n_left) / self.n_samples) * var_left
         e2 = ((<double> self.n_right) / self.n_samples) * var_right
@@ -365,13 +366,13 @@ cdef int smallest_sample_larger_than(int sample_idx,
     return -1
 
 
-def _find_best_split(np.ndarray[np.float_t, ndim=2, mode="fortran"] features,
-                     np.ndarray[np.float_t, ndim=1, mode="c"] labels,
+def _find_best_split(np.ndarray[np.float64_t, ndim=2, mode="fortran"] features,
+                     np.ndarray[np.float64_t, ndim=1, mode="c"] labels,
                      Criterion criterion):
     """
     Parameters
     ----------
-    features : ndarray, shape (n_samples, n_features), dtype=np.float
+    features : ndarray, shape (n_samples, n_features), dtype=np.float64
         The feature values.
     labels : ndarray, shape (n_samples,), dtype=float
         The labels.
@@ -382,19 +383,20 @@ def _find_best_split(np.ndarray[np.float_t, ndim=2, mode="fortran"] features,
     -------
     best_i : int
         The split feature or -1 if criterion not smaller than `parent_split_error`.
-    best_t : np.float_t
+    best_t : np.float64_t
         The split threshold
-    best_error : np.float_t
+    best_error : np.float64_t
         The error of the split.
     """
     cdef int n_samples = features.shape[0]
     cdef int n_features = features.shape[1]
     cdef int i, a, b, best_i = -1
-    cdef np.float_t t, initial_error, error, best_error, best_t
+    cdef np.float64_t t, initial_error, error
+    cdef np.float64_t best_error = np.inf, best_t = np.inf
 
     # pointer access to ndarray data
     cdef double *labels_ptr = <double*>labels.data 
-    cdef np.float_t *features_i = NULL
+    cdef np.float64_t *features_i = NULL
     cdef np.ndarray[np.int32_t, ndim=2, mode="fortran"] sorted_features = \
         np.asfortranarray(np.argsort(features, axis=0).astype(np.int32))
     cdef int *sorted_features_i = NULL    
@@ -419,7 +421,7 @@ def _find_best_split(np.ndarray[np.float_t, ndim=2, mode="fortran"] features,
     
     for i from 0 <= i < n_features:
         # get i-th col of features and features_sorted
-        features_i = (<np.float_t *>features.data) + features_stride * i
+        features_i = (<np.float64_t *>features.data) + features_stride * i
         sorted_features_i = (<int *>sorted_features.data) + sorted_features_stride * i
 
         # init the criterion for this feature
