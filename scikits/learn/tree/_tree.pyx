@@ -37,7 +37,7 @@ cdef class Criterion:
     """Interface for splitting criteria, both regression and classification.
     """
     
-    cdef void init(self, np.ndarray[np.float_t, ndim=1] labels, 
+    cdef void init(self, np.ndarray[np.float64_t, ndim=1] labels, 
                    int *sorted_features_i):
         """Init the criteria for each feature `i`. """
         pass
@@ -85,7 +85,7 @@ cdef class ClassificationCriterion(Criterion):
         self.pm_left = <int*>pm_left.data
         self.pm_right = <int*>pm_right.data
 
-    cdef void init(self, np.ndarray[np.float_t, ndim=1] labels, 
+    cdef void init(self, np.ndarray[np.float64_t, ndim=1] labels, 
                    int *sorted_features_i):
         """
         Initializes the criterion for a new feature (col of `features`).
@@ -235,7 +235,7 @@ cdef class RegressionCriterion(Criterion):
 
     cdef int n_left, n_right, n_samples
     
-    def __init__(self, np.ndarray[np.float_t, ndim=1] labels):
+    def __init__(self, np.ndarray[np.float64_t, ndim=1] labels):
         self.sum_left = 0.0
         self.sum_right = 0.0
         self.n_left = 0
