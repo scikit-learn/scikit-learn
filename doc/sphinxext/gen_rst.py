@@ -117,8 +117,8 @@ def generate_example_rst(app):
         float: left;
         margin: 10px;
         width: auto;
-        height: 220px;
-        width: 220px;
+        height: 200px;
+        width: 180px;
     }
 
     .figure img {
@@ -171,7 +171,13 @@ def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery):
 """ % file(os.path.join(src_dir, 'README.txt')).read())
     if not os.path.exists(target_dir):
         os.makedirs(target_dir)
-    for fname in sorted(os.listdir(src_dir)):
+
+    def sort_key(a):
+        # put last elements without a plot
+        if not a.startswith('plot') and a.endswith('.py'):
+            return 'zz' + a
+        return a
+    for fname in sorted(os.listdir(src_dir), key=sort_key):
         if fname.endswith('py'):
             generate_file_rst(fname, target_dir, src_dir, plot_gallery)
             thumb = os.path.join(dir, 'images', 'thumb', fname[:-3] + '.png')
