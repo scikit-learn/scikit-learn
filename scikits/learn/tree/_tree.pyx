@@ -367,13 +367,13 @@ cdef int smallest_sample_larger_than(int sample_idx,
     return -1
 
 
-def _find_best_split(np.ndarray[np.float_t, ndim=2, mode="fortran"] features,
-                     np.ndarray[np.float_t, ndim=1, mode="c"] labels,
+def _find_best_split(np.ndarray[np.float64_t, ndim=2, mode="fortran"] features,
+                     np.ndarray[np.float64_t, ndim=1, mode="c"] labels,
                      Criterion criterion):
     """
     Parameters
     ----------
-    features : ndarray, shape (n_samples, n_features), dtype=np.float
+    features : ndarray, shape (n_samples, n_features), dtype=np.float64
         The feature values.
     labels : ndarray, shape (n_samples,), dtype=float
         The labels.
@@ -384,19 +384,19 @@ def _find_best_split(np.ndarray[np.float_t, ndim=2, mode="fortran"] features,
     -------
     best_i : int
         The split feature or -1 if criterion not smaller than `parent_split_error`.
-    best_t : np.float_t
+    best_t : np.float64_t
         The split threshold
-    best_error : np.float_t
+    best_error : np.float64_t
         The error of the split.
     """
     cdef int n_samples = features.shape[0]
     cdef int n_features = features.shape[1]
     cdef int i, a, b, best_i = -1
-    cdef np.float_t t, initial_error, error, best_error, best_t
+    cdef np.float64_t t, initial_error, error, best_error, best_t
 
     # pointer access to ndarray data
     cdef double *labels_ptr = <double*>labels.data 
-    cdef np.float_t *features_i = NULL
+    cdef np.float64_t *features_i = NULL
     cdef np.ndarray[np.int32_t, ndim=2, mode="fortran"] sorted_features = \
         np.asfortranarray(np.argsort(features, axis=0).astype(np.int32))
     cdef int *sorted_features_i = NULL    
@@ -421,7 +421,7 @@ def _find_best_split(np.ndarray[np.float_t, ndim=2, mode="fortran"] features,
     
     for i from 0 <= i < n_features:
         # get i-th col of features and features_sorted
-        features_i = (<np.float_t *>features.data) + features_stride * i
+        features_i = (<np.float64_t *>features.data) + features_stride * i
         sorted_features_i = (<int *>sorted_features.data) + sorted_features_stride * i
 
         # init the criterion for this feature
