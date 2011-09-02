@@ -5,7 +5,7 @@
 Support Vector Machines
 =======================
 
-.. currentmodule:: scikits.learn.svm
+.. currentmodule:: sklearn.svm
 
 **Support vector machines (SVMs)** are a set of supervised learning
 methods used for :ref:`classification <svm_classification>`,
@@ -74,7 +74,7 @@ of integer values, size [n_samples], holding the class labels for the
 training samples::
 
 
-    >>> from scikits.learn import svm
+    >>> from sklearn import svm
     >>> X = [[0, 0], [1, 1]]
     >>> Y = [0, 1]
     >>> clf = svm.SVC()
@@ -200,7 +200,7 @@ As with classification classes, the fit method will take as
 argument vectors X, y, only that in this case y is expected to have
 floating point values instead of integer values::
 
-    >>> from scikits.learn import svm
+    >>> from sklearn import svm
     >>> X = [[0, 0], [2, 2]]
     >>> y = [0.5, 2.5]
     >>> clf = svm.SVR()
@@ -241,7 +241,7 @@ will only take as input an array X, as there are no class labels.
  * :ref:`example_svm_plot_oneclass.py`
  * :ref:`example_applications_plot_species_distribution_modeling.py`
 
-.. currentmodule:: scikits.learn.svm.sparse
+.. currentmodule:: sklearn.svm.sparse
 
 
 Support Vector machines for sparse data
@@ -373,7 +373,7 @@ The following code defines a linear kernel and creates a classifier
 instance that will use that kernel::
 
     >>> import numpy as np
-    >>> from scikits.learn import svm
+    >>> from sklearn import svm
     >>> def my_kernel(x, y):
     ...     return np.dot(x, y.T)
     ...

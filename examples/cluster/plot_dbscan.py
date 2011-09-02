@@ -11,9 +11,9 @@ print __doc__
 
 import numpy as np
 from scipy.spatial import distance
-from scikits.learn.cluster import DBSCAN
-from scikits.learn import metrics
-from scikits.learn.datasets.samples_generator import make_blobs
+from sklearn.cluster import DBSCAN
+from sklearn import metrics
+from sklearn.datasets.samples_generator import make_blobs
 
 
 ##############################################################################
