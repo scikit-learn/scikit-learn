@@ -123,7 +123,6 @@ def generate_example_rst(app):
 
     .figure img {
         display: inline;
-        margin: 3px;
         }
 
     .figure .caption {
@@ -280,7 +279,7 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
 
     if not os.path.exists(thumb_file):
         # create something not to replace the thumbnail
-        shutil.copy('logos/scikit-learn-logo-thumb.png', thumb_file)
+        shutil.copy('images/blank_image.png', thumb_file)
 
     docstring, short_desc, end_row = extract_docstring(example_file)
 
