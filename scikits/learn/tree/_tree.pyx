@@ -392,7 +392,8 @@ def _find_best_split(np.ndarray[np.float64_t, ndim=2, mode="fortran"] features,
     cdef int n_samples = features.shape[0]
     cdef int n_features = features.shape[1]
     cdef int i, a, b, best_i = -1
-    cdef np.float64_t t, initial_error, error, best_error, best_t
+    cdef np.float64_t t, initial_error, error
+    cdef np.float64_t best_error = np.inf, best_t = np.inf
 
     # pointer access to ndarray data
     cdef double *labels_ptr = <double*>labels.data 
