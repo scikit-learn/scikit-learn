@@ -44,8 +44,8 @@ for i in range(5):
     Y_train = np.copy(Y)
     Y_train[unlabeled_indices] = -1
 
-    lp_model = label_propagation.LabelSpreading()
-    lp_model.fit(X, Y_train, gamma=0.25, max_iters=5)
+    lp_model = label_propagation.LabelSpreading(gamma=0.25, max_iters=5)
+    lp_model.fit(X, Y_train)
 
     y_pred = lp_model.transduction_[unlabeled_indices]
     y_true = Y[unlabeled_indices]

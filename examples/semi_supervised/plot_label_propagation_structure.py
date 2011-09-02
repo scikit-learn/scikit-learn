@@ -17,7 +17,8 @@ import pylab as pl
 
 from scikits.learn import svm, datasets
 
-label_spread = label_propagation.LabelSpreading(gamma=15, alpha=1.0)
+label_spread = label_propagation.LabelSpreading(gamma=15, alpha=1.0,\
+       unlabeled_identifier='unlabeled')
 
 # generate ring with inner box
 n_samples_per_circle = 100
@@ -35,7 +36,7 @@ labels = ['outer'] +\
          ['inner'] +\
          ['unlabeled' for x in range(0, n_samples_per_circle - 1)]
 
-label_spread.fit(data, labels, unlabeled_identifier='unlabeled')
+label_spread.fit(data, labels)
 
 output_labels = label_spread.transduction_
 pl.figure(figsize=(4.5, 8))

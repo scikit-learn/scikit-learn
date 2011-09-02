@@ -48,8 +48,6 @@ from .metrics.pairwise import rbf_kernel
 
 # Authors: Clay Woolam <clay@woolam.org>
 
-EPSILON = 1e-9
-
 
 class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
     """
@@ -71,15 +69,16 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
 
     max_iters : float
       change maximum number of iterations allowed
-    conv_threshold : float
+    tol : float
       threshold to consider the system at steady state
     """
 
     def __init__(self, kernel='rbf', gamma=20, alpha=1,
             unlabeled_identifier=-1, max_iters=30,
-            conv_threshold=1e-3):
+            tol=1e-3):
+
         self.max_iters = max_iters
-        self.conv_threshold = conv_threshold
+        self.tol = tol
 
         # object referring to a point that is unlabeled
         self.unlabeled_identifier = unlabeled_identifier
@@ -130,7 +129,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         ary = np.atleast_2d(X)
         return self._get_kernel(self._X, ary).T * self.y_
 
-    def fit(self, X, y, **params):
+    def fit(self, X, y):
         """
         Fit a semi-supervised label propagation model based on input data
         matrix X and corresponding label matrix Y.
@@ -148,7 +147,6 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         -------
         updated LabelPropagation object with a new transduction results
         """
-        self._set_params(**params)
         self._X = np.asanyarray(X)
 
         # actual graph construction (implementations should override this)
@@ -170,7 +168,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         # initialize distributions
         self.y_ = np.zeros((n_labels, n_classes))
         for label in unq_labels:
-            self.y_[np.where(y_st == label), np.where(unq_labels == label)] = 1
+            self.y_[y_st == label, unq_labels == label] = 1
 
         Y_alpha = np.copy(self.y_)
         Y_alpha = Y_alpha * (1 - self.alpha)
@@ -180,7 +178,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         self.y_.resize((self._X.shape[0], n_classes))
 
         max_iters = self.max_iters
-        ct = self.conv_threshold
+        ct = self.tol
         while _not_converged(self.y_, y_p, ct) and max_iters > 1:
             y_p = self.y_
             self.y_ = np.dot(graph_matrix, self.y_)
@@ -214,7 +212,7 @@ class LabelPropagation(BaseLabelPropagation):
 
     max_iters : float
       change maximum number of iterations allowed
-    conv_threshold : float
+    tol : float
       threshold to consider the system at steady state
 
     Examples
@@ -239,9 +237,8 @@ class LabelPropagation(BaseLabelPropagation):
         class distributions will exceed 1 (normalization may be desired)
         """
         affinity_matrix = self._get_kernel(self._X, self._X)
-        degree_matrix = np.diag(np.sum(affinity_matrix, axis=0))
-        deg_inv = np.linalg.inv(degree_matrix)
-        aff_ideg = deg_inv * np.matrix(affinity_matrix)
+        degree_inv = np.diag(1. / np.sum(affinity_matrix, axis=0))
+        aff_ideg = degree_inv * np.matrix(affinity_matrix)
         return aff_ideg
 
 
@@ -266,7 +263,7 @@ class LabelSpreading(BaseLabelPropagation):
 
     max_iters : float
       change maximum number of iterations allowed
-    conv_threshold : float
+    tol : float
       threshold to consider the system at steady state
 
     Examples
@@ -283,11 +280,9 @@ class LabelSpreading(BaseLabelPropagation):
     LabelSpreading(...)
     """
 
-    def __init__(self, kernel='rbf', gamma=20, alpha=0.2,
-            unlabeled_identifier=-1, max_iters=100,
-            conv_threshold=1e-3):
+    def __init__(self, alpha=0.2, *args, **kwargs):
         # this one has different base parameters
-        super(LabelSpreading, self).__init__()
+        super(LabelSpreading, self).__init__(alpha=alpha, *args, **kwargs)
 
     def _build_graph(self):
         """
@@ -297,14 +292,14 @@ class LabelSpreading(BaseLabelPropagation):
         n_samples = self._X.shape[0]
         affinity_matrix = self._get_kernel(self._X, self._X)
         affinity_matrix[np.diag_indices(n_samples)] = 0
-        degree_matrix = np.diag(np.sum(affinity_matrix, axis=0))
-        deg_invsq = np.sqrt(np.linalg.inv(degree_matrix))
-        laplacian = deg_invsq * np.matrix(affinity_matrix) * deg_invsq
+        degree_matrix = np.diag(1. / np.sum(affinity_matrix, axis=0))
+        np.sqrt(degree_matrix, degree_matrix)
+        laplacian = degree_matrix * np.matrix(affinity_matrix) * degree_matrix
         return laplacian
 
 ### Helper functions
 
 
-def _not_converged(y, y_hat, threshold=1e-3):
+def _not_converged(y, y_hat, tol=1e-3):
     """basic convergence check"""
-    return np.sum(np.abs(np.asarray(y - y_hat))) > threshold
+    return np.sum(np.abs(np.asarray(y - y_hat))) > tol

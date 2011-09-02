@@ -34,10 +34,10 @@ Y_50 = np.copy(Y)
 Y_50[np.random.rand(len(Y)) < 0.5] = 3
 # we create an instance of SVM and fit out data. We do not scale our
 # data since we want to plot the support vectors
-ls30 = (label_propagation.LabelSpreading().fit(X, Y_30,\
-        unlabeled_identifier=3), Y_30)
-ls50 = (label_propagation.LabelSpreading().fit(X, Y_50,\
-        unlabeled_identifier=3), Y_50)
+ls30 = (label_propagation.LabelSpreading(unlabeled_identifier=3).fit(X, Y_30),
+        Y_30)
+ls50 = (label_propagation.LabelSpreading(unlabeled_identifier=3).fit(X, Y_50),
+        Y_50)
 ls100 = (label_propagation.LabelSpreading().fit(X, Y), Y)
 rbf_svc = (svm.SVC(kernel='rbf').fit(X, Y), Y)
 
