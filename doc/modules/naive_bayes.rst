@@ -2,7 +2,7 @@
 Naive Bayes
 ===========
 
-.. currentmodule:: scikits.learn.naive_bayes
+.. currentmodule:: sklearn.naive_bayes
 
 
 **Naive Bayes** algorithms are a set of supervised learning methods

@@ -1,5 +1,5 @@
 
-.. currentmodule:: scikits.learn
+.. currentmodule:: sklearn
 
 .. _changes_0_8:
 
@@ -257,7 +257,7 @@ Changelog
 
   - Improved sparse matrix support, both in main classes
     (:class:`grid_search.GridSearchCV`) as in modules
-    scikits.learn.svm.sparse and scikits.learn.linear_model.sparse.
+    sklearn.svm.sparse and sklearn.linear_model.sparse.
 
   - Lots of cool new examples and a new section that uses real-world
     datasets was created. These include:
@@ -356,7 +356,7 @@ New classes
     - New module feature_extraction (see :ref:`class reference
       <feature_extraction_ref>`)
 
-    - New FastICA algorithm in module scikits.learn.fastica
+    - New FastICA algorithm in module sklearn.fastica
 
 
 Documentation
@@ -397,7 +397,7 @@ External dependencies
 ~~~~~~~~~~~~~~~~~~~~~
 
     - Joblib is now a dependencie of this package, although it is
-      shipped with (scikits.learn.externals.joblib).
+      shipped with (sklearn.externals.joblib).
 
 Removed modules
 ~~~~~~~~~~~~~~~
