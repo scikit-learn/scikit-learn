@@ -10,7 +10,7 @@ print __doc__
 
 import numpy as np
 import pylab as pl
-from scikits.learn import svm
+from sklearn import svm
 
 # we create 20 points
 np.random.seed(0)

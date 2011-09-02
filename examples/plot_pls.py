@@ -22,7 +22,7 @@ print __doc__
 
 import numpy as np
 import pylab as pl
-from scikits.learn.pls import PLSCanonical, PLSRegression, CCA
+from sklearn.pls import PLSCanonical, PLSRegression, CCA
 
 ################################################################################
 # Dataset based latent variables model

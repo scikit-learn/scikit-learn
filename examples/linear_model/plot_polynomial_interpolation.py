@@ -29,7 +29,7 @@ print __doc__
 import numpy as np
 import pylab as pl
 
-from scikits.learn.linear_model import Ridge
+from sklearn.linear_model import Ridge
 
 np.random.seed(0)
 

@@ -20,7 +20,7 @@ import numpy as np
 import pylab as pl
 from scipy import stats
 
-from scikits.learn.linear_model import ARDRegression, LinearRegression
+from sklearn.linear_model import ARDRegression, LinearRegression
 
 ################################################################################
 # Generating simulated data with Gaussian weigthts
