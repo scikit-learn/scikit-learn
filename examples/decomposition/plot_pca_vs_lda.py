@@ -20,9 +20,9 @@ print __doc__
 
 import pylab as pl
 
-from sklearn import datasets
-from sklearn.decomposition import PCA
-from sklearn.lda import LDA
+from scikits.learn import datasets
+from scikits.learn.decomposition import PCA
+from scikits.learn.lda import LDA
 
 iris = datasets.load_iris()
 

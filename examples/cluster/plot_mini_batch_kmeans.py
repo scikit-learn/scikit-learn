@@ -19,9 +19,9 @@ import time
 import numpy as np
 import pylab as pl
 
-from sklearn.cluster import MiniBatchKMeans, KMeans
-from sklearn.metrics.pairwise import euclidean_distances
-from sklearn.datasets.samples_generator import make_blobs
+from scikits.learn.cluster import MiniBatchKMeans, KMeans
+from scikits.learn.metrics.pairwise import euclidean_distances
+from scikits.learn.datasets.samples_generator import make_blobs
 
 ##############################################################################
 # Generate sample data

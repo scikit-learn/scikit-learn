@@ -17,7 +17,7 @@ print __doc__
 # License: BSD Style.
 
 import numpy as np
-from sklearn import linear_model
+from scikits.learn import linear_model
 
 ###############################################################################
 # Generate sample data

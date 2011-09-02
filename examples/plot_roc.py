@@ -10,9 +10,9 @@ print __doc__
 
 import numpy as np
 import pylab as pl
-from sklearn import svm, datasets
-from sklearn.utils import shuffle
-from sklearn.metrics import roc_curve, auc
+from scikits.learn import svm, datasets
+from scikits.learn.utils import shuffle
+from scikits.learn.metrics import roc_curve, auc
 
 random_state = np.random.RandomState(0)
 

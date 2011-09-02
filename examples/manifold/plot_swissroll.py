@@ -19,7 +19,7 @@ from mpl_toolkits.mplot3d import Axes3D
 #----------------------------------------------------------------------
 # Locally linear embedding of the swiss roll
 
-from sklearn import manifold, datasets
+from scikits.learn import manifold, datasets
 X, color = datasets.samples_generator.make_swiss_roll(n_samples=1500)
 
 print "Computing LLE embedding"

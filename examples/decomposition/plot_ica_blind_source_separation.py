@@ -13,7 +13,7 @@ print __doc__
 
 import numpy as np
 import pylab as pl
-from sklearn.decomposition import FastICA
+from scikits.learn.decomposition import FastICA
 
 ###############################################################################
 # Generate sample data

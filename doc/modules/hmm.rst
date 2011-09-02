@@ -9,7 +9,7 @@ Hidden Markov Models
     the mailing list.
 
 
-.. currentmodule:: sklearn.hmm
+.. currentmodule:: scikits.learn.hmm
 
 Classes in this module include :class:`GaussianHMM`, :class:`MultinomalHMM`
 and :class:`GMMHMM`. There's currently no narrative documentation for this

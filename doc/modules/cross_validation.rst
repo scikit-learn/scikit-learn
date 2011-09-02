@@ -2,7 +2,7 @@
 Cross-Validation
 ================
 
-.. currentmodule:: sklearn.cross_val
+.. currentmodule:: scikits.learn.cross_val
 
 Learning the parameters of a prediction function and testing it on the same
 data yields a methodological bias. To avoid over-fitting, we have to define two
@@ -40,12 +40,12 @@ cross-validation procedure does not waste much data as only one sample
 is removed from the learning set::
 
   >>> import numpy as np
-  >>> from sklearn.cross_val import LeaveOneOut
+  >>> from scikits.learn.cross_val import LeaveOneOut
   >>> X = np.array([[0., 0.], [1., 1.], [-1., -1.], [2., 2.]])
   >>> Y = np.array([0, 1, 0, 1])
   >>> loo = LeaveOneOut(len(Y))
   >>> print loo
-  sklearn.cross_val.LeaveOneOut(n=4)
+  scikits.learn.cross_val.LeaveOneOut(n=4)
   >>> for train, test in loo: print train, test
   [False  True  True  True] [ True False False False]
   [ True False  True  True] [False  True False False]
@@ -64,12 +64,12 @@ integer indices. It can be obtained by setting the parameter indices to True
 when creating the cross-validation procedure::
 
   >>> import numpy as np
-  >>> from sklearn.cross_val import LeaveOneOut
+  >>> from scikits.learn.cross_val import LeaveOneOut
   >>> X = np.array([[0., 0.], [1., 1.], [-1., -1.], [2., 2.]])
   >>> Y = np.array([0, 1, 0, 1])
   >>> loo = LeaveOneOut(len(Y), indices=True)
   >>> print loo
-  sklearn.cross_val.LeaveOneOut(n=4)
+  scikits.learn.cross_val.LeaveOneOut(n=4)
   >>> for train, test in loo: print train, test
   [1 2 3] [0]
   [0 2 3] [1]
@@ -86,12 +86,12 @@ possible training/test sets by removing *P* samples from the complete set.
 
 Example of Leave-2-Out::
 
-  >>> from sklearn.cross_val import LeavePOut
+  >>> from scikits.learn.cross_val import LeavePOut
   >>> X = [[0., 0.], [1., 1.], [-1., -1.], [2., 2.]]
   >>> Y = [0, 1, 0, 1]
   >>> loo = LeavePOut(len(Y), 2)
   >>> print loo
-  sklearn.cross_val.LeavePOut(n=4, p=2)
+  scikits.learn.cross_val.LeavePOut(n=4, p=2)
   >>> for train, test in loo: print train,test
   [False False  True  True] [ True  True False False]
   [False  True False  True] [ True False  True False]
@@ -121,12 +121,12 @@ and the fold left out is used for test.
 
 Example of 2-fold::
 
-  >>> from sklearn.cross_val import KFold
+  >>> from scikits.learn.cross_val import KFold
   >>> X = [[0., 0.], [1., 1.], [-1., -1.], [2., 2.]]
   >>> Y = [0, 1, 0, 1]
   >>> loo = KFold(len(Y), 2)
   >>> print loo
-  sklearn.cross_val.KFold(n=4, k=2)
+  scikits.learn.cross_val.KFold(n=4, k=2)
   >>> for train, test in loo: print train,test
   [False False  True  True] [ True  True False False]
   [ True  True False False] [False False  True  True]
@@ -144,12 +144,12 @@ class as in the complete set.
 
 Example of stratified 2-fold::
 
-  >>> from sklearn.cross_val import StratifiedKFold
+  >>> from scikits.learn.cross_val import StratifiedKFold
   >>> X = [[0., 0.], [1., 1.], [-1., -1.], [2., 2.], [3., 3.], [4., 4.], [0., 1.]]
   >>> Y = [0, 0, 0, 1, 1, 1, 0]
   >>> skf = StratifiedKFold(Y, 2)
   >>> print skf
-  sklearn.cross_val.StratifiedKFold(labels=[0 0 0 1 1 1 0], k=2)
+  scikits.learn.cross_val.StratifiedKFold(labels=[0 0 0 1 1 1 0], k=2)
   >>> for train, test in skf: print train, test
   [False  True False False  True False  True] [ True False  True  True False  True False]
   [ True False  True  True False  True False] [False  True False False  True False  True]
@@ -169,13 +169,13 @@ For example, in the cases of multiple experiments, *LOLO* can be used to
 create a cross-validation based on the different experiments: we create a
 training set using the samples of all the experiments except one::
 
-  >>> from sklearn.cross_val import LeaveOneLabelOut
+  >>> from scikits.learn.cross_val import LeaveOneLabelOut
   >>> X = [[0., 0.], [1., 1.], [-1., -1.], [2., 2.]]
   >>> Y = [0, 1, 0, 1]
   >>> labels = [1, 1, 2, 2]
   >>> loo = LeaveOneLabelOut(labels)
   >>> print loo
-  sklearn.cross_val.LeaveOneLabelOut(labels=[1, 1, 2, 2])
+  scikits.learn.cross_val.LeaveOneLabelOut(labels=[1, 1, 2, 2])
   >>> for train, test in loo: print train,test
   [False False  True  True] [ True  True False False]
   [ True  True False False] [False False  True  True]
@@ -191,13 +191,13 @@ related to *P* labels for each training/test set.
 
 Example of Leave-2-Label Out::
 
-  >>> from sklearn.cross_val import LeavePLabelOut
+  >>> from scikits.learn.cross_val import LeavePLabelOut
   >>> X = [[0., 0.], [1., 1.], [-1., -1.], [2., 2.], [3., 3.], [4., 4.]]
   >>> Y = [0, 1, 0, 1, 0, 1]
   >>> labels = [1, 1, 2, 2, 3, 3]
   >>> loo = LeavePLabelOut(labels, 2)
   >>> print loo
-  sklearn.cross_val.LeavePLabelOut(labels=[1, 1, 2, 2, 3, 3], p=2)
+  scikits.learn.cross_val.LeavePLabelOut(labels=[1, 1, 2, 2, 3, 3], p=2)
   >>> for train, test in loo: print train,test
   [False False False False  True  True] [ True  True  True  True False False]
   [False False  True  True False False] [ True  True False False  True  True]
@@ -225,7 +225,7 @@ smaller than the total dataset if it is very large.
 
 .. _Bootstrapping: http://en.wikipedia.org/wiki/Bootstrapping_%28statistics%29
 
-  >>> from sklearn import cross_val
+  >>> from scikits.learn import cross_val
   >>> bs = cross_val.Bootstrap(9, random_state=0)
   >>> len(bs)
   3

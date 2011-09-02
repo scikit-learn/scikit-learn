@@ -7,9 +7,9 @@ A recursive feature elimination is performed prior to SVM classification.
 """
 print __doc__
 
-from sklearn.svm import SVC
-from sklearn import datasets
-from sklearn.feature_selection import RFE
+from scikits.learn.svm import SVC
+from scikits.learn import datasets
+from scikits.learn.feature_selection import RFE
 
 ################################################################################
 # Loading the Digits dataset

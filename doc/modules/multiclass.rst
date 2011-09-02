@@ -2,7 +2,7 @@
 Multiclass algorithms
 =====================
 
-.. currentmodule:: sklearn.multiclass
+.. currentmodule:: scikits.learn.multiclass
 
 This module implements multiclass learning algorithms:
     - one-vs-the-rest / one-vs-all
@@ -40,9 +40,9 @@ only, it is possible to gain knowledge about the class by inspecting its
 corresponding classifier. This is the most commonly used strategy and is a
 fair default choice. Below is an example::
 
-  >>> from sklearn import datasets
-  >>> from sklearn.multiclass import OneVsRestClassifier
-  >>> from sklearn.svm import LinearSVC
+  >>> from scikits.learn import datasets
+  >>> from scikits.learn.multiclass import OneVsRestClassifier
+  >>> from scikits.learn.svm import LinearSVC
   >>> iris = datasets.load_iris()
   >>> X, y = iris.data, iris.target
   >>> OneVsRestClassifier(LinearSVC()).fit(X, y).predict(X)
@@ -68,9 +68,9 @@ algorithms such as kernel algorithms which don't scale well with
 a small subset of the data whereas, with one-vs-the-rest, the complete
 dataset is used `n_classes` times. Below is an example::
 
-  >>> from sklearn import datasets
-  >>> from sklearn.multiclass import OneVsOneClassifier
-  >>> from sklearn.svm import LinearSVC
+  >>> from scikits.learn import datasets
+  >>> from scikits.learn.multiclass import OneVsOneClassifier
+  >>> from scikits.learn.svm import LinearSVC
   >>> iris = datasets.load_iris()
   >>> X, y = iris.data, iris.target
   >>> OneVsOneClassifier(LinearSVC()).fit(X, y).predict(X)
@@ -120,9 +120,9 @@ effect to bagging.
 
 Example::
 
-  >>> from sklearn import datasets
-  >>> from sklearn.multiclass import OutputCodeClassifier
-  >>> from sklearn.svm import LinearSVC
+  >>> from scikits.learn import datasets
+  >>> from scikits.learn.multiclass import OutputCodeClassifier
+  >>> from scikits.learn.svm import LinearSVC
   >>> iris = datasets.load_iris()
   >>> X, y = iris.data, iris.target
   >>> OutputCodeClassifier(LinearSVC(), code_size=2, random_state=0).fit(X, y).predict(X)

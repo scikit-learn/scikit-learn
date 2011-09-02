@@ -33,7 +33,7 @@ import Tkinter as Tk
 import sys
 import numpy as np
 
-from sklearn import svm
+from scikits.learn import svm
 
 y_min, y_max = -50, 50
 x_min, x_max = -50, 50

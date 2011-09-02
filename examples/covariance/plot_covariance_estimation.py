@@ -42,7 +42,7 @@ X_test = np.dot(base_X_test, coloring_matrix)
 ###############################################################################
 # Compute Ledoit-Wolf and Covariances on a grid of shrinkages
 
-from sklearn.covariance import LedoitWolf, OAS, ShrunkCovariance, \
+from scikits.learn.covariance import LedoitWolf, OAS, ShrunkCovariance, \
     log_likelihood, empirical_covariance
 
 # Ledoit-Wolf optimal shrinkage coefficient estimate

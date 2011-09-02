@@ -16,13 +16,13 @@ print __doc__
 from pprint import pprint
 import numpy as np
 
-from sklearn import datasets
-from sklearn.cross_val import StratifiedKFold
-from sklearn.grid_search import GridSearchCV
-from sklearn.metrics import classification_report
-from sklearn.metrics import precision_score
-from sklearn.metrics import recall_score
-from sklearn.svm import SVC
+from scikits.learn import datasets
+from scikits.learn.cross_val import StratifiedKFold
+from scikits.learn.grid_search import GridSearchCV
+from scikits.learn.metrics import classification_report
+from scikits.learn.metrics import precision_score
+from scikits.learn.metrics import recall_score
+from scikits.learn.svm import SVC
 
 ################################################################################
 # Loading the Digits dataset

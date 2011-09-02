@@ -2,7 +2,7 @@
 Grid Search
 ===================================================
 
-.. currentmodule:: sklearn.grid_search
+.. currentmodule:: scikits.learn.grid_search
 
 
 Grid Search is used to optimize the parameters of a model

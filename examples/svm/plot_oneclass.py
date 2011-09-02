@@ -10,7 +10,7 @@ print __doc__
 
 import numpy as np
 import pylab as pl
-from sklearn import svm
+from scikits.learn import svm
 
 xx, yy = np.meshgrid(np.linspace(-7, 7, 500), np.linspace(-7, 7, 500))
 X = 0.3 * np.random.randn(100, 2)

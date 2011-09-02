@@ -10,8 +10,8 @@ print __doc__
 
 import random
 import pylab as pl
-from sklearn import svm, datasets
-from sklearn.metrics import confusion_matrix
+from scikits.learn import svm, datasets
+from scikits.learn.metrics import confusion_matrix
 
 # import some data to play with
 iris = datasets.load_iris()

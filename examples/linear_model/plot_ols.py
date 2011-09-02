@@ -11,7 +11,7 @@ print __doc__
 import numpy as np
 import pylab as pl
 
-from sklearn import linear_model
+from scikits.learn import linear_model
 
 # this is our test set, it's just a straight line with some
 # gaussian noise

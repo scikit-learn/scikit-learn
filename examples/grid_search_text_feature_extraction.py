@@ -52,12 +52,12 @@ from time import time
 import os
 import logging
 
-from sklearn.datasets import fetch_20newsgroups
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.feature_extraction.text import TfidfTransformer
-from sklearn.linear_model.sparse import SGDClassifier
-from sklearn.grid_search import GridSearchCV
-from sklearn.pipeline import Pipeline
+from scikits.learn.datasets import fetch_20newsgroups
+from scikits.learn.feature_extraction.text import CountVectorizer
+from scikits.learn.feature_extraction.text import TfidfTransformer
+from scikits.learn.linear_model.sparse import SGDClassifier
+from scikits.learn.grid_search import GridSearchCV
+from scikits.learn.pipeline import Pipeline
 
 # Display progress logs on stdout
 logging.basicConfig(level=logging.INFO,

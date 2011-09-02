@@ -16,11 +16,11 @@ from time import time
 import numpy as np
 import pylab as pl
 
-from sklearn import metrics
-from sklearn.cluster import KMeans
-from sklearn.datasets import load_digits
-from sklearn.decomposition import PCA
-from sklearn.preprocessing import scale
+from scikits.learn import metrics
+from scikits.learn.cluster import KMeans
+from scikits.learn.datasets import load_digits
+from scikits.learn.decomposition import PCA
+from scikits.learn.preprocessing import scale
 
 np.random.seed(42)
 

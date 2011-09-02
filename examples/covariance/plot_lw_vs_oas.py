@@ -26,7 +26,7 @@ import numpy as np
 import pylab as pl
 from scipy.linalg import toeplitz, cholesky
 
-from sklearn.covariance import LedoitWolf, OAS
+from scikits.learn.covariance import LedoitWolf, OAS
 
 ###############################################################################
 n_features = 100

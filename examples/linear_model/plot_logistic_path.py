@@ -16,9 +16,9 @@ from datetime import datetime
 import numpy as np
 import pylab as pl
 
-from sklearn import linear_model
-from sklearn import datasets
-from sklearn.svm import l1_min_c
+from scikits.learn import linear_model
+from scikits.learn import datasets
+from scikits.learn.svm import l1_min_c
 
 iris = datasets.load_iris()
 X = iris.data

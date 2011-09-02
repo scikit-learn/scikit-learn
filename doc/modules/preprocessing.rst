@@ -4,9 +4,9 @@
 Preprocessing data
 ==================
 
-.. currentmodule:: sklearn.preprocessing
+.. currentmodule:: scikits.learn.preprocessing
 
-The ``sklearn.preprocessing`` package provides several common
+The ``scikits.learn.preprocessing`` package provides several common
 utility functions and transformer classes to change raw feature vectors
 into a representation that is more suitable for the downstream estimators.
 
@@ -36,7 +36,7 @@ estimator unable to learn from other features correctly as expected.
 The function :func:`scale` provides a quick and easy way to perform this
 operation on a single array-like dataset::
 
-  >>> from sklearn import preprocessing
+  >>> from scikits.learn import preprocessing
   >>> X = [[ 1., -1.,  2.],
   ...      [ 2.,  0.,  0.],
   ...      [ 0.,  1., -1.]]
@@ -60,7 +60,7 @@ The ``preprocessing`` module further provides a utility class
 the mean and standard deviation on a training set so as to be
 able to later reapply the same transformation on the testing set.
 This class is hence suitable for use in the early steps of a
-:class:`sklearn.pipeline.Pipeline`::
+:class:`scikits.learn.pipeline.Pipeline`::
 
   >>> scaler = preprocessing.Scaler().fit(X)
   >>> scaler
@@ -101,8 +101,8 @@ of :class:`Scaler`.
   since downstream model can further make assumption on the linear independence
   of the features.
 
-  To address this issue you can use :class:`sklearn.decomposition.PCA`
-  or :class:`sklearn.decomposition.RandomizedPCA` with ``whiten=True``
+  To address this issue you can use :class:`scikits.learn.decomposition.PCA`
+  or :class:`scikits.learn.decomposition.RandomizedPCA` with ``whiten=True``
   to further remove the linear correlation across features.
 
   Also note that the current implementation of :func:`scale` and
@@ -141,7 +141,7 @@ The ``preprocessing`` module further provides a utility class
 the class is stateless as this operation treats samples independently).
 
 This class is hence suitable for use in the early steps of a
-:class:`sklearn.pipeline.Pipeline`::
+:class:`scikits.learn.pipeline.Pipeline`::
 
   >>> normalizer = preprocessing.Normalizer().fit(X)  # fit does nothing
   >>> normalizer
@@ -192,7 +192,7 @@ often perform slightly better in practice.
 
 As for the :class:`Normalizer`, the utility class
 :class:`Binarizer` is meant to be used in the early stages of
-:class:`sklearn.pipeline.Pipeline`. The ``fit`` method does nothing
+:class:`scikits.learn.pipeline.Pipeline`. The ``fit`` method does nothing
 as each sample is treated independently of others::
 
   >>> X = [[ 1., -1.,  2.],

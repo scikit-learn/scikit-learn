@@ -28,8 +28,8 @@ import time as time
 import numpy as np
 import pylab as pl
 import mpl_toolkits.mplot3d.axes3d as p3
-from sklearn.cluster import Ward
-from sklearn.datasets.samples_generator import make_swiss_roll
+from scikits.learn.cluster import Ward
+from scikits.learn.datasets.samples_generator import make_swiss_roll
 
 ###############################################################################
 # Generate data (swiss roll dataset)
@@ -61,7 +61,7 @@ pl.title('Without connectivity constraints')
 
 ###############################################################################
 # Define the structure A of the data. Here a 10 nearest neighbors
-from sklearn.neighbors import kneighbors_graph
+from scikits.learn.neighbors import kneighbors_graph
 connectivity = kneighbors_graph(X, n_neighbors=10)
 
 ###############################################################################

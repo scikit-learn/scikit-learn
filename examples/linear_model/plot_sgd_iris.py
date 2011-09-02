@@ -12,8 +12,8 @@ print __doc__
 
 import numpy as np
 import pylab as pl
-from sklearn import datasets
-from sklearn.linear_model import SGDClassifier
+from scikits.learn import datasets
+from scikits.learn.linear_model import SGDClassifier
 
 # import some data to play with
 iris = datasets.load_iris()

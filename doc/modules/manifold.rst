@@ -1,7 +1,7 @@
 
 .. _manifold:
 
-.. currentmodule:: sklearn.manifold
+.. currentmodule:: scikits.learn.manifold
 
 =================
 Manifold learning
@@ -91,7 +91,7 @@ from the data itself, without the use of predetermined classifications.
     * See :ref:`example_manifold_plot_compare_methods.py` for an example of
       dimensionality reduction on a toy "S-curve" dataset.
 
-The manifold learning implementations available in sklearn are
+The manifold learning implementations available in scikits-learn are
 summarized below
 
 Isomap
@@ -114,7 +114,7 @@ Complexity
 The Isomap algorithm comprises three stages:
 
 1. **Nearest neighbor search.**  Isomap uses
-   :class:`sklearn.neighbors.BallTree` for efficient neighbor search.
+   :class:`scikits.learn.neighbors.BallTree` for efficient neighbor search.
    The cost is approximately :math:`O[D \log(k) N \log(N)]`, for :math:`k`
    nearest neighbors of :math:`N` points in :math:`D` dimensions.
 
@@ -257,7 +257,7 @@ Hessian Eigenmapping (also known as Hessian-based LLE: HLLE) is another method
 of solving the regularization problem of LLE.  It revolves around a
 hessian-based quadratic form at each neighborhood which is used to recover
 the locally linear structure.  Though other implementations note its poor
-scaling with data size, ``sklearn`` implements some algorithmic
+scaling with data size, ``scikits-learn`` implements some algorithmic
 improvements which make its cost comparable to that of other LLE variants
 for small output dimension.  HLLE can be  performed with function
 :func:`locally_linear_embedding` or its object-oriented counterpart

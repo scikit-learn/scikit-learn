@@ -22,7 +22,7 @@ y[::5] += 3*(0.5 - np.random.rand(8))
 
 ###############################################################################
 # Fit regression model
-from sklearn.svm import SVR
+from scikits.learn.svm import SVR
 
 svr_rbf = SVR(kernel='rbf', C=1e4, gamma=0.1)
 svr_lin = SVR(kernel='linear', C=1e4)

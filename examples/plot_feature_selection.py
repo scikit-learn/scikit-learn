@@ -27,7 +27,7 @@ import pylab as pl
 # import some data to play with
 
 # The IRIS dataset
-from sklearn import datasets, svm
+from scikits.learn import datasets, svm
 iris = datasets.load_iris()
 
 # Some noisy data not correlated
@@ -45,7 +45,7 @@ x_indices = np.arange(x.shape[-1])
 
 ################################################################################
 # Univariate feature selection
-from sklearn.feature_selection import SelectFpr, f_classif
+from scikits.learn.feature_selection import SelectFpr, f_classif
 # As a scoring function, we use a F test for classification
 # We use the default selection function: the 10% most significant
 # features

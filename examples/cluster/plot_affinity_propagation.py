@@ -11,9 +11,9 @@ Between Data Points", Science Feb. 2007
 print __doc__
 
 import numpy as np
-from sklearn.cluster import AffinityPropagation
-from sklearn import metrics
-from sklearn.datasets.samples_generator import make_blobs
+from scikits.learn.cluster import AffinityPropagation
+from scikits.learn import metrics
+from scikits.learn.datasets.samples_generator import make_blobs
 
 ##############################################################################
 # Generate sample data

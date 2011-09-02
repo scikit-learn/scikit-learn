@@ -18,8 +18,8 @@ import time as time
 import numpy as np
 import scipy as sp
 import pylab as pl
-from sklearn.feature_extraction.image import grid_to_graph
-from sklearn.cluster import Ward
+from scikits.learn.feature_extraction.image import grid_to_graph
+from scikits.learn.cluster import Ward
 
 ###############################################################################
 # Generate data

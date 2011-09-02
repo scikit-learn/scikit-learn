@@ -10,7 +10,7 @@ matrices.
 
 import numpy as np
 import pylab as pl
-from sklearn import mixture
+from scikits.learn import mixture
 
 n_samples = 300
 

@@ -1,7 +1,7 @@
 
 .. _dpgmm:
 
-.. currentmodule:: sklearn.mixture
+.. currentmodule:: scikits.learn.mixture
 
 
 Variational Gaussian Mixture Models

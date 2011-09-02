@@ -10,8 +10,8 @@ print __doc__
 
 import numpy as np
 import pylab as pl
-from sklearn import svm, datasets, feature_selection, cross_val
-from sklearn.pipeline import Pipeline
+from scikits.learn import svm, datasets, feature_selection, cross_val
+from scikits.learn.pipeline import Pipeline
 
 ################################################################################
 # Import some data to play with

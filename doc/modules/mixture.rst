@@ -4,9 +4,9 @@
 Gaussian mixture models
 ===================================================
 
-.. currentmodule:: sklearn.mixture
+.. currentmodule:: scikits.learn.mixture
 
-`sklearn.mixture` is a package which enables one to learn
+`scikits.learn.mixture` is a package which enables one to learn
 Gaussian Mixture Models (diagonal, spherical, tied and full covariance
 matrices supported), sample them, and estimate them from
 data. Facilities to help determine the appropriate number of
@@ -35,7 +35,7 @@ these models that, while not guaranteed to return the optimal
 solution, do converge quickly to a local optimum. To improve the
 quality it is usual to fit these models many times with different
 parameters and choose the best result, as measured by the likelihood
-or some other external criterion. Here in `sklearn` we implement
+or some other external criterion. Here in `scikits.learn` we implement
 two approximate inference algorithms for mixtures of gaussians:
 expectation-maximization and variational inference. We also implement
 a variant of the mixture model, known as the Dirichlet Process prior,
@@ -59,7 +59,7 @@ origin) and computes for each point a probability distribution on the
 components it could have been assigned to. Then, one tweaks the
 parameters to maximize the likelihood of the data given those
 assignments. Repeating this process is guaranteed to always converge
-to a local optimum. In the `sklearn` this algorithm in
+to a local optimum. In the `scikits.learn` this algorithm in
 implemented in the :class:`GMM` class.
 
 Advantages of expectation-maximization:
@@ -206,7 +206,7 @@ The main disadvantages of using the dirichlet process are:
 GMM classifier
 ==============
 
-.. currentmodule:: sklearn.mixture
+.. currentmodule:: scikits.learn.mixture
 
 The :class:`GMM` object implements the expectation-maximization (EM)
 algorithm for fitting mixture-of-gaussian models. It can also draw
@@ -238,7 +238,7 @@ the :meth:`GMM.predict` method.
 Variational Gaussian mixtures: VBGMM classifier
 =============================================
 
-.. currentmodule:: sklearn.mixture
+.. currentmodule:: scikits.learn.mixture
 
 The :class:`VBGMM` object implements a variant of the Gaussian mixture
 model with variational inference algorithms. The API is identical to

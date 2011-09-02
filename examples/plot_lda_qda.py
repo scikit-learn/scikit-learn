@@ -13,8 +13,8 @@ import pylab as pl
 import matplotlib as mpl
 from matplotlib import colors
 
-from sklearn.lda import LDA
-from sklearn.qda import QDA
+from scikits.learn.lda import LDA
+from scikits.learn.qda import QDA
 
 ###############################################################################
 # colormap

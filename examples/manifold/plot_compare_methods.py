@@ -20,7 +20,7 @@ import pylab as pl
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.ticker import NullFormatter
 
-from sklearn import manifold, datasets
+from scikits.learn import manifold, datasets
 
 n_points = 1000
 X, color = datasets.samples_generator.make_s_curve(n_points)

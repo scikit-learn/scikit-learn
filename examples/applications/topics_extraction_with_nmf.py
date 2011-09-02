@@ -36,9 +36,9 @@ edu reply pain health david article medical medicine 16
 """
 
 from time import time
-from sklearn.feature_extraction import text
-from sklearn import decomposition
-from sklearn import datasets
+from scikits.learn.feature_extraction import text
+from scikits.learn import decomposition
+from scikits.learn import datasets
 
 n_samples = 1000
 n_features = 1000

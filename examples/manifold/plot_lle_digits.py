@@ -17,8 +17,8 @@ from time import time
 import numpy as np
 import pylab as pl
 from matplotlib import offsetbox
-from sklearn.utils.fixes import qr_economic
-from sklearn import manifold, datasets, decomposition, lda
+from scikits.learn.utils.fixes import qr_economic
+from scikits.learn import manifold, datasets, decomposition, lda
 
 digits = datasets.load_digits(n_class=6)
 X = digits.data
