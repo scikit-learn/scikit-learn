@@ -77,8 +77,8 @@ cdef class ClassificationCriterion(Criterion):
     
     def __init__(self, 
                  int K, 
-                 np.ndarray[np.int_t, ndim=1] pm_left,
-                 np.ndarray[np.int_t, ndim=1] pm_right):
+                 np.ndarray[np.int32_t, ndim=1] pm_left,
+                 np.ndarray[np.int32_t, ndim=1] pm_right):
         self.K = K
         self.n_left = 0
         self.n_right = 0
@@ -242,7 +242,7 @@ cdef class RegressionCriterion(Criterion):
         self.n_right = 0
         self.labels = <double*> labels.data
         
-    cdef void init(self, np.ndarray[np.float_t, ndim=1] labels, 
+    cdef void init(self, np.ndarray[np.float64_t, ndim=1] labels, 
                    int *sorted_features_i):
         """Initializes the criterion for a new feature (col of `features`)."""
         

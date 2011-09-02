@@ -280,8 +280,8 @@ class BaseDecisionTree(BaseEstimator):
                                  "classification " % self.K)
 
             criterion_class = lookup_c[self.criterion]
-            pm_left = np.zeros((self.K,), dtype=np.int)
-            pm_right = np.zeros((self.K,), dtype=np.int)
+            pm_left = np.zeros((self.K,), dtype=np.int32)
+            pm_right = np.zeros((self.K,), dtype=np.int32)
             criterion = criterion_class(self.K, pm_left, pm_right)
 
             self.tree = _build_tree(True, X, y, criterion,
@@ -291,7 +291,7 @@ class BaseDecisionTree(BaseEstimator):
             y = np.asanyarray(y, dtype=np.float64, order='C')
 
             criterion_class = lookup_r[self.criterion]
-            labels_temp = np.zeros((n_samples,), dtype=np.float)
+            labels_temp = np.zeros((n_samples,), dtype=np.float64)
             criterion = criterion_class(labels_temp)            
             self.tree = _build_tree(False, X, y, criterion,
                                     self.max_depth, self.min_split, self.F,
