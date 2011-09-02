@@ -493,16 +493,16 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     ...     print np.mean(np.power(clf.predict(data.data[test_index]) - \
                 data.target[test_index], 2)) #doctest: +ELLIPSIS
     ...
-    19.0133
-    17.7946
-    9.10902222222
-    51.73465
-    17.7013611111
-    30.0680472222
-    11.96595
-    101.465894444
-    54.8160888889
-    53.4878174603
+    12.9450419508
+    11.6925868725
+    12.8940290384
+    59.7824284864
+    19.3208876032
+    64.0553094769
+    15.1038466202
+    92.2104637727
+    54.4061950617
+    50.6928172067
     """
 
     def __init__(self, criterion='mse', max_depth=10,
