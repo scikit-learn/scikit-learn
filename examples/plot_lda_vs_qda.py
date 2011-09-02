@@ -12,12 +12,12 @@ import numpy as np
 import pylab as pl
 import matplotlib as mpl
 
-from scikits.learn.lda import LDA
-from scikits.learn.qda import QDA
+from sklearn.lda import LDA
+from sklearn.qda import QDA
 
 ################################################################################
 # load sample dataset
-from scikits.learn.datasets import load_iris
+from sklearn.datasets import load_iris
 
 iris = load_iris()
 X = iris.data[:,:2] # Take only 2 dimensions

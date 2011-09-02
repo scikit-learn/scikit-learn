@@ -63,7 +63,7 @@ Loading an example dataset
 datasets for classification and the `boston house prices dataset 
 <http://archive.ics.uci.edu/ml/datasets/Housing>`_ for regression.::
 
-    >>> from scikits.learn import datasets
+    >>> from sklearn import datasets
     >>> iris = datasets.load_iris()
     >>> digits = datasets.load_digits()
 
@@ -115,7 +115,7 @@ array([0, 1, 2, ..., 8, 9, 8])
     data for consumption in the `scikit-learn`.
 
 
-``scikits.learn`` also offers the possibility to reuse external datasets coming
+``sklearn`` also offers the possibility to reuse external datasets coming
 from the http://mlcomp.org online service that provides a repository of public
 datasets for various tasks (binary & multi label classification, regression,
 document classification, ...) along with a runtime environment to compare
@@ -135,14 +135,14 @@ the labels corresponding to new data.
 In `scikit-learn`, an *estimator* is just a plain Python class that
 implements the methods `fit(X, Y)` and `predict(T)`.
 
-An example of estimator is the class ``scikits.learn.svm.SVC`` that
+An example of estimator is the class ``sklearn.svm.SVC`` that
 implements `Support Vector Classification
 <http://en.wikipedia.org/wiki/Support_vector_machine>`_. The
 constructor of an estimator takes as arguments the parameters of the
 model, but for the time being, we will consider the estimator as a black
 box and not worry about these:
 
->>> from scikits.learn import svm
+>>> from sklearn import svm
 >>> clf = svm.SVC()
 
 We call our estimator instance `clf` as it is a classifier. It now must
@@ -181,8 +181,8 @@ Model persistence
 It is possible to save a model in the scikit by using Python's built-in
 persistence model, namely `pickle <http://docs.python.org/library/pickle.html>`_.
 
->>> from scikits.learn import svm
->>> from scikits.learn import datasets
+>>> from sklearn import svm
+>>> from sklearn import datasets
 >>> clf = svm.SVC()
 >>> iris = datasets.load_iris()
 >>> X, y = iris.data, iris.target
@@ -201,6 +201,6 @@ In the specific case of the scikit, it may be more interesting to use
 joblib's replacement of pickle, which is more efficient on big data, but
 can only pickle to the disk and not to a string:
 
->>> from scikits.learn.externals import joblib
+>>> from sklearn.externals import joblib
 >>> joblib.dump(clf, 'filename.pkl') # doctest: +SKIP
 

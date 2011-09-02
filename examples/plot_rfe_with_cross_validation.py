@@ -9,11 +9,11 @@ number of features selected with cross-validation
 print __doc__
 import numpy as np
 
-from scikits.learn.svm import SVC
-from scikits.learn.cross_val import StratifiedKFold
-from scikits.learn.feature_selection import RFECV
-from scikits.learn.datasets import samples_generator
-from scikits.learn.metrics import zero_one
+from sklearn.svm import SVC
+from sklearn.cross_val import StratifiedKFold
+from sklearn.feature_selection import RFECV
+from sklearn.datasets import samples_generator
+from sklearn.metrics import zero_one
 
 ################################################################################
 # Loading a dataset

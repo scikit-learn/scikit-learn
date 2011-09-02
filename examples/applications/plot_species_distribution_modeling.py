@@ -10,7 +10,7 @@ mammals given past observations and 14 environmental
 variables. Since we have only positive examples (there are
 no unsuccessful observations), we cast this problem as a
 density estimation problem and use the `OneClassSVM` provided
-by the package `scikits.learn.svm` as our modeling tool.
+by the package `sklearn.svm` as our modeling tool.
 The dataset is provided by Phillips et. al. (2006).
 If available, the example uses `basemap <http://matplotlib.sourceforge.net/basemap/doc/html/>`_
 to plot the coast lines and national boundaries of South America.
@@ -54,9 +54,9 @@ try:
 except ImportError:
     basemap = False
 
-from scikits.learn import svm
-from scikits.learn.metrics import roc_curve, auc
-from scikits.learn.datasets.base import Bunch
+from sklearn import svm
+from sklearn.metrics import roc_curve, auc
+from sklearn.datasets.base import Bunch
 
 ###############################################################################
 # Download the data, if not already on disk

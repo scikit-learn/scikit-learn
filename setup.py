@@ -9,7 +9,7 @@ import sys
 import os
 import shutil
 
-DISTNAME = 'scikits.learn'
+DISTNAME = 'sklearn'
 DESCRIPTION = 'A set of python modules for machine learning and data mining'
 LONG_DESCRIPTION = open('README.rst').read()
 MAINTAINER = 'Fabian Pedregosa'
@@ -33,6 +33,8 @@ def configuration(parent_package='', top_path=None):
 
     config.add_subpackage('scikits.learn')
     config.add_data_files('scikits/__init__.py')
+
+    config.add_subpackage('sklearn')
 
     return config
 
