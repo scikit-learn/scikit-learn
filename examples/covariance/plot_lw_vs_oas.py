@@ -26,7 +26,7 @@ import numpy as np
 import pylab as pl
 from scipy.linalg import toeplitz, cholesky
 
-from scikits.learn.covariance import LedoitWolf, OAS
+from scikits.learn.covariance import LedoitWolf, OracleApproxShrinkage
 
 ###############################################################################
 n_features = 100
@@ -51,7 +51,7 @@ for i, n_samples in enumerate(n_samples_range):
         lw_mse[i,j] = lw.error_norm(real_cov, scaling=False)
         lw_shrinkage[i,j] = lw.shrinkage_
 
-        oa = OAS(store_precision=False)
+        oa = OracleApproxShrinkage(store_precision=False)
         oa.fit(X, assume_centered=True)
         oa_mse[i,j] = oa.error_norm(real_cov, scaling=False)
         oa_shrinkage[i,j] = oa.shrinkage_
