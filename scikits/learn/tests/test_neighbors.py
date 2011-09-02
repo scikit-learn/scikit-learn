@@ -27,7 +27,7 @@ def test_neighbors_1D():
     X = [[x] for x in range(0, n)]
     Y = [0] * (n / 2) + [1] * (n / 2)
 
-    for s in ('auto', 'ball_tree', 'brute', 'inplace'):
+    for s in ('auto', 'ball_tree', 'brute', 'kd_tree'):
         # n_neighbors = 1
         knn = neighbors.NeighborsClassifier(n_neighbors=1, algorithm=s)
         knn.fit(X, Y)
@@ -58,7 +58,7 @@ def test_neighbors_high_dimension():
     X = 2 * np.random.random(size=(n, p)) - 1
     Y = ((X ** 2).sum(axis=1) < .25).astype(np.int)
 
-    for s in ('auto', 'ball_tree', 'brute', 'inplace'):
+    for s in ('auto', 'ball_tree', 'brute', 'kd_tree'):
         knn = neighbors.NeighborsClassifier(n_neighbors=1, algorithm=s)
         knn.fit(X, Y)
         for i, (x, y) in enumerate(zip(X[:10], Y[:10])):
@@ -79,9 +79,8 @@ def test_neighbors_sparse_classification():
     SPARSE_TYPES = (bsr_matrix, coo_matrix, csc_matrix, csr_matrix,
                     dok_matrix, lil_matrix)
     for sparsemat in SPARSE_TYPES:
-        # 'ball_tree' option should be overridden automatically
         knn = neighbors.NeighborsClassifier(n_neighbors=1,
-                                            algorithm='ball_tree')
+                                            algorithm='auto')
         knn.fit(sparsemat(X), Y)
 
         for i, (x, y) in enumerate(zip(X[:5], Y[:5])):
@@ -100,7 +99,7 @@ def test_neighbors_iris():
     nearest neighbor query on points near the decision boundary.
     """
 
-    for s in ('auto', 'ball_tree', 'brute', 'inplace'):
+    for s in ('auto', 'ball_tree', 'brute', 'kd_tree'):
         clf = neighbors.NeighborsClassifier(n_neighbors=1, algorithm=s)
         clf.fit(iris.data, iris.target)
         assert_array_equal(clf.predict(iris.data), iris.target)

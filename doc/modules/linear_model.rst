@@ -327,8 +327,8 @@ function of the norm of its coefficients.
    LassoLars(alpha=0.1, eps=..., fit_intercept=True,
         max_iter=500, normalize=True, overwrite_X=False, precompute='auto',
         verbose=False)
-   >>> clf.coef_
-   array([ 0.71715729,  0.        ])
+   >>> clf.coef_ # doctest: +ELLIPSIS
+   array([ 0.717157...,  0.        ])
 
 .. topic:: Examples:
 
