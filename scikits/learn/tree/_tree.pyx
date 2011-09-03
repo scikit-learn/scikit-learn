@@ -20,18 +20,16 @@ cdef extern from "math.h":
 cdef extern from "float.h":
     cdef extern double DBL_MAX
 
-"""
- Classification entropy measures
- 
-    From Hastie et al. Elements of Statistical Learning, 2009.
-         
-    If a target is a classification outcome taking on values 0,1,...,K-1
-    In node m, representing a region Rm with Nm observations, let
-            
-       pmk = 1/ Nm \sum_{x_i in Rm} I(yi = k)
-          
-    be the proportion of class k observations in node m   
-"""  
+# Classification entropy measures
+# 
+#    From Hastie et al. Elements of Statistical Learning, 2009.
+#         
+#    If a target is a classification outcome taking on values 0,1,...,K-1
+#    In node m, representing a region Rm with Nm observations, let
+#            
+#       pmk = 1/ Nm \sum_{x_i in Rm} I(yi = k)
+#          
+#    be the proportion of class k observations in node m     
 
 cdef class Criterion:
     """Interface for splitting criteria, both regression and classification."""
@@ -109,17 +107,16 @@ cdef class ClassificationCriterion(Criterion):
             self.label_count_right[c] += 1
             self.n_right += 1
         
-        """    
-        print "ClassificationCriterion.init: "
-        print "    label_count_left [",    
-        for c from 0 <= c < self.n_classes:    
-            print self.label_count_left[c],  
-        print "] ", self.n_left          
-        print "    label_count_right [",    
-        for c from 0 <= c < self.n_classes:    
-            print self.label_count_right[c],
-        print "] ", self.n_right        
-        """
+
+        # print "ClassificationCriterion.init: "
+        # print "    label_count_left [",    
+        # for c from 0 <= c < self.n_classes:    
+        #     print self.label_count_left[c],  
+        # print "] ", self.n_left          
+        # print "    label_count_right [",    
+        # for c from 0 <= c < self.n_classes:    
+        #     print self.label_count_right[c],
+        # print "] ", self.n_right        
 
     cdef int update(self, int a, int b, 
                      np.float64_t *y,
@@ -138,26 +135,23 @@ cdef class ClassificationCriterion(Criterion):
             self.n_right -= 1
             self.n_left += 1
 
-        """  
-        print "ClassificationCriterion.update: a = ", a, " b = ", b
-        print "    sorted [",    
-        for c from 0 <= c < self.n_samples:    
-            print sorted_X_i[c],  
-        print "] "                  
-        print "    y [",    
-        for c from 0 <= c < self.n_samples:    
-            print <int>y[sorted_X_i[c]],
-        print "] "               
-
-        print "    label_count_left [",    
-        for c from 0 <= c < self.n_classes:    
-            print self.label_count_left[c],  
-        print "] ", self.n_left          
-        print "    label_count_right [",    
-        for c from 0 <= c < self.n_classes:    
-            print self.label_count_right[c],
-        print "] ", self.n_right   
-        """   
+        # print "ClassificationCriterion.update: a = ", a, " b = ", b
+        # print "    sorted [",    
+        # for c from 0 <= c < self.n_samples:    
+        #     print sorted_X_i[c],  
+        # print "] "                  
+        # print "    y [",    
+        # for c from 0 <= c < self.n_samples:    
+        #     print <int>y[sorted_X_i[c]],
+        # print "] "
+        # print "    label_count_left [",    
+        # for c from 0 <= c < self.n_classes:    
+        #     print self.label_count_left[c],  
+        # print "] ", self.n_left          
+        # print "    label_count_right [",    
+        # for c from 0 <= c < self.n_classes:    
+        #     print self.label_count_right[c],
+        # print "] ", self.n_right   
             
         return self.n_left
 
@@ -268,11 +262,9 @@ cdef class RegressionCriterion(Criterion):
             self.sum_right += self.y[j]
             self.n_right += 1 
 
-        """
-        print "RegressionCriterion.init: "
-        print "    sum_left = ", self.sum_left , self.n_left 
-        print "    sum_right = ", self.sum_right , self.n_right     
-        """
+        # print "RegressionCriterion.init: "
+        # print "    sum_left = ", self.sum_left , self.n_left 
+        # print "    sum_right = ", self.sum_right , self.n_right     
         
     cdef int update(self, int a, int b, 
                      np.float64_t *y,
@@ -290,20 +282,17 @@ cdef class RegressionCriterion(Criterion):
             self.n_right -= 1
             self.n_left += 1
 
-        """
-        print "RegressionCriterion.update: a = ", a, " b = ", b
-        print "    sorted [",    
-        for c from 0 <= c < self.n_samples:    
-            print sorted_X_i[c],  
-        print "] "                 
-        print "    y [",    
-        for c from 0 <= c < self.n_samples:    
-            print y[sorted_X_i[c]],
-        print "] "               
-
-        print "    sum_left = ", self.sum_left , self.n_left 
-        print "    sum_right = ", self.sum_right , self.n_right      
-        """
+        # print "RegressionCriterion.update: a = ", a, " b = ", b
+        # print "    sorted [",    
+        # for c from 0 <= c < self.n_samples:    
+        #     print sorted_X_i[c],  
+        # print "] "                 
+        # print "    y [",    
+        # for c from 0 <= c < self.n_samples:    
+        #     print y[sorted_X_i[c]],
+        # print "] "               
+        # print "    sum_left = ", self.sum_left , self.n_left 
+        # print "    sum_right = ", self.sum_right , self.n_right      
          
         return self.n_left
 
@@ -326,8 +315,8 @@ cdef class MSE(RegressionCriterion):
         if self.n_right > 0:
             mean_right = self.sum_right / self.n_right
             
-        #print "MSE.eval: mean_left = ", mean_left
-        #print "MSE.eval: mean_right = ", mean_right        
+        # print "MSE.eval: mean_left = ", mean_left
+        # print "MSE.eval: mean_right = ", mean_right        
 
         cdef double variance_left = 0.0
         cdef double variance_right = 0.0
@@ -341,8 +330,8 @@ cdef class MSE(RegressionCriterion):
             else: 
                 variance_right += (self.y[j] - mean_right) * (self.y[j] - mean_right)
 
-        #print "MSE.eval: variance_left = ", variance_left, 
-        #print "MSE.eval: variance_right = ", variance_right   
+        # print "MSE.eval: variance_left = ", variance_left, 
+        # print "MSE.eval: variance_right = ", variance_right   
 
         if self.n_left > 0:
             variance_left /= self.n_left
@@ -430,14 +419,14 @@ def _find_best_split(np.ndarray[np.float64_t, ndim=2, mode="fortran"] X,
     cdef int sorted_X_col_stride = sorted_X.strides[1]
     cdef int sorted_X_stride = sorted_X_col_stride / sorted_X_elem_stride   
     
-    #compute the initial entropy in the node
+    # compute the initial entropy in the node
     sorted_X_i = (<int *>sorted_X.data)
     criterion.init(y, sorted_X_i)
     initial_error = criterion.eval()
     if initial_error == 0: # break early if the node is pure
         return best_i, best_t, best_error, initial_error 
     best_error = initial_error
-    #print 'at init, best error = ', best_error
+    # print 'at init, best error = ', best_error
     
     for i from 0 <= i < n_features:
         # get i-th col of X and X_sorted
@@ -461,7 +450,7 @@ def _find_best_split(np.ndarray[np.float64_t, ndim=2, mode="fortran"] X,
 
             # get criterion value
             error = criterion.eval()
-            #print 'error = ', error
+            # print 'error = ', error
             
             # check if current error is smaller than previous best
             # if this is never true best_i is -1.
