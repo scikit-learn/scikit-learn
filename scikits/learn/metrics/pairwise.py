@@ -12,62 +12,62 @@ from ..utils.extmath import safe_sparse_dot
 
 
 # Utility Functions
-def check_pairwise_arrays(XA, XB):
-    """ Sets XA and XB appropriately and checks inputs
+def check_pairwise_arrays(X, Y):
+    """ Sets X and Y appropriately and checks inputs
 
-    If XB is None, it is set as a pointer to XA (i.e. not a copy).
-    If XB is given, this does not happen.
+    If Y is None, it is set as a pointer to X (i.e. not a copy).
+    If Y is given, this does not happen.
     All distance metrics should use this function first to assert that the
     given parameters are correct and safe to use.
 
-    Specifically, this function first ensures that both XA and XB are arrays,
+    Specifically, this function first ensures that both X and Y are arrays,
     then checkes that they are at least two dimensional. Finally, the function
     checks that the size of the second dimension of the two arrays is equal.
 
     Parameters
     ----------
-    XA: {array-like, sparse matrix}, shape = [n_samples_a, n_features]
+    X: {array-like, sparse matrix}, shape = [n_samples_a, n_features]
 
-    XB: {array-like, sparse matrix}, shape = [n_samples_b, n_features]
+    Y: {array-like, sparse matrix}, shape = [n_samples_b, n_features]
 
     Returns
     -------
-    safe_XA: {array-like, sparse matrix}, shape = [n_samples_a, n_features]
-        An array equal to XA, guarenteed to be a numpy array.
+    safe_X: {array-like, sparse matrix}, shape = [n_samples_a, n_features]
+        An array equal to X, guarenteed to be a numpy array.
 
-    safe_XB: {array-like, sparse matrix}, shape = [n_samples_b, n_features]
-        An array equal to XB if XB was not None, guarenteed to be a numpy array.
-        If XB was None, safe_XB will be a pointer to XA.
+    safe_Y: {array-like, sparse matrix}, shape = [n_samples_b, n_features]
+        An array equal to Y if Y was not None, guarenteed to be a numpy array.
+        If Y was None, safe_Y will be a pointer to X.
 
     """
-    if XB is XA or XB is None:
-        XA = XB = safe_asanyarray(XA)
+    if Y is X or Y is None:
+        X = Y = safe_asanyarray(X)
     else:
-        XA = safe_asanyarray(XA)
-        XB = safe_asanyarray(XB)
-    if len(XA.shape) < 2:
-        raise ValueError("XA is required to be at least two dimensional.")
-    if len(XB.shape) < 2:
-        raise ValueError("XB is required to be at least two dimensional.")
-    if XA.shape[1] != XB.shape[1]:
-        raise ValueError("Incompatible dimension for XA and XB matrices")
-    return XA, XB
+        X = safe_asanyarray(X)
+        Y = safe_asanyarray(Y)
+    if len(X.shape) < 2:
+        raise ValueError("X is required to be at least two dimensional.")
+    if len(Y.shape) < 2:
+        raise ValueError("Y is required to be at least two dimensional.")
+    if X.shape[1] != Y.shape[1]:
+        raise ValueError("Incompatible dimension for X and Y matrices")
+    return X, Y
 
 
 # Distances
-def euclidean_distances(XA, XB=None, Y_norm_squared=None, squared=False):
+def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     """
-    Considering the rows of XA (and XB=XA) as vectors, compute the
+    Considering the rows of X (and Y=X) as vectors, compute the
     distance matrix between each pair of vectors.
 
     Parameters
     ----------
-    XA: {array-like, sparse matrix}, shape = [n_samples_1, n_features]
+    X: {array-like, sparse matrix}, shape = [n_samples_1, n_features]
 
-    XB: {array-like, sparse matrix}, shape = [n_samples_2, n_features]
+    Y: {array-like, sparse matrix}, shape = [n_samples_2, n_features]
 
     Y_norm_squared: array-like, shape = [n_samples_2], optional
-        Pre-computed (XB**2).sum(axis=1)
+        Pre-computed (Y**2).sum(axis=1)
 
     squared: boolean, optional
         Return squared Euclidean distances.
@@ -92,32 +92,32 @@ def euclidean_distances(XA, XB=None, Y_norm_squared=None, squared=False):
     # should not need X_norm_squared because if you could precompute that as
     # well as Y, then you should just pre-compute the output and not even
     # call this function.
-    XA, XB = check_pairwise_arrays(XA, XB)
-    if issparse(XA):
-        XX = XA.multiply(XA).sum(axis=1)
+    X, Y = check_pairwise_arrays(X, Y)
+    if issparse(X):
+        XX = X.multiply(X).sum(axis=1)
     else:
-        XX = np.sum(XA * XA, axis=1)[:, np.newaxis]
+        XX = np.sum(X * X, axis=1)[:, np.newaxis]
 
-    if XA is XB:  # shortcut in the common case euclidean_distances(X, X)
+    if X is Y:  # shortcut in the common case euclidean_distances(X, X)
         YY = XX.T
     elif Y_norm_squared is None:
-        if issparse(XB):
+        if issparse(Y):
             # scipy.sparse matrices don't have element-wise scalar
             # exponentiation, and tocsr has a copy kwarg only on CSR matrices.
-            YY = XB.copy() if isinstance(XB, csr_matrix) else XB.tocsr()
+            YY = Y.copy() if isinstance(Y, csr_matrix) else Y.tocsr()
             YY.data **= 2
             YY = np.asarray(YY.sum(axis=1)).T
         else:
-            YY = np.sum(XB ** 2, axis=1)[np.newaxis, :]
+            YY = np.sum(Y ** 2, axis=1)[np.newaxis, :]
     else:
         YY = atleast2d_or_csr(Y_norm_squared)
-        if YY.shape != (1, XB.shape[0]):
+        if YY.shape != (1, Y.shape[0]):
             raise ValueError(
-                        "Incompatible dimensions for XB and Y_norm_squared")
+                        "Incompatible dimensions for Y and Y_norm_squared")
 
     # TODO: a faster Cython implementation would do the clipping of negative
     # values in a single pass over the output matrix.
-    distances = safe_sparse_dot(XA, XB.T, dense_output=True)
+    distances = safe_sparse_dot(X, Y.T, dense_output=True)
     distances *= -2
     distances += XX
     distances += YY
@@ -288,8 +288,8 @@ pairwise_function_map['euclidean'] = euclidean_distances
 pairwise_function_map['l1'] = l1_distances
 
 
-def pairwise_distances(XA, XB=None, metric="euclidean", **kwds):
-    """ Calculates the distance matrix from a vector matrix XA and optional XB.
+def pairwise_distances(X, Y=None, metric="euclidean", **kwds):
+    """ Calculates the distance matrix from a vector matrix X and optional Y.
 
     This method takes either a vector array or a distance matrix, and returns
     a distance matrix. If the input is a vector array, the distances are
@@ -299,27 +299,27 @@ def pairwise_distances(XA, XB=None, metric="euclidean", **kwds):
     preserving compatability with many other algorithms that take a vector
     array.
 
-    If XB is given (default is None), then the returned matrix is the pairwise
-    distance between the arrays from both XA and XB.
+    If Y is given (default is None), then the returned matrix is the pairwise
+    distance between the arrays from both X and Y.
 
     Parameters
     ----------
-    XA: array [n_samples_a, n_samples_a] if metric == "precomputed", or,
+    X: array [n_samples_a, n_samples_a] if metric == "precomputed", or,
              [n_samples_a, n_features] otherwise
         Array of pairwise distances between samples, or a feature array.
 
-    XB: array [n_samples_b, n_features]
-        A second feature array only if XA has shape [n_samples_a, n_features].
+    Y: array [n_samples_b, n_features]
+        A second feature array only if X has shape [n_samples_a, n_features].
 
     metric: string, or callable
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
         allowed by scipy.spatial.distance.pdist for its metric parameter.
-        If metric is "precomputed", XA is assumed to be a distance matrix and
+        If metric is "precomputed", X is assumed to be a distance matrix and
         must be square.
         Alternatively, if metric is a callable function, it is called on each
         pair of instances (rows) and the resulting value recorded. The callable
-        should take two arrays from XA as input and return a value indicating
+        should take two arrays from X as input and return a value indicating
         the distance between them.
 
     **kwds: optional keyword parameters
@@ -329,21 +329,21 @@ def pairwise_distances(XA, XB=None, metric="euclidean", **kwds):
     -------
     D: array [n_samples_a, n_samples_a] or [n_samples_a, n_samples_b]
         A distance matrix D such that D_{i, j} is the distance between the
-        ith and jth vectors of the given matrix XA, if XB is None.
-        If XB is not None, then D_{i, j} is the distance between the ith array
-        from XA and the jth array from XB.
+        ith and jth vectors of the given matrix X, if Y is None.
+        If Y is not None, then D_{i, j} is the distance between the ith array
+        from X and the jth array from Y.
 
     """
     if metric == "precomputed":
-        if XA.shape[0] != XA.shape[1]:
+        if X.shape[0] != X.shape[1]:
             raise ValueError("X is not square!")
-        return XA
+        return X
     elif metric in pairwise_function_map:
-        return pairwise_function_map[metric](XA, XB, **kwds)
+        return pairwise_function_map[metric](X, Y, **kwds)
     else:
         # FIXME: the distance module doesn't support sparse matrices!
-        if XB is None:
-            return distance.squareform(distance.pdist(XA, metric=metric),
+        if Y is None:
+            return distance.squareform(distance.pdist(X, metric=metric),
                                        **kwds)
         else:
-            return distance.cdist(XA, XB, metric=metric, **kwds)
+            return distance.cdist(X, Y, metric=metric, **kwds)
