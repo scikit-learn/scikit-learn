@@ -44,7 +44,7 @@ def bench_scikit_tree_classifier(X, Y):
 def bench_scikit_tree_regressor(X, Y):
     """bench with scikit-learn decision tree regressor"""
 
-    from scikits.learn.tree import DecisionTreeRegressor
+    from sklearn.tree import DecisionTreeRegressor
 
     gc.collect()
 
