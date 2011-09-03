@@ -59,9 +59,9 @@ cdef class ClassificationCriterion(Criterion):
 
     Attributes
     ----------
-    pm_left_ptr : np.ndarray
+    label_count_left : int*
         label counts for samples left of splitting point.
-    pm_right_ptr : int*
+    label_count_right : int*
         label counts for samples right of splitting point.
     n_left : int
         number of samples left of splitting point.
@@ -69,20 +69,20 @@ cdef class ClassificationCriterion(Criterion):
         number of samples right of splitting point.
     """
 
-    cdef int* pm_left
-    cdef int* pm_right
+    cdef int* label_count_left
+    cdef int* label_count_right
 
     cdef int n_left, n_right, K, n_samples
     
     def __init__(self, 
                  int K, 
-                 np.ndarray[np.int32_t, ndim=1] pm_left,
-                 np.ndarray[np.int32_t, ndim=1] pm_right):
+                 np.ndarray[np.int32_t, ndim=1] label_count_left,
+                 np.ndarray[np.int32_t, ndim=1] label_count_right):
         self.K = K
         self.n_left = 0
         self.n_right = 0
-        self.pm_left = <int*>pm_left.data
-        self.pm_right = <int*>pm_right.data
+        self.label_count_left = <int*>label_count_left.data
+        self.label_count_right = <int*>label_count_right.data
 
     cdef void init(self, np.ndarray[np.float64_t, ndim=1] labels, 
                    int *sorted_features_i):
@@ -94,24 +94,24 @@ cdef class ClassificationCriterion(Criterion):
         
         cdef int c = 0      
         for c from 0 <= c < self.K:
-            self.pm_left[c] = 0
-            self.pm_right[c] = 0
+            self.label_count_left[c] = 0
+            self.label_count_right[c] = 0
         
         cdef int j = 0
         for j from 0 <= j < self.n_samples:
             c = <int>(labels[j])
-            self.pm_right[c] += 1
+            self.label_count_right[c] += 1
             self.n_right += 1
         
         """    
         print "ClassificationCriterion.init: "
-        print "    pm_left [",    
+        print "    label_count_left [",    
         for c from 0 <= c < self.K:    
-            print self.pm_left[c],  
+            print self.label_count_left[c],  
         print "] ", self.n_left          
-        print "    pm_right [",    
+        print "    label_count_right [",    
         for c from 0 <= c < self.K:    
-            print self.pm_right[c],
+            print self.label_count_right[c],
         print "] ", self.n_right        
         """
 
@@ -127,8 +127,8 @@ cdef class ClassificationCriterion(Criterion):
         for idx from a <= idx < b:
             s = sorted_features_i[idx]
             c = <int>(labels[s])
-            self.pm_right[c] -= 1
-            self.pm_left[c] += 1
+            self.label_count_right[c] -= 1
+            self.label_count_left[c] += 1
             self.n_right -= 1
             self.n_left += 1
 
@@ -143,13 +143,13 @@ cdef class ClassificationCriterion(Criterion):
             print <int>labels[sorted_features_i[c]],
         print "] "               
 
-        print "    pm_left [",    
+        print "    label_count_left [",    
         for c from 0 <= c < self.K:    
-            print self.pm_left[c],  
+            print self.label_count_left[c],  
         print "] ", self.n_left          
-        print "    pm_right [",    
+        print "    label_count_right [",    
         for c from 0 <= c < self.K:    
-            print self.pm_right[c],
+            print self.label_count_right[c],
         print "] ", self.n_right   
         """   
             
@@ -176,10 +176,10 @@ cdef class Gini(ClassificationCriterion):
         cdef double n_right = <double> self.n_right
         
         for k from 0 <= k < self.K:
-            if self.pm_left[k] > 0:
-                H_left -= (self.pm_left[k] / n_left) * (self.pm_left[k] / n_left)
-            if self.pm_right[k] > 0:
-                H_right -= (self.pm_right[k] / n_right) * (self.pm_right[k] / n_right)
+            if self.label_count_left[k] > 0:
+                H_left -= (self.label_count_left[k] / n_left) * (self.label_count_left[k] / n_left)
+            if self.label_count_right[k] > 0:
+                H_right -= (self.label_count_right[k] / n_right) * (self.label_count_right[k] / n_right)
 
         e1 = (n_left / self.n_samples) * H_left
         e2 = (n_right / self.n_samples) * H_right
@@ -203,10 +203,10 @@ cdef class Entropy(ClassificationCriterion):
         cdef double n_right = <double> self.n_right
         
         for k from 0 <= k < self.K:
-            if self.pm_left[k] > 0:
-                H_left -= (self.pm_left[k] / n_left) * log(self.pm_left[k] / n_left)
-            if self.pm_right[k] > 0:    
-                H_right -= (self.pm_right[k] / n_right) * log(self.pm_right[k] / n_right)
+            if self.label_count_left[k] > 0:
+                H_left -= (self.label_count_left[k] / n_left) * log(self.label_count_left[k] / n_left)
+            if self.label_count_right[k] > 0:    
+                H_right -= (self.label_count_right[k] / n_right) * log(self.label_count_right[k] / n_right)
 
         e1 = (n_left / self.n_samples) * H_left
         e2 = (n_right / self.n_samples) * H_right
