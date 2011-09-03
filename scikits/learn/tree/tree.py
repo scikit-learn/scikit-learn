@@ -111,23 +111,23 @@ class Node(object):
 def _build_tree(is_classification, X, y, criterion,
                max_depth, min_split, max_features, n_classes, random_state):
 
-    n_samples, n_dims = X.shape
+    n_samples, n_features = X.shape
     if len(y) != len(X):
         raise ValueError("Number of labels=%d does not match "
                           "number of features=%d\n"
                          % (len(y), len(X)))
     y = np.array(y, dtype=np.float64, order="c")
 
-    feature_mask = np.ones(n_dims, dtype=np.bool)
-    sample_dims = np.arange(n_dims)
+    feature_mask = np.ones(n_features, dtype=np.bool)
+    sample_dims = np.arange(n_features)
     if max_features is not None:
-        if max_features <= 0 or max_features > n_dims:
+        if max_features <= 0 or max_features > n_features:
             raise ValueError("max_features=%d must be in range (0..%d].\n"
                              "Did you mean to use None to signal no "
                              "max_features?"
-                             % (max_features, n_dims))
+                             % (max_features, n_features))
 
-        permutation = random_state.permutation(n_dims)
+        permutation = random_state.permutation(n_features)
         sample_dims = np.sort(permutation[-max_features:])
         feature_mask[sample_dims] = False
         feature_mask = np.logical_not(feature_mask)
