@@ -329,28 +329,28 @@ cdef class MSE(RegressionCriterion):
         #print "MSE.eval: mean_left = ", mean_left
         #print "MSE.eval: mean_right = ", mean_right        
 
-        cdef double var_left = 0.0
-        cdef double var_right = 0.0
+        cdef double variance_left = 0.0
+        cdef double variance_right = 0.0
         cdef int j
         cdef double e1, e2
 
         for j from 0 <= j < self.n_samples:
             #print "y[",j,"] = ", self.y[j]
             if j < self.n_left:
-                var_left += (self.y[j] - mean_left) * (self.y[j] - mean_left)
+                variance_left += (self.y[j] - mean_left) * (self.y[j] - mean_left)
             else: 
-                var_right += (self.y[j] - mean_right) * (self.y[j] - mean_right)
+                variance_right += (self.y[j] - mean_right) * (self.y[j] - mean_right)
 
-        #print "MSE.eval: var_left = ", var_left, 
-        #print "MSE.eval: var_right = ", var_right   
+        #print "MSE.eval: variance_left = ", variance_left, 
+        #print "MSE.eval: variance_right = ", variance_right   
 
         if self.n_left > 0:
-            var_left /= self.n_left
+            variance_left /= self.n_left
         if self.n_right > 0:
-            var_right /= self.n_right
+            variance_right /= self.n_right
 
-        e1 = ((<double> self.n_left) / self.n_samples) * var_left
-        e2 = ((<double> self.n_right) / self.n_samples) * var_right
+        e1 = ((<double> self.n_left) / self.n_samples) * variance_left
+        e2 = ((<double> self.n_right) / self.n_samples) * variance_right
 
         return e1 + e2
 
