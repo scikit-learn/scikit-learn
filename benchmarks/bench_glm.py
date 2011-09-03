@@ -6,8 +6,8 @@ Data comes from a random square matrix.
 """
 from datetime import datetime
 import numpy as np
-from scikits.learn import linear_model
-from scikits.learn.utils.bench import total_seconds
+from sklearn import linear_model
+from sklearn.utils.bench import total_seconds
 
 
 if __name__ == '__main__':
