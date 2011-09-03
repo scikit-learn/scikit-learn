@@ -3,6 +3,7 @@
 # caution: testing won't work on windows, see README
 
 PYTHON ?= python
+CYTHON ?= cython
 NOSETESTS ?= nosetests
 CTAGS ?= ctags
 
@@ -40,6 +41,9 @@ test: test-code test-doc
 
 trailing-spaces:
 	find -name "*.py" |xargs sed -i 's/[ \t]*$$//'
+
+cython:
+	find sklearn -name "*.pyx" | xargs $(CYTHON)
 
 ctags:
 	# make tags for symbol based navigation in emacs and vim
