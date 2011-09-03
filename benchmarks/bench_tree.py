@@ -26,10 +26,8 @@ mu_second = 0.0 + 10**6 # number of microseconds in a second
 
 
 def bench_scikit_tree_classifier(X, Y):
-    """
-    bench with scikit-learn decision tree classifier
-    """
-    import scikits.learn
+    """bench with scikit-learn decision tree classifier"""
+
     from scikits.learn.tree import DecisionTreeClassifier
 
     gc.collect()
@@ -44,10 +42,8 @@ def bench_scikit_tree_classifier(X, Y):
     scikit_classifier_results.append(delta.seconds + delta.microseconds/mu_second)
 
 def bench_scikit_tree_regressor(X, Y):
-    """
-    bench with scikit-learn decision tree regressor
-    """
-    import scikits.learn
+    """bench with scikit-learn decision tree regressor"""
+
     from scikits.learn.tree import DecisionTreeRegressor
 
     gc.collect()
@@ -71,14 +67,14 @@ if __name__ == '__main__':
     step = 10000
     n_samples = 10000
     dim = 10
-    K = 10 
+    n_classes = 10 
     for i in range(n):
         print '============================================'
         print 'Entering iteration %s of %s' % (i, n)
         print '============================================'
         n_samples += step
         X = np.random.randn(n_samples, dim)
-        Y = np.random.randint(0, K, (n_samples,))
+        Y = np.random.randint(0, n_classes, (n_samples,))
         bench_scikit_tree_classifier(X, Y)
         Y = np.random.randn(n_samples)
         bench_scikit_tree_regressor(X, Y)
@@ -100,7 +96,7 @@ if __name__ == '__main__':
     n = 10
     step = 500
     start_dim = 500
-    K = 10 
+    n_classes = 10 
 
     dim = start_dim
     for i in range(0, n):
@@ -109,7 +105,7 @@ if __name__ == '__main__':
         print '============================================'
         dim += step
         X = np.random.randn(100, dim)
-        Y = np.random.randint(0, K, (100,))
+        Y = np.random.randint(0, n_classes, (100,))
         bench_scikit_tree_classifier(X, Y)
         Y = np.random.randn(100)
         bench_scikit_tree_regressor(X, Y)
