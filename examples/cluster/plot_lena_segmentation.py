@@ -22,7 +22,7 @@ import pylab as pl
 from sklearn.feature_extraction import image
 from sklearn.cluster import spectral_clustering
 
-lena = sp.lena()
+lena = sp.misc.lena()
 # Downsample the image by a factor of 4
 lena = lena[::2, ::2] + lena[1::2, ::2] + lena[::2, 1::2] + lena[1::2, 1::2]
 lena = lena[::2, ::2] + lena[1::2, ::2] + lena[::2, 1::2] + lena[1::2, 1::2]
