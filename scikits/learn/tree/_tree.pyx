@@ -72,13 +72,13 @@ cdef class ClassificationCriterion(Criterion):
     cdef int* label_count_left
     cdef int* label_count_right
 
-    cdef int n_left, n_right, K, n_samples
+    cdef int n_left, n_right, n_classes, n_samples
     
     def __init__(self, 
-                 int K, 
+                 int n_classes, 
                  np.ndarray[np.int32_t, ndim=1] label_count_left,
                  np.ndarray[np.int32_t, ndim=1] label_count_right):
-        self.K = K
+        self.n_classes = n_classes
         self.n_left = 0
         self.n_right = 0
         self.label_count_left = <int*>label_count_left.data
@@ -93,7 +93,7 @@ cdef class ClassificationCriterion(Criterion):
         self.n_right = 0
         
         cdef int c = 0      
-        for c from 0 <= c < self.K:
+        for c from 0 <= c < self.n_classes:
             self.label_count_left[c] = 0
             self.label_count_right[c] = 0
         
@@ -106,11 +106,11 @@ cdef class ClassificationCriterion(Criterion):
         """    
         print "ClassificationCriterion.init: "
         print "    label_count_left [",    
-        for c from 0 <= c < self.K:    
+        for c from 0 <= c < self.n_classes:    
             print self.label_count_left[c],  
         print "] ", self.n_left          
         print "    label_count_right [",    
-        for c from 0 <= c < self.K:    
+        for c from 0 <= c < self.n_classes:    
             print self.label_count_right[c],
         print "] ", self.n_right        
         """
@@ -144,11 +144,11 @@ cdef class ClassificationCriterion(Criterion):
         print "] "               
 
         print "    label_count_left [",    
-        for c from 0 <= c < self.K:    
+        for c from 0 <= c < self.n_classes:    
             print self.label_count_left[c],  
         print "] ", self.n_left          
         print "    label_count_right [",    
-        for c from 0 <= c < self.K:    
+        for c from 0 <= c < self.n_classes:    
             print self.label_count_right[c],
         print "] ", self.n_right   
         """   
@@ -175,7 +175,7 @@ cdef class Gini(ClassificationCriterion):
         cdef double n_left = <double> self.n_left
         cdef double n_right = <double> self.n_right
         
-        for k from 0 <= k < self.K:
+        for k from 0 <= k < self.n_classes:
             if self.label_count_left[k] > 0:
                 H_left -= (self.label_count_left[k] / n_left) * (self.label_count_left[k] / n_left)
             if self.label_count_right[k] > 0:
@@ -202,7 +202,7 @@ cdef class Entropy(ClassificationCriterion):
         cdef double n_left = <double> self.n_left
         cdef double n_right = <double> self.n_right
         
-        for k from 0 <= k < self.K:
+        for k from 0 <= k < self.n_classes:
             if self.label_count_left[k] > 0:
                 H_left -= (self.label_count_left[k] / n_left) * log(self.label_count_left[k] / n_left)
             if self.label_count_right[k] > 0:    
