@@ -36,17 +36,17 @@ cdef extern from "float.h":
 cdef class Criterion:
     """Interface for splitting criteria, both regression and classification."""
     
-    cdef void init(self, np.ndarray[np.float64_t, ndim=1] labels, 
-                   int *sorted_features_i):
+    cdef void init(self, np.ndarray[np.float64_t, ndim=1] y, 
+                   int *sorted_X_i):
         """Initialise the criterion class."""
         pass
 
     cdef int update(self, int a, int b, 
-                     np.float64_t *labels,
-                     int *sorted_features_i):
+                     np.float64_t *y,
+                     int *sorted_X_i):
         """
         Update the criteria for each value in interval [a,b) 
-        where a and b are indices in `sorted_features_i`. 
+        where a and b are indices in `sorted_X_i`. 
         """
         pass
 
@@ -59,6 +59,10 @@ cdef class ClassificationCriterion(Criterion):
 
     Attributes
     ----------
+    n_classes : int
+        number of classes
+    n_samples : int
+        number of samples
     label_count_left : int*
         label counts for samples left of splitting point.
     label_count_right : int*
@@ -68,27 +72,29 @@ cdef class ClassificationCriterion(Criterion):
     n_right : int
         number of samples right of splitting point.
     """
-
+    cdef n_classes
+    cdef n_samples
     cdef int* label_count_left
     cdef int* label_count_right
-
-    cdef int n_left, n_right, n_classes, n_samples
+    cdef int n_left
+    cdef int n_right
     
     def __init__(self, 
                  int n_classes, 
                  np.ndarray[np.int32_t, ndim=1] label_count_left,
                  np.ndarray[np.int32_t, ndim=1] label_count_right):
         self.n_classes = n_classes
+        self.n_samples = 0
         self.n_left = 0
         self.n_right = 0
         self.label_count_left = <int*>label_count_left.data
         self.label_count_right = <int*>label_count_right.data
 
-    cdef void init(self, np.ndarray[np.float64_t, ndim=1] labels, 
-                   int *sorted_features_i):
+    cdef void init(self, np.ndarray[np.float64_t, ndim=1] y, 
+                   int *sorted_X_i):
         """Initialise the criterion class."""
         
-        self.n_samples = labels.shape[0]
+        self.n_samples = y.shape[0]
         self.n_left = 0
         self.n_right = 0
         
@@ -99,7 +105,7 @@ cdef class ClassificationCriterion(Criterion):
         
         cdef int j = 0
         for j from 0 <= j < self.n_samples:
-            c = <int>(labels[j])
+            c = <int>(y[j])
             self.label_count_right[c] += 1
             self.n_right += 1
         
@@ -116,17 +122,17 @@ cdef class ClassificationCriterion(Criterion):
         """
 
     cdef int update(self, int a, int b, 
-                     np.float64_t *labels,
-                     int *sorted_features_i):
+                     np.float64_t *y,
+                     int *sorted_X_i):
         """
         Update the criteria for each value in interval [a,b) 
-        where a and b are indices in `sorted_features_i`. 
+        where a and b are indices in `sorted_X_i`. 
         """
         cdef int c
         # post condition: all samples from [0:b) are on the left side
         for idx from a <= idx < b:
-            s = sorted_features_i[idx]
-            c = <int>(labels[s])
+            s = sorted_X_i[idx]
+            c = <int>(y[s])
             self.label_count_right[c] -= 1
             self.label_count_left[c] += 1
             self.n_right -= 1
@@ -136,11 +142,11 @@ cdef class ClassificationCriterion(Criterion):
         print "ClassificationCriterion.update: a = ", a, " b = ", b
         print "    sorted [",    
         for c from 0 <= c < self.n_samples:    
-            print sorted_features_i[c],  
+            print sorted_X_i[c],  
         print "] "                  
-        print "    labels [",    
+        print "    y [",    
         for c from 0 <= c < self.n_samples:    
-            print <int>labels[sorted_features_i[c]],
+            print <int>y[sorted_X_i[c]],
         print "] "               
 
         print "    label_count_left [",    
@@ -218,35 +224,39 @@ cdef class RegressionCriterion(Criterion):
 
     Attributes
     ----------
+    n_samples : int
+        The number of samples
     sum_left : double
-        The sum of the samples left of the SP.
+        The sum of the samples left of the split point.
     sum_right : double
-        The sum of the samples right of the SP.
+        The sum of the samples right of the split.
+    y : double*
+        Pointer to the labels array    
     n_left : int
-        number of samples left of splitting point.
+        number of samples left of split point.
     n_right : int
-        number of samples right of splitting point.
+        number of samples right of split point.
     """
 
+    cdef n_samples
     cdef double sum_left
     cdef double sum_right
-
-    cdef double* labels
-
-    cdef int n_left, n_right, n_samples
+    cdef double* y
+    cdef int n_left
+    cdef n_right
     
-    def __init__(self, np.ndarray[np.float64_t, ndim=1] labels):
+    def __init__(self, np.ndarray[np.float64_t, ndim=1] y):
         self.sum_left = 0.0
         self.sum_right = 0.0
         self.n_left = 0
         self.n_right = 0
-        self.labels = <double*> labels.data
+        self.y = <double*> y.data
         
-    cdef void init(self, np.ndarray[np.float64_t, ndim=1] labels, 
-                   int *sorted_features_i):
+    cdef void init(self, np.ndarray[np.float64_t, ndim=1] y, 
+                   int *sorted_X_i):
         """Initialise the criterion class."""
         
-        self.n_samples = labels.shape[0]
+        self.n_samples = y.shape[0]
         self.n_left = 0
         self.n_right = 0
         self.sum_left = 0.0
@@ -254,8 +264,8 @@ cdef class RegressionCriterion(Criterion):
 
         cdef int j = 0
         for j from 0 <= j < self.n_samples:
-            self.labels[j] = labels[sorted_features_i[j]]
-            self.sum_right += self.labels[j]
+            self.y[j] = y[sorted_X_i[j]]
+            self.sum_right += self.y[j]
             self.n_right += 1 
 
         """
@@ -265,16 +275,16 @@ cdef class RegressionCriterion(Criterion):
         """
         
     cdef int update(self, int a, int b, 
-                     np.float64_t *labels,
-                     int *sorted_features_i):
+                     np.float64_t *y,
+                     int *sorted_X_i):
         """
         Update the criteria for each value in interval [a,b) 
-        where a and b are indices in `sorted_features_i`. 
+        where a and b are indices in `sorted_X_i`. 
         """
         cdef double val = 0.0
         # post condition: all samples from [0:b) are on the left side
         for idx from a <= idx < b:
-            val = self.labels[idx]
+            val = self.y[idx]
             self.sum_right -= val
             self.sum_left += val
             self.n_right -= 1
@@ -284,11 +294,11 @@ cdef class RegressionCriterion(Criterion):
         print "RegressionCriterion.update: a = ", a, " b = ", b
         print "    sorted [",    
         for c from 0 <= c < self.n_samples:    
-            print sorted_features_i[c],  
+            print sorted_X_i[c],  
         print "] "                 
-        print "    labels [",    
+        print "    y [",    
         for c from 0 <= c < self.n_samples:    
-            print labels[sorted_features_i[c]],
+            print y[sorted_X_i[c]],
         print "] "               
 
         print "    sum_left = ", self.sum_left , self.n_left 
@@ -325,11 +335,11 @@ cdef class MSE(RegressionCriterion):
         cdef double e1, e2
 
         for j from 0 <= j < self.n_samples:
-            #print "labels[",j,"] = ", self.labels[j]
+            #print "y[",j,"] = ", self.y[j]
             if j < self.n_left:
-                var_left += (self.labels[j] - mean_left) * (self.labels[j] - mean_left)
+                var_left += (self.y[j] - mean_left) * (self.y[j] - mean_left)
             else: 
-                var_right += (self.labels[j] - mean_right) * (self.labels[j] - mean_right)
+                var_right += (self.y[j] - mean_right) * (self.y[j] - mean_right)
 
         #print "MSE.eval: var_left = ", var_left, 
         #print "MSE.eval: var_right = ", var_right   
@@ -346,45 +356,45 @@ cdef class MSE(RegressionCriterion):
 
 
 cdef int smallest_sample_larger_than(int sample_idx,
-                                     np.float64_t *features_i,
-                                     int *sorted_features_i,
+                                     np.float64_t *X_i,
+                                     int *sorted_X_i,
                                      int n_samples):
     """Find the largest next sample.
     
-    Find the index in the `sorted_features` matrix for sample
+    Find the index in the `X_i` array for sample
     who's feature `i` value is just about
-    greater than those of the sample `sorted_features_i[sample_idx]`.
+    greater than those of the sample `sorted_X_i[sample_idx]`.
 
     Returns
     -------
     next_sample_idx : int
-        The index of the next smallest sample in `sorted_features`
+        The index of the next smallest sample in `sorted_X`
         with different feature value than `sample_idx` .
-        I.e. `sorted_features_i[sample_idx] < sorted_features_i[next_sample_idx]`
+        I.e. `sorted_X_i[sample_idx] < sorted_X_i[next_sample_idx]`
         -1 if no such element exists.
     """
     
     cdef int idx = 0
     cdef np.float64_t threshold = -DBL_MAX
     if sample_idx > -1:
-        threshold = features_i[sorted_features_i[sample_idx]]
+        threshold = X_i[sorted_X_i[sample_idx]]
     for idx from sample_idx < idx < n_samples:
-        if features_i[sorted_features_i[idx]] > threshold:
+        if X_i[sorted_X_i[idx]] > threshold:
             return idx
     return -1
 
 
-def _find_best_split(np.ndarray[np.float64_t, ndim=2, mode="fortran"] features,
-                     np.ndarray[np.float64_t, ndim=1, mode="c"] labels,
+def _find_best_split(np.ndarray[np.float64_t, ndim=2, mode="fortran"] X,
+                     np.ndarray[np.float64_t, ndim=1, mode="c"] y,
                      Criterion criterion):
     """Find the best dimension and threshold that minimises the error.
     
     Parameters
     ----------
-    features : ndarray, shape (n_samples, n_features), dtype=np.float64
+    X : ndarray, shape (n_samples, n_features), dtype=np.float64
         The feature values.
-    labels : ndarray, shape (n_samples,), dtype=float
-        The labels.
+    y : ndarray, shape (n_samples,), dtype=float
+        The y.
     criterion : Criterion
         The criterion function to be minimized.
 
@@ -398,31 +408,31 @@ def _find_best_split(np.ndarray[np.float64_t, ndim=2, mode="fortran"] features,
         The error of the split.
     """
 
-    cdef int n_samples = features.shape[0]
-    cdef int n_features = features.shape[1]
+    cdef int n_samples = X.shape[0]
+    cdef int n_features = X.shape[1]
     cdef int i, a, b, best_i = -1
     cdef np.float64_t t, initial_error, error
     cdef np.float64_t best_error = np.inf, best_t = np.inf
 
     # pointer access to ndarray data
-    cdef double *labels_ptr = <double*>labels.data 
-    cdef np.float64_t *features_i = NULL
-    cdef np.ndarray[np.int32_t, ndim=2, mode="fortran"] sorted_features = \
-        np.asfortranarray(np.argsort(features, axis=0).astype(np.int32))
-    cdef int *sorted_features_i = NULL    
+    cdef double *y_ptr = <double*>y.data 
+    cdef np.float64_t *X_i = NULL
+    cdef np.ndarray[np.int32_t, ndim=2, mode="fortran"] sorted_X = \
+        np.asfortranarray(np.argsort(X, axis=0).astype(np.int32))
+    cdef int *sorted_X_i = NULL    
     
     # Compute the column strides (inc in pointer elem to get from col i to i+1)
-    # for `features` and `sorted_features`
-    cdef int features_elem_stride = features.strides[0]
-    cdef int features_col_stride = features.strides[1]
-    cdef int features_stride = features_col_stride / features_elem_stride
-    cdef int sorted_features_elem_stride = sorted_features.strides[0]
-    cdef int sorted_features_col_stride = sorted_features.strides[1]
-    cdef int sorted_features_stride = sorted_features_col_stride / sorted_features_elem_stride   
+    # for `X` and `sorted_X`
+    cdef int X_elem_stride = X.strides[0]
+    cdef int X_col_stride = X.strides[1]
+    cdef int X_stride = X_col_stride / X_elem_stride
+    cdef int sorted_X_elem_stride = sorted_X.strides[0]
+    cdef int sorted_X_col_stride = sorted_X.strides[1]
+    cdef int sorted_X_stride = sorted_X_col_stride / sorted_X_elem_stride   
     
     #compute the initial entropy in the node
-    sorted_features_i = (<int *>sorted_features.data)
-    criterion.init(labels, sorted_features_i)
+    sorted_X_i = (<int *>sorted_X.data)
+    criterion.init(y, sorted_X_i)
     initial_error = criterion.eval()
     if initial_error == 0: # break early if the node is pure
         return best_i, best_t, best_error, initial_error 
@@ -430,24 +440,24 @@ def _find_best_split(np.ndarray[np.float64_t, ndim=2, mode="fortran"] features,
     #print 'at init, best error = ', best_error
     
     for i from 0 <= i < n_features:
-        # get i-th col of features and features_sorted
-        features_i = (<np.float64_t *>features.data) + features_stride * i
-        sorted_features_i = (<int *>sorted_features.data) + sorted_features_stride * i
+        # get i-th col of X and X_sorted
+        X_i = (<np.float64_t *>X.data) + X_stride * i
+        sorted_X_i = (<int *>sorted_X.data) + sorted_X_stride * i
 
         # init the criterion for this feature
-        criterion.init(labels, sorted_features_i)
+        criterion.init(y, sorted_X_i)
 
         # get sample in mask with smallest value for i-th feature
-        a = smallest_sample_larger_than(-1, features_i, sorted_features_i,
-                                        n_samples)
+        a = smallest_sample_larger_than(-1, X_i, sorted_X_i, n_samples)
+        
         while True:
-            b = smallest_sample_larger_than(a, features_i, sorted_features_i,
-                                            n_samples)
+            b = smallest_sample_larger_than(a, X_i, sorted_X_i, n_samples)
+            
             # if -1 there's none and we are finished
             if b == -1:
                 break
 
-            criterion.update(a, b, labels_ptr, sorted_features_i)
+            criterion.update(a, b, y_ptr, sorted_X_i)
 
             # get criterion value
             error = criterion.eval()
@@ -456,8 +466,7 @@ def _find_best_split(np.ndarray[np.float64_t, ndim=2, mode="fortran"] features,
             # check if current error is smaller than previous best
             # if this is never true best_i is -1.
             if error < best_error:
-                t = (features_i[sorted_features_i[a]] +
-                     features_i[sorted_features_i[b]]) / 2.0
+                t = (X_i[sorted_X_i[a]] + X_i[sorted_X_i[b]]) / 2.0
                 best_i = i
                 best_t = t
                 best_error = error
