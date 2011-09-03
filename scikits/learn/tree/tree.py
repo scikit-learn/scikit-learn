@@ -1,18 +1,10 @@
-# -*- coding: utf-8 -*-
+# Adapted from MILK: Machine Learning Toolkit
 # Copyright (C) 2008-2011, Luis Pedro Coelho <luis@luispedro.org>
-# vim: set ts=4 sts=4 sw=4 expandtab smartindent:
-#
 # License: MIT. See COPYING.MIT file in the milk distribution
-"""
-================
-Tree Classifier
-================
-
-A decision tree classifier
-
-Implements Classification and Regression Trees (Breiman et al. 1984)
-
-"""
+#
+# Authors: Brian Holt, Peter Prettenhofer, Satrajit Ghosh
+#
+# License: BSD Style.
 
 from __future__ import division
 from ..utils import check_random_state
@@ -243,7 +235,7 @@ class BaseDecisionTree(BaseEstimator):
     def export_to_graphviz(self, filename="tree.dot"):
         """Export the tree in ".dot" format.
 
-        Render to PostScript using e.g.
+        Once exported, you can render to PostScript using, for example,
         $ dot -Tps tree.dot -o tree.ps
 
         Parameters
@@ -401,6 +393,21 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     random_state : integer or array_like, optional (default=None)
         seed the random number generator
 
+    References
+    ----------
+
+    http://en.wikipedia.org/wiki/Decision_tree_learning
+
+    L. Breiman, J. Friedman, R. Olshen, and C. Stone. Classification and
+    Regression Trees. Wadsworth, Belmont, CA, 1984.
+
+    T. Hastie, R. Tibshirani and J. Friedman.
+    Elements of Statistical Learning, Springer, 2009.
+
+    See also
+    --------
+
+    DecisionTreeRegressor
 
     Example
     -------
@@ -507,6 +514,22 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
 
     random_state : integer or array_like, optional
         seed the random number generator
+
+    References
+    ----------
+
+    http://en.wikipedia.org/wiki/Decision_tree_learning
+
+    L. Breiman, J. Friedman, R. Olshen, and C. Stone. Classification and
+    Regression Trees. Wadsworth, Belmont, CA, 1984.
+
+    T. Hastie, R. Tibshirani and J. Friedman.
+    Elements of Statistical Learning, Springer, 2009.
+
+    See also
+    --------
+
+    DecisionTreeRegressor
 
     Example
     -------
