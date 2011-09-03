@@ -16,14 +16,14 @@ from ..cross_val import check_cv
 class RFE(BaseEstimator):
     """Feature ranking with recursive feature elimination.
 
-       Given an external estimator that assigns weights to features (e.g., the
-       coefficients of a linear model), the goal of the RFE algorithm is to
-       select features by recursively considering smaller and smaller sets of
-       features.  First, the estimator is trained on the initial set of
-       features and weights are assigned to each one of them. Then, features
-       whose absolute weights are the smallest are pruned from the current set
-       features. That procedure is recursively repeated until the desired
-       number of features to select is eventually reached.
+    Given an external estimator that assigns weights to features (e.g., the
+    coefficients of a linear model), the goal of the RFE algorithm is to
+    select features by recursively considering smaller and smaller sets of
+    features.  First, the estimator is trained on the initial set of
+    features and weights are assigned to each one of them. Then, features
+    whose absolute weights are the smallest are pruned from the current set
+    features. That procedure is recursively repeated until the desired
+    number of features to select is eventually reached.
 
     Parameters
     ----------
@@ -62,9 +62,9 @@ class RFE(BaseEstimator):
     The following example shows how to retrieve the 5 right informative
     features in the Friedman #1 dataset.
 
-    >>> from scikits.learn.datasets import make_friedman1
-    >>> from scikits.learn.feature_selection import RFE
-    >>> from scikits.learn.svm import SVR
+    >>> from sklearn.datasets import make_friedman1
+    >>> from sklearn.feature_selection import RFE
+    >>> from sklearn.svm import SVR
     >>> X, y = make_friedman1(n_samples=50, n_features=10, random_state=0)
     >>> estimator = SVR(kernel="linear")
     >>> selector = RFE(estimator, 5, step=1)
@@ -227,9 +227,9 @@ class RFECV(RFE):
     The following example shows how to retrieve the a-priori not known 5
     informative features in the Friedman #1 dataset.
 
-    >>> from scikits.learn.datasets import make_friedman1
-    >>> from scikits.learn.feature_selection import RFECV
-    >>> from scikits.learn.svm import SVR
+    >>> from sklearn.datasets import make_friedman1
+    >>> from sklearn.feature_selection import RFECV
+    >>> from sklearn.svm import SVR
     >>> X, y = make_friedman1(n_samples=50, n_features=10, random_state=0)
     >>> estimator = SVR(kernel="linear")
     >>> selector = RFECV(estimator, step=1, cv=5)
