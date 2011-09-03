@@ -26,10 +26,10 @@ __all__ = [
     ]
 
 lookup_c = {
-       'gini': _tree.Gini,
-       'entropy': _tree.Entropy,
-       #'miss': _tree.eval_miss,
-       }
+        'gini': _tree.Gini,
+        'entropy': _tree.Entropy,
+        #'miss': _tree.eval_miss,
+        }
 lookup_r = {
        'mse': _tree.MSE,
        }
@@ -110,6 +110,7 @@ class Node(object):
 
 def _build_tree(is_classification, X, y, criterion,
                max_depth, min_split, max_features, n_classes, random_state):
+    """Build a tree by recursively partitioning the data."""
 
     n_samples, n_features = X.shape
     if len(y) != len(X):
@@ -215,9 +216,7 @@ def _graphviz(tree):
 
 
 class BaseDecisionTree(BaseEstimator):
-    '''
-    Should not be used directly, use derived classes instead
-    '''
+    """Should not be used directly, use derived classes instead."""
 
     _tree_types = ['classification', 'regression']
     _classification_subtypes = ['binary', 'multiclass']
@@ -242,13 +241,14 @@ class BaseDecisionTree(BaseEstimator):
         self.tree = None
 
     def export_to_graphviz(self, filename="tree.dot"):
-        """
-        Export the tree in .dot format.  Render to PostScript using e.g.
+        """Export the tree in ".dot" format.
+
+        Render to PostScript using e.g.
         $ dot -Tps tree.dot -o tree.ps
 
         Parameters
         ----------
-        filename : str
+        filename : string
             The name of the file to write to.
 
         """
@@ -261,9 +261,7 @@ class BaseDecisionTree(BaseEstimator):
             f.write("\n}\n")
 
     def fit(self, X, y):
-        """
-        Fit the tree model according to the given training data and
-        parameters.
+        """Fit the tree with the given training data and parameters.
 
         Parameters
         ----------
@@ -274,7 +272,7 @@ class BaseDecisionTree(BaseEstimator):
         y : array-like, shape = [n_samples]
             Target values (integers in classification, real numbers in
             regression)
-            For classification, labels must correspond to classes 
+            For classification, labels must correspond to classes
             0, 1, ..., n_classes-1
 
         Returns
@@ -316,28 +314,26 @@ class BaseDecisionTree(BaseEstimator):
             pm_right = np.zeros((self.n_classes,), dtype=np.int32)
             criterion = criterion_class(self.n_classes, pm_left, pm_right)
 
-            self.tree = _build_tree(True, X, y, criterion,
-                                    self.max_depth, self.min_split, self.max_features,
+            self.tree = _build_tree(True, X, y, criterion, self.max_depth,
+                                    self.min_split, self.max_features,
                                     self.n_classes, self.random_state)
         else:  # regression
             y = np.asanyarray(y, dtype=np.float64, order='C')
 
             criterion_class = lookup_r[self.criterion]
             y_temp = np.zeros((n_samples,), dtype=np.float64)
-            criterion = criterion_class(y_temp)            
-            self.tree = _build_tree(False, X, y, criterion,
-                                    self.max_depth, self.min_split, self.max_features,
+            criterion = criterion_class(y_temp)
+            self.tree = _build_tree(False, X, y, criterion, self.max_depth,
+                                    self.min_split, self.max_features,
                                     None, self.random_state)
         return self
 
     def predict(self, X):
-        """
-        This function does classification or regression on an array of
-        test vectors X.
+        """Predict class or regression target for a test vector X.
 
         For a classification model, the predicted class for each
-        sample in X is returned.  For a regression model, the function
-        value of X calculated is returned.
+        sample in X is returned.  For a regression model, the predicted
+        value based on X is returned.
 
         Parameters
         ----------
@@ -382,7 +378,7 @@ class BaseDecisionTree(BaseEstimator):
 
 
 class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
-    """Classify a multi-labeled dataset with a decision tree.
+    """A binary or multiclass tree classifier.
 
     Parameters
     ----------
@@ -439,9 +435,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                                   max_features, random_state)
 
     def predict_proba(self, X):
-        """
-        This function does classification on a test vector X
-        given a model with probability information.
+        """Predict class probabilities on a test vector X.
 
         Parameters
         ----------
@@ -475,8 +469,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         return P
 
     def predict_log_proba(self, X):
-        """
-        This function does classification on a test vector X
+        """Predict class log probabilities on a test vector X
 
         Parameters
         ----------
@@ -495,7 +488,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
 
 class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
-    """Perform regression on dataset with a decision tree.
+    """A tree regressor
 
     Parameters
     ----------
