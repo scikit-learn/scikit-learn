@@ -34,12 +34,11 @@ cdef extern from "float.h":
 """  
 
 cdef class Criterion:
-    """Interface for splitting criteria, both regression and classification.
-    """
+    """Interface for splitting criteria, both regression and classification."""
     
     cdef void init(self, np.ndarray[np.float64_t, ndim=1] labels, 
                    int *sorted_features_i):
-        """Init the criteria for each feature `i`. """
+        """Initialise the criterion class."""
         pass
 
     cdef int update(self, int a, int b, 
@@ -87,9 +86,7 @@ cdef class ClassificationCriterion(Criterion):
 
     cdef void init(self, np.ndarray[np.float64_t, ndim=1] labels, 
                    int *sorted_features_i):
-        """
-        Initializes the criterion for a new feature (col of `features`).
-        """
+        """Initialise the criterion class."""
         
         self.n_samples = labels.shape[0]
         self.n_left = 0
@@ -121,7 +118,10 @@ cdef class ClassificationCriterion(Criterion):
     cdef int update(self, int a, int b, 
                      np.float64_t *labels,
                      int *sorted_features_i):
-
+        """
+        Update the criteria for each value in interval [a,b) 
+        where a and b are indices in `sorted_features_i`. 
+        """
         cdef int c
         # post condition: all samples from [0:b) are on the left side
         for idx from a <= idx < b:
@@ -244,7 +244,7 @@ cdef class RegressionCriterion(Criterion):
         
     cdef void init(self, np.ndarray[np.float64_t, ndim=1] labels, 
                    int *sorted_features_i):
-        """Initializes the criterion for a new feature (col of `features`)."""
+        """Initialise the criterion class."""
         
         self.n_samples = labels.shape[0]
         self.n_left = 0
@@ -267,6 +267,10 @@ cdef class RegressionCriterion(Criterion):
     cdef int update(self, int a, int b, 
                      np.float64_t *labels,
                      int *sorted_features_i):
+        """
+        Update the criteria for each value in interval [a,b) 
+        where a and b are indices in `sorted_features_i`. 
+        """
         cdef double val = 0.0
         # post condition: all samples from [0:b) are on the left side
         for idx from a <= idx < b:
@@ -345,7 +349,9 @@ cdef int smallest_sample_larger_than(int sample_idx,
                                      np.float64_t *features_i,
                                      int *sorted_features_i,
                                      int n_samples):
-    """Find index in the `sorted_features` matrix for sample
+    """Find the largest next sample.
+    
+    Find the index in the `sorted_features` matrix for sample
     who's feature `i` value is just about
     greater than those of the sample `sorted_features_i[sample_idx]`.
 
@@ -357,6 +363,7 @@ cdef int smallest_sample_larger_than(int sample_idx,
         I.e. `sorted_features_i[sample_idx] < sorted_features_i[next_sample_idx]`
         -1 if no such element exists.
     """
+    
     cdef int idx = 0
     cdef np.float64_t threshold = -DBL_MAX
     if sample_idx > -1:
@@ -370,7 +377,8 @@ cdef int smallest_sample_larger_than(int sample_idx,
 def _find_best_split(np.ndarray[np.float64_t, ndim=2, mode="fortran"] features,
                      np.ndarray[np.float64_t, ndim=1, mode="c"] labels,
                      Criterion criterion):
-    """
+    """Find the best dimension and threshold that minimises the error.
+    
     Parameters
     ----------
     features : ndarray, shape (n_samples, n_features), dtype=np.float64
@@ -389,6 +397,7 @@ def _find_best_split(np.ndarray[np.float64_t, ndim=2, mode="fortran"] features,
     best_error : np.float64_t
         The error of the split.
     """
+
     cdef int n_samples = features.shape[0]
     cdef int n_features = features.shape[1]
     cdef int i, a, b, best_i = -1
