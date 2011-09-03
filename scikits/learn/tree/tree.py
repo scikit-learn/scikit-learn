@@ -108,14 +108,14 @@ class Node(object):
                   self.error, self.samples, self.value)
 
 
-def _build_tree(is_classification, features, labels, criterion,
+def _build_tree(is_classification, X, labels, criterion,
                max_depth, min_split, max_features, n_classes, random_state):
 
-    n_samples, n_dims = features.shape
-    if len(labels) != len(features):
+    n_samples, n_dims = X.shape
+    if len(labels) != len(X):
         raise ValueError("Number of labels=%d does not match "
                           "number of features=%d\n"
-                         % (len(labels), len(features)))
+                         % (len(labels), len(X)))
     labels = np.array(labels, dtype=np.float64, order="c")
 
     feature_mask = np.ones(n_dims, dtype=np.bool)
@@ -132,11 +132,11 @@ def _build_tree(is_classification, features, labels, criterion,
         feature_mask[sample_dims] = False
         feature_mask = np.logical_not(feature_mask)
 
-    features = features[:, feature_mask]
+    X = X[:, feature_mask]
 
     # make data fortran layout
-    if not features.flags["F_CONTIGUOUS"]:
-        features = np.array(features, order="F")
+    if not X.flags["F_CONTIGUOUS"]:
+        X = np.array(X, order="F")
 
     if min_split <= 0:
         raise ValueError("min_split must be greater than zero.\n"
@@ -145,20 +145,20 @@ def _build_tree(is_classification, features, labels, criterion,
         raise ValueError("max_depth must be greater than zero.\n"
                          "max_depth is %s." % max_depth)
 
-    def recursive_partition(features, labels, depth):
+    def recursive_partition(X, labels, depth):
         is_split_valid = True
 
         if depth >= max_depth:
             is_split_valid = False
 
-        dim, thresh, error, init_error = _tree._find_best_split(features,
+        dim, thresh, error, init_error = _tree._find_best_split(X,
                                                                 labels,
                                                                 criterion)
 
         if dim != -1:
-            split = features[:, dim] < thresh
-            if len(features[split]) < min_split or \
-               len(features[~split]) < min_split:
+            split = X[:, dim] < thresh
+            if len(X[split]) < min_split or \
+               len(X[~split]) < min_split:
                 is_split_valid = False
         else:
             is_split_valid = False
@@ -178,22 +178,22 @@ def _build_tree(is_classification, features, labels, criterion,
                     error=init_error,
                     samples=len(labels),
                     value=a,
-                    left=recursive_partition(features[split],
+                    left=recursive_partition(X[split],
                                              labels[split], depth + 1),
-                    right=recursive_partition(features[~split],
+                    right=recursive_partition(X[~split],
                                               labels[~split], depth + 1))
 
-    return recursive_partition(features, labels, 0)
+    return recursive_partition(X, labels, 0)
 
 
-def _apply_tree(tree, features):
-    """Applies the decision tree to features."""
+def _apply_tree(tree, X):
+    """Applies the decision tree to X."""
 
     if type(tree) is Leaf:
         return tree.value
-    if features[tree.dimension] < tree.threshold:
-        return _apply_tree(tree.left, features)
-    return _apply_tree(tree.right, features)
+    if X[tree.dimension] < tree.threshold:
+        return _apply_tree(tree.left, X)
+    return _apply_tree(tree.right, X)
 
 
 def _graphviz(tree):
