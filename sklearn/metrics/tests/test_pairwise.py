@@ -15,30 +15,34 @@ np.random.seed(0)
 
 
 def test_pairwise_distances():
+    """ Test the pairwise_distance helper function. """
     rng = np.random.RandomState(0)
     X = rng.random_sample((5, 4))
     S = pairwise_distances(X, metric="euclidean")
     S2 = euclidean_distances(X)
     assert_array_equal(S, S2)
 
-    X2 = rng.random_sample((2, 4))
-    S = pairwise_distances(X, X2, metric="euclidean")
-    S2 = euclidean_distances(X, X2)
+    Y = rng.random_sample((2, 4))
+    S = pairwise_distances(X, Y, metric="euclidean")
+    S2 = euclidean_distances(X, Y)
     assert_array_equal(S, S2)
 
     S = pairwise_distances(X, metric="cityblock")
     assert_equal(S.shape[0], S.shape[1])
     assert_equal(S.shape[0], X.shape[0])
 
-    S = pairwise_distances(X, X2, metric="cityblock")
+    S = pairwise_distances(X, Y, metric="cityblock")
     assert_equal(S.shape[0], X.shape[0])
-    assert_equal(S.shape[1], X2.shape[0])
+    assert_equal(S.shape[1], Y.shape[0])
 
     S = np.dot(X, X.T)
     S2 = pairwise_distances(S, metric="precomputed")
     assert_true(S is S2)
     assert_raises(ValueError, pairwise_distances, X, None, "precomputed")
 
+def test_pairwise_kernels():
+    """ Test the pairwise_kernels helper function. """
+    X = 
 
 def test_euclidean_distances():
     """Check the pairwise Euclidean distances computation"""

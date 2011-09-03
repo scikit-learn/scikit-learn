@@ -283,13 +283,13 @@ def rbf_kernel(X, Y=None, gamma=0):
 
 
 # Helper functions - distance
-pairwise_function_map = {}
-pairwise_function_map['euclidean'] = euclidean_distances
-pairwise_function_map['l1'] = l1_distances
+pairwise_distance_functions = {}
+pairwise_distance_functions['euclidean'] = euclidean_distances
+pairwise_distance_functions['l1'] = l1_distances
 
 
 def pairwise_distances(X, Y=None, metric="euclidean", **kwds):
-    """ Calculates the distance matrix from a vector matrix X and optional Y.
+    """ Calculates the distance matrix from a vector array X and optional Y.
 
     This method takes either a vector array or a distance matrix, and returns
     a distance matrix. If the input is a vector array, the distances are
@@ -301,6 +301,9 @@ def pairwise_distances(X, Y=None, metric="euclidean", **kwds):
 
     If Y is given (default is None), then the returned matrix is the pairwise
     distance between the arrays from both X and Y.
+
+    Please note that support for sparse matrices is currently limited to those
+    metrics listed in pairwise.pairwise_distance_functions.
 
     Parameters
     ----------
@@ -314,7 +317,8 @@ def pairwise_distances(X, Y=None, metric="euclidean", **kwds):
     metric: string, or callable
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
-        allowed by scipy.spatial.distance.pdist for its metric parameter.
+        allowed by scipy.spatial.distance.pdist for its metric parameter, or
+        a metric listed in pairwise.pairwise_distance_functions.
         If metric is "precomputed", X is assumed to be a distance matrix and
         must be square.
         Alternatively, if metric is a callable function, it is called on each
@@ -323,7 +327,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", **kwds):
         the distance between them.
 
     **kwds: optional keyword parameters
-        Any further parameters are passed directly to the distance metric.
+        Any further parameters are passed directly to the distance function.
 
     Returns
     -------
@@ -338,12 +342,88 @@ def pairwise_distances(X, Y=None, metric="euclidean", **kwds):
         if X.shape[0] != X.shape[1]:
             raise ValueError("X is not square!")
         return X
-    elif metric in pairwise_function_map:
-        return pairwise_function_map[metric](X, Y, **kwds)
+    elif metric in pairwise_distance_functions:
+        return pairwise_distance_functions[metric](X, Y, **kwds)
     else:
+        # Note that if the metric is callable
         # FIXME: the distance module doesn't support sparse matrices!
         if Y is None:
             return distance.squareform(distance.pdist(X, metric=metric),
                                        **kwds)
         else:
             return distance.cdist(X, Y, metric=metric, **kwds)
+
+
+# Helper functions - distance
+pairwise_kernel_functions = {}
+pairwise_kernel_functions['rbf'] = rbf_kernel
+pairwise_kernel_functions['sigmoid'] = sigmoid_kernel
+pairwise_kernel_functions['polynomial'] = polynomial_kernel
+pairwise_kernel_functions['linear'] = linear_kernel
+
+
+def pairwise_kernels(X, Y=None, metric="euclidean", **kwds):
+    """ Calculates the kernel between arrays X and optional array Y.
+
+    This method takes either a vector array or a kernel matrix, and returns
+    a kernel matrix. If the input is a vector array, the kernels are
+    computed. If the input is a kernel matrix, it is returned instead.
+
+    This method provides a safe way to take a kernel matrix as input, while
+    preserving compatability with many other algorithms that take a vector
+    array.
+
+    If Y is given (default is None), then the returned matrix is the pairwise
+    kernel between the arrays from both X and Y.
+
+    Parameters
+    ----------
+    X: array [n_samples_a, n_samples_a] if metric == "precomputed", or,
+             [n_samples_a, n_features] otherwise
+        Array of pairwise kernels between samples, or a feature array.
+
+    Y: array [n_samples_b, n_features]
+        A second feature array only if X has shape [n_samples_a, n_features].
+
+    metric: string, or callable
+        The metric to use when calculating kernel between instances in a
+        feature array. If metric is a string, it must be one of the metrics
+        in pairwise.pairwise_kernel_functions.
+        If metric is "precomputed", X is assumed to be a kernel matrix and
+        must be square.
+        Alternatively, if metric is a callable function, it is called on each
+        pair of instances (rows) and the resulting value recorded. The callable
+        should take two arrays from X as input and return a value indicating
+        the distance between them.
+
+    **kwds: optional keyword parameters
+        Any further parameters are passed directly to the kernel function.
+
+    Returns
+    -------
+    K: array [n_samples_a, n_samples_a] or [n_samples_a, n_samples_b]
+        A kernel matrix D such that D_{i, j} is the kernel between the
+        ith and jth vectors of the given matrix X, if Y is None.
+        If Y is not None, then D_{i, j} is the kernel between the ith array
+        from X and the jth array from Y.
+
+    """
+    if metric == "precomputed":
+        if X.shape[0] != X.shape[1]:
+            raise ValueError("X is not square!")
+        return X
+    elif metric in pairwise_distance_functions:
+        return pairwise_distance_functions[metric](X, Y, **kwds)
+    elif callable(metric):
+        # Check matrices first (this is usually done by the metric).
+        X, Y = check_pairwise_arrays(X, Y)
+        n_x, n_y = len(X), len(Y)
+        # Calculate kernel for each element in X and Y.
+        K = np.zeros(n_x, n_y)
+        for i in range(n_x):
+            for j in range(i, n_y):
+                # Kernel assumed to be symmetric.
+                K[i][j] = K[j][i] = metric(X[i], Y[j], **kwds)
+        return K
+    else:
+        raise AttributeError("Unknown metric {0}".format(metric))
