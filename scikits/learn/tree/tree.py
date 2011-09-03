@@ -395,7 +395,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         maximum depth of the tree
 
     min_split : integer, optional (default=1)
-        minimum size to split on
+        minimum number of samples required at any leaf node
 
     max_features : integer, optional (default=None)
         if given, then use a subset (max_features) of features.
@@ -505,7 +505,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         maximum depth of the tree
 
     min_split : integer, optional (default=1)
-        minimum size to split on
+        minimum number of samples required at any leaf node
 
     max_features : integer, optional (default=None)
         if given, then use a subset (max_features) of features.
