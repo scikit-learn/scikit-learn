@@ -28,7 +28,7 @@ inplace:
 	$(PYTHON) setup.py build_ext -i
 
 test-code: in
-	$(NOSETESTS) -s scikits/learn
+	$(NOSETESTS) -s sklearn
 test-doc:
 	$(NOSETESTS) -s --with-doctest --doctest-tests --doctest-extension=rst \
 	--doctest-fixtures=_fixture doc/modules/

@@ -13,15 +13,15 @@ from time import time
 import numpy as np
 import pylab as pl
 
-from scikits.learn.cluster import k_means
-from scikits.learn.cluster import affinity_propagation
-from scikits.learn.cluster import mean_shift
-from scikits.learn.cluster import spectral_clustering
-from scikits.learn.cluster import Ward
-from scikits.learn.cluster import power_iteration_clustering
-from scikits.learn.metrics.pairwise import euclidean_distances
-from scikits.learn.metrics import homogeneity_completeness_v_measure
-from scikits.learn.neighbors import kneighbors_graph
+from sklearn.cluster import k_means
+from sklearn.cluster import affinity_propagation
+from sklearn.cluster import mean_shift
+from sklearn.cluster import spectral_clustering
+from sklearn.cluster import Ward
+from sklearn.cluster import power_iteration_clustering
+from sklearn.metrics.pairwise import euclidean_distances
+from sklearn.metrics import homogeneity_completeness_v_measure
+from sklearn.neighbors import kneighbors_graph
 
 # Generate random samples roughly arranged as nested circles
 

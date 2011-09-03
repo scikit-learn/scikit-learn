@@ -3,5 +3,5 @@
 Clustering
 ----------
 
-Examples concerning the `scikits.learn.cluster` package.
+Examples concerning the `sklearn.cluster` package.
 

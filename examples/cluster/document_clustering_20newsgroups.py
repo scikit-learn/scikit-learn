@@ -25,12 +25,12 @@ print __doc__
 from time import time
 import logging
 
-from scikits.learn.datasets import fetch_20newsgroups
-from scikits.learn.feature_extraction.text import Vectorizer
-from scikits.learn.cluster import power_iteration_clustering
-from scikits.learn.cluster import spectral_clustering
-from scikits.learn.metrics.pairwise import cosine_similarity
-from scikits.learn.metrics import homogeneity_completeness_v_measure
+from sklearn.datasets import fetch_20newsgroups
+from sklearn.feature_extraction.text import Vectorizer
+from sklearn.cluster import power_iteration_clustering
+from sklearn.cluster import spectral_clustering
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.metrics import homogeneity_completeness_v_measure
 
 # Display progress logs on stdout
 logging.basicConfig(level=logging.INFO,
@@ -57,7 +57,7 @@ print "%d documents (training set)" % len(data_train.filenames)
 print "%d categories" % len(data_train.target_names)
 print
 
-from scikits.learn.externals import joblib
+from sklearn.externals import joblib
 memory = joblib.Memory('.')
 
 @memory.cache

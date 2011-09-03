@@ -4,7 +4,7 @@
 Partial Least Squares
 ======================
 
-.. currentmodule:: scikits.learn.pls
+.. currentmodule:: sklearn.pls
 
 Partial least squares (PLS) models are useful to find linear relations
 between two multivariate datasets: in PLS the `X` and `Y` arguments of
