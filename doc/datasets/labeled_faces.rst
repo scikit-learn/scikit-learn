@@ -39,7 +39,7 @@ less than 200ms by using a memmaped version memoized on the disk in the
 The first loader is used for the Face Identification task: a multi-class
 classification task (hence supervised learning)::
 
-  >>> from scikits.learn.datasets import fetch_lfw_people
+  >>> from sklearn.datasets import fetch_lfw_people
   >>> lfw_people = fetch_lfw_people(min_faces_per_person=70, resize=0.4)
 
   >>> for name in lfw_people.target_names:
@@ -74,7 +74,7 @@ array::
 The second loader is typically used for the face verification task: each sample
 is a pair of two picture belonging or not to the same person::
 
-  >>> from scikits.learn.datasets import fetch_lfw_pairs
+  >>> from sklearn.datasets import fetch_lfw_pairs
   >>> lfw_pairs_train = fetch_lfw_pairs(subset='train')
 
   >>> list(lfw_pairs_train.target_names)

@@ -18,12 +18,12 @@ import time as time
 import numpy as np
 import scipy as sp
 import pylab as pl
-from scikits.learn.feature_extraction.image import grid_to_graph
-from scikits.learn.cluster import Ward
+from sklearn.feature_extraction.image import grid_to_graph
+from sklearn.cluster import Ward
 
 ###############################################################################
 # Generate data
-lena = sp.lena()
+lena = sp.misc.lena()
 # Downsample the image by a factor of 4
 lena = lena[::2, ::2] + lena[1::2, ::2] + lena[::2, 1::2] + lena[1::2, 1::2]
 X = np.reshape(lena, (-1, 1))

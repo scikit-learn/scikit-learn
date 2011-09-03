@@ -3,7 +3,7 @@
 
     >>> import numpy as np
     >>> import os
-    >>> from scikits.learn import datasets
+    >>> from sklearn import datasets
     >>> datasets.mldata.urllib2 = mock_urllib2
 
 .. _datasets:
@@ -12,9 +12,9 @@
 Dataset loading utilities
 =========================
 
-.. currentmodule:: scikits.learn.datasets
+.. currentmodule:: sklearn.datasets
 
-The ``scikits.learn.datasets`` package embeds some small toy datasets
+The ``sklearn.datasets`` package embeds some small toy datasets
 as introduced in the "Getting Started" section.
 
 To evaluate the impact of the scale of the dataset (``n_samples`` and
@@ -108,7 +108,7 @@ Scipy sparse CSR matrices are used for ``X`` and numpy arrays are used for ``y``
 
 You may load a dataset like this::
 
-  >>> from scikits.learn.datasets import load_svmlight_file
+  >>> from sklearn.datasets import load_svmlight_file
   >>> X_train, y_train = load_svmlight_file("/path/to/train_dataset.txt")
   ...                                                         # doctest: +SKIP
 

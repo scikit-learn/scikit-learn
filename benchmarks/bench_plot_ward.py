@@ -8,7 +8,7 @@ import numpy as np
 from scipy.cluster import hierarchy
 import pylab as pl
 
-from scikits.learn.cluster import Ward
+from sklearn.cluster import Ward
 
 ward = Ward(n_clusters=15)
 
