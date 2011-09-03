@@ -36,42 +36,76 @@ lookup_r = {
 
 
 class Leaf(object):
-    '''
-        v : target value
-            Classification: array-like, shape = [n_features]
-                Histogram of target values
-            Regression:  real number
-                Mean for the region
-    '''
+    """A class to store leaf values in the tree.
 
-    def __init__(self, v):
-        self.v = v
+    Parameters
+    ----------
+
+    value : array-like, shape = [n_features] OR 1
+        For classification it is a histogram of target values
+        For regression is it the mean for the region
+
+    See also
+    --------
+
+    Node
+    """
+
+    def __init__(self, value):
+        self.value = value
 
     def _graphviz(self):
-        return 'Leaf(%s)' % (self.v)
+        """Print the leaf for graph visualisation."""
+
+        return 'Leaf(%s)' % (self.value)
 
 
 class Node(object):
-    '''
-        value : target value
-            Classification: array-like, shape = [n_features]
-                Histogram of target values
-            Regression:  real number
-                Mean for the region
-    '''
+    """A class to store node information in the tree.
 
-    def __init__(self, dimension, value, error, samples, v, left, right):
+    Parameters
+    ----------
+
+    dimension : integer
+        The dimension used to split on
+    threshold : float
+        The threshold value to split on
+    error : float
+        The error in the node.  This could be the impurity (calculated using
+        an entropy measure for classification) or the residual regression
+        error (calculated using an estimator)
+    samples : integer
+        Number of samples present at this node
+    value : array-like, shape = [n_features] OR 1
+        For classification it is a histogram of target values
+        For regression is it the mean for the region
+    left : Node
+        The left child node
+    right : Node
+        The right child node
+
+    See also
+    --------
+
+    Leaf
+    """
+
+    def __init__(self, dimension, threshold, error, samples, value,
+                 left, right):
         self.dimension = dimension
-        self.value = value
+        self.threshold = threshold
         self.error = error
         self.samples = samples
-        self.v = v
+        self.value = value
         self.left = left
         self.right = right
 
     def _graphviz(self):
+        """Print the node for graph visualisation."""
+
         return "x[%s] < %s \\n error = %s \\n samples = %s \\n v = %s" \
-               % (self.dimension, self.value, self.error, self.samples, self.v)
+               % (self.dimension, self.threshold,\
+                  self.error, self.samples, self.value)
 
 
 def _build_tree(is_classification, features, labels, criterion,
@@ -139,10 +173,10 @@ def _build_tree(is_classification, features, labels, criterion,
             return Leaf(a)
 
         return Node(dimension=sample_dims[dim],
-                    value=thresh,
+                    threshold=thresh,
                     error=init_error,
                     samples=len(labels),
-                    v=a,
+                    value=a,
                     left=recursive_partition(features[split],
                                              labels[split], depth + 1),
                     right=recursive_partition(features[~split],
@@ -152,21 +186,18 @@ def _build_tree(is_classification, features, labels, criterion,
 
 
 def _apply_tree(tree, features):
-    '''
-    conf = apply_tree(tree, features)
+    """Applies the decision tree to features."""
 
-    Applies the decision tree to a set of features.
-    '''
     if type(tree) is Leaf:
-        return tree.v
-    if features[tree.dimension] < tree.value:
+        return tree.value
+    if features[tree.dimension] < tree.threshold:
         return _apply_tree(tree.left, features)
     return _apply_tree(tree.right, features)
 
 
 def _graphviz(tree):
-    '''Print decision tree in .dot format
-    '''
+    """Print decision tree in .dot format."""
+
     if type(tree) is Leaf:
         return ""
     s = str(tree) + \
