@@ -27,7 +27,7 @@ from sklearn import datasets
 from sklearn.gaussian_process import GaussianProcess
 from sklearn.cross_val import cross_val_score, KFold
 
-# Load the dataset from scikits' data sets
+# Load the dataset from scikit's data sets
 diabetes = datasets.load_diabetes()
 X, y = diabetes.data, diabetes.target
 

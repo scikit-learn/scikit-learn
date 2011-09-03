@@ -9,7 +9,7 @@ import sys
 import os
 import shutil
 
-DISTNAME = 'sklearn'
+DISTNAME = 'scikit-learn'
 DESCRIPTION = 'A set of python modules for machine learning and data mining'
 LONG_DESCRIPTION = open('README.rst').read()
 MAINTAINER = 'Fabian Pedregosa'
