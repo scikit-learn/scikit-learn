@@ -19,7 +19,7 @@ In both cases, only 10% of the features are informative.
 import numpy as np
 import gc
 from time import time
-from scikits.learn.datasets.samples_generator import make_regression
+from sklearn.datasets.samples_generator import make_regression
 
 alpha = 0.1
 # alpha = 0.01
@@ -46,7 +46,7 @@ def bench(factory, X, Y, X_test, Y_test, ref_coef):
 
 if __name__ == '__main__':
     from glmnet.elastic_net import Lasso as GlmnetLasso
-    from scikits.learn.linear_model import Lasso as ScikitLasso
+    from sklearn.linear_model import Lasso as ScikitLasso
     # Delayed import of pylab
     import pylab as pl
 
