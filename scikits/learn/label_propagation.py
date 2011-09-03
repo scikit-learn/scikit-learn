@@ -50,8 +50,7 @@ from .metrics.pairwise import rbf_kernel
 
 
 class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
-    """
-    Base class for label propagation module.
+    """Base class for label propagation module.
 
     Parameters
     ----------
@@ -227,6 +226,14 @@ class LabelPropagation(BaseLabelPropagation):
     >>> label_prop_model.fit(iris.data, labels, unlabeled_identifier=-1)
     ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     LabelPropagation(...)
+
+    References
+    ----------
+
+
+    See Also
+    --------
+    LabelSpreading : 
     """
     def _build_graph(self):
         """
@@ -238,14 +245,16 @@ class LabelPropagation(BaseLabelPropagation):
         """
         affinity_matrix = self._get_kernel(self._X, self._X)
         degree_inv = np.diag(1. / np.sum(affinity_matrix, axis=0))
-        aff_ideg = np.dot(degree_inv, affinity_matrix)
-        return aff_ideg
+        np.dot(degree_inv, affinity_matrix, affinity_matrix)
+        return affinity_matrix
 
 
 class LabelSpreading(BaseLabelPropagation):
-    """
+    """Semi-supervised learning using Label Spreading strategy.
+
     Similar to the basic Label Propgation algorithm, but uses affinity matrix
-    based on the graph laplacian and soft clamping accross the labels.
+    based on the graph laplacian and soft clamping accross the labels. Will be
+    more robust to noise & uncertainty in the input labeling.
 
     Parameters
     ----------
@@ -285,9 +294,7 @@ class LabelSpreading(BaseLabelPropagation):
         super(LabelSpreading, self).__init__(alpha=alpha, *args, **kwargs)
 
     def _build_graph(self):
-        """
-        Graph matrix for Label Spreading computes the graph laplacian
-        """
+        """Graph matrix for Label Spreading computes the graph laplacian"""
         # compute affinity matrix (or gram matrix)
         n_samples = self._X.shape[0]
         affinity_matrix = self._get_kernel(self._X, self._X)
@@ -295,6 +302,7 @@ class LabelSpreading(BaseLabelPropagation):
         degree_matrix = np.diag(1. / np.sum(affinity_matrix, axis=0))
         np.sqrt(degree_matrix, degree_matrix)
         np.dot(degree_matrix, affinity_matrix, affinity_matrix)
+        # final step produces graph laplacian matrix
         np.dot(affinity_matrix, degree_matrix, affinity_matrix)
         return affinity_matrix
 
