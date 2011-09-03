@@ -181,7 +181,7 @@ def test_error():
     assert_raises(ValueError, clf.predict, t[:,1:])    
 
     # labels out of range
-    clf = tree.DecisionTreeClassifier(K=1)
+    clf = tree.DecisionTreeClassifier(n_classes=1)
     assert_raises(ValueError, clf.fit, X, Y2)    
 
 if __name__ == '__main__':

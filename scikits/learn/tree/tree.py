@@ -109,7 +109,7 @@ class Node(object):
 
 
 def _build_tree(is_classification, features, labels, criterion,
-               max_depth, min_split, F, K, random_state):
+               max_depth, min_split, F, n_classes, random_state):
 
     n_samples, n_dims = features.shape
     if len(labels) != len(features):
@@ -163,7 +163,7 @@ def _build_tree(is_classification, features, labels, criterion,
             is_split_valid = False
 
         if is_classification:
-            a = np.zeros((K, ))
+            a = np.zeros((n_classes, ))
             t = labels.max() + 1
             a[:t] = np.bincount(labels.astype(np.int))
         else:
@@ -221,7 +221,7 @@ class BaseDecisionTree(BaseEstimator):
     _tree_types = ['classification', 'regression']
     _classification_subtypes = ['binary', 'multiclass']
 
-    def __init__(self, K, impl, criterion, max_depth,
+    def __init__(self, n_classes, impl, criterion, max_depth,
                  min_split, F, random_state):
 
         if not impl in self._tree_types:
@@ -229,7 +229,7 @@ class BaseDecisionTree(BaseEstimator):
                              % (self._tree_types, impl))
 
         self.type = impl
-        self.K = K
+        self.n_classes = n_classes
         self.classification_subtype = None
         self.criterion = criterion
         self.max_depth = max_depth
@@ -273,7 +273,7 @@ class BaseDecisionTree(BaseEstimator):
         y : array-like, shape = [n_samples]
             Target values (integers in classification, real numbers in
             regression)
-            For classification, labels must correspond to classes 0,1,...,K-1
+            For classification, labels must correspond to classes 0,1,...,n_classes-1
 
         Returns
         -------
@@ -288,35 +288,35 @@ class BaseDecisionTree(BaseEstimator):
 
             labels = np.unique(y)
             if tuple(labels) == (-1, 1):
-                if self.K is None:
-                    self.K = 2
+                if self.n_classes is None:
+                    self.n_classes = 2
                 else:
-                    if self.K != 2:
-                        raise ValueError("K must equal 2 for binary"
+                    if self.n_classes != 2:
+                        raise ValueError("n_classes must equal 2 for binary"
                                          " classification")
                 self.classification_subtype = "binary"
                 y[y == -1] = 0  # normalise target
             elif labels.min() >= 0:
-                if self.K is None:
-                    self.K = labels.max() + 1
+                if self.n_classes is None:
+                    self.n_classes = labels.max() + 1
                 else:
-                    if self.K < labels.max() + 1:
+                    if self.n_classes < labels.max() + 1:
                         raise ValueError("Labels must be in range"
-                                         "[0 to %s) " % self.K)
+                                         "[0 to %s) " % self.n_classes)
                 self.classification_subtype = "multiclass"
             else:
                 raise ValueError("Labels must be [-1, 1] for binary and "
                                  "in the range [0 to %s) for multiclass "
-                                 "classification " % self.K)
+                                 "classification " % self.n_classes)
 
             criterion_class = lookup_c[self.criterion]
-            pm_left = np.zeros((self.K,), dtype=np.int32)
-            pm_right = np.zeros((self.K,), dtype=np.int32)
-            criterion = criterion_class(self.K, pm_left, pm_right)
+            pm_left = np.zeros((self.n_classes,), dtype=np.int32)
+            pm_right = np.zeros((self.n_classes,), dtype=np.int32)
+            criterion = criterion_class(self.n_classes, pm_left, pm_right)
 
             self.tree = _build_tree(True, X, y, criterion,
                                     self.max_depth, self.min_split, self.F,
-                                    self.K, self.random_state)
+                                    self.n_classes, self.random_state)
         else:  # regression
             y = np.asanyarray(y, dtype=np.float64, order='C')
 
@@ -383,7 +383,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
     Parameters
     ----------
-    K : integer, optional
+    n_classes : integer, optional
         number of classes (computed at fit() if not provided)
 
     criterion : string, optional (default='gini')
@@ -428,9 +428,9 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     1.0
     """
 
-    def __init__(self, K=None, criterion='gini', max_depth=10,
+    def __init__(self, n_classes=None, criterion='gini', max_depth=10,
                   min_split=1, F=None, random_state=None):
-        BaseDecisionTree.__init__(self, K, 'classification', criterion,
+        BaseDecisionTree.__init__(self, n_classes, 'classification', criterion,
                                   max_depth, min_split, F, random_state)
 
     def predict_proba(self, X):
@@ -463,7 +463,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                              " input n_features is %s "
                              % (self.n_features, n_features))
 
-        P = np.zeros((n_samples, self.K))
+        P = np.zeros((n_samples, self.n_classes))
         for idx, sample in enumerate(X):
             P[idx, :] = _apply_tree(self.tree, sample)
             P[idx, :] /= np.sum(P[idx, :])
