@@ -412,9 +412,9 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     Example
     -------
     >>> import numpy as np
-    >>> from scikits.learn.datasets import load_iris
-    >>> from scikits.learn.cross_val import StratifiedKFold
-    >>> from scikits.learn.tree import DecisionTreeClassifier
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.cross_val import StratifiedKFold
+    >>> from sklearn.tree import DecisionTreeClassifier
     >>> data = load_iris()
     >>> skf = StratifiedKFold(data.target, 10)
     >>> for train_index, test_index in skf:
@@ -534,9 +534,9 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     Example
     -------
     >>> import numpy as np
-    >>> from scikits.learn.datasets import load_boston
-    >>> from scikits.learn.cross_val import KFold
-    >>> from scikits.learn.tree import DecisionTreeRegressor
+    >>> from sklearn.datasets import load_boston
+    >>> from sklearn.cross_val import KFold
+    >>> from sklearn.tree import DecisionTreeRegressor
     >>> data = load_boston()
     >>> kf = KFold(len(data.target), 10)
     >>> for train_index, test_index in kf:
