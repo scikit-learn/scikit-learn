@@ -10,8 +10,8 @@ print __doc__
 
 import pylab as pl
 import numpy as np
-from scikits.learn.linear_model import orthogonal_mp
-from scikits.learn.datasets import make_sparse_coded_signal
+from sklearn.linear_model import orthogonal_mp
+from sklearn.datasets import make_sparse_coded_signal
 
 n_components, n_features = 512, 100
 n_atoms = 17

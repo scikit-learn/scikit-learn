@@ -43,8 +43,8 @@ import numpy as np
 
 from scipy import sparse
 
-from scikits.learn.utils.extmath import fast_svd
-from scikits.learn.externals.joblib import Memory
+from sklearn.utils.extmath import fast_svd
+from sklearn.externals.joblib import Memory
 
 
 ################################################################################

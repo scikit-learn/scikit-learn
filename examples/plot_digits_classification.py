@@ -19,7 +19,7 @@ print __doc__
 import pylab as pl
 
 # Import datasets, classifiers and performance metrics
-from scikits.learn import datasets, svm, metrics
+from sklearn import datasets, svm, metrics
 
 # The digits dataset
 digits = datasets.load_digits()

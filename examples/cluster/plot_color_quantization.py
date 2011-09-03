@@ -27,10 +27,10 @@ randomly) is also shown.
 print __doc__
 import numpy as np
 import pylab as pl
-from scikits.learn.cluster import KMeans
-from scikits.learn.metrics import euclidean_distances
-from scikits.learn.datasets import load_sample_image
-from scikits.learn.utils import shuffle
+from sklearn.cluster import KMeans
+from sklearn.metrics import euclidean_distances
+from sklearn.datasets import load_sample_image
+from sklearn.utils import shuffle
 from time import time
 
 n_colors = 64
