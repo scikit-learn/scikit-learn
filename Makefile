@@ -35,7 +35,8 @@ test-doc:
 	--doctest-fixtures=_fixture doc/modules/
 
 test-coverage:
-	$(NOSETESTS) -s --with-coverage --cover-html --cover-html-dir=coverage
+	$(NOSETESTS) -s --with-coverage --cover-html --cover-html-dir=coverage \
+	--cover-package=sklearn sklearn
 
 test: test-code test-doc
 
