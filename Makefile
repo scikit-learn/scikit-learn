@@ -6,7 +6,7 @@ PYTHON ?= python
 NOSETESTS ?= nosetests
 CTAGS ?= ctags
 
-all: clean inplace test test-doc
+all: clean inplace test
 
 clean-pyc:
 	find . -name "*.pyc" | xargs rm -f
@@ -27,8 +27,8 @@ in: inplace # just a shortcut
 inplace:
 	$(PYTHON) setup.py build_ext -i
 
-test: in
-	$(NOSETESTS) -s scikits/learn
+test-code: in
+	$(NOSETESTS) -s sklearn
 test-doc:
 	$(NOSETESTS) -s --with-doctest --doctest-tests --doctest-extension=rst \
 	--doctest-fixtures=_fixture doc/modules/
@@ -36,6 +36,7 @@ test-doc:
 test-coverage:
 	$(NOSETESTS) -s --with-coverage --cover-html --cover-html-dir=coverage
 
+test: test-code test-doc
 
 trailing-spaces:
 	find -name "*.py" |xargs sed -i 's/[ \t]*$$//'

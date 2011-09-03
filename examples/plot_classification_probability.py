@@ -18,9 +18,9 @@ print __doc__
 import pylab as pl
 import numpy as np
 
-from scikits.learn.linear_model import LogisticRegression
-from scikits.learn.svm import SVC
-from scikits.learn import datasets
+from sklearn.linear_model import LogisticRegression
+from sklearn.svm import SVC
+from sklearn import datasets
 
 iris = datasets.load_iris()
 X = iris.data[:, :2] # we only take the first two features for visualization

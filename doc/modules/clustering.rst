@@ -5,7 +5,7 @@ Clustering
 ==========
 
 `Clustering <http://en.wikipedia.org/wiki/Cluster_analysis>`__ of
-unlabeled data can be performed with the module :mod:`scikits.learn.cluster`.
+unlabeled data can be performed with the module :mod:`sklearn.cluster`.
 
 Each clustering algorithm comes in two variants: a class, that implements
 the `fit` method to learn the clusters on train data, and a function,
@@ -13,7 +13,7 @@ that, given train data, returns an array of integer labels corresponding
 to the different clusters. For the class, the labels over the training
 data can be found in the `labels_` attribute.
 
-.. currentmodule:: scikits.learn.cluster
+.. currentmodule:: sklearn.cluster
 
 .. topic:: Input data
 
@@ -21,10 +21,10 @@ data can be found in the `labels_` attribute.
     this module take different kinds of matrix as input.  On one hand,
     :class:`MeanShift` and :class:`KMeans` take data matrices of shape
     [n_samples, n_features]. These can be obtained from the classes in
-    the :mod:`scikits.learn.feature_extraction` module. On the other hand,
+    the :mod:`sklearn.feature_extraction` module. On the other hand,
     :class:`AffinityPropagation` and :class:`SpectralClustering` take
     similarity matrices of shape [n_samples, n_samples].  These can be
-    obtained from the functions in the :mod:`scikits.learn.metrics.pairwise`
+    obtained from the functions in the :mod:`sklearn.metrics.pairwise`
     module. In other words, :class:`MeanShift` and :class:`KMeans` work
     with points in a vector space, whereas :class:`AffinityPropagation`
     and :class:`SpectralClustering` can work with arbitrary objects, as
@@ -43,9 +43,21 @@ be specified. It scales well to large number of samples, however its
 results may be dependent on an initialisation. As a result, the computation is
 often done several times, with different initialisation of the centroids.
 
+K-means is often referred to as Lloyd's algorithm. After initialization,
+k-means consists of looping between two major steps. First the Voronoi diagram 
+of the points is calculated using the current centroids. Each segment in the 
+Voronoi diagram becomes a separate cluster. Secondly, the centroids are updated
+to the mean of each segment. The algorithm then repeats this until a stopping 
+criteria is fulfilled. Usually, as in this implementation, the algorithm
+stops when the relative increment in the results between iterations is less than
+the given tolerance value.
+
+K-means can be used for vector quantization. This is achieved using the 
+transform method of a trained model of :class:`KMeans`.
+
 .. topic:: Examples:
 
- * :ref:`example_cluster_kmeans_digits.py`: Clustering handwritten digits
+ * :ref:`example_cluster_plot_kmeans_digits.py`: Clustering handwritten digits
 
 
 .. _mini_batch_kmeans:
@@ -235,10 +247,10 @@ and a column with indices of the dataset that should be connected. This
 matrix can be constructed from apriori information, for instance if you
 whish to cluster web pages, but only merging pages with a link pointing
 from one to another. It can also be learned from the data, for instance
-using :func:`scikits.learn.neighbors.kneighbors_graph` to restrict
+using :func:`sklearn.neighbors.kneighbors_graph` to restrict
 merging to nearest neighbors as in the :ref:`swiss roll
 <example_cluster_plot_ward_structured_vs_unstructured.py>` example, or
-using :func:`scikits.learn.feature_extraction.image.grid_to_graph` to
+using :func:`sklearn.feature_extraction.image.grid_to_graph` to
 enable only merging of neighboring pixels on an image, as in the
 :ref:`Lena <example_cluster_plot_lena_ward_segmentation.py>` example.
 
@@ -299,7 +311,7 @@ truth set of classes or satisfying some assumption such that members
 belong to the same class are more similar that members of different
 classes according to some similarity metric.
 
-.. currentmodule:: scikits.learn.metrics
+.. currentmodule:: sklearn.metrics
 
 Inertia
 -------
@@ -351,7 +363,7 @@ We can turn those concept as scores :func:`homogeneity_score` and
 :func:`completeness_score`. Both are bounded below by 0.0 and above by
 1.0 (higher is better)::
 
-  >>> from scikits.learn import metrics
+  >>> from sklearn import metrics
   >>> labels_true = [0, 0, 0, 1, 1, 1]
   >>> labels_pred = [0, 0, 1, 1, 2, 2]
 
@@ -394,7 +406,7 @@ homogeneous but not complete::
 
 
 Mathematical formulation
-------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 Homogeneity and completeness scores are formally given by:
 

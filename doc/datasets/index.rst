@@ -3,7 +3,7 @@
 
     >>> import numpy as np
     >>> import os
-    >>> from scikits.learn import datasets
+    >>> from sklearn import datasets
     >>> datasets.mldata.urllib2 = mock_urllib2
 
 .. _datasets:
@@ -12,9 +12,9 @@
 Dataset loading utilities
 =========================
 
-.. currentmodule:: scikits.learn.datasets
+.. currentmodule:: sklearn.datasets
 
-The ``scikits.learn.datasets`` package embeds some small toy datasets
+The ``sklearn.datasets`` package embeds some small toy datasets
 as introduced in the "Getting Started" section.
 
 To evaluate the impact of the scale of the dataset (``n_samples`` and
@@ -46,6 +46,31 @@ require to download any file from some external website.
 These datasets are useful to quickly illustrate the behavior of the
 various algorithms implemented in the scikit. They are however often too
 small to be representative of real world machine learning tasks.
+
+Sample images
+=============
+
+The scikit also embed a couple of sample JPEG images published under Creative
+Commons license by their authors. Those image can be useful to test algorithms
+and pipeline on 2D data.
+
+.. autosummary::
+
+   load_sample_images
+   load_sample_image
+
+.. note::
+
+  The default coding of images is based on the ``uint8`` dtype to
+  spare memory.  Often machine learning algorithms work best if the
+  input is converted to a floating point representation first.  Also,
+  if you plan to use ``pylab.imshow`` don't forget to scale to the range
+  0 - 1 as done in the following example.
+
+.. topic:: Examples:
+
+    * :ref:`example_cluster_plot_vq_china.py`
+
 
 Sample generators
 =================
@@ -83,7 +108,7 @@ Scipy sparse CSR matrices are used for ``X`` and numpy arrays are used for ``y``
 
 You may load a dataset like this::
 
-  >>> from scikits.learn.datasets import load_svmlight_file
+  >>> from sklearn.datasets import load_svmlight_file
   >>> X_train, y_train = load_svmlight_file("/path/to/train_dataset.txt")
   ...                                                         # doctest: +SKIP
 
