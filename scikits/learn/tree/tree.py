@@ -109,7 +109,7 @@ class Node(object):
 
 
 def _build_tree(is_classification, features, labels, criterion,
-               max_depth, min_split, F, n_classes, random_state):
+               max_depth, min_split, max_features, n_classes, random_state):
 
     n_samples, n_dims = features.shape
     if len(labels) != len(features):
@@ -120,14 +120,15 @@ def _build_tree(is_classification, features, labels, criterion,
 
     feature_mask = np.ones(n_dims, dtype=np.bool)
     sample_dims = np.arange(n_dims)
-    if F is not None:
-        if F <= 0 or F > n_dims:
-            raise ValueError("F=%d must be in range (0..%d].\n"
-                             "Did you mean to use None to signal no F?"
-                             % (F, n_dims))
+    if max_features is not None:
+        if max_features <= 0 or max_features > n_dims:
+            raise ValueError("max_features=%d must be in range (0..%d].\n"
+                             "Did you mean to use None to signal no "
+                             "max_features?"
+                             % (max_features, n_dims))
 
         permutation = random_state.permutation(n_dims)
-        sample_dims = np.sort(permutation[-F:])
+        sample_dims = np.sort(permutation[-max_features:])
         feature_mask[sample_dims] = False
         feature_mask = np.logical_not(feature_mask)
 
@@ -222,7 +223,7 @@ class BaseDecisionTree(BaseEstimator):
     _classification_subtypes = ['binary', 'multiclass']
 
     def __init__(self, n_classes, impl, criterion, max_depth,
-                 min_split, F, random_state):
+                 min_split, max_features, random_state):
 
         if not impl in self._tree_types:
             raise ValueError("impl should be one of %s, %s was given"
@@ -234,7 +235,7 @@ class BaseDecisionTree(BaseEstimator):
         self.criterion = criterion
         self.max_depth = max_depth
         self.min_split = min_split
-        self.F = F
+        self.max_features = max_features
         self.random_state = check_random_state(random_state)
 
         self.n_features = None
@@ -315,7 +316,7 @@ class BaseDecisionTree(BaseEstimator):
             criterion = criterion_class(self.n_classes, pm_left, pm_right)
 
             self.tree = _build_tree(True, X, y, criterion,
-                                    self.max_depth, self.min_split, self.F,
+                                    self.max_depth, self.min_split, self.max_features,
                                     self.n_classes, self.random_state)
         else:  # regression
             y = np.asanyarray(y, dtype=np.float64, order='C')
@@ -324,7 +325,7 @@ class BaseDecisionTree(BaseEstimator):
             labels_temp = np.zeros((n_samples,), dtype=np.float64)
             criterion = criterion_class(labels_temp)            
             self.tree = _build_tree(False, X, y, criterion,
-                                    self.max_depth, self.min_split, self.F,
+                                    self.max_depth, self.min_split, self.max_features,
                                     None, self.random_state)
         return self
 
@@ -395,8 +396,9 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     min_split : integer, optional (default=1)
         minimum size to split on
 
-    F : integer, optional (default=None)
-        if given, then, choose F features, 0 < F <= n_dims
+    max_features : integer, optional (default=None)
+        if given, then use a subset (max_features) of features.
+        max_features must be in range 0 < max_features <= n_features
 
     random_state : integer or array_like, optional (default=None)
         seed the random number generator
@@ -429,9 +431,10 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     """
 
     def __init__(self, n_classes=None, criterion='gini', max_depth=10,
-                  min_split=1, F=None, random_state=None):
-        BaseDecisionTree.__init__(self, n_classes, 'classification', criterion,
-                                  max_depth, min_split, F, random_state)
+                  min_split=1, max_features=None, random_state=None):
+        BaseDecisionTree.__init__(self, n_classes, 'classification',
+                                  criterion, max_depth, min_split,
+                                  max_features, random_state)
 
     def predict_proba(self, X):
         """
@@ -503,8 +506,9 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     min_split : integer, optional (default=1)
         minimum size to split on
 
-    F : integer, optional (default=None)
-        if given, then, choose F features, 0 < F <= n_dims
+    max_features : integer, optional (default=None)
+        if given, then use a subset (max_features) of features.
+        max_features must be in range 0 < max_features <= n_features
 
     random_state : integer or array_like, optional
         seed the random number generator
@@ -536,6 +540,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     """
 
     def __init__(self, criterion='mse', max_depth=10,
-                  min_split=1, F=None, random_state=None):
-        BaseDecisionTree.__init__(self, None, 'regression', criterion,
-                                  max_depth, min_split, F, random_state)
+                  min_split=1, max_features=None, random_state=None):
+        BaseDecisionTree.__init__(self, None, 'regression',
+                                  criterion, max_depth, min_split,
+                                  max_features, random_state)

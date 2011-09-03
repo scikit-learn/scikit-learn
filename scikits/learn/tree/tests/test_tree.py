@@ -45,7 +45,7 @@ def test_classification_toy():
     """
     With subsampling
     """
-    clf = tree.DecisionTreeClassifier(F=1, random_state=1)
+    clf = tree.DecisionTreeClassifier(max_features=1, random_state=1)
     clf.fit(X,Y)
     
     assert_array_equal(clf.predict(T), true_result)
@@ -62,7 +62,7 @@ def test_regression_toy():
     """
     With subsampling
     """
-    clf = tree.DecisionTreeRegressor(F=1, random_state=1)
+    clf = tree.DecisionTreeRegressor(max_features=1, random_state=1)
     clf.fit(X,Y)
     
     assert_almost_equal(clf.predict(T), true_result)
@@ -82,7 +82,9 @@ def test_iris():
         assert score > 0.9, "Failed with criterion " + c + \
             " and score = " + str(score) 
 
-        clf = tree.DecisionTreeClassifier(criterion=c, F=2, random_state=1)\
+        clf = tree.DecisionTreeClassifier(criterion=c,
+                                          max_features=2,
+                                          random_state=1)\
               .fit(iris.data, iris.target)
             
         score = np.mean(clf.predict(iris.data) == iris.target) 
@@ -101,7 +103,9 @@ def test_boston():
         assert score < 1, "Failed with criterion " + c + \
             " and score = " + str(score)             
 
-        clf = tree.DecisionTreeRegressor(criterion=c, F=6, random_state=1)\
+        clf = tree.DecisionTreeRegressor(criterion=c,
+                                         max_features=6,
+                                         random_state=1)\
               .fit(boston.data, boston.target)
         
         #using fewer dimensions reduces the learning ability of this tree, 
@@ -163,11 +167,11 @@ def test_error():
     clf.fit(Xf, Y)
     assert_array_equal(clf.predict(T), true_result)
 
-    # use values of F that are invalid
-    clf = tree.DecisionTreeClassifier(F=-1)
+    # use values of max_features that are invalid
+    clf = tree.DecisionTreeClassifier(max_features=-1)
     assert_raises(ValueError, clf.fit, X, Y2)
     
-    clf = tree.DecisionTreeClassifier(F=10)
+    clf = tree.DecisionTreeClassifier(max_features=10)
     assert_raises(ValueError, clf.fit, X, Y2)
 
     # predict before fitting
