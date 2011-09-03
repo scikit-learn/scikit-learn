@@ -19,21 +19,20 @@ from ..utils import check_random_state
 import numpy as np
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 import _tree
-import random
 
 __all__ = [
     'DecisionTreeClassifier',
     'DecisionTreeRegressor',
     ]
 
-lookup_c = \
-      {'gini': _tree.Gini,
+lookup_c = {
+       'gini': _tree.Gini,
        'entropy': _tree.Entropy,
        #'miss': _tree.eval_miss,
        }
-lookup_r = \
-      {'mse': _tree.MSE,
-      }
+lookup_r = {
+       'mse': _tree.MSE,
+       }
 
 
 class Leaf(object):
