@@ -127,7 +127,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         X : array_like, shape = (n_features, n_features)
         """
         ary = np.atleast_2d(X)
-        return self._get_kernel(self._X, ary).T * self.y_
+        return np.dot(self._get_kernel(self._X, ary).T, self.y_)
 
     def fit(self, X, y):
         """
@@ -238,7 +238,7 @@ class LabelPropagation(BaseLabelPropagation):
         """
         affinity_matrix = self._get_kernel(self._X, self._X)
         degree_inv = np.diag(1. / np.sum(affinity_matrix, axis=0))
-        aff_ideg = degree_inv * np.matrix(affinity_matrix)
+        aff_ideg = np.dot(degree_inv, affinity_matrix)
         return aff_ideg
 
 
@@ -294,8 +294,9 @@ class LabelSpreading(BaseLabelPropagation):
         affinity_matrix[np.diag_indices(n_samples)] = 0
         degree_matrix = np.diag(1. / np.sum(affinity_matrix, axis=0))
         np.sqrt(degree_matrix, degree_matrix)
-        laplacian = degree_matrix * np.matrix(affinity_matrix) * degree_matrix
-        return laplacian
+        np.dot(degree_matrix, affinity_matrix, affinity_matrix)
+        np.dot(affinity_matrix, degree_matrix, affinity_matrix)
+        return affinity_matrix
 
 ### Helper functions
 
