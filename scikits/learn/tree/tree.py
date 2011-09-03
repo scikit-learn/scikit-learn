@@ -108,15 +108,15 @@ class Node(object):
                   self.error, self.samples, self.value)
 
 
-def _build_tree(is_classification, X, labels, criterion,
+def _build_tree(is_classification, X, y, criterion,
                max_depth, min_split, max_features, n_classes, random_state):
 
     n_samples, n_dims = X.shape
-    if len(labels) != len(X):
+    if len(y) != len(X):
         raise ValueError("Number of labels=%d does not match "
                           "number of features=%d\n"
-                         % (len(labels), len(X)))
-    labels = np.array(labels, dtype=np.float64, order="c")
+                         % (len(y), len(X)))
+    y = np.array(y, dtype=np.float64, order="c")
 
     feature_mask = np.ones(n_dims, dtype=np.bool)
     sample_dims = np.arange(n_dims)
@@ -145,14 +145,14 @@ def _build_tree(is_classification, X, labels, criterion,
         raise ValueError("max_depth must be greater than zero.\n"
                          "max_depth is %s." % max_depth)
 
-    def recursive_partition(X, labels, depth):
+    def recursive_partition(X, y, depth):
         is_split_valid = True
 
         if depth >= max_depth:
             is_split_valid = False
 
         dim, thresh, error, init_error = _tree._find_best_split(X,
-                                                                labels,
+                                                                y,
                                                                 criterion)
 
         if dim != -1:
@@ -165,10 +165,10 @@ def _build_tree(is_classification, X, labels, criterion,
 
         if is_classification:
             a = np.zeros((n_classes, ))
-            t = labels.max() + 1
-            a[:t] = np.bincount(labels.astype(np.int))
+            t = y.max() + 1
+            a[:t] = np.bincount(y.astype(np.int))
         else:
-            a = np.mean(labels)
+            a = np.mean(y)
 
         if is_split_valid == False:
             return Leaf(a)
@@ -176,14 +176,14 @@ def _build_tree(is_classification, X, labels, criterion,
         return Node(dimension=sample_dims[dim],
                     threshold=thresh,
                     error=init_error,
-                    samples=len(labels),
+                    samples=len(y),
                     value=a,
                     left=recursive_partition(X[split],
-                                             labels[split], depth + 1),
+                                             y[split], depth + 1),
                     right=recursive_partition(X[~split],
-                                              labels[~split], depth + 1))
+                                              y[~split], depth + 1))
 
-    return recursive_partition(X, labels, 0)
+    return recursive_partition(X, y, 0)
 
 
 def _apply_tree(tree, X):
@@ -274,7 +274,8 @@ class BaseDecisionTree(BaseEstimator):
         y : array-like, shape = [n_samples]
             Target values (integers in classification, real numbers in
             regression)
-            For classification, labels must correspond to classes 0,1,...,n_classes-1
+            For classification, labels must correspond to classes 
+            0, 1, ..., n_classes-1
 
         Returns
         -------
@@ -287,8 +288,8 @@ class BaseDecisionTree(BaseEstimator):
         if self.type == 'classification':
             y = np.asanyarray(y, dtype=np.int, order='C')
 
-            labels = np.unique(y)
-            if tuple(labels) == (-1, 1):
+            y_unique = np.unique(y)
+            if tuple(y_unique) == (-1, 1):
                 if self.n_classes is None:
                     self.n_classes = 2
                 else:
@@ -297,11 +298,11 @@ class BaseDecisionTree(BaseEstimator):
                                          " classification")
                 self.classification_subtype = "binary"
                 y[y == -1] = 0  # normalise target
-            elif labels.min() >= 0:
+            elif y.min() >= 0:
                 if self.n_classes is None:
-                    self.n_classes = labels.max() + 1
+                    self.n_classes = y.max() + 1
                 else:
-                    if self.n_classes < labels.max() + 1:
+                    if self.n_classes < y.max() + 1:
                         raise ValueError("Labels must be in range"
                                          "[0 to %s) " % self.n_classes)
                 self.classification_subtype = "multiclass"
@@ -322,8 +323,8 @@ class BaseDecisionTree(BaseEstimator):
             y = np.asanyarray(y, dtype=np.float64, order='C')
 
             criterion_class = lookup_r[self.criterion]
-            labels_temp = np.zeros((n_samples,), dtype=np.float64)
-            criterion = criterion_class(labels_temp)            
+            y_temp = np.zeros((n_samples,), dtype=np.float64)
+            criterion = criterion_class(y_temp)            
             self.tree = _build_tree(False, X, y, criterion,
                                     self.max_depth, self.min_split, self.max_features,
                                     None, self.random_state)
