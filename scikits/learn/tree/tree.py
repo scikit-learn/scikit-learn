@@ -345,7 +345,7 @@ class BaseDecisionTree(BaseEstimator):
 
         Returns
         -------
-        C : array, shape = [n_samples]
+        predictions : array, shape = [n_samples]
         """
 
         X = np.atleast_2d(X)
@@ -363,21 +363,22 @@ class BaseDecisionTree(BaseEstimator):
 
         if self.type == 'classification':
             if self.classification_subtype == 'binary':
-                C = np.zeros(n_samples, dtype=int)
+                predictions = np.zeros(n_samples, dtype=int)
                 for idx, sample in enumerate(X):
                     tmp = np.argmax(_apply_tree(self.tree, sample))
                     assert tmp == 0 or tmp == 1
-                    C[idx] = -1 if tmp == 0 else 1
+                    predictions[idx] = -1 if tmp == 0 else 1
             elif self.classification_subtype == 'multiclass':
-                C = np.zeros(n_samples, dtype=int)
+                predictions = np.zeros(n_samples, dtype=int)
                 for idx, sample in enumerate(X):
-                    C[idx] = np.argmax(_apply_tree(self.tree, sample))
+                    predictions[idx] = np.argmax(_apply_tree(self.tree,
+                                                             sample))
         else:
-            C = np.zeros(n_samples, dtype=float)
+            predictions = np.zeros(n_samples, dtype=float)
             for idx, sample in enumerate(X):
-                C[idx] = _apply_tree(self.tree, sample)
+                predictions[idx] = _apply_tree(self.tree, sample)
 
-        return C
+        return predictions
 
 
 class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
