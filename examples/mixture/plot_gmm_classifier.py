@@ -30,9 +30,9 @@ import pylab as pl
 import matplotlib as mpl
 import numpy as np
 
-from scikits.learn import datasets
-from scikits.learn.cross_val import StratifiedKFold
-from scikits.learn.mixture import GMM
+from sklearn import datasets
+from sklearn.cross_val import StratifiedKFold
+from sklearn.mixture import GMM
 
 def make_ellipses(gmm, ax):
     for n, color in enumerate('rgb'):

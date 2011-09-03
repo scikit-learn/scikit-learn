@@ -23,11 +23,11 @@ print __doc__
 # Author: Vincent Dubourg <vincent.dubourg@gmail.com>
 # License: BSD style
 
-from scikits.learn import datasets
-from scikits.learn.gaussian_process import GaussianProcess
-from scikits.learn.cross_val import cross_val_score, KFold
+from sklearn import datasets
+from sklearn.gaussian_process import GaussianProcess
+from sklearn.cross_val import cross_val_score, KFold
 
-# Load the dataset from scikits' data sets
+# Load the dataset from scikit's data sets
 diabetes = datasets.load_diabetes()
 X, y = diabetes.data, diabetes.target
 

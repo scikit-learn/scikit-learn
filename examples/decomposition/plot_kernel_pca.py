@@ -14,7 +14,7 @@ print __doc__
 import numpy as np
 import pylab as pl
 
-from scikits.learn.decomposition import PCA, KernelPCA
+from sklearn.decomposition import PCA, KernelPCA
 
 np.random.seed(0)
 

@@ -5,7 +5,7 @@
 Decomposing signals in components (matrix factorization problems)
 =================================================================
 
-.. currentmodule:: scikits.learn.decomposition
+.. currentmodule:: sklearn.decomposition
 
 
 .. _PCA:

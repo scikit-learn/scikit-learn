@@ -17,14 +17,14 @@ from time import time
 import logging
 import numpy as np
 
-from scikits.learn.datasets import fetch_20newsgroups
-from scikits.learn.feature_extraction.text import Vectorizer
-from scikits.learn import metrics
+from sklearn.datasets import fetch_20newsgroups
+from sklearn.feature_extraction.text import Vectorizer
+from sklearn import metrics
 
-from scikits.learn.cluster import MiniBatchKMeans
-from scikits.learn.cluster import randindex
+from sklearn.cluster import MiniBatchKMeans
+from sklearn.cluster import randindex
 
-from scikits.learn.preprocessing import Normalizer
+from sklearn.preprocessing import Normalizer
 
 
 # Display progress logs on stdout

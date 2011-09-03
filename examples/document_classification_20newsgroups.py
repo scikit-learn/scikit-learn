@@ -29,15 +29,15 @@ from optparse import OptionParser
 import sys
 from time import time
 
-from scikits.learn.datasets import fetch_20newsgroups
-from scikits.learn.feature_extraction.text import Vectorizer
-from scikits.learn.feature_selection import SelectKBest, chi2
-from scikits.learn.linear_model import RidgeClassifier
-from scikits.learn.svm.sparse import LinearSVC
-from scikits.learn.linear_model.sparse import SGDClassifier
-from scikits.learn.naive_bayes import BernoulliNB, MultinomialNB
-from scikits.learn.neighbors import NeighborsClassifier
-from scikits.learn import metrics
+from sklearn.datasets import fetch_20newsgroups
+from sklearn.feature_extraction.text import Vectorizer
+from sklearn.feature_selection import SelectKBest, chi2
+from sklearn.linear_model import RidgeClassifier
+from sklearn.svm.sparse import LinearSVC
+from sklearn.linear_model.sparse import SGDClassifier
+from sklearn.naive_bayes import BernoulliNB, MultinomialNB
+from sklearn.neighbors import NeighborsClassifier
+from sklearn import metrics
 
 
 # Display progress logs on stdout

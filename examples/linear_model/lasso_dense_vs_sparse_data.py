@@ -15,8 +15,8 @@ import numpy as np
 from scipy import sparse
 from scipy import linalg
 
-from scikits.learn.linear_model.sparse import Lasso as SparseLasso
-from scikits.learn.linear_model import Lasso as DenseLasso
+from sklearn.linear_model.sparse import Lasso as SparseLasso
+from sklearn.linear_model import Lasso as DenseLasso
 
 
 ###############################################################################

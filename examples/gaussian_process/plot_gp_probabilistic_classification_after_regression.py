@@ -21,7 +21,7 @@ print __doc__
 
 import numpy as np
 from scipy import stats
-from scikits.learn.gaussian_process import GaussianProcess
+from sklearn.gaussian_process import GaussianProcess
 from matplotlib import pyplot as pl
 from matplotlib import cm
 
