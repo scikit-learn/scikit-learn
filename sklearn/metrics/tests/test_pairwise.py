@@ -9,7 +9,8 @@ from scipy.sparse import csr_matrix
 
 from ..pairwise import euclidean_distances, linear_kernel, polynomial_kernel, \
                        rbf_kernel, sigmoid_kernel
-from .. import pairwise_distances
+from .. import pairwise_distances, pairwise_kernels
+from .. import pairwise_distance_functions, pairwise_kernel_functions
 
 np.random.seed(0)
 
@@ -40,9 +41,37 @@ def test_pairwise_distances():
     assert_true(S is S2)
     assert_raises(ValueError, pairwise_distances, X, None, "precomputed")
 
+
 def test_pairwise_kernels():
     """ Test the pairwise_kernels helper function. """
-    X = 
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((5, 4))
+    Y = rng.random-sample((2, 4))
+    # Test with all metrics that should be in pairwise_kernel_functions.
+    test_metrics = ["rbf", "sigmoid", "polynomial", "linear"]
+    for metric, function in test_metrics:
+        function = pairwise_kernel_functions[metric]
+        # Test with Y=None
+        K1 = pairwise_kernel(X, metric=metric)
+        K2 = function(X)
+        assert_equal(K1, K2)
+        # Test with Y=Y
+        K1 = pairwise_kernel(X, Y=Y, metric=metric)
+        K2 = function(X, Y=Y)
+        assert_equal(K1, K2)
+    # Test with a callable function, with given keywords.
+    metric = callable_rbf_kernel
+    kwds = {}
+    kwds['gamma'] = 0.5
+    K1 = pairwise_kernel(X, Y=Y, metric=metric, **kwds)
+    K2 = rbf_kernel(X, Y=Y, **kwds)    
+    assert_equal(K1, K2)
+
+
+def callable_rbf_kernel(x, y):
+    """ Callable version of pairwise.rbf_kernel. """
+    return rbf_kernel(np.atleast_2d(x), np.atleast_2d(y))
+
 
 def test_euclidean_distances():
     """Check the pairwise Euclidean distances computation"""

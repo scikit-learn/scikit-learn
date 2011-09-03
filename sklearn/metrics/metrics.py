@@ -719,12 +719,6 @@ def hinge_loss(y_true, pred_decision, pos_label=1, neg_label=-1):
 
     margin = y_true * pred_decision
     losses = 1 - margin
-<<<<<<< HEAD
     # The hinge doesn't penalize good enough predictions.
     losses[losses <= 0] = 0
-||||||| merged common ancestors
-    losses[losses <= 0] = 0 # the hinge doesn't penalize good enough predictions
-=======
-    losses[losses <= 0] = 0  # hinge doesn't penalize good enough predictions
->>>>>>> master
     return np.mean(losses)
