@@ -545,7 +545,8 @@ class NeighborsClassifier(NearestNeighbors, ClassifierMixin):
     leaf_size : int, optional
         Leaf size passed to BallTree or cKDTree.  This can affect the speed
         of the nearest neighbors query.  The optimal value depends on the
-        nature of the problem (see Discussion below).  Defaults to 20.
+        nature of the problem (see Discussion in NearestNeighbors).
+        Defaults to 20.
 
     classification_type : {'k', 'r'}, optional
         Type of fit to use: 'k' specifies a k-NN classification.
@@ -666,7 +667,8 @@ class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
     leaf_size : int, optional
         Leaf size passed to BallTree or cKDTree.  This can affect the speed
         of the nearest neighbors query.  The optimal value depends on the
-        nature of the problem (see Discussion below).  Defaults to 20.
+        nature of the problem (see discussion in NearestNeighbors).
+        Defaults to 20.
 
     classification_type : {'k', 'r'}, optional
         Type of fit to use: 'k' specifies a k-NN classification.
@@ -754,6 +756,8 @@ class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
                     'Unsupported mode, must be one of "barycenter" or '
                     '"mean" but got %s instead' % self.mode)
         else:
+            # barycenter_weights() will have to be modified to allow
+            # calculation of weights with a different `k` at each point.
             raise NotImplementedError("classification_type = 'r'")
                 
 
