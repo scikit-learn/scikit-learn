@@ -175,11 +175,13 @@ class BaseLibSVM(BaseEstimator):
 
         if self.kernel == "precomputed":
             if X.shape[1] != self.shape_fit_[0]:
-                raise ValueError("X.shape[1] should be equal to the number of "
-                                 "samples at training time!")
+                raise ValueError("X.shape[1] = %d should be equal to %d, "
+                                 "the number of samples at training time" %
+                                 (X.shape[1], self.shape_fit_[0]))
         elif n_features != self.shape_fit_[1]:
-            raise ValueError("X.shape[1] should be equal to the number of "
-                             "features at training time!")
+            raise ValueError("X.shape[1] = %d should be equal to %d, "
+                             "the number of features at training time" %
+                             (n_features, self.shape_fit_[1]))
 
         svm_type = LIBSVM_IMPL.index(self.impl)
         return libsvm.predict(
