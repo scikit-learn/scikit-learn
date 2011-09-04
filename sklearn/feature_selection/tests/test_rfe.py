@@ -18,12 +18,16 @@ def test_rfe():
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
     y = iris.target
 
-    rfe = RFE(estimator=SVC(kernel="linear"), n_features_to_select=4, step=0.1)
+    clf = SVC(kernel="linear")
+    rfe = RFE(estimator=clf, n_features_to_select=4, step=0.1)
     rfe.fit(X, y)
     X_r = rfe.transform(X)
 
     assert X_r.shape == iris.data.shape
     assert_array_almost_equal(X_r[:10], iris.data[:10])
+
+    assert_array_almost_equal(rfe.predict(X), clf.predict(iris.data))
+    assert rfe.score(X, y) == clf.score(iris.data, iris.target)
 
 def test_rfecv():
     generator = check_random_state(0)
