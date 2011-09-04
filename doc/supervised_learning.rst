@@ -16,4 +16,4 @@ Supervised learning
     modules/pls
     modules/naive_bayes
     modules/multiclass
-
+    modules/tree

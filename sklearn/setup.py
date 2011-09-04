@@ -33,7 +33,9 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('gaussian_process/tests')
     config.add_subpackage('manifold')
     config.add_subpackage('metrics')
-    config.add_subpackage('metrics/tests')
+    config.add_subpackage('metrics/tests')  
+    config.add_subpackage("tree")
+    config.add_subpackage("tree/tests")    
 
     # some libs needs cblas, fortran-compiled BLAS will not be sufficient
     blas_info = get_info('blas_opt', 0)
