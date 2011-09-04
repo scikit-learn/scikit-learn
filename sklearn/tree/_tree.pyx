@@ -32,25 +32,23 @@ cdef extern from "float.h":
 #    be the proportion of class k observations in node m
 
 cdef class Criterion:
-    """Interface for splitting criteria, both regression and classification."""
+    """Interface for splitting criteria (regression and classification)"""
 
-    cdef void init(self, np.ndarray[np.float64_t, ndim=1] y,
-                   int *sorted_X_i):
+    cdef void init(self, np.ndarray[np.float64_t, ndim=1] y, int *sorted_X_i):
         """Initialise the criterion class."""
         pass
 
-    cdef int update(self, int a, int b,
-                     np.float64_t *y,
-                     int *sorted_X_i):
-        """
-        Update the criteria for each value in interval [a,b)
-        where a and b are indices in `sorted_X_i`.
+    cdef int update(self, int a, int b, np.float64_t *y, int *sorted_X_i):
+        """Update the criteria for each value in interval [a,b)
+
+        a and b are indices in `sorted_X_i`.
         """
         pass
 
     cdef double eval(self):
-        """Evaluate the criteria (aka the split error). """
+        """Evaluate the criteria (aka the split error)."""
         pass
+
 
 cdef class ClassificationCriterion(Criterion):
     """Abstract criterion for classification.
@@ -77,8 +75,7 @@ cdef class ClassificationCriterion(Criterion):
     cdef int n_left
     cdef int n_right
 
-    def __init__(self,
-                 int n_classes,
+    def __init__(self, int n_classes,
                  np.ndarray[np.int32_t, ndim=1] label_count_left,
                  np.ndarray[np.int32_t, ndim=1] label_count_right):
         self.n_classes = n_classes
@@ -88,8 +85,7 @@ cdef class ClassificationCriterion(Criterion):
         self.label_count_left = <int*>label_count_left.data
         self.label_count_right = <int*>label_count_right.data
 
-    cdef void init(self, np.ndarray[np.float64_t, ndim=1] y,
-                   int *sorted_X_i):
+    cdef void init(self, np.ndarray[np.float64_t, ndim=1] y, int *sorted_X_i):
         """Initialise the criterion class."""
 
         self.n_samples = y.shape[0]
@@ -118,12 +114,10 @@ cdef class ClassificationCriterion(Criterion):
         #     print self.label_count_right[c],
         # print "] ", self.n_right
 
-    cdef int update(self, int a, int b,
-                     np.float64_t *y,
-                     int *sorted_X_i):
-        """
-        Update the criteria for each value in interval [a,b)
-        where a and b are indices in `sorted_X_i`.
+    cdef int update(self, int a, int b, np.float64_t *y, int *sorted_X_i):
+        """Update the criteria for each value in interval [a,b)
+
+        a and b are indices in `sorted_X_i`.
         """
         cdef int c
         # post condition: all samples from [0:b) are on the left side
@@ -177,9 +171,11 @@ cdef class Gini(ClassificationCriterion):
 
         for k from 0 <= k < self.n_classes:
             if self.label_count_left[k] > 0:
-                H_left -= (self.label_count_left[k] / n_left) * (self.label_count_left[k] / n_left)
+                H_left -= ((self.label_count_left[k] / n_left)
+                           * (self.label_count_left[k] / n_left))
             if self.label_count_right[k] > 0:
-                H_right -= (self.label_count_right[k] / n_right) * (self.label_count_right[k] / n_right)
+                H_right -= ((self.label_count_right[k] / n_right)
+                            * (self.label_count_right[k] / n_right))
 
         e1 = (n_left / self.n_samples) * H_left
         e2 = (n_right / self.n_samples) * H_right
@@ -204,9 +200,11 @@ cdef class Entropy(ClassificationCriterion):
 
         for k from 0 <= k < self.n_classes:
             if self.label_count_left[k] > 0:
-                H_left -= (self.label_count_left[k] / n_left) * log(self.label_count_left[k] / n_left)
+                H_left -= ((self.label_count_left[k] / n_left)
+                           * log( self.label_count_left[k] / n_left))
             if self.label_count_right[k] > 0:
-                H_right -= (self.label_count_right[k] / n_right) * log(self.label_count_right[k] / n_right)
+                H_right -= ((self.label_count_right[k] / n_right)
+                            * log(self.label_count_right[k] / n_right))
 
         e1 = (n_left / self.n_samples) * H_left
         e2 = (n_right / self.n_samples) * H_right
@@ -246,8 +244,7 @@ cdef class RegressionCriterion(Criterion):
         self.n_right = 0
         self.y = <double*> y.data
 
-    cdef void init(self, np.ndarray[np.float64_t, ndim=1] y,
-                   int *sorted_X_i):
+    cdef void init(self, np.ndarray[np.float64_t, ndim=1] y, int *sorted_X_i):
         """Initialise the criterion class."""
 
         self.n_samples = y.shape[0]
@@ -266,12 +263,10 @@ cdef class RegressionCriterion(Criterion):
         # print "    sum_left = ", self.sum_left , self.n_left
         # print "    sum_right = ", self.sum_right , self.n_right
 
-    cdef int update(self, int a, int b,
-                     np.float64_t *y,
-                     int *sorted_X_i):
-        """
-        Update the criteria for each value in interval [a,b)
-        where a and b are indices in `sorted_X_i`.
+    cdef int update(self, int a, int b, np.float64_t *y, int *sorted_X_i):
+        """Update the criteria for each value in interval [a,b)
+
+        a and b are indices in `sorted_X_i`.
         """
         cdef double val = 0.0
         # post condition: all samples from [0:b) are on the left side
@@ -303,9 +298,9 @@ cdef class RegressionCriterion(Criterion):
 cdef class MSE(RegressionCriterion):
 
     cdef double eval(self):
-        """
-        MSE =  \sum_i (y_i - c0)^2  / N
+        """Compute the Mean Square Error criterion value
 
+        MSE =  \sum_i (y_i - c0)^2  / N
         """
         cdef double mean_left = 0
         cdef double mean_right = 0
@@ -344,15 +339,13 @@ cdef class MSE(RegressionCriterion):
         return e1 + e2
 
 
-cdef int smallest_sample_larger_than(int sample_idx,
-                                     np.float64_t *X_i,
-                                     int *sorted_X_i,
-                                     int n_samples):
+cdef int smallest_sample_larger_than(int sample_idx, np.float64_t *X_i,
+                                     int *sorted_X_i, int n_samples):
     """Find the largest next sample.
 
-    Find the index in the `X_i` array for sample
-    who's feature `i` value is just about
-    greater than those of the sample `sorted_X_i[sample_idx]`.
+    Find the index in the `X_i` array for sample who's feature
+    `i` value is just about greater than those of the sample
+    `sorted_X_i[sample_idx]`.
 
     Returns
     -------
