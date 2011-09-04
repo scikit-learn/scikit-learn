@@ -2,7 +2,7 @@
 Nearest Neighbors
 =================
 
-.. currentmodule:: scikits.learn.neighbors
+.. currentmodule:: sklearn.neighbors
 
 The principle behind nearest neighbor methods (*k*-NN) is to find the *k*
 training samples closest in Euclidean distance to the sample to be classified,

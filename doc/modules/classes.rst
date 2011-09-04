@@ -10,11 +10,11 @@ Support Vector Machines
 =======================
 
 
-.. automodule:: scikits.learn.svm
+.. automodule:: sklearn.svm
    :no-members:
    :no-inherited-members:
 
-.. currentmodule:: scikits.learn
+.. currentmodule:: sklearn
 
 .. autosummary::
    :toctree: generated/
@@ -37,11 +37,11 @@ Support Vector Machines
 For sparse data
 ---------------
 
-.. automodule:: scikits.learn.svm.sparse
+.. automodule:: sklearn.svm.sparse
    :no-members:
    :no-inherited-members:
 
-.. currentmodule:: scikits.learn
+.. currentmodule:: sklearn
 
 .. autosummary::
    :toctree: generated/
@@ -73,11 +73,11 @@ Low-level methods
 Generalized Linear Models
 =========================
 
-.. automodule:: scikits.learn.linear_model
+.. automodule:: sklearn.linear_model
    :no-members:
    :no-inherited-members:
 
-.. currentmodule:: scikits.learn
+.. currentmodule:: sklearn
 
 .. autosummary::
    :toctree: generated/
@@ -116,11 +116,11 @@ Generalized Linear Models
 For sparse data
 ---------------
 
-.. automodule:: scikits.learn.linear_model.sparse
+.. automodule:: sklearn.linear_model.sparse
    :no-members:
    :no-inherited-members:
 
-.. currentmodule:: scikits.learn
+.. currentmodule:: sklearn
 
 .. autosummary::
    :toctree: generated/
@@ -136,11 +136,11 @@ For sparse data
 Naive Bayes
 ===========
 
-.. automodule:: scikits.learn.naive_bayes
+.. automodule:: sklearn.naive_bayes
    :no-members:
    :no-inherited-members:
 
-.. currentmodule:: scikits.learn
+.. currentmodule:: sklearn
 
 .. autosummary::
    :toctree: generated/
@@ -154,11 +154,11 @@ Naive Bayes
 Nearest Neighbors
 =================
 
-.. automodule:: scikits.learn.neighbors
+.. automodule:: sklearn.neighbors
    :no-members:
    :no-inherited-members:
 
-.. currentmodule:: scikits.learn
+.. currentmodule:: sklearn
 
 .. autosummary::
    :toctree: generated/
@@ -179,11 +179,11 @@ Nearest Neighbors
 Gaussian Mixture Models
 =======================
 
-.. automodule:: scikits.learn.mixture
+.. automodule:: sklearn.mixture
    :no-members:
    :no-inherited-members:
 
-.. currentmodule:: scikits.learn
+.. currentmodule:: sklearn
 
 .. autosummary::
    :toctree: generated/
@@ -197,11 +197,11 @@ Gaussian Mixture Models
 Hidden Markov Models
 ====================
 
-.. automodule:: scikits.learn.hmm
+.. automodule:: sklearn.hmm
    :no-members:
    :no-inherited-members:
 
-.. currentmodule:: scikits.learn
+.. currentmodule:: sklearn
 
 .. autosummary::
    :toctree: generated/
@@ -215,11 +215,11 @@ Hidden Markov Models
 Clustering
 ==========
 
-.. automodule:: scikits.learn.cluster
+.. automodule:: sklearn.cluster
    :no-members:
    :no-inherited-members:
 
-.. currentmodule:: scikits.learn
+.. currentmodule:: sklearn
 
 .. autosummary::
    :toctree: generated/
@@ -254,11 +254,11 @@ Metrics
 Classification metrics
 ----------------------
 
-.. automodule:: scikits.learn.metrics
+.. automodule:: sklearn.metrics
    :no-members:
    :no-inherited-members:
 
-.. currentmodule:: scikits.learn
+.. currentmodule:: sklearn
 
 .. autosummary::
    :toctree: generated/
@@ -282,11 +282,11 @@ Classification metrics
 Regression metrics
 ------------------
 
-.. automodule:: scikits.learn.metrics
+.. automodule:: sklearn.metrics
    :no-members:
    :no-inherited-members:
 
-.. currentmodule:: scikits.learn
+.. currentmodule:: sklearn
 
 .. autosummary::
    :toctree: generated/
@@ -299,11 +299,11 @@ Regression metrics
 Clustering metrics
 ------------------
 
-.. automodule:: scikits.learn.metrics.cluster
+.. automodule:: sklearn.metrics.cluster
    :no-members:
    :no-inherited-members:
 
-.. currentmodule:: scikits.learn
+.. currentmodule:: sklearn
 
 .. autosummary::
    :toctree: generated/
@@ -317,11 +317,11 @@ Clustering metrics
 Pairwise metrics
 ----------------
 
-.. automodule:: scikits.learn.metrics.pairwise
+.. automodule:: sklearn.metrics.pairwise
    :no-members:
    :no-inherited-members:
 
-.. currentmodule:: scikits.learn
+.. currentmodule:: sklearn
 
 .. autosummary::
    :toctree: generated/
@@ -337,11 +337,11 @@ Pairwise metrics
 Covariance Estimators
 =====================
 
-.. automodule:: scikits.learn.covariance
+.. automodule:: sklearn.covariance
    :no-members:
    :no-inherited-members:
 
-.. currentmodule:: scikits.learn
+.. currentmodule:: sklearn
 
 .. autosummary::
    :toctree: generated/
@@ -365,11 +365,11 @@ Covariance Estimators
 Signal Decomposition
 ====================
 
-.. automodule:: scikits.learn.decomposition
+.. automodule:: sklearn.decomposition
    :no-members:
    :no-inherited-members:
 
-.. currentmodule:: scikits.learn
+.. currentmodule:: sklearn
 
 .. autosummary::
    :toctree: generated/
@@ -407,11 +407,11 @@ Linear Discriminant Analysis
 Partial Least Squares
 =====================
 
-.. automodule:: scikits.learn.pls
+.. automodule:: sklearn.pls
    :no-members:
    :no-inherited-members:
 
-.. currentmodule:: scikits.learn
+.. currentmodule:: sklearn
 
 .. autosummary::
    :toctree: generated/
@@ -426,11 +426,11 @@ Partial Least Squares
 Cross Validation
 ================
 
-.. automodule:: scikits.learn.cross_val
+.. automodule:: sklearn.cross_val
    :no-members:
    :no-inherited-members:
 
-.. currentmodule:: scikits.learn
+.. currentmodule:: sklearn
 
 .. autosummary::
    :toctree: generated/
@@ -449,11 +449,11 @@ Cross Validation
 Grid Search
 ===========
 
-.. automodule:: scikits.learn.grid_search
+.. automodule:: sklearn.grid_search
    :no-members:
    :no-inherited-members:
 
-.. currentmodule:: scikits.learn
+.. currentmodule:: sklearn
 
 .. autosummary::
    :toctree: generated/
@@ -468,11 +468,11 @@ Grid Search
 Feature Selection
 =================
 
-.. automodule:: scikits.learn.feature_selection
+.. automodule:: sklearn.feature_selection
    :no-members:
    :no-inherited-members:
 
-.. currentmodule:: scikits.learn
+.. currentmodule:: sklearn
 
 .. autosummary::
    :toctree: generated/
@@ -488,20 +488,20 @@ Feature Selection
 Feature Extraction
 ==================
 
-.. automodule:: scikits.learn.feature_extraction
+.. automodule:: sklearn.feature_extraction
    :no-members:
    :no-inherited-members:
 
-.. currentmodule:: scikits.learn
+.. currentmodule:: sklearn
 
 From images
 -------------
 
-.. automodule:: scikits.learn.feature_extraction.image
+.. automodule:: sklearn.feature_extraction.image
    :no-members:
    :no-inherited-members:
 
-.. currentmodule:: scikits.learn
+.. currentmodule:: sklearn
 
 .. autosummary::
    :toctree: generated/
@@ -520,11 +520,11 @@ From images
 From text
 ---------
 
-.. automodule:: scikits.learn.feature_extraction.text
+.. automodule:: sklearn.feature_extraction.text
    :no-members:
    :no-inherited-members:
 
-.. currentmodule:: scikits.learn
+.. currentmodule:: sklearn
 
 .. autosummary::
    :toctree: generated/
@@ -541,11 +541,11 @@ From text
 Preprocessing and normalization
 ===============================
 
-.. automodule:: scikits.learn.preprocessing
+.. automodule:: sklearn.preprocessing
    :no-members:
    :no-inherited-members:
 
-.. currentmodule:: scikits.learn
+.. currentmodule:: sklearn
 
 .. autosummary::
    :toctree: generated/
@@ -591,11 +591,11 @@ Datasets
 Loaders
 -------
 
-.. automodule:: scikits.learn.datasets
+.. automodule:: sklearn.datasets
    :no-members:
    :no-inherited-members:
 
-.. currentmodule:: scikits.learn
+.. currentmodule:: sklearn
 
 .. autosummary::
    :toctree: generated/
@@ -616,11 +616,11 @@ Loaders
 Samples generator
 -----------------
 
-.. automodule:: scikits.learn.datasets
+.. automodule:: sklearn.datasets
    :no-members:
    :no-inherited-members:
 
-.. currentmodule:: scikits.learn
+.. currentmodule:: sklearn
 
 .. autosummary::
    :toctree: generated/
@@ -643,11 +643,11 @@ Samples generator
 Pipeline
 ========
 
-.. automodule:: scikits.learn.pipeline
+.. automodule:: sklearn.pipeline
    :no-members:
    :no-inherited-members:
 
-.. currentmodule:: scikits.learn
+.. currentmodule:: sklearn
 
 .. autosummary::
    :toctree: generated/
@@ -659,11 +659,11 @@ Pipeline
 Utilities
 =========
 
-.. automodule:: scikits.learn.utils
+.. automodule:: sklearn.utils
    :no-members:
    :no-inherited-members:
 
-.. currentmodule:: scikits.learn
+.. currentmodule:: sklearn
 
 .. autosummary::
    :toctree: generated/

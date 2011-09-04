@@ -7,8 +7,8 @@ from time import time
 import numpy as np
 from collections import defaultdict
 
-from scikits.learn.decomposition.nmf import NMF, _initialize_nmf
-from scikits.learn.datasets.samples_generator import make_low_rank_matrix
+from sklearn.decomposition.nmf import NMF, _initialize_nmf
+from sklearn.datasets.samples_generator import make_low_rank_matrix
 
 
 def alt_nnmf(V, r, max_iter=1000, tol=1e-3, R=None):

@@ -5,7 +5,7 @@ Faces dataset decompositions
 
 This example applies to :doc:`/datasets/olivetti_faces` different
 unsupervised matrix decomposition (dimension reduction) methods  from the
-module :py:mod:`scikits.learn.decomposition` (see the documentation
+module :py:mod:`sklearn.decomposition` (see the documentation
 chapter :ref:`decompositions`) .
 
 """
@@ -19,9 +19,9 @@ from time import time
 
 import pylab as pl
 
-from scikits.learn.datasets import fetch_olivetti_faces
-from scikits.learn.cluster import MiniBatchKMeans
-from scikits.learn import decomposition
+from sklearn.datasets import fetch_olivetti_faces
+from sklearn.cluster import MiniBatchKMeans
+from sklearn import decomposition
 
 # Display progress logs on stdout
 logging.basicConfig(level=logging.INFO,

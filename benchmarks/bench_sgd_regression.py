@@ -17,9 +17,9 @@ import gc
 
 from time import time
 
-from scikits.learn.linear_model import Ridge, SGDRegressor, ElasticNet
-from scikits.learn.metrics import mean_square_error
-from scikits.learn.datasets.samples_generator import make_regression
+from sklearn.linear_model import Ridge, SGDRegressor, ElasticNet
+from sklearn.metrics import mean_square_error
+from sklearn.datasets.samples_generator import make_regression
 
 if __name__ == "__main__":
     list_n_samples = np.linspace(100, 10000, 5).astype(np.int)

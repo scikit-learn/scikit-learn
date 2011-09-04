@@ -51,8 +51,8 @@ import time
 import numpy as np
 import pylab as pl
 
-from scikits.learn.linear_model import LassoCV, LassoLarsCV, LassoLarsIC
-from scikits.learn import datasets
+from sklearn.linear_model import LassoCV, LassoLarsCV, LassoLarsIC
+from sklearn import datasets
 
 diabetes = datasets.load_diabetes()
 X = diabetes.data

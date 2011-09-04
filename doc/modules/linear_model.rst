@@ -5,7 +5,7 @@
 Generalized Linear Models
 =========================
 
-.. currentmodule:: scikits.learn.linear_model
+.. currentmodule:: sklearn.linear_model
 
 The following are a set of methods intended for regression in which
 the target value is expected to be a linear combination of the input
@@ -19,6 +19,7 @@ Across the module, we designate the vector :math:`w = (w_1,
 
 To perform classification with generalized linear models, see
 :ref:`Logistic_regression`.
+
 
 .. _ordinary_least_squares:
 
@@ -37,16 +38,14 @@ responses predicted by the linear approximation.
 
 :class:`LinearRegression` will take in its `fit` method arrays X, y
 and will store the coefficients :math:`w` of the linear model in its
-`coef\_` member.
+`coef\_` member::
 
-
-    >>> from scikits.learn import linear_model
+    >>> from sklearn import linear_model
     >>> clf = linear_model.LinearRegression()
     >>> clf.fit ([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
-    LinearRegression(fit_intercept=True)
+    LinearRegression(fit_intercept=True, normalize=False, overwrite_X=False)
     >>> clf.coef_
     array([ 0.5,  0.5])
-
 
 However, coefficient estimates for Ordinary Least Squares rely on the
 independence of the model terms. When terms are correlated and the
@@ -96,12 +95,13 @@ of shrinkage and thus the coefficients become more robust to collinearity.
 
 As with other linear models, :class:`Ridge` will take in its `fit` method
 arrays X, y and will store the coefficients :math:`w` of the linear model in
-its `coef\_` member.
+its `coef\_` member::
 
-    >>> from scikits.learn import linear_model
+    >>> from sklearn import linear_model
     >>> clf = linear_model.Ridge (alpha = .5)
     >>> clf.fit ([[0, 0], [0, 0], [1, 1]], [0, .1, 1])
-    Ridge(alpha=0.5, tol=0.001, fit_intercept=True)
+    Ridge(alpha=0.5, fit_intercept=True, normalize=False, overwrite_X=False,
+       tol=0.001)
     >>> clf.coef_
     array([ 0.34545455,  0.34545455])
     >>> clf.intercept_ #doctest: +ELLIPSIS
@@ -131,15 +131,15 @@ Setting alpha: generalized Cross-Validation
 :class:`RidgeCV` implements ridge regression with built-in
 cross-validation of the alpha parameter.  The object works in the same way
 as GridSearchCV except that it defaults to Generalized Cross-Validation
-(GCV), an efficient form of leave-one-out cross-validation.
+(GCV), an efficient form of leave-one-out cross-validation::
 
-    >>> from scikits.learn import linear_model
+    >>> from sklearn import linear_model
     >>> clf = linear_model.RidgeCV(alphas=[0.1, 1.0, 10.0])
-    >>> clf.fit ([[0, 0], [0, 0], [1, 1]], [0, .1, 1])         # doctest: +SKIP
-    RidgeCV(alphas=[0.1, 1.0, 10.0], loss_func=None, cv=None, score_func=None,
-        fit_intercept=True)
-    >>> clf.best_alpha                                         # doctest: +SKIP
-    0.10000000000000001
+    >>> clf.fit([[0, 0], [0, 0], [1, 1]], [0, .1, 1])       # doctest: +SKIP
+    RidgeCV(alphas=[0.1, 1.0, 10.0], cv=None, fit_intercept=True, loss_func=None,
+        normalize=False, score_func=None)
+    >>> clf.best_alpha                                      # doctest: +SKIP
+    0.1
 
 .. topic:: References
 
@@ -172,13 +172,13 @@ parameter vector.
 
 The implementation in the class :class:`Lasso` uses coordinate descent as
 the algorithm to fit the coefficients. See :ref:`least_angle_regression`
-for another implementation.
+for another implementation::
 
     >>> clf = linear_model.Lasso(alpha = 0.1)
-    >>> clf.fit ([[0, 0], [1, 1]], [0, 1])
-    Lasso(precompute='auto', alpha=0.1, max_iter=1000, tol=0.0001,
-       fit_intercept=True)
-    >>> clf.predict ([[1, 1]])
+    >>> clf.fit([[0, 0], [1, 1]], [0, 1])
+    Lasso(alpha=0.1, fit_intercept=True, max_iter=1000, normalize=False,
+       overwrite_X=False, precompute='auto', tol=0.0001)
+    >>> clf.predict([[1, 1]])
     array([ 0.8])
 
 Also useful for lower-level tasks is the function :func:`lasso_path` that
@@ -321,13 +321,14 @@ function of the norm of its coefficients.
 
 ::
 
-   >>> from scikits.learn import linear_model
+   >>> from sklearn import linear_model
    >>> clf = linear_model.LassoLars(alpha=.1)
-   >>> clf.fit ([[0, 0], [1, 1]], [0, 1]) # doctest: +ELLIPSIS
-   LassoLars(normalize=True, verbose=False, fit_intercept=True, max_iter=500,
-        eps=..., precompute='auto', alpha=0.1)
-   >>> clf.coef_
-   array([ 0.71715729,  0.        ])
+   >>> clf.fit ([[0, 0], [1, 1]], [0, 1])                 # doctest: +ELLIPSIS
+   LassoLars(alpha=0.1, eps=..., fit_intercept=True,
+        max_iter=500, normalize=True, overwrite_X=False, precompute='auto',
+        verbose=False)
+   >>> clf.coef_    # doctest: +ELLIPSIS
+   array([ 0.717157...,  0.        ])
 
 .. topic:: Examples:
 
@@ -357,7 +358,7 @@ column is always zero.
    <http://www-stat.stanford.edu/~hastie/Papers/LARS/LeastAngle_2002.pdf>`_
    by Hastie et al.
 
-.. OMP:
+.. _OMP:
 
 Orthogonal Matching Pursuit (OMP)
 =================================
@@ -458,16 +459,16 @@ By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e^{-6}`, *i.e
    :align: center
 
 
-*Bayesian Ridge Regression* is used for regression:
+*Bayesian Ridge Regression* is used for regression::
 
-    >>> from scikits.learn import linear_model
+    >>> from sklearn import linear_model
     >>> X = [[0., 0.], [1., 1.], [2., 2.], [3., 3.]]
     >>> Y = [0., 1., 2., 3.]
     >>> clf = linear_model.BayesianRidge()
     >>> clf.fit (X, Y)
-    BayesianRidge(n_iter=300, verbose=False, lambda_1=1e-06, lambda_2=1e-06,
-           fit_intercept=True, eps=0.001, alpha_2=1e-06, alpha_1=1e-06,
-           compute_score=False)
+    BayesianRidge(alpha_1=1e-06, alpha_2=1e-06, compute_score=False,
+           fit_intercept=True, lambda_1=1e-06, lambda_2=1e-06, n_iter=300,
+           normalize=False, overwrite_X=False, tol=0.001, verbose=False)
 
 After being fitted, the model can then be used to predict new values::
 
@@ -475,7 +476,7 @@ After being fitted, the model can then be used to predict new values::
     array([ 0.50000013])
 
 
-The weights :math:`\beta` of the model can be access:
+The weights :math:`\beta` of the model can be access::
 
     >>> clf.coef_
     array([ 0.49999993,  0.49999993])
@@ -584,7 +585,7 @@ but rather a "hit or miss" cost.
 
 The :class:`LogisticRegression` class can be used to do L1 or L2 penalized
 logistic regression. L1 penalization yields sparse predicting weights.
-For L1 penalization :func:`scikits.learn.svm.l1_min_c` allows to calculate
+For L1 penalization :func:`sklearn.svm.l1_min_c` allows to calculate
 the lower bound for C in order to get a non "null" (all feature weights to
 zero) model.
 

@@ -9,8 +9,8 @@ import sys
 
 import numpy as np
 
-from scikits.learn.linear_model import lars_path, orthogonal_mp
-from scikits.learn.datasets.samples_generator import make_sparse_coded_signal
+from sklearn.linear_model import lars_path, orthogonal_mp
+from sklearn.datasets.samples_generator import make_sparse_coded_signal
 
 
 def compute_bench(samples_range, features_range):
@@ -98,8 +98,8 @@ def compute_bench(samples_range, features_range):
 
 
 if __name__ == '__main__':
-    samples_range = np.linspace(1000, 3000, 5).astype(np.int)
-    features_range = np.linspace(1000, 3000, 5).astype(np.int)
+    samples_range = np.linspace(1000, 5000, 5).astype(np.int)
+    features_range = np.linspace(1000, 5000, 5).astype(np.int)
     results = compute_bench(samples_range, features_range)
     max_time = max(np.max(t) for t in results.itervalues())
 
@@ -107,7 +107,8 @@ if __name__ == '__main__':
     fig = pl.figure()
     for i, (label, timings) in enumerate(sorted(results.iteritems())):
         ax = fig.add_subplot(1, 2, i)
-        pl.matshow(timings, fignum=False, cmap='OrRd')
+        vmax = max(1 - timings.min(), -1 + timings.max())
+        pl.matshow(timings, fignum=False, vmin=1-vmax, vmax=1+vmax)
         ax.set_xticklabels([''] + map(str, samples_range))
         ax.set_yticklabels([''] + map(str, features_range))
         pl.xlabel('n_samples')

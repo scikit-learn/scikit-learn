@@ -9,7 +9,7 @@ import sys
 import os
 import shutil
 
-DISTNAME = 'scikits.learn'
+DISTNAME = 'scikit-learn'
 DESCRIPTION = 'A set of python modules for machine learning and data mining'
 LONG_DESCRIPTION = open('README.rst').read()
 MAINTAINER = 'Fabian Pedregosa'
@@ -34,6 +34,8 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('scikits.learn')
     config.add_data_files('scikits/__init__.py')
 
+    config.add_subpackage('sklearn')
+
     return config
 
 if __name__ == "__main__":
@@ -53,15 +55,15 @@ if __name__ == "__main__":
             shutil.rmtree(local_path)
         print("Copying source tree into build/py3k for 2to3 transformation"
               "...")
-        shutil.copytree(os.path.join(old_path, 'scikits'),
-                        os.path.join(local_path, 'scikits'))
+        shutil.copytree(os.path.join(old_path, 'sklearn'),
+                        os.path.join(local_path, 'sklearn'))
         import lib2to3.main
         from io import StringIO
         print("Converting to Python3 via 2to3...")
         _old_stdout = sys.stdout
         try:
             sys.stdout = StringIO()  # supress noisy output
-            res = lib2to3.main.main("lib2to3.fixes", ['-w'] + [local_path])
+            res = lib2to3.main.main("lib2to3.fixes", ['-x', 'import', '-w', local_path])
         finally:
             sys.stdout = _old_stdout
 

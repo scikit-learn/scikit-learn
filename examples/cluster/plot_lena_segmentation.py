@@ -19,10 +19,10 @@ import numpy as np
 import scipy as sp
 import pylab as pl
 
-from scikits.learn.feature_extraction import image
-from scikits.learn.cluster import spectral_clustering
+from sklearn.feature_extraction import image
+from sklearn.cluster import spectral_clustering
 
-lena = sp.lena()
+lena = sp.misc.lena()
 # Downsample the image by a factor of 4
 lena = lena[::2, ::2] + lena[1::2, ::2] + lena[::2, 1::2] + lena[1::2, 1::2]
 lena = lena[::2, ::2] + lena[1::2, ::2] + lena[::2, 1::2] + lena[1::2, 1::2]

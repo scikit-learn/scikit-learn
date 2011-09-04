@@ -10,7 +10,7 @@ print __doc__
 
 import numpy as np
 import pylab as pl
-from scikits.learn import linear_model
+from sklearn import linear_model
 
 # we create 20 points
 np.random.seed(0)

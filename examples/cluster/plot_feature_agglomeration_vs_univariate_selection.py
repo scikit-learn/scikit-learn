@@ -22,14 +22,14 @@ import numpy as np
 import pylab as pl
 from scipy import linalg, ndimage
 
-from scikits.learn.feature_extraction.image import grid_to_graph
-from scikits.learn import feature_selection
-from scikits.learn.cluster import WardAgglomeration
-from scikits.learn.linear_model import BayesianRidge
-from scikits.learn.pipeline import Pipeline
-from scikits.learn.grid_search import GridSearchCV
-from scikits.learn.externals.joblib import Memory
-from scikits.learn.cross_val import KFold
+from sklearn.feature_extraction.image import grid_to_graph
+from sklearn import feature_selection
+from sklearn.cluster import WardAgglomeration
+from sklearn.linear_model import BayesianRidge
+from sklearn.pipeline import Pipeline
+from sklearn.grid_search import GridSearchCV
+from sklearn.externals.joblib import Memory
+from sklearn.cross_val import KFold
 
 ###############################################################################
 # Generate data

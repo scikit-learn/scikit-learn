@@ -252,7 +252,7 @@ In addition, we add the following guidelines:
     * Avoid multiple statements on one line. Prefer a line return after
       a control flow statement (``if``/``for``).
 
-    * Use relative imports for references inside scikits.learn.
+    * Use relative imports for references inside scikit-learn.
 
     * **Please don't use `import *` in any case**. It is considered harmful
       by the `official Python recommendations
@@ -327,6 +327,11 @@ inferring some properties on new data. It can be for instance a
 classifier or a regressor. All estimators implement the fit method::
 
     estimator.fit(X, y)
+
+All built-in estimators also have a ``set_params`` method, which sets
+data-independent parameters (overriding previous parameter values passed
+to ``__init__``). This method is not required for an object to be an
+estimator.
 
 
 Instantiation
