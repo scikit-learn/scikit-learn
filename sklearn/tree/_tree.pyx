@@ -103,7 +103,6 @@ cdef class ClassificationCriterion(Criterion):
             self.label_count_right[c] += 1
             self.n_right += 1
 
-
         # print "ClassificationCriterion.init: "
         # print "    label_count_left [",
         # for c from 0 <= c < self.n_classes:
@@ -321,9 +320,11 @@ cdef class MSE(RegressionCriterion):
         for j from 0 <= j < self.n_samples:
             #print "y[",j,"] = ", self.y[j]
             if j < self.n_left:
-                variance_left += (self.y[j] - mean_left) * (self.y[j] - mean_left)
+                variance_left += ((self.y[j] - mean_left)
+                                  * (self.y[j] - mean_left))
             else:
-                variance_right += (self.y[j] - mean_right) * (self.y[j] - mean_right)
+                variance_right += ((self.y[j] - mean_right)
+                                   * (self.y[j] - mean_right))
 
         # print "MSE.eval: variance_left = ", variance_left,
         # print "MSE.eval: variance_right = ", variance_right
@@ -355,7 +356,6 @@ cdef int smallest_sample_larger_than(int sample_idx, np.float64_t *X_i,
         I.e. `sorted_X_i[sample_idx] < sorted_X_i[next_sample_idx]`
         -1 if no such element exists.
     """
-
     cdef int idx = 0
     cdef np.float64_t threshold = -DBL_MAX
     if sample_idx > -1:
@@ -376,14 +376,15 @@ def _find_best_split(np.ndarray[np.float64_t, ndim=2, mode="fortran"] X,
     X : ndarray, shape (n_samples, n_features), dtype=np.float64
         The feature values.
     y : ndarray, shape (n_samples,), dtype=float
-        The y.
+        The label to predict for each sample.
     criterion : Criterion
         The criterion function to be minimized.
 
     Returns
     -------
     best_i : int
-        The split feature or -1 if criterion not smaller than `parent_split_error`.
+        The split feature or -1 if criterion not smaller than
+        `parent_split_error`.
     best_t : np.float64_t
         The split threshold
     best_error : np.float64_t
@@ -396,15 +397,15 @@ def _find_best_split(np.ndarray[np.float64_t, ndim=2, mode="fortran"] X,
     cdef np.float64_t t, initial_error, error
     cdef np.float64_t best_error = np.inf, best_t = np.inf
 
-    # pointer access to ndarray data
+    # Pointer access to ndarray data
     cdef double *y_ptr = <double*>y.data
     cdef np.float64_t *X_i = NULL
     cdef np.ndarray[np.int32_t, ndim=2, mode="fortran"] sorted_X = \
         np.asfortranarray(np.argsort(X, axis=0).astype(np.int32))
     cdef int *sorted_X_i = NULL
 
-    # Compute the column strides (inc in pointer elem to get from col i to i+1)
-    # for `X` and `sorted_X`
+    # Compute the column strides (increment in pointer elements to get
+    # from column i to i + 1) for `X` and `sorted_X`
     cdef int X_elem_stride = X.strides[0]
     cdef int X_col_stride = X.strides[1]
     cdef int X_stride = X_col_stride / X_elem_stride
@@ -412,8 +413,8 @@ def _find_best_split(np.ndarray[np.float64_t, ndim=2, mode="fortran"] X,
     cdef int sorted_X_col_stride = sorted_X.strides[1]
     cdef int sorted_X_stride = sorted_X_col_stride / sorted_X_elem_stride
 
-    # compute the initial entropy in the node
-    sorted_X_i = (<int *>sorted_X.data)
+    # Compute the initial entropy in the node
+    sorted_X_i = <int *>sorted_X.data
     criterion.init(y, sorted_X_i)
     initial_error = criterion.eval()
     if initial_error == 0: # break early if the node is pure
