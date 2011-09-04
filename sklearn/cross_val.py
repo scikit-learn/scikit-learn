@@ -723,13 +723,18 @@ class ShuffleSplit(object):
 
 def _cross_val_score(estimator, X, y, score_func, train, test):
     """Inner loop for cross validation"""
-    if score_func is None:
-        score_func = lambda self, *args: self.score(*args)
     if y is None:
-        score = score_func(estimator.fit(X[train]), X[test])
+        estimator.fit(X[train])
+        if score_func is None:
+            return estimator.score(X[test])
+        else:
+            return score_func(X[test])
     else:
-        score = score_func(estimator.fit(X[train], y[train]), X[test], y[test])
-    return score
+        estimator.fit(X[train], y[train])
+        if score_func is None:
+            return estimator.score(X[test], y[test])
+        else:
+            return score_func(y[test], estimator.predict(X[test]))
 
 
 def cross_val_score(estimator, X, y=None, score_func=None, cv=None, n_jobs=1,
