@@ -20,7 +20,7 @@ __all__ = [
 CLASSIFICATION = {
     'gini': _tree.Gini,
     'entropy': _tree.Entropy,
-    #'miss': _tree.eval_miss,
+    #'miss': _tree.Miss,
 }
 
 REGRESSION = {
