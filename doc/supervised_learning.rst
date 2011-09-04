@@ -15,4 +15,4 @@ Supervised learning
     modules/pls
     modules/naive_bayes
     modules/multiclass
-
+    modules/feature_selection.rst
