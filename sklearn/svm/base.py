@@ -9,9 +9,7 @@ LIBSVM_IMPL = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
 
 
 def _get_class_weight(class_weight, y):
-    """
-    Estimate class weights for unbalanced datasets.
-    """
+    """Estimate class weights for unbalanced datasets."""
     if class_weight == 'auto':
         uy = np.unique(y)
         weight_label = np.asarray(uy, dtype=np.int32, order='C')
@@ -31,10 +29,9 @@ def _get_class_weight(class_weight, y):
 
 
 class BaseLibSVM(BaseEstimator):
-    """
-    Base class for classifiers that use libsvm as library for
-    support vector machine classification and regression.
+    """Base class for estimators that use libsvm as backing library
 
+    This implements support vector machine classification and regression.
     Should not be used directly, use derived classes instead
     """
 
@@ -304,9 +301,7 @@ class BaseLibSVM(BaseEstimator):
 
 
 class BaseLibLinear(BaseEstimator):
-    """
-    Base for classes binding liblinear (dense and sparse versions)
-    """
+    """Base for classes binding liblinear (dense and sparse versions)"""
 
     _solver_type_dict = {
         'PL2_LLR_D0' : 0,  # L2 penalty, logistic regression
