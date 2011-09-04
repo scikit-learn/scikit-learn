@@ -4,12 +4,12 @@ Downloading datasets from the mldata.org repository
 `mldata.org <http://mldata.org>`_ is a public repository for machine learning
 data, supported by the `PASCAL network <http://www.pascal-network.org>`_ .
 
-The ``scikits.learn.datasets`` package is able to directly download data
+The ``sklearn.datasets`` package is able to directly download data
 sets from the repository using the function ``fetch_mldata(dataname)``.
 
 For example, to download the MNIST digit recognition database::
 
-  >>> from scikits.learn.datasets import fetch_mldata
+  >>> from sklearn.datasets import fetch_mldata
   >>> mnist = fetch_mldata('MNIST original', data_home=custom_data_home)
 
 The MNIST database contains a total of 70000 examples of handwritten digits
@@ -36,7 +36,7 @@ datasets:
 
 * The data arrays in `mldata.org <http://mldata.org>`_ are most often
   shaped as ``(n_features, n_samples)``. This is the opposite of the
-  ``scikits.learn`` convention, so ``fetch_mldata`` transposes the matrix
+  ``scikit-learn`` convention, so ``fetch_mldata`` transposes the matrix
   by default. The ``transpose_data`` keyword controls this behavior::
 
     >>> iris = fetch_mldata('iris', data_home=custom_data_home)

@@ -10,9 +10,9 @@ print __doc__
 
 import numpy as np
 import pylab as pl
-from scikits.learn import svm, datasets
-from scikits.learn.utils import shuffle
-from scikits.learn.metrics import roc_curve, auc
+from sklearn import svm, datasets
+from sklearn.utils import shuffle
+from sklearn.metrics import roc_curve, auc
 
 random_state = np.random.RandomState(0)
 
@@ -44,7 +44,6 @@ roc_auc = auc(fpr, tpr)
 print "Area under the ROC curve : %f" % roc_auc
 
 # Plot ROC curve
-pl.figure(-1)
 pl.clf()
 pl.plot(fpr, tpr, label='ROC curve (area = %0.2f)' % roc_auc)
 pl.plot([0, 1], [0, 1], 'k--')

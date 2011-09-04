@@ -4,7 +4,7 @@ with the cKDTree from scipy.spatial
 
 """
 
-from scikits.learn.ball_tree import BallTree
+from sklearn.ball_tree import BallTree
 import numpy as np
 from time import time
 
@@ -54,7 +54,7 @@ if __name__ == '__main__':
         assert compare_nbrs(nbrs1, nbrs2)
 
     xx = 100 * np.arange(1, 10)
-    pl.plot(xx, BT_results, label='scikits.learn (BallTree)')
+    pl.plot(xx, BT_results, label='sklearn (BallTree)')
     pl.plot(xx, KDT_results, label='scipy (cKDTree)')
     pl.xlabel('number of dimensions')
     pl.ylabel('time (seconds)')

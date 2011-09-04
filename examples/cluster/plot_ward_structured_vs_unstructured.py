@@ -28,8 +28,8 @@ import time as time
 import numpy as np
 import pylab as pl
 import mpl_toolkits.mplot3d.axes3d as p3
-from scikits.learn.cluster import Ward
-from scikits.learn.datasets.samples_generator import make_swiss_roll
+from sklearn.cluster import Ward
+from sklearn.datasets.samples_generator import make_swiss_roll
 
 ###############################################################################
 # Generate data (swiss roll dataset)
@@ -61,14 +61,14 @@ pl.title('Without connectivity constraints')
 
 ###############################################################################
 # Define the structure A of the data. Here a 10 nearest neighbors
-from scikits.learn.neighbors import kneighbors_graph
+from sklearn.neighbors import kneighbors_graph
 connectivity = kneighbors_graph(X, n_neighbors=10)
 
 ###############################################################################
 # Compute clustering
 print "Compute structured hierarchical clustering..."
 st = time.time()
-ward = Ward(n_clusters=6).fit(X, connectivity=connectivity)
+ward = Ward(n_clusters=6, connectivity=connectivity).fit(X)
 label = ward.labels_
 print "Elapsed time: ", time.time() - st
 print "Number of points: ", label.size
