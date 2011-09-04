@@ -17,12 +17,12 @@ class RFE(BaseEstimator):
     """Feature ranking with recursive feature elimination.
 
     Given an external estimator that assigns weights to features (e.g., the
-    coefficients of a linear model), the goal of the RFE algorithm is to
-    select features by recursively considering smaller and smaller sets of
-    features.  First, the estimator is trained on the initial set of
-    features and weights are assigned to each one of them. Then, features
-    whose absolute weights are the smallest are pruned from the current set
-    features. That procedure is recursively repeated until the desired
+    coefficients of a linear model), the goal of recursive feature elimination
+    (RFE) is to select features by recursively considering smaller and smaller
+    sets of features.  First, the estimator is trained on the initial set of
+    features and weights are assigned to each one of them. Then, features whose
+    absolute weights are the smallest are pruned from the current set features.
+    That procedure is recursively repeated on the pruned set until the desired
     number of features to select is eventually reached.
 
     Parameters
@@ -214,6 +214,9 @@ class RFECV(RFE):
 
     Attributes
     ----------
+    `n_features_` : int
+        The number of selected features with cross-validation.
+
     `support_` : array of shape [n_features]
         The mask of selected features.
 
@@ -221,6 +224,10 @@ class RFECV(RFE):
         The feature ranking, such that `ranking_[i]` corresponds to the ranking
         position of the i-th feature. Selected (i.e., estimated best) features
         are assigned rank 1.
+
+    `cv_scores_`: array of shape [n_subsets_of_features]
+        The cross-validation scores such that `cv_scores_[i]` corresponds to
+        the CV score of the i-th subset of features.
 
     Examples
     --------
@@ -275,6 +282,8 @@ class RFECV(RFE):
         scores = {}
 
         # Cross-validation
+        n = 0
+
         for train, test in cv:
             # Compute a full ranking of the features
             ranking_ = rfe.fit(X[train], y[train]).ranking_
@@ -299,6 +308,8 @@ class RFECV(RFE):
 
                 scores[k] += score_k
 
+            n += 1
+
         # Pick the best number of features on average
         best_score = np.inf
         best_k = None
@@ -317,7 +328,12 @@ class RFECV(RFE):
 
         # Set final attributes
         self.estimator.fit(X[:, rfe.support_], y)
+        self.n_features_ = rfe.support_.sum()
         self.support_ = rfe.support_
         self.ranking_ = rfe.ranking_
+
+        self.cv_scores_ = [0] * len(scores)
+        for k, score in scores.iteritems():
+            self.cv_scores_[k - 1] = score / n
 
         return self

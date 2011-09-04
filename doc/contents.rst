@@ -13,5 +13,6 @@
    model_selection.rst
    Dataset loading utilities <datasets/index.rst>
    Preprocessing data <modules/preprocessing.rst>
+   modules/feature_selection.rst
    modules/feature_extraction.rst
    Class Reference <modules/classes.rst>
