@@ -61,7 +61,8 @@ class LeaveOneOut(object):
 
     See also
     ========
-    LeaveOneLabelOut
+    LeaveOneLabelOut for splitting the data according to explicit,
+    domain-specific stratification of the dataset.
     """
 
     def __init__(self, n, indices=False):
@@ -352,12 +353,18 @@ class StratifiedKFold(object):
 class LeaveOneLabelOut(object):
     """Leave-One-Label_Out cross-validation iterator
 
-    Provides train/test indices to split data in train test sets.
+    Provides train/test indices to split data according to a third-party
+    provided label. This label information can be used to encode arbitrary
+    domain specific stratifications of the samples as integers.
+
+    For instance the labels could be the year of collection of the samples
+    and thus allow for cross-validation against time-based splits.
 
     Parameters
     ----------
-    labels : list
-        List of labels
+    labels : array-like of int with shape (n_samples,)
+        Arbitrary domain-specific stratification of the data to be used
+        to draw the splits.
 
     indices: boolean, optional (default False)
         Return train/test split with integer indices or boolean mask.
@@ -423,12 +430,23 @@ class LeaveOneLabelOut(object):
 class LeavePLabelOut(object):
     """Leave-P-Label_Out cross-validation iterator
 
-    Provides train/test indices to split data in train test sets
+    Provides train/test indices to split data according to a third-party
+    provided label. This label information can be used to encode arbitrary
+    domain specific stratifications of the samples as integers.
+
+    For instance the labels could be the year of collection of the samples
+    and thus allow for cross-validation against time-based splits.
+
+    The difference between LeavePLabelOut and LeaveOneLabelOut is that
+    the former builds the test sets with all the samples assigned to
+    ``p`` different values of the labels while the latter uses samples
+    all assigned the same labels.
 
     Parameters
     ----------
-    labels : list
-        List of labels
+    labels : array-like of int with shape (n_samples,)
+        Arbitrary domain-specific stratification of the data to be used
+        to draw the splits.
 
     p : int
         Number of samples to leave out in the test split.

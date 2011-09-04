@@ -163,9 +163,12 @@ Leave-One-Label-Out - LOLO
 :class:`LeaveOneLabelOut`
 
 The *Leave-One-Label-Out* (LOLO) is a cross-validation scheme which
-removes the samples according to a specific label. Each training set
-is thus constituted by all the samples except the ones related to a
-specific label.
+holds out the samples according to a third-party provided label. This
+label information can be used to encode arbitrary domain specific
+stratifications of the samples as integers.
+
+Each training set is thus constituted by all the samples except the ones
+related to a specific label.
 
 For example, in the cases of multiple experiments, *LOLO* can be used to
 create a cross-validation based on the different experiments: we create
@@ -181,6 +184,10 @@ a training set using the samples of all the experiments except one::
   >>> for train, test in loo: print train,test
   [False False  True  True] [ True  True False False]
   [ True  True False False] [False False  True  True]
+
+Another common application is to use time information: for instance the
+labels could be the year of collection of the samples and thus allow
+for cross-validation against time-based splits.
 
 
 Leave-P-Label-Out
