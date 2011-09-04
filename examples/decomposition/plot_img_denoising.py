@@ -35,9 +35,9 @@ import pylab as pl
 import scipy as sp
 import numpy as np
 
-from scikits.learn.decomposition import DictionaryLearningOnline
-from scikits.learn.feature_extraction.image import extract_patches_2d, \
-                                                   reconstruct_from_patches_2d
+from sklearn.decomposition import DictionaryLearningOnline
+from sklearn.feature_extraction.image import extract_patches_2d, \
+                                             reconstruct_from_patches_2d
 
 ###############################################################################
 # Load Lena image and extract patches
