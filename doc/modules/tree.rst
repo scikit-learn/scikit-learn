@@ -5,7 +5,7 @@
 Decision Trees
 ==============
 
-.. currentmodule:: scikits.learn.tree
+.. currentmodule:: sklearn.tree
 
 **Decision Trees** are a supervised learning
 method used for :ref:`classification <tree_classification>`,
@@ -48,7 +48,7 @@ Classification
    :align: center
 
 
-    >>> from scikits.learn import tree
+    >>> from sklearn import tree
     >>> X = [[0, 0], [1, 1]]
     >>> Y = [0, 1]
     >>> clf = tree.DecisionTreeClassifier()
@@ -84,7 +84,7 @@ As with classification classes, the fit method will take as
 argument vectors X, y, only that in this case y is expected to have
 floating point values instead of integer values::
 
-    >>> from scikits.learn import tree
+    >>> from sklearn import tree
     >>> X = [[0, 0], [2, 2]]
     >>> y = [0.5, 2.5]
     >>> clf = tree.DecisionTreeRegressor()

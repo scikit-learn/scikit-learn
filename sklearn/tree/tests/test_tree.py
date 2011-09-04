@@ -1,5 +1,5 @@
 """
-Testing for Tree module (scikits.learn.tree)
+Testing for Tree module (sklearn.tree)
 
 """
 
@@ -8,7 +8,7 @@ from numpy.testing import assert_array_equal, assert_array_almost_equal, \
                           assert_almost_equal
 from nose.tools import assert_raises
 
-from scikits.learn import tree, datasets, metrics
+from sklearn import tree, datasets, metrics
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]

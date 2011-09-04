@@ -15,16 +15,26 @@ import _tree
 __all__ = [
     'DecisionTreeClassifier',
     'DecisionTreeRegressor',
-    ]
+]
 
-lookup_c = {
-        'gini': _tree.Gini,
-        'entropy': _tree.Entropy,
-        #'miss': _tree.eval_miss,
-        }
-lookup_r = {
-       'mse': _tree.MSE,
-       }
+CLASSIFICATION = {
+    'gini': _tree.Gini,
+    'entropy': _tree.Entropy,
+    #'miss': _tree.Miss,
+}
+
+REGRESSION = {
+    'mse': _tree.MSE,
+}
+
+GRAPHVIZ_TREE_TEMPLATE = """\
+%(tree)s [label="%(tree_gv)s"] ;
+[label="%(tree_left_gv)s"] ;
+[label="%(tree_right_gv)s"] ;
+%(tree)s -> %(tree_left)s ;
+%(tree)s -> %(tree_right)s ;
+
+"""
 
 
 class Leaf(object):
@@ -48,7 +58,6 @@ class Leaf(object):
 
     def _graphviz(self):
         """Print the leaf for graph visualisation."""
-
         return 'Leaf(%s)' % (self.value)
 
 
@@ -107,7 +116,7 @@ def _build_tree(is_classification, X, y, criterion,
     n_samples, n_features = X.shape
     if len(y) != len(X):
         raise ValueError("Number of labels=%d does not match "
-                          "number of features=%d\n"
+                          "number of features=%d"
                          % (len(y), len(X)))
     y = np.array(y, dtype=np.float64, order="c")
 
@@ -115,7 +124,7 @@ def _build_tree(is_classification, X, y, criterion,
     sample_dims = np.arange(n_features)
     if max_features is not None:
         if max_features <= 0 or max_features > n_features:
-            raise ValueError("max_features=%d must be in range (0..%d].\n"
+            raise ValueError("max_features=%d must be in range (0..%d]. "
                              "Did you mean to use None to signal no "
                              "max_features?"
                              % (max_features, n_features))
@@ -132,10 +141,10 @@ def _build_tree(is_classification, X, y, criterion,
         X = np.array(X, order="F")
 
     if min_split <= 0:
-        raise ValueError("min_split must be greater than zero.\n"
+        raise ValueError("min_split must be greater than zero. "
                          "min_split is %s." % min_split)
     if max_depth <= 0:
-        raise ValueError("max_depth must be greater than zero.\n"
+        raise ValueError("max_depth must be greater than zero. "
                          "max_depth is %s." % max_depth)
 
     def recursive_partition(X, y, depth):
@@ -144,20 +153,18 @@ def _build_tree(is_classification, X, y, criterion,
         if depth >= max_depth:
             is_split_valid = False
 
-        dim, thresh, error, init_error = _tree._find_best_split(X,
-                                                                y,
-                                                                criterion)
+        dim, threshold, error, init_error = _tree._find_best_split(
+            X, y, criterion)
 
         if dim != -1:
-            split = X[:, dim] < thresh
-            if len(X[split]) < min_split or \
-               len(X[~split]) < min_split:
+            split = X[:, dim] < threshold
+            if len(X[split]) < min_split or len(X[~split]) < min_split:
                 is_split_valid = False
         else:
             is_split_valid = False
 
         if is_classification:
-            a = np.zeros((n_classes, ))
+            a = np.zeros((n_classes,))
             t = y.max() + 1
             a[:t] = np.bincount(y.astype(np.int))
         else:
@@ -166,15 +173,12 @@ def _build_tree(is_classification, X, y, criterion,
         if is_split_valid == False:
             return Leaf(a)
 
-        return Node(dimension=sample_dims[dim],
-                    threshold=thresh,
-                    error=init_error,
-                    samples=len(y),
-                    value=a,
-                    left=recursive_partition(X[split],
-                                             y[split], depth + 1),
-                    right=recursive_partition(X[~split],
-                                              y[~split], depth + 1))
+        left_partition = recursive_partition(X[split], y[split], depth + 1)
+        right_partition = recursive_partition(X[~split], y[~split], depth + 1)
+
+        return Node(dimension=sample_dims[dim], threshold=threshold,
+                    error=init_error, samples=len(y), value=a,
+                    left=left_partition, right=right_partition)
 
     return recursive_partition(X, y, 0)
 
@@ -194,16 +198,14 @@ def _graphviz(tree):
 
     if type(tree) is Leaf:
         return ""
-    s = str(tree) + \
-        " [label=" + "\"" + tree._graphviz() + "\"" + "] ;\n"
-    s += str(tree.left) + \
-        " [label=" + "\"" + tree.left._graphviz() + "\"" + "] ;\n"
-    s += str(tree.right) + \
-        " [label=" + "\"" + tree.right._graphviz() + "\"" + "] ;\n"
-
-    s += str(tree) + " -> " + str(tree.left) + " ;\n"
-    s += str(tree) + " -> " + str(tree.right) + " ;\n"
-
+    s = GRAPHVIZ_TREE_TEMPLATE % {
+        "tree": tree,
+        "tree_gv": tree._graphviz(),
+        "tree_left": tree.left,
+        "tree_left_gv": tree.left._graphviz(),
+        "tree_right": tree.right,
+        "tree_right_gv": tree.right._graphviz(),
+    }
     return s + _graphviz(tree.left) + _graphviz(tree.right)
 
 
@@ -284,8 +286,9 @@ class BaseDecisionTree(BaseEstimator):
                     self.n_classes = 2
                 else:
                     if self.n_classes != 2:
-                        raise ValueError("n_classes must equal 2 for binary"
-                                         " classification")
+                        raise ValueError(
+                            "n_classes must equal 2 for binary "
+                            "classification: got %d " % self.n_classes)
                 self.classification_subtype = "binary"
                 y[y == -1] = 0  # normalise target
             elif y.min() >= 0:
@@ -301,10 +304,11 @@ class BaseDecisionTree(BaseEstimator):
                                  "in the range [0 to %s) for multiclass "
                                  "classification " % self.n_classes)
 
-            criterion_class = lookup_c[self.criterion]
-            pm_left = np.zeros((self.n_classes,), dtype=np.int32)
-            pm_right = np.zeros((self.n_classes,), dtype=np.int32)
-            criterion = criterion_class(self.n_classes, pm_left, pm_right)
+            criterion_class = CLASSIFICATION[self.criterion]
+            label_counts_left = np.zeros((self.n_classes,), dtype=np.int32)
+            label_counts_right = np.zeros((self.n_classes,), dtype=np.int32)
+            criterion = criterion_class(self.n_classes, label_counts_left,
+                                        label_counts_right)
 
             self.tree = _build_tree(True, X, y, criterion, self.max_depth,
                                     self.min_split, self.max_features,
@@ -312,7 +316,7 @@ class BaseDecisionTree(BaseEstimator):
         else:  # regression
             y = np.asanyarray(y, dtype=np.float64, order='C')
 
-            criterion_class = lookup_r[self.criterion]
+            criterion_class = REGRESSION[self.criterion]
             y_temp = np.zeros((n_samples,), dtype=np.float64)
             criterion = criterion_class(y_temp)
             self.tree = _build_tree(False, X, y, criterion, self.max_depth,
@@ -344,8 +348,7 @@ class BaseDecisionTree(BaseEstimator):
 
         if self.n_features != n_features:
             raise ValueError("Number of features of the model must "
-                             " match the input.\n"
-                             "Model n_features is %s and "
+                             " match the input. Model n_features is %s and "
                              " input n_features is %s "
                              % (self.n_features, n_features))
 
@@ -412,16 +415,16 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     Example
     -------
     >>> import numpy as np
-    >>> from scikits.learn.datasets import load_iris
-    >>> from scikits.learn.cross_val import StratifiedKFold
-    >>> from scikits.learn.tree import DecisionTreeClassifier
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.cross_val import StratifiedKFold
+    >>> from sklearn.tree import DecisionTreeClassifier
     >>> data = load_iris()
     >>> skf = StratifiedKFold(data.target, 10)
     >>> for train_index, test_index in skf:
     ...     clf = DecisionTreeClassifier(random_state=0)
     ...     clf = clf.fit(data.data[train_index], data.target[train_index])
-    ...     print np.mean(clf.predict(data.data[test_index]) == \
-                data.target[test_index]) #doctest: +ELLIPSIS
+    ...     print np.mean(clf.predict(data.data[test_index]) ==
+    ...          data.target[test_index]) #doctest: +ELLIPSIS
     ...
     1.0
     0.933333333333
@@ -464,8 +467,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
         if self.n_features != n_features:
             raise ValueError("Number of features of the model must "
-                             " match the input.\n"
-                             "Model n_features is %s and "
+                             " match the input. Model n_features is %s and "
                              " input n_features is %s "
                              % (self.n_features, n_features))
 
@@ -490,7 +492,6 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             order.
 
         """
-
         return np.log(self.predict_proba(X))
 
 
@@ -534,16 +535,16 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     Example
     -------
     >>> import numpy as np
-    >>> from scikits.learn.datasets import load_boston
-    >>> from scikits.learn.cross_val import KFold
-    >>> from scikits.learn.tree import DecisionTreeRegressor
+    >>> from sklearn.datasets import load_boston
+    >>> from sklearn.cross_val import KFold
+    >>> from sklearn.tree import DecisionTreeRegressor
     >>> data = load_boston()
     >>> kf = KFold(len(data.target), 10)
     >>> for train_index, test_index in kf:
     ...     clf = DecisionTreeRegressor(random_state=0)
     ...     clf = clf.fit(data.data[train_index], data.target[train_index])
-    ...     print np.mean(np.power(clf.predict(data.data[test_index]) - \
-                data.target[test_index], 2)) #doctest: +ELLIPSIS
+    ...     print np.mean(np.power(clf.predict(data.data[test_index]) -
+    ...          data.target[test_index], 2)) #doctest: +ELLIPSIS
     ...
     12.9450419508
     11.6925868725
