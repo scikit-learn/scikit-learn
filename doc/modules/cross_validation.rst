@@ -21,7 +21,7 @@ case when fixing an arbitrary test set), which is a major advantage in problem
 such as inverse inference where the number of samples is very small.
 
 Examples
---------
+========
 
 * :ref:`example_plot_roc_crossval.py`,
 * :ref:`example_plot_rfe_with_cross_validation.py`,
@@ -29,8 +29,11 @@ Examples
 * :ref:`example_grid_search_text_feature_extraction.py`,
 
 
+Cross validation iterators
+==========================
+
 Leave-One-Out - LOO
-===================
+-------------------
 
 :class:`LeaveOneOut` The *Leave-One-Out* (or LOO) is a simple
 cross-validation. Each learning set is created by taking all the samples
@@ -78,7 +81,7 @@ when creating the cross-validation procedure::
 
 
 Leave-P-Out - LPO
-=================
+-----------------
 
 :class:`LeavePOut`
 *Leave-P-Out* is very similar to *Leave-One-Out*, as it creates all the
@@ -110,7 +113,7 @@ sets using::
 
 
 K-fold
-======
+------
 
 :class:`KFold`
 
@@ -133,14 +136,13 @@ Example of 2-fold::
 
 
 Stratified K-Fold
-=================
+-----------------
 
 :class:`StratifiedKFold`
 
 The *Stratified K-Fold* is a variation of *K-fold*, which returns stratified
 folds, *i.e* which creates folds by preserving the same percentage for each
 class as in the complete set.
-
 
 Example of stratified 2-fold::
 
@@ -156,18 +158,18 @@ Example of stratified 2-fold::
 
 
 Leave-One-Label-Out - LOLO
-==========================
+--------------------------
 
 :class:`LeaveOneLabelOut`
 
-The *Leave-One-Label-Out* (LOLO) is a cross-validation scheme which removes the
-samples according to a specific label.
-Each training set is thus constituted by all the samples except the ones related
-to a specific label.
+The *Leave-One-Label-Out* (LOLO) is a cross-validation scheme which
+removes the samples according to a specific label. Each training set
+is thus constituted by all the samples except the ones related to a
+specific label.
 
 For example, in the cases of multiple experiments, *LOLO* can be used to
-create a cross-validation based on the different experiments: we create a
-training set using the samples of all the experiments except one::
+create a cross-validation based on the different experiments: we create
+a training set using the samples of all the experiments except one::
 
   >>> from sklearn.cross_val import LeaveOneLabelOut
   >>> X = [[0., 0.], [1., 1.], [-1., -1.], [2., 2.]]
@@ -182,7 +184,7 @@ training set using the samples of all the experiments except one::
 
 
 Leave-P-Label-Out
-=================
+-----------------
 
 :class:`LeavePLabelOut`
 
@@ -204,8 +206,42 @@ Example of Leave-2-Label Out::
   [ True  True False False False False] [False False  True  True  True  True]
 
 
+Random permutations cross-validation a.k.a. Shuffle & Split
+-----------------------------------------------------------
+
+:class:`ShuffleSplit`
+
+The :class:`ShuffleSplit` iterator will generate a user defined number of
+independent train / test dataset splits. Samples are first shuffled and
+then splitted into a pair of train and test sets.
+
+It is possible to control the randomness for reproducibility of the
+results by explicitly seeding the ``random_state`` pseudo random number
+generator.
+
+Here is a usage example::
+
+  >>> from sklearn import cross_val
+  >>> ss = cross_val.ShuffleSplit(5, n_iterations=3, test_fraction=0.25,
+  ...     random_state=0)
+  >>> len(ss)
+  3
+  >>> print ss                                            # doctest: +ELLIPSIS
+  ShuffleSplit(5, n_iterations=3, test_fraction=0.25, indices=False, ...)
+  >>> for train_index, test_index in ss:
+  ...    print train_index, test_index
+  ...
+  [ True  True  True False False] [False False False  True  True]
+  [ True  True  True False False] [False False False  True  True]
+  [False  True False  True  True] [ True False  True False False]
+
+:class:`ShuffleSplit` is thus a good alternative to :class:`KFold` cross
+validation that allows a finer control on the number of iterations and
+the proportion of samples in on each side of the train / test split.
+
+
 Bootstrapping cross-validation
-==============================
+------------------------------
 
 :class:`Bootstrap`
 
@@ -238,3 +274,46 @@ smaller than the total dataset if it is very large.
   [5 4 2 4 2] [6 7 1 0]
   [4 7 0 1 1] [5 3 6 5]
 
+
+Computing cross-validated metrics
+=================================
+
+The simplest way to use a cross validation iterator is to pass it along
+with an estimator and some dataset to the :func:`cross_val_score` helper
+function::
+
+  >>> from sklearn import datasets
+  >>> from sklearn import svm
+  >>> from sklearn import cross_val
+
+  >>> iris = datasets.load_iris()
+  >>> n_samples = iris.data.shape[0]
+  >>> clf = svm.SVC(kernel='linear')
+  >>> cv = cross_val.ShuffleSplit(n_samples, n_iterations=3,
+  ...     test_fraction=0.3, random_state=0)
+
+  >>> cross_val.cross_val_score(clf, iris.data, iris.target, cv=cv)
+  ...                                                     # doctest: +ELLIPSIS
+  array([ 0.97...,  0.95...,  0.95...])
+
+By default, the score computed at each CV iteration is the ``score``
+method of the estimator. It is possible to change this by passing a custom
+scoring function, e.g. from the metrics module::
+
+  >>> from sklearn import metrics
+  >>> cross_val.cross_val_score(clf, iris.data, iris.target, cv=cv,
+  ...     score_func=metrics.f1_score)
+  ...                                                     # doctest: +ELLIPSIS
+  array([ 0.95...,  1.  ...,  1.  ...])
+
+It is also possible to directly pass a number of folds instead of a
+CV iterator.  In that case a :class:`KFold` or :class:`StratifiedKFold`
+instance is automatically created::
+
+  >>> cross_val.cross_val_score(clf, iris.data, iris.target, cv=5)
+  ...                                                     # doctest: +ELLIPSIS
+  array([ 1.  ...,  0.96...,  0.9 ...,  0.96...,  1.  ...])
+
+Cross validation iterators can also be used to directly perform model
+selection using Grid Search for the optimal hyperparameters of the
+model. This is the topic if the next section: :ref:`grid_search`.
