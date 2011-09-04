@@ -17,15 +17,24 @@ __all__ = [
     'DecisionTreeRegressor',
 ]
 
-lookup_c = {
+CLASSIFICATION = {
     'gini': _tree.Gini,
     'entropy': _tree.Entropy,
     #'miss': _tree.eval_miss,
 }
 
-lookup_r = {
+REGRESSION = {
     'mse': _tree.MSE,
 }
+
+GRAPHVIZ_TREE_TEMPLATE = """\
+%(tree)s [label="%(tree_gv)s"] ;
+[label="%(tree_left_gv)s"] ;
+[label="%(tree_right_gv)s"] ;
+%(tree)s -> %(tree_left)s ;
+%(tree)s -> %(tree_right)s ;
+
+"""
 
 
 class Leaf(object):
@@ -49,7 +58,6 @@ class Leaf(object):
 
     def _graphviz(self):
         """Print the leaf for graph visualisation."""
-
         return 'Leaf(%s)' % (self.value)
 
 
@@ -190,16 +198,14 @@ def _graphviz(tree):
 
     if type(tree) is Leaf:
         return ""
-    s = str(tree) + \
-        " [label=" + "\"" + tree._graphviz() + "\"" + "] ;\n"
-    s += str(tree.left) + \
-        " [label=" + "\"" + tree.left._graphviz() + "\"" + "] ;\n"
-    s += str(tree.right) + \
-        " [label=" + "\"" + tree.right._graphviz() + "\"" + "] ;\n"
-
-    s += str(tree) + " -> " + str(tree.left) + " ;\n"
-    s += str(tree) + " -> " + str(tree.right) + " ;\n"
-
+    s = GRAPHVIZ_TREE_TEMPLATE % {
+        "tree": tree,
+        "tree_gv": tree._graphviz(),
+        "tree_left": tree.left,
+        "tree_left_gv": tree.left._graphviz(),
+        "tree_right": tree.right,
+        "tree_right_gv": tree.right._graphviz(),
+    }
     return s + _graphviz(tree.left) + _graphviz(tree.right)
 
 
@@ -298,7 +304,7 @@ class BaseDecisionTree(BaseEstimator):
                                  "in the range [0 to %s) for multiclass "
                                  "classification " % self.n_classes)
 
-            criterion_class = lookup_c[self.criterion]
+            criterion_class = CLASSIFICATION[self.criterion]
             label_counts_left = np.zeros((self.n_classes,), dtype=np.int32)
             label_counts_right = np.zeros((self.n_classes,), dtype=np.int32)
             criterion = criterion_class(self.n_classes, label_counts_left,
@@ -310,7 +316,7 @@ class BaseDecisionTree(BaseEstimator):
         else:  # regression
             y = np.asanyarray(y, dtype=np.float64, order='C')
 
-            criterion_class = lookup_r[self.criterion]
+            criterion_class = REGRESSION[self.criterion]
             y_temp = np.zeros((n_samples,), dtype=np.float64)
             criterion = criterion_class(y_temp)
             self.tree = _build_tree(False, X, y, criterion, self.max_depth,
