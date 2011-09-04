@@ -3,7 +3,7 @@
 Recursive feature elimination with cross-validation
 ===================================================
 
-Recursive feature elimination with automatic tuning of the
+A recursive feature elimination example with automatic tuning of the
 number of features selected with cross-validation.
 """
 print __doc__
