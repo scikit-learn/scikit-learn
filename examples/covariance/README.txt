@@ -1,4 +1,4 @@
 Covariance estimation
 ---------------------
 
-Examples concerning the `scikits.learn.covariance` package.
+Examples concerning the `sklearn.covariance` package.

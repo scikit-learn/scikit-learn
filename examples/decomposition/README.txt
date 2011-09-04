@@ -3,5 +3,5 @@
 Decomposition 
 -------------
 
-Examples concerning the `scikits.learn.decomposition` package.
+Examples concerning the `sklearn.decomposition` package.
 

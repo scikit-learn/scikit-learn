@@ -14,8 +14,8 @@ print __doc__
 import numpy as np
 import pylab as pl
 
-from scikits.learn.linear_model import lasso_path, enet_path
-from scikits.learn import datasets
+from sklearn.linear_model import lasso_path, enet_path
+from sklearn import datasets
 
 diabetes = datasets.load_diabetes()
 X = diabetes.data

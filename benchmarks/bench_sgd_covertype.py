@@ -55,10 +55,10 @@ from time import time
 import os
 import numpy as np
 
-from scikits.learn.svm import LinearSVC
-from scikits.learn.linear_model import SGDClassifier
-from scikits.learn.naive_bayes import GaussianNB
-from scikits.learn import metrics
+from sklearn.svm import LinearSVC
+from sklearn.linear_model import SGDClassifier
+from sklearn.naive_bayes import GaussianNB
+from sklearn import metrics
 
 ######################################################################
 ## Download the data, if not already on disk

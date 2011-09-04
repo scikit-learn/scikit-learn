@@ -3,5 +3,5 @@
 Manifold learning
 -----------------------
 
-Examples concerning the `scikits.learn.manifold` package.
+Examples concerning the `sklearn.manifold` package.
 
