@@ -17,45 +17,53 @@ from .externals.joblib import Parallel, delayed
 
 
 class LeaveOneOut(object):
-    """Leave-One-Out cross validation iterator
+    """Leave-One-Out cross validation iterator.
 
-    Provides train/test indices to split data in train test sets
+    Provides train/test indices to split data in train test sets. Each
+    sample is used once as a test set (singleton) while the remaining
+    samples form the training set.
+
+    Due to the high number of test sets (which is the same as the
+    number of samples) this cross validation method can be very costly.
+    For large datasets one should favor KFold, StratifiedKFold or
+    ShuffleSplit.
+
+    Parameters
+    ==========
+    n: int
+        Total number of elements
+
+    indices: boolean, optional (default False)
+        Return train/test split with integer indices or boolean mask.
+        Integer indices are useful when dealing with sparse matrices
+        that cannot be indexed by boolean masks.
+
+    Examples
+    ========
+    >>> from sklearn import cross_val
+    >>> X = np.array([[1, 2], [3, 4]])
+    >>> y = np.array([1, 2])
+    >>> loo = cross_val.LeaveOneOut(2)
+    >>> len(loo)
+    2
+    >>> print loo
+    sklearn.cross_val.LeaveOneOut(n=2)
+    >>> for train_index, test_index in loo:
+    ...    print "TRAIN:", train_index, "TEST:", test_index
+    ...    X_train, X_test = X[train_index], X[test_index]
+    ...    y_train, y_test = y[train_index], y[test_index]
+    ...    print X_train, X_test, y_train, y_test
+    TRAIN: [False  True] TEST: [ True False]
+    [[3 4]] [[1 2]] [2] [1]
+    TRAIN: [ True False] TEST: [False  True]
+    [[1 2]] [[3 4]] [1] [2]
+
+    See also
+    ========
+    LeaveOneLabelOut
     """
 
     def __init__(self, n, indices=False):
-        """Leave-One-Out cross validation iterator
-
-        Provides train/test indices to split data in train test sets
-
-        Parameters
-        ===========
-        n: int
-            Total number of elements
-        indices: boolean, optional (default False)
-            Return train/test split with integer indices or boolean mask.
-            Integer indices are useful when dealing with sparse matrices
-            that cannot be indexed by boolean masks.
-
-        Examples
-        ========
-        >>> from sklearn import cross_val
-        >>> X = np.array([[1, 2], [3, 4]])
-        >>> y = np.array([1, 2])
-        >>> loo = cross_val.LeaveOneOut(2)
-        >>> len(loo)
-        2
-        >>> print loo
-        sklearn.cross_val.LeaveOneOut(n=2)
-        >>> for train_index, test_index in loo:
-        ...    print "TRAIN:", train_index, "TEST:", test_index
-        ...    X_train, X_test = X[train_index], X[test_index]
-        ...    y_train, y_test = y[train_index], y[test_index]
-        ...    print X_train, X_test, y_train, y_test
-        TRAIN: [False  True] TEST: [ True False]
-        [[3 4]] [[1 2]] [2] [1]
-        TRAIN: [ True False] TEST: [False  True]
-        [[1 2]] [[3 4]] [1] [2]
-        """
         self.n = n
         self.indices = indices
 
@@ -72,10 +80,11 @@ class LeaveOneOut(object):
             yield train_index, test_index
 
     def __repr__(self):
-        return '%s.%s(n=%i)' % (self.__class__.__module__,
-                                self.__class__.__name__,
-                                self.n,
-                                )
+        return '%s.%s(n=%i)' % (
+            self.__class__.__module__,
+            self.__class__.__name__,
+            self.n,
+        )
 
     def __len__(self):
         return self.n
@@ -84,46 +93,50 @@ class LeaveOneOut(object):
 class LeavePOut(object):
     """Leave-P-Out cross validation iterator
 
-    Provides train/test indices to split data in train test sets
+    Provides train/test indices to split data in train test sets. The
+    test set is built using p samples while the remaining samples form
+    the training set.
+
+    Due to the high number of iterations which grows with the number of
+    samples this cross validation method can be very costly. For large
+    datasets one should favor KFold, StratifiedKFold or ShuffleSplit.
+
+    Parameters
+    ===========
+    n: int
+        Total number of elements
+
+    p: int
+        Size of the test sets
+
+    indices: boolean, optional (default False)
+        Return train/test split with integer indices or boolean mask.
+        Integer indices are useful when dealing with sparse matrices
+        that cannot be indexed by boolean masks.
+
+    Examples
+    ========
+    >>> from sklearn import cross_val
+    >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
+    >>> y = np.array([1, 2, 3, 4])
+    >>> lpo = cross_val.LeavePOut(4, 2)
+    >>> len(lpo)
+    6
+    >>> print lpo
+    sklearn.cross_val.LeavePOut(n=4, p=2)
+    >>> for train_index, test_index in lpo:
+    ...    print "TRAIN:", train_index, "TEST:", test_index
+    ...    X_train, X_test = X[train_index], X[test_index]
+    ...    y_train, y_test = y[train_index], y[test_index]
+    TRAIN: [False False  True  True] TEST: [ True  True False False]
+    TRAIN: [False  True False  True] TEST: [ True False  True False]
+    TRAIN: [False  True  True False] TEST: [ True False False  True]
+    TRAIN: [ True False False  True] TEST: [False  True  True False]
+    TRAIN: [ True False  True False] TEST: [False  True False  True]
+    TRAIN: [ True  True False False] TEST: [False False  True  True]
     """
 
     def __init__(self, n, p, indices=False):
-        """Leave-P-Out cross validation iterator
-
-        Provides train/test indices to split data in train test sets
-
-        Parameters
-        ===========
-        n: int
-            Total number of elements
-        p: int
-            Size test sets
-        indices: boolean, optional (default False)
-            Return train/test split with integer indices or boolean mask.
-            Integer indices are useful when dealing with sparse matrices
-            that cannot be indexed by boolean masks.
-
-        Examples
-        ========
-        >>> from sklearn import cross_val
-        >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
-        >>> y = np.array([1, 2, 3, 4])
-        >>> lpo = cross_val.LeavePOut(4, 2)
-        >>> len(lpo)
-        6
-        >>> print lpo
-        sklearn.cross_val.LeavePOut(n=4, p=2)
-        >>> for train_index, test_index in lpo:
-        ...    print "TRAIN:", train_index, "TEST:", test_index
-        ...    X_train, X_test = X[train_index], X[test_index]
-        ...    y_train, y_test = y[train_index], y[test_index]
-        TRAIN: [False False  True  True] TEST: [ True  True False False]
-        TRAIN: [False  True False  True] TEST: [ True False  True False]
-        TRAIN: [False  True  True False] TEST: [ True False False  True]
-        TRAIN: [ True False False  True] TEST: [False  True  True False]
-        TRAIN: [ True False  True False] TEST: [False  True False  True]
-        TRAIN: [ True  True False False] TEST: [False False  True  True]
-        """
         self.n = n
         self.p = p
         self.indices = indices
@@ -144,60 +157,69 @@ class LeavePOut(object):
 
     def __repr__(self):
         return '%s.%s(n=%i, p=%i)' % (
-                                self.__class__.__module__,
-                                self.__class__.__name__,
-                                self.n,
-                                self.p,
-                                )
+            self.__class__.__module__,
+            self.__class__.__name__,
+            self.n,
+            self.p,
+        )
 
     def __len__(self):
-        return factorial(self.n) / factorial(self.n - self.p) \
-               / factorial(self.p)
+        return (factorial(self.n) / factorial(self.n - self.p)
+                / factorial(self.p))
 
 
 class KFold(object):
     """K-Folds cross validation iterator
 
-    Provides train/test indices to split data in train test sets
+    Provides train/test indices to split data in train test sets. Split
+    dataset into k consecutive folds (without shuffling).
+
+    Each fold is then used a validation set once while the k - 1 remaining
+    fold form the training set.
+
+    Parameters
+    ----------
+    n: int
+        Total number of elements
+
+    k: int
+        Number of folds
+
+    indices: boolean, optional (default False)
+        Return train/test split with integer indices or boolean mask.
+        Integer indices are useful when dealing with sparse matrices
+        that cannot be indexed by boolean masks.
+
+    Examples
+    --------
+    >>> from sklearn import cross_val
+    >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
+    >>> y = np.array([1, 2, 3, 4])
+    >>> kf = cross_val.KFold(4, k=2)
+    >>> len(kf)
+    2
+    >>> print kf
+    sklearn.cross_val.KFold(n=4, k=2)
+    >>> for train_index, test_index in kf:
+    ...    print "TRAIN:", train_index, "TEST:", test_index
+    ...    X_train, X_test = X[train_index], X[test_index]
+    ...    y_train, y_test = y[train_index], y[test_index]
+    TRAIN: [False False  True  True] TEST: [ True  True False False]
+    TRAIN: [ True  True False False] TEST: [False False  True  True]
+
+    Notes
+    -----
+    All the folds have size trunc(n_samples / n_folds), the last one has the
+    complementary.
+
+    See also
+    --------
+    StratifiedKFold: take label information into account to avoid building
+    folds with imbalanced class distributions (for binary or multiclass
+    classification tasks).
     """
 
     def __init__(self, n, k, indices=False):
-        """K-Folds cross validation iterator
-
-        Provides train/test indices to split data in train test sets
-
-        Parameters
-        ----------
-        n: int
-            Total number of elements
-        k: int
-            number of folds
-        indices: boolean, optional (default False)
-            Return train/test split with integer indices or boolean mask.
-            Integer indices are useful when dealing with sparse matrices
-            that cannot be indexed by boolean masks.
-
-        Examples
-        --------
-        >>> from sklearn import cross_val
-        >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
-        >>> y = np.array([1, 2, 3, 4])
-        >>> kf = cross_val.KFold(4, k=2)
-        >>> len(kf)
-        2
-        >>> print kf
-        sklearn.cross_val.KFold(n=4, k=2)
-        >>> for train_index, test_index in kf:
-        ...    print "TRAIN:", train_index, "TEST:", test_index
-        ...    X_train, X_test = X[train_index], X[test_index]
-        ...    y_train, y_test = y[train_index], y[test_index]
-        TRAIN: [False False  True  True] TEST: [ True  True False False]
-        TRAIN: [ True  True False False] TEST: [False False  True  True]
-
-        Notes
-        -----
-        All the folds have size trunc(n/k), the last one has the complementary
-        """
         assert k > 0, ValueError('Cannot have number of folds k below 1.')
         assert k <= n, ValueError('Cannot have number of folds k=%d, '
                                   'greater than the number '
@@ -226,11 +248,11 @@ class KFold(object):
 
     def __repr__(self):
         return '%s.%s(n=%i, k=%i)' % (
-                                self.__class__.__module__,
-                                self.__class__.__name__,
-                                self.n,
-                                self.k,
-                                )
+            self.__class__.__module__,
+            self.__class__.__name__,
+            self.n,
+            self.k,
+        )
 
     def __len__(self):
         return self.k
@@ -239,50 +261,49 @@ class KFold(object):
 class StratifiedKFold(object):
     """Stratified K-Folds cross validation iterator
 
-    Provides train/test indices to split data in train test sets
+    Provides train/test indices to split data in train test sets.
 
     This cross-validation object is a variation of KFold, which
     returns stratified folds. The folds are made by preserving
     the percentage of samples for each class.
+
+    Parameters
+    ----------
+    y: array, [n_samples]
+        Samples to split in K folds
+
+    k: int
+        Number of folds
+
+    indices: boolean, optional (default False)
+        Return train/test split with integer indices or boolean mask.
+        Integer indices are useful when dealing with sparse matrices
+        that cannot be indexed by boolean masks.
+
+    Examples
+    --------
+    >>> from sklearn import cross_val
+    >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
+    >>> y = np.array([0, 0, 1, 1])
+    >>> skf = cross_val.StratifiedKFold(y, k=2)
+    >>> len(skf)
+    2
+    >>> print skf
+    sklearn.cross_val.StratifiedKFold(labels=[0 0 1 1], k=2)
+    >>> for train_index, test_index in skf:
+    ...    print "TRAIN:", train_index, "TEST:", test_index
+    ...    X_train, X_test = X[train_index], X[test_index]
+    ...    y_train, y_test = y[train_index], y[test_index]
+    TRAIN: [False  True False  True] TEST: [ True False  True False]
+    TRAIN: [ True False  True False] TEST: [False  True False  True]
+
+    Notes
+    -----
+    All the folds have size trunc(n_samples / n_folds), the last one has the
+    complementary.
     """
 
     def __init__(self, y, k, indices=False):
-        """K-Folds cross validation iterator
-
-        Provides train/test indices to split data in train test sets
-
-        Parameters
-        ----------
-        y: array, [n_samples]
-            Samples to split in K folds
-        k: int
-            number of folds
-        indices: boolean, optional (default False)
-            Return train/test split with integer indices or boolean mask.
-            Integer indices are useful when dealing with sparse matrices
-            that cannot be indexed by boolean masks.
-
-        Examples
-        --------
-        >>> from sklearn import cross_val
-        >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
-        >>> y = np.array([0, 0, 1, 1])
-        >>> skf = cross_val.StratifiedKFold(y, k=2)
-        >>> len(skf)
-        2
-        >>> print skf
-        sklearn.cross_val.StratifiedKFold(labels=[0 0 1 1], k=2)
-        >>> for train_index, test_index in skf:
-        ...    print "TRAIN:", train_index, "TEST:", test_index
-        ...    X_train, X_test = X[train_index], X[test_index]
-        ...    y_train, y_test = y[train_index], y[test_index]
-        TRAIN: [False  True False  True] TEST: [ True False  True False]
-        TRAIN: [ True False  True False] TEST: [False  True False  True]
-
-        Notes
-        -----
-        All the folds have size trunc(n/k), the last one has the complementary
-        """
         y = np.asanyarray(y)
         n = y.shape[0]
         assert k > 0, ValueError('Cannot have number of folds k below 1.')
@@ -317,11 +338,11 @@ class StratifiedKFold(object):
 
     def __repr__(self):
         return '%s.%s(labels=%s, k=%i)' % (
-                                self.__class__.__module__,
-                                self.__class__.__name__,
-                                self.y,
-                                self.k,
-                                )
+            self.__class__.__module__,
+            self.__class__.__name__,
+            self.y,
+            self.k,
+        )
 
     def __len__(self):
         return self.k
@@ -330,49 +351,46 @@ class StratifiedKFold(object):
 class LeaveOneLabelOut(object):
     """Leave-One-Label_Out cross-validation iterator
 
-    Provides train/test indices to split data in train test sets
+    Provides train/test indices to split data in train test sets.
+
+    Parameters
+    ----------
+    labels : list
+        List of labels
+
+    indices: boolean, optional (default False)
+        Return train/test split with integer indices or boolean mask.
+        Integer indices are useful when dealing with sparse matrices
+        that cannot be indexed by boolean masks.
+
+    Examples
+    ----------
+    >>> from sklearn import cross_val
+    >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
+    >>> y = np.array([1, 2, 1, 2])
+    >>> labels = np.array([1, 1, 2, 2])
+    >>> lol = cross_val.LeaveOneLabelOut(labels)
+    >>> len(lol)
+    2
+    >>> print lol
+    sklearn.cross_val.LeaveOneLabelOut(labels=[1 1 2 2])
+    >>> for train_index, test_index in lol:
+    ...    print "TRAIN:", train_index, "TEST:", test_index
+    ...    X_train, X_test = X[train_index], X[test_index]
+    ...    y_train, y_test = y[train_index], y[test_index]
+    ...    print X_train, X_test, y_train, y_test
+    TRAIN: [False False  True  True] TEST: [ True  True False False]
+    [[5 6]
+     [7 8]] [[1 2]
+     [3 4]] [1 2] [1 2]
+    TRAIN: [ True  True False False] TEST: [False False  True  True]
+    [[1 2]
+     [3 4]] [[5 6]
+     [7 8]] [1 2] [1 2]
+
     """
 
     def __init__(self, labels, indices=False):
-        """Leave-One-Label_Out cross validation
-
-        Provides train/test indices to split data in train test sets
-
-        Parameters
-        ----------
-        labels : list
-                List of labels
-        indices: boolean, optional (default False)
-            Return train/test split with integer indices or boolean mask.
-            Integer indices are useful when dealing with sparse matrices
-            that cannot be indexed by boolean masks.
-
-        Examples
-        ----------
-        >>> from sklearn import cross_val
-        >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
-        >>> y = np.array([1, 2, 1, 2])
-        >>> labels = np.array([1, 1, 2, 2])
-        >>> lol = cross_val.LeaveOneLabelOut(labels)
-        >>> len(lol)
-        2
-        >>> print lol
-        sklearn.cross_val.LeaveOneLabelOut(labels=[1 1 2 2])
-        >>> for train_index, test_index in lol:
-        ...    print "TRAIN:", train_index, "TEST:", test_index
-        ...    X_train, X_test = X[train_index], X[test_index]
-        ...    y_train, y_test = y[train_index], y[test_index]
-        ...    print X_train, X_test, y_train, y_test
-        TRAIN: [False False  True  True] TEST: [ True  True False False]
-        [[5 6]
-         [7 8]] [[1 2]
-         [3 4]] [1 2] [1 2]
-        TRAIN: [ True  True False False] TEST: [False False  True  True]
-        [[1 2]
-         [3 4]] [[5 6]
-         [7 8]] [1 2] [1 2]
-
-        """
         self.labels = labels
         self.n_labels = unique(labels).size
         self.indices = indices
@@ -405,49 +423,48 @@ class LeavePLabelOut(object):
     """Leave-P-Label_Out cross-validation iterator
 
     Provides train/test indices to split data in train test sets
+
+    Parameters
+    ----------
+    labels : list
+        List of labels
+
+    p : int
+        Number of samples to leave out in the test split.
+
+    indices: boolean, optional (default False)
+        Return train/test split with integer indices or boolean mask.
+        Integer indices are useful when dealing with sparse matrices
+        that cannot be indexed by boolean masks.
+
+    Examples
+    ----------
+    >>> from sklearn import cross_val
+    >>> X = np.array([[1, 2], [3, 4], [5, 6]])
+    >>> y = np.array([1, 2, 1])
+    >>> labels = np.array([1, 2, 3])
+    >>> lpl = cross_val.LeavePLabelOut(labels, p=2)
+    >>> len(lpl)
+    3
+    >>> print lpl
+    sklearn.cross_val.LeavePLabelOut(labels=[1 2 3], p=2)
+    >>> for train_index, test_index in lpl:
+    ...    print "TRAIN:", train_index, "TEST:", test_index
+    ...    X_train, X_test = X[train_index], X[test_index]
+    ...    y_train, y_test = y[train_index], y[test_index]
+    ...    print X_train, X_test, y_train, y_test
+    TRAIN: [False False  True] TEST: [ True  True False]
+    [[5 6]] [[1 2]
+     [3 4]] [1] [1 2]
+    TRAIN: [False  True False] TEST: [ True False  True]
+    [[3 4]] [[1 2]
+     [5 6]] [2] [1 1]
+    TRAIN: [ True False False] TEST: [False  True  True]
+    [[1 2]] [[3 4]
+     [5 6]] [1] [2 1]
     """
 
     def __init__(self, labels, p, indices=False):
-        """Leave-P-Label_Out cross validation
-
-        Provides train/test indices to split data in train test sets
-
-        Parameters
-        ----------
-        labels : list
-            List of labels
-        indices: boolean, optional (default False)
-            Return train/test split with integer indices or boolean mask.
-            Integer indices are useful when dealing with sparse matrices
-            that cannot be indexed by boolean masks.
-
-        Examples
-        ----------
-        >>> from sklearn import cross_val
-        >>> X = np.array([[1, 2], [3, 4], [5, 6]])
-        >>> y = np.array([1, 2, 1])
-        >>> labels = np.array([1, 2, 3])
-        >>> lpl = cross_val.LeavePLabelOut(labels, p=2)
-        >>> len(lpl)
-        3
-        >>> print lpl
-        sklearn.cross_val.LeavePLabelOut(labels=[1 2 3], p=2)
-        >>> for train_index, test_index in lpl:
-        ...    print "TRAIN:", train_index, "TEST:", test_index
-        ...    X_train, X_test = X[train_index], X[test_index]
-        ...    y_train, y_test = y[train_index], y[test_index]
-        ...    print X_train, X_test, y_train, y_test
-        TRAIN: [False False  True] TEST: [ True  True False]
-        [[5 6]] [[1 2]
-         [3 4]] [1] [1 2]
-        TRAIN: [False  True False] TEST: [ True False  True]
-        [[3 4]] [[1 2]
-         [5 6]] [2] [1 1]
-        TRAIN: [ True False False] TEST: [False  True  True]
-        [[1 2]] [[3 4]
-         [5 6]] [1] [2 1]
-
-        """
         self.labels = labels
         self.unique_labels = unique(self.labels)
         self.n_labels = self.unique_labels.size
@@ -475,11 +492,11 @@ class LeavePLabelOut(object):
 
     def __repr__(self):
         return '%s.%s(labels=%s, p=%s)' % (
-                                self.__class__.__module__,
-                                self.__class__.__name__,
-                                self.labels,
-                                self.p,
-                                )
+            self.__class__.__module__,
+            self.__class__.__name__,
+            self.labels,
+            self.p,
+        )
 
     def __len__(self):
         return factorial(self.n_labels) / factorial(self.n_labels - self.p) \
@@ -487,68 +504,73 @@ class LeavePLabelOut(object):
 
 
 class Bootstrap(object):
-    """Bootstrapping cross-validation iterator
+    """Random sampling with replacement cross-validation iterator
 
     Provides train/test indices to split data in train test sets
+    while resampling the input n_bootstraps times: each time a new
+    random split of the data is performed and then samples are drawn
+    (with replacement) on each side of the split to build the training
+    and test sets.
+
+    Note: contrary to other cross-validation strategies, bootstrapping
+    will allow some samples to occur several times in each splits. However
+    a sample that occurs in the train split will never occur in the test
+    split and vice-versa.
+
+    If you want each sample to occur at most once you should probably
+    use ShuffleSplit cross validation instead.
+
+    Parameters
+    ----------
+    n : int
+        Total number of elements in the dataset.
+
+    n_bootstraps : int (default is 3)
+        Number of bootstrapping iterations
+
+    n_train : int or float (default is 0.5)
+        If int, number of samples to include in the training split
+        (should be smaller than the total number of samples passed
+        in the dataset).
+
+        If float, should be between 0.0 and 1.0 and represent the
+        proportion of the dataset to include in the train split.
+
+    n_test : int or float or None (default is None)
+        If int, number of samples to include in the training set
+        (should be smaller than the total number of samples passed
+        in the dataset).
+
+        If float, should be between 0.0 and 1.0 and represent the
+        proportion of the dataset to include in the test split.
+
+        If None, n_test is set as the complement of n_train.
+
+    random_state : int or RandomState
+        Pseudo number generator state used for random sampling.
+
+    Examples
+    --------
+    >>> from sklearn import cross_val
+    >>> bs = cross_val.Bootstrap(9, random_state=0)
+    >>> len(bs)
+    3
+    >>> print bs
+    Bootstrap(9, n_bootstraps=3, n_train=5, n_test=4, random_state=0)
+    >>> for train_index, test_index in bs:
+    ...    print "TRAIN:", train_index, "TEST:", test_index
+    ...
+    TRAIN: [1 8 7 7 8] TEST: [0 3 0 5]
+    TRAIN: [5 4 2 4 2] TEST: [6 7 1 0]
+    TRAIN: [4 7 0 1 1] TEST: [5 3 6 5]
+
+    See also
+    --------
+    ShuffleSplit: cross validation using random permutations.
     """
 
     def __init__(self, n, n_bootstraps=3, n_train=0.5, n_test=None,
                  random_state=None):
-        """Bootstrapping cross validation
-
-        Provides train/test indices to split data in train test sets
-        while resampling the input n_bootstraps times: each time a new
-        random split of the data is performed and then samples are drawn
-        (with replacement) on each side of the split to build the training
-        and test sets.
-
-        Note: contrary to other cross-validation strategies, bootstrapping
-        will allow some samples to occur several times in each splits.
-
-        Parameters
-        ----------
-        n : int
-            Total number of elements in the dataset.
-
-        n_bootstraps : int (default is 3)
-            Number of bootstrapping iterations
-
-        n_train : int or float (default is 0.5)
-            If int, number of samples to include in the training split
-            (should be smaller than the total number of samples passed
-            in the dataset).
-
-            If float, should be between 0.0 and 1.0 and represent the
-            proportion of the dataset to include in the train split.
-
-        n_test : int or float or None (default is None)
-            If int, number of samples to include in the training set
-            (should be smaller than the total number of samples passed
-            in the dataset).
-
-            If float, should be between 0.0 and 1.0 and represent the
-            proportion of the dataset to include in the test split.
-
-            If None, n_test is set as the complement of n_train.
-
-        random_state : int or RandomState
-            Pseudo number generator state used for random sampling.
-
-        Examples
-        ----------
-        >>> from sklearn import cross_val
-        >>> bs = cross_val.Bootstrap(9, random_state=0)
-        >>> len(bs)
-        3
-        >>> print bs
-        Bootstrap(9, n_bootstraps=3, n_train=5, n_test=4, random_state=0)
-        >>> for train_index, test_index in bs:
-        ...    print "TRAIN:", train_index, "TEST:", test_index
-        ...
-        TRAIN: [1 8 7 7 8] TEST: [0 3 0 5]
-        TRAIN: [5 4 2 4 2] TEST: [6 7 1 0]
-        TRAIN: [4 7 0 1 1] TEST: [5 3 6 5]
-        """
         self.n = n
         self.n_bootstraps = n_bootstraps
 
@@ -605,24 +627,24 @@ class Bootstrap(object):
 
 
 class ShuffleSplit(object):
-    """Random split cross-validation iterator.
+    """Random permutation cross-validation iterator.
 
     Yields indices to split data into training and test sets.
 
-    Note: contrary to other cross-validation strategies, random splits do not
-    guarantee that all folds will be different, although this is still very
-    likely for sizeable datasets.
+    Note: contrary to other cross-validation strategies, random splits
+    do not guarantee that all folds will be different, although this is
+    still very likely for sizeable datasets.
 
     Parameters
     ----------
     n : int
         Total number of elements in the dataset.
 
-    n_splits : int (default 20)
-        Number of splitting iterations.
+    n_iterations : int (default 10)
+        Number of re-shuffling & splitting iterations.
 
     test_fraction : float (default 0.1)
-        should be between 0.0 and 1.0 and represent the proportion of
+        Should be between 0.0 and 1.0 and represent the proportion of
         the dataset to include in the test split.
 
     indices : boolean, optional (default False)
@@ -636,25 +658,29 @@ class ShuffleSplit(object):
     Examples
     ----------
     >>> from sklearn import cross_val
-    >>> rs = cross_val.ShuffleSplit(4, n_splits=3, test_fraction=.25,
+    >>> rs = cross_val.ShuffleSplit(4, n_iterations=3, test_fraction=.25,
     ...                             random_state=0)
     >>> len(rs)
     3
     >>> print rs
     ... # doctest: +ELLIPSIS
-    ShuffleSplit(4, n_splits=3, test_fraction=0.25, indices=False, ...)
+    ShuffleSplit(4, n_iterations=3, test_fraction=0.25, indices=False, ...)
     >>> for train_index, test_index in rs:
     ...    print "TRAIN:", train_index, "TEST:", test_index
     ...
     TRAIN: [False  True  True  True] TEST: [ True False False False]
     TRAIN: [ True  True  True False] TEST: [False False False  True]
     TRAIN: [ True False  True  True] TEST: [False  True False False]
+
+    See also
+    --------
+    Bootstrap: cross-validation using re-sampling with replacement.
     """
 
-    def __init__(self, n, n_splits=20, test_fraction=0.1,
+    def __init__(self, n, n_iterations=10, test_fraction=0.1,
                  indices=False, random_state=None):
         self.n = n
-        self.n_splits = n_splits
+        self.n_iterations = n_iterations
         self.test_fraction = test_fraction
         self.random_state = random_state
         self.indices = indices
@@ -662,7 +688,7 @@ class ShuffleSplit(object):
     def __iter__(self):
         rng = self.random_state = check_random_state(self.random_state)
         n_test = ceil(self.test_fraction * self.n)
-        for i in range(self.n_splits):
+        for i in range(self.n_iterations):
             # random partition
             permutation = rng.permutation(self.n)
             ind_train = permutation[:-n_test]
@@ -678,18 +704,18 @@ class ShuffleSplit(object):
                 yield train_mask, test_mask
 
     def __repr__(self):
-        return ('%s(%d, n_splits=%d, test_fraction=%s, indices=%s, '
+        return ('%s(%d, n_iterations=%d, test_fraction=%s, indices=%s, '
                 'random_state=%d)' % (
                     self.__class__.__name__,
                     self.n,
-                    self.n_splits,
+                    self.n_iterations,
                     str(self.test_fraction),
                     self.indices,
                     self.random_state,
                 ))
 
     def __len__(self):
-        return self.n_splits
+        return self.n_iterations
 
 
 ##############################################################################
@@ -705,30 +731,36 @@ def _cross_val_score(estimator, X, y, score_func, train, test):
     return score
 
 
-def cross_val_score(estimator, X, y=None, score_func=None, cv=None,
-                    n_jobs=1, verbose=0):
+def cross_val_score(estimator, X, y=None, score_func=None, cv=None, n_jobs=1,
+                    verbose=0):
     """Evaluate a score by cross-validation
 
     Parameters
     ----------
     estimator: estimator object implementing 'fit'
         The object to use to fit the data
+
     X: array-like of shape at least 2D
         The data to fit.
+
     y: array-like, optional
         The target variable to try to predict in the case of
         supervised learning.
+
     score_func: callable, optional
         callable taking as arguments the fitted estimator, the
         test data (X_test) and the test target (y_test) if y is
         not None.
+
     cv: cross-validation generator, optional
         A cross-validation generator. If None, a 3-fold cross
         validation is used or 3-fold stratified cross-validation
         when y is supplied and estimator is a classifier.
+
     n_jobs: integer, optional
         The number of CPUs to use to do the computation. -1 means
         'all CPUs'.
+
     verbose: integer, optional
         The verbosity level
     """
@@ -759,8 +791,7 @@ def _permutation_test_score(estimator, X, y, cv, score_func):
 
 
 def _shuffle(y, labels, random_state):
-    """Return a shuffled copy of y eventually shuffle among same labels.
-    """
+    """Return a shuffled copy of y eventually shuffle among same labels."""
     if labels is None:
         ind = random_state.permutation(y.size)
     else:
@@ -772,21 +803,24 @@ def _shuffle(y, labels, random_state):
 
 
 def check_cv(cv, X=None, y=None, classifier=False):
-    """Creates a valid and usable cv generator
+    """Input checker utility for building a CV in a user friendly way.
 
     Parameters
     ===========
     cv: an integer, a cv generator instance, or None
-        The input specifying which cv generator to use. It can be an 
+        The input specifying which cv generator to use. It can be an
         integer, in which case it is the number of folds in a KFold,
         None, in which case 3 fold is used, or another object, that
         will then be used as a cv generator.
+
     X: 2D ndarray
         the data the cross-val object will be applied on
+
     y: 1D ndarray
         the target variable for a supervised learning problem
+
     classifier: boolean optional
-        whether the task is a classification task, in which case 
+        whether the task is a classification task, in which case
         stratified KFold will be used.
     """
     if cv is None:
@@ -804,8 +838,6 @@ def check_cv(cv, X=None, y=None, classifier=False):
     return cv
 
 
-
-
 def permutation_test_score(estimator, X, y, score_func, cv=None,
                       n_permutations=100, n_jobs=1, labels=None,
                       random_state=0, verbose=0):
@@ -815,27 +847,35 @@ def permutation_test_score(estimator, X, y, score_func, cv=None,
     ----------
     estimator: estimator object implementing 'fit'
         The object to use to fit the data
+
     X: array-like of shape at least 2D
         The data to fit.
+
     y: array-like, optional
         The target variable to try to predict in the case of
         supervised learning.
+
     score_func: callable, optional
         callable taking as arguments the test targets (y_test) and
         the predicted targets (y_pred). Returns a float.
+
     cv : integer or crossvalidation generator, optional
         If an integer is passed, it is the number of fold (default 3).
-        Specific crossvalidation objects can be passed, see 
-        sklearn.cross_val module for the list of possible objects 
+        Specific crossvalidation objects can be passed, see
+        sklearn.cross_val module for the list of possible objects
+
     n_jobs: integer, optional
         The number of CPUs to use to do the computation. -1 means
         'all CPUs'.
+
     labels: array-like of shape [n_samples] (optional)
         Labels constrain the permutation among groups of samples with
         a same label.
+
     random_state: RandomState or an int seed (0 by default)
         A random number generator instance to define the state of the
         random permutations generator.
+
     verbose: integer, optional
         The verbosity level
 
@@ -848,11 +888,14 @@ def permutation_test_score(estimator, X, y, score_func, cv=None,
     pvalue: float
         The p-value.
 
-    Notes
-    -----
-    In corresponds to Test 1 in :
-    Ojala and Garriga. Permutation Tests for Studying Classifier Performance.
-    The Journal of Machine Learning Research (2010) vol. 11
+    References
+    ----------
+    This function implements Test 1 in:
+
+        Ojala and Garriga. Permutation Tests for Studying Classifier
+        Performance.  The Journal of Machine Learning Research (2010)
+        vol. 11
+
     """
     X, y = check_arrays(X, y, sparse_format='csr')
     cv = check_cv(cv, X, y, classifier=is_classifier(estimator))

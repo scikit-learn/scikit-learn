@@ -181,6 +181,9 @@ def libsvm_sparse_train ( int n_features,
             probA = np.empty(1, dtype=np.float64)
             probB = np.empty(0, dtype=np.float64)
         copy_probA(probA.data, model, probA.shape)
+    else:
+        probA = np.empty(0, dtype=np.float64)
+        probB = np.empty(0, dtype=np.float64)
 
     svm_csr_free_and_destroy_model (&model)
     free_problem(problem)
