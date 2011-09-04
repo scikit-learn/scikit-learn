@@ -1,7 +1,8 @@
 """Utilities for cross validation and performance evaluation"""
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>,
-#         Gael Varoquaux    <gael.varoquaux@normalesup.org>
+#         Gael Varoquaux <gael.varoquaux@normalesup.org>,
+#         Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD Style.
 
 from math import ceil
