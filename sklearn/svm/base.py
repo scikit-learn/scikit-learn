@@ -58,9 +58,7 @@ class BaseLibSVM(BaseEstimator):
         self.probability = probability
 
     def _compute_kernel(self, X):
-        """ Return the data transformed by the kernel (if the kernel
-            is a callable).
-        """
+        """Return the data transformed by a callable kernel"""
         if hasattr(self, 'kernel_function'):
             # in the case of precomputed kernel given as a function, we
             # have to compute explicitly the kernel matrix
@@ -68,10 +66,9 @@ class BaseLibSVM(BaseEstimator):
                                dtype=np.float64, order='C')
         return X
 
-    def fit(self, X, y, class_weight=None, sample_weight=None, cache_size=100.):
-        """
-        Fit the SVM model according to the given training data and
-        parameters.
+    def fit(self, X, y, class_weight=None, sample_weight=None,
+            cache_size=100.):
+        """Fit the SVM model according to the given training data.
 
         Parameters
         ----------
@@ -148,9 +145,7 @@ class BaseLibSVM(BaseEstimator):
         return self
 
     def predict(self, X):
-        """
-        This function does classification or regression on an array of
-        test vectors X.
+        """Perform classification or regression samples in X.
 
         For a classification model, the predicted class for each
         sample in X is returned.  For a regression model, the function
@@ -191,9 +186,10 @@ class BaseLibSVM(BaseEstimator):
             svm_type=svm_type, **self._get_params())
 
     def predict_proba(self, X):
-        """
-        This function does classification or regression on a test vector X
-        given a model with probability information.
+        """Compute the likehoods each possible outcomes of samples in T.
+
+        The model need to have probability information computed at training
+        time: fit with attribute `probability` set to True.
 
         Parameters
         ----------
@@ -235,9 +231,10 @@ class BaseLibSVM(BaseEstimator):
         return pprob
 
     def predict_log_proba(self, T):
-        """
-        This function does classification or regression on a test vector T
-        given a model with probability information.
+        """Compute the log likehoods each possible outcomes of samples in T.
+
+        The model need to have probability information computed at training
+        time: fit with attribute `probability` set to True.
 
         Parameters
         ----------
@@ -260,8 +257,7 @@ class BaseLibSVM(BaseEstimator):
         return np.log(self.predict_proba(T))
 
     def decision_function(self, X):
-        """
-        Calculate the distance of the samples T to the separating hyperplane.
+        """Distance of the samples T to the separating hyperplane.
 
         Parameters
         ----------
@@ -290,7 +286,7 @@ class BaseLibSVM(BaseEstimator):
             # libsvm has the convention of returning negative values for
             # rightmost labels, so we invert the sign since our label_ is
             # sorted by increasing order
-            return -dec_func
+            return - dec_func
         else:
             return dec_func
 
@@ -306,14 +302,14 @@ class BaseLibLinear(BaseEstimator):
     """Base for classes binding liblinear (dense and sparse versions)"""
 
     _solver_type_dict = {
-        'PL2_LLR_D0' : 0,  # L2 penalty, logistic regression
-        'PL2_LL2_D1' : 1,  # L2 penalty, L2 loss, dual form
-        'PL2_LL2_D0' : 2,  # L2 penalty, L2 loss, primal form
-        'PL2_LL1_D1' : 3,  # L2 penalty, L1 Loss, dual form
-        'MC_SVC'     : 4,  # Multi-class Support Vector Classification
-        'PL1_LL2_D0' : 5,  # L1 penalty, L2 Loss, primal form
-        'PL1_LLR_D0' : 6,  # L1 penalty, logistic regression
-        'PL2_LLR_D1' : 7,  # L2 penalty, logistic regression, dual form
+        'PL2_LLR_D0': 0,  # L2 penalty, logistic regression
+        'PL2_LL2_D1': 1,  # L2 penalty, L2 loss, dual form
+        'PL2_LL2_D0': 2,  # L2 penalty, L2 loss, primal form
+        'PL2_LL1_D1': 3,  # L2 penalty, L1 Loss, dual form
+        'MC_SVC': 4,      # Multi-class Support Vector Classification
+        'PL1_LL2_D0': 5,  # L1 penalty, L2 Loss, primal form
+        'PL1_LLR_D0': 6,  # L1 penalty, logistic regression
+        'PL2_LLR_D1': 7,  # L2 penalty, logistic regression, dual form
         }
 
     def __init__(self, penalty='l2', loss='l2', dual=True, tol=1e-4, C=1.0,
@@ -331,8 +327,13 @@ class BaseLibLinear(BaseEstimator):
         self._get_solver_type()
 
     def _get_solver_type(self):
-        """ Return the magic number for the solver described by the
-            settings.
+        """Find the liblinear magic number for the solver.
+
+        This number depends on the values of the following attributes:
+          - multi_class
+          - penalty
+          - loss
+          - dual
         """
         if self.multi_class:
             solver_type = 'MC_SVC'
@@ -345,9 +346,7 @@ class BaseLibLinear(BaseEstimator):
         return self._solver_type_dict[solver_type]
 
     def fit(self, X, y, class_weight=None):
-        """
-        Fit the model according to the given training data and
-        parameters.
+        """Fit the model according to the given training data.
 
         Parameters
         ----------
@@ -385,8 +384,7 @@ class BaseLibLinear(BaseEstimator):
         return self
 
     def predict(self, X):
-        """
-        Predict target values of X according to the fitted model.
+        """Predict target values of X according to the fitted model.
 
         Parameters
         ----------
@@ -409,9 +407,7 @@ class BaseLibLinear(BaseEstimator):
                                       self._get_bias())
 
     def decision_function(self, X):
-        """
-        Return the decision function of X according to the trained
-        model.
+        """Decision function value for X according to the trained model.
 
         Parameters
         ----------
