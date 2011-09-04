@@ -14,7 +14,7 @@ from StringIO import StringIO
 def test_label_propagation_fit():
     samples = [[1., 0.], [0., 1.], [1., 3.]]
     labels = [0, 1, -1]
-    lp = label_propagation.LabelPropagation(unlabeled_identifier=-1)
+    lp = label_propagation.LabelPropagation()
     lp.fit(samples, labels)
     assert lp.transduction_[2] == 1
 
@@ -22,7 +22,7 @@ def test_label_propagation_fit():
 def test_label_spreading_fit():
     samples = [[1., 0.], [0., 1.], [1., 3.]]
     labels = [0, 1, -1]
-    lp = label_propagation.LabelSpreading(unlabeled_identifier=-1)
+    lp = label_propagation.LabelSpreading()
     lp.fit(samples, labels)
     assert lp.transduction_[2] == 1
 
@@ -38,7 +38,7 @@ def test_string_labels():
 def test_distribution():
     samples = [[1., 0.], [0., 1.], [1., 1.]]
     labels = [0, 1, -1]
-    lp = label_propagation.LabelPropagation(unlabeled_identifier=-1)
+    lp = label_propagation.LabelPropagation()
     lp.fit(samples, labels)
     assert_array_almost_equal(np.asarray(lp.y_[2]),
              np.array([  2.06115361e-09,   4.12230722e-09]))

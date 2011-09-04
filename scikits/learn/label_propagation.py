@@ -1,14 +1,29 @@
-"""
+"""Graph based semi-supervised learning with label propagation algorithms
+
 Label propagation in the context of this module refers to a set of
-semisupervised classification algorithms. In the high level, these algorithms
+semi-supervised classification algorithms. In the high level, these algorithms
 work by forming a fully-connected graph between all points given and solving
-for the steady-state distribution of labels at each point.
+for the steady-state distribution of labels at each point. Using these
+algorithms assumes that the data can be clustered across a lower dimensional
+manifold.
 
 These algorithms perform very well in practice. The cost of running can be very
 expensive, at approximately O(N^3) where N is the number of (labeled and
 unlabeled) points. The theory (why they perform so well) is motivated by
 intuitions from random walk algorithms and geometric relationships in the data.
 For more information see the references below.
+
+This algorithm solves a convex optimization problem and will converge to one
+global solution. The ordering of input labels will not change the solution.
+
+The algorithms assume maximum entropy priors for unlabeled data in each case
+of these algorithms. It may be desired to incorporate prior information in
+light of some domain information.
+
+LabelSpreading is recommended for a good general case semi-supervised solution.
+LabelPropagation much easier to understand and intuitive, so it may be good
+for debugging, feature selection, and graph analysis, but in the most general
+case it will be outperformed by LabelSpreading.
 
 Model Features
 --------------
@@ -21,7 +36,8 @@ Label clamping:
 
 Kernel:
   A function which projects a vector into some higher dimensional space. See
-  the documentation for SVMs for more info on kernels.
+  the documentation for SVMs for more info on kernels. Only RBF kernels are
+  currently supported.
 
 Example
 -------
@@ -32,7 +48,7 @@ Example
 ...        size=len(iris.target)))
 >>> labels = np.copy(iris.target)
 >>> labels[random_unlabeled_points] = -1
->>> label_prop_model.fit(iris.data, labels, unlabeled_identifier=-1)
+>>> label_prop_model.fit(iris.data, labels)
 ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
 LabelPropagation(...)
 
@@ -223,17 +239,19 @@ class LabelPropagation(BaseLabelPropagation):
     ...    size=len(iris.target)))
     >>> labels = np.copy(iris.target)
     >>> labels[random_unlabeled_points] = -1
-    >>> label_prop_model.fit(iris.data, labels, unlabeled_identifier=-1)
+    >>> label_prop_model.fit(iris.data, labels)
     ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     LabelPropagation(...)
 
     References
     ----------
-
+    Xiaojin Zhu and Zoubin Ghahramani. Learning from labeled and unlabeled data
+    with label propagation. Technical Report CMU-CALD-02-107, Carnegie Mellon
+    University, 2002. http://pages.cs.wisc.edu/~jerryzhu/pub/CMU-CALD-02-107.pdf
 
     See Also
     --------
-    LabelSpreading : 
+    LabelSpreading : Alternate label proagation strategy more robust to noise
     """
     def _build_graph(self):
         """
@@ -284,9 +302,19 @@ class LabelSpreading(BaseLabelPropagation):
     ...    size=len(iris.target)))
     >>> labels = np.copy(iris.target)
     >>> labels[random_unlabeled_points] = -1
-    >>> label_prop_model.fit(iris.data, labels, unlabeled_identifier=-1)
+    >>> label_prop_model.fit(iris.data, labels)
     ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     LabelSpreading(...)
+
+    References
+    ----------
+    Dengyong Zhou, Olivier Bousquet, Thomas Navin Lal, Jason Weston,
+    Bernhard Schölkopf. Learning with local and global consistency (2004)
+    http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.115.3219
+
+    See Also
+    --------
+    Label Propagation : Unregularized graph based semi-supervised learning
     """
 
     def __init__(self, alpha=0.2, *args, **kwargs):
