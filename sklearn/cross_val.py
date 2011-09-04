@@ -504,7 +504,7 @@ class LeavePLabelOut(object):
 
 
 class Bootstrap(object):
-    """Bootstrapping cross-validation iterator
+    """Random sampling with replacement cross-validation iterator
 
     Provides train/test indices to split data in train test sets
     while resampling the input n_bootstraps times: each time a new
@@ -513,7 +513,12 @@ class Bootstrap(object):
     and test sets.
 
     Note: contrary to other cross-validation strategies, bootstrapping
-    will allow some samples to occur several times in each splits.
+    will allow some samples to occur several times in each splits. However
+    a sample that occurs in the train split will never occur in the test
+    split and vice-versa.
+
+    If you want each sample to occur at most once you should probably
+    use ShuffleSplit cross validation instead.
 
     Parameters
     ----------
@@ -545,7 +550,7 @@ class Bootstrap(object):
         Pseudo number generator state used for random sampling.
 
     Examples
-    ----------
+    --------
     >>> from sklearn import cross_val
     >>> bs = cross_val.Bootstrap(9, random_state=0)
     >>> len(bs)
@@ -558,6 +563,10 @@ class Bootstrap(object):
     TRAIN: [1 8 7 7 8] TEST: [0 3 0 5]
     TRAIN: [5 4 2 4 2] TEST: [6 7 1 0]
     TRAIN: [4 7 0 1 1] TEST: [5 3 6 5]
+
+    See also
+    --------
+    ShuffleSplit: cross validation using random permutations.
     """
 
     def __init__(self, n, n_bootstraps=3, n_train=0.5, n_test=None,
@@ -618,24 +627,24 @@ class Bootstrap(object):
 
 
 class ShuffleSplit(object):
-    """Random split cross-validation iterator.
+    """Random permutation cross-validation iterator.
 
     Yields indices to split data into training and test sets.
 
-    Note: contrary to other cross-validation strategies, random splits do not
-    guarantee that all folds will be different, although this is still very
-    likely for sizeable datasets.
+    Note: contrary to other cross-validation strategies, random splits
+    do not guarantee that all folds will be different, although this is
+    still very likely for sizeable datasets.
 
     Parameters
     ----------
     n : int
         Total number of elements in the dataset.
 
-    n_splits : int (default 20)
-        Number of splitting iterations.
+    n_iterations : int (default 10)
+        Number of re-shuffling & splitting iterations.
 
     test_fraction : float (default 0.1)
-        should be between 0.0 and 1.0 and represent the proportion of
+        Should be between 0.0 and 1.0 and represent the proportion of
         the dataset to include in the test split.
 
     indices : boolean, optional (default False)
@@ -649,25 +658,29 @@ class ShuffleSplit(object):
     Examples
     ----------
     >>> from sklearn import cross_val
-    >>> rs = cross_val.ShuffleSplit(4, n_splits=3, test_fraction=.25,
+    >>> rs = cross_val.ShuffleSplit(4, n_iterations=3, test_fraction=.25,
     ...                             random_state=0)
     >>> len(rs)
     3
     >>> print rs
     ... # doctest: +ELLIPSIS
-    ShuffleSplit(4, n_splits=3, test_fraction=0.25, indices=False, ...)
+    ShuffleSplit(4, n_iterations=3, test_fraction=0.25, indices=False, ...)
     >>> for train_index, test_index in rs:
     ...    print "TRAIN:", train_index, "TEST:", test_index
     ...
     TRAIN: [False  True  True  True] TEST: [ True False False False]
     TRAIN: [ True  True  True False] TEST: [False False False  True]
     TRAIN: [ True False  True  True] TEST: [False  True False False]
+
+    See also
+    --------
+    Bootstrap: cross-validation using re-sampling with replacement.
     """
 
-    def __init__(self, n, n_splits=20, test_fraction=0.1,
+    def __init__(self, n, n_iterations=10, test_fraction=0.1,
                  indices=False, random_state=None):
         self.n = n
-        self.n_splits = n_splits
+        self.n_iterations = n_iterations
         self.test_fraction = test_fraction
         self.random_state = random_state
         self.indices = indices
@@ -675,7 +688,7 @@ class ShuffleSplit(object):
     def __iter__(self):
         rng = self.random_state = check_random_state(self.random_state)
         n_test = ceil(self.test_fraction * self.n)
-        for i in range(self.n_splits):
+        for i in range(self.n_iterations):
             # random partition
             permutation = rng.permutation(self.n)
             ind_train = permutation[:-n_test]
@@ -691,18 +704,18 @@ class ShuffleSplit(object):
                 yield train_mask, test_mask
 
     def __repr__(self):
-        return ('%s(%d, n_splits=%d, test_fraction=%s, indices=%s, '
+        return ('%s(%d, n_iterations=%d, test_fraction=%s, indices=%s, '
                 'random_state=%d)' % (
                     self.__class__.__name__,
                     self.n,
-                    self.n_splits,
+                    self.n_iterations,
                     str(self.test_fraction),
                     self.indices,
                     self.random_state,
                 ))
 
     def __len__(self):
-        return self.n_splits
+        return self.n_iterations
 
 
 ##############################################################################
