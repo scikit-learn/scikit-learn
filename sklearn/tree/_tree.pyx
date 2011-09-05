@@ -34,8 +34,12 @@ cdef extern from "float.h":
 cdef class Criterion:
     """Interface for splitting criteria (regression and classification)"""
 
-    cdef void init(self, np.ndarray[np.float64_t, ndim=1] y, int *sorted_X_i):
-        """Initialise the criterion class."""
+    cdef void init(self, np.float64_t *y, int n_samples):
+        """Initialise the criterion class for new split point."""
+        pass
+
+    cdef void reset(self):
+        """Reset the criterion for a new feature index."""
         pass
 
     cdef int update(self, int a, int b, np.float64_t *y, int *sorted_X_i):
@@ -63,45 +67,58 @@ cdef class ClassificationCriterion(Criterion):
         label counts for samples left of splitting point.
     label_count_right : int*
         label counts for samples right of splitting point.
+    label_count_init : int*
+        Initial label counts for samples right of splitting point.
+        Used to reset `label_count_right` for each feature.
     n_left : int
         number of samples left of splitting point.
     n_right : int
         number of samples right of splitting point.
     """
-    cdef n_classes
-    cdef n_samples
+    cdef int n_classes
+    cdef int n_samples
     cdef int* label_count_left
     cdef int* label_count_right
+    cdef int* label_count_init
     cdef int n_left
     cdef int n_right
 
-    def __init__(self, int n_classes,
-                 np.ndarray[np.int32_t, ndim=1] label_count_left,
-                 np.ndarray[np.int32_t, ndim=1] label_count_right):
+    # need to store ref to arrays to prevent GC
+    cdef ndarray_label_count_left
+    cdef ndarray_label_count_right
+    cdef ndarray_label_count_init
+
+    def __init__(self, int n_classes):
+        cdef np.ndarray[np.int32_t, ndim=1] ndarray_label_count_left = np.zeros((n_classes,), dtype=np.int32, order='C')
+        cdef np.ndarray[np.int32_t, ndim=1] ndarray_label_count_right = np.zeros((n_classes,), dtype=np.int32, order='C')
+        cdef np.ndarray[np.int32_t, ndim=1] ndarray_label_count_init = np.zeros((n_classes,), dtype=np.int32, order='C')
+        
         self.n_classes = n_classes
         self.n_samples = 0
         self.n_left = 0
         self.n_right = 0
-        self.label_count_left = <int*>label_count_left.data
-        self.label_count_right = <int*>label_count_right.data
+        self.label_count_left = <int*>ndarray_label_count_left.data
+        self.label_count_right = <int*>ndarray_label_count_right.data
+        self.label_count_init = <int*>ndarray_label_count_init.data
+        self.ndarray_label_count_left = ndarray_label_count_left
+        self.ndarray_label_count_right = ndarray_label_count_right
+        self.ndarray_label_count_init = ndarray_label_count_init
 
-    cdef void init(self, np.ndarray[np.float64_t, ndim=1] y, int *sorted_X_i):
+    cdef void init(self, np.float64_t *y, int n_samples):
         """Initialise the criterion class."""
-
-        self.n_samples = y.shape[0]
-        self.n_left = 0
-        self.n_right = 0
-
         cdef int c = 0
-        for c from 0 <= c < self.n_classes:
-            self.label_count_left[c] = 0
-            self.label_count_right[c] = 0
-
         cdef int j = 0
+        
+        self.n_samples = n_samples
+
+        for c from 0 <= c < self.n_classes:
+            self.label_count_init[c] = 0
+
         for j from 0 <= j < self.n_samples:
             c = <int>(y[j])
-            self.label_count_right[c] += 1
-            self.n_right += 1
+            self.label_count_init[c] += 1
+
+        self.reset()
 
         # print "ClassificationCriterion.init: "
         # print "    label_count_left [",
@@ -112,6 +129,17 @@ cdef class ClassificationCriterion(Criterion):
         # for c from 0 <= c < self.n_classes:
         #     print self.label_count_right[c],
         # print "] ", self.n_right
+
+    cdef void reset(self):
+        """Reset label_counts by setting `label_count_left to zero
+        and copying the init array into the right."""
+        cdef int c = 0
+        self.n_left = 0
+        self.n_right = self.n_samples
+
+        for c from 0 <= c < self.n_classes:
+            self.label_count_left[c] = 0
+            self.label_count_right[c] = self.label_count_init[c]
 
     cdef int update(self, int a, int b, np.float64_t *y, int *sorted_X_i):
         """Update the criteria for each value in interval [a,b)
@@ -211,82 +239,125 @@ cdef class Entropy(ClassificationCriterion):
 
 
 cdef class RegressionCriterion(Criterion):
-    """Abstract criterion for regression.
+    """Abstract criterion for regression. Computes variance of the
+    target values left and right of the split point.
+
+    Computation is linear in `n_samples` by using ::
+
+        var = \sum_i^n (y_i - y_bar) ** 2
+            = (\sum_i^n y_i ** 2) - n_samples y_bar ** 2
 
     Attributes
     ----------
     n_samples : int
         The number of samples
-    sum_left : double
-        The sum of the samples left of the split point.
-    sum_right : double
-        The sum of the samples right of the split.
-    y : double*
-        Pointer to the labels array
+    mean_left : double
+        The mean target value of the samples left of the split point.
+    mean_right : double
+        The mean target value of the samples right of the split.
+    sq_sum_left : double
+        The sum of squared target values left of the split point.
+    sq_sum_right : double
+        The sum of squared target values right of the split point.
+    var_left : double
+        The variance of the target values left of the split point.
+    var_right : double
+        The variance of the target values left of the split point.
     n_left : int
         number of samples left of split point.
     n_right : int
         number of samples right of split point.
     """
 
-    cdef n_samples
-    cdef double sum_left
-    cdef double sum_right
-    cdef double* y
+    cdef int n_samples
+    cdef int n_right
     cdef int n_left
-    cdef n_right
 
-    def __init__(self, np.ndarray[np.float64_t, ndim=1] y):
-        self.sum_left = 0.0
-        self.sum_right = 0.0
+    cdef double mean_left
+    cdef double mean_right
+    cdef double mean_init
+    
+    cdef double sq_sum_right
+    cdef double sq_sum_left
+    cdef double sq_sum_init
+
+    cdef double var_left
+    cdef double var_right
+
+    def __init__(self):
+        self.n_samples = 0
         self.n_left = 0
         self.n_right = 0
-        self.y = <double*> y.data
+        self.mean_left = 0.0
+        self.mean_right = 0.0
+        self.mean_init = 0.0
+        self.sq_sum_right = 0.0
+        self.sq_sum_left = 0.0
+        self.sq_sum_init = 0.0
+        self.var_left = 0.0
+        self.var_right = 0.0
 
-    cdef void init(self, np.ndarray[np.float64_t, ndim=1] y, int *sorted_X_i):
-        """Initialise the criterion class."""
-
-        self.n_samples = y.shape[0]
-        self.n_left = 0
-        self.n_right = 0
-        self.sum_left = 0.0
-        self.sum_right = 0.0
+    cdef void init(self, np.float64_t *y, int n_samples):
+        """Initialise the criterion class; assume all samples
+        are in the right branch and store the mean and squared
+        sum in `self.mean_init` and `self.sq_sum_init`. """
+        self.mean_left = 0.0
+        self.mean_right = 0.0
+        self.mean_init = 0.0
+        self.sq_sum_right = 0.0
+        self.sq_sum_left = 0.0
+        self.sq_sum_init = 0.0
+        self.var_left = 0.0
+        self.var_right = 0.0
+        self.n_samples = n_samples
 
         cdef int j = 0
         for j from 0 <= j < self.n_samples:
-            self.y[j] = y[sorted_X_i[j]]
-            self.sum_right += self.y[j]
-            self.n_right += 1
+            self.sq_sum_init = self.sq_sum_init + (y[j] * y[j])
+            self.mean_init = self.mean_init + y[j]
 
-        # print "RegressionCriterion.init: "
-        # print "    sum_left = ", self.sum_left , self.n_left
-        # print "    sum_right = ", self.sum_right , self.n_right
+        self.mean_init = self.mean_init / self.n_samples
+
+        self.reset()
+
+    cdef void reset(self):
+        """Reset criterion for new feature; assume all data in right branch and
+        copy statistics of the whole dataset into the auxiliary variables of the
+        right branch. 
+        """
+        self.n_right = self.n_samples
+        self.n_left = 0
+        self.mean_right = self.mean_init
+        self.mean_left = 0.0
+        self.sq_sum_right = self.sq_sum_init
+        self.sq_sum_left = 0.0
+        self.var_left = 0.0
+        self.var_right = self.sq_sum_right - \
+                         self.n_samples * (self.mean_right * self.mean_right)
 
     cdef int update(self, int a, int b, np.float64_t *y, int *sorted_X_i):
-        """Update the criteria for each value in interval [a,b)
-
+        """Update the criteria for each value in interval [a,b) where
         a and b are indices in `sorted_X_i`.
         """
-        cdef double val = 0.0
+        cdef double y_idx = 0.0
+        cdef int idx
         # post condition: all samples from [0:b) are on the left side
         for idx from a <= idx < b:
-            val = self.y[idx]
-            self.sum_right -= val
-            self.sum_left += val
+            y_idx = y[sorted_X_i[idx]]
+            self.sq_sum_left = self.sq_sum_left + (y_idx * y_idx)
+            self.sq_sum_right = self.sq_sum_right - (y_idx * y_idx)
+
+            self.mean_left = (idx  * self.mean_left + y_idx) / <double>(idx + 1)
+            self.mean_right = ((self.n_samples - idx) * self.mean_right - y_idx) / \
+                              <double>(self.n_samples - idx - 1)
+
             self.n_right -= 1
             self.n_left += 1
 
-        # print "RegressionCriterion.update: a = ", a, " b = ", b
-        # print "    sorted [",
-        # for c from 0 <= c < self.n_samples:
-        #     print sorted_X_i[c],
-        # print "] "
-        # print "    y [",
-        # for c from 0 <= c < self.n_samples:
-        #     print y[sorted_X_i[c]],
-        # print "] "
-        # print "    sum_left = ", self.sum_left , self.n_left
-        # print "    sum_right = ", self.sum_right , self.n_right
+            self.var_left = self.sq_sum_left - \
+                            self.n_left * (self.mean_left * self.mean_left)
+            self.var_right = self.sq_sum_right - \
+                             self.n_right * (self.mean_right * self.mean_right)
 
         return self.n_left
 
@@ -295,49 +366,14 @@ cdef class RegressionCriterion(Criterion):
 
 
 cdef class MSE(RegressionCriterion):
+    """Mean squared error impurity criterion.
+
+    MSE = var_left + var_right
+    """
 
     cdef double eval(self):
-        """Compute the Mean Square Error criterion value
-
-        MSE =  \sum_i (y_i - c0)^2  / N
-        """
-        cdef double mean_left = 0
-        cdef double mean_right = 0
-
-        if self.n_left > 0:
-            mean_left = self.sum_left / self.n_left
-        if self.n_right > 0:
-            mean_right = self.sum_right / self.n_right
-
-        # print "MSE.eval: mean_left = ", mean_left
-        # print "MSE.eval: mean_right = ", mean_right
-
-        cdef double variance_left = 0.0
-        cdef double variance_right = 0.0
-        cdef int j
-        cdef double e1, e2
-
-        for j from 0 <= j < self.n_samples:
-            #print "y[",j,"] = ", self.y[j]
-            if j < self.n_left:
-                variance_left += ((self.y[j] - mean_left)
-                                  * (self.y[j] - mean_left))
-            else:
-                variance_right += ((self.y[j] - mean_right)
-                                   * (self.y[j] - mean_right))
-
-        # print "MSE.eval: variance_left = ", variance_left,
-        # print "MSE.eval: variance_right = ", variance_right
-
-        if self.n_left > 0:
-            variance_left /= self.n_left
-        if self.n_right > 0:
-            variance_right /= self.n_right
-
-        e1 = ((<double> self.n_left) / self.n_samples) * variance_left
-        e2 = ((<double> self.n_right) / self.n_samples) * variance_right
-
-        return e1 + e2
+        return (self.n_left / <double>self.n_samples) * self.var_left + \
+               (self.n_right / <double>self.n_samples) * self.var_right
 
 
 cdef int smallest_sample_larger_than(int sample_idx, np.float64_t *X_i,
@@ -415,7 +451,7 @@ def _find_best_split(np.ndarray[np.float64_t, ndim=2, mode="fortran"] X,
 
     # Compute the initial entropy in the node
     sorted_X_i = <int *>sorted_X.data
-    criterion.init(y, sorted_X_i)
+    criterion.init(y_ptr, n_samples)
     initial_error = criterion.eval()
     if initial_error == 0: # break early if the node is pure
         return best_i, best_t, best_error, initial_error
@@ -427,11 +463,11 @@ def _find_best_split(np.ndarray[np.float64_t, ndim=2, mode="fortran"] X,
         X_i = (<np.float64_t *>X.data) + X_stride * i
         sorted_X_i = (<int *>sorted_X.data) + sorted_X_stride * i
 
-        # init the criterion for this feature
-        criterion.init(y, sorted_X_i)
+        # reset the criterion for this feature
+        criterion.reset()
 
-        # get sample in mask with smallest value for i-th feature
-        a = smallest_sample_larger_than(-1, X_i, sorted_X_i, n_samples)
+        # index of smallest sample in sorted_X_i
+        a = 0
 
         while True:
             b = smallest_sample_larger_than(a, X_i, sorted_X_i, n_samples)
