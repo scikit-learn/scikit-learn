@@ -1,3 +1,4 @@
+# encoding=UTF-8
 """Graph based semi-supervised learning with label propagation algorithms
 
 Label propagation in the context of this module refers to a set of
@@ -41,7 +42,7 @@ Kernel:
 
 Example
 -------
->>> from scikits.learn import datasets
+>>> from sklearn import datasets
 >>> label_prop_model = LabelPropagation()
 >>> iris = datasets.load_iris()
 >>> random_unlabeled_points = np.where(np.random.random_integers(0, 1,
@@ -49,8 +50,9 @@ Example
 >>> labels = np.copy(iris.target)
 >>> labels[random_unlabeled_points] = -1
 >>> label_prop_model.fit(iris.data, labels)
-... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-LabelPropagation(...)
+... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+LabelPropagation(alpha=1, gamma=20, kernel='rbf', max_iter=30, tol=0.001,
+        unlabeled_identifier=-1)
 
 Notes
 -----
@@ -82,17 +84,17 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
       a special identifier label that represents unlabeled examples
       in the training set
 
-    max_iters : float
+    max_iter : float
       change maximum number of iterations allowed
     tol : float
       threshold to consider the system at steady state
     """
 
     def __init__(self, kernel='rbf', gamma=20, alpha=1,
-            unlabeled_identifier=-1, max_iters=30,
+            unlabeled_identifier=-1, max_iter=30,
             tol=1e-3):
 
-        self.max_iters = max_iters
+        self.max_iter = max_iter
         self.tol = tol
 
         # object referring to a point that is unlabeled
@@ -130,7 +132,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
             Predictions for input data
         """
         ym = self.predict_proba(X)
-        return self.unq_labels[np.argmax(ym, axis=1)].flatten()
+        return self.unique_labels[np.argmax(ym, axis=1)].flatten()
 
     def predict_proba(self, X):
         """
@@ -169,11 +171,11 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
 
         # label construction
         # construct a categorical distribution for classification only
-        unq_labels = np.unique(y)
-        unq_labels = unq_labels[unq_labels != self.unlabeled_identifier]
-        self.unq_labels = unq_labels
+        unique_labels = np.unique(y)
+        unique_labels = unique_labels[unique_labels != self.unlabeled_identifier]
+        self.unique_labels = unique_labels
 
-        n_labels, n_classes = len(y), len(unq_labels)
+        n_labels, n_classes = len(y), len(unique_labels)
 
         y_st = np.asanyarray(y)
         unlabeled_points = np.where(y_st == self.unlabeled_identifier)
@@ -182,8 +184,8 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
 
         # initialize distributions
         self.y_ = np.zeros((n_labels, n_classes))
-        for label in unq_labels:
-            self.y_[y_st == label, unq_labels == label] = 1
+        for label in unique_labels:
+            self.y_[y_st == label, unique_labels == label] = 1
 
         Y_alpha = np.copy(self.y_)
         Y_alpha = Y_alpha * (1 - self.alpha)
@@ -192,17 +194,17 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         y_p = np.zeros((self._X.shape[0], n_classes))
         self.y_.resize((self._X.shape[0], n_classes))
 
-        max_iters = self.max_iters
+        max_iter = self.max_iter
         ct = self.tol
-        while _not_converged(self.y_, y_p, ct) and max_iters > 1:
+        while _not_converged(self.y_, y_p, ct) and max_iter > 1:
             y_p = self.y_
             self.y_ = np.dot(graph_matrix, self.y_)
             # clamp
             self.y_ = np.multiply(alpha_ary, self.y_) + Y_alpha
-            max_iters -= 1
+            max_iter -= 1
 
         # set the transduction item
-        transduction = self.unq_labels[np.argmax(self.y_, axis=1)]
+        transduction = self.unique_labels[np.argmax(self.y_, axis=1)]
         self.transduction_ = transduction.flatten()
         return self
 
@@ -225,14 +227,14 @@ class LabelPropagation(BaseLabelPropagation):
       a special identifier label that represents unlabeled examples
       in the training set
 
-    max_iters : float
+    max_iter : float
       change maximum number of iterations allowed
     tol : float
       threshold to consider the system at steady state
 
     Examples
     --------
-    >>> from scikits.learn import datasets
+    >>> from sklearn import datasets
     >>> label_prop_model = LabelPropagation()
     >>> iris = datasets.load_iris()
     >>> random_unlabeled_points = np.where(np.random.random_integers(0, 1,
@@ -240,8 +242,9 @@ class LabelPropagation(BaseLabelPropagation):
     >>> labels = np.copy(iris.target)
     >>> labels[random_unlabeled_points] = -1
     >>> label_prop_model.fit(iris.data, labels)
-    ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    LabelPropagation(...)
+    ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    LabelPropagation(alpha=1, gamma=20, kernel='rbf', max_iter=30, tol=0.001,
+            unlabeled_identifier=-1) 
 
     References
     ----------
@@ -288,14 +291,14 @@ class LabelSpreading(BaseLabelPropagation):
       a special identifier label that represents unlabeled examples
       in the training set
 
-    max_iters : float
+    max_iter : float
       change maximum number of iterations allowed
     tol : float
       threshold to consider the system at steady state
 
     Examples
     --------
-    >>> from scikits.learn import datasets
+    >>> from sklearn import datasets
     >>> label_prop_model = LabelSpreading()
     >>> iris = datasets.load_iris()
     >>> random_unlabeled_points = np.where(np.random.random_integers(0, 1,
@@ -303,8 +306,9 @@ class LabelSpreading(BaseLabelPropagation):
     >>> labels = np.copy(iris.target)
     >>> labels[random_unlabeled_points] = -1
     >>> label_prop_model.fit(iris.data, labels)
-    ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    LabelSpreading(...)
+    ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    LabelSpreading(alpha=0.2, gamma=20, kernel='rbf', max_iter=30, tol=0.001,
+           unlabeled_identifier=-1)
 
     References
     ----------
@@ -317,9 +321,12 @@ class LabelSpreading(BaseLabelPropagation):
     Label Propagation : Unregularized graph based semi-supervised learning
     """
 
-    def __init__(self, alpha=0.2, *args, **kwargs):
+    def __init__(self, kernel='rbf', gamma=20, alpha=0.2,
+            unlabeled_identifier=-1, max_iter=30, tol=1e-3):
         # this one has different base parameters
-        super(LabelSpreading, self).__init__(alpha=alpha, *args, **kwargs)
+        super(LabelSpreading, self).__init__(kernel=kernel, gamma=gamma,
+                alpha=alpha, unlabeled_identifier=unlabeled_identifier,
+                max_iter=max_iter, tol=tol)
 
     def _build_graph(self):
         """Graph matrix for Label Spreading computes the graph laplacian"""
