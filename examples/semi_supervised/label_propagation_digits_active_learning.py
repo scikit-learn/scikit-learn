@@ -22,11 +22,11 @@ import pylab as pl
 
 from scipy import stats
 
-from scikits.learn import datasets
-from scikits.learn import label_propagation
+from sklearn import datasets
+from sklearn import label_propagation
 
-from scikits.learn.metrics import metrics
-from scikits.learn.metrics.metrics import confusion_matrix
+from sklearn.metrics import metrics
+from sklearn.metrics.metrics import confusion_matrix
 
 np.random.RandomState(42)
 
@@ -44,13 +44,13 @@ for i in range(5):
     Y_train = np.copy(Y)
     Y_train[unlabeled_indices] = -1
 
-    lp_model = label_propagation.LabelSpreading(gamma=0.25, max_iters=5)
+    lp_model = label_propagation.LabelSpreading(gamma=0.25, max_iter=5)
     lp_model.fit(X, Y_train)
 
     y_pred = lp_model.transduction_[unlabeled_indices]
     y_true = Y[unlabeled_indices]
 
-    cm = confusion_matrix(y_true, y_pred, labels=lp_model.unq_labels)
+    cm = confusion_matrix(y_true, y_pred, labels=lp_model.unique_labels)
 
     print "Label Spreading model: %d labeled & %d unlabeled (%d total)" %\
         (n_labeled_points, n_total_samples - n_labeled_points, n_total_samples)

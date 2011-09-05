@@ -20,12 +20,12 @@ print __doc__
 
 import numpy as np
 import pylab as pl
-from scikits.learn import datasets
-from scikits.learn import svm
-from scikits.learn import label_propagation
-from scikits.learn.metrics.metrics import precision_score
-from scikits.learn.metrics.metrics import recall_score
-from scikits.learn.metrics.metrics import f1_score
+from sklearn import datasets
+from sklearn import svm
+from sklearn import label_propagation
+from sklearn.metrics.metrics import precision_score
+from sklearn.metrics.metrics import recall_score
+from sklearn.metrics.metrics import f1_score
 
 np.random.RandomState(42)
 
