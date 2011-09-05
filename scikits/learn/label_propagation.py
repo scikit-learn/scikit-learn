@@ -176,9 +176,9 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         n_labels, n_classes = len(y), len(unq_labels)
 
         y_st = np.asanyarray(y)
-        self.unlabeled_points = np.where(y_st == self.unlabeled_identifier)
+        unlabeled_points = np.where(y_st == self.unlabeled_identifier)
         alpha_ary = np.ones((n_labels, 1))
-        alpha_ary[self.unlabeled_points, 0] = self.alpha
+        alpha_ary[unlabeled_points, 0] = self.alpha
 
         # initialize distributions
         self.y_ = np.zeros((n_labels, n_classes))
@@ -187,7 +187,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
 
         Y_alpha = np.copy(self.y_)
         Y_alpha = Y_alpha * (1 - self.alpha)
-        Y_alpha[self.unlabeled_points] = 0
+        Y_alpha[unlabeled_points] = 0
 
         y_p = np.zeros((self._X.shape[0], n_classes))
         self.y_.resize((self._X.shape[0], n_classes))
@@ -247,7 +247,7 @@ class LabelPropagation(BaseLabelPropagation):
     ----------
     Xiaojin Zhu and Zoubin Ghahramani. Learning from labeled and unlabeled data
     with label propagation. Technical Report CMU-CALD-02-107, Carnegie Mellon
-    University, 2002. http://pages.cs.wisc.edu/~jerryzhu/pub/CMU-CALD-02-107.pdf
+    University, 2002 http://pages.cs.wisc.edu/~jerryzhu/pub/CMU-CALD-02-107.pdf
 
     See Also
     --------
