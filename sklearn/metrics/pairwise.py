@@ -143,6 +143,10 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     distances += XX
     distances += YY
     distances = np.maximum(distances, 0)
+
+    if X is Y:
+        np.fill_diagonal(distances, 0.0)
+
     return distances if squared else np.sqrt(distances)
 
 
