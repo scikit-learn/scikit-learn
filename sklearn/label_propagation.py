@@ -63,6 +63,7 @@ Learning (2006), pp. 193-216
 import numpy as np
 from .base import BaseEstimator, ClassifierMixin
 from .metrics.pairwise import rbf_kernel
+from .utils.fixes import dot_out
 
 # Authors: Clay Woolam <clay@woolam.org>
 
@@ -266,7 +267,7 @@ class LabelPropagation(BaseLabelPropagation):
         """
         affinity_matrix = self._get_kernel(self._X, self._X)
         degree_inv = np.diag(1. / np.sum(affinity_matrix, axis=0))
-        np.dot(degree_inv, affinity_matrix, affinity_matrix)
+        dot_out(degree_inv, affinity_matrix, out=affinity_matrix)
         return affinity_matrix
 
 
@@ -336,9 +337,10 @@ class LabelSpreading(BaseLabelPropagation):
         affinity_matrix[np.diag_indices(n_samples)] = 0
         degree_matrix = np.diag(1. / np.sum(affinity_matrix, axis=0))
         np.sqrt(degree_matrix, degree_matrix)
-        np.dot(degree_matrix, affinity_matrix, affinity_matrix)
+        dot_out(degree_matrix, affinity_matrix, out=affinity_matrix)
+
         # final step produces graph laplacian matrix
-        np.dot(affinity_matrix, degree_matrix, affinity_matrix)
+        dot_out(affinity_matrix, degree_matrix, out=affinity_matrix)
         return affinity_matrix
 
 ### Helper functions
