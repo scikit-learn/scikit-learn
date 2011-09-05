@@ -67,13 +67,15 @@ for i in range(5):
     uncertain_idx = [x[1] for x in arg[-5:]]
     del_inds = np.array([])
 
-    f.text(.05, (1 - (i + 1) * .17), "model %d" % (i + 1))
+    f.text(.05, (1 - (i + 1) * .18), "model %d\n\nfit with\n%d labels" % ((i + 1), 
+        i * 5 + 10), size=10)
     for index, im_ind in enumerate(uncertain_idx):
         image = digits.images[im_ind]
 
         sub = f.add_subplot(5, 5, index + 1 + (5 * i))
         sub.imshow(image, cmap=pl.cm.gray_r)
-        sub.set_title('%i' % lp_model.transduction_[im_ind])
+        sub.set_title('pred: %i\ntrue: %i' % (lp_model.transduction_[im_ind],
+            Y[im_ind]), size=10)
         sub.axis('off')
 
         # labeling 5 points
@@ -83,4 +85,5 @@ for i in range(5):
     unlabeled_indices = np.delete(unlabeled_indices, del_inds)
     n_labeled_points += 5
 
+pl.subplots_adjust(0.12, 0.03, 0.9, 0.9, 0.2, 0.45)
 pl.show()
