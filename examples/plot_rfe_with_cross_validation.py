@@ -3,46 +3,40 @@
 Recursive feature elimination with cross-validation
 ===================================================
 
-Recursive feature elimination with automatic tuning of the
-number of features selected with cross-validation
+A recursive feature elimination example with automatic tuning of the
+number of features selected with cross-validation.
 """
 print __doc__
-import numpy as np
 
+import numpy as np
 from sklearn.svm import SVC
 from sklearn.cross_val import StratifiedKFold
 from sklearn.feature_selection import RFECV
 from sklearn.datasets import samples_generator
 from sklearn.metrics import zero_one
 
-################################################################################
-# Loading a dataset
-
-X, y = samples_generator.make_classification(n_samples=1000, n_features=20,
+# Build a classification task using 3 informative features
+X, y = samples_generator.make_classification(n_samples=1000, n_features=25,
                                              n_informative=3, n_redundant=2,
                                              n_repeated=0, n_classes=8,
                                              n_clusters_per_class=1,
                                              random_state=0)
 
-################################################################################
-# Create the RFE object and compute a cross-validated score
+# Create the RFE object and compute a cross-validated score.
+svc = SVC(kernel="linear")
+rfecv = RFECV(estimator=svc,
+              step=1,
+              cv=StratifiedKFold(y, 2),
+              loss_func=zero_one)
+rfecv.fit(X, y)
 
-svc = SVC(kernel='linear')
-rfecv = RFECV(estimator=svc, n_features=2, percentage=0.1, loss_func=zero_one)
-rfecv.fit(X, y, cv=StratifiedKFold(y, 2))
+print "Optimal number of features : %d" % rfecv.n_features_
 
-print 'Optimal number of features : %d' % rfecv.support_.sum()
-
+# Plot number of features VS. cross-validation scores
 import pylab as pl
 pl.figure()
-pl.semilogx(rfecv.n_features_, rfecv.cv_scores_)
-pl.xlabel('Number of features selected')
-pl.ylabel('Cross validation score (nb of misclassifications)')
-# 15 ticks regularly-space in log
-x_ticks = np.unique(np.logspace(np.log10(2),
-                                np.log10(rfecv.n_features_.max()),
-                                15,
-                    ).astype(np.int))
-pl.xticks(x_ticks, x_ticks)
+pl.xlabel("Number of features selected")
+pl.ylabel("Cross validation score (nb of misclassifications)")
+pl.plot(xrange(1, len(rfecv.cv_scores_) + 1), rfecv.cv_scores_)
 pl.show()
 
