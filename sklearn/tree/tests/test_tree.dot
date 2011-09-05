@@ -1,0 +1,8 @@
+digraph Tree {
+<sklearn.tree.tree.Node object at 0x08AED990> [label="x[0] < 0.0 \n error = 0.5 \n samples = 6 \n v = [ 3.  3.]"] ;
+<sklearn.tree.tree.Leaf object at 0x08AED950> [label="Leaf([ 3.  0.])"] ;
+<sklearn.tree.tree.Leaf object at 0x08AED970> [label="Leaf([ 0.  3.])"] ;
+<sklearn.tree.tree.Node object at 0x08AED990> -> <sklearn.tree.tree.Leaf object at 0x08AED950> ;
+<sklearn.tree.tree.Node object at 0x08AED990> -> <sklearn.tree.tree.Leaf object at 0x08AED970> ;
+
+}
