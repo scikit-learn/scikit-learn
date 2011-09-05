@@ -51,7 +51,7 @@ class NearestNeighbors(BaseEstimator):
     Examples
     --------
     >>> samples = [[0, 0, 2], [1, 0, 0], [0, 0, 1]]
-    >>> from scikits.learn.neighbors import NearestNeighbors
+    >>> from sklearn.neighbors import NearestNeighbors
     >>> neigh = NearestNeighbors(2, 0.4)
     >>> neigh.fit(samples)
     NearestNeighbors(algorithm='auto', leaf_size=20, n_neighbors=2,
@@ -212,7 +212,7 @@ class NearestNeighbors(BaseEstimator):
         the closest point to [1,1,1]
 
         >>> samples = [[0., 0., 0.], [0., .5, 0.], [1., 1., .5]]
-        >>> from scikits.learn.neighbors import NearestNeighbors
+        >>> from sklearn.neighbors import NearestNeighbors
         >>> neigh = NearestNeighbors(n_neighbors=1)
         >>> neigh.fit(samples)
         NearestNeighbors(algorithm='auto', leaf_size=20, n_neighbors=1,
@@ -295,7 +295,7 @@ class NearestNeighbors(BaseEstimator):
         the closest point to [1,1,1]
 
         >>> samples = [[0., 0., 0.], [0., .5, 0.], [1., 1., .5]]
-        >>> from scikits.learn.neighbors import NearestNeighbors
+        >>> from sklearn.neighbors import NearestNeighbors
         >>> neigh = NearestNeighbors(r_neighbors=1.6)
         >>> neigh.fit(samples)
         NearestNeighbors(algorithm='auto', leaf_size=20, n_neighbors=5,
@@ -393,7 +393,7 @@ class NearestNeighbors(BaseEstimator):
         Examples
         --------
         >>> X = [[0], [3], [1]]
-        >>> from scikits.learn.neighbors import NearestNeighbors
+        >>> from sklearn.neighbors import NearestNeighbors
         >>> neigh = NearestNeighbors(n_neighbors=2)
         >>> neigh.fit(X)
         NearestNeighbors(algorithm='auto', leaf_size=20, n_neighbors=2,
@@ -469,7 +469,7 @@ class NearestNeighbors(BaseEstimator):
         Examples
         --------
         >>> X = [[0], [3], [1]]
-        >>> from scikits.learn.neighbors import NearestNeighbors
+        >>> from sklearn.neighbors import NearestNeighbors
         >>> neigh = NearestNeighbors(r_neighbors=1.5)
         >>> neigh.fit(X)
         NearestNeighbors(algorithm='auto', leaf_size=20, n_neighbors=5,
@@ -557,7 +557,7 @@ class NeighborsClassifier(NearestNeighbors, ClassifierMixin):
     --------
     >>> X = [[0], [1], [2], [3]]
     >>> y = [0, 0, 1, 1]
-    >>> from scikits.learn.neighbors import NeighborsClassifier
+    >>> from sklearn.neighbors import NeighborsClassifier
     >>> neigh = NeighborsClassifier(n_neighbors=2)
     >>> neigh.fit(X, y)
     NeighborsClassifier(algorithm='auto', classification_type='k', leaf_size=20,
@@ -679,7 +679,7 @@ class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
     --------
     >>> X = [[0], [1], [2], [3]]
     >>> y = [0, 0, 1, 1]
-    >>> from scikits.learn.neighbors import NeighborsRegressor
+    >>> from sklearn.neighbors import NeighborsRegressor
     >>> neigh = NeighborsRegressor(n_neighbors=2)
     >>> neigh.fit(X, y)
     NeighborsRegressor(algorithm='auto', classification_type='k', leaf_size=20,
@@ -847,7 +847,7 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', reg=1e-3):
     Examples
     --------
     >>> X = [[0], [3], [1]]
-    >>> from scikits.learn.neighbors import kneighbors_graph
+    >>> from sklearn.neighbors import kneighbors_graph
     >>> A = kneighbors_graph(X, 2)
     >>> A.todense()
     matrix([[ 1.,  0.,  1.],
@@ -891,7 +891,7 @@ def radius_neighbors_graph(X, radius, mode='connectivity'):
     Examples
     --------
     >>> X = [[0], [3], [1]]
-    >>> from scikits.learn.neighbors import radius_neighbors_graph
+    >>> from sklearn.neighbors import radius_neighbors_graph
     >>> A = radius_neighbors_graph(X, 1.5)
     >>> A.todense()
     matrix([[ 1.,  0.,  1.],
