@@ -1,5 +1,4 @@
-""" Test the cross_val module
-"""
+"""Test the cross_val module"""
 
 import numpy as np
 from scipy.sparse import coo_matrix
@@ -8,13 +7,22 @@ from nose.tools import assert_true
 from nose.tools import assert_raises
 
 from ..base import BaseEstimator
+from ..datasets import make_regression
 from ..datasets import load_iris
 from ..metrics import zero_one_score
+from ..metrics import f1_score
+from ..metrics import mean_square_error
+from ..metrics import r2_score
+from ..metrics import explained_variance_score
 from ..cross_val import StratifiedKFold
 from ..svm import SVC
+from ..linear_model import Ridge
 from ..svm.sparse import SVC as SparseSVC
 from .. import cross_val
 from ..cross_val import permutation_test_score
+
+from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_array_equal
 
 
 class MockClassifier(BaseEstimator):
@@ -30,7 +38,7 @@ class MockClassifier(BaseEstimator):
         return T.shape[0]
 
     def score(self, X=None, Y=None):
-        return 1./(1+np.abs(self.a))
+        return 1. / (1 + np.abs(self.a))
 
 
 X = np.ones((10, 2))
@@ -52,11 +60,59 @@ def test_cross_val_score():
     for a in range(-10, 10):
         clf.a = a
         # Smoke test
-        score = cross_val.cross_val_score(clf, X, y)
-        np.testing.assert_array_equal(score, clf.score(X, y))
+        scores = cross_val.cross_val_score(clf, X, y)
+        assert_array_equal(scores, clf.score(X, y))
 
-        score = cross_val.cross_val_score(clf, X_sparse, y)
-        np.testing.assert_array_equal(score, clf.score(X_sparse, y))
+        scores = cross_val.cross_val_score(clf, X_sparse, y)
+        assert_array_equal(scores, clf.score(X_sparse, y))
+
+
+def test_cross_val_score_with_score_func_classification():
+    iris = load_iris()
+    clf = SVC(kernel='linear')
+
+    # Default score (should be the accuracy score)
+    scores = cross_val.cross_val_score(clf, iris.data, iris.target, cv=5)
+    assert_array_almost_equal(scores, [1., 0.97, 0.90, 0.97, 1.], 2)
+
+    # Correct classification score (aka. zero / one score) - should be the
+    # same as the default estimator score
+    zo_scores = cross_val.cross_val_score(clf, iris.data, iris.target,
+                                          score_func=zero_one_score, cv=5)
+    assert_array_almost_equal(zo_scores, [1., 0.97, 0.90, 0.97, 1.], 2)
+
+    # F1 score (class are balanced so f1_score should be equal to zero/one
+    # score
+    f1_scores = cross_val.cross_val_score(clf, iris.data, iris.target,
+                                          score_func=f1_score, cv=5)
+    assert_array_almost_equal(f1_scores, [1., 0.97, 0.90, 0.97, 1.], 2)
+
+
+def test_cross_val_score_with_score_func_regression():
+    X, y = make_regression(n_samples=30, n_features=20, n_informative=5,
+                           random_state=0)
+    reg = Ridge()
+
+    # Default score of the Ridge regression estimator
+    scores = cross_val.cross_val_score(reg, X, y, cv=5)
+    assert_array_almost_equal(scores, [0.94, 0.97, 0.97, 0.99, 0.92], 2)
+
+    # R2 score (aka. determination coefficient) - should be the
+    # same as the default estimator score
+    r2_scores = cross_val.cross_val_score(reg, X, y, score_func=r2_score,
+                                          cv=5)
+    assert_array_almost_equal(r2_scores, [0.94, 0.97, 0.97, 0.99, 0.92], 2)
+
+    # Mean squared error
+    mse_scores = cross_val.cross_val_score(reg, X, y, cv=5,
+                                           score_func=mean_square_error)
+    expected_mse = [4578.47, 3319.02, 1646.29, 1639.58, 10092.00]
+    assert_array_almost_equal(mse_scores, expected_mse, 2)
+
+    # Explained variance
+    ev_scores = cross_val.cross_val_score(reg, X, y, cv=5,
+                                          score_func=explained_variance_score)
+    assert_array_almost_equal(ev_scores, [0.94, 0.97, 0.97, 0.99, 0.92], 2)
 
 
 def test_permutation_score():

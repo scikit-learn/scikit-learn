@@ -837,11 +837,11 @@ class LassoLarsCV(LarsCV):
 class LassoLarsIC(LassoLars):
     """Lasso model fit with Lars using BIC or AIC for model selection
 
-    AIC is the Akaike information criterion and BIC is the Bayes Information
-    criterion. Such citeria are useful to select the value of the
-    regularization parameter by making a trade-off between
-    the goodness of fit and the complexity of the model. A good model
-    should explain well the data while being simple.
+    AIC is the Akaike information criterion and BIC is the Bayes
+    Information criterion. Such criteria are useful to select the value
+    of the regularization parameter by making a trade-off between the
+    goodness of fit and the complexity of the model. A good model should
+    explain well the data while being simple.
 
     Parameters
     ----------
