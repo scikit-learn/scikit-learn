@@ -399,7 +399,7 @@ class LeaveOneLabelOut(object):
 
     def __init__(self, labels, indices=False):
         self.labels = labels
-        self.n_labels = unique(labels).size
+        self.n_unique_labels = unique(labels).size
         self.indices = indices
 
     def __iter__(self):
@@ -423,7 +423,7 @@ class LeaveOneLabelOut(object):
         )
 
     def __len__(self):
-        return self.n_labels
+        return self.n_unique_labels
 
 
 class LeavePLabelOut(object):
@@ -485,7 +485,7 @@ class LeavePLabelOut(object):
     def __init__(self, labels, p, indices=False):
         self.labels = labels
         self.unique_labels = unique(self.labels)
-        self.n_labels = self.unique_labels.size
+        self.n_unique_labels = self.unique_labels.size
         self.p = p
         self.indices = indices
 
@@ -493,8 +493,7 @@ class LeavePLabelOut(object):
         # We make a copy here to avoid side-effects during iteration
         labels = np.array(self.labels, copy=True)
         unique_labels = unique(labels)
-        n_labels = unique_labels.size
-        comb = combinations(range(n_labels), self.p)
+        comb = combinations(range(self.n_unique_labels), self.p)
 
         for idx in comb:
             test_index = np.zeros(labels.size, dtype=np.bool)
@@ -517,8 +516,9 @@ class LeavePLabelOut(object):
         )
 
     def __len__(self):
-        return factorial(self.n_labels) / factorial(self.n_labels - self.p) \
-               / factorial(self.p)
+        return (factorial(self.n_unique_labels) /
+                factorial(self.n_unique_labels - self.p) /
+                factorial(self.p))
 
 
 class Bootstrap(object):
