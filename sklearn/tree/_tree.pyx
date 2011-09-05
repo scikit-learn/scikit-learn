@@ -238,18 +238,6 @@ cdef class Entropy(ClassificationCriterion):
         return e1 + e2
 
 
-# Regression entropy measures
-#
-#    From Hastie et al. Elements of Statistical Learning, 2009.
-#
-#    If a target is a classification outcome taking on values 0,1,...,K-1
-#    In node m, representing a region Rm with Nm observations, let
-#
-#       pmk = 1/ Nm \sum_{x_i in Rm} I(yi = k)
-#
-#    be the proportion of class k observations in node m
-
-
 cdef class RegressionCriterion(Criterion):
     """Abstract criterion for regression. Computes variance of the
     target values left and right of the split point.
@@ -284,6 +272,7 @@ cdef class RegressionCriterion(Criterion):
     cdef int n_samples
     cdef int n_right
     cdef int n_left
+
     cdef double mean_left
     cdef double mean_right
     cdef double mean_init
@@ -291,7 +280,6 @@ cdef class RegressionCriterion(Criterion):
     cdef double sq_sum_right
     cdef double sq_sum_left
     cdef double sq_sum_init
-    cdef double sq_mean_right
 
     cdef double var_left
     cdef double var_right
@@ -329,10 +317,6 @@ cdef class RegressionCriterion(Criterion):
             self.mean_init = self.mean_init + y[j]
 
         self.mean_init = self.mean_init / self.n_samples
-        
-##         print "RegressionCriterion.init: "
-##         print "    sq_sum_init = %.4f" % self.sq_sum_init
-##         print "    mean_init = %.4f" % self.mean_init
 
         self.reset()
 
@@ -348,7 +332,8 @@ cdef class RegressionCriterion(Criterion):
         self.sq_sum_right = self.sq_sum_init
         self.sq_sum_left = 0.0
         self.var_left = 0.0
-        self.var_right = self.sq_sum_right - self.n_samples * (self.mean_right * self.mean_right)
+        self.var_right = self.sq_sum_right - \
+                         self.n_samples * (self.mean_right * self.mean_right)
 
     cdef int update(self, int a, int b, np.float64_t *y, int *sorted_X_i):
         """Update the criteria for each value in interval [a,b) where
@@ -362,17 +347,17 @@ cdef class RegressionCriterion(Criterion):
             self.sq_sum_left = self.sq_sum_left + (y_idx * y_idx)
             self.sq_sum_right = self.sq_sum_right - (y_idx * y_idx)
 
-            self.mean_left = (idx  * self.mean_left + y_idx) / float(idx + 1)
-            self.mean_right = ((self.n_samples - idx) * self.mean_right - y_idx) / float(self.n_samples - idx - 1)
+            self.mean_left = (idx  * self.mean_left + y_idx) / <double>(idx + 1)
+            self.mean_right = ((self.n_samples - idx) * self.mean_right - y_idx) / \
+                              <double>(self.n_samples - idx - 1)
 
             self.n_right -= 1
             self.n_left += 1
 
-            self.var_left = self.sq_sum_left - self.n_left * (self.mean_left * self.mean_left)
-            self.var_right = self.sq_sum_right - self.n_right * (self.mean_right * self.mean_right)
-
-            #print "Upd idx=%d | y[idx]=%.4f | var_left=%.4f | var_right=%.4f" % (idx, y_idx, self.var_left, self.var_right)
-            
+            self.var_left = self.sq_sum_left - \
+                            self.n_left * (self.mean_left * self.mean_left)
+            self.var_right = self.sq_sum_right - \
+                             self.n_right * (self.mean_right * self.mean_right)
 
         return self.n_left
 
@@ -387,7 +372,8 @@ cdef class MSE(RegressionCriterion):
     """
 
     cdef double eval(self):
-        return self.var_left + self.var_right
+        return (self.n_left / <double>self.n_samples) * self.var_left + \
+               (self.n_right / <double>self.n_samples) * self.var_right
 
 
 cdef int smallest_sample_larger_than(int sample_idx, np.float64_t *X_i,
