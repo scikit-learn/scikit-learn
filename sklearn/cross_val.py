@@ -314,10 +314,9 @@ class StratifiedKFold(object):
                                   'of samples: %d.' % (k, n))
         _, y_sorted = unique(y, return_inverse=True)
         min_labels = np.min(np.bincount(y_sorted))
-        assert k <= min_labels, ValueError('Cannot have number of folds k=%d, '
-                                           'smaller than %d, the minimum '
-                                           'number of labels for any class.'
-                                           % (k, min_labels))
+        assert k <= min_labels, ValueError(
+            'Cannot have number of folds k=%d, smaller than %d, the minimum '
+            'number of labels for any class.' % (k, min_labels))
         self.y = y
         self.k = k
         self.indices = indices
