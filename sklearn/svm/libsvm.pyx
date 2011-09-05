@@ -211,7 +211,7 @@ def fit(
         copy_probA(probA.data, model, probA.shape)
     else:
         probA = np.empty(0, dtype=np.float64)
-        probA = np.empty(0, dtype=np.float64)
+        probB = np.empty(0, dtype=np.float64)
 
     # memory deallocation
     svm_free_and_destroy_model(&model)
