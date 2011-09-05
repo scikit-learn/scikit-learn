@@ -66,6 +66,7 @@ from .metrics.pairwise import rbf_kernel
 from .utils.fixes import dot_out
 
 # Authors: Clay Woolam <clay@woolam.org>
+# License: BSD
 
 
 class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
@@ -76,8 +77,10 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
     kernel : string
       string identifier for kernel function to use
       only 'rbf' kernel is currently supported
+
     gamma : float
       parameter for rbf kernel
+
     alpha : float
       clamping factor
 
@@ -87,6 +90,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
 
     max_iter : float
       change maximum number of iterations allowed
+
     tol : float
       threshold to consider the system at steady state
     """
@@ -120,8 +124,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
                 to fit a label propagation model.")
 
     def predict(self, X):
-        """
-        Performs inductive inference across the model.
+        """Performs inductive inference across the model.
 
         Parameters
         ----------
@@ -136,9 +139,11 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         return self.unique_labels[np.argmax(ym, axis=1)].flatten()
 
     def predict_proba(self, X):
-        """
-        Returns a probability distribution (categorical distribution)
-        over labels for a single input point.
+        """Predict probability for each possible outcome.
+
+        Compute the probability estimates for each single sample in X
+        and each possible outcome seen during training (categorical
+        distribution).
 
         Parameters
         ----------
@@ -148,22 +153,21 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         return np.dot(self._get_kernel(self._X, ary).T, self.y_)
 
     def fit(self, X, y):
-        """
-        Fit a semi-supervised label propagation model based on input data
-        matrix X and corresponding label matrix Y.
+        """Fit a semi-supervised label propagation model on X and y.
 
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_freatures]
           A {n_samples by n_samples} size matrix will be created from this
           (keep dataset fewer than 2000 points)
+
         y : array_like, shape = [n_labeled_samples]
           n_labeled_samples (unlabeled points marked with a special identifier)
           All unlabeled samples will be transductively assigned labels
 
         Returns
         -------
-        updated LabelPropagation object with a new transduction results
+        Updated LabelPropagation object with a new transduction results
         """
         self._X = np.asanyarray(X)
 
@@ -211,16 +215,23 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
 
 
 class LabelPropagation(BaseLabelPropagation):
-    """
-    Computes a stochastic affinity matrix and uses hard clamping.
+    """Semi-supervised learning using Label Spreading strategy.
+
+    Baseline semi-supervised estimator using a stochastic affinity
+    matrix and hard clamping.
+
+    Samples with missing label information must be assigned a special
+    marker (the -1 integer by default) instead of the usual label value.
 
     Parameters
     ----------
     kernel : string
-      string identifier for kernel function to use
-      only 'rbf' kernel is currently supported
+      String identifier for kernel function to use.  Only 'rbf' kernel
+      is currently supported
+
     gamma : float
       parameter for rbf kernel
+
     alpha : float
       clamping factor
 
@@ -230,6 +241,7 @@ class LabelPropagation(BaseLabelPropagation):
 
     max_iter : float
       change maximum number of iterations allowed
+
     tol : float
       threshold to consider the system at steady state
 
@@ -245,7 +257,7 @@ class LabelPropagation(BaseLabelPropagation):
     >>> label_prop_model.fit(iris.data, labels)
     ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     LabelPropagation(alpha=1, gamma=20, kernel='rbf', max_iter=30, tol=0.001,
-            unlabeled_identifier=-1) 
+            unlabeled_identifier=-1)
 
     References
     ----------
@@ -278,13 +290,18 @@ class LabelSpreading(BaseLabelPropagation):
     based on the graph laplacian and soft clamping accross the labels. Will be
     more robust to noise & uncertainty in the input labeling.
 
+    Samples with missing label information must be assigned a special
+    marker (the -1 integer by default) instead of the usual label value.
+
     Parameters
     ----------
     kernel : string
       string identifier for kernel function to use
       only 'rbf' kernel is currently supported
+
     gamma : float
       parameter for rbf kernel
+
     alpha : float
       clamping factor
 
@@ -294,6 +311,7 @@ class LabelSpreading(BaseLabelPropagation):
 
     max_iter : float
       change maximum number of iterations allowed
+
     tol : float
       threshold to consider the system at steady state
 
@@ -343,8 +361,8 @@ class LabelSpreading(BaseLabelPropagation):
         dot_out(affinity_matrix, degree_matrix, out=affinity_matrix)
         return affinity_matrix
 
-### Helper functions
 
+### Helper functions
 
 def _not_converged(y, y_hat, tol=1e-3):
     """basic convergence check"""
