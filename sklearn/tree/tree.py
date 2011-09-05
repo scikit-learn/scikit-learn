@@ -414,28 +414,18 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
     Example
     -------
-    >>> import numpy as np
     >>> from sklearn.datasets import load_iris
-    >>> from sklearn.cross_val import StratifiedKFold
+    >>> from sklearn.cross_val import cross_val_score
     >>> from sklearn.tree import DecisionTreeClassifier
-    >>> data = load_iris()
-    >>> skf = StratifiedKFold(data.target, 10)
-    >>> for train_index, test_index in skf:
-    ...     clf = DecisionTreeClassifier(random_state=0)
-    ...     clf = clf.fit(data.data[train_index], data.target[train_index])
-    ...     print np.mean(clf.predict(data.data[test_index]) ==
-    ...          data.target[test_index]) #doctest: +ELLIPSIS
+
+    >>> clf = DecisionTreeClassifier(random_state=0)
+    >>> iris = load_iris()
+
+    >>> cross_val_score(clf, iris.data, iris.target, cv=10)
+    ...                             # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     ...
-    1.0
-    0.933333333333
-    0.866666666667
-    0.933333333333
-    0.933333333333
-    0.933333333333
-    0.933333333333
-    1.0
-    0.933333333333
-    1.0
+    array([ 1.     ,  0.93...,  0.86...,  0.93...,  0.93...,
+            0.93...,  0.93...,  1.     ,  0.93...,  1.      ])
     """
 
     def __init__(self, n_classes=None, criterion='gini', max_depth=10,
@@ -534,28 +524,20 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
 
     Example
     -------
-    >>> import numpy as np
     >>> from sklearn.datasets import load_boston
-    >>> from sklearn.cross_val import KFold
+    >>> from sklearn.cross_val import cross_val_score
     >>> from sklearn.tree import DecisionTreeRegressor
-    >>> data = load_boston()
-    >>> kf = KFold(len(data.target), 10)
-    >>> for train_index, test_index in kf:
-    ...     clf = DecisionTreeRegressor(random_state=0)
-    ...     clf = clf.fit(data.data[train_index], data.target[train_index])
-    ...     print np.mean(np.power(clf.predict(data.data[test_index]) -
-    ...          data.target[test_index], 2)) #doctest: +ELLIPSIS
+
+    >>> boston = load_boston()
+    >>> regressor = DecisionTreeRegressor(random_state=0)
+
+    R2 scores (a.k.a. coefficient of determination) over 10-folds CV:
+
+    >>> cross_val_score(regressor, boston.data, boston.target, cv=10)
+    ...                             # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     ...
-    12.9450419508
-    11.6925868725
-    12.8940290384
-    59.7824284864
-    19.3208876032
-    64.0553094769
-    15.1038466202
-    92.2104637727
-    54.4061950617
-    50.6928172067
+    array([ 0.63...,  0.57..., -0.31...,  0.39...,  0.75...,
+            0.19...,  0.29...,  0.33..., -1.45... , -1.77...])
     """
 
     def __init__(self, criterion='mse', max_depth=10,
