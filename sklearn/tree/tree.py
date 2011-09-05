@@ -245,6 +245,17 @@ class BaseDecisionTree(BaseEstimator):
         filename : string
             The name of the file to write to.
 
+        Example
+        -------
+        >>> from sklearn.datasets import load_iris
+        >>> from sklearn.tree import DecisionTreeClassifier
+
+        >>> clf = DecisionTreeClassifier()
+        >>> iris = load_iris()
+
+        >>> clf.fit(iris.data, iris.target)
+        >>> clf.export_to_graphviz("tree.dot")
+
         """
         if self.tree is None:
             raise Exception('Tree not initialized. Perform a fit first')
