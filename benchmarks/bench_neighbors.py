@@ -1,17 +1,15 @@
 """
-This script compares the performance of the Ball Tree code with
-scipy.spatial.cKDTree.
+This script compares the performance of the various nearest neighbors
+algorithms available in NearestNeighbors: ball_tree, kd_tree, and brute
 
 Then run the simple timings script:
- python bench_kdtree.py 1000 100
+ python bench_neighbors.py 1000 100
 """
 
-from sklearn.ball_tree import BallTree
-import numpy
-from time import time
-
-from scipy.spatial import cKDTree
 import sys
+from time import time
+import numpy as np
+from sklearn.neighbors import NearestNeighbors
 
 
 def compare_nbrs(nbrs1, nbrs2):
@@ -27,34 +25,47 @@ def compare_nbrs(nbrs1, nbrs2):
         return True
     elif(nbrs1.ndim == 1):
         N = len(nbrs1)
-        return numpy.all(nbrs1 == nbrs2)
+        return np.all(nbrs1 == nbrs2)
 
 
-def test_time(n_samples=1000, n_features=100, leaf_size=1, k=20):
-    X = numpy.random.random([n_samples, n_features])
+def test_time(n_samples=1000, n_features=100, leaf_size=20, k=20):
+    X = np.random.random([n_samples, n_features])
 
     print "---------------------------------------------------"
     print "%i neighbors of %i points in %i dimensions:" % (k, n_samples, n_features)
     print "   (leaf size = %i)" % leaf_size
     print "  -------------"
+    BT = NearestNeighbors(algorithm='ball_tree',
+                          leaf_size=leaf_size)
+    KDT = NearestNeighbors(algorithm='kd_tree',
+                           leaf_size=leaf_size)
+    Brute = NearestNeighbors(algorithm='brute')
 
     t0 = time()
-    BT = BallTree(X, leaf_size)
+    BT.fit(X)
     print "  Ball Tree construction     : %.3g sec" % (time() - t0)
-    d, nbrs1 = BT.query(X, k)
+    d, nbrs1 = BT.kneighbors(X, k)
     print "  total (construction+query) : %.3g sec" % (time() - t0)
     print "  -------------"
 
 
     t0 = time()
-    KDT = cKDTree(X, leaf_size)
+    KDT.fit(X)
     print "  KD tree construction       : %.3g sec" % (time() - t0)
-    d, nbrs2 = KDT.query(X, k)
+    d, nbrs2 = KDT.kneighbors(X, k)
+    print "  total (construction+query) : %.3g sec" % (time() - t0)
+    print "  -------------"
+
+
+    t0 = time()
+    Brute.fit(X)
+    print "  Brute Force construction   : %.3g sec" % (time() - t0)
+    d, nbrs3 = Brute.kneighbors(X, k)
     print "  total (construction+query) : %.3g sec" % (time() - t0)
     print "  -------------"
 
     print "  neighbors match: ",
-    print compare_nbrs(nbrs1, nbrs2)
+    print compare_nbrs(nbrs1, nbrs2) and compare_nbrs(nbrs2, nbrs3)
     print "  -------------"
 
 if __name__ == '__main__':
@@ -71,7 +82,7 @@ if __name__ == '__main__':
         n_samples, n_features, leaf_size, k = map(int, sys.argv[1:])
 
     else:
-        print "usage: bench_balltree.py n_samples n_features " + \
+        print "usage: bench_neighbors.py n_samples n_features " + \
               "[leafsize=20], [k=20]"
         exit()
 
