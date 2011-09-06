@@ -61,7 +61,8 @@ class LeaveOneOut(object):
 
     See also
     ========
-    LeaveOneLabelOut
+    LeaveOneLabelOut for splitting the data according to explicit,
+    domain-specific stratification of the dataset.
     """
 
     def __init__(self, n, indices=False):
@@ -313,10 +314,9 @@ class StratifiedKFold(object):
                                   'of samples: %d.' % (k, n))
         _, y_sorted = unique(y, return_inverse=True)
         min_labels = np.min(np.bincount(y_sorted))
-        assert k <= min_labels, ValueError('Cannot have number of folds k=%d, '
-                                           'smaller than %d, the minimum '
-                                           'number of labels for any class.'
-                                           % (k, min_labels))
+        assert k <= min_labels, ValueError(
+            'Cannot have number of folds k=%d, smaller than %d, the minimum '
+            'number of labels for any class.' % (k, min_labels))
         self.y = y
         self.k = k
         self.indices = indices
@@ -352,12 +352,18 @@ class StratifiedKFold(object):
 class LeaveOneLabelOut(object):
     """Leave-One-Label_Out cross-validation iterator
 
-    Provides train/test indices to split data in train test sets.
+    Provides train/test indices to split data according to a third-party
+    provided label. This label information can be used to encode arbitrary
+    domain specific stratifications of the samples as integers.
+
+    For instance the labels could be the year of collection of the samples
+    and thus allow for cross-validation against time-based splits.
 
     Parameters
     ----------
-    labels : list
-        List of labels
+    labels : array-like of int with shape (n_samples,)
+        Arbitrary domain-specific stratification of the data to be used
+        to draw the splits.
 
     indices: boolean, optional (default False)
         Return train/test split with integer indices or boolean mask.
@@ -393,7 +399,7 @@ class LeaveOneLabelOut(object):
 
     def __init__(self, labels, indices=False):
         self.labels = labels
-        self.n_labels = unique(labels).size
+        self.n_unique_labels = unique(labels).size
         self.indices = indices
 
     def __iter__(self):
@@ -417,18 +423,29 @@ class LeaveOneLabelOut(object):
         )
 
     def __len__(self):
-        return self.n_labels
+        return self.n_unique_labels
 
 
 class LeavePLabelOut(object):
     """Leave-P-Label_Out cross-validation iterator
 
-    Provides train/test indices to split data in train test sets
+    Provides train/test indices to split data according to a third-party
+    provided label. This label information can be used to encode arbitrary
+    domain specific stratifications of the samples as integers.
+
+    For instance the labels could be the year of collection of the samples
+    and thus allow for cross-validation against time-based splits.
+
+    The difference between LeavePLabelOut and LeaveOneLabelOut is that
+    the former builds the test sets with all the samples assigned to
+    ``p`` different values of the labels while the latter uses samples
+    all assigned the same labels.
 
     Parameters
     ----------
-    labels : list
-        List of labels
+    labels : array-like of int with shape (n_samples,)
+        Arbitrary domain-specific stratification of the data to be used
+        to draw the splits.
 
     p : int
         Number of samples to leave out in the test split.
@@ -468,7 +485,7 @@ class LeavePLabelOut(object):
     def __init__(self, labels, p, indices=False):
         self.labels = labels
         self.unique_labels = unique(self.labels)
-        self.n_labels = self.unique_labels.size
+        self.n_unique_labels = self.unique_labels.size
         self.p = p
         self.indices = indices
 
@@ -476,8 +493,7 @@ class LeavePLabelOut(object):
         # We make a copy here to avoid side-effects during iteration
         labels = np.array(self.labels, copy=True)
         unique_labels = unique(labels)
-        n_labels = unique_labels.size
-        comb = combinations(range(n_labels), self.p)
+        comb = combinations(range(self.n_unique_labels), self.p)
 
         for idx in comb:
             test_index = np.zeros(labels.size, dtype=np.bool)
@@ -500,8 +516,9 @@ class LeavePLabelOut(object):
         )
 
     def __len__(self):
-        return factorial(self.n_labels) / factorial(self.n_labels - self.p) \
-               / factorial(self.p)
+        return (factorial(self.n_unique_labels) /
+                factorial(self.n_unique_labels - self.p) /
+                factorial(self.p))
 
 
 class Bootstrap(object):
@@ -723,13 +740,18 @@ class ShuffleSplit(object):
 
 def _cross_val_score(estimator, X, y, score_func, train, test):
     """Inner loop for cross validation"""
-    if score_func is None:
-        score_func = lambda self, *args: self.score(*args)
     if y is None:
-        score = score_func(estimator.fit(X[train]), X[test])
+        estimator.fit(X[train])
+        if score_func is None:
+            return estimator.score(X[test])
+        else:
+            return score_func(X[test])
     else:
-        score = score_func(estimator.fit(X[train], y[train]), X[test], y[test])
-    return score
+        estimator.fit(X[train], y[train])
+        if score_func is None:
+            return estimator.score(X[test], y[test])
+        else:
+            return score_func(y[test], estimator.predict(X[test]))
 
 
 def cross_val_score(estimator, X, y=None, score_func=None, cv=None, n_jobs=1,
