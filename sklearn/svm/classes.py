@@ -98,11 +98,11 @@ class SVC(BaseLibSVM, ClassifierMixin):
         It is significant only in 'poly' and 'sigmoid'.
 
     gamma : float, optional (default=0.0)
-        Kernel coefficient for 'rbf' and 'poly'. 
+        Kernel coefficient for 'rbf' and 'poly'.
         If gamma is 0.0 then 1/n_features will be used instead.
 
     coef0 : float, optional (default=0.0)
-        Independent term in kernel function. 
+        Independent term in kernel function.
         It is only significant in 'poly' and 'sigmoid'.
 
     probability: boolean, optional (default=False)
@@ -276,8 +276,8 @@ class SVR(BaseLibSVM, RegressorMixin):
 
     epsilon : float, optional (default=0.1)
          epsilon in the epsilon-SVR model. It specifies the epsilon-tube
-         within which no penalty is associated in the training loss function 
-         with points predicted within a distance epsilon from the actual 
+         within which no penalty is associated in the training loss function
+         with points predicted within a distance epsilon from the actual
          value.
 
     kernel : string, optional (default='rbf')
@@ -343,7 +343,7 @@ class SVR(BaseLibSVM, RegressorMixin):
     NuSVR
     """
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
-                 tol=1e-3, C=1.0, epsilon=0.1, shrinking=True, 
+                 tol=1e-3, C=1.0, epsilon=0.1, shrinking=True,
                  probability=False):
 
         BaseLibSVM.__init__(self, 'epsilon_svr', kernel, degree,

@@ -90,3 +90,30 @@ select is eventually reached.
     * :ref:`example_plot_rfe_with_cross_validation.py`: A recursive feature
       elimination example with automatic tuning of the number of features
       selected with cross-validation.
+
+L1-based feature selection
+==========================
+
+.. currentmodule:: sklearn.feature_selection
+
+Linear models penalized with the L1 norm have sparse solutions. When the goal
+is to reduce the dimensionality of the data to use with another classifier, the
+`transform` method of `LogisticRegression` and `LinearSVC` can be used::
+
+  >>> from sklearn import datasets
+  >>> from sklearn.svm import LinearSVC
+  >>> iris = datasets.load_iris()
+  >>> X, y = iris.data, iris.target
+  >>> X.shape
+  (150, 4)
+  >>> X_new = LinearSVC(C=1).fit_transform(X, y)
+  >>> X_new.shape
+  (150, 2)
+
+The parameter C controls the sparsity: the smaller the fewer features.
+
+.. topic:: Examples:
+
+    * :ref:`example_document_classification_20newsgroups.py`: Comparison
+      of different algorithms for document classification including L1-based
+      feature selection.
