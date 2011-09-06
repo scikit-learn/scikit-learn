@@ -100,7 +100,10 @@ def density(w, **kwargs):
 
     Return a value between 0 and 1
     """
-    d = 0 if w is None else float((w != 0).sum()) / w.size
+    if hasattr(w, "tocsr"):
+        d = float(w.data.size) / w.size
+    else:
+        d = 0 if w is None else float((w != 0).sum()) / w.size
     return d
 
 
