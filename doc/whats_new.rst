@@ -29,6 +29,15 @@ version 0.8:
 
       find -name "*.py" | xargs sed -i 's/\bscikits.learn\b/sklearn/g'
 
+  - Estimators no longer accept model parameters as ``fit`` arguments:
+    instead all parameters must be only be passed as constructor
+    arguments or using the now public ``set_params`` method inhereted
+    from :class:`base.BaseEstimator`.
+
+    Some estimators can still accept keyword arguments on the ``fit``
+    but this is restricted to data-dependent values (e.g. a Gram matrix
+    or an affinity matrix that are precomputed from the ``X`` data matrix.
+
   - The ``cross_val`` package has been renamed to ``cross_validation``
     although there is also a ``cross_val`` package alias in place for
     backward compatibility.
