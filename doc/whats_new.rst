@@ -54,6 +54,11 @@ version 0.8:
     classification and regression tasks or ``X_test`` for unsupervised
     estimators.
 
+  - The ``sklearn.hmm`` has been marked as orphaned: it will be removed
+    from scikit-learn in version 0.11 unless someone steps up to
+    contribute documentation, examples and fix lurking numerical
+    stability issues.
+
 Backward compatibilty package aliases and other deprecated classes and
 functions will be removed in version 0.11.
 
