@@ -16,7 +16,7 @@ from sklearn.linear_model.ridge import RidgeClassifier
 from sklearn.linear_model.ridge import RidgeClassifierCV
 
 
-from sklearn.cross_val import KFold
+from sklearn.cross_validation import KFold
 
 diabetes = datasets.load_diabetes()
 

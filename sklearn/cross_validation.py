@@ -41,14 +41,14 @@ class LeaveOneOut(object):
 
     Examples
     ========
-    >>> from sklearn import cross_val
+    >>> from sklearn import cross_validation
     >>> X = np.array([[1, 2], [3, 4]])
     >>> y = np.array([1, 2])
-    >>> loo = cross_val.LeaveOneOut(2)
+    >>> loo = cross_validation.LeaveOneOut(2)
     >>> len(loo)
     2
     >>> print loo
-    sklearn.cross_val.LeaveOneOut(n=2)
+    sklearn.cross_validation.LeaveOneOut(n=2)
     >>> for train_index, test_index in loo:
     ...    print "TRAIN:", train_index, "TEST:", test_index
     ...    X_train, X_test = X[train_index], X[test_index]
@@ -118,14 +118,14 @@ class LeavePOut(object):
 
     Examples
     ========
-    >>> from sklearn import cross_val
+    >>> from sklearn import cross_validation
     >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
     >>> y = np.array([1, 2, 3, 4])
-    >>> lpo = cross_val.LeavePOut(4, 2)
+    >>> lpo = cross_validation.LeavePOut(4, 2)
     >>> len(lpo)
     6
     >>> print lpo
-    sklearn.cross_val.LeavePOut(n=4, p=2)
+    sklearn.cross_validation.LeavePOut(n=4, p=2)
     >>> for train_index, test_index in lpo:
     ...    print "TRAIN:", train_index, "TEST:", test_index
     ...    X_train, X_test = X[train_index], X[test_index]
@@ -194,14 +194,14 @@ class KFold(object):
 
     Examples
     --------
-    >>> from sklearn import cross_val
+    >>> from sklearn import cross_validation
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([1, 2, 3, 4])
-    >>> kf = cross_val.KFold(4, k=2)
+    >>> kf = cross_validation.KFold(4, k=2)
     >>> len(kf)
     2
     >>> print kf
-    sklearn.cross_val.KFold(n=4, k=2)
+    sklearn.cross_validation.KFold(n=4, k=2)
     >>> for train_index, test_index in kf:
     ...    print "TRAIN:", train_index, "TEST:", test_index
     ...    X_train, X_test = X[train_index], X[test_index]
@@ -284,14 +284,14 @@ class StratifiedKFold(object):
 
     Examples
     --------
-    >>> from sklearn import cross_val
+    >>> from sklearn import cross_validation
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([0, 0, 1, 1])
-    >>> skf = cross_val.StratifiedKFold(y, k=2)
+    >>> skf = cross_validation.StratifiedKFold(y, k=2)
     >>> len(skf)
     2
     >>> print skf
-    sklearn.cross_val.StratifiedKFold(labels=[0 0 1 1], k=2)
+    sklearn.cross_validation.StratifiedKFold(labels=[0 0 1 1], k=2)
     >>> for train_index, test_index in skf:
     ...    print "TRAIN:", train_index, "TEST:", test_index
     ...    X_train, X_test = X[train_index], X[test_index]
@@ -372,15 +372,15 @@ class LeaveOneLabelOut(object):
 
     Examples
     ----------
-    >>> from sklearn import cross_val
+    >>> from sklearn import cross_validation
     >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
     >>> y = np.array([1, 2, 1, 2])
     >>> labels = np.array([1, 1, 2, 2])
-    >>> lol = cross_val.LeaveOneLabelOut(labels)
+    >>> lol = cross_validation.LeaveOneLabelOut(labels)
     >>> len(lol)
     2
     >>> print lol
-    sklearn.cross_val.LeaveOneLabelOut(labels=[1 1 2 2])
+    sklearn.cross_validation.LeaveOneLabelOut(labels=[1 1 2 2])
     >>> for train_index, test_index in lol:
     ...    print "TRAIN:", train_index, "TEST:", test_index
     ...    X_train, X_test = X[train_index], X[test_index]
@@ -457,15 +457,15 @@ class LeavePLabelOut(object):
 
     Examples
     ----------
-    >>> from sklearn import cross_val
+    >>> from sklearn import cross_validation
     >>> X = np.array([[1, 2], [3, 4], [5, 6]])
     >>> y = np.array([1, 2, 1])
     >>> labels = np.array([1, 2, 3])
-    >>> lpl = cross_val.LeavePLabelOut(labels, p=2)
+    >>> lpl = cross_validation.LeavePLabelOut(labels, p=2)
     >>> len(lpl)
     3
     >>> print lpl
-    sklearn.cross_val.LeavePLabelOut(labels=[1 2 3], p=2)
+    sklearn.cross_validation.LeavePLabelOut(labels=[1 2 3], p=2)
     >>> for train_index, test_index in lpl:
     ...    print "TRAIN:", train_index, "TEST:", test_index
     ...    X_train, X_test = X[train_index], X[test_index]
@@ -569,8 +569,8 @@ class Bootstrap(object):
 
     Examples
     --------
-    >>> from sklearn import cross_val
-    >>> bs = cross_val.Bootstrap(9, random_state=0)
+    >>> from sklearn import cross_validation
+    >>> bs = cross_validation.Bootstrap(9, random_state=0)
     >>> len(bs)
     3
     >>> print bs
@@ -675,8 +675,8 @@ class ShuffleSplit(object):
 
     Examples
     ----------
-    >>> from sklearn import cross_val
-    >>> rs = cross_val.ShuffleSplit(4, n_iterations=3, test_fraction=.25,
+    >>> from sklearn import cross_validation
+    >>> rs = cross_validation.ShuffleSplit(4, n_iterations=3, test_fraction=.25,
     ...                             random_state=0)
     >>> len(rs)
     3
@@ -885,7 +885,7 @@ def permutation_test_score(estimator, X, y, score_func, cv=None,
     cv : integer or crossvalidation generator, optional
         If an integer is passed, it is the number of fold (default 3).
         Specific crossvalidation objects can be passed, see
-        sklearn.cross_val module for the list of possible objects
+        sklearn.cross_validation module for the list of possible objects
 
     n_jobs: integer, optional
         The number of CPUs to use to do the computation. -1 means

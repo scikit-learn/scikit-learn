@@ -412,7 +412,7 @@ Partial Least Squares
 Cross Validation
 ================
 
-.. automodule:: sklearn.cross_val
+.. automodule:: sklearn.cross_validation
    :no-members:
    :no-inherited-members:
 
@@ -422,14 +422,14 @@ Cross Validation
    :toctree: generated/
    :template: class.rst
 
-   cross_val.LeaveOneOut
-   cross_val.LeavePOut
-   cross_val.KFold
-   cross_val.StratifiedKFold
-   cross_val.LeaveOneLabelOut
-   cross_val.LeavePLabelOut
-   cross_val.Bootstrap
-   cross_val.ShuffleSplit
+   cross_validation.LeaveOneOut
+   cross_validation.LeavePOut
+   cross_validation.KFold
+   cross_validation.StratifiedKFold
+   cross_validation.LeaveOneLabelOut
+   cross_validation.LeavePLabelOut
+   cross_validation.Bootstrap
+   cross_validation.ShuffleSplit
 
 
 Grid Search

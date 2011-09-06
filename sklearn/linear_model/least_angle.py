@@ -17,7 +17,7 @@ from scipy.linalg.lapack import get_lapack_funcs
 from .base import LinearModel
 from ..utils import arrayfuncs, as_float_array
 from ..utils import deprecated
-from ..cross_val import check_cv
+from ..cross_validation import check_cv
 from ..externals.joblib import Parallel, delayed
 
 
@@ -642,7 +642,7 @@ class LarsCV(LARS):
         Maximum number of iterations to perform.
 
     cv : crossvalidation generator, optional
-        see sklearn.cross_val module. If None is passed, default to
+        see sklearn.cross_validation module. If None is passed, default to
         a 5-fold strategy
 
     n_jobs : integer, optional
@@ -775,7 +775,7 @@ class LassoLarsCV(LarsCV):
         Maximum number of iterations to perform.
 
     cv : crossvalidation generator, optional
-        see sklearn.cross_val module. If None is passed, default to
+        see sklearn.cross_validation module. If None is passed, default to
         a 5-fold strategy
 
     n_jobs : integer, optional

@@ -2,7 +2,7 @@
 Cross-Validation
 ================
 
-.. currentmodule:: sklearn.cross_val
+.. currentmodule:: sklearn.cross_validation
 
 Learning the parameters of a prediction function and testing it on the same
 data yields a methodological bias. To avoid over-fitting, we have to define two
@@ -43,12 +43,12 @@ cross-validation procedure does not waste much data as only one sample
 is removed from the learning set::
 
   >>> import numpy as np
-  >>> from sklearn.cross_val import LeaveOneOut
+  >>> from sklearn.cross_validation import LeaveOneOut
   >>> X = np.array([[0., 0.], [1., 1.], [-1., -1.], [2., 2.]])
   >>> Y = np.array([0, 1, 0, 1])
   >>> loo = LeaveOneOut(len(Y))
   >>> print loo
-  sklearn.cross_val.LeaveOneOut(n=4)
+  sklearn.cross_validation.LeaveOneOut(n=4)
   >>> for train, test in loo: print train, test
   [False  True  True  True] [ True False False False]
   [ True False  True  True] [False  True False False]
@@ -67,12 +67,12 @@ integer indices. It can be obtained by setting the parameter indices to True
 when creating the cross-validation procedure::
 
   >>> import numpy as np
-  >>> from sklearn.cross_val import LeaveOneOut
+  >>> from sklearn.cross_validation import LeaveOneOut
   >>> X = np.array([[0., 0.], [1., 1.], [-1., -1.], [2., 2.]])
   >>> Y = np.array([0, 1, 0, 1])
   >>> loo = LeaveOneOut(len(Y), indices=True)
   >>> print loo
-  sklearn.cross_val.LeaveOneOut(n=4)
+  sklearn.cross_validation.LeaveOneOut(n=4)
   >>> for train, test in loo: print train, test
   [1 2 3] [0]
   [0 2 3] [1]
@@ -89,12 +89,12 @@ possible training/test sets by removing *P* samples from the complete set.
 
 Example of Leave-2-Out::
 
-  >>> from sklearn.cross_val import LeavePOut
+  >>> from sklearn.cross_validation import LeavePOut
   >>> X = [[0., 0.], [1., 1.], [-1., -1.], [2., 2.]]
   >>> Y = [0, 1, 0, 1]
   >>> loo = LeavePOut(len(Y), 2)
   >>> print loo
-  sklearn.cross_val.LeavePOut(n=4, p=2)
+  sklearn.cross_validation.LeavePOut(n=4, p=2)
   >>> for train, test in loo: print train,test
   [False False  True  True] [ True  True False False]
   [False  True False  True] [ True False  True False]
@@ -124,12 +124,12 @@ and the fold left out is used for test.
 
 Example of 2-fold::
 
-  >>> from sklearn.cross_val import KFold
+  >>> from sklearn.cross_validation import KFold
   >>> X = [[0., 0.], [1., 1.], [-1., -1.], [2., 2.]]
   >>> Y = [0, 1, 0, 1]
   >>> loo = KFold(len(Y), 2)
   >>> print loo
-  sklearn.cross_val.KFold(n=4, k=2)
+  sklearn.cross_validation.KFold(n=4, k=2)
   >>> for train, test in loo: print train,test
   [False False  True  True] [ True  True False False]
   [ True  True False False] [False False  True  True]
@@ -146,12 +146,12 @@ class as in the complete set.
 
 Example of stratified 2-fold::
 
-  >>> from sklearn.cross_val import StratifiedKFold
+  >>> from sklearn.cross_validation import StratifiedKFold
   >>> X = [[0., 0.], [1., 1.], [-1., -1.], [2., 2.], [3., 3.], [4., 4.], [0., 1.]]
   >>> Y = [0, 0, 0, 1, 1, 1, 0]
   >>> skf = StratifiedKFold(Y, 2)
   >>> print skf
-  sklearn.cross_val.StratifiedKFold(labels=[0 0 0 1 1 1 0], k=2)
+  sklearn.cross_validation.StratifiedKFold(labels=[0 0 0 1 1 1 0], k=2)
   >>> for train, test in skf: print train, test
   [False  True False False  True False  True] [ True False  True  True False  True False]
   [ True False  True  True False  True False] [False  True False False  True False  True]
@@ -174,13 +174,13 @@ For example, in the cases of multiple experiments, *LOLO* can be used to
 create a cross-validation based on the different experiments: we create
 a training set using the samples of all the experiments except one::
 
-  >>> from sklearn.cross_val import LeaveOneLabelOut
+  >>> from sklearn.cross_validation import LeaveOneLabelOut
   >>> X = [[0., 0.], [1., 1.], [-1., -1.], [2., 2.]]
   >>> Y = [0, 1, 0, 1]
   >>> labels = [1, 1, 2, 2]
   >>> loo = LeaveOneLabelOut(labels)
   >>> print loo
-  sklearn.cross_val.LeaveOneLabelOut(labels=[1, 1, 2, 2])
+  sklearn.cross_validation.LeaveOneLabelOut(labels=[1, 1, 2, 2])
   >>> for train, test in loo: print train,test
   [False False  True  True] [ True  True False False]
   [ True  True False False] [False False  True  True]
@@ -200,13 +200,13 @@ related to *P* labels for each training/test set.
 
 Example of Leave-2-Label Out::
 
-  >>> from sklearn.cross_val import LeavePLabelOut
+  >>> from sklearn.cross_validation import LeavePLabelOut
   >>> X = [[0., 0.], [1., 1.], [-1., -1.], [2., 2.], [3., 3.], [4., 4.]]
   >>> Y = [0, 1, 0, 1, 0, 1]
   >>> labels = [1, 1, 2, 2, 3, 3]
   >>> loo = LeavePLabelOut(labels, 2)
   >>> print loo
-  sklearn.cross_val.LeavePLabelOut(labels=[1, 1, 2, 2, 3, 3], p=2)
+  sklearn.cross_validation.LeavePLabelOut(labels=[1, 1, 2, 2, 3, 3], p=2)
   >>> for train, test in loo: print train,test
   [False False False False  True  True] [ True  True  True  True False False]
   [False False  True  True False False] [ True  True False False  True  True]
@@ -228,8 +228,8 @@ generator.
 
 Here is a usage example::
 
-  >>> from sklearn import cross_val
-  >>> ss = cross_val.ShuffleSplit(5, n_iterations=3, test_fraction=0.25,
+  >>> from sklearn import cross_validation
+  >>> ss = cross_validation.ShuffleSplit(5, n_iterations=3, test_fraction=0.25,
   ...     random_state=0)
   >>> len(ss)
   3
@@ -268,8 +268,8 @@ smaller than the total dataset if it is very large.
 
 .. _Bootstrapping: http://en.wikipedia.org/wiki/Bootstrapping_%28statistics%29
 
-  >>> from sklearn import cross_val
-  >>> bs = cross_val.Bootstrap(9, random_state=0)
+  >>> from sklearn import cross_validation
+  >>> bs = cross_validation.Bootstrap(9, random_state=0)
   >>> len(bs)
   3
   >>> print bs
@@ -291,15 +291,15 @@ function::
 
   >>> from sklearn import datasets
   >>> from sklearn import svm
-  >>> from sklearn import cross_val
+  >>> from sklearn import cross_validation
 
   >>> iris = datasets.load_iris()
   >>> n_samples = iris.data.shape[0]
   >>> clf = svm.SVC(kernel='linear')
-  >>> cv = cross_val.ShuffleSplit(n_samples, n_iterations=3,
+  >>> cv = cross_validation.ShuffleSplit(n_samples, n_iterations=3,
   ...     test_fraction=0.3, random_state=0)
 
-  >>> cross_val.cross_val_score(clf, iris.data, iris.target, cv=cv)
+  >>> cross_validation.cross_val_score(clf, iris.data, iris.target, cv=cv)
   ...                                                     # doctest: +ELLIPSIS
   array([ 0.97...,  0.95...,  0.95...])
 
@@ -308,7 +308,7 @@ method of the estimator. It is possible to change this by passing a custom
 scoring function, e.g. from the metrics module::
 
   >>> from sklearn import metrics
-  >>> cross_val.cross_val_score(clf, iris.data, iris.target, cv=cv,
+  >>> cross_validation.cross_val_score(clf, iris.data, iris.target, cv=cv,
   ...     score_func=metrics.f1_score)
   ...                                                     # doctest: +ELLIPSIS
   array([ 0.95...,  1.  ...,  1.  ...])
@@ -317,7 +317,7 @@ It is also possible to directly pass a number of folds instead of a
 CV iterator.  In that case a :class:`KFold` or :class:`StratifiedKFold`
 instance is automatically created::
 
-  >>> cross_val.cross_val_score(clf, iris.data, iris.target, cv=5)
+  >>> cross_validation.cross_val_score(clf, iris.data, iris.target, cv=5)
   ...                                                     # doctest: +ELLIPSIS
   array([ 1.  ...,  0.96...,  0.9 ...,  0.96...,  1.  ...])
 

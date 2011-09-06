@@ -36,7 +36,7 @@ from time import time
 import logging
 import pylab as pl
 
-from sklearn.cross_val import StratifiedKFold
+from sklearn.cross_validation import StratifiedKFold
 from sklearn.datasets import fetch_lfw_people
 from sklearn.grid_search import GridSearchCV
 from sklearn.metrics import classification_report

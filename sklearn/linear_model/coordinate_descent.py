@@ -9,7 +9,7 @@ import numpy as np
 
 from .base import LinearModel
 from ..utils import as_float_array
-from ..cross_val import check_cv
+from ..cross_validation import check_cv
 from . import cd_fast
 
 
@@ -546,7 +546,7 @@ class LassoCV(LinearModelCV):
     cv : integer or crossvalidation generator, optional
         If an integer is passed, it is the number of fold (default 3).
         Specific crossvalidation objects can be passed, see
-        sklearn.cross_val module for the list of possible objects
+        sklearn.cross_validation module for the list of possible objects
 
     Notes
     -----
@@ -601,7 +601,7 @@ class ElasticNetCV(LinearModelCV):
     cv : integer or crossvalidation generator, optional
         If an integer is passed, it is the number of fold (default 3).
         Specific crossvalidation objects can be passed, see
-        sklearn.cross_val module for the list of possible objects
+        sklearn.cross_validation module for the list of possible objects
 
 
     Notes

@@ -10,7 +10,7 @@ print __doc__
 
 import numpy as np
 from sklearn.svm import SVC
-from sklearn.cross_val import StratifiedKFold
+from sklearn.cross_validation import StratifiedKFold
 from sklearn.feature_selection import RFECV
 from sklearn.datasets import samples_generator
 from sklearn.metrics import zero_one

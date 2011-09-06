@@ -11,7 +11,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from .externals.joblib import Parallel, delayed, logger
-from .cross_val import check_cv
+from .cross_validation import check_cv
 from .base import BaseEstimator, is_classifier, clone
 from .utils.fixes import product
 
@@ -183,7 +183,7 @@ class GridSearchCV(BaseEstimator):
     cv : integer or crossvalidation generator, optional
         If an integer is passed, it is the number of fold (default 3).
         Specific crossvalidation objects can be passed, see 
-        sklearn.cross_val module for the list of possible objects
+        sklearn.cross_validation module for the list of possible objects
 
     refit: boolean
         refit the best estimator with the entire dataset
