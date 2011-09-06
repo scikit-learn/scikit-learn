@@ -115,9 +115,8 @@ class KNeighborsMixin(object):
         >>> samples = [[0., 0., 0.], [0., .5, 0.], [1., 1., .5]]
         >>> from sklearn.neighbors import NearestNeighbors
         >>> neigh = NearestNeighbors(n_neighbors=1)
-        >>> neigh.fit(samples)
-        NearestNeighbors(algorithm='auto', leaf_size=20, n_neighbors=1,
-                 radius=1.0)
+        >>> neigh.fit(samples) # doctest: +ELLIPSIS
+        NearestNeighbors(algorithm='auto', leaf_size=20, ...)
         >>> print neigh.kneighbors([1., 1., 1.]) # doctest: +ELLIPSIS
         (array([[ 0.5]]), array([[2]]...))
 
@@ -199,9 +198,8 @@ class KNeighborsMixin(object):
         >>> X = [[0], [3], [1]]
         >>> from sklearn.neighbors import NearestNeighbors
         >>> neigh = NearestNeighbors(n_neighbors=2)
-        >>> neigh.fit(X)
-        NearestNeighbors(algorithm='auto', leaf_size=20, n_neighbors=2,
-                 radius=1.0)
+        >>> neigh.fit(X) # doctest: +ELLIPSIS
+        NearestNeighbors(algorithm='auto', leaf_size=20, ...)
         >>> A = neigh.kneighbors_graph(X)
         >>> A.todense()
         matrix([[ 1.,  0.,  1.],
@@ -284,9 +282,8 @@ class RadiusNeighborsMixin(object):
         >>> samples = [[0., 0., 0.], [0., .5, 0.], [1., 1., .5]]
         >>> from sklearn.neighbors import NearestNeighbors
         >>> neigh = NearestNeighbors(radius=1.6)
-        >>> neigh.fit(samples)
-        NearestNeighbors(algorithm='auto', leaf_size=20, n_neighbors=5,
-                 radius=1.6)
+        >>> neigh.fit(samples) # doctest: +ELLIPSIS
+        NearestNeighbors(algorithm='auto', leaf_size=20, ...)
         >>> print neigh.radius_neighbors([1., 1., 1.]) # doctest: +ELLIPSIS
         (array([[ 1.5  0.5]]...), array([[1 2]]...)
 
@@ -395,9 +392,8 @@ class RadiusNeighborsMixin(object):
         >>> X = [[0], [3], [1]]
         >>> from sklearn.neighbors import NearestNeighbors
         >>> neigh = NearestNeighbors(radius=1.5)
-        >>> neigh.fit(X)
-        NearestNeighbors(algorithm='auto', leaf_size=20, n_neighbors=5,
-                 radius=1.5)
+        >>> neigh.fit(X) # doctest: +ELLIPSIS
+        NearestNeighbors(algorithm='auto', leaf_size=20, ...)
         >>> A = neigh.radius_neighbors_graph(X)
         >>> A.todense()
         matrix([[ 1.,  0.,  1.],

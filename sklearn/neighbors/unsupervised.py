@@ -38,8 +38,7 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
     >>> from sklearn.neighbors import NearestNeighbors
     >>> neigh = NearestNeighbors(2, 0.4)
     >>> neigh.fit(samples)
-    NearestNeighbors(algorithm='auto', leaf_size=20, n_neighbors=2,
-             radius=0.4)
+    NearestNeighbors(algorithm='auto', leaf_size=20, n_neighbors=2, radius=0.4)
     >>> neigh.kneighbors([[0, 0, 1.3]], 2, return_distance=False)
     array([[2, 0]])
     >>> neigh.radius_neighbors([0, 0, 1.3], 0.4, return_distance=False)
