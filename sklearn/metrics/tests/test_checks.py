@@ -4,7 +4,7 @@ from nose.tools import assert_raises
 from nose.tools import assert_true
 from scipy.sparse import csr_matrix
 
-from scikits.learn.metrics.pairwise import check_pairwise_arrays
+from sklearn.metrics.pairwise import check_pairwise_arrays
 
 def test_check_dense_matrices():
     """ Ensure that pairwise array check works for dense matrices."""

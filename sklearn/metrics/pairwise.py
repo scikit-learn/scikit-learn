@@ -412,18 +412,19 @@ def pairwise_kernels(X, Y=None, metric="euclidean", **kwds):
         if X.shape[0] != X.shape[1]:
             raise ValueError("X is not square!")
         return X
-    elif metric in pairwise_distance_functions:
-        return pairwise_distance_functions[metric](X, Y, **kwds)
+    elif metric in pairwise_kernel_functions:
+        return pairwise_kernel_functions[metric](X, Y, **kwds)
     elif callable(metric):
         # Check matrices first (this is usually done by the metric).
         X, Y = check_pairwise_arrays(X, Y)
         n_x, n_y = len(X), len(Y)
         # Calculate kernel for each element in X and Y.
-        K = np.zeros(n_x, n_y)
+        K = np.zeros((n_x, n_y), dtype='float')
         for i in range(n_x):
             for j in range(i, n_y):
                 # Kernel assumed to be symmetric.
-                K[i][j] = K[j][i] = metric(X[i], Y[j], **kwds)
+                K[i][j] = metric(X[i], Y[j], **kwds)
+                K[j][i] = K[i][j]
         return K
     else:
         raise AttributeError("Unknown metric {0}".format(metric))
