@@ -89,10 +89,13 @@ cdef class ClassificationCriterion(Criterion):
     cdef ndarray_label_count_init
 
     def __init__(self, int n_classes):
-        cdef np.ndarray[np.int32_t, ndim=1] ndarray_label_count_left = np.zeros((n_classes,), dtype=np.int32, order='C')
-        cdef np.ndarray[np.int32_t, ndim=1] ndarray_label_count_right = np.zeros((n_classes,), dtype=np.int32, order='C')
-        cdef np.ndarray[np.int32_t, ndim=1] ndarray_label_count_init = np.zeros((n_classes,), dtype=np.int32, order='C')
-        
+        cdef np.ndarray[np.int32_t, ndim=1] ndarray_label_count_left \
+            = np.zeros((n_classes,), dtype=np.int32, order='C')
+        cdef np.ndarray[np.int32_t, ndim=1] ndarray_label_count_right \
+            = np.zeros((n_classes,), dtype=np.int32, order='C')
+        cdef np.ndarray[np.int32_t, ndim=1] ndarray_label_count_init \
+            = np.zeros((n_classes,), dtype=np.int32, order='C')
+
         self.n_classes = n_classes
         self.n_samples = 0
         self.n_left = 0
@@ -108,7 +111,7 @@ cdef class ClassificationCriterion(Criterion):
         """Initialise the criterion class."""
         cdef int c = 0
         cdef int j = 0
-        
+
         self.n_samples = n_samples
 
         for c from 0 <= c < self.n_classes:
@@ -213,7 +216,6 @@ cdef class Entropy(ClassificationCriterion):
     """Entropy splitting criteria.
 
     Cross Entropy = - \sum_{k=0}^{K-1} pmk log(pmk)
-
     """
 
     cdef double eval(self):
@@ -228,7 +230,7 @@ cdef class Entropy(ClassificationCriterion):
         for k from 0 <= k < self.n_classes:
             if self.label_count_left[k] > 0:
                 H_left -= ((self.label_count_left[k] / n_left)
-                           * log( self.label_count_left[k] / n_left))
+                           * log(self.label_count_left[k] / n_left))
             if self.label_count_right[k] > 0:
                 H_right -= ((self.label_count_right[k] / n_right)
                             * log(self.label_count_right[k] / n_right))
@@ -276,7 +278,7 @@ cdef class RegressionCriterion(Criterion):
     cdef double mean_left
     cdef double mean_right
     cdef double mean_init
-    
+
     cdef double sq_sum_right
     cdef double sq_sum_left
     cdef double sq_sum_init
@@ -321,9 +323,11 @@ cdef class RegressionCriterion(Criterion):
         self.reset()
 
     cdef void reset(self):
-        """Reset criterion for new feature; assume all data in right branch and
-        copy statistics of the whole dataset into the auxiliary variables of the
-        right branch. 
+        """Reset criterion for new feature.
+
+        Assume all data in right branch and copy statistics of the
+        whole dataset into the auxiliary variables of the
+        right branch.
         """
         self.n_right = self.n_samples
         self.n_left = 0
@@ -333,10 +337,11 @@ cdef class RegressionCriterion(Criterion):
         self.sq_sum_left = 0.0
         self.var_left = 0.0
         self.var_right = self.sq_sum_right - \
-                         self.n_samples * (self.mean_right * self.mean_right)
+            self.n_samples * (self.mean_right * self.mean_right)
 
     cdef int update(self, int a, int b, np.float64_t *y, int *sorted_X_i):
-        """Update the criteria for each value in interval [a,b) where
+        """Update the criteria for each value in interval [a,b)
+
         a and b are indices in `sorted_X_i`.
         """
         cdef double y_idx = 0.0
@@ -347,17 +352,19 @@ cdef class RegressionCriterion(Criterion):
             self.sq_sum_left = self.sq_sum_left + (y_idx * y_idx)
             self.sq_sum_right = self.sq_sum_right - (y_idx * y_idx)
 
-            self.mean_left = (idx  * self.mean_left + y_idx) / <double>(idx + 1)
-            self.mean_right = ((self.n_samples - idx) * self.mean_right - y_idx) / \
-                              <double>(self.n_samples - idx - 1)
+            self.mean_left = (idx * self.mean_left + y_idx) / \
+                <double>(idx + 1)
+            self.mean_right = ((self.n_samples - idx) * \
+                self.mean_right - y_idx) / \
+                <double>(self.n_samples - idx - 1)
 
             self.n_right -= 1
             self.n_left += 1
 
             self.var_left = self.sq_sum_left - \
-                            self.n_left * (self.mean_left * self.mean_left)
+                self.n_left * (self.mean_left * self.mean_left)
             self.var_right = self.sq_sum_right - \
-                             self.n_right * (self.mean_right * self.mean_right)
+                self.n_right * (self.mean_right * self.mean_right)
 
         return self.n_left
 
