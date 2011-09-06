@@ -69,7 +69,7 @@ estimators = [
      True, False),
 
     ('Non-negative components - NMF',
-     decomposition.NMF(n_components=n_components, init='nndsvda', beta=5.0, 
+     decomposition.NMF(n_components=n_components, init='nndsvda', beta=5.0,
                         tol=5e-3, sparseness='components'),
      False, False),
 
@@ -78,7 +78,7 @@ estimators = [
      True, True),
 
     ('Sparse comp. - MiniBatchSparsePCA',
-     decomposition.MiniBatchSparsePCA(n_components=n_components, alpha=1e-3, 
+     decomposition.MiniBatchSparsePCA(n_components=n_components, alpha=1e-3,
                                       n_iter=100, chunk_size=3),
      True, False),
 

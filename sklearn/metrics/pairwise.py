@@ -155,8 +155,8 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     distances = np.maximum(distances, 0)
 
     if X is Y:
-        # Ensure that distances between vectors and themselves are set to 0.0. 
-        # This may not be the case due to floating point rounding errors. 
+        # Ensure that distances between vectors and themselves are set to 0.0.
+        # This may not be the case due to floating point rounding errors.
         distances.flat[::distances.shape[0] + 1] = 0.0
 
     return distances if squared else np.sqrt(distances)

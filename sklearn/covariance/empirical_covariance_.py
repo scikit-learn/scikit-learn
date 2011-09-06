@@ -210,5 +210,5 @@ class EmpiricalCovariance(BaseEstimator):
             result = squared_norm
         else:
             result = np.sqrt(squared_norm)
-        
+
         return result

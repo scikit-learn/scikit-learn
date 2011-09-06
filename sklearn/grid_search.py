@@ -182,7 +182,7 @@ class GridSearchCV(BaseEstimator):
 
     cv : integer or crossvalidation generator, optional
         If an integer is passed, it is the number of fold (default 3).
-        Specific crossvalidation objects can be passed, see 
+        Specific crossvalidation objects can be passed, see
         sklearn.cross_validation module for the list of possible objects
 
     refit: boolean
