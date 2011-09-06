@@ -73,6 +73,16 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     Considering the rows of X (and Y=X) as vectors, compute the
     distance matrix between each pair of vectors.
 
+    For efficiency reasons, the euclidean distance between a pair of row
+    vector x and y is computed as::
+
+        dist(x, y) = sqrt(dot(x, x) - 2 * dot(x, y) + dot(y, y))
+
+    This formulation has two main advantages. First, it is computationally
+    efficient when dealing with sparse data. Second, if x varies but y
+    remains unchanged, then the right-most dot-product `dot(y, y)` can be
+    pre-computed.
+
     Parameters
     ----------
     X: {array-like, sparse matrix}, shape = [n_samples_1, n_features]
@@ -80,7 +90,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     Y: {array-like, sparse matrix}, shape = [n_samples_2, n_features]
 
     Y_norm_squared: array-like, shape = [n_samples_2], optional
-        Pre-computed (Y**2).sum(axis=1)
+        Pre-computed dot-products of vectors in Y (e.g., `(Y**2).sum(axis=1)`)
 
     squared: boolean, optional
         Return squared Euclidean distances.
