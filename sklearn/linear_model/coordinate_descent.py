@@ -653,7 +653,8 @@ class ElasticNetCV(LinearModelCV):
 
     def __init__(self, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True, normalize=False, precompute='auto',
-                 max_iter=1000, tol=1e-4, cv=None, overwrite_X=False):
+                 max_iter=1000, tol=1e-4, cv=None, overwrite_X=False,
+                 verbose=0):
         self.rho = rho
         self.eps = eps
         self.n_alphas = n_alphas
@@ -665,3 +666,4 @@ class ElasticNetCV(LinearModelCV):
         self.tol = tol
         self.cv = cv
         self.overwrite_X = overwrite_X
+        self.verbose = verbose
