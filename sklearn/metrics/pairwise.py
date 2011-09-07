@@ -131,10 +131,7 @@ def euclidian_distances(*args, **kwargs):
 
 
 def l1_distances(X, Y=None):
-    import warnings
-    warnings.warn('l1_distances is deprecated, please use manhattan_distances'
-                  ' and set sum_over_features=False')
-    return manhattan_distances(X, Y=Y, sum_over_features=False)
+    raise ValueError("Don't use l1_distances any more")
 
 
 def manhattan_distances(X, Y=None, sum_over_features=True):
@@ -349,6 +346,8 @@ def pairwise_distances(X, Y=None, metric="euclidean", **kwds):
 
     **kwds: optional keyword parameters
         Any further parameters are passed directly to the distance function.
+        If using a scipy.spatial.distance metric, the parameters are still
+        metric dependent. See the scipy docs for usage examples.
 
     Returns
     -------
@@ -439,7 +438,7 @@ def pairwise_kernels(X, Y=None, metric="euclidean", **kwds):
     elif callable(metric):
         # Check matrices first (this is usually done by the metric).
         X, Y = check_pairwise_arrays(X, Y)
-        n_x, n_y = len(X), len(Y)
+        n_x, n_y = X.shape[0], Y.shape[0]
         # Calculate kernel for each element in X and Y.
         K = np.zeros((n_x, n_y), dtype='float')
         for i in range(n_x):
