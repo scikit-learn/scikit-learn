@@ -62,7 +62,7 @@ def test_lle_manifold():
     assert_lower(reconstruction_error, tol)
 
     for solver in eigen_solvers:
-        clf.set_params(eigen_solver=solver)        
+        clf.set_params(eigen_solver=solver)
         clf.fit(X)
         assert clf.embedding_.shape[1] == out_dim
         reconstruction_error = np.linalg.norm(

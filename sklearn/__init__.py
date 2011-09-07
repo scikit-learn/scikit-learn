@@ -41,7 +41,7 @@ except:
     pass
 
 
-__all__ = ['check_build', 'cross_val', 'cluster', 'covariance',
+__all__ = ['check_build', 'cross_validation', 'cluster', 'covariance',
            'datasets', 'decomposition', 'feature_extraction',
            'feature_selection',
            'gaussian_process', 'grid_search', 'hmm', 'lda', 'linear_model',

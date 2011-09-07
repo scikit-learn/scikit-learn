@@ -13,7 +13,7 @@ from .metrics import r2_score
 
 ###############################################################################
 def clone(estimator, safe=True):
-    """ Constructs a new estimator with the same parameters.
+    """Constructs a new estimator with the same parameters.
 
     Clone does a deep copy of the model in an estimator
     without actually copying attached data. It yields a new estimator
@@ -52,12 +52,12 @@ def clone(estimator, safe=True):
         param2 = params_set[name]
         if isinstance(param1, np.ndarray):
             # For ndarrays, we do not test for complete equality
-            equality_test = (param1.shape == param2.shape 
-                             and param1.dtype == param2.dtype 
-                             and param1[0] == param2[0] 
+            equality_test = (param1.shape == param2.shape
+                             and param1.dtype == param2.dtype
+                             and param1[0] == param2[0]
                              and param1[-1] == param2[-1])
         elif sparse.issparse(param1):
-            # For sparse matrices equality doesn't work 
+            # For sparse matrices equality doesn't work
             equality_test = (param1.__class__ == param2.__class__
                              and param1.data[0] == param2.data[0]
                              and param1.data[-1] == param2.data[-1]
@@ -75,19 +75,20 @@ def clone(estimator, safe=True):
 
 ###############################################################################
 def _pprint(params, offset=0, printer=repr):
-    """ Pretty print the dictionnary 'params'
+    """Pretty print the dictionnary 'params'
 
-        Parameters
-        ----------
-        params: dict
-            The dictionnary to pretty print
+    Parameters
+    ----------
+    params: dict
+        The dictionnary to pretty print
 
-        offset: int
-            The offset in characters to add at the begin of each line.
+    offset: int
+        The offset in characters to add at the begin of each line.
 
-        printer:
-            The function to convert entries to strings, typically
-            the builtin str or repr
+    printer:
+        The function to convert entries to strings, typically
+        the builtin str or repr
+
     """
     # Do a multi-line justified repr:
     options = np.get_printoptions()
@@ -126,20 +127,19 @@ def _pprint(params, offset=0, printer=repr):
 
 ###############################################################################
 class BaseEstimator(object):
-    """ Base class for all estimators in the scikit learn
+    """Base class for all estimators in the scikit learn
 
-        Notes
-        -----
-        All estimators should specify all the parameters that can be set
-        at the class level in their __init__ as explicit keyword
-        arguments (no *args, **kwargs).
+    Notes
+    -----
+    All estimators should specify all the parameters that can be set
+    at the class level in their __init__ as explicit keyword
+    arguments (no *args, **kwargs).
 
     """
 
     @classmethod
     def _get_param_names(cls):
-        """ Get parameter names for the estimator
-        """
+        """Get parameter names for the estimator"""
         try:
             args, varargs, kw, default = inspect.getargspec(cls.__init__)
             assert varargs is None, (
@@ -157,13 +157,13 @@ class BaseEstimator(object):
         return args
 
     def _get_params(self, deep=True):
-        """ Get parameters for the estimator
+        """Get parameters for the estimator
 
-            Parameters
-            ----------
-            deep: boolean, optional
-                If True, will return the parameters for this estimator and
-                contained subobjects that are estimators.
+        Parameters
+        ----------
+        deep: boolean, optional
+            If True, will return the parameters for this estimator and
+            contained subobjects that are estimators.
         """
         out = dict()
         for key in self._get_param_names():
@@ -175,7 +175,7 @@ class BaseEstimator(object):
         return out
 
     def set_params(self, **params):
-        """ Set the parameters of the estimator.
+        """Set the parameters of the estimator.
 
         The method works on simple estimators as well as on nested
         objects (such as pipelines). The former have parameters of the
@@ -242,53 +242,51 @@ class BaseEstimator(object):
 
 ###############################################################################
 class ClassifierMixin(object):
-    """ Mixin class for all classifiers in the scikit learn
-    """
+    """Mixin class for all classifiers in scikit-learn"""
 
     def score(self, X, y):
-        """ Returns the mean error rate on the given test data and labels.
+        """Returns the mean error rate on the given test data and labels.
 
-            Parameters
-            ----------
-            X : array-like, shape = [n_samples, n_features]
-                Training set.
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training set.
 
-            y : array-like, shape = [n_samples]
-                Labels for X.
+        y : array-like, shape = [n_samples]
+            Labels for X.
 
-            Returns
-            -------
-            z : float
+        Returns
+        -------
+        z : float
+
         """
         return np.mean(self.predict(X) == y)
 
 
 ###############################################################################
 class RegressorMixin(object):
-    """ Mixin class for all regression estimators in the scikit learn
-    """
+    """Mixin class for all regression estimators in the scikit learn"""
 
     def score(self, X, y):
-        """ Returns the coefficient of determination of the prediction
+        """Returns the coefficient of determination of the prediction
 
-            Parameters
-            ----------
-            X : array-like, shape = [n_samples, n_features]
-                Training set.
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training set.
 
-            y : array-like, shape = [n_samples]
+        y : array-like, shape = [n_samples]
 
-            Returns
-            -------
-            z : float
+        Returns
+        -------
+        z : float
         """
         return r2_score(y, self.predict(X))
 
 
 ###############################################################################
 class TransformerMixin(object):
-    """ Mixin class for all transformers in the scikit learn
-    """
+    """Mixin class for all transformers in the scikit learn"""
 
     def fit_transform(self, X, y=None, **fit_params):
         """Fit to data, then transform it
@@ -314,6 +312,7 @@ class TransformerMixin(object):
         This method just calls fit and transform consecutively, i.e., it is not
         an optimized implementation of fit_transform, unlike other transformers
         such as PCA.
+
         """
         if y is None:
             # fit method of arity 1 (unsupervised transformation)
@@ -327,8 +326,7 @@ class TransformerMixin(object):
 # XXX: Temporary solution to figure out if an estimator is a classifier
 
 def _get_sub_estimator(estimator):
-    """ Returns the final estimator if there is any.
-    """
+    """Returns the final estimator if there is any."""
     if hasattr(estimator, 'estimator'):
         # GridSearchCV and other CV-tuned estimators
         return _get_sub_estimator(estimator.estimator)
@@ -339,7 +337,6 @@ def _get_sub_estimator(estimator):
 
 
 def is_classifier(estimator):
-    """ Returns True if the given estimator is (probably) a classifier.
-    """
+    """Returns True if the given estimator is (probably) a classifier."""
     estimator = _get_sub_estimator(estimator)
     return isinstance(estimator, ClassifierMixin)

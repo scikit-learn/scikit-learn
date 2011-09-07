@@ -17,7 +17,7 @@ from scipy.linalg.lapack import get_lapack_funcs
 from .base import LinearModel
 from ..utils import arrayfuncs, as_float_array
 from ..utils import deprecated
-from ..cross_val import check_cv
+from ..cross_validation import check_cv
 from ..externals.joblib import Parallel, delayed
 
 
@@ -642,7 +642,7 @@ class LarsCV(LARS):
         Maximum number of iterations to perform.
 
     cv : crossvalidation generator, optional
-        see sklearn.cross_val module. If None is passed, default to
+        see sklearn.cross_validation module. If None is passed, default to
         a 5-fold strategy
 
     n_jobs : integer, optional
@@ -775,7 +775,7 @@ class LassoLarsCV(LarsCV):
         Maximum number of iterations to perform.
 
     cv : crossvalidation generator, optional
-        see sklearn.cross_val module. If None is passed, default to
+        see sklearn.cross_validation module. If None is passed, default to
         a 5-fold strategy
 
     n_jobs : integer, optional
@@ -837,11 +837,11 @@ class LassoLarsCV(LarsCV):
 class LassoLarsIC(LassoLars):
     """Lasso model fit with Lars using BIC or AIC for model selection
 
-    AIC is the Akaike information criterion and BIC is the Bayes Information
-    criterion. Such citeria are useful to select the value of the
-    regularization parameter by making a trade-off between
-    the goodness of fit and the complexity of the model. A good model
-    should explain well the data while being simple.
+    AIC is the Akaike information criterion and BIC is the Bayes
+    Information criterion. Such criteria are useful to select the value
+    of the regularization parameter by making a trade-off between the
+    goodness of fit and the complexity of the model. A good model should
+    explain well the data while being simple.
 
     Parameters
     ----------

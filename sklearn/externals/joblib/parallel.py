@@ -54,7 +54,7 @@ class WorkerInterrupt(Exception):
 class SafeFunction(object):
     """ Wraps a function to make it exception with full traceback in
         their representation.
-        Useful for parallel computing with multiprocessing, for which 
+        Useful for parallel computing with multiprocessing, for which
         exceptions cannot be captured.
     """
 
@@ -109,7 +109,7 @@ class ImmediateApply(object):
 
 ################################################################################
 class CallBack(object):
-    """ Callback used by parallel: it is used for progress reporting, and 
+    """ Callback used by parallel: it is used for progress reporting, and
         to add data to be processed
     """
     def __init__(self, index, parallel):
@@ -145,8 +145,8 @@ class CallBack(object):
             writer = sys.stdout.write
         writer('[%s]: Done %3i out of %s |elapsed: %s remaining: %s\n'
                 % (self.parallel,
-                    self.index+1, 
-                    total, 
+                    self.index+1,
+                    total,
                     short_format_time(elapsed_time),
                     short_format_time(remaining_time),
                     ))
@@ -214,7 +214,7 @@ class Parallel(Logger):
         (0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5)
         >>> i
         (0.0, 0.0, 1.0, 1.0, 2.0, 2.0, 3.0, 3.0, 4.0, 4.0)
-       
+
         The progress meter::
 
             >>> from time import sleep
@@ -236,7 +236,7 @@ class Parallel(Logger):
          >>> Parallel(n_jobs=2)(delayed(atoi)(n) for n in ('1', '300', 30)) #doctest: +SKIP
          #...
          ---------------------------------------------------------------------------
-         Sub-process traceback: 
+         Sub-process traceback:
          ---------------------------------------------------------------------------
          TypeError                                          Fri Jul  2 20:32:05 2010
          PID: 4151                                     Python 2.6.5: /usr/bin/python
@@ -245,14 +245,14 @@ class Parallel(Logger):
              398     is chosen from the leading characters of s, 0 for octal, 0x or
              399     0X for hexadecimal.  If base is 16, a preceding 0x or 0X is
              400     accepted.
-             401 
+             401
              402     """
          --> 403     return _int(s, base)
-             404 
-             405 
+             404
+             405
              406 # Convert string to long integer
              407 def atol(s, base=10):
-         
+
          TypeError: int() can't convert non-string with explicit base
          ___________________________________________________________________________
 
@@ -269,7 +269,7 @@ class Parallel(Logger):
          ...     for i in range(6):
          ...         print 'Produced %s' % i
          ...         yield i
-         
+
          >>> out = Parallel(n_jobs=2, verbose=100, pre_dispatch='1.5*n_jobs')(
          ...                         delayed(sqrt)(i) for i in producer()) #doctest: +SKIP
          Produced 0
@@ -294,7 +294,7 @@ class Parallel(Logger):
 
 
     def dispatch(self, func, args, kwargs):
-        """ Queue the function for computing, with or without multiprocessing 
+        """ Queue the function for computing, with or without multiprocessing
         """
         if self._pool is None:
             job = ImmediateApply(func, args, kwargs)
@@ -325,7 +325,7 @@ class Parallel(Logger):
         self._dispatch_amount += 1
         while self._dispatch_amount:
             try:
-                # XXX: possible race condition shuffling the order of 
+                # XXX: possible race condition shuffling the order of
                 # dispatchs in the next two lines.
                 func, args, kwargs = self._iterable.next()
                 self.dispatch(func, args, kwargs)
@@ -352,7 +352,7 @@ class Parallel(Logger):
             try:
                 self._output.append(job.get())
             except tuple(self.exceptions), exception:
-                if isinstance(exception, 
+                if isinstance(exception,
                         (KeyboardInterrupt, WorkerInterrupt)):
                     # We have captured a user interruption, clean up
                     # everything
@@ -361,7 +361,7 @@ class Parallel(Logger):
                         self._pool.terminate()
                     raise exception
                 elif isinstance(exception, TransportableException):
-                    # Capture exception to add information on 
+                    # Capture exception to add information on
                     # the local stack in addition to the distant
                     # stack
                     this_report = format_outer_frames(
@@ -371,7 +371,7 @@ class Parallel(Logger):
                     report = """Multiprocessing exception:
 %s
 ---------------------------------------------------------------------------
-Sub-process traceback: 
+Sub-process traceback:
 ---------------------------------------------------------------------------
 %s""" % (
                             this_report,
@@ -418,7 +418,7 @@ Sub-process traceback:
         try:
             for function, args, kwargs in iterable:
                 self.dispatch(function, args, kwargs)
-            
+
             self.retrieve()
         finally:
             if n_jobs > 1:

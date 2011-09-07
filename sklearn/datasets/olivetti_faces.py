@@ -52,7 +52,7 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
         all scikit learn data is stored in '~/scikit_learn_data' subfolders.
 
     shuffle : boolean, optional
-        If True the order of the dataset is shuffled to avoid having 
+        If True the order of the dataset is shuffled to avoid having
         images of the same person grouped.
 
     download_if_missing: optional, True by default

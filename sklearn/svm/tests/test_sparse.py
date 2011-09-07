@@ -133,7 +133,7 @@ def test_weight():
     Test class weights
     """
 
-    X_, y_ = make_classification(n_samples=200, n_features=100, 
+    X_, y_ = make_classification(n_samples=200, n_features=100,
                                  weights=[0.833, 0.167], random_state=0)
 
     X_ = scipy.sparse.csr_matrix(X_)

@@ -4,12 +4,13 @@
 #
 # License: BSD Style.
 
+import sys
 import warnings
 import numpy as np
 
 from .base import LinearModel
 from ..utils import as_float_array
-from ..cross_val import check_cv
+from ..cross_validation import check_cv
 from . import cd_fast
 
 
@@ -305,8 +306,8 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
         If True, X will not be copied
         Default is False
 
-    verbose : bool
-        Verbose computation or not.
+    verbose : bool or integer
+        Amount of verbosity
 
     params : kwargs
         keyword arguments passed to the Lasso objects
@@ -377,8 +378,8 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
         If True, X will not be copied
         Default is False
 
-    verbose : bool
-        Verbose computation or not.
+    verbose : bool or integer
+        Amount of verbosity
 
     params : kwargs
         keyword arguments passed to the Lasso objects
@@ -422,7 +423,8 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
     coef_ = None  # init coef_
     models = []
 
-    for alpha in alphas:
+    n_alphas = len(alphas)
+    for i, alpha in enumerate(alphas):
         model = ElasticNet(alpha=alpha, rho=rho, fit_intercept=False,
                            precompute=precompute)
         model.set_params(**params)
@@ -431,7 +433,12 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
             model.fit_intercept = True
             model._set_intercept(X_mean, y_mean, X_std)
         if verbose:
-            print model
+            if verbose > 2:
+                print model
+            elif verbose > 1:
+                print 'Path: %03i out of %03i' % (i, n_alphas)
+            else:
+                sys.stderr.write('.')
         coef_ = model.coef_.copy()
         models.append(model)
     return models
@@ -442,7 +449,7 @@ class LinearModelCV(LinearModel):
 
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
             normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
-            overwrite_X=False, cv=None):
+            overwrite_X=False, cv=None, verbose=False):
         self.eps = eps
         self.n_alphas = n_alphas
         self.alphas = alphas
@@ -453,6 +460,7 @@ class LinearModelCV(LinearModel):
         self.tol = tol
         self.overwrite_X = overwrite_X
         self.cv = cv
+        self.verbose = verbose
 
     def fit(self, X, y):
         """Fit linear model with coordinate descent along decreasing alphas
@@ -492,12 +500,19 @@ class LinearModelCV(LinearModel):
 
         # Compute path for all folds and compute MSE to get the best alpha
         folds = list(cv)
-        mse_alphas = np.zeros((len(folds), n_alphas))
+        n_folds = len(folds)
+        mse_alphas = np.zeros((n_folds, n_alphas))
         for i, (train, test) in enumerate(folds):
+            if self.verbose:
+                print '%s: fold % 2i out of % 2i' % (
+                        self.__class__.__name__, i, n_folds),
+                sys.stdout.flush()
             models_train = self.path(X[train], y[train], **path_params)
             for i_alpha, model in enumerate(models_train):
                 y_ = model.predict(X[test])
                 mse_alphas[i, i_alpha] += ((y_ - y[test]) ** 2).mean()
+            if self.verbose == 1:
+                print ''
 
         i_best_alpha = np.argmin(np.mean(mse_alphas, axis=0))
         model = models[i_best_alpha]
@@ -546,7 +561,10 @@ class LassoCV(LinearModelCV):
     cv : integer or crossvalidation generator, optional
         If an integer is passed, it is the number of fold (default 3).
         Specific crossvalidation objects can be passed, see
-        sklearn.cross_val module for the list of possible objects
+        sklearn.cross_validation module for the list of possible objects
+
+    verbose : bool or integer
+        amount of verbosity
 
     Notes
     -----
@@ -601,8 +619,10 @@ class ElasticNetCV(LinearModelCV):
     cv : integer or crossvalidation generator, optional
         If an integer is passed, it is the number of fold (default 3).
         Specific crossvalidation objects can be passed, see
-        sklearn.cross_val module for the list of possible objects
+        sklearn.cross_validation module for the list of possible objects
 
+    verbose : bool or integer
+        amount of verbosity
 
     Notes
     -----
@@ -633,7 +653,8 @@ class ElasticNetCV(LinearModelCV):
 
     def __init__(self, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True, normalize=False, precompute='auto',
-                 max_iter=1000, tol=1e-4, cv=None, overwrite_X=False):
+                 max_iter=1000, tol=1e-4, cv=None, overwrite_X=False,
+                 verbose=0):
         self.rho = rho
         self.eps = eps
         self.n_alphas = n_alphas
@@ -645,3 +666,4 @@ class ElasticNetCV(LinearModelCV):
         self.tol = tol
         self.cv = cv
         self.overwrite_X = overwrite_X
+        self.verbose = verbose
