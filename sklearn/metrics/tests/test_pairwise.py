@@ -10,7 +10,7 @@ from scipy.sparse import csr_matrix
 from ..pairwise import euclidean_distances, linear_kernel, polynomial_kernel, \
                        rbf_kernel, sigmoid_kernel
 from .. import pairwise_distances, pairwise_kernels
-from ..pairwise import pairwise_distance_functions, pairwise_kernel_functions
+from ..pairwise import pairwise_kernel_functions
 
 np.random.seed(0)
 
@@ -62,14 +62,14 @@ def test_pairwise_kernels():
         # Test with sparse X and Y
         X_sparse = csr_matrix(X)
         Y_sparse = csr_matrix(Y)
-        K1 = pairwise_kernels(X, Y=Y, metric=metric)
+        K1 = pairwise_kernels(X_sparse, Y=Y_sparse, metric=metric)
         assert_equal(K1, K2)
     # Test with a callable function, with given keywords.
     metric = callable_rbf_kernel
     kwds = {}
     kwds['gamma'] = 0.5
     K1 = pairwise_kernels(X, Y=Y, metric=metric, **kwds)
-    K2 = rbf_kernel(X, Y=Y, **kwds)    
+    K2 = rbf_kernel(X, Y=Y, **kwds)
     assert_equal(K1, K2)
 
 

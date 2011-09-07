@@ -6,6 +6,7 @@ from scipy.sparse import csr_matrix
 
 from sklearn.metrics.pairwise import check_pairwise_arrays
 
+
 def test_check_dense_matrices():
     """ Ensure that pairwise array check works for dense matrices."""
     # Check that if XB is None, XB is returned as reference to XA
@@ -13,6 +14,7 @@ def test_check_dense_matrices():
     XA_checked, XB_checked = check_pairwise_arrays(XA, None)
     assert_true(XA_checked is XB_checked)
     assert_equal(XA, XA_checked)
+
 
 def test_check_XB_returned():
     """ Ensure that if XA and XB are given correctly, they return as equal."""
@@ -63,7 +65,7 @@ def tuplify(X):
     else:
         # Single dimension input, just return tuple of contents.
         return tuple(r for r in X)
-        
+
 
 def test_check_tuple_input():
     """ Ensures that checks return valid tuples. """
@@ -75,4 +77,3 @@ def test_check_tuple_input():
     XA_checked, XB_checked = check_pairwise_arrays(XA_tuples, XB_tuples)
     assert_equal(XA_tuples, XA_checked)
     assert_equal(XB_tuples, XB_checked)
-

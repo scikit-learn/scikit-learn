@@ -136,6 +136,7 @@ def l1_distances(X, Y=None):
                   ' and set sum_over_features=False')
     return manhattan_distances(X, Y=Y, sum_over_features=False)
 
+
 def manhattan_distances(X, Y=None, sum_over_features=True):
     """ Compute the L1 distances between the vectors in X and Y.
 
@@ -157,11 +158,11 @@ def manhattan_distances(X, Y=None, sum_over_features=True):
     Returns
     -------
     D: array
- 	If sum_over_features is False shape is
- 	(n_samples_X, n_samples_Y, n_features) and D contains the
- 	componentwise L1 pairwise-distances (ie. absolute difference),
- 	else shape is (n_samples_X, n_samples_Y) and D contains
- 	the pairwise l1 distances.
+        If sum_over_features is False shape is
+        (n_samples_X, n_samples_Y, n_features) and D contains the
+        componentwise L1 pairwise-distances (ie. absolute difference),
+        else shape is (n_samples_X, n_samples_Y) and D contains
+        the pairwise l1 distances.
 
     Examples
     --------
@@ -300,11 +301,11 @@ def rbf_kernel(X, Y=None, gamma=0):
 
 # Helper functions - distance
 pairwise_distance_functions = {
-    'euclidean':euclidean_distances,
-    'l2':euclidean_distances,
-    'l1':manhattan_distances,
-    'manhattan':manhattan_distances,
-    'cityblock':manhattan_distances
+    'euclidean': euclidean_distances,
+    'l2': euclidean_distances,
+    'l1': manhattan_distances,
+    'manhattan': manhattan_distances,
+    'cityblock': manhattan_distances
     }
 
 
@@ -376,10 +377,10 @@ def pairwise_distances(X, Y=None, metric="euclidean", **kwds):
 
 # Helper functions - distance
 pairwise_kernel_functions = {
-    'rbf':rbf_kernel,
-    'sigmoid':sigmoid_kernel,
-    'polynomial':polynomial_kernel,
-    'linear':linear_kernel
+    'rbf': rbf_kernel,
+    'sigmoid': sigmoid_kernel,
+    'polynomial': polynomial_kernel,
+    'linear': linear_kernel
     }
 
 
