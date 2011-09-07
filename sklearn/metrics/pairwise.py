@@ -130,23 +130,32 @@ def euclidian_distances(*args, **kwargs):
     return euclidean_distances(*args, **kwargs)
 
 
-def l1_distances(X, Y=None):
-    """
-    Computes the componentwise L1 pairwise-distances between the vectors
-    in X and Y.
+def l1_distances(X, Y=None, sum_over_features=True):
+    """ Computes the L1 distances between the vectors in X and Y.
+
+    With sum_over_features equal to False it returns the componentwise
+    distances.
 
     Parameters
     ----------
     X: array_like
-        An array with shape (n_samples_X, n_features)
+        An array with shape (n_samples_X, n_features).
 
     Y: array_like, optional
         An array with shape (n_samples_Y, n_features).
 
+    sum_over_features: bool, default=True
+        If True the function returns the pairwise distance matrix
+        else it returns the componentwise L1 pairwise-distances.
+
     Returns
     -------
-    D: array with shape (n_samples_X * n_samples_Y, n_features)
-        The array of componentwise L1 pairwise-distances.
+    D: array
+ 	If sum_over_features is False shape is
+ 	(n_samples_X, n_samples_Y, n_features) and D contains the
+ 	componentwise L1 pairwise-distances (ie. absolute difference),
+ 	else shape is (n_samples_X, n_samples_Y) and D contains
+ 	the pairwise l1 distances.
 
     Examples
     --------
@@ -159,8 +168,8 @@ def l1_distances(X, Y=None):
     array([[1]])
     >>> import numpy as np
     >>> X = np.ones((1, 2))
-    >>> y = 2*np.ones((2, 2))
-    >>> l1_distances(X, y)
+    >>> y = 2 * np.ones((2, 2))
+    >>> l1_distances(X, y, sum_over_features=False)
     array([[ 1.,  1.],
            [ 1.,  1.]])
     """
@@ -173,7 +182,8 @@ def l1_distances(X, Y=None):
         n_features = n_features_X
     D = np.abs(X[:, np.newaxis, :] - Y[np.newaxis, :, :])
     D = D.reshape((n_samples_X * n_samples_Y, n_features))
-
+    if sum_over_features:
+        D = np.sum(D, axis=2)
     return D
 
 
@@ -285,7 +295,10 @@ def rbf_kernel(X, Y=None, gamma=0):
 # Helper functions - distance
 pairwise_distance_functions = {}
 pairwise_distance_functions['euclidean'] = euclidean_distances
+pairwise_distance_functions['l2'] = euclidean_distances
 pairwise_distance_functions['l1'] = l1_distances
+pairwise_distance_functions['manhattan'] = l1_distances
+pairwise_distance_functions['cityblock'] = l1_distances
 
 
 def pairwise_distances(X, Y=None, metric="euclidean", **kwds):
