@@ -361,6 +361,18 @@ def pairwise_distances(X, Y=None, metric="euclidean", **kwds):
         return X
     elif metric in pairwise_distance_functions:
         return pairwise_distance_functions[metric](X, Y, **kwds)
+    elif callable(metric):
+        # Check matrices first (this is usually done by the metric).
+        X, Y = check_pairwise_arrays(X, Y)
+        n_x, n_y = X.shape[0], Y.shape[0]
+        # Calculate distance for each element in X and Y.
+        D = np.zeros((n_x, n_y), dtype='float')
+        for i in range(n_x):
+            for j in range(i, n_y):
+                # Kernel assumed to be symmetric.
+                D[i][j] = metric(X[i], Y[j], **kwds)
+                D[j][i] = K[i][j]
+        return D
     else:
         # Note that if the metric is callable
         # FIXME: the distance module doesn't support sparse matrices!
@@ -376,11 +388,12 @@ pairwise_kernel_functions = {
     'rbf': rbf_kernel,
     'sigmoid': sigmoid_kernel,
     'polynomial': polynomial_kernel,
+    'poly': polynomial_kernel,
     'linear': linear_kernel
     }
 
 
-def pairwise_kernels(X, Y=None, metric="euclidean", **kwds):
+def pairwise_kernels(X, Y=None, metric="linear", **kwds):
     """ Compute the kernel between arrays X and optional array Y.
 
     This method takes either a vector array or a kernel matrix, and returns
@@ -420,9 +433,9 @@ def pairwise_kernels(X, Y=None, metric="euclidean", **kwds):
     Returns
     -------
     K: array [n_samples_a, n_samples_a] or [n_samples_a, n_samples_b]
-        A kernel matrix D such that D_{i, j} is the kernel between the
+        A kernel matrix K such that K_{i, j} is the kernel between the
         ith and jth vectors of the given matrix X, if Y is None.
-        If Y is not None, then D_{i, j} is the kernel between the ith array
+        If Y is not None, then K_{i, j} is the kernel between the ith array
         from X and the jth array from Y.
 
     """
@@ -445,4 +458,4 @@ def pairwise_kernels(X, Y=None, metric="euclidean", **kwds):
                 K[j][i] = K[i][j]
         return K
     else:
-        raise AttributeError("Unknown metric {0}".format(metric))
+        raise AttributeError("Unknown metric %s" % metric)
