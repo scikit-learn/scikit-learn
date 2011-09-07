@@ -59,6 +59,11 @@ def test_pairwise_kernels():
         K1 = pairwise_kernels(X, Y=Y, metric=metric)
         K2 = function(X, Y=Y)
         assert_equal(K1, K2)
+        # Test with sparse X and Y
+        X_sparse = csr_matrix(X)
+        Y_sparse = csr_matrix(Y)
+        K1 = pairwise_kernels(X, Y=Y, metric=metric)
+        assert_equal(K1, K2)
     # Test with a callable function, with given keywords.
     metric = callable_rbf_kernel
     kwds = {}
@@ -74,7 +79,7 @@ def callable_rbf_kernel(x, y, **kwds):
 
 
 def test_euclidean_distances():
-    """Check the pairwise Euclidean distances computation"""
+    """ Check the pairwise Euclidean distances computation"""
     X = [[0]]
     Y = [[1], [2]]
     D = euclidean_distances(X, Y)
@@ -87,7 +92,7 @@ def test_euclidean_distances():
 
 
 def test_kernel_symmetry():
-    """valid kernels should be symmetric"""
+    """ Valid kernels should be symmetric"""
     rng = np.random.RandomState(0)
     X = rng.random_sample((5, 4))
     for kernel in (linear_kernel, polynomial_kernel, rbf_kernel,

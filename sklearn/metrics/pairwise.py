@@ -13,7 +13,7 @@ from ..utils.extmath import safe_sparse_dot
 
 # Utility Functions
 def check_pairwise_arrays(X, Y):
-    """ Sets X and Y appropriately and checks inputs
+    """ Set X and Y appropriately and checks inputs
 
     If Y is None, it is set as a pointer to X (i.e. not a copy).
     If Y is given, this does not happen.
@@ -131,7 +131,7 @@ def euclidian_distances(*args, **kwargs):
 
 
 def l1_distances(X, Y=None, sum_over_features=True):
-    """ Computes the L1 distances between the vectors in X and Y.
+    """ Compute the L1 distances between the vectors in X and Y.
 
     With sum_over_features equal to False it returns the componentwise
     distances.
@@ -293,16 +293,17 @@ def rbf_kernel(X, Y=None, gamma=0):
 
 
 # Helper functions - distance
-pairwise_distance_functions = {}
-pairwise_distance_functions['euclidean'] = euclidean_distances
-pairwise_distance_functions['l2'] = euclidean_distances
-pairwise_distance_functions['l1'] = l1_distances
-pairwise_distance_functions['manhattan'] = l1_distances
-pairwise_distance_functions['cityblock'] = l1_distances
+pairwise_distance_functions = {
+    'euclidean':euclidean_distances,
+    'l2':euclidean_distances,
+    'l1':l1_distances,
+    'manhattan':l1_distances,
+    'cityblock':l1_distances
+    }
 
 
 def pairwise_distances(X, Y=None, metric="euclidean", **kwds):
-    """ Calculates the distance matrix from a vector array X and optional Y.
+    """ Compute the distance matrix from a vector array X and optional Y.
 
     This method takes either a vector array or a distance matrix, and returns
     a distance matrix. If the input is a vector array, the distances are
@@ -368,15 +369,16 @@ def pairwise_distances(X, Y=None, metric="euclidean", **kwds):
 
 
 # Helper functions - distance
-pairwise_kernel_functions = {}
-pairwise_kernel_functions['rbf'] = rbf_kernel
-pairwise_kernel_functions['sigmoid'] = sigmoid_kernel
-pairwise_kernel_functions['polynomial'] = polynomial_kernel
-pairwise_kernel_functions['linear'] = linear_kernel
+pairwise_kernel_functions = {
+    'rbf':rbf_kernel,
+    'sigmoid':sigmoid_kernel,
+    'polynomial':polynomial_kernel,
+    'linear':linear_kernel
+    }
 
 
 def pairwise_kernels(X, Y=None, metric="euclidean", **kwds):
-    """ Calculates the kernel between arrays X and optional array Y.
+    """ Compute the kernel between arrays X and optional array Y.
 
     This method takes either a vector array or a kernel matrix, and returns
     a kernel matrix. If the input is a vector array, the kernels are
