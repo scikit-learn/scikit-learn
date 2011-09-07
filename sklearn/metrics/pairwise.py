@@ -130,9 +130,6 @@ def euclidian_distances(*args, **kwargs):
     return euclidean_distances(*args, **kwargs)
 
 
-def l1_distances(X, Y=None):
-    raise ValueError("Don't use l1_distances any more")
-
 
 def manhattan_distances(X, Y=None, sum_over_features=True):
     """ Compute the L1 distances between the vectors in X and Y.
