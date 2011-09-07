@@ -165,12 +165,16 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         return mode.flatten().astype(np.int)
 
 
-#@deprecated("deprecated in v0.9; will be removed in v0.11; "
-#            "use KNeighborsClassifier or RadiusNeighborsClassifier instead")
+@deprecated("deprecated in v0.9; will be removed in v0.11; "
+            "use KNeighborsClassifier or RadiusNeighborsClassifier instead")
 class NeighborsClassifier(NeighborsBase, KNeighborsMixin,
                           RadiusNeighborsMixin, SupervisedMixinInt,
                           ClassifierMixin):
     """Classifier implementing the nearest neighbors vote.
+
+    DEPRECATED IN VERSION 0.9; WILL BE REMOVED IN VERSION 0.11
+    Please use :class:`KNeighborsClassifier` or
+    :class:`RadiusNeighborsClassifier` instead.
 
     Samples participating in the vote are either the k-nearest neighbors
     (for some k)  or all neighbors within some fixed radius around the sample

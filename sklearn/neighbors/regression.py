@@ -175,12 +175,16 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
                          for ind in neigh_ind])
 
 
-#@deprecated("deprecated in v0.9; will be removed in v0.11; "
-#            "use KNeighborsRegressor or RadiusNeighborsRegressor instead")
+@deprecated("deprecated in v0.9; will be removed in v0.11; "
+            "use KNeighborsRegressor or RadiusNeighborsRegressor instead")
 class NeighborsRegressor(NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin,
                          SupervisedMixinFloat,
                          RegressorMixin):
     """Regression based on nearest neighbors.
+
+    DEPRECATED IN VERSION 0.9; WILL BE REMOVED IN VERSION 0.11
+    Please use :class:`KNeighborsRegressor` or
+    :class:`RadiusNeighborsRegressor` instead.
 
     The target is predicted by local interpolation of the targets
     associated of the nearest neighbors in the training set.
