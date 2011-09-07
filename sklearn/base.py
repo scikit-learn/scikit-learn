@@ -141,11 +141,17 @@ class BaseEstimator(object):
     def _get_param_names(cls):
         """Get parameter names for the estimator"""
         try:
-            args, varargs, kw, default = inspect.getargspec(cls.__init__)
+            # fetch the constructor or the original constructor before
+            # deprecation wrapping if any
+            init = getattr(cls.__init__, 'deprecated_original', cls.__init__)
+
+            # introspect the constructor arguments to find the model parameters
+            # to represent
+            args, varargs, kw, default = inspect.getargspec(init)
             assert varargs is None, (
                 'scikit learn estimators should always specify their '
                 'parameters in the signature of their init (no varargs).'
-                )
+            )
             # Remove 'self'
             # XXX: This is going to fail if the init is a staticmethod, but
             # who would do this?

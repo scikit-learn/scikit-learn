@@ -204,6 +204,7 @@ class deprecated(object):
 
         wrapped.__name__ = '__init__'
         wrapped.__doc__ = self._update_doc(init.__doc__)
+        wrapped.deprecated_original = init
 
         return cls
 
