@@ -262,13 +262,12 @@ def recall_score(y_true, y_pred, pos_label=1):
 def fbeta_score(y_true, y_pred, beta, pos_label=1):
     """Compute fbeta score
 
-    The F_beta score can be interpreted as a weighted average of the precision
-    and recall, where an F_beta score reaches its best value at 1 and worst
-    score at 0.
-
-    F_1 weights recall beta as much as precision.
-
-    See: http://en.wikipedia.org/wiki/F1_score
+    The F_beta score is the weighted harmonic mean of precision and recall,
+    reaching its optimal value at 1 and its worst value at 0.
+    
+    The beta parameter determines the weight of precision in the combined
+    score. beta < 1 lends more weight to precision, while beta > 1 favors
+    precision (beta == 0 considers only precision, beta == inf only recall).
 
     Parameters
     ----------
@@ -291,6 +290,13 @@ def fbeta_score(y_true, y_pred, beta, pos_label=1):
     fbeta_score : float
         fbeta_score of the positive class in binary classification or weighted
         avergage of the fbeta_score of each class for the multiclass task.
+
+    See also
+    --------
+    R. Baeza-Yates and B. Ribeiro-Neto (2011). Modern Information Retrieval.
+    Addison Wesley, pp. 327-328.
+
+    http://en.wikipedia.org/wiki/F1_score
 
     """
     _, _, f, s = precision_recall_fscore_support(y_true, y_pred, beta=beta)
