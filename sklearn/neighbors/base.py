@@ -17,6 +17,7 @@ from ..base import BaseEstimator
 from ..metrics import euclidean_distances
 from ..utils import safe_asanyarray, atleast2d_or_csr
 
+
 class NeighborsBase(BaseEstimator):
     """Base class for nearest neighbors estimators."""
 
@@ -143,7 +144,7 @@ class KNeighborsMixin(object):
             # XXX: should be implemented with a partial sort
             neigh_ind = dist.argsort(axis=1)[:, :n_neighbors]
             if return_distance:
-                j = np.arange(neigh_ind.shape[0])[:,None]
+                j = np.arange(neigh_ind.shape[0])[:, None]
                 return np.sqrt(dist[j, neigh_ind]), neigh_ind
             else:
                 return neigh_ind
@@ -297,7 +298,7 @@ class RadiusNeighborsMixin(object):
             rad2 = radius ** 2
 
             neigh_ind = [np.where(d < rad2)[0] for d in dist]
-            
+
             # if there are the same number of neighbors for each point,
             # we can do a normal array.  Otherwise, we return an object
             # array with elements that are numpy arrays
@@ -330,7 +331,7 @@ class RadiusNeighborsMixin(object):
                                          distance_upper_bound=radius)
 
             ind = [ind_i[:ind_i.searchsorted(Npts)] for ind_i in ind]
-            
+
             # if there are the same number of neighbors for each point,
             # we can do a normal array.  Otherwise, we return an object
             # array with elements that are numpy arrays

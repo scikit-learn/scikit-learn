@@ -13,7 +13,7 @@ from scipy import stats
 from .base import \
     NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin, SupervisedMixinInt
 from ..base import ClassifierMixin
-from ..utils import atleast2d_or_csr
+from ..utils import atleast2d_or_csr, deprecated
 
 
 class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
@@ -157,20 +157,22 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
             List of class labels (one for each data sample).
         """
         X = atleast2d_or_csr(X)
-        
+
         neigh_ind = self.radius_neighbors(X, return_distance=False)
         pred_labels = [self._y[ind] for ind in neigh_ind]
         mode = np.asarray([stats.mode(pl)[0] for pl in pred_labels],
                           dtype=np.int)
         return mode.flatten().astype(np.int)
-    
 
+
+#@deprecated("deprecated in v0.9; will be removed in v0.11; "
+#            "use KNeighborsClassifier or RadiusNeighborsClassifier instead")
 class NeighborsClassifier(NeighborsBase, KNeighborsMixin,
                           RadiusNeighborsMixin, SupervisedMixinInt,
                           ClassifierMixin):
     """Classifier implementing the nearest neighbors vote.
 
-    Samples participating in the vote are either the k-nearest neighbors 
+    Samples participating in the vote are either the k-nearest neighbors
     (for some k)  or all neighbors within some fixed radius around the sample
     to classify.
 

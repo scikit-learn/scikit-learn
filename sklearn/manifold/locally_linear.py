@@ -95,7 +95,7 @@ def barycenter_kneighbors_graph(X, n_neighbors, reg=1e-3):
     data = barycenter_weights(X, X[ind], reg=reg)
     indptr = np.arange(0, n_samples * n_neighbors + 1, n_neighbors)
     return csr_matrix((data.ravel(), ind.ravel(), indptr),
-                      shape = (n_samples, n_samples))
+                      shape=(n_samples, n_samples))
 
 
 def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100):

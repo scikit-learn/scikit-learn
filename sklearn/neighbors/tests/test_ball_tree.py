@@ -2,9 +2,10 @@ import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 
 from sklearn import neighbors
-   
+
 # Note: simple tests of BallTree.query() and BallTree.query_radius()
 # are contained within the tests of test_neighbors.py
+
 
 def test_ball_tree_query_radius(n_samples=100, n_features=10):
     X = 2 * np.random.random(size=(n_samples, n_features)) - 1
@@ -30,7 +31,7 @@ def test_ball_tree_query_radius_distance(n_samples=100, n_features=10):
 
     eps = 1E-15  # roundoff error can cause test to fail
     bt = neighbors.BallTree(X, leaf_size=5)
-    rad = np.sqrt( ((X - query_pt) ** 2).sum(1) )
+    rad = np.sqrt(((X - query_pt) ** 2).sum(1))
 
     for r in np.linspace(rad[0], rad[-1], 100):
         ind, dist = bt.query_radius(query_pt, r + eps, return_distance=True)

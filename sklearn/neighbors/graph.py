@@ -7,6 +7,7 @@
 from .base import KNeighborsMixin, RadiusNeighborsMixin
 from .unsupervised import NearestNeighbors
 
+
 def kneighbors_graph(X, n_neighbors, mode='connectivity'):
     """Computes the (weighted) graph of k-Neighbors for points in X
 

@@ -25,7 +25,7 @@ def test_unsupervised_kneighbors(n_samples=20, n_features=5,
     Samples are are set of n two-category equally spaced points.
     """
     rng = np.random.RandomState(random_state)
-    
+
     X = rng.rand(n_samples, n_features)
 
     test = rng.rand(n_query_pts, n_features)
@@ -40,8 +40,8 @@ def test_unsupervised_kneighbors(n_samples=20, n_features=5,
         results.append(neigh.kneighbors(test, return_distance=True))
 
     for i in range(len(results) - 1):
-        assert_array_almost_equal(results[i][0], results[i+1][0])
-        assert_array_almost_equal(results[i][1], results[i+1][1])
+        assert_array_almost_equal(results[i][0], results[i + 1][0])
+        assert_array_almost_equal(results[i][1], results[i + 1][1])
 
 
 def test_unsupervised_radius_neighbors(n_samples=20, n_features=5,
@@ -51,7 +51,7 @@ def test_unsupervised_radius_neighbors(n_samples=20, n_features=5,
     Samples are are set of n two-category equally spaced points.
     """
     rng = np.random.RandomState(random_state)
-    
+
     X = rng.rand(n_samples, n_features)
 
     test = rng.rand(n_query_pts, n_features)
@@ -63,20 +63,20 @@ def test_unsupervised_radius_neighbors(n_samples=20, n_features=5,
                                            algorithm=algorithm)
         neigh.fit(X)
 
-        # sort the results: this is not done automatically for 
+        # sort the results: this is not done automatically for
         # radius searches
         dist, ind = neigh.radius_neighbors(test, return_distance=True)
-        for (d,i) in zip(dist, ind):
+        for (d, i) in zip(dist, ind):
             j = d.argsort()
             d[:] = d[j]
             i[:] = i[j]
         results.append((dist, ind))
 
-    for i in range(len(results) - 1):        
+    for i in range(len(results) - 1):
         assert_array_almost_equal(np.concatenate(list(results[i][0])),
-                                  np.concatenate(list(results[i+1][0]))),
+                                  np.concatenate(list(results[i + 1][0]))),
         assert_array_almost_equal(np.concatenate(list(results[i][1])),
-                                  np.concatenate(list(results[i+1][1])))
+                                  np.concatenate(list(results[i + 1][1])))
 
 
 def test_kneighbors_classifier(n_samples=40,
@@ -92,7 +92,7 @@ def test_kneighbors_classifier(n_samples=40,
         knn = neighbors.KNeighborsClassifier(n_neighbors=n_neighbors,
                                              algorithm=algorithm)
         knn.fit(X, y)
-        epsilon = 1e-5 * (2 * rng.rand(1,n_features) - 1)
+        epsilon = 1e-5 * (2 * rng.rand(1, n_features) - 1)
         y_pred = knn.predict(X[:n_test_pts] + epsilon)
         assert_array_equal(y_pred, y[:n_test_pts])
 
@@ -100,7 +100,7 @@ def test_kneighbors_classifier(n_samples=40,
 def test_radius_neighbors_classifier(n_samples=40,
                                      n_features=5,
                                      n_test_pts=10,
-                                     radius = 0.5,
+                                     radius=0.5,
                                      random_state=0):
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
@@ -110,7 +110,7 @@ def test_radius_neighbors_classifier(n_samples=40,
         neigh = neighbors.RadiusNeighborsClassifier(radius=radius,
                                                     algorithm=algorithm)
         neigh.fit(X, y)
-        epsilon = 1e-5 * (2 * rng.rand(1,n_features) - 1)
+        epsilon = 1e-5 * (2 * rng.rand(1, n_features) - 1)
         y_pred = neigh.predict(X[:n_test_pts] + epsilon)
         assert_array_equal(y_pred, y[:n_test_pts])
 
@@ -138,6 +138,7 @@ def test_kneighbors_classifier_sparse(n_samples=40,
             y_pred = knn.predict(X_eps)
             assert_array_equal(y_pred, y[:n_test_pts])
 
+
 def test_kneighbors_regressor(n_samples=40,
                               n_features=5,
                               n_test_pts=10,
@@ -145,7 +146,7 @@ def test_kneighbors_regressor(n_samples=40,
                               random_state=0):
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
-    y = np.sqrt( (X ** 2).sum(1) )
+    y = np.sqrt((X ** 2).sum(1))
     y /= y.max()
 
     y_target = y[:n_test_pts]
@@ -158,6 +159,7 @@ def test_kneighbors_regressor(n_samples=40,
         y_pred = knn.predict(X[:n_test_pts] + epsilon)
         assert np.all(abs(y_pred - y_target) < 0.3)
 
+
 def test_radius_neighbors_regressor(n_samples=40,
                                     n_features=3,
                                     n_test_pts=10,
@@ -165,7 +167,7 @@ def test_radius_neighbors_regressor(n_samples=40,
                                     random_state=0):
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
-    y = np.sqrt( (X ** 2).sum(1) )
+    y = np.sqrt((X ** 2).sum(1))
     y /= y.max()
 
     y_target = y[:n_test_pts]

@@ -4,6 +4,7 @@ import numpy as np
 from .base import \
     NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin, UnsupervisedMixin
 
+
 class NearestNeighbors(NeighborsBase, KNeighborsMixin,
                        RadiusNeighborsMixin, UnsupervisedMixin):
     """Unsupervised learner for implementing neighbor searches.

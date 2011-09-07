@@ -32,7 +32,7 @@ def test_barycenter_kneighbors_graph():
     assert_array_almost_equal(np.sum(A.todense(), 1), np.ones((3, 1)))
     pred = np.dot(A.todense(), X)
     assert np.linalg.norm(pred - X) / X.shape[0] < 1
-    
+
 
 #----------------------------------------------------------------------
 # Test LLE by computing the reconstruction error on some manifolds.
