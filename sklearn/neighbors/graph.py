@@ -7,7 +7,7 @@
 from .base import KNeighborsMixin, RadiusNeighborsMixin
 from .unsupervised import NearestNeighbors
 
-def kneighbors_graph(X, n_neighbors, mode='connectivity', reg=1e-3):
+def kneighbors_graph(X, n_neighbors, mode='connectivity'):
     """Computes the (weighted) graph of k-Neighbors for points in X
 
     Parameters
@@ -19,17 +19,10 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', reg=1e-3):
     n_neighbors : int
         Number of neighbors for each sample.
 
-    mode : {'connectivity', 'distance', 'barycenter'}, optional
+    mode : {'connectivity', 'distance'}, optional
         Type of returned matrix: 'connectivity' will return the
         connectivity matrix with ones and zeros, in 'distance' the
-        edges are Euclidean distance between points. In 'barycenter'
-        they are the weights that best reconstruncts the point from
-        its nearest neighbors.
-
-    reg : float, optional
-        Amount of regularization when solving the least-squares
-        problem. Only relevant if mode='barycenter'. If None, use the
-        default.
+        edges are Euclidean distance between points.
 
     Returns
     -------
@@ -52,7 +45,7 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', reg=1e-3):
     """
     if not isinstance(X, KNeighborsMixin):
         X = NearestNeighbors(n_neighbors).fit(X)
-    return X.kneighbors_graph(X._fit_X, n_neighbors, mode=mode, reg=reg)
+    return X.kneighbors_graph(X._fit_X, n_neighbors, mode=mode)
 
 
 def radius_neighbors_graph(X, radius, mode='connectivity'):

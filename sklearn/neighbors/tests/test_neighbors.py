@@ -245,13 +245,6 @@ def test_kneighbors_graph():
          [ 1.01      ,  0.        ,  0.        ],
          [ 0.        ,  1.40716026,  0.        ]])
 
-    A = neighbors.kneighbors_graph(X, 1, mode='barycenter')
-    assert_array_almost_equal(
-        A.todense(),
-        [[ 0.,  1.,  0.],
-         [ 1.,  0.,  0.],
-         [ 0.,  1.,  0.]])
-
     # n_neighbors = 2
     A = neighbors.kneighbors_graph(X, 2, mode='connectivity')
     assert_array_equal(
@@ -266,12 +259,6 @@ def test_kneighbors_graph():
         [[ 0.        ,  1.01      ,  2.23606798],
          [ 1.01      ,  0.        ,  1.40716026],
          [ 2.23606798,  1.40716026,  0.        ]])
-
-    A = neighbors.kneighbors_graph(X, 2, mode='barycenter')
-    # check that columns sum to one
-    assert_array_almost_equal(np.sum(A.todense(), 1), np.ones((3, 1)))
-    pred = np.dot(A.todense(), X)
-    assert np.linalg.norm(pred - X) / X.shape[0] < 1
 
     # n_neighbors = 3
     A = neighbors.kneighbors_graph(X, 3, mode='connectivity')

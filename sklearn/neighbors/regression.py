@@ -10,7 +10,7 @@
 import numpy as np
 from scipy import linalg
 
-from .base import barycenter_weights, \
+from .base import \
     NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin, SupervisedMixinFloat
 from ..base import RegressorMixin
 from ..utils import atleast2d_or_csr
@@ -23,12 +23,7 @@ class NeighborsRegressor(NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin,
     The target is predicted by local interpolation of the targets
     associated of the nearest neighbors in the training set.
     Samples used for the regression are either the k-nearest points, or
-    all points within some fixed radius.  
-
-    Different modes for estimating the result can be set via parameter
-    mode. 'barycenter' will apply the weights that best reconstruct
-    the point from its neighbors while 'mean' will apply constant
-    weights to each point.
+    all points within some fixed radius.
 
     Parameters
     ----------
@@ -38,9 +33,6 @@ class NeighborsRegressor(NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin,
 
     radius : float, optional
         Radius to use by default for r-NN prediction. Default is 1.0.
-
-    mode : {'mean', 'barycenter'}, optional
-        Weights to apply to labels.
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         Algorithm used to compute the nearest neighbors. 'ball_tree' will
@@ -69,7 +61,7 @@ class NeighborsRegressor(NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin,
     >>> neigh = NeighborsRegressor(n_neighbors=2)
     >>> neigh.fit(X, y)
     NeighborsRegressor(algorithm='auto', classification_type='knn_vote',
-              leaf_size=20, mode='mean', n_neighbors=2, radius=1.0)
+              leaf_size=20, n_neighbors=2, radius=1.0)
     >>> print neigh.predict([[1.5]])
     [ 0.5]
 
@@ -86,14 +78,11 @@ class NeighborsRegressor(NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin,
     """
 
     def __init__(self, n_neighbors=5, radius=1.0,
-                 mode='mean', algorithm='auto',
+                 algorithm='auto',
                  leaf_size=20, classification_type='knn_vote'):
         if classification_type not in ('radius_vote', 'knn_vote'):
             raise ValueError("classification_type not recognized")
         self.classification_type = classification_type
-        if mode not in ('mean', 'barycenter'):
-            raise ValueError("mode must be one of 'mean' or 'barycenter'")
-        self.mode = mode
         self._init_params(n_neighbors=n_neighbors,
                           radius=radius,
                           algorithm=algorithm,
@@ -118,21 +107,15 @@ class NeighborsRegressor(NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin,
             neigh_ind = self.kneighbors(X, return_distance=False)
 
             # compute interpolation on y
-            if self.mode == 'barycenter':
-                W = barycenter_weights(X, self._fit_X[neigh_ind])
-                return (W * self._y[neigh_ind]).sum(axis=1)
+            return np.mean(self._y[neigh_ind], axis=1)
 
-            elif self.mode == 'mean':
-                return np.mean(self._y[neigh_ind], axis=1)
-
-            else:
-                raise ValueError(
-                    'Unsupported mode, must be one of "barycenter" or '
-                    '"mean" but got %s instead' % self.mode)
         else:
-            # barycenter_weights() will have to be modified to allow
-            # calculation of weights with a different `k` at each point.
-            raise NotImplementedError("classification_type = 'radius_vote'")
+            neigh_ind = self.radius_neighbors(X, return_distance=False)
+
+            # compute interpolation on y
+            return np.array([np.mean(self._y[ind])
+                             for ind in neigh_ind])
+            
 
 
 

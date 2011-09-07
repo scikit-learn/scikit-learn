@@ -164,7 +164,7 @@ class KNeighborsMixin(object):
             raise ValueError("internal: _fit_method not recognized")
 
     def kneighbors_graph(self, X, n_neighbors=None,
-                         mode='connectivity', reg=1e-3):
+                         mode='connectivity'):
         """Computes the (weighted) graph of k-Neighbors for points in X
 
         Parameters
@@ -176,16 +176,10 @@ class KNeighborsMixin(object):
             Number of neighbors for each sample.
             (default is value passed to the constructor).
 
-        mode : {'connectivity', 'distance', 'barycenter'}, optional
+        mode : {'connectivity', 'distance'}, optional
             Type of returned matrix: 'connectivity' will return the
             connectivity matrix with ones and zeros, in 'distance' the
-            edges are Euclidean distance between points. In 'barycenter'
-            they are the weights that best reconstruncts the point from
-            its nearest neighbors.
-
-        reg : float, optional
-            Amount of regularization when solving the least-squares
-            problem. Only relevant if mode='barycenter'. Default is 1E-3
+            edges are Euclidean distance between points.
 
         Returns
         -------
@@ -230,15 +224,10 @@ class KNeighborsMixin(object):
                                         return_distance=True)
             A_data, A_ind = data[:, 1:], ind[:, 1:]
 
-        elif mode == 'barycenter':
-            ind = self.kneighbors(X, n_neighbors + 1, return_distance=False)
-            A_ind = ind[:, 1:]
-            A_data = barycenter_weights(X, X[A_ind], reg=reg)
-
         else:
             raise ValueError(
-                'Unsupported mode, must be one of "connectivity", '
-                '"distance" or "barycenter" but got "%s" instead' % mode)
+                'Unsupported mode, must be one of "connectivity" '
+                'or "distance" but got "%s" instead' % mode)
 
         return csr_matrix((A_data.ravel(), A_ind.ravel(), A_indptr),
                           shape=(n_samples1, n_samples2))
@@ -482,55 +471,3 @@ class UnsupervisedMixin(object):
             Training data. If array or matrix, shape = [n_samples, n_features]
         """
         return self._fit(X)
-
-
-###############################################################################
-# Utils for k-NN based Functions
-
-def barycenter_weights(X, Z, reg=1e-3):
-    """Compute barycenter weights of X from Y along the first axis
-
-    We estimate the weights to assign to each point in Y[i] to recover
-    the point X[i]. The barycenter weights sum to 1.
-
-    Parameters
-    ----------
-    X : array-like, shape (n_samples, n_dim)
-
-    Z : array-like, shape (n_samples, n_neighbors, n_dim)
-
-    reg: float, optional
-        amount of regularization to add for the problem to be
-        well-posed in the case of n_neighbors > n_dim
-
-    Returns
-    -------
-    B : array-like, shape (n_samples, n_neighbors)
-
-    Notes
-    -----
-    See developers note for more information.
-    """
-    X, Z = map(np.asanyarray, (X, Z))
-    n_samples, n_neighbors = X.shape[0], Z.shape[1]
-    if X.dtype.kind == 'i':
-        X = X.astype(np.float)
-    if Z.dtype.kind == 'i':
-        Z = Z.astype(np.float)
-    B = np.empty((n_samples, n_neighbors), dtype=X.dtype)
-    v = np.ones(n_neighbors, dtype=X.dtype)
-
-    # this might raise a LinalgError if G is singular and has trace
-    # zero
-    for i, A in enumerate(Z.transpose(0, 2, 1)):
-        C = A.T - X[i]  # broadcasting
-        G = np.dot(C, C.T)
-        trace = np.trace(G)
-        if trace > 0:
-            R = reg * trace
-        else:
-            R = reg
-        G.flat[::Z.shape[1] + 1] += R
-        w = linalg.solve(G, v, sym_pos=True)
-        B[i, :] = w / np.sum(w)
-    return B
