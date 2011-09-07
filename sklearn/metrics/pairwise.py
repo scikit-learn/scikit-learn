@@ -130,7 +130,13 @@ def euclidian_distances(*args, **kwargs):
     return euclidean_distances(*args, **kwargs)
 
 
-def l1_distances(X, Y=None, sum_over_features=True):
+def l1_distances(X, Y=None):
+    import warnings
+    warnings.warn('l1_distances is deprecated, please use manhattan_distances'
+                  ' and set sum_over_features=False')
+    return manhattan_distances(X, Y=Y, sum_over_features=False)
+
+def manhattan_distances(X, Y=None, sum_over_features=True):
     """ Compute the L1 distances between the vectors in X and Y.
 
     With sum_over_features equal to False it returns the componentwise
@@ -159,17 +165,17 @@ def l1_distances(X, Y=None, sum_over_features=True):
 
     Examples
     --------
-    >>> from sklearn.metrics.pairwise import l1_distances
-    >>> l1_distances(3, 3)
+    >>> from sklearn.metrics.pairwise import manhattan_distances
+    >>> manhattan_distances(3, 3)
     array([[0]])
-    >>> l1_distances(3, 2)
+    >>> manhattan_distances(3, 2)
     array([[1]])
-    >>> l1_distances(2, 3)
+    >>> manhattan_distances(2, 3)
     array([[1]])
     >>> import numpy as np
     >>> X = np.ones((1, 2))
     >>> y = 2 * np.ones((2, 2))
-    >>> l1_distances(X, y, sum_over_features=False)
+    >>> manhattan_distances(X, y, sum_over_features=False)
     array([[ 1.,  1.],
            [ 1.,  1.]])
     """
@@ -296,9 +302,9 @@ def rbf_kernel(X, Y=None, gamma=0):
 pairwise_distance_functions = {
     'euclidean':euclidean_distances,
     'l2':euclidean_distances,
-    'l1':l1_distances,
-    'manhattan':l1_distances,
-    'cityblock':l1_distances
+    'l1':manhattan_distances,
+    'manhattan':manhattan_distances,
+    'cityblock':manhattan_distances
     }
 
 
