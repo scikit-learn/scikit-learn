@@ -73,7 +73,7 @@ class SGDClassifier(BaseSGDClassifier):
         multi-class problems) computation. -1 means 'all CPUs'. Defaults
         to 1.
 
-    learning_rate : int
+    learning_rate : str
         The learning rate:
         constant: eta = eta0
         optimal: eta = 1.0/(t+t0) [default]
