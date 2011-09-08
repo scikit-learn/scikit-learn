@@ -31,11 +31,10 @@ REGRESSION = {
 
 GRAPHVIZ_TREE_TEMPLATE = """\
 %(tree)s [label="%(tree_gv)s"] ;
-[label="%(tree_left_gv)s"] ;
-[label="%(tree_right_gv)s"] ;
+%(tree_left)s [label="%(tree_left_gv)s"] ;
+%(tree_right)s [label="%(tree_right_gv)s"] ;
 %(tree)s -> %(tree_left)s ;
 %(tree)s -> %(tree_right)s ;
-
 """
 
 
