@@ -121,7 +121,7 @@ def _build_tree(is_classification, X, y, criterion,
                          % (len(y), len(X)))
     y = np.array(y, dtype=np.float64, order="c")
 
-    feature_mask = np.ones(n_features, dtype=np.bool)
+    feature_mask = np.ones(n_features, dtype=np.int32)
     sample_dims = np.arange(n_features)
     if max_features is not None:
         if max_features <= 0 or max_features > n_features:
@@ -134,8 +134,6 @@ def _build_tree(is_classification, X, y, criterion,
         sample_dims = np.sort(permutation[-max_features:])
         feature_mask[sample_dims] = False
         feature_mask = np.logical_not(feature_mask)
-
-    X = X[:, feature_mask]
 
     # make data fortran layout
     if not X.flags["F_CONTIGUOUS"]:
@@ -155,7 +153,7 @@ def _build_tree(is_classification, X, y, criterion,
             is_split_valid = False
 
         dim, threshold, error, init_error = _tree._find_best_split(
-            X, y, criterion)
+            X, y, feature_mask, criterion)
 
         if dim != -1:
             split = X[:, dim] < threshold
