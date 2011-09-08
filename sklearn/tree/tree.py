@@ -7,9 +7,11 @@
 # License: BSD Style.
 
 from __future__ import division
-from ..utils import check_random_state
 import numpy as np
+
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
+from ..utils import check_random_state
+
 import _tree
 
 __all__ = [
