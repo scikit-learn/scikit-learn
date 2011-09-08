@@ -6,7 +6,7 @@ Testing for Tree module (sklearn.tree)
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal, \
                           assert_almost_equal
-from nose.tools import assert_raises
+from nose.tools import assert_raises, with_setup
 
 from sklearn import tree, datasets, metrics
 
@@ -15,6 +15,8 @@ X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
 Y = [-1, -1, -1, 1, 1, 1]
 T = [[-1, -1], [2, 2], [3, 2]]
 true_result = [-1, 1, 1]
+
+TEMP_DIR = ""
 
 # also load the iris dataset
 # and randomly permute it
@@ -67,24 +69,37 @@ def test_regression_toy():
     assert_almost_equal(clf.predict(T), true_result)
 
 
+def setup_graphviz_toy():
+    import tempfile
+    global TEMP_DIR
+    TEMP_DIR = tempfile.mkdtemp(dir=".")
+    print "created new directory ", TEMP_DIR
+
+
+def teardown_graphviz_toy():
+    import shutil
+    shutil.rmtree(TEMP_DIR)
+
+
+@with_setup(setup_graphviz_toy, teardown_graphviz_toy)
 def test_graphviz_toy():
     """Check correctness of graphviz output on a toy dataset."""
     clf = tree.DecisionTreeClassifier(max_depth=100, min_split=1)
     clf.fit(X, Y)
-    clf.export_to_graphviz("tree.dot")
+    clf.export_to_graphviz(TEMP_DIR + "/tree.dot")
 
     import os
     import re
     dirname = os.path.dirname(__file__)
     if dirname != "":
         dirname += "/"
-    with open('tree.dot') as f1:
+    with open(TEMP_DIR + "/tree.dot") as f1:
         with open(dirname + 'test_tree.dot') as f2:
-            # replace unique memory addresses with a temp string
+            # replace unique memory addresses with a tmp string
             l1 = f1.read()
-            l1 = re.sub("at (.*)>", "tmp>", l1)
+            l1 = re.sub("0x.......", "tmp", l1)
             l2 = f2.read()
-            l2 = re.sub("at (.*)>", "tmp>", l2)
+            l2 = re.sub("0x........", "tmp", l2)
             assert l1 == l2, \
                 "graphviz output test failed\n: %s != %s" % (l1, l2)
 

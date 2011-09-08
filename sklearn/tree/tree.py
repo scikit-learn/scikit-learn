@@ -252,7 +252,7 @@ class BaseDecisionTree(BaseEstimator):
         >>> clf = DecisionTreeClassifier()
         >>> iris = load_iris()
 
-        >>> clf.fit(iris.data, iris.target)
+        >>> clf = clf.fit(iris.data, iris.target)
         >>> clf.export_to_graphviz("tree.dot")
 
         """
@@ -540,10 +540,10 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     R2 scores (a.k.a. coefficient of determination) over 10-folds CV:
 
     >>> cross_val_score(regressor, boston.data, boston.target, cv=10)
-    ...                             # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+    ...                    # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     ...
-    array([ 0.63...,  0.57..., -0.31...,  0.39...,  0.75...,
-            0.19...,  0.29...,  0.33..., -1.45... , -1.77...])
+    array([ 0.43...,  0.34..., -0.07...,  0.66...,  0.77...,
+            0.62...,  0.39...,  0.26..., -1.49..., -0.51...])
     """
 
     def __init__(self, criterion='mse', max_depth=10,
