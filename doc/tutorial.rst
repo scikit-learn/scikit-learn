@@ -1,12 +1,12 @@
 .. _getting_started:
 
-Getting started: an introduction to machine learning with scikits.learn
+Getting started: an introduction to machine learning with scikit-learn
 =======================================================================
 
 .. topic:: Section contents
 
     In this section, we introduce the machine learning vocabulary that we
-    use through-out `scikits.learn` and give a simple learning example.
+    use through-out `scikit-learn` and give a simple learning example.
 
 
 Machine learning: the problem setting
@@ -57,13 +57,13 @@ We can separate learning problems in a few large categories:
 Loading an example dataset
 --------------------------
 
-`scikits.learn` comes with a few standard datasets, for instance the
+`scikit-learn` comes with a few standard datasets, for instance the
 `iris <http://en.wikipedia.org/wiki/Iris_flower_data_set>`_ and `digits
 <http://archive.ics.uci.edu/ml/datasets/Pen-Based+Recognition+of+Handwritten+Digits>`_ 
 datasets for classification and the `boston house prices dataset 
 <http://archive.ics.uci.edu/ml/datasets/Housing>`_ for regression.::
 
-    >>> from scikits.learn import datasets
+    >>> from sklearn import datasets
     >>> iris = datasets.load_iris()
     >>> digits = datasets.load_digits()
 
@@ -112,10 +112,10 @@ array([0, 1, 2, ..., 8, 9, 8])
 
     The :ref:`simple example on this dataset <example_plot_digits_classification.py>`
     illustrates how starting from the original problem one can shape the
-    data for consumption in the `scikit.learn`.
+    data for consumption in the `scikit-learn`.
 
 
-``scikits.learn`` also offers the possibility to reuse external datasets coming
+``sklearn`` also offers the possibility to reuse external datasets coming
 from the http://mlcomp.org online service that provides a repository of public
 datasets for various tasks (binary & multi label classification, regression,
 document classification, ...) along with a runtime environment to compare
@@ -132,17 +132,17 @@ hand-written digit from an image. We are given samples of each of the 10
 possible classes on which we *fit* an `estimator` to be able to *predict*
 the labels corresponding to new data.
 
-In `scikit.learn`, an *estimator* is just a plain Python class that
+In `scikit-learn`, an *estimator* is just a plain Python class that
 implements the methods `fit(X, Y)` and `predict(T)`.
 
-An example of estimator is the class ``scikits.learn.svm.SVC`` that
+An example of estimator is the class ``sklearn.svm.SVC`` that
 implements `Support Vector Classification
 <http://en.wikipedia.org/wiki/Support_vector_machine>`_. The
 constructor of an estimator takes as arguments the parameters of the
 model, but for the time being, we will consider the estimator as a black
 box and not worry about these:
 
->>> from scikits.learn import svm
+>>> from sklearn import svm
 >>> clf = svm.SVC()
 
 We call our estimator instance `clf` as it is a classifier. It now must
@@ -181,8 +181,8 @@ Model persistence
 It is possible to save a model in the scikit by using Python's built-in
 persistence model, namely `pickle <http://docs.python.org/library/pickle.html>`_.
 
->>> from scikits.learn import svm
->>> from scikits.learn import datasets
+>>> from sklearn import svm
+>>> from sklearn import datasets
 >>> clf = svm.SVC()
 >>> iris = datasets.load_iris()
 >>> X, y = iris.data, iris.target
@@ -201,6 +201,6 @@ In the specific case of the scikit, it may be more interesting to use
 joblib's replacement of pickle, which is more efficient on big data, but
 can only pickle to the disk and not to a string:
 
->>> from scikits.learn.externals import joblib
+>>> from sklearn.externals import joblib
 >>> joblib.dump(clf, 'filename.pkl') # doctest: +SKIP
 

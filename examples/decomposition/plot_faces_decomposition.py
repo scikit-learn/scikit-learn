@@ -5,7 +5,7 @@ Faces dataset decompositions
 
 This example applies to :doc:`/datasets/olivetti_faces` different
 unsupervised matrix decomposition (dimension reduction) methods  from the
-module :py:mod:`scikits.learn.decomposition` (see the documentation
+module :py:mod:`sklearn.decomposition` (see the documentation
 chapter :ref:`decompositions`) .
 
 """
@@ -19,9 +19,9 @@ from time import time
 
 import pylab as pl
 
-from scikits.learn.datasets import fetch_olivetti_faces
-from scikits.learn.cluster import MiniBatchKMeans
-from scikits.learn import decomposition
+from sklearn.datasets import fetch_olivetti_faces
+from sklearn.cluster import MiniBatchKMeans
+from sklearn import decomposition
 
 # Display progress logs on stdout
 logging.basicConfig(level=logging.INFO,
@@ -69,7 +69,7 @@ estimators = [
      True, False),
 
     ('Non-negative components - NMF',
-     decomposition.NMF(n_components=n_components, init='nndsvda', beta=5.0, 
+     decomposition.NMF(n_components=n_components, init='nndsvda', beta=5.0,
                         tol=5e-3, sparseness='components'),
      False, False),
 
@@ -78,7 +78,7 @@ estimators = [
      True, True),
 
     ('Sparse comp. - MiniBatchSparsePCA',
-     decomposition.MiniBatchSparsePCA(n_components=n_components, alpha=1e-3, 
+     decomposition.MiniBatchSparsePCA(n_components=n_components, alpha=1e-3,
                                       n_iter=100, chunk_size=3),
      True, False),
 

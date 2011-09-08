@@ -19,10 +19,10 @@ print __doc__
 import numpy as np
 import pylab as pl
 
-from scikits.learn.svm import SVC
-from scikits.learn.cross_val import StratifiedKFold, permutation_test_score
-from scikits.learn import datasets
-from scikits.learn.metrics import zero_one_score
+from sklearn.svm import SVC
+from sklearn.cross_validation import StratifiedKFold, permutation_test_score
+from sklearn import datasets
+from sklearn.metrics import zero_one_score
 
 
 ##############################################################################

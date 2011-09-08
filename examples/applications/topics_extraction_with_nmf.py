@@ -35,10 +35,13 @@ pitt gordon banks cs science pittsburgh univ computer soon disease
 edu reply pain health david article medical medicine 16
 """
 
+# Author: Olivier Grisel <olivier.grisel@ensta.org>
+# License: Simplified BSD
+
 from time import time
-from scikits.learn.feature_extraction import text
-from scikits.learn import decomposition
-from scikits.learn import datasets
+from sklearn.feature_extraction import text
+from sklearn import decomposition
+from sklearn import datasets
 
 n_samples = 1000
 n_features = 1000

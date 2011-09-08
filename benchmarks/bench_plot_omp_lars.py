@@ -9,8 +9,8 @@ import sys
 
 import numpy as np
 
-from scikits.learn.linear_model import lars_path, orthogonal_mp
-from scikits.learn.datasets.samples_generator import make_sparse_coded_signal
+from sklearn.linear_model import lars_path, orthogonal_mp
+from sklearn.datasets.samples_generator import make_sparse_coded_signal
 
 
 def compute_bench(samples_range, features_range):

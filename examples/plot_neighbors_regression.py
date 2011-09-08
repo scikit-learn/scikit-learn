@@ -20,7 +20,7 @@ print __doc__
 # Generate sample data
 import numpy as np
 import pylab as pl
-from scikits.learn import neighbors
+from sklearn import neighbors
 
 np.random.seed(0)
 X = np.sort(5*np.random.rand(40, 1), axis=0)

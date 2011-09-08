@@ -3,5 +3,5 @@
 Support Vector Machines
 -----------------------
 
-Examples concerning the `scikits.learn.svm` package.
+Examples concerning the `sklearn.svm` package.
 

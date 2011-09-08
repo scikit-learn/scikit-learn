@@ -45,12 +45,12 @@ import numpy as np
 import scipy.sparse as sp
 import pylab as pl
 
-from scikits.learn.datasets import load_mlcomp
-from scikits.learn.feature_extraction.text import Vectorizer
-from scikits.learn.linear_model.sparse import SGDClassifier
-from scikits.learn.metrics import confusion_matrix
-from scikits.learn.metrics import classification_report
-from scikits.learn.naive_bayes import MultinomialNB
+from sklearn.datasets import load_mlcomp
+from sklearn.feature_extraction.text import Vectorizer
+from sklearn.linear_model.sparse import SGDClassifier
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import classification_report
+from sklearn.naive_bayes import MultinomialNB
 
 
 if 'MLCOMP_DATASETS_HOME' not in os.environ:
@@ -105,22 +105,22 @@ def benchmark(clf_class, params, name):
     t0 = time()
     pred = clf.predict(X_test)
     print "done in %fs" % (time() - t0)
-    
+
     print "Classification report on test set for classifier:"
     print clf
     print
     print classification_report(y_test, pred, target_names=news_test.target_names)
-    
+
     cm = confusion_matrix(y_test, pred)
     print "Confusion matrix:"
     print cm
-    
+
     # Show confusion matrix
     pl.matshow(cm)
     pl.title('Confusion matrix of the %s classifier' % name)
     pl.colorbar()
-    
-    
+
+
 print "Testbenching a linear classifier..."
 parameters = {
     'loss': 'hinge',
