@@ -282,7 +282,7 @@ class BaseDecisionTree(BaseEstimator):
         self : object
             Returns self.
         """
-        X = np.asanyarray(X, dtype=np.float64, order='C')
+        X = np.asanyarray(X, dtype=np.float64, order='F')
         n_samples, self.n_features = X.shape
 
         if self.type == 'classification':
