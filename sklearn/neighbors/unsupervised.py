@@ -61,7 +61,7 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
     * dimensionality D (n_features)
       Intrinsic dimensionality refers to the dimension of a manifold which
       is linearly or nonlinearly embedded within the parameter space
-      * 'brute' query time grows as O[D], and is unaffected by the value of d.
+      * 'brute' query time grows as O[D], and is unaffected by the value of D.
       * 'ball_tree' query time may grow faster or slower than this, depending
         on the structure of the data.
     * data structure: intrinsic dimensionality of the data and/or sparsity

@@ -11,13 +11,13 @@ import numpy as np
 from scipy import linalg
 
 from .base import \
-    NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin, SupervisedMixinFloat
+    NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin, SupervisedFloatMixin
 from ..base import RegressorMixin
 from ..utils import atleast2d_or_csr, deprecated
 
 
 class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
-                          SupervisedMixinFloat,
+                          SupervisedFloatMixin,
                           RegressorMixin):
     """Regression based on k-nearest neighbors.
 
@@ -96,7 +96,7 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
 
 
 class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
-                               SupervisedMixinFloat,
+                               SupervisedFloatMixin,
                                RegressorMixin):
     """Regression based on neighbors within a fixed radius.
 
@@ -178,7 +178,7 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
 @deprecated("deprecated in v0.9; will be removed in v0.11; "
             "use KNeighborsRegressor or RadiusNeighborsRegressor instead")
 class NeighborsRegressor(NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin,
-                         SupervisedMixinFloat,
+                         SupervisedFloatMixin,
                          RegressorMixin):
     """Regression based on nearest neighbors.
 

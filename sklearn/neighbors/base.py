@@ -8,7 +8,6 @@
 import warnings
 
 import numpy as np
-from scipy import linalg
 from scipy.sparse import csr_matrix, issparse
 from scipy.spatial.ckdtree import cKDTree
 
@@ -109,7 +108,7 @@ class KNeighborsMixin(object):
 
         Examples
         --------
-        In the following example, we construnct a NeighborsClassifier
+        In the following example, we construct a NeighborsClassifier
         class from an array representing our data set and ask who's
         the closest point to [1,1,1]
 
@@ -428,7 +427,7 @@ class RadiusNeighborsMixin(object):
                           shape=(n_samples1, n_samples2))
 
 
-class SupervisedMixinFloat(object):
+class SupervisedFloatMixin(object):
     def fit(self, X, y):
         """Fit the model using X as training data and y as target values
 
@@ -445,7 +444,7 @@ class SupervisedMixinFloat(object):
         return self._fit(X)
 
 
-class SupervisedMixinInt(object):
+class SupervisedIntegerMixin(object):
     def fit(self, X, y):
         """Fit the model using X as training data and y as target values
 

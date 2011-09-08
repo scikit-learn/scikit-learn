@@ -11,13 +11,14 @@ import numpy as np
 from scipy import stats
 
 from .base import \
-    NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin, SupervisedMixinInt
+    NeighborsBase, KNeighborsMixin,\
+    RadiusNeighborsMixin, SupervisedIntegerMixin
 from ..base import ClassifierMixin
 from ..utils import atleast2d_or_csr, deprecated
 
 
 class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
-                           SupervisedMixinInt, ClassifierMixin):
+                           SupervisedIntegerMixin, ClassifierMixin):
     """Classifier implementing the k-nearest neighbors vote.
 
     Parameters
@@ -91,7 +92,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
 
 class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
-                                SupervisedMixinInt, ClassifierMixin):
+                                SupervisedIntegerMixin, ClassifierMixin):
     """Classifier implementing a vote among neighbors within a given radius
 
     Parameters
@@ -168,7 +169,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 @deprecated("deprecated in v0.9; will be removed in v0.11; "
             "use KNeighborsClassifier or RadiusNeighborsClassifier instead")
 class NeighborsClassifier(NeighborsBase, KNeighborsMixin,
-                          RadiusNeighborsMixin, SupervisedMixinInt,
+                          RadiusNeighborsMixin, SupervisedIntegerMixin,
                           ClassifierMixin):
     """Classifier implementing the nearest neighbors vote.
 
