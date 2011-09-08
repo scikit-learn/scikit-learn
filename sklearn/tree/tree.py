@@ -69,8 +69,8 @@ class Node(object):
     Parameters
     ----------
 
-    dimension : integer
-        The dimension used to split on
+    feature : integer
+        The feature used to split on
     threshold : float
         The threshold value to split on
     error : float
@@ -93,9 +93,9 @@ class Node(object):
     Leaf
     """
 
-    def __init__(self, dimension, threshold, error, samples, value,
+    def __init__(self, feature, threshold, error, samples, value,
                  left, right):
-        self.dimension = dimension
+        self.feature = feature
         self.threshold = threshold
         self.error = error
         self.samples = samples
@@ -107,7 +107,7 @@ class Node(object):
         """Print the node for graph visualisation."""
 
         return "x[%s] < %s \\n error = %s \\n samples = %s \\n v = %s" \
-               % (self.dimension, self.threshold,\
+               % (self.feature, self.threshold,\
                   self.error, self.samples, self.value)
 
 
@@ -176,7 +176,7 @@ def _build_tree(is_classification, X, y, criterion,
         left_partition = recursive_partition(X[split], y[split], depth + 1)
         right_partition = recursive_partition(X[~split], y[~split], depth + 1)
 
-        return Node(dimension=sample_dims[dim], threshold=threshold,
+        return Node(feature=sample_dims[dim], threshold=threshold,
                     error=init_error, samples=len(y), value=a,
                     left=left_partition, right=right_partition)
 
@@ -188,7 +188,7 @@ def _apply_tree(tree, X):
 
     if type(tree) is Leaf:
         return tree.value
-    if X[tree.dimension] < tree.threshold:
+    if X[tree.feature] < tree.threshold:
         return _apply_tree(tree.left, X)
     return _apply_tree(tree.right, X)
 

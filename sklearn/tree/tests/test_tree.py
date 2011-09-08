@@ -126,7 +126,7 @@ def test_boston():
                                          random_state=1)\
               .fit(boston.data, boston.target)
 
-        #using fewer dimensions reduces the learning ability of this tree,
+        #using fewer features reduces the learning ability of this tree,
         # but reduces training time.
         score = np.mean(np.power(clf.predict(boston.data) - boston.target, 2))
         assert score < 2, "Failed with criterion " + c + \
@@ -205,7 +205,7 @@ def test_error():
     assert_raises(Exception, clf.predict_proba, X)
 
     clf.fit(X, Y)
-    X2 = [-2, -1, 1]  # wrong dimension for sample
+    X2 = [-2, -1, 1]  # wrong feature shape for sample
     assert_raises(ValueError, clf.predict_proba, X2)
 
     Xt = np.array(X).T
