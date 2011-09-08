@@ -150,7 +150,7 @@ def _build_tree(is_classification, X, y, criterion,
     def recursive_partition(X, y, depth):
         is_split_valid = True
 
-        if depth >= max_depth:
+        if depth >= max_depth or len(X) < min_split:
             is_split_valid = False
 
         dim, threshold, error, init_error = _tree._find_best_split(
@@ -158,8 +158,6 @@ def _build_tree(is_classification, X, y, criterion,
 
         if dim != -1:
             split = X[:, dim] < threshold
-            if len(X[split]) < min_split or len(X[~split]) < min_split:
-                is_split_valid = False
         else:
             is_split_valid = False
 
