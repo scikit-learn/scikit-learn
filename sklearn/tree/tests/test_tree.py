@@ -97,7 +97,7 @@ def test_graphviz_toy():
         with open(dirname + 'test_tree.dot') as f2:
             # replace unique memory addresses with a tmp string
             l1 = f1.read()
-            l1 = re.sub("0x.......", "tmp", l1)
+            l1 = re.sub("0x........", "tmp", l1)
             l2 = f2.read()
             l2 = re.sub("0x........", "tmp", l2)
             assert l1 == l2, \
