@@ -167,7 +167,7 @@ def _build_tree(is_classification, X, y, criterion,
         else:
             a = np.mean(y)
 
-        if is_split_valid == False:
+        if not is_split_valid:
             return Leaf(a)
 
         left_partition = recursive_partition(X[split], y[split], depth + 1)
