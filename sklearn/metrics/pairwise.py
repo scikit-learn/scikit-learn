@@ -45,6 +45,8 @@ def check_pairwise_arrays(X, Y):
     else:
         X = safe_asanyarray(X)
         Y = safe_asanyarray(Y)
+    X = atleast2d_or_csr(X)
+    Y = atleast2d_or_csr(Y)
     if len(X.shape) < 2:
         raise ValueError("X is required to be at least two dimensional.")
     if len(Y.shape) < 2:
