@@ -12,17 +12,19 @@ import numpy as np
 import pylab as pl
 from sklearn import neighbors, datasets
 
+n_neighbors = 5
+
 # import some data to play with
 iris = datasets.load_iris()
 X = iris.data[:, :2] # we only take the first two features. We could
                      # avoid this ugly slicing by using a two-dim dataset
-Y = iris.target
+y = iris.target
 
 h = .02 # step size in the mesh
 
 # we create an instance of Neighbours Classifier and fit the data.
-clf = neighbors.NeighborsClassifier()
-clf.fit(X, Y)
+clf = neighbors.KNeighborsClassifier(n_neighbors)
+clf.fit(X, y)
 
 # Plot the decision boundary. For that, we will asign a color to each
 # point in the mesh [x_min, m_max]x[y_min, y_max].
@@ -33,11 +35,11 @@ Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])
 
 # Put the result into a color plot
 Z = Z.reshape(xx.shape)
-pl.set_cmap(pl.cm.Paired)
+pl.set_cmap(pl.cm.prism)
 pl.pcolormesh(xx, yy, Z)
 
 # Plot also the training points
-pl.scatter(X[:,0], X[:,1], c=Y)
-pl.title('3-Class classification using Nearest Neighbors')
+pl.scatter(X[:,0], X[:,1], c=y)
+pl.title('3-Class classification using %i Nearest Neighbors' % n_neighbors)
 pl.axis('tight')
 pl.show()
