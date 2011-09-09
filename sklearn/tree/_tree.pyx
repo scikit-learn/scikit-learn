@@ -411,6 +411,7 @@ cdef int smallest_sample_larger_than(int sample_idx, np.float64_t *X_i,
 
 def _find_best_split(np.ndarray[np.float64_t, ndim=2, mode="fortran"] X,
                      np.ndarray[np.float64_t, ndim=1, mode="c"] y,
+                     np.ndarray[np.int32_t, ndim=1, mode="c"] feature_mask,
                      Criterion criterion):
     """Find the best dimension and threshold that minimises the error.
 
@@ -420,6 +421,8 @@ def _find_best_split(np.ndarray[np.float64_t, ndim=2, mode="fortran"] X,
         The feature values.
     y : ndarray, shape (n_samples,), dtype=float
         The label to predict for each sample.
+    feature_mask : ndarray, shape (n_samples,), dtype=int32
+        A feature mask indicating active features.
     criterion : Criterion
         The criterion function to be minimized.
 
@@ -466,6 +469,9 @@ def _find_best_split(np.ndarray[np.float64_t, ndim=2, mode="fortran"] X,
     # print 'at init, best error = ', best_error
 
     for i from 0 <= i < n_features:
+        if feature_mask[i] == 0:
+            continue
+
         # get i-th col of X and X_sorted
         X_i = (<np.float64_t *>X.data) + X_stride * i
         sorted_X_i = (<int *>sorted_X.data) + sorted_X_stride * i

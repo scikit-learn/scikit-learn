@@ -97,9 +97,9 @@ def test_graphviz_toy():
         with open(dirname + 'test_tree.dot') as f2:
             # replace unique memory addresses with a tmp string
             l1 = f1.read()
-            l1 = re.sub("0x.......", "tmp", l1)
+            l1 = re.sub("0x[0-9a-fA-F]+", "tmp", l1)
             l2 = f2.read()
-            l2 = re.sub("0x........", "tmp", l2)
+            l2 = re.sub("0x[0-9a-fA-F]+", "tmp", l2)
             assert l1 == l2, \
                 "graphviz output test failed\n: %s != %s" % (l1, l2)
 
@@ -141,7 +141,7 @@ def test_boston():
                                          random_state=1)\
               .fit(boston.data, boston.target)
 
-        #using fewer dimensions reduces the learning ability of this tree,
+        #using fewer features reduces the learning ability of this tree,
         # but reduces training time.
         score = np.mean(np.power(clf.predict(boston.data) - boston.target, 2))
         assert score < 2, "Failed with criterion " + c + \
@@ -220,7 +220,7 @@ def test_error():
     assert_raises(Exception, clf.predict_proba, X)
 
     clf.fit(X, Y)
-    X2 = [-2, -1, 1]  # wrong dimension for sample
+    X2 = [-2, -1, 1]  # wrong feature shape for sample
     assert_raises(ValueError, clf.predict_proba, X2)
 
     Xt = np.array(X).T

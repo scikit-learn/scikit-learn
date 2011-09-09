@@ -7,9 +7,11 @@
 # License: BSD Style.
 
 from __future__ import division
-from ..utils import check_random_state
 import numpy as np
+
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
+from ..utils import check_random_state
+
 import _tree
 
 __all__ = [
@@ -66,8 +68,8 @@ class Node(object):
     Parameters
     ----------
 
-    dimension : integer
-        The dimension used to split on
+    feature : integer
+        The feature used to split on
     threshold : float
         The threshold value to split on
     error : float
@@ -90,9 +92,9 @@ class Node(object):
     Leaf
     """
 
-    def __init__(self, dimension, threshold, error, samples, value,
+    def __init__(self, feature, threshold, error, samples, value,
                  left, right):
-        self.dimension = dimension
+        self.feature = feature
         self.threshold = threshold
         self.error = error
         self.samples = samples
@@ -104,7 +106,7 @@ class Node(object):
         """Print the node for graph visualisation."""
 
         return "x[%s] < %s \\n error = %s \\n samples = %s \\n v = %s" \
-               % (self.dimension, self.threshold,\
+               % (self.feature, self.threshold,\
                   self.error, self.samples, self.value)
 
 
@@ -119,8 +121,7 @@ def _build_tree(is_classification, X, y, criterion,
                          % (len(y), len(X)))
     y = np.array(y, dtype=np.float64, order="c")
 
-    feature_mask = np.ones(n_features, dtype=np.bool)
-    sample_dims = np.arange(n_features)
+    feature_mask = np.ones((n_features,), dtype=np.bool, order="c")
     if max_features is not None:
         if max_features <= 0 or max_features > n_features:
             raise ValueError("max_features=%d must be in range (0..%d]. "
@@ -133,7 +134,7 @@ def _build_tree(is_classification, X, y, criterion,
         feature_mask[sample_dims] = False
         feature_mask = np.logical_not(feature_mask)
 
-    X = X[:, feature_mask]
+    feature_mask = feature_mask.astype(np.int32)
 
     # make data fortran layout
     if not X.flags["F_CONTIGUOUS"]:
@@ -149,16 +150,14 @@ def _build_tree(is_classification, X, y, criterion,
     def recursive_partition(X, y, depth):
         is_split_valid = True
 
-        if depth >= max_depth:
+        if depth >= max_depth or len(X) < min_split:
             is_split_valid = False
 
-        dim, threshold, error, init_error = _tree._find_best_split(
-            X, y, criterion)
+        feature, threshold, error, init_error = _tree._find_best_split(
+            X, y, feature_mask, criterion)
 
-        if dim != -1:
-            split = X[:, dim] < threshold
-            if len(X[split]) < min_split or len(X[~split]) < min_split:
-                is_split_valid = False
+        if feature != -1:
+            split = X[:, feature] < threshold
         else:
             is_split_valid = False
 
@@ -169,13 +168,13 @@ def _build_tree(is_classification, X, y, criterion,
         else:
             a = np.mean(y)
 
-        if is_split_valid == False:
+        if not is_split_valid:
             return Leaf(a)
 
         left_partition = recursive_partition(X[split], y[split], depth + 1)
         right_partition = recursive_partition(X[~split], y[~split], depth + 1)
 
-        return Node(dimension=sample_dims[dim], threshold=threshold,
+        return Node(feature=feature, threshold=threshold,
                     error=init_error, samples=len(y), value=a,
                     left=left_partition, right=right_partition)
 
@@ -187,7 +186,7 @@ def _apply_tree(tree, X):
 
     if type(tree) is Leaf:
         return tree.value
-    if X[tree.dimension] < tree.threshold:
+    if X[tree.feature] < tree.threshold:
         return _apply_tree(tree.left, X)
     return _apply_tree(tree.right, X)
 
@@ -284,7 +283,7 @@ class BaseDecisionTree(BaseEstimator):
         self : object
             Returns self.
         """
-        X = np.asanyarray(X, dtype=np.float64, order='C')
+        X = np.asanyarray(X, dtype=np.float64, order='F')
         n_samples, self.n_features = X.shape
 
         if self.type == 'classification':
