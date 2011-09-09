@@ -38,6 +38,51 @@ GRAPHVIZ_TREE_TEMPLATE = """\
 """
 
 
+class GraphvizVisitor(object):
+
+    def __init__(self, out):
+        """Visitor that generates graphviz representation of the
+        decision tree. The graphviz representation is written to `out`.
+
+        Parameters
+        ----------
+        out : file-like
+            The output stream.
+        """
+        self.out = out
+
+    def make_node_repr(self, node):
+        if isinstance(node, Leaf):
+            return 'Leaf(%s)' % (node.value)
+        else:
+            return "x[%s] < %s \\n error = %s \\n samples = %s \\n v = %s" \
+                   % (node.feature, node.threshold,\
+                      node.error, node.samples, node.value)
+
+    def visit_node(self, node):
+        """Print the node for graph visualisation."""
+        current_repr = self.make_node_repr(node)
+        left_repr = self.make_node_repr(node.left)
+        right_repr = self.make_node_repr(node.right)
+        node_data = {
+            "tree": node,
+            "tree_gv": current_repr,
+            "tree_left": node.left,
+            "tree_left_gv": left_repr,
+            "tree_right": node.right,
+            "tree_right_gv": right_repr,
+            }
+        self.out.write(GRAPHVIZ_TREE_TEMPLATE % node_data)
+        
+        if isinstance(node.left, Node):
+            node.left.accept(self)
+        if isinstance(node.right, Node):
+            node.right.accept(self)
+
+    def visit_leaf(self, node):
+        pass
+
+
 class Leaf(object):
     """A class to store leaf values in the tree.
 
@@ -57,9 +102,8 @@ class Leaf(object):
     def __init__(self, value):
         self.value = value
 
-    def _graphviz(self):
-        """Print the leaf for graph visualisation."""
-        return 'Leaf(%s)' % (self.value)
+    def accept(self, visitor):
+        visitor.visit_leaf(self)
 
 
 class Node(object):
@@ -102,12 +146,8 @@ class Node(object):
         self.left = left
         self.right = right
 
-    def _graphviz(self):
-        """Print the node for graph visualisation."""
-
-        return "x[%s] < %s \\n error = %s \\n samples = %s \\n v = %s" \
-               % (self.feature, self.threshold,\
-                  self.error, self.samples, self.value)
+    def accept(self, visitor):
+        visitor.visit_node(self)
 
 
 def _build_tree(is_classification, X, y, criterion,
@@ -191,22 +231,6 @@ def _apply_tree(tree, X):
     return _apply_tree(tree.right, X)
 
 
-def _graphviz(tree):
-    """Print decision tree in .dot format."""
-
-    if type(tree) is Leaf:
-        return ""
-    s = GRAPHVIZ_TREE_TEMPLATE % {
-        "tree": tree,
-        "tree_gv": tree._graphviz(),
-        "tree_left": tree.left,
-        "tree_left_gv": tree.left._graphviz(),
-        "tree_right": tree.right,
-        "tree_right_gv": tree.right._graphviz(),
-    }
-    return s + _graphviz(tree.left) + _graphviz(tree.right)
-
-
 class BaseDecisionTree(BaseEstimator):
     """Should not be used directly, use derived classes instead."""
 
@@ -259,8 +283,10 @@ class BaseDecisionTree(BaseEstimator):
             raise Exception('Tree not initialized. Perform a fit first')
 
         with open(filename, 'w') as f:
+            visitor = GraphvizVisitor(f)
             f.write("digraph Tree {\n")
-            f.write(_graphviz(self.tree))
+            self.tree.accept(visitor)
+            #f.write(_graphviz(self.tree))
             f.write("\n}\n")
 
     def fit(self, X, y):
