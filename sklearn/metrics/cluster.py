@@ -7,9 +7,8 @@ better
 # Authors: Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD Style.
 
+from ..utils.extmath import factorial
 from math import log
-from math import factorial
-from itertools import izip
 
 import numpy as np
 
@@ -137,7 +136,7 @@ def ari_score(labels_true, labels_pred):
     n_clusters = clusters.shape[0]
     contengency = np.zeros((n_classes, n_clusters), dtype=np.int)
 
-    for c, k in izip(labels_true, labels_pred):
+    for c, k in zip(labels_true, labels_pred):
         contengency[class_idx[c], cluster_idx[k]] += 1
 
     # compute the ARI using the contengency data
@@ -215,10 +214,10 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred):
     n_C = [float(np.sum(labels_true == c)) for c in classes]
     n_K = [float(np.sum(labels_pred == k)) for k in clusters]
 
-    for i, _ in enumerate(classes):
+    for i in xrange(len(classes)):
         entropy_C -= n_C[i] / n_samples * log(n_C[i] / n_samples)
 
-    for j, _ in enumerate(clusters):
+    for j in xrange(len(clusters)):
         entropy_K -= n_K[j] / n_samples * log(n_K[j] / n_samples)
 
     for i, c in enumerate(classes):
