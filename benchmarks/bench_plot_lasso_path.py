@@ -9,9 +9,9 @@ import sys
 import numpy as np
 from collections import defaultdict
 
-from scikits.learn.linear_model import lars_path
-from scikits.learn.linear_model import lasso_path
-from scikits.learn.datasets.samples_generator import make_regression
+from sklearn.linear_model import lars_path
+from sklearn.linear_model import lasso_path
+from sklearn.datasets.samples_generator import make_regression
 
 
 def compute_bench(samples_range, features_range):

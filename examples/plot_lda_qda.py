@@ -1,9 +1,9 @@
 """
-==============================================================================
-Linear Discriminant Analysis & Quadratic Discriminant Analysis with confidence
-==============================================================================
+====================================================================
+Linear and Quadratic Discriminant Analysis with confidence ellipsoid
+====================================================================
 
-Plot the decision boundary
+Plot the confidence ellipsoids of each class and decision boundary
 """
 print __doc__
 
@@ -13,8 +13,8 @@ import pylab as pl
 import matplotlib as mpl
 from matplotlib import colors
 
-from scikits.learn.lda import LDA
-from scikits.learn.qda import QDA
+from sklearn.lda import LDA
+from sklearn.qda import QDA
 
 ###############################################################################
 # colormap

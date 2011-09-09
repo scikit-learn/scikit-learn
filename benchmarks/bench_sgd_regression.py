@@ -17,9 +17,9 @@ import gc
 
 from time import time
 
-from scikits.learn.linear_model import Ridge, SGDRegressor, ElasticNet
-from scikits.learn.metrics import mean_square_error
-from scikits.learn.datasets.samples_generator import make_regression
+from sklearn.linear_model import Ridge, SGDRegressor, ElasticNet
+from sklearn.metrics import mean_square_error
+from sklearn.datasets.samples_generator import make_regression
 
 if __name__ == "__main__":
     list_n_samples = np.linspace(100, 10000, 5).astype(np.int)
@@ -33,9 +33,9 @@ if __name__ == "__main__":
     for i, n_train in enumerate(list_n_samples):
         for j, n_features in enumerate(list_n_features):
             X, y, coef = make_regression(
-                n_samples=n_train + n_test, n_features=n_features, 
+                n_samples=n_train + n_test, n_features=n_features,
                 noise=noise, coef=True)
-            
+
             X_train = X[:n_train]
             y_train = y[:n_train]
             X_test = X[n_train:]

@@ -3,7 +3,7 @@
 Plot Ridge coefficients as a function of the regularization
 ===========================================================
 
-.. currentmodule:: scikits.learn.linear_model
+.. currentmodule:: sklearn.linear_model
 
 Shows the effect of collinearity in the coefficients or the
 :class:`Ridge`. At the end of the path, as alpha tends toward zero
@@ -18,7 +18,7 @@ print __doc__
 
 import numpy as np
 import pylab as pl
-from scikits.learn import linear_model
+from sklearn import linear_model
 
 # X is the 10x10 Hilbert matrix
 X = 1. / (np.arange(1, 11) + np.arange(0, 10)[:, np.newaxis])
@@ -33,7 +33,8 @@ clf = linear_model.Ridge(fit_intercept=False)
 
 coefs = []
 for a in alphas:
-    clf.fit(X, y, alpha=a)
+    clf.set_params(alpha=a)
+    clf.fit(X, y)
     coefs.append(clf.coef_)
 
 ################################################################################

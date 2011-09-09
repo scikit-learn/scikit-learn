@@ -2,7 +2,7 @@
 Naive Bayes
 ===========
 
-.. currentmodule:: scikits.learn.naive_bayes
+.. currentmodule:: sklearn.naive_bayes
 
 
 **Naive Bayes** algorithms are a set of supervised learning methods
@@ -67,7 +67,7 @@ estimated using maximum likelihood.
 
 .. topic:: Examples:
 
- * :ref:`example_naive_bayes.py`,
+ * :ref:`example_naive_bayes.py`
 
 
 Multinomial Naive Bayes
