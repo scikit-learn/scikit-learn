@@ -6,6 +6,7 @@ from numpy.testing import assert_equal
 from nose.tools import assert_raises
 from nose.tools import assert_true
 from scipy.sparse import csr_matrix
+from scipy.spatial.distance import cosine, cityblock
 
 from ..pairwise import euclidean_distances, linear_kernel, polynomial_kernel, \
                        rbf_kernel, sigmoid_kernel
@@ -19,28 +20,45 @@ np.random.seed(0)
 def test_pairwise_distances():
     """ Test the pairwise_distance helper function. """
     rng = np.random.RandomState(0)
+    # Euclidean distance should be equivalent to calling the function.
     X = rng.random_sample((5, 4))
     S = pairwise_distances(X, metric="euclidean")
     S2 = euclidean_distances(X)
     assert_array_equal(S, S2)
-
+    # Euclidean distance, with Y != X.
     Y = rng.random_sample((2, 4))
     S = pairwise_distances(X, Y, metric="euclidean")
     S2 = euclidean_distances(X, Y)
     assert_array_equal(S, S2)
-
+    # "cityblock" uses sklearn metric, cityblock (function) is scipy.spatial.
     S = pairwise_distances(X, metric="cityblock")
+    S2 = pairwise_distances(X, metric=cityblock)
     assert_equal(S.shape[0], S.shape[1])
     assert_equal(S.shape[0], X.shape[0])
-
-    S = pairwise_distances(X, Y, metric="cityblock")
+    assert_equal(S, S2)
+    # The manhattan metric should be equivalent to cityblock.
+    S = pairwise_distances(X, Y, metric="manhattan")
+    S2 = pairwise_distances(X, Y, metric=cityblock)
     assert_equal(S.shape[0], X.shape[0])
     assert_equal(S.shape[1], Y.shape[0])
-
+    assert_array_almost_equal(S, S2)
+    # Test cosine as a string metric versus cosine callable
+    S = pairwise_distances(X, Y, metric="cosine")
+    S2 = pairwise_distances(X, Y, metric=cosine) # callable
+    assert_equal(S.shape[0], X.shape[0])
+    assert_equal(S.shape[1], Y.shape[0])
+    assert_array_almost_equal(S, S2)
+    # Tests that precomputed metric returns pointer to, and not copy of, X.
     S = np.dot(X, X.T)
     S2 = pairwise_distances(S, metric="precomputed")
     assert_true(S is S2)
     assert_raises(ValueError, pairwise_distances, X, None, "precomputed")
+    # Test with sparse X and Y
+    X_sparse = csr_matrix(X)
+    Y_sparse = csr_matrix(Y)
+    S = pairwise_distances(X_sparse, Y_sparse, metric="euclidean")
+    S2 = euclidean_distances(X_sparse, Y_sparse)
+    assert_array_almost_equal(S, S2)
 
 
 def test_pairwise_kernels():
@@ -68,15 +86,16 @@ def test_pairwise_kernels():
     # Test with a callable function, with given keywords.
     metric = callable_rbf_kernel
     kwds = {}
-    kwds['gamma'] = 0.5
+    kwds['gamma'] = 0.
     K1 = pairwise_kernels(X, Y=Y, metric=metric, **kwds)
     K2 = rbf_kernel(X, Y=Y, **kwds)
-    assert_equal(K1, K2)
+    assert_array_almost_equal(K1, K2)
 
 
 def callable_rbf_kernel(x, y, **kwds):
     """ Callable version of pairwise.rbf_kernel. """
-    return rbf_kernel(np.atleast_2d(x), np.atleast_2d(y), **kwds)
+    K = rbf_kernel(np.atleast_2d(x), np.atleast_2d(y), **kwds)
+    return K
 
 
 def test_euclidean_distances():

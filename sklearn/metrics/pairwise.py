@@ -183,7 +183,7 @@ def manhattan_distances(X, Y=None, sum_over_features=True):
         n_features = n_features_X
     D = np.abs(X[:, np.newaxis, :] - Y[np.newaxis, :, :])
     if sum_over_features:
-        D = np.sum(D, axis=1)
+        D = np.sum(D, axis=2)
     return D
 
 
@@ -367,10 +367,14 @@ def pairwise_distances(X, Y=None, metric="euclidean", **kwds):
         # Calculate distance for each element in X and Y.
         D = np.zeros((n_x, n_y), dtype='float')
         for i in range(n_x):
-            for j in range(i, n_y):
+            start = 0
+            if X is Y:
+                start = i
+            for j in range(start, n_y):
                 # Kernel assumed to be symmetric.
                 D[i][j] = metric(X[i], Y[j], **kwds)
-                D[j][i] = D[i][j]
+                if X is Y:
+                    D[j][i] = D[i][j]
         return D
     else:
         # Note that if the metric is callable
@@ -451,10 +455,14 @@ def pairwise_kernels(X, Y=None, metric="linear", **kwds):
         # Calculate kernel for each element in X and Y.
         K = np.zeros((n_x, n_y), dtype='float')
         for i in range(n_x):
-            for j in range(i, n_y):
+            start = 0
+            if X is Y:
+                start = i
+            for j in range(start, n_y):
                 # Kernel assumed to be symmetric.
                 K[i][j] = metric(X[i], Y[j], **kwds)
-                K[j][i] = K[i][j]
+                if X is Y:
+                    K[j][i] = K[i][j]
         return K
     else:
         raise AttributeError("Unknown metric %s" % metric)
