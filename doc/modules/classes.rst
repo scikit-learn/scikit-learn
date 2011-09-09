@@ -295,10 +295,12 @@ Clustering metrics
    :toctree: generated/
    :template: function.rst
 
+   metrics.ari_score
    metrics.homogeneity_completeness_v_measure
    metrics.homogeneity_score
    metrics.completeness_score
    metrics.v_measure_score
+
 
 Pairwise metrics
 ----------------
