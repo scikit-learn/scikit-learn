@@ -270,7 +270,7 @@ enable only merging of neighboring pixels on an image, as in the
 .. _dbscan:
 
 DBSCAN
-=======
+======
 
 The :class:`DBSCAN` algorithm clusters data by finding core points which have
 many neighbours within a given radius. After a core point is found, the cluster
