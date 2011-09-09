@@ -171,8 +171,8 @@ def manhattan_distances(X, Y=None, sum_over_features=True):
     >>> X = np.ones((1, 2))
     >>> y = 2 * np.ones((2, 2))
     >>> manhattan_distances(X, y, sum_over_features=False)
-    array([[ 1.,  1.],
-           [ 1.,  1.]])
+    array([[[ 1.,  1.],
+            [ 1.,  1.]]])
     """
     X, Y = check_pairwise_arrays(X, Y)
     n_samples_X, n_features_X = X.shape
@@ -182,9 +182,8 @@ def manhattan_distances(X, Y=None, sum_over_features=True):
     else:
         n_features = n_features_X
     D = np.abs(X[:, np.newaxis, :] - Y[np.newaxis, :, :])
-    D = D.reshape((n_samples_X * n_samples_Y, n_features))
     if sum_over_features:
-        D = np.sum(D, axis=2)
+        D = np.sum(D, axis=1)
     return D
 
 
@@ -371,7 +370,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", **kwds):
             for j in range(i, n_y):
                 # Kernel assumed to be symmetric.
                 D[i][j] = metric(X[i], Y[j], **kwds)
-                D[j][i] = K[i][j]
+                D[j][i] = D[i][j]
         return D
     else:
         # Note that if the metric is callable
