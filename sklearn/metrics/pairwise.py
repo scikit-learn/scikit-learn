@@ -318,6 +318,18 @@ def pairwise_distances(X, Y=None, metric="euclidean", **kwds):
     Please note that support for sparse matrices is currently limited to those
     metrics listed in pairwise.pairwise_distance_functions.
 
+    Valid values for metric are:
+    - from scikits.learn: ['euclidean', 'l2', 'l1', 'manhattan', 'cityblock']
+    - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
+      'correlation', 'cosine', 'dice', 'hamming', 'jaccard', 'kulsinski',
+      'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto', 'russellrao',
+      'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeucludean', 'yule']
+      See the documentation for scipy.spatial.distance for details on these
+      metrics.
+    Note in the case of 'euclidean' and 'cityblock' (which are valid
+    scipy.spatial.distance metrics), the values will use the scikits.learn
+    implementation, which is faster and has support for sparse matrices.
+
     Parameters
     ----------
     X: array [n_samples_a, n_samples_a] if metric == "precomputed", or,
@@ -408,6 +420,9 @@ def pairwise_kernels(X, Y=None, metric="linear", **kwds):
 
     If Y is given (default is None), then the returned matrix is the pairwise
     kernel between the arrays from both X and Y.
+
+    Valid values for metric are:
+    ['rbf', 'sigmoid', 'polynomial', 'poly', 'linear']
 
     Parameters
     ----------
