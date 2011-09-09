@@ -121,8 +121,7 @@ def _build_tree(is_classification, X, y, criterion,
                          % (len(y), len(X)))
     y = np.array(y, dtype=np.float64, order="c")
 
-    feature_mask = np.ones(n_features, dtype=np.int32)
-    sample_dims = np.arange(n_features)
+    feature_mask = np.ones((n_features,), dtype=np.bool, order="c")
     if max_features is not None:
         if max_features <= 0 or max_features > n_features:
             raise ValueError("max_features=%d must be in range (0..%d]. "
@@ -134,6 +133,8 @@ def _build_tree(is_classification, X, y, criterion,
         sample_dims = np.sort(permutation[-max_features:])
         feature_mask[sample_dims] = False
         feature_mask = np.logical_not(feature_mask)
+
+    feature_mask = feature_mask.astype(np.int32)
 
     # make data fortran layout
     if not X.flags["F_CONTIGUOUS"]:
@@ -152,11 +153,11 @@ def _build_tree(is_classification, X, y, criterion,
         if depth >= max_depth or len(X) < min_split:
             is_split_valid = False
 
-        dim, threshold, error, init_error = _tree._find_best_split(
+        feature, threshold, error, init_error = _tree._find_best_split(
             X, y, feature_mask, criterion)
 
-        if dim != -1:
-            split = X[:, dim] < threshold
+        if feature != -1:
+            split = X[:, feature] < threshold
         else:
             is_split_valid = False
 
@@ -173,7 +174,7 @@ def _build_tree(is_classification, X, y, criterion,
         left_partition = recursive_partition(X[split], y[split], depth + 1)
         right_partition = recursive_partition(X[~split], y[~split], depth + 1)
 
-        return Node(feature=sample_dims[dim], threshold=threshold,
+        return Node(feature=feature, threshold=threshold,
                     error=init_error, samples=len(y), value=a,
                     left=left_partition, right=right_partition)
 
