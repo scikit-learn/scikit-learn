@@ -24,18 +24,23 @@ def test_pairwise_distances():
     X = rng.random_sample((5, 4))
     S = pairwise_distances(X, metric="euclidean")
     S2 = euclidean_distances(X)
-    assert_array_equal(S, S2)
+    assert_array_almost_equal(S, S2)
     # Euclidean distance, with Y != X.
     Y = rng.random_sample((2, 4))
     S = pairwise_distances(X, Y, metric="euclidean")
     S2 = euclidean_distances(X, Y)
-    assert_array_equal(S, S2)
+    assert_array_almost_equal(S, S2)
+    # Test with tuples as X and Y
+    X_tuples = tuple([tuple([v for v in row]) for row in X])
+    Y_tuples = tuple([tuple([v for v in row]) for row in Y])
+    S2 = pairwise_distances(X_tuples, Y_tuples, metric="euclidean")
+    assert_array_almost_equal(S, S2) # S from previous sub-test
     # "cityblock" uses sklearn metric, cityblock (function) is scipy.spatial.
     S = pairwise_distances(X, metric="cityblock")
     S2 = pairwise_distances(X, metric=cityblock)
     assert_equal(S.shape[0], S.shape[1])
     assert_equal(S.shape[0], X.shape[0])
-    assert_equal(S, S2)
+    assert_array_almost_equal(S, S2)
     # The manhattan metric should be equivalent to cityblock.
     S = pairwise_distances(X, Y, metric="manhattan")
     S2 = pairwise_distances(X, Y, metric=cityblock)
@@ -59,7 +64,8 @@ def test_pairwise_distances():
     S = pairwise_distances(X_sparse, Y_sparse, metric="euclidean")
     S2 = euclidean_distances(X_sparse, Y_sparse)
     assert_array_almost_equal(S, S2)
-
+    
+    
 
 def test_pairwise_kernels():
     """ Test the pairwise_kernels helper function. """
@@ -73,16 +79,21 @@ def test_pairwise_kernels():
         # Test with Y=None
         K1 = pairwise_kernels(X, metric=metric)
         K2 = function(X)
-        assert_equal(K1, K2)
+        assert_array_almost_equal(K1, K2)
         # Test with Y=Y
         K1 = pairwise_kernels(X, Y=Y, metric=metric)
         K2 = function(X, Y=Y)
-        assert_equal(K1, K2)
+        assert_array_almost_equal(K1, K2)
+        # Test with tuples as X and Y
+        X_tuples = tuple([tuple([v for v in row]) for row in X])
+        Y_tuples = tuple([tuple([v for v in row]) for row in Y])
+        K2 = pairwise_kernels(X_tuples, Y_tuples, metric=metric)
+        assert_array_almost_equal(K1, K2) # K1 from previous sub-test.
         # Test with sparse X and Y
         X_sparse = csr_matrix(X)
         Y_sparse = csr_matrix(Y)
         K1 = pairwise_kernels(X_sparse, Y=Y_sparse, metric=metric)
-        assert_equal(K1, K2)
+        assert_array_almost_equal(K1, K2)
     # Test with a callable function, with given keywords.
     metric = callable_rbf_kernel
     kwds = {}
