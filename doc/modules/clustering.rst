@@ -63,7 +63,7 @@ transform method of a trained model of :class:`KMeans`.
 .. _mini_batch_kmeans:
 
 Mini Batch K-Means
--------------------
+------------------
 
 The :class:`MiniBatchKMeans` is a variant of the :class:`K-Means` algorithm
 using mini-batches, random subset of the dataset, to compute the centroids.
