@@ -74,11 +74,11 @@ Decision Trees
 ==============
 
 
-.. automodule:: scikits.learn.tree
+.. automodule:: sklearn.tree
    :no-members:
    :no-inherited-members:
 
-.. currentmodule:: scikits.learn
+.. currentmodule:: sklearn
 
 .. autosummary::
    :toctree: generated/

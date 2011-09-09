@@ -1,7 +1,7 @@
 """
 To run this, you'll need to have installed.
 
-  * scikit-learn 
+  * scikit-learn
 
 Does two benchmarks
 
@@ -22,15 +22,13 @@ from datetime import datetime
 scikit_classifier_results = []
 scikit_regressor_results = []
 
-mu_second = 0.0 + 10**6 # number of microseconds in a second
+mu_second = 0.0 + 10 ** 6  # number of microseconds in a second
 
 
 def bench_scikit_tree_classifier(X, Y):
-    """
-    bench with scikit-learn decision tree classifier
-    """
-    import scikits.learn
-    from scikits.learn.tree import DecisionTreeClassifier
+    """Bench with scikit-learn decision tree classifier"""
+
+    from sklearn.tree import DecisionTreeClassifier
 
     gc.collect()
 
@@ -41,14 +39,14 @@ def bench_scikit_tree_classifier(X, Y):
     delta = (datetime.now() - tstart)
     # stop time
 
-    scikit_classifier_results.append(delta.seconds + delta.microseconds/mu_second)
+    scikit_classifier_results.append(
+        delta.seconds + delta.microseconds / mu_second)
+
 
 def bench_scikit_tree_regressor(X, Y):
-    """
-    bench with scikit-learn decision tree regressor
-    """
-    import scikits.learn
-    from scikits.learn.tree import DecisionTreeRegressor
+    """Bench with scikit-learn decision tree regressor"""
+
+    from sklearn.tree import DecisionTreeRegressor
 
     gc.collect()
 
@@ -59,7 +57,9 @@ def bench_scikit_tree_regressor(X, Y):
     delta = (datetime.now() - tstart)
     # stop time
 
-    scikit_regressor_results.append(delta.seconds + delta.microseconds/mu_second)
+    scikit_regressor_results.append(
+        delta.seconds + delta.microseconds / mu_second)
+
 
 if __name__ == '__main__':
 
@@ -71,21 +71,19 @@ if __name__ == '__main__':
     step = 10000
     n_samples = 10000
     dim = 10
-    K = 10 
+    n_classes = 10
     for i in range(n):
         print '============================================'
         print 'Entering iteration %s of %s' % (i, n)
         print '============================================'
         n_samples += step
         X = np.random.randn(n_samples, dim)
-        Y = np.random.randint(0, K, (n_samples,))
+        Y = np.random.randint(0, n_classes, (n_samples,))
         bench_scikit_tree_classifier(X, Y)
         Y = np.random.randn(n_samples)
         bench_scikit_tree_regressor(X, Y)
 
-
-    import pylab as pl
-    xx = range(0, n*step, step)
+    xx = range(0, n * step, step)
     pl.figure(1)
     pl.subplot(211)
     pl.title('Learning with varying number of samples')
@@ -93,14 +91,14 @@ if __name__ == '__main__':
     pl.plot(xx, scikit_regressor_results, 'r-', label='regression')
     pl.legend()
     pl.xlabel('number of samples')
-    pl.ylabel('time (in microseconds)')
+    pl.ylabel('time (in seconds)')
 
     scikit_classifier_results = []
     scikit_regressor_results = []
     n = 10
     step = 500
     start_dim = 500
-    K = 10 
+    n_classes = 10
 
     dim = start_dim
     for i in range(0, n):
@@ -109,12 +107,12 @@ if __name__ == '__main__':
         print '============================================'
         dim += step
         X = np.random.randn(100, dim)
-        Y = np.random.randint(0, K, (100,))
+        Y = np.random.randint(0, n_classes, (100,))
         bench_scikit_tree_classifier(X, Y)
         Y = np.random.randn(100)
         bench_scikit_tree_regressor(X, Y)
 
-    xx = np.arange(start_dim, start_dim+n*step, step)
+    xx = np.arange(start_dim, start_dim + n * step, step)
     pl.subplot(212)
     pl.title('Learning in high dimensional spaces')
     pl.plot(xx, scikit_classifier_results, 'g-', label='classification')
