@@ -132,7 +132,6 @@ def euclidian_distances(*args, **kwargs):
     return euclidean_distances(*args, **kwargs)
 
 
-
 def manhattan_distances(X, Y=None, sum_over_features=True):
     """ Compute the L1 distances between the vectors in X and Y.
 
@@ -181,8 +180,6 @@ def manhattan_distances(X, Y=None, sum_over_features=True):
     n_samples_Y, n_features_Y = Y.shape
     if n_features_X != n_features_Y:
         raise Exception("X and Y should have the same number of features!")
-    else:
-        n_features = n_features_X
     D = np.abs(X[:, np.newaxis, :] - Y[np.newaxis, :, :])
     if sum_over_features:
         D = np.sum(D, axis=2)

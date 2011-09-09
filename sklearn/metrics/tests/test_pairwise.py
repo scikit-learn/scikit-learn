@@ -1,15 +1,14 @@
 import numpy as np
 from numpy import linalg
 from numpy.testing import assert_array_almost_equal
-from numpy.testing import assert_array_equal
 from numpy.testing import assert_equal
 from nose.tools import assert_raises
 from nose.tools import assert_true
 from scipy.sparse import csr_matrix
 from scipy.spatial.distance import cosine, cityblock
 
-from ..pairwise import euclidean_distances, linear_kernel, polynomial_kernel, \
-                       rbf_kernel, sigmoid_kernel
+from ..pairwise import (euclidean_distances, linear_kernel, polynomial_kernel,
+                        rbf_kernel, sigmoid_kernel)
 from .. import pairwise_distances, pairwise_kernels
 from ..pairwise import pairwise_kernel_functions
 from ..pairwise import check_pairwise_arrays
@@ -34,7 +33,7 @@ def test_pairwise_distances():
     X_tuples = tuple([tuple([v for v in row]) for row in X])
     Y_tuples = tuple([tuple([v for v in row]) for row in Y])
     S2 = pairwise_distances(X_tuples, Y_tuples, metric="euclidean")
-    assert_array_almost_equal(S, S2) # S from previous sub-test
+    assert_array_almost_equal(S, S2)
     # "cityblock" uses sklearn metric, cityblock (function) is scipy.spatial.
     S = pairwise_distances(X, metric="cityblock")
     S2 = pairwise_distances(X, metric=cityblock)
@@ -49,7 +48,7 @@ def test_pairwise_distances():
     assert_array_almost_equal(S, S2)
     # Test cosine as a string metric versus cosine callable
     S = pairwise_distances(X, Y, metric="cosine")
-    S2 = pairwise_distances(X, Y, metric=cosine) # callable
+    S2 = pairwise_distances(X, Y, metric=cosine)
     assert_equal(S.shape[0], X.shape[0])
     assert_equal(S.shape[1], Y.shape[0])
     assert_array_almost_equal(S, S2)
@@ -64,8 +63,7 @@ def test_pairwise_distances():
     S = pairwise_distances(X_sparse, Y_sparse, metric="euclidean")
     S2 = euclidean_distances(X_sparse, Y_sparse)
     assert_array_almost_equal(S, S2)
-    
-    
+
 
 def test_pairwise_kernels():
     """ Test the pairwise_kernels helper function. """
@@ -88,7 +86,7 @@ def test_pairwise_kernels():
         X_tuples = tuple([tuple([v for v in row]) for row in X])
         Y_tuples = tuple([tuple([v for v in row]) for row in Y])
         K2 = pairwise_kernels(X_tuples, Y_tuples, metric=metric)
-        assert_array_almost_equal(K1, K2) # K1 from previous sub-test.
+        assert_array_almost_equal(K1, K2)
         # Test with sparse X and Y
         X_sparse = csr_matrix(X)
         Y_sparse = csr_matrix(Y)
