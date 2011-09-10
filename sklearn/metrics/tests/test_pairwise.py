@@ -5,7 +5,7 @@ from numpy.testing import assert_equal
 from nose.tools import assert_raises
 from nose.tools import assert_true
 from scipy.sparse import csr_matrix
-from scipy.spatial.distance import cosine, cityblock
+from scipy.spatial.distance import cosine, cityblock, minkowski
 
 from ..pairwise import (euclidean_distances, linear_kernel, polynomial_kernel,
                         rbf_kernel, sigmoid_kernel)
@@ -63,7 +63,11 @@ def test_pairwise_distances():
     S = pairwise_distances(X_sparse, Y_sparse, metric="euclidean")
     S2 = euclidean_distances(X_sparse, Y_sparse)
     assert_array_almost_equal(S, S2)
-
+    # Test with scipy.spatial.distance metric, with a kwd
+    kwds = {"p":2.0}
+    S = pairwise_distances(X, Y, metric="minkowski", **kwds)
+    S2 = pairwise_distances(X, Y, metric=minkowski, **kwds)
+    assert_array_almost_equal(S, S2)
 
 def test_pairwise_kernels():
     """ Test the pairwise_kernels helper function. """

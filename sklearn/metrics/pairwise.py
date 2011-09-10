@@ -391,8 +391,8 @@ def pairwise_distances(X, Y=None, metric="euclidean", **kwds):
         # Note that if the metric is callable
         # FIXME: the distance module doesn't support sparse matrices!
         if Y is None:
-            return distance.squareform(distance.pdist(X, metric=metric),
-                                       **kwds)
+            return distance.squareform(distance.pdist(X, metric=metric,
+                                                      **kwds))
         else:
             return distance.cdist(X, Y, metric=metric, **kwds)
 
