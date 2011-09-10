@@ -293,12 +293,35 @@ def rbf_kernel(X, Y=None, gamma=0):
 
 # Helper functions - distance
 pairwise_distance_functions = {
+    # If updating this dictionary, update the doc in both distance_metrics()
+    # and also in pairwise_distances()!
     'euclidean': euclidean_distances,
     'l2': euclidean_distances,
     'l1': manhattan_distances,
     'manhattan': manhattan_distances,
     'cityblock': manhattan_distances
     }
+
+
+def distance_metrics():
+    """ Valid metrics for pairwise_distances
+
+    This function simply returns the valid pairwise distance metrics.
+    It exists, however, to allow for a verbose description of the mapping for
+    each of the valid strings.
+
+    The valid distance metrics, and the function they map to, are:
+      ===========     ====================================
+      metric          Function
+      ===========     ====================================
+      'cityblock'     sklearn.pairwise.manhattan_distances
+      'euclidean'     sklearn.pairwise.euclidean_distances
+      'l1'            sklearn.pairwise.manhattan_distances
+      'l2'            sklearn.pairwise.euclidean_distances
+      'manhattan'     sklearn.pairwise.manhattan_distances
+      ===========     ====================================
+    """
+    return pairwise_distance_functions
 
 
 def pairwise_distances(X, Y=None, metric="euclidean", **kwds):
@@ -329,6 +352,8 @@ def pairwise_distances(X, Y=None, metric="euclidean", **kwds):
     Note in the case of 'euclidean' and 'cityblock' (which are valid
     scipy.spatial.distance metrics), the values will use the scikits.learn
     implementation, which is faster and has support for sparse matrices.
+    For a verbose description of the metrics from scikits.learn, see the
+    __doc__ of the sklearn.pairwise.distance_metrics function.
 
     Parameters
     ----------
@@ -399,12 +424,35 @@ def pairwise_distances(X, Y=None, metric="euclidean", **kwds):
 
 # Helper functions - distance
 pairwise_kernel_functions = {
+    # If updating this dictionary, update the doc in both distance_metrics()
+    # and also in pairwise_distances()!
     'rbf': rbf_kernel,
     'sigmoid': sigmoid_kernel,
     'polynomial': polynomial_kernel,
     'poly': polynomial_kernel,
     'linear': linear_kernel
     }
+
+
+def kernel_metrics():
+    """ Valid metrics for pairwise_kernels
+
+    This function simply returns the valid pairwise distance metrics.
+    It exists, however, to allow for a verbose description of the mapping for
+    each of the valid strings.
+
+    The valid distance metrics, and the function they map to, are:
+      ============   ==================================
+      metric         Function
+      ============   ==================================
+      'linear'       sklearn.pairwise.linear_kernel
+      'poly'         sklearn.pairwise.polynomial_kernel
+      'polynomial'   sklearn.pairwise.polynomial_kernel
+      'rbf'          sklearn.pairwise.rbf_kernel
+      'sigmoid'      sklearn.pairwise.sigmoid_kernel
+      ============   ==================================
+    """
+    return pairwise_kernel_functions
 
 
 def pairwise_kernels(X, Y=None, metric="linear", **kwds):
