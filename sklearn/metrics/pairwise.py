@@ -414,10 +414,16 @@ def pairwise_distances(X, Y=None, metric="euclidean", **kwds):
         return D
     else:
         # Note: the distance module doesn't support sparse matrices!
+        if type(X) is csr_matrix:
+            raise TypeError("scipy distance metrics do not"
+                            " support sparse matrices.")
         if Y is None:
             return distance.squareform(distance.pdist(X, metric=metric,
                                                       **kwds))
         else:
+            if type(Y) is csr_matrix:
+                raise TypeError("scipy distance metrics do not"
+                                " support sparse matrices.")
             return distance.cdist(X, Y, metric=metric, **kwds)
 
 

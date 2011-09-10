@@ -68,6 +68,11 @@ def test_pairwise_distances():
     S = pairwise_distances(X, Y, metric="minkowski", **kwds)
     S2 = pairwise_distances(X, Y, metric=minkowski, **kwds)
     assert_array_almost_equal(S, S2)
+    # Test that scipy distance metrics throw an error if sparse matrix given
+    assert_raises(TypeError, pairwise_distances, X_sparse, metric="minkowski")
+    assert_raises(TypeError, pairwise_distances, X, Y_sparse,
+                  metric="minkowski")
+    
 
 def test_pairwise_kernels():
     """ Test the pairwise_kernels helper function. """
