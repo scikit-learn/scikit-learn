@@ -8,9 +8,13 @@ better.
 # License: BSD Style.
 
 from math import log
-from scipy.misc import comb
+from scipy import comb as sp_comb
 
 import numpy as np
+
+# the exact version if faster for k == 2: use it by default globally in
+# this module instead of the float approximate variant
+comb = lambda n, k: sp_comb(n, k, exact=1)
 
 
 def check_clusterings(labels_true, labels_pred):

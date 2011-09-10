@@ -120,8 +120,10 @@ def test_adjustment_for_chance():
     """Check that adjusted scores are almost zero on random labels"""
     n_clusters_range = [2, 10, 50, 90]
     n_samples = 100
-    n_runs = 5
-    scores = uniform_labelings_scores(ari_score, n_samples, n_clusters_range,
-                                      n_runs=n_runs)
+    n_runs = 10
+
+    scores = uniform_labelings_scores(
+        ari_score, n_samples, n_clusters_range, n_runs)
+
     max_abs_scores = np.abs(scores).max(axis=1)
     assert_array_almost_equal(max_abs_scores, [0.02, 0.03, 0.03, 0.02], 2)
