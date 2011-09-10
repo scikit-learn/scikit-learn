@@ -7,39 +7,14 @@ better
 # Authors: Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD Style.
 
-from ..utils.extmath import factorial
 from math import log
+from scipy.misc import comb
 
 import numpy as np
 
 
 # helpers
 
-def combinations(n, k):
-    """Number of ways to choose k elements out of n without ordering
-
-    For example counter the number of ways to pick elements from a set
-    of 3 elements::
-
-      >>> from sklearn.metrics.cluster import combinations
-      >>> combinations(3, 0)
-      1
-      >>> combinations(3, 1)
-      3
-      >>> combinations(3, 2)
-      3
-      >>> combinations(3, 3)
-      1
-
-    It is impossible to pick 3 items from a collections of three::
-
-      >>> combinations(3, 4)
-      0
-
-    """
-    if n < k:
-        return 0
-    return factorial(n) / factorial(k) / factorial(n - k)
 
 
 def check_clusterings(labels_true, labels_pred):
@@ -146,9 +121,10 @@ def ari_score(labels_true, labels_pred):
     classes = np.unique(labels_true)
     clusters = np.unique(labels_pred)
 
-    # special limit case: no clustering since the data is not splitted.
+    # special limit cases: no clustering since the data is not splitted.
     # This is a perfect match
-    if classes.shape[0] == clusters.shape[0] == 1:
+    if (classes.shape[0] == clusters.shape[0] == 1
+        or classes.shape[0] == clusters.shape[0] == 0):
         return 1.0
 
     # the cluster and class ids are not necessarily consecutive integers
@@ -165,13 +141,11 @@ def ari_score(labels_true, labels_pred):
         contengency[class_idx[c], cluster_idx[k]] += 1
 
     # compute the ARI using the contengency data
-    sum_comb_c = sum(combinations(n_c, 2)
-                     for n_c in contengency.sum(axis=1))
-    sum_comb_k = sum(combinations(n_k, 2)
-                     for n_k in contengency.sum(axis=0))
+    sum_comb_c = sum(comb(n_c, 2) for n_c in contengency.sum(axis=1))
+    sum_comb_k = sum(comb(n_k, 2) for n_k in contengency.sum(axis=0))
 
-    sum_comb = sum(combinations(n_ij, 2) for n_ij in contengency.flatten())
-    prod_comb = (sum_comb_c * sum_comb_k) / float(combinations(n_samples, 2))
+    sum_comb = sum(comb(n_ij, 2) for n_ij in contengency.flatten())
+    prod_comb = (sum_comb_c * sum_comb_k) / float(comb(n_samples, 2))
     mean_comb = (sum_comb_k + sum_comb_c) / 2.
     return ((sum_comb - prod_comb) / (mean_comb - prod_comb))
 

@@ -45,10 +45,10 @@ def test_error_messages_on_wrong_input():
 
 def test_perfect_matches():
     for score_func in score_funcs:
-        assert_equal(score_func([], [], 1.0))
-        assert_equal(score_func([0], [1], 1.0))
-        assert_equal(score_func([0, 0, 0], [0, 0, 0], 1.0))
-        assert_equal(score_func([0, 1, 0], [42, 7, 42], 1.0))
+        assert_equal(score_func([], []), 1.0)
+        assert_equal(score_func([0], [1]), 1.0)
+        assert_equal(score_func([0, 0, 0], [0, 0, 0]), 1.0)
+        assert_equal(score_func([0, 1, 0], [42, 7, 42]), 1.0)
 
 
 def test_homogeneous_but_not_complete_labeling():
@@ -120,6 +120,8 @@ def test_adjustment_for_chance():
     """Check that adjusted scores are almost zero on random labels"""
     n_clusters_range = [2, 10, 50, 90]
     n_samples = 100
-    scores = uniform_labelings_scores(ari_score, n_samples, n_clusters_range)
+    n_runs = 5
+    scores = uniform_labelings_scores(ari_score, n_samples, n_clusters_range,
+                                      n_runs=n_runs)
     max_abs_scores = np.abs(scores).max(axis=1)
     assert_array_almost_equal(max_abs_scores, [0.02, 0.03, 0.03, 0.02], 2)
