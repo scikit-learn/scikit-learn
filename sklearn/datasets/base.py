@@ -31,6 +31,7 @@ class Bunch(dict):
         dict.__init__(self, kwargs)
         self.__dict__ = self
 
+
 def get_data_home(data_home=None):
     """Return the path of the scikit-learn data dir.
 
@@ -54,10 +55,12 @@ def get_data_home(data_home=None):
         makedirs(data_home)
     return data_home
 
+
 def clear_data_home(data_home=None):
     """Delete all the content of the data home cache."""
     data_home = get_data_home(data_home)
     shutil.rmtree(data_home)
+
 
 def load_files(container_path, description=None, categories=None,
                load_content=True, shuffle=True, random_state=None):
@@ -173,6 +176,7 @@ def load_files(container_path, description=None, categories=None,
                  target=target,
                  DESCR=description)
 
+
 def load_iris():
     """Load and return the iris dataset (classification).
 
@@ -215,6 +219,7 @@ def load_iris():
                  DESCR=fdescr.read(),
                  feature_names=['sepal length (cm)', 'sepal width (cm)',
                                 'petal length (cm)', 'petal width (cm)'])
+
 
 def load_digits(n_class=10):
     """Load and return the digits dataset (classification).
@@ -265,6 +270,7 @@ def load_digits(n_class=10):
                  images=images,
                  DESCR=descr)
 
+
 def load_diabetes():
     """Load and return the diabetes dataset (regression).
 
@@ -279,6 +285,7 @@ def load_diabetes():
     data = np.loadtxt(join(base_dir, 'diabetes_data.csv.gz'))
     target = np.loadtxt(join(base_dir, 'diabetes_target.csv.gz'))
     return Bunch(data=data, target=target)
+
 
 def load_linnerud():
     """Load and return the linnerud dataset (multivariate regression).
@@ -309,6 +316,7 @@ def load_linnerud():
                  data_physiological=data_physiological,
                  header_physiological=header_physiological,
                  DESCR=fdescr.read())
+
 
 def load_boston():
     """Load and return the boston house-prices dataset (regression).
@@ -346,6 +354,7 @@ def load_boston():
                  target=target,
                  feature_names=feature_names,
                  DESCR=fdescr.read())
+
 
 def load_sample_images():
     """Load sample images for image manipulation.
@@ -399,6 +408,7 @@ def load_sample_images():
     return Bunch(images=images,
                  filenames=filenames,
                  DESCR=descr)
+
 
 def load_sample_image(image_name):
     """Load the numpy array of a single sample image

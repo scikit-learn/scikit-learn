@@ -1,6 +1,74 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_0_9:
+
+0.9
+===
+
+TODO
+
+Changelog
+---------
+
+TODO
+
+
+API changes summary
+-------------------
+
+Here are the code migration instructions when updgrading from scikit-learn
+version 0.8:
+
+  - The ``scikits.learn`` package was renamed ``sklearn``. There is
+    still a ``scikits.learn`` package alias for backward compatibility.
+
+    Third-party projects with a dependency on scikit-learn 0.9+ should
+    upgrade their codebase. For instance under Linux / MacOSX just run
+    (make a backup first!)::
+
+      find -name "*.py" | xargs sed -i 's/\bscikits.learn\b/sklearn/g'
+
+  - Estimators no longer accept model parameters as ``fit`` arguments:
+    instead all parameters must be only be passed as constructor
+    arguments or using the now public ``set_params`` method inhereted
+    from :class:`base.BaseEstimator`.
+
+    Some estimators can still accept keyword arguments on the ``fit``
+    but this is restricted to data-dependent values (e.g. a Gram matrix
+    or an affinity matrix that are precomputed from the ``X`` data matrix.
+
+  - The ``cross_val`` package has been renamed to ``cross_validation``
+    although there is also a ``cross_val`` package alias in place for
+    backward compatibility.
+
+    Third-party projects with a dependency on scikit-learn 0.9+ should
+    upgrade their codebase. For instance under Linux / MacOSX just run
+    (make a backup first!)::
+
+      find -name "*.py" | xargs sed -i 's/\bcross_val\b/cross_validation/g'
+
+  - The ``score_func`` argument of the
+    ``sklearn.cross_validation.cross_val_score`` function is now expected
+    to accept ``y_test`` and ``y_predicted`` as only arguments for
+    classification and regression tasks or ``X_test`` for unsupervised
+    estimators.
+
+  - The ``sklearn.hmm`` has been marked as orphaned: it will be removed
+    from scikit-learn in version 0.11 unless someone steps up to
+    contribute documentation, examples and fix lurking numerical
+    stability issues.
+
+Backward compatibilty package aliases and other deprecated classes and
+functions will be removed in version 0.11.
+
+
+People
+------
+
+TODO
+
+
 .. _changes_0_8:
 
 0.8

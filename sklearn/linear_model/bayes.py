@@ -120,7 +120,7 @@ class BayesianRidge(LinearModel):
                 fit_intercept=True, normalize=False,
                 overwrite_X=False, verbose=False):
         self.n_iter = n_iter
-        self.tol = tol 
+        self.tol = tol
         self.alpha_1 = alpha_1
         self.alpha_2 = alpha_2
         self.lambda_1 = lambda_1

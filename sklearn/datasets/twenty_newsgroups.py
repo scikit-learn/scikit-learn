@@ -142,7 +142,7 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
                                           cache_path=cache_path)
         else:
             raise IOError('20Newsgroups dataset not found')
-        
+
     if subset in ('train', 'test'):
         data = cache[subset]
     elif subset == 'all':

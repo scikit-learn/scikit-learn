@@ -2,7 +2,7 @@
 Test the func_inspect module.
 """
 
-# Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org> 
+# Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
 # Copyright (c) 2009 Gael Varoquaux
 # License: BSD Style, 3 clauses.
 
@@ -14,7 +14,7 @@ from ..func_inspect import filter_args, get_func_name, get_func_code
 from ..memory import Memory
 
 ################################################################################
-# Module-level functions, for tests 
+# Module-level functions, for tests
 def f(x, y=0):
     pass
 
@@ -65,7 +65,7 @@ def test_filter_args():
 
 def test_filter_args_method():
     obj = Klass()
-    nose.tools.assert_equal(filter_args(obj.f, [], 1), 
+    nose.tools.assert_equal(filter_args(obj.f, [], 1),
         {'x': 1, 'self': obj})
 
 
@@ -81,24 +81,24 @@ def test_filter_varargs():
 
 
 def test_filter_kwargs():
-    nose.tools.assert_equal(filter_args(k, [], 1, 2, ee=2), 
+    nose.tools.assert_equal(filter_args(k, [], 1, 2, ee=2),
                             {'*': [1, 2], '**':{'ee':2}})
-    nose.tools.assert_equal(filter_args(k, [], 3, 4), 
+    nose.tools.assert_equal(filter_args(k, [], 3, 4),
                             {'*': [3, 4], '**':{}})
 
 
 def test_filter_args_2():
-    nose.tools.assert_equal(filter_args(j, [], 1, 2, ee=2), 
+    nose.tools.assert_equal(filter_args(j, [], 1, 2, ee=2),
                             {'x': 1, 'y': 2, '**':{'ee':2}})
-    
+
     nose.tools.assert_raises(ValueError, filter_args, f, 'a', None)
     # Check that we capture an undefined argument
     nose.tools.assert_raises(ValueError, filter_args, f, ['a'], None)
     ff = functools.partial(f, 1)
     # filter_args has to special-case partial
-    nose.tools.assert_equal(filter_args(ff, [], 1), 
+    nose.tools.assert_equal(filter_args(ff, [], 1),
                             {'*': [1], '**':{}})
-    nose.tools.assert_equal(filter_args(ff, ['y'], 1), 
+    nose.tools.assert_equal(filter_args(ff, ['y'], 1),
                             {'*': [1], '**':{}})
 
 
@@ -114,15 +114,15 @@ def test_func_inspect_errors():
     nose.tools.assert_equal(get_func_name('a'.lower)[-1], 'lower')
     nose.tools.assert_equal(get_func_code('a'.lower)[1:], (None, -1))
     ff = lambda x: x
-    nose.tools.assert_equal(get_func_name(ff, win_characters=False)[-1], 
+    nose.tools.assert_equal(get_func_name(ff, win_characters=False)[-1],
                                                             '<lambda>')
-    nose.tools.assert_equal(get_func_code(ff)[1], 
+    nose.tools.assert_equal(get_func_code(ff)[1],
                                     __file__.replace('.pyc', '.py'))
     # Simulate a function defined in __main__
     ff.__module__ = '__main__'
-    nose.tools.assert_equal(get_func_name(ff, win_characters=False)[-1], 
+    nose.tools.assert_equal(get_func_name(ff, win_characters=False)[-1],
                                                             '<lambda>')
-    nose.tools.assert_equal(get_func_code(ff)[1], 
+    nose.tools.assert_equal(get_func_code(ff)[1],
                                     __file__.replace('.pyc', '.py'))
 
 
@@ -133,7 +133,7 @@ def test_bound_methods():
     """
     a = Klass()
     b = Klass()
-    nose.tools.assert_not_equal(filter_args(a.f, [], 1), 
+    nose.tools.assert_not_equal(filter_args(a.f, [], 1),
                                 filter_args(b.f, [], 1))
 
 

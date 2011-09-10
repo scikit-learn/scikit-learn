@@ -204,6 +204,7 @@ class deprecated(object):
 
         wrapped.__name__ = '__init__'
         wrapped.__doc__ = self._update_doc(init.__doc__)
+        wrapped.deprecated_original = init
 
         return cls
 
@@ -296,7 +297,7 @@ def resample(*arrays, **options):
 
     See also
     --------
-    :class:`sklearn.cross_val.Bootstrap`
+    :class:`sklearn.cross_validation.Bootstrap`
     :func:`sklearn.utils.shuffle`
     """
     random_state = check_random_state(options.pop('random_state', None))

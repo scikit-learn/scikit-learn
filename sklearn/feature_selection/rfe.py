@@ -10,7 +10,7 @@ import numpy as np
 from ..base import BaseEstimator
 from ..base import clone
 from ..base import is_classifier
-from ..cross_val import check_cv
+from ..cross_validation import check_cv
 
 
 class RFE(BaseEstimator):
@@ -210,7 +210,7 @@ class RFECV(RFE):
         If int, it is the number of folds.
         If None, 3-fold cross-validation is performed by default.
         Specific cross-validation objects can also be passed, see
-        `scikits.learn.cross_val module` for details.
+        `scikits.learn.cross_validation module` for details.
 
     loss_function : function, optional (default=None)
         The loss function to minimize by cross-validation. If None, then the
