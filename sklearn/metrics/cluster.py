@@ -1,7 +1,7 @@
 """Utilities to evaluate the clustering performance of models
 
 Functions named as *_score return a scalar value to maximize: the higher the
-better
+better.
 """
 
 # Authors: Olivier Grisel <olivier.grisel@ensta.org>
@@ -11,10 +11,6 @@ from math import log
 from scipy.misc import comb
 
 import numpy as np
-
-
-# helpers
-
 
 
 def check_clusterings(labels_true, labels_pred):
