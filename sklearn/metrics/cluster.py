@@ -16,7 +16,24 @@ import numpy as np
 # helpers
 
 def combinations(n, k):
-    """Number of ways to choose k elements out of n without ordering"""
+    """Number of ways to choose k elements out of n without ordering
+
+    For example counter the number of ways to pick elements from a set
+    of 3 elements::
+
+      >>> combinations(3, 1)
+      3
+      >>> combinations(3, 2)
+      3
+      >>> combinations(3, 3)
+      1
+
+    It is impossible to pick 3 items from a collections of three::
+
+      >>> combinations(3, 4)
+      0
+
+    """
     if n < k:
         return 0
     return factorial(n) / factorial(k) / factorial(n - k)
