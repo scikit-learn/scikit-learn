@@ -7,6 +7,7 @@ from sklearn.metrics.cluster import v_measure_score
 from sklearn.metrics.cluster import homogeneity_completeness_v_measure
 
 from nose.tools import assert_almost_equal
+from nose.tools import assert_equal
 from numpy.testing import assert_array_almost_equal
 
 
@@ -40,6 +41,14 @@ def test_error_messages_on_wrong_input():
         expected = "labels_pred must be 1D: shape is (2, 2)"
         assert_raise_message(ValueError, expected, score_func,
                              [0, 1, 0], [[1, 1], [0, 0]])
+
+
+def test_perfect_matches():
+    for score_func in score_funcs:
+        assert_equal(score_func([], [], 1.0))
+        assert_equal(score_func([0], [1], 1.0))
+        assert_equal(score_func([0, 0, 0], [0, 0, 0], 1.0))
+        assert_equal(score_func([0, 1, 0], [1, 0, 1], 1.0))
 
 
 def test_homogeneous_but_not_complete_labeling():

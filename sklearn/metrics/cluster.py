@@ -21,6 +21,9 @@ def combinations(n, k):
     For example counter the number of ways to pick elements from a set
     of 3 elements::
 
+      >>> from sklearn.metrics.cluster import combinations
+      >>> combinations(3, 0)
+      1
       >>> combinations(3, 1)
       3
       >>> combinations(3, 2)
@@ -142,6 +145,11 @@ def ari_score(labels_true, labels_pred):
 
     classes = np.unique(labels_true)
     clusters = np.unique(labels_pred)
+
+    # special limit case: no clustering since the data is not splitted.
+    # This is a perfect match
+    if classes.shape[0] == clusters.shape[0] == 1:
+        return 1.0
 
     # the cluster and class ids are not necessarily consecutive integers
     # starting at 0 hence build a map
