@@ -396,10 +396,11 @@ Independent labelings have negative clause to 0.0 scores::
 Mathematical formulation
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-If C is Let us define :math:`a` and :math:`b` as:
+If C is a ground truth class assignement and K the clustering, let us
+define :math:`a` and :math:`b` as:
 
 - :math:`a`, the number of pairs of elements that are in the same set
-  in C and in the same set  in K
+  in C and in the same set in K
 
 - :math:`b`, the number of pairs of elements that are in different sets
   in C and in different sets in K
@@ -411,8 +412,8 @@ The raw (unadjusted) Rand index is then given by:
 Where :math:`C_2^{n_{samples}}` is the total number of possible pairs
 in the dataset (without ordering).
 
-However the RI score does not garantee that random label assignements
-will get a value clause to zero (esp. if the number of clusters is in
+However the RI score does not guarantee that random label assignements
+will get a value close to zero (esp. if the number of clusters is in
 the same order of magnitude as the number of samples).
 
 To counter this effect we can discount the expected RI of random labelings
