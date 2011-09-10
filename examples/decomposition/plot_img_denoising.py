@@ -56,17 +56,17 @@ distorted[:, height / 2:] += 0.075 * np.random.randn(width, height / 2)
 
 # Extract all clean patches from the left half of the image
 print 'Extracting clean patches...'
-patch_size = (4, 4)
+patch_size = (7, 7)
 data = extract_patches_2d(distorted[:, :height / 2], patch_size)
 data = data.reshape(data.shape[0], -1)
-intercept = np.mean(data, 0)
-data -= intercept
+data -= np.mean(data, axis=0)
+data /= np.std(data, axis=0)
 
 ###############################################################################
 # Learn the dictionary from clean patches
 print 'Learning the dictionary... ',
 t0 = time()
-dico = DictionaryLearningOnline(n_atoms=100, alpha=1e-2, n_iter=300)
+dico = DictionaryLearningOnline(n_atoms=100, alpha=1e-2, n_iter=500)
 V = dico.fit(data).components_
 dt = time() - t0
 print 'done in %.2f.' % dt
@@ -111,7 +111,9 @@ show_with_diff(distorted, lena, 'Distorted image')
 # Extract noisy patches and reconstruct them using the dictionary
 print 'Extracting noisy patches... '
 data = extract_patches_2d(distorted[:, height / 2:], patch_size)
-data = data.reshape(data.shape[0], -1) - intercept
+data = data.reshape(data.shape[0], -1)
+intercept = np.mean(data, axis=0)
+data -= intercept
 
 transform_algorithms = [
     ('Orthogonal Matching Pursuit\n1 atom', 'omp',
@@ -126,15 +128,14 @@ for title, transform_algorithm, kwargs in transform_algorithms:
     print title, '... ',
     reconstructions[title] = lena.copy()
     t0 = time()
-    dico.set_params(transform_algorithm=transform_algorithm,
-                    **kwargs)
+    dico.set_params(transform_algorithm=transform_algorithm, **kwargs)
     code = dico.transform(data)
     patches = np.dot(code, V)
 
     if transform_algorithm == 'threshold':
         patches -= patches.min()
         patches /= patches.max()
-    
+
     patches += intercept
     patches = patches.reshape(len(data), *patch_size)
     if transform_algorithm == 'threshold':
