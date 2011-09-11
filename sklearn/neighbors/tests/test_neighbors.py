@@ -88,13 +88,17 @@ def test_kneighbors_classifier(n_samples=40,
     X = 2 * rng.rand(n_samples, n_features) - 1
     y = ((X ** 2).sum(axis=1) < .25).astype(np.int)
 
+    weight_func = lambda d: d ** -2
+
     for algorithm in ALGORITHMS:
-        knn = neighbors.KNeighborsClassifier(n_neighbors=n_neighbors,
-                                             algorithm=algorithm)
-        knn.fit(X, y)
-        epsilon = 1e-5 * (2 * rng.rand(1, n_features) - 1)
-        y_pred = knn.predict(X[:n_test_pts] + epsilon)
-        assert_array_equal(y_pred, y[:n_test_pts])
+        for weights in ['uniform', 'distance', weight_func]:
+            knn = neighbors.KNeighborsClassifier(n_neighbors=n_neighbors,
+                                                 weights=weights,
+                                                 algorithm=algorithm)
+            knn.fit(X, y)
+            epsilon = 1e-5 * (2 * rng.rand(1, n_features) - 1)
+            y_pred = knn.predict(X[:n_test_pts] + epsilon)
+            assert_array_equal(y_pred , y[:n_test_pts])
 
 
 def test_radius_neighbors_classifier(n_samples=40,
@@ -106,13 +110,17 @@ def test_radius_neighbors_classifier(n_samples=40,
     X = 2 * rng.rand(n_samples, n_features) - 1
     y = ((X ** 2).sum(axis=1) < .25).astype(np.int)
 
+    weight_func = lambda d: d ** -2
+
     for algorithm in ALGORITHMS:
-        neigh = neighbors.RadiusNeighborsClassifier(radius=radius,
-                                                    algorithm=algorithm)
-        neigh.fit(X, y)
-        epsilon = 1e-5 * (2 * rng.rand(1, n_features) - 1)
-        y_pred = neigh.predict(X[:n_test_pts] + epsilon)
-        assert_array_equal(y_pred, y[:n_test_pts])
+        for weights in ['uniform', 'distance', weight_func]:
+            neigh = neighbors.RadiusNeighborsClassifier(radius=radius,
+                                                        weights=weights,
+                                                        algorithm=algorithm)
+            neigh.fit(X, y)
+            epsilon = 1e-5 * (2 * rng.rand(1, n_features) - 1)
+            y_pred = neigh.predict(X[:n_test_pts] + epsilon)
+            assert_array_equal(y_pred, y[:n_test_pts])
 
 
 def test_kneighbors_classifier_sparse(n_samples=40,
@@ -151,13 +159,17 @@ def test_kneighbors_regressor(n_samples=40,
 
     y_target = y[:n_test_pts]
 
+    weight_func = lambda d: d ** -2
+
     for algorithm in ALGORITHMS:
-        knn = neighbors.KNeighborsRegressor(n_neighbors=n_neighbors,
-                                            algorithm=algorithm)
-        knn.fit(X, y)
-        epsilon = 1E-5 * (2 * rng.rand(1, n_features) - 1)
-        y_pred = knn.predict(X[:n_test_pts] + epsilon)
-        assert np.all(abs(y_pred - y_target) < 0.3)
+        for weights in ['uniform', 'distance', weight_func]:
+            knn = neighbors.KNeighborsRegressor(n_neighbors=n_neighbors,
+                                                weights=weights,
+                                                algorithm=algorithm)
+            knn.fit(X, y)
+            epsilon = 1E-5 * (2 * rng.rand(1, n_features) - 1)
+            y_pred = knn.predict(X[:n_test_pts] + epsilon)
+            assert np.all(abs(y_pred - y_target) < 0.3)
 
 
 def test_radius_neighbors_regressor(n_samples=40,
@@ -172,13 +184,16 @@ def test_radius_neighbors_regressor(n_samples=40,
 
     y_target = y[:n_test_pts]
 
+    weight_func = lambda d: d ** -2
+
     for algorithm in ALGORITHMS:
-        neigh = neighbors.RadiusNeighborsRegressor(radius=radius,
-                                                   algorithm=algorithm)
-        neigh.fit(X, y)
-        epsilon = 1E-5 * (2 * rng.rand(1, n_features) - 1)
-        y_pred = neigh.predict(X[:n_test_pts] + epsilon)
-        assert np.all(abs(y_pred - y_target) < radius / 2)
+        for weights in ['uniform', 'distance', weight_func]:
+            neigh = neighbors.RadiusNeighborsRegressor(radius=radius,
+                                                       algorithm=algorithm)
+            neigh.fit(X, y)
+            epsilon = 1E-5 * (2 * rng.rand(1, n_features) - 1)
+            y_pred = neigh.predict(X[:n_test_pts] + epsilon)
+            assert np.all(abs(y_pred - y_target) < radius / 2)
 
 
 def test_kneighbors_regressor_sparse(n_samples=40,

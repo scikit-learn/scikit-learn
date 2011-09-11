@@ -39,8 +39,8 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
     >>> y = [0, 0, 1, 1]
     >>> from sklearn.neighbors import KNeighborsClassifier
     >>> neigh = KNeighborsClassifier(n_neighbors=2)
-    >>> neigh.fit(X, y)
-    KNeighborsClassifier(algorithm='auto', leaf_size=30, n_neighbors=2)
+    >>> neigh.fit(X, y) # doctest: +ELLIPSIS
+    KNeighborsClassifier(...)
     >>> print neigh.predict([[1.5]])
     [0]
 
@@ -111,8 +111,8 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
     >>> y = [0, 0, 1, 1]
     >>> from sklearn.neighbors import RadiusNeighborsClassifier
     >>> neigh = RadiusNeighborsClassifier(radius=1.0)
-    >>> neigh.fit(X, y)
-    RadiusNeighborsClassifier(algorithm='auto', leaf_size=30, radius=1.0)
+    >>> neigh.fit(X, y) # doctest: +ELLIPSIS
+    RadiusNeighborsClassifier(...)
     >>> print neigh.predict([[1.5]])
     [0]
 
@@ -158,7 +158,8 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
             mode = np.asarray([stats.mode(pl)[0] for pl in pred_labels],
                               dtype=np.int)
         else:
-            mode = np.asarray([weighted_mode(pl)[0] for pl in pred_labels],
+            mode = np.asarray([weighted_mode(pl,w)[0]
+                               for (pl, w) in zip(pred_labels, weights)],
                               dtype=np.int)
 
         return mode.flatten().astype(np.int)

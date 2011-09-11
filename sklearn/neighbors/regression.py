@@ -42,8 +42,8 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
     >>> y = [0, 0, 1, 1]
     >>> from sklearn.neighbors import KNeighborsRegressor
     >>> neigh = KNeighborsRegressor(n_neighbors=2)
-    >>> neigh.fit(X, y)
-    KNeighborsRegressor(algorithm='auto', leaf_size=30, n_neighbors=2)
+    >>> neigh.fit(X, y) # doctest: +ELLIPSIS
+    KNeighborsRegressor(...)
     >>> print neigh.predict([[1.5]])
     [ 0.5]
 
@@ -116,8 +116,8 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
     >>> y = [0, 0, 1, 1]
     >>> from sklearn.neighbors import KNeighborsRegressor
     >>> neigh = RadiusNeighborsRegressor(radius=1.0)
-    >>> neigh.fit(X, y)
-    RadiusNeighborsRegressor(algorithm='auto', leaf_size=30, radius=1.0)
+    >>> neigh.fit(X, y) # doctest: +ELLIPSIS
+    RadiusNeighborsRegressor(...)
     >>> print neigh.predict([[1.5]])
     [ 0.5]
 
@@ -156,7 +156,7 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
 
         neigh_dist, neigh_ind = self.radius_neighbors(X)
 
-        weights = _get_weights(neigh_dist)
+        weights = _get_weights(neigh_dist, self.weights)
 
         if weights is None:
             return np.array([np.mean(self._y[ind])
