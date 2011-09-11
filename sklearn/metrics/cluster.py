@@ -121,18 +121,18 @@ def ari_score(labels_true, labels_pred):
     classes = np.unique(labels_true)
     clusters = np.unique(labels_pred)
 
-    # special limit cases: no clustering since the data is not splitted.
-    # This is a perfect match
+    # Special limit cases: no clustering since the data is not splitted.
+    # This is a perfect match hence return 1.0.
     if (classes.shape[0] == clusters.shape[0] == 1
         or classes.shape[0] == clusters.shape[0] == 0):
         return 1.0
 
-    # the cluster and class ids are not necessarily consecutive integers
+    # The cluster and class ids are not necessarily consecutive integers
     # starting at 0 hence build a map
     class_idx = dict((k, v) for v, k in enumerate(classes))
     cluster_idx = dict((k, v) for v, k in enumerate(clusters))
 
-    # build the contengency table
+    # Build the contengency table
     n_classes = classes.shape[0]
     n_clusters = clusters.shape[0]
     contengency = np.zeros((n_classes, n_clusters), dtype=np.int)
@@ -140,7 +140,7 @@ def ari_score(labels_true, labels_pred):
     for c, k in zip(labels_true, labels_pred):
         contengency[class_idx[c], cluster_idx[k]] += 1
 
-    # compute the ARI using the contengency data
+    # Compute the ARI using the contengency data
     sum_comb_c = sum(comb(n_c, 2) for n_c in contengency.sum(axis=1))
     sum_comb_k = sum(comb(n_k, 2) for n_k in contengency.sum(axis=0))
 
