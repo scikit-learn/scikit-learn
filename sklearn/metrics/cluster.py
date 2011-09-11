@@ -71,7 +71,8 @@ def ari_score(labels_true, labels_pred):
     Returns
     -------
     ari: float
-       Similarity score between ~0.0 and 1.0. 1.0 stands for perfect match.
+       Similarity score between -1.0 and 1.0. Random labelings have an ARI
+       close to 0.0. 1.0 stands for perfect match.
 
     Example
     -------

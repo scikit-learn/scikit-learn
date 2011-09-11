@@ -380,7 +380,7 @@ Perfect labeling is scored 1.0::
   >>> metrics.ari_score(labels_true, labels_pred)
   1.0
 
-Independent labelings have negative clause to 0.0 scores::
+Bad (e.g. independent labelings) have negative or close to 0.0 scores::
 
   >>> labels_true = [0, 1, 2, 0, 3, 4, 5, 1]
   >>> labels_pred = [1, 1, 0, 0, 2, 2, 2, 2]
