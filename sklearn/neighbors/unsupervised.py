@@ -1,7 +1,7 @@
 """Unsupervised nearest neighbors learner"""
 import numpy as np
 
-from .base import \
+from .base import construct_docstring, \
     NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin, UnsupervisedMixin
 
 
@@ -11,28 +11,13 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
 
     Parameters
     ----------
-    n_neighbors : int, optional (default = 5)
-        Number of neighbors to use by default for :meth:`k_neighbors` queries.
+    @INCLUDE n_neighbors
 
-    radius : float, optional (default = 1.0)
-        Range of parameter space to use by default for :meth`radius_neighbors`
-        queries.
+    @INCLUDE radius
 
-    algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
-        Algorithm used to compute the nearest neighbors.
-        ``'ball_tree'`` will use :class:`BallTree`,
-        ``'kd_tree'`` will use :class:`scipy.spatial.cKDtree`, 
-        and ``'brute'`` will use a brute-force search.
-        ``'auto'`` will guess the most appropriate algorithm based on the
-        values passed to :meth:`fit` method.
-        Note: Fitting on sparse input will override the setting of this
-        parameter, using brute force.
+    @INCLUDE algorithm
 
-    leaf_size : int, optional (default = 30)
-        Leaf size passed to BallTree or cKDTree.  This can affect the speed
-        of the construction and query, as well as the memory required to
-        store the tree.  The optimal value depends on the nature of the
-        problem.
+    @INCLUDE leaf_size
 
     Examples
     --------
@@ -54,15 +39,9 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
     RadiusNeighborsRegressor
     BallTree
 
-    Notes
-    -----
-    See :ref:`Nearest Neighbors <neighbors>` in the online documentation
-    for a discussion of the choice of ``algorithm`` and ``leaf_size``.
-
-    References
-    ----------
-    http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
+    @INCLUDE notes
     """
+    __doc__ = construct_docstring(__doc__)
 
     def __init__(self, n_neighbors=5, radius=1.0,
                  algorithm='auto', leaf_size=30):

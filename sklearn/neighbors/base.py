@@ -7,6 +7,8 @@
 # License: BSD, (C) INRIA, University of Amsterdam
 import warnings
 
+import re
+
 import numpy as np
 from scipy.sparse import csr_matrix, issparse
 from scipy.spatial.ckdtree import cKDTree
@@ -16,10 +18,104 @@ from ..base import BaseEstimator
 from ..metrics import euclidean_distances
 from ..utils import safe_asanyarray, atleast2d_or_csr
 
+algorithm_descr = \
+    ("algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional\n"
+     "    Algorithm used to compute the nearest neighbors:\n"
+     "\n"
+     "    - 'ball_tree' will use :class:`BallTree`\n"
+     "    - 'kd_tree' will use :class:`scipy.spatial.cKDtree`\n"
+     "    - 'brute' will use a brute-force search.\n"
+     "    - 'auto' will attempt to decide the most appropriate algorithm\n"
+     "      based on the values passed to :meth:`fit` method.\n"
+     "\n"
+     "    Note: fitting on sparse input will override the setting of\n"
+     "    this parameter, using brute force.")
+
+leaf_size_descr = \
+    ("leaf_size : int, optional (default = 30)\n"
+     "    Leaf size passed to BallTree or cKDTree.  This can affect the\n"
+     "    speed of the construction and query, as well as the memory\n"
+     "    required to store the tree.  The optimal value depends on the\n"
+     "    nature of the problem.\n")
+
+notes_descr = \
+    ("Notes\n"
+     "-----\n"
+     "See :ref:`Nearest Neighbors <neighbors>` in the online documentation\n"
+     "for a discussion of the choice of ``algorithm`` and ``leaf_size``.\n"
+     "\n"
+     "References\n"
+     "----------\n"
+     "http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm\n")
+
+n_neighbors_descr = \
+    ("n_neighbors : int, optional (default = 5)\n"
+     "    Number of neighbors to use by default for "
+     ":meth:`k_neighbors` queries.\n")
+
+radius_descr = \
+    ("radius : float, optional (default = 1.0)\n"
+     "    Range of parameter space to use by default "
+     "for :meth`radius_neighbors`\n"
+     "    queries.\n")
+
+neighbors_doc_dict = {'algorithm':algorithm_descr,
+                      'leaf_size':leaf_size_descr,
+                      'notes':notes_descr,
+                      'n_neighbors':n_neighbors_descr,
+                      'radius':radius_descr}
+
+def construct_docstring(template,
+                        flag='@INCLUDE',
+                        doc_dict = neighbors_doc_dict,
+                        indent=4):
+    """
+    Construct a documentation string using information from mixins and
+    subclasses.
+
+    Parameters
+    ----------
+    template : string
+        This string gives the template for the docstring.  Anywhere the
+        characters in `flag` are present, the rest of the line will be
+        replaced with the argument of `flag`
+    flag : string
+        The character string indicating when a replacement should be made
+    doc_dict : dict object
+        dictionary of replacement strings for the documentation
+    indent : int
+        The indentation level of the documentation.  Default is 4.
+
+    Returns
+    -------
+    docstr : string
+    """
+    # find all instances of the flag in the template
+    indices = [match.start() for match in re.finditer(flag, template)]
+
+    # build the final docstring from the template
+    docstr = ""
+    i_last = 0
+    for i in indices:
+        docstr += template[i_last:i]
+        
+        current = template[i:]
+
+        i_endline = current.find('\n')
+
+        key = current[:i_endline].strip(flag).strip()
+
+        docstr += doc_dict[key].strip().replace('\n', '\n' + indent * ' ')
+        docstr += '\n'
+
+        i_last = i + i_endline + 1
+
+    docstr += template[i_last:]
+
+    return docstr
 
 class NeighborsBase(BaseEstimator):
     """Base class for nearest neighbors estimators."""
-
     #FIXME: include float parameter p for using different distance metrics.
     # this can be passed directly to BallTree and cKDTree.  Brute-force will
     # rely on soon-to-be-updated functionality in the pairwise module.
