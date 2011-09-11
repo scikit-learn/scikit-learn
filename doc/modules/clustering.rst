@@ -590,3 +590,10 @@ Drawbacks
   than a thousand and the number of clusters is less than 10. For smaller
   sample sizes it is better to use an adjusted index instead such as the
   Adjusted Rand Index or the Adjusted Mutual Information (TODO).
+
+.. topic:: Examples:
+
+ * :ref:`example_cluster_plot_adjustment_for_chance.py`: Analysis of
+   the impact of the dataset size on the value of clustering measures
+   for random assignements.
+
