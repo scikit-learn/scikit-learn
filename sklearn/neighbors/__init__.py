@@ -1,6 +1,7 @@
 __all__ = ['BallTree',
            'kneighbors_graph', 'radius_neighbors_graph',
            'NearestNeighbors',
+           'NeighborsClassifier', 'NeighborsRegressor',
            'KNeighborsClassifier', 'RadiusNeighborsClassifier',
            'KNeighborsRegressor', 'RadiusNeighborsRegressor']
 

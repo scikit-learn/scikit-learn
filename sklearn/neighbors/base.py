@@ -20,8 +20,11 @@ from ..utils import safe_asanyarray, atleast2d_or_csr
 class NeighborsBase(BaseEstimator):
     """Base class for nearest neighbors estimators."""
 
+    #FIXME: include float parameter p for using different distance metrics.
+    # this can be passed directly to BallTree and cKDTree.  Brute-force will
+    # rely on soon-to-be-updated functionality in the pairwise module.
     def _init_params(self, n_neighbors=None, radius=None,
-                     algorithm='auto', leaf_size=20):
+                     algorithm='auto', leaf_size=30):
         self.n_neighbors = n_neighbors
         self.radius = radius
         self.algorithm = algorithm
@@ -116,7 +119,7 @@ class KNeighborsMixin(object):
         >>> from sklearn.neighbors import NearestNeighbors
         >>> neigh = NearestNeighbors(n_neighbors=1)
         >>> neigh.fit(samples) # doctest: +ELLIPSIS
-        NearestNeighbors(algorithm='auto', leaf_size=20, ...)
+        NearestNeighbors(algorithm='auto', leaf_size=30, ...)
         >>> print neigh.kneighbors([1., 1., 1.]) # doctest: +ELLIPSIS
         (array([[ 0.5]]), array([[2]]...))
 
@@ -193,7 +196,7 @@ class KNeighborsMixin(object):
         >>> from sklearn.neighbors import NearestNeighbors
         >>> neigh = NearestNeighbors(n_neighbors=2)
         >>> neigh.fit(X) # doctest: +ELLIPSIS
-        NearestNeighbors(algorithm='auto', leaf_size=20, ...)
+        NearestNeighbors(algorithm='auto', leaf_size=30, ...)
         >>> A = neigh.kneighbors_graph(X)
         >>> A.todense()
         matrix([[ 1.,  0.,  1.],
@@ -272,7 +275,7 @@ class RadiusNeighborsMixin(object):
         >>> from sklearn.neighbors import NearestNeighbors
         >>> neigh = NearestNeighbors(radius=1.6)
         >>> neigh.fit(samples) # doctest: +ELLIPSIS
-        NearestNeighbors(algorithm='auto', leaf_size=20, ...)
+        NearestNeighbors(algorithm='auto', leaf_size=30, ...)
         >>> print neigh.radius_neighbors([1., 1., 1.]) # doctest: +ELLIPSIS
         (array([[ 1.5  0.5]]...), array([[1 2]]...)
 
@@ -382,7 +385,7 @@ class RadiusNeighborsMixin(object):
         >>> from sklearn.neighbors import NearestNeighbors
         >>> neigh = NearestNeighbors(radius=1.5)
         >>> neigh.fit(X) # doctest: +ELLIPSIS
-        NearestNeighbors(algorithm='auto', leaf_size=20, ...)
+        NearestNeighbors(algorithm='auto', leaf_size=30, ...)
         >>> A = neigh.radius_neighbors_graph(X)
         >>> A.todense()
         matrix([[ 1.,  0.,  1.],

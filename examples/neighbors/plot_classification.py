@@ -1,7 +1,7 @@
 """
-=================
-Nearest Neighbors
-=================
+================================
+Nearest Neighbors Classification
+================================
 
 Sample usage of Nearest Neighbors classification.
 It will plot the decision boundaries for each class.
@@ -10,6 +10,7 @@ print __doc__
 
 import numpy as np
 import pylab as pl
+from matplotlib.colors import ListedColormap
 from sklearn import neighbors, datasets
 
 n_neighbors = 5
@@ -33,13 +34,16 @@ y_min, y_max = X[:,1].min()-1, X[:,1].max() + 1
 xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
 Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])
 
+# Create color maps
+cmap_light = ListedColormap(['#FFAAAA', '#AAFFAA', '#AAAAFF'])
+cmap_bold = ListedColormap(['#FF0000', '#00FF00', '#0000FF'])
+
 # Put the result into a color plot
 Z = Z.reshape(xx.shape)
-pl.set_cmap(pl.cm.prism)
-pl.pcolormesh(xx, yy, Z)
+pl.pcolormesh(xx, yy, Z, cmap=cmap_light)
 
 # Plot also the training points
-pl.scatter(X[:,0], X[:,1], c=y)
+pl.scatter(X[:,0], X[:,1], c=y, cmap=cmap_bold)
 pl.title('3-Class classification using %i Nearest Neighbors' % n_neighbors)
 pl.axis('tight')
 pl.show()

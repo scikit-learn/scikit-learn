@@ -36,7 +36,7 @@ from sklearn.linear_model import RidgeClassifier
 from sklearn.svm.sparse import LinearSVC
 from sklearn.linear_model.sparse import SGDClassifier
 from sklearn.naive_bayes import BernoulliNB, MultinomialNB
-from sklearn.neighbors import NeighborsClassifier
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.utils.extmath import density
 from sklearn import metrics
 
@@ -181,7 +181,7 @@ def benchmark(clf):
     return score, train_time, test_time
 
 for clf, name in ((RidgeClassifier(tol=1e-1), "Ridge Classifier"),
-                  (NeighborsClassifier(n_neighbors=10), "kNN")):
+                  (KNeighborsClassifier(n_neighbors=10), "kNN")):
     print 80 * '='
     print name
     results = benchmark(clf)

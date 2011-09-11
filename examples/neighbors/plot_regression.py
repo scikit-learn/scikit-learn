@@ -1,7 +1,7 @@
 """
-==============================
-k-Nearest Neighbors regression
-==============================
+============================
+Nearest Neighbors regression
+============================
 
 Demonstrate the resolution of a regression problem
 using a k-Nearest Neighbor and the interpolation of the

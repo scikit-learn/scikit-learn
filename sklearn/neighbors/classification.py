@@ -23,23 +23,24 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
     Parameters
     ----------
-    n_neighbors : int, optional
-        Number of neighbors to use by default for prediction. Default is 5.
+    n_neighbors : int, optional (default = 5)
+        Number of neighbors to use by default for :meth:`k_neighbors` queries.
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
-        Algorithm used to compute the nearest neighbors. 'ball_tree' will
-        construct a BallTree, 'kd_tree' will use the KD-tree implementation
-        in `scipy.spatial.ckdtree`, while 'brute' will perform brute-force
-        search. 'auto' will guess the most appropriate based on current
-        dataset.  See Discussion in `NearestNeighbors` for notes on choosing
-        the optimal method. Fitting on sparse input will override the setting
-        of this parameter.
+        Algorithm used to compute the nearest neighbors.
+        ``'ball_tree'`` will use :class:`BallTree`,
+        ``'kd_tree'`` will use :class:`scipy.spatial.cKDtree`, 
+        and ``'brute'`` will use a brute-force search.
+        ``'auto'`` will guess the most appropriate algorithm based on the
+        values passed to :meth:`fit` method.
+        Note: Fitting on sparse input will override the setting of this
+        parameter, using brute force.
 
-    leaf_size : int, optional
+    leaf_size : int, optional (default = 30)
         Leaf size passed to BallTree or cKDTree.  This can affect the speed
-        of the nearest neighbors query.  The optimal value depends on the
-        nature of the problem (see Discussion in NearestNeighbors).
-        Defaults to 20.
+        of the construction and query, as well as the memory required to
+        store the tree.  The optimal value depends on the nature of the
+        problem.
 
     Examples
     --------
@@ -48,7 +49,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
     >>> from sklearn.neighbors import KNeighborsClassifier
     >>> neigh = KNeighborsClassifier(n_neighbors=2)
     >>> neigh.fit(X, y)
-    KNeighborsClassifier(algorithm='auto', leaf_size=20, n_neighbors=2)
+    KNeighborsClassifier(algorithm='auto', leaf_size=30, n_neighbors=2)
     >>> print neigh.predict([[1.5]])
     [0]
 
@@ -61,11 +62,14 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
     Notes
     -----
-    See Discussion in NearestNeighbors docstring regarding the optimal
-    choice of algorithm and leaf_size.
+    See :ref:`Nearest Neighbors <neighbors>` in the online documentation
+    for a discussion of the choice of ``algorithm`` and ``leaf_size``.
+
+    References
+    ----------
     http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
-    def __init__(self, n_neighbors=5, algorithm='auto', leaf_size=20):
+    def __init__(self, n_neighbors=5, algorithm='auto', leaf_size=30):
         self._init_params(n_neighbors=n_neighbors,
                           algorithm=algorithm,
                           leaf_size=leaf_size)
@@ -97,23 +101,25 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
     Parameters
     ----------
-    radius : float, optional
-        Radius to use by default for prediction. Default is 1.0.
+    radius : float, optional (default = 1.0)
+        Range of parameter space to use by default for :meth`radius_neighbors`
+        queries.
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
-        Algorithm used to compute the nearest neighbors. 'ball_tree' will
-        construct a BallTree, 'kd_tree' will use the KD-tree implementation
-        in `scipy.spatial.ckdtree`, while 'brute' will perform brute-force
-        search. 'auto' will guess the most appropriate based on current
-        dataset.  See Discussion in `NearestNeighbors` for notes on choosing
-        the optimal method. Fitting on sparse input will override the setting
-        of this parameter.
+        Algorithm used to compute the nearest neighbors.
+        ``'ball_tree'`` will use :class:`BallTree`,
+        ``'kd_tree'`` will use :class:`scipy.spatial.cKDtree`, 
+        and ``'brute'`` will use a brute-force search.
+        ``'auto'`` will guess the most appropriate algorithm based on the
+        values passed to :meth:`fit` method.
+        Note: fitting on sparse input will override the setting of this
+        parameter, using brute force.
 
-    leaf_size : int, optional
+    leaf_size : int, optional (default = 30)
         Leaf size passed to BallTree or cKDTree.  This can affect the speed
-        of the nearest neighbors query.  The optimal value depends on the
-        nature of the problem (see Discussion in NearestNeighbors).
-        Defaults to 20.
+        of the construction and query, as well as the memory required to
+        store the tree.  The optimal value depends on the nature of the
+        problem.
 
     Examples
     --------
@@ -122,7 +128,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
     >>> from sklearn.neighbors import RadiusNeighborsClassifier
     >>> neigh = RadiusNeighborsClassifier(radius=1.0)
     >>> neigh.fit(X, y)
-    RadiusNeighborsClassifier(algorithm='auto', leaf_size=20, radius=1.0)
+    RadiusNeighborsClassifier(algorithm='auto', leaf_size=30, radius=1.0)
     >>> print neigh.predict([[1.5]])
     [0]
 
@@ -135,11 +141,14 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
     Notes
     -----
-    See Discussion in NearestNeighbors docstring regarding the optimal
-    choice of algorithm and leaf_size.
+    See :ref:`Nearest Neighbors <neighbors>` in the online documentation
+    for a discussion of the choice of ``algorithm`` and ``leaf_size``.
+
+    References
+    ----------
     http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
-    def __init__(self, radius=5, algorithm='auto', leaf_size=20):
+    def __init__(self, radius=5, algorithm='auto', leaf_size=30):
         self._init_params(radius=radius,
                           algorithm=algorithm,
                           leaf_size=leaf_size)
@@ -171,7 +180,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 class NeighborsClassifier(NeighborsBase, KNeighborsMixin,
                           RadiusNeighborsMixin, SupervisedIntegerMixin,
                           ClassifierMixin):
-    """Classifier implementing the nearest neighbors vote.
+    """Classifier implementing the nearest neighbors vote. (Deprecated)
 
     DEPRECATED IN VERSION 0.9; WILL BE REMOVED IN VERSION 0.11
     Please use :class:`KNeighborsClassifier` or
@@ -183,27 +192,28 @@ class NeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
     Parameters
     ----------
-    n_neighbors : int, optional
-        Number of neighbors to use by default for k-NN prediction.
-        Default is 5.
+    n_neighbors : int, optional (default = 5)
+        Number of neighbors to use by default for :meth:`k_neighbors` queries.
 
-    radius : float, optional
-        Radius to use by default for r-NN prediction. Default is 1.0.
+    radius : float, optional (default = 1.0)
+        Range of parameter space to use by default for :meth`radius_neighbors`
+        queries.
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
-        Algorithm used to compute the nearest neighbors. 'ball_tree' will
-        construct a BallTree, 'kd_tree' will use the KD-tree implementation
-        in `scipy.spatial.ckdtree`, while 'brute' will perform brute-force
-        search. 'auto' will guess the most appropriate based on current
-        dataset.  See Discussion in `NearestNeighbors` for notes on choosing
-        the optimal method. Fitting on sparse input will override the setting
-        of this parameter.
+        Algorithm used to compute the nearest neighbors.
+        ``'ball_tree'`` will use :class:`BallTree`,
+        ``'kd_tree'`` will use :class:`scipy.spatial.cKDtree`, 
+        and ``'brute'`` will use a brute-force search.
+        ``'auto'`` will guess the most appropriate algorithm based on the
+        values passed to :meth:`fit` method.
+        Note: fitting on sparse input will override the setting of this
+        parameter, using brute force.
 
-    leaf_size : int, optional
+    leaf_size : int, optional (default = 30)
         Leaf size passed to BallTree or cKDTree.  This can affect the speed
-        of the nearest neighbors query.  The optimal value depends on the
-        nature of the problem (see Discussion in NearestNeighbors).
-        Defaults to 20.
+        of the construction and query, as well as the memory required to
+        store the tree.  The optimal value depends on the nature of the
+        problem.
 
     classification_type : {'knn_vote', 'radius_vote'}, optional
         Type of fit to use: 'knn_vote' specifies a k-NN classification.
@@ -217,7 +227,7 @@ class NeighborsClassifier(NeighborsBase, KNeighborsMixin,
     >>> neigh = NeighborsClassifier(n_neighbors=2)
     >>> neigh.fit(X, y)
     NeighborsClassifier(algorithm='auto', classification_type='knn_vote',
-              leaf_size=20, n_neighbors=2, radius=1.0)
+              leaf_size=30, n_neighbors=2, radius=1.0)
     >>> print neigh.predict([[1.5]])
     [0]
 
@@ -228,12 +238,15 @@ class NeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
     Notes
     -----
-    See Discussion in NearestNeighbors docstring regarding the optimal
-    choice of algorithm and leaf_size.
+    See :ref:`Nearest Neighbors <neighbors>` in the online documentation
+    for a discussion of the choice of ``algorithm`` and ``leaf_size``.
+
+    References
+    ----------
     http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
     def __init__(self, n_neighbors=5, radius=1.0,
-                 algorithm='auto', leaf_size=20,
+                 algorithm='auto', leaf_size=30,
                  classification_type='knn_vote'):
         if classification_type not in ('radius_vote', 'knn_vote'):
             raise ValueError("classification_type not recognized")
