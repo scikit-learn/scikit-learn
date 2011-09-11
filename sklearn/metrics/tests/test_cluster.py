@@ -105,7 +105,7 @@ def test_non_consicutive_labels():
 
 def uniform_labelings_scores(score_func, n_samples, k_range, n_runs=10,
                              seed=42):
-    """Compute score for random uniform cluster labelins"""
+    """Compute score for random uniform cluster labelings"""
     random_labels = np.random.RandomState(seed).random_integers
     scores = np.zeros((len(k_range), n_runs))
     for i, k in enumerate(k_range):
