@@ -25,7 +25,7 @@ distance is the most common choice.
 Neighbors-based methods are known as *non-generalizing* machine
 learning methods, since they simply "remember" all of its training data
 (possibly transformed into a fast indexing structure such as a
-`Ball Tree <ball_tree>`_ or `KD Tree <kd_tree>`.).
+:ref:`Ball Tree <ball_tree>` or :ref:`KD Tree <kd_tree>`.).
 
 Despite its simplicity, nearest neighbors has been successful in a
 large number of classification and regression problems, including
