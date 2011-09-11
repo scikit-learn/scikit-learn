@@ -10,8 +10,10 @@
 import numpy as np
 from scipy import linalg
 
-from .base import construct_docstring, \
-    NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin, SupervisedFloatMixin
+from .base import \
+    construct_docstring, _get_weights, _check_weights, \
+    NeighborsBase, KNeighborsMixin, \
+    RadiusNeighborsMixin, SupervisedFloatMixin
 from ..base import RegressorMixin
 from ..utils import atleast2d_or_csr, deprecated
 
@@ -27,6 +29,8 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
     Parameters
     ----------
     @INCLUDE n_neighbors
+
+    @INCLUDE weights
 
     @INCLUDE algorithm
 
@@ -54,10 +58,12 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
     """
     __doc__ = construct_docstring(__doc__)
 
-    def __init__(self, n_neighbors=5, algorithm='auto', leaf_size=30):
+    def __init__(self, n_neighbors=5, weights='uniform',
+                 algorithm='auto', leaf_size=30):
         self._init_params(n_neighbors=n_neighbors,
                           algorithm=algorithm,
                           leaf_size=leaf_size)
+        self.weights = _check_weights(weights)
 
     def predict(self, X):
         """Predict the target for the provided data
@@ -74,9 +80,16 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         """
         X = atleast2d_or_csr(X)
 
-        neigh_ind = self.kneighbors(X, return_distance=False)
+        neigh_dist, neigh_ind = self.kneighbors(X)
 
-        return np.mean(self._y[neigh_ind], axis=1)
+        weights = _get_weights(neigh_dist, self.weights)
+
+        if weights is None:
+            return np.mean(self._y[neigh_ind], axis=1)
+        else:
+            num = np.sum(self._y[neigh_ind] * weights, axis=1)
+            denom = np.sum(weights, axis=1)
+            return num / denom
 
 
 class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
@@ -90,6 +103,8 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
     Parameters
     ----------
     @INCLUDE radius
+
+    @INCLUDE weights
 
     @INCLUDE algorithm
 
@@ -117,10 +132,12 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
     """
     __doc__ = construct_docstring(__doc__)
 
-    def __init__(self, radius=1.0, algorithm='auto', leaf_size=30):
+    def __init__(self, radius=1.0, weights='uniform',
+                 algorithm='auto', leaf_size=30):
         self._init_params(radius=radius,
                           algorithm=algorithm,
                           leaf_size=leaf_size)
+        self.weights = _check_weights(weights)
 
     def predict(self, X):
         """Predict the target for the provided data
@@ -137,10 +154,17 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
         """
         X = atleast2d_or_csr(X)
 
-        neigh_ind = self.radius_neighbors(X, return_distance=False)
+        neigh_dist, neigh_ind = self.radius_neighbors(X)
 
-        return np.array([np.mean(self._y[ind])
-                         for ind in neigh_ind])
+        weights = _get_weights(neigh_dist)
+
+        if weights is None:
+            return np.array([np.mean(self._y[ind])
+                             for ind in neigh_ind])
+        else:
+            return np.array([(np.sum(self._y[ind] * weights[i])
+                              / np.sum(weights[i]))
+                             for (i, ind) in enumerate(neigh_ind)])
 
 
 @deprecated("deprecated in v0.9; will be removed in v0.11; "

@@ -59,11 +59,28 @@ radius_descr = \
      "for :meth`radius_neighbors`\n"
      "    queries.\n")
 
+weights_descr = \
+    ("weights : str or callable\n"
+     "    weight function used in prediction.  Possible values:\n"
+     "\n"
+     "    - 'uniform' : uniform weights.  All points in each neighborhood\n"
+     "      are weighted equally.\n"
+     "    - 'distance' : weight points by the inverse of their distance.\n"
+     "      in this case, closer neighbors of a query point will have a\n"
+     "      greater influence than neighbors which are further away.\n"
+     "    - [callable] : a user-defined function which accepts an\n"
+     "      array of distances, and returns an array of the same shape\n"
+     "      containing the weights.\n"
+     "\n"
+     "    Uniform weights are used by default.")
+
+
 neighbors_doc_dict = {'algorithm':algorithm_descr,
                       'leaf_size':leaf_size_descr,
                       'notes':notes_descr,
                       'n_neighbors':n_neighbors_descr,
-                      'radius':radius_descr}
+                      'radius':radius_descr,
+                      'weights':weights_descr}
 
 def construct_docstring(template,
                         flag='@INCLUDE',
@@ -113,6 +130,48 @@ def construct_docstring(template,
     docstr += template[i_last:]
 
     return docstr
+
+def _check_weights(weights):
+    """
+    check to make sure weights are valid
+    """
+    if weights in (None, 'uniform', 'distance'):
+        return weights
+    elif callable(weights):
+        return weights
+    else:
+        raise ValueError("weights not recognized: should be 'uniform', "
+                         "'distance', or a callable function")
+
+def _get_weights(dist, weights):
+    """
+    get the weights from an array of distances and a parameter ``weights``,
+    which can be either a string or an executable
+
+    returns ``weights_arr``, an array of the same size as ``dist``
+    if ``weights == 'uniform'``, then returns None
+    """
+    if dist.dtype == np.dtype(object):
+        if weights in (None, 'uniform'):
+            return None
+        elif weights == 'distance':
+            return [1. / d for d in dist]
+        elif callable(weights):
+            return [weights(d) for d in dist]
+        else:
+            raise ValueError("weights not recognized: should be 'uniform', "
+                             "'distance', or a callable function")
+    else:
+        if weights in (None, 'uniform'):
+            return None
+        elif weights == 'distance':
+            return 1. / dist
+        elif callable(weights):
+            return weights(dist)
+        else:
+            raise ValueError("weights not recognized: should be 'uniform', "
+                             "'distance', or a callable function")
+
 
 class NeighborsBase(BaseEstimator):
     """Base class for nearest neighbors estimators."""

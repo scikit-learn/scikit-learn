@@ -9,8 +9,10 @@
 
 import numpy as np
 from scipy import stats
+from .tools import weighted_mode
 
-from .base import construct_docstring, \
+from .base import \
+    construct_docstring, _check_weights, _get_weights, \
     NeighborsBase, KNeighborsMixin,\
     RadiusNeighborsMixin, SupervisedIntegerMixin
 from ..base import ClassifierMixin
@@ -24,6 +26,8 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
     Parameters
     ----------
     @INCLUDE n_neighbors
+
+    @INCLUDE weights
 
     @INCLUDE algorithm
 
@@ -51,10 +55,13 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
     """
     __doc__ = construct_docstring(__doc__)
 
-    def __init__(self, n_neighbors=5, algorithm='auto', leaf_size=30):
+    def __init__(self, n_neighbors=5, 
+                 weights='uniform',
+                 algorithm='auto', leaf_size=30):
         self._init_params(n_neighbors=n_neighbors,
                           algorithm=algorithm,
                           leaf_size=leaf_size)
+        self.weights = _check_weights(weights)
 
     def predict(self, X):
         """Predict the class labels for the provided data
@@ -71,9 +78,16 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         """
         X = atleast2d_or_csr(X)
 
-        neigh_ind = self.kneighbors(X, return_distance=False)
+        neigh_dist, neigh_ind = self.kneighbors(X)
         pred_labels = self._y[neigh_ind]
-        mode, _ = stats.mode(pred_labels, axis=1)
+
+        weights = _get_weights(neigh_dist, self.weights)
+
+        if weights is None:
+            mode, _ = stats.mode(pred_labels, axis=1)
+        else:
+            mode, _ = weighted_mode(pred_labels, weights, axis=1)
+
         return mode.flatten().astype(np.int)
 
 
@@ -84,6 +98,8 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
     Parameters
     ----------
     @INCLUDE radius
+
+    @INCLUDE weights
 
     @INCLUDE algorithm
 
@@ -111,10 +127,12 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
     """
     __doc__ = construct_docstring(__doc__)
 
-    def __init__(self, radius=5, algorithm='auto', leaf_size=30):
+    def __init__(self, radius=5, weights='uniform',
+                 algorithm='auto', leaf_size=30):
         self._init_params(radius=radius,
                           algorithm=algorithm,
                           leaf_size=leaf_size)
+        self.weights = _check_weights(weights)
 
     def predict(self, X):
         """Predict the class labels for the provided data
@@ -131,10 +149,18 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         """
         X = atleast2d_or_csr(X)
 
-        neigh_ind = self.radius_neighbors(X, return_distance=False)
+        neigh_dist, neigh_ind = self.radius_neighbors(X)
         pred_labels = [self._y[ind] for ind in neigh_ind]
-        mode = np.asarray([stats.mode(pl)[0] for pl in pred_labels],
-                          dtype=np.int)
+
+        weights = _get_weights(neigh_dist, self.weights)
+
+        if weights is None:
+            mode = np.asarray([stats.mode(pl)[0] for pl in pred_labels],
+                              dtype=np.int)
+        else:
+            mode = np.asarray([weighted_mode(pl)[0] for pl in pred_labels],
+                              dtype=np.int)
+
         return mode.flatten().astype(np.int)
 
 
