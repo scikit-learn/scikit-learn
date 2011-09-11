@@ -266,6 +266,22 @@ def test_vectorizer_max_df():
     assert u'a' not in vect.vocabulary.keys()  # 'a' is ignored
     assert_equals(len(vect.vocabulary.keys()), 4)  # the others remain
 
+def test_vectorizer_min_df():
+    test_data = [u'this is a document',
+                 u'this is another document',
+                 u'another document appears']
+    n_doc = len(test_data)
+    max_df = (n_doc-1.0)/n_doc #all documents but one
+    min_df = 2.0/n_doc #at least two documents
+    
+    vect = Vectorizer(WordNGramAnalyzer(stop_words=None),
+                      max_df=max_df,
+                      min_df=min_df)
+    vect.fit_transform(test_data)
+    assert u'document' not in vect.vocabulary.keys() #term in all documents
+    assert u'appears' not in vect.vocabulary.keys() #term in only one document
+    assert_equals(len(vect.vocabulary.keys()),3) #other terms except 'a' remain
+
 
 def test_vectorizer_inverse_transform():
     # raw documents
