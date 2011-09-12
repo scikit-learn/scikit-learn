@@ -4,7 +4,8 @@ This module contains both distance metrics and kernels. A brief summary is
 given on the two here.
 
 Distance metrics are a function d(a, b) such that d(a, b) < d(a, c) if objects
-a and b are considered "more similar" to objects a and c.
+a and b are considered "more similar" to objects a and c. Two objects exactly
+alike would have a distance of zero.
 One of the most popular examples is Euclidean distance.
 To be a 'true' metric, it must obey the following four conditions:
 
@@ -14,16 +15,16 @@ To be a 'true' metric, it must obey the following four conditions:
 4. d(a, c) <= d(a, b) + d(b, c), the triangle inequality
 
 
-Kernels are measures of similarity, i.e. d(a, b) > d(a, c) if objects a and b
+Kernels are measures of similarity, i.e. s(a, b) > s(a, c) if objects a and b
 are considered "more similar" to objects a and c. A kernel must also be
 positive semi-definite.
 
-There are a number of ways to convert between a distance metric and a kernel.
-Let D be the distance, and K be the kernel:
+There are a number of ways to convert between a distance metric and a similarity
+measure, such as a kernel. Let D be the distance, and S be the kernel:
 
-1. K = np.exp(-D * gamma), where one heuristic for choosing
+1. S = np.exp(-D * gamma), where one heuristic for choosing
    gamma is 1 / num_features
-2. K = 1. / (D / np.max(D))
+2. S = 1. / (D / np.max(D))
 
 """
 
