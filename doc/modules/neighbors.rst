@@ -206,6 +206,13 @@ keyword ``algorithm = 'kd_tree'``, and are computed using the class
 :class:`scipy.spatial.cKDTree`.
 
 
+.. topic:: References:
+
+   * `"Multidimensional binary search trees used for associative searching"
+     <http://dl.acm.org/citation.cfm?doid=361002.361007>`_,
+     Bentley, J.L., Communications of the ACM (1975)
+
+
 .. _ball_tree:
 
 Ball Tree
@@ -235,6 +242,13 @@ does not degrade at high dimensions.  In scikit-learn, ball-tree-based
 neighbors searches are specified using the keyword ``algorithm = 'ball_tree'``,
 and are computed using the class :class:`sklearn.neighbors.BallTree`.
 Alternatively, the user can work with the :class:`BallTree` class directly.
+
+.. topic:: References:
+
+   * `"Five balltree construction algorithms"
+     <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.91.8209>`_,
+     Omohundro, S.M., International Computer Science Institute
+     Technical Report (1989)
 
 Choice of Nearest Neighbors Algorithm
 -------------------------------------
@@ -304,9 +318,9 @@ depends on a number of factors:
 
 Currently, ``algorithm = 'auto'`` selects ``'ball_tree'`` if
 :math:`k < N/2`, and ``'brute'`` otherwise.  This choice is based on
-the assumption that the number of query points on the same order as the
-number of training points, and that ``leaf_size`` is close to its default
-value of ``30``.
+the assumption that the number of query points is at least the same order
+as the number of training points, and that ``leaf_size`` is close to its
+default value of ``30``.
 
 Effect of ``leaf_size``
 -----------------------
@@ -336,17 +350,6 @@ leaf nodes.  The level of this switch can be specified with the parameter
   the size of the training set.
 
 ``leaf_size`` is not referenced for brute force queries.
-
-.. topic:: References:
-
-   * `"Multidimensional binary search trees used for associative searching"
-     <http://dl.acm.org/citation.cfm?doid=361002.361007>`_,
-     Bentley, J.L., Communications of the ACM (1975)
-
-   * `"Five balltree construction algorithms"
-     <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.91.8209>`_,
-     Omohundro, S.M., International Computer Science Institute
-     Technical Report (1989)
 
 
 

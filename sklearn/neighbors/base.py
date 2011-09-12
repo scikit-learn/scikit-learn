@@ -110,7 +110,10 @@ class NeighborsBase(BaseEstimator):
 
         if self._fit_method == 'auto':
             # BallTree outperforms the others in nearly any circumstance.
-            self._fit_method = 'ball_tree'
+            if self.n_neighbors < self._fit_X.shape[0] / 2:
+                self._fit_method = 'ball_tree'
+            else:
+                self._fit_method = 'brute'
 
         if self._fit_method == 'kd_tree':
             self._tree = cKDTree(X, self.leaf_size)
