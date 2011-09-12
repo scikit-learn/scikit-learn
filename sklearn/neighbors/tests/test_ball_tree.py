@@ -1,6 +1,8 @@
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 
+from scipy.spatial import cKDTree
+
 from sklearn import neighbors
 
 # Note: simple tests of BallTree.query() and BallTree.query_radius()
@@ -55,6 +57,18 @@ def test_ball_tree_pickle():
         ind2, dist2 = bt2.query(X)
         assert np.all(ind1 == ind2)
         assert_array_almost_equal(dist1, dist2)
+
+def test_ball_tree_p_distance():
+    X = np.random.random(size=(100, 5))
+    
+    for p in (1, 2, 3, 4, np.inf):
+        bt = neighbors.BallTree(X, leaf_size=10, p=p)
+        kdt = cKDTree(X, leafsize=10)
+
+        dist_bt, ind_bt = bt.query(X, k=5)
+        dist_kd, ind_kd = kdt.query(X, k=5, p=p)
+
+        assert_array_almost_equal(dist_bt, dist_kd)
 
 
 if __name__ == '__main__':
