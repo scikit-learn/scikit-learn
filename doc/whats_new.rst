@@ -59,6 +59,17 @@ version 0.8:
     contribute documentation, examples and fix lurking numerical
     stability issues.
 
+  - ``sklearn.neighbors`` has been made into a submodule.  The two previously
+    available estimators, ``NeighborsClassifier`` and ``NeighborsRegressor``
+    have been marked as deprecated.  Their functionality has been divided
+    among five new classes: ``NearestNeighbors`` for unsupervised neighbors
+    searches, ``KNeighborsClassifier`` & ``RadiusNeighborsClassifier``
+    for supervised classification problems, and ``KNeighborsRegressor``
+    & ``RadiusNeighborsRegressor`` for supervised regression problems.
+
+  - ``sklearn.ball_tree.BallTree`` has been moved to
+    ``sklearn.neighbors.BallTree``.  Using the former will generate a warning.
+
 Backward compatibilty package aliases and other deprecated classes and
 functions will be removed in version 0.11.
 

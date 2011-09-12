@@ -10,7 +10,7 @@ import numpy as np
 
 from ..utils import extmath, check_random_state
 from ..base import BaseEstimator
-from ..ball_tree import BallTree
+from ..neighbors import BallTree
 
 
 def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0):

@@ -164,9 +164,14 @@ Nearest Neighbors
    :toctree: generated/
    :template: class.rst
 
+   neighbors.NearestNeighbors
+   neighbors.KNeighborsClassifier
+   neighbors.RadiusNeighborsClassifier
    neighbors.NeighborsClassifier
+   neighbors.KNeighborsRegressor
+   neighbors.RadiusNeighborsRegressor
    neighbors.NeighborsRegressor
-   ball_tree.BallTree
+   neighbors.BallTree
 
 .. autosummary::
    :toctree: generated/
