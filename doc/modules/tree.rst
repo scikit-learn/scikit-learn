@@ -126,7 +126,7 @@ Complexity
 ==========
 
 Decision Trees are effective learners, and scikits-learn offers an efficient 
-implementation to the storage and compute complexity.  The main idea in a 
+implementation to the computational complexity.  The main idea in a 
 decision tree is to compute for each node both the feature and the threshold 
 that offers the largest decrease in entropy (or increase in information).
 An inefficient implementation would recompute the class label histograms 
@@ -141,29 +141,33 @@ tree is approximately equal to :math:`log(n_{samples})`, the total time
 complexity for the algorithm is 
 :math:`O(n_{features} \times n_{samples}) \times log(n_{samples})`
 
+This implementation uses fancy indexing for data partitioning during the 
+tree building phase.  While this does increase the memory requirement to 
+3 to 4 times the size of the data in the worst case, it results in significantly 
+faster training times (up to 20 times in certain cases).
 
 Tips on Practical Use
 =====================
 
   * Decision trees tend to overfit to data with large number of features.  
-  Getting the right ratio of samples to number of features is important, since 
-  a tree with few samples in high dimensional space is very likely to overfit.
+    Getting the right ratio of samples to number of features is important, since 
+    a tree with few samples in high dimensional space is very likely to overfit.
   
   * Perform dimensionality reduction (PCA or ICA) beforehand to give your tree
-  a better chance of finding features that are discriminative.
+    a better chance of finding features that are discriminative.
   
   * Visualise your tree as you are training by using the ``export_to_graphviz``
-  function.  Use ``max_depth=3`` as an initial tree depth to get a feel for
-  how the tree is fitting to your data, and then increase the depth.  
+    function.  Use ``max_depth=3`` as an initial tree depth to get a feel for
+    how the tree is fitting to your data, and then increase the depth.  
   
   * Remember that the number of samples required to populate the tree doubles 
-  for each additional level the tree grows to.  Use ``max_depth`` to control
-  the size of the tree to prevent overfitting. 
+    for each additional level the tree grows to.  Use ``max_depth`` to control
+    the size of the tree to prevent overfitting. 
   
   * Use ``min_split`` to control the number of samples at a leaf node.  A very 
-  small number will usually mean the tree will overfit, whereas a large number
-  will prevent the tree from learning the data.  Try ``min_split=5`` as an 
-  initial value.  
+    small number will usually mean the tree will overfit, whereas a large number
+    will prevent the tree from learning the data.  Try ``min_split=5`` as an 
+    initial value.  
 
 ID3, C4.5, C5.0 and CART
 ========================
@@ -200,17 +204,14 @@ Mathematical formulation
 
 .. topic:: References:
 
-    http://en.wikipedia.org/wiki/Decision_tree_learning
+    * http://en.wikipedia.org/wiki/Decision_tree_learning
 
-	http://en.wikipedia.org/wiki/Predictive_analytics
+    * http://en.wikipedia.org/wiki/Predictive_analytics
 
-    L. Breiman, J. Friedman, R. Olshen, and C. Stone. Classification and
-    Regression Trees. Wadsworth, Belmont, CA, 1984.
+    * L. Breiman, J. Friedman, R. Olshen, and C. Stone. Classification and
+      Regression Trees. Wadsworth, Belmont, CA, 1984.
 
-	J.R. Quinlan. C4. 5: programs for machine learning. Morgan Kaufmann, 1993.
+	* J.R. Quinlan. C4. 5: programs for machine learning. Morgan Kaufmann, 1993.
 
-    T. Hastie, R. Tibshirani and J. Friedman.
-    Elements of Statistical Learning, Springer, 2009.
-
-	
-    
+    * T. Hastie, R. Tibshirani and J. Friedman.
+      Elements of Statistical Learning, Springer, 2009.
