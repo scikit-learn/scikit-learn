@@ -8,10 +8,10 @@ a and b are considered "more similar" to objects c and d.
 One of the most popular examples is Euclidean distance.
 To be a 'true' metric, it must obey the following four conditions:
 
-1) d(a, b) >= 0, for all a and b
-2) d(a, b) == 0, if and only if a = b, positive definiteness
-3) d(a, b) == d(b, a), symmetry
-4) d(a, c) <= d(a, b) + d(b, c), the triangle inequality
+1. d(a, b) >= 0, for all a and b
+2. d(a, b) == 0, if and only if a = b, positive definiteness
+3. d(a, b) == d(b, a), symmetry
+4. d(a, c) <= d(a, b) + d(b, c), the triangle inequality
 
 
 Kernels are measures of similarity, i.e. d(a, b) > d(c, d) if objects a and b
