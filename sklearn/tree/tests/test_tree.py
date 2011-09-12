@@ -73,12 +73,11 @@ def setup_graphviz_toy():
     import tempfile
     global TEMP_DIR
     TEMP_DIR = tempfile.mkdtemp(dir=".")
-    print "created new directory ", TEMP_DIR
 
 
 def teardown_graphviz_toy():
     import shutil
-    shutil.rmtree(TEMP_DIR)
+    shutil.rmtree(TEMP_DIR, ignore_errors=True)
 
 
 @with_setup(setup_graphviz_toy, teardown_graphviz_toy)
@@ -86,10 +85,12 @@ def test_graphviz_toy():
     """Check correctness of graphviz output on a toy dataset."""
     clf = tree.DecisionTreeClassifier(max_depth=100, min_split=1)
     clf.fit(X, Y)
-    clf.export_to_graphviz(TEMP_DIR + "/tree.dot")
+    out = open(TEMP_DIR + "/tree.dot", 'w')
+    exporter = tree.GraphvizExporter(out)
+    clf.export(exporter)
+    exporter.close()
 
     import os
-    import re
     dirname = os.path.dirname(__file__)
     if dirname != "":
         dirname += "/"
@@ -97,9 +98,7 @@ def test_graphviz_toy():
         with open(dirname + 'test_tree.dot') as f2:
             # replace unique memory addresses with a tmp string
             l1 = f1.read()
-            l1 = re.sub("0x[0-9a-fA-F]+", "tmp", l1)
             l2 = f2.read()
-            l2 = re.sub("0x[0-9a-fA-F]+", "tmp", l2)
             assert l1 == l2, \
                 "graphviz output test failed\n: %s != %s" % (l1, l2)
 

@@ -30,80 +30,71 @@ REGRESSION = {
 }
 
 GRAPHVIZ_TREE_TEMPLATE = """\
-%(tree)s [label="%(tree_gv)s"] ;
-%(tree_left)s [label="%(tree_left_gv)s"] ;
-%(tree_right)s [label="%(tree_right_gv)s"] ;
-%(tree)s -> %(tree_left)s ;
-%(tree)s -> %(tree_right)s ;
+%(current)s [label="%(current_gv)s"] ;
+%(left_child)s [label="%(left_child_gv)s"] ;
+%(right_child)s [label="%(right_child_gv)s"] ;
+%(current)s -> %(left_child)s ;
+%(current)s -> %(right_child)s ;
 """
 
 
-class GraphvizVisitor(object):
+class GraphvizExporter(object):
+    """Export a Decision Tree in ".dot" format.
 
-    def __init__(self, out):
-        """Visitor that generates graphviz representation of the
-        decision tree. The graphviz representation is written to `out`.
+    Once exported, you can render to PostScript using, for example,
+    $ dot -Tps tree.dot -o tree.ps
+
+    or to PNG using
+    $ dot -Tpng tree.dot -o tree.png
+    """
+
+    def __init__(self, out=open("tree.dot", 'w')):
+        """Export a Decision Tree to GraphViz format.
+
+        Generates graphviz representation of the decision tree. The output
+        is written to `out`.
 
         Parameters
         ----------
-        out : file-like
-            The output stream.
+        filename : string
+            The name of the output file.
         """
         self.out = out
+        self.out.write("digraph Tree {\n")
+
+    def close(self):
+        self.out.write("\n}\n")
+        self.out.close()
 
     def make_node_repr(self, node):
-        if isinstance(node, Leaf):
-            return 'Leaf(%s)' % (node.value)
+        if node.is_leaf:
+            return "error = %s \\n samples = %s \\n v = %s" \
+                % (node.error, node.samples, node.value)
         else:
             return "x[%s] < %s \\n error = %s \\n samples = %s \\n v = %s" \
                    % (node.feature, node.threshold,\
                       node.error, node.samples, node.value)
 
-    def visit_node(self, node):
+    def visit(self, node):
         """Print the node for graph visualisation."""
+
         current_repr = self.make_node_repr(node)
         left_repr = self.make_node_repr(node.left)
         right_repr = self.make_node_repr(node.right)
         node_data = {
-            "tree": node,
-            "tree_gv": current_repr,
-            "tree_left": node.left,
-            "tree_left_gv": left_repr,
-            "tree_right": node.right,
-            "tree_right_gv": right_repr,
+            "current": node.id,
+            "current_gv": current_repr,
+            "left_child": node.left.id,
+            "left_child_gv": left_repr,
+            "right_child": node.right.id,
+            "right_child_gv": right_repr,
             }
         self.out.write(GRAPHVIZ_TREE_TEMPLATE % node_data)
-        
-        if isinstance(node.left, Node):
-            node.left.accept(self)
-        if isinstance(node.right, Node):
-            node.right.accept(self)
 
-    def visit_leaf(self, node):
-        pass
-
-
-class Leaf(object):
-    """A class to store leaf values in the tree.
-
-    Parameters
-    ----------
-
-    value : array-like, shape = [n_features] OR 1
-        For classification it is a histogram of target values
-        For regression is it the mean for the region
-
-    See also
-    --------
-
-    Node
-    """
-
-    def __init__(self, value):
-        self.value = value
-
-    def accept(self, visitor):
-        visitor.visit_leaf(self)
+        if not node.left.is_leaf:
+            self.visit(node.left)
+        if not node.right.is_leaf:
+            self.visit(node.right)
 
 
 class Node(object):
@@ -135,9 +126,10 @@ class Node(object):
 
     Leaf
     """
+    class_counter = 0
 
-    def __init__(self, feature, threshold, error, samples, value,
-                 left, right):
+    def __init__(self, feature=None, threshold=None, error=None, samples=None,
+                 value=None, left=None, right=None):
         self.feature = feature
         self.threshold = threshold
         self.error = error
@@ -146,8 +138,13 @@ class Node(object):
         self.left = left
         self.right = right
 
-    def accept(self, visitor):
-        visitor.visit_node(self)
+        if left == None and right == None:
+            self.is_leaf = True
+        else:
+            self.is_leaf = False
+
+        self.id = Node.class_counter
+        Node.class_counter += 1
 
 
 def _build_tree(is_classification, X, y, criterion,
@@ -187,6 +184,8 @@ def _build_tree(is_classification, X, y, criterion,
         raise ValueError("max_depth must be greater than zero. "
                          "max_depth is %s." % max_depth)
 
+    Node.class_counter = 0
+
     def recursive_partition(X, y, depth):
         is_split_valid = True
 
@@ -209,7 +208,7 @@ def _build_tree(is_classification, X, y, criterion,
             a = np.mean(y)
 
         if not is_split_valid:
-            return Leaf(a)
+            return Node(error=init_error, samples=len(y), value=a)
 
         left_partition = recursive_partition(X[split], y[split], depth + 1)
         right_partition = recursive_partition(X[~split], y[~split], depth + 1)
@@ -221,14 +220,14 @@ def _build_tree(is_classification, X, y, criterion,
     return recursive_partition(X, y, 0)
 
 
-def _apply_tree(tree, X):
+def _apply_tree(node, X):
     """Applies the decision tree to X."""
 
-    if type(tree) is Leaf:
-        return tree.value
-    if X[tree.feature] < tree.threshold:
-        return _apply_tree(tree.left, X)
-    return _apply_tree(tree.right, X)
+    if node.is_leaf:
+        return node.value
+    if X[node.feature] < node.threshold:
+        return _apply_tree(node.left, X)
+    return _apply_tree(node.right, X)
 
 
 class BaseDecisionTree(BaseEstimator):
@@ -256,38 +255,34 @@ class BaseDecisionTree(BaseEstimator):
         self.n_features = None
         self.tree = None
 
-    def export_to_graphviz(self, filename="tree.dot"):
-        """Export the tree in ".dot" format.
-
-        Once exported, you can render to PostScript using, for example,
-        $ dot -Tps tree.dot -o tree.ps
+    def export(self, exporter):
+        """Export the tree using an exporter.
 
         Parameters
         ----------
-        filename : string
-            The name of the file to write to.
+        exporter : class
+            Any class that has `visit_node` implemented.
 
         Example
         -------
         >>> from sklearn.datasets import load_iris
-        >>> from sklearn.tree import DecisionTreeClassifier
+        >>> from sklearn import tree
 
-        >>> clf = DecisionTreeClassifier()
+        >>> clf = tree.DecisionTreeClassifier()
         >>> iris = load_iris()
 
         >>> clf = clf.fit(iris.data, iris.target)
-        >>> clf.export_to_graphviz("tree.dot")
+        >>> import tempfile
+        >>> t = tempfile.TemporaryFile()
+        >>> exporter = tree.GraphvizExporter(out=t)
+        >>> clf.export(exporter)
+        >>> exporter.close()
 
         """
         if self.tree is None:
             raise Exception('Tree not initialized. Perform a fit first')
 
-        with open(filename, 'w') as f:
-            visitor = GraphvizVisitor(f)
-            f.write("digraph Tree {\n")
-            self.tree.accept(visitor)
-            #f.write(_graphviz(self.tree))
-            f.write("\n}\n")
+        exporter.visit(self.tree)
 
     def fit(self, X, y):
         """Fit the tree with the given training data and parameters.
