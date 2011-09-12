@@ -84,6 +84,6 @@ if __name__ == '__main__':
     else:
         print "usage: bench_neighbors.py n_samples n_features " + \
               "[leafsize=20], [k=20]"
-        exit()
+        sys.exit()
 
     test_time(n_samples, n_features, leaf_size, k)
