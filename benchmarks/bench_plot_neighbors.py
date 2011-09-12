@@ -5,6 +5,7 @@ from time import time
 
 import numpy as np
 import pylab as pl
+from matplotlib import ticker
 
 from sklearn import neighbors, datasets
 
@@ -22,29 +23,31 @@ def get_data(N, D, dataset='dense'):
         raise ValueError("invalid dataset: %s" % dataset)
 
 
-def plot_neighbors_vs_N(Nrange=2 ** np.arange(11),
-                        D=32,
-                        k=5,
-                        leaf_size=30,
-                        dataset='digits',
-                        ax=None):
-    print '------------------------------------------------------------'
-    print ' plot %s neighbors as a function of N:' % dataset
-    print ' ', Nrange
-    print '------------------------------------------------------------'
+def barplot_neighbors(Nrange=2 ** np.arange(1, 11),
+                      Drange=2 ** np.arange(7),
+                      krange=2 ** np.arange(10),
+                      N=1000,
+                      D=64,
+                      k=5,
+                      leaf_size=30,
+                      dataset='digits'):
+    algorithms = ('kd_tree', 'brute', 'ball_tree')
+    fiducial_values = {'N': N,
+                       'D': D,
+                       'k': k}
 
-    results_build = {'ball_tree': np.zeros(len(Nrange)),
-                     'kd_tree': np.zeros(len(Nrange)),
-                     'brute': np.zeros(len(Nrange))}
-    results_query = {'ball_tree': np.zeros(len(Nrange)),
-                     'kd_tree': np.zeros(len(Nrange)),
-                     'brute': np.zeros(len(Nrange))}
+    #------------------------------------------------------------
+    # varying N
+    N_results_build = dict([(alg, np.zeros(len(Nrange)))
+                            for alg in algorithms])
+    N_results_query = dict([(alg, np.zeros(len(Nrange)))
+                            for alg in algorithms])
 
-    for i, N in enumerate(Nrange):
-        print "N = %i (%i out of %i)" % (N, i + 1, len(Nrange))
-        X = get_data(N, D, dataset)
-        for algorithm in results_build:
-            nbrs = neighbors.NearestNeighbors(n_neighbors=min(k, N),
+    for i, NN in enumerate(Nrange):
+        print "N = %i (%i out of %i)" % (NN, i + 1, len(Nrange))
+        X = get_data(NN, D, dataset)
+        for algorithm in algorithms:
+            nbrs = neighbors.NearestNeighbors(n_neighbors=min(NN, k),
                                               algorithm=algorithm,
                                               leaf_size=leaf_size)
             t0 = time()
@@ -53,52 +56,21 @@ def plot_neighbors_vs_N(Nrange=2 ** np.arange(11),
             nbrs.kneighbors(X)
             t2 = time()
 
-            results_build[algorithm][i] = (t1 - t0)
-            results_query[algorithm][i] = (t2 - t1)
+            N_results_build[algorithm][i] = (t1 - t0)
+            N_results_query[algorithm][i] = (t2 - t1)
+        
 
-    if ax is None:
-        pl.figure()
-        ax = pl.subplot(111)
+    #------------------------------------------------------------
+    # varying D
+    D_results_build = dict([(alg, np.zeros(len(Drange)))
+                            for alg in algorithms])
+    D_results_query = dict([(alg, np.zeros(len(Drange)))
+                            for alg in algorithms])
 
-    color_dict = {}
-
-    for alg in results_build:
-        l = ax.loglog(Nrange, results_build[alg] + results_query[alg],
-                      label=alg)
-        color_dict[alg] = l[0].get_color()
-
-    for alg in results_build:
-        ax.plot(Nrange, results_build[alg], ls='--', c=color_dict[alg])
-        ax.plot(Nrange, results_query[alg], ls=':', c=color_dict[alg])
-
-    pl.legend(loc=4)
-    pl.xlabel('N')
-    pl.ylabel('time (s)')
-    pl.title('Time vs N for %s (D = %i, k = %i)' % (dataset, D, k))
-
-
-def plot_neighbors_vs_D(Drange=2 ** np.arange(7),
-                        N=1000,
-                        k=5,
-                        leaf_size=30,
-                        dataset='digits',
-                        ax=None):
-    print '------------------------------------------------------------'
-    print ' plot %s neighbors as a function of D:' % dataset
-    print ' ', Drange
-    print '------------------------------------------------------------'
-
-    results_build = {'ball_tree': np.zeros(len(Drange)),
-                     'kd_tree': np.zeros(len(Drange)),
-                     'brute': np.zeros(len(Drange))}
-    results_query = {'ball_tree': np.zeros(len(Drange)),
-                     'kd_tree': np.zeros(len(Drange)),
-                     'brute': np.zeros(len(Drange))}
-
-    for i, D in enumerate(Drange):
-        print "D = %i (%i out of %i)" % (D, i + 1, len(Drange))
-        X = get_data(N, D, dataset)
-        for algorithm in results_build:
+    for i, DD in enumerate(Drange):
+        print "D = %i (%i out of %i)" % (DD, i + 1, len(Drange))
+        X = get_data(N, DD, dataset)
+        for algorithm in algorithms:
             nbrs = neighbors.NearestNeighbors(n_neighbors=k,
                                               algorithm=algorithm,
                                               leaf_size=leaf_size)
@@ -108,54 +80,23 @@ def plot_neighbors_vs_D(Drange=2 ** np.arange(7),
             nbrs.kneighbors(X)
             t2 = time()
 
-            results_build[algorithm][i] = (t1 - t0)
-            results_query[algorithm][i] = (t2 - t1)
-
-    if ax is None:
-        pl.figure()
-        ax = pl.subplot(111)
-
-    color_dict = {}
-
-    for alg in results_build:
-        l = ax.loglog(Drange, results_build[alg] + results_query[alg],
-                      label=alg)
-        color_dict[alg] = l[0].get_color()
-
-    for alg in results_build:
-        ax.plot(Drange, results_build[alg], ls='--', c=color_dict[alg])
-        ax.plot(Drange, results_query[alg], ls=':', c=color_dict[alg])
-
-    pl.legend(loc=4)
-    pl.xlabel('D')
-    pl.ylabel('time (s)')
-    pl.title('Time vs D for %s (N = %i, k = %i)' % (dataset, N, k))
+            D_results_build[algorithm][i] = (t1 - t0)
+            D_results_query[algorithm][i] = (t2 - t1)
 
 
-def plot_neighbors_vs_k(krange=2 ** np.arange(10),
-                        N=1000,
-                        D=20,
-                        leaf_size=30,
-                        dataset='digits',
-                        ax=None):
-    print '------------------------------------------------------------'
-    print ' plot %s neighbors as a function of k:' % dataset
-    print ' ', krange
-    print '------------------------------------------------------------'
+    #------------------------------------------------------------
+    # varying k
+    k_results_build = dict([(alg, np.zeros(len(krange)))
+                            for alg in algorithms])
+    k_results_query = dict([(alg, np.zeros(len(krange)))
+                            for alg in algorithms])
 
-    results_build = {'ball_tree': np.zeros(len(krange)),
-                     'kd_tree': np.zeros(len(krange)),
-                     'brute': np.zeros(len(krange))}
-    results_query = {'ball_tree': np.zeros(len(krange)),
-                     'kd_tree': np.zeros(len(krange)),
-                     'brute': np.zeros(len(krange))}
+    X = get_data(N, DD, dataset)
 
-    X = get_data(N, D, dataset)
-
-    for i, k in enumerate(krange):
-        print "k = %i (%i out of %i)" % (k, i + 1, len(krange))
-        for algorithm in results_build:
-            nbrs = neighbors.NearestNeighbors(n_neighbors=k,
+    for i, kk in enumerate(krange):
+        print "k = %i (%i out of %i)" % (kk, i + 1, len(krange))
+        for algorithm in algorithms:
+            nbrs = neighbors.NearestNeighbors(n_neighbors=kk,
                                               algorithm=algorithm,
                                               leaf_size=leaf_size)
             t0 = time()
@@ -164,38 +105,83 @@ def plot_neighbors_vs_k(krange=2 ** np.arange(10),
             nbrs.kneighbors(X)
             t2 = time()
 
-            results_build[algorithm][i] = (t1 - t0)
-            results_query[algorithm][i] = (t2 - t1)
+            k_results_build[algorithm][i] = (t1 - t0)
+            k_results_query[algorithm][i] = (t2 - t1)
 
-    if ax is None:
-        pl.figure()
-        ax = pl.subplot(111)
+    pl.figure(figsize=(8, 11))
 
-    color_dict = {}
+    for (sbplt, vals, quantity, 
+         build_time, query_time) in [(311, Nrange, 'N',
+                                      N_results_build,
+                                      N_results_query),
+                                     (312, Drange, 'D',
+                                      D_results_build,
+                                      D_results_query),
+                                     (313, krange, 'k',
+                                      k_results_build,
+                                      k_results_query)]:
+        ax = pl.subplot(sbplt, yscale='log')
+        pl.grid(True)
 
-    for alg in results_build:
-        l = ax.loglog(krange, results_build[alg] + results_query[alg],
-                      label=alg)
-        color_dict[alg] = l[0].get_color()
+        tick_vals = []
+        tick_labels = []
+        
+        bottom = 10 ** np.min([min(np.floor(np.log10(build_time[alg])))
+                               for alg in algorithms])
 
-    for alg in results_build:
-        ax.plot(krange, results_build[alg], ls='--', c=color_dict[alg])
-        ax.plot(krange, results_query[alg], ls=':', c=color_dict[alg])
+        for i, alg in enumerate(algorithms):
+            xvals = 0.1 + i * (1 + len(vals)) + np.arange(len(vals))
+            width = 0.8
 
-    pl.legend(loc=4)
-    pl.xlabel('k')
-    pl.ylabel('time (s)')
-    pl.title('Time vs k for %s (N = %i, D = %i)' % (dataset, N, D))
+            pl.bar(xvals, build_time[alg] - bottom,
+                   width, bottom, color='r')
+            pl.bar(xvals, query_time[alg],
+                   width, build_time[alg], color='b')
+
+            tick_vals += list(xvals + 0.5 * width)
+            tick_labels += ['%i' % val for val in vals]
+
+            pl.text((i + 0.02) / len(algorithms), 0.98, alg,
+                    transform=ax.transAxes,
+                    ha='left',
+                    va='top',
+                    bbox=dict(facecolor='w', edgecolor='w', alpha=0.5))
+
+            pl.ylabel('time (seconds)')
+
+        ax.xaxis.set_major_locator(ticker.FixedLocator(tick_vals))
+        ax.xaxis.set_major_formatter(ticker.FixedFormatter(tick_labels))
+    
+        for label in ax.get_xticklabels():
+            label.set_rotation(-90)
+            label.set_fontsize(10)
+
+        title_string = 'Varying %s' % quantity
+
+        descr_string = ''
+
+        for s in 'NDk':
+            if s == quantity:
+                pass
+            else:
+                descr_string += '%s = %i, ' % (s, fiducial_values[s])
+
+        descr_string = descr_string[:-2]
+
+        pl.text(1.01, 0.5, title_string,
+                transform=ax.transAxes, rotation=-90,
+                ha='left', va='center', fontsize=20)
+
+        pl.text(0.99, 0.5, descr_string,
+                transform=ax.transAxes, rotation=-90,
+                ha='right', va='center')
+
+        pl.gcf().suptitle("%s data\nred = construction;  blue = N-point query"
+                          % (dataset[0].upper() + dataset[1:]),
+                          fontsize=16)
+
 
 if __name__ == '__main__':
-    for plot_func in [plot_neighbors_vs_N,
-                      plot_neighbors_vs_D,
-                      plot_neighbors_vs_k]:
-        pl.figure(figsize=(8, 10))
-        for dataset, plt in [('dense', 211), ('digits', 212)]:
-            plot_func(dataset=dataset, ax=pl.subplot(plt))
-            pl.grid(True)
-            if plt == 211:
-                pl.xlabel('')
-
+    barplot_neighbors(dataset='digits')
+    barplot_neighbors(dataset='dense')
     pl.show()
