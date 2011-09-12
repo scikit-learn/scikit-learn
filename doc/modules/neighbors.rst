@@ -84,12 +84,27 @@ neighborhoods use fewer nearest neighbors for the classification.  For
 high-dimensional parameter spaces, this method becomes less effective due
 to the so-called "curse of dimensionality".
 
+The basic nearest neighbors classification uses uniform weights: that is, the
+value assigned to a query point is computed from a simple majority vote of
+the nearest neighbors.  Under some circumstances, it is better to weight the
+neighbors such that nearer neighbors contribute more to the fit.  This can
+be accomplished through the ``weights`` keyword.  The default value,
+``weights = 'uniform'``, assigns uniform weights to each neighbor.
+``weights = 'distance'`` assigns weights proportional to the inverse of the
+distance from the query point.  Alternatively, a user-defined function of the
+distance can be supplied which is used to compute the weights.
 
-.. figure:: ../auto_examples/neighbors/images/plot_classification_1.png
+
+
+.. |classification_1| image:: ../auto_examples/neighbors/images/plot_classification_1.png
    :target: ../auto_examples/neighbors/plot_classification.html
-   :align: center
-   :scale: 75
+   :scale: 50
 
+.. |classification_2| image:: ../auto_examples/neighbors/images/plot_classification_2.png
+   :target: ../auto_examples/neighbors/plot_classification.html
+   :scale: 50
+
+.. centered:: |classification_1| |classification_2|
 
 .. topic:: Examples:
 
@@ -112,6 +127,17 @@ value specified by the user.  :class:`RadiusNeighborsRegressor` implements
 learning based on the neighbors within a fixed radius :math:`r` of the
 query point, where :math:`r` is a floating-point value specified by the
 user.
+
+The basic nearest neighbors regression uses uniform weights: that is, 
+each point in the local neighborhood contributes uniformly to the
+classification of a query point.  Under some circumstances, it can be
+advantageous to weight points such that nearby points contribute more
+to the regression than faraway points.  This can be accomplished through
+the ``weights`` keyword.  The default value, ``weights = 'uniform'``,
+assigns equal weights to all points.  ``weights = 'distance'`` assigns 
+weights proportional to the inverse of the distance from the query point.
+Alternatively, a user-defined function of the distance can be supplied,
+which will be used to compute the weights.
 
 .. figure:: ../auto_examples/neighbors/images/plot_regression_1.png
    :target: ../auto_examples/neighbors/plot_regression.html
