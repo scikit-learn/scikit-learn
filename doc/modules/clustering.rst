@@ -593,7 +593,7 @@ Drawbacks
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_adjustment_for_chance.py`: Analysis of
+ * :ref:`example_cluster_plot_adjusted_for_chance_measures.py`: Analysis of
    the impact of the dataset size on the value of clustering measures
    for random assignements.
 
