@@ -8,6 +8,7 @@ import pylab as pl
 
 from sklearn import neighbors, datasets
 
+
 def get_data(N, D, dataset='dense'):
     if dataset == 'dense':
         np.random.seed(0)
@@ -19,10 +20,9 @@ def get_data(N, D, dataset='dense'):
         return X[:N, :D]
     else:
         raise ValueError("invalid dataset: %s" % dataset)
-        
-        
 
-def plot_neighbors_vs_N(Nrange = 2**np.arange(11),
+
+def plot_neighbors_vs_N(Nrange=2 ** np.arange(11),
                         D=32,
                         k=5,
                         leaf_size=30,
@@ -33,15 +33,15 @@ def plot_neighbors_vs_N(Nrange = 2**np.arange(11),
     print ' ', Nrange
     print '------------------------------------------------------------'
 
-    results_build = {'ball_tree':np.zeros(len(Nrange)),
-                     'kd_tree':np.zeros(len(Nrange)),
-                     'brute':np.zeros(len(Nrange))}
-    results_query = {'ball_tree':np.zeros(len(Nrange)),
-                     'kd_tree':np.zeros(len(Nrange)),
-                     'brute':np.zeros(len(Nrange))}
+    results_build = {'ball_tree': np.zeros(len(Nrange)),
+                     'kd_tree': np.zeros(len(Nrange)),
+                     'brute': np.zeros(len(Nrange))}
+    results_query = {'ball_tree': np.zeros(len(Nrange)),
+                     'kd_tree': np.zeros(len(Nrange)),
+                     'brute': np.zeros(len(Nrange))}
 
     for i, N in enumerate(Nrange):
-        print "N = %i (%i out of %i)" % (N, i+1, len(Nrange))
+        print "N = %i (%i out of %i)" % (N, i + 1, len(Nrange))
         X = get_data(N, D, dataset)
         for algorithm in results_build:
             nbrs = neighbors.NearestNeighbors(n_neighbors=min(k, N),
@@ -77,7 +77,7 @@ def plot_neighbors_vs_N(Nrange = 2**np.arange(11),
     pl.title('Time vs N for %s (D = %i, k = %i)' % (dataset, D, k))
 
 
-def plot_neighbors_vs_D(Drange = 2**np.arange(7),
+def plot_neighbors_vs_D(Drange=2 ** np.arange(7),
                         N=1000,
                         k=5,
                         leaf_size=30,
@@ -88,15 +88,15 @@ def plot_neighbors_vs_D(Drange = 2**np.arange(7),
     print ' ', Drange
     print '------------------------------------------------------------'
 
-    results_build = {'ball_tree':np.zeros(len(Drange)),
-                     'kd_tree':np.zeros(len(Drange)),
-                     'brute':np.zeros(len(Drange))}
-    results_query = {'ball_tree':np.zeros(len(Drange)),
-                     'kd_tree':np.zeros(len(Drange)),
-                     'brute':np.zeros(len(Drange))}
+    results_build = {'ball_tree': np.zeros(len(Drange)),
+                     'kd_tree': np.zeros(len(Drange)),
+                     'brute': np.zeros(len(Drange))}
+    results_query = {'ball_tree': np.zeros(len(Drange)),
+                     'kd_tree': np.zeros(len(Drange)),
+                     'brute': np.zeros(len(Drange))}
 
     for i, D in enumerate(Drange):
-        print "D = %i (%i out of %i)" % (D, i+1, len(Drange))
+        print "D = %i (%i out of %i)" % (D, i + 1, len(Drange))
         X = get_data(N, D, dataset)
         for algorithm in results_build:
             nbrs = neighbors.NearestNeighbors(n_neighbors=k,
@@ -132,7 +132,7 @@ def plot_neighbors_vs_D(Drange = 2**np.arange(7),
     pl.title('Time vs D for %s (N = %i, k = %i)' % (dataset, N, k))
 
 
-def plot_neighbors_vs_k(krange = 2**np.arange(10),
+def plot_neighbors_vs_k(krange=2 ** np.arange(10),
                         N=1000,
                         D=20,
                         leaf_size=30,
@@ -143,17 +143,17 @@ def plot_neighbors_vs_k(krange = 2**np.arange(10),
     print ' ', krange
     print '------------------------------------------------------------'
 
-    results_build = {'ball_tree':np.zeros(len(krange)),
-                     'kd_tree':np.zeros(len(krange)),
-                     'brute':np.zeros(len(krange))}
-    results_query = {'ball_tree':np.zeros(len(krange)),
-                     'kd_tree':np.zeros(len(krange)),
-                     'brute':np.zeros(len(krange))}
+    results_build = {'ball_tree': np.zeros(len(krange)),
+                     'kd_tree': np.zeros(len(krange)),
+                     'brute': np.zeros(len(krange))}
+    results_query = {'ball_tree': np.zeros(len(krange)),
+                     'kd_tree': np.zeros(len(krange)),
+                     'brute': np.zeros(len(krange))}
 
     X = get_data(N, D, dataset)
 
     for i, k in enumerate(krange):
-        print "k = %i (%i out of %i)" % (k, i+1, len(krange))
+        print "k = %i (%i out of %i)" % (k, i + 1, len(krange))
         for algorithm in results_build:
             nbrs = neighbors.NearestNeighbors(n_neighbors=k,
                                               algorithm=algorithm,
@@ -188,26 +188,14 @@ def plot_neighbors_vs_k(krange = 2**np.arange(10),
     pl.title('Time vs k for %s (N = %i, D = %i)' % (dataset, N, D))
 
 if __name__ == '__main__':
-    pl.figure(figsize=(8,10))
-    plot_neighbors_vs_N(dataset='dense', ax=pl.subplot(211))
-    pl.grid(True)
-    pl.xlabel('')
-    plot_neighbors_vs_N(dataset='digits', ax=pl.subplot(212))
-    pl.grid(True)
+    for plot_func in [plot_neighbors_vs_N,
+                      plot_neighbors_vs_D,
+                      plot_neighbors_vs_k]:
+        pl.figure(figsize=(8, 10))
+        for dataset, plt in [('dense', 211), ('digits', 212)]:
+            plot_func(dataset=dataset, ax=pl.subplot(plt))
+            pl.grid(True)
+            if plt == 211:
+                pl.xlabel('')
 
-    pl.figure(figsize=(8,10))
-    plot_neighbors_vs_D(dataset='dense', ax=pl.subplot(211))
-    pl.grid(True)
-    pl.xlabel('')
-    plot_neighbors_vs_D(dataset='digits', ax=pl.subplot(212))
-    pl.grid(True)
-
-    pl.figure(figsize=(8,10))
-    plot_neighbors_vs_k(dataset='dense', ax=pl.subplot(211))
-    pl.grid(True)
-    pl.xlabel('')
-    plot_neighbors_vs_k(dataset='digits', ax=pl.subplot(212))
-    pl.grid(True)
     pl.show()
-        
-        

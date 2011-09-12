@@ -18,7 +18,7 @@ def compare_nbrs(nbrs1, nbrs2):
         N, k = nbrs1.shape
         for i in range(N):
             for j in range(k):
-                if nbrs1[i, j]==i:
+                if nbrs1[i, j] == i:
                     continue
                 elif nbrs1[i, j] not in nbrs2[i]:
                     return False
@@ -32,7 +32,8 @@ def test_time(n_samples=1000, n_features=100, leaf_size=20, k=20):
     X = np.random.random([n_samples, n_features])
 
     print "---------------------------------------------------"
-    print "%i neighbors of %i points in %i dimensions:" % (k, n_samples, n_features)
+    print "%i neighbors of %i points in %i dimensions:" \
+        % (k, n_samples, n_features)
     print "   (leaf size = %i)" % leaf_size
     print "  -------------"
     BT = NearestNeighbors(algorithm='ball_tree',
@@ -48,14 +49,12 @@ def test_time(n_samples=1000, n_features=100, leaf_size=20, k=20):
     print "  total (construction+query) : %.3g sec" % (time() - t0)
     print "  -------------"
 
-
     t0 = time()
     KDT.fit(X)
     print "  KD tree construction       : %.3g sec" % (time() - t0)
     d, nbrs2 = KDT.kneighbors(X, k)
     print "  total (construction+query) : %.3g sec" % (time() - t0)
     print "  -------------"
-
 
     t0 = time()
     Brute.fit(X)

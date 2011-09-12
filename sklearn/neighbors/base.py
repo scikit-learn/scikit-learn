@@ -75,16 +75,17 @@ weights_descr = \
      "    Uniform weights are used by default.")
 
 
-neighbors_doc_dict = {'algorithm':algorithm_descr,
-                      'leaf_size':leaf_size_descr,
-                      'notes':notes_descr,
-                      'n_neighbors':n_neighbors_descr,
-                      'radius':radius_descr,
-                      'weights':weights_descr}
+neighbors_doc_dict = {'algorithm': algorithm_descr,
+                      'leaf_size': leaf_size_descr,
+                      'notes': notes_descr,
+                      'n_neighbors': n_neighbors_descr,
+                      'radius': radius_descr,
+                      'weights': weights_descr}
+
 
 def construct_docstring(template,
                         flag='@INCLUDE',
-                        doc_dict = neighbors_doc_dict,
+                        doc_dict=neighbors_doc_dict,
                         indent=4):
     """
     Construct a documentation string using information from mixins and
@@ -115,7 +116,7 @@ def construct_docstring(template,
     i_last = 0
     for i in indices:
         docstr += template[i_last:i]
-        
+
         current = template[i:]
 
         i_endline = current.find('\n')
@@ -131,6 +132,7 @@ def construct_docstring(template,
 
     return docstr
 
+
 def _check_weights(weights):
     """
     check to make sure weights are valid
@@ -142,6 +144,7 @@ def _check_weights(weights):
     else:
         raise ValueError("weights not recognized: should be 'uniform', "
                          "'distance', or a callable function")
+
 
 def _get_weights(dist, weights):
     """

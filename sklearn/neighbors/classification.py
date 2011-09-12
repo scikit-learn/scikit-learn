@@ -9,7 +9,7 @@
 
 import numpy as np
 from scipy import stats
-from .tools import weighted_mode
+from ..utils.extmath import weighted_mode
 
 from .base import \
     construct_docstring, _check_weights, _get_weights, \
@@ -55,7 +55,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
     """
     __doc__ = construct_docstring(__doc__)
 
-    def __init__(self, n_neighbors=5, 
+    def __init__(self, n_neighbors=5,
                  weights='uniform',
                  algorithm='auto', leaf_size=30):
         self._init_params(n_neighbors=n_neighbors,
@@ -158,7 +158,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
             mode = np.asarray([stats.mode(pl)[0] for pl in pred_labels],
                               dtype=np.int)
         else:
-            mode = np.asarray([weighted_mode(pl,w)[0]
+            mode = np.asarray([weighted_mode(pl, w)[0]
                                for (pl, w) in zip(pred_labels, weights)],
                               dtype=np.int)
 
@@ -214,7 +214,7 @@ class NeighborsClassifier(NeighborsBase, KNeighborsMixin,
     @INCLUDE notes
     """
     __doc__ = construct_docstring(__doc__)
-    
+
     def __init__(self, n_neighbors=5, radius=1.0,
                  algorithm='auto', leaf_size=30,
                  classification_type='knn_vote'):

@@ -98,7 +98,7 @@ def test_kneighbors_classifier(n_samples=40,
             knn.fit(X, y)
             epsilon = 1e-5 * (2 * rng.rand(1, n_features) - 1)
             y_pred = knn.predict(X[:n_test_pts] + epsilon)
-            assert_array_equal(y_pred , y[:n_test_pts])
+            assert_array_equal(y_pred, y[:n_test_pts])
 
 
 def test_radius_neighbors_classifier(n_samples=40,
