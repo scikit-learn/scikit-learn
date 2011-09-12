@@ -171,7 +171,7 @@ Nearest Neighbors
    neighbors.KNeighborsRegressor
    neighbors.RadiusNeighborsRegressor
    neighbors.NeighborsRegressor
-   ball_tree.BallTree
+   neighbors.BallTree
 
 .. autosummary::
    :toctree: generated/
