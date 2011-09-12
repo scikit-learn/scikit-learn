@@ -356,7 +356,7 @@ Dictionary Learning
 ===================
 
 Generic dictionary learning
--------------------------
+---------------------------
 
 Dictionary learning (:class:`DictionaryLearning`) is a matrix factorization
 problem that amounts to finding a (usually overcomplete) dictionary that will
