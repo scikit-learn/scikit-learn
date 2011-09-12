@@ -3,7 +3,7 @@
 Adjustment for chance in clustering performance evaluation
 ==========================================================
 
-The following plots demonstrate the impact of the number of cluster and
+The following plots demonstrate the impact of the number of clusters and
 number of samples on various clustering performance evaluation metrics.
 
 Non-adjusted measures such as the V-Measure show a dependency between
