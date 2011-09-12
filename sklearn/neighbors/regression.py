@@ -1,4 +1,4 @@
-"""Nearest Neighbor Classification"""
+"""Nearest Neighbor Regression"""
 
 # Authors: Jake Vanderplas <vanderplas@astro.washington.edu>
 #          Fabian Pedregosa <fabian.pedregosa@inria.fr>

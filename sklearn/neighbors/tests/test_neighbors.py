@@ -1,7 +1,9 @@
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
+from numpy.testing import assert_raises
 from scipy.sparse import (bsr_matrix, coo_matrix, csc_matrix, csr_matrix,
                           dok_matrix, lil_matrix)
+from scipy.spatial import cKDTree
 
 from sklearn import neighbors, datasets
 
@@ -30,6 +32,7 @@ def test_unsupervised_kneighbors(n_samples=20, n_features=5,
 
     test = rng.rand(n_query_pts, n_features)
 
+    results_nodist = []
     results = []
 
     for algorithm in ALGORITHMS:
@@ -37,11 +40,31 @@ def test_unsupervised_kneighbors(n_samples=20, n_features=5,
                                            algorithm=algorithm)
         neigh.fit(X)
 
+        results_nodist.append(neigh.kneighbors(test, return_distance=False))
         results.append(neigh.kneighbors(test, return_distance=True))
 
     for i in range(len(results) - 1):
+        assert_array_almost_equal(results_nodist[i], results[i][1])
         assert_array_almost_equal(results[i][0], results[i + 1][0])
         assert_array_almost_equal(results[i][1], results[i + 1][1])
+
+
+def test_unsupervised_inputs():
+    X = np.random.random((10,3))
+
+    nbrs_fid = neighbors.NearestNeighbors(n_neighbors=1)
+    nbrs_fid.fit(X)
+    
+    dist1, ind1 = nbrs_fid.kneighbors(X)
+
+    nbrs = neighbors.NearestNeighbors(n_neighbors=1)    
+
+    for input in (nbrs_fid, neighbors.BallTree(X), cKDTree(X)):
+        nbrs.fit(input)
+        dist2, ind2 = nbrs.kneighbors(X)
+        
+        assert_array_almost_equal(dist1, dist2)
+        assert_array_almost_equal(ind1, ind2)
 
 
 def test_unsupervised_radius_neighbors(n_samples=20, n_features=5,
@@ -63,14 +86,19 @@ def test_unsupervised_radius_neighbors(n_samples=20, n_features=5,
                                            algorithm=algorithm)
         neigh.fit(X)
 
+        ind1 = neigh.radius_neighbors(test, return_distance=False)
+
         # sort the results: this is not done automatically for
         # radius searches
         dist, ind = neigh.radius_neighbors(test, return_distance=True)
-        for (d, i) in zip(dist, ind):
+        for (d, i, i1) in zip(dist, ind, ind1):
             j = d.argsort()
             d[:] = d[j]
             i[:] = i[j]
         results.append((dist, ind))
+
+        assert_array_almost_equal(np.concatenate(list(ind)),
+                                  np.concatenate(list(ind1)))
 
     for i in range(len(results) - 1):
         assert_array_almost_equal(np.concatenate(list(results[i][0])),
@@ -189,6 +217,7 @@ def test_radius_neighbors_regressor(n_samples=40,
     for algorithm in ALGORITHMS:
         for weights in ['uniform', 'distance', weight_func]:
             neigh = neighbors.RadiusNeighborsRegressor(radius=radius,
+                                                       weights=weights,
                                                        algorithm=algorithm)
             neigh.fit(X, y)
             epsilon = 1E-5 * (2 * rng.rand(1, n_features) - 1)
@@ -303,6 +332,44 @@ def test_radius_neighbors_graph():
         [[ 0.        ,  1.01      ,  0.        ],
          [ 1.01      ,  0.        ,  1.40716026],
          [ 0.        ,  1.40716026,  0.        ]])
+
+def test_neighbors_badargs():
+    neigh_types = [neighbors.KNeighborsClassifier,
+                   neighbors.RadiusNeighborsClassifier,
+                   neighbors.KNeighborsRegressor,
+                   neighbors.RadiusNeighborsRegressor]
+
+    
+    assert_raises(ValueError,
+                  neighbors.NearestNeighbors,
+                  algorithm='blah')
+
+    X = np.random.random((10,2))
+
+    for cls in neigh_types:
+        assert_raises(ValueError,
+                      cls,
+                      weights='blah')
+
+    for cls in neigh_types:
+        nbrs = cls()
+        assert_raises(ValueError,
+                      nbrs.predict,
+                      X)
+        
+
+        
+    nbrs = neighbors.NearestNeighbors().fit(X)
+
+    assert_raises(ValueError,
+                  nbrs.kneighbors_graph,
+                  X, mode='blah')
+    assert_raises(ValueError,
+                  nbrs.radius_neighbors_graph,
+                  X, mode='blah')
+
+
+    
 
 if __name__ == '__main__':
     import nose

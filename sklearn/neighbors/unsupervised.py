@@ -47,10 +47,10 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
       NearestNeighbors(algorithm='auto', leaf_size=30, n_neighbors=2, radius=0.4)
 
       >>> neigh.kneighbors([[0, 0, 1.3]], 2, return_distance=False)
-      array([[2, 0]], dtype=int32)
+      array([[2, 0]])
 
       >>> neigh.radius_neighbors([0, 0, 1.3], 0.4, return_distance=False)
-      array([[2]], dtype=object)
+      array([[2]])
 
     See also
     --------

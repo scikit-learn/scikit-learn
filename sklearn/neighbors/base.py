@@ -78,19 +78,28 @@ class NeighborsBase(BaseEstimator):
         self._fit_method = None
 
     def _fit(self, X):
-        if isinstance(X, BallTree):
+        if isinstance(X, NeighborsBase):
+            self._fit_X = X._fit_X
+            self._tree = X._tree
+            self._fit_method = X._fit_method
+            return self
+
+        elif isinstance(X, BallTree):
             self._fit_X = X.data
             self._tree = X
             self._fit_method = 'ball_tree'
             return self
 
-        if isinstance(X, cKDTree):
+        elif isinstance(X, cKDTree):
             self._fit_X = X.data
             self._tree = X
             self._fit_method = 'kd_tree'
             return self
 
         X = safe_asanyarray(X)
+
+        if X.ndim != 2:
+            raise ValueError("data type not understood")
 
         if issparse(X):
             if self.algorithm not in ('auto', 'brute'):
@@ -320,7 +329,7 @@ class RadiusNeighborsMixin(object):
         >>> neigh.fit(samples) # doctest: +ELLIPSIS
         NearestNeighbors(algorithm='auto', leaf_size=30, ...)
         >>> print neigh.radius_neighbors([1., 1., 1.]) # doctest: +ELLIPSIS
-        (array([[ 1.5  0.5]]...), array([[1 2]]...)
+        (array([[ 1.5,  0.5]]...), array([[1, 2]]...)
 
         The first array returned contains the distances to all points which
         are closer than 1.6, while the second array returned contains their
@@ -328,8 +337,8 @@ class RadiusNeighborsMixin(object):
         Because the number of neighbors of each point is not necessarily
         equal, `radius_neighbors` returns an array of objects, where each
         object is a 1D array of indices.
-
         """
+
         if self._fit_method == None:
             raise ValueError("must fit neighbors before querying")
 
