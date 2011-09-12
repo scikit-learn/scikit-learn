@@ -68,33 +68,69 @@ Classification
 ==============
 
 :class:`DecisionTreeClassifier` is capable of performing multi-class 
-    classification on a dataset.
+classification on a dataset.
 
-
-.. figure:: ../auto_examples/tree/images/plot_iris_1.png
-   :target: ../auto_examples/tree/plot_iris.html
-   :align: center
-
+As other classifiers, :class:`DecisionTreeClassifier` take as input two 
+arrays: an array X of size [n_samples, n_features] holding the training 
+samples, and an array Y of integer values, size [n_samples], holding 
+the class labels for the training samples::
 
     >>> from sklearn import tree
     >>> X = [[0, 0], [1, 1]]
     >>> Y = [0, 1]
     >>> clf = tree.DecisionTreeClassifier()
-    >>> clf = clf.fit(X, Y)
-
+    >>> clf.fit(X, Y)
+    SVC(C=1.0, coef0=0.0, degree=3, gamma=0.5, kernel='rbf', probability=False,
+      shrinking=True, tol=0.001)
 
 After being fitted, the model can then be used to predict new values::
 
     >>> clf.predict([[2., 2.]])
-    array([1])
+    array([ 1.])
+
+:class:`DecisionTreeClassifier` is capable of both binary (where the labels are 
+[-1, 1]) classification and multiclass (where the labels are [0, ..., K-1]) 
+classification.
+
+Using the Iris dataset, we can construct a tree as follows
+
+    >>> from sklearn.datasets import iris
+    >>> from sklearn import tree
+    >>> iris = load_iris()
+    >>> perm = np.random.permutation(iris.target.size)
+    >>> iris.data = iris.data[perm]
+    >>> iris.target = iris.target[perm]
+    >>> X_train = iris.data[-100:]
+    >>> Y_train = iris.target[-100:]
+    >>> clf = tree.DecisionTreeClassifier()
+    >>> clf.fit(X_train, Y_train)
+
+Once trained, we can export the tree in `Graphviz <http://www.graphviz.org/>`_ format
+using the :class:`GraphvizExporter` exporter. Below is an example export of a tree
+trained on the entire iris dataset.
+
+    >>> t = open('iris.dot', 'w')
+    >>> exporter = tree.GraphvizExporter(out=t)
+    >>> clf.export(exporter)
+    >>> exporter.close()
+
+.. figure:: ../images/iris.svg
+   :align: center
+
+After being fitted, the model can then be used to predict new values::
+
+    >>> X_test = iris.data[:50]
+    >>> Y_test = iris.target[:50]    
+    >>> clf.predict()
+
+.. figure:: ../auto_examples/tree/images/plot_iris.png
+   :target: ../auto_examples/tree/plot_iris.html
+   :align: center
 
 .. topic:: Examples:
 
  * :ref:`example_tree_plot_iris.py`,
  * :ref:`example_tree_plot_separating_hyperplane.py`,
-
-.. figure:: ../images/iris.png
-   :align: center
 
 .. _tree_regression:
 
@@ -153,10 +189,10 @@ Tips on Practical Use
     Getting the right ratio of samples to number of features is important, since 
     a tree with few samples in high dimensional space is very likely to overfit.
   
-  * Perform dimensionality reduction (PCA or ICA) beforehand to give your tree
-    a better chance of finding features that are discriminative.
+  * Consider performing  dimensionality reduction (PCA or ICA) beforehand to 
+    give your tree a better chance of finding features that are discriminative.
   
-  * Visualise your tree as you are training by using the ``export_to_graphviz``
+  * Visualise your tree as you are training by using the ``export``
     function.  Use ``max_depth=3`` as an initial tree depth to get a feel for
     how the tree is fitting to your data, and then increase the depth.  
   
@@ -211,7 +247,7 @@ Mathematical formulation
     * L. Breiman, J. Friedman, R. Olshen, and C. Stone. Classification and
       Regression Trees. Wadsworth, Belmont, CA, 1984.
 
-	* J.R. Quinlan. C4. 5: programs for machine learning. Morgan Kaufmann, 1993.
+    * J.R. Quinlan. C4. 5: programs for machine learning. Morgan Kaufmann, 1993.
 
     * T. Hastie, R. Tibshirani and J. Friedman.
       Elements of Statistical Learning, Springer, 2009.
