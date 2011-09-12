@@ -264,15 +264,35 @@ def weighted_mode(a, w, axis=0):
     score : ndarray
         Array of weighted counts for each mode.
 
+    Examples
+    --------
+    >>> from sklearn.utils.extmath import weighted_mode
+    >>> x = [4, 1, 4, 2, 4, 2]
+    >>> weights = [1, 1, 1, 1, 1, 1]
+    >>> weighted_mode(x, weights)
+    (array([ 4.]), array([ 3.]))
+    
+    The value 4 appears three times: with uniform weights, the result is
+    simply the mode of the distribution.
+
+    >>> weights = [1, 3, 0.5, 1.5, 1, 2] # deweight the 4's
+    >>> weighted_mode(x, weights)
+    (array([ 2.]), array([ 3.5]))
+
+    The value 2 has the highest score: it appears twice with weights of
+    1.5 and 2: the sum of these is 3.
+
     See Also
     --------
     scipy.stats.mode
     """
     if axis is None:
         a = np.ravel(a)
+        w = np.ravel(w)
         axis = 0
     else:
         a = np.asarray(a)
+        w = np.asarray(w)
         axis = axis
 
     if a.shape != w.shape:
