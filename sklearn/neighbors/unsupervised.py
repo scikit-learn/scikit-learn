@@ -1,8 +1,9 @@
 """Unsupervised nearest neighbors learner"""
-import numpy as np
 
-from .base import \
-    NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin, UnsupervisedMixin
+from .base import NeighborsBase
+from .base import KNeighborsMixin
+from .base import RadiusNeighborsMixin
+from .base import UnsupervisedMixin
 
 
 class NearestNeighbors(NeighborsBase, KNeighborsMixin,
@@ -38,15 +39,18 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
 
     Examples
     --------
-    >>> samples = [[0, 0, 2], [1, 0, 0], [0, 0, 1]]
-    >>> from sklearn.neighbors import NearestNeighbors
-    >>> neigh = NearestNeighbors(2, 0.4)
-    >>> neigh.fit(samples)
-    NearestNeighbors(algorithm='auto', leaf_size=30, n_neighbors=2, radius=0.4)
-    >>> neigh.kneighbors([[0, 0, 1.3]], 2, return_distance=False)
-    array([[2, 0]])
-    >>> neigh.radius_neighbors([0, 0, 1.3], 0.4, return_distance=False)
-    array([[2]], dtype=object)
+      >>> from sklearn.neighbors import NearestNeighbors
+      >>> samples = [[0, 0, 2], [1, 0, 0], [0, 0, 1]]
+
+      >>> neigh = NearestNeighbors(2, 0.4)
+      >>> neigh.fit(samples)
+      NearestNeighbors(algorithm='auto', leaf_size=30, n_neighbors=2, radius=0.4)
+
+      >>> neigh.kneighbors([[0, 0, 1.3]], 2, return_distance=False)
+      array([[2, 0]], dtype=int32)
+
+      >>> neigh.radius_neighbors([0, 0, 1.3], 0.4, return_distance=False)
+      array([[2]], dtype=object)
 
     See also
     --------

@@ -7,8 +7,6 @@
 # License: BSD, (C) INRIA, University of Amsterdam
 import warnings
 
-import re
-
 import numpy as np
 from scipy.sparse import csr_matrix, issparse
 from scipy.spatial.ckdtree import cKDTree
@@ -20,9 +18,7 @@ from ..utils import safe_asanyarray, atleast2d_or_csr
 
 
 def _check_weights(weights):
-    """
-    check to make sure weights are valid
-    """
+    """Check to make sure weights are valid"""
     if weights in (None, 'uniform', 'distance'):
         return weights
     elif callable(weights):
@@ -33,9 +29,9 @@ def _check_weights(weights):
 
 
 def _get_weights(dist, weights):
-    """
-    get the weights from an array of distances and a parameter ``weights``,
-    which can be either a string or an executable
+    """Get the weights from an array of distances and a parameter ``weights``
+
+    ``weights`` can be either a string or an executable.
 
     returns ``weights_arr``, an array of the same size as ``dist``
     if ``weights == 'uniform'``, then returns None
