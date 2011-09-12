@@ -274,7 +274,7 @@ def test_vectorizer_min_df():
                  u'another document appears']
     n_doc = len(test_data)
     max_df = (n_doc - 1.0) / n_doc  # all documents but one
-    min_df = 2.0 / n_doc  # at least two documents
+    min_df = 2  # at least two documents
 
     vect = Vectorizer(WordNGramAnalyzer(stop_words=None),
                       max_df=max_df,

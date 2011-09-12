@@ -225,16 +225,18 @@ class CountVectorizer(BaseEstimator):
 
         This is useful in order to fix the vocabulary in advance.
 
-    max_df : float in range [0.0, 1.0], optional, 1.0 by default
-        When building the vocabulary ignore terms that have a term frequency
-        strictly higher than the given threshold (corpus specific stop words).
+    max_df : positive int or float in range [0.0, 1.0], optional, 1.0 by
+        default. When building the vocabulary ignore terms that have a term
+        frequency strictly higher than the given threshold (corpus specific
+        stop words).
 
         This parameter is ignored if vocabulary is not None.
 
-    min_df : float in range [0.0, 1.0], optional, 0.0 by default
-        When building the vocabulary ignore terms that have a document
+    min_df : positive int or float in range [0.0, 1.0], optional, 0.0 by
+        default. When building the vocabulary ignore terms that have a document
         frequency strictly lower than the given threshold (e.g. words in only
-        one document).
+        one document). This may also be called document frequency cut-off in IR
+        literature.
 
         This parameter is ignored if vocabulary is not None.
 
@@ -343,11 +345,11 @@ class CountVectorizer(BaseEstimator):
 
         # filter out uninformative words: terms that occur in all/one documents
         if (max_df or min_df) is not None:
-            max_document_count = max_df * n_doc
-            min_document_count = min_df * n_doc
+            max_doc_count = max_df * n_doc if type(max_df) == float else max_df
+            min_doc_count = min_df * n_doc if type(min_df) == float else min_df
             remove_words = set(t for t, dc in document_counts.iteritems()
-                               if dc > max_document_count
-                               or dc < min_document_count)
+                               if dc > max_doc_count
+                               or dc < min_doc_count)
 
         # list the terms that should be part of the vocabulary
         if max_features is None:
