@@ -20,7 +20,6 @@ except ImportError:
 
 from .base import clone
 
-from . import mixture
 
 try:
     from numpy.testing import nosetester
