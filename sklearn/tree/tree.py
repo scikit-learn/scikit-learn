@@ -105,19 +105,25 @@ class Node(object):
 
     feature : integer
         The feature used to split on
+
     threshold : float
         The threshold value to split on
+
     error : float
         The error in the node.  This could be the impurity (calculated using
         an entropy measure for classification) or the residual regression
         error (calculated using an estimator)
+
     samples : integer
         Number of samples present at this node
+
     value : array-like, shape = [n_features] OR 1
         For classification it is a histogram of target values
         For regression is it the mean for the region
+
     left : Node
         The left child node
+
     right : Node
         The right child node
 
