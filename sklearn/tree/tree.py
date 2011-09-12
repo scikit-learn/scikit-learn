@@ -366,6 +366,8 @@ class BaseDecisionTree(BaseEstimator):
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
+            Test vectors, where n_samples is the number of samples
+            and n_features is the number of features.
 
         Returns
         -------
@@ -472,6 +474,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
+            Test vectors, where n_samples is the number of samples
+            and n_features is the number of features.
 
         Returns
         -------
@@ -500,11 +504,13 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         return P
 
     def predict_log_proba(self, X):
-        """Predict class log probabilities on a test vector X
+        """Predict class log probabilities on a test vector X.
 
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
+            Test vectors, where n_samples is the number of samples
+            and n_features is the number of features.
 
         Returns
         -------
@@ -518,7 +524,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
 
 class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
-    """A tree regressor
+    """A tree regressor.
 
     Parameters
     ----------
@@ -552,7 +558,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     See also
     --------
 
-    DecisionTreeRegressor
+    DecisionTreeClassifier
 
     Example
     -------
