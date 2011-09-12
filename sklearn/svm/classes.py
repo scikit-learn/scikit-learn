@@ -13,6 +13,9 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, CoefSelectTransformerMixin):
 
     Parameters
     ----------
+    C : float, optional (default=1.0)
+        Penalty parameter C of the error term.
+
     loss : string, 'l1' or 'l2' (default='l2')
         Specifies the loss function. 'l1' is the hinge loss (standard SVM)
         while 'l2' is the squared hinge loss.
