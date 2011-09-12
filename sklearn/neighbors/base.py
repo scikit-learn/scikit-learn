@@ -18,7 +18,7 @@ from ..base import BaseEstimator
 from ..metrics import euclidean_distances
 from ..utils import safe_asanyarray, atleast2d_or_csr
 
-algorithm_descr = \
+ALGORITHM_DESCR = \
     ("algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional\n"
      "    Algorithm used to compute the nearest neighbors:\n"
      "\n"
@@ -31,14 +31,14 @@ algorithm_descr = \
      "    Note: fitting on sparse input will override the setting of\n"
      "    this parameter, using brute force.")
 
-leaf_size_descr = \
+LEAF_SIZE_DESCR = \
     ("leaf_size : int, optional (default = 30)\n"
      "    Leaf size passed to BallTree or cKDTree.  This can affect the\n"
      "    speed of the construction and query, as well as the memory\n"
      "    required to store the tree.  The optimal value depends on the\n"
      "    nature of the problem.\n")
 
-notes_descr = \
+NOTES_DESCR = \
     ("Notes\n"
      "-----\n"
      "See :ref:`Nearest Neighbors <neighbors>` in the online documentation\n"
@@ -48,18 +48,18 @@ notes_descr = \
      "----------\n"
      "http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm\n")
 
-n_neighbors_descr = \
+N_NEIGHBORS_DESCR = \
     ("n_neighbors : int, optional (default = 5)\n"
      "    Number of neighbors to use by default for "
      ":meth:`k_neighbors` queries.\n")
 
-radius_descr = \
+RADIUS_DESCR = \
     ("radius : float, optional (default = 1.0)\n"
      "    Range of parameter space to use by default "
      "for :meth`radius_neighbors`\n"
      "    queries.\n")
 
-weights_descr = \
+WEIGHTS_DESCR = \
     ("weights : str or callable\n"
      "    weight function used in prediction.  Possible values:\n"
      "\n"
@@ -75,17 +75,17 @@ weights_descr = \
      "    Uniform weights are used by default.")
 
 
-neighbors_doc_dict = {'algorithm': algorithm_descr,
-                      'leaf_size': leaf_size_descr,
-                      'notes': notes_descr,
-                      'n_neighbors': n_neighbors_descr,
-                      'radius': radius_descr,
-                      'weights': weights_descr}
+NEIGHBORS_DOC_DICT = {'algorithm': ALGORITHM_DESCR,
+                      'leaf_size': LEAF_SIZE_DESCR,
+                      'notes': NOTES_DESCR,
+                      'n_neighbors': N_NEIGHBORS_DESCR,
+                      'radius': RADIUS_DESCR,
+                      'weights': WEIGHTS_DESCR}
 
 
 def construct_docstring(template,
                         flag='@INCLUDE',
-                        doc_dict=neighbors_doc_dict,
+                        doc_dict=NEIGHBORS_DOC_DICT,
                         indent=4):
     """
     Construct a documentation string using information from mixins and
