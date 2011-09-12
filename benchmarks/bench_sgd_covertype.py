@@ -58,6 +58,7 @@ import numpy as np
 from sklearn.svm import LinearSVC
 from sklearn.linear_model import SGDClassifier
 from sklearn.naive_bayes import GaussianNB
+from sklearn.tree import DecisionTreeClassifier
 from sklearn import metrics
 
 ######################################################################
@@ -170,6 +171,8 @@ sgd_parameters = {
 sgd_err, sgd_train_time, sgd_test_time = benchmark(SGDClassifier(
     **sgd_parameters))
 
+cart_err, cart_train_time, cart_test_time = benchmark(DecisionTreeClassifier(min_split=5, max_depth=100))
+
 ######################################################################
 ## Print classification performance
 print("")
@@ -191,5 +194,6 @@ print_row("Liblinear", liblinear_train_time, liblinear_test_time,
           liblinear_err)
 print_row("GaussianNB", gnb_train_time, gnb_test_time, gnb_err)
 print_row("SGD", sgd_train_time, sgd_test_time, sgd_err)
+print_row("CART", cart_train_time, cart_test_time, cart_err)
 print("")
 print("")
