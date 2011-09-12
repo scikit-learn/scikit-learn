@@ -1,4 +1,24 @@
-"""Utilities to evaluate pairwise distances or affinity of sets of samples"""
+""" Utilities to evaluate pairwise distances or affinity of sets of samples.
+
+This module contains both distance metrics and kernels. A brief summary is
+given on the two here.
+
+Distance metrics are a function d(a, b) such that d(a, b) < d(c, d) if objects
+a and b are considered "more similar" to objects c and d.
+One of the most popular examples is Euclidean distance.
+To be a 'true' metric, it must obey the following four conditions:
+
+1) d(a, b) >= 0, for all a and b
+2) d(a, b) == 0, if and only if a = b, positive definiteness
+3) d(a, b) == d(b, a), symmetry
+4) d(a, c) <= d(a, b) + d(b, c), the triangle inequality
+
+
+Kernels are measures of similarity, i.e. d(a, b) > d(c, d) if objects a and b
+are considered "more similar" to objects c and d. A kernel must also be
+positive semi-definite.
+
+"""
 
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Mathieu Blondel <mathieu@mblondel.org>
