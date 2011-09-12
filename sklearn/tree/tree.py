@@ -75,7 +75,7 @@ class GraphvizExporter(object):
                    % (node.feature, node.threshold,\
                       node.error, node.samples, node.value)
 
-    def visit(self, node):
+    def export(self, node):
         """Print the node for graph visualisation."""
 
         current_repr = self.make_node_repr(node)
@@ -92,9 +92,9 @@ class GraphvizExporter(object):
         self.out.write(GRAPHVIZ_TREE_TEMPLATE % node_data)
 
         if not node.left.is_leaf:
-            self.visit(node.left)
+            self.export(node.left)
         if not node.right.is_leaf:
-            self.visit(node.right)
+            self.export(node.right)
 
 
 class Node(object):
@@ -282,7 +282,7 @@ class BaseDecisionTree(BaseEstimator):
         if self.tree is None:
             raise Exception('Tree not initialized. Perform a fit first')
 
-        exporter.visit(self.tree)
+        exporter.export(self.tree)
 
     def fit(self, X, y):
         """Fit the tree with the given training data and parameters.
