@@ -56,7 +56,7 @@ def uniform_labelings_scores(score_func, n_samples, n_clusters_range,
     return scores
 
 score_funcs = [
-    metrics.ari_score,
+    metrics.adjusted_rand_score,
     metrics.v_measure_score,
 ]
 

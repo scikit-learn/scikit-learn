@@ -12,6 +12,7 @@ from scipy import comb
 
 import numpy as np
 
+
 # the exact version if faster for k == 2: use it by default globally in
 # this module instead of the float approximate variant
 def comb2(n):
@@ -39,7 +40,7 @@ def check_clusterings(labels_true, labels_pred):
 
 # clustering measures
 
-def ari_score(labels_true, labels_pred):
+def adjusted_rand_score(labels_true, labels_pred):
     """Rand index adjusted for chance
 
     The Rand Index computes a similarity measure between two clusterings
@@ -59,7 +60,7 @@ def ari_score(labels_true, labels_pred):
 
     ARI is a symmetric measure::
 
-        ari_score(a, b) == ari_score(b, a)
+        adjusted_rand_score(a, b) == adjusted_rand_score(b, a)
 
     Parameters
     ----------
@@ -80,28 +81,28 @@ def ari_score(labels_true, labels_pred):
 
     Perfectly maching labelings have a score of 1 even
 
-      >>> from sklearn.metrics.cluster import ari_score
-      >>> ari_score([0, 0, 1, 1], [0, 0, 1, 1])
+      >>> from sklearn.metrics.cluster import adjusted_rand_score
+      >>> adjusted_rand_score([0, 0, 1, 1], [0, 0, 1, 1])
       1.0
-      >>> ari_score([0, 0, 1, 1], [1, 1, 0, 0])
+      >>> adjusted_rand_score([0, 0, 1, 1], [1, 1, 0, 0])
       1.0
 
     Labelings that assign all classes members to the same clusters
     are complete be not always pure, hence penalized::
 
-      >>> ari_score([0, 0, 1, 2], [0, 0, 1, 1])     # doctest: +ELLIPSIS
+      >>> adjusted_rand_score([0, 0, 1, 2], [0, 0, 1, 1])  # doctest: +ELLIPSIS
       0.57...
 
     ARI is symmetric, so labelings that have pure clusters with members
     coming from the same classes but unnecessary splits are penalized::
 
-      >>> ari_score([0, 0, 1, 1], [0, 0, 1, 2])     # doctest: +ELLIPSIS
+      >>> adjusted_rand_score([0, 0, 1, 1], [0, 0, 1, 2])  # doctest: +ELLIPSIS
       0.57...
 
     If classes members are completely split across different clusters, the
     assignment is totally incomplete, hence the ARI is very low::
 
-      >>> ari_score([0, 0, 0, 0], [0, 1, 2, 3])
+      >>> adjusted_rand_score([0, 0, 0, 0], [0, 1, 2, 3])
       0.0
 
     References

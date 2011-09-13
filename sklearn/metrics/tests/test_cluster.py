@@ -1,6 +1,6 @@
 import numpy as np
 
-from sklearn.metrics.cluster import ari_score
+from sklearn.metrics.cluster import adjusted_rand_score
 from sklearn.metrics.cluster import homogeneity_score
 from sklearn.metrics.cluster import completeness_score
 from sklearn.metrics.cluster import v_measure_score
@@ -12,11 +12,12 @@ from numpy.testing import assert_array_almost_equal
 
 
 score_funcs = [
-    ari_score,
+    adjusted_rand_score,
     homogeneity_score,
     completeness_score,
     v_measure_score,
 ]
+
 
 def assert_raise_message(exception, message, callable, *args, **kwargs):
     """Helper function to test error messages in exceptions"""
@@ -97,8 +98,8 @@ def test_non_consicutive_labels():
     assert_almost_equal(c, 0.42, 2)
     assert_almost_equal(v, 0.52, 2)
 
-    ari_1 = ari_score([0, 0, 0, 1, 1, 1], [0, 1, 0, 1, 2, 2])
-    ari_2 = ari_score([0, 0, 0, 1, 1, 1], [0, 4, 0, 4, 2, 2])
+    ari_1 = adjusted_rand_score([0, 0, 0, 1, 1, 1], [0, 1, 0, 1, 2, 2])
+    ari_2 = adjusted_rand_score([0, 0, 0, 1, 1, 1], [0, 4, 0, 4, 2, 2])
     assert_almost_equal(ari_1, 0.24, 2)
     assert_almost_equal(ari_2, 0.24, 2)
 
@@ -123,7 +124,7 @@ def test_adjustment_for_chance():
     n_runs = 10
 
     scores = uniform_labelings_scores(
-        ari_score, n_samples, n_clusters_range, n_runs)
+        adjusted_rand_score, n_samples, n_clusters_range, n_runs)
 
     max_abs_scores = np.abs(scores).max(axis=1)
     assert_array_almost_equal(max_abs_scores, [0.02, 0.03, 0.03, 0.02], 2)

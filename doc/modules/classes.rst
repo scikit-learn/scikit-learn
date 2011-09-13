@@ -295,7 +295,7 @@ Clustering metrics
    :toctree: generated/
    :template: function.rst
 
-   metrics.ari_score
+   metrics.adjusted_rand_score
    metrics.homogeneity_completeness_v_measure
    metrics.homogeneity_score
    metrics.completeness_score
