@@ -1,143 +1,355 @@
+.. _neighbors:
+
 =================
 Nearest Neighbors
 =================
 
+.. sectionauthor:: Jake Vanderplas <vanderplas@astro.washington.edu>
+
 .. currentmodule:: sklearn.neighbors
 
-The principle behind nearest neighbor methods (*k*-NN) is to find the *k*
-training samples closest in Euclidean distance to the sample to be classified,
-the perform a majority vote among these *k* neighbors' classes.
-This method is known as a non-generalizing machine learning method, since it
-simply "remembers" all of its training data (possibly transformed into a fast
-:ref:`indexing structure <ball_tree>`).
+:mod:`sklearn.neighbors` provides functionality for unsupervised and 
+supervised neighbors-based learning methods.  Unsupervised nearest neighbors
+is the foundation of many other learning methods,
+notably manifold learning and spectral clustering.  Supervised neighbors-based
+learning comes in two flavors: `classification`_ for data with
+discrete labels, and `regression`_ for data with continuous labels.
+
+The principle behind nearest neighbor methods is to find a predefined number
+of training samples closest in distance to the new point, and
+predict the label from these.  The number of samples can be a user-defined
+constant (k-nearest neighbor learning), or vary based
+on the local density of points (radius-based neighbor learning).
+The distance can, in general, be any metric measure: standard Euclidean
+distance is the most common choice.
+Neighbors-based methods are known as *non-generalizing* machine
+learning methods, since they simply "remember" all of its training data
+(possibly transformed into a fast indexing structure such as a
+:ref:`Ball Tree <ball_tree>` or :ref:`KD Tree <kd_tree>`.).
 
 Despite its simplicity, nearest neighbors has been successful in a
-large number of classification problems, including handwritten digits
-or satellite image scenes. It is often successful in situation where
-the decision boundary is very irregular.
+large number of classification and regression problems, including
+handwritten digits or satellite image scenes. It is often successful
+in classification situations where the decision boundary is very irregular.
 
-The `NeighborsClassifier` can handle either Numpy arrays and `scipy.sparse`
-matrices as input.
-It currently supports only the Euclidean distance metric.
-
-Classification
-==============
-
-The :class:`NeighborsClassifier` implements the nearest-neighbors
-classification method using a vote heuristic: the class most present
-in the k nearest neighbors of a point is assigned to this point.
-
-It is possible to use different nearest neighbor search algorithms by using
-the keyword ``algorithm``. Possible values are ``'auto'``, ``'ball_tree'``,
-``'brute'``. ``'ball_tree'`` will create an instance of :class:`BallTree` to
-conduct the search, which is usually very efficient in low-dimensional spaces.
-In higher dimension, a brute-force approach is prefered thus parameters
-``'brute'`` can be used. Finally, ``'auto'`` is a simple
-heuristic that will guess the best approach based on the current dataset.
+The classes in :mod:`sklearn.neighbors` can handle either Numpy arrays or
+`scipy.sparse` matrices as input.  It currently supports only the Euclidean
+distance metric.
 
 
-.. figure:: ../auto_examples/images/plot_neighbors_1.png
-   :target: ../auto_examples/plot_neighbors.html
+Unsupervised Nearest Neighbors
+==============================
+
+:class:`NearestNeighbors` implements unsupervised nearest neighbors learning.
+It acts as a uniform interface to three different nearest neighbors
+algorithms: :class:`BallTree`, :class:`scipy.spatial.cKDTree`, and a
+brute-force algorithm based on routines in :mod:`sklearn.metrics.pairwise`.
+The choice of neighbors search algorithm is controlled through the keyword
+``'algorithm'``, which must be one of
+``['auto', 'ball_tree', 'kd_tree', 'brute']``.  When the default value
+``'auto'`` is passed, the algorithm attempts to determine the best approach
+from the training data.  For a discussion of the strengths and weaknesses
+of each option, see `Nearest Neighbor Algorithms`_.
+
+.. _classification:
+
+Nearest Neighbors Classification
+================================
+
+Neighbors-based classification is a type of *instance-based learning* or
+*non-generalizing learning*: it does not attempt to construct a general
+internal model, but simply stores instances of the training data.
+Classification is computed from a simple majority vote of the nearest 
+neighbors of each point: a query point is assigned the data class which
+has the most representatives within the nearest neighbors of the point.
+
+scikit-learn implements two different nearest neighbors classifiers:
+:class:`KNeighborsClassifier` implements learning based on the :math:`k`
+nearest neighbors of each query point, where :math:`k` is an integer value
+specified by the user.  :class:`RadiusNeighborsClassifier` implements learning
+based on the number of neighbors within a fixed radius :math:`r` of each
+training point, where :math:`r` is a floating-point value specified by
+the user.
+
+The :math:`k`-neighbors classification in :class:`KNeighborsClassifier`
+is the more commonly used of the two techniques.  The
+optimal choice of the value :math:`k` is highly data-dependent: in general
+a larger :math:`k` suppresses the effects of noise, but makes the 
+classification boundaries less distinct.
+
+In cases where the data is not uniformly sampled, radius-based neighbors
+classification in :class:`RadiusNeighborsClassifier` can be a better choice.
+The user specifies a fixed radius :math:`r`, such that points in sparser
+neighborhoods use fewer nearest neighbors for the classification.  For
+high-dimensional parameter spaces, this method becomes less effective due
+to the so-called "curse of dimensionality".
+
+The basic nearest neighbors classification uses uniform weights: that is, the
+value assigned to a query point is computed from a simple majority vote of
+the nearest neighbors.  Under some circumstances, it is better to weight the
+neighbors such that nearer neighbors contribute more to the fit.  This can
+be accomplished through the ``weights`` keyword.  The default value,
+``weights = 'uniform'``, assigns uniform weights to each neighbor.
+``weights = 'distance'`` assigns weights proportional to the inverse of the
+distance from the query point.  Alternatively, a user-defined function of the
+distance can be supplied which is used to compute the weights.
+
+
+
+.. |classification_1| image:: ../auto_examples/neighbors/images/plot_classification_1.png
+   :target: ../auto_examples/neighbors/plot_classification.html
+   :scale: 50
+
+.. |classification_2| image:: ../auto_examples/neighbors/images/plot_classification_2.png
+   :target: ../auto_examples/neighbors/plot_classification.html
+   :scale: 50
+
+.. centered:: |classification_1| |classification_2|
+
+.. topic:: Examples:
+
+  * :ref:`example_neighbors_plot_classification.py`: an example of
+    classification using nearest neighbors.
+
+.. _regression:
+
+Nearest Neighbors Regression
+============================
+
+Neighbors-based regression can be used in cases where the data labels are
+continuous rather than discrete variables.  The label assigned to a query
+point is computed based the mean of the labels of its nearest neighbors.
+
+scikit-learn implements two different neighbors regressors:
+:class:`KNeighborsRegressor` implements learning based on the :math:`k`
+nearest neighbors of each query point, where :math:`k` is an integer
+value specified by the user.  :class:`RadiusNeighborsRegressor` implements
+learning based on the neighbors within a fixed radius :math:`r` of the
+query point, where :math:`r` is a floating-point value specified by the
+user.
+
+The basic nearest neighbors regression uses uniform weights: that is, 
+each point in the local neighborhood contributes uniformly to the
+classification of a query point.  Under some circumstances, it can be
+advantageous to weight points such that nearby points contribute more
+to the regression than faraway points.  This can be accomplished through
+the ``weights`` keyword.  The default value, ``weights = 'uniform'``,
+assigns equal weights to all points.  ``weights = 'distance'`` assigns 
+weights proportional to the inverse of the distance from the query point.
+Alternatively, a user-defined function of the distance can be supplied,
+which will be used to compute the weights.
+
+.. figure:: ../auto_examples/neighbors/images/plot_regression_1.png
+   :target: ../auto_examples/neighbors/plot_regression.html
    :align: center
    :scale: 75
 
 
 .. topic:: Examples:
 
-  * :ref:`example_plot_neighbors.py`: an example of classification
-    using nearest neighbor.
+  * :ref:`example_neighbors_plot_regression.py`: an example of regression
+    using nearest neighbors.
 
 
-Regression
-==========
+Nearest Neighbor Algorithms
+===========================
 
-The :class:`NeighborsRegressor` estimator implements a
-nearest-neighbors regression method by weighting the targets of the
-k-neighbors. Two different weighting strategies are implemented:
-``barycenter`` and ``mean``. ``barycenter`` will apply the weights
-that best reconstruct the point from its neighbors while ``mean`` will
-apply constant weights to each point. This plot shows the behavior of
-both classifier for a simple regression task.
+.. _brute_force:
 
-.. figure:: ../auto_examples/images/plot_neighbors_regression_1.png
-   :target: ../auto_examples/plot_neighbors_regression.html
-   :align: center
-   :scale: 75
+Brute Force
+-----------
+
+Fast computation of nearest neighbors is an active area of research in
+machine learning.  The most naive neighbor search implementation involves
+the brute-force computation of distances between all pairs of points in the
+dataset: for :math:`N` samples in :math:`D` dimensions, this approach scales
+as :math:`O[D N^2]`.  Efficient brute-force neighbors searches can be very
+competetive for small data samples.  
+However, as the number of samples :math:`N` grows, the brute-force
+approach quickly becomes infeasible.  In the classes within 
+:mod:`sklearn.neighbors`, brute-force neighbors searches are specified
+using the keyword ``algorithm = 'brute'``, and are computed using the
+routines available in :mod:`sklearn.metrics.pairwise`.
+
+.. _kd_tree:
+
+K-D Tree
+--------
+
+To address the computational inefficiencies of the brute-force approach, a
+variety of tree-based data structures have been invented.  In general, these
+structures attempt to reduce the required number of distance calculations
+by efficiently encoding aggregate distance information for the sample.
+The basic idea is that if point :math:`A` is very distant from point
+:math:`B`, and point :math:`B` is very close to point :math:`C`,
+then we know that points :math:`A` and :math:`C` 
+are very distant, *without having to explicitly calculate their distance*.
+In this way, the computational cost of a nearest neighbors search can be
+reduced to :math:`O[D N \log(N)]` or better.  This is a significant 
+improvement over brute-force for large :math:`N`.
+
+An early approach to taking advantage of this aggregate information was 
+the *KD tree* data structure (short for *K-dimensional tree*), which 
+generalizes two-dimensional *Quad-trees* and 3-dimensional *Oct-trees*
+to an arbitrary number of dimensions.  The KD tree is a tree
+structure which recursively partitions the parameter space along the data
+axes, deviding it into nested orthotopic regions into which data points
+are filed.  The construction of a KD tree is very fast: because partitioning
+is performed only along the data axes, no :math:`D`-dimensional distances
+need to be computed.  Once constructed, the nearest neighbor of a query
+point can be determined with only :math:`O[\log(N)]` distance computations.
+Though the KD tree approach is very fast for low-dimensional (:math:`D < 20`)
+neighbors searches, it becomes inefficient as :math:`D` grows very large:
+this is one manifestation of the so-called "curse of dimensionality".
+In scikit-learn, KD tree neighbors searches are specified using the 
+keyword ``algorithm = 'kd_tree'``, and are computed using the class
+:class:`scipy.spatial.cKDTree`.
 
 
-.. topic:: Examples:
+.. topic:: References:
 
-  * :ref:`example_plot_neighbors_regression.py`: an example of regression
-    using nearest neighbor.
+   * `"Multidimensional binary search trees used for associative searching"
+     <http://dl.acm.org/citation.cfm?doid=361002.361007>`_,
+     Bentley, J.L., Communications of the ACM (1975)
+
 
 .. _ball_tree:
 
-Efficient implementation: the ball tree
-==========================================
+Ball Tree
+---------
 
-In the case of low-dimensional (<20), dense input, nearest neighbor search
-is done by the object :class:`BallTree`. This algorithm makes it possible to
-rapidly find the nearest neighbors of a point in N-dimensional space.
-
-The optimal neighbor search algorithm for any problem
-depends on a few factors: the number of candidate points (N),
-the dimensionality of the parameter space (D),
-the structure of the data, and the number of neighbors desired (K).
-For small N (less than 500 or so), a brute force search is
-generally adequate.  As N increases, however, the computation time
-for a neighbor search grows as O[N].  Various tree methods have
-been developed to reduce this to O[log(N)], the simplest of which is the
-KD tree.  A KD tree gains this speedup by recursively partitioning the data,
-each time along a single dimension, so that clusters of candidate
-neighbors can be ruled-out via a single distance calculation.  Unfortunately,
-as D grows large compared to log(N), KD trees become very inefficient:
-this is one manifestation of the so-called "curse of dimensionality".
-
-Ball trees were developed as an alternative for high-dimensional neighbor
-searches.  Compared to a KDTree, the cost is a slightly longer construction
-time, though for repeated queries, this added construction time quickly
-becomes insignificant. The advantage of the Ball Tree is that it is
-efficient even as the dimensionality D becomes large.
+To address the inefficiencies of KD Trees in higher dimensions, the *ball tree*
+data structure was developed.  Where KD trees partition data along
+cartesian axes, ball trees partition data in a series of nesting
+hyper-spheres.  This makes tree construction more costly than that of the
+KD tree, but
+results in a data structure which allows for efficient neighbors searches
+even in very high dimensions.
 
 A ball tree recursively divides the data into
-nodes defined by a centroid C and radius R, such that each
-point in the node lies within the hyper-sphere of radius R centered
-at C.  The number of candidate points for a neighbor search
-is reduced through use of the triangle inequality:
+nodes defined by a centroid :math:`C` and radius :math:`r`, such that each
+point in the node lies within the hyper-sphere defined by :math:`r` and
+:math:`C`. The number of candidate points for a neighbor search
+is reduced through use of the *triangle inequality*:
 
 .. math::   |x+y| \leq |x| + |y|
 
 With this setup, a single distance calculation between a test point and
-the centroid is sufficient to determine a lower bound on the distance
-to all points within the node.
+the centroid is sufficient to determine a lower and upper bound on the
+distance to all points within the node.
 Because of the spherical geometry of the ball tree nodes, its performance
-does not degrade at high dimensions, as long as the distribution of
-points has a lower-dimensional or sparse structure.
-For dense distributions of points that uniformly fill the
-parameter space, the performance gain of a ball tree will be reduced.
-Because datasets of interest are usually structured,
-the ball tree is a better choice in practice.
-
-One final performance note is the effect of the
-number of neighbors K.  The performance gain over brute force
-for any tree algorithm will degrade as K increases.  Depending on the
-size, dimensionality, and structure of the dataset, a search for
-very large K may be performed more efficiently with a brute force algorithm
-than with a tree algorithm.
-
-A ball tree can be constructed in a number of ways: the optimal method
-depends on the size and structure of the data.  Currently, the
-:class:`BallTree` implements only the KD construction algorithm
-(see reference below).
-This is the simplest and fastest construction algorithm, but is
-sub-optimal for some datasets.
+does not degrade at high dimensions.  In scikit-learn, ball-tree-based
+neighbors searches are specified using the keyword ``algorithm = 'ball_tree'``,
+and are computed using the class :class:`sklearn.neighbors.BallTree`.
+Alternatively, the user can work with the :class:`BallTree` class directly.
 
 .. topic:: References:
 
    * `"Five balltree construction algorithms"
-     <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.91.8209&rep=rep1&type=pdf>`_,
+     <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.91.8209>`_,
      Omohundro, S.M., International Computer Science Institute
-     Technical Report
+     Technical Report (1989)
+
+Choice of Nearest Neighbors Algorithm
+-------------------------------------
+The optimal algorithm for a given dataset is a complicated choice, and
+depends on a number of factors:
+
+* number of samples :math:`N` (i.e. ``n_samples``) and dimensionality 
+  :math:`D` (i.e. ``n_features``).
+
+  * *Brute force* query time grows as :math:`O[D N]`
+  * *Ball tree* query time grows as approximately :math:`O[D \log(N)]`
+  * *KD tree* query time changes with :math:`D` in a way that is difficult
+    to precisely characterise.  For small :math:`D` (less than 20 or so)
+    the cost is approximately :math:`O[D\log(N)]`, and the KD tree
+    query can be very efficient.
+    For larger :math:`D`, the cost increases to nearly `O[DN]`, and 
+    the overhead due to the tree
+    structure can lead to queries which are slower than brute force.
+  
+  For small data sets (:math:`N` less than 30 or so), :math:`\log(N)` 
+  can is comparable to :math:`N`, and brute force algorithms will
+  can be more efficient than a tree-based approach.  Both :class:`cKDTree`
+  and :class:`BallTree` address this through providing a *leaf size*
+  parameter: this controls the number of samples at which a query switches
+  to brute-force.  This allows both algorithms to approach the efficiency
+  of a brute-force computation for small :math:`N`.
+
+* data structure: *intrinsic dimensionality* of the data and/or *sparsity*
+  of the data. Intrinsic dimensionality refers to the dimension
+  :math:`d \le D` of a manifold on which the data lies, which can be linearly
+  or nonlinearly embedded in the parameter space. Sparsity refers to the
+  degree to which the data fills the parameter space (this is to be
+  distinguished from the concept as used in "sparse" matrices.  The data
+  matrix may have no zero entries, but the **structure** can still be
+  "sparse" in this sense).
+  
+  * *Brute force* query time is unchanged by data structure.
+  * *Ball tree* and *KD tree* query times can be greatly influenced
+    by data structure.  In general, sparser data with a smaller intrinsic
+    dimensionality leads to faster query times.  Because the KD tree
+    internal representation is aligned with the parameter axes, it will not
+    generally show as much improvement as ball tree for arbitrarily
+    structured data.
+  
+  Datasets used in machine learning tend to be very structured, and are
+  very well-suited for tree-based queries.
+
+* number of neighbors :math:`k` requested for a query point.
+
+  * *Brute force* query time is largely unaffected by the value of :math:`k`
+  * *Ball tree* and *KD tree* query time will become slower as :math:`k`
+    increases.  This is due to two effects: first, a larger :math:`k` leads
+    to the necessity to search a larger portion of the parameter space.
+    Second, using :math:`k > 1` requires internal queueing of results
+    as the tree is traversed.
+
+  As :math:`k` becomes large compared to :math:`N`, the ability to prune
+  branches in a tree-based query is reduced.  In this situation, Brute force
+  queries can be more efficient.
+
+* number of query points.  Both the ball tree and the KD Tree
+  require a construction phase.  The cost of this construction becomes
+  negligible when amortized over many queries.  If only a small number of
+  queries will be performed, however, the construction can make up
+  a significant fraction of the total cost.  If very few query points
+  will be required, brute force is better than a tree-based method.
+
+Currently, ``algorithm = 'auto'`` selects ``'ball_tree'`` if
+:math:`k < N/2`, and ``'brute'`` otherwise.  This choice is based on
+the assumption that the number of query points is at least the same order
+as the number of training points, and that ``leaf_size`` is close to its
+default value of ``30``.
+
+Effect of ``leaf_size``
+-----------------------
+As noted above, for small sample sizes a brute force search can be more
+efficient than a tree-based query.  This fact is accounted for in the ball
+tree and KD tree by internally switching to brute force searches within
+leaf nodes.  The level of this switch can be specified with the parameter
+``leaf_size``.  This parameter choice has many effects:
+
+**construction time**
+  A larger ``leaf_size`` leads to a faster tree construction time, because
+  fewer nodes need to be created
+
+**query time**
+  Both a large or small ``leaf_size`` can lead to suboptimal query cost.
+  For ``leaf_size`` approaching 1, the overhead involved in traversing
+  nodes can significantly slow query times.  For ``leaf_size`` approaching
+  the size of the training set, queries become essentially brute force.
+  A good compromise between these is ``leaf_size = 30``, the default value
+  of the parameter.
+  
+**memory**
+  As ``leaf_size`` increases, the memory required to store a tree structure
+  decreases.  This is especially important in the case of ball tree, which
+  stores a :math:`D`-dimensional centroid for each node.  The required
+  storage space for :class:`BallTree` is approximately ``1 / leaf_size`` times
+  the size of the training set.
+
+``leaf_size`` is not referenced for brute force queries.
 
 
 
