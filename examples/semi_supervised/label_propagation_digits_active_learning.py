@@ -50,7 +50,7 @@ for i in range(5):
     y_pred = lp_model.transduction_[unlabeled_indices]
     y_true = Y[unlabeled_indices]
 
-    cm = confusion_matrix(y_true, y_pred, labels=lp_model.unique_labels)
+    cm = confusion_matrix(y_true, y_pred, labels=lp_model.unique_labels_)
 
     print "Label Spreading model: %d labeled & %d unlabeled (%d total)" %\
         (n_labeled_points, n_total_samples - n_labeled_points, n_total_samples)

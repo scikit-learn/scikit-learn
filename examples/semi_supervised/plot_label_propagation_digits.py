@@ -49,7 +49,7 @@ lp_model.fit(X, Y_train)
 y_pred = lp_model.transduction_[unlabeled_set]
 y_true = Y[unlabeled_set]
 
-cm = confusion_matrix(y_true, y_pred, labels=lp_model.unique_labels)
+cm = confusion_matrix(y_true, y_pred, labels=lp_model.unique_labels_)
 
 print "Label Spreading model: %d labeled & %d unlabeled points (%d total)" %\
         (n_labeled_points, n_total_samples - n_labeled_points, n_total_samples)

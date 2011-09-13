@@ -128,15 +128,15 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        X : array_like, shape = [n_points, n_features]
+        X : array_like, shape = [n_samples, n_features]
 
         Returns
         -------
-        y : array_like, shape = [n_points]
+        y : array_like, shape = [n_samples]
             Predictions for input data
         """
-        ym = self.predict_proba(X)
-        return self.unique_labels[np.argmax(ym, axis=1)].flatten()
+        probas = self.predict_proba(X)
+        return self.unique_labels_[np.argmax(probas, axis=1)].flatten()
 
     def predict_proba(self, X):
         """Predict probability for each possible outcome.
@@ -161,9 +161,10 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
           A {n_samples by n_samples} size matrix will be created from this
           (keep dataset fewer than 2000 points)
 
-        y : array_like, shape = [n_labeled_samples]
-          n_labeled_samples (unlabeled points marked with a special identifier)
-          All unlabeled samples will be transductively assigned labels
+        y : array_like, shape = [n_samples]
+          Signal to predict with unlabeled points marked with a special
+          identifier. All unlabeled samples will be transductively assigned
+          labels
 
         Returns
         -------
@@ -178,38 +179,37 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         # construct a categorical distribution for classification only
         unique_labels = np.unique(y)
         unique_labels = unique_labels[unique_labels != self.unlabeled_identifier]
-        self.unique_labels = unique_labels
+        self.unique_labels_ = unique_labels
 
-        n_labels, n_classes = len(y), len(unique_labels)
+        n_samples, n_classes = len(y), len(unique_labels)
 
-        y_st = np.asanyarray(y)
-        unlabeled_points = np.where(y_st == self.unlabeled_identifier)
-        alpha_ary = np.ones((n_labels, 1))
-        alpha_ary[unlabeled_points, 0] = self.alpha
+        y = np.asanyarray(y)
+        unlabeled = y == self.unlabeled_identifier
+        alpha_ary = np.ones((n_samples, 1))
+        alpha_ary[unlabeled, 0] = self.alpha
 
         # initialize distributions
-        self.y_ = np.zeros((n_labels, n_classes))
+        self.y_ = np.zeros((n_samples, n_classes))
         for label in unique_labels:
-            self.y_[y_st == label, unique_labels == label] = 1
+            self.y_[y == label, unique_labels == label] = 1
 
         Y_alpha = np.copy(self.y_)
         Y_alpha = Y_alpha * (1 - self.alpha)
-        Y_alpha[unlabeled_points] = 0
+        Y_alpha[unlabeled] = 0
 
         y_p = np.zeros((self._X.shape[0], n_classes))
         self.y_.resize((self._X.shape[0], n_classes))
 
-        max_iter = self.max_iter
-        ct = self.tol
-        while _not_converged(self.y_, y_p, ct) and max_iter > 1:
+        remaining_iter = self.max_iter
+        while _not_converged(self.y_, y_p, self.tol) and remaining_iter > 1:
             y_p = self.y_
             self.y_ = np.dot(graph_matrix, self.y_)
             # clamp
             self.y_ = np.multiply(alpha_ary, self.y_) + Y_alpha
-            max_iter -= 1
+            remaining_iter -= 1
 
         # set the transduction item
-        transduction = self.unique_labels[np.argmax(self.y_, axis=1)]
+        transduction = self.unique_labels_[np.argmax(self.y_, axis=1)]
         self.transduction_ = transduction.flatten()
         return self
 
