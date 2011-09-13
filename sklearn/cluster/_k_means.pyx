@@ -124,47 +124,6 @@ cdef double add(DOUBLE *center_data_ptr, DOUBLE center_scale,
     return (xsqnorm * c * c) + (2.0 * innerprod * c * center_scale)
 
 
-###############################################################################
-# Rand Index
-
-def randindex(labels_true, labels_pred):
-    """Compute the Rand-Index (aka clustering accuracy) given by
-    RI = N_00 + N_11 / (n * (n - 1) / 2)
-
-    where N_00 is the number of sample pairs which are clustered together
-    in both clusterings, N_11 is the number of pairs which are not
-    clustered together in both clusterings, and n is the total number of
-    samples. 
-    """
-    true = np.asanyarray(labels_true, dtype=np.float64)
-    pred = np.asanyarray(labels_pred, dtype=np.float64)
-    assert true.shape[0] == pred.shape[0]
-    return _randindex(true, pred)
-
-cdef _randindex(np.ndarray[DOUBLE, ndim=1] labels_true,
-                np.ndarray[DOUBLE, ndim=1] labels_pred):
-    cdef np.ndarray[INT, ndim=2]count = np.zeros((2, 2), dtype=np.int32)
-    cdef int i = 0, j = 0
-    cdef int n = labels_pred.shape[0]
-    if n < 2:
-        raise ValueError("number of samples must be at least 2.")
-
-    for i from 0 <= i < n:
-        for j from i <= j < n:
-            if labels_true[i] == labels_true[j]:
-                if labels_pred[i] == labels_pred[j]:
-                    count[1, 1] += 1
-                else:
-                    count[1, 0] += 1
-            else:
-                if labels_pred[i] == labels_pred[j]:
-                    count[0, 1] += 1
-                else:
-                    count[0, 0] += 1
-
-    return float(count[0, 0] + count[1, 1]) / ((n * (n - 1)) / 2.0)
-
-
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)

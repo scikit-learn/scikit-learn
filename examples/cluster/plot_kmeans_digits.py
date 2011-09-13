@@ -44,6 +44,7 @@ print "Inertia: %f" % km.inertia_
 print "Homogeneity: %0.3f" % metrics.homogeneity_score(labels, km.labels_)
 print "Completeness: %0.3f" % metrics.completeness_score(labels, km.labels_)
 print "V-measure: %0.3f" % metrics.v_measure_score(labels, km.labels_)
+print "Adjusted Rand Index: %0.3f" % metrics.ari_score(labels, km.labels_)
 print
 
 print "Raw k-means with random centroid init..."
@@ -54,6 +55,7 @@ print "Inertia: %f" % km.inertia_
 print "Homogeneity: %0.3f" % metrics.homogeneity_score(labels, km.labels_)
 print "Completeness: %0.3f" % metrics.completeness_score(labels, km.labels_)
 print "V-measure: %0.3f" % metrics.v_measure_score(labels, km.labels_)
+print "Adjusted Rand Index: %0.3f" % metrics.ari_score(labels, km.labels_)
 print
 
 print "Raw k-means with PCA-based centroid init..."
@@ -67,6 +69,7 @@ print "Inertia: %f" % km.inertia_
 print "Homogeneity: %0.3f" % metrics.homogeneity_score(labels, km.labels_)
 print "Completeness: %0.3f" % metrics.completeness_score(labels, km.labels_)
 print "V-measure: %0.3f" % metrics.v_measure_score(labels, km.labels_)
+print "Adjusted Rand Index: %0.3f" % metrics.ari_score(labels, km.labels_)
 print
 
 # Plot k-means++ form on a 2D plot using PCA
