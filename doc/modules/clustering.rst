@@ -401,7 +401,7 @@ Advantages
   match score.
 
 - **No assumption is made on the cluster structure**: can be used
-  to compare clustering algorithms such as k-means which assume isotropic
+  to compare clustering algorithms such as k-means which assumes isotropic
   blob shapes with results of spectral clustering algorithms which can
   find cluster with "folded" shapes.
 
@@ -537,7 +537,7 @@ Advantages
   to better feel what 'kind' of mistakes is done by the assigmenent.
 
 - **No assumption is made on the cluster structure**: can be used
-  to compare clustering algorithms such as k-means which assume isotropic
+  to compare clustering algorithms such as k-means which assumes isotropic
   blob shapes with results of spectral clustering algorithms which can
   find cluster with "folded" shapes.
 
