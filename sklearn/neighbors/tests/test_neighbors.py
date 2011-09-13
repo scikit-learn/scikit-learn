@@ -23,9 +23,7 @@ ALGORITHMS = ('ball_tree', 'brute', 'kd_tree', 'auto')
 def test_unsupervised_kneighbors(n_samples=20, n_features=5,
                                  n_query_pts=2, n_neighbors=5,
                                  random_state=0):
-    """
-    Samples are are set of n two-category equally spaced points.
-    """
+    """Test unsupervised neighbors methods"""
     rng = np.random.RandomState(random_state)
 
     X = rng.rand(n_samples, n_features)
@@ -50,19 +48,20 @@ def test_unsupervised_kneighbors(n_samples=20, n_features=5,
 
 
 def test_unsupervised_inputs():
-    X = np.random.random((10,3))
+    """test the types of valid input into NearestNeighbors"""
+    X = np.random.random((10, 3))
 
     nbrs_fid = neighbors.NearestNeighbors(n_neighbors=1)
     nbrs_fid.fit(X)
-    
+
     dist1, ind1 = nbrs_fid.kneighbors(X)
 
-    nbrs = neighbors.NearestNeighbors(n_neighbors=1)    
+    nbrs = neighbors.NearestNeighbors(n_neighbors=1)
 
     for input in (nbrs_fid, neighbors.BallTree(X), cKDTree(X)):
         nbrs.fit(input)
         dist2, ind2 = nbrs.kneighbors(X)
-        
+
         assert_array_almost_equal(dist1, dist2)
         assert_array_almost_equal(ind1, ind2)
 
@@ -70,9 +69,7 @@ def test_unsupervised_inputs():
 def test_unsupervised_radius_neighbors(n_samples=20, n_features=5,
                                        n_query_pts=2, radius=0.5,
                                        random_state=0):
-    """
-    Samples are are set of n two-category equally spaced points.
-    """
+    """Test unsupervised radius-based query"""
     rng = np.random.RandomState(random_state)
 
     X = rng.rand(n_samples, n_features)
@@ -112,6 +109,7 @@ def test_kneighbors_classifier(n_samples=40,
                                n_test_pts=10,
                                n_neighbors=5,
                                random_state=0):
+    """Test k-neighbors classification"""
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
     y = ((X ** 2).sum(axis=1) < .25).astype(np.int)
@@ -134,6 +132,7 @@ def test_radius_neighbors_classifier(n_samples=40,
                                      n_test_pts=10,
                                      radius=0.5,
                                      random_state=0):
+    """Test radius-based classification"""
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
     y = ((X ** 2).sum(axis=1) < .25).astype(np.int)
@@ -180,6 +179,7 @@ def test_kneighbors_regressor(n_samples=40,
                               n_test_pts=10,
                               n_neighbors=3,
                               random_state=0):
+    """Test k-neighbors regression"""
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
     y = np.sqrt((X ** 2).sum(1))
@@ -205,6 +205,7 @@ def test_radius_neighbors_regressor(n_samples=40,
                                     n_test_pts=10,
                                     radius=0.5,
                                     random_state=0):
+    """Test radius-based neighbors regression"""
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
     y = np.sqrt((X ** 2).sum(1))
@@ -230,7 +231,7 @@ def test_kneighbors_regressor_sparse(n_samples=40,
                                      n_test_pts=10,
                                      n_neighbors=5,
                                      random_state=0):
-    """Test radius-neighbors classifier on sparse matrices"""
+    """Test radius-based regression on sparse matrices"""
     # Like the above, but with various types of sparse matrices
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
@@ -250,8 +251,7 @@ def test_kneighbors_regressor_sparse(n_samples=40,
 
 
 def test_neighbors_iris():
-    """
-    Sanity checks on the iris dataset
+    """Sanity checks on the iris dataset
 
     Puts three points of each label in the plane and performs a
     nearest neighbor query on points near the decision boundary.
@@ -275,9 +275,7 @@ def test_neighbors_iris():
 
 
 def test_kneighbors_graph():
-    """
-    Test kneighbors_graph to build the k-Nearest Neighbor graph.
-    """
+    """Test kneighbors_graph to build the k-Nearest Neighbor graph."""
     X = np.array([[0, 1], [1.01, 1.], [2, 0]])
 
     # n_neighbors = 1
@@ -314,9 +312,7 @@ def test_kneighbors_graph():
 
 
 def test_radius_neighbors_graph():
-    """
-    Test radius_neighbors_graph to build the Nearest Neighbor graph.
-    """
+    """Test radius_neighbors_graph to build the Nearest Neighbor graph."""
     X = np.array([[0, 1], [1.01, 1.], [2, 0]])
 
     A = neighbors.radius_neighbors_graph(X, 1.5, mode='connectivity')
@@ -333,32 +329,27 @@ def test_radius_neighbors_graph():
          [ 1.01      ,  0.        ,  1.40716026],
          [ 0.        ,  1.40716026,  0.        ]])
 
-def test_neighbors_badargs():
-    neigh_types = [neighbors.KNeighborsClassifier,
-                   neighbors.RadiusNeighborsClassifier,
-                   neighbors.KNeighborsRegressor,
-                   neighbors.RadiusNeighborsRegressor]
 
-    
+def test_neighbors_badargs():
+    """Test bad argument values: these should all raise ValueErrors"""
     assert_raises(ValueError,
                   neighbors.NearestNeighbors,
                   algorithm='blah')
 
-    X = np.random.random((10,2))
+    X = np.random.random((10, 2))
 
-    for cls in neigh_types:
+    for cls in (neighbors.KNeighborsClassifier,
+                neighbors.RadiusNeighborsClassifier,
+                neighbors.KNeighborsRegressor,
+                neighbors.RadiusNeighborsRegressor):
         assert_raises(ValueError,
                       cls,
                       weights='blah')
-
-    for cls in neigh_types:
         nbrs = cls()
         assert_raises(ValueError,
                       nbrs.predict,
                       X)
-        
 
-        
     nbrs = neighbors.NearestNeighbors().fit(X)
 
     assert_raises(ValueError,
@@ -368,8 +359,6 @@ def test_neighbors_badargs():
                   nbrs.radius_neighbors_graph,
                   X, mode='blah')
 
-
-    
 
 if __name__ == '__main__':
     import nose
