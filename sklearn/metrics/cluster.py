@@ -8,13 +8,14 @@ better.
 # License: BSD Style.
 
 from math import log
-from scipy import comb as sp_comb
+from scipy import comb
 
 import numpy as np
 
 # the exact version if faster for k == 2: use it by default globally in
 # this module instead of the float approximate variant
-comb = lambda n, k: sp_comb(n, k, exact=1)
+def comb2(n):
+    return comb(n, 2, exact=1)
 
 
 def check_clusterings(labels_true, labels_pred):
@@ -91,14 +92,14 @@ def ari_score(labels_true, labels_pred):
       >>> ari_score([0, 0, 1, 2], [0, 0, 1, 1])     # doctest: +ELLIPSIS
       0.57...
 
-    ARI is symmetric hence labelings that have pure clusters with members
-    coming from the same classes but un-necessary splits are penalized::
+    ARI is symmetric, so labelings that have pure clusters with members
+    coming from the same classes but unnecessary splits are penalized::
 
       >>> ari_score([0, 0, 1, 1], [0, 0, 1, 2])     # doctest: +ELLIPSIS
       0.57...
 
-    If classes members are completly splitted accross different clusters,
-    the assignment is totally in-complete, hence the ARI is very low::
+    If classes members are completely split across different clusters, the
+    assignment is totally incomplete, hence the ARI is very low::
 
       >>> ari_score([0, 0, 0, 0], [0, 1, 2, 3])
       0.0
@@ -122,7 +123,7 @@ def ari_score(labels_true, labels_pred):
     classes = np.unique(labels_true)
     clusters = np.unique(labels_pred)
 
-    # Special limit cases: no clustering since the data is not splitted.
+    # Special limit cases: no clustering since the data is not split.
     # This is a perfect match hence return 1.0.
     if (classes.shape[0] == clusters.shape[0] == 1
         or classes.shape[0] == clusters.shape[0] == 0):
@@ -133,19 +134,19 @@ def ari_score(labels_true, labels_pred):
     class_idx = dict((k, v) for v, k in enumerate(classes))
     cluster_idx = dict((k, v) for v, k in enumerate(clusters))
 
-    # Build the contengency table
+    # Build the contingency table
     n_classes = classes.shape[0]
     n_clusters = clusters.shape[0]
-    contengency = np.zeros((n_classes, n_clusters), dtype=np.int)
+    contingency = np.zeros((n_classes, n_clusters), dtype=np.int)
 
     for c, k in zip(labels_true, labels_pred):
-        contengency[class_idx[c], cluster_idx[k]] += 1
+        contingency[class_idx[c], cluster_idx[k]] += 1
 
-    # Compute the ARI using the contengency data
-    sum_comb_c = sum(comb(n_c, 2) for n_c in contengency.sum(axis=1))
-    sum_comb_k = sum(comb(n_k, 2) for n_k in contengency.sum(axis=0))
+    # Compute the ARI using the contingency data
+    sum_comb_c = sum(comb2(n_c) for n_c in contingency.sum(axis=1))
+    sum_comb_k = sum(comb2(n_k) for n_k in contingency.sum(axis=0))
 
-    sum_comb = sum(comb(n_ij, 2) for n_ij in contengency.flatten())
+    sum_comb = sum(comb2(n_ij) for n_ij in contingency.flatten())
     prod_comb = (sum_comb_c * sum_comb_k) / float(comb(n_samples, 2))
     mean_comb = (sum_comb_k + sum_comb_c) / 2.
     return ((sum_comb - prod_comb) / (mean_comb - prod_comb))
