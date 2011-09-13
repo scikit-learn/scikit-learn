@@ -5,7 +5,7 @@ Clustering
 ==========
 
 `Clustering <http://en.wikipedia.org/wiki/Cluster_analysis>`__ of
-unlabeled data can be performed with the module :mod:`scikits.learn.cluster`.
+unlabeled data can be performed with the module :mod:`sklearn.cluster`.
 
 Each clustering algorithm comes in two variants: a class, that implements
 the `fit` method to learn the clusters on train data, and a function,
@@ -13,7 +13,7 @@ that, given train data, returns an array of integer labels corresponding
 to the different clusters. For the class, the labels over the training
 data can be found in the `labels_` attribute.
 
-.. currentmodule:: scikits.learn.cluster
+.. currentmodule:: sklearn.cluster
 
 .. topic:: Input data
 
@@ -21,10 +21,10 @@ data can be found in the `labels_` attribute.
     this module take different kinds of matrix as input.  On one hand,
     :class:`MeanShift` and :class:`KMeans` take data matrices of shape
     [n_samples, n_features]. These can be obtained from the classes in
-    the :mod:`scikits.learn.feature_extraction` module. On the other hand,
+    the :mod:`sklearn.feature_extraction` module. On the other hand,
     :class:`AffinityPropagation` and :class:`SpectralClustering` take
     similarity matrices of shape [n_samples, n_samples].  These can be
-    obtained from the functions in the :mod:`scikits.learn.metrics.pairwise`
+    obtained from the functions in the :mod:`sklearn.metrics.pairwise`
     module. In other words, :class:`MeanShift` and :class:`KMeans` work
     with points in a vector space, whereas :class:`AffinityPropagation`
     and :class:`SpectralClustering` can work with arbitrary objects, as
@@ -43,22 +43,34 @@ be specified. It scales well to large number of samples, however its
 results may be dependent on an initialisation. As a result, the computation is
 often done several times, with different initialisation of the centroids.
 
+K-means is often referred to as Lloyd's algorithm. After initialization,
+k-means consists of looping between two major steps. First the Voronoi diagram
+of the points is calculated using the current centroids. Each segment in the
+Voronoi diagram becomes a separate cluster. Secondly, the centroids are updated
+to the mean of each segment. The algorithm then repeats this until a stopping
+criteria is fulfilled. Usually, as in this implementation, the algorithm
+stops when the relative increment in the results between iterations is less than
+the given tolerance value.
+
+K-means can be used for vector quantization. This is achieved using the
+transform method of a trained model of :class:`KMeans`.
+
 .. topic:: Examples:
 
- * :ref:`example_cluster_kmeans_digits.py`: Clustering handwritten digits
+ * :ref:`example_cluster_plot_kmeans_digits.py`: Clustering handwritten digits
 
 
 .. _mini_batch_kmeans:
 
 Mini Batch K-Means
--------------------
+------------------
 
 The :class:`MiniBatchKMeans` is a variant of the :class:`K-Means` algorithm
 using mini-batches, random subset of the dataset, to compute the centroids.
 
-Althought the :class:`MiniBatchKMeans` converge faster than the KMeans 
-version, the quality of the results, measured by the inertia, the sum of 
-the distance of each points to the nearest centroid, is not as good as 
+Althought the :class:`MiniBatchKMeans` converge faster than the KMeans
+version, the quality of the results, measured by the inertia, the sum of
+the distance of each points to the nearest centroid, is not as good as
 the :class:`KMeans` algorithm.
 
 .. figure:: ../auto_examples/cluster/images/plot_mini_batch_kmeans_1.png
@@ -80,7 +92,7 @@ the :class:`KMeans` algorithm.
 
  * `"Web Scale K-Means clustering"
    <http://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf>`_
-   D. Sculley, *Proceedings of the 19th international conference on World 
+   D. Sculley, *Proceedings of the 19th international conference on World
    wide web* (2010)
 
 
@@ -235,10 +247,10 @@ and a column with indices of the dataset that should be connected. This
 matrix can be constructed from apriori information, for instance if you
 whish to cluster web pages, but only merging pages with a link pointing
 from one to another. It can also be learned from the data, for instance
-using :func:`scikits.learn.neighbors.kneighbors_graph` to restrict
+using :func:`sklearn.neighbors.kneighbors_graph` to restrict
 merging to nearest neighbors as in the :ref:`swiss roll
 <example_cluster_plot_ward_structured_vs_unstructured.py>` example, or
-using :func:`scikits.learn.feature_extraction.image.grid_to_graph` to
+using :func:`sklearn.feature_extraction.image.grid_to_graph` to
 enable only merging of neighboring pixels on an image, as in the
 :ref:`Lena <example_cluster_plot_lena_ward_segmentation.py>` example.
 
@@ -258,7 +270,7 @@ enable only merging of neighboring pixels on an image, as in the
 .. _dbscan:
 
 DBSCAN
-=======
+======
 
 The :class:`DBSCAN` algorithm clusters data by finding core points which have
 many neighbours within a given radius. After a core point is found, the cluster
@@ -282,10 +294,11 @@ points below.
 
 .. topic:: References:
 
- * "A Density-Based Algorithm for Discovering Clusters in Large Spatial Databases with Noise"
-    Ester, M., H. P. Kriegel, J. Sander, and X. Xu, 
-    In Proceedings of the 2nd International Conference on Knowledge Discovery
-    and Data Mining, Portland, OR, AAAI Press, pp. 226–231. 1996
+ * "A Density-Based Algorithm for Discovering Clusters in Large Spatial Databases
+   with Noise"
+   Ester, M., H. P. Kriegel, J. Sander, and X. Xu,
+   In Proceedings of the 2nd International Conference on Knowledge Discovery
+   and Data Mining, Portland, OR, AAAI Press, pp. 226–231. 1996
 
 Clustering performance evaluation
 =================================
@@ -299,7 +312,7 @@ truth set of classes or satisfying some assumption such that members
 belong to the same class are more similar that members of different
 classes according to some similarity metric.
 
-.. currentmodule:: scikits.learn.metrics
+.. currentmodule:: sklearn.metrics
 
 Inertia
 -------
@@ -329,6 +342,127 @@ Drawbacks
   is known).
 
 
+Ajusted Rand index
+------------------
+
+Presentation and usage
+~~~~~~~~~~~~~~~~~~~~~~
+
+Given the knowledge of the ground truth class assignments ``labels_true``
+and our clustering algorithm assignments of the same samples
+``labels_pred``, the **adjusted Rand index** is a function that measures
+the **similarity** of the two assignements, ignoring permutations and **with
+chance normalization**::
+
+  >>> from sklearn import metrics
+  >>> labels_true = [0, 0, 0, 1, 1, 1]
+  >>> labels_pred = [0, 0, 1, 1, 2, 2]
+
+  >>> metrics.adjusted_rand_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
+  0.24...
+
+One can permute 0 and 1 in the predicted labels and rename `2` by `3` and get
+the same score::
+
+  >>> labels_pred = [1, 1, 0, 0, 3, 3]
+  >>> metrics.adjusted_rand_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
+  0.24...
+
+Furthermore, :func:`adjusted_rand_score` is **symmetric**: swapping the argument
+does not change the score. It can thus be used as a **consensus
+measure**::
+
+  >>> metrics.adjusted_rand_score(labels_pred, labels_true)  # doctest: +ELLIPSIS
+  0.24...
+
+Perfect labeling is scored 1.0::
+
+  >>> labels_pred = labels_true[:]
+  >>> metrics.adjusted_rand_score(labels_true, labels_pred)
+  1.0
+
+Bad (e.g. independent labelings) have negative or close to 0.0 scores::
+
+  >>> labels_true = [0, 1, 2, 0, 3, 4, 5, 1]
+  >>> labels_pred = [1, 1, 0, 0, 2, 2, 2, 2]
+  >>> metrics.adjusted_rand_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
+  -0.12...
+
+
+Advantages
+~~~~~~~~~~
+
+- **Random (uniform) label assignements have a ARI score close to 0.0**
+  for any value of ``n_clusters`` and ``n_samples`` (which is not the
+  case for raw Rand index or the V-measure for instance).
+
+- **Bounded range [-1, 1]**: negative values are bad (independent
+  labelings), similar clusterings have a positve ARI, 1.0 is the perfect
+  match score.
+
+- **No assumption is made on the cluster structure**: can be used
+  to compare clustering algorithms such as k-means which assumes isotropic
+  blob shapes with results of spectral clustering algorithms which can
+  find cluster with "folded" shapes.
+
+
+Drawbacks
+~~~~~~~~~
+
+- Contrary to inertia, **ARI requires the knowlege of the ground truth
+  classes** while almost never available in practice or requires manual
+  assignment by human annotators (as in the supervised learning setting).
+
+  However ARI can also be useful in purely unsupervised setting as a
+  building block for a Consensus Index that can be used for clustering
+  model selection (TODO).
+
+
+.. topic:: Examples:
+
+ * :ref:`example_cluster_plot_adjusted_for_chance_measures.py`: Analysis of
+   the impact of the dataset size on the value of clustering measures
+   for random assignements.
+
+
+Mathematical formulation
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+If C is a ground truth class assignement and K the clustering, let us
+define :math:`a` and :math:`b` as:
+
+- :math:`a`, the number of pairs of elements that are in the same set
+  in C and in the same set in K
+
+- :math:`b`, the number of pairs of elements that are in different sets
+  in C and in different sets in K
+
+The raw (unadjusted) Rand index is then given by:
+
+.. math:: RI = \frac{a + b}{C_2^{n_{samples}}}
+
+Where :math:`C_2^{n_{samples}}` is the total number of possible pairs
+in the dataset (without ordering).
+
+However the RI score does not guarantee that random label assignements
+will get a value close to zero (esp. if the number of clusters is in
+the same order of magnitude as the number of samples).
+
+To counter this effect we can discount the expected RI of random labelings
+by defining the adjusted Rand index as follows:
+
+.. math:: ARI = \frac{RI - Expected\_RI}{max(RI) - Expected\_RI}
+
+.. topic:: References
+
+ * `Comparing Partitions
+   <http://www.springerlink.com/content/x64124718341j1j0/>`_
+   L. Hubert and P. Arabie, Journal of Classification 1985
+
+ * `Wikipedia entry for the adjusted Rand index
+   <http://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index>`_
+
+
 Homogeneity, completeness and V-measure
 ---------------------------------------
 
@@ -351,7 +485,7 @@ We can turn those concept as scores :func:`homogeneity_score` and
 :func:`completeness_score`. Both are bounded below by 0.0 and above by
 1.0 (higher is better)::
 
-  >>> from scikits.learn import metrics
+  >>> from sklearn import metrics
   >>> labels_true = [0, 0, 0, 1, 1, 1]
   >>> labels_pred = [0, 0, 1, 1, 2, 2]
 
@@ -393,6 +527,53 @@ homogeneous but not complete::
     homogeneity_score(a, b) == completeness_score(b, a)
 
 
+Advantages
+~~~~~~~~~~
+
+- **Bounded scores**: 0.0 is as bad as it can be, 1.0 is a perfect score
+
+- Intuitive interpretation: clustering with bad V-measure can be
+  **qualitatively analyzed in terms of homogeneity and completeness**
+  to better feel what 'kind' of mistakes is done by the assigmenent.
+
+- **No assumption is made on the cluster structure**: can be used
+  to compare clustering algorithms such as k-means which assumes isotropic
+  blob shapes with results of spectral clustering algorithms which can
+  find cluster with "folded" shapes.
+
+
+Drawbacks
+~~~~~~~~~
+
+- The previously introduced metrics are **not normalized w.r.t. random
+  labeling**: this means that depending on the number of samples,
+  clusters and ground truth classes, a completely random labeling will
+  not always yield the same values for homogeneity, completeness and
+  hence v-measure. In particular **random labeling won't yield zero
+  scores especially when the number of clusters is large**.
+
+  This problem can safely be ignored when the number of samples is more
+  than a thousand and the number of clusters is less than 10. **For
+  smaller sample sizes or larger number of clusters it is safer to use
+  an adjusted index such as the Adjusted Rand Index (ARI)**.
+
+.. figure:: ../auto_examples/cluster/images/plot_adjusted_for_chance_measures_1.png
+   :target: ../auto_examples/cluster/plot_adjusted_for_chance_measures.html
+   :align: center
+   :scale: 100
+
+- These metrics **require the knowlege of the ground truth classes** while
+  almost never available in practice or requires manual assignment by
+  human annotators (as in the supervised learning setting).
+
+
+.. topic:: Examples:
+
+ * :ref:`example_cluster_plot_adjusted_for_chance_measures.py`: Analysis of
+   the impact of the dataset size on the value of clustering measures
+   for random assignements.
+
+
 Mathematical formulation
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -427,36 +608,7 @@ mean of homogeneity and completeness**:
 
 .. topic:: References
 
- * `"V-Measure: A conditional entropy-based external cluster evaluation
-   measure" <http://acl.ldc.upenn.edu/D/D07/D07-1043.pdf>`_
+ * `V-Measure: A conditional entropy-based external cluster evaluation
+   measure <http://acl.ldc.upenn.edu/D/D07/D07-1043.pdf>`_
    Andrew Rosenberg and Julia Hirschberg, 2007
 
-
-Advantages
-~~~~~~~~~~
-
-- Bounded scores: 0.0 is as bad as it can be, 1.0 is a perfect score
-
-- Intuitive interpretation: clustering with bad V-measure can be
-  qualitatively analyzed in terms of homogeneity and completeness to
-  better feel what 'kind' of mistakes is done by the assigmenent.
-
-- No assumption is made on the similarity metric and the cluster
-  structure.
-
-
-Drawbacks
-~~~~~~~~~
-
-- These metrics require the knowlege of the ground truth classes while
-  almost never available in practice or requires manual assignment by
-  human annotators (as in the supervised learning setting).
-
-- The previously introduced metrics are not normalized w.r.t. random
-  labeling: this means that depending on the number of samples,
-  clusters and ground truth classes, a completely random labeling will
-  not always yield the same values for homogeneity, completeness and
-  hence v-measure. In particular random labeling won't yield zero scores.
-
-  TODO: check the values we get for random labeling on various problem
-  sizes to know whether this is a real problem in practice.

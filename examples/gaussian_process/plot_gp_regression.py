@@ -19,7 +19,7 @@ print __doc__
 # License: BSD style
 
 import numpy as np
-from scikits.learn.gaussian_process import GaussianProcess
+from sklearn.gaussian_process import GaussianProcess
 from matplotlib import pyplot as pl
 
 

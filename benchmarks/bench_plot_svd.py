@@ -8,8 +8,8 @@ import numpy as np
 from collections import defaultdict
 
 from scipy.linalg import svd
-from scikits.learn.utils.extmath import fast_svd
-from scikits.learn.datasets.samples_generator import make_low_rank_matrix
+from sklearn.utils.extmath import fast_svd
+from sklearn.datasets.samples_generator import make_low_rank_matrix
 
 
 def compute_bench(samples_range, features_range, q=3, rank=50):

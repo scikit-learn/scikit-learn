@@ -23,11 +23,11 @@ print __doc__
 # Author: Vincent Dubourg <vincent.dubourg@gmail.com>
 # License: BSD style
 
-from scikits.learn import datasets
-from scikits.learn.gaussian_process import GaussianProcess
-from scikits.learn.cross_val import cross_val_score, KFold
+from sklearn import datasets
+from sklearn.gaussian_process import GaussianProcess
+from sklearn.cross_validation import cross_val_score, KFold
 
-# Load the dataset from scikits' data sets
+# Load the dataset from scikit's data sets
 diabetes = datasets.load_diabetes()
 X, y = diabetes.data, diabetes.target
 
@@ -44,7 +44,7 @@ gp.theta0 = gp.theta # Given correlation parameter = MLE
 gp.thetaL, gp.thetaU = None, None # None bounds deactivate MLE
 
 # Perform a cross-validation estimate of the coefficient of determination using
-# the cross_val module using all CPUs available on the machine
+# the cross_validation module using all CPUs available on the machine
 K = 20 # folds
 R2 = cross_val_score(gp, X, y=y, cv=KFold(y.size, K), n_jobs=1).mean()
 print("The %d-Folds estimate of the coefficient of determination is R2 = %s"

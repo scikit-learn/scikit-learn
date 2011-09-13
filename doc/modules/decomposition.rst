@@ -5,7 +5,7 @@
 Decomposing signals in components (matrix factorization problems)
 =================================================================
 
-.. currentmodule:: scikits.learn.decomposition
+.. currentmodule:: sklearn.decomposition
 
 
 .. _PCA:
@@ -327,6 +327,7 @@ of the data.
 .. topic:: Examples:
 
     * :ref:`example_decomposition_plot_faces_decomposition.py`
+    * :ref:`example_applications_topics_extraction_with_nmf.py`
 
 .. topic:: References:
 

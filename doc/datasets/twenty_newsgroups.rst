@@ -13,21 +13,21 @@ provides a version where the data is already vectorized.
 
 This is not the case for this loader. Instead, it returns the list of
 the raw text files that can be fed to  text feature extractors such as
-:class:`scikits.learn.feature_extraction.text.Vectorizer` with custom
+:class:`sklearn.feature_extraction.text.Vectorizer` with custom
 parameters so as to extract feature vectors.
 
 
 Usage
 -----
 
-The ``scikits.learn.datasets.fetch_20newsgroups`` function is a data
+The ``sklearn.datasets.fetch_20newsgroups`` function is a data
 fetching / caching functions that downloads the data archive from
 the original `20 newsgroups website`_, extracts the archive contents
 in the ``~/scikit_learn_data/20news_home`` folder and calls the
-``scikits.learn.datasets.load_file`` on either the training or
+``sklearn.datasets.load_file`` on either the training or
 testing set folder, or both of them::
 
-  >>> from scikits.learn.datasets import fetch_20newsgroups
+  >>> from sklearn.datasets import fetch_20newsgroups
   >>> newsgroups_train = fetch_20newsgroups(subset='train')
 
   >>> from pprint import pprint
@@ -81,11 +81,11 @@ list of the categories to load to the ``fetch_20newsgroups`` function::
 In order to feed predictive or clustering models with the text data,
 one first need to turn the text into vectors of numerical values suitable
 for statistical analysis. This can be achieved with the utilities of the
-``scikits.learn.feature_extraction.text`` as demonstrated in the following
+``sklearn.feature_extraction.text`` as demonstrated in the following
 example that extract `TF-IDF`_ vectors of unigram tokens::
 
 
-  >>> from scikits.learn.feature_extraction.text import Vectorizer
+  >>> from sklearn.feature_extraction.text import Vectorizer
   >>> documents = [open(f).read() for f in newsgroups_train.filenames]
   >>> vectorizer = Vectorizer()
   >>> vectors = vectorizer.fit_transform(documents)

@@ -42,7 +42,7 @@ X_test = np.dot(base_X_test, coloring_matrix)
 ###############################################################################
 # Compute Ledoit-Wolf and Covariances on a grid of shrinkages
 
-from scikits.learn.covariance import LedoitWolf, OAS, ShrunkCovariance, \
+from sklearn.covariance import LedoitWolf, OAS, ShrunkCovariance, \
     log_likelihood, empirical_covariance
 
 # Ledoit-Wolf optimal shrinkage coefficient estimate
@@ -68,7 +68,6 @@ loglik_real = -log_likelihood(emp_cov, linalg.inv(real_cov))
 
 ###############################################################################
 # Plot results
-pl.figure(-1)
 pl.title("Regularized covariance: likelihood and shrinkage coefficient")
 pl.xlabel('Shrinkage')
 pl.ylabel('Negative log-likelihood')
