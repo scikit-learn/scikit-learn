@@ -196,12 +196,14 @@ def manhattan_distances(X, Y=None, sum_over_features=True):
     array([[1]])
     >>> manhattan_distances(2, 3)
     array([[1]])
+    >>> manhattan_distances([[1, 2], [3, 4]], [[1, 2], [0, 3]])
+    array([[0, 2], [4, 4]])
     >>> import numpy as np
     >>> X = np.ones((1, 2))
     >>> y = 2 * np.ones((2, 2))
     >>> manhattan_distances(X, y, sum_over_features=False)
-    array([[[ 1.,  1.],
-            [ 1.,  1.]]])
+    array([[ 1.,  1.],
+           [ 1.,  1.]])
     """
     X, Y = check_pairwise_arrays(X, Y)
     n_samples_X, n_features_X = X.shape
@@ -211,6 +213,8 @@ def manhattan_distances(X, Y=None, sum_over_features=True):
     D = np.abs(X[:, np.newaxis, :] - Y[np.newaxis, :, :])
     if sum_over_features:
         D = np.sum(D, axis=2)
+    else:
+        D = D.reshape((n_samples_X * n_samples_Y, n_features_X))
     return D
 
 
