@@ -182,7 +182,7 @@ def manhattan_distances(X, Y=None, sum_over_features=True):
     -------
     D: array
         If sum_over_features is False shape is
-        (n_samples_X, n_samples_Y, n_features) and D contains the
+        (n_samples_X * n_samples_Y, n_features) and D contains the
         componentwise L1 pairwise-distances (ie. absolute difference),
         else shape is (n_samples_X, n_samples_Y) and D contains
         the pairwise l1 distances.
