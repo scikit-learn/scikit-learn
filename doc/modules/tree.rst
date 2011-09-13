@@ -13,15 +13,15 @@ method used for :ref:`classification <tree_classification>`,
 
 The advantages of Decision Trees are:
 
-    - Simple to understand and interpret.  Trees can be visualised if needed.
+    - Simple to understand and interpret.  Trees can be visualised.
     
     - Requires little data preparation. Other techniques often require data 
       normalisation, dummy variables need to be created and blank values to 
-      be removed. This module does not support missing values though..
+      be removed. Note that this module does not support missing values.
     
     - Able to handle both numerical and categorical data. Other techniques 
       are usually specialised in analysing datasets that have only one type 
-      of variable.
+      of variable. See :ref:`algorithms <tree_algorithms>` for more information.
     
     - Uses a white box model. If a given situation is observable in a model 
       the explanation for the condition is easily explained by boolean logic. 
@@ -31,7 +31,7 @@ The advantages of Decision Trees are:
     - Possible to validate a model using statistical tests. That makes it 
       possible to account for the reliability of the model.
     
-    - Robust. Performs well even if its assumptions are somewhat violated by 
+    - Performs well even if its assumptions are somewhat violated by 
       the true model from which the data were generated.
 
 The disadvantages of Decision Trees include:
@@ -58,9 +58,9 @@ The disadvantages of Decision Trees include:
       It is therefore recommended to balance the dataset prior to fitting 
       with the decision tree.
 
-    - Decision trees are unstable because small variations in the data might
+    - Decision trees can be unstable because small variations in the data might
       result in a completely different tree being generated.  This problem
-      is mitigated by using decision trees with an ensemble. 
+      is mitigated by using decision trees within an ensemble. 
 
 .. _tree_classification:
 
@@ -80,8 +80,10 @@ the class labels for the training samples::
     >>> Y = [0, 1]
     >>> clf = tree.DecisionTreeClassifier()
     >>> clf.fit(X, Y)
-    SVC(C=1.0, coef0=0.0, degree=3, gamma=0.5, kernel='rbf', probability=False,
-      shrinking=True, tol=0.001)
+    DecisionTreeClassifier(criterion='gini', max_depth=10, max_features=None,
+                min_split=1, n_classes=2,
+                random_state=<mtrand.RandomState object at 0x7fb6370620d8>)
+
 
 After being fitted, the model can then be used to predict new values::
 
@@ -92,22 +94,20 @@ After being fitted, the model can then be used to predict new values::
 [-1, 1]) classification and multiclass (where the labels are [0, ..., K-1]) 
 classification.
 
-Using the Iris dataset, we can construct a tree as follows
+Using the Iris dataset, we can construct a tree as follows::
 
-    >>> from sklearn.datasets import iris
+    >>> from sklearn.datasets import load_iris
     >>> from sklearn import tree
     >>> iris = load_iris()
-    >>> perm = np.random.permutation(iris.target.size)
-    >>> iris.data = iris.data[perm]
-    >>> iris.target = iris.target[perm]
-    >>> X_train = iris.data[-100:]
-    >>> Y_train = iris.target[-100:]
     >>> clf = tree.DecisionTreeClassifier()
-    >>> clf.fit(X_train, Y_train)
+    >>> clf.fit(iris.data, iris.target)
+    DecisionTreeClassifier(criterion='gini', max_depth=10, max_features=None,
+                min_split=1, n_classes=3,
+                random_state=<mtrand.RandomState object at 0x7fb6370620d8>)
 
 Once trained, we can export the tree in `Graphviz <http://www.graphviz.org/>`_ format
 using the :class:`GraphvizExporter` exporter. Below is an example export of a tree
-trained on the entire iris dataset.
+trained on the entire iris dataset::
 
     >>> t = open('iris.dot', 'w')
     >>> exporter = tree.GraphvizExporter(out=t)
@@ -118,10 +118,9 @@ trained on the entire iris dataset.
    :align: center
 
 After being fitted, the model can then be used to predict new values::
-
-    >>> X_test = iris.data[:50]
-    >>> Y_test = iris.target[:50]    
-    >>> clf.predict()
+ 
+    >>> clf.predict(iris.data[0, :])
+    array([0])
 
 .. figure:: ../auto_examples/tree/images/plot_iris.png
    :target: ../auto_examples/tree/plot_iris.html
@@ -129,8 +128,7 @@ After being fitted, the model can then be used to predict new values::
 
 .. topic:: Examples:
 
- * :ref:`example_tree_plot_iris.py`,
- * :ref:`example_tree_plot_separating_hyperplane.py`,
+ * :ref:`example_tree_plot_iris.py`
 
 .. _tree_regression:
 
@@ -178,9 +176,16 @@ complexity for the algorithm is
 :math:`O(n_{features} \times n_{samples}) \times log(n_{samples})`
 
 This implementation uses fancy indexing for data partitioning during the 
-tree building phase.  While this does increase the memory requirement to 
-3 to 4 times the size of the data in the worst case, it results in significantly 
-faster training times (up to 20 times in certain cases).
+tree building phase since this results in significantly faster training 
+times (up to 20 times in certain cases) than sample masking.
+The size of memory (as a proportion of the input data :math:`a`) 
+required at a node of depth :math:`n` can be approximated using a geometric series:
+:math:`size = a \frac{1 - r^n}{1 - r}` where :math:`r` is the ratio of samples 
+used at each node.  A best case analysis shows that the lowest memory requirement 
+(for an infinitely deep tree) is :math:`2 \times a`, where each partition divides 
+the data in half.  A worst case analysis shows that the memory requirement 
+can  increase to :math:`n \times a`. In practise it usually requires 3 to 4 times 
+:math:`a`.
 
 Tips on Practical Use
 =====================
@@ -205,7 +210,9 @@ Tips on Practical Use
     will prevent the tree from learning the data.  Try ``min_split=5`` as an 
     initial value.  
 
-ID3, C4.5, C5.0 and CART
+.. _tree_algorithms:
+
+Tree algorithms: ID3, C4.5, C5.0 and CART
 ========================
 
 What are all the various decision tree algorithms and how do they differ from 
@@ -214,10 +221,16 @@ each other? Which one is implemented in scikit-learn?
 [ID3](http://en.wikipedia.org/wiki/ID3_algorithm) was developed in 1986 by Ross
 Quinlan.  The algorithm creates a multiway tree, finding for each node the
 categorical feature that will yield the largest information gain for 
-categorical targets. C4.5 is the successor to this algorithm and removed the 
+categorical targets. 
+
+C4.5 is the successor to this algorithm and removed the 
 restriction that features must be categorical by dynamically defining a 
 discrete attribute (based on numerical variables) that partitions the 
 continuous attribute value into a discrete set of intervals. 
+
+C5.0 is Quinlan's latest version release under a proprietary license. 
+It uses less memory and builds smaller rulesets than C4.5 while being more 
+accurate. 
 
 [CART](http://en.wikipedia.org/wiki/Predictive_analytics#Classification_and_regression_trees) 
 is very similar to C4.5, but it differs in that it supports 
@@ -225,11 +238,7 @@ numerical target variables (regression) and does not compute rule sets.
 CART also uses the feature and threshold that yield the largest 
 information gain and creates a binary split at each node. 
 
-C5.0 is Quinlan's latest version release under a proprietary license. 
-It uses less memory and builds smaller rulesets than C4.5 while being more 
-accurate. 
-
-We use CART in scikit-learn.
+Scikit-learn uses an optimised version of the CART algorithm.
 
 .. _tree_mathematical_formulation:
 
@@ -237,6 +246,8 @@ We use CART in scikit-learn.
 
 Mathematical formulation
 ========================
+
+TODO
 
 .. topic:: References:
 

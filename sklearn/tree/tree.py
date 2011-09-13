@@ -19,6 +19,8 @@ __all__ = [
     'DecisionTreeRegressor',
 ]
 
+DTYPE = np.float32
+
 CLASSIFICATION = {
     'gini': _tree.Gini,
     'entropy': _tree.Entropy,
@@ -162,7 +164,7 @@ def _build_tree(is_classification, X, y, criterion,
         raise ValueError("Number of labels=%d does not match "
                           "number of features=%d"
                          % (len(y), len(X)))
-    y = np.array(y, dtype=np.float64, order="c")
+    y = np.array(y, dtype=DTYPE, order="c")
 
     feature_mask = np.ones((n_features,), dtype=np.bool, order="c")
     if max_features is not None:
@@ -310,7 +312,7 @@ class BaseDecisionTree(BaseEstimator):
         self : object
             Returns self.
         """
-        X = np.asanyarray(X, dtype=np.float64, order='F')
+        X = np.asanyarray(X, dtype=DTYPE, order='F')
         n_samples, self.n_features = X.shape
 
         if self.type == 'classification':
@@ -347,7 +349,7 @@ class BaseDecisionTree(BaseEstimator):
                                     self.min_split, self.max_features,
                                     self.n_classes, self.random_state)
         else:  # regression
-            y = np.asanyarray(y, dtype=np.float64, order='C')
+            y = np.asanyarray(y, dtype=DTYPE, order='C')
 
             criterion_class = REGRESSION[self.criterion]
             criterion = criterion_class()
@@ -574,8 +576,9 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     >>> cross_val_score(regressor, boston.data, boston.target, cv=10)
     ...                    # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     ...
-    array([ 0.43...,  0.34..., -0.07...,  0.66...,  0.77...,
-            0.62...,  0.39...,  0.26..., -1.49..., -0.51...])
+    array([ 0.40...,  0.32..., -0.09...,  0.45...,  0.78...,
+            0.57...,  0.42...,  0.19..., -1.44..., -2.15...])
+
     """
 
     def __init__(self, criterion='mse', max_depth=10,
