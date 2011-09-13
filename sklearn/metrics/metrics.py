@@ -120,7 +120,6 @@ def roc_curve(y_true, y_score):
         raise ValueError("ROC is defined for binary classification only")
 
     y_score = y_score.ravel()
-    thresholds = np.sort(np.unique(y_score))[::-1]
 
     n_pos = float(np.sum(y_true == classes[1]))  # nb of true positive
     n_neg = float(np.sum(y_true == classes[0]))  # nb of true negative
