@@ -451,7 +451,7 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
     cdef DTYPE_t *y_ptr = <DTYPE_t *>y.data
     cdef DTYPE_t *X_i = NULL
     cdef np.ndarray[np.int32_t, ndim=2, mode="fortran"] sorted_X = \
-        np.asfortranarray(np.argsort(X, axis=0).astype(np.int32))
+        np.asfortranarray(np.argsort(X.T, axis=1).astype(np.int32).T)
     cdef int *sorted_X_i = NULL
 
     # Compute the column strides (increment in pointer elements to get
