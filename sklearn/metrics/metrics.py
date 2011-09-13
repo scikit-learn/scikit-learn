@@ -131,7 +131,7 @@ def roc_curve(y_true, y_score):
     tpr = np.empty(thresholds.size)  # True positive rate
     fpr = np.empty(thresholds.size)  # False positive rate
 
-    # Buid tpr/fpr vector
+    # Build tpr/fpr vector
     dpos = dneg = sum_pos = sum_neg = idx = 0
 
     sorted_signal = sorted(zip(y_score, y_true), reverse=True)
