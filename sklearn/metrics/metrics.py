@@ -132,28 +132,28 @@ def roc_curve(y_true, y_score):
     fpr = np.empty(thresholds.size)  # False positive rate
 
     # Build tpr/fpr vector
-    dpos = dneg = sum_pos = sum_neg = idx = 0
+    current_pos_count = current_neg_count = sum_pos = sum_neg = idx = 0
 
     sorted_signal = sorted(zip(y_score, y_true), reverse=True)
-    last_input = sorted_signal[0][0]
-    for each, value in sorted_signal:
-        if each == last_input:
+    last_score = sorted_signal[0][0]
+    for score, value in sorted_signal:
+        if score == last_score:
             if value == pos_value:
-                dpos += 1
+                current_pos_count += 1
             else:
-                dneg += 1
+                current_neg_count += 1
         else:
-            tpr[idx] = (sum_pos + dpos) / n_pos
-            fpr[idx] = (sum_neg + dneg) / n_neg
-            sum_pos += dpos
-            sum_neg += dneg
-            dpos = 1 if value == pos_value else 0
-            dneg = 1 if value == neg_value else 0
+            tpr[idx] = (sum_pos + current_pos_count) / n_pos
+            fpr[idx] = (sum_neg + current_neg_count) / n_neg
+            sum_pos += current_pos_count
+            sum_neg += current_neg_count
+            current_pos_count = 1 if value == pos_value else 0
+            current_neg_count = 1 if value == neg_value else 0
             idx += 1
-            last_input = each
+            last_score = score
     else:
-        tpr[-1] = (sum_pos + dpos) / n_pos
-        fpr[-1] = (sum_neg + dneg) / n_neg
+        tpr[-1] = (sum_pos + current_pos_count) / n_pos
+        fpr[-1] = (sum_neg + current_neg_count) / n_neg
 
     # hard decisions, add (0,0)
     if fpr.shape[0] == 2:
