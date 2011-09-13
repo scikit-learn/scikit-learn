@@ -350,8 +350,9 @@ Presentation and usage
 
 Given the knowledge of the ground truth class assignments ``labels_true``
 and our clustering algorithm assignments of the same samples
-``labels_pred``, the adjusted Rand index is a function that measures
-the similarity of the two assignements (ignoring permutations)::
+``labels_pred``, the **adjusted Rand index** is a function that measures
+the **similarity** of the two assignements, ignoring permutations and **with
+chance normalization**::
 
   >>> from sklearn import metrics
   >>> labels_true = [0, 0, 0, 1, 1, 1]
@@ -387,10 +388,41 @@ Bad (e.g. independent labelings) have negative or close to 0.0 scores::
   >>> metrics.ari_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
   -0.12...
 
-.. warning::
 
-  :func:`ari_score` is not strictly positive: random assignements can
-  have a negative ARI.
+Advantages
+~~~~~~~~~~
+
+- **Random (uniform) label assignements have a ARI score close to 0.0**
+  for any value of ``n_clusters`` and ``n_samples`` (which is not the
+  case for raw Rand index or the V-measure for instance).
+
+- **Bounded range [-1, 1]**: negative values are bad (independent
+  labelings), similar clusterings have a positve ARI, 1.0 is the perfect
+  match score.
+
+- **No assumption is made on the cluster structure**: can be used
+  to compare clustering algorithms such as k-means which assume isotropic
+  blob shapes with results of spectral clustering algorithms which can
+  find cluster with "folded" shapes.
+
+
+Drawbacks
+~~~~~~~~~
+
+- Contrary to inertia, **ARI requires the knowlege of the ground truth
+  classes** while almost never available in practice or requires manual
+  assignment by human annotators (as in the supervised learning setting).
+
+  However ARI can also be useful in purely unsupervised setting as a
+  building block for a Consensus Index that can be used for clustering
+  model selection (TODO).
+
+
+.. topic:: Examples:
+
+ * :ref:`example_cluster_plot_adjusted_for_chance_measures.py`: Analysis of
+   the impact of the dataset size on the value of clustering measures
+   for random assignements.
 
 
 Mathematical formulation
@@ -429,32 +461,6 @@ by defining the adjusted Rand index as follows:
 
  * `Wikipedia entry for the adjusted Rand index
    <http://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index>`_
-
-
-Advantages
-~~~~~~~~~~
-
-- Upper-bounded range: negative values are bad (independent labelings),
-  similar clusterings have a positve ARI, 1.0 is a perfect match score.
-
-- No assumption is made on the similarity metric and the cluster
-  structure.
-
-- Random (uniform) label assignements have a ARI score close to 0.0
-  for any value of ``n_clusters`` and ``n_samples`` (which is not the
-  case for raw Rand index or the V-measure for instance).
-
-
-Drawbacks
-~~~~~~~~~
-
-- Contrary to inertia, ARI requires the knowlege of the ground truth
-  classes while almost never available in practice or requires manual
-  assignment by human annotators (as in the supervised learning setting).
-
-  However ARI can also be useful in purely unsupervised setting as a
-  building block for a Consensus Index that can be used for clustering
-  model selection (TODO).
 
 
 Homogeneity, completeness and V-measure
@@ -521,6 +527,53 @@ homogeneous but not complete::
     homogeneity_score(a, b) == completeness_score(b, a)
 
 
+Advantages
+~~~~~~~~~~
+
+- **Bounded scores**: 0.0 is as bad as it can be, 1.0 is a perfect score
+
+- Intuitive interpretation: clustering with bad V-measure can be
+  **qualitatively analyzed in terms of homogeneity and completeness**
+  to better feel what 'kind' of mistakes is done by the assigmenent.
+
+- **No assumption is made on the cluster structure**: can be used
+  to compare clustering algorithms such as k-means which assume isotropic
+  blob shapes with results of spectral clustering algorithms which can
+  find cluster with "folded" shapes.
+
+
+Drawbacks
+~~~~~~~~~
+
+- The previously introduced metrics are **not normalized w.r.t. random
+  labeling**: this means that depending on the number of samples,
+  clusters and ground truth classes, a completely random labeling will
+  not always yield the same values for homogeneity, completeness and
+  hence v-measure. In particular **random labeling won't yield zero
+  scores especially when the number of clusters is large**.
+
+  This problem can safely be ignored when the number of samples is more
+  than a thousand and the number of clusters is less than 10. **For
+  smaller sample sizes or larger number of clusters it is safer to use
+  an adjusted index such as the Adjusted Rand Index (ARI)**.
+
+.. figure:: ../auto_examples/cluster/images/plot_adjusted_for_chance_measures_1.png
+   :target: ../auto_examples/cluster/plot_adjusted_for_chance_measures.html
+   :align: center
+   :scale: 100
+
+- These metrics **require the knowlege of the ground truth classes** while
+  almost never available in practice or requires manual assignment by
+  human annotators (as in the supervised learning setting).
+
+
+.. topic:: Examples:
+
+ * :ref:`example_cluster_plot_adjusted_for_chance_measures.py`: Analysis of
+   the impact of the dataset size on the value of clustering measures
+   for random assignements.
+
+
 Mathematical formulation
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -558,42 +611,4 @@ mean of homogeneity and completeness**:
  * `V-Measure: A conditional entropy-based external cluster evaluation
    measure <http://acl.ldc.upenn.edu/D/D07/D07-1043.pdf>`_
    Andrew Rosenberg and Julia Hirschberg, 2007
-
-
-Advantages
-~~~~~~~~~~
-
-- Bounded scores: 0.0 is as bad as it can be, 1.0 is a perfect score
-
-- Intuitive interpretation: clustering with bad V-measure can be
-  qualitatively analyzed in terms of homogeneity and completeness to
-  better feel what 'kind' of mistakes is done by the assigmenent.
-
-- No assumption is made on the similarity metric and the cluster
-  structure.
-
-
-Drawbacks
-~~~~~~~~~
-
-- These metrics require the knowlege of the ground truth classes while
-  almost never available in practice or requires manual assignment by
-  human annotators (as in the supervised learning setting).
-
-- The previously introduced metrics are not normalized w.r.t. random
-  labeling: this means that depending on the number of samples,
-  clusters and ground truth classes, a completely random labeling will
-  not always yield the same values for homogeneity, completeness and
-  hence v-measure. In particular random labeling won't yield zero scores.
-
-  This problem can safely be ignored when the number of samples is more
-  than a thousand and the number of clusters is less than 10. For smaller
-  sample sizes it is better to use an adjusted index instead such as the
-  Adjusted Rand Index or the Adjusted Mutual Information (TODO).
-
-.. topic:: Examples:
-
- * :ref:`example_cluster_plot_adjusted_for_chance_measures.py`: Analysis of
-   the impact of the dataset size on the value of clustering measures
-   for random assignements.
 
