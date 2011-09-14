@@ -61,15 +61,20 @@ for i in range(5):
     print "Confusion matrix"
     print cm
 
+    # compute the entropies of transduced label distributions
     predicted_entropies = stats.distributions.entropy(
             lp_model.label_distributions_.T)
 
     arg = zip(predicted_entropies, np.arange(n_total_samples))
     arg.sort()
+
+    # select five digit examples that the classifier is most uncertain about
     uncertainty_index = [x[1] for x in arg[-5:]]
+
+    # keep track of indicies that we get labels for
     delete_indices = np.array([])
 
-    f.text(.05, (1 - (i + 1) * .18), "model %d\n\nfit with\n%d labels" % (
+    f.text(.05, (1 - (i + 1) * .183), "model %d\n\nfit with\n%d labels" % (
         (i + 1), i * 5 + 10), size=10)
     for index, image_index in enumerate(uncertainty_index):
         image = digits.images[image_index]

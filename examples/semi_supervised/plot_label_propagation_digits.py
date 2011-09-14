@@ -61,10 +61,12 @@ print metrics.classification_report(true_labels, predicted_labels)
 print "Confusion matrix"
 print cm
 
+# calculate uncertainty values for each transduced distribution
 pred_entropies = stats.distributions.entropy(lp_model.label_distributions_.T)
 
 arg = zip(pred_entropies, np.arange(n_total_samples))
 arg.sort()
+# pick the top 10 most uncertain labels
 uncertainty_index = [x[1] for x in arg[-10:]]
 
 for index, image_index in enumerate(uncertainty_index):

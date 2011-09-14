@@ -156,7 +156,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         """
         X_2d = np.atleast_2d(X)
         inference = np.dot(self._get_kernel(self._X, X_2d).T,
-                self.label_distributions)
+                self.label_distributions_)
         normalizer = np.atleast_2d(np.sum(inference, axis=1)).T
         np.divide(inference, normalizer, out=inference)
         return inference
@@ -222,11 +222,11 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
                     self.label_distributions_) + Y_static
             remaining_iter -= 1
 
-        normalizer = np.atleast_2d(np.sum(self.label_distributions, axis=1)).T
-        np.divide(self.label_distributions, normalizer,
-                out=self.label_distributions)
+        normalizer = np.atleast_2d(np.sum(self.label_distributions_, axis=1)).T
+        np.divide(self.label_distributions_, normalizer,
+                out=self.label_distributions_)
         # set the transduction item
-        transduction = self.unique_labels_[np.argmax(self.label_distributions,
+        transduction = self.unique_labels_[np.argmax(self.label_distributions_,
                 axis=1)]
         self.transduction_ = transduction.flatten()
         return self
