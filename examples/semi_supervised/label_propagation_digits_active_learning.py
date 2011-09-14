@@ -62,7 +62,7 @@ for i in range(5):
     print cm
 
     predicted_entropies = stats.distributions.entropy(
-            lp_model.label_distributions.T)
+            lp_model.label_distributions_.T)
 
     arg = zip(predicted_entropies, np.arange(n_total_samples))
     arg.sort()

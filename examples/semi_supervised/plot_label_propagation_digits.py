@@ -61,7 +61,7 @@ print metrics.classification_report(true_labels, predicted_labels)
 print "Confusion matrix"
 print cm
 
-pred_entropies = stats.distributions.entropy(lp_model.label_distributions.T)
+pred_entropies = stats.distributions.entropy(lp_model.label_distributions_.T)
 
 arg = zip(pred_entropies, np.arange(n_total_samples))
 arg.sort()

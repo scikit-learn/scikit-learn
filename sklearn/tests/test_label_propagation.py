@@ -34,7 +34,7 @@ def test_distribution():
     labels = [0, 1, -1]
     for estimator in ESTIMATORS:
         clf = estimator().fit(samples, labels)
-        assert_array_almost_equal(np.asarray(clf.label_distributions[2]),
+        assert_array_almost_equal(np.asarray(clf.label_distributions_[2]),
                 np.array([.5, .5]), 2)
 
 

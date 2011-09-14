@@ -199,27 +199,27 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         clamp_weights[unlabeled, 0] = self.alpha
 
         # initialize distributions
-        self.label_distributions = np.zeros((n_samples, n_classes))
+        self.label_distributions_ = np.zeros((n_samples, n_classes))
         for label in unique_labels:
-            self.label_distributions[y == label, unique_labels == label] = 1
+            self.label_distributions_[y == label, unique_labels == label] = 1
 
-        Y_static = np.copy(self.label_distributions)
+        Y_static = np.copy(self.label_distributions_)
         if self.alpha > 0.:
             Y_static = Y_static * (1 - self.alpha)
         Y_static[unlabeled] = 0
 
         l_previous = np.zeros((self._X.shape[0], n_classes))
-        self.label_distributions.resize((self._X.shape[0], n_classes))
+        self.label_distributions_.resize((self._X.shape[0], n_classes))
 
         remaining_iter = self.max_iter
-        while _not_converged(self.label_distributions, l_previous, self.tol)\
+        while _not_converged(self.label_distributions_, l_previous, self.tol)\
                 and remaining_iter > 1:
-            l_previous = self.label_distributions
-            self.label_distributions = np.dot(graph_matrix,
-                    self.label_distributions)
+            l_previous = self.label_distributions_
+            self.label_distributions_ = np.dot(graph_matrix,
+                    self.label_distributions_)
             # clamp
-            self.label_distributions = np.multiply(clamp_weights,
-                    self.label_distributions) + Y_static
+            self.label_distributions_ = np.multiply(clamp_weights,
+                    self.label_distributions_) + Y_static
             remaining_iter -= 1
 
         normalizer = np.atleast_2d(np.sum(self.label_distributions, axis=1)).T
