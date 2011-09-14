@@ -197,7 +197,8 @@ def manhattan_distances(X, Y=None, sum_over_features=True):
     >>> manhattan_distances(2, 3)
     array([[1]])
     >>> manhattan_distances([[1, 2], [3, 4]], [[1, 2], [0, 3]])
-    array([[0, 2], [4, 4]])
+    array([[0, 2],
+           [4, 4]])
     >>> import numpy as np
     >>> X = np.ones((1, 2))
     >>> y = 2 * np.ones((2, 2))
