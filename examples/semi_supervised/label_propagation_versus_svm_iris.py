@@ -20,14 +20,16 @@ print __doc__
 
 import numpy as np
 import pylab as pl
+
 from sklearn import datasets
 from sklearn import svm
 from sklearn import label_propagation
+
 from sklearn.metrics.metrics import precision_score
 from sklearn.metrics.metrics import recall_score
 from sklearn.metrics.metrics import f1_score
 
-np.random.RandomState(42)
+np.random.RandomState(0)
 
 iris = datasets.load_iris()
 
@@ -49,8 +51,8 @@ svc.fit(X_all, Y_all)
 print "Limited Label data example"
 print "Test name\tprecision\trecall   \tf1"
 print "SVM 80.0pct\t%0.6f\t%0.6f\t%0.6f" %\
-        (precision_score(svc.predict(X[test]), Y[test]),\
-         recall_score(svc.predict(X[test]), Y[test]),\
+        (precision_score(svc.predict(X[test]), Y[test]),
+         recall_score(svc.predict(X[test]), Y[test]),
          f1_score(svc.predict(X[test]), Y[test]))
 
 print "-------"
@@ -63,8 +65,8 @@ for num in [0.2, 0.3, 0.4, 1.0]:
     Y_dup[train_new] = -1
     lp.fit(X_all, Y_dup)
     print "LP %0.1fpct\t%0.6f\t%0.6f\t%0.6f" % \
-            (80 * num, precision_score(lp.predict(X[test]), Y[test]),\
-             recall_score(lp.predict(X[test]), Y[test]),\
+            (80 * num, precision_score(lp.predict(X[test]), Y[test]),
+             recall_score(lp.predict(X[test]), Y[test]),
              f1_score(lp.predict(X[test]), Y[test]))
 
 # label spreading
@@ -76,8 +78,8 @@ for num in [0.2, 0.3, 0.4, 1.0]:
     Y_dup[train_new] = -1
     lspread.fit(X_all, Y_dup)
     print "LS %0.1fpct\t%0.6f\t%0.6f\t%0.6f" % \
-            (80 * num, precision_score(lspread.predict(X[test]), Y[test]),\
-             recall_score(lspread.predict(X[test]), Y[test]), \
+            (80 * num, precision_score(lspread.predict(X[test]), Y[test]),
+             recall_score(lspread.predict(X[test]), Y[test]),
              f1_score(lspread.predict(X[test]), Y[test]))
 
 print "-------"
@@ -91,5 +93,5 @@ lspread.fit(X, Y)
 trans_result = np.asarray(lspread.transduction_)
 print "LS 20tran\t%0.6f\t%0.6f\t%0.6f" % \
         (precision_score(trans_result[test], Y[test]),
-         recall_score(trans_result[test], Y[test]), \
+         recall_score(trans_result[test], Y[test]),
          f1_score(trans_result[test], Y[test]))

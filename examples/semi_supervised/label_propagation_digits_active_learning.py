@@ -47,43 +47,46 @@ for i in range(5):
     lp_model = label_propagation.LabelSpreading(gamma=0.25, max_iter=5)
     lp_model.fit(X, Y_train)
 
-    y_pred = lp_model.transduction_[unlabeled_indices]
-    y_true = Y[unlabeled_indices]
+    predicted_labels = lp_model.transduction_[unlabeled_indices]
+    true_labels = Y[unlabeled_indices]
 
-    cm = confusion_matrix(y_true, y_pred, labels=lp_model.unique_labels_)
+    cm = confusion_matrix(true_labels, predicted_labels,
+            labels=lp_model.unique_labels_)
 
     print "Label Spreading model: %d labeled & %d unlabeled (%d total)" %\
         (n_labeled_points, n_total_samples - n_labeled_points, n_total_samples)
 
-    print metrics.classification_report(y_true, y_pred)
+    print metrics.classification_report(true_labels, predicted_labels)
 
     print "Confusion matrix"
     print cm
 
-    pred_entropies = stats.distributions.entropy(lp_model.y_.T)
+    predicted_entropies = stats.distributions.entropy(
+            lp_model.label_distributions.T)
 
-    arg = zip(pred_entropies, np.arange(n_total_samples))
+    arg = zip(predicted_entropies, np.arange(n_total_samples))
     arg.sort()
-    uncertain_idx = [x[1] for x in arg[-5:]]
-    del_inds = np.array([])
+    uncertainty_index = [x[1] for x in arg[-5:]]
+    delete_indices = np.array([])
 
     f.text(.05, (1 - (i + 1) * .18), "model %d\n\nfit with\n%d labels" % ((i + 1), 
         i * 5 + 10), size=10)
-    for index, im_ind in enumerate(uncertain_idx):
-        image = digits.images[im_ind]
+    for index, image_index in enumerate(uncertainty_index):
+        image = digits.images[image_index]
 
         sub = f.add_subplot(5, 5, index + 1 + (5 * i))
         sub.imshow(image, cmap=pl.cm.gray_r)
-        sub.set_title('pred: %i\ntrue: %i' % (lp_model.transduction_[im_ind],
-            Y[im_ind]), size=10)
+        sub.set_title('predict: %i\ntrue: %i' % (
+            lp_model.transduction_[image_index], Y[image_index]), size=10)
         sub.axis('off')
 
-        # labeling 5 points
-        del_ind, = np.where(unlabeled_indices == im_ind)
-        del_inds = np.concatenate((del_inds, del_ind))
+        # labeling 5 points, remote from labeled set
+        delete_index, = np.where(unlabeled_indices == image_index)
+        delete_indices = np.concatenate((delete_indices, delete_index))
 
-    unlabeled_indices = np.delete(unlabeled_indices, del_inds)
+    unlabeled_indices = np.delete(unlabeled_indices, delete_indices)
     n_labeled_points += 5
 
+f.suptitle("Active learning with Label Propagation.\nRows show 5 most uncertain labels to learn with the next model.")
 pl.subplots_adjust(0.12, 0.03, 0.9, 0.9, 0.2, 0.45)
 pl.show()

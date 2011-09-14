@@ -148,9 +148,18 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         Parameters
         ----------
         X : array_like, shape = (n_features, n_features)
+
+        Return
+        ------
+        inference : array of normalized probability distributions across class
+        labels
         """
-        ary = np.atleast_2d(X)
-        return np.dot(self._get_kernel(self._X, ary).T, self.y_)
+        X_2d = np.atleast_2d(X)
+        inference = np.dot(self._get_kernel(self._X, X_2d).T,
+                self.label_distributions)
+        normalizer = np.atleast_2d(np.sum(inference, axis=1)).T
+        np.divide(inference, normalizer, out=inference)
+        return inference
 
     def fit(self, X, y):
         """Fit a semi-supervised label propagation model on X and y.
@@ -185,31 +194,36 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
 
         y = np.asanyarray(y)
         unlabeled = y == self.unlabeled_identifier
-        alpha_ary = np.ones((n_samples, 1))
-        alpha_ary[unlabeled, 0] = self.alpha
+        clamp_weights = np.ones((n_samples, 1))
+        clamp_weights[unlabeled, 0] = self.alpha
 
         # initialize distributions
-        self.y_ = np.zeros((n_samples, n_classes))
+        self.label_distributions = np.zeros((n_samples, n_classes))
         for label in unique_labels:
-            self.y_[y == label, unique_labels == label] = 1
+            self.label_distributions[y == label, unique_labels == label] = 1
 
-        Y_alpha = np.copy(self.y_)
-        Y_alpha = Y_alpha * (1 - self.alpha)
-        Y_alpha[unlabeled] = 0
+        Y_static = np.copy(self.label_distributions)
+        if self.alpha > 0.:
+            Y_static = Y_static * (1 - self.alpha)
+        Y_static[unlabeled] = 0
 
-        y_p = np.zeros((self._X.shape[0], n_classes))
-        self.y_.resize((self._X.shape[0], n_classes))
+        l_previous = np.zeros((self._X.shape[0], n_classes))
+        self.label_distributions.resize((self._X.shape[0], n_classes))
 
         remaining_iter = self.max_iter
-        while _not_converged(self.y_, y_p, self.tol) and remaining_iter > 1:
-            y_p = self.y_
-            self.y_ = np.dot(graph_matrix, self.y_)
+        while _not_converged(self.label_distributions, l_previous, self.tol)\
+                and remaining_iter > 1:
+            l_previous = self.label_distributions
+            self.label_distributions = np.dot(graph_matrix,
+                    self.label_distributions)
             # clamp
-            self.y_ = np.multiply(alpha_ary, self.y_) + Y_alpha
+            self.label_distributions = np.multiply(clamp_weights,
+                    self.label_distributions) + Y_static
             remaining_iter -= 1
 
         # set the transduction item
-        transduction = self.unique_labels_[np.argmax(self.y_, axis=1)]
+        transduction = self.unique_labels_[np.argmax(self.label_distributions,
+                axis=1)]
         self.transduction_ = transduction.flatten()
         return self
 
@@ -354,7 +368,7 @@ class LabelSpreading(BaseLabelPropagation):
         affinity_matrix = self._get_kernel(self._X, self._X)
         affinity_matrix[np.diag_indices(n_samples)] = 0
         degree_matrix = np.diag(1. / np.sum(affinity_matrix, axis=0))
-        np.sqrt(degree_matrix, degree_matrix)
+        np.sqrt(degree_matrix, out=degree_matrix)
         dot_out(degree_matrix, affinity_matrix, out=affinity_matrix)
 
         # final step produces graph laplacian matrix
@@ -364,6 +378,6 @@ class LabelSpreading(BaseLabelPropagation):
 
 ### Helper functions
 
-def _not_converged(y, y_hat, tol=1e-3):
+def _not_converged(y_truth, y_prediction, tol=1e-3):
     """basic convergence check"""
-    return np.sum(np.abs(np.asarray(y - y_hat))) > tol
+    return np.sum(np.abs(np.asarray(y_truth - y_prediction))) > tol

@@ -170,7 +170,7 @@ try:
     # this is ok, just use the existing implementation
     dot_out = np.dot
 
-except TypeError:
+except (TypeError, ValueError):
     # old version of np.dot that does not accept the third argument, define a
     # pure python workaround:
     def dot_out(a, b, out=None):
