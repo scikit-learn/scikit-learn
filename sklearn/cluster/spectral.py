@@ -124,7 +124,7 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
 
 
 def spectral_clustering(affinity, k=8, n_components=None, mode=None,
-                        random_state=None):
+                        random_state=None, n_init=10):
     """Apply k-means to a projection to the normalized laplacian
 
     In practice Spectral Clustering is very useful when the structure of
@@ -163,6 +163,11 @@ def spectral_clustering(affinity, k=8, n_components=None, mode=None,
         of the lobpcg eigen vectors decomposition when mode == 'amg'
         and by the K-Means initialization.
 
+    n_init: int, optional, default: 10
+        Number of time the k-means algorithm will be run with different
+        centroid seeds. The final results will be the best output of
+        n_init consecutive runs in terms of inertia.
+
     Returns
     -------
     labels: array of integers, shape: n_samples
@@ -194,7 +199,8 @@ def spectral_clustering(affinity, k=8, n_components=None, mode=None,
     maps = spectral_embedding(affinity, n_components=n_components,
                               mode=mode, random_state=random_state)
     maps = maps[1:]
-    _, labels, _ = k_means(maps.T, k, random_state=random_state)
+    _, labels, _ = k_means(maps.T, k, random_state=random_state, 
+                    n_init=n_init)
     return labels
 
 
@@ -224,6 +230,11 @@ class SpectralClustering(BaseEstimator):
         of the lobpcg eigen vectors decomposition when mode == 'amg'
         and by the K-Means initialization.
 
+    n_init: int, optional, default: 10
+        Number of time the k-means algorithm will be run with different
+        centroid seeds. The final results will be the best output of
+        n_init consecutive runs in terms of inertia.
+
     Methods
     -------
 
@@ -247,10 +258,11 @@ class SpectralClustering(BaseEstimator):
       http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.165.9323
     """
 
-    def __init__(self, k=8, mode=None, random_state=None):
+    def __init__(self, k=8, mode=None, random_state=None, n_init=10):
         self.k = k
         self.mode = mode
         self.random_state = random_state
+        self.n_init = n_init
 
     def fit(self, X):
         """Compute the spectral clustering from the affinity matrix
@@ -282,5 +294,6 @@ class SpectralClustering(BaseEstimator):
         """
         self.random_state = check_random_state(self.random_state)
         self.labels_ = spectral_clustering(X, k=self.k, mode=self.mode,
-                                           random_state=self.random_state)
+                                           random_state=self.random_state,
+                                           n_init=self.n_init)
         return self
