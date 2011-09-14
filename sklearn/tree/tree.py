@@ -193,39 +193,49 @@ def _build_tree(is_classification, X, y, criterion,
                          "max_depth is %s." % max_depth)
 
     Node.class_counter = 0
+    sample_mask = np.ones((n_samples,), dtype=np.bool, order="c")
 
-    def recursive_partition(X, y, depth):
+    def recursive_partition(X, y, depth, sample_mask):
         is_split_valid = True
 
-        if depth >= max_depth or len(X) < min_split:
+        # create a view of the relevant samples at this node
+        X_temp = X[sample_mask]
+        y_temp = y[sample_mask]
+
+        if depth >= max_depth or len(X_temp) < min_split:
             is_split_valid = False
 
         feature, threshold, error, init_error = _tree._find_best_split(
-            X, y, feature_mask, criterion)
+            X_temp, y_temp, feature_mask, criterion)
 
         if feature != -1:
+            # compute split over all X -> needed for shapes to match
+            # in the logical_and step later
             split = X[:, feature] < threshold
         else:
             is_split_valid = False
 
         if is_classification:
             a = np.zeros((n_classes,))
-            t = y.max() + 1
-            a[:t] = np.bincount(y.astype(np.int))
+            t = y_temp.max() + 1
+            a[:t] = np.bincount(y_temp.astype(np.int))
         else:
-            a = np.mean(y)
+            a = np.mean(y_temp)
 
         if not is_split_valid:
-            return Node(error=init_error, samples=len(y), value=a)
+            return Node(error=init_error, samples=len(y_temp), value=a)
 
-        left_partition = recursive_partition(X[split], y[split], depth + 1)
-        right_partition = recursive_partition(X[~split], y[~split], depth + 1)
+        left_mask = np.logical_and(sample_mask, split)
+        left_partition = recursive_partition(X, y, depth + 1, left_mask)
+
+        right_mask = np.logical_and(sample_mask, ~split)
+        right_partition = recursive_partition(X, y, depth + 1, right_mask)
 
         return Node(feature=feature, threshold=threshold,
                     error=init_error, samples=len(y), value=a,
                     left=left_partition, right=right_partition)
 
-    return recursive_partition(X, y, 0)
+    return recursive_partition(X, y, 0, sample_mask)
 
 
 def _apply_tree(node, X):
