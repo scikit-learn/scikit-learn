@@ -37,15 +37,20 @@ Changelog
    - New :ref:`manifold` module by `Jake Vanderplas`_ and 
      `Fabian Pedregosa`_.
 
-   - :ref:`Dirichlet Process <dirichlet_process>` GMM 
+   - New :ref:`Dirichlet Process <dirichlet_process>` Gaussian Mixture
+     Model by `Alexandre Passos`_
 
-   - Neighbors refactoring by `Jake Vanderplas`_
+   - :ref:`neighbors` module refactoring by `Jake Vanderplas`_ :
+     general refactoring, support for sparse matrices as input and
+     speed improvements. See the next section for a full list of API
+     changes.
 
    - feature_selection improvements by `Gilles Louppe`_ :
      documentation, efficiency and added methods ``predict``
      ``score``.
 
-   - :ref:`SparsePCA`
+   - :ref:`SparsePCA` by `Vlad Niculae`_, `Gael Varoquaux`_ and
+     `Alexandre Gramfort`_
 
    - Sorting parameters in BaseEstimtor.__repr__
 
@@ -126,7 +131,47 @@ functions will be removed in version 0.11.
 People
 ------
 
-TODO
+38 people contributed to this release.
+
+   - 304  Olivier Grisel
+   - 212  Vlad Niculae
+   - 190  Lars Buitinck
+   - 173  Gael Varoquaux
+   - 149  Fabian Pedregosa (`INRIA`_, `Parietal Team`_)
+   - 127  Jake Vanderplas
+   - 119  Mathieu Blondel
+   - 83  Alexandre Passos
+   - 58  Alexandre Gramfort
+   - 57  Peter Prettenhofer
+   - 56  Gilles Louppe
+   - 41  Robert Layton
+   - 38  Nelle Varoquaux
+   - 32  Jean Kossaifi
+   - 30  Conrad Lee
+   - 22  Pietro Berkes
+   - 18  andy
+   - 17  David Warde-Farley
+   - 11  Brian Holt
+   - 11  Robert
+   - 8  Amit Aides
+   - 8  Virgile Fritsch
+   - 7  Yaroslav Halchenko
+   - 6  Salvatore Masecchia
+   - 5  Paolo Losi
+   - 4  Vincent Schut
+   - 3  Alexis Metaireau
+   - 3  Bryan Silverthorn
+   - 3  Andreas Mueller
+   - 2  Minwoo Jake Lee
+   - 1  Emmanuelle Gouillart
+   - 1  Keith Goodman
+   - 1  Lucas Wiman
+   - 1  Nicolas Pinto
+   - 1  Thouis (Ray) Jones
+   - 1  Tim Sheerman-Chase
+   - 1  Virgile
+   - 1  bdholt1
+   - 1  robertlayton
 
 
 .. _changes_0_8:
@@ -625,3 +670,9 @@ of commits):
 .. _Matthieu Perrot: http://www.lnao.fr/spip.php?rubrique19
 
 .. _Jake Vanderplas: http://www.astro.washington.edu/users/vanderplas/
+
+.. _Gilles Louppe: http://www.montefiore.ulg.ac.be/~glouppe/
+
+.. _INRIA: http://inria.fr
+
+.. _Parietal Team: http://parietal.saclay.inria.fr/
