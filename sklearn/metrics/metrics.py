@@ -134,7 +134,7 @@ def roc_curve(y_true, y_score):
     current_pos_count = current_neg_count = sum_pos = sum_neg = idx = 0
 
     signal = np.c_[y_score, y_true]
-    sorted_signal = signal[signal[:,0].argsort(),:][::-1]
+    sorted_signal = signal[signal[:, 0].argsort(), :][::-1]
     last_score = sorted_signal[0][0]
     for score, value in sorted_signal:
         if score == last_score:
@@ -288,7 +288,7 @@ def fbeta_score(y_true, y_pred, beta, pos_label=1):
 
     The F_beta score is the weighted harmonic mean of precision and recall,
     reaching its optimal value at 1 and its worst value at 0.
-    
+
     The beta parameter determines the weight of precision in the combined
     score. beta < 1 lends more weight to precision, while beta > 1 favors
     precision (beta == 0 considers only precision, beta == inf only recall).
