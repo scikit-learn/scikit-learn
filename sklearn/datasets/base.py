@@ -244,7 +244,8 @@ def load_digits(n_class=10):
 
     >>> from sklearn.datasets import load_digits
     >>> digits = load_digits()
-
+    >>> digits.data.shape
+    (1797, 64)
     >>> # import pylab as pl
     >>> # pl.gray()
     >>> # pl.matshow(digits.images[0]) # Visualize the first image
@@ -332,7 +333,9 @@ def load_boston():
     Examples
     --------
     >>> from sklearn.datasets import load_boston
-    >>> data = load_boston()
+    >>> boston = load_boston()
+    >>> boston.data.shape
+    (506, 13)
     """
     module_path = dirname(__file__)
     data_file = csv.reader(open(join(module_path, 'data',
@@ -381,7 +384,6 @@ def load_sample_images():
     (427, 640, 3)
     >>> first_img_data.dtype
     dtype('uint8')
-
     >>> # import pylab as pl
     >>> # pl.gray()
     >>> # pl.matshow(dataset.images[0]) # Visualize the first image
@@ -413,6 +415,7 @@ def load_sample_images():
 def load_sample_image(image_name):
     """Load the numpy array of a single sample image
 
+    >>> from sklearn.datasets import load_sample_image
     >>> china = load_sample_image('china.jpg')
     >>> china.dtype
     dtype('uint8')

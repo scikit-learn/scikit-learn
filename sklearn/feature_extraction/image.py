@@ -208,13 +208,14 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
     Examples
     --------
 
+    >>> from sklearn.feature_extraction import image
     >>> one_image = np.arange(16).reshape((4, 4))
     >>> one_image
     array([[ 0,  1,  2,  3],
            [ 4,  5,  6,  7],
            [ 8,  9, 10, 11],
            [12, 13, 14, 15]])
-    >>> patches = extract_patches_2d(one_image, (2, 2))
+    >>> patches = image.extract_patches_2d(one_image, (2, 2))
     >>> patches.shape
     (9, 2, 2)
     >>> patches[0]
