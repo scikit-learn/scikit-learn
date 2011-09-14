@@ -69,8 +69,8 @@ for i in range(5):
     uncertainty_index = [x[1] for x in arg[-5:]]
     delete_indices = np.array([])
 
-    f.text(.05, (1 - (i + 1) * .18), "model %d\n\nfit with\n%d labels" % ((i + 1), 
-        i * 5 + 10), size=10)
+    f.text(.05, (1 - (i + 1) * .18), "model %d\n\nfit with\n%d labels" % (
+        (i + 1), i * 5 + 10), size=10)
     for index, image_index in enumerate(uncertainty_index):
         image = digits.images[image_index]
 
@@ -87,6 +87,7 @@ for i in range(5):
     unlabeled_indices = np.delete(unlabeled_indices, delete_indices)
     n_labeled_points += 5
 
-f.suptitle("Active learning with Label Propagation.\nRows show 5 most uncertain labels to learn with the next model.")
+f.suptitle("Active learning with Label Propagation.\nRows show 5 most "\
+        "uncertain labels to learn with the next model.")
 pl.subplots_adjust(0.12, 0.03, 0.9, 0.9, 0.2, 0.45)
 pl.show()

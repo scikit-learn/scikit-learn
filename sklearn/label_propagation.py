@@ -187,7 +187,8 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         # label construction
         # construct a categorical distribution for classification only
         unique_labels = np.unique(y)
-        unique_labels = unique_labels[unique_labels != self.unlabeled_identifier]
+        unique_labels = unique_labels[unique_labels !=\
+                self.unlabeled_identifier]
         self.unique_labels_ = unique_labels
 
         n_samples, n_classes = len(y), len(unique_labels)
@@ -221,6 +222,9 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
                     self.label_distributions) + Y_static
             remaining_iter -= 1
 
+        normalizer = np.atleast_2d(np.sum(self.label_distributions, axis=1)).T
+        np.divide(self.label_distributions, normalizer,
+                out=self.label_distributions)
         # set the transduction item
         transduction = self.unique_labels_[np.argmax(self.label_distributions,
                 axis=1)]
@@ -292,8 +296,8 @@ class LabelPropagation(BaseLabelPropagation):
         class distributions will exceed 1 (normalization may be desired)
         """
         affinity_matrix = self._get_kernel(self._X, self._X)
-        degree_inv = np.diag(1. / np.sum(affinity_matrix, axis=0))
-        dot_out(degree_inv, affinity_matrix, out=affinity_matrix)
+        degree_inverse = np.diag(1. / np.sum(affinity_matrix, axis=0))
+        dot_out(degree_inverse, affinity_matrix, out=affinity_matrix)
         return affinity_matrix
 
 

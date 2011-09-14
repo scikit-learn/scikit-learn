@@ -8,8 +8,8 @@ training a Label Spreading model to classify handwritten digits
 with sets of very few labels.
 
 The handwritten digit dataset has 1797 total points. The model will
-be trained using all points, but only 30 will be labeled. Results 
-in the form of a confusion matrix and a series of metrics over each 
+be trained using all points, but only 30 will be labeled. Results
+in the form of a confusion matrix and a series of metrics over each
 class will be very good.
 
 At the end, the top 10 most uncertain predictions will be shown.
@@ -50,7 +50,8 @@ lp_model.fit(X, Y_train)
 predicted_labels = lp_model.transduction_[unlabeled_set]
 true_labels = Y[unlabeled_set]
 
-cm = confusion_matrix(true_labels, predicted_labels, labels=lp_model.unique_labels_)
+cm = confusion_matrix(true_labels, predicted_labels,
+        labels=lp_model.unique_labels_)
 
 print "Label Spreading model: %d labeled & %d unlabeled points (%d total)" %\
         (n_labeled_points, n_total_samples - n_labeled_points, n_total_samples)
