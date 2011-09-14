@@ -155,7 +155,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         labels
         """
         X_2d = np.atleast_2d(X)
-        inference = np.dot(self._get_kernel(self._X, X_2d).T,
+        inference = np.dot(self._get_kernel(self.X_, X_2d).T,
                 self.label_distributions_)
         normalizer = np.atleast_2d(np.sum(inference, axis=1)).T
         np.divide(inference, normalizer, out=inference)
@@ -175,11 +175,28 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
           identifier. All unlabeled samples will be transductively assigned
           labels
 
+        Attributes
+        ----------
+        `X_` : array, shape = [n_samples, n_features]
+          Input data points gauranteed to be a numpy object. Needed for
+          inference done with predict and predict_proba
+
+        `label_distributions_` : array, shape = [n_samples, n_classes]
+          Learned probability distributions for all input data points
+
+        `unique_labels_` : array, shape = [n_classes]
+          Mapping of class labels to fields in a probability distribution
+          vector
+            
+        `transduction_` : array, shape = [n_samples]
+          Highest probability assigned class label for each point in the
+          input data set
+
         Returns
         -------
         Updated LabelPropagation object with a new transduction results
         """
-        self._X = np.asanyarray(X)
+        self.X_ = np.asanyarray(X)
 
         # actual graph construction (implementations should override this)
         graph_matrix = self._build_graph()
@@ -208,8 +225,8 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
             Y_static = Y_static * (1 - self.alpha)
         Y_static[unlabeled] = 0
 
-        l_previous = np.zeros((self._X.shape[0], n_classes))
-        self.label_distributions_.resize((self._X.shape[0], n_classes))
+        l_previous = np.zeros((self.X_.shape[0], n_classes))
+        self.label_distributions_.resize((self.X_.shape[0], n_classes))
 
         remaining_iter = self.max_iter
         while _not_converged(self.label_distributions_, l_previous, self.tol)\
@@ -295,7 +312,7 @@ class LabelPropagation(BaseLabelPropagation):
         This basic implementation creates a non-stochastic affinity matrix, so
         class distributions will exceed 1 (normalization may be desired)
         """
-        affinity_matrix = self._get_kernel(self._X, self._X)
+        affinity_matrix = self._get_kernel(self.X_, self.X_)
         degree_inverse = np.diag(1. / np.sum(affinity_matrix, axis=0))
         dot_out(degree_inverse, affinity_matrix, out=affinity_matrix)
         return affinity_matrix
@@ -368,8 +385,8 @@ class LabelSpreading(BaseLabelPropagation):
     def _build_graph(self):
         """Graph matrix for Label Spreading computes the graph laplacian"""
         # compute affinity matrix (or gram matrix)
-        n_samples = self._X.shape[0]
-        affinity_matrix = self._get_kernel(self._X, self._X)
+        n_samples = self.X_.shape[0]
+        affinity_matrix = self._get_kernel(self.X_, self.X_)
         affinity_matrix[np.diag_indices(n_samples)] = 0
         degree_matrix = np.diag(1. / np.sum(affinity_matrix, axis=0))
         np.sqrt(degree_matrix, out=degree_matrix)
