@@ -41,8 +41,8 @@ Changelog
      Model by `Alexandre Passos`_
 
    - :ref:`neighbors` module refactoring by `Jake Vanderplas`_ :
-     general refactoring, support for sparse matrices as input and
-     speed improvements. See the next section for a full list of API
+     general refactoring, support for sparse matrices in input, speed and 
+     documentation improvements. See the next section for a full list of API
      changes.
 
    - feature_selection improvements by `Gilles Louppe`_ :
@@ -52,13 +52,40 @@ Changelog
    - :ref:`SparsePCA` by `Vlad Niculae`_, `Gael Varoquaux`_ and
      `Alexandre Gramfort`_
 
-   - Sorting parameters in BaseEstimtor.__repr__
+   - Printing an estimator now behaves independently of architectures
+     and Python version thanks to Jean Kossaifi.
 
-   - Loader for libsvm/svmlight format by `Mathieu Blondel`_ and 
-     `Lars Buitinck`_
+   - :ref:`Loader for libsvm/svmlight format <libsvm_loader>` by
+     `Mathieu Blondel`_ and `Lars Buitinck`_
 
-   - Documentation improvements: thumbnails in gallery, extended
-     documentation for modules feature_selection, (...).
+   - Documentation improvements: thumbnails in 
+     :ref:`example gallery <_examples-index>` by `Fabian Pedregosa`_, 
+     extended documentation for modules feature_selection, (...).
+
+   - Important bugfixes in :ref:`svm` module (segfaults, bad
+     performance) by `Fabian Pedregosa`_.
+
+   - Added :ref:`multinomial_naive_bayes` and :ref:`bernoulli_naive_bayes`
+     by `Lars Buitinck`_
+
+   - Text feature extraction optimizations by Lars Buitinck
+
+   - Chi-Square feature selection 
+     (:func:`feature_selection.univariate_selection.chi2`) by `Lars Buitinck`.
+
+   - :ref:`sample_generators` module refactoring by Gilles Louppe
+
+   - :ref:`multiclass` by `Mathieu Blondel`_
+
+   - Ball tree rewrite by `Jake Vanderplas`_
+
+   - Implementation of :ref:`dbscan` algorithm by Robert Layton
+
+   - Kmeans predict and transform by Robert Layton
+
+   - Preprocessing module refactoring by Olivier Grisel
+
+   - faster mean shift by Conrad Lee
 
 
 API changes summary
@@ -121,7 +148,7 @@ version 0.8:
     ``sklearn.neighbors.BallTree``.  Using the former will generate a warning.
 
   - ``sklearn.linear_model.LARS()`` and related classes (LassoLARS,
-    LassoLARSIC, etc.) have been renamed to
+    LassoLARSCV, etc.) have been renamed to
     ``sklearn.linear_model.Lars()``.
 
 Backward compatibilty package aliases and other deprecated classes and
@@ -676,3 +703,5 @@ of commits):
 .. _INRIA: http://inria.fr
 
 .. _Parietal Team: http://parietal.saclay.inria.fr/
+
+.. _Lars Buitinck: https://github.com/larsmans

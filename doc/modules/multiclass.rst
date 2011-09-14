@@ -1,3 +1,6 @@
+
+.. _multiclass:
+
 =====================
 Multiclass algorithms
 =====================

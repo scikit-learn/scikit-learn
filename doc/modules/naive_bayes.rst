@@ -70,6 +70,8 @@ estimated using maximum likelihood.
  * :ref:`example_naive_bayes.py`
 
 
+.. _multinomial_naive_bayes:
+
 Multinomial Naive Bayes
 -----------------------
 
@@ -104,6 +106,8 @@ of class :math:`c` and :math:`N_{c}` is the total count of words in a document
 of class :math:`c`. The smoothness priors :math:`\alpha_i` and their sum 
 :math:`\alpha` account for words not seen in the learning samples.
 
+
+.. _bernoulli_naive_bayes:
 
 Bernoulli Naive Bayes
 ---------------------
