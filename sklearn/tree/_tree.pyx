@@ -441,7 +441,6 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
                      np.ndarray[np.int32_t, ndim=1, mode="c"] feature_mask,
                      Criterion criterion,
                      int n_samples):
-#                     np.ndarray[np.uint16_t, ndim=1, mode="c"] indices):
     """Find the best dimension and threshold that minimises the error.
 
     Parameters
@@ -450,11 +449,18 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
         The feature values.
     y : ndarray, shape (n_total_samples,), dtype=float
         The label to predict for each sample.
-    TODO doc sample_mask
+    sorted_X : ndarray, shape (n_samples, n_features)
+        Argsort of cols of `X`. `sorted_X[0,j]` gives the example
+        index of the smallest value of feature `j`.
+    sample_mask : ndarray, shape (n_samples,), dtype=np.bool
+        A mask for the samples to be considered. Only samples `j` for which
+        sample_mask[j] != 0 are considered.
     feature_mask : ndarray, shape (n_samples,), dtype=int32
         A feature mask indicating active features.
     criterion : Criterion
         The criterion function to be minimized.
+    n_samples : int
+        The number of samples in the current sample_mask (i.e. `sample_mask.sum()`).
 
     Returns
     -------
@@ -481,8 +487,6 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
 
     # sample mask data pointer
     cdef BOOL_t *sample_mask_ptr = <BOOL_t *>sample_mask.data
-
-#    cdef np.uint16_t *indices_ptr = <np.uint16_t *>indices.data
 
     # Compute the column strides (increment in pointer elements to get
     # from column i to i + 1) for `X` and `sorted_X`
