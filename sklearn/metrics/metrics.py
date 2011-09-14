@@ -127,13 +127,14 @@ def roc_curve(y_true, y_score):
     thresholds = np.unique(y_score)
     neg_value, pos_value = classes[0], classes[1]
 
-    tpr = np.empty(thresholds.size)  # True positive rate
-    fpr = np.empty(thresholds.size)  # False positive rate
+    tpr = np.empty(thresholds.size, dtype=np.float)  # True positive rate
+    fpr = np.empty(thresholds.size, dtype=np.float)  # False positive rate
 
     # Build tpr/fpr vector
     current_pos_count = current_neg_count = sum_pos = sum_neg = idx = 0
 
-    sorted_signal = sorted(zip(y_score, y_true), reverse=True)
+    signal = np.c_[y_score, y_true]
+    sorted_signal = signal[signal[:,0].argsort(),:][::-1]
     last_score = sorted_signal[0][0]
     for score, value in sorted_signal:
         if score == last_score:
