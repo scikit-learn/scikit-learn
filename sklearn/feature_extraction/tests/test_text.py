@@ -276,7 +276,7 @@ def test_vectorizer_min_df():
     max_df = (n_doc - 1.0) / n_doc  # all documents but one
     min_df = 2  # at least two documents
 
-    vect = Vectorizer(WordNGramAnalyzer(stop_words=None),
+    vect = Vectorizer(WordNGramAnalyzer(stop_words=None,min_n=0),
                       max_df=max_df,
                       min_df=min_df)
     vect.fit_transform(test_data)
@@ -285,7 +285,7 @@ def test_vectorizer_min_df():
     assert u'document' not in vect.vocabulary.keys()
     # term in only one document
     assert u'appears' not in vect.vocabulary.keys()
-    # other terms except 'a' remain
+    # other terms remain
     assert_equals(len(vect.vocabulary.keys()), 3)
 
 

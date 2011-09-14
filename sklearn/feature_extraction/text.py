@@ -226,9 +226,10 @@ class CountVectorizer(BaseEstimator):
         This is useful in order to fix the vocabulary in advance.
 
     max_df : positive int or float in range [0.0, 1.0], optional, 1.0 by
-        default. When building the vocabulary ignore terms that have a term
+        default. When building the vocabulary ignore terms that have a document
         frequency strictly higher than the given threshold (corpus specific
-        stop words).
+        stop words). The relative or absolute document frequency are assumed
+        when the parameter is accordingly a float or an int. 
 
         This parameter is ignored if vocabulary is not None.
 
@@ -236,7 +237,8 @@ class CountVectorizer(BaseEstimator):
         default. When building the vocabulary ignore terms that have a document
         frequency strictly lower than the given threshold (e.g. words in only
         one document). This may also be called document frequency cut-off in IR
-        literature.
+        literature. The relative or absolute document frequency are assumed
+        when the parameter is accordingly a float or an int.
 
         This parameter is ignored if vocabulary is not None.
 
@@ -335,7 +337,7 @@ class CountVectorizer(BaseEstimator):
                 term_count_current[term] += 1
                 term_counts[term] += 1
 
-            if (max_df or min_df) is not None:
+            if (max_df is not None) or (min_df is not None):
                 for term in term_count_current:
                     document_counts[term] += 1
 
@@ -343,13 +345,16 @@ class CountVectorizer(BaseEstimator):
 
         n_doc = len(term_counts_per_doc)
 
-        # filter out uninformative words: terms that occur in all/one documents
-        if (max_df or min_df) is not None:
-            max_doc_count = max_df * n_doc if type(max_df) == float else max_df
-            min_doc_count = min_df * n_doc if type(min_df) == float else min_df
+        # filter out uninformative words: terms that occur in all/few documents
+        if max_df is not None:
+            max_doc_count = max_df * n_doc if np.issubdtype(type(max_df),float) else max_df
+        if min_df is not None:
+            min_doc_count = min_df * n_doc if np.issubdtype(type(min_df),float) else min_df
+
+        if (max_df is not None) or (min_df is not None):
             remove_words = set(t for t, dc in document_counts.iteritems()
-                               if dc > max_doc_count
-                               or dc < min_doc_count)
+                               if (max_df is not None and dc > max_doc_count)
+                               or (min_df is not None and dc < min_doc_count))
 
         # list the terms that should be part of the vocabulary
         if max_features is None:
