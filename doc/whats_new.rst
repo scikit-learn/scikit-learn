@@ -54,6 +54,9 @@ version 0.8:
     classification and regression tasks or ``X_test`` for unsupervised
     estimators.
 
+  - ``gamma`` parameter for support vector machine algorithms is set
+    to ``1 / n_features`` by default, instead of ``1 / n_samples``.
+
   - The ``sklearn.hmm`` has been marked as orphaned: it will be removed
     from scikit-learn in version 0.11 unless someone steps up to
     contribute documentation, examples and fix lurking numerical
