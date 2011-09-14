@@ -155,23 +155,15 @@ class Node(object):
         Node.class_counter += 1
 
 
-def _build_tree(is_classification, X, y, criterion,
-               max_depth, min_split, max_features, n_classes, random_state):
+def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
+                max_features, n_classes, random_state, min_density):
     """Build a tree by recursively partitioning the data."""
 
     n_samples, n_features = X.shape
-    if len(y) != len(X):
-        raise ValueError("Number of labels=%d does not match "
-                          "number of features=%d"
-                         % (len(y), len(X)))
+    assert n_samples == y.shape[0]
+    assert max_depth > 0
+    assert min_split > 0
 
-    if min_split <= 0:
-        raise ValueError("min_split must be greater than zero. "
-                         "min_split is %s." % min_split)
-    if max_depth <= 0:
-        raise ValueError("max_depth must be greater than zero. "
-                         "max_depth is %s." % max_depth)
-    
     y = np.array(y, dtype=DTYPE, order="c")
 
     feature_mask = np.ones((n_features,), dtype=np.bool, order="c")
@@ -205,7 +197,8 @@ def _build_tree(is_classification, X, y, criterion,
             is_split_valid = False
         else:
             feature, threshold, error, init_error = _tree._find_best_split(
-                X, y, sorted_X, sample_mask, feature_mask, criterion, n_samples)
+                X, y, sorted_X, sample_mask, feature_mask,
+                criterion, n_samples)
 
             if feature == -1:
                 is_split_valid = False
@@ -223,20 +216,21 @@ def _build_tree(is_classification, X, y, criterion,
             return Node(error=0.0, samples=n_samples, value=a)
         else:
             ## FIXME make 0.10 a parameter
-            if n_samples / X.shape[0] <= 0.10:
-                # sample mask too sparse - fancy index X and re-compute sorted_X
-                #print "Fancy index X sample mask too sparse."
+            if n_samples / X.shape[0] <= min_density:
+                # sample mask too sparse; fancy index X and re-compute sorted_X
                 X = X[sample_mask]
-                sorted_X = np.asfortranarray(np.argsort(X.T,
-                                                        axis=1).astype(np.int32).T)
+                sorted_X = np.asfortranarray(
+                    np.argsort(X.T, axis=1).astype(np.int32).T)
                 y = current_y
                 sample_mask = np.ones((X.shape[0],), dtype=np.bool)
 
             split = X[:, feature] < threshold
             left_partition = recursive_partition(X, sorted_X, y,
-                                                 split & sample_mask, depth + 1)
+                                                 split & sample_mask,
+                                                 depth + 1)
             right_partition = recursive_partition(X, sorted_X, y,
-                                                  ~split & sample_mask, depth + 1)
+                                                  ~split & sample_mask,
+                                                  depth + 1)
 
             return Node(feature=feature, threshold=threshold,
                         error=init_error, samples=n_samples, value=a,
@@ -263,7 +257,7 @@ class BaseDecisionTree(BaseEstimator):
     _classification_subtypes = ['binary', 'multiclass']
 
     def __init__(self, n_classes, impl, criterion, max_depth,
-                 min_split, max_features, random_state):
+                 min_split, max_features, random_state, min_density):
 
         if not impl in self._tree_types:
             raise ValueError("impl should be one of %s, %s was given"
@@ -273,11 +267,20 @@ class BaseDecisionTree(BaseEstimator):
         self.n_classes = n_classes
         self.classification_subtype = None
         self.criterion = criterion
-        self.max_depth = max_depth
+
+        if min_split <= 0:
+            raise ValueError("min_split must be greater than zero.")
         self.min_split = min_split
+        if max_depth <= 0:
+            raise ValueError("max_depth must be greater than zero. ")
+        self.max_depth = max_depth
+
         self.max_features = max_features
         self.random_state = check_random_state(random_state)
 
+        if min_density < 0.0 or min_density > 1.0:
+            raise ValueError("min_density must be in [0, 1]")
+        self.min_density = min_density
         self.n_features = None
         self.tree = None
 
@@ -332,6 +335,10 @@ class BaseDecisionTree(BaseEstimator):
         """
         X = np.asanyarray(X, dtype=DTYPE, order='F')
         n_samples, self.n_features = X.shape
+        if len(y) != n_samples:
+            raise ValueError("Number of labels=%d does not match "
+                             "number of features=%d"
+                             % (len(y), n_samples))
 
         if self.type == 'classification':
             y = np.asanyarray(y, dtype=np.int, order='C')
@@ -365,7 +372,8 @@ class BaseDecisionTree(BaseEstimator):
 
             self.tree = _build_tree(True, X, y, criterion, self.max_depth,
                                     self.min_split, self.max_features,
-                                    self.n_classes, self.random_state)
+                                    self.n_classes, self.random_state,
+                                    self.min_density)
         else:  # regression
             y = np.asanyarray(y, dtype=DTYPE, order='C')
 
@@ -373,7 +381,8 @@ class BaseDecisionTree(BaseEstimator):
             criterion = criterion_class()
             self.tree = _build_tree(False, X, y, criterion, self.max_depth,
                                     self.min_split, self.max_features,
-                                    None, self.random_state)
+                                    None, self.random_state,
+                                    self.min_density)
         return self
 
     def predict(self, X):
@@ -450,6 +459,14 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     random_state : integer or array_like, optional (default=None)
         seed the random number generator
 
+    min_density : float, optional (default=0.1)
+        The minimum density of the sample_mask (i.e. the fraction of samples
+        in the mask). If the density falls below this threshold the mask
+        is recomputed and the input data is packed which results in data
+        copying. If min_density equals one, the partitions are always
+        represented as copies of the original data. Otherwise, partitions
+        are represented as bit masks (aka sample masks).
+
     References
     ----------
 
@@ -483,10 +500,12 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     """
 
     def __init__(self, n_classes=None, criterion='gini', max_depth=10,
-                  min_split=1, max_features=None, random_state=None):
+                 min_split=1, max_features=None, random_state=None,
+                 min_density=0.1):
         BaseDecisionTree.__init__(self, n_classes, 'classification',
                                   criterion, max_depth, min_split,
-                                  max_features, random_state)
+                                  max_features, random_state,
+                                  min_density)
 
     def predict_proba(self, X):
         """Predict class probabilities on a test vector X.
@@ -564,6 +583,14 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     random_state : integer or array_like, optional
         seed the random number generator
 
+    min_density : float, optional (default=0.1)
+        The minimum density of the sample_mask (i.e. the fraction of samples
+        in the mask). If the density falls below this threshold the mask
+        is recomputed and the input data is packed which results in data
+        copying. If min_density equals one, the partitions are always
+        represented as copies of the original data. Otherwise, partitions
+        are represented as bit masks (aka sample masks).
+
     References
     ----------
 
@@ -600,7 +627,9 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     """
 
     def __init__(self, criterion='mse', max_depth=10,
-                  min_split=1, max_features=None, random_state=None):
+                 min_split=1, max_features=None, random_state=None,
+                 min_density=0.1):
         BaseDecisionTree.__init__(self, None, 'regression',
                                   criterion, max_depth, min_split,
-                                  max_features, random_state)
+                                  max_features, random_state,
+                                  min_density)
