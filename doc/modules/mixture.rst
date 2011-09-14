@@ -130,6 +130,9 @@ But brings with it the following disadvantage:
 :Hyperparameters: this algorithm needs an extra hyperparameter
    that might need experimental tuning via cross-validation.
 
+
+.. _dirichlet_process:
+
 The Dirichlet Process
 ---------------------
 

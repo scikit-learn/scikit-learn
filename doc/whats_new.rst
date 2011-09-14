@@ -6,12 +6,54 @@
 0.9
 ===
 
-TODO
+scikit-learn 0.9 was released on September 2011, three months after
+the 0.8 release and includes XX new modules: manifold, dpgmm as well
+as several new algorithms and documentation improvements.
+
+This release also includes de work developed by `Vlad Niculae`_ as
+part of the `Google Summer of Code <http://code.google.com/soc/>`_
+program.
+
+
+
+.. |banner1| image:: ./auto_examples/manifold/images/thumb/plot_compare_methods.png
+   :target: auto_examples/applications/face_recognition.html
+
+
+.. |center-div| raw:: html
+
+    <div style="text-align: center; margin: 0px 0 -5px 0;">
+
+.. |end-div| raw:: html
+
+    </div>
+
+
+|center-div| |banner1| |end-div|
 
 Changelog
 ---------
 
-TODO
+   - New :ref:`manifold` module by `Jake Vanderplas`_ and 
+     `Fabian Pedregosa`_.
+
+   - :ref:`Dirichlet Process <dirichlet_process>` GMM 
+
+   - Neighbors refactoring by `Jake Vanderplas`_
+
+   - feature_selection improvements by `Gilles Louppe`_ :
+     documentation, efficiency and added methods ``predict``
+     ``score``.
+
+   - :ref:`SparsePCA`
+
+   - Sorting parameters in BaseEstimtor.__repr__
+
+   - Loader for libsvm/svmlight format by `Mathieu Blondel`_ and 
+     `Lars Buitinck`_
+
+   - Documentation improvements: thumbnails in gallery, extended
+     documentation for modules feature_selection, (...).
 
 
 API changes summary
@@ -72,6 +114,10 @@ version 0.8:
 
   - ``sklearn.ball_tree.BallTree`` has been moved to
     ``sklearn.neighbors.BallTree``.  Using the former will generate a warning.
+
+  - ``sklearn.linear_model.LARS()`` and related classes (LassoLARS,
+    LassoLARSIC, etc.) have been renamed to
+    ``sklearn.linear_model.Lars()``.
 
 Backward compatibilty package aliases and other deprecated classes and
 functions will be removed in version 0.11.
@@ -282,34 +328,6 @@ scikit-learn 0.6 was released on december 2010. It is marked by the
 inclusion of several new modules and a general renaming of old
 ones. It is also marked by the inclusion of new example, including
 applications to real-world datasets.
-
-.. |banner1| image:: images/plot_face_recognition_1.png
-   :height: 150
-   :target: auto_examples/applications/face_recognition.html
-
-.. |banner2| image:: auto_examples/applications/images/plot_species_distribution_modeling_1.png
-   :height: 150
-   :target: auto_examples/applications/plot_species_distribution_modeling.html
-
-.. |banner3| image:: auto_examples/gaussian_process/images/plot_gp_regression_1.png
-   :height: 150
-   :target: auto_examples/gaussian_process/plot_gp_regression.html
-
-.. |banner4| image:: auto_examples/linear_model/images/plot_sgd_iris_1.png
-   :height: 150
-   :target: auto_examples/linear_model/plot_lasso_lars.html
-
-
-.. |center-div| raw:: html
-
-    <div style="text-align: center; margin: 0px 0 -5px 0;">
-
-.. |end-div| raw:: html
-
-    </div>
-
-
-|center-div| |banner1| |banner2| |banner3| |banner4| |end-div|
 
 
 Changelog
@@ -605,3 +623,5 @@ of commits):
 .. _Andreas Müller: http://www.ais.uni-bonn.de/~amueller/
 
 .. _Matthieu Perrot: http://www.lnao.fr/spip.php?rubrique19
+
+.. _Jake Vanderplas: http://www.astro.washington.edu/users/vanderplas/
