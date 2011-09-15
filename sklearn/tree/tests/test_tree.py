@@ -225,6 +225,7 @@ def test_error():
     X2 = [-2, -1, 1]  # wrong feature shape for sample
     assert_raises(ValueError, clf.predict_proba, X2)
 
+    # wrong sample shape
     Xt = np.array(X).T
 
     clf = tree.DecisionTreeClassifier()
@@ -235,6 +236,14 @@ def test_error():
     clf.fit(X, Y)
     assert_raises(ValueError, clf.predict, Xt)
 
+    # wrong sample mask size
+    clf = tree.DecisionTreeClassifier()
+    assert_raises(ValueError, clf.fit, X, Y, np.ones((1,), 
+                                                     dtype=np.bool))
+
+    clf = tree.DecisionTreeClassifier()
+    assert_raises(ValueError, clf.fit, X, Y, np.ones((len(X),), 
+                                                     dtype=np.float32))        
 
 if __name__ == '__main__':
     import nose

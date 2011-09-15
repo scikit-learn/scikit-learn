@@ -156,7 +156,8 @@ class Node(object):
 
 
 def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
-                max_features, n_classes, random_state, min_density):
+                max_features, n_classes, random_state, min_density,
+                sample_mask):
     """Build a tree by recursively partitioning the data."""
 
     n_samples, n_features = X.shape
@@ -233,7 +234,6 @@ def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
                         error=init_error, samples=n_samples, value=a,
                         left=left_partition, right=right_partition)
 
-    sample_mask = np.ones((X.shape[0],), dtype=np.bool)
     return recursive_partition(X, sorted_X, y, sample_mask, 0)
 
 
@@ -310,7 +310,7 @@ class BaseDecisionTree(BaseEstimator):
 
         exporter.export(self.tree)
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_mask=None):
         """Fit the tree with the given training data and parameters.
 
         Parameters
@@ -325,6 +325,10 @@ class BaseDecisionTree(BaseEstimator):
             For classification, labels must correspond to classes
             0, 1, ..., n_classes-1
 
+        sample_mask : array-like, shape = [n_samples], dtype=np.bool
+            A boolean mask indicating which samples to use. Samples
+            in use are marked True.
+
         Returns
         -------
         self : object
@@ -336,6 +340,17 @@ class BaseDecisionTree(BaseEstimator):
             raise ValueError("Number of labels=%d does not match "
                              "number of features=%d"
                              % (len(y), n_samples))
+
+        if sample_mask is not None:
+            if len(sample_mask) != n_samples:
+                raise ValueError("Sample mask length=%d does not match "
+                                 "number of features=%d"
+                                 % (len(sample_mask), n_samples))
+            if sample_mask.dtype != np.bool:
+                raise ValueError("Sample mask dtype=%s is not np.bool"
+                                 % (sample_mask.dtype))
+        else:
+            sample_mask = np.ones((n_samples,), dtype=np.bool)
 
         if self.type == 'classification':
             y = np.asanyarray(y, dtype=np.int, order='C')
@@ -370,7 +385,7 @@ class BaseDecisionTree(BaseEstimator):
             self.tree = _build_tree(True, X, y, criterion, self.max_depth,
                                     self.min_split, self.max_features,
                                     self.n_classes, self.random_state,
-                                    self.min_density)
+                                    self.min_density, sample_mask)
         else:  # regression
             y = np.asanyarray(y, dtype=DTYPE, order='C')
 
@@ -379,7 +394,7 @@ class BaseDecisionTree(BaseEstimator):
             self.tree = _build_tree(False, X, y, criterion, self.max_depth,
                                     self.min_split, self.max_features,
                                     None, self.random_state,
-                                    self.min_density)
+                                    self.min_density, sample_mask)
         return self
 
     def predict(self, X):
