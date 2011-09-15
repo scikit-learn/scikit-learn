@@ -30,6 +30,7 @@ measure, such as a kernel. Let D be the distance, and S be the kernel:
 
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Mathieu Blondel <mathieu@mblondel.org>
+#          Robert Layton <robertlayton@gmail.com>
 # License: BSD Style.
 
 import numpy as np
