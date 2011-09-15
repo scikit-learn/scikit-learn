@@ -16,10 +16,10 @@ Liblinear while being two orders of magnitude faster to train::
 
     Classifier   train-time test-time error-rate
     --------------------------------------------
-    Liblinear     9.4471s    0.0184s     0.2305
-    GaussianNB           2.5426s    0.1725s     0.3633
-    SGD           0.2137s    0.0047s     0.2300
-
+    Liblinear     10.0171s   0.0213s     0.2305
+    GaussianNB    3.1570s    0.1907s     0.3633
+    SGD           0.2317s    0.0050s     0.2300
+    CART          62.7706s   1.7280s     0.0425
 
 The same task has been used in a number of papers including:
 
@@ -39,7 +39,7 @@ The same task has been used in a number of papers including:
 
 To run this example use your favorite python shell::
 
-  % ipython examples/sgd/covertype_dense_sgd.py
+  % ipython benchmark/bench_sgd_covertype.py
 
 """
 from __future__ import division
@@ -111,8 +111,8 @@ mean = X_train.mean(axis=0)
 std = X_train.std(axis=0)
 mean[10:] = 0.0
 std[10:] = 1.0
-X_train = (X_train-mean) / std
-X_test = (X_test-mean) / std
+X_train = (X_train - mean) / std
+X_test = (X_test - mean) / std
 
 ######################################################################
 ## Print dataset statistics
@@ -124,11 +124,11 @@ print("%s %d" % ("number of features:".ljust(25),
 print("%s %d" % ("number of classes:".ljust(25),
                  np.unique(y_train).shape[0]))
 print("%s %d (%d, %d)" % ("number of train samples:".ljust(25),
-                          X_train.shape[0], np.sum(y_train==1),
-                          np.sum(y_train==-1)))
+                          X_train.shape[0], np.sum(y_train == 1),
+                          np.sum(y_train == -1)))
 print("%s %d (%d, %d)" % ("number of test samples:".ljust(25),
-                          X_test.shape[0], np.sum(y_test==1),
-                          np.sum(y_test==-1)))
+                          X_test.shape[0], np.sum(y_test == 1),
+                          np.sum(y_test == -1)))
 print("")
 print("Training classifiers...")
 print("")
@@ -171,7 +171,8 @@ sgd_parameters = {
 sgd_err, sgd_train_time, sgd_test_time = benchmark(SGDClassifier(
     **sgd_parameters))
 
-cart_err, cart_train_time, cart_test_time = benchmark(DecisionTreeClassifier(min_split=5, max_depth=100))
+cart_err, cart_train_time, cart_test_time = benchmark(
+    DecisionTreeClassifier(min_split=5, max_depth=6))
 
 ######################################################################
 ## Print classification performance

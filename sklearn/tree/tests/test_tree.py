@@ -4,11 +4,14 @@ Testing for Tree module (sklearn.tree)
 """
 
 import numpy as np
-from numpy.testing import assert_array_equal, assert_array_almost_equal, \
-                          assert_almost_equal
-from nose.tools import assert_raises, with_setup
+from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_almost_equal
+from nose.tools import assert_raises
+from nose.tools import with_setup
 
-from sklearn import tree, datasets, metrics
+from sklearn import tree
+from sklearn import datasets
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -167,11 +170,11 @@ def test_error():
     """Test that it gives proper exception on deficient input."""
     # impossible value of min_split
     assert_raises(ValueError, \
-                  tree.DecisionTreeClassifier(min_split=-1).fit, X, Y)
+                  tree.DecisionTreeClassifier, min_split=-1)
 
     # impossible value of max_depth
     assert_raises(ValueError, \
-                  tree.DecisionTreeClassifier(max_depth=-1).fit, X, Y)
+                  tree.DecisionTreeClassifier, max_depth=-1)
 
     clf = tree.DecisionTreeClassifier()
 
