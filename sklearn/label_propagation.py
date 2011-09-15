@@ -63,7 +63,6 @@ Learning (2006), pp. 193-216
 import numpy as np
 from .base import BaseEstimator, ClassifierMixin
 from .metrics.pairwise import rbf_kernel
-from .utils.fixes import dot_out
 
 # Authors: Clay Woolam <clay@woolam.org>
 # License: BSD
@@ -313,8 +312,7 @@ class LabelPropagation(BaseLabelPropagation):
         class distributions will exceed 1 (normalization may be desired)
         """
         affinity_matrix = self._get_kernel(self.X_, self.X_)
-        degree_inverse = np.diag(1. / np.sum(affinity_matrix, axis=0))
-        dot_out(degree_inverse, affinity_matrix, out=affinity_matrix)
+        affinity_matrix /= np.sum(affinity_matrix, axis=0)[:, np.newaxis]
         return affinity_matrix
 
 
@@ -387,13 +385,12 @@ class LabelSpreading(BaseLabelPropagation):
         # compute affinity matrix (or gram matrix)
         n_samples = self.X_.shape[0]
         affinity_matrix = self._get_kernel(self.X_, self.X_)
-        affinity_matrix[np.diag_indices(n_samples)] = 0
-        degree_matrix = np.diag(1. / np.sum(affinity_matrix, axis=0))
-        np.sqrt(degree_matrix, out=degree_matrix)
-        dot_out(degree_matrix, affinity_matrix, out=affinity_matrix)
-
+        affinity_matrix.flat[::n_samples + 1] = 0.0  # set diag to 0.0
+        degrees = np.sum(affinity_matrix, axis=0)
+        degrees = np.sqrt(degrees, out=degrees)
         # final step produces graph laplacian matrix
-        dot_out(affinity_matrix, degree_matrix, out=affinity_matrix)
+        affinity_matrix /= degrees[:, np.newaxis]
+        affinity_matrix /= degrees[np.newaxis, :]
         return affinity_matrix
 
 
