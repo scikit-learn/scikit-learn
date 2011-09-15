@@ -18,28 +18,28 @@ from sklearn import datasets
 from sklearn import svm
 from sklearn import label_propagation
 
-np.random.seed(0)
+rng = np.random.RandomState(0)
 
 iris = datasets.load_iris()
 
 X = iris.data[:, :2]
-Y = iris.target
+y = iris.target
 
 # step size in the mesh
 h = .02
 
-Y_30 = np.copy(Y)
-Y_30[np.random.rand(len(Y)) < 0.3] = 3
-Y_50 = np.copy(Y)
-Y_50[np.random.rand(len(Y)) < 0.5] = 3
+y_30 = np.copy(y)
+y_30[rng.rand(len(y)) < 0.3] = 3
+y_50 = np.copy(y)
+y_50[rng.rand(len(y)) < 0.5] = 3
 # we create an instance of SVM and fit out data. We do not scale our
 # data since we want to plot the support vectors
-ls30 = (label_propagation.LabelSpreading(unlabeled_identifier=3).fit(X, Y_30),
-        Y_30)
-ls50 = (label_propagation.LabelSpreading(unlabeled_identifier=3).fit(X, Y_50),
-        Y_50)
-ls100 = (label_propagation.LabelSpreading().fit(X, Y), Y)
-rbf_svc = (svm.SVC(kernel='rbf').fit(X, Y), Y)
+ls30 = (label_propagation.LabelSpreading(unlabeled_identifier=3).fit(X, y_30),
+        y_30)
+ls50 = (label_propagation.LabelSpreading(unlabeled_identifier=3).fit(X, y_50),
+        y_50)
+ls100 = (label_propagation.LabelSpreading().fit(X, y), y)
+rbf_svc = (svm.SVC(kernel='rbf').fit(X, y), y)
 
 # create a mesh to plot in
 x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
@@ -53,10 +53,9 @@ titles = ['Label Spreading 30% data',
           'Label Spreading 100% data',
           'SVC with rbf kernel']
 
-
 pl.set_cmap(pl.cm.Paired)
 
-for i, (clf, Y_train) in enumerate((ls30, ls50, ls100, rbf_svc)):
+for i, (clf, y_train) in enumerate((ls30, ls50, ls100, rbf_svc)):
     # Plot the decision boundary. For that, we will asign a color to each
     # point in the mesh [x_min, m_max]x[y_min, y_max].
     pl.subplot(2, 2, i + 1)
@@ -69,7 +68,7 @@ for i, (clf, Y_train) in enumerate((ls30, ls50, ls100, rbf_svc)):
     pl.axis('off')
 
     # Plot also the training points
-    pl.scatter(X[:, 0], X[:, 1], c=(Y_train))
+    pl.scatter(X[:, 0], X[:, 1], c=(y_train))
 
     pl.title(titles[i])
 

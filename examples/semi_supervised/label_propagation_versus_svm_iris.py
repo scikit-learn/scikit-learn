@@ -19,7 +19,6 @@ transductively assigned labels.
 print __doc__
 
 import numpy as np
-import pylab as pl
 
 from sklearn import datasets
 from sklearn import svm
@@ -29,69 +28,69 @@ from sklearn.metrics.metrics import precision_score
 from sklearn.metrics.metrics import recall_score
 from sklearn.metrics.metrics import f1_score
 
-np.random.RandomState(0)
+rng = np.random.RandomState(0)
 
 iris = datasets.load_iris()
 
 X = iris.data
-Y = iris.target
+y = iris.target
 
 # 80% data to keep
-hold_80 = np.random.rand(len(Y)) < 0.8
+hold_80 = rng.rand(len(y)) < 0.8
 train, = np.where(hold_80)
 
 # 20% test data
 test, = np.where(hold_80 == False)
 
 X_all = X[train]
-Y_all = Y[train]
+y_all = y[train]
 
 svc = svm.SVC(kernel='rbf')
-svc.fit(X_all, Y_all)
+svc.fit(X_all, y_all)
 print "Limited Label data example"
 print "Test name\tprecision\trecall   \tf1"
 print "SVM 80.0pct\t%0.6f\t%0.6f\t%0.6f" %\
-        (precision_score(svc.predict(X[test]), Y[test]),
-         recall_score(svc.predict(X[test]), Y[test]),
-         f1_score(svc.predict(X[test]), Y[test]))
+        (precision_score(svc.predict(X[test]), y[test]),
+         recall_score(svc.predict(X[test]), y[test]),
+         f1_score(svc.predict(X[test]), y[test]))
 
 print "-------"
 
 for num in [0.2, 0.3, 0.4, 1.0]:
     lp = label_propagation.LabelPropagation()
-    hold_new = np.random.rand(len(train)) > num
+    hold_new = rng.rand(len(train)) > num
     train_new, = np.where(hold_new)
-    Y_dup = np.copy(Y_all)
-    Y_dup[train_new] = -1
-    lp.fit(X_all, Y_dup)
+    y_dup = np.copy(y_all)
+    y_dup[train_new] = -1
+    lp.fit(X_all, y_dup)
     print "LP %0.1fpct\t%0.6f\t%0.6f\t%0.6f" % \
-            (80 * num, precision_score(lp.predict(X[test]), Y[test]),
-             recall_score(lp.predict(X[test]), Y[test]),
-             f1_score(lp.predict(X[test]), Y[test]))
+            (80 * num, precision_score(lp.predict(X[test]), y[test]),
+             recall_score(lp.predict(X[test]), y[test]),
+             f1_score(lp.predict(X[test]), y[test]))
 
 # label spreading
 for num in [0.2, 0.3, 0.4, 1.0]:
     lspread = label_propagation.LabelSpreading()
-    hold_new = np.random.rand(len(train)) > num
+    hold_new = rng.rand(len(train)) > num
     train_new, = np.where(hold_new)
-    Y_dup = np.copy(Y_all)
-    Y_dup[train_new] = -1
-    lspread.fit(X_all, Y_dup)
+    y_dup = np.copy(y_all)
+    y_dup[train_new] = -1
+    lspread.fit(X_all, y_dup)
     print "LS %0.1fpct\t%0.6f\t%0.6f\t%0.6f" % \
-            (80 * num, precision_score(lspread.predict(X[test]), Y[test]),
-             recall_score(lspread.predict(X[test]), Y[test]),
-             f1_score(lspread.predict(X[test]), Y[test]))
+            (80 * num, precision_score(lspread.predict(X[test]), y[test]),
+             recall_score(lspread.predict(X[test]), y[test]),
+             f1_score(lspread.predict(X[test]), y[test]))
 
 print "-------"
 lspread = label_propagation.LabelSpreading(alpha=0.8)
-Y_dup = np.copy(Y)
-hold_new = np.random.rand(len(train)) > 0.3
+y_dup = np.copy(y)
+hold_new = rng.rand(len(train)) > 0.3
 train_new, = np.where(hold_new)
-Y_dup = np.copy(Y)
-Y_dup[train_new] = -1
-lspread.fit(X, Y)
+y_dup = np.copy(y)
+y_dup[train_new] = -1
+lspread.fit(X, y)
 trans_result = np.asarray(lspread.transduction_)
 print "LS 20tran\t%0.6f\t%0.6f\t%0.6f" % \
-        (precision_score(trans_result[test], Y[test]),
-         recall_score(trans_result[test], Y[test]),
-         f1_score(trans_result[test], Y[test]))
+        (precision_score(trans_result[test], y[test]),
+         recall_score(trans_result[test], y[test]),
+         f1_score(trans_result[test], y[test]))
