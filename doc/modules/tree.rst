@@ -81,14 +81,14 @@ the class labels for the training samples::
     >>> clf = tree.DecisionTreeClassifier()
     >>> clf.fit(X, Y)
     DecisionTreeClassifier(criterion='gini', max_depth=10, max_features=None,
-                min_split=1, n_classes=2,
-                random_state=<mtrand.RandomState object at 0x7fb6370620d8>)
+                min_density=0.1, min_split=1, n_classes=2,
+                random_state=<mtrand.RandomState object at 0x2b895206e1b0>)
 
 
 After being fitted, the model can then be used to predict new values::
 
     >>> clf.predict([[2., 2.]])
-    array([ 1.])
+    array([1])
 
 :class:`DecisionTreeClassifier` is capable of both binary (where the labels are 
 [-1, 1]) classification and multiclass (where the labels are [0, ..., K-1]) 
@@ -102,8 +102,8 @@ Using the Iris dataset, we can construct a tree as follows::
     >>> clf = tree.DecisionTreeClassifier()
     >>> clf.fit(iris.data, iris.target)
     DecisionTreeClassifier(criterion='gini', max_depth=10, max_features=None,
-                min_split=1, n_classes=3,
-                random_state=<mtrand.RandomState object at 0x7fb6370620d8>)
+                min_density=0.1, min_split=1, n_classes=3,
+                random_state=<mtrand.RandomState object at 0x2b895206e1b0>)
 
 Once trained, we can export the tree in `Graphviz <http://www.graphviz.org/>`_ format
 using the :class:`GraphvizExporter` exporter. Below is an example export of a tree
@@ -175,10 +175,12 @@ tree is approximately equal to :math:`log(n_{samples})`, the total time
 complexity for the algorithm is 
 :math:`O(n_{features} \times n_{samples}) \times log(n_{samples})`
 
-This implementation uses fancy indexing for data partitioning during the 
-tree building phase since this results in significantly faster training 
-times (up to 20 times in certain cases) than sample masking.
-The size of memory (as a proportion of the input data :math:`a`) 
+This implementation offers a parameter `min_density` to control the trade-off 
+between memory usage and speed by specifying a minimum density below which the
+memory is reallocated and the sample_mask reset. 
+If `min_density' is 1, then fancy indexing 
+will be used for data partitioning during the tree building phase.
+In this case, the size of memory (as a proportion of the input data :math:`a`) 
 required at a node of depth :math:`n` can be approximated using a geometric series:
 :math:`size = a \frac{1 - r^n}{1 - r}` where :math:`r` is the ratio of samples 
 used at each node.  A best case analysis shows that the lowest memory requirement 
@@ -186,6 +188,12 @@ used at each node.  A best case analysis shows that the lowest memory requiremen
 the data in half.  A worst case analysis shows that the memory requirement 
 can  increase to :math:`n \times a`. In practise it usually requires 3 to 4 times 
 :math:`a`.
+Setting `min_density` to 0 will always use the sample mask to select the subset
+of samples at each node.  This results in little to no additional memory being 
+allocated, making it appropriate for massive datasets or within ensemble learners, 
+but at the expense of being slower when training deep trees.
+The default value for `min_density` is 0.1 which strikes a balance between 
+potentially excessive allocation of temporary memory and the long training times.
 
 Tips on Practical Use
 =====================
