@@ -75,24 +75,41 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
     Parameters
     ----------
     kernel : string
-      string identifier for kernel function to use
-      only 'rbf' kernel is currently supported
+        string identifier for kernel function to use
+        only 'rbf' kernel is currently supported
 
     gamma : float
-      parameter for rbf kernel
+        parameter for rbf kernel
 
     alpha : float
-      clamping factor
+        clamping factor
 
     unlabeled_identifier : any object, same class as label objects
-      a special identifier label that represents unlabeled examples
-      in the training set
+        a special identifier label that represents unlabeled examples
+        in the training set
 
     max_iter : float
-      change maximum number of iterations allowed
+        change maximum number of iterations allowed
 
     tol : float
-      threshold to consider the system at steady state
+        threshold to consider the system at steady state
+
+    Attributes
+    ----------
+    `X_` : array, shape = [n_samples, n_features]
+        Input data points gauranteed to be a numpy object. Needed for
+        inference done with predict and predict_proba
+
+    `label_distributions_` : array, shape = [n_samples, n_classes]
+        Learned probability distributions for all input data points
+
+    `unique_labels_` : array, shape = [n_classes]
+        Mapping of class labels to fields in a probability distribution
+        vector
+
+    `transduction_` : array, shape = [n_samples]
+        Highest probability assigned class label for each point in the
+        input data set
     """
 
     def __init__(self, kernel='rbf', gamma=20, alpha=1,
@@ -112,9 +129,9 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         # clamping factor
         self.alpha = alpha
 
-    def _get_kernel(self, X, Y):
+    def _get_kernel(self, X, y):
         if self.kernel == "rbf":
-            return rbf_kernel(X, Y, gamma=self.gamma)
+            return rbf_kernel(X, y, gamma=self.gamma)
         else:
             raise ValueError("%s is not a valid kernel. Only rbf \
                              supported at this time" % self.kernel)
@@ -175,23 +192,6 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
           identifier. All unlabeled samples will be transductively assigned
           labels
 
-        Attributes
-        ----------
-        `X_` : array, shape = [n_samples, n_features]
-          Input data points gauranteed to be a numpy object. Needed for
-          inference done with predict and predict_proba
-
-        `label_distributions_` : array, shape = [n_samples, n_classes]
-          Learned probability distributions for all input data points
-
-        `unique_labels_` : array, shape = [n_classes]
-          Mapping of class labels to fields in a probability distribution
-          vector
-            
-        `transduction_` : array, shape = [n_samples]
-          Highest probability assigned class label for each point in the
-          input data set
-
         Returns
         -------
         Updated LabelPropagation object with a new transduction results
@@ -204,8 +204,8 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         # label construction
         # construct a categorical distribution for classification only
         unique_labels = np.unique(y)
-        unique_labels = unique_labels[unique_labels !=\
-                self.unlabeled_identifier]
+        unique_labels = (unique_labels[unique_labels !=
+                                                    self.unlabeled_identifier])
         self.unique_labels_ = unique_labels
 
         n_samples, n_classes = len(y), len(unique_labels)
@@ -220,28 +220,28 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         for label in unique_labels:
             self.label_distributions_[y == label, unique_labels == label] = 1
 
-        Y_static = np.copy(self.label_distributions_)
+        y_static = np.copy(self.label_distributions_)
         if self.alpha > 0.:
-            Y_static = Y_static * (1 - self.alpha)
-        Y_static[unlabeled] = 0
+            y_static = y_static * (1 - self.alpha)
+        y_static[unlabeled] = 0
 
         l_previous = np.zeros((self.X_.shape[0], n_classes))
         self.label_distributions_.resize((self.X_.shape[0], n_classes))
 
         remaining_iter = self.max_iter
-        while _not_converged(self.label_distributions_, l_previous, self.tol)\
-                and remaining_iter > 1:
+        while (_not_converged(self.label_distributions_, l_previous, self.tol)
+                and remaining_iter > 1):
             l_previous = self.label_distributions_
             self.label_distributions_ = np.dot(graph_matrix,
                     self.label_distributions_)
             # clamp
             self.label_distributions_ = np.multiply(clamp_weights,
-                    self.label_distributions_) + Y_static
+                    self.label_distributions_) + y_static
             remaining_iter -= 1
 
-        normalizer = np.atleast_2d(np.sum(self.label_distributions_, axis=1)).T
+        normalizer = np.sum(self.label_distributions_, axis=1)[:, np.newaxis]
         np.divide(self.label_distributions_, normalizer,
-                out=self.label_distributions_)
+                  out=self.label_distributions_)
         # set the transduction item
         transduction = self.unique_labels_[np.argmax(self.label_distributions_,
                 axis=1)]
