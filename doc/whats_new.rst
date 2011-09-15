@@ -86,6 +86,10 @@ Changelog
 
    - Faster mean shift by Conrad Lee
 
+   - New `Bootstrap`, `ShuffleSplit` and various other improvements in cross validation schemes by `Olivier Grisel`_ and `Gael Varoquaux`_
+
+   - Adjusted Rand index and V-Measure clustering evaluation metrics by `Olivier Grisel`_
+
 
 API changes summary
 -------------------
