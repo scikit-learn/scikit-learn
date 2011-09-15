@@ -212,12 +212,9 @@ def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
             a = np.mean(current_y)
 
         if not is_split_valid:
-            # FIXME why recompute error on leaf? isn't that a waste of time
             return Node(error=0.0, samples=n_samples, value=a)
         else:
-            ## FIXME make 0.10 a parameter
             if n_samples / X.shape[0] <= min_density:
-                # sample mask too sparse; fancy index X and re-compute sorted_X
                 X = X[sample_mask]
                 sorted_X = np.asfortranarray(
                     np.argsort(X.T, axis=1).astype(np.int32).T)
@@ -290,7 +287,7 @@ class BaseDecisionTree(BaseEstimator):
         Parameters
         ----------
         exporter : class
-            Any class that has `visit_node` implemented.
+            Any class that has `export` implemented.
 
         Example
         -------
