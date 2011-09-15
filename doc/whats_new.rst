@@ -1,4 +1,3 @@
-
 .. currentmodule:: sklearn
 
 .. _changes_0_9:
@@ -45,9 +44,9 @@ Changelog
      documentation improvements. See the next section for a full list of API
      changes.
 
-   - feature_selection improvements by `Gilles Louppe`_ :
-     documentation, efficiency and added methods ``predict``
-     ``score``.
+   - Improvements on the :ref:`feature_selection` module by 
+     `Gilles Louppe`_ : refactoring of the RFE classes, documentation 
+     rewrite, increased efficiency and minor API changes.
 
    - :ref:`SparsePCA` by `Vlad Niculae`_, `Gael Varoquaux`_ and
      `Alexandre Gramfort`_
@@ -73,7 +72,7 @@ Changelog
    - Chi-Square feature selection 
      (:func:`feature_selection.univariate_selection.chi2`) by `Lars Buitinck`.
 
-   - :ref:`sample_generators` module refactoring by Gilles Louppe
+   - :ref:`sample_generators` module refactoring by `Gilles Louppe`_
 
    - :ref:`multiclass` by `Mathieu Blondel`_
 
@@ -83,9 +82,9 @@ Changelog
 
    - Kmeans predict and transform by Robert Layton
 
-   - Preprocessing module refactoring by Olivier Grisel
+   - Preprocessing module refactoring by `Olivier Grisel`_
 
-   - faster mean shift by Conrad Lee
+   - Faster mean shift by Conrad Lee
 
 
 API changes summary
