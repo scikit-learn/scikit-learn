@@ -58,7 +58,7 @@ def barplot_neighbors(Nrange=2 ** np.arange(1, 11),
 
             N_results_build[algorithm][i] = (t1 - t0)
             N_results_query[algorithm][i] = (t2 - t1)
-        
+
 
     #------------------------------------------------------------
     # varying D
@@ -110,7 +110,7 @@ def barplot_neighbors(Nrange=2 ** np.arange(1, 11),
 
     pl.figure(figsize=(8, 11))
 
-    for (sbplt, vals, quantity, 
+    for (sbplt, vals, quantity,
          build_time, query_time) in [(311, Nrange, 'N',
                                       N_results_build,
                                       N_results_query),
@@ -125,7 +125,7 @@ def barplot_neighbors(Nrange=2 ** np.arange(1, 11),
 
         tick_vals = []
         tick_labels = []
-        
+
         bottom = 10 ** np.min([min(np.floor(np.log10(build_time[alg])))
                                for alg in algorithms])
 
@@ -151,7 +151,7 @@ def barplot_neighbors(Nrange=2 ** np.arange(1, 11),
 
         ax.xaxis.set_major_locator(ticker.FixedLocator(tick_vals))
         ax.xaxis.set_major_formatter(ticker.FixedFormatter(tick_labels))
-    
+
         for label in ax.get_xticklabels():
             label.set_rotation(-90)
             label.set_fontsize(10)

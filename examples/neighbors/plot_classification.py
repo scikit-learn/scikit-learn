@@ -39,16 +39,16 @@ for weights in ['uniform', 'distance']:
     xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
                          np.arange(y_min, y_max, h))
     Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])
-    
+
     # Put the result into a color plot
     Z = Z.reshape(xx.shape)
     pl.figure()
     pl.pcolormesh(xx, yy, Z, cmap=cmap_light)
-    
+
     # Plot also the training points
     pl.scatter(X[:,0], X[:,1], c=y, cmap=cmap_bold)
     pl.title("3-Class classification (k = %i, weights = '%s')"
              % (n_neighbors, weights))
     pl.axis('tight')
-    
+
 pl.show()

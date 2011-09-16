@@ -60,7 +60,7 @@ def test_ball_tree_pickle():
 
 def test_ball_tree_p_distance():
     X = np.random.random(size=(100, 5))
-    
+
     for p in (1, 2, 3, 4, np.inf):
         bt = neighbors.BallTree(X, leaf_size=10, p=p)
         kdt = cKDTree(X, leafsize=10)

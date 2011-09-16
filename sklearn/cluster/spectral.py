@@ -199,7 +199,7 @@ def spectral_clustering(affinity, k=8, n_components=None, mode=None,
     maps = spectral_embedding(affinity, n_components=n_components,
                               mode=mode, random_state=random_state)
     maps = maps[1:]
-    _, labels, _ = k_means(maps.T, k, random_state=random_state, 
+    _, labels, _ = k_means(maps.T, k, random_state=random_state,
                     n_init=n_init)
     return labels
 
