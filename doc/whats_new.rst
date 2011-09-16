@@ -1,4 +1,3 @@
-
 .. currentmodule:: sklearn
 
 .. _changes_0_9:
@@ -6,12 +5,90 @@
 0.9
 ===
 
-TODO
+scikit-learn 0.9 was released on September 2011, three months after
+the 0.8 release and includes XX new modules: manifold, dpgmm as well
+as several new algorithms and documentation improvements.
+
+This release also includes de work developed by `Vlad Niculae`_ as
+part of the `Google Summer of Code <http://code.google.com/soc/>`_
+program.
+
+
+
+.. |banner1| image:: ./auto_examples/manifold/images/thumb/plot_compare_methods.png
+   :target: auto_examples/applications/face_recognition.html
+
+
+.. |center-div| raw:: html
+
+    <div style="text-align: center; margin: 0px 0 -5px 0;">
+
+.. |end-div| raw:: html
+
+    </div>
+
+
+|center-div| |banner1| |end-div|
 
 Changelog
 ---------
 
-TODO
+   - New :ref:`manifold` module by `Jake Vanderplas`_ and 
+     `Fabian Pedregosa`_.
+
+   - New :ref:`Dirichlet Process <dirichlet_process>` Gaussian Mixture
+     Model by `Alexandre Passos`_
+
+   - :ref:`neighbors` module refactoring by `Jake Vanderplas`_ :
+     general refactoring, support for sparse matrices in input, speed and 
+     documentation improvements. See the next section for a full list of API
+     changes.
+
+   - Improvements on the :ref:`feature_selection` module by 
+     `Gilles Louppe`_ : refactoring of the RFE classes, documentation 
+     rewrite, increased efficiency and minor API changes.
+
+   - :ref:`SparsePCA` by `Vlad Niculae`_, `Gael Varoquaux`_ and
+     `Alexandre Gramfort`_
+
+   - Printing an estimator now behaves independently of architectures
+     and Python version thanks to Jean Kossaifi.
+
+   - :ref:`Loader for libsvm/svmlight format <libsvm_loader>` by
+     `Mathieu Blondel`_ and `Lars Buitinck`_
+
+   - Documentation improvements: thumbnails in 
+     :ref:`example gallery <_examples-index>` by `Fabian Pedregosa`_, 
+     extended documentation for modules feature_selection, (...).
+
+   - Important bugfixes in :ref:`svm` module (segfaults, bad
+     performance) by `Fabian Pedregosa`_.
+
+   - Added :ref:`multinomial_naive_bayes` and :ref:`bernoulli_naive_bayes`
+     by `Lars Buitinck`_
+
+   - Text feature extraction optimizations by Lars Buitinck
+
+   - Chi-Square feature selection 
+     (:func:`feature_selection.univariate_selection.chi2`) by `Lars Buitinck`.
+
+   - :ref:`sample_generators` module refactoring by `Gilles Louppe`_
+
+   - :ref:`multiclass` by `Mathieu Blondel`_
+
+   - Ball tree rewrite by `Jake Vanderplas`_
+
+   - Implementation of :ref:`dbscan` algorithm by Robert Layton
+
+   - Kmeans predict and transform by Robert Layton
+
+   - Preprocessing module refactoring by `Olivier Grisel`_
+
+   - Faster mean shift by Conrad Lee
+
+   - New `Bootstrap`, `ShuffleSplit` and various other improvements in cross validation schemes by `Olivier Grisel`_ and `Gael Varoquaux`_
+
+   - Adjusted Rand index and V-Measure clustering evaluation metrics by `Olivier Grisel`_
 
 
 API changes summary
@@ -54,10 +131,28 @@ version 0.8:
     classification and regression tasks or ``X_test`` for unsupervised
     estimators.
 
+  - ``gamma`` parameter for support vector machine algorithms is set
+    to ``1 / n_features`` by default, instead of ``1 / n_samples``.
+
   - The ``sklearn.hmm`` has been marked as orphaned: it will be removed
     from scikit-learn in version 0.11 unless someone steps up to
     contribute documentation, examples and fix lurking numerical
     stability issues.
+
+  - ``sklearn.neighbors`` has been made into a submodule.  The two previously
+    available estimators, ``NeighborsClassifier`` and ``NeighborsRegressor``
+    have been marked as deprecated.  Their functionality has been divided
+    among five new classes: ``NearestNeighbors`` for unsupervised neighbors
+    searches, ``KNeighborsClassifier`` & ``RadiusNeighborsClassifier``
+    for supervised classification problems, and ``KNeighborsRegressor``
+    & ``RadiusNeighborsRegressor`` for supervised regression problems.
+
+  - ``sklearn.ball_tree.BallTree`` has been moved to
+    ``sklearn.neighbors.BallTree``.  Using the former will generate a warning.
+
+  - ``sklearn.linear_model.LARS()`` and related classes (LassoLARS,
+    LassoLARSCV, etc.) have been renamed to
+    ``sklearn.linear_model.Lars()``.
 
 Backward compatibilty package aliases and other deprecated classes and
 functions will be removed in version 0.11.
@@ -66,7 +161,47 @@ functions will be removed in version 0.11.
 People
 ------
 
-TODO
+38 people contributed to this release.
+
+   - 304  Olivier Grisel
+   - 212  Vlad Niculae
+   - 190  Lars Buitinck
+   - 173  Gael Varoquaux
+   - 149  Fabian Pedregosa (`INRIA`_, `Parietal Team`_)
+   - 127  Jake Vanderplas
+   - 119  Mathieu Blondel
+   - 83  Alexandre Passos
+   - 58  Alexandre Gramfort
+   - 57  Peter Prettenhofer
+   - 56  Gilles Louppe
+   - 41  Robert Layton
+   - 38  Nelle Varoquaux
+   - 32  Jean Kossaifi
+   - 30  Conrad Lee
+   - 22  Pietro Berkes
+   - 18  andy
+   - 17  David Warde-Farley
+   - 11  Brian Holt
+   - 11  Robert
+   - 8  Amit Aides
+   - 8  Virgile Fritsch
+   - 7  Yaroslav Halchenko
+   - 6  Salvatore Masecchia
+   - 5  Paolo Losi
+   - 4  Vincent Schut
+   - 3  Alexis Metaireau
+   - 3  Bryan Silverthorn
+   - 3  Andreas Mueller
+   - 2  Minwoo Jake Lee
+   - 1  Emmanuelle Gouillart
+   - 1  Keith Goodman
+   - 1  Lucas Wiman
+   - 1  Nicolas Pinto
+   - 1  Thouis (Ray) Jones
+   - 1  Tim Sheerman-Chase
+   - 1  Virgile
+   - 1  bdholt1
+   - 1  robertlayton
 
 
 .. _changes_0_8:
@@ -268,34 +403,6 @@ scikit-learn 0.6 was released on december 2010. It is marked by the
 inclusion of several new modules and a general renaming of old
 ones. It is also marked by the inclusion of new example, including
 applications to real-world datasets.
-
-.. |banner1| image:: images/plot_face_recognition_1.png
-   :height: 150
-   :target: auto_examples/applications/face_recognition.html
-
-.. |banner2| image:: auto_examples/applications/images/plot_species_distribution_modeling_1.png
-   :height: 150
-   :target: auto_examples/applications/plot_species_distribution_modeling.html
-
-.. |banner3| image:: auto_examples/gaussian_process/images/plot_gp_regression_1.png
-   :height: 150
-   :target: auto_examples/gaussian_process/plot_gp_regression.html
-
-.. |banner4| image:: auto_examples/linear_model/images/plot_sgd_iris_1.png
-   :height: 150
-   :target: auto_examples/linear_model/plot_lasso_lars.html
-
-
-.. |center-div| raw:: html
-
-    <div style="text-align: center; margin: 0px 0 -5px 0;">
-
-.. |end-div| raw:: html
-
-    </div>
-
-
-|center-div| |banner1| |banner2| |banner3| |banner4| |end-div|
 
 
 Changelog
@@ -591,3 +698,13 @@ of commits):
 .. _Andreas Müller: http://www.ais.uni-bonn.de/~amueller/
 
 .. _Matthieu Perrot: http://www.lnao.fr/spip.php?rubrique19
+
+.. _Jake Vanderplas: http://www.astro.washington.edu/users/vanderplas/
+
+.. _Gilles Louppe: http://www.montefiore.ulg.ac.be/~glouppe/
+
+.. _INRIA: http://inria.fr
+
+.. _Parietal Team: http://parietal.saclay.inria.fr/
+
+.. _Lars Buitinck: https://github.com/larsmans

@@ -13,6 +13,9 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, CoefSelectTransformerMixin):
 
     Parameters
     ----------
+    C : float, optional (default=1.0)
+        Penalty parameter C of the error term.
+
     loss : string, 'l1' or 'l2' (default='l2')
         Specifies the loss function. 'l1' is the hinge loss (standard SVM)
         while 'l2' is the squared hinge loss.
@@ -144,7 +147,7 @@ class SVC(BaseLibSVM, ClassifierMixin):
     >>> from sklearn.svm import SVC
     >>> clf = SVC()
     >>> clf.fit(X, y)
-    SVC(C=1.0, coef0=0.0, degree=3, gamma=0.25, kernel='rbf', probability=False,
+    SVC(C=1.0, coef0=0.0, degree=3, gamma=0.5, kernel='rbf', probability=False,
       shrinking=True, tol=0.001)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
@@ -245,8 +248,8 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
     >>> from sklearn.svm import NuSVC
     >>> clf = NuSVC()
     >>> clf.fit(X, y)
-    NuSVC(coef0=0.0, degree=3, gamma=0.25, kernel='rbf', nu=0.5,
-       probability=False, shrinking=True, tol=0.001)
+    NuSVC(coef0=0.0, degree=3, gamma=0.5, kernel='rbf', nu=0.5, probability=False,
+       shrinking=True, tol=0.001)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
 
@@ -335,7 +338,7 @@ class SVR(BaseLibSVM, RegressorMixin):
     >>> X = np.random.randn(n_samples, n_features)
     >>> clf = SVR(C=1.0, epsilon=0.2)
     >>> clf.fit(X, y)
-    SVR(C=1.0, coef0=0.0, degree=3, epsilon=0.2, gamma=0.1, kernel='rbf',
+    SVR(C=1.0, coef0=0.0, degree=3, epsilon=0.2, gamma=0.2, kernel='rbf',
       probability=False, shrinking=True, tol=0.001)
 
     See also
@@ -443,7 +446,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     >>> X = np.random.randn(n_samples, n_features)
     >>> clf = NuSVR(C=1.0, nu=0.1)
     >>> clf.fit(X, y)
-    NuSVR(C=1.0, coef0=0.0, degree=3, gamma=0.1, kernel='rbf', nu=0.1,
+    NuSVR(C=1.0, coef0=0.0, degree=3, gamma=0.2, kernel='rbf', nu=0.1,
        probability=False, shrinking=True, tol=0.001)
 
     See also

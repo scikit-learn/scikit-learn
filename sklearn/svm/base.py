@@ -131,7 +131,7 @@ class BaseLibSVM(BaseEstimator):
 
         if (self.kernel in ['poly', 'rbf']) and (self.gamma == 0):
             # if custom gamma is not provided ...
-            self.gamma = 1.0 / X.shape[0]
+            self.gamma = 1.0 / X.shape[1]
         self.shape_fit_ = X.shape
 
         self.support_, self.support_vectors_, self.n_support_, \

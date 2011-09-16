@@ -164,9 +164,14 @@ Nearest Neighbors
    :toctree: generated/
    :template: class.rst
 
+   neighbors.NearestNeighbors
+   neighbors.KNeighborsClassifier
+   neighbors.RadiusNeighborsClassifier
    neighbors.NeighborsClassifier
+   neighbors.KNeighborsRegressor
+   neighbors.RadiusNeighborsRegressor
    neighbors.NeighborsRegressor
-   ball_tree.BallTree
+   neighbors.BallTree
 
 .. autosummary::
    :toctree: generated/
@@ -295,10 +300,12 @@ Clustering metrics
    :toctree: generated/
    :template: function.rst
 
+   metrics.adjusted_rand_score
    metrics.homogeneity_completeness_v_measure
    metrics.homogeneity_score
    metrics.completeness_score
    metrics.v_measure_score
+
 
 Pairwise metrics
 ----------------

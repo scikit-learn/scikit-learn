@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import numpy
+import os
 
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
@@ -8,6 +9,7 @@ def configuration(parent_package='', top_path=None):
     config.add_data_dir('data')
     config.add_data_dir('descr')
     config.add_data_dir('images')
+    config.add_data_dir(os.path.join('tests', 'data'))
 
     return config
 
