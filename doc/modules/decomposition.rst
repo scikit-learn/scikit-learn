@@ -347,3 +347,105 @@ of the data.
       matrix factorization"
       <http://www.cs.rpi.edu/~boutsc/files/nndsvd.pdf>`_
       C. Boutsidis, E. Gallopoulos, 2008
+
+
+
+.. _DictionaryLearning:
+
+Dictionary Learning
+===================
+
+Generic dictionary learning
+---------------------------
+
+Dictionary learning (:class:`DictionaryLearning`) is a matrix factorization
+problem that amounts to finding a (usually overcomplete) dictionary that will
+perform good at sparsely encoding the fitted data.
+
+Representing data as sparse combinations of atoms from an overcomplete
+dictionary is suggested to be the way the mammal primary visual cortex works.
+Consequently, dictionary learning applied on image patches has been shown to 
+give good results in image processing tasks such as image completion,
+inpainting and denoising, as well as for supervised recognition tasks.
+
+Dictionary learning is an optimization problem solved by alternatively updating
+the sparse code, as a solution to multiple Lasso problems, considering the
+dictionary fixed, and then updating the dictionary to best fit the sparse code.
+
+After using such a procedure to fit the dictionary, the fitted object can be 
+used to transform new data. The transformation amounts to a sparse coding
+problem: finding a representation of the data as a linear combination of as few
+dictionary atoms as possible. All variations of dictionary learning implement
+the following transform methods, controllable via the `transform_method` 
+initialization parameter:
+
+
+* Orthogonal matching pursuit (:ref:`omp`)
+
+* Least-angle regression (:ref:`least_angle_regression`)
+
+* Lasso computed by least-angle regression
+
+* Lasso using coordinate descent (:ref:`lasso`)
+
+* Thresholding
+
+Thresholding is very fast but it does not yield accurate reconstructions.
+They have been shown useful in literature for classification tasks. For image
+reconstruction tasks, orthogonal matching pursuit yields the most accurate,
+unbiased reconstruction.
+
+The dictionary learning objects offer, via the `split_code` parameter, the
+possibility to separate the positive and negative values in the results of 
+sparse coding. This is useful when dictionary learning is used for extracting
+features that will be used for supervised learning, because it allows the
+learning algorithm to assign different weights to negative loadings of a
+particular atom, from to the corresponding positive loading.
+
+The split code for a single sample has length `2 * n_atoms`
+and is constructed using the following rule: First, the regular code of length
+`n_atoms` is computed. Then, the first `n_atoms` entries of the split_code are
+filled with the positive part of the regular code vector. The second half of
+the split code is filled with the negative part of the code vector, only with
+a positive sign. Therefore, the split_code is non-negative. 
+
+The following image shows how a dictionary learned from 4x4 pixel image patches
+extracted from part of the image of Lena looks like.
+
+
+.. figure:: ../auto_examples/decomposition/images/plot_img_denoising_1.png
+    :target: ../auto_examples/decomposition/plot_img_denoising.html
+    :align: center
+    :scale: 50%
+
+
+.. topic:: Examples:
+
+  * :ref:`example_decomposition_plot_img_denoising.py`
+
+
+.. topic:: References:
+
+  * `"Online dictionary learning for sparse coding" 
+    <http://www.di.ens.fr/sierra/pdfs/icml09.pdf>`_
+    J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009
+
+.. _DictionaryLearningOnline
+
+Online dictionary learning
+--------------------------
+
+:class:`DictionaryLearningOnline` implements a faster, but less accurate
+version of the dictionary learning algorithm that is better suited for large
+datasets. 
+
+By default, :class:`DictionaryLearningOnline` divides the data into
+mini-batches and optimizes in an online manner by cycling over the mini-batches
+for the specified number of iterations. However, at the moment it does not
+implement a stopping condition.
+
+The estimator also implements `partial_fit`, which updates the dictionary by
+iterating only once over a mini-batch. This can be used for online learning
+when the data is not readily available from the start, or for when the data
+does not fit into the memory.
+
