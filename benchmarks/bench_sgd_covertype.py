@@ -172,7 +172,7 @@ sgd_err, sgd_train_time, sgd_test_time = benchmark(SGDClassifier(
     **sgd_parameters))
 
 cart_err, cart_train_time, cart_test_time = benchmark(
-    DecisionTreeClassifier(min_split=5, max_depth=6))
+    DecisionTreeClassifier(min_split=5, max_depth=100))
 
 ######################################################################
 ## Print classification performance
