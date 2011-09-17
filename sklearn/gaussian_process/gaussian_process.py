@@ -9,7 +9,7 @@ import numpy as np
 from scipy import linalg, optimize, rand
 
 from ..base import BaseEstimator, RegressorMixin
-from ..metrics.pairwise import l1_distances
+from ..metrics.pairwise import manhattan_distances
 from . import regression_models as regression
 from . import correlation_models as correlation
 
@@ -413,8 +413,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                 MSE = np.zeros(n_eval)
 
             # Get pairwise componentwise L1-distances to the input training set
-            dx = l1_distances(X, self.X)
-
+            dx = manhattan_distances(X, Y=self.X, sum_over_features=False)
             # Get regression function and correlation
             f = self.regr(X)
             r = self.corr(self.theta, dx).reshape(n_eval, n_samples)
