@@ -310,6 +310,11 @@ extracted from part of the image of Lena looks like.
     :scale: 50%
 
 
+.. figure:: ../auto_examples/decomposition/images/plot_faces_decomposition_5.png
+   :target: ../auto_examples/decomposition/plot_faces_decomposition.html
+   :scale: 50%
+
+
 .. topic:: Examples:
 
   * :ref:`example_decomposition_plot_img_denoising.py`
