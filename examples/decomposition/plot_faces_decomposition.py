@@ -70,7 +70,7 @@ estimators = [
 
     ('Non-negative components - NMF',
      decomposition.NMF(n_components=n_components, init='nndsvda', beta=5.0,
-                        tol=5e-3, sparseness='components'),
+                       tol=5e-3, sparseness='components'),
      False, False),
 
     ('Independent components - FastICA',
@@ -84,7 +84,7 @@ estimators = [
 
     ('Dict. atoms - MiniBatchDictionaryLearning',
     decomposition.MiniBatchDictionaryLearning(n_atoms=n_components, alpha=1e-3,
-                                           n_iter=100, chunk_size=3),
+                                              n_iter=100, chunk_size=3),
      True, False),
 
     ('Cluster centers - MiniBatchKMeans',
