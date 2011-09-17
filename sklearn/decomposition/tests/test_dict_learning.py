@@ -2,7 +2,7 @@ import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal, \
                           assert_equal
 
-from .. import DictionaryLearning, DictionaryLearningOnline, \
+from .. import DictionaryLearning, MiniBatchDictionaryLearning, \
                dict_learning_online
 from ..dict_learning import sparse_encode, sparse_encode_parallel
 
@@ -74,20 +74,20 @@ def test_dict_learning_online_shapes():
 
 def test_dict_learning_online_estimator_shapes():
     n_atoms = 5
-    dico = DictionaryLearningOnline(n_atoms, n_iter=20).fit(X)
+    dico = MiniBatchDictionaryLearning(n_atoms, n_iter=20).fit(X)
     assert dico.components_.shape == (n_atoms, n_features)
 
 
 def test_dict_learning_online_overcomplete():
     n_atoms = 12
-    dico = DictionaryLearningOnline(n_atoms, n_iter=20).fit(X)
+    dico = MiniBatchDictionaryLearning(n_atoms, n_iter=20).fit(X)
     assert dico.components_.shape == (n_atoms, n_features)
 
 
 def test_dict_learning_online_initialization():
     n_atoms = 12
     V = rng.randn(n_atoms, n_features)
-    dico = DictionaryLearningOnline(n_atoms, n_iter=0, dict_init=V).fit(X)
+    dico = MiniBatchDictionaryLearning(n_atoms, n_iter=0, dict_init=V).fit(X)
     assert_array_equal(dico.components_, V)
 
 
@@ -96,13 +96,13 @@ def test_dict_learning_online_partial_fit():
     V = rng.randn(n_atoms, n_features)  # random init
     rng1 = np.random.RandomState(0)
     rng2 = np.random.RandomState(0)
-    dico1 = DictionaryLearningOnline(n_atoms, n_iter=10, chunk_size=1,
-                                     shuffle=False, dict_init=V,
-                                     transform_algorithm='threshold',
-                                     random_state=rng1).fit(X)
-    dico2 = DictionaryLearningOnline(n_atoms, n_iter=1, dict_init=V,
-                                     transform_algorithm='threshold',
-                                     random_state=rng2)
+    dico1 = MiniBatchDictionaryLearning(n_atoms, n_iter=10, chunk_size=1,
+                                        shuffle=False, dict_init=V,
+                                        transform_algorithm='threshold',
+                                        random_state=rng1).fit(X)
+    dico2 = MiniBatchDictionaryLearning(n_atoms, n_iter=1, dict_init=V,
+                                        transform_algorithm='threshold',
+                                        random_state=rng2)
     for ii, sample in enumerate(X):
         dico2.partial_fit(sample, iter_offset=ii * dico2.n_iter)
 

@@ -82,8 +82,8 @@ estimators = [
                                       n_iter=100, chunk_size=3),
      True, False),
 
-    ('Dictionary atoms - DictionaryLearningOnline',
-    decomposition.DictionaryLearningOnline(n_atoms=n_components, alpha=1e-3,
+    ('Dict. atoms - MiniBatchDictionaryLearning',
+    decomposition.MiniBatchDictionaryLearning(n_atoms=n_components, alpha=1e-3,
                                            n_iter=100, chunk_size=3),
      True, False),
 

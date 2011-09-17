@@ -35,7 +35,7 @@ import pylab as pl
 import scipy as sp
 import numpy as np
 
-from sklearn.decomposition import DictionaryLearningOnline
+from sklearn.decomposition import MiniBatchDictionaryLearning
 from sklearn.feature_extraction.image import extract_patches_2d
 from sklearn.feature_extraction.image import reconstruct_from_patches_2d
 
@@ -69,7 +69,7 @@ print 'done in %.2fs.' % (time() - t0)
 
 print 'Learning the dictionary... '
 t0 = time()
-dico = DictionaryLearningOnline(n_atoms=100, alpha=1e-2, n_iter=500)
+dico = MiniBatchDictionaryLearning(n_atoms=100, alpha=1e-2, n_iter=500)
 V = dico.fit(data).components_
 dt = time() - t0
 print 'done in %.2fs.' % dt

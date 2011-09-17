@@ -828,8 +828,8 @@ class DictionaryLearning(BaseDictionaryLearning):
         return self
 
 
-class DictionaryLearningOnline(BaseDictionaryLearning):
-    """ Online dictionary learning
+class MiniBatchDictionaryLearning(BaseDictionaryLearning):
+    """Mini-batch dictionary learning
 
     Finds a dictionary (a set of atoms) that can best be used to represent data
     using a sparse code.

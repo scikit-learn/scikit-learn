@@ -430,16 +430,16 @@ extracted from part of the image of Lena looks like.
     <http://www.di.ens.fr/sierra/pdfs/icml09.pdf>`_
     J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009
 
-.. _DictionaryLearningOnline
+.. _MiniBatchDictionaryLearning
 
-Online dictionary learning
+Mini-batch dictionary learning
 --------------------------
 
-:class:`DictionaryLearningOnline` implements a faster, but less accurate
+:class:`MiniBatchDictionaryLearning` implements a faster, but less accurate
 version of the dictionary learning algorithm that is better suited for large
 datasets. 
 
-By default, :class:`DictionaryLearningOnline` divides the data into
+By default, :class:`MiniBatchDictionaryLearning` divides the data into
 mini-batches and optimizes in an online manner by cycling over the mini-batches
 for the specified number of iterations. However, at the moment it does not
 implement a stopping condition.
@@ -448,4 +448,3 @@ The estimator also implements `partial_fit`, which updates the dictionary by
 iterating only once over a mini-batch. This can be used for online learning
 when the data is not readily available from the start, or for when the data
 does not fit into the memory.
-
