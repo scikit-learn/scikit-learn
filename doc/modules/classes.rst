@@ -325,7 +325,10 @@ Pairwise metrics
    metrics.pairwise.linear_kernel
    metrics.pairwise.polynomial_kernel
    metrics.pairwise.rbf_kernel
-
+   metrics.pairwise.distance_metrics
+   metrics.pairwise.pairwise_distances
+   metrics.pairwise.kernel_metrics
+   metrics.pairwise.pairwise_kernels
 
 Covariance Estimators
 =====================
