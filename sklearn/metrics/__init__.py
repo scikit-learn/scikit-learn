@@ -14,4 +14,4 @@ from .cluster import homogeneity_completeness_v_measure
 from .cluster import homogeneity_score
 from .cluster import completeness_score
 from .cluster import v_measure_score
-from .pairwise import euclidean_distances, pairwise_distances
+from .pairwise import euclidean_distances, pairwise_distances, pairwise_kernels
