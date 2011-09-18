@@ -157,15 +157,28 @@ class Node(object):
 
 def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
                 max_features, n_classes, random_state, min_density,
-                sample_mask):
+                sample_mask=None, X_argsorted=None):
     """Build a tree by recursively partitioning the data."""
-
-    n_samples, n_features = X.shape
-    assert n_samples == y.shape[0]
+    assert X.shape[0] == y.shape[0]
     assert max_depth > 0
     assert min_split > 0
 
-    y = np.array(y, dtype=DTYPE, order="c")
+    # make data fortran layout
+    if not X.flags["F_CONTIGUOUS"]:
+        X = np.array(X, order="F")
+
+    y = np.array(y, dtype=DTYPE, order="C")
+
+    if X_argsorted is None:
+        X_argsorted = np.asfortranarray(
+            np.argsort(X.T, axis=1).astype(np.int32).T)
+    
+    if sample_mask is None:
+        sample_mask = np.ones((X.shape[0],), dtype=np.bool)
+    
+    # get num samples from sample_mask instead of X
+    n_samples = sample_mask.sum()
+    n_features = X.shape[1]
 
     feature_mask = np.ones((n_features,), dtype=np.bool, order="c")
     if max_features is not None:
@@ -182,23 +195,16 @@ def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
 
     feature_mask = feature_mask.astype(np.int32)
 
-    # make data fortran layout
-    if not X.flags["F_CONTIGUOUS"]:
-        X = np.array(X, order="F")
-
-    # argsort X
-    sorted_X = np.asfortranarray(np.argsort(X.T, axis=1).astype(np.int32).T)
-
     Node.class_counter = 0
 
-    def recursive_partition(X, sorted_X, y, sample_mask, depth):
+    def recursive_partition(X, X_argsorted, y, sample_mask, depth):
         is_split_valid = True
         n_samples = sample_mask.sum()
         if depth >= max_depth or n_samples < min_split:
             is_split_valid = False
         else:
             feature, threshold, error, init_error = _tree._find_best_split(
-                X, y, sorted_X, sample_mask, feature_mask,
+                X, y, X_argsorted, sample_mask, feature_mask,
                 criterion, n_samples)
 
             if feature == -1:
@@ -216,17 +222,18 @@ def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
             return Node(error=0.0, samples=n_samples, value=a)
         else:
             if n_samples / X.shape[0] <= min_density:
+                # sample_mask too sparse - pack X and X_argsorted
                 X = X[sample_mask]
-                sorted_X = np.asfortranarray(
+                X_argsorted = np.asfortranarray(
                     np.argsort(X.T, axis=1).astype(np.int32).T)
                 y = current_y
                 sample_mask = np.ones((X.shape[0],), dtype=np.bool)
 
             split = X[:, feature] < threshold
-            left_partition = recursive_partition(X, sorted_X, y,
+            left_partition = recursive_partition(X, X_argsorted, y,
                                                  split & sample_mask,
                                                  depth + 1)
-            right_partition = recursive_partition(X, sorted_X, y,
+            right_partition = recursive_partition(X, X_argsorted, y,
                                                   ~split & sample_mask,
                                                   depth + 1)
 
@@ -234,7 +241,7 @@ def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
                         error=init_error, samples=n_samples, value=a,
                         left=left_partition, right=right_partition)
 
-    return recursive_partition(X, sorted_X, y, sample_mask, 0)
+    return recursive_partition(X, X_argsorted, y, sample_mask, 0)
 
 
 def _apply_tree(node, X):
