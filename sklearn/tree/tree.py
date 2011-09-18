@@ -140,8 +140,8 @@ def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
         sample_mask = np.ones((X.shape[0],), dtype=np.bool)
 
     n_features = X.shape[1]
-
     feature_mask = np.ones((n_features,), dtype=np.bool, order="C")
+
     if max_features is not None:
         if max_features <= 0 or max_features > n_features:
             raise ValueError("max_features=%d must be in range (0..%d]. "
@@ -248,7 +248,7 @@ class BaseDecisionTree(BaseEstimator):
         self : object
             Returns self.
         """
-        X = np.asanyarray(X, dtype=DTYPE, order='F')
+        X = np.asanyarray(X, dtype=DTPE, order='F')
         n_samples, self.n_features = X.shape
         if len(y) != n_samples:
             raise ValueError("Number of labels=%d does not match "
@@ -389,6 +389,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     array([ 1.     ,  0.93...,  0.86...,  0.93...,  0.93...,
             0.93...,  0.93...,  1.     ,  0.93...,  1.      ])
     """
+
     def __init__(self, criterion="gini", max_depth=10, min_split=1,
                  max_features=None, random_state=None, min_density=0.1):
         super(DecisionTreeClassifier, self).__init__(
@@ -507,6 +508,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     array([ 0.61..., 0.57..., -0.34..., 0.41..., 0.75...,
             0.07..., 0.29..., 0.33..., -1.42..., -1.77...])
     """
+
     def __init__(self, criterion="mse", max_depth=10, min_split=1,
                  max_features=None, random_state=None, min_density=0.1):
         super(DecisionTreeRegressor, self).__init__(
