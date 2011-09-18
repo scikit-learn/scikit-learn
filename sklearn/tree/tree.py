@@ -128,11 +128,6 @@ class Node(object):
 
     right : Node
         The right child node
-
-    See also
-    --------
-
-    Leaf
     """
     class_counter = 0
 
