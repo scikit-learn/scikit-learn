@@ -381,7 +381,7 @@ Signal Decomposition
    decomposition.SparsePCA
    decomposition.MiniBatchSparsePCA
    decomposition.DictionaryLearning
-   decomposition.DictionaryLearningOnline
+   decomposition.MiniBatchDictionaryLearning
 
 .. autosummary::
    :toctree: generated/

@@ -14,9 +14,9 @@ at the difference between the reconstruction and the original image. If the
 reconstruction is perfect this will look like gaussian noise.
 
 It can be seen from the plots that the results of :ref:`omp` with two
-non-zero coefficients is a bit less biased than when keeping only one (the
-edges look less prominent). However, it is farther from the ground truth in
-Frobenius norm.
+non-zero coefficients is a bit less biased than when keeping only one
+(the edges look less prominent). It is in addition closer from the ground
+truth in Frobenius norm.
 
 The result of :ref:`least_angle_regression` is much more strongly biased: the
 difference is reminiscent of the local intensity value of the original image.
@@ -35,7 +35,7 @@ import pylab as pl
 import scipy as sp
 import numpy as np
 
-from sklearn.decomposition import DictionaryLearningOnline
+from sklearn.decomposition import MiniBatchDictionaryLearning
 from sklearn.feature_extraction.image import extract_patches_2d
 from sklearn.feature_extraction.image import reconstruct_from_patches_2d
 
@@ -46,8 +46,7 @@ lena = sp.lena() / 256.0
 
 # downsample for higher speed
 lena = lena[::2, ::2] + lena[1::2, ::2] + lena[::2, 1::2] + lena[1::2, 1::2]
-lena = lena[::2, ::2] + lena[1::2, ::2] + lena[::2, 1::2] + lena[1::2, 1::2]
-lena /= 16.0
+lena /= 4.0
 height, width = lena.shape
 
 # Distort the right half of the image
@@ -70,7 +69,7 @@ print 'done in %.2fs.' % (time() - t0)
 
 print 'Learning the dictionary... '
 t0 = time()
-dico = DictionaryLearningOnline(n_atoms=100, alpha=1e-2, n_iter=500)
+dico = MiniBatchDictionaryLearning(n_atoms=100, alpha=1e-2, n_iter=500)
 V = dico.fit(data).components_
 dt = time() - t0
 print 'done in %.2fs.' % dt
@@ -123,15 +122,13 @@ data -= intercept
 print 'done in %.2fs.' % (time() - t0)
 
 transform_algorithms = [
-    ('Orthogonal Matching Pursuit\n1 atom',
-     'omp', {'transform_n_nonzero_coefs': 1}),
-    ('Orthogonal Matching Pursuit\n2 atoms',
-     'omp', {'transform_n_nonzero_coefs': 2}),
-    ('Least-angle regression\n5 atoms',
-     'lars', {'transform_n_nonzero_coefs': 5}),
-    ('Thresholding\n alpha=0.1', 'threshold',
-     {'transform_alpha': .1}),
-]
+    ('Orthogonal Matching Pursuit\n1 atom', 'omp',
+     {'transform_n_nonzero_coefs': 1}),
+    ('Orthogonal Matching Pursuit\n2 atoms', 'omp',
+     {'transform_n_nonzero_coefs': 2}),
+    ('Least-angle regression\n5 atoms', 'lars',
+                            {'transform_n_nonzero_coefs': 5}),
+    ('Thresholding\n alpha=0.1', 'threshold', {'transform_alpha': .1})]
 
 reconstructions = {}
 for title, transform_algorithm, kwargs in transform_algorithms:
