@@ -50,18 +50,22 @@ class GraphvizExporter(object):
     $ dot -Tpng tree.dot -o tree.png
     """
 
-    def __init__(self, out=open("tree.dot", 'w')):
+    def __init__(self, out=open("tree.dot", 'w'), feature_names=None):
         """Export a Decision Tree to GraphViz format.
 
-        Generates graphviz representation of the decision tree. The output
+        Generates GraphViz representation of the decision tree. The output
         is written to `out`.
 
         Parameters
         ----------
-        filename : string
-            The name of the output file.
+        out : filehandle, optional
+            Handle to the output file.
+
+        feature_names : list of strings, optional
+            Names of each of the features.
         """
         self.out = out
+        self.feature_names = feature_names
         self.out.write("digraph Tree {\n")
 
     def close(self):
@@ -73,8 +77,15 @@ class GraphvizExporter(object):
             return "error = %s \\n samples = %s \\n v = %s" \
                 % (node.error, node.samples, node.value)
         else:
+            feature = node.feature
+            if self.feature_names is not None:
+                try:
+                    feature = self.feature_names[node.feature]
+                except:
+                    pass
+
             return "x[%s] < %s \\n error = %s \\n samples = %s \\n v = %s" \
-                   % (node.feature, node.threshold,\
+                   % (feature, node.threshold,\
                       node.error, node.samples, node.value)
 
     def export(self, node):
