@@ -213,7 +213,7 @@ People
    - 1  Tim Sheerman-Chase
 
 
-.. _changes`__0_8:
+.. _changes_0_8:
 
 0.8
 ===
