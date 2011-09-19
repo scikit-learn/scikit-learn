@@ -723,7 +723,7 @@ class ShuffleSplit(object):
 
     def __repr__(self):
         return ('%s(%d, n_iterations=%d, test_fraction=%s, indices=%s, '
-                'random_state=%d)' % (
+                'random_state=%s)' % (
                     self.__class__.__name__,
                     self.n,
                     self.n_iterations,
