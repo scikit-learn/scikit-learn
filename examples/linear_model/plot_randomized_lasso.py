@@ -26,13 +26,13 @@ pl.title("Weights of the model")
 scores = list()
 scores.append(coef/coef.max())
 n_alphas = 12
-alphas = np.logspace(-1, 1, n_alphas)[::-1]
+alphas = np.logspace(-1, 1.5, n_alphas)[::-1]
 for alpha in alphas:
     clf = RandomizedLasso(verbose=True, alpha=alpha, random_state=42)
     clf.fit(X, y)
     scores.append(clf.scores_)
 scores = np.array(scores)
-pl.imshow(np.rot90(scores), cmap=pl.cm.gray,
+pl.imshow(np.rot90(scores), cmap=pl.cm.spectral,
           interpolation='nearest', aspect='auto')
 #pl.plot(coef/coef.max(), 'g-', label="Ground truth coefficients")
 alpha_aic = LassoLarsIC(criterion='aic').fit(X, y).alpha_
@@ -43,7 +43,8 @@ pl.xlabel("alpha (AIC=%.2e, BIC=%.2e, CV=%.2e)" %
 pl.ylabel("Features")
 
 pl.xticks(np.arange(0, n_alphas+1),
-          ['Truth', ] + ['%.2e' % a for a in alphas])
+          ['Truth', ] + ['%.1e' % a for a in alphas])
+pl.colorbar()
 #pl.legend(loc=1)
 
 pl.show()
