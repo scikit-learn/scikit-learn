@@ -69,7 +69,10 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
     See also
     --------
-    :ref:`LassoLars`, :ref:`Lars`
+    :ref:`LassoLars`
+    :ref:`Lars`
+    decomposition.sparse_encode
+    decomposition.sparse_encode_parallel
 
     Notes
     ------
@@ -358,6 +361,7 @@ class Lars(LinearModel):
     See also
     --------
     lars_path, LassoLARS, LarsCV, LassoLarsCV
+    decomposition.sparse_encode, decomposition.sparse_encode_parallel
     """
     def __init__(self, fit_intercept=True, verbose=False, normalize=True,
                  precompute='auto', n_nonzero_coefs=500,
