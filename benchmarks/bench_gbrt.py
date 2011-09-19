@@ -2,6 +2,7 @@ import numpy as np
 
 from sklearn import datasets
 from sklearn.utils import shuffle
+from sklearn.utils import check_random_state
 
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.ensemble.gradient_boosting import GradientBoostingClassifier
@@ -17,8 +18,8 @@ def repeat(f):
     return wrapper
 
 
-def bench_random_gaussian():
-    rs = np.random.RandomState(13)
+def bench_random_gaussian(random_state=None):
+    rs = check_random_state(random_state)
     shape = (12000, 10)
     X = rs.normal(size=shape).reshape(shape)
     y = ((X ** 2.0).sum(axis=1) > 9.34).astype(np.float64)
@@ -48,15 +49,17 @@ def bench_random_gaussian():
 
     print "Tree: %.2f" % error_rate
 
-    gbrt = GradientBoostingClassifier(n_iter=100, max_depth=2, min_split=10)
+    gbrt = GradientBoostingClassifier(loss='deviance', n_iter=100,
+                                      min_split=5, max_depth=1,
+                                      learn_rate=0.1)
     gbrt.fit(X_train, y_train)
     error_rate = (1.0 - gbrt.score(X_test, y_test)) * 100.0
     print "GBRT: %.2f" % error_rate
 
 
 regression_params = {'n_iter': 100, 'max_depth': 4,
-                     'min_split': 1, 'init': 'median',
-                     'learn_rate': 0.1}
+                     'min_split': 1, 'learn_rate': 0.1,
+                     'loss': 'ls'}
 
 
 @repeat
@@ -109,9 +112,10 @@ def bench_friedman3(random_state=None):
 
 
 if __name__ == "__main__":
-    #bench_random_gaussian()
+    print "Example 10.2"
+    bench_random_gaussian()
 
-    print "Boston", bench_boston()
-    print "Friedman#1", bench_friedman1()
-    print "Friedman#2", bench_friedman2()
-    print "Friedman#3", bench_friedman3()
+    #print "Boston", bench_boston()
+    #print "Friedman#1", bench_friedman1()
+    #print "Friedman#2", bench_friedman2()
+    #print "Friedman#3", bench_friedman3()
