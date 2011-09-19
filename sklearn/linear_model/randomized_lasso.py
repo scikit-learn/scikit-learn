@@ -17,9 +17,11 @@ from .least_angle import lars_path, LassoLarsIC
 
 ################################################################################
 # Randomized lasso: feature selection
-def _randomized_lasso(X, y, weights, alpha, precompute, eps, verbose,
+def _randomized_lasso(X, y, weights, mask, alpha, precompute, eps, verbose,
                       max_iter):
-    X = (1 + weights) * X
+    X = X[mask]
+    y = y[mask]
+    X = (1 - weights) * X
     _, _, coef_ = lars_path(X, y,
                 Gram=precompute, overwrite_X=True,
                 overwrite_Gram=True, alpha_min=alpha,
@@ -97,7 +99,7 @@ class RandomizedLasso(LinearModel):
     TODO
     """
 
-    def __init__(self, alpha='aic', a=.2,
+    def __init__(self, alpha='aic', a=.5, jacknife_fraction=.75,
                  n_resampling=200,
                  selection_threshold=.5,
                  fit_intercept=True, verbose=False,
@@ -107,6 +109,7 @@ class RandomizedLasso(LinearModel):
                  n_jobs=1):
         self.alpha = alpha
         self.a = a
+        self.jacknife_fraction = jacknife_fraction
         self.n_resampling = n_resampling
         self.fit_intercept = fit_intercept
         self.max_iter = max_iter
@@ -158,11 +161,16 @@ class RandomizedLasso(LinearModel):
 
         random_state = check_random_state(self.random_state)
 
+        # We are generating 1 - weights, and not weights
+        a = 1 - self.a
+
         self.scores_ = np.zeros(n_features)
         for active_set in Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
                 delayed(_randomized_lasso)(X, y,
-                        weights=self.a*random_state.random_integers(0,
+                        weights=a*random_state.random_integers(0,
                                             1, size=(n_features,)),
+                        mask=(random_state.rand(n_samples) <
+                                    self.jacknife_fraction),
                         precompute=self.precompute, alpha=alpha,
                         verbose=max(0, self.verbose - 1),
                         max_iter=self.max_iter, eps=self.eps)
