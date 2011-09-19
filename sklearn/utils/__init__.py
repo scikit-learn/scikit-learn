@@ -159,7 +159,7 @@ def warn_if_not_float(X, estimator='This algorithm'):
 class deprecated(object):
     """Decorator to mark a function or class as deprecated.
 
-    Prints a warning when the function is called/the class is instantiated and
+    Issue a warning when the function is called/the class is instantiated and
     adds a warning to the docstring.
 
     The optional extra argument will be appended to the deprecation message
