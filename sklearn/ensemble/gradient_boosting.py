@@ -28,7 +28,6 @@ class MedianPredictor(object):
     median = None
 
     def fit(self, X, y):
-        y = np.asanyarray(y)
         self.median = np.median(y)
 
     def predict(self, X):
@@ -45,7 +44,6 @@ class MeanPredictor(object):
     mean = None
 
     def fit(self, X, y):
-        y = np.asanyarray(y)
         self.mean = np.mean(y)
 
     def predict(self, X):
@@ -54,8 +52,29 @@ class MeanPredictor(object):
         return y
 
 
+class ClassPriorPredictor(object):
+    """A simple initial estimator that predicts the mean
+    of the training targets.
+    """
+
+    prior = None
+
+    def fit(self, X, y):
+        y_bar = y.mean()
+        self.prior = 0.5 * np.log((1.0 + y_bar) / (1.0 - y_bar))
+        print "prior", self.prior
+
+    def predict(self, X):
+        y = np.empty((X.shape[0],), dtype=np.float64)
+        y.fill(self.prior)
+        return y
+
+
 class LossFunction(object):
     """Abstract base class for various loss functions."""
+
+    def init_estimator(self, X, y):
+        pass
 
     def loss(self, y, pred):
         pass
@@ -64,17 +83,17 @@ class LossFunction(object):
         """Compute the negative gradient."""
         pass
 
-    def update_terminal_regions(self, tree):
+    def update_terminal_regions(self, tree, X, y, residual, pred):
         """Update the terminal regions (=leafs) of the given
-        tree. Traverses tree and invoces template method
+        tree. Traverses tree and invokes template method
         `_update_terminal_region`. """
         if tree.is_leaf:
-            self._update_terminal_region(tree)
+            self._update_terminal_region(tree, X, y, residual, pred)
         else:
-            self.update_terminal_regions(tree.left)
-            self.update_terminal_regions(tree.right)
+            self.update_terminal_regions(tree.left, X, y, residual, pred)
+            self.update_terminal_regions(tree.right, X, y, residual, pred)
 
-    def _update_terminal_region(self, node):
+    def _update_terminal_region(self, node, X, y, residual, pred):
         """Template method for updating terminal regions (=leafs). """
         pass
 
@@ -82,13 +101,16 @@ class LossFunction(object):
 class LeastSquaresError(LossFunction):
     """Loss function for least squares (LS) estimation. """
 
+    def init_estimator(self):
+        return MeanPredictor()
+
     def loss(self, y, pred):
         return 0.5 * np.sum((y - pred) ** 2.0)
 
     def negative_gradient(self, y, pred):
         return y - pred
 
-    def update_terminal_regions(self, tree):
+    def update_terminal_regions(self, tree, X, y, residual, pred):
         """Terminal regions need not to be updated for least squares. """
         pass
 
@@ -96,19 +118,24 @@ class LeastSquaresError(LossFunction):
 class LeastAbsoluteError(LossFunction):
     """Loss function for least absolute deviation (LAD) regression. """
 
+    def init_estimator(self):
+        return MedianPredictor()
+
     def loss(self, y, pred):
         return np.abs(y - pred)
 
     def negative_gradient(self, y, pred):
         return np.sign(y - pred)
 
-    def _update_terminal_region(self, node):
+    def _update_terminal_region(self, node, X, y, residual, pred):
         """LAD updates terminal regions to median estimates. """
-        ## FIXME cannot use targets -> use sample_mask instead.
-        node.value = node.targets.median()
+        node.value = np.median(y[node.sample_mask] - pred[node.sample_mask])
 
 
 class BinomialDeviance(LossFunction):
+
+    def init_estimator(self):
+        return ClassPriorPredictor()
 
     def loss(self, y, pred):
         return np.log(1 + np.exp(-2.0 * y * pred))
@@ -116,15 +143,17 @@ class BinomialDeviance(LossFunction):
     def negative_gradient(self, y, pred):
         return (2.0 * y) / (1.0 + np.exp(2.0 * y * pred))
 
-    def _update_terminal_region(self, node):
-        """LAD updates terminal regions to median estimates. """
-        ## FIXME cannot use targets -> use sample_mask instead.
-        abs_targets = np.abs(node.targets)
-        node.value = node.targets.sum() / np.sum(abs_targets * \
+    def _update_terminal_region(self, node, X, y, residual, pred):
+        """Make a single Newton-Raphson step. """
+        targets = residual[node.sample_mask]
+        abs_targets = np.abs(targets)
+        node.value = targets.sum() / np.sum(abs_targets * \
                                                  (2.0 - abs_targets))
 
 
-LOSS_FUNCTIONS = {'ls': SquaredError}
+LOSS_FUNCTIONS = {'ls': LeastSquaresError,
+                  'lad': LeastAbsoluteError,
+                  'deviance': BinomialDeviance}
 
 
 class BaseGradientBoosting(BaseEstimator):
@@ -157,12 +186,8 @@ class BaseGradientBoosting(BaseEstimator):
             raise ValueError("max_depth must be larger than 0.")
         self.max_depth = max_depth
 
-        if init == 'median':
-            self.init = MedianPredictor()
-        elif init == 'mean':
-            self.init = MeanPredictor()
-        elif init == None:
-            raise ValueError("init must not be None")
+        if init is None:
+            self.init = self.loss.init_estimator()
         else:
             if not hasattr(init, 'fit') or not hasattr(init, 'predict'):
                 raise ValueError("init must be valid estimator")
@@ -221,9 +246,9 @@ class BaseGradientBoosting(BaseEstimator):
             # induce regression tree on residuals
             tree = _build_tree(False, X, residual, MSE(), self.max_depth,
                                self.min_split, None, 1, self.random_state,
-                               0.0, sample_mask, X_argsorted)
+                               0.0, sample_mask, X_argsorted, True)
 
-            loss.update_terminal_regions(tree)
+            loss.update_terminal_regions(tree, X, y, residual, y_pred)
             self.trees.append(tree)
 
             y_pred = self._predict(X, old_pred=y_pred,
@@ -248,27 +273,38 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
     def __init__(self, loss='deviance', learn_rate=0.1, n_iter=100,
                  subsample=1.0, min_split=5, max_depth=4,
-                 init='median', random_state=None):
+                 init=None, random_state=None):
 
         super(GradientBoostingClassifier, self).__init__(
             loss, learn_rate, n_iter, min_split, max_depth, init, subsample,
             random_state)
 
+    def fit(self, X, y):
+        self.classes = np.unique(y)
+        if self.classes.shape[0] != 2:
+            raise ValueError("only binary classification supported")
+        y = np.searchsorted(self.classes, y)
+        y[y == 0] = -1
+        print "classes", self.classes
+        super(GradientBoostingClassifier, self).fit(X, y)
+
     def predict(self, X):
+        proba = self.predict_proba(X)
+        return self.classes[(proba > 0.0).astype(np.int32)]
+
+    def predict_proba(self, X):
         X = np.atleast_2d(X)
         if len(self.trees) == 0:
             raise ValueError("Estimator not fitted, " \
                              "call `fit` before `predict`.")
         y = self._predict(X)
-        y[y > 0.0] = 1.0
-        y[y <= 0.0] = -1.0
-        return y
+        return 1.0 / (1.0 + np.exp(-2.0 * y))
 
 
 class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
     def __init__(self, loss='ls', learn_rate=0.1, n_iter=100, subsample=1.0,
-                 min_split=5, max_depth=4, init='median', random_state=None):
+                 min_split=5, max_depth=4, init=None, random_state=None):
 
         super(GradientBoostingRegressor, self).__init__(
             loss, learn_rate, n_iter, min_split, max_depth, init, subsample,
