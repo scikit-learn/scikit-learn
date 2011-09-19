@@ -34,7 +34,7 @@ rng = RandomState(0)
 
 ###############################################################################
 # Load faces data
-dataset = fetch_olivetti_faces(shuffle=True)
+dataset = fetch_olivetti_faces(shuffle=True, random_state=rng)
 faces = dataset.data
 
 n_samples, n_features = faces.shape
