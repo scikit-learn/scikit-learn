@@ -906,6 +906,9 @@ class LassoLarsIC(LassoLars):
     `intercept_` : float
         independent term in decision function.
 
+    `alpha_` : float
+        the alpha parameter chosen by the information criterion
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -1010,3 +1013,5 @@ class LassoLarsIC(LassoLars):
         self.coef_ = coef_path_[:, n_best]
         self._set_intercept(Xmean, ymean, Xstd)
         return self
+
+
