@@ -24,7 +24,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'scikit-learn tutorial'
-copyright = u'2010–2011, scikits.learn developers (BSD License)'
+copyright = u'2010–2011, scikit-learn developers (BSD License)'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -92,7 +92,7 @@ html_theme_path = ['themes']
 #html_title = None
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
-html_short_title = 'scikits.learn'
+html_short_title = 'scikit-learn'
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
@@ -160,7 +160,7 @@ htmlhelp_basename = 'scikit-learndoc'
 latex_documents = [
   ('index', 'scikit_learn_tutorial.tex',
    u'Applied Machine Learning in Python with scikit-learn',
-   u'By the scikits.learn developers', 'manual'),
+   u'By the scikit-learn developers', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of

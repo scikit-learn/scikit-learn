@@ -2,9 +2,9 @@
 
 .. topic:: Applied machine learning in Python with scikit-learn
 
-    ``scikits.learn`` is a Python module integrating classic machine
+    ``scikit-learn`` is a Python module integrating classic machine
     learning algorithms in the tightly-knit world of scientific Python
-    packages (`numpy <http://www.scipy.org>`_, `scipy
+    packages (`numpy <http://numpy.scipy.org>`_, `scipy
     <http://www.scipy.org>`_, `matplotlib
     <http://matplotlib.sourceforge.net/>`_).
 
