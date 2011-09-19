@@ -52,7 +52,7 @@ def test_correct_shapes():
 def test_fit_transform():
     rng = np.random.RandomState(0)
     Y, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)  # wide array
-    spca_lars = SparsePCA(n_components=3, method='lasso_lars',
+    spca_lars = SparsePCA(n_components=3, method='lars',
                           random_state=rng)
     spca_lars.fit(Y)
     U1 = spca_lars.transform(Y)
@@ -71,7 +71,7 @@ def test_fit_transform():
         U2 = spca.transform(Y)
     assert_array_almost_equal(U1, U2)
     # Test that CD gives similar results
-    spca_lasso = SparsePCA(n_components=3, method='lasso_cd', random_state=rng)
+    spca_lasso = SparsePCA(n_components=3, method='cd', random_state=rng)
     spca_lasso.fit(Y)
     assert_array_almost_equal(spca_lasso.components_, spca_lars.components_)
 
@@ -79,10 +79,10 @@ def test_fit_transform():
 def test_fit_transform_tall():
     rng = np.random.RandomState(0)
     Y, _, _ = generate_toy_data(3, 65, (8, 8), random_state=rng)  # tall array
-    spca_lars = SparsePCA(n_components=3, method='lasso_lars',
+    spca_lars = SparsePCA(n_components=3, method='lars',
                           random_state=rng)
     U1 = spca_lars.fit_transform(Y)
-    spca_lasso = SparsePCA(n_components=3, method='lasso_cd', random_state=rng)
+    spca_lasso = SparsePCA(n_components=3, method='cd', random_state=rng)
     U2 = spca_lasso.fit(Y).transform(Y)
     assert_array_almost_equal(U1, U2)
 
@@ -131,6 +131,6 @@ def test_mini_batch_fit_transform():
                                 random_state=rng).fit(Y).transform(Y)
     assert_array_almost_equal(U1, U2)
     # Test that CD gives similar results
-    spca_lasso = MiniBatchSparsePCA(n_components=3, method='lasso_cd',
+    spca_lasso = MiniBatchSparsePCA(n_components=3, method='cd',
                                     random_state=rng).fit(Y)
     assert_array_almost_equal(spca_lasso.components_, spca_lars.components_)

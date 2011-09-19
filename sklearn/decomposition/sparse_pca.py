@@ -36,10 +36,10 @@ class SparsePCA(BaseEstimator, TransformerMixin):
     tol: float,
         Tolerance for the stopping condition.
 
-    method: {'lasso_lars', 'lasso_cd'}
-        lasso_lars: uses the least angle regression method
+    method: {'lars', 'cd'}
+        lars: uses the least angle regression method to solve the lasso problem
         (linear_model.lars_path)
-        lasso_cd: uses the coordinate descent method to compute the
+        cd: uses the coordinate descent method to compute the
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
 
@@ -72,7 +72,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
 
     """
     def __init__(self, n_components, alpha=1, ridge_alpha=0.01, max_iter=1000,
-                 tol=1e-8, method='lasso_lars', n_jobs=1, U_init=None,
+                 tol=1e-8, method='lars', n_jobs=1, U_init=None,
                  V_init=None, verbose=False, random_state=None):
         self.n_components = n_components
         self.alpha = alpha
@@ -185,10 +185,10 @@ class MiniBatchSparsePCA(SparsePCA):
     n_jobs: int,
         number of parallel jobs to run, or -1 to autodetect.
 
-    method: {'lasso_lars', 'lasso_cd'}
-        lasso_lars: uses the least angle regression method
+    method: {'lars', 'cd'}
+        lars: uses the least angle regression method to solve the lasso problem
         (linear_model.lars_path)
-        lasso_cd: uses the coordinate descent method to compute the
+        cd: uses the coordinate descent method to compute the
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
 
@@ -198,7 +198,7 @@ class MiniBatchSparsePCA(SparsePCA):
     """
     def __init__(self, n_components, alpha=1, ridge_alpha=0.01, n_iter=100,
                  callback=None, chunk_size=3, verbose=False, shuffle=True,
-                 n_jobs=1, method='lasso_lars', random_state=None):
+                 n_jobs=1, method='lars', random_state=None):
         self.n_components = n_components
         self.alpha = alpha
         self.ridge_alpha = ridge_alpha
