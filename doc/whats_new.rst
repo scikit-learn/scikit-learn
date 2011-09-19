@@ -102,6 +102,8 @@ Changelog
 
    - Scalability improvements to :func:`metrics.metrics.roc_curve` by Olivier Hervieu
 
+   - Distance helper functions :func:`metrics.pairwise.pairwise_distances` and :func:`metrics.pairwise.pairwise_kernels` by Robert Layton
+
 
 API changes summary
 -------------------
