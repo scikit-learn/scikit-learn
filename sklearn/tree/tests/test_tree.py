@@ -75,6 +75,8 @@ def test_graphviz_toy():
     clf = tree.DecisionTreeClassifier(max_depth=3, min_split=1)
     clf.fit(X, Y)
     from StringIO import StringIO
+    
+    # test export code
     out = StringIO()
     exporter = tree.GraphvizExporter(out)
     clf.export(exporter)
@@ -93,6 +95,7 @@ def test_graphviz_toy():
     assert contents1 == contents2, \
         "graphviz output test failed\n: %s != %s" % (contents1, contents2)
 
+    # test with feature_names
     out = StringIO()
     exporter = tree.GraphvizExporter(out, feature_names=["feature1",""])
     clf.export(exporter)
@@ -110,6 +113,12 @@ def test_graphviz_toy():
 
     assert contents1 == contents2, \
         "graphviz output test failed\n: %s != %s" % (contents1, contents2)   
+
+    # test improperly formed feature_names
+    out = StringIO()
+    exporter = tree.GraphvizExporter(out, feature_names=[])
+    assert_raises(IndexError, clf.export, exporter)
+
 
 def test_iris():
     """Check consistency on dataset iris."""

@@ -74,10 +74,7 @@ class GraphvizExporter(object):
         else:
             feature = "X[%s]" % node.feature
             if self.feature_names is not None:
-                try:
-                    feature = self.feature_names[node.feature]
-                except:
-                    pass
+                feature = self.feature_names[node.feature]
 
             return "%s < %s \\n error = %s \\n samples = %s \\n v = %s" \
                    % (feature, node.threshold,\
