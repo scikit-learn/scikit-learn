@@ -329,7 +329,7 @@ class BaseDecisionTree(BaseEstimator):
 
         exporter.export(self.tree)
 
-    def fit(self, X, y, sample_mask=None):
+    def fit(self, X, y):
         """Fit the tree with the given training data and parameters.
 
         Parameters
@@ -344,10 +344,6 @@ class BaseDecisionTree(BaseEstimator):
             For classification, labels must correspond to classes
             0, 1, ..., n_classes-1
 
-        sample_mask : array-like, shape = [n_samples], dtype=np.bool
-            A boolean mask indicating which samples to use. Samples
-            in use are marked True.
-
         Returns
         -------
         self : object
@@ -360,16 +356,7 @@ class BaseDecisionTree(BaseEstimator):
                              "number of features=%d"
                              % (len(y), n_samples))
 
-        if sample_mask is not None:
-            if len(sample_mask) != n_samples:
-                raise ValueError("Sample mask length=%d does not match "
-                                 "number of features=%d"
-                                 % (len(sample_mask), n_samples))
-            if sample_mask.dtype != np.bool:
-                raise ValueError("Sample mask dtype=%s is not np.bool"
-                                 % (sample_mask.dtype))
-        else:
-            sample_mask = np.ones((n_samples,), dtype=np.bool)
+        sample_mask = np.ones((n_samples,), dtype=np.bool)
 
         if self.type == 'classification':
             y = np.asanyarray(y, dtype=np.int, order='C')

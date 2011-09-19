@@ -248,16 +248,8 @@ def test_error():
 
     clf = tree.DecisionTreeClassifier()
     clf.fit(X, Y)
-    assert_raises(ValueError, clf.predict, Xt)
+    assert_raises(ValueError, clf.predict, Xt)     
 
-    # wrong sample mask size
-    clf = tree.DecisionTreeClassifier()
-    assert_raises(ValueError, clf.fit, X, Y, np.ones((1,), 
-                                                     dtype=np.bool))
-
-    clf = tree.DecisionTreeClassifier()
-    assert_raises(ValueError, clf.fit, X, Y, np.ones((len(X),), 
-                                                     dtype=np.float32))        
 
 if __name__ == '__main__':
     import nose
