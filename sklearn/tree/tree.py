@@ -215,7 +215,7 @@ def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
         if depth >= max_depth or n_samples < min_split:
             is_split_valid = False
         else:
-            feature, threshold, error, init_error = _tree._find_best_split(
+            feature, threshold, init_error = _tree._find_best_split(
                 X, y, X_argsorted, sample_mask, feature_mask,
                 criterion, n_samples)
 

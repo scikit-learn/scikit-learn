@@ -469,8 +469,8 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
         `parent_split_error`.
     best_t : DTYPE_t
         The split threshold
-    best_error : DTYPE_t
-        The error of the split.
+    initial_error : DTYPE_t
+        The initial error contained in the node.
     """
 
     cdef int n_total_samples = X.shape[0]
@@ -502,7 +502,7 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
     criterion.init(y_ptr, sample_mask_ptr, n_samples, n_total_samples)
     initial_error = criterion.eval()
     if initial_error == 0: # break early if the node is pure
-        return best_i, best_t, best_error, initial_error
+        return best_i, best_t, initial_error
     best_error = initial_error
     # print 'at init, best error = ', best_error
 
@@ -544,4 +544,4 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
 
             a = b
 
-    return best_i, best_t, best_error, initial_error
+    return best_i, best_t, initial_error
