@@ -18,6 +18,11 @@ def repeat(f):
     return wrapper
 
 
+classification_params = {'loss': 'deviance', 'n_iter': 250,
+                         'min_split': 1, 'max_depth': 1,
+                         'learn_rate': 0.10}
+
+
 def bench_random_gaussian(random_state=None):
     rs = check_random_state(random_state)
     shape = (12000, 10)
@@ -49,11 +54,33 @@ def bench_random_gaussian(random_state=None):
 
     print "Tree: %.2f" % error_rate
 
-    gbrt = GradientBoostingClassifier(loss='deviance', n_iter=100,
-                                      min_split=5, max_depth=1,
-                                      learn_rate=0.1)
+    gbrt = GradientBoostingClassifier(**classification_params)
+    
     gbrt.fit(X_train, y_train)
     error_rate = (1.0 - gbrt.score(X_test, y_test)) * 100.0
+    print "GBRT: %.2f" % error_rate
+
+
+def bench_madelon():
+    X_train = np.loadtxt("/home/pprett/corpora/madelon/madelon_train.data")
+    y_train = np.loadtxt("/home/pprett/corpora/madelon/madelon_train.labels")
+    X_test = np.loadtxt("/home/pprett/corpora/madelon/madelon_valid.data")
+    y_test = np.loadtxt("/home/pprett/corpora/madelon/madelon_valid.labels")
+    clf = GradientBoostingClassifier(**classification_params)
+
+    clf.fit(X_train, y_train)
+    error_rate = (1.0 - clf.score(X_test, y_test)) * 100.0
+    print "GBRT: %.2f" % error_rate
+
+
+def bench_arcene():
+    X_train = np.loadtxt("/home/pprett/corpora/arcene/arcene_train.data")
+    y_train = np.loadtxt("/home/pprett/corpora/arcene/arcene_train.labels")
+    X_test = np.loadtxt("/home/pprett/corpora/arcene/arcene_valid.data")
+    y_test = np.loadtxt("/home/pprett/corpora/arcene/arcene_valid.labels")
+    clf = GradientBoostingClassifier(**classification_params)
+    clf.fit(X_train, y_train)
+    error_rate = (1.0 - clf.score(X_test, y_test)) * 100.0
     print "GBRT: %.2f" % error_rate
 
 
@@ -112,8 +139,11 @@ def bench_friedman3(random_state=None):
 
 
 if __name__ == "__main__":
-    print "Example 10.2"
-    bench_random_gaussian()
+    #print "Example 10.2"
+    #bench_random_gaussian(13)
+
+    bench_madelon()
+    bench_arcene()
 
     #print "Boston", bench_boston()
     #print "Friedman#1", bench_friedman1()
