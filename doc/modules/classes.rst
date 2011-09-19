@@ -390,6 +390,8 @@ Signal Decomposition
    decomposition.fastica
    decomposition.dict_learning
    decomposition.dict_learning_online
+   decomposition.sparse_encode
+   decomposition.sparse_encode_parallel
 
 
 Linear Discriminant Analysis

@@ -263,6 +263,18 @@ dictionary fixed, and then updating the dictionary to best fit the sparse code.
                 \text{subject to\,} & ||V_k||_2 = 1 \text{ for all }
                 0 \leq k < n_{atoms}
 
+
+.. |pca_img| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_2.png
+   :target: ../auto_examples/decomposition/plot_faces_decomposition.html
+   :scale: 60%
+
+.. |dict_img| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_6.png
+   :target: ../auto_examples/decomposition/plot_faces_decomposition.html
+   :scale: 60%
+
+.. centered:: |pca_img| |dict_img|
+
+
 After using such a procedure to fit the dictionary, the fitted object can be 
 used to transform new data. The transformation amounts to a sparse coding
 problem: finding a representation of the data as a linear combination of as few
@@ -308,12 +320,6 @@ extracted from part of the image of Lena looks like.
     :target: ../auto_examples/decomposition/plot_image_denoising.html
     :align: center
     :scale: 50%
-
-
-.. figure:: ../auto_examples/decomposition/images/plot_faces_decomposition_6.png
-   :target: ../auto_examples/decomposition/plot_faces_decomposition.html
-   :align: center
-   :scale: 50%
 
 
 .. topic:: Examples:

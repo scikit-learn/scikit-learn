@@ -240,6 +240,8 @@ class Lasso(ElasticNet):
     See also
     --------
     LassoLars
+    decomposition.sparse_encode
+    decomposition.sparse_encode_parallel
 
     Notes
     -----
