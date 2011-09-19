@@ -62,7 +62,6 @@ class ClassPriorPredictor(object):
     def fit(self, X, y):
         y_bar = y.mean()
         self.prior = 0.5 * np.log((1.0 + y_bar) / (1.0 - y_bar))
-        print "prior", self.prior
 
     def predict(self, X):
         y = np.empty((X.shape[0],), dtype=np.float64)
@@ -90,6 +89,8 @@ class LossFunction(object):
         if tree.is_leaf:
             self._update_terminal_region(tree, X, y, residual, pred)
         else:
+            #print "%d: fx:%d, thres:%.8f" % (tree.id, tree.feature,
+            #                                 tree.threshold)
             self.update_terminal_regions(tree.left, X, y, residual, pred)
             self.update_terminal_regions(tree.right, X, y, residual, pred)
 
@@ -146,9 +147,9 @@ class BinomialDeviance(LossFunction):
     def _update_terminal_region(self, node, X, y, residual, pred):
         """Make a single Newton-Raphson step. """
         targets = residual[node.sample_mask]
+        # assert node.samples == node.sample_mask.sum()
         abs_targets = np.abs(targets)
-        node.value = targets.sum() / np.sum(abs_targets * \
-                                                 (2.0 - abs_targets))
+        node.value = targets.sum() / np.sum(abs_targets * (2.0 - abs_targets))
 
 
 LOSS_FUNCTIONS = {'ls': LeastSquaresError,
@@ -237,9 +238,11 @@ class BaseGradientBoosting(BaseEstimator):
 
         # perform boosting iterations
         for i in xrange(self.n_iter):
-
+            #print "_" * 80
+            #print "Iteration %d" % i
             # subsampling
-            sample_mask = np.random.rand(n_samples) > (1.0 - self.subsample)
+            #sample_mask = np.random.rand(n_samples) > (1.0 - self.subsample)
+            sample_mask = np.ones((n_samples,), dtype=np.bool)
 
             residual = loss.negative_gradient(y, y_pred)
 
@@ -284,13 +287,14 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         if self.classes.shape[0] != 2:
             raise ValueError("only binary classification supported")
         y = np.searchsorted(self.classes, y)
+        #print "bincount: ", np.bincount(y)
         y[y == 0] = -1
-        print "classes", self.classes
+        #print "classes", self.classes
         super(GradientBoostingClassifier, self).fit(X, y)
 
     def predict(self, X):
-        proba = self.predict_proba(X)
-        return self.classes[(proba > 0.0).astype(np.int32)]
+        pos_proba = self.predict_proba(X)
+        return (2 * (pos_proba > 0.5) - 1.0).astype(np.int32)
 
     def predict_proba(self, X):
         X = np.atleast_2d(X)
@@ -298,7 +302,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             raise ValueError("Estimator not fitted, " \
                              "call `fit` before `predict`.")
         y = self._predict(X)
-        return 1.0 / (1.0 + np.exp(-2.0 * y))
+        pos_proba = 1.0 / (1.0 + np.exp(-2.0 * y))
+        return pos_proba
 
 
 class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
