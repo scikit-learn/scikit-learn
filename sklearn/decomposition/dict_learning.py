@@ -323,9 +323,8 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
 
 
 def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8,
-                  method='lasso_lars', n_jobs=1, dict_init=None,
-                  code_init=None, callback=None, verbose=False,
-                  random_state=None):
+                  method='lars', n_jobs=1, dict_init=None, code_init=None,
+                  callback=None, verbose=False, random_state=None):
     """Solves a dictionary learning matrix factorization problem.
 
     Finds the best dictionary and the corresponding sparse code for
@@ -354,10 +353,10 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8,
     tol: float,
         Tolerance for the stopping condition.
 
-    method: {'lasso_lars', 'lasso_cd'}
-        lasso_lars: uses the least angle regression method
+    method: {'lars', 'cd'}
+        lars: uses the least angle regression method to solve the lasso problem
         (linear_model.lars_path)
-        lasso_cd: uses the coordinate descent method to compute the
+        cd: uses the coordinate descent method to compute the
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
 
@@ -391,8 +390,10 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8,
         Vector of errors at each iteration.
 
     """
-    if method not in ('lasso_lars', 'lasso_cd'):
+    if method not in ('lars', 'cd'):
         raise ValueError('Coding method not supported as a fit algorithm.')
+    method = 'lasso_' + method
+
     t0 = time.time()
     n_features = X.shape[1]
     # Avoid integer division problems
@@ -474,8 +475,7 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8,
 def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
                          dict_init=None, callback=None, chunk_size=3,
                          verbose=False, shuffle=True, n_jobs=1,
-                         method='lasso_lars', iter_offset=0,
-                         random_state=None):
+                         method='lars', iter_offset=0, random_state=None):
     """Solves a dictionary learning matrix factorization problem online.
 
     Finds the best dictionary and the corresponding sparse code for
@@ -524,10 +524,10 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
     n_jobs: int,
         number of parallel jobs to run, or -1 to autodetect.
 
-    method: {'lasso_lars', 'lasso_cd'}
-        lasso_lars: uses the least angle regression method
+    method: {'lars', 'cd'}
+        lars: uses the least angle regression method to solve the lasso problem
         (linear_model.lars_path)
-        lasso_cd: uses the coordinate descent method to compute the
+        cd: uses the coordinate descent method to compute the
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
 
@@ -546,8 +546,10 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
     code: array of shape (n_samples, n_atoms),
         the sparse code (only returned if `return_code=True`)
     """
-    if method not in ('lasso_lars', 'lasso_cd'):
+    if method not in ('lars', 'cd'):
         raise ValueError('Coding method not supported as a fit algorithm.')
+    method = 'lasso_' + method
+
     t0 = time.time()
     n_samples, n_features = X.shape
     # Avoid integer division problems
@@ -715,10 +717,10 @@ class DictionaryLearning(BaseDictionaryLearning):
     tol: float,
         tolerance for numerical error
 
-    fit_algorithm: {'lasso_lars', 'lasso_cd'}
-        lasso_lars: uses the least angle regression method
+    fit_algorithm: {'lars', 'cd'}
+        lars: uses the least angle regression method to solve the lasso problem
         (linear_model.lars_path)
-        lasso_cd: uses the coordinate descent method to compute the
+        cd: uses the coordinate descent method to compute the
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
 
@@ -783,7 +785,7 @@ class DictionaryLearning(BaseDictionaryLearning):
 
     """
     def __init__(self, n_atoms, alpha=1, max_iter=1000, tol=1e-8,
-                 fit_algorithm='lasso_lars', transform_algorithm='omp',
+                 fit_algorithm='lars', transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,
                  n_jobs=1, code_init=None, dict_init=None, verbose=False,
                  split_sign=False, random_state=None):
@@ -851,7 +853,8 @@ class MiniBatchDictionaryLearning(BaseDictionaryLearning):
         total number of iterations to perform
 
     fit_algorithm: {'lars', 'cd'}
-        lars: uses the least angle regression method (linear_model.lars_path)
+        lars: uses the least angle regression method to solve the lasso problem
+        (linear_model.lars_path)
         cd: uses the coordinate descent method to compute the
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
@@ -875,7 +878,7 @@ class MiniBatchDictionaryLearning(BaseDictionaryLearning):
     transform_alpha: float, 1. by default
         If `algorithm='lasso_lars'` or `algorithm='lasso_cd'`, `alpha` is the
         penalty applied to the L1 norm.
-        If `algorithm='threhold'`, `alpha` is the absolute value of the
+        If `algorithm='threshold'`, `alpha` is the absolute value of the
         threshold below which coefficients will be squashed to zero.
         If `algorithm='omp'`, `alpha` is the tolerance parameter: the value of
         the reconstruction error targeted. In this case, it overrides
@@ -917,7 +920,7 @@ class MiniBatchDictionaryLearning(BaseDictionaryLearning):
 
     """
     def __init__(self, n_atoms, alpha=1, n_iter=1000,
-                 fit_algorithm='lasso_lars', n_jobs=1, chunk_size=3,
+                 fit_algorithm='lars', n_jobs=1, chunk_size=3,
                  shuffle=True, dict_init=None, transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,
                  verbose=False, split_sign=False, random_state=None):
