@@ -22,6 +22,9 @@ from ..base import BaseEstimator
 from ..base import RegressorMixin
 from ..utils.extmath import safe_sparse_dot
 from ..utils import array2d, as_float_array, safe_asarray
+from ..utils import atleast2d_or_csr, check_arrays
+
+from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
 
 ###
 ### TODO: intercept for all models
@@ -29,8 +32,38 @@ from ..utils import array2d, as_float_array, safe_asarray
 ### repeating the same code inside each fit method.
 ###
 ### Also, bayesian_ridge_regression and bayesian_regression_ard
+
+
+### TODO: bayesian_ridge_regression and bayesian_regression_ard
 ### should be squashed into its respective objects.
-###
+
+def center_data(X, y, fit_intercept, normalize=False, copy=True):
+    """
+    Centers data to have mean zero along axis 0. This is here because
+    nearly all linear models will want their data to be centered.
+    """
+    X = as_float_array(X, copy)
+
+    if fit_intercept:
+        if sp.issparse(X):
+            X_mean = np.zeros(X.shape[1])
+            X_std = np.ones(X.shape[1])
+        else:
+            X_mean = X.mean(axis=0)
+            X -= X_mean
+            if normalize:
+                X_std = np.sqrt(np.sum(X ** 2, axis=0))
+                X_std[X_std==0] = 1
+                X /= X_std
+            else:
+                X_std = np.ones(X.shape[1])
+        y_mean = y.mean()
+        y = y - y_mean
+    else:
+        X_mean = np.zeros(X.shape[1])
+        X_std = np.ones(X.shape[1])
+        y_mean = 0.
+    return X, y, X_mean, y_mean, X_std
 
 
 class LinearModel(BaseEstimator, RegressorMixin):
@@ -65,36 +98,7 @@ class LinearModel(BaseEstimator, RegressorMixin):
         """
         return self.decision_function(X)
 
-    @staticmethod
-    def _center_data(X, y, fit_intercept, normalize=False, copy=True):
-        """
-        Centers data to have mean zero along axis 0. This is here because
-        nearly all linear models will want their data to be centered.
-
-        If copy is False, modifies X in-place.
-        """
-        X = as_float_array(X, copy)
-
-        if fit_intercept:
-            if sp.issparse(X):
-                X_mean = np.zeros(X.shape[1])
-                X_std = np.ones(X.shape[1])
-            else:
-                X_mean = X.mean(axis=0)
-                X -= X_mean
-                if normalize:
-                    X_std = np.sqrt(np.sum(X ** 2, axis=0))
-                    X_std[X_std == 0] = 1
-                    X /= X_std
-                else:
-                    X_std = np.ones(X.shape[1])
-            y_mean = y.mean()
-            y = y - y_mean
-        else:
-            X_mean = np.zeros(X.shape[1])
-            X_std = np.ones(X.shape[1])
-            y_mean = 0.
-        return X, y, X_mean, y_mean, X_std
+    _center_data = staticmethod(center_data)
 
     def _set_intercept(self, X_mean, y_mean, X_std):
         """Set the intercept_
