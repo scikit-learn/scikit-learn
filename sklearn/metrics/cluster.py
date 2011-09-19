@@ -8,7 +8,7 @@ better.
 # License: BSD Style.
 
 from math import log
-from scipy import comb
+from scipy.misc import comb
 
 import numpy as np
 
