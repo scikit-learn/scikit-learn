@@ -9,9 +9,9 @@ scikit-learn 0.9 was released on September 2011, three months after the 0.8
 release and includes the new modules :ref:`manifold`, :ref:`dirichlet_process`
 as well as several new algorithms and documentation improvements.
 
-This release also includes de work developed by `Vlad Niculae`_ as
-part of the `Google Summer of Code <http://code.google.com/soc/>`_
-program.
+This release also includes the dictionary-learning work developed by
+`Vlad Niculae`_ as part of the `Google Summer of Code
+<http://code.google.com/soc/>`_ program.
 
 
 
@@ -94,8 +94,11 @@ Changelog
 
    - Added 2D-patch extractor utilites in the :ref:`feature_extraction` module by `Vlad Niculae`_
 
-   - Implementation of :class:`linear_model.least_angle.LassoLarsCV` and
-     :class:`linear_model.least_angle.LassoLarsIC` by `Gael Varoquaux`_ and `Alexandre Gramfort`_
+   - Implementation of :class:`linear_model.least_angle.LassoLarsCV`
+     (cross-validated Lasso solver using the Lars algorithm) and
+     :class:`linear_model.least_angle.LassoLarsIC` (BIC/AIC model
+     selection in Lars) by `Gael Varoquaux`_ 
+     and `Alexandre Gramfort`_
 
    - Scalability improvements to :func:`metrics.metrics.roc_curve` by Olivier Hervieu
 
