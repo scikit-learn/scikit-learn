@@ -262,10 +262,10 @@ class BaseSGD(BaseEstimator):
             if intercept_init is not None:
                 intercept_init = np.asanyarray(intercept_init,
                                                dtype=np.float64)
-                if intercept_init.shape != (1,):
+                if intercept_init.shape != (1,) and intercept_init.shape !=():
                     raise ValueError("Provided intercept_init " \
                                  "does not match dataset.")
-                self.intercept_ = intercept_init
+                self.intercept_ = intercept_init.reshape(1,)
             else:
                 self.intercept_ = np.zeros(1, dtype=np.float64, order="C")
 
