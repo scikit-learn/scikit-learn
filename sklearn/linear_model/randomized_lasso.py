@@ -72,8 +72,8 @@ class BaseRandomizedLinearModel(LinearModel):
         self.scores_ = np.zeros(n_features)
         for active_set in Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
                 delayed(estimator_func)(X, y,
-                        weights=a*random_state.random_integers(0,
-                                            1, size=(n_features,)),
+                        weights=a * random_state.random_integers(0,
+                                                    1, size=(n_features,)),
                         mask=(random_state.rand(n_samples) <
                                     self.jacknife_fraction),
                         verbose=max(0, self.verbose - 1),
@@ -256,7 +256,7 @@ def _randomized_logistic(X, y, weights, mask, C=1., verbose=False,
     clf = LogisticRegression(C=C, tol=tol, penalty='l1', dual=False,
                 fit_intercept=fit_intercept)
     clf.fit(X, y)
-    return np.any(np.abs(clf.coef_) > 2*tol, axis=0)
+    return np.any(np.abs(clf.coef_) > 10 * np.finfo(np.float).eps, axis=0)
 
 
 class RandomizedLogistic(BaseRandomizedLinearModel):
