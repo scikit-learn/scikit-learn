@@ -97,7 +97,8 @@ class RandomizedLasso(LinearModel):
     TODO
     """
 
-    def __init__(self, alpha='aic', a=.2, n_resampling=200,
+    def __init__(self, alpha='aic', a=.2,
+                 n_resampling=200,
                  selection_threshold=.5,
                  fit_intercept=True, verbose=False,
                  normalize=True, refit=True, precompute='auto',
@@ -117,6 +118,7 @@ class RandomizedLasso(LinearModel):
         self.eps = eps
         self.random_state = random_state
         self.n_jobs = n_jobs
+        self.selection_threshold = selection_threshold
 
     def fit(self, X, y):
         """Fit the model using X, y as training data.
@@ -162,7 +164,7 @@ class RandomizedLasso(LinearModel):
                         weights=self.a*random_state.random_integers(0,
                                             1, size=(n_features,)),
                         precompute=self.precompute, alpha=alpha,
-                        verbose=min(0, self.verbose - 1),
+                        verbose=max(0, self.verbose - 1),
                         max_iter=self.max_iter, eps=self.eps)
                 for _ in range(self.n_resampling)):
             self.scores_ += active_set
