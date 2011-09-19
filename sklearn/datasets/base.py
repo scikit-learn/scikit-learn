@@ -375,19 +375,19 @@ def load_sample_images():
     --------
     To load the data and visualize the images::
 
-    >>> from sklearn.datasets import load_sample_images
-    >>> dataset = load_sample_images()
-    >>> len(dataset.images)
-    2
-    >>> first_img_data = dataset.images[0]
-    >>> first_img_data.shape  # height, width, channels
-    (427, 640, 3)
-    >>> first_img_data.dtype
-    dtype('uint8')
-    >>> # import pylab as pl
-    >>> # pl.gray()
-    >>> # pl.matshow(dataset.images[0]) # Visualize the first image
-    >>> # pl.show()
+    # >>> from sklearn.datasets import load_sample_images
+    # >>> dataset = load_sample_images()
+    # >>> len(dataset.images)
+    # 2
+    # >>> first_img_data = dataset.images[0]
+    # >>> first_img_data.shape
+    # (427, 640, 3)
+    # >>> first_img_data.dtype
+    # dtype('uint8')
+    # >>> import pylab as pl
+    # >>> pl.gray()
+    # >>> pl.matshow(dataset.images[0]) # Visualize the first image
+    # >>> pl.show()
     """
     # Try to import imread from scipy. We do this lazily here to prevent
     # this module from depending on PIL.
@@ -415,18 +415,17 @@ def load_sample_images():
 def load_sample_image(image_name):
     """Load the numpy array of a single sample image
 
-    >>> from sklearn.datasets import load_sample_image
-    >>> china = load_sample_image('china.jpg')
-    >>> china.dtype
-    dtype('uint8')
-    >>> china.shape
-    (427, 640, 3)
-
-    >>> flower = load_sample_image('flower.jpg')
-    >>> flower.dtype
-    dtype('uint8')
-    >>> flower.shape
-    (427, 640, 3)
+    # >>> from sklearn.datasets import load_sample_image
+    # >>> china = load_sample_image('china.jpg')
+    # >>> china.dtype
+    # dtype('uint8')
+    # >>> china.shape
+    # (427, 640, 3)
+    # >>> flower = load_sample_image('flower.jpg') # doctest: +SKIP
+    # >>> flower.dtype
+    # dtype('uint8')
+    # >>> flower.shape
+    # (427, 640, 3)
     """
     images = load_sample_images()
     index = None
