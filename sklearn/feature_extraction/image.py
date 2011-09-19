@@ -360,7 +360,6 @@ class PatchExtractor(BaseEstimator):
              `n_patches` is either `n_samples * max_patches` or the total
              number of patches that can be extracted.
 
-
         """
         self.random_state = check_random_state(self.random_state)
         n_images, i_h, i_w = X.shape[:3]

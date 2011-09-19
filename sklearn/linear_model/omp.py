@@ -20,7 +20,7 @@ dependence in the dictionary. The requested precision might not have been met.
 """
 
 
-def _cholesky_omp(X, y, n_nonzero_coefs, eps=None, overwrite_X=False):
+def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, overwrite_X=False):
     """Orthogonal Matching Pursuit step using the Cholesky decomposition.
 
     Parameters:
@@ -34,7 +34,7 @@ def _cholesky_omp(X, y, n_nonzero_coefs, eps=None, overwrite_X=False):
     n_nonzero_coefs: int
         Targeted number of non-zero elements
 
-    eps: float
+    tol: float
         Targeted squared error, if not None overrides n_nonzero_coefs.
 
     overwrite_X: bool,
@@ -66,7 +66,7 @@ def _cholesky_omp(X, y, n_nonzero_coefs, eps=None, overwrite_X=False):
     n_active = 0
     idx = []
 
-    max_features = X.shape[1] if eps is not None else n_nonzero_coefs
+    max_features = X.shape[1] if tol is not None else n_nonzero_coefs
     L = np.empty((max_features, max_features), dtype=X.dtype)
     L[0, 0] = 1.
 
@@ -94,7 +94,7 @@ def _cholesky_omp(X, y, n_nonzero_coefs, eps=None, overwrite_X=False):
                          overwrite_b=False)
 
         residual = y - np.dot(X[:, :n_active], gamma)
-        if eps is not None and nrm2(residual) ** 2 <= eps:
+        if tol is not None and nrm2(residual) ** 2 <= tol:
             break
         elif n_active == max_features:
             break
@@ -102,7 +102,7 @@ def _cholesky_omp(X, y, n_nonzero_coefs, eps=None, overwrite_X=False):
     return gamma, idx
 
 
-def _gram_omp(Gram, Xy, n_nonzero_coefs, eps_0=None, eps=None,
+def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
               overwrite_gram=False, overwrite_Xy=False):
     """Orthogonal Matching Pursuit step on a precomputed Gram matrix.
 
@@ -119,10 +119,10 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, eps_0=None, eps=None,
     n_nonzero_coefs: int
         Targeted number of non-zero elements
 
-    eps_0: float
-        Squared norm of y, required if eps is not None.
+    tol_0: float
+        Squared norm of y, required if tol is not None.
 
-    eps: float
+    tol: float
         Targeted squared error, if not None overrides n_nonzero_coefs.
 
     overwrite_gram: bool,
@@ -157,11 +157,11 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, eps_0=None, eps=None,
 
     idx = []
     alpha = Xy
-    eps_curr = eps_0
+    tol_curr = tol_0
     delta = 0
     n_active = 0
 
-    max_features = len(Gram) if eps is not None else n_nonzero_coefs
+    max_features = len(Gram) if tol is not None else n_nonzero_coefs
     L = np.empty((max_features, max_features), dtype=Gram.dtype)
     L[0, 0] = 1.
 
@@ -190,11 +190,11 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, eps_0=None, eps=None,
 
         beta = np.dot(Gram[:, :n_active], gamma)
         alpha = Xy - beta
-        if eps is not None:
-            eps_curr += delta
+        if tol is not None:
+            tol_curr += delta
             delta = np.inner(gamma, beta[:n_active])
-            eps_curr -= delta
-            if eps_curr <= eps:
+            tol_curr -= delta
+            if tol_curr <= tol:
                 break
         elif n_active == max_features:
             break
@@ -202,7 +202,7 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, eps_0=None, eps=None,
     return gamma, idx
 
 
-def orthogonal_mp(X, y, n_nonzero_coefs=None, eps=None, precompute_gram=False,
+def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute_gram=False,
                   overwrite_X=False):
     """Orthogonal Matching Pursuit (OMP)
 
@@ -213,8 +213,8 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, eps=None, precompute_gram=False,
     `n_nonzero_coefs`:
     argmin ||y - X\gamma||^2 subject to ||\gamma||_0 <= n_{nonzero coefs}
 
-    When parametrized by error using the parameter `eps`:
-    argmin ||\gamma||_0 subject to ||y - X\gamma||^2 <= \epsilon
+    When parametrized by error using the parameter `tol`:
+    argmin ||\gamma||_0 subject to ||y - X\gamma||^2 <= tol
 
     Parameters
     ----------
@@ -228,7 +228,7 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, eps=None, precompute_gram=False,
         Desired number of non-zero entries in the solution. If None (by
         default) this value is set to 10% of n_features.
 
-    eps: float
+    tol: float
         Maximum norm of the residual. If not None, overrides n_nonzero_coefs.
 
     precompute_gram: {True, False, 'auto'},
@@ -250,6 +250,8 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, eps=None, precompute_gram=False,
     OrthogonalMatchingPursuit
     orthogonal_mp_gram
     lars_path
+    decomposition.sparse_encode
+    decomposition.sparse_encode_parallel
 
     Notes
     -----
@@ -274,13 +276,13 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, eps=None, precompute_gram=False,
         X = np.asfortranarray(X)
     if y.shape[1] > 1:  # subsequent targets will be affected
         overwrite_X = False
-    if n_nonzero_coefs == None and eps == None:
+    if n_nonzero_coefs == None and tol == None:
         n_nonzero_coefs = int(0.1 * X.shape[1])
-    if eps is not None and eps < 0:
+    if tol is not None and tol < 0:
         raise ValueError("Epsilon cannot be negative")
-    if eps is None and n_nonzero_coefs <= 0:
+    if tol is None and n_nonzero_coefs <= 0:
         raise ValueError("The number of atoms must be positive")
-    if eps is None and n_nonzero_coefs > X.shape[1]:
+    if tol is None and n_nonzero_coefs > X.shape[1]:
         raise ValueError("The number of atoms cannot be more than the number \
                           of features")
     if precompute_gram == 'auto':
@@ -289,23 +291,23 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, eps=None, precompute_gram=False,
         G = np.dot(X.T, X)
         G = np.asfortranarray(G)
         Xy = np.dot(X.T, y)
-        if eps is not None:
+        if tol is not None:
             norms_squared = np.sum((y ** 2), axis=0)
         else:
             norms_squared = None
-        return orthogonal_mp_gram(G, Xy, n_nonzero_coefs, eps, norms_squared,
+        return orthogonal_mp_gram(G, Xy, n_nonzero_coefs, tol, norms_squared,
                                   overwrite_gram=overwrite_X,
                                   overwrite_Xy=True)
 
     coef = np.zeros((X.shape[1], y.shape[1]))
     for k in xrange(y.shape[1]):
-        x, idx = _cholesky_omp(X, y[:, k], n_nonzero_coefs, eps,
+        x, idx = _cholesky_omp(X, y[:, k], n_nonzero_coefs, tol,
                                overwrite_X=overwrite_X)
         coef[idx, k] = x
     return np.squeeze(coef)
 
 
-def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, eps=None,
+def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
                        norms_squared=None, overwrite_gram=False,
                        overwrite_Xy=False):
     """Gram Orthogonal Matching Pursuit (OMP)
@@ -325,11 +327,11 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, eps=None,
         Desired number of non-zero entries in the solution. If None (by
         default) this value is set to 10% of n_features.
 
-    eps: float
+    tol: float
         Maximum norm of the residual. If not None, overrides n_nonzero_coefs.
 
     norms_squared: array-like, shape = (n_targets,)
-        Squared L2 norms of the lines of y. Required if eps is not None.
+        Squared L2 norms of the lines of y. Required if tol is not None.
 
     overwrite_gram: bool,
         Whether the gram matrix can be overwritten by the algorithm. This
@@ -349,6 +351,8 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, eps=None,
     OrthogonalMatchingPursuit
     orthogonal_mp
     lars_path
+    decomposition.sparse_encode
+    decomposition.sparse_encode_parallel
 
     Notes
     -----
@@ -366,25 +370,25 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, eps=None,
     Gram, Xy = map(np.asanyarray, (Gram, Xy))
     if Xy.ndim == 1:
         Xy = Xy[:, np.newaxis]
-        if eps is not None:
+        if tol is not None:
             norms_squared = [norms_squared]
 
-    if n_nonzero_coefs == None and eps is None:
+    if n_nonzero_coefs == None and tol is None:
         n_nonzero_coefs = int(0.1 * len(Gram))
-    if eps is not None and norms_squared == None:
+    if tol is not None and norms_squared == None:
         raise ValueError('Gram OMP needs the precomputed norms in order \
                           to evaluate the error sum of squares.')
-    if eps is not None and eps < 0:
+    if tol is not None and tol < 0:
         raise ValueError("Epsilon cennot be negative")
-    if eps is None and n_nonzero_coefs <= 0:
+    if tol is None and n_nonzero_coefs <= 0:
         raise ValueError("The number of atoms must be positive")
-    if eps is None and n_nonzero_coefs > len(Gram):
+    if tol is None and n_nonzero_coefs > len(Gram):
         raise ValueError("The number of atoms cannot be more than the number \
                           of features")
     coef = np.zeros((len(Gram), Xy.shape[1]))
     for k in range(Xy.shape[1]):
         x, idx = _gram_omp(Gram, Xy[:, k], n_nonzero_coefs,
-                           norms_squared[k] if eps is not None else None, eps,
+                           norms_squared[k] if tol is not None else None, tol,
                            overwrite_gram=overwrite_gram,
                            overwrite_Xy=overwrite_Xy)
         coef[idx, k] = x
@@ -400,7 +404,7 @@ class OrthogonalMatchingPursuit(LinearModel):
         Desired number of non-zero entries in the solution. If None (by
         default) this value is set to 10% of n_features.
 
-    eps: float, optional
+    tol: float, optional
         Maximum norm of the residual. If not None, overrides n_nonzero_coefs.
 
     fit_intercept: boolean, optional
@@ -459,20 +463,21 @@ class OrthogonalMatchingPursuit(LinearModel):
     lars_path
     Lars
     LassoLars
+    decomposition.sparse_encode
+    decomposition.sparse_encode_parallel
 
     """
     def __init__(self, overwrite_X=False, overwrite_gram=False,
-            overwrite_Xy=False, n_nonzero_coefs=None, eps=None,
+            overwrite_Xy=False, n_nonzero_coefs=None, tol=None,
             fit_intercept=True, normalize=True, precompute_gram=False):
         self.n_nonzero_coefs = n_nonzero_coefs
-        self.eps = eps
+        self.tol = tol
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.precompute_gram = precompute_gram
         self.overwrite_gram = overwrite_gram
         self.overwrite_Xy = overwrite_Xy
         self.overwrite_X = overwrite_X
-        self.eps = eps
 
     def fit(self, X, y, Gram=None, Xy=None):
         """Fit the model using X, y as training data.
@@ -507,7 +512,7 @@ class OrthogonalMatchingPursuit(LinearModel):
                                                         self.fit_intercept,
                                                         self.normalize)
 
-        if self.n_nonzero_coefs == None and self.eps is None:
+        if self.n_nonzero_coefs == None and self.tol is None:
             self.n_nonzero_coefs = int(0.1 * n_features)
 
         if Gram is not None:
@@ -538,15 +543,15 @@ class OrthogonalMatchingPursuit(LinearModel):
                 Gram /= X_std
                 Gram /= X_std[:, np.newaxis]
 
-            norms_sq = np.sum(y ** 2, axis=0) if self.eps is not None else None
+            norms_sq = np.sum(y ** 2, axis=0) if self.tol is not None else None
             self.coef_ = orthogonal_mp_gram(Gram, Xy, self.n_nonzero_coefs,
-                                            self.eps, norms_sq,
+                                            self.tol, norms_sq,
                                             overwrite_gram, True).T
         else:
             precompute_gram = self.precompute_gram
             if precompute_gram == 'auto':
                 precompute_gram = X.shape[0] > X.shape[1]
-            self.coef_ = orthogonal_mp(X, y, self.n_nonzero_coefs, self.eps,
+            self.coef_ = orthogonal_mp(X, y, self.n_nonzero_coefs, self.tol,
                                        precompute_gram=self.precompute_gram,
                                        overwrite_X=self.overwrite_X).T
 
