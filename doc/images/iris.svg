@@ -7,119 +7,119 @@
      For user: (bh00038) Brian Holt -->
 <!-- Title: Tree Pages: 1 -->
 <svg width="600pt" height="640pt"
- viewBox="0.00 0.00 1358.00 812.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ viewBox="0.00 0.00 1515.00 812.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 808)">
 <title>Tree</title>
-<polygon style="fill:white;stroke:white;" points="-4,4 -4,-808 1354,-808 1354,4 -4,4"/>
+<polygon style="fill:white;stroke:white;" points="-4,4 -4,-808 1511,-808 1511,4 -4,4"/>
 <!-- 16 -->
 <g id="node1" class="node"><title>16</title>
-<ellipse style="fill:none;stroke:black;" cx="709" cy="-750" rx="142.836" ry="53.7401"/>
-<text text-anchor="middle" x="709" y="-771.4" style="font-family:Times New Roman;font-size:14.00;">x[2] &lt; 2.45 </text>
-<text text-anchor="middle" x="709" y="-754.4" style="font-family:Times New Roman;font-size:14.00;"> error = 0.666666666667 </text>
-<text text-anchor="middle" x="709" y="-737.4" style="font-family:Times New Roman;font-size:14.00;"> samples = 150 </text>
-<text text-anchor="middle" x="709" y="-720.4" style="font-family:Times New Roman;font-size:14.00;"> v = [ 50. &#160;50. &#160;50.]</text>
+<ellipse style="fill:none;stroke:black;" cx="773" cy="-750" rx="191.833" ry="53.7401"/>
+<text text-anchor="middle" x="773" y="-771.4" style="font-family:Times New Roman;font-size:14.00;">petal length (cm) &lt; 2.45000004768 </text>
+<text text-anchor="middle" x="773" y="-754.4" style="font-family:Times New Roman;font-size:14.00;"> error = 0.666666686535 </text>
+<text text-anchor="middle" x="773" y="-737.4" style="font-family:Times New Roman;font-size:14.00;"> samples = 150 </text>
+<text text-anchor="middle" x="773" y="-720.4" style="font-family:Times New Roman;font-size:14.00;"> v = [ 50. &#160;50. &#160;50.]</text>
 </g>
 <!-- 0 -->
 <g id="node2" class="node"><title>0</title>
-<ellipse style="fill:none;stroke:black;" cx="599" cy="-606" rx="99.201" ry="41.7193"/>
-<text text-anchor="middle" x="599" y="-618.9" style="font-family:Times New Roman;font-size:14.00;">error = 0.0 </text>
-<text text-anchor="middle" x="599" y="-601.9" style="font-family:Times New Roman;font-size:14.00;"> samples = 50 </text>
-<text text-anchor="middle" x="599" y="-584.9" style="font-family:Times New Roman;font-size:14.00;"> v = [ 50. &#160;&#160;0. &#160;&#160;0.]</text>
+<ellipse style="fill:none;stroke:black;" cx="649" cy="-606" rx="99.201" ry="41.7193"/>
+<text text-anchor="middle" x="649" y="-618.9" style="font-family:Times New Roman;font-size:14.00;">error = 0.0 </text>
+<text text-anchor="middle" x="649" y="-601.9" style="font-family:Times New Roman;font-size:14.00;"> samples = 50 </text>
+<text text-anchor="middle" x="649" y="-584.9" style="font-family:Times New Roman;font-size:14.00;"> v = [ 50. &#160;&#160;0. &#160;&#160;0.]</text>
 </g>
 <!-- 16&#45;&gt;0 -->
 <g id="edge2" class="edge"><title>16&#45;&gt;0</title>
-<path style="fill:none;stroke:black;" d="M670,-698C659,-684 647,-668 636,-654"/>
-<polygon style="fill:black;stroke:black;" points="638.8,-651.9 630,-646 633.2,-656.1 638.8,-651.9"/>
+<path style="fill:none;stroke:black;" d="M728,-698C715,-683 702,-667 690,-653"/>
+<polygon style="fill:black;stroke:black;" points="692.219,-650.221 683,-645 686.951,-654.831 692.219,-650.221"/>
 </g>
 <!-- 15 -->
 <g id="node3" class="node"><title>15</title>
-<ellipse style="fill:none;stroke:black;" cx="819" cy="-606" rx="103.238" ry="53.7401"/>
-<text text-anchor="middle" x="819" y="-627.4" style="font-family:Times New Roman;font-size:14.00;">x[3] &lt; 1.75 </text>
-<text text-anchor="middle" x="819" y="-610.4" style="font-family:Times New Roman;font-size:14.00;"> error = 0.5 </text>
-<text text-anchor="middle" x="819" y="-593.4" style="font-family:Times New Roman;font-size:14.00;"> samples = 100 </text>
-<text text-anchor="middle" x="819" y="-576.4" style="font-family:Times New Roman;font-size:14.00;"> v = [ &#160;0. &#160;50. &#160;50.]</text>
+<ellipse style="fill:none;stroke:black;" cx="897" cy="-606" rx="131.022" ry="53.7401"/>
+<text text-anchor="middle" x="897" y="-627.4" style="font-family:Times New Roman;font-size:14.00;">petal width (cm) &lt; 1.75 </text>
+<text text-anchor="middle" x="897" y="-610.4" style="font-family:Times New Roman;font-size:14.00;"> error = 0.5 </text>
+<text text-anchor="middle" x="897" y="-593.4" style="font-family:Times New Roman;font-size:14.00;"> samples = 100 </text>
+<text text-anchor="middle" x="897" y="-576.4" style="font-family:Times New Roman;font-size:14.00;"> v = [ &#160;0. &#160;50. &#160;50.]</text>
 </g>
 <!-- 16&#45;&gt;15 -->
 <g id="edge4" class="edge"><title>16&#45;&gt;15</title>
-<path style="fill:none;stroke:black;" d="M748,-698C757,-687 766,-675 775,-664"/>
-<polygon style="fill:black;stroke:black;" points="777.8,-666.1 781,-656 772.2,-661.9 777.8,-666.1"/>
+<path style="fill:none;stroke:black;" d="M818,-698C828,-687 838,-675 847,-664"/>
+<polygon style="fill:black;stroke:black;" points="849.404,-666.546 854,-657 844.454,-661.596 849.404,-666.546"/>
 </g>
 <!-- 9 -->
 <g id="node6" class="node"><title>9</title>
-<ellipse style="fill:none;stroke:black;" cx="647" cy="-462" rx="142.836" ry="53.7401"/>
-<text text-anchor="middle" x="647" y="-483.4" style="font-family:Times New Roman;font-size:14.00;">x[2] &lt; 4.95 </text>
-<text text-anchor="middle" x="647" y="-466.4" style="font-family:Times New Roman;font-size:14.00;"> error = 0.168038408779 </text>
-<text text-anchor="middle" x="647" y="-449.4" style="font-family:Times New Roman;font-size:14.00;"> samples = 54 </text>
-<text text-anchor="middle" x="647" y="-432.4" style="font-family:Times New Roman;font-size:14.00;"> v = [ &#160;0. &#160;49. &#160;&#160;5.]</text>
+<ellipse style="fill:none;stroke:black;" cx="696" cy="-462" rx="191.833" ry="53.7401"/>
+<text text-anchor="middle" x="696" y="-483.4" style="font-family:Times New Roman;font-size:14.00;">petal length (cm) &lt; 4.94999980927 </text>
+<text text-anchor="middle" x="696" y="-466.4" style="font-family:Times New Roman;font-size:14.00;"> error = 0.168038412929 </text>
+<text text-anchor="middle" x="696" y="-449.4" style="font-family:Times New Roman;font-size:14.00;"> samples = 54 </text>
+<text text-anchor="middle" x="696" y="-432.4" style="font-family:Times New Roman;font-size:14.00;"> v = [ &#160;0. &#160;49. &#160;&#160;5.]</text>
 </g>
 <!-- 15&#45;&gt;9 -->
 <g id="edge6" class="edge"><title>15&#45;&gt;9</title>
-<path style="fill:none;stroke:black;" d="M765,-560C749,-546 731,-531 714,-517"/>
-<polygon style="fill:black;stroke:black;" points="716.1,-514.2 706,-511 711.9,-519.8 716.1,-514.2"/>
+<path style="fill:none;stroke:black;" d="M832,-559C814,-546 793,-531 774,-518"/>
+<polygon style="fill:black;stroke:black;" points="776.1,-515.2 766,-512 771.9,-520.8 776.1,-515.2"/>
 </g>
 <!-- 14 -->
 <g id="node7" class="node"><title>14</title>
-<ellipse style="fill:none;stroke:black;" cx="991" cy="-462" rx="149.2" ry="53.7401"/>
-<text text-anchor="middle" x="991" y="-483.4" style="font-family:Times New Roman;font-size:14.00;">x[2] &lt; 4.85 </text>
-<text text-anchor="middle" x="991" y="-466.4" style="font-family:Times New Roman;font-size:14.00;"> error = 0.0425330812854 </text>
-<text text-anchor="middle" x="991" y="-449.4" style="font-family:Times New Roman;font-size:14.00;"> samples = 46 </text>
-<text text-anchor="middle" x="991" y="-432.4" style="font-family:Times New Roman;font-size:14.00;"> v = [ &#160;0. &#160;&#160;1. &#160;45.]</text>
+<ellipse style="fill:none;stroke:black;" cx="1098" cy="-462" rx="191.833" ry="53.7401"/>
+<text text-anchor="middle" x="1098" y="-483.4" style="font-family:Times New Roman;font-size:14.00;">petal length (cm) &lt; 4.85000038147 </text>
+<text text-anchor="middle" x="1098" y="-466.4" style="font-family:Times New Roman;font-size:14.00;"> error = 0.0425330810249 </text>
+<text text-anchor="middle" x="1098" y="-449.4" style="font-family:Times New Roman;font-size:14.00;"> samples = 46 </text>
+<text text-anchor="middle" x="1098" y="-432.4" style="font-family:Times New Roman;font-size:14.00;"> v = [ &#160;0. &#160;&#160;1. &#160;45.]</text>
 </g>
 <!-- 15&#45;&gt;14 -->
 <g id="edge8" class="edge"><title>15&#45;&gt;14</title>
-<path style="fill:none;stroke:black;" d="M873,-560C889,-546 907,-531 924,-517"/>
-<polygon style="fill:black;stroke:black;" points="926.1,-519.8 932,-511 921.9,-514.2 926.1,-519.8"/>
+<path style="fill:none;stroke:black;" d="M962,-559C980,-546 1001,-531 1020,-518"/>
+<polygon style="fill:black;stroke:black;" points="1022.1,-520.8 1028,-512 1017.9,-515.2 1022.1,-520.8"/>
 </g>
 <!-- 3 -->
 <g id="node10" class="node"><title>3</title>
-<ellipse style="fill:none;stroke:black;" cx="303" cy="-318" rx="149.2" ry="53.7401"/>
-<text text-anchor="middle" x="303" y="-339.4" style="font-family:Times New Roman;font-size:14.00;">x[3] &lt; 1.65 </text>
-<text text-anchor="middle" x="303" y="-322.4" style="font-family:Times New Roman;font-size:14.00;"> error = 0.0407986111111 </text>
-<text text-anchor="middle" x="303" y="-305.4" style="font-family:Times New Roman;font-size:14.00;"> samples = 48 </text>
-<text text-anchor="middle" x="303" y="-288.4" style="font-family:Times New Roman;font-size:14.00;"> v = [ &#160;0. &#160;47. &#160;&#160;1.]</text>
+<ellipse style="fill:none;stroke:black;" cx="301" cy="-318" rx="188.798" ry="53.7401"/>
+<text text-anchor="middle" x="301" y="-339.4" style="font-family:Times New Roman;font-size:14.00;">petal width (cm) &lt; 1.65000009537 </text>
+<text text-anchor="middle" x="301" y="-322.4" style="font-family:Times New Roman;font-size:14.00;"> error = 0.040798611939 </text>
+<text text-anchor="middle" x="301" y="-305.4" style="font-family:Times New Roman;font-size:14.00;"> samples = 48 </text>
+<text text-anchor="middle" x="301" y="-288.4" style="font-family:Times New Roman;font-size:14.00;"> v = [ &#160;0. &#160;47. &#160;&#160;1.]</text>
 </g>
 <!-- 9&#45;&gt;3 -->
 <g id="edge10" class="edge"><title>9&#45;&gt;3</title>
-<path style="fill:none;stroke:black;" d="M552,-422C508,-403 455,-381 409,-363"/>
-<polygon style="fill:black;stroke:black;" points="410.56,-359.863 400,-359 407.717,-366.26 410.56,-359.863"/>
+<path style="fill:none;stroke:black;" d="M579,-419C531,-402 475,-382 427,-364"/>
+<polygon style="fill:black;stroke:black;" points="427.585,-360.464 417,-360 424.985,-366.964 427.585,-360.464"/>
 </g>
 <!-- 8 -->
 <g id="node11" class="node"><title>8</title>
-<ellipse style="fill:none;stroke:black;" cx="647" cy="-318" rx="142.836" ry="53.7401"/>
-<text text-anchor="middle" x="647" y="-339.4" style="font-family:Times New Roman;font-size:14.00;">x[3] &lt; 1.55 </text>
-<text text-anchor="middle" x="647" y="-322.4" style="font-family:Times New Roman;font-size:14.00;"> error = 0.444444444444 </text>
-<text text-anchor="middle" x="647" y="-305.4" style="font-family:Times New Roman;font-size:14.00;"> samples = 6 </text>
-<text text-anchor="middle" x="647" y="-288.4" style="font-family:Times New Roman;font-size:14.00;"> v = [ 0. &#160;2. &#160;4.]</text>
+<ellipse style="fill:none;stroke:black;" cx="697" cy="-318" rx="188.798" ry="53.7401"/>
+<text text-anchor="middle" x="697" y="-339.4" style="font-family:Times New Roman;font-size:14.00;">petal width (cm) &lt; 1.54999995232 </text>
+<text text-anchor="middle" x="697" y="-322.4" style="font-family:Times New Roman;font-size:14.00;"> error = 0.444444447756 </text>
+<text text-anchor="middle" x="697" y="-305.4" style="font-family:Times New Roman;font-size:14.00;"> samples = 6 </text>
+<text text-anchor="middle" x="697" y="-288.4" style="font-family:Times New Roman;font-size:14.00;"> v = [ 0. &#160;2. &#160;4.]</text>
 </g>
 <!-- 9&#45;&gt;8 -->
 <g id="edge12" class="edge"><title>9&#45;&gt;8</title>
-<path style="fill:none;stroke:black;" d="M647,-408C647,-399 647,-391 647,-382"/>
-<polygon style="fill:black;stroke:black;" points="650.5,-382 647,-372 643.5,-382 650.5,-382"/>
+<path style="fill:none;stroke:black;" d="M696,-408C696,-399 696,-391 696,-382"/>
+<polygon style="fill:black;stroke:black;" points="699.488,-382.299 697,-372 692.522,-381.602 699.488,-382.299"/>
 </g>
 <!-- 12 -->
 <g id="node26" class="node"><title>12</title>
-<ellipse style="fill:none;stroke:black;" cx="991" cy="-318" rx="142.836" ry="53.7401"/>
-<text text-anchor="middle" x="991" y="-339.4" style="font-family:Times New Roman;font-size:14.00;">x[0] &lt; 5.95 </text>
-<text text-anchor="middle" x="991" y="-322.4" style="font-family:Times New Roman;font-size:14.00;"> error = 0.444444444444 </text>
-<text text-anchor="middle" x="991" y="-305.4" style="font-family:Times New Roman;font-size:14.00;"> samples = 3 </text>
-<text text-anchor="middle" x="991" y="-288.4" style="font-family:Times New Roman;font-size:14.00;"> v = [ 0. &#160;1. &#160;2.]</text>
+<ellipse style="fill:none;stroke:black;" cx="1098" cy="-318" rx="193.04" ry="53.7401"/>
+<text text-anchor="middle" x="1098" y="-339.4" style="font-family:Times New Roman;font-size:14.00;">sepal length (cm) &lt; 5.94999980927 </text>
+<text text-anchor="middle" x="1098" y="-322.4" style="font-family:Times New Roman;font-size:14.00;"> error = 0.444444447756 </text>
+<text text-anchor="middle" x="1098" y="-305.4" style="font-family:Times New Roman;font-size:14.00;"> samples = 3 </text>
+<text text-anchor="middle" x="1098" y="-288.4" style="font-family:Times New Roman;font-size:14.00;"> v = [ 0. &#160;1. &#160;2.]</text>
 </g>
 <!-- 14&#45;&gt;12 -->
 <g id="edge26" class="edge"><title>14&#45;&gt;12</title>
-<path style="fill:none;stroke:black;" d="M991,-408C991,-399 991,-391 991,-382"/>
-<polygon style="fill:black;stroke:black;" points="994.5,-382 991,-372 987.5,-382 994.5,-382"/>
+<path style="fill:none;stroke:black;" d="M1098,-408C1098,-399 1098,-391 1098,-382"/>
+<polygon style="fill:black;stroke:black;" points="1101.5,-382 1098,-372 1094.5,-382 1101.5,-382"/>
 </g>
 <!-- 13 -->
 <g id="node27" class="node"><title>13</title>
-<ellipse style="fill:none;stroke:black;" cx="1251" cy="-318" rx="99.201" ry="41.7193"/>
-<text text-anchor="middle" x="1251" y="-330.9" style="font-family:Times New Roman;font-size:14.00;">error = 0.0 </text>
-<text text-anchor="middle" x="1251" y="-313.9" style="font-family:Times New Roman;font-size:14.00;"> samples = 43 </text>
-<text text-anchor="middle" x="1251" y="-296.9" style="font-family:Times New Roman;font-size:14.00;"> v = [ &#160;0. &#160;&#160;0. &#160;43.]</text>
+<ellipse style="fill:none;stroke:black;" cx="1408" cy="-318" rx="99.201" ry="41.7193"/>
+<text text-anchor="middle" x="1408" y="-330.9" style="font-family:Times New Roman;font-size:14.00;">error = 0.0 </text>
+<text text-anchor="middle" x="1408" y="-313.9" style="font-family:Times New Roman;font-size:14.00;"> samples = 43 </text>
+<text text-anchor="middle" x="1408" y="-296.9" style="font-family:Times New Roman;font-size:14.00;"> v = [ &#160;0. &#160;&#160;0. &#160;43.]</text>
 </g>
 <!-- 14&#45;&gt;13 -->
 <g id="edge28" class="edge"><title>14&#45;&gt;13</title>
-<path style="fill:none;stroke:black;" d="M1072,-417C1107,-398 1148,-375 1182,-356"/>
-<polygon style="fill:black;stroke:black;" points="1183.96,-358.916 1191,-351 1180.56,-352.797 1183.96,-358.916"/>
+<path style="fill:none;stroke:black;" d="M1201,-417C1233,-403 1268,-387 1300,-372 1312,-366 1324,-360 1336,-354"/>
+<polygon style="fill:black;stroke:black;" points="1337.28,-357.26 1345,-350 1334.44,-350.863 1337.28,-357.26"/>
 </g>
 <!-- 1 -->
 <g id="node14" class="node"><title>1</title>
@@ -130,8 +130,8 @@
 </g>
 <!-- 3&#45;&gt;1 -->
 <g id="edge14" class="edge"><title>3&#45;&gt;1</title>
-<path style="fill:none;stroke:black;" d="M235,-270C210,-252 183,-233 158,-216"/>
-<polygon style="fill:black;stroke:black;" points="160.1,-213.2 150,-210 155.9,-218.8 160.1,-213.2"/>
+<path style="fill:none;stroke:black;" d="M231,-268C207,-251 181,-232 157,-216"/>
+<polygon style="fill:black;stroke:black;" points="159.1,-213.2 149,-210 154.9,-218.8 159.1,-213.2"/>
 </g>
 <!-- 2 -->
 <g id="node15" class="node"><title>2</title>
@@ -142,81 +142,81 @@
 </g>
 <!-- 3&#45;&gt;2 -->
 <g id="edge16" class="edge"><title>3&#45;&gt;2</title>
-<path style="fill:none;stroke:black;" d="M303,-264C303,-252 303,-238 303,-226"/>
-<polygon style="fill:black;stroke:black;" points="306.5,-226 303,-216 299.5,-226 306.5,-226"/>
+<path style="fill:none;stroke:black;" d="M302,-264C302,-252 302,-238 302,-226"/>
+<polygon style="fill:black;stroke:black;" points="305.5,-226 302,-216 298.5,-226 305.5,-226"/>
 </g>
 <!-- 4 -->
 <g id="node18" class="node"><title>4</title>
-<ellipse style="fill:none;stroke:black;" cx="495" cy="-174" rx="86.9741" ry="41.7193"/>
-<text text-anchor="middle" x="495" y="-186.9" style="font-family:Times New Roman;font-size:14.00;">error = 0.0 </text>
-<text text-anchor="middle" x="495" y="-169.9" style="font-family:Times New Roman;font-size:14.00;"> samples = 3 </text>
-<text text-anchor="middle" x="495" y="-152.9" style="font-family:Times New Roman;font-size:14.00;"> v = [ 0. &#160;0. &#160;3.]</text>
+<ellipse style="fill:none;stroke:black;" cx="499" cy="-174" rx="86.9741" ry="41.7193"/>
+<text text-anchor="middle" x="499" y="-186.9" style="font-family:Times New Roman;font-size:14.00;">error = 0.0 </text>
+<text text-anchor="middle" x="499" y="-169.9" style="font-family:Times New Roman;font-size:14.00;"> samples = 3 </text>
+<text text-anchor="middle" x="499" y="-152.9" style="font-family:Times New Roman;font-size:14.00;"> v = [ 0. &#160;0. &#160;3.]</text>
 </g>
 <!-- 8&#45;&gt;4 -->
 <g id="edge18" class="edge"><title>8&#45;&gt;4</title>
-<path style="fill:none;stroke:black;" d="M594,-268C577,-252 559,-234 542,-218"/>
-<polygon style="fill:black;stroke:black;" points="544.546,-215.596 535,-211 539.596,-220.546 544.546,-215.596"/>
+<path style="fill:none;stroke:black;" d="M628,-268C604,-250 578,-231 555,-215"/>
+<polygon style="fill:black;stroke:black;" points="557.1,-212.2 547,-209 552.9,-217.8 557.1,-212.2"/>
 </g>
 <!-- 7 -->
 <g id="node19" class="node"><title>7</title>
-<ellipse style="fill:none;stroke:black;" cx="743" cy="-174" rx="142.836" ry="53.7401"/>
-<text text-anchor="middle" x="743" y="-195.4" style="font-family:Times New Roman;font-size:14.00;">x[0] &lt; 6.95 </text>
-<text text-anchor="middle" x="743" y="-178.4" style="font-family:Times New Roman;font-size:14.00;"> error = 0.444444444444 </text>
-<text text-anchor="middle" x="743" y="-161.4" style="font-family:Times New Roman;font-size:14.00;"> samples = 3 </text>
-<text text-anchor="middle" x="743" y="-144.4" style="font-family:Times New Roman;font-size:14.00;"> v = [ 0. &#160;2. &#160;1.]</text>
+<ellipse style="fill:none;stroke:black;" cx="797" cy="-174" rx="193.04" ry="53.7401"/>
+<text text-anchor="middle" x="797" y="-195.4" style="font-family:Times New Roman;font-size:14.00;">sepal length (cm) &lt; 6.94999980927 </text>
+<text text-anchor="middle" x="797" y="-178.4" style="font-family:Times New Roman;font-size:14.00;"> error = 0.444444447756 </text>
+<text text-anchor="middle" x="797" y="-161.4" style="font-family:Times New Roman;font-size:14.00;"> samples = 3 </text>
+<text text-anchor="middle" x="797" y="-144.4" style="font-family:Times New Roman;font-size:14.00;"> v = [ 0. &#160;2. &#160;1.]</text>
 </g>
 <!-- 8&#45;&gt;7 -->
 <g id="edge20" class="edge"><title>8&#45;&gt;7</title>
-<path style="fill:none;stroke:black;" d="M682,-266C689,-256 696,-245 703,-235"/>
-<polygon style="fill:black;stroke:black;" points="706.203,-236.441 708,-226 700.084,-233.042 706.203,-236.441"/>
+<path style="fill:none;stroke:black;" d="M734,-265C741,-256 748,-245 754,-235"/>
+<polygon style="fill:black;stroke:black;" points="756.8,-237.1 760,-227 751.2,-232.9 756.8,-237.1"/>
 </g>
 <!-- 5 -->
 <g id="node22" class="node"><title>5</title>
-<ellipse style="fill:none;stroke:black;" cx="647" cy="-42" rx="86.9741" ry="41.7193"/>
-<text text-anchor="middle" x="647" y="-54.9" style="font-family:Times New Roman;font-size:14.00;">error = 0.0 </text>
-<text text-anchor="middle" x="647" y="-37.9" style="font-family:Times New Roman;font-size:14.00;"> samples = 2 </text>
-<text text-anchor="middle" x="647" y="-20.9" style="font-family:Times New Roman;font-size:14.00;"> v = [ 0. &#160;2. &#160;0.]</text>
+<ellipse style="fill:none;stroke:black;" cx="701" cy="-42" rx="86.9741" ry="41.7193"/>
+<text text-anchor="middle" x="701" y="-54.9" style="font-family:Times New Roman;font-size:14.00;">error = 0.0 </text>
+<text text-anchor="middle" x="701" y="-37.9" style="font-family:Times New Roman;font-size:14.00;"> samples = 2 </text>
+<text text-anchor="middle" x="701" y="-20.9" style="font-family:Times New Roman;font-size:14.00;"> v = [ 0. &#160;2. &#160;0.]</text>
 </g>
 <!-- 7&#45;&gt;5 -->
 <g id="edge22" class="edge"><title>7&#45;&gt;5</title>
-<path style="fill:none;stroke:black;" d="M705,-122C697,-111 689,-100 681,-89"/>
-<polygon style="fill:black;stroke:black;" points="683.8,-86.9 675,-81 678.2,-91.1 683.8,-86.9"/>
+<path style="fill:none;stroke:black;" d="M759,-121C751,-111 743,-100 736,-89"/>
+<polygon style="fill:black;stroke:black;" points="738.8,-86.9 730,-81 733.2,-91.1 738.8,-86.9"/>
 </g>
 <!-- 6 -->
 <g id="node23" class="node"><title>6</title>
-<ellipse style="fill:none;stroke:black;" cx="839" cy="-42" rx="86.9741" ry="41.7193"/>
-<text text-anchor="middle" x="839" y="-54.9" style="font-family:Times New Roman;font-size:14.00;">error = 0.0 </text>
-<text text-anchor="middle" x="839" y="-37.9" style="font-family:Times New Roman;font-size:14.00;"> samples = 1 </text>
-<text text-anchor="middle" x="839" y="-20.9" style="font-family:Times New Roman;font-size:14.00;"> v = [ 0. &#160;0. &#160;1.]</text>
+<ellipse style="fill:none;stroke:black;" cx="893" cy="-42" rx="86.9741" ry="41.7193"/>
+<text text-anchor="middle" x="893" y="-54.9" style="font-family:Times New Roman;font-size:14.00;">error = 0.0 </text>
+<text text-anchor="middle" x="893" y="-37.9" style="font-family:Times New Roman;font-size:14.00;"> samples = 1 </text>
+<text text-anchor="middle" x="893" y="-20.9" style="font-family:Times New Roman;font-size:14.00;"> v = [ 0. &#160;0. &#160;1.]</text>
 </g>
 <!-- 7&#45;&gt;6 -->
 <g id="edge24" class="edge"><title>7&#45;&gt;6</title>
-<path style="fill:none;stroke:black;" d="M781,-122C789,-111 797,-100 805,-89"/>
-<polygon style="fill:black;stroke:black;" points="807.8,-91.1 811,-81 802.2,-86.9 807.8,-91.1"/>
+<path style="fill:none;stroke:black;" d="M835,-121C843,-111 851,-100 858,-89"/>
+<polygon style="fill:black;stroke:black;" points="860.8,-91.1 864,-81 855.2,-86.9 860.8,-91.1"/>
 </g>
 <!-- 10 -->
 <g id="node30" class="node"><title>10</title>
-<ellipse style="fill:none;stroke:black;" cx="991" cy="-174" rx="86.9741" ry="41.7193"/>
-<text text-anchor="middle" x="991" y="-186.9" style="font-family:Times New Roman;font-size:14.00;">error = 0.0 </text>
-<text text-anchor="middle" x="991" y="-169.9" style="font-family:Times New Roman;font-size:14.00;"> samples = 1 </text>
-<text text-anchor="middle" x="991" y="-152.9" style="font-family:Times New Roman;font-size:14.00;"> v = [ 0. &#160;1. &#160;0.]</text>
+<ellipse style="fill:none;stroke:black;" cx="1097" cy="-174" rx="86.9741" ry="41.7193"/>
+<text text-anchor="middle" x="1097" y="-186.9" style="font-family:Times New Roman;font-size:14.00;">error = 0.0 </text>
+<text text-anchor="middle" x="1097" y="-169.9" style="font-family:Times New Roman;font-size:14.00;"> samples = 1 </text>
+<text text-anchor="middle" x="1097" y="-152.9" style="font-family:Times New Roman;font-size:14.00;"> v = [ 0. &#160;1. &#160;0.]</text>
 </g>
 <!-- 12&#45;&gt;10 -->
 <g id="edge30" class="edge"><title>12&#45;&gt;10</title>
-<path style="fill:none;stroke:black;" d="M991,-264C991,-252 991,-238 991,-226"/>
-<polygon style="fill:black;stroke:black;" points="994.5,-226 991,-216 987.5,-226 994.5,-226"/>
+<path style="fill:none;stroke:black;" d="M1098,-264C1098,-252 1097,-238 1097,-226"/>
+<polygon style="fill:black;stroke:black;" points="1100.5,-226 1097,-216 1093.5,-226 1100.5,-226"/>
 </g>
 <!-- 11 -->
 <g id="node31" class="node"><title>11</title>
-<ellipse style="fill:none;stroke:black;" cx="1183" cy="-174" rx="86.9741" ry="41.7193"/>
-<text text-anchor="middle" x="1183" y="-186.9" style="font-family:Times New Roman;font-size:14.00;">error = 0.0 </text>
-<text text-anchor="middle" x="1183" y="-169.9" style="font-family:Times New Roman;font-size:14.00;"> samples = 2 </text>
-<text text-anchor="middle" x="1183" y="-152.9" style="font-family:Times New Roman;font-size:14.00;"> v = [ 0. &#160;0. &#160;2.]</text>
+<ellipse style="fill:none;stroke:black;" cx="1289" cy="-174" rx="86.9741" ry="41.7193"/>
+<text text-anchor="middle" x="1289" y="-186.9" style="font-family:Times New Roman;font-size:14.00;">error = 0.0 </text>
+<text text-anchor="middle" x="1289" y="-169.9" style="font-family:Times New Roman;font-size:14.00;"> samples = 2 </text>
+<text text-anchor="middle" x="1289" y="-152.9" style="font-family:Times New Roman;font-size:14.00;"> v = [ 0. &#160;0. &#160;2.]</text>
 </g>
 <!-- 12&#45;&gt;11 -->
 <g id="edge32" class="edge"><title>12&#45;&gt;11</title>
-<path style="fill:none;stroke:black;" d="M1055,-270C1079,-252 1105,-232 1128,-215"/>
-<polygon style="fill:black;stroke:black;" points="1130.1,-217.8 1136,-209 1125.9,-212.2 1130.1,-217.8"/>
+<path style="fill:none;stroke:black;" d="M1165,-268C1188,-250 1213,-232 1234,-215"/>
+<polygon style="fill:black;stroke:black;" points="1236.1,-217.8 1242,-209 1231.9,-212.2 1236.1,-217.8"/>
 </g>
 </g>
 </svg>

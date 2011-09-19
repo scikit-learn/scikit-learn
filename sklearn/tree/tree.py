@@ -58,7 +58,7 @@ class GraphvizExporter(object):
 
         Parameters
         ----------
-        out : filehandle, optional
+        out : file object, optional
             Handle to the output file.
 
         feature_names : list of strings, optional
@@ -66,48 +66,57 @@ class GraphvizExporter(object):
         """
         self.out = out
         self.feature_names = feature_names
-        self.out.write("digraph Tree {\n")
-
-    def close(self):
-        self.out.write("\n}\n")
-        self.out.close()
 
     def make_node_repr(self, node):
         if node.is_leaf:
             return "error = %s \\n samples = %s \\n v = %s" \
                 % (node.error, node.samples, node.value)
         else:
-            feature = node.feature
+            feature = "X[%s]" % node.feature
             if self.feature_names is not None:
                 try:
                     feature = self.feature_names[node.feature]
                 except:
                     pass
 
-            return "x[%s] < %s \\n error = %s \\n samples = %s \\n v = %s" \
+            return "%s < %s \\n error = %s \\n samples = %s \\n v = %s" \
                    % (feature, node.threshold,\
                       node.error, node.samples, node.value)
 
     def export(self, node):
-        """Print the node for graph visualisation."""
+        """Print the node for graph visualisation.
 
-        current_repr = self.make_node_repr(node)
-        left_repr = self.make_node_repr(node.left)
-        right_repr = self.make_node_repr(node.right)
-        node_data = {
-            "current": node.id,
-            "current_gv": current_repr,
-            "left_child": node.left.id,
-            "left_child_gv": left_repr,
-            "right_child": node.right.id,
-            "right_child_gv": right_repr,
-            }
-        self.out.write(GRAPHVIZ_TREE_TEMPLATE % node_data)
+        Returns
+        -------
+        self.out : file object
+            The file object to which the tree was exported.  The user is
+            expected to `close()` this object when done with it.
+        """
 
-        if not node.left.is_leaf:
-            self.export(node.left)
-        if not node.right.is_leaf:
-            self.export(node.right)
+        def recurse(node):
+            current_repr = self.make_node_repr(node)
+            left_repr = self.make_node_repr(node.left)
+            right_repr = self.make_node_repr(node.right)
+            node_data = {
+                "current": node.id,
+                "current_gv": current_repr,
+                "left_child": node.left.id,
+                "left_child_gv": left_repr,
+                "right_child": node.right.id,
+                "right_child_gv": right_repr,
+                }
+            self.out.write(GRAPHVIZ_TREE_TEMPLATE % node_data)
+
+            if not node.left.is_leaf:
+                recurse(node.left)
+            if not node.right.is_leaf:
+                recurse(node.right)
+
+        self.out.write("digraph Tree {\n")
+        recurse(node)
+        self.out.write("}")
+
+        return self.out
 
 
 class Node(object):
@@ -178,10 +187,10 @@ def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
     if X_argsorted is None:
         X_argsorted = np.asfortranarray(
             np.argsort(X.T, axis=1).astype(np.int32).T)
-    
+
     if sample_mask is None:
         sample_mask = np.ones((X.shape[0],), dtype=np.bool)
-    
+
     # get num samples from sample_mask instead of X
     n_samples = sample_mask.sum()
     n_features = X.shape[1]
@@ -315,7 +324,7 @@ class BaseDecisionTree(BaseEstimator):
         >>> t = tempfile.TemporaryFile()
         >>> exporter = tree.GraphvizExporter(out=t)
         >>> clf.export(exporter)
-        >>> exporter.close()
+        >>> t.close()
 
         """
         if self.tree is None:

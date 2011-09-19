@@ -1,8 +1,0 @@
-digraph Tree {
-2 [label="x[0] < 0.0 \n error = 0.5 \n samples = 6 \n v = [ 3.  3.]"] ;
-0 [label="error = 0.0 \n samples = 3 \n v = [ 3.  0.]"] ;
-1 [label="error = 0.0 \n samples = 3 \n v = [ 0.  3.]"] ;
-2 -> 0 ;
-2 -> 1 ;
-
-}
