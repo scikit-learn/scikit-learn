@@ -97,7 +97,7 @@ class RandomizedLasso(LinearModel):
     TODO
     """
 
-    def __init__(self, alpha='aic', a=.2, n_resampling=1000,
+    def __init__(self, alpha='aic', a=.2, n_resampling=200,
                  selection_threshold=.5,
                  fit_intercept=True, verbose=False,
                  normalize=True, refit=True, precompute='auto',

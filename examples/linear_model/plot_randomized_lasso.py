@@ -19,15 +19,17 @@ X, y, coef = make_regression(n_samples=40, n_features=100,
 
 ################################################################################
 # Fit the RandomizedLasso
-clf = RandomizedLasso(verbose=True, alpha=5, random_state=42)
-clf.fit(X, y)
 
 ################################################################################
 # Plot the true weights, the estimated weights and the histogram of the
 # weights
 pl.figure(figsize=(6, 5))
 pl.title("Weights of the model")
-pl.plot(clf.scores_, 'b-', label="Randomized Lasso scores")
+for index, alpha in enumerate((1, 5, 10, 15, 20, 'aic')):
+    clf = RandomizedLasso(verbose=True, alpha=alpha, random_state=42)
+    clf.fit(X, y)
+    pl.plot(clf.scores_, ':', color=pl.cm.bone(index/6.),
+                    label="alpha = %s" % alpha)
 pl.plot(coef/coef.max(), 'g-', label="Ground truth coefficients")
 pl.xlabel("Features")
 #pl.ylabel("Values of the weights")
