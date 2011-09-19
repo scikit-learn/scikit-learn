@@ -489,7 +489,7 @@ class LassoLars(Lars):
     LassoLars(alpha=0.01, eps=..., fit_intercept=True,
          max_iter=500, normalize=True, overwrite_X=False, precompute='auto',
          verbose=False)
-    >>> print clf.coef_ # doctest: +ELLIPSIS
+    >>> print clf.coef_ # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     [ 0.         -0.963257...]
 
     References
