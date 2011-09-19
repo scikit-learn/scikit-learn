@@ -47,7 +47,7 @@ categories out of the 20 available in the dataset::
 
 We can now load the list of files matching those categories as follows::
 
-  >>> from scikits.learn.datasets import load_files
+  >>> from sklearn.datasets import load_files
   >>> twenty_train = load_files('data/twenty_newsgroups/20news-bydate-train',
   ...                           categories=categories, shuffle=True,
   ...                           random_state=42)
@@ -158,7 +158,7 @@ Tokenizing text with ``scikit-learn``
 work with text data. The first one is a preprocessor that removes
 accents and converts to lowercase on roman languages::
 
-  >>> from scikits.learn.feature_extraction.text import RomanPreprocessor
+  >>> from sklearn.feature_extraction.text import RomanPreprocessor
   >>> text = u"J'ai bien mang\xe9."
   >>> print RomanPreprocessor().preprocess(text)
   j'ai bien mange.
@@ -166,7 +166,7 @@ accents and converts to lowercase on roman languages::
 The second one is a utility that splits the text into words after
 having applied the preprocessor::
 
-  >>> from scikits.learn.feature_extraction.text import WordNGramAnalyzer
+  >>> from sklearn.feature_extraction.text import WordNGramAnalyzer
   >>> WordNGramAnalyzer().analyze(text)
   ['ai', 'bien', 'mange']
 
@@ -182,7 +182,7 @@ instead of single words::
 These tools are wrapped into a higher level component that is able to build a
 dictionary of features and transform documents to feature vectors::
 
-  >>> from scikits.learn.feature_extraction.text import CountVectorizer
+  >>> from sklearn.feature_extraction.text import CountVectorizer
   >>> count_vect = CountVectorizer()
   >>> X_train_counts = count_vect.fit_transform(twenty_train.data)
   >>> X_train_counts.shape
@@ -231,7 +231,7 @@ Inverse Document Frequency".
 
 Both tf and tf–idf can be computed as follows::
 
-  >>> from scikits.learn.feature_extraction.text import TfidfTransformer
+  >>> from sklearn.feature_extraction.text import TfidfTransformer
   >>> tf_transformer = TfidfTransformer(use_idf=False).fit(X_train_counts)
   >>> X_train_tf = tf_transformer.transform(X_train_counts)
   >>> X_train_tf.shape
@@ -252,7 +252,7 @@ provides a nice baseline for this task. ``scikit-learn`` includes several
 variants of this classifier; the one most suitable for word counts is the
 multinomial variant::
 
-  >>> from scikits.learn.naive_bayes import MultinomialNB
+  >>> from sklearn.naive_bayes import MultinomialNB
   >>> clf = MultinomialNB().fit(X_train_tfidf, twenty_train.target)
 
 To try to predict the outcome on a new document we need to extract
@@ -281,7 +281,7 @@ In order to make the vectorizer => transformer => classifier easier
 to work with, ``scikit-learn`` provides a ``Pipeline`` class that behaves
 like a compound classifier::
 
-  >>> from scikits.learn.pipeline import Pipeline
+  >>> from sklearn.pipeline import Pipeline
   >>> text_clf = Pipeline([
   ...     ('vect', CountVectorizer()),
   ...     ('tfidf', TfidfTransformer()),
@@ -316,7 +316,7 @@ the best text classification algorithms (although it's also a bit slower
 than naïve Bayes). We can change the learner by just plugging a different
 classifier object into our pipeline::
 
-  >>> from scikits.learn.svm.sparse import LinearSVC
+  >>> from sklearn.svm.sparse import LinearSVC
   >>> text_clf = Pipeline([
   ...     ('vect', CountVectorizer()),
   ...     ('tfidf', TfidfTransformer()),
@@ -330,7 +330,7 @@ classifier object into our pipeline::
 ``scikit-learn`` further provides utilities for more detailed performance
 analysis of the results::
 
-  >>> from scikits.learn import metrics
+  >>> from sklearn import metrics
   >>> print metrics.classification_report(
   ...     twenty_test.target, predicted,
   ...     target_names=twenty_test.target_names)
@@ -370,7 +370,7 @@ parameters on a grid of possible values. We try out all classifiers
 on either words or bigrams, with or without idf, and with a penalty
 parameter of either 100 or 1000 for the linear SVM::
 
-  >>> from scikits.learn.grid_search import GridSearchCV
+  >>> from sklearn.grid_search import GridSearchCV
   >>> parameters = {
   ...     'vect__analyzer__max_n': (1, 2),
   ...     'tfidf__use_idf': (True, False),

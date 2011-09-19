@@ -3,13 +3,13 @@
 # License: Simplified BSD
 
 import sys
-from scikits.learn.feature_extraction.text import CountVectorizer
-from scikits.learn.feature_extraction.text import TfidfTransformer
-from scikits.learn.svm.sparse import LinearSVC
-from scikits.learn.pipeline import Pipeline
-from scikits.learn.grid_search import GridSearchCV
-from scikits.learn.datasets import load_files
-from scikits.learn import metrics
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn.svm.sparse import LinearSVC
+from sklearn.pipeline import Pipeline
+from sklearn.grid_search import GridSearchCV
+from sklearn.datasets import load_files
+from sklearn import metrics
 
 #
 # The real code starts here
