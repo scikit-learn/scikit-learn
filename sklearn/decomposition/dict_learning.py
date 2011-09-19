@@ -80,6 +80,12 @@ def sparse_encode(X, Y, gram=None, cov=None, algorithm='lasso_lars',
     -------
     code: array of shape (n_components, n_features)
         The sparse codes
+
+    See also
+    --------
+    linear_model.lars_path
+    linear_model.orthogonal_mp
+    linear_model.Lasso
     """
     alpha = float(alpha) if alpha is not None else None
     X, Y = map(np.asanyarray, (X, Y))
@@ -223,6 +229,12 @@ def sparse_encode_parallel(X, Y, gram=None, cov=None, algorithm='lasso_lars',
     -------
     code: array of shape (n_components, n_features)
         The sparse codes
+
+    See also
+    --------
+    linear_model.lars_path
+    linear_model.orthogonal_mp
+    linear_model.Lasso
     """
     n_samples, n_features = Y.shape
     n_components = X.shape[1]
