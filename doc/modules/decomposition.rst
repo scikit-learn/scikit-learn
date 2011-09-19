@@ -310,8 +310,9 @@ extracted from part of the image of Lena looks like.
     :scale: 50%
 
 
-.. figure:: ../auto_examples/decomposition/images/plot_faces_decomposition_5.png
+.. figure:: ../auto_examples/decomposition/images/plot_faces_decomposition_6.png
    :target: ../auto_examples/decomposition/plot_faces_decomposition.html
+   :align: center
    :scale: 50%
 
 
