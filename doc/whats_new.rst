@@ -94,6 +94,11 @@ Changelog
 
    - Added 2D-patch extractor utilites in the :ref:`feature_extraction` module by `Vlad Niculae`_
 
+   - Implementation of :class:`linear_model.least_angle.LassoLarsCV` and
+     :class:`linear_model.least_angle.LassoLarsIC` by `Gael Varoquaux`_ and `Alexandre Gramfort`_
+
+   - Scalability improvements to :func:`metrics.metrics.roc_curve` by Olivier Hervieu
+
 
 API changes summary
 -------------------
