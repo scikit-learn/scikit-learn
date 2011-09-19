@@ -5,9 +5,9 @@
 0.9
 ===
 
-scikit-learn 0.9 was released on September 2011, three months after
-the 0.8 release and includes XX new modules: manifold, dpgmm as well
-as several new algorithms and documentation improvements.
+scikit-learn 0.9 was released on September 2011, three months after the 0.8
+release and includes the new modules :ref:`manifold`, :ref:`dirichlet_process`
+as well as several new algorithms and documentation improvements.
 
 This release also includes de work developed by `Vlad Niculae`_ as
 part of the `Google Summer of Code <http://code.google.com/soc/>`_
@@ -33,19 +33,19 @@ program.
 Changelog
 ---------
 
-   - New :ref:`manifold` module by `Jake Vanderplas`_ and 
+   - New :ref:`manifold` module by `Jake Vanderplas`_ and
      `Fabian Pedregosa`_.
 
    - New :ref:`Dirichlet Process <dirichlet_process>` Gaussian Mixture
      Model by `Alexandre Passos`_
 
    - :ref:`neighbors` module refactoring by `Jake Vanderplas`_ :
-     general refactoring, support for sparse matrices in input, speed and 
+     general refactoring, support for sparse matrices in input, speed and
      documentation improvements. See the next section for a full list of API
      changes.
 
-   - Improvements on the :ref:`feature_selection` module by 
-     `Gilles Louppe`_ : refactoring of the RFE classes, documentation 
+   - Improvements on the :ref:`feature_selection` module by
+     `Gilles Louppe`_ : refactoring of the RFE classes, documentation
      rewrite, increased efficiency and minor API changes.
 
    - :ref:`SparsePCA` by `Vlad Niculae`_, `Gael Varoquaux`_ and
@@ -57,8 +57,8 @@ Changelog
    - :ref:`Loader for libsvm/svmlight format <libsvm_loader>` by
      `Mathieu Blondel`_ and `Lars Buitinck`_
 
-   - Documentation improvements: thumbnails in 
-     :ref:`example gallery <_examples-index>` by `Fabian Pedregosa`_, 
+   - Documentation improvements: thumbnails in
+     :ref:`example gallery <_examples-index>` by `Fabian Pedregosa`_,
      extended documentation for modules feature_selection, (...).
 
    - Important bugfixes in :ref:`svm` module (segfaults, bad
@@ -69,7 +69,7 @@ Changelog
 
    - Text feature extraction optimizations by Lars Buitinck
 
-   - Chi-Square feature selection 
+   - Chi-Square feature selection
      (:func:`feature_selection.univariate_selection.chi2`) by `Lars Buitinck`.
 
    - :ref:`sample_generators` module refactoring by `Gilles Louppe`_
@@ -89,6 +89,10 @@ Changelog
    - New `Bootstrap`, `ShuffleSplit` and various other improvements in cross validation schemes by `Olivier Grisel`_ and `Gael Varoquaux`_
 
    - Adjusted Rand index and V-Measure clustering evaluation metrics by `Olivier Grisel`_
+
+   - Added :class:`Orthogonal Matching Pursuit <linear_model.OrthogonalMatchingPursuit>` by `Vlad Niculae`_
+
+   - Added 2D-patch extractor utilites in the :ref:`feature_extraction` module by `Vlad Niculae`_
 
 
 API changes summary
@@ -163,29 +167,29 @@ People
 
 38 people contributed to this release.
 
-   - 304  Olivier Grisel
-   - 212  Vlad Niculae
-   - 190  Lars Buitinck
-   - 173  Gael Varoquaux
-   - 149  Fabian Pedregosa (`INRIA`_, `Parietal Team`_)
-   - 127  Jake Vanderplas
-   - 119  Mathieu Blondel
-   - 83  Alexandre Passos
-   - 58  Alexandre Gramfort
-   - 57  Peter Prettenhofer
-   - 56  Gilles Louppe
-   - 41  Robert Layton
+   - 304  `Olivier Grisel`_
+   - 212  `Vlad Niculae`_
+   - 190  `Lars Buitinck`_
+   - 173  `Gael Varoquaux`_
+   - 149  `Fabian Pedregosa`_ (`INRIA`_, `Parietal Team`_)
+   - 127  `Jake Vanderplas`_
+   - 119  `Mathieu Blondel`_
+   - 83  `Alexandre Passos`_
+   - 58  `Alexandre Gramfort`_
+   - 57  `Peter Prettenhofer`_
+   - 56  `Gilles Louppe`_
+   - 42  Robert Layton
    - 38  Nelle Varoquaux
    - 32  Jean Kossaifi
    - 30  Conrad Lee
    - 22  Pietro Berkes
    - 18  andy
    - 17  David Warde-Farley
-   - 11  Brian Holt
+   - 12  Brian Holt
    - 11  Robert
    - 8  Amit Aides
-   - 8  Virgile Fritsch
-   - 7  Yaroslav Halchenko
+   - 8  `Virgile Fritsch`_
+   - 7  `Yaroslav Halchenko`_
    - 6  Salvatore Masecchia
    - 5  Paolo Losi
    - 4  Vincent Schut
@@ -196,15 +200,12 @@ People
    - 1  Emmanuelle Gouillart
    - 1  Keith Goodman
    - 1  Lucas Wiman
-   - 1  Nicolas Pinto
+   - 1  `Nicolas Pinto`_
    - 1  Thouis (Ray) Jones
    - 1  Tim Sheerman-Chase
-   - 1  Virgile
-   - 1  bdholt1
-   - 1  robertlayton
 
 
-.. _changes_0_8:
+.. _changes`__0_8:
 
 0.8
 ===
