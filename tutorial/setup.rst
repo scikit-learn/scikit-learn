@@ -83,7 +83,7 @@ Alternatively you can install the library globally::
 You should also be able to launch the tests from anywhere in the system
 (if nose is installed) with the following::
 
-    % nosetests scikits/learn
+    % nosetests sklearn
 
 The output should end with ``OK`` as in::
 

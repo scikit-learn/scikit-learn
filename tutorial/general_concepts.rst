@@ -96,7 +96,7 @@ belong to one of the target classes:
 ``scikit-learn`` embeds a copy of the iris CSV file along with a
 helper function to load it into numpy arrays::
 
-  >>> from scikits.learn.datasets import load_iris
+  >>> from sklearn.datasets import load_iris
   >>> iris = load_iris()
 
 .. note::
@@ -273,7 +273,7 @@ petals and sepals. This is a classification task, hence we have::
 Once the data has this format it is trivial to train a classifier,
 for instance a support vector machine with a linear kernel::
 
-  >>> from scikits.learn.svm import LinearSVC
+  >>> from sklearn.svm import LinearSVC
   >>> clf = LinearSVC()
 
 .. note::
@@ -336,7 +336,7 @@ data (it already comes as vectors of features):
 Some ``scikit-learn`` classifiers can further predict probabilities
 of the outcome.  This is the case of logistic regression models::
 
-  >>> from scikits.learn.linear_model import LogisticRegression
+  >>> from sklearn.linear_model import LogisticRegression
   >>> clf2 = LogisticRegression().fit(X, y)
   >>> clf2
   LogisticRegression(C=1.0, intercept_scaling=1, dual=False, fit_intercept=True,
@@ -364,24 +364,24 @@ most likely outcome is also available::
 Notable implementations of classifiers
 ++++++++++++++++++++++++++++++++++++++
 
-:``scikits.learn.linear_model.LogisticRegression``:
+:``sklearn.linear_model.LogisticRegression``:
 
   Regularized Logistic Regression based on ``liblinear``
 
-:``scikits.learn.svm.LinearSVC``:
+:``sklearn.svm.LinearSVC``:
 
   Support Vector Machines without kernels based on ``liblinear``
 
-:``scikits.learn.svm.SVC``:
+:``sklearn.svm.SVC``:
 
   Support Vector Machines with kernels based on ``libsvm``
 
-:``scikits.learn.linear_model.SGDClassifier``:
+:``sklearn.linear_model.SGDClassifier``:
 
   Regularized linear models (SVM or logistic regression) using a Stochastic
   Gradient Descent algorithm written in ``Cython``
 
-:``scikits.learn.neighbors.NeighborsClassifier``:
+:``sklearn.neighbors.NeighborsClassifier``:
 
   k-Nearest Neighbors classifier based on the ball tree datastructure for low
   dimensional data and brute force search for high dimensional data
@@ -419,30 +419,30 @@ some input variables (a.k.a. the features, "predictors" or
 "regressors"). Some notable implementations of regression models in
 ``scikit-learn`` include:
 
-:``scikits.learn.linear_model.Ridge``:
+:``sklearn.linear_model.Ridge``:
 
   L2-regularized least squares linear model
 
-:``scikits.learn.linear_model.ElasticNet``:
+:``sklearn.linear_model.ElasticNet``:
 
   L1+L2-regularized least squares linear model trained using
   Coordinate Descent
 
-:``scikits.learn.linear_model.LassoLARS``:
+:``sklearn.linear_model.LassoLARS``:
 
   L1-regularized least squares linear model trained with Least Angle
   Regression
 
-:``scikits.learn.linear_model.SGDRegressor``:
+:``sklearn.linear_model.SGDRegressor``:
 
   L1+L2-regularized least squares linear model trained using
   Stochastic Gradient Descent
 
-:``scikits.learn.linear_model.ARDRegression``:
+:``sklearn.linear_model.ARDRegression``:
 
   Bayesian Automated Relevance Determination regression
 
-:``scikits.learn.svm.SVR``:
+:``sklearn.svm.SVR``:
 
   Non-linear regression using Support Vector Machines (wrapper for
   ``libsvm``)
@@ -490,7 +490,7 @@ so as to project the data onto a base of the top singular vectors.
 If the number of retained components is 2 or 3, PCA can be used to
 visualize the dataset::
 
-  >>> from scikits.learn.decomposition import PCA
+  >>> from sklearn.decomposition import PCA
   >>> pca = PCA(n_components=2, whiten=True).fit(X)
 
 Once fitted, the ``pca`` model exposes the singular vectors in the
@@ -564,7 +564,7 @@ display the following:
 
   If you are interested in a number of components that is much
   smaller than both ``n_samples`` and ``n_features``, consider using
-  ``scikits.learn.decomposition.RandomizedPCA`` instead.
+  ``sklearn.decomposition.RandomizedPCA`` instead.
 
 
 Other applications of dimensionality reduction
@@ -595,7 +595,7 @@ For instance let us reuse the output of the 2D PCA of the iris
 dataset and try to find 3 groups of samples using the simplest
 clustering algorithm (KMeans)::
 
-  >>> from scikits.learn.cluster import KMeans
+  >>> from sklearn.cluster import KMeans
   >>> from numpy.random import RandomState
   >>> rng = RandomState(42)
 
@@ -633,13 +633,13 @@ The following are two well-known clustering algorithms. Like most
 unsupervised learning models in the scikit, they expect the data
 to be clustered to have the shape ``(n_samples, n_features)``:
 
-:``scikits.learn.cluster.KMeans``:
+:``sklearn.cluster.KMeans``:
 
   The simplest, yet effective clustering algorithm. Needs to be
   provided with the number of clusters in advance, and assumes that the
   data is normalized as input (but use a PCA model as preprocessor).
 
-:``scikits.learn.cluster.MeanShift``:
+:``sklearn.cluster.MeanShift``:
 
   Can find better looking clusters than KMeans but is not scalable
   to high number of samples.
@@ -648,11 +648,11 @@ Other clustering algorithms do not work with a data matrix with
 shape ``(n_samples, n_features)`` but directly with a precomputed
 affinity matrix with shape ``(n_samples, n_samples)``:
 
-:``scikits.learn.cluster.AffinityPropagation``:
+:``sklearn.cluster.AffinityPropagation``:
 
   Clustering algorithm based on message passing between data points.
 
-:``scikits.learn.cluster.SpectralClustering``:
+:``sklearn.cluster.SpectralClustering``:
 
   KMeans applied to a projection of the normalized graph Laplacian:
   finds normalized graph cuts if the affinity matrix is interpreted
