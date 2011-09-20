@@ -260,8 +260,14 @@ class CountVectorizer(BaseEstimator):
             vocabulary = dict((t, i) for i, t in enumerate(vocabulary))
         self.vocabulary = vocabulary
         self.dtype = dtype
+
+        if (not np.issubdtype(type(max_df),float) and not np.issubdtype(type(max_df),int)) or max_df<0:
+            raise ValueError("max_df should be a positive float or integer, got %r instead" % max_df)
+        if (not np.issubdtype(type(min_df),float) and not np.issubdtype(type(min_df),int)) or min_df<0:
+            raise ValueError("min_df should be a positive float or integer, got %r instead" % min_df)
         self.max_df = max_df
         self.min_df = min_df
+        
         self.max_features = max_features
 
     def _term_count_dicts_to_matrix(self, term_count_dicts):
@@ -324,8 +330,10 @@ class CountVectorizer(BaseEstimator):
         # document)
         document_counts = Counter()
 
-        max_df = self.max_df
-        min_df = self.min_df
+        #document frequencies into ratios
+        n_doc = len(raw_documents)
+        max_df = self.max_df if np.issubdtype(type(self.max_df),float) else float(self.max_df)/n_doc
+        min_df = self.min_df if np.issubdtype(type(self.min_df),float) else float(self.min_df)/n_doc
         max_features = self.max_features
 
         # TODO: parallelize the following loop with joblib?
@@ -337,24 +345,16 @@ class CountVectorizer(BaseEstimator):
                 term_count_current[term] += 1
                 term_counts[term] += 1
 
-            if (max_df is not None) or (min_df is not None):
+            if min_df>0 or max_df<1:
                 for term in term_count_current:
                     document_counts[term] += 1
 
             term_counts_per_doc.append(term_count_current)
 
-        n_doc = len(term_counts_per_doc)
-
         # filter out uninformative words: terms that occur in all/few documents
-        if max_df is not None:
-            max_doc_count = max_df * n_doc if np.issubdtype(type(max_df),float) else max_df
-        if min_df is not None:
-            min_doc_count = min_df * n_doc if np.issubdtype(type(min_df),float) else min_df
-
-        if (max_df is not None) or (min_df is not None):
+        if min_df>0 or max_df<1:
             remove_words = set(t for t, dc in document_counts.iteritems()
-                               if (max_df is not None and dc > max_doc_count)
-                               or (min_df is not None and dc < min_doc_count))
+                               if dc > max_df * n_doc or dc < min_df * n_doc)
 
         # list the terms that should be part of the vocabulary
         if max_features is None:
