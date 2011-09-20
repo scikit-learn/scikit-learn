@@ -188,15 +188,15 @@ People
 
 38 people contributed to this release.
 
-   - 304  `Olivier Grisel`_
-   - 212  `Vlad Niculae`_
-   - 190  `Lars Buitinck`_
-   - 173  `Gael Varoquaux`_
-   - 149  `Fabian Pedregosa`_ (`INRIA`_, `Parietal Team`_)
+   - 387  `Vlad Niculae`_
+   - 320  `Olivier Grisel`_
+   - 192  `Lars Buitinck`_
+   - 179  `Gael Varoquaux`_
+   - 168  `Fabian Pedregosa`_ (`INRIA`_, `Parietal Team`_)
    - 127  `Jake Vanderplas`_
-   - 119  `Mathieu Blondel`_
-   - 83  `Alexandre Passos`_
-   - 58  `Alexandre Gramfort`_
+   - 120  `Mathieu Blondel`_
+   - 85  `Alexandre Passos`_
+   - 67  `Alexandre Gramfort`_
    - 57  `Peter Prettenhofer`_
    - 56  `Gilles Louppe`_
    - 42  Robert Layton
