@@ -58,8 +58,7 @@ class LinearModel(BaseEstimator, RegressorMixin):
 
         If overwrite_X is True, modifies X in-place.
         """
-        if not overwrite_X:
-            X = as_float_array(X, overwrite_X)
+        X = as_float_array(X, overwrite_X)
 
         if fit_intercept:
             if sp.issparse(X):
