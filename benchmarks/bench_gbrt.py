@@ -18,11 +18,12 @@ def repeat(f):
     return wrapper
 
 
-classification_params = {'loss': 'deviance', 'n_iter': 250,
+classification_params = {'loss': 'deviance', 'n_iter': 500,
                          'min_split': 1, 'max_depth': 1,
-                         'learn_rate': 0.10}
+                         'learn_rate': .20, 'subsample': .5}
 
 
+@repeat
 def bench_random_gaussian(random_state=None):
     rs = check_random_state(random_state)
     shape = (12000, 10)
@@ -33,32 +34,23 @@ def bench_random_gaussian(random_state=None):
     X_train, X_test = X[:2000], X[2000:]
     y_train, y_test = y[:2000], y[2000:]
 
-    stump = DecisionTreeClassifier(max_depth=1)
-    stump.fit(X_train, y_train)
-    error_rate = (1.0 - stump.score(X_test, y_test)) * 100.0
+    ## stump = DecisionTreeClassifier(max_depth=1)
+##     stump.fit(X_train, y_train)
+##     error_rate = (1.0 - stump.score(X_test, y_test)) * 100.0
 
-    print "Stump: %.2f" % error_rate
+##     print "Stump: %.2f" % error_rate
 
-    tree = DecisionTreeClassifier(max_depth=20, min_split=5)
-    tree.fit(X_train, y_train)
-    error_rate = (1.0 - tree.score(X_test, y_test)) * 100.0
+##     tree = DecisionTreeClassifier(max_depth=20, min_split=5)
+##     tree.fit(X_train, y_train)
+##     error_rate = (1.0 - tree.score(X_test, y_test)) * 100.0
 
-    print "Tree: %.2f" % error_rate
-
-    tree = DecisionTreeRegressor(max_depth=20, min_split=5)
-    tree.fit(X_train, y_train)
-    y_pred = tree.predict(X_test)
-    y_pred[y_pred > 0.0] = 1.0
-    y_pred[y_pred <= 0.0] = -1.0
-    error_rate = (1.0 - np.mean(y_pred == y_test)) * 100.0
-
-    print "Tree: %.2f" % error_rate
+##     print "Tree: %.2f" % error_rate
 
     gbrt = GradientBoostingClassifier(**classification_params)
     
     gbrt.fit(X_train, y_train)
     error_rate = (1.0 - gbrt.score(X_test, y_test)) * 100.0
-    print "GBRT: %.2f" % error_rate
+    return error_rate
 
 
 def bench_madelon():
@@ -70,7 +62,7 @@ def bench_madelon():
 
     clf.fit(X_train, y_train)
     error_rate = (1.0 - clf.score(X_test, y_test)) * 100.0
-    print "GBRT: %.2f" % error_rate
+    return error_rate
 
 
 def bench_arcene():
@@ -81,7 +73,7 @@ def bench_arcene():
     clf = GradientBoostingClassifier(**classification_params)
     clf.fit(X_train, y_train)
     error_rate = (1.0 - clf.score(X_test, y_test)) * 100.0
-    print "GBRT: %.2f" % error_rate
+    return error_rate
 
 
 regression_params = {'n_iter': 100, 'max_depth': 4,
@@ -139,13 +131,12 @@ def bench_friedman3(random_state=None):
 
 
 if __name__ == "__main__":
-    #print "Example 10.2"
-    #bench_random_gaussian(13)
+    print "Example 10.2", bench_random_gaussian()
 
-    bench_madelon()
-    bench_arcene()
+    ## print "Madelon", bench_madelon()
+##     print "Arcene", bench_arcene()
 
-    #print "Boston", bench_boston()
-    #print "Friedman#1", bench_friedman1()
-    #print "Friedman#2", bench_friedman2()
-    #print "Friedman#3", bench_friedman3()
+##     print "Boston", bench_boston()
+##     print "Friedman#1", bench_friedman1()
+##     print "Friedman#2", bench_friedman2()
+##     print "Friedman#3", bench_friedman3()
