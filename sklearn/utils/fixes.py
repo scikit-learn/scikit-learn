@@ -1,4 +1,8 @@
-"""Compatibility fixes for older version of python, numpy and scipy"""
+"""Compatibility fixes for older version of python, numpy and scipy
+
+If you add content to this file, please give the version of the package
+at which the fixe is no longer needed.
+"""
 # Authors: Emmanuelle Gouillart <emmanuelle.gouillart@normalesup.org>
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>
 #          Fabian Pedregosa <fpedregosa@acm.org>
@@ -10,6 +14,7 @@ import numpy as np
 from operator import itemgetter
 
 
+# Python < 2.6 does not have product
 try:
     Counter = collections.Counter
 except AttributeError:
