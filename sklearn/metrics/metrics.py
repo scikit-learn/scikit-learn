@@ -569,9 +569,9 @@ def precision_recall_curve(y_true, probas_pred):
     labels = np.unique(y_true)
     if np.all(labels == np.array([-1, 1])):
         # convert {-1, 1} to boolean {0, 1} repr
+        y_true = y_true.copy()
         y_true[y_true == -1] = 0
-        labels = np.array([0, 1])
-    if not np.all(labels == np.array([0, 1])):
+    elif not np.all(labels == np.array([0, 1])):
         raise ValueError("y_true contains non binary labels: %r" % labels)
 
     probas_pred = probas_pred.ravel()
@@ -580,8 +580,7 @@ def precision_recall_curve(y_true, probas_pred):
     precision = np.empty(n_thresholds)
     recall = np.empty(n_thresholds)
     for i, t in enumerate(thresholds):
-        y_pred = np.ones(len(y_true))
-        y_pred[probas_pred < t] = 0
+        y_pred = (probas_pred > t).astype(np.int)
         p, r, _, _ = precision_recall_fscore_support(y_true, y_pred)
         precision[i] = p[1]
         recall[i] = r[1]
