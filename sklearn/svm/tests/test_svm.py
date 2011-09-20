@@ -347,28 +347,26 @@ def test_LinearSVC_parameters():
     Test possible parameter combinations in LinearSVC
     """
     s = 'Not supported set of arguments: '
-    for dual in [True, False]:
-        for loss in ['l1', 'l2', 'lr']:
-            for penalty in ['l1', 'l2']:
-                try:
-                    svm.LinearSVC(penalty=penalty, loss=loss, dual=dual)
-                except ValueError as err:
-                    if loss == 'l1' and penalty == 'l1':
-                        assert(err.args[0] == s +
-                                "The combination of penalty='l1' "
-                                "and loss='l1' is not supported.")
-                    elif loss == 'l1' and penalty == 'l2' and dual == False:
-                        assert(err.args[0] == s +
-                                "loss='l2' and penalty='l1' is "
-                                 "only supported when dual='true'.")
-                    elif penalty == 'l1' and dual == True:
-                        assert(err.args[0] == s +
-                                "penalty='l1' is only supported "
-                                "when dual='false'.")
-                    else:
-                        print(err, loss, penalty, dual)
-                        raise ValueError("LinearSVC parameters not "
-                                                "correctly parsed")
+    # generate list of possible parameter combinations
+    params = [(dual, loss, penalty) for dual in [True, False]
+            for loss in ['l1', 'l2', 'lr'] for penalty in ['l1', 'l2']]
+
+    for dual, loss, penalty in params:
+        try:
+            svm.LinearSVC(penalty=penalty, loss=loss, dual=dual)
+        except ValueError as err:
+            if loss == 'l1' and penalty == 'l1':
+                assert(err.args[0] == s + "The combination of penalty='l1' "
+                        "and loss='l1' is not supported.")
+            elif loss == 'l1' and penalty == 'l2' and dual == False:
+                assert(err.args[0] == s + "loss='l2' and penalty='l1' is "
+                         "only supported when dual='true'.")
+            elif penalty == 'l1' and dual == True:
+                assert(err.args[0] == s + "penalty='l1' is only supported "
+                        "when dual='false'.")
+            else:
+                print(err, loss, penalty, dual)
+                raise ValueError("LinearSVC parameters not correctly parsed")
 
 
 def test_LinearSVC():
