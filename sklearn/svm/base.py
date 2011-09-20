@@ -341,17 +341,17 @@ class BaseLibLinear(BaseEstimator):
             solver_type = "P%s_L%s_D%d" % (
                 self.penalty.upper(), self.loss.upper(), int(self.dual))
         if not solver_type in self._solver_type_dict:
-            if self.penalty.upper() == 'L1' and self.loss.upper == 'L1':
-                error_string = "The combination of penalty='l1' \
-                        and loss='l1' is not supported."
-            elif self.penalty.upper() == 'L1' and self.loss.upper == 'L2':
+            if self.penalty.upper() == 'L1' and self.loss.upper() == 'L1':
+                error_string = ("The combination of penalty='l1' "
+                    "and loss='l1' is not supported.")
+            elif self.penalty.upper() == 'L2' and self.loss.upper() == 'L1':
                 # this has to be in primal
-                error_string = "loss='l2' and penalty='l1' is \
-                        only supported when dual='true'."
+                error_string = ("loss='l2' and penalty='l1' is "
+                    "only supported when dual='true'.")
             else:
                 # only PL1 in dual remains
-                error_string = "penalty='l1' is only supported \
-                        when dual='false'."
+                error_string = ("penalty='l1' is only supported "
+                    "when dual='false'.")
             raise ValueError('Not supported set of arguments: '
                              + error_string)
         return self._solver_type_dict[solver_type]
