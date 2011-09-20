@@ -25,7 +25,8 @@ class BaseRandomizedLinearModel(LinearModel):
 
     def __init__(self, jacknife_fraction=.75, n_resampling=200,
                  selection_threshold=.5, fit_intercept=True, verbose=False,
-                 normalize=True, refit=True, random_state=None, n_jobs=1):
+                 normalize=True, refit=True, random_state=None, n_jobs=1,
+                 pre_dispatch='3*n_jobs'):
         self.jacknife_fraction = jacknife_fraction
         self.n_resampling = n_resampling
         self.fit_intercept = fit_intercept
@@ -35,6 +36,7 @@ class BaseRandomizedLinearModel(LinearModel):
         self.random_state = random_state
         self.n_jobs = n_jobs
         self.selection_threshold = selection_threshold
+        self.pre_dispatch = pre_dispatch
 
     def fit(self, X, y):
         """Fit the model using X, y as training data.
@@ -70,7 +72,9 @@ class BaseRandomizedLinearModel(LinearModel):
         estimator_func, params = self._mk_estimator_and_params(X, y)
 
         self.scores_ = np.zeros(n_features)
-        for active_set in Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
+        for active_set in Parallel(n_jobs=self.n_jobs,
+                                verbose=self.verbose,
+                                pre_dispatch=self.pre_dispatch)(
                 delayed(estimator_func)(X, y,
                         weights=a * random_state.random_integers(0,
                                                     1, size=(n_features,)),
@@ -190,6 +194,24 @@ class RandomizedLasso(BaseRandomizedLinearModel):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
+    pre_dispatch: int, or string, optional
+        Controls the number of jobs that get dispatched during parallel
+        execution. Reducing this number can be useful to avoid an
+        explosion of memory consumption when more jobs get dispatched
+        than CPUs can process. This parameter can be:
+
+            - None, in which case all the jobs are immediatly
+              created and spawned. Use this for lightweight and
+              fast-running jobs, to avoid delays due to on-demand
+              spawning of the jobs
+
+            - An int, giving the exact number of total jobs that are
+              spawned
+
+            - A string, giving an expression as a function of n_jobs,
+              as in '2*n_jobs'
+
+
     Attributes
     ----------
     TODO
@@ -214,7 +236,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
                  normalize=True, refit=True, precompute='auto',
                  max_iter=500,
                  eps=np.finfo(np.float).eps, random_state=None,
-                 n_jobs=1):
+                 n_jobs=1, pre_dispatch='3*n_jobs'):
         self.alpha = alpha
         self.a = a
         self.jacknife_fraction = jacknife_fraction
@@ -229,6 +251,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
         self.random_state = random_state
         self.n_jobs = n_jobs
         self.selection_threshold = selection_threshold
+        self.pre_dispatch = pre_dispatch
 
     def _mk_estimator_and_params(self, X, y):
         assert self.precompute in (True, False, None, 'auto')
@@ -266,7 +289,7 @@ class RandomizedLogistic(BaseRandomizedLinearModel):
                  fit_intercept=True, verbose=False,
                  normalize=True, refit=True,
                  random_state=None,
-                 n_jobs=1):
+                 n_jobs=1, pre_dispatch='3*n_jobs'):
         self.C = C
         self.a = a
         self.jacknife_fraction = jacknife_fraction
@@ -279,6 +302,7 @@ class RandomizedLogistic(BaseRandomizedLinearModel):
         self.random_state = random_state
         self.n_jobs = n_jobs
         self.selection_threshold = selection_threshold
+        self.pre_dispatch = pre_dispatch
 
     def _mk_estimator_and_params(self, X, y):
         params = dict(C=self.C, tol=self.tol,
