@@ -47,4 +47,4 @@ __all__ = ['check_build', 'cross_validation', 'cluster', 'covariance',
            'metrics', 'mixture', 'naive_bayes', 'neighbors', 'pipeline',
            'preprocessing', 'qda', 'svm', 'test', 'clone', 'pls']
 
-__version__ = '0.9-git'
+__version__ = '0.10-git'
