@@ -329,11 +329,8 @@ class CountVectorizer(BaseEstimator):
         # term counts across entire corpus (count each term maximum once per
         # document)
         document_counts = Counter()
-
-        #document frequencies into ratios
-        n_doc = len(raw_documents)
-        max_df = self.max_df if np.issubdtype(type(self.max_df),float) else float(self.max_df)/n_doc
-        min_df = self.min_df if np.issubdtype(type(self.min_df),float) else float(self.min_df)/n_doc
+        max_df = self.max_df
+        min_df = self.min_df
         max_features = self.max_features
 
         # TODO: parallelize the following loop with joblib?
@@ -345,13 +342,17 @@ class CountVectorizer(BaseEstimator):
                 term_count_current[term] += 1
                 term_counts[term] += 1
 
-            if min_df>0 or max_df<1:
+            if min_df>0:
                 for term in term_count_current:
                     document_counts[term] += 1
 
             term_counts_per_doc.append(term_count_current)
 
+        n_doc = len(term_counts_per_doc)
+
         # filter out uninformative words: terms that occur in all/few documents
+        max_df = max_df if np.issubdtype(type(max_df),float) else float(max_df)/n_doc
+        min_df = min_df if np.issubdtype(type(min_df),float) else float(min_df)/n_doc
         if min_df>0 or max_df<1:
             remove_words = set(t for t, dc in document_counts.iteritems()
                                if dc > max_df * n_doc or dc < min_df * n_doc)
