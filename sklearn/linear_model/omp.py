@@ -13,7 +13,6 @@ from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
 from ..utils.arrayfuncs import solve_triangular
-from ..utils import as_float_array
 
 premature = """ Orthogonal matching pursuit ended prematurely due to linear
 dependence in the dictionary. The requested precision might not have been met.
@@ -506,11 +505,11 @@ class OrthogonalMatchingPursuit(LinearModel):
         X = np.atleast_2d(X)
         y = np.atleast_1d(y)
         n_features = X.shape[1]
-        X = as_float_array(X, self.overwrite_X)
 
         X, y, X_mean, y_mean, X_std = self._center_data(X, y,
                                                         self.fit_intercept,
-                                                        self.normalize)
+                                                        self.normalize,
+                                                        self.overwrite_X)
 
         if self.n_nonzero_coefs == None and self.tol is None:
             self.n_nonzero_coefs = int(0.1 * n_features)
