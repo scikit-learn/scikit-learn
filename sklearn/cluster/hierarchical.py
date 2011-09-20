@@ -19,7 +19,7 @@ from ..base import BaseEstimator
 from ..utils._csgraph import cs_graph_components
 from ..externals.joblib import Memory
 
-from . import _inertia
+from . import _hierarchical
 from ._feature_agglomeration import AgglomerationTransform
 
 
@@ -118,8 +118,8 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
     moments[0][:n_samples] = 1
     moments[1][:n_samples] = X
     inertia = np.empty(len(coord_row), dtype=np.float)
-    _inertia.compute_ward_dist(moments[0], moments[1],
-                               coord_row, coord_col, inertia)
+    _hierarchical.compute_ward_dist(moments[0], moments[1],
+                             coord_row, coord_col, inertia)
     inertia = zip(inertia, coord_row, coord_col)
     heapify(inertia)
 
@@ -163,7 +163,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
         coord_row.fill(k)
         ini = np.empty(len(coord_row), dtype=np.float)
 
-        _inertia.compute_ward_dist(moments[0], moments[1],
+        _hierarchical.compute_ward_dist(moments[0], moments[1],
                                    coord_row, coord_col, ini)
         for tupl in itertools.izip(ini, coord_row, coord_col):
             heappush(inertia, tupl)
@@ -177,38 +177,6 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
 
 ###############################################################################
 # Functions for cutting  hierarchical clustering tree
-
-def _hc_get_descendent(ind, children, n_leaves):
-    """
-    Function returning all the descendent leaves of a set of nodes in the tree.
-    WARNING: this function modifies the 'ind' parameter inplace
-
-    Parameters
-    ----------
-    ind : list of int
-        A list that indicates the nodes for which we want the descendents.
-
-    children : list of pairs. Length of n_nodes
-        List of the children of each nodes.
-        This is not defined for leaves.
-
-    n_leaves : int
-        Number of leaves.
-
-    Returns
-    -------
-    descendent : list of int
-    """
-    descendent = []
-    while len(ind) != 0:
-        i = ind.pop()
-        if i < n_leaves:
-            descendent.append(i)
-        else:
-            ci = children[i - n_leaves]
-            ind.extend((ci[0], ci[1]))
-    return descendent
-
 
 def _hc_cut(n_clusters, children, n_leaves):
     """Function cutting the ward tree for a given number of clusters.
@@ -237,6 +205,7 @@ def _hc_cut(n_clusters, children, n_leaves):
     # the max of the nodes: the first element is always the smallest
     # We use negated indices as heaps work on smallest elements, and we
     # are interested in largest elements
+    # children[-1] is the root of the tree
     nodes = [-(max(children[-1]) + 1)]
     for i in range(n_clusters - 1):
         # As we have a heap, nodes[0] is the smallest element
@@ -246,7 +215,8 @@ def _hc_cut(n_clusters, children, n_leaves):
         heappushpop(nodes, -these_children[1])
     label = np.zeros(n_leaves, dtype=np.int)
     for i, node in enumerate(nodes):
-        label[_hc_get_descendent([-node], children, n_leaves)] = i
+        label[_hierarchical._hc_get_descendent(-node,
+                                children, n_leaves)] = i
     return label
 
 
