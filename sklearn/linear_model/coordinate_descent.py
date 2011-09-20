@@ -128,7 +128,8 @@ class ElasticNet(LinearModel):
         X_init = X
         X, y, X_mean, y_mean, X_std = self._center_data(X, y,
                                                         self.fit_intercept,
-                                                        self.normalize)
+                                                        self.normalize,
+                                                        overwrite_X=True)
         precompute = self.precompute
         if X_init is not X and hasattr(precompute, '__array__'):
             precompute = 'auto'  # recompute Gram
@@ -399,7 +400,8 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
     X_init = X
     X, y, X_mean, y_mean, X_std = LinearModel._center_data(X, y,
                                                            fit_intercept,
-                                                           normalize)
+                                                           normalize,
+                                                           overwrite_X=True)
     X = np.asfortranarray(X)  # make data contiguous in memory
     n_samples, n_features = X.shape
 

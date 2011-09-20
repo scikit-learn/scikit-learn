@@ -15,7 +15,7 @@ from scipy import linalg, interpolate
 from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
-from ..utils import arrayfuncs, as_float_array
+from ..utils import arrayfuncs
 from ..utils import deprecated
 from ..cross_validation import check_cv
 from ..externals.joblib import Parallel, delayed
@@ -407,11 +407,10 @@ class Lars(LinearModel):
         X = np.atleast_2d(X)
         y = np.atleast_1d(y)
 
-        X = as_float_array(X, self.overwrite_X)
-
         X, y, X_mean, y_mean, X_std = self._center_data(X, y,
                                                         self.fit_intercept,
-                                                        self.normalize)
+                                                        self.normalize,
+                                                        self.overwrite_X)
         alpha = getattr(self, 'alpha', 0.)
         if hasattr(self, 'n_nonzero_coefs'):
             alpha = 0.  # n_nonzero_coefs parametrization takes priority
@@ -951,10 +950,10 @@ class LassoLarsIC(LassoLars):
         X = np.atleast_2d(X)
         y = np.atleast_1d(y)
 
-        X = as_float_array(X, self.overwrite_X)
         X, y, Xmean, ymean, Xstd = LinearModel._center_data(X, y,
                                                     self.fit_intercept,
-                                                    normalize=self.normalize)
+                                                    self.normalize,
+                                                    self.overwrite_X)
         max_iter = self.max_iter
 
         Gram = self._get_gram()
