@@ -86,7 +86,8 @@ Changelog
 
    - Faster mean shift by Conrad Lee
 
-   - New `Bootstrap`, `ShuffleSplit` and various other improvements in cross validation schemes by `Olivier Grisel`_ and `Gael Varoquaux`_
+   - New `Bootstrap`, `ShuffleSplit` and various other improvements in cross validation
+     schemes by `Olivier Grisel`_ and `Gael Varoquaux`_
 
    - Adjusted Rand index and V-Measure clustering evaluation metrics by `Olivier Grisel`_
 
@@ -102,7 +103,8 @@ Changelog
 
    - Scalability improvements to :func:`metrics.metrics.roc_curve` by Olivier Hervieu
 
-   - Distance helper functions :func:`metrics.pairwise.pairwise_distances` and :func:`metrics.pairwise.pairwise_kernels` by Robert Layton
+   - Distance helper functions :func:`metrics.pairwise.pairwise_distances`
+     and :func:`metrics.pairwise.pairwise_kernels` by Robert Layton
 
 
 API changes summary
@@ -170,8 +172,8 @@ version 0.8:
 
   - All distance metrics and kernels in ``sklearn.metrics.pairwise`` now have a Y
     parameter, which by default is None. If not given, the result is the distance
-    (or kernel similarity) between each sample in Y. If given, the pairwise
-    distance (or kernel similarity) between samples in X to Y are given.
+    (or kernel similarity) between each sample in Y. If given, the result is the
+    pairwise distance (or kernel similarity) between samples in X to Y.
 
   - ``sklearn.metrics.pairwise.l1_distance`` is now called ``manhattan_distance``,
     and by default returns the pairwise distance. For the component wise distance,
