@@ -59,6 +59,7 @@ from sklearn.svm import LinearSVC
 from sklearn.linear_model import SGDClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble.gradient_boosting import GradientBoostingClassifier
 from sklearn import metrics
 
 ######################################################################
@@ -174,6 +175,10 @@ sgd_err, sgd_train_time, sgd_test_time = benchmark(SGDClassifier(
 cart_err, cart_train_time, cart_test_time = benchmark(
     DecisionTreeClassifier(min_split=5, max_depth=100))
 
+gb_err, gb_train_time, gb_test_time = benchmark(
+    GradientBoostingClassifier(min_split=5, max_depth=3, n_iter=300,
+                               learn_rate=0.1, subsample=0.5))
+
 ######################################################################
 ## Print classification performance
 print("")
@@ -196,5 +201,6 @@ print_row("Liblinear", liblinear_train_time, liblinear_test_time,
 print_row("GaussianNB", gnb_train_time, gnb_test_time, gnb_err)
 print_row("SGD", sgd_train_time, sgd_test_time, sgd_err)
 print_row("CART", cart_train_time, cart_test_time, cart_err)
+print_row("GB", gb_train_time, gb_test_time, gb_err)
 print("")
 print("")
