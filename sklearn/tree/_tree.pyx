@@ -440,13 +440,13 @@ cdef class RegressionCriterion(Criterion):
                 self.mean_right - y_idx) / \
                 <double>(self.n_samples - self.n_left - 1)
 
-            self.n_right -= 1
-            self.n_left += 1
-
             self.var_left = self.sq_sum_left - \
                 self.n_left * (self.mean_left * self.mean_left)
             self.var_right = self.sq_sum_right - \
                 self.n_right * (self.mean_right * self.mean_right)
+
+            self.n_right -= 1
+            self.n_left += 1
 
         return self.n_left
 
