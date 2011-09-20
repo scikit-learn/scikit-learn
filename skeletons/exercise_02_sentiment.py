@@ -18,7 +18,9 @@ from sklearn import metrics
 if __name__ == "__main__":
     # NOTE: we put the following in a 'if __name__ == "__main__"' protected
     # block to be able to use a multi-core grid search that also works under
-    # Windows: see http://docs.python.org/library/multiprocessing.html#windows
+    # Windows, see: http://docs.python.org/library/multiprocessing.html#windows
+    # The multiprocessing module is used as the backend of joblib.Parallel
+    # that is used when n_jobs != 1 in GridSearchCV
 
     # the training data folder must be passed as first argument
     movie_reviews_data_folder = sys.argv[1]
