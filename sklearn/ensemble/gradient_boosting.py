@@ -241,8 +241,7 @@ class BaseGradientBoosting(BaseEstimator):
             #print "_" * 80
             #print "Iteration %d" % i
             # subsampling
-            #sample_mask = np.random.rand(n_samples) > (1.0 - self.subsample)
-            sample_mask = np.ones((n_samples,), dtype=np.bool)
+            sample_mask = np.random.rand(n_samples) > (1.0 - self.subsample)
 
             residual = loss.negative_gradient(y, y_pred)
 
