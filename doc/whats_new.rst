@@ -168,6 +168,15 @@ version 0.8:
     LassoLARSCV, etc.) have been renamed to
     ``sklearn.linear_model.Lars()``.
 
+  - All distance metrics and kernels in ``sklearn.metrics.pairwise`` now have a Y
+    parameter, which by default is None. If not given, the result is the distance
+    (or kernel similarity) between each sample in Y. If given, the pairwise
+    distance (or kernel similarity) between samples in X to Y are given.
+
+  - ``sklearn.metrics.pairwise.l1_distance`` is now called ``manhattan_distance``,
+    and by default returns the pairwise distance. For the component wise distance,
+    set the parameter ``sum_over_features`` to ``False``.
+
 Backward compatibilty package aliases and other deprecated classes and
 functions will be removed in version 0.11.
 
