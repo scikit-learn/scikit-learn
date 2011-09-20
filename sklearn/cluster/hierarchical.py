@@ -129,7 +129,6 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
 
     # recursive merge loop
     for k in range(n_samples, n_nodes):
-
         # identify the merge
         while True:
             node = heapq.heappop(inertia)
@@ -174,6 +173,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
 def _hc_get_descendent(ind, children, n_leaves):
     """
     Function returning all the descendent leaves of a set of nodes in the tree.
+    WARNING: this function modifies the 'ind' parameter inplace 
 
     Parameters
     ----------
@@ -226,13 +226,22 @@ def _hc_cut(n_clusters, children, n_leaves):
     active_nodes : list of int
                 index of the nodes kept for the labeling
     """
-    nodes = [np.max(children[-1]) + 1]
+    assert n_clusters <= n_leaves, \
+                'Cannot extract more clusters than samples'
+    # In this function, we stores nodes as a heap to avoid recomputing
+    # the max of the nodes: the first element is always the smallest
+    # We use negated indices as heaps work on smallest elements, and we
+    # are interested in largest elements
+    nodes = [-(max(children[-1]) + 1)]
     for i in range(n_clusters - 1):
-        nodes.extend(children[np.max(nodes) - n_leaves])
-        nodes.remove(np.max(nodes))
+        # As we have a heap, nodes[0] is the smallest element 
+        these_children = children[-nodes[0] - n_leaves]
+        # Insert the 2 children and remove the largest node
+        heapq.heappush(nodes, -these_children[0])
+        heapq.heappushpop(nodes, -these_children[1])
     label = np.zeros(n_leaves, dtype=np.int)
     for i, node in enumerate(nodes):
-        label[_hc_get_descendent([node], children, n_leaves)] = i
+        label[_hc_get_descendent([-node], children, n_leaves)] = i
     return label
 
 
