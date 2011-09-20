@@ -5,7 +5,9 @@
 from __future__ import division
 import numpy as np
 
-from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
+from ..base import BaseEstimator
+from ..base import ClassifierMixin
+from ..base import RegressorMixin
 from ..utils import check_random_state
 
 from ..tree.tree import _build_tree
@@ -238,8 +240,7 @@ class BaseGradientBoosting(BaseEstimator):
 
         # perform boosting iterations
         for i in xrange(self.n_iter):
-            #print "_" * 80
-            #print "Iteration %d" % i
+
             # subsampling
             sample_mask = np.random.rand(n_samples) > (1.0 - self.subsample)
 
@@ -272,9 +273,76 @@ class BaseGradientBoosting(BaseEstimator):
 
 
 class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
+    """Gradient Boosting for classification. GB builds an additive model in a
+    forward stage-wise fashion; it allows for the optimization of
+    arbitrary differentiable loss functions. In each stage a regression
+    tree is fit on the negative gradient of binomial or multinomial
+    deviance.
+
+    Parameters
+    ----------
+    n_iter : int
+        The number of boosting stages to perform. Gradient boosting
+        is fairly robust to over-fitting so a large number usually
+        results in better performance.
+
+    learn_rate : float, optional (default=0.1)
+        learning rate shrinks the contribution of each tree by `learn_rate`.
+        There is a trade-off between learn_rate and n_iter (see Discussion).
+
+    max_depth : integer, optional (default=3)
+        maximum depth of the individual regression trees. The maximum
+        depth limits the number of nodes in the tree. Tune this parameter
+        for best performance; the best value depends on the interaction
+        of the input variables.
+
+    min_split : integer, optional (default=1)
+        minimum number of samples required at any leaf node. Use larger
+        value if number of samples is large.
+
+    subsample : float, optional (default=1.0)
+        The fraction of samples to be used for fitting the individual base
+        learners. If smaller than 1.0 this results in Stochastic Gradient
+        Boosting. `subsample` interacts with the parameter `n_iter`
+        (see Discussion).
+
+    Examples
+    --------
+    >>> samples = [[0, 0, 2], [1, 0, 0]]
+    >>> labels = [0, 1]
+    >>> from sklearn.ensemble import GradientBoostingRegressor
+    >>> gb = GradientBoostingRegressor(10)
+    >>> gb.fit(samples, labels)
+    GradientBoostingRegressor()
+    >>> print gb.predict([[0, 0, 0]])
+    [1]
+
+    See also
+    --------
+    DecisionTreeRegressor, RandomForestRegressor
+
+    Discussion
+    ----------
+    The optimal algorithm for a given dataset is a complicated choice, and
+    depends on a number of factors:
+    * n_iter vs. learn_rate
+        TODO
+    * n_iter vs. subsample
+        TODO
+
+    References
+    ----------
+    J. Friedman, Greedy Function Approximation: A Gradient Boosting
+    Machine, The Annals of Statistics, Vol. 29, No. 5, 2001.
+
+    J. Friedman, Stochastic Gradient Boosting, 1999
+
+    T. Hastie, R. Tibshirani and J. Friedman.
+    Elements of Statistical Learning Ed. 2, Springer, 2009.
+    """
 
     def __init__(self, loss='deviance', learn_rate=0.1, n_iter=100,
-                 subsample=1.0, min_split=5, max_depth=4,
+                 subsample=1.0, min_split=1, max_depth=3,
                  init=None, random_state=None):
 
         super(GradientBoostingClassifier, self).__init__(
@@ -306,9 +374,81 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
 
 class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
+    """Gradient Boosting for regression. GB builds an additive model in a
+    forward stage-wise fashion; it allows for the optimization of
+    arbitrary differentiable loss functions. In each stage a regression
+    tree is fit on the negative gradient of the given loss function.
+
+    Parameters
+    ----------
+    n_iter : int
+        The number of boosting stages to perform. Gradient boosting
+        is fairly robust to over-fitting so a large number usually
+        results in better performance.
+
+    learn_rate : float, optional (default=0.1)
+        learning rate shrinks the contribution of each tree by `learn_rate`.
+        There is a trade-off between learn_rate and n_iter (see Discussion).
+
+    loss : {'ls', 'lad'}, optional
+        loss function to be optimized. 'ls' refers to least squares
+        regression. 'lad' (least absolute deviation) is a highly robust
+        loss function soley based on order information of the input
+        variables.
+
+    max_depth : integer, optional (default=3)
+        maximum depth of the individual regression trees. The maximum
+        depth limits the number of nodes in the tree. Tune this parameter
+        for best performance; the best value depends on the interaction
+        of the input variables.
+
+    min_split : integer, optional (default=1)
+        minimum number of samples required at any leaf node. Use larger
+        value if number of samples is large.
+
+    subsample : float, optional (default=1.0)
+        The fraction of samples to be used for fitting the individual base
+        learners. If smaller than 1.0 this results in Stochastic Gradient
+        Boosting. `subsample` interacts with the parameter `n_iter`
+        (see Discussion).
+
+    Examples
+    --------
+    >>> samples = [[0, 0, 2], [1, 0, 0]]
+    >>> labels = [0, 1]
+    >>> from sklearn.ensemble import GradientBoostingRegressor
+    >>> gb = GradientBoostingRegressor(10)
+    >>> gb.fit(samples, labels)
+    GradientBoostingRegressor()
+    >>> print gb.predict([[0, 0, 0]])
+    [1]
+
+    See also
+    --------
+    DecisionTreeRegressor, RandomForestRegressor
+
+    Discussion
+    ----------
+    The optimal algorithm for a given dataset is a complicated choice, and
+    depends on a number of factors:
+    * n_iter vs. learn_rate
+        TODO
+    * n_iter vs. subsample
+        TODO
+
+    References
+    ----------
+    J. Friedman, Greedy Function Approximation: A Gradient Boosting
+    Machine, The Annals of Statistics, Vol. 29, No. 5, 2001.
+
+    J. Friedman, Stochastic Gradient Boosting, 1999
+
+    T. Hastie, R. Tibshirani and J. Friedman.
+    Elements of Statistical Learning Ed. 2, Springer, 2009.
+    """
 
     def __init__(self, loss='ls', learn_rate=0.1, n_iter=100, subsample=1.0,
-                 min_split=5, max_depth=4, init=None, random_state=None):
+                 min_split=1, max_depth=3, init=None, random_state=None):
 
         super(GradientBoostingRegressor, self).__init__(
             loss, learn_rate, n_iter, min_split, max_depth, init, subsample,
