@@ -50,8 +50,8 @@ the data and fitting a model and computing the score 5 consecutive times
 The mean score and the standard deviation of the score estimate are hence given
 by::
 
-  >>> print "Accurracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() / 2)
-  Accurracy: 0.97 (+/- 0.02)
+  >>> print "Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() / 2)
+  Accuracy: 0.97 (+/- 0.02)
 
 By default, the score computed at each CV iteration is the ``score``
 method of the estimator. It is possible to change this by passing a custom
