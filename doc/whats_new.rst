@@ -113,6 +113,11 @@ Changelog
 
    - :class:`Mini-Batch K-Means <cluster.MiniBatchKMeans>` by Nelle Varoquaux and Peter Prettenhofer.
 
+   - :ref:`mldata` utilities by Pietro Berkes.
+
+   - :ref:`olivetti_faces` by `David Warde-Farley`_.
+
+
 API changes summary
 -------------------
 
@@ -736,3 +741,5 @@ of commits):
 .. _Parietal Team: http://parietal.saclay.inria.fr/
 
 .. _Lars Buitinck: https://github.com/larsmans
+
+.. _David Warde-Farley: http://www-etud.iro.umontreal.ca/~wardefar/
