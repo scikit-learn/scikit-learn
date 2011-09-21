@@ -342,9 +342,8 @@ class CountVectorizer(BaseEstimator):
                 term_count_current[term] += 1
                 term_counts[term] += 1
 
-            if min_df>0:
-                for term in term_count_current:
-                    document_counts[term] += 1
+            for term in term_count_current:
+                document_counts[term] += 1
 
             term_counts_per_doc.append(term_count_current)
 
@@ -353,6 +352,7 @@ class CountVectorizer(BaseEstimator):
         # filter out uninformative words: terms that occur in all/few documents
         max_df = max_df if np.issubdtype(type(max_df),float) else float(max_df)/n_doc
         min_df = min_df if np.issubdtype(type(min_df),float) else float(min_df)/n_doc
+        remove_words = set()
         if min_df>0 or max_df<1:
             remove_words = set(t for t, dc in document_counts.iteritems()
                                if dc > max_df * n_doc or dc < min_df * n_doc)
