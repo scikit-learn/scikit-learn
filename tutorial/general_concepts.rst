@@ -644,9 +644,14 @@ to be clustered to have the shape ``(n_samples, n_features)``:
   Can find better looking clusters than KMeans but is not scalable
   to high number of samples.
 
-Other clustering algorithms do not work with a data matrix with
-shape ``(n_samples, n_features)`` but directly with a precomputed
-affinity matrix with shape ``(n_samples, n_samples)``:
+:``sklearn.cluster.DBSCAN``:
+  Can detect irregularly shaped clusters based on density, i.e. sparse regions
+  in the input space are likely to become inter-cluster boundaries. Can also
+  detect outliers (samples that are not part of a cluster).
+
+Other clustering algorithms do not work with a data array of shape
+``(n_samples, n_features)`` but directly with a precomputed affinity matrix
+of shape ``(n_samples, n_samples)``:
 
 :``sklearn.cluster.AffinityPropagation``:
 
@@ -658,10 +663,11 @@ affinity matrix with shape ``(n_samples, n_samples)``:
   finds normalized graph cuts if the affinity matrix is interpreted
   as an adjacency matrix of a graph.
 
+``DBSCAN`` can work with either an array of samples or an affinity matrix.
 
 Hierarchical clustering is being implemented in a branch that is
 likely to be merged into master before the release of ``scikit-learn``
-0.8.
+0.9.
 
 
 Applications of clustering
