@@ -465,11 +465,6 @@ class BaseLibLinear(BaseEstimator):
         else:
             return ret
 
-    def predict_proba(self, T):
-        # only available for logistic regression
-        raise NotImplementedError(
-                'liblinear does not provide this functionality')
-
     def _get_bias(self):
         if self.fit_intercept:
             return self.intercept_scaling
