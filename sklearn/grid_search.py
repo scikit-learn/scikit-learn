@@ -324,6 +324,8 @@ class GridSearchCV(BaseEstimator):
         self.best_estimator = best_estimator
         if hasattr(best_estimator, 'predict'):
             self.predict = best_estimator.predict
+        if hasattr(best_estimator, 'predict_proba'):
+            self.predict = best_estimator.predict_proba
         if hasattr(best_estimator, 'score'):
             self.score = best_estimator.score
 
