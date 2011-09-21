@@ -324,7 +324,7 @@ class Lars(LinearModel):
         calculations. If set to 'auto' let us decide. The Gram
         matrix can also be passed as argument.
 
-    overwrite_X : boolean, optionnal
+    overwrite_X : boolean, optional
         If True, X will not be copied
         Default is False
 
@@ -452,7 +452,7 @@ class LassoLars(Lars):
     normalize : boolean, optional
         If True, the regressors X are normalized
 
-    overwrite_X : boolean, optionnal
+    overwrite_X : boolean, optional
         If True, X will not be copied
         Default is False
 
@@ -632,7 +632,7 @@ class LarsCV(LARS):
     normalize : boolean, optional
         If True, the regressors X are normalized
 
-    overwrite_X : boolean, optionnal
+    overwrite_X : boolean, optional
         If True, X will not be copied
         Default is False
 
@@ -790,7 +790,7 @@ class LassoLarsCV(LarsCV):
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems.
 
-    overwrite_X : boolean, optionnal
+    overwrite_X : boolean, optional
         If True, X will not be copied
         Default is False
 
@@ -862,7 +862,7 @@ class LassoLarsIC(LassoLars):
     normalize : boolean, optional
         If True, the regressors X are normalized
 
-    overwrite_X : boolean, optionnal
+    overwrite_X : boolean, optional
         Default is False.
         If True, X will be overwritten
 

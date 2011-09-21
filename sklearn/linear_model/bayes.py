@@ -68,7 +68,7 @@ class BayesianRidge(LinearModel):
         If True, the regressors X are normalized
         Default is False
 
-    overwrite_X : boolean, optionnal
+    overwrite_X : boolean, optional
         If True, X will not be copied
         Default is False
 
@@ -285,7 +285,7 @@ class ARDRegression(LinearModel):
     normalize : boolean, optional
         If True, the regressors X are normalized
 
-    overwrite_X : boolean, optionnal
+    overwrite_X : boolean, optional
         If True, X will not be copied
         Default is False
 
