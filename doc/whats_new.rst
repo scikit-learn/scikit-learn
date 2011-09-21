@@ -111,6 +111,7 @@ Changelog
    - Distance helper functions :func:`metrics.pairwise.pairwise_distances`
      and :func:`metrics.pairwise.pairwise_kernels` by Robert Layton
 
+   - :class:`Mini-Batch K-Means <cluster.MiniBatchKMeans>` by Nelle Varoquaux and Peter Prettenhofer.
 
 API changes summary
 -------------------
