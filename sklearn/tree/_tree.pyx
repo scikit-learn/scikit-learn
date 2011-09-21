@@ -378,13 +378,13 @@ cdef class RegressionCriterion(Criterion):
                 self.mean_right - y_idx) / \
                 <double>(self.n_samples - self.n_left - 1)
 
-            self.n_right -= 1
-            self.n_left += 1
-
             self.var_left = self.sq_sum_left - \
                 self.n_left * (self.mean_left * self.mean_left)
             self.var_right = self.sq_sum_right - \
                 self.n_right * (self.mean_right * self.mean_right)
+
+            self.n_right -= 1
+            self.n_left += 1
 
         return self.n_left
 
@@ -400,8 +400,7 @@ cdef class MSE(RegressionCriterion):
 
     cdef double eval(self):
         assert (self.n_left + self.n_right) == self.n_samples
-        return (self.n_left / <double>self.n_samples) * self.var_left + \
-               (self.n_right / <double>self.n_samples) * self.var_right
+        return self.var_left + self.var_right
 
 
 cdef int smallest_sample_larger_than(int sample_idx, DTYPE_t *X_i,
