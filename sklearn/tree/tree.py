@@ -256,14 +256,15 @@ def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
     return recursive_partition(X, X_argsorted, y, sample_mask, 0)
 
 
-def _apply_tree(node, X):
-    """Applies the decision tree to X."""
-
-    if node.is_leaf:
-        return node.value
-    if X[node.feature] < node.threshold:
-        return _apply_tree(node.left, X)
-    return _apply_tree(node.right, X)
+def _apply_tree(node, x):
+    """Applies the decision tree to sample `x`."""
+    while node is not None:
+        if node.is_leaf:
+            return node.value
+        if x[node.feature] < node.threshold:
+            node = node.left
+        else:
+            node = node.right
 
 
 class BaseDecisionTree(BaseEstimator):
@@ -639,8 +640,8 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     >>> cross_val_score(regressor, boston.data, boston.target, cv=10)
     ...                    # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     ...
-    array([ 0.40...,  0.32..., -0.09...,  0.45...,  0.78...,
-            0.57...,  0.42...,  0.19..., -1.44..., -2.15...])
+    array([ 0.61..., 0.57..., -0.34..., 0.41..., 0.75...,
+            0.07..., 0.26..., 0.33..., -1.42..., -1.77...])
 
     """
 
