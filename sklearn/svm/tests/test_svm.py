@@ -353,11 +353,14 @@ def test_LinearSVC_parameters():
 
     for dual, loss, penalty in params:
             if loss == 'l1' and penalty == 'l1':
-                assert_raises(ValueError,svm.LinearSVC,penalty=penalty, loss=loss, dual=dual)
+                assert_raises(ValueError, svm.LinearSVC, penalty=penalty,
+                        loss=loss, dual=dual)
             elif loss == 'l1' and penalty == 'l2' and dual == False:
-                assert_raises(ValueError,svm.LinearSVC,penalty=penalty, loss=loss, dual=dual)
+                assert_raises(ValueError, svm.LinearSVC, penalty=penalty,
+                        loss=loss, dual=dual)
             elif penalty == 'l1' and dual == True:
-                assert_raises(ValueError,svm.LinearSVC,penalty=penalty, loss=loss, dual=dual)
+                assert_raises(ValueError, svm.LinearSVC, penalty=penalty,
+                        loss=loss, dual=dual)
             else:
                 svm.LinearSVC(penalty=penalty, loss=loss, dual=dual)
 
