@@ -352,21 +352,14 @@ def test_LinearSVC_parameters():
             for loss in ['l1', 'l2', 'lr'] for penalty in ['l1', 'l2']]
 
     for dual, loss, penalty in params:
-        try:
-            svm.LinearSVC(penalty=penalty, loss=loss, dual=dual)
-        except ValueError as err:
             if loss == 'l1' and penalty == 'l1':
-                assert(err.args[0] == s + "The combination of penalty='l1' "
-                        "and loss='l1' is not supported.")
+                assert_raises(ValueError,svm.LinearSVC,penalty=penalty, loss=loss, dual=dual)
             elif loss == 'l1' and penalty == 'l2' and dual == False:
-                assert(err.args[0] == s + "loss='l2' and penalty='l1' is "
-                         "only supported when dual='true'.")
+                assert_raises(ValueError,svm.LinearSVC,penalty=penalty, loss=loss, dual=dual)
             elif penalty == 'l1' and dual == True:
-                assert(err.args[0] == s + "penalty='l1' is only supported "
-                        "when dual='false'.")
+                assert_raises(ValueError,svm.LinearSVC,penalty=penalty, loss=loss, dual=dual)
             else:
-                print(err, loss, penalty, dual)
-                raise ValueError("LinearSVC parameters not correctly parsed")
+                svm.LinearSVC(penalty=penalty, loss=loss, dual=dual)
 
 
 def test_LinearSVC():
