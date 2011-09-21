@@ -50,7 +50,7 @@ class ElasticNet(LinearModel):
     max_iter: int, optional
         The maximum number of iterations
 
-    overwrite_X : boolean, optionnal
+    overwrite_X : boolean, optional
         If True, X will not be copied
         Default is False
 
@@ -199,7 +199,7 @@ class Lasso(ElasticNet):
     normalize : boolean, optional
         If True, the regressors X are normalized
 
-    overwrite_X : boolean, optionnal
+    overwrite_X : boolean, optional
         If True, X will not be copied
         Default is False
 
@@ -305,7 +305,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     normalize : boolean, optional
         If True, the regressors X are normalized
 
-    overwrite_X : boolean, optionnal
+    overwrite_X : boolean, optional
         If True, X will not be copied
         Default is False
 
@@ -377,7 +377,7 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
     normalize : boolean, optional
         If True, the regressors X are normalized
 
-    overwrite_X : boolean, optionnal
+    overwrite_X : boolean, optional
         If True, X will not be copied
         Default is False
 
