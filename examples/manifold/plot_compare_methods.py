@@ -41,7 +41,7 @@ except:
     pl.scatter(X[:, 0], X[:, 2], c=color, cmap=pl.cm.Spectral)
 
 methods = ['standard', 'ltsa', 'hessian', 'modified']
-labels = ['LLE', 'LTSA', 'Hessian LLE', 'Modified LLE']    
+labels = ['LLE', 'LTSA', 'Hessian LLE', 'Modified LLE']
 
 for i, method in enumerate(methods):
     t0 = time()

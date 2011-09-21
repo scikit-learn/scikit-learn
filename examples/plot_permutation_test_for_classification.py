@@ -20,7 +20,7 @@ import numpy as np
 import pylab as pl
 
 from sklearn.svm import SVC
-from sklearn.cross_val import StratifiedKFold, permutation_test_score
+from sklearn.cross_validation import StratifiedKFold, permutation_test_score
 from sklearn import datasets
 from sklearn.metrics import zero_one_score
 

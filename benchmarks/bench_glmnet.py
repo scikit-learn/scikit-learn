@@ -63,7 +63,7 @@ if __name__ == '__main__':
         print '=================='
 
         X, Y, coef_ = make_regression(
-            n_samples=(i * step) + n_test_samples, n_features=n_features, 
+            n_samples=(i * step) + n_test_samples, n_features=n_features,
             noise=0.1, n_informative=n_informative, coef=True)
 
         X_test = X[-n_test_samples:]
@@ -103,7 +103,7 @@ if __name__ == '__main__':
         n_informative = n_features / 10
 
         X, Y, coef_ = make_regression(
-            n_samples=(i * step) + n_test_samples, n_features=n_features, 
+            n_samples=(i * step) + n_test_samples, n_features=n_features,
             noise=0.1, n_informative=n_informative, coef=True)
 
         X_test = X[-n_test_samples:]

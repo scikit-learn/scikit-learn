@@ -82,7 +82,7 @@ def plot_ic_criterion(model, name, color):
     alpha_ = model.alpha_
     alphas_ = model.alphas_
     criterion_ = model.criterion_
-    pl.plot(-np.log10(alphas_), criterion_, '--', color=color, 
+    pl.plot(-np.log10(alphas_), criterion_, '--', color=color,
             linewidth=3, label='%s criterion' % name)
     pl.axvline(-np.log10(alpha_), color=color,
               linewidth=3, label='alpha: %s estimate' % name)

@@ -10,7 +10,6 @@ import numpy as np
 from scipy import linalg
 
 from .base import LinearModel
-from ..utils import as_float_array
 from ..utils.extmath import fast_logdet
 
 
@@ -69,7 +68,7 @@ class BayesianRidge(LinearModel):
         If True, the regressors X are normalized
         Default is False
 
-    overwrite_X : boolean, optionnal
+    overwrite_X : boolean, optional
         If True, X will not be copied
         Default is False
 
@@ -120,7 +119,7 @@ class BayesianRidge(LinearModel):
                 fit_intercept=True, normalize=False,
                 overwrite_X=False, verbose=False):
         self.n_iter = n_iter
-        self.tol = tol 
+        self.tol = tol
         self.alpha_1 = alpha_1
         self.alpha_2 = alpha_2
         self.lambda_1 = lambda_1
@@ -147,9 +146,8 @@ class BayesianRidge(LinearModel):
         """
         X = np.asanyarray(X, dtype=np.float)
         y = np.asanyarray(y, dtype=np.float)
-        X = as_float_array(X, self.overwrite_X)
         X, y, X_mean, y_mean, X_std = self._center_data(X, y,
-                self.fit_intercept, self.normalize)
+                self.fit_intercept, self.normalize, self.overwrite_X)
         n_samples, n_features = X.shape
 
         ### Initialization of the values of the parameters
@@ -287,7 +285,7 @@ class ARDRegression(LinearModel):
     normalize : boolean, optional
         If True, the regressors X are normalized
 
-    overwrite_X : boolean, optionnal
+    overwrite_X : boolean, optional
         If True, X will not be copied
         Default is False
 
@@ -378,10 +376,8 @@ class ARDRegression(LinearModel):
         n_samples, n_features = X.shape
         coef_ = np.zeros(n_features)
 
-        X = as_float_array(X, self.overwrite_X)
-
         X, y, X_mean, y_mean, X_std = self._center_data(X, y, self.fit_intercept,
-                self.normalize)
+                self.normalize, self.overwrite_X)
 
         ### Launch the convergence loop
         keep_lambda = np.ones(n_features, dtype=bool)

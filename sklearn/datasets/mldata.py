@@ -80,7 +80,7 @@ def fetch_mldata(dataname, target_name='label', data_name='data',
     Load the 'iris' dataset from mldata.org:
     >>> from sklearn.datasets.mldata import fetch_mldata
     >>> iris = fetch_mldata('iris')
-    >>> print iris.target[0]
+    >>> iris.target[0]
     1
     >>> print iris.data[0]
     [-0.555556  0.25     -0.864407 -0.916667]

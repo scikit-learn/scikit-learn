@@ -1,7 +1,8 @@
 import numpy as np
 
-from numpy.testing import assert_almost_equal
+from numpy.testing import assert_almost_equal, assert_array_almost_equal
 from sklearn import neighbors, manifold
+from sklearn.manifold.locally_linear import barycenter_kneighbors_graph
 from sklearn.utils.fixes import product
 
 eigen_solvers = ['dense', 'arpack']
@@ -15,6 +16,25 @@ def assert_lower(a, b, details=None):
 
 
 #----------------------------------------------------------------------
+# Test utility routines
+def test_barycenter_kneighbors_graph():
+    X = np.array([[0, 1], [1.01, 1.], [2, 0]])
+
+    A = barycenter_kneighbors_graph(X, 1)
+    assert_array_almost_equal(
+        A.todense(),
+        [[ 0.,  1.,  0.],
+         [ 1.,  0.,  0.],
+         [ 0.,  1.,  0.]])
+
+    A = barycenter_kneighbors_graph(X, 2)
+    # check that columns sum to one
+    assert_array_almost_equal(np.sum(A.todense(), 1), np.ones((3, 1)))
+    pred = np.dot(A.todense(), X)
+    assert np.linalg.norm(pred - X) / X.shape[0] < 1
+
+
+#----------------------------------------------------------------------
 # Test LLE by computing the reconstruction error on some manifolds.
 
 def test_lle_simple_grid():
@@ -25,8 +45,7 @@ def test_lle_simple_grid():
     clf = manifold.LocallyLinearEmbedding(n_neighbors=5, out_dim=out_dim)
     tol = .1
 
-    N = neighbors.kneighbors_graph(
-        X, clf.n_neighbors, mode='barycenter').todense()
+    N = barycenter_kneighbors_graph(X, clf.n_neighbors).todense()
     reconstruction_error = np.linalg.norm(np.dot(N, X) - X, 'fro')
     assert_lower(reconstruction_error, tol)
 
@@ -56,13 +75,12 @@ def test_lle_manifold():
     clf = manifold.LocallyLinearEmbedding(n_neighbors=5, out_dim=out_dim)
     tol = 1.5
 
-    N = neighbors.kneighbors_graph(X, clf.n_neighbors,
-                                   mode='barycenter').toarray()
+    N = barycenter_kneighbors_graph(X, clf.n_neighbors).toarray()
     reconstruction_error = np.linalg.norm(np.dot(N, X) - X)
     assert_lower(reconstruction_error, tol)
 
     for solver in eigen_solvers:
-        clf.set_params(eigen_solver=solver)        
+        clf.set_params(eigen_solver=solver)
         clf.fit(X)
         assert clf.embedding_.shape[1] == out_dim
         reconstruction_error = np.linalg.norm(
