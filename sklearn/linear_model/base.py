@@ -14,11 +14,13 @@ Generalized Linear models.
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import BaseEstimator, RegressorMixin, ClassifierMixin
+from ..base import BaseEstimator
+from ..base import RegressorMixin
+from ..base import ClassifierMixin
+from ..base import TransformerMixin
 from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
 from ..utils.extmath import safe_sparse_dot
-from ..utils import safe_asanyarray
-from ..utils import as_float_array
+from ..utils import as_float_array, safe_asanyarray
 
 
 ###
@@ -49,15 +51,15 @@ class LinearModel(BaseEstimator, RegressorMixin):
         return safe_sparse_dot(X, self.coef_.T) + self.intercept_
 
     @staticmethod
-    def _center_data(X, y, fit_intercept, normalize=False):
+    def _center_data(X, y, fit_intercept, normalize=False, overwrite_X=False):
         """
         Centers data to have mean zero along axis 0. This is here because
         nearly all linear models will want their data to be centered.
 
-        WARNING : This function modifies X inplace :
-            Use sklearn.utils.as_float_array before to convert X to np.float.
-            You can specify an argument overwrite_X (default is False).
+        If overwrite_X is True, modifies X in-place.
         """
+        X = as_float_array(X, overwrite_X)
+
         if fit_intercept:
             if sp.issparse(X):
                 X_mean = np.zeros(X.shape[1])
@@ -137,10 +139,8 @@ class LinearRegression(LinearModel):
         X = np.asanyarray(X)
         y = np.asanyarray(y)
 
-        X = as_float_array(X, self.overwrite_X)
-
         X, y, X_mean, y_mean, X_std = self._center_data(X, y,
-                self.fit_intercept, self.normalize)
+                self.fit_intercept, self.normalize, self.overwrite_X)
 
         self.coef_, self.residues_, self.rank_, self.singular_ = \
                 np.linalg.lstsq(X, y)
@@ -527,7 +527,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         return np.dot(X, self.coef_) + self.intercept_
 
 
-class CoefSelectTransformerMixin(object):
+class CoefSelectTransformerMixin(TransformerMixin):
     """Mixin for linear models that can find sparse solutions.
     """
 
@@ -539,4 +539,4 @@ class CoefSelectTransformerMixin(object):
             # multi-class case
             coef = np.mean(self.coef_, axis=0)
 
-        return X[:, coef <= threshold]
+        return X[:, coef > threshold]

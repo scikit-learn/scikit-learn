@@ -49,7 +49,6 @@ print __doc__
 
 from pprint import pprint
 from time import time
-import os
 import logging
 
 from sklearn.datasets import fetch_20newsgroups

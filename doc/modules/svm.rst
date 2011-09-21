@@ -116,7 +116,7 @@ classifiers are constructed and each one trains data from two classes::
     >>> Y = [0, 1, 2, 3]
     >>> clf = svm.SVC()
     >>> clf.fit(X, Y)
-    SVC(C=1.0, coef0=0.0, degree=3, gamma=0.25, kernel='rbf', probability=False,
+    SVC(C=1.0, coef0=0.0, degree=3, gamma=1.0, kernel='rbf', probability=False,
       shrinking=True, tol=0.001)
     >>> dec = clf.decision_function([[1]])
     >>> dec.shape[1] # 4 classes: 4*3/2 = 6

@@ -15,9 +15,9 @@ from scipy import linalg, interpolate
 from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
-from ..utils import arrayfuncs, as_float_array
+from ..utils import arrayfuncs
 from ..utils import deprecated
-from ..cross_val import check_cv
+from ..cross_validation import check_cv
 from ..externals.joblib import Parallel, delayed
 
 
@@ -69,7 +69,10 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
     See also
     --------
-    :ref:`LassoLars`, :ref:`Lars`
+    :ref:`LassoLars`
+    :ref:`Lars`
+    decomposition.sparse_encode
+    decomposition.sparse_encode_parallel
 
     Notes
     ------
@@ -348,8 +351,8 @@ class Lars(LinearModel):
     >>> clf.fit([[-1, 1], [0, 0], [1, 1]], [-1.1111, 0, -1.1111]) # doctest: +ELLIPSIS
     Lars(eps=..., fit_intercept=True, n_nonzero_coefs=1,
        normalize=True, overwrite_X=False, precompute='auto', verbose=False)
-    >>> print clf.coef_ # doctest: +ELLIPSIS
-    [ 0. ... -1.1111...]
+    >>> print clf.coef_ # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    [ 0. -1.11...]
 
     References
     ----------
@@ -358,6 +361,7 @@ class Lars(LinearModel):
     See also
     --------
     lars_path, LassoLARS, LarsCV, LassoLarsCV
+    decomposition.sparse_encode, decomposition.sparse_encode_parallel
     """
     def __init__(self, fit_intercept=True, verbose=False, normalize=True,
                  precompute='auto', n_nonzero_coefs=500,
@@ -403,11 +407,10 @@ class Lars(LinearModel):
         X = np.atleast_2d(X)
         y = np.atleast_1d(y)
 
-        X = as_float_array(X, self.overwrite_X)
-
         X, y, X_mean, y_mean, X_std = self._center_data(X, y,
                                                         self.fit_intercept,
-                                                        self.normalize)
+                                                        self.normalize,
+                                                        self.overwrite_X)
         alpha = getattr(self, 'alpha', 0.)
         if hasattr(self, 'n_nonzero_coefs'):
             alpha = 0.  # n_nonzero_coefs parametrization takes priority
@@ -485,7 +488,7 @@ class LassoLars(Lars):
     LassoLars(alpha=0.01, eps=..., fit_intercept=True,
          max_iter=500, normalize=True, overwrite_X=False, precompute='auto',
          verbose=False)
-    >>> print clf.coef_ # doctest: +ELLIPSIS
+    >>> print clf.coef_ # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     [ 0.         -0.963257...]
 
     References
@@ -642,7 +645,7 @@ class LarsCV(LARS):
         Maximum number of iterations to perform.
 
     cv : crossvalidation generator, optional
-        see sklearn.cross_val module. If None is passed, default to
+        see sklearn.cross_validation module. If None is passed, default to
         a 5-fold strategy
 
     n_jobs : integer, optional
@@ -775,7 +778,7 @@ class LassoLarsCV(LarsCV):
         Maximum number of iterations to perform.
 
     cv : crossvalidation generator, optional
-        see sklearn.cross_val module. If None is passed, default to
+        see sklearn.cross_validation module. If None is passed, default to
         a 5-fold strategy
 
     n_jobs : integer, optional
@@ -837,11 +840,11 @@ class LassoLarsCV(LarsCV):
 class LassoLarsIC(LassoLars):
     """Lasso model fit with Lars using BIC or AIC for model selection
 
-    AIC is the Akaike information criterion and BIC is the Bayes Information
-    criterion. Such citeria are useful to select the value of the
-    regularization parameter by making a trade-off between
-    the goodness of fit and the complexity of the model. A good model
-    should explain well the data while being simple.
+    AIC is the Akaike information criterion and BIC is the Bayes
+    Information criterion. Such criteria are useful to select the value
+    of the regularization parameter by making a trade-off between the
+    goodness of fit and the complexity of the model. A good model should
+    explain well the data while being simple.
 
     Parameters
     ----------
@@ -896,8 +899,8 @@ class LassoLarsIC(LassoLars):
     LassoLarsIC(criterion='bic', eps=..., fit_intercept=True,
           max_iter=500, normalize=True, overwrite_X=False, precompute='auto',
           verbose=False)
-    >>> print clf.coef_ # doctest: +ELLIPSIS
-    [ 0. ...  -1.1111...]
+    >>> print clf.coef_ # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    [ 0.  -1.11...]
 
     References
     ----------
@@ -947,10 +950,10 @@ class LassoLarsIC(LassoLars):
         X = np.atleast_2d(X)
         y = np.atleast_1d(y)
 
-        X = as_float_array(X, self.overwrite_X)
         X, y, Xmean, ymean, Xstd = LinearModel._center_data(X, y,
                                                     self.fit_intercept,
-                                                    normalize=self.normalize)
+                                                    self.normalize,
+                                                    self.overwrite_X)
         max_iter = self.max_iter
 
         Gram = self._get_gram()

@@ -1,14 +1,156 @@
 """Utilities to evaluate the clustering performance of models
 
 Functions named as *_score return a scalar value to maximize: the higher the
-better
+better.
 """
 
 # Authors: Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD Style.
 
 from math import log
+from scipy.misc import comb
+
 import numpy as np
+
+
+# the exact version if faster for k == 2: use it by default globally in
+# this module instead of the float approximate variant
+def comb2(n):
+    return comb(n, 2, exact=1)
+
+
+def check_clusterings(labels_true, labels_pred):
+    """Check that the two clusterings matching 1D integer arrays"""
+    labels_true = np.asanyarray(labels_true)
+    labels_pred = np.asanyarray(labels_pred)
+
+    # input checks
+    if labels_true.ndim != 1:
+        raise ValueError(
+            "labels_true must be 1D: shape is %r" % (labels_true.shape,))
+    if labels_pred.ndim != 1:
+        raise ValueError(
+            "labels_pred must be 1D: shape is %r" % (labels_pred.shape,))
+    if labels_true.shape != labels_pred.shape:
+        raise ValueError(
+            "labels_true and labels_pred must have same size, got %d and %d"
+            % (labels_true.shape[0], labels_pred.shape[0]))
+    return labels_true, labels_pred
+
+
+# clustering measures
+
+def adjusted_rand_score(labels_true, labels_pred):
+    """Rand index adjusted for chance
+
+    The Rand Index computes a similarity measure between two clusterings
+    by considering all pairs of samples and counting pairs that are
+    assigned in the same or different clusters in the predicted and
+    true clusterings.
+
+    The raw RI score is then "adjusted for chance" into the ARI score
+    using the following scheme::
+
+        ARI = (RI - Expected_RI) / (max(RI) - Expected_RI)
+
+    The adjusted Rand index is thus ensured to have a value close to
+    0.0 for random labeling independently of the number of clusters and
+    samples and exactly 1.0 when the clusterings are identical (up to
+    a permutation).
+
+    ARI is a symmetric measure::
+
+        adjusted_rand_score(a, b) == adjusted_rand_score(b, a)
+
+    Parameters
+    ----------
+    labels_true : int array, shape = [n_samples]
+        Ground truth class labels to be used as a reference
+
+    labels_pred : array, shape = [n_samples]
+        Cluster labels to evaluate
+
+    Returns
+    -------
+    ari: float
+       Similarity score between -1.0 and 1.0. Random labelings have an ARI
+       close to 0.0. 1.0 stands for perfect match.
+
+    Example
+    -------
+
+    Perfectly maching labelings have a score of 1 even
+
+      >>> from sklearn.metrics.cluster import adjusted_rand_score
+      >>> adjusted_rand_score([0, 0, 1, 1], [0, 0, 1, 1])
+      1.0
+      >>> adjusted_rand_score([0, 0, 1, 1], [1, 1, 0, 0])
+      1.0
+
+    Labelings that assign all classes members to the same clusters
+    are complete be not always pure, hence penalized::
+
+      >>> adjusted_rand_score([0, 0, 1, 2], [0, 0, 1, 1])  # doctest: +ELLIPSIS
+      0.57...
+
+    ARI is symmetric, so labelings that have pure clusters with members
+    coming from the same classes but unnecessary splits are penalized::
+
+      >>> adjusted_rand_score([0, 0, 1, 1], [0, 0, 1, 2])  # doctest: +ELLIPSIS
+      0.57...
+
+    If classes members are completely split across different clusters, the
+    assignment is totally incomplete, hence the ARI is very low::
+
+      >>> adjusted_rand_score([0, 0, 0, 0], [0, 1, 2, 3])
+      0.0
+
+    References
+    ----------
+    - L. Hubert and P. Arabie, Comparing Partitions,
+      Journal of Classification 1985
+      http://www.springerlink.com/content/x64124718341j1j0/
+
+    - http://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index
+
+    See also
+    --------
+    - ami_score: Adjusted Mutual Information (TODO: implement me!)
+
+    """
+    labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
+    n_samples = labels_true.shape[0]
+
+    classes = np.unique(labels_true)
+    clusters = np.unique(labels_pred)
+
+    # Special limit cases: no clustering since the data is not split.
+    # This is a perfect match hence return 1.0.
+    if (classes.shape[0] == clusters.shape[0] == 1
+        or classes.shape[0] == clusters.shape[0] == 0):
+        return 1.0
+
+    # The cluster and class ids are not necessarily consecutive integers
+    # starting at 0 hence build a map
+    class_idx = dict((k, v) for v, k in enumerate(classes))
+    cluster_idx = dict((k, v) for v, k in enumerate(clusters))
+
+    # Build the contingency table
+    n_classes = classes.shape[0]
+    n_clusters = clusters.shape[0]
+    contingency = np.zeros((n_classes, n_clusters), dtype=np.int)
+
+    for c, k in zip(labels_true, labels_pred):
+        contingency[class_idx[c], cluster_idx[k]] += 1
+
+    # Compute the ARI using the contingency data
+    sum_comb_c = sum(comb2(n_c) for n_c in contingency.sum(axis=1))
+    sum_comb_k = sum(comb2(n_k) for n_k in contingency.sum(axis=0))
+
+    sum_comb = sum(comb2(n_ij) for n_ij in contingency.flatten())
+    prod_comb = (sum_comb_c * sum_comb_k) / float(comb(n_samples, 2))
+    mean_comb = (sum_comb_k + sum_comb_c) / 2.
+    return ((sum_comb - prod_comb) / (mean_comb - prod_comb))
 
 
 def homogeneity_completeness_v_measure(labels_true, labels_pred):
@@ -60,21 +202,7 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred):
     - completeness_score
     - v_measure_score
     """
-    labels_true = np.asanyarray(labels_true)
-    labels_pred = np.asanyarray(labels_pred)
-
-    # input checks
-    if labels_true.ndim != 1:
-        raise ValueError(
-            "labels_true must be 1D: shape is %r" % (labels_true.shape,))
-    if labels_pred.ndim != 1:
-        raise ValueError(
-            "labels_pred must be 1D: shape is %r" % (labels_pred.shape,))
-    if labels_true.shape != labels_pred.shape:
-        raise ValueError(
-            "labels_true and labels_pred must have same size, got %d and %d"
-            % (labels_true.shape[0], labels_pred.shape[0]))
-
+    labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
     n_samples = labels_true.shape[0]
 
     entropy_K_given_C = 0.
@@ -88,10 +216,10 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred):
     n_C = [float(np.sum(labels_true == c)) for c in classes]
     n_K = [float(np.sum(labels_pred == k)) for k in clusters]
 
-    for i, _ in enumerate(classes):
+    for i in xrange(len(classes)):
         entropy_C -= n_C[i] / n_samples * log(n_C[i] / n_samples)
 
-    for j, _ in enumerate(clusters):
+    for j in xrange(len(clusters)):
         entropy_K -= n_K[j] / n_samples * log(n_K[j] / n_samples)
 
     for i, c in enumerate(classes):

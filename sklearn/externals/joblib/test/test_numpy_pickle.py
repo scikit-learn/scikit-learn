@@ -113,7 +113,7 @@ def test_numpy_persistence():
         for item in obj_:
             yield nose.tools.assert_true, isinstance(item, np.ndarray)
         # And finally, check that all the values are equal.
-        yield nose.tools.assert_true, np.all(np.array(obj) == 
+        yield nose.tools.assert_true, np.all(np.array(obj) ==
                                              np.array(obj_))
 
 
