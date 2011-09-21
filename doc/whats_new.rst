@@ -16,8 +16,13 @@ This release also includes the dictionary-learning work developed by
 
 
 .. |banner1| image:: ./auto_examples/manifold/images/thumb/plot_compare_methods.png
-   :target: auto_examples/applications/face_recognition.html
+   :target: auto_examples/manifold/plot_compare_methods.html
 
+.. |banner2| image:: ./auto_examples/linear_model/images/thumb/plot_omp.png
+   :target: auto_examples/linear_model/plot_omp.html
+
+.. |banner3| image:: ./auto_examples/decomposition/images/thumb/plot_kernel_pca.png
+   :target: auto_examples/decomposition/plot_kernel_pca.html
 
 .. |center-div| raw:: html
 
@@ -28,7 +33,7 @@ This release also includes the dictionary-learning work developed by
     </div>
 
 
-|center-div| |banner1| |end-div|
+|center-div| |banner2| |banner1| |banner3| |end-div|
 
 Changelog
 ---------
@@ -58,8 +63,7 @@ Changelog
      `Mathieu Blondel`_ and `Lars Buitinck`_
 
    - Documentation improvements: thumbnails in
-     :ref:`example gallery <_examples-index>` by `Fabian Pedregosa`_,
-     extended documentation for modules feature_selection, (...).
+     :ref:`example gallery <examples-index>` by `Fabian Pedregosa`_.
 
    - Important bugfixes in :ref:`svm` module (segfaults, bad
      performance) by `Fabian Pedregosa`_.
@@ -86,8 +90,9 @@ Changelog
 
    - Faster mean shift by Conrad Lee
 
-   - New `Bootstrap`, `ShuffleSplit` and various other improvements in cross validation
-     schemes by `Olivier Grisel`_ and `Gael Varoquaux`_
+   - New :ref:`Bootstrap`, :ref:`ShuffleSplit` and various other
+     improvements in cross validation schemes by `Olivier Grisel`_ and
+     `Gael Varoquaux`_
 
    - Adjusted Rand index and V-Measure clustering evaluation metrics by `Olivier Grisel`_
 
@@ -95,13 +100,13 @@ Changelog
 
    - Added 2D-patch extractor utilites in the :ref:`feature_extraction` module by `Vlad Niculae`_
 
-   - Implementation of :class:`linear_model.least_angle.LassoLarsCV`
+   - Implementation of :class:`linear_model.LassoLarsCV`
      (cross-validated Lasso solver using the Lars algorithm) and
-     :class:`linear_model.least_angle.LassoLarsIC` (BIC/AIC model
+     :class:`linear_model.LassoLarsIC` (BIC/AIC model
      selection in Lars) by `Gael Varoquaux`_ 
      and `Alexandre Gramfort`_
 
-   - Scalability improvements to :func:`metrics.metrics.roc_curve` by Olivier Hervieu
+   - Scalability improvements to :func:`metrics.roc_curve` by Olivier Hervieu
 
    - Distance helper functions :func:`metrics.pairwise.pairwise_distances`
      and :func:`metrics.pairwise.pairwise_kernels` by Robert Layton
