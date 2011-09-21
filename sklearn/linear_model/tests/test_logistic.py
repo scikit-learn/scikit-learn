@@ -69,9 +69,9 @@ def test_nan():
 
     Regression test for Issue #252: fit used to go into an infinite loop.
     """
-    Xnan = np.array(X)
+    Xnan = np.array(X, dtype=np.float64)
     Xnan[0, 1] = np.nan
-    logistic.LogisticRegression().fit(X, Y1)
+    logistic.LogisticRegression().fit(Xnan, Y1)
 
 
 def test_transform():
