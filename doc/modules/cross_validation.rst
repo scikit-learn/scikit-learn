@@ -276,6 +276,7 @@ Example of Leave-2-Label Out::
   [False False  True  True False False] [ True  True False False  True  True]
   [ True  True False False False False] [False False  True  True  True  True]
 
+.. _ShuffleSplit:
 
 Random permutations cross-validation a.k.a. Shuffle & Split
 -----------------------------------------------------------
@@ -310,6 +311,7 @@ Here is a usage example::
 validation that allows a finer control on the number of iterations and
 the proportion of samples in on each side of the train / test split.
 
+.. _Bootstrap:
 
 Bootstrapping cross-validation
 ------------------------------

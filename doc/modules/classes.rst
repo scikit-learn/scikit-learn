@@ -482,6 +482,13 @@ Feature Selection
    feature_selection.rfe.RFECV
 
 
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   feature_selection.univariate_selection.chi2
+
+
 .. _feature_extraction:
 
 
