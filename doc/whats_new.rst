@@ -16,8 +16,13 @@ This release also includes the dictionary-learning work developed by
 
 
 .. |banner1| image:: ./auto_examples/manifold/images/thumb/plot_compare_methods.png
-   :target: auto_examples/applications/face_recognition.html
+   :target: auto_examples/manifold/plot_compare_methods.html
 
+.. |banner2| image:: ./auto_examples/linear_model/images/thumb/plot_omp.png
+   :target: auto_examples/linear_model/plot_omp.html
+
+.. |banner3| image:: ./auto_examples/decomposition/images/thumb/plot_kernel_pca.png
+   :target: auto_examples/decomposition/plot_kernel_pca.html
 
 .. |center-div| raw:: html
 
@@ -28,7 +33,7 @@ This release also includes the dictionary-learning work developed by
     </div>
 
 
-|center-div| |banner1| |end-div|
+|center-div| |banner2| |banner1| |banner3| |end-div|
 
 Changelog
 ---------
@@ -58,8 +63,7 @@ Changelog
      `Mathieu Blondel`_ and `Lars Buitinck`_
 
    - Documentation improvements: thumbnails in
-     :ref:`example gallery <_examples-index>` by `Fabian Pedregosa`_,
-     extended documentation for modules feature_selection, (...).
+     :ref:`example gallery <examples-index>` by `Fabian Pedregosa`_.
 
    - Important bugfixes in :ref:`svm` module (segfaults, bad
      performance) by `Fabian Pedregosa`_.
@@ -86,7 +90,9 @@ Changelog
 
    - Faster mean shift by Conrad Lee
 
-   - New `Bootstrap`, `ShuffleSplit` and various other improvements in cross validation schemes by `Olivier Grisel`_ and `Gael Varoquaux`_
+   - New :ref:`Bootstrap`, :ref:`ShuffleSplit` and various other
+     improvements in cross validation schemes by `Olivier Grisel`_ and
+     `Gael Varoquaux`_
 
    - Adjusted Rand index and V-Measure clustering evaluation metrics by `Olivier Grisel`_
 
@@ -94,13 +100,16 @@ Changelog
 
    - Added 2D-patch extractor utilites in the :ref:`feature_extraction` module by `Vlad Niculae`_
 
-   - Implementation of :class:`linear_model.least_angle.LassoLarsCV`
+   - Implementation of :class:`linear_model.LassoLarsCV`
      (cross-validated Lasso solver using the Lars algorithm) and
-     :class:`linear_model.least_angle.LassoLarsIC` (BIC/AIC model
+     :class:`linear_model.LassoLarsIC` (BIC/AIC model
      selection in Lars) by `Gael Varoquaux`_ 
      and `Alexandre Gramfort`_
 
-   - Scalability improvements to :func:`metrics.metrics.roc_curve` by Olivier Hervieu
+   - Scalability improvements to :func:`metrics.roc_curve` by Olivier Hervieu
+
+   - Distance helper functions :func:`metrics.pairwise.pairwise_distances`
+     and :func:`metrics.pairwise.pairwise_kernels` by Robert Layton
 
 
 API changes summary
@@ -166,6 +175,15 @@ version 0.8:
     LassoLARSCV, etc.) have been renamed to
     ``sklearn.linear_model.Lars()``.
 
+  - All distance metrics and kernels in ``sklearn.metrics.pairwise`` now have a Y
+    parameter, which by default is None. If not given, the result is the distance
+    (or kernel similarity) between each sample in Y. If given, the result is the
+    pairwise distance (or kernel similarity) between samples in X to Y.
+
+  - ``sklearn.metrics.pairwise.l1_distance`` is now called ``manhattan_distance``,
+    and by default returns the pairwise distance. For the component wise distance,
+    set the parameter ``sum_over_features`` to ``False``.
+
 Backward compatibilty package aliases and other deprecated classes and
 functions will be removed in version 0.11.
 
@@ -175,15 +193,15 @@ People
 
 38 people contributed to this release.
 
-   - 304  `Olivier Grisel`_
-   - 212  `Vlad Niculae`_
-   - 190  `Lars Buitinck`_
-   - 173  `Gael Varoquaux`_
-   - 149  `Fabian Pedregosa`_ (`INRIA`_, `Parietal Team`_)
+   - 387  `Vlad Niculae`_
+   - 320  `Olivier Grisel`_
+   - 192  `Lars Buitinck`_
+   - 179  `Gael Varoquaux`_
+   - 168  `Fabian Pedregosa`_ (`INRIA`_, `Parietal Team`_)
    - 127  `Jake Vanderplas`_
-   - 119  `Mathieu Blondel`_
-   - 83  `Alexandre Passos`_
-   - 58  `Alexandre Gramfort`_
+   - 120  `Mathieu Blondel`_
+   - 85  `Alexandre Passos`_
+   - 67  `Alexandre Gramfort`_
    - 57  `Peter Prettenhofer`_
    - 56  `Gilles Louppe`_
    - 42  Robert Layton

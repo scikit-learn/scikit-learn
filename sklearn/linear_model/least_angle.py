@@ -15,7 +15,7 @@ from scipy import linalg, interpolate
 from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
-from ..utils import arrayfuncs, as_float_array
+from ..utils import arrayfuncs
 from ..utils import deprecated
 from ..cross_validation import check_cv
 from ..externals.joblib import Parallel, delayed
@@ -351,8 +351,8 @@ class Lars(LinearModel):
     >>> clf.fit([[-1, 1], [0, 0], [1, 1]], [-1.1111, 0, -1.1111]) # doctest: +ELLIPSIS
     Lars(eps=..., fit_intercept=True, n_nonzero_coefs=1,
        normalize=True, overwrite_X=False, precompute='auto', verbose=False)
-    >>> print clf.coef_ # doctest: +ELLIPSIS
-    [ 0. ... -1.1111...]
+    >>> print clf.coef_ # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    [ 0. -1.11...]
 
     References
     ----------
@@ -407,11 +407,10 @@ class Lars(LinearModel):
         X = np.atleast_2d(X)
         y = np.atleast_1d(y)
 
-        X = as_float_array(X, self.overwrite_X)
-
         X, y, X_mean, y_mean, X_std = self._center_data(X, y,
                                                         self.fit_intercept,
-                                                        self.normalize)
+                                                        self.normalize,
+                                                        self.overwrite_X)
         alpha = getattr(self, 'alpha', 0.)
         if hasattr(self, 'n_nonzero_coefs'):
             alpha = 0.  # n_nonzero_coefs parametrization takes priority
@@ -903,8 +902,8 @@ class LassoLarsIC(LassoLars):
     LassoLarsIC(criterion='bic', eps=..., fit_intercept=True,
           max_iter=500, normalize=True, overwrite_X=False, precompute='auto',
           verbose=False)
-    >>> print clf.coef_ # doctest: +ELLIPSIS
-    [ 0. ...  -1.1111...]
+    >>> print clf.coef_ # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    [ 0.  -1.11...]
 
     References
     ----------
@@ -954,10 +953,10 @@ class LassoLarsIC(LassoLars):
         X = np.atleast_2d(X)
         y = np.atleast_1d(y)
 
-        X = as_float_array(X, self.overwrite_X)
         X, y, Xmean, ymean, Xstd = LinearModel._center_data(X, y,
                                                     self.fit_intercept,
-                                                    normalize=self.normalize)
+                                                    self.normalize,
+                                                    self.overwrite_X)
         max_iter = self.max_iter
 
         Gram = self._get_gram()

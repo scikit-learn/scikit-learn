@@ -20,21 +20,19 @@ from ..base import ClassifierMixin
 from ..base import TransformerMixin
 from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
 from ..utils.extmath import safe_sparse_dot
-from ..utils import safe_asanyarray
-from ..utils import as_float_array
+from ..utils import as_float_array, safe_asanyarray
 
 ### TODO: bayesian_ridge_regression and bayesian_regression_ard
 ### should be squashed into its respective objects.
 
-def center_data(X, y, fit_intercept, normalize=False):
-    """
-    Centers data to have mean zero along axis 0. This is here because
+def center_data(X, y, fit_intercept, normalize=False, overwrite_X=False):
+    """Centers data to have mean zero along axis 0. This is here because
     nearly all linear models will want their data to be centered.
 
-    WARNING : This function modifies X inplace :
-        Use sklearn.utils.as_float_array before to convert X to np.float.
-        You can specify an argument overwrite_X (default is False).
+    If overwrite_X is True, modifies X in-place.
     """
+    X = as_float_array(X, overwrite_X)
+
     if fit_intercept:
         if sp.issparse(X):
             X_mean = np.zeros(X.shape[1])
@@ -55,6 +53,7 @@ def center_data(X, y, fit_intercept, normalize=False):
         X_std = np.ones(X.shape[1])
         y_mean = 0.
     return X, y, X_mean, y_mean, X_std
+
 
 class LinearModel(BaseEstimator, RegressorMixin):
     """Base class for Linear Models"""
@@ -134,10 +133,8 @@ class LinearRegression(LinearModel):
         X = np.asanyarray(X)
         y = np.asanyarray(y)
 
-        X = as_float_array(X, self.overwrite_X)
-
         X, y, X_mean, y_mean, X_std = self._center_data(X, y,
-                self.fit_intercept, self.normalize)
+                self.fit_intercept, self.normalize, self.overwrite_X)
 
         self.coef_, self.residues_, self.rank_, self.singular_ = \
                 np.linalg.lstsq(X, y)
@@ -256,10 +253,10 @@ class BaseSGD(BaseEstimator):
             if intercept_init is not None:
                 intercept_init = np.asanyarray(intercept_init,
                                                dtype=np.float64)
-                if intercept_init.shape != (1,):
+                if intercept_init.shape != (1,) and intercept_init.shape !=():
                     raise ValueError("Provided intercept_init " \
                                  "does not match dataset.")
-                self.intercept_ = intercept_init
+                self.intercept_ = intercept_init.reshape(1,)
             else:
                 self.intercept_ = np.zeros(1, dtype=np.float64, order="C")
 

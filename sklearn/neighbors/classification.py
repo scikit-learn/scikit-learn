@@ -232,8 +232,6 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         return mode.flatten().astype(np.int)
 
 
-@deprecated("deprecated in v0.9; will be removed in v0.11; "
-            "use KNeighborsClassifier or RadiusNeighborsClassifier instead")
 class NeighborsClassifier(NeighborsBase, KNeighborsMixin,
                           RadiusNeighborsMixin, SupervisedIntegerMixin,
                           ClassifierMixin):
@@ -341,3 +339,9 @@ class NeighborsClassifier(NeighborsBase, KNeighborsMixin,
             pred_labels = [self._y[ind] for ind in neigh_ind]
             return np.asarray([stats.mode(pi) for pi in pred_labels],
                               dtype=np.int)
+
+NeighborsClassifier = deprecated(
+    "deprecated in v0.9; will be removed in v0.11; "
+    "use KNeighborsClassifier or RadiusNeighborsClassifier instead")(
+    NeighborsClassifier)
+
