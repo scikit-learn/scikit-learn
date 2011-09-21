@@ -19,8 +19,6 @@ Y = [-1, -1, -1, 1, 1, 1]
 T = [[-1, -1], [2, 2], [3, 2]]
 true_result = [-1, 1, 1]
 
-TEMP_DIR = ""
-
 # also load the iris dataset
 # and randomly permute it
 iris = datasets.load_iris()
@@ -72,38 +70,54 @@ def test_regression_toy():
     assert_almost_equal(clf.predict(T), true_result)
 
 
-def setup_graphviz_toy():
-    import tempfile
-    global TEMP_DIR
-    TEMP_DIR = tempfile.mkdtemp(dir=".")
-
-
-def teardown_graphviz_toy():
-    import shutil
-    shutil.rmtree(TEMP_DIR, ignore_errors=True)
-
-
-@with_setup(setup_graphviz_toy, teardown_graphviz_toy)
 def test_graphviz_toy():
     """Check correctness of graphviz output on a toy dataset."""
-    clf = tree.DecisionTreeClassifier(max_depth=100, min_split=1)
+    clf = tree.DecisionTreeClassifier(max_depth=3, min_split=1)
     clf.fit(X, Y)
-    out = open(TEMP_DIR + "/tree.dot", 'w')
+    from StringIO import StringIO
+    
+    # test export code
+    out = StringIO()
     exporter = tree.GraphvizExporter(out)
     clf.export(exporter)
-    exporter.close()
+    contents1 = out.getvalue()
 
-    import os
-    dirname = os.path.dirname(__file__)
-    if dirname != "":
-        dirname += "/"
-    with open(TEMP_DIR + "/tree.dot") as f1:
-        with open(dirname + 'test_tree.dot') as f2:
-            # replace unique memory addresses with a tmp string
-            l1 = f1.read()
-            l2 = f2.read()
-            assert l1 == l2, \
-                "graphviz output test failed\n: %s != %s" % (l1, l2)
+    tree_toy = StringIO("digraph Tree {\n"
+    "2 [label=\"X[0] < 0.0 \\n error = 0.5 "
+    "\\n samples = 6 \\n v = [ 3.  3.]\"] ;\n"
+    "0 [label=\"error = 0.0 \\n samples = 3 \\n v = [ 3.  0.]\"] ;\n"
+    "1 [label=\"error = 0.0 \\n samples = 3 \\n v = [ 0.  3.]\"] ;\n"
+    "2 -> 0 ;\n"
+    "2 -> 1 ;\n"
+    "}")
+    contents2 = tree_toy.getvalue()
+
+    assert contents1 == contents2, \
+        "graphviz output test failed\n: %s != %s" % (contents1, contents2)
+
+    # test with feature_names
+    out = StringIO()
+    exporter = tree.GraphvizExporter(out, feature_names=["feature1",""])
+    clf.export(exporter)
+    contents1 = out.getvalue()
+
+    tree_toy = StringIO("digraph Tree {\n"
+    "2 [label=\"feature1 < 0.0 \\n error = 0.5 "
+    "\\n samples = 6 \\n v = [ 3.  3.]\"] ;\n"
+    "0 [label=\"error = 0.0 \\n samples = 3 \\n v = [ 3.  0.]\"] ;\n"
+    "1 [label=\"error = 0.0 \\n samples = 3 \\n v = [ 0.  3.]\"] ;\n"
+    "2 -> 0 ;\n"
+    "2 -> 1 ;\n"
+    "}")
+    contents2 = tree_toy.getvalue()
+
+    assert contents1 == contents2, \
+        "graphviz output test failed\n: %s != %s" % (contents1, contents2)   
+
+    # test improperly formed feature_names
+    out = StringIO()
+    exporter = tree.GraphvizExporter(out, feature_names=[])
+    assert_raises(IndexError, clf.export, exporter)
 
 
 def test_iris():
@@ -234,16 +248,8 @@ def test_error():
 
     clf = tree.DecisionTreeClassifier()
     clf.fit(X, Y)
-    assert_raises(ValueError, clf.predict, Xt)
+    assert_raises(ValueError, clf.predict, Xt)     
 
-    # wrong sample mask size
-    clf = tree.DecisionTreeClassifier()
-    assert_raises(ValueError, clf.fit, X, Y, np.ones((1,), 
-                                                     dtype=np.bool))
-
-    clf = tree.DecisionTreeClassifier()
-    assert_raises(ValueError, clf.fit, X, Y, np.ones((len(X),), 
-                                                     dtype=np.float32))        
 
 if __name__ == '__main__':
     import nose
