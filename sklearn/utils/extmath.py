@@ -58,7 +58,7 @@ try:
 except AttributeError:
      # math.factorial is only available in Python >= 2.6
      import operator
-     def factorial(x):
+     def factorial(n):
          # don't use reduce operator or 2to3 will fail.
          # ripped from http://www.joelbdalley.com/page.pl?38
          # Ensure that n is a Natural number
