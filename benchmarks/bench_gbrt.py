@@ -18,9 +18,9 @@ def repeat(f):
     return wrapper
 
 
-classification_params = {'loss': 'deviance', 'n_iter': 500,
+classification_params = {'loss': 'deviance', 'n_iter': 100,
                          'min_split': 1, 'max_depth': 1,
-                         'learn_rate': .20, 'subsample': .5}
+                         'learn_rate': .20, 'subsample': 1}
 
 
 @repeat
@@ -133,10 +133,10 @@ def bench_friedman3(random_state=None):
 if __name__ == "__main__":
     print "Example 10.2", bench_random_gaussian()
 
-    ## print "Madelon", bench_madelon()
-##     print "Arcene", bench_arcene()
+    print "Madelon", bench_madelon()
+    print "Arcene", bench_arcene()
 
-##     print "Boston", bench_boston()
-##     print "Friedman#1", bench_friedman1()
-##     print "Friedman#2", bench_friedman2()
-##     print "Friedman#3", bench_friedman3()
+    print "Boston", bench_boston()
+    print "Friedman#1", bench_friedman1()
+    print "Friedman#2", bench_friedman2()
+    print "Friedman#3", bench_friedman3()

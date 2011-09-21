@@ -242,27 +242,27 @@ class BaseGradientBoosting(BaseEstimator):
 
         # perform boosting iterations
         for i in xrange(self.n_iter):
-            t0 = time()
+            #t0 = time()
             # subsampling
             sample_mask = np.random.rand(n_samples) > (1.0 - self.subsample)
 
             residual = loss.negative_gradient(y, y_pred)
-            print "Iteration %d - residual - in %fs" % (i, time() - t0)
+            #print "Iteration %d - residual - in %fs" % (i, time() - t0)
 
             # induce regression tree on residuals
             tree = _build_tree(False, X, residual, MSE(), self.max_depth,
                                self.min_split, None, 1, self.random_state,
                                0.0, sample_mask, X_argsorted, True)
-            print "Iteration %d - build_tree - in %fs" % (i, time() - t0)
+            #print "Iteration %d - build_tree - in %fs" % (i, time() - t0)
 
             loss.update_terminal_regions(tree, X, y, residual, y_pred)
-            print "Iteration %d - update - in %fs" % (i, time() - t0)
+            #print "Iteration %d - update - in %fs" % (i, time() - t0)
             self.trees.append(tree)
 
             # FIXME - most of the time is spend on the stmt below.
             y_pred = self._predict(X, old_pred=y_pred,
                                    learn_rate=self.learn_rate)
-            print "Iteration %d - all - in %fs" % (i, time() - t0)
+            #print "Iteration %d - all - in %fs" % (i, time() - t0)
 
         return self
 
