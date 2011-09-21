@@ -9,34 +9,65 @@ Randomized Lasso: feature selection based on lasso
 import numpy as np
 from scipy.sparse import issparse
 
-from .base import LinearModel
+from .base import center_data
+from ..base import TransformerMixin
 from ..utils import as_float_array, check_random_state, safe_asarray
 from ..externals.joblib import Parallel, delayed
 from .least_angle import lars_path, LassoLarsIC
 from .logistic import LogisticRegression
+from ..externals.joblib import Memory
+
+
 ################################################################################
 # Randomized linear model: feature selection
 
-class BaseRandomizedLinearModel(LinearModel):
-    """ Base class to implement randomized linear models, in the spirit
-        of Meinshausen and Buhlman's: stability selection with
-        jacknife, and random reweighting of the penalty
+def _resample_model(estimator_func, X, y, a=.5, n_resampling=200,
+                    n_jobs=1, verbose=False, pre_dispatch='3*n_jobs',
+                    random_state=None, jacknife_fraction=.75, **params):
+    random_state = check_random_state(random_state)
+    # We are generating 1 - weights, and not weights
+    n_samples, n_features = X.shape
+    a = 1 - a
+    scores_ = np.zeros(n_features)
+    for active_set in Parallel(n_jobs=n_jobs, verbose=verbose,
+                               pre_dispatch=pre_dispatch)(
+                delayed(estimator_func)(X, y,
+                        weights=a * random_state.random_integers(0,
+                                                    1, size=(n_features,)),
+                        mask=(random_state.rand(n_samples) < jacknife_fraction),
+                        verbose=max(0, verbose - 1),
+                        **params)
+                for _ in range(n_resampling)):
+        scores_ += active_set
+
+    scores_ /= n_resampling
+    return scores_
+
+
+class BaseRandomizedLinearModel(TransformerMixin):
+    """ Base class to implement randomized linear models for feature
+        selection, in the spirit of Meinshausen and Buhlman's:
+        stability selection with jacknife, and random reweighting of
+        the penalty
     """
 
+    _center_data = staticmethod(center_data)
+
     def __init__(self, jacknife_fraction=.75, n_resampling=200,
-                 selection_threshold=.5, fit_intercept=True, verbose=False,
-                 normalize=True, refit=True, random_state=None, n_jobs=1,
-                 pre_dispatch='3*n_jobs'):
+                 selection_threshold=.25, fit_intercept=True, verbose=False,
+                 normalize=True, random_state=None, n_jobs=1,
+                 pre_dispatch='3*n_jobs',
+                 memory=Memory(cachedir=None, verbose=0)):
         self.jacknife_fraction = jacknife_fraction
         self.n_resampling = n_resampling
         self.fit_intercept = fit_intercept
         self.verbose = verbose
         self.normalize = normalize
-        self.refit = refit
         self.random_state = random_state
         self.n_jobs = n_jobs
         self.selection_threshold = selection_threshold
         self.pre_dispatch = pre_dispatch
+        self.memory = memory
 
     def fit(self, X, y):
         """Fit the model using X, y as training data.
@@ -65,35 +96,21 @@ class BaseRandomizedLinearModel(LinearModel):
                                                         self.fit_intercept,
                                                         self.normalize)
 
-        random_state = check_random_state(self.random_state)
 
-        # We are generating 1 - weights, and not weights
-        a = 1 - self.a
         estimator_func, params = self._mk_estimator_and_params(X, y)
+        memory = self.memory
+        if isinstance(memory, basestring):
+            memory = Memory(cachedir=memory)
 
-        self.scores_ = np.zeros(n_features)
-        for active_set in Parallel(n_jobs=self.n_jobs,
-                                verbose=self.verbose,
-                                pre_dispatch=self.pre_dispatch)(
-                delayed(estimator_func)(X, y,
-                        weights=a * random_state.random_integers(0,
-                                                    1, size=(n_features,)),
-                        mask=(random_state.rand(n_samples) <
-                                    self.jacknife_fraction),
-                        verbose=max(0, self.verbose - 1),
-                        **params)
-                for _ in range(self.n_resampling)):
-            self.scores_ += active_set
-
-        self.scores_ /= self.n_resampling
-
-        if self.refit:
-            pass
-            # XXX: must transform and use OLS to fit
-            # XXX: challenge: it is going to interfere with the
-            # self.mean_ and self.intercept_
-            #self._set_intercept(X_mean, y_mean, X_std)
-
+        self.scores_ = memory.cache(_resample_model)(estimator_func, X, y,
+                                    a=self.a,
+                                    n_resampling=self.n_resampling,
+                                    n_jobs=self.n_jobs,
+                                    verbose=self.verbose,
+                                    pre_dispatch=self.pre_dispatch,
+                                    random_state=self.random_state,
+                                    jacknife_fraction=self.jacknife_fraction,
+                                    **params)
         return self
 
     def _mk_estimator_and_params(self, X, y):
@@ -211,6 +228,10 @@ class RandomizedLasso(BaseRandomizedLinearModel):
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
+    memory : Instance of joblib.Memory or string
+        Used to cache the output of the computation of the tree.
+        By default, no caching is done. If a string is given, it is the
+        path to the caching directory.
 
     Attributes
     ----------
@@ -231,12 +252,13 @@ class RandomizedLasso(BaseRandomizedLinearModel):
 
     def __init__(self, alpha='aic', a=.5, jacknife_fraction=.75,
                  n_resampling=200,
-                 selection_threshold=.5,
+                 selection_threshold=.25,
                  fit_intercept=True, verbose=False,
-                 normalize=True, refit=True, precompute='auto',
+                 normalize=True, precompute='auto',
                  max_iter=500,
                  eps=np.finfo(np.float).eps, random_state=None,
-                 n_jobs=1, pre_dispatch='3*n_jobs'):
+                 n_jobs=1, pre_dispatch='3*n_jobs',
+                 memory=Memory(cachedir=None, verbose=0)):
         self.alpha = alpha
         self.a = a
         self.jacknife_fraction = jacknife_fraction
@@ -245,13 +267,13 @@ class RandomizedLasso(BaseRandomizedLinearModel):
         self.max_iter = max_iter
         self.verbose = verbose
         self.normalize = normalize
-        self.refit = refit
         self.precompute = precompute
         self.eps = eps
         self.random_state = random_state
         self.n_jobs = n_jobs
         self.selection_threshold = selection_threshold
         self.pre_dispatch = pre_dispatch
+        self.memory = memory
 
     def _mk_estimator_and_params(self, X, y):
         assert self.precompute in (True, False, None, 'auto')
@@ -283,13 +305,17 @@ def _randomized_logistic(X, y, weights, mask, C=1., verbose=False,
 
 
 class RandomizedLogistic(BaseRandomizedLinearModel):
+    """ TODO
+    """
+
     def __init__(self, C=1, a=.5, jacknife_fraction=.75,
                  n_resampling=200,
-                 selection_threshold=.5, tol=1e-3,
+                 selection_threshold=.25, tol=1e-3,
                  fit_intercept=True, verbose=False,
-                 normalize=True, refit=True,
+                 normalize=True,
                  random_state=None,
-                 n_jobs=1, pre_dispatch='3*n_jobs'):
+                 n_jobs=1, pre_dispatch='3*n_jobs',
+                 memory=Memory(cachedir=None, verbose=0)):
         self.C = C
         self.a = a
         self.jacknife_fraction = jacknife_fraction
@@ -297,12 +323,12 @@ class RandomizedLogistic(BaseRandomizedLinearModel):
         self.fit_intercept = fit_intercept
         self.verbose = verbose
         self.normalize = normalize
-        self.refit = refit
         self.tol = tol
         self.random_state = random_state
         self.n_jobs = n_jobs
         self.selection_threshold = selection_threshold
         self.pre_dispatch = pre_dispatch
+        self.memory = memory
 
     def _mk_estimator_and_params(self, X, y):
         params = dict(C=self.C, tol=self.tol,
@@ -312,7 +338,6 @@ class RandomizedLogistic(BaseRandomizedLinearModel):
     def _center_data(self, X, y, fit_intercept, normalize=False):
         """ Center the data in X but not in y
         """
-        X, _, Xmean, _, X_std = super(RandomizedLogistic, self
-                                  )._center_data(X, y, fit_intercept,
+        X, _, Xmean, _, X_std = center_data(X, y, fit_intercept,
                                                  normalize=normalize)
         return X, y, Xmean, y, X_std
