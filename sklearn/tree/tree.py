@@ -19,7 +19,7 @@ __all__ = [
     'DecisionTreeRegressor',
 ]
 
-DTYPE = np.float32
+DTYPE = _tree.DTYPE
 
 CLASSIFICATION = {
     'gini': _tree.Gini,
