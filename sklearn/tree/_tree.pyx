@@ -400,8 +400,7 @@ cdef class MSE(RegressionCriterion):
 
     cdef double eval(self):
         assert (self.n_left + self.n_right) == self.n_samples
-        return (self.n_left / <double>self.n_samples) * self.var_left + \
-               (self.n_right / <double>self.n_samples) * self.var_right
+        return self.var_left + self.var_right
 
 
 cdef int smallest_sample_larger_than(int sample_idx, DTYPE_t *X_i,
