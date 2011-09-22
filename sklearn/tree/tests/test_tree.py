@@ -7,6 +7,7 @@ import numpy as np
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_almost_equal
+from numpy.testing import assert_equal
 from nose.tools import assert_raises
 from nose.tools import with_setup
 
@@ -249,6 +250,20 @@ def test_error():
     clf = tree.DecisionTreeClassifier()
     clf.fit(X, Y)
     assert_raises(ValueError, clf.predict, Xt)     
+
+
+def test_pickle():
+    import pickle
+
+    obj = tree.DecisionTreeClassifier()
+    obj.fit(iris.data, iris.target)
+    s = pickle.dumps(obj)
+    assert_equal(type(pickle.loads(s)), obj.__class__)
+
+    obj = tree.DecisionTreeRegressor()
+    obj.fit(boston.data, boston.target)
+    s = pickle.dumps(obj)
+    assert_equal(type(pickle.loads(s)), obj.__class__)
 
 
 if __name__ == '__main__':
