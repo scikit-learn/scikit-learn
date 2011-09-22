@@ -50,7 +50,7 @@ class GraphvizExporter(object):
     $ dot -Tpng tree.dot -o tree.png
     """
 
-    def __init__(self, out=open("tree.dot", 'w'), feature_names=None):
+    def __init__(self, out=None, feature_names=None):
         """Export a Decision Tree to GraphViz format.
 
         Generates GraphViz representation of the decision tree. The output
@@ -58,12 +58,16 @@ class GraphvizExporter(object):
 
         Parameters
         ----------
-        out : file object, optional
-            Handle to the output file.
+        out : file object or string, optional
+            Handle or name of the output file.
 
         feature_names : list of strings, optional
             Names of each of the features.
         """
+        if out is None:
+            out = open("tree.dot", 'w')
+        elif isinstance(out, basestring):
+            out = open(out, 'w')
         self.out = out
         self.feature_names = feature_names
 
