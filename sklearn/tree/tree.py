@@ -207,8 +207,6 @@ def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
 
     feature_mask = feature_mask.astype(np.int32)
 
-    Node.class_counter = 0
-
     def recursive_partition(X, X_argsorted, y, sample_mask, depth):
         is_split_valid = True
         n_samples = sample_mask.sum()
