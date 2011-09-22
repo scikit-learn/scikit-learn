@@ -31,6 +31,7 @@ cdef class Node:
 
     Parameters
     ----------
+
     feature : integer
         The feature used to split on.
 
@@ -97,6 +98,7 @@ cpdef np.ndarray apply_tree(Node node, np.ndarray[DTYPE_t, ndim=2] X, int k):
     for 0 <= i < n:
         y[i] = apply_tree_sample(node, X[i])
     return y
+
 
 
 ################################################################################

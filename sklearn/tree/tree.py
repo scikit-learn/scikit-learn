@@ -148,8 +148,8 @@ def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
         sample_mask = np.ones((X.shape[0],), dtype=np.bool)
 
     n_features = X.shape[1]
+    
     feature_mask = np.ones((n_features,), dtype=np.bool, order="C")
-
     if max_features is not None:
         if max_features <= 0 or max_features > n_features:
             raise ValueError("max_features=%d must be in range (0..%d]. "
