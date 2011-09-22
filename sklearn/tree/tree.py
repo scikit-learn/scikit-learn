@@ -13,6 +13,7 @@ from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..utils import check_random_state
 
 import _tree
+from _tree import Node
 
 __all__ = [
     'DecisionTreeClassifier',
@@ -120,6 +121,7 @@ class GraphvizExporter(object):
         return self.out
 
 
+<<<<<<< HEAD
 class Node(object):
     """A class to store node information in the tree.
 
@@ -182,9 +184,9 @@ def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
 
     # make data fortran layout
     if not np.isfortran(X):
-        X = np.array(X, order="F")
+        X = np.asfortranarray(X)
 
-    y = np.array(y, dtype=DTYPE, order="C")
+    y = np.ascontiguousarray(y, dtype=DTYPE)
 
     if X_argsorted is None:
         X_argsorted = np.asfortranarray(
@@ -193,10 +195,9 @@ def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
     if sample_mask is None:
         sample_mask = np.ones((X.shape[0],), dtype=np.bool)
 
-    # get num samples from sample_mask instead of X
     n_features = X.shape[1]
 
-    feature_mask = np.ones((n_features,), dtype=np.bool, order="c")
+    feature_mask = np.ones((n_features,), dtype=np.bool, order="C")
     if max_features is not None:
         if max_features <= 0 or max_features > n_features:
             raise ValueError("max_features=%d must be in range (0..%d]. "
@@ -226,14 +227,16 @@ def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
 
         current_y = y[sample_mask]
         if is_classification:
-            a = np.zeros((n_classes,))
+            value = np.zeros((n_classes,))
             t = current_y.max() + 1
-            a[:t] = np.bincount(current_y.astype(np.int))
+            value[:t] = np.bincount(current_y.astype(np.int))
         else:
-            a = np.mean(current_y)
+            # we need to wrap the mean into an array
+            value = np.asanyarray(np.mean(current_y))
 
         if not is_split_valid:
-            return Node(error=0.0, samples=n_samples, value=a)
+            node_class_counter[0] += 1
+            return Node(-1, 0.0, 0.0, n_samples, value, None, None)
         else:
             if n_samples / X.shape[0] <= min_density:
                 # sample_mask too sparse - pack X and X_argsorted
@@ -251,22 +254,11 @@ def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
                                                   ~split & sample_mask,
                                                   depth + 1)
 
-            return Node(feature=feature, threshold=threshold,
-                        error=init_error, samples=n_samples, value=a,
-                        left=left_partition, right=right_partition)
+            node_class_counter[0] += 1
+            return Node(feature, threshold, init_error, n_samples, value,
+                        left_partition, right_partition)
 
     return recursive_partition(X, X_argsorted, y, sample_mask, 0)
-
-
-def _apply_tree(node, x):
-    """Applies the decision tree to sample `x`."""
-    while node is not None:
-        if node.is_leaf:
-            return node.value
-        if x[node.feature] < node.threshold:
-            node = node.left
-        else:
-            node = node.right
 
 
 class BaseDecisionTree(BaseEstimator):
@@ -362,31 +354,10 @@ class BaseDecisionTree(BaseEstimator):
         sample_mask = np.ones((n_samples,), dtype=np.bool)
 
         if self.type == 'classification':
-            y = np.asanyarray(y, dtype=np.int, order='C')
-
-            y_unique = np.unique(y)
-            if tuple(y_unique) == (-1, 1):
-                if self.n_classes is None:
-                    self.n_classes = 2
-                else:
-                    if self.n_classes != 2:
-                        raise ValueError(
-                            "n_classes must equal 2 for binary "
-                            "classification: got %d " % self.n_classes)
-                self.classification_subtype = "binary"
-                y[y == -1] = 0  # normalise target
-            elif y.min() >= 0:
-                if self.n_classes is None:
-                    self.n_classes = y.max() + 1
-                else:
-                    if self.n_classes < y.max() + 1:
-                        raise ValueError("Labels must be in range"
-                                         "[0 to %s) " % self.n_classes)
-                self.classification_subtype = "multiclass"
-            else:
-                raise ValueError("Labels must be [-1, 1] for binary and "
-                                 "in the range [0 to %s) for multiclass "
-                                 "classification " % self.n_classes)
+            y = np.ascontiguousarray(y, dtype=np.int)
+            self.classes = np.unique(y)
+            self.n_classes = self.classes.shape[0]
+            y = np.searchsorted(self.classes, y)
 
             criterion_class = CLASSIFICATION[self.criterion]
             criterion = criterion_class(self.n_classes)
@@ -396,7 +367,8 @@ class BaseDecisionTree(BaseEstimator):
                                     self.n_classes, self.random_state,
                                     self.min_density, sample_mask)
         else:  # regression
-            y = np.asanyarray(y, dtype=DTYPE, order='C')
+            y = np.ascontiguousarray(y, dtype=DTYPE)
+            self.n_classes = 1
 
             criterion_class = REGRESSION[self.criterion]
             criterion = criterion_class()
@@ -425,6 +397,7 @@ class BaseDecisionTree(BaseEstimator):
         """
 
         X = np.atleast_2d(X)
+        X = X.astype(DTYPE)
         n_samples, n_features = X.shape
 
         if self.tree is None:
@@ -437,21 +410,11 @@ class BaseDecisionTree(BaseEstimator):
                              % (self.n_features, n_features))
 
         if self.type == 'classification':
-            if self.classification_subtype == 'binary':
-                predictions = np.zeros(n_samples, dtype=int)
-                for idx, sample in enumerate(X):
-                    tmp = np.argmax(_apply_tree(self.tree, sample))
-                    assert tmp == 0 or tmp == 1
-                    predictions[idx] = -1 if tmp == 0 else 1
-            elif self.classification_subtype == 'multiclass':
-                predictions = np.zeros(n_samples, dtype=int)
-                for idx, sample in enumerate(X):
-                    predictions[idx] = np.argmax(_apply_tree(self.tree,
-                                                             sample))
+            predictions = self.classes[np.argmax(
+                _tree.apply_tree(self.tree, X, self.n_classes), axis=1)]
         else:
-            predictions = np.zeros(n_samples, dtype=float)
-            for idx, sample in enumerate(X):
-                predictions[idx] = _apply_tree(self.tree, sample)
+            predictions = _tree.apply_tree(self.tree, X, self.n_classes)
+            predictions = predictions.ravel()
 
         return predictions
 
@@ -545,6 +508,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
         """
         X = np.atleast_2d(X)
+        X = X.astype(DTYPE)
         n_samples, n_features = X.shape
 
         if self.tree is None:
@@ -556,10 +520,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                              " input n_features is %s "
                              % (self.n_features, n_features))
 
-        P = np.zeros((n_samples, self.n_classes))
-        for idx, sample in enumerate(X):
-            P[idx, :] = _apply_tree(self.tree, sample)
-            P[idx, :] /= np.sum(P[idx, :])
+        P = _tree.apply_tree(self.tree, X, self.n_classes)
+        P /= P.sum(axis=1)
         return P
 
     def predict_log_proba(self, X):
@@ -642,7 +604,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     ...                    # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     ...
     array([ 0.61..., 0.57..., -0.34..., 0.41..., 0.75...,
-            0.07..., 0.26..., 0.33..., -1.42..., -1.77...])
+            0.07..., 0.29..., 0.33..., -1.42..., -1.77...])
 
     """
 
