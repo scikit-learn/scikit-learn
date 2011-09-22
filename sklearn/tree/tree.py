@@ -176,7 +176,7 @@ def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
     assert min_split > 0
 
     # make data fortran layout
-    if not X.flags["F_CONTIGUOUS"]:
+    if not np.isfortran(X):
         X = np.array(X, order="F")
 
     y = np.array(y, dtype=DTYPE, order="C")
