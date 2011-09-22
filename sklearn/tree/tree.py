@@ -171,9 +171,14 @@ def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
                 max_features, n_classes, random_state, min_density,
                 sample_mask=None, X_argsorted=None):
     """Build a tree by recursively partitioning the data."""
-    assert X.shape[0] == y.shape[0]
-    assert max_depth > 0
-    assert min_split > 0
+    if X.shape[0] != y.shape[0]:
+        raise ValueError, \
+            "Number of samples (%d) does not match number of labels (%d)" \
+            % (X.shape[0], y.shape[0])
+    if max_depth <= 0:
+        raise ValueError, "max_depth (%d) should be >0" % max_depth
+    if min_split <= 0:
+        raise ValueError, "min_split (%d) should be >0" % max_depth
 
     # make data fortran layout
     if not np.isfortran(X):
@@ -189,7 +194,6 @@ def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
         sample_mask = np.ones((X.shape[0],), dtype=np.bool)
 
     # get num samples from sample_mask instead of X
-    n_samples = sample_mask.sum()
     n_features = X.shape[1]
 
     feature_mask = np.ones((n_features,), dtype=np.bool, order="c")
@@ -503,7 +507,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     Example
     -------
     >>> from sklearn.datasets import load_iris
-    >>> from sklearn.cross_val import cross_val_score
+    >>> from sklearn.cross_validation import cross_val_score
     >>> from sklearn.tree import DecisionTreeClassifier
 
     >>> clf = DecisionTreeClassifier(random_state=0)
@@ -519,10 +523,9 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     def __init__(self, n_classes=None, criterion='gini', max_depth=10,
                  min_split=1, max_features=None, random_state=None,
                  min_density=0.1):
-        BaseDecisionTree.__init__(self, n_classes, 'classification',
-                                  criterion, max_depth, min_split,
-                                  max_features, random_state,
-                                  min_density)
+        supr = super(DecisionTreeClassifier, self)
+        supr.__init__(n_classes, 'classification', criterion, max_depth,
+                      min_split, max_features, random_state, min_density)
 
     def predict_proba(self, X):
         """Predict class probabilities on a test vector X.
@@ -627,7 +630,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     Example
     -------
     >>> from sklearn.datasets import load_boston
-    >>> from sklearn.cross_val import cross_val_score
+    >>> from sklearn.cross_validation import cross_val_score
     >>> from sklearn.tree import DecisionTreeRegressor
 
     >>> boston = load_boston()
@@ -646,7 +649,6 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     def __init__(self, criterion='mse', max_depth=10,
                  min_split=1, max_features=None, random_state=None,
                  min_density=0.1):
-        BaseDecisionTree.__init__(self, None, 'regression',
-                                  criterion, max_depth, min_split,
-                                  max_features, random_state,
-                                  min_density)
+        supr = super(DecisionTreeRegressor, self)
+        supr.__init__(self, None, 'regression', criterion, max_depth,
+                      min_split, max_features, random_state, min_density)
