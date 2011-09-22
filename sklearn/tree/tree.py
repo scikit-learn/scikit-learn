@@ -138,7 +138,7 @@ def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
     if not np.isfortran(X):
         X = np.asfortranarray(X)
 
-    y = np.ascontiguousarray(y, dtype=DTYPE)
+    y = np.ascontiguousarray(y, dtype=np.float64)
 
     if X_argsorted is None:
         X_argsorted = np.asfortranarray(
@@ -189,9 +189,13 @@ def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
             value = np.asanyarray(np.mean(current_y))
 
         if not is_split_valid:
-            leaf = _tree.Node(-1, 0.0, 0.0, n_samples, value, None, None)
+            # FIXME compute error for leaf
             if store_sample_mask:
-                leaf.sample_mask = sample_mask
+                leaf = Node(-1, 0.0, 0.0, n_samples, value, None, None,
+                            sample_mask)
+            else:
+                leaf = Node(-1, 0.0, 0.0, n_samples, value, None, None,
+                            None)
             return leaf
         else:
             if n_samples / X.shape[0] <= min_density:
@@ -211,8 +215,8 @@ def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
                                                   ~split & sample_mask,
                                                   depth + 1)
 
-            return _tree.Node(feature, threshold, init_error, n_samples,
-                              value, left_partition, right_partition)
+            return Node(feature, threshold, init_error, n_samples, value,
+                        left_partition, right_partition, None)
 
     return recursive_partition(X, X_argsorted, y, sample_mask, 0)
 
@@ -285,7 +289,7 @@ class BaseDecisionTree(BaseEstimator):
             criterion_class = CLASSIFICATION[self.criterion]
             criterion = criterion_class(self.n_classes)
         else:  # regression
-            y = np.ascontiguousarray(y, dtype=DTYPE)
+            y = np.ascontiguousarray(y, dtype=np.float64)
             self.n_classes = 1
 
             criterion_class = REGRESSION[self.criterion]

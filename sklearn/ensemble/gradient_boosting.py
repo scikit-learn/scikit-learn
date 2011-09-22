@@ -13,15 +13,9 @@ from ..base import RegressorMixin
 from ..utils import check_random_state
 
 from ..tree.tree import _build_tree
-from ..tree.tree import _apply_tree
+from ..tree._tree import apply_tree
 from ..tree._tree import MSE
-
-
-def _predict_tree(tree, X):
-    predictions = np.zeros(X.shape[0], dtype=np.float64)
-    for idx, sample in enumerate(X):
-        predictions[idx] = _apply_tree(tree, sample)
-    return predictions
+from ..tree._tree import DTYPE
 
 
 class MedianPredictor(object):
@@ -134,7 +128,8 @@ class LeastAbsoluteError(LossFunction):
 
     def _update_terminal_region(self, node, X, y, residual, pred):
         """LAD updates terminal regions to median estimates. """
-        node.value = np.median(y[node.sample_mask] - pred[node.sample_mask])
+        node.value = np.asanyarray(np.median(y[node.sample_mask] - \
+                                             pred[node.sample_mask]))
 
 
 class BinomialDeviance(LossFunction):
@@ -153,7 +148,8 @@ class BinomialDeviance(LossFunction):
         targets = residual[node.sample_mask]
         # assert node.samples == node.sample_mask.sum()
         abs_targets = np.abs(targets)
-        node.value = targets.sum() / np.sum(abs_targets * (2.0 - abs_targets))
+        node.value = np.asanyarray(targets.sum() / np.sum(abs_targets * \
+                                                          (2.0 - abs_targets)))
 
 
 LOSS_FUNCTIONS = {'ls': LeastSquaresError,
@@ -220,8 +216,9 @@ class BaseGradientBoosting(BaseEstimator):
         self : object
             Returns self.
         """
-        X = np.asanyarray(X, dtype=np.float32, order='F')
+        X = np.asfortranarray(X, dtype=DTYPE)
         y = np.asanyarray(y, order='C')
+        
         n_samples, n_features = X.shape
         if y.shape[0] != n_samples:
             raise ValueError("Number of labels does not match " \
@@ -271,11 +268,11 @@ class BaseGradientBoosting(BaseEstimator):
         from previous iteration if available.
         """
         if old_pred is not None:
-            return old_pred + learn_rate * _predict_tree(self.trees[-1], X)
+            return old_pred + learn_rate * apply_tree(self.trees[-1], X, 1).ravel()
         else:
             y = self.init.predict(X)
             for tree in self.trees:
-                y += learn_rate * _predict_tree(tree, X)
+                y += learn_rate * apply_tree(tree, X, 1).ravel()
             return y
 
 
@@ -361,23 +358,24 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         if self.classes.shape[0] != 2:
             raise ValueError("only binary classification supported")
         y = np.searchsorted(self.classes, y)
-        #print "bincount: ", np.bincount(y)
         y[y == 0] = -1
-        #print "classes", self.classes
         super(GradientBoostingClassifier, self).fit(X, y)
 
     def predict(self, X):
-        pos_proba = self.predict_proba(X)
-        return (2 * (pos_proba > 0.5) - 1.0).astype(np.int32)
+        P = self.predict_proba(X)
+        return self.classes[np.argmax(P, axis=1)]
 
     def predict_proba(self, X):
         X = np.atleast_2d(X)
+        X = X.astype(DTYPE)
         if len(self.trees) == 0:
             raise ValueError("Estimator not fitted, " \
                              "call `fit` before `predict`.")
         y = self._predict(X)
-        pos_proba = 1.0 / (1.0 + np.exp(-2.0 * y))
-        return pos_proba
+        P = np.ones((X.shape[0], 2), dtype=np.float64)
+        P[:,1] = 1.0 / (1.0 + np.exp(-2.0 * y))
+        P[:,0] -= P[:,1]
+        return P
 
 
 class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
@@ -463,6 +461,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
     def predict(self, X):
         X = np.atleast_2d(X)
+        X = X.astype(DTYPE)
         if len(self.trees) == 0:
             raise ValueError("Estimator not fitted, " \
                              "call `fit` before `predict`.")

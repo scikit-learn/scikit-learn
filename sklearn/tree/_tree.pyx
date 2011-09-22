@@ -16,6 +16,7 @@ cimport cython
 # Define a datatype for the data array
 DTYPE = np.float32
 ctypedef np.float32_t DTYPE_t
+ctypedef np.float64_t DOUBLE_t
 ctypedef np.int8_t BOOL_t
 
 cdef extern from "math.h":
@@ -65,9 +66,10 @@ cdef class Node:
     cdef public Node left
     cdef public Node right
     cdef public bint is_leaf
+    cdef public np.ndarray sample_mask
 
     def __init__(self, feature, threshold, error, samples,
-                 value, left, right):
+                 value, left, right, sample_mask):
         self.feature = feature
         self.threshold = threshold
         self.error = error
@@ -76,6 +78,7 @@ cdef class Node:
         self.left = left
         self.right = right
         self.is_leaf = (left is None) and (right is None)
+        self.sample_mask = sample_mask
 
     def __reduce__(self):
         return Node, (self.feature, self.threshold, self.error, self.samples,
@@ -116,7 +119,7 @@ cpdef np.ndarray apply_tree(Node node, np.ndarray[DTYPE_t, ndim=2] X, int k):
 cdef class Criterion:
     """Interface for splitting criteria (regression and classification)"""
 
-    cdef void init(self, DTYPE_t *y, BOOL_t *sample_mask, int n_samples,
+    cdef void init(self, DOUBLE_t *y, BOOL_t *sample_mask, int n_samples,
                    int n_total_samples):
         """Initialise the criterion class for new split point."""
         pass
@@ -125,7 +128,7 @@ cdef class Criterion:
         """Reset the criterion for a new feature index."""
         pass
 
-    cdef int update(self, int a, int b, DTYPE_t *y, int *X_argsorted_i,
+    cdef int update(self, int a, int b, DOUBLE_t *y, int *X_argsorted_i,
                     BOOL_t *sample_mask):
         """Update the criteria for each value in interval [a,b) (where a and b
            are indices in `X_argsorted_i`)."""
@@ -195,7 +198,7 @@ cdef class ClassificationCriterion(Criterion):
         self.ndarray_label_count_right = ndarray_label_count_right
         self.ndarray_label_count_init = ndarray_label_count_init
 
-    cdef void init(self, DTYPE_t *y, BOOL_t *sample_mask, int n_samples,
+    cdef void init(self, DOUBLE_t *y, BOOL_t *sample_mask, int n_samples,
                    int n_total_samples):
         """Initialise the criterion class."""
         cdef int c = 0
@@ -225,7 +228,7 @@ cdef class ClassificationCriterion(Criterion):
             self.label_count_left[c] = 0
             self.label_count_right[c] = self.label_count_init[c]
 
-    cdef int update(self, int a, int b, DTYPE_t *y, int *X_argsorted_i,
+    cdef int update(self, int a, int b, DOUBLE_t *y, int *X_argsorted_i,
                     BOOL_t *sample_mask):
         """Update the criteria for each value in interval [a,b) (where a and b
            are indices in `X_argsorted_i`)."""
@@ -378,7 +381,7 @@ cdef class RegressionCriterion(Criterion):
         self.var_left = 0.0
         self.var_right = 0.0
 
-    cdef void init(self, DTYPE_t *y, BOOL_t *sample_mask, int n_samples,
+    cdef void init(self, DOUBLE_t *y, BOOL_t *sample_mask, int n_samples,
                    int n_total_samples):
         """Initialise the criterion class; assume all samples
            are in the right branch and store the mean and squared
@@ -421,7 +424,7 @@ cdef class RegressionCriterion(Criterion):
         self.var_right = self.sq_sum_right - \
             self.n_samples * (self.mean_right * self.mean_right)
 
-    cdef int update(self, int a, int b, DTYPE_t *y, int *X_argsorted_i,
+    cdef int update(self, int a, int b, DOUBLE_t *y, int *X_argsorted_i,
                     BOOL_t *sample_mask):
         """Update the criteria for each value in interval [a,b) (where a and b
            are indices in `X_argsorted_i`)."""
@@ -502,7 +505,7 @@ cdef int smallest_sample_larger_than(int sample_idx, DTYPE_t *X_i,
 
 
 def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
-                     np.ndarray[DTYPE_t, ndim=1, mode="c"] y,
+                     np.ndarray[DOUBLE_t, ndim=1, mode="c"] y,
                      np.ndarray[np.int32_t, ndim=2, mode="fortran"] X_argsorted,
                      np.ndarray sample_mask,
                      np.ndarray[np.int32_t, ndim=1, mode="c"] feature_mask,
@@ -555,7 +558,7 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
     cdef DTYPE_t best_error = np.inf, best_t = np.inf
 
     # Pointer access to ndarray data
-    cdef DTYPE_t *y_ptr = <DTYPE_t *>y.data
+    cdef DOUBLE_t *y_ptr = <DOUBLE_t *>y.data
     cdef DTYPE_t *X_i = NULL
 
     cdef int *X_argsorted_i = NULL
