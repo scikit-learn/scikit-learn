@@ -125,13 +125,12 @@ def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
                 sample_mask=None, X_argsorted=None):
     """Build a tree by recursively partitioning the data."""
     if X.shape[0] != y.shape[0]:
-        raise ValueError, \
-            "Number of samples (%d) does not match number of labels (%d)" \
-            % (X.shape[0], y.shape[0])
+        raise ValueError("Number of samples (%d) does not match number " \
+                         "of labels (%d)" % (X.shape[0], y.shape[0]))
     if max_depth <= 0:
-        raise ValueError, "max_depth (%d) should be >0" % max_depth
+        raise ValueError("max_depth (%d) should be >0" % max_depth)
     if min_split <= 0:
-        raise ValueError, "min_split (%d) should be >0" % max_depth
+        raise ValueError("min_split (%d) should be >0" % max_depth)
 
     # make data fortran layout
     if not np.isfortran(X):
@@ -186,7 +185,6 @@ def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
             value = np.asanyarray(np.mean(current_y))
 
         if not is_split_valid:
-            node_class_counter[0] += 1
             return _tree.Node(-1, 0.0, 0.0, n_samples, value, None, None)
         else:
             if n_samples / X.shape[0] <= min_density:
@@ -205,7 +203,6 @@ def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
                                                   ~split & sample_mask,
                                                   depth + 1)
 
-            node_class_counter[0] += 1
             return _tree.Node(feature, threshold, init_error, n_samples,
                               value, left_partition, right_partition)
 
@@ -216,17 +213,15 @@ class BaseDecisionTree(BaseEstimator):
     """Should not be used directly, use derived classes instead."""
 
     _tree_types = ['classification', 'regression']
-    _classification_subtypes = ['binary', 'multiclass']
 
-    def __init__(self, n_classes, impl, criterion, max_depth,
-                 min_split, max_features, random_state, min_density):
+    def __init__(self, impl, criterion, max_depth, min_split,
+                 max_features, random_state, min_density):
 
         if not impl in self._tree_types:
             raise ValueError("impl should be one of %s, %s was given"
                              % (self._tree_types, impl))
 
         self.type = impl
-        self.n_classes = n_classes
         self.classification_subtype = None
         self.criterion = criterion
 
@@ -325,7 +320,7 @@ class BaseDecisionTree(BaseEstimator):
             criterion = criterion_class()
             self.tree = _build_tree(False, X, y, criterion, self.max_depth,
                                     self.min_split, self.max_features,
-                                    None, self.random_state,
+                                    self.n_classes, self.random_state,
                                     self.min_density, sample_mask)
         return self
 
@@ -375,9 +370,6 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
     Parameters
     ----------
-    n_classes : integer, optional
-        number of classes (computed at fit() if not provided)
-
     criterion : string, optional (default='gini')
         function to measure goodness of split
 
@@ -434,12 +426,11 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             0.93...,  0.93...,  1.     ,  0.93...,  1.      ])
     """
 
-    def __init__(self, n_classes=None, criterion='gini', max_depth=10,
-                 min_split=1, max_features=None, random_state=None,
-                 min_density=0.1):
-        supr = super(DecisionTreeClassifier, self)
-        supr.__init__(n_classes, 'classification', criterion, max_depth,
-                      min_split, max_features, random_state, min_density)
+    def __init__(self, criterion='gini', max_depth=10, min_split=1,
+                 max_features=None, random_state=None, min_density=0.1):
+        super(DecisionTreeClassifier, self).__init__(
+            'classification', criterion, max_depth, min_split, max_features,
+            random_state, min_density)
 
     def predict_proba(self, X):
         """Predict class probabilities on a test vector X.
@@ -472,7 +463,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                              % (self.n_features, n_features))
 
         P = _tree.apply_tree(self.tree, X, self.n_classes)
-        P /= P.sum(axis=1)
+        P /= P.sum(axis=1)[:, np.newaxis]
         return P
 
     def predict_log_proba(self, X):
@@ -559,9 +550,8 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
 
     """
 
-    def __init__(self, criterion='mse', max_depth=10,
-                 min_split=1, max_features=None, random_state=None,
-                 min_density=0.1):
-        supr = super(DecisionTreeRegressor, self)
-        supr.__init__(self, None, 'regression', criterion, max_depth,
-                      min_split, max_features, random_state, min_density)
+    def __init__(self, criterion='mse', max_depth=10, min_split=1,
+                 max_features=None, random_state=None, min_density=0.1):
+        super(DecisionTreeRegressor, self).__init__(
+            'regression', criterion, max_depth, min_split, max_features,
+            random_state, min_density)

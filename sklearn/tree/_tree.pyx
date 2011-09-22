@@ -57,7 +57,6 @@ cdef class Node:
         The right child node
     """
 
-    cdef public int id
     cdef public int feature
     cdef public double threshold
     cdef public double error
@@ -67,9 +66,8 @@ cdef class Node:
     cdef public Node right
     cdef public bint is_leaf
 
-    def __init__(self, id_, feature, threshold, error, samples,
+    def __init__(self, feature, threshold, error, samples,
                  value, left, right):
-        self.id = id_
         self.feature = feature
         self.threshold = threshold
         self.error = error
@@ -82,6 +80,10 @@ cdef class Node:
             self.is_leaf = True
         else:
             self.is_leaf = False
+
+    def __reduce__(self):
+        return Node, (self.feature, self.threshold, self.error, self.samples,
+                      self.value, self.left, self.right)
 
 
 cdef np.ndarray apply_tree_sample(Node node, np.ndarray[DTYPE_t, ndim=1] x):
