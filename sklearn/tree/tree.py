@@ -12,8 +12,7 @@ import numpy as np
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..utils import check_random_state
 
-import _tree
-from _tree import Node
+from . import _tree
 
 __all__ = [
     'DecisionTreeClassifier',
@@ -121,54 +120,6 @@ class GraphvizExporter(object):
         return self.out
 
 
-<<<<<<< HEAD
-class Node(object):
-    """A class to store node information in the tree.
-
-    Parameters
-    ----------
-
-    feature : integer
-        The feature used to split on
-
-    threshold : float
-        The threshold value to split on
-
-    error : float
-        The error in the node.  This could be the impurity (calculated using
-        an entropy measure for classification) or the residual regression
-        error (calculated using an estimator)
-
-    samples : integer
-        Number of samples present at this node
-
-    value : array-like, shape = [n_features] OR 1
-        For classification it is a histogram of target values
-        For regression is it the mean for the region
-
-    left : Node
-        The left child node
-
-    right : Node
-        The right child node
-    """
-
-    def __init__(self, feature=None, threshold=None, error=None, samples=None,
-                 value=None, left=None, right=None):
-        self.feature = feature
-        self.threshold = threshold
-        self.error = error
-        self.samples = samples
-        self.value = value
-        self.left = left
-        self.right = right
-
-        if left == None and right == None:
-            self.is_leaf = True
-        else:
-            self.is_leaf = False
-
-
 def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
                 max_features, n_classes, random_state, min_density,
                 sample_mask=None, X_argsorted=None):
@@ -236,7 +187,7 @@ def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
 
         if not is_split_valid:
             node_class_counter[0] += 1
-            return Node(-1, 0.0, 0.0, n_samples, value, None, None)
+            return _tree.Node(-1, 0.0, 0.0, n_samples, value, None, None)
         else:
             if n_samples / X.shape[0] <= min_density:
                 # sample_mask too sparse - pack X and X_argsorted
@@ -255,8 +206,8 @@ def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
                                                   depth + 1)
 
             node_class_counter[0] += 1
-            return Node(feature, threshold, init_error, n_samples, value,
-                        left_partition, right_partition)
+            return _tree.Node(feature, threshold, init_error, n_samples,
+                              value, left_partition, right_partition)
 
     return recursive_partition(X, X_argsorted, y, sample_mask, 0)
 
