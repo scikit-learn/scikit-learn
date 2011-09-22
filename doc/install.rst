@@ -55,11 +55,11 @@ This is usually the fastest way to install the latest stable
 release. If you have pip or easy_install, you can install or update
 with the command::
 
-    pip install -U sklearn
+    pip install -U scikit-learn
 
 or::
 
-    easy_install -U sklearn
+    easy_install -U scikit-learn
 
 for easy_install. Note that you might need root privileges to run
 these commands.
