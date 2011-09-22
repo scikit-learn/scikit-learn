@@ -94,27 +94,27 @@ class GraphvizExporter(object):
             expected to `close()` this object when done with it.
         """
 
-        def recurse(node):
+        def recurse(node, count):
             current_repr = self.make_node_repr(node)
             left_repr = self.make_node_repr(node.left)
             right_repr = self.make_node_repr(node.right)
             node_data = {
-                "current": node.id,
+                "current": count,
                 "current_gv": current_repr,
-                "left_child": node.left.id,
+                "left_child": 2 * count + 1,
                 "left_child_gv": left_repr,
-                "right_child": node.right.id,
+                "right_child": 2 * count + 2,
                 "right_child_gv": right_repr,
                 }
             self.out.write(GRAPHVIZ_TREE_TEMPLATE % node_data)
 
             if not node.left.is_leaf:
-                recurse(node.left)
+                recurse(node.left, 2 * count + 1)
             if not node.right.is_leaf:
-                recurse(node.right)
+                recurse(node.right, 2 * count + 2)
 
         self.out.write("digraph Tree {\n")
-        recurse(node)
+        recurse(node, 0)
         self.out.write("}")
 
         return self.out
@@ -150,7 +150,6 @@ class Node(object):
     right : Node
         The right child node
     """
-    class_counter = 0
 
     def __init__(self, feature=None, threshold=None, error=None, samples=None,
                  value=None, left=None, right=None):
@@ -166,9 +165,6 @@ class Node(object):
             self.is_leaf = True
         else:
             self.is_leaf = False
-
-        self.id = Node.class_counter
-        Node.class_counter += 1
 
 
 def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
