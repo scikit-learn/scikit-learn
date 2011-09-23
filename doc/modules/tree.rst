@@ -7,14 +7,17 @@ Decision Trees
 
 .. currentmodule:: sklearn.tree
 
-**Decision Trees** are a supervised learning
+**Decision Trees** are a non-parametric supervised learning
 method used for :ref:`classification <tree_classification>`,
 :ref:`regression <tree_regression>`.
 
 The advantages of Decision Trees are:
 
     - Simple to understand and interpret.  Trees can be visualised.
-    
+
+    - The cost of using the tree (predicting data) is logarithmic in the 
+      number of data points used to train the tree.
+
     - Requires little data preparation. Other techniques often require data 
       normalisation, dummy variables need to be created and blank values to 
       be removed. Note that this module does not support missing values.
@@ -151,30 +154,37 @@ floating point values instead of integer values::
 
 Complexity
 ==========
+In general, the run time cost to construct a balanced binary 
+tree is  :math:`O(n_{samples}log(n_{samples}))` and query time 
+:math:`O(log(n_{samples}))`.  Although the tree construction algorithm attempts 
+to generate balanced trees, they will not always be balanced.  Assuming that 
+the subtrees remain approximately balanced, the cost at each node consists of
+searching through :math:`O(n_{features})` to find the feature that offers
+the largest reduction in entropy.  This has a cost of 
+:math:`O(n_{features}n_{samples}log(n_{samples}))` at each node, leading to
+a total cost over the entire trees (by summing the cost at each node) of 
+:math:`O(n_{features}n_{samples}^{2}log(n_{samples}))`. 
 
-Decision Trees are effective learners, and scikits-learn offers an efficient 
-implementation to the computational complexity.  The main idea in a 
-decision tree is to compute for each node both the feature and the threshold 
-that offers the largest decrease in entropy (or increase in information).
-An inefficient implementation would recompute the class label histograms 
-(for classification) or the means (for regression) leading to a run time 
-complexity of :math:`O(n_{features} \times n_{samples}^2)` for each node.
-By presorting the feature over all relevant samples, and retaining a running
-label count, we reduce the complexity at each node to 
-:math:`O(n_{features} \times n_{samples})`. The relative compute time 
-decreases for nodes further down the tree since there are fewer samples for
-which to compute the error.  Assuming that the total number of nodes in the 
-tree is approximately equal to :math:`log(n_{samples})`, the total time 
-complexity for the algorithm is 
-:math:`O(n_{features} \times n_{samples}) \times log(n_{samples})`
+Scikit-learn offers a more efficient implementation for the construction of 
+Decision Trees.  A naive implementation (as above) would recompute the 
+class label histograms (for classification) or the means (for regression) at 
+for each new split point along a given feature. By presorting the feature 
+over all relevant samples, and retaining a running label count, we reduce 
+the complexity at each node to :math:`O(n_{features}log(n_{samples}))`, which
+results in a total cost of :math:`O(n_{features}n_{samples}log(n_{samples}))`.
 
-This implementation offers a parameter `min_density` to control the trade-off 
-between memory usage and speed by specifying a minimum density below which the
-memory is reallocated and the sample_mask reset. 
-If `min_density' is 1, then fancy indexing 
-will be used for data partitioning during the tree building phase.
-In this case, the size of memory (as a proportion of the input data :math:`a`) 
-required at a node of depth :math:`n` can be approximated using a geometric series:
+This implementation also offers a parameter `min_density` to control the 
+trade-off  between memory usage and speed within the tree construction process.
+A sample mask is used to mask data points that are inactive at a given node, 
+which avoids the copying of data (important for large datasets or training
+trees within an ensemble). Density is defined as the ratio of 'active' data 
+samples to total samples at a given node.  The minimum density parameter 
+specifies the level below which fancy indexing (and therefore data copied)
+and the sample mask reset. 
+If `min_density` is 1, then fancy indexing is always used for data partitioning
+during the tree building phase. In this case, the size of memory (as a 
+proportion of the input data :math:`a`) required at a node of depth 
+:math:`n` can be approximated using a geometric series: 
 :math:`size = a \frac{1 - r^n}{1 - r}` where :math:`r` is the ratio of samples 
 used at each node.  A best case analysis shows that the lowest memory requirement 
 (for an infinitely deep tree) is :math:`2 \times a`, where each partition divides 
@@ -211,6 +221,8 @@ Tips on Practical Use
     will prevent the tree from learning the data.  Try ``min_split=5`` as an 
     initial value.  
 
+   * Balance your dataset before training to prevent the tree from creating
+
 .. _tree_algorithms:
 
 Tree algorithms: ID3, C4.5, C5.0 and CART
@@ -219,36 +231,40 @@ Tree algorithms: ID3, C4.5, C5.0 and CART
 What are all the various decision tree algorithms and how do they differ from 
 each other? Which one is implemented in scikit-learn?
 
-[ID3](http://en.wikipedia.org/wiki/ID3_algorithm) was developed in 1986 by Ross
-Quinlan.  The algorithm creates a multiway tree, finding for each node the
-categorical feature that will yield the largest information gain for 
-categorical targets. 
+[ID3](http://en.wikipedia.org/wiki/ID3_algorithm) (Iterative Dichotomiser 3)
+was developed in 1986 by Ross Quinlan.  The algorithm creates a multiway tree, 
+finding for each node (i.e. in a greedy manner) the categorical feature that 
+will yield the largest information gain for categorical targets. Trees are 
+grown to their maximum size and then a pruning step is usually applied to 
+improve the ability of the tree to generalise to unseen data.
 
-C4.5 is the successor to this algorithm and removed the 
+C4.5 is the successor to ID3 and removed the 
 restriction that features must be categorical by dynamically defining a 
 discrete attribute (based on numerical variables) that partitions the 
-continuous attribute value into a discrete set of intervals. 
+continuous attribute value into a discrete set of intervals. C4.5 converts 
+the trained trees (i.e. the output of the ID3 algorithm) into sets of 
+if-then rules.  These accuracy of each rule is then evaluated to determine 
+the order in which they should be applied. Pruning is done by removing a
+rule's precondition if the accuracy of the rule improves without it.  
 
 C5.0 is Quinlan's latest version release under a proprietary license. 
 It uses less memory and builds smaller rulesets than C4.5 while being more 
 accurate. 
 
 [CART](http://en.wikipedia.org/wiki/Predictive_analytics#Classification_and_regression_trees) 
-is very similar to C4.5, but it differs in that it supports 
-numerical target variables (regression) and does not compute rule sets.  
-CART also uses the feature and threshold that yield the largest 
-information gain and creates a binary split at each node. 
+(Classification and Regression Trees)is very similar to C4.5, but it 
+differs in that it supports numerical target variables (regression) and 
+does not compute rule sets. CART constructs binary trees using the feature and 
+threshold that yield the largest information gain at each node.   
 
 Scikit-learn uses an optimised version of the CART algorithm.
 
 .. _tree_mathematical_formulation:
 
-.. TODO 
-
 Mathematical formulation
 ========================
 
-TODO
+
 
 .. topic:: References:
 
