@@ -60,7 +60,8 @@ cdef class Node:
 
     cdef public int feature
     cdef public double threshold
-    cdef public double error
+    cdef public double initial_error
+    cdef public double best_error
     cdef public int samples
     cdef public np.ndarray value
     cdef public Node left
@@ -68,11 +69,12 @@ cdef class Node:
     cdef public bint is_leaf
     cdef public np.ndarray sample_mask
 
-    def __init__(self, feature, threshold, error, samples,
-                 value, left, right, sample_mask):
+    def __init__(self, feature, threshold, initial_error, best_error,
+                 samples, value, left, right, sample_mask):
         self.feature = feature
         self.threshold = threshold
-        self.error = error
+        self.initial_error = initial_error
+        self.best_error = best_error
         self.samples = samples
         self.value = value
         self.left = left
@@ -403,7 +405,7 @@ cdef class RegressionCriterion(Criterion):
             self.sq_sum_init += (y[j] * y[j])
             self.mean_init += y[j]
 
-        self.mean_init = self.mean_init / self.n_samples
+        self.mean_init = self.mean_init / <double>self.n_samples
 
         self.reset()
 
@@ -436,23 +438,30 @@ cdef class RegressionCriterion(Criterion):
             if sample_mask[j] == 0:
                 continue
             y_idx = y[j]
-            self.sq_sum_left = self.sq_sum_left + (y_idx * y_idx)
-            self.sq_sum_right = self.sq_sum_right - (y_idx * y_idx)
-
-            self.mean_left = (self.n_left * self.mean_left + y_idx) / \
-                <double>(self.n_left + 1)
-            self.mean_right = ((self.n_samples - self.n_left) * \
-                self.mean_right - y_idx) / \
-                <double>(self.n_samples - self.n_left - 1)
 
             self.n_right -= 1
             self.n_left += 1
+
+            assert self.n_right > 0
+
+            self.sq_sum_left = self.sq_sum_left + (y_idx * y_idx)
+            self.sq_sum_right = self.sq_sum_right - (y_idx * y_idx)
+
+            self.mean_left = (((self.n_left - 1) * self.mean_left) + y_idx) / \
+                <double>(self.n_left)
+            self.mean_right = (((self.n_right + 1) * self.mean_right) - y_idx) / \
+                <double>(self.n_right)
 
             self.var_left = self.sq_sum_left - \
                 self.n_left * (self.mean_left * self.mean_left)
             self.var_right = self.sq_sum_right - \
                 self.n_right * (self.mean_right * self.mean_right)
 
+            # sometimes self.var_right is smaller than 0.0 - precision issue or bug?
+            #if self.var_right < -0.000000001:
+            #    print "var_right: %.10f" % self.var_right
+            #    print "n_l:%d, n_r:%d" % (self.n_left, self.n_right)
+            #    print "\mu_l:%.8f, \mu_r:%.8f" % (self.mean_left, self.mean_right)
             
         return self.n_left
 
@@ -580,7 +589,7 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
     criterion.init(y_ptr, sample_mask_ptr, n_samples, n_total_samples)
     initial_error = criterion.eval()
     if initial_error == 0:  # break early if the node is pure
-        return best_i, best_t, initial_error
+        return best_i, best_t, initial_error, initial_error
     best_error = initial_error
     # print 'at init, best error = ', best_error
 
@@ -628,4 +637,4 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
 
             a = b
 
-    return best_i, best_t, initial_error
+    return best_i, best_t, initial_error, best_error

@@ -172,7 +172,7 @@ def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
         if depth >= max_depth or n_samples < min_split:
             is_split_valid = False
         else:
-            feature, threshold, init_error = _tree._find_best_split(
+            feature, threshold, init_error, best_error = _tree._find_best_split(
                 X, y, X_argsorted, sample_mask, feature_mask,
                 criterion, n_samples)
 
@@ -191,10 +191,10 @@ def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
         if not is_split_valid:
             # FIXME compute error for leaf
             if store_sample_mask:
-                leaf = Node(-1, 0.0, 0.0, n_samples, value, None, None,
+                leaf = Node(-1, 0.0, 0.0, 0.0, n_samples, value, None, None,
                             sample_mask)
             else:
-                leaf = Node(-1, 0.0, 0.0, n_samples, value, None, None,
+                leaf = Node(-1, 0.0, 0.0, 0.0, n_samples, value, None, None,
                             None)
             return leaf
         else:
@@ -215,7 +215,8 @@ def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
                                                   ~split & sample_mask,
                                                   depth + 1)
 
-            return Node(feature, threshold, init_error, n_samples, value,
+            return Node(feature, threshold, init_error, best_error,
+                        n_samples, value,
                         left_partition, right_partition, None)
 
     return recursive_partition(X, X_argsorted, y, sample_mask, 0)
