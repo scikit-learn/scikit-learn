@@ -145,10 +145,10 @@ version of scikit-learn:
 Debian and derivatives (Ubuntu)
 -------------------------------
 
-The Debian package is named python-sklearn and can be install
+The Debian package is named python-scikits-learn and can be install
 using the following commands with root privileges::
 
-      apt-get install python-sklearn
+      apt-get install python-scikits-learn
 
 
 Python(x, y)
@@ -173,14 +173,14 @@ Macports
 The macport's package is named py26-sklearn and can be installed
 by typing the following command::
 
-    sudo port install py26-sklearn
+    sudo port install py26-scikits-learn
 
 NetBSD
 ------
 
 scikit-learn is available via `pkgsrc-wip <http://pkgsrc-wip.sourceforge.net/>`_:
 
-    http://pkgsrc.se/wip/py-sklearn
+    http://pkgsrc.se/wip/py-scikit_learn
 
 .. _install_bleeding_edge:
 
