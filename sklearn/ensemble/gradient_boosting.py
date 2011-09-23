@@ -1,6 +1,11 @@
 # Authors: Peter Prettenhofer
 #
 # License: BSD Style.
+#
+# TODO:
+#      * Multi-class classification
+#      * Huber loss for regression
+#
 
 from __future__ import division
 import numpy as np
@@ -16,6 +21,26 @@ from ..tree.tree import _build_tree
 from ..tree._tree import apply_tree
 from ..tree._tree import MSE
 from ..tree._tree import DTYPE
+
+
+class VariableImportance(object):
+
+    def __init__(self, n_features):
+        self.variable_importance = np.zeros((n_features), dtype=np.float64)
+
+    def visit_nonterminal_region(self, node):
+        if node.is_leaf:
+            return
+        else:
+            # do stuff
+            #print node.initial_error, node.best_error
+            feature = node.feature
+            error_improvement = (node.initial_error - node.best_error) / node.initial_error
+            self.variable_importance[feature] += error_improvement ** 2.0
+            
+            # tail recursion
+            self.visit_nonterminal_region(node.left)
+            self.visit_nonterminal_region(node.right)
 
 
 class MedianPredictor(object):
@@ -223,6 +248,7 @@ class BaseGradientBoosting(BaseEstimator):
         if y.shape[0] != n_samples:
             raise ValueError("Number of labels does not match " \
                              "number of samples.")
+        self.n_features = n_features
 
         # create argsorted X for fast tree induction
         X_argsorted = np.asfortranarray(
@@ -274,6 +300,21 @@ class BaseGradientBoosting(BaseEstimator):
             for tree in self.trees:
                 y += learn_rate * apply_tree(tree, X, 1).ravel()
             return y
+
+    @property
+    def variable_importance(self):
+        if not self.trees or len(self.trees) == 0:
+            raise ValueError("Estimator not fitted, " \
+                             "call `fit` before `variable_importance`.")
+        variable_importance = np.zeros((self.n_features,), dtype=np.float64)
+        for tree in self.trees:
+            vi = VariableImportance(self.n_features)
+            vi.visit_nonterminal_region(tree)
+            variable_importance += vi.variable_importance
+        variable_importance /= len(self.trees)
+        variable_importance = 100.0 * (variable_importance /
+                                       variable_importance.max())
+        return variable_importance
 
 
 class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
