@@ -218,10 +218,11 @@ Tips on Practical Use
   
   * Use ``min_split`` to control the number of samples at a leaf node.  A very 
     small number will usually mean the tree will overfit, whereas a large number
-    will prevent the tree from learning the data.  Try ``min_split=5`` as an 
-    initial value.  
+    will prevent the tree from learning the data.  Try ``min_split=5`` as an
+    initial value.
 
-   * Balance your dataset before training to prevent the tree from creating
+  * Balance your dataset before training to prevent the tree from creating
+    a tree biased toward the classes that are dominant.
 
 .. _tree_algorithms:
 
@@ -264,6 +265,83 @@ Scikit-learn uses an optimised version of the CART algorithm.
 Mathematical formulation
 ========================
 
+Given training vectors :math:`x_i \in R^n`, i=1,..., l and a label vector 
+:math:`y \in R^l`, a decision tree recursively partitions the space such 
+that the samples with the same labels are grouped together.
+
+Let the data at node :math:`m` be represented by :math:`Q`. For each candidate
+split :math:`\theta = (j, t_m)` consisting of a feature :math:`j` and threshold 
+:math:`t_m`, partition the data into :math:`Q_{left}(\theta)` and 
+:math:`Q_{right}(\theta)` subsets 
+
+.. math::
+    
+    Q_{left}(\theta) = {(x, y) | x_j < t_m}
+    
+    Q_{right}(\theta) = Q \setminus Q_{left}(\theta)
+
+The impurity at :math:`m` is computed using an impurity function :math:`H()`, 
+the choice of which depends on the task being solved 
+(classification or regression)
+
+.. math::
+
+   G(Q, \theta) = \frac{n_{left}}{N_m} H(Q_{left}(\theta)) 
+   + \frac{n_{right}}{N_m} H(Q_{right}(\theta)) 
+
+Select the parameters that minimises the impurity
+
+.. math::
+
+    \theta^* = argmin_\theta  G(Q, \theta)
+    
+Recurse for subsets :math:`Q_{left}(\theta^*)` and :math:`Q_{right}(\theta^*)` 
+until the maximum allowable depth is reached, :math:`N_m < min\_samples` or
+:math:`N_m = 1`.
+
+Classification criteria
+-----------------------
+
+If a target is a classification outcome taking on values 0,1,...,K-1,
+for node :math:`m`, representing a region :math:`R_m` with :math:`N_m` 
+observations, let
+
+.. math::
+
+    p_{mk} = 1/ N_m \sum_{x_i \in R_m} I(y_i = k)
+
+be the proportion of class k observations in node :math:`m`
+
+Common measures of impurity are Gini
+
+.. math::
+
+    H(X_m) = \sum_k p_{mk} (1 - p_{mk})
+
+Cross-Entropy
+
+.. math::
+
+    H(X_m) = \sum_k p_{mk} log(p_{mk})
+
+and Misclassification
+
+.. math::
+
+    H(X_m) = 1 - max(p_{mk})
+
+Regression criteria
+-------------------
+
+If the target is a continuous value, then for node :math:`m`, 
+representing a region :math:`R_m` with :math:`N_m` observations, a common
+criterion to minimise is the Mean Squared Error
+
+.. math::
+
+	c_m = \frac{1}{N_m} \sum_{i \in N_m} y_i
+
+    H(X_m) = \frac{1}{N_m} \sum_{i \in N_m} (y_i - c_m)^2	
 
 
 .. topic:: References:
