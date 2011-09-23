@@ -79,10 +79,7 @@ the class labels for the training samples::
     >>> X = [[0, 0], [1, 1]]
     >>> Y = [0, 1]
     >>> clf = tree.DecisionTreeClassifier()
-    >>> clf.fit(X, Y)
-    DecisionTreeClassifier(criterion='gini', max_depth=10, max_features=None,
-                min_density=0.1, min_split=1, n_classes=2,
-                random_state=<mtrand.RandomState object at 0x2b895206e1b0>)
+    >>> clf = clf.fit(X, Y)
 
 
 After being fitted, the model can then be used to predict new values::
@@ -100,10 +97,7 @@ Using the Iris dataset, we can construct a tree as follows::
     >>> from sklearn import tree
     >>> iris = load_iris()
     >>> clf = tree.DecisionTreeClassifier()
-    >>> clf.fit(iris.data, iris.target)
-    DecisionTreeClassifier(criterion='gini', max_depth=10, max_features=None,
-                min_density=0.1, min_split=1, n_classes=3,
-                random_state=<mtrand.RandomState object at 0x2b895206e1b0>)
+    >>> clf = clf.fit(iris.data, iris.target)
 
 Once trained, we can export the tree in `Graphviz <http://www.graphviz.org/>`_ format
 using the :class:`GraphvizExporter` exporter. Below is an example export of a tree
@@ -112,7 +106,6 @@ trained on the entire iris dataset::
     >>> t = open('iris.dot', 'w')
     >>> exporter = tree.GraphvizExporter(out=t)
     >>> clf.export(exporter)
-    >>> exporter.close()
 
 .. figure:: ../images/iris.svg
    :align: center
