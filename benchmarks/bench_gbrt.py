@@ -59,7 +59,6 @@ def bench_madelon():
     X_test = np.loadtxt("/home/pprett/corpora/madelon/madelon_valid.data")
     y_test = np.loadtxt("/home/pprett/corpora/madelon/madelon_valid.labels")
     clf = GradientBoostingClassifier(**classification_params)
-
     clf.fit(X_train, y_train)
     error_rate = (1.0 - clf.score(X_test, y_test)) * 100.0
     return error_rate
@@ -93,6 +92,7 @@ def bench_boston(random_state=None):
     clf = GradientBoostingRegressor(**regression_params)
     clf.fit(X_train, y_train)
     mse = np.mean((clf.predict(X_test) - y_test) ** 2.0)
+    variable_importance = clf.variable_importance
     return mse
 
 

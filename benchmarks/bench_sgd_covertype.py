@@ -176,8 +176,8 @@ cart_err, cart_train_time, cart_test_time = benchmark(
     DecisionTreeClassifier(min_split=5, max_depth=100))
 
 gb_err, gb_train_time, gb_test_time = benchmark(
-    GradientBoostingClassifier(min_split=5, max_depth=3, n_iter=300,
-                               learn_rate=0.1, subsample=0.5))
+    GradientBoostingClassifier(min_split=5, max_depth=4, n_iter=50,
+                               learn_rate=0.2, subsample=0.5))
 
 ######################################################################
 ## Print classification performance
