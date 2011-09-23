@@ -50,12 +50,6 @@ def test_classification_toy():
 
     assert_array_equal(clf.predict(T), true_result)
 
-    # With n_classes given
-    clf = tree.DecisionTreeClassifier(n_classes=2)
-    clf.fit(X, Y)
-
-    assert_array_equal(clf.predict(T), true_result)
-
 
 def test_regression_toy():
     """Check regression on a toy dataset."""
@@ -217,13 +211,6 @@ def test_error():
     clf.fit(X, Y)
     t = np.asanyarray(T)
     assert_raises(ValueError, clf.predict, t[:, 1:])
-
-    # labels out of range
-    clf = tree.DecisionTreeClassifier(n_classes=1)
-    assert_raises(ValueError, clf.fit, X, Y2)
-
-    clf = tree.DecisionTreeClassifier(n_classes=3)
-    assert_raises(ValueError, clf.fit, X, Y)
 
     # max_features invalid
     clf = tree.DecisionTreeClassifier(max_features=-1)

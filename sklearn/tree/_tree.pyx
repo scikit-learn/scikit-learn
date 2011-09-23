@@ -25,6 +25,85 @@ cdef extern from "math.h":
 cdef extern from "float.h":
     cdef extern double DBL_MAX
 
+
+cdef class Node:
+    """A class to store node information in the tree.
+
+    Parameters
+    ----------
+
+    feature : integer
+        The feature used to split on
+
+    threshold : float
+        The threshold value to split on
+
+    error : float
+        The error in the node.  This could be the impurity (calculated using
+        an entropy measure for classification) or the residual regression
+        error (calculated using an estimator)
+
+    samples : integer
+        Number of samples present at this node
+
+    value : array-like, shape = [n_features] OR 1
+        For classification it is a histogram of target values
+        For regression is it the mean for the region
+
+    left : Node
+        The left child node
+
+    right : Node
+        The right child node
+    """
+
+    cdef public int feature
+    cdef public double threshold
+    cdef public double error
+    cdef public int samples
+    cdef public np.ndarray value
+    cdef public Node left
+    cdef public Node right
+    cdef public bint is_leaf
+
+    def __init__(self, feature, threshold, error, samples,
+                 value, left, right):
+        self.feature = feature
+        self.threshold = threshold
+        self.error = error
+        self.samples = samples
+        self.value = value
+        self.left = left
+        self.right = right
+
+        if left is None and right is None:
+            self.is_leaf = True
+        else:
+            self.is_leaf = False
+
+    def __reduce__(self):
+        return Node, (self.feature, self.threshold, self.error, self.samples,
+                      self.value, self.left, self.right)
+
+
+cdef np.ndarray apply_tree_sample(Node node, np.ndarray[DTYPE_t, ndim=1] x):
+    while node is not None:
+        if node.is_leaf:
+            return node.value
+        elif x[node.feature] < node.threshold:
+            node = node.left
+        else:
+            node = node.right
+
+
+cpdef np.ndarray apply_tree(Node node, np.ndarray[DTYPE_t, ndim=2] X, int k):
+    cdef np.ndarray y = np.zeros((X.shape[0], k), dtype=np.float64)
+    cdef int i = 0, n = X.shape[0]
+    for 0 <= i < n:
+        y[i] = apply_tree_sample(node, X[i])
+    return y
+
+
 # Classification entropy measures
 #
 #    From Hastie et al. Elements of Statistical Learning, 2009.
@@ -459,7 +538,8 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
     criterion : Criterion
         The criterion function to be minimized.
     n_samples : int
-        The number of samples in the current sample_mask (i.e. `sample_mask.sum()`).
+        The number of samples in the current sample_mask
+        (i.e. `sample_mask.sum()`).
 
     Returns
     -------
@@ -481,7 +561,7 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
     # Pointer access to ndarray data
     cdef DTYPE_t *y_ptr = <DTYPE_t *>y.data
     cdef DTYPE_t *X_i = NULL
-    
+
     cdef int *X_argsorted_i = NULL
 
     # sample mask data pointer
@@ -500,7 +580,7 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
     X_argsorted_i = <int *>X_argsorted.data
     criterion.init(y_ptr, sample_mask_ptr, n_samples, n_total_samples)
     initial_error = criterion.eval()
-    if initial_error == 0: # break early if the node is pure
+    if initial_error == 0:  # break early if the node is pure
         return best_i, best_t, initial_error
     best_error = initial_error
     # print 'at init, best error = ', best_error
@@ -520,8 +600,8 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
         a = 0
 
         while True:
-            b = smallest_sample_larger_than(a, X_i, X_argsorted_i, sample_mask_ptr,
-                                            n_total_samples)
+            b = smallest_sample_larger_than(a, X_i, X_argsorted_i,
+                                            sample_mask_ptr, n_total_samples)
 
             # if -1 there's none and we are finished
             if b == -1:
