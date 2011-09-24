@@ -242,15 +242,29 @@ def test_error():
 def test_pickle():
     import pickle
 
+    # classification
     obj = tree.DecisionTreeClassifier()
     obj.fit(iris.data, iris.target)
+    score = np.mean(obj.predict(iris.data) == iris.target)
     s = pickle.dumps(obj)
-    assert_equal(type(pickle.loads(s)), obj.__class__)
+    
+    obj2 = pickle.loads(s)
+    assert_equal(type(obj2), obj.__class__)
+    score2 = np.mean(obj2.predict(iris.data) == iris.target)
+    assert score == score2, "Failed to generate same score " + \
+            " after pickling (classification) "
 
+    # regression
     obj = tree.DecisionTreeRegressor()
     obj.fit(boston.data, boston.target)
+    score = np.mean(np.power(obj.predict(boston.data) - boston.target, 2))
     s = pickle.dumps(obj)
-    assert_equal(type(pickle.loads(s)), obj.__class__)
+    
+    obj2 = pickle.loads(s)
+    assert_equal(type(obj2), obj.__class__)
+    score2 = np.mean(np.power(obj2.predict(boston.data) - boston.target, 2))
+    assert score == score2, "Failed to generate same score " + \
+            " after pickling (regression) "
 
 
 if __name__ == '__main__':
