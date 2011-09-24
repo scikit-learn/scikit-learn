@@ -12,6 +12,8 @@ the AUTHORS.rst file for a complete list of contributors.
 
 It is currently maintained by a team of volunteers.
 
+**Note** The `scikit-learn` was previously referred to as `scikits.learn`
+
 
 Important links
 ===============
