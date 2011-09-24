@@ -70,7 +70,7 @@ def test_graphviz_toy():
     clf = tree.DecisionTreeClassifier(max_depth=3, min_split=1)
     clf.fit(X, Y)
     from StringIO import StringIO
-    
+
     # test export code
     out = StringIO()
     exporter = tree.GraphvizExporter(out)
@@ -92,7 +92,7 @@ def test_graphviz_toy():
 
     # test with feature_names
     out = StringIO()
-    exporter = tree.GraphvizExporter(out, feature_names=["feature1",""])
+    exporter = tree.GraphvizExporter(out, feature_names=["feature1", ""])
     clf.export(exporter)
     contents1 = out.getvalue()
 
@@ -107,7 +107,7 @@ def test_graphviz_toy():
     contents2 = tree_toy.getvalue()
 
     assert contents1 == contents2, \
-        "graphviz output test failed\n: %s != %s" % (contents1, contents2)   
+        "graphviz output test failed\n: %s != %s" % (contents1, contents2)
 
     # test improperly formed feature_names
     out = StringIO()
@@ -236,7 +236,7 @@ def test_error():
 
     clf = tree.DecisionTreeClassifier()
     clf.fit(X, Y)
-    assert_raises(ValueError, clf.predict, Xt)     
+    assert_raises(ValueError, clf.predict, Xt)
 
 
 def test_pickle():
@@ -247,7 +247,7 @@ def test_pickle():
     obj.fit(iris.data, iris.target)
     score = np.mean(obj.predict(iris.data) == iris.target)
     s = pickle.dumps(obj)
-    
+
     obj2 = pickle.loads(s)
     assert_equal(type(obj2), obj.__class__)
     score2 = np.mean(obj2.predict(iris.data) == iris.target)
@@ -259,7 +259,7 @@ def test_pickle():
     obj.fit(boston.data, boston.target)
     score = np.mean(np.power(obj.predict(boston.data) - boston.target, 2))
     s = pickle.dumps(obj)
-    
+
     obj2 = pickle.loads(s)
     assert_equal(type(obj2), obj.__class__)
     score2 = np.mean(np.power(obj2.predict(boston.data) - boston.target, 2))
