@@ -3,7 +3,7 @@
 About
 =====
 
-scikits.learn is a Python module for machine learning built on top of
+scikit-learn is a Python module for machine learning built on top of
 SciPy.
 
 The project was started in 2007 by David Cournapeau as a Google Summer
