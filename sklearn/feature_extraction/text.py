@@ -225,9 +225,20 @@ class CountVectorizer(BaseEstimator):
 
         This is useful in order to fix the vocabulary in advance.
 
-    max_df : float in range [0.0, 1.0], optional, 1.0 by default
-        When building the vocabulary ignore terms that have a term frequency
-        strictly higher than the given threshold (corpus specific stop words).
+    max_df : positive int or float in range [0.0, 1.0], optional, 1.0 by
+        default. When building the vocabulary ignore terms that have a document
+        frequency strictly higher than the given threshold (corpus specific
+        stop words). The relative or absolute document frequency are assumed
+        when the parameter is accordingly a float or an int. 
+
+        This parameter is ignored if vocabulary is not None.
+
+    min_df : positive int or float in range [0.0, 1.0], optional, 0.0 by
+        default. When building the vocabulary ignore terms that have a document
+        frequency strictly lower than the given threshold (e.g. words in only
+        one document). This may also be called document frequency cut-off in IR
+        literature. The relative or absolute document frequency are assumed
+        when the parameter is accordingly a float or an int.
 
         This parameter is ignored if vocabulary is not None.
 
@@ -242,14 +253,21 @@ class CountVectorizer(BaseEstimator):
     """
 
     def __init__(self, analyzer=DEFAULT_ANALYZER, vocabulary=None, max_df=1.0,
-                 max_features=None, dtype=long):
+                 min_df=0.0, max_features=None, dtype=long):
         self.analyzer = analyzer
         self.fit_vocabulary = vocabulary is None
         if vocabulary is not None and not isinstance(vocabulary, dict):
             vocabulary = dict((t, i) for i, t in enumerate(vocabulary))
         self.vocabulary = vocabulary
         self.dtype = dtype
+
+        if (not np.issubdtype(type(max_df),float) and not np.issubdtype(type(max_df),int)) or max_df<0:
+            raise ValueError("max_df should be a positive float or integer, got %r instead" % max_df)
+        if (not np.issubdtype(type(min_df),float) and not np.issubdtype(type(min_df),int)) or min_df<0:
+            raise ValueError("min_df should be a positive float or integer, got %r instead" % min_df)
         self.max_df = max_df
+        self.min_df = min_df
+        
         self.max_features = max_features
 
     def _term_count_dicts_to_matrix(self, term_count_dicts):
@@ -311,8 +329,8 @@ class CountVectorizer(BaseEstimator):
         # term counts across entire corpus (count each term maximum once per
         # document)
         document_counts = Counter()
-
         max_df = self.max_df
+        min_df = self.min_df
         max_features = self.max_features
 
         # TODO: parallelize the following loop with joblib?
@@ -324,28 +342,29 @@ class CountVectorizer(BaseEstimator):
                 term_count_current[term] += 1
                 term_counts[term] += 1
 
-            if max_df is not None:
-                for term in term_count_current:
-                    document_counts[term] += 1
+            for term in term_count_current:
+                document_counts[term] += 1
 
             term_counts_per_doc.append(term_count_current)
 
         n_doc = len(term_counts_per_doc)
 
-        # filter out stop words: terms that occur in almost all documents
-        if max_df is not None:
-            max_document_count = max_df * n_doc
-            stop_words = set(t for t, dc in document_counts.iteritems()
-                               if dc > max_document_count)
+        # filter out uninformative words: terms that occur in all/few documents
+        max_df = max_df if np.issubdtype(type(max_df),float) else float(max_df)/n_doc
+        min_df = min_df if np.issubdtype(type(min_df),float) else float(min_df)/n_doc
+        remove_words = set()
+        if min_df>0 or max_df<1:
+            remove_words = set(t for t, dc in document_counts.iteritems()
+                               if dc > max_df * n_doc or dc < min_df * n_doc)
 
         # list the terms that should be part of the vocabulary
         if max_features is None:
-            terms = [t for t in term_counts if t not in stop_words]
+            terms = [t for t in term_counts if t not in remove_words]
         else:
             # extract the most frequent terms for the vocabulary
             terms = set()
             for t, tc in term_counts.most_common():
-                if t not in stop_words:
+                if t not in remove_words:
                     terms.add(t)
                 if len(terms) >= max_features:
                     break
@@ -514,9 +533,9 @@ class Vectorizer(BaseEstimator):
     Equivalent to CountVectorizer followed by TfidfTransformer.
     """
 
-    def __init__(self, analyzer=DEFAULT_ANALYZER, max_df=1.0,
+    def __init__(self, analyzer=DEFAULT_ANALYZER, max_df=1.0, min_df=0.0,
                  max_features=None, norm='l2', use_idf=True, smooth_idf=True):
-        self.tc = CountVectorizer(analyzer, max_df=max_df,
+        self.tc = CountVectorizer(analyzer, max_df=max_df, min_df=min_df,
                                   max_features=max_features,
                                   dtype=np.float64)
         self.tfidf = TfidfTransformer(norm=norm, use_idf=use_idf,
