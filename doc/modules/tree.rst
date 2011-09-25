@@ -154,6 +154,7 @@ floating point values instead of integer values::
 
 Complexity
 ==========
+
 In general, the run time cost to construct a balanced binary 
 tree is  :math:`O(n_{samples}log(n_{samples}))` and query time 
 :math:`O(log(n_{samples}))`.  Although the tree construction algorithm attempts 
@@ -227,7 +228,7 @@ Tips on Practical Use
 .. _tree_algorithms:
 
 Tree algorithms: ID3, C4.5, C5.0 and CART
-========================
+==========================================
 
 What are all the various decision tree algorithms and how do they differ from 
 each other? Which one is implemented in scikit-learn?
