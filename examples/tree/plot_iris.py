@@ -5,7 +5,7 @@ Plot multi-class DecisionTree on the iris dataset
 
 Plot decision surface of multi-class DecisionTree on iris dataset on pairwise
 selection of features.
- 
+
 """
 print __doc__
 
@@ -16,9 +16,9 @@ from sklearn.tree import DecisionTreeClassifier
 
 # import some data to play with
 iris = datasets.load_iris()
-for pairidx, pair in enumerate([[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]]):
-    X = iris.data[:, pair]  # we only take the first two features. We could
-    # avoid this ugly slicing by using a two-dim dataset
+for pairidx, pair in enumerate([[0, 1], [0, 2], [0, 3],
+                                [1, 2], [1, 3], [2, 3]]):
+    X = iris.data[:, pair]  # we only take the two corresponding features
     y = iris.target
     K=3
     colors = "bry"
@@ -45,7 +45,7 @@ for pairidx, pair in enumerate([[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]]):
     xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
                          np.arange(y_min, y_max, h))
 
-    pl.subplot(2,3,pairidx+1)
+    pl.subplot(2, 3, pairidx + 1)
     pl.set_cmap(pl.cm.Paired)
 
     # Plot the decision boundary. For that, we will asign a color to each

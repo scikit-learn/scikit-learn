@@ -104,6 +104,7 @@ cpdef np.ndarray apply_tree(Node node, np.ndarray[DTYPE_t, ndim=2] X, int k):
     return y
 
 
+################################################################################
 # Classification entropy measures
 #
 #    From Hastie et al. Elements of Statistical Learning, 2009.
@@ -482,6 +483,7 @@ cdef class MSE(RegressionCriterion):
         return self.var_left + self.var_right
 
 
+################################################################################
 cdef int smallest_sample_larger_than(int sample_idx, DTYPE_t *X_i,
                                      int *X_argsorted_i, BOOL_t *sample_mask,
                                      int n_total_samples):
