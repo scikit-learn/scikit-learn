@@ -79,6 +79,32 @@ def safe_sparse_dot(a, b, dense_output=False):
         return np.dot(a, b)
 
 
+def randomized_range_finder(A, ell, q, random_state):
+    """Computes an orthonormal matrix whose range approximates the range of A.
+
+    Follows Algorithm 4.3 of
+    Finding structure with randomness: Stochastic algorithms for constructing
+    approximate matrix decompositions
+    Halko, et al., 2009 (arXiv:909)
+    """
+    # generating random gaussian vectors r with shape: (M.shape[1], k + p)
+    r = random_state.normal(size=(A.shape[1], ell))
+
+    # sampling the range of A using by linear projection of r
+    Y = safe_sparse_dot(A, r)
+    del r
+
+    # apply q power iterations on Y to make to further 'imprint' the top
+    # singular values of A in Y
+    for i in xrange(q):
+        Y = safe_sparse_dot(A, safe_sparse_dot(A.T, Y))
+
+    # extracting an orthonormal basis of the A range samples
+    from .fixes import qr_economic
+    Q, R = qr_economic(Y)
+    return Q
+
+
 def fast_svd(M, k, p=None, q=0, transpose='auto', random_state=0):
     """Computes the k-truncated randomized SVD
 
@@ -141,22 +167,7 @@ def fast_svd(M, k, p=None, q=0, transpose='auto', random_state=0):
         # this implementation is a bit faster with smaller shape[1]
         M = M.T
 
-    # generating random gaussian vectors r with shape: (M.shape[1], k + p)
-    r = random_state.normal(size=(M.shape[1], k + p))
-
-    # sampling the range of M using by linear projection of r
-    Y = safe_sparse_dot(M, r)
-    del r
-
-    # apply q power iterations on Y to make to further 'imprint' the top
-    # singular values of M in Y
-    for i in xrange(q):
-        Y = safe_sparse_dot(M, safe_sparse_dot(M.T, Y))
-
-    # extracting an orthonormal basis of the M range samples
-    from .fixes import qr_economic
-    Q, R = qr_economic(Y)
-    del R
+    Q = randomized_range_finder(M, k+p, q, random_state)
 
     # project M to the (k + p) dimensional space using the basis vectors
     B = safe_sparse_dot(Q.T, M)
