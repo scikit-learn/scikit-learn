@@ -9,7 +9,6 @@ from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_almost_equal
 from numpy.testing import assert_equal
 from nose.tools import assert_raises
-from nose.tools import with_setup
 
 from sklearn import tree
 from sklearn import datasets
@@ -31,7 +30,7 @@ iris.target = iris.target[perm]
 # also load the boston dataset
 # and randomly permute it
 boston = datasets.load_boston()
-perm = np.random.permutation(boston.target.size)
+perm = np.random.RandomState(0).permutation(boston.target.size)
 boston.data = boston.data[perm]
 boston.target = boston.target[perm]
 
