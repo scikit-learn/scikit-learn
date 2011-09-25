@@ -141,7 +141,7 @@ def fast_svd(M, k, p=None, q=0, transpose='auto', random_state=0):
         # this implementation is a bit faster with smaller shape[1]
         M = M.T
 
-   # generating random gaussian vectors r with shape: (M.shape[1], k + p)
+    # generating random gaussian vectors r with shape: (M.shape[1], k + p)
     r = random_state.normal(size=(M.shape[1], k + p))
 
     # sampling the range of M using by linear projection of r
