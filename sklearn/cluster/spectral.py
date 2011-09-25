@@ -13,7 +13,7 @@ from ..utils.graph import graph_laplacian
 from .k_means_ import k_means
 
 
-def spectral_embedding(adjacency, n_components=8, mode=None,
+def spectral_embedding(adjacency, n_components=8, mode='arpack',
                        random_state=None):
     """Project the sample on the first eigen vectors of the graph Laplacian
 
@@ -123,7 +123,7 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
     return embedding
 
 
-def spectral_clustering(affinity, k=8, n_components=None, mode=None,
+def spectral_clustering(affinity, k=8, n_components=None, mode='arpack',
                         random_state=None, n_init=10):
     """Apply k-means to a projection to the normalized laplacian
 
