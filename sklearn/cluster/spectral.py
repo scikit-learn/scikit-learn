@@ -258,7 +258,7 @@ class SpectralClustering(BaseEstimator):
       http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.165.9323
     """
 
-    def __init__(self, k=8, mode=None, random_state=None, n_init=10):
+    def __init__(self, k=8, mode='arpack', random_state=None, n_init=10):
         self.k = k
         self.mode = mode
         self.random_state = random_state

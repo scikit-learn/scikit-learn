@@ -136,6 +136,7 @@ of cluster. It will have difficulties scaling to thousands of samples.
  * :ref:`example_cluster_plot_mean_shift.py`: Mean Shift clustering
    on a synthetic 2D datasets with 3 classes.
 
+.. _spectral_clustering:
 
 Spectral clustering
 ===================
@@ -166,6 +167,14 @@ function of the gradient of the image.
     :scale: 50
 
 .. centered:: |noisy_img| |segmented_img|
+
+.. warning:: Shapeless isotropic data
+
+   When the data is really shapeless (i.e. generated from a random
+   distribution with no clusters), the spectral-clustering problem is
+   ill-conditioned: the different choices are almost equivalent, and 
+   the spectral clustering solver chooses an arbitrary one, putting 
+   the first sample alone in one bin. 
 
 .. topic:: Examples:
 
