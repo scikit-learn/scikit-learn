@@ -15,7 +15,7 @@ from sklearn import datasets
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
-Y = [-1, -1, -1, 1, 1, 1]
+y = [-1, -1, -1, 1, 1, 1]
 T = [[-1, -1], [2, 2], [3, 2]]
 true_result = [-1, 1, 1]
 
@@ -39,13 +39,13 @@ def test_classification_toy():
     """Check classification on a toy dataset."""
 
     clf = tree.DecisionTreeClassifier()
-    clf.fit(X, Y)
+    clf.fit(X, y)
 
     assert_array_equal(clf.predict(T), true_result)
 
     # With subsampling
     clf = tree.DecisionTreeClassifier(max_features=1, random_state=1)
-    clf.fit(X, Y)
+    clf.fit(X, y)
 
     assert_array_equal(clf.predict(T), true_result)
 
@@ -53,13 +53,13 @@ def test_classification_toy():
 def test_regression_toy():
     """Check regression on a toy dataset."""
     clf = tree.DecisionTreeRegressor()
-    clf.fit(X, Y)
+    clf.fit(X, y)
 
     assert_almost_equal(clf.predict(T), true_result)
 
     # With subsampling
     clf = tree.DecisionTreeRegressor(max_features=1, random_state=1)
-    clf.fit(X, Y)
+    clf.fit(X, y)
 
     assert_almost_equal(clf.predict(T), true_result)
 
@@ -67,7 +67,7 @@ def test_regression_toy():
 def test_graphviz_toy():
     """Check correctness of graphviz output on a toy dataset."""
     clf = tree.DecisionTreeClassifier(max_depth=3, min_split=1)
-    clf.fit(X, Y)
+    clf.fit(X, y)
     from StringIO import StringIO
 
     # test export code
@@ -179,52 +179,52 @@ def test_error():
     # impossible value of min_split
     assert_raises(ValueError,
                   tree.DecisionTreeClassifier(min_split=-1).fit,
-                  X, Y)
+                  X, y)
 
     # impossible value of max_depth
     assert_raises(ValueError,
                   tree.DecisionTreeClassifier(max_depth=-1).fit,
-                  X, Y)
+                  X, y)
 
     clf = tree.DecisionTreeClassifier()
 
-    Y2 = Y[:-1]  # wrong dimensions for labels
-    assert_raises(ValueError, clf.fit, X, Y2)
+    y2 = y[:-1]  # wrong dimensions for labels
+    assert_raises(ValueError, clf.fit, X, y2)
 
     # Test with arrays that are non-contiguous.
     Xf = np.asfortranarray(X)
     clf = tree.DecisionTreeClassifier()
-    clf.fit(Xf, Y)
+    clf.fit(Xf, y)
     assert_array_equal(clf.predict(T), true_result)
 
     # use values of max_features that are invalid
     clf = tree.DecisionTreeClassifier(max_features=-1)
-    assert_raises(ValueError, clf.fit, X, Y2)
+    assert_raises(ValueError, clf.fit, X, y2)
 
     clf = tree.DecisionTreeClassifier(max_features=10)
-    assert_raises(ValueError, clf.fit, X, Y2)
+    assert_raises(ValueError, clf.fit, X, y2)
 
     clf = tree.DecisionTreeClassifier()
     # predict before fitting
     assert_raises(Exception, clf.predict, T)
 
     # predict on vector with different dims
-    clf.fit(X, Y)
+    clf.fit(X, y)
     t = np.asanyarray(T)
     assert_raises(ValueError, clf.predict, t[:, 1:])
 
     # max_features invalid
     clf = tree.DecisionTreeClassifier(max_features=-1)
-    assert_raises(ValueError, clf.fit, X, Y)
+    assert_raises(ValueError, clf.fit, X, y)
 
     clf = tree.DecisionTreeClassifier(max_features=3)
-    assert_raises(ValueError, clf.fit, X, Y)
+    assert_raises(ValueError, clf.fit, X, y)
 
     # predict before fit
     clf = tree.DecisionTreeClassifier()
     assert_raises(Exception, clf.predict_proba, X)
 
-    clf.fit(X, Y)
+    clf.fit(X, y)
     X2 = [-2, -1, 1]  # wrong feature shape for sample
     assert_raises(ValueError, clf.predict_proba, X2)
 
@@ -232,11 +232,11 @@ def test_error():
     Xt = np.array(X).T
 
     clf = tree.DecisionTreeClassifier()
-    clf.fit(np.dot(X, Xt), Y)
+    clf.fit(np.dot(X, Xt), y)
     assert_raises(ValueError, clf.predict, X)
 
     clf = tree.DecisionTreeClassifier()
-    clf.fit(X, Y)
+    clf.fit(X, y)
     assert_raises(ValueError, clf.predict, Xt)
 
 
