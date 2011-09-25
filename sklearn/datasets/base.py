@@ -415,6 +415,19 @@ def load_sample_images():
 def load_sample_image(image_name):
     """Load the numpy array of a single sample image
 
+    Parameters
+    -----------
+    image_name: {`china.jpg`, `flower.jpg`}
+        The name of the sample image loaded
+
+    Returns
+    -------
+    img: 3D array
+        The image as a numpy array: height x width x color
+
+    Examples
+    ---------
+
     # >>> from sklearn.datasets import load_sample_image
     # >>> china = load_sample_image('china.jpg')
     # >>> china.dtype
