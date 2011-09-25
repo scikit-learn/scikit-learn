@@ -636,7 +636,7 @@ def make_low_rank_matrix(n_samples=100, n_features=100, effective_rank=10,
     components (singular vectors).
 
     This kind of singular profiles is often seen in practice, for instance:
-     - graw level pictures of faces
+     - gray level pictures of faces
      - TF-IDF vectors of text documents crawled from the web
 
     Parameters
