@@ -222,22 +222,14 @@ class BaseDecisionTree(BaseEstimator):
                              % (self._tree_types, impl))
 
         self.type = impl
-        self.classification_subtype = None
         self.criterion = criterion
-
-        if min_split <= 0:
-            raise ValueError("min_split must be greater than zero.")
         self.min_split = min_split
-        if max_depth <= 0:
-            raise ValueError("max_depth must be greater than zero. ")
         self.max_depth = max_depth
-
         self.max_features = max_features
-        self.random_state = check_random_state(random_state)
-
-        if min_density < 0.0 or min_density > 1.0:
-            raise ValueError("min_density must be in [0, 1]")
+        self.random_state = random_state
         self.min_density = min_density
+
+        self.classification_subtype = None
         self.n_features = None
         self.tree = None
 
@@ -296,6 +288,13 @@ class BaseDecisionTree(BaseEstimator):
             raise ValueError("Number of labels=%d does not match "
                              "number of features=%d"
                              % (len(y), n_samples))
+        random_state = check_random_state(self.random_state)
+        if self.min_split <= 0:
+            raise ValueError("min_split must be greater than zero.")
+        if self.max_depth <= 0:
+            raise ValueError("max_depth must be greater than zero. ")
+        if self.min_density < 0.0 or self.min_density > 1.0:
+            raise ValueError("min_density must be in [0, 1]")
 
         sample_mask = np.ones((n_samples,), dtype=np.bool)
 
@@ -318,7 +317,7 @@ class BaseDecisionTree(BaseEstimator):
         self.tree = _build_tree(is_classification, X, y, criterion,
                                 self.max_depth, self.min_split,
                                 self.max_features, self.n_classes,
-                                self.random_state, self.min_density,
+                                random_state, self.min_density,
                                 sample_mask)
         return self
 

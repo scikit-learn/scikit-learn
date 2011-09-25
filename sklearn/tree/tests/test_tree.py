@@ -177,12 +177,14 @@ def test_probability():
 def test_error():
     """Test that it gives proper exception on deficient input."""
     # impossible value of min_split
-    assert_raises(ValueError, \
-                  tree.DecisionTreeClassifier, min_split=-1)
+    assert_raises(ValueError,
+                  tree.DecisionTreeClassifier(min_split=-1).fit,
+                  X, Y)
 
     # impossible value of max_depth
-    assert_raises(ValueError, \
-                  tree.DecisionTreeClassifier, max_depth=-1)
+    assert_raises(ValueError,
+                  tree.DecisionTreeClassifier(max_depth=-1).fit,
+                  X, Y)
 
     clf = tree.DecisionTreeClassifier()
 
