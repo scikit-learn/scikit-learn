@@ -138,13 +138,19 @@ def randomized_range_finder(A, ell, q, random_state):
     Y = safe_sparse_dot(A, r)
     del r
 
-    # apply q power iterations on Y to make to further 'imprint' the top
-    # singular values of A in Y
+    from .fixes import qr_economic
+
+    # apply q power iterations on Y to make to further 'imprint' the
+    # top singular values of A in Y. Re-orthogonalize after each
+    # half-step, as recommended (see Algorithm 4.4 of Halko et al).
     for i in xrange(q):
-        Y = safe_sparse_dot(A, safe_sparse_dot(A.T, Y))
+        Yhat = safe_sparse_dot(A.T, Y)
+        Yhat = qr_economic(Yhat)[0]
+        Y = safe_sparse_dot(A, Yhat)
+        Y = qr_economic(Y)[0]
+        del Yhat
 
     # extracting an orthonormal basis of the A range samples
-    from .fixes import qr_economic
     Q, R = qr_economic(Y)
     return Q
 
