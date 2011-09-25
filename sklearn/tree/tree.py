@@ -299,7 +299,8 @@ class BaseDecisionTree(BaseEstimator):
 
         sample_mask = np.ones((n_samples,), dtype=np.bool)
 
-        if self.type == 'classification':
+        is_classification = (self.type == 'classification')
+        if is_classification:
             y = np.ascontiguousarray(y, dtype=np.int)
             self.classes = np.unique(y)
             self.n_classes = self.classes.shape[0]
@@ -307,21 +308,18 @@ class BaseDecisionTree(BaseEstimator):
 
             criterion_class = CLASSIFICATION[self.criterion]
             criterion = criterion_class(self.n_classes)
-
-            self.tree = _build_tree(True, X, y, criterion, self.max_depth,
-                                    self.min_split, self.max_features,
-                                    self.n_classes, self.random_state,
-                                    self.min_density, sample_mask)
         else:  # regression
             y = np.ascontiguousarray(y, dtype=DTYPE)
             self.n_classes = 1
 
             criterion_class = REGRESSION[self.criterion]
             criterion = criterion_class()
-            self.tree = _build_tree(False, X, y, criterion, self.max_depth,
-                                    self.min_split, self.max_features,
-                                    self.n_classes, self.random_state,
-                                    self.min_density, sample_mask)
+
+        self.tree = _build_tree(is_classification, X, y, criterion,
+                                self.max_depth, self.min_split,
+                                self.max_features, self.n_classes,
+                                self.random_state, self.min_density,
+                                sample_mask)
         return self
 
     def predict(self, X):
