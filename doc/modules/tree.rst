@@ -7,21 +7,22 @@ Decision Trees
 
 .. currentmodule:: sklearn.tree
 
-**Decision Trees** are a non-parametric supervised learning
-method used for :ref:`classification <tree_classification>`,
-:ref:`regression <tree_regression>`.
+**Decision Trees** are a non-parametric supervised learning method used
+for :ref:`classification <tree_classification>`, :ref:`regression
+<tree_regression>`. They learn a tree simple decision rules combining
+information from the features.
 
 The advantages of Decision Trees are:
 
     - Simple to understand and interpret.  Trees can be visualised.
 
-    - The cost of using the tree (predicting data) is logarithmic in the 
-      number of data points used to train the tree.
-
     - Requires little data preparation. Other techniques often require data 
       normalisation, dummy variables need to be created and blank values to 
       be removed. Note that this module does not support missing values.
     
+    - The cost of using the tree (predicting data) is logarithmic in the 
+      number of data points used to train the tree.
+
     - Able to handle both numerical and categorical data. Other techniques 
       are usually specialised in analysing datasets that have only one type 
       of variable. See :ref:`algorithms <tree_algorithms>` for more information.
@@ -118,7 +119,7 @@ After being fitted, the model can then be used to predict new values::
     >>> clf.predict(iris.data[0, :])
     array([0])
 
-.. figure:: ../auto_examples/tree/images/plot_iris.png
+.. figure:: ../auto_examples/tree/images/plot_iris_1.png
    :target: ../auto_examples/tree/plot_iris.html
    :align: center
 
@@ -206,7 +207,8 @@ Tips on Practical Use
     Getting the right ratio of samples to number of features is important, since 
     a tree with few samples in high dimensional space is very likely to overfit.
   
-  * Consider performing  dimensionality reduction (PCA or ICA) beforehand to 
+  * Consider performing  dimensionality reduction (:ref:`PCA <PCA>`, 
+    :ref:`ICA <ICA>`, or :ref:`feature_selection`) beforehand to 
     give your tree a better chance of finding features that are discriminative.
   
   * Visualise your tree as you are training by using the ``export``
