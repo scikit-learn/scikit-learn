@@ -3,9 +3,12 @@
 Plot multi-class DecisionTree on the iris dataset
 =================================================
 
-Plot decision surface of multi-class DecisionTree on iris dataset on pairwise
-selection of features.
+Plot decision surface of multi-class :ref:`decision tree <tree>` on iris
+dataset on pairwise selection of features.
 
+For each pair of iris features, the decision tree learn decision
+boundaries made of combination of simple thresholding rules on the train
+observations.
 """
 print __doc__
 
