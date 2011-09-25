@@ -543,7 +543,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     R2 scores (a.k.a. coefficient of determination) over 10-folds CV:
 
     >>> cross_val_score(regressor, boston.data, boston.target, cv=10)
-    ...                    # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+    ...                    # doctest: +SKIP
     ...
     array([ 0.61..., 0.57..., -0.34..., 0.41..., 0.75...,
             0.07..., 0.29..., 0.33..., -1.42..., -1.77...])
