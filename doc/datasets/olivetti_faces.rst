@@ -1,3 +1,6 @@
+
+.. _olivetti_faces:
+
 The Olivetti faces dataset
 ==========================
 

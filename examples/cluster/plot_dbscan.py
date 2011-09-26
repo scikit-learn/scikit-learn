@@ -11,9 +11,9 @@ print __doc__
 
 import numpy as np
 from scipy.spatial import distance
-from scikits.learn.cluster import DBSCAN
-from scikits.learn import metrics
-from scikits.learn.datasets.samples_generator import make_blobs
+from sklearn.cluster import DBSCAN
+from sklearn import metrics
+from sklearn.datasets.samples_generator import make_blobs
 
 
 ##############################################################################
@@ -39,6 +39,8 @@ print 'Estimated number of clusters: %d' % n_clusters_
 print "Homogeneity: %0.3f" % metrics.homogeneity_score(labels_true, labels)
 print "Completeness: %0.3f" % metrics.completeness_score(labels_true, labels)
 print "V-measure: %0.3f" % metrics.v_measure_score(labels_true, labels)
+print "Adjusted Rand Index: %0.3f" % \
+    metrics.adjusted_rand_score(labels_true, labels)
 
 ##############################################################################
 # Plot result

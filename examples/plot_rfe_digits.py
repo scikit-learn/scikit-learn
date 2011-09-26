@@ -3,37 +3,29 @@
 Recursive feature elimination
 =============================
 
-A recursive feature elimination is performed prior to SVM classification.
+A recursive feature elimination example showing the relevance of pixels in
+a digit classification task.
 """
 print __doc__
 
-from scikits.learn.svm import SVC
-from scikits.learn import datasets
-from scikits.learn.feature_selection import RFE
+from sklearn.svm import SVC
+from sklearn import datasets
+from sklearn.feature_selection import RFE
 
-################################################################################
 # Loading the Digits dataset
 digits = datasets.load_digits()
-
-# To apply an classifier on this data, we need to flatten the image, to
-# turn the data in a (samples, feature) matrix:
-n_samples = len(digits.images)
-X = digits.images.reshape((n_samples, -1))
+X = digits.images.reshape((len(digits.images), -1))
 y = digits.target
 
-
-################################################################################
-# Create the RFE object and compute a cross-validated score
-
+# Create the RFE object and rank each pixel
 svc = SVC(kernel="linear", C=1)
-rfe = RFE(estimator=svc, n_features=1, percentage=0.1)
+rfe = RFE(estimator=svc, n_features_to_select=1, step=1)
 rfe.fit(X, y)
+ranking = rfe.ranking_.reshape(digits.images[0].shape)
 
-image_ranking_ = rfe.ranking_.reshape(digits.images[0].shape)
-
+# Plot pixel ranking
 import pylab as pl
-pl.matshow(image_ranking_)
+pl.matshow(ranking)
 pl.colorbar()
-pl.title('Ranking of pixels with RFE')
+pl.title("Ranking of pixels with RFE")
 pl.show()
-

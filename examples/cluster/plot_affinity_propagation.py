@@ -11,9 +11,9 @@ Between Data Points", Science Feb. 2007
 print __doc__
 
 import numpy as np
-from scikits.learn.cluster import AffinityPropagation
-from scikits.learn import metrics
-from scikits.learn.datasets.samples_generator import make_blobs
+from sklearn.cluster import AffinityPropagation
+from sklearn import metrics
+from sklearn.datasets.samples_generator import make_blobs
 
 ##############################################################################
 # Generate sample data
@@ -38,6 +38,8 @@ print 'Estimated number of clusters: %d' % n_clusters_
 print "Homogeneity: %0.3f" % metrics.homogeneity_score(labels_true, labels)
 print "Completeness: %0.3f" % metrics.completeness_score(labels_true, labels)
 print "V-measure: %0.3f" % metrics.v_measure_score(labels_true, labels)
+print "Adjusted Rand Index: %0.3f" % \
+    metrics.adjusted_rand_score(labels_true, labels)
 
 ##############################################################################
 # Plot result

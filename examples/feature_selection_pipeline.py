@@ -8,14 +8,14 @@ feature selection with anova and then a C-SVM of the selected features.
 """
 print __doc__
 
-from scikits.learn import svm
-from scikits.learn.datasets import samples_generator
-from scikits.learn.feature_selection import SelectKBest, f_regression
-from scikits.learn.pipeline import Pipeline
+from sklearn import svm
+from sklearn.datasets import samples_generator
+from sklearn.feature_selection import SelectKBest, f_regression
+from sklearn.pipeline import Pipeline
 
 # import some data to play with
 X, y = samples_generator.make_classification(
-	n_features=20, n_informative=3, n_redundant=0, 
+	n_features=20, n_informative=3, n_redundant=0,
 	n_classes=4, n_clusters_per_class=2)
 
 # ANOVA SVM-C

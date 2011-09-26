@@ -3,6 +3,7 @@
 # caution: testing won't work on windows, see README
 
 PYTHON ?= python
+CYTHON ?= cython
 NOSETESTS ?= nosetests
 CTAGS ?= ctags
 
@@ -28,18 +29,22 @@ inplace:
 	$(PYTHON) setup.py build_ext -i
 
 test-code: in
-	$(NOSETESTS) -s scikits/learn
+	$(NOSETESTS) -s sklearn
 test-doc:
 	$(NOSETESTS) -s --with-doctest --doctest-tests --doctest-extension=rst \
 	--doctest-fixtures=_fixture doc/modules/
 
 test-coverage:
-	$(NOSETESTS) -s --with-coverage --cover-html --cover-html-dir=coverage
+	$(NOSETESTS) -s --with-coverage --cover-html --cover-html-dir=coverage \
+	--cover-package=sklearn sklearn
 
 test: test-code test-doc
 
 trailing-spaces:
 	find -name "*.py" |xargs sed -i 's/[ \t]*$$//'
+
+cython:
+	find sklearn -name "*.pyx" | xargs $(CYTHON)
 
 ctags:
 	# make tags for symbol based navigation in emacs and vim

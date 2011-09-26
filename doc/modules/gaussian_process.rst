@@ -6,7 +6,7 @@
 Gaussian Processes
 ==================
 
-.. currentmodule:: scikits.learn.gaussian_process
+.. currentmodule:: sklearn.gaussian_process
 
 **Gaussian Processes for Machine Learning (GPML)** is a generic supervised
 learning method primarily designed to solve *regression* problems. It has also
@@ -64,7 +64,7 @@ parameters or alternatively it uses the given parameters.
 ::
 
     >>> import numpy as np
-    >>> from scikits.learn import gaussian_process
+    >>> from sklearn import gaussian_process
     >>> def f(x):
     ...	    return x * np.sin(x)
     >>> X = np.atleast_2d([1., 3., 5., 6., 7., 8.]).T
@@ -84,7 +84,7 @@ parameters or alternatively it uses the given parameters.
 
   * :ref:`example_gaussian_process_plot_gp_probabilistic_classification_after_regression.py`
 
-  * :ref:`example_gaussian_process_plot_gp_diabetes_dataset.py`
+  * :ref:`example_gaussian_process_plot_gp_regression.py`
 
 Mathematical formulation
 ========================

@@ -28,7 +28,7 @@ from scipy import linalg
 import pylab as pl
 import matplotlib as mpl
 
-from scikits.learn import mixture
+from sklearn import mixture
 
 # Number of samples per component
 n_samples = 500

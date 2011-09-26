@@ -17,14 +17,13 @@ from time import time
 import logging
 import numpy as np
 
-from scikits.learn.datasets import fetch_20newsgroups
-from scikits.learn.feature_extraction.text import Vectorizer
-from scikits.learn import metrics
+from sklearn.datasets import fetch_20newsgroups
+from sklearn.feature_extraction.text import Vectorizer
+from sklearn import metrics
 
-from scikits.learn.cluster import MiniBatchKMeans
-from scikits.learn.cluster import randindex
+from sklearn.cluster import MiniBatchKMeans
 
-from scikits.learn.preprocessing import Normalizer
+from sklearn.preprocessing import Normalizer
 
 
 # Display progress logs on stdout
@@ -50,10 +49,10 @@ data_train = fetch_20newsgroups(subset='train', categories=categories,
 data_test = fetch_20newsgroups(subset='test', categories=categories,
                                shuffle=True, random_state=42)
 
-filenames = np.concatenate((data_train.filenames, data_test.filenames))
+documents = data_train.data + data_test.data
 target_names = set(data_train.target_names + data_test.target_names)
 
-print "%d documents" % len(filenames)
+print "%d documents" % len(documents)
 print "%d categories" % len(target_names)
 print
 
@@ -64,7 +63,7 @@ true_k = np.unique(labels).shape[0]
 print "Extracting features from the training dataset using a sparse vectorizer"
 t0 = time()
 vectorizer = Vectorizer(max_features=10000)
-X = vectorizer.fit_transform((open(f).read() for f in filenames))
+X = vectorizer.fit_transform(documents)
 
 X = Normalizer(norm="l2", copy=False).transform(X)
 
@@ -72,26 +71,20 @@ print "done in %fs" % (time() - t0)
 print "n_samples: %d, n_features: %d" % X.shape
 print
 
-
 ###############################################################################
 # Now sparse MiniBatchKmeans
 
-print "_" * 80
-
 mbkm = MiniBatchKMeans(init="random", k=true_k, max_iter=10, random_state=13,
-                       chunk_size=1000, tol=0.0, n_init=1)
-
+                       chunk_size=1000)
 print "Clustering sparse data with %s" % str(mbkm)
-print
-
 t0 = time()
 mbkm.fit(X)
 print "done in %0.3fs" % (time() - t0)
+print
 
-ri = randindex(labels, mbkm.labels_)
-vmeasure = metrics.v_measure_score(labels, mbkm.labels_)
 print "Homogeneity: %0.3f" % metrics.homogeneity_score(labels, mbkm.labels_)
 print "Completeness: %0.3f" % metrics.completeness_score(labels, mbkm.labels_)
-print "V-measure: %0.3f" % vmeasure
-print "Rand-Index: %.3f" % ri
+print "V-measure: %0.3f" % metrics.v_measure_score(labels, mbkm.labels_)
+print "Adjusted Rand-Index: %.3f" % \
+    metrics.adjusted_rand_score(labels, mbkm.labels_)
 print

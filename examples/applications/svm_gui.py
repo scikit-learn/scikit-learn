@@ -25,7 +25,7 @@ import matplotlib
 matplotlib.use('TkAgg')
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-#from matplotlib.backends.backend_tkagg import NavigationToolbar2TkAgg
+from matplotlib.backends.backend_tkagg import NavigationToolbar2TkAgg
 from matplotlib.figure import Figure
 from matplotlib.contour import ContourSet
 
@@ -33,7 +33,7 @@ import Tkinter as Tk
 import sys
 import numpy as np
 
-from scikits.learn import svm
+from sklearn import svm
 
 y_min, y_max = -50, 50
 x_min, x_max = -50, 50
@@ -142,8 +142,8 @@ class View(object):
         canvas.get_tk_widget().pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
         canvas._tkcanvas.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
         canvas.mpl_connect('button_press_event', self.onclick)
-#        toolbar = NavigationToolbar2TkAgg(canvas, root)
-#        toolbar.update()
+        toolbar = NavigationToolbar2TkAgg(canvas, root)
+        toolbar.update()
         self.controllbar = ControllBar(root, controller)
         self.f = f
         self.ax = ax

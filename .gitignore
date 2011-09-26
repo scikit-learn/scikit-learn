@@ -14,7 +14,7 @@ doc/auto_examples/
 doc/modules/generated/
 doc/datasets/generated/
 pip-log.txt
-scikits.learn.egg-info/
+scikit_learn.egg-info/
 .coverage
 coverage
 tags

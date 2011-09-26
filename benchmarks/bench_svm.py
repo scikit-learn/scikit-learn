@@ -32,8 +32,8 @@ def bench_scikit(X, Y):
     """
     bench with scikit-learn bindings on libsvm
     """
-    import scikits.learn
-    from scikits.learn.svm import SVC
+    import sklearn
+    from sklearn.svm import SVC
 
     gc.collect()
 

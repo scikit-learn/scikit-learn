@@ -5,9 +5,9 @@
 Feature extraction
 ==================
 
-.. currentmodule:: scikits.learn.feature_extraction
+.. currentmodule:: sklearn.feature_extraction
 
-The :mod:`scikits.learn.feature_extraction` module can be used to extract
+The :mod:`sklearn.feature_extraction` module can be used to extract
 features in a format supported by machine learning algorithms from datasets
 consisting of formats such as text and image.
 
@@ -15,7 +15,7 @@ consisting of formats such as text and image.
 Text feature extraction
 =======================
 
-.. currentmodule:: scikits.learn.feature_extraction.text
+.. currentmodule:: sklearn.feature_extraction.text
 
 XXX: a lot to do here
 
@@ -23,7 +23,7 @@ XXX: a lot to do here
 Image feature extraction
 ========================
 
-.. currentmodule:: scikits.learn.feature_extraction.image
+.. currentmodule:: sklearn.feature_extraction.image
 
 Patch extraction
 ----------------
@@ -35,7 +35,7 @@ the third axis. For rebuilding an image from all its patches, use
 picture with 3 color channels (e.g. in RGB format)::
 
     >>> import numpy as np
-    >>> from scikits.learn.feature_extraction import image
+    >>> from sklearn.feature_extraction import image
 
     >>> one_image = np.arange(4 * 4 * 3).reshape((4, 4, 3))
     >>> one_image[:, :, 0]  # R channel of a fake RGB picture

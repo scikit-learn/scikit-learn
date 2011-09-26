@@ -33,7 +33,7 @@ print __doc__
 import numpy as np
 import pylab as pl
 
-from scikits.learn.decomposition import PCA, FastICA
+from sklearn.decomposition import PCA, FastICA
 
 ###############################################################################
 # Generate sample data

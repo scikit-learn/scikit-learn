@@ -5,8 +5,8 @@ Mock urllib2 access to mldata.org
 
 from os import makedirs
 from os.path import join
-from scikits.learn import datasets
-from scikits.learn.utils.testing import mock_urllib2
+from sklearn import datasets
+from sklearn.utils.testing import mock_urllib2
 import tempfile
 import scipy as sp
 import shutil

@@ -3,7 +3,7 @@
 About
 =====
 
-scikits.learn is a Python module for machine learning built on top of
+scikit-learn is a Python module for machine learning built on top of
 SciPy.
 
 The project was started in 2007 by David Cournapeau as a Google Summer
@@ -11,6 +11,8 @@ of Code project, and since then many volunteers have contributed. See
 the AUTHORS.rst file for a complete list of contributors.
 
 It is currently maintained by a team of volunteers.
+
+**Note** `scikit-learn` was previously referred to as `scikits.learn`.
 
 
 Important links
@@ -71,7 +73,7 @@ Testing
 After installation, you can launch the test suite from outside the
 source directory (you will need to have nosetest installed)::
 
-    python -c "import scikits.learn as skl; skl.test()"
+    python -c "import sklearn; sklearn.test()"
 
 See web page http://scikit-learn.sourceforge.net/install.html#testing
 for more information.

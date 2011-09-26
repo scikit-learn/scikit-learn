@@ -5,7 +5,7 @@ Faces dataset decompositions
 
 This example applies to :doc:`/datasets/olivetti_faces` different
 unsupervised matrix decomposition (dimension reduction) methods  from the
-module :py:mod:`scikits.learn.decomposition` (see the documentation
+module :py:mod:`sklearn.decomposition` (see the documentation
 chapter :ref:`decompositions`) .
 
 """
@@ -17,11 +17,12 @@ print __doc__
 import logging
 from time import time
 
+from numpy.random import RandomState
 import pylab as pl
 
-from scikits.learn.datasets import fetch_olivetti_faces
-from scikits.learn.cluster import MiniBatchKMeans
-from scikits.learn import decomposition
+from sklearn.datasets import fetch_olivetti_faces
+from sklearn.cluster import MiniBatchKMeans
+from sklearn import decomposition
 
 # Display progress logs on stdout
 logging.basicConfig(level=logging.INFO,
@@ -29,10 +30,11 @@ logging.basicConfig(level=logging.INFO,
 n_row, n_col = 2, 3
 n_components = n_row * n_col
 image_shape = (64, 64)
+rng = RandomState(0)
 
 ###############################################################################
 # Load faces data
-dataset = fetch_olivetti_faces(shuffle=True)
+dataset = fetch_olivetti_faces(shuffle=True, random_state=rng)
 faces = dataset.data
 
 n_samples, n_features = faces.shape
@@ -69,8 +71,8 @@ estimators = [
      True, False),
 
     ('Non-negative components - NMF',
-     decomposition.NMF(n_components=n_components, init='nndsvda', beta=5.0, 
-                        tol=5e-3, sparseness='components'),
+     decomposition.NMF(n_components=n_components, init='nndsvda', beta=5.0,
+                       tol=5e-3, sparseness='components'),
      False, False),
 
     ('Independent components - FastICA',
@@ -78,12 +80,20 @@ estimators = [
      True, True),
 
     ('Sparse comp. - MiniBatchSparsePCA',
-     decomposition.MiniBatchSparsePCA(n_components=n_components, alpha=1e-3, 
-                                      n_iter=100, chunk_size=3),
+     decomposition.MiniBatchSparsePCA(n_components=n_components, alpha=1e-3,
+                                      n_iter=100, chunk_size=3,
+                                      random_state=rng),
+     True, False),
+
+    ('MiniBatchDictionaryLearning',
+    decomposition.MiniBatchDictionaryLearning(n_atoms=15, alpha=5e-3,
+                                              n_iter=50, chunk_size=3,
+                                              random_state=rng),
      True, False),
 
     ('Cluster centers - MiniBatchKMeans',
-     MiniBatchKMeans(k=n_components, tol=1e-3, chunk_size=20, max_iter=50),
+     MiniBatchKMeans(k=n_components, tol=1e-3, chunk_size=20, max_iter=50,
+                     random_state=rng),
      True, False)
 ]
 
@@ -112,6 +122,7 @@ for name, estimator, center, transpose in estimators:
         components_ = estimator.components_
     if transpose:
         components_ = components_.T
-    plot_gallery('%s - Train time %.1fs' % (name, train_time), components_)
+    plot_gallery('%s - Train time %.1fs' % (name, train_time),
+                 components_[:n_components])
 
 pl.show()
