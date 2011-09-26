@@ -382,6 +382,7 @@ Signal Decomposition
    decomposition.MiniBatchSparsePCA
    decomposition.DictionaryLearning
    decomposition.MiniBatchDictionaryLearning
+   decomposition.KMeansCoder
 
 .. autosummary::
    :toctree: generated/
