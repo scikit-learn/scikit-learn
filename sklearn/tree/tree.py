@@ -417,7 +417,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     >>> iris = load_iris()
 
     >>> cross_val_score(clf, iris.data, iris.target, cv=10)
-    ...                             # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+    ...                             # doctest: +SKIP
     ...
     array([ 1.     ,  0.93...,  0.86...,  0.93...,  0.93...,
             0.93...,  0.93...,  1.     ,  0.93...,  1.      ])
