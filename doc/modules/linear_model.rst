@@ -100,8 +100,7 @@ its `coef\_` member::
     >>> from sklearn import linear_model
     >>> clf = linear_model.Ridge (alpha = .5)
     >>> clf.fit ([[0, 0], [0, 0], [1, 1]], [0, .1, 1])
-    Ridge(alpha=0.5, copy_X=True, fit_intercept=True, normalize=False,
-       tol=0.001)
+    Ridge(alpha=0.5, copy_X=True, fit_intercept=True, normalize=False, tol=0.001)
     >>> clf.coef_
     array([ 0.34545455,  0.34545455])
     >>> clf.intercept_ #doctest: +ELLIPSIS
@@ -323,7 +322,7 @@ function of the norm of its coefficients.
 
    >>> from sklearn import linear_model
    >>> clf = linear_model.LassoLars(alpha=.1)
-   >>> clf.fit ([[0, 0], [1, 1]], [0, 1])                 # doctest: +ELLIPSIS
+   >>> clf.fit([[0, 0], [1, 1]], [0, 1])                # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
    LassoLars(alpha=0.1, copy_X=True, eps=..., fit_intercept=True,
         max_iter=500, normalize=True, precompute='auto', verbose=False)
    >>> clf.coef_    # doctest: +ELLIPSIS
@@ -465,10 +464,10 @@ By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e^{-6}`, *i.e
     >>> X = [[0., 0.], [1., 1.], [2., 2.], [3., 3.]]
     >>> Y = [0., 1., 2., 3.]
     >>> clf = linear_model.BayesianRidge()
-    >>> clf.fit (X, Y)
-    BayesianRidge(alpha_1=1e-06, alpha_2=1e-06, compute_score=False,
-           copy_X=True, fit_intercept=True, lambda_1=1e-06, lambda_2=1e-06,
-           n_iter=300, normalize=False, tol=0.001, verbose=False)
+    >>> clf.fit(X, Y)
+    BayesianRidge(alpha_1=1e-06, alpha_2=1e-06, compute_score=False, copy_X=True,
+           fit_intercept=True, lambda_1=1e-06, lambda_2=1e-06, n_iter=300,
+           normalize=False, tol=0.001, verbose=False)
 
 After being fitted, the model can then be used to predict new values::
 
