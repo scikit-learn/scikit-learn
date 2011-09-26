@@ -41,36 +41,35 @@ GRAPHVIZ_TREE_TEMPLATE = """\
 
 
 def export_graphviz(decision_tree, out_file=None, feature_names=None):
-    """Export a Decision Tree in ".dot" format.
+    """Export a decision tree in DOT format.
 
-    Generates GraphViz representation of the decision tree. The output
-    is written to `out_file`.
+    This function generates a GraphViz representation of the decision tree,
+    which is then written into `out_file`.
 
-    Once exported, you can render to PostScript using, for example,
-    $ dot -Tps tree.dot -o tree.ps
+    Once exported, graphical renderings can be generated using, for example,::
 
-    or to PNG using
-    $ dot -Tpng tree.dot -o tree.png
+        $ dot -Tps tree.dot -o tree.ps
+        $ dot -Tpng tree.dot -o tree.png
 
     Parameters
     ----------
     decision_tree : decision tree classifier
-        The decision tree to be exported to graphviz
+        The decision tree to be exported to graphviz.
 
-    out : file object or string, optional
+    out : file object or string, optional (default=None)
         Handle or name of the output file.
 
-    feature_names : list of strings, optional
+    feature_names : list of strings, optional (default=None)
         Names of each of the features.
 
-    Returns
-    -------
+    Return
+    ------
     out_file : file object
         The file object to which the tree was exported.  The user is
         expected to `close()` this object when done with it.
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sklearn.datasets import load_iris
     >>> from sklearn import tree
 
@@ -241,39 +240,21 @@ class BaseDecisionTree(BaseEstimator):
         self.n_features = None
         self.tree = None
 
-    def export(self, exporter):
-        """Export the tree using an exporter.
-
-        Parameters
-        ----------
-        exporter : class
-            Any class that has `export` implemented.
-
-
-
-        """
-        if self.tree is None:
-            raise Exception('Tree not initialized. Perform a fit first')
-
-        exporter.export(self.tree)
-
     def fit(self, X, y):
-        """Fit the tree with the given training data and parameters.
+        """Build a decision tree from the training set (X, y).
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
-            Training vectors, where n_samples is the number of samples
-            and n_features is the number of features.
+        X : array-like of shape = [n_samples, n_features]
+            The training input samples.
 
         y : array-like, shape = [n_samples]
-            Target values (integers in classification, real numbers in
-            regression)
-            For classification, labels must correspond to classes
-            0, 1, ..., n_classes-1
+            The target values (integers in classification, real numbers in
+            regression). For classification, labels must correspond to classes
+            0, 1, ..., n_classes-1.
 
-        Returns
-        -------
+        Return
+        ------
         self : object
             Returns self.
         """
@@ -317,7 +298,7 @@ class BaseDecisionTree(BaseEstimator):
         return self
 
     def predict(self, X):
-        """Predict class or regression target for a test vector X.
+        """Predict class or regression target for X.
 
         For a classification model, the predicted class for each
         sample in X is returned.  For a regression model, the predicted
@@ -325,13 +306,13 @@ class BaseDecisionTree(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
-            Test vectors, where n_samples is the number of samples
-            and n_features is the number of features.
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
 
-        Returns
-        -------
-        predictions : array, shape = [n_samples]
+        Return
+        ------
+        predictions : array of shape = [n_samples]
+            The predicted classes, or the predict values.
         """
 
         X = np.atleast_2d(X)
@@ -388,7 +369,6 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
     References
     ----------
-
     http://en.wikipedia.org/wiki/Decision_tree_learning
 
     L. Breiman, J. Friedman, R. Olshen, and C. Stone. Classification and
@@ -399,11 +379,10 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
     See also
     --------
-
     DecisionTreeRegressor
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.cross_validation import cross_val_score
     >>> from sklearn.tree import DecisionTreeClassifier
@@ -433,8 +412,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             Test vectors, where n_samples is the number of samples
             and n_features is the number of features.
 
-        Returns
-        -------
+        Return
+        ------
         P : array-like, shape = [n_samples, n_classes]
             Returns the probability of the sample for each class in
             the model, where classes are ordered by arithmetical
@@ -467,8 +446,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             Test vectors, where n_samples is the number of samples
             and n_features is the number of features.
 
-        Returns
-        -------
+        Return
+        ------
         P : array-like, shape = [n_samples, n_classes]
             Returns the log-probabilities of the sample for each class in
             the model, where classes are ordered by arithmetical
@@ -509,7 +488,6 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
 
     References
     ----------
-
     http://en.wikipedia.org/wiki/Decision_tree_learning
 
     L. Breiman, J. Friedman, R. Olshen, and C. Stone. Classification and
@@ -520,11 +498,10 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
 
     See also
     --------
-
     DecisionTreeClassifier
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sklearn.datasets import load_boston
     >>> from sklearn.cross_validation import cross_val_score
     >>> from sklearn.tree import DecisionTreeRegressor
