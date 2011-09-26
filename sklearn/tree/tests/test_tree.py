@@ -72,8 +72,7 @@ def test_graphviz_toy():
 
     # test export code
     out = StringIO()
-    exporter = tree.GraphvizExporter(out)
-    clf.export(exporter)
+    tree.export_graphviz(clf, out_file=out)
     contents1 = out.getvalue()
 
     tree_toy = StringIO("digraph Tree {\n"
@@ -91,8 +90,8 @@ def test_graphviz_toy():
 
     # test with feature_names
     out = StringIO()
-    exporter = tree.GraphvizExporter(out, feature_names=["feature1", ""])
-    clf.export(exporter)
+    out = tree.export_graphviz(clf, out_file=out,
+                               feature_names=["feature1", ""])
     contents1 = out.getvalue()
 
     tree_toy = StringIO("digraph Tree {\n"
@@ -110,8 +109,8 @@ def test_graphviz_toy():
 
     # test improperly formed feature_names
     out = StringIO()
-    exporter = tree.GraphvizExporter(out, feature_names=[])
-    assert_raises(IndexError, clf.export, exporter)
+    assert_raises(IndexError, tree.export_graphviz,
+                  clf, out, feature_names=[])
 
 
 def test_iris():

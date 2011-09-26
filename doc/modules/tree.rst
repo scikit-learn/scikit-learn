@@ -113,9 +113,9 @@ Once trained, we can export the tree in `Graphviz <http://www.graphviz.org/>`_ f
 using the :class:`GraphvizExporter` exporter. Below is an example export of a tree
 trained on the entire iris dataset::
 
-    >>> t = open('iris.dot', 'w')
-    >>> exporter = tree.GraphvizExporter(out=t)
-    >>> clf.export(exporter)
+    >>> from StringIO import StringIO
+    >>> out = StringIO()
+    >>> out = tree.export_graphviz(clf, out_file=out)
 
 .. figure:: ../images/iris.svg
    :align: center
