@@ -13,10 +13,10 @@ def test_silhouette():
     D = pairwise_distances(X, metric='euclidean')
     # Given that the actual labels are used, we can assume that S would be
     # positive.
-    silhouette = silhouette_coefficient(y, D)
+    silhouette = silhouette_coefficient(D, y)
     assert(silhouette > 0)
     # Test with sparse X
     X_sparse = csr_matrix(X)
     D = pairwise_distances(X, metric='euclidean')
-    silhouette = silhouette_coefficient(y, D)
+    silhouette = silhouette_coefficient(D, y)
     assert(silhouette > 0)

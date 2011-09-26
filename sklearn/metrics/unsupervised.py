@@ -10,12 +10,12 @@
 import numpy as np
 
 
-def silhouette_coefficient(y, D):
+def silhouette_coefficient(distances, labels):
     """Compute the Silhouette Coefficient
 
     The Silhouette Coefficient is calculated using the mean intra-cluster
     distance (a) and the mean nearest-cluster distance (b) for each sample.
-    The Silhouette Coefficient for a point is (b - a) / max(a, b).
+    The Silhouette Coefficient for a sample is (b - a) / max(a, b).
     To clarrify, b is the distance between a sample and the nearest cluster
     that b is not a part of.
 
@@ -28,11 +28,11 @@ def silhouette_coefficient(y, D):
 
     Parameters
     ----------
-    y : array, shape = [n_samples]
-        label values for each sample
+    distances : array, shape = [n_samples, n_samples]
+                Pairwise distance matrix between each sample.
 
-    D : array, shape = [n_samples, n_samples]
-        Pairwise distance matrix between each sample.
+    labels : array, shape = [n_samples]
+             label values for each sample
 
     Returns
     -------
@@ -48,10 +48,10 @@ def silhouette_coefficient(y, D):
     http://en.wikipedia.org/wiki/Silhouette_(clustering)
 
     """
-    return np.mean(silhouette_samples(y, D))
+    return np.mean(silhouette_samples(distances, labels))
 
 
-def silhouette_samples(y, D):
+def silhouette_samples(distances, labels):
     """Compute the Silhouette Coefficient for each sample.
 
     The Silhoeutte Coefficient is a measure of how well samples are clustered
@@ -62,7 +62,7 @@ def silhouette_samples(y, D):
 
     The Silhouette Coefficient is calculated using the mean intra-cluster
     distance (a) and the mean nearest-cluster distance (b) for each sample.
-    The Silhouette Coefficient for a point is (b - a) / max(a, b).
+    The Silhouette Coefficient for a sample is (b - a) / max(a, b).
 
     This function returns the Silhoeutte Coefficient for each sample.
 
@@ -71,11 +71,11 @@ def silhouette_samples(y, D):
 
     Parameters
     ----------
-    y : array, shape = [n_samples]
-        label values for each sample
+    distances : array, shape = [n_samples, n_samples]
+                Pairwise distance matrix between each sample.
 
-    D : array, shape = [n_samples, n_samples]
-        Pairwise distance matrix between each sample.
+    labels : array, shape = [n_samples]
+             label values for each sample
 
     Returns
     -------
@@ -91,24 +91,24 @@ def silhouette_samples(y, D):
     http://en.wikipedia.org/wiki/Silhouette_(clustering)
 
     """
-    n = y.shape[0]
-    A = np.array([_intra_cluster_distance(y, D[i], i)
+    n = labels.shape[0]
+    A = np.array([_intra_cluster_distance(distances[i], labels, i)
                   for i in range(n)])
-    B = np.array([_nearest_cluster_distance(y, D[i], i)
+    B = np.array([_nearest_cluster_distance(distances[i], labels, i)
                   for i in range(n)])
     return (B - A) / np.maximum(A, B)
 
 
-def _intra_cluster_distance(y, d, i):
-    """ Calculate the mean intra-cluster distance for point i.
+def _intra_cluster_distance(distances_row, labels, i):
+    """ Calculate the mean intra-cluster distance for sample i.
 
     Parameters
     ----------
-    y : array, shape = [n_samples]
-        label values for each sample
+    distances_row : array, shape = [n_samples]
+                    Pairwise distance matrix between sample i and each sample.
 
-    d : array, shape = [n_samples]
-        Pairwise distance matrix between sample i and each sample.
+    labels : array, shape = [n_samples]
+             label values for each sample
 
     i : int
         Sample index being calculated. It is excluded from calculation and
@@ -117,24 +117,24 @@ def _intra_cluster_distance(y, d, i):
     Returns
     -------
     a : float
-        Mean intra-cluster distance for point i
+        Mean intra-cluster distance for sample i
     """
-    label = y[i]
-    a = np.mean([d[j] for j in range(len(d))
-                 if y[j] == label and not i == j])
+    label = labels[i]
+    a = np.mean([distances_row[j] for j in range(len(distances_row))
+                 if labels[j] == label and not i == j])
     return a
 
 
-def _nearest_cluster_distance(y, d, i):
-    """ Calculate the mean nearest-cluster distance for point i.
+def _nearest_cluster_distance(distances_row, labels, i):
+    """ Calculate the mean nearest-cluster distance for sample i.
 
     Parameters
     ----------
-    y : array, shape = [n_samples]
-        Label values for each sample.
+    distances_row : array, shape = [n_samples]
+                    Pairwise distance matrix between sample i and each sample.
 
-    d : array, shape = [n_samples]
-        Pairwise distance matrix between sample i and each sample.
+    labels : array, shape = [n_samples]
+             label values for each sample
 
     i : int
         Sample index being calculated. It is used to determine the current
@@ -143,10 +143,10 @@ def _nearest_cluster_distance(y, d, i):
     Returns
     -------
     b : float
-        Mean nearest-cluster distance for point i
+        Mean nearest-cluster distance for sample i
     """
-    label = y[i]
-    b = np.min([np.mean([d[j] for j in range(len(d))
-                         if y[j] == cur_label])
-               for cur_label in set(y) if not cur_label == label])
+    label = labels[i]
+    b = np.min([np.mean([distances_row[j] for j in range(len(distances_row))
+                         if labels[j] == cur_label])
+               for cur_label in set(labels) if not cur_label == label])
     return b
