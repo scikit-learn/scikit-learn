@@ -40,84 +40,92 @@ GRAPHVIZ_TREE_TEMPLATE = """\
 """
 
 
-class GraphvizExporter(object):
+def export_graphviz(decision_tree, out_file=None, feature_names=None):
     """Export a Decision Tree in ".dot" format.
+
+    Generates GraphViz representation of the decision tree. The output
+    is written to `out_file`.
 
     Once exported, you can render to PostScript using, for example,
     $ dot -Tps tree.dot -o tree.ps
 
     or to PNG using
     $ dot -Tpng tree.dot -o tree.png
+
+    Parameters
+    ----------
+    decision_tree : decision tree classifier
+        The decision tree to be exported to graphviz
+
+    out : file object or string, optional
+        Handle or name of the output file.
+
+    feature_names : list of strings, optional
+        Names of each of the features.
+
+    Returns
+    -------
+    out_file : file object
+        The file object to which the tree was exported.  The user is
+        expected to `close()` this object when done with it.
+
+    Example
+    -------
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn import tree
+
+    >>> clf = tree.DecisionTreeClassifier()
+    >>> iris = load_iris()
+
+    >>> clf = clf.fit(iris.data, iris.target)
+    >>> import tempfile
+    >>> t = tempfile.TemporaryFile()
+    >>> out_file = export_graphviz(clf, out_file=t)
+    >>> out_file.close()
     """
 
-    def __init__(self, out=None, feature_names=None):
-        """Export a Decision Tree to GraphViz format.
+    if out_file is None:
+        out_file = open("tree.dot", 'w')
+    elif isinstance(out_file, basestring):
+        out_file = open(out_file, 'w')
 
-        Generates GraphViz representation of the decision tree. The output
-        is written to `out`.
-
-        Parameters
-        ----------
-        out : file object or string, optional
-            Handle or name of the output file.
-
-        feature_names : list of strings, optional
-            Names of each of the features.
-        """
-        if out is None:
-            out = open("tree.dot", 'w')
-        elif isinstance(out, basestring):
-            out = open(out, 'w')
-        self.out = out
-        self.feature_names = feature_names
-
-    def make_node_repr(self, node):
+    def make_node_repr(node):
         if node.is_leaf:
             return "error = %s \\n samples = %s \\n v = %s" \
                 % (node.error, node.samples, node.value)
         else:
             feature = "X[%s]" % node.feature
-            if self.feature_names is not None:
-                feature = self.feature_names[node.feature]
+            if feature_names is not None:
+                feature = feature_names[node.feature]
 
             return "%s < %s \\n error = %s \\n samples = %s \\n v = %s" \
                    % (feature, node.threshold,\
                       node.error, node.samples, node.value)
 
-    def export(self, node):
-        """Print the node for graph visualisation.
+    def recurse(node, count):
+        current_repr = make_node_repr(node)
+        left_repr = make_node_repr(node.left)
+        right_repr = make_node_repr(node.right)
+        node_data = {
+            "current": count,
+            "current_gv": current_repr,
+            "left_child": 2 * count + 1,
+            "left_child_gv": left_repr,
+            "right_child": 2 * count + 2,
+            "right_child_gv": right_repr,
+            }
+        out_file.write(GRAPHVIZ_TREE_TEMPLATE % node_data)
 
-        Returns
-        -------
-        self.out : file object
-            The file object to which the tree was exported.  The user is
-            expected to `close()` this object when done with it.
-        """
+        if not node.left.is_leaf:
+            recurse(node.left, 2 * count + 1)
+        if not node.right.is_leaf:
+            recurse(node.right, 2 * count + 2)
 
-        def recurse(node, count):
-            current_repr = self.make_node_repr(node)
-            left_repr = self.make_node_repr(node.left)
-            right_repr = self.make_node_repr(node.right)
-            node_data = {
-                "current": count,
-                "current_gv": current_repr,
-                "left_child": 2 * count + 1,
-                "left_child_gv": left_repr,
-                "right_child": 2 * count + 2,
-                "right_child_gv": right_repr,
-                }
-            self.out.write(GRAPHVIZ_TREE_TEMPLATE % node_data)
+    out_file.write("digraph Tree {\n")
+    recurse(decision_tree.tree, 0)
+    out_file.write("}")
 
-            if not node.left.is_leaf:
-                recurse(node.left, 2 * count + 1)
-            if not node.right.is_leaf:
-                recurse(node.right, 2 * count + 2)
-
-        self.out.write("digraph Tree {\n")
-        recurse(node, 0)
-        self.out.write("}")
-
-        return self.out
+    return out_file
 
 
 def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
@@ -241,20 +249,7 @@ class BaseDecisionTree(BaseEstimator):
         exporter : class
             Any class that has `export` implemented.
 
-        Example
-        -------
-        >>> from sklearn.datasets import load_iris
-        >>> from sklearn import tree
 
-        >>> clf = tree.DecisionTreeClassifier()
-        >>> iris = load_iris()
-
-        >>> clf = clf.fit(iris.data, iris.target)
-        >>> import tempfile
-        >>> t = tempfile.TemporaryFile()
-        >>> exporter = tree.GraphvizExporter(out=t)
-        >>> clf.export(exporter)
-        >>> t.close()
 
         """
         if self.tree is None:
