@@ -279,8 +279,8 @@ class BaseDiscreteNB(BaseEstimator, ClassifierMixin):
         -------
         C : array, shape = [n_samples]
         """
-        joint_log_likelihood = self._joint_log_likelihood(X)
-        y_pred = self.unique_y[np.argmax(joint_log_likelihood, axis=0)]
+        jll = self._joint_log_likelihood(X)
+        y_pred = self.unique_y[np.argmax(jll, axis=1)]
 
         return y_pred
 
@@ -318,8 +318,11 @@ class BaseDiscreteNB(BaseEstimator, ClassifierMixin):
         """
         jll = self._joint_log_likelihood(X)
         # normalize by P(x) = P(f_1, ..., f_n)
-        log_prob_x = logsum(jll[:, np.newaxis])
-        return (jll - log_prob_x).T
+        log_prob_x = logsum(jll, axis=1)
+        return jll - np.atleast_2d(log_prob_x).T
+
+    intercept_ = property(lambda self: self.class_log_prior_)
+    coef_ = property(lambda self: self.feature_log_prob_)
 
 
 class MultinomialNB(BaseDiscreteNB):
@@ -388,16 +391,10 @@ class MultinomialNB(BaseDiscreteNB):
         self.alpha = alpha
         self.fit_prior = fit_prior
 
-    intercept_ = property(lambda self: self.class_log_prior_)
-    coef_ = property(lambda self: self.feature_log_prob_)
-
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
-
         X = atleast2d_or_csr(X)
-
-        jll = safe_sparse_dot(self.feature_log_prob_, X.T)
-        return jll + np.atleast_2d(self.class_log_prior_).T
+        return safe_sparse_dot(X, self.coef_.T) + self.intercept_
 
 
 class BernoulliNB(BaseDiscreteNB):
@@ -495,8 +492,8 @@ class BernoulliNB(BaseDiscreteNB):
 
         neg_prob = np.log(1 - np.exp(self.feature_log_prob_))
         # Compute  neg_prob · (1 - X).T  as  ∑neg_prob - X · neg_prob
-        X_neg_prob = (neg_prob.sum(axis=1).reshape(-1, 1)
-                    - safe_sparse_dot(neg_prob, X.T))
-        jll = safe_sparse_dot(self.feature_log_prob_, X.T) + X_neg_prob
+        X_neg_prob = (neg_prob.sum(axis=1)
+                    - safe_sparse_dot(X, neg_prob.T))
+        jll = safe_sparse_dot(X, self.coef_.T) + X_neg_prob
 
-        return jll + np.atleast_2d(self.class_log_prior_).T
+        return jll + self.intercept_
