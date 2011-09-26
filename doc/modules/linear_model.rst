@@ -43,7 +43,7 @@ and will store the coefficients :math:`w` of the linear model in its
     >>> from sklearn import linear_model
     >>> clf = linear_model.LinearRegression()
     >>> clf.fit ([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
-    LinearRegression(fit_intercept=True, normalize=False, overwrite_X=False)
+    LinearRegression(copy_X=True, fit_intercept=True, normalize=False)
     >>> clf.coef_
     array([ 0.5,  0.5])
 
@@ -100,7 +100,7 @@ its `coef\_` member::
     >>> from sklearn import linear_model
     >>> clf = linear_model.Ridge (alpha = .5)
     >>> clf.fit ([[0, 0], [0, 0], [1, 1]], [0, .1, 1])
-    Ridge(alpha=0.5, fit_intercept=True, normalize=False, overwrite_X=False,
+    Ridge(alpha=0.5, copy_X=True, fit_intercept=True, normalize=False,
        tol=0.001)
     >>> clf.coef_
     array([ 0.34545455,  0.34545455])
@@ -176,8 +176,8 @@ for another implementation::
 
     >>> clf = linear_model.Lasso(alpha = 0.1)
     >>> clf.fit([[0, 0], [1, 1]], [0, 1])
-    Lasso(alpha=0.1, fit_intercept=True, max_iter=1000, normalize=False,
-       overwrite_X=False, precompute='auto', tol=0.0001)
+    Lasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
+       normalize=False, precompute='auto', tol=0.0001)
     >>> clf.predict([[1, 1]])
     array([ 0.8])
 
@@ -324,9 +324,8 @@ function of the norm of its coefficients.
    >>> from sklearn import linear_model
    >>> clf = linear_model.LassoLars(alpha=.1)
    >>> clf.fit ([[0, 0], [1, 1]], [0, 1])                 # doctest: +ELLIPSIS
-   LassoLars(alpha=0.1, eps=..., fit_intercept=True,
-        max_iter=500, normalize=True, overwrite_X=False, precompute='auto',
-        verbose=False)
+   LassoLars(alpha=0.1, copy_X=True, eps=..., fit_intercept=True,
+        max_iter=500, normalize=True, precompute='auto', verbose=False)
    >>> clf.coef_    # doctest: +ELLIPSIS
    array([ 0.717157...,  0.        ])
 
@@ -468,8 +467,8 @@ By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e^{-6}`, *i.e
     >>> clf = linear_model.BayesianRidge()
     >>> clf.fit (X, Y)
     BayesianRidge(alpha_1=1e-06, alpha_2=1e-06, compute_score=False,
-           fit_intercept=True, lambda_1=1e-06, lambda_2=1e-06, n_iter=300,
-           normalize=False, overwrite_X=False, tol=0.001, verbose=False)
+           copy_X=True, fit_intercept=True, lambda_1=1e-06, lambda_2=1e-06,
+           n_iter=300, normalize=False, tol=0.001, verbose=False)
 
 After being fitted, the model can then be used to predict new values::
 

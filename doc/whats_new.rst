@@ -1,5 +1,24 @@
 .. currentmodule:: sklearn
 
+.. _changes_0_10:
+
+0.10
+====
+
+API changes summary
+-------------------
+
+Here are the code migration instructions when updgrading from scikit-learn
+version 0.9:
+
+  - Some estimators that may overwrite their inputs to save memory previously
+    had ``overwrite_`` parameters; these have been replaced with ``copy_``
+    parameters with exactly the opposite meaning.
+
+    This particularly affects some of the estimators in ``linear_models``.
+    The default behavior is still to copy everything passed in.
+
+
 .. _changes_0_9:
 
 0.9
