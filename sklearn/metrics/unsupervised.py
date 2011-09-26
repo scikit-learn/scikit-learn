@@ -9,8 +9,6 @@
 
 import numpy as np
 
-from ..utils import check_arrays
-
 
 def silhouette_coefficient(y, D):
     """Compute the Silhouette Coefficient
@@ -43,7 +41,7 @@ def silhouette_coefficient(y, D):
 
     References
     ----------
-    Peter J. Rousseeuw (1987). "Silhouettes: a Graphical Aid to the 
+    Peter J. Rousseeuw (1987). "Silhouettes: a Graphical Aid to the
         Interpretation and Validation of Cluster Analysis". Computational
         and Applied Mathematics 20: 53–65. doi:10.1016/0377-0427(87)90125-7.
 
@@ -86,7 +84,7 @@ def silhouette_samples(y, D):
 
     References
     ----------
-    Peter J. Rousseeuw (1987). "Silhouettes: a Graphical Aid to the 
+    Peter J. Rousseeuw (1987). "Silhouettes: a Graphical Aid to the
         Interpretation and Validation of Cluster Analysis". Computational
         and Applied Mathematics 20: 53–65. doi:10.1016/0377-0427(87)90125-7.
 
@@ -148,8 +146,7 @@ def _nearest_cluster_distance(y, d, i):
         Mean nearest-cluster distance for point i
     """
     label = y[i]
-    b = np.min(np.mean([d[j] for j in range(len(d))
-                        if y[j] == cur_label])
-               for cur_label in set(y) if not cur_label == label)
+    b = np.min([np.mean([d[j] for j in range(len(d))
+                         if y[j] == cur_label])
+               for cur_label in set(y) if not cur_label == label])
     return b
-
