@@ -237,9 +237,8 @@ class BaseDecisionTree(BaseEstimator):
             The training input samples.
 
         y : array-like, shape = [n_samples]
-            The target values (integers in classification, real numbers in
-            regression). For classification, labels must correspond to classes
-            0, 1, ..., `n_classes`-1.
+            The target values (integers that correspond to classes in classification,
+            real numbers in regression).
 
         Return
         ------
