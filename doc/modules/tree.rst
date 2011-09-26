@@ -7,21 +7,28 @@ Decision Trees
 
 .. currentmodule:: sklearn.tree
 
-**Decision Trees** are a non-parametric supervised learning
-method used for :ref:`classification <tree_classification>`,
-:ref:`regression <tree_regression>`.
+.. image:: ../auto_examples/tree/images/plot_tree_regression_1.png
+   :target: ../auto_examples/tree/plot_tree_regression.html
+   :scale: 50
+   :align: right
+
+**Decision Trees** are a non-parametric supervised learning method used
+for :ref:`classification <tree_classification>`, :ref:`regression
+<tree_regression>`. They learn a tree simple decision rules combining
+information from the features. For example, on the left, decision trees
+learn from data to approximate a sine curve be a set of lines.
 
 The advantages of Decision Trees are:
 
     - Simple to understand and interpret.  Trees can be visualised.
 
-    - The cost of using the tree (predicting data) is logarithmic in the 
-      number of data points used to train the tree.
-
     - Requires little data preparation. Other techniques often require data 
       normalisation, dummy variables need to be created and blank values to 
       be removed. Note that this module does not support missing values.
     
+    - The cost of using the tree (predicting data) is logarithmic in the 
+      number of data points used to train the tree.
+
     - Able to handle both numerical and categorical data. Other techniques 
       are usually specialised in analysing datasets that have only one type 
       of variable. See :ref:`algorithms <tree_algorithms>` for more information.
@@ -39,6 +46,16 @@ The advantages of Decision Trees are:
 
 The disadvantages of Decision Trees include:
 
+    - Decision-tree learners can create over-complex trees that do not 
+      generalise the data well. This is called overfitting. Mechanisms 
+      such as pruning (not currently supported), setting the minimum 
+      number of samples required at a leaf node or setting the maximum 
+      depth of the tree are necessary to avoid this problem.
+ 
+    - Decision trees can be unstable because small variations in the data might
+      result in a completely different tree being generated.  This problem
+      is mitigated by using decision trees within an ensemble. 
+
     - The problem of learning an optimal decision tree is known to be 
       NP-complete under several aspects of optimality and even for simple 
       concepts. Consequently, practical decision-tree learning algorithms 
@@ -47,23 +64,13 @@ The disadvantages of Decision Trees include:
       cannot guarantee to return the globally optimal decision tree.  This
       can be mitigated by training multiple trees in an ensemble learner, 
       where the features and samples are randomly sampled with replacement.
-    
-    - Decision-tree learners can create over-complex trees that do not 
-      generalise the data well. This is called overfitting. Mechanisms 
-      such as pruning (not currently supported), setting the minimum 
-      number of samples required at a leaf node or setting the maximum 
-      depth of the tree are necessary to avoid this problem.
-    
+   
     - There are concepts that are hard to learn because decision trees 
       do not express them easily, such as XOR, parity or multiplexer problems. 
 
     - Decision tree learners create biased trees if some classes dominate. 
       It is therefore recommended to balance the dataset prior to fitting 
       with the decision tree.
-
-    - Decision trees can be unstable because small variations in the data might
-      result in a completely different tree being generated.  This problem
-      is mitigated by using decision trees within an ensemble. 
 
 .. _tree_classification:
 
@@ -118,9 +125,10 @@ After being fitted, the model can then be used to predict new values::
     >>> clf.predict(iris.data[0, :])
     array([0])
 
-.. figure:: ../auto_examples/tree/images/plot_iris.png
+.. figure:: ../auto_examples/tree/images/plot_iris_1.png
    :target: ../auto_examples/tree/plot_iris.html
    :align: center
+   :scale: 70
 
 .. topic:: Examples:
 
@@ -130,6 +138,12 @@ After being fitted, the model can then be used to predict new values::
 
 Regression
 ==========
+
+.. image:: ../auto_examples/tree/images/plot_tree_regression_1.png
+   :target: ../auto_examples/tree/plot_tree_regression.html
+   :scale: 50
+   :align: right
+
 
 Decision Trees can be applied to solve regression problems. 
 
@@ -154,6 +168,7 @@ floating point values instead of integer values::
 
 Complexity
 ==========
+
 In general, the run time cost to construct a balanced binary 
 tree is  :math:`O(n_{samples}log(n_{samples}))` and query time 
 :math:`O(log(n_{samples}))`.  Although the tree construction algorithm attempts 
@@ -205,7 +220,8 @@ Tips on Practical Use
     Getting the right ratio of samples to number of features is important, since 
     a tree with few samples in high dimensional space is very likely to overfit.
   
-  * Consider performing  dimensionality reduction (PCA or ICA) beforehand to 
+  * Consider performing  dimensionality reduction (:ref:`PCA <PCA>`, 
+    :ref:`ICA <ICA>`, or :ref:`feature_selection`) beforehand to 
     give your tree a better chance of finding features that are discriminative.
   
   * Visualise your tree as you are training by using the ``export``
@@ -227,7 +243,7 @@ Tips on Practical Use
 .. _tree_algorithms:
 
 Tree algorithms: ID3, C4.5, C5.0 and CART
-========================
+==========================================
 
 What are all the various decision tree algorithms and how do they differ from 
 each other? Which one is implemented in scikit-learn?

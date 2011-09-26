@@ -222,22 +222,14 @@ class BaseDecisionTree(BaseEstimator):
                              % (self._tree_types, impl))
 
         self.type = impl
-        self.classification_subtype = None
         self.criterion = criterion
-
-        if min_split <= 0:
-            raise ValueError("min_split must be greater than zero.")
         self.min_split = min_split
-        if max_depth <= 0:
-            raise ValueError("max_depth must be greater than zero. ")
         self.max_depth = max_depth
-
         self.max_features = max_features
-        self.random_state = check_random_state(random_state)
-
-        if min_density < 0.0 or min_density > 1.0:
-            raise ValueError("min_density must be in [0, 1]")
+        self.random_state = random_state
         self.min_density = min_density
+
+        self.classification_subtype = None
         self.n_features = None
         self.tree = None
 
@@ -296,10 +288,18 @@ class BaseDecisionTree(BaseEstimator):
             raise ValueError("Number of labels=%d does not match "
                              "number of features=%d"
                              % (len(y), n_samples))
+        random_state = check_random_state(self.random_state)
+        if self.min_split <= 0:
+            raise ValueError("min_split must be greater than zero.")
+        if self.max_depth <= 0:
+            raise ValueError("max_depth must be greater than zero. ")
+        if self.min_density < 0.0 or self.min_density > 1.0:
+            raise ValueError("min_density must be in [0, 1]")
 
         sample_mask = np.ones((n_samples,), dtype=np.bool)
 
-        if self.type == 'classification':
+        is_classification = (self.type == 'classification')
+        if is_classification:
             y = np.ascontiguousarray(y, dtype=np.int)
             self.classes = np.unique(y)
             self.n_classes = self.classes.shape[0]
@@ -307,21 +307,18 @@ class BaseDecisionTree(BaseEstimator):
 
             criterion_class = CLASSIFICATION[self.criterion]
             criterion = criterion_class(self.n_classes)
-
-            self.tree = _build_tree(True, X, y, criterion, self.max_depth,
-                                    self.min_split, self.max_features,
-                                    self.n_classes, self.random_state,
-                                    self.min_density, sample_mask)
         else:  # regression
             y = np.ascontiguousarray(y, dtype=DTYPE)
             self.n_classes = 1
 
             criterion_class = REGRESSION[self.criterion]
             criterion = criterion_class()
-            self.tree = _build_tree(False, X, y, criterion, self.max_depth,
-                                    self.min_split, self.max_features,
-                                    self.n_classes, self.random_state,
-                                    self.min_density, sample_mask)
+
+        self.tree = _build_tree(is_classification, X, y, criterion,
+                                self.max_depth, self.min_split,
+                                self.max_features, self.n_classes,
+                                random_state, self.min_density,
+                                sample_mask)
         return self
 
     def predict(self, X):
@@ -543,7 +540,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     R2 scores (a.k.a. coefficient of determination) over 10-folds CV:
 
     >>> cross_val_score(regressor, boston.data, boston.target, cv=10)
-    ...                    # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+    ...                    # doctest: +SKIP
     ...
     array([ 0.61..., 0.57..., -0.34..., 0.41..., 0.75...,
             0.07..., 0.29..., 0.33..., -1.42..., -1.77...])
