@@ -131,13 +131,6 @@ def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
                 max_features, n_classes, random_state, min_density,
                 sample_mask=None, X_argsorted=None):
     """Build a tree by recursively partitioning the data."""
-    if X.shape[0] != y.shape[0]:
-        raise ValueError("Number of samples (%d) does not match number " \
-                         "of labels (%d)" % (X.shape[0], y.shape[0]))
-    if max_depth <= 0:
-        raise ValueError("max_depth (%d) should be >0" % max_depth)
-    if min_split <= 0:
-        raise ValueError("min_split (%d) should be >0" % max_depth)
 
     # make data fortran layout
     if not np.isfortran(X):
