@@ -80,42 +80,41 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
     >>> out_file = export_graphviz(clf, out_file=t)
     >>> out_file.close()
     """
-    if out_file is None:
-        out_file = open("tree.dot", 'w')
-    elif isinstance(out_file, basestring):
-        out_file = open(out_file, 'w')
-
-    def make_node_repr(node):
+    def node_to_str(node):
         if node.is_leaf:
-            return "error = %s \\n samples = %s \\n v = %s" \
+            return "error = %s\\nsamples = %s\\nvalue = %s" \
                 % (node.error, node.samples, node.value)
         else:
-            feature = "X[%s]" % node.feature
             if feature_names is not None:
                 feature = feature_names[node.feature]
+            else:
+                feature = "X[%s]" % node.feature
 
-            return "%s < %s \\n error = %s \\n samples = %s \\n v = %s" \
-                   % (feature, node.threshold,\
+            return "%s < %s\\nerror = %s\\nsamples = %s\\nvalue = %s" \
+                   % (feature, node.threshold,
                       node.error, node.samples, node.value)
 
     def recurse(node, count):
-        current_repr = make_node_repr(node)
-        left_repr = make_node_repr(node.left)
-        right_repr = make_node_repr(node.right)
         node_data = {
             "current": count,
-            "current_gv": current_repr,
+            "current_gv": node_to_str(node),
             "left_child": 2 * count + 1,
-            "left_child_gv": left_repr,
+            "left_child_gv": node_to_str(node.left),
             "right_child": 2 * count + 2,
-            "right_child_gv": right_repr,
-            }
+            "right_child_gv": node_to_str(node.right),
+        }
+
         out_file.write(GRAPHVIZ_TREE_TEMPLATE % node_data)
 
         if not node.left.is_leaf:
             recurse(node.left, 2 * count + 1)
         if not node.right.is_leaf:
             recurse(node.right, 2 * count + 2)
+
+    if out_file is None:
+        out_file = open("tree.dot", 'w')
+    elif isinstance(out_file, basestring):
+        out_file = open(out_file, 'w')
 
     out_file.write("digraph Tree {\n")
     recurse(decision_tree.tree, 0)
