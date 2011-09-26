@@ -59,15 +59,38 @@ class KMeansCoder(BaseDictionaryLearning):
     verbose: bool, default False
         whether to display verbose output
 
-    transform_method: 'lasso_lars' | 'lasso_cd' | 'omp' | 'threshold' |
-                      'triangle'
-        method to use for transforming the data after the dictionary has been
-        learned
+    transform_algorithm: {'lasso_lars', 'lasso_cd', 'lars', 'omp', 'threshold'}
+        Algorithm used to transform the data.
+        lars: uses the least angle regression method (linear_model.lars_path)
+        lasso_lars: uses Lars to compute the Lasso solution
+        lasso_cd: uses the coordinate descent method to compute the
+        Lasso solution (linear_model.Lasso). lasso_lars will be faster if
+        the estimated components are sparse.
+        omp: uses orthogonal matching pursuit to estimate the sparse solution
+        threshold: squashes to zero all coefficients less than alpha from
+        the projection X.T * Y
+
+    transform_n_nonzero_coefs: int, 0.1 * n_features by default
+        Number of nonzero coefficients to target in each column of the
+        solution. This is only used by `algorithm='lars'` and `algorithm='omp'`
+        and is overridden by `alpha` in the `omp` case.
+
+    transform_alpha: float, 1. by default
+        If `algorithm='lasso_lars'` or `algorithm='lasso_cd'`, `alpha` is the
+        penalty applied to the L1 norm.
+        If `algorithm='threshold'`, `alpha` is the absolute value of the
+        threshold below which coefficients will be squashed to zero.
+        If `algorithm='omp'`, `alpha` is the tolerance parameter: the value of
+        the reconstruction error targeted. In this case, it overrides
+        `n_nonzero_coefs`.
 
     split_sign: bool, default False
         whether to split the transformed feature vectors into positive and
         negative components, such that the downstream classification algorithms
         can assign different weights depending on the sign
+
+    n_jobs: int,
+        number of parallel jobs to run
 
     Attributes
     ----------
@@ -85,7 +108,8 @@ class KMeansCoder(BaseDictionaryLearning):
     def __init__(self, n_atoms, whiten=True, n_components=None,
                  max_iter=100, n_init=1, n_prefit=5, tol=1e-4,
                  local_contrast=True, n_drop_components=0, verbose=False,
-                 transform_method='omp', split_sign=False):
+                 transform_algorithm='omp', transform_n_nonzero_coefs=None,
+                 transform_alpha=None, split_sign=False, n_jobs=1):
         self.n_atoms = n_atoms
         self.whiten = whiten
         self.max_iter = max_iter
@@ -96,8 +120,11 @@ class KMeansCoder(BaseDictionaryLearning):
         self.verbose = verbose
         self.tol = tol
         self.n_drop_components = n_drop_components
-        self.transform_method = transform_method
+        self.transform_algorithm = transform_algorithm
+        self.transform_n_nonzero_coefs = transform_n_nonzero_coefs
+        self.transform_alpha = transform_alpha
         self.split_sign = split_sign
+        self.n_jobs = n_jobs
 
     def local_contrast_normalization(self, patches):
         """Normalize the patch-wise variance of the signal
@@ -206,7 +233,7 @@ class KMeansCoder(BaseDictionaryLearning):
         self.inertia_ = kmeans.inertia_
         return self
 
-    def transform(self, X, y=None, **kwargs):
+    def transform(self, X, y=None):
         """Map a collection of patches into the feature space
 
         """ + BaseDictionaryLearning.transform.__doc__
@@ -214,4 +241,4 @@ class KMeansCoder(BaseDictionaryLearning):
             # TODO: make it inplace by default explictly
             X = self.local_contrast_normalization(X)
 
-        return BaseDictionaryLearning.transform(self, X, y, **kwargs)
+        return BaseDictionaryLearning.transform(self, X, y)

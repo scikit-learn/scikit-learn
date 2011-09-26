@@ -11,7 +11,7 @@ def test_kmeans_coder_shape():
                              max_patches=int(1e2)).transform(lena)
 
     encoder = KMeansCoder(n_atoms=12, max_iter=3,
-                          transform_method='triangle')
+                          transform_algorithm='threshold', transform_alpha=1.)
     encoder.fit(patches)
     assert_equal(encoder.components_.shape, (12, 4 * 4))
     code = encoder.transform(patches)
