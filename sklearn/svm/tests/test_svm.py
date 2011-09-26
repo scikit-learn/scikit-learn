@@ -65,6 +65,18 @@ def test_libsvm_iris():
     assert np.mean(pred == iris.target) > .95
 
 
+def test_single_sample_1d():
+    """
+    Test whether SVCs work on a single sample given as a 1-d array
+    """
+
+    clf = svm.SVC().fit(X, Y)
+    clf.predict(X[0])
+
+    clf = svm.LinearSVC().fit(X, Y)
+    clf.predict(X[0])
+
+
 def test_precomputed():
     """
     SVC with a precomputed kernel.

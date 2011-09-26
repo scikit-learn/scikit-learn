@@ -406,6 +406,7 @@ class BaseLibLinear(BaseEstimator):
         C : array, shape = [n_samples]
         """
         X = np.asanyarray(X, dtype=np.float64, order='C')
+        X = np.atleast_2d(X)
         self._check_n_features(X)
 
         coef = self.raw_coef_
