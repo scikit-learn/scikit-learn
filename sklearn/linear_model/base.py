@@ -430,8 +430,8 @@ class BaseSGDClassifier(BaseSGD, ClassifierMixin):
             self.classes.shape[0] == 2):
             return 1.0 / (1.0 + np.exp(-self.decision_function(X)))
         else:
-            raise NotImplementedError("%s loss does not provide "
-                                      "this functionality" % self.loss)
+            raise NotImplementedError("predict_(log_)proba only supported when"
+                                      " loss='log' (%s given)" % self.loss)
 
 
 class BaseSGDRegressor(BaseSGD, RegressorMixin):
