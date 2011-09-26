@@ -76,8 +76,7 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
 
     >>> clf = clf.fit(iris.data, iris.target)
     >>> import tempfile
-    >>> t = tempfile.TemporaryFile()
-    >>> out_file = export_graphviz(clf, out_file=t)
+    >>> out_file = export_graphviz(clf, out_file=tempfile.TemporaryFile())
     >>> out_file.close()
     """
     def node_to_str(node):
@@ -436,7 +435,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         Returns
         -------
         P : array of shape = [n_samples, n_classes]
-            The class log- probabilities of the input samples. Classes are
+            The class log-probabilities of the input samples. Classes are
             ordered by arithmetical order.
         """
         return np.log(self.predict_proba(X))
