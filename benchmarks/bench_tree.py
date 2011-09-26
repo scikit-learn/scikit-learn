@@ -166,8 +166,8 @@ def bench_friedman3(random_state=None):
     return mse
 
 if __name__ == '__main__':
-    #bench_madelon()
-    #bench_arcene()
+    print "Madelon", bench_madelon()
+    print "Arcene", bench_arcene()
     print "Boston", bench_boston()
     print "Friedman#1", bench_friedman1()
     print "Friedman#2", bench_friedman2()

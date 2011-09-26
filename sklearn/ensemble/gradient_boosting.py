@@ -35,9 +35,10 @@ class VariableImportance(object):
             # do stuff
             #print node.initial_error, node.best_error
             feature = node.feature
-            error_improvement = (node.initial_error - node.best_error) / node.initial_error
+            error_improvement = (node.initial_error - node.best_error) \
+                                / node.initial_error
             self.variable_importance[feature] += error_improvement ** 2.0
-            
+
             # tail recursion
             self.visit_nonterminal_region(node.left)
             self.visit_nonterminal_region(node.right)
@@ -98,7 +99,7 @@ class LossFunction(object):
     def init_estimator(self, X, y):
         pass
 
-    def loss(self, y, pred):
+    def __call__(self, y, pred):
         pass
 
     def negative_gradient(self, y, pred):
@@ -128,7 +129,7 @@ class LeastSquaresError(LossFunction):
     def init_estimator(self):
         return MeanPredictor()
 
-    def loss(self, y, pred):
+    def __call__(self, y, pred):
         return 0.5 * np.sum((y - pred) ** 2.0)
 
     def negative_gradient(self, y, pred):
@@ -145,7 +146,7 @@ class LeastAbsoluteError(LossFunction):
     def init_estimator(self):
         return MedianPredictor()
 
-    def loss(self, y, pred):
+    def __call__(self, y, pred):
         return np.abs(y - pred)
 
     def negative_gradient(self, y, pred):
@@ -153,8 +154,26 @@ class LeastAbsoluteError(LossFunction):
 
     def _update_terminal_region(self, node, X, y, residual, pred):
         """LAD updates terminal regions to median estimates. """
-        node.value = np.asanyarray(np.median(y[node.sample_mask] - \
-                                             pred[node.sample_mask]))
+        node.value = np.asanyarray(np.median(y.take(node.sample_mask, axis=0) - \
+                                             pred.take(node.sample_mask, axis=0)))
+
+
+class HuberError(LossFunction):
+    """Loss function for least absolute deviation (LAD) regression. """
+
+    def init_estimator(self):
+        return MedianPredictor()
+
+    def __call__(self, y, pred):
+        return np.sum(np.abs(y - pred))
+
+    def negative_gradient(self, y, pred):
+        return np.sign(y - pred)
+
+    def _update_terminal_region(self, node, X, y, residual, pred):
+        """LAD updates terminal regions to median estimates. """
+        node.value = np.asanyarray(np.median(y.take(node.sample_mask, axis=0) - \
+                                             pred.take(node.sample_mask, axis=0)))
 
 
 class BinomialDeviance(LossFunction):
@@ -162,19 +181,22 @@ class BinomialDeviance(LossFunction):
     def init_estimator(self):
         return ClassPriorPredictor()
 
-    def loss(self, y, pred):
-        return np.log(1 + np.exp(-2.0 * y * pred))
+    def __call__(self, y, pred):
+        return np.sum(np.log(1 + np.exp(-2.0 * y * pred)))
 
     def negative_gradient(self, y, pred):
         return (2.0 * y) / (1.0 + np.exp(2.0 * y * pred))
 
     def _update_terminal_region(self, node, X, y, residual, pred):
         """Make a single Newton-Raphson step. """
-        targets = residual[node.sample_mask]
-        # assert node.samples == node.sample_mask.sum()
+        targets = residual.take(node.sample_mask, axis=0)
+        # assert node.samples == node.sample_mask.shape[0]
         abs_targets = np.abs(targets)
         node.value = np.asanyarray(targets.sum() / np.sum(abs_targets * \
                                                           (2.0 - abs_targets)))
+        # FIXME free mem - maybe we should use index arrays instead of a mask
+        del node.sample_mask
+        node.sample_mask = None
 
 
 LOSS_FUNCTIONS = {'ls': LeastSquaresError,
@@ -221,7 +243,7 @@ class BaseGradientBoosting(BaseEstimator):
 
         self.random_state = check_random_state(random_state)
 
-    def fit(self, X, y):
+    def fit(self, X, y, monitor=None):
         """Fit the gradient boosting model.
 
         Parameters
@@ -242,8 +264,8 @@ class BaseGradientBoosting(BaseEstimator):
             Returns self.
         """
         X = np.asfortranarray(X, dtype=DTYPE)
-        y = np.asanyarray(y, order='C')
-        
+        y = np.ascontiguousarray(y)
+
         n_samples, n_features = X.shape
         if y.shape[0] != n_samples:
             raise ValueError("Number of labels does not match " \
@@ -262,13 +284,23 @@ class BaseGradientBoosting(BaseEstimator):
 
         self.trees = []
         loss = self.loss
+        #oob = np.zeros((self.n_iter), dtype=np.float64)
+        #obj_func = np.zeros((self.n_iter), dtype=np.float64)
+
+        trim_mask = np.ones((n_samples,), dtype=np.bool)
 
         # perform boosting iterations
         for i in xrange(self.n_iter):
-            #t0 = time()
+            t0 = time()
             # subsampling
             sample_mask = np.random.rand(n_samples) > (1.0 - self.subsample)
 
+            # influence trimming for numerical stability
+            trim_mask = trim_mask & (np.abs(y_pred) < 10000.0)
+            #print "trimming: ", (trim_mask.shape[0] - trim_mask.sum())
+            y_pred[~trim_mask] = 0.0
+            sample_mask = sample_mask & trim_mask
+            
             residual = loss.negative_gradient(y, y_pred)
             #print "Iteration %d - residual - in %fs" % (i, time() - t0)
 
@@ -282,23 +314,32 @@ class BaseGradientBoosting(BaseEstimator):
             #print "Iteration %d - update - in %fs" % (i, time() - t0)
             self.trees.append(tree)
 
-            # FIXME - most of the time is spend on the stmt below.
-            y_pred = self._predict(X, old_pred=y_pred,
-                                   learn_rate=self.learn_rate)
-            #print "Iteration %d - all - in %fs" % (i, time() - t0)
+            y_pred = self._predict(X, old_pred=y_pred)
+
+            if monitor:
+                monitor(self, i)
+            
+            #if self.subsample < 1.0:
+            #    oob[i] = loss.loss(y[~sample_mask], y_pred[~sample_mask])
+            #print "Iteration %d - in %fs" % (i, time() - t0)
+            #print "Obj_func: %.4f     OOB: %.4f" % (obj_func[i], oob[i])
+
+        #self.obj_func = obj_func
+        #self.oob = oob
 
         return self
 
-    def _predict(self, X, old_pred=None, learn_rate=1.0):
+    def _predict(self, X, old_pred=None):
         """Predict targets with current model. Re-uses predictions
         from previous iteration if available.
         """
         if old_pred is not None:
-            return old_pred + learn_rate * apply_tree(self.trees[-1], X, 1).ravel()
+            return old_pred + self.learn_rate * apply_tree(self.trees[-1],
+                                                           X, 1).ravel()
         else:
             y = self.init.predict(X)
             for tree in self.trees:
-                y += learn_rate * apply_tree(tree, X, 1).ravel()
+                y += self.learn_rate * apply_tree(tree, X, 1).ravel()
             return y
 
     @property
@@ -394,17 +435,17 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             loss, learn_rate, n_iter, min_split, max_depth, init, subsample,
             random_state)
 
-    def fit(self, X, y):
+    def fit(self, X, y, monitor=None):
         self.classes = np.unique(y)
         if self.classes.shape[0] != 2:
             raise ValueError("only binary classification supported")
         y = np.searchsorted(self.classes, y)
         y[y == 0] = -1
-        super(GradientBoostingClassifier, self).fit(X, y)
+        super(GradientBoostingClassifier, self).fit(X, y, monitor=monitor)
 
     def predict(self, X):
         P = self.predict_proba(X)
-        return self.classes[np.argmax(P, axis=1)]
+        return self.classes.take(np.argmax(P, axis=1), axis=0)
 
     def predict_proba(self, X):
         X = np.atleast_2d(X)
@@ -414,8 +455,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
                              "call `fit` before `predict`.")
         y = self._predict(X)
         P = np.ones((X.shape[0], 2), dtype=np.float64)
-        P[:,1] = 1.0 / (1.0 + np.exp(-2.0 * y))
-        P[:,0] -= P[:,1]
+        P[:, 1] = 1.0 / (1.0 + np.exp(-2.0 * y))
+        P[:, 0] -= P[:,1]
         return P
 
 
@@ -506,5 +547,5 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         if len(self.trees) == 0:
             raise ValueError("Estimator not fitted, " \
                              "call `fit` before `predict`.")
-        y = self._predict(X, learn_rate=self.learn_rate)
+        y = self._predict(X)
         return y

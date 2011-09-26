@@ -192,7 +192,7 @@ def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
             # FIXME compute error for leaf
             if store_sample_mask:
                 leaf = Node(-1, 0.0, 0.0, 0.0, n_samples, value, None, None,
-                            sample_mask)
+                            sample_mask.nonzero()[0])
             else:
                 leaf = Node(-1, 0.0, 0.0, 0.0, n_samples, value, None, None,
                             None)
@@ -334,8 +334,8 @@ class BaseDecisionTree(BaseEstimator):
                              % (self.n_features, n_features))
 
         if self.type == "classification":
-            predictions = self.classes[np.argmax(
-                _tree.apply_tree(self.tree, X, self.n_classes), axis=1)]
+            predictions = self.classes.take(np.argmax(
+                _tree.apply_tree(self.tree, X, self.n_classes), axis=1), axis=0)
         else:
             predictions = _tree.apply_tree(self.tree, X, self.n_classes)
             predictions = predictions.ravel()

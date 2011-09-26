@@ -141,6 +141,7 @@ def benchmark(clf):
     t0 = time()
     clf.fit(X_train, y_train)
     train_time = time() - t0
+    print "now predicting", clf
     t0 = time()
     pred = clf.predict(X_test)
     test_time = time() - t0
@@ -173,11 +174,11 @@ sgd_err, sgd_train_time, sgd_test_time = benchmark(SGDClassifier(
     **sgd_parameters))
 
 cart_err, cart_train_time, cart_test_time = benchmark(
-    DecisionTreeClassifier(min_split=5, max_depth=100))
+    DecisionTreeClassifier(min_split=5, max_depth=5))
 
 gb_err, gb_train_time, gb_test_time = benchmark(
-    GradientBoostingClassifier(min_split=5, max_depth=4, n_iter=50,
-                               learn_rate=0.2, subsample=0.5))
+    GradientBoostingClassifier(min_split=5, max_depth=5, n_iter=100,
+                               learn_rate=.8, subsample=0.5))
 
 ######################################################################
 ## Print classification performance
