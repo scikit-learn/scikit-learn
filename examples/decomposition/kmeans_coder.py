@@ -31,10 +31,10 @@ import pylab as pl
 
 import numpy as np
 
-from scikits.learn.cross_val import StratifiedKFold
-from scikits.learn.datasets import fetch_lfw_people
-from scikits.learn.feature_extraction.image import PatchExtractor
-from scikits.learn.decomposition import KMeansCoder
+from sklearn.cross_validation import StratifiedKFold
+from sklearn.datasets import fetch_lfw_people
+from sklearn.feature_extraction.image import PatchExtractor
+from sklearn.decomposition import KMeansCoder
 
 # Display progress logs on stdout
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
