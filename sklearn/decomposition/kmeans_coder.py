@@ -119,7 +119,6 @@ class KMeansCoder(BaseDictionaryLearning):
         self.n_prefit = n_prefit
         self.verbose = verbose
         self.tol = tol
-        self.n_drop_components = n_drop_components
         self.transform_algorithm = transform_algorithm
         self.transform_n_nonzero_coefs = transform_n_nonzero_coefs
         self.transform_alpha = transform_alpha
@@ -187,11 +186,6 @@ class KMeansCoder(BaseDictionaryLearning):
                 print "Whitening PCA of the samples"
             self.pca = pca = PCA(whiten=True, n_components=self.n_components)
             pca.fit(X)
-
-            # implement a band-pass filter by dropping the first eigen
-            # values which are generally low frequency components
-            if self.n_drop_components:
-                pca.components_ = pca.components_[self.n_drop_components:, :]
             X = pca.transform(X)
 
             # compute the KMeans centers

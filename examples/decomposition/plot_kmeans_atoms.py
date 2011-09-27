@@ -34,7 +34,7 @@ print "done in %0.3fs" % (time() - t0)
 print "Extracting %d atoms from %d patches" % (n_atoms, len(patches))
 t0 = time()
 kc1 = KMeansCoder(n_atoms, max_iter=10, verbose=True, local_contrast=False,
-				  whiten=False).fit(patches)
+				  whiten=False) #  .fit(patches)
 print "done in %0.3fs" % (time() - t0)
 
 print "Extracting %d whitened atoms from %d patches" % (n_atoms, len(patches))
@@ -47,7 +47,7 @@ n_row = n_col = int(np.sqrt(n_atoms))
 
 titles = ("without whitening PCA", "with whitening PCA")
 
-for img_index, components in enumerate((kc1.components_, kc2.components_)):
+for img_index, components in enumerate((kc2.components_,)):
     pl.figure(figsize=(2, 3.5))
     pl.suptitle("Dictionary learned with K-Means\non natural scenes\n" +
                 titles[img_index])
