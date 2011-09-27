@@ -42,7 +42,6 @@ t0 = time()
 kc2 = KMeansCoder(n_atoms, max_iter=10, verbose=True, local_contrast=False,
 				  whiten=True).fit(patches)
 print "done in %0.3fs" % (time() - t0)
-print kc2.components_[0]
 
 n_row = n_col = int(np.sqrt(n_atoms))
 
