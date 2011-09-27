@@ -49,7 +49,7 @@ lfw_people = fetch_lfw_people(min_faces_per_person=70, resize=0.4)
 faces = lfw_people.data
 n_samples, h, w = faces.shape
 
-X = faces.reshape((n_samples, h * w))
+X = faces.reshape((n_samples, -1))
 X -= X.mean(axis=1)[:, np.newaxis]
 n_features = X.shape[1]
 X = X.reshape((n_samples, h, w))
@@ -82,6 +82,7 @@ print "Extracting image patches from %d faces" % len(X_train)
 t0 = time()
 extr = PatchExtractor(patch_size=(6, 6), max_patches=100, random_state=0)
 patches = extr.transform(X_train)
+patches = patches.reshape(len(patches), -1)
 print "done in %0.3fs" % (time() - t0)
 
 print "Extracting %d atoms from %d patches" % (

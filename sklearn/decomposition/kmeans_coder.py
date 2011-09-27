@@ -33,10 +33,10 @@ class KMeansCoder(BaseDictionaryLearning):
         number of centers extracted by the kmeans algorithm
 
     whiten: boolean, optional: default True
-        perform a whitening PCA on the patches at feature extraction time
+        perform a whitening PCA on the data at feature extraction time
 
     n_components: int, optional: default None
-        number of components to keep after whitening individual patches
+        number of components to keep after whitening individual samples
 
     max_iter: int, default 100
         maximum number of iterations to run the k-means algorithm
@@ -126,40 +126,40 @@ class KMeansCoder(BaseDictionaryLearning):
         self.split_sign = split_sign
         self.n_jobs = n_jobs
 
-    def local_contrast_normalization(self, patches):
+    def local_contrast_normalization(self, X):
         """Normalize the patch-wise variance of the signal
 
         Parameters
         ----------
-        patches: array-like, shape n_samples, n_features
+        X: array-like, shape n_samples, n_features
             Data to be normalized
 
         Returns
         -------
-        patches:
+        X:
             Data after individual normalization of the samples
         """
         # XXX: this should probably be extracted somewhere more general
         # center all colour channels together
-        patches = patches.reshape((patches.shape[0], -1))
-        patches -= patches.mean(axis=1)[:, None]
+        X = X.reshape((X.shape[0], -1))
+        X -= X.mean(axis=1)[:, None]
 
-        patches_std = patches.std(axis=1)
-        # Cap the divisor to avoid amplifying patches that are essentially
+        X_std = X.std(axis=1)
+        # Cap the divisor to avoid amplifying samples that are essentially
         # a flat surface into full-contrast salt-and-pepper garbage.
         # the actual value is a wild guess
         # This trick is credited to N. Pinto
-        min_divisor = (2 * patches_std.min() + patches_std.mean()) / 3
-        patches /= np.maximum(min_divisor, patches_std).reshape(
-            (patches.shape[0], 1))
-        return patches
+        min_divisor = (2 * X_std.min() + X_std.mean()) / 3
+        X /= np.maximum(min_divisor, X_std).reshape(
+            (X.shape[0], 1))
+        return X
 
     def fit(self, X, y=None, **kwargs):
         """Fit the encoder on a collection of data, e.g. image patches.
 
         Parameters
         ----------
-        X: array-like, shape: n_samples, *patch_size
+        X: array-like, shape: n_samples, n_features
             the patch data to be fitted
 
         Returns
@@ -167,56 +167,54 @@ class KMeansCoder(BaseDictionaryLearning):
         self: object
             Returns the object itself
         """
-        patches = np.atleast_2d(X)
-        n_patches = len(patches)
-        patches = patches.reshape((n_patches, -1))
+        X = np.atleast_2d(X)
+        n_samples, n_features = X.shape
         # normalize each patch individually
         if self.local_contrast:
             if self.verbose:
-                print "Local contrast normalization of the patches"
-            patches = self.local_contrast_normalization(patches)
+                print "Local contrast normalization of the data"
+            X = self.local_contrast_normalization(X)
 
         # kmeans model to find the filters
         if self.verbose:
-            print "About to extract filters from %d patches" % n_patches
+            print "About to extract atoms from %d samples" % n_samples
         kmeans = KMeans(k=self.n_atoms, init='k-means++',
                         max_iter=self.max_iter, n_init=self.n_init,
                         tol=self.tol, verbose=self.verbose)
 
         if self.whiten:
-            # whiten the patch space
             if self.verbose:
-                print "Whitening PCA of the patches"
+                print "Whitening PCA of the samples"
             self.pca = pca = PCA(whiten=True, n_components=self.n_components)
-            pca.fit(patches)
+            pca.fit(X)
 
             # implement a band-pass filter by dropping the first eigen
             # values which are generally low frequency components
             if self.n_drop_components:
                 pca.components_ = pca.components_[self.n_drop_components:, :]
-            patches = pca.transform(patches)
+            X = pca.transform(X)
 
             # compute the KMeans centers
-            if 0 < self.n_prefit < patches.shape[1]:
+            if 0 < self.n_prefit < n_features:
                 if self.verbose:
                     print "First KMeans in simplified curriculum space"
                 # starting the kmeans on a the projection to the first singular
                 # components: curriculum learning trick by Andrej Karpathy
-                kmeans.fit(patches[:, :self.n_prefit])
+                kmeans.fit(X[:, :self.n_prefit])
 
                 # warm restart by padding previous centroids with zeros
                 # with full dimensionality this time
-                kmeans.init = np.zeros((self.n_atoms, patches.shape[1]),
+                kmeans.init = np.zeros((self.n_atoms, n_features),
                                        dtype=kmeans.cluster_centers_.dtype)
                 kmeans.init[:, :self.n_prefit] = kmeans.cluster_centers_
                 if self.verbose:
-                    print "Second KMeans in full whitened patch space"
-                kmeans.set_params(n_init=1).fit(patches)
+                    print "Second KMeans in full whitened sample space"
+                kmeans.set_params(n_init=1).fit(X)
             else:
                 if self.verbose:
-                    print "KMeans in full original patch space"
+                    print "KMeans in full original sample space"
                 # regular kmeans fit (without the curriculum trick)
-                kmeans.fit(patches)
+                kmeans.fit(X)
 
             # project back the centers in original, non-whitened space (useful
             # for qualitative inspection of the filters)
@@ -226,7 +224,7 @@ class KMeansCoder(BaseDictionaryLearning):
             # find the kernel in the raw original dimensional space
             # TODO: experiment with component wise scaling too
             self.pca = None
-            kmeans.fit(patches)
+            kmeans.fit(X)
             self.components_ = kmeans.cluster_centers_
 
         self.kmeans = kmeans
@@ -234,7 +232,7 @@ class KMeansCoder(BaseDictionaryLearning):
         return self
 
     def transform(self, X, y=None):
-        """Map a collection of patches into the feature space
+        """Map a collection of samples into the feature space
 
         """ + BaseDictionaryLearning.transform.__doc__
         if self.local_contrast:
