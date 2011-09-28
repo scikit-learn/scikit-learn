@@ -189,7 +189,7 @@ class KMeansCoder(BaseDictionaryLearning):
             X = pca.transform(X)
 
             # compute the KMeans centers
-            if 0 < self.n_prefit < n_features:
+            if 0 < self.n_prefit < pca.n_components:
                 if self.verbose:
                     print "First KMeans in simplified curriculum space"
                 # starting the kmeans on a the projection to the first singular
@@ -198,7 +198,7 @@ class KMeansCoder(BaseDictionaryLearning):
 
                 # warm restart by padding previous centroids with zeros
                 # with full dimensionality this time
-                kmeans.init = np.zeros((self.n_atoms, n_features),
+                kmeans.init = np.zeros((self.n_atoms, pca.n_components),
                                        dtype=kmeans.cluster_centers_.dtype)
                 kmeans.init[:, :self.n_prefit] = kmeans.cluster_centers_
                 if self.verbose:

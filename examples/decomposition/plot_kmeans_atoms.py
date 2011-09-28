@@ -21,11 +21,11 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
 images = load_sample_images().images
 images = np.asanyarray(images, dtype=np.float)
 
-n_atoms = 100
+n_atoms = 64
 
 print "Extracting image patches"
 t0 = time()
-extr = PatchExtractor(patch_size=(6, 6), max_patches=25000, random_state=0)
+extr = PatchExtractor(patch_size=(6, 6), max_patches=30000, random_state=0)
 patches = extr.transform(images)
 patches = patches.reshape(len(patches), -1)
 patches = scale(patches, axis=1, copy=False)
@@ -34,20 +34,20 @@ print "done in %0.3fs" % (time() - t0)
 print "Extracting %d atoms from %d patches" % (n_atoms, len(patches))
 t0 = time()
 kc1 = KMeansCoder(n_atoms, max_iter=10, verbose=True, local_contrast=False,
-				  whiten=False) #  .fit(patches)
+				  whiten=False).fit(patches)
 print "done in %0.3fs" % (time() - t0)
 
 print "Extracting %d whitened atoms from %d patches" % (n_atoms, len(patches))
 t0 = time()
 kc2 = KMeansCoder(n_atoms, max_iter=10, verbose=True, local_contrast=False,
-				  whiten=True).fit(patches)
+				  whiten=True, n_components=36).fit(patches)
 print "done in %0.3fs" % (time() - t0)
 
 n_row = n_col = int(np.sqrt(n_atoms))
 
 titles = ("without whitening PCA", "with whitening PCA")
 
-for img_index, components in enumerate((kc2.components_,)):
+for img_index, components in enumerate((kc1.components_, kc2.components_)):
     pl.figure(figsize=(2, 3.5))
     pl.suptitle("Dictionary learned with K-Means\non natural scenes\n" +
                 titles[img_index])
@@ -58,3 +58,4 @@ for img_index, components in enumerate((kc2.components_,)):
         pl.yticks(())
     pl.subplots_adjust(0.02, 0.03, 0.98, 0.79, 0.14, 0.01)
 pl.show()
+ 
