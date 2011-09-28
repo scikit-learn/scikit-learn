@@ -426,12 +426,14 @@ class BaseSGDClassifier(BaseSGD, ClassifierMixin):
             Contains the membership probabilities of the positive class.
 
         """
-        if (isinstance(self.loss_function, Log) and
-            self.classes.shape[0] == 2):
-            return 1.0 / (1.0 + np.exp(-self.decision_function(X)))
-        else:
+        if len(self.classes) != 2:
+            raise NotImplementedError("predict_(log_)proba only supported"
+                                      " for binary classification"
+        elif not isinstance(self.loss_function, Log):
             raise NotImplementedError("predict_(log_)proba only supported when"
                                       " loss='log' (%s given)" % self.loss)
+
+        return 1.0 / (1.0 + np.exp(-self.decision_function(X)))
 
 
 class BaseSGDRegressor(BaseSGD, RegressorMixin):
