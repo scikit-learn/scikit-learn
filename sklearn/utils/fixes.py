@@ -24,13 +24,24 @@ except ImportError:
 try:
     Counter = collections.Counter
 except AttributeError:
-    # Partial replacement for Python 2.7 Counter
+    # Partial replacement for Python 2.7 collections.Counter
     class Counter(collections.defaultdict):
-        def __init__(self, **kwargs):
+        def __init__(self, iterable=(), **kwargs):
             super(Counter, self).__init__(int, **kwargs)
+            self.update(iterable)
+
+        def __iadd__(self, other):
+            """self += other; adds counts for elements in other"""
+            for x, n in other.iteritems():
+                self[x] += n
+            return self
 
         def most_common(self):
             return sorted(self.iteritems(), key=itemgetter(1), reverse=True)
+
+        def update(self, iterable):
+            for x in iterable:
+                self[x] += 1
 
 
 def _unique(ar, return_index=False, return_inverse=False):

@@ -318,29 +318,27 @@ class CountVectorizer(BaseEstimator):
         # TODO: parallelize the following loop with joblib?
         # (see XXX up ahead)
         for doc in raw_documents:
-            term_count_current = Counter()
+            term_count_current = Counter(self.analyzer.analyze(doc))
+            term_counts += term_count_current
 
-            for term in self.analyzer.analyze(doc):
-                term_count_current[term] += 1
-                term_counts[term] += 1
-
-            if max_df is not None:
-                for term in term_count_current:
-                    document_counts[term] += 1
+            if max_df < 1.0:
+                document_counts.update(term_count_current)
 
             term_counts_per_doc.append(term_count_current)
 
         n_doc = len(term_counts_per_doc)
 
         # filter out stop words: terms that occur in almost all documents
-        if max_df is not None:
+        if max_df < 1.0:
             max_document_count = max_df * n_doc
             stop_words = set(t for t, dc in document_counts.iteritems()
                                if dc > max_document_count)
+        else:
+            stop_words = set()
 
         # list the terms that should be part of the vocabulary
         if max_features is None:
-            terms = [t for t in term_counts if t not in stop_words]
+            terms = set(term_counts) - stop_words
         else:
             # extract the most frequent terms for the vocabulary
             terms = set()
