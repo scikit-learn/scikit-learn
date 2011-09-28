@@ -18,6 +18,10 @@ version 0.9:
     This particularly affects some of the estimators in ``linear_models``.
     The default behavior is still to copy everything passed in.
 
+  - The ``naive_bayes`` classifiers now return 1-dimensional probability
+    estimates from ``predict_proba`` and ``predict_log_proba``; see the
+    method documentation for details.
+
 
 .. _changes_0_9:
 

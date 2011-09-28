@@ -2,7 +2,8 @@ import cPickle as pickle
 from cStringIO import StringIO
 import numpy as np
 import scipy.sparse
-from numpy.testing import assert_array_equal, assert_array_almost_equal
+from numpy.testing import (assert_almost_equal, assert_array_equal,
+                           assert_array_almost_equal, assert_equal)
 
 from ..naive_bayes import GaussianNB, BernoulliNB, MultinomialNB
 
@@ -76,16 +77,25 @@ def test_discretenb_predict_proba():
     # FIXME: write a test to show this.
     X_bernoulli = [[1, 100, 0], [0, 1, 0], [0, 100, 1]]
     X_multinomial = [[0, 1], [1, 3], [4, 0]]
-    y = [0, 0, 2]   # 2 is regression test for binary case, 02e673
 
+    # test binary case (1-d output)
+    y = [0, 0, 2]   # 2 is regression test for binary case, 02e673
     for cls, X in ([BernoulliNB, MultinomialNB], [X_bernoulli, X_multinomial]):
-        clf = MultinomialNB().fit([[0, 1], [1, 3], [4, 0]], [0, 0, 2])
-        assert clf.predict([4, 1]) == 2
-        assert clf.predict_proba([0, 1]).shape == (1, 2)
-        assert np.sum(clf.predict_proba([1, 5])) == 1
-        assert np.sum(clf.predict_proba([3, 0])) == 1
-        assert np.sum(np.exp(clf.class_log_prior_)) == 1
-        assert np.sum(np.exp(clf.intercept_)) == 1
+        clf = MultinomialNB().fit([[0, 1], [1, 3], [4, 0]], y)
+        assert_equal(clf.predict([4, 1]), 2)
+        assert_equal(clf.predict_proba([0, 1]).shape, (1,))
+        assert_equal(clf.predict_proba([[0, 1], [1, 0]]).shape, (2,))
+
+    # test multiclass case (2-d output, must sum to one)
+    y = [0, 1, 2]
+    for cls, X in ([BernoulliNB, MultinomialNB], [X_bernoulli, X_multinomial]):
+        clf = MultinomialNB().fit([[0, 1], [1, 3], [4, 0]], y)
+        assert_equal(clf.predict_proba([0, 1]).shape, (1, 3))
+        assert_equal(clf.predict_proba([[0, 1], [1, 0]]).shape, (2, 3))
+        assert_almost_equal(np.sum(clf.predict_proba([1, 5])), 1)
+        assert_almost_equal(np.sum(clf.predict_proba([3, 0])), 1)
+        assert_almost_equal(np.sum(np.exp(clf.class_log_prior_)), 1)
+        assert_almost_equal(np.sum(np.exp(clf.intercept_)), 1)
 
 
 def test_discretenb_uniform_prior():
@@ -97,5 +107,4 @@ def test_discretenb_uniform_prior():
         clf.set_params(fit_prior=False)
         clf.fit([[0], [0], [1]], [0, 0, 1])
         prior = np.exp(clf.class_log_prior_)
-        assert prior[0] == prior[1]
-        assert prior[0] == .5
+        assert_array_equal(prior, np.array([.5, .5]))
