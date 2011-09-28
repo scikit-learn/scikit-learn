@@ -428,7 +428,7 @@ class BaseSGDClassifier(BaseSGD, ClassifierMixin):
         """
         if len(self.classes) != 2:
             raise NotImplementedError("predict_(log_)proba only supported"
-                                      " for binary classification"
+                                      " for binary classification")
         elif not isinstance(self.loss_function, Log):
             raise NotImplementedError("predict_(log_)proba only supported when"
                                       " loss='log' (%s given)" % self.loss)
