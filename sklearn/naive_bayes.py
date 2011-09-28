@@ -46,11 +46,11 @@ class GaussianNB(BaseEstimator, ClassifierMixin):
     class_prior : array, shape = [n_classes]
         probability of each class.
 
-    theta : array, shape [n_classes * n_features]
-        mean of each feature for the different class
+    theta : array, shape = [n_classes, n_features]
+        mean of each feature per class
 
-    sigma : array, shape [n_classes * n_features]
-        variance of each feature for the different class
+    sigma : array, shape = [n_classes, n_features]
+        variance of each feature per class
 
     Methods
     -------
@@ -101,18 +101,17 @@ class GaussianNB(BaseEstimator, ClassifierMixin):
         X = np.asanyarray(X)
         y = np.asanyarray(y)
 
-        theta = []
-        sigma = []
-        class_prior = []
-        unique_y = unique(y)
-        for yi in unique_y:
-            theta.append(np.mean(X[y == yi, :], 0))
-            sigma.append(np.var(X[y == yi, :], 0))
-            class_prior.append(np.float(np.sum(y == yi)) / np.size(y))
-        self.theta = np.array(theta)
-        self.sigma = np.array(sigma)
-        self.class_prior = np.array(class_prior)
-        self.unique_y = unique_y
+        self.unique_y = unique_y = np.unique(y)
+        n_classes = unique_y.shape[0]
+        _, n_features = X.shape
+
+        self.theta = np.empty((n_classes, n_features))
+        self.sigma = np.empty((n_classes, n_features))
+        self.class_prior = np.empty(n_classes)
+        for i, y_i in enumerate(unique_y):
+            self.theta[i, :] = np.mean(X[y == y_i, :], axis=0)
+            self.sigma[i, :] = np.var(X[y == y_i, :], axis=0)
+            self.class_prior[i] = np.float(np.sum(y == y_i)) / n_classes
         return self
 
     def predict(self, X):
@@ -126,12 +125,13 @@ class GaussianNB(BaseEstimator, ClassifierMixin):
         Returns
         -------
         C : array, shape = [n_samples]
+            Predicted target values for X
         """
-        X = np.asanyarray(X)
-        y_pred = self.unique_y[np.argmax(self.predict_proba(X), 1)]
+        y_pred = self.unique_y[np.argmax(self.predict_proba(X), axis=1)]
         return y_pred
 
     def _joint_log_likelihood(self, X):
+        X = np.atleast_2d(X)
         joint_log_likelihood = []
         for i in xrange(np.size(self.unique_y)):
             jointi = np.log(self.class_prior[i])
@@ -154,10 +154,8 @@ class GaussianNB(BaseEstimator, ClassifierMixin):
         -------
         C : array-like, shape = [n_samples, n_classes]
             Returns the probability of the sample for each class in
-            the model, where classes are ordered by arithmetical
-            order.
+            the model, where classes are ordered arithmetically.
         """
-        X = np.asanyarray(X)
         joint_log_likelihood = self._joint_log_likelihood(X)
         proba = np.exp(joint_log_likelihood)
         proba = proba / np.sum(proba, 1)[:, np.newaxis]
@@ -175,8 +173,7 @@ class GaussianNB(BaseEstimator, ClassifierMixin):
         -------
         C : array-like, shape = [n_samples, n_classes]
             Returns the log-probability of the sample for each class
-            in the model, where classes are ordered by arithmetical
-            order.
+            in the model, where classes are ordered arithmetically.
         """
         log_proba = self._joint_log_likelihood(X)
         # Compute a sum of logs without underflow. Equivalent to:
