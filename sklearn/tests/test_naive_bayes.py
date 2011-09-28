@@ -42,48 +42,18 @@ def test_mnnb():
     correct values for a simple toy dataset.
     """
 
-    #
-    # Check the ability to predict the learning set.
-    #
-    clf = MultinomialNB()
-    y_pred = clf.fit(X2, y2).predict(X2)
+    for X in [X2, scipy.sparse.csr_matrix(X2)]:
+        # Check the ability to predict the learning set.
+        clf = MultinomialNB()
+        y_pred = clf.fit(X, y2).predict(X)
 
-    assert_array_equal(y_pred, y2)
+        assert_array_equal(y_pred, y2)
 
-    #
-    # Verify that np.log(clf.predict_proba(X)) gives the same results as
-    # clf.predict_log_proba(X)
-    #
-    y_pred_proba = clf.predict_proba(X2)
-    y_pred_log_proba = clf.predict_log_proba(X2)
-    assert_array_almost_equal(np.log(y_pred_proba), y_pred_log_proba, 8)
-
-
-def test_sparse_mnnb():
-    """
-    Multinomial Naive Bayes classification for sparse data.
-
-    This checks that MultinomialNB implements fit and predict and returns
-    correct values for a simple toy dataset.
-    """
-
-    X2S = scipy.sparse.csr_matrix(X2)
-
-    #
-    # Check the ability to predict the learning set.
-    #
-    clf = MultinomialNB()
-    y_pred = clf.fit(X2S, y2).predict(X2S)
-
-    assert_array_equal(y_pred, y2)
-
-    #
-    # Verify that np.log(clf.predict_proba(X)) gives the same results as
-    # clf.predict_log_proba(X)
-    #
-    y_pred_proba = clf.predict_proba(X2S)
-    y_pred_log_proba = clf.predict_log_proba(X2S)
-    assert_array_almost_equal(np.log(y_pred_proba), y_pred_log_proba, 8)
+        # Verify that np.log(clf.predict_proba(X)) gives the same results as
+        # clf.predict_log_proba(X)
+        y_pred_proba = clf.predict_proba(X)
+        y_pred_log_proba = clf.predict_log_proba(X)
+        assert_array_almost_equal(np.log(y_pred_proba), y_pred_log_proba, 8)
 
 
 def test_discretenb_pickle():
