@@ -40,7 +40,7 @@ def predict_binary(estimator, X):
         return np.ravel(estimator.decision_function(X))
     else:
         # probabilities of the positive class
-        return estimator.predict_proba(X)
+        return estimator.predict_proba(X)[:, 1]
 
 
 def check_estimator(estimator):
