@@ -83,8 +83,8 @@ def test_discretenb_predict_proba():
     for cls, X in ([BernoulliNB, MultinomialNB], [X_bernoulli, X_multinomial]):
         clf = MultinomialNB().fit([[0, 1], [1, 3], [4, 0]], y)
         assert_equal(clf.predict([4, 1]), 2)
-        assert_equal(clf.predict_proba([0, 1]).shape, (1,))
-        assert_equal(clf.predict_proba([[0, 1], [1, 0]]).shape, (2,))
+        assert_equal(clf.predict_proba([0, 1]).shape, (1, 2))
+        assert_equal(clf.predict_proba([[0, 1], [1, 0]]).sum(axis=1), [1, 1])
 
     # test multiclass case (2-d output, must sum to one)
     y = [0, 1, 2]

@@ -71,17 +71,14 @@ class BaseNB(BaseEstimator, ClassifierMixin):
 
         Returns
         -------
-        C : array-like, shape = n_samples or [n_samples, n_classes]
-            Returns the log-probability of the sample for each class in the
-            model, where classes are ordered arithmetically.
-            In the binary (two-class) case, only the probabilities for the
-            arithmetically greatest ("positive") class are returned.
+        C : array-like, shape = [n_samples, n_classes]
+            Returns the log-probability of the sample for each class
+            in the model, where classes are ordered arithmetically.
         """
         jll = self._joint_log_likelihood(X)
         # normalize by P(x) = P(f_1, ..., f_n)
-        lg_prob_x = logsum(jll, axis=1)
-        lg_posterior = jll - np.atleast_2d(lg_prob_x).T
-        return lg_posterior if len(self.unique_y) > 2 else lg_posterior[:, 1]
+        log_prob_x = logsum(jll, axis=1)
+        return jll - np.atleast_2d(log_prob_x).T
 
     def predict_proba(self, X):
         """
@@ -94,10 +91,8 @@ class BaseNB(BaseEstimator, ClassifierMixin):
         Returns
         -------
         C : array-like, shape = [n_samples, n_classes]
-            Returns the probability of the sample for each class in the model,
-            where classes are ordered arithmetically.
-            In the binary (two-class) case, only the probabilities for the
-            arithmetically greatest ("positive") class are returned.
+            Returns the probability of the sample for each class in
+            the model, where classes are ordered arithmetically.
         """
         return np.exp(self.predict_log_proba(X))
 
