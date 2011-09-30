@@ -71,7 +71,7 @@ class NeighborsBase(BaseEstimator):
     # rely on soon-to-be-updated functionality in the pairwise module.
     def _init_params(self, n_neighbors=None, radius=None,
                      algorithm='auto', leaf_size=30,
-                     warn_on_equidistant=False):
+                     warn_on_equidistant=True):
         self.n_neighbors = n_neighbors
         self.radius = radius
         self.algorithm = algorithm
@@ -209,8 +209,6 @@ class KNeighborsMixin(object):
                 ii = np.arange(dist.shape[0])
                 ind_k = neigh_ind[:, n_neighbors - 1]
                 ind_k1 = neigh_ind[:, n_neighbors]
-                print dist[ii, ind_k]
-                print dist[ii, ind_k1]
                 if np.any(dist[ii, ind_k] == dist[ii, ind_k1]):
                     warn_equidistant()
             neigh_ind = neigh_ind[:, :n_neighbors]
