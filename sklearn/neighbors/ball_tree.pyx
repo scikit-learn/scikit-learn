@@ -432,11 +432,12 @@ cdef class BallTree(object):
         The training data
 
     warning_flag : bool
-        A warning flag if neighbors with identical distances are encountered.
-        For classification or regression based on k-neighbors, if a query
-        point is equidistant from multiple training points, the resulting
-        classification could be dependent on the data order.  In this case,
-        ``warning_flag`` is set to true.
+        Warning flag is set to true during query(...) if a neighbor with an
+        identical distance is discarded.
+        For classification or regression based on k-neighbors, if
+        neighbor k and neighbor k+1 have identical distances but different
+        labels, then the result will be dependent on the ordering of the
+        training data.  In this case, ``warning_flag`` will be set to True.
 
     Examples
     --------
