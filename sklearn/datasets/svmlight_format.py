@@ -9,7 +9,7 @@ import numpy as np
 import scipy.sparse as sp
 import re
 
-def _load_svmlight_file(file_path, buffer_mb):
+def _load_svmlight_file(file, buffer_mb):
     data = []
     indptr = []
     indices = []
@@ -17,7 +17,12 @@ def _load_svmlight_file(file_path, buffer_mb):
 
     pattern = re.compile(r'\s+')
 
-    for line in open(file_path):
+    need_close = False
+    if not hasattr(file, "read"):
+        file = open(file)
+        need_close = True
+
+    for line in file:
         line = line.strip()
 
         if line.startswith("#"):
@@ -39,6 +44,9 @@ def _load_svmlight_file(file_path, buffer_mb):
             data.append(float(value))
 
     indptr.append(len(data))
+
+    if need_close:
+        file.close()
 
     return np.array(data, dtype=np.double), \
            np.array(indices, dtype=np.int), \
@@ -118,3 +126,35 @@ def load_svmlight_file(file_path, other_file_path=None,
         ret.append(labels)
 
     return tuple(ret)
+
+
+def dump_svmlight_file(X, y, file):
+    """Dump the dataset in svmlight / libsvm file format.
+
+    Parameters
+    ----------
+    X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        Training vectors, where n_samples is the number of samples and
+        n_features is the number of features.
+
+    y : array-like, shape = [n_samples]
+        Target values.
+
+    file: file path or file object
+    """
+    if X.shape[0] != y.shape[0]:
+        raise ValueError("X.shape[0] and y.shape[0] should be the same.")
+
+    is_sp = int(hasattr(X, "tocsr"))
+
+    need_close = False
+    if not hasattr(file, "write"):
+        file = open(file, "w")
+        need_close = True
+
+    for i in xrange(X.shape[0]):
+        s = " ".join(["%d:%f" % (j, X[i, j]) for j in X[i].nonzero()[is_sp]])
+        file.write("%f %s\n" % (y[i], s))
+
+    if need_close:
+        file.close()

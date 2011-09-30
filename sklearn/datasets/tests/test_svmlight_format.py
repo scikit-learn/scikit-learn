@@ -1,10 +1,11 @@
 
 import os.path
+from StringIO import StringIO
 
 from numpy.testing import assert_equal, assert_array_equal
 from nose.tools import raises
 
-from sklearn.datasets import load_svmlight_file
+from sklearn.datasets import load_svmlight_file, dump_svmlight_file
 
 currdir = os.path.dirname(os.path.abspath(__file__))
 datafile = os.path.join(currdir, "data", "svmlight_classification.txt")
@@ -71,3 +72,15 @@ def test_not_a_filename():
 @raises(IOError)
 def test_invalid_filename():
     load_svmlight_file("trou pic nic douille")
+
+def test_dump():
+    Xs, y = load_svmlight_file(datafile, buffer_mb=1)
+    Xd = Xs.toarray()
+
+    for X in (Xs, Xd):
+        f = StringIO()
+        dump_svmlight_file(X, y, f)
+        f.seek(0)
+        X2, y2 = load_svmlight_file(f, buffer_mb=1)
+        assert_array_equal(Xd, X2.toarray())
+        assert_array_equal(y, y2)
