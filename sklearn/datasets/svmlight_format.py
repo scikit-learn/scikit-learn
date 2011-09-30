@@ -9,7 +9,7 @@ import numpy as np
 import scipy.sparse as sp
 import re
 
-def _load_svmlight_file(file, buffer_mb):
+def _load_svmlight_file(f, buffer_mb, n_features):
     data = []
     indptr = []
     indices = []
@@ -17,12 +17,7 @@ def _load_svmlight_file(file, buffer_mb):
 
     pattern = re.compile(r'\s+')
 
-    need_close = False
-    if not hasattr(file, "read"):
-        file = open(file)
-        need_close = True
-
-    for line in file:
+    for line in f:
         line = line.strip()
 
         if line.startswith("#"):
@@ -44,30 +39,40 @@ def _load_svmlight_file(file, buffer_mb):
             data.append(float(value))
 
     indptr.append(len(data))
+    indptr = np.array(indptr, dtype=np.int)
 
-    if need_close:
-        file.close()
+    if n_features is not None:
+        shape = (indptr.shape[0] - 1, n_features)
+    else:
+        shape = None    # inferred
 
-    return np.array(data, dtype=np.double), \
-           np.array(indices, dtype=np.int), \
-           np.array(indptr, dtype=np.int), \
-           np.array(labels, dtype=np.double)
+    X = sp.csr_matrix((np.array(data, dtype=np.double),
+                       np.array(indices, dtype=np.int),
+                       indptr),
+                      shape)
+
+    return X, np.array(labels, dtype=np.double)
 
 
-def load_svmlight_file(file_path, other_file_path=None,
-                         n_features=None, buffer_mb=40):
+def _load_svmlight(f, *args):
+    if hasattr(f, "read"):
+        return _load_svmlight_file(f, *args)
+    with open(f) as f:
+        return _load_svmlight_file(f, *args)
+
+
+def load_svmlight_file(f, other_file=None, n_features=None, buffer_mb=40):
     """Load datasets in the svmlight / libsvm format directly into
     scipy sparse CSR matrices.
 
     Parameters
     ----------
-    file_path: str
-        Path to a file to load.
+    f: str or file-like
+        (Path to) a file to load.
 
-    other_file_path: str or None
-        Path to another file to load. scikit-learn will make sure that the
-        number of features in the returned matrix is the same as for
-        file_path.
+    other_file: str or file-like, optional
+        (Path to) another file to load. The benefit over calling this function
+        twice for the files is that n_features is enforced on both datasets.
 
     n_features: int or None
         The number of features to use. If None, it will be inferred.
@@ -100,35 +105,26 @@ def load_svmlight_file(file_path, other_file_path=None,
     problem, we recommend to use load_svmlight_format(train_file, test_file)
     or load_svmlight_format(test_file, n_features=X_train.shape[1]).
     """
-    data, indices, indptr, labels = _load_svmlight_file(file_path, buffer_mb)
+    ret = _load_svmlight(f, buffer_mb, n_features)
 
-    if n_features is not None:
-        shape = (indptr.shape[0] - 1, n_features)
-    else:
-        shape = None    # inferred
+    if other_file is not None:
+        ret += _load_svmlight(other_file, buffer_mb, n_features)
 
-    X_train = sp.csr_matrix((data, indices, indptr), shape)
-
-    ret = [X_train, labels]
-
-    if other_file_path is not None:
-        tup = _load_svmlight_file(other_file_path, buffer_mb)
-        data, indices, indptr, labels = tup
-
-        if n_features is None:
-            n_features = X_train.shape[1]
-
-        shape = (indptr.shape[0] - 1, n_features)
-
-        X_test = sp.csr_matrix((data, indices, indptr), shape)
-
-        ret.append(X_test)
-        ret.append(labels)
-
-    return tuple(ret)
+    return ret
 
 
-def dump_svmlight_file(X, y, file):
+def _dump_svmlight(X, y, f):
+    if X.shape[0] != y.shape[0]:
+        raise ValueError("X.shape[0] and y.shape[0] should be the same.")
+
+    is_sp = int(hasattr(X, "tocsr"))
+
+    for i in xrange(X.shape[0]):
+        s = " ".join(["%d:%f" % (j, X[i, j]) for j in X[i].nonzero()[is_sp]])
+        f.write("%f %s\n" % (y[i], s))
+
+
+def dump_svmlight_file(X, y, f):
     """Dump the dataset in svmlight / libsvm file format.
 
     Parameters
@@ -140,21 +136,10 @@ def dump_svmlight_file(X, y, file):
     y : array-like, shape = [n_samples]
         Target values.
 
-    file: file path or file object
+    f : str or file-like
     """
-    if X.shape[0] != y.shape[0]:
-        raise ValueError("X.shape[0] and y.shape[0] should be the same.")
-
-    is_sp = int(hasattr(X, "tocsr"))
-
-    need_close = False
-    if not hasattr(file, "write"):
-        file = open(file, "w")
-        need_close = True
-
-    for i in xrange(X.shape[0]):
-        s = " ".join(["%d:%f" % (j, X[i, j]) for j in X[i].nonzero()[is_sp]])
-        file.write("%f %s\n" % (y[i], s))
-
-    if need_close:
-        file.close()
+    if hasattr(f, "write"):
+        _dump_svmlight(X, y, f)
+    else:
+        with open(f, "w") as f:
+            _dump_svmlight(X, y, f)
