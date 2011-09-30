@@ -6,6 +6,7 @@ from scipy.sparse import (bsr_matrix, coo_matrix, csc_matrix, csr_matrix,
 from scipy.spatial import cKDTree
 
 from sklearn import neighbors, datasets
+from sklearn.utils.testing import assert_warns
 
 # load and shuffle iris dataset
 iris = datasets.load_iris()
@@ -18,6 +19,35 @@ SPARSE_TYPES = (bsr_matrix, coo_matrix, csc_matrix, csr_matrix, dok_matrix,
 SPARSE_OR_DENSE = SPARSE_TYPES + (np.asarray,)
 
 ALGORITHMS = ('ball_tree', 'brute', 'kd_tree', 'auto')
+
+
+def test_warn_on_equidistant(n_samples=100, n_features=3, k=3):
+    """test the production of a warning if equidistant points are discarded"""
+    X = np.random.random(size=(n_samples, n_features))
+    q = np.random.random(size=n_features)
+
+    neigh = neighbors.NearestNeighbors(n_neighbors=k)
+    neigh.fit(X[:-1])
+    ind = neigh.kneighbors(q, return_distance=False)
+
+    # make the last point identical to the furthest neighbor
+    # querying this should set warning_flag to True
+    X[-1] = X[ind[0, k - 1]]
+
+    y = np.zeros(X.shape[0])
+
+    for algorithm in ('ball_tree', 'brute'):
+        neigh = neighbors.KNeighborsClassifier(n_neighbors=k,
+                                               algorithm=algorithm)
+        neigh.fit(X, y)
+
+        assert_warns(UserWarning, neigh.predict, q)
+
+        neigh = neighbors.KNeighborsRegressor(n_neighbors=k,
+                                              algorithm=algorithm)
+        neigh.fit(X, y)
+
+        assert_warns(UserWarning, neigh.predict, q)
 
 
 def test_unsupervised_kneighbors(n_samples=20, n_features=5,
