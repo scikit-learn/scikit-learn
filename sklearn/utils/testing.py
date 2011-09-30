@@ -97,7 +97,7 @@ class mock_urllib2(object):
 
 #----------------------------------------------------------------------
 # These are copied from python 2.6 warnings module
-# It is also available in numpy > 1.3
+# assert_warns is also available in numpy > 1.3
 
 class WarningMessage(object):
 
@@ -107,7 +107,7 @@ class WarningMessage(object):
     Notes
     -----
     `WarningMessage` is copied from the Python 2.6 warnings module,
-    so it can be used in NumPy with older Python versions.
+    so it can be used in scikit-learn with older Python versions.
 
     """
 
