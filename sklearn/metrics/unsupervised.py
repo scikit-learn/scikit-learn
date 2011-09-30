@@ -10,8 +10,8 @@
 import numpy as np
 
 
-def silhouette_coefficient(distances, labels):
-    """Compute the Silhouette Coefficient
+def silhouette_score(distances, labels):
+    """Compute the mean Silhouette Coefficient of all samples.
 
     The Silhouette Coefficient is calculated using the mean intra-cluster
     distance (a) and the mean nearest-cluster distance (b) for each sample.
