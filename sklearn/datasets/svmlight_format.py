@@ -1,5 +1,14 @@
-""" This module implements a loader for the svmlight / libsvm
-sparse dataset format.  """
+"""This module implements a loader and dumper for the svmlight format
+
+This format is a text-based format, with one sample per line. It does
+not store zero valued features hence is suitable for sparse dataset.
+
+The first element of each line can be used to store a target variable to
+predict.
+
+This format is used as the default format for both svmlight and the
+libsvm command line programs.
+"""
 
 # Authors: Mathieu Blondel <mathieu@mblondel.org>
 #          Lars Buitinck <L.J.Buitinck@uva.nl>
@@ -62,8 +71,28 @@ def _load_svmlight(f, *args):
 
 
 def load_svmlight_file(f, other_file=None, n_features=None, buffer_mb=40):
-    """Load datasets in the svmlight / libsvm format directly into
-    scipy sparse CSR matrices.
+    """Load datasets in the svmlight / libsvm format into sparse CSR matrix
+
+    This format is a text-based format, with one sample per line. It does
+    not store zero valued features hence is suitable for sparse dataset.
+
+    The first element of each line can be used to store a target variable
+    to predict.
+
+    This format is used as the default format for both svmlight and the
+    libsvm command line programs.
+
+    Parsing a text based source can be expensive. When working on
+    repeatedly on the same dataset, it is recommended to wrap this
+    loader with joblib.Memory.cache to store a memmapped backup of the
+    CSR results of the first call and benefit from the near instantaneous
+    loading of memmapped structures for the subsequent calls.
+
+    This implementation is naive: it does allocate too much memory and
+    is slow since written in python. On large datasets it is recommended
+    to use an optimized loader such as:
+
+      https://github.com/mblondel/svmlight-loader
 
     Parameters
     ----------
@@ -75,26 +104,30 @@ def load_svmlight_file(f, other_file=None, n_features=None, buffer_mb=40):
         twice for the files is that n_features is enforced on both datasets.
 
     n_features: int or None
-        The number of features to use. If None, it will be inferred.
+        The number of features to use. If None, it will be inferred. This
+        argument is useful to load several files that are subsets of a
+        bigger sliced dataset: each subset might not have example of
+        every feature, hence the inferred shape might vary from one
+        slice to another.
 
     buffer_mb: int (default: 40)
         The size of the buffer used while loading the dataset in mega-bytes.
 
     Returns
     -------
-        (X, y)
+    (X, y)
 
-        where X is a scipy.sparse matrix of shape (n_samples, n_features),
-              y is a ndarray of shape (n_samples,),
+    where X is a scipy.sparse matrix of shape (n_samples, n_features),
+          y is a ndarray of shape (n_samples,),
 
-        or, if other_file_path is not None,
+    or, if other_file_path is not None,
 
-        (X1, y1, X2, y2)
+    (X1, y1, X2, y2)
 
-        where X1 and X2 are scipy.sparse matrices of shape
-                            (n_samples1, n_features) and
-                            (n_samples2, n_features),
-              y1 and y2 are ndarrays of shape (n_samples1,) and (n_samples2,).
+    where X1 and X2 are scipy.sparse matrices of shape
+                        (n_samples1, n_features) and
+                        (n_samples2, n_features),
+          y1 and y2 are ndarrays of shape (n_samples1,) and (n_samples2,).
 
     Note
     ----
@@ -126,6 +159,12 @@ def _dump_svmlight(X, y, f):
 
 def dump_svmlight_file(X, y, f):
     """Dump the dataset in svmlight / libsvm file format.
+
+    This format is a text-based format, with one sample per line. It does
+    not store zero valued features hence is suitable for sparse dataset.
+
+    The first element of each line can be used to store a target variable
+    to predict.
 
     Parameters
     ----------
