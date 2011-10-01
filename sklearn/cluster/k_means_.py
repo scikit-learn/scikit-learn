@@ -734,7 +734,7 @@ class MiniBatchKMeans(KMeans):
 
         n_batches = int(np.ceil(float(n_samples) / self.chunk_size))
         batch_slices = list(gen_even_slices(n_samples, n_batches))
-        n_iterations = xrange(int(self.max_iter * n_batches))
+        n_iterations = int(self.max_iter * n_batches)
         if sp.issparse(X_shuffled):
             _mini_batch_step = _mini_batch_step_sparse
             tol = self.tol
@@ -742,14 +742,18 @@ class MiniBatchKMeans(KMeans):
             _mini_batch_step = _mini_batch_step_dense
             tol = np.mean(np.var(X_shuffled, axis=0)) * self.tol
 
-        for i, batch_slice in izip(n_iterations, cycle(batch_slices)):
+        for i, batch_slice in izip(xrange(n_iterations), cycle(batch_slices)):
             old_centers = self.cluster_centers_.copy()
             self.counts, self.cluster_centers_ = _mini_batch_step(
                             X_shuffled, batch_slice, 
                             self.cluster_centers_, self.counts, 
                             x_squared_norms=x_squared_norms)
 
-            if np.sum((old_centers - self.cluster_centers_) ** 2) < tol:
+            squared_delta = np.sum((old_centers - self.cluster_centers_) ** 2)
+            if self.verbose:
+                print 'Minibatch iteration %d/%d: change = %f' % (
+                    i + 1, n_iterations, squared_delta)
+            if squared_delta < tol:
                 if self.verbose:
                     print 'Converged to similar centers at iteration', i
                 break
