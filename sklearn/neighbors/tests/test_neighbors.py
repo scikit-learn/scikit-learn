@@ -22,12 +22,18 @@ SPARSE_OR_DENSE = SPARSE_TYPES + (np.asarray,)
 ALGORITHMS = ('ball_tree', 'brute', 'kd_tree', 'auto')
 
 
-# This test passes when the file is run individually, but not when
-# it is run as part of the test suite.
 def test_warn_on_equidistant(n_samples=100, n_features=3, k=3):
     """test the production of a warning if equidistant points are discarded"""
+    # This test passes when test_neighbors.py is run on its own.
+    # It fails when run as part of the test suite, because the warning it's
+    # looking for is thrown in other tests.
+    # The simplefilter statement should take care of this, but there's a bug
+    # in the warnings module: http://bugs.python.org/issue4180
     import nose
     raise nose.SkipTest
+
+    filters = warnings.filters[:]
+    warnings.simplefilter('always', UserWarning)  # doesn't work: see above
 
     X = np.random.random(size=(n_samples, n_features))
     q = np.random.random(size=n_features)
@@ -54,6 +60,8 @@ def test_warn_on_equidistant(n_samples=100, n_features=3, k=3):
         neigh.fit(X, y)
 
         assert_warns(UserWarning, neigh.predict, q)
+
+    warnings.filters = filters
 
 
 def test_unsupervised_kneighbors(n_samples=20, n_features=5,
