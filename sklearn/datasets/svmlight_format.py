@@ -25,17 +25,19 @@ def _load_svmlight_file(f, buffer_mb, n_features):
     labels = []
 
     for line in f:
-        line = line.strip()
+        line = line
 
         hash_position = line.find('#')
         if hash_position == 0:
             continue
         elif hash_position > 0:
-            line = line[:hash_position].strip()
+            line = line[:hash_position]
 
         line_parts = line.split()
-        y, features = line_parts[0], line_parts[1:]
+        if len(line_parts) == 0:
+            continue
 
+        y, features = line_parts[0], line_parts[1:]
         labels.append(float(y))
         indptr.append(len(data))
 
