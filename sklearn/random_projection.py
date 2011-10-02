@@ -27,6 +27,7 @@ Johnson-Lindenstrauss lemma (quoting Wikipedia):
 
 import math
 import warnings
+import random
 
 import numpy as np
 import scipy.sparse as sp
@@ -152,7 +153,10 @@ def sparse_random_matrix(n_components, n_features, density='auto',
       http://www.cs.ucsc.edu/~optas/papers/jl.pdf
 
     """
+    # seed numpy and python pseudo random number generators from one another
+    # to ensure reproducible executions
     random_state = check_random_state(random_state)
+    py_random_state = random.Random(random_state.rand())
 
     if density is 'auto':
         density = min(1 / math.sqrt(n_features), 1 / 3.)
@@ -169,12 +173,17 @@ def sparse_random_matrix(n_components, n_features, density='auto',
     prob_nonzero = density
     for i in xrange(n_components):
         # find the indices of the non-zero components for row i
-        u = random_state.uniform(size=n_features)
-        indices_i = np.arange(n_features)[u < prob_nonzero].copy()
-        indices.append(indices_i)
+        n_nonzero_i = random_state.binomial(n_features, prob_nonzero)
+
+        # Use the python rng to perform reservoir sampling without
+        # replacement and without exhausting the memory.
+        # The python RNG sampling method is at least twice slower than
+        # calling random_state.randint(n_features, n_nonzero_i) but the
+        # latter would not be exact because of the replacement
+        indices_i = py_random_state.sample(xrange(n_features), n_nonzero_i)
+        indices.append(np.array(indices_i))
 
         # among non zero components the probability of the sign is 50%/50%
-        n_nonzero_i = indices_i.shape[0]
         data_i = np.ones(n_nonzero_i)
         u = random_state.uniform(size=n_nonzero_i)
         data_i[u < 0.5] *= -1
@@ -183,10 +192,9 @@ def sparse_random_matrix(n_components, n_features, density='auto',
         indptr.append(offset)
 
     # build the CSR structure by concatenating the rows
-    r = sp.csr_matrix(
-        (np.concatenate(data), np.concatenate(indices), np.array(indptr)),
-        shape=(n_components, n_features))
-
+    data, indices = np.concatenate(data), np.concatenate(indices)
+    r = sp.csr_matrix((data, indices, indptr),
+                      shape=(n_components, n_features))
     return math.sqrt(1 / density) / math.sqrt(n_components) * r
 
 
