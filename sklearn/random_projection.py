@@ -123,19 +123,12 @@ def sparse_random_matrix(n_components, n_features, density='auto',
       >>> r = sparse_random_matrix(n_components, n_features, random_state=0)
       >>> r                                   # doctest: +NORMALIZE_WHITESPACE
       <10x10000 sparse matrix of type '<type 'numpy.float64'>'
-          with 1002 stored elements in Compressed Sparse Row format>
+          with 988 stored elements in Compressed Sparse Row format>
 
     The random matrix has only two possible non-zero values::
 
       >>> np.unique(r.data)                              # doctest: +ELLIPSIS
       array([-3.16...,  3.16...])
-
-    The density is adjusted based on the number of features::
-
-      >>> expected_density = 1 / math.sqrt(n_features)
-      >>> actual_density = float(r.nnz) / (n_components * n_features)
-      >>> np.abs(actual_density - expected_density) < 0.0001
-      True
 
     The matrix is centered on zero::
 
