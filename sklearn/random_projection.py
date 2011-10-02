@@ -86,8 +86,29 @@ def sparse_random_matrix(n_components, n_features, density='auto',
                          random_state=None):
     """Generalized Achlioptas random sparse matrix for random projection
 
-    Setting density to 1/3 will yield the original Achlioptas matrix
-    while setting a lower value will yield Li's generalization.
+    Setting density to 1/3 will yield the original matrix by Dimitris
+    Achlioptas while setting a lower value will yield the generalization
+    by Ping Li et al:
+
+    If we note `s = 1 / density` the components of the random matrix are:
+
+      - -sqrt(s) / sqrt(n_components)   with probability 1 / 2s
+      -  0                              with probability 1 - 1 / s
+      - +sqrt(s) / sqrt(n_components)   with probability 1 / 2s
+
+    Parameters
+    ----------
+    n_components: int
+        Dimensionality of the target projection space.
+
+    density: float in range (0, 1/3], optional
+        Ratio of non-zero component in the random projection matrix.
+
+        By default the value is set to the minimum density as recommended
+        by Ping Li et al.: 1 / sqrt(n_features)
+
+        Use density = 1 / 3.0 if you want to reproduce the results from
+        Achlioptas, 2001.
 
     Examples
     --------
@@ -151,7 +172,7 @@ def sparse_random_matrix(n_components, n_features, density='auto',
         indices_i = np.arange(n_features)[u < prob_nonzero].copy()
         indices.append(indices_i)
 
-        # among non zero component the
+        # among non zero components the probability of the sign is 50%/50%
         n_nonzero_i = indices_i.shape[0]
         data_i = np.ones(n_nonzero_i)
         u = random_state.uniform(size=n_nonzero_i)
@@ -177,6 +198,12 @@ class SparseRandomProjection(BaseEstimator, TransformerMixin):
 
     The implementation uses a CSR matrix internally.
 
+    If we note `s = 1 / density` the components of the random matrix are:
+
+      - -sqrt(s) / sqrt(n_components)   with probability 1 / 2s
+      -  0                              with probability 1 - 1 / s
+      - +sqrt(s) / sqrt(n_components)   with probability 1 / 2s
+
     Parameters
     ----------
     n_components: int, optional
@@ -189,15 +216,16 @@ class SparseRandomProjection(BaseEstimator, TransformerMixin):
     density: float in range (0, 1/3], optional
         Ratio of non-zero component in the random projection matrix.
 
-        By default the value is set to the minimum density as recommended by
-        Ping Li et al.: 1 / sqrt(n_features)
+        By default the value is set to the minimum density as recommended
+        by Ping Li et al.: 1 / sqrt(n_features)
 
         Use density = 1 / 3.0 if you want to reproduce the results from
         Achlioptas, 2001.
 
     eps: strictly positive float, optional, default 0.1
-        Parameter to control the quality of the embedding according to the
-        Johnson-Lindenstrauss lemma when n_components is set to auto.
+        Parameter to control the quality of the embedding according to
+        the Johnson-Lindenstrauss lemma when n_components is set to
+        'auto'.
 
         Smaller values lead to better embedding and higher number of
         dimensions (n_components) in the target projection space.
