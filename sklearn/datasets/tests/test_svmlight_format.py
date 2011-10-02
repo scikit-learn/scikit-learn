@@ -1,18 +1,19 @@
-
+import numpy as np
 import os.path
 from StringIO import StringIO
 
 from numpy.testing import assert_equal, assert_array_equal
 from nose.tools import raises
 
-from sklearn.datasets import load_svmlight_file, dump_svmlight_file
+from sklearn.datasets import (load_svmlight_file, load_svmlight_files,
+                              dump_svmlight_file)
 
 currdir = os.path.dirname(os.path.abspath(__file__))
 datafile = os.path.join(currdir, "data", "svmlight_classification.txt")
 invalidfile = os.path.join(currdir, "data", "svmlight_invalid.txt")
 
 def test_load_svmlight_file():
-    X, y = load_svmlight_file(datafile, buffer_mb=1)
+    X, y = load_svmlight_file(datafile)
 
     # test X's shape
     assert_equal(X.indptr.shape[0], 4)
@@ -41,14 +42,22 @@ def test_load_svmlight_file():
     # test y
     assert_array_equal(y, [1, 2, 3])
 
-def test_load_svmlight_file_2_files():
-    X_train, y_train, X_test, y_test = load_svmlight_file(datafile,
-                                                            datafile)
+def test_load_svmlight_files():
+    X_train, y_train, X_test, y_test = load_svmlight_files([datafile] * 2,
+                                                           dtype=np.float32)
     assert_array_equal(X_train.toarray(), X_test.toarray())
     assert_array_equal(y_train, y_test)
+    assert_equal(X_train.dtype, np.float32)
+    assert_equal(X_test.dtype, np.float32)
+
+    X1, y1, X2, y2, X3, y3 = load_svmlight_files([datafile] * 3,
+                                                 dtype=np.float64)
+    assert_equal(X1.dtype, X2.dtype)
+    assert_equal(X2.dtype, X3.dtype)
+    assert_equal(X3.dtype, np.float64)
 
 def test_load_svmlight_file_n_features():
-    X, y = load_svmlight_file(datafile, n_features=14, buffer_mb=1)
+    X, y = load_svmlight_file(datafile, n_features=14)
 
     # test X'shape
     assert_equal(X.indptr.shape[0], 4)
@@ -63,7 +72,11 @@ def test_load_svmlight_file_n_features():
 
 @raises(ValueError)
 def test_load_invalid_file():
-    X, y = load_svmlight_file(invalidfile, buffer_mb=1)
+    load_svmlight_file(invalidfile)
+
+@raises(ValueError)
+def test_load_invalid_file():
+    load_svmlight_files([datafile, invalidfile, datafile])
 
 @raises(TypeError)
 def test_not_a_filename():
@@ -74,13 +87,13 @@ def test_invalid_filename():
     load_svmlight_file("trou pic nic douille")
 
 def test_dump():
-    Xs, y = load_svmlight_file(datafile, buffer_mb=1)
+    Xs, y = load_svmlight_file(datafile)
     Xd = Xs.toarray()
 
     for X in (Xs, Xd):
         f = StringIO()
         dump_svmlight_file(X, y, f)
         f.seek(0)
-        X2, y2 = load_svmlight_file(f, buffer_mb=1)
+        X2, y2 = load_svmlight_file(f)
         assert_array_equal(Xd, X2.toarray())
         assert_array_equal(y, y2)
