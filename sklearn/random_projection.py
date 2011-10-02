@@ -275,7 +275,8 @@ class SparseRandomProjection(BaseEstimator, TransformerMixin):
         The fitted estimator.
 
         """
-        # TODO: check
+        if not sp.issparse(X):
+            X = np.atleast_2d(X)
         self.random_state = check_random_state(self.random_state)
         n_samples, n_features = X.shape
 
@@ -284,7 +285,7 @@ class SparseRandomProjection(BaseEstimator, TransformerMixin):
                 n_samples, eps=self.eps)
             if self.n_components > n_features:
                 warnings.warn(
-                    'eps=%f and n_samples=%d lead to a target dimension of'
+                    'eps=%f and n_samples=%d lead to a target dimension of '
                     '%d which is larger than the original space with '
                     'n_features=%d' % (self.eps, n_samples, self.n_components,
                                        n_features))
@@ -314,4 +315,6 @@ class SparseRandomProjection(BaseEstimator, TransformerMixin):
             Projected array.
 
         """
+        if not sp.issparse(X):
+            X = np.atleast_2d(X)
         return X * self.components_.T
