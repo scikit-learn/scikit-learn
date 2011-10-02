@@ -287,7 +287,7 @@ class BaseGradientBoosting(BaseEstimator):
         #oob = np.zeros((self.n_iter), dtype=np.float64)
         #obj_func = np.zeros((self.n_iter), dtype=np.float64)
 
-        trim_mask = np.ones((n_samples,), dtype=np.bool)
+        #trim_mask = np.ones((n_samples,), dtype=np.bool)
 
         # perform boosting iterations
         for i in xrange(self.n_iter):
@@ -296,10 +296,10 @@ class BaseGradientBoosting(BaseEstimator):
             sample_mask = np.random.rand(n_samples) > (1.0 - self.subsample)
 
             # influence trimming for numerical stability
-            trim_mask = trim_mask & (np.abs(y_pred) < 10000.0)
+            #trim_mask = trim_mask & (np.abs(y_pred) < 10000.0)
             #print "trimming: ", (trim_mask.shape[0] - trim_mask.sum())
-            y_pred[~trim_mask] = 0.0
-            sample_mask = sample_mask & trim_mask
+            #y_pred[~trim_mask] = 0.0
+            #sample_mask = sample_mask & trim_mask
             
             residual = loss.negative_gradient(y, y_pred)
             #print "Iteration %d - residual - in %fs" % (i, time() - t0)

@@ -155,7 +155,7 @@ def bench_madelon():
     clf = GradientBoostingClassifier(**classification_params)
     clf.fit(X_train, y_train)
     #error_rate = (1.0 - clf.score(X_test, y_test)) * 100.0
-    score = 1.0 - np.mean(clf.predict(X_test) == y_test)
+    score = np.mean(clf.predict(X_test) == y_test)
     return score
 
 
@@ -232,12 +232,12 @@ if __name__ == "__main__":
     
 ##     print "Example 10.2 - LC"
 ##     #random_gaussian_learning_curve(13)
-##     print "Example 10.2", bench_random_gaussian()
+    print "Example 10.2", bench_random_gaussian()
 
-##     print "Madelon", bench_madelon()
-##     print "Arcene", bench_arcene()
+    print "Madelon", bench_madelon()
+    print "Arcene", bench_arcene()
 
-##     print "Boston", bench_boston()
-##     print "Friedman#1", bench_friedman1()
-##     print "Friedman#2", bench_friedman2()
-##     print "Friedman#3", bench_friedman3()
+    print "Boston", bench_boston()
+    print "Friedman#1", bench_friedman1()
+    print "Friedman#2", bench_friedman2()
+    print "Friedman#3", bench_friedman3()
