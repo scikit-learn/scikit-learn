@@ -1,4 +1,5 @@
 import warnings
+from nose import SkipTest
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 from numpy.testing import assert_raises
@@ -8,6 +9,7 @@ from scipy.spatial import cKDTree
 
 from sklearn import neighbors, datasets
 from sklearn.utils.testing import assert_warns
+from sklearn.neighbors.base import warn_equidistant
 
 # load and shuffle iris dataset
 iris = datasets.load_iris()
@@ -21,19 +23,21 @@ SPARSE_OR_DENSE = SPARSE_TYPES + (np.asarray,)
 
 ALGORITHMS = ('ball_tree', 'brute', 'kd_tree', 'auto')
 
-
 def test_warn_on_equidistant(n_samples=100, n_features=3, k=3):
     """test the production of a warning if equidistant points are discarded"""
-    # This test passes when test_neighbors.py is run on its own.
-    # It fails when run as part of the test suite, because the warning it's
-    # looking for is thrown in other tests.
+    # If the warning has been called earlier, it will be suppressed on further
+    # calls.
     # The simplefilter statement should take care of this, but there's a bug
     # in the warnings module: http://bugs.python.org/issue4180
-    import nose
-    raise nose.SkipTest
 
     filters = warnings.filters[:]
     warnings.simplefilter('always', UserWarning)  # doesn't work: see above
+
+    # hack to fix this: we'll override the warning call with a new message
+    import sklearn.neighbors.base
+    warn_equidistant = sklearn.neighbors.base.warn_equidistant
+    sklearn.neighbors.base.warn_equidistant = lambda: warnings.warn("---")
+    # end hack
 
     X = np.random.random(size=(n_samples, n_features))
     q = np.random.random(size=n_features)
@@ -62,6 +66,9 @@ def test_warn_on_equidistant(n_samples=100, n_features=3, k=3):
         assert_warns(UserWarning, neigh.predict, q)
 
     warnings.filters = filters
+
+    # set function back to its original
+    sklearn.neighbors.base.warn_equidistant = warn_equidistant
 
 
 def test_unsupervised_kneighbors(n_samples=20, n_features=5,
