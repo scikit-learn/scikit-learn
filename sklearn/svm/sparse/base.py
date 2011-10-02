@@ -91,6 +91,16 @@ class SparseBaseLibSVM(BaseLibSVM):
         sample_weight = np.asanyarray(sample_weight, dtype=np.float64,
                                       order='C')
 
+        if X.shape[0] != y.shape[0]:
+            raise ValueError("X and y have incompatible shapes.\n" +
+                             "Note: Sparse matrices cannot be indexed w/" +
+                             "boolean masks (use `indices=True` in CV).")
+
+        if sample_weight.shape[0] > 0 and sample_weight.shape[0] != X.shape[0]:
+            raise ValueError("sample_weight and X have incompatible shapes.\n" +
+                             "Note: Sparse matrices cannot be indexed w/" +
+                             "boolean masks (use `indices=True` in CV).")
+
         solver_type = self._svm_types.index(self.impl)
         kernel_type = self._kernel_types.index(self.kernel)
 
@@ -168,7 +178,6 @@ class SparseBaseLibSVM(BaseLibSVM):
                       self.probability, self.n_support_, self.label_,
                       self.probA_, self.probB_)
 
-
     def predict_proba(self, X):
         """
         This function does classification or regression on a test vector X
@@ -198,7 +207,8 @@ class SparseBaseLibSVM(BaseLibSVM):
                     "probability estimates must be enabled to use this method")
 
         if self.impl not in ('c_svc', 'nu_svc'):
-            raise NotImplementedError("predict_proba only implemented for SVC and NuSVC")
+            raise NotImplementedError("predict_proba only implemented for " +
+                                      "SVC and NuSVC")
 
         import scipy.sparse
         X = scipy.sparse.csr_matrix(X)
@@ -217,6 +227,7 @@ class SparseBaseLibSVM(BaseLibSVM):
             self.nu, self.epsilon, self.shrinking,
             self.probability, self.n_support_, self.label_,
             self.probA_, self.probB_)
+
 
 class SparseBaseLibLinear(BaseLibLinear):
 
@@ -240,8 +251,13 @@ class SparseBaseLibLinear(BaseLibLinear):
 
         import scipy.sparse
         X = scipy.sparse.csr_matrix(X)
-        X.data = np.asanyarray(X.data, dtype=np.float64, order='C')
         y = np.asanyarray(y, dtype=np.int32, order='C')
+        if X.shape[0] != y.shape[0]:
+            raise ValueError("X and y have incompatible shapes.\n" +
+                             "Note: Sparse matrices cannot be indexed w/" +
+                             "boolean masks (use `indices=True` in CV).")
+
+        X.data = np.asanyarray(X.data, dtype=np.float64, order='C')
 
         self.class_weight, self.class_weight_label = \
                      _get_class_weight(class_weight, y)
