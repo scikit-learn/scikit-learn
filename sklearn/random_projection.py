@@ -1,7 +1,7 @@
 """Random Projection transformers
 
 Random Projections are an efficient way to reduce the dimensionality
-of the data by trading a controlled amout of accuracy (as additional
+of the data by trading a controlled amount of accuracy (as additional
 variance) for faster processing times and smaller model sizes.
 
 The dimensions and distribution of Random Projections matrices are
@@ -48,7 +48,8 @@ def johnson_lindenstrauss_bound(n_samples, eps=0.1):
     n_features] and p is a projection by a random gaussian N(0, 1) matrix
     with shape [n_components, n_features] (or a sparse Achlioptas matrix).
 
-    The minimum number of components to garantee the embedding is given by:
+    The minimum number of components to guarantee the embedding is
+    given by:
 
       n_components >= 4 log(n_samples) / (eps^2 / 2 - eps^3 / 3)
 
@@ -272,7 +273,7 @@ class SparseRandomProjection(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        The fitted estimator.
+        self
 
         """
         if not sp.issparse(X):
@@ -307,7 +308,7 @@ class SparseRandomProjection(BaseEstimator, TransformerMixin):
         X : numpy array or scipy.sparse of shape [n_samples, n_features]
             The input data to project into a smaller dimensional space.
 
-        y : is not used: placehold to allow for usage in a Pipeline.
+        y : is not used: placeholder to allow for usage in a Pipeline.
 
         Returns
         -------
