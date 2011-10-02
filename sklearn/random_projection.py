@@ -180,6 +180,10 @@ def sparse_random_matrix(n_components, n_features, density='auto',
         # The python RNG sampling method is at least twice slower than
         # calling random_state.randint(n_features, n_nonzero_i) but the
         # latter would not be exact because of the replacement
+        # If speed is an issue it might be interesting to integrate this
+        # cython implementation by Robert Kern:
+        # http://mail.scipy.org/pipermail/numpy-discussion/2010-December/
+        # 054289.html
         indices_i = py_random_state.sample(xrange(n_features), n_nonzero_i)
         indices.append(np.array(indices_i))
 
