@@ -11,7 +11,7 @@ samples of the dataset.
 The main theoretical result behind their efficiency is the
 Johnson-Lindenstrauss lemma (quoting Wikipedia):
 
-  In mathematics, the Johnson–Lindenstrauss lemma is a result
+  In mathematics, the Johnson-Lindenstrauss lemma is a result
   concerning low-distortion embeddings of points from high-dimensional
   into low-dimensional Euclidean space. The lemma states that a small set
   of points in a high-dimensional space can be embedded into a space of
