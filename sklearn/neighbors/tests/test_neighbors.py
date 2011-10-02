@@ -36,8 +36,9 @@ def test_warn_on_equidistant(n_samples=100, n_features=3, k=3):
     # hack to fix this: we'll override the warning call with a new message
     import sklearn.neighbors.base
     warn_equidistant = sklearn.neighbors.base.warn_equidistant
-    sklearn.neighbors.base.warn_equidistant = lambda: warnings.warn("---")
-    # end hack
+    sklearn.neighbors.base.warn_equidistant = \
+        lambda: warnings.warn("test_neighbors.py unused warning hack")
+    # this will be set back to the original function below
 
     X = np.random.random(size=(n_samples, n_features))
     q = np.random.random(size=n_features)
@@ -67,7 +68,7 @@ def test_warn_on_equidistant(n_samples=100, n_features=3, k=3):
 
     warnings.filters = filters
 
-    # set function back to its original
+    # hack: set function back to its original
     sklearn.neighbors.base.warn_equidistant = warn_equidistant
 
 
