@@ -18,9 +18,11 @@ from ..base import BaseEstimator
 from ..base import RegressorMixin
 from ..base import ClassifierMixin
 from ..base import TransformerMixin
-from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
 from ..utils.extmath import safe_sparse_dot
 from ..utils import as_float_array, safe_asanyarray
+from ..utils import atleast2d_or_csr, check_arrays
+
+from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
 
 
 ###
@@ -69,7 +71,7 @@ class LinearModel(BaseEstimator, RegressorMixin):
                 X -= X_mean
                 if normalize:
                     X_std = np.sqrt(np.sum(X ** 2, axis=0))
-                    X_std[X_std==0] = 1
+                    X_std[X_std == 0] = 1
                     X /= X_std
                 else:
                     X_std = np.ones(X.shape[1])
@@ -218,6 +220,10 @@ class BaseSGD(BaseEstimator):
         if self.sample_weight.shape[0] != n_samples:
             raise ValueError("Shapes of X and sample_weight do not match.")
 
+    def _set_coef(self, coef_):
+        """Make sure that coef_ is 2d. """
+        self.coef_ = np.atleast_2d(coef_)
+
     def _allocate_parameter_mem(self, n_classes, n_features, coef_init=None,
                                 intercept_init=None):
         """Allocate mem for parameters; initialize if provided."""
@@ -259,7 +265,7 @@ class BaseSGD(BaseEstimator):
             if intercept_init is not None:
                 intercept_init = np.asanyarray(intercept_init,
                                                dtype=np.float64)
-                if intercept_init.shape != (1,) and intercept_init.shape !=():
+                if intercept_init.shape != (1,) and intercept_init.shape != ():
                     raise ValueError("Provided intercept_init " \
                                  "does not match dataset.")
                 self.intercept_ = intercept_init.reshape(1,)
@@ -361,7 +367,7 @@ class BaseSGDClassifier(BaseSGD, ClassifierMixin):
             X = np.asanyarray(X)
             n_samples, n_features = X.shape
 
-        if n_samples != len(y):
+        if n_samples != y.shape[0]:
             raise ValueError("Shapes of X and y do not match.")
 
         # sort in asc order; largest class id is positive class
@@ -390,6 +396,25 @@ class BaseSGDClassifier(BaseSGD, ClassifierMixin):
 
     def _fit_multiclass(self, X, y):
         raise NotImplementedError("BaseSGDClassifier is an abstract class.")
+
+    def decision_function(self, X):
+        """Predict signed 'distance' to the hyperplane (aka confidence score)
+
+        Parameters
+        ----------
+        X : array, shape [n_samples, n_features]
+
+        Returns
+        -------
+        array, shape = [n_samples] if n_classes == 2 else [n_samples,n_classes]
+          The signed 'distances' to the hyperplane(s).
+        """
+        X = atleast2d_or_csr(X)
+        scores = safe_sparse_dot(X, self.coef_.T) + self.intercept_
+        if self.classes.shape[0] == 2:
+            return np.ravel(scores)
+        else:
+            return scores
 
     def predict(self, X):
         """Predict using the linear model
@@ -488,17 +513,10 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         -------
         self : returns an instance of self.
         """
+        X, y = check_arrays(X, y, sparse_format="csr", copy=False)
         y = np.asanyarray(y, dtype=np.float64, order="C")
 
-        # make sure X has shape
-        try:
-            n_samples, n_features = X.shape
-        except AttributeError:
-            X = np.asanyarray(X)
-            n_samples, n_features = X.shape
-
-        if n_samples != len(y):
-            raise ValueError("Shapes of X and y do not match.")
+        n_samples, n_features = X.shape
 
         # Allocate datastructures from input arguments
         self._set_sample_weight(sample_weight, n_samples)
@@ -525,8 +543,9 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         array, shape = [n_samples]
            Array containing the predicted class labels.
         """
-        X = np.asanyarray(X)
-        return np.dot(X, self.coef_) + self.intercept_
+        X = atleast2d_or_csr(X)
+        scores = safe_sparse_dot(X, self.coef_) + self.intercept_
+        return scores.ravel()
 
 
 class CoefSelectTransformerMixin(TransformerMixin):

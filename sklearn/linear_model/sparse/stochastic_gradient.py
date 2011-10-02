@@ -9,8 +9,6 @@ import scipy.sparse as sp
 from ...externals.joblib import Parallel, delayed
 from ..base import BaseSGDClassifier, BaseSGDRegressor
 from ..sgd_fast_sparse import plain_sgd
-from ...utils import atleast2d_or_csr
-from ...utils.extmath import safe_sparse_dot
 
 ## TODO add flag for intercept learning rate heuristic
 ##
@@ -130,14 +128,6 @@ class SGDClassifier(BaseSGDClassifier):
 
     """
 
-    def _set_coef(self, coef_):
-        self.coef_ = coef_
-        if coef_ is None:
-            self.sparse_coef_ = None
-        else:
-            # sparse representation of the fitted coef for the predict method
-            self.sparse_coef_ = sp.csr_matrix(coef_)
-
     def _fit_binary(self, X, y):
         """Fit a binary classifier.
         """
@@ -172,7 +162,7 @@ class SGDClassifier(BaseSGDClassifier):
                                       self.eta0, self.power_t)
 
         # update self.coef_ and self.sparse_coef_ consistently
-        self._set_coef(np.atleast_2d(self.coef_))
+        self._set_coef(coef_)
         self.intercept_ = np.asarray(intercept_)
 
     def _fit_multiclass(self, X, y):
@@ -208,27 +198,6 @@ class SGDClassifier(BaseSGDClassifier):
             self.intercept_[i] = intercept
 
         self._set_coef(self.coef_)
-
-    def decision_function(self, X):
-        """Predict signed 'distance' to the hyperplane (aka confidence score).
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix} of shape [n_samples, n_features]
-
-        Returns
-        -------
-        array, shape = [n_samples] if n_classes == 2 else [n_samples,n_classes]
-          The signed 'distances' to the hyperplane(s).
-        """
-        X = atleast2d_or_csr(X)
-
-        scores = (safe_sparse_dot(X, self.sparse_coef_.T, dense_output=True)
-                  + self.intercept_)
-        if self.classes.shape[0] == 2:
-            return np.ravel(scores)
-        else:
-            return scores
 
 
 def _train_ova_classifier(i, c, X_data, X_indices, X_indptr, y, coef_,
@@ -352,14 +321,6 @@ class SGDRegressor(BaseSGDRegressor):
 
     """
 
-    def _set_coef(self, coef_):
-        self.coef_ = coef_
-        if coef_ is None:
-            self.sparse_coef_ = None
-        else:
-            # sparse representation of the fitted coef for the predict method
-            self.sparse_coef_ = sp.csr_matrix(coef_)
-
     def _fit_regressor(self, X, y):
         # interprete X as CSR matrix
         X = _tocsr(X)
@@ -387,22 +348,5 @@ class SGDRegressor(BaseSGDRegressor):
                                       self.eta0, self.power_t)
 
         # update self.coef_ and self.sparse_coef_ consistently
-        self._set_coef(self.coef_)
+        self.coef_ = coef_
         self.intercept_ = np.asarray(intercept_)
-
-    def predict(self, X):
-        """Predict using the linear model
-
-        Parameters
-        ----------
-        X : array or scipy.sparse matrix of shape [n_samples, n_features]
-
-        Returns
-        -------
-        array, shape = [n_samples]
-           Array containing the predicted class labels.
-        """
-        X = atleast2d_or_csr(X)
-        scores = (safe_sparse_dot(X, self.sparse_coef_.T, dense_output=True)
-                  + self.intercept_).ravel()
-        return scores
