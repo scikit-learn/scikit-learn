@@ -79,7 +79,8 @@ def test_sparse_random_projection_dimensions():
     projected = rp.fit_transform(data)
     assert_equal(projected.shape, (n_samples, 100))
     assert_equal(rp.components_.shape, (100, n_features))
-    assert_equal(rp.components_.nnz, 960)  # close to 1% density
+    assert_lower(rp.components_.nnz, 1100)  # close to 1% density
+    assert_lower(900, rp.components_.nnz)  # close to 1% density
 
 
 def test_sparse_projection_embedding_quality():
@@ -99,10 +100,7 @@ def test_sparse_projection_embedding_quality():
     distances_ratio = projected_distances / original_distances
 
     # check that the automatically tuned values for the density respect the
-    # contract for eps: pairwise distances are preserved
-    assert_almost_equal(distances_ratio.mean(), 1.00, 2)
-    assert_almost_equal(distances_ratio.std(), 0.03, 2)
-
-    # check the Johnson Lindenstrauss bound
+    # contract for eps: pairwise distances are preserved according to the
+    # Johnson Lindenstrauss bound
     assert_lower(distances_ratio.max(), 1 + eps)
     assert_lower(1 - eps, distances_ratio.min())
