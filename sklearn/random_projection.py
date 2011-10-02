@@ -193,7 +193,7 @@ def sparse_random_matrix(n_components, n_features, density='auto',
 class SparseRandomProjection(BaseEstimator, TransformerMixin):
     """Transformer to reduce the dimensionality with sparse random projection
 
-    Alternative to the dense Gaussian Random matrix that garantees
+    Alternative to the dense Gaussian Random matrix that guarantees
     similar embedding quality while being much more memory efficient
     and allowing faster computation of the projected data.
 
