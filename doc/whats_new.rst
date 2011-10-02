@@ -18,6 +18,10 @@ version 0.9:
     This particularly affects some of the estimators in ``linear_models``.
     The default behavior is still to copy everything passed in.
 
+  - The SVMlight dataset loader ``sklearn.datasets.load_svmlight_file`` no
+    longer supports loading two files at once; use ``load_svmlight_files``
+    instead. Also, the (unused) ``buffer_mb`` parameter is gone.
+
 
 .. _changes_0_9:
 
