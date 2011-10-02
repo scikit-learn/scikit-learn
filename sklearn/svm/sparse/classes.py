@@ -168,9 +168,9 @@ class OneClassSVM (SparseBaseLibSVM):
                          gamma, coef0, tol, 0.0, nu, 0.0,
                          shrinking, probability)
 
-    def fit(self, X, class_weight={}, sample_weight=[]):
+    def fit(self, X, class_weight=None, sample_weight=None):
         super(OneClassSVM, self).fit(
-            X, [], class_weight=class_weight, ample_weight=sample_weight)
+            X, [], class_weight=class_weight, sample_weight=sample_weight)
 
 
 class LinearSVC(SparseBaseLibLinear, ClassifierMixin,

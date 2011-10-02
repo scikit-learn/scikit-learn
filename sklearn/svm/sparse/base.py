@@ -47,7 +47,7 @@ class SparseBaseLibSVM(BaseLibSVM):
         # only used in classification
         self.n_support_ = np.empty(0, dtype=np.int32, order='C')
 
-    def fit(self, X, y, class_weight=None, sample_weight=[], cache_size=100.):
+    def fit(self, X, y, class_weight=None, sample_weight=None, cache_size=100.):
         """
         Fit the SVM model according to the given training data and
         parameters.
@@ -88,8 +88,8 @@ class SparseBaseLibSVM(BaseLibSVM):
         X = scipy.sparse.csr_matrix(X)
         X.data = np.asanyarray(X.data, dtype=np.float64, order='C')
         y = np.asanyarray(y, dtype=np.float64, order='C')
-        sample_weight = np.asanyarray(sample_weight, dtype=np.float64,
-                                      order='C')
+        sample_weight = np.asanyarray([] if sample_weight is None
+                                         else sample_weight, dtype=np.float64)
 
         if X.shape[0] != y.shape[0]:
             raise ValueError("X and y have incompatible shapes.\n" +
