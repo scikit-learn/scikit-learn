@@ -18,7 +18,7 @@ libsvm command line programs.
 import numpy as np
 import scipy.sparse as sp
 
-def _load_svmlight_file(f, buffer_mb, n_features):
+def _load_svmlight_file(f, n_features, dtype):
     data = []
     indptr = []
     indices = []
@@ -44,7 +44,7 @@ def _load_svmlight_file(f, buffer_mb, n_features):
         for feat in features:
             idx, value = feat.split(":")
             indices.append(int(idx))
-            data.append(float(value))
+            data.append(dtype(value))
 
     indptr.append(len(data))
     indptr = np.array(indptr, dtype=np.int)
@@ -54,21 +54,14 @@ def _load_svmlight_file(f, buffer_mb, n_features):
     else:
         shape = None    # inferred
 
-    X = sp.csr_matrix((np.array(data, dtype=np.double),
+    X = sp.csr_matrix((np.array(data),
                        np.array(indices, dtype=np.int),
                        indptr), shape)
 
     return X, np.array(labels, dtype=np.double)
 
 
-def _load_svmlight(f, *args):
-    if hasattr(f, "read"):
-        return _load_svmlight_file(f, *args)
-    with open(f) as f:
-        return _load_svmlight_file(f, *args)
-
-
-def load_svmlight_file(f, other_file=None, n_features=None, buffer_mb=40):
+def load_svmlight_file(f, n_features=None, dtype=np.float64):
     """Load datasets in the svmlight / libsvm format into sparse CSR matrix
 
     This format is a text-based format, with one sample per line. It does
@@ -97,10 +90,6 @@ def load_svmlight_file(f, other_file=None, n_features=None, buffer_mb=40):
     f: str or file-like
         (Path to) a file to load.
 
-    other_file: str or file-like, optional
-        (Path to) another file to load. The benefit over calling this function
-        twice for the files is that n_features is enforced on both datasets.
-
     n_features: int or None
         The number of features to use. If None, it will be inferred. This
         argument is useful to load several files that are subsets of a
@@ -108,42 +97,64 @@ def load_svmlight_file(f, other_file=None, n_features=None, buffer_mb=40):
         every feature, hence the inferred shape might vary from one
         slice to another.
 
-    buffer_mb: int (default: 40)
-        The size of the buffer used while loading the dataset in mega-bytes.
-
     Returns
     -------
     (X, y)
 
     where X is a scipy.sparse matrix of shape (n_samples, n_features),
-          y is a ndarray of shape (n_samples,),
+          y is a ndarray of shape (n_samples,).
+    """
+    if hasattr(f, "read"):
+        return _load_svmlight_file(f, n_features, dtype)
+    with open(f) as f:
+        return _load_svmlight_file(f, n_features, dtype)
 
-    or, if other_file_path is not None,
 
-    (X1, y1, X2, y2)
+def load_svmlight_files(files, n_features=None, dtype=np.float64):
+    """Load dataset from multiple files in SVMlight format
 
-    where X1 and X2 are scipy.sparse matrices of shape
-                        (n_samples1, n_features) and
-                        (n_samples2, n_features),
-          y1 and y2 are ndarrays of shape (n_samples1,) and (n_samples2,).
+    This function is equivalent to mapping load_svmlight_file over a list of
+    files, except that the results are concatenated into a single, flat list
+    and the samples vectors are constrained to all have the same number of
+    features.
 
-    Note
-    ----
+    Parameters
+    ----------
+    files : iterable over {str, file-like}
+        (Paths to) files to load.
+
+    n_features: int or None
+        The number of features to use. If None, it will be inferred from the
+        first file. This argument is useful to load several files that are
+        subsets of a bigger sliced dataset: each subset might not have
+        examples of every feature, hence the inferred shape might vary from
+        one slice to another.
+
+    Returns
+    -------
+    [X1, y1, ..., Xn, yn]
+
+    where each (Xi, yi) pair is the result from load_svmlight_file(files[i]).
+
+    Rationale
+    ---------
     When fitting a model to a matrix X_train and evaluating it against a
     matrix X_test, it is essential that X_train and X_test have the same
-    number of features (X_train.shape[1] == X_test.shape[1]). This may
-    not be the case if you load them with load_svmlight_file separately.
+    number of features (X_train.shape[1] == X_test.shape[1]). This may not
+    be the case if you load them with load_svmlight_file separately.
 
-    To address this problem, we recommend to use
-    load_svmlight_file(train_file, test_file) or
-    load_svmlight_file(test_file, n_features=X_train.shape[1]).
+    See also
+    --------
+    load_svmlight_file
     """
-    ret = _load_svmlight(f, buffer_mb, n_features)
+    files = iter(files)
+    result = list(load_svmlight_file(files.next(), n_features, dtype))
+    n_features = result[0].shape[1]
 
-    if other_file is not None:
-        ret += _load_svmlight(other_file, buffer_mb, n_features)
+    for f in files:
+        result += load_svmlight_file(f, n_features, dtype)
 
-    return ret
+    return result
 
 
 def _dump_svmlight(X, y, f):
