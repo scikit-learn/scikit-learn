@@ -508,6 +508,7 @@ cdef int smallest_sample_larger_than(int sample_idx, DTYPE_t *X_i,
         j = X_argsorted_i[idx]
         if sample_mask[j] == 0:
             continue
+
         if X_i[j] > threshold + 1.e-7:
             return idx
     return -1
