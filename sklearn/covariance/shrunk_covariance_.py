@@ -26,8 +26,8 @@ from .empirical_covariance_ import empirical_covariance, EmpiricalCovariance
 def shrunk_covariance(emp_cov, shrinkage=0.1):
     """Calculates a covariance matrix shrunk on the diagonal
 
-    Params
-    ------
+    Parameters
+    ----------
     emp_cov: array-like, shape (n_features, n_features)
       Covariance matrix to be shrunk
 
@@ -99,7 +99,7 @@ class ShrunkCovariance(EmpiricalCovariance):
         self.store_precision = store_precision
         self.shrinkage = shrinkage
 
-    def fit(self, X, assume_centered=False, **params):
+    def fit(self, X, assume_centered=False):
         """ Fits the shrunk covariance model
         according to the given training data and parameters.
 
@@ -121,7 +121,6 @@ class ShrunkCovariance(EmpiricalCovariance):
             Returns self.
 
         """
-        self._set_params(**params)
         empirical_cov = empirical_covariance(X,
                                              assume_centered=assume_centered)
         covariance = shrunk_covariance(empirical_cov, self.shrinkage)
