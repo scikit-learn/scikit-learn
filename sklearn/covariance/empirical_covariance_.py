@@ -108,7 +108,7 @@ class EmpiricalCovariance(BaseEstimator):
         else:
             self.precision_ = None
 
-    def fit(self, X, assume_centered=False):
+    def fit(self, X, assume_centered=False, **params):
         """ Fits the Maximum Likelihood Estimator covariance model
         according to the given training data and parameters.
 
@@ -130,6 +130,7 @@ class EmpiricalCovariance(BaseEstimator):
             Returns self.
 
         """
+        self._set_params(**params)
         covariance = empirical_covariance(X, assume_centered=assume_centered)
         self._set_estimates(covariance)
 
@@ -210,5 +211,36 @@ class EmpiricalCovariance(BaseEstimator):
             result = squared_norm
         else:
             result = np.sqrt(squared_norm)
-
+        
         return result
+    
+    
+    def mahalanobis(self, observations):
+        """Computes the mahalanobis distances of given observations.
+        
+        The provided observations are assumed to be centered. One may
+        want to center it using a location estimate of its choice
+        first.
+        
+        Parameters
+        ----------
+        observations: array-like, shape = [n_observations, n_features]
+          The observations, the Mahalanobis distances of the which we compute.
+        
+        Returns
+        -------
+        mahalanobis_distance: 1D ndarray, shape = [n_observations,]
+          Mahalanobis distances of the observations.
+
+        """
+        # get precision
+        if self.store_precision:
+            precision = self.precision_
+        else:
+            precision = linalg.pinv(self.covariance_)
+            
+        # compute mahalanobis distances
+        mahalanobis_dist = np.sum(
+            np.dot(observations, precision) * observations, 1)
+        
+        return mahalanobis_dist 

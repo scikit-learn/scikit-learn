@@ -22,6 +22,9 @@ version 0.9:
     longer supports loading two files at once; use ``load_svmlight_files``
     instead. Also, the (unused) ``buffer_mb`` parameter is gone.
 
+  - The ``sklearn.covariance`` module now has a robust estimator of
+    covariance, the Minimum Covariance Determinant estimator.
+
 
 .. _changes_0_9:
 
