@@ -1,6 +1,7 @@
 """ Non-negative matrix factorization
 """
 # Author: Vlad Niculae
+#         Lars Buitinck <L.J.Buitinck@uva.nl>
 # Author: Chih-Jen Lin, National Taiwan University (original projected gradient
 #     NMF implementation)
 # Author: Anthony Di Franco (original Python and NumPy port)
@@ -224,14 +225,13 @@ def _nls_subproblem(V, W, H_init, tol, max_iter):
                     H = Hn
                     break
                 else:
-                    alpha = alpha * beta
+                    alpha *= beta
+            elif not suff_decr or (Hp == Hn).all():
+                H = Hp
+                break
             else:
-                if not suff_decr or (Hp == Hn).all():
-                    H = Hp
-                    break
-                else:
-                    alpha = alpha / beta
-                    Hp = Hn
+                alpha /= beta
+                Hp = Hn
 
     if n_iter == max_iter:
         warnings.warn("Iteration limit reached in nls subproblem.")
@@ -385,8 +385,10 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         else:
             try:
                 rng = check_random_state(self.init)
-                W = np.abs(rng.randn(n_samples, self.n_components))
-                H = np.abs(rng.randn(self.n_components, n_features))
+                W = rng.randn(n_samples, self.n_components)
+                np.abs(W, out=W)
+                H = rng.randn(self.n_components, n_features)
+                np.abs(H, out=H)
             except ValueError:
                 raise ValueError(
                     'Invalid init parameter: got %r instead of one of %r' %
