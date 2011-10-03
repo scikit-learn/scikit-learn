@@ -43,7 +43,8 @@ def _sparseness(x):
     return (sqrt_n - np.linalg.norm(x, 1) / norm(x)) / (sqrt_n - 1)
 
 
-def _initialize_nmf(X, n_components, variant=None, eps=1e-6, random_state=None):
+def _initialize_nmf(X, n_components, variant=None, eps=1e-6,
+                    random_state=None):
     """NNDSVD algorithm for NMF initialization.
 
     Computes a good initial guess for the non-negative
@@ -293,9 +294,8 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
     >>> from sklearn.decomposition import ProjectedGradientNMF
     >>> model = ProjectedGradientNMF(n_components=2, init=0)
     >>> model.fit(X) #doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    ProjectedGradientNMF(beta=1, eta=0.1,
-               init=<mtrand.RandomState object at 0x...>, max_iter=200,
-               n_components=2, nls_max_iter=2000, sparseness=None, tol=0.0001)
+    ProjectedGradientNMF(beta=1, eta=0.1, init=0, max_iter=200, n_components=2,
+                         nls_max_iter=2000, sparseness=None, tol=0.0001)
     >>> model.components_
     array([[ 0.77032744,  0.11118662],
            [ 0.38526873,  0.38228063]])
@@ -304,10 +304,8 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
     >>> model = ProjectedGradientNMF(n_components=2, init=0,
     ...                              sparseness='components')
     >>> model.fit(X) #doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    ProjectedGradientNMF(beta=1, eta=0.1,
-               init=<mtrand.RandomState object at 0x...>, max_iter=200,
-               n_components=2, nls_max_iter=2000, sparseness='components',
-               tol=0.0001)
+    ProjectedGradientNMF(beta=1, eta=0.1, init=0, max_iter=200, n_components=2,
+               nls_max_iter=2000, sparseness='components', tol=0.0001)
     >>> model.components_
     array([[ 1.67481991,  0.29614922],
            [-0.        ,  0.4681982 ]])
