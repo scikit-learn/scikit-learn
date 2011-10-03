@@ -2,7 +2,6 @@
 # License: BSD Style.
 
 import numpy
-from os.path import join
 
 
 def configuration(parent_package='', top_path=None):
@@ -11,7 +10,7 @@ def configuration(parent_package='', top_path=None):
     config.add_extension('_check_build',
                          sources=['_check_build.c'],
                          include_dirs=[numpy.get_include()])
-    
+
     return config
 
 if __name__ == '__main__':

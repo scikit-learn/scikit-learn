@@ -1,6 +1,5 @@
 from os.path import join
 import warnings
-import numpy
 
 
 def configuration(parent_package='', top_path=None):
@@ -31,6 +30,7 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('mixture/tests')
     config.add_subpackage('gaussian_process')
     config.add_subpackage('gaussian_process/tests')
+    config.add_subpackage('neighbors')
     config.add_subpackage('manifold')
     config.add_subpackage('metrics')
     config.add_subpackage('metrics/tests')
@@ -44,10 +44,6 @@ def configuration(parent_package='', top_path=None):
         config.add_library('cblas',
                            sources=[join('src', 'cblas', '*.c')])
         warnings.warn(BlasNotFoundError.__doc__)
-
-    config.add_extension('ball_tree',
-                         sources=['ball_tree.c'],
-                         include_dirs=[numpy.get_include()])
 
     # the following packages depend on cblas, so they have to be build
     # after the above.

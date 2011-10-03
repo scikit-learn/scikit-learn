@@ -6,7 +6,8 @@ import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_almost_equal, \
                           assert_equal
 
-from ..coordinate_descent import Lasso, LassoCV, ElasticNet, ElasticNetCV
+from sklearn.linear_model.coordinate_descent import Lasso, \
+    LassoCV, ElasticNet, ElasticNetCV
 
 
 def test_lasso_zero():
@@ -83,7 +84,7 @@ def test_enet_toy():
     assert_array_almost_equal(pred, [2, 3, 4])
     assert_almost_equal(clf.dual_gap_, 0)
 
-    clf = ElasticNet(alpha=0.5, rho=0.3, max_iter=1000,
+    clf = ElasticNet(alpha=0.5, rho=0.3, max_iter=100,
                      precompute=False)
     clf.fit(X, Y)
     pred = clf.predict(T)
@@ -91,14 +92,14 @@ def test_enet_toy():
     assert_array_almost_equal(pred, [1.0163, 1.5245, 2.0327], decimal=3)
     assert_almost_equal(clf.dual_gap_, 0)
 
-    clf.set_params(max_iter=1000, precompute=True)
+    clf.set_params(max_iter=100, precompute=True)
     clf.fit(X, Y)  # with Gram
     pred = clf.predict(T)
     assert_array_almost_equal(clf.coef_, [0.50819], decimal=3)
     assert_array_almost_equal(pred, [1.0163, 1.5245, 2.0327], decimal=3)
     assert_almost_equal(clf.dual_gap_, 0)
 
-    clf.set_params(max_iter=1000, precompute=np.dot(X.T, X))
+    clf.set_params(max_iter=100, precompute=np.dot(X.T, X))
     clf.fit(X, Y)  # with Gram
     pred = clf.predict(T)
     assert_array_almost_equal(clf.coef_, [0.50819], decimal=3)
@@ -124,10 +125,10 @@ def test_lasso_path():
     X = random_state.randn(n_samples, n_features)
     y = np.dot(X, w)
 
-    clf = LassoCV(n_alphas=100, eps=1e-3, max_iter=max_iter).fit(X, y)
+    clf = LassoCV(n_alphas=10, eps=1e-3, max_iter=max_iter).fit(X, y)
     assert_almost_equal(clf.alpha, 0.011, 2)
 
-    clf = LassoCV(n_alphas=100, eps=1e-3, max_iter=max_iter, precompute=True)
+    clf = LassoCV(n_alphas=10, eps=1e-3, max_iter=max_iter, precompute=True)
     clf.fit(X, y)
     assert_almost_equal(clf.alpha, 0.011, 2)
 
@@ -148,14 +149,14 @@ def test_enet_path():
     X = random_state.randn(n_samples, n_features)
     y = np.dot(X, w)
 
-    clf = ElasticNetCV(n_alphas=100, eps=1e-3, rho=0.95, cv=5, max_iter=max_iter)
+    clf = ElasticNetCV(n_alphas=10, eps=1e-3, rho=0.95, cv=5, max_iter=max_iter)
     clf.fit(X, y)
-    assert_almost_equal(clf.alpha, 0.00779, 2)
+    assert_almost_equal(clf.alpha, 0.002, 2)
 
-    clf = ElasticNetCV(n_alphas=100, eps=1e-3, rho=0.95, cv=5,
+    clf = ElasticNetCV(n_alphas=10, eps=1e-3, rho=0.95, cv=5,
                        max_iter=max_iter, precompute=True)
     clf.fit(X, y)
-    assert_almost_equal(clf.alpha, 0.00779, 2)
+    assert_almost_equal(clf.alpha, 0.002, 2)
 
     # test set
     X_test = random_state.randn(n_samples, n_features)
@@ -180,3 +181,8 @@ def test_path_parameters():
     assert_almost_equal(0.5, clf.rho)
     assert_equal(50, clf.n_alphas)
     assert_equal(50, len(clf.alphas))
+
+
+if __name__ == '__main__':
+    import nose
+    nose.runmodule()

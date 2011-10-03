@@ -21,7 +21,7 @@ def test_fast_svd_low_rank():
 
     # generate a matrix X of approximate effective rank `rank` and no noise
     # component (very structured signal):
-    X = make_low_rank_matrix(n_samples=n_samples, n_features=n_features, 
+    X = make_low_rank_matrix(n_samples=n_samples, n_features=n_features,
                              effective_rank=rank, tail_strength=0.0, random_state=0)
     assert_equal(X.shape, (n_samples, n_features))
 
@@ -58,7 +58,7 @@ def test_fast_svd_low_rank_with_noise():
 
     # generate a matrix X wity structure approximate rank `rank` and an
     # important noisy component
-    X = make_low_rank_matrix(n_samples=n_samples, n_features=n_features, 
+    X = make_low_rank_matrix(n_samples=n_samples, n_features=n_features,
                              effective_rank=rank, tail_strength=0.5, random_state=0)
     assert_equal(X.shape, (n_samples, n_features))
 
@@ -89,7 +89,7 @@ def test_fast_svd_infinite_rank():
 
     # let us try again without 'low_rank component': just regularly but slowly
     # decreasing singular values: the rank of the data matrix is infinite
-    X = make_low_rank_matrix(n_samples=n_samples, n_features=n_features, 
+    X = make_low_rank_matrix(n_samples=n_samples, n_features=n_features,
                              effective_rank=rank, tail_strength=1.0, random_state=0)
     assert_equal(X.shape, (n_samples, n_features))
 
@@ -119,7 +119,7 @@ def test_fast_svd_transpose_consistency():
     rank = 4
     k = 10
 
-    X = make_low_rank_matrix(n_samples=n_samples, n_features=n_features, 
+    X = make_low_rank_matrix(n_samples=n_samples, n_features=n_features,
                              effective_rank=rank, tail_strength=0.5, random_state=0)
     assert_equal(X.shape, (n_samples, n_features))
 

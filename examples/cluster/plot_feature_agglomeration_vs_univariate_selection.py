@@ -29,7 +29,7 @@ from sklearn.linear_model import BayesianRidge
 from sklearn.pipeline import Pipeline
 from sklearn.grid_search import GridSearchCV
 from sklearn.externals.joblib import Memory
-from sklearn.cross_val import KFold
+from sklearn.cross_validation import KFold
 
 ###############################################################################
 # Generate data

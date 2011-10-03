@@ -1,3 +1,6 @@
+
+.. _mldata:
+
 Downloading datasets from the mldata.org repository
 ===================================================
 

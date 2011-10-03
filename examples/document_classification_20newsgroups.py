@@ -36,7 +36,8 @@ from sklearn.linear_model import RidgeClassifier
 from sklearn.svm.sparse import LinearSVC
 from sklearn.linear_model.sparse import SGDClassifier
 from sklearn.naive_bayes import BernoulliNB, MultinomialNB
-from sklearn.neighbors import NeighborsClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.utils.extmath import density
 from sklearn import metrics
 
 
@@ -157,8 +158,8 @@ def benchmark(clf):
     print "f1-score:   %0.3f" % score
 
     if hasattr(clf, 'coef_'):
-        nnz = clf.coef_.nonzero()[0].shape[0]
-        print "non-zero coef: %d" % nnz
+        print "dimensionality: %d" % clf.coef_.shape[1]
+        print "density: %f" % density(clf.coef_)
 
         if opts.print_top10:
             print "top 10 keywords per class:"
@@ -180,7 +181,7 @@ def benchmark(clf):
     return score, train_time, test_time
 
 for clf, name in ((RidgeClassifier(tol=1e-1), "Ridge Classifier"),
-                  (NeighborsClassifier(n_neighbors=10), "kNN")):
+                  (KNeighborsClassifier(n_neighbors=10), "kNN")):
     print 80 * '='
     print name
     results = benchmark(clf)
@@ -207,3 +208,23 @@ print 80 * '='
 print "Naive Bayes"
 mnnb_results = benchmark(MultinomialNB(alpha=.01))
 bnb_result = benchmark(BernoulliNB(alpha=.01))
+
+class L1LinearSVC(LinearSVC):
+
+    def fit(self, X, y):
+        # The smaller C, the stronger the regularization.
+        # The more regularization, the more sparsity.
+        self.transformer_ = LinearSVC(C=1000, penalty="l1",
+                                      dual=False, tol=1e-3)
+        X = self.transformer_.fit_transform(X, y)
+        return LinearSVC.fit(self, X, y)
+
+    def predict(self, X):
+        X = self.transformer_.transform(X)
+        return LinearSVC.predict(self, X)
+
+print 80 * '='
+print "LinearSVC with L1-based feature selection"
+l1linearsvc_results = benchmark(L1LinearSVC())
+
+

@@ -2,7 +2,7 @@
 Test the memory module.
 """
 
-# Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org> 
+# Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
 # Copyright (c) 2009 Gael Varoquaux
 # License: BSD Style, 3 clauses.
 
@@ -44,7 +44,7 @@ def setup_module():
     print 80*'_'
     print 'test_memory setup'
     print 80*'_'
-    
+
 def _rmtree_onerror(func, path, excinfo):
     print '!'*79
     print 'os function failed:', repr(func)
@@ -169,7 +169,7 @@ def test_memory_name_collision():
 
     @memory.cache
     def name_collision(x):
-        """ A first function called name_collision 
+        """ A first function called name_collision
         """
         return x
 
@@ -177,7 +177,7 @@ def test_memory_name_collision():
 
     @memory.cache
     def name_collision(x):
-        """ A second function called name_collision 
+        """ A second function called name_collision
         """
         return x
 
@@ -221,7 +221,7 @@ def test_memory_warning_lambda_collisions():
 
 
 def test_memory_warning_collision_detection():
-    """ Check that collisions impossible to detect will raise appropriate 
+    """ Check that collisions impossible to detect will raise appropriate
         warnings.
     """
     memory = Memory(cachedir=env['dir'], verbose=0)
@@ -272,7 +272,7 @@ def test_memory_eval():
 
 
 def count_and_append(x=[]):
-    """ A function with a side effect in its arguments. 
+    """ A function with a side effect in its arguments.
 
         Return the lenght of its argument and append one element.
     """
@@ -316,7 +316,7 @@ def test_memory_numpy():
 
 
 def test_memory_exception():
-    """ Smoketest the exception handling of Memory. 
+    """ Smoketest the exception handling of Memory.
     """
     memory = Memory(cachedir=env['dir'], verbose=0)
     class MyException(Exception):

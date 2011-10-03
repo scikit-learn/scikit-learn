@@ -379,7 +379,7 @@ class SelectFdr(_AbstractUnivariateFilter):
 
 class SelectFwe(_AbstractUnivariateFilter):
     """
-    Filter : Select the p-values corresponding to Family-wise error rate: a 
+    Filter : Select the p-values corresponding to Family-wise error rate: a
     corrected p-value of alpha
     """
 

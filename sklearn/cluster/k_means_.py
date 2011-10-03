@@ -575,11 +575,11 @@ def _mini_batch_step_dense(X, batch_slice, centers, counts, x_squared_norms):
         The row slice of the mini batch.
 
     centers: array, shape (k, n_features)
-        The cluster centers
+        The cluster centers. This array is MODIFIED IN PLACE
 
     counts: array, shape (k, )
          The vector in which we keep track of the numbers of elements in a
-         cluster
+         cluster. This array is MODIFIED IN PLACE
 
     x_squared_norms: array, shape (n_samples,)
         Squared euclidean norm of each data point.
@@ -599,6 +599,7 @@ def _mini_batch_step_dense(X, batch_slice, centers, counts, x_squared_norms):
             centers[q] = (1. / (counts[q] + c)) * (
                 counts[q] * centers[q] + np.sum(X[center_mask], axis=0))
             counts[q] += c
+    return counts, centers
 
 
 def _mini_batch_step_sparse(X, batch_slice, centers, counts, x_squared_norms):
@@ -614,11 +615,11 @@ def _mini_batch_step_sparse(X, batch_slice, centers, counts, x_squared_norms):
         The row slice of the mini batch.
 
     centers: array, shape (k, n_features)
-        The cluster centers
+        The cluster centers. This array is MODIFIED IN PLACE
 
     counts: array, shape (k, )
          The vector in which we keep track of the numbers of elements in a
-         cluster
+         cluster. This array is MODIFIED IN PLACE
 
     x_squared_norms: array, shape (n_samples,)
          The squared norms of each sample in `X`.
@@ -628,6 +629,7 @@ def _mini_batch_step_sparse(X, batch_slice, centers, counts, x_squared_norms):
 
     _k_means._mini_batch_update_sparse(X.data, X.indices, X.indptr,
                                        batch_slice, centers, counts, cache)
+    return counts, centers
 
 
 class MiniBatchKMeans(KMeans):
@@ -662,6 +664,10 @@ class MiniBatchKMeans(KMeans):
     tol: float, optional default: 1e-4
         Relative tolerance w.r.t. inertia to declare convergence
 
+    compute_labels: boolean
+        Compute label assignements and inertia for the complete dataset
+        once the minibatch optimization has converged in fit.
+
     Methods
     -------
 
@@ -678,11 +684,11 @@ class MiniBatchKMeans(KMeans):
         Coordinates of cluster centers
 
     labels_:
-        Labels of each point
+        Labels of each point (if compute_labels is set to True).
 
     inertia_: float
         The value of the inertia criterion associated with the chosen
-        partition.
+        partition (if compute_labels is set to True).
 
     References
     ----------
@@ -690,7 +696,8 @@ class MiniBatchKMeans(KMeans):
     """
 
     def __init__(self, k=8, init='random', max_iter=100,
-                 chunk_size=1000, tol=1e-4, verbose=0, random_state=None):
+                 chunk_size=1000, tol=1e-4, verbose=0,
+                 compute_labels=True, random_state=None):
 
         super(MiniBatchKMeans, self).__init__(k, init, 1,
               max_iter, tol, verbose, random_state)
@@ -698,6 +705,7 @@ class MiniBatchKMeans(KMeans):
         self.counts = None
         self.cluster_centers_ = None
         self.chunk_size = chunk_size
+        self.compute_labels = compute_labels
 
     def fit(self, X, y=None):
         """Compute the centroids on X by chunking it into mini-batches.
@@ -732,7 +740,7 @@ class MiniBatchKMeans(KMeans):
 
         n_batches = int(np.ceil(float(n_samples) / self.chunk_size))
         batch_slices = list(gen_even_slices(n_samples, n_batches))
-        n_iterations = xrange(int(self.max_iter * n_batches))
+        n_iterations = int(self.max_iter * n_batches)
         if sp.issparse(X_shuffled):
             _mini_batch_step = _mini_batch_step_sparse
             tol = self.tol
@@ -740,24 +748,35 @@ class MiniBatchKMeans(KMeans):
             _mini_batch_step = _mini_batch_step_dense
             tol = np.mean(np.var(X_shuffled, axis=0)) * self.tol
 
-        for i, batch_slice in izip(n_iterations, cycle(batch_slices)):
+        for i, batch_slice in izip(xrange(n_iterations), cycle(batch_slices)):
             old_centers = self.cluster_centers_.copy()
-            _mini_batch_step(X_shuffled, batch_slice, self.cluster_centers_,
-                             self.counts, x_squared_norms=x_squared_norms)
+            self.counts, self.cluster_centers_ = _mini_batch_step(
+                            X_shuffled, batch_slice,
+                            self.cluster_centers_, self.counts,
+                            x_squared_norms=x_squared_norms)
 
-            if np.sum((old_centers - self.cluster_centers_) ** 2) < tol:
+            squared_delta = np.sum((old_centers - self.cluster_centers_) ** 2)
+            if self.verbose:
+                print 'Minibatch iteration %d/%d: change = %f' % (
+                    i + 1, n_iterations, squared_delta)
+            if squared_delta < tol:
                 if self.verbose:
                     print 'Converged to similar centers at iteration', i
                 break
 
-        self.inertia_ = 0
-        self.labels_ = np.empty((n_samples,), dtype=np.int)
-        for batch_slice in batch_slices:
-            batch_inertia, batch_labels = _calculate_labels_inertia(
-            X[batch_slice], self.cluster_centers_)
-            self.inertia_ += batch_inertia
-            self.labels_[batch_slice] = batch_labels
-
+        if self.compute_labels:
+            if self.verbose:
+                print 'Computing label assignements', i
+            self.inertia_ = 0
+            self.labels_ = np.empty((n_samples,), dtype=np.int)
+            for i, batch_slice in enumerate(batch_slices):
+                batch_inertia, batch_labels = _calculate_labels_inertia(
+                X[batch_slice], self.cluster_centers_)
+                self.inertia_ += batch_inertia
+                self.labels_[batch_slice] = batch_labels
+                if self.verbose:
+                    print 'Assignements iteration %d/%d' % (
+                        i + 1, len(batch_slices))
         return self
 
     def partial_fit(self, X, y=None):
@@ -798,10 +817,12 @@ class MiniBatchKMeans(KMeans):
         else:
             _mini_batch_step = _mini_batch_step_dense
 
-        _mini_batch_step(X, batch_slice, self.cluster_centers_, self.counts,
-                         x_squared_norms=x_squared_norms)
+        self.counts, self.cluster_centers_ = _mini_batch_step(X,
+                        batch_slice, self.cluster_centers_, self.counts,
+                        x_squared_norms=x_squared_norms)
 
-        self.inertia_, self.labels_ = _calculate_labels_inertia(
-            X, self.cluster_centers_, x_squared_norms)
+        if self.compute_labels:
+            self.inertia_, self.labels_ = _calculate_labels_inertia(
+                X, self.cluster_centers_, x_squared_norms)
 
         return self

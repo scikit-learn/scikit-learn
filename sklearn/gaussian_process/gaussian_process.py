@@ -414,7 +414,6 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
             # Get pairwise componentwise L1-distances to the input training set
             dx = manhattan_distances(X, Y=self.X, sum_over_features=False)
-
             # Get regression function and correlation
             f = self.regr(X)
             r = self.corr(self.theta, dx).reshape(n_eval, n_samples)

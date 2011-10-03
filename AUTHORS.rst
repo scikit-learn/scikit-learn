@@ -93,7 +93,7 @@ People
 
   * Robert Layton
 
-  * Gilles Louppe
+  * `Gilles Louppe <http://www.montefiore.ulg.ac.be/~glouppe>`_
 
 If I forgot anyone, do not hesitate to send me an email to
 fabian.pedregosa@inria.fr and I'll include you in the list.

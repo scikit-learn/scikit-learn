@@ -4,7 +4,8 @@ This module contains both distance metrics and kernels. A brief summary is
 given on the two here.
 
 Distance metrics are a function d(a, b) such that d(a, b) < d(a, c) if objects
-a and b are considered "more similar" to objects a and c.
+a and b are considered "more similar" to objects a and c. Two objects exactly
+alike would have a distance of zero.
 One of the most popular examples is Euclidean distance.
 To be a 'true' metric, it must obey the following four conditions:
 
@@ -14,21 +15,22 @@ To be a 'true' metric, it must obey the following four conditions:
 4. d(a, c) <= d(a, b) + d(b, c), the triangle inequality
 
 
-Kernels are measures of similarity, i.e. d(a, b) > d(a, c) if objects a and b
+Kernels are measures of similarity, i.e. s(a, b) > s(a, c) if objects a and b
 are considered "more similar" to objects a and c. A kernel must also be
 positive semi-definite.
 
-There are a number of ways to convert between a distance metric and a kernel.
-Let D be the distance, and K be the kernel:
+There are a number of ways to convert between a distance metric and a similarity
+measure, such as a kernel. Let D be the distance, and S be the kernel:
 
-1. K = np.exp(-D * gamma), where one heuristic for choosing
+1. S = np.exp(-D * gamma), where one heuristic for choosing
    gamma is 1 / num_features
-2. K = 1. / (D / np.max(D))
+2. S = 1. / (D / np.max(D))
 
 """
 
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Mathieu Blondel <mathieu@mblondel.org>
+#          Robert Layton <robertlayton@gmail.com>
 # License: BSD Style.
 
 import numpy as np
@@ -89,6 +91,16 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     Considering the rows of X (and Y=X) as vectors, compute the
     distance matrix between each pair of vectors.
 
+    For efficiency reasons, the euclidean distance between a pair of row
+    vector x and y is computed as::
+
+        dist(x, y) = sqrt(dot(x, x) - 2 * dot(x, y) + dot(y, y))
+
+    This formulation has two main advantages. First, it is computationally
+    efficient when dealing with sparse data. Second, if x varies but y
+    remains unchanged, then the right-most dot-product `dot(y, y)` can be
+    pre-computed.
+
     Parameters
     ----------
     X: {array-like, sparse matrix}, shape = [n_samples_1, n_features]
@@ -96,7 +108,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     Y: {array-like, sparse matrix}, shape = [n_samples_2, n_features]
 
     Y_norm_squared: array-like, shape = [n_samples_2], optional
-        Pre-computed (Y**2).sum(axis=1)
+        Pre-computed dot-products of vectors in Y (e.g., `(Y**2).sum(axis=1)`)
 
     squared: boolean, optional
         Return squared Euclidean distances.
@@ -151,6 +163,12 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     distances += XX
     distances += YY
     distances = np.maximum(distances, 0)
+
+    if X is Y:
+        # Ensure that distances between vectors and themselves are set to 0.0.
+        # This may not be the case due to floating point rounding errors.
+        distances.flat[::distances.shape[0] + 1] = 0.0
+
     return distances if squared else np.sqrt(distances)
 
 
@@ -181,7 +199,7 @@ def manhattan_distances(X, Y=None, sum_over_features=True):
     -------
     D: array
         If sum_over_features is False shape is
-        (n_samples_X, n_samples_Y, n_features) and D contains the
+        (n_samples_X * n_samples_Y, n_features) and D contains the
         componentwise L1 pairwise-distances (ie. absolute difference),
         else shape is (n_samples_X, n_samples_Y) and D contains
         the pairwise l1 distances.
@@ -195,12 +213,15 @@ def manhattan_distances(X, Y=None, sum_over_features=True):
     array([[1]])
     >>> manhattan_distances(2, 3)
     array([[1]])
+    >>> manhattan_distances([[1, 2], [3, 4]], [[1, 2], [0, 3]])
+    array([[0, 2],
+           [4, 4]])
     >>> import numpy as np
     >>> X = np.ones((1, 2))
     >>> y = 2 * np.ones((2, 2))
     >>> manhattan_distances(X, y, sum_over_features=False)
-    array([[[ 1.,  1.],
-            [ 1.,  1.]]])
+    array([[ 1.,  1.],
+           [ 1.,  1.]])
     """
     X, Y = check_pairwise_arrays(X, Y)
     n_samples_X, n_features_X = X.shape
@@ -210,6 +231,8 @@ def manhattan_distances(X, Y=None, sum_over_features=True):
     D = np.abs(X[:, np.newaxis, :] - Y[np.newaxis, :, :])
     if sum_over_features:
         D = np.sum(D, axis=2)
+    else:
+        D = D.reshape((n_samples_X * n_samples_Y, n_features_X))
     return D
 
 
