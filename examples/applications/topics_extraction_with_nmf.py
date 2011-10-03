@@ -63,9 +63,6 @@ print "done in %0.3fs." % (time() - t0)
 # Convert scipy.sparse.csr_matrix representation to dense numpy array
 tfidf = tfidf.toarray()
 
-# Remove negative values (they should not be there, is this a bug?)
-tfidf[tfidf < 0] = 0.0
-
 # Fit the NMF model
 print "Fitting the NMF model on with n_samples=%d and n_features=%d..." % (
     n_samples, n_features)
