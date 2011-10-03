@@ -12,31 +12,35 @@ import warnings
 
 import numpy as np
 from ..base import BaseEstimator, TransformerMixin
+from ..utils import check_random_state
 from ..utils.extmath import fast_svd
 
 
 def _pos(x):
-    """Postive part of a vector / matrix"""
+    """Positive part of a vector / matrix"""
     return (x >= 0) * x
 
 
 def _neg(x):
     """Negative part of a vector / matrix"""
-    return (x < 0) * (-x)
+    neg_x = -x
+    neg_x *= x < 0
+    return neg_x
 
 
 def norm(x):
-    """Dot product based Euclidean norm implementation
+    """Dot product-based Euclidean norm implementation
 
     See: http://fseoane.net/blog/2011/computing-the-vector-norm/
     """
-    return np.sqrt(np.dot(x.flatten().T, x.flatten()))
+    x = x.ravel()
+    return np.sqrt(np.dot(x.T, x))
 
 
 def _sparseness(x):
     """Hoyer's measure of sparsity for a vector"""
-    n = len(x)
-    return (np.sqrt(n) - np.linalg.norm(x, 1) / norm(x)) / (np.sqrt(n) - 1)
+    sqrt_n = np.sqrt(len(x))
+    return (sqrt_n - np.linalg.norm(x, 1) / norm(x)) / (sqrt_n - 1)
 
 
 def _initialize_nmf(X, n_components, variant=None, eps=1e-6, random_state=None):
@@ -135,12 +139,7 @@ def _initialize_nmf(X, n_components, variant=None, eps=1e-6, random_state=None):
         W[W == 0] = avg
         H[H == 0] = avg
     elif variant == "ar":
-        if random_state is None:
-            random_state = np.random
-        elif isinstance(random_state, int):
-            random_state = np.random.mtrand.RandomState(random_state)
-        elif not isinstance(random_state, np.random.mtrand.RandomState):
-            raise ValueError('Invalid random state in _nmf_initialize_')
+        random_state = check_random_state(random_state)
         avg = X.mean()
         W[W == 0] = abs(avg * random_state.randn(len(W[W == 0])) / 100)
         H[H == 0] = abs(avg * random_state.randn(len(H[H == 0])) / 100)
@@ -370,25 +369,22 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         if not self.n_components:
             self.n_components = n_features
 
-        if self.init == None:
-            self.init = np.random.RandomState()
-        elif isinstance(self.init, int):
-            self.init = np.random.RandomState(self.init)
-
-        if isinstance(self.init, np.random.RandomState):
-            W = np.abs(self.init.randn(n_samples, self.n_components))
-            H = np.abs(self.init.randn(self.n_components, n_features))
-        elif self.init == 'nndsvd':
+        if self.init == 'nndsvd':
             W, H = _initialize_nmf(X, self.n_components)
         elif self.init == 'nndsvda':
             W, H = _initialize_nmf(X, self.n_components, variant='a')
         elif self.init == 'nndsvdar':
             W, H = _initialize_nmf(X, self.n_components, variant='ar')
         else:
-            raise ValueError(
-                'Invalid init parameter: got %r instead of one of %r' %
-                (self.init, (None, 'nndsvd', 'nndsvda', 'nndsvdar',
-                             int, np.random.RandomState)))
+            try:
+                rng = check_random_state(self.init)
+                W = np.abs(rng.randn(n_samples, self.n_components))
+                H = np.abs(rng.randn(self.n_components, n_features))
+            except ValueError:
+                raise ValueError(
+                    'Invalid init parameter: got %r instead of one of %r' %
+                    (self.init, (None, 'nndsvd', 'nndsvda', 'nndsvdar',
+                                 int, np.random.RandomState)))
 
         gradW = np.dot(W, np.dot(H, H.T)) - np.dot(X, H.T)
         gradH = np.dot(np.dot(W.T, W), H) - np.dot(W.T, X)
