@@ -319,10 +319,10 @@ class CountVectorizer(BaseEstimator):
         # (see XXX up ahead)
         for doc in raw_documents:
             term_count_current = Counter(self.analyzer.analyze(doc))
-            term_counts += term_count_current
+            term_counts.update(term_count_current)
 
             if max_df < 1.0:
-                document_counts.update(term_count_current)
+                document_counts.update(term_count_current.iterkeys())
 
             term_counts_per_doc.append(term_count_current)
 
@@ -375,22 +375,10 @@ class CountVectorizer(BaseEstimator):
 
         # raw_documents is an iterable so we don't know its size in advance
 
-        # result of document conversion to term_count_dict
-        term_counts_per_doc = []
-
         # XXX @larsmans tried to parallelize the following loop with joblib.
         # The result was some 20% slower than the serial version.
-        for doc in raw_documents:
-            term_count_current = Counter()
-
-            for term in self.analyzer.analyze(doc):
-                term_count_current[term] += 1
-
-            term_counts_per_doc.append(term_count_current)
-
-        # now that we know the document we can allocate the vectors matrix at
-        # once and fill it with the term counts collected as a temporary list
-        # of dict
+        term_counts_per_doc = [Counter(self.analyzer.analyze(doc))
+                               for doc in raw_documents]
         return self._term_count_dicts_to_matrix(term_counts_per_doc)
 
     def inverse_transform(self, X):
