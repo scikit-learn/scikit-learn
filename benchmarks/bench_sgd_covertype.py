@@ -141,7 +141,6 @@ def benchmark(clf):
     t0 = time()
     clf.fit(X_train, y_train)
     train_time = time() - t0
-    print "now predicting", clf
     t0 = time()
     pred = clf.predict(X_test)
     test_time = time() - t0
@@ -174,11 +173,11 @@ sgd_err, sgd_train_time, sgd_test_time = benchmark(SGDClassifier(
     **sgd_parameters))
 
 cart_err, cart_train_time, cart_test_time = benchmark(
-    DecisionTreeClassifier(min_split=5, max_depth=5))
+    DecisionTreeClassifier(min_split=5, max_depth=30))
 
-gb_err, gb_train_time, gb_test_time = benchmark(
-    GradientBoostingClassifier(min_split=5, max_depth=5, n_iter=100,
-                               learn_rate=.8, subsample=0.5))
+#gb_err, gb_train_time, gb_test_time = benchmark(
+#    GradientBoostingClassifier(min_split=5, max_depth=3, n_iter=500,
+#                               learn_rate=.1, subsample=0.5))
 
 ######################################################################
 ## Print classification performance
@@ -202,6 +201,6 @@ print_row("Liblinear", liblinear_train_time, liblinear_test_time,
 print_row("GaussianNB", gnb_train_time, gnb_test_time, gnb_err)
 print_row("SGD", sgd_train_time, sgd_test_time, sgd_err)
 print_row("CART", cart_train_time, cart_test_time, cart_err)
-print_row("GB", gb_train_time, gb_test_time, gb_err)
+#print_row("GB", gb_train_time, gb_test_time, gb_err)
 print("")
 print("")

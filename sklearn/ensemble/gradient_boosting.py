@@ -193,7 +193,8 @@ class BinomialDeviance(LossFunction):
         targets = residual.take(node.sample_mask, axis=0)
         abs_targets = np.abs(targets)
         node.value = np.asanyarray(targets.sum() / np.sum(abs_targets * \
-                                                          (2.0 - abs_targets)))
+                                                          (2.5 - abs_targets)))
+        
         # FIXME free mem - maybe we should use index arrays instead of a mask
         del node.sample_mask
         node.sample_mask = None
@@ -302,6 +303,7 @@ class BaseGradientBoosting(BaseEstimator):
             #sample_mask = sample_mask & trim_mask
             
             residual = loss.negative_gradient(y, y_pred)
+
             #print "Iteration %d - residual - in %fs" % (i, time() - t0)
 
             # induce regression tree on residuals
@@ -309,8 +311,10 @@ class BaseGradientBoosting(BaseEstimator):
                                self.min_split, None, 1, self.random_state,
                                0.0, sample_mask, X_argsorted, True)
             #print "Iteration %d - build_tree - in %fs" % (i, time() - t0)
+            
+            
             assert tree.is_leaf == False
-
+            
             loss.update_terminal_regions(tree, X, y, residual, y_pred)
             #print "Iteration %d - update - in %fs" % (i, time() - t0)
             self.trees.append(tree)
