@@ -440,8 +440,8 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
                         H, tolH, self.nls_max_iter)
             if iterH == 1:
                 tolH = 0.1 * tolH
-            self.comp_sparseness_ = _sparseness(H.flatten())
-            self.data_sparseness_ = _sparseness(W.flatten())
+            self.comp_sparseness_ = _sparseness(H.ravel())
+            self.data_sparseness_ = _sparseness(W.ravel())
             self.reconstruction_err_ = norm(X - np.dot(W, H))
             self.components_ = H
 
