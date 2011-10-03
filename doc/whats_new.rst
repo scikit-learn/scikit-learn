@@ -5,6 +5,9 @@
 0.10
 ====
 
+   - Faster tests by Fabian Pedregosa.
+
+
 API changes summary
 -------------------
 
