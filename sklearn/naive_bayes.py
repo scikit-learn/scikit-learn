@@ -20,12 +20,15 @@ complete documentation.
 #
 # License: BSD Style.
 
+import numpy as np
+from scipy.sparse import issparse
+
 from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize, LabelBinarizer
 from .utils import safe_asanyarray, atleast2d_or_csr
 from .utils.extmath import safe_sparse_dot, logsum
 from .utils.fixes import unique
-import numpy as np
+
 
 
 class BaseNB(BaseEstimator, ClassifierMixin):
@@ -228,6 +231,13 @@ class BaseDiscreteNB(BaseNB):
         """
         X = atleast2d_or_csr(X)
         y = safe_asanyarray(y)
+
+        if X.shape[0] != y.shape[0]:
+            msg = "X and y have incompatible shapes."
+            if issparse(X):
+                msg += "\nNote: Sparse matrices cannot be indexed w/ boolean \
+                masks (use `indices=True` in CV)."
+            raise ValueError(msg)
 
         self.unique_y, inv_y_ind = unique(y, return_inverse=True)
         n_classes = self.unique_y.size
