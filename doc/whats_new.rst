@@ -22,6 +22,15 @@ version 0.9:
     longer supports loading two files at once; use ``load_svmlight_files``
     instead. Also, the (unused) ``buffer_mb`` parameter is gone.
 
+  - Sparse estimators in the :ref:`sgd` module use dense parameter vector 
+    ``coef_`` instead of ``sparse_coef_``. This significantly improves
+    test time performance.
+
+Changelog
+---------
+
+   - Minor refactoring in :ref:`sgd` module; consolidated 
+     dense and sparse predict methods.
 
 .. _changes_0_9:
 
