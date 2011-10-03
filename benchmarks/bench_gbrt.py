@@ -19,9 +19,9 @@ def repeat(f):
     return wrapper
 
 
-classification_params = {'loss': 'deviance', 'n_iter': 100,
+classification_params = {'loss': 'deviance', 'n_iter': 500,
                          'min_split': 1, 'max_depth': 1,
-                         'learn_rate': 1.0, 'subsample': 1}
+                         'learn_rate': .1, 'subsample': 1.0}
 
 
 @repeat
@@ -65,7 +65,7 @@ def random_gaussian_learning_curve(random_state=None):
     X_train, X_test = X[:2000], X[2000:]
     y_train, y_test = y[:2000], y[2000:]
 
-    n_iter = 2000
+    n_iter = 3000
     max_depth = 1
     
     deviance = np.zeros((n_iter,), dtype=np.float64)
@@ -77,9 +77,8 @@ def random_gaussian_learning_curve(random_state=None):
             y_pred[:] = clf.init.predict(X_test)
         else:
             y_pred[:] = clf._predict(X_test, old_pred=y_pred)
-        deviance[i] = clf.loss(y_test, y_pred) / y_test.shape[0]
+        deviance[i] = np.mean(clf.loss(y_test, y_pred))
         tmp = 2 * (1.0 / (1.0 + np.exp(-2.0 * y_pred)) > 0.5) - 1
-        
         error_rate[i] = np.mean(tmp != y_test)
 
     gbrt = GradientBoostingClassifier(n_iter=n_iter, min_split=1,
@@ -111,7 +110,7 @@ def random_gaussian_learning_curve(random_state=None):
 
     pl.subplot(121)
     pl.title("Stumps Deviance")
-    pl.xticks(np.linspace(0, n_iter, 5))
+    pl.xticks(np.linspace(0, n_iter, 7))
     pl.yticks(np.linspace(0.0, 2.0, 5))
     pl.xlabel("Boosting Iterations")
     pl.ylabel("Test Set Deviance")
@@ -132,8 +131,7 @@ def bench_spam(random_state=None):
     X_test, y_test = X[:1536], y[:1536]
     X_train, y_train = X[1536:], y[1536:]
 
-    clf = GradientBoostingClassifier(n_iter=500, learn_rate=0.1,
-                                     max_depth=1, min_split=1)
+    clf = GradientBoostingClassifier(**classification_params)
     clf.fit(X_train, y_train)
     error_rate = (1.0 - clf.score(X_test, y_test))
 
@@ -228,16 +226,16 @@ def bench_friedman3(random_state=None):
 
 if __name__ == "__main__":
 
-    print "spam", bench_spam()
+##     print "spam", bench_spam()
     
-##     print "Example 10.2 - LC"
-##     #random_gaussian_learning_curve(13)
-    print "Example 10.2", bench_random_gaussian()
+    print "Example 10.2 - LC"
+    random_gaussian_learning_curve()
+##     print "Example 10.2", bench_random_gaussian()
 
-    print "Madelon", bench_madelon()
-    print "Arcene", bench_arcene()
+##     print "Madelon", bench_madelon()
+##     print "Arcene", bench_arcene()
 
-    print "Boston", bench_boston()
-    print "Friedman#1", bench_friedman1()
-    print "Friedman#2", bench_friedman2()
-    print "Friedman#3", bench_friedman3()
+##     print "Boston", bench_boston()
+##     print "Friedman#1", bench_friedman1()
+##     print "Friedman#2", bench_friedman2()
+##     print "Friedman#3", bench_friedman3()

@@ -186,7 +186,7 @@ def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
             value[:t] = np.bincount(current_y.astype(np.int))
         else:
             # we need to wrap the mean into an array
-            value = np.asanyarray(np.mean(current_y))
+            value = np.asanyarray(np.mean(current_y), dtype=np.float64)
 
         if not is_split_valid:
             # FIXME compute error for leaf

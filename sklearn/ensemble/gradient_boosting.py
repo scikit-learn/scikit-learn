@@ -84,8 +84,8 @@ class ClassPriorPredictor(object):
     prior = None
 
     def fit(self, X, y):
-        y_bar = y.mean()
-        self.prior = 0.5 * np.log((1.0 + y_bar) / (1.0 - y_bar))
+        pos_prior = y[y == -1].shape[0] / float(y.shape[0])
+        self.prior = 0.5 * np.log2(pos_prior / (1.0 - pos_prior))
 
     def predict(self, X):
         y = np.empty((X.shape[0],), dtype=np.float64)
@@ -172,6 +172,7 @@ class HuberError(LossFunction):
 
     def _update_terminal_region(self, node, X, y, residual, pred):
         """LAD updates terminal regions to median estimates. """
+        ## FIXME copied from LAD, still TODO
         node.value = np.asanyarray(np.median(y.take(node.sample_mask, axis=0) - \
                                              pred.take(node.sample_mask, axis=0)))
 
@@ -182,7 +183,7 @@ class BinomialDeviance(LossFunction):
         return ClassPriorPredictor()
 
     def __call__(self, y, pred):
-        return np.sum(np.log(1 + np.exp(-2.0 * y * pred)))
+        return np.log2(1.0 + np.exp(-2.0 * y * pred))
 
     def negative_gradient(self, y, pred):
         return (2.0 * y) / (1.0 + np.exp(2.0 * y * pred))
@@ -190,7 +191,6 @@ class BinomialDeviance(LossFunction):
     def _update_terminal_region(self, node, X, y, residual, pred):
         """Make a single Newton-Raphson step. """
         targets = residual.take(node.sample_mask, axis=0)
-        # assert node.samples == node.sample_mask.shape[0]
         abs_targets = np.abs(targets)
         node.value = np.asanyarray(targets.sum() / np.sum(abs_targets * \
                                                           (2.0 - abs_targets)))
@@ -309,6 +309,7 @@ class BaseGradientBoosting(BaseEstimator):
                                self.min_split, None, 1, self.random_state,
                                0.0, sample_mask, X_argsorted, True)
             #print "Iteration %d - build_tree - in %fs" % (i, time() - t0)
+            assert tree.is_leaf == False
 
             loss.update_terminal_regions(tree, X, y, residual, y_pred)
             #print "Iteration %d - update - in %fs" % (i, time() - t0)
