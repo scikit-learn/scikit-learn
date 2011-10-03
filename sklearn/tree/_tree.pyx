@@ -629,6 +629,8 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
             # if this is never true best_i is -1.
             if error < best_error:
                 t = (X_i[X_argsorted_i[a]] + X_i[X_argsorted_i[b]]) / 2.0
+                if np.abs(X_i[X_argsorted_i[a]] - t) < 1e-8:
+                    t = X_i[X_argsorted_i[b]]                
                 best_i = i
                 best_t = t
                 best_error = error
