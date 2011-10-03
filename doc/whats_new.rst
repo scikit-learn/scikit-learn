@@ -29,7 +29,7 @@ version 0.9:
     ``coef_`` instead of ``sparse_coef_``. This significantly improves
     test time performance.
   
-  - The ``sklearn.covariance`` module now has a robust estimator of
+  - The :ref:`covariance` module now has a robust estimator of
     covariance, the Minimum Covariance Determinant estimator.
 
 Changelog

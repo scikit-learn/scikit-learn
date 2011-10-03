@@ -108,7 +108,7 @@ class EmpiricalCovariance(BaseEstimator):
         else:
             self.precision_ = None
 
-    def fit(self, X, assume_centered=False, **params):
+    def fit(self, X, assume_centered=False):
         """ Fits the Maximum Likelihood Estimator covariance model
         according to the given training data and parameters.
 
@@ -130,7 +130,6 @@ class EmpiricalCovariance(BaseEstimator):
             Returns self.
 
         """
-        self._set_params(**params)
         covariance = empirical_covariance(X, assume_centered=assume_centered)
         self._set_estimates(covariance)
 
