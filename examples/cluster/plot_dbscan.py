@@ -41,6 +41,7 @@ print "Completeness: %0.3f" % metrics.completeness_score(labels_true, labels)
 print "V-measure: %0.3f" % metrics.v_measure_score(labels_true, labels)
 print "Adjusted Rand Index: %0.3f" % \
     metrics.adjusted_rand_score(labels_true, labels)
+print "Silhouette Coefficient: %0.3f" % metrics.silhouette_score(D, labels)
 
 ##############################################################################
 # Plot result
