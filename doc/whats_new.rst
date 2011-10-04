@@ -5,6 +5,10 @@
 0.10
 ====
 
+   - New :ref:`Tree <tree>` module by `Brian Holt`_, `Peter Prettenhofer`_ 
+     and `Satrajit Ghosh`_. The module comes with complete documentation 
+     and examples..
+
    - Faster tests by Fabian Pedregosa.
 
 
