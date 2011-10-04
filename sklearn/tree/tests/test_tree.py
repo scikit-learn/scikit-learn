@@ -76,7 +76,7 @@ def test_graphviz_toy():
     contents1 = out.getvalue()
 
     tree_toy = StringIO("digraph Tree {\n"
-    "0 [label=\"X[0] < 0.0\\nerror = 0.5"
+    "0 [label=\"X[0] <= 0.0\\nerror = 0.5"
     "\\nsamples = 6\\nvalue = [ 3.  3.]\"] ;\n"
     "1 [label=\"error = 0.0\\nsamples = 3\\nvalue = [ 3.  0.]\"] ;\n"
     "2 [label=\"error = 0.0\\nsamples = 3\\nvalue = [ 0.  3.]\"] ;\n"
@@ -95,7 +95,7 @@ def test_graphviz_toy():
     contents1 = out.getvalue()
 
     tree_toy = StringIO("digraph Tree {\n"
-    "0 [label=\"feature1 < 0.0\\nerror = 0.5"
+    "0 [label=\"feature1 <= 0.0\\nerror = 0.5"
     "\\nsamples = 6\\nvalue = [ 3.  3.]\"] ;\n"
     "1 [label=\"error = 0.0\\nsamples = 3\\nvalue = [ 3.  0.]\"] ;\n"
     "2 [label=\"error = 0.0\\nsamples = 3\\nvalue = [ 0.  3.]\"] ;\n"

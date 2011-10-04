@@ -85,7 +85,7 @@ cdef np.ndarray apply_tree_sample(Node node, np.ndarray[DTYPE_t, ndim=1] x):
     while True:
         if node.is_leaf:
             return node.value
-        elif x[node.feature] < node.threshold:
+        elif x[node.feature] <= node.threshold:
             node = node.left
         else:
             node = node.right
@@ -628,9 +628,7 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
             # check if current error is smaller than previous best
             # if this is never true best_i is -1.
             if error < best_error:
-                t = (X_i[X_argsorted_i[a]] + X_i[X_argsorted_i[b]]) / 2.0
-                if np.abs(X_i[X_argsorted_i[a]] - t) < 1e-8:
-                    t = X_i[X_argsorted_i[b]]                
+                t = (X_i[X_argsorted_i[a]] + X_i[X_argsorted_i[b]]) / 2.0      
                 best_i = i
                 best_t = t
                 best_error = error
