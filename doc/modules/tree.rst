@@ -1,4 +1,3 @@
-
 .. _tree:
 
 ==============
@@ -170,7 +169,7 @@ Complexity
 ==========
 
 In general, the run time cost to construct a balanced binary 
-tree is  :math:`O(n_{samples}log(n_{samples}))` and query time 
+tree is  :math:`O(n_{samples}n_{features}log(n_{samples}))` and query time 
 :math:`O(log(n_{samples}))`.  Although the tree construction algorithm attempts 
 to generate balanced trees, they will not always be balanced.  Assuming that 
 the subtrees remain approximately balanced, the cost at each node consists of
