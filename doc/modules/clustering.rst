@@ -653,7 +653,6 @@ Silhouette Coefficient for each sample.
   >>> dataset = datasets.load_iris()
   >>> X = dataset.data
   >>> y = dataset.target
-  >>> D = pairwise_distances(X, metric='euclidean')
 
 In normal usage, the Silhouette Coefficient is applied to the results of a
 cluster analysis.
