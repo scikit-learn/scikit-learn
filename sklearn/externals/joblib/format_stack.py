@@ -63,7 +63,7 @@ def safe_repr(value):
             except:
                 return 'UNRECOVERABLE REPR FAILURE'
 
-def eq_repr(value, repr=safe_repr): 
+def eq_repr(value, repr=safe_repr):
     return '=%s' % repr(value)
 
 
@@ -92,7 +92,7 @@ def uniq_stable(elems):
 ################################################################################
 def fix_frame_records_filenames(records):
     """Try to fix the filenames in each record from inspect.getinnerframes().
-    
+
     Particularly, modules loaded from within zip files have useless filenames
     attached to their code object, and inspect.getinnerframes() just uses it.
     """
@@ -106,7 +106,7 @@ def fix_frame_records_filenames(records):
             # __file__. It might also be None if the error occurred during
             # import.
             filename = better_fn
-        fixed_records.append((frame, filename, line_no, func_name, lines, index))           
+        fixed_records.append((frame, filename, line_no, func_name, lines, index))
     return fixed_records
 
 
@@ -158,7 +158,7 @@ def _format_traceback_lines(lnum, index, lines, lvals=None):
             if pad >= 3:
                 marker = '-'*(pad-3) + '-> '
             elif pad == 2:
-                marker = '> '    
+                marker = '> '
             elif pad == 1:
                 marker = '>'
             else:
@@ -196,7 +196,7 @@ def format_records(records):   #, print_globals=False):
             # able to remove this try/except when 2.4 becomes a
             # requirement.  Bug details at http://python.org/sf/1005466
             print "\nJoblib's exception reporting continues...\n"
-            
+
         if func == '?':
             call = ''
         else:
@@ -228,7 +228,7 @@ def format_records(records):   #, print_globals=False):
             there is no way to disambguate partial dotted structures until
             the full list is known.  The caller is responsible for pruning
             the final list of duplicates before using it."""
-            
+
             # build composite names
             if token == '.':
                 try:
@@ -275,7 +275,7 @@ def format_records(records):   #, print_globals=False):
             print ("An unexpected error occurred while tokenizing input\n"
                     "The following traceback may be corrupted or invalid\n"
                     "The error message is: %s\n" % msg)
-        
+
         # prune names list of duplicates, but keep the right order
         unique_names = uniq_stable(names)
 
@@ -315,14 +315,14 @@ def format_records(records):   #, print_globals=False):
         else:
             frames.append('%s%s' % (level,''.join(
                 _format_traceback_lines(lnum, index, lines, lvals))))
-           
+
     return frames
 
 
 ################################################################################
 def format_exc(etype, evalue, etb, context=5, tb_offset=0):
     """ Return a nice text document describing the traceback.
-    
+
         Parameters
         -----------
         etype, evalue, etb: as returned by sys.exc_info
@@ -340,7 +340,7 @@ def format_exc(etype, evalue, etb, context=5, tb_offset=0):
     pyver = 'Python ' + string.split(sys.version)[0] + ': ' + sys.executable
     date = time.ctime(time.time())
     pid = 'PID: %i' % os.getpid()
-    
+
     head = '%s%s%s\n%s%s%s' % (etype, ' '*(75-len(str(etype))-len(date)),
                            date, pid, ' '*(75-len(str(pid))-len(pyver)),
                            pyver)
@@ -407,7 +407,7 @@ def format_outer_frames(context=5, stack_start=None, stack_end=None,
                 filename = filename[:-4] + '.py'
         if ignore_ipython:
             # Hack to avoid printing the interals of IPython
-            if (os.path.basename(filename) == 'iplib.py' 
+            if (os.path.basename(filename) == 'iplib.py'
                         and func_name in ('safe_execfile', 'runcode')):
                 break
         maybeStart = line_no -1 - context//2

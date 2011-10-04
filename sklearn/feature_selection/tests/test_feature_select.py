@@ -30,9 +30,9 @@ def test_f_classif():
     Test whether the F test yields meaningful results
     on a simple simulated classification problem
     """
-    X, Y = make_classification(n_samples=200, n_features=20, 
-                               n_informative=3, n_redundant=2, 
-                               n_repeated=0, n_classes=8, 
+    X, Y = make_classification(n_samples=200, n_features=20,
+                               n_informative=3, n_redundant=2,
+                               n_repeated=0, n_classes=8,
                                n_clusters_per_class=1, flip_y=0.0,
                                class_sep=10, shuffle=False, random_state=0)
 
@@ -49,7 +49,7 @@ def test_f_regression():
     Test whether the F test yields meaningful results
     on a simple simulated regression problem
     """
-    X, Y = make_regression(n_samples=200, n_features=20, 
+    X, Y = make_regression(n_samples=200, n_features=20,
                            n_informative=5, shuffle=False, random_state=0)
 
     F, pv = f_regression(X, Y)
@@ -65,9 +65,9 @@ def test_f_classif_multi_class():
     Test whether the F test yields meaningful results
     on a simple simulated classification problem
     """
-    X, Y = make_classification(n_samples=200, n_features=20, 
-                               n_informative=3, n_redundant=2, 
-                               n_repeated=0, n_classes=8, 
+    X, Y = make_classification(n_samples=200, n_features=20,
+                               n_informative=3, n_redundant=2,
+                               n_repeated=0, n_classes=8,
                                n_clusters_per_class=1, flip_y=0.0,
                                class_sep=10, shuffle=False, random_state=0)
 
@@ -85,9 +85,9 @@ def test_select_percentile_classif():
     gets the correct items in a simple classification problem
     with the percentile heuristic
     """
-    X, Y = make_classification(n_samples=200, n_features=20, 
-                               n_informative=3, n_redundant=2, 
-                               n_repeated=0, n_classes=8, 
+    X, Y = make_classification(n_samples=200, n_features=20,
+                               n_informative=3, n_redundant=2,
+                               n_repeated=0, n_classes=8,
                                n_clusters_per_class=1, flip_y=0.0,
                                class_sep=10, shuffle=False, random_state=0)
 
@@ -110,9 +110,9 @@ def test_select_kbest_classif():
     gets the correct items in a simple classification problem
     with the k best heuristic
     """
-    X, Y = make_classification(n_samples=200, n_features=20, 
-                               n_informative=3, n_redundant=2, 
-                               n_repeated=0, n_classes=8, 
+    X, Y = make_classification(n_samples=200, n_features=20,
+                               n_informative=3, n_redundant=2,
+                               n_repeated=0, n_classes=8,
                                n_clusters_per_class=1, flip_y=0.0,
                                class_sep=10, shuffle=False, random_state=0)
 
@@ -133,9 +133,9 @@ def test_select_fpr_classif():
     gets the correct items in a simple classification problem
     with the fpr heuristic
     """
-    X, Y = make_classification(n_samples=200, n_features=20, 
-                               n_informative=3, n_redundant=2, 
-                               n_repeated=0, n_classes=8, 
+    X, Y = make_classification(n_samples=200, n_features=20,
+                               n_informative=3, n_redundant=2,
+                               n_repeated=0, n_classes=8,
                                n_clusters_per_class=1, flip_y=0.0,
                                class_sep=10, shuffle=False, random_state=0)
 
@@ -156,9 +156,9 @@ def test_select_fdr_classif():
     gets the correct items in a simple classification problem
     with the fpr heuristic
     """
-    X, Y = make_classification(n_samples=200, n_features=20, 
-                               n_informative=3, n_redundant=2, 
-                               n_repeated=0, n_classes=8, 
+    X, Y = make_classification(n_samples=200, n_features=20,
+                               n_informative=3, n_redundant=2,
+                               n_repeated=0, n_classes=8,
                                n_clusters_per_class=1, flip_y=0.0,
                                class_sep=10, shuffle=False, random_state=0)
 
@@ -179,9 +179,9 @@ def test_select_fwe_classif():
     gets the correct items in a simple classification problem
     with the fpr heuristic
     """
-    X, Y = make_classification(n_samples=200, n_features=20, 
-                               n_informative=3, n_redundant=2, 
-                               n_repeated=0, n_classes=8, 
+    X, Y = make_classification(n_samples=200, n_features=20,
+                               n_informative=3, n_redundant=2,
+                               n_repeated=0, n_classes=8,
                                n_clusters_per_class=1, flip_y=0.0,
                                class_sep=10, shuffle=False, random_state=0)
 
@@ -205,7 +205,7 @@ def test_select_percentile_regression():
     gets the correct items in a simple regression problem
     with the percentile heuristic
     """
-    X, Y = make_regression(n_samples=200, n_features=20, 
+    X, Y = make_regression(n_samples=200, n_features=20,
                            n_informative=5, shuffle=False, random_state=0)
 
     univariate_filter = SelectPercentile(f_regression, percentile=25)
@@ -227,7 +227,7 @@ def test_select_percentile_regression_full():
     Test whether the relative univariate feature selection
     selects all features when '100%' is asked.
     """
-    X, Y = make_regression(n_samples=200, n_features=20, 
+    X, Y = make_regression(n_samples=200, n_features=20,
                            n_informative=5, shuffle=False, random_state=0)
 
     univariate_filter = SelectPercentile(f_regression, percentile=100)
@@ -246,7 +246,7 @@ def test_select_kbest_regression():
     gets the correct items in a simple regression problem
     with the k best heuristic
     """
-    X, Y = make_regression(n_samples=200, n_features=20, 
+    X, Y = make_regression(n_samples=200, n_features=20,
                            n_informative=5, shuffle=False, random_state=0)
 
     univariate_filter = SelectKBest(f_regression, k=5)
@@ -266,7 +266,7 @@ def test_select_fpr_regression():
     gets the correct items in a simple regression problem
     with the fpr heuristic
     """
-    X, Y = make_regression(n_samples=200, n_features=20, 
+    X, Y = make_regression(n_samples=200, n_features=20,
                            n_informative=5, shuffle=False, random_state=0)
 
     univariate_filter = SelectFpr(f_regression, alpha=0.01)
@@ -287,7 +287,7 @@ def test_select_fdr_regression():
     gets the correct items in a simple regression problem
     with the fdr heuristic
     """
-    X, Y = make_regression(n_samples=200, n_features=20, 
+    X, Y = make_regression(n_samples=200, n_features=20,
                            n_informative=5, shuffle=False, random_state=0)
 
     univariate_filter = SelectFdr(f_regression, alpha=0.01)
@@ -307,7 +307,7 @@ def test_select_fwe_regression():
     gets the correct items in a simple regression problem
     with the fwe heuristic
     """
-    X, Y = make_regression(n_samples=200, n_features=20, 
+    X, Y = make_regression(n_samples=200, n_features=20,
                            n_informative=5, shuffle=False, random_state=0)
 
     univariate_filter = SelectFwe(f_regression, alpha=0.01)

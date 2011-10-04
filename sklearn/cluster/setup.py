@@ -15,7 +15,7 @@ def configuration(parent_package='', top_path=None):
                          sources=['_k_means.c'],
                          include_dirs=[numpy.get_include()]
                          )
-    
+
     return config
 
 if __name__ == '__main__':

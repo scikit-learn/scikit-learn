@@ -88,8 +88,8 @@ plot_embedding(X_projected, "Random Projection of the digits")
 print "Computing PCA projection"
 t0 = time()
 X_pca = decomposition.RandomizedPCA(n_components=2).fit_transform(X)
-plot_embedding(X_pca, 
-    "Principal Components projection of the digits (time %.2fs)" % 
+plot_embedding(X_pca,
+    "Principal Components projection of the digits (time %.2fs)" %
     (time() - t0))
 
 #----------------------------------------------------------------------
@@ -100,8 +100,8 @@ X2 = X.copy()
 X2.flat[::X.shape[1] + 1] += 0.01  # Make X invertible
 t0 = time()
 X_lda = lda.LDA(n_components=2).fit_transform(X2, y)
-plot_embedding(X_lda, 
-    "Linear Discriminant projection of the digits (time %.2fs)" % 
+plot_embedding(X_lda,
+    "Linear Discriminant projection of the digits (time %.2fs)" %
     (time() - t0))
 
 
@@ -111,8 +111,8 @@ print "Computing Isomap embedding"
 t0 = time()
 X_iso = manifold.Isomap(n_neighbors, out_dim=2).fit_transform(X)
 print "Done."
-plot_embedding(X_iso, 
-    "Isomap projection of the digits (time %.2fs)" % 
+plot_embedding(X_iso,
+    "Isomap projection of the digits (time %.2fs)" %
     (time() - t0))
 
 
@@ -124,8 +124,8 @@ clf = manifold.LocallyLinearEmbedding(n_neighbors, out_dim=2,
 t0 = time()
 X_lle = clf.fit_transform(X)
 print "Done. Reconstruction error: %g" % clf.reconstruction_error_
-plot_embedding(X_lle, 
-    "Locally Linear Embedding of the digits (time %.2fs)" % 
+plot_embedding(X_lle,
+    "Locally Linear Embedding of the digits (time %.2fs)" %
     (time() - t0))
 
 
@@ -137,8 +137,8 @@ clf = manifold.LocallyLinearEmbedding(n_neighbors, out_dim=2,
 t0 = time()
 X_mlle = clf.fit_transform(X)
 print "Done. Reconstruction error: %g" % clf.reconstruction_error_
-plot_embedding(X_mlle, 
-    "Modified Locally Linear Embedding of the digits (time %.2fs)" % 
+plot_embedding(X_mlle,
+    "Modified Locally Linear Embedding of the digits (time %.2fs)" %
     (time() - t0))
 
 
@@ -150,8 +150,8 @@ clf = manifold.LocallyLinearEmbedding(n_neighbors, out_dim=2,
 t0 = time()
 X_hlle = clf.fit_transform(X)
 print "Done. Reconstruction error: %g" % clf.reconstruction_error_
-plot_embedding(X_hlle, 
-    "Hessian Locally Linear Embedding of the digits (time %.2fs)" % 
+plot_embedding(X_hlle,
+    "Hessian Locally Linear Embedding of the digits (time %.2fs)" %
     (time() - t0))
 
 
@@ -164,7 +164,7 @@ t0 = time()
 X_ltsa = clf.fit_transform(X)
 print "Done. Reconstruction error: %g" % clf.reconstruction_error_
 plot_embedding(X_ltsa,
-    "Local Tangent Space Alignment of the digits (time %.2fs)" % 
+    "Local Tangent Space Alignment of the digits (time %.2fs)" %
     (time() - t0))
 
 pl.show()

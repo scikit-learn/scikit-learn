@@ -17,7 +17,7 @@ from pprint import pprint
 import numpy as np
 
 from sklearn import datasets
-from sklearn.cross_val import StratifiedKFold
+from sklearn.cross_validation import StratifiedKFold
 from sklearn.grid_search import GridSearchCV
 from sklearn.metrics import classification_report
 from sklearn.metrics import precision_score

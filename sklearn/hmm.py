@@ -12,6 +12,13 @@ from .base import BaseEstimator
 from .mixture import (GMM, lmvnpdf, normalize, sample_gaussian,
                  _distribute_covar_matrix_to_match_cvtype, _validate_covars)
 from . import cluster
+import warnings
+warnings.warn('sklearn.hmm is orphaned, undocumented and has known numerical'
+              ' stability issues. If nobody volunteers to write documentation'
+              ' and make it more stable, this module will be removed in'
+              ' version 0.11.')
+
+
 ZEROLOGPROB = -1e200
 
 class _BaseHMM(BaseEstimator):

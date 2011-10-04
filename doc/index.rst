@@ -57,9 +57,9 @@
 
   * **Work in progress**: :ref:`unsupervised-learning`:
     :ref:`clustering`, :ref:`mixture`, :ref:`Manifold learning <manifold>`, :ref:`ICA
-    <ICA>`, :ref:`gaussian_process`
+    <ICA>`, :ref:`gaussian_process`, :ref:`matrix factorization <decompositions>`
 
-  * **Planned**: Gaussian graphical models, matrix factorization
+  * **Planned**: Gaussian graphical models
 
 :License:
   Open source, commercially usable: **BSD license** (3 clause)

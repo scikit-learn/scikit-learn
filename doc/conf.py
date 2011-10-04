@@ -46,6 +46,9 @@ autodoc_default_flags = ['members', 'inherited-members']
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['templates']
 
+# generate autosummary even if no references
+autosummary_generate = True
+
 # The suffix of source filenames.
 source_suffix = '.rst'
 
@@ -67,7 +70,7 @@ copyright = u'2010–2011, scikit-learn developers (BSD License)'
 # built documents.
 #
 # The short X.Y version.
-version = '0.9'
+version = '0.10'
 # The full version, including alpha/beta/rc tags.
 import sklearn
 release = sklearn.__version__

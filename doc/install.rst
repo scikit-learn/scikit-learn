@@ -200,7 +200,7 @@ Testing requires having the `nose
 installation, the package can be tested by executing *from outside* the
 source directory::
 
-    python -c "import sklearn as skl; skl.test()"
+    python -c "import sklearn; sklearn.test()"
 
 This should give you a lot of output (and some warnings) but
 eventually should finish with the a text similar to::

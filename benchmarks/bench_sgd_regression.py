@@ -33,9 +33,9 @@ if __name__ == "__main__":
     for i, n_train in enumerate(list_n_samples):
         for j, n_features in enumerate(list_n_features):
             X, y, coef = make_regression(
-                n_samples=n_train + n_test, n_features=n_features, 
+                n_samples=n_train + n_test, n_features=n_features,
                 noise=noise, coef=True)
-            
+
             X_train = X[:n_train]
             y_train = y[:n_train]
             X_test = X[n_train:]

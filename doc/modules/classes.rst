@@ -186,9 +186,14 @@ Nearest Neighbors
    :toctree: generated/
    :template: class.rst
 
+   neighbors.NearestNeighbors
+   neighbors.KNeighborsClassifier
+   neighbors.RadiusNeighborsClassifier
    neighbors.NeighborsClassifier
+   neighbors.KNeighborsRegressor
+   neighbors.RadiusNeighborsRegressor
    neighbors.NeighborsRegressor
-   ball_tree.BallTree
+   neighbors.BallTree
 
 .. autosummary::
    :toctree: generated/
@@ -317,10 +322,12 @@ Clustering metrics
    :toctree: generated/
    :template: function.rst
 
+   metrics.adjusted_rand_score
    metrics.homogeneity_completeness_v_measure
    metrics.homogeneity_score
    metrics.completeness_score
    metrics.v_measure_score
+
 
 Pairwise metrics
 ----------------
@@ -340,7 +347,10 @@ Pairwise metrics
    metrics.pairwise.linear_kernel
    metrics.pairwise.polynomial_kernel
    metrics.pairwise.rbf_kernel
-
+   metrics.pairwise.distance_metrics
+   metrics.pairwise.pairwise_distances
+   metrics.pairwise.kernel_metrics
+   metrics.pairwise.pairwise_kernels
 
 Covariance Estimators
 =====================
@@ -392,6 +402,8 @@ Signal Decomposition
    decomposition.NMF
    decomposition.SparsePCA
    decomposition.MiniBatchSparsePCA
+   decomposition.DictionaryLearning
+   decomposition.MiniBatchDictionaryLearning
 
 .. autosummary::
    :toctree: generated/
@@ -400,6 +412,8 @@ Signal Decomposition
    decomposition.fastica
    decomposition.dict_learning
    decomposition.dict_learning_online
+   decomposition.sparse_encode
+   decomposition.sparse_encode_parallel
 
 
 Linear Discriminant Analysis
@@ -434,7 +448,7 @@ Partial Least Squares
 Cross Validation
 ================
 
-.. automodule:: sklearn.cross_val
+.. automodule:: sklearn.cross_validation
    :no-members:
    :no-inherited-members:
 
@@ -444,14 +458,14 @@ Cross Validation
    :toctree: generated/
    :template: class.rst
 
-   cross_val.LeaveOneOut
-   cross_val.LeavePOut
-   cross_val.KFold
-   cross_val.StratifiedKFold
-   cross_val.LeaveOneLabelOut
-   cross_val.LeavePLabelOut
-   cross_val.Bootstrap
-   cross_val.ShuffleSplit
+   cross_validation.LeaveOneOut
+   cross_validation.LeavePOut
+   cross_validation.KFold
+   cross_validation.StratifiedKFold
+   cross_validation.LeaveOneLabelOut
+   cross_validation.LeavePLabelOut
+   cross_validation.Bootstrap
+   cross_validation.ShuffleSplit
 
 
 Grid Search
@@ -488,6 +502,13 @@ Feature Selection
 
    feature_selection.rfe.RFE
    feature_selection.rfe.RFECV
+
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   feature_selection.univariate_selection.chi2
 
 
 .. _feature_extraction:

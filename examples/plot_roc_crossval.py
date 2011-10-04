@@ -15,7 +15,7 @@ import pylab as pl
 
 from sklearn import svm, datasets
 from sklearn.metrics import roc_curve, auc
-from sklearn.cross_val import StratifiedKFold
+from sklearn.cross_validation import StratifiedKFold
 
 ################################################################################
 # Data IO and generation

@@ -20,7 +20,6 @@ except ImportError:
 
 from .base import clone
 
-from . import mixture
 
 try:
     from numpy.testing import nosetester
@@ -41,11 +40,11 @@ except:
     pass
 
 
-__all__ = ['check_build', 'cross_val', 'ball_tree', 'cluster', 'covariance',
+__all__ = ['check_build', 'cross_validation', 'cluster', 'covariance',
            'datasets', 'decomposition', 'feature_extraction',
            'feature_selection',
            'gaussian_process', 'grid_search', 'hmm', 'lda', 'linear_model',
            'metrics', 'mixture', 'naive_bayes', 'neighbors', 'pipeline',
            'preprocessing', 'qda', 'svm', 'test', 'clone', 'pls']
 
-__version__ = '0.9-git'
+__version__ = '0.10-git'

@@ -99,7 +99,7 @@ class SparseBaseLibSVM(BaseLibSVM):
 
         if (kernel_type in [1, 2]) and (self.gamma == 0):
             # if custom gamma is not provided ...
-            self.gamma = 1.0 / X.shape[0]
+            self.gamma = 1.0 / X.shape[1]
 
         self.label_, self.probA_, self.probB_ = libsvm.libsvm_sparse_train(
                  X.shape[1], X.data, X.indices, X.indptr, y,

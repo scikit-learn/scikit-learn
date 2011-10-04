@@ -575,11 +575,11 @@ def _mini_batch_step_dense(X, batch_slice, centers, counts, x_squared_norms):
         The row slice of the mini batch.
 
     centers: array, shape (k, n_features)
-        The cluster centers
+        The cluster centers. This array is MODIFIED IN PLACE
 
     counts: array, shape (k, )
          The vector in which we keep track of the numbers of elements in a
-         cluster
+         cluster. This array is MODIFIED IN PLACE
 
     x_squared_norms: array, shape (n_samples,)
         Squared euclidean norm of each data point.
@@ -599,6 +599,7 @@ def _mini_batch_step_dense(X, batch_slice, centers, counts, x_squared_norms):
             centers[q] = (1. / (counts[q] + c)) * (
                 counts[q] * centers[q] + np.sum(X[center_mask], axis=0))
             counts[q] += c
+    return counts, centers
 
 
 def _mini_batch_step_sparse(X, batch_slice, centers, counts, x_squared_norms):
@@ -614,11 +615,11 @@ def _mini_batch_step_sparse(X, batch_slice, centers, counts, x_squared_norms):
         The row slice of the mini batch.
 
     centers: array, shape (k, n_features)
-        The cluster centers
+        The cluster centers. This array is MODIFIED IN PLACE
 
     counts: array, shape (k, )
          The vector in which we keep track of the numbers of elements in a
-         cluster
+         cluster. This array is MODIFIED IN PLACE
 
     x_squared_norms: array, shape (n_samples,)
          The squared norms of each sample in `X`.
@@ -628,6 +629,7 @@ def _mini_batch_step_sparse(X, batch_slice, centers, counts, x_squared_norms):
 
     _k_means._mini_batch_update_sparse(X.data, X.indices, X.indptr,
                                        batch_slice, centers, counts, cache)
+    return counts, centers
 
 
 class MiniBatchKMeans(KMeans):
@@ -742,8 +744,10 @@ class MiniBatchKMeans(KMeans):
 
         for i, batch_slice in izip(n_iterations, cycle(batch_slices)):
             old_centers = self.cluster_centers_.copy()
-            _mini_batch_step(X_shuffled, batch_slice, self.cluster_centers_,
-                             self.counts, x_squared_norms=x_squared_norms)
+            self.counts, self.cluster_centers_ = _mini_batch_step(
+                            X_shuffled, batch_slice, 
+                            self.cluster_centers_, self.counts, 
+                            x_squared_norms=x_squared_norms)
 
             if np.sum((old_centers - self.cluster_centers_) ** 2) < tol:
                 if self.verbose:
@@ -798,8 +802,9 @@ class MiniBatchKMeans(KMeans):
         else:
             _mini_batch_step = _mini_batch_step_dense
 
-        _mini_batch_step(X, batch_slice, self.cluster_centers_, self.counts,
-                         x_squared_norms=x_squared_norms)
+        self.counts, self.cluster_centers_ = _mini_batch_step(X, 
+                        batch_slice, self.cluster_centers_, self.counts,
+                        x_squared_norms=x_squared_norms)
 
         self.inertia_, self.labels_ = _calculate_labels_inertia(
             X, self.cluster_centers_, x_squared_norms)
