@@ -655,7 +655,7 @@ Silhouette Coefficient for each sample.
   >>> y = dataset.target
   >>> D = pairwise_distances(X, metric='euclidean')
 
-In the normal usage, the Silhouette Coefficient is applied to the results of a
+In normal usage, the Silhouette Coefficient is applied to the results of a
 cluster analysis.
 
   >>> import numpy as np
@@ -663,9 +663,9 @@ cluster analysis.
   >>> from sklearn.cluster import KMeans
   >>> kmeans_model = KMeans(init="k-means++", k=3).fit(X)
   >>> labels = kmeans_model.labels_
-  >>> metrics.silhouette_score(D, labels)  # doctest: +ELLIPSIS
+  >>> metrics.silhouette_score(X, labels, metric='euclidean')  
+  ...                                                      # doctest: +ELLIPSIS
   0.5525...
-
 
 .. topic:: References
 
