@@ -874,13 +874,15 @@ def permutation_test_score(estimator, X, y, score_func, cv=None,
     X: array-like of shape at least 2D
         The data to fit.
 
-    y: array-like, optional
+    y: array-like
         The target variable to try to predict in the case of
         supervised learning.
 
-    score_func: callable, optional
-        callable taking as arguments the test targets (y_test) and
-        the predicted targets (y_pred). Returns a float.
+    score_func: callable
+        Callable taking as arguments the test targets (y_test) and
+        the predicted targets (y_pred) and returns a float. The returned
+        pvalue differs depending on which score_func is used. See pvalue in the
+        Returns section below for details.
 
     cv : integer or crossvalidation generator, optional
         If an integer is passed, it is the number of fold (default 3).
@@ -906,10 +908,15 @@ def permutation_test_score(estimator, X, y, score_func, cv=None,
     -------
     score: float
         The true score without permuting targets.
+
     permutation_scores : array, shape = [n_permutations]
         The scores obtained for each permutations.
+
     pvalue: float
-        The p-value.
+        The returned value equals p-value if score_func returns bigger numbers
+        for better scores (e.g., zero_one). The returned value equals 1-pvalue
+        if score_func returns smaller numbers for better scores (e.g.,
+        mean_square_error)
 
     References
     ----------
