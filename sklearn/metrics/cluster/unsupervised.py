@@ -1,7 +1,4 @@
-""" Unsupervised evaluation metrics
-
-
-"""
+""" Unsupervised evaluation metrics. """
 
 # Authors: Robert Layton <robertlayton@gmail.com>
 #
@@ -9,10 +6,11 @@
 
 import numpy as np
 
-
+from ...utils import shuffle, check_random_state
 from ..pairwise import pairwise_distances
 
-def silhouette_score(X, labels, metric='euclidean', **kwds):
+def silhouette_score(X, labels, metric='euclidean',
+                      sample_size=None, random_state=None, **kwds):
     """Compute the mean Silhouette Coefficient of all samples.
 
     The Silhouette Coefficient is calculated using the mean intra-cluster
@@ -43,6 +41,13 @@ def silhouette_score(X, labels, metric='euclidean', **kwds):
         allowed by metrics.pairwise.pairwise_distances. If X is the distance
         array itself, use "precomputed" as the metric.
 
+    sample_size: int or None
+        The size of the sample to use when computing the Silhouette Coefficient.
+        If sample_size is None, no sampling is used.
+
+    random_state: numpy.RandomState, optional
+        The generator used to initialize the centers. Defaults to numpy.random.
+
     **kwds: optional keyword parameters
         Any further parameters are passed directly to the distance function.
         If using a scipy.spatial.distance metric, the parameters are still
@@ -62,6 +67,13 @@ def silhouette_score(X, labels, metric='euclidean', **kwds):
     http://en.wikipedia.org/wiki/Silhouette_(clustering)
 
     """
+    if sample_size is not None:
+        random_state = check_random_state(random_state)
+        indices = random_state.permutation(X.shape[0])[:sample_size]
+        if metric == "precomputed":
+            X, labels = X[indices].T[indices].T, labels[indices]
+        else:
+            X, labels = X[indices], labels[indices]
     return np.mean(silhouette_samples(X, labels, metric=metric, **kwds))
 
 

@@ -27,17 +27,12 @@ np.random.seed(42)
 
 digits = load_digits()
 data = scale(digits.data)
-#D = metrics.pairwise_distances(data, metric='euclidean')
 
 n_samples, n_features = data.shape
 n_digits = len(np.unique(digits.target))
 labels = digits.target
 
-data_shuffled, indices_shuffled = shuffle(data, range(n_samples),
-                                          random_state=0)
 sample_size = 300
-data_sample = data_shuffled[:sample_size]
-sample_indices = indices_shuffled[:sample_size]
 
 print "n_digits: %d" % n_digits
 print "n_features: %d" % n_features
@@ -57,8 +52,8 @@ print "Adjusted Rand Index: %0.3f" % \
 #print ("Silhouette Coefficient: %0.3f" %
 #       metrics.silhouette_score(D, km.labels_, metric='precomputed'))
 print ("Silhouette Coefficient: %0.3f" %
-       metrics.silhouette_score(data_sample, km.labels_[sample_indices],
-                                metric='euclidean'))
+       metrics.silhouette_score(data, km.labels_,
+                                metric='euclidean', sample_size=sample_size))
 print
 
 print "Raw k-means with random centroid init..."
@@ -74,8 +69,8 @@ print "Adjusted Rand Index: %0.3f" % \
 #print ("Silhouette Coefficient: %0.3f" %
 #       metrics.silhouette_score(D, km.labels_, metric='precomputed'))
 print ("Silhouette Coefficient: %0.3f" %
-       metrics.silhouette_score(data, km.labels_[sample_indices],
-                                metric='euclidean'))
+       metrics.silhouette_score(data, km.labels_,
+                                metric='euclidean', sample_size=sample_size))
 print
 
 print "Raw k-means with PCA-based centroid init..."
@@ -94,8 +89,8 @@ print "Adjusted Rand Index: %0.3f" % \
 #print ("Silhouette Coefficient: %0.3f" %
 #       metrics.silhouette_score(D, km.labels_, metric='precomputed'))
 print ("Silhouette Coefficient: %0.3f" %
-       metrics.silhouette_score(data, km.labels_[sample_indices],
-                                metric='euclidean'))
+       metrics.silhouette_score(data, km.labels_,
+                                metric='euclidean', sample_size=sample_size))
 print
 
 # Plot k-means++ form on a 2D plot using PCA
