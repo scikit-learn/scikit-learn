@@ -63,7 +63,7 @@ def clear_data_home(data_home=None):
 
 
 def load_files(container_path, description=None, categories=None,
-               load_content=True, shuffle=True, random_state=None):
+               load_content=True, shuffle=True, random_state=0):
     """Load text files with categories as subfolder names.
 
     Individual samples are assumed to be files stored a two levels folder
@@ -119,7 +119,7 @@ def load_files(container_path, description=None, categories=None,
         make the assumption that the samples are independent and identically
         distributed (i.i.d.), such as stochastic gradient descent.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance or None, optional (default=0)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
@@ -414,6 +414,19 @@ def load_sample_images():
 
 def load_sample_image(image_name):
     """Load the numpy array of a single sample image
+
+    Parameters
+    -----------
+    image_name: {`china.jpg`, `flower.jpg`}
+        The name of the sample image loaded
+
+    Returns
+    -------
+    img: 3D array
+        The image as a numpy array: height x width x color
+
+    Examples
+    ---------
 
     # >>> from sklearn.datasets import load_sample_image
     # >>> china = load_sample_image('china.jpg')

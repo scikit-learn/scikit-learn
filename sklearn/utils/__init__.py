@@ -22,22 +22,20 @@ def safe_asanyarray(X, dtype=None, order=None):
     return X
 
 
-def as_float_array(X, overwrite_X=False):
+def as_float_array(X, copy=True):
     """Converts a numpy array to an array of floats
 
     The new dtype will be np.float32 or np.float64, depending on the original
     type. The function can create a copy or modify the argument depending
-    on the argument overwrite_X.
-
-    WARNING : If X is not of type float, then a copy of X with the right type
-              will be returned
+    on the argument copy.
 
     Parameters
     ----------
     X : array
 
-    overwrite_X : bool, optional
-        if False, a copy of X will be created
+    copy : bool, optional
+        If True, a copy of X will be created. If False, a copy may still be
+        returned if X's dtype is not a floating point type.
 
     Returns
     -------
@@ -45,10 +43,7 @@ def as_float_array(X, overwrite_X=False):
         An array of type np.float
     """
     if X.dtype in [np.float32, np.float64]:
-        if overwrite_X:
-            return X
-        else:
-            return X.copy()
+        return X.copy() if copy else X
     if X.dtype == np.int32:
         X = X.astype(np.float32)
     else:

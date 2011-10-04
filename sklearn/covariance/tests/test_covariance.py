@@ -7,7 +7,8 @@
 from numpy.testing import assert_almost_equal, assert_array_almost_equal
 
 from .. import empirical_covariance, EmpiricalCovariance, \
-    ShrunkCovariance, shrunk_covariance, LedoitWolf, ledoit_wolf, OAS, oas
+    ShrunkCovariance, shrunk_covariance, LedoitWolf, ledoit_wolf, OAS, oas, \
+    fast_mcd, MCD
 
 import numpy as np
 from sklearn import datasets
@@ -26,6 +27,16 @@ def test_covariance():
     assert_almost_equal(cov.error_norm(empirical_covariance(X)), 0)
     assert_almost_equal(
         cov.error_norm(empirical_covariance(X), norm='spectral'), 0)
+    assert_almost_equal(
+        cov.error_norm(empirical_covariance(X), norm='frobenius'), 0)
+    assert_almost_equal(
+        cov.error_norm(empirical_covariance(X), scaling=False), 0)
+    assert_almost_equal(
+        cov.error_norm(empirical_covariance(X), squared=False), 0)
+    # Mahalanobis distances computation test
+    mahal_dist = cov.mahalanobis(X)
+    assert(np.amax(mahal_dist) < 250)
+    assert(np.amin(mahal_dist) > 50)
 
     # test with n_features = 1
     X_1d = X[:,0]
@@ -204,3 +215,81 @@ def test_oas():
     oa.fit(X)
     assert_almost_equal(oa.score(X), 2.079025, 4)
     assert(oa.precision_ is None)
+
+
+def test_mcd():
+    """Tests the FastMCD algorithm implementation
+
+    """
+    yield generator_mcd, "empirical"
+    yield generator_mcd, "theoretical"
+    
+def generator_mcd(correction):
+    """Tests the fastMCD algorithm implementation with a given correction type
+
+    """
+    ### Small data set
+    # test without outliers (random independant normal data)
+    launch_mcd_on_dataset(100, 5, 0, 0.3, 0.2, 70, correction)
+    # test with a contaminated data set (medium contamination)
+    launch_mcd_on_dataset(100, 5, 20, 0.1, 0.2, 65, correction)    
+    # test with a contaminated data set (strong contamination)
+    launch_mcd_on_dataset(100, 5, 40, 0.1, 0.1, 50, correction)
+    
+    ### Medium data set
+    launch_mcd_on_dataset(1000, 5, 450, 1e-3, 0.01, 540, correction)
+    
+    ### Large data set
+    launch_mcd_on_dataset(1700, 5, 800, 1e-3, 1e-3, 870, correction)
+    
+    ### 1D data set
+    launch_mcd_on_dataset(500, 1, 100, 0.1, 0.1, 350, correction)
+    
+
+def launch_mcd_on_dataset(n_samples, n_features, n_outliers,
+                          tol_loc, tol_cov, tol_support, correction):
+    """
+
+    """
+    data = np.random.randn(n_samples, n_features)
+    # add some outliers
+    outliers_index = np.random.permutation(n_samples)[:n_outliers]
+    outliers_offset = 10. * \
+        (np.random.randint(2, size=(n_outliers,n_features)) - 0.5)
+    data[outliers_index] += outliers_offset
+    inliers_mask = np.ones(n_samples).astype(bool)
+    inliers_mask[outliers_index] = False
+    
+    # compute MCD directly
+    T, S, H = fast_mcd(data, correction=correction)
+    # compare with the estimates learnt from the inliers
+    pure_data = data[inliers_mask]
+    error_location = np.sum((pure_data.mean(0) - T)**2)
+    assert(error_location < tol_loc)
+    emp_cov = EmpiricalCovariance().fit(pure_data)
+    #print emp_cov.error_norm(S)
+    assert(emp_cov.error_norm(S) < tol_cov)
+    assert(np.sum(H) > tol_support)
+    # check improvement
+    if (n_outliers/float(n_samples) > 0.1) and (n_features > 1):
+        error_bad_location = np.sum((data.mean(0) - T)**2)
+        assert(error_bad_location > error_location)
+        bad_emp_cov = EmpiricalCovariance().fit(data)
+        assert(emp_cov.error_norm(S) < bad_emp_cov.error_norm(S))
+    
+    # compute MCD by fitting an object
+    mcd_fit = MCD().fit(data)
+    T = mcd_fit.location_
+    S = mcd_fit.covariance_
+    H = mcd_fit.support_
+    # compare with the estimates learnt from the inliers
+    error_location = np.sum((pure_data.mean(0) - T)**2)
+    assert(error_location < tol_loc)
+    assert(emp_cov.error_norm(S) < tol_cov)
+    assert(np.sum(H) > tol_support)
+    # check improvement
+    if (n_outliers/float(n_samples) > 0.1) and (n_features > 1):
+        error_bad_location = np.sum((data.mean(0) - T)**2)
+        assert(error_bad_location > error_location)
+        bad_emp_cov = EmpiricalCovariance().fit(data)
+        assert(emp_cov.error_norm(S) < bad_emp_cov.error_norm(S))

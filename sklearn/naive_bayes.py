@@ -20,15 +20,87 @@ complete documentation.
 #
 # License: BSD Style.
 
+import numpy as np
+from scipy.sparse import issparse
+
 from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize, LabelBinarizer
 from .utils import safe_asanyarray, atleast2d_or_csr
 from .utils.extmath import safe_sparse_dot, logsum
 from .utils.fixes import unique
-import numpy as np
 
 
-class GaussianNB(BaseEstimator, ClassifierMixin):
+
+class BaseNB(BaseEstimator, ClassifierMixin):
+    """Abstract base class for naive Bayes estimators
+
+    Any estimator based on this class should provide:
+
+    __init__
+    fit(X, y)
+    _joint_log_likelihood(X)
+        Compute the unnormalized posterior log probability of X,
+        i.e. log P(c) + log P(x|c) for all rows x of X,
+        as an array-like of shape [n_classes, n_samples].
+
+    Input is passed to _joint_log_likelihood as is by predict, predict_proba
+    and predict_log_proba.
+    """
+
+    def predict(self, X):
+        """
+        Perform classification on an array of test vectors X.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        C : array, shape = [n_samples]
+            Predicted target values for X
+        """
+        jll = self._joint_log_likelihood(X)
+        y_pred = self.unique_y[np.argmax(jll, axis=1)]
+        return y_pred
+
+    def predict_log_proba(self, X):
+        """
+        Return log-probability estimates for the test vector X.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        C : array-like, shape = [n_samples, n_classes]
+            Returns the log-probability of the sample for each class
+            in the model, where classes are ordered arithmetically.
+        """
+        jll = self._joint_log_likelihood(X)
+        # normalize by P(x) = P(f_1, ..., f_n)
+        log_prob_x = logsum(jll, axis=1)
+        return jll - np.atleast_2d(log_prob_x).T
+
+    def predict_proba(self, X):
+        """
+        Return probability estimates for the test vector X.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        C : array-like, shape = [n_samples, n_classes]
+            Returns the probability of the sample for each class in
+            the model, where classes are ordered arithmetically.
+        """
+        return np.exp(self.predict_log_proba(X))
+
+
+class GaussianNB(BaseNB):
     """
     Gaussian Naive Bayes (GaussianNB)
 
@@ -46,11 +118,11 @@ class GaussianNB(BaseEstimator, ClassifierMixin):
     class_prior : array, shape = [n_classes]
         probability of each class.
 
-    theta : array, shape [n_classes * n_features]
-        mean of each feature for the different class
+    theta : array, shape = [n_classes, n_features]
+        mean of each feature per class
 
-    sigma : array, shape [n_classes * n_features]
-        variance of each feature for the different class
+    sigma : array, shape = [n_classes, n_features]
+        variance of each feature per class
 
     Methods
     -------
@@ -101,37 +173,21 @@ class GaussianNB(BaseEstimator, ClassifierMixin):
         X = np.asanyarray(X)
         y = np.asanyarray(y)
 
-        theta = []
-        sigma = []
-        class_prior = []
-        unique_y = unique(y)
-        for yi in unique_y:
-            theta.append(np.mean(X[y == yi, :], 0))
-            sigma.append(np.var(X[y == yi, :], 0))
-            class_prior.append(np.float(np.sum(y == yi)) / np.size(y))
-        self.theta = np.array(theta)
-        self.sigma = np.array(sigma)
-        self.class_prior = np.array(class_prior)
-        self.unique_y = unique_y
+        self.unique_y = unique_y = np.unique(y)
+        n_classes = unique_y.shape[0]
+        _, n_features = X.shape
+
+        self.theta = np.empty((n_classes, n_features))
+        self.sigma = np.empty((n_classes, n_features))
+        self.class_prior = np.empty(n_classes)
+        for i, y_i in enumerate(unique_y):
+            self.theta[i, :] = np.mean(X[y == y_i, :], axis=0)
+            self.sigma[i, :] = np.var(X[y == y_i, :], axis=0)
+            self.class_prior[i] = np.float(np.sum(y == y_i)) / n_classes
         return self
 
-    def predict(self, X):
-        """
-        Perform classification on an array of test vectors X.
-
-        Parameters
-        ----------
-        X : array-like, shape = [n_samples, n_features]
-
-        Returns
-        -------
-        C : array, shape = [n_samples]
-        """
-        X = np.asanyarray(X)
-        y_pred = self.unique_y[np.argmax(self.predict_proba(X), 1)]
-        return y_pred
-
     def _joint_log_likelihood(self, X):
+        X = np.atleast_2d(X)
         joint_log_likelihood = []
         for i in xrange(np.size(self.unique_y)):
             jointi = np.log(self.class_prior[i])
@@ -142,67 +198,14 @@ class GaussianNB(BaseEstimator, ClassifierMixin):
         joint_log_likelihood = np.array(joint_log_likelihood).T
         return joint_log_likelihood
 
-    def predict_proba(self, X):
-        """
-        Return probability estimates for the test vector X.
 
-        Parameters
-        ----------
-        X : array-like, shape = [n_samples, n_features]
-
-        Returns
-        -------
-        C : array-like, shape = [n_samples, n_classes]
-            Returns the probability of the sample for each class in
-            the model, where classes are ordered by arithmetical
-            order.
-        """
-        X = np.asanyarray(X)
-        joint_log_likelihood = self._joint_log_likelihood(X)
-        proba = np.exp(joint_log_likelihood)
-        proba = proba / np.sum(proba, 1)[:, np.newaxis]
-        return proba
-
-    def predict_log_proba(self, X):
-        """
-        Return log-probability estimates for the test vector X.
-
-        Parameters
-        ----------
-        X : array-like, shape = [n_samples, n_features]
-
-        Returns
-        -------
-        C : array-like, shape = [n_samples, n_classes]
-            Returns the log-probability of the sample for each class
-            in the model, where classes are ordered by arithmetical
-            order.
-        """
-        log_proba = self._joint_log_likelihood(X)
-        # Compute a sum of logs without underflow. Equivalent to:
-        # log_proba -= np.log(np.sum(np.exp(log_proba), axis=1))[:, np.newaxis]
-        B = np.max(log_proba, axis=1)[:, np.newaxis]
-        logaB = log_proba - B
-        sup = logaB > -np.inf
-        aB = np.zeros_like(logaB)
-        aB[sup] = np.exp(logaB[sup])
-        log_proba -= np.log(np.sum(aB, axis=1))[:, np.newaxis] + B
-        return log_proba
-
-
-class BaseDiscreteNB(BaseEstimator, ClassifierMixin):
-    """Abstract base class for Naive Bayes on discrete/categorical data.
+class BaseDiscreteNB(BaseNB):
+    """Abstract base class for naive Bayes on discrete/categorical data
 
     Any estimator based on this class should provide:
 
     __init__
-    _joint_log_likelihood(X)
-        Compute the unnormalized posterior log probability of X,
-        i.e. log P(c) + log P(x|c) for all rows x of X,
-        as an array-like of shape [n_classes, n_samples].
-
-    All other methods are implemented in terms of these using the template
-    method pattern.
+    _joint_log_likelihood(X) as per BaseNB
     """
 
     def fit(self, X, y, class_prior=None):
@@ -228,6 +231,13 @@ class BaseDiscreteNB(BaseEstimator, ClassifierMixin):
         """
         X = atleast2d_or_csr(X)
         y = safe_asanyarray(y)
+
+        if X.shape[0] != y.shape[0]:
+            msg = "X and y have incompatible shapes."
+            if issparse(X):
+                msg += "\nNote: Sparse matrices cannot be indexed w/ boolean \
+                masks (use `indices=True` in CV)."
+            raise ValueError(msg)
 
         self.unique_y, inv_y_ind = unique(y, return_inverse=True)
         n_classes = self.unique_y.size
@@ -267,59 +277,8 @@ class BaseDiscreteNB(BaseEstimator, ClassifierMixin):
 
         return N_c, N_c_i
 
-    def predict(self, X):
-        """
-        Perform classification on an array of test vectors X.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-
-        Returns
-        -------
-        C : array, shape = [n_samples]
-        """
-        joint_log_likelihood = self._joint_log_likelihood(X)
-        y_pred = self.unique_y[np.argmax(joint_log_likelihood, axis=0)]
-
-        return y_pred
-
-    def predict_proba(self, X):
-        """
-        Return probability estimates for the test vector X.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-
-        Returns
-        -------
-        C : array-like, shape = [n_samples, n_classes]
-            Returns the probability of the sample for each class in
-            the model, where classes are ordered by arithmetical
-            order.
-        """
-        return np.exp(self.predict_log_proba(X))
-
-    def predict_log_proba(self, X):
-        """
-        Return log-probability estimates for the test vector X.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-
-        Returns
-        -------
-        C : array-like, shape = [n_samples, n_classes]
-            Returns the log-probability of the sample for each class
-            in the model, where classes are ordered by arithmetical
-            order.
-        """
-        jll = self._joint_log_likelihood(X)
-        # normalize by P(x) = P(f_1, ..., f_n)
-        log_prob_x = logsum(jll[:, np.newaxis])
-        return (jll - log_prob_x).T
+    intercept_ = property(lambda self: self.class_log_prior_)
+    coef_ = property(lambda self: self.feature_log_prob_)
 
 
 class MultinomialNB(BaseDiscreteNB):
@@ -388,16 +347,10 @@ class MultinomialNB(BaseDiscreteNB):
         self.alpha = alpha
         self.fit_prior = fit_prior
 
-    intercept_ = property(lambda self: self.class_log_prior_)
-    coef_ = property(lambda self: self.feature_log_prob_)
-
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
-
         X = atleast2d_or_csr(X)
-
-        jll = safe_sparse_dot(self.feature_log_prob_, X.T)
-        return jll + np.atleast_2d(self.class_log_prior_).T
+        return safe_sparse_dot(X, self.coef_.T) + self.intercept_
 
 
 class BernoulliNB(BaseDiscreteNB):
@@ -495,8 +448,8 @@ class BernoulliNB(BaseDiscreteNB):
 
         neg_prob = np.log(1 - np.exp(self.feature_log_prob_))
         # Compute  neg_prob · (1 - X).T  as  ∑neg_prob - X · neg_prob
-        X_neg_prob = (neg_prob.sum(axis=1).reshape(-1, 1)
-                    - safe_sparse_dot(neg_prob, X.T))
-        jll = safe_sparse_dot(self.feature_log_prob_, X.T) + X_neg_prob
+        X_neg_prob = (neg_prob.sum(axis=1)
+                    - safe_sparse_dot(X, neg_prob.T))
+        jll = safe_sparse_dot(X, self.coef_.T) + X_neg_prob
 
-        return jll + np.atleast_2d(self.class_log_prior_).T
+        return jll + self.intercept_

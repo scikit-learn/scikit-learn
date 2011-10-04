@@ -16,7 +16,9 @@ See http://scikit-learn.sourceforge.net for complete documentation.
 try:
     from . import check_build
 except ImportError:
-    raise ImportError("Please do not forget to run `make` first")
+    raise ImportError("Please do not forget to build the package first: "
+            "run `python setup.py install` or `make`."
+        )
 
 from .base import clone
 

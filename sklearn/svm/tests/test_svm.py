@@ -55,12 +55,26 @@ def test_libsvm_iris():
     pred = svm.libsvm.predict(iris.data, *model)
     assert np.mean(pred == iris.target) > .95
 
-    model = svm.libsvm.fit(iris.data, iris.target.astype(np.float64), kernel='linear')
-    pred = svm.libsvm.predict(iris.data, *model, **{'kernel' : 'linear'})
+    model = svm.libsvm.fit(iris.data,
+            iris.target.astype(np.float64), kernel='linear')
+    pred = svm.libsvm.predict(iris.data, *model, **{'kernel': 'linear'})
     assert np.mean(pred == iris.target) > .95
 
-    pred = svm.libsvm.cross_validation(iris.data, iris.target.astype(np.float64), 5, kernel='linear')
+    pred = svm.libsvm.cross_validation(iris.data,
+            iris.target.astype(np.float64), 5, kernel='linear')
     assert np.mean(pred == iris.target) > .95
+
+
+def test_single_sample_1d():
+    """
+    Test whether SVCs work on a single sample given as a 1-d array
+    """
+
+    clf = svm.SVC().fit(X, Y)
+    clf.predict(X[0])
+
+    clf = svm.LinearSVC().fit(X, Y)
+    clf.predict(X[0])
 
 
 def test_precomputed():
@@ -160,7 +174,7 @@ def test_oneclass():
     assert_array_almost_equal(pred, [-1, -1, -1])
     assert_array_almost_equal(clf.intercept_, [-1.008], decimal=3)
     assert_array_almost_equal(clf.dual_coef_,
-                              [[ 0.632, 0.233, 0.633, 0.234, 0.632, 0.633]],
+                              [[0.632, 0.233, 0.633, 0.234, 0.632, 0.633]],
                               decimal=3)
     assert_raises(NotImplementedError, lambda: clf.coef_)
 
@@ -195,8 +209,7 @@ def test_probability():
         svm.SVC(probability=True),
         svm.NuSVC(probability=True),
         svm.sparse.SVC(probability=True),
-        svm.sparse.NuSVC(probability=True)
-        ):
+        svm.sparse.NuSVC(probability=True)):
 
         clf.fit(iris.data, iris.target)
 
@@ -290,13 +303,15 @@ def test_auto_weight():
 
     assert np.argmax(_get_class_weight('auto', y[unbalanced])[0]) == 2
 
-    for clf in (svm.SVC(kernel='linear'), svm.LinearSVC(), LogisticRegression()):
+    for clf in (svm.SVC(kernel='linear'),
+            svm.LinearSVC(), LogisticRegression()):
         # check that score is better when class='auto' is set.
         y_pred = clf.fit(X[unbalanced], y[unbalanced],
                          class_weight={}).predict(X)
         y_pred_balanced = clf.fit(X[unbalanced], y[unbalanced],
                                   class_weight='auto').predict(X)
-        assert metrics.f1_score(y, y_pred) <= metrics.f1_score(y, y_pred_balanced)
+        assert metrics.f1_score(y, y_pred) <= \
+                metrics.f1_score(y, y_pred_balanced)
 
 
 def test_bad_input():
@@ -318,7 +333,7 @@ def test_bad_input():
                 svm.sparse.LinearSVC()):
         Xf = np.asfortranarray(X)
         assert Xf.flags['C_CONTIGUOUS'] == False
-        yf = np.ascontiguousarray(np.tile(Y, (2,1)).T)
+        yf = np.ascontiguousarray(np.tile(Y, (2, 1)).T)
         yf = yf[:, -1]
         assert yf.flags['F_CONTIGUOUS'] == False
         assert yf.flags['C_CONTIGUOUS'] == False
@@ -337,6 +352,29 @@ def test_bad_input():
     clf = svm.SVC()
     clf.fit(X, Y)
     assert_raises(ValueError, clf.predict, Xt)
+
+
+def test_LinearSVC_parameters():
+    """
+    Test possible parameter combinations in LinearSVC
+    """
+    s = 'Not supported set of arguments: '
+    # generate list of possible parameter combinations
+    params = [(dual, loss, penalty) for dual in [True, False]
+            for loss in ['l1', 'l2', 'lr'] for penalty in ['l1', 'l2']]
+
+    for dual, loss, penalty in params:
+            if loss == 'l1' and penalty == 'l1':
+                assert_raises(ValueError, svm.LinearSVC, penalty=penalty,
+                        loss=loss, dual=dual)
+            elif loss == 'l1' and penalty == 'l2' and dual == False:
+                assert_raises(ValueError, svm.LinearSVC, penalty=penalty,
+                        loss=loss, dual=dual)
+            elif penalty == 'l1' and dual == True:
+                assert_raises(ValueError, svm.LinearSVC, penalty=penalty,
+                        loss=loss, dual=dual)
+            else:
+                svm.LinearSVC(penalty=penalty, loss=loss, dual=dual)
 
 
 def test_LinearSVC():

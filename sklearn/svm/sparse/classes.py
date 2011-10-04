@@ -38,8 +38,7 @@ class SVC(SparseBaseLibSVM, ClassifierMixin):
                          shrinking, probability)
 
 
-
-class NuSVC (SparseBaseLibSVM, ClassifierMixin):
+class NuSVC(SparseBaseLibSVM, ClassifierMixin):
     """NuSVC for sparse matrices (csr).
 
     See :class:`sklearn.svm.NuSVC` for a complete list of parameters
@@ -64,7 +63,6 @@ class NuSVC (SparseBaseLibSVM, ClassifierMixin):
     [ 1.]
     """
 
-
     def __init__(self, nu=0.5, kernel='rbf', degree=3, gamma=0.0,
                  coef0=0.0, shrinking=True, probability=False,
                  tol=1e-3):
@@ -74,9 +72,7 @@ class NuSVC (SparseBaseLibSVM, ClassifierMixin):
                          shrinking, probability)
 
 
-
-
-class SVR (SparseBaseLibSVM, RegressorMixin):
+class SVR(SparseBaseLibSVM, RegressorMixin):
     """SVR for sparse matrices (csr)
 
     See :class:`sklearn.svm.SVR` for a complete list of parameters
@@ -110,10 +106,7 @@ class SVR (SparseBaseLibSVM, RegressorMixin):
                          epsilon, shrinking, probability)
 
 
-
-
-
-class NuSVR (SparseBaseLibSVM, RegressorMixin):
+class NuSVR(SparseBaseLibSVM, RegressorMixin):
     """NuSVR for sparse matrices (csr)
 
     See :class:`sklearn.svm.NuSVC` for a complete list of parameters
@@ -147,8 +140,7 @@ class NuSVR (SparseBaseLibSVM, RegressorMixin):
                          epsilon, shrinking, probability)
 
 
-
-class OneClassSVM (SparseBaseLibSVM):
+class OneClassSVM(SparseBaseLibSVM):
     """NuSVR for sparse matrices (csr)
 
     See :class:`sklearn.svm.NuSVC` for a complete list of parameters
@@ -168,9 +160,9 @@ class OneClassSVM (SparseBaseLibSVM):
                          gamma, coef0, tol, 0.0, nu, 0.0,
                          shrinking, probability)
 
-    def fit(self, X, class_weight={}, sample_weight=[]):
+    def fit(self, X, class_weight=None, sample_weight=None):
         super(OneClassSVM, self).fit(
-            X, [], class_weight=class_weight, ample_weight=sample_weight)
+            X, [], class_weight=class_weight, sample_weight=sample_weight)
 
 
 class LinearSVC(SparseBaseLibLinear, ClassifierMixin,
