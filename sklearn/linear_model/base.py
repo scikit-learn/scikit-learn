@@ -536,7 +536,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         ----------
         X : array or scipy.sparse matrix of shape [n_samples, n_features]
            Whether the numpy.array or scipy.sparse matrix is accepted dependes
-           on the actual implementation. 
+           on the actual implementation.
 
         Returns
         -------
