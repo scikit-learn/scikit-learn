@@ -116,7 +116,7 @@ def safe_sparse_dot(a, b, dense_output=False):
             ret = ret.toarray()
         return ret
     else:
-        return np.dot(a,b)
+        return np.dot(a, b)
 
 
 def fast_svd(M, k, p=None, q=0, transpose='auto', random_state=0):
