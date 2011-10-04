@@ -880,9 +880,10 @@ def permutation_test_score(estimator, X, y, score_func, cv=None,
 
     score_func: callable
         Callable taking as arguments the test targets (y_test) and
-        the predicted targets (y_pred) and returns a float. The returned
-        pvalue differs depending on which score_func is used. See pvalue in the
-        Returns section below for details.
+        the predicted targets (y_pred) and returns a float. The score
+        functions are expected to return a bigger value for a better result
+        otherwise the returned value does not correspond to a p-value (see
+        Returns below for further details).
 
     cv : integer or crossvalidation generator, optional
         If an integer is passed, it is the number of fold (default 3).
@@ -913,10 +914,10 @@ def permutation_test_score(estimator, X, y, score_func, cv=None,
         The scores obtained for each permutations.
 
     pvalue: float
-        The returned value equals p-value if score_func returns bigger numbers
-        for better scores (e.g., zero_one). The returned value equals 1-pvalue
-        if score_func returns smaller numbers for better scores (e.g.,
-        mean_square_error)
+        The returned value equals p-value if `score_func` returns bigger numbers
+        for better scores (e.g., zero_one). If `score_func` is rather a loss
+        function (i.e. when lower is better such as with `mean_square_error`)
+        then this is actually the complement of the p-value:  1 - p-value.
 
     References
     ----------
