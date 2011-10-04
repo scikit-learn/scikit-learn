@@ -143,7 +143,7 @@ class SGDClassifier(BaseSGDClassifier):
                                       self.learning_rate_code, self.eta0,
                                       self.power_t)
 
-        self.coef_ = np.atleast_2d(coef_)
+        self._set_coef(coef_)
         self.intercept_ = np.asarray(intercept_)
 
     def _fit_multiclass(self, X, y):
@@ -173,25 +173,6 @@ class SGDClassifier(BaseSGDClassifier):
         for i, coef, intercept in res:
             self.coef_[i] = coef
             self.intercept_[i] = intercept
-
-    def decision_function(self, X):
-        """Predict signed 'distance' to the hyperplane (aka confidence score)
-
-        Parameters
-        ----------
-        X : array, shape [n_samples, n_features]
-
-        Returns
-        -------
-        array, shape = [n_samples] if n_classes == 2 else [n_samples,n_classes]
-          The signed 'distances' to the hyperplane(s).
-        """
-        X = np.atleast_2d(np.asanyarray(X))
-        scores = np.dot(X, self.coef_.T) + self.intercept_
-        if self.classes.shape[0] == 2:
-            return np.ravel(scores)
-        else:
-            return scores
 
 
 def _train_ova_classifier(i, c, X, y, coef_, intercept_, loss_function,

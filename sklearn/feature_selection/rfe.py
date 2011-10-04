@@ -29,10 +29,8 @@ class RFE(BaseEstimator):
     ----------
     estimator : object
         A supervised learning estimator with a `fit` method that updates a
-        `coef_` attribute that holds the fitted parameters. The first
-        dimension of the `coef_` array must be equal to the number of features
-        of the input dataset of the estimator. Important features must
-        correspond to high absolute values in the `coef_` array.
+        `coef_` attribute that holds the fitted parameters. Important features
+        must correspond to high absolute values in the `coef_` array.
 
         For instance, this is the case for most supervised learning
         algorithms such as Support Vector Classifiers and Generalized
@@ -121,7 +119,11 @@ class RFE(BaseEstimator):
             # Rank the remaining features
             estimator = clone(self.estimator)
             estimator.fit(X[:, features], y)
-            ranks = np.argsort(np.sum(estimator.coef_ ** 2, axis=0))
+
+            if estimator.coef_.ndim > 1:
+                ranks = np.argsort(np.sum(estimator.coef_ ** 2, axis=0))
+            else:
+                ranks = np.argsort(estimator.coef_ ** 2)
 
             # Eliminate the worse features
             threshold = min(step, np.sum(support_) - self.n_features_to_select)
@@ -191,10 +193,8 @@ class RFECV(RFE):
     ----------
     estimator : object
         A supervised learning estimator with a `fit` method that updates a
-        `coef_` attribute that holds the fitted parameters. The first
-        dimension of the `coef_` array must be equal to the number of features
-        of the input dataset of the estimator. Important features must
-        correspond to high absolute values in the `coef_` array.
+        `coef_` attribute that holds the fitted parameters. Important features
+        must correspond to high absolute values in the `coef_` array.
 
         For instance, this is the case for most supervised learning
         algorithms such as Support Vector Classifiers and Generalized

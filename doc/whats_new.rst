@@ -5,6 +5,11 @@
 0.10
 ====
 
+   - Fixed memory leak in in :ref:`svm` module by `Brian Holt`_.
+
+   - Faster tests by `Fabian Pedregosa`_.
+
+
 API changes summary
 -------------------
 
@@ -22,6 +27,18 @@ version 0.9:
     longer supports loading two files at once; use ``load_svmlight_files``
     instead. Also, the (unused) ``buffer_mb`` parameter is gone.
 
+  - Sparse estimators in the :ref:`sgd` module use dense parameter vector 
+    ``coef_`` instead of ``sparse_coef_``. This significantly improves
+    test time performance.
+  
+  - The :ref:`covariance` module now has a robust estimator of
+    covariance, the Minimum Covariance Determinant estimator.
+
+Changelog
+---------
+
+   - Minor refactoring in :ref:`sgd` module; consolidated 
+     dense and sparse predict methods.
 
 .. _changes_0_9:
 
@@ -766,3 +783,5 @@ of commits):
 .. _Lars Buitinck: https://github.com/larsmans
 
 .. _David Warde-Farley: http://www-etud.iro.umontreal.ca/~wardefar/
+
+.. _Brian Holt: http://info.ee.surrey.ac.uk/Personal/B.Holt/
