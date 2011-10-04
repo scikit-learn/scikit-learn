@@ -422,7 +422,7 @@ class BaseSGDClassifier(BaseSGD, ClassifierMixin):
         Parameters
         ----------
         X : array or scipy.sparse matrix of shape [n_samples, n_features]
-           Whether the numpy.array or scipy.sparse matrix is accepted dependes
+           Whether the numpy.array or scipy.sparse matrix is accepted depends
            on the actual implementation
 
         Returns
@@ -535,7 +535,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         Parameters
         ----------
         X : array or scipy.sparse matrix of shape [n_samples, n_features]
-           Whether the numpy.array or scipy.sparse matrix is accepted dependes
+           Whether the numpy.array or scipy.sparse matrix is accepted depends
            on the actual implementation.
 
         Returns
