@@ -21,16 +21,23 @@ from sklearn.cluster import KMeans
 from sklearn.datasets import load_digits
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import scale
+from sklearn.utils import shuffle
 
 np.random.seed(42)
 
 digits = load_digits()
 data = scale(digits.data)
-D = metrics.pairwise_distances(data, metric='euclidean')
+#D = metrics.pairwise_distances(data, metric='euclidean')
 
 n_samples, n_features = data.shape
 n_digits = len(np.unique(digits.target))
 labels = digits.target
+
+data_shuffled, indices_shuffled = shuffle(data, range(n_samples),
+                                          random_state=0)
+sample_size = 300
+data_sample = data_shuffled[:sample_size]
+sample_indices = indices_shuffled[:sample_size]
 
 print "n_digits: %d" % n_digits
 print "n_features: %d" % n_features
@@ -47,8 +54,11 @@ print "Completeness: %0.3f" % metrics.completeness_score(labels, km.labels_)
 print "V-measure: %0.3f" % metrics.v_measure_score(labels, km.labels_)
 print "Adjusted Rand Index: %0.3f" % \
     metrics.adjusted_rand_score(labels, km.labels_)
+#print ("Silhouette Coefficient: %0.3f" %
+#       metrics.silhouette_score(D, km.labels_, metric='precomputed'))
 print ("Silhouette Coefficient: %0.3f" %
-       metrics.silhouette_score(D, km.labels_, metric='precomputed'))
+       metrics.silhouette_score(data_sample, km.labels_[sample_indices],
+                                metric='euclidean'))
 print
 
 print "Raw k-means with random centroid init..."
@@ -61,8 +71,11 @@ print "Completeness: %0.3f" % metrics.completeness_score(labels, km.labels_)
 print "V-measure: %0.3f" % metrics.v_measure_score(labels, km.labels_)
 print "Adjusted Rand Index: %0.3f" % \
     metrics.adjusted_rand_score(labels, km.labels_)
+#print ("Silhouette Coefficient: %0.3f" %
+#       metrics.silhouette_score(D, km.labels_, metric='precomputed'))
 print ("Silhouette Coefficient: %0.3f" %
-       metrics.silhouette_score(D, km.labels_, metric='precomputed'))
+       metrics.silhouette_score(data, km.labels_[sample_indices],
+                                metric='euclidean'))
 print
 
 print "Raw k-means with PCA-based centroid init..."
@@ -78,8 +91,11 @@ print "Completeness: %0.3f" % metrics.completeness_score(labels, km.labels_)
 print "V-measure: %0.3f" % metrics.v_measure_score(labels, km.labels_)
 print "Adjusted Rand Index: %0.3f" % \
     metrics.adjusted_rand_score(labels, km.labels_)
+#print ("Silhouette Coefficient: %0.3f" %
+#       metrics.silhouette_score(D, km.labels_, metric='precomputed'))
 print ("Silhouette Coefficient: %0.3f" %
-       metrics.silhouette_score(D, km.labels_, metric='precomputed'))
+       metrics.silhouette_score(data, km.labels_[sample_indices],
+                                metric='euclidean'))
 print
 
 # Plot k-means++ form on a 2D plot using PCA
