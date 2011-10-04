@@ -159,7 +159,7 @@ floating point values instead of integer values::
     >>> clf = tree.DecisionTreeRegressor()
     >>> clf = clf.fit(X, y)
     >>> clf.predict([[1, 1]])
-    array([ 2.5])
+    array([ 0.5])
 
 
 .. topic:: Examples:
@@ -292,7 +292,7 @@ split :math:`\theta = (j, t_m)` consisting of a feature :math:`j` and threshold
 
 .. math::
     
-    Q_{left}(\theta) = {(x, y) | x_j < t_m}
+    Q_{left}(\theta) = {(x, y) | x_j <= t_m}
     
     Q_{right}(\theta) = Q \setminus Q_{left}(\theta)
 

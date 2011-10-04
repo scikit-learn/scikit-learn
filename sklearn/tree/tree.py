@@ -89,7 +89,7 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
             else:
                 feature = "X[%s]" % node.feature
 
-            return "%s < %s\\nerror = %s\\nsamples = %s\\nvalue = %s" \
+            return "%s <= %s\\nerror = %s\\nsamples = %s\\nvalue = %s" \
                    % (feature, node.threshold,
                       node.error, node.samples, node.value)
 
@@ -189,7 +189,7 @@ def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
                 y = current_y
                 sample_mask = np.ones((X.shape[0],), dtype=np.bool)
 
-            split = X[:, feature] < threshold
+            split = X[:, feature] <= threshold
             left_partition = recursive_partition(X, X_argsorted, y,
                                                  split & sample_mask,
                                                  depth + 1)
