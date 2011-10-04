@@ -41,7 +41,8 @@ print "V-measure: %0.3f" % metrics.v_measure_score(labels_true, labels)
 print "Adjusted Rand Index: %0.3f" % \
     metrics.adjusted_rand_score(labels_true, labels)
 D = (S / np.min(S))
-print "Silhouette Coefficient: %0.3f" % metrics.silhouette_score(D, labels)
+print ("Silhouette Coefficient: %0.3f" %
+       metrics.silhouette_score(D, labels, metric='precomputed'))
 
 ##############################################################################
 # Plot result

@@ -10,7 +10,9 @@
 import numpy as np
 
 
-def silhouette_score(distances, labels):
+from ..pairwise import pairwise_distances
+
+def silhouette_score(X, labels, metric='euclidean', **kwds):
     """Compute the mean Silhouette Coefficient of all samples.
 
     The Silhouette Coefficient is calculated using the mean intra-cluster
@@ -28,11 +30,23 @@ def silhouette_score(distances, labels):
 
     Parameters
     ----------
-    distances : array, shape = [n_samples, n_samples]
-                Pairwise distance matrix between each sample.
+    X: array [n_samples_a, n_samples_a] if metric == "precomputed", or,
+             [n_samples_a, n_features] otherwise
+        Array of pairwise distances between samples, or a feature array.
 
     labels : array, shape = [n_samples]
              label values for each sample
+
+    metric: string, or callable
+        The metric to use when calculating distance between instances in a
+        feature array. If metric is a string, it must be one of the options
+        allowed by metrics.pairwise.pairwise_distances. If X is the distance
+        array itself, use "precomputed" as the metric.
+
+    **kwds: optional keyword parameters
+        Any further parameters are passed directly to the distance function.
+        If using a scipy.spatial.distance metric, the parameters are still
+        metric dependent. See the scipy docs for usage examples.
 
     Returns
     -------
@@ -48,10 +62,10 @@ def silhouette_score(distances, labels):
     http://en.wikipedia.org/wiki/Silhouette_(clustering)
 
     """
-    return np.mean(silhouette_samples(distances, labels))
+    return np.mean(silhouette_samples(X, labels, metric=metric, **kwds))
 
 
-def silhouette_samples(distances, labels):
+def silhouette_samples(X, labels, metric='euclidean', **kwds):
     """Compute the Silhouette Coefficient for each sample.
 
     The Silhoeutte Coefficient is a measure of how well samples are clustered
@@ -71,11 +85,23 @@ def silhouette_samples(distances, labels):
 
     Parameters
     ----------
-    distances : array, shape = [n_samples, n_samples]
-                Pairwise distance matrix between each sample.
+    X: array [n_samples_a, n_samples_a] if metric == "precomputed", or,
+             [n_samples_a, n_features] otherwise
+        Array of pairwise distances between samples, or a feature array.
 
     labels : array, shape = [n_samples]
              label values for each sample
+
+    metric: string, or callable
+        The metric to use when calculating distance between instances in a
+        feature array. If metric is a string, it must be one of the options
+        allowed by metrics.pairwise.pairwise_distances. If X is the distance
+        array itself, use "precomputed" as the metric.
+
+    **kwds: optional keyword parameters
+        Any further parameters are passed directly to the distance function.
+        If using a scipy.spatial.distance metric, the parameters are still
+        metric dependent. See the scipy docs for usage examples.
 
     Returns
     -------
@@ -91,6 +117,7 @@ def silhouette_samples(distances, labels):
     http://en.wikipedia.org/wiki/Silhouette_(clustering)
 
     """
+    distances = pairwise_distances(X, metric=metric, **kwds)
     n = labels.shape[0]
     A = np.array([_intra_cluster_distance(distances[i], labels, i)
                   for i in range(n)])
