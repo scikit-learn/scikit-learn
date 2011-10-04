@@ -41,7 +41,7 @@ test-coverage:
 test: test-code test-doc
 
 trailing-spaces:
-	find -name "*.py" |xargs sed -i 's/[ \t]*$$//'
+	find . -name "*.py" | xargs perl -pi -e 's/[ \t]*$$//'
 
 cython:
 	find sklearn -name "*.pyx" | xargs $(CYTHON)
