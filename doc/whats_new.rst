@@ -28,6 +28,9 @@ version 0.9:
   - Sparse estimators in the :ref:`sgd` module use dense parameter vector 
     ``coef_`` instead of ``sparse_coef_``. This significantly improves
     test time performance.
+  
+  - The :ref:`covariance` module now has a robust estimator of
+    covariance, the Minimum Covariance Determinant estimator.
 
 Changelog
 ---------
