@@ -110,7 +110,7 @@ class SVC(BaseLibSVM, ClassifierMixin):
 
     probability: boolean, optional (default=False)
         Whether to enable probability estimates. This must be enabled prior
-        to calling prob_predict.
+        to calling predict_proba.
 
     shrinking: boolean, optional (default=True)
         Whether to use the shrinking heuristic.
@@ -194,7 +194,7 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
 
     probability: boolean, optional (default=False)
         Whether to enable probability estimates. This must be enabled prior
-        to calling prob_predict.
+        to calling predict_proba.
 
     shrinking: boolean, optional (default=True)
         Whether to use the shrinking heuristic.
@@ -302,7 +302,7 @@ class SVR(BaseLibSVM, RegressorMixin):
 
     probability: boolean, optional (default=False)
         Whether to enable probability estimates. This must be enabled prior
-        to calling prob_predict.
+        to calling predict_proba.
 
     shrinking: boolean, optional (default=True)
         Whether to use the shrinking heuristic.
@@ -410,7 +410,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
 
     probability: boolean, optional (default=False)
         Whether to enable probability estimates. This must be enabled prior
-        to calling prob_predict.
+        to calling predict_proba.
 
     shrinking: boolean, optional (default=True)
         Whether to use the shrinking heuristic.

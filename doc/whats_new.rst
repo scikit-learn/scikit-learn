@@ -1,5 +1,43 @@
 .. currentmodule:: sklearn
 
+.. _changes_0_10:
+
+0.10
+====
+
+   - Faster tests by Fabian Pedregosa.
+
+
+API changes summary
+-------------------
+
+Here are the code migration instructions when updgrading from scikit-learn
+version 0.9:
+
+  - Some estimators that may overwrite their inputs to save memory previously
+    had ``overwrite_`` parameters; these have been replaced with ``copy_``
+    parameters with exactly the opposite meaning.
+
+    This particularly affects some of the estimators in ``linear_models``.
+    The default behavior is still to copy everything passed in.
+
+  - The SVMlight dataset loader ``sklearn.datasets.load_svmlight_file`` no
+    longer supports loading two files at once; use ``load_svmlight_files``
+    instead. Also, the (unused) ``buffer_mb`` parameter is gone.
+
+  - Sparse estimators in the :ref:`sgd` module use dense parameter vector 
+    ``coef_`` instead of ``sparse_coef_``. This significantly improves
+    test time performance.
+  
+  - The :ref:`covariance` module now has a robust estimator of
+    covariance, the Minimum Covariance Determinant estimator.
+
+Changelog
+---------
+
+   - Minor refactoring in :ref:`sgd` module; consolidated 
+     dense and sparse predict methods.
+
 .. _changes_0_9:
 
 0.9
@@ -112,6 +150,11 @@ Changelog
      and :func:`metrics.pairwise.pairwise_kernels` by Robert Layton
 
    - :class:`Mini-Batch K-Means <cluster.MiniBatchKMeans>` by Nelle Varoquaux and Peter Prettenhofer.
+
+   - :ref:`mldata` utilities by Pietro Berkes.
+
+   - :ref:`olivetti_faces` by `David Warde-Farley`_.
+
 
 API changes summary
 -------------------
@@ -736,3 +779,5 @@ of commits):
 .. _Parietal Team: http://parietal.saclay.inria.fr/
 
 .. _Lars Buitinck: https://github.com/larsmans
+
+.. _David Warde-Farley: http://www-etud.iro.umontreal.ca/~wardefar/
