@@ -11,10 +11,12 @@ import numpy as np
 
 from scipy import linalg
 
+
 def norm(v):
     v = np.asarray(v)
     __nrm2, = linalg.get_blas_funcs(['nrm2'], [v])
     return __nrm2(v)
+
 
 def _fast_logdet(A):
     """
@@ -56,24 +58,26 @@ else:
 try:
     factorial = math.factorial
 except AttributeError:
-     # math.factorial is only available in Python >= 2.6
-     import operator
-     def factorial(n):
-         # don't use reduce operator or 2to3 will fail.
-         # ripped from http://www.joelbdalley.com/page.pl?38
-         # Ensure that n is a Natural number
-         n = abs(int(n))
-         if n < 1: n = 1
+    # math.factorial is only available in Python >= 2.6
+    import operator
 
-         # Store n! in variable x
-         x = 1
+    def factorial(n):
+        # don't use reduce operator or 2to3 will fail.
+        # ripped from http://www.joelbdalley.com/page.pl?38
+        # Ensure that n is a Natural number
+        n = abs(int(n))
+        if n < 1:
+            n = 1
 
-         # Compute n!
-         for i in range(1, n + 1):
-             x = i * x
+        # Store n! in variable x
+        x = 1
 
-         # Return n!
-         return x
+        # Compute n!
+        for i in range(1, n + 1):
+            x = i * x
+
+        # Return n!
+        return x
 
 
 try:
@@ -91,8 +95,8 @@ except AttributeError:
             yield []
         else:
             for i in xrange(len(seq)):
-                for cc in combinations(seq[i+1:], r-1):
-                    yield [seq[i]]+cc
+                for cc in combinations(seq[i + 1:], r - 1):
+                    yield [seq[i]] + cc
 
 
 def density(w, **kwargs):
