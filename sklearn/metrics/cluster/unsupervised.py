@@ -6,8 +6,9 @@
 
 import numpy as np
 
-from ...utils import shuffle, check_random_state
+from ...utils import check_random_state
 from ..pairwise import pairwise_distances
+
 
 def silhouette_score(X, labels, metric='euclidean',
                       sample_size=None, random_state=None, **kwds):
@@ -42,8 +43,8 @@ def silhouette_score(X, labels, metric='euclidean',
         array itself, use "precomputed" as the metric.
 
     sample_size: int or None
-        The size of the sample to use when computing the Silhouette Coefficient.
-        If sample_size is None, no sampling is used.
+        The size of the sample to use when computing the Silhouette
+        Coefficient. If sample_size is None, no sampling is used.
 
     random_state: numpy.RandomState, optional
         The generator used to initialize the centers. Defaults to numpy.random.
@@ -139,7 +140,7 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
 
 
 def _intra_cluster_distance(distances_row, labels, i):
-    """ Calculate the mean intra-cluster distance for sample i.
+    """Calculate the mean intra-cluster distance for sample i.
 
     Parameters
     ----------
@@ -165,7 +166,7 @@ def _intra_cluster_distance(distances_row, labels, i):
 
 
 def _nearest_cluster_distance(distances_row, labels, i):
-    """ Calculate the mean nearest-cluster distance for sample i.
+    """Calculate the mean nearest-cluster distance for sample i.
 
     Parameters
     ----------

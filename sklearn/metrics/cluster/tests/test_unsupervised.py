@@ -20,12 +20,10 @@ def test_silhouette():
     assert(silhouette == silhouette_metric)
     # Test with sampling
     silhouette = silhouette_score(D, y, metric='precomputed',
-                                  sample_size=int(X.shape[0]/2))
+                                  sample_size=int(X.shape[0] / 2))
     assert(silhouette > 0)
     # Test with sparse X
     X_sparse = csr_matrix(X)
-    D = pairwise_distances(X, metric='euclidean')
+    D = pairwise_distances(X_sparse, metric='euclidean')
     silhouette = silhouette_score(D, y, metric='precomputed')
     assert(silhouette > 0)
-    
-    
