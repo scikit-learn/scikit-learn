@@ -5,6 +5,8 @@
 0.10
 ====
 
+   - Fixed memory leak in in :ref:`svm` module.
+
    - Faster tests by Fabian Pedregosa.
 
 
