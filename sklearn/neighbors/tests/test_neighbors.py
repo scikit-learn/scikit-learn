@@ -8,8 +8,6 @@ from scipy.sparse import (bsr_matrix, coo_matrix, csc_matrix, csr_matrix,
 from scipy.spatial import cKDTree
 
 from sklearn import neighbors, datasets
-from sklearn.utils.testing import assert_warns
-from sklearn.neighbors.base import warn_equidistant
 
 # load and shuffle iris dataset
 iris = datasets.load_iris()
@@ -23,23 +21,9 @@ SPARSE_OR_DENSE = SPARSE_TYPES + (np.asarray,)
 
 ALGORITHMS = ('ball_tree', 'brute', 'kd_tree', 'auto')
 
+
 def test_warn_on_equidistant(n_samples=100, n_features=3, k=3):
     """test the production of a warning if equidistant points are discarded"""
-    # If the warning has been called earlier, it will be suppressed on further
-    # calls.
-    # The simplefilter statement should take care of this, but there's a bug
-    # in the warnings module: http://bugs.python.org/issue4180
-
-    filters = warnings.filters[:]
-    warnings.simplefilter('always', UserWarning)  # doesn't work: see above
-
-    # hack to fix this: we'll override the warning call with a new message
-    import sklearn.neighbors.base
-    warn_equidistant = sklearn.neighbors.base.warn_equidistant
-    sklearn.neighbors.base.warn_equidistant = \
-        lambda: warnings.warn("test_neighbors.py unused warning hack")
-    # this will be set back to the original function below
-
     X = np.random.random(size=(n_samples, n_features))
     q = np.random.random(size=n_features)
 
@@ -53,23 +37,31 @@ def test_warn_on_equidistant(n_samples=100, n_features=3, k=3):
 
     y = np.zeros(X.shape[0])
 
-    for algorithm in ('ball_tree', 'brute'):
-        neigh = neighbors.KNeighborsClassifier(n_neighbors=k,
-                                               algorithm=algorithm)
-        neigh.fit(X, y)
+    # change warnings.warn to catch the message
+    warn_queue = []
+    warnings_warn = warnings.warn
+    warnings.warn = lambda msg: warn_queue.append(msg)
 
-        assert_warns(UserWarning, neigh.predict, q)
+    expected_message = ("kneighbors: neighbor k+1 and neighbor k "
+                        "have the same distance: results will be "
+                        "dependent on data order.")
 
-        neigh = neighbors.KNeighborsRegressor(n_neighbors=k,
-                                              algorithm=algorithm)
-        neigh.fit(X, y)
+    algorithms = ('ball_tree', 'brute')
+    estimators = (neighbors.KNeighborsClassifier,
+                  neighbors.KNeighborsRegressor)
 
-        assert_warns(UserWarning, neigh.predict, q)
+    for algorithm in algorithms:
+        for estimator in estimators:
+            neigh = estimator(n_neighbors=k, algorithm=algorithm)
+            neigh.fit(X, y)
+            neigh.predict(q)
 
-    warnings.filters = filters
+            assert len(warn_queue) == 1
+            assert warn_queue[0] == expected_message
+            warn_queue = []
 
-    # hack: set function back to its original
-    sklearn.neighbors.base.warn_equidistant = warn_equidistant
+    # restore default behavior
+    warnings.warn = warnings_warn
 
 
 def test_unsupervised_kneighbors(n_samples=20, n_features=5,
