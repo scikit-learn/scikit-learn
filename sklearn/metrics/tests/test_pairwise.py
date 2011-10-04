@@ -72,7 +72,7 @@ def test_pairwise_distances():
     assert_raises(TypeError, pairwise_distances, X_sparse, metric="minkowski")
     assert_raises(TypeError, pairwise_distances, X, Y_sparse,
                   metric="minkowski")
-    
+
 
 def test_pairwise_kernels():
     """ Test the pairwise_kernels helper function. """
