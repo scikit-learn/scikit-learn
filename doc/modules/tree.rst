@@ -19,7 +19,7 @@ learn from data to approximate a sine curve be a set of lines.
 
 The advantages of Decision Trees are:
 
-    - Simple to understand and interpret.  Trees can be visualised.
+    - Simple to understand and interpret. Trees can be visualised.
 
     - Requires little data preparation. Other techniques often require data
       normalisation, dummy variables need to be created and blank values to
@@ -51,9 +51,10 @@ The disadvantages of Decision Trees include:
       number of samples required at a leaf node or setting the maximum
       depth of the tree are necessary to avoid this problem.
 
-    - Decision trees can be unstable because small variations in the data might
-      result in a completely different tree being generated.  This problem
-      is mitigated by using decision trees within an ensemble.
+    - Decision trees can be unstable because small variations in the
+      data might result in a completely different tree being generated.
+      This problem is mitigated by using decision trees within an
+      ensemble.
 
     - The problem of learning an optimal decision tree is known to be
       NP-complete under several aspects of optimality and even for simple
@@ -90,15 +91,14 @@ the class labels for the training samples::
     >>> clf = tree.DecisionTreeClassifier()
     >>> clf = clf.fit(X, Y)
 
-
 After being fitted, the model can then be used to predict new values::
 
     >>> clf.predict([[2., 2.]])
     array([1])
 
-:class:`DecisionTreeClassifier` is capable of both binary (where the labels are
-[-1, 1]) classification and multiclass (where the labels are [0, ..., K-1])
-classification.
+:class:`DecisionTreeClassifier` is capable of both binary (where the
+labels are [-1, 1]) classification and multiclass (where the labels are
+[0, ..., K-1]) classification.
 
 Using the Iris dataset, we can construct a tree as follows::
 
@@ -108,9 +108,10 @@ Using the Iris dataset, we can construct a tree as follows::
     >>> clf = tree.DecisionTreeClassifier()
     >>> clf = clf.fit(iris.data, iris.target)
 
-Once trained, we can export the tree in `Graphviz <http://www.graphviz.org/>`_ format
-using the :class:`GraphvizExporter` exporter. Below is an example export of a tree
-trained on the entire iris dataset::
+Once trained, we can export the tree in `Graphviz
+<http://www.graphviz.org/>`_ format using the :class:`GraphvizExporter`
+exporter. Below is an example export of a tree trained on the entire
+iris dataset::
 
     >>> from StringIO import StringIO
     >>> out = StringIO()
@@ -244,36 +245,38 @@ Tips on Practical Use
 Tree algorithms: ID3, C4.5, C5.0 and CART
 ==========================================
 
-What are all the various decision tree algorithms and how do they differ from
-each other? Which one is implemented in scikit-learn?
+What are all the various decision tree algorithms and how do they differ
+from each other? Which one is implemented in scikit-learn?
 
-[ID3](http://en.wikipedia.org/wiki/ID3_algorithm) (Iterative Dichotomiser 3)
-was developed in 1986 by Ross Quinlan.  The algorithm creates a multiway tree,
-finding for each node (i.e. in a greedy manner) the categorical feature that
-will yield the largest information gain for categorical targets. Trees are
-grown to their maximum size and then a pruning step is usually applied to
-improve the ability of the tree to generalise to unseen data.
+ID3_ (Iterative Dichotomiser 3) was developed in 1986 by Ross Quinlan.
+The algorithm creates a multiway tree, finding for each node (i.e. in
+a greedy manner) the categorical feature that will yield the largest
+information gain for categorical targets. Trees are grown to their
+maximum size and then a pruning step is usually applied to improve the
+ability of the tree to generalise to unseen data.
 
-C4.5 is the successor to ID3 and removed the
-restriction that features must be categorical by dynamically defining a
-discrete attribute (based on numerical variables) that partitions the
-continuous attribute value into a discrete set of intervals. C4.5 converts
-the trained trees (i.e. the output of the ID3 algorithm) into sets of
-if-then rules.  These accuracy of each rule is then evaluated to determine
-the order in which they should be applied. Pruning is done by removing a
-rule's precondition if the accuracy of the rule improves without it.
+C4.5 is the successor to ID3 and removed the restriction that features
+must be categorical by dynamically defining a discrete attribute (based
+on numerical variables) that partitions the continuous attribute value
+into a discrete set of intervals. C4.5 converts the trained trees
+(i.e. the output of the ID3 algorithm) into sets of if-then rules.
+These accuracy of each rule is then evaluated to determine the order
+in which they should be applied. Pruning is done by removing a rule's
+precondition if the accuracy of the rule improves without it.
 
 C5.0 is Quinlan's latest version release under a proprietary license.
-It uses less memory and builds smaller rulesets than C4.5 while being more
-accurate.
+It uses less memory and builds smaller rulesets than C4.5 while being
+more accurate.
 
-[CART](http://en.wikipedia.org/wiki/Predictive_analytics#Classification_and_regression_trees)
-(Classification and Regression Trees)is very similar to C4.5, but it
-differs in that it supports numerical target variables (regression) and
-does not compute rule sets. CART constructs binary trees using the feature and
-threshold that yield the largest information gain at each node.
+CART_ (Classification and Regression Trees) is very similar to C4.5, but
+it differs in that it supports numerical target variables (regression) and
+does not compute rule sets. CART constructs binary trees using the feature
+and threshold that yield the largest information gain at each node.
 
-Scikit-learn uses an optimised version of the CART algorithm.
+scikit-learn uses an optimised version of the CART algorithm.
+
+.. _ID3: http://en.wikipedia.org/wiki/ID3_algorithm
+.. _CART: http://en.wikipedia.org/wiki/Predictive_analytics#Classification_and_regression_trees
 
 .. _tree_mathematical_formulation:
 
@@ -284,10 +287,10 @@ Given training vectors :math:`x_i \in R^n`, i=1,..., l and a label vector
 :math:`y \in R^l`, a decision tree recursively partitions the space such
 that the samples with the same labels are grouped together.
 
-Let the data at node :math:`m` be represented by :math:`Q`. For each candidate
-split :math:`\theta = (j, t_m)` consisting of a feature :math:`j` and threshold
-:math:`t_m`, partition the data into :math:`Q_{left}(\theta)` and
-:math:`Q_{right}(\theta)` subsets
+Let the data at node :math:`m` be represented by :math:`Q`. For
+each candidate split :math:`\theta = (j, t_m)` consisting of a
+feature :math:`j` and threshold :math:`t_m`, partition the data into
+:math:`Q_{left}(\theta)` and :math:`Q_{right}(\theta)` subsets
 
 .. math::
 
@@ -295,8 +298,8 @@ split :math:`\theta = (j, t_m)` consisting of a feature :math:`j` and threshold
 
     Q_{right}(\theta) = Q \setminus Q_{left}(\theta)
 
-The impurity at :math:`m` is computed using an impurity function :math:`H()`,
-the choice of which depends on the task being solved
+The impurity at :math:`m` is computed using an impurity function
+:math:`H()`, the choice of which depends on the task being solved
 (classification or regression)
 
 .. math::
@@ -310,9 +313,9 @@ Select the parameters that minimises the impurity
 
     \theta^* = argmin_\theta  G(Q, \theta)
 
-Recurse for subsets :math:`Q_{left}(\theta^*)` and :math:`Q_{right}(\theta^*)`
-until the maximum allowable depth is reached, :math:`N_m < min\_samples` or
-:math:`N_m = 1`.
+Recurse for subsets :math:`Q_{left}(\theta^*)` and
+:math:`Q_{right}(\theta^*)` until the maximum allowable depth is reached,
+:math:`N_m < min\_samples` or :math:`N_m = 1`.
 
 Classification criteria
 -----------------------
@@ -354,7 +357,7 @@ criterion to minimise is the Mean Squared Error
 
 .. math::
 
-	c_m = \frac{1}{N_m} \sum_{i \in N_m} y_i
+    c_m = \frac{1}{N_m} \sum_{i \in N_m} y_i
 
     H(X_m) = \frac{1}{N_m} \sum_{i \in N_m} (y_i - c_m)^2
 
