@@ -14,6 +14,7 @@ from itertools import cycle, izip
 import numpy as np
 import scipy.sparse as sp
 
+from ..utils.extmath import norm
 from ..base import BaseEstimator
 from ..metrics.pairwise import euclidean_distances
 from ..utils import check_arrays
@@ -748,14 +749,19 @@ class MiniBatchKMeans(KMeans):
             _mini_batch_step = _mini_batch_step_dense
             tol = np.mean(np.var(X_shuffled, axis=0)) * self.tol
 
+        # pre-allocate a copy of the cluster centers
+        old_centers = self.cluster_centers_.copy()
+
         for i, batch_slice in izip(xrange(n_iterations), cycle(batch_slices)):
-            old_centers = self.cluster_centers_.copy()
             self.counts, self.cluster_centers_ = _mini_batch_step(
                             X_shuffled, batch_slice,
                             self.cluster_centers_, self.counts,
                             x_squared_norms=x_squared_norms)
 
-            squared_delta = np.sum((old_centers - self.cluster_centers_) ** 2)
+            # inplace difference to avoid memory allocation for computing a
+            # difference between two sets of vectors
+            old_centers -= self.cluster_centers_
+            squared_delta = norm(old_centers) ** 2
             if self.verbose:
                 print 'Minibatch iteration %d/%d: change = %f' % (
                     i + 1, n_iterations, squared_delta)
@@ -763,6 +769,8 @@ class MiniBatchKMeans(KMeans):
                 if self.verbose:
                     print 'Converged to similar centers at iteration', i
                 break
+            if i < n_iterations - 1:
+                old_centers[:] = self.cluster_centers_
 
         if self.compute_labels:
             if self.verbose:

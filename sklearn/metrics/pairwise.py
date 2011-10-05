@@ -162,7 +162,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     distances *= -2
     distances += XX
     distances += YY
-    distances = np.maximum(distances, 0)
+    np.maximum(distances, 0, distances)
 
     if X is Y:
         # Ensure that distances between vectors and themselves are set to 0.0.

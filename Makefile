@@ -50,3 +50,9 @@ ctags:
 	# make tags for symbol based navigation in emacs and vim
 	# Install with: sudo apt-get install exuberant-ctags
 	$(CTAGS) -R *
+
+doc: inplace
+	make -C doc html
+
+doc-noplot: inplace
+	make -C doc html-noplot

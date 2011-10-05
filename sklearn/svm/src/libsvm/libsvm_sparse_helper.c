@@ -400,6 +400,8 @@ int free_model_SV(struct svm_csr_model *model)
     int i;
     for (i=model->l-1; i>=0; --i) free(model->SV[i]);
     /* svn_destroy_model frees model->SV */
+    for (i=0; i < model->nr_class-1 ; ++i) free(model->sv_coef[i]);
+    /* svn_destroy_model frees model->sv_coef */
     return 0;
 }
 
