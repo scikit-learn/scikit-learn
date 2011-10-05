@@ -11,9 +11,9 @@ print __doc__
 import random
 import pylab as pl
 import numpy as np
-from scikits.learn import svm, datasets
-from scikits.learn.metrics import precision_recall_curve
-from scikits.learn.metrics import auc
+from sklearn import svm, datasets
+from sklearn.metrics import precision_recall_curve
+from sklearn.metrics import auc
 
 # import some data to play with
 iris = datasets.load_iris()
@@ -40,7 +40,6 @@ precision, recall, thresholds = precision_recall_curve(y[half:], probas_[:,1])
 area = auc(recall, precision)
 print "Area Under Curve: %0.2f" % area
 
-pl.figure(-1)
 pl.clf()
 pl.plot(recall, precision, label='Precision-Recall curve')
 pl.xlabel('Recall')

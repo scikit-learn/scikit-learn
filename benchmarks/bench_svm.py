@@ -32,8 +32,8 @@ def bench_scikit(X, Y):
     """
     bench with scikit-learn bindings on libsvm
     """
-    import scikits.learn
-    from scikits.learn.svm import SVC
+    import sklearn
+    from sklearn.svm import SVC
 
     gc.collect()
 
@@ -125,9 +125,6 @@ if __name__ == '__main__':
 
     # now do a bench where the number of points is fixed
     # and the variable is the number of dimensions
-    from scikits.learn.datasets.samples_generator import friedman, \
-                                                         sparse_uncorrelated
-
     scikit_results = []
     svm_results = []
     mvpa_results = []

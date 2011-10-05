@@ -6,8 +6,8 @@ Data comes from a random square matrix.
 """
 from datetime import datetime
 import numpy as np
-from scikits.learn import linear_model
-from scikits.learn.utils.bench import total_seconds
+from sklearn import linear_model
+from sklearn.utils.bench import total_seconds
 
 
 if __name__ == '__main__':
@@ -42,7 +42,7 @@ if __name__ == '__main__':
         time_ols[i] = total_seconds(datetime.now() - start)
 
         start = datetime.now()
-        lasso = linear_model.LassoLARS()
+        lasso = linear_model.LassoLars()
         lasso.fit(X, Y)
         time_lasso[i] = total_seconds(datetime.now() - start)
 
@@ -53,6 +53,6 @@ if __name__ == '__main__':
     pl.plot(dimensions, time_ols, color='g')
     pl.plot(dimensions, time_lasso, color='b')
 
-    pl.legend(['Ridge', 'OLS', 'LassoLARS'])
+    pl.legend(['Ridge', 'OLS', 'LassoLars'])
     pl.axis('tight')
     pl.show()

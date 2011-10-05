@@ -1,7 +1,3 @@
-"""
-Matrix decomposition algorithms
-"""
-
-from .nmf import NMF, ProjectedGradientNMF
-from .pca import PCA, RandomizedPCA, ProbabilisticPCA, KernelPCA
-from .fastica_ import FastICA, fastica
+import warnings
+warnings.warn('scikits.learn namespace is deprecated, please use sklearn instead')
+from sklearn.decomposition import *

@@ -2,7 +2,7 @@
 Contributing
 ============
 
-This project is a community effort, and everyone is welcomed to
+This project is a community effort, and everyone is welcome to
 contribute.
 
 The project is hosted on http://github.com/scikit-learn/scikit-learn
@@ -10,11 +10,11 @@ The project is hosted on http://github.com/scikit-learn/scikit-learn
 Submitting a bug report
 =======================
 
-In case you experience difficulties using the package, do not hesitate
+In case you experience issues using the package, do not hesitate
 to submit a ticket to the
 `Bug Tracker <http://github.com/scikit-learn/scikit-learn/issues>`_.
 
-You are also welcomed to post there feature requests and patches.
+You are also welcome to post there feature requests or links to pull-requests.
 
 .. _git_repo:
 
@@ -46,13 +46,10 @@ Contributing code
 
 .. note:
 
-  Before to starting to work on a non trivial new feature, it highly advised
-  to discuss it on the developer mailing list.
+  To avoid duplicated work it is highly advised to contact the developers
+  mailing list before starting work on a non-trivial feature.
 
   https://lists.sourceforge.net/lists/listinfo/scikit-learn-general
-
-  The goal is to avoid duplicated work (this has occurred several times in the
-  past).
 
 
 How to contribute
@@ -96,38 +93,23 @@ this case, replace step 4 by step 5:
         $ git commit
         $ git push origin my-feature
 
-When you are ready, and you have pushed your changes on your github repo,
-go the web page of the repo, and click on 'Pull request' to send us a
-pull request. Send us a mail with your pull request, and we can look at
-your changes, and integrate them.
+When you are ready, and you have pushed your changes on your github repo, go
+the web page of the repo, and click on 'Pull request' to send us a pull
+request. This will send an email to the commiters, but might also send an
+email to the mailing list in order to get more visibility.
 
-**Before asking for a pull or a review**, please check that your contribution
-complies with the following rules:
+It is recommented to check that your contribution complies with the following
+rules before submitting a pull request:
 
     * Follow the `coding-guidelines`_ (see below).
 
     * All public methods should have informative docstrings with sample
       usage presented as doctests when appropriate.
 
-    * Code with a good unittest coverage (at least 80%), check with::
-
-        $ pip install nose coverage
-        $ nosetests --with-coverage path/to/tests_for_package
-
     * All other tests pass when everything is rebuilt from scrath, under Unix,
       check with (from the toplevel source folder)::
 
         $ make
-
-    * No pyflakes warnings, check with::
-
-        $ pip install pyflakes
-        $ pyflakes path/to/module.py
-
-    * No PEP8 warnings, check with::
-
-        $ pip install pep8
-        $ pep8 path/to/module.py
 
     * At least one example script in the ``examples/`` folder. Have a look at
       other examples for reference. Example should demonstrate why this method
@@ -144,6 +126,24 @@ complies with the following rules:
       dimensionality: n_features is expected to be lower than 100".
 
       To build the documentation see `documentation`_ below.
+
+You can also check for common programming errors with the following tools:
+
+    * Code with a good unittest coverage (at least 80%), check with::
+
+        $ pip install nose coverage
+        $ nosetests --with-coverage path/to/tests_for_package
+
+    * No pyflakes warnings, check with::
+
+        $ pip install pyflakes
+        $ pyflakes path/to/module.py
+
+    * No PEP8 warnings, check with::
+
+        $ pip install pep8
+        $ pep8 path/to/module.py
+
 
 Bonus points for contributions that include a performance analysis with
 a benchmark script and profiling output (please report on the mailing
@@ -170,6 +170,7 @@ that are labeled as EasyFix. This means that the knowledge needed to solve
 the issue is low, but still you are helping the project and letting more
 experienced developers concentrate on other issues.
 
+.. _contribute_documentation:
 
 Documentation
 -------------
@@ -187,6 +188,13 @@ browser.
 For building the documentation, you will need `sphinx
 <http://sphinx.pocoo.org/>`_ and `matplotlib
 <http://matplotlib.sourceforge.net/>`_.
+
+When you are writing documentation, it is important to keep a good
+compromise between mathematical and algorithmic details, and giving
+intuitions to the reader on what the algorithm does. It is best to always
+start with a small paragraph with a hand waiving explanation of what the
+method does to the data and a figure (coming from an example) ilustrating
+it.
 
 .. warning:: **Sphinx version**
 
@@ -244,7 +252,7 @@ In addition, we add the following guidelines:
     * Avoid multiple statements on one line. Prefer a line return after
       a control flow statement (``if``/``for``).
 
-    * Use relative imports for references inside scikits.learn.
+    * Use relative imports for references inside scikit-learn.
 
     * **Please don't use `import *` in any case**. It is considered harmful
       by the `official Python recommendations
@@ -256,7 +264,7 @@ In addition, we add the following guidelines:
       find bugs in scikit.
 
     * Use the `numpy docstring standard
-      <https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt>`_ 
+      <https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt>`_
       in all your docstrings.
 
 A good example of code that we like can be found `here
@@ -320,9 +328,14 @@ classifier or a regressor. All estimators implement the fit method::
 
     estimator.fit(X, y)
 
+All built-in estimators also have a ``set_params`` method, which sets
+data-independent parameters (overriding previous parameter values passed
+to ``__init__``). This method is not required for an object to be an
+estimator.
+
 
 Instantiation
-^^^^^^^^^^^^^^
+^^^^^^^^^^^^^
 
 This concerns the object creation. The object's ``__init__`` method might
 accept as arguments constants that determine the estimator behavior
@@ -341,9 +354,7 @@ an estimator without passing to it any arguments.
 
 The arguments in given at instanciation of an estimator should all
 correspond to hyper parameters describing the model or the optimisation
-problem that estimator tries to solve. They should however not be
-parameters of the estimation routine: these are passed directly to the
-``fit`` method.
+problem that estimator tries to solve.
 
 In addition, **every keyword argument given to the ``__init__`` should
 correspond to an attribute on the instance**. The scikit relies on this
@@ -371,25 +382,46 @@ data in the predict method.
 ============= ======================================================
 Parameters
 ============= ======================================================
-X             array-like, with shape = [N, D], where N is the number 
+X             array-like, with shape = [N, D], where N is the number
               of samples and D is the number of features.
 
-Y             array, with shape = [N], where N is the number of 
+y             array, with shape = [N], where N is the number of
               samples.
 
-args, kwargs  Parameters can also be set in the fit method.
+kwargs        optional data dependent parameters.
 ============= ======================================================
 
-X.shape[0] should be the same as Y.shape[0]. If this requisite is not
-met, an exception should be raised.
+``X.shape[0]`` should be the same as ``y.shape[0]``. If this requisite
+is not met, an exception of type ``ValueError`` should be raised.
 
-Y might be dropped in the case of unsupervised learning.
+``y`` might be ignored in the case of unsupervised learning. However to
+make it possible to use the estimator as part of a pipeline that can
+mix both supervised and unsupervised transformers even unsupervised
+estimators are kindly ask to accept a ``y=None`` keyword argument in
+the second position that is just ignored by the estimator.
 
-The method should return the object (``self``).
+The method should return the object (``self``). This pattern is useful
+to be able to implement quick one liners in an ipython session such as::
+
+  y_predicted = SVC(C=100).fit(X_train, y_train).predict(X_test)
+
+Depending on the nature of the algorithm ``fit`` can sometimes also
+accept additional keywords arguments. However any parameter that can
+have a value assigned prior having access to the data should be an
+``__init__`` keyword argument. **fit parameters should be restricted
+to directly data dependent variables**. For instance a Gram matrix or
+an affinity matrix which are precomputed from the data matrix ``X`` are
+data dependent. A tolerance stopping criterion ``tol`` is not directly
+data dependent (although the optimal value according to some scoring
+function probably is).
+
+Any attribute that ends with ``_`` is expected to be overridden when
+you call ``fit`` a second time without taking any previous value into
+account: **fit should be idempotent**.
 
 
 Python tuples
-^^^^^^^^^^^^^^
+^^^^^^^^^^^^^
 
 In addition to numpy arrays, all methods should be able to accept
 Python tuples as arguments. In practice, this means you should call
@@ -398,7 +430,7 @@ arrays.
 
 
 Optional Arguments
-^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^
 
 In iterative algorithms, number of iterations should be specified by
 an int called ``n_iter``.
