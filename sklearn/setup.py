@@ -1,6 +1,5 @@
 from os.path import join
 import warnings
-import numpy
 
 
 def configuration(parent_package='', top_path=None):

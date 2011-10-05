@@ -40,13 +40,14 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
         The dimension of the projection subspace.
 
     mode: {None, 'arpack' or 'amg'}
-        The eigenvalue decomposition strategy to use. AMG (Algebraic
-        MultiGrid) is much faster, but requires pyamg to be
-        installed.
+        The eigenvalue decomposition strategy to use. AMG requires pyamg
+        to be installed. It can be faster on very large, sparse problems,
+        but may also lead to instabilities
 
     random_state: int seed, RandomState instance, or None (default)
         A pseudo random number generator used for the initialization of the
-        lobpcg eigen vectors decomposition when mode == 'amg'.
+        lobpcg eigen vectors decomposition when mode == 'amg'. By default
+        arpack is used.
 
     Returns
     --------
@@ -75,7 +76,7 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
     if not amg_loaded:
         warnings.warn('pyamg not available, using scipy.sparse')
     if mode is None:
-        mode = ('amg' if amg_loaded else 'arpack')
+        mode = 'arpack'
     laplacian, dd = graph_laplacian(adjacency,
                                     normed=True, return_diag=True)
     if (mode == 'arpack'
@@ -154,9 +155,9 @@ def spectral_clustering(affinity, k=8, n_components=None, mode=None,
         Number of eigen vectors to use for the spectral embedding
 
     mode: {None, 'arpack' or 'amg'}
-        The eigenvalue decomposition strategy to use. AMG (Algebraic
-        MultiGrid) is much faster, but requires pyamg to be
-        installed.
+        The eigenvalue decomposition strategy to use. AMG requires pyamg
+        to be installed. It can be faster on very large, sparse problems,
+        but may also lead to instabilities
 
     random_state: int seed, RandomState instance, or None (default)
         A pseudo random number generator used for the initialization
@@ -222,8 +223,9 @@ class SpectralClustering(BaseEstimator):
         The dimension of the projection subspace.
 
     mode: {None, 'arpack' or 'amg'}
-        The eigenvalue decomposition strategy to use. AMG (Algebraic
-        MultiGrid) is much faster, but requires pyamg to be installed.
+        The eigenvalue decomposition strategy to use. AMG requires pyamg
+        to be installed. It can be faster on very large, sparse problems,
+        but may also lead to instabilities
 
     random_state: int seed, RandomState instance, or None (default)
         A pseudo random number generator used for the initialization

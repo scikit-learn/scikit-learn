@@ -23,7 +23,6 @@ from sklearn import metrics
 
 from sklearn.cluster import MiniBatchKMeans
 
-from sklearn.preprocessing import Normalizer
 
 
 # Display progress logs on stdout
@@ -62,10 +61,8 @@ true_k = np.unique(labels).shape[0]
 
 print "Extracting features from the training dataset using a sparse vectorizer"
 t0 = time()
-vectorizer = Vectorizer(max_features=10000)
+vectorizer = Vectorizer(max_df=0.95, max_features=10000)
 X = vectorizer.fit_transform(documents)
-
-X = Normalizer(norm="l2", copy=False).transform(X)
 
 print "done in %fs" % (time() - t0)
 print "n_samples: %d, n_features: %d" % X.shape

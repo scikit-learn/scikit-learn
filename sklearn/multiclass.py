@@ -1,4 +1,3 @@
-
 """
 Multiclass algorithms
 ======================
@@ -94,7 +93,6 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin):
     label_binarizer_ : LabelBinarizer object
         Object used to transform multiclass labels to binary labels and
         vice-versa.
-
     """
 
     def __init__(self, estimator):
@@ -108,7 +106,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin):
         X: {array-like, sparse matrix}, shape = [n_samples, n_features]
             Data.
 
-        y : numpy array of shape [n_samples]
+        y : array-like, shape = [n_samples]
             Multi-class targets.
 
         Returns
@@ -128,7 +126,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin):
 
         Returns
         -------
-        y : numpy array of shape [n_samples]
+        y : array-like, shape = [n_samples]
             Predicted multi-class targets.
         """
         if not hasattr(self, "estimators_"):
