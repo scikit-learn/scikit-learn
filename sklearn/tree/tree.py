@@ -39,6 +39,7 @@ GRAPHVIZ_TREE_TEMPLATE = """\
 %(current)s -> %(right_child)s ;
 """
 
+
 def export_graphviz(decision_tree, out_file=None, feature_names=None):
     """Export a decision tree in DOT format.
 
@@ -237,8 +238,8 @@ class BaseDecisionTree(BaseEstimator):
             The training input samples.
 
         y : array-like, shape = [n_samples]
-            The target values (integers that correspond to classes in classification,
-            real numbers in regression).
+            The target values (integers that correspond to classes in
+            classification, real numbers in regression).
 
         Return
         ------

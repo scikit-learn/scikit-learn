@@ -11,7 +11,7 @@ import warnings
 import numpy as np
 from scipy import linalg
 from scipy.stats import chi2
-from sklearn.covariance import empirical_covariance, EmpiricalCovariance
+from . import empirical_covariance, EmpiricalCovariance
 from ..utils.extmath import fast_logdet as exact_logdet
 
 

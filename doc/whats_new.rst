@@ -7,9 +7,11 @@
 
    - New :ref:`Tree <tree>` module by `Brian Holt`_, `Peter Prettenhofer`_ 
      and `Satrajit Ghosh`_. The module comes with complete documentation 
-     and examples..
+     and examples.
 
-   - Faster tests by Fabian Pedregosa.
+   - Fixed memory leak in in :ref:`svm` module by `Brian Holt`_.
+
+   - Faster tests by `Fabian Pedregosa`_.
 
 
 API changes summary
@@ -785,3 +787,5 @@ of commits):
 .. _Lars Buitinck: https://github.com/larsmans
 
 .. _David Warde-Farley: http://www-etud.iro.umontreal.ca/~wardefar/
+
+.. _Brian Holt: http://info.ee.surrey.ac.uk/Personal/B.Holt/
