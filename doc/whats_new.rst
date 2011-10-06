@@ -13,6 +13,9 @@
 
    - Faster tests by `Fabian Pedregosa`_.
 
+   - Silhoeutte Coefficient cluster analysis evaluation metric added as 
+     ``sklearn.metrics.silhouette_score`` by Robert Layton.
+
 
 API changes summary
 -------------------
@@ -37,6 +40,11 @@ version 0.9:
   
   - The :ref:`covariance` module now has a robust estimator of
     covariance, the Minimum Covariance Determinant estimator.
+
+  - Cluster evaluation metrics in ``metrics.cluster.py`` have been refactored
+    but the changes are backwards compatible. They have been moved to the
+    ``metrics.cluster.supervised``, along with ``metrics.cluster.unsupervised``
+    which contains the Silhouette Coefficient. 
 
 Changelog
 ---------

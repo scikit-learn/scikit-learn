@@ -31,6 +31,8 @@ n_samples, n_features = data.shape
 n_digits = len(np.unique(digits.target))
 labels = digits.target
 
+sample_size = 300
+
 print "n_digits: %d" % n_digits
 print "n_features: %d" % n_features
 print "n_samples: %d" % n_samples
@@ -46,6 +48,11 @@ print "Completeness: %0.3f" % metrics.completeness_score(labels, km.labels_)
 print "V-measure: %0.3f" % metrics.v_measure_score(labels, km.labels_)
 print "Adjusted Rand Index: %0.3f" % \
     metrics.adjusted_rand_score(labels, km.labels_)
+#print ("Silhouette Coefficient: %0.3f" %
+#       metrics.silhouette_score(D, km.labels_, metric='precomputed'))
+print ("Silhouette Coefficient: %0.3f" %
+       metrics.silhouette_score(data, km.labels_,
+                                metric='euclidean', sample_size=sample_size))
 print
 
 print "Raw k-means with random centroid init..."
@@ -58,6 +65,11 @@ print "Completeness: %0.3f" % metrics.completeness_score(labels, km.labels_)
 print "V-measure: %0.3f" % metrics.v_measure_score(labels, km.labels_)
 print "Adjusted Rand Index: %0.3f" % \
     metrics.adjusted_rand_score(labels, km.labels_)
+#print ("Silhouette Coefficient: %0.3f" %
+#       metrics.silhouette_score(D, km.labels_, metric='precomputed'))
+print ("Silhouette Coefficient: %0.3f" %
+       metrics.silhouette_score(data, km.labels_,
+                                metric='euclidean', sample_size=sample_size))
 print
 
 print "Raw k-means with PCA-based centroid init..."
@@ -73,6 +85,11 @@ print "Completeness: %0.3f" % metrics.completeness_score(labels, km.labels_)
 print "V-measure: %0.3f" % metrics.v_measure_score(labels, km.labels_)
 print "Adjusted Rand Index: %0.3f" % \
     metrics.adjusted_rand_score(labels, km.labels_)
+#print ("Silhouette Coefficient: %0.3f" %
+#       metrics.silhouette_score(D, km.labels_, metric='precomputed'))
+print ("Silhouette Coefficient: %0.3f" %
+       metrics.silhouette_score(data, km.labels_,
+                                metric='euclidean', sample_size=sample_size))
 print
 
 # Plot k-means++ form on a 2D plot using PCA
