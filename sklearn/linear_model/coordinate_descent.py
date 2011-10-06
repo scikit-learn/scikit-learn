@@ -324,7 +324,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     should be directly passed as a fortran contiguous numpy array.
     """
     return enet_path(X, y, rho=1., eps=eps, n_alphas=n_alphas, alphas=alphas,
-                     precompute='auto', Xy=None,
+                     precompute=precompute, Xy=Xy,
                      fit_intercept=fit_intercept, normalize=normalize,
                      copy_X=copy_X, verbose=verbose, **params)
 
