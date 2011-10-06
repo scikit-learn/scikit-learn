@@ -5,6 +5,10 @@
 0.10
 ====
 
+   - New :ref:`Tree <tree>` module by `Brian Holt`_, `Peter Prettenhofer`_ 
+     and `Satrajit Ghosh`_. The module comes with complete documentation 
+     and examples.
+
    - Fixed memory leak in in :ref:`svm` module by `Brian Holt`_.
 
    - Faster tests by `Fabian Pedregosa`_.
