@@ -621,3 +621,72 @@ mean of homogeneity and completeness**:
    measure <http://acl.ldc.upenn.edu/D/D07/D07-1043.pdf>`_
    Andrew Rosenberg and Julia Hirschberg, 2007
 
+Silhouette Coefficient
+----------------------
+
+Presentation and usage
+~~~~~~~~~~~~~~~~~~~~~~
+
+If the ground truth labels are not known, evaluation must be performed using
+the model itself. The Silhouette Coefficient is an example of this, where a
+higher Silhouette Coefficient score relates to a model with better defined
+clusters. The Silhouette Coefficient is defined for each sample and is composed
+of two scores:
+
+- **a**: The mean distance between a sample and all other points in the same
+  class.
+
+- **b**: The mean distance between a sample and all other points in the *next
+  nearest cluster*.
+
+The Silhoeutte Coefficient *s* for a single sample is then given as:
+
+.. math:: s = \frac{b - a}{max(a, b)}
+
+The Silhouette Coefficient for a set of samples is given as the mean of the 
+Silhouette Coefficient for each sample.
+
+
+  >>> from sklearn import metrics
+  >>> from sklearn.metrics import pairwise_distances
+  >>> from sklearn import datasets
+  >>> dataset = datasets.load_iris()
+  >>> X = dataset.data
+  >>> y = dataset.target
+
+In normal usage, the Silhouette Coefficient is applied to the results of a
+cluster analysis.
+
+  >>> import numpy as np
+  >>> np.random.seed(1)
+  >>> from sklearn.cluster import KMeans
+  >>> kmeans_model = KMeans(init="k-means++", k=3).fit(X)
+  >>> labels = kmeans_model.labels_
+  >>> metrics.silhouette_score(X, labels, metric='euclidean')  
+  ...                                                      # doctest: +ELLIPSIS
+  0.5525...
+
+.. topic:: References
+
+ * Peter J. Rousseeuw (1987). "Silhouettes: a Graphical Aid to the
+   Interpretation and Validation of Cluster Analysis". Computational
+   and Applied Mathematics 20: 53–65. doi:10.1016/0377-0427(87)90125-7.
+
+
+Advantages
+~~~~~~~~~~
+
+- The score is bounded between -1 for incorrect clustering and +1 for highly
+  dense clustering. Scores around zero indicate overlapping clusters.
+
+- The score is higher when clusters are dense and well separated, which relates
+  to a standard concept of a cluster.
+
+
+Drawbacks
+~~~~~~~~~
+
+- The Silhouette Coefficient is generally higher for convex clusters than other
+  concepts of clusters, such as density based clusters like those obtained
+  through DBSCAN.
+
