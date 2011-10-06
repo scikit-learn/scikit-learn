@@ -64,7 +64,7 @@ def test_pairwise_distances():
     S2 = euclidean_distances(X_sparse, Y_sparse)
     assert_array_almost_equal(S, S2)
     # Test with scipy.spatial.distance metric, with a kwd
-    kwds = {"p":2.0}
+    kwds = {"p": 2.0}
     S = pairwise_distances(X, Y, metric="minkowski", **kwds)
     S2 = pairwise_distances(X, Y, metric=minkowski, **kwds)
     assert_array_almost_equal(S, S2)
