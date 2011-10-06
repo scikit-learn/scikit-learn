@@ -24,7 +24,6 @@ DTYPE = _tree.DTYPE
 CLASSIFICATION = {
     "gini": _tree.Gini,
     "entropy": _tree.Entropy,
-    #'miss': _tree.Miss,
 }
 
 REGRESSION = {
