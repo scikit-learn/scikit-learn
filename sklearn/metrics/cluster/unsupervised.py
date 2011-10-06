@@ -63,7 +63,7 @@ def silhouette_score(X, labels, metric='euclidean',
     ----------
     Peter J. Rousseeuw (1987). "Silhouettes: a Graphical Aid to the
         Interpretation and Validation of Cluster Analysis". Computational
-        and Applied Mathematics 20: 53–65. doi:10.1016/0377-0427(87)90125-7.
+        and Applied Mathematics 20: 53-65. doi:10.1016/0377-0427(87)90125-7.
 
     http://en.wikipedia.org/wiki/Silhouette_(clustering)
 
@@ -125,7 +125,7 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
     ----------
     Peter J. Rousseeuw (1987). "Silhouettes: a Graphical Aid to the
         Interpretation and Validation of Cluster Analysis". Computational
-        and Applied Mathematics 20: 53–65. doi:10.1016/0377-0427(87)90125-7.
+        and Applied Mathematics 20: 53-65. doi:10.1016/0377-0427(87)90125-7.
 
     http://en.wikipedia.org/wiki/Silhouette_(clustering)
 
