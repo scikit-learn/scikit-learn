@@ -610,6 +610,9 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
         while sample_mask_ptr[X_argsorted_i[a]] == 0:
             a = a + 1
 
+        while sample_mask_ptr[X_argsorted_i[a]] == 0:
+            a = a + 1
+
         while True:
             b = smallest_sample_larger_than(a, X_i, X_argsorted_i,
                                             sample_mask_ptr, n_total_samples)
@@ -624,7 +627,7 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
             error = criterion.eval()
 
             assert sample_mask_ptr[X_argsorted_i[a]] == 1 and sample_mask_ptr[X_argsorted_i[b]]
-            
+
             # check if current error is smaller than previous best
             # if this is never true best_i is -1.
             if error < best_error:
