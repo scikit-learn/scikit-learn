@@ -159,6 +159,8 @@ def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
     def recursive_partition(X, X_argsorted, y, sample_mask, depth):
         is_split_valid = True
         n_samples = sample_mask.sum()
+        if n_samples == 0:
+            raise ValueError("Attempting to find a split with an empty sample_mask")
         if depth >= max_depth or n_samples < min_split:
             is_split_valid = False
         else:
