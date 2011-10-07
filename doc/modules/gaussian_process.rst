@@ -84,7 +84,7 @@ parameters or alternatively it uses the given parameters.
 
   * :ref:`example_gaussian_process_plot_gp_probabilistic_classification_after_regression.py`
 
-  * :ref:`example_gaussian_process_plot_gp_diabetes_dataset.py`
+  * :ref:`example_gaussian_process_plot_gp_regression.py`
 
 Mathematical formulation
 ========================

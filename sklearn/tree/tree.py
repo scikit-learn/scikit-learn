@@ -12,116 +12,136 @@ import numpy as np
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..utils import check_random_state
 
-import _tree
+from . import _tree
 
 __all__ = [
-    'DecisionTreeClassifier',
-    'DecisionTreeRegressor',
+    "DecisionTreeClassifier",
+    "DecisionTreeRegressor",
 ]
 
+DTYPE = _tree.DTYPE
+
 CLASSIFICATION = {
-    'gini': _tree.Gini,
-    'entropy': _tree.Entropy,
-    #'miss': _tree.Miss,
+    "gini": _tree.Gini,
+    "entropy": _tree.Entropy,
 }
 
 REGRESSION = {
-    'mse': _tree.MSE,
+    "mse": _tree.MSE,
 }
 
 GRAPHVIZ_TREE_TEMPLATE = """\
-%(tree)s [label="%(tree_gv)s"] ;
-%(tree_left)s [label="%(tree_left_gv)s"] ;
-%(tree_right)s [label="%(tree_right_gv)s"] ;
-%(tree)s -> %(tree_left)s ;
-%(tree)s -> %(tree_right)s ;
+%(current)s [label="%(current_gv)s"] ;
+%(left_child)s [label="%(left_child_gv)s"] ;
+%(right_child)s [label="%(right_child_gv)s"] ;
+%(current)s -> %(left_child)s ;
+%(current)s -> %(right_child)s ;
 """
 
 
-class Leaf(object):
-    """A class to store leaf values in the tree.
+def export_graphviz(decision_tree, out_file=None, feature_names=None):
+    """Export a decision tree in DOT format.
+
+    This function generates a GraphViz representation of the decision tree,
+    which is then written into `out_file`. Once exported, graphical renderings
+    can be generated using, for example,::
+
+        $ dot -Tps tree.dot -o tree.ps      (PostScript format)
+        $ dot -Tpng tree.dot -o tree.png    (PNG format)
 
     Parameters
     ----------
+    decision_tree : decision tree classifier
+        The decision tree to be exported to graphviz.
 
-    value : array-like, shape = [n_features] OR 1
-        For classification it is a histogram of target values
-        For regression is it the mean for the region
+    out : file object or string, optional (default=None)
+        Handle or name of the output file.
 
-    See also
+    feature_names : list of strings, optional (default=None)
+        Names of each of the features.
+
+    Returns
+    -------
+    out_file : file object
+        The file object to which the tree was exported.  The user is
+        expected to `close()` this object when done with it.
+
+    Examples
     --------
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn import tree
 
-    Node
+    >>> clf = tree.DecisionTreeClassifier()
+    >>> iris = load_iris()
+
+    >>> clf = clf.fit(iris.data, iris.target)
+    >>> import tempfile
+    >>> out_file = export_graphviz(clf, out_file=tempfile.TemporaryFile())
+    >>> out_file.close()
     """
+    def node_to_str(node):
+        if node.is_leaf:
+            return "error = %s\\nsamples = %s\\nvalue = %s" \
+                % (node.error, node.samples, node.value)
+        else:
+            if feature_names is not None:
+                feature = feature_names[node.feature]
+            else:
+                feature = "X[%s]" % node.feature
 
-    def __init__(self, value):
-        self.value = value
+            return "%s <= %s\\nerror = %s\\nsamples = %s\\nvalue = %s" \
+                   % (feature, node.threshold,
+                      node.error, node.samples, node.value)
 
-    def _graphviz(self):
-        """Print the leaf for graph visualisation."""
-        return 'Leaf(%s)' % (self.value)
+    def recurse(node, count):
+        node_data = {
+            "current": count,
+            "current_gv": node_to_str(node),
+            "left_child": 2 * count + 1,
+            "left_child_gv": node_to_str(node.left),
+            "right_child": 2 * count + 2,
+            "right_child_gv": node_to_str(node.right),
+        }
 
+        out_file.write(GRAPHVIZ_TREE_TEMPLATE % node_data)
 
-class Node(object):
-    """A class to store node information in the tree.
+        if not node.left.is_leaf:
+            recurse(node.left, 2 * count + 1)
+        if not node.right.is_leaf:
+            recurse(node.right, 2 * count + 2)
 
-    Parameters
-    ----------
+    if out_file is None:
+        out_file = open("tree.dot", 'w')
+    elif isinstance(out_file, basestring):
+        out_file = open(out_file, 'w')
 
-    feature : integer
-        The feature used to split on
-    threshold : float
-        The threshold value to split on
-    error : float
-        The error in the node.  This could be the impurity (calculated using
-        an entropy measure for classification) or the residual regression
-        error (calculated using an estimator)
-    samples : integer
-        Number of samples present at this node
-    value : array-like, shape = [n_features] OR 1
-        For classification it is a histogram of target values
-        For regression is it the mean for the region
-    left : Node
-        The left child node
-    right : Node
-        The right child node
+    out_file.write("digraph Tree {\n")
+    recurse(decision_tree.tree, 0)
+    out_file.write("}")
 
-    See also
-    --------
-
-    Leaf
-    """
-
-    def __init__(self, feature, threshold, error, samples, value,
-                 left, right):
-        self.feature = feature
-        self.threshold = threshold
-        self.error = error
-        self.samples = samples
-        self.value = value
-        self.left = left
-        self.right = right
-
-    def _graphviz(self):
-        """Print the node for graph visualisation."""
-
-        return "x[%s] < %s \\n error = %s \\n samples = %s \\n v = %s" \
-               % (self.feature, self.threshold,\
-                  self.error, self.samples, self.value)
+    return out_file
 
 
-def _build_tree(is_classification, X, y, criterion,
-               max_depth, min_split, max_features, n_classes, random_state):
+def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
+                max_features, n_classes, random_state, min_density,
+                sample_mask=None, X_argsorted=None):
     """Build a tree by recursively partitioning the data."""
+    # make data fortran layout
+    if not np.isfortran(X):
+        X = np.asfortranarray(X)
 
-    n_samples, n_features = X.shape
-    if len(y) != len(X):
-        raise ValueError("Number of labels=%d does not match "
-                          "number of features=%d"
-                         % (len(y), len(X)))
-    y = np.array(y, dtype=np.float64, order="c")
+    y = np.ascontiguousarray(y, dtype=DTYPE)
 
-    feature_mask = np.ones((n_features,), dtype=np.bool, order="c")
+    if X_argsorted is None:
+        X_argsorted = np.asfortranarray(
+            np.argsort(X.T, axis=1).astype(np.int32).T)
+
+    if sample_mask is None:
+        sample_mask = np.ones((X.shape[0],), dtype=np.bool)
+
+    n_features = X.shape[1]
+
+    feature_mask = np.ones((n_features,), dtype=np.bool, order="C")
     if max_features is not None:
         if max_features <= 0 or max_features > n_features:
             raise ValueError("max_features=%d must be in range (0..%d]. "
@@ -136,216 +156,153 @@ def _build_tree(is_classification, X, y, criterion,
 
     feature_mask = feature_mask.astype(np.int32)
 
-    # make data fortran layout
-    if not X.flags["F_CONTIGUOUS"]:
-        X = np.array(X, order="F")
-
-    if min_split <= 0:
-        raise ValueError("min_split must be greater than zero. "
-                         "min_split is %s." % min_split)
-    if max_depth <= 0:
-        raise ValueError("max_depth must be greater than zero. "
-                         "max_depth is %s." % max_depth)
-
-    def recursive_partition(X, y, depth):
+    def recursive_partition(X, X_argsorted, y, sample_mask, depth):
         is_split_valid = True
-
-        if depth >= max_depth or len(X) < min_split:
+        n_samples = sample_mask.sum()
+        if depth >= max_depth or n_samples < min_split:
             is_split_valid = False
-
-        feature, threshold, error, init_error = _tree._find_best_split(
-            X, y, feature_mask, criterion)
-
-        if feature != -1:
-            split = X[:, feature] < threshold
         else:
-            is_split_valid = False
+            feature, threshold, init_error = _tree._find_best_split(
+                X, y, X_argsorted, sample_mask, feature_mask,
+                criterion, n_samples)
 
+            if feature == -1:
+                is_split_valid = False
+
+        current_y = y[sample_mask]
         if is_classification:
-            a = np.zeros((n_classes,))
-            t = y.max() + 1
-            a[:t] = np.bincount(y.astype(np.int))
+            value = np.zeros((n_classes,))
+            t = current_y.max() + 1
+            value[:t] = np.bincount(current_y.astype(np.int))
         else:
-            a = np.mean(y)
+            # we need to wrap the mean into an array
+            value = np.asanyarray(np.mean(current_y))
 
         if not is_split_valid:
-            return Leaf(a)
+            return _tree.Node(-1, 0.0, 0.0, n_samples, value, None, None)
+        else:
+            if n_samples / X.shape[0] <= min_density:
+                # sample_mask too sparse - pack X and X_argsorted
+                X = X[sample_mask]
+                X_argsorted = np.asfortranarray(
+                    np.argsort(X.T, axis=1).astype(np.int32).T)
+                y = current_y
+                sample_mask = np.ones((X.shape[0],), dtype=np.bool)
 
-        left_partition = recursive_partition(X[split], y[split], depth + 1)
-        right_partition = recursive_partition(X[~split], y[~split], depth + 1)
+            split = X[:, feature] <= threshold
+            left_partition = recursive_partition(X, X_argsorted, y,
+                                                 split & sample_mask,
+                                                 depth + 1)
+            right_partition = recursive_partition(X, X_argsorted, y,
+                                                  ~split & sample_mask,
+                                                  depth + 1)
 
-        return Node(feature=feature, threshold=threshold,
-                    error=init_error, samples=len(y), value=a,
-                    left=left_partition, right=right_partition)
+            return _tree.Node(feature, threshold, init_error, n_samples,
+                              value, left_partition, right_partition)
 
-    return recursive_partition(X, y, 0)
-
-
-def _apply_tree(tree, X):
-    """Applies the decision tree to X."""
-
-    if type(tree) is Leaf:
-        return tree.value
-    if X[tree.feature] < tree.threshold:
-        return _apply_tree(tree.left, X)
-    return _apply_tree(tree.right, X)
-
-
-def _graphviz(tree):
-    """Print decision tree in .dot format."""
-
-    if type(tree) is Leaf:
-        return ""
-    s = GRAPHVIZ_TREE_TEMPLATE % {
-        "tree": tree,
-        "tree_gv": tree._graphviz(),
-        "tree_left": tree.left,
-        "tree_left_gv": tree.left._graphviz(),
-        "tree_right": tree.right,
-        "tree_right_gv": tree.right._graphviz(),
-    }
-    return s + _graphviz(tree.left) + _graphviz(tree.right)
+    return recursive_partition(X, X_argsorted, y, sample_mask, 0)
 
 
 class BaseDecisionTree(BaseEstimator):
-    """Should not be used directly, use derived classes instead."""
+    """Warning: This class should not be used directly. Use derived classes
+       instead."""
 
-    _tree_types = ['classification', 'regression']
-    _classification_subtypes = ['binary', 'multiclass']
+    _tree_types = ["classification", "regression"]
 
-    def __init__(self, n_classes, impl, criterion, max_depth,
-                 min_split, max_features, random_state):
+    def __init__(self, impl, criterion, max_depth, min_split,
+                 max_features, random_state, min_density):
 
         if not impl in self._tree_types:
             raise ValueError("impl should be one of %s, %s was given"
                              % (self._tree_types, impl))
 
         self.type = impl
-        self.n_classes = n_classes
-        self.classification_subtype = None
         self.criterion = criterion
-        self.max_depth = max_depth
         self.min_split = min_split
+        self.max_depth = max_depth
         self.max_features = max_features
-        self.random_state = check_random_state(random_state)
+        self.random_state = random_state
+        self.min_density = min_density
 
+        self.classification_subtype = None
         self.n_features = None
         self.tree = None
 
-    def export_to_graphviz(self, filename="tree.dot"):
-        """Export the tree in ".dot" format.
-
-        Once exported, you can render to PostScript using, for example,
-        $ dot -Tps tree.dot -o tree.ps
-
-        Parameters
-        ----------
-        filename : string
-            The name of the file to write to.
-
-        Example
-        -------
-        >>> from sklearn.datasets import load_iris
-        >>> from sklearn.tree import DecisionTreeClassifier
-
-        >>> clf = DecisionTreeClassifier()
-        >>> iris = load_iris()
-
-        >>> clf = clf.fit(iris.data, iris.target)
-        >>> clf.export_to_graphviz("tree.dot")
-
-        """
-        if self.tree is None:
-            raise Exception('Tree not initialized. Perform a fit first')
-
-        with open(filename, 'w') as f:
-            f.write("digraph Tree {\n")
-            f.write(_graphviz(self.tree))
-            f.write("\n}\n")
-
     def fit(self, X, y):
-        """Fit the tree with the given training data and parameters.
+        """Build a decision tree from the training set (X, y).
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
-            Training vectors, where n_samples is the number of samples
-            and n_features is the number of features.
+        X : array-like of shape = [n_samples, n_features]
+            The training input samples.
 
         y : array-like, shape = [n_samples]
-            Target values (integers in classification, real numbers in
-            regression)
-            For classification, labels must correspond to classes
-            0, 1, ..., n_classes-1
+            The target values (integers that correspond to classes in
+            classification, real numbers in regression).
 
-        Returns
-        -------
+        Return
+        ------
         self : object
             Returns self.
         """
-        X = np.asanyarray(X, dtype=np.float64, order='F')
+        X = np.asanyarray(X, dtype=DTYPE, order='F')
         n_samples, self.n_features = X.shape
+        if len(y) != n_samples:
+            raise ValueError("Number of labels=%d does not match "
+                             "number of features=%d"
+                             % (len(y), n_samples))
+        random_state = check_random_state(self.random_state)
+        if self.min_split <= 0:
+            raise ValueError("min_split must be greater than zero.")
+        if self.max_depth <= 0:
+            raise ValueError("max_depth must be greater than zero. ")
+        if self.min_density < 0.0 or self.min_density > 1.0:
+            raise ValueError("min_density must be in [0, 1]")
 
-        if self.type == 'classification':
-            y = np.asanyarray(y, dtype=np.int, order='C')
+        sample_mask = np.ones((n_samples,), dtype=np.bool)
 
-            y_unique = np.unique(y)
-            if tuple(y_unique) == (-1, 1):
-                if self.n_classes is None:
-                    self.n_classes = 2
-                else:
-                    if self.n_classes != 2:
-                        raise ValueError(
-                            "n_classes must equal 2 for binary "
-                            "classification: got %d " % self.n_classes)
-                self.classification_subtype = "binary"
-                y[y == -1] = 0  # normalise target
-            elif y.min() >= 0:
-                if self.n_classes is None:
-                    self.n_classes = y.max() + 1
-                else:
-                    if self.n_classes < y.max() + 1:
-                        raise ValueError("Labels must be in range"
-                                         "[0 to %s) " % self.n_classes)
-                self.classification_subtype = "multiclass"
-            else:
-                raise ValueError("Labels must be [-1, 1] for binary and "
-                                 "in the range [0 to %s) for multiclass "
-                                 "classification " % self.n_classes)
+        is_classification = (self.type == "classification")
+        if is_classification:
+            y = np.ascontiguousarray(y, dtype=np.int)
+            self.classes = np.unique(y)
+            self.n_classes = self.classes.shape[0]
+            y = np.searchsorted(self.classes, y)
 
             criterion_class = CLASSIFICATION[self.criterion]
             criterion = criterion_class(self.n_classes)
-
-            self.tree = _build_tree(True, X, y, criterion, self.max_depth,
-                                    self.min_split, self.max_features,
-                                    self.n_classes, self.random_state)
         else:  # regression
-            y = np.asanyarray(y, dtype=np.float64, order='C')
+            y = np.ascontiguousarray(y, dtype=DTYPE)
+            self.n_classes = 1
 
             criterion_class = REGRESSION[self.criterion]
             criterion = criterion_class()
-            self.tree = _build_tree(False, X, y, criterion, self.max_depth,
-                                    self.min_split, self.max_features,
-                                    None, self.random_state)
+
+        self.tree = _build_tree(is_classification, X, y, criterion,
+                                self.max_depth, self.min_split,
+                                self.max_features, self.n_classes,
+                                random_state, self.min_density,
+                                sample_mask)
         return self
 
     def predict(self, X):
-        """Predict class or regression target for a test vector X.
+        """Predict class or regression target for X.
 
-        For a classification model, the predicted class for each
-        sample in X is returned.  For a regression model, the predicted
-        value based on X is returned.
+        For a classification model, the predicted class for each sample in X is
+        returned. For a regression model, the predicted value based on X is
+        returned.
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
 
         Returns
         -------
-        predictions : array, shape = [n_samples]
+        predictions : array of shape = [n_samples]
+            The predicted classes, or the predict values.
         """
-
         X = np.atleast_2d(X)
+        X = X.astype(DTYPE)
         n_samples, n_features = X.shape
 
         if self.tree is None:
@@ -357,108 +314,104 @@ class BaseDecisionTree(BaseEstimator):
                              " input n_features is %s "
                              % (self.n_features, n_features))
 
-        if self.type == 'classification':
-            if self.classification_subtype == 'binary':
-                predictions = np.zeros(n_samples, dtype=int)
-                for idx, sample in enumerate(X):
-                    tmp = np.argmax(_apply_tree(self.tree, sample))
-                    assert tmp == 0 or tmp == 1
-                    predictions[idx] = -1 if tmp == 0 else 1
-            elif self.classification_subtype == 'multiclass':
-                predictions = np.zeros(n_samples, dtype=int)
-                for idx, sample in enumerate(X):
-                    predictions[idx] = np.argmax(_apply_tree(self.tree,
-                                                             sample))
+        if self.type == "classification":
+            predictions = self.classes[np.argmax(
+                _tree.apply_tree(self.tree, X, self.n_classes), axis=1)]
         else:
-            predictions = np.zeros(n_samples, dtype=float)
-            for idx, sample in enumerate(X):
-                predictions[idx] = _apply_tree(self.tree, sample)
+            predictions = _tree.apply_tree(self.tree, X, self.n_classes)
+            predictions = predictions.ravel()
 
         return predictions
 
 
 class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
-    """A binary or multiclass tree classifier.
+    """A decision tree classifier.
 
     Parameters
     ----------
-    n_classes : integer, optional
-        number of classes (computed at fit() if not provided)
-
-    criterion : string, optional (default='gini')
-        function to measure goodness of split
+    criterion : string, optional (default="gini")
+        The function to measure the quality of a split. Supported criteria are
+        "gini" for the Gini impurity and "entropy" for the information gain.
 
     max_depth : integer, optional (default=10)
-        maximum depth of the tree
+        The maximum depth of the tree.
 
     min_split : integer, optional (default=1)
-        minimum number of samples required at any leaf node
+        The minimum number of samples required to split an internal node.
 
     max_features : integer, optional (default=None)
-        if given, then use a subset (max_features) of features.
-        max_features must be in range 0 < max_features <= n_features
+        If given, then use a subset (max_features) of features.
+        max_features must be in range 0 < `max_features` <= `n_features`
 
-    random_state : integer or array_like, optional (default=None)
-        seed the random number generator
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    min_density : float, optional (default=0.1)
+        The minimum density of the `sample_mask` (i.e. the fraction of samples
+        in the mask). If the density falls below this threshold the mask is
+        recomputed and the input data is packed which results in data copying.
+        If `min_density` equals to one, the partitions are always represented
+        as copies of the original data. Otherwise, partitions are represented
+        as bit masks (aka sample masks).
 
     References
     ----------
+    .. [1] http://en.wikipedia.org/wiki/Decision_tree_learning
 
-    http://en.wikipedia.org/wiki/Decision_tree_learning
+    .. [2] L. Breiman, J. Friedman, R. Olshen, and C. Stone, "Classification
+           and Regression Trees", Wadsworth, Belmont, CA, 1984.
 
-    L. Breiman, J. Friedman, R. Olshen, and C. Stone. Classification and
-    Regression Trees. Wadsworth, Belmont, CA, 1984.
-
-    T. Hastie, R. Tibshirani and J. Friedman.
-    Elements of Statistical Learning, Springer, 2009.
+    .. [3] T. Hastie, R. Tibshirani and J. Friedman. "Elements of Statistical
+           Learning", Springer, 2009.
 
     See also
     --------
-
     DecisionTreeRegressor
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sklearn.datasets import load_iris
-    >>> from sklearn.cross_val import cross_val_score
+    >>> from sklearn.cross_validation import cross_val_score
     >>> from sklearn.tree import DecisionTreeClassifier
 
     >>> clf = DecisionTreeClassifier(random_state=0)
     >>> iris = load_iris()
 
     >>> cross_val_score(clf, iris.data, iris.target, cv=10)
-    ...                             # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+    ...                             # doctest: +SKIP
     ...
     array([ 1.     ,  0.93...,  0.86...,  0.93...,  0.93...,
             0.93...,  0.93...,  1.     ,  0.93...,  1.      ])
     """
-
-    def __init__(self, n_classes=None, criterion='gini', max_depth=10,
-                  min_split=1, max_features=None, random_state=None):
-        BaseDecisionTree.__init__(self, n_classes, 'classification',
-                                  criterion, max_depth, min_split,
-                                  max_features, random_state)
+    def __init__(self, criterion="gini", max_depth=10, min_split=1,
+                 max_features=None, random_state=None, min_density=0.1):
+        super(DecisionTreeClassifier, self).__init__(
+            "classification", criterion, max_depth, min_split, max_features,
+            random_state, min_density)
 
     def predict_proba(self, X):
-        """Predict class probabilities on a test vector X.
+        """Predict class probabilities of the input samples X.
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
 
         Returns
         -------
-        P : array-like, shape = [n_samples, n_classes]
-            Returns the probability of the sample for each class in
-            the model, where classes are ordered by arithmetical
-            order.
-
+        P : array of shape = [n_samples, n_classes]
+            The class probabilities of the input samples. Classes are ordered
+            by arithmetical order.
         """
         X = np.atleast_2d(X)
+        X = X.astype(DTYPE)
         n_samples, n_features = X.shape
 
         if self.tree is None:
-            raise Exception('Tree not initialized. Perform a fit first')
+            raise Exception("Tree not initialized. Perform a fit first.")
 
         if self.n_features != n_features:
             raise ValueError("Number of features of the model must "
@@ -466,71 +419,78 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                              " input n_features is %s "
                              % (self.n_features, n_features))
 
-        P = np.zeros((n_samples, self.n_classes))
-        for idx, sample in enumerate(X):
-            P[idx, :] = _apply_tree(self.tree, sample)
-            P[idx, :] /= np.sum(P[idx, :])
+        P = _tree.apply_tree(self.tree, X, self.n_classes)
+        P /= P.sum(axis=1)[:, np.newaxis]
         return P
 
     def predict_log_proba(self, X):
-        """Predict class log probabilities on a test vector X
+        """Predict class log-probabilities of the input samples X.
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
 
         Returns
         -------
-        P : array-like, shape = [n_samples, n_classes]
-            Returns the log-probabilities of the sample for each class in
-            the model, where classes are ordered by arithmetical
-            order.
-
+        P : array of shape = [n_samples, n_classes]
+            The class log-probabilities of the input samples. Classes are
+            ordered by arithmetical order.
         """
         return np.log(self.predict_proba(X))
 
 
 class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
-    """A tree regressor
+    """A tree regressor.
 
     Parameters
     ----------
-    criterion : string, optional (default='mse')
-        function to measure goodness of split
+    criterion : string, optional (default="mse")
+        The function to measure the quality of a split. The only supported
+        criterion is "mse" for the mean squared error.
 
     max_depth : integer, optional (default=10)
-        maximum depth of the tree
+        The maximum depth of the tree.
 
     min_split : integer, optional (default=1)
-        minimum number of samples required at any leaf node
+        The minimum number of samples required to split an internal node.
 
     max_features : integer, optional (default=None)
-        if given, then use a subset (max_features) of features.
-        max_features must be in range 0 < max_features <= n_features
+        If given, then use a subset (max_features) of features.
+        max_features must be in range 0 < `max_features` <= `n_features`
 
-    random_state : integer or array_like, optional
-        seed the random number generator
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    min_density : float, optional (default=0.1)
+        The minimum density of the `sample_mask` (i.e. the fraction of samples
+        in the mask). If the density falls below this threshold the mask is
+        recomputed and the input data is packed which results in data copying.
+        If `min_density` equals to one, the partitions are always represented
+        as copies of the original data. Otherwise, partitions are represented
+        as bit masks (aka sample masks).
 
     References
     ----------
+    .. [1] http://en.wikipedia.org/wiki/Decision_tree_learning
 
-    http://en.wikipedia.org/wiki/Decision_tree_learning
+    .. [2] L. Breiman, J. Friedman, R. Olshen, and C. Stone, "Classification
+           and Regression Trees", Wadsworth, Belmont, CA, 1984.
 
-    L. Breiman, J. Friedman, R. Olshen, and C. Stone. Classification and
-    Regression Trees. Wadsworth, Belmont, CA, 1984.
-
-    T. Hastie, R. Tibshirani and J. Friedman.
-    Elements of Statistical Learning, Springer, 2009.
+    .. [3] T. Hastie, R. Tibshirani and J. Friedman. "Elements of Statistical
+           Learning", Springer, 2009.
 
     See also
     --------
+    DecisionTreeClassifier
 
-    DecisionTreeRegressor
-
-    Example
-    -------
+    Examples
+    --------
     >>> from sklearn.datasets import load_boston
-    >>> from sklearn.cross_val import cross_val_score
+    >>> from sklearn.cross_validation import cross_val_score
     >>> from sklearn.tree import DecisionTreeRegressor
 
     >>> boston = load_boston()
@@ -539,14 +499,13 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     R2 scores (a.k.a. coefficient of determination) over 10-folds CV:
 
     >>> cross_val_score(regressor, boston.data, boston.target, cv=10)
-    ...                    # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+    ...                    # doctest: +SKIP
     ...
-    array([ 0.43...,  0.34..., -0.07...,  0.66...,  0.77...,
-            0.62...,  0.39...,  0.26..., -1.49..., -0.51...])
+    array([ 0.61..., 0.57..., -0.34..., 0.41..., 0.75...,
+            0.07..., 0.29..., 0.33..., -1.42..., -1.77...])
     """
-
-    def __init__(self, criterion='mse', max_depth=10,
-                  min_split=1, max_features=None, random_state=None):
-        BaseDecisionTree.__init__(self, None, 'regression',
-                                  criterion, max_depth, min_split,
-                                  max_features, random_state)
+    def __init__(self, criterion="mse", max_depth=10, min_split=1,
+                 max_features=None, random_state=None, min_density=0.1):
+        super(DecisionTreeRegressor, self).__init__(
+            "regression", criterion, max_depth, min_split, max_features,
+            random_state, min_density)

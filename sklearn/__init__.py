@@ -16,11 +16,12 @@ See http://scikit-learn.sourceforge.net for complete documentation.
 try:
     from . import check_build
 except ImportError:
-    raise ImportError("Please do not forget to run `make` first")
+    raise ImportError("Please do not forget to build the package first: "
+            "run `python setup.py install` or `make`."
+        )
 
 from .base import clone
 
-from . import mixture
 
 try:
     from numpy.testing import nosetester
@@ -41,11 +42,11 @@ except:
     pass
 
 
-__all__ = ['check_build', 'cross_validation', 'ball_tree', 'cluster', 'covariance',
+__all__ = ['check_build', 'cross_validation', 'cluster', 'covariance',
            'datasets', 'decomposition', 'feature_extraction',
            'feature_selection',
            'gaussian_process', 'grid_search', 'hmm', 'lda', 'linear_model',
            'metrics', 'mixture', 'naive_bayes', 'neighbors', 'pipeline',
            'preprocessing', 'qda', 'svm', 'test', 'clone', 'pls']
 
-__version__ = '0.9-git'
+__version__ = '0.10-git'

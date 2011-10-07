@@ -26,8 +26,8 @@ from .empirical_covariance_ import empirical_covariance, EmpiricalCovariance
 def shrunk_covariance(emp_cov, shrinkage=0.1):
     """Calculates a covariance matrix shrunk on the diagonal
 
-    Params
-    ------
+    Parameters
+    ----------
     emp_cov: array-like, shape (n_features, n_features)
       Covariance matrix to be shrunk
 
@@ -195,13 +195,13 @@ def ledoit_wolf(X, assume_centered=False):
 
 
 class LedoitWolf(EmpiricalCovariance):
-    """Ledoit-Wolf shrinkage estimator
+    """LedoitWolf Estimator
 
     Ledoit-Wolf is a particular form of shrinkage, where the shrinkage
-    coefficient is computed using O. Ledoit and M. Wolf's formula as
+    coefficient is computed using O.Ledoit and M.Wolf's formula as
     described in "A Well-Conditioned Estimator for Large-Dimensional
-    Covariance Matrices", Journal of Multivariate Analysis, Volume 88,
-    Issue 2, February 2004, pages 365-411.
+    Covariance Matrices", Ledoit and Wolf, Journal of Multivariate
+    Analysis, Volume 88, Issue 2, February 2004, pages 365-411.
 
     Parameters
     ----------

@@ -2,18 +2,17 @@ import numpy as np
 import scipy.sparse as sp
 import warnings
 
-_FLOAT_CODES = np.typecodes['AllFloat']
-
 
 def assert_all_finite(X):
     """Throw a ValueError if X contains NaN or infinity.
     Input MUST be an np.ndarray instance or a scipy.sparse matrix."""
 
-    # O(n) time, O(1) solution. XXX: will fail if the sum over X is
-    # *extremely* large. A proper solution would be a C-level loop to check
-    # each element.
-    if X.dtype.char in _FLOAT_CODES and not np.isfinite(X.sum()):
-        raise ValueError("array contains NaN or infinity")
+    # First try an O(n) time, O(1) space solution for the common case that
+    # there everything is finite; fall back to O(n) space np.isfinite to
+    # prevent false positives from overflow in sum method.
+    if X.dtype.char in np.typecodes['AllFloat'] and not np.isfinite(X.sum()) \
+      and not np.isfinite(X).all():
+            raise ValueError("array contains NaN or infinity")
 
 
 def safe_asanyarray(X, dtype=None, order=None):
@@ -23,23 +22,20 @@ def safe_asanyarray(X, dtype=None, order=None):
     return X
 
 
-def as_float_array(X, overwrite_X=False):
-    """
-    Converts a numpy array to type np.float
+def as_float_array(X, copy=True):
+    """Converts a numpy array to an array of floats
 
-    The new dtype will be float32 or np.float64, depending on the original type.
-    The function can create a copy or modify the argument depending
-    of the argument overwrite_X
-
-    WARNING : If X is not of type float, then a copy of X with the right type
-              will be returned
+    The new dtype will be np.float32 or np.float64, depending on the original
+    type. The function can create a copy or modify the argument depending
+    on the argument copy.
 
     Parameters
     ----------
     X : array
 
-    overwrite_X : bool, optional
-        if False, a copy of X will be created
+    copy : bool, optional
+        If True, a copy of X will be created. If False, a copy may still be
+        returned if X's dtype is not a floating point type.
 
     Returns
     -------
@@ -47,10 +43,7 @@ def as_float_array(X, overwrite_X=False):
         An array of type np.float
     """
     if X.dtype in [np.float32, np.float64]:
-        if overwrite_X:
-            return X
-        else:
-            return X.copy()
+        return X.copy() if copy else X
     if X.dtype == np.int32:
         X = X.astype(np.float32)
     else:
@@ -159,7 +152,7 @@ def warn_if_not_float(X, estimator='This algorithm'):
 class deprecated(object):
     """Decorator to mark a function or class as deprecated.
 
-    Prints a warning when the function is called/the class is instantiated and
+    Issue a warning when the function is called/the class is instantiated and
     adds a warning to the docstring.
 
     The optional extra argument will be appended to the deprecation message
@@ -167,6 +160,9 @@ class deprecated(object):
     in an empty of parentheses:
 
     >>> from sklearn.utils import deprecated
+    >>> deprecated() # doctest: +ELLIPSIS
+    <sklearn.utils.deprecated object at ...>
+
     >>> @deprecated()
     ... def some_function(): pass
 
@@ -197,6 +193,7 @@ class deprecated(object):
 
         # FIXME: we should probably reset __new__ for full generality
         init = cls.__init__
+
         def wrapped(*args, **kwargs):
             warnings.warn(msg, category=DeprecationWarning)
             return init(*args, **kwargs)

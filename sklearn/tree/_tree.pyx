@@ -13,6 +13,11 @@ cimport numpy as np
 
 cimport cython
 
+# Define a datatype for the data array
+DTYPE = np.float32
+ctypedef np.float32_t DTYPE_t
+ctypedef np.int8_t BOOL_t
+
 cdef extern from "math.h":
     cdef extern double log(double x)
     cdef extern double pow(double base, double exponent)
@@ -20,6 +25,81 @@ cdef extern from "math.h":
 cdef extern from "float.h":
     cdef extern double DBL_MAX
 
+
+cdef class Node:
+    """A class to store node information in the tree.
+
+    Parameters
+    ----------
+    feature : integer
+        The feature used to split on.
+
+    threshold : float
+        The threshold value to split on.
+
+    error : float
+        The error in the node.  This could be the impurity (calculated using
+        an entropy measure for classification) or the residual regression
+        error (calculated using an estimator).
+
+    samples : integer
+        The number of samples present at this node.
+
+    value : array-like of shape = [n_features], or 1
+        For classification it is a histogram of target values.
+        For regression is it the mean for the region.
+
+    left : Node
+        The left child node.
+
+    right : Node
+        The right child node.
+    """
+
+    cdef public int feature
+    cdef public double threshold
+    cdef public double error
+    cdef public int samples
+    cdef public np.ndarray value
+    cdef public Node left
+    cdef public Node right
+    cdef public bint is_leaf
+
+    def __init__(self, feature, threshold, error, samples,
+                 value, left, right):
+        self.feature = feature
+        self.threshold = threshold
+        self.error = error
+        self.samples = samples
+        self.value = value
+        self.left = left
+        self.right = right
+        self.is_leaf = (left is None) and (right is None)
+
+    def __reduce__(self):
+        return Node, (self.feature, self.threshold, self.error, self.samples,
+                      self.value, self.left, self.right)
+
+
+cdef np.ndarray apply_tree_sample(Node node, np.ndarray[DTYPE_t, ndim=1] x):
+    while True:
+        if node.is_leaf:
+            return node.value
+        elif x[node.feature] <= node.threshold:
+            node = node.left
+        else:
+            node = node.right
+
+
+cpdef np.ndarray apply_tree(Node node, np.ndarray[DTYPE_t, ndim=2] X, int k):
+    cdef np.ndarray y = np.zeros((X.shape[0], k), dtype=np.float64)
+    cdef int i = 0, n = X.shape[0]
+    for 0 <= i < n:
+        y[i] = apply_tree_sample(node, X[i])
+    return y
+
+
+################################################################################
 # Classification entropy measures
 #
 #    From Hastie et al. Elements of Statistical Learning, 2009.
@@ -34,7 +114,8 @@ cdef extern from "float.h":
 cdef class Criterion:
     """Interface for splitting criteria (regression and classification)"""
 
-    cdef void init(self, np.float64_t *y, int n_samples):
+    cdef void init(self, DTYPE_t *y, BOOL_t *sample_mask, int n_samples,
+                   int n_total_samples):
         """Initialise the criterion class for new split point."""
         pass
 
@@ -42,11 +123,10 @@ cdef class Criterion:
         """Reset the criterion for a new feature index."""
         pass
 
-    cdef int update(self, int a, int b, np.float64_t *y, int *sorted_X_i):
-        """Update the criteria for each value in interval [a,b)
-
-        a and b are indices in `sorted_X_i`.
-        """
+    cdef int update(self, int a, int b, DTYPE_t *y, int *X_argsorted_i,
+                    BOOL_t *sample_mask):
+        """Update the criteria for each value in interval [a,b) (where a and b
+           are indices in `X_argsorted_i`)."""
         pass
 
     cdef double eval(self):
@@ -60,20 +140,26 @@ cdef class ClassificationCriterion(Criterion):
     Attributes
     ----------
     n_classes : int
-        number of classes
+        The number of classes.
+
     n_samples : int
-        number of samples
+        The number of samples.
+
     label_count_left : int*
-        label counts for samples left of splitting point.
+        The label counts for samples left of splitting point.
+
     label_count_right : int*
-        label counts for samples right of splitting point.
+        The label counts for samples right of splitting point.
+
     label_count_init : int*
-        Initial label counts for samples right of splitting point.
+        The initial label counts for samples right of splitting point.
         Used to reset `label_count_right` for each feature.
+
     n_left : int
-        number of samples left of splitting point.
+        The number of samples left of splitting point.
+
     n_right : int
-        number of samples right of splitting point.
+        The number of samples right of splitting point.
     """
     cdef int n_classes
     cdef int n_samples
@@ -107,7 +193,8 @@ cdef class ClassificationCriterion(Criterion):
         self.ndarray_label_count_right = ndarray_label_count_right
         self.ndarray_label_count_init = ndarray_label_count_init
 
-    cdef void init(self, np.float64_t *y, int n_samples):
+    cdef void init(self, DTYPE_t *y, BOOL_t *sample_mask, int n_samples,
+                   int n_total_samples):
         """Initialise the criterion class."""
         cdef int c = 0
         cdef int j = 0
@@ -117,7 +204,9 @@ cdef class ClassificationCriterion(Criterion):
         for c from 0 <= c < self.n_classes:
             self.label_count_init[c] = 0
 
-        for j from 0 <= j < self.n_samples:
+        for j from 0 <= j < n_total_samples:
+            if sample_mask[j] == 0:
+                continue
             c = <int>(y[j])
             self.label_count_init[c] += 1
 
@@ -144,15 +233,16 @@ cdef class ClassificationCriterion(Criterion):
             self.label_count_left[c] = 0
             self.label_count_right[c] = self.label_count_init[c]
 
-    cdef int update(self, int a, int b, np.float64_t *y, int *sorted_X_i):
-        """Update the criteria for each value in interval [a,b)
-
-        a and b are indices in `sorted_X_i`.
-        """
+    cdef int update(self, int a, int b, DTYPE_t *y, int *X_argsorted_i,
+                    BOOL_t *sample_mask):
+        """Update the criteria for each value in interval [a,b) (where a and b
+           are indices in `X_argsorted_i`)."""
         cdef int c
         # post condition: all samples from [0:b) are on the left side
         for idx from a <= idx < b:
-            s = sorted_X_i[idx]
+            s = X_argsorted_i[idx]
+            if sample_mask[s] == 0:
+                continue
             c = <int>(y[s])
             self.label_count_right[c] -= 1
             self.label_count_left[c] += 1
@@ -162,11 +252,11 @@ cdef class ClassificationCriterion(Criterion):
         # print "ClassificationCriterion.update: a = ", a, " b = ", b
         # print "    sorted [",
         # for c from 0 <= c < self.n_samples:
-        #     print sorted_X_i[c],
+        #     print X_argsorted_i[c],
         # print "] "
         # print "    y [",
         # for c from 0 <= c < self.n_samples:
-        #     print <int>y[sorted_X_i[c]],
+        #     print <int>y[X_argsorted_i[c]],
         # print "] "
         # print "    label_count_left [",
         # for c from 0 <= c < self.n_classes:
@@ -242,7 +332,7 @@ cdef class Entropy(ClassificationCriterion):
 
 cdef class RegressionCriterion(Criterion):
     """Abstract criterion for regression. Computes variance of the
-    target values left and right of the split point.
+       target values left and right of the split point.
 
     Computation is linear in `n_samples` by using ::
 
@@ -253,20 +343,28 @@ cdef class RegressionCriterion(Criterion):
     ----------
     n_samples : int
         The number of samples
+
     mean_left : double
         The mean target value of the samples left of the split point.
+
     mean_right : double
         The mean target value of the samples right of the split.
+
     sq_sum_left : double
         The sum of squared target values left of the split point.
+
     sq_sum_right : double
         The sum of squared target values right of the split point.
+
     var_left : double
         The variance of the target values left of the split point.
+
     var_right : double
         The variance of the target values left of the split point.
+
     n_left : int
         number of samples left of split point.
+
     n_right : int
         number of samples right of split point.
     """
@@ -299,10 +397,11 @@ cdef class RegressionCriterion(Criterion):
         self.var_left = 0.0
         self.var_right = 0.0
 
-    cdef void init(self, np.float64_t *y, int n_samples):
+    cdef void init(self, DTYPE_t *y, BOOL_t *sample_mask, int n_samples,
+                   int n_total_samples):
         """Initialise the criterion class; assume all samples
-        are in the right branch and store the mean and squared
-        sum in `self.mean_init` and `self.sq_sum_init`. """
+           are in the right branch and store the mean and squared
+           sum in `self.mean_init` and `self.sq_sum_init`. """
         self.mean_left = 0.0
         self.mean_right = 0.0
         self.mean_init = 0.0
@@ -314,7 +413,9 @@ cdef class RegressionCriterion(Criterion):
         self.n_samples = n_samples
 
         cdef int j = 0
-        for j from 0 <= j < self.n_samples:
+        for j from 0 <= j < n_total_samples:
+            if sample_mask[j] == 0:
+                continue
             self.sq_sum_init = self.sq_sum_init + (y[j] * y[j])
             self.mean_init = self.mean_init + y[j]
 
@@ -339,24 +440,26 @@ cdef class RegressionCriterion(Criterion):
         self.var_right = self.sq_sum_right - \
             self.n_samples * (self.mean_right * self.mean_right)
 
-    cdef int update(self, int a, int b, np.float64_t *y, int *sorted_X_i):
-        """Update the criteria for each value in interval [a,b)
-
-        a and b are indices in `sorted_X_i`.
-        """
+    cdef int update(self, int a, int b, DTYPE_t *y, int *X_argsorted_i,
+                    BOOL_t *sample_mask):
+        """Update the criteria for each value in interval [a,b) (where a and b
+           are indices in `X_argsorted_i`)."""
         cdef double y_idx = 0.0
-        cdef int idx
+        cdef int idx, j
         # post condition: all samples from [0:b) are on the left side
         for idx from a <= idx < b:
-            y_idx = y[sorted_X_i[idx]]
+            j = X_argsorted_i[idx]
+            if sample_mask[j] == 0:
+                continue
+            y_idx = y[j]
             self.sq_sum_left = self.sq_sum_left + (y_idx * y_idx)
             self.sq_sum_right = self.sq_sum_right - (y_idx * y_idx)
 
-            self.mean_left = (idx * self.mean_left + y_idx) / \
-                <double>(idx + 1)
-            self.mean_right = ((self.n_samples - idx) * \
+            self.mean_left = (self.n_left * self.mean_left + y_idx) / \
+                <double>(self.n_left + 1)
+            self.mean_right = ((self.n_samples - self.n_left) * \
                 self.mean_right - y_idx) / \
-                <double>(self.n_samples - idx - 1)
+                <double>(self.n_samples - self.n_left - 1)
 
             self.n_right -= 1
             self.n_left += 1
@@ -379,92 +482,118 @@ cdef class MSE(RegressionCriterion):
     """
 
     cdef double eval(self):
-        return (self.n_left / <double>self.n_samples) * self.var_left + \
-               (self.n_right / <double>self.n_samples) * self.var_right
+        assert (self.n_left + self.n_right) == self.n_samples
+        return self.var_left + self.var_right
 
 
-cdef int smallest_sample_larger_than(int sample_idx, np.float64_t *X_i,
-                                     int *sorted_X_i, int n_samples):
+################################################################################
+cdef int smallest_sample_larger_than(int sample_idx, DTYPE_t *X_i,
+                                     int *X_argsorted_i, BOOL_t *sample_mask,
+                                     int n_total_samples):
     """Find the largest next sample.
 
     Find the index in the `X_i` array for sample who's feature
     `i` value is just about greater than those of the sample
-    `sorted_X_i[sample_idx]`.
+    `X_argsorted_i[sample_idx]`.
 
     Returns
     -------
     next_sample_idx : int
-        The index of the next smallest sample in `sorted_X`
+        The index of the next smallest sample in `X_argsorted`
         with different feature value than `sample_idx` .
-        I.e. `sorted_X_i[sample_idx] < sorted_X_i[next_sample_idx]`
+        I.e. `X_argsorted_i[sample_idx] < X_argsorted_i[next_sample_idx]`
         -1 if no such element exists.
     """
-    cdef int idx = 0
-    cdef np.float64_t threshold = -DBL_MAX
+    cdef int idx = 0, j
+    cdef DTYPE_t threshold = -DBL_MAX
     if sample_idx > -1:
-        threshold = X_i[sorted_X_i[sample_idx]]
-    for idx from sample_idx < idx < n_samples:
-        if X_i[sorted_X_i[idx]] > threshold:
+        threshold = X_i[X_argsorted_i[sample_idx]]
+    for idx from sample_idx < idx < n_total_samples:
+        j = X_argsorted_i[idx]
+        if sample_mask[j] == 0:
+            continue
+        if X_i[j] > threshold + 1.e-7:
             return idx
     return -1
 
 
-def _find_best_split(np.ndarray[np.float64_t, ndim=2, mode="fortran"] X,
-                     np.ndarray[np.float64_t, ndim=1, mode="c"] y,
+def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
+                     np.ndarray[DTYPE_t, ndim=1, mode="c"] y,
+                     np.ndarray[np.int32_t, ndim=2, mode="fortran"] X_argsorted,
+                     np.ndarray sample_mask,
                      np.ndarray[np.int32_t, ndim=1, mode="c"] feature_mask,
-                     Criterion criterion):
+                     Criterion criterion,
+                     int n_samples):
     """Find the best dimension and threshold that minimises the error.
 
     Parameters
     ----------
-    X : ndarray, shape (n_samples, n_features), dtype=np.float64
+    X : ndarray, shape (n_total_samples, n_features), dtype=DTYPE_t
         The feature values.
-    y : ndarray, shape (n_samples,), dtype=float
+
+    y : ndarray, shape (n_total_samples,), dtype=float
         The label to predict for each sample.
+
+    X_argsorted : ndarray, shape (n_samples, n_features)
+        Argsort of cols of `X`. `X_argsorted[0,j]` gives the example
+        index of the smallest value of feature `j`.
+
+    sample_mask : ndarray, shape (n_samples,), dtype=np.bool
+        A mask for the samples to be considered. Only samples `j` for which
+        sample_mask[j] != 0 are considered.
+
     feature_mask : ndarray, shape (n_samples,), dtype=int32
         A feature mask indicating active features.
+
     criterion : Criterion
         The criterion function to be minimized.
+
+    n_samples : int
+        The number of samples in the current sample_mask
+        (i.e. `sample_mask.sum()`).
 
     Returns
     -------
     best_i : int
         The split feature or -1 if criterion not smaller than
         `parent_split_error`.
-    best_t : np.float64_t
-        The split threshold
-    best_error : np.float64_t
-        The error of the split.
-    """
 
-    cdef int n_samples = X.shape[0]
+    best_t : DTYPE_t
+        The split threshold
+
+    initial_error : DTYPE_t
+        The initial error contained in the node.
+    """
+    cdef int n_total_samples = X.shape[0]
     cdef int n_features = X.shape[1]
     cdef int i, a, b, best_i = -1
-    cdef np.float64_t t, initial_error, error
-    cdef np.float64_t best_error = np.inf, best_t = np.inf
+    cdef DTYPE_t t, initial_error, error
+    cdef DTYPE_t best_error = np.inf, best_t = np.inf
 
     # Pointer access to ndarray data
-    cdef double *y_ptr = <double*>y.data
-    cdef np.float64_t *X_i = NULL
-    cdef np.ndarray[np.int32_t, ndim=2, mode="fortran"] sorted_X = \
-        np.asfortranarray(np.argsort(X, axis=0).astype(np.int32))
-    cdef int *sorted_X_i = NULL
+    cdef DTYPE_t *y_ptr = <DTYPE_t *>y.data
+    cdef DTYPE_t *X_i = NULL
+
+    cdef int *X_argsorted_i = NULL
+
+    # sample mask data pointer
+    cdef BOOL_t *sample_mask_ptr = <BOOL_t *>sample_mask.data
 
     # Compute the column strides (increment in pointer elements to get
-    # from column i to i + 1) for `X` and `sorted_X`
+    # from column i to i + 1) for `X` and `X_argsorted`
     cdef int X_elem_stride = X.strides[0]
     cdef int X_col_stride = X.strides[1]
     cdef int X_stride = X_col_stride / X_elem_stride
-    cdef int sorted_X_elem_stride = sorted_X.strides[0]
-    cdef int sorted_X_col_stride = sorted_X.strides[1]
-    cdef int sorted_X_stride = sorted_X_col_stride / sorted_X_elem_stride
+    cdef int X_argsorted_elem_stride = X_argsorted.strides[0]
+    cdef int X_argsorted_col_stride = X_argsorted.strides[1]
+    cdef int X_argsorted_stride = X_argsorted_col_stride / X_argsorted_elem_stride
 
     # Compute the initial entropy in the node
-    sorted_X_i = <int *>sorted_X.data
-    criterion.init(y_ptr, n_samples)
+    X_argsorted_i = <int *>X_argsorted.data
+    criterion.init(y_ptr, sample_mask_ptr, n_samples, n_total_samples)
     initial_error = criterion.eval()
-    if initial_error == 0: # break early if the node is pure
-        return best_i, best_t, best_error, initial_error
+    if initial_error == 0:  # break early if the node is pure
+        return best_i, best_t, initial_error
     best_error = initial_error
     # print 'at init, best error = ', best_error
 
@@ -473,23 +602,24 @@ def _find_best_split(np.ndarray[np.float64_t, ndim=2, mode="fortran"] X,
             continue
 
         # get i-th col of X and X_sorted
-        X_i = (<np.float64_t *>X.data) + X_stride * i
-        sorted_X_i = (<int *>sorted_X.data) + sorted_X_stride * i
+        X_i = (<DTYPE_t *>X.data) + X_stride * i
+        X_argsorted_i = (<int *>X_argsorted.data) + X_argsorted_stride * i
 
         # reset the criterion for this feature
         criterion.reset()
 
-        # index of smallest sample in sorted_X_i
+        # index of smallest sample in X_argsorted_i
         a = 0
 
         while True:
-            b = smallest_sample_larger_than(a, X_i, sorted_X_i, n_samples)
+            b = smallest_sample_larger_than(a, X_i, X_argsorted_i,
+                                            sample_mask_ptr, n_total_samples)
 
             # if -1 there's none and we are finished
             if b == -1:
                 break
 
-            criterion.update(a, b, y_ptr, sorted_X_i)
+            criterion.update(a, b, y_ptr, X_argsorted_i, sample_mask_ptr)
 
             # get criterion value
             error = criterion.eval()
@@ -498,11 +628,11 @@ def _find_best_split(np.ndarray[np.float64_t, ndim=2, mode="fortran"] X,
             # check if current error is smaller than previous best
             # if this is never true best_i is -1.
             if error < best_error:
-                t = (X_i[sorted_X_i[a]] + X_i[sorted_X_i[b]]) / 2.0
+                t = (X_i[X_argsorted_i[a]] + X_i[X_argsorted_i[b]]) / 2.0      
                 best_i = i
                 best_t = t
                 best_error = error
 
             a = b
 
-    return best_i, best_t, best_error, initial_error
+    return best_i, best_t, initial_error

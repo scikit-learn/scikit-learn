@@ -34,6 +34,7 @@ import sys
 import numpy as np
 
 from sklearn import svm
+from sklearn.datasets import dump_svmlight_file
 
 y_min, y_max = -50, 50
 x_min, x_max = -50, 50
@@ -64,6 +65,11 @@ class Model(object):
     def set_surface(self, surface):
         self.surface = surface
 
+    def dump_svmlight_file(self, file):
+        data = np.array(self.data)
+        X = data[:, :2]
+        y = data[:, 2]
+        dump_svmlight_file(X, y, file)
 
 class Controller(object):
     def __init__(self, model):
@@ -165,14 +171,21 @@ class View(object):
             elif event.button == 3:
                 self.controller.add_example(event.xdata, event.ydata, -1)
 
+    def update_example(self, model, idx):
+        x, y, l = model.data[idx]
+        if l == 1:
+            color = 'w'
+        elif l == -1:
+            color = 'k'
+        self.ax.plot([x], [y], "%so" % color, scalex=0.0, scaley=0.0)
+
     def update(self, event, model):
+        if event == "examples_loaded":
+            for i in xrange(len(model.data)):
+                self.update_example(model, i)
+
         if event == "example_added":
-            x, y, l = model.data[-1]
-            if l == 1:
-                color = 'w'
-            elif l == -1:
-                color = 'k'
-            self.ax.plot([x], [y], "%so" % color, scalex=0.0, scaley=0.0)
+            self.update_example(model, -1)
 
         if event == "clear":
             self.ax.clear()
@@ -289,8 +302,17 @@ class ControllBar(object):
         Tk.Button(fm, text='Clear', width=5,
                   command=controller.clear_data).pack(side=Tk.LEFT)
 
+def get_parser():
+    from optparse import OptionParser
+    op = OptionParser()
+    op.add_option("--output",
+              action="store", type="str", dest="output",
+              help="Path where to dump data.")
+    return op
 
 def main(argv):
+    op = get_parser()
+    opts, args =  op.parse_args(argv[1:])
     root = Tk.Tk()
     model = Model()
     controller = Controller(model)
@@ -298,6 +320,9 @@ def main(argv):
     view = View(root, controller)
     model.add_observer(view)
     Tk.mainloop()
+
+    if opts.output:
+        model.dump_svmlight_file(opts.output)
 
 if __name__ == "__main__":
     main(sys.argv)

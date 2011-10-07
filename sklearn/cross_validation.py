@@ -723,7 +723,7 @@ class ShuffleSplit(object):
 
     def __repr__(self):
         return ('%s(%d, n_iterations=%d, test_fraction=%s, indices=%s, '
-                'random_state=%d)' % (
+                'random_state=%s)' % (
                     self.__class__.__name__,
                     self.n,
                     self.n_iterations,
@@ -874,13 +874,16 @@ def permutation_test_score(estimator, X, y, score_func, cv=None,
     X: array-like of shape at least 2D
         The data to fit.
 
-    y: array-like, optional
+    y: array-like
         The target variable to try to predict in the case of
         supervised learning.
 
-    score_func: callable, optional
-        callable taking as arguments the test targets (y_test) and
-        the predicted targets (y_pred). Returns a float.
+    score_func: callable
+        Callable taking as arguments the test targets (y_test) and
+        the predicted targets (y_pred) and returns a float. The score
+        functions are expected to return a bigger value for a better result
+        otherwise the returned value does not correspond to a p-value (see
+        Returns below for further details).
 
     cv : integer or crossvalidation generator, optional
         If an integer is passed, it is the number of fold (default 3).
@@ -906,10 +909,15 @@ def permutation_test_score(estimator, X, y, score_func, cv=None,
     -------
     score: float
         The true score without permuting targets.
+
     permutation_scores : array, shape = [n_permutations]
         The scores obtained for each permutations.
+
     pvalue: float
-        The p-value.
+        The returned value equals p-value if `score_func` returns bigger numbers
+        for better scores (e.g., zero_one). If `score_func` is rather a loss
+        function (i.e. when lower is better such as with `mean_square_error`)
+        then this is actually the complement of the p-value:  1 - p-value.
 
     References
     ----------

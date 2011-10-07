@@ -6,8 +6,7 @@ import sys
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_equal
 
-from .. import SparsePCA, MiniBatchSparsePCA, dict_learning_online
-from ..sparse_pca import _update_code, _update_code_parallel
+from .. import SparsePCA, MiniBatchSparsePCA
 from ...utils import check_random_state
 
 
@@ -53,7 +52,8 @@ def test_correct_shapes():
 def test_fit_transform():
     rng = np.random.RandomState(0)
     Y, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)  # wide array
-    spca_lars = SparsePCA(n_components=3, method='lars', random_state=rng)
+    spca_lars = SparsePCA(n_components=3, method='lars',
+                          random_state=rng)
     spca_lars.fit(Y)
     U1 = spca_lars.transform(Y)
     # Test multiple CPUs
@@ -79,24 +79,12 @@ def test_fit_transform():
 def test_fit_transform_tall():
     rng = np.random.RandomState(0)
     Y, _, _ = generate_toy_data(3, 65, (8, 8), random_state=rng)  # tall array
-    spca_lars = SparsePCA(n_components=3, method='lars', random_state=rng)
+    spca_lars = SparsePCA(n_components=3, method='lars',
+                          random_state=rng)
     U1 = spca_lars.fit_transform(Y)
     spca_lasso = SparsePCA(n_components=3, method='cd', random_state=rng)
     U2 = spca_lasso.fit(Y).transform(Y)
     assert_array_almost_equal(U1, U2)
-
-
-def test_sparse_code():
-    rng = np.random.RandomState(0)
-    dictionary = rng.randn(10, 3)
-    real_code = np.zeros((3, 5))
-    real_code.ravel()[rng.randint(15, size=6)] = 1.0
-    Y = np.dot(dictionary, real_code)
-    est_code_1 = _update_code(dictionary, Y, alpha=1.0)
-    est_code_2 = _update_code_parallel(dictionary, Y, alpha=1.0)
-    assert_equal(est_code_1.shape, real_code.shape)
-    assert_equal(est_code_1, est_code_2)
-    assert_equal(est_code_1.nonzero(), real_code.nonzero())
 
 
 def test_initialization():
@@ -107,16 +95,6 @@ def test_initialization():
                       random_state=rng)
     model.fit(rng.randn(5, 4))
     assert_equal(model.components_, V_init)
-
-
-def test_dict_learning_online_shapes():
-    rng = np.random.RandomState(0)
-    X = rng.randn(12, 10)
-    dictionaryT, codeT = dict_learning_online(X.T, n_atoms=8, alpha=1,
-                                              random_state=rng)
-    assert_equal(codeT.shape, (8, 12))
-    assert_equal(dictionaryT.shape, (10, 8))
-    assert_equal(np.dot(codeT.T, dictionaryT.T).shape, X.shape)
 
 
 def test_mini_batch_correct_shapes():

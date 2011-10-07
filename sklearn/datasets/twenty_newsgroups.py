@@ -40,7 +40,6 @@ import urllib
 import logging
 import tarfile
 import pickle
-import warnings
 import shutil
 
 import numpy as np
