@@ -67,11 +67,10 @@ class BaseRandomForest(BaseEstimator):
         self.base_tree = base_tree
         self.n_trees = n_trees
         self.r = r
-        self.K = base_tree.K
         self.criterion = base_tree.criterion
         self.max_depth = base_tree.max_depth
         self.min_split = base_tree.min_split
-        self.F = base_tree.F
+        self.max_features = base_tree.max_features
 
         if n_jobs <= 0:
             raise ValueError("n_jobs must be >= 0")           
@@ -190,12 +189,14 @@ class RandomForestClassifier(BaseRandomForest, ClassifierMixin):
 
     
     """     
-    def __init__(self, K=None, criterion='gini', max_depth=10,\
-                  min_split=1, F=None, random_state=None, n_trees=10, r=0.7, \
-                  n_jobs=1):
-        base_tree = DecisionTreeClassifier( K=K, criterion=criterion, \
-            max_depth=max_depth, min_split=min_split, F=F, random_state=random_state)
-        BaseRandomForest.__init__(self, random_state, base_tree, n_trees, r, n_jobs)
+    def __init__(self, criterion='gini', max_depth=10, min_split=1, 
+                 max_features=None, random_state=None, n_trees=10, r=0.7, 
+                 n_jobs=1):
+        base_tree = DecisionTreeClassifier(criterion=criterion,
+            max_depth=max_depth, min_split=min_split,
+            max_features=max_features, random_state=random_state)
+        BaseRandomForest.__init__(self, random_state, base_tree, n_trees,
+                                  r, n_jobs)
            
     def predict_proba(self, X):
         """
@@ -298,10 +299,11 @@ class RandomForestRegressor(BaseRandomForest, RegressorMixin):
    
     """ 
      
-    def __init__(self, criterion='mse', max_depth=10,\
-                  min_split=1, F=None, random_state=None, n_trees=10, r=0.7, \
-                   n_jobs=1):       
-        base_tree = DecisionTreeRegressor(criterion=criterion, \
-            max_depth=max_depth, min_split=min_split, F=F, random_state=random_state)
-        BaseRandomForest.__init__(self, random_state, base_tree, n_trees, r, n_jobs)
-              
+    def __init__(self, criterion='mse', max_depth=10, min_split=1,
+                 max_features=None, random_state=None, n_trees=10, r=0.7,
+                 n_jobs=1):       
+        base_tree = DecisionTreeRegressor( criterion=criterion,
+            max_depth=max_depth, min_split=min_split,
+            max_features=max_features, random_state=random_state)
+        BaseRandomForest.__init__(self, random_state, base_tree, n_trees,
+                                  r, n_jobs)
