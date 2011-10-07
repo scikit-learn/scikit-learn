@@ -567,6 +567,8 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
     cdef int n_total_samples = X.shape[0]
     cdef int n_features = X.shape[1]
     cdef int i, a, b, best_i = -1
+    cdef int best_split_sample_a = -1
+    cdef int best_split_sample_b = -1
     cdef DTYPE_t t, initial_error, error
     cdef DTYPE_t best_error = np.inf, best_t = np.inf
 
@@ -608,8 +610,10 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
         # reset the criterion for this feature
         criterion.reset()
 
-        # index of smallest sample in X_argsorted_i
+        # index of smallest sample in X_argsorted_i that is in the sample mask
         a = 0
+        while sample_mask[X_argsorted_i[a]] == False:
+            a = a + 1
 
         while True:
             b = smallest_sample_larger_than(a, X_i, X_argsorted_i,
@@ -624,6 +628,9 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
             # get criterion value
             error = criterion.eval()
             # print 'error = ', error
+
+            if not sample_mask[X_argsorted_i[a]] or not sample_mask[X_argsorted_i[b]]:
+                raise ValueError("Attempting to split on sample that is not within sample_mask")
 
             # check if current error is smaller than previous best
             # if this is never true best_i is -1.
