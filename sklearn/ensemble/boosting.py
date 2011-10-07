@@ -1,11 +1,25 @@
-import numpy as np
+from ..base import clone
 from .base import BaseEnsemble
+
 import math
+import numpy as np
 
 
 class AdaBoost(BaseEnsemble):
+    def __init__(self, estimator, boosts=1, beta=.5, **params):
+        if boosts < 1:
+            raise ValueError(
+                "You must specify a number of boosts greater than 0")
+        if beta <= 0:
+            raise ValueError("Beta must be positive and non-zero")
 
-    def fit(self, X, Y, sample_weight=[], boosts=1, beta=0.5, **params):
+        self.beta = beta
+        self.boosts = boosts
+
+        super(AdaBoost, self).__init__(self, estimator, boosts + 1)
+        self.estimator_weights_ = np.ones(boosts + 1)
+
+    def fit(self, X, Y, sample_weight=[], **fit_params):
         """
         X: list of instance vectors
         Y: target values/classes
@@ -15,11 +29,6 @@ class AdaBoost(BaseEnsemble):
         I am making the assumption that one class label is
         positive and the other is negative
         """
-        if boosts < 1:
-            raise ValueError(
-                "You must specify a number of boosts greater than 0")
-        if beta <= 0:
-            raise ValueError("Beta must be positive and non-zero")
 
         if len(sample_weight) == 0:
             # initialize weights to 1/N
@@ -27,11 +36,10 @@ class AdaBoost(BaseEnsemble):
                 / X.shape[0]
         else:
             sample_weight = np.copy(sample_weight)
-        # remove any previous ensemble
-        self[:] = []
-        for i, boost in enumerate(xrange(boosts + 1)):
-            estimator = self.estimator(**self.params)
-            estimator.fit(X, Y, sample_weight, **params)
+
+        for i in xrange(self.boosts + 1):
+            estimator = self.estimators[i]
+            estimator.fit(X, Y, sample_weight, **fit_params)
             # TODO request that classifiers return classification
             # of training sets when fitting
             # which would make the following line unnecessary
@@ -41,42 +49,29 @@ class AdaBoost(BaseEnsemble):
             # error fraction
             err = np.sum(sample_weight * incorrect) / np.sum(sample_weight)
             # sanity check
-            if err == 0:
-                self.append((1., estimator))
-                break
-            elif err >= 0.5:
-                if i == 0:
-                    self.append((1., estimator))
+            if err >= 0.5:
                 break
             # boost weight
-            alpha = beta * math.log((1 - err) / err)
-            self.append((alpha, estimator))
-            if i < boosts:
+            alpha = self.beta * math.log((1 - err) / err)
+            self.alpha_[i] = alpha
+            if i < self.boosts:
                 correct = incorrect ^ 1
                 sample_weight *= np.exp(alpha * (incorrect - correct))
+
         return self
 
     def predict(self, X):
-
+        X = np.atleast_2d(X)
         prediction = np.zeros(X.shape[0], dtype=np.float64)
         norm = 0.
-        for alpha, estimator in self:
-            prediction += alpha * estimator.predict(X)
-            norm += alpha
+        for i in xrange(len(self.estimators)):
+            alpha = self.alpha_[i]
+            prediction += alpha * self.estimators[i].predict(X)
+        norm = self.alpha_.sum()
         if norm > 0:
             prediction /= norm
         return prediction
     
-    def predict_single(self, x):
-
-        prediction = 0.
-        norm = 0.
-        for alpha, estimator in self:
-            prediction += alpha * estimator.predict_single(x)
-            norm += alpha
-        if norm > 0:
-            prediction /= norm
-        return prediction
 
 """
 YET TO BE IMPLEMENTED
