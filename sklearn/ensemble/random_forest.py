@@ -128,7 +128,7 @@ class BaseRandomForest(BaseEstimator):
         if self.forest is None:
             raise Exception('Random Forest not initialized. Perform a fit first')       
         
-        C = np.zeros(n_samples, dtype=int)
+        C = np.zeros(n_samples)
         for idx, sample in enumerate(X): 
             if self.base_tree.type == 'classification':
                 pred_labels = [int(t.predict(sample)) for t in self.forest]
