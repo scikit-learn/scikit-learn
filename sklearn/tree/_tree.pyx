@@ -212,16 +212,6 @@ cdef class ClassificationCriterion(Criterion):
 
         self.reset()
 
-        # print "ClassificationCriterion.init: "
-        # print "    label_count_left [",
-        # for c from 0 <= c < self.n_classes:
-        #     print self.label_count_left[c],
-        # print "] ", self.n_left
-        # print "    label_count_right [",
-        # for c from 0 <= c < self.n_classes:
-        #     print self.label_count_right[c],
-        # print "] ", self.n_right
-
     cdef void reset(self):
         """Reset label_counts by setting `label_count_left to zero
         and copying the init array into the right."""
@@ -248,24 +238,6 @@ cdef class ClassificationCriterion(Criterion):
             self.label_count_left[c] += 1
             self.n_right -= 1
             self.n_left += 1
-
-        # print "ClassificationCriterion.update: a = ", a, " b = ", b
-        # print "    sorted [",
-        # for c from 0 <= c < self.n_samples:
-        #     print X_argsorted_i[c],
-        # print "] "
-        # print "    y [",
-        # for c from 0 <= c < self.n_samples:
-        #     print <int>y[X_argsorted_i[c]],
-        # print "] "
-        # print "    label_count_left [",
-        # for c from 0 <= c < self.n_classes:
-        #     print self.label_count_left[c],
-        # print "] ", self.n_left
-        # print "    label_count_right [",
-        # for c from 0 <= c < self.n_classes:
-        #     print self.label_count_right[c],
-        # print "] ", self.n_right
 
         return self.n_left
 
@@ -610,7 +582,7 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
 
         # index of smallest sample in X_argsorted_i that is in the sample mask
         a = 0
-        while sample_mask[X_argsorted_i[a]] == False:
+        while sample_mask_ptr[X_argsorted_i[a]] == 0:
             a = a + 1
 
         while True:
@@ -625,12 +597,16 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
 
             # get criterion value
             error = criterion.eval()
-            # print 'error = ', error
 
+            assert sample_mask_ptr[X_argsorted_i[a]] == 1 and sample_mask_ptr[X_argsorted_i[b]]
+            
             # check if current error is smaller than previous best
             # if this is never true best_i is -1.
             if error < best_error:
-                t = (X_i[X_argsorted_i[a]] + X_i[X_argsorted_i[b]]) / 2.0      
+                t = X_i[X_argsorted_i[a]] + \
+                    ((X_i[X_argsorted_i[b]] - X_i[X_argsorted_i[a]]) / 2.0)
+                if t == X_i[X_argsorted_i[b]]:
+                    t = X_i[X_argsorted_i[a]]
                 best_i = i
                 best_t = t
                 best_error = error

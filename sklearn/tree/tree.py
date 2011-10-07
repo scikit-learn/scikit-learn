@@ -192,6 +192,7 @@ def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
                 sample_mask = np.ones((X.shape[0],), dtype=np.bool)
 
             split = X[:, feature] <= threshold
+
             left_partition = recursive_partition(X, X_argsorted, y,
                                                  split & sample_mask,
                                                  depth + 1)
