@@ -608,8 +608,10 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
         # reset the criterion for this feature
         criterion.reset()
 
-        # index of smallest sample in X_argsorted_i
+        # index of smallest sample in X_argsorted_i that is in the sample mask
         a = 0
+        while sample_mask[X_argsorted_i[a]] == False:
+            a = a + 1
 
         while True:
             b = smallest_sample_larger_than(a, X_i, X_argsorted_i,
