@@ -629,9 +629,6 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
             error = criterion.eval()
             # print 'error = ', error
 
-            if not sample_mask[X_argsorted_i[a]] or not sample_mask[X_argsorted_i[b]]:
-                raise ValueError("Attempting to split on sample that is not within sample_mask")
-
             # check if current error is smaller than previous best
             # if this is never true best_i is -1.
             if error < best_error:
