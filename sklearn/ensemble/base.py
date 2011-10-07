@@ -1,33 +1,21 @@
 from ..base import BaseEstimator
-"""
-Base class for all ensemble classes
-"""
+
+
 class BaseEnsemble(BaseEstimator):
+    """
+    Base class for all ensemble classes
+    """
 
-    def __init__(self, estimator, **params):
-
-        self.estimator = estimator
-        if not issubclass(estimator, BaseEstimator):
+    def __init__(self, estimator, n_estimators, **params):
+        if not isinstance(estimator, BaseEstimator):
             raise TypeError("estimator must be a subclass of BaseEstimator")
-        self.params = params
-        self.estimators = []
+        estimator.set_params(**params)
+        self.estimators = [clone(estimator) for i in xrange(n_estimators)]
 
     def __len__(self):
-
+        """Returns the number of estimators in the ensemble"""
         return len(self.estimators)
 
     def __getitem__(self, index):
-
+        """Returns the index'th estimator in the ensemble"""
         return self.estimators[index]
-
-    def __setitem__(self, index, thing):
-
-        self.estimators[index] = thing
-
-    def __delitem__(self, index):
-
-        del self.estimators[index]
-    
-    def append(self, thing):
-
-        return self.estimators.append(thing)
