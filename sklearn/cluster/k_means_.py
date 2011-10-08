@@ -173,8 +173,10 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
     verbose: boolean, optional
         Terbosity mode
 
-    random_state: numpy.RandomState, optional
-        The generator used to initialize the centers. Defaults to numpy.random.
+    random_state: integer or numpy.RandomState, optional
+        The generator used to initialize the centers. If an integer is
+        given, it fixes the seed. Defaults to the global numpy random
+        number generator.
 
     copy_x: boolean, optional
         When pre-computing distances it is more numerically accurate to center
@@ -433,6 +435,11 @@ class KMeans(BaseEstimator):
     tol: float, optional default: 1e-4
         Relative tolerance w.r.t. inertia to declare convergence
 
+    random_state: integer or numpy.RandomState, optional
+        The generator used to initialize the centers. If an integer is
+        given, it fixes the seed. Defaults to the global numpy random
+        number generator.
+
 
     Methods
     -------
@@ -668,6 +675,12 @@ class MiniBatchKMeans(KMeans):
     compute_labels: boolean
         Compute label assignements and inertia for the complete dataset
         once the minibatch optimization has converged in fit.
+
+    random_state: integer or numpy.RandomState, optional
+        The generator used to initialize the centers. If an integer is
+        given, it fixes the seed. Defaults to the global numpy random
+        number generator.
+
 
     Methods
     -------

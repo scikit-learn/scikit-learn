@@ -658,9 +658,8 @@ In normal usage, the Silhouette Coefficient is applied to the results of a
 cluster analysis.
 
   >>> import numpy as np
-  >>> np.random.seed(1)
   >>> from sklearn.cluster import KMeans
-  >>> kmeans_model = KMeans(init="k-means++", k=3).fit(X)
+  >>> kmeans_model = KMeans(k=3, random_state=1).fit(X)
   >>> labels = kmeans_model.labels_
   >>> metrics.silhouette_score(X, labels, metric='euclidean')  
   ...                                                      # doctest: +ELLIPSIS
