@@ -15,10 +15,19 @@ See http://scikit-learn.sourceforge.net for complete documentation.
 
 try:
     from . import check_build
-except ImportError:
-    raise ImportError("Please do not forget to build the package first: "
-            "run `python setup.py install` or `make`."
-        )
+except ImportError, e:
+    raise ImportError(
+"""%s
+___________________________________________________________________________
+It seems that the scikit-learn has not been built correctly.
+
+If you have installed the scikit-learn from source, please do not forget
+to build the package before using it: run `python setup.py install` or
+`make` in the source directory.
+
+If you have used an installer, please check that it is suited for your
+Python version and your OS.
+""" % e)
 
 from .base import clone
 
