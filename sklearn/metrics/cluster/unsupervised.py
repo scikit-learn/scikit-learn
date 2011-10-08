@@ -46,8 +46,10 @@ def silhouette_score(X, labels, metric='euclidean',
         The size of the sample to use when computing the Silhouette
         Coefficient. If sample_size is None, no sampling is used.
 
-    random_state: numpy.RandomState, optional
-        The generator used to initialize the centers. Defaults to numpy.random.
+    random_state: integer or numpy.RandomState, optional
+        The generator used to initialize the centers. If an integer is
+        given, it fixes the seed. Defaults to the global numpy random
+        number generator.
 
     **kwds: optional keyword parameters
         Any further parameters are passed directly to the distance function.

@@ -628,7 +628,9 @@ Presentation and usage
 ~~~~~~~~~~~~~~~~~~~~~~
 
 If the ground truth labels are not known, evaluation must be performed using
-the model itself. The Silhouette Coefficient is an example of this, where a
+the model itself. The Silhouette Coefficient
+(:func:`sklearn.metrics.silhouette_score`)
+is an example of such an evaluation, where a
 higher Silhouette Coefficient score relates to a model with better defined
 clusters. The Silhouette Coefficient is defined for each sample and is composed
 of two scores:

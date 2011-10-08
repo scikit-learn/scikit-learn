@@ -47,8 +47,10 @@ def k_init(X, k, n_local_trials=None, random_state=None, x_squared_norms=None):
         Set to None to make the number of trials depend logarithmically
         on the number of seeds (2+log(k)); this is the default.
 
-    random_state: numpy.RandomState, optional
-        The generator used to initialize the centers. Defaults to numpy.random.
+    random_state: integer or numpy.RandomState, optional
+        The generator used to initialize the centers. If an integer is
+        given, it fixes the seed. Defaults to the global numpy random
+        number generator.
 
     x_squared_norms: array, shape (n_samples,), optional
         Squared euclidean norm of each data point. Pass it if you have it at
@@ -314,8 +316,10 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None):
     init: {'k-means++', 'random' or ndarray or callable} optional
         Method for initialisation
 
-    random_state: numpy.RandomState, optional
-        The generator used to initialise the centers. Defaults to numpy.random
+    random_state: integer or numpy.RandomState, optional
+        The generator used to initialize the centers. If an integer is
+        given, it fixes the seed. Defaults to the global numpy random
+        number generator.
 
     x_squared_norms:  array, shape (n_samples,), optional
         Squared euclidean norm of each data point. Pass it if you have it at
