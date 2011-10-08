@@ -1,7 +1,7 @@
 """
-==============================
-k-Nearest Neighbors regression
-==============================
+============================
+Nearest Neighbors regression
+============================
 
 Demonstrate the resolution of a regression problem
 using a k-Nearest Neighbor and the interpolation of the
@@ -32,18 +32,19 @@ y[::5] += 1*(0.5 - np.random.rand(8))
 
 ###############################################################################
 # Fit regression model
+n_neighbors = 5
 
-for i, mode in enumerate(('mean', 'barycenter')):
-    knn = neighbors.NeighborsRegressor(n_neighbors=4, mode=mode)
+for i,weights in enumerate(['uniform', 'distance']):
+    knn = neighbors.KNeighborsRegressor(n_neighbors, weights=weights)
     y_ = knn.fit(X, y).predict(T)
 
-    pl.subplot(2, 1, 1 + i)
+    pl.subplot(2, 1, i + 1)
     pl.scatter(X, y, c='k', label='data')
     pl.plot(T, y_, c='g', label='prediction')
     pl.axis('tight')
     pl.legend()
-    pl.title('NeighborsRegressor with %s weights' % mode)
+    pl.title("KNeighborsRegressor (k = %i, weights = '%s')" % (n_neighbors,
+                                                               weights))
 
-pl.subplots_adjust(0.1, 0.04, 0.95, 0.94, 0.3, 0.28)
 pl.show()
 

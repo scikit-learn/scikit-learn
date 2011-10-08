@@ -9,9 +9,7 @@ LIBSVM_IMPL = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
 
 
 def _get_class_weight(class_weight, y):
-    """
-    Estimate class weights for unbalanced datasets.
-    """
+    """Estimate class weights for unbalanced datasets."""
     if class_weight == 'auto':
         uy = np.unique(y)
         weight_label = np.asarray(uy, dtype=np.int32, order='C')
@@ -31,10 +29,9 @@ def _get_class_weight(class_weight, y):
 
 
 class BaseLibSVM(BaseEstimator):
-    """
-    Base class for classifiers that use libsvm as library for
-    support vector machine classification and regression.
+    """Base class for estimators that use libsvm as backing library
 
+    This implements support vector machine classification and regression.
     Should not be used directly, use derived classes instead
     """
 
@@ -61,9 +58,7 @@ class BaseLibSVM(BaseEstimator):
         self.probability = probability
 
     def _compute_kernel(self, X):
-        """ Return the data transformed by the kernel (if the kernel
-            is a callable).
-        """
+        """Return the data transformed by a callable kernel"""
         if hasattr(self, 'kernel_function'):
             # in the case of precomputed kernel given as a function, we
             # have to compute explicitly the kernel matrix
@@ -71,10 +66,9 @@ class BaseLibSVM(BaseEstimator):
                                dtype=np.float64, order='C')
         return X
 
-    def fit(self, X, y, class_weight=None, sample_weight=None, cache_size=100.):
-        """
-        Fit the SVM model according to the given training data and
-        parameters.
+    def fit(self, X, y, class_weight=None, sample_weight=None,
+            cache_size=100.):
+        """Fit the SVM model according to the given training data.
 
         Parameters
         ----------
@@ -129,7 +123,7 @@ class BaseLibSVM(BaseEstimator):
         solver_type = LIBSVM_IMPL.index(self.impl)
         if solver_type != 2 and X.shape[0] != y.shape[0]:
             raise ValueError("X and y have incompatible shapes.\n" +
-                             "X has %s features, but y has %s." % \
+                             "X has %s samples, but y has %s." % \
                              (X.shape[0], y.shape[0]))
 
         if self.kernel == "precomputed" and X.shape[0] != X.shape[1]:
@@ -137,7 +131,7 @@ class BaseLibSVM(BaseEstimator):
 
         if (self.kernel in ['poly', 'rbf']) and (self.gamma == 0):
             # if custom gamma is not provided ...
-            self.gamma = 1.0 / X.shape[0]
+            self.gamma = 1.0 / X.shape[1]
         self.shape_fit_ = X.shape
 
         self.support_, self.support_vectors_, self.n_support_, \
@@ -151,9 +145,7 @@ class BaseLibSVM(BaseEstimator):
         return self
 
     def predict(self, X):
-        """
-        This function does classification or regression on an array of
-        test vectors X.
+        """Perform classification or regression samples in X.
 
         For a classification model, the predicted class for each
         sample in X is returned.  For a regression model, the function
@@ -178,11 +170,13 @@ class BaseLibSVM(BaseEstimator):
 
         if self.kernel == "precomputed":
             if X.shape[1] != self.shape_fit_[0]:
-                raise ValueError("X.shape[1] should be equal to the number of "
-                                 "samples at training time!")
+                raise ValueError("X.shape[1] = %d should be equal to %d, "
+                                 "the number of samples at training time" %
+                                 (X.shape[1], self.shape_fit_[0]))
         elif n_features != self.shape_fit_[1]:
-            raise ValueError("X.shape[1] should be equal to the number of "
-                             "features at training time!")
+            raise ValueError("X.shape[1] = %d should be equal to %d, "
+                             "the number of features at training time" %
+                             (n_features, self.shape_fit_[1]))
 
         svm_type = LIBSVM_IMPL.index(self.impl)
         return libsvm.predict(
@@ -192,9 +186,10 @@ class BaseLibSVM(BaseEstimator):
             svm_type=svm_type, **self._get_params())
 
     def predict_proba(self, X):
-        """
-        This function does classification or regression on a test vector X
-        given a model with probability information.
+        """Compute the likehoods each possible outcomes of samples in T.
+
+        The model need to have probability information computed at training
+        time: fit with attribute `probability` set to True.
 
         Parameters
         ----------
@@ -236,9 +231,10 @@ class BaseLibSVM(BaseEstimator):
         return pprob
 
     def predict_log_proba(self, T):
-        """
-        This function does classification or regression on a test vector T
-        given a model with probability information.
+        """Compute the log likehoods each possible outcomes of samples in T.
+
+        The model need to have probability information computed at training
+        time: fit with attribute `probability` set to True.
 
         Parameters
         ----------
@@ -261,8 +257,7 @@ class BaseLibSVM(BaseEstimator):
         return np.log(self.predict_proba(T))
 
     def decision_function(self, X):
-        """
-        Calculate the distance of the samples T to the separating hyperplane.
+        """Distance of the samples T to the separating hyperplane.
 
         Parameters
         ----------
@@ -291,7 +286,7 @@ class BaseLibSVM(BaseEstimator):
             # libsvm has the convention of returning negative values for
             # rightmost labels, so we invert the sign since our label_ is
             # sorted by increasing order
-            return -dec_func
+            return - dec_func
         else:
             return dec_func
 
@@ -304,19 +299,17 @@ class BaseLibSVM(BaseEstimator):
 
 
 class BaseLibLinear(BaseEstimator):
-    """
-    Base for classes binding liblinear (dense and sparse versions)
-    """
+    """Base for classes binding liblinear (dense and sparse versions)"""
 
     _solver_type_dict = {
-        'PL2_LLR_D0' : 0,  # L2 penalty, logistic regression
-        'PL2_LL2_D1' : 1,  # L2 penalty, L2 loss, dual form
-        'PL2_LL2_D0' : 2,  # L2 penalty, L2 loss, primal form
-        'PL2_LL1_D1' : 3,  # L2 penalty, L1 Loss, dual form
-        'MC_SVC'     : 4,  # Multi-class Support Vector Classification
-        'PL1_LL2_D0' : 5,  # L1 penalty, L2 Loss, primal form
-        'PL1_LLR_D0' : 6,  # L1 penalty, logistic regression
-        'PL2_LLR_D1' : 7,  # L2 penalty, logistic regression, dual form
+        'PL2_LLR_D0': 0,  # L2 penalty, logistic regression
+        'PL2_LL2_D1': 1,  # L2 penalty, L2 loss, dual form
+        'PL2_LL2_D0': 2,  # L2 penalty, L2 loss, primal form
+        'PL2_LL1_D1': 3,  # L2 penalty, L1 Loss, dual form
+        'MC_SVC': 4,      # Multi-class Support Vector Classification
+        'PL1_LL2_D0': 5,  # L1 penalty, L2 Loss, primal form
+        'PL1_LLR_D0': 6,  # L1 penalty, logistic regression
+        'PL2_LLR_D1': 7,  # L2 penalty, logistic regression, dual form
         }
 
     def __init__(self, penalty='l2', loss='l2', dual=True, tol=1e-4, C=1.0,
@@ -334,8 +327,13 @@ class BaseLibLinear(BaseEstimator):
         self._get_solver_type()
 
     def _get_solver_type(self):
-        """ Return the magic number for the solver described by the
-            settings.
+        """Find the liblinear magic number for the solver.
+
+        This number depends on the values of the following attributes:
+          - multi_class
+          - penalty
+          - loss
+          - dual
         """
         if self.multi_class:
             solver_type = 'MC_SVC'
@@ -343,14 +341,23 @@ class BaseLibLinear(BaseEstimator):
             solver_type = "P%s_L%s_D%d" % (
                 self.penalty.upper(), self.loss.upper(), int(self.dual))
         if not solver_type in self._solver_type_dict:
+            if self.penalty.upper() == 'L1' and self.loss.upper() == 'L1':
+                error_string = ("The combination of penalty='l1' "
+                    "and loss='l1' is not supported.")
+            elif self.penalty.upper() == 'L2' and self.loss.upper() == 'L1':
+                # this has to be in primal
+                error_string = ("loss='l2' and penalty='l1' is "
+                    "only supported when dual='true'.")
+            else:
+                # only PL1 in dual remains
+                error_string = ("penalty='l1' is only supported "
+                    "when dual='false'.")
             raise ValueError('Not supported set of arguments: '
-                             + solver_type)
+                             + error_string)
         return self._solver_type_dict[solver_type]
 
     def fit(self, X, y, class_weight=None):
-        """
-        Fit the model according to the given training data and
-        parameters.
+        """Fit the model according to the given training data.
 
         Parameters
         ----------
@@ -388,8 +395,7 @@ class BaseLibLinear(BaseEstimator):
         return self
 
     def predict(self, X):
-        """
-        Predict target values of X according to the fitted model.
+        """Predict target values of X according to the fitted model.
 
         Parameters
         ----------
@@ -400,6 +406,7 @@ class BaseLibLinear(BaseEstimator):
         C : array, shape = [n_samples]
         """
         X = np.asanyarray(X, dtype=np.float64, order='C')
+        X = np.atleast_2d(X)
         self._check_n_features(X)
 
         coef = self.raw_coef_
@@ -412,9 +419,7 @@ class BaseLibLinear(BaseEstimator):
                                       self._get_bias())
 
     def decision_function(self, X):
-        """
-        Return the decision function of X according to the trained
-        model.
+        """Decision function value for X according to the trained model.
 
         Parameters
         ----------
@@ -471,11 +476,6 @@ class BaseLibLinear(BaseEstimator):
             return -ret
         else:
             return ret
-
-    def predict_proba(self, T):
-        # only available for logistic regression
-        raise NotImplementedError(
-                'liblinear does not provide this functionality')
 
     def _get_bias(self):
         if self.fit_intercept:

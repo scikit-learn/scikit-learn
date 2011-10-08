@@ -35,6 +35,9 @@ pitt gordon banks cs science pittsburgh univ computer soon disease
 edu reply pain health david article medical medicine 16
 """
 
+# Author: Olivier Grisel <olivier.grisel@ensta.org>
+# License: Simplified BSD
+
 from time import time
 from sklearn.feature_extraction import text
 from sklearn import decomposition
@@ -56,12 +59,6 @@ vectorizer = text.CountVectorizer(max_df=0.95, max_features=n_features)
 counts = vectorizer.fit_transform(dataset.data[:n_samples])
 tfidf = text.TfidfTransformer().fit_transform(counts)
 print "done in %0.3fs." % (time() - t0)
-
-# Convert scipy.sparse.csr_matrix representation to dense numpy array
-tfidf = tfidf.toarray()
-
-# Remove negative values (they should not be there, is this a bug?)
-tfidf[tfidf < 0] = 0.0
 
 # Fit the NMF model
 print "Fitting the NMF model on with n_samples=%d and n_features=%d..." % (

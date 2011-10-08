@@ -4,7 +4,7 @@ Helpers for logging.
 This module needs much love to become useful.
 """
 
-# Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org> 
+# Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
 # Copyright (c) 2008 Gael Varoquaux
 # License: BSD Style, 3 clauses.
 
@@ -43,7 +43,7 @@ def short_format_time(t):
 class Logger(object):
     """ Base class for logging messages.
     """
-    
+
     def __init__(self, depth=3):
         """
             Parameters
@@ -99,7 +99,7 @@ class PrintTime(object):
                 for i in range(1, 9):
                     if os.path.exists(logfile+'.%i' % i):
                         try:
-                            shutil.move(logfile+'.%i' % i, 
+                            shutil.move(logfile+'.%i' % i,
                                         logfile+'.%i' % (i+1))
                         except:
                             "No reason failing here"

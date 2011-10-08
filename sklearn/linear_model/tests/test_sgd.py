@@ -45,6 +45,10 @@ Y4 = np.array([1, 1, 1, 1, 2, 2, 2, 2])
 
 iris = datasets.load_iris()
 
+# test sample 5 - test sample 1 as binary classification problem
+X5 = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
+Y5 = [1, 1, 1, 2, 2, 2]
+true_result5 = [0, 1, 1]
 
 ##
 ## Classification Test Case
@@ -122,6 +126,18 @@ class DenseSGDClassifierTestCase(unittest.TestCase):
         """Checks intercept_ shape for the warm starts"""
         # Provided intercept_ does not match dataset.
         self.factory().fit(X, Y, intercept_init=np.zeros((3,)))
+
+    def test_set_intercept_binary(self):
+        """Checks intercept_ shape for the warm starts in binary case"""
+        self.factory().fit(X5, Y5, intercept_init=0)
+
+    def test_set_intercept_to_intercept(self):
+        """Checks intercept_ shape consistency for the warm starts"""
+        # Inconsistent intercept_ shape.
+        clf = self.factory().fit(X5, Y5)
+        self.factory().fit(X5, Y5, intercept_init = clf.intercept_)
+        clf = self.factory().fit(X, Y)
+        self.factory().fit(X, Y, intercept_init = clf.intercept_)
 
     @raises(ValueError)
     def test_sgd_at_least_two_labels(self):

@@ -49,7 +49,6 @@ print __doc__
 
 from pprint import pprint
 from time import time
-import os
 import logging
 
 from sklearn.datasets import fetch_20newsgroups
@@ -107,16 +106,12 @@ parameters = {
 # classifier
 grid_search = GridSearchCV(pipeline, parameters, n_jobs=1)
 
-# cross-validation doesn't work if the length of the data is not known,
-# hence use lists instead of iterators
-text_docs = [file(f).read() for f in data.filenames]
-
 print "Performing grid search..."
 print "pipeline:", [name for name, _ in pipeline.steps]
 print "parameters:"
 pprint(parameters)
 t0 = time()
-grid_search.fit(text_docs, data.target)
+grid_search.fit(data.data, data.target)
 print "done in %0.3fs" % (time() - t0)
 print
 

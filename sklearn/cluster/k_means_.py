@@ -14,6 +14,7 @@ from itertools import cycle, izip
 import numpy as np
 import scipy.sparse as sp
 
+from ..utils.extmath import norm
 from ..base import BaseEstimator
 from ..metrics.pairwise import euclidean_distances
 from ..utils import check_arrays
@@ -46,8 +47,10 @@ def k_init(X, k, n_local_trials=None, random_state=None, x_squared_norms=None):
         Set to None to make the number of trials depend logarithmically
         on the number of seeds (2+log(k)); this is the default.
 
-    random_state: numpy.RandomState, optional
-        The generator used to initialize the centers. Defaults to numpy.random.
+    random_state: integer or numpy.RandomState, optional
+        The generator used to initialize the centers. If an integer is
+        given, it fixes the seed. Defaults to the global numpy random
+        number generator.
 
     x_squared_norms: array, shape (n_samples,), optional
         Squared euclidean norm of each data point. Pass it if you have it at
@@ -172,8 +175,10 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
     verbose: boolean, optional
         Terbosity mode
 
-    random_state: numpy.RandomState, optional
-        The generator used to initialize the centers. Defaults to numpy.random.
+    random_state: integer or numpy.RandomState, optional
+        The generator used to initialize the centers. If an integer is
+        given, it fixes the seed. Defaults to the global numpy random
+        number generator.
 
     copy_x: boolean, optional
         When pre-computing distances it is more numerically accurate to center
@@ -311,8 +316,10 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None):
     init: {'k-means++', 'random' or ndarray or callable} optional
         Method for initialisation
 
-    random_state: numpy.RandomState, optional
-        The generator used to initialise the centers. Defaults to numpy.random
+    random_state: integer or numpy.RandomState, optional
+        The generator used to initialize the centers. If an integer is
+        given, it fixes the seed. Defaults to the global numpy random
+        number generator.
 
     x_squared_norms:  array, shape (n_samples,), optional
         Squared euclidean norm of each data point. Pass it if you have it at
@@ -431,6 +438,11 @@ class KMeans(BaseEstimator):
 
     tol: float, optional default: 1e-4
         Relative tolerance w.r.t. inertia to declare convergence
+
+    random_state: integer or numpy.RandomState, optional
+        The generator used to initialize the centers. If an integer is
+        given, it fixes the seed. Defaults to the global numpy random
+        number generator.
 
 
     Methods
@@ -575,11 +587,11 @@ def _mini_batch_step_dense(X, batch_slice, centers, counts, x_squared_norms):
         The row slice of the mini batch.
 
     centers: array, shape (k, n_features)
-        The cluster centers
+        The cluster centers. This array is MODIFIED IN PLACE
 
     counts: array, shape (k, )
          The vector in which we keep track of the numbers of elements in a
-         cluster
+         cluster. This array is MODIFIED IN PLACE
 
     x_squared_norms: array, shape (n_samples,)
         Squared euclidean norm of each data point.
@@ -599,6 +611,7 @@ def _mini_batch_step_dense(X, batch_slice, centers, counts, x_squared_norms):
             centers[q] = (1. / (counts[q] + c)) * (
                 counts[q] * centers[q] + np.sum(X[center_mask], axis=0))
             counts[q] += c
+    return counts, centers
 
 
 def _mini_batch_step_sparse(X, batch_slice, centers, counts, x_squared_norms):
@@ -614,11 +627,11 @@ def _mini_batch_step_sparse(X, batch_slice, centers, counts, x_squared_norms):
         The row slice of the mini batch.
 
     centers: array, shape (k, n_features)
-        The cluster centers
+        The cluster centers. This array is MODIFIED IN PLACE
 
     counts: array, shape (k, )
          The vector in which we keep track of the numbers of elements in a
-         cluster
+         cluster. This array is MODIFIED IN PLACE
 
     x_squared_norms: array, shape (n_samples,)
          The squared norms of each sample in `X`.
@@ -628,6 +641,7 @@ def _mini_batch_step_sparse(X, batch_slice, centers, counts, x_squared_norms):
 
     _k_means._mini_batch_update_sparse(X.data, X.indices, X.indptr,
                                        batch_slice, centers, counts, cache)
+    return counts, centers
 
 
 class MiniBatchKMeans(KMeans):
@@ -662,6 +676,16 @@ class MiniBatchKMeans(KMeans):
     tol: float, optional default: 1e-4
         Relative tolerance w.r.t. inertia to declare convergence
 
+    compute_labels: boolean
+        Compute label assignements and inertia for the complete dataset
+        once the minibatch optimization has converged in fit.
+
+    random_state: integer or numpy.RandomState, optional
+        The generator used to initialize the centers. If an integer is
+        given, it fixes the seed. Defaults to the global numpy random
+        number generator.
+
+
     Methods
     -------
 
@@ -678,11 +702,11 @@ class MiniBatchKMeans(KMeans):
         Coordinates of cluster centers
 
     labels_:
-        Labels of each point
+        Labels of each point (if compute_labels is set to True).
 
     inertia_: float
         The value of the inertia criterion associated with the chosen
-        partition.
+        partition (if compute_labels is set to True).
 
     References
     ----------
@@ -690,7 +714,8 @@ class MiniBatchKMeans(KMeans):
     """
 
     def __init__(self, k=8, init='random', max_iter=100,
-                 chunk_size=1000, tol=1e-4, verbose=0, random_state=None):
+                 chunk_size=1000, tol=1e-4, verbose=0,
+                 compute_labels=True, random_state=None):
 
         super(MiniBatchKMeans, self).__init__(k, init, 1,
               max_iter, tol, verbose, random_state)
@@ -698,6 +723,7 @@ class MiniBatchKMeans(KMeans):
         self.counts = None
         self.cluster_centers_ = None
         self.chunk_size = chunk_size
+        self.compute_labels = compute_labels
 
     def fit(self, X, y=None):
         """Compute the centroids on X by chunking it into mini-batches.
@@ -732,7 +758,7 @@ class MiniBatchKMeans(KMeans):
 
         n_batches = int(np.ceil(float(n_samples) / self.chunk_size))
         batch_slices = list(gen_even_slices(n_samples, n_batches))
-        n_iterations = xrange(int(self.max_iter * n_batches))
+        n_iterations = int(self.max_iter * n_batches)
         if sp.issparse(X_shuffled):
             _mini_batch_step = _mini_batch_step_sparse
             tol = self.tol
@@ -740,24 +766,42 @@ class MiniBatchKMeans(KMeans):
             _mini_batch_step = _mini_batch_step_dense
             tol = np.mean(np.var(X_shuffled, axis=0)) * self.tol
 
-        for i, batch_slice in izip(n_iterations, cycle(batch_slices)):
-            old_centers = self.cluster_centers_.copy()
-            _mini_batch_step(X_shuffled, batch_slice, self.cluster_centers_,
-                             self.counts, x_squared_norms=x_squared_norms)
+        # pre-allocate a copy of the cluster centers
+        old_centers = self.cluster_centers_.copy()
 
-            if np.sum((old_centers - self.cluster_centers_) ** 2) < tol:
+        for i, batch_slice in izip(xrange(n_iterations), cycle(batch_slices)):
+            self.counts, self.cluster_centers_ = _mini_batch_step(
+                            X_shuffled, batch_slice,
+                            self.cluster_centers_, self.counts,
+                            x_squared_norms=x_squared_norms)
+
+            # inplace difference to avoid memory allocation for computing a
+            # difference between two sets of vectors
+            old_centers -= self.cluster_centers_
+            squared_delta = norm(old_centers) ** 2
+            if self.verbose:
+                print 'Minibatch iteration %d/%d: change = %f' % (
+                    i + 1, n_iterations, squared_delta)
+            if squared_delta < tol:
                 if self.verbose:
                     print 'Converged to similar centers at iteration', i
                 break
+            if i < n_iterations - 1:
+                old_centers[:] = self.cluster_centers_
 
-        self.inertia_ = 0
-        self.labels_ = np.empty((n_samples,), dtype=np.int)
-        for batch_slice in batch_slices:
-            batch_inertia, batch_labels = _calculate_labels_inertia(
-            X[batch_slice], self.cluster_centers_)
-            self.inertia_ += batch_inertia
-            self.labels_[batch_slice] = batch_labels
-
+        if self.compute_labels:
+            if self.verbose:
+                print 'Computing label assignements', i
+            self.inertia_ = 0
+            self.labels_ = np.empty((n_samples,), dtype=np.int)
+            for i, batch_slice in enumerate(batch_slices):
+                batch_inertia, batch_labels = _calculate_labels_inertia(
+                X[batch_slice], self.cluster_centers_)
+                self.inertia_ += batch_inertia
+                self.labels_[batch_slice] = batch_labels
+                if self.verbose:
+                    print 'Assignements iteration %d/%d' % (
+                        i + 1, len(batch_slices))
         return self
 
     def partial_fit(self, X, y=None):
@@ -798,10 +842,12 @@ class MiniBatchKMeans(KMeans):
         else:
             _mini_batch_step = _mini_batch_step_dense
 
-        _mini_batch_step(X, batch_slice, self.cluster_centers_, self.counts,
-                         x_squared_norms=x_squared_norms)
+        self.counts, self.cluster_centers_ = _mini_batch_step(X,
+                        batch_slice, self.cluster_centers_, self.counts,
+                        x_squared_norms=x_squared_norms)
 
-        self.inertia_, self.labels_ = _calculate_labels_inertia(
-            X, self.cluster_centers_, x_squared_norms)
+        if self.compute_labels:
+            self.inertia_, self.labels_ = _calculate_labels_inertia(
+                X, self.cluster_centers_, x_squared_norms)
 
         return self

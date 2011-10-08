@@ -69,8 +69,10 @@ and pipeline on 2D data.
 
 .. topic:: Examples:
 
-    * :ref:`example_cluster_plot_vq_china.py`
+    * :ref:`example_cluster_plot_color_quantization.py`
 
+
+.. _sample_generators:
 
 Sample generators
 =================
@@ -96,6 +98,8 @@ can be used to build artifical datasets of controled size and complexity.
    make_swiss_roll
    make_s_curve
 
+
+.. _libsvm_loader:
 
 Datasets in svmlight / libsvm format
 ====================================

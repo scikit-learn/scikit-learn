@@ -68,6 +68,7 @@ loglik_real = -log_likelihood(emp_cov, linalg.inv(real_cov))
 
 ###############################################################################
 # Plot results
+pl.figure(-1)
 pl.title("Regularized covariance: likelihood and shrinkage coefficient")
 pl.xlabel('Shrinkage')
 pl.ylabel('Negative log-likelihood')
@@ -79,8 +80,8 @@ pl.hlines(loglik_real, pl.xlim()[0], pl.xlim()[1], color='red',
 # adjust view
 lik_max = np.amax(negative_logliks)
 lik_min = np.amin(negative_logliks)
-ylim0 = lik_min - 5.*np.log((pl.ylim()[1]-pl.ylim()[0]))
-ylim1 = lik_max + 10.*np.log(lik_max-lik_min)
+ylim0 = lik_min - 5. * np.log((pl.ylim()[1] - pl.ylim()[0]))
+ylim1 = lik_max + 10. * np.log(lik_max - lik_min)
 # LW likelihood
 pl.vlines(lw.shrinkage_, ylim0, -loglik_lw, color='g',
           linewidth=3, label='Ledoit-Wolf estimate')

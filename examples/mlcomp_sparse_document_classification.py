@@ -105,22 +105,22 @@ def benchmark(clf_class, params, name):
     t0 = time()
     pred = clf.predict(X_test)
     print "done in %fs" % (time() - t0)
-    
+
     print "Classification report on test set for classifier:"
     print clf
     print
     print classification_report(y_test, pred, target_names=news_test.target_names)
-    
+
     cm = confusion_matrix(y_test, pred)
     print "Confusion matrix:"
     print cm
-    
+
     # Show confusion matrix
     pl.matshow(cm)
     pl.title('Confusion matrix of the %s classifier' % name)
     pl.colorbar()
-    
-    
+
+
 print "Testbenching a linear classifier..."
 parameters = {
     'loss': 'hinge',

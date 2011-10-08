@@ -174,17 +174,42 @@ order to better understand the profile of this specific function, let
 us install ``line-prof`` and wire it to IPython::
 
   $ pip install line-profiler
-  $ vim ~/.ipython/ipy_user_conf.py
 
-Ensure the following lines are present::
+- **Under IPython <= 0.10**, edit ``~/.ipython/ipy_user_conf.py`` and
+  ensure the following lines are present::
 
-  import IPython.ipapi
-  ip = IPython.ipapi.get()
+    import IPython.ipapi
+    ip = IPython.ipapi.get()
 
-Towards the end of the file, define the ``%lprun`` magic::
+  Towards the end of the file, define the ``%lprun`` magic::
 
-  import line_profiler
-  ip.expose_magic('lprun', line_profiler.magic_lprun)
+    import line_profiler
+    ip.expose_magic('lprun', line_profiler.magic_lprun)
+
+- **Under IPython 0.11+**, first create a configuration profile::
+
+    $ ipython profile create
+
+  Then create a file named ``~/.ipython/extensions/line_profile_ext`` with
+  the following content::
+
+    import line_profiler
+
+    def load_ipython_extension(ip):
+        ip.define_magic('lprun', line_profiler.magic_lprun)
+
+  Then register it in ``~/.ipython/profile_default/ipython_config.py``::
+
+    c.TerminalIPythonApp.extensions = [
+        'line_profiler_ext',
+    ]
+
+  This will register the ``%lprun`` magic command in the IPython terminal
+  client.
+
+  You can do a similar operation ``ipython_notebook_config.py`` and
+  ``ipython_qtconsole_config`` to register the same extensions for the
+  HTML notebook and qtconsole clients.
 
 Now restart IPython and let us use this new toy::
 

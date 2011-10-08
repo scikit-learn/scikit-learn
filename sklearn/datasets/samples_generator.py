@@ -136,7 +136,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     y = np.zeros(n_samples)
 
     # Build the polytope
-    from itertools import product
+    from ..utils.fixes import product
     C = np.array(list(product([-class_sep, class_sep], repeat=n_informative)))
 
     if not hypercube:

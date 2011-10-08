@@ -6,7 +6,7 @@ Recognizing hand-written digits
 An example showing how the scikit-learn can be used to recognize images of
 hand-written digits.
 
-This example is commented in the 
+This example is commented in the
 :ref:`tutorial section of the user manual <getting_started>`.
 
 """
@@ -27,7 +27,7 @@ digits = datasets.load_digits()
 # The data that we are interested in is made of 8x8 images of digits,
 # let's have a look at the first 3 images, stored in the `images`
 # attribute of the dataset. If we were working from image files, we
-# could load them using pylab.imread. For these images know which 
+# could load them using pylab.imread. For these images know which
 # digit they represent: it is given in the 'target' of the dataset.
 for index, (image, label) in enumerate(zip(digits.images, digits.target)[:4]):
     pl.subplot(2, 4, index+1)

@@ -31,7 +31,7 @@ import matplotlib as mpl
 import numpy as np
 
 from sklearn import datasets
-from sklearn.cross_val import StratifiedKFold
+from sklearn.cross_validation import StratifiedKFold
 from sklearn.mixture import GMM
 
 def make_ellipses(gmm, ax):

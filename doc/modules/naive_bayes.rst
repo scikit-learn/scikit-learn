@@ -70,23 +70,28 @@ estimated using maximum likelihood.
  * :ref:`example_naive_bayes.py`
 
 
+.. _multinomial_naive_bayes:
+
 Multinomial Naive Bayes
 -----------------------
 
-:class:`MultinomialNB` implements the Multinomial Naive Bayes algorithm for classification.
-Multinomial Naive Bayes models the distribution of words in a document as a
-multinomial. The distribution is parametrized by the vector
+:class:`MultinomialNB` implements the naive Bayes algorithm for multinomially
+distributed data, and is one of the two classic naive Bayes variants used in
+text classification (where the data are typically represented as word vector
+counts, although tf-idf vectors are also known to work well in practice).
+The distribution is parametrized by the vector
 :math:`\overline{\theta_c} = (\theta_{c1},\ldots,\theta_{cn})` where :math:`c`
-is the class of document, :math:`n` is the size of the vocabulary and :math:`\theta_{ci}`
-is the probability of word :math:`i` appearing in a document of class :math:`c`.
-The likelihood of document :math:`d` is,
+is the class of document, :math:`n` is the size of the vocabulary and
+:math:`\theta_{ci}` is the probability of word :math:`i` appearing in a
+document of class :math:`c`. The likelihood of document :math:`d` is then
 
 .. math::
 
    p(d \mid \overline{\theta_c}) &= \frac{ (\sum_i f_i)! }{\prod_i f_i !} \prod_i(\theta_{ci})^{f_i}
 
-where :math:`f_{i}` is the frequency count of word :math:`i`. It can be shown
-that the maximum posterior probability is,
+where :math:`f_{i}` is the frequency count of word :math:`i`. Naive Bayes
+predicts the class of a document to be the class :math:`\hat{c}` that maximizes
+posterior probability, i.e.
 
 .. math::
 
@@ -104,6 +109,8 @@ of class :math:`c` and :math:`N_{c}` is the total count of words in a document
 of class :math:`c`. The smoothness priors :math:`\alpha_i` and their sum 
 :math:`\alpha` account for words not seen in the learning samples.
 
+
+.. _bernoulli_naive_bayes:
 
 Bernoulli Naive Bayes
 ---------------------

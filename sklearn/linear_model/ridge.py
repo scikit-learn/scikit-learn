@@ -9,7 +9,7 @@ import numpy as np
 
 from .base import LinearModel
 from ..utils.extmath import safe_sparse_dot
-from ..utils import safe_asanyarray, as_float_array
+from ..utils import safe_asanyarray
 from ..preprocessing import LabelBinarizer
 from ..grid_search import GridSearchCV
 
@@ -140,9 +140,8 @@ class Ridge(LinearModel):
     normalize : boolean, optional
         If True, the regressors X are normalized
 
-    overwrite_X : boolean, optionnal
-        If True, X will not be copied
-        Default is False
+    copy_X : boolean, optional, default True
+        If True, X will be copied; else, it may be overwritten.
 
     tol: float
         Precision of the solution.
@@ -162,17 +161,17 @@ class Ridge(LinearModel):
     >>> y = np.random.randn(n_samples)
     >>> X = np.random.randn(n_samples, n_features)
     >>> clf = Ridge(alpha=1.0)
-    >>> clf.fit(X, y)
-    Ridge(alpha=1.0, fit_intercept=True, normalize=False, overwrite_X=False,
+    >>> clf.fit(X, y) # doctest: +NORMALIZE_WHITESPACE
+    Ridge(alpha=1.0, copy_X=True, fit_intercept=True, normalize=False,
        tol=0.001)
     """
 
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
-            overwrite_X=False, tol=1e-3):
+            copy_X=True, tol=1e-3):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
         self.normalize = normalize
-        self.overwrite_X = overwrite_X
+        self.copy_X = copy_X
         self.tol = tol
 
     def fit(self, X, y, sample_weight=1.0, solver='auto'):
@@ -204,11 +203,10 @@ class Ridge(LinearModel):
         """
         X = safe_asanyarray(X, dtype=np.float)
         y = np.asanyarray(y, dtype=np.float)
-        X = as_float_array(X, self.overwrite_X)
 
         X, y, X_mean, y_mean, X_std = \
            self._center_data(X, y, self.fit_intercept,
-                   self.normalize)
+                   self.normalize, self.copy_X)
 
         self.coef_ = ridge_regression(X, y, self.alpha, sample_weight,
                                       solver, self.tol)
@@ -336,13 +334,13 @@ class _RidgeGCV(LinearModel):
     """
 
     def __init__(self, alphas=[0.1, 1.0, 10.0], fit_intercept=True, normalize=False,
-            score_func=None, loss_func=None, overwrite_X=False):
+            score_func=None, loss_func=None, copy_X=True):
         self.alphas = np.asanyarray(alphas)
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.score_func = score_func
         self.loss_func = loss_func
-        self.overwrite_X = overwrite_X
+        self.copy_X = copy_X
 
     def _pre_compute(self, X, y):
         # even if X is very sparse, K is usually very dense
@@ -400,10 +398,9 @@ class _RidgeGCV(LinearModel):
         y = np.asanyarray(y, dtype=np.float)
 
         n_samples = X.shape[0]
-        X = as_float_array(X, self.overwrite_X)
 
         X, y, X_mean, y_mean, X_std = LinearModel._center_data(X, y,
-                self.fit_intercept, self.normalize)
+                self.fit_intercept, self.normalize, self.copy_X)
 
         K, v, Q = self._pre_compute(X, y)
         n_y = 1 if len(y.shape) == 1 else y.shape[1]

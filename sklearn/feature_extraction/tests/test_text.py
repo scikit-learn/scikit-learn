@@ -311,7 +311,7 @@ def test_dense_vectorizer_pipeline_grid_selection():
 
     # on this toy dataset bigram representation which is used in the last of
     # the grid_search is considered the best estimator since they all converge
-    # to 100% accurracy models
+    # to 100% accuracy models
     assert_equal(grid_search.best_score, 1.0)
     best_vectorizer = grid_search.best_estimator.named_steps['vect']
     assert_equal(best_vectorizer.analyzer.max_n, 1)

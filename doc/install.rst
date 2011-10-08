@@ -55,11 +55,11 @@ This is usually the fastest way to install the latest stable
 release. If you have pip or easy_install, you can install or update
 with the command::
 
-    pip install -U sklearn
+    pip install -U scikit-learn
 
 or::
 
-    easy_install -U sklearn
+    easy_install -U scikit-learn
 
 for easy_install. Note that you might need root privileges to run
 these commands.
@@ -145,10 +145,10 @@ version of scikit-learn:
 Debian and derivatives (Ubuntu)
 -------------------------------
 
-The Debian package is named python-sklearn and can be install
+The Debian package is named python-scikits-learn and can be install
 using the following commands with root privileges::
 
-      apt-get install python-sklearn
+      apt-get install python-scikits-learn
 
 
 Python(x, y)
@@ -173,14 +173,14 @@ Macports
 The macport's package is named py26-sklearn and can be installed
 by typing the following command::
 
-    sudo port install py26-sklearn
+    sudo port install py26-scikits-learn
 
 NetBSD
 ------
 
 scikit-learn is available via `pkgsrc-wip <http://pkgsrc-wip.sourceforge.net/>`_:
 
-    http://pkgsrc.se/wip/py-sklearn
+    http://pkgsrc.se/wip/py-scikit_learn
 
 .. _install_bleeding_edge:
 
@@ -200,7 +200,7 @@ Testing requires having the `nose
 installation, the package can be tested by executing *from outside* the
 source directory::
 
-    python -c "import sklearn as skl; skl.test()"
+    python -c "import sklearn; sklearn.test()"
 
 This should give you a lot of output (and some warnings) but
 eventually should finish with the a text similar to::
