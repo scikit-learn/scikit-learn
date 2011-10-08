@@ -26,7 +26,7 @@ to build the package before using it: run `python setup.py install` or
 `make` in the source directory.
 
 If you have used an installer, please check that it is suited for your
-Python version and your OS.
+Python version, your operating system and your platform.
 """ % e)
 
 from .base import clone
