@@ -1,5 +1,4 @@
 import warnings
-from nose import SkipTest
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 from numpy.testing import assert_raises
@@ -287,7 +286,6 @@ def test_kneighbors_regressor_sparse(n_samples=40,
         knn = neighbors.KNeighborsRegressor(n_neighbors=n_neighbors,
                                             algorithm='auto')
         knn.fit(sparsemat(X), y)
-        epsilon = 1e-5 * (2 * rng.rand(1, n_features) - 1)
         for sparsev in SPARSE_OR_DENSE:
             X2 = sparsev(X)
             assert (np.mean(knn.predict(X2).round() == y)
