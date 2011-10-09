@@ -600,14 +600,14 @@ def _mini_batch_step_dense(X, batch_slice, centers, counts, x_squared_norms):
     X = X[batch_slice]
     x_squared_norms = x_squared_norms[batch_slice]
 
-    closest_center = euclidean_distances(centers, X,
+    nearest_center = euclidean_distances(centers, X,
                                          Y_norm_squared=x_squared_norms,
                                          squared=True).argmin(axis=0)
 
     k = centers.shape[0]
     for center_idx in range(k):
         # find points from minibatch that are assigned to this center
-        center_mask = closest_center == center_idx
+        center_mask = nearest_center == center_idx
         count = center_mask.sum()
 
         if count > 0:
@@ -647,11 +647,13 @@ def _mini_batch_step_sparse(X, batch_slice, centers, counts, x_squared_norms):
     x_squared_norms: array, shape (n_samples,)
          The squared norms of each sample in `X`.
     """
-    cache = euclidean_distances(centers, X[batch_slice],
-              x_squared_norms[batch_slice]).argmin(axis=0).astype(np.int32)
+    nearest_center = euclidean_distances(centers, X[batch_slice],
+                                         x_squared_norms[batch_slice]
+                                        ).argmin(axis=0).astype(np.int32)
 
     _k_means._mini_batch_update_sparse(X.data, X.indices, X.indptr,
-                                       batch_slice, centers, counts, cache)
+                                       batch_slice, centers, counts,
+                                       nearest_center)
     return counts, centers
 
 
