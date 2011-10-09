@@ -10,6 +10,7 @@ import numpy as np
 from scipy import linalg
 
 from ..base import BaseEstimator, TransformerMixin
+from ..utils import check_random_state
 from ..utils.extmath import fast_logdet
 from ..utils.extmath import fast_svd
 from ..utils.extmath import safe_sparse_dot
@@ -377,6 +378,10 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         improve the predictive accuracy of the downstream estimators by
         making there data respect some hard-wired assumptions.
 
+    random_state: int or RandomState instance or None (default)
+        Pseudo Random Number generator seed control. If None, use the
+        numpy.random singleton.
+
     Attributes
     ----------
     components_: array, [n_components, n_features]
@@ -393,8 +398,9 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
     >>> from sklearn.decomposition import RandomizedPCA
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> pca = RandomizedPCA(n_components=2)
-    >>> pca.fit(X)
-    RandomizedPCA(copy=True, iterated_power=3, n_components=2, whiten=False)
+    >>> pca.fit(X)                                        # doctest: +ELLIPSIS
+    RandomizedPCA(copy=True, iterated_power=3, n_components=2,
+           random_state=<mtrand.RandomState object at 0x...>, whiten=False)
     >>> print pca.explained_variance_ratio_
     [ 0.99244289  0.00755711]
 
@@ -418,12 +424,13 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, n_components, copy=True, iterated_power=3,
-                 whiten=False):
+                 whiten=False, random_state=None):
         self.n_components = n_components
         self.copy = copy
         self.iterated_power = iterated_power
         self.whiten = whiten
         self.mean_ = None
+        self.random_state = random_state
 
     def fit(self, X, y=None):
         """Fit the model to the data X.
@@ -439,6 +446,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         self : object
             Returns the instance itself.
         """
+        self.random_state = check_random_state(self.random_state)
         if not hasattr(X, 'todense'):
             X = np.atleast_2d(X)
 
@@ -455,7 +463,8 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
             self.mean_ = np.mean(X, axis=0)
             X -= self.mean_
 
-        U, S, V = fast_svd(X, self.n_components, q=self.iterated_power)
+        U, S, V = fast_svd(X, self.n_components, q=self.iterated_power,
+                           random_state=self.random_state)
 
         self.explained_variance_ = (S ** 2) / n_samples
         self.explained_variance_ratio_ = self.explained_variance_ / \
