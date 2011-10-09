@@ -622,7 +622,6 @@ def _mini_batch_step_dense(X, batch_slice, centers, counts, x_squared_norms):
 
             # update the count statistics for this center
             counts[center_idx] += count
-    return counts, centers
 
 
 def _mini_batch_step_sparse(X, batch_slice, centers, counts, x_squared_norms):
@@ -647,14 +646,9 @@ def _mini_batch_step_sparse(X, batch_slice, centers, counts, x_squared_norms):
     x_squared_norms: array, shape (n_samples,)
          The squared norms of each sample in `X`.
     """
-    nearest_center = euclidean_distances(centers, X[batch_slice],
-                                         x_squared_norms[batch_slice]
-                                        ).argmin(axis=0).astype(np.int32)
-
     _k_means._mini_batch_update_sparse(X.data, X.indices, X.indptr,
-                                       batch_slice, centers, counts,
-                                       nearest_center)
-    return counts, centers
+                                       x_squared_norms,
+                                       batch_slice, centers, counts)
 
 
 class MiniBatchKMeans(KMeans):
@@ -783,10 +777,9 @@ class MiniBatchKMeans(KMeans):
         old_centers = self.cluster_centers_.copy()
 
         for i, batch_slice in izip(xrange(n_iterations), cycle(batch_slices)):
-            self.counts, self.cluster_centers_ = _mini_batch_step(
-                            X_shuffled, batch_slice,
-                            self.cluster_centers_, self.counts,
-                            x_squared_norms=x_squared_norms)
+            _mini_batch_step(X_shuffled, batch_slice,
+                             self.cluster_centers_, self.counts,
+                             x_squared_norms=x_squared_norms)
 
             # inplace difference to avoid memory allocation for computing a
             # difference between two sets of vectors
@@ -855,9 +848,8 @@ class MiniBatchKMeans(KMeans):
         else:
             _mini_batch_step = _mini_batch_step_dense
 
-        self.counts, self.cluster_centers_ = _mini_batch_step(X,
-                        batch_slice, self.cluster_centers_, self.counts,
-                        x_squared_norms=x_squared_norms)
+        _mini_batch_step(X, batch_slice, self.cluster_centers_, self.counts,
+                         x_squared_norms=x_squared_norms)
 
         if self.compute_labels:
             self.inertia_, self.labels_ = _calculate_labels_inertia(

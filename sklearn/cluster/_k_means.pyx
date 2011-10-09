@@ -1,13 +1,14 @@
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
+#         Olivier Grisel <olivier.grisel@ensta.org>
 #
 # License: BSD Style.
 
 import numpy as np
 cimport numpy as np
 cimport cython
+
 ctypedef np.float64_t DOUBLE
 ctypedef np.int32_t INT
-
 
 cdef extern from "math.h":
     double sqrt(double f)
@@ -19,10 +20,10 @@ cdef extern from "math.h":
 def _mini_batch_update_sparse(np.ndarray[DOUBLE, ndim=1] X_data,
                               np.ndarray[INT, ndim=1] X_indices,
                               np.ndarray[INT, ndim=1] X_indptr,
+                              np.ndarray[DOUBLE, ndim=1] x_squared_norms,
                               batch_slice,
                               np.ndarray[DOUBLE, ndim=2] centers,
-                              np.ndarray[INT, ndim=1] counts,
-                              np.ndarray[INT, ndim=1] cache):
+                              np.ndarray[INT, ndim=1] counts):
     """Incremental update of the centers for sparse MiniBatchKMeans.
 
     Parameters
@@ -47,9 +48,6 @@ def _mini_batch_update_sparse(np.ndarray[DOUBLE, ndim=1] X_data,
          The vector in which we keep track of the numbers of elements in a
          cluster
 
-    cache: array, shape (n_samples,)
-         The center nearest to each x.
-
     """
     cdef DOUBLE *X_data_ptr = <DOUBLE *>X_data.data
     cdef INT *X_indptr_ptr = <INT *>X_indptr.data
@@ -58,27 +56,57 @@ def _mini_batch_update_sparse(np.ndarray[DOUBLE, ndim=1] X_data,
     cdef int c_stride = centers.strides[0] / centers.strides[1]
     cdef DOUBLE *center_data_ptr = <DOUBLE *> centers.data
 
-    cdef np.ndarray[DOUBLE, ndim=1] center_scales = np.ones((centers.shape[0],),
-                                                            dtype=np.float64)
-    cdef DOUBLE *center_scales_ptr = <DOUBLE *> center_scales.data
 
     cdef int n_samples = batch_slice.stop - batch_slice.start
     cdef int n_clusters = centers.shape[0]
     cdef int n_features = centers.shape[1]
 
     cdef int i = 0
+    cdef int j = 0
+    cdef int k = 0
+    cdef DOUBLE center_squared_norm = 0.0
     cdef int batch_slice_start = batch_slice.start
     cdef int sample_idx = -1
     cdef int offset = -1
     cdef int xnnz = -1
     cdef int c = -1
     cdef double eta = 0.0, u = 0.0
+    cdef DOUBLE min_dist = 0.0
+    cdef DOUBLE dist = 0.0
 
-    for i from 0 <= i < n_samples:
+    # TODO: reuse a arrays preallocated outside of the mini batch main loop
+    cdef np.ndarray[DOUBLE, ndim=1] center_scales = np.ones(n_clusters,
+                                                            dtype=np.float64)
+    cdef np.ndarray[DOUBLE, ndim=1] center_squared_norms = np.zeros(
+        n_clusters, dtype=np.float64)
+    cdef DOUBLE *center_scales_ptr = <DOUBLE *> center_scales.data
+    cdef np.ndarray[INT, ndim=1] nearest_center = np.zeros(n_samples,
+                                                           dtype=np.int32)
+
+    # step 0: precompute current center square norms
+    for c in range(n_clusters):
+        center_squared_norms[c] = np.dot(centers[c].T, centers[c])
+
+    # step 1: assign minibatch samples to there nearest center
+    for i in range(n_samples):
+        sample_idx = batch_slice_start + i
+        min_dist = -1
+        for j in range(n_clusters):
+            dist = 0.0
+            for k in range(X_indptr[sample_idx], X_indptr[sample_idx + 1]):
+                dist += centers[j, X_indices[k]] * X_data[k]
+            dist *= -2
+            dist += center_squared_norms[j] + x_squared_norms[sample_idx]
+            if min_dist < 0.0 or dist < min_dist:
+                min_dist = dist
+                nearest_center[i] = j
+
+    # step 2: move centers to mean of old and newly assigned samples
+    for i in range(n_samples):
         sample_idx = batch_slice_start + i  #batch[i]
         offset = X_indptr_ptr[sample_idx]
         xnnz = X_indptr_ptr[sample_idx + 1] - offset
-        c = cache[i]
+        c = nearest_center[i]
         counts[c] = counts[c] + 1
         eta = 1.0 / counts[c]
         center_scales_ptr[c] *= (1.0 - eta)
