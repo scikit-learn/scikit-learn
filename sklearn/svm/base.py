@@ -57,6 +57,41 @@ class BaseLibSVM(BaseEstimator):
         self.shrinking = shrinking
         self.probability = probability
 
+    def predict_log_proba(self, T):
+        """Compute the log likehoods each possible outcomes of samples in T.
+
+        The model need to have probability information computed at training
+        time: fit with attribute `probability` set to True.
+
+        Parameters
+        ----------
+        T : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        T : array-like, shape = [n_samples, n_classes]
+            Returns the log-probabilities of the sample for each class in
+            the model, where classes are ordered by arithmetical
+            order.
+
+        Notes
+        -----
+        The probability model is created using cross validation, so
+        the results can be slightly different than those obtained by
+        predict. Also, it will meaningless results on very small
+        datasets.
+        """
+        return np.log(self.predict_proba(T))
+
+    @property
+    def coef_(self):
+        if self.kernel != 'linear':
+            raise NotImplementedError('coef_ is only available when using a '
+                                      'linear kernel')
+        return np.dot(self.dual_coef_, self.support_vectors_)
+
+
+class DenseBaseLibSVM(BaseLibSVM):
     def _compute_kernel(self, X):
         """Return the data transformed by a callable kernel"""
         if hasattr(self, 'kernel_function'):
@@ -230,32 +265,6 @@ class BaseLibSVM(BaseEstimator):
 
         return pprob
 
-    def predict_log_proba(self, T):
-        """Compute the log likehoods each possible outcomes of samples in T.
-
-        The model need to have probability information computed at training
-        time: fit with attribute `probability` set to True.
-
-        Parameters
-        ----------
-        T : array-like, shape = [n_samples, n_features]
-
-        Returns
-        -------
-        T : array-like, shape = [n_samples, n_classes]
-            Returns the log-probabilities of the sample for each class in
-            the model, where classes are ordered by arithmetical
-            order.
-
-        Notes
-        -----
-        The probability model is created using cross validation, so
-        the results can be slightly different than those obtained by
-        predict. Also, it will meaningless results on very small
-        datasets.
-        """
-        return np.log(self.predict_proba(T))
-
     def decision_function(self, X):
         """Distance of the samples T to the separating hyperplane.
 
@@ -289,13 +298,6 @@ class BaseLibSVM(BaseEstimator):
             return - dec_func
         else:
             return dec_func
-
-    @property
-    def coef_(self):
-        if self.kernel != 'linear':
-            raise NotImplementedError('coef_ is only available when using a '
-                                      'linear kernel')
-        return np.dot(self.dual_coef_, self.support_vectors_)
 
 
 class BaseLibLinear(BaseEstimator):
