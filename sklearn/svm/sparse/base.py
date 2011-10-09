@@ -1,6 +1,6 @@
 import numpy as np
 
-from ..base import BaseLibSVM, BaseLibLinear, _get_class_weight
+from ..base import BaseLibSVM, BaseLibLinear, LIBSVM_IMPL, _get_class_weight
 from . import libsvm
 from .. import liblinear
 
@@ -8,30 +8,17 @@ from .. import liblinear
 class SparseBaseLibSVM(BaseLibSVM):
 
     _kernel_types = ['linear', 'poly', 'rbf', 'sigmoid', 'precomputed']
-    _svm_types = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
 
     def __init__(self, impl, kernel, degree, gamma, coef0,
                  tol, C, nu, epsilon, shrinking, probability):
-
-        assert impl in self._svm_types, \
-            "impl should be one of %s, %s was given" % (
-                self._svm_types, impl)
 
         assert kernel in self._kernel_types, \
                "kernel should be one of %s, "\
                "%s was given." % (self._kernel_types, kernel)
 
-        self.kernel = kernel
-        self.impl = impl
-        self.degree = degree
-        self.gamma = gamma
-        self.coef0 = coef0
-        self.tol = tol
-        self.C = C
-        self.nu = nu
-        self.epsilon = epsilon
-        self.shrinking = shrinking
-        self.probability = probability
+        super(SparseBaseLibSVM, self).__init__(impl, kernel, degree, gamma,
+                                               coef0, tol, C, nu, epsilon,
+                                               shrinking, probability)
 
         # container for when we call fit
         self._support_data = np.empty(0, dtype=np.float64, order='C')
@@ -101,7 +88,7 @@ class SparseBaseLibSVM(BaseLibSVM):
                              "Note: Sparse matrices cannot be indexed w/" +
                              "boolean masks (use `indices=True` in CV).")
 
-        solver_type = self._svm_types.index(self.impl)
+        solver_type = LIBSVM_IMPL.index(self.impl)
         kernel_type = self._kernel_types.index(self.kernel)
 
         self.class_weight, self.class_weight_label = \
@@ -171,7 +158,7 @@ class SparseBaseLibSVM(BaseLibSVM):
                       self.support_vectors_.indices,
                       self.support_vectors_.indptr,
                       self.dual_coef_.data, self.intercept_,
-                      self._svm_types.index(self.impl), kernel_type,
+                      LIBSVM_IMPL.index(self.impl), kernel_type,
                       self.degree, self.gamma, self.coef0, self.tol,
                       self.C, self.class_weight_label, self.class_weight,
                       self.nu, self.epsilon, self.shrinking,
@@ -221,7 +208,7 @@ class SparseBaseLibSVM(BaseLibSVM):
             self.support_vectors_.indices,
             self.support_vectors_.indptr,
             self.dual_coef_.data, self.intercept_,
-            self._svm_types.index(self.impl), kernel_type,
+            LIBSVM_IMPL.index(self.impl), kernel_type,
             self.degree, self.gamma, self.coef0, self.tol,
             self.C, self.class_weight_label, self.class_weight,
             self.nu, self.epsilon, self.shrinking,
