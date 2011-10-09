@@ -173,29 +173,6 @@ def test_probability():
                         np.exp(clf.predict_log_proba(iris.data)), 8)
 
 
-def test_numerical_stability():
-    old_settings = np.geterr()
-    np.seterr(all="raise")
-
-    X = np.array(
-       [[ 152.08097839, 140.40744019, 129.75102234, 159.90493774],
-        [ 142.50700378, 135.8193512, 117.82884979, 162.7578125 ],
-        [ 127.28772736, 140.40744019, 129.75102234, 159.90493774],
-        [ 132.37025452, 143.71923828, 138.35694885, 157.84558105],
-        [ 103.10237122, 143.71928406, 138.35696411, 157.84559631],
-        [ 127.71276855, 143.71923828, 138.35694885, 157.84558105],
-        [ 120.91514587, 140.40744019, 129.75102234, 159.90493774]])
-
-    y = np.array(
-        [1., 0.70209277, 0.53896582, 0., 0.90914464, 0.48026916,  0.49622521])
-
-    dt = tree.DecisionTreeRegressor()
-    dt.fit(X, y)
-    dt.fit(-X, y)
-
-    np.seterr(**old_settings)
-
-
 def test_error():
     """Test that it gives proper exception on deficient input."""
     # impossible value of min_split
