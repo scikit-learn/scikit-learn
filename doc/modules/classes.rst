@@ -327,6 +327,7 @@ Clustering metrics
    metrics.homogeneity_score
    metrics.completeness_score
    metrics.v_measure_score
+   metrics.silhouette_score
 
 
 Pairwise metrics
