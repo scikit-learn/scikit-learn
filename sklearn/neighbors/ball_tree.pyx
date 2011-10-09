@@ -433,7 +433,7 @@ cdef class BallTree(object):
 
     warning_flag : bool
         Warning flag is set to true during query(...) if results are
-	dependent on the order of the training cases.
+        dependent on the order of the training cases.
         For classification or regression based on k-neighbors, if
         neighbor k and neighbor k+1 have identical distances but different
         labels, then the result will be dependent on the ordering of the
