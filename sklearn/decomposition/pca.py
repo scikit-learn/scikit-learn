@@ -291,9 +291,7 @@ class PCA(BaseEstimator, TransformerMixin):
 
 
 class ProbabilisticPCA(PCA):
-    """Additional layer on top of PCA that adds a probabilistic evaluation
-
-    """
+    """Additional layer on top of PCA that adds a probabilistic evaluation"""
     __doc__ += PCA.__doc__
 
     def fit(self, X, y=None, homoscedastic=True):
@@ -398,7 +396,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
     >>> from sklearn.decomposition import RandomizedPCA
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> pca = RandomizedPCA(n_components=2)
-    >>> pca.fit(X)                                        # doctest: +ELLIPSIS
+    >>> pca.fit(X)                 # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     RandomizedPCA(copy=True, iterated_power=3, n_components=2,
            random_state=<mtrand.RandomState object at 0x...>, whiten=False)
     >>> print pca.explained_variance_ratio_
