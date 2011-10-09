@@ -1,3 +1,7 @@
+# cython: profile=True
+# Profiling is enabled by default as the overhead does not seem to be measurable
+# on this specific use case.
+
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #
@@ -12,6 +16,49 @@ ctypedef np.int32_t INT
 
 cdef extern from "math.h":
     double sqrt(double f)
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+def _assign_labels(np.ndarray[DOUBLE, ndim=1] X_data,
+                   np.ndarray[INT, ndim=1] X_indices,
+                   np.ndarray[INT, ndim=1] X_indptr,
+                   np.ndarray[DOUBLE, ndim=1] x_squared_norms,
+                   batch_slice,
+                   np.ndarray[DOUBLE, ndim=2] centers,
+                   np.ndarray[INT, ndim=1] labels):
+    cdef int n_clusters = centers.shape[0]
+    cdef int n_samples = batch_slice.stop - batch_slice.start
+    cdef int batch_slice_start = batch_slice.start
+    cdef int sample_idx = -1
+    cdef int c = 0
+    cdef int i = 0
+    cdef int j = 0
+    cdef int k = 0
+    cdef DOUBLE min_dist = 0.0
+    cdef DOUBLE dist = 0.0
+
+    cdef np.ndarray[DOUBLE, ndim=1] center_squared_norms = np.zeros(
+        n_clusters, dtype=np.float64)
+
+    for c in range(n_clusters):
+        center_squared_norms[c] = np.dot(centers[c].T, centers[c])
+
+    for i in range(n_samples):
+        sample_idx = batch_slice_start + i
+        min_dist = -1
+        for j in range(n_clusters):
+            dist = 0.0
+            # hardcoded: minimize euclidean distance to cluster center:
+            # ||a - b||^2 = ||a||^2 + ||b||^2 -2 <a, b>
+            for k in range(X_indptr[sample_idx], X_indptr[sample_idx + 1]):
+                dist += centers[j, X_indices[k]] * X_data[k]
+            dist *= -2
+            dist += center_squared_norms[j] + x_squared_norms[sample_idx]
+            if min_dist < 0.0 or dist < min_dist:
+                min_dist = dist
+                labels[i] = j
 
 
 @cython.boundscheck(False)
@@ -41,10 +88,10 @@ def _mini_batch_update_sparse(np.ndarray[DOUBLE, ndim=1] X_data,
     batch_slice: slice
         The row slice of the mini batch.
 
-    centers: array, shape (k, n_features)
+    centers: array, shape (n_clusters, n_features)
         The cluster centers
 
-    counts: array, shape (k, )
+    counts: array, shape (n_clusters,)
          The vector in which we keep track of the numbers of elements in a
          cluster
 
@@ -62,8 +109,6 @@ def _mini_batch_update_sparse(np.ndarray[DOUBLE, ndim=1] X_data,
     cdef int n_features = centers.shape[1]
 
     cdef int i = 0
-    cdef int j = 0
-    cdef int k = 0
     cdef DOUBLE center_squared_norm = 0.0
     cdef int batch_slice_start = batch_slice.start
     cdef int sample_idx = -1
@@ -71,35 +116,17 @@ def _mini_batch_update_sparse(np.ndarray[DOUBLE, ndim=1] X_data,
     cdef int xnnz = -1
     cdef int c = -1
     cdef double eta = 0.0, u = 0.0
-    cdef DOUBLE min_dist = 0.0
-    cdef DOUBLE dist = 0.0
 
     # TODO: reuse a arrays preallocated outside of the mini batch main loop
     cdef np.ndarray[DOUBLE, ndim=1] center_scales = np.ones(n_clusters,
                                                             dtype=np.float64)
-    cdef np.ndarray[DOUBLE, ndim=1] center_squared_norms = np.zeros(
-        n_clusters, dtype=np.float64)
     cdef DOUBLE *center_scales_ptr = <DOUBLE *> center_scales.data
     cdef np.ndarray[INT, ndim=1] nearest_center = np.zeros(n_samples,
                                                            dtype=np.int32)
 
-    # step 0: precompute current center square norms
-    for c in range(n_clusters):
-        center_squared_norms[c] = np.dot(centers[c].T, centers[c])
-
     # step 1: assign minibatch samples to there nearest center
-    for i in range(n_samples):
-        sample_idx = batch_slice_start + i
-        min_dist = -1
-        for j in range(n_clusters):
-            dist = 0.0
-            for k in range(X_indptr[sample_idx], X_indptr[sample_idx + 1]):
-                dist += centers[j, X_indices[k]] * X_data[k]
-            dist *= -2
-            dist += center_squared_norms[j] + x_squared_norms[sample_idx]
-            if min_dist < 0.0 or dist < min_dist:
-                min_dist = dist
-                nearest_center[i] = j
+    _assign_labels(X_data, X_indices, X_indptr, x_squared_norms, batch_slice,
+                   centers, nearest_center)
 
     # step 2: move centers to mean of old and newly assigned samples
     for i in range(n_samples):
