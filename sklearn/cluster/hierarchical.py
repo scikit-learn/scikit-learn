@@ -1,6 +1,7 @@
-"""
-These routines perform some hierachical agglomerative clustering of some input
-data. Currently, only Ward's algorithm is implemented.
+"""Hierarchical Agglomerative Clustering
+
+These routines perform some hierachical agglomerative clustering of some
+input data. Currently, only Ward's algorithm is implemented.
 
 Authors : Vincent Michel, Bertrand Thirion, Alexandre Gramfort,
           Gael Varoquaux
@@ -26,8 +27,9 @@ from ._feature_agglomeration import AgglomerationTransform
 # Ward's algorithm
 
 def ward_tree(X, connectivity=None, n_components=None, copy=True):
-    """Ward clustering based on a Feature matrix. Heapq-based representation
-    of the inertia matrix.
+    """Ward clustering based on a Feature matrix.
+
+    The inertia matrix uses a Heapq-based representation.
 
     This is the structured version, that takes into account a some topological
     structure between samples.
@@ -117,7 +119,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
     moments[1][:n_samples] = X
     inertia = np.empty(len(coord_row), dtype=np.float)
     _inertia.compute_ward_dist(moments[0], moments[1],
-                             coord_row, coord_col, inertia)
+                               coord_row, coord_col, inertia)
     inertia = zip(inertia, coord_row, coord_col)
     heapq.heapify(inertia)
 
@@ -172,8 +174,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
 # Functions for cutting  hierarchical clustering tree
 
 def _hc_get_descendent(ind, children, n_leaves):
-    """
-    Function returning all the descendent leaves of a set of nodes in the tree.
+    """Function returning all the descendent leaves of a set of nodes.
 
     Parameters
     ----------
@@ -203,15 +204,14 @@ def _hc_get_descendent(ind, children, n_leaves):
 
 
 def _hc_cut(n_clusters, children, n_leaves):
-    """
-    Function cutting the ward tree for a given number of clusters.
+    """Function cutting the ward tree for a given number of clusters.
 
     Parameters
     ----------
     n_clusters : int or ndarray
         The number of clusters to form.
 
-    children : list of pairs. Lenght of n_nodes
+    children : list of pairs. Length of n_nodes
         List of the children of each nodes.
         Leaves have empty list of children and are not stored.
 
@@ -220,20 +220,18 @@ def _hc_cut(n_clusters, children, n_leaves):
 
     Return
     ------
-    labels_ : array [n_points]
+    labels : array [n_points]
         cluster labels for each point
 
-    active_nodes : list of int
-                index of the nodes kept for the labeling
     """
     nodes = [np.max(children[-1]) + 1]
     for i in range(n_clusters - 1):
         nodes.extend(children[np.max(nodes) - n_leaves])
         nodes.remove(np.max(nodes))
-    label = np.zeros(n_leaves, dtype=np.int)
+    labels = np.zeros(n_leaves, dtype=np.int)
     for i, node in enumerate(nodes):
-        label[_hc_get_descendent([node], children, n_leaves)] = i
-    return label
+        labels[_hc_get_descendent([node], children, n_leaves)] = i
+    return labels
 
 
 ###############################################################################
@@ -245,10 +243,10 @@ class Ward(BaseEstimator):
     Parameters
     ----------
     n_clusters : int or ndarray
-        The number of clusters.
+        The number of clusters to find.
 
     connectivity : sparse matrix.
-        connectivity matrix. Defines for each sample the neigbhoring
+        Connectivity matrix. Defines for each sample the neigbhoring
         samples following a given structure of the data.
         Defaut is None, i.e, the hiearchical clustering algorithm is
         unstructured.
