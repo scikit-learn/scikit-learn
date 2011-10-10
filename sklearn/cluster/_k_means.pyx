@@ -8,6 +8,7 @@
 # License: BSD Style.
 
 import numpy as np
+from ..utils.extmath import norm
 cimport numpy as np
 cimport cython
 
@@ -16,6 +17,9 @@ ctypedef np.int32_t INT
 
 cdef extern from "math.h":
     double sqrt(double f)
+
+cdef extern from "cblas.h":
+    double ddot "cblas_ddot"(int N, double *X, int incX, double *Y, int incY)
 
 
 @cython.boundscheck(False)
@@ -29,6 +33,7 @@ def _assign_labels(np.ndarray[DOUBLE, ndim=1] X_data,
                    np.ndarray[DOUBLE, ndim=2] centers,
                    np.ndarray[INT, ndim=1] labels):
     cdef int n_clusters = centers.shape[0]
+    cdef int n_features = centers.shape[1]
     cdef int n_samples = batch_slice.stop - batch_slice.start
     cdef int batch_slice_start = batch_slice.start
     cdef int sample_idx = -1
@@ -43,7 +48,11 @@ def _assign_labels(np.ndarray[DOUBLE, ndim=1] X_data,
         n_clusters, dtype=np.float64)
 
     for c in range(n_clusters):
-        center_squared_norms[c] = np.dot(centers[c].T, centers[c])
+        center_squared_norms[c] = ddot(
+            n_features,
+            <DOUBLE*>(centers.data + c * n_features * sizeof(DOUBLE)), 1,
+            <DOUBLE*>(centers.data + c * n_features * sizeof(DOUBLE)), 1)
+
 
     for i in range(n_samples):
         sample_idx = batch_slice_start + i
@@ -102,7 +111,6 @@ def _mini_batch_update_sparse(np.ndarray[DOUBLE, ndim=1] X_data,
 
     cdef int c_stride = centers.strides[0] / centers.strides[1]
     cdef DOUBLE *center_data_ptr = <DOUBLE *> centers.data
-
 
     cdef int n_samples = batch_slice.stop - batch_slice.start
     cdef int n_clusters = centers.shape[0]

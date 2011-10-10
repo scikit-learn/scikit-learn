@@ -9,7 +9,6 @@ from nose.tools import assert_raises
 from nose.tools import assert_true
 
 from ..k_means_ import KMeans, MiniBatchKMeans
-from ...datasets.samples_generator import make_blobs
 from .common import generate_clustered_data
 from ...utils import shuffle
 
@@ -35,7 +34,7 @@ def test_k_means_pp_init():
     assert_raises(ValueError, k_means.fit, [[0., 1.]])
 
 
-def test_mini_batch_k_means_pp_init():
+def test_mini_batch_k_means_radom_init():
     np.random.seed(1)
     sample = X[0:X.shape[0] / 2]
     km = MiniBatchKMeans(init="random").partial_fit(sample)
@@ -48,14 +47,16 @@ def test_mini_batch_k_means_pp_init():
     assert(km.inertia_ < inertia)
 
 
-def test_sparse_mini_batch_k_means_pp_init():
+def test_sparse_mini_batch_k_means_random_init():
     np.random.seed(1)
     sample = X_csr[0:X_csr.shape[0] / 2]
     km = MiniBatchKMeans(init="random").partial_fit(sample)
+
     # Let's recalculate the inertia on the whole dataset
     km.partial_fit(X_csr)
     inertia = km.inertia_
     km.partial_fit(X_csr[X_csr.shape[0] / 2:])
+
     # And again
     km.partial_fit(X_csr)
     assert(km.inertia_ < inertia)
@@ -262,12 +263,10 @@ def test_predict_minibatch_sparse_input():
     assert_array_equal(pred, np.arange(n_clusters))
 
     # sanity check: re-predict labeling for training set samples
-    pred = mbk_means.predict(X_csr)
-    assert_array_equal(mbk_means.predict(X), mbk_means.labels_)
+    assert_array_equal(mbk_means.predict(X_csr), mbk_means.labels_)
 
     # check that models trained on sparse input also works for dense input at
     # predict time
-    pred = mbk_means.predict(X)
     assert_array_equal(mbk_means.predict(X), mbk_means.labels_)
 
 

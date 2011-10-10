@@ -22,6 +22,7 @@ from ..utils import check_random_state
 from ..utils import gen_even_slices
 from ..utils import shuffle
 from ..utils import warn_if_not_float
+from ..utils import atleast2d_or_csr
 
 from . import _k_means
 
@@ -351,7 +352,7 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None):
             "'%s' (type '%s') was passed.")
 
     if sp.issparse(centers):
-        centers = centers.toarray()
+        centers = centers.todense()
     return centers
 
 
@@ -443,7 +444,6 @@ class KMeans(BaseEstimator):
         The generator used to initialize the centers. If an integer is
         given, it fixes the seed. Defaults to the global numpy random
         number generator.
-
 
     Methods
     -------
@@ -566,12 +566,22 @@ class KMeans(BaseEstimator):
         if not hasattr(self, "cluster_centers_"):
             raise AttributeError("Model has not been trained yet. "
                                  "Fit k-means before using predict.")
+        X = atleast2d_or_csr(X)
+        n_samples, n_features = X.shape
         expected_n_features = self.cluster_centers_.shape[1]
-        if not X.shape[1] == expected_n_features:
+        if not n_features == expected_n_features:
             raise ValueError("Incorrect number of features. "
                              "Got %d features, expected %d" % (
-                                 X.shape[1], expected_n_features))
-        return _e_step(X, self.cluster_centers_)[0]
+                                 n_features, expected_n_features))
+        if sp.issparse(X):
+            labels = np.zeros(n_samples, dtype=np.int32)
+            x_squared_norms = _k_means.csr_row_norm_l2(X)
+            _k_means._assign_labels(X.data, X.indices, X.indptr,
+                                    x_squared_norms, slice(0, n_samples),
+                                    self.cluster_centers_, labels)
+            return labels
+        else:
+            return _e_step(X, self.cluster_centers_)[0]
 
 
 def _mini_batch_step_dense(X, batch_slice, centers, counts, x_squared_norms):
