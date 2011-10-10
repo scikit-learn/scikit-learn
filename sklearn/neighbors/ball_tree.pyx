@@ -201,6 +201,7 @@ DTYPE = np.float64
 ctypedef np.float64_t DTYPE_t
 
 # type used for indices & counts
+# warning: there will be problems if this is switched to an unsigned type!
 ITYPE = np.int32
 ctypedef np.int32_t ITYPE_t
 
@@ -425,6 +426,19 @@ cdef class BallTree(object):
         equivalent to
             D = max(X[i] - X[j])
 
+    Attributes
+    ----------
+    data : np.ndarray
+        The training data
+
+    warning_flag : bool
+        Warning flag is set to true during query(...) if results are
+        dependent on the order of the training cases.
+        For classification or regression based on k-neighbors, if
+        neighbor k and neighbor k+1 have identical distances but different
+        labels, then the result will be dependent on the ordering of the
+        training data.  In this case, ``warning_flag`` will be set to True.
+
     Examples
     --------
     Query for k-nearest neighbors
@@ -464,6 +478,7 @@ cdef class BallTree(object):
     cdef ITYPE_t leaf_size
     cdef ITYPE_t n_levels
     cdef ITYPE_t n_nodes
+    cdef readonly int warning_flag
 
     def __cinit__(self):
         """
@@ -477,6 +492,7 @@ cdef class BallTree(object):
 
     def __init__(self, X, ITYPE_t leaf_size=20, DTYPE_t p=2):
         self.data = np.asarray(X, dtype=DTYPE, order='C')
+        self.warning_flag = True
 
         if X.size == 0:
             raise ValueError("X is an empty array")
@@ -586,6 +602,8 @@ cdef class BallTree(object):
             # >>> print dist  # distances to 3 closest neighbors
             # [ 0.          0.19662693  0.29473397]
         """
+        self.warning_flag = False
+
         X = np.asarray(X, dtype=DTYPE, order='C')
         X = np.atleast_2d(X)
 
@@ -939,10 +957,15 @@ cdef class BallTree(object):
         cdef DTYPE_t p = self.p
         cdef ITYPE_t n_features = self.data.shape[1]
 
-        cdef DTYPE_t dist_pt, dist_p_LB, dist_p_LB_1, dist_p_LB_2
+        cdef DTYPE_t dmax, dist_pt, dist_p_LB, dist_p_LB_1, dist_p_LB_2
         cdef ITYPE_t i, i1, i2, i_node
 
         cdef stack_item item
+
+        # This will keep track of any indices with distances values.  If at
+        # the end of the tree traversal, this index is in the last position,
+        # then the warning flag will be set.
+        cdef ITYPE_t check_index = -1
 
         item.i_node = 0
         item.dist_p_LB = calc_dist_p_LB(pt, node_centroid_arr,
@@ -951,16 +974,19 @@ cdef class BallTree(object):
         stack_push(node_stack, item)
 
         # create pointers to the priority-queue/max-heap functions.
-        # they both can operate on near_set_dist and near_set_idx
+        # they both can operate on near_set_dist and near_set_indx
         cdef DTYPE_t (*heapqueue_largest)(DTYPE_t*, ITYPE_t)
+        cdef ITYPE_t (*heapqueue_idx_largest)(ITYPE_t*, ITYPE_t)
         cdef void (*heapqueue_insert)(DTYPE_t, ITYPE_t, DTYPE_t*,
                                       ITYPE_t*, ITYPE_t)
 
         if use_max_heap:
             heapqueue_largest = &max_heap_largest
+            heapqueue_idx_largest = &max_heap_idx_largest
             heapqueue_insert = &max_heap_insert
         else:
             heapqueue_largest = &pqueue_largest
+            heapqueue_idx_largest = &pqueue_idx_largest
             heapqueue_insert = &pqueue_insert
 
         while(node_stack.n > 0):
@@ -971,8 +997,17 @@ cdef class BallTree(object):
             node_info = node_info_arr + i_node
 
             #------------------------------------------------------------
+            # Case 0: query point is exactly on the boundary.  Set
+            #         warning flag
+            if dist_p_LB == heapqueue_largest(near_set_dist, k):
+                # store index of point with same distance:
+                # we'll check it later
+                check_index = heapqueue_idx_largest(near_set_indx, k)
+                continue
+
+            #------------------------------------------------------------
             # Case 1: query point is outside node radius
-            if dist_p_LB >= heapqueue_largest(near_set_dist, k):
+            elif dist_p_LB > heapqueue_largest(near_set_dist, k):
                 continue
 
             #------------------------------------------------------------
@@ -983,9 +1018,17 @@ cdef class BallTree(object):
                                      data + n_features * idx_array[i],
                                      n_features, p)
 
-                    if dist_pt < heapqueue_largest(near_set_dist, k):
+                    dmax = heapqueue_largest(near_set_dist, k)
+
+                    if dist_pt == dmax:
+                        check_index = heapqueue_idx_largest(near_set_indx, k)
+
+                    elif dist_pt < dmax:
                         heapqueue_insert(dist_pt, idx_array[i],
                                          near_set_dist, near_set_indx, k)
+                        if dmax == heapqueue_largest(near_set_dist, k):
+                            check_index = heapqueue_idx_largest(near_set_indx,
+                                                                k)
 
             #------------------------------------------------------------
             # Case 3: Node is not a leaf.  Recursively query subnodes
@@ -1020,6 +1063,9 @@ cdef class BallTree(object):
                     item.i_node = i1
                     item.dist_p_LB = dist_p_LB_1
                     stack_push(node_stack, item)
+
+        if check_index == heapqueue_idx_largest(near_set_indx, k):
+            self.warning_flag = True
 
         for i from 0 <= i < k:
             near_set_dist[i] = dist_from_dist_p(near_set_dist[i], p)
@@ -1374,6 +1420,10 @@ cdef inline DTYPE_t pqueue_largest(DTYPE_t* queue, ITYPE_t queue_size):
     return queue[queue_size - 1]
 
 
+cdef inline ITYPE_t pqueue_idx_largest(ITYPE_t* idx_array, ITYPE_t queue_size):
+    return idx_array[queue_size - 1]
+
+
 cdef inline void pqueue_insert(DTYPE_t val, ITYPE_t i_val,
                                DTYPE_t* queue, ITYPE_t* idx_array,
                                ITYPE_t queue_size):
@@ -1436,6 +1486,11 @@ cdef inline void pqueue_insert(DTYPE_t val, ITYPE_t i_val,
 @cython.profile(False)
 cdef inline DTYPE_t max_heap_largest(DTYPE_t* heap, ITYPE_t k):
     return heap[0]
+
+
+@cython.profile(False)
+cdef inline ITYPE_t max_heap_idx_largest(ITYPE_t* idx_array, ITYPE_t k):
+    return idx_array[0]
 
 
 cdef void max_heap_insert(DTYPE_t val, ITYPE_t i_val,

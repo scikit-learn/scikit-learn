@@ -37,14 +37,22 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
         required to store the tree.  The optimal value depends on the
         nature of the problem.
 
+    warn_on_equidistant : boolean, optional.  Defaults to True.
+        Generate a warning if equidistant neighbors are discarded.
+        For classification or regression based on k-neighbors, if
+        neighbor k and neighbor k+1 have identical distances but
+        different labels, then the result will be dependent on the
+        ordering of the training data.
+        If the fit method is ``'kd_tree'``, no warnings will be generated.
+
     Examples
     --------
       >>> from sklearn.neighbors import NearestNeighbors
       >>> samples = [[0, 0, 2], [1, 0, 0], [0, 0, 1]]
 
       >>> neigh = NearestNeighbors(2, 0.4)
-      >>> neigh.fit(samples)
-      NearestNeighbors(algorithm='auto', leaf_size=30, n_neighbors=2, radius=0.4)
+      >>> neigh.fit(samples)  #doctest: +ELLIPSIS
+      NearestNeighbors(...)
 
       >>> neigh.kneighbors([[0, 0, 1.3]], 2, return_distance=False)
       array([[2, 0]])
@@ -71,8 +79,10 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
     """
 
     def __init__(self, n_neighbors=5, radius=1.0,
-                 algorithm='auto', leaf_size=30):
+                 algorithm='auto', leaf_size=30,
+                 warn_on_equidistant=True):
         self._init_params(n_neighbors=n_neighbors,
                           radius=radius,
                           algorithm=algorithm,
-                          leaf_size=leaf_size)
+                          leaf_size=leaf_size,
+                          warn_on_equidistant=warn_on_equidistant)
