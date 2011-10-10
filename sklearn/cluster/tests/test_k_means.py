@@ -49,8 +49,8 @@ def test_mini_batch_k_means_radom_init():
 
 def test_sparse_mini_batch_k_means_random_init():
     np.random.seed(1)
-    sample = X_csr[0:X_csr.shape[0] / 2]
-    km = MiniBatchKMeans(init="random").partial_fit(sample)
+    X_csr_half = X_csr[0:X_csr.shape[0] / 2]
+    km = MiniBatchKMeans(init="random").partial_fit(X_csr_half)
 
     # Let's recalculate the inertia on the whole dataset
     km.partial_fit(X_csr)

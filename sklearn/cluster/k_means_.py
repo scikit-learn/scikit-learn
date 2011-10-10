@@ -352,7 +352,7 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None):
             "'%s' (type '%s') was passed.")
 
     if sp.issparse(centers):
-        centers = centers.todense()
+        centers = centers.toarray()
     return centers
 
 
