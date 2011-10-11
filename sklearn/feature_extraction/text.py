@@ -318,29 +318,27 @@ class CountVectorizer(BaseEstimator):
         # TODO: parallelize the following loop with joblib?
         # (see XXX up ahead)
         for doc in raw_documents:
-            term_count_current = Counter()
+            term_count_current = Counter(self.analyzer.analyze(doc))
+            term_counts.update(term_count_current)
 
-            for term in self.analyzer.analyze(doc):
-                term_count_current[term] += 1
-                term_counts[term] += 1
-
-            if max_df is not None:
-                for term in term_count_current:
-                    document_counts[term] += 1
+            if max_df < 1.0:
+                document_counts.update(term_count_current.iterkeys())
 
             term_counts_per_doc.append(term_count_current)
 
         n_doc = len(term_counts_per_doc)
 
         # filter out stop words: terms that occur in almost all documents
-        if max_df is not None:
+        if max_df < 1.0:
             max_document_count = max_df * n_doc
             stop_words = set(t for t, dc in document_counts.iteritems()
                                if dc > max_document_count)
+        else:
+            stop_words = set()
 
         # list the terms that should be part of the vocabulary
         if max_features is None:
-            terms = [t for t in term_counts if t not in stop_words]
+            terms = set(term_counts) - stop_words
         else:
             # extract the most frequent terms for the vocabulary
             terms = set()
@@ -377,22 +375,10 @@ class CountVectorizer(BaseEstimator):
 
         # raw_documents is an iterable so we don't know its size in advance
 
-        # result of document conversion to term_count_dict
-        term_counts_per_doc = []
-
         # XXX @larsmans tried to parallelize the following loop with joblib.
         # The result was some 20% slower than the serial version.
-        for doc in raw_documents:
-            term_count_current = Counter()
-
-            for term in self.analyzer.analyze(doc):
-                term_count_current[term] += 1
-
-            term_counts_per_doc.append(term_count_current)
-
-        # now that we know the document we can allocate the vectors matrix at
-        # once and fill it with the term counts collected as a temporary list
-        # of dict
+        term_counts_per_doc = [Counter(self.analyzer.analyze(doc))
+                               for doc in raw_documents]
         return self._term_count_dicts_to_matrix(term_counts_per_doc)
 
     def inverse_transform(self, X):

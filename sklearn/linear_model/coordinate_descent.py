@@ -50,9 +50,8 @@ class ElasticNet(LinearModel):
     max_iter: int, optional
         The maximum number of iterations
 
-    overwrite_X : boolean, optionnal
-        If True, X will not be copied
-        Default is False
+    copy_X : boolean, optional, default False
+        If True, X will be copied; else, it may be overwritten.
 
     tol: float, optional
         The tolerance for the optimization: if the updates are
@@ -83,7 +82,7 @@ class ElasticNet(LinearModel):
     """
     def __init__(self, alpha=1.0, rho=0.5, fit_intercept=True,
                  normalize=False, precompute='auto', max_iter=1000,
-                 overwrite_X=False, tol=1e-4):
+                 copy_X=True, tol=1e-4):
         self.alpha = alpha
         self.rho = rho
         self.coef_ = None
@@ -91,7 +90,7 @@ class ElasticNet(LinearModel):
         self.normalize = normalize
         self.precompute = precompute
         self.max_iter = max_iter
-        self.overwrite_X = overwrite_X
+        self.copy_X = copy_X
         self.tol = tol
 
     def fit(self, X, y, Xy=None, coef_init=None):
@@ -121,7 +120,7 @@ class ElasticNet(LinearModel):
         """
         X = np.asanyarray(X, dtype=np.float64)
         y = np.asanyarray(y, dtype=np.float64)
-        X = as_float_array(X, self.overwrite_X)
+        X = as_float_array(X, self.copy_X)
 
         n_samples, n_features = X.shape
 
@@ -129,7 +128,7 @@ class ElasticNet(LinearModel):
         X, y, X_mean, y_mean, X_std = self._center_data(X, y,
                                                         self.fit_intercept,
                                                         self.normalize,
-                                                        overwrite_X=True)
+                                                        copy=False)
         precompute = self.precompute
         if X_init is not X and hasattr(precompute, '__array__'):
             precompute = 'auto'  # recompute Gram
@@ -199,9 +198,8 @@ class Lasso(ElasticNet):
     normalize : boolean, optional
         If True, the regressors X are normalized
 
-    overwrite_X : boolean, optionnal
-        If True, X will not be copied
-        Default is False
+    copy_X : boolean, optional, default True
+        If True, X will be copied; else, it may be overwritten.
 
     precompute : True | False | 'auto' | array-like
         Whether to use a precomputed Gram matrix to speed up
@@ -231,8 +229,8 @@ class Lasso(ElasticNet):
     >>> from sklearn import linear_model
     >>> clf = linear_model.Lasso(alpha=0.1)
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])
-    Lasso(alpha=0.1, fit_intercept=True, max_iter=1000, normalize=False,
-       overwrite_X=False, precompute='auto', tol=0.0001)
+    Lasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
+       normalize=False, precompute='auto', tol=0.0001)
     >>> print clf.coef_
     [ 0.85  0.  ]
     >>> print clf.intercept_
@@ -253,11 +251,11 @@ class Lasso(ElasticNet):
     """
 
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
-                 precompute='auto', overwrite_X=False, max_iter=1000,
+                 precompute='auto', copy_X=True, max_iter=1000,
                  tol=1e-4):
         super(Lasso, self).__init__(alpha=alpha, rho=1.0,
                             fit_intercept=fit_intercept, normalize=normalize,
-                            precompute=precompute, overwrite_X=overwrite_X,
+                            precompute=precompute, copy_X=copy_X,
                             max_iter=max_iter, tol=tol)
 
 
@@ -266,7 +264,7 @@ class Lasso(ElasticNet):
 
 def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
                precompute='auto', Xy=None, fit_intercept=True,
-               normalize=False, overwrite_X=False, verbose=False,
+               normalize=False, copy_X=True, verbose=False,
                **params):
     """Compute Lasso path with coordinate descent
 
@@ -305,9 +303,8 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     normalize : boolean, optional
         If True, the regressors X are normalized
 
-    overwrite_X : boolean, optionnal
-        If True, X will not be copied
-        Default is False
+    copy_X : boolean, optional, default True
+        If True, X will be copied; else, it may be overwritten.
 
     verbose : bool or integer
         Amount of verbosity
@@ -327,14 +324,14 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     should be directly passed as a fortran contiguous numpy array.
     """
     return enet_path(X, y, rho=1., eps=eps, n_alphas=n_alphas, alphas=alphas,
-                     precompute='auto', Xy=None,
+                     precompute=precompute, Xy=Xy,
                      fit_intercept=fit_intercept, normalize=normalize,
-                     overwrite_X=overwrite_X, verbose=verbose, **params)
+                     copy_X=copy_X, verbose=verbose, **params)
 
 
 def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
               precompute='auto', Xy=None, fit_intercept=True,
-              normalize=False, overwrite_X=False, verbose=False,
+              normalize=False, copy_X=True, verbose=False,
               **params):
     """Compute Elastic-Net path with coordinate descent
 
@@ -377,9 +374,8 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
     normalize : boolean, optional
         If True, the regressors X are normalized
 
-    overwrite_X : boolean, optionnal
-        If True, X will not be copied
-        Default is False
+    copy_X : boolean, optional, default True
+        If True, X will be copied; else, it may be overwritten.
 
     verbose : bool or integer
         Amount of verbosity
@@ -395,13 +391,13 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
     -----
     See examples/plot_lasso_coordinate_descent_path.py for an example.
     """
-    X = as_float_array(X, overwrite_X)
+    X = as_float_array(X, copy_X)
 
     X_init = X
     X, y, X_mean, y_mean, X_std = LinearModel._center_data(X, y,
                                                            fit_intercept,
                                                            normalize,
-                                                           overwrite_X=True)
+                                                           copy=False)
     X = np.asfortranarray(X)  # make data contiguous in memory
     n_samples, n_features = X.shape
 
@@ -453,7 +449,7 @@ class LinearModelCV(LinearModel):
 
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
             normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
-            overwrite_X=False, cv=None, verbose=False):
+            copy_X=True, cv=None, verbose=False):
         self.eps = eps
         self.n_alphas = n_alphas
         self.alphas = alphas
@@ -462,7 +458,7 @@ class LinearModelCV(LinearModel):
         self.precompute = precompute
         self.max_iter = max_iter
         self.tol = tol
-        self.overwrite_X = overwrite_X
+        self.copy_X = copy_X
         self.cv = cv
         self.verbose = verbose
 
@@ -657,7 +653,7 @@ class ElasticNetCV(LinearModelCV):
 
     def __init__(self, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True, normalize=False, precompute='auto',
-                 max_iter=1000, tol=1e-4, cv=None, overwrite_X=False,
+                 max_iter=1000, tol=1e-4, cv=None, copy_X=True,
                  verbose=0):
         self.rho = rho
         self.eps = eps
@@ -669,5 +665,5 @@ class ElasticNetCV(LinearModelCV):
         self.max_iter = max_iter
         self.tol = tol
         self.cv = cv
-        self.overwrite_X = overwrite_X
+        self.copy_X = copy_X
         self.verbose = verbose

@@ -63,6 +63,14 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         required to store the tree.  The optimal value depends on the
         nature of the problem.
 
+    warn_on_equidistant : boolean, optional.  Defaults to True.
+        Generate a warning if equidistant neighbors are discarded.
+        For classification or regression based on k-neighbors, if
+        neighbor k and neighbor k+1 have identical distances but
+        different labels, then the result will be dependent on the
+        ordering of the training data.
+        If the fit method is ``'kd_tree'``, no warnings will be generated.
+
     Examples
     --------
     >>> X = [[0], [1], [2], [3]]
@@ -92,10 +100,11 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
     """
 
     def __init__(self, n_neighbors=5, weights='uniform',
-                 algorithm='auto', leaf_size=30):
+                 algorithm='auto', leaf_size=30, warn_on_equidistant=True):
         self._init_params(n_neighbors=n_neighbors,
                           algorithm=algorithm,
-                          leaf_size=leaf_size)
+                          leaf_size=leaf_size,
+                          warn_on_equidistant=warn_on_equidistant)
         self.weights = _check_weights(weights)
 
     def predict(self, X):
@@ -234,8 +243,6 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
                              for (i, ind) in enumerate(neigh_ind)])
 
 
-@deprecated("deprecated in v0.9; will be removed in v0.11; "
-            "use KNeighborsRegressor or RadiusNeighborsRegressor instead")
 class NeighborsRegressor(NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin,
                          SupervisedFloatMixin,
                          RegressorMixin):
@@ -349,3 +356,8 @@ class NeighborsRegressor(NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin,
             # compute interpolation on y
             return np.array([np.mean(self._y[ind])
                              for ind in neigh_ind])
+
+NeighborsRegressor = deprecated(
+    "deprecated in v0.9; will be removed in v0.11; "
+    "use KNeighborsRegressor or RadiusNeighborsRegressor instead")(
+    NeighborsRegressor)

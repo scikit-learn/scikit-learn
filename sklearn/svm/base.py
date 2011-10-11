@@ -57,6 +57,41 @@ class BaseLibSVM(BaseEstimator):
         self.shrinking = shrinking
         self.probability = probability
 
+    def predict_log_proba(self, T):
+        """Compute the log likehoods each possible outcomes of samples in T.
+
+        The model need to have probability information computed at training
+        time: fit with attribute `probability` set to True.
+
+        Parameters
+        ----------
+        T : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        T : array-like, shape = [n_samples, n_classes]
+            Returns the log-probabilities of the sample for each class in
+            the model, where classes are ordered by arithmetical
+            order.
+
+        Notes
+        -----
+        The probability model is created using cross validation, so
+        the results can be slightly different than those obtained by
+        predict. Also, it will meaningless results on very small
+        datasets.
+        """
+        return np.log(self.predict_proba(T))
+
+    @property
+    def coef_(self):
+        if self.kernel != 'linear':
+            raise NotImplementedError('coef_ is only available when using a '
+                                      'linear kernel')
+        return np.dot(self.dual_coef_, self.support_vectors_)
+
+
+class DenseBaseLibSVM(BaseLibSVM):
     def _compute_kernel(self, X):
         """Return the data transformed by a callable kernel"""
         if hasattr(self, 'kernel_function'):
@@ -123,7 +158,7 @@ class BaseLibSVM(BaseEstimator):
         solver_type = LIBSVM_IMPL.index(self.impl)
         if solver_type != 2 and X.shape[0] != y.shape[0]:
             raise ValueError("X and y have incompatible shapes.\n" +
-                             "X has %s features, but y has %s." % \
+                             "X has %s samples, but y has %s." % \
                              (X.shape[0], y.shape[0]))
 
         if self.kernel == "precomputed" and X.shape[0] != X.shape[1]:
@@ -230,32 +265,6 @@ class BaseLibSVM(BaseEstimator):
 
         return pprob
 
-    def predict_log_proba(self, T):
-        """Compute the log likehoods each possible outcomes of samples in T.
-
-        The model need to have probability information computed at training
-        time: fit with attribute `probability` set to True.
-
-        Parameters
-        ----------
-        T : array-like, shape = [n_samples, n_features]
-
-        Returns
-        -------
-        T : array-like, shape = [n_samples, n_classes]
-            Returns the log-probabilities of the sample for each class in
-            the model, where classes are ordered by arithmetical
-            order.
-
-        Notes
-        -----
-        The probability model is created using cross validation, so
-        the results can be slightly different than those obtained by
-        predict. Also, it will meaningless results on very small
-        datasets.
-        """
-        return np.log(self.predict_proba(T))
-
     def decision_function(self, X):
         """Distance of the samples T to the separating hyperplane.
 
@@ -289,13 +298,6 @@ class BaseLibSVM(BaseEstimator):
             return - dec_func
         else:
             return dec_func
-
-    @property
-    def coef_(self):
-        if self.kernel != 'linear':
-            raise NotImplementedError('coef_ is only available when using a '
-                                      'linear kernel')
-        return np.dot(self.dual_coef_, self.support_vectors_)
 
 
 class BaseLibLinear(BaseEstimator):
@@ -341,8 +343,19 @@ class BaseLibLinear(BaseEstimator):
             solver_type = "P%s_L%s_D%d" % (
                 self.penalty.upper(), self.loss.upper(), int(self.dual))
         if not solver_type in self._solver_type_dict:
+            if self.penalty.upper() == 'L1' and self.loss.upper() == 'L1':
+                error_string = ("The combination of penalty='l1' "
+                    "and loss='l1' is not supported.")
+            elif self.penalty.upper() == 'L2' and self.loss.upper() == 'L1':
+                # this has to be in primal
+                error_string = ("loss='l2' and penalty='l1' is "
+                    "only supported when dual='true'.")
+            else:
+                # only PL1 in dual remains
+                error_string = ("penalty='l1' is only supported "
+                    "when dual='false'.")
             raise ValueError('Not supported set of arguments: '
-                             + solver_type)
+                             + error_string)
         return self._solver_type_dict[solver_type]
 
     def fit(self, X, y, class_weight=None):
@@ -395,6 +408,7 @@ class BaseLibLinear(BaseEstimator):
         C : array, shape = [n_samples]
         """
         X = np.asanyarray(X, dtype=np.float64, order='C')
+        X = np.atleast_2d(X)
         self._check_n_features(X)
 
         coef = self.raw_coef_
@@ -464,11 +478,6 @@ class BaseLibLinear(BaseEstimator):
             return -ret
         else:
             return ret
-
-    def predict_proba(self, T):
-        # only available for logistic regression
-        raise NotImplementedError(
-                'liblinear does not provide this functionality')
 
     def _get_bias(self):
         if self.fit_intercept:

@@ -1,5 +1,59 @@
 .. currentmodule:: sklearn
 
+.. _changes_0_10:
+
+0.10
+====
+
+   - New :ref:`Tree <tree>` module by `Brian Holt`_, `Peter Prettenhofer`_ 
+     and `Satrajit Ghosh`_. The module comes with complete documentation 
+     and examples.
+
+   - Fixed a bug in the RFE module by `Gilles Louppe`_ (issue #378).
+
+   - Fixed a memory leak in in :ref:`svm` module by `Brian Holt`_ (issue #367).
+
+   - Faster tests by `Fabian Pedregosa`_.
+
+   - Silhouette Coefficient cluster analysis evaluation metric added as 
+     ``sklearn.metrics.silhouette_score`` by Robert Layton.
+
+
+API changes summary
+-------------------
+
+Here are the code migration instructions when updgrading from scikit-learn
+version 0.9:
+
+  - Some estimators that may overwrite their inputs to save memory previously
+    had ``overwrite_`` parameters; these have been replaced with ``copy_``
+    parameters with exactly the opposite meaning.
+
+    This particularly affects some of the estimators in ``linear_models``.
+    The default behavior is still to copy everything passed in.
+
+  - The SVMlight dataset loader ``sklearn.datasets.load_svmlight_file`` no
+    longer supports loading two files at once; use ``load_svmlight_files``
+    instead. Also, the (unused) ``buffer_mb`` parameter is gone.
+
+  - Sparse estimators in the :ref:`sgd` module use dense parameter vector 
+    ``coef_`` instead of ``sparse_coef_``. This significantly improves
+    test time performance.
+  
+  - The :ref:`covariance` module now has a robust estimator of
+    covariance, the Minimum Covariance Determinant estimator.
+
+  - Cluster evaluation metrics in ``metrics.cluster.py`` have been refactored
+    but the changes are backwards compatible. They have been moved to the
+    ``metrics.cluster.supervised``, along with ``metrics.cluster.unsupervised``
+    which contains the Silhouette Coefficient. 
+
+Changelog
+---------
+
+   - Minor refactoring in :ref:`sgd` module; consolidated 
+     dense and sparse predict methods.
+
 .. _changes_0_9:
 
 0.9
@@ -16,8 +70,13 @@ This release also includes the dictionary-learning work developed by
 
 
 .. |banner1| image:: ./auto_examples/manifold/images/thumb/plot_compare_methods.png
-   :target: auto_examples/applications/face_recognition.html
+   :target: auto_examples/manifold/plot_compare_methods.html
 
+.. |banner2| image:: ./auto_examples/linear_model/images/thumb/plot_omp.png
+   :target: auto_examples/linear_model/plot_omp.html
+
+.. |banner3| image:: ./auto_examples/decomposition/images/thumb/plot_kernel_pca.png
+   :target: auto_examples/decomposition/plot_kernel_pca.html
 
 .. |center-div| raw:: html
 
@@ -28,7 +87,7 @@ This release also includes the dictionary-learning work developed by
     </div>
 
 
-|center-div| |banner1| |end-div|
+|center-div| |banner2| |banner1| |banner3| |end-div|
 
 Changelog
 ---------
@@ -58,8 +117,7 @@ Changelog
      `Mathieu Blondel`_ and `Lars Buitinck`_
 
    - Documentation improvements: thumbnails in
-     :ref:`example gallery <_examples-index>` by `Fabian Pedregosa`_,
-     extended documentation for modules feature_selection, (...).
+     :ref:`example gallery <examples-index>` by `Fabian Pedregosa`_.
 
    - Important bugfixes in :ref:`svm` module (segfaults, bad
      performance) by `Fabian Pedregosa`_.
@@ -86,8 +144,9 @@ Changelog
 
    - Faster mean shift by Conrad Lee
 
-   - New `Bootstrap`, `ShuffleSplit` and various other improvements in cross validation
-     schemes by `Olivier Grisel`_ and `Gael Varoquaux`_
+   - New :ref:`Bootstrap`, :ref:`ShuffleSplit` and various other
+     improvements in cross validation schemes by `Olivier Grisel`_ and
+     `Gael Varoquaux`_
 
    - Adjusted Rand index and V-Measure clustering evaluation metrics by `Olivier Grisel`_
 
@@ -95,16 +154,22 @@ Changelog
 
    - Added 2D-patch extractor utilites in the :ref:`feature_extraction` module by `Vlad Niculae`_
 
-   - Implementation of :class:`linear_model.least_angle.LassoLarsCV`
+   - Implementation of :class:`linear_model.LassoLarsCV`
      (cross-validated Lasso solver using the Lars algorithm) and
-     :class:`linear_model.least_angle.LassoLarsIC` (BIC/AIC model
+     :class:`linear_model.LassoLarsIC` (BIC/AIC model
      selection in Lars) by `Gael Varoquaux`_ 
      and `Alexandre Gramfort`_
 
-   - Scalability improvements to :func:`metrics.metrics.roc_curve` by Olivier Hervieu
+   - Scalability improvements to :func:`metrics.roc_curve` by Olivier Hervieu
 
    - Distance helper functions :func:`metrics.pairwise.pairwise_distances`
      and :func:`metrics.pairwise.pairwise_kernels` by Robert Layton
+
+   - :class:`Mini-Batch K-Means <cluster.MiniBatchKMeans>` by Nelle Varoquaux and Peter Prettenhofer.
+
+   - :ref:`mldata` utilities by Pietro Berkes.
+
+   - :ref:`olivetti_faces` by `David Warde-Farley`_.
 
 
 API changes summary
@@ -730,3 +795,7 @@ of commits):
 .. _Parietal Team: http://parietal.saclay.inria.fr/
 
 .. _Lars Buitinck: https://github.com/larsmans
+
+.. _David Warde-Farley: http://www-etud.iro.umontreal.ca/~wardefar/
+
+.. _Brian Holt: http://info.ee.surrey.ac.uk/Personal/B.Holt/

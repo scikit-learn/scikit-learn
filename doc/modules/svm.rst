@@ -1,4 +1,3 @@
-
 .. _svm:
 
 =======================
@@ -39,10 +38,21 @@ The disadvantages of Support Vector Machines include:
 
 .. note:: **Avoiding data copy**
 
-    If the data passed to certain methods is not C-ordered and
-    contiguous, it will be copied before calling the underlying C
+    For SVC, SVR, NuSVC and NuSVR, if the data passed to certain
+    methods is not C-ordered contiguous, and double precision,
+    it will be copied before calling the underlying C
     implementation. You can check whether a give numpy array is
-    C-contiguous by inspecting its `flags` dictionnary.
+    C-contiguous by inspecting its `flags` attribute.
+
+    For LinearSVC (and LogisticRegression) any input passed as a
+    numpy array will be copied and converted to the liblinear
+    internal sparse data representation (double precision floats
+    and int 32 indices of non-zero components). If you want to fit
+    a largescale linear classifier without copying a dense numpy
+    C-contiguous double precision array as input we suggest to use
+    the SGDClassifier class instead. The objective function can be
+    configured to be almost the same as the LinearSVC model.
+
 
 .. _svm_classification:
 

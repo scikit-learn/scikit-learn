@@ -89,7 +89,7 @@ People
 
   * Nelle Varoquaux
 
-  * Brian Holt
+  * `Brian Holt <http://info.ee.surrey.ac.uk/Personal/B.Holt/>`_
 
   * Robert Layton
 
