@@ -148,12 +148,12 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
 
         # update the structure matrix A and the inertia matrix
         coord_col = []
-        visited = [k]        
+        visited = set([k])        
         for l in set(A[i]).union(A[j]):
             while parent[l] != l:
                l = parent[l]
             if l not in visited:
-               visited.append(l)
+               visited.add(l)
                coord_col.append(l)
                A[l].append(k)
         A.append(coord_col)
