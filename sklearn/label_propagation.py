@@ -63,6 +63,8 @@ Learning (2006), pp. 193-216
 import numpy as np
 from .base import BaseEstimator, ClassifierMixin
 from .metrics.pairwise import rbf_kernel
+from .neighbors.graph import kneighbors_graph
+from .utils.graph import graph_laplacian
 
 # Authors: Clay Woolam <clay@woolam.org>
 # License: BSD
@@ -111,8 +113,8 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         input data set
     """
 
-    def __init__(self, kernel='rbf', gamma=20, alpha=1,
-            unlabeled_identifier=-1, max_iter=30,
+    def __init__(self, kernel='rbf', gamma=20, n_neighbors=7,
+            alpha=1, unlabeled_identifier=-1, max_iter=30,
             tol=1e-3):
 
         self.max_iter = max_iter
@@ -131,6 +133,8 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
     def _get_kernel(self, X, y):
         if self.kernel == "rbf":
             return rbf_kernel(X, y, gamma=self.gamma)
+        elif self.kernel == "knn":
+            return kneighbors_graph(X, self.n_neighbors)
         else:
             raise ValueError("%s is not a valid kernel. Only rbf \
                              supported at this time" % self.kernel)
@@ -385,13 +389,10 @@ class LabelSpreading(BaseLabelPropagation):
         # compute affinity matrix (or gram matrix)
         n_samples = self.X_.shape[0]
         affinity_matrix = self._get_kernel(self.X_, self.X_)
-        affinity_matrix.flat[::n_samples + 1] = 0.0  # set diag to 0.0
-        degrees = np.sum(affinity_matrix, axis=0)
-        degrees = np.sqrt(degrees, out=degrees)
-        # final step produces graph laplacian matrix
-        affinity_matrix /= degrees[:, np.newaxis]
-        affinity_matrix /= degrees[np.newaxis, :]
-        return affinity_matrix
+        laplacian = graph_laplacian(affinity_matrix, normed=True)
+        laplacian = -laplacian
+        laplacian.flat[::n_samples + 1] = 0.0  # set diag to 0.0
+        return laplacian
 
 
 ### Helper functions
