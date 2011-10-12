@@ -82,7 +82,7 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
     def node_to_str(node):
         if node.is_leaf:
             return "error = %s\\nsamples = %s\\nvalue = %s" \
-                % (node.error, node.samples, node.value)
+                % (node.initial_error, node.samples, node.value)
         else:
             if feature_names is not None:
                 feature = feature_names[node.feature]
@@ -91,7 +91,7 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
 
             return "%s <= %s\\nerror = %s\\nsamples = %s\\nvalue = %s" \
                    % (feature, node.threshold,
-                      node.error, node.samples, node.value)
+                      node.initial_error, node.samples, node.value)
 
     def recurse(node, count):
         node_data = {
