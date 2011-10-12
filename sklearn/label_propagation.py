@@ -61,6 +61,8 @@ References:
 Learning (2006), pp. 193-216
 """
 import numpy as np
+from scipy import sparse
+
 from .base import BaseEstimator, ClassifierMixin
 from .metrics.pairwise import rbf_kernel
 from .neighbors.graph import kneighbors_graph
@@ -126,6 +128,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         # kernel parameters
         self.kernel = kernel
         self.gamma = gamma
+        self.n_neighbors = n_neighbors
 
         # clamping factor
         self.alpha = alpha
@@ -231,16 +234,19 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         l_previous = np.zeros((self.X_.shape[0], n_classes))
         self.label_distributions_.resize((self.X_.shape[0], n_classes))
 
-        remaining_iter = self.max_iter
-        while (_not_converged(self.label_distributions_, l_previous, self.tol)
-                and remaining_iter > 1):
-            l_previous = self.label_distributions_
-            self.label_distributions_ = np.dot(graph_matrix,
-                    self.label_distributions_)
-            # clamp
-            self.label_distributions_ = np.multiply(clamp_weights,
-                    self.label_distributions_) + y_static
-            remaining_iter -= 1
+        if SPARSE:
+            #TODO DO SPARSE STUFF
+        else:
+            remaining_iter = self.max_iter
+            while (_not_converged(self.label_distributions_, l_previous, self.tol)
+                    and remaining_iter > 1):
+                l_previous = self.label_distributions_
+                self.label_distributions_ = np.dot(graph_matrix,
+                        self.label_distributions_)
+                # clamp
+                self.label_distributions_ = np.multiply(clamp_weights,
+                        self.label_distributions_) + y_static
+                remaining_iter -= 1
 
         normalizer = np.sum(self.label_distributions_, axis=1)[:, np.newaxis]
         np.divide(self.label_distributions_, normalizer,
@@ -391,7 +397,11 @@ class LabelSpreading(BaseLabelPropagation):
         affinity_matrix = self._get_kernel(self.X_, self.X_)
         laplacian = graph_laplacian(affinity_matrix, normed=True)
         laplacian = -laplacian
-        laplacian.flat[::n_samples + 1] = 0.0  # set diag to 0.0
+        #if sparse.isspmatrix(laplacian):
+        #    diag_mask = (laplacian.row == laplacian.col)
+        #    laplacian.data[diag_mask] = 0.0
+        #else:
+        #    laplacian.flat[::n_samples + 1] = 0.0  # set diag to 0.0
         return laplacian
 
 
