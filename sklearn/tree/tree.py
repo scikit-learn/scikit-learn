@@ -191,11 +191,11 @@ def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
         if not is_split_valid:
             # FIXME compute error for leaf
             if store_sample_mask:
-                leaf = Node(-1, 0.0, 0.0, 0.0, n_samples, value, None, None,
-                            sample_mask.nonzero()[0])
+                leaf = _tree.Node(-1, 0.0, 0.0, 0.0, n_samples, value, None, None,
+                                  sample_mask.nonzero()[0])
             else:
-                leaf = Node(-1, 0.0, 0.0, 0.0, n_samples, value, None, None,
-                            None)
+                leaf = _tree.Node(-1, 0.0, 0.0, 0.0, n_samples, value, None, None,
+                                  None)
             return leaf
         else:
             if n_samples / X.shape[0] <= min_density:
@@ -215,7 +215,7 @@ def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
                                                   ~split & sample_mask,
                                                   depth + 1)
 
-            return Node(feature, threshold, init_error, best_error,
+            return _tree.Node(feature, threshold, init_error, best_error,
                         n_samples, value,
                         left_partition, right_partition, None)
 
@@ -264,7 +264,7 @@ class BaseDecisionTree(BaseEstimator):
         self : object
             Returns self.
         """
-        X = np.asanyarray(X, dtype=DTPE, order='F')
+        X = np.asanyarray(X, dtype=DTYPE, order='F')
         n_samples, self.n_features = X.shape
         if len(y) != n_samples:
             raise ValueError("Number of labels=%d does not match "
