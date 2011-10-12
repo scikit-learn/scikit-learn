@@ -26,7 +26,8 @@ from ._feature_agglomeration import AgglomerationTransform
 ###############################################################################
 # Ward's algorithm
 
-def ward_tree(X, connectivity=None, n_components=None, copy=True):
+def ward_tree(X, connectivity=None, n_components=None, return_inertias=False, 
+              copy=True):
     """Ward clustering based on a Feature matrix.
 
     The inertia matrix uses a Heapq-based representation.
@@ -48,6 +49,9 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
     n_components : int (optional)
         Number of connected components. If None the number of connected
         components is estimated from the connectivity matrix.
+        
+    return_inertias : bool (optional)
+        If true, the inertias are returned additionally
 
     copy : bool (optional)
         Make a copy of connectivity or work inplace. If connectivity
@@ -55,7 +59,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
 
     Returns
     -------
-    children : list of pairs. Lenght of n_nodes
+    children : list of pairs. Length of n_nodes
                list of the children of each nodes.
                Leaves of the tree have empty list of children.
 
@@ -64,6 +68,10 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
 
     n_leaves : int
         The number of leaves in the tree
+        
+    heights :  list of floats. Length n_nodes
+        The inertias associated to the tree's nodes. Only returned, if 
+        return_inertias is True
     """
     X = np.asanyarray(X)
     n_samples, n_features = X.shape
@@ -171,7 +179,10 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
     n_leaves = n_samples
     children = np.array(children)  # return numpy array for efficient caching
 
-    return children, n_components, n_leaves
+    if return_inertias:
+        return children, n_components, n_leaves, heights
+    else:
+        return children, n_components, n_leaves
 
 
 ###############################################################################
@@ -237,6 +248,41 @@ def _hc_cut(n_clusters, children, n_leaves):
         labels[_hc_get_descendent([node], children, n_leaves)] = i
     return labels
 
+def _hc_cut_inertia(max_inertia, children, n_leaves, inertias):
+    """Function cutting the ward tree for a given maximal inertia.
+
+    Parameters
+    ----------
+    max_inertia : float
+        The maximal inertia a cluster is allowed to have. Determines indirectly
+        how many clusters are formed. 
+
+    children : list of pairs. Length of n_nodes
+        List of the children of each nodes.
+        Leaves have empty list of children and are not stored.
+
+    n_leaves : int
+        Number of leaves of the tree.
+        
+    inertias :  list of floats. Length of n_nodes
+        The inertias associated to the tree's nodes.
+
+    Return
+    ------
+    labels : array
+        cluster labels for each point
+
+    """
+    nodes = [np.max(children[-1]) + 1]
+    for i in range(len(inertias)):
+        if inertias[-(i+1)] <= max_inertia: break
+        nodes.extend(children[np.max(nodes) - n_leaves])
+        nodes.remove(np.max(nodes))
+    labels = np.zeros(n_leaves, dtype=np.int)
+    for i, node in enumerate(nodes):
+        labels[_hc_get_descendent([node], children, n_leaves)] = i
+    return labels
+
 
 ###############################################################################
 # Class for Ward hierarchical clustering
@@ -246,8 +292,13 @@ class Ward(BaseEstimator):
 
     Parameters
     ----------
-    n_clusters : int or ndarray
+    n_clusters : int or ndarray or None
         The number of clusters to find.
+        
+    max_inertia : float or None
+        If this value is not None, the max_inertia is used to determine the
+        number of returned clusters. In this case, the n_clusters parameter
+        is agnored and may be None.
 
     connectivity : sparse matrix.
         Connectivity matrix. Defines for each sample the neigbhoring
@@ -286,9 +337,11 @@ class Ward(BaseEstimator):
 
     """
 
-    def __init__(self, n_clusters=2, memory=Memory(cachedir=None, verbose=0),
-                 connectivity=None, copy=True, n_components=None):
+    def __init__(self, n_clusters=2, max_inertia=None,
+                 memory=Memory(cachedir=None, verbose=0), connectivity=None,
+                 copy=True, n_components=None):
         self.n_clusters = n_clusters
+        self.max_inertia = max_inertia
         self.memory = memory
         self.copy = copy
         self.n_components = n_components
@@ -311,12 +364,23 @@ class Ward(BaseEstimator):
             memory = Memory(cachedir=memory)
 
         # Construct the tree
-        self.children_, self.n_components, self.n_leaves_ = \
-                memory.cache(ward_tree)(X, self.connectivity,
-                                n_components=self.n_components, copy=self.copy)
-
-        # Cut the tree
-        self.labels_ = _hc_cut(self.n_clusters, self.children_, self.n_leaves_)
+        if self.max_inertia is None:
+            self.children_, self.n_components, self.n_leaves_ = \
+                    memory.cache(ward_tree)(X, self.connectivity,
+                                            n_components=self.n_components, 
+                                            copy=self.copy)
+            # Cut the tree based on number of desired clusters
+            self.labels_ = _hc_cut(self.n_clusters, self.children_, self.n_leaves_)
+        else:
+            self.children_, self.n_components, self.n_leaves_, self.inertias_ = \
+                    memory.cache(ward_tree)(X, self.connectivity,
+                                            n_components=self.n_components,
+                                            return_inertias=True, 
+                                            copy=self.copy)
+            # Cut the tree based on maximally allowed inertia
+            self.labels_ = _hc_cut_inertia(self.max_inertia, self.children_,
+                                           self.n_leaves_, self.inertias_)
+            
         return self
 
 
