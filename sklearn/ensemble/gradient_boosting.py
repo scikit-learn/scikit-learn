@@ -158,23 +158,23 @@ class LeastAbsoluteError(LossFunction):
                                              pred.take(node.sample_mask, axis=0)))
 
 
-class HuberError(LossFunction):
-    """Loss function for least absolute deviation (LAD) regression. """
+## class HuberError(LossFunction):
+##     """Loss function for least absolute deviation (LAD) regression."""
 
-    def init_estimator(self):
-        return MedianPredictor()
+##     def init_estimator(self):
+##         return MedianPredictor()
 
-    def __call__(self, y, pred):
-        return np.sum(np.abs(y - pred))
+##     def __call__(self, y, pred):
+##         return np.sum(np.abs(y - pred))
 
-    def negative_gradient(self, y, pred):
-        return np.sign(y - pred)
+##     def negative_gradient(self, y, pred):
+##         return np.sign(y - pred)
 
-    def _update_terminal_region(self, node, X, y, residual, pred):
-        """LAD updates terminal regions to median estimates. """
-        ## FIXME copied from LAD, still TODO
-        node.value = np.asanyarray(np.median(y.take(node.sample_mask, axis=0) - \
-                                             pred.take(node.sample_mask, axis=0)))
+##     def _update_terminal_region(self, node, X, y, residual, pred):
+##         """LAD updates terminal regions to median estimates. """
+##         ## FIXME copied from LAD, still TODO
+##         node.value = np.asanyarray(np.median(y.take(node.sample_mask, axis=0) - \
+##                                              pred.take(node.sample_mask, axis=0)))
 
 
 class BinomialDeviance(LossFunction):
