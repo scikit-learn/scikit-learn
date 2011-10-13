@@ -53,7 +53,6 @@ def _assign_labels(np.ndarray[DOUBLE, ndim=1] X_data,
             <DOUBLE*>(centers.data + c * n_features * sizeof(DOUBLE)), 1,
             <DOUBLE*>(centers.data + c * n_features * sizeof(DOUBLE)), 1)
 
-
     for i in range(n_samples):
         sample_idx = batch_slice_start + i
         min_dist = -1
@@ -105,86 +104,60 @@ def _mini_batch_update_sparse(np.ndarray[DOUBLE, ndim=1] X_data,
          cluster
 
     """
-    cdef DOUBLE *X_data_ptr = <DOUBLE *>X_data.data
-    cdef INT *X_indptr_ptr = <INT *>X_indptr.data
-    cdef INT *X_indices_ptr = <INT *>X_indices.data
-
-    cdef int c_stride = centers.strides[0] / centers.strides[1]
-    cdef DOUBLE *center_data_ptr = <DOUBLE *> centers.data
-
     cdef int n_samples = batch_slice.stop - batch_slice.start
     cdef int n_clusters = centers.shape[0]
     cdef int n_features = centers.shape[1]
 
-    cdef int i = 0
     cdef DOUBLE center_squared_norm = 0.0
-    cdef int batch_slice_start = batch_slice.start
-    cdef int sample_idx = -1
-    cdef int offset = -1
-    cdef int xnnz = -1
-    cdef int c = -1
-    cdef double eta = 0.0, u = 0.0
 
-    # TODO: reuse a arrays preallocated outside of the mini batch main loop
-    cdef np.ndarray[DOUBLE, ndim=1] center_scales = np.ones(n_clusters,
-                                                            dtype=np.float64)
-    cdef DOUBLE *center_scales_ptr = <DOUBLE *> center_scales.data
-    cdef np.ndarray[INT, ndim=1] nearest_center = np.zeros(n_samples,
-                                                           dtype=np.int32)
+    # TODO: replace slice by permutation array view to avoid memory copy
+    # of X_shuffled in main minibatch function
+    cdef int batch_slice_start = batch_slice.start
+    cdef int batch_slice_stop = batch_slice.stop
+    cdef int sample_idx = 0
+    cdef int center_idx = 0
+    cdef int feature_idx = 0
+    cdef int i = 0
+    cdef int k = 0
+    cdef int old_count = 0
+    cdef int batch_count = 0
+
+    # TODO: reuse a array preallocated outside of the mini batch main loop
+    cdef np.ndarray[INT, ndim=1] nearest_center = np.zeros(
+        n_samples, dtype=np.int32)
 
     # step 1: assign minibatch samples to there nearest center
     _assign_labels(X_data, X_indices, X_indptr, x_squared_norms, batch_slice,
                    centers, nearest_center)
 
     # step 2: move centers to mean of old and newly assigned samples
-    for i in range(n_samples):
-        sample_idx = batch_slice_start + i  #batch[i]
-        offset = X_indptr_ptr[sample_idx]
-        xnnz = X_indptr_ptr[sample_idx + 1] - offset
-        c = nearest_center[i]
-        counts[c] = counts[c] + 1
-        eta = 1.0 / counts[c]
-        center_scales_ptr[c] *= (1.0 - eta)
+    for center_idx in range(n_clusters):
+        old_count = counts[center_idx]
+        if old_count > 0:
+            for feature_idx in range(n_features):
+                # inplace remove previous count scaling
+                centers[center_idx, feature_idx] *= old_count
 
-        # check for scale underflow
-        if center_scales_ptr[c] < 1e-9:
-            scale(center_data_ptr + (c_stride * c), n_features,
-                  center_scales_ptr[c])
-            center_scales_ptr[c] = 1.0
+        # iterate of over samples assigned to this cluster to move the center
+        # location by inplace summation
+        batch_count = 0
+        for i in range(n_samples):
+            if nearest_center[i] != center_idx:
+                continue
+            sample_idx = batch_slice_start + i
+            batch_count += 1
 
-        add(center_data_ptr + (c_stride * c), center_scales_ptr[c],
-            X_data_ptr, X_indices_ptr, offset, xnnz, eta)
+            # inplace sum with new samples that are members of this cluster
+            for k in range(X_indptr[sample_idx], X_indptr[sample_idx + 1]):
+                centers[center_idx, X_indices[k]] += X_data[k]
 
-    # finally scale by scaling factors.
-    for c from 0 <= c < n_clusters:
-        scale(center_data_ptr + (c_stride * c), n_features,
-              center_scales_ptr[c])
+        # inplace rescale center with updated count
+        if old_count + batch_count > 0:
+            for feature_idx in range(n_features):
+                centers[center_idx, feature_idx] /= old_count + batch_count
 
-
-cdef void scale(DOUBLE *dense_vec, int n_features, double c):
-    """Scale dense vector by constant c."""
-    cdef int j
-    for j from 0 <= j < n_features:
-        dense_vec[j] *= c
-
-
-@cython.cdivision(True)
-cdef double add(DOUBLE *center_data_ptr, DOUBLE center_scale,
-                DOUBLE *X_data_ptr, INT *X_indices_ptr, int offset,
-                int xnnz, double c):
-    """Scales example x by constant c and adds it to the weight vector w"""
-    cdef int j
-    cdef int idx
-    cdef double val
-    cdef double innerprod = 0.0
-    cdef double xsqnorm = 0.0
-    for j from 0 <= j < xnnz:
-        idx = X_indices_ptr[offset + j]
-        val = X_data_ptr[offset + j]
-        innerprod += (center_data_ptr[idx] * val)
-        xsqnorm += (val * val)
-        center_data_ptr[idx] += val * c / center_scale
-    return (xsqnorm * c * c) + (2.0 * innerprod * c * center_scale)
+            # update the count statistics for this center
+            counts[center_idx] += batch_count
 
 
 @cython.boundscheck(False)

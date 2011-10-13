@@ -141,7 +141,7 @@ def test_mbk_means_fixed_array_init():
     assert_equal(centers.shape, (n_clusters, 2))
 
     labels = mbk_means.labels_
-    assert_equal(np.unique(labels).size, 3)
+    assert_equal(np.unique(labels).size, n_clusters)
 
     assert_raises(ValueError, mbk_means.fit, [[0., 1.]])
 

@@ -599,7 +599,7 @@ def _mini_batch_step_dense(X, batch_slice, centers, counts, x_squared_norms):
     centers: array, shape (k, n_features)
         The cluster centers. This array is MODIFIED IN PLACE
 
-    counts: array, shape (k, )
+    counts: array, shape (k,)
          The vector in which we keep track of the numbers of elements in a
          cluster. This array is MODIFIED IN PLACE
 
@@ -622,13 +622,15 @@ def _mini_batch_step_dense(X, batch_slice, centers, counts, x_squared_norms):
 
         if count > 0:
             # inplace remove previous count scaling
-            centers[center_idx] *= counts[center_idx]
+            if counts[center_idx] > 0:
+                centers[center_idx] *= counts[center_idx]
 
             # inplace sum with new points members of this cluster
             centers[center_idx] += np.sum(X[center_mask], axis=0)
 
             # inplace rescale to compute mean of all points (old and new)
-            centers[center_idx] /= counts[center_idx] + count
+            if counts[center_idx] + count > 0:
+                centers[center_idx] /= counts[center_idx] + count
 
             # update the count statistics for this center
             counts[center_idx] += count
@@ -771,6 +773,8 @@ class MiniBatchKMeans(KMeans):
         self.cluster_centers_ = _init_centroids(
             X_shuffled, self.k, self.init, random_state=self.random_state,
             x_squared_norms=x_squared_norms)
+
+        # TODO: initialize the counts after random assignement here
         self.counts = np.zeros(self.k, dtype=np.int32)
 
         n_batches = int(np.ceil(float(n_samples) / self.chunk_size))
@@ -778,6 +782,8 @@ class MiniBatchKMeans(KMeans):
         n_iterations = int(self.max_iter * n_batches)
         if sp.issparse(X_shuffled):
             _mini_batch_step = _mini_batch_step_sparse
+            # TODO: cython variance implementation for CSR matrix to normalize
+            # the tolerance
             tol = self.tol
         else:
             _mini_batch_step = _mini_batch_step_dense
