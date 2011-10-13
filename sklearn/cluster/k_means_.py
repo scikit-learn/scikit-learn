@@ -576,9 +576,9 @@ class KMeans(BaseEstimator):
         if sp.issparse(X):
             labels = np.zeros(n_samples, dtype=np.int32)
             x_squared_norms = _k_means.csr_row_norm_l2(X)
-            _k_means._assign_labels(X.data, X.indices, X.indptr,
-                                    x_squared_norms, slice(0, n_samples),
-                                    self.cluster_centers_, labels)
+            _k_means._assign_labels_csr(X, x_squared_norms,
+                                        slice(0, n_samples),
+                                        self.cluster_centers_, labels)
             return labels
         else:
             return _e_step(X, self.cluster_centers_)[0]
