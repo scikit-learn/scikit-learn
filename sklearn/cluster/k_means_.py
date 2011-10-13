@@ -584,7 +584,7 @@ class KMeans(BaseEstimator):
             return _e_step(X, self.cluster_centers_)[0]
 
 
-def _mini_batch_step_dense(X, batch_slice, centers, counts, x_squared_norms):
+def _mini_batch_step_dense(X, x_squared_norms, batch_slice, centers, counts):
     """Incremental update of the centers for the Minibatch K-Means algorithm
 
     Parameters
@@ -634,33 +634,6 @@ def _mini_batch_step_dense(X, batch_slice, centers, counts, x_squared_norms):
 
             # update the count statistics for this center
             counts[center_idx] += count
-
-
-def _mini_batch_step_sparse(X, batch_slice, centers, counts, x_squared_norms):
-    """Incremental update of the centers for the Minibatch K-Means algorithm
-
-    Parameters
-    ----------
-
-    X: csr_matrix, shape (n_samples, n_features)
-        The data matrix in sparse CSR format.
-
-    batch_slice: slice
-        The row slice of the mini batch.
-
-    centers: array, shape (k, n_features)
-        The cluster centers. This array is MODIFIED IN PLACE
-
-    counts: array, shape (k, )
-         The vector in which we keep track of the numbers of elements in a
-         cluster. This array is MODIFIED IN PLACE
-
-    x_squared_norms: array, shape (n_samples,)
-         The squared norms of each sample in `X`.
-    """
-    _k_means._mini_batch_update_sparse(X.data, X.indices, X.indptr,
-                                       x_squared_norms,
-                                       batch_slice, centers, counts)
 
 
 class MiniBatchKMeans(KMeans):
@@ -781,7 +754,7 @@ class MiniBatchKMeans(KMeans):
         batch_slices = list(gen_even_slices(n_samples, n_batches))
         n_iterations = int(self.max_iter * n_batches)
         if sp.issparse(X_shuffled):
-            _mini_batch_step = _mini_batch_step_sparse
+            _mini_batch_step = _k_means._mini_batch_update_csr
             # TODO: cython variance implementation for CSR matrix to normalize
             # the tolerance
             tol = self.tol
@@ -793,9 +766,8 @@ class MiniBatchKMeans(KMeans):
         old_centers = self.cluster_centers_.copy()
 
         for i, batch_slice in izip(xrange(n_iterations), cycle(batch_slices)):
-            _mini_batch_step(X_shuffled, batch_slice,
-                             self.cluster_centers_, self.counts,
-                             x_squared_norms=x_squared_norms)
+            _mini_batch_step(X_shuffled, x_squared_norms, batch_slice,
+                             self.cluster_centers_, self.counts)
 
             # inplace difference to avoid memory allocation for computing a
             # difference between two sets of vectors
@@ -860,12 +832,12 @@ class MiniBatchKMeans(KMeans):
 
         batch_slice = slice(0, n_samples, None)
         if sp.issparse(X):
-            _mini_batch_step = _mini_batch_step_sparse
+            _mini_batch_step = _k_means._mini_batch_update_csr
         else:
             _mini_batch_step = _mini_batch_step_dense
 
-        _mini_batch_step(X, batch_slice, self.cluster_centers_, self.counts,
-                         x_squared_norms=x_squared_norms)
+        _mini_batch_step(X, x_squared_norms, batch_slice, self.cluster_centers_,
+                         self.counts)
 
         if self.compute_labels:
             self.inertia_, self.labels_ = _calculate_labels_inertia(

@@ -25,27 +25,28 @@ cdef extern from "cblas.h":
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def _assign_labels(np.ndarray[DOUBLE, ndim=1] X_data,
-                   np.ndarray[INT, ndim=1] X_indices,
-                   np.ndarray[INT, ndim=1] X_indptr,
-                   np.ndarray[DOUBLE, ndim=1] x_squared_norms,
-                   batch_slice,
-                   np.ndarray[DOUBLE, ndim=2] centers,
-                   np.ndarray[INT, ndim=1] labels):
-    cdef int n_clusters = centers.shape[0]
-    cdef int n_features = centers.shape[1]
-    cdef int n_samples = batch_slice.stop - batch_slice.start
-    cdef int batch_slice_start = batch_slice.start
-    cdef int sample_idx = -1
-    cdef int c = 0
-    cdef int i = 0
-    cdef int j = 0
-    cdef int k = 0
-    cdef DOUBLE min_dist = 0.0
-    cdef DOUBLE dist = 0.0
-
-    cdef np.ndarray[DOUBLE, ndim=1] center_squared_norms = np.zeros(
-        n_clusters, dtype=np.float64)
+def _assign_labels_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
+                       slice_, np.ndarray[DOUBLE, ndim=2] centers,
+                       np.ndarray[INT, ndim=1] labels):
+    """Compute label assignement and inertia for a slice of a CSR input"""
+    cdef:
+        np.ndarray[DOUBLE, ndim=1] X_data = X.data
+        np.ndarray[INT, ndim=1] X_indices = X.indices
+        np.ndarray[INT, ndim=1] X_indptr = X.indptr
+        int n_clusters = centers.shape[0]
+        int n_features = centers.shape[1]
+        int n_samples = slice_.stop - slice_.start
+        int slice_start = slice_.start
+        int sample_idx
+        int c
+        int i
+        int j
+        int k
+        DOUBLE inertia = 0.0
+        DOUBLE min_dist
+        DOUBLE dist
+        np.ndarray[DOUBLE, ndim=1] center_squared_norms = np.zeros(
+            n_clusters, dtype=np.float64)
 
     for c in range(n_clusters):
         center_squared_norms[c] = ddot(
@@ -54,7 +55,7 @@ def _assign_labels(np.ndarray[DOUBLE, ndim=1] X_data,
             <DOUBLE*>(centers.data + c * n_features * sizeof(DOUBLE)), 1)
 
     for i in range(n_samples):
-        sample_idx = batch_slice_start + i
+        sample_idx = slice_start + i
         min_dist = -1
         for j in range(n_clusters):
             dist = 0.0
@@ -67,31 +68,24 @@ def _assign_labels(np.ndarray[DOUBLE, ndim=1] X_data,
             if min_dist < 0.0 or dist < min_dist:
                 min_dist = dist
                 labels[i] = j
+        inertia += min_dist
+
+    return inertia
 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def _mini_batch_update_sparse(np.ndarray[DOUBLE, ndim=1] X_data,
-                              np.ndarray[INT, ndim=1] X_indices,
-                              np.ndarray[INT, ndim=1] X_indptr,
-                              np.ndarray[DOUBLE, ndim=1] x_squared_norms,
-                              batch_slice,
-                              np.ndarray[DOUBLE, ndim=2] centers,
-                              np.ndarray[INT, ndim=1] counts):
+def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
+                           batch_slice, np.ndarray[DOUBLE, ndim=2] centers,
+                           np.ndarray[INT, ndim=1] counts):
     """Incremental update of the centers for sparse MiniBatchKMeans.
 
     Parameters
     ----------
 
-    X_data: array, dtype float64
-        Data array of CSR matrix.
-
-    X_indices: array, dtype int32
-        Indices array of CSR matrix.
-
-    X_indptr: array, dtype int32
-        index pointer array of CSR matrix.
+    X: CSR matrix, dtype float64
+        The complete (pre allocated) training set as a CSR matrix.
 
     batch_slice: slice
         The row slice of the mini batch.
@@ -104,31 +98,33 @@ def _mini_batch_update_sparse(np.ndarray[DOUBLE, ndim=1] X_data,
          cluster
 
     """
-    cdef int n_samples = batch_slice.stop - batch_slice.start
-    cdef int n_clusters = centers.shape[0]
-    cdef int n_features = centers.shape[1]
+    cdef:
+        np.ndarray[DOUBLE, ndim=1] X_data = X.data
+        np.ndarray[INT, ndim=1] X_indices = X.indices
+        np.ndarray[INT, ndim=1] X_indptr = X.indptr
+        int n_samples = batch_slice.stop - batch_slice.start
+        int n_clusters = centers.shape[0]
+        int n_features = centers.shape[1]
 
-    cdef DOUBLE center_squared_norm = 0.0
+        DOUBLE center_squared_norm = 0.0
 
-    # TODO: replace slice by permutation array view to avoid memory copy
-    # of X_shuffled in main minibatch function
-    cdef int batch_slice_start = batch_slice.start
-    cdef int batch_slice_stop = batch_slice.stop
-    cdef int sample_idx = 0
-    cdef int center_idx = 0
-    cdef int feature_idx = 0
-    cdef int i = 0
-    cdef int k = 0
-    cdef int old_count = 0
-    cdef int batch_count = 0
+        int batch_slice_start = batch_slice.start
+        int batch_slice_stop = batch_slice.stop
+        int sample_idx
+        int center_idx
+        int feature_idx
+        int i
+        int k
+        int old_count
+        int batch_count
 
-    # TODO: reuse a array preallocated outside of the mini batch main loop
-    cdef np.ndarray[INT, ndim=1] nearest_center = np.zeros(
-        n_samples, dtype=np.int32)
+        # TODO: reuse a array preallocated outside of the mini batch main loop
+        np.ndarray[INT, ndim=1] nearest_center = np.zeros(
+            n_samples, dtype=np.int32)
 
     # step 1: assign minibatch samples to there nearest center
-    _assign_labels(X_data, X_indices, X_indptr, x_squared_norms, batch_slice,
-                   centers, nearest_center)
+    _assign_labels_csr(X, x_squared_norms, batch_slice, centers,
+                       nearest_center)
 
     # step 2: move centers to mean of old and newly assigned samples
     for center_idx in range(n_clusters):
@@ -165,19 +161,19 @@ def _mini_batch_update_sparse(np.ndarray[DOUBLE, ndim=1] X_data,
 @cython.cdivision(True)
 def csr_row_norm_l2(X, squared=True):
     """Get L2 norm of each row in X."""
-    cdef unsigned int n_samples = X.shape[0]
-    cdef unsigned int n_features = X.shape[1]
-    cdef np.ndarray[DOUBLE, ndim=1] norms = np.zeros((n_samples,),
-                                                     dtype=np.float64)
+    cdef:
+        unsigned int n_samples = X.shape[0]
+        unsigned int n_features = X.shape[1]
+        np.ndarray[DOUBLE, ndim=1] norms = np.zeros((n_samples,),
+                                                    dtype=np.float64)
+        np.ndarray[DOUBLE, ndim=1] X_data = X.data
+        np.ndarray[INT, ndim=1] X_indices = X.indices
+        np.ndarray[INT, ndim=1] X_indptr = X.indptr
 
-    cdef np.ndarray[DOUBLE, ndim=1] X_data = X.data
-    cdef np.ndarray[INT, ndim=1] X_indices = X.indices
-    cdef np.ndarray[INT, ndim=1] X_indptr = X.indptr
-
-    cdef unsigned int i
-    cdef unsigned int j
-    cdef double sum_
-    cdef int withsqrt = not squared
+        unsigned int i
+        unsigned int j
+        double sum_
+        int withsqrt = not squared
 
     for i in xrange(n_samples):
         sum_ = 0.0
