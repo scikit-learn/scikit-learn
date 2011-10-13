@@ -203,6 +203,49 @@ Nearest Neighbors
    neighbors.radius_neighbors_graph
 
 
+Gaussian Processes
+==================
+
+.. automodule:: sklearn.gaussian_process
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+  :toctree: generated/
+  :template: class.rst
+
+  gaussian_process.GaussianProcess
+
+
+Correlation models
+------------------
+
+.. autosummary::
+   :toctree: generated
+   :template: function.rst
+
+   gaussian_process.correlation_models.absolute_exponential
+   gaussian_process.correlation_models.squared_exponential
+   gaussian_process.correlation_models.generalized_exponential
+   gaussian_process.correlation_models.pure_nugget
+   gaussian_process.correlation_models.cubic
+   gaussian_process.correlation_models.linear
+
+
+Regression models
+-----------------
+
+.. autosummary::
+   :toctree: generated
+   :template: function.rst
+
+   gaussian_process.regression_models.constant
+   gaussian_process.regression_models.linear
+   gaussian_process.regression_models.quadratic
+
+
 Gaussian Mixture Models
 =======================
 
