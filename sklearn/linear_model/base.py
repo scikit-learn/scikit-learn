@@ -18,10 +18,11 @@ from ..base import BaseEstimator
 from ..base import RegressorMixin
 from ..base import ClassifierMixin
 from ..base import TransformerMixin
-from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
 from ..utils.extmath import safe_sparse_dot
-from ..utils import safe_asanyarray
-from ..utils import as_float_array
+from ..utils import as_float_array, safe_asanyarray
+from ..utils import atleast2d_or_csr, check_arrays
+
+from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
 
 
 ###
@@ -52,15 +53,15 @@ class LinearModel(BaseEstimator, RegressorMixin):
         return safe_sparse_dot(X, self.coef_.T) + self.intercept_
 
     @staticmethod
-    def _center_data(X, y, fit_intercept, normalize=False):
+    def _center_data(X, y, fit_intercept, normalize=False, copy=True):
         """
         Centers data to have mean zero along axis 0. This is here because
         nearly all linear models will want their data to be centered.
 
-        WARNING : This function modifies X inplace :
-            Use sklearn.utils.as_float_array before to convert X to np.float.
-            You can specify an argument overwrite_X (default is False).
+        If copy is False, modifies X in-place.
         """
+        X = as_float_array(X, copy)
+
         if fit_intercept:
             if sp.issparse(X):
                 X_mean = np.zeros(X.shape[1])
@@ -70,7 +71,7 @@ class LinearModel(BaseEstimator, RegressorMixin):
                 X -= X_mean
                 if normalize:
                     X_std = np.sqrt(np.sum(X ** 2, axis=0))
-                    X_std[X_std==0] = 1
+                    X_std[X_std == 0] = 1
                     X /= X_std
                 else:
                     X_std = np.ones(X.shape[1])
@@ -111,10 +112,10 @@ class LinearRegression(LinearModel):
 
     """
 
-    def __init__(self, fit_intercept=True, normalize=False, overwrite_X=False):
+    def __init__(self, fit_intercept=True, normalize=False, copy_X=True):
         self.fit_intercept = fit_intercept
         self.normalize = normalize
-        self.overwrite_X = overwrite_X
+        self.copy_X = copy_X
 
     def fit(self, X, y):
         """
@@ -140,10 +141,8 @@ class LinearRegression(LinearModel):
         X = np.asanyarray(X)
         y = np.asanyarray(y)
 
-        X = as_float_array(X, self.overwrite_X)
-
         X, y, X_mean, y_mean, X_std = self._center_data(X, y,
-                self.fit_intercept, self.normalize)
+                self.fit_intercept, self.normalize, self.copy_X)
 
         self.coef_, self.residues_, self.rank_, self.singular_ = \
                 np.linalg.lstsq(X, y)
@@ -221,6 +220,10 @@ class BaseSGD(BaseEstimator):
         if self.sample_weight.shape[0] != n_samples:
             raise ValueError("Shapes of X and sample_weight do not match.")
 
+    def _set_coef(self, coef_):
+        """Make sure that coef_ is 2d. """
+        self.coef_ = np.atleast_2d(coef_)
+
     def _allocate_parameter_mem(self, n_classes, n_features, coef_init=None,
                                 intercept_init=None):
         """Allocate mem for parameters; initialize if provided."""
@@ -262,10 +265,10 @@ class BaseSGD(BaseEstimator):
             if intercept_init is not None:
                 intercept_init = np.asanyarray(intercept_init,
                                                dtype=np.float64)
-                if intercept_init.shape != (1,):
+                if intercept_init.shape != (1,) and intercept_init.shape != ():
                     raise ValueError("Provided intercept_init " \
                                  "does not match dataset.")
-                self.intercept_ = intercept_init
+                self.intercept_ = intercept_init.reshape(1,)
             else:
                 self.intercept_ = np.zeros(1, dtype=np.float64, order="C")
 
@@ -364,7 +367,7 @@ class BaseSGDClassifier(BaseSGD, ClassifierMixin):
             X = np.asanyarray(X)
             n_samples, n_features = X.shape
 
-        if n_samples != len(y):
+        if n_samples != y.shape[0]:
             raise ValueError("Shapes of X and y do not match.")
 
         # sort in asc order; largest class id is positive class
@@ -394,13 +397,32 @@ class BaseSGDClassifier(BaseSGD, ClassifierMixin):
     def _fit_multiclass(self, X, y):
         raise NotImplementedError("BaseSGDClassifier is an abstract class.")
 
+    def decision_function(self, X):
+        """Predict signed 'distance' to the hyperplane (aka confidence score)
+
+        Parameters
+        ----------
+        X : array, shape [n_samples, n_features]
+
+        Returns
+        -------
+        array, shape = [n_samples] if n_classes == 2 else [n_samples,n_classes]
+          The signed 'distances' to the hyperplane(s).
+        """
+        X = atleast2d_or_csr(X)
+        scores = safe_sparse_dot(X, self.coef_.T) + self.intercept_
+        if self.classes.shape[0] == 2:
+            return np.ravel(scores)
+        else:
+            return scores
+
     def predict(self, X):
         """Predict using the linear model
 
         Parameters
         ----------
         X : array or scipy.sparse matrix of shape [n_samples, n_features]
-           Whether the numpy.array or scipy.sparse matrix is accepted dependes
+           Whether the numpy.array or scipy.sparse matrix is accepted depends
            on the actual implementation
 
         Returns
@@ -429,12 +451,14 @@ class BaseSGDClassifier(BaseSGD, ClassifierMixin):
             Contains the membership probabilities of the positive class.
 
         """
-        if (isinstance(self.loss_function, Log) and
-            self.classes.shape[0] == 2):
-            return 1.0 / (1.0 + np.exp(-self.decision_function(X)))
-        else:
-            raise NotImplementedError("%s loss does not provide "
-                                      "this functionality" % self.loss)
+        if len(self.classes) != 2:
+            raise NotImplementedError("predict_(log_)proba only supported"
+                                      " for binary classification")
+        elif not isinstance(self.loss_function, Log):
+            raise NotImplementedError("predict_(log_)proba only supported when"
+                                      " loss='log' (%s given)" % self.loss)
+
+        return 1.0 / (1.0 + np.exp(-self.decision_function(X)))
 
 
 class BaseSGDRegressor(BaseSGD, RegressorMixin):
@@ -489,17 +513,10 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         -------
         self : returns an instance of self.
         """
+        X, y = check_arrays(X, y, sparse_format="csr", copy=False)
         y = np.asanyarray(y, dtype=np.float64, order="C")
 
-        # make sure X has shape
-        try:
-            n_samples, n_features = X.shape
-        except AttributeError:
-            X = np.asanyarray(X)
-            n_samples, n_features = X.shape
-
-        if n_samples != len(y):
-            raise ValueError("Shapes of X and y do not match.")
+        n_samples, n_features = X.shape
 
         # Allocate datastructures from input arguments
         self._set_sample_weight(sample_weight, n_samples)
@@ -518,16 +535,17 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         Parameters
         ----------
         X : array or scipy.sparse matrix of shape [n_samples, n_features]
-           Whether the numpy.array or scipy.sparse matrix is accepted dependes
-           on the actual implementation
+           Whether the numpy.array or scipy.sparse matrix is accepted depends
+           on the actual implementation.
 
         Returns
         -------
         array, shape = [n_samples]
            Array containing the predicted class labels.
         """
-        X = np.asanyarray(X)
-        return np.dot(X, self.coef_) + self.intercept_
+        X = atleast2d_or_csr(X)
+        scores = safe_sparse_dot(X, self.coef_) + self.intercept_
+        return scores.ravel()
 
 
 class CoefSelectTransformerMixin(TransformerMixin):

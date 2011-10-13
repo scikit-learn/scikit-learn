@@ -41,7 +41,7 @@ test-coverage:
 test: test-code test-doc
 
 trailing-spaces:
-	find -name "*.py" |xargs sed -i 's/[ \t]*$$//'
+	find . -name "*.py" | xargs perl -pi -e 's/[ \t]*$$//'
 
 cython:
 	find sklearn -name "*.pyx" | xargs $(CYTHON)
@@ -50,3 +50,9 @@ ctags:
 	# make tags for symbol based navigation in emacs and vim
 	# Install with: sudo apt-get install exuberant-ctags
 	$(CTAGS) -R *
+
+doc: inplace
+	make -C doc html
+
+doc-noplot: inplace
+	make -C doc html-noplot

@@ -5,11 +5,97 @@
 # License: BSD, (C) INRIA 2011
 
 import numpy as np
-from scipy.linalg import eigh, svd, qr
+from scipy.linalg import eigh, svd, qr, solve
 from scipy.sparse import eye, csr_matrix
 from ..base import BaseEstimator
 from ..utils.arpack import eigsh
-from ..neighbors import kneighbors_graph, BallTree, barycenter_weights
+from ..neighbors import NearestNeighbors, BallTree
+
+
+def barycenter_weights(X, Z, reg=1e-3):
+    """Compute barycenter weights of X from Y along the first axis
+
+    We estimate the weights to assign to each point in Y[i] to recover
+    the point X[i]. The barycenter weights sum to 1.
+
+    Parameters
+    ----------
+    X : array-like, shape (n_samples, n_dim)
+
+    Z : array-like, shape (n_samples, n_neighbors, n_dim)
+
+    reg: float, optional
+        amount of regularization to add for the problem to be
+        well-posed in the case of n_neighbors > n_dim
+
+    Returns
+    -------
+    B : array-like, shape (n_samples, n_neighbors)
+
+    Notes
+    -----
+    See developers note for more information.
+    """
+    X, Z = map(np.asanyarray, (X, Z))
+    n_samples, n_neighbors = X.shape[0], Z.shape[1]
+    if X.dtype.kind == 'i':
+        X = X.astype(np.float)
+    if Z.dtype.kind == 'i':
+        Z = Z.astype(np.float)
+    B = np.empty((n_samples, n_neighbors), dtype=X.dtype)
+    v = np.ones(n_neighbors, dtype=X.dtype)
+
+    # this might raise a LinalgError if G is singular and has trace
+    # zero
+    for i, A in enumerate(Z.transpose(0, 2, 1)):
+        C = A.T - X[i]  # broadcasting
+        G = np.dot(C, C.T)
+        trace = np.trace(G)
+        if trace > 0:
+            R = reg * trace
+        else:
+            R = reg
+        G.flat[::Z.shape[1] + 1] += R
+        w = solve(G, v, sym_pos=True)
+        B[i, :] = w / np.sum(w)
+    return B
+
+
+def barycenter_kneighbors_graph(X, n_neighbors, reg=1e-3):
+    """Computes the barycenter weighted graph of k-Neighbors for points in X
+
+    Parameters
+    ----------
+    X : array-like or BallTree, shape = [n_samples, n_features]
+        Sample data, in the form of a numpy array or a precomputed
+        :class:`BallTree`.
+
+    n_neighbors : int
+        Number of neighbors for each sample.
+
+    reg : float, optional
+        Amount of regularization when solving the least-squares
+        problem. Only relevant if mode='barycenter'. If None, use the
+        default.
+
+    Returns
+    -------
+    A : sparse matrix in CSR format, shape = [n_samples, n_samples]
+        A[i, j] is assigned the weight of edge that connects i to j.
+
+    See also
+    --------
+    sklearn.neighbors.kneighbors_graph
+    sklearn.neighbors.radius_neighbors_graph
+    """
+    knn = NearestNeighbors(n_neighbors + 1).fit(X)
+    X = knn._fit_X
+    n_samples = X.shape[0]
+    ind = knn.kneighbors(X, return_distance=False)[:, 1:]
+    data = barycenter_weights(X, X[ind], reg=reg)
+    indptr = np.arange(0, n_samples * n_neighbors + 1, n_neighbors)
+    return csr_matrix((data.ravel(), ind.ravel(), indptr),
+                      shape=(n_samples, n_samples))
 
 
 def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100):
@@ -171,13 +257,14 @@ def locally_linear_embedding(
     M_sparse = (eigen_solver != 'dense')
 
     if method == 'standard':
-        W = kneighbors_graph(
-            balltree, n_neighbors=n_neighbors, mode='barycenter', reg=reg)
+        W = barycenter_kneighbors_graph(
+            balltree, n_neighbors=n_neighbors, reg=reg)
 
         # we'll compute M = (I-W)'(I-W)
         # depending on the solver, we'll do this differently
         if M_sparse:
-            M = eye(*W.shape, format=W.format) - W
+            # the **kwargs syntax is for python2.5 compatibility
+            M = eye(*W.shape, **{'format' : W.format}) - W
             M = np.dot(M.T, M).tocsr()
         else:
             M = (np.dot(W.T, W) - (W.T + W)).todense()

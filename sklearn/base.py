@@ -30,7 +30,7 @@ def clone(estimator, safe=True):
 
     """
     estimator_type = type(estimator)
-    # XXX: not handling dictionnaries
+    # XXX: not handling dictionaries
     if estimator_type in (list, tuple, set, frozenset):
         return estimator_type([clone(e, safe=safe) for e in estimator])
     elif not hasattr(estimator, '_get_params'):
@@ -75,12 +75,12 @@ def clone(estimator, safe=True):
 
 ###############################################################################
 def _pprint(params, offset=0, printer=repr):
-    """Pretty print the dictionnary 'params'
+    """Pretty print the dictionary 'params'
 
     Parameters
     ----------
     params: dict
-        The dictionnary to pretty print
+        The dictionary to pretty print
 
     offset: int
         The offset in characters to add at the begin of each line.
@@ -127,14 +127,13 @@ def _pprint(params, offset=0, printer=repr):
 
 ###############################################################################
 class BaseEstimator(object):
-    """Base class for all estimators in the scikit learn
+    """Base class for all estimators in scikit-learn
 
     Notes
     -----
     All estimators should specify all the parameters that can be set
     at the class level in their __init__ as explicit keyword
     arguments (no *args, **kwargs).
-
     """
 
     @classmethod
@@ -271,7 +270,7 @@ class ClassifierMixin(object):
 
 ###############################################################################
 class RegressorMixin(object):
-    """Mixin class for all regression estimators in the scikit learn"""
+    """Mixin class for all regression estimators in scikit-learn"""
 
     def score(self, X, y):
         """Returns the coefficient of determination of the prediction
@@ -292,7 +291,7 @@ class RegressorMixin(object):
 
 ###############################################################################
 class TransformerMixin(object):
-    """Mixin class for all transformers in the scikit learn"""
+    """Mixin class for all transformers in scikit-learn"""
 
     def fit_transform(self, X, y=None, **fit_params):
         """Fit to data, then transform it

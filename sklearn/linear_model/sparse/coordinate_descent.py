@@ -70,6 +70,11 @@ class ElasticNet(LinearModel):
         X = sp.csc_matrix(X)
         y = np.asanyarray(y, dtype=np.float64)
 
+        if X.shape[0] != y.shape[0]:
+            raise ValueError("X and y have incompatible shapes.\n" +
+                             "Note: Sparse matrices cannot be indexed w/" +
+                             "boolean masks (use `indices=True` in CV).")
+
         # NOTE: we are explicitly not centering the data the naive way to
         # avoid breaking the sparsity of X
 

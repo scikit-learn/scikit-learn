@@ -40,13 +40,14 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
         The dimension of the projection subspace.
 
     mode: {None, 'arpack' or 'amg'}
-        The eigenvalue decomposition strategy to use. AMG (Algebraic
-        MultiGrid) is much faster, but requires pyamg to be
-        installed.
+        The eigenvalue decomposition strategy to use. AMG requires pyamg
+        to be installed. It can be faster on very large, sparse problems,
+        but may also lead to instabilities
 
     random_state: int seed, RandomState instance, or None (default)
         A pseudo random number generator used for the initialization of the
-        lobpcg eigen vectors decomposition when mode == 'amg'.
+        lobpcg eigen vectors decomposition when mode == 'amg'. By default
+        arpack is used.
 
     Returns
     --------
@@ -75,7 +76,7 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
     if not amg_loaded:
         warnings.warn('pyamg not available, using scipy.sparse')
     if mode is None:
-        mode = ('amg' if amg_loaded else 'arpack')
+        mode = 'arpack'
     laplacian, dd = graph_laplacian(adjacency,
                                     normed=True, return_diag=True)
     if (mode == 'arpack'
@@ -124,7 +125,7 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
 
 
 def spectral_clustering(affinity, k=8, n_components=None, mode=None,
-                        random_state=None):
+                        random_state=None, n_init=10):
     """Apply k-means to a projection to the normalized laplacian
 
     In practice Spectral Clustering is very useful when the structure of
@@ -154,14 +155,19 @@ def spectral_clustering(affinity, k=8, n_components=None, mode=None,
         Number of eigen vectors to use for the spectral embedding
 
     mode: {None, 'arpack' or 'amg'}
-        The eigenvalue decomposition strategy to use. AMG (Algebraic
-        MultiGrid) is much faster, but requires pyamg to be
-        installed.
+        The eigenvalue decomposition strategy to use. AMG requires pyamg
+        to be installed. It can be faster on very large, sparse problems,
+        but may also lead to instabilities
 
     random_state: int seed, RandomState instance, or None (default)
         A pseudo random number generator used for the initialization
         of the lobpcg eigen vectors decomposition when mode == 'amg'
         and by the K-Means initialization.
+
+    n_init: int, optional, default: 10
+        Number of time the k-means algorithm will be run with different
+        centroid seeds. The final results will be the best output of
+        n_init consecutive runs in terms of inertia.
 
     Returns
     -------
@@ -194,7 +200,8 @@ def spectral_clustering(affinity, k=8, n_components=None, mode=None,
     maps = spectral_embedding(affinity, n_components=n_components,
                               mode=mode, random_state=random_state)
     maps = maps[1:]
-    _, labels, _ = k_means(maps.T, k, random_state=random_state)
+    _, labels, _ = k_means(maps.T, k, random_state=random_state,
+                    n_init=n_init)
     return labels
 
 
@@ -216,13 +223,19 @@ class SpectralClustering(BaseEstimator):
         The dimension of the projection subspace.
 
     mode: {None, 'arpack' or 'amg'}
-        The eigenvalue decomposition strategy to use. AMG (Algebraic
-        MultiGrid) is much faster, but requires pyamg to be installed.
+        The eigenvalue decomposition strategy to use. AMG requires pyamg
+        to be installed. It can be faster on very large, sparse problems,
+        but may also lead to instabilities
 
     random_state: int seed, RandomState instance, or None (default)
         A pseudo random number generator used for the initialization
         of the lobpcg eigen vectors decomposition when mode == 'amg'
         and by the K-Means initialization.
+
+    n_init: int, optional, default: 10
+        Number of time the k-means algorithm will be run with different
+        centroid seeds. The final results will be the best output of
+        n_init consecutive runs in terms of inertia.
 
     Methods
     -------
@@ -247,10 +260,11 @@ class SpectralClustering(BaseEstimator):
       http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.165.9323
     """
 
-    def __init__(self, k=8, mode=None, random_state=None):
+    def __init__(self, k=8, mode=None, random_state=None, n_init=10):
         self.k = k
         self.mode = mode
         self.random_state = random_state
+        self.n_init = n_init
 
     def fit(self, X):
         """Compute the spectral clustering from the affinity matrix
@@ -282,5 +296,6 @@ class SpectralClustering(BaseEstimator):
         """
         self.random_state = check_random_state(self.random_state)
         self.labels_ = spectral_clustering(X, k=self.k, mode=self.mode,
-                                           random_state=self.random_state)
+                                           random_state=self.random_state,
+                                           n_init=self.n_init)
         return self

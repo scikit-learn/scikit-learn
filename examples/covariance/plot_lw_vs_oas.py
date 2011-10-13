@@ -32,7 +32,7 @@ from sklearn.covariance import LedoitWolf, OAS
 n_features = 100
 # simulation covariance matrix (AR(1) process)
 r = 0.1
-real_cov = toeplitz(r**np.arange(n_features))
+real_cov = toeplitz(r ** np.arange(n_features))
 coloring_matrix = cholesky(real_cov)
 
 n_samples_range = np.arange(6, 31, 1)
@@ -48,16 +48,16 @@ for i, n_samples in enumerate(n_samples_range):
 
         lw = LedoitWolf(store_precision=False)
         lw.fit(X, assume_centered=True)
-        lw_mse[i,j] = lw.error_norm(real_cov, scaling=False)
-        lw_shrinkage[i,j] = lw.shrinkage_
+        lw_mse[i, j] = lw.error_norm(real_cov, scaling=False)
+        lw_shrinkage[i, j] = lw.shrinkage_
 
         oa = OAS(store_precision=False)
         oa.fit(X, assume_centered=True)
-        oa_mse[i,j] = oa.error_norm(real_cov, scaling=False)
-        oa_shrinkage[i,j] = oa.shrinkage_
+        oa_mse[i, j] = oa.error_norm(real_cov, scaling=False)
+        oa_shrinkage[i, j] = oa.shrinkage_
 
 # plot MSE
-pl.subplot(2,1,1)
+pl.subplot(2, 1, 1)
 pl.errorbar(n_samples_range, lw_mse.mean(1), yerr=lw_mse.std(1),
             label='Ledoit-Wolf', color='g')
 pl.errorbar(n_samples_range, oa_mse.mean(1), yerr=oa_mse.std(1),
@@ -68,7 +68,7 @@ pl.title("Comparison of covariance estimators")
 pl.xlim(5, 31)
 
 # plot shrinkage coefficient
-pl.subplot(2,1,2)
+pl.subplot(2, 1, 2)
 pl.errorbar(n_samples_range, lw_shrinkage.mean(1), yerr=lw_shrinkage.std(1),
             label='Ledoit-Wolf', color='g')
 pl.errorbar(n_samples_range, oa_shrinkage.mean(1), yerr=oa_shrinkage.std(1),
@@ -76,7 +76,7 @@ pl.errorbar(n_samples_range, oa_shrinkage.mean(1), yerr=oa_shrinkage.std(1),
 pl.xlabel("n_samples")
 pl.ylabel("Shrinkage")
 pl.legend(loc="lower right")
-pl.ylim(pl.ylim()[0], 1. + (pl.ylim()[1] - pl.ylim()[0])/10.)
+pl.ylim(pl.ylim()[0], 1. + (pl.ylim()[1] - pl.ylim()[0]) / 10.)
 pl.xlim(5, 31)
 
 pl.show()

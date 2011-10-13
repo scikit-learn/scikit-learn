@@ -11,10 +11,12 @@ import numpy as np
 
 from scipy import linalg
 
+
 def norm(v):
     v = np.asarray(v)
     __nrm2, = linalg.get_blas_funcs(['nrm2'], [v])
     return __nrm2(v)
+
 
 def _fast_logdet(A):
     """
@@ -56,24 +58,26 @@ else:
 try:
     factorial = math.factorial
 except AttributeError:
-     # math.factorial is only available in Python >= 2.6
-     import operator
-     def factorial(x):
-         # don't use reduce operator or 2to3 will fail.
-         # ripped from http://www.joelbdalley.com/page.pl?38
-         # Ensure that n is a Natural number
-         n = abs(int(n))
-         if n < 1: n = 1
+    # math.factorial is only available in Python >= 2.6
+    import operator
 
-         # Store n! in variable x
-         x = 1
+    def factorial(n):
+        # don't use reduce operator or 2to3 will fail.
+        # ripped from http://www.joelbdalley.com/page.pl?38
+        # Ensure that n is a Natural number
+        n = abs(int(n))
+        if n < 1:
+            n = 1
 
-         # Compute n!
-         for i in range(1, n + 1):
-             x = i * x
+        # Store n! in variable x
+        x = 1
 
-         # Return n!
-         return x
+        # Compute n!
+        for i in range(1, n + 1):
+            x = i * x
+
+        # Return n!
+        return x
 
 
 try:
@@ -91,8 +95,8 @@ except AttributeError:
             yield []
         else:
             for i in xrange(len(seq)):
-                for cc in combinations(seq[i+1:], r-1):
-                    yield [seq[i]]+cc
+                for cc in combinations(seq[i + 1:], r - 1):
+                    yield [seq[i]] + cc
 
 
 def density(w, **kwargs):
@@ -116,7 +120,7 @@ def safe_sparse_dot(a, b, dense_output=False):
             ret = ret.toarray()
         return ret
     else:
-        return np.dot(a,b)
+        return np.dot(a, b)
 
 
 def fast_svd(M, k, p=None, q=0, transpose='auto', random_state=0):
@@ -238,3 +242,77 @@ def logsum(arr, axis=0):
     out += vmax
     return out
 
+
+def weighted_mode(a, w, axis=0):
+    """Returns an array of the weighted modal (most common) value in the
+    passed array.
+
+    If there is more than one such value, only the first is returned.
+    The bin-count for the modal bins is also returned.
+
+    This is an extension of the algorithm in scipy.stats.mode.
+
+    Parameters
+    ----------
+    a : array_like
+        n-dimensional array of which to find mode(s).
+    w : array_like
+        n-dimensional array of weights for each value
+    axis : int, optional
+        Axis along which to operate. Default is 0, i.e. the first axis.
+
+    Returns
+    -------
+    vals : ndarray
+        Array of modal values.
+    score : ndarray
+        Array of weighted counts for each mode.
+
+    Examples
+    --------
+    >>> from sklearn.utils.extmath import weighted_mode
+    >>> x = [4, 1, 4, 2, 4, 2]
+    >>> weights = [1, 1, 1, 1, 1, 1]
+    >>> weighted_mode(x, weights)
+    (array([ 4.]), array([ 3.]))
+
+    The value 4 appears three times: with uniform weights, the result is
+    simply the mode of the distribution.
+
+    >>> weights = [1, 3, 0.5, 1.5, 1, 2] # deweight the 4's
+    >>> weighted_mode(x, weights)
+    (array([ 2.]), array([ 3.5]))
+
+    The value 2 has the highest score: it appears twice with weights of
+    1.5 and 2: the sum of these is 3.
+
+    See Also
+    --------
+    scipy.stats.mode
+    """
+    if axis is None:
+        a = np.ravel(a)
+        w = np.ravel(w)
+        axis = 0
+    else:
+        a = np.asarray(a)
+        w = np.asarray(w)
+        axis = axis
+
+    if a.shape != w.shape:
+        w = np.zeros(a.shape, dtype=w.dtype) + w
+
+    scores = np.unique(np.ravel(a))       # get ALL unique values
+    testshape = list(a.shape)
+    testshape[axis] = 1
+    oldmostfreq = np.zeros(testshape)
+    oldcounts = np.zeros(testshape)
+    for score in scores:
+        template = np.zeros(a.shape)
+        ind = (a == score)
+        template[ind] = w[ind]
+        counts = np.expand_dims(np.sum(template, axis), axis)
+        mostfrequent = np.where(counts > oldcounts, score, oldmostfreq)
+        oldcounts = np.maximum(counts, oldcounts)
+        oldmostfreq = mostfrequent
+    return mostfrequent, oldcounts

@@ -149,13 +149,13 @@ def chi2(X, y):
     X = safe_asanyarray(X)
     Y = LabelBinarizer().fit_transform(y)
     if Y.shape[1] == 1:
-        Y = np.concatenate((1 - Y, Y), axis=1)
+        Y = np.append(1 - Y, Y, axis=1)
 
     observed = safe_sparse_dot(Y.T, X)          # n_classes * n_features
 
     feature_count = np.atleast_2d(X.sum(axis=0))
     feature_count = np.asarray(feature_count)   # stupid numpy.matrix!
-    class_prob = np.atleast_2d(Y.sum(axis=0) / Y.sum())
+    class_prob = np.atleast_2d(Y.mean(axis=0))
     expected = safe_sparse_dot(class_prob.T, feature_count)
 
     return stats.chisquare(observed, expected)

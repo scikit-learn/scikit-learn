@@ -43,7 +43,7 @@ and will store the coefficients :math:`w` of the linear model in its
     >>> from sklearn import linear_model
     >>> clf = linear_model.LinearRegression()
     >>> clf.fit ([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
-    LinearRegression(fit_intercept=True, normalize=False, overwrite_X=False)
+    LinearRegression(copy_X=True, fit_intercept=True, normalize=False)
     >>> clf.coef_
     array([ 0.5,  0.5])
 
@@ -100,8 +100,7 @@ its `coef\_` member::
     >>> from sklearn import linear_model
     >>> clf = linear_model.Ridge (alpha = .5)
     >>> clf.fit ([[0, 0], [0, 0], [1, 1]], [0, .1, 1])
-    Ridge(alpha=0.5, fit_intercept=True, normalize=False, overwrite_X=False,
-       tol=0.001)
+    Ridge(alpha=0.5, copy_X=True, fit_intercept=True, normalize=False, tol=0.001)
     >>> clf.coef_
     array([ 0.34545455,  0.34545455])
     >>> clf.intercept_ #doctest: +ELLIPSIS
@@ -176,8 +175,8 @@ for another implementation::
 
     >>> clf = linear_model.Lasso(alpha = 0.1)
     >>> clf.fit([[0, 0], [1, 1]], [0, 1])
-    Lasso(alpha=0.1, fit_intercept=True, max_iter=1000, normalize=False,
-       overwrite_X=False, precompute='auto', tol=0.0001)
+    Lasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
+       normalize=False, precompute='auto', tol=0.0001)
     >>> clf.predict([[1, 1]])
     array([ 0.8])
 
@@ -323,10 +322,9 @@ function of the norm of its coefficients.
 
    >>> from sklearn import linear_model
    >>> clf = linear_model.LassoLars(alpha=.1)
-   >>> clf.fit ([[0, 0], [1, 1]], [0, 1])                 # doctest: +ELLIPSIS
-   LassoLars(alpha=0.1, eps=..., fit_intercept=True,
-        max_iter=500, normalize=True, overwrite_X=False, precompute='auto',
-        verbose=False)
+   >>> clf.fit([[0, 0], [1, 1]], [0, 1])                # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+   LassoLars(alpha=0.1, copy_X=True, eps=..., fit_intercept=True,
+        max_iter=500, normalize=True, precompute='auto', verbose=False)
    >>> clf.coef_    # doctest: +ELLIPSIS
    array([ 0.717157...,  0.        ])
 
@@ -358,7 +356,8 @@ column is always zero.
    <http://www-stat.stanford.edu/~hastie/Papers/LARS/LeastAngle_2002.pdf>`_
    by Hastie et al.
 
-.. _OMP:
+
+.. _omp:
 
 Orthogonal Matching Pursuit (OMP)
 =================================
@@ -370,12 +369,12 @@ Being a forward feature selection method like :ref:`least_angle_regression`,
 orthogonal matching pursuit can approximate the optimum solution vector with a
 fixed number of non-zero elements:
 
-.. math:: \text{arg\,min} ||y - X\gamma||_2^2 \text{ subject to } ||\gamma||_0 \leq n_{features}
+.. math:: \text{arg\,min} ||y - X\gamma||_2^2 \text{ subject to } ||\gamma||_0 \leq n_{nonzero_coefs}
 
 Alternatively, orthogonal matching pursuit can target a specific error instead
 of a specific number of non-zero coefficients. This can be expressed as:
 
-.. math:: \text{arg\,min} ||\gamma||_0 \text{ subject to } ||y-X\gamma||_2^2 \leq \varepsilon
+.. math:: \text{arg\,min} ||\gamma||_0 \text{ subject to } ||y-X\gamma||_2^2 \leq \text{tol}
 
 
 OMP is based on a greedy algorithm that includes at each step the atom most
@@ -465,10 +464,10 @@ By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e^{-6}`, *i.e
     >>> X = [[0., 0.], [1., 1.], [2., 2.], [3., 3.]]
     >>> Y = [0., 1., 2., 3.]
     >>> clf = linear_model.BayesianRidge()
-    >>> clf.fit (X, Y)
-    BayesianRidge(alpha_1=1e-06, alpha_2=1e-06, compute_score=False,
+    >>> clf.fit(X, Y)
+    BayesianRidge(alpha_1=1e-06, alpha_2=1e-06, compute_score=False, copy_X=True,
            fit_intercept=True, lambda_1=1e-06, lambda_2=1e-06, n_iter=300,
-           normalize=False, overwrite_X=False, tol=0.001, verbose=False)
+           normalize=False, tol=0.001, verbose=False)
 
 After being fitted, the model can then be used to predict new values::
 

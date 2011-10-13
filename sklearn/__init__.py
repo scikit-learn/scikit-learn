@@ -15,12 +15,22 @@ See http://scikit-learn.sourceforge.net for complete documentation.
 
 try:
     from . import check_build
-except ImportError:
-    raise ImportError("Please do not forget to run `make` first")
+except ImportError, e:
+    raise ImportError(
+"""%s
+___________________________________________________________________________
+It seems that the scikit-learn has not been built correctly.
+
+If you have installed the scikit-learn from source, please do not forget
+to build the package before using it: run `python setup.py install` or
+`make` in the source directory.
+
+If you have used an installer, please check that it is suited for your
+Python version, your operating system and your platform.
+""" % e)
 
 from .base import clone
 
-from . import mixture
 
 try:
     from numpy.testing import nosetester
@@ -41,11 +51,11 @@ except:
     pass
 
 
-__all__ = ['check_build', 'cross_validation', 'ball_tree', 'cluster', 'covariance',
+__all__ = ['check_build', 'cross_validation', 'cluster', 'covariance',
            'datasets', 'decomposition', 'feature_extraction',
            'feature_selection',
            'gaussian_process', 'grid_search', 'hmm', 'lda', 'linear_model',
            'metrics', 'mixture', 'naive_bayes', 'neighbors', 'pipeline',
            'preprocessing', 'qda', 'svm', 'test', 'clone', 'pls']
 
-__version__ = '0.9-git'
+__version__ = '0.10-git'

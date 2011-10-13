@@ -31,6 +31,8 @@ n_samples, n_features = data.shape
 n_digits = len(np.unique(digits.target))
 labels = digits.target
 
+sample_size = 300
+
 print "n_digits: %d" % n_digits
 print "n_features: %d" % n_features
 print "n_samples: %d" % n_samples
@@ -44,6 +46,13 @@ print "Inertia: %f" % km.inertia_
 print "Homogeneity: %0.3f" % metrics.homogeneity_score(labels, km.labels_)
 print "Completeness: %0.3f" % metrics.completeness_score(labels, km.labels_)
 print "V-measure: %0.3f" % metrics.v_measure_score(labels, km.labels_)
+print "Adjusted Rand Index: %0.3f" % \
+    metrics.adjusted_rand_score(labels, km.labels_)
+#print ("Silhouette Coefficient: %0.3f" %
+#       metrics.silhouette_score(D, km.labels_, metric='precomputed'))
+print ("Silhouette Coefficient: %0.3f" %
+       metrics.silhouette_score(data, km.labels_,
+                                metric='euclidean', sample_size=sample_size))
 print
 
 print "Raw k-means with random centroid init..."
@@ -54,6 +63,13 @@ print "Inertia: %f" % km.inertia_
 print "Homogeneity: %0.3f" % metrics.homogeneity_score(labels, km.labels_)
 print "Completeness: %0.3f" % metrics.completeness_score(labels, km.labels_)
 print "V-measure: %0.3f" % metrics.v_measure_score(labels, km.labels_)
+print "Adjusted Rand Index: %0.3f" % \
+    metrics.adjusted_rand_score(labels, km.labels_)
+#print ("Silhouette Coefficient: %0.3f" %
+#       metrics.silhouette_score(D, km.labels_, metric='precomputed'))
+print ("Silhouette Coefficient: %0.3f" %
+       metrics.silhouette_score(data, km.labels_,
+                                metric='euclidean', sample_size=sample_size))
 print
 
 print "Raw k-means with PCA-based centroid init..."
@@ -67,6 +83,13 @@ print "Inertia: %f" % km.inertia_
 print "Homogeneity: %0.3f" % metrics.homogeneity_score(labels, km.labels_)
 print "Completeness: %0.3f" % metrics.completeness_score(labels, km.labels_)
 print "V-measure: %0.3f" % metrics.v_measure_score(labels, km.labels_)
+print "Adjusted Rand Index: %0.3f" % \
+    metrics.adjusted_rand_score(labels, km.labels_)
+#print ("Silhouette Coefficient: %0.3f" %
+#       metrics.silhouette_score(D, km.labels_, metric='precomputed'))
+print ("Silhouette Coefficient: %0.3f" %
+       metrics.silhouette_score(data, km.labels_,
+                                metric='euclidean', sample_size=sample_size))
 print
 
 # Plot k-means++ form on a 2D plot using PCA
@@ -77,7 +100,7 @@ kmeans = KMeans(init='k-means++', k=n_digits, n_init=10).fit(reduced_data)
 print "done in %0.3fs" % (time() - t0)
 
 # Step size of the mesh. Decrease to increase the quality of the VQ.
-h = .02# point in the mesh [x_min, m_max]x[y_min, y_max].
+h = .02     # point in the mesh [x_min, m_max]x[y_min, y_max].
 
 # Plot the decision boundary. For that, we will asign a color to each
 x_min, x_max = reduced_data[:, 0].min() - 1, reduced_data[:, 0].max() + 1
