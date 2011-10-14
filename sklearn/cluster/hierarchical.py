@@ -43,7 +43,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
         connectivity matrix. Defines for each sample the neigbhoring samples
         following a given structure of the data. The matrix is assumed to
         be symmetric and only the upper triangular half is used.
-        Defaut is None, i.e, the ward algorithm is unstructured.
+        Default is None, i.e, the Ward algorithm is unstructured.
 
     n_components : int (optional)
         Number of connected components. If None the number of connected
