@@ -22,6 +22,55 @@ cdef extern from "cblas.h":
     double ddot "cblas_ddot"(int N, double *X, int incX, double *Y, int incY)
 
 
+cdef inline DOUBLE array_ddot(int n,
+                np.ndarray[DOUBLE, ndim=1] a,
+                np.ndarray[DOUBLE, ndim=1] b):
+    return ddot(n, <DOUBLE*>(a.data), 1, <DOUBLE*>(b.data), 1)
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+def _assign_labels_array(np.ndarray[DOUBLE, ndim=2] X,
+                         np.ndarray[DOUBLE, ndim=1] x_squared_norms,
+                         slice_, np.ndarray[DOUBLE, ndim=2] centers,
+                         np.ndarray[INT, ndim=1] labels):
+    """Compute label assignement and inertia for a slice of a dense array"""
+    cdef:
+        int n_clusters = centers.shape[0]
+        int n_features = centers.shape[1]
+        int n_samples = slice_.stop - slice_.start
+        int slice_start = slice_.start
+        int sample_idx, center_idx, feature_idx
+        int i
+        DOUBLE inertia = 0.0
+        DOUBLE min_dist
+        DOUBLE dist
+        np.ndarray[DOUBLE, ndim=1] center_squared_norms = np.zeros(
+            n_clusters, dtype=np.float64)
+
+    for center_idx in range(n_clusters):
+        center_squared_norms[center_idx] = array_ddot(
+            n_features, centers[center_idx], centers[center_idx])
+
+    for i in range(n_samples):
+        sample_idx = slice_start + i
+        min_dist = -1
+        for center_idx in range(n_clusters):
+            dist = 0.0
+            # hardcoded: minimize euclidean distance to cluster center:
+            # ||a - b||^2 = ||a||^2 + ||b||^2 -2 <a, b>
+            dist += array_ddot(n_features, X[sample_idx], centers[center_idx])
+            dist *= -2
+            dist += center_squared_norms[center_idx]
+            dist += x_squared_norms[sample_idx]
+            if min_dist < 0.0 or dist < min_dist:
+                min_dist = dist
+                labels[i] = center_idx
+        inertia += min_dist
+
+    return inertia
+
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
@@ -37,37 +86,33 @@ def _assign_labels_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
         int n_features = centers.shape[1]
         int n_samples = slice_.stop - slice_.start
         int slice_start = slice_.start
-        int sample_idx
-        int c
-        int i
-        int j
-        int k
+        int sample_idx, center_idx, feature_idx
+        int i, k
         DOUBLE inertia = 0.0
         DOUBLE min_dist
         DOUBLE dist
         np.ndarray[DOUBLE, ndim=1] center_squared_norms = np.zeros(
             n_clusters, dtype=np.float64)
 
-    for c in range(n_clusters):
-        center_squared_norms[c] = ddot(
-            n_features,
-            <DOUBLE*>(centers.data + c * n_features * sizeof(DOUBLE)), 1,
-            <DOUBLE*>(centers.data + c * n_features * sizeof(DOUBLE)), 1)
+    for center_idx in range(n_clusters):
+        center_squared_norms[center_idx] = array_ddot(
+            n_features, centers[center_idx], centers[center_idx])
 
     for i in range(n_samples):
         sample_idx = slice_start + i
         min_dist = -1
-        for j in range(n_clusters):
+        for center_idx in range(n_clusters):
             dist = 0.0
             # hardcoded: minimize euclidean distance to cluster center:
             # ||a - b||^2 = ||a||^2 + ||b||^2 -2 <a, b>
             for k in range(X_indptr[sample_idx], X_indptr[sample_idx + 1]):
-                dist += centers[j, X_indices[k]] * X_data[k]
+                dist += centers[center_idx, X_indices[k]] * X_data[k]
             dist *= -2
-            dist += center_squared_norms[j] + x_squared_norms[sample_idx]
+            dist += center_squared_norms[center_idx]
+            dist += x_squared_norms[sample_idx]
             if min_dist < 0.0 or dist < min_dist:
                 min_dist = dist
-                labels[i] = j
+                labels[i] = center_idx
         inertia += min_dist
 
     return inertia
@@ -110,13 +155,10 @@ def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
 
         int batch_slice_start = batch_slice.start
         int batch_slice_stop = batch_slice.stop
-        int sample_idx
-        int center_idx
-        int feature_idx
-        int i
-        int k
-        int old_count
-        int batch_count
+
+        int sample_idx, center_idx, feature_idx
+        int i, k
+        int old_count, batch_count
 
         # TODO: reuse a array preallocated outside of the mini batch main loop
         np.ndarray[INT, ndim=1] nearest_center = np.zeros(
