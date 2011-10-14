@@ -20,39 +20,34 @@ import copy
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..externals.joblib import Parallel, delayed
+from ..tree import _tree
 
 __all__ = [
     'RandomForestClassifier',
     'RandomForestRegressor',    
     ]
+
+DTYPE = _tree.DTYPE
           
-def _train_tree(X, y, i, r, t, random_state):   
-    X = np.asanyarray(X, dtype=np.float64, order='C')       
+def _train_tree(X, y, i, t, random_state):
+    X = np.asanyarray(X, dtype=DTYPE, order='F')     
     n_samples, n_features = X.shape    
-    y = np.asanyarray(y, dtype=np.float64, order='C') 
+    y = np.asanyarray(y, dtype=DTYPE, order='C')
 
     tree = copy.copy(t)
-
-    if r <= 0 or r > 1 :
-        raise ValueError("r must be in 0 <= r < 1.\n" +
-                         "r is %s" % r)
-    n = np.ceil(r * n_samples)
                       
-    sample_mask = np.zeros(n_samples, dtype=np.bool)
-    permutation = random_state.permutation(n_samples)
-    ind_in = permutation[-n:]
-    sample_mask[ind_in] = True
+    in_indices = np.random.randint(0, n_samples, n_samples)
+    out = np.bincount(in_indices) == 0
     
-    X_in = X[sample_mask]
-    X_out = X[~sample_mask]
-    y_in = y[sample_mask] 
-    y_out = y[~sample_mask]
+    X_in = X[in_indices]
+    y_in = y[in_indices]     
+    X_out = X[out]
+    y_out = y[out]
             
     tree.fit(X_in, y_in)
     
-    """
-    @TODO Compute the out-of-bag error using X_out and y_out
-    """
+    # compute out-of-bag error
+    #y_pred = tree.predict(X_out)
     
     return tree            
             
@@ -62,11 +57,10 @@ class BaseRandomForest(BaseEstimator):
     Should not be used directly, use derived classes instead
     '''
     
-    def __init__(self, random_state, base_tree,  n_trees, r, n_jobs):
+    def __init__(self, random_state, base_tree,  n_trees, n_jobs):
         self.random_state = check_random_state(random_state)       
         self.base_tree = base_tree
         self.n_trees = n_trees
-        self.r = r
         self.criterion = base_tree.criterion
         self.max_depth = base_tree.max_depth
         self.min_split = base_tree.min_split
@@ -100,7 +94,7 @@ class BaseRandomForest(BaseEstimator):
         """                  
 
         self.forest = Parallel(self.n_jobs) \
-            (delayed(_train_tree)(X, y, i, self.r, self.base_tree, self.random_state) \
+            (delayed(_train_tree)(X, y, i, self.base_tree, self.random_state) \
             for i in range(self.n_trees))   
         return self
         
@@ -158,17 +152,14 @@ class RandomForestClassifier(BaseRandomForest, ClassifierMixin):
     min_split : integer
         minimum size to split on
         
-    F : integer, optional
-        if given, then, choose F features
+    max_features : integer, optional
+        if given, then, choose max_features features
 
     random_state : integer or array_like, optional
         random_state the random number generator
 
     n_trees : integer, optional
         the number of trees in the forest
-        
-    r : float, optional
-        the ratio of training samples used per tree 0 < r <= r
     
     n_jobs : integer, optional
         the number of processes to use for parallel computation
@@ -182,7 +173,7 @@ class RandomForestClassifier(BaseRandomForest, ClassifierMixin):
     #>>> data = load_iris()
     #>>> skf = StratifiedKFold(data.target, 10)
     #>>> for train_index, test_index in skf:
-    #...     rf = ensemble.RandomForestClassifier(K=3)
+    #...     rf = ensemble.RandomForestClassifier()
     #...     rf.fit(data.data[train_index], data.target[train_index])
     #...     #print np.mean(tree.predict(data.data[test_index]) == data.target[test_index])
     #... 
@@ -190,13 +181,13 @@ class RandomForestClassifier(BaseRandomForest, ClassifierMixin):
     
     """     
     def __init__(self, criterion='gini', max_depth=10, min_split=1, 
-                 max_features=None, random_state=None, n_trees=10, r=0.7, 
+                 max_features=None, random_state=None, n_trees=10,
                  n_jobs=1):
         base_tree = DecisionTreeClassifier(criterion=criterion,
             max_depth=max_depth, min_split=min_split,
             max_features=max_features, random_state=random_state)
         BaseRandomForest.__init__(self, random_state, base_tree, n_trees,
-                                  r, n_jobs)
+                                  n_jobs)
            
     def predict_proba(self, X):
         """
@@ -221,10 +212,12 @@ class RandomForestClassifier(BaseRandomForest, ClassifierMixin):
         if self.forest is None:
             raise Exception('Random Forest not initialized. Perform a fit first')       
         
-        P = np.zeros((n_samples, self.forest[0].K), dtype=float)
+        # this doesn't work propoerly
+        P = []
         for t in self.forest:
-            P += t.predict_proba(X)
-        P /= self.n_trees
+            P.append(t.predict_proba(X))
+        P = np.array(P)
+        P = np.sum(P, axis=0) / self.n_trees
 
         return P
     
@@ -262,17 +255,14 @@ class RandomForestRegressor(BaseRandomForest, RegressorMixin):
     min_split : integer
         minimum size to split on
         
-    F : integer, optional
-        if given, then, choose F features
+    max_features : integer, optional
+        if given, then, choose max_features features
 
     random_state : integer or array_like, optional
         seed the random number generator
 
     n_trees : integer, optional
         the number of trees in the forest
-        
-    r : float, optional
-        the ratio of training samples used per tree 0 < r <= r
     
     n_jobs : integer, optional
         the number of processes to use for parallel computation
@@ -300,10 +290,10 @@ class RandomForestRegressor(BaseRandomForest, RegressorMixin):
     """ 
      
     def __init__(self, criterion='mse', max_depth=10, min_split=1,
-                 max_features=None, random_state=None, n_trees=10, r=0.7,
+                 max_features=None, random_state=None, n_trees=10,
                  n_jobs=1):       
         base_tree = DecisionTreeRegressor( criterion=criterion,
             max_depth=max_depth, min_split=min_split,
             max_features=max_features, random_state=random_state)
         BaseRandomForest.__init__(self, random_state, base_tree, n_trees,
-                                  r, n_jobs)
+                                  n_jobs)

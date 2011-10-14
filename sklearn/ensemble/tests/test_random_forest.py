@@ -36,7 +36,7 @@ def test_classification_toy():
     Check classification on a toy dataset
     """
 
-    clf = ensemble.RandomForestClassifier(r=0.9)
+    clf = ensemble.RandomForestClassifier()
     clf.fit(X,Y)
     
     assert_array_equal(clf.predict(T), true_result)
@@ -44,7 +44,7 @@ def test_classification_toy():
     """
     With subsampling
     """
-    clf = ensemble.RandomForestClassifier(r=0.9, F=1)
+    clf = ensemble.RandomForestClassifier(max_features=1)
     clf.fit(X,Y)
     
     assert_array_equal(clf.predict(T), true_result)
@@ -53,7 +53,7 @@ def test_regression_toy():
     """
     Check regression on a toy dataset
     """
-    clf = ensemble.RandomForestRegressor(r=0.9)
+    clf = ensemble.RandomForestRegressor()
     clf.fit(X,Y)
 
     assert_almost_equal(clf.predict(T), true_result)
@@ -61,7 +61,7 @@ def test_regression_toy():
     """
     With subsampling
     """
-    clf = ensemble.RandomForestRegressor(r=0.9, F=1)
+    clf = ensemble.RandomForestRegressor(max_features=1)
     clf.fit(X,Y)
     
     assert_almost_equal(clf.predict(T), true_result)
@@ -81,7 +81,7 @@ def test_iris():
         assert score > 0.9, "Failed with criterion " + c + \
             " and score = " + str(score) 
 
-        clf = ensemble.RandomForestClassifier(criterion=c, F=2)\
+        clf = ensemble.RandomForestClassifier(criterion=c, max_features=2)\
               .fit(iris.data, iris.target)
             
         score = np.mean(clf.predict(iris.data) == iris.target) 
@@ -99,16 +99,16 @@ def test_boston():
               .fit(boston.data, boston.target)
             
         score = np.mean(np.power(clf.predict(boston.data)-boston.target,2)) 
-        assert score < 2, "Failed with F=None, criterion " + c + \
+        assert score < 3, "Failed with max_features=None, criterion " + c + \
             " and score = " + str(score)             
 
-        clf = ensemble.RandomForestRegressor(criterion=c, F=6, random_state=1)\
+        clf = ensemble.RandomForestRegressor(criterion=c, max_features=6, random_state=1)\
               .fit(boston.data, boston.target)
         
         #using fewer dimensions reduces the learning ability of this tree, 
         # but reduces training time.
         score = np.mean(np.power(clf.predict(boston.data)-boston.target,2)) 
-        assert score < 3, "Failed with F=6, criterion " + c + \
+        assert score < 3, "Failed with max_features=6, criterion " + c + \
             " and score = " + str(score)    
 
 
