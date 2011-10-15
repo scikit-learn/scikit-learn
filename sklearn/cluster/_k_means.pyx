@@ -15,26 +15,31 @@ cimport cython
 ctypedef np.float64_t DOUBLE
 ctypedef np.int32_t INT
 
+
 cdef extern from "math.h":
     double sqrt(double f)
+
 
 cdef extern from "cblas.h":
     double ddot "cblas_ddot"(int N, double *X, int incX, double *Y, int incY)
 
 
+@cython.profile(False)
+@cython.wraparound(False)
 cdef inline DOUBLE array_ddot(int n,
-                np.ndarray[DOUBLE, ndim=1] a,
-                np.ndarray[DOUBLE, ndim=1] b):
-    return ddot(n, <DOUBLE*>(a.data), 1, <DOUBLE*>(b.data), 1)
+                np.ndarray[DOUBLE, ndim=2] a, int a_idx,
+                np.ndarray[DOUBLE, ndim=2] b, int b_idx):
+    return ddot(n, <DOUBLE*>(a.data + a_idx * n * sizeof(DOUBLE)), 1,
+                <DOUBLE*>(b.data + b_idx * n * sizeof(DOUBLE)), 1)
 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def _assign_labels_array(np.ndarray[DOUBLE, ndim=2] X,
-                         np.ndarray[DOUBLE, ndim=1] x_squared_norms,
-                         slice_, np.ndarray[DOUBLE, ndim=2] centers,
-                         np.ndarray[INT, ndim=1] labels):
+cpdef DOUBLE _assign_labels_array(np.ndarray[DOUBLE, ndim=2] X,
+                                  np.ndarray[DOUBLE, ndim=1] x_squared_norms,
+                                  slice_, np.ndarray[DOUBLE, ndim=2] centers,
+                                  np.ndarray[INT, ndim=1] labels):
     """Compute label assignement and inertia for a slice of a dense array"""
     cdef:
         int n_clusters = centers.shape[0]
@@ -51,7 +56,7 @@ def _assign_labels_array(np.ndarray[DOUBLE, ndim=2] X,
 
     for center_idx in range(n_clusters):
         center_squared_norms[center_idx] = array_ddot(
-            n_features, centers[center_idx], centers[center_idx])
+            n_features, centers, center_idx, centers, center_idx)
 
     for i in range(n_samples):
         sample_idx = slice_start + i
@@ -60,7 +65,7 @@ def _assign_labels_array(np.ndarray[DOUBLE, ndim=2] X,
             dist = 0.0
             # hardcoded: minimize euclidean distance to cluster center:
             # ||a - b||^2 = ||a||^2 + ||b||^2 -2 <a, b>
-            dist += array_ddot(n_features, X[sample_idx], centers[center_idx])
+            dist += array_ddot(n_features, X, sample_idx, centers, center_idx)
             dist *= -2
             dist += center_squared_norms[center_idx]
             dist += x_squared_norms[sample_idx]
@@ -96,7 +101,7 @@ def _assign_labels_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
 
     for center_idx in range(n_clusters):
         center_squared_norms[center_idx] = array_ddot(
-            n_features, centers[center_idx], centers[center_idx])
+            n_features, centers, center_idx, centers, center_idx)
 
     for i in range(n_samples):
         sample_idx = slice_start + i
