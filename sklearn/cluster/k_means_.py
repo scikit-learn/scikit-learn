@@ -661,7 +661,6 @@ class MiniBatchKMeans(KMeans):
         given, it fixes the seed. Defaults to the global numpy random
         number generator.
 
-
     Methods
     -------
 
