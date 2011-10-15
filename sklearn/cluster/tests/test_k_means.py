@@ -185,8 +185,7 @@ def test_predict():
 
 
 def test_predict_minibatch():
-    mb_k_means = MiniBatchKMeans(init='k-means++', k=n_clusters,
-                                 random_state=42).fit(X)
+    mb_k_means = MiniBatchKMeans(k=n_clusters, random_state=42).fit(X)
 
     # sanity check: predict centroid labels
     pred = mb_k_means.predict(mb_k_means.cluster_centers_)
@@ -200,12 +199,12 @@ def test_predict_minibatch():
 def test_predict_minibatch_sparse_input():
     mb_k_means = MiniBatchKMeans(k=n_clusters, random_state=42).fit(X_csr)
 
+    # sanity check: re-predict labeling for training set samples
+    assert_array_equal(mb_k_means.predict(X_csr), mb_k_means.labels_)
+
     # sanity check: predict centroid labels
     pred = mb_k_means.predict(mb_k_means.cluster_centers_)
     assert_array_equal(pred, np.arange(n_clusters))
-
-    # sanity check: re-predict labeling for training set samples
-    assert_array_equal(mb_k_means.predict(X_csr), mb_k_means.labels_)
 
     # check that models trained on sparse input also works for dense input at
     # predict time

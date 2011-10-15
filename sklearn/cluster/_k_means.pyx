@@ -38,7 +38,8 @@ cdef inline DOUBLE array_ddot(int n,
 @cython.cdivision(True)
 cpdef DOUBLE _assign_labels_array(np.ndarray[DOUBLE, ndim=2] X,
                                   np.ndarray[DOUBLE, ndim=1] x_squared_norms,
-                                  int slice_start, int slice_stop,
+                                  unsigned int slice_start,
+                                  unsigned int slice_stop,
                                   np.ndarray[DOUBLE, ndim=2] centers,
                                   np.ndarray[INT, ndim=1] labels):
     """Compute label assignement and inertia for a slice of a dense array
@@ -46,11 +47,11 @@ cpdef DOUBLE _assign_labels_array(np.ndarray[DOUBLE, ndim=2] X,
     Return the inertia (sum of squared distances to the centers).
     """
     cdef:
-        int n_clusters = centers.shape[0]
-        int n_features = centers.shape[1]
-        int n_samples = slice_stop - slice_start
-        int sample_idx, center_idx, feature_idx
-        int i
+        unsigned int n_clusters = centers.shape[0]
+        unsigned int n_features = centers.shape[1]
+        unsigned int n_samples = slice_stop - slice_start
+        unsigned int sample_idx, center_idx, feature_idx
+        unsigned int i
         DOUBLE inertia = 0.0
         DOUBLE min_dist
         DOUBLE dist
@@ -84,7 +85,8 @@ cpdef DOUBLE _assign_labels_array(np.ndarray[DOUBLE, ndim=2] X,
 @cython.wraparound(False)
 @cython.cdivision(True)
 cpdef DOUBLE _assign_labels_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
-                                int slice_start, int slice_stop,
+                                unsigned int slice_start,
+                                unsigned int slice_stop,
                                 np.ndarray[DOUBLE, ndim=2] centers,
                                 np.ndarray[INT, ndim=1] labels):
     """Compute label assignement and inertia for a slice of a CSR input
@@ -95,11 +97,11 @@ cpdef DOUBLE _assign_labels_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
         np.ndarray[DOUBLE, ndim=1] X_data = X.data
         np.ndarray[INT, ndim=1] X_indices = X.indices
         np.ndarray[INT, ndim=1] X_indptr = X.indptr
-        int n_clusters = centers.shape[0]
-        int n_features = centers.shape[1]
-        int n_samples = slice_stop - slice_start
-        int sample_idx, center_idx, feature_idx
-        int i, k
+        unsigned int n_clusters = centers.shape[0]
+        unsigned int n_features = centers.shape[1]
+        unsigned int n_samples = slice_stop - slice_start
+        unsigned int sample_idx, center_idx, feature_idx
+        unsigned int i, k
         DOUBLE inertia = 0.0
         DOUBLE min_dist
         DOUBLE dist
@@ -154,28 +156,33 @@ def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
          The vector in which we keep track of the numbers of elements in a
          cluster
 
+
+    Return
+    ------
+    The inertia of the batch prior to centers update.
     """
     cdef:
         np.ndarray[DOUBLE, ndim=1] X_data = X.data
         np.ndarray[INT, ndim=1] X_indices = X.indices
         np.ndarray[INT, ndim=1] X_indptr = X.indptr
-        int n_samples = batch_slice.stop - batch_slice.start
-        int n_clusters = centers.shape[0]
-        int n_features = centers.shape[1]
+        unsigned int n_samples = batch_slice.stop - batch_slice.start
+        unsigned int n_clusters = centers.shape[0]
+        unsigned int n_features = centers.shape[1]
 
-        int batch_slice_start = batch_slice.start
-        int batch_slice_stop = batch_slice.stop
+        unsigned int batch_slice_start = batch_slice.start
+        unsigned int batch_slice_stop = batch_slice.stop
 
-        int sample_idx, center_idx, feature_idx
-        int i, k
-        int old_count, batch_count
+        unsigned int sample_idx, center_idx, feature_idx
+        unsigned int i, k
+        unsigned int old_count, batch_count
+        DOUBLE inertia
 
         # TODO: reuse a array preallocated outside of the mini batch main loop
         np.ndarray[INT, ndim=1] nearest_center = np.zeros(
             n_samples, dtype=np.int32)
 
     # step 1: assign minibatch samples to there nearest center
-    _assign_labels_csr(
+    inertia = _assign_labels_csr(
         X, x_squared_norms, batch_slice_start, batch_slice_stop,
         centers, nearest_center)
 
@@ -208,12 +215,14 @@ def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
             # update the count statistics for this center
             counts[center_idx] += batch_count
 
+    return inertia
+
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
 def csr_row_norm_l2(X, squared=True):
-    """Get L2 norm of each row in X."""
+    """Get L2 norm of each row in CSR matrix X."""
     cdef:
         unsigned int n_samples = X.shape[0]
         unsigned int n_features = X.shape[1]

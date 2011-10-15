@@ -586,6 +586,9 @@ def _mini_batch_step_dense(X, x_squared_norms, batch_slice, centers, counts):
     X: array, shape (n_samples, n_features)
         The original data array.
 
+    x_squared_norms: array, shape (n_samples,)
+        Squared euclidean norm of each data point.
+
     batch_slice: slice
         The row slice of the mini batch.
 
@@ -595,17 +598,15 @@ def _mini_batch_step_dense(X, x_squared_norms, batch_slice, centers, counts):
     counts: array, shape (k,)
          The vector in which we keep track of the numbers of elements in a
          cluster. This array is MODIFIED IN PLACE
-
-    x_squared_norms: array, shape (n_samples,)
-        Squared euclidean norm of each data point.
     """
-    # This is inefficient but saves mem and fits to sparse matrices.
+    # TODO: rewrite me as a cython function to save the distance matrix
+    # allocation
     X = X[batch_slice]
     x_squared_norms = x_squared_norms[batch_slice]
 
-    nearest_center = euclidean_distances(centers, X,
-                                         Y_norm_squared=x_squared_norms,
-                                         squared=True).argmin(axis=0)
+    distances = euclidean_distances(
+        centers, X, Y_norm_squared=x_squared_norms, squared=True)
+    nearest_center = distances.argmin(axis=0)
 
     k = centers.shape[0]
     for center_idx in range(k):
@@ -627,6 +628,8 @@ def _mini_batch_step_dense(X, x_squared_norms, batch_slice, centers, counts):
 
             # update the count statistics for this center
             counts[center_idx] += count
+
+    return distances[nearest_center].sum()
 
 
 class MiniBatchKMeans(KMeans):
@@ -658,8 +661,9 @@ class MiniBatchKMeans(KMeans):
 
         if init is an 2d array, it is used as a seed for the centroids
 
-    tol: float, optional default: 1e-4
-        Relative tolerance w.r.t. inertia to declare convergence
+    max_no_improvement: integer, default 10
+        Maximum number of mini-batches without improvement on the inertia
+        before early stopping. Set to None to disable early stopping.
 
     compute_labels: boolean
         Compute label assignements and inertia for the complete dataset
@@ -698,16 +702,21 @@ class MiniBatchKMeans(KMeans):
     """
 
     def __init__(self, k=8, init='random', max_iter=100,
-                 chunk_size=1000, tol=1e-4, verbose=0,
-                 compute_labels=True, random_state=None):
+                 chunk_size=1000, verbose=0, compute_labels=True,
+                 random_state=None, tol=None, max_no_improvement=10):
 
-        super(MiniBatchKMeans, self).__init__(k, init, 1,
-              max_iter, tol, verbose, random_state)
+        super(MiniBatchKMeans, self).__init__(k=k, init=init,
+              max_iter=max_iter, verbose=verbose, random_state=random_state)
 
+        if tol is not None:
+            warnings.warn('The tol parameter is deprecated, use '
+                          'max_no_improvement to control early stopping '
+                          'instead')
         self.counts = None
         self.cluster_centers_ = None
         self.chunk_size = chunk_size
         self.compute_labels = compute_labels
+        self.max_no_improvement = max_no_improvement
 
     def fit(self, X, y=None):
         """Compute the centroids on X by chunking it into mini-batches.
@@ -744,39 +753,42 @@ class MiniBatchKMeans(KMeans):
         n_iterations = int(self.max_iter * n_batches)
         if sp.issparse(X_shuffled):
             _mini_batch_step = _k_means._mini_batch_update_csr
-            # TODO: cython variance implementation for CSR matrix to normalize
-            # the tolerance
-            tol = self.tol
         else:
             _mini_batch_step = _mini_batch_step_dense
-            tol = np.mean(np.var(X_shuffled, axis=0)) * self.tol
 
-        # pre-allocate a copy of the cluster centers
-        old_centers = self.cluster_centers_.copy()
-
+        min_inertia = np.inf
+        no_improvement = 0
         for i, batch_slice in izip(xrange(n_iterations), cycle(batch_slices)):
-            _mini_batch_step(X_shuffled, x_squared_norms, batch_slice,
-                             self.cluster_centers_, self.counts)
+            inertia = _mini_batch_step(X_shuffled, x_squared_norms, batch_slice,
+                                       self.cluster_centers_, self.counts)
 
-            # inplace difference to avoid memory allocation for computing a
-            # difference between two sets of vectors
-            old_centers -= self.cluster_centers_
-            squared_delta = norm(old_centers) ** 2
+            # normalize inertia to be able to compare values when chunk_size
+            # changes
+            inertia /= float(batch_slice.stop - batch_slice.start)
+
+            if inertia < min_inertia:
+                min_inertia = inertia
+                no_improvement = 0
+            else:
+                no_improvement += 1
+
             if self.verbose:
-                print 'Minibatch iteration %d/%d: change = %f' % (
-                    i + 1, n_iterations, squared_delta)
-            if squared_delta < tol:
+                print ('Minibatch iteration %d/%d:'
+                       ' mean inertia: %f, best: %f' % (
+                           i + 1, n_iterations, inertia, min_inertia))
+
+            if (self.max_no_improvement
+                and no_improvement > self.max_no_improvement):
                 if self.verbose:
-                    print 'Converged to similar centers at iteration', i
+                    print 'No improvement after %d: early stopping' % (
+                        self.max_no_improvement)
                 break
-            if i < n_iterations - 1:
-                old_centers[:] = self.cluster_centers_
 
         if self.compute_labels:
             if self.verbose:
-                print 'Computing label assignements', i
-            self.labels_, self.inertia_ = _labels_inertia(X, x_squared_norms,
-                                                          self.cluster_centers_)
+                print 'Computing label assignements and total inertia', i
+            self.labels_, self.inertia_ = _labels_inertia(
+                X, x_squared_norms, self.cluster_centers_)
         return self
 
     def partial_fit(self, X, y=None):
