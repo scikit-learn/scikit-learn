@@ -491,6 +491,7 @@ def v_measure_score(labels_true, labels_pred):
     """
     return homogeneity_completeness_v_measure(labels_true, labels_pred)[2]
 
+
 def v_measure_score(labels_true, labels_pred):
     """V-Measure cluster labeling given a ground truth
 
@@ -616,18 +617,14 @@ def mutual_information(labels_true, labels_pred, contingency=None):
     if contingency is None:
         labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
         contingency = contingency_matrix(labels_true, labels_pred)
-    # Calculate P(i) for all i and P'(j) for all j
+    contingency = np.array(contingency, dtype='float')
+    contingency /= np.sum(contingency)
     pi = np.sum(contingency, axis=1)
-    pi /= float(np.sum(pi))
+    pi /= np.sum(pi)
     pj = np.sum(contingency, axis=0)
-    pj /= float(np.sum(pj))
-    # Compute log for all values
-    log_pij = np.log(contingency)
-    # Product of pi and pj for denominator
-    pi_pj = np.outer(pi, pj)
-    # Remembering that log(x/y) = log(x) - log(y)
-    mi = np.sum(contingency * (log_pij - pi_pj))
-    return mi
+    pj /= np.sum(pj)
+    mi = contingency * np.log2(contingency / np.outer(pi, pj))
+    return np.sum(mi[np.isfinite(mi)])
 
 
 def ami_score(labels_true, labels_pred):
@@ -672,14 +669,14 @@ def ami_score(labels_true, labels_pred):
       >>> from sklearn.metrics.cluster import ami_score
       >>> ami_score([0, 0, 1, 1], [0, 0, 1, 1])
       1.0
-      >>> v_measure_score([0, 0, 1, 1], [1, 1, 0, 0])
+      >>> ami_score([0, 0, 1, 1], [1, 1, 0, 0])
       1.0
 
 
     If classes members are completly splitted accross different clusters,
     the assignment is totally in-complete, hence the AMI is null::
 
-      >>> v_measure_score([0, 0, 0, 0], [0, 1, 2, 3])
+      >>> ami_score([0, 0, 0, 0], [0, 1, 2, 3])
       0.0
 
     """
@@ -692,28 +689,26 @@ def ami_score(labels_true, labels_pred):
     if (classes.shape[0] == clusters.shape[0] == 1
         or classes.shape[0] == clusters.shape[0] == 0):
         return 1.0
-    eps = np.finfo(float).eps
-    eps = 1e-15
-    contingency = contingency_matrix(labels_true, labels_pred,
-                                     eps=eps)
+    contingency = contingency_matrix(labels_true, labels_pred)
+    contingency = np.array(contingency, dtype='float')
     # Calculate the MI for the two clusterings
     mi = mutual_information(labels_true, labels_pred, contingency=contingency)
-    assert not np.isnan(mi), "mutual information is nan. %r\n%r\n%r" % (labels_true, labels_pred, contingency)
     # Calcualte the expected value for the mutual information
     emi = _expected_mutual_information(contingency, n_samples)
-    assert not np.isnan(emi), "emi is nan"
+    assert np.isfinite(emi), "emi is nan"
     # Calculate entropy for each labelling
     h_true, h_pred = entropy(labels_true), entropy(labels_pred)
-    assert not np.isnan(h_true), "h_true is nan"
-    assert not np.isnan(h_pred), "h_pred is nan"
+    assert np.isfinite(h_true), "h_true is nan"
+    assert np.isfinite(h_pred), "h_pred is nan"
     ami = (mi - emi) / (max(h_true, h_pred) - emi)
-    assert not np.isnan(ami), "%.4f\t%.4f\t%.4f\t%.4f\t%.4f" % (mi, emi, h_true, h_pred, emi)
+    assert np.isfinite(ami), "%.4f\t%.4f\t%.4f\t%.4f\t%.4f" % (mi, emi, h_true, h_pred, emi)
     return ami
+
 
 def _expected_mutual_information(contingency, n_samples):
     """ Calculate the expected mutual information for two labellings. """
     n_samples = float(n_samples)
-    M = np.zeros(contingency.shape, dtype='float')
+    M = 0.
     R, C = contingency.shape
     a = np.sum(contingency, axis=1)
     b = np.sum(contingency, axis=0)
@@ -732,18 +727,19 @@ def _expected_mutual_information(contingency, n_samples):
             n2 = np.log(n_samples * contingency[i][j] / (a[i] * b[i]))
             n3 = (fact_a[i] * fact_b[j] * fact_Na[i] * fact_Nb[j])
             numerator = n1 * n2 * n3
-            assert not np.isnan(numerator), "%.4f\t%.4f\t%.4f\t%.4f\t%.4f\t%.4f" % (n1, n2, n3, n_samples, contingency[i][j], a[i] * b[i])
+            assert np.isfinite(numerator), "%r,%r,%r" % (n1, n2, n3)
             for nij in range(start, end):
                 d1  = float(fact_N * factorial(nij) * factorial(a[i] - nij) *
                             factorial(b[j] - nij) *
                             factorial(n_samples - a[i] - b[j] + nij))
-                assert not np.isnan(numerator / d1) or not np.isinf(numerator / d1), "%.4f, %.2f" % (d1, nij)
-                M[i][j] += numerator / d1
-    assert not np.isnan(np.sum(M)), M
-    return np.sum(M)
+                M += numerator / d1
+    return M
 
 
 def entropy(labels):
     """ Calculates the entropy for a labelling. """
-    pi = np.array([np.sum(labels == i) for i in np.unique(labels)])
+    pi = np.array([np.sum(labels == i) for i in np.unique(labels)],
+                  dtype='float')
+    pi = pi[pi > 0]
+    pi /= np.sum(pi)
     return -np.sum(pi * np.log(pi))
