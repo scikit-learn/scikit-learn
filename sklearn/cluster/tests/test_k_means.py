@@ -8,9 +8,9 @@ from numpy.testing import assert_array_almost_equal
 from nose.tools import assert_raises
 from nose.tools import assert_true
 
-from sklearn.cluster import KMeans, MiniBatchKMeans
-from sklearn.cluster._k_means import _assign_labels_array
-from sklearn.cluster._k_means import _assign_labels_csr
+from sklearn.cluster import KMeans
+from sklearn.cluster import MiniBatchKMeans
+from sklearn.cluster.k_means_ import _labels_inertia
 from sklearn.datasets.samples_generator import make_blobs
 from sklearn.utils import shuffle
 
@@ -33,8 +33,8 @@ x_squared_norms = x_squared.sum(axis=1)
 X_csr = sp.csr_matrix(X)
 
 
-def test_label_assignement_inertia_dense():
-    labels_gold = np.empty(n_samples, dtype=np.int)
+def test_label_assignement_inertia():
+    labels_gold = - np.ones(n_samples, dtype=np.int)
     mindist = np.empty(n_samples)
     mindist.fill(np.infty)
     for center_id in range(n_clusters):
@@ -42,20 +42,15 @@ def test_label_assignement_inertia_dense():
         labels_gold[dist < mindist] = center_id
         mindist = np.minimum(dist, mindist)
     inertia_gold = mindist.sum()
+    assert_true((labels_gold != -1).all())
 
     # perform label assignement using the dense array input
-    labels_array = np.empty(n_samples, dtype=np.int32)
-    inertia_array = _assign_labels_array(
-        X, x_squared_norms, slice(0, n_samples), centers, labels_array)
-
+    labels_array, inertia_array = _labels_inertia(X, x_squared_norms, centers)
     assert_array_almost_equal(inertia_array, inertia_gold, 7)
     assert_array_equal(labels_array, labels_gold)
 
     # perform label assignement using the sparse CSR input
-    labels_csr = np.empty(n_samples, dtype=np.int32)
-    inertia_csr = _assign_labels_csr(
-        X_csr, x_squared_norms, slice(0, n_samples), centers, labels_csr)
-
+    labels_csr, inertia_csr = _labels_inertia(X_csr, x_squared_norms, centers)
     assert_array_almost_equal(inertia_csr, inertia_gold, 7)
     assert_array_equal(labels_csr, labels_gold)
 
