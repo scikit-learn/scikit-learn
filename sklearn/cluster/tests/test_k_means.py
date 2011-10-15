@@ -198,8 +198,7 @@ def test_predict_minibatch():
 
 
 def test_predict_minibatch_sparse_input():
-    mb_k_means = MiniBatchKMeans(k=n_clusters,
-                                 random_state=42).fit(X_csr)
+    mb_k_means = MiniBatchKMeans(k=n_clusters, random_state=42).fit(X_csr)
 
     # sanity check: predict centroid labels
     pred = mb_k_means.predict(mb_k_means.cluster_centers_)
@@ -211,6 +210,33 @@ def test_predict_minibatch_sparse_input():
     # check that models trained on sparse input also works for dense input at
     # predict time
     assert_array_equal(mb_k_means.predict(X), mb_k_means.labels_)
+
+
+def test_input_dtypes():
+    X_list = [[0, 0], [10, 10], [12, 9], [-1, 1], [2, 0], [8, 10]]
+    X_int = np.array(X_list, dtype=np.int32)
+    X_int_csr = sp.csr_matrix(X_int)
+    init_int = X_int[:2]
+
+    fitted_models = [
+        KMeans(k=2, random_state=42).fit(X_list),
+        KMeans(k=2, random_state=42).fit(X_int),
+        KMeans(k=2, init=init_int, random_state=42).fit(X_list),
+        KMeans(k=2, init=init_int, random_state=42).fit(X_int),
+        # mini batch kmeans is very unstable on such a small dataset but we are
+        # not interested in testing stability here hence picking up good random
+        # init
+        MiniBatchKMeans(k=2, random_state=1, chunk_size=2).fit(X_list),
+        MiniBatchKMeans(k=2, random_state=1, chunk_size=2).fit(X_int),
+        MiniBatchKMeans(k=2, random_state=2, chunk_size=2).fit(X_int_csr),
+        MiniBatchKMeans(k=2, random_state=42, init=init_int).fit(X_list),
+        MiniBatchKMeans(k=2, random_state=42, init=init_int).fit(X_int),
+        MiniBatchKMeans(k=2, random_state=42, init=init_int).fit(X_int_csr),
+    ]
+    expected_labels = [0, 1, 1, 0, 0, 1]
+    scores = np.array([v_measure_score(expected_labels, km.labels_)
+                       for km in fitted_models])
+    assert_array_equal(scores, np.ones(scores.shape[0]))
 
 
 def test_transform():

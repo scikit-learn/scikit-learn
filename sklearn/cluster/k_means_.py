@@ -470,6 +470,16 @@ class KMeans(BaseEstimator):
     In practice, the K-means algorithm is very fast (one of the fastest
     clustering algorithms available), but it falls in local minima. That's why
     it can be useful to restart it several times.
+
+    See also
+    --------
+
+    MiniBatchKMeans:
+        Alternative online implementation that does incremental updates
+        of the centers positions using mini-batches.
+        For large scale learning (say n_samples > 10k) MiniBatchKMeans is
+        probably much faster to than the default batch implementation.
+
     """
 
     def __init__(self, k=8, init='k-means++', n_init=10, max_iter=300,
@@ -477,6 +487,7 @@ class KMeans(BaseEstimator):
 
         if hasattr(init, '__array__'):
             k = init.shape[0]
+            init = np.asanyarray(init, dtype=np.float64)
 
         self.k = k
         self.init = init
@@ -491,7 +502,7 @@ class KMeans(BaseEstimator):
         """Verify that the number of samples given is larger than k"""
         if sp.issparse(X):
             raise ValueError("K-Means does not support sparse input matrices.")
-        X = np.asanyarray(X)
+        X = np.asanyarray(X, dtype=np.float64)
         if X.shape[0] < self.k:
             raise ValueError("n_samples=%d should be >= k=%d" % (
                 X.shape[0], self.k))
@@ -500,9 +511,7 @@ class KMeans(BaseEstimator):
     def fit(self, X, y=None):
         """Compute k-means"""
         self.random_state = check_random_state(self.random_state)
-
         X = self._check_data(X)
-        warn_if_not_float(X, self)
 
         self.cluster_centers_, self.labels_, self.inertia_ = k_means(
             X, k=self.k, init=self.init, n_init=self.n_init,
@@ -709,7 +718,8 @@ class MiniBatchKMeans(KMeans):
             Coordinates of the data points to cluster
         """
         self.random_state = check_random_state(self.random_state)
-        X = check_arrays(X, sparse_format="csr", copy=False)[0]
+        X = check_arrays(X, sparse_format="csr", copy=False,
+                         check_ccontiguous=True, dtype=np.float64)[0]
         warn_if_not_float(X, self)
         n_samples, n_features = X.shape
         if n_samples < self.k:
@@ -717,7 +727,7 @@ class MiniBatchKMeans(KMeans):
                              "of clusters.")
 
         if hasattr(self.init, '__array__'):
-            self.init = np.asarray(self.init)
+            self.init = np.ascontiguousarray(self.init, dtype=np.float64)
 
         X_shuffled = shuffle(X, random_state=self.random_state)
         x_squared_norms = _squared_norms(X)
@@ -782,7 +792,7 @@ class MiniBatchKMeans(KMeans):
         X = check_arrays(X, sparse_format="csr", copy=False)[0]
         n_samples, n_features = X.shape
         if hasattr(self.init, '__array__'):
-            self.init = np.asarray(self.init)
+            self.init = np.ascontiguousarray(self.init, dtype=np.float64)
 
         if n_samples == 0:
             return self

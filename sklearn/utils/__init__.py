@@ -92,11 +92,19 @@ def check_arrays(*arrays, **options):
     copy : boolean, False by default
         If copy is True, ensure that returned arrays are copies of the original
         (if not already converted to another format earlier in the process).
+
+    check_ccontiguous : boolean, False by default
+        Check that the arrays are C contiguous
+
+    dtype : a numpy dtype instance, None by default
+        Enforce a specific dtype.
     """
     sparse_format = options.pop('sparse_format', None)
     if sparse_format not in (None, 'csr', 'csc'):
         raise ValueError('Unexpected sparse format: %r' % sparse_format)
     copy = options.pop('copy', False)
+    check_ccontiguous = options.pop('check_ccontiguous', False)
+    dtype = options.pop('dtype', None)
     if options:
         raise ValueError("Unexpected kw arguments: %r" % options.keys())
 
@@ -130,8 +138,15 @@ def check_arrays(*arrays, **options):
                 array = array.tocsr()
             elif sparse_format == 'csc':
                 array = array.tocsc()
+            if check_ccontiguous:
+                array.data = np.ascontiguousarray(array.data, dtype=dtype)
+            else:
+                array.data = np.asanyarray(array.data, dtype=dtype)
         else:
-            array = np.asanyarray(array)
+            if check_ccontiguous:
+                array = np.ascontiguousarray(array, dtype=dtype)
+            else:
+                array = np.asanyarray(array, dtype=dtype)
 
         if copy and array is array_orig:
             array = array.copy()
