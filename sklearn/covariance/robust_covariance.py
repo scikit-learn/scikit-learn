@@ -22,6 +22,25 @@ from ..utils.extmath import fast_logdet as exact_logdet
 #   1999, American Statistical Association and the American Society
 #   for Quality, TECHNOMETRICS)
 ###############################################################################
+def _nonrobust_covariance(data, assume_centered=False):
+        """Non-robust estimation of the covariance to be used within MCD.
+
+        Parameters
+        ----------
+        data: array_like, shape (n_samples, n_features)
+          Data for which to compute the non-robust covariance matrix.
+        assume_centered: Boolean
+          Whether or not the observations should be considered as centered.
+
+        Returns
+        -------
+        nonrobust_covariance: array_like, shape (n_features, n_features)
+          The non-robust covariance of the data.
+
+        """
+        return empirical_covariance(data, assume_centered=assume_centered)
+
+
 def c_step(X, h, remaining_iterations=30, initial_estimates=None,
            verbose=False):
     """C_step procedure described in [1] aiming at computing the MCD
@@ -69,7 +88,7 @@ def c_step(X, h, remaining_iterations=30, initial_estimates=None,
         support = np.zeros(n_samples).astype(bool)
         support[np.random.permutation(n_samples)[:h]] = True
         T = X[support].mean(0)
-        S = empirical_covariance(X[support])
+        S = _nonrobust_covariance(X[support])
     else:
         # get initial robust estimates from the function parameters
         T = initial_estimates[0]
@@ -82,7 +101,7 @@ def c_step(X, h, remaining_iterations=30, initial_estimates=None,
         support = np.zeros(n_samples).astype(bool)
         support[np.argsort(dist)[:h]] = True
         T = X[support].mean(0)
-        S = empirical_covariance(X[support])
+        S = _nonrobust_covariance(X[support])
         detS = exact_logdet(S)
     previous_detS = np.inf
 
@@ -102,7 +121,7 @@ def c_step(X, h, remaining_iterations=30, initial_estimates=None,
         support = np.zeros(n_samples).astype(bool)
         support[np.argsort(dist)[:h]] = True
         T = X[support].mean(0)
-        S = empirical_covariance(X[support])
+        S = _nonrobust_covariance(X[support])
         detS = np.log(linalg.det(S))
         # update remaining iterations for early stopping
         remaining_iterations = remaining_iterations - 1
@@ -381,7 +400,7 @@ def fast_mcd(X, correction="empirical", reweight="rousseeuw"):
             1)
         mask = dist < chi2(n_features).isf(0.025)
         T_reweighted = X[mask].mean(0)
-        S_reweighted = empirical_covariance(X[mask])
+        S_reweighted = _nonrobust_covariance(X[mask])
         support = np.zeros(n_samples).astype(bool)
         support[mask] = True
     else:
@@ -487,7 +506,8 @@ class MCD(EmpiricalCovariance):
             X, correction=correction, reweight=reweight)
         if assume_centered:
             location = np.zeros(location.shape[0])
-            covariance = empirical_covariance(X[support], assume_centered=True)
+            covariance = _nonrobust_covariance(
+                X[support], assume_centered=True)
         self._set_estimates(covariance)
         self.location_ = location
         self.support_ = support
