@@ -7,7 +7,7 @@ Authors : Vincent Michel, Bertrand Thirion, Alexandre Gramfort,
           Gael Varoquaux
 License: BSD 3 clause
 """
-import heapq
+from heapq import heapify, heappop, heappush
 import itertools
 import warnings
 
@@ -121,7 +121,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
     _inertia.compute_ward_dist(moments[0], moments[1],
                                coord_row, coord_col, inertia)
     inertia = zip(inertia, coord_row, coord_col)
-    heapq.heapify(inertia)
+    heapify(inertia)
 
     # prepare the main fields
     parent = np.arange(n_nodes, dtype=np.int)
@@ -129,33 +129,35 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
     used_node = np.ones(n_nodes, dtype=bool)
     children = []
 
+    visited = np.empty(n_nodes, dtype=bool)
+
     # recursive merge loop
-    for k in range(n_samples, n_nodes):
+    for k in xrange(n_samples, n_nodes):
 
         # identify the merge
         while True:
-            node = heapq.heappop(inertia)
-            i, j = node[1], node[2]
+            inert, i, j = heappop(inertia)
             if used_node[i] and used_node[j]:
                 break
-        parent[i], parent[j], heights[k] = k, k, node[0]
+        parent[i], parent[j], heights[k] = k, k, inert
         children.append([i, j])
-        used_node[i], used_node[j] = False, False
+        used_node[i] = used_node[j] = False
 
         # update the moments
-        for p in range(2):
+        for p in xrange(2):
             moments[p][k] = moments[p][i] + moments[p][j]
 
         # update the structure matrix A and the inertia matrix
         coord_col = []
-        visited = set([k])        
+        visited[:] = False
+        visited[k] = True
         for l in set(A[i]).union(A[j]):
             while parent[l] != l:
-               l = parent[l]
-            if l not in visited:
-               visited.add(l)
-               coord_col.append(l)
-               A[l].append(k)
+                l = parent[l]
+            if not visited[l]:
+                visited[l] = True
+                coord_col.append(l)
+                A[l].append(k)
         A.append(coord_col)
         coord_col = np.array(coord_col, dtype=np.int)
         coord_row = np.empty_like(coord_col)
@@ -165,7 +167,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
         _inertia.compute_ward_dist(moments[0], moments[1],
                                    coord_row, coord_col, ini)
         for tupl in itertools.izip(ini, coord_row, coord_col):
-            heapq.heappush(inertia, tupl)
+            heappush(inertia, tupl)
 
     # Separate leaves in children (empty lists up to now)
     n_leaves = n_samples
@@ -252,7 +254,7 @@ class Ward(BaseEstimator):
     connectivity : sparse matrix.
         Connectivity matrix. Defines for each sample the neigbhoring
         samples following a given structure of the data.
-        Defaut is None, i.e, the hiearchical clustering algorithm is
+        Default is None, i.e, the hiearchical clustering algorithm is
         unstructured.
 
     memory : Instance of joblib.Memory or string
@@ -334,7 +336,7 @@ class WardAgglomeration(AgglomerationTransform, Ward):
     connectivity : sparse matrix
         connectivity matrix. Defines for each feature the neigbhoring
         features following a given structure of the data.
-        Defaut is None, i.e, the hiearchical agglomeration algorithm is
+        Default is None, i.e, the hiearchical agglomeration algorithm is
         unstructured.
 
     memory : Instance of joblib.Memory or string
