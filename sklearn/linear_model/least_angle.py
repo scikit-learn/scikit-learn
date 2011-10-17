@@ -120,7 +120,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
     if verbose:
         print "Step\t\tAdded\t\tDropped\t\tActive set size\t\tC"
 
-    while 1:
+    while True:
         if Cov.size:
             C_idx = np.argmax(np.abs(Cov))
             C_ = Cov[C_idx]
@@ -146,13 +146,14 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
         if not drop:
 
-            # Update the Cholesky factorization of (Xa * Xa') #
-            #                                                 #
-            #            ( L   0 )                            #
-            #     L  ->  (       )  , where L * w = b         #
-            #            ( w   z )    z = 1 - ||w||           #
-            #                                                 #
-            #   where u is the last added to the active set   #
+            ##########################################################
+            # Append x_j to the Cholesky factorization of (Xa * Xa') #
+            #                                                        #
+            #            ( L   0 )                                   #
+            #     L  ->  (       )  , where L * w = Xa' x_j          #
+            #            ( w   z )    and z = ||x_j||                #
+            #                                                        #
+            ##########################################################
 
             sign_active[n_active] = np.sign(C_)
             m, n = n_active, C_idx + n_active
@@ -179,7 +180,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                                         L[n_active, :n_active])
             v = np.dot(L[n_active, :n_active], L[n_active, :n_active])
             diag = max(np.sqrt(np.abs(c - v)), eps)
-            L[n_active,  n_active] = diag
+            L[n_active, n_active] = diag
 
             active.append(indices[n_active])
             n_active += 1
@@ -215,7 +216,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
         # TODO: better names for these variables: z
         drop = False
-        z = - coefs[n_iter, active] / least_squares
+        z = -coefs[n_iter, active] / least_squares
         z_pos = arrayfuncs.min_pos(z)
         if z_pos < gamma_:
             # some coefficients have changed sign
@@ -255,7 +256,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                 # propagate dropped variable
                 for i in range(idx, n_active):
                     X.T[i], X.T[i + 1] = swap(X.T[i], X.T[i + 1])
-                    indices[i], indices[i + 1] =  \
+                    indices[i], indices[i + 1] = \
                             indices[i + 1], indices[i]  # yeah this is stupid
 
                 # TODO: this could be updated
@@ -266,7 +267,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                 Cov = np.r_[temp, Cov]
             else:
                 for i in range(idx, n_active):
-                    indices[i], indices[i + 1] =  \
+                    indices[i], indices[i + 1] = \
                                 indices[i + 1], indices[i]
                     Gram[i], Gram[i + 1] = swap(Gram[i], Gram[i + 1])
                     Gram[:, i], Gram[:, i + 1] = swap(Gram[:, i],
@@ -730,13 +731,13 @@ class LarsCV(LARS):
                                                  fill_value=residues.max(),
                                                  axis=0)(all_alphas)
             this_residues **= 2
-            mse_path[:, index] = np.mean(this_residues, axis=-1)
+            mse_path[:, index] = np.mean(this_residues, axis= -1)
 
-        mask = np.all(np.isfinite(mse_path), axis=-1)
+        mask = np.all(np.isfinite(mse_path), axis= -1)
         all_alphas = all_alphas[mask]
         mse_path = mse_path[mask]
         # Select the alpha that minimizes left-out error
-        i_best_alpha = np.argmin(mse_path.mean(axis=-1))
+        i_best_alpha = np.argmin(mse_path.mean(axis= -1))
         best_alpha = all_alphas[i_best_alpha]
 
         # Store our parameters
