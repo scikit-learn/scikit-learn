@@ -27,7 +27,7 @@ from ._feature_agglomeration import AgglomerationTransform
 # Ward's algorithm
 
 def ward_tree(X, connectivity=None, n_components=None, return_inertias=False, 
-              copy=True):
+              merge_replay=[], copy=True):
     """Ward clustering based on a Feature matrix.
 
     The inertia matrix uses a Heapq-based representation.
@@ -91,7 +91,7 @@ def ward_tree(X, connectivity=None, n_components=None, return_inertias=False,
         children_ = out[:, :2].astype(np.int)
         return children_, 1, n_samples
 
-    n_nodes = 2 * n_samples - n_components
+    n_nodes = 2 * n_samples - 1
 
     if (connectivity.shape[0] != n_samples or
         connectivity.shape[1] != n_samples):
@@ -105,7 +105,7 @@ def ward_tree(X, connectivity=None, n_components=None, return_inertias=False,
 
     # Remove diagonal from connectivity matrix
     connectivity.setdiag(np.zeros(connectivity.shape[0]))
-
+    
     # create inertia matrix
     coord_row = []
     coord_col = []
@@ -136,17 +136,62 @@ def ward_tree(X, connectivity=None, n_components=None, return_inertias=False,
     heights = np.zeros(n_nodes)
     used_node = np.ones(n_nodes, dtype=bool)
     children = []
-
+    merges = []
+    
+    reserved_indices = set([]) # The indices which are contained in the replayed merges
+    for (i_, j_), k_ in merge_replay:
+        reserved_indices.add(i_)
+        reserved_indices.add(j_)
+    for (i_, j_), k_ in merge_replay:
+        if k_ in reserved_indices:
+            reserved_indices.remove(k_) # Add this later since we don't know the new index yet
+    
+    index_mapping = dict(zip(reserved_indices, reserved_indices))    
     # recursive merge loop
     for k in range(n_samples, n_nodes):
-
-        # identify the merge
-        while True:
-            node = heapq.heappop(inertia)
-            i, j = node[1], node[2]
-            if used_node[i] and used_node[j]:
-                break
-        parent[i], parent[j], heights[k] = k, k, node[0]
+        # Fetch merge that will be reapplied next (if any)
+        if len(merge_replay) > 0:
+            (i_, j_), k_ = merge_replay[0]
+            merge_replay = merge_replay[1:]
+             # Associate indices
+            i = index_mapping[i_]
+            j = index_mapping[j_]
+            # Compute inertia of the cluster obtained when merging i and j
+            ini = np.empty(len(coord_row), dtype=np.float)
+            _inertia.compute_ward_dist(moments[0], moments[1],
+                                       np.array([i]), np.array([j]), ini)
+            height = ini[0]
+            index_mapping[k_] = k
+#            print "Reapply", height, i, j, k
+        else: # No merges to be reapplied left
+            # Identify the merge that will be applied next
+            height = np.inf
+            while len(inertia) > 0:
+                height, i, j = heapq.heappop(inertia)
+                if used_node[i] and used_node[j]:
+                    break
+                if len(inertia) == 0:
+                    height = np.inf
+                    break
+            if len(inertia) == 0 and height == np.inf: 
+                # Merge unconnected components with height infinity
+                i = k - 1
+                desc = _hc_get_descendent([i], np.array(children), n_samples, 
+                                          add_intermediate_nodes=True)
+                for j in range(k-2, 0, -1):
+                    if j not in desc:
+                        break                
+            # Update index and inertia mappings
+            if i in index_mapping.values():
+                i_ = index_mapping.keys()[index_mapping.values().index(i)]
+                index_mapping[i_] = k
+            if j in index_mapping.values():
+                j_ = index_mapping.keys()[index_mapping.values().index(j)]
+                index_mapping[j_] = k  
+#            print "Novel", height, i, j, k
+            
+        parent[i], parent[j], heights[k] = k, k, height
+        merges.append(((i,j),k))
         children.append([i, j])
         used_node[i], used_node[j] = False, False
 
@@ -180,15 +225,15 @@ def ward_tree(X, connectivity=None, n_components=None, return_inertias=False,
     children = np.array(children)  # return numpy array for efficient caching
 
     if return_inertias:
-        return children, n_components, n_leaves, heights
+        return children, n_components, n_leaves, merges, heights
     else:
-        return children, n_components, n_leaves
+        return children, n_components, n_leaves, merges
 
 
 ###############################################################################
 # Functions for cutting  hierarchical clustering tree
 
-def _hc_get_descendent(ind, children, n_leaves):
+def _hc_get_descendent(ind, children, n_leaves, add_intermediate_nodes=False):
     """Function returning all the descendent leaves of a set of nodes.
 
     Parameters
@@ -213,6 +258,8 @@ def _hc_get_descendent(ind, children, n_leaves):
         if i < n_leaves:
             descendent.append(i)
         else:
+            if add_intermediate_nodes:
+                descendent.append(i)
             ci = children[i - n_leaves]
             ind.extend((ci[0], ci[1]))
     return descendent
@@ -347,7 +394,7 @@ class Ward(BaseEstimator):
         self.n_components = n_components
         self.connectivity = connectivity
 
-    def fit(self, X):
+    def fit(self, X, merge_replay=[]):
         """Fit the hierarchical clustering on the data
 
         Parameters
@@ -365,24 +412,25 @@ class Ward(BaseEstimator):
 
         # Construct the tree
         if self.max_inertia is None:
-            self.children_, self.n_components, self.n_leaves_ = \
+            children, n_components, n_leaves, self.merges = \
                     memory.cache(ward_tree)(X, self.connectivity,
-                                            n_components=self.n_components, 
+                                            n_components=self.n_components,
+                                            merge_replay=merge_replay,
                                             copy=self.copy)
             # Cut the tree based on number of desired clusters
-            self.labels_ = _hc_cut(self.n_clusters, self.children_, self.n_leaves_)
+            self.labels_ = _hc_cut(self.n_clusters, children, n_leaves)
         else:
-            self.children_, self.n_components, self.n_leaves_, self.inertias_ = \
+            children, n_components, n_leaves, self.merges, inertias = \
                     memory.cache(ward_tree)(X, self.connectivity,
                                             n_components=self.n_components,
                                             return_inertias=True, 
+                                            merge_replay=merge_replay,
                                             copy=self.copy)
             # Cut the tree based on maximally allowed inertia
-            self.labels_ = _hc_cut_inertia(self.max_inertia, self.children_,
-                                           self.n_leaves_, self.inertias_)
+            self.labels_ = _hc_cut_inertia(self.max_inertia, children, n_leaves,
+                                           inertias)
             
         return self
-
 
 ###############################################################################
 # Ward-based feature agglomeration
