@@ -21,7 +21,7 @@ ctypedef np.int8_t BOOL_t
 cdef extern from "math.h":
     cdef extern double pow(double base, double exponent)
 
-cdef extern from "fast_math.h":
+cdef extern from "_fast_math.h":
     cdef extern float fast_log(float x)
 
 cdef extern from "float.h":
