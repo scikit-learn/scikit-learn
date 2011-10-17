@@ -19,8 +19,10 @@ ctypedef np.float32_t DTYPE_t
 ctypedef np.int8_t BOOL_t
 
 cdef extern from "math.h":
-    cdef extern double log(double x)
     cdef extern double pow(double base, double exponent)
+
+cdef extern from "fast_math.h":
+    cdef extern float fast_log(float x)
 
 cdef extern from "float.h":
     cdef extern double DBL_MAX
@@ -292,21 +294,22 @@ cdef class Entropy(ClassificationCriterion):
         cdef double H_left = 0.0
         cdef double H_right = 0.0
         cdef int k
-        cdef double e1, e2
         cdef double n_left = <double> self.n_left
         cdef double n_right = <double> self.n_right
+        # Time in this function is dominated by the computation of the
+        # log
 
         for k from 0 <= k < self.n_classes:
             if self.label_count_left[k] > 0:
                 H_left -= ((self.label_count_left[k] / n_left)
-                           * log(self.label_count_left[k] / n_left))
+                           * fast_log(self.label_count_left[k] / n_left))
             if self.label_count_right[k] > 0:
                 H_right -= ((self.label_count_right[k] / n_right)
-                            * log(self.label_count_right[k] / n_right))
+                            * fast_log(self.label_count_right[k] / n_right))
 
-        e1 = (n_left / self.n_samples) * H_left
-        e2 = (n_right / self.n_samples) * H_right
-        return e1 + e2
+        H_left *= n_left
+        H_right *= n_right
+        return (H_left + H_right) / self.n_samples
 
 
 cdef class RegressionCriterion(Criterion):
