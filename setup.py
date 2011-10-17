@@ -55,6 +55,8 @@ if __name__ == "__main__":
             shutil.rmtree(local_path)
         print("Copying source tree into build/py3k for 2to3 transformation"
               "...")
+        shutil.copytree(os.path.join(old_path, 'scikits'),
+                        os.path.join(local_path, 'scikits'))
         shutil.copytree(os.path.join(old_path, 'sklearn'),
                         os.path.join(local_path, 'sklearn'))
         import lib2to3.main
@@ -84,7 +86,7 @@ if __name__ == "__main__":
           version=VERSION,
           download_url=DOWNLOAD_URL,
           long_description=LONG_DESCRIPTION,
-          zip_safe=False,  # the package can run out of an .egg file
+          zip_safe=False, # the package can run out of an .egg file
           classifiers=[
               'Intended Audience :: Science/Research',
               'Intended Audience :: Developers',
