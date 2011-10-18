@@ -13,9 +13,9 @@ import numpy as np
 from scipy import interp
 import pylab as pl
 
-from scikits.learn import svm, datasets
-from scikits.learn.metrics import roc_curve, auc
-from scikits.learn.cross_val import StratifiedKFold
+from sklearn import svm, datasets
+from sklearn.metrics import roc_curve, auc
+from sklearn.cross_validation import StratifiedKFold
 
 ################################################################################
 # Data IO and generation

@@ -10,15 +10,17 @@ well as L1 and L2 penalized logistic regression.
 The logistic regression is not a multiclass classifier out of the box. As
 a result it can identify only the first class.
 """
+print __doc__
+
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD Style.
 
 import pylab as pl
 import numpy as np
 
-from scikits.learn.linear_model import LogisticRegression
-from scikits.learn.svm import SVC
-from scikits.learn import datasets
+from sklearn.linear_model import LogisticRegression
+from sklearn.svm import SVC
+from sklearn import datasets
 
 iris = datasets.load_iris()
 X = iris.data[:, :2] # we only take the first two features for visualization

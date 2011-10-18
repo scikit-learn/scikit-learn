@@ -22,14 +22,14 @@ import numpy as np
 import pylab as pl
 from scipy import linalg, ndimage
 
-from scikits.learn.feature_extraction.image import grid_to_graph
-from scikits.learn import feature_selection
-from scikits.learn.cluster import WardAgglomeration
-from scikits.learn.linear_model import BayesianRidge
-from scikits.learn.pipeline import Pipeline
-from scikits.learn.grid_search import GridSearchCV
-from scikits.learn.externals.joblib import Memory
-from scikits.learn.cross_val import KFold
+from sklearn.feature_extraction.image import grid_to_graph
+from sklearn import feature_selection
+from sklearn.cluster import WardAgglomeration
+from sklearn.linear_model import BayesianRidge
+from sklearn.pipeline import Pipeline
+from sklearn.grid_search import GridSearchCV
+from sklearn.externals.joblib import Memory
+from sklearn.cross_validation import KFold
 
 ###############################################################################
 # Generate data
@@ -66,9 +66,8 @@ A = grid_to_graph(n_x=size, n_y=size)
 ward = WardAgglomeration(n_clusters=10, connectivity=A, memory=mem,
                          n_components=1)
 clf = Pipeline([('ward', ward), ('ridge', ridge)])
-parameters = {'ward__n_clusters': [10, 20, 30]}
 # Select the optimal number of parcels with grid search
-clf = GridSearchCV(clf, parameters, n_jobs=1)
+clf = GridSearchCV(clf, {'ward__n_clusters': [10, 20, 30]}, n_jobs=1)
 clf.fit(X, y, cv=cv) # set the best parameters
 coef_ = clf.best_estimator.steps[-1][1].coef_
 coef_ = clf.best_estimator.steps[0][1].inverse_transform(coef_)
@@ -78,9 +77,8 @@ coef_agglomeration_ = coef_.reshape(size, size)
 f_regression = mem.cache(feature_selection.f_regression) # caching function
 anova = feature_selection.SelectPercentile(f_regression)
 clf = Pipeline([('anova', anova), ('ridge', ridge)])
-parameters = {'anova__percentile': [5, 10, 20]}
 # Select the optimal percentage of features with grid search
-clf = GridSearchCV(clf, parameters)
+clf = GridSearchCV(clf, {'anova__percentile': [5, 10, 20]})
 clf.fit(X, y, cv=cv) # set the best parameters
 coef_ = clf.best_estimator.steps[-1][1].coef_
 coef_ = clf.best_estimator.steps[0][1].inverse_transform(coef_)

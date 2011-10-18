@@ -26,7 +26,7 @@ code for the scikit-learn project.
 Python, Cython or C/C++?
 ========================
 
-.. currentmodule:: scikits.learn
+.. currentmodule:: sklearn
 
 In general, the scikit-learn project emphasizes the **readability** of
 the source code to make it easy for the project users to dive into the
@@ -89,9 +89,9 @@ Suppose we want to profile the Non Negative Matrix Factorization module
 of the scikit. Let us setup a new IPython session and load the digits
 dataset and as in the :ref:`example_decomposition_plot_nmf.py` example::
 
-  In [1]: from scikits.learn.decomposition import NMF
+  In [1]: from sklearn.decomposition import NMF
 
-  In [2]: from scikits.learn.datasets import load_digits
+  In [2]: from sklearn.datasets import load_digits
 
   In [3]: X = load_digits().data
 
@@ -174,30 +174,55 @@ order to better understand the profile of this specific function, let
 us install ``line-prof`` and wire it to IPython::
 
   $ pip install line-profiler
-  $ vim ~/.ipython/ipy_user_conf.py
 
-Ensure the following lines are present::
+- **Under IPython <= 0.10**, edit ``~/.ipython/ipy_user_conf.py`` and
+  ensure the following lines are present::
 
-  import IPython.ipapi
-  ip = IPython.ipapi.get()
+    import IPython.ipapi
+    ip = IPython.ipapi.get()
 
-Towards the end of the file, define the ``%lprun`` magic::
+  Towards the end of the file, define the ``%lprun`` magic::
 
-  import line_profiler
-  ip.expose_magic('lprun', line_profiler.magic_lprun)
+    import line_profiler
+    ip.expose_magic('lprun', line_profiler.magic_lprun)
+
+- **Under IPython 0.11+**, first create a configuration profile::
+
+    $ ipython profile create
+
+  Then create a file named ``~/.ipython/extensions/line_profile_ext`` with
+  the following content::
+
+    import line_profiler
+
+    def load_ipython_extension(ip):
+        ip.define_magic('lprun', line_profiler.magic_lprun)
+
+  Then register it in ``~/.ipython/profile_default/ipython_config.py``::
+
+    c.TerminalIPythonApp.extensions = [
+        'line_profiler_ext',
+    ]
+
+  This will register the ``%lprun`` magic command in the IPython terminal
+  client.
+
+  You can do a similar operation ``ipython_notebook_config.py`` and
+  ``ipython_qtconsole_config`` to register the same extensions for the
+  HTML notebook and qtconsole clients.
 
 Now restart IPython and let us use this new toy::
 
-  In [1]: from scikits.learn.datasets import load_digits
+  In [1]: from sklearn.datasets import load_digits
 
-  In [2]: from scikits.learn.decomposition.nmf import _nls_subproblem, NMF
+  In [2]: from sklearn.decomposition.nmf import _nls_subproblem, NMF
 
   In [3]: X = load_digits().data
 
   In [4]: %lprun -f _nls_subproblem NMF(n_components=16, tol=1e-2).fit(X)
   Timer unit: 1e-06 s
 
-  File: scikits/learn/decomposition/nmf.py
+  File: sklearn/decomposition/nmf.py
   Function: _nls_subproblem at line 137
   Total time: 1.73153 s
 
@@ -239,17 +264,17 @@ pin-point the most expensive expressions that would deserve additional care.
 Performance tips for the Cython developer
 =========================================
 
-If the profiling of the python code reveals that the python interpreter
+If profiling of the Python code reveals that the Python interpreter
 overhead is larger by one order of magnitude or more than the cost of the
 actual numerical computation (e.g. ``for`` loops over vector components,
 nested evaluation of conditional expression, scalar arithmetics...), it
 is probably adequate to extract the hotspot portion of the code as a
-standalone function in a ``.pyx`` file and add static type declarations
-and then use cython_ to generate a C program suitable to be compiled as
-a Python extension module.
+standalone function in a ``.pyx`` file, add static type declarations and
+then use Cython to generate a C program suitable to be compiled as a
+Python extension module.
 
-The official documentation available http://docs.cython.org/ contains
-tutorial and reference guide for developing such a module. In the
+The official documentation available at http://docs.cython.org/ contains
+a tutorial and reference guide for developing such a module. In the
 following we will just highlight a couple of tricks that we found
 important in practice on the existing cython codebase in the scikit-learn
 project.

@@ -21,7 +21,8 @@ https://github.com/scikit-learn/scikit-learn/issues
 
 IRC
 ===
-Some devs like to hang out on channel #learn on irc.freenode.net
+
+Some devs like to hang out on channel #scikit-learn on irc.freenode.net
 
 If you do not have an irc client or are behind a firewall this web
 client works fine: http://webchat.freenode.net

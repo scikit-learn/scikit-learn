@@ -5,7 +5,7 @@
 Stochastic Gradient Descent
 ===========================
 
-.. currentmodule:: scikits.learn.linear_model
+.. currentmodule:: sklearn.linear_model
 
 **Stochastic Gradient Descent (SGD)** is a simple yet very efficient
 approach to discriminative learning of linear classifiers under
@@ -24,16 +24,16 @@ examples and more than 10^5 features.
 
 The advantages of Stochastic Gradient Descent are:
 
-    - Efficiency.
+    + Efficiency.
 
-    - Ease of implementation (lots of opportunities for code tuning).
+    + Ease of implementation (lots of opportunities for code tuning).
 
 The disadvantages of Stochastic Gradient Descent include:
 
-    - SGD requires a number of hyperparameters such as the regularization
+    + SGD requires a number of hyperparameters such as the regularization
       parameter and the number of iterations.
 
-    - SGD is sensitive to feature scaling.
+    + SGD is sensitive to feature scaling.
 
 Classification
 ==============
@@ -54,14 +54,15 @@ of size [n_samples, n_features] holding the training samples, and an
 array Y of size [n_samples] holding the target values (class labels)
 for the training samples::
 
-    >>> from scikits.learn.linear_model import SGDClassifier
+    >>> from sklearn.linear_model import SGDClassifier
     >>> X = [[0., 0.], [1., 1.]]
     >>> y = [0, 1]
     >>> clf = SGDClassifier(loss="hinge", penalty="l2")
     >>> clf.fit(X, y)
-    SGDClassifier(loss='hinge', n_jobs=1, shuffle=False, verbose=0, n_iter=5,
-           learning_rate='optimal', fit_intercept=True, penalty='l2',
-           power_t=0.5, seed=0, eta0=0.0, rho=1.0, alpha=0.0001)
+    SGDClassifier(alpha=0.0001, eta0=0.0, fit_intercept=True,
+           learning_rate='optimal', loss='hinge', n_iter=5, n_jobs=1,
+           penalty='l2', power_t=0.5, rho=1.0, seed=0, shuffle=False,
+           verbose=0)
 
 After being fitted, the model can then be used to predict new values::
 
@@ -90,9 +91,9 @@ To get the signed distance to the hyperplane use `decision_function`::
 The concrete loss function can be set via the `loss`
 parameter. :class:`SGDClassifier` supports the following loss functions:
 
-  - `loss="hinge"`: (soft-margin) linear Support Vector Machine.
-  - `loss="modified_huber"`: smoothed hinge loss.
-  - `loss="log"`: Logistic Regression
+  * `loss="hinge"`: (soft-margin) linear Support Vector Machine.
+  * `loss="modified_huber"`: smoothed hinge loss.
+  * `loss="log"`: Logistic Regression
 
 The first two loss functions are lazy, they only update the model
 parameters if an example violates the margin constraint, which makes
@@ -110,9 +111,9 @@ largest class label::
 The concrete penalty can be set via the `penalty` parameter. `SGD`
 supports the following penalties:
 
-  - `penalty="l2"`: L2 norm penalty on `coef_`.
-  - `penalty="l1"`: L1 norm penalty on `coef_`.
-  - `penalty="elasticnet"`: Convex combination of L2 and L1; `rho * L2 + (1 - rho) * L1`.
+  * `penalty="l2"`: L2 norm penalty on `coef_`.
+  * `penalty="l1"`: L1 norm penalty on `coef_`.
+  * `penalty="elasticnet"`: Convex combination of L2 and L1; `rho * L2 + (1 - rho) * L1`.
 
 The default setting is `penalty="l2"`. The L1 penalty leads to sparse
 solutions, driving most coefficients to zero. The Elastic Net solves
@@ -147,10 +148,10 @@ further information.
 
 .. topic:: Examples:
 
- * :ref:`example_linear_model_plot_sgd_separating_hyperplane.py`,
- * :ref:`example_linear_model_plot_sgd_iris.py`
- * :ref:`example_linear_model_plot_sgd_weighted_classes.py`
- * :ref:`example_linear_model_plot_sgd_weighted_samples.py`
+ - :ref:`example_linear_model_plot_sgd_separating_hyperplane.py`,
+ - :ref:`example_linear_model_plot_sgd_iris.py`
+ - :ref:`example_linear_model_plot_sgd_weighted_classes.py`
+ - :ref:`example_linear_model_plot_sgd_weighted_samples.py`
 
 Regression
 ==========
@@ -170,8 +171,8 @@ samples (> 10.000), for other problems we recommend :class:`Ridge`,
 The concrete loss function can be set via the `loss`
 parameter. :class:`SGDRegressor` supports the following loss functions:
 
-  - `loss="squared_loss"`: Ordinary least squares.
-  - `loss="huber"`: Huber loss for robust regression.
+  * `loss="squared_loss"`: Ordinary least squares.
+  * `loss="huber"`: Huber loss for robust regression.
 
 The Huber loss function is an epsilon insensitive loss function for 
 robust regression. The width of the insensitive region has to be 
@@ -179,10 +180,10 @@ specified via the parameter `epsilon`.
 
 .. topic:: Examples:
 
- * :ref:`example_linear_model_plot_sgd_ols.py`,
+ - :ref:`example_linear_model_plot_sgd_ols.py`,
 
 
-.. currentmodule:: scikits.learn.linear_model.sparse
+.. currentmodule:: sklearn.linear_model.sparse
 
 Stochastic Gradient Descent for sparse data
 ===========================================
@@ -208,7 +209,7 @@ of the model parameters via the attribute `sparse_coef_`.
 
 .. topic:: Examples:
 
- * :ref:`example_document_classification_20newsgroups.py`
+ - :ref:`example_document_classification_20newsgroups.py`
 
 Complexity
 ==========
@@ -232,11 +233,11 @@ Tips on Practical Use
     must be applied to the test vector to obtain meaningful
     results. This can be easily done using :class:`Scaler`::
 
-      from scikits.learn.preprocessing import Scaler
+      from sklearn.preprocessing import Scaler
       scaler = Scaler()
       scaler.fit(X_train)  # Don't cheat - fit only on training data
-      scaler.transform(X_train)
-      scaler.transform(X_test)  # apply same transformation to test data
+      X_train = scaler.transform(X_train)
+      X_test = scaler.transform(X_test)  # apply same transformation to test data
 
     If your attributes have an intrinsic scale (e.g. word frequencies or 
     indicator features) scaling is not needed.

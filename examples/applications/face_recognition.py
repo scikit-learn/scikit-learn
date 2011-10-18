@@ -36,13 +36,13 @@ from time import time
 import logging
 import pylab as pl
 
-from scikits.learn.cross_val import StratifiedKFold
-from scikits.learn.datasets import fetch_lfw_people
-from scikits.learn.grid_search import GridSearchCV
-from scikits.learn.metrics import classification_report
-from scikits.learn.metrics import confusion_matrix
-from scikits.learn.decomposition import RandomizedPCA
-from scikits.learn.svm import SVC
+from sklearn.cross_validation import StratifiedKFold
+from sklearn.datasets import fetch_lfw_people
+from sklearn.grid_search import GridSearchCV
+from sklearn.metrics import classification_report
+from sklearn.metrics import confusion_matrix
+from sklearn.decomposition import RandomizedPCA
+from sklearn.svm import SVC
 
 # Display progress logs on stdout
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')

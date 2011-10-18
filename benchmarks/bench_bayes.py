@@ -6,7 +6,7 @@ Data comes from a random square matrix.
 """
 from datetime import datetime
 import numpy as np
-from scikits.learn import linear_model
+from sklearn import linear_model
 
 
 if __name__ == '__main__':

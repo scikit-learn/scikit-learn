@@ -1,0 +1,15 @@
+"""Fixture module to skip the datasets loading when offline
+
+Doctests are skipped if the datasets have not already been dowloaded
+and cached in the past.
+"""
+from os.path import exists
+from os.path import join
+from nose import SkipTest
+from scikits.learn.datasets import get_data_home
+
+
+def setup_module(module):
+    data_home = get_data_home()
+    if not exists(join(data_home, '20news_home')):
+        raise SkipTest("Skipping dataset loading doctests")
