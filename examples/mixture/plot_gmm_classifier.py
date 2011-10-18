@@ -30,9 +30,9 @@ import pylab as pl
 import matplotlib as mpl
 import numpy as np
 
-from scikits.learn import datasets
-from scikits.learn.cross_val import StratifiedKFold
-from scikits.learn.mixture import GMM
+from sklearn import datasets
+from sklearn.cross_validation import StratifiedKFold
+from sklearn.mixture import GMM
 
 def make_ellipses(gmm, ax):
     for n, color in enumerate('rgb'):
@@ -64,7 +64,7 @@ y_test = iris.target[test_index]
 n_classes = len(np.unique(y_train))
 
 # Try GMMs using different types of covariances.
-classifiers = dict((x, GMM(n_states=n_classes, cvtype=x))
+classifiers = dict((x, GMM(n_components=n_classes, cvtype=x))
                     for x in ['spherical', 'diag', 'tied', 'full'])
 
 n_classifiers = len(classifiers)
