@@ -94,9 +94,69 @@ class WardDistance(object):
         _inertia.compute_ward_dist(self.moments[0], self.moments[1],
                                    np.array([i]), np.array([j]), distances)
         return distances[0]
+
+
+class CompleteLinkageDistance(object):
+    
+    def __init__(self, X, connectivity, n_nodes, n_features, n_samples):
+        self.distances = []
+        self.A = []
+        self.distanceDict = {}
+        for ind1, row in enumerate(connectivity.rows):
+            self.A.append(row)
+            for ind2 in row:
+                dist = np.linalg.norm(X[ind1] - X[ind2])
+                self.distances.append((dist, ind1, ind2))
+                self.distanceDict[(ind1, ind2)] = dist
+                self.distanceDict[(ind2, ind1)] = dist
+        
+        # Enforce symmetry of A
+        for ind1, row in enumerate(connectivity.rows):
+            for ind2 in row:
+                if ind1 not in self.A[ind2]:
+                    self.A[ind2].append(ind1)
+        
+
+        heapq.heapify(self.distances)
+
+    def update(self, child_node1, child_node2, parent_node, parent):
+        coord_col = []
+        visited = set([parent_node])
+        for l in set(self.A[child_node1]).union(self.A[child_node2]):
+            while parent[l] != l:
+                l = parent[l]
+            if l not in visited:
+                visited.add(l)
+                coord_col.append(l)
+                self.A[l].append(parent_node)
+        self.A.append(coord_col)
+        
+        for l in coord_col:
+            if (l,child_node1) not in self.distanceDict:
+                self.distanceDict[(l,child_node1)] = \
+                    self.distanceDict[(l,child_node2)] +  self.distanceDict[(child_node1,child_node2)]
+            elif (l,child_node2) not in self.distanceDict:
+                self.distanceDict[(l,child_node2)] = \
+                    self.distanceDict[(l,child_node1)] +  self.distanceDict[(child_node1,child_node2)]
+            
+            dist = max(self.distanceDict[(l,child_node1)], 
+                       self.distanceDict[(l,child_node2)])
+            self.distanceDict[(l, parent_node)] = dist
+            self.distanceDict[(parent_node, l)] = dist
+            heapq.heappush(self.distances, (dist, parent_node, l))
+            
+    def hasMoreCandidates(self):
+        return len(self.distances) > 0
+    
+    def fetchCandidate(self):
+        return heapq.heappop(self.distances)
+    
+    def computeDistance(self, i, j):
+        return self.distanceDict[(i,j)]
+
             
 def ward_tree(X, connectivity=None, n_components=None, return_inertias=False, 
-              merge_replay=[], DistanceClass='WardDistance', copy=True):
+              merge_replay=[], DistanceClass='CompleteLinkageDistance', copy=True):
     """Hierarchical clustering based on a Feature matrix.
 
     The inertia matrix uses a Heapq-based representation.
