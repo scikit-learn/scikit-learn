@@ -321,13 +321,20 @@ def _hc_cut_inertia(max_inertia, children, n_leaves, inertias):
         cluster labels for each point
 
     """
-    nodes = [np.max(children[-1]) + 1]
-    for i in range(len(inertias)):
-        if inertias[-(i+1)] <= max_inertia: break
-        nodes.extend(children[np.max(nodes) - n_leaves])
-        nodes.remove(np.max(nodes))
+    open_nodes = [len(inertias)-1] # root of the tree
+    cluster_roots = [] 
+    while open_nodes != []:
+        node = open_nodes[0]
+        open_nodes = open_nodes[1:]
+        if inertias[node] <= max_inertia: 
+            # This tree node is the root of a cluster
+            cluster_roots.append(node)
+        else:
+            # Tree node induces subtree with too large inertia; split it
+            open_nodes.extend(children[node - n_leaves])
+            
     labels = np.zeros(n_leaves, dtype=np.int)
-    for i, node in enumerate(nodes):
+    for i, node in enumerate(cluster_roots):
         labels[_hc_get_descendent([node], children, n_leaves)] = i
     return labels
 
