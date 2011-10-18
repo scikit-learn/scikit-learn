@@ -70,7 +70,7 @@ override_dh_pysupport:
 	: # Move scikits. space into a compatibility package
 	find debian -wholename \*scikits -type d | while read skd; do \
 		skbd=$$(dirname $$skd); \
-		skbd_=$${skbd//sklearn/scikits-learn}; \
+		skbd_=$$(echo $$skbd | sed -e 's/sklearn/scikits-learn/g'); \
 		mkdir -p $$skbd_; \
 		mv $$skd $$skbd_; \
 	done
