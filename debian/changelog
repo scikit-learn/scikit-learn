@@ -1,8 +1,10 @@
 scikit-learn (0.9.0.dfsg-1) unstable; urgency=low
 
-  * New upstream release
+  * New upstream release: renamed module to sklearn,
+    scikits.learn adapter was provided to ease migration
   * Enabled all unittests and ignored failures on doctests:
     https://github.com/scikit-learn/scikit-learn/issues/401
+  * Adjusted debian/copyright to be fresh DEP5-compliant
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 17 Oct 2011 23:49:47 -0400
 

@@ -1,10 +1,45 @@
-Format-Specification: http://svn.debian.org/wsvn/dep/web/deps/dep5.mdwn?op=file&rev=153
-Name: scikits.learn
-Maintainer: Fabian Pedregosa <fabian.pedregosa@inria.fr>
-Source-Location: http://github.com/scikit-learn/scikit-learn
+Format: http://www.debian.org/doc/copyright-format/1.0
+Upstream-Name: scikit-learn
+Upstream-Contact: Fabian Pedregosa <fabian.pedregosa@inria.fr>
+Source: http://github.com/scikit-learn/scikit-learn
 
 Files: *
-Copyright: 2007-2010, Scikit-Learn Developers
+Copyright: 2007-2011, Scikit-Learn Developers
+License: BSD-3
+
+Files: doc/sphinxext/*
+Copyright: 2008, Stefan van der Walt <stefan@mentat.za.net>, Pauli Virtanen <pav@iki.fi>
+License: BSD
+  1. Redistributions of source code must retain the above copyright
+     notice, this list of conditions and the following disclaimer.
+  2. Redistributions in binary form must reproduce the above copyright
+     notice, this list of conditions and the following disclaimer in
+     the documentation and/or other materials provided with the
+     distribution.
+
+Files: sklearn/src/cblas/*
+Copyright: 1996-2006 R. Clint Whaley
+           1998 Jeff Horner
+           2001 Peter Soendergaard
+           1999 Antoine P. Petitet
+           2001 Julian Ruhe
+           2003 Tim Mattox
+           2003 Hank Dietz
+           2003 Camm Maguire
+           1999 The Australian National University
+License: BSD-3
+Comment: Extract from 3.9.25 atlas
+
+Files: sklearn/svm/src/libsvm
+       sklearn/svm/src/liblinear
+Copyright: 2000-2010, Chih-Chung Chang and Chih-Jen Lin
+License: BSD-3
+Comment: Partial fork of the LIBSVM package.
+
+Files: debian/*
+Copyright: 2010-2011, Yaroslav Halchenko <debian@onerussian.com>
+License: BSD-3
+
 License: BSD-3
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
@@ -30,35 +65,3 @@ License: BSD-3
   LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
   OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
   DAMAGE.
-
-Files: doc/sphinxext/*
-Copyright: 2008, Stefan van der Walt <stefan@mentat.za.net>, Pauli Virtanen <pav@iki.fi>
-License: BSD
-  1. Redistributions of source code must retain the above copyright
-     notice, this list of conditions and the following disclaimer.
-  2. Redistributions in binary form must reproduce the above copyright
-     notice, this list of conditions and the following disclaimer in
-     the documentation and/or other materials provided with the
-     distribution.
-
-Files: sklearn/src/cblas/*
-Copyright: 1996-2006 R. Clint Whaley
-           1998 Jeff Horner
-           2001 Peter Soendergaard
-           1999 Antoine P. Petitet
-           2001 Julian Ruhe
-           2003 Tim Mattox
-           2003 Hank Dietz
-           2003 Camm Maguire
-           1999 The Australian National University
-License: BSD-3
-Comment: Extract from 3.9.25 atlas
-
-Files: sklearn/svm/src/lib{svm,linear}
-Copyright: 2000-2010, Chih-Chung Chang and Chih-Jen Lin
-License: BSD-3
-Comment: Partial fork of the LIBSVM package.
-
-Files: debian/*
-Copyright: 2010-2011, Yaroslav Halchenko <debian@onerussian.com>
-License: BSD-3
