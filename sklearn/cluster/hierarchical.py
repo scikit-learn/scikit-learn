@@ -129,7 +129,7 @@ def ward_tree(X, connectivity=None, n_components=None, return_inertias=False,
     _inertia.compute_ward_dist(moments[0], moments[1],
                                coord_row, coord_col, inertia)
     inertia = zip(inertia, coord_row, coord_col)
-    heapq.heapify(inertia)
+    heapq.heapify(inertia)    
 
     # prepare the main fields
     parent = np.arange(n_nodes, dtype=np.int)
@@ -176,12 +176,12 @@ def ward_tree(X, connectivity=None, n_components=None, return_inertias=False,
             if len(inertia) == 0 and height == np.inf: 
                 # Merge unconnected components with height infinity
                 i = k - 1
-                desc = _hc_get_descendent([i], np.array(children), n_samples, 
-                                          add_intermediate_nodes=True)
+                desc = set(_hc_get_descendent([i], np.array(children), n_samples, 
+                                              add_intermediate_nodes=True))
                 for j in range(k-2, 0, -1):
                     if j not in desc:
-                        break                
-            # Update index and inertia mappings
+                        break           
+            # Update index mapping
             if i in index_mapping.values():
                 i_ = index_mapping.keys()[index_mapping.values().index(i)]
                 index_mapping[i_] = k
@@ -217,6 +217,7 @@ def ward_tree(X, connectivity=None, n_components=None, return_inertias=False,
 
         _inertia.compute_ward_dist(moments[0], moments[1],
                                    coord_row, coord_col, ini)
+        
         for tupl in itertools.izip(ini, coord_row, coord_col):
             heapq.heappush(inertia, tupl)
 
