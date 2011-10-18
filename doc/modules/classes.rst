@@ -568,7 +568,7 @@ Feature Extraction
 .. currentmodule:: sklearn
 
 From images
--------------
+-----------
 
 .. automodule:: sklearn.feature_extraction.image
    :no-members:
@@ -674,6 +674,7 @@ Loaders
    :toctree: generated/
    :template: function.rst
 
+   datasets.load_boston
    datasets.load_files
    datasets.load_diabetes
    datasets.load_digits
