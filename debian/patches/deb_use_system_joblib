@@ -14,7 +14,7 @@ Subject: use system-wide joblib and do not attempt to install joblib/test
      return config
  
 --- /dev/null
-+++ b/scikits/learn/externals/joblib/__init__.py
++++ b/sklearn/externals/joblib/__init__.py
 @@ -0,0 +1,3 @@
 +# yoh: use system-wide joblib
 +
