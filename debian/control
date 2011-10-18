@@ -11,13 +11,15 @@ Vcs-Browser: http://github.com/yarikoptic/scikit-learn
 Vcs-Git: git://github.com/yarikoptic/scikit-learn.git
 XS-DM-Upload-Allowed: yes
 
-Package: python-scikits-learn
+Package: python-sklearn
+Replaces: python-scikits-learn (<< 0.9~)
+Breaks: python-scikits-learn (<< 0.9~)
 Architecture: all
-Depends: ${misc:Depends}, ${python:Depends}, python-numpy, python-scipy, python-scikits-learn-lib(>= ${source:Version})
+Depends: ${misc:Depends}, ${python:Depends}, python-numpy, python-scipy, python-sklearn-lib(>= ${source:Version})
 Provides: ${python:Provides}
 XB-Python-Version: ${python:Versions}
 Recommends: python-nose, python-psyco, python-matplotlib, python-joblib (>= 0.4.5)
-Suggests: python-dap, python-scikits-optimization, python-scikits-learn-doc
+Suggests: python-dap, python-scikits-optimization, python-sklearn-doc
 Description: Python modules for machine learning and data mining
  scikit-learn is a collection of Python modules relevant to
  machine/statistical learning and data mining.  Non-exhaustive list of
@@ -28,22 +30,34 @@ Description: Python modules for machine learning and data mining
   - SVM (via LIBSVM)
 
 
-Package: python-scikits-learn-doc
+Package: python-sklearn-doc
+Conflicts: python-scikits-learn-doc
+Replaces: python-scikits-learn-doc
 Architecture: all
 Section: doc
 Depends: ${misc:Depends}, libjs-jquery
-Suggests: python-scikits-learn
+Suggests: python-sklearn
 Description: documentation and examples for scikit-learn
  This package contains documentation and example scripts for
- python-scikits-learn.
+ python-sklearn.
 
-
-Package: python-scikits-learn-lib
+Package: python-sklearn-lib
+Conflicts: python-scikits-learn-lib
+Replaces: python-scikits-learn-lib
 Architecture: any
 Depends: ${misc:Depends}, ${shlibs:Depends}, ${python:Depends}, python-numpy
 Provides: ${python:Provides}
 XB-Python-Version: ${python:Versions}
-Description: low-level implementations and bindings for scikits-learn
- This is an add-on package for python-scikits-learn. It provides
+Description: low-level implementations and bindings for scikit-learn
+ This is an add-on package for python-sklearn. It provides
  low-level implementations and custom Python bindings for the LIBSVM
  library.
+
+
+Package: python-scikits-learn
+Depends: python-sklearn, ${misc:Depends}
+Architecture: all
+Section: oldlibs
+Description: transitional compatibility package for scikits.learn -> sklearn migration
+ Provides old namespace (scikits.learn) and could be removed if
+ dependent code migrated to use sklearn for clarity of the namespace.

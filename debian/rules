@@ -1,7 +1,7 @@
 #!/usr/bin/make -f
 # -*- mode: makefile; coding: utf-8 -*-
 
-PACKAGE_NAME = python-scikits-learn
+PACKAGE_NAME = python-sklearn
 PACKAGE_ROOT_DIR = debian/${PACKAGE_NAME}
 
 PYVERS = $(shell pyversions -vs)
@@ -64,9 +64,14 @@ override_dh_pysupport:
 	   echo "Moving '$$lib' into '$$tdir'." ; \
 	   mv $$lib $$tdir ; \
 	done
-	if [ -x /usr/bin/dh_numpy ]; then dh_numpy -ppython-scikits-learn-lib; fi
+	if [ -x /usr/bin/dh_numpy ]; then dh_numpy -ppython-sklearn-lib; fi
 	: # Prune scikits/__init__.py to avoid conflicts
 	find debian -wholename \*scikits/__init__.py -delete
+	: # Move scikits. space into a compatibility package
+	skd=$$(find debian -wholename \*scikits -type d); \
+	skdbd=$$(basedir $$skd); \
+	skdbd_=$${sdkbd//sklearn/scikits-learn}; \
+	mv $$skd $$skdbd_
 	dh_pysupport
 
 ## immediately useable documentation and exemplar scripts/data
