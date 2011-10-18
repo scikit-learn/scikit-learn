@@ -20,6 +20,7 @@ Provides: ${python:Provides}
 XB-Python-Version: ${python:Versions}
 Recommends: python-nose, python-psyco, python-matplotlib, python-joblib (>= 0.4.5)
 Suggests: python-dap, python-scikits-optimization, python-sklearn-doc
+Enhances: python-mvpa2, python-mdp
 Description: Python modules for machine learning and data mining
  scikit-learn is a collection of Python modules relevant to
  machine/statistical learning and data mining.  Non-exhaustive list of
