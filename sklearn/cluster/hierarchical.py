@@ -24,11 +24,80 @@ from ._feature_agglomeration import AgglomerationTransform
 
 
 ###############################################################################
-# Ward's algorithm
 
+class WardDistance(object):
+    
+    def __init__(self, X, connectivity, n_nodes, n_features, n_samples):
+        # build moments as a list
+        self.moments = [np.zeros(n_nodes), np.zeros((n_nodes, n_features))]
+        self.moments[0][:n_samples] = 1
+        self.moments[1][:n_samples] = X
+    
+        self.A = []
+        # create distances matrix
+        coord_row = []
+        coord_col = []
+        for ind, row in enumerate(connectivity.rows):
+            self.A.append(row)
+            # We keep only the upper triangular for the moments
+            # Generator expressions are faster than arrays on the following
+            row = [i for i in row if i < ind]
+            coord_row.extend(len(row) * [ind, ])
+            coord_col.extend(row)
+    
+        coord_row = np.array(coord_row, dtype=np.int)
+        coord_col = np.array(coord_col, dtype=np.int)
+        
+        distances = np.empty(len(coord_row), dtype=np.float)
+        _inertia.compute_ward_dist(self.moments[0], self.moments[1],
+                                   coord_row, coord_col, distances)
+    
+        self.distances = zip(distances, coord_row, coord_col)
+        heapq.heapify(self.distances)
+
+    def update(self, child_node1, child_node2, parent_node, parent):
+        # update the moments
+        for p in range(2):
+            self.moments[p][parent_node] = \
+                        self.moments[p][child_node1] + self.moments[p][child_node2]
+        # update the structure matrix A and the inertia matrix
+        coord_col = []
+        visited = set([parent_node])      
+        for l in set(self.A[child_node1]).union(self.A[child_node2]):
+            while parent[l] != l:
+               l = parent[l]
+            if l not in visited:
+               visited.add(l)
+               coord_col.append(l)
+               self.A[l].append(parent_node)
+        self.A.append(coord_col)
+        coord_col = np.array(coord_col, dtype=np.int)
+        coord_row = np.empty_like(coord_col)
+        coord_row.fill(parent_node)
+        
+        distances = np.empty(len(coord_row), dtype=np.float)
+        _inertia.compute_ward_dist(self.moments[0], self.moments[1],
+                                   coord_row, coord_col, distances)
+        
+        for tupl in itertools.izip(distances, coord_row, coord_col):
+            heapq.heappush(self.distances, tupl)
+            
+    def hasMoreCandidates(self):
+        return len(self.distances) > 0
+    
+    def fetchCandidate(self):
+        return heapq.heappop(self.distances)
+    
+    def computeDistance(self, i, j):
+        # Compute inertia of the cluster obtained when merging i and j
+        distances = np.empty(1, dtype=np.float)
+        _inertia.compute_ward_dist(self.moments[0], self.moments[1],
+                                   np.array([i]), np.array([j]), distances)
+        return distances[0]
+            
 def ward_tree(X, connectivity=None, n_components=None, return_inertias=False, 
-              merge_replay=[], copy=True):
-    """Ward clustering based on a Feature matrix.
+              merge_replay=[], DistanceClass='WardDistance', copy=True):
+    """Hierarchical clustering based on a Feature matrix.
 
     The inertia matrix uses a Heapq-based representation.
 
@@ -78,6 +147,11 @@ def ward_tree(X, connectivity=None, n_components=None, return_inertias=False,
     if X.ndim == 1:
         X = np.reshape(X, (-1, 1))
 
+    try:
+        DistanceClass = eval(DistanceClass)
+    except:
+        raise Exception("Unknown distance class %s" % DistanceClass)
+
     # Compute the number of nodes
     if connectivity is not None:
         if n_components is None:
@@ -105,36 +179,14 @@ def ward_tree(X, connectivity=None, n_components=None, return_inertias=False,
 
     # Remove diagonal from connectivity matrix
     connectivity.setdiag(np.zeros(connectivity.shape[0]))
-    
-    # create inertia matrix
-    coord_row = []
-    coord_col = []
-    A = []
-    for ind, row in enumerate(connectivity.rows):
-        A.append(row)
-        # We keep only the upper triangular for the moments
-        # Generator expressions are faster than arrays on the following
-        row = [i for i in row if i < ind]
-        coord_row.extend(len(row) * [ind, ])
-        coord_col.extend(row)
-
-    coord_row = np.array(coord_row, dtype=np.int)
-    coord_col = np.array(coord_col, dtype=np.int)
-
-    # build moments as a list
-    moments = [np.zeros(n_nodes), np.zeros((n_nodes, n_features))]
-    moments[0][:n_samples] = 1
-    moments[1][:n_samples] = X
-    inertia = np.empty(len(coord_row), dtype=np.float)
-    _inertia.compute_ward_dist(moments[0], moments[1],
-                               coord_row, coord_col, inertia)
-    inertia = zip(inertia, coord_row, coord_col)
-    heapq.heapify(inertia)    
+        
+    # Compute distances between connected nodes
+    distance_class = DistanceClass(X, connectivity, n_nodes, n_features, n_samples)
 
     # prepare the main fields
     parent = np.arange(n_nodes, dtype=np.int)
     heights = np.zeros(n_nodes)
-    used_node = np.ones(n_nodes, dtype=bool)
+    open_nodes = np.ones(n_nodes, dtype=bool)
     children = []
     merges = []
     
@@ -156,24 +208,21 @@ def ward_tree(X, connectivity=None, n_components=None, return_inertias=False,
              # Associate indices
             i = index_mapping[i_]
             j = index_mapping[j_]
-            # Compute inertia of the cluster obtained when merging i and j
-            ini = np.empty(len(coord_row), dtype=np.float)
-            _inertia.compute_ward_dist(moments[0], moments[1],
-                                       np.array([i]), np.array([j]), ini)
-            height = ini[0]
+            # Compute merge distance
+            merge_distance = distance_class.computeDistance(i,j)
             index_mapping[k_] = k
-#            print "Reapply", height, i, j, k
+#            print "Reapply", merge_distance, i, j, k
         else: # No merges to be reapplied left
             # Identify the merge that will be applied next
-            height = np.inf
-            while len(inertia) > 0:
-                height, i, j = heapq.heappop(inertia)
-                if used_node[i] and used_node[j]:
+            merge_distance = np.inf
+            while distance_class.hasMoreCandidates():
+                merge_distance, i, j = distance_class.fetchCandidate()
+                if open_nodes[i] and open_nodes[j]:
                     break
-                if len(inertia) == 0:
-                    height = np.inf
+                if not distance_class.hasMoreCandidates():
+                    merge_distance = np.inf
                     break
-            if len(inertia) == 0 and height == np.inf: 
+            if not distance_class.hasMoreCandidates() and merge_distance == np.inf: 
                 # Merge unconnected components with height infinity
                 i = k - 1
                 desc = set(_hc_get_descendent([i], np.array(children), n_samples, 
@@ -188,38 +237,16 @@ def ward_tree(X, connectivity=None, n_components=None, return_inertias=False,
             if j in index_mapping.values():
                 j_ = index_mapping.keys()[index_mapping.values().index(j)]
                 index_mapping[j_] = k  
-#            print "Novel", height, i, j, k
+#            print "Novel", merge_distance, i, j, k
             
-        parent[i], parent[j], heights[k] = k, k, height
-        merges.append(((i,j),k))
+        parent[i], parent[j], heights[k] = k, k, merge_distance
+        merges.append(((i, j), k))
         children.append([i, j])
-        used_node[i], used_node[j] = False, False
-
-        # update the moments
-        for p in range(2):
-            moments[p][k] = moments[p][i] + moments[p][j]
-
-        # update the structure matrix A and the inertia matrix
-        coord_col = []
-        visited = set([k])        
-        for l in set(A[i]).union(A[j]):
-            while parent[l] != l:
-               l = parent[l]
-            if l not in visited:
-               visited.add(l)
-               coord_col.append(l)
-               A[l].append(k)
-        A.append(coord_col)
-        coord_col = np.array(coord_col, dtype=np.int)
-        coord_row = np.empty_like(coord_col)
-        coord_row.fill(k)
-        ini = np.empty(len(coord_row), dtype=np.float)
-
-        _inertia.compute_ward_dist(moments[0], moments[1],
-                                   coord_row, coord_col, ini)
+        open_nodes[i], open_nodes[j] = False, False
         
-        for tupl in itertools.izip(ini, coord_row, coord_col):
-            heapq.heappush(inertia, tupl)
+        # Add new possible merges and their distances to heap
+        distance_class.update(i, j, k, parent)
+        
 
     # Separate leaves in children (empty lists up to now)
     n_leaves = n_samples
