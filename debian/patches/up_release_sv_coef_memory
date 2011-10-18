@@ -1,0 +1,19 @@
+From: Yaroslav Halchenko <debian@onerussian.com>
+Author: Fabian Pedregosa <fabian.pedregosa@inria.fr>
+Subject: release memory
+
+ Picked up from git among commits following the release:
+ 59006f248f24b22f7a8a21ada85c8558b5a1d1b6
+
+
+--- a/sklearn/svm/src/libsvm/libsvm_sparse_helper.c
++++ b/sklearn/svm/src/libsvm/libsvm_sparse_helper.c
+@@ -400,6 +400,8 @@ int free_model_SV(struct svm_csr_model *
+     int i;
+     for (i=model->l-1; i>=0; --i) free(model->SV[i]);
+     /* svn_destroy_model frees model->SV */
++    for (i=0; i < model->nr_class-1 ; ++i) free(model->sv_coef[i]);
++    /* svn_destroy_model frees model->sv_coef */
+     return 0;
+ }
+ 
