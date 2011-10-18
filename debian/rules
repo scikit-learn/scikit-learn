@@ -30,7 +30,7 @@ ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
 	export MPLCONFIGDIR=$(CURDIR)/build HOME=$(CURDIR)/build; \
 	export JOBLIB_MULTIPROCESSING=0; \
 	cd build/; python$* /usr/bin/nosetests -s sklearn && \
-			   { python$* /usr/bin/nosetests --with-doctest --doctest-extension=rst ../doc/ || : } # doctests are failing ATM
+			   { python$* /usr/bin/nosetests --with-doctest --doctest-extension=rst ../doc/ || : ; } # doctests are failing ATM
 else
 	: # Skip unittests due to nocheck
 endif
@@ -68,10 +68,12 @@ override_dh_pysupport:
 	: # Prune scikits/__init__.py to avoid conflicts
 	find debian -wholename \*scikits/__init__.py -delete
 	: # Move scikits. space into a compatibility package
-	skd=$$(find debian -wholename \*scikits -type d); \
-	skdbd=$$(basedir $$skd); \
-	skdbd_=$${sdkbd//sklearn/scikits-learn}; \
-	mv $$skd $$skdbd_
+	find debian -wholename \*scikits -type d | while read skd; do \
+		skbd=$$(dirname $$skd); \
+		skbd_=$${skbd//sklearn/scikits-learn}; \
+		mkdir -p $$skbd_; \
+		mv $$skd $$skbd_; \
+	done
 	dh_pysupport
 
 ## immediately useable documentation and exemplar scripts/data
