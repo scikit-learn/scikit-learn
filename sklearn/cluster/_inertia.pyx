@@ -21,7 +21,7 @@ def compute_ward_dist(np.ndarray[DOUBLE, ndim=1] m_1,\
     for i in range(size_max):
         row = coord_row[i]
         col = coord_col[i]
-        n = (m_1[row] * m_1[col]) / (m_1[row] + m_1[col])
+        n = (m_1[row] * m_1[col]) / ((m_1[row] + m_1[col])**2)
         pa = 0.
         for j in range(n_features):
             pa += (m_2[row, j] / m_1[row] - m_2[col, j] / m_1[col])**2
