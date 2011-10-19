@@ -208,7 +208,7 @@ class GridSearchCV(BaseEstimator):
 
     Attributes
     ----------
-    `grid_scores_` : dict
+    `grid_scores_` : dict of any to float
         Contains scores for all parameter combinations in param_grid.
 
      `best_estimator` : estimator
