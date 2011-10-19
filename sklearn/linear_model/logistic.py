@@ -8,12 +8,12 @@ from ..svm import liblinear
 
 class LogisticRegression(BaseLibLinear, ClassifierMixin,
                          CoefSelectTransformerMixin):
-    """
-    Logistic Regression classifier.
+    """Logistic Regression classifier.
 
     In the multiclass case, the training algorithm uses a one-vs.-all (OvA)
     scheme, rather than the "true" multinomial LR (aka maximum entropy/MaxEnt).
-    This class implements L1 and L2 regularized logistic regression.
+    This class implements L1 and L2 regularized logistic regression using the
+    `liblinear` library.
 
     Parameters
     ----------
