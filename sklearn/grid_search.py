@@ -206,12 +206,26 @@ class GridSearchCV(BaseEstimator):
            param_grid=...,
            ...)
 
+    Attributes
+    ----------
+    `grid_scores_` : dict
+        Contains scores for all parameter combinations in param_grid.
+
+     `best_estimator` : estimator
+        Estimator that was choosen by grid search, i.e. estimator
+        which gave highest score (or smallest loss if specified)
+        on the left out data.
+
+     `best_score` : score of best_estimator on the left out data.
+
+
     Notes
     ------
     The parameters selected are those that maximize the score of the
     left out data, unless an explicit score_func is passed in which
     case it is used instead. If a loss function loss_func is passed,
     it overrides the score functions and is minimized.
+
     """
 
     def __init__(self, estimator, param_grid, loss_func=None, score_func=None,
