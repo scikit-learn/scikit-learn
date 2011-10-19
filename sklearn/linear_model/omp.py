@@ -55,7 +55,8 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True):
         X = X.copy('F')
     else:  # even if we are allowed to overwrite, still copy it if bad order
         X = np.asfortranarray(X)
-
+    
+    
     min_float = np.finfo(X.dtype).eps
     nrm2, swap = linalg.get_blas_funcs(('nrm2', 'swap'), (X,))
     potrs, = get_lapack_funcs(('potrs',), (X,))
@@ -63,7 +64,7 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True):
     alpha = np.dot(X.T, y)
     residual = y
     n_active = 0
-    idx = []
+    indices = range(X.shape[1])  # keeping track of swapping
 
     max_features = X.shape[1] if tol is not None else n_nonzero_coefs
     L = np.empty((max_features, max_features), dtype=X.dtype)
@@ -84,9 +85,9 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True):
                 warn(premature)
                 break
             L[n_active, n_active] = np.sqrt(1 - v)
-        idx.append(lam)
         X.T[n_active], X.T[lam] = swap(X.T[n_active], X.T[lam])
         alpha[n_active], alpha[lam] = alpha[lam], alpha[n_active]
+        indices[n_active], indices[lam] = indices[lam], indices[n_active]
         n_active += 1
         # solves LL'x = y as a composition of two triangular systems
         gamma, _ = potrs(L[:n_active, :n_active], alpha[:n_active], lower=True,
@@ -98,7 +99,7 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True):
         elif n_active == max_features:
             break
 
-    return gamma, idx
+    return gamma, indices[:n_active]
 
 
 def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
@@ -152,7 +153,7 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
     nrm2, swap = linalg.get_blas_funcs(('nrm2', 'swap'), (Gram,))
     potrs, = get_lapack_funcs(('potrs',), (Gram,))
 
-    idx = []
+    indices = range(len(Gram))  # keeping track of swapping
     alpha = Xy
     tol_curr = tol_0
     delta = 0
@@ -176,9 +177,9 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
                 warn(premature)
                 break
             L[n_active, n_active] = np.sqrt(1 - v)
-        idx.append(lam)
         Gram[n_active], Gram[lam] = swap(Gram[n_active], Gram[lam])
         Gram.T[n_active], Gram.T[lam] = swap(Gram.T[n_active], Gram.T[lam])
+        indices[n_active], indices[lam] = indices[lam], indices[n_active]
         Xy[n_active], Xy[lam] = Xy[lam], Xy[n_active]
         n_active += 1
         # solves LL'x = y as a composition of two triangular systems
@@ -196,7 +197,7 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
         elif n_active == max_features:
             break
 
-    return gamma, idx
+    return gamma, indices[:n_active]
 
 
 def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute_gram=False,
