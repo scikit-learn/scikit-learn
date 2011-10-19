@@ -56,7 +56,7 @@ Description: low-level implementations and bindings for scikit-learn
 
 
 Package: python-scikits-learn
-Depends: python-sklearn, ${misc:Depends}
+Depends: python-sklearn, ${misc:Depends}, ${python:Depends}
 Architecture: all
 Section: oldlibs
 Description: transitional compatibility package for scikits.learn -> sklearn migration
