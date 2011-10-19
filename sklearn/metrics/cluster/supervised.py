@@ -605,14 +605,14 @@ def ami_score(labels_true, labels_pred):
     # Calculate the MI for the two clusterings
     mi = mutual_information(labels_true, labels_pred, contingency=contingency)
     # Calcualte the expected value for the mutual information
-    emi = _expected_mutual_information(contingency, n_samples)
+    emi = expected_mutual_information(contingency, n_samples)
     # Calculate entropy for each labelling
     h_true, h_pred = entropy(labels_true), entropy(labels_pred)
     ami = (mi - emi) / (max(h_true, h_pred) - emi)
     return ami
 
 
-def _expected_mutual_information(contingency, n_samples):
+def expected_mutual_information(contingency, n_samples):
     """ Calculate the expected mutual information for two labellings. """
     R, C = contingency.shape
     N = n_samples
