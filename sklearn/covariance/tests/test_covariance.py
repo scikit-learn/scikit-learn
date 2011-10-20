@@ -11,7 +11,7 @@ import numpy as np
 from sklearn import datasets
 from sklearn.covariance import empirical_covariance, EmpiricalCovariance, \
     ShrunkCovariance, shrunk_covariance, LedoitWolf, ledoit_wolf, OAS, oas, \
-    fast_mcd, MinCovDet
+    MinCovDet
 
 X = datasets.load_iris().data
 X_1d = X[:, 0]
