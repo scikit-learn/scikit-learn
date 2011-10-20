@@ -638,7 +638,8 @@ def expected_mutual_information(contingency, n_samples):
         for j in range(C):
             # numerator of the third term
             num3 = factA[i] * factB[j] * factNA[i] * factNB[j]
-            assert np.isfinite(num3)
+            assert np.isfinite(num3), "%r,%r,%r,%r" % (
+                factA[i], factB[j], factNA[i], factNB[j])
             start = int(max(a[i] + b[j] - N, 1))
             end = int(min(a[i], b[j]) + 1)
             for nij in range(start, end):
