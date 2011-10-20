@@ -6,7 +6,7 @@ from sklearn.metrics.cluster import completeness_score
 from sklearn.metrics.cluster import v_measure_score
 from sklearn.metrics.cluster import homogeneity_completeness_v_measure
 from sklearn.metrics.cluster import ami_score
-from sklearn.metrics.cluster import mutual_information
+from sklearn.metrics.cluster import mutual_information_score
 from sklearn.metrics.cluster import expected_mutual_information
 from sklearn.metrics.cluster import contingency_matrix
 
@@ -140,7 +140,7 @@ def test_ami_score():
     labels_a = np.array([1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3])
     labels_b = np.array([1, 1, 1, 1, 2, 1, 2, 2, 2, 2, 3, 1, 3, 3, 3, 2, 2])
     # Mutual information
-    mi = mutual_information(labels_a, labels_b)
+    mi = mutual_information_score(labels_a, labels_b)
     assert_almost_equal(mi, 0.59182, 5)
     # Expected mutual information
     C = contingency_matrix(labels_a, labels_b)

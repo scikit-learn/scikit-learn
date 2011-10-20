@@ -39,7 +39,7 @@ def check_clusterings(labels_true, labels_pred):
 
 
 def contingency_matrix(labels_true, labels_pred, eps=None):
-    """ Build a contengency matrix describing the relationship between labels.
+    """Build a contengency matrix describing the relationship between labels.
 
     Parameters
     ----------
@@ -156,7 +156,7 @@ def adjusted_rand_score(labels_true, labels_pred):
 
     See also
     --------
-    - ami_score: Adjusted Mutual Information (TODO: implement me!)
+    - ami_score: Adjusted Mutual Information
 
     """
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
@@ -488,7 +488,7 @@ def v_measure_score(labels_true, labels_pred):
     return homogeneity_completeness_v_measure(labels_true, labels_pred)[2]
 
 
-def mutual_information(labels_true, labels_pred, contingency=None):
+def mutual_information_score(labels_true, labels_pred, contingency=None):
     """Adjusted Mutual Information between two clusterings
 
     The Mutual Information is a measure of the similarity between two labels
@@ -525,6 +525,10 @@ def mutual_information(labels_true, labels_pred, contingency=None):
     -------
     mi: float
        Mutual information, a non-negative value
+
+    See also
+    --------
+    - ami_score: Adjusted Mutual Information
     """
     if contingency is None:
         labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
@@ -572,6 +576,11 @@ def ami_score(labels_true, labels_pred):
     ami: float
        score between 0.0 and 1.0. 1.0 stands for perfectly complete labeling
 
+    See also
+    --------
+    - adjusted_rand_score: Adjusted Rand Index
+    - mutual_information_score: Mutual Information (not adjusted for chance)
+
     Examples
     --------
 
@@ -603,17 +612,18 @@ def ami_score(labels_true, labels_pred):
     contingency = contingency_matrix(labels_true, labels_pred)
     contingency = np.array(contingency, dtype='float')
     # Calculate the MI for the two clusterings
-    mi = mutual_information(labels_true, labels_pred, contingency=contingency)
+    mi = mutual_information_score(labels_true, labels_pred,
+                                  contingency=contingency)
     # Calcualte the expected value for the mutual information
     emi = expected_mutual_information(contingency, n_samples)
-    # Calculate entropy for each labelling
+    # Calculate entropy for each labeling
     h_true, h_pred = entropy(labels_true), entropy(labels_pred)
     ami = (mi - emi) / (max(h_true, h_pred) - emi)
     return ami
 
 
 def expected_mutual_information(contingency, n_samples):
-    """ Calculate the expected mutual information for two labellings. """
+    """Calculate the expected mutual information for two labelings."""
     R, C = contingency.shape
     N = n_samples
     a = np.sum(contingency, axis=1)
@@ -648,7 +658,7 @@ def expected_mutual_information(contingency, n_samples):
 
 
 def entropy(labels):
-    """ Calculates the entropy for a labelling. """
+    """Calculates the entropy for a labeling."""
     pi = np.array([np.sum(labels == i) for i in np.unique(labels)],
                   dtype='float')
     pi = pi[pi > 0]
