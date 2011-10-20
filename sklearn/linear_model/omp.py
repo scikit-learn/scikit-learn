@@ -55,8 +55,7 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True):
         X = X.copy('F')
     else:  # even if we are allowed to overwrite, still copy it if bad order
         X = np.asfortranarray(X)
-    
-    
+
     min_float = np.finfo(X.dtype).eps
     nrm2, swap = linalg.get_blas_funcs(('nrm2', 'swap'), (X,))
     potrs, = get_lapack_funcs(('potrs',), (X,))
