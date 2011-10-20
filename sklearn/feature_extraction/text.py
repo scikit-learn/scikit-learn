@@ -148,7 +148,8 @@ class WordNGramAnalyzer(BaseEstimator):
             original_tokens = tokens
             tokens = []
             n_original_tokens = len(original_tokens)
-            for n in xrange(self.min_n, min(self.max_n + 1, n_original_tokens + 1)):
+            for n in xrange(self.min_n,
+                            min(self.max_n + 1, n_original_tokens + 1)):
                 for i in xrange(n_original_tokens - n + 1):
                     tokens.append(u" ".join(original_tokens[i: i + n]))
 

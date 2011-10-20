@@ -271,8 +271,18 @@ A good example of code that we like can be found `here
 <https://svn.enthought.com/enthought/browser/sandbox/docs/coding_standard.py>`_.
 
 
-APIs of scikit learn objects
-=============================
+Input validation
+----------------
+
+The module ``sklearn.utils`` contains various functions for doing input
+validation/conversion. Sometimes, ``np.atleast_2d`` suffices for validation;
+in other cases, be sure to call ``safe_asanyarray``, ``atleast2d_or_csr`` or
+``as_float_array`` on any array-like argument passed to a scikit-learn API
+function.
+
+
+APIs of scikit-learn objects
+============================
 
 To have a uniform API, we try to have a common basic API for all the
 objects. In addition, to avoid the proliferation of framework code, we
