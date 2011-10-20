@@ -22,27 +22,8 @@ from ..utils.extmath import fast_logdet as exact_logdet
 #   1999, American Statistical Association and the American Society
 #   for Quality, TECHNOMETRICS)
 ###############################################################################
-def _nonrobust_covariance(data, assume_centered=False):
-        """Non-robust estimation of the covariance to be used within MCD.
-
-        Parameters
-        ----------
-        data: array_like, shape (n_samples, n_features)
-          Data for which to compute the non-robust covariance matrix.
-        assume_centered: Boolean
-          Whether or not the observations should be considered as centered.
-
-        Returns
-        -------
-        nonrobust_covariance: array_like, shape (n_features, n_features)
-          The non-robust covariance of the data.
-
-        """
-        return empirical_covariance(data, assume_centered=assume_centered)
-
-
 def c_step(X, h, remaining_iterations=30, initial_estimates=None,
-           verbose=False):
+           verbose=False, covariance_computation_method=empirical_covariance):
     """C_step procedure described in [1] aiming at computing the MCD
 
     [1] A Fast Algorithm for the Minimum Covariance Determinant Estimator,
@@ -88,7 +69,7 @@ def c_step(X, h, remaining_iterations=30, initial_estimates=None,
         support = np.zeros(n_samples).astype(bool)
         support[np.random.permutation(n_samples)[:h]] = True
         T = X[support].mean(0)
-        S = _nonrobust_covariance(X[support])
+        S = covariance_computation_method(X[support])
     else:
         # get initial robust estimates from the function parameters
         T = initial_estimates[0]
@@ -101,7 +82,7 @@ def c_step(X, h, remaining_iterations=30, initial_estimates=None,
         support = np.zeros(n_samples).astype(bool)
         support[np.argsort(dist)[:h]] = True
         T = X[support].mean(0)
-        S = _nonrobust_covariance(X[support])
+        S = covariance_computation_method(X[support])
         detS = exact_logdet(S)
     previous_detS = np.inf
 
@@ -121,7 +102,7 @@ def c_step(X, h, remaining_iterations=30, initial_estimates=None,
         support = np.zeros(n_samples).astype(bool)
         support[np.argsort(dist)[:h]] = True
         T = X[support].mean(0)
-        S = _nonrobust_covariance(X[support])
+        S = covariance_computation_method(X[support])
         detS = np.log(linalg.det(S))
         # update remaining iterations for early stopping
         remaining_iterations = remaining_iterations - 1
@@ -149,7 +130,8 @@ def c_step(X, h, remaining_iterations=30, initial_estimates=None,
     return results
 
 
-def select_candidates(X, h, n_trials, select=1, n_iter=30, verbose=False):
+def select_candidates(X, h, n_trials, select=1, n_iter=30, verbose=False,
+                      covariance_computation_method=empirical_covariance):
     """Finds the best pure subset of observations to compute MCD from it.
 
     The purpose of this function is to find the best sets of h
@@ -224,14 +206,16 @@ def select_candidates(X, h, n_trials, select=1, n_iter=30, verbose=False):
         # perform `n_trials` computations from random initial supports
         for j in range(n_trials):
             all_T_sub[j], all_S_sub[j], all_detS_sub[j], all_H_sub[j] = c_step(
-                X, h, remaining_iterations=n_iter, verbose=verbose)
+                X, h, remaining_iterations=n_iter, verbose=verbose,
+                covariance_computation_method=covariance_computation_method)
     else:
         # perform computations from every given initial estimates
         for j in range(n_trials):
             all_T_sub[j], all_S_sub[j], all_detS_sub[j], all_H_sub[j] = c_step(
                 X, h, remaining_iterations=n_iter,
                 initial_estimates=(estimates_list[0][j], estimates_list[1][j]),
-                verbose=verbose)
+                verbose=verbose,
+                covariance_computation_method=covariance_computation_method)
 
     # find the `n_best` best results among the `n_trials` ones
     index_best = np.argsort(all_detS_sub)[:select]
@@ -242,7 +226,8 @@ def select_candidates(X, h, n_trials, select=1, n_iter=30, verbose=False):
     return best_T, best_S, best_H
 
 
-def fast_mcd(X, correction="empirical", reweighting="rousseeuw"):
+def fast_mcd(X, correction="empirical", reweighting="rousseeuw",
+             covariance_computation_method=empirical_covariance):
     """Estimates the Minimum Covariance Determinant matrix.
 
     The FastMCD algorithm has been introduced by Rousseuw and Van Driessen
@@ -336,7 +321,8 @@ def fast_mcd(X, correction="empirical", reweighting="rousseeuw"):
             current_subset = X[samples_shuffle[low_bound:high_bound]]
             best_T_sub, best_S_sub, _ = select_candidates(
                 current_subset, h_subset, n_trials,
-                select=n_best_sub, n_iter=2)
+                select=n_best_sub, n_iter=2,
+                covariance_computation_method=covariance_computation_method)
             subset_slice = np.arange(i * n_best_sub, (i + 1) * n_best_sub)
             all_best_T[subset_slice] = best_T_sub
             all_best_S[subset_slice] = best_S_sub
@@ -351,7 +337,8 @@ def fast_mcd(X, correction="empirical", reweighting="rousseeuw"):
         # find the best couples (T,S) on the merged set
         T_merged, S_merged, H_merged = select_candidates(
             X[np.random.permutation(n_samples)[:n_samples_merged]],
-            h_merged, n_trials=(all_best_T, all_best_S), select=n_best_merged)
+            h_merged, n_trials=(all_best_T, all_best_S), select=n_best_merged,
+            covariance_computation_method=covariance_computation_method)
         ## 3. Finally get the overall best (T,S) couple
         if n_samples < 1500:
             # directly get the best couple (T,S)
@@ -361,7 +348,8 @@ def fast_mcd(X, correction="empirical", reweighting="rousseeuw"):
         else:
             # select the best couple on the full dataset
             T_full, S_full, H_full = select_candidates(
-                X, h, n_trials=(T_merged, S_merged), select=1)
+                X, h, n_trials=(T_merged, S_merged), select=1,
+                covariance_computation_method=covariance_computation_method)
             T = T_full[0]
             S = S_full[0]
             H = H_full[0]
@@ -370,10 +358,12 @@ def fast_mcd(X, correction="empirical", reweighting="rousseeuw"):
         n_trials = 30
         n_best = 10
         T_best, S_best, _ = select_candidates(
-            X, h, n_trials=n_trials, select=n_best, n_iter=2)
+            X, h, n_trials=n_trials, select=n_best, n_iter=2,
+            covariance_computation_method=covariance_computation_method)
         ## 2. Select the best couple on the full dataset amongst the 10
         T_full, S_full, H_full = select_candidates(
-            X, h, n_trials=(T_best, S_best), select=1)
+            X, h, n_trials=(T_best, S_best), select=1,
+            covariance_computation_method=covariance_computation_method)
         T = T_full[0]
         S = S_full[0]
         H = H_full[0]
@@ -382,8 +372,9 @@ def fast_mcd(X, correction="empirical", reweighting="rousseeuw"):
     S_corrected = _correct(T, S, H, correction, data=X)
 
     ## 5. Reweight estimate
-    T_reweighted, S_reweighted, support = _reweight(T, S_corrected, H,
-                                                    reweighting, data=X)
+    T_reweighted, S_reweighted, support = _reweight(
+            T, S_corrected, H, reweighting, data=X,
+            covariance_computation_method=covariance_computation_method)
 
     return T_reweighted, S_reweighted, support
 
@@ -444,7 +435,8 @@ def _correct(location, covariance, support, correction="empirical", data=None):
 
 
 def _reweight(location, covariance, support,
-              reweighting="rousseeuw", data=None):
+              reweighting="rousseeuw", data=None,
+              covariance_computation_method=empirical_covariance):
     """Reweight a raw Minimum Covariance Determinant estimate
 
     Parameters
@@ -489,7 +481,7 @@ def _reweight(location, covariance, support,
                 1)
             mask = dist < chi2(n_features).isf(0.025)
             T_reweighted = data[mask].mean(0)
-            S_reweighted = _nonrobust_covariance(data[mask])
+            S_reweighted = covariance_computation_method(data[mask])
             support = np.zeros(n_samples).astype(bool)
             support[mask] = True
     else:
@@ -616,10 +608,11 @@ class MinCovDet(EmpiricalCovariance):
         """
         # compute and store raw estimates
         raw_location, raw_covariance, raw_support = fast_mcd(
-                X, correction=None, reweighting=None)
+                X, correction=None, reweighting=None,
+                covariance_computation_method=self._nonrobust_covariance)
         if self.assume_centered:
             raw_location = np.zeros(raw_location.shape[0])
-            raw_covariance = _nonrobust_covariance(
+            raw_covariance = self._nonrobust_covariance(
                     X[raw_support], assume_centered=True)
         self.raw_location_ = raw_location
         self.raw_covariance_ = raw_covariance
@@ -633,6 +626,24 @@ class MinCovDet(EmpiricalCovariance):
                 self.reweighting, X, permanent=True)
 
         return self
+
+    def _nonrobust_covariance(self, data, assume_centered=False):
+        """Non-robust estimation of the covariance to be used within MCD.
+
+        Parameters
+        ----------
+        data: array_like, shape (n_samples, n_features)
+          Data for which to compute the non-robust covariance matrix.
+        assume_centered: Boolean
+          Whether or not the observations should be considered as centered.
+
+        Returns
+        -------
+        nonrobust_covariance: array_like, shape (n_features, n_features)
+          The non-robust covariance of the data.
+
+        """
+        return empirical_covariance(data, assume_centered=assume_centered)
 
     def correct(self, correction="empirical", data=None, permanent=False):
         """Apply a correction to raw Minimum Covariance Determinant estimates.
@@ -697,8 +708,10 @@ class MinCovDet(EmpiricalCovariance):
           the reweighted robust location and covariance estimates.
 
         """
-        T, S, H = _reweight(self.location_, self.covariance_,
-                            self.support_, reweighting, data=data)
+        T, S, H = _reweight(
+                self.location_, self.covariance_, self.support_,
+                reweighting, data=data,
+                covariance_computation_method=self._nonrobust_covariance)
         if permanent:
             self._set_estimates(S)
             self.location_ = T
