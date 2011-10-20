@@ -20,7 +20,7 @@ from ..utils.extmath import fast_logdet
 
 
 def log_likelihood(emp_cov, precision):
-    """Computes the negative log_likelihood of the data
+    """Computes the log_likelihood of the data
 
     Params
     ------

@@ -226,7 +226,7 @@ def select_candidates(X, h, n_trials, select=1, n_iter=30, verbose=False,
     return best_T, best_S, best_H
 
 
-def fast_mcd(X, correction="empirical", reweighting="rousseeuw",
+def fast_mcd(X, h=None, correction="empirical", reweighting="rousseeuw",
              covariance_computation_method=empirical_covariance):
     """Estimates the Minimum Covariance Determinant matrix.
 
@@ -243,12 +243,11 @@ def fast_mcd(X, correction="empirical", reweighting="rousseeuw",
     ----------
     X: array-like, shape (n_samples, n_features)
       The data matrix, with p features and n samples.
-    reweighting: str
-      Computation of a reweighted estimator:
-        - "rousseeuw" (default): Reweight observations using Rousseeuw's
-          method (equivalent to deleting outlying observations from the
-          data set before computing location and covariance estimates)
-        - else: no reweighting
+    h: float, 0 < h < 1
+          The proportion of points to be included in the support of the raw
+          MCD estimate. Default is None, which implies that the minimum
+          value of h will be used within the algorithm:
+          [n_sample + n_features + 1] / 2
     correction: str
       Improve the covariance estimator consistency at gaussian models
         - "empirical" (default): correction using the empirical correction
@@ -256,6 +255,13 @@ def fast_mcd(X, correction="empirical", reweighting="rousseeuw",
         - "theoretical": correction using the theoretical correction factor
           derived in [2]
         - else: no correction
+    reweighting: str
+      Computation of a reweighted estimator:
+        - "rousseeuw" (default): Reweight observations using Rousseeuw's
+          method (equivalent to deleting outlying observations from the
+          data set before computing location and covariance estimates)
+        - else: no reweighting
+
 
     [1] A Fast Algorithm for the Minimum Covariance Determinant Estimator,
         1999, American Statistical Association and the American Society
@@ -281,7 +287,10 @@ def fast_mcd(X, correction="empirical", reweighting="rousseeuw",
     n_samples, n_features = X.shape
 
     # minimum breakdown value
-    h = int(np.ceil(0.5 * (n_samples + n_features + 1)))
+    if h is None:
+        h = int(np.ceil(0.5 * (n_samples + n_features + 1)))
+    else:
+        h = int(h * n_samples)
 
     # 1-dimensional case quick computation
     # (Rousseeuw, P. J. and Leroy, A. M. (2005) References, in Robust
@@ -497,7 +506,7 @@ class MinCovDet(EmpiricalCovariance):
 
     The Minimum Covariance Determinant estimator is a robust estimator
     of a data set's covariance introduced by P.J.Rousseuw in [1].
-    The idea is to find a given proportion of "good" observations which
+    The idea is to find a given proportion (h) of "good" observations which
     are not outliers and compute their empirical covariance matrix.
     This empirical covariance matrix is then rescaled to compensate the
     performed selection of observations ("consistency step").
@@ -533,6 +542,10 @@ class MinCovDet(EmpiricalCovariance):
         A mask of the observations that have been used to compute
         the robust estimates of location and shape.
 
+    `h`: float, 0 < h < 1
+        The proportion of points to be included in the support of the raw
+        MCD estimate.
+
     `correction`: str
         Improve the covariance estimator consistency at gaussian models
           - "empirical" (default): correction using the empirical correction
@@ -559,7 +572,7 @@ class MinCovDet(EmpiricalCovariance):
 
     """
     def __init__(self, store_precision=True, assume_centered=False,
-                 correction="empirical", reweighting="rousseeuw"):
+                 h=None, correction="empirical", reweighting="rousseeuw"):
         """
         assume_centered: Boolean
           If True, the support of robust location and covariance estimates
@@ -569,12 +582,11 @@ class MinCovDet(EmpiricalCovariance):
           zero but is not exactly zero.
           If False, the robust location and covariance are directly computed
           with the FastMCD algorithm without additional treatment.
-        reweighting: str
-          Computation of a reweighted estimator:
-            - "rousseeuw" (default): Reweight observations using Rousseeuw's
-              method (equivalent to deleting outlying observations from the
-              data set before computing location and covariance estimates)
-            - else: no re-weighting
+        h: float, 0 < h < 1
+          The proportion of points to be included in the support of the raw
+          MCD estimate. Default is None, which implies that the minimum
+          value of h will be used within the algorithm:
+          [n_sample + n_features + 1] / 2
         correction: str
           Improve the covariance estimator consistency at Gaussian models
             - "empirical" (default): correction using the empirical correction
@@ -582,14 +594,21 @@ class MinCovDet(EmpiricalCovariance):
             - "theoretical": correction using the theoretical correction factor
               derived in [2]
             - else: no correction
+        reweighting: str
+          Computation of a reweighted estimator:
+            - "rousseeuw" (default): Reweight observations using Rousseeuw's
+              method (equivalent to deleting outlying observations from the
+              data set before computing location and covariance estimates)
+            - else: no re-weighting
         shrinkage: float
           The amount of shrinkage (ridge regularization) for ill-conditionned
           matrices.
         """
         self.store_precision = store_precision
         self.assume_centered = assume_centered
-        self.reweighting = reweighting
+        self.h = h
         self.correction = correction
+        self.reweighting = reweighting
 
     def fit(self, X):
         """Fits a Minimum Covariance Determinant with the FastMCD algorithm.
@@ -608,7 +627,7 @@ class MinCovDet(EmpiricalCovariance):
         """
         # compute and store raw estimates
         raw_location, raw_covariance, raw_support = fast_mcd(
-                X, correction=None, reweighting=None,
+                X, h=self.h, correction=None, reweighting=None,
                 covariance_computation_method=self._nonrobust_covariance)
         if self.assume_centered:
             raw_location = np.zeros(raw_location.shape[0])
