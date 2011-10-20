@@ -400,5 +400,5 @@ The code is written in Cython.
    S. Shalev-Shwartz, Y. Singer, N. Srebro - In Proceedings of ICML '07.
 
  * `"Stochastic gradient descent training for l1-regularized log-linear models with cumulative penalty"
-   <www.aclweb.org/anthology/P/P09/P09-1054.pdf>`_
+   <http://www.aclweb.org/anthology/P/P09/P09-1054.pdf>`_
    Y. Tsuruoka, J. Tsujii, S. Ananiadou -  In Proceedings of the AFNLP/ACL '09.
