@@ -15,50 +15,9 @@ libsvm command line programs.
 #          Olivier Grisel <olivier.grisel@ensta.org>
 # License: Simple BSD.
 
+from _svmlight_format import _load_svmlight_file
 import numpy as np
 import scipy.sparse as sp
-
-def _load_svmlight_file(f, n_features, dtype):
-    data = []
-    indptr = []
-    indices = []
-    labels = []
-
-    for line in f:
-        line = line
-
-        hash_position = line.find('#')
-        if hash_position == 0:
-            continue
-        elif hash_position > 0:
-            line = line[:hash_position]
-
-        line_parts = line.split()
-        if len(line_parts) == 0:
-            continue
-
-        y, features = line_parts[0], line_parts[1:]
-        labels.append(float(y))
-        indptr.append(len(data))
-
-        for feat in features:
-            idx, value = feat.split(":")
-            indices.append(int(idx))
-            data.append(dtype(value))
-
-    indptr.append(len(data))
-    indptr = np.array(indptr, dtype=np.int)
-
-    if n_features is not None:
-        shape = (indptr.shape[0] - 1, n_features)
-    else:
-        shape = None    # inferred
-
-    X = sp.csr_matrix((np.array(data),
-                       np.array(indices, dtype=np.int),
-                       indptr), shape)
-
-    return X, np.array(labels, dtype=np.double)
 
 
 def load_svmlight_file(f, n_features=None, dtype=np.float64):
