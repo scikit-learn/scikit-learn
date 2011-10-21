@@ -170,8 +170,8 @@ class GaussianNB(BaseNB):
             Returns self.
         """
 
-        X = np.asanyarray(X)
-        y = np.asanyarray(y)
+        X = np.asarray(X)
+        y = np.asarray(y)
 
         self.unique_y = unique_y = np.unique(y)
         n_classes = unique_y.shape[0]

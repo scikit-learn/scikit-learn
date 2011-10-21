@@ -247,8 +247,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         self._check_params()
 
         # Force data to 2D numpy.array
-        X = np.atleast_2d(X)
-        y = np.asanyarray(y).ravel()[:, np.newaxis]
+        X = np.atleast_2d(np.asarray(X))
+        y = np.asarray(y).ravel()[:, np.newaxis]
 
         # Check shapes of DOE & observations
         n_samples_X, n_features = X.shape

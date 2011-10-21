@@ -178,7 +178,7 @@ def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
             value[:t] = np.bincount(current_y.astype(np.int))
         else:
             # we need to wrap the mean into an array
-            value = np.asanyarray(np.mean(current_y))
+            value = np.asarray(np.mean(current_y))
 
         if not is_split_valid:
             return _tree.Node(-1, 0.0, 0.0, n_samples, value, None, None)
@@ -248,7 +248,7 @@ class BaseDecisionTree(BaseEstimator):
         self : object
             Returns self.
         """
-        X = np.asanyarray(X, dtype=DTYPE, order='F')
+        X = np.asarray(X, dtype=DTYPE, order='F')
         n_samples, self.n_features = X.shape
         if len(y) != n_samples:
             raise ValueError("Number of labels=%d does not match "

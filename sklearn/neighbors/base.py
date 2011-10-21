@@ -277,7 +277,7 @@ class KNeighborsMixin(object):
         --------
         NearestNeighbors.radius_neighbors_graph
         """
-        X = np.asanyarray(X)
+        X = np.asarray(X)
 
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
@@ -466,7 +466,7 @@ class RadiusNeighborsMixin(object):
         --------
         kneighbors_graph
         """
-        X = np.asanyarray(X)
+        X = np.asarray(X)
 
         if radius is None:
             radius = self.radius
@@ -513,7 +513,7 @@ class SupervisedFloatMixin(object):
         y : {array-like, sparse matrix}, shape = [n_samples]
             Target values, array of float values.
         """
-        self._y = np.asanyarray(y)
+        self._y = np.asarray(y)
         return self._fit(X)
 
 
@@ -530,7 +530,7 @@ class SupervisedIntegerMixin(object):
         y : {array-like, sparse matrix}, shape = [n_samples]
             Target values, array of integer values.
         """
-        self._y = np.asanyarray(y)
+        self._y = np.asarray(y)
         return self._fit(X)
 
 

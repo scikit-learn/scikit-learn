@@ -1,5 +1,7 @@
 import numpy as np
-from .. import as_float_array
+import scipy.sparse as sp
+
+from .. import as_float_array, atleast2d_or_csr, safe_asanyarray
 
 
 def test_as_float_array():
@@ -21,3 +23,22 @@ def test_as_float_array():
     # Here, X is of the right type, it shouldn't be modified
     X = np.ones((3, 2), dtype=np.float32)
     assert as_float_array(X, copy=False) is X
+
+
+def test_np_matrix():
+    """
+    Confirm that input validation code does not return np.matrix
+    """
+    X = np.arange(12).reshape(3, 4)
+
+    assert not isinstance(as_float_array(X), np.matrix)
+    assert not isinstance(as_float_array(np.matrix(X)), np.matrix)
+    assert not isinstance(as_float_array(sp.csc_matrix(X)), np.matrix)
+
+    assert not isinstance(atleast2d_or_csr(X), np.matrix)
+    assert not isinstance(atleast2d_or_csr(np.matrix(X)), np.matrix)
+    assert not isinstance(atleast2d_or_csr(sp.csc_matrix(X)), np.matrix)
+
+    assert not isinstance(safe_asanyarray(X), np.matrix)
+    assert not isinstance(safe_asanyarray(np.matrix(X)), np.matrix)
+    assert not isinstance(safe_asanyarray(sp.lil_matrix(X)), np.matrix)

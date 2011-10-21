@@ -36,7 +36,9 @@ def barycenter_weights(X, Z, reg=1e-3):
     -----
     See developers note for more information.
     """
-    X, Z = map(np.asanyarray, (X, Z))
+    X = np.asarray(X)
+    Z = np.asarray(Z)
+
     n_samples, n_neighbors = X.shape[0], Z.shape[1]
     if X.dtype.kind == 'i':
         X = X.astype(np.float)
