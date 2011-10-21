@@ -614,7 +614,7 @@ def ami_score(labels_true, labels_pred):
     # Calculate the MI for the two clusterings
     mi = mutual_information_score(labels_true, labels_pred,
                                   contingency=contingency)
-    # Calcualte the expected value for the mutual information
+    # Calculate the expected value for the mutual information
     emi = expected_mutual_information(contingency, n_samples)
     # Calculate entropy for each labeling
     h_true, h_pred = entropy(labels_true), entropy(labels_pred)
@@ -626,35 +626,51 @@ def expected_mutual_information(contingency, n_samples):
     """Calculate the expected mutual information for two labelings."""
     R, C = contingency.shape
     N = n_samples
-    a = np.sum(contingency, axis=1)
-    b = np.sum(contingency, axis=0)
-    factA = factorial(a)
-    factB = factorial(b)
-    factNA = factorial(N - a)
-    factNB = factorial(N - b)
-    factN = factorial(N)
+    a = np.sum(contingency, axis=1, dtype='int')
+    b = np.sum(contingency, axis=0, dtype='int')
     emi = 0
     for i in range(R):
         for j in range(C):
-            # numerator of the third term
-            num3 = factA[i] * factB[j] * factNA[i] * factNB[j]
-            assert np.isfinite(num3), "%r,%r,%r,%r" % (
-                factA[i], factB[j], factNA[i], factNB[j])
             start = int(max(a[i] + b[j] - N, 1))
             end = int(min(a[i], b[j]) + 1)
             for nij in range(start, end):
-                nij = float(nij)
-                # term 1: nij / N
-                term1 = nij / N
-                assert np.isfinite(term1)
-                # term 2: log(N.nij / ai.bj)
-                term2 = np.log((N * nij) / (a[i] * b[j]))
-                assert np.isfinite(term2)
-                # denominator of term 3
-                den3 = float(factN * factorial(nij) * factorial(a[i] - nij)
-                             * factorial(b[j] - nij)
-                             * factorial(N - a[i] - b[j] + nij))
-                emi += term1 * term2 * (num3 / den3)
+                term1 = nij / float(N)
+                assert np.isfinite(term1), ("term1: %r, nij=%d, N=%d" %
+                                            (term1, nij, N))
+                term2 = np.log(float(N * nij) / (a[i] * b[j]))
+                assert np.isfinite(term2), ("term2: %r, nij=%d, N=%d, a[i]=%d, b[j]=%d" %
+                                            (term2, nij, N, a[i], b[j]))
+                
+                # a! / (a - n)!
+                term3a = np.multiply.reduce(range(a[i] - nij + 1, a[i] + 1))
+                assert np.isfinite(term3a), ("term3a: %r, a[i]=%d, nij=%d" %
+                                             (term3a, a[i], nij))
+                # b! / (b - n)!
+                term3b = np.multiply.reduce(range(b[j] - nij + 1, b[j] + 1))
+                assert np.isfinite(term3b), ("term3b: %r, b[j]=%d, nij=%d" %
+                                             (term3b, b[j], nij))
+                # (N - a)! / N!
+                t = np.multiply.reduce(range(N - a[i] + 1, N + 1))
+                if t == 0:
+                    continue
+                term3c = 1. / t
+                assert np.isfinite(term3c), ("term3c: %r, a[i]=%d, N=%d, t=%.3f" %
+                                             (term3c, a[i], N, t))
+                # (N - b)! / (N - a - b - n)!
+                num3d = N - b[j] + 1
+                den3d = N - a[i] - b[j] + nij + 1
+                if num3d > den3d:
+                    term3d = np.multiply.reduce(range(den3d, num3d))
+                else:
+                    term3d = np.multiply.reduce(range(num3d, den3d))
+                    term3d = 1. / term3d
+                assert np.isfinite(term3d), ("term3d: %r, N=%d, a[i]=%d, b[j]=%d, nij=%d" %
+                                             (term3d, N, a[i], b[j], nij))
+                # 1 / n!
+                term3e = 1. / factorial(nij)
+                # Add the product of all terms
+                emi += (term1 * term2 * term3a * term3b
+                        * term3c * term3d * term3e)
     return emi
 
 
