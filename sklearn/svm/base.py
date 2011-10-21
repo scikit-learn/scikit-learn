@@ -2,7 +2,7 @@ import numpy as np
 
 from . import libsvm, liblinear
 from ..base import BaseEstimator
-from ..utils import safe_asarray
+from ..utils import array2d, safe_asarray
 
 
 LIBSVM_IMPL = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
@@ -407,8 +407,7 @@ class BaseLibLinear(BaseEstimator):
         -------
         C : array, shape = [n_samples]
         """
-        X = np.asarray(X, dtype=np.float64, order='C')
-        X = np.atleast_2d(X)
+        X = array2d(X, dtype=np.float64, order='C')
         self._check_n_features(X)
 
         coef = self.raw_coef_

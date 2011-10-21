@@ -25,7 +25,7 @@ from scipy.sparse import issparse
 
 from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize, LabelBinarizer
-from .utils import safe_asarray, atleast2d_or_csr
+from .utils import array2d, atleast2d_or_csr, safe_asarray
 from .utils.extmath import safe_sparse_dot, logsum
 from .utils.fixes import unique
 
@@ -187,7 +187,7 @@ class GaussianNB(BaseNB):
         return self
 
     def _joint_log_likelihood(self, X):
-        X = np.atleast_2d(X)
+        X = array2d(X)
         joint_log_likelihood = []
         for i in xrange(np.size(self.unique_y)):
             jointi = np.log(self.class_prior[i])

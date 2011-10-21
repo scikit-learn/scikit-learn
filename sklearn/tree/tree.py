@@ -10,7 +10,7 @@ from __future__ import division
 import numpy as np
 
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
-from ..utils import check_random_state
+from ..utils import array2d, check_random_state
 
 from . import _tree
 
@@ -304,8 +304,7 @@ class BaseDecisionTree(BaseEstimator):
         predictions : array of shape = [n_samples]
             The predicted classes, or the predict values.
         """
-        X = np.atleast_2d(X)
-        X = X.astype(DTYPE)
+        X = array2d(X, dtype=DTYPE)
         n_samples, n_features = X.shape
 
         if self.tree is None:
@@ -409,8 +408,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             The class probabilities of the input samples. Classes are ordered
             by arithmetical order.
         """
-        X = np.atleast_2d(X)
-        X = X.astype(DTYPE)
+        X = array2d(X, dtype=DTYPE)
         n_samples, n_features = X.shape
 
         if self.tree is None:

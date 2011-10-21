@@ -15,6 +15,7 @@ import numpy as np
 from scipy import linalg
 
 from ..base import BaseEstimator
+from ..utils import array2d
 from ..utils.extmath import fast_logdet as exact_logdet
 
 
@@ -99,7 +100,7 @@ class EmpiricalCovariance(BaseEstimator):
           the precision is computed.
 
         """
-        covariance = np.atleast_2d(covariance)
+        covariance = array2d(covariance)
         # set covariance
         self.covariance_ = covariance
         # set precision
