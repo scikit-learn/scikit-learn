@@ -635,27 +635,16 @@ def expected_mutual_information(contingency, n_samples):
             end = int(min(a[i], b[j]) + 1)
             for nij in range(start, end):
                 term1 = nij / float(N)
-                assert np.isfinite(term1), ("term1: %r, nij=%d, N=%d" %
-                                            (term1, nij, N))
                 term2 = np.log(float(N * nij) / (a[i] * b[j]))
-                assert np.isfinite(term2), ("term2: %r, nij=%d, N=%d, a[i]=%d, b[j]=%d" %
-                                            (term2, nij, N, a[i], b[j]))
-                
                 # a! / (a - n)!
                 term3a = np.multiply.reduce(range(a[i] - nij + 1, a[i] + 1))
-                assert np.isfinite(term3a), ("term3a: %r, a[i]=%d, nij=%d" %
-                                             (term3a, a[i], nij))
                 # b! / (b - n)!
                 term3b = np.multiply.reduce(range(b[j] - nij + 1, b[j] + 1))
-                assert np.isfinite(term3b), ("term3b: %r, b[j]=%d, nij=%d" %
-                                             (term3b, b[j], nij))
                 # (N - a)! / N!
                 t = np.multiply.reduce(range(N - a[i] + 1, N + 1))
                 if t == 0:
                     continue
                 term3c = 1. / t
-                assert np.isfinite(term3c), ("term3c: %r, a[i]=%d, N=%d, t=%.3f" %
-                                             (term3c, a[i], N, t))
                 # (N - b)! / (N - a - b - n)!
                 num3d = N - b[j] + 1
                 den3d = N - a[i] - b[j] + nij + 1
@@ -664,8 +653,6 @@ def expected_mutual_information(contingency, n_samples):
                 else:
                     term3d = np.multiply.reduce(range(num3d, den3d))
                     term3d = 1. / term3d
-                assert np.isfinite(term3d), ("term3d: %r, N=%d, a[i]=%d, b[j]=%d, nij=%d" %
-                                             (term3d, N, a[i], b[j], nij))
                 # 1 / n!
                 term3e = 1. / factorial(nij)
                 # Add the product of all terms

@@ -11,4 +11,3 @@ from supervised import (homogeneity_completeness_v_measure,
                         ami_score, expected_mutual_information,
                         mutual_information_score, contingency_matrix)
 from unsupervised import silhouette_score, silhouette_samples
-
