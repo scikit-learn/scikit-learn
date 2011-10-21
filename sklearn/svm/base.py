@@ -2,7 +2,7 @@ import numpy as np
 
 from . import libsvm, liblinear
 from ..base import BaseEstimator
-from ..utils import safe_asanyarray
+from ..utils import safe_asarray
 
 
 LIBSVM_IMPL = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
@@ -383,7 +383,7 @@ class BaseLibLinear(BaseEstimator):
         self.class_weight, self.class_weight_label = \
                      _get_class_weight(class_weight, y)
 
-        X = safe_asanyarray(X, dtype=np.float64, order='C')
+        X = safe_asarray(X, dtype=np.float64, order='C')
         if not isinstance(X, np.ndarray):   # sparse X passed in by user
             raise ValueError("Training vectors should be array-like, not %s"
                              % type(X))

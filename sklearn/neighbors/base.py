@@ -14,7 +14,7 @@ from scipy.spatial.ckdtree import cKDTree
 from .ball_tree import BallTree
 from ..base import BaseEstimator
 from ..metrics import euclidean_distances
-from ..utils import safe_asanyarray, atleast2d_or_csr
+from ..utils import safe_asarray, atleast2d_or_csr
 
 
 def warn_equidistant():
@@ -104,7 +104,7 @@ class NeighborsBase(BaseEstimator):
             self._fit_method = 'kd_tree'
             return self
 
-        X = safe_asanyarray(X)
+        X = safe_asarray(X)
 
         if X.ndim != 2:
             raise ValueError("data type not understood")

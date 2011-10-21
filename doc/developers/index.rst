@@ -276,7 +276,7 @@ Input validation
 
 The module ``sklearn.utils`` contains various functions for doing input
 validation/conversion. Sometimes, ``np.atleast_2d`` suffices for validation;
-in other cases, be sure to call ``safe_asanyarray``, ``atleast2d_or_csr`` or
+in other cases, be sure to call ``safe_asarray``, ``atleast2d_or_csr`` or
 ``as_float_array`` on any array-like argument passed to a scikit-learn API
 function.
 
@@ -428,15 +428,6 @@ function probably is).
 Any attribute that ends with ``_`` is expected to be overridden when
 you call ``fit`` a second time without taking any previous value into
 account: **fit should be idempotent**.
-
-
-Python tuples
-^^^^^^^^^^^^^
-
-In addition to numpy arrays, all methods should be able to accept
-Python tuples as arguments. In practice, this means you should call
-``numpy.asanyarray`` at the beginning at each public method that accepts
-arrays.
 
 
 Optional Arguments

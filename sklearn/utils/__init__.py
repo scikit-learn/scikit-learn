@@ -15,7 +15,7 @@ def assert_all_finite(X):
             raise ValueError("array contains NaN or infinity")
 
 
-def safe_asanyarray(X, dtype=None, order=None):
+def safe_asarray(X, dtype=None, order=None):
     """Convert X to an array or sparse matrix.
     Prevents copying X when possible; sparse matrices are passed through."""
     if not sp.issparse(X):
@@ -47,7 +47,7 @@ def as_float_array(X, copy=True):
     if isinstance(X, np.matrix):
         X = X.A
     elif not isinstance(X, np.ndarray) and not sp.issparse(X):
-        return safe_asanyarray(X, dtype=np.float64)
+        return safe_asarray(X, dtype=np.float64)
     if X.dtype in [np.float32, np.float64]:
         return X.copy() if copy else X
     if X.dtype == np.int32:

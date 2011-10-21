@@ -25,7 +25,7 @@ from scipy.sparse import issparse
 
 from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize, LabelBinarizer
-from .utils import safe_asanyarray, atleast2d_or_csr
+from .utils import safe_asarray, atleast2d_or_csr
 from .utils.extmath import safe_sparse_dot, logsum
 from .utils.fixes import unique
 
@@ -230,7 +230,7 @@ class BaseDiscreteNB(BaseNB):
             Returns self.
         """
         X = atleast2d_or_csr(X)
-        y = safe_asanyarray(y)
+        y = safe_asarray(y)
 
         if X.shape[0] != y.shape[0]:
             msg = "X and y have incompatible shapes."
