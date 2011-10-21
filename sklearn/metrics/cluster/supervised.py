@@ -539,7 +539,7 @@ def mutual_information_score(labels_true, labels_pred, contingency=None):
     pi /= np.sum(pi)
     pj = np.sum(contingency, axis=0)
     pj /= np.sum(pj)
-    mi = contingency * np.log2(contingency / np.outer(pi, pj))
+    mi = contingency * np.log(contingency / np.outer(pi, pj))
     return np.sum(mi[np.isfinite(mi)])
 
 
@@ -680,4 +680,4 @@ def entropy(labels):
                   dtype='float')
     pi = pi[pi > 0]
     pi /= np.sum(pi)
-    return -np.sum(pi * np.log2(pi))
+    return -np.sum(pi * np.log(pi))

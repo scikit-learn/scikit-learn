@@ -141,7 +141,7 @@ def test_ami_score():
     labels_b = np.array([1, 1, 1, 1, 2, 1, 2, 2, 2, 2, 3, 1, 3, 3, 3, 2, 2])
     # Mutual information
     mi = mutual_information_score(labels_a, labels_b)
-    assert_almost_equal(mi, 0.59182, 5)
+    assert_almost_equal(mi, 0.41022, 5)
     # Expected mutual information
     C = contingency_matrix(labels_a, labels_b)
     n_samples = np.sum(C)
