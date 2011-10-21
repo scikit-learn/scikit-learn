@@ -10,6 +10,7 @@ clustering.
 import numpy as np
 
 from ..base import BaseEstimator
+from ..utils import as_float_array
 
 
 def affinity_propagation(S, p=None, convit=30, max_iter=200, damping=0.5,

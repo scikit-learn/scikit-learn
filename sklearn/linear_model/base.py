@@ -19,7 +19,7 @@ from ..base import RegressorMixin
 from ..base import ClassifierMixin
 from ..base import TransformerMixin
 from ..utils.extmath import safe_sparse_dot
-from ..utils import as_float_array, safe_asanyarray
+from ..utils import as_float_array, safe_asarray
 from ..utils import atleast2d_or_csr, check_arrays
 
 from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
@@ -49,7 +49,7 @@ class LinearModel(BaseEstimator, RegressorMixin):
         C : array, shape = [n_samples]
             Returns predicted values.
         """
-        X = safe_asanyarray(X)
+        X = safe_asarray(X)
         return safe_sparse_dot(X, self.coef_.T) + self.intercept_
 
     @staticmethod
@@ -355,7 +355,7 @@ class BaseSGDClassifier(BaseSGD, ClassifierMixin):
         -------
         self : returns an instance of self.
         """
-        X = safe_asanyarray(X)
+        X = safe_asarray(X)
         y = np.asarray(y, dtype=np.float64, order='C')
 
         n_samples, n_features = X.shape

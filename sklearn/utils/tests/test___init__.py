@@ -1,7 +1,7 @@
 import numpy as np
 import scipy.sparse as sp
 
-from .. import as_float_array, atleast2d_or_csr, safe_asanyarray
+from .. import as_float_array, atleast2d_or_csr, safe_asarray
 
 
 def test_as_float_array():
@@ -39,6 +39,6 @@ def test_np_matrix():
     assert not isinstance(atleast2d_or_csr(np.matrix(X)), np.matrix)
     assert not isinstance(atleast2d_or_csr(sp.csc_matrix(X)), np.matrix)
 
-    assert not isinstance(safe_asanyarray(X), np.matrix)
-    assert not isinstance(safe_asanyarray(np.matrix(X)), np.matrix)
-    assert not isinstance(safe_asanyarray(sp.lil_matrix(X)), np.matrix)
+    assert not isinstance(safe_asarray(X), np.matrix)
+    assert not isinstance(safe_asarray(np.matrix(X)), np.matrix)
+    assert not isinstance(safe_asarray(sp.lil_matrix(X)), np.matrix)

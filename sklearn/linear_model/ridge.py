@@ -9,7 +9,7 @@ import numpy as np
 
 from .base import LinearModel
 from ..utils.extmath import safe_sparse_dot
-from ..utils import safe_asanyarray
+from ..utils import safe_asarray
 from ..preprocessing import LabelBinarizer
 from ..grid_search import GridSearchCV
 
@@ -201,7 +201,7 @@ class Ridge(LinearModel):
         -------
         self : returns an instance of self.
         """
-        X = safe_asanyarray(X, dtype=np.float)
+        X = safe_asarray(X, dtype=np.float)
         y = np.asarray(y, dtype=np.float)
 
         X, y, X_mean, y_mean, X_std = \
@@ -394,7 +394,7 @@ class _RidgeGCV(LinearModel):
         -------
         self : Returns self.
         """
-        X = safe_asanyarray(X, dtype=np.float)
+        X = safe_asarray(X, dtype=np.float)
         y = np.asarray(y, dtype=np.float)
 
         n_samples = X.shape[0]
