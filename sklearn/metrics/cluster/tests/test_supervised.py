@@ -152,3 +152,8 @@ def test_ami_score():
     assert_almost_equal(ami, 0.27502, 5)
     ami = ami_score([1, 1, 2, 2], [2, 2, 3, 3])
     assert_equal(ami, 1.0)
+    # Test with a very large array
+    a100 = np.array([list(a) * 110])
+    b100 = np.array([list(b) * 110])
+    # This is not accurate to more than 2 places
+    assert_almost_equal(ami, 0.37, 2)
