@@ -13,7 +13,7 @@ from scipy.sparse import issparse
 
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import LabelBinarizer
-from ..utils import safe_asarray
+from ..utils import array2d, safe_asarray
 from ..utils.extmath import safe_sparse_dot
 
 ######################################################################
@@ -110,10 +110,8 @@ def f_classif(X, y):
     pval : array of shape(m),
         the set of p-values
     """
-    X = np.atleast_2d(X)
-    y = np.atleast_1d(y)
-    if y.ndim > 1:
-        y = y.ravel()
+    X = array2d(X)
+    y = np.asarray(y).ravel()
     args = [X[y==k] for k in np.unique(y)]
     return f_oneway(*args)
 
@@ -153,9 +151,8 @@ def chi2(X, y):
 
     observed = safe_sparse_dot(Y.T, X)          # n_classes * n_features
 
-    feature_count = np.atleast_2d(X.sum(axis=0))
-    feature_count = np.asarray(feature_count)   # stupid numpy.matrix!
-    class_prob = np.atleast_2d(Y.mean(axis=0))
+    feature_count = array2d(X.sum(axis=0))
+    class_prob = array2d(Y.mean(axis=0))
     expected = safe_sparse_dot(class_prob.T, feature_count)
 
     return stats.chisquare(observed, expected)

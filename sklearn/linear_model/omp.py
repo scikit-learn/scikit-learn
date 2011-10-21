@@ -12,6 +12,7 @@ from scipy import linalg
 from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
+from ..utils import array2d
 from ..utils.arrayfuncs import solve_triangular
 
 premature = """ Orthogonal matching pursuit ended prematurely due to linear
@@ -501,8 +502,8 @@ class OrthogonalMatchingPursuit(LinearModel):
         self: object
             returns an instance of self.
         """
-        X = np.atleast_2d(X)
-        y = np.atleast_1d(y)
+        X = array2d(X)
+        y = np.asarray(y)
         n_features = X.shape[1]
 
         X, y, X_mean, y_mean, X_std = self._center_data(X, y,
@@ -514,7 +515,7 @@ class OrthogonalMatchingPursuit(LinearModel):
             self.n_nonzero_coefs = int(0.1 * n_features)
 
         if Gram is not None:
-            Gram = np.atleast_2d(Gram)
+            Gram = array2d(Gram)
 
             if self.copy_Gram:
                 copy_Gram = False

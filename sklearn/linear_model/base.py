@@ -19,7 +19,7 @@ from ..base import RegressorMixin
 from ..base import ClassifierMixin
 from ..base import TransformerMixin
 from ..utils.extmath import safe_sparse_dot
-from ..utils import as_float_array, safe_asarray
+from ..utils import array2d, as_float_array, safe_asarray
 from ..utils import atleast2d_or_csr, check_arrays
 
 from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
@@ -222,7 +222,7 @@ class BaseSGD(BaseEstimator):
 
     def _set_coef(self, coef_):
         """Make sure that coef_ is 2d. """
-        self.coef_ = np.atleast_2d(coef_)
+        self.coef_ = array2d(coef_)
 
     def _allocate_parameter_mem(self, n_classes, n_features, coef_init=None,
                                 intercept_init=None):

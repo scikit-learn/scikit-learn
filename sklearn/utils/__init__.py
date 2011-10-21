@@ -57,12 +57,17 @@ def as_float_array(X, copy=True):
     return X
 
 
+def array2d(X, dtype=None, order=None):
+    """Returns at least 2-d array with data from X"""
+    return np.atleast_2d(np.asarray(X, dtype=dtype, order=order))
+
+
 def atleast2d_or_csr(X):
     """Like numpy.atleast_2d, but converts sparse matrices to CSR format
     
     Also, converts np.matrix to np.ndarray.
     """
-    X = X.tocsr() if sp.issparse(X) else np.atleast_2d(np.asarray(X))
+    X = X.tocsr() if sp.issparse(X) else array2d(X)
     assert_all_finite(X)
     return X
 

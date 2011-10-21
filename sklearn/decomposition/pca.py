@@ -10,10 +10,8 @@ import numpy as np
 from scipy import linalg
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import check_random_state
-from ..utils.extmath import fast_logdet
-from ..utils.extmath import fast_svd
-from ..utils.extmath import safe_sparse_dot
+from ..utils import array2d, check_random_state
+from ..utils.extmath import fast_logdet, fast_svd, safe_sparse_dot
 
 
 def _assess_dimension_(spectrum, rank, n_samples, dim):
@@ -217,7 +215,7 @@ class PCA(BaseEstimator, TransformerMixin):
         return U
 
     def _fit(self, X):
-        X = np.atleast_2d(X)
+        X = array2d(X)
         n_samples, n_features = X.shape
         if self.copy:
             X = X.copy()
@@ -446,7 +444,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         """
         self.random_state = check_random_state(self.random_state)
         if not hasattr(X, 'todense'):
-            X = np.atleast_2d(X)
+            X = array2d(X)
 
         n_samples = X.shape[0]
 
@@ -455,7 +453,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
 
         if not hasattr(X, 'todense'):
             # not a sparse matrix, ensure this is a 2D array
-            X = np.atleast_2d(X)
+            X = array2d(X)
 
             # Center data
             self.mean_ = np.mean(X, axis=0)

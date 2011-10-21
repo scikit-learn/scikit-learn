@@ -15,8 +15,7 @@ from numpy.lib.stride_tricks import as_strided
 
 from ..base import BaseEstimator, TransformerMixin
 from ..externals.joblib import Parallel, delayed, cpu_count
-from ..utils import check_random_state
-from ..utils import gen_even_slices
+from ..utils import array2d, check_random_state, gen_even_slices
 from ..utils.extmath import fast_svd
 from ..linear_model import Lasso, orthogonal_mp_gram, lars_path
 
@@ -689,7 +688,7 @@ class BaseDictionaryLearning(BaseEstimator, TransformerMixin):
             Transformed data
         """
         # XXX : kwargs is not documented
-        X = np.atleast_2d(X)
+        X = array2d(X)
         n_samples, n_features = X.shape
 
         code = sparse_encode_parallel(
@@ -996,7 +995,7 @@ class MiniBatchDictionaryLearning(BaseDictionaryLearning):
             Returns the instance itself.
         """
         self.random_state = check_random_state(self.random_state)
-        X = np.atleast_2d(X)
+        X = array2d(X)
         if hasattr(self, 'components_'):
             dict_init = self.components_
         else:
