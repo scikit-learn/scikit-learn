@@ -805,13 +805,12 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, n_jobs=1,
 
 def _permutation_test_score(estimator, X, y, cv, score_func):
     """Auxilary function for permutation_test_score"""
-    y_test = list()
-    y_pred = list()
+    avgscore = []
     for train, test in cv:
-        y_test.append(y[test])
-        y_pred.append(estimator.fit(X[train], y[train]).predict(X[test]))
-    return score_func(np.ravel(y_test), np.ravel(y_pred))
-
+        avgscore.append(score_func(y[test],
+                                   estimator.fit(X[train],
+                                                 y[train]).predict(X[test])))
+    return np.mean(avgscore)
 
 def _shuffle(y, labels, random_state):
     """Return a shuffled copy of y eventually shuffle among same labels."""
