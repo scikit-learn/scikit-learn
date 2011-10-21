@@ -21,7 +21,7 @@ def _mean_and_std(X, axis=0, with_mean=True, with_std=True):
 
     Zero valued std components are reset to 1.0 to avoid NaNs when scaling.
     """
-    X = np.asanyarray(X)
+    X = np.asarray(X)
     Xr = np.rollaxis(X, axis)
 
     if with_mean:
@@ -77,7 +77,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     if sp.issparse(X):
         raise NotImplementedError(
             "Scaling is not yet implement for sparse matrices")
-    X = np.asanyarray(X)
+    X = np.asarray(X)
     mean_, std_ = _mean_and_std(
         X, axis, with_mean=with_mean, with_std=with_std)
     if copy:
@@ -175,7 +175,7 @@ class Scaler(BaseEstimator, TransformerMixin):
         if sp.issparse(X):
             raise NotImplementedError(
                 "Scaling is not yet implement for sparse matrices")
-        X = np.asanyarray(X)
+        X = np.asarray(X)
         if copy:
             X = X.copy()
         if self.with_mean:
@@ -196,7 +196,7 @@ class Scaler(BaseEstimator, TransformerMixin):
         if sp.issparse(X):
             raise NotImplementedError(
                 "Scaling is not yet implement for sparse matrices")
-        X = np.asanyarray(X)
+        X = np.asarray(X)
         if copy:
             X = X.copy()
         if self.with_std:

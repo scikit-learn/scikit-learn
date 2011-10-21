@@ -97,8 +97,8 @@ class DenseBaseLibSVM(BaseLibSVM):
         if hasattr(self, 'kernel_function'):
             # in the case of precomputed kernel given as a function, we
             # have to compute explicitly the kernel matrix
-            X = np.asanyarray(self.kernel_function(X, self.__Xfit),
-                               dtype=np.float64, order='C')
+            X = np.asarray(self.kernel_function(X, self.__Xfit),
+                           dtype=np.float64, order='C')
         return X
 
     def fit(self, X, y, class_weight=None, sample_weight=None,
@@ -140,10 +140,10 @@ class DenseBaseLibSVM(BaseLibSVM):
 
         """
 
-        X = np.asanyarray(X, dtype=np.float64, order='C')
-        y = np.asanyarray(y, dtype=np.float64, order='C')
-        sample_weight = np.asanyarray([] if sample_weight is None
-                                         else sample_weight, dtype=np.float64)
+        X = np.asarray(X, dtype=np.float64, order='C')
+        y = np.asarray(y, dtype=np.float64, order='C')
+        sample_weight = np.asarray([] if sample_weight is None
+                                      else sample_weight, dtype=np.float64)
 
         if hasattr(self, 'kernel_function'):
             # you must store a reference to X to compute the kernel in predict
@@ -196,7 +196,7 @@ class DenseBaseLibSVM(BaseLibSVM):
         -------
         C : array, shape = [n_samples]
         """
-        X = np.asanyarray(X, dtype=np.float64, order='C')
+        X = np.asarray(X, dtype=np.float64, order='C')
         if X.ndim == 1:
             # don't use np.atleast_2d, it doesn't guarantee C-contiguity
             X = np.reshape(X, (1, -1), order='C')
@@ -247,7 +247,7 @@ class DenseBaseLibSVM(BaseLibSVM):
         if not self.probability:
             raise ValueError(
                     "probability estimates must be enabled to use this method")
-        X = np.asanyarray(X, dtype=np.float64, order='C')
+        X = np.asarray(X, dtype=np.float64, order='C')
         if X.ndim == 1:
             # don't use np.atleast_2d, it doesn't guarantee C-contiguity
             X = np.reshape(X, (1, -1), order='C')
@@ -278,7 +278,7 @@ class DenseBaseLibSVM(BaseLibSVM):
             Returns the decision function of the sample for each class
             in the model.
         """
-        X = np.asanyarray(X, dtype=np.float64, order='C')
+        X = np.asarray(X, dtype=np.float64, order='C')
         if X.ndim == 1:
             # don't use np.atleast_2d, it doesn't guarantee C-contiguity
             X = np.reshape(X, (1, -1), order='C')
@@ -387,7 +387,7 @@ class BaseLibLinear(BaseEstimator):
         if not isinstance(X, np.ndarray):   # sparse X passed in by user
             raise ValueError("Training vectors should be array-like, not %s"
                              % type(X))
-        y = np.asanyarray(y, dtype=np.int32, order='C')
+        y = np.asarray(y, dtype=np.int32, order='C')
 
         self.raw_coef_, self.label_ = liblinear.train_wrap(X, y,
                        self._get_solver_type(), self.tol,
@@ -407,7 +407,7 @@ class BaseLibLinear(BaseEstimator):
         -------
         C : array, shape = [n_samples]
         """
-        X = np.asanyarray(X, dtype=np.float64, order='C')
+        X = np.asarray(X, dtype=np.float64, order='C')
         X = np.atleast_2d(X)
         self._check_n_features(X)
 
@@ -433,7 +433,7 @@ class BaseLibLinear(BaseEstimator):
             Returns the decision function of the sample for each class
             in the model.
         """
-        X = np.asanyarray(X, dtype=np.float64, order='C')
+        X = np.asarray(X, dtype=np.float64, order='C')
         if X.ndim == 1:
             # don't use np.atleast_2d, it doesn't guarantee C-contiguity
             X = np.reshape(X, (1, -1), order='C')

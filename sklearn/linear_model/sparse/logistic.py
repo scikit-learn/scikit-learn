@@ -94,7 +94,7 @@ class LogisticRegression(SparseBaseLibLinear, ClassifierMixin,
         label of classes.
         """
         X = sp.csr_matrix(X)
-        X.data = np.asanyarray(X.data, dtype=np.float64, order='C')
+        X.data = np.asarray(X.data, dtype=np.float64, order='C')
         probas = csr_predict_prob(X.shape[1], X.data, X.indices,
                                   X.indptr, self.raw_coef_,
                                   self._get_solver_type(),

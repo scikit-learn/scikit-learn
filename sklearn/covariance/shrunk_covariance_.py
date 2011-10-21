@@ -165,7 +165,7 @@ def ledoit_wolf(X, assume_centered=False):
     where mu = trace(cov) / n_features
 
     """
-    X = np.asanyarray(X)
+    X = np.asarray(X)
     # for only one feature, the result is the same whatever the shrinkage
     if X.ndim == 1:
         if not assume_centered:
@@ -303,7 +303,7 @@ def oas(X, assume_centered=False):
     where mu = trace(cov) / n_features
 
     """
-    X = np.asanyarray(X)
+    X = np.asarray(X)
     # for only one feature, the result is the same whatever the shrinkage
     if X.ndim == 1:
         if not assume_centered:

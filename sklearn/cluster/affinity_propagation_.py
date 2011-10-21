@@ -49,11 +49,7 @@ def affinity_propagation(S, p=None, convit=30, max_iter=200, damping=0.5,
     Between Data Points", Science Feb. 2007
 
     """
-    if copy:
-        # Copy the affinity matrix to avoid modifying it inplace
-        S = np.array(S, copy=True, dtype=np.float)
-    else:
-        S = np.asanyarray(S, dtype=np.float)
+    S = as_float_array(S, copy=copy)
 
     n_points = S.shape[0]
 

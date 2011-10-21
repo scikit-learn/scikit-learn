@@ -53,7 +53,7 @@ def empirical_covariance(X, assume_centered=False):
 
 
     """
-    X = np.asanyarray(X)
+    X = np.asarray(X)
     if X.ndim == 1:
         X = np.atleast_2d(X).T
 

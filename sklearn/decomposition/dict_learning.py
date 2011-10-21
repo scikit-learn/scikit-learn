@@ -90,7 +90,8 @@ def sparse_encode(X, Y, gram=None, cov=None, algorithm='lasso_lars',
     linear_model.Lasso
     """
     alpha = float(alpha) if alpha is not None else None
-    X, Y = map(np.asanyarray, (X, Y))
+    X = np.asarray(X)
+    Y = np.asarray(Y)
     if Y.ndim == 1:
         Y = Y[:, np.newaxis]
     n_features = Y.shape[1]
@@ -832,7 +833,7 @@ class DictionaryLearning(BaseDictionaryLearning):
             Returns the object itself
         """
         self.random_state = check_random_state(self.random_state)
-        X = np.asanyarray(X)
+        X = np.asarray(X)
         V, U, E = dict_learning(X, self.n_atoms, self.alpha,
                                 tol=self.tol, max_iter=self.max_iter,
                                 method=self.fit_algorithm,
@@ -968,7 +969,7 @@ class MiniBatchDictionaryLearning(BaseDictionaryLearning):
             Returns the instance itself.
         """
         self.random_state = check_random_state(self.random_state)
-        X = np.asanyarray(X)
+        X = np.asarray(X)
         U = dict_learning_online(X, self.n_atoms, self.alpha,
                                  n_iter=self.n_iter, return_code=False,
                                  method=self.fit_algorithm,

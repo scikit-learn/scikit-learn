@@ -119,7 +119,7 @@ class SGDClassifier(BaseSGDClassifier):
     def _fit_binary(self, X, y):
         """Fit a single binary classifier"""
         # interprete X as dense array
-        X = np.asanyarray(X, dtype=np.float64, order='C')
+        X = np.asarray(X, dtype=np.float64, order='C')
 
         # encode original class labels as 1 (classes[1]) or -1 (classes[0]).
         y_new = np.ones(y.shape, dtype=np.float64, order='C') * -1.0
@@ -152,7 +152,7 @@ class SGDClassifier(BaseSGDClassifier):
         Each binary classifier predicts one class versus all others. This
         strategy is called OVA: One Versus All.
         """
-        X = np.asanyarray(X, dtype=np.float64, order='C')
+        X = np.asarray(X, dtype=np.float64, order='C')
 
         # Use joblib to run OVA in parallel.
         res = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
@@ -293,7 +293,7 @@ class SGDRegressor(BaseSGDRegressor):
     """
 
     def _fit_regressor(self, X, y):
-        X = np.asanyarray(X, dtype=np.float64, order='C')
+        X = np.asarray(X, dtype=np.float64, order='C')
         coef_, intercept_ = plain_sgd(self.coef_,
                                       self.intercept_,
                                       self.loss_function,

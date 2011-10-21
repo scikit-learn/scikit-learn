@@ -702,7 +702,7 @@ class LarsCV(LARS):
         self : object
             returns an instance of self.
         """
-        X = np.asanyarray(X)
+        X = np.asarray(X)
 
         n_samples, n_features = X.shape
         # init cross-validation generator

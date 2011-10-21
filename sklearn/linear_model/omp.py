@@ -263,7 +263,8 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute_gram=False,
     http://www.cs.technion.ac.il/~ronrubin/Publications/KSVX-OMP-v2.pdf
 
     """
-    X, y = map(np.asanyarray, (X, y))
+    X = np.asarray(X)
+    y = np.asarray(y)
     if y.ndim == 1:
         y = y[:, np.newaxis]
     if copy_X:
@@ -364,7 +365,8 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
     http://www.cs.technion.ac.il/~ronrubin/Publications/KSVX-OMP-v2.pdf
 
     """
-    Gram, Xy = map(np.asanyarray, (Gram, Xy))
+    Gram = np.asarray(Gram)
+    Xy = np.asarray(Xy)
     if Xy.ndim == 1:
         Xy = Xy[:, np.newaxis]
         if tol is not None:
