@@ -48,6 +48,9 @@ version 0.9:
     ``metrics.cluster.supervised``, along with ``metrics.cluster.unsupervised``
     which contains the Silhouette Coefficient. 
 
+  - The permutation_test_score function now behaves the same way as
+    cross_val_score (i.e. uses the mean score across the folds.)
+
 Changelog
 ---------
 
