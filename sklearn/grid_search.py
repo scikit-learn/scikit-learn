@@ -115,7 +115,8 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
             this_n_test_samples = X.shape[0]
         else:
             this_n_test_samples = len(X)
-
+    if verbose > 2:
+        msg += ", score=%f"%this_score
     if verbose > 1:
         end_msg = "%s -%s" % (msg,
                               logger.short_format_time(time.time() -
