@@ -39,7 +39,7 @@ def bench_scikit(X, Y):
 
     # start time
     tstart = datetime.now()
-    clf = SVC(kernel='rbf')
+    clf = SVC(kernel='rbf', gamma=1.)
     clf.fit(X, Y).predict(X)
     delta = (datetime.now() - tstart)
     # stop time
