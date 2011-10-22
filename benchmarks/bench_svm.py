@@ -26,7 +26,7 @@ svm_results = []
 mvpa_results = []
 shogun_libsvm_results = []
 
-mu_second = 0.0 + 10**6 # number of microseconds in a second
+mu_second = 0.0 + 10 ** 6  # number of microseconds in a second
 
 
 def bench_scikit(X, Y):
@@ -45,7 +45,7 @@ def bench_scikit(X, Y):
     delta = (datetime.now() - tstart)
     # stop time
 
-    scikit_results.append(delta.seconds + delta.microseconds/mu_second)
+    scikit_results.append(delta.seconds + delta.microseconds / mu_second)
 
 
 def bench_shogun_libsvm(X, Y):
@@ -66,7 +66,8 @@ def bench_shogun_libsvm(X, Y):
     svm.classify(features).get_labels()
 
     delta = (datetime.now() - tstart)
-    shogun_libsvm_results.append(delta.seconds + delta.microseconds / mu_second)
+    shogun_libsvm_results.append(delta.seconds
+            + delta.microseconds / mu_second)
 
 
 def bench_svm(X, Y):
@@ -85,13 +86,13 @@ def bench_svm(X, Y):
     tstart = datetime.now()
     problem = svmutil.svm_problem(Y1, X1)
     param = svmutil.svm_parameter()
-    param.svm_type=0
-    param.kernel_type=2
+    param.svm_type = 0
+    param.kernel_type = 2
     model = svmutil.svm_train(problem, param)
-    svmutil.svm_predict([0]*len(X1), X1, model)
+    svmutil.svm_predict([0] * len(X1), X1, model)
     delta = (datetime.now() - tstart)
     # stop time
-    svm_results.append(delta.seconds + delta.microseconds/mu_second)
+    svm_results.append(delta.seconds + delta.microseconds / mu_second)
 
 
 def bench_pymvpa(X, Y):
@@ -113,7 +114,7 @@ def bench_pymvpa(X, Y):
     delta = (datetime.now() - tstart)
 
     # stop time
-    mvpa_results.append(delta.seconds + delta.microseconds/mu_second)
+    mvpa_results.append(delta.seconds + delta.microseconds / mu_second)
 
 if __name__ == '__main__':
 
@@ -137,7 +138,7 @@ if __name__ == '__main__':
         bench_shogun_libsvm(X, Y)
 
     import pylab as pl
-    xx = range(0, n*step, step)
+    xx = range(0, n * step, step)
     pl.figure(1)
     pl.subplot(211)
     pl.title('SVM with varying number of samples')
@@ -148,7 +149,6 @@ if __name__ == '__main__':
     pl.legend()
     pl.xlabel('number of samples to classify')
     pl.ylabel('time (in microseconds)')
-
 
     # now do a bench where the number of points is fixed
     # and the variable is the number of dimensions
@@ -171,7 +171,7 @@ if __name__ == '__main__':
         print '============================================'
         dim += step
         X, Y = np.random.randn(100, dim), np.random.randn(100)
-        Y = (10*Y).astype(np.int)
+        Y = (10 * Y).astype(np.int)
         # make labels positive and continuing numbers
         Y = np.unique(Y, return_inverse=True)[1]
         bench_scikit(X, Y)
@@ -179,7 +179,7 @@ if __name__ == '__main__':
         bench_pymvpa(X, Y)
         bench_shogun_libsvm(X, Y)
 
-    xx = np.arange(start_dim, start_dim+n*step, step)
+    xx = np.arange(start_dim, start_dim + n * step, step)
     pl.subplot(212)
     pl.title('Classification in high dimensional spaces')
     pl.plot(xx, mvpa_results, 'g-', label='pymvpa')
