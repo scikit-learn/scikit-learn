@@ -106,6 +106,9 @@ if __name__ == '__main__':
         n_samples += step
         X = np.random.randn(n_samples, dim)
         Y = np.random.randn(n_samples)
+        Y = (10 * Y).astype(np.int)
+        # make labels positive and continuing numbers
+        Y = np.unique(Y, return_inverse=True)[1]
         bench_scikit(X, Y)
         bench_pymvpa(X, Y)
         bench_svm(X, Y)
@@ -144,6 +147,8 @@ if __name__ == '__main__':
         dim += step
         X, Y = np.random.randn(100, dim), np.random.randn(100)
         Y = (10*Y).astype(np.int)
+        # make labels positive and continuing numbers
+        Y = np.unique(Y, return_inverse=True)[1]
         bench_scikit(X, Y)
         bench_svm(X, Y)
         bench_pymvpa(X, Y)
