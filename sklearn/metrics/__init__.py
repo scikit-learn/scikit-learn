@@ -16,4 +16,6 @@ from .cluster import homogeneity_score
 from .cluster import completeness_score
 from .cluster import v_measure_score
 from .cluster import silhouette_score
+from .cluster import mutual_information_score
+from .cluster import ami_score
 from .pairwise import euclidean_distances, pairwise_distances, pairwise_kernels
