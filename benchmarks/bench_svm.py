@@ -3,6 +3,7 @@ To run this, you'll need to have installed.
 
   * pymvpa
   * libsvm and it's python bindings
+  * shogun-python-modular
   * scikit-learn (of course)
 
 Does two benchmarks
