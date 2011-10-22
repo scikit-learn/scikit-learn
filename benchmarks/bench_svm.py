@@ -24,6 +24,7 @@ from datetime import datetime
 scikit_results = []
 svm_results = []
 mvpa_results = []
+shogun_libsvm_results = []
 
 mu_second = 0.0 + 10**6 # number of microseconds in a second
 
@@ -45,6 +46,27 @@ def bench_scikit(X, Y):
     # stop time
 
     scikit_results.append(delta.seconds + delta.microseconds/mu_second)
+
+
+def bench_shogun_libsvm(X, Y):
+    from shogun.Features import RealFeatures, Labels
+    from shogun.Kernel import GaussianKernel
+    from shogun.Classifier import LibSVMMultiClass
+    features = RealFeatures(X.T.copy())
+    labels = Labels(Y.astype(np.float))
+
+    gc.collect()
+
+    tstart = datetime.now()
+    kernel = GaussianKernel(features, features, 1.)
+    C = 1
+    svm = LibSVMMultiClass(C, kernel, labels)
+    svm.train()
+
+    svm.classify(features).get_labels()
+
+    delta = (datetime.now() - tstart)
+    shogun_libsvm_results.append(delta.seconds + delta.microseconds / mu_second)
 
 
 def bench_svm(X, Y):
@@ -112,6 +134,7 @@ if __name__ == '__main__':
         bench_scikit(X, Y)
         bench_pymvpa(X, Y)
         bench_svm(X, Y)
+        bench_shogun_libsvm(X, Y)
 
     import pylab as pl
     xx = range(0, n*step, step)
@@ -121,6 +144,7 @@ if __name__ == '__main__':
     pl.plot(xx, mvpa_results, 'g-', label='pymvpa')
     pl.plot(xx, svm_results, 'r-', label='libsvm (ctypes binding)')
     pl.plot(xx, scikit_results, 'b-', label='scikit-learn')
+    pl.plot(xx, shogun_libsvm_results, 'y-', label='shogun-libsvm')
     pl.legend()
     pl.xlabel('number of samples to classify')
     pl.ylabel('time (in microseconds)')
@@ -131,6 +155,7 @@ if __name__ == '__main__':
     scikit_results = []
     svm_results = []
     mvpa_results = []
+    shogun_libsvm_results = []
     n = 10
     step = 500
     start_dim = 100
@@ -152,6 +177,7 @@ if __name__ == '__main__':
         bench_scikit(X, Y)
         bench_svm(X, Y)
         bench_pymvpa(X, Y)
+        bench_shogun_libsvm(X, Y)
 
     xx = np.arange(start_dim, start_dim+n*step, step)
     pl.subplot(212)
@@ -159,6 +185,7 @@ if __name__ == '__main__':
     pl.plot(xx, mvpa_results, 'g-', label='pymvpa')
     pl.plot(xx, svm_results, 'r-', label='libsvm (ctypes binding)')
     pl.plot(xx, scikit_results, 'b-', label='scikit-learn')
+    pl.plot(xx, shogun_libsvm_results, 'y-', label='shogun-libsvm')
     pl.legend()
     pl.xlabel('number of dimensions')
     pl.ylabel('time (in seconds)')
