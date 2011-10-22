@@ -805,12 +805,13 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, n_jobs=1,
 
 def _permutation_test_score(estimator, X, y, cv, score_func):
     """Auxilary function for permutation_test_score"""
-    avgscore = []
+    avg_score = []
     for train, test in cv:
-        avgscore.append(score_func(y[test],
-                                   estimator.fit(X[train],
-                                                 y[train]).predict(X[test])))
-    return np.mean(avgscore)
+        avg_score.append(score_func(y[test],
+                                    estimator.fit(X[train],
+                                                  y[train]).predict(X[test])))
+    return np.mean(avg_score)
+
 
 def _shuffle(y, labels, random_state):
     """Return a shuffled copy of y eventually shuffle among same labels."""
@@ -913,10 +914,11 @@ def permutation_test_score(estimator, X, y, score_func, cv=None,
         The scores obtained for each permutations.
 
     pvalue: float
-        The returned value equals p-value if `score_func` returns bigger numbers
-        for better scores (e.g., zero_one). If `score_func` is rather a loss
-        function (i.e. when lower is better such as with `mean_square_error`)
-        then this is actually the complement of the p-value:  1 - p-value.
+        The returned value equals p-value if `score_func` returns bigger
+        numbers for better scores (e.g., zero_one). If `score_func` is rather a
+        loss function (i.e. when lower is better such as with
+        `mean_square_error`) then this is actually the complement of the
+        p-value:  1 - p-value.
 
     References
     ----------
