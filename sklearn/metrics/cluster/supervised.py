@@ -539,8 +539,10 @@ def mutual_information_score(labels_true, labels_pred, contingency=None):
     pi /= np.sum(pi)
     pj = np.sum(contingency, axis=0)
     pj /= np.sum(pj)
-    mi = contingency * np.log(contingency / np.outer(pi, pj))
-    return np.sum(mi[np.isfinite(mi)])
+    outer = np.outer(pi, pj)
+    nnz = contingency != 0.0
+    mi = contingency[nnz] * np.log(contingency[nnz] / outer[nnz])
+    return mi.sum()
 
 
 def ami_score(labels_true, labels_pred):
@@ -584,14 +586,14 @@ def ami_score(labels_true, labels_pred):
     Examples
     --------
 
-    Perfect labelings are both homogeneous and complete, hence have score 1.0::
+    Perfect labelings are both homogeneous and complete, hence have
+    score 1.0::
 
       >>> from sklearn.metrics.cluster import ami_score
       >>> ami_score([0, 0, 1, 1], [0, 0, 1, 1])
       1.0
       >>> ami_score([0, 0, 1, 1], [1, 1, 0, 0])
       1.0
-
 
     If classes members are completly splitted accross different clusters,
     the assignment is totally in-complete, hence the AMI is null::
