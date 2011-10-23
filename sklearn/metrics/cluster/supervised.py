@@ -630,36 +630,52 @@ def expected_mutual_information(contingency, n_samples):
     N = n_samples
     a = np.sum(contingency, axis=1, dtype='int')
     b = np.sum(contingency, axis=0, dtype='int')
+    # While nijs[0] will never be used, having it simplifies the indexing.
+    nijs = np.arange(0, max(np.max(a), np.max(b)) + 1, dtype='float')
+    # Compute values that are used multiple times.
+    # term1 is nij / N
+    term1 = nijs / N
+    # term2 uses the outer product
+    ab_outer = np.outer(a, b)
+    # term2 uses N * nij
+    Nnij = N * nijs
+    # term3a (was np.multiply.reduce(range(a[i] - nij + 1, a[i] + 1)))
+    # term3 has a component: 1 / n!
+    term3e = 1. / factorial(nijs)
+    # numerator for term 3d
+    num3d = N - b + 1
     emi = 0
     for i in range(R):
         for j in range(C):
             start = int(max(a[i] + b[j] - N, 1))
             end = int(min(a[i], b[j]) + 1)
             for nij in range(start, end):
-                term1 = nij / float(N)
-                term2 = np.log(float(N * nij) / (a[i] * b[j]))
+                term2 = np.log(Nnij[nij] / ab_outer[i][j])
                 # a! / (a - n)!
-                term3a = np.multiply.reduce(range(a[i] - nij + 1, a[i] + 1))
+                term3a = np.multiply.reduce(np.arange(a[i] - nij + 1, a[i] + 1,
+                                                      dtype='int'))
                 # b! / (b - n)!
-                term3b = np.multiply.reduce(range(b[j] - nij + 1, b[j] + 1))
+                term3b = np.multiply.reduce(np.arange(b[j] - nij + 1, b[j] + 1,
+                                                      dtype='int'))
                 # (N - a)! / N!
-                t = np.multiply.reduce(range(N - a[i] + 1, N + 1))
+                t = np.multiply.reduce(np.arange(N - a[i] + 1, N + 1,
+                                                 dtype='int'))
                 if t == 0:
                     continue
                 term3c = 1. / t
                 # (N - b)! / (N - a - b - n)!
-                num3d = N - b[j] + 1
+                num3dj = num3d[j]
                 den3d = N - a[i] - b[j] + nij + 1
-                if num3d > den3d:
-                    term3d = np.multiply.reduce(range(den3d, num3d))
+                if num3dj > den3d:
+                    term3d = np.multiply.reduce(np.arange(den3d, num3dj,
+                                                          dtype='int'))
                 else:
-                    term3d = np.multiply.reduce(range(num3d, den3d))
+                    term3d = np.multiply.reduce(np.arange(num3dj, den3d,
+                                                          dtype='int'))
                     term3d = 1. / term3d
-                # 1 / n!
-                term3e = 1. / factorial(nij)
                 # Add the product of all terms
-                emi += (term1 * term2 * term3a * term3b
-                        * term3c * term3d * term3e)
+                emi += (term1[nij] * term2 * term3a * term3b
+                        * term3c * term3d * term3e[nij])
     return emi
 
 

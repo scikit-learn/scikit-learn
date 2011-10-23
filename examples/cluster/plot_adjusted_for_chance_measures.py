@@ -59,7 +59,8 @@ def uniform_labelings_scores(score_func, n_samples, n_clusters_range,
 score_funcs = [
     metrics.adjusted_rand_score,
     metrics.v_measure_score,
-    metrics.ami_score
+    metrics.ami_score,
+    metrics.mutual_information_score,
 ]
 
 # 2 independent random clusterings with equal cluster number
@@ -79,7 +80,8 @@ for score_func in score_funcs:
     scores = uniform_labelings_scores(score_func, n_samples, n_clusters_range)
     print "done in %0.3fs" % (time() - t0)
     plots.append(pl.errorbar(
-        n_clusters_range, scores.mean(axis=1), scores.std(axis=1)))
+    #    n_clusters_range, scores.mean(axis=1), scores.std(axis=1)))
+        n_clusters_range, np.median(scores, axis=1), scores.std(axis=1)))
     names.append(score_func.__name__)
 
 pl.title("Clustering measures for 2 random uniform labelings\n"
