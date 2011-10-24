@@ -19,8 +19,11 @@ def repeat(f):
     return wrapper
 
 
-classification_params = {'loss': 'deviance', 'n_iter': 100,
-                         'min_split': 5, 'max_depth': 1,
+np.seterr(invalid='print', under='print', divide='print', over='print')
+
+
+classification_params = {'loss': 'bernoulli', 'n_iter': 100,
+                         'min_split': 1, 'max_depth': 1,
                          'learn_rate': 1.0, 'subsample': 1.0}
 
 
@@ -59,13 +62,13 @@ def random_gaussian_learning_curve(random_state=None):
     rs = check_random_state(random_state)
     shape = (12000, 10)
     X = rs.normal(size=shape).reshape(shape).astype(np.float32)
-    y = ((X ** 2.0).sum(axis=1) > 9.34).astype(np.int)
-    y[y == 0] = -1
+    y = ((X ** 2.0).sum(axis=1) > 9.34).astype(np.float64)
+    #y[y == 0] = -1
 
     X_train, X_test = X[:2000], X[2000:]
     y_train, y_test = y[:2000], y[2000:]
 
-    n_iter = 3000
+    n_iter = 2000
     max_depth = 1
     
     deviance = np.zeros((n_iter,), dtype=np.float64)
@@ -77,21 +80,22 @@ def random_gaussian_learning_curve(random_state=None):
             y_pred[:] = clf.init.predict(X_test)
         else:
             y_pred[:] = clf._predict(X_test, old_pred=y_pred)
-        deviance[i] = np.mean(clf.loss(y_test, y_pred))
-        tmp = 2 * (1.0 / (1.0 + np.exp(-2.0 * y_pred)) > 0.5) - 1
+        deviance[i] = clf.loss(y_test, y_pred)
+        tmp = ((1.0 / (1.0 + np.exp(-y_pred))) >= 0.5).astype(np.float64)
         error_rate[i] = np.mean(tmp != y_test)
 
-    gbrt = GradientBoostingClassifier(n_iter=n_iter, min_split=1,
+    gbrt = GradientBoostingClassifier(loss='bernoulli', n_iter=n_iter, min_split=1,
                                       max_depth=max_depth, learn_rate=1.0,
                                       subsample=1.0)
     gbrt.fit(X_train, y_train, monitor=monitor)
     n = deviance.shape[0]
+    print deviance[:5]
     pl.subplot(122)
     pl.plot(np.arange(n), error_rate, "r-", label="No shrinkage")
     pl.subplot(121)
     pl.plot(np.arange(n), deviance, "r-", label="No shrinkage")
 
-    gbrt = GradientBoostingClassifier(n_iter=n_iter, min_split=1,
+    gbrt = GradientBoostingClassifier(loss='bernoulli', n_iter=n_iter, min_split=1,
                                       max_depth=max_depth, learn_rate=0.2,
                                       subsample=1.0)
     gbrt.fit(X_train, y_train, monitor=monitor)
@@ -110,7 +114,7 @@ def random_gaussian_learning_curve(random_state=None):
 
     pl.subplot(121)
     pl.title("Stumps Deviance")
-    pl.xticks(np.linspace(0, n_iter, 7))
+    pl.xticks(np.linspace(0, n_iter, 5))
     pl.yticks(np.linspace(0.0, 2.0, 5))
     pl.xlabel("Boosting Iterations")
     pl.ylabel("Test Set Deviance")
@@ -235,7 +239,7 @@ if __name__ == "__main__":
     print "Madelon", bench_madelon()
     print "Arcene", bench_arcene()
 
-    print "Boston", bench_boston()
-    print "Friedman#1", bench_friedman1()
-    print "Friedman#2", bench_friedman2()
-    print "Friedman#3", bench_friedman3()
+##     print "Boston", bench_boston()
+##     print "Friedman#1", bench_friedman1()
+##     print "Friedman#2", bench_friedman2()
+##     print "Friedman#3", bench_friedman3()

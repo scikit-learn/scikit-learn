@@ -76,6 +76,22 @@ class MeanPredictor(object):
         return y
 
 
+class ClassPrior2Predictor(object):
+    """A simple initial estimator that predicts the mean
+    of the training targets.
+    """
+
+    prior = None
+
+    def fit(self, X, y):
+        self.prior = np.log(y.sum() / float(y.shape[0] - y.sum()))
+
+    def predict(self, X):
+        y = np.empty((X.shape[0],), dtype=np.float64)
+        y.fill(self.prior)
+        return y
+
+
 class ClassPriorPredictor(object):
     """A simple initial estimator that predicts the mean
     of the training targets.
@@ -177,6 +193,32 @@ class LeastAbsoluteError(LossFunction):
 ##                                              pred.take(node.sample_mask, axis=0)))
 
 
+class BernoulliDeviance(LossFunction):
+
+    def init_estimator(self):
+        return ClassPrior2Predictor()
+
+    def __call__(self, y, pred):
+        """Compute the deviance (= negative log-likelihood). """
+        return -2.0 * np.sum((y * pred) - np.log(1.0 + np.exp(pred))) / y.shape[0]
+
+    def negative_gradient(self, y, pred):
+        return y - (1.0 / (1.0 + np.exp(-pred)))
+
+    def _update_terminal_region(self, node, X, y, residual, pred):
+        """Make a single Newton-Raphson step. """
+        residual = residual.take(node.sample_mask, axis=0)
+        y = y.take(node.sample_mask, axis=0)
+
+        node.value = np.asanyarray(residual.sum() / \
+                                   np.sum((y - residual) * (1.0 - y + residual)),
+                                   dtype=np.float64)
+        
+        # FIXME free mem - rename `sample_mask` since its actually an index arr
+        del node.sample_mask
+        node.sample_mask = None
+
+
 class BinomialDeviance(LossFunction):
 
     def init_estimator(self):
@@ -193,16 +235,17 @@ class BinomialDeviance(LossFunction):
         targets = residual.take(node.sample_mask, axis=0)
         abs_targets = np.abs(targets)
         node.value = np.asanyarray(targets.sum() / np.sum(abs_targets * \
-                                                          (2.5 - abs_targets)))
+                                                          (2.00000001 - abs_targets)))
         
-        # FIXME free mem - maybe we should use index arrays instead of a mask
+        # FIXME free mem - rename `sample_mask` since its actually an index arr
         del node.sample_mask
         node.sample_mask = None
 
 
 LOSS_FUNCTIONS = {'ls': LeastSquaresError,
                   'lad': LeastAbsoluteError,
-                  'deviance': BinomialDeviance}
+                  'deviance': BinomialDeviance,
+                  'bernoulli': BernoulliDeviance}
 
 
 class BaseGradientBoosting(BaseEstimator):
@@ -293,6 +336,7 @@ class BaseGradientBoosting(BaseEstimator):
         # perform boosting iterations
         for i in xrange(self.n_iter):
             t0 = time()
+
             # subsampling
             sample_mask = np.random.rand(n_samples) > (1.0 - self.subsample)
 
@@ -313,7 +357,7 @@ class BaseGradientBoosting(BaseEstimator):
             #print "Iteration %d - build_tree - in %fs" % (i, time() - t0)
             
             
-            assert tree.is_leaf == False
+            #assert tree.is_leaf == False
             
             loss.update_terminal_regions(tree, X, y, residual, y_pred)
             #print "Iteration %d - update - in %fs" % (i, time() - t0)
@@ -445,7 +489,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         if self.classes.shape[0] != 2:
             raise ValueError("only binary classification supported")
         y = np.searchsorted(self.classes, y)
-        y[y == 0] = -1
+        #y[y == 0] = -1  ## FIXME
         super(GradientBoostingClassifier, self).fit(X, y, monitor=monitor)
 
     def predict(self, X):
@@ -458,9 +502,9 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         if len(self.trees) == 0:
             raise ValueError("Estimator not fitted, " \
                              "call `fit` before `predict`.")
-        y = self._predict(X)
+        f = self._predict(X)
         P = np.ones((X.shape[0], 2), dtype=np.float64)
-        P[:, 1] = 1.0 / (1.0 + np.exp(-2.0 * y))
+        P[:, 1] = 1.0 / (1.0 + np.exp(-f))
         P[:, 0] -= P[:,1]
         return P
 
