@@ -21,7 +21,6 @@ ctypedef np.int8_t BOOL_t
 
 cdef extern from "math.h":
     cdef extern double log(double x)
-    cdef extern double pow(double base, double exponent)
 
 cdef extern from "float.h":
     cdef extern double DBL_MAX
@@ -359,9 +358,9 @@ cdef class RegressionCriterion(Criterion):
     cdef int n_right
     cdef int n_left
 
-    cdef double mean_left
-    cdef double mean_right
-    cdef double mean_init
+    cdef double sum_left
+    cdef double sum_right
+    cdef double sum_init
 
     cdef double sq_sum_right
     cdef double sq_sum_left
@@ -374,9 +373,9 @@ cdef class RegressionCriterion(Criterion):
         self.n_samples = 0
         self.n_left = 0
         self.n_right = 0
-        self.mean_left = 0.0
-        self.mean_right = 0.0
-        self.mean_init = 0.0
+        self.sum_left = 0.0
+        self.sum_right = 0.0
+        self.sum_init = 0.0
         self.sq_sum_right = 0.0
         self.sq_sum_left = 0.0
         self.sq_sum_init = 0.0
@@ -386,11 +385,11 @@ cdef class RegressionCriterion(Criterion):
     cdef void init(self, DOUBLE_t *y, BOOL_t *sample_mask, int n_samples,
                    int n_total_samples):
         """Initialise the criterion class; assume all samples
-           are in the right branch and store the mean and squared
-           sum in `self.mean_init` and `self.sq_sum_init`. """
-        self.mean_left = 0.0
-        self.mean_right = 0.0
-        self.mean_init = 0.0
+           are in the right branch and store the sum and squared
+           sum in `self.sum_init` and `self.sq_sum_init`. """
+        self.sum_left = 0.0
+        self.sum_right = 0.0
+        self.sum_init = 0.0
         self.sq_sum_right = 0.0
         self.sq_sum_left = 0.0
         self.sq_sum_init = 0.0
@@ -403,9 +402,7 @@ cdef class RegressionCriterion(Criterion):
             if sample_mask[j] == 0:
                 continue
             self.sq_sum_init += (y[j] * y[j])
-            self.mean_init += y[j]
-
-        self.mean_init = self.mean_init / <double>self.n_samples
+            self.sum_init += y[j]
 
         self.reset()
 
@@ -418,13 +415,13 @@ cdef class RegressionCriterion(Criterion):
         """
         self.n_right = self.n_samples
         self.n_left = 0
-        self.mean_right = self.mean_init
-        self.mean_left = 0.0
+        self.sum_right = self.sum_init
+        self.sum_left = 0.0
         self.sq_sum_right = self.sq_sum_init
         self.sq_sum_left = 0.0
         self.var_left = 0.0
         self.var_right = self.sq_sum_right - \
-            self.n_samples * (self.mean_right * self.mean_right)
+                         (self.sum_right * self.sum_right) / self.n_samples
 
     cdef int update(self, int a, int b, DOUBLE_t *y, int *X_argsorted_i,
                     BOOL_t *sample_mask):
@@ -447,21 +444,28 @@ cdef class RegressionCriterion(Criterion):
             self.sq_sum_left = self.sq_sum_left + (y_idx * y_idx)
             self.sq_sum_right = self.sq_sum_right - (y_idx * y_idx)
 
-            self.mean_left = (((self.n_left - 1) * self.mean_left) + y_idx) / \
-                <double>(self.n_left)
-            self.mean_right = (((self.n_right + 1) * self.mean_right) - y_idx) / \
-                <double>(self.n_right)
+            # we have numerical issues with sq_sum_right since we subtract
+            # a small number from a potentially large one.
+            if self.sq_sum_right < 0.0:
+                self.sq_sum_right = 0.0
 
-            self.var_left = self.sq_sum_left - \
-                self.n_left * (self.mean_left * self.mean_left)
-            self.var_right = self.sq_sum_right - \
-                self.n_right * (self.mean_right * self.mean_right)
+            self.sum_left = self.sum_left + y_idx
+            self.sum_right = self.sum_right - y_idx
 
-            # sometimes self.var_right is smaller than 0.0 - precision issue or bug?
-            #if self.var_right < -0.000000001:
-            #    print "var_right: %.10f" % self.var_right
-            #    print "n_l:%d, n_r:%d" % (self.n_left, self.n_right)
-            #    print "\mu_l:%.8f, \mu_r:%.8f" % (self.mean_left, self.mean_right)
+            if self.n_left > 1:
+                self.var_left = self.sq_sum_left - \
+                                (self.sum_left * self.sum_left) / self.n_left
+                if self.var_left < 0.0:
+                    self.var_left = 0.0
+            else:
+                self.var_left = 0.0
+            if self.n_right > 1:
+                self.var_right = self.sq_sum_right - \
+                                 (self.sum_right * self.sum_right) / self.n_right
+                if self.var_right < 0.0:
+                    self.var_right = 0.0
+            else:
+                self.var_right = 0.0
             
         return self.n_left
 
@@ -478,8 +482,6 @@ cdef class MSE(RegressionCriterion):
     cdef double eval(self):
         assert (self.n_left + self.n_right) == self.n_samples
         return self.var_left + self.var_right
-        #return (self.n_left / <double>self.n_samples) * self.var_left + \
-        #       (self.n_right / <double>self.n_samples) * self.var_right
 
 
 ################################################################################
@@ -592,7 +594,7 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
     if initial_error == 0:  # break early if the node is pure
         return best_i, best_t, initial_error, initial_error
     best_error = initial_error
-    # print 'at init, best error = ', best_error
+
 
     for i from 0 <= i < n_features:
         if feature_mask[i] == 0:
