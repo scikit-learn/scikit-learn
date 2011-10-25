@@ -38,19 +38,18 @@ def empirical_covariance(X, assume_centered=False):
     Parameters
     ----------
     X: 2D ndarray, shape (n_samples, n_features)
-      Data from which to compute the covariance estimate
+        Data from which to compute the covariance estimate
 
     assume_centered: Boolean
-      If True, data are not centered before computation.
-      Usefull to work with data whose mean is significantly equal to
-      zero but is not exactly zero.
-      If False, data are centered before computation.
+        If True, data are not centered before computation.
+        Useful when working with data whose mean is almost, but not exactly
+        zero.
+        If False, data are centered before computation.
 
     Returns
     -------
     covariance: 2D ndarray, shape (n_features, n_features)
-      Empirical covariance (Maximum Likelihood Estimator)
-
+        Empirical covariance (Maximum Likelihood Estimator)
 
     """
     X = np.asanyarray(X)
@@ -79,7 +78,7 @@ class EmpiricalCovariance(BaseEstimator):
         Estimated covariance matrix
 
     `precision_` : 2D ndarray, shape (n_features, n_features)
-        Estimated pseudo inverse matrix.
+        Estimated pseudo-inverse matrix.
         (stored only if store_precision is True)
 
     """
@@ -95,8 +94,8 @@ class EmpiricalCovariance(BaseEstimator):
         Params
         ------
         covariance: 2D ndarray, shape (n_features, n_features)
-          Estimated covariance matrix to be stored, and from which
-          the precision is computed.
+            Estimated covariance matrix to be stored, and from which precision 
+            is computed.
 
         """
         covariance = np.atleast_2d(covariance)
@@ -109,20 +108,20 @@ class EmpiricalCovariance(BaseEstimator):
             self.precision_ = None
 
     def fit(self, X, assume_centered=False):
-        """ Fits the Maximum Likelihood Estimator covariance model
+        """Fits the Maximum Likelihood Estimator covariance model
         according to the given training data and parameters.
 
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
-          Training data, where n_samples is the number of samples
-          and n_features is the number of features.
+            Training data, where n_samples is the number of samples and
+            n_features is the number of features.
 
         assume_centered: Boolean
-          If True, data are not centered before computation.
-          Usefull to work with data whose mean is significantly equal to
-          zero but is not exactly zero.
-          If False, data are centered before computation.
+            If True, data are not centered before computation.
+            Useful when working with data whose mean is almost, but not exactly
+            zero.
+            If False, data are centered before computation.
 
         Returns
         -------
@@ -142,15 +141,14 @@ class EmpiricalCovariance(BaseEstimator):
         Parameters
         ----------
         X_test : array-like, shape = [n_samples, n_features]
-          Test data of which we compute the likelihood,
-          where n_samples is the number of samples and n_features is
-          the number of features.
+            Test data of which we compute the likelihood, where n_samples is
+            the number of samples and n_features is the number of features.
 
         Returns
         -------
         res: float
-          The likelihood of the data set with self.covariance_ as an estimator
-          of its covariance matrix.
+            The likelihood of the data set with self.covariance_ as an estimator
+            of its covariance matrix.
 
         """
         # compute empirical covariance of the test set
@@ -172,19 +170,19 @@ class EmpiricalCovariance(BaseEstimator):
         Parameters
         ----------
         comp_cov: array-like, shape = [n_features, n_features]
-          The covariance which to be compared to.
+            The covariance to compare with.
         norm: str
-          The type of norm used to compute the error. Available error types:
-          - 'frobenius' (default): sqrt(tr(A^t.A))
-          - 'spectral': sqrt(max(eigenvalues(A^t.A))
-          where A is the error (comp_cov - self.covariance_).
+            The type of norm used to compute the error. Available error types:
+            - 'frobenius' (default): sqrt(tr(A^t.A))
+            - 'spectral': sqrt(max(eigenvalues(A^t.A))
+            where A is the error (comp_cov - self.covariance_).
         scaling: bool
-          If True (default), the squared error norm is divided by n_features
-          If False, the squared error norm is not rescaled
+            If True (default), the squared error norm is divided by n_features.
+            If False, the squared error norm is not rescaled.
         squared: bool
-          Whether to compute the squared error norm or the error norm.
-          If True (default), the squared error norm is returned.
-          If False, the error norm is returned.
+            Whether to compute the squared error norm or the error norm.
+            If True (default), the squared error norm is returned.
+            If False, the error norm is returned.
 
         Returns
         -------
@@ -216,19 +214,18 @@ class EmpiricalCovariance(BaseEstimator):
     def mahalanobis(self, observations):
         """Computes the mahalanobis distances of given observations.
 
-        The provided observations are assumed to be centered. One may
-        want to center it using a location estimate of its choice
-        first.
+        The provided observations are assumed to be centered. One may want to
+        center them using a location estimate first.
 
         Parameters
         ----------
         observations: array-like, shape = [n_observations, n_features]
-          The observations, the Mahalanobis distances of the which we compute.
+            The observations, the Mahalanobis distances of the which we compute.
 
         Returns
         -------
-        mahalanobis_distance: 1D ndarray, shape = [n_observations,]
-          Mahalanobis distances of the observations.
+        mahalanobis_distance: array, shape = [n_observations,]
+            Mahalanobis distances of the observations.
 
         """
         # get precision
