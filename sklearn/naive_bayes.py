@@ -61,7 +61,7 @@ class BaseNB(BaseEstimator, ClassifierMixin):
             Predicted target values for X
         """
         jll = self._joint_log_likelihood(X)
-        y_pred = self.unique_y[np.argmax(jll, axis=1)]
+        y_pred = self._classes[np.argmax(jll, axis=1)]
         return y_pred
 
     def predict_log_proba(self, X):
@@ -173,7 +173,7 @@ class GaussianNB(BaseNB):
         X = np.asarray(X)
         y = np.asarray(y)
 
-        self.unique_y = unique_y = np.unique(y)
+        self._classes = unique_y = np.unique(y)
         n_classes = unique_y.shape[0]
         _, n_features = X.shape
 
@@ -189,7 +189,7 @@ class GaussianNB(BaseNB):
     def _joint_log_likelihood(self, X):
         X = array2d(X)
         joint_log_likelihood = []
-        for i in xrange(np.size(self.unique_y)):
+        for i in xrange(np.size(self._classes)):
             jointi = np.log(self.class_prior[i])
             n_ij = - 0.5 * np.sum(np.log(np.pi * self.sigma[i, :]))
             n_ij -= 0.5 * np.sum(((X - self.theta[i, :]) ** 2) / \
@@ -208,7 +208,7 @@ class BaseDiscreteNB(BaseNB):
     _joint_log_likelihood(X) as per BaseNB
     """
 
-    def fit(self, X, y, class_prior=None):
+    def fit(self, X, y, sample_weight=None, class_prior=None):
         """Fit Naive Bayes classifier according to X, y
 
         Parameters
@@ -219,6 +219,9 @@ class BaseDiscreteNB(BaseNB):
 
         y : array-like, shape = [n_samples]
             Target values.
+
+        sample_weight : array-like, shape = [n_samples], optional
+            Weights applied to individual samples (1. for unweighted).
 
         class_prior : array, shape [n_classes]
             Custom prior probability per class.
@@ -239,28 +242,32 @@ class BaseDiscreteNB(BaseNB):
                 masks (use `indices=True` in CV)."
             raise ValueError(msg)
 
-        self.unique_y, inv_y_ind = unique(y, return_inverse=True)
-        n_classes = self.unique_y.size
+        self._classes, inv_y_ind = unique(y, return_inverse=True)
+        n_classes = self._classes.size
+
+        Y = LabelBinarizer().fit_transform(y)
+        if Y.shape[1] == 1:
+            Y = np.concatenate((1 - Y, Y), axis=1)
+
+        if sample_weight is not None:
+            Y *= array2d(sample_weight).T
 
         if class_prior:
             assert len(class_prior) == n_classes, \
                    'Number of priors must match number of classs'
             self.class_log_prior_ = np.log(class_prior)
         elif self.fit_prior:
-            y_count = np.bincount(inv_y_ind)
-            self.class_log_prior_ = np.log(y_count) - np.log(len(y))
+            # empirical prior, with sample_weight taken into account
+            y_freq = Y.sum(axis=0)
+            self.class_log_prior_ = np.log(y_freq) - np.log(y_freq.sum())
         else:
             self.class_log_prior_ = np.zeros(n_classes) - np.log(n_classes)
-
-        Y = LabelBinarizer().fit_transform(y)
-        if Y.shape[1] == 1:
-            Y = np.concatenate((1 - Y, Y), axis=1)
 
         N_c, N_c_i = self._count(X, Y)
 
         self.feature_log_prob_ = (np.log(N_c_i + self.alpha)
-                    - np.log(N_c.reshape(-1, 1)
-                           + self.alpha * X.shape[1]))
+                                - np.log(N_c.reshape(-1, 1)
+                                       + self.alpha * X.shape[1]))
 
         return self
 
