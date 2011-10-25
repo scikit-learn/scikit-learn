@@ -15,8 +15,7 @@ from scipy import linalg, interpolate
 from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
-from ..utils import arrayfuncs
-from ..utils import deprecated
+from ..utils import array2d, arrayfuncs, deprecated
 from ..cross_validation import check_cv
 from ..externals.joblib import Parallel, delayed
 
@@ -402,9 +401,8 @@ class Lars(LinearModel):
         self : object
             returns an instance of self.
         """
-
-        X = np.atleast_2d(X)
-        y = np.atleast_1d(y)
+        X = array2d(X)
+        y = np.asarray(y)
 
         X, y, X_mean, y_mean, X_std = self._center_data(X, y,
                                                         self.fit_intercept,
@@ -702,7 +700,7 @@ class LarsCV(LARS):
         self : object
             returns an instance of self.
         """
-        X = np.asanyarray(X)
+        X = np.asarray(X)
 
         n_samples, n_features = X.shape
         # init cross-validation generator
@@ -941,8 +939,8 @@ class LassoLarsIC(LassoLars):
         self : object
             returns an instance of self.
         """
-        X = np.atleast_2d(X)
-        y = np.atleast_1d(y)
+        X = array2d(X)
+        y = np.asarray(y)
 
         X, y, Xmean, ymean, Xstd = LinearModel._center_data(X, y,
                                                     self.fit_intercept,

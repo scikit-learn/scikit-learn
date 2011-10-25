@@ -12,6 +12,7 @@ from scipy import linalg
 from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
+from ..utils import array2d
 from ..utils.arrayfuncs import solve_triangular
 
 premature = """ Orthogonal matching pursuit ended prematurely due to linear
@@ -263,7 +264,8 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute_gram=False,
     http://www.cs.technion.ac.il/~ronrubin/Publications/KSVX-OMP-v2.pdf
 
     """
-    X, y = map(np.asanyarray, (X, y))
+    X = np.asarray(X)
+    y = np.asarray(y)
     if y.ndim == 1:
         y = y[:, np.newaxis]
     if copy_X:
@@ -364,7 +366,8 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
     http://www.cs.technion.ac.il/~ronrubin/Publications/KSVX-OMP-v2.pdf
 
     """
-    Gram, Xy = map(np.asanyarray, (Gram, Xy))
+    Gram = np.asarray(Gram)
+    Xy = np.asarray(Xy)
     if Xy.ndim == 1:
         Xy = Xy[:, np.newaxis]
         if tol is not None:
@@ -499,8 +502,8 @@ class OrthogonalMatchingPursuit(LinearModel):
         self: object
             returns an instance of self.
         """
-        X = np.atleast_2d(X)
-        y = np.atleast_1d(y)
+        X = array2d(X)
+        y = np.asarray(y)
         n_features = X.shape[1]
 
         X, y, X_mean, y_mean, X_std = self._center_data(X, y,
@@ -512,7 +515,7 @@ class OrthogonalMatchingPursuit(LinearModel):
             self.n_nonzero_coefs = int(0.1 * n_features)
 
         if Gram is not None:
-            Gram = np.atleast_2d(Gram)
+            Gram = array2d(Gram)
 
             if self.copy_Gram:
                 copy_Gram = False

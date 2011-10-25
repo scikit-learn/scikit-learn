@@ -499,8 +499,8 @@ class KMeans(BaseEstimator):
     def _check_data(self, X):
         """Verify that the number of samples given is larger than k"""
         if sp.issparse(X):
-            raise ValueError("K-Means does not support sparse input matrices.")
-        X = np.asanyarray(X)
+            raise TypeError("K-Means does not support sparse input matrices.")
+        X = np.asarray(X)
         if X.shape[0] < self.k:
             raise ValueError("n_samples=%d should be >= k=%d" % (
                 X.shape[0], self.k))

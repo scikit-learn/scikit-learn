@@ -25,7 +25,7 @@ from scipy.sparse import issparse
 
 from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize, LabelBinarizer
-from .utils import safe_asanyarray, atleast2d_or_csr
+from .utils import array2d, atleast2d_or_csr, safe_asarray
 from .utils.extmath import safe_sparse_dot, logsum
 from .utils.fixes import unique
 
@@ -170,8 +170,8 @@ class GaussianNB(BaseNB):
             Returns self.
         """
 
-        X = np.asanyarray(X)
-        y = np.asanyarray(y)
+        X = np.asarray(X)
+        y = np.asarray(y)
 
         self.unique_y = unique_y = np.unique(y)
         n_classes = unique_y.shape[0]
@@ -187,7 +187,7 @@ class GaussianNB(BaseNB):
         return self
 
     def _joint_log_likelihood(self, X):
-        X = np.atleast_2d(X)
+        X = array2d(X)
         joint_log_likelihood = []
         for i in xrange(np.size(self.unique_y)):
             jointi = np.log(self.class_prior[i])
@@ -230,7 +230,7 @@ class BaseDiscreteNB(BaseNB):
             Returns self.
         """
         X = atleast2d_or_csr(X)
-        y = safe_asanyarray(y)
+        y = safe_asarray(y)
 
         if X.shape[0] != y.shape[0]:
             msg = "X and y have incompatible shapes."
