@@ -3,7 +3,7 @@ from numpy.testing import assert_array_almost_equal
 from sklearn.utils.graph_shortest_path import graph_shortest_path
 
 
-def FloydWarshallSlow(graph, directed=False):
+def floyd_warshall_slow(graph, directed=False):
     N = graph.shape[0]
 
     #set nonzero entries to infinity
@@ -43,22 +43,22 @@ def generate_graph(N=20):
     return dist_matrix
 
 
-def test_FloydWarshall():
+def test_floyd_warshall():
     dist_matrix = generate_graph(20)
 
     for directed in (True, False):
         graph_FW = graph_shortest_path(dist_matrix, directed, 'FW')
-        graph_py = FloydWarshallSlow(dist_matrix.copy(), directed)
+        graph_py = floyd_warshall_slow(dist_matrix.copy(), directed)
 
         assert_array_almost_equal(graph_FW, graph_py)
 
 
-def test_Dijkstra():
+def test_dijkstra():
     dist_matrix = generate_graph(20)
 
     for directed in (True, False):
         graph_D = graph_shortest_path(dist_matrix, directed, 'D')
-        graph_py = FloydWarshallSlow(dist_matrix.copy(), directed)
+        graph_py = floyd_warshall_slow(dist_matrix.copy(), directed)
 
         assert_array_almost_equal(graph_D, graph_py)
 
