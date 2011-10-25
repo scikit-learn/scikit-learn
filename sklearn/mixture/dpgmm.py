@@ -281,7 +281,7 @@ class DPGMM(GMM):
             obs = self._X
         else:
             z = np.zeros((obs.shape[0], self.n_components))
-        obs = np.asanyarray(obs)
+        obs = np.asarray(obs)
         sd = digamma(self._gamma.T[1] + self._gamma.T[2])
         dgamma1 = digamma(self._gamma.T[1]) - sd
         dgamma2 = np.zeros(self.n_components)
@@ -548,7 +548,7 @@ class DPGMM(GMM):
 
         ## initialization step
 
-        self._X = np.asanyarray(X)
+        self._X = np.asarray(X)
         if hasattr(self, 'n_features') and self.n_features != self._X.shape[1]:
             raise ValueError('Unexpected number of dimensions, got %s but '
                              'expected %s' % (self._X.shape[1],
@@ -749,7 +749,7 @@ class VBGMM(DPGMM):
             obs = self._X
         else:
             z = np.zeros((obs.shape[0], self.n_components))
-        obs = np.asanyarray(obs)
+        obs = np.asarray(obs)
         p = np.zeros(self.n_components)
         bound = np.zeros(obs.shape[0])
         dg = digamma(self._gamma) - digamma(np.sum(self._gamma))

@@ -118,9 +118,8 @@ class ElasticNet(LinearModel):
         To avoid memory re-allocation it is advised to allocate the
         initial data in memory directly using that format.
         """
-        X = np.asanyarray(X, dtype=np.float64)
-        y = np.asanyarray(y, dtype=np.float64)
         X = as_float_array(X, self.copy_X)
+        y = np.asarray(y, dtype=np.float64)
 
         n_samples, n_features = X.shape
 
@@ -481,7 +480,7 @@ class LinearModelCV(LinearModel):
 
         """
         X = np.asfortranarray(X, dtype=np.float64)
-        y = np.asanyarray(y, dtype=np.float64)
+        y = np.asarray(y, dtype=np.float64)
 
         # All LinearModelCV parameters except 'cv' are acceptable
         path_params = self._get_params()

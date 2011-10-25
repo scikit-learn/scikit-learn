@@ -142,8 +142,8 @@ class BayesianRidge(LinearModel):
         -------
         self : returns an instance of self.
         """
-        X = np.asanyarray(X, dtype=np.float)
-        y = np.asanyarray(y, dtype=np.float)
+        X = np.asarray(X, dtype=np.float)
+        y = np.asarray(y, dtype=np.float)
         X, y, X_mean, y_mean, X_std = self._center_data(X, y,
                 self.fit_intercept, self.normalize, self.copy_X)
         n_samples, n_features = X.shape
@@ -367,8 +367,8 @@ class ARDRegression(LinearModel):
         self : returns an instance of self.
         """
 
-        X = np.asanyarray(X, dtype=np.float)
-        y = np.asanyarray(y, dtype=np.float)
+        X = np.asarray(X, dtype=np.float)
+        y = np.asarray(y, dtype=np.float)
 
         n_samples, n_features = X.shape
         coef_ = np.zeros(n_features)

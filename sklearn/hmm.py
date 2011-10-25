@@ -126,7 +126,7 @@ class _BaseHMM(BaseEstimator):
         score : Compute the log probability under the model
         decode : Find most likely state sequence corresponding to a `obs`
         """
-        obs = np.asanyarray(obs)
+        obs = np.asarray(obs)
         framelogprob = self._compute_log_likelihood(obs)
         logprob, fwdlattice = self._do_forward_pass(framelogprob, maxrank,
                                                     beamlogprob)
@@ -170,7 +170,7 @@ class _BaseHMM(BaseEstimator):
         eval : Compute the log probability under the model and posteriors
         decode : Find most likely state sequence corresponding to a `obs`
         """
-        obs = np.asanyarray(obs)
+        obs = np.asarray(obs)
         framelogprob = self._compute_log_likelihood(obs)
         logprob, fwdlattice = self._do_forward_pass(framelogprob, maxrank,
                                                     beamlogprob)
@@ -208,7 +208,7 @@ class _BaseHMM(BaseEstimator):
         eval : Compute the log probability under the model and posteriors
         score : Compute the log probability under the model
         """
-        obs = np.asanyarray(obs)
+        obs = np.asarray(obs)
         framelogprob = self._compute_log_likelihood(obs)
         logprob, state_sequence = self._do_viterbi_pass(framelogprob, maxrank,
                                                         beamlogprob)
@@ -380,7 +380,7 @@ class _BaseHMM(BaseEstimator):
         if not np.allclose(np.sum(startprob), 1.0):
             raise ValueError('startprob must sum to 1.0')
 
-        self._log_startprob = np.log(np.asanyarray(startprob).copy())
+        self._log_startprob = np.log(np.asarray(startprob).copy())
 
     startprob = property(_get_startprob, _set_startprob)
 
@@ -389,12 +389,12 @@ class _BaseHMM(BaseEstimator):
         return np.exp(self._log_transmat)
 
     def _set_transmat(self, transmat):
-        if np.asanyarray(transmat).shape != (self.n_components, self.n_components):
+        if np.asarray(transmat).shape != (self.n_components, self.n_components):
             raise ValueError('transmat must have shape (n_components, n_components)')
         if not np.all(np.allclose(np.sum(transmat, axis=1), 1.0)):
             raise ValueError('Rows of transmat must sum to 1.0')
 
-        self._log_transmat = np.log(np.asanyarray(transmat).copy())
+        self._log_transmat = np.log(np.asarray(transmat).copy())
         underflow_idx = np.isnan(self._log_transmat)
         self._log_transmat[underflow_idx] = -np.Inf
 
@@ -646,7 +646,7 @@ class GaussianHMM(_BaseHMM):
         return self._means
 
     def _set_means(self, means):
-        means = np.asanyarray(means)
+        means = np.asarray(means)
         if hasattr(self, 'n_features') and \
                means.shape != (self.n_components, self.n_features):
             raise ValueError('means must have shape (n_components, n_features)')
@@ -667,7 +667,7 @@ class GaussianHMM(_BaseHMM):
             return [np.eye(self.n_features) * f for f in self._covars]
 
     def _set_covars(self, covars):
-        covars = np.asanyarray(covars)
+        covars = np.asarray(covars)
         _validate_covars(covars, self._cvtype, self.n_components, self.n_features)
         self._covars = covars.copy()
 
@@ -862,7 +862,7 @@ class MultinomialHMM(_BaseHMM):
         return np.exp(self._log_emissionprob)
 
     def _set_emissionprob(self, emissionprob):
-        emissionprob = np.asanyarray(emissionprob)
+        emissionprob = np.asarray(emissionprob)
         if hasattr(self, 'n_symbols') and \
                emissionprob.shape != (self.n_components, self.n_symbols):
             raise ValueError('emissionprob must have shape '

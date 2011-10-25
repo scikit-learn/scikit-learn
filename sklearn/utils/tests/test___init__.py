@@ -1,5 +1,9 @@
 import numpy as np
-from .. import as_float_array
+from numpy.testing import assert_array_equal
+import scipy.sparse as sp
+from tempfile import NamedTemporaryFile
+
+from .. import array2d, as_float_array, atleast2d_or_csr, safe_asarray
 
 
 def test_as_float_array():
@@ -21,3 +25,40 @@ def test_as_float_array():
     # Here, X is of the right type, it shouldn't be modified
     X = np.ones((3, 2), dtype=np.float32)
     assert as_float_array(X, copy=False) is X
+
+
+def test_np_matrix():
+    """
+    Confirm that input validation code does not return np.matrix
+    """
+    X = np.arange(12).reshape(3, 4)
+
+    assert not isinstance(as_float_array(X), np.matrix)
+    assert not isinstance(as_float_array(np.matrix(X)), np.matrix)
+    assert not isinstance(as_float_array(sp.csc_matrix(X)), np.matrix)
+
+    assert not isinstance(atleast2d_or_csr(X), np.matrix)
+    assert not isinstance(atleast2d_or_csr(np.matrix(X)), np.matrix)
+    assert not isinstance(atleast2d_or_csr(sp.csc_matrix(X)), np.matrix)
+
+    assert not isinstance(safe_asarray(X), np.matrix)
+    assert not isinstance(safe_asarray(np.matrix(X)), np.matrix)
+    assert not isinstance(safe_asarray(sp.lil_matrix(X)), np.matrix)
+
+
+def test_memmap():
+    """
+    Confirm that input validation code doesn't copy memory mapped arrays
+    """
+
+    asflt = lambda x: as_float_array(x, copy=False)
+
+    with NamedTemporaryFile(prefix='sklearn-test') as tmp:
+        M = np.memmap(tmp, shape=100, dtype=np.float32)
+        M[:] = 0
+
+        for f in (array2d, np.asarray, asflt, safe_asarray):
+            X = f(M)
+            X[:] = 1
+            assert_array_equal(X.ravel(), M)
+            X[:] = 0

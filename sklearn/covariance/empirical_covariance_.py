@@ -15,6 +15,7 @@ import numpy as np
 from scipy import linalg
 
 from ..base import BaseEstimator
+from ..utils import array2d
 from ..utils.extmath import fast_logdet as exact_logdet
 
 
@@ -52,7 +53,7 @@ def empirical_covariance(X, assume_centered=False):
         Empirical covariance (Maximum Likelihood Estimator)
 
     """
-    X = np.asanyarray(X)
+    X = np.asarray(X)
     if X.ndim == 1:
         X = np.atleast_2d(X).T
 
@@ -98,7 +99,7 @@ class EmpiricalCovariance(BaseEstimator):
             is computed.
 
         """
-        covariance = np.atleast_2d(covariance)
+        covariance = array2d(covariance)
         # set covariance
         self.covariance_ = covariance
         # set precision
