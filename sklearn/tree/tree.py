@@ -124,14 +124,14 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
 
 def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
                 max_features, n_classes, random_state, min_density,
-                sample_mask=None, X_argsorted=None, store_sample_mask=False):
+                sample_mask=None, X_argsorted=None, store_terminal_region=False):
     """Build a tree by recursively partitioning the data."""
     assert X.shape[0] == y.shape[0]
     assert max_depth > 0
     assert min_split > 0
 
     # only works if we don't fancy index ever
-    if store_sample_mask:
+    if store_terminal_region:
         assert min_density == 0.0
 
     # make data fortran layout
@@ -190,7 +190,7 @@ def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
 
         if not is_split_valid:
             # FIXME compute error for leaf
-            if store_sample_mask:
+            if store_terminal_region:
                 leaf = _tree.Node(-1, 0.0, 0.0, 0.0, n_samples, value, None, None,
                                   sample_mask.nonzero()[0])
             else:

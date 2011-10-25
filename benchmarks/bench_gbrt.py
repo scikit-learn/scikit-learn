@@ -19,12 +19,13 @@ def repeat(f):
     return wrapper
 
 
-np.seterr(invalid='print', under='print', divide='print', over='print')
+# ignore overflows due to exp
+np.seterr(invalid='print', under='print', divide='print', over='ignore')
 
 
-classification_params = {'loss': 'bernoulli', 'n_iter': 100,
+classification_params = {'loss': 'deviance', 'n_iter': 100,
                          'min_split': 1, 'max_depth': 1,
-                         'learn_rate': 1.0, 'subsample': 1.0}
+                         'learn_rate': .6, 'subsample': 1.0}
 
 
 @repeat
@@ -69,7 +70,7 @@ def random_gaussian_learning_curve(random_state=None):
     y_train, y_test = y[:2000], y[2000:]
 
     n_iter = 2000
-    max_depth = 1
+    max_depth = 2
     
     deviance = np.zeros((n_iter,), dtype=np.float64)
     error_rate = np.zeros((n_iter,), dtype=np.float64)
@@ -84,18 +85,20 @@ def random_gaussian_learning_curve(random_state=None):
         tmp = ((1.0 / (1.0 + np.exp(-y_pred))) >= 0.5).astype(np.float64)
         error_rate[i] = np.mean(tmp != y_test)
 
-    gbrt = GradientBoostingClassifier(loss='bernoulli', n_iter=n_iter, min_split=1,
+    print "Train first model..."
+    gbrt = GradientBoostingClassifier(loss='deviance', n_iter=n_iter, min_split=1,
                                       max_depth=max_depth, learn_rate=1.0,
                                       subsample=1.0)
     gbrt.fit(X_train, y_train, monitor=monitor)
     n = deviance.shape[0]
-    print deviance[:5]
+
     pl.subplot(122)
     pl.plot(np.arange(n), error_rate, "r-", label="No shrinkage")
     pl.subplot(121)
     pl.plot(np.arange(n), deviance, "r-", label="No shrinkage")
 
-    gbrt = GradientBoostingClassifier(loss='bernoulli', n_iter=n_iter, min_split=1,
+    print "Train second model..."
+    gbrt = GradientBoostingClassifier(loss='deviance', n_iter=n_iter, min_split=1,
                                       max_depth=max_depth, learn_rate=0.2,
                                       subsample=1.0)
     gbrt.fit(X_train, y_train, monitor=monitor)
@@ -230,14 +233,14 @@ def bench_friedman3(random_state=None):
 
 if __name__ == "__main__":
 
-    print "spam", bench_spam()
+     print "spam", bench_spam()
     
 ##     print "Example 10.2 - LC"
-##     random_gaussian_learning_curve()
-    print "Example 10.2", bench_random_gaussian()
+##     random_gaussian_learning_curve(13)
+##     print "Example 10.2", bench_random_gaussian()
 
-    print "Madelon", bench_madelon()
-    print "Arcene", bench_arcene()
+##     print "Madelon", bench_madelon()
+##     print "Arcene", bench_arcene()
 
 ##     print "Boston", bench_boston()
 ##     print "Friedman#1", bench_friedman1()

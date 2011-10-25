@@ -76,22 +76,6 @@ class MeanPredictor(object):
         return y
 
 
-class ClassPrior2Predictor(object):
-    """A simple initial estimator that predicts the mean
-    of the training targets.
-    """
-
-    prior = None
-
-    def fit(self, X, y):
-        self.prior = np.log(y.sum() / float(y.shape[0] - y.sum()))
-
-    def predict(self, X):
-        y = np.empty((X.shape[0],), dtype=np.float64)
-        y.fill(self.prior)
-        return y
-
-
 class ClassPriorPredictor(object):
     """A simple initial estimator that predicts the mean
     of the training targets.
@@ -100,8 +84,7 @@ class ClassPriorPredictor(object):
     prior = None
 
     def fit(self, X, y):
-        pos_prior = y[y == -1].shape[0] / float(y.shape[0])
-        self.prior = 0.5 * np.log2(pos_prior / (1.0 - pos_prior))
+        self.prior = np.log(y.sum() / float(y.shape[0] - y.sum()))
 
     def predict(self, X):
         y = np.empty((X.shape[0],), dtype=np.float64)
@@ -170,8 +153,8 @@ class LeastAbsoluteError(LossFunction):
 
     def _update_terminal_region(self, node, X, y, residual, pred):
         """LAD updates terminal regions to median estimates. """
-        node.value = np.asanyarray(np.median(y.take(node.sample_mask, axis=0) - \
-                                             pred.take(node.sample_mask, axis=0)))
+        node.value = np.asanyarray(np.median(y.take(node.terminal_region, axis=0) - \
+                                             pred.take(node.terminal_region, axis=0)))
 
 
 ## class HuberError(LossFunction):
@@ -189,14 +172,14 @@ class LeastAbsoluteError(LossFunction):
 ##     def _update_terminal_region(self, node, X, y, residual, pred):
 ##         """LAD updates terminal regions to median estimates. """
 ##         ## FIXME copied from LAD, still TODO
-##         node.value = np.asanyarray(np.median(y.take(node.sample_mask, axis=0) - \
-##                                              pred.take(node.sample_mask, axis=0)))
+##         node.value = np.asanyarray(np.median(y.take(node.terminal_region, axis=0) - \
+##                                              pred.take(node.terminal_region, axis=0)))
 
 
-class BernoulliDeviance(LossFunction):
+class BinomialDeviance(LossFunction):
 
     def init_estimator(self):
-        return ClassPrior2Predictor()
+        return ClassPriorPredictor()
 
     def __call__(self, y, pred):
         """Compute the deviance (= negative log-likelihood). """
@@ -207,45 +190,26 @@ class BernoulliDeviance(LossFunction):
 
     def _update_terminal_region(self, node, X, y, residual, pred):
         """Make a single Newton-Raphson step. """
-        residual = residual.take(node.sample_mask, axis=0)
-        y = y.take(node.sample_mask, axis=0)
+        
+        residual = residual.take(node.terminal_region, axis=0)
+        y = y.take(node.terminal_region, axis=0)
 
-        node.value = np.asanyarray(residual.sum() / \
-                                   np.sum((y - residual) * (1.0 - y + residual)),
-                                   dtype=np.float64)
+        numerator = residual.sum()
+        denominator = np.sum((y - residual) * (1.0 - y + residual))
+
+        if denominator == 0.0:
+            node.value = np.array(0.0, dtype=np.float64)
+        else:
+            node.value = np.asanyarray(numerator / denominator, dtype=np.float64)
         
         # FIXME free mem - rename `sample_mask` since its actually an index arr
-        del node.sample_mask
-        node.sample_mask = None
-
-
-class BinomialDeviance(LossFunction):
-
-    def init_estimator(self):
-        return ClassPriorPredictor()
-
-    def __call__(self, y, pred):
-        return np.log2(1.0 + np.exp(-2.0 * y * pred))
-
-    def negative_gradient(self, y, pred):
-        return (2.0 * y) / (1.0 + np.exp(2.0 * y * pred))
-
-    def _update_terminal_region(self, node, X, y, residual, pred):
-        """Make a single Newton-Raphson step. """
-        targets = residual.take(node.sample_mask, axis=0)
-        abs_targets = np.abs(targets)
-        node.value = np.asanyarray(targets.sum() / np.sum(abs_targets * \
-                                                          (2.00000001 - abs_targets)))
-        
-        # FIXME free mem - rename `sample_mask` since its actually an index arr
-        del node.sample_mask
-        node.sample_mask = None
+        del node.terminal_region
+        node.terminal_region = None
 
 
 LOSS_FUNCTIONS = {'ls': LeastSquaresError,
                   'lad': LeastAbsoluteError,
-                  'deviance': BinomialDeviance,
-                  'bernoulli': BernoulliDeviance}
+                  'deviance': BinomialDeviance}
 
 
 class BaseGradientBoosting(BaseEstimator):
@@ -357,14 +321,14 @@ class BaseGradientBoosting(BaseEstimator):
             #print "Iteration %d - build_tree - in %fs" % (i, time() - t0)
             
             
-            #assert tree.is_leaf == False
-            
+            assert tree.is_leaf != True
+
             loss.update_terminal_regions(tree, X, y, residual, y_pred)
             #print "Iteration %d - update - in %fs" % (i, time() - t0)
             self.trees.append(tree)
 
             y_pred = self._predict(X, old_pred=y_pred)
-
+            
             if monitor:
                 monitor(self, i)
             

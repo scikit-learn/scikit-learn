@@ -55,6 +55,13 @@ cdef class Node:
 
     right : Node
         The right child node.
+
+    is_leaf : bool
+        Whether the node is a leaf or not.
+
+    terminal_region : ndarray or None
+        An index array of the samples which ended up in this leaf.
+        For internal nodes this is `None`. 
     """
 
     cdef public int feature
@@ -66,10 +73,10 @@ cdef class Node:
     cdef public Node left
     cdef public Node right
     cdef public bint is_leaf
-    cdef public np.ndarray sample_mask
+    cdef public np.ndarray terminal_region
 
     def __init__(self, feature, threshold, initial_error, best_error,
-                 samples, value, left, right, sample_mask):
+                 samples, value, left, right, terminal_region):
         self.feature = feature
         self.threshold = threshold
         self.initial_error = initial_error
@@ -79,7 +86,7 @@ cdef class Node:
         self.left = left
         self.right = right
         self.is_leaf = (left is None) and (right is None)
-        self.sample_mask = sample_mask
+        self.terminal_region = terminal_region
 
     def __reduce__(self):
         return Node, (self.feature, self.threshold, self.error, self.samples,
