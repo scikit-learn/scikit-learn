@@ -108,3 +108,12 @@ def test_discretenb_uniform_prior():
         clf.fit([[0], [0], [1]], [0, 0, 1])
         prior = np.exp(clf.class_log_prior_)
         assert_array_equal(prior, np.array([.5, .5]))
+
+
+def test_sample_weight():
+    clf = MultinomialNB()
+    clf.fit([[1, 2], [1, 2], [1, 0]],
+            [0, 0, 1],
+            sample_weight=[1,1,4])
+    assert_array_equal(clf.predict([1, 0]), [1])
+    assert_array_almost_equal(np.exp(clf.intercept_), [1/3., 2/3.])
