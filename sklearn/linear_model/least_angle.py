@@ -385,7 +385,7 @@ class Lars(LinearModel):
             Gram = None
         return Gram
 
-    def fit(self, X, y, copy_X=True):
+    def fit(self, X, y):
         """Fit the model using X, y as training data.
 
         parameters
@@ -702,7 +702,6 @@ class LarsCV(LARS):
         """
         X = np.asarray(X)
 
-        n_samples, n_features = X.shape
         # init cross-validation generator
         cv = check_cv(self.cv, X, y, classifier=False)
 
