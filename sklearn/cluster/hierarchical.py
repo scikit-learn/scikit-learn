@@ -168,11 +168,15 @@ class CompleteLinkageDistance(object):
                 max(self.maximalDistanceFromNodeInCluster[child_node2][node], # intra cluster dist
                     minInterClusterDist)
         
+        # Cleaning up
+        self.maximalDistanceFromNodeInCluster.pop(child_node1)
+        self.maximalDistanceFromNodeInCluster.pop(child_node2)
+        
         # Determine all other clusters that are connected to one of the child
         # clusters. These cluster will also be connected to the parent cluster
         coord_col = []
         visited = set([parent_node])
-        for l in set(self.A[child_node1]).union(self.A[child_node2]):
+        for l in self.getNodesConnectedToClusters([child_node1, child_node2]):
             while parent[l] != l:
                 l = parent[l]
             if l not in visited:
@@ -203,6 +207,12 @@ class CompleteLinkageDistance(object):
             self.distanceDict[(parent_node, l)] = interClusterDist
             heapq.heappush(self.distances, (interClusterDist, parent_node, l))
             
+            # Cleaning up
+            self.clusterConnectingNodes.pop((child_node1, l), None)
+            self.clusterConnectingNodes.pop((child_node2, l), None)
+            self.clusterConnectingNodes.pop((l, child_node1), None)
+            self.clusterConnectingNodes.pop((l, child_node2), None)
+            
     def hasMoreCandidates(self):
         return len(self.distances) > 0
     
@@ -211,7 +221,15 @@ class CompleteLinkageDistance(object):
     
     def computeDistance(self, i, j):
         return self.distanceDict[(i, j)]
-
+    
+    def getNodesConnectedToClusters(self, cluster_roots):
+        return set.union(*[set(self.A[cluster_root]) 
+                                for cluster_root in cluster_roots])
+    
+    def getNontrivialClusters(self):
+        return [cluster_root for cluster_root in self.maximalDistanceFromNodeInCluster.keys()
+                    if cluster_root > self.X.shape[0]]
+    
             
 def ward_tree(X, connectivity=None, n_components=None, return_inertias=False, 
               merge_replay=[], DistanceClass='CompleteLinkageDistance', copy=True):
@@ -316,8 +334,12 @@ def ward_tree(X, connectivity=None, n_components=None, return_inertias=False,
         if k_ in reserved_indices:
             reserved_indices.remove(k_) # Add this later since we don't know the new index yet
     
-    index_mapping = dict(zip(reserved_indices, reserved_indices))    
+    index_mapping = dict(zip(reserved_indices, reserved_indices))
+    
+    augmentation = None
+    max_height = None
     # recursive merge loop
+    replaying = len(merge_replay) > 0
     for k in range(n_samples, n_nodes):
         # Fetch merge that will be reapplied next (if any)
         if len(merge_replay) > 0:
@@ -331,23 +353,31 @@ def ward_tree(X, connectivity=None, n_components=None, return_inertias=False,
             index_mapping[k_] = k
 #            print "Reapply", merge_distance, i, j, k
         else: # No merges to be reapplied left
-            # Identify the merge that will be applied next
-            merge_distance = np.inf
-            while distance_class.hasMoreCandidates():
-                merge_distance, i, j = distance_class.fetchCandidate()
-                if open_nodes[i] and open_nodes[j]:
-                    break
-                if not distance_class.hasMoreCandidates():
-                    merge_distance = np.inf
-                    break
-            if not distance_class.hasMoreCandidates() and merge_distance == np.inf: 
-                # Merge unconnected components with height infinity
-                i = k - 1
-                desc = set(_hc_get_descendent([i], np.array(children), n_samples, 
-                                              add_intermediate_nodes=True))
-                for j in range(k-2, 0, -1):
-                    if j not in desc:
-                        break           
+            if augmentation: 
+                # There are nodes that can be added to cluster created during
+                # replaying 
+                merge_distance, i, j = augmentation
+                augmentation = None
+#                print "Augmentation", merge_distance, i, j, k
+            else:
+                # Identify the merge that will be applied next using the standard method
+                merge_distance = np.inf
+                while distance_class.hasMoreCandidates():
+                    merge_distance, i, j = distance_class.fetchCandidate()
+                    if open_nodes[i] and open_nodes[j]:
+                        break
+                    if not distance_class.hasMoreCandidates():
+                        merge_distance = np.inf
+                        break
+                if not distance_class.hasMoreCandidates() and merge_distance == np.inf: 
+                    # Merge unconnected components with height infinity
+                    i = k - 1
+                    desc = set(_hc_get_descendent([i], np.array(children), n_samples, 
+                                                  add_intermediate_nodes=True))
+                    for j in range(k-2, 0, -1):
+                        if j not in desc:
+                            break      
+#                print "Novel", merge_distance, i, j, k     
             # Update index mapping
             if i in index_mapping.values():
                 i_ = index_mapping.keys()[index_mapping.values().index(i)]
@@ -355,9 +385,7 @@ def ward_tree(X, connectivity=None, n_components=None, return_inertias=False,
             if j in index_mapping.values():
                 j_ = index_mapping.keys()[index_mapping.values().index(j)]
                 index_mapping[j_] = k  
-#            print "Novel", merge_distance, i, j, k
 
-            
         parent[i], parent[j], heights[k] = k, k, merge_distance
         merges.append(((i, j), k))
         children.append([i, j])
@@ -365,7 +393,24 @@ def ward_tree(X, connectivity=None, n_components=None, return_inertias=False,
         
         # Add new possible merges and their distances to heap
         distance_class.update(i, j, k, parent)
-                    
+        
+        # If we are finished with replaying
+        if replaying and len(merge_replay) == 0:
+            # Check for possible augmentations of the clusters created during 
+            # replaying
+            possible_augmentations = []
+            for cluster_root in distance_class.getNontrivialClusters():
+                for node in distance_class.getNodesConnectedToClusters([cluster_root]):
+                    if not open_nodes[node]: continue
+                    dist = distance_class.computeDistance(node, cluster_root)
+                    if dist < heights[cluster_root]:
+                        possible_augmentations.append(
+                            (dist - heights[cluster_root], heights[cluster_root],
+                             node, cluster_root))
+            if len(possible_augmentations) > 0:
+                augmentation = min(possible_augmentations)[1:]
+            else:
+                replaying = False
 
     # Separate leaves in children (empty lists up to now)
     n_leaves = n_samples
