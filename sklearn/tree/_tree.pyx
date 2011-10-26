@@ -89,8 +89,9 @@ cdef class Node:
         self.terminal_region = terminal_region
 
     def __reduce__(self):
-        return Node, (self.feature, self.threshold, self.error, self.samples,
-                      self.value, self.left, self.right)
+        return Node, (self.feature, self.threshold, self.initial_error,
+                      self.best_error, self.samples, self.value, self.left,
+                      self.right, self.terminal_region)
 
 
 cdef np.ndarray apply_tree_sample(Node node, np.ndarray[DTYPE_t, ndim=1] x):
