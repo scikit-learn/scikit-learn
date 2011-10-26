@@ -96,7 +96,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
     # referenced.
     L = np.empty((max_features, max_features), dtype=X.dtype)
     swap, nrm2 = linalg.get_blas_funcs(('swap', 'nrm2'), (X,))
-    potrs, = get_lapack_funcs(('potrs',), (X,))
+    solve_cholesky, = get_lapack_funcs(('potrs',), (X,))
 
     if Gram is None:
         if copy_X:
@@ -189,7 +189,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                                                             n_active, C)
 
         # least squares solution
-        least_squares, info = potrs(L[:n_active, :n_active],
+        least_squares, info = solve_cholesky(L[:n_active, :n_active],
                                sign_active[:n_active], lower=True)
 
         # is this really needed ?
