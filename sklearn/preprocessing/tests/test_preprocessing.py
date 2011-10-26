@@ -318,6 +318,8 @@ def test_label_binarizer_multilabel():
                          [1, 1]])
     got = lb.fit_transform(inp)
     assert_array_equal(expected, got)
+    assert_equal([set(x) for x in lb.inverse_transform(got)],
+                 [set(x) for x in inp])
 
 
 def test_label_binarizer_errors():
