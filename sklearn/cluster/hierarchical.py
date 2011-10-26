@@ -8,6 +8,7 @@ Authors : Vincent Michel, Bertrand Thirion, Alexandre Gramfort,
 License: BSD 3 clause
 """
 import heapq
+from collections import defaultdict
 import itertools
 import warnings
 
@@ -99,27 +100,76 @@ class WardDistance(object):
 class CompleteLinkageDistance(object):
     
     def __init__(self, X, connectivity, n_nodes, n_features, n_samples):
-        self.distances = []
-        self.A = []
-        self.distanceDict = {}
+        self.X = X
+        self.A = [] 
+        # Heap of possible cluster merges, sorted by heir distances
+        self.distances = [] 
+        # Distances between two clusters (represented by their root node indices) 
+        self.distanceDict = {} 
+        # Mapping from a pair of clusters to the set of node pairs which
+        # connect these two clusters
+        self.clusterConnectingNodes = defaultdict(set)
+        # Mapping from a a cluster to a mapping from nodes in this cluster
+        # to their distance to the most distant node in the cluster
+        self.maximalDistanceFromNodeInCluster = defaultdict(dict)  
+        # Determine distances between all connected nodes 
         for ind1, row in enumerate(connectivity.rows):
             self.A.append(row)
+            self.maximalDistanceFromNodeInCluster[ind1][ind1] = 0.0
             for ind2 in row:
+                self.clusterConnectingNodes[(ind1, ind2)] = set([(ind1, ind2)])
+                self.clusterConnectingNodes[(ind2, ind1)] = set([(ind1, ind2)])
+                # Compute distance between two connected nodes
                 dist = np.linalg.norm(X[ind1] - X[ind2])
                 self.distances.append((dist, ind1, ind2))
                 self.distanceDict[(ind1, ind2)] = dist
                 self.distanceDict[(ind2, ind1)] = dist
-        
+                
         # Enforce symmetry of A
         for ind1, row in enumerate(connectivity.rows):
             for ind2 in row:
                 if ind1 not in self.A[ind2]:
                     self.A[ind2].append(ind1)
         
-
         heapq.heapify(self.distances)
 
     def update(self, child_node1, child_node2, parent_node, parent):
+        # Update maximalDistanceFromNodeInCluster for new cluster "parent_node" 
+        for node in self.maximalDistanceFromNodeInCluster[child_node1].keys():
+            minInterClusterDist = np.inf
+            for (connecting_node1, connecting_node2) in self.clusterConnectingNodes[(child_node1, child_node2)]:
+                # Canonical ordering (connecting node 1 in cluster 1)
+                if connecting_node1 not in self.maximalDistanceFromNodeInCluster[child_node1]:
+                    connecting_node1, connecting_node2 = connecting_node2, connecting_node1
+                    
+                interClusterDist = \
+                    self.maximalDistanceFromNodeInCluster[child_node2][connecting_node2] \
+                        + self.distanceDict[(connecting_node1, connecting_node2)] \
+                        + np.linalg.norm(self.X[node] - self.X[connecting_node1]) # TODO: graph distance instead of euclidean
+                minInterClusterDist = min(minInterClusterDist, interClusterDist)
+                      
+            self.maximalDistanceFromNodeInCluster[parent_node][node] = \
+                max(self.maximalDistanceFromNodeInCluster[child_node1][node], # intra cluster dist
+                    minInterClusterDist)
+        for node in self.maximalDistanceFromNodeInCluster[child_node2].keys():
+            minInterClusterDist = np.inf
+            for (connecting_node1, connecting_node2) in self.clusterConnectingNodes[(child_node1, child_node2)]:
+                # Canonical ordering (connecting node 1 in cluster 1)
+                if connecting_node1 not in self.maximalDistanceFromNodeInCluster[child_node1]:
+                    connecting_node1, connecting_node2 = connecting_node2, connecting_node1
+                    
+                interClusterDist = \
+                    self.maximalDistanceFromNodeInCluster[child_node1][connecting_node1] \
+                        + self.distanceDict[(connecting_node1, connecting_node2)] \
+                        + np.linalg.norm(self.X[node] - self.X[connecting_node2]) # TODO: graph distance instead of euclidean
+                minInterClusterDist = min(minInterClusterDist, interClusterDist)
+                      
+            self.maximalDistanceFromNodeInCluster[parent_node][node] = \
+                max(self.maximalDistanceFromNodeInCluster[child_node2][node], # intra cluster dist
+                    minInterClusterDist)
+        
+        # Determine all other clusters that are connected to one of the child
+        # clusters. These cluster will also be connected to the parent cluster
         coord_col = []
         visited = set([parent_node])
         for l in set(self.A[child_node1]).union(self.A[child_node2]):
@@ -131,19 +181,27 @@ class CompleteLinkageDistance(object):
                 self.A[l].append(parent_node)
         self.A.append(coord_col)
         
+        # Determine for all connected clusters the distance to the newly formed
+        # cluster
         for l in coord_col:
-            if (l,child_node1) not in self.distanceDict:
-                self.distanceDict[(l,child_node1)] = \
-                    self.distanceDict[(l,child_node2)] +  self.distanceDict[(child_node1,child_node2)]
-            elif (l,child_node2) not in self.distanceDict:
-                self.distanceDict[(l,child_node2)] = \
-                    self.distanceDict[(l,child_node1)] +  self.distanceDict[(child_node1,child_node2)]
+            self.clusterConnectingNodes[(parent_node, l)] = \
+                 self.clusterConnectingNodes[(child_node1, l)].union(self.clusterConnectingNodes[(child_node2, l)])
+            self.clusterConnectingNodes[(l, parent_node)] = \
+                            self.clusterConnectingNodes[(parent_node, l)]
+            # Find the distance between pair of nodes that are most distant in l and parent_node
+            interClusterDist = np.inf
+            for (connecting_node1, connecting_node2) in self.clusterConnectingNodes[(l, parent_node)]:
+                # Canonical ordering (connecting node 1 in l)
+                if connecting_node1 not in self.maximalDistanceFromNodeInCluster[l]:
+                    connecting_node1, connecting_node2 = connecting_node2, connecting_node1
+                dist = self.maximalDistanceFromNodeInCluster[l][connecting_node1] \
+                        + self.distanceDict[(connecting_node1, connecting_node2)] \
+                        + self.maximalDistanceFromNodeInCluster[parent_node][connecting_node2]
+                interClusterDist = min(interClusterDist, dist)
             
-            dist = max(self.distanceDict[(l,child_node1)], 
-                       self.distanceDict[(l,child_node2)])
-            self.distanceDict[(l, parent_node)] = dist
-            self.distanceDict[(parent_node, l)] = dist
-            heapq.heappush(self.distances, (dist, parent_node, l))
+            self.distanceDict[(l, parent_node)] = interClusterDist
+            self.distanceDict[(parent_node, l)] = interClusterDist
+            heapq.heappush(self.distances, (interClusterDist, parent_node, l))
             
     def hasMoreCandidates(self):
         return len(self.distances) > 0
@@ -152,7 +210,7 @@ class CompleteLinkageDistance(object):
         return heapq.heappop(self.distances)
     
     def computeDistance(self, i, j):
-        return self.distanceDict[(i,j)]
+        return self.distanceDict[(i, j)]
 
             
 def ward_tree(X, connectivity=None, n_components=None, return_inertias=False, 
@@ -223,7 +281,7 @@ def ward_tree(X, connectivity=None, n_components=None, return_inertias=False,
     else:
         out = hierarchy.ward(X)
         children_ = out[:, :2].astype(np.int)
-        return children_, 1, n_samples
+        return children_, 1, n_samples, None
 
     n_nodes = 2 * n_samples - 1
 
@@ -298,6 +356,7 @@ def ward_tree(X, connectivity=None, n_components=None, return_inertias=False,
                 j_ = index_mapping.keys()[index_mapping.values().index(j)]
                 index_mapping[j_] = k  
 #            print "Novel", merge_distance, i, j, k
+
             
         parent[i], parent[j], heights[k] = k, k, merge_distance
         merges.append(((i, j), k))
@@ -306,7 +365,7 @@ def ward_tree(X, connectivity=None, n_components=None, return_inertias=False,
         
         # Add new possible merges and their distances to heap
         distance_class.update(i, j, k, parent)
-        
+                    
 
     # Separate leaves in children (empty lists up to now)
     n_leaves = n_samples
