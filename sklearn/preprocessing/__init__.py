@@ -514,10 +514,10 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         Y : numpy array of shape [n_samples, n_classes]
         """
 
-        if len(self.classes_) == 2:
-            Y = np.zeros((len(y), 1))
-        else:
+        if self.multilabel or len(self.classes_) > 2:
             Y = np.zeros((len(y), len(self.classes_)))
+        else:
+            Y = np.zeros((len(y), 1))
 
         y_is_multilabel = _is_multilabel(y)
 
