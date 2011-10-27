@@ -14,7 +14,6 @@ from itertools import cycle, izip
 import numpy as np
 import scipy.sparse as sp
 
-from ..utils.extmath import norm
 from ..base import BaseEstimator
 from ..metrics.pairwise import euclidean_distances
 from ..utils import check_arrays
