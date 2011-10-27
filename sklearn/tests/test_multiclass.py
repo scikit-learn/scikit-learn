@@ -42,6 +42,15 @@ def test_ovr_fit_predict():
     assert_true(np.mean(iris.target == pred) >= 0.65)
 
 
+def test_ovr_multilabel():
+    X = np.array([[0, 4, 5], [0, 5, 0], [3, 3, 3], [4, 0, 6], [6, 0, 0]])
+    y = [[1, 2], [1], [0, 1, 2], [0, 2], [0]]
+
+    clf = OneVsRestClassifier(MultinomialNB()).fit(X, y)
+    y_pred = clf.predict([[0, 4, 4]])[0]
+    assert_equal(set(y_pred), set([1, 2]))
+
+
 def test_ovr_gridsearch():
     ovr = OneVsRestClassifier(LinearSVC())
     Cs = [0.1, 0.5, 0.8]

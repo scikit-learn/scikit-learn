@@ -1,6 +1,6 @@
 """
-Multiclass algorithms
-======================
+Multiclass and multilabel classification strategies
+===================================================
 
 This module implements multiclass learning algorithms:
     - one-vs-the-rest / one-vs-all
@@ -63,12 +63,16 @@ def fit_ovr(estimator, X, y):
 
 def predict_ovr(estimators, label_binarizer, X):
     """Make predictions using the one-vs-the-rest strategy."""
-    Y = np.array([predict_binary(e, X) for e in estimators]).T
-    return label_binarizer.inverse_transform(Y)
+    if label_binarizer.multilabel:
+        Y = np.array([e.predict_proba(X)[:, 1] for e in estimators]) > .5
+    else:
+        Y = np.array([predict_binary(e, X) for e in estimators])
+    print Y
+    return label_binarizer.inverse_transform(Y.T)
 
 
 class OneVsRestClassifier(BaseEstimator, ClassifierMixin):
-    """One-vs-the-rest multiclass strategy
+    """One-vs-the-rest multiclass/multilabel strategy
 
     Also known as one-vs-all, this strategy consists in fitting one classifier
     per class. For each classifier, the class is fitted against all the other
@@ -76,8 +80,15 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin):
     classifiers are needed), one advantage of this approach is its
     interpretability. Since each class is represented by one and one classifier
     only, it is possible to gain knowledge about the class by inspecting its
-    corresponding classifier. This is the most commonly used strategy and is a
-    fair default choice.
+    corresponding classifier. This is the most commonly used strategy for
+    multiclass classification and is a fair default choice.
+
+    This strategy can also be used for multilabel learning, where a classifier
+    is used to predict multiple labels for instance, by fitting on a sequence
+    of sequences of labels (e.g., a list of tuples) rather than a single
+    target vector. For multilabel learning, the underlying estimator must
+    support probabilistic output (predict_proba) and the number of classes
+    must be at least three.
 
     Parameters
     ----------
@@ -107,7 +118,9 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin):
             Data.
 
         y : array-like, shape = [n_samples]
-            Multi-class targets.
+         or sequence of sequences, len = n_samples
+            Multi-class targets. A sequence of sequences turns on multilabel
+            classification.
 
         Returns
         -------
