@@ -63,12 +63,11 @@ def fit_ovr(estimator, X, y):
 
 def predict_ovr(estimators, label_binarizer, X):
     """Make predictions using the one-vs-the-rest strategy."""
-    if label_binarizer.multilabel:
-        Y = np.array([e.predict_proba(X)[:, 1] for e in estimators]) > .5
+    Y = np.array([predict_binary(e, X) for e in estimators])
+    if hasattr(estimators[0], "decision_function"):
+        return label_binarizer.inverse_transform(Y.T, 0)
     else:
-        Y = np.array([predict_binary(e, X) for e in estimators])
-    print Y
-    return label_binarizer.inverse_transform(Y.T)
+        return label_binarizer.inverse_transform(Y.T, 0.5)
 
 
 class OneVsRestClassifier(BaseEstimator, ClassifierMixin):
@@ -86,8 +85,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin):
     This strategy can also be used for multilabel learning, where a classifier
     is used to predict multiple labels for instance, by fitting on a sequence
     of sequences of labels (e.g., a list of tuples) rather than a single
-    target vector. For multilabel learning, the underlying estimator must
-    support probabilistic output (predict_proba) and the number of classes
+    target vector. For multilabel learning, the number of classes
     must be at least three.
 
     Parameters

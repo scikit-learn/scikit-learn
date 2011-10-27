@@ -50,6 +50,10 @@ def test_ovr_multilabel():
     y_pred = clf.predict([[0, 4, 4]])[0]
     assert_equal(set(y_pred), set([1, 2]))
 
+    clf = OneVsRestClassifier(LinearSVC()).fit(X, y)
+    y_pred = clf.predict([[0, 4, 4]])[0]
+    assert_equal(set(y_pred), set([1, 2]))
+
 
 def test_ovr_gridsearch():
     ovr = OneVsRestClassifier(LinearSVC())
