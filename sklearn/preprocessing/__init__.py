@@ -430,8 +430,13 @@ class Binarizer(BaseEstimator, TransformerMixin):
         return binarize(X, threshold=self.threshold, copy=copy)
 
 
+def _is_label_indicator_matrix(y):
+    return hasattr(y, "shape") and len(y.shape) == 2
+
 def _is_multilabel(y):
-    return isinstance(y[0], tuple) or isinstance(y[0], list)
+    return isinstance(y[0], tuple) or \
+           isinstance(y[0], list) or \
+           _is_label_indicator_matrix(y)
 
 
 class LabelBinarizer(BaseEstimator, TransformerMixin):
@@ -491,8 +496,12 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         """
         self.multilabel = _is_multilabel(y)
         if self.multilabel:
-            # concatenation of the sub-sequences
-            self.classes_ = np.unique(reduce(lambda a, b: a + b, y))
+            self.indicator_matrix_ = _is_label_indicator_matrix(y)
+            if self.indicator_matrix_:
+                self.classes_ = np.arange(y.shape[1])
+            else:
+                # concatenation of the sub-sequences
+                self.classes_ = np.unique(reduce(lambda a, b: a + b, y))
         else:
             self.classes_ = np.unique(y)
         return self
@@ -515,6 +524,10 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         """
 
         if self.multilabel or len(self.classes_) > 2:
+            if _is_label_indicator_matrix(y):
+                # nothing to do as y is already a label indicator matrix
+                return y
+
             Y = np.zeros((len(y), len(self.classes_)))
         else:
             Y = np.zeros((len(y), 1))
@@ -579,8 +592,14 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         """
         if self.multilabel:
             Y = np.array(Y > threshold, dtype=int)
-            return [tuple(self.classes_[np.flatnonzero(Y[i])])
-                    for i in range(Y.shape[0])]
+            # Return the predictions in the same format as in fit
+            if self.indicator_matrix_:
+                # Label indicator matrix format
+                return Y
+            else:
+                # Lists of tuples format
+                return [tuple(self.classes_[np.flatnonzero(Y[i])])
+                        for i in range(Y.shape[0])]
 
         if len(Y.shape) == 1 or Y.shape[1] == 1:
             y = np.array(Y.ravel() > threshold, dtype=int)
