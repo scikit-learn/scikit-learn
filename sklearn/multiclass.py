@@ -71,7 +71,7 @@ def predict_ovr(estimators, label_binarizer, X):
 
 
 class OneVsRestClassifier(BaseEstimator, ClassifierMixin):
-    """One-vs-the-rest multiclass/multilabel strategy
+    """One-vs-the-rest (OvR) multiclass/multilabel strategy
 
     Also known as one-vs-all, this strategy consists in fitting one classifier
     per class. For each classifier, the class is fitted against all the other
@@ -85,8 +85,8 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin):
     This strategy can also be used for multilabel learning, where a classifier
     is used to predict multiple labels for instance, by fitting on a sequence
     of sequences of labels (e.g., a list of tuples) rather than a single
-    target vector. For multilabel learning, the number of classes
-    must be at least three.
+    target vector. For multilabel learning, the number of classes must be at
+    least three, since otherwise OvR reduces to binary classification.
 
     Parameters
     ----------
