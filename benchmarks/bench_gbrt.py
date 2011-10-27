@@ -25,7 +25,7 @@ np.seterr(invalid='print', under='print', divide='print', over='ignore')
 
 classification_params = {'loss': 'deviance', 'n_iter': 100,
                          'min_split': 1, 'max_depth': 1,
-                         'learn_rate': .6, 'subsample': 1.0}
+                         'learn_rate': 1.0, 'subsample': 1.0}
 
 
 @repeat
@@ -233,14 +233,14 @@ def bench_friedman3(random_state=None):
 
 if __name__ == "__main__":
 
-     print "spam", bench_spam()
+    print "spam", bench_spam()
     
 ##     print "Example 10.2 - LC"
 ##     random_gaussian_learning_curve(13)
-##     print "Example 10.2", bench_random_gaussian()
+    print "Example 10.2", bench_random_gaussian()
 
-##     print "Madelon", bench_madelon()
-##     print "Arcene", bench_arcene()
+    print "Madelon", bench_madelon()
+    print "Arcene", bench_arcene()
 
 ##     print "Boston", bench_boston()
 ##     print "Friedman#1", bench_friedman1()

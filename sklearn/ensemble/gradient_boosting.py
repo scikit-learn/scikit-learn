@@ -84,7 +84,7 @@ class ClassPriorPredictor(object):
     prior = None
 
     def fit(self, X, y):
-        self.prior = np.log(y.sum() / float(y.shape[0] - y.sum()))
+        self.prior = np.log(np.sum(y) / np.sum(1.0 - y))
 
     def predict(self, X):
         y = np.empty((X.shape[0],), dtype=np.float64)
