@@ -10,6 +10,7 @@ from sklearn.datasets import (load_svmlight_file, load_svmlight_files,
 
 currdir = os.path.dirname(os.path.abspath(__file__))
 datafile = os.path.join(currdir, "data", "svmlight_classification.txt")
+multifile = os.path.join(currdir, "data", "svmlight_multilabel.txt")
 invalidfile = os.path.join(currdir, "data", "svmlight_invalid.txt")
 
 def test_load_svmlight_file():
@@ -42,6 +43,12 @@ def test_load_svmlight_file():
     # test y
     assert_array_equal(y, [1, 2, 3])
 
+
+def test_load_svmlight_file_multilabel():
+    X, y = load_svmlight_file(multifile, multilabel=True)
+    assert_equal(y, [(0, 1), (2,), (1, 2)])
+
+
 def test_load_svmlight_files():
     X_train, y_train, X_test, y_test = load_svmlight_files([datafile] * 2,
                                                            dtype=np.float32)
@@ -55,6 +62,7 @@ def test_load_svmlight_files():
     assert_equal(X1.dtype, X2.dtype)
     assert_equal(X2.dtype, X3.dtype)
     assert_equal(X3.dtype, np.float64)
+
 
 def test_load_svmlight_file_n_features():
     X, y = load_svmlight_file(datafile, n_features=14)
@@ -70,21 +78,26 @@ def test_load_svmlight_file_n_features():
 
         assert_equal(X[i, j], val)
 
+
 @raises(ValueError)
 def test_load_invalid_file():
     load_svmlight_file(invalidfile)
+
 
 @raises(ValueError)
 def test_load_invalid_file():
     load_svmlight_files([datafile, invalidfile, datafile])
 
+
 @raises(TypeError)
 def test_not_a_filename():
     load_svmlight_file(1)
 
+
 @raises(IOError)
 def test_invalid_filename():
     load_svmlight_file("trou pic nic douille")
+
 
 def test_dump():
     Xs, y = load_svmlight_file(datafile)
