@@ -1,16 +1,22 @@
 
 .. _multiclass:
 
-=====================
-Multiclass algorithms
-=====================
+====================================
+Multiclass and multilabel algorithms
+====================================
 
 .. currentmodule:: sklearn.multiclass
 
-This module implements multiclass learning algorithms:
+This module implements multiclass and multilabel learning algorithms:
     - one-vs-the-rest / one-vs-all
     - one-vs-one
     - error correcting output codes
+
+Multiclass classification means classification with more than two classes.
+Multilabel classification is a different task, where a classifier is used to
+predict multiple target labels per instance; i.e., the set of target classes
+is not assumed to be disjoint as in ordinary (binary or multiclass)
+classification. This is also called any-of classification.
 
 The estimators provided in this module are meta-estimators: they require a base
 estimator to be provided in their constructor. For example, it is possible to
@@ -56,6 +62,13 @@ fair default choice. Below is an example::
          1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 1, 2, 2, 2, 2,
          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2])
+
+Multilabel learning with OvR
+----------------------------
+
+``OneVsRestClassifier`` also supports multilabel classification.
+To use this feature, feed the classifier a list of tuples containing
+target labels.
 
 
 One-Vs-One
