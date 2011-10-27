@@ -560,9 +560,8 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
             Target values.
 
         threshold : float
-            Threshold used to decide whether to assign the positive class or the
-            negative class in the binary case. Use 0.5 when Y contains
-            probabilities.
+            Threshold used in the binary and multi-label cases.
+            Use 0.5 when Y contains probabilities.
 
         Returns
         -------
@@ -579,7 +578,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         of inverse_transform.
         """
         if self.multilabel:
-            Y = np.array(Y > 0, dtype=int)
+            Y = np.array(Y > threshold, dtype=int)
             return [tuple(self.classes_[np.flatnonzero(Y[i])])
                     for i in range(Y.shape[0])]
 
