@@ -64,10 +64,8 @@ def fit_ovr(estimator, X, y):
 def predict_ovr(estimators, label_binarizer, X):
     """Make predictions using the one-vs-the-rest strategy."""
     Y = np.array([predict_binary(e, X) for e in estimators])
-    if hasattr(estimators[0], "decision_function"):
-        return label_binarizer.inverse_transform(Y.T, threshold=0)
-    else:
-        return label_binarizer.inverse_transform(Y.T, threshold=0.5)
+    thresh = 0 if hasattr(estimators[0], "decision_function") else .5
+    return label_binarizer.inverse_transform(Y.T, threshold=thresh)
 
 
 class OneVsRestClassifier(BaseEstimator, ClassifierMixin):
