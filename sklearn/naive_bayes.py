@@ -61,8 +61,7 @@ class BaseNB(BaseEstimator, ClassifierMixin):
             Predicted target values for X
         """
         jll = self._joint_log_likelihood(X)
-        y_pred = self._classes[np.argmax(jll, axis=1)]
-        return y_pred
+        return self._classes[np.argmax(jll, axis=1)]
 
     def predict_log_proba(self, X):
         """
