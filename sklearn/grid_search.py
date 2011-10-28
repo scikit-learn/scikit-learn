@@ -227,6 +227,10 @@ class GridSearchCV(BaseEstimator):
     case it is used instead. If a loss function loss_func is passed,
     it overrides the score functions and is minimized.
 
+    See Also
+    ---------
+    IterGrid
+
     """
 
     def __init__(self, estimator, param_grid, loss_func=None, score_func=None,
