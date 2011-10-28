@@ -15,7 +15,7 @@ def repeat(f):
         scores = []
         for i in range(10):
             scores.append(f(*args, random_state=i, **kargs))
-        return np.mean(scores)
+        return np.mean(scores), np.std(scores)
     return wrapper
 
 
@@ -25,7 +25,7 @@ np.seterr(invalid='print', under='print', divide='print', over='ignore')
 
 classification_params = {'loss': 'deviance', 'n_iter': 100,
                          'min_split': 1, 'max_depth': 1,
-                         'learn_rate': 1.0, 'subsample': 1.0}
+                         'learn_rate': .6, 'subsample': 1.0}
 
 
 @repeat
@@ -242,7 +242,7 @@ if __name__ == "__main__":
     print "Madelon", bench_madelon()
     print "Arcene", bench_arcene()
 
-##     print "Boston", bench_boston()
-##     print "Friedman#1", bench_friedman1()
-##     print "Friedman#2", bench_friedman2()
-##     print "Friedman#3", bench_friedman3()
+    print "Boston", bench_boston()
+    print "Friedman#1", bench_friedman1()
+    print "Friedman#2", bench_friedman2()
+    print "Friedman#3", bench_friedman3()

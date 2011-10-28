@@ -105,17 +105,24 @@ class LossFunction(object):
         """Compute the negative gradient."""
         pass
 
-    def update_terminal_regions(self, tree, X, y, residual, pred):
+    def update_terminal_regions(self, tree, X, y, residual, y_pred, learn_rate=1.0):
         """Update the terminal regions (=leafs) of the given
         tree. Traverses tree and invokes template method
         `_update_terminal_region`. """
         if tree.is_leaf:
-            self._update_terminal_region(tree, X, y, residual, pred)
+            self._update_terminal_region(tree, X, y, residual, y_pred)
+
+            # update predictions
+            y_pred[tree.terminal_region] += learn_rate * tree.value
+
+            # Delete terminal_region to save memory
+            del tree.terminal_region
+            tree.terminal_region = None
         else:
             #print "%d: fx:%d, thres:%.8f" % (tree.id, tree.feature,
             #                                 tree.threshold)
-            self.update_terminal_regions(tree.left, X, y, residual, pred)
-            self.update_terminal_regions(tree.right, X, y, residual, pred)
+            self.update_terminal_regions(tree.left, X, y, residual, y_pred, learn_rate)
+            self.update_terminal_regions(tree.right, X, y, residual, y_pred, learn_rate)
 
     def _update_terminal_region(self, node, X, y, residual, pred):
         """Template method for updating terminal regions (=leafs). """
@@ -123,7 +130,8 @@ class LossFunction(object):
 
 
 class LeastSquaresError(LossFunction):
-    """Loss function for least squares (LS) estimation. """
+    """Loss function for least squares (LS) estimation.
+    Terminal regions need not to be updated for least squares. """
 
     def init_estimator(self):
         return MeanPredictor()
@@ -133,10 +141,6 @@ class LeastSquaresError(LossFunction):
 
     def negative_gradient(self, y, pred):
         return y - pred
-
-    def update_terminal_regions(self, tree, X, y, residual, pred):
-        """Terminal regions need not to be updated for least squares. """
-        pass
 
 
 class LeastAbsoluteError(LossFunction):
@@ -201,10 +205,6 @@ class BinomialDeviance(LossFunction):
             node.value = np.array(0.0, dtype=np.float64)
         else:
             node.value = np.asanyarray(numerator / denominator, dtype=np.float64)
-        
-        # FIXME free mem - rename `sample_mask` since its actually an index arr
-        del node.terminal_region
-        node.terminal_region = None
 
 
 LOSS_FUNCTIONS = {'ls': LeastSquaresError,
@@ -295,39 +295,32 @@ class BaseGradientBoosting(BaseEstimator):
         #oob = np.zeros((self.n_iter), dtype=np.float64)
         #obj_func = np.zeros((self.n_iter), dtype=np.float64)
 
-        #trim_mask = np.ones((n_samples,), dtype=np.bool)
-
         # perform boosting iterations
         for i in xrange(self.n_iter):
             t0 = time()
 
             # subsampling
             sample_mask = np.random.rand(n_samples) > (1.0 - self.subsample)
-
-            # influence trimming for numerical stability
-            #trim_mask = trim_mask & (np.abs(y_pred) < 10000.0)
-            #print "trimming: ", (trim_mask.shape[0] - trim_mask.sum())
-            #y_pred[~trim_mask] = 0.0
-            #sample_mask = sample_mask & trim_mask
             
             residual = loss.negative_gradient(y, y_pred)
-
-            #print "Iteration %d - residual - in %fs" % (i, time() - t0)
 
             # induce regression tree on residuals
             tree = _build_tree(False, X, residual, MSE(), self.max_depth,
                                self.min_split, None, 1, self.random_state,
                                0.0, sample_mask, X_argsorted, True)
-            #print "Iteration %d - build_tree - in %fs" % (i, time() - t0)
-            
             
             assert tree.is_leaf != True
 
-            loss.update_terminal_regions(tree, X, y, residual, y_pred)
-            #print "Iteration %d - update - in %fs" % (i, time() - t0)
+            # update tree leafs
+            loss.update_terminal_regions(tree, X, y, residual, y_pred,
+                                         self.learn_rate)
+
+            # add tree to ensemble
             self.trees.append(tree)
 
-            y_pred = self._predict(X, old_pred=y_pred)
+            # update OOB predictions
+            if self.subsample < 1.0:
+                y_pred[~sample_mask] = self._predict(X, old_pred=y_pred[~sample_mask])
             
             if monitor:
                 monitor(self, i)
@@ -453,19 +446,23 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         if self.classes.shape[0] != 2:
             raise ValueError("only binary classification supported")
         y = np.searchsorted(self.classes, y)
-        #y[y == 0] = -1  ## FIXME
         super(GradientBoostingClassifier, self).fit(X, y, monitor=monitor)
 
     def predict(self, X):
-        P = self.predict_proba(X)
-        return self.classes.take(np.argmax(P, axis=1), axis=0)
+        X = np.atleast_2d(X)
+        X = X.astype(DTYPE)
+        if len(self.trees) == 0:
+            raise ValueError("Estimator not fitted, " \
+                             "call `fit` before `predict`.")
+        f = self._predict(X)
+        return self.classes.take(f >= 0.0, axis=0)
 
     def predict_proba(self, X):
         X = np.atleast_2d(X)
         X = X.astype(DTYPE)
         if len(self.trees) == 0:
             raise ValueError("Estimator not fitted, " \
-                             "call `fit` before `predict`.")
+                             "call `fit` before `predict_proba`.")
         f = self._predict(X)
         P = np.ones((X.shape[0], 2), dtype=np.float64)
         P[:, 1] = 1.0 / (1.0 + np.exp(-f))
