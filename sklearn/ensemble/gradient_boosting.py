@@ -10,8 +10,6 @@
 from __future__ import division
 import numpy as np
 
-from time import time
-
 from ..base import BaseEstimator
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
@@ -32,8 +30,6 @@ class VariableImportance(object):
         if node.is_leaf:
             return
         else:
-            # do stuff
-            #print node.initial_error, node.best_error
             feature = node.feature
             error_improvement = (node.initial_error - node.best_error) \
                                 / node.initial_error
@@ -105,7 +101,8 @@ class LossFunction(object):
         """Compute the negative gradient."""
         pass
 
-    def update_terminal_regions(self, tree, X, y, residual, y_pred, learn_rate=1.0):
+    def update_terminal_regions(self, tree, X, y, residual, y_pred,
+                                learn_rate=1.0):
         """Update the terminal regions (=leafs) of the given
         tree. Traverses tree and invokes template method
         `_update_terminal_region`. """
@@ -121,8 +118,10 @@ class LossFunction(object):
         else:
             #print "%d: fx:%d, thres:%.8f" % (tree.id, tree.feature,
             #                                 tree.threshold)
-            self.update_terminal_regions(tree.left, X, y, residual, y_pred, learn_rate)
-            self.update_terminal_regions(tree.right, X, y, residual, y_pred, learn_rate)
+            self.update_terminal_regions(tree.left, X, y, residual, y_pred,
+                                         learn_rate)
+            self.update_terminal_regions(tree.right, X, y, residual, y_pred,
+                                         learn_rate)
 
     def _update_terminal_region(self, node, X, y, residual, pred):
         """Template method for updating terminal regions (=leafs). """
@@ -157,8 +156,9 @@ class LeastAbsoluteError(LossFunction):
 
     def _update_terminal_region(self, node, X, y, residual, pred):
         """LAD updates terminal regions to median estimates. """
-        node.value = np.asanyarray(np.median(y.take(node.terminal_region, axis=0) - \
-                                             pred.take(node.terminal_region, axis=0)))
+        node.value = np.asanyarray(
+            np.median(y.take(node.terminal_region, axis=0) - \
+                      pred.take(node.terminal_region, axis=0)))
 
 
 ## class HuberError(LossFunction):
@@ -187,14 +187,14 @@ class BinomialDeviance(LossFunction):
 
     def __call__(self, y, pred):
         """Compute the deviance (= negative log-likelihood). """
-        return -2.0 * np.sum((y * pred) - np.log(1.0 + np.exp(pred))) / y.shape[0]
+        return -2.0 * np.sum((y * pred) -
+                             np.log(1.0 + np.exp(pred))) / y.shape[0]
 
     def negative_gradient(self, y, pred):
         return y - (1.0 / (1.0 + np.exp(-pred)))
 
     def _update_terminal_region(self, node, X, y, residual, pred):
         """Make a single Newton-Raphson step. """
-        
         residual = residual.take(node.terminal_region, axis=0)
         y = y.take(node.terminal_region, axis=0)
 
@@ -204,7 +204,8 @@ class BinomialDeviance(LossFunction):
         if denominator == 0.0:
             node.value = np.array(0.0, dtype=np.float64)
         else:
-            node.value = np.asanyarray(numerator / denominator, dtype=np.float64)
+            node.value = np.asanyarray(numerator / denominator,
+                                       dtype=np.float64)
 
 
 LOSS_FUNCTIONS = {'ls': LeastSquaresError,
@@ -297,18 +298,17 @@ class BaseGradientBoosting(BaseEstimator):
 
         # perform boosting iterations
         for i in xrange(self.n_iter):
-            t0 = time()
 
             # subsampling
             sample_mask = np.random.rand(n_samples) > (1.0 - self.subsample)
-            
+
             residual = loss.negative_gradient(y, y_pred)
 
             # induce regression tree on residuals
             tree = _build_tree(False, X, residual, MSE(), self.max_depth,
                                self.min_split, None, 1, self.random_state,
                                0.0, sample_mask, X_argsorted, True)
-            
+
             assert tree.is_leaf != True
 
             # update tree leafs
@@ -320,11 +320,12 @@ class BaseGradientBoosting(BaseEstimator):
 
             # update OOB predictions
             if self.subsample < 1.0:
-                y_pred[~sample_mask] = self._predict(X, old_pred=y_pred[~sample_mask])
-            
+                y_pred[~sample_mask] = self._predict(
+                    X[~sample_mask], old_pred=y_pred[~sample_mask])
+
             if monitor:
                 monitor(self, i)
-            
+
             #if self.subsample < 1.0:
             #    oob[i] = loss.loss(y[~sample_mask], y_pred[~sample_mask])
             #print "Iteration %d - in %fs" % (i, time() - t0)
@@ -466,7 +467,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         f = self._predict(X)
         P = np.ones((X.shape[0], 2), dtype=np.float64)
         P[:, 1] = 1.0 / (1.0 + np.exp(-f))
-        P[:, 0] -= P[:,1]
+        P[:, 0] -= P[:, 1]
         return P
 
 
