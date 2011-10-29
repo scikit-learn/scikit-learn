@@ -659,7 +659,7 @@ def expected_mutual_information(contingency, n_samples):
                                                       dtype='int'))
                 # (N - a)! / N!
                 t = np.multiply.reduce(np.arange(N - a[i] + 1, N + 1,
-                                                 dtype='int'))
+                                                 dtype='float'))
                 if t == 0:
                     continue
                 term3c = 1. / t
