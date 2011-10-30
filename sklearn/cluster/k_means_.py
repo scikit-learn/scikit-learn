@@ -6,6 +6,7 @@
 #          Jan Schlueter <scikit-learn@jan-schlueter.de>
 #          Nelle Varoquaux
 #          Peter Prettenhofer <peter.prettenhofer@gmail.com>
+#          Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD
 
 import warnings
@@ -629,7 +630,8 @@ def _mini_batch_step_dense(X, x_squared_norms, batch_slice, centers, counts):
             # update the count statistics for this center
             counts[center_idx] += count
 
-    return distances[nearest_center].sum(), ((centers - centers) ** 2).sum()
+    diff = centers - old_centers
+    return distances[nearest_center].sum(), (diff ** 2).sum()
 
 
 class MiniBatchKMeans(KMeans):
@@ -661,10 +663,6 @@ class MiniBatchKMeans(KMeans):
 
         if init is an 2d array, it is used as a seed for the centroids
 
-    max_no_improvement: integer, default 10
-        Maximum number of mini-batches without improvement on the inertia
-        before early stopping. Set to None to disable early stopping.
-
     compute_labels: boolean
         Compute label assignements and inertia for the complete dataset
         once the minibatch optimization has converged in fit.
@@ -694,7 +692,9 @@ class MiniBatchKMeans(KMeans):
 
     inertia_: float
         The value of the inertia criterion associated with the chosen
-        partition (if compute_labels is set to True).
+        partition (if compute_labels is set to True). The inertia is
+        defined as the sum of square distances of samples to their nearest
+        neighbor.
 
     References
     ----------
@@ -703,18 +703,18 @@ class MiniBatchKMeans(KMeans):
 
     def __init__(self, k=8, init='random', max_iter=100,
                  chunk_size=1000, verbose=0, compute_labels=True,
-                 random_state=None, tol=None, max_no_improvement=10):
+                 random_state=None, tol=None):
 
         super(MiniBatchKMeans, self).__init__(k=k, init=init,
               max_iter=max_iter, verbose=verbose, random_state=random_state)
 
         if tol is not None:
-            warnings.warn('The tol parameter is deprecated, use '
-                          'max_no_improvement to control early stopping '
-                          'instead')
+            warnings.warn(
+                'The tol parameter is deprecated: the convergence is detected'
+                ' by the lack of improvement in a smooth average of the'
+                ' inertia')
         self.chunk_size = chunk_size
         self.compute_labels = compute_labels
-        self.max_no_improvement = max_no_improvement
 
     def fit(self, X, y=None):
         """Compute the centroids on X by chunking it into mini-batches.
@@ -754,8 +754,9 @@ class MiniBatchKMeans(KMeans):
         else:
             _mini_batch_step = _mini_batch_step_dense
 
-        min_inertia = np.inf
-        no_improvement = 0
+        previous_ewa_inertia = None
+        ewa_diff = None
+        ewa_inertia = None
         for i, batch_slice in izip(xrange(n_iterations), cycle(batch_slices)):
             inertia, diff = _mini_batch_step(
                 X_shuffled, x_squared_norms, batch_slice,
@@ -764,24 +765,36 @@ class MiniBatchKMeans(KMeans):
             # normalize inertia to be able to compare values when chunk_size
             # changes
             inertia /= float(batch_slice.stop - batch_slice.start)
+            diff /= float(batch_slice.stop - batch_slice.start)
 
-            if inertia < min_inertia:
-                min_inertia = inertia
-                no_improvement = 0
+            # compute an exponenontially weighted average of the squared diff to
+            # monitor the convergence while discarding batch local stochastic
+            # variability:
+            # https://en.wikipedia.org/wiki/Moving_average
+            if ewa_diff is None:
+                ewa_diff = diff
+                ewa_inertia = inertia
             else:
-                no_improvement += 1
+                alpha = float(self.chunk_size) * 2.0 / (n_samples + 1)
+                alpha = 1.0 if alpha > 1.0 else alpha
+                ewa_diff = ewa_diff * (1 - alpha) + diff * alpha
+                ewa_inertia = ewa_inertia * (1 - alpha) + inertia * alpha
 
             if self.verbose:
                 print ('Minibatch iteration %d/%d:'
-                       ' mean inertia: %f, best: %f' % (
-                           i + 1, n_iterations, inertia, min_inertia))
+                       ' mean inertia: %f, ewa inertia: %f,'
+                       ' mean squared diff: %f, ewa diff: %f' % (
+                           i + 1, n_iterations, inertia, ewa_inertia,
+                           diff, ewa_diff))
 
-            if (self.max_no_improvement
-                and no_improvement > self.max_no_improvement):
+            if (previous_ewa_inertia is not None
+                and ewa_inertia >= previous_ewa_inertia):
                 if self.verbose:
-                    print 'No improvement after %d: early stopping' % (
-                        self.max_no_improvement)
+                    print 'Converged at iteration %d/%d' % (
+                        i + 1, n_iterations)
                 break
+            else:
+                previous_ewa_inertia = ewa_inertia
 
         if self.compute_labels:
             if self.verbose:
