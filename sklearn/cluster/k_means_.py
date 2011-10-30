@@ -607,6 +607,7 @@ def _mini_batch_step_dense(X, x_squared_norms, batch_slice, centers, counts):
         centers, X, Y_norm_squared=x_squared_norms, squared=True)
     nearest_center = distances.argmin(axis=0)
 
+    old_centers = centers.copy()
     k = centers.shape[0]
     for center_idx in range(k):
         # find points from minibatch that are assigned to this center
@@ -628,7 +629,7 @@ def _mini_batch_step_dense(X, x_squared_norms, batch_slice, centers, counts):
             # update the count statistics for this center
             counts[center_idx] += count
 
-    return distances[nearest_center].sum()
+    return distances[nearest_center].sum(), ((centers - centers) ** 2).sum()
 
 
 class MiniBatchKMeans(KMeans):
@@ -758,8 +759,9 @@ class MiniBatchKMeans(KMeans):
         min_inertia = np.inf
         no_improvement = 0
         for i, batch_slice in izip(xrange(n_iterations), cycle(batch_slices)):
-            inertia = _mini_batch_step(X_shuffled, x_squared_norms, batch_slice,
-                                       self.cluster_centers_, self.counts)
+            inertia, diff = _mini_batch_step(
+                X_shuffled, x_squared_norms, batch_slice,
+                self.cluster_centers_, self.counts)
 
             # normalize inertia to be able to compare values when chunk_size
             # changes

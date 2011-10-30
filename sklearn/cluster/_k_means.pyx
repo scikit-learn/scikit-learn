@@ -159,7 +159,16 @@ def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
 
     Return
     ------
-    The inertia of the batch prior to centers update.
+    inertia: float
+        The inertia of the batch prior to centers update, i.e. the sum distances
+        to the closest center for each sample in the slice. This is the
+        objective function being minimized by the k-means algorithm.
+
+    squared_diff: float
+        The sum of squared update (squared norm of the centers position change).
+
+    Both squared diff and inertia are commonly used to monitor the convergence
+    of the algorithm.
     """
     cdef:
         np.ndarray[DOUBLE, ndim=1] X_data = X.data
@@ -174,10 +183,15 @@ def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
 
         unsigned int sample_idx, center_idx, feature_idx
         unsigned int i, k
-        unsigned int old_count, batch_count
+        unsigned int old_count, new_count
         DOUBLE inertia
+        DOUBLE center_diff
+        DOUBLE squared_diff = 0.0
+        DOUBLE old_center
 
         # TODO: reuse a array preallocated outside of the mini batch main loop
+        np.ndarray[DOUBLE, ndim=1] new_center = np.zeros(
+            n_features, dtype=np.double)
         np.ndarray[INT, ndim=1] nearest_center = np.zeros(
             n_samples, dtype=np.int32)
 
@@ -186,36 +200,49 @@ def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
         X, x_squared_norms, batch_slice_start, batch_slice_stop,
         centers, nearest_center)
 
-    # step 2: move centers to mean of old and newly assigned samples
+    # step 2: move centers to the mean of both old and newly assigned samples
     for center_idx in range(n_clusters):
+        center_diff = 0.0
         old_count = counts[center_idx]
-        if old_count > 0:
-            for feature_idx in range(n_features):
-                # inplace remove previous count scaling
-                centers[center_idx, feature_idx] *= old_count
+        new_count = old_count
+
+        # rescale the old center to reflect it previous accumulated
+        # weight w.r.t. the new data that will be incrementally contributed
+        new_center[:] = centers[center_idx, :]
+        new_center *= old_count
 
         # iterate of over samples assigned to this cluster to move the center
         # location by inplace summation
-        batch_count = 0
         for i in range(n_samples):
             if nearest_center[i] != center_idx:
                 continue
             sample_idx = batch_slice_start + i
-            batch_count += 1
+            new_count += 1
 
             # inplace sum with new samples that are members of this cluster
+            # and update of the incremental squared difference update of the
+            # center position
             for k in range(X_indptr[sample_idx], X_indptr[sample_idx + 1]):
-                centers[center_idx, X_indices[k]] += X_data[k]
+                new_center[X_indices[k]] += X_data[k]
 
         # inplace rescale center with updated count
-        if old_count + batch_count > 0:
-            for feature_idx in range(n_features):
-                centers[center_idx, feature_idx] /= old_count + batch_count
-
+        if new_count > old_count:
             # update the count statistics for this center
-            counts[center_idx] += batch_count
+            counts[center_idx] = new_count
 
-    return inertia
+            # re-scale the updated center with the total new counts
+            new_center /= new_count
+
+            # update the incremental computation of the squared total
+            # centers position change
+            for feature_idx in range(n_features):
+                squared_diff += (new_center[feature_idx]
+                                 - centers[center_idx, feature_idx]) ** 2
+
+            # save the updated center position
+            centers[center_idx, :] = new_center
+
+    return inertia, squared_diff
 
 
 @cython.boundscheck(False)

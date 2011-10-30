@@ -7,11 +7,14 @@ from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
 from nose.tools import assert_raises
 from nose.tools import assert_true
+from nose.tools import assert_almost_equal
 
 from sklearn.metrics.cluster import v_measure_score
 from sklearn.cluster import KMeans
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.cluster.k_means_ import _labels_inertia
+from sklearn.cluster._k_means import _mini_batch_update_csr
+from sklearn.cluster._k_means import csr_row_norm_l2
 from sklearn.datasets.samples_generator import make_blobs
 
 
@@ -55,6 +58,32 @@ def test_labels_assignement_and_inertia():
     labels_csr, inertia_csr = _labels_inertia(X_csr, x_squared_norms, centers)
     assert_array_almost_equal(inertia_csr, inertia_gold, 7)
     assert_array_equal(labels_csr, labels_gold)
+
+
+def test_minibatch_update_sparse_csr():
+    rng = np.random.RandomState(42)
+    old_centers = centers + rng.normal(size=centers.shape)
+    new_centers = old_centers.copy()
+    counts = np.ones(new_centers.shape[0], dtype=np.int32)
+    x_squared_norms = csr_row_norm_l2(X_csr, squared=True)
+
+    slice_ = slice(0, 10)
+    out = _mini_batch_update_csr(
+        X_csr, x_squared_norms, slice_, new_centers, counts)
+    print out
+    old_inertia, incremental_diff = out
+    assert_true(old_inertia > 0.0)
+
+    # compute the new inertia on the same batch to check that is decreased
+    _, new_inertia = _labels_inertia(X_csr[slice_], x_squared_norms,
+                                     new_centers)
+    assert_true(new_inertia > 0.0)
+    assert_true(new_inertia < old_inertia)
+
+    # check that the incremental difference computation is matching the
+    # final observed value
+    effective_diff = np.sum((new_centers - old_centers) ** 2)
+    assert_almost_equal(incremental_diff, effective_diff, 5)
 
 
 def _check_fitted_model(km):
