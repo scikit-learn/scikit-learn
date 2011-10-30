@@ -93,8 +93,7 @@ class LogisticRegression(SparseBaseLibLinear, ClassifierMixin,
         The returned estimates for all classes are ordered by the
         label of classes.
         """
-        if not sp.isspmatrix_csr(X):
-            X = sp.csr_matrix(X)
+        X = sp.csr_matrix(X)
         X.data = np.asarray(X.data, dtype=np.float64, order='C')
         probas = csr_predict_prob(X.shape[1], X.data, X.indices,
                                   X.indptr, self.raw_coef_,
