@@ -68,10 +68,8 @@ def test_minibatch_update_sparse_csr():
     x_squared_norms = csr_row_norm_l2(X_csr, squared=True)
 
     slice_ = slice(0, 10)
-    out = _mini_batch_update_csr(
+    old_inertia, incremental_diff = _mini_batch_update_csr(
         X_csr, x_squared_norms, slice_, new_centers, counts)
-    print out
-    old_inertia, incremental_diff = out
     assert_true(old_inertia > 0.0)
 
     # compute the new inertia on the same batch to check that is decreased

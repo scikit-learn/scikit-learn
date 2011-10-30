@@ -712,8 +712,6 @@ class MiniBatchKMeans(KMeans):
             warnings.warn('The tol parameter is deprecated, use '
                           'max_no_improvement to control early stopping '
                           'instead')
-        self.counts = None
-        self.cluster_centers_ = None
         self.chunk_size = chunk_size
         self.compute_labels = compute_labels
         self.max_no_improvement = max_no_improvement
@@ -812,7 +810,8 @@ class MiniBatchKMeans(KMeans):
 
         x_squared_norms = _squared_norms(X)
 
-        if self.counts is None:
+        if (not hasattr(self, 'counts')
+            or not hasattr(self, 'cluster_centers_')):
             # this is the first call partial_fit on this object:
             # initialize the cluster centers
             self.cluster_centers_ = _init_centroids(
@@ -827,8 +826,8 @@ class MiniBatchKMeans(KMeans):
         else:
             _mini_batch_step = _mini_batch_step_dense
 
-        _mini_batch_step(X, x_squared_norms, batch_slice, self.cluster_centers_,
-                         self.counts)
+        _mini_batch_step(X, x_squared_norms, batch_slice,
+                         self.cluster_centers_, self.counts)
 
         if self.compute_labels:
             self.labels_, self.inertia_ = _labels_inertia(

@@ -156,7 +156,6 @@ def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
          The vector in which we keep track of the numbers of elements in a
          cluster
 
-
     Return
     ------
     inertia: float
