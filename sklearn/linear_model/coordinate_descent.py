@@ -104,7 +104,7 @@ class ElasticNet(LinearModel):
             Target
         Xy : array-like, optional
             Xy = np.dot(X.T, y) that can be precomputed. It is useful
-            only when the Gram matrix is precomuted.
+            only when the Gram matrix is precomputed.
         coef_init: ndarray of shape n_features
             The initial coeffients to warm-start the optimization
 
@@ -294,7 +294,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 
     Xy : array-like, optional
         Xy = np.dot(X.T, y) that can be precomputed. It is useful
-        only when the Gram matrix is precomuted.
+        only when the Gram matrix is precomputed.
 
     fit_intercept : bool
         Fit or not an intercept
@@ -365,7 +365,7 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     Xy : array-like, optional
         Xy = np.dot(X.T, y) that can be precomputed. It is useful
-        only when the Gram matrix is precomuted.
+        only when the Gram matrix is precomputed.
 
     fit_intercept : bool
         Fit or not an intercept
