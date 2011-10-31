@@ -5,6 +5,7 @@ estimator.
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD Style
 # Copyright: INRIA
+import warnings
 
 import numpy as np
 from scipy import linalg
@@ -14,6 +15,7 @@ from .empirical_covariance_ import empirical_covariance, \
 from ..utils.extmath import fast_logdet
 
 from ..linear_model import lars_path
+from ..linear_model import cd_fast
 
 ################################################################################
 # Helper functions to compute the objective and dual objective functions
@@ -51,46 +53,75 @@ def _dual_gap(emp_cov, precision_, alpha):
 ################################################################################
 # The g-lasso algorithm
 
-def g_lasso(X, alpha, tol=1e-4, maxiter=100,
-                          eps=10*np.finfo(np.float).eps,
-            ):
-    # XXX: need to be able to give an initial guess
+def g_lasso(X, alpha, cov_init=None, mode='cd', tol=1e-4,
+            max_iter=100, eps=10*np.finfo(np.float).eps, verbose=False):
+    """ l1-penalized covariance estimator
+
+    Parameters
+    ----------
+    X: 2D ndarray, shape (n_samples, n_features)
+        Data from which to compute the covariance estimate
+
+    alpha: positive float
+        The regularization parameter: the higher alpha, the more
+        regularization, the sparser the inverse covariance
+    cov_init: 2D array (n_features, n_features), optional
+        The initial guess for the covariance
+    mode: {'cd', 'lars'}
+        The Lasso solver to use: coordinate descent or LARS. Use LARS for
+        very sparse underlying graphs, where p > n. Elsewhere prefer cd
+        which is more numerically stable.
+    """
     _, n_features = X.shape
-    covariance_ = empirical_covariance(X)
+    mle = empirical_covariance(X)
     if alpha == 0:
-        return covariance_
-    mle = covariance_.copy()
-    covariance_.flat[::n_features + 1] += alpha
+        return mle
+    if cov_init is None:
+        covariance_ = mle.copy()
+        covariance_.flat[::n_features + 1] += alpha
+    else:
+        covariance_ = cov_init.copy()
+        covariance_.flat[::n_features + 1] = mle.flat[::n_features + 1] + alpha
     indices = np.arange(n_features)
     precision_ = linalg.inv(covariance_)
-    for i in xrange(maxiter):
+    for i in xrange(max_iter):
         for idx in xrange(n_features):
             sub_covariance = covariance_[indices != idx].T[indices != idx]
             row = mle[idx, indices != idx]
-            _, _, coefs = lars_path(sub_covariance, row,
-                                    Xy=row, Gram=sub_covariance,
-                                    alpha_min=alpha/(n_features-1),
-                                    copy_Gram=True,
-                                    method='lars')
-            coefs = coefs[:, -1]
+            if mode == 'cd':
+                # Use coordinate descent
+                coefs = -precision_[indices != idx, idx]/precision_[idx, idx]
+                coefs, _, _ = \
+                    cd_fast.enet_coordinate_descent_gram(coefs,
+                            alpha,
+                            0, sub_covariance, row,
+                            row, max_iter, tol)
+            else:
+                # Use LARS
+                _, _, coefs = lars_path(sub_covariance, row,
+                                        Xy=row, Gram=sub_covariance,
+                                        alpha_min=alpha/(n_features-1),
+                                        copy_Gram=True,
+                                        method='lars')
+                coefs = coefs[:, -1]
+            # Update the precision matrix
             precision_[idx, idx] = 1./(covariance_[idx, idx] -
                         np.dot(covariance_[indices != idx, idx], coefs))
             precision_[indices != idx, idx] = -precision_[idx, idx]*coefs
             precision_[idx, indices != idx] = -precision_[idx, idx]*coefs
-            # We need to regularize the coefs in case the system is
-            # ill-conditioned
-            #coefs[coefs != 0] += eps
-            # update the precision matrix
             coefs = np.dot(sub_covariance, coefs)
-            #print 'MMMMM', coefs.max()
             covariance_[idx, indices != idx] = coefs
             covariance_[indices != idx, idx] = coefs
-        cost = _objective(mle, precision_, alpha)
         d_gap = _dual_gap(mle, precision_, alpha)
-        print cost, d_gap
+        if verbose:
+            cost = _objective(mle, precision_, alpha)
+            print '[g_lasso] Iteration % 3i, cost %.4f, dual gap %.3e' % (
+                                                    i, cost, d_gap)
         if np.abs(d_gap) < tol:
             break
-        #_dual_objective(mle, covariance_, alpha), \
+    else:
+        warnings.warn('g_lasso: did not converge after %i iteration:'
+                        'dual gap: %.3e' % (max_iter, d_gap))
     return covariance_, precision_
 
 
