@@ -11,6 +11,7 @@ Maximum likelihood covariance estimator.
 
 # avoid division truncation
 from __future__ import division
+import warnings
 import numpy as np
 from scipy import linalg
 
@@ -55,7 +56,9 @@ def empirical_covariance(X, assume_centered=False):
     """
     X = np.asarray(X)
     if X.ndim == 1:
-        X = np.atleast_2d(X).T
+        X = np.reshape(X, (1, -1))
+        warnings.warn("Only one sample available. " \
+                          "You may want to reshape your data array")
 
     if assume_centered:
         covariance = np.dot(X.T, X) / X.shape[0]

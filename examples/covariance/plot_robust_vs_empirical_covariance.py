@@ -58,7 +58,10 @@ from sklearn.covariance import EmpiricalCovariance, MinCovDet
 n_samples = 80
 n_features = 5
 repeat = 10
-range_n_outliers = np.arange(0, n_samples / 2, 5)
+
+range_n_outliers = np.concatenate(
+    (np.linspace(0, n_samples / 8, 5),
+     np.linspace(n_samples / 8, n_samples / 2, 5)[1:-1]))
 
 # definition of arrays to store results
 err_loc_mcd = np.zeros((range_n_outliers.size, repeat))
@@ -145,6 +148,6 @@ pl.errorbar(range_n_outliers, err_cov_emp_pure.mean(1),
 pl.title("Influence of outliers on the covariance estimation")
 pl.xlabel("Amount of contamination (%)")
 pl.ylabel("RMSE")
-pl.legend(loc="upper right", prop=font_prop)
+pl.legend(loc="upper center", prop=font_prop)
 
 pl.show()
