@@ -16,7 +16,7 @@ from scipy import linalg
 
 from ..base import BaseEstimator
 from ..utils import array2d
-from ..utils.extmath import fast_logdet as exact_logdet
+from ..utils.extmath import fast_logdet
 
 
 def log_likelihood(emp_cov, precision):
@@ -30,7 +30,7 @@ def log_likelihood(emp_cov, precision):
       The precision matrix of the covariance model to be tested
 
     """
-    return -np.sum(emp_cov * precision) + exact_logdet(precision)
+    return -np.sum(emp_cov * precision) + fast_logdet(precision)
 
 
 def empirical_covariance(X, assume_centered=False):
