@@ -54,7 +54,7 @@ def _dual_gap(emp_cov, precision_, alpha):
 # The g-lasso algorithm
 
 def g_lasso(X, alpha, cov_init=None, mode='cd', tol=1e-4,
-            max_iter=100, eps=10*np.finfo(np.float).eps, verbose=False):
+            max_iter=100, verbose=False):
     """ l1-penalized covariance estimator
 
     Parameters
@@ -71,6 +71,22 @@ def g_lasso(X, alpha, cov_init=None, mode='cd', tol=1e-4,
         The Lasso solver to use: coordinate descent or LARS. Use LARS for
         very sparse underlying graphs, where p > n. Elsewhere prefer cd
         which is more numerically stable.
+    tol: positive float, optional
+        The tolerance to declare convergence: if the dual gap goes below
+        this value, iterations are stopped
+    max_iter: integer, optional
+        The maximum number of iterations
+    verbose: boolean, optional
+        If verbose is True, the objective function and dual gap are
+        plotted at each iteration
+
+    Returns
+    -------
+    covariance_: 2D ndarray, shape (n_features, n_features)
+        The estimated covariance matrix
+    precision_: 2D ndarray, shape (n_features, n_features)
+        The estimated (sparse) precision matrix
+
     """
     _, n_features = X.shape
     mle = empirical_covariance(X)
