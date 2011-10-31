@@ -182,11 +182,10 @@ def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
 
         unsigned int sample_idx, center_idx, feature_idx
         unsigned int i, k
-        unsigned int old_count, new_count
+        int old_count, new_count
         DOUBLE inertia
         DOUBLE center_diff
         DOUBLE squared_diff = 0.0
-        DOUBLE old_center
 
         # TODO: reuse a array preallocated outside of the mini batch main loop
         np.ndarray[DOUBLE, ndim=1] new_center = np.zeros(
@@ -201,13 +200,12 @@ def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
 
     # step 2: move centers to the mean of both old and newly assigned samples
     for center_idx in range(n_clusters):
-        center_diff = 0.0
         old_count = counts[center_idx]
         new_count = old_count
 
         # rescale the old center to reflect it previous accumulated
         # weight w.r.t. the new data that will be incrementally contributed
-        new_center[:] = centers[center_idx, :]
+        new_center[:] = centers[center_idx]
         new_center *= old_count
 
         # iterate of over samples assigned to this cluster to move the center
@@ -239,7 +237,7 @@ def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
                                  - centers[center_idx, feature_idx]) ** 2
 
             # save the updated center position
-            centers[center_idx, :] = new_center
+            centers[center_idx] = new_center
 
     return inertia, squared_diff
 
