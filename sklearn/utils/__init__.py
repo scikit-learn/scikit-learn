@@ -15,15 +15,17 @@ def assert_all_finite(X):
             raise ValueError("array contains NaN or infinity")
 
 
-def safe_asanyarray(X, dtype=None, order=None):
+def safe_asarray(X, dtype=None, order=None):
+    """Convert X to an array or sparse matrix.
+    Prevents copying X when possible; sparse matrices are passed through."""
     if not sp.issparse(X):
-        X = np.asanyarray(X, dtype, order)
+        X = np.asarray(X, dtype, order)
     assert_all_finite(X)
     return X
 
 
 def as_float_array(X, copy=True):
-    """Converts a numpy array to an array of floats
+    """Converts an array-like to an array of floats
 
     The new dtype will be np.float32 or np.float64, depending on the original
     type. The function can create a copy or modify the argument depending
@@ -42,6 +44,10 @@ def as_float_array(X, copy=True):
     X : array
         An array of type np.float
     """
+    if isinstance(X, np.matrix):
+        X = X.A
+    elif not isinstance(X, np.ndarray) and not sp.issparse(X):
+        return safe_asarray(X, dtype=np.float64)
     if X.dtype in [np.float32, np.float64]:
         return X.copy() if copy else X
     if X.dtype == np.int32:
@@ -51,9 +57,17 @@ def as_float_array(X, copy=True):
     return X
 
 
+def array2d(X, dtype=None, order=None):
+    """Returns at least 2-d array with data from X"""
+    return np.atleast_2d(np.asarray(X, dtype=dtype, order=order))
+
+
 def atleast2d_or_csr(X):
-    """Like numpy.atleast_2d, but converts sparse matrices to CSR format"""
-    X = X.tocsr() if sp.issparse(X) else np.atleast_2d(X)
+    """Like numpy.atleast_2d, but converts sparse matrices to CSR format
+    
+    Also, converts np.matrix to np.ndarray.
+    """
+    X = X.tocsr() if sp.issparse(X) else array2d(X)
     assert_all_finite(X)
     return X
 
@@ -131,7 +145,7 @@ def check_arrays(*arrays, **options):
             elif sparse_format == 'csc':
                 array = array.tocsc()
         else:
-            array = np.asanyarray(array)
+            array = np.asarray(array)
 
         if copy and array is array_orig:
             array = array.copy()

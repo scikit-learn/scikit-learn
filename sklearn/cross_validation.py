@@ -306,7 +306,7 @@ class StratifiedKFold(object):
     """
 
     def __init__(self, y, k, indices=False):
-        y = np.asanyarray(y)
+        y = np.asarray(y)
         n = y.shape[0]
         assert k > 0, ValueError('Cannot have number of folds k below 1.')
         assert k <= n, ValueError('Cannot have number of folds k=%d, '
@@ -805,12 +805,12 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, n_jobs=1,
 
 def _permutation_test_score(estimator, X, y, cv, score_func):
     """Auxilary function for permutation_test_score"""
-    y_test = list()
-    y_pred = list()
+    avg_score = []
     for train, test in cv:
-        y_test.append(y[test])
-        y_pred.append(estimator.fit(X[train], y[train]).predict(X[test]))
-    return score_func(np.ravel(y_test), np.ravel(y_pred))
+        avg_score.append(score_func(y[test],
+                                    estimator.fit(X[train],
+                                                  y[train]).predict(X[test])))
+    return np.mean(avg_score)
 
 
 def _shuffle(y, labels, random_state):
@@ -914,10 +914,11 @@ def permutation_test_score(estimator, X, y, score_func, cv=None,
         The scores obtained for each permutations.
 
     pvalue: float
-        The returned value equals p-value if `score_func` returns bigger numbers
-        for better scores (e.g., zero_one). If `score_func` is rather a loss
-        function (i.e. when lower is better such as with `mean_square_error`)
-        then this is actually the complement of the p-value:  1 - p-value.
+        The returned value equals p-value if `score_func` returns bigger
+        numbers for better scores (e.g., zero_one). If `score_func` is rather a
+        loss function (i.e. when lower is better such as with
+        `mean_square_error`) then this is actually the complement of the
+        p-value:  1 - p-value.
 
     References
     ----------

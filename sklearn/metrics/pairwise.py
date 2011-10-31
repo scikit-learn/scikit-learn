@@ -37,7 +37,7 @@ kernel:
 import numpy as np
 from scipy.spatial import distance
 from scipy.sparse import csr_matrix, issparse
-from ..utils import safe_asanyarray, atleast2d_or_csr, deprecated
+from ..utils import safe_asarray, atleast2d_or_csr, deprecated
 from ..utils.extmath import safe_sparse_dot
 
 
@@ -71,10 +71,10 @@ def check_pairwise_arrays(X, Y):
 
     """
     if Y is X or Y is None:
-        X = Y = safe_asanyarray(X)
+        X = Y = safe_asarray(X)
     else:
-        X = safe_asanyarray(X)
-        Y = safe_asanyarray(Y)
+        X = safe_asarray(X)
+        Y = safe_asarray(Y)
     X = atleast2d_or_csr(X)
     Y = atleast2d_or_csr(Y)
     if len(X.shape) < 2:

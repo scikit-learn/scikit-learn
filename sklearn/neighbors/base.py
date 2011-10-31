@@ -14,7 +14,7 @@ from scipy.spatial.ckdtree import cKDTree
 from .ball_tree import BallTree
 from ..base import BaseEstimator
 from ..metrics import euclidean_distances
-from ..utils import safe_asanyarray, atleast2d_or_csr
+from ..utils import safe_asarray, atleast2d_or_csr
 
 
 def warn_equidistant():
@@ -104,7 +104,7 @@ class NeighborsBase(BaseEstimator):
             self._fit_method = 'kd_tree'
             return self
 
-        X = safe_asanyarray(X)
+        X = safe_asarray(X)
 
         if X.ndim != 2:
             raise ValueError("data type not understood")
@@ -277,7 +277,7 @@ class KNeighborsMixin(object):
         --------
         NearestNeighbors.radius_neighbors_graph
         """
-        X = np.asanyarray(X)
+        X = np.asarray(X)
 
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
@@ -466,7 +466,7 @@ class RadiusNeighborsMixin(object):
         --------
         kneighbors_graph
         """
-        X = np.asanyarray(X)
+        X = np.asarray(X)
 
         if radius is None:
             radius = self.radius
@@ -513,7 +513,7 @@ class SupervisedFloatMixin(object):
         y : {array-like, sparse matrix}, shape = [n_samples]
             Target values, array of float values.
         """
-        self._y = np.asanyarray(y)
+        self._y = np.asarray(y)
         return self._fit(X)
 
 
@@ -530,7 +530,7 @@ class SupervisedIntegerMixin(object):
         y : {array-like, sparse matrix}, shape = [n_samples]
             Target values, array of integer values.
         """
-        self._y = np.asanyarray(y)
+        self._y = np.asarray(y)
         return self._fit(X)
 
 

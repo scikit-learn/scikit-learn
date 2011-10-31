@@ -4,7 +4,7 @@ About
 =====
 
 scikit-learn is a Python module for machine learning built on top of
-SciPy.
+SciPy and distributed under the 3-Clause BSD license.
 
 The project was started in 2007 by David Cournapeau as a Google Summer
 of Code project, and since then many volunteers have contributed. See
@@ -19,8 +19,8 @@ Important links
 ===============
 
 - Official source code repo: https://github.com/scikit-learn/scikit-learn
-- HTML documentation (stable release): http://scikit-learn.sourceforge.net/
-- HTML documentation (development version): http://scikit-learn.sourceforge.net/dev/
+- HTML documentation (stable release): http://scikit-learn.org
+- HTML documentation (development version): http://scikit-learn.org/dev/
 - Download releases: http://sourceforge.net/projects/scikit-learn/files/
 - Issue tracker: https://github.com/scikit-learn/scikit-learn/issues
 - Mailing list: https://lists.sourceforge.net/lists/listinfo/scikit-learn-general

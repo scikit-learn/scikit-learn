@@ -526,6 +526,7 @@ Grid Search
    :template: class.rst
 
    grid_search.GridSearchCV
+   grid_search.IterGrid
 
 
 .. _feature_selection_ref:
@@ -568,7 +569,7 @@ Feature Extraction
 .. currentmodule:: sklearn
 
 From images
--------------
+-----------
 
 .. automodule:: sklearn.feature_extraction.image
    :no-members:
@@ -674,6 +675,7 @@ Loaders
    :toctree: generated/
    :template: function.rst
 
+   datasets.load_boston
    datasets.load_files
    datasets.load_diabetes
    datasets.load_digits

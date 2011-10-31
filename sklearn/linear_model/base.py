@@ -19,7 +19,7 @@ from ..base import RegressorMixin
 from ..base import ClassifierMixin
 from ..base import TransformerMixin
 from ..utils.extmath import safe_sparse_dot
-from ..utils import as_float_array, safe_asanyarray
+from ..utils import array2d, as_float_array, safe_asarray
 from ..utils import atleast2d_or_csr, check_arrays
 
 from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
@@ -49,7 +49,7 @@ class LinearModel(BaseEstimator, RegressorMixin):
         C : array, shape = [n_samples]
             Returns predicted values.
         """
-        X = safe_asanyarray(X)
+        X = safe_asarray(X)
         return safe_sparse_dot(X, self.coef_.T) + self.intercept_
 
     @staticmethod
@@ -138,8 +138,8 @@ class LinearRegression(LinearModel):
         -------
         self : returns an instance of self.
         """
-        X = np.asanyarray(X)
-        y = np.asanyarray(y)
+        X = np.asarray(X)
+        y = np.asarray(y)
 
         X, y, X_mean, y_mean, X_std = self._center_data(X, y,
                 self.fit_intercept, self.normalize, self.copy_X)
@@ -214,15 +214,15 @@ class BaseSGD(BaseEstimator):
         if sample_weight == None:
             sample_weight = np.ones(n_samples, dtype=np.float64, order='C')
         else:
-            sample_weight = np.asanyarray(sample_weight, dtype=np.float64,
-                                          order="C")
+            sample_weight = np.asarray(sample_weight, dtype=np.float64,
+                                       order="C")
         self.sample_weight = sample_weight
         if self.sample_weight.shape[0] != n_samples:
             raise ValueError("Shapes of X and sample_weight do not match.")
 
     def _set_coef(self, coef_):
         """Make sure that coef_ is 2d. """
-        self.coef_ = np.atleast_2d(coef_)
+        self.coef_ = array2d(coef_)
 
     def _allocate_parameter_mem(self, n_classes, n_features, coef_init=None,
                                 intercept_init=None):
@@ -230,7 +230,7 @@ class BaseSGD(BaseEstimator):
         if n_classes > 2:
             # allocate coef_ for multi-class
             if coef_init is not None:
-                coef_init = np.asanyarray(coef_init)
+                coef_init = np.asarray(coef_init)
                 if coef_init.shape != (n_classes, n_features):
                     raise ValueError("Provided coef_ does not match dataset. ")
                 self.coef_ = coef_init
@@ -240,7 +240,7 @@ class BaseSGD(BaseEstimator):
 
             # allocate intercept_ for multi-class
             if intercept_init is not None:
-                intercept_init = np.asanyarray(intercept_init)
+                intercept_init = np.asarray(intercept_init)
                 if intercept_init.shape != (n_classes, ):
                     raise ValueError("Provided intercept_init " \
                                      "does not match dataset.")
@@ -251,8 +251,8 @@ class BaseSGD(BaseEstimator):
         else:
             # allocate coef_ for binary problem
             if coef_init is not None:
-                coef_init = np.asanyarray(coef_init, dtype=np.float64,
-                                          order="C")
+                coef_init = np.asarray(coef_init, dtype=np.float64,
+                                       order="C")
                 coef_init = coef_init.ravel()
                 if coef_init.shape != (n_features,):
                     raise ValueError("Provided coef_init does not " \
@@ -263,8 +263,7 @@ class BaseSGD(BaseEstimator):
 
             # allocate intercept_ for binary problem
             if intercept_init is not None:
-                intercept_init = np.asanyarray(intercept_init,
-                                               dtype=np.float64)
+                intercept_init = np.asarray(intercept_init, dtype=np.float64)
                 if intercept_init.shape != (1,) and intercept_init.shape != ():
                     raise ValueError("Provided intercept_init " \
                                  "does not match dataset.")
@@ -356,17 +355,10 @@ class BaseSGDClassifier(BaseSGD, ClassifierMixin):
         -------
         self : returns an instance of self.
         """
+        X = safe_asarray(X)
+        y = np.asarray(y, dtype=np.float64, order='C')
 
-        # check only y because X might be dense or sparse
-        y = np.asanyarray(y, dtype=np.float64, order='C')
-
-        # make sure X has shape
-        try:
-            n_samples, n_features = X.shape
-        except AttributeError:
-            X = np.asanyarray(X)
-            n_samples, n_features = X.shape
-
+        n_samples, n_features = X.shape
         if n_samples != y.shape[0]:
             raise ValueError("Shapes of X and y do not match.")
 
@@ -514,7 +506,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         self : returns an instance of self.
         """
         X, y = check_arrays(X, y, sparse_format="csr", copy=False)
-        y = np.asanyarray(y, dtype=np.float64, order="C")
+        y = np.asarray(y, dtype=np.float64, order="C")
 
         n_samples, n_features = X.shape
 
