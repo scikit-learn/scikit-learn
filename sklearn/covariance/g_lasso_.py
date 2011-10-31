@@ -3,8 +3,8 @@ estimator.
 """
 
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
-#
-# License: BSD Style.
+# License: BSD Style
+# Copyright: INRIA
 
 import numpy as np
 from scipy import linalg
