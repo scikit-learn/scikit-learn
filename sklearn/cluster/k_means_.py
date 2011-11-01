@@ -828,8 +828,8 @@ class MiniBatchKMeans(KMeans):
                     print 'Converged at iteration %d/%d' % (
                         i + 1, n_iterations)
                 break
-            else:
-                previous_ewa_inertia = ewa_inertia
+
+            previous_ewa_inertia = ewa_inertia
 
         if self.compute_labels:
             if self.verbose:
