@@ -43,22 +43,10 @@ def test_classification_toy():
 
     assert_array_equal(clf.predict(T), true_result)
 
-    # With subsampling
-    clf = tree.DecisionTreeClassifier(max_features=1, random_state=1)
-    clf.fit(X, y)
-
-    assert_array_equal(clf.predict(T), true_result)
-
 
 def test_regression_toy():
     """Check regression on a toy dataset."""
     clf = tree.DecisionTreeRegressor()
-    clf.fit(X, y)
-
-    assert_almost_equal(clf.predict(T), true_result)
-
-    # With subsampling
-    clf = tree.DecisionTreeRegressor(max_features=1, random_state=1)
     clf.fit(X, y)
 
     assert_almost_equal(clf.predict(T), true_result)
@@ -125,15 +113,6 @@ def test_iris():
         assert score > 0.9, "Failed with criterion " + c + \
             " and score = " + str(score)
 
-        clf = tree.DecisionTreeClassifier(criterion=c,
-                                          max_features=2,
-                                          random_state=1)\
-              .fit(iris.data, iris.target)
-
-        score = np.mean(clf.predict(iris.data) == iris.target)
-        assert score > 0.5, "Failed with criterion " + c + \
-            " and score = " + str(score)
-
 
 def test_boston():
     """Check consistency on dataset boston house prices."""
@@ -143,17 +122,6 @@ def test_boston():
 
         score = np.mean(np.power(clf.predict(boston.data) - boston.target, 2))
         assert score < 1, "Failed with criterion " + c + \
-            " and score = " + str(score)
-
-        clf = tree.DecisionTreeRegressor(criterion=c,
-                                         max_features=6,
-                                         random_state=1)\
-              .fit(boston.data, boston.target)
-
-        #using fewer features reduces the learning ability of this tree,
-        # but reduces training time.
-        score = np.mean(np.power(clf.predict(boston.data) - boston.target, 2))
-        assert score < 2, "Failed with criterion " + c + \
             " and score = " + str(score)
 
 
@@ -196,28 +164,14 @@ def test_error():
     clf.fit(Xf, y)
     assert_array_equal(clf.predict(T), true_result)
 
-    # use values of max_features that are invalid
-    clf = tree.DecisionTreeClassifier(max_features=-1)
-    assert_raises(ValueError, clf.fit, X, y2)
-
-    clf = tree.DecisionTreeClassifier(max_features=10)
-    assert_raises(ValueError, clf.fit, X, y2)
-
-    clf = tree.DecisionTreeClassifier()
     # predict before fitting
+    clf = tree.DecisionTreeClassifier()
     assert_raises(Exception, clf.predict, T)
 
     # predict on vector with different dims
     clf.fit(X, y)
     t = np.asanyarray(T)
     assert_raises(ValueError, clf.predict, t[:, 1:])
-
-    # max_features invalid
-    clf = tree.DecisionTreeClassifier(max_features=-1)
-    assert_raises(ValueError, clf.fit, X, y)
-
-    clf = tree.DecisionTreeClassifier(max_features=3)
-    assert_raises(ValueError, clf.fit, X, y)
 
     # predict before fit
     clf = tree.DecisionTreeClassifier()

@@ -493,7 +493,6 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
                      np.ndarray[DTYPE_t, ndim=1, mode="c"] y,
                      np.ndarray[np.int32_t, ndim=2, mode="fortran"] X_argsorted,
                      np.ndarray sample_mask,
-                     np.ndarray[np.int32_t, ndim=1, mode="c"] feature_mask,
                      Criterion criterion,
                      int n_samples):
     """Find the best dimension and threshold that minimises the error.
@@ -513,9 +512,6 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
     sample_mask : ndarray, shape (n_samples,), dtype=np.bool
         A mask for the samples to be considered. Only samples `j` for which
         sample_mask[j] != 0 are considered.
-
-    feature_mask : ndarray, shape (n_samples,), dtype=int32
-        A feature mask indicating active features.
 
     criterion : Criterion
         The criterion function to be minimized.
@@ -570,9 +566,6 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
     # print 'at init, best error = ', best_error
 
     for i from 0 <= i < n_features:
-        if feature_mask[i] == 0:
-            continue
-
         # get i-th col of X and X_sorted
         X_i = (<DTYPE_t *>X.data) + X_stride * i
         X_argsorted_i = (<int *>X_argsorted.data) + X_argsorted_stride * i
@@ -599,7 +592,7 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
             error = criterion.eval()
 
             assert sample_mask_ptr[X_argsorted_i[a]] == 1 and sample_mask_ptr[X_argsorted_i[b]]
-            
+
             # check if current error is smaller than previous best
             # if this is never true best_i is -1.
             if error < best_error:
