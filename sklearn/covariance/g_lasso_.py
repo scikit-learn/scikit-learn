@@ -15,6 +15,9 @@ from .empirical_covariance_ import empirical_covariance, \
 
 from ..linear_model import lars_path
 from ..linear_model import cd_fast
+from ..cross_validation import check_cv
+from ..externals.joblib import Parallel, delayed
+
 
 ################################################################################
 # Helper functions to compute the objective and dual objective functions
@@ -84,7 +87,7 @@ def g_lasso(X, alpha, cov_init=None, mode='cd', tol=1e-4,
     _, n_features = X.shape
     mle = empirical_covariance(X)
     if alpha == 0:
-        return mle
+        return mle, linalg.inv(mle)
     if cov_init is None:
         covariance_ = mle.copy()
     else:
@@ -188,4 +191,132 @@ class GLasso(EmpiricalCovariance):
                                         tol=self.tol, max_iter=self.max_iter,
                                         verbose=self.verbose,
                                         )
+        return self
+
+
+################################################################################
+# Cross-validation with GLasso
+def g_lasso_path(X, alphas, X_test=False, mode='cd', tol=1e-4,
+                 max_iter=100, verbose=False):
+    """ l1-penalized covariance estimator
+
+    Parameters
+    ----------
+    X: 2D ndarray, shape (n_samples, n_features)
+        Data from which to compute the covariance estimate
+    alphas: list of positive floats
+        The list of regularization parameters, decreasing order
+    X_test: 2D array, shape (n_test_samples, n_features), optional
+        Optional test matrix to measure generalisation error
+    mode: {'cd', 'lars'}
+        The Lasso solver to use: coordinate descent or LARS. Use LARS for
+        very sparse underlying graphs, where p > n. Elsewhere prefer cd
+        which is more numerically stable.
+    tol: positive float, optional
+        The tolerance to declare convergence: if the dual gap goes below
+        this value, iterations are stopped
+    max_iter: integer, optional
+        The maximum number of iterations
+    verbose: boolean, optional
+        If verbose is True, the objective function and dual gap are
+        printed at each iteration
+
+    Returns
+    -------
+    covariances_: List of 2D ndarray, shape (n_features, n_features)
+        The estimated covariance matrices
+    precisions_: List of 2D ndarray, shape (n_features, n_features)
+        The estimated (sparse) precision matrices
+    scores_: List of float
+        The generalisation error (log-likelihood) on the test data.
+        Returned only if test data is passed.
+    """
+    covariance_ = empirical_covariance(X)
+    covariances_ = list()
+    precisions_ = list()
+    scores_ = list()
+    if X_test is not None:
+        test_emp_cov = empirical_covariance(X_test)
+    for alpha in alphas:
+        covariance_, precision_ = g_lasso(X, alpha=alpha,
+                                    cov_init=covariance_, mode=mode, tol=tol,
+                                    max_iter=max_iter, verbose=verbose)
+        covariances_.append(covariance_)
+        precisions_.append(precision_)
+        if X_test is not None:
+            scores_.append(log_likelihood(test_emp_cov, precision_))
+    if X_test is not None:
+        return covariances_, precisions_, scores_
+    return covariances_, precisions_
+
+
+DEFAULT_ALPHAS = np.r_[0, np.logspace(-2.5, .5, 20)][::-1]
+
+
+class GLassoCV(GLasso):
+
+    def __init__(self, alphas=DEFAULT_ALPHAS, cv=None, tol=1e-4,
+                 max_iter=100, mode='cd', n_jobs=1, verbose=False):
+        """ l1-penalized covariance estimator
+
+        Parameters
+        ----------
+        alpha: positive float, optional
+            The regularization parameter: the higher alpha, the more
+            regularization, the sparser the inverse covariance
+        cov_init: 2D array (n_features, n_features), optional
+            The initial guess for the covariance
+        mode: {'cd', 'lars'}
+            The Lasso solver to use: coordinate descent or LARS. Use LARS for
+            very sparse underlying graphs, where p > n. Elsewhere prefer cd
+            which is more numerically stable.
+        tol: positive float, optional
+            The tolerance to declare convergence: if the dual gap goes below
+            this value, iterations are stopped
+        max_iter: integer, optional
+            The maximum number of iterations
+        cv : crossvalidation generator, optional
+            see sklearn.cross_validation module. If None is passed, default to
+            a 5-fold strategy
+        verbose: boolean, optional
+            If verbose is True, the objective function and dual gap are
+            plotted at each iteration
+
+        """
+        self.alphas = alphas
+        self.mode = mode
+        self.tol = tol
+        self.max_iter = max_iter
+        self.verbose = verbose
+        self.cv = cv
+        self.n_jobs = n_jobs
+
+    def fit(self, X, y=None):
+        X = np.asarray(X)
+
+        # init cross-validation generator
+        cv = check_cv(self.cv, X, y, classifier=False)
+
+        path = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
+                        delayed(g_lasso_path)(X[train], alphas=self.alphas,
+                                    X_test=X[test], mode=self.mode,
+                                    tol=self.tol, max_iter=self.max_iter,
+                                    verbose=self.verbose)
+                        for train, test in cv)
+
+        path = zip(*path)
+        best_score = -np.inf
+        all_scores = np.array(path[2]).T
+        for alpha, scores in zip(self.alphas, all_scores):
+            this_score = np.mean(scores)
+            if this_score >= best_score:
+                best_score = this_score
+                best_alpha = alpha
+        # XXX: need to store the scores in a name consistent with the
+        # rest of the CV estimators
+        self.all_scores = all_scores
+        self.alpha_ = best_alpha
+        self.covariance_, self.precision_ = g_lasso(X, alpha=best_alpha,
+                        mode=self.mode, tol=self.tol, max_iter=self.max_iter,
+                        verbose=self.verbose)
         return self
