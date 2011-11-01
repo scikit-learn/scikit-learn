@@ -15,4 +15,5 @@ from .empirical_covariance_ import empirical_covariance, EmpiricalCovariance, \
 from .shrunk_covariance_ import shrunk_covariance, ShrunkCovariance, \
     ledoit_wolf, LedoitWolf, oas, OAS
 from .robust_covariance import fast_mcd, MCD
-from g_lasso_ import g_lasso, GLasso
+from g_lasso_ import g_lasso, GLasso, GLassoCV
+

@@ -48,7 +48,7 @@ empirical precision is not displayed.
 import numpy as np
 from scipy import linalg
 from sklearn.datasets.samples_generator import make_sparse_spd_matrix
-from sklearn.covariance import g_lasso, ledoit_wolf
+from sklearn.covariance import GLassoCV, ledoit_wolf
 import pylab as pl
 
 ################################################################################
@@ -68,8 +68,11 @@ X -= X.mean(axis=0)
 # Estimate the covariance
 emp_cov = np.dot(X.T, X)/N_SAMPLES
 
-alpha = .3
-cov_, prec_ = g_lasso(X, alpha=alpha)
+model = GLassoCV()
+model.fit(X)
+cov_ = model.covariance_
+prec_ = model.precision_
+
 lw_cov_, _ = ledoit_wolf(X)
 lw_prec_ = linalg.inv(lw_cov_)
 
