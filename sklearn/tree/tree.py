@@ -152,9 +152,10 @@ def _build_tree(estimator, X, y, criterion):
             raise ValueError("Attempting to find a split with an empty sample_mask")
 
         # Split samples
-        if depth < max_depth and n_samples >= min_split:
+        if (max_depth is None or depth < max_depth) and n_samples >= min_split:
             feature, threshold, init_error = _tree._find_best_split(
                 X, y, X_argsorted, sample_mask, criterion, n_samples)
+
         else:
             feature = -1
 
@@ -165,6 +166,7 @@ def _build_tree(estimator, X, y, criterion):
             value = np.zeros((n_classes,))
             t = current_y.max() + 1
             value[:t] = np.bincount(current_y.astype(np.int))
+
         else:
             value = np.asanyarray(np.mean(current_y))
 
@@ -246,7 +248,7 @@ class BaseDecisionTree(BaseEstimator):
                              % (len(y), n_samples))
         if self.min_split <= 0:
             raise ValueError("min_split must be greater than zero.")
-        if self.max_depth <= 0:
+        if self.max_depth is not None and self.max_depth <= 0:
             raise ValueError("max_depth must be greater than zero. ")
         if self.min_density < 0.0 or self.min_density > 1.0:
             raise ValueError("min_density must be in [0, 1]")
@@ -320,11 +322,13 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         The function to measure the quality of a split. Supported criteria are
         "gini" for the Gini impurity and "entropy" for the information gain.
 
-    max_depth : integer, optional (default=10)
-        The maximum depth of the tree.
+    max_depth : integer or None, optional (default=10)
+        The maximum depth of the tree. If None, then nodes are expanded until
+        all leaves are pure or until all leaves contain less than min_split
+        samples.
 
     min_split : integer, optional (default=1)
-        The minimum number of samples required to split an internal node.
+        The minimum number of samples required to split an internal node,
 
     min_density : float, optional (default=0.1)
         The minimum density of the `sample_mask` (i.e. the fraction of samples
@@ -438,8 +442,10 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         The function to measure the quality of a split. The only supported
         criterion is "mse" for the mean squared error.
 
-    max_depth : integer, optional (default=10)
-        The maximum depth of the tree.
+    max_depth : integer or None, optional (default=10)
+        The maximum depth of the tree. If None, then nodes are expanded until
+        all leaves are pure or until all leaves contain less than min_split
+        samples.
 
     min_split : integer, optional (default=1)
         The minimum number of samples required to split an internal node.
