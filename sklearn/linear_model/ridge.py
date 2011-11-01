@@ -63,7 +63,7 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto', tol=1e-3):
     if solver == 'sparse_cg':
         # gradient descent
         from scipy.sparse import linalg as sp_linalg
-        X1 = sp_linalg.interface.MatrixLinearOperator(X)
+        X1 = sp_linalg.aslinearoperator(X)
         if y.ndim == 1:
             y1 = np.reshape(y, (-1, 1))
         else:
