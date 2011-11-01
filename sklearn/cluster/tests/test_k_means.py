@@ -66,10 +66,11 @@ def test_minibatch_update_sparse_csr():
     new_centers = old_centers.copy()
     counts = np.ones(new_centers.shape[0], dtype=np.int32)
     x_squared_norms = csr_row_norm_l2(X_csr, squared=True)
+    buffer = np.zeros(centers.shape[1], dtype=np.double)
 
     slice_ = slice(0, 10)
     old_inertia, incremental_diff = _mini_batch_update_csr(
-        X_csr, x_squared_norms, slice_, new_centers, counts)
+        X_csr, x_squared_norms, slice_, new_centers, counts, buffer, 1)
     assert_true(old_inertia > 0.0)
 
     # compute the new inertia on the same batch to check that is decreased

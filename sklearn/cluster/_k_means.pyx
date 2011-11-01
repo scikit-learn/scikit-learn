@@ -137,7 +137,9 @@ cpdef DOUBLE _assign_labels_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
 @cython.cdivision(True)
 def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
                            batch_slice, np.ndarray[DOUBLE, ndim=2] centers,
-                           np.ndarray[INT, ndim=1] counts):
+                           np.ndarray[INT, ndim=1] counts,
+                           np.ndarray[DOUBLE, ndim=1] old_center,
+                           INT compute_squared_diff):
     """Incremental update of the centers for sparse MiniBatchKMeans.
 
     Parameters
@@ -165,6 +167,8 @@ def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
 
     squared_diff: float
         The sum of squared update (squared norm of the centers position change).
+        If compute_squared_diff is 0, this computation is skipped and 0.0 is
+        returned instead.
 
     Both squared diff and inertia are commonly used to monitor the convergence
     of the algorithm.
@@ -187,9 +191,7 @@ def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
         DOUBLE center_diff
         DOUBLE squared_diff = 0.0
 
-        # TODO: reuse a array preallocated outside of the mini batch main loop
-        np.ndarray[DOUBLE, ndim=1] new_center = np.zeros(
-            n_features, dtype=np.double)
+        # TODO: reuse a array preallocated outside of the mini batch main loop?
         np.ndarray[INT, ndim=1] nearest_center = np.zeros(
             n_samples, dtype=np.int32)
 
@@ -205,8 +207,9 @@ def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
 
         # rescale the old center to reflect it previous accumulated
         # weight w.r.t. the new data that will be incrementally contributed
-        new_center[:] = centers[center_idx]
-        new_center *= old_count
+        if compute_squared_diff:
+            old_center[:] = centers[center_idx]
+        centers[center_idx] *= old_count
 
         # iterate of over samples assigned to this cluster to move the center
         # location by inplace summation
@@ -220,7 +223,7 @@ def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
             # and update of the incremental squared difference update of the
             # center position
             for k in range(X_indptr[sample_idx], X_indptr[sample_idx + 1]):
-                new_center[X_indices[k]] += X_data[k]
+                centers[center_idx, X_indices[k]] += X_data[k]
 
         # inplace rescale center with updated count
         if new_count > old_count:
@@ -228,16 +231,14 @@ def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
             counts[center_idx] = new_count
 
             # re-scale the updated center with the total new counts
-            new_center /= new_count
+            centers[center_idx] /= new_count
 
             # update the incremental computation of the squared total
             # centers position change
-            for feature_idx in range(n_features):
-                squared_diff += (new_center[feature_idx]
-                                 - centers[center_idx, feature_idx]) ** 2
-
-            # save the updated center position
-            centers[center_idx] = new_center
+            if compute_squared_diff:
+                for feature_idx in range(n_features):
+                    squared_diff += (old_center[feature_idx]
+                                     - centers[center_idx, feature_idx]) ** 2
 
     return inertia, squared_diff
 

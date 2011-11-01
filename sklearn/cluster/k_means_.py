@@ -577,7 +577,8 @@ class KMeans(BaseEstimator):
         return _labels_inertia(X, x_squared_norms, self.cluster_centers_)[0]
 
 
-def _mini_batch_step_dense(X, x_squared_norms, batch_slice, centers, counts):
+def _mini_batch_step_dense(X, x_squared_norms, batch_slice, centers, counts,
+                           old_center_buffer=None, compute_squared_diff=0):
     """Incremental update of the centers for the Minibatch K-Means algorithm
 
     Parameters
@@ -608,17 +609,19 @@ def _mini_batch_step_dense(X, x_squared_norms, batch_slice, centers, counts):
         centers, X, Y_norm_squared=x_squared_norms, squared=True)
     nearest_center = distances.argmin(axis=0)
 
-    old_centers = centers.copy()
     k = centers.shape[0]
+    squared_diff = 0.0
     for center_idx in range(k):
         # find points from minibatch that are assigned to this center
         center_mask = nearest_center == center_idx
         count = center_mask.sum()
 
         if count > 0:
+            if compute_squared_diff:
+                old_center_buffer[:] = centers[center_idx]
+
             # inplace remove previous count scaling
-            if counts[center_idx] > 0:
-                centers[center_idx] *= counts[center_idx]
+            centers[center_idx] *= counts[center_idx]
 
             # inplace sum with new points members of this cluster
             centers[center_idx] += np.sum(X[center_mask], axis=0)
@@ -630,8 +633,12 @@ def _mini_batch_step_dense(X, x_squared_norms, batch_slice, centers, counts):
             # update the count statistics for this center
             counts[center_idx] += count
 
-    diff = centers - old_centers
-    return distances[nearest_center].sum(), (diff ** 2).sum()
+            # update the squared diff if necessary
+            if compute_squared_diff:
+                squared_diff += np.sum(
+                    (centers[center_idx] - old_center_buffer) ** 2)
+
+    return distances[nearest_center].sum(), squared_diff
 
 
 class MiniBatchKMeans(KMeans):
@@ -644,9 +651,27 @@ class MiniBatchKMeans(KMeans):
         The number of clusters to form as well as the number of
         centroids to generate.
 
-    max_iter : int
-        Maximum number of iterations of the k-means algorithm for a
-        single run.
+    max_iter : int, optional
+        Maximum number of iterations over the complete dataset before
+        stopping independently of any early stopping criterion heuristics.
+
+    max_no_improvement : int, optional
+        Control early stopping based on the consecutive number of mini
+        batch that does not yield an improvement on the smoothed inertia.
+
+        To disable convergence detection based on inertia, set
+        max_no_improvement to -1.
+
+    tol : float, optional
+        Control early stopping based on the relative center changes as
+        measured by a smoothed, variance-normalized of the mean center
+        squared position changes. This early stopping heuristics is
+        closer to the one used for the batch variant of the algorithms
+        but induces a slight computational and memory overhead over the
+        inertia heuristic.
+
+        To disable convergence detection based on normalized center
+        change, set tol to 0.0 (default).
 
     chunk_size: int, optional, default: 1000
         Size of the mini batches
@@ -703,16 +728,13 @@ class MiniBatchKMeans(KMeans):
 
     def __init__(self, k=8, init='random', max_iter=100,
                  chunk_size=1000, verbose=0, compute_labels=True,
-                 random_state=None, tol=None):
+                 random_state=None, tol=0.0, max_no_improvements=3):
 
         super(MiniBatchKMeans, self).__init__(k=k, init=init,
-              max_iter=max_iter, verbose=verbose, random_state=random_state)
+              max_iter=max_iter, verbose=verbose, random_state=random_state,
+              tol=tol)
 
-        if tol is not None:
-            warnings.warn(
-                'The tol parameter is deprecated: the convergence is detected'
-                ' by the lack of improvement in a smooth average of the'
-                ' inertia')
+        self.max_no_improvements = max_no_improvements
         self.chunk_size = chunk_size
         self.compute_labels = compute_labels
 
@@ -743,6 +765,18 @@ class MiniBatchKMeans(KMeans):
             X_shuffled, self.k, self.init, random_state=self.random_state,
             x_squared_norms=x_squared_norms)
 
+        if self.tol > 0.0:
+            # TODO: compute the variance of the data both for sparse and
+            # dense data
+            variance = 1.0
+            tol = self.tol * variance
+            old_center_buffer = np.zeros(n_features, np.double)
+            compute_squared_diff = 1
+        else:
+            tol = 0.0
+            old_center_buffer = np.zeros(0, np.double)
+            compute_squared_diff = 0
+
         # TODO: initialize the counts after random assignement here
         self.counts = np.zeros(self.k, dtype=np.int32)
 
@@ -760,14 +794,15 @@ class MiniBatchKMeans(KMeans):
         for i, batch_slice in izip(xrange(n_iterations), cycle(batch_slices)):
             inertia, diff = _mini_batch_step(
                 X_shuffled, x_squared_norms, batch_slice,
-                self.cluster_centers_, self.counts)
+                self.cluster_centers_, self.counts, old_center_buffer,
+                compute_squared_diff)
 
             # normalize inertia to be able to compare values when chunk_size
             # changes
             inertia /= float(batch_slice.stop - batch_slice.start)
             diff /= float(batch_slice.stop - batch_slice.start)
 
-            # compute an exponenontially weighted average of the squared diff to
+            # compute an exponentially weighted average of the squared diff to
             # monitor the convergence while discarding batch local stochastic
             # variability:
             # https://en.wikipedia.org/wiki/Moving_average
@@ -840,7 +875,8 @@ class MiniBatchKMeans(KMeans):
             _mini_batch_step = _mini_batch_step_dense
 
         _mini_batch_step(X, x_squared_norms, batch_slice,
-                         self.cluster_centers_, self.counts)
+                         self.cluster_centers_, self.counts,
+                         np.zeros(0, np.double), 0)
 
         if self.compute_labels:
             self.labels_, self.inertia_ = _labels_inertia(
