@@ -54,7 +54,7 @@ def _dual_gap(emp_cov, precision_, alpha):
 # The g-lasso algorithm
 
 def g_lasso(X, alpha, cov_init=None, mode='cd', tol=1e-4,
-            max_iter=100, verbose=False):
+            max_iter=100, verbose=False, return_costs=False):
     """ l1-penalized covariance estimator
 
     Parameters
@@ -78,7 +78,10 @@ def g_lasso(X, alpha, cov_init=None, mode='cd', tol=1e-4,
         The maximum number of iterations
     verbose: boolean, optional
         If verbose is True, the objective function and dual gap are
-        plotted at each iteration
+        printed at each iteration
+    return_costs: boolean, optional
+        If return_costs is True, the objective function and dual gap
+        at each iteration are returned
 
     Returns
     -------
@@ -86,6 +89,9 @@ def g_lasso(X, alpha, cov_init=None, mode='cd', tol=1e-4,
         The estimated covariance matrix
     precision_: 2D ndarray, shape (n_features, n_features)
         The estimated (sparse) precision matrix
+    costs: list of (objective, dual_gap) pairs
+        The list of values of the objective function and the dual gap at
+        each iteration. Returned only if return_costs is True
 
     """
     _, n_features = X.shape
@@ -100,6 +106,7 @@ def g_lasso(X, alpha, cov_init=None, mode='cd', tol=1e-4,
         covariance_.flat[::n_features + 1] = mle.flat[::n_features + 1] + alpha
     indices = np.arange(n_features)
     precision_ = linalg.inv(covariance_)
+    costs = list()
     for i in xrange(max_iter):
         for idx in xrange(n_features):
             sub_covariance = covariance_[indices != idx].T[indices != idx]
@@ -127,15 +134,20 @@ def g_lasso(X, alpha, cov_init=None, mode='cd', tol=1e-4,
             covariance_[idx, indices != idx] = coefs
             covariance_[indices != idx, idx] = coefs
         d_gap = _dual_gap(mle, precision_, alpha)
-        if verbose:
+        if verbose or return_costs:
             cost = _objective(mle, precision_, alpha)
-            print '[g_lasso] Iteration % 3i, cost %.4f, dual gap %.3e' % (
+            if verbose:
+                print '[g_lasso] Iteration % 3i, cost %.4f, dual gap %.3e' % (
                                                     i, cost, d_gap)
+            if return_costs:
+                costs.append((cost, d_gap))
         if np.abs(d_gap) < tol:
             break
     else:
         warnings.warn('g_lasso: did not converge after %i iteration:'
                         'dual gap: %.3e' % (max_iter, d_gap))
+    if return_costs:
+        return covariance_, precision_, costs
     return covariance_, precision_
 
 

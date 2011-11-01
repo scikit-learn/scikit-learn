@@ -917,7 +917,9 @@ def make_s_curve(n_samples=100, noise=0.0, random_state=None):
     return X, t
 
 
-def make_sparse_spd_matrix(dim=1, alpha=0.95, random_state=None):
+def make_sparse_spd_matrix(dim=1, alpha=0.95, norm_diag=False,
+                           smallest_coef=.1, largest_coef=.9,
+                           random_state=None):
     """ Generate a sparse symetric definite positive matrix
 
     Parameters
@@ -946,7 +948,9 @@ def make_sparse_spd_matrix(dim=1, alpha=0.95, random_state=None):
     chol = -np.eye(dim)
     aux = random_state.rand(dim, dim)
     aux[aux<alpha] = 0
-    aux[aux>alpha] = .9*random_state.rand(np.sum(aux>alpha))
+    aux[aux>alpha] = (smallest_coef
+                        + (largest_coef - smallest_coef)
+                            *random_state.rand(np.sum(aux>alpha)))
     aux = np.tril(aux, k=-1)
     # Permute the lines: we don't want to have assymetries in the final
     # SPD matrix
@@ -954,5 +958,10 @@ def make_sparse_spd_matrix(dim=1, alpha=0.95, random_state=None):
     aux = aux[permutation].T[permutation]
     chol += aux
     prec = np.dot(chol.T, chol)
+    if norm_diag:
+        d = np.diag(prec)
+        d = 1./np.sqrt(d)
+        prec *= d
+        prec *= d[:, np.newaxis]
     return prec
 
