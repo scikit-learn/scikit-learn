@@ -68,7 +68,7 @@ X -= X.mean(axis=0)
 # Estimate the covariance
 emp_cov = np.dot(X.T, X)/N_SAMPLES
 
-alpha = .2
+alpha = .3
 cov_, prec_ = g_lasso(X, alpha=alpha)
 lw_cov_, _ = ledoit_wolf(X)
 lw_prec_ = linalg.inv(lw_cov_)
@@ -94,7 +94,7 @@ for i, (name, this_cov) in enumerate(covs):
 # plot the precisions
 precs = [('Empirical', linalg.inv(emp_cov)), ('Ledoit-Wolf', lw_prec_),
          ('L1', prec_), ('True', prec)]
-vmax = prec_.max()
+vmax = .9*prec_.max()
 for i, (name, this_prec) in enumerate(precs):
     ax = pl.subplot(2, 4, i+5)
     pl.imshow(np.ma.masked_equal(this_prec, 0),

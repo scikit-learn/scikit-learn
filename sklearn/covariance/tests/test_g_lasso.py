@@ -17,7 +17,6 @@ def test_g_lasso(random_state=0):
                                   random_state=random_state)
     cov = linalg.inv(prec)
     X = random_state.multivariate_normal(np.zeros(dim), cov, size=n_samples)
-    X -= X.mean(axis=0)
 
     for alpha in (.1, .01):
         covs = dict()
