@@ -79,14 +79,17 @@ class SparseBaseLibSVM(BaseLibSVM):
                                          else sample_weight, dtype=np.float64)
 
         if X.shape[0] != y.shape[0]:
-            raise ValueError("X and y have incompatible shapes.\n" +
-                             "Note: Sparse matrices cannot be indexed w/" +
-                             "boolean masks (use `indices=True` in CV).")
+            raise ValueError("X and y have incompatible shapes: %r vs %r\n"
+                             "Note: Sparse matrices cannot be indexed w/"
+                             "boolean masks (use `indices=True` in CV)."
+                             % (X.shape, y.shape))
 
         if sample_weight.shape[0] > 0 and sample_weight.shape[0] != X.shape[0]:
-            raise ValueError("sample_weight and X have incompatible shapes.\n" +
-                             "Note: Sparse matrices cannot be indexed w/" +
-                             "boolean masks (use `indices=True` in CV).")
+            raise ValueError("sample_weight and X have incompatible shapes:"
+                             "%r vs %r\n"
+                             "Note: Sparse matrices cannot be indexed w/"
+                             "boolean masks (use `indices=True` in CV)."
+                             % (sample_weight.shape, X.shape))
 
         solver_type = LIBSVM_IMPL.index(self.impl)
         kernel_type = self._kernel_types.index(self.kernel)
