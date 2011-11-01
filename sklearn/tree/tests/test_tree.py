@@ -232,7 +232,7 @@ def test_error():
 
     # predict on vector with different dims
     clf.fit(X, y)
-    t = np.asanyarray(T)
+    t = np.asarray(T)
     assert_raises(ValueError, clf.predict, t[:, 1:])
 
     # max_features invalid

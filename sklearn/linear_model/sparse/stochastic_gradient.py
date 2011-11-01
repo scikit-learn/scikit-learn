@@ -139,9 +139,9 @@ class SGDClassifier(BaseSGDClassifier):
         y = y_new
 
         # get sparse matrix datastructures
-        X_data = np.asanyarray(X.data, dtype=np.float64, order="C")
-        X_indices = np.asanyarray(X.indices, dtype=np.int32, order="C")
-        X_indptr = np.asanyarray(X.indptr, dtype=np.int32, order="C")
+        X_data = np.asarray(X.data, dtype=np.float64, order="C")
+        X_indices = np.asarray(X.indices, dtype=np.int32, order="C")
+        X_indptr = np.asarray(X.indptr, dtype=np.int32, order="C")
 
         coef_, intercept_ = plain_sgd(self.coef_,
                                       self.intercept_,
@@ -173,9 +173,9 @@ class SGDClassifier(BaseSGDClassifier):
         X = _tocsr(X)
 
         # get sparse matrix datastructures
-        X_data = np.asanyarray(X.data, dtype=np.float64, order="C")
-        X_indices = np.asanyarray(X.indices, dtype=np.int32, order="C")
-        X_indptr = np.asanyarray(X.indptr, dtype=np.int32, order="C")
+        X_data = np.asarray(X.data, dtype=np.float64, order="C")
+        X_indices = np.asarray(X.indices, dtype=np.int32, order="C")
+        X_indptr = np.asarray(X.indptr, dtype=np.int32, order="C")
 
         res = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
                 delayed(_train_ova_classifier)(i, c, X_data, X_indices,

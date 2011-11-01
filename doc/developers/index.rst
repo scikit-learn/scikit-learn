@@ -275,10 +275,16 @@ Input validation
 ----------------
 
 The module ``sklearn.utils`` contains various functions for doing input
-validation/conversion. Sometimes, ``np.atleast_2d`` suffices for validation;
-in other cases, be sure to call ``safe_asanyarray``, ``atleast2d_or_csr`` or
-``as_float_array`` on any array-like argument passed to a scikit-learn API
-function.
+validation/conversion. Sometimes, ``np.asarray`` suffices for validation;
+do `not` use ``np.asanyarray`` or ``np.atleast_2d``, since those let NumPy's
+``np.matrix`` through, which has a different API
+(e.g., ``*`` means dot product on ``np.matrix``,
+but Hadamard product on ``np.ndarray``).
+
+In other cases, be sure to call ``safe_asarray``, ``atleast2d_or_csr``,
+``as_float_array`` or ``array2d`` on any array-like argument passed to a
+scikit-learn API function. The exact function to use depends mainly on whether
+``scipy.sparse`` matrices must be accepted.
 
 
 APIs of scikit-learn objects
@@ -428,15 +434,6 @@ function probably is).
 Any attribute that ends with ``_`` is expected to be overridden when
 you call ``fit`` a second time without taking any previous value into
 account: **fit should be idempotent**.
-
-
-Python tuples
-^^^^^^^^^^^^^
-
-In addition to numpy arrays, all methods should be able to accept
-Python tuples as arguments. In practice, this means you should call
-``numpy.asanyarray`` at the beginning at each public method that accepts
-arrays.
 
 
 Optional Arguments

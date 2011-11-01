@@ -99,7 +99,7 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin,
             the model, where classes are ordered by arithmetical
             order.
         """
-        X = np.asanyarray(X, dtype=np.float64, order='C')
+        X = np.asarray(X, dtype=np.float64, order='C')
         probas = liblinear.predict_prob_wrap(X, self.raw_coef_,
                                       self._get_solver_type(),
                                       self.tol, self.C,

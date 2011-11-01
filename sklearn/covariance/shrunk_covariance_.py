@@ -18,6 +18,7 @@ from __future__ import division
 import numpy as np
 
 from .empirical_covariance_ import empirical_covariance, EmpiricalCovariance
+from ..utils import array2d
 
 
 ###############################################################################
@@ -50,7 +51,7 @@ def shrunk_covariance(emp_cov, shrinkage=0.1):
     where mu = trace(cov) / n_features
 
     """
-    emp_cov = np.atleast_2d(emp_cov)
+    emp_cov = array2d(emp_cov)
     n_features = emp_cov.shape[0]
 
     mu = np.trace(emp_cov) / n_features
@@ -165,7 +166,7 @@ def ledoit_wolf(X, assume_centered=False):
     where mu = trace(cov) / n_features
 
     """
-    X = np.asanyarray(X)
+    X = np.asarray(X)
     # for only one feature, the result is the same whatever the shrinkage
     if X.ndim == 1:
         if not assume_centered:
@@ -303,7 +304,7 @@ def oas(X, assume_centered=False):
     where mu = trace(cov) / n_features
 
     """
-    X = np.asanyarray(X)
+    X = np.asarray(X)
     # for only one feature, the result is the same whatever the shrinkage
     if X.ndim == 1:
         if not assume_centered:
