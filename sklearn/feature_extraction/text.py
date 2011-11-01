@@ -484,7 +484,12 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         n_samples, n_features = X.shape
 
         if self.use_idf:
-            d = sp.lil_matrix((len(self.idf_), len(self.idf_)))
+            expected_n_features = self.idf_.shape[0]
+            if n_features != expected_n_features:
+                raise ValueError("Input has n_features=%d while the model"
+                                 " has been trained with n_features=%d" % (
+                                     n_features, expected_n_features))
+            d = sp.lil_matrix((n_features, n_features))
             d.setdiag(self.idf_)
             # *= doesn't work
             X = X * d
