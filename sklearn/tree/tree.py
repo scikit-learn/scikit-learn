@@ -213,6 +213,8 @@ class BaseDecisionTree(BaseEstimator):
         self.random_state = check_random_state(random_state)
 
         self.n_features = None
+        self.classes = None
+        self.n_classes = None
         self.tree = None
 
     def fit(self, X, y):
@@ -232,8 +234,10 @@ class BaseDecisionTree(BaseEstimator):
         self : object
             Returns self.
         """
-
+        # Convert data
         X = np.asanyarray(X, dtype=DTYPE, order="F")
+
+        # Check parameters
         n_samples, self.n_features = X.shape
 
         if len(y) != n_samples:
@@ -247,6 +251,7 @@ class BaseDecisionTree(BaseEstimator):
         if self.min_density < 0.0 or self.min_density > 1.0:
             raise ValueError("min_density must be in [0, 1]")
 
+        # Classification task
         if isinstance(self, ClassifierMixin):
             y = np.ascontiguousarray(y, dtype=np.int)
             self.classes = np.unique(y)
@@ -254,11 +259,13 @@ class BaseDecisionTree(BaseEstimator):
             y = np.searchsorted(self.classes, y)
             criterion = CLASSIFICATION[self.criterion](self.n_classes)
 
+        # Regression task
         else:
             y = np.ascontiguousarray(y, dtype=DTYPE)
             self.n_classes = 1
             criterion = REGRESSION[self.criterion]()
 
+        # Build tree
         self.tree = _build_tree(self, X, y, criterion)
 
         return self
