@@ -38,7 +38,10 @@ The disadvantages of Stochastic Gradient Descent include:
 Classification
 ==============
 
-.. warning:: Make sure you permute (shuffle) your training data before fitting the model or use `shuffle=True` to shuffle after each iterations.
+.. warning::
+
+  Make sure you permute (shuffle) your training data before fitting the
+  model or use `shuffle=True` to shuffle after each iterations.
 
 The class :class:`SGDClassifier` implements a plain stochastic gradient
 descent learning routine which supports different loss functions and
@@ -59,7 +62,7 @@ for the training samples::
     >>> y = [0, 1]
     >>> clf = SGDClassifier(loss="hinge", penalty="l2")
     >>> clf.fit(X, y)
-    SGDClassifier(alpha=0.0001, eta0=0.0, fit_intercept=True,
+    SGDClassifier(alpha=0.0001, class_weight=None, eta0=0.0, fit_intercept=True,
            learning_rate='optimal', loss='hinge', n_iter=5, n_jobs=1,
            penalty='l2', power_t=0.5, rho=1.0, seed=0, shuffle=False,
            verbose=0)
