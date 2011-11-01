@@ -29,16 +29,21 @@ n_clusters, n_features = centers.shape
 X, true_labels = make_blobs(n_samples=n_samples, centers=centers,
                             cluster_std=1., random_state=42)
 
-x_squared = X.copy()
-x_squared **= 2
-x_squared_norms = x_squared.sum(axis=1)
-
 X_csr = sp.csr_matrix(X)
+
+
+def test_square_norms():
+    x_squared_norms = (X ** 2).sum(axis=1)
+    x_squared_norms_from_csr = csr_row_norm_l2(X_csr)
+    assert_array_almost_equal(x_squared_norms,
+                              x_squared_norms_from_csr, 5)
 
 
 def test_labels_assignement_and_inertia():
     # pure numpy implementation as easily auditable reference gold
     # implementation
+    rng = np.random.RandomState(42)
+    noisy_centers = centers + rng.normal(size=centers.shape)
     labels_gold = - np.ones(n_samples, dtype=np.int)
     mindist = np.empty(n_samples)
     mindist.fill(np.infty)
@@ -50,12 +55,16 @@ def test_labels_assignement_and_inertia():
     assert_true((labels_gold != -1).all())
 
     # perform label assignement using the dense array input
-    labels_array, inertia_array = _labels_inertia(X, x_squared_norms, centers)
+    x_squared_norms = (X ** 2).sum(axis=1)
+    labels_array, inertia_array = _labels_inertia(
+        X, x_squared_norms, noisy_centers)
     assert_array_almost_equal(inertia_array, inertia_gold, 7)
     assert_array_equal(labels_array, labels_gold)
 
     # perform label assignement using the sparse CSR input
-    labels_csr, inertia_csr = _labels_inertia(X_csr, x_squared_norms, centers)
+    x_squared_norms_from_csr = csr_row_norm_l2(X_csr)
+    labels_csr, inertia_csr = _labels_inertia(
+        X_csr, x_squared_norms_from_csr, noisy_centers)
     assert_array_almost_equal(inertia_csr, inertia_gold, 7)
     assert_array_equal(labels_csr, labels_gold)
 
@@ -212,8 +221,8 @@ def test_predict():
     assert_array_equal(k_means.predict(X), k_means.labels_)
 
 
-def test_predict_minibatch():
-    mb_k_means = MiniBatchKMeans(k=n_clusters, random_state=42).fit(X)
+def test_predict_minibatch_dense_input():
+    mb_k_means = MiniBatchKMeans(k=n_clusters, random_state=40).fit(X)
 
     # sanity check: predict centroid labels
     pred = mb_k_means.predict(mb_k_means.cluster_centers_)
@@ -225,7 +234,9 @@ def test_predict_minibatch():
 
 
 def test_predict_minibatch_sparse_input():
-    mb_k_means = MiniBatchKMeans(k=n_clusters, random_state=42).fit(X_csr)
+    # TODO: make MiniBatchKMeans more stables using either restarts or
+    # multi-init
+    mb_k_means = MiniBatchKMeans(k=n_clusters, random_state=40).fit(X_csr)
 
     # sanity check: re-predict labeling for training set samples
     assert_array_equal(mb_k_means.predict(X_csr), mb_k_means.labels_)

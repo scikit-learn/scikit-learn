@@ -626,12 +626,11 @@ def _mini_batch_step_dense(X, x_squared_norms, batch_slice, centers, counts,
             # inplace sum with new points members of this cluster
             centers[center_idx] += np.sum(X[center_mask], axis=0)
 
-            # inplace rescale to compute mean of all points (old and new)
-            if counts[center_idx] + count > 0:
-                centers[center_idx] /= counts[center_idx] + count
-
             # update the count statistics for this center
             counts[center_idx] += count
+
+            # inplace rescale to compute mean of all points (old and new)
+            centers[center_idx] /= counts[center_idx]
 
             # update the squared diff if necessary
             if compute_squared_diff:
@@ -657,7 +656,7 @@ class MiniBatchKMeans(KMeans):
 
     max_no_improvement : int, optional
         Control early stopping based on the consecutive number of mini
-        batch that does not yield an improvement on the smoothed inertia.
+        batches that does not yield an improvement on the smoothed inertia.
 
         To disable convergence detection based on inertia, set
         max_no_improvement to -1.
@@ -728,13 +727,13 @@ class MiniBatchKMeans(KMeans):
 
     def __init__(self, k=8, init='random', max_iter=100,
                  chunk_size=1000, verbose=0, compute_labels=True,
-                 random_state=None, tol=0.0, max_no_improvements=3):
+                 random_state=None, tol=0.0, max_no_improvement=3):
 
         super(MiniBatchKMeans, self).__init__(k=k, init=init,
               max_iter=max_iter, verbose=verbose, random_state=random_state,
               tol=tol)
 
-        self.max_no_improvements = max_no_improvements
+        self.max_no_improvement = max_no_improvement
         self.chunk_size = chunk_size
         self.compute_labels = compute_labels
 
@@ -766,10 +765,12 @@ class MiniBatchKMeans(KMeans):
             x_squared_norms=x_squared_norms)
 
         if self.tol > 0.0:
-            # TODO: compute the variance of the data both for sparse and
-            # dense data
-            variance = 1.0
-            tol = self.tol * variance
+            if not sp.issparse(X):
+                mean_variance = np.mean(np.var(X, 0))
+            else:
+                # TODO: implement efficient variance for CSR input
+                mean_variance = 1.0
+            tol = self.tol * mean_variance
             old_center_buffer = np.zeros(n_features, np.double)
             compute_squared_diff = 1
         else:
@@ -788,23 +789,25 @@ class MiniBatchKMeans(KMeans):
         else:
             _mini_batch_step = _mini_batch_step_dense
 
-        previous_ewa_inertia = None
+        ewa_inertia_min = None
         ewa_diff = None
         ewa_inertia = None
+        no_improvement = 0
         for i, batch_slice in izip(xrange(n_iterations), cycle(batch_slices)):
+            # Perform the actual update step on the minibatch data
             inertia, diff = _mini_batch_step(
                 X_shuffled, x_squared_norms, batch_slice,
                 self.cluster_centers_, self.counts, old_center_buffer,
                 compute_squared_diff)
 
-            # normalize inertia to be able to compare values when chunk_size
+            # Normalize inertia to be able to compare values when chunk_size
             # changes
             inertia /= float(batch_slice.stop - batch_slice.start)
             diff /= float(batch_slice.stop - batch_slice.start)
 
-            # compute an exponentially weighted average of the squared diff to
-            # monitor the convergence while discarding batch local stochastic
-            # variability:
+            # Compute an Exponentially Weighted Average of the squared diff to
+            # monitor the convergence while discarding minibatch-local
+            # stochastic variability:
             # https://en.wikipedia.org/wiki/Moving_average
             if ewa_diff is None:
                 ewa_diff = diff
@@ -815,21 +818,38 @@ class MiniBatchKMeans(KMeans):
                 ewa_diff = ewa_diff * (1 - alpha) + diff * alpha
                 ewa_inertia = ewa_inertia * (1 - alpha) + inertia * alpha
 
+            # Log progress to be able to monitor convergence
             if self.verbose:
-                print ('Minibatch iteration %d/%d:'
-                       ' mean inertia: %f, ewa inertia: %f,'
-                       ' mean squared diff: %f, ewa diff: %f' % (
-                           i + 1, n_iterations, inertia, ewa_inertia,
-                           diff, ewa_diff))
+                progress_msg = (
+                    'Minibatch iteration %d/%d:'
+                    ' mean inertia: %f, ewa inertia: %f ' % (
+                        i + 1, n_iterations, inertia, ewa_inertia))
+                if compute_squared_diff:
+                    progress_msg += ' mean squared diff: %f, ewa diff: %f' % (
+                           diff, ewa_diff)
+                print progress_msg
 
-            if (previous_ewa_inertia is not None
-                and ewa_inertia >= previous_ewa_inertia):
+            # Early stopping based on absolute tolerance on squared change of
+            # centers postion (using EWA smoothing)
+            if ewa_diff < tol:
                 if self.verbose:
-                    print 'Converged at iteration %d/%d' % (
-                        i + 1, n_iterations)
+                    print ('Converged (small centers change)'
+                           ' at iteration %d/%d' % (i + 1, n_iterations))
                 break
 
-            previous_ewa_inertia = ewa_inertia
+            # Early stopping heuristic due to lack of improvement on EWA
+            # smoothed inertia
+            if (ewa_inertia_min is None or ewa_inertia < ewa_inertia_min):
+                no_improvement = 0
+                ewa_inertia_min = ewa_inertia
+            else:
+                no_improvement += 1
+
+            if no_improvement >= self.max_no_improvement:
+                if self.verbose:
+                    print ('Converged (lack of improvement in inertia)'
+                           ' at iteration %d/%d' % (i + 1, n_iterations))
+                break
 
         if self.compute_labels:
             if self.verbose:

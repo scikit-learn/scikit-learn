@@ -262,11 +262,11 @@ def csr_row_norm_l2(X, squared=True):
         double sum_
         int withsqrt = not squared
 
-    for i in xrange(n_samples):
+    for i in range(n_samples):
         sum_ = 0.0
 
-        for j in xrange(X_indptr[i], X_indptr[i + 1]):
-            sum_ += (X_data[j] * X_data[j])
+        for j in range(X_indptr[i], X_indptr[i + 1]):
+            sum_ += X_data[j] * X_data[j]
 
         if withsqrt:
             sum_ = sqrt(sum_)
