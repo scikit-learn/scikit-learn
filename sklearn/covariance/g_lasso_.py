@@ -107,11 +107,9 @@ def g_lasso(X, alpha, cov_init=None, mode='cd', tol=1e-4,
             if mode == 'cd':
                 # Use coordinate descent
                 coefs = -precision_[indices != idx, idx]/precision_[idx, idx]
-                coefs, _, _ = \
-                    cd_fast.enet_coordinate_descent_gram(coefs,
-                            alpha,
-                            0, sub_covariance, row,
-                            row, max_iter, tol)
+                coefs, _, _ = cd_fast.enet_coordinate_descent_gram(coefs,
+                                            alpha, 0, sub_covariance,
+                                            row, row, max_iter, tol)
             else:
                 # Use LARS
                 _, _, coefs = lars_path(sub_covariance, row,
@@ -145,12 +143,6 @@ class GLasso(EmpiricalCovariance):
     """GLasso: sparse inverse covariance estimation with an l1-penalized
     estimator.
 
-
-    Parameters
-    ----------
-    store_precision : bool
-        Specify if the estimated precision is stored
-
     Attributes
     ----------
     `covariance_` : array-like, shape (n_features, n_features)
@@ -158,20 +150,44 @@ class GLasso(EmpiricalCovariance):
 
     `precision_` : array-like, shape (n_features, n_features)
         Estimated pseudo inverse matrix.
-        (stored only if store_precision is True)
-
-    `shrinkage_`: float, 0 <= shrinkage <= 1
-      coefficient in the convex combination used for the computation
-      of the shrunk estimate.
-
 
     """
 
-    def __init__(self, alpha=.01, tol=1e-4):
+    def __init__(self, alpha=.01, mode='cd', tol=1e-4,
+                 max_iter=100, verbose=False):
+        """ l1-penalized covariance estimator
+
+        Parameters
+        ----------
+        alpha: positive float, optional
+            The regularization parameter: the higher alpha, the more
+            regularization, the sparser the inverse covariance
+        cov_init: 2D array (n_features, n_features), optional
+            The initial guess for the covariance
+        mode: {'cd', 'lars'}
+            The Lasso solver to use: coordinate descent or LARS. Use LARS for
+            very sparse underlying graphs, where p > n. Elsewhere prefer cd
+            which is more numerically stable.
+        tol: positive float, optional
+            The tolerance to declare convergence: if the dual gap goes below
+            this value, iterations are stopped
+        max_iter: integer, optional
+            The maximum number of iterations
+        verbose: boolean, optional
+            If verbose is True, the objective function and dual gap are
+            plotted at each iteration
+
+    """
         self.alpha = alpha
+        self.mode = mode
         self.tol = tol
-        # XXX: verbosity
+        self.max_iter = max_iter
+        self.verbose = verbose
 
     def fit(self, X, y=None):
-        self.covariance_ = g_lasso(X, alpha=self.alpha, tol=self.tol)
+        self.covariance_, self.precision_ = g_lasso(X,
+                                        alpha=self.alpha, mode=self.mode,
+                                        tol=self.tol, max_iter=self.max_iter,
+                                        verbose=self.verbose,
+                                        )
         return self
