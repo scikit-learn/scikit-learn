@@ -134,6 +134,7 @@ class EmpiricalCovariance(BaseEstimator):
 
         """
         covariance = empirical_covariance(X, assume_centered=assume_centered)
+        self.location_ = X.mean(0)
         self._set_estimates(covariance)
 
         return self
@@ -224,8 +225,7 @@ class EmpiricalCovariance(BaseEstimator):
         Parameters
         ----------
         observations: array-like, shape = [n_observations, n_features]
-            The observations, the Mahalanobis distances of the which we
-            compute.
+          The observations, the Mahalanobis distances of the which we compute.
 
         Returns
         -------
