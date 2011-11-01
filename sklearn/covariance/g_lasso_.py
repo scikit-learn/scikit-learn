@@ -12,7 +12,6 @@ from scipy import linalg
 
 from .empirical_covariance_ import empirical_covariance, \
                 EmpiricalCovariance, log_likelihood
-from ..utils.extmath import fast_logdet
 
 from ..linear_model import lars_path
 from ..linear_model import cd_fast
@@ -24,19 +23,6 @@ def _objective(mle, precision_, alpha):
     cost = (-log_likelihood(mle, precision_)
             + alpha*np.abs(precision_).sum())
     return cost
-
-
-def _dual_objective(mle, covariance_, alpha):
-    dual_var = covariance_ - mle
-    dual_var.flat[::dual_var.shape[0]+1] = 0
-    dual_var /= np.maximum(np.abs(dual_var)/alpha, 1)
-    B = mle + dual_var
-    # It might be necessary to enforce B to be symetric here, if it is
-    # not garantied by the estimator. The glasso estimator garanties
-    # this.
-    #B = B + B.T
-    #B *= .5
-    return fast_logdet(B) + covariance_.shape[0]
 
 
 def _dual_gap(emp_cov, precision_, alpha):
