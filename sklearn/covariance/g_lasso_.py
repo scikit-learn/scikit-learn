@@ -21,7 +21,8 @@ from ..linear_model import cd_fast
 # of the l1-penalized estimator
 def _objective(mle, precision_, alpha):
     cost = (-log_likelihood(mle, precision_)
-            + alpha*np.abs(precision_).sum())
+            + alpha*(np.abs(precision_).sum()
+                        - np.abs(np.diag(precision_)).sum()))
     return cost
 
 
@@ -31,8 +32,8 @@ def _dual_gap(emp_cov, precision_, alpha):
     """
     gap = np.sum(emp_cov * precision_)
     gap -= precision_.shape[0]
-    gap += alpha*np.abs(precision_).sum()
-           #             - np.abs(np.diag(precision_)).sum())
+    gap += alpha*(np.abs(precision_).sum()
+                        - np.abs(np.diag(precision_)).sum())
     return gap
 
 
@@ -86,10 +87,9 @@ def g_lasso(X, alpha, cov_init=None, mode='cd', tol=1e-4,
         return mle
     if cov_init is None:
         covariance_ = mle.copy()
-        covariance_.flat[::n_features + 1] += alpha
     else:
         covariance_ = cov_init.copy()
-        covariance_.flat[::n_features + 1] = mle.flat[::n_features + 1] + alpha
+        covariance_.flat[::n_features + 1] = mle.flat[::n_features + 1]
     indices = np.arange(n_features)
     precision_ = linalg.inv(covariance_)
     costs = list()
