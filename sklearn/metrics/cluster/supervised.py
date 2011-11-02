@@ -9,6 +9,7 @@ better.
 
 from math import log
 from scipy.misc import comb, factorial
+from scipy.special import gammaln
 
 import numpy as np
 
@@ -655,7 +656,7 @@ def expected_mutual_information(contingency, n_samples):
     """Calculate the expected mutual information for two labelings."""
     np.seterr(all='raise')
     R, C = contingency.shape
-    N = n_samples
+    N = float(n_samples)
     a = np.sum(contingency, axis=1, dtype='int')
     b = np.sum(contingency, axis=0, dtype='int')
     # While nijs[0] will never be used, having it simplifies the indexing.
@@ -678,7 +679,9 @@ def expected_mutual_information(contingency, n_samples):
                 factors = np.array([a[i], b[j], (N-a[i]), (N-b[j]),
                                     -N, -nij, -(a[i] - nij), -(b[j] - nij),
                                     -(N - a[i] - b[j] + nij)])
-                term3 = _accumulate_factorials(factors)
+                gln = gammaln(np.abs(factors) + 1)  # n! = gamma(n-1)
+                signs = np.sign(factors)
+                term3 = np.exp(np.sum(np.dot(signs, gln)))
                 # Add the product of all terms
                 emi += (term1 * term2 * term3)
     return emi
