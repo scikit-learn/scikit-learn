@@ -95,7 +95,7 @@ def test_minibatch_update_consistency():
         buffer, 1)
     assert_true(old_inertia > 0.0)
 
-    # compute the new inertia on the same batch to check that is decreased
+    # compute the new inertia on the same batch to check that it decreased
     labels, new_inertia = _labels_inertia(
         X[slice_], x_squared_norms, new_centers)
     assert_true(new_inertia > 0.0)
@@ -104,7 +104,7 @@ def test_minibatch_update_consistency():
     # check that the incremental difference computation is matching the
     # final observed value
     effective_diff = np.sum((new_centers - old_centers) ** 2)
-    assert_almost_equal(incremental_diff, effective_diff, 5)
+    assert_almost_equal(incremental_diff, effective_diff)
 
     # step 2: compute the sparse minibatch update
     old_inertia_csr, incremental_diff_csr = _mini_batch_step(
@@ -112,7 +112,7 @@ def test_minibatch_update_consistency():
         buffer_csr, 1)
     assert_true(old_inertia_csr > 0.0)
 
-    # compute the new inertia on the same batch to check that is decreased
+    # compute the new inertia on the same batch to check that it decreased
     labels_csr, new_inertia_csr = _labels_inertia(
         X_csr[slice_], x_squared_norms_csr, new_centers_csr)
     assert_true(new_inertia_csr > 0.0)
@@ -121,7 +121,7 @@ def test_minibatch_update_consistency():
     # check that the incremental difference computation is matching the
     # final observed value
     effective_diff = np.sum((new_centers_csr - old_centers) ** 2)
-    assert_almost_equal(incremental_diff_csr, effective_diff, 5)
+    assert_almost_equal(incremental_diff_csr, effective_diff)
 
     # step 3: check that sparse and dense updates lead to the same results
     assert_array_equal(labels, labels_csr)
