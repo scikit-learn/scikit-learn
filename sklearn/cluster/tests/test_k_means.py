@@ -78,8 +78,8 @@ def test_minibatch_update_consistency():
     new_centers = old_centers.copy()
     new_centers_csr = old_centers.copy()
 
-    counts = np.ones(new_centers.shape[0], dtype=np.int32)
-    counts_csr = np.ones(new_centers.shape[0], dtype=np.int32)
+    counts = np.zeros(new_centers.shape[0], dtype=np.int32)
+    counts_csr = np.zeros(new_centers.shape[0], dtype=np.int32)
 
     x_squared_norms = (X ** 2).sum(axis=1)
     x_squared_norms_csr = csr_row_norm_l2(X_csr, squared=True)
