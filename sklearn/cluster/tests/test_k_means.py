@@ -59,14 +59,14 @@ def test_labels_assignement_and_inertia():
     x_squared_norms = (X ** 2).sum(axis=1)
     labels_array, inertia_array = _labels_inertia(
         X, x_squared_norms, noisy_centers)
-    assert_array_almost_equal(inertia_array, inertia_gold, 7)
+    assert_array_almost_equal(inertia_array, inertia_gold)
     assert_array_equal(labels_array, labels_gold)
 
     # perform label assignement using the sparse CSR input
     x_squared_norms_from_csr = csr_row_norm_l2(X_csr)
     labels_csr, inertia_csr = _labels_inertia(
         X_csr, x_squared_norms_from_csr, noisy_centers)
-    assert_array_almost_equal(inertia_csr, inertia_gold, 7)
+    assert_array_almost_equal(inertia_csr, inertia_gold)
     assert_array_equal(labels_csr, labels_gold)
 
 
@@ -128,7 +128,7 @@ def test_minibatch_update_consistency():
     assert_array_almost_equal(new_centers, new_centers_csr)
     assert_almost_equal(incremental_diff, incremental_diff_csr)
     assert_almost_equal(old_inertia, old_inertia_csr)
-    assert_almost_equal(new_inertia, new_centers_csr)
+    assert_almost_equal(new_inertia, new_inertia_csr)
 
 
 def _check_fitted_model(km):
