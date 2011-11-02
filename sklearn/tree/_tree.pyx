@@ -493,8 +493,9 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
                      np.ndarray[DTYPE_t, ndim=1, mode="c"] y,
                      np.ndarray[np.int32_t, ndim=2, mode="fortran"] X_argsorted,
                      np.ndarray sample_mask,
-                     Criterion criterion,
-                     int n_samples):
+                     int n_samples,
+                     int k_features,
+                     Criterion criterion):
     """Find the best dimension and threshold that minimises the error.
 
     Parameters
@@ -513,12 +514,17 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
         A mask for the samples to be considered. Only samples `j` for which
         sample_mask[j] != 0 are considered.
 
-    criterion : Criterion
-        The criterion function to be minimized.
-
     n_samples : int
         The number of samples in the current sample_mask
         (i.e. `sample_mask.sum()`).
+
+    k_features : int
+        The number of features to consider when looking for the best split.
+        If k_features < 0, all features are considered, otherwise k_features
+        are chosen at random.
+
+    criterion : Criterion
+        The criterion function to be minimized.
 
     Returns
     -------
@@ -565,7 +571,12 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
     best_error = initial_error
     # print 'at init, best error = ', best_error
 
-    for i from 0 <= i < n_features:
+    if k_features < 0 or k_features == n_features:
+        features = np.arange(n_features)
+    else:
+        features = np.random.permutation(n_features)[:k_features]
+
+    for i in features:
         # get i-th col of X and X_sorted
         X_i = (<DTYPE_t *>X.data) + X_stride * i
         X_argsorted_i = (<int *>X_argsorted.data) + X_argsorted_stride * i
