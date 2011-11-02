@@ -577,8 +577,8 @@ class KMeans(BaseEstimator):
         return _labels_inertia(X, x_squared_norms, self.cluster_centers_)[0]
 
 
-def _mini_batch_step_dense(X, x_squared_norms, batch_slice, centers, counts,
-                           old_center_buffer=None, compute_squared_diff=0):
+def _mini_batch_step(X, x_squared_norms, batch_slice, centers, counts,
+                     old_center_buffer, compute_squared_diff):
     """Incremental update of the centers for the Minibatch K-Means algorithm
 
     Parameters
@@ -600,14 +600,17 @@ def _mini_batch_step_dense(X, x_squared_norms, batch_slice, centers, counts,
          The vector in which we keep track of the numbers of elements in a
          cluster. This array is MODIFIED IN PLACE
     """
-    # TODO: rewrite me as a cython function to save the distance matrix
-    # allocation
+    # implementation for the sparse CSR reprensation completely written in
+    # cython
+    if sp.issparse(X):
+        return _k_means._mini_batch_update_csr(
+            X, x_squared_norms, batch_slice, centers, counts,
+            old_center_buffer, compute_squared_diff)
+
+    # dense variant in mostly numpy (not as memory efficient though)
     X = X[batch_slice]
     x_squared_norms = x_squared_norms[batch_slice]
-
-    distances = euclidean_distances(
-        centers, X, Y_norm_squared=x_squared_norms, squared=True)
-    nearest_center = distances.argmin(axis=0)
+    nearest_center, inertia = _labels_inertia(X, x_squared_norms, centers)
 
     k = centers.shape[0]
     squared_diff = 0.0
@@ -637,7 +640,7 @@ def _mini_batch_step_dense(X, x_squared_norms, batch_slice, centers, counts,
                 squared_diff += np.sum(
                     (centers[center_idx] - old_center_buffer) ** 2)
 
-    return distances[nearest_center].sum(), squared_diff
+    return inertia, squared_diff
 
 
 class MiniBatchKMeans(KMeans):
@@ -784,10 +787,6 @@ class MiniBatchKMeans(KMeans):
         n_batches = int(np.ceil(float(n_samples) / self.chunk_size))
         batch_slices = list(gen_even_slices(n_samples, n_batches))
         n_iterations = int(self.max_iter * n_batches)
-        if sp.issparse(X_shuffled):
-            _mini_batch_step = _k_means._mini_batch_update_csr
-        else:
-            _mini_batch_step = _mini_batch_step_dense
 
         ewa_inertia_min = None
         ewa_diff = None
@@ -889,10 +888,6 @@ class MiniBatchKMeans(KMeans):
             self.counts = np.zeros(self.k, dtype=np.int32)
 
         batch_slice = slice(0, n_samples, None)
-        if sp.issparse(X):
-            _mini_batch_step = _k_means._mini_batch_update_csr
-        else:
-            _mini_batch_step = _mini_batch_step_dense
 
         _mini_batch_step(X, x_squared_norms, batch_slice,
                          self.cluster_centers_, self.counts,
