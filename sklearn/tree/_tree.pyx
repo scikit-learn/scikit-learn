@@ -478,14 +478,19 @@ cdef int smallest_sample_larger_than(int sample_idx, DTYPE_t *X_i,
     """
     cdef int idx = 0, j
     cdef DTYPE_t threshold = -DBL_MAX
+
     if sample_idx > -1:
         threshold = X_i[X_argsorted_i[sample_idx]]
+
     for idx from sample_idx < idx < n_total_samples:
         j = X_argsorted_i[idx]
+
         if sample_mask[j] == 0:
             continue
+
         if X_i[j] > threshold + 1.e-7:
             return idx
+
     return -1
 
 
@@ -538,19 +543,15 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
     initial_error : DTYPE_t
         The initial error contained in the node.
     """
+    # Variables declarations
     cdef int n_total_samples = X.shape[0]
     cdef int n_features = X.shape[1]
     cdef int i, a, b, best_i = -1
     cdef DTYPE_t t, initial_error, error
     cdef DTYPE_t best_error = np.inf, best_t = np.inf
-
-    # Pointer access to ndarray data
     cdef DTYPE_t *y_ptr = <DTYPE_t *>y.data
     cdef DTYPE_t *X_i = NULL
-
     cdef int *X_argsorted_i = NULL
-
-    # sample mask data pointer
     cdef BOOL_t *sample_mask_ptr = <BOOL_t *>sample_mask.data
 
     # Compute the column strides (increment in pointer elements to get
@@ -562,48 +563,48 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
     cdef int X_argsorted_col_stride = X_argsorted.strides[1]
     cdef int X_argsorted_stride = X_argsorted_col_stride / X_argsorted_elem_stride
 
-    # Compute the initial entropy in the node
+    # Compute the initial criterion value in the node
     X_argsorted_i = <int *>X_argsorted.data
     criterion.init(y_ptr, sample_mask_ptr, n_samples, n_total_samples)
     initial_error = criterion.eval()
+
     if initial_error == 0:  # break early if the node is pure
         return best_i, best_t, initial_error
-    best_error = initial_error
-    # print 'at init, best error = ', best_error
 
+    best_error = initial_error
+
+    # Features to consider
     if max_features < 0 or max_features == n_features:
         features = np.arange(n_features)
     else:
         features = np.random.permutation(n_features)[:max_features]
 
+    # Look for the best split
     for i in features:
-        # get i-th col of X and X_sorted
+        # Get i-th col of X and X_sorted
         X_i = (<DTYPE_t *>X.data) + X_stride * i
         X_argsorted_i = (<int *>X_argsorted.data) + X_argsorted_stride * i
 
-        # reset the criterion for this feature
+        # Reset the criterion for this feature
         criterion.reset()
 
-        # index of smallest sample in X_argsorted_i that is in the sample mask
+        # Index of smallest sample in X_argsorted_i that is in the sample mask
         a = 0
         while sample_mask_ptr[X_argsorted_i[a]] == 0:
             a = a + 1
 
+        # Consider splits between two consecutive samples
         while True:
+            # Find the next sample
             b = smallest_sample_larger_than(a, X_i, X_argsorted_i,
                                             sample_mask_ptr, n_total_samples)
-
-            # if -1 there's none and we are finished
             if b == -1:
                 break
 
+            # Better than the best so far?
             criterion.update(a, b, y_ptr, X_argsorted_i, sample_mask_ptr)
-
-            # get criterion value
             error = criterion.eval()
 
-            # check if current error is smaller than previous best
-            # if this is never true best_i is -1.
             if error < best_error:
                 t = X_i[X_argsorted_i[a]] + \
                     ((X_i[X_argsorted_i[b]] - X_i[X_argsorted_i[a]]) / 2.0)
@@ -613,6 +614,7 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
                 best_t = t
                 best_error = error
 
+            # Proceed to the next pair of samples
             a = b
 
     return best_i, best_t, initial_error
@@ -667,19 +669,15 @@ def _find_best_random_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
     initial_error : DTYPE_t
         The initial error contained in the node.
     """
+    # Variables
     cdef int n_total_samples = X.shape[0]
     cdef int n_features = X.shape[1]
     cdef int i, a, b, best_i = -1
     cdef DTYPE_t t, initial_error, error
     cdef DTYPE_t best_error = np.inf, best_t = np.inf
-
-    # Pointer access to ndarray data
     cdef DTYPE_t *y_ptr = <DTYPE_t *>y.data
     cdef DTYPE_t *X_i = NULL
-
     cdef int *X_argsorted_i = NULL
-
-    # sample mask data pointer
     cdef BOOL_t *sample_mask_ptr = <BOOL_t *>sample_mask.data
 
     # Compute the column strides (increment in pointer elements to get
@@ -691,28 +689,32 @@ def _find_best_random_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
     cdef int X_argsorted_col_stride = X_argsorted.strides[1]
     cdef int X_argsorted_stride = X_argsorted_col_stride / X_argsorted_elem_stride
 
-    # Compute the initial entropy in the node
+    # Compute the initial criterion value
     X_argsorted_i = <int *>X_argsorted.data
     criterion.init(y_ptr, sample_mask_ptr, n_samples, n_total_samples)
     initial_error = criterion.eval()
+
     if initial_error == 0:  # break early if the node is pure
         return best_i, best_t, initial_error
-    best_error = initial_error
-    # print 'at init, best error = ', best_error
 
+    best_error = initial_error
+
+    # Features to consider
     if max_features < 0 or max_features == n_features:
         features = np.arange(n_features)
     else:
         features = np.random.permutation(n_features)[:max_features]
 
+    # Look for the best random split
     for i in features:
-        # get i-th col of X and X_sorted
+        # Get i-th col of X and X_sorted
         X_i = (<DTYPE_t *>X.data) + X_stride * i
         X_argsorted_i = (<int *>X_argsorted.data) + X_argsorted_stride * i
 
-        # reset the criterion for this feature
+        # Reset the criterion for this feature
         criterion.reset()
 
+        # Find min and max
         a = 0
         while sample_mask_ptr[X_argsorted_i[a]] == 0:
             a = a + 1
@@ -724,10 +726,12 @@ def _find_best_random_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
         if b <= a or X_i[X_argsorted_i[a]] == X_i[X_argsorted_i[b]]:
             continue
 
+        # Draw a random threshold in [a, b)
         t = X_i[X_argsorted_i[a]] + np.random.rand() * (X_i[X_argsorted_i[b]] - X_i[X_argsorted_i[a]])
         if t == X_i[X_argsorted_i[b]]:
             t = X_i[X_argsorted_i[a]]
 
+        # Find the sample just greater than t
         c = a + 1
 
         while True:
@@ -737,6 +741,7 @@ def _find_best_random_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
 
             c += 1
 
+        # Better than the best so far?
         criterion.update(0, c, y_ptr, X_argsorted_i, sample_mask_ptr)
         error = criterion.eval()
 
