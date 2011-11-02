@@ -80,7 +80,8 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
             "Scaling is not yet implement for sparse matrices")
     X = np.asarray(X)
     if X.dtype.kind == 'i':
-        warnings.warn('Data of type %s in scale' % X.dtype)
+        warnings.warn('Data of type %s in scale. '
+                      'Converting to float is recommended' % X.dtype)
     mean_, std_ = _mean_and_std(
         X, axis, with_mean=with_mean, with_std=with_std)
     if copy:
@@ -250,7 +251,8 @@ def normalize(X, norm='l2', axis=1, copy=True):
 
     X = check_arrays(X, sparse_format=sparse_format, copy=copy)[0]
     if X.dtype.kind == 'i':
-        warnings.warn('Data of type %s in normalize' % X.dtype)
+        warnings.warn('Data of type %s in normalize. '
+                      'Converting to float is recommended' % X.dtype)
     if axis == 0:
         X = X.T
 
