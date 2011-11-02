@@ -15,7 +15,9 @@ To be in favorable recovery conditions, we sample the data from a model
 with a sparse inverse covariance matrix. In addition, we ensure that the
 data is not too much correlated (limiting the largest coefficient of the
 precision matrix) and that there a no small coefficients in the
-precision matrix that cannot be recovered.
+precision matrix that cannot be recovered. In addition, with a small
+number of observations, it is easier to recover a correlation matrix
+rather than a covariance, thus we scale the time series.
 
 Here, the number of samples is slightly larger than the number of
 dimensions, thus the empirical covariance is still invertible. However,
@@ -40,6 +42,11 @@ ground truth value.
 Note that, the color range of the precision matrices is tweeked to
 improve readibility of the figure. The full range of values of the
 empirical precision is not displayed.
+
+The alpha parameter of the GLasso setting the sparsity of the model is
+set by internal cross-validation in the GLassoCV. As can be
+seen on figure 2, the grid to compute the cross-validation score is
+iteratively refined in the neighborhood of the maximum.
 """
 # author: Gael Varoquaux <gael.varoquaux@inria.fr>
 # License: BSD Style
@@ -53,16 +60,23 @@ import pylab as pl
 
 ################################################################################
 # Generate the data
-N_SAMPLES = 15
-DIM = 10
+N_SAMPLES = 60
+DIM = 20
 
 prng = np.random.RandomState(1)
-prec = make_sparse_spd_matrix(DIM, norm_diag=True, smallest_coef=.4,
+prec = make_sparse_spd_matrix(DIM, alpha=.98,
+                              smallest_coef=.4,
                               largest_coef=.7,
                               random_state=prng)
 cov = linalg.inv(prec)
+d = np.sqrt(np.diag(cov))
+cov /= d
+cov /= d[:, np.newaxis]
+prec *= d
+prec *= d[:, np.newaxis]
 X = prng.multivariate_normal(np.zeros(DIM), cov, size=N_SAMPLES)
 X -= X.mean(axis=0)
+X /= X.std(axis=0)
 
 ################################################################################
 # Estimate the covariance
@@ -108,6 +122,14 @@ for i, (name, this_prec) in enumerate(precs):
     pl.title('%s precision' % name)
     ax.set_axis_bgcolor('.7')
 
+# plot the model selection metric
+pl.figure(figsize=(4, 3))
+pl.axes([.2, .15, .75, .7])
+pl.plot(model.cv_alphas_, np.mean(model.cv_scores, axis=1), 'o-')
+pl.axvline(model.alpha_, color='.5')
+pl.title('Model selection')
+pl.ylabel('Cross-validation score')
+pl.xlabel('alpha')
 
 pl.show()
 

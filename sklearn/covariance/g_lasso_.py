@@ -6,6 +6,7 @@ estimator.
 # License: BSD Style
 # Copyright: INRIA
 import warnings
+import operator
 
 import numpy as np
 from scipy import linalg
@@ -38,6 +39,19 @@ def _dual_gap(emp_cov, precision_, alpha):
     gap += alpha*(np.abs(precision_).sum()
                         - np.abs(np.diag(precision_)).sum())
     return gap
+
+
+def alpha_max(emp_cov):
+    """ Find the maximum alpha for which there are some non-zero
+        off-diagonal elements.
+
+        This results from the bound for the all the Lasso that are solved
+        in GLasso: each time, the row of cov corresponds to Xy. As the
+        bound for alpha is given by max(abs(Xy)), the result follows.
+    """
+    A = np.copy(emp_cov)
+    A.flat[::A.shape[0]+1] = 0
+    return np.max(np.abs(A))
 
 
 ################################################################################
@@ -196,8 +210,8 @@ class GLasso(EmpiricalCovariance):
 
 ################################################################################
 # Cross-validation with GLasso
-def g_lasso_path(X, alphas, X_test=False, mode='cd', tol=1e-4,
-                 max_iter=100, verbose=False):
+def g_lasso_path(X, alphas, cov_init=None, X_test=False, mode='cd',
+                 tol=1e-4, max_iter=100, verbose=False):
     """ l1-penalized covariance estimator
 
     Parameters
@@ -231,7 +245,10 @@ def g_lasso_path(X, alphas, X_test=False, mode='cd', tol=1e-4,
         The generalisation error (log-likelihood) on the test data.
         Returned only if test data is passed.
     """
-    covariance_ = empirical_covariance(X)
+    if cov_init is None:
+        covariance_ = empirical_covariance(X)
+    else:
+        covariances_ = cov_init
     covariances_ = list()
     precisions_ = list()
     scores_ = list()
@@ -250,40 +267,72 @@ def g_lasso_path(X, alphas, X_test=False, mode='cd', tol=1e-4,
     return covariances_, precisions_
 
 
-DEFAULT_ALPHAS = np.r_[0, np.logspace(-2.5, .5, 20)][::-1]
 
 
 class GLassoCV(GLasso):
+    """GLasso: sparse inverse covariance, cross-validated choice of the
+    l1 penality
 
-    def __init__(self, alphas=DEFAULT_ALPHAS, cv=None, tol=1e-4,
+    Attributes
+    ----------
+    `covariance_` : array-like, shape (n_features, n_features)
+        Estimated covariance matrix
+
+    `precision_` : array-like, shape (n_features, n_features)
+        Estimated pseudo inverse matrix.
+
+    `alpha_`: float
+        Penalization parameter selected
+
+    `cv_alphas_`: list of float
+        All the penalization parameters explored
+
+    `cv_scores`: 2D array (n_alphas, n_folds)
+        The log-likelihood score on left-out data across the folds.
+
+    Notes
+    -----
+    The search for the optimal alpha is done on an iteratively refined
+    grid: first the cross-validated scores on a grid are computed, then
+    a new refined grid is center around the maximum...
+    """
+
+
+    def __init__(self, alphas=4, n_refinements=4, cv=None, tol=1e-4,
                  max_iter=100, mode='cd', n_jobs=1, verbose=False):
         """ l1-penalized covariance estimator
 
         Parameters
         ----------
-        alpha: positive float, optional
-            The regularization parameter: the higher alpha, the more
-            regularization, the sparser the inverse covariance
-        cov_init: 2D array (n_features, n_features), optional
-            The initial guess for the covariance
-        mode: {'cd', 'lars'}
-            The Lasso solver to use: coordinate descent or LARS. Use LARS for
-            very sparse underlying graphs, where p > n. Elsewhere prefer cd
-            which is more numerically stable.
+        alphas: integer, or list positive float, optional
+            If an integer is given, it fixes the number of points on the
+            grids of alpha to be used. If a list is given, it gives the
+            grid to be used. See the notes in the class docstring for
+            more details.
+        n_refinements: strictly positive integer
+            The number of time the grid is refined. Not used if explicit
+            values of alphas are passed.
+        cv : crossvalidation generator, optional
+            see sklearn.cross_validation module. If None is passed, default to
+            a 3-fold strategy
         tol: positive float, optional
             The tolerance to declare convergence: if the dual gap goes below
             this value, iterations are stopped
         max_iter: integer, optional
             The maximum number of iterations
-        cv : crossvalidation generator, optional
-            see sklearn.cross_validation module. If None is passed, default to
-            a 5-fold strategy
+        mode: {'cd', 'lars'}
+            The Lasso solver to use: coordinate descent or LARS. Use LARS for
+            very sparse underlying graphs, where p > n. Elsewhere prefer cd
+            which is more numerically stable.
+        n_jobs: int, optional
+            number of jobs to run in parallel (default 1)
         verbose: boolean, optional
             If verbose is True, the objective function and dual gap are
-            plotted at each iteration
+            print at each iteration
 
         """
         self.alphas = alphas
+        self.n_refinements = n_refinements
         self.mode = mode
         self.tol = tol
         self.max_iter = max_iter
@@ -294,28 +343,80 @@ class GLassoCV(GLasso):
     def fit(self, X, y=None):
         X = np.asarray(X)
 
-        # init cross-validation generator
         cv = check_cv(self.cv, X, y, classifier=False)
 
-        path = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
-                        delayed(g_lasso_path)(X[train], alphas=self.alphas,
-                                    X_test=X[test], mode=self.mode,
-                                    tol=self.tol, max_iter=self.max_iter,
-                                    verbose=self.verbose)
-                        for train, test in cv)
+        # List of (alpha, scores, covs)
+        path = list()
+        n_alphas = self.alphas
+
+        if operator.isSequenceType(n_alphas):
+            alphas = self.alphas
+            n_refinements = 1
+        else:
+            n_refinements = self.n_refinements
+            emp_cov = empirical_covariance(X)
+            alpha_1 = alpha_max(emp_cov)
+            alpha_0 = 1e-2 * alpha_1
+            alphas = np.r_[0,
+                                np.logspace(np.log10(alpha_0),
+                                            np.log10(alpha_1),
+                                            n_alphas)][::-1]
+        covs_init = (None, None, None)
+
+        for i in range(n_refinements):
+            # Compute the cross-validated loss on the current grid
+            this_path = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
+                            delayed(g_lasso_path)(X[train], alphas=alphas,
+                                        X_test=X[test], mode=self.mode,
+                                        tol=self.tol, max_iter=self.max_iter,
+                                        verbose=self.verbose)
+                            for (train, test), cov_init in zip(cv, covs_init))
+
+            # Little danse to transform the list in what we need
+            covs, _, scores = zip(*this_path)
+            covs = zip(*covs)
+            scores = zip(*scores)
+            path.extend(zip(alphas, scores, covs))
+            path = sorted(path, key=operator.itemgetter(0), reverse=True)
+
+            # Find the maximum (we avoid using built in 'max' function to
+            # have a fully-reproducible selection of the smallest alpha
+            # is case of equality)
+            best_score = -np.inf
+            for index, (alpha, scores, _) in enumerate(path):
+                this_score = np.mean(scores)
+                if this_score >= best_score:
+                    best_score = this_score
+                    best_index = index
+
+            # Refine our grid
+            if best_index == 0:
+                # We do not need to go to far back: we have choosen
+                # the highest value of alpha for which there are
+                # non-zero coefficients
+                alpha_1 = 2 * path[0][0]
+                alpha_0 = path[1][0]
+                covs_init = path[0][-1]
+            elif best_index == len(path) - 1:
+                alpha_1 = path[-2][0]
+                alpha_0 = .1 * path[-1][0]
+                covs_init = path[best_index-1][-1]
+            else:
+                alpha_1 = path[best_index-1][0]
+                alpha_0 = path[best_index+1][0]
+                covs_init = path[best_index-1][-1]
+            alphas = np.logspace(np.log10(alpha_1), np.log10(alpha_0),
+                                 n_alphas + 2)
+            alphas = alphas[1:-1]
 
         path = zip(*path)
-        best_score = -np.inf
-        all_scores = np.array(path[2]).T
-        for alpha, scores in zip(self.alphas, all_scores):
-            this_score = np.mean(scores)
-            if this_score >= best_score:
-                best_score = this_score
-                best_alpha = alpha
-        # XXX: need to store the scores in a name consistent with the
-        # rest of the CV estimators
-        self.all_scores = all_scores
+        self.cv_scores = np.array(path[1])
+        alphas = path[0]
+        best_alpha = alphas[best_index]
         self.alpha_ = best_alpha
+        self.cv_alphas_ = alphas
+
+        # Finally fit the model with the selected alpha
         self.covariance_, self.precision_ = g_lasso(X, alpha=best_alpha,
                         mode=self.mode, tol=self.tol, max_iter=self.max_iter,
                         verbose=self.verbose)
