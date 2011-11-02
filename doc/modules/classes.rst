@@ -526,6 +526,7 @@ Grid Search
    :template: class.rst
 
    grid_search.GridSearchCV
+   grid_search.IterGrid
 
 
 .. _feature_selection_ref:

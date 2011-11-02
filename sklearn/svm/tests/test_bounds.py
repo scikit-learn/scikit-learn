@@ -52,13 +52,13 @@ def check_l1_min_c(X, y, loss, fit_intercept=True, intercept_scaling=None):
 
     clf.C = min_c
     clf.fit(X, y)
-    assert (np.asanyarray(clf.coef_) == 0).all()
-    assert (np.asanyarray(clf.intercept_) == 0).all()
+    assert (np.asarray(clf.coef_) == 0).all()
+    assert (np.asarray(clf.intercept_) == 0).all()
 
     clf.C = min_c * 1.01
     clf.fit(X, y)
-    assert (np.asanyarray(clf.coef_) != 0).any() or \
-           (np.asanyarray(clf.intercept_) != 0).any()
+    assert (np.asarray(clf.coef_) != 0).any() or \
+           (np.asarray(clf.intercept_) != 0).any()
 
 
 @nose.tools.raises(ValueError)

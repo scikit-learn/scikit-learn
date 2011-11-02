@@ -56,7 +56,7 @@ def _unique(ar, return_index=False, return_inverse=False):
             items = sorted(set(ar))
             return np.asarray(items)
         else:
-            ar = np.asanyarray(ar).flatten()
+            ar = np.asarray(ar).flatten()
 
     if ar.size == 0:
         if return_inverse and return_index:

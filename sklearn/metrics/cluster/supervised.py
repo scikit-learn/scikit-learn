@@ -22,8 +22,8 @@ def comb2(n):
 
 def check_clusterings(labels_true, labels_pred):
     """Check that the two clusterings matching 1D integer arrays"""
-    labels_true = np.asanyarray(labels_true)
-    labels_pred = np.asanyarray(labels_pred)
+    labels_true = np.asarray(labels_true)
+    labels_pred = np.asarray(labels_pred)
 
     # input checks
     if labels_true.ndim != 1:

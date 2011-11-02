@@ -73,20 +73,23 @@ class SparseBaseLibSVM(BaseLibSVM):
 
         import scipy.sparse
         X = scipy.sparse.csr_matrix(X)
-        X.data = np.asanyarray(X.data, dtype=np.float64, order='C')
-        y = np.asanyarray(y, dtype=np.float64, order='C')
-        sample_weight = np.asanyarray([] if sample_weight is None
-                                         else sample_weight, dtype=np.float64)
+        X.data = np.asarray(X.data, dtype=np.float64, order='C')
+        y = np.asarray(y, dtype=np.float64, order='C')
+        sample_weight = np.asarray([] if sample_weight is None
+                                      else sample_weight, dtype=np.float64)
 
         if X.shape[0] != y.shape[0]:
-            raise ValueError("X and y have incompatible shapes.\n" +
-                             "Note: Sparse matrices cannot be indexed w/" +
-                             "boolean masks (use `indices=True` in CV).")
+            raise ValueError("X and y have incompatible shapes: %r vs %r\n"
+                             "Note: Sparse matrices cannot be indexed w/"
+                             "boolean masks (use `indices=True` in CV)."
+                             % (X.shape, y.shape))
 
         if sample_weight.shape[0] > 0 and sample_weight.shape[0] != X.shape[0]:
-            raise ValueError("sample_weight and X have incompatible shapes.\n" +
-                             "Note: Sparse matrices cannot be indexed w/" +
-                             "boolean masks (use `indices=True` in CV).")
+            raise ValueError("sample_weight and X have incompatible shapes:"
+                             "%r vs %r\n"
+                             "Note: Sparse matrices cannot be indexed w/"
+                             "boolean masks (use `indices=True` in CV)."
+                             % (sample_weight.shape, X.shape))
 
         solver_type = LIBSVM_IMPL.index(self.impl)
         kernel_type = self._kernel_types.index(self.kernel)
@@ -150,7 +153,7 @@ class SparseBaseLibSVM(BaseLibSVM):
         """
         import scipy.sparse
         T = scipy.sparse.csr_matrix(T)
-        T.data = np.asanyarray(T.data, dtype=np.float64, order='C')
+        T.data = np.asarray(T.data, dtype=np.float64, order='C')
         kernel_type = self._kernel_types.index(self.kernel)
 
         return libsvm.libsvm_sparse_predict(T.data, T.indices, T.indptr,
@@ -199,7 +202,7 @@ class SparseBaseLibSVM(BaseLibSVM):
 
         import scipy.sparse
         X = scipy.sparse.csr_matrix(X)
-        X.data = np.asanyarray(X.data, dtype=np.float64, order='C')
+        X.data = np.asarray(X.data, dtype=np.float64, order='C')
         kernel_type = self._kernel_types.index(self.kernel)
 
         return libsvm.libsvm_sparse_predict_proba(
@@ -238,13 +241,13 @@ class SparseBaseLibLinear(BaseLibLinear):
 
         import scipy.sparse
         X = scipy.sparse.csr_matrix(X)
-        y = np.asanyarray(y, dtype=np.int32, order='C')
+        y = np.asarray(y, dtype=np.int32, order='C')
         if X.shape[0] != y.shape[0]:
             raise ValueError("X and y have incompatible shapes.\n" +
                              "Note: Sparse matrices cannot be indexed w/" +
                              "boolean masks (use `indices=True` in CV).")
 
-        X.data = np.asanyarray(X.data, dtype=np.float64, order='C')
+        X.data = np.asarray(X.data, dtype=np.float64, order='C')
 
         self.class_weight, self.class_weight_label = \
                      _get_class_weight(class_weight, y)
@@ -273,7 +276,7 @@ class SparseBaseLibLinear(BaseLibLinear):
         import scipy.sparse
         X = scipy.sparse.csr_matrix(X)
         self._check_n_features(X)
-        X.data = np.asanyarray(X.data, dtype=np.float64, order='C')
+        X.data = np.asarray(X.data, dtype=np.float64, order='C')
 
         return liblinear.csr_predict_wrap(X.shape[1], X.data,
                                       X.indices, X.indptr,
@@ -302,7 +305,7 @@ class SparseBaseLibLinear(BaseLibLinear):
         import scipy.sparse
         X = scipy.sparse.csr_matrix(X)
         self._check_n_features(X)
-        X.data = np.asanyarray(X.data, dtype=np.float64, order='C')
+        X.data = np.asarray(X.data, dtype=np.float64, order='C')
 
         dec_func = liblinear.csr_decision_function_wrap(
             X.shape[1], X.data, X.indices, X.indptr, self.raw_coef_,

@@ -101,7 +101,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
             Returns the instance itself.
         """
         self.random_state = check_random_state(self.random_state)
-        X = np.asanyarray(X)
+        X = np.asarray(X)
         code_init = self.V_init.T if self.V_init is not None else None
         dict_init = self.U_init.T if self.U_init is not None else None
         Vt, _, E = dict_learning(X.T, self.n_components, self.alpha,
@@ -226,7 +226,7 @@ class MiniBatchSparsePCA(SparsePCA):
             Returns the instance itself.
         """
         self.random_state = check_random_state(self.random_state)
-        X = np.asanyarray(X)
+        X = np.asarray(X)
         Vt, _ = dict_learning_online(X.T, self.n_components, alpha=self.alpha,
                                      n_iter=self.n_iter, return_code=True,
                                      dict_init=None, verbose=self.verbose,

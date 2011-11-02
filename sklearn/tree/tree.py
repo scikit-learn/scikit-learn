@@ -10,7 +10,7 @@ from __future__ import division
 import numpy as np
 
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
-from ..utils import check_random_state
+from ..utils import array2d, check_random_state
 
 from . import _tree
 
@@ -178,7 +178,7 @@ def _build_tree(is_classification, X, y, criterion, max_depth, min_split,
             value[:t] = np.bincount(current_y.astype(np.int))
         else:
             # we need to wrap the mean into an array
-            value = np.asanyarray(np.mean(current_y))
+            value = np.asarray(np.mean(current_y))
 
         if not is_split_valid:
             return _tree.Node(-1, 0.0, 0.0, n_samples, value, None, None)
@@ -248,7 +248,7 @@ class BaseDecisionTree(BaseEstimator):
         self : object
             Returns self.
         """
-        X = np.asanyarray(X, dtype=DTYPE, order='F')
+        X = np.asarray(X, dtype=DTYPE, order='F')
         n_samples, self.n_features = X.shape
         if len(y) != n_samples:
             raise ValueError("Number of labels=%d does not match "
@@ -304,8 +304,7 @@ class BaseDecisionTree(BaseEstimator):
         predictions : array of shape = [n_samples]
             The predicted classes, or the predict values.
         """
-        X = np.atleast_2d(X)
-        X = X.astype(DTYPE)
+        X = array2d(X, dtype=DTYPE)
         n_samples, n_features = X.shape
 
         if self.tree is None:
@@ -409,8 +408,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             The class probabilities of the input samples. Classes are ordered
             by arithmetical order.
         """
-        X = np.atleast_2d(X)
-        X = X.astype(DTYPE)
+        X = array2d(X, dtype=DTYPE)
         n_samples, n_features = X.shape
 
         if self.tree is None:

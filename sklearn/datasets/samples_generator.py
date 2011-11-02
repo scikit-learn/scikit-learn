@@ -9,7 +9,7 @@ Generate samples of synthetic data sets.
 import numpy as np
 from scipy import linalg
 
-from ..utils import check_random_state
+from ..utils import array2d, check_random_state
 
 
 def make_classification(n_samples=100, n_features=20, n_informative=2,
@@ -395,7 +395,7 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
         centers = generator.uniform(center_box[0], center_box[1],
                                     size=(centers, n_features))
     else:
-        centers = np.atleast_2d(centers)
+        centers = array2d(centers)
         n_features = centers.shape[1]
 
     X = []

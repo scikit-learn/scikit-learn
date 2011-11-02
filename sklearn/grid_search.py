@@ -116,7 +116,7 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
         else:
             this_n_test_samples = len(X)
     if verbose > 2:
-        msg += ", score=%f"%this_score
+        msg += ", score=%f" % this_score
     if verbose > 1:
         end_msg = "%s -%s" % (msg,
                               logger.short_format_time(time.time() -
@@ -226,6 +226,10 @@ class GridSearchCV(BaseEstimator):
     left out data, unless an explicit score_func is passed in which
     case it is used instead. If a loss function loss_func is passed,
     it overrides the score functions and is minimized.
+
+    See Also
+    ---------
+    IterGrid
 
     """
 
