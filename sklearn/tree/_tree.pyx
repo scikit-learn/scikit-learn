@@ -602,8 +602,6 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
             # get criterion value
             error = criterion.eval()
 
-            assert sample_mask_ptr[X_argsorted_i[a]] == 1 and sample_mask_ptr[X_argsorted_i[b]]
-
             # check if current error is smaller than previous best
             # if this is never true best_i is -1.
             if error < best_error:
@@ -616,5 +614,138 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
                 best_error = error
 
             a = b
+
+    return best_i, best_t, initial_error
+
+
+def _find_best_random_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
+                            np.ndarray[DTYPE_t, ndim=1, mode="c"] y,
+                            np.ndarray[np.int32_t, ndim=2, mode="fortran"] X_argsorted,
+                            np.ndarray sample_mask,
+                            int n_samples,
+                            int k_features,
+                            Criterion criterion):
+    """Find the best dimension and threshold that minimises the error.
+
+    Parameters
+    ----------
+    X : ndarray, shape (n_total_samples, n_features), dtype=DTYPE_t
+        The feature values.
+
+    y : ndarray, shape (n_total_samples,), dtype=float
+        The label to predict for each sample.
+
+    X_argsorted : ndarray, shape (n_samples, n_features)
+        Argsort of cols of `X`. `X_argsorted[0,j]` gives the example
+        index of the smallest value of feature `j`.
+
+    sample_mask : ndarray, shape (n_samples,), dtype=np.bool
+        A mask for the samples to be considered. Only samples `j` for which
+        sample_mask[j] != 0 are considered.
+
+    n_samples : int
+        The number of samples in the current sample_mask
+        (i.e. `sample_mask.sum()`).
+
+    k_features : int
+        The number of features to consider when looking for the best split.
+        If k_features < 0, all features are considered, otherwise k_features
+        are chosen at random.
+
+    criterion : Criterion
+        The criterion function to be minimized.
+
+    Returns
+    -------
+    best_i : int
+        The split feature or -1 if criterion not smaller than
+        `parent_split_error`.
+
+    best_t : DTYPE_t
+        The split threshold
+
+    initial_error : DTYPE_t
+        The initial error contained in the node.
+    """
+    cdef int n_total_samples = X.shape[0]
+    cdef int n_features = X.shape[1]
+    cdef int i, a, b, best_i = -1
+    cdef DTYPE_t t, initial_error, error
+    cdef DTYPE_t best_error = np.inf, best_t = np.inf
+
+    # Pointer access to ndarray data
+    cdef DTYPE_t *y_ptr = <DTYPE_t *>y.data
+    cdef DTYPE_t *X_i = NULL
+
+    cdef int *X_argsorted_i = NULL
+
+    # sample mask data pointer
+    cdef BOOL_t *sample_mask_ptr = <BOOL_t *>sample_mask.data
+
+    # Compute the column strides (increment in pointer elements to get
+    # from column i to i + 1) for `X` and `X_argsorted`
+    cdef int X_elem_stride = X.strides[0]
+    cdef int X_col_stride = X.strides[1]
+    cdef int X_stride = X_col_stride / X_elem_stride
+    cdef int X_argsorted_elem_stride = X_argsorted.strides[0]
+    cdef int X_argsorted_col_stride = X_argsorted.strides[1]
+    cdef int X_argsorted_stride = X_argsorted_col_stride / X_argsorted_elem_stride
+
+    # Compute the initial entropy in the node
+    X_argsorted_i = <int *>X_argsorted.data
+    criterion.init(y_ptr, sample_mask_ptr, n_samples, n_total_samples)
+    initial_error = criterion.eval()
+    if initial_error == 0:  # break early if the node is pure
+        return best_i, best_t, initial_error
+    best_error = initial_error
+    # print 'at init, best error = ', best_error
+
+    if k_features < 0 or k_features == n_features:
+        features = np.arange(n_features)
+    else:
+        features = np.random.permutation(n_features)[:k_features]
+
+    for i in features:
+        # get i-th col of X and X_sorted
+        X_i = (<DTYPE_t *>X.data) + X_stride * i
+        X_argsorted_i = (<int *>X_argsorted.data) + X_argsorted_stride * i
+
+        # reset the criterion for this feature
+        criterion.reset()
+
+        a = 0
+        while sample_mask_ptr[X_argsorted_i[a]] == 0:
+            a = a + 1
+
+        b = n_total_samples - 1
+        while sample_mask_ptr[X_argsorted_i[b]] == 0:
+            b = b - 1
+
+        if b <= a or X_i[X_argsorted_i[a]] == X_i[X_argsorted_i[b]]:
+            continue
+
+        t = X_i[X_argsorted_i[a]] + np.random.rand() * (X_i[X_argsorted_i[b]] - X_i[X_argsorted_i[a]])
+        if t == X_i[X_argsorted_i[b]]:
+            t = X_i[X_argsorted_i[a]]
+
+        c = a + 1
+
+        while True:
+            if sample_mask_ptr[X_argsorted_i[c]] != 0:
+                if X_i[X_argsorted_i[c]] > t:
+                    break
+
+                if c == b:
+                    break
+
+            c += 1
+
+        criterion.update(0, c, y_ptr, X_argsorted_i, sample_mask_ptr)
+        error = criterion.eval()
+
+        if error < best_error:
+            best_i = i
+            best_t = t
+            best_error = error
 
     return best_i, best_t, initial_error

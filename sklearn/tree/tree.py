@@ -224,8 +224,9 @@ class BaseDecisionTree(BaseEstimator):
         self.n_features = None
         self.classes = None
         self.n_classes = None
-        self.tree = None
         self.find_split = _tree._find_best_split
+
+        self.tree = None
 
     def fit(self, X, y):
         """Build a decision tree from the training set (X, y).
