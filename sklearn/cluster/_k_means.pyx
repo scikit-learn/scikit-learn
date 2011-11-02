@@ -73,7 +73,7 @@ cpdef DOUBLE _assign_labels_array(np.ndarray[DOUBLE, ndim=2] X,
             dist *= -2
             dist += center_squared_norms[center_idx]
             dist += x_squared_norms[sample_idx]
-            if min_dist < 0.0 or dist < min_dist:
+            if min_dist == -1 or dist < min_dist:
                 min_dist = dist
                 labels[i] = center_idx
         inertia += min_dist
@@ -124,7 +124,7 @@ cpdef DOUBLE _assign_labels_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
             dist *= -2
             dist += center_squared_norms[center_idx]
             dist += x_squared_norms[sample_idx]
-            if min_dist < 0.0 or dist < min_dist:
+            if min_dist == -1 or dist < min_dist:
                 min_dist = dist
                 labels[i] = center_idx
         inertia += min_dist
