@@ -48,10 +48,11 @@ def test_labels_assignement_and_inertia():
     mindist = np.empty(n_samples)
     mindist.fill(np.infty)
     for center_id in range(n_clusters):
-        dist = np.sum((X - centers[center_id]) ** 2, axis=1)
+        dist = np.sum((X - noisy_centers[center_id]) ** 2, axis=1)
         labels_gold[dist < mindist] = center_id
         mindist = np.minimum(dist, mindist)
     inertia_gold = mindist.sum()
+    assert_true((mindist >= 0.0).all())
     assert_true((labels_gold != -1).all())
 
     # perform label assignement using the dense array input
