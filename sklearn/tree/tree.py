@@ -136,25 +136,22 @@ def _build_tree(estimator, X, y, criterion):
     n_classes = estimator.n_classes
 
     # Convert data
-    if not np.isfortran(X):
-        X = np.asfortranarray(X)
-
     X_argsorted = np.asfortranarray(np.argsort(X.T, axis=1).astype(np.int32).T)
-    y = np.ascontiguousarray(y, dtype=DTYPE)
     sample_mask = np.ones((X.shape[0],), dtype=np.bool)
 
     # Recursively partition X
     def recursive_partition(X, X_argsorted, y, sample_mask, depth):
         # Count samples
-        n_samples = sample_mask.sum()
+        n_node_samples = sample_mask.sum()
 
-        if n_samples == 0:
+        if n_node_samples == 0:
             raise ValueError("Attempting to find a split with an empty sample_mask")
 
         # Split samples
-        if (max_depth is None or depth < max_depth) and n_samples >= min_split:
+        if ((max_depth is None or depth < max_depth)
+            and n_node_samples >= min_split):
             feature, threshold, init_error = _tree._find_best_split(
-                X, y, X_argsorted, sample_mask, criterion, n_samples)
+                X, y, X_argsorted, sample_mask, criterion, n_node_samples)
 
         else:
             feature = -1
@@ -172,12 +169,12 @@ def _build_tree(estimator, X, y, criterion):
 
         # Terminal node
         if feature == -1:
-            return _tree.Node(-1, 0.0, 0.0, n_samples, value, None, None)
+            return _tree.Node(-1, 0.0, 0.0, n_node_samples, value, None, None)
 
         # Internal node
         else:
-            if n_samples / X.shape[0] <= min_density:
-                # sample_mask too sparse - pack X and X_argsorted
+            # Sample mask is too sparse?
+            if n_node_samples / X.shape[0] <= min_density:
                 X = X[sample_mask]
                 X_argsorted = np.asfortranarray(
                     np.argsort(X.T, axis=1).astype(np.int32).T)
@@ -193,7 +190,7 @@ def _build_tree(estimator, X, y, criterion):
                                                   ~split & sample_mask,
                                                   depth + 1)
 
-            return _tree.Node(feature, threshold, init_error, n_samples,
+            return _tree.Node(feature, threshold, init_error, n_node_samples,
                               value, left_partition, right_partition)
 
     return recursive_partition(X, X_argsorted, y, sample_mask, 0)
@@ -236,16 +233,7 @@ class BaseDecisionTree(BaseEstimator):
         self : object
             Returns self.
         """
-        # Convert data
-        X = np.asanyarray(X, dtype=DTYPE, order="F")
-
         # Check parameters
-        n_samples, self.n_features = X.shape
-
-        if len(y) != n_samples:
-            raise ValueError("Number of labels=%d does not match "
-                             "number of features=%d"
-                             % (len(y), n_samples))
         if self.min_split <= 0:
             raise ValueError("min_split must be greater than zero.")
         if self.max_depth is not None and self.max_depth <= 0:
@@ -253,19 +241,27 @@ class BaseDecisionTree(BaseEstimator):
         if self.min_density < 0.0 or self.min_density > 1.0:
             raise ValueError("min_density must be in [0, 1]")
 
-        # Classification task
+        # Convert data
+        X = np.asanyarray(X, dtype=DTYPE, order="F")
+        n_samples, self.n_features = X.shape
+
+        if len(y) != n_samples:
+            raise ValueError("Number of labels=%d does not match "
+                             "number of features=%d"
+                             % (len(y), n_samples))
+
         if isinstance(self, ClassifierMixin):
-            y = np.ascontiguousarray(y, dtype=np.int)
             self.classes = np.unique(y)
             self.n_classes = self.classes.shape[0]
-            y = np.searchsorted(self.classes, y)
             criterion = CLASSIFICATION[self.criterion](self.n_classes)
+            y = np.searchsorted(self.classes, y)
 
-        # Regression task
         else:
-            y = np.ascontiguousarray(y, dtype=DTYPE)
+            self.classes = None
             self.n_classes = 1
             criterion = REGRESSION[self.criterion]()
+
+        y = np.ascontiguousarray(y, dtype=DTYPE)
 
         # Build tree
         self.tree = _build_tree(self, X, y, criterion)
@@ -289,8 +285,7 @@ class BaseDecisionTree(BaseEstimator):
         predictions : array of shape = [n_samples]
             The predicted classes, or the predict values.
         """
-        X = np.atleast_2d(X)
-        X = X.astype(DTYPE)
+        X = np.atleast_2d(X).astype(DTYPE)
         n_samples, n_features = X.shape
 
         if self.tree is None:
@@ -328,7 +323,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         samples.
 
     min_split : integer, optional (default=1)
-        The minimum number of samples required to split an internal node,
+        The minimum number of samples required to split an internal node.
 
     min_density : float, optional (default=0.1)
         The minimum density of the `sample_mask` (i.e. the fraction of samples
@@ -398,8 +393,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             The class probabilities of the input samples. Classes are ordered
             by arithmetical order.
         """
-        X = np.atleast_2d(X)
-        X = X.astype(DTYPE)
+        X = np.atleast_2d(X).astype(DTYPE)
         n_samples, n_features = X.shape
 
         if self.tree is None:
