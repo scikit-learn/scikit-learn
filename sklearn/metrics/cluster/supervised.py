@@ -624,8 +624,36 @@ def ami_score(labels_true, labels_pred):
     return ami
 
 
+def _accumulate_factorials(all_factors):
+    """Calculates the product of the given factorials.
+
+    This function solves equations of the form:
+
+    \frac{\prod{n_1!, n_2!,...n_k!}}{\prod{d_1!, d_2!,...d_m!}}
+
+    Parameters
+    ----------
+    all_factors: list of signed integers
+        Integers are positive if they are a numerator in the equation,
+        and negative if they are in the denominator.
+
+    Returns
+    -------
+    t: float
+        The product of the factorial of each of the given values that are
+        positive divided by the product of each of the given values that are
+        negative.
+    """
+    a = np.zeros((all_factors.max() + 1))
+    b = np.arange(all_factors.max() + 1, dtype='float')
+    for factor in all_factors:
+        a[:(abs(factor) + 1)] += np.sign(factor)
+    return np.exp(np.sum(np.dot(a[2:], np.log(b[2:]))))
+
+
 def expected_mutual_information(contingency, n_samples):
     """Calculate the expected mutual information for two labelings."""
+    np.seterr(all='raise')
     R, C = contingency.shape
     N = n_samples
     a = np.sum(contingency, axis=1, dtype='int')
@@ -639,43 +667,20 @@ def expected_mutual_information(contingency, n_samples):
     ab_outer = np.outer(a, b)
     # term2 uses N * nij
     Nnij = N * nijs
-    # term3a (was np.multiply.reduce(range(a[i] - nij + 1, a[i] + 1)))
-    # term3 has a component: 1 / n!
-    term3e = 1. / factorial(nijs)
-    # numerator for term 3d
-    num3d = N - b + 1
     emi = 0
     for i in range(R):
         for j in range(C):
             start = int(max(a[i] + b[j] - N, 1))
             end = int(min(a[i], b[j]) + 1)
             for nij in range(start, end):
-                term2 = np.log(Nnij[nij] / ab_outer[i][j])
-                # a! / (a - n)!
-                term3a = np.multiply.reduce(np.arange(a[i] - nij + 1, a[i] + 1,
-                                                      dtype='int'))
-                # b! / (b - n)!
-                term3b = np.multiply.reduce(np.arange(b[j] - nij + 1, b[j] + 1,
-                                                      dtype='int'))
-                # (N - a)! / N!
-                t = np.multiply.reduce(np.arange(N - a[i] + 1, N + 1,
-                                                 dtype='float'))
-                if t == 0:
-                    continue
-                term3c = 1. / t
-                # (N - b)! / (N - a - b - n)!
-                num3dj = num3d[j]
-                den3d = N - a[i] - b[j] + nij + 1
-                if num3dj > den3d:
-                    term3d = np.multiply.reduce(np.arange(den3d, num3dj,
-                                                          dtype='int'))
-                else:
-                    term3d = np.multiply.reduce(np.arange(num3dj, den3d,
-                                                          dtype='int'))
-                    term3d = 1. / term3d
+                term1 = nij / N
+                term2 = np.log(N * nij) -  np.log(a[i] * b[j])
+                factors = np.array([a[i], b[j], (N-a[i]), (N-b[j]),
+                                    -N, -nij, -(a[i] - nij), -(b[j] - nij),
+                                    -(N - a[i] - b[j] + nij)])
+                term3 = _accumulate_factorials(factors)
                 # Add the product of all terms
-                emi += (term1[nij] * term2 * term3a * term3b
-                        * term3c * term3d * term3e[nij])
+                emi += (term1 * term2 * term3)
     return emi
 
 
