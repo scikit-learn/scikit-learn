@@ -494,7 +494,7 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
                      np.ndarray[np.int32_t, ndim=2, mode="fortran"] X_argsorted,
                      np.ndarray sample_mask,
                      int n_samples,
-                     int k_features,
+                     int max_features,
                      Criterion criterion):
     """Find the best dimension and threshold that minimises the error.
 
@@ -518,9 +518,9 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
         The number of samples in the current sample_mask
         (i.e. `sample_mask.sum()`).
 
-    k_features : int
+    max_features : int
         The number of features to consider when looking for the best split.
-        If k_features < 0, all features are considered, otherwise k_features
+        If max_features < 0, all features are considered, otherwise max_features
         are chosen at random.
 
     criterion : Criterion
@@ -571,10 +571,10 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
     best_error = initial_error
     # print 'at init, best error = ', best_error
 
-    if k_features < 0 or k_features == n_features:
+    if max_features < 0 or max_features == n_features:
         features = np.arange(n_features)
     else:
-        features = np.random.permutation(n_features)[:k_features]
+        features = np.random.permutation(n_features)[:max_features]
 
     for i in features:
         # get i-th col of X and X_sorted
@@ -623,7 +623,7 @@ def _find_best_random_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
                             np.ndarray[np.int32_t, ndim=2, mode="fortran"] X_argsorted,
                             np.ndarray sample_mask,
                             int n_samples,
-                            int k_features,
+                            int max_features,
                             Criterion criterion):
     """Find the best dimension and threshold that minimises the error.
 
@@ -647,9 +647,9 @@ def _find_best_random_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
         The number of samples in the current sample_mask
         (i.e. `sample_mask.sum()`).
 
-    k_features : int
+    max_features : int
         The number of features to consider when looking for the best split.
-        If k_features < 0, all features are considered, otherwise k_features
+        If max_features < 0, all features are considered, otherwise max_features
         are chosen at random.
 
     criterion : Criterion
@@ -700,10 +700,10 @@ def _find_best_random_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
     best_error = initial_error
     # print 'at init, best error = ', best_error
 
-    if k_features < 0 or k_features == n_features:
+    if max_features < 0 or max_features == n_features:
         features = np.arange(n_features)
     else:
-        features = np.random.permutation(n_features)[:k_features]
+        features = np.random.permutation(n_features)[:max_features]
 
     for i in features:
         # get i-th col of X and X_sorted
@@ -732,10 +732,7 @@ def _find_best_random_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
 
         while True:
             if sample_mask_ptr[X_argsorted_i[c]] != 0:
-                if X_i[X_argsorted_i[c]] > t:
-                    break
-
-                if c == b:
+                if X_i[X_argsorted_i[c]] > t or c == b:
                     break
 
             c += 1

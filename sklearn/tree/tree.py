@@ -131,11 +131,11 @@ def _build_tree(estimator, X, y, criterion):
     max_depth = estimator.max_depth
     min_split = estimator.min_split
     min_density = estimator.min_density
+    max_features = estimator.max_features
     random_state = estimator.random_state
     n_features = estimator.n_features
     n_classes = estimator.n_classes
     find_split = estimator.find_split
-    k_features = estimator.k_features
 
     # Convert data
     X_argsorted = np.asfortranarray(np.argsort(X.T, axis=1).astype(np.int32).T)
@@ -151,14 +151,13 @@ def _build_tree(estimator, X, y, criterion):
                              "with an empty sample_mask")
 
         # Split samples
-        if ((max_depth is None or depth < max_depth)
-            and n_node_samples >= min_split):
+        if depth < max_depth and n_node_samples >= min_split:
             feature, threshold, init_error = find_split(X,
                                                         y,
                                                         X_argsorted,
                                                         sample_mask,
                                                         n_node_samples,
-                                                        k_features,
+                                                        max_features,
                                                         criterion)
 
         else:
@@ -212,13 +211,13 @@ class BaseDecisionTree(BaseEstimator):
                        max_depth,
                        min_split,
                        min_density,
-                       k_features,
+                       max_features,
                        random_state):
         self.criterion = criterion
-        self.max_depth = max_depth
+        self.max_depth = np.inf if max_depth is None else max_depth
         self.min_split = min_split
         self.min_density = min_density
-        self.k_features = -1 if k_features is None else k_features
+        self.max_features = -1 if max_features is None else max_features
         self.random_state = check_random_state(random_state)
 
         self.n_features = None
@@ -265,16 +264,15 @@ class BaseDecisionTree(BaseEstimator):
         # Check parameters
         if len(y) != n_samples:
             raise ValueError("Number of labels=%d does not match "
-                             "number of features=%d"
-                             % (len(y), n_samples))
+                             "number of features=%d" % (len(y), n_samples))
         if self.min_split <= 0:
             raise ValueError("min_split must be greater than zero.")
         if self.max_depth is not None and self.max_depth <= 0:
             raise ValueError("max_depth must be greater than zero. ")
         if self.min_density < 0.0 or self.min_density > 1.0:
             raise ValueError("min_density must be in [0, 1]")
-        if self.k_features >= 0 and not (0 < self.k_features <= n_features):
-            raise ValueError("k_features must be greater in (0, n_features]")
+        if self.max_features >= 0 and not (0 < self.max_features <= n_features):
+            raise ValueError("max_features must be in (0, n_features]")
 
         # Build tree
         self.tree = _build_tree(self, X, y, criterion)
@@ -346,9 +344,9 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         as copies of the original data. Otherwise, partitions are represented
         as bit masks (aka sample masks).
 
-    k_features : int or None, optional (default=None)
+    max_features : int or None, optional (default=None)
         The number of features to consider when looking for the best split.
-        If None, all features are considered, otherwise k_features are chosen
+        If None, all features are considered, otherwise max_features are chosen
         at random.
 
     random_state : int, RandomState instance or None, optional (default=None)
@@ -390,13 +388,13 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                        max_depth=10,
                        min_split=1,
                        min_density=0.1,
-                       k_features=None,
+                       max_features=None,
                        random_state=None):
         super(DecisionTreeClassifier, self).__init__(criterion,
                                                      max_depth,
                                                      min_split,
                                                      min_density,
-                                                     k_features,
+                                                     max_features,
                                                      random_state)
 
     def predict_proba(self, X):
@@ -472,9 +470,9 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         as copies of the original data. Otherwise, partitions are represented
         as bit masks (aka sample masks).
 
-    k_features : int or None, optional (default=None)
+    max_features : int or None, optional (default=None)
         The number of features to consider when looking for the best split.
-        If None, all features are considered, otherwise k_features are chosen
+        If None, all features are considered, otherwise max_features are chosen
         at random.
 
     random_state : int, RandomState instance or None, optional (default=None)
@@ -518,11 +516,11 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
                        max_depth=10,
                        min_split=1,
                        min_density=0.1,
-                       k_features=None,
+                       max_features=None,
                        random_state=None):
         super(DecisionTreeRegressor, self).__init__(criterion,
                                                     max_depth,
                                                     min_split,
                                                     min_density,
-                                                    k_features,
+                                                    max_features,
                                                     random_state)
