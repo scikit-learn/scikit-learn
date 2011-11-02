@@ -352,7 +352,7 @@ class SVR(DenseBaseLibSVM, RegressorMixin):
                                  coef0, tol, C, 0., epsilon, shrinking,
                                  probability)
 
-    def fit(self, X, y, sample_weight=None, **params):
+    def fit(self, X, y, sample_weight=None, cache_size=100., **params):
         """
         Fit the SVM model according to the given training data and parameters.
 
@@ -363,6 +363,9 @@ class SVR(DenseBaseLibSVM, RegressorMixin):
             n_features is the number of features.
         y : array, shape = [n_samples]
             Target values. Array of floating-point numbers.
+        cache_size: float, optional
+            Specify the size of the cache (in MB)
+
 
         Returns
         -------
@@ -371,7 +374,7 @@ class SVR(DenseBaseLibSVM, RegressorMixin):
         """
         # we copy this method because SVR does not accept class_weight
         return DenseBaseLibSVM.fit(self, X, y, sample_weight=sample_weight,
-                                   **params)
+                                  cache_size=cache_size, **params)
 
 
 class NuSVR(DenseBaseLibSVM, RegressorMixin):
@@ -564,4 +567,3 @@ class OneClassSVM(DenseBaseLibSVM):
         super(OneClassSVM, self).fit(
             X, [], class_weight=class_weight, sample_weight=sample_weight,
             **params)
-
