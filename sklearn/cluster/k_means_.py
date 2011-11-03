@@ -662,7 +662,7 @@ class MiniBatchKMeans(KMeans):
         batches that does not yield an improvement on the smoothed inertia.
 
         To disable convergence detection based on inertia, set
-        max_no_improvement to -1.
+        max_no_improvement to None.
 
     tol : float, optional
         Control early stopping based on the relative center changes as
@@ -730,7 +730,7 @@ class MiniBatchKMeans(KMeans):
 
     def __init__(self, k=8, init='random', max_iter=100,
                  chunk_size=1000, verbose=0, compute_labels=True,
-                 random_state=None, tol=0.0, max_no_improvement=3):
+                 random_state=None, tol=0.0, max_no_improvement=10):
 
         super(MiniBatchKMeans, self).__init__(k=k, init=init,
               max_iter=max_iter, verbose=verbose, random_state=random_state,
@@ -845,7 +845,8 @@ class MiniBatchKMeans(KMeans):
             else:
                 no_improvement += 1
 
-            if no_improvement >= self.max_no_improvement:
+            if (self.max_no_improvement is not None
+                and no_improvement >= self.max_no_improvement):
                 if self.verbose:
                     print ('Converged (lack of improvement in inertia)'
                            ' at iteration %d/%d' % (i + 1, n_iterations))
