@@ -7,6 +7,8 @@ estimator.
 # Copyright: INRIA
 import warnings
 import operator
+import sys
+import time
 
 import numpy as np
 from scipy import linalg
@@ -58,7 +60,8 @@ def alpha_max(emp_cov):
 # The g-lasso algorithm
 
 def g_lasso(X, alpha, cov_init=None, mode='cd', tol=1e-4,
-            max_iter=100, verbose=False, return_costs=False):
+            max_iter=100, verbose=False, return_costs=False,
+            eps=np.finfo(np.float).eps, raise_nans=True):
     """ l1-penalized covariance estimator
 
     Parameters
@@ -86,6 +89,14 @@ def g_lasso(X, alpha, cov_init=None, mode='cd', tol=1e-4,
     return_costs: boolean, optional
         If return_costs is True, the objective function and dual gap
         at each iteration are returned
+    raise_nans: boolean, optional
+        If raise_nans is True, a ValueError is raised if NaNs appear in
+        the system. If it is False, the loop is simply iterrupted without
+        raising any error
+    eps: float, optional
+        The machine-precision regularization in the computation of the
+        Cholesky diagonal factors. Increase this for very ill-conditioned
+        systems.
 
     Returns
     -------
@@ -99,56 +110,77 @@ def g_lasso(X, alpha, cov_init=None, mode='cd', tol=1e-4,
 
     """
     _, n_features = X.shape
-    mle = empirical_covariance(X)
+    emp_cov = empirical_covariance(X)
     if alpha == 0:
-        return mle, linalg.inv(mle)
+        return emp_cov, linalg.inv(emp_cov)
     if cov_init is None:
-        covariance_ = mle.copy()
+        covariance_ = emp_cov.copy()
     else:
         covariance_ = cov_init.copy()
-        covariance_.flat[::n_features + 1] = mle.flat[::n_features + 1]
+    # As a trivial regularization (Tichonov like), we scale down the
+    # off-diagonal coefficients of our starting point:
+    covariance_ *= 0.95
+    covariance_.flat[::n_features + 1] = emp_cov.flat[::n_features + 1]
+    precision_ = linalg.pinv(covariance_)
+
     indices = np.arange(n_features)
-    precision_ = linalg.inv(covariance_)
     costs = list()
-    for i in xrange(max_iter):
-        for idx in xrange(n_features):
-            sub_covariance = covariance_[indices != idx].T[indices != idx]
-            row = mle[idx, indices != idx]
-            if mode == 'cd':
-                # Use coordinate descent
-                coefs = -precision_[indices != idx, idx]/precision_[idx, idx]
-                coefs, _, _ = cd_fast.enet_coordinate_descent_gram(coefs,
-                                            alpha, 0, sub_covariance,
+    # The different l1 regression solver have different numerical errors
+    if mode == 'cd':
+        errors = dict(over='raise')
+    else:
+        errors = dict(invalid='raise')
+    try:
+        for i in xrange(max_iter):
+            for idx in xrange(n_features):
+                sub_covariance = covariance_[indices != idx].T[indices != idx]
+                row = emp_cov[idx, indices != idx]
+                with np.errstate(**errors):
+                    if mode == 'cd':
+                        # Use coordinate descent
+                        coefs = -(precision_[indices != idx, idx]
+                                    /(precision_[idx, idx] + 10*eps))
+                        coefs, _, _ = cd_fast.enet_coordinate_descent_gram(
+                                            coefs, alpha, 0, sub_covariance,
                                             row, row, max_iter, tol)
-            else:
-                # Use LARS
-                _, _, coefs = lars_path(sub_covariance, row,
-                                        Xy=row, Gram=sub_covariance,
-                                        alpha_min=alpha/(n_features-1),
-                                        copy_Gram=True,
-                                        method='lars')
-                coefs = coefs[:, -1]
-            # Update the precision matrix
-            precision_[idx, idx] = 1./(covariance_[idx, idx] -
-                        np.dot(covariance_[indices != idx, idx], coefs))
-            precision_[indices != idx, idx] = -precision_[idx, idx]*coefs
-            precision_[idx, indices != idx] = -precision_[idx, idx]*coefs
-            coefs = np.dot(sub_covariance, coefs)
-            covariance_[idx, indices != idx] = coefs
-            covariance_[indices != idx, idx] = coefs
-        d_gap = _dual_gap(mle, precision_, alpha)
-        if verbose or return_costs:
-            cost = _objective(mle, precision_, alpha)
+                    else:
+                        # Use LARS
+                        _, _, coefs = lars_path(sub_covariance, row,
+                                                Xy=row, Gram=sub_covariance,
+                                                alpha_min=alpha/(n_features-1),
+                                                copy_Gram=True,
+                                                method='lars')
+                        coefs = coefs[:, -1]
+                # Update the precision matrix
+                precision_[idx, idx] = 1./(covariance_[idx, idx] -
+                            np.dot(covariance_[indices != idx, idx], coefs))
+                precision_[indices != idx, idx] = -precision_[idx, idx]*coefs
+                precision_[idx, indices != idx] = -precision_[idx, idx]*coefs
+                coefs = np.dot(sub_covariance, coefs)
+                covariance_[idx, indices != idx] = coefs
+                covariance_[indices != idx, idx] = coefs
+            d_gap = _dual_gap(emp_cov, precision_, alpha)
+            cost = _objective(emp_cov, precision_, alpha)
             if verbose:
-                print '[g_lasso] Iteration % 3i, cost %.4f, dual gap %.3e' % (
+                print '[g_lasso] Iteration % 3i, cost % 3.2e, dual gap %.3e' % (
                                                     i, cost, d_gap)
             if return_costs:
                 costs.append((cost, d_gap))
-        if np.abs(d_gap) < tol:
-            break
-    else:
-        warnings.warn('g_lasso: did not converge after %i iteration:'
-                        'dual gap: %.3e' % (max_iter, d_gap))
+            if np.abs(d_gap) < tol:
+                break
+            if not np.isfinite(cost) and i > 0:
+                if raise_nans:
+                    raise ValueError('Non SPD result: the system is '
+                                    'too ill-conditionned for this solver')
+                else:
+                    break
+        else:
+            warnings.warn('g_lasso: did not converge after %i iteration:'
+                            'dual gap: %.3e' % (max_iter, d_gap))
+    except FloatingPointError:
+        if raise_nans:
+            raise FloatingPointError('Nans in the precision matrix: the '
+                            'system  is too ill-conditionned for this solver')
     if return_costs:
         return covariance_, precision_, costs
     return covariance_, precision_
@@ -191,7 +223,6 @@ class GLasso(EmpiricalCovariance):
         verbose: boolean, optional
             If verbose is True, the objective function and dual gap are
             plotted at each iteration
-
     """
         self.alpha = alpha
         self.mode = mode
@@ -231,9 +262,9 @@ def g_lasso_path(X, alphas, cov_init=None, X_test=False, mode='cd',
         this value, iterations are stopped
     max_iter: integer, optional
         The maximum number of iterations
-    verbose: boolean, optional
-        If verbose is True, the objective function and dual gap are
-        printed at each iteration
+    verbose: integer, optional
+        The higher the verbosity flag, the more information is printed
+        during the fitting.
 
     Returns
     -------
@@ -245,6 +276,7 @@ def g_lasso_path(X, alphas, cov_init=None, X_test=False, mode='cd',
         The generalisation error (log-likelihood) on the test data.
         Returned only if test data is passed.
     """
+    inner_verbose = max(0, verbose - 1)
     if cov_init is None:
         covariance_ = empirical_covariance(X)
     else:
@@ -255,13 +287,33 @@ def g_lasso_path(X, alphas, cov_init=None, X_test=False, mode='cd',
     if X_test is not None:
         test_emp_cov = empirical_covariance(X_test)
     for alpha in alphas:
+        # Nans are OK here, because they will simply lead to not
+        # selecting the corresponding alpha.
         covariance_, precision_ = g_lasso(X, alpha=alpha,
                                     cov_init=covariance_, mode=mode, tol=tol,
-                                    max_iter=max_iter, verbose=verbose)
+                                    max_iter=max_iter,
+                                    verbose=inner_verbose,
+                                    raise_nans=False)
         covariances_.append(covariance_)
         precisions_.append(precision_)
         if X_test is not None:
+            this_score = log_likelihood(test_emp_cov, precision_)
+            if not np.isfinite(this_score):
+                this_score = -np.inf
             scores_.append(log_likelihood(test_emp_cov, precision_))
+        if np.any(np.isnan(covariance_)):
+            # We cannot use these matrices for the estimation, thus we
+            # use the last estimate
+            covariance_ = covariances_[-2]
+            precision_ = precisions_[-2]
+        if verbose == 1:
+            sys.stderr.write('.')
+        elif verbose:
+            if X_test is not None:
+                print '[g_lasso_path] alpha: %.2e, score: %.2e' % (alpha,
+                                                            this_score)
+            else:
+                print '[g_lasso_path] alpha: %.2e' % alpha
     if X_test is not None:
         return covariances_, precisions_, scores_
     return covariances_, precisions_
@@ -348,6 +400,7 @@ class GLassoCV(GLasso):
         # List of (alpha, scores, covs)
         path = list()
         n_alphas = self.alphas
+        inner_verbose = max(0, self.verbose - 1)
 
         if operator.isSequenceType(n_alphas):
             alphas = self.alphas
@@ -363,13 +416,15 @@ class GLassoCV(GLasso):
                                             n_alphas)][::-1]
         covs_init = (None, None, None)
 
+        t0 = time.time()
         for i in range(n_refinements):
             # Compute the cross-validated loss on the current grid
             this_path = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
                             delayed(g_lasso_path)(X[train], alphas=alphas,
                                         X_test=X[test], mode=self.mode,
-                                        tol=self.tol, max_iter=self.max_iter,
-                                        verbose=self.verbose)
+                                        tol=self.tol,
+                                        max_iter=int(.1*self.max_iter),
+                                        verbose=inner_verbose)
                             for (train, test), cov_init in zip(cv, covs_init))
 
             # Little danse to transform the list in what we need
@@ -385,21 +440,23 @@ class GLassoCV(GLasso):
             best_score = -np.inf
             for index, (alpha, scores, _) in enumerate(path):
                 this_score = np.mean(scores)
+                if this_score >= .1/np.finfo(np.float).eps:
+                    this_score = np.nan
                 if this_score >= best_score:
                     best_score = this_score
                     best_index = index
 
             # Refine our grid
             if best_index == 0:
-                # We do not need to go to far back: we have choosen
+                # We do not need to go back: we have choosen
                 # the highest value of alpha for which there are
                 # non-zero coefficients
-                alpha_1 = 2 * path[0][0]
+                alpha_1 = path[0][0]
                 alpha_0 = path[1][0]
                 covs_init = path[0][-1]
             elif best_index == len(path) - 1:
                 alpha_1 = path[-2][0]
-                alpha_0 = .1 * path[-1][0]
+                alpha_0 = .05 * path[-2][0]
                 covs_init = path[best_index-1][-1]
             else:
                 alpha_1 = path[best_index-1][0]
@@ -408,6 +465,9 @@ class GLassoCV(GLasso):
             alphas = np.logspace(np.log10(alpha_1), np.log10(alpha_0),
                                  n_alphas + 2)
             alphas = alphas[1:-1]
+            if self.verbose and n_refinements > 1:
+                print '[GLassoCV] Done refinement % 2i out of %i: % 3is'\
+                        % (i + 1, n_refinements, time.time() - t0)
 
         path = zip(*path)
         self.cv_scores = np.array(path[1])
@@ -419,5 +479,5 @@ class GLassoCV(GLasso):
         # Finally fit the model with the selected alpha
         self.covariance_, self.precision_ = g_lasso(X, alpha=best_alpha,
                         mode=self.mode, tol=self.tol, max_iter=self.max_iter,
-                        verbose=self.verbose)
+                        verbose=inner_verbose)
         return self

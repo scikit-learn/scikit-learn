@@ -33,6 +33,7 @@ def test_g_lasso(random_state=0):
     model = GLasso(alpha=.1).fit(X)
     np.testing.assert_allclose(model.covariance_, covs['cd'])
 
+
 def test_g_lasso_cv(random_state=0):
     # Sample data from a sparse multivariate normal
     dim = 5
