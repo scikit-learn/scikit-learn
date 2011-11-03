@@ -36,7 +36,7 @@ class BaseLibSVM(BaseEstimator):
     """
 
     def __init__(self, impl, kernel, degree, gamma, coef0,
-                 tol, C, nu, epsilon, shrinking, probability):
+                 tol, C, nu, epsilon, shrinking, probability, cache):
 
         if not impl in LIBSVM_IMPL:
             raise ValueError("impl should be one of %s, %s was given" % (
@@ -56,6 +56,7 @@ class BaseLibSVM(BaseEstimator):
         self.epsilon = epsilon
         self.shrinking = shrinking
         self.probability = probability
+        self.cache = cache
 
     def predict_log_proba(self, T):
         """Compute the log likehoods each possible outcomes of samples in T.
@@ -101,8 +102,7 @@ class DenseBaseLibSVM(BaseLibSVM):
                            dtype=np.float64, order='C')
         return X
 
-    def fit(self, X, y, class_weight=None, sample_weight=None,
-            cache_size=100.):
+    def fit(self, X, y, class_weight=None, sample_weight=None):
         """Fit the SVM model according to the given training data.
 
         Parameters
@@ -124,9 +124,6 @@ class DenseBaseLibSVM(BaseLibSVM):
 
         sample_weight : array-like, shape = [n_samples], optional
             Weights applied to individual samples (1. for unweighted).
-
-        cache_size: float, optional
-            Specify the size of the cache (in MB)
 
         Returns
         -------
