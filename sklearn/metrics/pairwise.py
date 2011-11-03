@@ -1,4 +1,4 @@
-""" Utilities to evaluate pairwise distances or affinity of sets of samples.
+"""Utilities to evaluate pairwise distances or affinity of sets of samples.
 
 This module contains both distance metrics and kernels. A brief summary is
 given on the two here.
@@ -39,6 +39,7 @@ from scipy.spatial import distance
 from scipy.sparse import csr_matrix, issparse
 from ..utils import safe_asarray, atleast2d_or_csr, deprecated
 from ..utils.extmath import safe_sparse_dot
+from ..utils import safe_asanyarray
 
 
 # Utility Functions
@@ -86,11 +87,10 @@ def check_pairwise_arrays(X, Y):
     return X, Y
 
 
-# Distances
 def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
-    """
-    Considering the rows of X (and Y=X) as vectors, compute the
-    distance matrix between each pair of vectors.
+    """compute the distance matrix between each pair of vectors.
+
+    Considering the rows of X (and Y=X) as the vectors to pair.
 
     For efficiency reasons, the euclidean distance between a pair of row
     vector x and y is computed as::
@@ -179,7 +179,7 @@ def euclidian_distances(*args, **kwargs):
 
 
 def manhattan_distances(X, Y=None, sum_over_features=True):
-    """ Compute the L1 distances between the vectors in X and Y.
+    """Compute the L1 distances between the vectors in X and Y.
 
     With sum_over_features equal to False it returns the componentwise
     distances.
@@ -236,6 +236,7 @@ def manhattan_distances(X, Y=None, sum_over_features=True):
         D = D.reshape((n_samples_X * n_samples_Y, n_features_X))
     return D
 
+# Kernels (more akin to similarity than distances)
 
 # Kernels
 def linear_kernel(X, Y=None):
@@ -340,6 +341,78 @@ def rbf_kernel(X, Y=None, gamma=0):
     K *= -gamma
     np.exp(K, K)    # exponentiate K in-place
     return K
+
+
+def cosine_similarity(X, Y, copy=True):
+    """Compute pairwise cosine similarities between rows in X and Y
+
+    Cosine similarity is a normalized linear kernel with value ranging
+      - -1: similar vectors with opposite signs
+      - 0: completely dissimilar (orthogonal) vectors
+      - 1: similar vectors (same sign)
+
+    In practice, cosine similarity is often used to measure the
+    relatedness of text documents represented by sparse vectors of word
+    counts, frequencies or TF-IDF weights. In this cases all features
+    are non negative and the similarities range from 0 to 1 instead.
+
+    Cosine similarity can be used as an affinity matrix for spectral
+    and power iteration clustering algorithms.
+
+    Parameters
+    ----------
+
+    X: array or sparse matrix of shape (n_samples_1, n_features)
+
+    Y: array or sparse matrix of shape (n_samples_2, n_features)
+
+    copy: boolean, optional, True by default
+        For memory efficiency, set to False to avoid copies of X and Y and
+        accept them to be modified (inplace row normalization).
+
+    Returns
+    -------
+
+    array or sparse matrix of shape (n_samples_1, n_samples_2)
+
+    Examples
+    --------
+
+    >>> from sklearn.metrics.pairwise import cosine_similarity
+    >>> X = np.asarray([[0, 1], [1, 1], [0, -1], [0, 0]], dtype=np.float64)
+    >>> cosine_similarity(X, X).round(decimals=2)
+    array([[ 1.  ,  0.71, -1.  ,  0.  ],
+           [ 0.71,  1.  , -0.71,  0.  ],
+           [-1.  , -0.71,  1.  ,  0.  ],
+           [ 0.  ,  0.  ,  0.  ,  0.  ]])
+
+    >>> from scipy.sparse import csr_matrix
+    >>> X_sparse = csr_matrix(X)
+    >>> cosine_similarity(X_sparse, X_sparse).toarray().round(decimals=2)
+    array([[ 1.  ,  0.71, -1.  ,  0.  ],
+           [ 0.71,  1.  , -0.71,  0.  ],
+           [-1.  , -0.71,  1.  ,  0.  ],
+           [ 0.  ,  0.  ,  0.  ,  0.  ]])
+
+    It is possible to use the cosine similarity to perform similarity
+    queries:
+
+    >>> query = [[0.5, 0.9]]
+    >>> cosine_similarity(X, query)
+    array([[ 0.87415728],
+           [ 0.96152395],
+           [-0.87415728],
+           [ 0.        ]])
+    """
+    # XXX: delayed import to avoid cyclic dependency between base, metrics
+    # and preprocessing
+    from ..preprocessing import normalize
+    X = safe_asanyarray(X)
+    Y = safe_asanyarray(Y)
+
+    X = normalize(X, norm='l2', copy=copy)
+    Y = normalize(Y, norm='l2', copy=copy)
+    return safe_sparse_dot(X, Y.T)
 
 
 # Helper functions - distance
