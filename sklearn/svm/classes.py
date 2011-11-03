@@ -118,6 +118,9 @@ class SVC(DenseBaseLibSVM, ClassifierMixin):
     tol: float, optional (default=1e-3)
         Tolerance for stopping criterion.
 
+    cache_size: float, optional
+        Specify the size of the kernel cache (in MB)
+
     Attributes
     ----------
     `support_` : array-like, shape = [n_SV]
@@ -159,10 +162,10 @@ class SVC(DenseBaseLibSVM, ClassifierMixin):
 
     def __init__(self, C=1.0, kernel='rbf', degree=3, gamma=0.0,
                  coef0=0.0, shrinking=True, probability=False,
-                 tol=1e-3):
+                 tol=1e-3, cache=100):
 
         DenseBaseLibSVM.__init__(self, 'c_svc', kernel, degree, gamma, coef0,
-                                 tol, C, 0., 0., shrinking, probability)
+                                 tol, C, 0., 0., shrinking, probability, cache)
 
 
 class NuSVC(DenseBaseLibSVM, ClassifierMixin):
@@ -201,6 +204,9 @@ class NuSVC(DenseBaseLibSVM, ClassifierMixin):
 
     tol: float, optional (default=1e-3)
         Tolerance for stopping criterion.
+
+    cache_size: float, optional
+        Specify the size of the kernel cache (in MB)
 
     Attributes
     ----------
@@ -260,10 +266,10 @@ class NuSVC(DenseBaseLibSVM, ClassifierMixin):
 
     def __init__(self, nu=0.5, kernel='rbf', degree=3, gamma=0.0,
                  coef0=0.0, shrinking=True, probability=False,
-                 tol=1e-3):
+                 tol=1e-3, cache=100):
 
         DenseBaseLibSVM.__init__(self, 'nu_svc', kernel, degree, gamma,
-                                coef0, tol, 0., nu, 0., shrinking, probability)
+                                coef0, tol, 0., nu, 0., shrinking, probability, cache)
 
 
 class SVR(DenseBaseLibSVM, RegressorMixin):
@@ -309,6 +315,9 @@ class SVR(DenseBaseLibSVM, RegressorMixin):
     tol: float, optional (default=1e-3)
         Tolerance for stopping criterion.
 
+    cache_size: float, optional
+        Specify the size of the kernel cache (in MB)
+
     Attributes
     ----------
     `support_` : array-like, shape = [n_SV]
@@ -346,13 +355,13 @@ class SVR(DenseBaseLibSVM, RegressorMixin):
     """
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
                  tol=1e-3, C=1.0, epsilon=0.1, shrinking=True,
-                 probability=False):
+                 probability=False, cache=100):
 
         DenseBaseLibSVM.__init__(self, 'epsilon_svr', kernel, degree, gamma,
                                  coef0, tol, C, 0., epsilon, shrinking,
-                                 probability)
+                                 probability, cache)
 
-    def fit(self, X, y, sample_weight=None, cache_size=100., **params):
+    def fit(self, X, y, sample_weight=None, **params):
         """
         Fit the SVM model according to the given training data and parameters.
 
@@ -374,7 +383,7 @@ class SVR(DenseBaseLibSVM, RegressorMixin):
         """
         # we copy this method because SVR does not accept class_weight
         return DenseBaseLibSVM.fit(self, X, y, sample_weight=sample_weight,
-                                  cache_size=cache_size, **params)
+                                  **params)
 
 
 class NuSVR(DenseBaseLibSVM, RegressorMixin):
@@ -421,6 +430,9 @@ class NuSVR(DenseBaseLibSVM, RegressorMixin):
     tol: float, optional (default=1e-3)
         Tolerance for stopping criterion.
 
+    cache_size: float, optional
+        Specify the size of the kernel cache (in MB)
+
     Attributes
     ----------
     `support_` : array-like, shape = [n_SV]
@@ -459,10 +471,10 @@ class NuSVR(DenseBaseLibSVM, RegressorMixin):
 
     def __init__(self, nu=0.5, C=1.0, kernel='rbf', degree=3,
                  gamma=0.0, coef0=0.0, shrinking=True,
-                 probability=False, tol=1e-3):
+                 probability=False, tol=1e-3, cache=100):
 
         DenseBaseLibSVM.__init__(self, 'nu_svr', kernel, degree, gamma, coef0,
-                                 tol, C, nu, None, shrinking, probability)
+                                 tol, C, nu, None, shrinking, probability, cache)
 
     def fit(self, X, y, sample_weight=None, **params):
         """
@@ -520,6 +532,9 @@ class OneClassSVM(DenseBaseLibSVM):
     shrinking: boolean, optional
         Whether to use the shrinking heuristic.
 
+    cache_size: float, optional
+        Specify the size of the kernel cache (in MB)
+
     Attributes
     ----------
     `support_` : array-like, shape = [n_SV]
@@ -540,9 +555,9 @@ class OneClassSVM(DenseBaseLibSVM):
 
     """
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
-                 tol=1e-3, nu=0.5, shrinking=True):
+                 tol=1e-3, nu=0.5, shrinking=True, cache=100):
         DenseBaseLibSVM.__init__(self, 'one_class', kernel, degree, gamma,
-                                 coef0, tol, 0., nu, 0., shrinking, False)
+                                 coef0, tol, 0., nu, 0., shrinking, False, cache)
 
     def fit(self, X, class_weight={}, sample_weight=None, **params):
         """
