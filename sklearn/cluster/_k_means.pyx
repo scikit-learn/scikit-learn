@@ -205,6 +205,15 @@ def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
         old_count = counts[center_idx]
         new_count = old_count
 
+        # count the number of samples assigned to this center
+        for i in range(n_samples):
+            if nearest_center[i] == center_idx:
+                new_count += 1
+
+        if new_count == old_count:
+            # no new sample: leave this center as it stands
+            continue
+
         # rescale the old center to reflect it previous accumulated
         # weight w.r.t. the new data that will be incrementally contributed
         if compute_squared_diff:
@@ -217,7 +226,6 @@ def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
             if nearest_center[i] != center_idx:
                 continue
             sample_idx = batch_slice_start + i
-            new_count += 1
 
             # inplace sum with new samples that are members of this cluster
             # and update of the incremental squared difference update of the
