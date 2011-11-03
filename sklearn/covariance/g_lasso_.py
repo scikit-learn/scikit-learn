@@ -18,7 +18,7 @@ from .empirical_covariance_ import empirical_covariance, \
 
 from ..linear_model import lars_path
 from ..linear_model import cd_fast
-from ..cross_validation import check_cv
+from ..cross_validation import check_cv, cross_val_score
 from ..externals.joblib import Parallel, delayed
 
 
@@ -26,9 +26,9 @@ from ..externals.joblib import Parallel, delayed
 # Helper functions to compute the objective and dual objective functions
 # of the l1-penalized estimator
 def _objective(mle, precision_, alpha):
-    cost = (-log_likelihood(mle, precision_)
-            + alpha*(np.abs(precision_).sum()
-                        - np.abs(np.diag(precision_)).sum()))
+    cost = -log_likelihood(mle, precision_)
+    cost += alpha*(np.abs(precision_).sum()
+                   -np.abs(np.diag(precision_)).sum())
     return cost
 
 
@@ -39,7 +39,7 @@ def _dual_gap(emp_cov, precision_, alpha):
     gap = np.sum(emp_cov * precision_)
     gap -= precision_.shape[0]
     gap += alpha*(np.abs(precision_).sum()
-                        - np.abs(np.diag(precision_)).sum())
+                  -np.abs(np.diag(precision_)).sum())
     return gap
 
 
@@ -59,9 +59,8 @@ def alpha_max(emp_cov):
 ################################################################################
 # The g-lasso algorithm
 
-def g_lasso(X, alpha, cov_init=None, mode='cd', tol=1e-4,
-            max_iter=100, verbose=False, return_costs=False,
-            eps=np.finfo(np.float).eps, raise_nans=True):
+def g_lasso(X, alpha, cov_init=None, mode='cd', tol=1e-4, max_iter=100,
+            verbose=False, return_costs=False, eps=np.finfo(np.float).eps):
     """ l1-penalized covariance estimator
 
     Parameters
@@ -89,10 +88,6 @@ def g_lasso(X, alpha, cov_init=None, mode='cd', tol=1e-4,
     return_costs: boolean, optional
         If return_costs is True, the objective function and dual gap
         at each iteration are returned
-    raise_nans: boolean, optional
-        If raise_nans is True, a ValueError is raised if NaNs appear in
-        the system. If it is False, the loop is simply iterrupted without
-        raising any error
     eps: float, optional
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
@@ -120,7 +115,8 @@ def g_lasso(X, alpha, cov_init=None, mode='cd', tol=1e-4,
     # As a trivial regularization (Tichonov like), we scale down the
     # off-diagonal coefficients of our starting point:
     covariance_ *= 0.95
-    covariance_.flat[::n_features + 1] = emp_cov.flat[::n_features + 1]
+    diagonal = emp_cov.flat[::n_features + 1]
+    covariance_.flat[::n_features + 1] = diagonal
     precision_ = linalg.pinv(covariance_)
 
     indices = np.arange(n_features)
@@ -139,7 +135,7 @@ def g_lasso(X, alpha, cov_init=None, mode='cd', tol=1e-4,
                     if mode == 'cd':
                         # Use coordinate descent
                         coefs = -(precision_[indices != idx, idx]
-                                    /(precision_[idx, idx] + 10*eps))
+                                    /(precision_[idx, idx] + 1000*eps))
                         coefs, _, _ = cd_fast.enet_coordinate_descent_gram(
                                             coefs, alpha, 0, sub_covariance,
                                             row, row, max_iter, tol)
@@ -169,18 +165,16 @@ def g_lasso(X, alpha, cov_init=None, mode='cd', tol=1e-4,
             if np.abs(d_gap) < tol:
                 break
             if not np.isfinite(cost) and i > 0:
-                if raise_nans:
-                    raise ValueError('Non SPD result: the system is '
+                raise FloatingPointError('Non SPD result: the system is '
                                     'too ill-conditionned for this solver')
-                else:
-                    break
         else:
             warnings.warn('g_lasso: did not converge after %i iteration:'
                             'dual gap: %.3e' % (max_iter, d_gap))
-    except FloatingPointError:
-        if raise_nans:
-            raise FloatingPointError('Nans in the precision matrix: the '
-                            'system  is too ill-conditionned for this solver')
+    except FloatingPointError, e:
+        e.args = (e.args[0]
+                  +'The system is too ill-conditionned for this solver',
+                 )
+        raise e
     if return_costs:
         return covariance_, precision_, costs
     return covariance_, precision_
@@ -280,32 +274,31 @@ def g_lasso_path(X, alphas, cov_init=None, X_test=False, mode='cd',
     if cov_init is None:
         covariance_ = empirical_covariance(X)
     else:
-        covariances_ = cov_init
+        covariance_ = cov_init
     covariances_ = list()
     precisions_ = list()
     scores_ = list()
     if X_test is not None:
         test_emp_cov = empirical_covariance(X_test)
     for alpha in alphas:
-        # Nans are OK here, because they will simply lead to not
-        # selecting the corresponding alpha.
-        covariance_, precision_ = g_lasso(X, alpha=alpha,
+        try:
+            # Capture the errors, and move on
+            covariance_, precision_ = g_lasso(X, alpha=alpha,
                                     cov_init=covariance_, mode=mode, tol=tol,
                                     max_iter=max_iter,
-                                    verbose=inner_verbose,
-                                    raise_nans=False)
-        covariances_.append(covariance_)
-        precisions_.append(precision_)
+                                    verbose=inner_verbose)
+            covariances_.append(covariance_)
+            precisions_.append(precision_)
+            if X_test is not None:
+                this_score = log_likelihood(test_emp_cov, precision_)
+        except FloatingPointError:
+            this_score = -np.inf
+            covariances_.append(np.nan)
+            precisions_.append(np.nan)
         if X_test is not None:
-            this_score = log_likelihood(test_emp_cov, precision_)
             if not np.isfinite(this_score):
                 this_score = -np.inf
-            scores_.append(log_likelihood(test_emp_cov, precision_))
-        if np.any(np.isnan(covariance_)):
-            # We cannot use these matrices for the estimation, thus we
-            # use the last estimate
-            covariance_ = covariances_[-2]
-            precision_ = precisions_[-2]
+            scores_.append(this_score)
         if verbose == 1:
             sys.stderr.write('.')
         elif verbose:
@@ -347,6 +340,11 @@ class GLassoCV(GLasso):
     The search for the optimal alpha is done on an iteratively refined
     grid: first the cross-validated scores on a grid are computed, then
     a new refined grid is center around the maximum...
+
+    One of the challenges that we have to face is that the solvers can
+    fail to converge to a well-conditioned estimate. The corresponding
+    values of alpha then come out as missing values, but the optimum may
+    be close to these missing values.
     """
 
 
@@ -410,10 +408,9 @@ class GLassoCV(GLasso):
             emp_cov = empirical_covariance(X)
             alpha_1 = alpha_max(emp_cov)
             alpha_0 = 1e-2 * alpha_1
-            alphas = np.r_[0,
-                                np.logspace(np.log10(alpha_0),
+            alphas = np.logspace(np.log10(alpha_0),
                                             np.log10(alpha_1),
-                                            n_alphas)][::-1]
+                                            n_alphas)[::-1]
         covs_init = (None, None, None)
 
         t0 = time.time()
@@ -438,10 +435,13 @@ class GLassoCV(GLasso):
             # have a fully-reproducible selection of the smallest alpha
             # is case of equality)
             best_score = -np.inf
+            last_finite_idx = 0
             for index, (alpha, scores, _) in enumerate(path):
                 this_score = np.mean(scores)
                 if this_score >= .1/np.finfo(np.float).eps:
                     this_score = np.nan
+                if np.isfinite(this_score):
+                    last_finite_idx = index
                 if this_score >= best_score:
                     best_score = this_score
                     best_index = index
@@ -454,10 +454,17 @@ class GLassoCV(GLasso):
                 alpha_1 = path[0][0]
                 alpha_0 = path[1][0]
                 covs_init = path[0][-1]
+            elif (best_index == last_finite_idx
+                        and not best_index == len(path) - 1):
+                # We have non-converged models on the upper bound of the
+                # grid, we need to refine the grid there
+                alpha_1 = path[best_index][0]
+                alpha_0 = path[best_index+1][0]
+                covs_init = path[best_index][-1]
             elif best_index == len(path) - 1:
-                alpha_1 = path[-2][0]
-                alpha_0 = .05 * path[-2][0]
-                covs_init = path[best_index-1][-1]
+                alpha_1 = path[best_index][0]
+                alpha_0 = 0.01*path[best_index+1][0]
+                covs_init = path[best_index][-1]
             else:
                 alpha_1 = path[best_index-1][0]
                 alpha_0 = path[best_index+1][0]
@@ -470,8 +477,14 @@ class GLassoCV(GLasso):
                         % (i + 1, n_refinements, time.time() - t0)
 
         path = zip(*path)
-        self.cv_scores = np.array(path[1])
-        alphas = path[0]
+        cv_scores = list(path[1])
+        alphas = list(path[0])
+        # Finally, compute the score with alpha = 0
+        alphas.append(0)
+        cv_scores.append(cross_val_score(EmpiricalCovariance(), X,
+                                         cv=cv, n_jobs=self.n_jobs,
+                                         verbose=inner_verbose))
+        self.cv_scores = np.array(cv_scores)
         best_alpha = alphas[best_index]
         self.alpha_ = best_alpha
         self.cv_alphas_ = alphas
