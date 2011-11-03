@@ -760,12 +760,13 @@ class MiniBatchKMeans(KMeans):
         if hasattr(self.init, '__array__'):
             self.init = np.ascontiguousarray(self.init, dtype=np.float64)
 
-        X_shuffled = shuffle(X, random_state=self.random_state)
         x_squared_norms = _squared_norms(X)
+        X_shuffled, x_squared_norms_shuffled = shuffle(X, x_squared_norms,
+                             random_state=self.random_state)
 
         self.cluster_centers_ = _init_centroids(
             X_shuffled, self.k, self.init, random_state=self.random_state,
-            x_squared_norms=x_squared_norms)
+            x_squared_norms=x_squared_norms_shuffled)
 
         if self.tol > 0.0:
             if not sp.issparse(X):
@@ -795,7 +796,7 @@ class MiniBatchKMeans(KMeans):
         for i, batch_slice in izip(xrange(n_iterations), cycle(batch_slices)):
             # Perform the actual update step on the minibatch data
             inertia, diff = _mini_batch_step(
-                X_shuffled, x_squared_norms, batch_slice,
+                X_shuffled, x_squared_norms_shuffled, batch_slice,
                 self.cluster_centers_, self.counts, old_center_buffer,
                 compute_squared_diff)
 
