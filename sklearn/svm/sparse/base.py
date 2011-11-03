@@ -10,7 +10,7 @@ class SparseBaseLibSVM(BaseLibSVM):
     _kernel_types = ['linear', 'poly', 'rbf', 'sigmoid', 'precomputed']
 
     def __init__(self, impl, kernel, degree, gamma, coef0,
-                 tol, C, nu, epsilon, shrinking, probability):
+                 tol, C, nu, epsilon, shrinking, probability, cache_size):
 
         assert kernel in self._kernel_types, \
                "kernel should be one of %s, "\
@@ -18,7 +18,7 @@ class SparseBaseLibSVM(BaseLibSVM):
 
         super(SparseBaseLibSVM, self).__init__(impl, kernel, degree, gamma,
                                                coef0, tol, C, nu, epsilon,
-                                               shrinking, probability)
+                                               shrinking, probability, cache_size)
 
         # container for when we call fit
         self._support_data = np.empty(0, dtype=np.float64, order='C')
