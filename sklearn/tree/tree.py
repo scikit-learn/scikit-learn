@@ -539,7 +539,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                              " input n_features is %s "
                              % (self.n_features, n_features))
 
-        P = self.tree(X)
+        P = self.tree.predict(X)
         P /= P.sum(axis=1)[:, np.newaxis]
         return P
 
