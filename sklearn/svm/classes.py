@@ -162,10 +162,10 @@ class SVC(DenseBaseLibSVM, ClassifierMixin):
 
     def __init__(self, C=1.0, kernel='rbf', degree=3, gamma=0.0,
                  coef0=0.0, shrinking=True, probability=False,
-                 tol=1e-3, cache=100):
+                 tol=1e-3, cache_size=100):
 
         DenseBaseLibSVM.__init__(self, 'c_svc', kernel, degree, gamma, coef0,
-                                 tol, C, 0., 0., shrinking, probability, cache)
+                                 tol, C, 0., 0., shrinking, probability, cache_size)
 
 
 class NuSVC(DenseBaseLibSVM, ClassifierMixin):
@@ -266,10 +266,10 @@ class NuSVC(DenseBaseLibSVM, ClassifierMixin):
 
     def __init__(self, nu=0.5, kernel='rbf', degree=3, gamma=0.0,
                  coef0=0.0, shrinking=True, probability=False,
-                 tol=1e-3, cache=100):
+                 tol=1e-3, cache_size=100):
 
         DenseBaseLibSVM.__init__(self, 'nu_svc', kernel, degree, gamma,
-                                coef0, tol, 0., nu, 0., shrinking, probability, cache)
+                                coef0, tol, 0., nu, 0., shrinking, probability, cache_size)
 
 
 class SVR(DenseBaseLibSVM, RegressorMixin):
@@ -355,11 +355,11 @@ class SVR(DenseBaseLibSVM, RegressorMixin):
     """
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
                  tol=1e-3, C=1.0, epsilon=0.1, shrinking=True,
-                 probability=False, cache=100):
+                 probability=False, cache_size=100):
 
         DenseBaseLibSVM.__init__(self, 'epsilon_svr', kernel, degree, gamma,
                                  coef0, tol, C, 0., epsilon, shrinking,
-                                 probability, cache)
+                                 probability, cache_size)
 
     def fit(self, X, y, sample_weight=None, **params):
         """
@@ -471,10 +471,10 @@ class NuSVR(DenseBaseLibSVM, RegressorMixin):
 
     def __init__(self, nu=0.5, C=1.0, kernel='rbf', degree=3,
                  gamma=0.0, coef0=0.0, shrinking=True,
-                 probability=False, tol=1e-3, cache=100):
+                 probability=False, tol=1e-3, cache_size=100):
 
         DenseBaseLibSVM.__init__(self, 'nu_svr', kernel, degree, gamma, coef0,
-                                 tol, C, nu, None, shrinking, probability, cache)
+                                 tol, C, nu, None, shrinking, probability, cache_size)
 
     def fit(self, X, y, sample_weight=None, **params):
         """
@@ -555,9 +555,9 @@ class OneClassSVM(DenseBaseLibSVM):
 
     """
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
-                 tol=1e-3, nu=0.5, shrinking=True, cache=100):
+                 tol=1e-3, nu=0.5, shrinking=True, cache_size=100):
         DenseBaseLibSVM.__init__(self, 'one_class', kernel, degree, gamma,
-                                 coef0, tol, 0., nu, 0., shrinking, False, cache)
+                                 coef0, tol, 0., nu, 0., shrinking, False, cache_size)
 
     def fit(self, X, class_weight={}, sample_weight=None, **params):
         """
