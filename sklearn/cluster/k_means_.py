@@ -596,16 +596,17 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
          The vector in which we keep track of the numbers of elements in a
          cluster. This array is MODIFIED IN PLACE
     """
+    # Perform label assignement to nearest centers
+    nearest_center, inertia = _labels_inertia(X, x_squared_norms, centers)
+
     # implementation for the sparse CSR reprensation completely written in
     # cython
     if sp.issparse(X):
-        return _k_means._mini_batch_update_csr(
-            X, x_squared_norms, centers, counts,
+        return inertia, _k_means._mini_batch_update_csr(
+            X, x_squared_norms, centers, counts, nearest_center,
             old_center_buffer, compute_squared_diff)
 
     # dense variant in mostly numpy (not as memory efficient though)
-    nearest_center, inertia = _labels_inertia(X, x_squared_norms, centers)
-
     k = centers.shape[0]
     squared_diff = 0.0
     for center_idx in range(k):

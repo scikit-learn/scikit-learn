@@ -132,6 +132,7 @@ cpdef DOUBLE _assign_labels_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
 def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
                            np.ndarray[DOUBLE, ndim=2] centers,
                            np.ndarray[INT, ndim=1] counts,
+                           np.ndarray[INT, ndim=1] nearest_center,
                            np.ndarray[DOUBLE, ndim=1] old_center,
                            INT compute_squared_diff):
     """Incremental update of the centers for sparse MiniBatchKMeans.
@@ -175,19 +176,10 @@ def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
         unsigned int sample_idx, center_idx, feature_idx
         unsigned int k
         int old_count, new_count
-        DOUBLE inertia
         DOUBLE center_diff
         DOUBLE squared_diff = 0.0
 
-        # TODO: reuse a array preallocated outside of the mini batch main loop?
-        np.ndarray[INT, ndim=1] nearest_center = np.zeros(
-            n_samples, dtype=np.int32)
-
-    # step 1: assign minibatch samples to there nearest center
-    inertia = _assign_labels_csr(
-        X, x_squared_norms, centers, nearest_center)
-
-    # step 2: move centers to the mean of both old and newly assigned samples
+    # move centers to the mean of both old and newly assigned samples
     for center_idx in range(n_clusters):
         old_count = counts[center_idx]
         new_count = old_count
@@ -234,7 +226,7 @@ def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
                     squared_diff += (old_center[feature_idx]
                                      - centers[center_idx, feature_idx]) ** 2
 
-    return inertia, squared_diff
+    return squared_diff
 
 
 @cython.boundscheck(False)
