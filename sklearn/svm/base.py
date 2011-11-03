@@ -36,7 +36,7 @@ class BaseLibSVM(BaseEstimator):
     """
 
     def __init__(self, impl, kernel, degree, gamma, coef0,
-                 tol, C, nu, epsilon, shrinking, probability, cache):
+                 tol, C, nu, epsilon, shrinking, probability, cache_size):
 
         if not impl in LIBSVM_IMPL:
             raise ValueError("impl should be one of %s, %s was given" % (
@@ -56,7 +56,7 @@ class BaseLibSVM(BaseEstimator):
         self.epsilon = epsilon
         self.shrinking = shrinking
         self.probability = probability
-        self.cache = cache
+        self.cache_size = cache_size
 
     def predict_log_proba(self, T):
         """Compute the log likehoods each possible outcomes of samples in T.
