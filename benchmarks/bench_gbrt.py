@@ -1,5 +1,7 @@
 import numpy as np
 
+from time import time
+
 from sklearn import datasets
 from sklearn.utils import shuffle
 from sklearn.utils import check_random_state
@@ -15,7 +17,8 @@ def repeat(f):
         scores = []
         for i in range(10):
             scores.append(f(*args, random_state=i, **kargs))
-        return np.mean(scores), np.std(scores)
+        scores = np.array(scores)
+        return scores.mean(axis=0), scores.std(axis=0)
     return wrapper
 
 
@@ -23,9 +26,9 @@ def repeat(f):
 np.seterr(invalid='print', under='print', divide='print', over='ignore')
 
 
-classification_params = {'loss': 'deviance', 'n_iter': 100,
+classification_params = {'loss': 'deviance', 'n_iter': 500,
                          'min_split': 1, 'max_depth': 1,
-                         'learn_rate': .6, 'subsample': 1.0}
+                         'learn_rate': .6, 'subsample': 1}
 
 
 @repeat
@@ -51,11 +54,14 @@ def bench_random_gaussian(random_state=None):
 
 ##     print "Tree: %.2f" % error_rate
 
+    t0 = time()
     gbrt = GradientBoostingClassifier(**classification_params)
-    
     gbrt.fit(X_train, y_train)
+    train_time = time() - t0
+    t0 = time()
     error_rate = (1.0 - gbrt.score(X_test, y_test))
-    return error_rate
+    test_time = time() - t0
+    return error_rate, train_time, test_time
 
 
 def random_gaussian_learning_curve(random_state=None):
@@ -233,16 +239,16 @@ def bench_friedman3(random_state=None):
 
 if __name__ == "__main__":
 
-    print "spam", bench_spam()
+##    print "spam", bench_spam()
     
 ##     print "Example 10.2 - LC"
 ##     random_gaussian_learning_curve(13)
     print "Example 10.2", bench_random_gaussian()
 
-    print "Madelon", bench_madelon()
-    print "Arcene", bench_arcene()
+##     print "Madelon", bench_madelon()
+##     print "Arcene", bench_arcene()
 
-    print "Boston", bench_boston()
-    print "Friedman#1", bench_friedman1()
-    print "Friedman#2", bench_friedman2()
-    print "Friedman#3", bench_friedman3()
+##     print "Boston", bench_boston()
+##     print "Friedman#1", bench_friedman1()
+##     print "Friedman#2", bench_friedman2()
+##     print "Friedman#3", bench_friedman3()
