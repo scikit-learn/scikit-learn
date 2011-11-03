@@ -320,7 +320,7 @@ def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
 
     # q vector is only used for L1 regularization
     cdef np.ndarray[np.float64_t, ndim=1, mode="c"] q = None
-    cdef double *q_data_ptr
+    cdef double *q_data_ptr = NULL
     if penalty_type != L2:
         q = np.zeros((n_features,), dtype=np.float64, order="c")
         q_data_ptr = <double *> q.data

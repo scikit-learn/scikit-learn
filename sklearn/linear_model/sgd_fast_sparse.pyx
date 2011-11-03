@@ -15,7 +15,7 @@ cimport numpy as np
 cimport cython
 cimport sgd_fast
 
-from sgd_fast cimport LossFunction, exp, log, sqrt, pow
+from sgd_fast cimport LossFunction, log, sqrt, pow
 
 # Penalty constants
 DEF L1 = 1
@@ -135,7 +135,7 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
     cdef unsigned int i = 0
     cdef int sample_idx = 0
     cdef np.ndarray[double, ndim=1, mode="c"] q = None
-    cdef double *q_data_ptr
+    cdef double *q_data_ptr = NULL
     if penalty_type != L2:
         q = np.zeros((n_features,), dtype=np.float64, order="c")
         q_data_ptr = <double *> q.data
