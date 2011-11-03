@@ -66,8 +66,8 @@ print
 ###############################################################################
 # Now sparse MiniBatchKmeans
 
-mbkm = MiniBatchKMeans(init="random", k=true_k, max_iter=10, random_state=13,
-                       chunk_size=1000, verbose=0)
+mbkm = MiniBatchKMeans(init="random", k=true_k, max_iter=10, chunk_size=1000,
+                       verbose=0)
 print "Clustering sparse data with %s" % mbkm
 t0 = time()
 mbkm.fit(X)

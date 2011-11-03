@@ -87,17 +87,21 @@ def test_minibatch_update_consistency():
     buffer = np.zeros(centers.shape[1], dtype=np.double)
     buffer_csr = np.zeros(centers.shape[1], dtype=np.double)
 
-    slice_ = slice(0, 10)
+    # extract a small minibatch
+    X_mb = X[:10]
+    X_mb_csr = X_csr[:10]
+    x_mb_squared_norms = x_squared_norms[:10]
+    x_mb_squared_norms_csr = x_squared_norms_csr[:10]
 
     # step 1: compute the dense minibatch update
     old_inertia, incremental_diff = _mini_batch_step(
-        X, x_squared_norms, slice_, new_centers, counts,
+        X_mb, x_mb_squared_norms, new_centers, counts,
         buffer, 1)
     assert_true(old_inertia > 0.0)
 
     # compute the new inertia on the same batch to check that it decreased
     labels, new_inertia = _labels_inertia(
-        X[slice_], x_squared_norms, new_centers)
+        X_mb, x_mb_squared_norms, new_centers)
     assert_true(new_inertia > 0.0)
     assert_true(new_inertia < old_inertia)
 
@@ -108,13 +112,13 @@ def test_minibatch_update_consistency():
 
     # step 2: compute the sparse minibatch update
     old_inertia_csr, incremental_diff_csr = _mini_batch_step(
-        X_csr, x_squared_norms_csr, slice_, new_centers_csr, counts_csr,
+        X_mb_csr, x_mb_squared_norms_csr, new_centers_csr, counts_csr,
         buffer_csr, 1)
     assert_true(old_inertia_csr > 0.0)
 
     # compute the new inertia on the same batch to check that it decreased
     labels_csr, new_inertia_csr = _labels_inertia(
-        X_csr[slice_], x_squared_norms_csr, new_centers_csr)
+        X_mb_csr, x_mb_squared_norms_csr, new_centers_csr)
     assert_true(new_inertia_csr > 0.0)
     assert_true(new_inertia_csr < old_inertia_csr)
 

@@ -10,7 +10,6 @@
 # License: BSD
 
 import warnings
-from itertools import cycle, izip
 
 import numpy as np
 import scipy.sparse as sp
@@ -19,8 +18,6 @@ from ..base import BaseEstimator
 from ..metrics.pairwise import euclidean_distances
 from ..utils import check_arrays
 from ..utils import check_random_state
-from ..utils import gen_even_slices
-from ..utils import shuffle
 from ..utils import warn_if_not_float
 from ..utils import atleast2d_or_csr
 
@@ -295,13 +292,15 @@ def _labels_inertia(X, x_squared_norms, centers):
         The value of the inertia criterion with the assignment
     """
     n_samples = X.shape[0]
+    # set the default value of centers to -1 to be able to detect any anomaly
+    # easily
     labels = - np.ones(n_samples, np.int32)
     if sp.issparse(X):
         inertia = _k_means._assign_labels_csr(
-            X, x_squared_norms, 0, n_samples, centers, labels)
+            X, x_squared_norms, centers, labels)
     else:
         inertia = _k_means._assign_labels_array(
-            X, x_squared_norms, 0, n_samples, centers, labels)
+            X, x_squared_norms, centers, labels)
     return labels, inertia
 
 
@@ -577,7 +576,7 @@ class KMeans(BaseEstimator):
         return _labels_inertia(X, x_squared_norms, self.cluster_centers_)[0]
 
 
-def _mini_batch_step(X, x_squared_norms, batch_slice, centers, counts,
+def _mini_batch_step(X, x_squared_norms, centers, counts,
                      old_center_buffer, compute_squared_diff):
     """Incremental update of the centers for the Minibatch K-Means algorithm
 
@@ -590,9 +589,6 @@ def _mini_batch_step(X, x_squared_norms, batch_slice, centers, counts,
     x_squared_norms: array, shape (n_samples,)
         Squared euclidean norm of each data point.
 
-    batch_slice: slice
-        The row slice of the mini batch.
-
     centers: array, shape (k, n_features)
         The cluster centers. This array is MODIFIED IN PLACE
 
@@ -604,12 +600,10 @@ def _mini_batch_step(X, x_squared_norms, batch_slice, centers, counts,
     # cython
     if sp.issparse(X):
         return _k_means._mini_batch_update_csr(
-            X, x_squared_norms, batch_slice, centers, counts,
+            X, x_squared_norms, centers, counts,
             old_center_buffer, compute_squared_diff)
 
     # dense variant in mostly numpy (not as memory efficient though)
-    X = X[batch_slice]
-    x_squared_norms = x_squared_norms[batch_slice]
     nearest_center, inertia = _labels_inertia(X, x_squared_norms, centers)
 
     k = centers.shape[0]
@@ -761,12 +755,10 @@ class MiniBatchKMeans(KMeans):
             self.init = np.ascontiguousarray(self.init, dtype=np.float64)
 
         x_squared_norms = _squared_norms(X)
-        X_shuffled, x_squared_norms_shuffled = shuffle(X, x_squared_norms,
-                             random_state=self.random_state)
 
         self.cluster_centers_ = _init_centroids(
-            X_shuffled, self.k, self.init, random_state=self.random_state,
-            x_squared_norms=x_squared_norms_shuffled)
+            X, self.k, self.init, random_state=self.random_state,
+            x_squared_norms=x_squared_norms)
 
         if self.tol > 0.0:
             if not sp.issparse(X):
@@ -775,10 +767,16 @@ class MiniBatchKMeans(KMeans):
                 # TODO: implement efficient variance for CSR input
                 mean_variance = 1.0
             tol = self.tol * mean_variance
+
+            # using tol-based early stopping needs the allocation of a dedicated
+            # before wich can be expensive for high dim data: hence we allocate
+            # it outside of the main loop
             old_center_buffer = np.zeros(n_features, np.double)
             compute_squared_diff = 1
         else:
             tol = 0.0
+            # no need for the center buffer if tol-based early stopping is
+            # disabled
             old_center_buffer = np.zeros(0, np.double)
             compute_squared_diff = 0
 
@@ -786,24 +784,29 @@ class MiniBatchKMeans(KMeans):
         self.counts = np.zeros(self.k, dtype=np.int32)
 
         n_batches = int(np.ceil(float(n_samples) / self.chunk_size))
-        batch_slices = list(gen_even_slices(n_samples, n_batches))
         n_iterations = int(self.max_iter * n_batches)
 
+        # perform the random permutation
         ewa_inertia_min = None
         ewa_diff = None
         ewa_inertia = None
         no_improvement = 0
-        for i, batch_slice in izip(xrange(n_iterations), cycle(batch_slices)):
+
+        for i in xrange(n_iterations):
+            # Sample the minibatch from the full dataset
+            minibatch_indices = self.random_state.random_integers(
+                0, n_samples - 1, self.chunk_size)
+
             # Perform the actual update step on the minibatch data
             inertia, diff = _mini_batch_step(
-                X_shuffled, x_squared_norms_shuffled, batch_slice,
+                X[minibatch_indices], x_squared_norms[minibatch_indices],
                 self.cluster_centers_, self.counts, old_center_buffer,
                 compute_squared_diff)
 
             # Normalize inertia to be able to compare values when chunk_size
             # changes
-            inertia /= float(batch_slice.stop - batch_slice.start)
-            diff /= float(batch_slice.stop - batch_slice.start)
+            inertia /= self.chunk_size
+            diff /= self.chunk_size
 
             # Compute an Exponentially Weighted Average of the squared diff to
             # monitor the convergence while discarding minibatch-local
@@ -889,11 +892,8 @@ class MiniBatchKMeans(KMeans):
 
             self.counts = np.zeros(self.k, dtype=np.int32)
 
-        batch_slice = slice(0, n_samples, None)
-
-        _mini_batch_step(X, x_squared_norms, batch_slice,
-                         self.cluster_centers_, self.counts,
-                         np.zeros(0, np.double), 0)
+        _mini_batch_step(X, x_squared_norms, self.cluster_centers_,
+                         self.counts, np.zeros(0, np.double), 0)
 
         if self.compute_labels:
             self.labels_, self.inertia_ = _labels_inertia(
