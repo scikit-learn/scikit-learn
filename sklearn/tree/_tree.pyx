@@ -79,23 +79,42 @@ cdef class Node:
         return Node, (self.feature, self.threshold, self.error, self.samples,
                       self.value, self.left, self.right)
 
+@cython.boundscheck(False)
+def apply_tree(np.ndarray[DTYPE_t, ndim=2] X,
+               np.ndarray[np.int64_t, ndim=1] left,
+               np.ndarray[np.int64_t, ndim=1] right,
+               np.ndarray[np.int32_t, ndim=1] feature,
+               np.ndarray[np.float64_t, ndim=1] threshold,
+               np.ndarray[np.int64_t, ndim=1] out):
+    cdef int i = 0
+    cdef int n = X.shape[0]
+    cdef int node_id = 0
+    for i from 0 <= i < n:
+        node_id = 0
+        while left[node_id] != -1 and right[node_id] != -1:
+            if X[i, feature[node_id]] <= threshold[node_id]:
+                node_id = left[node_id]
+            else:
+                node_id = right[node_id]
+        out[i] = node_id
 
-cdef np.ndarray apply_tree_sample(Node node, np.ndarray[DTYPE_t, ndim=1] x):
-    while True:
-        if node.is_leaf:
-            return node.value
-        elif x[node.feature] <= node.threshold:
-            node = node.left
-        else:
-            node = node.right
+
+## cdef np.ndarray apply_tree_sample(Node node, np.ndarray[DTYPE_t, ndim=1] x):
+##     while True:
+##         if node.is_leaf:
+##             return node.value
+##         elif x[node.feature] <= node.threshold:
+##             node = node.left
+##         else:
+##             node = node.right
 
 
-cpdef np.ndarray apply_tree(Node node, np.ndarray[DTYPE_t, ndim=2] X, int k):
-    cdef np.ndarray y = np.zeros((X.shape[0], k), dtype=np.float64)
-    cdef int i = 0, n = X.shape[0]
-    for 0 <= i < n:
-        y[i] = apply_tree_sample(node, X[i])
-    return y
+## cpdef np.ndarray apply_tree(Node node, np.ndarray[DTYPE_t, ndim=2] X, int k):
+##     cdef np.ndarray y = np.zeros((X.shape[0], k), dtype=np.float64)
+##     cdef int i = 0, n = X.shape[0]
+##     for 0 <= i < n:
+##         y[i] = apply_tree_sample(node, X[i])
+##     return y
 
 
 ################################################################################
