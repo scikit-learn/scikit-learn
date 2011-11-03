@@ -335,7 +335,7 @@ class ProbabilisticPCA(PCA):
         """
         Xr = X - self.mean_
         log_like = np.zeros(X.shape[0])
-        self.precision_ = np.linalg.inv(self.covariance_)
+        self.precision_ = linalg.inv(self.covariance_)
         for i in range(X.shape[0]):
             log_like[i] = -.5 * np.dot(np.dot(self.precision_, Xr[i]), Xr[i])
         log_like += fast_logdet(self.precision_) - \
