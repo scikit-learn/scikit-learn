@@ -221,7 +221,7 @@ def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
               int n_iter, int fit_intercept,
               int verbose, int shuffle, int seed,
               double weight_pos, double weight_neg,
-              np.ndarray[double, ndim=1] sample_weight,
+              np.ndarray[np.float64_t, ndim=1, mode='c'] sample_weight,
               int learning_rate, double eta0,
               double power_t):
     """Cython impl. of SGD for generic loss functions and penalties
@@ -286,9 +286,8 @@ def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
     cdef unsigned int n_samples = Y.shape[0]
     cdef unsigned int n_features = w.shape[0]
 
-    # Array strides to get to next feature or example
-    cdef int row_stride = X.strides[0]
-    cdef int elem_stride = X.strides[1]
+    # Array stride to get to next sample
+    cdef int stride = X.strides[0] / X.strides[1]
 
     cdef double *w_data_ptr = <double *>w.data
     cdef double *X_data_ptr = <double *>X.data
@@ -303,7 +302,7 @@ def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
     cdef int *index_data_ptr = <int *>index.data
 
     # helper variable
-    cdef int offset = 0
+    cdef unsigned int offset = 0
     cdef double wscale = 1.0
     cdef double eta = 0.0
     cdef double p = 0.0
@@ -350,7 +349,7 @@ def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
             sample_idx = index_data_ptr[i]
 
             # row offset in elem
-            offset = row_stride * sample_idx / elem_stride
+            offset = sample_idx * stride
             y = Y_data_ptr[sample_idx]
             if learning_rate == OPTIMAL:
                 eta = 1.0 / (alpha * t)
@@ -408,7 +407,7 @@ cdef inline double min(double a, double b):
 
 
 cdef double dot(double *w_data_ptr, double *X_data_ptr,
-                int offset, unsigned int n_features):
+                unsigned int offset, unsigned int n_features):
     cdef double sum = 0.0
     cdef int j
     for j from 0 <= j < n_features:
@@ -417,7 +416,7 @@ cdef double dot(double *w_data_ptr, double *X_data_ptr,
 
 
 cdef double add(double *w_data_ptr, double wscale, double *X_data_ptr,
-                int offset, unsigned int n_features, double c):
+                unsigned int offset, unsigned int n_features, double c):
     """Scales example x by constant c and adds it to the weight vector w"""
     cdef int j
     cdef int idx
