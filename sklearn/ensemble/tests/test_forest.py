@@ -26,33 +26,33 @@ boston.target = boston.target[perm]
 
 def test_classification_toy_rf():
     """Check classification on a toy dataset (random forest)."""
-    clf = ensemble.RandomForestClassifier(n_trees=10)
+    clf = ensemble.RandomForestClassifier(n_trees=10, random_state=1)
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
 
-    clf = ensemble.RandomForestClassifier(n_trees=10, max_features=1)
+    clf = ensemble.RandomForestClassifier(n_trees=10, max_features=1, random_state=1)
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
 
 def test_classification_toy_et():
     """Check classification on a toy dataset (extra-trees)."""
-    clf = ensemble.ExtraTreesClassifier(n_trees=10)
+    clf = ensemble.ExtraTreesClassifier(n_trees=10, random_state=1)
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
 
-    clf = ensemble.ExtraTreesClassifier(n_trees=10, max_features=1)
+    clf = ensemble.ExtraTreesClassifier(n_trees=10, max_features=1, random_state=1)
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
 
 def test_iris_rf():
     """Check consistency on dataset iris (random forest)."""
     for c in ("gini", "entropy"):
-        clf = ensemble.RandomForestClassifier(n_trees=10, criterion=c)
+        clf = ensemble.RandomForestClassifier(n_trees=10, criterion=c, random_state=1)
         clf.fit(iris.data, iris.target)
         score = clf.score(iris.data, iris.target)
         assert score > 0.9, "Failed with criterion %s and score = %f" % (c, score)
 
-        clf = ensemble.RandomForestClassifier(n_trees=10, criterion=c, max_features=2)
+        clf = ensemble.RandomForestClassifier(n_trees=10, criterion=c, max_features=2, random_state=1)
         clf.fit(iris.data, iris.target)
         score = clf.score(iris.data, iris.target)
         assert score > 0.5, "Failed with criterion %s and score = %f" % (c, score)
@@ -60,12 +60,12 @@ def test_iris_rf():
 def test_iris_et():
     """Check consistency on dataset iris (extra-trees)."""
     for c in ("gini", "entropy"):
-        clf = ensemble.ExtraTreesClassifier(n_trees=10, criterion=c)
+        clf = ensemble.ExtraTreesClassifier(n_trees=10, criterion=c, random_state=1)
         clf.fit(iris.data, iris.target)
         score = clf.score(iris.data, iris.target)
         assert score > 0.9, "Failed with criterion %s and score = %f" % (c, score)
 
-        clf = ensemble.ExtraTreesClassifier(n_trees=10, criterion=c, max_features=2)
+        clf = ensemble.ExtraTreesClassifier(n_trees=10, criterion=c, max_features=2, random_state=1)
         clf.fit(iris.data, iris.target)
         score = clf.score(iris.data, iris.target)
         assert score > 0.9, "Failed with criterion %s and score = %f" % (c, score)
