@@ -527,3 +527,49 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
                                                     min_density,
                                                     max_features,
                                                     random_state)
+
+class ExtraTreeClassifier(DecisionTreeClassifier):
+    """An extremly randomized tree classifier.
+
+    References
+    ----------
+    .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
+           Machine Learning, 63(1), 3-42, 2006.
+    """
+    def __init__(self, criterion="gini",
+                       max_depth=10,
+                       min_split=1,
+                       min_density=0.1,
+                       max_features=None,
+                       random_state=None):
+        super(ExtraTreeClassifier, self).__init__(criterion,
+                                                  max_depth,
+                                                  min_split,
+                                                  min_density,
+                                                  max_features,
+                                                  random_state)
+
+        self.find_split = _tree._find_best_random_split
+
+class ExtraTreeRegressor(DecisionTreeRegressor):
+    """An extremly randomized tree regressor.
+
+    References
+    ----------
+    .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
+           Machine Learning, 63(1), 3-42, 2006.
+    """
+    def __init__(self, criterion="mse",
+                       max_depth=10,
+                       min_split=1,
+                       min_density=0.1,
+                       max_features=None,
+                       random_state=None):
+        super(ExtraTreeClassifier, self).__init__(criterion,
+                                                  max_depth,
+                                                  min_split,
+                                                  min_density,
+                                                  max_features,
+                                                  random_state)
+
+        self.find_split = _tree._find_best_random_split
