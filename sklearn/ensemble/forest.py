@@ -27,6 +27,7 @@ class Forest(BaseEstimator):
 
     def fit(self, X, y):
         X = np.atleast_2d(X)
+        y = np.atleast_1d(y)
 
         if isinstance(self.base_tree, ClassifierMixin):
             self.classes = np.unique(y)

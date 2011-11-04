@@ -572,11 +572,11 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
                        min_density=0.1,
                        max_features=None,
                        random_state=None):
-        super(ExtraTreeClassifier, self).__init__(criterion,
-                                                  max_depth,
-                                                  min_split,
-                                                  min_density,
-                                                  max_features,
-                                                  random_state)
+        super(ExtraTreeRegressor, self).__init__(criterion,
+                                                 max_depth,
+                                                 min_split,
+                                                 min_density,
+                                                 max_features,
+                                                 random_state)
 
         self.find_split = _tree._find_best_random_split

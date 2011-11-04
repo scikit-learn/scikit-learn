@@ -24,14 +24,24 @@ perm = np.random.permutation(boston.target.size)
 boston.data = boston.data[perm]
 boston.target = boston.target[perm]
 
-def test_classification_toy():
-    """Check classification on a toy dataset."""
+def test_classification_toy_rf():
+    """Check classification on a toy dataset (random forest)."""
     clf = ensemble.RandomForestClassifier(n_trees=5)
     clf.fit(X, y)
-
     assert_array_equal(clf.predict(T), true_result)
 
     clf = ensemble.RandomForestClassifier(n_trees=5, max_features=1)
     clf.fit(X, y)
-
     assert_array_equal(clf.predict(T), true_result)
+
+def test_classification_toy_et():
+    """Check classification on a toy dataset (extra-trees)."""
+    clf = ensemble.ExtraTreesClassifier(n_trees=5)
+    clf.fit(X, y)
+    assert_array_equal(clf.predict(T), true_result)
+
+    clf = ensemble.ExtraTreesClassifier(n_trees=5, max_features=1)
+    clf.fit(X, y)
+    assert_array_equal(clf.predict(T), true_result)
+
+
