@@ -108,7 +108,7 @@ class SparseBaseLibSVM(BaseLibSVM):
                  self._support_indices, self._support_indptr,
                  self._dual_coef_data, self.intercept_,
                  self.class_weight_label, self.class_weight, sample_weight,
-                 self.n_support_, self.nu, self.epsilon,
+                 self.n_support_, self.nu, self.cache_size,  self.epsilon,
                  int(self.shrinking), int(self.probability))
 
         n_class = len(self.label_) - 1
