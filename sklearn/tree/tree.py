@@ -193,6 +193,12 @@ def _build_tree(X, y, is_classification, criterion, max_depth, min_split,
                               value, left_partition, right_partition)
 
     # Launch the construction
+    if X.dtype != DTYPE or not np.isfortran(X):
+        X = np.asanyarray(X, dtype=DTYPE, order="F")
+
+    if y.dtype != DTYPE or not y.flags.contiguous:
+        y = np.ascontiguousarray(y, dtype=DTYPE)
+
     if sample_mask is None:
         sample_mask = np.ones((X.shape[0],), dtype=np.bool)
 
