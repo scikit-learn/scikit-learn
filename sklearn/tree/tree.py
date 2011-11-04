@@ -20,6 +20,8 @@ from . import _tree
 __all__ = [
     "DecisionTreeClassifier",
     "DecisionTreeRegressor",
+    "ExtraTreeClassifier",
+    "ExtraTreeRegressor"
 ]
 
 DTYPE = _tree.DTYPE
