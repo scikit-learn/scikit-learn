@@ -418,7 +418,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
         Returns
         -------
-        P : array of shape = [n_samples, n_classes]
+        p : array of shape = [n_samples, n_classes]
             The class probabilities of the input samples. Classes are ordered
             by arithmetical order.
         """
@@ -449,7 +449,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
         Returns
         -------
-        P : array of shape = [n_samples, n_classes]
+        p : array of shape = [n_samples, n_classes]
             The class log-probabilities of the input samples. Classes are
             ordered by arithmetical order.
         """

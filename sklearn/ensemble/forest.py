@@ -99,7 +99,7 @@ class ForestClassifier(Forest, ClassifierMixin):
         """Predict class probabilities for X.
 
         The predicted class probabilities of an input sample is computed as
-        the mean class probabilities of the trees in the forest.
+        the mean predicted class probabilities of the trees in the forest.
 
         Parameters
         ----------
@@ -135,7 +135,7 @@ class ForestRegressor(Forest, RegressorMixin):
         """Predict regression target for X.
 
         The predicted regression target of an input sample is computed as the
-        mean regression target of the trees in the forest.
+        mean predicted regression targets of the trees in the forest.
 
         Parameters
         ----------
