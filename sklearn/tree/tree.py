@@ -316,8 +316,7 @@ class BaseDecisionTree(BaseEstimator):
                 _tree.apply_tree(self.tree, X, self.n_classes), axis=1)]
 
         else:
-            predictions = _tree.apply_tree(self.tree, X, self.n_classes)
-            predictions = predictions.ravel()
+            predictions = _tree.apply_tree(self.tree, X, self.n_classes).ravel()
 
         return predictions
 
@@ -426,10 +425,10 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                              " input n_features is %s "
                              % (self.n_features, n_features))
 
-        P = _tree.apply_tree(self.tree, X, self.n_classes)
-        P /= P.sum(axis=1)[:, np.newaxis]
+        p = _tree.apply_tree(self.tree, X, self.n_classes)
+        p /= p.sum(axis=1)[:, np.newaxis]
 
-        return P
+        return p
 
     def predict_log_proba(self, X):
         """Predict class log-probabilities of the input samples X.
