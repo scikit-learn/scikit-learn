@@ -270,7 +270,7 @@ class BaseDecisionTree(BaseEstimator):
             raise ValueError("max_depth must be greater than zero. ")
         if self.min_density < 0.0 or self.min_density > 1.0:
             raise ValueError("min_density must be in [0, 1]")
-        if self.max_features >= 0 and not (0 < self.max_features <= n_features):
+        if self.max_features >= 0 and not (0 < self.max_features <= self.n_features):
             raise ValueError("max_features must be in (0, n_features]")
 
         # Build tree
