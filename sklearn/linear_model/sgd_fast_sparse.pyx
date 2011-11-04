@@ -155,12 +155,12 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
         t = 1.0
 
     t_start = time()
-    for epoch from 0 <= epoch < n_iter:
+    for epoch in xrange(n_iter):
         if verbose > 0:
             print("-- Epoch %d" % (epoch + 1))
         if shuffle:
             np.random.RandomState(seed).shuffle(index)
-        for i from 0 <= i < n_samples:
+        for i in xrange(n_samples):
             sample_idx = index_data_ptr[i]
             offset = X_indptr_ptr[sample_idx]
             xnnz = X_indptr_ptr[sample_idx + 1] - offset
@@ -226,7 +226,7 @@ cdef double dot(double *w_data_ptr, double *X_data_ptr, int *X_indices_ptr,
                 int offset, int xnnz):
     cdef double sum = 0.0
     cdef int j
-    for j from 0 <= j < xnnz:
+    for j in xrange(xnnz):
         sum += w_data_ptr[X_indices_ptr[offset + j]] * X_data_ptr[offset + j]
     return sum
 
@@ -239,7 +239,7 @@ cdef double add(double *w_data_ptr, double wscale, double *X_data_ptr,
     cdef double val
     cdef double innerprod = 0.0
     cdef double xsqnorm = 0.0
-    for j from 0 <= j < xnnz:
+    for j in xrange(xnnz):
         idx = X_indices_ptr[offset + j]
         val = X_data_ptr[offset + j]
         innerprod += (w_data_ptr[idx] * val)
@@ -258,7 +258,7 @@ cdef void l1penalty(double *w_data_ptr, double wscale, double *q_data_ptr,
     cdef double z = 0.0
     cdef int j = 0
     cdef int idx = 0
-    for j from 0 <= j < xnnz:
+    for j in xrange(xnnz):
         idx = X_indices_ptr[offset + j]
         z = w_data_ptr[idx]
         if (wscale * w_data_ptr[idx]) > 0.0:

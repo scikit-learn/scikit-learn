@@ -340,12 +340,12 @@ def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
         t = 1.0
 
     t_start = time()
-    for epoch from 0 <= epoch < n_iter:
+    for epoch in xrange(n_iter):
         if verbose > 0:
             print("-- Epoch %d" % (epoch + 1))
         if shuffle:
             np.random.RandomState(seed).shuffle(index)
-        for i from 0 <= i < n_samples:
+        for i in xrange(n_samples):
             sample_idx = index_data_ptr[i]
 
             # row offset in elem
@@ -379,7 +379,7 @@ def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
             t += 1
             count += 1
 
-        # report epoche information
+        # report epoch information
         if verbose > 0:
             wnorm = sqrt(np.dot(w, w) * wscale * wscale)
             print("Norm: %.2f, NNZs: %d, "\
@@ -410,7 +410,7 @@ cdef double dot(double *w_data_ptr, double *X_data_ptr,
                 unsigned int offset, unsigned int n_features):
     cdef double sum = 0.0
     cdef int j
-    for j from 0 <= j < n_features:
+    for j in xrange(n_features):
         sum += w_data_ptr[j] * X_data_ptr[offset + j]
     return sum
 
@@ -418,12 +418,11 @@ cdef double dot(double *w_data_ptr, double *X_data_ptr,
 cdef double add(double *w_data_ptr, double wscale, double *X_data_ptr,
                 unsigned int offset, unsigned int n_features, double c):
     """Scales example x by constant c and adds it to the weight vector w"""
-    cdef int j
-    cdef int idx
+    cdef unsigned j
     cdef double val
     cdef double innerprod = 0.0
     cdef double xsqnorm = 0.0
-    for j from 0 <= j < n_features:
+    for j in xrange(n_features):
         val = X_data_ptr[offset + j]
         innerprod += (w_data_ptr[j] * val)
         xsqnorm += (val * val)
@@ -444,9 +443,8 @@ cdef void l1penalty(double *w_data_ptr, double wscale, double *q_data_ptr,
     Empirical results look better this way...
     """
     cdef double z = 0.0
-    cdef int j = 0
-    cdef int idx = 0
-    for j from 0 <= j < n_features:
+    cdef unsigned j = 0
+    for j in xrange(n_features):
         z = w_data_ptr[j]
         if (wscale * w_data_ptr[j]) > 0.0:
             w_data_ptr[j] = max(0.0, w_data_ptr[j] - ((u + q_data_ptr[j])
