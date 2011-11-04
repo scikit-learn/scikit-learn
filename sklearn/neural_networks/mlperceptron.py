@@ -1,0 +1,135 @@
+# Author: Lars Buitinck <L.J.Buitinck@uva.nl>
+
+import numpy as np
+
+from ..base import BaseEstimator, ClassifierMixin
+from ..preprocessing import LabelBinarizer
+from ..utils import atleast2d_or_csr, check_random_state
+from ..utils.extmath import logsumexp, safe_sparse_dot
+
+from .backprop_sgd import backprop_sgd
+
+
+def logistic(x):
+    return 1. / (1. + np.exp(-x))
+
+
+def log_softmax(X):
+    # Computes the logistic K-way softmax, (exp(X).T / exp(X).sum(axis=1)).T,
+    # in the log domain
+    return (X.T - logsumexp(X, axis=1)).T
+
+
+def softmax(X):
+    if X.shape[1] == 1:
+        return logistic(X)
+    else:
+        exp_X = np.exp(X)
+        return (exp_X.T / exp_X.sum(axis=1)).T
+
+
+class MLPClassifier(BaseEstimator, ClassifierMixin):
+    """Multi-layer perceptron (feedforward neural network) classifier.
+
+    Trained with gradient descent under log loss (aka the cross-entropy error
+    function).
+
+    Parameters
+    ----------
+    n_hidden : int
+        Number of units in the hidden layer.
+    alpha : float, optional
+        L2 penalty (weight decay) parameter.
+    learning_rate : float, optional
+        Base learning rate. This will be scaled by sqrt(n_features) for the
+        input-to-hidden weights, and by sqrt(n_hidden) for the hidden-to-output
+        weights.
+    max_iter : int, optional
+        Maximum number of iterations.
+    momentum : float, optional
+        Parameter for the momentum method. Set this somewhere between .5 and 1.
+    random_state : int or RandomState, optional
+        State of or seed for random number generator.
+    tol : float, optional
+        Tolerance for the optimization. When the loss at iteration i+1 differs
+        less than this amount from that at iteration i, convergence is
+        considered to be reached.
+    verbose : bool, optional
+        Whether to print progress messages to stderr.
+
+    """
+    def __init__(self, n_hidden, alpha=0, learning_rate=.01, max_iter=100,
+                 momentum=.9, random_state=None, tol=1e-5, verbose=False):
+        self.alpha = alpha
+        self.learning_rate = learning_rate
+        self.max_iter = max_iter
+        self.momentum = momentum
+        self.n_hidden = n_hidden
+        self.random_state = check_random_state(random_state)
+        self.tol = tol
+        self.verbose = verbose
+
+    def _init_fit(self, n_features, n_targets):
+        n_hidden = self.n_hidden
+        rng = self.random_state
+
+        # XXX Hinton's advice is to initialize weights to be proportional to
+        # sqrt(fan-in). That doesn't work on all problems, though, and it
+        # blows up in the face of L2 penalty.
+        #sqrt_n_features = np.sqrt(n_features)
+        #sqrt_n_hidden = np.sqrt(n_hidden)
+
+        self.coef_hidden_ = rng.uniform(-1, 1, (n_hidden, n_features))
+        self.coef_output_ = rng.uniform(-1, 1, (n_targets, n_hidden))
+
+        self.intercept_hidden_ = rng.uniform(-1, 1, n_hidden)
+        self.intercept_output_ = rng.uniform(-1, 1, n_targets)
+
+    def fit(self, X, y):
+        X = atleast2d_or_csr(X)
+        _, n_features = X.shape
+
+        self._lbin = LabelBinarizer()
+        Y = self._lbin.fit_transform(y)
+
+        self._init_fit(n_features, Y.shape[1])
+        backprop_sgd(self, X, Y)
+
+        return self
+
+    def decision_function(self, X):
+        X = atleast2d_or_csr(X)
+        z_hidden = (safe_sparse_dot(X, self.coef_hidden_.T) +
+                    self.intercept_hidden_)
+        y_hidden = logistic(z_hidden)
+        y_output = (np.dot(y_hidden, self.coef_output_.T) +
+                    self.intercept_output_)
+        if y_output.shape[1] == 1:
+            y_output = y_output.ravel()
+        return y_output
+
+    def predict(self, X):
+        scores = self.decision_function(X)
+        if len(scores.shape) == 1:
+            indices = (scores > 0).astype(np.int)
+        else:
+            indices = scores.argmax(axis=1)
+        return self.classes_[indices]
+
+    def predict_log_proba(self, X):
+        scores = self.decision_function(X)
+        if len(scores.shape) == 1:
+            return np.log(logistic(scores))
+        else:
+            return log_softmax(scores)
+
+    def predict_proba(self, X):
+        scores = self.decision_function(X)
+        if len(scores.shape) == 1:
+            return logistic(scores)
+        else:
+            return softmax(scores)
+
+    @property
+    def classes_(self):
+        return self._lbin.classes_
