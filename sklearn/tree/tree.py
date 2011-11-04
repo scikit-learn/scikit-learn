@@ -125,22 +125,10 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
     return out_file
 
 
-def _build_tree(estimator, X, y, criterion):
+def _build_tree(X, y, is_classification, criterion, max_depth, min_split,
+                min_density, max_features, random_state, n_classes, find_split,
+                sample_mask=None, X_argsorted=None):
     """Build a tree by recursively partitioning the data."""
-    # Pop parameters
-    max_depth = estimator.max_depth
-    min_split = estimator.min_split
-    min_density = estimator.min_density
-    max_features = estimator.max_features
-    random_state = estimator.random_state
-    n_features = estimator.n_features
-    n_classes = estimator.n_classes
-    find_split = estimator.find_split
-
-    # Convert data
-    X_argsorted = np.asfortranarray(np.argsort(X.T, axis=1).astype(np.int32).T)
-    sample_mask = np.ones((X.shape[0],), dtype=np.bool)
-
     # Recursively partition X
     def recursive_partition(X, X_argsorted, y, sample_mask, depth):
         # Count samples
@@ -166,7 +154,7 @@ def _build_tree(estimator, X, y, criterion):
         # Value at this node
         current_y = y[sample_mask]
 
-        if isinstance(estimator, ClassifierMixin):
+        if is_classification:
             value = np.zeros((n_classes,))
             t = current_y.max() + 1
             value[:t] = np.bincount(current_y.astype(np.int))
@@ -188,17 +176,26 @@ def _build_tree(estimator, X, y, criterion):
                 y = current_y
                 sample_mask = np.ones((X.shape[0],), dtype=np.bool)
 
+            # Split and and recurse
             split = X[:, feature] <= threshold
 
             left_partition = recursive_partition(X, X_argsorted, y,
                                                  split & sample_mask,
                                                  depth + 1)
+
             right_partition = recursive_partition(X, X_argsorted, y,
                                                   ~split & sample_mask,
                                                   depth + 1)
 
             return _tree.Node(feature, threshold, init_error, n_node_samples,
                               value, left_partition, right_partition)
+
+    # Launch the construction
+    if sample_mask is None:
+        sample_mask = np.ones((X.shape[0],), dtype=np.bool)
+
+    if X_argsorted is None:
+        X_argsorted = np.asfortranarray(np.argsort(X.T, axis=1).astype(np.int32).T)
 
     return recursive_partition(X, X_argsorted, y, sample_mask, 0)
 
@@ -275,7 +272,11 @@ class BaseDecisionTree(BaseEstimator):
             raise ValueError("max_features must be in (0, n_features]")
 
         # Build tree
-        self.tree = _build_tree(self, X, y, criterion)
+        self.tree = _build_tree(X, y, isinstance(self, ClassifierMixin),
+                                criterion, self.max_depth, self.min_split,
+                                self.min_density, self.max_features,
+                                self.random_state, self.n_classes,
+                                self.find_split)
 
         return self
 
