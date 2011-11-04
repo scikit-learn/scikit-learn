@@ -108,7 +108,7 @@ class ExtraTreesClassifier(ForestClassifier):
                                         random_state=random_state)
 
 class ExtraTreesRegressor(ForestRegressor):
-    def __init__(self, n_trees=10, bootstrap=True, random_state=None, **tree_args):
+    def __init__(self, n_trees=10, bootstrap=False, random_state=None, **tree_args):
         ForestRegressor.__init__(self, ExtraTreeRegressor(**tree_args),
                                        n_trees,
                                        bootstrap=bootstrap,
