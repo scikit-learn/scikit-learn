@@ -53,12 +53,13 @@ The disadvantages of Support Vector Machines include:
     the SGDClassifier class instead. The objective function can be
     configured to be almost the same as the LinearSVC model.
 
-    **Kernel cache size**
+.. note:: **Kernel cache size**
+
     For SVC, SVR, nuSVC and NuSVR, the size of the kernel cache
     has a strong impact on run times for larger problems.
-    If you have enough RAM available, it is recommended
-    to set `cache_size` to a higher value, such as 500(MB)
-    or 1000(MB).
+    If you have enough RAM available, it is recommended to set
+    `cache_size` to a higher value than the default of 200(MB),
+    such as 500(MB) or 1000(MB).
 
 
 .. _svm_classification:
