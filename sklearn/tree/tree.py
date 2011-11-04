@@ -529,7 +529,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
                                                     random_state)
 
 class ExtraTreeClassifier(DecisionTreeClassifier):
-    """An extremly randomized tree classifier.
+    """An extremely randomized tree classifier.
 
     References
     ----------
@@ -552,7 +552,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         self.find_split = _tree._find_best_random_split
 
 class ExtraTreeRegressor(DecisionTreeRegressor):
-    """An extremly randomized tree regressor.
+    """An extremely randomized tree regressor.
 
     References
     ----------
