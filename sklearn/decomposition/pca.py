@@ -320,7 +320,7 @@ class ProbabilisticPCA(PCA):
             self.covariance_ += self.explained_variance_[k] * add_cov
         return self
 
-    def score(self, X):
+    def score(self, X, y=None):
         """Return a score associated to new data
 
         Parameters
