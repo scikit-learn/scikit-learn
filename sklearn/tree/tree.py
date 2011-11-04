@@ -245,7 +245,9 @@ class BaseDecisionTree(BaseEstimator):
         X = np.asanyarray(X, dtype=DTYPE, order="F")
         n_samples, self.n_features = X.shape
 
-        if isinstance(self, ClassifierMixin):
+        is_classification = isinstance(self, ClassifierMixin)
+
+        if is_classification:
             self.classes = np.unique(y)
             self.n_classes = self.classes.shape[0]
             criterion = CLASSIFICATION[self.criterion](self.n_classes)
@@ -272,8 +274,8 @@ class BaseDecisionTree(BaseEstimator):
             raise ValueError("max_features must be in (0, n_features]")
 
         # Build tree
-        self.tree = _build_tree(X, y, isinstance(self, ClassifierMixin),
-                                criterion, self.max_depth, self.min_split,
+        self.tree = _build_tree(X, y, is_classification, criterion,
+                                self.max_depth, self.min_split,
                                 self.min_density, self.max_features,
                                 self.random_state, self.n_classes,
                                 self.find_split)
