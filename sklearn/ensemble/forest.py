@@ -18,7 +18,7 @@ __all__ = [
 
 
 class Forest(BaseEstimator):
-    def __init__(self, base_tree, n_trees, bootstrap=False, random_state=None):
+    def __init__(self, base_tree, n_trees=10, bootstrap=False, random_state=None):
         self.base_tree = base_tree
         self.n_trees = n_trees
         self.bootstrap = bootstrap
@@ -48,7 +48,7 @@ class Forest(BaseEstimator):
             self.forest.append(tree)
 
 class ForestClassifier(Forest, ClassifierMixin):
-    def __init__(self, base_tree, n_trees, bootstrap=False, random_state=None):
+    def __init__(self, base_tree, n_trees=10, bootstrap=False, random_state=None):
         Forest.__init__(self, base_tree,
                               n_trees,
                               bootstrap=bootstrap,
@@ -69,7 +69,7 @@ class ForestClassifier(Forest, ClassifierMixin):
         return p
 
 class ForestRegressor(Forest, RegressorMixin):
-    def __init__(self, base_tree, n_trees, bootstrap=False, random_state=None):
+    def __init__(self, base_tree, n_trees=10, bootstrap=False, random_state=None):
         Forest.__init__(self, base_tree,
                               n_trees,
                               bootstrap=bootstrap,
@@ -87,28 +87,28 @@ class ForestRegressor(Forest, RegressorMixin):
         return y_hat
 
 class RandomForestClassifier(ForestClassifier):
-    def __init__(self, n_trees, bootstrap=True, random_state=None, **tree_args):
+    def __init__(self, n_trees=10, bootstrap=True, random_state=None, **tree_args):
         ForestClassifier.__init__(self, DecisionTreeClassifier(**tree_args),
                                         n_trees,
                                         bootstrap=bootstrap,
                                         random_state=random_state)
 
 class RandomForestRegressor(ForestRegressor):
-    def __init__(self, n_trees, bootstrap=True, random_state=None, **tree_args):
+    def __init__(self, n_trees=10, bootstrap=True, random_state=None, **tree_args):
         ForestRegressor.__init__(self, DecisionTreeRegressor(**tree_args),
                                        n_trees,
                                        bootstrap=bootstrap,
                                        random_state=random_state)
 
 class ExtraTreesClassifier(ForestClassifier):
-    def __init__(self, n_trees, bootstrap=False, random_state=None, **tree_args):
+    def __init__(self, n_trees=10, bootstrap=False, random_state=None, **tree_args):
         ForestClassifier.__init__(self, ExtraTreeClassifier(**tree_args),
                                         n_trees,
                                         bootstrap=bootstrap,
                                         random_state=random_state)
 
 class ExtraTreesRegressor(ForestRegressor):
-    def __init__(self, n_trees, bootstrap=True, random_state=None, **tree_args):
+    def __init__(self, n_trees=10, bootstrap=True, random_state=None, **tree_args):
         ForestRegressor.__init__(self, ExtraTreeRegressor(**tree_args),
                                        n_trees,
                                        bootstrap=bootstrap,
