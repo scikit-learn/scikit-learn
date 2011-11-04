@@ -37,7 +37,6 @@ boston.target = boston.target[perm]
 
 def test_classification_toy():
     """Check classification on a toy dataset."""
-
     clf = tree.DecisionTreeClassifier()
     clf.fit(X, y)
 

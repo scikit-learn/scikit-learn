@@ -209,9 +209,10 @@ def _build_tree(X, y, is_classification, criterion, max_depth, min_split,
 
 
 class BaseDecisionTree(BaseEstimator):
-    """Warning: This class should not be used directly. Use derived classes
-       instead."""
+    """Base class for decision trees.
 
+    Warning: This class should not be used directly. Use derived classes instead.
+    """
     def __init__(self, criterion,
                        max_depth,
                        min_split,
