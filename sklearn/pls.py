@@ -5,7 +5,8 @@
 # License: BSD Style.
 
 from .base import BaseEstimator
-#from sklearn.base import BaseEstimator
+from .utils import as_float_array
+
 import warnings
 import numpy as np
 from scipy import linalg
@@ -203,12 +204,8 @@ class _PLS(BaseEstimator):
 
     def fit(self, X, Y):
         # copy since this will contains the residuals (deflated) matrices
-        if self.copy:
-            X = np.asanyarray(X, dtype=np.float).copy()
-            Y = np.asanyarray(Y, dtype=np.float).copy()
-        else:
-            X = np.asanyarray(X, dtype=np.float)
-            Y = np.asanyarray(Y, dtype=np.float)
+        X = as_float_array(X, copy=self.copy)
+        Y = as_float_array(Y, copy=self.copy)
 
         if X.ndim != 2:
             raise ValueError('X must be a 2D array')
@@ -338,15 +335,15 @@ class _PLS(BaseEstimator):
         """
         # Normalize
         if copy:
-            Xc = (np.asanyarray(X) - self.x_mean_) / self.x_std_
+            Xc = (np.asarray(X) - self.x_mean_) / self.x_std_
             if Y is not None:
-                Yc = (np.asanyarray(Y) - self.y_mean_) / self.y_std_
+                Yc = (np.asarray(Y) - self.y_mean_) / self.y_std_
         else:
-            X = np.asanyarray(X)
+            X = np.asarray(X)
             Xc -= self.x_mean_
             Xc /= self.x_std_
             if Y is not None:
-                Y = np.asanyarray(Y)
+                Y = np.asarray(Y)
                 Yc -= self.y_mean_
                 Yc /= self.y_std_
         # Apply rotation
@@ -375,9 +372,9 @@ class _PLS(BaseEstimator):
         """
         # Normalize
         if copy:
-            Xc = (np.asanyarray(X) - self.x_mean_)
+            Xc = (np.asarray(X) - self.x_mean_)
         else:
-            X = np.asanyarray(X)
+            X = np.asarray(X)
             Xc -= self.x_mean_
             Xc /= self.x_std_
         Ypred = np.dot(Xc, self.coefs)
@@ -764,11 +761,11 @@ class PLSSVD(BaseEstimator):
     def fit(self, X, Y):
         # copy since this will contains the centered data
         if self.copy:
-            X = np.asanyarray(X).copy()
-            Y = np.asanyarray(Y).copy()
+            X = np.asarray(X).copy()
+            Y = np.asarray(Y).copy()
         else:
-            X = np.asanyarray(X)
-            Y = np.asanyarray(Y)
+            X = np.asarray(X)
+            Y = np.asarray(Y)
 
         n = X.shape[0]
         p = X.shape[1]

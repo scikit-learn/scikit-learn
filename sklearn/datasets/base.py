@@ -211,8 +211,8 @@ def load_iris():
     target = np.empty((n_samples,), dtype=np.int)
 
     for i, ir in enumerate(data_file):
-        data[i] = np.asanyarray(ir[:-1], dtype=np.float)
-        target[i] = np.asanyarray(ir[-1], dtype=np.int)
+        data[i] = np.asarray(ir[:-1], dtype=np.float)
+        target[i] = np.asarray(ir[-1], dtype=np.int)
 
     return Bunch(data=data, target=target,
                  target_names=target_names,
@@ -350,8 +350,8 @@ def load_boston():
     feature_names = np.array(temp)
 
     for i, d in enumerate(data_file):
-        data[i] = np.asanyarray(d[:-1], dtype=np.float)
-        target[i] = np.asanyarray(d[-1], dtype=np.float)
+        data[i] = np.asarray(d[:-1], dtype=np.float)
+        target[i] = np.asarray(d[-1], dtype=np.float)
 
     return Bunch(data=data,
                  target=target,

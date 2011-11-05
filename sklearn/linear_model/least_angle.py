@@ -15,8 +15,7 @@ from scipy import linalg, interpolate
 from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
-from ..utils import arrayfuncs
-from ..utils import deprecated
+from ..utils import array2d, arrayfuncs, deprecated
 from ..cross_validation import check_cv
 from ..externals.joblib import Parallel, delayed
 
@@ -97,7 +96,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
     # referenced.
     L = np.empty((max_features, max_features), dtype=X.dtype)
     swap, nrm2 = linalg.get_blas_funcs(('swap', 'nrm2'), (X,))
-    potrs, = get_lapack_funcs(('potrs',), (X,))
+    solve_cholesky, = get_lapack_funcs(('potrs',), (X,))
 
     if Gram is None:
         if copy_X:
@@ -190,7 +189,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                                                             n_active, C)
 
         # least squares solution
-        least_squares, info = potrs(L[:n_active, :n_active],
+        least_squares, info = solve_cholesky(L[:n_active, :n_active],
                                sign_active[:n_active], lower=True)
 
         # is this really needed ?
@@ -386,7 +385,7 @@ class Lars(LinearModel):
             Gram = None
         return Gram
 
-    def fit(self, X, y, copy_X=True):
+    def fit(self, X, y):
         """Fit the model using X, y as training data.
 
         parameters
@@ -402,9 +401,8 @@ class Lars(LinearModel):
         self : object
             returns an instance of self.
         """
-
-        X = np.atleast_2d(X)
-        y = np.atleast_1d(y)
+        X = array2d(X)
+        y = np.asarray(y)
 
         X, y, X_mean, y_mean, X_std = self._center_data(X, y,
                                                         self.fit_intercept,
@@ -702,9 +700,8 @@ class LarsCV(LARS):
         self : object
             returns an instance of self.
         """
-        X = np.asanyarray(X)
+        X = np.asarray(X)
 
-        n_samples, n_features = X.shape
         # init cross-validation generator
         cv = check_cv(self.cv, X, y, classifier=False)
 
@@ -941,8 +938,8 @@ class LassoLarsIC(LassoLars):
         self : object
             returns an instance of self.
         """
-        X = np.atleast_2d(X)
-        y = np.atleast_1d(y)
+        X = array2d(X)
+        y = np.asarray(y)
 
         X, y, Xmean, ymean, Xstd = LinearModel._center_data(X, y,
                                                     self.fit_intercept,

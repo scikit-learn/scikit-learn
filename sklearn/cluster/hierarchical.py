@@ -65,7 +65,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
     n_leaves : int
         The number of leaves in the tree
     """
-    X = np.asanyarray(X)
+    X = np.asarray(X)
     n_samples, n_features = X.shape
     if X.ndim == 1:
         X = np.reshape(X, (-1, 1))

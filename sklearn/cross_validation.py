@@ -306,7 +306,7 @@ class StratifiedKFold(object):
     """
 
     def __init__(self, y, k, indices=False):
-        y = np.asanyarray(y)
+        y = np.asarray(y)
         n = y.shape[0]
         assert k > 0, ValueError('Cannot have number of folds k below 1.')
         assert k <= n, ValueError('Cannot have number of folds k=%d, '

@@ -193,6 +193,8 @@ cimport numpy as np
 cimport cython
 from libc cimport stdlib
 
+from ..utils import array2d
+
 ######################################################################
 # global definitions
 #
@@ -604,8 +606,7 @@ cdef class BallTree(object):
         """
         self.warning_flag = False
 
-        X = np.asarray(X, dtype=DTYPE, order='C')
-        X = np.atleast_2d(X)
+        X = array2d(X, dtype=DTYPE, order='C')
 
         if X.shape[-1] != self.data.shape[1]:
             raise ValueError("query data dimension must match BallTree "
@@ -738,8 +739,7 @@ cdef class BallTree(object):
         cdef ITYPE_t count_i
 
         # prepare X for query
-        X = np.asarray(X, dtype=DTYPE, order='C')
-        X = np.atleast_2d(X)
+        X = array2d(X, dtype=DTYPE, order='C')
         if X.shape[-1] != self.data.shape[1]:
             raise ValueError("query data dimension must match BallTree "
                              "data dimension")
