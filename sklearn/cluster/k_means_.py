@@ -240,15 +240,16 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
             if verbose:
                 print 'Iteration %i, inertia %s' % (i, inertia)
 
+            if best_inertia is None or inertia < best_inertia:
+                best_labels = labels.copy()
+                best_centers = centers.copy()
+                best_inertia = inertia
+
             if np.sum((centers_old - centers) ** 2) < tol * mean_variance:
                 if verbose:
                     print 'Converged to similar centers at iteration', i
                 break
 
-            if best_labels is None or inertia < best_inertia:
-                best_labels = labels.copy()
-                best_centers = centers.copy()
-                best_inertia = inertia
 
     if not copy_x:
         X += X_mean
