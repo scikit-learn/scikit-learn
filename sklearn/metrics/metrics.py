@@ -70,6 +70,53 @@ def confusion_matrix(y_true, y_pred, labels=None):
     return CM
 
 
+def matthews_correlation_coefficient(y_true, y_pred, labels=None):
+    """ Compute Matthews correlation coefficient
+
+    The Matthews correlation coefficient is used in machine learning
+    as a measure of the quality of binary (two-class)
+    classifications. It takes into account true and false positives
+    and negatives and is generally regarded as a balanced measure
+    which can be used even if the classes are of very different
+    sizes. The MCC is in essence a correlation coefficient between the
+    observed and predicted binary classifications; it returns a value
+    between -1 and +1. A coefficient of +1 represents a perfect
+    prediction, 0 an average random prediction and -1 an inverse
+    prediction.
+    
+
+    Parameters
+    ----------
+    y_true : array, shape = [n_samples]
+        true targets
+
+    y_pred : array, shape = [n_samples]
+        estimated targets
+
+    Returns
+    -------
+    mcc : float
+
+    References
+    ----------
+    http://en.wikipedia.org/wiki/Matthews_correlation_coefficient
+
+    """
+
+    CM = confusion_matrix(y_true, y_pred, labels)
+
+    assert(CM.shape == (2, 2))  # Only implemented for binary classification
+
+    tp = CM[1, 1]
+    tn = CM[0, 0]
+    fp = CM[0, 1]
+    fn = CM[1, 0]
+    mcc = (tp * tn - fp * fn) \
+          / np.sqrt((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn))
+
+    return mcc
+
+
 def roc_curve(y_true, y_score):
     """compute Receiver operating characteristic (ROC)
 
