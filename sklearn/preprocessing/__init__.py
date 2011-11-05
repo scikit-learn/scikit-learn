@@ -163,6 +163,10 @@ class Scaler(BaseEstimator, TransformerMixin):
         if sp.issparse(X):
             raise NotImplementedError(
                 "Scaling is not yet implement for sparse matrices")
+        X = np.asarray(X)
+        if X.dtype.kind == 'i':
+            warnings.warn('Data of type %s in Scaler.fit. '
+                          'Converting to float is recommended' % X.dtype)
         self.mean_, self.std_ = _mean_and_std(
             X, axis=0, with_mean=self.with_mean, with_std=self.with_std)
         return self
@@ -180,6 +184,9 @@ class Scaler(BaseEstimator, TransformerMixin):
             raise NotImplementedError(
                 "Scaling is not yet implement for sparse matrices")
         X = np.asarray(X)
+        if X.dtype.kind == 'i':
+            warnings.warn('Data of type %s in Scaler.transform. '
+                          'Converting to float is recommended' % X.dtype)
         if copy:
             X = X.copy()
         if self.with_mean:
