@@ -661,37 +661,34 @@ def expected_mutual_information(contingency, n_samples):
     b = np.sum(contingency, axis=0, dtype='int')
     # While nijs[0] will never be used, having it simplifies the indexing.
     nijs = np.arange(0, max(np.max(a), np.max(b)) + 1, dtype='float')
+    nijs[0] = 1  # stops divide by zero problems
     # Compute values that are used multiple times.
     # term1 is nij / N
     term1 = nijs / N
     # term2 uses the outer product
-    ab_outer = np.outer(a, b)
+    log_ab_outer = np.log(np.outer(a, b))
     # term2 uses N * nij
-    Nnij = N * nijs
+    log_Nnij = np.log(N * nijs)
+    # term3 uses these factors
+    gln_a = gammaln(a)
+    gln_b = gammaln(b)
+    gln_Na = gammaln(N-a)
+    gln_Nb = gammaln(N-b)
+    gln_N = gammaln(N)
+    gln_nij = gammaln(nijs)
     emi = 0
-    # signs is the same for all loops
-    signs = np.array([ 1,  1,  1,  1, -1, -1, -1, -1, -1])
     for i in range(R):
         for j in range(C):
             start = int(max(a[i] + b[j] - N, 1))
             end = int(min(a[i], b[j]) + 1)
             for nij in range(start, end):
-                term1 = nij / N # Moved '/ N' to reduce term 3
-                term2 = np.log(N * nij) -  np.log(a[i] * b[j])
-                factors = np.array([a[i], b[j], (N-a[i]), (N-b[j]),
-                                    -N, -nij, -(a[i] - nij), -(b[j] - nij),
-                                    -(N - a[i] - b[j] + nij)])
-                gln = gammaln(np.abs(factors) + 1)  # n! = gamma(n-1)
-                try:
-                    ev = np.exp(np.multiply(signs, gln))
-                    term3 = np.multiply.reduce(ev)
-                except:
-                    print gln
-                    print factors
-                    print signs
-                    raise
+                term2 = log_Nnij[nij] -  log_ab_outer[i][j]
+                gln = (gln_a[i] + gln_b[j] + gln_Na[i] + gln_Nb[j]
+                       - gln_N - gln_nij[nij] - gammaln(a[i] - nij) - gammaln(b[j] - nij)
+                       - gammaln(N - a[i] - b[j] + nij))
+                term3 = np.exp(gln)
                 # Add the product of all terms
-                emi += (term1 * term2 * term3)
+                emi += (term1[nij] * term2 * term3)
     return emi
 
 
