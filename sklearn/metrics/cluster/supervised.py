@@ -669,19 +669,27 @@ def expected_mutual_information(contingency, n_samples):
     # term2 uses N * nij
     Nnij = N * nijs
     emi = 0
+    # signs is the same for all loops
+    signs = np.array([ 1,  1,  1,  1, -1, -1, -1, -1, -1])
     for i in range(R):
         for j in range(C):
             start = int(max(a[i] + b[j] - N, 1))
             end = int(min(a[i], b[j]) + 1)
             for nij in range(start, end):
-                term1 = nij / N
+                term1 = nij / N # Moved '/ N' to reduce term 3
                 term2 = np.log(N * nij) -  np.log(a[i] * b[j])
                 factors = np.array([a[i], b[j], (N-a[i]), (N-b[j]),
                                     -N, -nij, -(a[i] - nij), -(b[j] - nij),
                                     -(N - a[i] - b[j] + nij)])
                 gln = gammaln(np.abs(factors) + 1)  # n! = gamma(n-1)
-                signs = np.sign(factors)
-                term3 = np.exp(np.sum(np.dot(signs, gln)))
+                try:
+                    ev = np.exp(np.multiply(signs, gln))
+                    term3 = np.multiply.reduce(ev)
+                except:
+                    print gln
+                    print factors
+                    print signs
+                    raise
                 # Add the product of all terms
                 emi += (term1 * term2 * term3)
     return emi
