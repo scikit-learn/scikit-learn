@@ -5,6 +5,7 @@
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD
+import warnings
 
 import numpy as np
 import scipy.sparse as sp
@@ -78,6 +79,9 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
         raise NotImplementedError(
             "Scaling is not yet implement for sparse matrices")
     X = np.asarray(X)
+    if X.dtype.kind == 'i':
+        warnings.warn('Data of type %s in scale. '
+                      'Converting to float is recommended' % X.dtype)
     mean_, std_ = _mean_and_std(
         X, axis, with_mean=with_mean, with_std=with_std)
     if copy:
@@ -246,6 +250,9 @@ def normalize(X, norm='l2', axis=1, copy=True):
         raise ValueError("'%d' is not a supported axis" % axis)
 
     X = check_arrays(X, sparse_format=sparse_format, copy=copy)[0]
+    if X.dtype.kind == 'i':
+        warnings.warn('Data of type %s in normalize. '
+                      'Converting to float is recommended' % X.dtype)
     if axis == 0:
         X = X.T
 

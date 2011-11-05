@@ -5,8 +5,11 @@
 0.10
 ====
 
-   - New :ref:`Tree <tree>` module by `Brian Holt`_, `Peter Prettenhofer`_ 
-     and `Satrajit Ghosh`_. The module comes with complete documentation 
+Changelog
+---------
+
+   - New :ref:`Tree <tree>` module by `Brian Holt`_, `Peter Prettenhofer`_
+     and `Satrajit Ghosh`_. The module comes with complete documentation
      and examples.
 
    - Fixed a bug in the RFE module by `Gilles Louppe`_ (issue #378).
@@ -15,8 +18,15 @@
 
    - Faster tests by `Fabian Pedregosa`_.
 
-   - Silhouette Coefficient cluster analysis evaluation metric added as 
+   - Silhouette Coefficient cluster analysis evaluation metric added as
      ``sklearn.metrics.silhouette_score`` by Robert Layton.
+
+   - Fixed a bug in `KMeans` in the handling of the `n_init` parameter:
+     the clustering algorithm used to be run `n_init` times but the last
+     solution was retained instead of the best solution.
+
+   - Minor refactoring in :ref:`sgd` module; consolidated dense and sparse
+     predict methods.
 
 
 API changes summary
@@ -36,26 +46,21 @@ version 0.9:
     longer supports loading two files at once; use ``load_svmlight_files``
     instead. Also, the (unused) ``buffer_mb`` parameter is gone.
 
-  - Sparse estimators in the :ref:`sgd` module use dense parameter vector 
+  - Sparse estimators in the :ref:`sgd` module use dense parameter vector
     ``coef_`` instead of ``sparse_coef_``. This significantly improves
     test time performance.
-  
+
   - The :ref:`covariance` module now has a robust estimator of
     covariance, the Minimum Covariance Determinant estimator.
 
   - Cluster evaluation metrics in ``metrics.cluster.py`` have been refactored
     but the changes are backwards compatible. They have been moved to the
     ``metrics.cluster.supervised``, along with ``metrics.cluster.unsupervised``
-    which contains the Silhouette Coefficient. 
+    which contains the Silhouette Coefficient.
 
   - The permutation_test_score function now behaves the same way as
     cross_val_score (i.e. uses the mean score across the folds.)
 
-Changelog
----------
-
-   - Minor refactoring in :ref:`sgd` module; consolidated 
-     dense and sparse predict methods.
 
 .. _changes_0_9:
 
@@ -160,7 +165,7 @@ Changelog
    - Implementation of :class:`linear_model.LassoLarsCV`
      (cross-validated Lasso solver using the Lars algorithm) and
      :class:`linear_model.LassoLarsIC` (BIC/AIC model
-     selection in Lars) by `Gael Varoquaux`_ 
+     selection in Lars) by `Gael Varoquaux`_
      and `Alexandre Gramfort`_
 
    - Scalability improvements to :func:`metrics.roc_curve` by Olivier Hervieu

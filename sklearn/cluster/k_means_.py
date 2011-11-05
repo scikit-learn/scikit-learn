@@ -218,6 +218,9 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
 
     # precompute squared norms of data points
     x_squared_norms = _squared_norms(X)
+
+    best_labels, best_inertia, best_centers = None, None, None
+
     for it in range(n_init):
         # init
         centers = _init_centroids(X, k, init, random_state=random_state,
@@ -242,15 +245,11 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
                     print 'Converged to similar centers at iteration', i
                 break
 
-            if inertia < best_inertia:
+            if best_labels is None or inertia < best_inertia:
                 best_labels = labels.copy()
                 best_centers = centers.copy()
                 best_inertia = inertia
 
-    else:
-        best_labels = labels
-        best_centers = centers
-        best_inertia = inertia
     if not copy_x:
         X += X_mean
     return best_centers + X_mean, best_labels, best_inertia
@@ -371,8 +370,8 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None):
     centers: array, shape(k, n_features)
     """
     random_state = check_random_state(random_state)
-
     n_samples = X.shape[0]
+
     if init == 'k-means++':
         if sp.issparse(X):
             raise ValueError("Init method 'k-means++' only for dense X.")
@@ -380,7 +379,7 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None):
                         random_state=random_state,
                         x_squared_norms=x_squared_norms)
     elif init == 'random':
-        seeds = np.argsort(random_state.rand(n_samples))[:k]
+        seeds = random_state.permutation(n_samples)[:k]
         centers = X[seeds]
     elif hasattr(init, '__array__'):
         centers = init
