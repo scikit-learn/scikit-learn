@@ -53,6 +53,14 @@ The disadvantages of Support Vector Machines include:
     the SGDClassifier class instead. The objective function can be
     configured to be almost the same as the LinearSVC model.
 
+.. note:: **Kernel cache size**
+
+    For SVC, SVR, nuSVC and NuSVR, the size of the kernel cache
+    has a strong impact on run times for larger problems.
+    If you have enough RAM available, it is recommended to set
+    `cache_size` to a higher value than the default of 200(MB),
+    such as 500(MB) or 1000(MB).
+
 
 .. _svm_classification:
 
@@ -89,8 +97,8 @@ training samples::
     >>> Y = [0, 1]
     >>> clf = svm.SVC()
     >>> clf.fit(X, Y)
-    SVC(C=1.0, coef0=0.0, degree=3, gamma=0.5, kernel='rbf', probability=False,
-      shrinking=True, tol=0.001)
+    SVC(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma=0.5, kernel='rbf',
+      probability=False, shrinking=True, tol=0.001)
 
 After being fitted, the model can then be used to predict new values::
 
@@ -126,8 +134,8 @@ classifiers are constructed and each one trains data from two classes::
     >>> Y = [0, 1, 2, 3]
     >>> clf = svm.SVC()
     >>> clf.fit(X, Y)
-    SVC(C=1.0, coef0=0.0, degree=3, gamma=1.0, kernel='rbf', probability=False,
-      shrinking=True, tol=0.001)
+    SVC(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma=1.0, kernel='rbf',
+      probability=False, shrinking=True, tol=0.001)
     >>> dec = clf.decision_function([[1]])
     >>> dec.shape[1] # 4 classes: 4*3/2 = 6
     6
@@ -215,8 +223,8 @@ floating point values instead of integer values::
     >>> y = [0.5, 2.5]
     >>> clf = svm.SVR()
     >>> clf.fit(X, y)
-    SVR(C=1.0, coef0=0.0, degree=3, epsilon=0.1, gamma=0.5, kernel='rbf',
-      probability=False, shrinking=True, tol=0.001)
+    SVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.1, gamma=0.5,
+      kernel='rbf', probability=False, shrinking=True, tol=0.001)
     >>> clf.predict([[1, 1]])
     array([ 1.5])
 
