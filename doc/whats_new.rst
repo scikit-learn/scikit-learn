@@ -508,7 +508,7 @@ Changelog
 ---------
 
   - New `stochastic gradient
-    <http://scikit-learn.sourceforge.net/modules/sgd.html>`_ descent
+    <http://scikit-learn.org/stable/modules/sgd.html>`_ descent
     module by Peter Prettenhofer. The module comes with complete
     documentation and examples.
 
@@ -639,9 +639,9 @@ Documentation
     - Improved documentation for many modules, now separating
       narrative documentation from the class reference. As an example,
       see `documentation for the SVM module
-      <http://scikit-learn.sourceforge.net/modules/svm.html>`_ and the
+      <http://scikit-learn.org/stable/modules/svm.html>`_ and the
       complete `class reference
-      <http://scikit-learn.sourceforge.net/modules/classes.html>`_.
+      <http://scikit-learn.org/stable/modules/classes.html>`_.
 
 Fixes
 ~~~~~
@@ -663,7 +663,7 @@ Examples
       :ref:`example_mlcomp_document_classification.py`
 
     - Many more examaples. `See here
-      <http://scikit-learn.sourceforge.net/auto_examples/index.html>`_
+      <http://scikit-learn.org/stable/auto_examples/index.html>`_
       the full list of examples.
 
 
