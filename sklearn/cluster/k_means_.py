@@ -212,8 +212,10 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
         init = np.asarray(init).copy()
         init -= X_mean
         if not n_init == 1:
-            warnings.warn('Explicit initial center position passed: '
-                          'performing only one init in the k-means')
+            warnings.warn(
+                'Explicit initial center position passed: '
+                'performing only one init in the k-means instead of %d'
+                % n_init)
             n_init = 1
 
     # precompute squared norms of data points

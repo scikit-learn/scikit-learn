@@ -298,19 +298,18 @@ def test_input_dtypes():
     init_int = X_int[:2]
 
     fitted_models = [
-        KMeans(k=2, random_state=42).fit(X_list),
-        KMeans(k=2, random_state=42).fit(X_int),
-        KMeans(k=2, init=init_int, random_state=42).fit(X_list),
-        KMeans(k=2, init=init_int, random_state=42).fit(X_int),
-        # mini batch kmeans is very unstable on such a small dataset but we are
-        # not interested in testing stability here hence picking up good random
-        # init
-        MiniBatchKMeans(k=2, random_state=1, chunk_size=2).fit(X_list),
-        MiniBatchKMeans(k=2, random_state=1, chunk_size=2).fit(X_int),
-        MiniBatchKMeans(k=2, random_state=2, chunk_size=2).fit(X_int_csr),
-        MiniBatchKMeans(k=2, random_state=42, init=init_int).fit(X_list),
-        MiniBatchKMeans(k=2, random_state=42, init=init_int).fit(X_int),
-        MiniBatchKMeans(k=2, random_state=42, init=init_int).fit(X_int_csr),
+        KMeans(k=2).fit(X_list),
+        KMeans(k=2).fit(X_int),
+        KMeans(k=2, init=init_int, n_init=1).fit(X_list),
+        KMeans(k=2, init=init_int, n_init=1).fit(X_int),
+        # mini batch kmeans is very unstable on such a small dataset hence
+        # we use many inits
+        MiniBatchKMeans(k=2, n_init=10, batch_size=2).fit(X_list),
+        MiniBatchKMeans(k=2, n_init=10, batch_size=2).fit(X_int),
+        MiniBatchKMeans(k=2, n_init=10, batch_size=2).fit(X_int_csr),
+        MiniBatchKMeans(k=2, batch_size=2, init=init_int).fit(X_list),
+        MiniBatchKMeans(k=2, batch_size=2, init=init_int).fit(X_int),
+        MiniBatchKMeans(k=2, batch_size=2, init=init_int).fit(X_int_csr),
     ]
     expected_labels = [0, 1, 1, 0, 0, 1]
     scores = np.array([v_measure_score(expected_labels, km.labels_)
