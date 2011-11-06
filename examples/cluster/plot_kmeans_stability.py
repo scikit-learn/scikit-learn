@@ -65,16 +65,12 @@ fig = pl.figure()
 plots = []
 legends = []
 
-minibatch_params = {
-    'max_no_improvement': 3,
-    'batch_size': 100,
-}
-
 cases = [
-   (KMeans, 'k-means++', {}),
-   (KMeans, 'random', {}),
-   (MiniBatchKMeans, 'k-means++', minibatch_params),
-   (MiniBatchKMeans, 'random', minibatch_params),
+    (KMeans, 'k-means++', {}),
+    (KMeans, 'random', {}),
+    (MiniBatchKMeans, 'k-means++', {'max_no_improvement': 3, 'n_reinit': 0}),
+    (MiniBatchKMeans, 'random', {'max_no_improvement': 3, 'n_reinit': 0}),
+    (MiniBatchKMeans, 'random', {'max_no_improvement': 3, 'n_reinit': 2}),
 ]
 
 for factory, init, params in cases:
@@ -95,13 +91,18 @@ for factory, init, params in cases:
 
     plots.append(
         pl.errorbar(n_init_range, inertia.mean(axis=1), inertia.std(axis=1)))
-    legends.append("%s with %s init" % (factory.__name__, init))
+    n_reinit = params.get('n_reinit')
+    if n_reinit is not None:
+        legends.append("%s with %s init and %d reinit" % (
+            factory.__name__, init, n_reinit))
+    else:
+        legends.append("%s with %s init" % (factory.__name__, init))
 
 
 pl.xlabel('n_init')
 pl.ylabel('inertia')
 pl.legend(plots, legends)
-pl.title("Mean and Std deviation inertia for various k-means init")
+pl.title("Mean inertia for various k-means init accross %d runs" % n_runs)
 
 # Part 2: qualitative visual inspection of the convergence
 

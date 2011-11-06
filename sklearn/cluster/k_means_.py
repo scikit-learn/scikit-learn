@@ -274,7 +274,7 @@ def _squared_norms(X):
         return (X ** 2).sum(axis=1)
 
 
-def _labels_inertia(X, x_squared_norms, centers):
+def _labels_inertia(X, x_squared_norms, centers, distances=None):
     """E step of the K-means EM algorithm
 
     Compute the labels and the inertia of the given samples and centers
@@ -289,7 +289,10 @@ def _labels_inertia(X, x_squared_norms, centers):
         computations.
 
     centers: float64 array, shape (k, n_features)
-        The cluster centers
+        The cluster centers.
+
+    distances: float64 array, shape (k, n_samples)
+        Distances for each sample to its closest center.
 
     Returns
     -------
@@ -595,7 +598,8 @@ class KMeans(BaseEstimator):
 
 
 def _mini_batch_step(X, x_squared_norms, centers, counts,
-                     old_center_buffer, compute_squared_diff):
+                     old_center_buffer, compute_squared_diff,
+                     distances=None):
     """Incremental update of the centers for the Minibatch K-Means algorithm
 
     Parameters
@@ -613,9 +617,14 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
     counts: array, shape (k,)
          The vector in which we keep track of the numbers of elements in a
          cluster. This array is MODIFIED IN PLACE
+
+    distances: array, dtype float64, shape (n_samples), optional
+        If not None, should be a pre-allocated array that will be used to store
+        the distances of each sample to it's closest center.
     """
     # Perform label assignement to nearest centers
-    nearest_center, inertia = _labels_inertia(X, x_squared_norms, centers)
+    nearest_center, inertia = _labels_inertia(X, x_squared_norms, centers,
+                                              distances=distances)
 
     # implementation for the sparse CSR reprensation completely written in
     # cython
@@ -814,7 +823,7 @@ class MiniBatchKMeans(KMeans):
     def __init__(self, k=8, init='k-means++', max_iter=100,
                  batch_size=100, verbose=0, compute_labels=True,
                  random_state=None, tol=0.0, max_no_improvement=10,
-                 init_size=None, n_init=1, chunk_size=None):
+                 init_size=None, n_init=1, n_reinit=2, chunk_size=None):
 
         super(MiniBatchKMeans, self).__init__(k=k, init=init,
               max_iter=max_iter, verbose=verbose, random_state=random_state,
@@ -827,6 +836,7 @@ class MiniBatchKMeans(KMeans):
             batch_size = chunk_size
         self.batch_size = batch_size
         self.compute_labels = compute_labels
+        self.n_reinit = n_reinit
         self.init_size = k * 100 if init_size is None else init_size
 
 
@@ -889,11 +899,9 @@ class MiniBatchKMeans(KMeans):
             n_batches = int(np.ceil(float(n_samples) / self.batch_size))
             n_iterations = int(self.max_iter * n_batches)
 
-            # Variables used to monitor the convergence
-            ewa_inertia_min = None
-
             # empty context to be used inplace by the convergence check routine
             convergence_context = {}
+            reallocation_budget = self.n_reinit
 
             for iteration_idx in xrange(n_iterations):
                 # Sample the minibatch from the full dataset
@@ -910,9 +918,45 @@ class MiniBatchKMeans(KMeans):
                     self, iteration_idx, n_iterations, tol, n_samples,
                     centers_squared_diff, batch_inertia, convergence_context,
                     verbose=self.verbose):
-                    break
+
+                    # if we can no longer reallocate bad centers, stop here
+                    if reallocation_budget < 1:
+                        break
+
+                    # reallocate bad centers to close to the most populated
+                    # centers
+                    sorted_counts_indices = counts.argsort()
+                    threshold = counts[self.k / 2] / 3
+                    should_stop = False
+                    for i, bad_idx in enumerate(sorted_counts_indices):
+                        if counts[bad_idx] >= threshold:
+                            if i == 0:
+                                # no more bad centers
+                                reallocation_budget = 0
+                                should_stop = True
+                            break
+
+                        if self.verbose:
+                            print ("Reallocating center with count %d" %
+                                   counts[bad_idx])
+
+                        good_idx = sorted_counts_indices[-(i + 1)]
+                        noise = self.random_state.normal(
+                            scale=0.001, size=(n_features,))
+                        cluster_centers[bad_idx] = cluster_centers[good_idx]
+                        cluster_centers[bad_idx] += noise
+
+                    if should_stop:
+                        break
+
+                    # reset count stastics
+                    reallocation_budget -= 1
+                    counts.fill(0)
+                    convergence_context.clear()
+
 
             # Keep only the best cluster centers accross independant inits
+            ewa_inertia_min = convergence_context.get('ewa_inertia_min')
             if (best_ewa_inertia_min is None
                 or ewa_inertia_min < best_ewa_inertia_min):
                 self.cluster_centers_ = cluster_centers
