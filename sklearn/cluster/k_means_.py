@@ -656,6 +656,72 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
     return inertia, squared_diff
 
 
+def _mini_batch_convergence(model, iteration_idx, n_iterations, tol,
+                            n_samples, centers_squared_diff, batch_inertia,
+                            context, verbose=0):
+    """Helper function to encapsulte the early stopping logic"""
+    # Normalize inertia to be able to compare values when
+    # batch_size changes
+    batch_inertia /= model.batch_size
+    centers_squared_diff /= model.batch_size
+
+    # Compute an Exponentially Weighted Average of the squared
+    # diff to monitor the convergence while discarding
+    # minibatch-local stochastic variability:
+    # https://en.wikipedia.org/wiki/Moving_average
+    ewa_diff = context.get('ewa_diff')
+    ewa_inertia = context.get('ewa_inertia')
+    if ewa_diff is None:
+        ewa_diff = centers_squared_diff
+        ewa_inertia = batch_inertia
+    else:
+        alpha = float(model.batch_size) * 2.0 / (n_samples + 1)
+        alpha = 1.0 if alpha > 1.0 else alpha
+        ewa_diff = ewa_diff * (1 - alpha) + centers_squared_diff * alpha
+        ewa_inertia = ewa_inertia * (1 - alpha) + batch_inertia * alpha
+
+    # Log progress to be able to monitor convergence
+    if verbose:
+        progress_msg = (
+            'Minibatch iteration %d/%d:'
+            'mean batch inertia: %f, ewa inertia: %f ' % (
+                iteration_idx + 1, n_iterations, batch_inertia,
+                ewa_inertia))
+        print progress_msg
+
+    # Early stopping based on absolute tolerance on squared change of
+    # centers postion (using EWA smoothing)
+    if tol > 0.0 and ewa_diff < tol:
+        if verbose:
+            print 'Converged (small centers change) at iteration %d/%d' % (
+                iteration_idx + 1, n_iterations)
+        return True
+
+    # Early stopping heuristic due to lack of improvement on smoothed inertia
+    ewa_inertia_min = context.get('ewa_inertia_min')
+    no_improvement = context.get('no_improvement', 0)
+    if (ewa_inertia_min is None or ewa_inertia < ewa_inertia_min):
+        no_improvement = 0
+        ewa_inertia_min = ewa_inertia
+    else:
+        no_improvement += 1
+
+    if (model.max_no_improvement is not None
+        and no_improvement >= model.max_no_improvement):
+        if verbose:
+            print ('Converged (lack of improvement in inertia)'
+                   ' at iteration %d/%d' % (
+                       iteration_idx + 1, n_iterations))
+        return True
+
+    # update the convergence context to maintain state accross sucessive calls:
+    context['ewa_diff'] = ewa_diff
+    context['ewa_inertia'] = ewa_inertia
+    context['ewa_inertia_min'] = ewa_inertia_min
+    context['no_improvement'] = no_improvement
+    return False
+
+
 class MiniBatchKMeans(KMeans):
     """Mini-Batch K-Means clustering
 
@@ -798,17 +864,19 @@ class MiniBatchKMeans(KMeans):
             # before wich can be expensive for high dim data: hence we allocate
             # it outside of the main loop
             old_center_buffer = np.zeros(n_features, np.double)
-            compute_squared_diff = 1
         else:
             tol = 0.0
             # no need for the center buffer if tol-based early stopping is
             # disabled
             old_center_buffer = np.zeros(0, np.double)
-            compute_squared_diff = 0
 
         best_ewa_inertia_min = None
 
         for init_idx in range(self.n_init):
+            if self.verbose:
+                print "Init %d/%d with method: %s" % (
+                    init_idx + 1, self.n_init, self.init)
+
             # Initialize the centers using only a fraction of the data as we
             # expect n_samples to be very large when using MiniBatchKMeans
             cluster_centers = _init_centroids(
@@ -823,9 +891,9 @@ class MiniBatchKMeans(KMeans):
 
             # Variables used to monitor the convergence
             ewa_inertia_min = None
-            ewa_diff = None
-            ewa_inertia = None
-            no_improvement = 0
+
+            # empty context to be used inplace by the convergence check routine
+            convergence_context = {}
 
             for iteration_idx in xrange(n_iterations):
                 # Sample the minibatch from the full dataset
@@ -833,66 +901,18 @@ class MiniBatchKMeans(KMeans):
                     0, n_samples - 1, self.batch_size)
 
                 # Perform the actual update step on the minibatch data
-                inertia, diff = _mini_batch_step(
+                batch_inertia, centers_squared_diff = _mini_batch_step(
                     X[minibatch_indices], x_squared_norms[minibatch_indices],
-                    cluster_centers, counts, old_center_buffer,
-                    compute_squared_diff)
+                    cluster_centers, counts, old_center_buffer, tol > 0.0)
 
-                # Normalize inertia to be able to compare values when
-                # batch_size changes
-                inertia /= self.batch_size
-                diff /= self.batch_size
-
-                # Compute an Exponentially Weighted Average of the squared
-                # diff to monitor the convergence while discarding
-                # minibatch-local stochastic variability:
-                # https://en.wikipedia.org/wiki/Moving_average
-                if ewa_diff is None:
-                    ewa_diff = diff
-                    ewa_inertia = inertia
-                else:
-                    alpha = float(self.batch_size) * 2.0 / (n_samples + 1)
-                    alpha = 1.0 if alpha > 1.0 else alpha
-                    ewa_diff = ewa_diff * (1 - alpha) + diff * alpha
-                    ewa_inertia = ewa_inertia * (1 - alpha) + inertia * alpha
-
-                # Log progress to be able to monitor convergence
-                if self.verbose:
-                    progress_msg = (
-                        'Minibatch iteration %d/%d:'
-                        ' mean inertia: %f, ewa inertia: %f ' % (
-                            iteration_idx + 1, n_iterations, inertia,
-                            ewa_inertia))
-                    if compute_squared_diff:
-                        progress_msg += ' mean squared diff: %f,' % diff
-                        progress_msg += ' ewa diff: %f' % ewa_diff
-                    print progress_msg
-
-                # Early stopping based on absolute tolerance on squared change of
-                # centers postion (using EWA smoothing)
-                if ewa_diff < tol:
-                    if self.verbose:
-                        print ('Converged (small centers change)'
-                               ' at iteration %d/%d' % (
-                                   iteration_idx + 1, n_iterations))
+                # Monitor the convergence and do early stopping if necessary
+                if _mini_batch_convergence(
+                    self, iteration_idx, n_iterations, tol, n_samples,
+                    centers_squared_diff, batch_inertia, convergence_context,
+                    verbose=self.verbose):
                     break
 
-                # Early stopping heuristic due to lack of improvement on EWA
-                # smoothed inertia
-                if (ewa_inertia_min is None or ewa_inertia < ewa_inertia_min):
-                    no_improvement = 0
-                    ewa_inertia_min = ewa_inertia
-                else:
-                    no_improvement += 1
-
-                if (self.max_no_improvement is not None
-                    and no_improvement >= self.max_no_improvement):
-                    if self.verbose:
-                        print ('Converged (lack of improvement in inertia)'
-                               ' at iteration %d/%d' % (
-                                   iteration_idx + 1, n_iterations))
-                    break
-
+            # Keep only the best cluster centers accross independant inits
             if (best_ewa_inertia_min is None
                 or ewa_inertia_min < best_ewa_inertia_min):
                 self.cluster_centers_ = cluster_centers
@@ -904,6 +924,7 @@ class MiniBatchKMeans(KMeans):
                 print 'Computing label assignements and total inertia'
             self.labels_, self.inertia_ = _labels_inertia(
                 X, x_squared_norms, self.cluster_centers_)
+
         return self
 
     def partial_fit(self, X, y=None):
