@@ -35,10 +35,10 @@ class LeaveOneOut(object):
     n: int
         Total number of elements
 
-    indices: boolean, optional (default False)
-        Return train/test split with integer indices or boolean mask.
-        Integer indices are useful when dealing with sparse matrices
-        that cannot be indexed by boolean masks.
+    indices: boolean, optional (default True)
+        Return train/test split as arrays of indices, rather than a boolean
+        mask array. Integer indices are required when dealing with sparse
+        matrices, since those cannot be indexed by boolean masks.
 
     Examples
     ========
@@ -112,10 +112,10 @@ class LeavePOut(object):
     p: int
         Size of the test sets
 
-    indices: boolean, optional (default False)
-        Return train/test split with integer indices or boolean mask.
-        Integer indices are useful when dealing with sparse matrices
-        that cannot be indexed by boolean masks.
+    indices: boolean, optional (default True)
+        Return train/test split as arrays of indices, rather than a boolean
+        mask array. Integer indices are required when dealing with sparse
+        matrices, since those cannot be indexed by boolean masks.
 
     Examples
     ========
@@ -188,10 +188,10 @@ class KFold(object):
     k: int
         Number of folds
 
-    indices: boolean, optional (default False)
-        Return train/test split with integer indices or boolean mask.
-        Integer indices are useful when dealing with sparse matrices
-        that cannot be indexed by boolean masks.
+    indices: boolean, optional (default True)
+        Return train/test split as arrays of indices, rather than a boolean
+        mask array. Integer indices are required when dealing with sparse
+        matrices, since those cannot be indexed by boolean masks.
 
     Examples
     --------
@@ -278,10 +278,10 @@ class StratifiedKFold(object):
     k: int
         Number of folds
 
-    indices: boolean, optional (default False)
-        Return train/test split with integer indices or boolean mask.
-        Integer indices are useful when dealing with sparse matrices
-        that cannot be indexed by boolean masks.
+    indices: boolean, optional (default True)
+        Return train/test split as arrays of indices, rather than a boolean
+        mask array. Integer indices are required when dealing with sparse
+        matrices, since those cannot be indexed by boolean masks.
 
     Examples
     --------
@@ -366,10 +366,10 @@ class LeaveOneLabelOut(object):
         Arbitrary domain-specific stratification of the data to be used
         to draw the splits.
 
-    indices: boolean, optional (default False)
-        Return train/test split with integer indices or boolean mask.
-        Integer indices are useful when dealing with sparse matrices
-        that cannot be indexed by boolean masks.
+    indices: boolean, optional (default True)
+        Return train/test split as arrays of indices, rather than a boolean
+        mask array. Integer indices are required when dealing with sparse
+        matrices, since those cannot be indexed by boolean masks.
 
     Examples
     ----------
@@ -451,10 +451,10 @@ class LeavePLabelOut(object):
     p : int
         Number of samples to leave out in the test split.
 
-    indices: boolean, optional (default False)
-        Return train/test split with integer indices or boolean mask.
-        Integer indices are useful when dealing with sparse matrices
-        that cannot be indexed by boolean masks.
+    indices: boolean, optional (default True)
+        Return train/test split as arrays of indices, rather than a boolean
+        mask array. Integer indices are required when dealing with sparse
+        matrices, since those cannot be indexed by boolean masks.
 
     Examples
     ----------
@@ -669,10 +669,10 @@ class ShuffleSplit(object):
         Should be between 0.0 and 1.0 and represent the proportion of
         the dataset to include in the test split.
 
-    indices : boolean, optional (default False)
-        Return train/test split with integer indices or boolean mask.
-        Integer indices are useful when dealing with sparse matrices
-        that cannot be indexed by boolean masks.
+    indices : boolean, optional (default True)
+        Return train/test split as arrays of indices, rather than a boolean
+        mask array. Integer indices are required when dealing with sparse
+        matrices, since those cannot be indexed by boolean masks.
 
     random_state : int or RandomState
         Pseudo-random number generator state used for random sampling.
