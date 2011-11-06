@@ -59,6 +59,7 @@ uses.
    covariance.OAS
    covariance.GraphLasso
    covariance.GraphLassoCV
+   covariance.MinCovDet
 
 .. autosummary::
    :toctree: generated/

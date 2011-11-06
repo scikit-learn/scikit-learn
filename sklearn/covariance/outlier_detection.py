@@ -15,10 +15,17 @@ covariance estimator (the Minimum Covariance Determinant).
 import numpy as np
 import  scipy as sp
 from sklearn.covariance import MinCovDet
+from sklearn.base import ClassifierMixin
 
 
-class OutlierDetection():
+class OutlierDetectionMixin(ClassifierMixin):
     """Set of methods for outliers detection with covariance estimators.
+
+    Notes
+    -----
+    Outlier detection from covariance estimation may break or not
+    perform well in high-dimensional settings. In particular, one will
+    always take care to work with n_samples > n_features ** 2.
 
     """
     def __init__(self, contamination=0.1):
@@ -32,27 +39,50 @@ class OutlierDetection():
 
         """
         self.contamination = contamination
+        self.threshold = None
 
-    def decision_function(self, X):
+    def decision_function(self, X, raw_mahalanobis=False):
         """Compute the decision function of the given observations.
 
         Parameters
         ----------
         X: array-like, shape = (n_samples, n_features)
 
+        raw_mahalanobis: bool
+          Whether or not to consider raw Mahalanobis distances as the
+          decision function. Must be False (default) for compatibility
+          with the others outlier detection tools.
+
         Returns
         -------
-        mahal_dist: array-like, shape = (n_samples, )
+        decision: array-like, shape = (n_samples, )
           The values of the decision function for each observations.
+          It is equal to the Mahalanobis distances if `raw_mahalanobis`
+          is True. By default (`raw_mahalanobis` = True), it is equal
+          to the cubic root of the shifted Mahalanobis distances (see [1]).
+          In that case, the threshold for being an outlier is 0, which
+          ensures a compatibility with other outlier detection tools
+          such as the One-Class SVM.
+
+        References
+        ----------
+        [1] Wilson, E. B., & Hilferty, M. M. (1931).
+            The distribution of chi-square.
+            Proceedings of the National Academy of Sciences of the
+            United States of America, 17, 684-688.
 
         """
-        if self.covariance_ is None:
-            raise Exception("No decision function defined. " \
-                                "Please fit some data first")
+        if self.threshold is None:
+            raise Exception("Please fit data before predicting")
         X_centered = X - self.location_
         mahal_dist = self.mahalanobis(X_centered)
+        if raw_mahalanobis:
+            decision = mahal_dist
+        else:
+            transformed_mahal_dist = mahal_dist ** 0.33
+            decision = self.threshold ** 0.33 - transformed_mahal_dist
 
-        return mahal_dist
+        return decision
 
     def predict(self, X):
         """Outlyingness of observations in X according to the fitted model.
@@ -70,20 +100,20 @@ class OutlierDetection():
           The values of the less outlying point's decision function.
 
         """
-        is_outlier = np.zeros(X.shape[0], dtype=bool)
+        if self.threshold is None:
+            raise Exception("Please fit data before predicting")
+        is_inlier = np.zeros(X.shape[0], dtype=int)
         if self.contamination is not None:
             X_centered = X - self.location_
-            values = self.decision_function(X_centered)
-            threshold = sp.stats.scoreatpercentile(
-                values, 100. * (1. - self.contamination))
-            is_outlier[values > threshold] = True
+            values = self.decision_function(X_centered, raw_mahalanobis=True)
+            is_inlier[values <= self.threshold] = 1
         else:
             raise NotImplemented("You must provide a contamination rate.")
 
-        return is_outlier, threshold
+        return is_inlier
 
 
-class EllipticData(OutlierDetection, MinCovDet):
+class EllipticEnvelop(OutlierDetectionMixin, MinCovDet):
     """An object for detecting outliers in a Gaussian distributed dataset.
 
     Attributes
@@ -105,6 +135,16 @@ class EllipticData(OutlierDetection, MinCovDet):
     `support_`: array-like, shape (n_samples,)
         A mask of the observations that have been used to compute
         the robust estimates of location and shape.
+
+    See Also
+    --------
+    EmpiricalCovariance, MinCovDet
+
+    Notes
+    -----
+    Outlier detection from covariance estimation may break or not
+    perform well in high-dimensional settings. In particular, one will
+    always take care to work with n_samples > n_features ** 2.
 
     """
     def __init__(self, store_precision=True, assume_centered=False,
@@ -150,4 +190,15 @@ class EllipticData(OutlierDetection, MinCovDet):
         MinCovDet.__init__(self, store_precision=store_precision,
                            assume_centered=assume_centered, h=h,
                            correction=correction, reweighting=reweighting)
-        OutlierDetection.__init__(self, contamination=contamination)
+        OutlierDetectionMixin.__init__(self, contamination=contamination)
+
+    def fit(self, X):
+        """
+        """
+        MinCovDet.fit(self, X)
+        X_centered = X - self.location_
+        values = self.mahalanobis(X_centered)
+        self.threshold = sp.stats.scoreatpercentile(
+            values, 100. * (1. - self.contamination))
+
+        return self

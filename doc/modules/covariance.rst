@@ -16,9 +16,8 @@ has a large influence on the estimation's quality. The
 an accurate estimation of a population's covariance matrix under
 various settings.
 
-The package does not include robust tools yet, so we assume that the
-data sets do not contain any outlying data. We also assume that the
-observations are independent and identically distributed (i.i.d.).
+We assume that the observations are independent and identically
+distributed (i.i.d.).
 
 
 Empirical covariance
@@ -241,3 +240,70 @@ paper. It is the same algorithm as in the R `glasso` package.
      Biostatistics 9, pp 432, 2008
 
 
+Robust Covariance Estimation
+============================
+
+Real data set are often subjects to measurement or recording
+errors. Regular but uncomon observations may also appear for a variety
+of reason. Every observation which is very uncomon is called an
+outlier.
+The empirical covariance estimator and the shrunk covariance
+estimators presented above are very sensitive to the presence of
+outlying observations in the data. Therefore, one should use robust
+covariance estimators to estimate the covariance of its real data
+sets. Alternatively, robust covariance estimators can be used to
+perform outlier detection and discard/downweight some observations
+according to further processing of the data.
+
+The `sklearn.covariance` package implements a robust estimator of covariance,
+the Minimum Covariance Determinant [3].
+
+
+Minimum Covariance Determinant
+------------------------------
+
+The Minimum Covariance Determinant estimator is a robust estimator of
+a data set's covariance introduced by P.J.Rousseuw in [3].  The idea
+is to find a given proportion (h) of "good" observations which are not
+outliers and compute their empirical covariance matrix.  This
+empirical covariance matrix is then rescaled to compensate the
+performed selection of observations ("consistency step").  Having
+computed the Minimum Covariance Determinant estimator, one can give
+weights to observations according to their Mahalanobis distance,
+leading the a reweighted estimate of the covariance matrix of the data
+set ("reweighting step").
+
+Rousseuw and Van Driessen [4] developed the FastMCD algorithm in order
+to compute the Minimum Covariance Determinant. This algorithm is used
+in sklearn when fitting an MCD object to data. The FastMCD algorithm also
+computes a robust estimate of the data set location at the same time.
+
+Raw estimates can be accessed as `raw_location_` and `raw_covariance_`
+attrributes of a :class:`MinCovDet` robust covariance estimator object
+
+[3] P. J. Rousseeuw. Least median of squares regression.
+    J. Am Stat Ass, 79:871, 1984.
+[4] A Fast Algorithm for the Minimum Covariance Determinant Estimator,
+    1999, American Statistical Association and the American Society
+    for Quality, TECHNOMETRICS.
+
+.. topic:: Examples:
+
+   * See :ref:`example_covariance_plot_robust_vs_empirical_covariance.py` for
+     an example on how to fit a :class:`MinCovDet` object to data and see how
+     the estimate remains accurate despite the presence of outliers.
+
+   * See :ref:`example_covariance_plot_mahalanobis_distances.py` to 
+     visualize the difference between :class:`EmpiricalCovariance` and
+     :class:`MinCovDet` covariance estimators in terms of Mahalanobis distance
+     (so we get a better estimate of the precision matrix too).
+
+.. figure:: ../auto_examples/covariance/images/plot_robust_vs_empirical_covariance_1.png
+   :target: ../auto_examples/covariance/plot_robust_vs_empirical_covariance.html
+   :align: center
+   :scale: 75%
+
+.. figure:: ../auto_examples/covariance/images/plot_mahalanobis_distances_1.png
+   :target: ../auto_examples/covariance/plot_mahalanobis_distances.html
+   :align: center
+   :scale: 75%
