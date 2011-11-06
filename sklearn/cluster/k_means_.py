@@ -725,11 +725,12 @@ class MiniBatchKMeans(KMeans):
 
     def __init__(self, k=8, init='random', max_iter=100,
                  chunk_size=1000, verbose=0, compute_labels=True,
-                 random_state=None, tol=0.0, max_no_improvement=10):
+                 random_state=None, tol=0.0, max_no_improvement=10,
+                 n_init=1):
 
         super(MiniBatchKMeans, self).__init__(k=k, init=init,
               max_iter=max_iter, verbose=verbose, random_state=random_state,
-              tol=tol)
+              tol=tol, n_init=n_init)
 
         self.max_no_improvement = max_no_improvement
         self.chunk_size = chunk_size
@@ -757,10 +758,6 @@ class MiniBatchKMeans(KMeans):
 
         x_squared_norms = _squared_norms(X)
 
-        self.cluster_centers_ = _init_centroids(
-            X, self.k, self.init, random_state=self.random_state,
-            x_squared_norms=x_squared_norms)
-
         if self.tol > 0.0:
             if not sp.issparse(X):
                 mean_variance = np.mean(np.var(X, 0))
@@ -781,84 +778,99 @@ class MiniBatchKMeans(KMeans):
             old_center_buffer = np.zeros(0, np.double)
             compute_squared_diff = 0
 
-        # TODO: initialize the counts after random assignement here
-        self.counts = np.zeros(self.k, dtype=np.int32)
+        best_ewa_inertia_min = None
 
-        n_batches = int(np.ceil(float(n_samples) / self.chunk_size))
-        n_iterations = int(self.max_iter * n_batches)
+        for init_idx in range(self.n_init):
+            # Initialize the centers
+            cluster_centers_ = _init_centroids(
+                X, self.k, self.init, random_state=self.random_state,
+                x_squared_norms=x_squared_norms)
 
-        # perform the random permutation
-        ewa_inertia_min = None
-        ewa_diff = None
-        ewa_inertia = None
-        no_improvement = 0
+            self.counts = np.zeros(self.k, dtype=np.int32)
 
-        for i in xrange(n_iterations):
-            # Sample the minibatch from the full dataset
-            minibatch_indices = self.random_state.random_integers(
-                0, n_samples - 1, self.chunk_size)
+            n_batches = int(np.ceil(float(n_samples) / self.chunk_size))
+            n_iterations = int(self.max_iter * n_batches)
 
-            # Perform the actual update step on the minibatch data
-            inertia, diff = _mini_batch_step(
-                X[minibatch_indices], x_squared_norms[minibatch_indices],
-                self.cluster_centers_, self.counts, old_center_buffer,
-                compute_squared_diff)
+            # Variables used to monitor the convergence
+            ewa_inertia_min = None
+            ewa_diff = None
+            ewa_inertia = None
+            no_improvement = 0
 
-            # Normalize inertia to be able to compare values when chunk_size
-            # changes
-            inertia /= self.chunk_size
-            diff /= self.chunk_size
+            for iteration_idx in xrange(n_iterations):
+                # Sample the minibatch from the full dataset
+                minibatch_indices = self.random_state.random_integers(
+                    0, n_samples - 1, self.chunk_size)
 
-            # Compute an Exponentially Weighted Average of the squared diff to
-            # monitor the convergence while discarding minibatch-local
-            # stochastic variability:
-            # https://en.wikipedia.org/wiki/Moving_average
-            if ewa_diff is None:
-                ewa_diff = diff
-                ewa_inertia = inertia
-            else:
-                alpha = float(self.chunk_size) * 2.0 / (n_samples + 1)
-                alpha = 1.0 if alpha > 1.0 else alpha
-                ewa_diff = ewa_diff * (1 - alpha) + diff * alpha
-                ewa_inertia = ewa_inertia * (1 - alpha) + inertia * alpha
+                # Perform the actual update step on the minibatch data
+                inertia, diff = _mini_batch_step(
+                    X[minibatch_indices], x_squared_norms[minibatch_indices],
+                    cluster_centers_, self.counts, old_center_buffer,
+                    compute_squared_diff)
 
-            # Log progress to be able to monitor convergence
-            if self.verbose:
-                progress_msg = (
-                    'Minibatch iteration %d/%d:'
-                    ' mean inertia: %f, ewa inertia: %f ' % (
-                        i + 1, n_iterations, inertia, ewa_inertia))
-                if compute_squared_diff:
-                    progress_msg += ' mean squared diff: %f, ewa diff: %f' % (
-                           diff, ewa_diff)
-                print progress_msg
+                # Normalize inertia to be able to compare values when chunk_size
+                # changes
+                inertia /= self.chunk_size
+                diff /= self.chunk_size
 
-            # Early stopping based on absolute tolerance on squared change of
-            # centers postion (using EWA smoothing)
-            if ewa_diff < tol:
+                # Compute an Exponentially Weighted Average of the squared
+                # diff to monitor the convergence while discarding
+                # minibatch-local stochastic variability:
+                # https://en.wikipedia.org/wiki/Moving_average
+                if ewa_diff is None:
+                    ewa_diff = diff
+                    ewa_inertia = inertia
+                else:
+                    alpha = float(self.chunk_size) * 2.0 / (n_samples + 1)
+                    alpha = 1.0 if alpha > 1.0 else alpha
+                    ewa_diff = ewa_diff * (1 - alpha) + diff * alpha
+                    ewa_inertia = ewa_inertia * (1 - alpha) + inertia * alpha
+
+                # Log progress to be able to monitor convergence
                 if self.verbose:
-                    print ('Converged (small centers change)'
-                           ' at iteration %d/%d' % (i + 1, n_iterations))
-                break
+                    progress_msg = (
+                        'Minibatch iteration %d/%d:'
+                        ' mean inertia: %f, ewa inertia: %f ' % (
+                            iteration_idx + 1, n_iterations, inertia,
+                            ewa_inertia))
+                    if compute_squared_diff:
+                        progress_msg += ' mean squared diff: %f,' % diff
+                        progress_msg += ' ewa diff: %f' % ewa_diff
+                    print progress_msg
 
-            # Early stopping heuristic due to lack of improvement on EWA
-            # smoothed inertia
-            if (ewa_inertia_min is None or ewa_inertia < ewa_inertia_min):
-                no_improvement = 0
-                ewa_inertia_min = ewa_inertia
-            else:
-                no_improvement += 1
+                # Early stopping based on absolute tolerance on squared change of
+                # centers postion (using EWA smoothing)
+                if ewa_diff < tol:
+                    if self.verbose:
+                        print ('Converged (small centers change)'
+                               ' at iteration %d/%d' % (
+                                   iteration_idx + 1, n_iterations))
+                    break
 
-            if (self.max_no_improvement is not None
-                and no_improvement >= self.max_no_improvement):
-                if self.verbose:
-                    print ('Converged (lack of improvement in inertia)'
-                           ' at iteration %d/%d' % (i + 1, n_iterations))
-                break
+                # Early stopping heuristic due to lack of improvement on EWA
+                # smoothed inertia
+                if (ewa_inertia_min is None or ewa_inertia < ewa_inertia_min):
+                    no_improvement = 0
+                    ewa_inertia_min = ewa_inertia
+                else:
+                    no_improvement += 1
+
+                if (self.max_no_improvement is not None
+                    and no_improvement >= self.max_no_improvement):
+                    if self.verbose:
+                        print ('Converged (lack of improvement in inertia)'
+                               ' at iteration %d/%d' % (
+                                   iteration_idx + 1, n_iterations))
+                    break
+
+            if (best_ewa_inertia_min is None
+                or ewa_inertia_min < best_ewa_inertia_min):
+                self.cluster_centers_ = cluster_centers_
+                best_ewa_inertia_min = ewa_inertia_min
 
         if self.compute_labels:
             if self.verbose:
-                print 'Computing label assignements and total inertia', i
+                print 'Computing label assignements and total inertia'
             self.labels_, self.inertia_ = _labels_inertia(
                 X, x_squared_norms, self.cluster_centers_)
         return self

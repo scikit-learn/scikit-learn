@@ -59,31 +59,37 @@ def make_data(random_state, n_samples_per_center, grid_size):
 
 # Batch k-means with various init
 
-experiments = []
-for init in ['k-means++', 'random']:
-    print "Evaluation of batch k-means with %s init" % init
+fig = pl.figure()
+plots = []
+legends = []
+
+cases = [
+   (KMeans, 'k-means++', {}),
+   (KMeans, 'random', {}),
+   (MiniBatchKMeans, 'k-means++', {'max_no_improvement': 3}),
+   (MiniBatchKMeans, 'random', {'max_no_improvement': 3}),
+]
+
+for factory, init, params in cases:
+    print "Evaluation of batch %s with %s init" % (factory.__name__, init)
     inertia = np.empty((len(n_init_range), n_runs))
 
     for run_id in range(n_runs):
         X, y = make_data(run_id, n_samples_per_center, grid_size)
         for i, n_init in enumerate(n_init_range):
-            km = KMeans(k=n_clusters,
-                        init=init,
-                        random_state=run_id,
-                        verbose=0,
-                        n_init=n_init).fit(X)
+            km = factory(k=n_clusters,
+                         init=init,
+                         random_state=run_id,
+                         n_init=n_init,
+                         **params).fit(X)
             inertia[i, run_id] = km.inertia_
             print "Inertia for n_init=%02d, run_id=%d: %0.3f" % (
                 n_init, run_id, km.inertia_)
-    experiments.append((init, inertia))
 
-fig = pl.figure()
-plots = []
-legends = []
-for init, inertia in experiments:
     plots.append(
         pl.errorbar(n_init_range, inertia.mean(axis=1), inertia.std(axis=1)))
-    legends.append("k-means with %s init" % init)
+    legends.append("%s with %s init" % (factory.__name__, init))
+
 
 pl.xlabel('n_init')
 pl.ylabel('inertia')
