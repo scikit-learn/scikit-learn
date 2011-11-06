@@ -39,18 +39,20 @@ n_init_range = np.array([1, 5, 10, 15])
 # Datasets generation parameters
 n_samples_per_center = 100
 grid_size = 3
+scale = 0.1
 n_clusters = grid_size ** 2
 
 
-def make_data(random_state, n_samples_per_center, grid_size):
+def make_data(random_state, n_samples_per_center, grid_size, scale):
     random_state = check_random_state(random_state)
     centers = np.array([[i, j]
                         for i in range(grid_size)
                         for j in range(grid_size)])
     n_clusters_true, n_featues = centers.shape
-    n_samples_per_center = 100
 
-    noise = random_state.normal(scale=0.1, size=(n_samples_per_center, 2))
+    noise = random_state.normal(
+        scale=scale, size=(n_samples_per_center, centers.shape[1]))
+
     X = np.concatenate([c + noise for c in centers])
     y = np.concatenate([[i] * n_samples_per_center
                         for i in range(n_clusters_true)])
@@ -80,7 +82,7 @@ for factory, init, params in cases:
     inertia = np.empty((len(n_init_range), n_runs))
 
     for run_id in range(n_runs):
-        X, y = make_data(run_id, n_samples_per_center, grid_size)
+        X, y = make_data(run_id, n_samples_per_center, grid_size, scale)
         for i, n_init in enumerate(n_init_range):
             km = factory(k=n_clusters,
                          init=init,
@@ -103,8 +105,9 @@ pl.title("Mean and Std deviation inertia for various k-means init")
 
 # Part 2: qualitative visual inspection of the convergence
 
-X, y = make_data(random_state, n_samples_per_center, grid_size)
-km = MiniBatchKMeans(k=n_clusters, random_state=random_state).fit(X)
+X, y = make_data(random_state, n_samples_per_center, grid_size, scale)
+km = MiniBatchKMeans(k=n_clusters, init='random', n_init=1,
+                     random_state=random_state).fit(X)
 
 fig = pl.figure()
 for k in range(n_clusters):
@@ -114,6 +117,6 @@ for k in range(n_clusters):
     cluster_center = km.cluster_centers_[k]
     pl.plot(cluster_center[0], cluster_center[1], 'o',
             markerfacecolor=color, markeredgecolor='k', markersize=6)
-    pl.title("Example cluser allocation with a single random init")
+    pl.title("Example cluster allocation with a single random init")
 
 pl.show()

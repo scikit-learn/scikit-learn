@@ -29,11 +29,11 @@ from . import _k_means
 
 
 def k_init(X, k, n_local_trials=None, random_state=None, x_squared_norms=None):
-    """Init k seeds according to kmeans++
+    """Init k seeds according to k-means++
 
     Parameters
     -----------
-    X: array, shape (n_samples, n_features)
+    X: array or sparse matrix, shape (n_samples, n_features)
         The data to pick seeds for. To avoid memory copy, the input data
         should be double precision (dtype=np.float64).
 
@@ -56,7 +56,7 @@ def k_init(X, k, n_local_trials=None, random_state=None, x_squared_norms=None):
         hands already to avoid it being recomputed here. Default: None
 
     Notes
-    ------
+    -----
     Selects initial cluster centers for k-mean clustering in a smart way
     to speed up convergence. see: Arthur, D. and Vassilvitskii, S.
     "k-means++: the advantages of careful seeding". ACM-SIAM symposium
@@ -79,7 +79,10 @@ def k_init(X, k, n_local_trials=None, random_state=None, x_squared_norms=None):
 
     # Pick first center randomly
     center_id = random_state.randint(n_samples)
-    centers[0] = np.atleast_2d(X[center_id])
+    if sp.issparse(X):
+        centers[0] = X[center_id].toarray()
+    else:
+        centers[0] = X[center_id]
 
     # Initialize list of closest distances and calculate current potential
     if x_squared_norms is None:
@@ -116,7 +119,10 @@ def k_init(X, k, n_local_trials=None, random_state=None, x_squared_norms=None):
                 best_dist_sq = new_dist_sq
 
         # Permanently add best center candidate found in local tries
-        centers[c] = X[best_candidate]
+        if sp.issparse(X):
+            centers[c] = X[best_candidate].toarray()
+        else:
+            centers[c] = X[best_candidate]
         current_pot = best_pot
         closest_dist_sq = best_dist_sq
 
@@ -388,8 +394,6 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
         n_samples = X.shape[0]
 
     if init == 'k-means++':
-        if sp.issparse(X):
-            raise ValueError("Init method 'k-means++' only for dense X.")
         centers = k_init(X, k,
                         random_state=random_state,
                         x_squared_norms=x_squared_norms)
@@ -687,16 +691,16 @@ class MiniBatchKMeans(KMeans):
     batch_size: int, optional, default: 100
         Size of the mini batches.
 
-    init_size: int, optional, default: k * 50
+    init_size: int, optional, default: k * 100
         Size of the random sample of the dataset passed to init method
         when calling fit.
 
     init : {'k-means++', 'random' or an ndarray}
-        Method for initialization, defaults to 'random':
+        Method for initialization, defaults to 'k-means++':
 
         'k-means++' : selects initial cluster centers for k-mean
         clustering in a smart way to speed up convergence. See section
-        Notes in k_init for more details. Only for dense `X`.
+        Notes in k_init for more details.
 
         'random': choose k observations (rows) at random from data for
         the initial centroids.
@@ -741,7 +745,7 @@ class MiniBatchKMeans(KMeans):
     http://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf
     """
 
-    def __init__(self, k=8, init='random', max_iter=100,
+    def __init__(self, k=8, init='k-means++', max_iter=100,
                  batch_size=100, verbose=0, compute_labels=True,
                  random_state=None, tol=0.0, max_no_improvement=10,
                  init_size=None, n_init=1, chunk_size=None):
@@ -757,7 +761,7 @@ class MiniBatchKMeans(KMeans):
             batch_size = chunk_size
         self.batch_size = batch_size
         self.compute_labels = compute_labels
-        self.init_size = k * 50 if init_size is None else init_size
+        self.init_size = k * 100 if init_size is None else init_size
 
 
     def fit(self, X, y=None):

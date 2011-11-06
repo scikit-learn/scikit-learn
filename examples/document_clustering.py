@@ -64,10 +64,10 @@ print "n_samples: %d, n_features: %d" % X.shape
 print
 
 ###############################################################################
-# Now sparse MiniBatchKmeans
+# Sparse MiniBatchKmeans
 
-mbkm = MiniBatchKMeans(init="random", k=true_k, max_iter=10, chunk_size=1000,
-                       verbose=0)
+mbkm = MiniBatchKMeans(k=true_k, init='k-means++', n_init=10,
+                       batch_size=1000, verbose=0)
 print "Clustering sparse data with %s" % mbkm
 t0 = time()
 mbkm.fit(X)

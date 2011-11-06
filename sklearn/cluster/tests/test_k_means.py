@@ -169,14 +169,16 @@ def test_k_means_perfect_init():
 
 def test_mb_k_means_plus_plus_init_dense_array():
     mb_k_means = MiniBatchKMeans(init="k-means++", k=n_clusters,
-                                random_state=42)
+                                 random_state=42)
     mb_k_means.fit(X)
     _check_fitted_model(mb_k_means)
 
 
-def test_mb_k_means_plus_plus_init_sparse_csr_invalid():
-    mb_k_means = MiniBatchKMeans(init="k-means++", k=n_clusters)
-    assert_raises(ValueError, mb_k_means.fit, X_csr)
+def test_mb_k_means_plus_plus_init_sparse_matrix():
+    mb_k_means = MiniBatchKMeans(init="k-means++", k=n_clusters,
+                                 random_state=42)
+    mb_k_means.fit(X_csr)
+    _check_fitted_model(mb_k_means)
 
 
 def test_minibatch_k_means_random_init_dense_array():
@@ -274,10 +276,25 @@ def test_predict_minibatch_dense_input():
     assert_array_equal(mb_k_means.predict(X), mb_k_means.labels_)
 
 
-def test_predict_minibatch_sparse_input():
-    # TODO: make MiniBatchKMeans more stables using either restarts or
-    # multi-init
-    mb_k_means = MiniBatchKMeans(k=n_clusters, random_state=40).fit(X_csr)
+def test_predict_minibatch_kmeanspp_init_sparse_input():
+    mb_k_means = MiniBatchKMeans(k=n_clusters, init='k-means++',
+                                 n_init=10).fit(X_csr)
+
+    # sanity check: re-predict labeling for training set samples
+    assert_array_equal(mb_k_means.predict(X_csr), mb_k_means.labels_)
+
+    # sanity check: predict centroid labels
+    pred = mb_k_means.predict(mb_k_means.cluster_centers_)
+    assert_array_equal(pred, np.arange(n_clusters))
+
+    # check that models trained on sparse input also works for dense input at
+    # predict time
+    assert_array_equal(mb_k_means.predict(X), mb_k_means.labels_)
+
+
+def test_predict_minibatch_random_init_sparse_input():
+    mb_k_means = MiniBatchKMeans(k=n_clusters, init='random',
+                                 n_init=10).fit(X_csr)
 
     # sanity check: re-predict labeling for training set samples
     assert_array_equal(mb_k_means.predict(X_csr), mb_k_means.labels_)
