@@ -757,7 +757,7 @@ class MiniBatchKMeans(KMeans):
         self.max_no_improvement = max_no_improvement
         if chunk_size is not None:
             warnings.warn(
-                "chunk_size is deprecated, use batch_size instead")
+                "chunk_size is deprecated in 0.10, use batch_size instead")
             batch_size = chunk_size
         self.batch_size = batch_size
         self.compute_labels = compute_labels
