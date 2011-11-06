@@ -13,7 +13,7 @@ from sklearn.grid_search import GridSearchCV
 from sklearn.datasets.samples_generator import make_classification
 from sklearn.svm import LinearSVC
 from sklearn.svm.sparse import LinearSVC as SparseLinearSVC
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score, precision_score
 
 
 class MockClassifier(BaseEstimator):
@@ -101,3 +101,31 @@ def test_grid_search_sparse_score_func():
 
     assert_array_equal(y_pred, y_pred2)
     assert_equal(C, C2)
+
+
+class BrokenClassifier(BaseEstimator):
+    """Broken classifier that cannot be fit twice"""
+
+    def __init__(self, parameter=None):
+        self.parameter = parameter
+
+    def fit(self, X, y):
+        assert not hasattr(self, 'has_been_fit_')
+        self.has_been_fit_ = True
+
+    def predict(self, X):
+        return np.zeros(X.shape[0])
+
+
+def test_refit():
+    """Regression test for bug in refitting
+
+    Simulates re-fitting a broken estimator; this used to break with
+    sparse SVMs.
+    """
+    X = np.arange(100).reshape(10, 10)
+    y = np.array([0] * 5 + [1] * 5)
+
+    clf = GridSearchCV(BrokenClassifier(), [{'parameter': [0, 1]}],
+                       score_func=precision_score, refit=True)
+    clf.fit(X, y)
