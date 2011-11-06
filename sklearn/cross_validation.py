@@ -9,6 +9,7 @@ from math import ceil
 import operator
 
 import numpy as np
+import scipy.sparse as sp
 
 from .base import is_classifier, clone
 from .utils import check_arrays, check_random_state
@@ -54,9 +55,9 @@ class LeaveOneOut(object):
     ...    X_train, X_test = X[train_index], X[test_index]
     ...    y_train, y_test = y[train_index], y[test_index]
     ...    print X_train, X_test, y_train, y_test
-    TRAIN: [False  True] TEST: [ True False]
+    TRAIN: [1] TEST: [0]
     [[3 4]] [[1 2]] [2] [1]
-    TRAIN: [ True False] TEST: [False  True]
+    TRAIN: [0] TEST: [1]
     [[1 2]] [[3 4]] [1] [2]
 
     See also
@@ -65,7 +66,7 @@ class LeaveOneOut(object):
     domain-specific stratification of the dataset.
     """
 
-    def __init__(self, n, indices=False):
+    def __init__(self, n, indices=True):
         self.n = n
         self.indices = indices
 
@@ -130,15 +131,15 @@ class LeavePOut(object):
     ...    print "TRAIN:", train_index, "TEST:", test_index
     ...    X_train, X_test = X[train_index], X[test_index]
     ...    y_train, y_test = y[train_index], y[test_index]
-    TRAIN: [False False  True  True] TEST: [ True  True False False]
-    TRAIN: [False  True False  True] TEST: [ True False  True False]
-    TRAIN: [False  True  True False] TEST: [ True False False  True]
-    TRAIN: [ True False False  True] TEST: [False  True  True False]
-    TRAIN: [ True False  True False] TEST: [False  True False  True]
-    TRAIN: [ True  True False False] TEST: [False False  True  True]
+    TRAIN: [2 3] TEST: [0 1]
+    TRAIN: [1 3] TEST: [0 2]
+    TRAIN: [1 2] TEST: [0 3]
+    TRAIN: [0 3] TEST: [1 2]
+    TRAIN: [0 2] TEST: [1 3]
+    TRAIN: [0 1] TEST: [2 3]
     """
 
-    def __init__(self, n, p, indices=False):
+    def __init__(self, n, p, indices=True):
         self.n = n
         self.p = p
         self.indices = indices
@@ -206,8 +207,8 @@ class KFold(object):
     ...    print "TRAIN:", train_index, "TEST:", test_index
     ...    X_train, X_test = X[train_index], X[test_index]
     ...    y_train, y_test = y[train_index], y[test_index]
-    TRAIN: [False False  True  True] TEST: [ True  True False False]
-    TRAIN: [ True  True False False] TEST: [False False  True  True]
+    TRAIN: [2 3] TEST: [0 1]
+    TRAIN: [0 1] TEST: [2 3]
 
     Notes
     -----
@@ -221,7 +222,7 @@ class KFold(object):
     classification tasks).
     """
 
-    def __init__(self, n, k, indices=False):
+    def __init__(self, n, k, indices=True):
         assert k > 0, ValueError('Cannot have number of folds k below 1.')
         assert k <= n, ValueError('Cannot have number of folds k=%d, '
                                   'greater than the number '
@@ -296,8 +297,8 @@ class StratifiedKFold(object):
     ...    print "TRAIN:", train_index, "TEST:", test_index
     ...    X_train, X_test = X[train_index], X[test_index]
     ...    y_train, y_test = y[train_index], y[test_index]
-    TRAIN: [False  True False  True] TEST: [ True False  True False]
-    TRAIN: [ True False  True False] TEST: [False  True False  True]
+    TRAIN: [1 3] TEST: [0 2]
+    TRAIN: [0 2] TEST: [1 3]
 
     Notes
     -----
@@ -305,7 +306,7 @@ class StratifiedKFold(object):
     complementary.
     """
 
-    def __init__(self, y, k, indices=False):
+    def __init__(self, y, k, indices=True):
         y = np.asarray(y)
         n = y.shape[0]
         assert k > 0, ValueError('Cannot have number of folds k below 1.')
@@ -386,18 +387,18 @@ class LeaveOneLabelOut(object):
     ...    X_train, X_test = X[train_index], X[test_index]
     ...    y_train, y_test = y[train_index], y[test_index]
     ...    print X_train, X_test, y_train, y_test
-    TRAIN: [False False  True  True] TEST: [ True  True False False]
+    TRAIN: [2 3] TEST: [0 1]
     [[5 6]
      [7 8]] [[1 2]
      [3 4]] [1 2] [1 2]
-    TRAIN: [ True  True False False] TEST: [False False  True  True]
+    TRAIN: [0 1] TEST: [2 3]
     [[1 2]
      [3 4]] [[5 6]
      [7 8]] [1 2] [1 2]
 
     """
 
-    def __init__(self, labels, indices=False):
+    def __init__(self, labels, indices=True):
         self.labels = labels
         self.n_unique_labels = unique(labels).size
         self.indices = indices
@@ -471,18 +472,18 @@ class LeavePLabelOut(object):
     ...    X_train, X_test = X[train_index], X[test_index]
     ...    y_train, y_test = y[train_index], y[test_index]
     ...    print X_train, X_test, y_train, y_test
-    TRAIN: [False False  True] TEST: [ True  True False]
+    TRAIN: [2] TEST: [0 1]
     [[5 6]] [[1 2]
      [3 4]] [1] [1 2]
-    TRAIN: [False  True False] TEST: [ True False  True]
+    TRAIN: [1] TEST: [0 2]
     [[3 4]] [[1 2]
      [5 6]] [2] [1 1]
-    TRAIN: [ True False False] TEST: [False  True  True]
+    TRAIN: [0] TEST: [1 2]
     [[1 2]] [[3 4]
      [5 6]] [1] [2 1]
     """
 
-    def __init__(self, labels, p, indices=False):
+    def __init__(self, labels, p, indices=True):
         self.labels = labels
         self.unique_labels = unique(self.labels)
         self.n_unique_labels = self.unique_labels.size
@@ -587,6 +588,9 @@ class Bootstrap(object):
     ShuffleSplit: cross validation using random permutations.
     """
 
+    # Static marker to be able to introspect the CV type
+    indices = True
+
     def __init__(self, n, n_bootstraps=3, n_train=0.5, n_test=None,
                  random_state=None):
         self.n = n
@@ -682,13 +686,13 @@ class ShuffleSplit(object):
     3
     >>> print rs
     ... # doctest: +ELLIPSIS
-    ShuffleSplit(4, n_iterations=3, test_fraction=0.25, indices=False, ...)
+    ShuffleSplit(4, n_iterations=3, test_fraction=0.25, indices=True, ...)
     >>> for train_index, test_index in rs:
     ...    print "TRAIN:", train_index, "TEST:", test_index
     ...
-    TRAIN: [False  True  True  True] TEST: [ True False False False]
-    TRAIN: [ True  True  True False] TEST: [False False False  True]
-    TRAIN: [ True False  True  True] TEST: [False  True False False]
+    TRAIN: [2 3 1] TEST: [0]
+    TRAIN: [0 2 1] TEST: [3]
+    TRAIN: [3 0 2] TEST: [1]
 
     See also
     --------
@@ -696,7 +700,7 @@ class ShuffleSplit(object):
     """
 
     def __init__(self, n, n_iterations=10, test_fraction=0.1,
-                 indices=False, random_state=None):
+                 indices=True, random_state=None):
         self.n = n
         self.n_iterations = n_iterations
         self.test_fraction = test_fraction
@@ -846,10 +850,10 @@ def check_cv(cv, X=None, y=None, classifier=False):
         whether the task is a classification task, in which case
         stratified KFold will be used.
     """
+    is_sparse = sp.issparse(X)
     if cv is None:
         cv = 3
     if operator.isNumberType(cv):
-        is_sparse = hasattr(X, 'tocsr')
         if classifier:
             cv = StratifiedKFold(y, cv, indices=is_sparse)
         else:
@@ -858,6 +862,9 @@ def check_cv(cv, X=None, y=None, classifier=False):
             else:
                 n_samples = X.shape[0]
             cv = KFold(n_samples, cv, indices=is_sparse)
+    if is_sparse and not getattr(cv, "indices", True):
+        raise ValueError("Sparse data require indices-based cross validation"
+                         " generator, got: %r", cv)
     return cv
 
 

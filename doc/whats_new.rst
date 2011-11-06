@@ -61,6 +61,10 @@ version 0.9:
   - The permutation_test_score function now behaves the same way as
     cross_val_score (i.e. uses the mean score across the folds.)
 
+  - Cross Validation generators now use integer indices (``indices=True``)
+    by default instead of boolean masks. This make it more intuitive to
+    use with sparse matrix data.
+
 
 .. _changes_0_9:
 
