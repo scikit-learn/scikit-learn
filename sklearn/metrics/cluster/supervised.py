@@ -670,22 +670,25 @@ def expected_mutual_information(contingency, n_samples):
     # term2 uses N * nij
     log_Nnij = np.log(N * nijs)
     # term3 uses these factors
-    gln_a = gammaln(a)
-    gln_b = gammaln(b)
-    gln_Na = gammaln(N-a)
-    gln_Nb = gammaln(N-b)
-    gln_N = gammaln(N)
-    gln_nij = gammaln(nijs)
+    gln_a = gammaln(a+1)
+    gln_b = gammaln(b+1)
+    gln_Na = gammaln(N-a+1)
+    gln_Nb = gammaln(N-b+1)
+    gln_N = gammaln(N+1)
+    gln_nij = gammaln(nijs+1)
+    # start and end values for nij terms
+    start = np.array([[v - N + w for w in b] for v in a], dtype='int')
+    start = np.maximum(start, 1)
+    end = np.minimum(np.resize(a, (C, R)).T, np.resize(b, (R, C))) + 1
     emi = 0
     for i in range(R):
         for j in range(C):
-            start = int(max(a[i] + b[j] - N, 1))
-            end = int(min(a[i], b[j]) + 1)
-            for nij in range(start, end):
+            for nij in range(start[i][j], end[i][j]):
                 term2 = log_Nnij[nij] -  log_ab_outer[i][j]
                 gln = (gln_a[i] + gln_b[j] + gln_Na[i] + gln_Nb[j]
-                       - gln_N - gln_nij[nij] - gammaln(a[i] - nij) - gammaln(b[j] - nij)
-                       - gammaln(N - a[i] - b[j] + nij))
+                       - gln_N - gln_nij[nij] - gammaln(a[i] - nij+1)
+                       - gammaln(b[j] - nij+1)
+                       - gammaln(N - a[i] - b[j] + nij+1))
                 term3 = np.exp(gln)
                 # Add the product of all terms
                 emi += (term1[nij] * term2 * term3)
