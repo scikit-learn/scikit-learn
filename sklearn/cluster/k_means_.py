@@ -343,7 +343,8 @@ def _centers(X, labels, n_clusters):
     return centers
 
 
-def _init_centroids(X, k, init, random_state=None, x_squared_norms=None):
+def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
+                    init_size=None):
     """Compute the initial centroids
 
     Parameters
@@ -366,12 +367,23 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None):
         Squared euclidean norm of each data point. Pass it if you have it at
         hands already to avoid it being recomputed here. Default: None
 
+    init_size : int, optional
+        Number of samples to randomly sample for speeding up the
+        initialization (sometimes at the expense of accurracy).
+
     Returns
     -------
     centers: array, shape(k, n_features)
     """
     random_state = check_random_state(random_state)
     n_samples = X.shape[0]
+
+    if init_size is not None and init_size < n_samples:
+        init_indices = random_state.random_integers(
+                0, n_samples - 1, init_size)
+        X = X[init_indices]
+        x_squared_norms = x_squared_norms[init_indices]
+        n_samples = X.shape[0]
 
     if init == 'k-means++':
         if sp.issparse(X):
@@ -670,8 +682,12 @@ class MiniBatchKMeans(KMeans):
         To disable convergence detection based on normalized center
         change, set tol to 0.0 (default).
 
-    chunk_size: int, optional, default: 1000
-        Size of the mini batches
+    batch_size: int, optional, default: 100
+        Size of the mini batches.
+
+    init_size: int, optional, default: k * 50
+        Size of the random sample of the dataset passed to init method
+        when calling fit.
 
     init : {'k-means++', 'random' or an ndarray}
         Method for initialization, defaults to 'random':
@@ -724,17 +740,23 @@ class MiniBatchKMeans(KMeans):
     """
 
     def __init__(self, k=8, init='random', max_iter=100,
-                 chunk_size=1000, verbose=0, compute_labels=True,
+                 batch_size=100, verbose=0, compute_labels=True,
                  random_state=None, tol=0.0, max_no_improvement=10,
-                 n_init=1):
+                 init_size=None, n_init=1, chunk_size=None):
 
         super(MiniBatchKMeans, self).__init__(k=k, init=init,
               max_iter=max_iter, verbose=verbose, random_state=random_state,
               tol=tol, n_init=n_init)
 
         self.max_no_improvement = max_no_improvement
-        self.chunk_size = chunk_size
+        if chunk_size is not None:
+            warnings.warn(
+                "chunk_size is deprecated, use batch_size instead")
+            batch_size = chunk_size
+        self.batch_size = batch_size
         self.compute_labels = compute_labels
+        self.init_size = k * 50 if init_size is None else init_size
+
 
     def fit(self, X, y=None):
         """Compute the centroids on X by chunking it into mini-batches.
@@ -781,14 +803,16 @@ class MiniBatchKMeans(KMeans):
         best_ewa_inertia_min = None
 
         for init_idx in range(self.n_init):
-            # Initialize the centers
-            cluster_centers_ = _init_centroids(
-                X, self.k, self.init, random_state=self.random_state,
-                x_squared_norms=x_squared_norms)
+            # Initialize the centers using only a fraction of the data as we
+            # expect n_samples to be very large when using MiniBatchKMeans
+            cluster_centers = _init_centroids(
+                X, self.k, self.init,
+                random_state=self.random_state,
+                x_squared_norms=x_squared_norms,
+                init_size=self.init_size)
+            counts = np.zeros(self.k, dtype=np.int32)
 
-            self.counts = np.zeros(self.k, dtype=np.int32)
-
-            n_batches = int(np.ceil(float(n_samples) / self.chunk_size))
+            n_batches = int(np.ceil(float(n_samples) / self.batch_size))
             n_iterations = int(self.max_iter * n_batches)
 
             # Variables used to monitor the convergence
@@ -800,18 +824,18 @@ class MiniBatchKMeans(KMeans):
             for iteration_idx in xrange(n_iterations):
                 # Sample the minibatch from the full dataset
                 minibatch_indices = self.random_state.random_integers(
-                    0, n_samples - 1, self.chunk_size)
+                    0, n_samples - 1, self.batch_size)
 
                 # Perform the actual update step on the minibatch data
                 inertia, diff = _mini_batch_step(
                     X[minibatch_indices], x_squared_norms[minibatch_indices],
-                    cluster_centers_, self.counts, old_center_buffer,
+                    cluster_centers, counts, old_center_buffer,
                     compute_squared_diff)
 
-                # Normalize inertia to be able to compare values when chunk_size
-                # changes
-                inertia /= self.chunk_size
-                diff /= self.chunk_size
+                # Normalize inertia to be able to compare values when
+                # batch_size changes
+                inertia /= self.batch_size
+                diff /= self.batch_size
 
                 # Compute an Exponentially Weighted Average of the squared
                 # diff to monitor the convergence while discarding
@@ -821,7 +845,7 @@ class MiniBatchKMeans(KMeans):
                     ewa_diff = diff
                     ewa_inertia = inertia
                 else:
-                    alpha = float(self.chunk_size) * 2.0 / (n_samples + 1)
+                    alpha = float(self.batch_size) * 2.0 / (n_samples + 1)
                     alpha = 1.0 if alpha > 1.0 else alpha
                     ewa_diff = ewa_diff * (1 - alpha) + diff * alpha
                     ewa_inertia = ewa_inertia * (1 - alpha) + inertia * alpha
@@ -865,7 +889,8 @@ class MiniBatchKMeans(KMeans):
 
             if (best_ewa_inertia_min is None
                 or ewa_inertia_min < best_ewa_inertia_min):
-                self.cluster_centers_ = cluster_centers_
+                self.cluster_centers_ = cluster_centers
+                self.counts_ = counts
                 best_ewa_inertia_min = ewa_inertia_min
 
         if self.compute_labels:
@@ -901,7 +926,7 @@ class MiniBatchKMeans(KMeans):
             # initialize the cluster centers
             self.cluster_centers_ = _init_centroids(
                 X, self.k, self.init, random_state=self.random_state,
-                x_squared_norms=x_squared_norms)
+                x_squared_norms=x_squared_norms, init_size=self.init_size)
 
             self.counts = np.zeros(self.k, dtype=np.int32)
 

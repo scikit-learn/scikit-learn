@@ -63,11 +63,16 @@ fig = pl.figure()
 plots = []
 legends = []
 
+minibatch_params = {
+    'max_no_improvement': 3,
+    'batch_size': 100,
+}
+
 cases = [
    (KMeans, 'k-means++', {}),
    (KMeans, 'random', {}),
-   (MiniBatchKMeans, 'k-means++', {'max_no_improvement': 3}),
-   (MiniBatchKMeans, 'random', {'max_no_improvement': 3}),
+   (MiniBatchKMeans, 'k-means++', minibatch_params),
+   (MiniBatchKMeans, 'random', minibatch_params),
 ]
 
 for factory, init, params in cases:
@@ -98,18 +103,17 @@ pl.title("Mean and Std deviation inertia for various k-means init")
 
 # Part 2: qualitative visual inspection of the convergence
 
-#X, y = make_data(random_state, n_samples_per_center, grid_size)
-#km = MiniBatchKMeans(k=n_clusters, random_state=0, verbose=1,
-#                     max_iter=100).fit(X)
-#
-#fig = pl.figure()
-#for k in range(n_clusters):
-#    my_members = km.labels_ == k
-#    color = cm.spectral(float(k) / n_clusters, 1)
-#    pl.plot(X[my_members, 0], X[my_members, 1], 'o', marker='.', c=color)
-#    cluster_center = km.cluster_centers_[k]
-#    pl.plot(cluster_center[0], cluster_center[1], 'o',
-#            markerfacecolor=color, markeredgecolor='k', markersize=6)
-#    pl.title("Example cluser allocation with a single random init")
+X, y = make_data(random_state, n_samples_per_center, grid_size)
+km = MiniBatchKMeans(k=n_clusters, random_state=random_state).fit(X)
+
+fig = pl.figure()
+for k in range(n_clusters):
+    my_members = km.labels_ == k
+    color = cm.spectral(float(k) / n_clusters, 1)
+    pl.plot(X[my_members, 0], X[my_members, 1], 'o', marker='.', c=color)
+    cluster_center = km.cluster_centers_[k]
+    pl.plot(cluster_center[0], cluster_center[1], 'o',
+            markerfacecolor=color, markeredgecolor='k', markersize=6)
+    pl.title("Example cluser allocation with a single random init")
 
 pl.show()

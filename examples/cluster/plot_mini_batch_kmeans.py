@@ -46,7 +46,7 @@ k_means_labels_unique = np.unique(k_means_labels)
 ##############################################################################
 # Compute clustering with MiniBatchKMeans
 
-mbk = MiniBatchKMeans(init='k-means++', k=3, chunk_size=batch_size,
+mbk = MiniBatchKMeans(init='k-means++', k=3, batch_size=batch_size,
                       max_no_improvement=10, verbose=1)
 t0 = time.time()
 mbk.fit(X)
