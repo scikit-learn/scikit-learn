@@ -50,7 +50,6 @@ print "%d documents" % len(dataset.data)
 print "%d categories" % len(dataset.target_names)
 print
 
-# split a training set and a test set
 labels = dataset.target
 true_k = np.unique(labels).shape[0]
 

@@ -59,8 +59,6 @@ def make_data(random_state, n_samples_per_center, grid_size, scale):
     return shuffle(X, y, random_state=random_state)
 
 
-# Batch k-means with various init
-
 fig = pl.figure()
 plots = []
 legends = []
@@ -74,7 +72,7 @@ cases = [
 ]
 
 for factory, init, params in cases:
-    print "Evaluation of batch %s with %s init" % (factory.__name__, init)
+    print "Evaluation of %s with %s init" % (factory.__name__, init)
     inertia = np.empty((len(n_init_range), n_runs))
 
     for run_id in range(n_runs):
