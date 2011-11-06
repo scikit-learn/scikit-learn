@@ -296,6 +296,23 @@ def test_label_binarizer():
     assert_array_equal(expected, got)
     assert_array_equal(lb.inverse_transform(got), inp)
 
+    # two-class case with unlabeled samples
+    inp = np.array([0, 1, -1, 1, 0])
+    expected = np.array([[0, 1, .5, 1, 0]]).T
+    got = lb.fit_transform(inp)
+    assert_array_equal(expected, got)
+
+    # multi-class case with unlabeled samples
+    inp = np.array([2, -1, 1, -1, 2, 0])
+    expected = np.array([[0, 0, 1],
+                         [1/3., 1/3., 1/3.],
+                         [0, 1, 0],
+                         [1/3., 1/3., 1/3.],
+                         [0, 0, 1],
+                         [1, 0, 0]])
+    got = lb.fit_transform(inp)
+    assert_array_equal(expected, got)
+
 
 def test_label_binarizer_multilabel():
     lb = LabelBinarizer()

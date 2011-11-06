@@ -227,13 +227,7 @@ class BaseDiscreteNB(BaseNB):
             Returns self.
         """
         X = atleast2d_or_csr(X)
-
-        labelbin = LabelBinarizer()
-        Y = labelbin.fit_transform(y)
-        self._classes = labelbin.classes_
-        n_classes = len(self._classes)
-        if Y.shape[1] == 1:
-            Y = np.concatenate((1 - Y, Y), axis=1)
+        Y = self._label_1ofK(y)
 
         if X.shape[0] != Y.shape[0]:
             msg = "X and y have incompatible shapes."
@@ -241,6 +235,12 @@ class BaseDiscreteNB(BaseNB):
                 msg += "\nNote: Sparse matrices cannot be indexed w/ boolean \
                 masks (use `indices=True` in CV)."
             raise ValueError(msg)
+
+        self._fit1ofK(X, Y, sample_weight, class_prior)
+        return self
+
+    def _fit1ofK(self, X, Y, sample_weight, class_prior):
+        """Guts of the fit method; takes labels in 1-of-K encoding Y"""
 
         if sample_weight is not None:
             Y *= array2d(sample_weight).T
@@ -262,8 +262,6 @@ class BaseDiscreteNB(BaseNB):
                                 - np.log(N_c.reshape(-1, 1)
                                        + self.alpha * X.shape[1]))
 
-        return self
-
     @staticmethod
     def _count(X, Y):
         """Count feature occurrences.
@@ -276,6 +274,22 @@ class BaseDiscreteNB(BaseNB):
         N_c = np.sum(N_c_i, axis=1)
 
         return N_c, N_c_i
+
+    def _label_1ofK(self, y):
+        """Convert label vector to 1-of-K and set self._classes"""
+
+        y = np.asarray(y)
+        if y.ndim == 1:
+            labelbin = LabelBinarizer()
+            Y = labelbin.fit_transform(y)
+            self._classes = labelbin.classes_
+            n_classes = len(self._classes)
+            if Y.shape[1] == 1:
+                Y = np.concatenate((1 - Y, Y), axis=1)
+        else:
+            Y = np.copy(y)
+
+        return Y
 
     intercept_ = property(lambda self: self.class_log_prior_)
     coef_ = property(lambda self: self.feature_log_prob_)
@@ -453,3 +467,100 @@ class BernoulliNB(BaseDiscreteNB):
         jll = safe_sparse_dot(X, self.coef_.T) + X_neg_prob
 
         return jll + self.intercept_
+
+
+class EMNB(BaseNB):
+    """Semisupervised Naive Bayes using expectation-maximization (EM)
+
+    This meta-estimator can be used to train a Naive Bayes model in
+    semisupervised mode, i.e. with a mix of labeled and unlabeled samples.
+
+    Parameters
+    ----------
+    estimator : BaseDiscreteNB
+        Underlying Naive Bayes estimator.
+    n_iter : int, optional
+        Maximum number of iterations.
+    tol : float, optional
+        Tolerance, per coefficient, for the convergence criterion.
+        Convergence is determined based on the coefficients (log probabilities)
+        instead of the model log likelihood.
+    verbose : boolean, optional
+        Whether to print progress information.
+    """
+
+    def __init__(self, estimator, n_iter=10, tol=1e-3, verbose=False):
+        self.estimator = estimator
+        self.n_iter = n_iter
+        self.tol = tol
+        self.verbose = verbose
+
+    def fit(self, X, y, sample_weight=None, class_prior=None):
+        """Fit Naive Bayes estimator using EM
+
+        This fits the underlying estimator at most n_iter times until its
+        parameter vector converges. After every iteration, the posterior label
+        probabilities (as returned by predict_proba) are used to fit in the
+        next iteration.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples and
+            n_features is the number of features.
+
+        y : array-like, shape = [n_samples]
+            Target values. Unlabeled samples should have a target value of -1.
+
+        sample_weight : array-like, shape = [n_samples], optional
+            Weights applied to individual samples (1. for unweighted).
+
+        class_prior : array, shape [n_classes]
+            Custom prior probability per class.
+            Overrides the fit_prior parameter.
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+
+        clf = self.estimator
+        X = atleast2d_or_csr(X)
+        Y = clf._label_1ofK(y)
+
+        n_features = X.shape[1]
+        n_classes = Y.shape[1]
+        tol = self.tol * n_features
+
+        old_coef = np.zeros((n_classes, n_features))
+        old_intercept = np.zeros(n_classes)
+
+        for i in xrange(self.n_iter):
+            if self.verbose:
+                print "Naive Bayes EM, iteration %d," % i,
+
+            clf._fit1ofK(X, Y, sample_weight, class_prior)
+
+            d = (np.abs(old_coef - clf.coef_).sum()
+               + np.abs(old_intercept - clf.intercept_).sum())
+            if self.verbose:
+                print "diff = %.3g" % d
+            if d < tol:
+                if self.verbose:
+                    print "Naive Bayes EM converged"
+                break
+
+            old_coef = np.copy(clf.coef_)
+            old_intercept = np.copy(clf.intercept_)
+            Y = clf.predict_proba(X)
+
+        return self
+
+    # we "inherit" the crucial parts of an NB estimator from the underlying
+    # one, so we can inherit the predict* methods from BaseNB with docstrings
+    coef_ = property(lambda self: self.estimator.coef_)
+    intercept_ = property(lambda self: self.estimator.intercept_)
+    _classes = property(lambda self: self.estimator._classes)
+    _joint_log_likelihood = \
+        property(lambda self: self.estimator._joint_log_likelihood)

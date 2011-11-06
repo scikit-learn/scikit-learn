@@ -468,6 +468,16 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     model gave the greatest confidence. LabelBinarizer makes this easy
     with the inverse_transform method.
 
+    This class can handle target vectors with missing classes (for
+    semisupervised learning) via the unlabeled parameter. The output for
+    unlabeled samples is uniform fractional (probabilistic) membership of
+    all classes.
+
+    Parameters
+    ----------
+    unlabeled : optional, default = -1
+        Pseudo-label for unlabeled samples.
+
     Attributes
     ----------
     classes_ : array of shape [n_class]
@@ -492,6 +502,9 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     array([1, 2, 3])
     """
 
+    def __init__(self, unlabeled=-1):
+        self.unlabeled = unlabeled
+
     def fit(self, y):
         """Fit label binarizer
 
@@ -510,7 +523,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
             # concatenation of the sub-sequences
             self.classes_ = np.unique(reduce(lambda a, b: a + b, y))
         else:
-            self.classes_ = np.unique(y)
+            self.classes_ = np.array(sorted(set(y) - {self.unlabeled}))
         return self
 
     def transform(self, y):
@@ -557,11 +570,13 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
         elif len(self.classes_) == 2:
             Y[y == self.classes_[1], 0] = 1
+            Y[y == self.unlabeled, 0] = .5
             return Y
 
         elif len(self.classes_) >= 2:
             for i, k in enumerate(self.classes_):
                 Y[y == k, i] = 1
+            Y[y == self.unlabeled, :] = 1. / len(self.classes_)
             return Y
 
         else:
