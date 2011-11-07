@@ -107,12 +107,24 @@ def test_boston_et():
         score = clf.score(boston.data, boston.target)
         assert score < 3, "Failed with max_features=None, criterion %s and score = %f" % (c, score)
 
+def test_probability_rf():
+    """Predict probabilities (random forest)."""
+    clf = RandomForestClassifier(n_trees=10, random_state=1)
+    clf.fit(iris.data, iris.target)
+    assert_array_almost_equal(np.sum(clf.predict_proba(iris.data), axis=1), np.ones(iris.data.shape[0]))
+
+def test_probability_et():
+    """Predict probabilities (extra-trees)."""
+    clf = ExtraTreesClassifier(n_trees=10, random_state=1)
+    clf.fit(iris.data, iris.target)
+    assert_array_almost_equal(np.sum(clf.predict_proba(iris.data), axis=1), np.ones(iris.data.shape[0]))
+
 def test_error_rf():
     """Check that proper errors are triggered (random forest)."""
     assert_raises(ValueError, RandomForestClassifier(n_trees=-1).fit, X, y)
     assert_raises(ValueError, RandomForestRegressor(n_trees=-1).fit, X, y)
 
 def test_error_et():
-    """Check that proper errors are triggered (random forest)."""
+    """Check that proper errors are triggered (extra-trees)."""
     assert_raises(ValueError, ExtraTreesClassifier(n_trees=-1).fit, X, y)
     assert_raises(ValueError, ExtraTreesRegressor(n_trees=-1).fit, X, y)
