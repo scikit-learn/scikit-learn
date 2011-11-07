@@ -112,14 +112,14 @@ def roc_curve(y_true, y_score):
     http://en.wikipedia.org/wiki/Receiver_operating_characteristic
 
     """
-    y_true = y_true.ravel()
+    y_true = np.ravel(y_true)
     classes = np.unique(y_true)
 
     # ROC only for binary classification
     if classes.shape[0] != 2:
         raise ValueError("ROC is defined for binary classification only")
 
-    y_score = y_score.ravel()
+    y_score = np.ravel(y_score)
 
     n_pos = float(np.sum(y_true == classes[1]))  # nb of true positive
     n_neg = float(np.sum(y_true == classes[0]))  # nb of true negative

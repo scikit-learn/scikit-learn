@@ -14,7 +14,7 @@ Decision Trees
 **Decision Trees** are a non-parametric supervised learning method used
 for :ref:`classification <tree_classification>`, :ref:`regression
 <tree_regression>`. They learn a tree simple decision rules combining
-information from the features. For example, on the left, decision trees
+information from the features. For example, on the right, decision trees
 learn from data to approximate a sine curve be a set of lines.
 
 The advantages of Decision Trees are:

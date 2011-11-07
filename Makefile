@@ -32,7 +32,7 @@ test-code: in
 	$(NOSETESTS) -s sklearn
 test-doc:
 	$(NOSETESTS) -s --with-doctest --doctest-tests --doctest-extension=rst \
-	--doctest-fixtures=_fixture doc/modules/
+	--doctest-fixtures=_fixture doc/ doc/modules/
 
 test-coverage:
 	$(NOSETESTS) -s --with-coverage --cover-html --cover-html-dir=coverage \

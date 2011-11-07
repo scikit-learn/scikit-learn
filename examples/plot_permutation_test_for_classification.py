@@ -50,7 +50,7 @@ print "Classification score %s (pvalue : %s)" % (score, pvalue)
 
 ###############################################################################
 # View histogram of permutation scores
-pl.hist(permutation_scores, label='Permutation scores')
+pl.hist(permutation_scores, 20, label='Permutation scores')
 ylim = pl.ylim()
 pl.vlines(score, ylim[0], ylim[1], linestyle='--',
           color='g', linewidth=3, label='Classification Score'

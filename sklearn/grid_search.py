@@ -115,7 +115,8 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
             this_n_test_samples = X.shape[0]
         else:
             this_n_test_samples = len(X)
-
+    if verbose > 2:
+        msg += ", score=%f" % this_score
     if verbose > 1:
         end_msg = "%s -%s" % (msg,
                               logger.short_format_time(time.time() -
@@ -200,11 +201,24 @@ class GridSearchCV(BaseEstimator):
     >>> clf = grid_search.GridSearchCV(svr, parameters)
     >>> clf.fit(iris.data, iris.target) # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     GridSearchCV(cv=None,
-           estimator=SVR(C=1.0, coef0=..., degree=..., epsilon=..., gamma=..., kernel='rbf',
-      probability=False, shrinking=True, tol=...),
+           estimator=SVR(C=1.0, cache_size=..., coef0=..., degree=..., epsilon=..., gamma=...,
+      kernel='rbf', probability=False, shrinking=True, tol=...),
            fit_params={}, iid=True, loss_func=None, n_jobs=1,
            param_grid=...,
            ...)
+
+    Attributes
+    ----------
+    `grid_scores_` : dict of any to float
+        Contains scores for all parameter combinations in param_grid.
+
+     `best_estimator` : estimator
+        Estimator that was choosen by grid search, i.e. estimator
+        which gave highest score (or smallest loss if specified)
+        on the left out data.
+
+     `best_score` : score of best_estimator on the left out data.
+
 
     Notes
     ------
@@ -212,6 +226,11 @@ class GridSearchCV(BaseEstimator):
     left out data, unless an explicit score_func is passed in which
     case it is used instead. If a loss function loss_func is passed,
     it overrides the score functions and is minimized.
+
+    See Also
+    ---------
+    IterGrid
+
     """
 
     def __init__(self, estimator, param_grid, loss_func=None, score_func=None,
@@ -319,6 +338,8 @@ class GridSearchCV(BaseEstimator):
 
         if self.refit:
             # fit the best estimator using the entire dataset
+            # clone first to work around broken estimators
+            best_estimator = clone(best_estimator)
             best_estimator.fit(X, y, **self.fit_params)
 
         self.best_estimator = best_estimator
