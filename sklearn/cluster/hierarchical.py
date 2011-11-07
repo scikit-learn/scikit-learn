@@ -4,11 +4,12 @@ These routines perform some hierachical agglomerative clustering of some
 input data. Currently, only Ward's algorithm is implemented.
 
 Authors : Vincent Michel, Bertrand Thirion, Alexandre Gramfort,
-          Gael Varoquaux
+          Gael Varoquaux, Jan Hendrik Metzen
 License: BSD 3 clause
 """
-import heapq
+
 from collections import defaultdict
+from heapq import heapify, heappop, heappush
 import itertools
 import warnings
 
@@ -54,7 +55,7 @@ class WardDistance(object):
                                    coord_row, coord_col, distances)
     
         self.distances = zip(distances, coord_row, coord_col)
-        heapq.heapify(self.distances)
+        heapify(self.distances)
 
     def update(self, child_node1, child_node2, parent_node, parent):
         # update the moments
@@ -63,12 +64,14 @@ class WardDistance(object):
                         self.moments[p][child_node1] + self.moments[p][child_node2]
         # update the structure matrix A and the inertia matrix
         coord_col = []
-        visited = set([parent_node])      
+        visited = np.empty(len(self.A), dtype=bool)
+        visited[:] = False
+        visited[parent_node] = True     
         for l in set(self.A[child_node1]).union(self.A[child_node2]):
             while parent[l] != l:
                l = parent[l]
-            if l not in visited:
-               visited.add(l)
+            if not visited[l]:
+               visited[l] = True
                coord_col.append(l)
                self.A[l].append(parent_node)
         self.A.append(coord_col)
@@ -81,13 +84,13 @@ class WardDistance(object):
                                    coord_row, coord_col, distances)
         
         for tupl in itertools.izip(distances, coord_row, coord_col):
-            heapq.heappush(self.distances, tupl)
+            heappush(self.distances, tupl)
             
     def hasMoreCandidates(self):
         return len(self.distances) > 0
     
     def fetchCandidate(self):
-        return heapq.heappop(self.distances)
+        return heappop(self.distances)
     
     def computeDistance(self, i, j):
         # Compute inertia of the cluster obtained when merging i and j
@@ -131,7 +134,7 @@ class CompleteLinkageDistance(object):
                 if ind1 not in self.A[ind2]:
                     self.A[ind2].append(ind1)
         
-        heapq.heapify(self.distances)
+        heapify(self.distances)
 
     def update(self, child_node1, child_node2, parent_node, parent):
         # Update maximalDistanceFromNodeInCluster for new cluster "parent_node" 
@@ -175,12 +178,14 @@ class CompleteLinkageDistance(object):
         # Determine all other clusters that are connected to one of the child
         # clusters. These cluster will also be connected to the parent cluster
         coord_col = []
-        visited = set([parent_node])
+        visited = np.empty(parent_node + 1, dtype=bool)
+        visited[:] = False
+        visited[parent_node] = True
         for l in self.getNodesConnectedToClusters([child_node1, child_node2]):
             while parent[l] != l:
                 l = parent[l]
-            if l not in visited:
-                visited.add(l)
+            if not visited[l]:
+                visited[l] = True
                 coord_col.append(l)
                 self.A[l].append(parent_node)
         self.A.append(coord_col)
@@ -205,7 +210,7 @@ class CompleteLinkageDistance(object):
             
             self.distanceDict[(l, parent_node)] = interClusterDist
             self.distanceDict[(parent_node, l)] = interClusterDist
-            heapq.heappush(self.distances, (interClusterDist, parent_node, l))
+            heappush(self.distances, (interClusterDist, parent_node, l))
             
             # Cleaning up
             self.clusterConnectingNodes.pop((child_node1, l), None)
@@ -217,7 +222,7 @@ class CompleteLinkageDistance(object):
         return len(self.distances) > 0
     
     def fetchCandidate(self):
-        return heapq.heappop(self.distances)
+        return heappop(self.distances)
     
     def computeDistance(self, i, j):
         return self.distanceDict[(i, j)]
@@ -249,7 +254,7 @@ def ward_tree(X, connectivity=None, n_components=None, return_inertias=False,
         connectivity matrix. Defines for each sample the neigbhoring samples
         following a given structure of the data. The matrix is assumed to
         be symmetric and only the upper triangular half is used.
-        Defaut is None, i.e, the ward algorithm is unstructured.
+        Default is None, i.e, the Ward algorithm is unstructured.
 
     n_components : int (optional)
         Number of connected components. If None the number of connected
@@ -278,7 +283,7 @@ def ward_tree(X, connectivity=None, n_components=None, return_inertias=False,
         The inertias associated to the tree's nodes. Only returned, if 
         return_inertias is True
     """
-    X = np.asanyarray(X)
+    X = np.asarray(X)
     n_samples, n_features = X.shape
     if X.ndim == 1:
         X = np.reshape(X, (-1, 1))
@@ -314,8 +319,7 @@ def ward_tree(X, connectivity=None, n_components=None, return_inertias=False,
         connectivity = connectivity.tolil()
 
     # Remove diagonal from connectivity matrix
-    connectivity.setdiag(np.zeros(connectivity.shape[0]))
-        
+    connectivity.setdiag(np.zeros(connectivity.shape[0]))        
     # Compute distances between connected nodes
     distance_class = DistanceClass(X, connectivity, n_nodes, n_features, n_samples)
 
@@ -340,7 +344,7 @@ def ward_tree(X, connectivity=None, n_components=None, return_inertias=False,
     max_height = None
     # recursive merge loop
     replaying = len(merge_replay) > 0
-    for k in range(n_samples, n_nodes):
+    for k in xrange(n_samples, n_nodes):
         # Fetch merge that will be reapplied next (if any)
         if len(merge_replay) > 0:
             (i_, j_), k_ = merge_replay[0]
@@ -374,7 +378,7 @@ def ward_tree(X, connectivity=None, n_components=None, return_inertias=False,
                     i = k - 1
                     desc = set(_hc_get_descendent([i], np.array(children), n_samples, 
                                                   add_intermediate_nodes=True))
-                    for j in range(k-2, 0, -1):
+                    for j in xrange(k-2, 0, -1):
                         if j not in desc:
                             break      
 #                print "Novel", merge_distance, i, j, k     
@@ -479,7 +483,7 @@ def _hc_cut(n_clusters, children, n_leaves):
 
     """
     nodes = [np.max(children[-1]) + 1]
-    for i in range(n_clusters - 1):
+    for i in xrange(n_clusters - 1):
         nodes.extend(children[np.max(nodes) - n_leaves])
         nodes.remove(np.max(nodes))
     labels = np.zeros(n_leaves, dtype=np.int)
@@ -549,7 +553,7 @@ class Ward(BaseEstimator):
     connectivity : sparse matrix.
         Connectivity matrix. Defines for each sample the neigbhoring
         samples following a given structure of the data.
-        Defaut is None, i.e, the hiearchical clustering algorithm is
+        Default is None, i.e, the hiearchical clustering algorithm is
         unstructured.
 
     memory : Instance of joblib.Memory or string
@@ -645,7 +649,7 @@ class WardAgglomeration(AgglomerationTransform, Ward):
     connectivity : sparse matrix
         connectivity matrix. Defines for each feature the neigbhoring
         features following a given structure of the data.
-        Defaut is None, i.e, the hiearchical agglomeration algorithm is
+        Default is None, i.e, the hiearchical agglomeration algorithm is
         unstructured.
 
     memory : Instance of joblib.Memory or string

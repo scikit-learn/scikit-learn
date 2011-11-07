@@ -271,7 +271,7 @@ def fast_mcd(X, correction="empirical", reweight="rousseeuw"):
       the robust location and covariance estimates of the data set
 
     """
-    X = np.asanyarray(X)
+    X = np.asarray(X)
     if X.ndim <= 1:
         X = X.reshape((-1, 1))
     n_samples, n_features = X.shape

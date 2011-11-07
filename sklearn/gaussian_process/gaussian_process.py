@@ -10,6 +10,7 @@ from scipy import linalg, optimize, rand
 
 from ..base import BaseEstimator, RegressorMixin
 from ..metrics.pairwise import manhattan_distances
+from ..utils import array2d
 from . import regression_models as regression
 from . import correlation_models as correlation
 
@@ -44,7 +45,7 @@ def l1_cross_distances(X):
         The indices i and j of the vectors in X associated to the cross-
         distances in D: D[k] = np.abs(X[ij[k, 0]] - Y[ij[k, 1]]).
     """
-    X = np.atleast_2d(X)
+    X = array2d(X)
     n_samples, n_features = X.shape
     n_nonzero_cross_dist = n_samples * (n_samples - 1) / 2
     ij = np.zeros((n_nonzero_cross_dist, 2), dtype=np.int)
@@ -159,7 +160,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
     -------
     >>> import numpy as np
     >>> from sklearn.gaussian_process import GaussianProcess
-    >>> X = np.atleast_2d([1., 3., 5., 6., 7., 8.]).T
+    >>> X = array2d([1., 3., 5., 6., 7., 8.]).T
     >>> y = (X * np.sin(X)).ravel()
     >>> gp = GaussianProcess(theta0=0.1, thetaL=.001, thetaU=1.)
     >>> gp.fit(X, y) # doctest: +ELLIPSIS
@@ -247,8 +248,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         self._check_params()
 
         # Force data to 2D numpy.array
-        X = np.atleast_2d(X)
-        y = np.asanyarray(y).ravel()[:, np.newaxis]
+        X = array2d(np.asarray(X))
+        y = np.asarray(y).ravel()[:, np.newaxis]
 
         # Check shapes of DOE & observations
         n_samples_X, n_features = X.shape
@@ -391,7 +392,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         self._check_params()
 
         # Check input shapes
-        X = np.atleast_2d(X)
+        X = array2d(X)
         n_eval, n_features_X = X.shape
         n_samples, n_features = self.X.shape
 
@@ -723,9 +724,9 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             # Initialize under isotropy assumption
             if verbose:
                 print("Initialize under isotropy assumption...")
-            self.theta0 = np.atleast_2d(self.theta0.min())
-            self.thetaL = np.atleast_2d(self.thetaL.min())
-            self.thetaU = np.atleast_2d(self.thetaU.max())
+            self.theta0 = array2d(self.theta0.min())
+            self.thetaL = array2d(self.thetaL.min())
+            self.thetaU = array2d(self.thetaU.max())
             theta_iso, optimal_rlf_value_iso, par_iso = \
                 self.arg_max_reduced_likelihood_function()
             optimal_theta = theta_iso + np.zeros(theta0.shape)
@@ -736,12 +737,12 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             for i in np.random.permutation(range(theta0.size)):
                 if verbose:
                     print "Proceeding along dimension %d..." % (i + 1)
-                self.theta0 = np.atleast_2d(theta_iso)
-                self.thetaL = np.atleast_2d(thetaL[0, i])
-                self.thetaU = np.atleast_2d(thetaU[0, i])
+                self.theta0 = array2d(theta_iso)
+                self.thetaL = array2d(thetaL[0, i])
+                self.thetaU = array2d(thetaU[0, i])
 
                 def corr_cut(t, d):
-                    return corr(np.atleast_2d(np.hstack([
+                    return corr(array2d(np.hstack([
                          optimal_theta[0][0:i],
                          t[0],
                          optimal_theta[0][(i + 1)::]])), d)
@@ -777,7 +778,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         # Check regression weights if given (Ordinary Kriging)
         if self.beta0 is not None:
-            self.beta0 = np.atleast_2d(self.beta0)
+            self.beta0 = array2d(self.beta0)
             if self.beta0.shape[1] != 1:
                 # Force to column vector
                 self.beta0 = self.beta0.T
@@ -797,12 +798,12 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                            + "'light', %s was given." % self.storage_mode)
 
         # Check correlation parameters
-        self.theta0 = np.atleast_2d(self.theta0)
+        self.theta0 = array2d(self.theta0)
         lth = self.theta0.size
 
         if self.thetaL is not None and self.thetaU is not None:
-            self.thetaL = np.atleast_2d(self.thetaL)
-            self.thetaU = np.atleast_2d(self.thetaU)
+            self.thetaL = array2d(self.thetaL)
+            self.thetaU = array2d(self.thetaU)
             if self.thetaL.size != lth or self.thetaU.size != lth:
                 raise ValueError("theta0, thetaL and thetaU must have the "
                                + "same length.")
