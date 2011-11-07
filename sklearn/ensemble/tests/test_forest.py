@@ -36,6 +36,7 @@ perm = np.random.permutation(boston.target.size)
 boston.data = boston.data[perm]
 boston.target = boston.target[perm]
 
+
 def test_classification_toy():
     """Check classification on a toy dataset."""
     # Random forest
@@ -55,6 +56,7 @@ def test_classification_toy():
     clf = ExtraTreesClassifier(n_trees=10, max_features=1, random_state=1)
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
+
 
 def test_iris():
     """Check consistency on dataset iris."""
@@ -81,6 +83,7 @@ def test_iris():
         score = clf.score(iris.data, iris.target)
         assert score > 0.9, "Failed with criterion %s and score = %f" % (c, score)
 
+
 def test_boston():
     """Check consistency on dataset boston house prices."""
     for c in ("mse",):
@@ -106,6 +109,7 @@ def test_boston():
         score = clf.score(boston.data, boston.target)
         assert score < 3, "Failed with max_features=None, criterion %s and score = %f" % (c, score)
 
+
 def test_probability():
     """Predict probabilities."""
     # Random forest
@@ -120,6 +124,7 @@ def test_probability():
     assert_array_almost_equal(np.sum(clf.predict_proba(iris.data), axis=1), np.ones(iris.data.shape[0]))
     assert_array_almost_equal(clf.predict_proba(iris.data), np.exp(clf.predict_log_proba(iris.data)))
 
+
 def test_error():
     """Check that proper errors are triggered."""
     # Random forest
@@ -129,6 +134,7 @@ def test_error():
     # Extra-trees
     assert_raises(ValueError, ExtraTreesClassifier(n_trees=-1).fit, X, y)
     assert_raises(ValueError, ExtraTreesRegressor(n_trees=-1).fit, X, y)
+
 
 def test_pickle():
     """Check pickability."""
@@ -175,3 +181,8 @@ def test_pickle():
     assert_equal(type(obj2), obj.__class__)
     score2 = obj2.score(boston.data, boston.target)
     assert score == score2
+
+
+if __name__ == "__main__":
+    import nose
+    nose.runmodule()

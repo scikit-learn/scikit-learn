@@ -233,28 +233,28 @@ def test_pickle():
     # classification
     obj = tree.DecisionTreeClassifier()
     obj.fit(iris.data, iris.target)
-    score = np.mean(obj.predict(iris.data) == iris.target)
+    score = obj.score(iris.data, iris.target)
     s = pickle.dumps(obj)
 
     obj2 = pickle.loads(s)
     assert_equal(type(obj2), obj.__class__)
-    score2 = np.mean(obj2.predict(iris.data) == iris.target)
+    score2 = obj2.score(iris.data, iris.target)
     assert score == score2, "Failed to generate same score " + \
             " after pickling (classification) "
 
     # regression
     obj = tree.DecisionTreeRegressor()
     obj.fit(boston.data, boston.target)
-    score = np.mean(np.power(obj.predict(boston.data) - boston.target, 2))
+    score = obj.score(boston.data, boston.target)
     s = pickle.dumps(obj)
 
     obj2 = pickle.loads(s)
     assert_equal(type(obj2), obj.__class__)
-    score2 = np.mean(np.power(obj2.predict(boston.data) - boston.target, 2))
+    score2 = obj2.score(boston.data, boston.target)
     assert score == score2, "Failed to generate same score " + \
             " after pickling (regression) "
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import nose
     nose.runmodule()
