@@ -51,6 +51,11 @@ class Forest(BaseEstimator):
         self : object
             Returns self.
         """
+        # Check parameters
+        if self.n_trees <= 0:
+            raise ValueError("n_trees must be greater than zero.")
+
+        # Build the forest
         X = np.atleast_2d(X)
         y = np.atleast_1d(y)
 
@@ -61,6 +66,7 @@ class Forest(BaseEstimator):
 
         for i in xrange(self.n_trees):
             tree = clone(self.base_tree)
+            tree.set_params(random_state=self.random_state)
 
             if self.bootstrap:
                 n_samples = X.shape[0]

@@ -1,6 +1,5 @@
 """
-Testing for Tree module (sklearn.tree)
-
+Testing for the tree module (sklearn.tree).
 """
 
 import numpy as np
