@@ -8,7 +8,7 @@ better.
 # License: BSD Style.
 
 from math import log
-from scipy.misc import comb, factorial
+from scipy.misc import comb
 from scipy.special import gammaln
 
 import numpy as np
@@ -654,43 +654,47 @@ def _accumulate_factorials(all_factors):
 
 def expected_mutual_information(contingency, n_samples):
     """Calculate the expected mutual information for two labelings."""
-    np.seterr(all='raise')
     R, C = contingency.shape
     N = float(n_samples)
     a = np.sum(contingency, axis=1, dtype='int')
     b = np.sum(contingency, axis=0, dtype='int')
+    # There are three major terms to the EMI equation, which are multiplied to
+    # and then summed over varying nij values.
     # While nijs[0] will never be used, having it simplifies the indexing.
     nijs = np.arange(0, max(np.max(a), np.max(b)) + 1, dtype='float')
-    nijs[0] = 1  # stops divide by zero problems
-    # Compute values that are used multiple times.
+    nijs[0] = 1  # Stops divide by zero warnings. As its not used, no issue.
     # term1 is nij / N
     term1 = nijs / N
+    # term2 is log((N*nij) / (a * b)) == log(N * nij) - log(a * b)
     # term2 uses the outer product
     log_ab_outer = np.log(np.outer(a, b))
     # term2 uses N * nij
     log_Nnij = np.log(N * nijs)
-    # term3 uses these factors
-    gln_a = gammaln(a+1)
-    gln_b = gammaln(b+1)
-    gln_Na = gammaln(N-a+1)
-    gln_Nb = gammaln(N-b+1)
-    gln_N = gammaln(N+1)
-    gln_nij = gammaln(nijs+1)
-    # start and end values for nij terms
+    # term3 is large, and involved many factorials. Calculate these in log
+    # space to stop overflows.
+    gln_a = gammaln(a + 1)
+    gln_b = gammaln(b + 1)
+    gln_Na = gammaln(N - a + 1)
+    gln_Nb = gammaln(N - b + 1)
+    gln_N = gammaln(N + 1)
+    gln_nij = gammaln(nijs + 1)
+    # start and end values for nij terms for each summation.
     start = np.array([[v - N + w for w in b] for v in a], dtype='int')
     start = np.maximum(start, 1)
     end = np.minimum(np.resize(a, (C, R)).T, np.resize(b, (R, C))) + 1
+    # emi itself is a summation over the various values.
     emi = 0
     for i in range(R):
         for j in range(C):
             for nij in range(start[i][j], end[i][j]):
-                term2 = log_Nnij[nij] -  log_ab_outer[i][j]
+                term2 = log_Nnij[nij] - log_ab_outer[i][j]
+                # Numerators are positive, denominators are negative.
                 gln = (gln_a[i] + gln_b[j] + gln_Na[i] + gln_Nb[j]
-                       - gln_N - gln_nij[nij] - gammaln(a[i] - nij+1)
-                       - gammaln(b[j] - nij+1)
-                       - gammaln(N - a[i] - b[j] + nij+1))
+                       - gln_N - gln_nij[nij] - gammaln(a[i] - nij + 1)
+                       - gammaln(b[j] - nij + 1)
+                       - gammaln(N - a[i] - b[j] + nij + 1))
                 term3 = np.exp(gln)
-                # Add the product of all terms
+                # Add the product of all terms.
                 emi += (term1[nij] * term2 * term3)
     return emi
 

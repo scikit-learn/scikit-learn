@@ -91,9 +91,6 @@ pl.ylabel('Score value')
 pl.legend(plots, names)
 pl.ylim(ymin=-0.05, ymax=1.05)
 pl.show()
-# The new version of matplotlib on my computer has a bug where show does nothing
-# Sorry if I forget to take this out!
-pl.savefig("adj1.png")
 
 
 # Random labeling with varying n_clusters against ground class labels
@@ -126,7 +123,3 @@ pl.ylabel('Score value')
 pl.ylim(ymin=-0.05, ymax=1.05)
 pl.legend(plots, names)
 pl.show()
-
-# The new version of matplotlib on my computer has a bug where show does nothing
-# Sorry if I forget to take this out!
-pl.savefig("adj2.png")
