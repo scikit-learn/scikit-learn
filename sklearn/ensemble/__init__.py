@@ -1,9 +1,5 @@
 """
-Bagging and boosting
-=================
-
-scikits.learn.ensemble is a module for ensemble learners.
-
+Ensemble algorithms.
 """
 
 from .forest import RandomForestClassifier

@@ -1,10 +1,7 @@
 """
-Tree-based models
-=================
-
-sklearn.tree is a module to fit data to decision trees.
-
+Tree-based models.
 """
+
 from .tree import DecisionTreeClassifier
 from .tree import DecisionTreeRegressor
 from .tree import ExtraTreeClassifier

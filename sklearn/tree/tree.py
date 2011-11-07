@@ -1,13 +1,14 @@
-# Adapted from MILK: Machine Learning Toolkit
+"""
+This module gathers tree-based methods, including decision, regression and
+randomized trees.
+"""
+
+# Code is originally adapted from MILK: Machine Learning Toolkit
 # Copyright (C) 2008-2011, Luis Pedro Coelho <luis@luispedro.org>
 # License: MIT. See COPYING.MIT file in the milk distribution
-#
-# Authors: Brian Holt,
-#          Peter Prettenhofer,
-#          Satrajit Ghosh,
-#          Gilles Louppe
-#
-# License: BSD Style.
+
+# Authors: Brian Holt, Peter Prettenhofer, Satrajit Ghosh, Gilles Louppe
+# License: BSD3
 
 from __future__ import division
 import numpy as np
@@ -539,6 +540,13 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
 class ExtraTreeClassifier(DecisionTreeClassifier):
     """An extremely randomized tree classifier.
 
+    Extra-trees differ from classic decision trees in the way they are built.
+    When looking for the best split to separate the samples of a node into two
+    groups, random splits are drawn for each of the `max_features` randomly
+    selected features and the best split among those is chosen. When
+    `max_features` is set 1, this amounts to building a totally random
+    decision tree.
+
     References
     ----------
     .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
@@ -561,6 +569,13 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
 class ExtraTreeRegressor(DecisionTreeRegressor):
     """An extremely randomized tree regressor.
+
+    Extra-trees differ from classic decision trees in the way they are built.
+    When looking for the best split to separate the samples of a node into two
+    groups, random splits are drawn for each of the `max_features` randomly
+    selected features and the best split among those is chosen. When
+    `max_features` is set 1, this amounts to building a totally random
+    decision tree.
 
     References
     ----------

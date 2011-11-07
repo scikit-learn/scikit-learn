@@ -1,5 +1,10 @@
-# Authors: Gilles Louppe,
-#          Brian Holt
+"""
+This module gathers forest of trees-based ensemble methods, including random
+forests and extra-trees.
+"""
+
+# Authors: Gilles Louppe, Brian Holt
+# License: BSD 3
 
 import numpy as np
 
@@ -18,7 +23,7 @@ __all__ = [
 
 
 class Forest(BaseEstimator):
-    """Base class for forests of trees estimators.
+    """Base class for forests of trees.
 
     Warning: This class should not be used directly. Use derived classes instead.
     """
@@ -67,6 +72,8 @@ class Forest(BaseEstimator):
             tree.fit(X, y)
             self.forest.append(tree)
 
+        return self
+
 class ForestClassifier(Forest, ClassifierMixin):
     """Base class for forest of trees-based classifiers.
 
@@ -80,7 +87,7 @@ class ForestClassifier(Forest, ClassifierMixin):
     def predict(self, X):
         """Predict class for X.
 
-        The predicted class of an input sample is computed as the likeliest
+        The predicted class of an input sample is computed as the majority
         prediction of the trees in the forest.
 
         Parameters
@@ -158,9 +165,34 @@ class ForestRegressor(Forest, RegressorMixin):
         return y_hat
 
 class RandomForestClassifier(ForestClassifier):
-    """Random forest classifier.
+    """A random forest classifier [1].
 
-    TODO"""
+    Parameters
+    ----------
+    n_trees : integer, optional (default=10)
+        The number of trees in the forest.
+
+    bootstrap : boolean, optional (default=True)
+        Whether bootstrap samples are used when building trees.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    **tree_args : key-words parameters
+        The parameters to pass when instantiating decision trees. See the
+        documentation of `DecisionTreeClassifier` for further details.
+
+    See also
+    --------
+    RandomForestRegressor, ExtraTreesClassifier, ExtraTreesRegressor
+
+    References
+    ----------
+    .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
+    """
     def __init__(self, n_trees=10, bootstrap=True, random_state=None, **tree_args):
         ForestClassifier.__init__(self, DecisionTreeClassifier(**tree_args),
                                         n_trees,
@@ -168,9 +200,34 @@ class RandomForestClassifier(ForestClassifier):
                                         random_state=random_state)
 
 class RandomForestRegressor(ForestRegressor):
-    """Random forest regressor.
+    """A random forest regressor [1].
 
-    TODO"""
+    Parameters
+    ----------
+    n_trees : integer, optional (default=10)
+        The number of trees in the forest.
+
+    bootstrap : boolean, optional (default=True)
+        Whether bootstrap samples are used when building trees.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    **tree_args : key-words parameters
+        The parameters to pass when instantiating regression trees. See the
+        documentation of `DecisionTreeRegressor` for further details.
+
+    See also
+    --------
+    RandomForestClassifier, ExtraTreesClassifier, ExtraTreesRegressor
+
+    References
+    ----------
+    .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
+    """
     def __init__(self, n_trees=10, bootstrap=True, random_state=None, **tree_args):
         ForestRegressor.__init__(self, DecisionTreeRegressor(**tree_args),
                                        n_trees,
@@ -178,9 +235,35 @@ class RandomForestRegressor(ForestRegressor):
                                        random_state=random_state)
 
 class ExtraTreesClassifier(ForestClassifier):
-    """Extra-trees classifier.
+    """An extra-trees classifier [1].
 
-    TODO"""
+    Parameters
+    ----------
+    n_trees : integer, optional (default=10)
+        The number of trees in the forest.
+
+    bootstrap : boolean, optional (default=True)
+        Whether bootstrap samples are used when building trees.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    **tree_args : key-words parameters
+        The parameters to pass when instantiating randomized trees. See the
+        documentation of `ExtraTreeClassifier` for further details.
+
+    See also
+    --------
+    ExtraTreesRegressor, RandomForestClassifier, RandomForestRegressor
+
+    References
+    ----------
+    .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
+           Machine Learning, 63(1), 3-42, 2006.
+    """
     def __init__(self, n_trees=10, bootstrap=False, random_state=None, **tree_args):
         ForestClassifier.__init__(self, ExtraTreeClassifier(**tree_args),
                                         n_trees,
@@ -188,9 +271,35 @@ class ExtraTreesClassifier(ForestClassifier):
                                         random_state=random_state)
 
 class ExtraTreesRegressor(ForestRegressor):
-    """Extra-trees regressor.
+    """An extra-trees regressor [1].
 
-    TODO"""
+    Parameters
+    ----------
+    n_trees : integer, optional (default=10)
+        The number of trees in the forest.
+
+    bootstrap : boolean, optional (default=True)
+        Whether bootstrap samples are used when building trees.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    **tree_args : key-words parameters
+        The parameters to pass when instantiating randomized trees. See the
+        documentation of `ExtraTreeRegressor` for further details.
+
+    See also
+    --------
+    ExtraTreesRegressor, RandomForestClassifier, RandomForestRegressor
+
+    References
+    ----------
+    .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
+           Machine Learning, 63(1), 3-42, 2006.
+    """
     def __init__(self, n_trees=10, bootstrap=False, random_state=None, **tree_args):
         ForestRegressor.__init__(self, ExtraTreeRegressor(**tree_args),
                                        n_trees,
