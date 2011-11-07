@@ -1,6 +1,7 @@
 
 import  numpy as np
 cimport numpy as np
+from scipy import sparse
 
 ################################################################################
 # Includes
@@ -62,15 +63,9 @@ def libsvm_sparse_train ( int n_features,
                      np.ndarray[np.float64_t, ndim=1, mode='c'] Y,
                      int svm_type, int kernel_type, int degree, double gamma,
                      double coef0, double eps, double C,
-                     np.ndarray[np.float64_t, ndim=1, mode='c'] SV_data,
-                     np.ndarray[np.int32_t,   ndim=1, mode='c'] SV_indices,
-                     np.ndarray[np.int32_t,   ndim=1, mode='c'] SV_indptr,
-                     np.ndarray[np.float64_t, ndim=1, mode='c'] sv_coef_data,
-                     np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
                      np.ndarray[np.int32_t,   ndim=1, mode='c'] weight_label,
                      np.ndarray[np.float64_t, ndim=1, mode='c'] weight,
                      np.ndarray[np.float64_t, ndim=1, mode='c'] sample_weight,
-                     np.ndarray[np.int32_t,   ndim=1, mode='c'] nclass_SV,
                      double nu, double cache_size, double p, int
                      shrinking, int probability):
     """
@@ -133,17 +128,19 @@ def libsvm_sparse_train ( int n_features,
     model = svm_csr_train(problem, param)
 
     cdef np.npy_intp SV_len = get_l(model)
-    cdef np.npy_intp n_class     = get_nr(model)
+    cdef np.npy_intp n_class = get_nr(model)
 
     # copy model.sv_coef
     # we create a new array instead of resizing, otherwise
     # it would not erase previous information
-    sv_coef_data.resize ((n_class-1)*SV_len, refcheck=False)
+    cdef np.ndarray sv_coef_data
+    sv_coef_data = np.empty((n_class-1)*SV_len, dtype=np.float64)
     copy_sv_coef (sv_coef_data.data, model)
 
     # copy model.rho into the intercept
     # the intercept is just model.rho but with sign changed
-    intercept.resize (n_class*(n_class-1)/2, refcheck=False)
+    cdef np.ndarray intercept
+    intercept = np.empty(n_class*(n_class-1)/2, dtype=np.float64)
     copy_intercept (intercept.data, model, intercept.shape)
 
     # copy model.SV
@@ -152,26 +149,28 @@ def libsvm_sparse_train ( int n_features,
     cdef np.npy_intp nonzero_SV
     nonzero_SV = get_nonzero_SV (model)
 
-    # SV_data.resize((0,0), refcheck=False) # why is this needed ?
-    SV_data.resize (nonzero_SV, refcheck=False)
-    SV_indices.resize (nonzero_SV, refcheck=False)
-    SV_indptr.resize (<np.npy_intp> SV_len + 1, refcheck=False)
+    cdef np.ndarray SV_data, SV_indices, SV_indptr
+    SV_data = np.empty(nonzero_SV, dtype=np.float64)
+    SV_indices = np.empty(nonzero_SV, dtype=np.int32)
+    SV_indptr = np.empty(<np.npy_intp>SV_len + 1, dtype=np.int32)
     csr_copy_SV(SV_data.data, SV_indices.shape, SV_indices.data,
                 SV_indptr.shape, SV_indptr.data, model, n_features)
+    support_vectors_ = sparse.csr_matrix(
+	(SV_data, SV_indices, SV_indptr), (SV_len, n_features))
 
     # copy model.nSV
     # TODO: do only in classification
-    nclass_SV.resize(n_class, refcheck=False)
-    copy_nSV(nclass_SV.data, model)
+    cdef np.ndarray n_class_SV 
+    n_class_SV = np.empty(n_class, dtype=np.int32)
+    copy_nSV(n_class_SV.data, model)
 
     # # copy label
-    cdef np.ndarray[np.int32_t, ndim=1, mode='c'] label
+    cdef np.ndarray label
     label = np.empty((n_class), dtype=np.int32)
     copy_label(label.data, model)
 
     # # copy probabilities
-    cdef np.ndarray[np.float64_t, ndim=1, mode='c'] probA
-    cdef np.ndarray[np.float64_t, ndim=1, mode='c'] probB
+    cdef np.ndarray probA, probB
     if probability != 0:
         if svm_type < 2: # SVC and NuSVC
             probA = np.empty(n_class*(n_class-1)/2, dtype=np.float64)
@@ -189,7 +188,7 @@ def libsvm_sparse_train ( int n_features,
     free_problem(problem)
     free_param(param)
 
-    return label, probA, probB
+    return support_vectors_, sv_coef_data, intercept, label, n_class_SV, probA, probB
 
 
 

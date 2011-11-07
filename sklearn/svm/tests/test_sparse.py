@@ -6,7 +6,7 @@ from numpy.testing import assert_array_almost_equal, \
 
 from nose.tools import assert_raises
 from sklearn.datasets.samples_generator import make_classification
-from . import test_svm
+from sklearn.svm.tests import test_svm
 
 # test sample 1
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
