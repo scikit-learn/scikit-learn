@@ -27,10 +27,11 @@ class Forest(BaseEstimator):
 
     Warning: This class should not be used directly. Use derived classes instead.
     """
-    def __init__(self, base_tree, n_trees=10, bootstrap=False, random_state=None):
+    def __init__(self, base_tree, n_trees=10, bootstrap=False, n_jobs=1, random_state=None):
         self.base_tree = base_tree
         self.n_trees = n_trees
         self.bootstrap = bootstrap
+        self.n_jobs = n_jobs
         self.random_state = check_random_state(random_state)
         self.forest = []
 
@@ -70,7 +71,7 @@ class Forest(BaseEstimator):
 
             if self.bootstrap:
                 n_samples = X.shape[0]
-                indices = np.random.randint(0, n_samples, n_samples)
+                indices = self.random_state.randint(0, n_samples, n_samples)
 
                 X = X[indices]
                 y = y[indices]
@@ -79,6 +80,7 @@ class Forest(BaseEstimator):
             self.forest.append(tree)
 
         return self
+
 
 class ForestClassifier(Forest, ClassifierMixin):
     """Base class for forest of trees-based classifiers.
@@ -190,6 +192,7 @@ class ForestRegressor(Forest, RegressorMixin):
 
         return y_hat
 
+
 class RandomForestClassifier(ForestClassifier):
     """A random forest classifier [1].
 
@@ -224,6 +227,7 @@ class RandomForestClassifier(ForestClassifier):
                                         n_trees,
                                         bootstrap=bootstrap,
                                         random_state=random_state)
+
 
 class RandomForestRegressor(ForestRegressor):
     """A random forest regressor [1].
@@ -260,6 +264,7 @@ class RandomForestRegressor(ForestRegressor):
                                        bootstrap=bootstrap,
                                        random_state=random_state)
 
+
 class ExtraTreesClassifier(ForestClassifier):
     """An extra-trees classifier [1].
 
@@ -295,6 +300,7 @@ class ExtraTreesClassifier(ForestClassifier):
                                         n_trees,
                                         bootstrap=bootstrap,
                                         random_state=random_state)
+
 
 class ExtraTreesRegressor(ForestRegressor):
     """An extra-trees regressor [1].
