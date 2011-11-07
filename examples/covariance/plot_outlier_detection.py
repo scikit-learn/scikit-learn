@@ -39,7 +39,7 @@ xx, yy = np.meshgrid(np.linspace(-7, 7, 500), np.linspace(-7, 7, 500))
 n_inliers = int((1. - outliers_rate) * n_samples)
 n_outliers = int(outliers_rate * n_samples)
 ground_truth = np.ones(n_samples, dtype=int)
-ground_truth[-n_outliers:] = 0
+ground_truth[-n_outliers:] = -1
 for i, offset in enumerate(clusters_distances):
     # Data generation
     X1 = 0.3 * np.random.randn(0.5 * n_inliers, 2) - offset
@@ -51,8 +51,7 @@ for i, offset in enumerate(clusters_distances):
     # Fit the model with the One-Class SVM
     pl.figure(figsize=(12, 5))
     pl.set_cmap(pl.cm.Blues_r)
-    for i, clf_name in enumerate(classifiers.keys()):
-        clf = classifiers[clf_name]
+    for i, (clf_name, clf) in enumerate(classifiers.iteritems()):
         # fit the data and tag outliers
         clf.fit(X)
         y_pred = clf.predict(X)
@@ -75,5 +74,6 @@ for i, offset in enumerate(clusters_distances):
         subplot.set_xlabel("%d. %s (errors: %d)" % (i + 1, clf_name, n_errors))
         subplot.set_xlim((-7, 7))
         subplot.set_ylim((-7, 7))
+    pl.subplots_adjust(0.09, 0.1, 0.94, 0.94, 0.26, 0.26)
 
 pl.show()

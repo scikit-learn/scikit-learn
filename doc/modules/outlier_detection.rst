@@ -15,8 +15,8 @@ for each point of the embedding space. (Setting up a threshold on the
 smooth distribution density leads to the definition of a rough
 frontier all the same.)
 
-Sklearn provides a set of machine learning tools that can be used both
-for novelty or outliers detection.
+The scikit-learn project provides a set of machine learning tools that
+can be used both for novelty or outliers detection.
 
 Novelty Detection
 =================
@@ -41,12 +41,12 @@ that they are abnormal with a given confidence in our assessment.
 The One-Class SVM has been introduced in [1] for that purpose and
 implemented in the `sklearn.svm` package in the :class:`OneClassSVM`
 object. It requires the choice of a kernel and a scalar parameter to
-define a frontier.
-The RBF kernel is usually chosen although there exist no exact formula
-or algorithm to set its bandwith parameter. This is the default in the
-sklearn implementation. The :math:`\nu` parameter, also known as the 
-margin of the One-Class SVM, corresponds to the probability of finding
-a new, but regular, observation outside the frontier.
+define a frontier.  The RBF kernel is usually chosen although there
+exist no exact formula or algorithm to set its bandwith
+parameter. This is the default in the scikit-learn implementation. The
+:math:`\nu` parameter, also known as the margin of the One-Class SVM,
+corresponds to the probability of finding a new, but regular,
+observation outside the frontier.
 
 .. topic:: Examples:
 
@@ -68,7 +68,7 @@ polutting ones, called "outliers". Yet, in the case of outlier
 detection, we don't have a clean data set representing the population
 of regular observations that can be used to train any tool.
 
-One comon way of performing outlier detection is to assume that the
+One common way of performing outlier detection is to assume that the
 regular data come from a known distribution (e.g. data are Gaussian
 distributed). From this assumption, we generaly try to define the
 "shape" of the data, and can define outlying observations as

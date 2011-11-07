@@ -11,7 +11,7 @@ import numpy as np
 from sklearn import datasets
 from sklearn.covariance import empirical_covariance, EmpiricalCovariance, \
     ShrunkCovariance, shrunk_covariance, LedoitWolf, ledoit_wolf, OAS, oas, \
-    MinCovDet
+    MinCovDet, EllipticEnvelop
 
 X = datasets.load_iris().data
 X_1d = X[:, 0]
@@ -268,3 +268,20 @@ def launch_mcd_on_dataset(
     error_cov = np.mean((empirical_covariance(pure_data) - S) ** 2)
     assert(error_cov < tol_cov)
     assert(np.sum(H) >= tol_support)
+
+
+def test_outlier_detection():
+    """
+
+    """
+    np.random.RandomState(0)
+    X = np.random.randn(100, 10)
+    clf = EllipticEnvelop(contamination=0.1)
+    clf.fit(X)
+    y_pred = clf.predict(X)
+
+    assert_array_almost_equal(
+        clf.decision_function(X, raw_mahalanobis=True),
+        clf.mahalanobis(X - clf.location_))
+    assert_almost_equal(clf.score(X, np.ones(100)),
+                        (100 - y_pred[y_pred == -1].size) / 100.)

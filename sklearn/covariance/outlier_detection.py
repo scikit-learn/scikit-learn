@@ -14,8 +14,8 @@ covariance estimator (the Minimum Covariance Determinant).
 
 import numpy as np
 import  scipy as sp
-from sklearn.covariance import MinCovDet
-from sklearn.base import ClassifierMixin
+from . import MinCovDet
+from ..base import ClassifierMixin
 
 
 class OutlierDetectionMixin(ClassifierMixin):
@@ -102,7 +102,7 @@ class OutlierDetectionMixin(ClassifierMixin):
         """
         if self.threshold is None:
             raise Exception("Please fit data before predicting")
-        is_inlier = np.zeros(X.shape[0], dtype=int)
+        is_inlier = -np.ones(X.shape[0], dtype=int)
         if self.contamination is not None:
             X_centered = X - self.location_
             values = self.decision_function(X_centered, raw_mahalanobis=True)

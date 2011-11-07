@@ -244,8 +244,8 @@ Robust Covariance Estimation
 ============================
 
 Real data set are often subjects to measurement or recording
-errors. Regular but uncomon observations may also appear for a variety
-of reason. Every observation which is very uncomon is called an
+errors. Regular but uncommon observations may also appear for a variety
+of reason. Every observation which is very uncommon is called an
 outlier.
 The empirical covariance estimator and the shrunk covariance
 estimators presented above are very sensitive to the presence of
@@ -275,11 +275,12 @@ set ("reweighting step").
 
 Rousseuw and Van Driessen [4] developed the FastMCD algorithm in order
 to compute the Minimum Covariance Determinant. This algorithm is used
-in sklearn when fitting an MCD object to data. The FastMCD algorithm also
-computes a robust estimate of the data set location at the same time.
+in scikit-learn when fitting an MCD object to data. The FastMCD
+algorithm also computes a robust estimate of the data set location at
+the same time.
 
 Raw estimates can be accessed as `raw_location_` and `raw_covariance_`
-attrributes of a :class:`MinCovDet` robust covariance estimator object
+attributes of a :class:`MinCovDet` robust covariance estimator object.
 
 [3] P. J. Rousseeuw. Least median of squares regression.
     J. Am Stat Ass, 79:871, 1984.
