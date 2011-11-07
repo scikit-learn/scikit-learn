@@ -122,7 +122,8 @@ class ForestClassifier(Forest, ClassifierMixin):
         Returns
         -------
         p : array of shape = [n_samples]
-            The class probabilities of the input samples.
+            The class probabilities of the input samples. Classes are
+            ordered by arithmetical order.
         """
         X = np.atleast_2d(X)
         p = np.zeros((X.shape[0], self.n_classes))
@@ -133,6 +134,25 @@ class ForestClassifier(Forest, ClassifierMixin):
         p /= self.n_trees
 
         return p
+
+    def predict_log_proba(self, X):
+        """Predict class log-probabilities for X.
+
+        The predicted class log-probabilities of an input sample is computed as
+        the mean predicted class log-probabilities of the trees in the forest.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        p : array of shape = [n_samples]
+            The class log-probabilities of the input samples. Classes are
+            ordered by arithmetical order.
+        """
+        return np.log(self.predict_proba(X))
 
 class ForestRegressor(Forest, RegressorMixin):
     """Base class for forest of trees-based regressors.
