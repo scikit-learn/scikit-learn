@@ -49,7 +49,7 @@ print "V-measure: %0.3f" % metrics.v_measure_score(labels, km.labels_)
 print "Adjusted Rand Index: %0.3f" % \
     metrics.adjusted_rand_score(labels, km.labels_)
 print "Adjusted Mutual Information: %0.3f" % \
-    metrics.ami_score(labels, km.labels_)
+    metrics.adjusted_mutual_info_score(labels, km.labels_)
 print ("Silhouette Coefficient: %0.3f" %
        metrics.silhouette_score(data, km.labels_,
                                 metric='euclidean', sample_size=sample_size))
@@ -66,7 +66,7 @@ print "V-measure: %0.3f" % metrics.v_measure_score(labels, km.labels_)
 print "Adjusted Rand Index: %0.3f" % \
     metrics.adjusted_rand_score(labels, km.labels_)
 print "Adjusted Mutual Information: %0.3f" % \
-    metrics.ami_score(labels, km.labels_)
+    metrics.adjusted_mutual_info_score(labels, km.labels_)
 print ("Silhouette Coefficient: %0.3f" %
        metrics.silhouette_score(data, km.labels_,
                                 metric='euclidean', sample_size=sample_size))
@@ -86,7 +86,7 @@ print "V-measure: %0.3f" % metrics.v_measure_score(labels, km.labels_)
 print "Adjusted Rand Index: %0.3f" % \
     metrics.adjusted_rand_score(labels, km.labels_)
 print "Adjusted Mutual Information: %0.3f" % \
-    metrics.ami_score(labels, km.labels_)
+    metrics.adjusted_mutual_info_score(labels, km.labels_)
 print ("Silhouette Coefficient: %0.3f" %
        metrics.silhouette_score(data, km.labels_,
                                 metric='euclidean', sample_size=sample_size))
