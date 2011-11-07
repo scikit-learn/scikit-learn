@@ -359,7 +359,7 @@ class BaseSGDClassifier(BaseSGD, ClassifierMixin):
         self : returns an instance of self.
         """
         X = safe_asarray(X)
-        y = np.asarray(y, dtype=np.float64, order='C')
+        y = np.asarray(y)
 
         n_samples, n_features = X.shape
         if n_samples != y.shape[0]:

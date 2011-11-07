@@ -396,13 +396,18 @@ class CountVectorizer(BaseEstimator):
         """
         if type(X) is sp.coo_matrix:    # COO matrix is not indexable
             X = X.tocsr()
+        elif not sp.issparse(X):
+            # We need to convert X to a matrix, so that the indexing
+            # returns 2D objects
+            X = np.asmatrix(X)
+        n_samples = X.shape[0]
 
         terms = np.array(self.vocabulary.keys())
         indices = np.array(self.vocabulary.values())
         inverse_vocabulary = terms[np.argsort(indices)]
 
         return [inverse_vocabulary[X[i, :].nonzero()[1]]
-                for i in xrange(X.shape[0])]
+                for i in xrange(n_samples)]
 
 
 class TfidfTransformer(BaseEstimator, TransformerMixin):

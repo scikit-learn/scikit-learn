@@ -401,20 +401,20 @@ Bayesian Regression
 
 Bayesian regression techniques can be used to include regularization
 parameters in the estimation procedure: the regularization parameter is
-not set in a hard sens but tuned to the data at hand.
+not set in a hard sense but tuned to the data at hand.
 
 This can be done by introducing some prior knowledge over the parameters.
 For example, penalization by weighted :math:`\ell_{2}` norm is equivalent
 to setting Gaussian priors on the weights.
 
-The advantages of *Bayesian Regression* are:
+The advantages of Bayesian Regression are:
 
     - It adapts to the data at hand.
 
     - It can be used to include regularization parameters in the
       estimation procedure.
 
-The disadvantages of *Bayesian Regression* include:
+The disadvantages of Bayesian regression include:
 
     - Inference of the model can be time consuming.
 
@@ -430,7 +430,7 @@ Bayesian Ridge Regression
     \mathcal{N}(\beta|0,\lambda^{-1}\bold{I_{p}})
 
 The resulting model is called *Bayesian Ridge Regression*, it is
-similar to the classical :class:`Ridge`.  :math:`\lambda` is an
+similar to the classical :class:`Ridge`.  :math:`\lambda` is a
 *hyper-parameter* and the prior over :math:`\beta` performs a
 shrinkage or regularization, by constraining the values of the weights
 to be small. Indeed, with a large value of :math:`\lambda`, the
@@ -448,8 +448,8 @@ There is also a Gamma prior for :math:`\lambda` and :math:`\alpha`:
 .. math:: g(\lambda|\lambda_1,\lambda_2) = \frac{\lambda_2^{\lambda_1}}
     {\Gamma(\lambda_1)} \lambda^{\lambda_1-1} e^{-\lambda_2 {\lambda}}
 
-By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e^{-6}`, *i.e.*
- very slightly informative priors.
+By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e^{-6}`,
+*i.e.* very slightly informative priors.
 
 
 
@@ -458,7 +458,7 @@ By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e^{-6}`, *i.e
    :align: center
 
 
-*Bayesian Ridge Regression* is used for regression::
+Bayesian Ridge Regression is used for regression::
 
     >>> from sklearn import linear_model
     >>> X = [[0., 0.], [1., 1.], [2., 2.], [3., 3.]]
@@ -481,8 +481,8 @@ The weights :math:`\beta` of the model can be access::
     array([ 0.49999993,  0.49999993])
 
 Due to the Bayesian framework, the weights found are slightly different to the
-ones found by :ref:`ordinary_least_squares`. However, *Bayesian Ridge
-Regression* is more robust to ill-posed problem.
+ones found by :ref:`ordinary_least_squares`. However, Bayesian Ridge
+Regression is more robust to ill-posed problem.
 
 .. topic:: Examples:
 
