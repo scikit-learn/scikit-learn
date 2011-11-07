@@ -546,7 +546,7 @@ def mutual_information_score(labels_true, labels_pred, contingency=None):
     return mi.sum()
 
 
-def ami_score(labels_true, labels_pred):
+def adjusted_mutual_info_score(labels_true, labels_pred):
     """Adjusted Mutual Information between two clusterings
 
     Adjusted Mutual Information (AMI) is an adjustement of the Mutual
@@ -565,6 +565,9 @@ def ami_score(labels_true, labels_pred):
     `label_pred` will return the same score value. This can be useful to
     measure the agreement of two independent label assignments strategies
     on the same dataset when the real ground truth is not known.
+
+    Be mindful that this function is an order of magnitude slower than other
+    metrics, such as the Adjusted Rand Index.
 
     Parameters
     ----------
@@ -590,16 +593,16 @@ def ami_score(labels_true, labels_pred):
     Perfect labelings are both homogeneous and complete, hence have
     score 1.0::
 
-      >>> from sklearn.metrics.cluster import ami_score
-      >>> ami_score([0, 0, 1, 1], [0, 0, 1, 1])
+      >>> from sklearn.metrics.cluster import adjusted_mutual_info_score
+      >>> adjusted_mutual_info_score([0, 0, 1, 1], [0, 0, 1, 1])
       1.0
-      >>> ami_score([0, 0, 1, 1], [1, 1, 0, 0])
+      >>> adjusted_mutual_info_score([0, 0, 1, 1], [1, 1, 0, 0])
       1.0
 
     If classes members are completly splitted accross different clusters,
     the assignment is totally in-complete, hence the AMI is null::
 
-      >>> ami_score([0, 0, 0, 0], [0, 1, 2, 3])
+      >>> adjusted_mutual_info_score([0, 0, 0, 0], [0, 1, 2, 3])
       0.0
 
     """
@@ -623,33 +626,6 @@ def ami_score(labels_true, labels_pred):
     h_true, h_pred = entropy(labels_true), entropy(labels_pred)
     ami = (mi - emi) / (max(h_true, h_pred) - emi)
     return ami
-
-
-def _accumulate_factorials(all_factors):
-    """Calculates the product of the given factorials.
-
-    This function solves equations of the form:
-
-    \frac{\prod{n_1!, n_2!,...n_k!}}{\prod{d_1!, d_2!,...d_m!}}
-
-    Parameters
-    ----------
-    all_factors: list of signed integers
-        Integers are positive if they are a numerator in the equation,
-        and negative if they are in the denominator.
-
-    Returns
-    -------
-    t: float
-        The product of the factorial of each of the given values that are
-        positive divided by the product of each of the given values that are
-        negative.
-    """
-    a = np.zeros((all_factors.max() + 1))
-    b = np.arange(all_factors.max() + 1, dtype='float')
-    for factor in all_factors:
-        a[:(abs(factor) + 1)] += np.sign(factor)
-    return np.exp(np.sum(np.dot(a[2:], np.log(b[2:]))))
 
 
 def expected_mutual_information(contingency, n_samples):
