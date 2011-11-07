@@ -27,11 +27,10 @@ class Forest(BaseEstimator):
 
     Warning: This class should not be used directly. Use derived classes instead.
     """
-    def __init__(self, base_tree, n_trees=10, bootstrap=False, n_jobs=1, random_state=None):
+    def __init__(self, base_tree, n_trees=10, bootstrap=False, random_state=None):
         self.base_tree = base_tree
         self.n_trees = n_trees
         self.bootstrap = bootstrap
-        self.n_jobs = n_jobs
         self.random_state = check_random_state(random_state)
         self.forest = []
 
