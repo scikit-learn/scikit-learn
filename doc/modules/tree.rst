@@ -117,7 +117,7 @@ iris dataset::
     >>> out = StringIO()
     >>> out = tree.export_graphviz(clf, out_file=out)
 
-.. figure:: ../images/iris.svg
+.. figure:: ../images/iris.png
    :align: center
 
 After being fitted, the model can then be used to predict new values::
