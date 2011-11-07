@@ -306,12 +306,14 @@ def _labels_inertia(X, x_squared_norms, centers, distances=None):
     # set the default value of centers to -1 to be able to detect any anomaly
     # easily
     labels = - np.ones(n_samples, np.int32)
+    if distances == None:
+        distances = np.zeros(shape=(0,), dtype=np.float64)
     if sp.issparse(X):
         inertia = _k_means._assign_labels_csr(
-            X, x_squared_norms, centers, labels)
+            X, x_squared_norms, centers, labels, distances=distances)
     else:
         inertia = _k_means._assign_labels_array(
-            X, x_squared_norms, centers, labels)
+            X, x_squared_norms, centers, labels, distances=distances)
     return labels, inertia
 
 
@@ -895,6 +897,7 @@ class MiniBatchKMeans(KMeans):
                 x_squared_norms=x_squared_norms,
                 init_size=self.init_size)
             counts = np.zeros(self.k, dtype=np.int32)
+            distances = np.zeros(self.batch_size, dtype=np.float64)
 
             n_batches = int(np.ceil(float(n_samples) / self.batch_size))
             n_iterations = int(self.max_iter * n_batches)
@@ -911,7 +914,8 @@ class MiniBatchKMeans(KMeans):
                 # Perform the actual update step on the minibatch data
                 batch_inertia, centers_squared_diff = _mini_batch_step(
                     X[minibatch_indices], x_squared_norms[minibatch_indices],
-                    cluster_centers, counts, old_center_buffer, tol > 0.0)
+                    cluster_centers, counts, old_center_buffer, tol > 0.0,
+                    distances=distances)
 
                 # Monitor the convergence and do early stopping if necessary
                 if _mini_batch_convergence(
@@ -919,40 +923,36 @@ class MiniBatchKMeans(KMeans):
                     centers_squared_diff, batch_inertia, convergence_context,
                     verbose=self.verbose):
 
-                    # if we can no longer reallocate bad centers, stop here
+                    # If we can no longer reallocate bad centers, stop here
                     if reallocation_budget < 1:
                         break
 
-                    # reallocate bad centers to close to the most populated
-                    # centers
-                    sorted_counts_indices = counts.argsort()
-                    threshold = counts[self.k / 2] / 3
-                    should_stop = False
-                    for i, bad_idx in enumerate(sorted_counts_indices):
-                        if counts[bad_idx] >= threshold:
-                            if i == 0:
-                                # no more bad centers
-                                reallocation_budget = 0
-                                should_stop = True
-                            break
-
-                        if self.verbose:
-                            print ("Reallocating center with count %d" %
-                                   counts[bad_idx])
-
-                        good_idx = sorted_counts_indices[-(i + 1)]
-                        noise = self.random_state.normal(
-                            scale=0.001, size=(n_features,))
-                        cluster_centers[bad_idx] = cluster_centers[good_idx]
-                        cluster_centers[bad_idx] += noise
-
-                    if should_stop:
+                    # Reallocate bad centers at samples that are the most
+                    # distant from existing centers
+                    threshold = np.median(counts) / 2
+                    to_reallocate = counts < threshold
+                    n_to_reallocate = np.sum(to_reallocate)
+                    if n_to_reallocate == 0:
                         break
 
-                    # reset count stastics
+                    #if self.verbose:
+                    print "Re-allocating %d centers" % n_to_reallocate
+
+                    # Find the most distant portion of the samples and re-init
+                    # bad centers with them
+                    n = int(0.1 * self.batch_size)
+                    reinit_indices = distances.argsort()[-n:]
+                    new_centers = _init_centroids(
+                        X[reinit_indices], n_to_reallocate,
+                        self.init, random_state=self.random_state,
+                        x_squared_norms=x_squared_norms[reinit_indices])
+                    cluster_centers[to_reallocate] = new_centers
+
+                    ## Reset convergence stastics and counts
                     reallocation_budget -= 1
-                    counts.fill(0)
                     convergence_context.clear()
+                    counts[to_reallocate] = 0
+                    #counts.fill(0)
 
 
             # Keep only the best cluster centers accross independant inits

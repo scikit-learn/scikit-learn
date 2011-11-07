@@ -67,6 +67,7 @@ cases = [
     (KMeans, 'k-means++', {}),
     (KMeans, 'random', {}),
     (MiniBatchKMeans, 'k-means++', {'max_no_improvement': 3, 'n_reinit': 0}),
+    (MiniBatchKMeans, 'k-means++', {'max_no_improvement': 3, 'n_reinit': 2}),
     (MiniBatchKMeans, 'random', {'max_no_improvement': 3, 'n_reinit': 0}),
     (MiniBatchKMeans, 'random', {'max_no_improvement': 3, 'n_reinit': 2}),
 ]
@@ -105,7 +106,7 @@ pl.title("Mean inertia for various k-means init accross %d runs" % n_runs)
 # Part 2: qualitative visual inspection of the convergence
 
 X, y = make_data(random_state, n_samples_per_center, grid_size, scale)
-km = MiniBatchKMeans(k=n_clusters, init='random', n_init=1,
+km = MiniBatchKMeans(k=n_clusters, init='random', n_init=1, n_reinit=0,
                      random_state=random_state).fit(X)
 
 fig = pl.figure()

@@ -19,7 +19,6 @@ print __doc__
 
 import numpy as np
 import pylab as pl
-import matplotlib.cm as cm
 from time import time
 
 from sklearn.cluster import MiniBatchKMeans
@@ -67,7 +66,7 @@ n_runs = 5
 
 # k-means models can do several random inits so as to be able to trade
 # CPU time for convergence robustness
-n_init_range = np.array([1, 5, 10])
+n_init_range = np.array([1, 5])
 
 fig = pl.figure()
 plots = []

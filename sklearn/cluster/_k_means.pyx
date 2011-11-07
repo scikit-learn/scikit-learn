@@ -39,7 +39,8 @@ cdef inline DOUBLE array_ddot(int n,
 cpdef DOUBLE _assign_labels_array(np.ndarray[DOUBLE, ndim=2] X,
                                   np.ndarray[DOUBLE, ndim=1] x_squared_norms,
                                   np.ndarray[DOUBLE, ndim=2] centers,
-                                  np.ndarray[INT, ndim=1] labels):
+                                  np.ndarray[INT, ndim=1] labels,
+                                  np.ndarray[DOUBLE, ndim=1] distances):
     """Compute label assignement and inertia for a dense array
 
     Return the inertia (sum of squared distances to the centers).
@@ -49,12 +50,16 @@ cpdef DOUBLE _assign_labels_array(np.ndarray[DOUBLE, ndim=2] X,
         unsigned int n_features = centers.shape[1]
         unsigned int n_samples = X.shape[0]
         unsigned int sample_idx, center_idx, feature_idx
+        unsigned int store_distances = 0
         unsigned int k
         DOUBLE inertia = 0.0
         DOUBLE min_dist
         DOUBLE dist
         np.ndarray[DOUBLE, ndim=1] center_squared_norms = np.zeros(
             n_clusters, dtype=np.float64)
+
+    if n_samples == distances.shape[0]:
+        store_distances = 1
 
     for center_idx in range(n_clusters):
         center_squared_norms[center_idx] = array_ddot(
@@ -73,6 +78,8 @@ cpdef DOUBLE _assign_labels_array(np.ndarray[DOUBLE, ndim=2] X,
             if min_dist == -1 or dist < min_dist:
                 min_dist = dist
                 labels[sample_idx] = center_idx
+                if store_distances:
+                    distances[sample_idx] = dist
         inertia += min_dist
 
     return inertia
@@ -83,7 +90,8 @@ cpdef DOUBLE _assign_labels_array(np.ndarray[DOUBLE, ndim=2] X,
 @cython.cdivision(True)
 cpdef DOUBLE _assign_labels_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
                                 np.ndarray[DOUBLE, ndim=2] centers,
-                                np.ndarray[INT, ndim=1] labels):
+                                np.ndarray[INT, ndim=1] labels,
+                                np.ndarray[DOUBLE, ndim=1] distances):
     """Compute label assignement and inertia for a CSR input
 
     Return the inertia (sum of squared distances to the centers).
@@ -95,6 +103,7 @@ cpdef DOUBLE _assign_labels_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
         unsigned int n_clusters = centers.shape[0]
         unsigned int n_features = centers.shape[1]
         unsigned int n_samples = X.shape[0]
+        unsigned int store_distances = 0
         unsigned int sample_idx, center_idx, feature_idx
         unsigned int k
         DOUBLE inertia = 0.0
@@ -102,6 +111,9 @@ cpdef DOUBLE _assign_labels_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
         DOUBLE dist
         np.ndarray[DOUBLE, ndim=1] center_squared_norms = np.zeros(
             n_clusters, dtype=np.float64)
+
+    if n_samples == distances.shape[0]:
+        store_distances = 1
 
     for center_idx in range(n_clusters):
         center_squared_norms[center_idx] = array_ddot(
@@ -121,6 +133,8 @@ cpdef DOUBLE _assign_labels_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
             if min_dist == -1 or dist < min_dist:
                 min_dist = dist
                 labels[sample_idx] = center_idx
+                if store_distances:
+                    distances[sample_idx] = dist
         inertia += min_dist
 
     return inertia
