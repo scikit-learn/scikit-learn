@@ -1,7 +1,8 @@
 """Hierarchical Agglomerative Clustering
 
-These routines perform some hierachical agglomerative clustering of some
-input data. Currently, only Ward's algorithm is implemented.
+These routines perform some hierarchical agglomerative clustering of some
+input data. Currently, only complete-linkage and ward's criterion are
+implemented as linkage criteria.
 
 Authors : Vincent Michel, Bertrand Thirion, Alexandre Gramfort,
           Gael Varoquaux, Jan Hendrik Metzen
@@ -27,8 +28,8 @@ from ._feature_agglomeration import AgglomerationTransform
 
 ###############################################################################
 
-class WardDistance(object):
-    
+class WardsLinkage(object):
+
     def __init__(self, X, connectivity, n_nodes, n_features, n_samples):
         # build moments as a list
         self.moments = [np.zeros(n_nodes), np.zeros((n_nodes, n_features))]
@@ -61,7 +62,7 @@ class WardDistance(object):
         # update the moments
         for p in range(2):
             self.moments[p][parent_node] = \
-                        self.moments[p][child_node1] + self.moments[p][child_node2]
+                    self.moments[p][child_node1] + self.moments[p][child_node2]
         # update the structure matrix A and the inertia matrix
         coord_col = []
         visited = np.empty(len(self.A), dtype=bool)
@@ -69,11 +70,11 @@ class WardDistance(object):
         visited[parent_node] = True     
         for l in set(self.A[child_node1]).union(self.A[child_node2]):
             while parent[l] != l:
-               l = parent[l]
+                l = parent[l]
             if not visited[l]:
-               visited[l] = True
-               coord_col.append(l)
-               self.A[l].append(parent_node)
+                visited[l] = True
+                coord_col.append(l)
+                self.A[l].append(parent_node)
         self.A.append(coord_col)
         coord_col = np.array(coord_col, dtype=np.int)
         coord_row = np.empty_like(coord_col)
@@ -86,13 +87,13 @@ class WardDistance(object):
         for tupl in itertools.izip(distances, coord_row, coord_col):
             heappush(self.distances, tupl)
             
-    def hasMoreCandidates(self):
+    def has_more_candidates(self):
         return len(self.distances) > 0
     
-    def fetchCandidate(self):
+    def fetch_candidate(self):
         return heappop(self.distances)
     
-    def computeDistance(self, i, j):
+    def compute_distance(self, i, j):
         # Compute inertia of the cluster obtained when merging i and j
         distances = np.empty(1, dtype=np.float)
         _inertia.compute_ward_dist(self.moments[0], self.moments[1],
@@ -100,33 +101,34 @@ class WardDistance(object):
         return distances[0]
 
 
-class CompleteLinkageDistance(object):
+class CompleteLinkage(object):
     
     def __init__(self, X, connectivity, n_nodes, n_features, n_samples):
         self.X = X
         self.A = [] 
         # Heap of possible cluster merges, sorted by heir distances
         self.distances = [] 
-        # Distances between two clusters (represented by their root node indices) 
-        self.distanceDict = {} 
+        # Distances between two clusters, represented by their 
+        # root node indices 
+        self.distance_dict = {} 
         # Mapping from a pair of clusters to the set of node pairs which
         # connect these two clusters
-        self.clusterConnectingNodes = defaultdict(set)
+        self.cluster_connections = defaultdict(set)
         # Mapping from a a cluster to a mapping from nodes in this cluster
         # to their distance to the most distant node in the cluster
-        self.maximalDistanceFromNodeInCluster = defaultdict(dict)  
+        self.max_dist_of_node_in_cluster = defaultdict(dict)  
         # Determine distances between all connected nodes 
         for ind1, row in enumerate(connectivity.rows):
             self.A.append(row)
-            self.maximalDistanceFromNodeInCluster[ind1][ind1] = 0.0
+            self.max_dist_of_node_in_cluster[ind1][ind1] = 0.0
             for ind2 in row:
-                self.clusterConnectingNodes[(ind1, ind2)] = set([(ind1, ind2)])
-                self.clusterConnectingNodes[(ind2, ind1)] = set([(ind1, ind2)])
+                self.cluster_connections[(ind1, ind2)] = set([(ind1, ind2)])
+                self.cluster_connections[(ind2, ind1)] = set([(ind1, ind2)])
                 # Compute distance between two connected nodes
                 dist = np.linalg.norm(X[ind1] - X[ind2])
                 self.distances.append((dist, ind1, ind2))
-                self.distanceDict[(ind1, ind2)] = dist
-                self.distanceDict[(ind2, ind1)] = dist
+                self.distance_dict[(ind1, ind2)] = dist
+                self.distance_dict[(ind2, ind1)] = dist
                 
         # Enforce symmetry of A
         for ind1, row in enumerate(connectivity.rows):
@@ -137,43 +139,51 @@ class CompleteLinkageDistance(object):
         heapify(self.distances)
 
     def update(self, child_node1, child_node2, parent_node, parent):
-        # Update maximalDistanceFromNodeInCluster for new cluster "parent_node" 
-        for node in self.maximalDistanceFromNodeInCluster[child_node1].keys():
+        # Update max_dist_of_node_in_cluster for new cluster "parent_node" 
+        for node in self.max_dist_of_node_in_cluster[child_node1].keys():
             minInterClusterDist = np.inf
-            for (connecting_node1, connecting_node2) in self.clusterConnectingNodes[(child_node1, child_node2)]:
+            for (node1, node2) in self.cluster_connections[(child_node1, 
+                                                            child_node2)]:
                 # Canonical ordering (connecting node 1 in cluster 1)
-                if connecting_node1 not in self.maximalDistanceFromNodeInCluster[child_node1]:
-                    connecting_node1, connecting_node2 = connecting_node2, connecting_node1
+                if node1 not in self.max_dist_of_node_in_cluster[child_node1]:
+                    node1, node2 = node2, node1
                     
+                # TODO: graph distance instead of euclidean
                 interClusterDist = \
-                    self.maximalDistanceFromNodeInCluster[child_node2][connecting_node2] \
-                        + self.distanceDict[(connecting_node1, connecting_node2)] \
-                        + np.linalg.norm(self.X[node] - self.X[connecting_node1]) # TODO: graph distance instead of euclidean
-                minInterClusterDist = min(minInterClusterDist, interClusterDist)
-                      
-            self.maximalDistanceFromNodeInCluster[parent_node][node] = \
-                max(self.maximalDistanceFromNodeInCluster[child_node1][node], # intra cluster dist
-                    minInterClusterDist)
-        for node in self.maximalDistanceFromNodeInCluster[child_node2].keys():
+                    self.max_dist_of_node_in_cluster[child_node2][node2] \
+                        + self.distance_dict[(node1, node2)] \
+                        + np.linalg.norm(self.X[node] - self.X[node1])  
+                minInterClusterDist = \
+                        min(minInterClusterDist, interClusterDist)
+            
+            # Take maximum of intra- und inter-cluster distance          
+            self.max_dist_of_node_in_cluster[parent_node][node] = \
+                    max(self.max_dist_of_node_in_cluster[child_node1][node], 
+                        minInterClusterDist)
+        for node in self.max_dist_of_node_in_cluster[child_node2].keys():
             minInterClusterDist = np.inf
-            for (connecting_node1, connecting_node2) in self.clusterConnectingNodes[(child_node1, child_node2)]:
+            for (node1, node2) in self.cluster_connections[(child_node1, 
+                                                            child_node2)]:
                 # Canonical ordering (connecting node 1 in cluster 1)
-                if connecting_node1 not in self.maximalDistanceFromNodeInCluster[child_node1]:
-                    connecting_node1, connecting_node2 = connecting_node2, connecting_node1
+                if node1 not in self.max_dist_of_node_in_cluster[child_node1]:
+                    node1, node2 = node2, node1
                     
+                 # TODO: graph distance instead of euclidean
                 interClusterDist = \
-                    self.maximalDistanceFromNodeInCluster[child_node1][connecting_node1] \
-                        + self.distanceDict[(connecting_node1, connecting_node2)] \
-                        + np.linalg.norm(self.X[node] - self.X[connecting_node2]) # TODO: graph distance instead of euclidean
-                minInterClusterDist = min(minInterClusterDist, interClusterDist)
+                    self.max_dist_of_node_in_cluster[child_node1][node1] \
+                        + self.distance_dict[(node1, node2)] \
+                        + np.linalg.norm(self.X[node] - self.X[node2])
+                minInterClusterDist = \
+                        min(minInterClusterDist, interClusterDist)
                       
-            self.maximalDistanceFromNodeInCluster[parent_node][node] = \
-                max(self.maximalDistanceFromNodeInCluster[child_node2][node], # intra cluster dist
-                    minInterClusterDist)
+            # Take maximum of intra- und inter-cluster distance   
+            self.max_dist_of_node_in_cluster[parent_node][node] = \
+                    max(self.max_dist_of_node_in_cluster[child_node2][node],
+                        minInterClusterDist)
         
         # Cleaning up
-        self.maximalDistanceFromNodeInCluster.pop(child_node1)
-        self.maximalDistanceFromNodeInCluster.pop(child_node2)
+        self.max_dist_of_node_in_cluster.pop(child_node1)
+        self.max_dist_of_node_in_cluster.pop(child_node2)
         
         # Determine all other clusters that are connected to one of the child
         # clusters. These cluster will also be connected to the parent cluster
@@ -181,7 +191,8 @@ class CompleteLinkageDistance(object):
         visited = np.empty(parent_node + 1, dtype=bool)
         visited[:] = False
         visited[parent_node] = True
-        for l in self.getNodesConnectedToClusters([child_node1, child_node2]):
+        for l in self.get_nodes_connected_to_clusters([child_node1, 
+                                                       child_node2]):
             while parent[l] != l:
                 l = parent[l]
             if not visited[l]:
@@ -193,51 +204,55 @@ class CompleteLinkageDistance(object):
         # Determine for all connected clusters the distance to the newly formed
         # cluster
         for l in coord_col:
-            self.clusterConnectingNodes[(parent_node, l)] = \
-                 self.clusterConnectingNodes[(child_node1, l)].union(self.clusterConnectingNodes[(child_node2, l)])
-            self.clusterConnectingNodes[(l, parent_node)] = \
-                            self.clusterConnectingNodes[(parent_node, l)]
-            # Find the distance between pair of nodes that are most distant in l and parent_node
+            self.cluster_connections[(parent_node, l)] = \
+                        set.union(self.cluster_connections[(child_node1, l)],
+                                  self.cluster_connections[(child_node2, l)])
+            self.cluster_connections[(l, parent_node)] = \
+                            self.cluster_connections[(parent_node, l)]
+            # Find the distance between pair of nodeWs that are most distant 
+            # in clusters rooted at l and parent_node
             interClusterDist = np.inf
-            for (connecting_node1, connecting_node2) in self.clusterConnectingNodes[(l, parent_node)]:
+            for (node1, node2) in self.cluster_connections[(l, parent_node)]:
                 # Canonical ordering (connecting node 1 in l)
-                if connecting_node1 not in self.maximalDistanceFromNodeInCluster[l]:
-                    connecting_node1, connecting_node2 = connecting_node2, connecting_node1
-                dist = self.maximalDistanceFromNodeInCluster[l][connecting_node1] \
-                        + self.distanceDict[(connecting_node1, connecting_node2)] \
-                        + self.maximalDistanceFromNodeInCluster[parent_node][connecting_node2]
+                if node1 not in self.max_dist_of_node_in_cluster[l]:
+                    node1, node2 = node2, node1
+                dist = self.max_dist_of_node_in_cluster[l][node1] \
+                        + self.distance_dict[(node1, node2)] \
+                        + self.max_dist_of_node_in_cluster[parent_node][node2]
                 interClusterDist = min(interClusterDist, dist)
             
-            self.distanceDict[(l, parent_node)] = interClusterDist
-            self.distanceDict[(parent_node, l)] = interClusterDist
+            self.distance_dict[(l, parent_node)] = interClusterDist
+            self.distance_dict[(parent_node, l)] = interClusterDist
             heappush(self.distances, (interClusterDist, parent_node, l))
             
             # Cleaning up
-            self.clusterConnectingNodes.pop((child_node1, l), None)
-            self.clusterConnectingNodes.pop((child_node2, l), None)
-            self.clusterConnectingNodes.pop((l, child_node1), None)
-            self.clusterConnectingNodes.pop((l, child_node2), None)
+            self.cluster_connections.pop((child_node1, l), None)
+            self.cluster_connections.pop((child_node2, l), None)
+            self.cluster_connections.pop((l, child_node1), None)
+            self.cluster_connections.pop((l, child_node2), None)
             
-    def hasMoreCandidates(self):
+    def has_more_candidates(self):
         return len(self.distances) > 0
     
-    def fetchCandidate(self):
+    def fetch_candidate(self):
         return heappop(self.distances)
     
-    def computeDistance(self, i, j):
-        return self.distanceDict[(i, j)]
+    def compute_distance(self, i, j):
+        return self.distance_dict[(i, j)]
     
-    def getNodesConnectedToClusters(self, cluster_roots):
+    def get_nodes_connected_to_clusters(self, cluster_roots):
         return set.union(*[set(self.A[cluster_root]) 
                                 for cluster_root in cluster_roots])
     
-    def getNontrivialClusters(self):
-        return [cluster_root for cluster_root in self.maximalDistanceFromNodeInCluster.keys()
-                    if cluster_root > self.X.shape[0]]
+    def get_nontrivial_clusters(self):
+        return [cluster_root 
+                    for cluster_root in self.max_dist_of_node_in_cluster
+                        if cluster_root > self.X.shape[0]]
     
             
-def ward_tree(X, connectivity=None, n_components=None, return_inertias=False, 
-              merge_replay=[], DistanceClass='CompleteLinkageDistance', copy=True):
+def dendrogram(X, connectivity=None, n_components=None, return_inertias=False, 
+              merge_replay=[], linkage_criteria='CompleteLinkage', 
+              copy=True):
     """Hierarchical clustering based on a Feature matrix.
 
     The inertia matrix uses a Heapq-based representation.
@@ -289,9 +304,9 @@ def ward_tree(X, connectivity=None, n_components=None, return_inertias=False,
         X = np.reshape(X, (-1, 1))
 
     try:
-        DistanceClass = eval(DistanceClass)
+        linkage_criteria = eval(linkage_criteria)
     except:
-        raise Exception("Unknown distance class %s" % DistanceClass)
+        raise Exception("Unknown distance class %s" % linkage_criteria)
 
     # Compute the number of nodes
     if connectivity is not None:
@@ -321,7 +336,8 @@ def ward_tree(X, connectivity=None, n_components=None, return_inertias=False,
     # Remove diagonal from connectivity matrix
     connectivity.setdiag(np.zeros(connectivity.shape[0]))        
     # Compute distances between connected nodes
-    distance_class = DistanceClass(X, connectivity, n_nodes, n_features, n_samples)
+    linkage = linkage_criteria(X, connectivity, n_nodes, n_features, 
+                                      n_samples)
 
     # prepare the main fields
     parent = np.arange(n_nodes, dtype=np.int)
@@ -330,18 +346,19 @@ def ward_tree(X, connectivity=None, n_components=None, return_inertias=False,
     children = []
     merges = []
     
-    reserved_indices = set([]) # The indices which are contained in the replayed merges
+    # The indices which are contained in the replayed merges
+    reserved_indices = set([])
     for (i_, j_), k_ in merge_replay:
         reserved_indices.add(i_)
         reserved_indices.add(j_)
     for (i_, j_), k_ in merge_replay:
         if k_ in reserved_indices:
-            reserved_indices.remove(k_) # Add this later since we don't know the new index yet
+             # Add k_ later since we don't know the new index yet
+            reserved_indices.remove(k_)
     
     index_mapping = dict(zip(reserved_indices, reserved_indices))
     
     augmentation = None
-    max_height = None
     # recursive merge loop
     replaying = len(merge_replay) > 0
     for k in xrange(n_samples, n_nodes):
@@ -353,10 +370,10 @@ def ward_tree(X, connectivity=None, n_components=None, return_inertias=False,
             i = index_mapping[i_]
             j = index_mapping[j_]
             # Compute merge distance
-            merge_distance = distance_class.computeDistance(i,j)
+            merge_distance = linkage.compute_distance(i, j)
             index_mapping[k_] = k
 #            print "Reapply", merge_distance, i, j, k
-        else: # No merges to be reapplied left
+        else:  # No merges to be reapplied left
             if augmentation: 
                 # There are nodes that can be added to cluster created during
                 # replaying 
@@ -364,21 +381,24 @@ def ward_tree(X, connectivity=None, n_components=None, return_inertias=False,
                 augmentation = None
 #                print "Augmentation", merge_distance, i, j, k
             else:
-                # Identify the merge that will be applied next using the standard method
+                # Identify the merge that will be applied next using the 
+                # standard method
                 merge_distance = np.inf
-                while distance_class.hasMoreCandidates():
-                    merge_distance, i, j = distance_class.fetchCandidate()
+                while linkage.has_more_candidates():
+                    merge_distance, i, j = linkage.fetch_candidate()
                     if open_nodes[i] and open_nodes[j]:
                         break
-                    if not distance_class.hasMoreCandidates():
+                    if not linkage.has_more_candidates():
                         merge_distance = np.inf
                         break
-                if not distance_class.hasMoreCandidates() and merge_distance == np.inf: 
+                if not linkage.has_more_candidates() \
+                                        and merge_distance == np.inf: 
                     # Merge unconnected components with height infinity
                     i = k - 1
-                    desc = set(_hc_get_descendent([i], np.array(children), n_samples, 
+                    desc = set(_hc_get_descendent([i], np.array(children), 
+                                                  n_samples, 
                                                   add_intermediate_nodes=True))
-                    for j in xrange(k-2, 0, -1):
+                    for j in xrange(k - 2, 0, -1):
                         if j not in desc:
                             break      
 #                print "Novel", merge_distance, i, j, k     
@@ -396,21 +416,24 @@ def ward_tree(X, connectivity=None, n_components=None, return_inertias=False,
         open_nodes[i], open_nodes[j] = False, False
         
         # Add new possible merges and their distances to heap
-        distance_class.update(i, j, k, parent)
+        linkage.update(i, j, k, parent)
         
         # If we are finished with replaying
         if replaying and len(merge_replay) == 0:
             # Check for possible augmentations of the clusters created during 
             # replaying
             possible_augmentations = []
-            for cluster_root in distance_class.getNontrivialClusters():
-                for node in distance_class.getNodesConnectedToClusters([cluster_root]):
-                    if not open_nodes[node]: continue
-                    dist = distance_class.computeDistance(node, cluster_root)
+            for cluster_root in linkage.get_nontrivial_clusters():
+                for node in linkage.get_nodes_connected_to_clusters(
+                                                            [cluster_root]):
+                    if not open_nodes[node]:
+                        continue
+                    dist = linkage.compute_distance(node, cluster_root)
                     if dist < heights[cluster_root]:
                         possible_augmentations.append(
-                            (dist - heights[cluster_root], heights[cluster_root],
-                             node, cluster_root))
+                                                (dist - heights[cluster_root],
+                                                 heights[cluster_root],
+                                                 node, cluster_root))
             if len(possible_augmentations) > 0:
                 augmentation = min(possible_augmentations)[1:]
             else:
@@ -491,6 +514,7 @@ def _hc_cut(n_clusters, children, n_leaves):
         labels[_hc_get_descendent([node], children, n_leaves)] = i
     return labels
 
+
 def _hc_cut_inertia(max_inertia, children, n_leaves, inertias):
     """Function cutting the ward tree for a given maximal inertia.
 
@@ -516,7 +540,7 @@ def _hc_cut_inertia(max_inertia, children, n_leaves, inertias):
         cluster labels for each point
 
     """
-    open_nodes = [len(inertias)-1] # root of the tree
+    open_nodes = [len(inertias) - 1]  # root of the tree
     cluster_roots = [] 
     while open_nodes != []:
         node = open_nodes[0]
@@ -535,10 +559,10 @@ def _hc_cut_inertia(max_inertia, children, n_leaves, inertias):
 
 
 ###############################################################################
-# Class for Ward hierarchical clustering
+# Class for Hierarchical clustering
 
-class Ward(BaseEstimator):
-    """Ward hierarchical clustering: constructs a tree and cuts it.
+class HierarchicalClustering(BaseEstimator):
+    """Hierarchical clustering: constructs a tree and cuts it.
 
     Parameters
     ----------
@@ -596,8 +620,9 @@ class Ward(BaseEstimator):
         self.copy = copy
         self.n_components = n_components
         self.connectivity = connectivity
+        self.merges = []
 
-    def fit(self, X, merge_replay=[]):
+    def fit(self, X):
         """Fit the hierarchical clustering on the data
 
         Parameters
@@ -616,28 +641,37 @@ class Ward(BaseEstimator):
         # Construct the tree
         if self.max_inertia is None:
             children, n_components, n_leaves, self.merges = \
-                    memory.cache(ward_tree)(X, self.connectivity,
+                    memory.cache(dendrogram)(X, self.connectivity,
                                             n_components=self.n_components,
-                                            merge_replay=merge_replay,
+                                            merge_replay=self.merges,
                                             copy=self.copy)
             # Cut the tree based on number of desired clusters
             self.labels_ = _hc_cut(self.n_clusters, children, n_leaves)
         else:
             children, n_components, n_leaves, self.merges, inertias = \
-                    memory.cache(ward_tree)(X, self.connectivity,
+                    memory.cache(dendrogram)(X, self.connectivity,
                                             n_components=self.n_components,
                                             return_inertias=True, 
-                                            merge_replay=merge_replay,
+                                            merge_replay=self.merges,
                                             copy=self.copy)
             # Cut the tree based on maximally allowed inertia
-            self.labels_ = _hc_cut_inertia(self.max_inertia, children, n_leaves,
-                                           inertias)
+            self.labels_ = _hc_cut_inertia(self.max_inertia, children, 
+                                           n_leaves, inertias)
+            
+        # Undo merges in the uppermost part of the tree that have been 
+        # "cut off" by _hc_cut_inertia or _hc_cut
+        if len(np.unique(self.labels_)) > 1:
+            self.merges = self.merges[:-len(np.unique(self.labels_)) + 1]
             
         return self
 
-###############################################################################
-# Ward-based feature agglomeration
 
+###############################################################################
+class Ward(HierarchicalClustering):
+    pass
+
+
+# Ward-based feature agglomeration
 class WardAgglomeration(AgglomerationTransform, Ward):
     """Feature agglomeration based on Ward hierarchical clustering
 
