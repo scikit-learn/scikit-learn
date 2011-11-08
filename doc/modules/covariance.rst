@@ -153,6 +153,8 @@ from the MATLAB program available from the author's webpage
    :align: center
    :scale: 75%
 
+.. _sparse_inverse_covariance:
+
 Sparse inverse covariance
 ==========================
 
