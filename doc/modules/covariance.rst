@@ -160,7 +160,7 @@ The matrix inverse of the covariance matrix, often called the precision
 matrix, is proportional to the partial correlation matrix. It gives the
 partial independence relationship. In other words, if two features are
 independent conditionally on the others, the corresponding coefficient in
-the precision matrix will be zero. This is why it makes sens to estimate
+the precision matrix will be zero. This is why it makes sense to estimate
 a sparse precision matrix: by learning independence relations from the
 data, the estimation of the covariance matrix is better conditioned. This
 is known as *covariance selection*.
@@ -197,7 +197,7 @@ The mathematical formulation is the following:
 
 Where `K` is the precision matrix to be estimated, and `S` is the sample
 covariance matrix. :math:`\|K\|_1` is the sum of the absolute values of
-off diagonal coefficients of `K`.
+off-diagonal coefficients of `K`.
 
 
 .. topic:: Examples:

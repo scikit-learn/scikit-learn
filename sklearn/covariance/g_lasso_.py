@@ -27,7 +27,7 @@ from ..externals.joblib import Parallel, delayed
 # of the l1-penalized estimator
 def _objective(mle, precision_, alpha):
     cost = -log_likelihood(mle, precision_)
-    cost += alpha*(np.abs(precision_).sum()
+    cost += alpha * (np.abs(precision_).sum()
                    -np.abs(np.diag(precision_)).sum())
     return cost
 
@@ -46,6 +46,14 @@ def _dual_gap(emp_cov, precision_, alpha):
 def alpha_max(emp_cov):
     """ Find the maximum alpha for which there are some non-zero
         off-diagonal elements.
+
+        Parameters
+        ----------
+        emp_cov: 2D array, (n_features, n_features)
+            The sample covariance matrix
+
+        Notes
+        -----
 
         This results from the bound for the all the Lasso that are solved
         in GLasso: each time, the row of cov corresponds to Xy. As the
@@ -67,7 +75,6 @@ def g_lasso(X, alpha, cov_init=None, mode='cd', tol=1e-4, max_iter=100,
     ----------
     X: 2D ndarray, shape (n_samples, n_features)
         Data from which to compute the covariance estimate
-
     alpha: positive float
         The regularization parameter: the higher alpha, the more
         regularization, the sparser the inverse covariance
@@ -116,7 +123,7 @@ def g_lasso(X, alpha, cov_init=None, mode='cd', tol=1e-4, max_iter=100,
         covariance_ = emp_cov.copy()
     else:
         covariance_ = cov_init.copy()
-    # As a trivial regularization (Tichonov like), we scale down the
+    # As a trivial regularization (Tikhonov like), we scale down the
     # off-diagonal coefficients of our starting point:
     covariance_ *= 0.95
     diagonal = emp_cov.flat[::n_features + 1]
@@ -225,7 +232,7 @@ class GLasso(EmpiricalCovariance):
         verbose: boolean, optional
             If verbose is True, the objective function and dual gap are
             plotted at each iteration
-    """
+        """
         self.alpha = alpha
         self.mode = mode
         self.tol = tol
@@ -243,9 +250,10 @@ class GLasso(EmpiricalCovariance):
 
 ################################################################################
 # Cross-validation with GLasso
-def g_lasso_path(X, alphas, cov_init=None, X_test=False, mode='cd',
+def g_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
                  tol=1e-4, max_iter=100, verbose=False):
-    """ l1-penalized covariance estimator
+    """ l1-penalized covariance estimator along a path of decreasing
+        alphas
 
     Parameters
     ----------
@@ -330,7 +338,7 @@ class GLassoCV(GLasso):
         Estimated covariance matrix
 
     `precision_` : array-like, shape (n_features, n_features)
-        Estimated pseudo inverse matrix.
+        Estimated precision matrix (inverse covariance).
 
     `alpha_`: float
         Penalization parameter selected
