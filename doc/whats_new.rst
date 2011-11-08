@@ -8,6 +8,9 @@
 Changelog
 ---------
 
+   - :ref:`sparse_inverse_covariance` estimation using the GLasso, with
+     associated cross-validated estimator, by `Gael Varoquaux`_
+
    - New :ref:`Tree <tree>` module by `Brian Holt`_, `Peter Prettenhofer`_
      and `Satrajit Ghosh`_. The module comes with complete documentation
      and examples.
