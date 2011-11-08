@@ -86,10 +86,11 @@ class ForestClassifier(Forest, ClassifierMixin):
 
     Warning: This class should not be used directly. Use derived classes instead."""
     def __init__(self, base_tree, n_trees=10, bootstrap=False, random_state=None):
-        Forest.__init__(self, base_tree,
-                              n_trees,
-                              bootstrap=bootstrap,
-                              random_state=random_state)
+        super(ForestClassifier, self).__init__(
+            base_tree,
+            n_trees,
+            bootstrap=bootstrap,
+            random_state=random_state)
 
     def predict(self, X):
         """Predict class for X.
@@ -160,10 +161,11 @@ class ForestRegressor(Forest, RegressorMixin):
 
     Warning: This class should not be used directly. Use derived classes instead."""
     def __init__(self, base_tree, n_trees=10, bootstrap=False, random_state=None):
-        Forest.__init__(self, base_tree,
-                              n_trees,
-                              bootstrap=bootstrap,
-                              random_state=random_state)
+        super(ForestRegressor, self).__init__(
+            base_tree,
+            n_trees,
+            bootstrap=bootstrap,
+            random_state=random_state)
 
     def predict(self, X):
         """Predict regression target for X.
@@ -222,10 +224,11 @@ class RandomForestClassifier(ForestClassifier):
     .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
     """
     def __init__(self, n_trees=10, bootstrap=True, random_state=None, **tree_args):
-        ForestClassifier.__init__(self, DecisionTreeClassifier(**tree_args),
-                                        n_trees,
-                                        bootstrap=bootstrap,
-                                        random_state=random_state)
+        super(RandomForestClassifier, self).__init__(
+            DecisionTreeClassifier(**tree_args),
+            n_trees,
+            bootstrap=bootstrap,
+            random_state=random_state)
 
 
 class RandomForestRegressor(ForestRegressor):
@@ -258,10 +261,11 @@ class RandomForestRegressor(ForestRegressor):
     .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
     """
     def __init__(self, n_trees=10, bootstrap=True, random_state=None, **tree_args):
-        ForestRegressor.__init__(self, DecisionTreeRegressor(**tree_args),
-                                       n_trees,
-                                       bootstrap=bootstrap,
-                                       random_state=random_state)
+        super(RandomForestRegressor, self).__init__(
+            DecisionTreeRegressor(**tree_args),
+            n_trees,
+            bootstrap=bootstrap,
+            random_state=random_state)
 
 
 class ExtraTreesClassifier(ForestClassifier):
@@ -295,10 +299,11 @@ class ExtraTreesClassifier(ForestClassifier):
            Machine Learning, 63(1), 3-42, 2006.
     """
     def __init__(self, n_trees=10, bootstrap=False, random_state=None, **tree_args):
-        ForestClassifier.__init__(self, ExtraTreeClassifier(**tree_args),
-                                        n_trees,
-                                        bootstrap=bootstrap,
-                                        random_state=random_state)
+        super(ExtraTreesClassifier, self).__init__(
+            ExtraTreeClassifier(**tree_args),
+            n_trees,
+            bootstrap=bootstrap,
+            random_state=random_state)
 
 
 class ExtraTreesRegressor(ForestRegressor):
@@ -332,7 +337,8 @@ class ExtraTreesRegressor(ForestRegressor):
            Machine Learning, 63(1), 3-42, 2006.
     """
     def __init__(self, n_trees=10, bootstrap=False, random_state=None, **tree_args):
-        ForestRegressor.__init__(self, ExtraTreeRegressor(**tree_args),
-                                       n_trees,
-                                       bootstrap=bootstrap,
-                                       random_state=random_state)
+        super(ExtraTreesRegressor, self).__init__(
+            ExtraTreeRegressor(**tree_args),
+            n_trees,
+            bootstrap=bootstrap,
+            random_state=random_state)
