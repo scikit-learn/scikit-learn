@@ -595,13 +595,13 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
 
         # Consider splits between two consecutive samples
         while True:
-            # Find the next sample
+            # Find the following larger sample
             b = smallest_sample_larger_than(a, X_i, X_argsorted_i,
                                             sample_mask_ptr, n_total_samples)
             if b == -1:
                 break
 
-            # Better than the best so far?
+            # Better split than the best so far?
             criterion.update(a, b, y_ptr, X_argsorted_i, sample_mask_ptr)
             error = criterion.eval()
 
@@ -614,7 +614,7 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
                 best_t = t
                 best_error = error
 
-            # Proceed to the next pair of samples
+            # Proceed to the next interval
             a = b
 
     return best_i, best_t, initial_error
