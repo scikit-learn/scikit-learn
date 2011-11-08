@@ -188,6 +188,18 @@ cross-validation to automatically set the `alpha` parameter.
    the covariance and precision matrix in the very small samples
    settings.*
 
+.. note:: **Structure recovery**
+
+   Recovering a graphical structure from correlations in the data is a
+   challenging thing. If you are interested in such recovery keep in mind
+   that:
+
+   * Recovery is easier from a correlation matrix than a covariance
+     matrix: standardize your observations before running :class:`GLasso`
+
+   * If your number of observations is not large compared to the number
+     of edges in your underlying graph, you will not recover it.
+
 The mathematical formulation is the following:
 
 .. math::    
