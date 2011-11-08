@@ -22,13 +22,13 @@ from ..cross_validation import check_cv, cross_val_score
 from ..externals.joblib import Parallel, delayed
 
 
-################################################################################
+###############################################################################
 # Helper functions to compute the objective and dual objective functions
 # of the l1-penalized estimator
 def _objective(mle, precision_, alpha):
     cost = -log_likelihood(mle, precision_)
     cost += alpha * (np.abs(precision_).sum()
-                   -np.abs(np.diag(precision_)).sum())
+                     - np.abs(np.diag(precision_)).sum())
     return cost
 
 
@@ -38,8 +38,8 @@ def _dual_gap(emp_cov, precision_, alpha):
     """
     gap = np.sum(emp_cov * precision_)
     gap -= precision_.shape[0]
-    gap += alpha*(np.abs(precision_).sum()
-                  -np.abs(np.diag(precision_)).sum())
+    gap += alpha * (np.abs(precision_).sum()
+                    - np.abs(np.diag(precision_)).sum())
     return gap
 
 
@@ -60,11 +60,11 @@ def alpha_max(emp_cov):
         bound for alpha is given by max(abs(Xy)), the result follows.
     """
     A = np.copy(emp_cov)
-    A.flat[::A.shape[0]+1] = 0
+    A.flat[::A.shape[0] + 1] = 0
     return np.max(np.abs(A))
 
 
-################################################################################
+###############################################################################
 # The g-lasso algorithm
 
 def g_lasso(X, alpha, cov_init=None, mode='cd', tol=1e-4, max_iter=100,
@@ -146,31 +146,33 @@ def g_lasso(X, alpha, cov_init=None, mode='cd', tol=1e-4, max_iter=100,
                     if mode == 'cd':
                         # Use coordinate descent
                         coefs = -(precision_[indices != idx, idx]
-                                    /(precision_[idx, idx] + 1000*eps))
+                                    / (precision_[idx, idx] + 1000 * eps))
                         coefs, _, _ = cd_fast.enet_coordinate_descent_gram(
                                             coefs, alpha, 0, sub_covariance,
                                             row, row, max_iter, tol)
                     else:
                         # Use LARS
                         _, _, coefs = lars_path(sub_covariance, row,
-                                                Xy=row, Gram=sub_covariance,
-                                                alpha_min=alpha/(n_features-1),
-                                                copy_Gram=True,
-                                                method='lars')
+                                            Xy=row, Gram=sub_covariance,
+                                            alpha_min=alpha / (n_features - 1),
+                                            copy_Gram=True,
+                                            method='lars')
                         coefs = coefs[:, -1]
                 # Update the precision matrix
-                precision_[idx, idx] = 1./(covariance_[idx, idx] -
+                precision_[idx, idx] = 1. / (covariance_[idx, idx] -
                             np.dot(covariance_[indices != idx, idx], coefs))
-                precision_[indices != idx, idx] = -precision_[idx, idx]*coefs
-                precision_[idx, indices != idx] = -precision_[idx, idx]*coefs
+                precision_[indices != idx, idx] = \
+                                            - precision_[idx, idx] * coefs
+                precision_[idx, indices != idx] = \
+                                            - precision_[idx, idx] * coefs
                 coefs = np.dot(sub_covariance, coefs)
                 covariance_[idx, indices != idx] = coefs
                 covariance_[indices != idx, idx] = coefs
             d_gap = _dual_gap(emp_cov, precision_, alpha)
             cost = _objective(emp_cov, precision_, alpha)
             if verbose:
-                print '[g_lasso] Iteration % 3i, cost % 3.2e, dual gap %.3e' % (
-                                                    i, cost, d_gap)
+                print '[g_lasso] Iteration % 3i, cost % 3.2e, dual gap %.3e'\
+                                                % (i, cost, d_gap)
             if return_costs:
                 costs.append((cost, d_gap))
             if np.abs(d_gap) < tol:
@@ -183,7 +185,7 @@ def g_lasso(X, alpha, cov_init=None, mode='cd', tol=1e-4, max_iter=100,
                             'dual gap: %.3e' % (max_iter, d_gap))
     except FloatingPointError, e:
         e.args = (e.args[0]
-                  +'The system is too ill-conditionned for this solver',
+                  + 'The system is too ill-conditionned for this solver',
                  )
         raise e
     if return_costs:
@@ -248,7 +250,7 @@ class GLasso(EmpiricalCovariance):
         return self
 
 
-################################################################################
+###############################################################################
 # Cross-validation with GLasso
 def g_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
                  tol=1e-4, max_iter=100, verbose=False):
@@ -365,7 +367,6 @@ class GLassoCV(GLasso):
     be close to these missing values.
     """
 
-
     def __init__(self, alphas=4, n_refinements=4, cv=None, tol=1e-4,
                  max_iter=100, mode='cd', n_jobs=1, verbose=False):
         """ l1-penalized covariance estimator
@@ -438,7 +439,7 @@ class GLassoCV(GLasso):
                             delayed(g_lasso_path)(X[train], alphas=alphas,
                                         X_test=X[test], mode=self.mode,
                                         tol=self.tol,
-                                        max_iter=int(.1*self.max_iter),
+                                        max_iter=int(.1 * self.max_iter),
                                         verbose=inner_verbose)
                             for (train, test), cov_init in zip(cv, covs_init))
 
@@ -456,7 +457,7 @@ class GLassoCV(GLasso):
             last_finite_idx = 0
             for index, (alpha, scores, _) in enumerate(path):
                 this_score = np.mean(scores)
-                if this_score >= .1/np.finfo(np.float).eps:
+                if this_score >= .1 / np.finfo(np.float).eps:
                     this_score = np.nan
                 if np.isfinite(this_score):
                     last_finite_idx = index
@@ -477,16 +478,16 @@ class GLassoCV(GLasso):
                 # We have non-converged models on the upper bound of the
                 # grid, we need to refine the grid there
                 alpha_1 = path[best_index][0]
-                alpha_0 = path[best_index+1][0]
+                alpha_0 = path[best_index + 1][0]
                 covs_init = path[best_index][-1]
             elif best_index == len(path) - 1:
                 alpha_1 = path[best_index][0]
-                alpha_0 = 0.01*path[best_index+1][0]
+                alpha_0 = 0.01 * path[best_index + 1][0]
                 covs_init = path[best_index][-1]
             else:
-                alpha_1 = path[best_index-1][0]
-                alpha_0 = path[best_index+1][0]
-                covs_init = path[best_index-1][-1]
+                alpha_1 = path[best_index - 1][0]
+                alpha_0 = path[best_index + 1][0]
+                covs_init = path[best_index - 1][-1]
             alphas = np.logspace(np.log10(alpha_1), np.log10(alpha_0),
                                  n_alphas + 2)
             alphas = alphas[1:-1]
