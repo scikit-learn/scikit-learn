@@ -152,3 +152,62 @@ from the MATLAB program available from the author's webpage
    :target: ../auto_examples/covariance/plot_lw_vs_oas.html
    :align: center
    :scale: 75%
+
+Sparse inverse covariance
+==========================
+
+The matrix inverse of the covariance matrix, often called the precision
+matrix, is proportional to the partial correlation matrix. It gives the
+partial independence relationship. In other words, if two features are
+independent conditionally on the others, the corresponding coefficient in
+the precision matrix will be zero. This is why it makes sens to estimate
+a sparse precision matrix: by learning independence relations from the
+data, the estimation of the covariance matrix is better conditioned. This
+is known as *covariance selection*.
+
+In the small-samples situation, in which `n` is on the order of magnitude
+of `p` or smaller, sparse inverse covariance estimators tend to work
+better than shrunk covariance estimators. However, in the opposite
+situation, or for very correlated data, the can be numerically unstable.
+In addition, unlike shrinkage estimators, sparse estimators are able to
+recover off-diagonal structure.
+
+The :class:`GLasso` estimator uses an l1 penalty to enforce sparsity on
+the precision matrix: the higher its `alpha` parameter, the more sparse
+the precision matrix. The corresponding :class:`GLassoCV` object uses
+cross-validation to automatically set the `alpha` parameter.
+
+.. figure:: ../auto_examples/covariance/images/plot_sparse_cov_1.png
+   :target: ../auto_examples/covariance/plot_sparse_cov.html
+   :align: center
+   :scale: 60%
+
+   *A comparison of maximum likelihood, shrinkage and sparse estimates of
+   the covariance and precision matrix in the very small samples
+   settings.*
+
+The mathematical formulation is the following:
+
+.. math::    
+   
+    \hat{K} = \mathrm{argmin}_K \big(
+                \mathrm{tr} S K - \mathrm{log} \mathrm{det} K
+                + \alpha \|K\|_1
+                \big)
+
+Where `K` is the precision matrix to be estimated, and `S` is the sample
+covariance matrix. :math:`\|K\|_1` is the sum of the absolute values of
+off diagonal coefficients of `K`.
+
+
+.. topic:: Examples:
+
+   * :ref:`example_covariance_plot_sparse_cov.py`
+
+.. topic:: References:
+
+   * Friedman et al, `"Sparse inverse covariance estimation with the 
+     graphical lasso" <http://biostatistics.oxfordjournals.org/content/9/3/432.short>`_,
+     Biostatistics 9, pp 432, 2008
+
+

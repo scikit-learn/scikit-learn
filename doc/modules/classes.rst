@@ -413,6 +413,8 @@ Covariance Estimators
    covariance.ShrunkCovariance
    covariance.LedoitWolf
    covariance.OAS
+   covariance.GLasso
+   covariance.GLassoCV
 
 .. autosummary::
    :toctree: generated/
@@ -422,6 +424,7 @@ Covariance Estimators
    covariance.ledoit_wolf
    covariance.shrunk_covariance
    covariance.oas
+   covariance.g_lasso
 
 
 Signal Decomposition

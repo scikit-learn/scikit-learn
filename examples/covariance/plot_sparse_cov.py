@@ -1,10 +1,10 @@
 """
-==================================
-l1-penalized covariance estimation
-==================================
+======================================
+Sparse inverse covariance estimation
+======================================
 
-Using the l1-penalized covariance estimator to learn a covariance and
-precision from a small number of samples.
+Using the GLasso estimator to learn a covariance and sparse precision
+from a small number of samples.
 
 To estimate a probabilistic model (e.g. a Gaussian model), estimating the
 precision matrix, that is the inverse covariance matrix, is as important
@@ -97,7 +97,7 @@ pl.subplots_adjust(left=0.02, right=0.98)
 
 # plot the covariances
 covs = [('Empirical', emp_cov), ('Ledoit-Wolf', lw_cov_),
-        ('L1', cov_), ('True', cov)]
+        ('GLasso', cov_), ('True', cov)]
 vmax = cov_.max()
 for i, (name, this_cov) in enumerate(covs):
     pl.subplot(2, 4, i+1)
@@ -110,7 +110,7 @@ for i, (name, this_cov) in enumerate(covs):
 
 # plot the precisions
 precs = [('Empirical', linalg.inv(emp_cov)), ('Ledoit-Wolf', lw_prec_),
-         ('L1', prec_), ('True', prec)]
+         ('GLasso', prec_), ('True', prec)]
 vmax = .9*prec_.max()
 for i, (name, this_prec) in enumerate(precs):
     ax = pl.subplot(2, 4, i+5)
