@@ -531,6 +531,8 @@ class EMNB(BaseNB):
 
         labeled = np.where(y != -1)[0]
         unlabeled = np.where(y == -1)[0]
+        X_unlabeled = X[unlabeled, :]
+        Y_unlabeled = Y[unlabeled, :]
 
         n_features = X.shape[1]
         n_classes = Y.shape[1]
@@ -559,7 +561,7 @@ class EMNB(BaseNB):
 
             old_coef[:] = clf.coef_
             old_intercept[:] = clf.intercept_
-            Y[unlabeled, :] = clf.predict_proba(X[unlabeled, :])
+            Y_unlabeled[:] = clf.predict_proba(X_unlabeled)
 
         return self
 
