@@ -97,13 +97,13 @@ distances obtained from this estimate to derive a measure of outlyingness.
 .. figure:: ../auto_examples/covariance/images/plot_outlier_detection_1.png
    :target: ../auto_examples/covariance/plot_outlier_detection.html
    :align: center
-   :scale: 50%
+   :scale: 60%
 .. figure:: ../auto_examples/covariance/images/plot_outlier_detection_2.png
    :target: ../auto_examples/covariance/plot_outlier_detection.html
    :align: center
-   :scale: 50%
+   :scale: 60%
 .. figure:: ../auto_examples/covariance/images/plot_outlier_detection_3.png
    :target: ../auto_examples/covariance/plot_outlier_detection.html
    :align: center
-   :scale: 50%
+   :scale: 60%
 

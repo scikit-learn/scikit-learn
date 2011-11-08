@@ -72,13 +72,13 @@ class OutlierDetectionMixin(ClassifierMixin):
             United States of America, 17, 684-688.
 
         """
-        if self.threshold is None:
-            raise Exception("Please fit data before predicting")
         X_centered = X - self.location_
         mahal_dist = self.mahalanobis(X_centered)
         if raw_mahalanobis:
             decision = mahal_dist
         else:
+            if self.threshold is None:
+                raise Exception("Please fit data before predicting")
             transformed_mahal_dist = mahal_dist ** 0.33
             decision = self.threshold ** 0.33 - transformed_mahal_dist
 
