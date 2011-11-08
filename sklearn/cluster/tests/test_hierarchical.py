@@ -4,54 +4,57 @@ Several basic tests for hierarchical clustering procedures
 Author : Vincent Michel, 2010
 """
 
+import sys
+sys.path = ["/home/jmetzen/Repositories/scikit-learn"] + sys.path
+
 import numpy as np
 from scipy.cluster import hierarchy
 
-from sklearn.cluster import Ward, WardAgglomeration, dendrogram
+from sklearn.cluster import Ward, WardAgglomeration, ward_tree
 from sklearn.cluster.hierarchical import _hc_cut
 from sklearn.feature_extraction.image import grid_to_graph
 
 
-def test_structured_dendrogram():
+def test_structured_ward_tree():
     """
-    Check that we obtain the correct solution for structured dendrogram.
-    """
-    np.random.seed(0)
-    mask = np.ones([10, 10], dtype=np.bool)
-    X = np.random.randn(50, 100)
-    connectivity = grid_to_graph(*mask.shape)
-    children, n_components, n_leaves = dendrogram(X.T, connectivity)
-    n_nodes = 2 * X.shape[1] - 1
-    assert(len(children) + n_leaves == n_nodes)
-
-
-def test_unstructured_dendrogram():
-    """
-    Check that we obtain the correct solution for unstructured dendrogram.
-    """
-    np.random.seed(0)
-    X = np.random.randn(50, 100)
-    children, n_nodes, n_leaves = dendrogram(X.T)
-    n_nodes = 2 * X.shape[1] - 1
-    assert(len(children) + n_leaves == n_nodes)
-
-
-def test_height_dendrogram():
-    """
-    Check that the height of dendrogram is sorted.
+    Check that we obtain the correct solution for structured ward tree.
     """
     np.random.seed(0)
     mask = np.ones([10, 10], dtype=np.bool)
     X = np.random.randn(50, 100)
     connectivity = grid_to_graph(*mask.shape)
-    children, n_nodes, n_leaves = dendrogram(X.T, connectivity)
+    children, n_components, n_leaves = ward_tree(X.T, connectivity)
+    n_nodes = 2 * X.shape[1] - 1
+    assert(len(children) + n_leaves == n_nodes)
+
+
+def test_unstructured_ward_tree():
+    """
+    Check that we obtain the correct solution for unstructured ward tree.
+    """
+    np.random.seed(0)
+    X = np.random.randn(50, 100)
+    children, n_nodes, n_leaves = ward_tree(X.T)
+    n_nodes = 2 * X.shape[1] - 1
+    assert(len(children) + n_leaves == n_nodes)
+
+
+def test_height_ward_tree():
+    """
+    Check that the height of ward tree is sorted.
+    """
+    np.random.seed(0)
+    mask = np.ones([10, 10], dtype=np.bool)
+    X = np.random.randn(50, 100)
+    connectivity = grid_to_graph(*mask.shape)
+    children, n_nodes, n_leaves = ward_tree(X.T, connectivity)
     n_nodes = 2 * X.shape[1] - 1
     assert(len(children) + n_leaves == n_nodes)
 
 
 def test_ward_clustering():
     """
-    Check that we obtain the correct number of clusters with hierarchical clustering.
+    Check that we obtain the correct number of clusters with Ward clustering.
     """
     np.random.seed(0)
     mask = np.ones([10, 10], dtype=np.bool)
@@ -107,7 +110,7 @@ def test_scikit_vs_scipy():
         out = hierarchy.ward(X)
 
         children_ = out[:, :2].astype(np.int)
-        children, _, n_leaves = dendrogram(X, connectivity)
+        children, _, n_leaves = ward_tree(X, connectivity)
 
         cut = _hc_cut(k, children, n_leaves)
         cut_ = _hc_cut(k, children_, n_leaves)

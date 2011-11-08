@@ -19,15 +19,19 @@ from ..base import BaseEstimator
 from ..utils._csgraph import cs_graph_components
 from ..externals.joblib import Memory
 
-from .linkage import WardsLinkage, CompleteLinkage
+from .linkage import CompleteLinkage
 from ._feature_agglomeration import AgglomerationTransform
 
-
-###############################################################################  
+###############################################################################
+  
+def ward_tree(X, connectivity=None, n_components=None, copy=True):
+    from .linkage import WardsLinkage
+    
+    return dendrogram(X, connectivity=None, n_components=None, merge_replay=[], 
+                      linkage_criterion=WardsLinkage, copy=True)[:3]
             
-def dendrogram(X, connectivity=None, n_components=None, return_inertias=False, 
-              merge_replay=[], linkage_criteria='CompleteLinkage', 
-              copy=True):
+def dendrogram(X, connectivity=None, n_components=None, merge_replay=[], 
+               linkage_criterion=CompleteLinkage, copy=True):
     """Hierarchical clustering based on a Feature matrix.
 
     The inertia matrix uses a Heapq-based representation.
@@ -49,9 +53,6 @@ def dendrogram(X, connectivity=None, n_components=None, return_inertias=False,
     n_components : int (optional)
         Number of connected components. If None the number of connected
         components is estimated from the connectivity matrix.
-        
-    return_inertias : bool (optional)
-        If true, the inertias are returned additionally
 
     copy : bool (optional)
         Make a copy of connectivity or work inplace. If connectivity
@@ -70,18 +71,12 @@ def dendrogram(X, connectivity=None, n_components=None, return_inertias=False,
         The number of leaves in the tree
         
     heights :  list of floats. Length n_nodes
-        The inertias associated to the tree's nodes. Only returned, if 
-        return_inertias is True
+        The inertias associated to the tree's nodes.
     """
     X = np.asarray(X)
     n_samples, n_features = X.shape
     if X.ndim == 1:
         X = np.reshape(X, (-1, 1))
-
-    try:
-        linkage_criteria = eval(linkage_criteria)
-    except:
-        raise Exception("Unknown distance class %s" % linkage_criteria)
 
     # Compute the number of nodes
     if connectivity is not None:
@@ -111,7 +106,7 @@ def dendrogram(X, connectivity=None, n_components=None, return_inertias=False,
     # Remove diagonal from connectivity matrix
     connectivity.setdiag(np.zeros(connectivity.shape[0]))        
     # Compute distances between connected nodes
-    linkage = linkage_criteria(X, connectivity, n_nodes, n_features, 
+    linkage = linkage_criterion(X, connectivity, n_nodes, n_features, 
                                       n_samples)
 
     # prepare the main fields
@@ -218,10 +213,7 @@ def dendrogram(X, connectivity=None, n_components=None, return_inertias=False,
     n_leaves = n_samples
     children = np.array(children)  # return numpy array for efficient caching
 
-    if return_inertias:
-        return children, n_components, n_leaves, merges, heights
-    else:
-        return children, n_components, n_leaves, merges
+    return children, n_components, n_leaves, merges, heights
 
 
 ###############################################################################
@@ -414,22 +406,17 @@ class HierarchicalClustering(BaseEstimator):
             memory = Memory(cachedir=memory)
 
         # Construct the tree
-        if self.max_inertia is None:
-            children, n_components, n_leaves, self.merges = \
+        children, n_components, n_leaves, self.merges, inertias = \
                     memory.cache(dendrogram)(X, self.connectivity,
                                             n_components=self.n_components,
                                             merge_replay=self.merges,
                                             copy=self.copy)
-            # Cut the tree based on number of desired clusters
+        # Cut the tree ... 
+        if self.max_inertia is None:
+            # based on number of desired clusters
             self.labels_ = _hc_cut(self.n_clusters, children, n_leaves)
         else:
-            children, n_components, n_leaves, self.merges, inertias = \
-                    memory.cache(dendrogram)(X, self.connectivity,
-                                            n_components=self.n_components,
-                                            return_inertias=True, 
-                                            merge_replay=self.merges,
-                                            copy=self.copy)
-            # Cut the tree based on maximally allowed inertia
+            # based on maximally allowed inertia
             self.labels_ = _hc_cut_inertia(self.max_inertia, children, 
                                            n_leaves, inertias)
             
