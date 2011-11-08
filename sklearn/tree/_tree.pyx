@@ -3,15 +3,14 @@
 # cython: boundscheck=False
 # cython: wraparound=False
 #
-# Author: Peter Prettenhofer and Brian Holt
+# Author: Peter Prettenhofer, Brian Holt, Gilles Louppe
 #
 # License: BSD Style.
 
+cimport cython
 
 import numpy as np
 cimport numpy as np
-
-cimport cython
 
 # Define a datatype for the data array
 DTYPE = np.float32
