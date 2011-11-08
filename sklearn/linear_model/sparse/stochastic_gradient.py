@@ -93,6 +93,14 @@ class SGDClassifier(BaseSGDClassifier):
     power_t : double, optional
         The exponent for inverse scaling learning rate [default 0.25].
 
+    class_weight : dict, {class_label : weight} or "auto" or None, optional
+        Preset for the class_weight fit parameter.
+
+        Weights associated with classes. If not given, all classes
+        are supposed to have weight one.
+
+        The "auto" mode uses the values of y to automatically adjust
+        weights inversely proportional to class frequencies.
 
     Attributes
     ----------
@@ -115,12 +123,12 @@ class SGDClassifier(BaseSGDClassifier):
     >>> y = np.array([1, 1, 2, 2])
     >>> clf = linear_model.sparse.SGDClassifier()
     >>> clf.fit(X, y)
-    SGDClassifier(alpha=0.0001, eta0=0.0, fit_intercept=True,
+    SGDClassifier(alpha=0.0001, class_weight=None, eta0=0.0, fit_intercept=True,
            learning_rate='optimal', loss='hinge', n_iter=5, n_jobs=1,
            penalty='l2', power_t=0.5, rho=1.0, seed=0, shuffle=False,
            verbose=0)
     >>> print clf.predict([[-0.8, -1]])
-    [ 1.]
+    [1]
 
     See also
     --------
@@ -129,8 +137,7 @@ class SGDClassifier(BaseSGDClassifier):
     """
 
     def _fit_binary(self, X, y):
-        """Fit a binary classifier.
-        """
+        """Fit a binary classifier."""
         X = _tocsr(X)
 
         # encode original class labels as 1 (classes[1]) or -1 (classes[0]).
@@ -155,8 +162,8 @@ class SGDClassifier(BaseSGDClassifier):
                                       int(self.verbose),
                                       int(self.shuffle),
                                       int(self.seed),
-                                      self.class_weight[1],
-                                      self.class_weight[0],
+                                      self._expanded_class_weight[1],
+                                      self._expanded_class_weight[0],
                                       self.sample_weight,
                                       self.learning_rate_code,
                                       self.eta0, self.power_t)
@@ -166,9 +173,10 @@ class SGDClassifier(BaseSGDClassifier):
         self.intercept_ = np.asarray(intercept_)
 
     def _fit_multiclass(self, X, y):
-        """Fit a multi-class classifier with a combination
-        of binary classifiers, each predicts one class versus
-        all others (OVA: One Versus All).
+        """Fit a multi-class classifier as a combination of binary classifiers
+
+        Each binary classifier predicts one class versus all others
+        (OVA: One Versus All).
         """
         X = _tocsr(X)
 
@@ -187,7 +195,7 @@ class SGDClassifier(BaseSGDClassifier):
                                                self.fit_intercept,
                                                self.verbose, self.shuffle,
                                                self.seed,
-                                               self.class_weight[i],
+                                               self._expanded_class_weight[i],
                                                self.sample_weight,
                                                self.learning_rate_code,
                                                self.eta0, self.power_t)

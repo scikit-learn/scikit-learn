@@ -358,7 +358,6 @@ def test_LinearSVC_parameters():
     """
     Test possible parameter combinations in LinearSVC
     """
-    s = 'Not supported set of arguments: '
     # generate list of possible parameter combinations
     params = [(dual, loss, penalty) for dual in [True, False]
             for loss in ['l1', 'l2', 'lr'] for penalty in ['l1', 'l2']]

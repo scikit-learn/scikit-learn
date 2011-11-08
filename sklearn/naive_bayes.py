@@ -27,7 +27,6 @@ from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize, LabelBinarizer
 from .utils import array2d, atleast2d_or_csr, safe_asarray
 from .utils.extmath import safe_sparse_dot, logsum
-from .utils.fixes import unique
 
 
 
@@ -232,21 +231,20 @@ class BaseDiscreteNB(BaseNB):
             Returns self.
         """
         X = atleast2d_or_csr(X)
-        y = safe_asarray(y)
 
-        if X.shape[0] != y.shape[0]:
+        labelbin = LabelBinarizer()
+        Y = labelbin.fit_transform(y)
+        self._classes = labelbin.classes_
+        n_classes = len(self._classes)
+        if Y.shape[1] == 1:
+            Y = np.concatenate((1 - Y, Y), axis=1)
+
+        if X.shape[0] != Y.shape[0]:
             msg = "X and y have incompatible shapes."
             if issparse(X):
                 msg += "\nNote: Sparse matrices cannot be indexed w/ boolean \
                 masks (use `indices=True` in CV)."
             raise ValueError(msg)
-
-        self._classes, inv_y_ind = unique(y, return_inverse=True)
-        n_classes = self._classes.size
-
-        Y = LabelBinarizer().fit_transform(y)
-        if Y.shape[1] == 1:
-            Y = np.concatenate((1 - Y, Y), axis=1)
 
         if sample_weight is not None:
             Y *= array2d(sample_weight).T

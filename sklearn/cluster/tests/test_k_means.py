@@ -281,3 +281,20 @@ def test_transform():
         for c2 in range(n_clusters):
             if c != c2:
                 assert_true(X_new[c, c2] > 0)
+
+def test_n_init():
+    """Check that increasing the number of init increases the quality"""
+    n_runs = 5
+    n_init_range = [1, 5, 10]
+    inertia = np.zeros((len(n_init_range), n_runs))
+    for i, n_init in enumerate(n_init_range):
+        for j in range(n_runs):
+            km = KMeans(k=n_clusters, init="random", n_init=n_init,
+                        random_state=j).fit(X)
+            inertia[i, j] = km.inertia_
+
+    inertia = inertia.mean(axis=1)
+    failure_msg = ("Inertia %r should be decreasing"
+                   " when n_init is increasing.") % list(inertia)
+    for i in range(len(n_init_range) - 1):
+        assert_true(inertia[i] >= inertia[i + 1], failure_msg)
