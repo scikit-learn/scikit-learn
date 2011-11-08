@@ -80,7 +80,7 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto', tol=1e-3):
                 C = sp_linalg.LinearOperator(
                     (n_samples, n_samples), matvec=mv, dtype=X.dtype)
                 coef, info = sp_linalg.cg(C, y_column, tol=tol)
-                coef = X1.rmatvec(coef)
+                coefs[i] = X1.rmatvec(coef)
             else:
                 # ridge
                 # w = inv(X^t X + alpha*Id) * X.T y
