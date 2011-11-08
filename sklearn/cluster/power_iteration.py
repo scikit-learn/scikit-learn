@@ -151,7 +151,7 @@ def power_iteration_clustering(affinity, k=8, n_vectors=1, tol=1e-5,
         previous_vectors[:] = vectors
         previous_delta = delta
 
-        vectors[:] = safe_sparse_dot(vectors, normalized)
+        vectors = safe_sparse_dot(vectors, normalized)
         vectors /= np.abs(vectors).sum(axis=1)[:, np.newaxis]
 
         delta = np.abs(previous_vectors - vectors)

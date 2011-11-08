@@ -27,14 +27,18 @@ import logging
 
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction.text import Vectorizer
+from sklearn.cluster import MiniBatchKMeans
 from sklearn.cluster import power_iteration_clustering
 from sklearn.cluster import spectral_clustering
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.metrics import homogeneity_completeness_v_measure
+from sklearn.metrics import adjusted_rand_score
 
 # Display progress logs on stdout
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(message)s')
+
+random_state = None
 
 ################################################################################
 # Load some categories from the training set
@@ -51,7 +55,7 @@ print "Loading 20 newsgroups dataset for categories:"
 print categories
 
 data_train = fetch_20newsgroups(subset='train', categories=categories,
-                                shuffle=True, random_state=42)
+                                shuffle=True, random_state=0)
 
 print "%d documents (training set)" % len(data_train.filenames)
 print "%d categories" % len(data_train.target_names)
@@ -89,27 +93,37 @@ print
 n_clusters = len(data_train.target_names)
 
 def report(labels_true, labels_pred, duration):
-    """Print lustering report on stdout"""
+    """Print clustering report on stdout"""
     h, c, v = homogeneity_completeness_v_measure(labels_true, labels_pred)
     print "Homogeneity: %0.3f" % h
     print "Completeness: %0.3f" % c
     print "V-Measure: %0.3f" % v
+    print "ARI: %0.3f" % adjusted_rand_score(labels_true, labels_pred)
     print "Duration: %0.3fs" % duration
     print
 
 
+print "Clustering the documents using the MiniBatchKMeans"
+t0 = time()
+labels_pred_pic = MiniBatchKMeans(
+    k=n_clusters, verbose=2, random_state=random_state).fit(X_train).labels_
+duration = time() - t0
+report(labels_true, labels_pred_pic, duration)
+
 print "Clustering the documents using the Power Iteration Clustering method"
 t0 = time()
-labels_pred = power_iteration_clustering(affinity, k=n_clusters,
-                                         verbose=2,
-                                         n_vectors=1, tol=1e-5,
-                                         random_state=42)
+labels_pred_pic = power_iteration_clustering(
+    affinity, k=n_clusters, verbose=2, n_vectors=1, tol=1e-6,
+    random_state=random_state)
 duration = time() - t0
-report(labels_true, labels_pred, duration)
+report(labels_true, labels_pred_pic, duration)
 
 print "Clustering the documents using the Spectral Clustering method"
 t0 = time()
-labels_pred = spectral_clustering(affinity, k=n_clusters, mode='arpack',
-                                  random_state=42)
+labels_pred_spectral = spectral_clustering(
+    affinity, k=n_clusters, mode='arpack', random_state=random_state)
 duration = time() - t0
-report(labels_true, labels_pred, duration)
+report(labels_true, labels_pred_spectral, duration)
+#
+#print "Agreement between PIC and Spectral labelings"
+#report(labels_pred_pic, labels_pred_spectral, 0.0)
