@@ -4,9 +4,6 @@ Several basic tests for hierarchical clustering procedures
 Author : Vincent Michel, 2010
 """
 
-import sys
-sys.path = ["/home/jmetzen/Repositories/scikit-learn"] + sys.path
-
 import numpy as np
 from scipy.cluster import hierarchy
 
