@@ -529,6 +529,8 @@ class EMNB(BaseNB):
         X = atleast2d_or_csr(X)
         Y = clf._label_1ofK(y)
 
+        unlabeled = np.where(y == -1)[0]
+
         n_features = X.shape[1]
         n_classes = Y.shape[1]
         tol = self.tol * n_features
@@ -553,7 +555,7 @@ class EMNB(BaseNB):
 
             old_coef = np.copy(clf.coef_)
             old_intercept = np.copy(clf.intercept_)
-            Y = clf.predict_proba(X)
+            Y[unlabeled, :] = clf.predict_proba(X[unlabeled, :])
 
         return self
 
