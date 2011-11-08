@@ -13,7 +13,7 @@ from time import time
 
 from .k_means_ import k_means
 from ..utils.extmath import safe_sparse_dot
-from ..utils import safe_asanyarray
+from ..utils import safe_asarray
 from ..utils import check_random_state
 from ..preprocessing import normalize
 
@@ -104,7 +104,7 @@ def power_iteration_clustering(affinity, k=8, n_vectors=1, tol=1e-5,
 
     """
     random_state = check_random_state(random_state)
-    affinity = safe_asanyarray(affinity)
+    affinity = safe_asarray(affinity)
 
     # the diagonal elements must be zeroed before row normalization
     affinity = affinity.copy()

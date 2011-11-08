@@ -39,7 +39,6 @@ from scipy.spatial import distance
 from scipy.sparse import csr_matrix, issparse
 from ..utils import safe_asarray, atleast2d_or_csr, deprecated
 from ..utils.extmath import safe_sparse_dot
-from ..utils import safe_asanyarray
 
 
 # Utility Functions
@@ -405,10 +404,10 @@ def cosine_similarity(X, Y, copy=True):
            [ 0.        ]])
     """
     # XXX: delayed import to avoid cyclic dependency between base, metrics
-    # and preprocessing
+    # and preprocessing. TODO: find a better way to break the cycle
     from ..preprocessing import normalize
-    X = safe_asanyarray(X)
-    Y = safe_asanyarray(Y)
+    X = safe_asarray(X)
+    Y = safe_asarray(Y)
 
     X = normalize(X, norm='l2', copy=copy)
     Y = normalize(Y, norm='l2', copy=copy)
