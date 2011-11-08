@@ -108,7 +108,7 @@ class ForestClassifier(Forest, ClassifierMixin):
         predictions : array of shape = [n_samples]
             The predicted classes.
         """
-        return self.classes[np.argmax(self.predict_proba(X), axis=1)]
+        return self.classes.take(np.argmax(self.predict_proba(X), axis=1), axis=0)
 
     def predict_proba(self, X):
         """Predict class probabilities for X.
