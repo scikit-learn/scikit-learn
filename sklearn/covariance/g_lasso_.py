@@ -103,6 +103,10 @@ def g_lasso(X, alpha, cov_init=None, mode='cd', tol=1e-4, max_iter=100,
         The list of values of the objective function and the dual gap at
         each iteration. Returned only if return_costs is True
 
+    See Also
+    --------
+    GLasso, GLassoCV
+
     """
     _, n_features = X.shape
     emp_cov = empirical_covariance(X)
@@ -192,7 +196,11 @@ class GLasso(EmpiricalCovariance):
     `precision_` : array-like, shape (n_features, n_features)
         Estimated pseudo inverse matrix.
 
-    """
+    See Also
+    --------
+    g_lasso, GLassoCV
+
+   """
 
     def __init__(self, alpha=.01, mode='cd', tol=1e-4,
                  max_iter=100, verbose=False):
@@ -312,8 +320,6 @@ def g_lasso_path(X, alphas, cov_init=None, X_test=False, mode='cd',
     return covariances_, precisions_
 
 
-
-
 class GLassoCV(GLasso):
     """GLasso: sparse inverse covariance, cross-validated choice of the
     l1 penality
@@ -334,6 +340,10 @@ class GLassoCV(GLasso):
 
     `cv_scores`: 2D array (n_alphas, n_folds)
         The log-likelihood score on left-out data across the folds.
+
+    See Also
+    --------
+    g_lasso, GLasso
 
     Notes
     -----
