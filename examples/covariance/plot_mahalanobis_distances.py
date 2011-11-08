@@ -3,26 +3,27 @@
 Robust covariance estimation and Mahalanobis distances relevance
 ================================================================
 
-For Gaussian ditributed data, the distance of an observation $x_i$ to
-the mode of the distribution can be computed using its Mahalanobis
-distance: $d_{(\mu,\Sigma)}(x_i)^2 = (x_i - \mu)'\Sigma^{-1}(x_i -
-\mu)$ where $\mu$ and $\Sigma$ are the location and the covariance of
-the underlying gaussian distribution.
+For Gaussian ditributed data, the distance of an observation
+:math:`x_i` to the mode of the distribution can be computed using its
+Mahalanobis distance: :math:`d_{(\mu,\Sigma)}(x_i)^2 = (x_i -
+\mu)'\Sigma^{-1}(x_i - \mu)` where :math:`\mu` and :math:`\Sigma` are
+the location and the covariance of the underlying gaussian
+distribution.
 
-In practice, $\mu$ and $\Sigma$ are replaced by some estimates.  The
-usual covariance maximum likelihood estimate is very sensitive to the
-presence of outliers in the data set and therefor, the corresponding
-Mahalanobis distances are. One would better have to use a robust
-estimator of covariance to garanty that the estimation is resistant to
-"errorneous" observations in the data set and that the associated
-Mahalanobis distances accurately reflect the true organisation of the
-observations.
+In practice, :math:`\mu` and :math:`\Sigma` are replaced by some
+estimates.  The usual covariance maximum likelihood estimate is very
+sensitive to the presence of outliers in the data set and therefor,
+the corresponding Mahalanobis distances are. One would better have to
+use a robust estimator of covariance to garanty that the estimation is
+resistant to "errorneous" observations in the data set and that the
+associated Mahalanobis distances accurately reflect the true
+organisation of the observations.
 
 The Minimum Covariance Determinant estimator is a robust,
 high-breakdown point (i.e. it can be used to estimate the covariance
 matrix of highly contaminated datasets, up to
-$\frac{n_samples-n_features-1}{2}$ outliers) estimator of
-covariance. The idea is to find $\frac{n_samples+n_features+1}{2}$
+:math:`\frac{n_samples-n_features-1}{2}` outliers) estimator of
+covariance. The idea is to find :math:`\frac{n_samples+n_features+1}{2}`
 observations whose empirical covariance has the smallest determinant,
 yielding a "pure" subset of observations from which to compute
 standards estimates of location and covariance.

@@ -223,76 +223,48 @@ def test_mcd():
     """Tests the FastMCD algorithm implementation
 
     """
-    yield generator_mcd, "empirical"
-    yield generator_mcd, "theoretical"
-
-
-def generator_mcd(correction):
-    """Tests the fastMCD algorithm implementation with a given correction type
-
-    """
     ### Small data set
     # test without outliers (random independant normal data)
-    launch_mcd_on_dataset(100, 5, 0, 0.3, 0.3, 70, correction)
+    launch_mcd_on_dataset(100, 5, 0, 0.01, 0.1, 80)
     # test with a contaminated data set (medium contamination)
-    launch_mcd_on_dataset(100, 5, 20, 0.1, 0.2, 65, correction)
+    launch_mcd_on_dataset(100, 5, 20, 0.01, 0.01, 70)
     # test with a contaminated data set (strong contamination)
-    launch_mcd_on_dataset(100, 5, 40, 0.1, 0.1, 50, correction)
+    launch_mcd_on_dataset(100, 5, 40, 0.1, 0.1, 50)
 
     ### Medium data set
-    launch_mcd_on_dataset(1000, 5, 450, 1e-3, 0.01, 540, correction)
+    launch_mcd_on_dataset(1000, 5, 450, 1e-3, 1e-3, 540)
 
     ### Large data set
-    launch_mcd_on_dataset(1700, 5, 800, 1e-3, 1e-3, 870, correction)
+    launch_mcd_on_dataset(1700, 5, 800, 1e-3, 1e-3, 870)
 
     ### 1D data set
-    launch_mcd_on_dataset(500, 1, 100, 0.1, 0.1, 350, correction)
+    launch_mcd_on_dataset(500, 1, 100, 0.001, 0.001, 350)
 
 
-def launch_mcd_on_dataset(n_samples, n_features, n_outliers,
-                          tol_loc, tol_cov, tol_support, correction):
+def launch_mcd_on_dataset(
+    n_samples, n_features, n_outliers, tol_loc, tol_cov, tol_support):
     """
 
     """
-    data = np.random.randn(n_samples, n_features)
+    rand_gen = np.random.RandomState(0)
+    data = rand_gen.randn(n_samples, n_features)
     # add some outliers
-    outliers_index = np.random.permutation(n_samples)[:n_outliers]
+    outliers_index = rand_gen.permutation(n_samples)[:n_outliers]
     outliers_offset = 10. * \
-        (np.random.randint(2, size=(n_outliers, n_features)) - 0.5)
+        (rand_gen.randint(2, size=(n_outliers, n_features)) - 0.5)
     data[outliers_index] += outliers_offset
     inliers_mask = np.ones(n_samples).astype(bool)
     inliers_mask[outliers_index] = False
 
-    # compute MCD directly
-    T, S, H = fast_mcd(data, correction=correction)
-    # compare with the estimates learnt from the inliers
     pure_data = data[inliers_mask]
-    error_location = np.sum((pure_data.mean(0) - T) ** 2)
-    assert(error_location < tol_loc)
-    emp_cov = EmpiricalCovariance().fit(pure_data)
-    #print emp_cov.error_norm(S)
-    assert(emp_cov.error_norm(S) < tol_cov)
-    assert(np.sum(H) > tol_support)
-    # check improvement
-    if (n_outliers / float(n_samples) > 0.1) and (n_features > 1):
-        error_bad_location = np.sum((data.mean(0) - T) ** 2)
-        assert(error_bad_location > error_location)
-        bad_emp_cov = EmpiricalCovariance().fit(data)
-        assert(emp_cov.error_norm(S) < bad_emp_cov.error_norm(S))
-
     # compute MCD by fitting an object
     mcd_fit = MinCovDet().fit(data)
     T = mcd_fit.location_
     S = mcd_fit.covariance_
     H = mcd_fit.support_
     # compare with the estimates learnt from the inliers
-    error_location = np.sum((pure_data.mean(0) - T) ** 2)
+    error_location = np.mean((pure_data.mean(0) - T) ** 2)
     assert(error_location < tol_loc)
-    assert(emp_cov.error_norm(S) < tol_cov)
-    assert(np.sum(H) > tol_support)
-    # check improvement
-    if (n_outliers / float(n_samples) > 0.1) and (n_features > 1):
-        error_bad_location = np.sum((data.mean(0) - T) ** 2)
-        assert(error_bad_location > error_location)
-        bad_emp_cov = EmpiricalCovariance().fit(data)
-        assert(emp_cov.error_norm(S) < bad_emp_cov.error_norm(S))
+    error_cov = np.mean((empirical_covariance(pure_data) - S) ** 2)
+    assert(error_cov < tol_cov)
+    assert(np.sum(H) >= tol_support)
