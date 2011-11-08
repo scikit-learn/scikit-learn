@@ -203,6 +203,49 @@ Nearest Neighbors
    neighbors.radius_neighbors_graph
 
 
+Gaussian Processes
+==================
+
+.. automodule:: sklearn.gaussian_process
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+  :toctree: generated/
+  :template: class.rst
+
+  gaussian_process.GaussianProcess
+
+
+Correlation models
+------------------
+
+.. autosummary::
+   :toctree: generated
+   :template: function.rst
+
+   gaussian_process.correlation_models.absolute_exponential
+   gaussian_process.correlation_models.squared_exponential
+   gaussian_process.correlation_models.generalized_exponential
+   gaussian_process.correlation_models.pure_nugget
+   gaussian_process.correlation_models.cubic
+   gaussian_process.correlation_models.linear
+
+
+Regression models
+-----------------
+
+.. autosummary::
+   :toctree: generated
+   :template: function.rst
+
+   gaussian_process.regression_models.constant
+   gaussian_process.regression_models.linear
+   gaussian_process.regression_models.quadratic
+
+
 Gaussian Mixture Models
 =======================
 
@@ -327,6 +370,7 @@ Clustering metrics
    metrics.homogeneity_score
    metrics.completeness_score
    metrics.v_measure_score
+   metrics.silhouette_score
 
 
 Pairwise metrics
@@ -482,6 +526,7 @@ Grid Search
    :template: class.rst
 
    grid_search.GridSearchCV
+   grid_search.IterGrid
 
 
 .. _feature_selection_ref:
@@ -524,7 +569,7 @@ Feature Extraction
 .. currentmodule:: sklearn
 
 From images
--------------
+-----------
 
 .. automodule:: sklearn.feature_extraction.image
    :no-members:
@@ -630,6 +675,7 @@ Loaders
    :toctree: generated/
    :template: function.rst
 
+   datasets.load_boston
    datasets.load_files
    datasets.load_diabetes
    datasets.load_digits

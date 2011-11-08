@@ -47,8 +47,10 @@ def k_init(X, k, n_local_trials=None, random_state=None, x_squared_norms=None):
         Set to None to make the number of trials depend logarithmically
         on the number of seeds (2+log(k)); this is the default.
 
-    random_state: numpy.RandomState, optional
-        The generator used to initialize the centers. Defaults to numpy.random.
+    random_state: integer or numpy.RandomState, optional
+        The generator used to initialize the centers. If an integer is
+        given, it fixes the seed. Defaults to the global numpy random
+        number generator.
 
     x_squared_norms: array, shape (n_samples,), optional
         Squared euclidean norm of each data point. Pass it if you have it at
@@ -130,8 +132,8 @@ def k_init(X, k, n_local_trials=None, random_state=None, x_squared_norms=None):
 
 
 def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
-                    tol=1e-4, random_state=None, copy_x=True):
-    """ K-means clustering algorithm.
+            tol=1e-4, random_state=None, copy_x=True):
+    """K-means clustering algorithm.
 
     Parameters
     ----------
@@ -173,8 +175,10 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
     verbose: boolean, optional
         Terbosity mode
 
-    random_state: numpy.RandomState, optional
-        The generator used to initialize the centers. Defaults to numpy.random.
+    random_state: integer or numpy.RandomState, optional
+        The generator used to initialize the centers. If an integer is
+        given, it fixes the seed. Defaults to the global numpy random
+        number generator.
 
     copy_x: boolean, optional
         When pre-computing distances it is more numerically accurate to center
@@ -262,7 +266,7 @@ def _calculate_labels_inertia(X, centers, x_squared_norms=None):
     return distance.min(axis=0).sum(), distance.argmin(axis=0)
 
 
-def _m_step(X, z, k):
+def _m_step(X, labels, k):
     """M step of the K-means EM algorithm
 
     Computation of cluster centers/means
@@ -271,8 +275,8 @@ def _m_step(X, z, k):
     ----------
     X: array, shape (n_samples, n_features)
 
-    z: array, shape (n_samples)
-        Current assignment
+    labels: array of integers, shape (n_samples)
+        Current label assignment
 
     k: int
         Number of desired clusters
@@ -285,16 +289,16 @@ def _m_step(X, z, k):
     dim = X.shape[1]
     centers = np.empty((k, dim))
     X_center = None
-    for q in range(k):
-        center_mask = (z == q)
+    for center_id in range(k):
+        center_mask = labels == center_id
         if not np.any(center_mask):
             # The centroid of empty clusters is set to the center of
             # everything
             if X_center is None:
                 X_center = X.mean(axis=0)
-            centers[q] = X_center
+            centers[center_id] = X_center
         else:
-            centers[q] = np.mean(X[center_mask], axis=0)
+            centers[center_id] = np.mean(X[center_mask], axis=0)
     return centers
 
 
@@ -312,8 +316,10 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None):
     init: {'k-means++', 'random' or ndarray or callable} optional
         Method for initialisation
 
-    random_state: numpy.RandomState, optional
-        The generator used to initialise the centers. Defaults to numpy.random
+    random_state: integer or numpy.RandomState, optional
+        The generator used to initialize the centers. If an integer is
+        given, it fixes the seed. Defaults to the global numpy random
+        number generator.
 
     x_squared_norms:  array, shape (n_samples,), optional
         Squared euclidean norm of each data point. Pass it if you have it at
@@ -371,7 +377,7 @@ def _e_step(x, centers, precompute_distances=True, x_squared_norms=None):
 
     Returns
     -------
-    z: array of shape(n)
+    labels: array of shape(n)
         The resulting assignment
 
     inertia: float
@@ -384,19 +390,19 @@ def _e_step(x, centers, precompute_distances=True, x_squared_norms=None):
     if precompute_distances:
         distances = euclidean_distances(centers, x, x_squared_norms,
                                         squared=True)
-    z = np.empty(n_samples, dtype=np.int)
-    z.fill(-1)
+    labels = np.empty(n_samples, dtype=np.int)
+    labels.fill(-1)
     mindist = np.empty(n_samples)
     mindist.fill(np.infty)
-    for q in range(k):
+    for center_id in range(k):
         if precompute_distances:
-            dist = distances[q]
+            dist = distances[center_id]
         else:
-            dist = np.sum((x - centers[q]) ** 2, axis=1)
-        z[dist < mindist] = q
+            dist = np.sum((x - centers[center_id]) ** 2, axis=1)
+        labels[dist < mindist] = center_id
         mindist = np.minimum(dist, mindist)
     inertia = mindist.sum()
-    return z, inertia
+    return labels, inertia
 
 
 class KMeans(BaseEstimator):
@@ -432,6 +438,11 @@ class KMeans(BaseEstimator):
 
     tol: float, optional default: 1e-4
         Relative tolerance w.r.t. inertia to declare convergence
+
+    random_state: integer or numpy.RandomState, optional
+        The generator used to initialize the centers. If an integer is
+        given, it fixes the seed. Defaults to the global numpy random
+        number generator.
 
 
     Methods
@@ -488,8 +499,8 @@ class KMeans(BaseEstimator):
     def _check_data(self, X):
         """Verify that the number of samples given is larger than k"""
         if sp.issparse(X):
-            raise ValueError("K-Means does not support sparse input matrices.")
-        X = np.asanyarray(X)
+            raise TypeError("K-Means does not support sparse input matrices.")
+        X = np.asarray(X)
         if X.shape[0] < self.k:
             raise ValueError("n_samples=%d should be >= k=%d" % (
                 X.shape[0], self.k))
@@ -509,11 +520,11 @@ class KMeans(BaseEstimator):
         return self
 
     def transform(self, X, y=None):
-        """ Transform the data to a cluster-distance space
+        """Transform the data to a cluster-distance space
 
-        In the new space, each dimension is the distance to the cluster centers.
-        Note that even if X is sparse, the array returned by `transform` will
-        typically be dense.
+        In the new space, each dimension is the distance to the cluster
+        centers.  Note that even if X is sparse, the array returned by
+        `transform` will typically be dense.
 
         Parameters
         ----------
@@ -589,17 +600,28 @@ def _mini_batch_step_dense(X, batch_slice, centers, counts, x_squared_norms):
     X = X[batch_slice]
     x_squared_norms = x_squared_norms[batch_slice]
 
-    cache = euclidean_distances(centers, X, Y_norm_squared=x_squared_norms,
-                                squared=True).argmin(axis=0)
+    nearest_center = euclidean_distances(centers, X,
+                                         Y_norm_squared=x_squared_norms,
+                                         squared=True).argmin(axis=0)
 
     k = centers.shape[0]
-    for q in range(k):
-        center_mask = (cache == q)
-        c = center_mask.sum()
-        if np.any(center_mask):
-            centers[q] = (1. / (counts[q] + c)) * (
-                counts[q] * centers[q] + np.sum(X[center_mask], axis=0))
-            counts[q] += c
+    for center_idx in range(k):
+        # find points from minibatch that are assigned to this center
+        center_mask = nearest_center == center_idx
+        count = center_mask.sum()
+
+        if count > 0:
+            # inplace remove previous count scaling
+            centers[center_idx] *= counts[center_idx]
+
+            # inplace sum with new points members of this cluster
+            centers[center_idx] += np.sum(X[center_mask], axis=0)
+
+            # inplace rescale to compute mean of all points (old and new)
+            centers[center_idx] /= counts[center_idx] + count
+
+            # update the count statistics for this center
+            counts[center_idx] += count
     return counts, centers
 
 
@@ -625,11 +647,13 @@ def _mini_batch_step_sparse(X, batch_slice, centers, counts, x_squared_norms):
     x_squared_norms: array, shape (n_samples,)
          The squared norms of each sample in `X`.
     """
-    cache = euclidean_distances(centers, X[batch_slice],
-              x_squared_norms[batch_slice]).argmin(axis=0).astype(np.int32)
+    nearest_center = euclidean_distances(centers, X[batch_slice],
+                                         x_squared_norms[batch_slice]
+                                        ).argmin(axis=0).astype(np.int32)
 
     _k_means._mini_batch_update_sparse(X.data, X.indices, X.indptr,
-                                       batch_slice, centers, counts, cache)
+                                       batch_slice, centers, counts,
+                                       nearest_center)
     return counts, centers
 
 
@@ -668,6 +692,12 @@ class MiniBatchKMeans(KMeans):
     compute_labels: boolean
         Compute label assignements and inertia for the complete dataset
         once the minibatch optimization has converged in fit.
+
+    random_state: integer or numpy.RandomState, optional
+        The generator used to initialize the centers. If an integer is
+        given, it fixes the seed. Defaults to the global numpy random
+        number generator.
+
 
     Methods
     -------

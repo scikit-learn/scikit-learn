@@ -68,7 +68,7 @@ class ElasticNet(LinearModel):
         sparse matrix in CSC format (scipy.sparse.csc_matrix)
         """
         X = sp.csc_matrix(X)
-        y = np.asanyarray(y, dtype=np.float64)
+        y = np.asarray(y, dtype=np.float64)
 
         if X.shape[0] != y.shape[0]:
             raise ValueError("X and y have incompatible shapes.\n" +

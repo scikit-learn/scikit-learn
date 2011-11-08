@@ -267,7 +267,7 @@ class GMM(BaseEstimator):
             return [np.eye(self.n_features) * f for f in self._covars]
 
     def _set_covars(self, covars):
-        covars = np.asanyarray(covars)
+        covars = np.asarray(covars)
         _validate_covars(covars, self._cvtype, self.n_components, self.n_features)
         self._covars = covars
 
@@ -327,7 +327,7 @@ class GMM(BaseEstimator):
             Posterior probabilities of each mixture component for each
             observation
         """
-        obs = np.asanyarray(obs)
+        obs = np.asarray(obs)
         lpr = (lmvnpdf(obs, self._means, self._covars, self._cvtype)
                + self._log_weights)
         logprob = logsum(lpr, axis=1)
@@ -472,7 +472,7 @@ class GMM(BaseEstimator):
 
         ## initialization step
 
-        X = np.asanyarray(X)
+        X = np.asarray(X)
 
         if hasattr(self, 'n_features') and self.n_features != X.shape[1]:
             raise ValueError('Unexpected number of dimensions, got %s but '

@@ -1,6 +1,6 @@
 import numpy as np
 
-from ..base import BaseLibSVM, BaseLibLinear, _get_class_weight
+from ..base import BaseLibSVM, BaseLibLinear, LIBSVM_IMPL, _get_class_weight
 from . import libsvm
 from .. import liblinear
 
@@ -8,30 +8,17 @@ from .. import liblinear
 class SparseBaseLibSVM(BaseLibSVM):
 
     _kernel_types = ['linear', 'poly', 'rbf', 'sigmoid', 'precomputed']
-    _svm_types = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
 
     def __init__(self, impl, kernel, degree, gamma, coef0,
                  tol, C, nu, epsilon, shrinking, probability):
-
-        assert impl in self._svm_types, \
-            "impl should be one of %s, %s was given" % (
-                self._svm_types, impl)
 
         assert kernel in self._kernel_types, \
                "kernel should be one of %s, "\
                "%s was given." % (self._kernel_types, kernel)
 
-        self.kernel = kernel
-        self.impl = impl
-        self.degree = degree
-        self.gamma = gamma
-        self.coef0 = coef0
-        self.tol = tol
-        self.C = C
-        self.nu = nu
-        self.epsilon = epsilon
-        self.shrinking = shrinking
-        self.probability = probability
+        super(SparseBaseLibSVM, self).__init__(impl, kernel, degree, gamma,
+                                               coef0, tol, C, nu, epsilon,
+                                               shrinking, probability)
 
         # container for when we call fit
         self._support_data = np.empty(0, dtype=np.float64, order='C')
@@ -86,10 +73,10 @@ class SparseBaseLibSVM(BaseLibSVM):
 
         import scipy.sparse
         X = scipy.sparse.csr_matrix(X)
-        X.data = np.asanyarray(X.data, dtype=np.float64, order='C')
-        y = np.asanyarray(y, dtype=np.float64, order='C')
-        sample_weight = np.asanyarray([] if sample_weight is None
-                                         else sample_weight, dtype=np.float64)
+        X.data = np.asarray(X.data, dtype=np.float64, order='C')
+        y = np.asarray(y, dtype=np.float64, order='C')
+        sample_weight = np.asarray([] if sample_weight is None
+                                      else sample_weight, dtype=np.float64)
 
         if X.shape[0] != y.shape[0]:
             raise ValueError("X and y have incompatible shapes.\n" +
@@ -101,7 +88,7 @@ class SparseBaseLibSVM(BaseLibSVM):
                              "Note: Sparse matrices cannot be indexed w/" +
                              "boolean masks (use `indices=True` in CV).")
 
-        solver_type = self._svm_types.index(self.impl)
+        solver_type = LIBSVM_IMPL.index(self.impl)
         kernel_type = self._kernel_types.index(self.kernel)
 
         self.class_weight, self.class_weight_label = \
@@ -163,7 +150,7 @@ class SparseBaseLibSVM(BaseLibSVM):
         """
         import scipy.sparse
         T = scipy.sparse.csr_matrix(T)
-        T.data = np.asanyarray(T.data, dtype=np.float64, order='C')
+        T.data = np.asarray(T.data, dtype=np.float64, order='C')
         kernel_type = self._kernel_types.index(self.kernel)
 
         return libsvm.libsvm_sparse_predict(T.data, T.indices, T.indptr,
@@ -171,7 +158,7 @@ class SparseBaseLibSVM(BaseLibSVM):
                       self.support_vectors_.indices,
                       self.support_vectors_.indptr,
                       self.dual_coef_.data, self.intercept_,
-                      self._svm_types.index(self.impl), kernel_type,
+                      LIBSVM_IMPL.index(self.impl), kernel_type,
                       self.degree, self.gamma, self.coef0, self.tol,
                       self.C, self.class_weight_label, self.class_weight,
                       self.nu, self.epsilon, self.shrinking,
@@ -212,7 +199,7 @@ class SparseBaseLibSVM(BaseLibSVM):
 
         import scipy.sparse
         X = scipy.sparse.csr_matrix(X)
-        X.data = np.asanyarray(X.data, dtype=np.float64, order='C')
+        X.data = np.asarray(X.data, dtype=np.float64, order='C')
         kernel_type = self._kernel_types.index(self.kernel)
 
         return libsvm.libsvm_sparse_predict_proba(
@@ -221,7 +208,7 @@ class SparseBaseLibSVM(BaseLibSVM):
             self.support_vectors_.indices,
             self.support_vectors_.indptr,
             self.dual_coef_.data, self.intercept_,
-            self._svm_types.index(self.impl), kernel_type,
+            LIBSVM_IMPL.index(self.impl), kernel_type,
             self.degree, self.gamma, self.coef0, self.tol,
             self.C, self.class_weight_label, self.class_weight,
             self.nu, self.epsilon, self.shrinking,
@@ -251,13 +238,13 @@ class SparseBaseLibLinear(BaseLibLinear):
 
         import scipy.sparse
         X = scipy.sparse.csr_matrix(X)
-        y = np.asanyarray(y, dtype=np.int32, order='C')
+        y = np.asarray(y, dtype=np.int32, order='C')
         if X.shape[0] != y.shape[0]:
             raise ValueError("X and y have incompatible shapes.\n" +
                              "Note: Sparse matrices cannot be indexed w/" +
                              "boolean masks (use `indices=True` in CV).")
 
-        X.data = np.asanyarray(X.data, dtype=np.float64, order='C')
+        X.data = np.asarray(X.data, dtype=np.float64, order='C')
 
         self.class_weight, self.class_weight_label = \
                      _get_class_weight(class_weight, y)
@@ -286,7 +273,7 @@ class SparseBaseLibLinear(BaseLibLinear):
         import scipy.sparse
         X = scipy.sparse.csr_matrix(X)
         self._check_n_features(X)
-        X.data = np.asanyarray(X.data, dtype=np.float64, order='C')
+        X.data = np.asarray(X.data, dtype=np.float64, order='C')
 
         return liblinear.csr_predict_wrap(X.shape[1], X.data,
                                       X.indices, X.indptr,
@@ -315,7 +302,7 @@ class SparseBaseLibLinear(BaseLibLinear):
         import scipy.sparse
         X = scipy.sparse.csr_matrix(X)
         self._check_n_features(X)
-        X.data = np.asanyarray(X.data, dtype=np.float64, order='C')
+        X.data = np.asarray(X.data, dtype=np.float64, order='C')
 
         dec_func = liblinear.csr_decision_function_wrap(
             X.shape[1], X.data, X.indices, X.indptr, self.raw_coef_,

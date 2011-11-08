@@ -9,6 +9,34 @@ from sklearn import neighbors
 # are contained within the tests of test_neighbors.py
 
 
+def test_warning_flag(n_samples=100, n_features=3, k=3):
+    """test that discarding identical distances triggers warning flag"""
+    X = np.random.random(size=(n_samples, n_features))
+    q = np.random.random(size=n_features)
+    bt = neighbors.BallTree(X[:-1], leaf_size=5)
+    dist, ind = bt.query(q, k=k)
+
+    # make the last point identical to the furthest neighbor
+    # querying this should set warning_flag to True
+    X[-1:] = X[ind[0, k - 1]]
+
+    bt = neighbors.BallTree(X, leaf_size=5)
+    dist, ind = bt.query(q, k=k)
+
+    assert bt.warning_flag
+
+    # make the last point identical to the closest neighbor
+    # though the distance is identical, there is no ambiguity, so there
+    # should be no warning.  If k==1, this should not be done
+    if k > 1:
+        X[-1:] = X[ind[0, 0]]
+
+        bt = neighbors.BallTree(X, leaf_size=5)
+        dist, ind = bt.query(q, k=k)
+
+        assert not bt.warning_flag
+
+
 def test_ball_tree_query_radius(n_samples=100, n_features=10):
     X = 2 * np.random.random(size=(n_samples, n_features)) - 1
     query_pt = np.zeros(n_features, dtype=float)
@@ -57,6 +85,7 @@ def test_ball_tree_pickle():
         ind2, dist2 = bt2.query(X)
         assert np.all(ind1 == ind2)
         assert_array_almost_equal(dist1, dist2)
+
 
 def test_ball_tree_p_distance():
     X = np.random.random(size=(100, 5))

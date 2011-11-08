@@ -1,6 +1,6 @@
 from ..base import ClassifierMixin, RegressorMixin
 from ..linear_model.base import CoefSelectTransformerMixin
-from .base import BaseLibLinear, BaseLibSVM
+from .base import BaseLibLinear, DenseBaseLibSVM
 
 
 class LinearSVC(BaseLibLinear, ClassifierMixin, CoefSelectTransformerMixin):
@@ -83,7 +83,7 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, CoefSelectTransformerMixin):
     pass
 
 
-class SVC(BaseLibSVM, ClassifierMixin):
+class SVC(DenseBaseLibSVM, ClassifierMixin):
     """C-Support Vector Classification.
 
     Parameters
@@ -161,11 +161,11 @@ class SVC(BaseLibSVM, ClassifierMixin):
                  coef0=0.0, shrinking=True, probability=False,
                  tol=1e-3):
 
-        BaseLibSVM.__init__(self, 'c_svc', kernel, degree, gamma, coef0,
-                         tol, C, 0., 0., shrinking, probability)
+        DenseBaseLibSVM.__init__(self, 'c_svc', kernel, degree, gamma, coef0,
+                                 tol, C, 0., 0., shrinking, probability)
 
 
-class NuSVC(BaseLibSVM, ClassifierMixin):
+class NuSVC(DenseBaseLibSVM, ClassifierMixin):
     """Nu-Support Vector Classification.
 
     Parameters
@@ -262,12 +262,11 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
                  coef0=0.0, shrinking=True, probability=False,
                  tol=1e-3):
 
-        BaseLibSVM.__init__(self, 'nu_svc', kernel, degree, gamma,
-                         coef0, tol, 0., nu, 0.,
-                         shrinking, probability)
+        DenseBaseLibSVM.__init__(self, 'nu_svc', kernel, degree, gamma,
+                                coef0, tol, 0., nu, 0., shrinking, probability)
 
 
-class SVR(BaseLibSVM, RegressorMixin):
+class SVR(DenseBaseLibSVM, RegressorMixin):
     """epsilon-Support Vector Regression.
 
     The free parameters in the model are C and epsilon.
@@ -349,9 +348,9 @@ class SVR(BaseLibSVM, RegressorMixin):
                  tol=1e-3, C=1.0, epsilon=0.1, shrinking=True,
                  probability=False):
 
-        BaseLibSVM.__init__(self, 'epsilon_svr', kernel, degree,
-                         gamma, coef0, tol, C, 0.0,
-                         epsilon, shrinking, probability)
+        DenseBaseLibSVM.__init__(self, 'epsilon_svr', kernel, degree, gamma,
+                                 coef0, tol, C, 0., epsilon, shrinking,
+                                 probability)
 
     def fit(self, X, y, sample_weight=None, **params):
         """
@@ -371,10 +370,11 @@ class SVR(BaseLibSVM, RegressorMixin):
             Returns self.
         """
         # we copy this method because SVR does not accept class_weight
-        return BaseLibSVM.fit(self, X, y, sample_weight=sample_weight, **params)
+        return DenseBaseLibSVM.fit(self, X, y, sample_weight=sample_weight,
+                                   **params)
 
 
-class NuSVR(BaseLibSVM, RegressorMixin):
+class NuSVR(DenseBaseLibSVM, RegressorMixin):
     """Nu Support Vector Regression.
 
     Similar to NuSVC, for regression, uses a parameter nu to control
@@ -458,9 +458,8 @@ class NuSVR(BaseLibSVM, RegressorMixin):
                  gamma=0.0, coef0=0.0, shrinking=True,
                  probability=False, tol=1e-3):
 
-        BaseLibSVM.__init__(self, 'nu_svr', kernel, degree,
-                         gamma, coef0, tol, C, nu,
-                         None, shrinking, probability)
+        DenseBaseLibSVM.__init__(self, 'nu_svr', kernel, degree, gamma, coef0,
+                                 tol, C, nu, None, shrinking, probability)
 
     def fit(self, X, y, sample_weight=None, **params):
         """
@@ -480,10 +479,10 @@ class NuSVR(BaseLibSVM, RegressorMixin):
             Returns self.
         """
         # we copy this method because SVR does not accept class_weight
-        return BaseLibSVM.fit(self, X, y, sample_weight=[], **params)
+        return DenseBaseLibSVM.fit(self, X, y, sample_weight=[], **params)
 
 
-class OneClassSVM(BaseLibSVM):
+class OneClassSVM(DenseBaseLibSVM):
     """Unsupervised Outliers Detection.
 
     Estimate the support of a high-dimensional distribution.
@@ -539,8 +538,8 @@ class OneClassSVM(BaseLibSVM):
     """
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
                  tol=1e-3, nu=0.5, shrinking=True):
-        BaseLibSVM.__init__(self, 'one_class', kernel, degree, gamma, coef0,
-                             tol, 0.0, nu, 0.0, shrinking, False)
+        DenseBaseLibSVM.__init__(self, 'one_class', kernel, degree, gamma,
+                                 coef0, tol, 0., nu, 0., shrinking, False)
 
     def fit(self, X, class_weight={}, sample_weight=None, **params):
         """

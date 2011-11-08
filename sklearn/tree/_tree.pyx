@@ -253,24 +253,31 @@ cdef class Gini(ClassificationCriterion):
 
     cdef double eval(self):
         """Returns Gini index of left branch + Gini index of right branch. """
-        cdef double H_left = 1.0
-        cdef double H_right = 1.0
-        cdef int k
-        cdef double e1, e2
         cdef double n_left = <double> self.n_left
         cdef double n_right = <double> self.n_right
+        cdef double H_left = n_left * n_left
+        cdef double H_right = n_right * n_right
+        cdef int k, count_left, count_right
 
         for k from 0 <= k < self.n_classes:
-            if self.label_count_left[k] > 0:
-                H_left -= ((self.label_count_left[k] / n_left)
-                           * (self.label_count_left[k] / n_left))
-            if self.label_count_right[k] > 0:
-                H_right -= ((self.label_count_right[k] / n_right)
-                            * (self.label_count_right[k] / n_right))
+            count_left = self.label_count_left[k]
+            if count_left > 0:
+                H_left -= (count_left * count_left)
+            count_right = self.label_count_right[k]
+            if count_right > 0:
+                H_right -= (count_right * count_right)
 
-        e1 = (n_left / self.n_samples) * H_left
-        e2 = (n_right / self.n_samples) * H_right
-        return e1 + e2
+        if n_left == 0:
+            H_left = 0
+        else:
+            H_left /= n_left
+
+        if n_right == 0:
+            H_right = 0
+        else:
+            H_right /= n_right
+
+        return (H_left + H_right) / self.n_samples
 
 
 cdef class Entropy(ClassificationCriterion):
@@ -387,8 +394,8 @@ cdef class RegressionCriterion(Criterion):
         for j from 0 <= j < n_total_samples:
             if sample_mask[j] == 0:
                 continue
-            self.sq_sum_init = self.sq_sum_init + (y[j] * y[j])
-            self.mean_init = self.mean_init + y[j]
+            self.sq_sum_init += (y[j] * y[j])
+            self.mean_init += y[j]
 
         self.mean_init = self.mean_init / self.n_samples
 

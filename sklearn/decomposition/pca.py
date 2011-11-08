@@ -10,9 +10,8 @@ import numpy as np
 from scipy import linalg
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils.extmath import fast_logdet
-from ..utils.extmath import fast_svd
-from ..utils.extmath import safe_sparse_dot
+from ..utils import array2d, check_random_state
+from ..utils.extmath import fast_logdet, fast_svd, safe_sparse_dot
 
 
 def _assess_dimension_(spectrum, rank, n_samples, dim):
@@ -216,7 +215,7 @@ class PCA(BaseEstimator, TransformerMixin):
         return U
 
     def _fit(self, X):
-        X = np.atleast_2d(X)
+        X = array2d(X)
         n_samples, n_features = X.shape
         if self.copy:
             X = X.copy()
@@ -290,9 +289,7 @@ class PCA(BaseEstimator, TransformerMixin):
 
 
 class ProbabilisticPCA(PCA):
-    """Additional layer on top of PCA that adds a probabilistic evaluation
-
-    """
+    """Additional layer on top of PCA that adds a probabilistic evaluation"""
     __doc__ += PCA.__doc__
 
     def fit(self, X, y=None, homoscedastic=True):
@@ -377,6 +374,10 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         improve the predictive accuracy of the downstream estimators by
         making there data respect some hard-wired assumptions.
 
+    random_state: int or RandomState instance or None (default)
+        Pseudo Random Number generator seed control. If None, use the
+        numpy.random singleton.
+
     Attributes
     ----------
     components_: array, [n_components, n_features]
@@ -393,8 +394,9 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
     >>> from sklearn.decomposition import RandomizedPCA
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> pca = RandomizedPCA(n_components=2)
-    >>> pca.fit(X)
-    RandomizedPCA(copy=True, iterated_power=3, n_components=2, whiten=False)
+    >>> pca.fit(X)                 # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+    RandomizedPCA(copy=True, iterated_power=3, n_components=2,
+           random_state=<mtrand.RandomState object at 0x...>, whiten=False)
     >>> print pca.explained_variance_ratio_
     [ 0.99244289  0.00755711]
 
@@ -418,12 +420,13 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, n_components, copy=True, iterated_power=3,
-                 whiten=False):
+                 whiten=False, random_state=None):
         self.n_components = n_components
         self.copy = copy
         self.iterated_power = iterated_power
         self.whiten = whiten
         self.mean_ = None
+        self.random_state = random_state
 
     def fit(self, X, y=None):
         """Fit the model to the data X.
@@ -439,8 +442,9 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         self : object
             Returns the instance itself.
         """
+        self.random_state = check_random_state(self.random_state)
         if not hasattr(X, 'todense'):
-            X = np.atleast_2d(X)
+            X = array2d(X)
 
         n_samples = X.shape[0]
 
@@ -449,13 +453,14 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
 
         if not hasattr(X, 'todense'):
             # not a sparse matrix, ensure this is a 2D array
-            X = np.atleast_2d(X)
+            X = array2d(X)
 
             # Center data
             self.mean_ = np.mean(X, axis=0)
             X -= self.mean_
 
-        U, S, V = fast_svd(X, self.n_components, q=self.iterated_power)
+        U, S, V = fast_svd(X, self.n_components, q=self.iterated_power,
+                           random_state=self.random_state)
 
         self.explained_variance_ = (S ** 2) / n_samples
         self.explained_variance_ratio_ = self.explained_variance_ / \
