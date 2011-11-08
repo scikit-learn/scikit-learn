@@ -18,6 +18,9 @@
    - Silhouette Coefficient cluster analysis evaluation metric added as 
      ``sklearn.metrics.silhouette_score`` by Robert Layton.
 
+   - Adjusted Mutual Information metric added as
+     ``sklearn.metrics.adjusted_mutual_info_score`` by Robert Layton.
+
 
 API changes summary
 -------------------
