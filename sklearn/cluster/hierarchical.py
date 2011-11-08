@@ -19,7 +19,7 @@ from ..base import BaseEstimator
 from ..utils._csgraph import cs_graph_components
 from ..externals.joblib import Memory
 
-from .linkage import CompleteLinkage
+from .linkage import ConstrainedCompleteLinkage
 from ._feature_agglomeration import AgglomerationTransform
 
 ###############################################################################
@@ -31,7 +31,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
                       linkage_criterion=WardsLinkage, copy=True)[:3]
             
 def dendrogram(X, connectivity=None, n_components=None, merge_replay=[], 
-               linkage_criterion=CompleteLinkage, copy=True):
+               linkage_criterion=ConstrainedCompleteLinkage, copy=True):
     """Hierarchical clustering based on a Feature matrix.
 
     The inertia matrix uses a Heapq-based representation.
