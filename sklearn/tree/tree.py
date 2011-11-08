@@ -164,12 +164,7 @@ def _build_tree(X, y, is_classification, criterion, max_depth, min_split,
             value[:t] = np.bincount(current_y.astype(np.int))
 
         else:
-<<<<<<< HEAD
-            value = np.asanyarray(np.mean(current_y))
-=======
-            # we need to wrap the mean into an array
             value = np.asarray(np.mean(current_y))
->>>>>>> origin/master
 
         # Terminal node
         if feature == -1:
@@ -257,12 +252,8 @@ class BaseDecisionTree(BaseEstimator):
         self : object
             Returns self.
         """
-<<<<<<< HEAD
         # Convert data
-        X = np.asanyarray(X, dtype=DTYPE, order="F")
-=======
         X = np.asarray(X, dtype=DTYPE, order='F')
->>>>>>> origin/master
         n_samples, self.n_features = X.shape
 
         is_classification = isinstance(self, ClassifierMixin)
@@ -319,11 +310,7 @@ class BaseDecisionTree(BaseEstimator):
         predictions : array of shape = [n_samples]
             The predicted classes, or the predict values.
         """
-<<<<<<< HEAD
-        X = np.atleast_2d(X).astype(DTYPE)
-=======
         X = array2d(X, dtype=DTYPE)
->>>>>>> origin/master
         n_samples, n_features = X.shape
 
         if self.tree is None:
@@ -437,11 +424,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             The class probabilities of the input samples. Classes are ordered
             by arithmetical order.
         """
-<<<<<<< HEAD
-        X = np.atleast_2d(X).astype(DTYPE)
-=======
         X = array2d(X, dtype=DTYPE)
->>>>>>> origin/master
         n_samples, n_features = X.shape
 
         if self.tree is None:
