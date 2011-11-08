@@ -529,14 +529,18 @@ class EMNB(BaseNB):
         X = atleast2d_or_csr(X)
         Y = clf._label_1ofK(y)
 
+        labeled = np.where(y != -1)[0]
         unlabeled = np.where(y == -1)[0]
 
         n_features = X.shape[1]
         n_classes = Y.shape[1]
         tol = self.tol * n_features
 
-        old_coef = np.zeros((n_classes, n_features))
-        old_intercept = np.zeros(n_classes)
+        clf._fit1ofK(X[labeled, :], Y[labeled, :],
+                     sample_weight[labeled, :] if sample_weight else None,
+                     class_prior)
+        old_coef = clf.coef_.copy()
+        old_intercept = clf.intercept_.copy()
 
         for i in xrange(self.n_iter):
             if self.verbose:
@@ -553,8 +557,8 @@ class EMNB(BaseNB):
                     print "Naive Bayes EM converged"
                 break
 
-            old_coef = np.copy(clf.coef_)
-            old_intercept = np.copy(clf.intercept_)
+            old_coef[:] = clf.coef_
+            old_intercept[:] = clf.intercept_
             Y[unlabeled, :] = clf.predict_proba(X[unlabeled, :])
 
         return self
