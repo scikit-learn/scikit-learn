@@ -19,19 +19,17 @@ from ..base import BaseEstimator
 from ..utils._csgraph import cs_graph_components
 from ..externals.joblib import Memory
 
-from .linkage import ConstrainedCompleteLinkage
+from .linkage import WardsLinkage
 from ._feature_agglomeration import AgglomerationTransform
 
 ###############################################################################
   
-def ward_tree(X, connectivity=None, n_components=None, copy=True):
-    from .linkage import WardsLinkage
-    
+def ward_tree(X, connectivity=None, n_components=None, copy=True):    
     return dendrogram(X, connectivity=None, n_components=None, merge_replay=[], 
                       linkage_criterion=WardsLinkage, copy=True)[:3]
             
 def dendrogram(X, connectivity=None, n_components=None, merge_replay=[], 
-               linkage_criterion=ConstrainedCompleteLinkage, copy=True):
+               linkage_criterion=WardsLinkage, copy=True):
     """Hierarchical clustering based on a Feature matrix.
 
     The inertia matrix uses a Heapq-based representation.
@@ -106,8 +104,7 @@ def dendrogram(X, connectivity=None, n_components=None, merge_replay=[],
     # Remove diagonal from connectivity matrix
     connectivity.setdiag(np.zeros(connectivity.shape[0]))        
     # Compute distances between connected nodes
-    linkage = linkage_criterion(X, connectivity, n_nodes, n_features, 
-                                      n_samples)
+    linkage = linkage_criterion(X, connectivity)
 
     # prepare the main fields
     parent = np.arange(n_nodes, dtype=np.int)
@@ -378,15 +375,16 @@ class HierarchicalClustering(BaseEstimator):
 
     """
 
-    def __init__(self, n_clusters=2, max_inertia=None,
+    def __init__(self, n_clusters=None, max_inertia=None,
                  memory=Memory(cachedir=None, verbose=0), connectivity=None,
-                 copy=True, n_components=None):
+                 copy=True, n_components=None, linkage_criterion=WardsLinkage):
         self.n_clusters = n_clusters
         self.max_inertia = max_inertia
         self.memory = memory
         self.copy = copy
         self.n_components = n_components
         self.connectivity = connectivity
+        self.linkage_criterion = linkage_criterion
         self.merges = []
 
     def fit(self, X):
@@ -407,10 +405,11 @@ class HierarchicalClustering(BaseEstimator):
 
         # Construct the tree
         children, n_components, n_leaves, self.merges, inertias = \
-                    memory.cache(dendrogram)(X, self.connectivity,
-                                            n_components=self.n_components,
-                                            merge_replay=self.merges,
-                                            copy=self.copy)
+                memory.cache(dendrogram)(X, self.connectivity,
+                                        n_components=self.n_components,
+                                        linkage_criterion = self.linkage_criterion,
+                                        merge_replay=self.merges,
+                                        copy=self.copy)
         # Cut the tree ... 
         if self.max_inertia is None:
             # based on number of desired clusters
@@ -430,7 +429,10 @@ class HierarchicalClustering(BaseEstimator):
 
 ###############################################################################
 class Ward(HierarchicalClustering):
-    pass
+    
+    def __init__(self, *args, **kwargs):
+        super(Ward, self).__init__(*args, linkage_criterion=WardsLinkage,
+                                   **kwargs)
 
 
 # Ward-based feature agglomeration

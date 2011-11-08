@@ -2,7 +2,6 @@
 # TODO: Consider nearest-neighbor chain algorithm ?
 # https://secure.wikimedia.org/wikipedia/en/wiki/Nearest-neighbor_chain_algorithm
 
-from collections import defaultdict
 import itertools
 from heapq import heapify, heappop, heappush
 
@@ -10,11 +9,24 @@ import numpy as np
 
 from . import _inertia
 
-
 class Linkage(object):
     
-    def __init__(self):
+    def __init__(self, X):
+        self.X = X
+        
         self.A = []
+        
+        # Heap of possible cluster merges, sorted by their distances
+        self.distances = []
+        
+        # Dictionary mapping node in tree to indices of all data points
+        # which belong to the cluster rooted at this node
+        self.cluster_nodes = dict(zip(xrange(X.shape[0]), 
+                                      [[i] for i in xrange(X.shape[0])])) 
+        
+    def update(self, child_node1, child_node2, parent_node):
+        self.cluster_nodes[parent_node] = \
+            self.cluster_nodes[child_node1] + self.cluster_nodes[child_node2]
         
     def has_more_candidates(self):
         return len(self.distances) > 0
@@ -26,22 +38,17 @@ class Linkage(object):
         return set.union(*[set(self.A[cluster_root]) 
                                 for cluster_root in cluster_roots])
         
-    def get_nodes_of_clusters(self, cluster_roots, children, n_samples):
-        nodes = set()
-        for cluster_root in cluster_roots:
-            if cluster_root < n_samples:
-                nodes.add(cluster_root)
-            else:
-                nodes = nodes.union(
-                    self.get_nodes_of_clusters(children[cluster_root - n_samples],
-                                               children, n_samples))
-        return list(nodes)
+    def get_nodes_of_cluster(self, cluster_root):
+        return self.cluster_nodes[cluster_root]
         
 
 class WardsLinkage(Linkage):
 
-    def __init__(self, X, connectivity, n_nodes, n_features, n_samples):
-        super(WardsLinkage, self).__init__()
+    def __init__(self, X, connectivity):
+        super(WardsLinkage, self).__init__(X)
+        
+        n_samples, n_features = X.shape
+        n_nodes = n_samples * 2 -1
         # build moments as a list
         self.moments = [np.zeros(n_nodes), np.zeros((n_nodes, n_features))]
         self.moments[0][:n_samples] = 1
@@ -69,6 +76,7 @@ class WardsLinkage(Linkage):
         heapify(self.distances)
 
     def update(self, child_node1, child_node2, parent_node, parent):
+        super(WardsLinkage, self).update(child_node1, child_node2, parent_node)
         # update the moments
         for p in range(2):
             self.moments[p][parent_node] = \
@@ -105,32 +113,24 @@ class WardsLinkage(Linkage):
         return distances[0]
 
 
-class ConstrainedCompleteLinkage(Linkage):
+
+class CompleteLinkage(Linkage):
     
-    def __init__(self, X, connectivity, *args):
-        super(ConstrainedCompleteLinkage, self).__init__()
+    def __init__(self, X, connectivity, 
+                 base_distance=lambda x,y: np.linalg.norm(x - y), *args):
+        super(CompleteLinkage, self).__init__(X)
         
-        self.X = X
-        # Heap of possible cluster merges, sorted by heir distances
-        self.distances = [] 
+        self.base_distance = base_distance
         # Distances between two clusters, represented by their 
         # root node indices 
-        self.distance_dict = {} 
-        # Mapping from a pair of clusters to the set of node pairs which
-        # connect these two clusters
-        self.cluster_connections = defaultdict(set)
-        # Mapping from a a cluster to a mapping from nodes in this cluster
-        # to their distance to the most distant node in the cluster
-        self.max_dist_of_node_in_cluster = defaultdict(dict)  
+        self.distance_dict = {}  
         # Determine distances between all connected nodes 
         for ind1, row in enumerate(connectivity.rows):
             self.A.append(row)
-            self.max_dist_of_node_in_cluster[ind1][ind1] = 0.0
             for ind2 in row:
-                self.cluster_connections[(ind1, ind2)] = set([(ind1, ind2)])
-                self.cluster_connections[(ind2, ind1)] = set([(ind1, ind2)])
+                if ind1 == ind2: continue
                 # Compute distance between two connected nodes
-                dist = np.linalg.norm(X[ind1] - X[ind2])
+                dist = self.base_distance(X[ind1], X[ind2])
                 self.distances.append((dist, ind1, ind2))
                 self.distance_dict[(ind1, ind2)] = dist
                 self.distance_dict[(ind2, ind1)] = dist
@@ -144,52 +144,7 @@ class ConstrainedCompleteLinkage(Linkage):
         heapify(self.distances)
 
     def update(self, child_node1, child_node2, parent_node, parent):
-        # Update max_dist_of_node_in_cluster for new cluster "parent_node" 
-        for node in self.max_dist_of_node_in_cluster[child_node1].keys():
-            min_inter_cluster_dist = np.inf
-            for (node1, node2) in self.cluster_connections[(child_node1, 
-                                                            child_node2)]:
-                # Canonical ordering (connecting node 1 in cluster 1)
-                if node1 not in self.max_dist_of_node_in_cluster[child_node1]:
-                    node1, node2 = node2, node1
-                    
-                # TODO: graph distance instead of euclidean
-                inter_cluster_dist = \
-                    self.max_dist_of_node_in_cluster[child_node2][node2] \
-                        + self.distance_dict[(node1, node2)] \
-                        + np.linalg.norm(self.X[node] - self.X[node1])  
-                min_inter_cluster_dist = \
-                        min(min_inter_cluster_dist, inter_cluster_dist)
-            
-            # Take maximum of intra- und inter-cluster distance          
-            self.max_dist_of_node_in_cluster[parent_node][node] = \
-                    max(self.max_dist_of_node_in_cluster[child_node1][node], 
-                        min_inter_cluster_dist)
-        for node in self.max_dist_of_node_in_cluster[child_node2].keys():
-            min_inter_cluster_dist = np.inf
-            for (node1, node2) in self.cluster_connections[(child_node1, 
-                                                            child_node2)]:
-                # Canonical ordering (connecting node 1 in cluster 1)
-                if node1 not in self.max_dist_of_node_in_cluster[child_node1]:
-                    node1, node2 = node2, node1
-                    
-                 # TODO: graph distance instead of euclidean
-                inter_cluster_dist = \
-                    self.max_dist_of_node_in_cluster[child_node1][node1] \
-                        + self.distance_dict[(node1, node2)] \
-                        + np.linalg.norm(self.X[node] - self.X[node2])
-                min_inter_cluster_dist = \
-                        min(min_inter_cluster_dist, inter_cluster_dist)
-                      
-            # Take maximum of intra- und inter-cluster distance   
-            self.max_dist_of_node_in_cluster[parent_node][node] = \
-                    max(self.max_dist_of_node_in_cluster[child_node2][node],
-                        min_inter_cluster_dist)
-        
-        # Cleaning up
-        self.max_dist_of_node_in_cluster.pop(child_node1)
-        self.max_dist_of_node_in_cluster.pop(child_node2)
-        
+        super(CompleteLinkage, self).update(child_node1, child_node2, parent_node)       
         # Determine all other clusters that are connected to one of the child
         # clusters. These cluster will also be connected to the parent cluster
         coord_col = []
@@ -208,38 +163,20 @@ class ConstrainedCompleteLinkage(Linkage):
         
         # Determine for all connected clusters the distance to the newly formed
         # cluster
-        for l in coord_col:
-            self.cluster_connections[(parent_node, l)] = \
-                        set.union(self.cluster_connections[(child_node1, l)],
-                                  self.cluster_connections[(child_node2, l)])
-            self.cluster_connections[(l, parent_node)] = \
-                            self.cluster_connections[(parent_node, l)]
+        for connected_cluster in coord_col:
             # Find the distance between pair of nodes that are most distant 
-            # in clusters rooted at l and parent_node
-            inter_cluster_dist = np.inf
-            for (node1, node2) in self.cluster_connections[(l, parent_node)]:
-                # Canonical ordering (connecting node 1 in l)
-                if node1 not in self.max_dist_of_node_in_cluster[l]:
-                    node1, node2 = node2, node1
-                dist = self.max_dist_of_node_in_cluster[l][node1] \
-                        + self.distance_dict[(node1, node2)] \
-                        + self.max_dist_of_node_in_cluster[parent_node][node2]
-                inter_cluster_dist = min(inter_cluster_dist, dist)
+            # in clusters rooted at connected_cluster and parent_node.
+            max_dist = 0.0
+            # Do a brute force search
+            for node1 in self.get_nodes_of_cluster(parent_node):
+                for node2 in self.get_nodes_of_cluster(connected_cluster):
+                    max_dist = max(max_dist, self.base_distance(self.X[node1],
+                                                                self.X[node2]))
             
-            self.distance_dict[(l, parent_node)] = inter_cluster_dist
-            self.distance_dict[(parent_node, l)] = inter_cluster_dist
-            heappush(self.distances, (inter_cluster_dist, parent_node, l))
-            
-            # Cleaning up
-            self.cluster_connections.pop((child_node1, l), None)
-            self.cluster_connections.pop((child_node2, l), None)
-            self.cluster_connections.pop((l, child_node1), None)
-            self.cluster_connections.pop((l, child_node2), None)
-    
+            self.distance_dict[(connected_cluster, parent_node)] = max_dist
+            self.distance_dict[(parent_node, connected_cluster)] = max_dist
+            heappush(self.distances, (max_dist, parent_node, connected_cluster))
+                
     def compute_distance(self, i, j):
         return self.distance_dict[(i, j)]
     
-    def get_nontrivial_clusters(self):
-        return [cluster_root 
-                    for cluster_root in self.max_dist_of_node_in_cluster
-                        if cluster_root > self.X.shape[0]]
