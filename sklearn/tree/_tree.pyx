@@ -499,7 +499,8 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
                      np.ndarray sample_mask,
                      int n_samples,
                      int max_features,
-                     Criterion criterion):
+                     Criterion criterion,
+                     object random_state):
     """Find the best dimension and threshold that minimises the error.
 
     Parameters
@@ -529,6 +530,9 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
 
     criterion : Criterion
         The criterion function to be minimized.
+
+    random_state : RandomState
+        The numpy random state to use.
 
     Returns
     -------
@@ -576,7 +580,7 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
     if max_features < 0 or max_features == n_features:
         features = np.arange(n_features)
     else:
-        features = np.random.permutation(n_features)[:max_features]
+        features = random_state.permutation(n_features)[:max_features]
 
     # Look for the best split
     for i in features:
@@ -625,7 +629,8 @@ def _find_best_random_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
                             np.ndarray sample_mask,
                             int n_samples,
                             int max_features,
-                            Criterion criterion):
+                            Criterion criterion,
+                            object random_state):
     """Find the best dimension and threshold that minimises the error.
 
     Parameters
@@ -655,6 +660,9 @@ def _find_best_random_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
 
     criterion : Criterion
         The criterion function to be minimized.
+
+    random_state : RandomState
+        The numpy random state to use.
 
     Returns
     -------
@@ -702,7 +710,7 @@ def _find_best_random_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
     if max_features < 0 or max_features == n_features:
         features = np.arange(n_features)
     else:
-        features = np.random.permutation(n_features)[:max_features]
+        features = random_state.permutation(n_features)[:max_features]
 
     # Look for the best random split
     for i in features:

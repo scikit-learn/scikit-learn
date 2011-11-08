@@ -149,7 +149,8 @@ def _build_tree(X, y, is_classification, criterion, max_depth, min_split,
                                                         sample_mask,
                                                         n_node_samples,
                                                         max_features,
-                                                        criterion)
+                                                        criterion,
+                                                        random_state)
 
         else:
             feature = -1
