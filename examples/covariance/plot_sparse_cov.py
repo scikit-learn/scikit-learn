@@ -55,7 +55,7 @@ print __doc__
 
 import numpy as np
 from scipy import linalg
-from sklearn.datasets.samples_generator import make_sparse_spd_matrix
+from sklearn.datasets import make_sparse_spd_matrix
 from sklearn.covariance import GraphLassoCV, ledoit_wolf
 import pylab as pl
 
