@@ -170,7 +170,7 @@ is known as *covariance selection*.
 In the small-samples situation, in which `n_samples` is on the order of magnitude
 of `n_features` or smaller, sparse inverse covariance estimators tend to work
 better than shrunk covariance estimators. However, in the opposite
-situation, or for very correlated data, the can be numerically unstable.
+situation, or for very correlated data, they can be numerically unstable.
 In addition, unlike shrinkage estimators, sparse estimators are able to
 recover off-diagonal structure.
 

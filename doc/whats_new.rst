@@ -8,7 +8,7 @@
 Changelog
 ---------
 
-   - :ref:`sparse_inverse_covariance` estimation using the GLasso, with
+   - :ref:`sparse_inverse_covariance` estimation using the graph Lasso, with
      associated cross-validated estimator, by `Gael Varoquaux`_
 
    - New :ref:`Tree <tree>` module by `Brian Holt`_, `Peter Prettenhofer`_

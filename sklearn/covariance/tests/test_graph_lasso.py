@@ -1,5 +1,8 @@
-""" Test the g_lasso module.
+""" Test the graph_lasso module.
 """
+import sys
+from StringIO import StringIO
+
 import numpy as np
 from scipy import linalg
 
@@ -43,5 +46,11 @@ def test_graph_lasso_cv(random_state=1):
                                   random_state=random_state)
     cov = linalg.inv(prec)
     X = random_state.multivariate_normal(np.zeros(dim), cov, size=n_samples)
-    GraphLassoCV(verbose=10, alphas=3).fit(X)
+    # Capture stdout, to smoke test the verbose mode
+    orig_stdout = sys.stdout
+    try:
+        sys.stdout = StringIO()
+        GraphLassoCV(verbose=10, alphas=3).fit(X)
+    finally:
+        sys.stdout = orig_stdout
 
