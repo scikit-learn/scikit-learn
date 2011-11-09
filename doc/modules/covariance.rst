@@ -232,7 +232,7 @@ paper. It is the same algorithm as in the R `glasso` package.
      covariance estimators.
 
    * :ref:`example_applications_plot_stock_market.py`: example on real
-   stock market data, finding which symbols are most linked.
+     stock market data, finding which symbols are most linked.
 
 .. topic:: References:
 
