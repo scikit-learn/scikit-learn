@@ -97,7 +97,7 @@ can be used to build artifical datasets of controled size and complexity.
    make_spd_matrix
    make_swiss_roll
    make_s_curve
-
+   make_sparse_spd_matrix
 
 .. _libsvm_loader:
 

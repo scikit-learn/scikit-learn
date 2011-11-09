@@ -1,4 +1,4 @@
-"""GLasso: sparse inverse covariance estimation with an l1-penalized
+"""GraphLasso: sparse inverse covariance estimation with an l1-penalized
 estimator.
 """
 
@@ -16,6 +16,7 @@ from scipy import linalg
 from .empirical_covariance_ import empirical_covariance, \
                 EmpiricalCovariance, log_likelihood
 
+from ..utils import ConvergenceWarning
 from ..linear_model import lars_path
 from ..linear_model import cd_fast
 from ..cross_validation import check_cv, cross_val_score
@@ -56,7 +57,7 @@ def alpha_max(emp_cov):
         -----
 
         This results from the bound for the all the Lasso that are solved
-        in GLasso: each time, the row of cov corresponds to Xy. As the
+        in GraphLasso: each time, the row of cov corresponds to Xy. As the
         bound for alpha is given by max(abs(Xy)), the result follows.
     """
     A = np.copy(emp_cov)
@@ -67,7 +68,7 @@ def alpha_max(emp_cov):
 ###############################################################################
 # The g-lasso algorithm
 
-def g_lasso(X, alpha, cov_init=None, mode='cd', tol=1e-4, max_iter=100,
+def graph_lasso(X, alpha, cov_init=None, mode='cd', tol=1e-4, max_iter=100,
             verbose=False, return_costs=False, eps=np.finfo(np.float).eps):
     """ l1-penalized covariance estimator
 
@@ -112,8 +113,17 @@ def g_lasso(X, alpha, cov_init=None, mode='cd', tol=1e-4, max_iter=100,
 
     See Also
     --------
-    GLasso, GLassoCV
+    GraphLasso, GraphLassoCV
 
+    Notes
+    -----
+
+    The algorithm employed to solve this problem is the GLasso algorithm,
+    from the Friedman 2008 Biostatistics paper. It is the same algorithm
+    as in the R `glasso` package.
+
+    One possible difference with the `glasso` R package is that the
+    diagonal coefficients are not penalized.
     """
     _, n_features = X.shape
     emp_cov = empirical_covariance(X)
@@ -124,7 +134,11 @@ def g_lasso(X, alpha, cov_init=None, mode='cd', tol=1e-4, max_iter=100,
     else:
         covariance_ = cov_init.copy()
     # As a trivial regularization (Tikhonov like), we scale down the
-    # off-diagonal coefficients of our starting point:
+    # off-diagonal coefficients of our starting point: This is needed, as
+    # in the cross-validation the cov_init can easily be
+    # ill-conditionned, and the CV loop blows. Beside, this takes
+    # conservative stand-point on the initial conditions, and it tends to
+    # make the convergence go faster.
     covariance_ *= 0.95
     diagonal = emp_cov.flat[::n_features + 1]
     covariance_.flat[::n_features + 1] = diagonal
@@ -171,8 +185,9 @@ def g_lasso(X, alpha, cov_init=None, mode='cd', tol=1e-4, max_iter=100,
             d_gap = _dual_gap(emp_cov, precision_, alpha)
             cost = _objective(emp_cov, precision_, alpha)
             if verbose:
-                print '[g_lasso] Iteration % 3i, cost % 3.2e, dual gap %.3e'\
-                                                % (i, cost, d_gap)
+                print (
+                    '[graph_lasso] Iteration % 3i, cost % 3.2e, dual gap %.3e'
+                                                % (i, cost, d_gap))
             if return_costs:
                 costs.append((cost, d_gap))
             if np.abs(d_gap) < tol:
@@ -181,8 +196,9 @@ def g_lasso(X, alpha, cov_init=None, mode='cd', tol=1e-4, max_iter=100,
                 raise FloatingPointError('Non SPD result: the system is '
                                     'too ill-conditionned for this solver')
         else:
-            warnings.warn('g_lasso: did not converge after %i iteration:'
-                            'dual gap: %.3e' % (max_iter, d_gap))
+            warnings.warn('graph_lasso: did not converge after %i iteration:'
+                            'dual gap: %.3e' % (max_iter, d_gap),
+                            ConvergenceWarning)
     except FloatingPointError, e:
         e.args = (e.args[0]
                   + 'The system is too ill-conditionned for this solver',
@@ -193,8 +209,8 @@ def g_lasso(X, alpha, cov_init=None, mode='cd', tol=1e-4, max_iter=100,
     return covariance_, precision_
 
 
-class GLasso(EmpiricalCovariance):
-    """GLasso: sparse inverse covariance estimation with an l1-penalized
+class GraphLasso(EmpiricalCovariance):
+    """GraphLasso: sparse inverse covariance estimation with an l1-penalized
     estimator.
 
     Attributes
@@ -207,7 +223,7 @@ class GLasso(EmpiricalCovariance):
 
     See Also
     --------
-    g_lasso, GLassoCV
+    graph_lasso, GraphLassoCV
 
    """
 
@@ -242,7 +258,7 @@ class GLasso(EmpiricalCovariance):
         self.verbose = verbose
 
     def fit(self, X, y=None):
-        self.covariance_, self.precision_ = g_lasso(X,
+        self.covariance_, self.precision_ = graph_lasso(X,
                                         alpha=self.alpha, mode=self.mode,
                                         tol=self.tol, max_iter=self.max_iter,
                                         verbose=self.verbose,
@@ -251,8 +267,8 @@ class GLasso(EmpiricalCovariance):
 
 
 ###############################################################################
-# Cross-validation with GLasso
-def g_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
+# Cross-validation with GraphLasso
+def graph_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
                  tol=1e-4, max_iter=100, verbose=False):
     """ l1-penalized covariance estimator along a path of decreasing
         alphas
@@ -301,7 +317,7 @@ def g_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
     for alpha in alphas:
         try:
             # Capture the errors, and move on
-            covariance_, precision_ = g_lasso(X, alpha=alpha,
+            covariance_, precision_ = graph_lasso(X, alpha=alpha,
                                     cov_init=covariance_, mode=mode, tol=tol,
                                     max_iter=max_iter,
                                     verbose=inner_verbose)
@@ -321,17 +337,17 @@ def g_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
             sys.stderr.write('.')
         elif verbose:
             if X_test is not None:
-                print '[g_lasso_path] alpha: %.2e, score: %.2e' % (alpha,
+                print '[graph_lasso_path] alpha: %.2e, score: %.2e' % (alpha,
                                                             this_score)
             else:
-                print '[g_lasso_path] alpha: %.2e' % alpha
+                print '[graph_lasso_path] alpha: %.2e' % alpha
     if X_test is not None:
         return covariances_, precisions_, scores_
     return covariances_, precisions_
 
 
-class GLassoCV(GLasso):
-    """GLasso: sparse inverse covariance, cross-validated choice of the
+class GraphLassoCV(GraphLasso):
+    """GraphLasso: sparse inverse covariance, cross-validated choice of the
     l1 penality
 
     Attributes
@@ -353,7 +369,7 @@ class GLassoCV(GLasso):
 
     See Also
     --------
-    g_lasso, GLasso
+    graph_lasso, GraphLasso
 
     Notes
     -----
@@ -434,9 +450,14 @@ class GLassoCV(GLasso):
 
         t0 = time.time()
         for i in range(n_refinements):
-            # Compute the cross-validated loss on the current grid
-            this_path = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
-                            delayed(g_lasso_path)(X[train], alphas=alphas,
+            with warnings.catch_warnings():
+                # No need to see the convergence warnings on this grid:
+                # they will always be points that will not converge
+                # during the cross-validation
+                warnings.simplefilter('ignore',  ConvergenceWarning)
+                # Compute the cross-validated loss on the current grid
+                this_path = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
+                            delayed(graph_lasso_path)(X[train], alphas=alphas,
                                         X_test=X[test], mode=self.mode,
                                         tol=self.tol,
                                         max_iter=int(.1 * self.max_iter),
@@ -492,7 +513,7 @@ class GLassoCV(GLasso):
                                  n_alphas + 2)
             alphas = alphas[1:-1]
             if self.verbose and n_refinements > 1:
-                print '[GLassoCV] Done refinement % 2i out of %i: % 3is'\
+                print '[GraphLassoCV] Done refinement % 2i out of %i: % 3is'\
                         % (i + 1, n_refinements, time.time() - t0)
 
         path = zip(*path)
@@ -509,7 +530,7 @@ class GLassoCV(GLasso):
         self.cv_alphas_ = alphas
 
         # Finally fit the model with the selected alpha
-        self.covariance_, self.precision_ = g_lasso(X, alpha=best_alpha,
+        self.covariance_, self.precision_ = graph_lasso(X, alpha=best_alpha,
                         mode=self.mode, tol=self.tol, max_iter=self.max_iter,
                         verbose=inner_verbose)
         return self

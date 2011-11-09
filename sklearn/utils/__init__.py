@@ -440,3 +440,7 @@ def gen_even_slices(n, n_packs):
             end = start + this_n
             yield slice(start, end, None)
             start = end
+
+
+class ConvergenceWarning(Warning):
+    "Custom warning to capture convergence problems"
