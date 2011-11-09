@@ -16,6 +16,7 @@ from scipy import linalg
 from .empirical_covariance_ import empirical_covariance, \
                 EmpiricalCovariance, log_likelihood
 
+from ..utils import ConvergenceWarning
 from ..linear_model import lars_path
 from ..linear_model import cd_fast
 from ..cross_validation import check_cv, cross_val_score
@@ -187,7 +188,8 @@ def graph_lasso(X, alpha, cov_init=None, mode='cd', tol=1e-4, max_iter=100,
                                     'too ill-conditionned for this solver')
         else:
             warnings.warn('graph_lasso: did not converge after %i iteration:'
-                            'dual gap: %.3e' % (max_iter, d_gap))
+                            'dual gap: %.3e' % (max_iter, d_gap),
+                            ConvergenceWarning)
     except FloatingPointError, e:
         e.args = (e.args[0]
                   + 'The system is too ill-conditionned for this solver',
@@ -439,8 +441,13 @@ class GraphLassoCV(GraphLasso):
 
         t0 = time.time()
         for i in range(n_refinements):
-            # Compute the cross-validated loss on the current grid
-            this_path = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
+            with warnings.catch_warnings():
+                # No need to see the convergence warnings on this grid:
+                # they will always be points that will not converge
+                # during the cross-validation
+                warnings.simplefilter('ignore',  ConvergenceWarning)
+                # Compute the cross-validated loss on the current grid
+                this_path = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
                             delayed(graph_lasso_path)(X[train], alphas=alphas,
                                         X_test=X[test], mode=self.mode,
                                         tol=self.tol,
