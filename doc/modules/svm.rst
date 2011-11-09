@@ -410,14 +410,17 @@ vectors and the test vectors must be provided.
 
     >>> import numpy as np
     >>> from sklearn import svm
-    >>> clf = svm.SVC(kernel=precomputed)
+    >>> X = np.array([[0, 0], [1, 1]])
+    >>> y = [0, 1]
+    >>> clf = svm.SVC(kernel='precomputed')
     >>> # linear kernel computation
     >>> gram = np.dot(X, X.T)
-    >>> clf.fit(kernel, y)
-    >>> # linear kernel for test examples
-    >>> gram_test = np.dot(X_test, X.T)
-    >>> clf.predict(gram_test)
-
+    >>> clf.fit(gram, y)
+    SVC(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma=0.0,
+      kernel='precomputed', probability=False, shrinking=True, tol=0.001)
+    >>> # predict on training examples
+    >>> clf.predict(gram)
+    array([ 0.,  1.])
 
 .. _svm_mathematical_formulation:
 
