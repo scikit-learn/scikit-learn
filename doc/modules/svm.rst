@@ -397,17 +397,26 @@ instance that will use that kernel::
     ...
     >>> clf = svm.SVC(kernel=my_kernel)
 
+.. topic:: Examples:
+
+ * :ref:`example_svm_plot_custom_kernel.py`.
+
 Using the Gram matrix
 ~~~~~~~~~~~~~~~~~~~~~
 
 Set kernel='precomputed' and pass the Gram matrix instead of X in the
-fit method.
+fit method. At the moment, the kernel values between `all` training
+vectors and the test vectors must be provided.
 
-.. TODO: inline example
-
-.. topic:: Examples:
-
- * :ref:`example_svm_plot_custom_kernel.py`.
+    >>> import numpy as np
+    >>> from sklearn import svm
+    >>> clf = svm.SVC(kernel=precomputed)
+    >>> # linear kernel computation
+    >>> gram = np.dot(X, X.T)
+    >>> clf.fit(kernel, y)
+    >>> # linear kernel for test examples
+    >>> gram_test = np.dot(X_test, X.T)
+    >>> clf.predict(gram_test)
 
 
 .. _svm_mathematical_formulation:
