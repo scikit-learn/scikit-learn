@@ -211,7 +211,9 @@ The mathematical formulation is the following:
 
 Where `K` is the precision matrix to be estimated, and `S` is the sample
 covariance matrix. :math:`\|K\|_1` is the sum of the absolute values of
-off-diagonal coefficients of `K`.
+off-diagonal coefficients of `K`. The algorithm employed to solve this
+problem is the GLasso algorithm, from the Friedman 2008 Biostatistics
+paper. It is the same algorithm as in the R `glasso` package.
 
 
 .. topic:: Examples:
