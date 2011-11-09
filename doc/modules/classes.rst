@@ -413,8 +413,8 @@ Covariance Estimators
    covariance.ShrunkCovariance
    covariance.LedoitWolf
    covariance.OAS
-   covariance.GLasso
-   covariance.GLassoCV
+   covariance.GraphLasso
+   covariance.GraphLassoCV
 
 .. autosummary::
    :toctree: generated/
