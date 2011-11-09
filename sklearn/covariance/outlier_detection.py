@@ -21,6 +21,12 @@ from ..base import ClassifierMixin
 class OutlierDetectionMixin(ClassifierMixin):
     """Set of methods for outliers detection with covariance estimators.
 
+    Parameters
+    ----------
+    contamination: float, 0. < contamination < 0.5
+      The amount of contamination of the data set, i.e. the proportion
+      of outliers in the data set.
+
     Notes
     -----
     Outlier detection from covariance estimation may break or not
@@ -29,15 +35,6 @@ class OutlierDetectionMixin(ClassifierMixin):
 
     """
     def __init__(self, contamination=0.1):
-        """
-
-        Parameters
-        ----------
-        contamination: float, 0. < contamination < 0.5
-          The amount of contamination of the data set, i.e. the proportion
-          of outliers in the data set.
-
-        """
         self.contamination = contamination
         self.threshold = None
 
@@ -136,6 +133,40 @@ class EllipticEnvelop(OutlierDetectionMixin, MinCovDet):
         A mask of the observations that have been used to compute
         the robust estimates of location and shape.
 
+    Parameters
+    ----------
+    store_precision: bool
+      Specify if the estimated precision is stored
+    assume_centered: Boolean
+      If True, the support of robust location and covariance estimates
+      is computed, and a covariance estimate is recomputed from it,
+      without centering the data.
+      Useful to work with data whose mean is significantly equal to
+      zero but is not exactly zero.
+      If False, the robust location and covariance are directly computed
+      with the FastMCD algorithm without additional treatment.
+    h: float, 0 < h < 1
+      The proportion of points to be included in the support of the raw
+      MCD estimate. Default is None, which implies that the minimum
+      value of h will be used within the algorithm:
+      [n_sample + n_features + 1] / 2
+    correction: str
+      Improve the covariance estimator consistency at Gaussian models
+        - "empirical" (default): correction using the empirical correction
+          factor suggested by Rousseeuw and Van Driessen in [1]
+        - "theoretical": correction using the theoretical correction factor
+          derived in [2]
+        - else: no correction
+    reweighting: str
+      Computation of a reweighted estimator:
+        - "rousseeuw" (default): Reweight observations using Rousseeuw's
+          method (equivalent to deleting outlying observations from the
+          data set before computing location and covariance estimates)
+        - else: no re-weighting
+    contamination: float, 0. < contamination < 0.5
+      The amount of contamination of the data set, i.e. the proportion
+      of outliers in the data set.
+
     See Also
     --------
     EmpiricalCovariance, MinCovDet
@@ -150,43 +181,6 @@ class EllipticEnvelop(OutlierDetectionMixin, MinCovDet):
     def __init__(self, store_precision=True, assume_centered=False,
                  h=None, correction="empirical", reweighting=None,
                  contamination=0.1):
-        """
-
-        Parameters
-        ----------
-        store_precision: bool
-          Specify if the estimated precision is stored
-        assume_centered: Boolean
-          If True, the support of robust location and covariance estimates
-          is computed, and a covariance estimate is recomputed from it,
-          without centering the data.
-          Useful to work with data whose mean is significantly equal to
-          zero but is not exactly zero.
-          If False, the robust location and covariance are directly computed
-          with the FastMCD algorithm without additional treatment.
-        h: float, 0 < h < 1
-          The proportion of points to be included in the support of the raw
-          MCD estimate. Default is None, which implies that the minimum
-          value of h will be used within the algorithm:
-          [n_sample + n_features + 1] / 2
-        correction: str
-          Improve the covariance estimator consistency at Gaussian models
-            - "empirical" (default): correction using the empirical correction
-              factor suggested by Rousseeuw and Van Driessen in [1]
-            - "theoretical": correction using the theoretical correction factor
-              derived in [2]
-            - else: no correction
-        reweighting: str
-          Computation of a reweighted estimator:
-            - "rousseeuw" (default): Reweight observations using Rousseeuw's
-              method (equivalent to deleting outlying observations from the
-              data set before computing location and covariance estimates)
-            - else: no re-weighting
-        contamination: float, 0. < contamination < 0.5
-          The amount of contamination of the data set, i.e. the proportion
-          of outliers in the data set.
-
-        """
         MinCovDet.__init__(self, store_precision=store_precision,
                            assume_centered=assume_centered, h=h,
                            correction=correction, reweighting=reweighting)
