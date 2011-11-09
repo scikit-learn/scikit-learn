@@ -3,7 +3,7 @@
 Sparse inverse covariance estimation
 ======================================
 
-Using the GLasso estimator to learn a covariance and sparse precision
+Using the GraphLasso estimator to learn a covariance and sparse precision
 from a small number of samples.
 
 To estimate a probabilistic model (e.g. a Gaussian model), estimating the
@@ -43,8 +43,8 @@ Note that, the color range of the precision matrices is tweeked to
 improve readibility of the figure. The full range of values of the
 empirical precision is not displayed.
 
-The alpha parameter of the GLasso setting the sparsity of the model is
-set by internal cross-validation in the GLassoCV. As can be
+The alpha parameter of the GraphLasso setting the sparsity of the model is
+set by internal cross-validation in the GraphLassoCV. As can be
 seen on figure 2, the grid to compute the cross-validation score is
 iteratively refined in the neighborhood of the maximum.
 """
@@ -56,7 +56,7 @@ print __doc__
 import numpy as np
 from scipy import linalg
 from sklearn.datasets.samples_generator import make_sparse_spd_matrix
-from sklearn.covariance import GLassoCV, ledoit_wolf
+from sklearn.covariance import GraphLassoCV, ledoit_wolf
 import pylab as pl
 
 ################################################################################
@@ -83,7 +83,7 @@ X /= X.std(axis=0)
 # Estimate the covariance
 emp_cov = np.dot(X.T, X)/N_SAMPLES
 
-model = GLassoCV()
+model = GraphLassoCV()
 model.fit(X)
 cov_ = model.covariance_
 prec_ = model.precision_
@@ -98,7 +98,7 @@ pl.subplots_adjust(left=0.02, right=0.98)
 
 # plot the covariances
 covs = [('Empirical', emp_cov), ('Ledoit-Wolf', lw_cov_),
-        ('GLasso', cov_), ('True', cov)]
+        ('GraphLasso', cov_), ('True', cov)]
 vmax = cov_.max()
 for i, (name, this_cov) in enumerate(covs):
     pl.subplot(2, 4, i+1)
@@ -111,7 +111,7 @@ for i, (name, this_cov) in enumerate(covs):
 
 # plot the precisions
 precs = [('Empirical', linalg.inv(emp_cov)), ('Ledoit-Wolf', lw_prec_),
-         ('GLasso', prec_), ('True', prec)]
+         ('GraphLasso', prec_), ('True', prec)]
 vmax = .9*prec_.max()
 for i, (name, this_prec) in enumerate(precs):
     ax = pl.subplot(2, 4, i+5)

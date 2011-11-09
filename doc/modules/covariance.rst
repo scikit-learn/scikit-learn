@@ -167,16 +167,16 @@ a sparse precision matrix: by learning independence relations from the
 data, the estimation of the covariance matrix is better conditioned. This
 is known as *covariance selection*.
 
-In the small-samples situation, in which `n` is on the order of magnitude
-of `p` or smaller, sparse inverse covariance estimators tend to work
+In the small-samples situation, in which `n_samples` is on the order of magnitude
+of `n_features` or smaller, sparse inverse covariance estimators tend to work
 better than shrunk covariance estimators. However, in the opposite
 situation, or for very correlated data, the can be numerically unstable.
 In addition, unlike shrinkage estimators, sparse estimators are able to
 recover off-diagonal structure.
 
-The :class:`GLasso` estimator uses an l1 penalty to enforce sparsity on
+The :class:`GraphLasso` estimator uses an l1 penalty to enforce sparsity on
 the precision matrix: the higher its `alpha` parameter, the more sparse
-the precision matrix. The corresponding :class:`GLassoCV` object uses
+the precision matrix. The corresponding :class:`GraphLassoCV` object uses
 cross-validation to automatically set the `alpha` parameter.
 
 .. figure:: ../auto_examples/covariance/images/plot_sparse_cov_1.png
@@ -195,7 +195,7 @@ cross-validation to automatically set the `alpha` parameter.
    that:
 
    * Recovery is easier from a correlation matrix than a covariance
-     matrix: standardize your observations before running :class:`GLasso`
+     matrix: standardize your observations before running :class:`GraphLasso`
 
    * If your number of observations is not large compared to the number
      of edges in your underlying graph, you will not recover it.

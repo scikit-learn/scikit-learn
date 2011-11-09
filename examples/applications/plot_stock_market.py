@@ -115,7 +115,7 @@ for i in range(n_labels+1):
 
 ###############################################################################
 # Learn a graphical structure from the correlations
-model = covariance.GLassoCV()
+model = covariance.GraphLassoCV()
 # standardize the time series: using correlations rather than covariance
 # is more efficient for structure recovery
 X = variation.copy().T
