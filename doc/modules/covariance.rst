@@ -197,8 +197,17 @@ cross-validation to automatically set the `alpha` parameter.
    * Recovery is easier from a correlation matrix than a covariance
      matrix: standardize your observations before running :class:`GraphLasso`
 
+   * If the underlying graph has nodes with much more connections than
+     the average node, the algorithm will miss some of these connections.
+
    * If your number of observations is not large compared to the number
      of edges in your underlying graph, you will not recover it.
+
+   * Even if you are in favorable recovery conditions, the alpha
+     parameter chosen by cross-validation (e.g. using the
+     :class:`GraphLassoCV` object) will lead to selecting too many edges.
+     However, the relevant edges will have heavier weights than the
+     irrelevant ones.
 
 The mathematical formulation is the following:
 

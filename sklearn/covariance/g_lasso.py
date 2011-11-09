@@ -115,6 +115,15 @@ def graph_lasso(X, alpha, cov_init=None, mode='cd', tol=1e-4, max_iter=100,
     --------
     GraphLasso, GraphLassoCV
 
+    Notes
+    -----
+
+    The algorithm employed to solve this problem is the GLasso algorithm,
+    from the Friedman 2008 Biostatistics paper. It is the same algorithm
+    as in the R `glasso` package.
+
+    One possible difference with the `glasso` R package is that the
+    diagonal coefficients are not penalized.
     """
     _, n_features = X.shape
     emp_cov = empirical_covariance(X)
