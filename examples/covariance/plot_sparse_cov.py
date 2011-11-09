@@ -59,13 +59,13 @@ from sklearn.datasets import make_sparse_spd_matrix
 from sklearn.covariance import GraphLassoCV, ledoit_wolf
 import pylab as pl
 
-################################################################################
+##############################################################################
 # Generate the data
-N_SAMPLES = 60
-DIM = 20
+n_samples = 60
+n_features = 20
 
 prng = np.random.RandomState(1)
-prec = make_sparse_spd_matrix(DIM, alpha=.98,
+prec = make_sparse_spd_matrix(n_features, alpha=.98,
                               smallest_coef=.4,
                               largest_coef=.7,
                               random_state=prng)
@@ -75,13 +75,13 @@ cov /= d
 cov /= d[:, np.newaxis]
 prec *= d
 prec *= d[:, np.newaxis]
-X = prng.multivariate_normal(np.zeros(DIM), cov, size=N_SAMPLES)
+X = prng.multivariate_normal(np.zeros(n_features), cov, size=n_samples)
 X -= X.mean(axis=0)
 X /= X.std(axis=0)
 
-################################################################################
+##############################################################################
 # Estimate the covariance
-emp_cov = np.dot(X.T, X)/N_SAMPLES
+emp_cov = np.dot(X.T, X) / n_samples
 
 model = GraphLassoCV()
 model.fit(X)
@@ -91,7 +91,7 @@ prec_ = model.precision_
 lw_cov_, _ = ledoit_wolf(X)
 lw_prec_ = linalg.inv(lw_cov_)
 
-################################################################################
+##############################################################################
 # Plot the results
 pl.figure(figsize=(10, 6))
 pl.subplots_adjust(left=0.02, right=0.98)
@@ -101,9 +101,9 @@ covs = [('Empirical', emp_cov), ('Ledoit-Wolf', lw_cov_),
         ('GraphLasso', cov_), ('True', cov)]
 vmax = cov_.max()
 for i, (name, this_cov) in enumerate(covs):
-    pl.subplot(2, 4, i+1)
+    pl.subplot(2, 4, i + 1)
     pl.imshow(this_cov, interpolation='nearest', vmin=-vmax, vmax=vmax,
-                cmap=pl.cm.RdBu_r)
+              cmap=pl.cm.RdBu_r)
     pl.xticks(())
     pl.yticks(())
     pl.title('%s covariance' % name)
@@ -112,12 +112,12 @@ for i, (name, this_cov) in enumerate(covs):
 # plot the precisions
 precs = [('Empirical', linalg.inv(emp_cov)), ('Ledoit-Wolf', lw_prec_),
          ('GraphLasso', prec_), ('True', prec)]
-vmax = .9*prec_.max()
+vmax = .9 * prec_.max()
 for i, (name, this_prec) in enumerate(precs):
-    ax = pl.subplot(2, 4, i+5)
+    ax = pl.subplot(2, 4, i + 5)
     pl.imshow(np.ma.masked_equal(this_prec, 0),
-                interpolation='nearest', vmin=-vmax, vmax=vmax,
-                cmap=pl.cm.RdBu_r)
+              interpolation='nearest', vmin=-vmax, vmax=vmax,
+              cmap=pl.cm.RdBu_r)
     pl.xticks(())
     pl.yticks(())
     pl.title('%s precision' % name)
@@ -133,4 +133,3 @@ pl.ylabel('Cross-validation score')
 pl.xlabel('alpha')
 
 pl.show()
-
