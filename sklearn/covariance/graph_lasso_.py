@@ -34,8 +34,10 @@ def _objective(mle, precision_, alpha):
 
 
 def _dual_gap(emp_cov, precision_, alpha):
-    """ Expression of the dual gap given in Duchi "Projected Subgradient
-    Methods for Learning Sparse Gaussians"
+    """Expression of the dual gap convergence criterion
+
+    The specific definition is given in Duchi "Projected Subgradient Methods
+    for Learning Sparse Gaussians".
     """
     gap = np.sum(emp_cov * precision_)
     gap -= precision_.shape[0]
@@ -45,20 +47,19 @@ def _dual_gap(emp_cov, precision_, alpha):
 
 
 def alpha_max(emp_cov):
-    """ Find the maximum alpha for which there are some non-zero
-        off-diagonal elements.
+    """Find the maximum alpha for which there are some non-zeros off-diagonal.
 
-        Parameters
-        ----------
-        emp_cov: 2D array, (n_features, n_features)
-            The sample covariance matrix
+    Parameters
+    ----------
+    emp_cov: 2D array, (n_features, n_features)
+        The sample covariance matrix
 
-        Notes
-        -----
+    Notes
+    -----
 
-        This results from the bound for the all the Lasso that are solved
-        in GraphLasso: each time, the row of cov corresponds to Xy. As the
-        bound for alpha is given by max(abs(Xy)), the result follows.
+    This results from the bound for the all the Lasso that are solved
+    in GraphLasso: each time, the row of cov corresponds to Xy. As the
+    bound for alpha is given by max(abs(Xy)), the result follows.
     """
     A = np.copy(emp_cov)
     A.flat[::A.shape[0] + 1] = 0
@@ -70,7 +71,7 @@ def alpha_max(emp_cov):
 
 def graph_lasso(X, alpha, cov_init=None, mode='cd', tol=1e-4, max_iter=100,
             verbose=False, return_costs=False, eps=np.finfo(np.float).eps):
-    """ l1-penalized covariance estimator
+    """l1-penalized covariance estimator
 
     Parameters
     ----------
@@ -210,8 +211,7 @@ def graph_lasso(X, alpha, cov_init=None, mode='cd', tol=1e-4, max_iter=100,
 
 
 class GraphLasso(EmpiricalCovariance):
-    """GraphLasso: sparse inverse covariance estimation with an l1-penalized
-    estimator.
+    """Sparse inverse covariance estimation with an l1-penalized estimator.
 
     Parameters
     ----------
@@ -268,8 +268,7 @@ class GraphLasso(EmpiricalCovariance):
 # Cross-validation with GraphLasso
 def graph_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
                  tol=1e-4, max_iter=100, verbose=False):
-    """ l1-penalized covariance estimator along a path of decreasing
-        alphas
+    """l1-penalized covariance estimator along a path of decreasing alphas
 
     Parameters
     ----------
@@ -345,8 +344,7 @@ def graph_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
 
 
 class GraphLassoCV(GraphLasso):
-    """GraphLasso: sparse inverse covariance, cross-validated choice of the
-    l1 penality
+    """Sparse inverse covariance w/ cross-validated choice of the l1 penality
 
     Parameters
     ----------
@@ -452,13 +450,16 @@ class GraphLassoCV(GraphLasso):
                 # during the cross-validation
                 warnings.simplefilter('ignore',  ConvergenceWarning)
                 # Compute the cross-validated loss on the current grid
-                this_path = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
-                            delayed(graph_lasso_path)(X[train], alphas=alphas,
-                                        X_test=X[test], mode=self.mode,
-                                        tol=self.tol,
-                                        max_iter=int(.1 * self.max_iter),
-                                        verbose=inner_verbose)
-                            for (train, test), cov_init in zip(cv, covs_init))
+                this_path = Parallel(
+                    n_jobs=self.n_jobs,
+                    verbose=self.verbose)(
+                        delayed(graph_lasso_path)(
+                            X[train], alphas=alphas,
+                            X_test=X[test], mode=self.mode,
+                            tol=self.tol,
+                            max_iter=int(.1 * self.max_iter),
+                            verbose=inner_verbose)
+                        for (train, test), cov_init in zip(cv, covs_init))
 
             # Little danse to transform the list in what we need
             covs, _, scores = zip(*this_path)
