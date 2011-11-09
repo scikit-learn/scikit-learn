@@ -95,6 +95,7 @@ the :class:`KMeans` algorithm.
    D. Sculley, *Proceedings of the 19th international conference on World
    wide web* (2010)
 
+.. _affinity_propagation:
 
 Affinity propagation
 ====================

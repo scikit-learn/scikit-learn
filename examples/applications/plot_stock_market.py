@@ -5,6 +5,45 @@ Visualizing the stock market structure
 
 This example employs several unsupervised learning techniques to extract
 the stock market structure from variations in historical quotes.
+
+The quantity that we use is the daily variation in quote price: quotes
+that are linked tend to cofluctuate during a day.
+
+Clustering
+----------
+
+We use clustering to group together quotes that behave similarly. Here,
+amongst the :ref:`various clustering techniques <clustering>` available
+in the scikit-learn, we use :ref:`affinity_propagation` as it does
+not enforce equal-size clusters, and it can choose automatically the
+number of clusters from the data.
+
+Learning a graph structure
+--------------------------
+
+We use sparse inverse covariance estimation to find which quotes are
+correlated conditionally on the others. Specifically, sparse inverse
+covariance gives us a graph, that is a list of connection. For each
+symbol, the symbols that it is connected too are those useful to expain
+its fluctuations.
+
+Note that this gives us a different indication than the clustering. One
+could apply graph clustering techniques (such as
+:ref:`spectral_clustering`) on the corresponding graph, to retrieve a
+clustering consistent with the partial-independence structure.
+
+Embedding in 2D space
+---------------------
+
+For visualization purposes, we need to lay out the different symbols on a
+2D canvas. For this we use :ref:`manifold` techniques to retrieve 2D
+embedding.
+
+Finally, this example has a fair amount of visualization-related code, as
+visualization is crucial here to display the graph. One of the challenge
+is to position the labels minimizing overlap. For this we use an
+heuristic based on the direction of the nearest neighbor along each
+axis.
 """
 print __doc__
 
@@ -140,28 +179,27 @@ ax = pl.axes([0., 0., 1., 1.])
 pl.axis('off')
 
 # Display a graph of the partial correlations
-adjacency = model.precision_.copy()
-d = 1/np.sqrt(np.diag(adjacency))
-adjacency *= d
-adjacency *= d[:, np.newaxis]
-non_zero = (np.abs(np.triu(adjacency, k=1)) > 0.02)
+partial_correlations = model.precision_.copy()
+d = 1/np.sqrt(np.diag(partial_correlations))
+partial_correlations *= d
+partial_correlations *= d[:, np.newaxis]
+non_zero = (np.abs(np.triu(partial_correlations, k=1)) > 0.02)
 
-# Plot the nodes using the coordinnates of our embedding
+# Plot the nodes using the coordinates of our embedding
 pl.scatter(embedding[0], embedding[1], s=100*d**2, c=labels,
            cmap=pl.cm.spectral)
 
 # Plot the edges
 start_idx, end_idx = np.where(non_zero)
 #a sequence of (*line0*, *line1*, *line2*), where::
-#
 #            linen = (x0, y0), (x1, y1), ... (xm, ym)
 segments = [[embedding[:, start], embedding[:, stop]]
             for start, stop in zip(start_idx, end_idx)]
-values = np.abs(adjacency[non_zero])
+values = np.abs(partial_correlations[non_zero])
 lc = LineCollection(segments,
                      zorder=0, cmap=pl.cm.hot_r,
                      norm=pl.Normalize(0, .7*values.max()),
-                     )
+                    )
 lc.set_array(values)
 lc.set_linewidths(15*values)
 ax.add_collection(lc)
@@ -199,5 +237,4 @@ pl.xlim(embedding[0].min() - .15*embedding[0].ptp(),
         embedding[0].max() + .10*embedding[0].ptp(),)
 pl.ylim(embedding[1].min() - .03*embedding[1].ptp(),
         embedding[1].max() + .03*embedding[1].ptp())
-
 

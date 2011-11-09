@@ -227,7 +227,12 @@ paper. It is the same algorithm as in the R `glasso` package.
 
 .. topic:: Examples:
 
-   * :ref:`example_covariance_plot_sparse_cov.py`
+   * :ref:`example_covariance_plot_sparse_cov.py`: example on synthetic
+     data showing some recovery of a structure, and comparing to other
+     covariance estimators.
+
+   * :ref:`example_applications_plot_stock_market.py`: example on real
+   stock market data, finding which symbols are most linked.
 
 .. topic:: References:
 
