@@ -136,7 +136,7 @@ def graph_lasso(X, alpha, cov_init=None, mode='cd', tol=1e-4, max_iter=100,
     # As a trivial regularization (Tikhonov like), we scale down the
     # off-diagonal coefficients of our starting point: This is needed, as
     # in the cross-validation the cov_init can easily be
-    # ill-conditionned, and the CV loop blows. Beside, this takes
+    # ill-conditioned, and the CV loop blows. Beside, this takes
     # conservative stand-point on the initial conditions, and it tends to
     # make the convergence go faster.
     covariance_ *= 0.95
@@ -194,14 +194,14 @@ def graph_lasso(X, alpha, cov_init=None, mode='cd', tol=1e-4, max_iter=100,
                 break
             if not np.isfinite(cost) and i > 0:
                 raise FloatingPointError('Non SPD result: the system is '
-                                    'too ill-conditionned for this solver')
+                                    'too ill-conditioned for this solver')
         else:
             warnings.warn('graph_lasso: did not converge after %i iteration:'
                             'dual gap: %.3e' % (max_iter, d_gap),
                             ConvergenceWarning)
     except FloatingPointError, e:
         e.args = (e.args[0]
-                  + 'The system is too ill-conditionned for this solver',
+                  + 'The system is too ill-conditioned for this solver',
                  )
         raise e
     if return_costs:
