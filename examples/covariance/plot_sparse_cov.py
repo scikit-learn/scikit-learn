@@ -35,9 +35,9 @@ structure. It learns a sparse precision. It is not able to
 recover the exact sparsity pattern: it detects too many non-zero
 coefficients. However, the highest non-zero coefficients of the l1
 estimated correspond to the non-zero coefficients in the ground truth.
-Finally, the coefficients of the l1 estimate are biased toward zero:
-because of the penalty, they are all smaller than the corresponding
-ground truth value.
+Finally, the coefficients of the l1 precision estimate are biased toward
+zero: because of the penalty, they are all smaller than the corresponding
+ground truth value, as can be seen on the figure.
 
 Note that, the color range of the precision matrices is tweeked to
 improve readibility of the figure. The full range of values of the
