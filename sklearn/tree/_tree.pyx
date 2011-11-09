@@ -32,11 +32,14 @@ def apply_tree(np.ndarray[DTYPE_t, ndim=2] X,
                np.ndarray[np.int32_t, ndim=1] feature,
                np.ndarray[np.float64_t, ndim=1] threshold,
                np.ndarray[np.int64_t, ndim=1] out):
+    """Findes the terminal region (=leaf node) for each sample in
+    `X` and sets the corresponding element in `out` to its node id."""
     cdef int i = 0
     cdef int n = X.shape[0]
     cdef int node_id = 0
     for i from 0 <= i < n:
         node_id = 0
+        # While node_id not a leaf
         while left[node_id] != -1 and right[node_id] != -1:
             if X[i, feature[node_id]] <= threshold[node_id]:
                 node_id = left[node_id]

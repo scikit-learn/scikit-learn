@@ -164,10 +164,12 @@ class Tree(object):
         Contains the constant prediction value of each node.
 
     best_error : np.ndarray of float64
-        The error of the split (only for internal nodes).
+        The error of the (best) split.
+        For leaves `init_error == `best_error`.
 
-    best_error : np.ndarray of float64
-        The error of the split (only for internal nodes).
+    init_error : np.ndarray of float64
+        The initial error of the node (before splitting).
+        For leaves `init_error == `best_error`.
 
     n_samples : np.ndarray of np.int64
         The number of samples at each node.
