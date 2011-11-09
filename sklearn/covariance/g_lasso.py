@@ -213,6 +213,26 @@ class GraphLasso(EmpiricalCovariance):
     """GraphLasso: sparse inverse covariance estimation with an l1-penalized
     estimator.
 
+    Parameters
+    ----------
+    alpha: positive float, optional
+        The regularization parameter: the higher alpha, the more
+        regularization, the sparser the inverse covariance
+    cov_init: 2D array (n_features, n_features), optional
+        The initial guess for the covariance
+    mode: {'cd', 'lars'}
+        The Lasso solver to use: coordinate descent or LARS. Use LARS for
+        very sparse underlying graphs, where p > n. Elsewhere prefer cd
+        which is more numerically stable.
+    tol: positive float, optional
+        The tolerance to declare convergence: if the dual gap goes below
+        this value, iterations are stopped
+    max_iter: integer, optional
+        The maximum number of iterations
+    verbose: boolean, optional
+        If verbose is True, the objective function and dual gap are
+        plotted at each iteration
+
     Attributes
     ----------
     `covariance_` : array-like, shape (n_features, n_features)
@@ -229,28 +249,6 @@ class GraphLasso(EmpiricalCovariance):
 
     def __init__(self, alpha=.01, mode='cd', tol=1e-4,
                  max_iter=100, verbose=False):
-        """ l1-penalized covariance estimator
-
-        Parameters
-        ----------
-        alpha: positive float, optional
-            The regularization parameter: the higher alpha, the more
-            regularization, the sparser the inverse covariance
-        cov_init: 2D array (n_features, n_features), optional
-            The initial guess for the covariance
-        mode: {'cd', 'lars'}
-            The Lasso solver to use: coordinate descent or LARS. Use LARS for
-            very sparse underlying graphs, where p > n. Elsewhere prefer cd
-            which is more numerically stable.
-        tol: positive float, optional
-            The tolerance to declare convergence: if the dual gap goes below
-            this value, iterations are stopped
-        max_iter: integer, optional
-            The maximum number of iterations
-        verbose: boolean, optional
-            If verbose is True, the objective function and dual gap are
-            plotted at each iteration
-        """
         self.alpha = alpha
         self.mode = mode
         self.tol = tol
@@ -350,6 +348,34 @@ class GraphLassoCV(GraphLasso):
     """GraphLasso: sparse inverse covariance, cross-validated choice of the
     l1 penality
 
+    Parameters
+    ----------
+    alphas: integer, or list positive float, optional
+        If an integer is given, it fixes the number of points on the
+        grids of alpha to be used. If a list is given, it gives the
+        grid to be used. See the notes in the class docstring for
+        more details.
+    n_refinements: strictly positive integer
+        The number of time the grid is refined. Not used if explicit
+        values of alphas are passed.
+    cv : crossvalidation generator, optional
+        see sklearn.cross_validation module. If None is passed, default to
+        a 3-fold strategy
+    tol: positive float, optional
+        The tolerance to declare convergence: if the dual gap goes below
+        this value, iterations are stopped
+    max_iter: integer, optional
+        The maximum number of iterations
+    mode: {'cd', 'lars'}
+        The Lasso solver to use: coordinate descent or LARS. Use LARS for
+        very sparse underlying graphs, where p > n. Elsewhere prefer cd
+        which is more numerically stable.
+    n_jobs: int, optional
+        number of jobs to run in parallel (default 1)
+    verbose: boolean, optional
+        If verbose is True, the objective function and dual gap are
+        print at each iteration
+
     Attributes
     ----------
     `covariance_` : array-like, shape (n_features, n_features)
@@ -385,37 +411,7 @@ class GraphLassoCV(GraphLasso):
 
     def __init__(self, alphas=4, n_refinements=4, cv=None, tol=1e-4,
                  max_iter=100, mode='cd', n_jobs=1, verbose=False):
-        """ l1-penalized covariance estimator
 
-        Parameters
-        ----------
-        alphas: integer, or list positive float, optional
-            If an integer is given, it fixes the number of points on the
-            grids of alpha to be used. If a list is given, it gives the
-            grid to be used. See the notes in the class docstring for
-            more details.
-        n_refinements: strictly positive integer
-            The number of time the grid is refined. Not used if explicit
-            values of alphas are passed.
-        cv : crossvalidation generator, optional
-            see sklearn.cross_validation module. If None is passed, default to
-            a 3-fold strategy
-        tol: positive float, optional
-            The tolerance to declare convergence: if the dual gap goes below
-            this value, iterations are stopped
-        max_iter: integer, optional
-            The maximum number of iterations
-        mode: {'cd', 'lars'}
-            The Lasso solver to use: coordinate descent or LARS. Use LARS for
-            very sparse underlying graphs, where p > n. Elsewhere prefer cd
-            which is more numerically stable.
-        n_jobs: int, optional
-            number of jobs to run in parallel (default 1)
-        verbose: boolean, optional
-            If verbose is True, the objective function and dual gap are
-            print at each iteration
-
-        """
         self.alphas = alphas
         self.n_refinements = n_refinements
         self.mode = mode
