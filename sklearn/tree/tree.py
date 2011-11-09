@@ -20,9 +20,7 @@ from . import _tree
 
 __all__ = [
     "DecisionTreeClassifier",
-    "DecisionTreeRegressor",
-    "ExtraTreeClassifier",
-    "ExtraTreeRegressor"
+    "DecisionTreeRegressor"
 ]
 
 DTYPE = _tree.DTYPE
