@@ -34,7 +34,7 @@ require to download any file from some external website.
 
 .. autosummary::
 
-   :toctree: generated/
+   :toctree: ../modules/generated/
    :template: function.rst
 
    load_boston
@@ -82,7 +82,7 @@ can be used to build artifical datasets of controled size and complexity.
 
 .. autosummary::
 
-   :toctree: generated/
+   :toctree: ../modules/generated/
    :template: function.rst
 
    make_classification
