@@ -492,21 +492,21 @@ and **with chance normalization**::
   >>> labels_pred = [0, 0, 1, 1, 2, 2]
 
   >>> metrics.adjusted_mutual_info_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
-  0.24...
+  0.22504...
 
 One can permute 0 and 1 in the predicted labels and rename `2` by `3` and get
 the same score::
 
   >>> labels_pred = [1, 1, 0, 0, 3, 3]
   >>> metrics.adjusted_mutual_info_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
-  0.24...
+  0.22504...
 
 Furthermore, :func:`adjusted_mutual_info_score` is **symmetric**: swapping the
 argument does not change the score. It can thus be used as a **consensus
 measure**::
 
   >>> metrics.adjusted_mutual_info_score(labels_pred, labels_true)  # doctest: +ELLIPSIS
-  0.24...
+  0.22504...
 
 Perfect labeling is scored 1.0::
 
@@ -514,12 +514,12 @@ Perfect labeling is scored 1.0::
   >>> metrics.adjusted_mutual_info_score(labels_true, labels_pred)
   1.0
 
-Bad (e.g. independent labelings) have scores of zero::
+Bad (e.g. independent labelings) have non-positive scores::
 
   >>> labels_true = [0, 1, 2, 0, 3, 4, 5, 1]
   >>> labels_pred = [1, 1, 0, 0, 2, 2, 2, 2]
   >>> metrics.adjusted_mutual_info_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
-  0.0...
+  -0.10526...
 
 
 Advantages
