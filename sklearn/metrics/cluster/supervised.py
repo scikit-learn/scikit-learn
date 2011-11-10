@@ -157,7 +157,7 @@ def adjusted_rand_score(labels_true, labels_pred):
 
     See also
     --------
-    - ami_score: Adjusted Mutual Information
+    - adjusted_mutual_info_score: Adjusted Mutual Information
 
     """
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
@@ -529,7 +529,7 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
 
     See also
     --------
-    - ami_score: Adjusted Mutual Information
+    - adjusted_mutual_info_score: Adjusted Mutual Information
     """
     if contingency is None:
         labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
