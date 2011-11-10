@@ -60,7 +60,7 @@ score_funcs = [
     metrics.adjusted_rand_score,
     metrics.v_measure_score,
     metrics.adjusted_mutual_info_score,
-    metrics.mutual_information_score,
+    metrics.mutual_info_score,
 ]
 
 # 2 independent random clusterings with equal cluster number
