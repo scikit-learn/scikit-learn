@@ -489,7 +489,7 @@ def v_measure_score(labels_true, labels_pred):
     return homogeneity_completeness_v_measure(labels_true, labels_pred)[2]
 
 
-def mutual_information_score(labels_true, labels_pred, contingency=None):
+def mutual_info_score(labels_true, labels_pred, contingency=None):
     """Adjusted Mutual Information between two clusterings
 
     The Mutual Information is a measure of the similarity between two labels
@@ -618,8 +618,8 @@ def adjusted_mutual_info_score(labels_true, labels_pred):
     contingency = contingency_matrix(labels_true, labels_pred)
     contingency = np.array(contingency, dtype='float')
     # Calculate the MI for the two clusterings
-    mi = mutual_information_score(labels_true, labels_pred,
-                                  contingency=contingency)
+    mi = mutual_info_score(labels_true, labels_pred,
+                           contingency=contingency)
     # Calculate the expected value for the mutual information
     emi = expected_mutual_information(contingency, n_samples)
     # Calculate entropy for each labeling
