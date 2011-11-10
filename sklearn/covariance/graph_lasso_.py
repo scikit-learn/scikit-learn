@@ -69,14 +69,15 @@ def alpha_max(emp_cov):
 ###############################################################################
 # The g-lasso algorithm
 
-def graph_lasso(X, alpha, cov_init=None, mode='cd', tol=1e-4, max_iter=100,
-            verbose=False, return_costs=False, eps=np.finfo(np.float).eps):
+def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
+                max_iter=100, verbose=False, return_costs=False,
+                eps=np.finfo(np.float).eps):
     """l1-penalized covariance estimator
 
     Parameters
     ----------
-    X: 2D ndarray, shape (n_samples, n_features)
-        Data from which to compute the covariance estimate
+    emp_cov: 2D ndarray, shape (n_features, n_features)
+        Empirical covariance from which to compute the covariance estimate
     alpha: positive float
         The regularization parameter: the higher alpha, the more
         regularization, the sparser the inverse covariance
@@ -126,8 +127,7 @@ def graph_lasso(X, alpha, cov_init=None, mode='cd', tol=1e-4, max_iter=100,
     One possible difference with the `glasso` R package is that the
     diagonal coefficients are not penalized.
     """
-    _, n_features = X.shape
-    emp_cov = empirical_covariance(X)
+    _, n_features = emp_cov.shape
     if alpha == 0:
         return emp_cov, linalg.inv(emp_cov)
     if cov_init is None:
@@ -202,7 +202,7 @@ def graph_lasso(X, alpha, cov_init=None, mode='cd', tol=1e-4, max_iter=100,
                             ConvergenceWarning)
     except FloatingPointError, e:
         e.args = (e.args[0]
-                  + 'The system is too ill-conditioned for this solver',
+                  + '. The system is too ill-conditioned for this solver',
                  )
         raise e
     if return_costs:
@@ -246,8 +246,8 @@ class GraphLasso(EmpiricalCovariance):
     graph_lasso, GraphLassoCV
     """
 
-    def __init__(self, alpha=.01, mode='cd', tol=1e-4,
-                 max_iter=100, verbose=False):
+    def __init__(self, alpha=.01, mode='cd', tol=1e-4, max_iter=100,
+                 verbose=False):
         self.alpha = alpha
         self.mode = mode
         self.tol = tol
@@ -255,7 +255,8 @@ class GraphLasso(EmpiricalCovariance):
         self.verbose = verbose
 
     def fit(self, X, y=None):
-        self.covariance_, self.precision_ = graph_lasso(X,
+        emp_cov = empirical_covariance(X)
+        self.covariance_, self.precision_ = graph_lasso(emp_cov,
                                         alpha=self.alpha, mode=self.mode,
                                         tol=self.tol, max_iter=self.max_iter,
                                         verbose=self.verbose,
@@ -301,8 +302,9 @@ def graph_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
         Returned only if test data is passed.
     """
     inner_verbose = max(0, verbose - 1)
+    emp_cov = empirical_covariance(X)
     if cov_init is None:
-        covariance_ = empirical_covariance(X)
+        covariance_ = emp_cov.copy()
     else:
         covariance_ = cov_init
     covariances_ = list()
@@ -313,7 +315,7 @@ def graph_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
     for alpha in alphas:
         try:
             # Capture the errors, and move on
-            covariance_, precision_ = graph_lasso(X, alpha=alpha,
+            covariance_, precision_ = graph_lasso(emp_cov, alpha=alpha,
                                     cov_init=covariance_, mode=mode, tol=tol,
                                     max_iter=max_iter,
                                     verbose=inner_verbose)
@@ -408,7 +410,6 @@ class GraphLassoCV(GraphLasso):
 
     def __init__(self, alphas=4, n_refinements=4, cv=None, tol=1e-4,
                  max_iter=100, mode='cd', n_jobs=1, verbose=False):
-
         self.alphas = alphas
         self.n_refinements = n_refinements
         self.mode = mode
@@ -420,6 +421,7 @@ class GraphLassoCV(GraphLasso):
 
     def fit(self, X, y=None):
         X = np.asarray(X)
+        emp_cov = empirical_covariance(X)
 
         cv = check_cv(self.cv, X, y, classifier=False)
 
@@ -433,7 +435,6 @@ class GraphLassoCV(GraphLasso):
             n_refinements = 1
         else:
             n_refinements = self.n_refinements
-            emp_cov = empirical_covariance(X)
             alpha_1 = alpha_max(emp_cov)
             alpha_0 = 1e-2 * alpha_1
             alphas = np.logspace(np.log10(alpha_0),
@@ -526,7 +527,7 @@ class GraphLassoCV(GraphLasso):
         self.cv_alphas_ = alphas
 
         # Finally fit the model with the selected alpha
-        self.covariance_, self.precision_ = graph_lasso(X, alpha=best_alpha,
-                        mode=self.mode, tol=self.tol, max_iter=self.max_iter,
-                        verbose=inner_verbose)
+        self.covariance_, self.precision_ = graph_lasso(emp_cov,
+                        alpha=best_alpha, mode=self.mode, tol=self.tol,
+                        max_iter=self.max_iter, verbose=inner_verbose)
         return self
