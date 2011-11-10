@@ -90,7 +90,6 @@ pl.xlabel('Number of clusters (Number of samples is fixed to %d)' % n_samples)
 pl.ylabel('Score value')
 pl.legend(plots, names)
 pl.ylim(ymin=-0.05, ymax=1.05)
-pl.show()
 
 
 # Random labeling with varying n_clusters against ground class labels

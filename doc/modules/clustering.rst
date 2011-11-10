@@ -484,7 +484,7 @@ Given the knowledge of the ground truth class assignments ``labels_true``
 and our clustering algorithm assignments of the same samples
 ``labels_pred``, the **Adjusted Mutual Information** is a function that 
 measures the **agreement** of the two assignements, ignoring permutations
- and **with chance normalization**::
+and **with chance normalization**::
 
   >>> from sklearn import metrics
   >>> labels_true = [0, 0, 0, 1, 1, 1]
@@ -603,10 +603,15 @@ calculated using a similar form to that of the adjusted Rand index:
 
 .. topic:: References
 
- * Vinh, Epps, and Bailey, J. (2009). "Information theoretic measures 
+ * Vinh, Epps, and Bailey, (2009). "Information theoretic measures 
    for clusterings comparison". Proceedings of the 26th Annual International
    Conference on Machine Learning - ICML '09.
    doi:10.1145/1553374.1553511. ISBN 9781605585161.
+
+ * Vinh, Epps, and Bailey, (2010). Information Theoretic Measures for
+   Clusterings Comparison: Variants, Properties, Normalization and
+   Correction for Chance}, JMLR
+   http://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf
 
  * `Wikipedia entry for the Adjusted Mutual Information
    <http://en.wikipedia.org/wiki/Adjusted_Mutual_Information>`_
