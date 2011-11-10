@@ -13,7 +13,7 @@ appreciate citations to the following paper:
 
  `Scikit-learn: Machine Learning in Python 
  <http://jmlr.csail.mit.edu/papers/v12/pedregosa11a.html>`_, Pedregosa 
- *et al.*, JMLR 12, pp. 2825−2830, 2011.
+ *et al.*, JMLR 12, pp. 2825-2830, 2011.
 
  Bibtex entry::
 

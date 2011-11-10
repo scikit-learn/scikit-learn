@@ -116,7 +116,7 @@ class SGDClassifier(BaseSGDClassifier):
            penalty='l2', power_t=0.5, rho=1.0, seed=0, shuffle=False,
            verbose=0)
     >>> print clf.predict([[-0.8, -1]])
-    [ 1.]
+    [1]
 
     See also
     --------

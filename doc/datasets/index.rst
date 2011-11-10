@@ -15,7 +15,7 @@ Dataset loading utilities
 .. currentmodule:: sklearn.datasets
 
 The ``sklearn.datasets`` package embeds some small toy datasets
-as introduced in the "Getting Started" section.
+as introduced in the :ref:`Getting Started <loading_example_dataset>` section.
 
 To evaluate the impact of the scale of the dataset (``n_samples`` and
 ``n_features``) while controlling the statistical properties of the data

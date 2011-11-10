@@ -70,7 +70,7 @@ for the training samples::
 After being fitted, the model can then be used to predict new values::
 
     >>> clf.predict([[2., 2.]])
-    array([ 1.])
+    array([1])
 
 SGD fits a linear model to the training data. The member `coef_` holds
 the model parameters::

@@ -53,6 +53,7 @@ We can separate learning problems in a few large categories:
     we learn data properties, and one that we call a **testing set**,
     on which we test these properties.
 
+.. _loading_example_dataset:
 
 Loading an example dataset
 --------------------------
