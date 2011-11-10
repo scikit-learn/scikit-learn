@@ -149,7 +149,7 @@ def graph_lasso(X, alpha, cov_init=None, mode='cd', tol=1e-4, max_iter=100,
     costs = list()
     # The different l1 regression solver have different numerical errors
     if mode == 'cd':
-        errors = dict(over='raise')
+        errors = dict(over='raise', invalid='ignore')
     else:
         errors = dict(invalid='raise')
     try:
@@ -244,8 +244,7 @@ class GraphLasso(EmpiricalCovariance):
     See Also
     --------
     graph_lasso, GraphLassoCV
-
-   """
+    """
 
     def __init__(self, alpha=.01, mode='cd', tol=1e-4,
                  max_iter=100, verbose=False):
