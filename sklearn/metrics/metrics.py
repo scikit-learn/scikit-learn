@@ -17,16 +17,14 @@ import numpy as np
 from ..utils import check_arrays
 
 
-def unique_labels(*list_of_labels):
-    """Extract an ordered integer array of unique labels
-
-    This implementation ignores any occurrence of NaNs.
-
-    """
-    list_of_labels = [np.unique(labels[np.isfinite(labels)].ravel())
-                      for labels in list_of_labels]
-    list_of_labels = np.concatenate(list_of_labels)
-    return np.unique(list_of_labels)
+def unique_labels(*lists_of_labels):
+    """Extract an ordered array of unique labels"""
+    labels = set()
+    for l in lists_of_labels:
+        if hasattr(l, 'ravel'):
+            l = l.ravel()
+        labels |= set(l)
+    return np.unique(sorted(labels))
 
 
 def confusion_matrix(y_true, y_pred, labels=None):
