@@ -309,6 +309,8 @@ points below.
    In Proceedings of the 2nd International Conference on Knowledge Discovery
    and Data Mining, Portland, OR, AAAI Press, pp. 226–231. 1996
 
+.. _clustering_evaluation:
+
 Clustering performance evaluation
 =================================
 
@@ -757,6 +759,8 @@ mean of homogeneity and completeness**:
  * `V-Measure: A conditional entropy-based external cluster evaluation
    measure <http://acl.ldc.upenn.edu/D/D07/D07-1043.pdf>`_
    Andrew Rosenberg and Julia Hirschberg, 2007
+
+.. _silhouette_coefficient:
 
 Silhouette Coefficient
 ----------------------
