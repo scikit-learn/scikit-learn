@@ -14,6 +14,7 @@ from sklearn.covariance import empirical_covariance, EmpiricalCovariance, \
     fast_mcd, MCD
 
 X = datasets.load_iris().data
+X_1d = X[:, 0]
 n_samples, n_features = X.shape
 
 
@@ -40,7 +41,6 @@ def test_covariance():
     assert(np.amin(mahal_dist) > 50)
 
     # test with n_features = 1
-    X_1d = X[:, 0]
     cov = EmpiricalCovariance()
     cov.fit(X_1d)
     assert_array_almost_equal(empirical_covariance(X_1d), cov.covariance_, 4)
@@ -78,7 +78,6 @@ def test_shrunk_covariance():
     assert_array_almost_equal(empirical_covariance(X), cov.covariance_, 4)
 
     # test with n_features = 1
-    X_1d = X[:, 0]
     cov = ShrunkCovariance(shrinkage=0.3)
     cov.fit(X_1d)
     assert_array_almost_equal(empirical_covariance(X_1d), cov.covariance_, 4)
@@ -109,7 +108,6 @@ def test_ledoit_wolf():
     assert_array_almost_equal(scov.covariance_, lw.covariance_, 4)
 
     # test with n_features = 1
-    X_1d = X[:, 0]
     lw = LedoitWolf()
     lw.fit(X_1d, assume_centered=True)
     lw_cov_from_mle, lw_shinkrage_from_mle = ledoit_wolf(X_1d,
@@ -140,7 +138,6 @@ def test_ledoit_wolf():
     assert_array_almost_equal(scov.covariance_, lw.covariance_, 4)
 
     # test with n_features = 1
-    X_1d = X[:, 0]
     lw = LedoitWolf()
     lw.fit(X_1d)
     lw_cov_from_mle, lw_shinkrage_from_mle = ledoit_wolf(X_1d)
@@ -174,7 +171,6 @@ def test_oas():
     assert_array_almost_equal(scov.covariance_, oa.covariance_, 4)
 
     # test with n_features = 1
-    X_1d = X[:, 0]
     oa = OAS()
     oa.fit(X_1d, assume_centered=True)
     oa_cov_from_mle, oa_shinkrage_from_mle = oas(X_1d, assume_centered=True)
@@ -204,7 +200,6 @@ def test_oas():
     assert_array_almost_equal(scov.covariance_, oa.covariance_, 4)
 
     # test with n_features = 1
-    X_1d = X[:, 0]
     oa = OAS()
     oa.fit(X_1d)
     oa_cov_from_mle, oa_shinkrage_from_mle = oas(X_1d)

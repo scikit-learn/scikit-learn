@@ -85,6 +85,14 @@ class SGDClassifier(BaseSGDClassifier):
     power_t : double
         The exponent for inverse scaling learning rate [default 0.25].
 
+    class_weight : dict, {class_label : weight} or "auto" or None, optional
+        Preset for the class_weight fit parameter.
+
+        Weights associated with classes. If not given, all classes
+        are supposed to have weight one.
+
+        The "auto" mode uses the values of y to automatically adjust
+        weights inversely proportional to class frequencies.
 
     Attributes
     ----------
@@ -103,12 +111,12 @@ class SGDClassifier(BaseSGDClassifier):
     >>> Y = np.array([1, 1, 2, 2])
     >>> clf = linear_model.SGDClassifier()
     >>> clf.fit(X, Y)
-    SGDClassifier(alpha=0.0001, eta0=0.0, fit_intercept=True,
+    SGDClassifier(alpha=0.0001, class_weight=None, eta0=0.0, fit_intercept=True,
            learning_rate='optimal', loss='hinge', n_iter=5, n_jobs=1,
            penalty='l2', power_t=0.5, rho=1.0, seed=0, shuffle=False,
            verbose=0)
     >>> print clf.predict([[-0.8, -1]])
-    [ 1.]
+    [1]
 
     See also
     --------
@@ -119,7 +127,7 @@ class SGDClassifier(BaseSGDClassifier):
     def _fit_binary(self, X, y):
         """Fit a single binary classifier"""
         # interprete X as dense array
-        X = np.asanyarray(X, dtype=np.float64, order='C')
+        X = np.asarray(X, dtype=np.float64, order='C')
 
         # encode original class labels as 1 (classes[1]) or -1 (classes[0]).
         y_new = np.ones(y.shape, dtype=np.float64, order='C') * -1.0
@@ -137,8 +145,8 @@ class SGDClassifier(BaseSGDClassifier):
                                       int(self.verbose),
                                       int(self.shuffle),
                                       self.seed,
-                                      self.class_weight[1],
-                                      self.class_weight[0],
+                                      self._expanded_class_weight[1],
+                                      self._expanded_class_weight[0],
                                       self.sample_weight,
                                       self.learning_rate_code, self.eta0,
                                       self.power_t)
@@ -152,7 +160,7 @@ class SGDClassifier(BaseSGDClassifier):
         Each binary classifier predicts one class versus all others. This
         strategy is called OVA: One Versus All.
         """
-        X = np.asanyarray(X, dtype=np.float64, order='C')
+        X = np.asarray(X, dtype=np.float64, order='C')
 
         # Use joblib to run OVA in parallel.
         res = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
@@ -164,7 +172,7 @@ class SGDClassifier(BaseSGDClassifier):
                                                self.fit_intercept,
                                                self.verbose, self.shuffle,
                                                self.seed,
-                                               self.class_weight[i],
+                                               self._expanded_class_weight[i],
                                                self.sample_weight,
                                                self.learning_rate_code,
                                                self.eta0, self.power_t)
@@ -293,7 +301,7 @@ class SGDRegressor(BaseSGDRegressor):
     """
 
     def _fit_regressor(self, X, y):
-        X = np.asanyarray(X, dtype=np.float64, order='C')
+        X = np.asarray(X, dtype=np.float64, order='C')
         coef_, intercept_ = plain_sgd(self.coef_,
                                       self.intercept_,
                                       self.loss_function,

@@ -11,6 +11,8 @@ import os
 import shutil
 import traceback
 import glob
+import sys
+from StringIO import StringIO
 
 import matplotlib
 matplotlib.use('Agg')
@@ -36,6 +38,8 @@ plot_rst_template = """
 %(docstring)s
 
 %(image_list)s
+
+%(stdout)s
 
 **Python source code:** :download:`%(fname)s <%(fname)s>`
 
@@ -224,12 +228,18 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
     if not os.path.exists(thumb_dir):
         os.makedirs(thumb_dir)
     image_path = os.path.join(image_dir, image_fname)
+    stdout_path = os.path.join(image_dir,
+                               'stdout_%s.txt' % base_image_name)
     thumb_file = os.path.join(thumb_dir, fname[:-3] + '.png')
     if plot_gallery and fname.startswith('plot'):
         # generate the plot as png image if file name
         # starts with plot and if it is more recent than an
         # existing image.
         first_image_file = image_path % 1
+        if os.path.exists(stdout_path):
+            stdout = open(stdout_path).read()
+        else:
+            stdout = ''
 
         if (not os.path.exists(first_image_file) or
                 os.stat(first_image_file).st_mtime <=
@@ -242,8 +252,25 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
             try:
                 # First CD in the original example dir, so that any file created
                 # by the example get created in this directory
+                orig_stdout = sys.stdout
                 os.chdir(os.path.dirname(src_file))
-                execfile(os.path.basename(src_file), {'pl' : plt})
+                my_stdout = StringIO()
+                sys.stdout = my_stdout
+                my_globals = {'pl' : plt}
+                execfile(os.path.basename(src_file), my_globals)
+                sys.stdout = orig_stdout
+                my_stdout = my_stdout.getvalue()
+                if '__doc__' in my_globals:
+                    # The __doc__ is often printed in the example, we
+                    # don't with to echo it
+                    my_stdout = my_stdout.replace(
+                                            my_globals['__doc__'],
+                                            '')
+                my_stdout = my_stdout.strip()
+                if my_stdout:
+                    stdout = '**Script output**::\n  %s\n\n' % (
+                        '\n  '.join(my_stdout.split('\n')))
+                open(stdout_path, 'w').write(stdout)
                 os.chdir(cwd)
 
                 # In order to save every figure we have two solutions :
@@ -266,6 +293,7 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
                 print 80*'_'
             finally:
                 os.chdir(cwd)
+                sys.stdout = orig_stdout
         else:
             figure_list = [f[len(image_dir):]
                             for f in glob.glob(image_path % '[1-9]')]

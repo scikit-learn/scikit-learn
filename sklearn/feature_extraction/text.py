@@ -396,13 +396,18 @@ class CountVectorizer(BaseEstimator):
         """
         if type(X) is sp.coo_matrix:    # COO matrix is not indexable
             X = X.tocsr()
+        elif not sp.issparse(X):
+            # We need to convert X to a matrix, so that the indexing
+            # returns 2D objects
+            X = np.asmatrix(X)
+        n_samples = X.shape[0]
 
         terms = np.array(self.vocabulary.keys())
         indices = np.array(self.vocabulary.values())
         inverse_vocabulary = terms[np.argsort(indices)]
 
         return [inverse_vocabulary[X[i, :].nonzero()[1]]
-                for i in xrange(X.shape[0])]
+                for i in xrange(n_samples)]
 
 
 class TfidfTransformer(BaseEstimator, TransformerMixin):
@@ -484,7 +489,12 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         n_samples, n_features = X.shape
 
         if self.use_idf:
-            d = sp.lil_matrix((len(self.idf_), len(self.idf_)))
+            expected_n_features = self.idf_.shape[0]
+            if n_features != expected_n_features:
+                raise ValueError("Input has n_features=%d while the model"
+                                 " has been trained with n_features=%d" % (
+                                     n_features, expected_n_features))
+            d = sp.lil_matrix((n_features, n_features))
             d.setdiag(self.idf_)
             # *= doesn't work
             X = X * d

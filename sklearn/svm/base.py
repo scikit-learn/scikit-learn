@@ -2,7 +2,7 @@ import numpy as np
 
 from . import libsvm, liblinear
 from ..base import BaseEstimator
-from ..utils import safe_asanyarray
+from ..utils import array2d, safe_asarray
 
 
 LIBSVM_IMPL = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
@@ -36,7 +36,7 @@ class BaseLibSVM(BaseEstimator):
     """
 
     def __init__(self, impl, kernel, degree, gamma, coef0,
-                 tol, C, nu, epsilon, shrinking, probability):
+                 tol, C, nu, epsilon, shrinking, probability, cache_size):
 
         if not impl in LIBSVM_IMPL:
             raise ValueError("impl should be one of %s, %s was given" % (
@@ -56,6 +56,7 @@ class BaseLibSVM(BaseEstimator):
         self.epsilon = epsilon
         self.shrinking = shrinking
         self.probability = probability
+        self.cache_size = cache_size
 
     def predict_log_proba(self, T):
         """Compute the log likehoods each possible outcomes of samples in T.
@@ -97,12 +98,11 @@ class DenseBaseLibSVM(BaseLibSVM):
         if hasattr(self, 'kernel_function'):
             # in the case of precomputed kernel given as a function, we
             # have to compute explicitly the kernel matrix
-            X = np.asanyarray(self.kernel_function(X, self.__Xfit),
-                               dtype=np.float64, order='C')
+            X = np.asarray(self.kernel_function(X, self.__Xfit),
+                           dtype=np.float64, order='C')
         return X
 
-    def fit(self, X, y, class_weight=None, sample_weight=None,
-            cache_size=100.):
+    def fit(self, X, y, class_weight=None, sample_weight=None):
         """Fit the SVM model according to the given training data.
 
         Parameters
@@ -125,9 +125,6 @@ class DenseBaseLibSVM(BaseLibSVM):
         sample_weight : array-like, shape = [n_samples], optional
             Weights applied to individual samples (1. for unweighted).
 
-        cache_size: float, optional
-            Specify the size of the cache (in MB)
-
         Returns
         -------
         self : object
@@ -140,10 +137,10 @@ class DenseBaseLibSVM(BaseLibSVM):
 
         """
 
-        X = np.asanyarray(X, dtype=np.float64, order='C')
-        y = np.asanyarray(y, dtype=np.float64, order='C')
-        sample_weight = np.asanyarray([] if sample_weight is None
-                                         else sample_weight, dtype=np.float64)
+        X = np.asarray(X, dtype=np.float64, order='C')
+        y = np.asarray(y, dtype=np.float64, order='C')
+        sample_weight = np.asarray([] if sample_weight is None
+                                      else sample_weight, dtype=np.float64)
 
         if hasattr(self, 'kernel_function'):
             # you must store a reference to X to compute the kernel in predict
@@ -196,7 +193,7 @@ class DenseBaseLibSVM(BaseLibSVM):
         -------
         C : array, shape = [n_samples]
         """
-        X = np.asanyarray(X, dtype=np.float64, order='C')
+        X = np.asarray(X, dtype=np.float64, order='C')
         if X.ndim == 1:
             # don't use np.atleast_2d, it doesn't guarantee C-contiguity
             X = np.reshape(X, (1, -1), order='C')
@@ -247,7 +244,7 @@ class DenseBaseLibSVM(BaseLibSVM):
         if not self.probability:
             raise ValueError(
                     "probability estimates must be enabled to use this method")
-        X = np.asanyarray(X, dtype=np.float64, order='C')
+        X = np.asarray(X, dtype=np.float64, order='C')
         if X.ndim == 1:
             # don't use np.atleast_2d, it doesn't guarantee C-contiguity
             X = np.reshape(X, (1, -1), order='C')
@@ -278,7 +275,7 @@ class DenseBaseLibSVM(BaseLibSVM):
             Returns the decision function of the sample for each class
             in the model.
         """
-        X = np.asanyarray(X, dtype=np.float64, order='C')
+        X = np.asarray(X, dtype=np.float64, order='C')
         if X.ndim == 1:
             # don't use np.atleast_2d, it doesn't guarantee C-contiguity
             X = np.reshape(X, (1, -1), order='C')
@@ -383,11 +380,11 @@ class BaseLibLinear(BaseEstimator):
         self.class_weight, self.class_weight_label = \
                      _get_class_weight(class_weight, y)
 
-        X = safe_asanyarray(X, dtype=np.float64, order='C')
+        X = safe_asarray(X, dtype=np.float64, order='C')
         if not isinstance(X, np.ndarray):   # sparse X passed in by user
             raise ValueError("Training vectors should be array-like, not %s"
                              % type(X))
-        y = np.asanyarray(y, dtype=np.int32, order='C')
+        y = np.asarray(y, dtype=np.int32, order='C')
 
         self.raw_coef_, self.label_ = liblinear.train_wrap(X, y,
                        self._get_solver_type(), self.tol,
@@ -407,8 +404,7 @@ class BaseLibLinear(BaseEstimator):
         -------
         C : array, shape = [n_samples]
         """
-        X = np.asanyarray(X, dtype=np.float64, order='C')
-        X = np.atleast_2d(X)
+        X = array2d(X, dtype=np.float64, order='C')
         self._check_n_features(X)
 
         coef = self.raw_coef_
@@ -433,7 +429,7 @@ class BaseLibLinear(BaseEstimator):
             Returns the decision function of the sample for each class
             in the model.
         """
-        X = np.asanyarray(X, dtype=np.float64, order='C')
+        X = np.asarray(X, dtype=np.float64, order='C')
         if X.ndim == 1:
             # don't use np.atleast_2d, it doesn't guarantee C-contiguity
             X = np.reshape(X, (1, -1), order='C')
