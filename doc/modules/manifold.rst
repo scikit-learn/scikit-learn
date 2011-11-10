@@ -1,7 +1,7 @@
 
-.. _manifold:
-
 .. currentmodule:: sklearn.manifold
+
+.. _manifold:
 
 =================
 Manifold learning
