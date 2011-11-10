@@ -6,7 +6,8 @@ from StringIO import StringIO
 import numpy as np
 from scipy import linalg
 
-from sklearn.covariance import graph_lasso, GraphLasso, GraphLassoCV
+from sklearn.covariance import graph_lasso, GraphLasso, GraphLassoCV, \
+            empirical_covariance
 from sklearn.datasets.samples_generator import make_sparse_spd_matrix
 from sklearn.utils import check_random_state
 
@@ -20,11 +21,12 @@ def test_graph_lasso(random_state=0):
                                   random_state=random_state)
     cov = linalg.inv(prec)
     X = random_state.multivariate_normal(np.zeros(dim), cov, size=n_samples)
+    emp_cov = empirical_covariance(X)
 
     for alpha in (.1, .01):
         covs = dict()
         for method in ('cd', 'lars'):
-            cov_, _, costs = graph_lasso(X, alpha=.1, return_costs=True)
+            cov_, _, costs = graph_lasso(emp_cov, alpha=.1, return_costs=True)
             covs[method] = cov_
             costs, dual_gap = np.array(costs).T
             # Check that the costs always decrease
