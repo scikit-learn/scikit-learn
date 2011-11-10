@@ -19,7 +19,7 @@ Changelog
    - Faster tests by `Fabian Pedregosa`_.
 
    - Silhouette Coefficient cluster analysis evaluation metric added as
-     ``sklearn.metrics.silhouette_score`` by Robert Layton.
+     ``sklearn.metrics.silhouette_score`` by `Robert Layton`.
 
    - Fixed a bug in `KMeans` in the handling of the `n_init` parameter:
      the clustering algorithm used to be run `n_init` times but the last
@@ -27,6 +27,9 @@ Changelog
 
    - Minor refactoring in :ref:`sgd` module; consolidated dense and sparse
      predict methods.
+
+   - Adjusted Mutual Information metric added as
+     ``sklearn.metrics.adjusted_mutual_info_score`` by `Robert Layton`.
 
 
 API changes summary
