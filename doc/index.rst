@@ -104,7 +104,7 @@ User Guide
 .. toctree::
    :maxdepth: 2
 
-   contents
+   user_guide.rst
 
 Example Gallery
 ===============

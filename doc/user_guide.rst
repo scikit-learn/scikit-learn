@@ -1,16 +1,24 @@
-.. _user_guide:
+..
+    We are putting the title as a raw HTML so that it doesn't appear in
+    the contents
 
-======================
-User guide: contents
-======================
+.. raw:: html
 
-..  
-    We are using this page to give access to the full table of contents of 
-    the user guide. It should not contain any content outside of the
-    header, as all the content goes in contens.rst, to enable using the
-    toctree directive on it.
+    <h1>User guide: contents</h1>
+
+.. _user_guide: User Guide
 
 .. include:: includes/bigger_toc_css.rst
 
-.. include:: contents.rst
+.. toctree::
+   :numbered:
 
+   install
+   tutorial
+   supervised_learning.rst
+   unsupervised_learning.rst
+   model_selection.rst
+   Dataset loading utilities <datasets/index.rst>
+   Preprocessing data <modules/preprocessing.rst>
+   modules/feature_extraction.rst
+   Class Reference <modules/classes.rst>
