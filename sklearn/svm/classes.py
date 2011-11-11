@@ -395,8 +395,6 @@ class NuSVR(DenseBaseLibSVM, RegressorMixin):
 
     Parameters
     ----------
-    C : float, optional (default=1.0)
-        penalty parameter C of the error term.
 
     nu : float, optional
         An upper bound on the fraction of training errors and a lower bound of
@@ -459,22 +457,22 @@ class NuSVR(DenseBaseLibSVM, RegressorMixin):
     >>> np.random.seed(0)
     >>> y = np.random.randn(n_samples)
     >>> X = np.random.randn(n_samples, n_features)
-    >>> clf = NuSVR(C=1.0, nu=0.1)
+    >>> clf = NuSVR(nu=0.1)
     >>> clf.fit(X, y)
-    NuSVR(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma=0.2, kernel='rbf',
-       nu=0.1, probability=False, shrinking=True, tol=0.001)
+    NuSVR(cache_size=200, coef0=0.0, degree=3, gamma=0.2, kernel='rbf', nu=0.1,
+       probability=False, shrinking=True, tol=0.001)
 
     See also
     --------
     NuSVC, SVR
     """
 
-    def __init__(self, nu=0.5, C=1.0, kernel='rbf', degree=3,
+    def __init__(self, nu=0.5, kernel='rbf', degree=3,
                  gamma=0.0, coef0=0.0, shrinking=True,
                  probability=False, tol=1e-3, cache_size=200):
 
         DenseBaseLibSVM.__init__(self, 'nu_svr', kernel, degree, gamma, coef0,
-                                 tol, C, nu, None, shrinking, probability, cache_size)
+                                 tol, 0, nu, None, shrinking, probability, cache_size)
 
     def fit(self, X, y, sample_weight=None, **params):
         """
