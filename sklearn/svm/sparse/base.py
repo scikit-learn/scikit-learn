@@ -11,7 +11,8 @@ class SparseBaseLibSVM(BaseLibSVM):
     _kernel_types = ['linear', 'poly', 'rbf', 'sigmoid', 'precomputed']
 
     def __init__(self, impl, kernel, degree, gamma, coef0,
-                 tol, C, nu, epsilon, shrinking, probability, cache_size):
+                 tol, C, nu, epsilon, shrinking, probability, cache_size,
+                 C_scale_n_samples):
 
         assert kernel in self._kernel_types, \
                "kernel should be one of %s, "\
@@ -19,7 +20,8 @@ class SparseBaseLibSVM(BaseLibSVM):
 
         super(SparseBaseLibSVM, self).__init__(impl, kernel, degree, gamma,
                                                coef0, tol, C, nu, epsilon,
-                                               shrinking, probability, cache_size)
+                                               shrinking, probability,
+                                               cache_size, C_scale_n_samples)
 
 
     def fit(self, X, y, class_weight=None, sample_weight=None):
@@ -88,12 +90,16 @@ class SparseBaseLibSVM(BaseLibSVM):
             # if custom gamma is not provided ...
             self.gamma = 1.0 / X.shape[1]
 
+        C = self.C
+        if self.C_scale_n_samples:
+            C = C / float(X.shape[0])
+
         self.support_vectors_, dual_coef_data, self.intercept_, self.label_, \
             self.n_support_, self.probA_, self.probB_ = \
             libsvm.libsvm_sparse_train(
                  X.shape[1], X.data, X.indices, X.indptr, y, solver_type,\
                  kernel_type, self.degree, self.gamma, self.coef0, self.tol,\
-                 self.C, self.class_weight_label, self.class_weight,\
+                 C, self.class_weight_label, self.class_weight,\
                  sample_weight, self.nu, self.cache_size, self.epsilon,\
                  int(self.shrinking), int(self.probability))
 
