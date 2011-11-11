@@ -127,8 +127,10 @@
 
         {% endif %}
 
+	{%- if toc|length != 11 %}
         <h3>{{ _('This page') }}</h3>
          {{ toc }}
+        {% endif %}
 
         {% if pagename == 'index' %}
         <h3>Funding</h3>
