@@ -497,8 +497,8 @@ class MinCovDet(EmpiricalCovariance):
             raw_location = np.zeros(n_features)
             raw_covariance = self._nonrobust_covariance(
                     X[raw_support], assume_centered=True)
-        if self.h is None:
-            self.h = int(np.ceil(0.5 * (n_samples + n_features + 1)))
+        #if self.h is None:
+        #    self.h_ = int(np.ceil(0.5 * (n_samples + n_features + 1)))
         self.raw_location_ = raw_location
         self.raw_covariance_ = raw_covariance
         self.raw_support_ = raw_support
