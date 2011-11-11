@@ -268,7 +268,7 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
                                             '')
                 my_stdout = my_stdout.strip()
                 if my_stdout:
-                    stdout = '**Script output**::\n  %s\n\n' % (
+                    stdout = '**Script output**::\n\n  %s\n\n' % (
                         '\n  '.join(my_stdout.split('\n')))
                 open(stdout_path, 'w').write(stdout)
                 os.chdir(cwd)
