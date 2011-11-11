@@ -9,6 +9,7 @@ import warnings
 import numpy as np
 import scipy.sparse as sp
 
+from ...utils.extmath import safe_sparse_dot
 from ..base import LinearModel
 from . import cd_fast_sparse
 
@@ -118,8 +119,8 @@ class ElasticNet(LinearModel):
         # np.dot only works correctly if both arguments are sparse matrices
         if not sp.issparse(X):
             X = sp.csr_matrix(X)
-        return np.ravel(np.dot(self.sparse_coef_, X.T).todense()
-                        + self.intercept_)
+        return np.ravel(safe_sparse_dot(self.sparse_coef_, X.T,
+                                        dense_output=True) + self.intercept_)
 
 
 class Lasso(ElasticNet):
