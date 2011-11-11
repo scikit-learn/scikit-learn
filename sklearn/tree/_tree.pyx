@@ -25,29 +25,6 @@ cdef extern from "float.h":
     cdef extern double DBL_MAX
 
 
-@cython.boundscheck(False)
-def apply_tree(np.ndarray[DTYPE_t, ndim=2] X,
-               np.ndarray[np.int64_t, ndim=1] left,
-               np.ndarray[np.int64_t, ndim=1] right,
-               np.ndarray[np.int32_t, ndim=1] feature,
-               np.ndarray[np.float64_t, ndim=1] threshold,
-               np.ndarray[np.int64_t, ndim=1] out):
-    """Findes the terminal region (=leaf node) for each sample in
-    `X` and sets the corresponding element in `out` to its node id."""
-    cdef int i = 0
-    cdef int n = X.shape[0]
-    cdef int node_id = 0
-    for i from 0 <= i < n:
-        node_id = 0
-        # While node_id not a leaf
-        while left[node_id] != -1 and right[node_id] != -1:
-            if X[i, feature[node_id]] <= threshold[node_id]:
-                node_id = left[node_id]
-            else:
-                node_id = right[node_id]
-        out[i] = node_id
-
-
 ################################################################################
 # Classification entropy measures
 #
@@ -413,6 +390,32 @@ cdef class MSE(RegressionCriterion):
         assert (self.n_left + self.n_right) == self.n_samples
         return self.var_left + self.var_right
 
+################################################################################
+# Tree functions 
+#
+
+
+def _apply_tree(np.ndarray[DTYPE_t, ndim=2] X,
+                np.ndarray[np.int32_t, ndim=1] left,
+                np.ndarray[np.int32_t, ndim=1] right,
+                np.ndarray[np.int32_t, ndim=1] feature,
+                np.ndarray[np.float64_t, ndim=1] threshold,
+                np.ndarray[np.int32_t, ndim=1] out):
+    """Finds the terminal region (=leaf node) for each sample in
+    `X` and sets the corresponding element in `out` to its node id."""
+    cdef int i = 0
+    cdef int n = X.shape[0]
+    cdef int node_id = 0
+    for i from 0 <= i < n:
+        node_id = 0
+        # While node_id not a leaf
+        while left[node_id] != -1 and right[node_id] != -1:
+            if X[i, feature[node_id]] <= threshold[node_id]:
+                node_id = left[node_id]
+            else:
+                node_id = right[node_id]
+        out[i] = node_id
+
 
 def _error_at_leaf(np.ndarray[DTYPE_t, ndim=1, mode="c"] y,
                    np.ndarray sample_mask, Criterion criterion,
@@ -427,7 +430,7 @@ def _error_at_leaf(np.ndarray[DTYPE_t, ndim=1, mode="c"] y,
     
 
 
-################################################################################
+
 cdef int smallest_sample_larger_than(int sample_idx, DTYPE_t *X_i,
                                      int *X_argsorted_i, BOOL_t *sample_mask,
                                      int n_total_samples):

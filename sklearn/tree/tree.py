@@ -146,11 +146,11 @@ class Tree(object):
     node_count : int
         Number of nodes (internal nodes + leaves) in the tree.
 
-    left : np.ndarray of int64
+    left : np.ndarray of int32
         `left[i]` holds the node id of the left child of node `i`.
         For leaves `left[i] == Tree.LEAF == -1`.
 
-    right : np.ndarray of int64
+    right : np.ndarray of int32
         `right[i]` holds the node id of the right child of node `i`.
         For leaves `right[i] == Tree.LEAF == -1`.
 
@@ -171,7 +171,7 @@ class Tree(object):
         The initial error of the node (before splitting).
         For leaves `init_error == `best_error`.
 
-    n_samples : np.ndarray of np.int64
+    n_samples : np.ndarray of np.int32
         The number of samples at each node.
     """
 
@@ -181,10 +181,10 @@ class Tree(object):
     def __init__(self, k, capacity=3):
         self.node_count = 0
 
-        self.left = np.empty((capacity,), dtype=np.int64)
+        self.left = np.empty((capacity,), dtype=np.int32)
         self.left.fill(Tree.UNDEFINED)
 
-        self.right = np.empty((capacity,), dtype=np.int64)
+        self.right = np.empty((capacity,), dtype=np.int32)
         self.right.fill(Tree.UNDEFINED)
 
         self.feature = np.empty((capacity,), dtype=np.int32)
@@ -193,9 +193,9 @@ class Tree(object):
         self.threshold = np.empty((capacity,), dtype=np.float64)
         self.value = np.empty((capacity, k), dtype=np.float64)
 
-        self.best_error = np.empty((capacity,), dtype=np.float64)
-        self.init_error = np.empty((capacity,), dtype=np.float64)
-        self.n_samples = np.empty((capacity,), dtype=np.int64)
+        self.best_error = np.empty((capacity,), dtype=np.float32)
+        self.init_error = np.empty((capacity,), dtype=np.float32)
+        self.n_samples = np.empty((capacity,), dtype=np.int32)
 
     def resize(self, capacity=None):
         """Resize tree arrays to `capacity`, if `None` double capacity. """
@@ -261,9 +261,9 @@ class Tree(object):
         self.node_count += 1
 
     def predict(self, X):
-        out = np.empty((X.shape[0], ), dtype=np.int64)
-        _tree.apply_tree(X, self.left, self.right, self.feature,
-                         self.threshold, out)
+        out = np.empty((X.shape[0], ), dtype=np.int32)
+        _tree._apply_tree(X, self.left, self.right, self.feature,
+                          self.threshold, out)
         return self.value.take(out, axis=0)
 
 
@@ -366,7 +366,8 @@ def _build_tree(X, y, is_classification, criterion, max_depth, min_split,
 class BaseDecisionTree(BaseEstimator):
     """Base class for decision trees.
 
-    Warning: This class should not be used directly. Use derived classes instead.
+    Warning: This class should not be used directly.
+    Use derived classes instead.
     """
     def __init__(self, criterion,
                        max_depth,
@@ -477,8 +478,8 @@ class BaseDecisionTree(BaseEstimator):
                              % (self.n_features, n_features))
 
         if isinstance(self, ClassifierMixin):
-            predictions = self.classes[np.argmax(
-                self.tree.predict(X), axis=1)]
+            predictions = self.classes.take(np.argmax(
+                self.tree.predict(X), axis=1), axis=0)
         else:
             predictions = self.tree.predict(X).ravel()
 
