@@ -153,7 +153,9 @@ def fit(
     # check parameters
     error_msg = svm_check_parameter(&problem, &param)
     if error_msg:
-        raise ValueError(error_msg)
+        # for SVR: epsilon is called p in libsvm
+        error_repl = error_msg.replace("p < 0", "epsilon < 0")
+        raise ValueError(error_repl)
 
     # this does the real work
     model = svm_train(&problem, &param)

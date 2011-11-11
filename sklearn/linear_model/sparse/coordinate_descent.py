@@ -9,6 +9,7 @@ import warnings
 import numpy as np
 import scipy.sparse as sp
 
+from ...utils.extmath import safe_sparse_dot
 from ..base import LinearModel
 from . import cd_fast_sparse
 
@@ -68,7 +69,12 @@ class ElasticNet(LinearModel):
         sparse matrix in CSC format (scipy.sparse.csc_matrix)
         """
         X = sp.csc_matrix(X)
-        y = np.asanyarray(y, dtype=np.float64)
+        y = np.asarray(y, dtype=np.float64)
+
+        if X.shape[0] != y.shape[0]:
+            raise ValueError("X and y have incompatible shapes.\n" +
+                             "Note: Sparse matrices cannot be indexed w/" +
+                             "boolean masks (use `indices=True` in CV).")
 
         # NOTE: we are explicitly not centering the data the naive way to
         # avoid breaking the sparsity of X
@@ -113,8 +119,8 @@ class ElasticNet(LinearModel):
         # np.dot only works correctly if both arguments are sparse matrices
         if not sp.issparse(X):
             X = sp.csr_matrix(X)
-        return np.ravel(np.dot(self.sparse_coef_, X.T).todense()
-                        + self.intercept_)
+        return np.ravel(safe_sparse_dot(self.sparse_coef_, X.T,
+                                        dense_output=True) + self.intercept_)
 
 
 class Lasso(ElasticNet):

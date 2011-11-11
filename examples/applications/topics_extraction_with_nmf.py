@@ -48,7 +48,7 @@ n_features = 1000
 n_topics = 10
 n_top_words = 20
 
-# Load the 20 newsgroups dataset and vectorizer it using the most common word
+# Load the 20 newsgroups dataset and vectorize it using the most common word
 # frequency with TF-IDF weighting (without top 5% stop words)
 
 t0 = time()
@@ -59,12 +59,6 @@ vectorizer = text.CountVectorizer(max_df=0.95, max_features=n_features)
 counts = vectorizer.fit_transform(dataset.data[:n_samples])
 tfidf = text.TfidfTransformer().fit_transform(counts)
 print "done in %0.3fs." % (time() - t0)
-
-# Convert scipy.sparse.csr_matrix representation to dense numpy array
-tfidf = tfidf.toarray()
-
-# Remove negative values (they should not be there, is this a bug?)
-tfidf[tfidf < 0] = 0.0
 
 # Fit the NMF model
 print "Fitting the NMF model on with n_samples=%d and n_features=%d..." % (
@@ -78,5 +72,5 @@ inverse_vocabulary = dict((v, k) for k, v in vectorizer.vocabulary.iteritems())
 for topic_idx, topic in enumerate(nmf.components_):
     print "Topic #%d:" % topic_idx
     print " ".join([inverse_vocabulary[i]
-                    for i in topic.argsort()[:-n_top_words:-1]])
+                    for i in topic.argsort()[:-n_top_words-1:-1]])
     print

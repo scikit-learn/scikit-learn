@@ -19,8 +19,9 @@ Kernels are measures of similarity, i.e. s(a, b) > s(a, c) if objects a and b
 are considered "more similar" to objects a and c. A kernel must also be
 positive semi-definite.
 
-There are a number of ways to convert between a distance metric and a similarity
-measure, such as a kernel. Let D be the distance, and S be the kernel:
+There are a number of ways to convert between a distance metric and a
+similarity measure, such as a kernel. Let D be the distance, and S be the
+kernel:
 
 1. S = np.exp(-D * gamma), where one heuristic for choosing
    gamma is 1 / num_features
@@ -36,7 +37,7 @@ measure, such as a kernel. Let D be the distance, and S be the kernel:
 import numpy as np
 from scipy.spatial import distance
 from scipy.sparse import csr_matrix, issparse
-from ..utils import safe_asanyarray, atleast2d_or_csr, deprecated
+from ..utils import safe_asarray, atleast2d_or_csr, deprecated
 from ..utils.extmath import safe_sparse_dot
 
 
@@ -70,10 +71,10 @@ def check_pairwise_arrays(X, Y):
 
     """
     if Y is X or Y is None:
-        X = Y = safe_asanyarray(X)
+        X = Y = safe_asarray(X)
     else:
-        X = safe_asanyarray(X)
-        Y = safe_asanyarray(Y)
+        X = safe_asarray(X)
+        Y = safe_asarray(Y)
     X = atleast2d_or_csr(X)
     Y = atleast2d_or_csr(Y)
     if len(X.shape) < 2:
@@ -162,7 +163,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     distances *= -2
     distances += XX
     distances += YY
-    distances = np.maximum(distances, 0)
+    np.maximum(distances, 0, distances)
 
     if X is Y:
         # Ensure that distances between vectors and themselves are set to 0.0.
@@ -349,7 +350,7 @@ pairwise_distance_functions = {
     'l2': euclidean_distances,
     'l1': manhattan_distances,
     'manhattan': manhattan_distances,
-    'cityblock': manhattan_distances
+    'cityblock': manhattan_distances,
     }
 
 

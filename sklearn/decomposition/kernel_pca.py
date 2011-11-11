@@ -146,7 +146,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
                 K, eigvals=(K.shape[0] - n_components, K.shape[0] - 1))
         elif eigen_solver == 'arpack':
             self.lambdas_, self.alphas_ = eigsh(K, n_components,
-                                                which="LM",
+                                                which="LA",
                                                 tol=self.tol,
                                                 maxiter=self.max_iter)
 

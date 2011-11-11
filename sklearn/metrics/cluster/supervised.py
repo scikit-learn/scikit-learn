@@ -9,6 +9,7 @@ better.
 
 from math import log
 from scipy.misc import comb
+from scipy.special import gammaln
 
 import numpy as np
 
@@ -21,8 +22,8 @@ def comb2(n):
 
 def check_clusterings(labels_true, labels_pred):
     """Check that the two clusterings matching 1D integer arrays"""
-    labels_true = np.asanyarray(labels_true)
-    labels_pred = np.asanyarray(labels_pred)
+    labels_true = np.asarray(labels_true)
+    labels_pred = np.asarray(labels_pred)
 
     # input checks
     if labels_true.ndim != 1:
@@ -36,6 +37,47 @@ def check_clusterings(labels_true, labels_pred):
             "labels_true and labels_pred must have same size, got %d and %d"
             % (labels_true.shape[0], labels_pred.shape[0]))
     return labels_true, labels_pred
+
+
+def contingency_matrix(labels_true, labels_pred, eps=None):
+    """Build a contengency matrix describing the relationship between labels.
+
+    Parameters
+    ----------
+    labels_true : int array, shape = [n_samples]
+        Ground truth class labels to be used as a reference
+
+    labels_pred : array, shape = [n_samples]
+        Cluster labels to evaluate
+
+    eps: None or float
+        If a float, that value is added to all values in the contingency
+        matrix. This helps to stop NaN propogation.
+        If None, nothing is adjusted.
+
+    Returns
+    -------
+    contingency: array, shape=[n_classes_true, n_classes_pred]
+        Matrix C such that C[i][j] is the number of samples in true class i and
+        in predicted class j. If eps is None, the dtype of this array will be
+        integer. If eps is given, the dtype will be float.
+    """
+    classes = np.unique(labels_true)
+    clusters = np.unique(labels_pred)
+    # The cluster and class ids are not necessarily consecutive integers
+    # starting at 0 hence build a map
+    class_idx = dict((k, v) for v, k in enumerate(classes))
+    cluster_idx = dict((k, v) for v, k in enumerate(clusters))
+    # Build the contingency table
+    n_classes = classes.shape[0]
+    n_clusters = clusters.shape[0]
+    contingency = np.zeros((n_classes, n_clusters), dtype=np.int)
+    for c, k in zip(labels_true, labels_pred):
+        contingency[class_idx[c], cluster_idx[k]] += 1
+    if eps is not None:
+        # Must be a float matrix to accept float eps
+        contingency = np.array(contingency, dtype='float') + eps
+    return contingency
 
 
 # clustering measures
@@ -115,33 +157,20 @@ def adjusted_rand_score(labels_true, labels_pred):
 
     See also
     --------
-    - ami_score: Adjusted Mutual Information (TODO: implement me!)
+    - adjusted_mutual_info_score: Adjusted Mutual Information
 
     """
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
     n_samples = labels_true.shape[0]
-
     classes = np.unique(labels_true)
     clusters = np.unique(labels_pred)
-
     # Special limit cases: no clustering since the data is not split.
     # This is a perfect match hence return 1.0.
     if (classes.shape[0] == clusters.shape[0] == 1
         or classes.shape[0] == clusters.shape[0] == 0):
         return 1.0
 
-    # The cluster and class ids are not necessarily consecutive integers
-    # starting at 0 hence build a map
-    class_idx = dict((k, v) for v, k in enumerate(classes))
-    cluster_idx = dict((k, v) for v, k in enumerate(clusters))
-
-    # Build the contingency table
-    n_classes = classes.shape[0]
-    n_clusters = clusters.shape[0]
-    contingency = np.zeros((n_classes, n_clusters), dtype=np.int)
-
-    for c, k in zip(labels_true, labels_pred):
-        contingency[class_idx[c], cluster_idx[k]] += 1
+    contingency = contingency_matrix(labels_true, labels_pred)
 
     # Compute the ARI using the contingency data
     sum_comb_c = sum(comb2(n_c) for n_c in contingency.sum(axis=1))
@@ -458,3 +487,198 @@ def v_measure_score(labels_true, labels_pred):
 
     """
     return homogeneity_completeness_v_measure(labels_true, labels_pred)[2]
+
+
+def mutual_info_score(labels_true, labels_pred, contingency=None):
+    """Adjusted Mutual Information between two clusterings
+
+    The Mutual Information is a measure of the similarity between two labels
+    of the same data. Where P(i) is the probability of a random sample occuring
+    in cluster U_i and P'(j) is the probability of a random sample occuring in
+    cluster V_j, the Mutual information  between clusterings U and V is given
+    as:
+
+      MI(U,V)=\sum_{i=1}^R \sum_{j=1}^C P(i,j)\log \frac{P(i,j)}{P(i)P'(j)}
+
+    This metric is independent of the absolute values of the labels:
+    a permutation of the class or cluster label values won't change the
+    score value in any way.
+
+    This metric is furthermore symmetric: switching `label_true` with
+    `label_pred` will return the same score value. This can be useful to
+    measure the agreement of two independent label assignments strategies
+    on the same dataset when the real ground truth is not known.
+
+    Parameters
+    ----------
+    labels_true : int array, shape = [n_samples]
+        A clustering of the data into disjoint subsets.
+
+    labels_pred : array, shape = [n_samples]
+        A clustering of the data into disjoint subsets.
+
+    contingency: None or array, shape = [n_classes_true, n_classes_pred]
+        A contingency matrix given by the contingency_matrix function.
+        If value is None, it will be computed, otherwise the given value is
+        used, with labels_true and labels_pred ignored.
+
+    Returns
+    -------
+    mi: float
+       Mutual information, a non-negative value
+
+    See also
+    --------
+    - adjusted_mutual_info_score: Adjusted Mutual Information
+    """
+    if contingency is None:
+        labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
+        contingency = contingency_matrix(labels_true, labels_pred)
+    contingency = np.array(contingency, dtype='float')
+    contingency /= np.sum(contingency)
+    pi = np.sum(contingency, axis=1)
+    pi /= np.sum(pi)
+    pj = np.sum(contingency, axis=0)
+    pj /= np.sum(pj)
+    outer = np.outer(pi, pj)
+    nnz = contingency != 0.0
+    mi = contingency[nnz] * np.log(contingency[nnz] / outer[nnz])
+    return mi.sum()
+
+
+def adjusted_mutual_info_score(labels_true, labels_pred):
+    """Adjusted Mutual Information between two clusterings
+
+    Adjusted Mutual Information (AMI) is an adjustement of the Mutual
+    Information (MI) score to account for chance. It accounts for the fact that
+    the MI is generally higher for two clusterings with a larger number of
+    clusters, regardless of whether there is actually more information shared.
+    For two clusterings U and V, the AMI is given as:
+
+      AMI(U, V) = \frac{MI(U, V) - E(MI(U, V))}{max(H(U), H(V)) - E(MI(U, V))}
+
+    This metric is independent of the absolute values of the labels:
+    a permutation of the class or cluster label values won't change the
+    score value in any way.
+
+    This metric is furthermore symmetric: switching `label_true` with
+    `label_pred` will return the same score value. This can be useful to
+    measure the agreement of two independent label assignments strategies
+    on the same dataset when the real ground truth is not known.
+
+    Be mindful that this function is an order of magnitude slower than other
+    metrics, such as the Adjusted Rand Index.
+
+    Parameters
+    ----------
+    labels_true : int array, shape = [n_samples]
+        A clustering of the data into disjoint subsets.
+
+    labels_pred : array, shape = [n_samples]
+        A clustering of the data into disjoint subsets.
+
+    Returns
+    -------
+    ami: float
+       score between 0.0 and 1.0. 1.0 stands for perfectly complete labeling
+
+    See also
+    --------
+    - adjusted_rand_score: Adjusted Rand Index
+    - mutual_information_score: Mutual Information (not adjusted for chance)
+
+    Examples
+    --------
+
+    Perfect labelings are both homogeneous and complete, hence have
+    score 1.0::
+
+      >>> from sklearn.metrics.cluster import adjusted_mutual_info_score
+      >>> adjusted_mutual_info_score([0, 0, 1, 1], [0, 0, 1, 1])
+      1.0
+      >>> adjusted_mutual_info_score([0, 0, 1, 1], [1, 1, 0, 0])
+      1.0
+
+    If classes members are completly splitted accross different clusters,
+    the assignment is totally in-complete, hence the AMI is null::
+
+      >>> adjusted_mutual_info_score([0, 0, 0, 0], [0, 1, 2, 3])
+      0.0
+
+    """
+    labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
+    n_samples = labels_true.shape[0]
+    classes = np.unique(labels_true)
+    clusters = np.unique(labels_pred)
+    # Special limit cases: no clustering since the data is not split.
+    # This is a perfect match hence return 1.0.
+    if (classes.shape[0] == clusters.shape[0] == 1
+        or classes.shape[0] == clusters.shape[0] == 0):
+        return 1.0
+    contingency = contingency_matrix(labels_true, labels_pred)
+    contingency = np.array(contingency, dtype='float')
+    # Calculate the MI for the two clusterings
+    mi = mutual_info_score(labels_true, labels_pred,
+                           contingency=contingency)
+    # Calculate the expected value for the mutual information
+    emi = expected_mutual_information(contingency, n_samples)
+    # Calculate entropy for each labeling
+    h_true, h_pred = entropy(labels_true), entropy(labels_pred)
+    ami = (mi - emi) / (max(h_true, h_pred) - emi)
+    return ami
+
+
+def expected_mutual_information(contingency, n_samples):
+    """Calculate the expected mutual information for two labelings."""
+    R, C = contingency.shape
+    N = float(n_samples)
+    a = np.sum(contingency, axis=1, dtype='int')
+    b = np.sum(contingency, axis=0, dtype='int')
+    # There are three major terms to the EMI equation, which are multiplied to
+    # and then summed over varying nij values.
+    # While nijs[0] will never be used, having it simplifies the indexing.
+    nijs = np.arange(0, max(np.max(a), np.max(b)) + 1, dtype='float')
+    nijs[0] = 1  # Stops divide by zero warnings. As its not used, no issue.
+    # term1 is nij / N
+    term1 = nijs / N
+    # term2 is log((N*nij) / (a * b)) == log(N * nij) - log(a * b)
+    # term2 uses the outer product
+    log_ab_outer = np.log(np.outer(a, b))
+    # term2 uses N * nij
+    log_Nnij = np.log(N * nijs)
+    # term3 is large, and involved many factorials. Calculate these in log
+    # space to stop overflows.
+    gln_a = gammaln(a + 1)
+    gln_b = gammaln(b + 1)
+    gln_Na = gammaln(N - a + 1)
+    gln_Nb = gammaln(N - b + 1)
+    gln_N = gammaln(N + 1)
+    gln_nij = gammaln(nijs + 1)
+    # start and end values for nij terms for each summation.
+    start = np.array([[v - N + w for w in b] for v in a], dtype='int')
+    start = np.maximum(start, 1)
+    end = np.minimum(np.resize(a, (C, R)).T, np.resize(b, (R, C))) + 1
+    # emi itself is a summation over the various values.
+    emi = 0
+    for i in range(R):
+        for j in range(C):
+            for nij in range(start[i][j], end[i][j]):
+                term2 = log_Nnij[nij] - log_ab_outer[i][j]
+                # Numerators are positive, denominators are negative.
+                gln = (gln_a[i] + gln_b[j] + gln_Na[i] + gln_Nb[j]
+                       - gln_N - gln_nij[nij] - gammaln(a[i] - nij + 1)
+                       - gammaln(b[j] - nij + 1)
+                       - gammaln(N - a[i] - b[j] + nij + 1))
+                term3 = np.exp(gln)
+                # Add the product of all terms.
+                emi += (term1[nij] * term2 * term3)
+    return emi
+
+
+def entropy(labels):
+    """Calculates the entropy for a labeling."""
+    pi = np.array([np.sum(labels == i) for i in np.unique(labels)],
+                  dtype='float')
+    pi = pi[pi > 0]
+    pi /= np.sum(pi)
+    return -np.sum(pi * np.log(pi))

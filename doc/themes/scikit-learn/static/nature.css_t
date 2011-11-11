@@ -179,10 +179,6 @@ div.related a {
     color: #E2F3CC;
 }
 
-div.rel {
-    text-align: center;
-    margin-top: 20px;
-}
 
 div.sphinxsidebar h3,
 div.sphinxsidebar h4 {
@@ -424,3 +420,38 @@ div.viewcode-block:target {
     border-top: 1px solid #ac9;
     border-bottom: 1px solid #ac9;
 }
+
+div.rel {
+    text-align: center;
+    margin-top: 20px;
+}
+
+div.rel ul {
+    background-color: #ff9c34;
+    color: white;
+    border-radius: 5px;
+    -moz-border-radius: 5px;
+    list-style: none;
+}
+
+div.rel ul, div.rel li {
+    display: inline;
+    list-style: none;
+    padding: 5px 5px 5px 5px;
+}
+
+div.rel ul li a,
+div.rel ul li a:link,
+div.rel ul li a:visited,
+div.rel ul li a:hover {
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+div.rel ul li a:hover {
+    color: #EEE;
+}
+
+

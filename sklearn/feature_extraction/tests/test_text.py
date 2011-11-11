@@ -277,6 +277,10 @@ def test_vectorizer_inverse_transform():
             data_vec = np.sort(np.unique(vectorizer.analyzer.analyze(data[0])))
             inversed_data_vec = np.sort(np.unique(inversed_data[0]))
             assert((data_vec == inversed_data_vec).all())
+    # Test that inverse_transform also works with numpy arrays
+    transformed_data = np.asarray(transformed_data.todense())
+    assert(vectorizer.inverse_transform(transformed_data),
+            inversed_data)
 
 
 def test_dense_vectorizer_pipeline_grid_selection():
@@ -311,7 +315,7 @@ def test_dense_vectorizer_pipeline_grid_selection():
 
     # on this toy dataset bigram representation which is used in the last of
     # the grid_search is considered the best estimator since they all converge
-    # to 100% accurracy models
+    # to 100% accuracy models
     assert_equal(grid_search.best_score, 1.0)
     best_vectorizer = grid_search.best_estimator.named_steps['vect']
     assert_equal(best_vectorizer.analyzer.max_n, 1)

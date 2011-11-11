@@ -28,7 +28,10 @@ from .samples_generator import make_sparse_uncorrelated
 from .samples_generator import make_spd_matrix
 from .samples_generator import make_swiss_roll
 from .samples_generator import make_s_curve
+from .samples_generator import make_sparse_spd_matrix
 from .svmlight_format import load_svmlight_file
+from .svmlight_format import load_svmlight_files
+from .svmlight_format import dump_svmlight_file
 from .olivetti_faces import fetch_olivetti_faces
 from ..utils import deprecated
 

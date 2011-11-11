@@ -80,10 +80,10 @@ def graph_shortest_path(dist_matrix, directed=True, method='auto'):
 
     if method == 'FW':
         graph = np.asarray(dist_matrix.toarray(), dtype=DTYPE, order='C')
-        FloydWarshall(graph, directed)
+        floyd_warshall(graph, directed)
     elif method == 'D':
         graph = np.zeros((N, N), dtype=DTYPE, order='C')
-        Dijkstra(dist_matrix, graph, directed)
+        dijkstra(dist_matrix, graph, directed)
     else:
         raise ValueError("unrecognized method '%s'" % method)
 
@@ -91,7 +91,7 @@ def graph_shortest_path(dist_matrix, directed=True, method='auto'):
 
 
 @cython.boundscheck(False)
-cdef np.ndarray FloydWarshall(np.ndarray[DTYPE_t, ndim=2, mode='c'] graph,
+cdef np.ndarray floyd_warshall(np.ndarray[DTYPE_t, ndim=2, mode='c'] graph,
                               int directed=0):
     """
     FloydWarshall algorithm
@@ -153,7 +153,7 @@ cdef np.ndarray FloydWarshall(np.ndarray[DTYPE_t, ndim=2, mode='c'] graph,
 
 
 @cython.boundscheck(False)
-cdef np.ndarray Dijkstra(dist_matrix,
+cdef np.ndarray dijkstra(dist_matrix,
                          np.ndarray[DTYPE_t, ndim=2] graph,
                          int directed=0):
     """
@@ -209,9 +209,8 @@ cdef np.ndarray Dijkstra(dist_matrix,
 
     if directed:
         for i from 0 <= i < N:
-            DijkstraDirectedOneRow(i,
-                                   neighbors, distances, indptr,
-                                   graph, &heap, nodes)
+            dijkstra_directed_one_row(i, neighbors, distances, indptr,
+                                      graph, &heap, nodes)
     else:
         #use the csr -> csc sparse matrix conversion to quickly get
         # both directions of neigbors
@@ -225,12 +224,9 @@ cdef np.ndarray Dijkstra(dist_matrix,
                              dtype=ITYPE, order='C')
 
         for i from 0 <= i < N:
-            DijkstraOneRow(i,
-                           neighbors, distances, indptr,
-                           neighbors2, distances2, indptr2,
-                           graph,
-                           &heap,
-                           nodes)
+            dijkstra_one_row(i, neighbors, distances, indptr,
+                             neighbors2, distances2, indptr2,
+                             graph, &heap, nodes)
 
     free(nodes)
 
@@ -465,14 +461,14 @@ cdef FibonacciNode* remove_min(FibonacciHeap* heap):
 
 
 @cython.boundscheck(False)
-cdef void DijkstraDirectedOneRow(
-    unsigned int i_node,
-    np.ndarray[ITYPE_t, ndim=1, mode='c'] neighbors,
-    np.ndarray[DTYPE_t, ndim=1, mode='c'] distances,
-    np.ndarray[ITYPE_t, ndim=1, mode='c'] indptr,
-    np.ndarray[DTYPE_t, ndim=2, mode='c'] graph,
-    FibonacciHeap* heap,
-    FibonacciNode* nodes):
+cdef void dijkstra_directed_one_row(
+                    unsigned int i_node,
+                    np.ndarray[ITYPE_t, ndim=1, mode='c'] neighbors,
+                    np.ndarray[DTYPE_t, ndim=1, mode='c'] distances,
+                    np.ndarray[ITYPE_t, ndim=1, mode='c'] indptr,
+                    np.ndarray[DTYPE_t, ndim=2, mode='c'] graph,
+                    FibonacciHeap* heap,
+                    FibonacciNode* nodes):
     """
     Calculate distances from a single point to all targets using a
     directed graph.
@@ -526,17 +522,16 @@ cdef void DijkstraDirectedOneRow(
 
 
 @cython.boundscheck(False)
-cdef void DijkstraOneRow(
-    unsigned int i_node,
-    np.ndarray[ITYPE_t, ndim=1, mode='c'] neighbors1,
-    np.ndarray[DTYPE_t, ndim=1, mode='c'] distances1,
-    np.ndarray[ITYPE_t, ndim=1, mode='c'] indptr1,
-    np.ndarray[ITYPE_t, ndim=1, mode='c'] neighbors2,
-    np.ndarray[DTYPE_t, ndim=1, mode='c'] distances2,
-    np.ndarray[ITYPE_t, ndim=1, mode='c'] indptr2,
-    np.ndarray[DTYPE_t, ndim=2, mode='c'] graph,
-    FibonacciHeap* heap,
-    FibonacciNode* nodes):
+cdef void dijkstra_one_row(unsigned int i_node,
+                    np.ndarray[ITYPE_t, ndim=1, mode='c'] neighbors1,
+                    np.ndarray[DTYPE_t, ndim=1, mode='c'] distances1,
+                    np.ndarray[ITYPE_t, ndim=1, mode='c'] indptr1,
+                    np.ndarray[ITYPE_t, ndim=1, mode='c'] neighbors2,
+                    np.ndarray[DTYPE_t, ndim=1, mode='c'] distances2,
+                    np.ndarray[ITYPE_t, ndim=1, mode='c'] indptr2,
+                    np.ndarray[DTYPE_t, ndim=2, mode='c'] graph,
+                    FibonacciHeap* heap,
+                    FibonacciNode* nodes):
     """
     Calculate distances from a single point to all targets using an
     undirected graph.

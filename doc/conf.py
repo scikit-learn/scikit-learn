@@ -164,10 +164,10 @@ html_static_path = ['images']
 #html_additional_pages = {}
 
 # If false, no module index is generated.
-#html_use_modindex = True
+html_use_modindex = False
 
 # If false, no index is generated.
-#html_use_index = True
+html_use_index = False
 
 # If true, the index is split into individual pages for each letter.
 #html_split_index = False
@@ -213,7 +213,7 @@ latex_logo = "logos/scikit-learn-logo.png"
 
 # Additional stuff for the LaTeX preamble.
 latex_preamble = """
-\usepackage{amsmath}\usepackage{amsfonts}
+\usepackage{amsmath}\usepackage{amsfonts}\usepackage{bm}\usepackage{morefloats}
 """
 
 # Documents to append as an appendix to all manuals.

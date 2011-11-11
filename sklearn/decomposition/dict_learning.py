@@ -15,15 +15,14 @@ from numpy.lib.stride_tricks import as_strided
 
 from ..base import BaseEstimator, TransformerMixin
 from ..externals.joblib import Parallel, delayed, cpu_count
-from ..utils import check_random_state
-from ..utils import gen_even_slices
+from ..utils import array2d, check_random_state, gen_even_slices
 from ..utils.extmath import fast_svd
 from ..linear_model import Lasso, orthogonal_mp_gram, lars_path
 
 
 def sparse_encode(X, Y, gram=None, cov=None, algorithm='lasso_lars',
                   n_nonzero_coefs=None, alpha=None,
-                  overwrite_gram=False, overwrite_cov=False, init=None):
+                  copy_gram=True, copy_cov=True, init=None):
     """Generic sparse coding
 
     Each column of the result is the solution to a Lasso problem.
@@ -60,7 +59,7 @@ def sparse_encode(X, Y, gram=None, cov=None, algorithm='lasso_lars',
     alpha: float, 1. by default
         If `algorithm='lasso_lars'` or `algorithm='lasso_cd'`, `alpha` is the
         penalty applied to the L1 norm.
-        If `algorithm='threhold'`, `alpha` is the absolute value of the
+        If `algorithm='threshold'`, `alpha` is the absolute value of the
         threshold below which coefficients will be squashed to zero.
         If `algorithm='omp'`, `alpha` is the tolerance parameter: the value of
         the reconstruction error targeted. In this case, it overrides
@@ -70,11 +69,13 @@ def sparse_encode(X, Y, gram=None, cov=None, algorithm='lasso_lars',
         Initialization value of the sparse codes. Only used if
         `algorithm='lasso_cd'`.
 
-    overwrite_gram: boolean,
-        Whether to overwrite the precomputed Gram matrix.
+    copy_gram: boolean, optional
+        Whether to copy the precomputed Gram matrix; if False, it may be
+        overwritten.
 
-    overwrite_cov: boolean,
-        Whether to overwrite the precomputed covariance matrix.
+    copy_cov: boolean, optional
+        Whether to copy the precomputed covariance matrix; if False, it may be
+        overwritten.
 
     Returns
     -------
@@ -88,7 +89,8 @@ def sparse_encode(X, Y, gram=None, cov=None, algorithm='lasso_lars',
     linear_model.Lasso
     """
     alpha = float(alpha) if alpha is not None else None
-    X, Y = map(np.asanyarray, (X, Y))
+    X = np.asarray(X)
+    Y = np.asarray(Y)
     if Y.ndim == 1:
         Y = Y[:, np.newaxis]
     n_features = Y.shape[1]
@@ -99,8 +101,8 @@ def sparse_encode(X, Y, gram=None, cov=None, algorithm='lasso_lars',
         # The parameter could be removed in this case. Discuss.
         gram = np.dot(X.T, X)
     if cov is None and algorithm != 'lasso_cd':
-        # overwrite_cov is safe
-        overwrite_cov = True
+        # overwriting cov is safe
+        copy_cov = False
         cov = np.dot(X.T, Y)
 
     if algorithm == 'lasso_lars':
@@ -159,7 +161,7 @@ def sparse_encode(X, Y, gram=None, cov=None, algorithm='lasso_lars',
             n_nonzero_coefs = n_features / 10
         norms_squared = np.sum((Y ** 2), axis=0)
         new_code = orthogonal_mp_gram(gram, cov, n_nonzero_coefs, alpha,
-                                      norms_squared, overwrite_Xy=overwrite_cov
+                                      norms_squared, copy_Xy=copy_cov
                                       )
     else:
         raise NotImplemented('Sparse coding method %s not implemented' %
@@ -168,8 +170,8 @@ def sparse_encode(X, Y, gram=None, cov=None, algorithm='lasso_lars',
 
 
 def sparse_encode_parallel(X, Y, gram=None, cov=None, algorithm='lasso_lars',
-                  n_nonzero_coefs=None, alpha=None, overwrite_gram=False,
-                  overwrite_cov=False, init=None, n_jobs=1):
+                  n_nonzero_coefs=None, alpha=None, copy_gram=True,
+                  copy_cov=True, init=None, n_jobs=1):
     """Parallel sparse coding using joblib
 
     Each column of the result is the solution to a Lasso problem.
@@ -216,13 +218,15 @@ def sparse_encode_parallel(X, Y, gram=None, cov=None, algorithm='lasso_lars',
         Initialization value of the sparse codes. Only used if
         `algorithm='lasso_cd'`.
 
-    overwrite_gram: boolean,
-        Whether to overwrite the precomputed Gram matrix.
+    copy_gram: boolean, optional
+        Whether to copy the precomputed Gram matrix; if False, it may be
+        overwritten.
 
-    overwrite_cov: boolean,
-        Whether to overwrite the precomputed covariance matrix.
+    copy_cov: boolean, optional
+        Whether to copy the precomputed covariance matrix; if False, it may be
+        overwritten.
 
-    n_jobs: int,
+    n_jobs: int, optional
         Number of parallel jobs to run.
 
     Returns
@@ -239,21 +243,21 @@ def sparse_encode_parallel(X, Y, gram=None, cov=None, algorithm='lasso_lars',
     n_samples, n_features = Y.shape
     n_components = X.shape[1]
     if gram is None:
-        overwrite_gram = True
+        copy_gram = False
         gram = np.dot(X.T, X)
     if cov is None and algorithm != 'lasso_cd':
-        overwrite_cov = True
+        copy_cov = False
         cov = np.dot(X.T, Y)
     if n_jobs == 1 or algorithm == 'threshold':
         return sparse_encode(X, Y, gram, cov, algorithm, n_nonzero_coefs,
-                             alpha, overwrite_gram, overwrite_cov, init)
+                             alpha, copy_gram, copy_cov, init)
     code = np.empty((n_components, n_features))
     slices = list(gen_even_slices(n_features, n_jobs))
     code_views = Parallel(n_jobs=n_jobs)(
                 delayed(sparse_encode)(X, Y[:, this_slice], gram,
                                        cov[:, this_slice], algorithm,
                                        n_nonzero_coefs, alpha,
-                                       overwrite_gram, overwrite_cov,
+                                       copy_gram, copy_cov,
                                        init=init[:, this_slice] if init is not
                                        None else None)
                 for this_slice in slices)
@@ -684,7 +688,7 @@ class BaseDictionaryLearning(BaseEstimator, TransformerMixin):
             Transformed data
         """
         # XXX : kwargs is not documented
-        X = np.atleast_2d(X)
+        X = array2d(X)
         n_samples, n_features = X.shape
 
         code = sparse_encode_parallel(
@@ -828,7 +832,7 @@ class DictionaryLearning(BaseDictionaryLearning):
             Returns the object itself
         """
         self.random_state = check_random_state(self.random_state)
-        X = np.asanyarray(X)
+        X = np.asarray(X)
         V, U, E = dict_learning(X, self.n_atoms, self.alpha,
                                 tol=self.tol, max_iter=self.max_iter,
                                 method=self.fit_algorithm,
@@ -964,7 +968,7 @@ class MiniBatchDictionaryLearning(BaseDictionaryLearning):
             Returns the instance itself.
         """
         self.random_state = check_random_state(self.random_state)
-        X = np.asanyarray(X)
+        X = np.asarray(X)
         U = dict_learning_online(X, self.n_atoms, self.alpha,
                                  n_iter=self.n_iter, return_code=False,
                                  method=self.fit_algorithm,
@@ -991,7 +995,7 @@ class MiniBatchDictionaryLearning(BaseDictionaryLearning):
             Returns the instance itself.
         """
         self.random_state = check_random_state(self.random_state)
-        X = np.atleast_2d(X)
+        X = array2d(X)
         if hasattr(self, 'components_'):
             dict_init = self.components_
         else:

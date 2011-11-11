@@ -1,6 +1,6 @@
 from ..base import ClassifierMixin, RegressorMixin
 from ..linear_model.base import CoefSelectTransformerMixin
-from .base import BaseLibLinear, BaseLibSVM
+from .base import BaseLibLinear, DenseBaseLibSVM
 
 
 class LinearSVC(BaseLibLinear, ClassifierMixin, CoefSelectTransformerMixin):
@@ -83,7 +83,7 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, CoefSelectTransformerMixin):
     pass
 
 
-class SVC(BaseLibSVM, ClassifierMixin):
+class SVC(DenseBaseLibSVM, ClassifierMixin):
     """C-Support Vector Classification.
 
     Parameters
@@ -110,13 +110,16 @@ class SVC(BaseLibSVM, ClassifierMixin):
 
     probability: boolean, optional (default=False)
         Whether to enable probability estimates. This must be enabled prior
-        to calling prob_predict.
+        to calling predict_proba.
 
     shrinking: boolean, optional (default=True)
         Whether to use the shrinking heuristic.
 
     tol: float, optional (default=1e-3)
         Tolerance for stopping criterion.
+
+    cache_size: float, optional
+        Specify the size of the kernel cache (in MB)
 
     Attributes
     ----------
@@ -147,8 +150,8 @@ class SVC(BaseLibSVM, ClassifierMixin):
     >>> from sklearn.svm import SVC
     >>> clf = SVC()
     >>> clf.fit(X, y)
-    SVC(C=1.0, coef0=0.0, degree=3, gamma=0.5, kernel='rbf', probability=False,
-      shrinking=True, tol=0.001)
+    SVC(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma=0.5, kernel='rbf',
+      probability=False, shrinking=True, tol=0.001)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
 
@@ -159,13 +162,13 @@ class SVC(BaseLibSVM, ClassifierMixin):
 
     def __init__(self, C=1.0, kernel='rbf', degree=3, gamma=0.0,
                  coef0=0.0, shrinking=True, probability=False,
-                 tol=1e-3):
+                 tol=1e-3, cache_size=200):
 
-        BaseLibSVM.__init__(self, 'c_svc', kernel, degree, gamma, coef0,
-                         tol, C, 0., 0., shrinking, probability)
+        DenseBaseLibSVM.__init__(self, 'c_svc', kernel, degree, gamma, coef0,
+                                 tol, C, 0., 0., shrinking, probability, cache_size)
 
 
-class NuSVC(BaseLibSVM, ClassifierMixin):
+class NuSVC(DenseBaseLibSVM, ClassifierMixin):
     """Nu-Support Vector Classification.
 
     Parameters
@@ -194,13 +197,16 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
 
     probability: boolean, optional (default=False)
         Whether to enable probability estimates. This must be enabled prior
-        to calling prob_predict.
+        to calling predict_proba.
 
     shrinking: boolean, optional (default=True)
         Whether to use the shrinking heuristic.
 
     tol: float, optional (default=1e-3)
         Tolerance for stopping criterion.
+
+    cache_size: float, optional
+        Specify the size of the kernel cache (in MB)
 
     Attributes
     ----------
@@ -248,8 +254,8 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
     >>> from sklearn.svm import NuSVC
     >>> clf = NuSVC()
     >>> clf.fit(X, y)
-    NuSVC(coef0=0.0, degree=3, gamma=0.5, kernel='rbf', nu=0.5, probability=False,
-       shrinking=True, tol=0.001)
+    NuSVC(cache_size=200, coef0=0.0, degree=3, gamma=0.5, kernel='rbf', nu=0.5,
+       probability=False, shrinking=True, tol=0.001)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
 
@@ -260,14 +266,13 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
 
     def __init__(self, nu=0.5, kernel='rbf', degree=3, gamma=0.0,
                  coef0=0.0, shrinking=True, probability=False,
-                 tol=1e-3):
+                 tol=1e-3, cache_size=200):
 
-        BaseLibSVM.__init__(self, 'nu_svc', kernel, degree, gamma,
-                         coef0, tol, 0., nu, 0.,
-                         shrinking, probability)
+        DenseBaseLibSVM.__init__(self, 'nu_svc', kernel, degree, gamma,
+                                coef0, tol, 0., nu, 0., shrinking, probability, cache_size)
 
 
-class SVR(BaseLibSVM, RegressorMixin):
+class SVR(DenseBaseLibSVM, RegressorMixin):
     """epsilon-Support Vector Regression.
 
     The free parameters in the model are C and epsilon.
@@ -302,13 +307,16 @@ class SVR(BaseLibSVM, RegressorMixin):
 
     probability: boolean, optional (default=False)
         Whether to enable probability estimates. This must be enabled prior
-        to calling prob_predict.
+        to calling predict_proba.
 
     shrinking: boolean, optional (default=True)
         Whether to use the shrinking heuristic.
 
     tol: float, optional (default=1e-3)
         Tolerance for stopping criterion.
+
+    cache_size: float, optional
+        Specify the size of the kernel cache (in MB)
 
     Attributes
     ----------
@@ -338,8 +346,8 @@ class SVR(BaseLibSVM, RegressorMixin):
     >>> X = np.random.randn(n_samples, n_features)
     >>> clf = SVR(C=1.0, epsilon=0.2)
     >>> clf.fit(X, y)
-    SVR(C=1.0, coef0=0.0, degree=3, epsilon=0.2, gamma=0.2, kernel='rbf',
-      probability=False, shrinking=True, tol=0.001)
+    SVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.2, gamma=0.2,
+      kernel='rbf', probability=False, shrinking=True, tol=0.001)
 
     See also
     --------
@@ -347,11 +355,11 @@ class SVR(BaseLibSVM, RegressorMixin):
     """
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
                  tol=1e-3, C=1.0, epsilon=0.1, shrinking=True,
-                 probability=False):
+                 probability=False, cache_size=200):
 
-        BaseLibSVM.__init__(self, 'epsilon_svr', kernel, degree,
-                         gamma, coef0, tol, C, 0.0,
-                         epsilon, shrinking, probability)
+        DenseBaseLibSVM.__init__(self, 'epsilon_svr', kernel, degree, gamma,
+                                 coef0, tol, C, 0., epsilon, shrinking,
+                                 probability, cache_size)
 
     def fit(self, X, y, sample_weight=None, **params):
         """
@@ -364,6 +372,9 @@ class SVR(BaseLibSVM, RegressorMixin):
             n_features is the number of features.
         y : array, shape = [n_samples]
             Target values. Array of floating-point numbers.
+        cache_size: float, optional
+            Specify the size of the cache (in MB)
+
 
         Returns
         -------
@@ -371,10 +382,11 @@ class SVR(BaseLibSVM, RegressorMixin):
             Returns self.
         """
         # we copy this method because SVR does not accept class_weight
-        return BaseLibSVM.fit(self, X, y, sample_weight=sample_weight, **params)
+        return DenseBaseLibSVM.fit(self, X, y, sample_weight=sample_weight,
+                                  **params)
 
 
-class NuSVR(BaseLibSVM, RegressorMixin):
+class NuSVR(DenseBaseLibSVM, RegressorMixin):
     """Nu Support Vector Regression.
 
     Similar to NuSVC, for regression, uses a parameter nu to control
@@ -410,13 +422,16 @@ class NuSVR(BaseLibSVM, RegressorMixin):
 
     probability: boolean, optional (default=False)
         Whether to enable probability estimates. This must be enabled prior
-        to calling prob_predict.
+        to calling predict_proba.
 
     shrinking: boolean, optional (default=True)
         Whether to use the shrinking heuristic.
 
     tol: float, optional (default=1e-3)
         Tolerance for stopping criterion.
+
+    cache_size: float, optional
+        Specify the size of the kernel cache (in MB)
 
     Attributes
     ----------
@@ -446,8 +461,8 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     >>> X = np.random.randn(n_samples, n_features)
     >>> clf = NuSVR(C=1.0, nu=0.1)
     >>> clf.fit(X, y)
-    NuSVR(C=1.0, coef0=0.0, degree=3, gamma=0.2, kernel='rbf', nu=0.1,
-       probability=False, shrinking=True, tol=0.001)
+    NuSVR(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma=0.2, kernel='rbf',
+       nu=0.1, probability=False, shrinking=True, tol=0.001)
 
     See also
     --------
@@ -456,11 +471,10 @@ class NuSVR(BaseLibSVM, RegressorMixin):
 
     def __init__(self, nu=0.5, C=1.0, kernel='rbf', degree=3,
                  gamma=0.0, coef0=0.0, shrinking=True,
-                 probability=False, tol=1e-3):
+                 probability=False, tol=1e-3, cache_size=200):
 
-        BaseLibSVM.__init__(self, 'nu_svr', kernel, degree,
-                         gamma, coef0, tol, C, nu,
-                         None, shrinking, probability)
+        DenseBaseLibSVM.__init__(self, 'nu_svr', kernel, degree, gamma, coef0,
+                                 tol, C, nu, None, shrinking, probability, cache_size)
 
     def fit(self, X, y, sample_weight=None, **params):
         """
@@ -480,10 +494,10 @@ class NuSVR(BaseLibSVM, RegressorMixin):
             Returns self.
         """
         # we copy this method because SVR does not accept class_weight
-        return BaseLibSVM.fit(self, X, y, sample_weight=[], **params)
+        return DenseBaseLibSVM.fit(self, X, y, sample_weight=[], **params)
 
 
-class OneClassSVM(BaseLibSVM):
+class OneClassSVM(DenseBaseLibSVM):
     """Unsupervised Outliers Detection.
 
     Estimate the support of a high-dimensional distribution.
@@ -518,6 +532,9 @@ class OneClassSVM(BaseLibSVM):
     shrinking: boolean, optional
         Whether to use the shrinking heuristic.
 
+    cache_size: float, optional
+        Specify the size of the kernel cache (in MB)
+
     Attributes
     ----------
     `support_` : array-like, shape = [n_SV]
@@ -538,9 +555,9 @@ class OneClassSVM(BaseLibSVM):
 
     """
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
-                 tol=1e-3, nu=0.5, shrinking=True):
-        BaseLibSVM.__init__(self, 'one_class', kernel, degree, gamma, coef0,
-                             tol, 0.0, nu, 0.0, shrinking, False)
+                 tol=1e-3, nu=0.5, shrinking=True, cache_size=200):
+        DenseBaseLibSVM.__init__(self, 'one_class', kernel, degree, gamma,
+                                 coef0, tol, 0., nu, 0., shrinking, False, cache_size)
 
     def fit(self, X, class_weight={}, sample_weight=None, **params):
         """
@@ -565,4 +582,3 @@ class OneClassSVM(BaseLibSVM):
         super(OneClassSVM, self).fit(
             X, [], class_weight=class_weight, sample_weight=sample_weight,
             **params)
-

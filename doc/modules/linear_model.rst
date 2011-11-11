@@ -43,7 +43,7 @@ and will store the coefficients :math:`w` of the linear model in its
     >>> from sklearn import linear_model
     >>> clf = linear_model.LinearRegression()
     >>> clf.fit ([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
-    LinearRegression(fit_intercept=True, normalize=False, overwrite_X=False)
+    LinearRegression(copy_X=True, fit_intercept=True, normalize=False)
     >>> clf.coef_
     array([ 0.5,  0.5])
 
@@ -100,8 +100,7 @@ its `coef\_` member::
     >>> from sklearn import linear_model
     >>> clf = linear_model.Ridge (alpha = .5)
     >>> clf.fit ([[0, 0], [0, 0], [1, 1]], [0, .1, 1])
-    Ridge(alpha=0.5, fit_intercept=True, normalize=False, overwrite_X=False,
-       tol=0.001)
+    Ridge(alpha=0.5, copy_X=True, fit_intercept=True, normalize=False, tol=0.001)
     >>> clf.coef_
     array([ 0.34545455,  0.34545455])
     >>> clf.intercept_ #doctest: +ELLIPSIS
@@ -176,8 +175,8 @@ for another implementation::
 
     >>> clf = linear_model.Lasso(alpha = 0.1)
     >>> clf.fit([[0, 0], [1, 1]], [0, 1])
-    Lasso(alpha=0.1, fit_intercept=True, max_iter=1000, normalize=False,
-       overwrite_X=False, precompute='auto', tol=0.0001)
+    Lasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
+       normalize=False, precompute='auto', tol=0.0001)
     >>> clf.predict([[1, 1]])
     array([ 0.8])
 
@@ -323,10 +322,9 @@ function of the norm of its coefficients.
 
    >>> from sklearn import linear_model
    >>> clf = linear_model.LassoLars(alpha=.1)
-   >>> clf.fit ([[0, 0], [1, 1]], [0, 1])                 # doctest: +ELLIPSIS
-   LassoLars(alpha=0.1, eps=..., fit_intercept=True,
-        max_iter=500, normalize=True, overwrite_X=False, precompute='auto',
-        verbose=False)
+   >>> clf.fit([[0, 0], [1, 1]], [0, 1])                # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+   LassoLars(alpha=0.1, copy_X=True, eps=..., fit_intercept=True,
+        max_iter=500, normalize=True, precompute='auto', verbose=False)
    >>> clf.coef_    # doctest: +ELLIPSIS
    array([ 0.717157...,  0.        ])
 
@@ -403,20 +401,20 @@ Bayesian Regression
 
 Bayesian regression techniques can be used to include regularization
 parameters in the estimation procedure: the regularization parameter is
-not set in a hard sens but tuned to the data at hand.
+not set in a hard sense but tuned to the data at hand.
 
 This can be done by introducing some prior knowledge over the parameters.
 For example, penalization by weighted :math:`\ell_{2}` norm is equivalent
 to setting Gaussian priors on the weights.
 
-The advantages of *Bayesian Regression* are:
+The advantages of Bayesian Regression are:
 
     - It adapts to the data at hand.
 
     - It can be used to include regularization parameters in the
       estimation procedure.
 
-The disadvantages of *Bayesian Regression* include:
+The disadvantages of Bayesian regression include:
 
     - Inference of the model can be time consuming.
 
@@ -432,7 +430,7 @@ Bayesian Ridge Regression
     \mathcal{N}(\beta|0,\lambda^{-1}\bold{I_{p}})
 
 The resulting model is called *Bayesian Ridge Regression*, it is
-similar to the classical :class:`Ridge`.  :math:`\lambda` is an
+similar to the classical :class:`Ridge`.  :math:`\lambda` is a
 *hyper-parameter* and the prior over :math:`\beta` performs a
 shrinkage or regularization, by constraining the values of the weights
 to be small. Indeed, with a large value of :math:`\lambda`, the
@@ -450,8 +448,8 @@ There is also a Gamma prior for :math:`\lambda` and :math:`\alpha`:
 .. math:: g(\lambda|\lambda_1,\lambda_2) = \frac{\lambda_2^{\lambda_1}}
     {\Gamma(\lambda_1)} \lambda^{\lambda_1-1} e^{-\lambda_2 {\lambda}}
 
-By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e^{-6}`, *i.e.*
- very slightly informative priors.
+By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e^{-6}`,
+*i.e.* very slightly informative priors.
 
 
 
@@ -460,16 +458,16 @@ By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e^{-6}`, *i.e
    :align: center
 
 
-*Bayesian Ridge Regression* is used for regression::
+Bayesian Ridge Regression is used for regression::
 
     >>> from sklearn import linear_model
     >>> X = [[0., 0.], [1., 1.], [2., 2.], [3., 3.]]
     >>> Y = [0., 1., 2., 3.]
     >>> clf = linear_model.BayesianRidge()
-    >>> clf.fit (X, Y)
-    BayesianRidge(alpha_1=1e-06, alpha_2=1e-06, compute_score=False,
+    >>> clf.fit(X, Y)
+    BayesianRidge(alpha_1=1e-06, alpha_2=1e-06, compute_score=False, copy_X=True,
            fit_intercept=True, lambda_1=1e-06, lambda_2=1e-06, n_iter=300,
-           normalize=False, overwrite_X=False, tol=0.001, verbose=False)
+           normalize=False, tol=0.001, verbose=False)
 
 After being fitted, the model can then be used to predict new values::
 
@@ -483,8 +481,8 @@ The weights :math:`\beta` of the model can be access::
     array([ 0.49999993,  0.49999993])
 
 Due to the Bayesian framework, the weights found are slightly different to the
-ones found by :ref:`ordinary_least_squares`. However, *Bayesian Ridge
-Regression* is more robust to ill-posed problem.
+ones found by :ref:`ordinary_least_squares`. However, Bayesian Ridge
+Regression is more robust to ill-posed problem.
 
 .. topic:: Examples:
 

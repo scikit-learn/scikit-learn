@@ -14,6 +14,7 @@ import numpy as np
 from scipy import linalg
 
 from ..base import BaseEstimator
+from ..utils import array2d
 
 __all__ = ['fastica', 'FastICA']
 
@@ -121,7 +122,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
 
     Parameters
     ----------
-    X : (n, p) array of shape = [n_samples, n_features], optional
+    X : array-like, shape = [n_samples, n_features]
         Training vector, where n_samples is the number of samples and
         n_features is the number of features.
     n_components : int, optional
@@ -197,7 +198,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     # make interface compatible with other decompositions
     warnings.warn("Please note: the interface of fastica has changed: "
                   "X is now assumed to be of shape [n_samples, n_features]")
-    X = X.T
+    X = array2d(X).T
 
     algorithm_funcs = {'parallel': _ica_par,
                        'deflation': _ica_def}

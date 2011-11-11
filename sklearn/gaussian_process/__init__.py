@@ -13,7 +13,9 @@ Contains
 --------
 GaussianProcess: The main class of the module that implements the Gaussian
                  Process prediction theory.
+
 regression_models: A submodule that contains the built-in regression models.
+
 correlation_models: A submodule that contains the built-in correlation models.
 
 Implementation details

@@ -13,11 +13,7 @@ machine-learning as a versatile tool for science and engineering.
 See http://scikit-learn.sourceforge.net for complete documentation.
 """
 
-try:
-    from . import check_build
-except ImportError:
-    raise ImportError("Please do not forget to run `make` first")
-
+from . import check_build
 from .base import clone
 
 

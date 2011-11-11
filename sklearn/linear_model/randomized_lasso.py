@@ -11,7 +11,7 @@ from scipy.sparse import issparse
 
 from .base import center_data
 from ..base import TransformerMixin
-from ..utils import as_float_array, check_random_state, safe_asanyarray
+from ..utils import as_float_array, check_random_state
 from ..externals.joblib import Parallel, delayed
 from .least_angle import lars_path, LassoLarsIC
 from .logistic import LogisticRegression
@@ -131,7 +131,7 @@ class BaseRandomizedLinearModel(TransformerMixin):
         """
         Transform a new matrix using the selected features
         """
-        return safe_asanyarray(X)[:, self.get_support(indices=issparse(X))]
+        return np.asarray(X)[:, self.get_support(indices=issparse(X))]
 
     def inverse_transform(self, X):
         """

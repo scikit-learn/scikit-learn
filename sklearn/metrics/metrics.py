@@ -17,16 +17,14 @@ import numpy as np
 from ..utils import check_arrays
 
 
-def unique_labels(*list_of_labels):
-    """Extract an ordered integer array of unique labels
-
-    This implementation ignores any occurrence of NaNs.
-
-    """
-    list_of_labels = [np.unique(labels[np.isfinite(labels)].ravel())
-                      for labels in list_of_labels]
-    list_of_labels = np.concatenate(list_of_labels)
-    return np.unique(list_of_labels)
+def unique_labels(*lists_of_labels):
+    """Extract an ordered array of unique labels"""
+    labels = set()
+    for l in lists_of_labels:
+        if hasattr(l, 'ravel'):
+            l = l.ravel()
+        labels |= set(l)
+    return np.unique(sorted(labels))
 
 
 def confusion_matrix(y_true, y_pred, labels=None):
@@ -112,14 +110,14 @@ def roc_curve(y_true, y_score):
     http://en.wikipedia.org/wiki/Receiver_operating_characteristic
 
     """
-    y_true = y_true.ravel()
+    y_true = np.ravel(y_true)
     classes = np.unique(y_true)
 
     # ROC only for binary classification
     if classes.shape[0] != 2:
         raise ValueError("ROC is defined for binary classification only")
 
-    y_score = y_score.ravel()
+    y_score = np.ravel(y_score)
 
     n_pos = float(np.sum(y_true == classes[1]))  # nb of true positive
     n_neg = float(np.sum(y_true == classes[0]))  # nb of true negative
