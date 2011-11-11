@@ -34,6 +34,10 @@ Changelog
    - Adjusted Mutual Information metric added as
      ``sklearn.metrics.adjusted_mutual_info_score`` by `Robert Layton`_.
 
+   - Models like SVC/SVR/LinearSVC/LogisticRegression from libsvm/liblinear
+     now support scaling of C regularization parameter by the number of
+     samples by `Alexandre Gramfort`_.
+
 
 API changes summary
 -------------------

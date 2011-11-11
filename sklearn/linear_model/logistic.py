@@ -47,6 +47,10 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin,
     tol: float, optional
          tolerance for stopping criteria
 
+    C_scale_n_samples : bool
+        Scale C with number of samples. It makes the setting of C independant
+        of the number of samples.
+
     Attributes
     ----------
 
@@ -75,11 +79,13 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin,
     """
 
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
-                 fit_intercept=True, intercept_scaling=1):
+                 fit_intercept=True, intercept_scaling=1,
+                 C_scale_n_samples=False):
 
         super(LogisticRegression, self).__init__(penalty=penalty,
             dual=dual, loss='lr', tol=tol, C=C,
-            fit_intercept=fit_intercept, intercept_scaling=intercept_scaling)
+            fit_intercept=fit_intercept, intercept_scaling=intercept_scaling,
+            C_scale_n_samples=C_scale_n_samples)
 
     def predict_proba(self, X):
         """

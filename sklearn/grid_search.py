@@ -201,7 +201,7 @@ class GridSearchCV(BaseEstimator):
     >>> clf = grid_search.GridSearchCV(svr, parameters)
     >>> clf.fit(iris.data, iris.target) # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     GridSearchCV(cv=None,
-           estimator=SVR(C=1.0, cache_size=..., coef0=..., degree=..., epsilon=..., gamma=...,
+           estimator=SVR(C=1.0, C_scale_n_samples=False, cache_size=..., coef0=..., degree=..., epsilon=..., gamma=...,
       kernel='rbf', probability=False, shrinking=True, tol=...),
            fit_params={}, iid=True, loss_func=None, n_jobs=1,
            param_grid=...,

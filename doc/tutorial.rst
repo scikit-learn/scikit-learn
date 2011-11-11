@@ -152,8 +152,8 @@ set, let us use all the images of our dataset apart from the last
 one::
 
   >>> clf.fit(digits.data[:-1], digits.target[:-1])
-  SVC(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma=0.001, kernel='rbf',
-    probability=False, shrinking=True, tol=0.001)
+  SVC(C=1.0, C_scale_n_samples=False, cache_size=200, coef0=0.0, degree=3,
+    gamma=0.001, kernel='rbf', probability=False, shrinking=True, tol=0.001)
 
 Now you can predict new values, in particular, we can ask to the
 classifier what is the digit of our last image in the `digits` dataset,
@@ -188,8 +188,8 @@ persistence model, namely `pickle <http://docs.python.org/library/pickle.html>`_
   >>> iris = datasets.load_iris()
   >>> X, y = iris.data, iris.target
   >>> clf.fit(X, y)
-  SVC(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma=0.25, kernel='rbf',
-    probability=False, shrinking=True, tol=0.001)
+  SVC(C=1.0, C_scale_n_samples=False, cache_size=200, coef0=0.0, degree=3,
+    gamma=0.25, kernel='rbf', probability=False, shrinking=True, tol=0.001)
 
   >>> import pickle
   >>> s = pickle.dumps(clf)

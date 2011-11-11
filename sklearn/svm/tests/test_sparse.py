@@ -1,10 +1,11 @@
 import numpy as np
+from scipy import linalg
 import scipy.sparse
 from sklearn import datasets, svm, linear_model
 from numpy.testing import assert_array_almost_equal, \
      assert_array_equal, assert_equal
 
-from nose.tools import assert_raises
+from nose.tools import assert_raises, assert_true
 from sklearn.datasets.samples_generator import make_classification
 from sklearn.svm.tests import test_svm
 
@@ -195,6 +196,20 @@ def test_sparse_realdata():
 
     assert_array_equal(clf.support_vectors_, sp_clf.support_vectors_.todense())
     assert_array_equal(clf.dual_coef_, sp_clf.dual_coef_.todense())
+
+
+def test_SVC_C_scale_n_samples():
+    """Check that sparse SVC works ok with scaling of C"""
+
+    clf = svm.SVC(kernel='linear', C_scale_n_samples=True).fit(X, Y)
+
+    sp_clf = svm.sparse.SVC(kernel='linear', C_scale_n_samples=True).fit(X, Y)
+    assert_array_almost_equal(clf.coef_, sp_clf.coef_.todense(), 5)
+
+    sp_clf = svm.sparse.SVC(kernel='linear', C_scale_n_samples=False).fit(X, Y)
+    error_with_scale = linalg.norm(clf.coef_
+                                   - sp_clf.coef_) / linalg.norm(clf.coef_)
+    assert_true(error_with_scale > 1e-3)
 
 
 if __name__ == '__main__':

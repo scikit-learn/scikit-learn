@@ -36,7 +36,8 @@ class BaseLibSVM(BaseEstimator):
     """
 
     def __init__(self, impl, kernel, degree, gamma, coef0,
-                 tol, C, nu, epsilon, shrinking, probability, cache_size):
+                 tol, C, nu, epsilon, shrinking, probability, cache_size,
+                 C_scale_n_samples):
 
         if not impl in LIBSVM_IMPL:
             raise ValueError("impl should be one of %s, %s was given" % (
@@ -57,6 +58,7 @@ class BaseLibSVM(BaseEstimator):
         self.shrinking = shrinking
         self.probability = probability
         self.cache_size = cache_size
+        self.C_scale_n_samples = C_scale_n_samples
 
     def predict_log_proba(self, T):
         """Compute the log likehoods each possible outcomes of samples in T.
@@ -166,13 +168,19 @@ class DenseBaseLibSVM(BaseLibSVM):
             self.gamma = 1.0 / X.shape[1]
         self.shape_fit_ = X.shape
 
+        params = self._get_params()
+        if 'C_scale_n_samples' in params:
+            if params['C_scale_n_samples']:
+                params['C'] = params['C'] / float(X.shape[0])
+            del params['C_scale_n_samples']
+
         self.support_, self.support_vectors_, self.n_support_, \
         self.dual_coef_, self.intercept_, self.label_, self.probA_, \
         self.probB_ = libsvm.fit(X, y,
             svm_type=solver_type, sample_weight=sample_weight,
             class_weight=class_weight,
             class_weight_label=class_weight_label,
-            **self._get_params())
+            **params)
 
         return self
 
@@ -210,12 +218,16 @@ class DenseBaseLibSVM(BaseLibSVM):
                              "the number of features at training time" %
                              (n_features, self.shape_fit_[1]))
 
+        params = self._get_params()
+        if 'C_scale_n_samples' in params:
+            del params['C_scale_n_samples']
+
         svm_type = LIBSVM_IMPL.index(self.impl)
         return libsvm.predict(
             X, self.support_, self.support_vectors_, self.n_support_,
             self.dual_coef_, self.intercept_,
             self.label_, self.probA_, self.probB_,
-            svm_type=svm_type, **self._get_params())
+            svm_type=svm_type, **params)
 
     def predict_proba(self, X):
         """Compute the likehoods each possible outcomes of samples in T.
@@ -253,12 +265,16 @@ class DenseBaseLibSVM(BaseLibSVM):
             raise NotImplementedError("predict_proba only implemented for SVC "
                                       "and NuSVC")
 
+        params = self._get_params()
+        if 'C_scale_n_samples' in params:
+            del params['C_scale_n_samples']
+
         svm_type = LIBSVM_IMPL.index(self.impl)
         pprob = libsvm.predict_proba(
             X, self.support_, self.support_vectors_, self.n_support_,
             self.dual_coef_, self.intercept_, self.label_,
             self.probA_, self.probB_,
-            svm_type=svm_type, **self._get_params())
+            svm_type=svm_type, **params)
 
         return pprob
 
@@ -281,12 +297,15 @@ class DenseBaseLibSVM(BaseLibSVM):
             X = np.reshape(X, (1, -1), order='C')
         X = self._compute_kernel(X)
 
+        params = self._get_params()
+        del params['C_scale_n_samples']
+
         dec_func = libsvm.decision_function(
             X, self.support_, self.support_vectors_, self.n_support_,
             self.dual_coef_, self.intercept_, self.label_,
             self.probA_, self.probB_,
             svm_type=LIBSVM_IMPL.index(self.impl),
-            **self._get_params())
+            **params)
 
         if self.impl != 'one_class':
             # libsvm has the convention of returning negative values for
@@ -312,7 +331,8 @@ class BaseLibLinear(BaseEstimator):
         }
 
     def __init__(self, penalty='l2', loss='l2', dual=True, tol=1e-4, C=1.0,
-                 multi_class=False, fit_intercept=True, intercept_scaling=1):
+                 multi_class=False, fit_intercept=True, intercept_scaling=1,
+                 C_scale_n_samples=False):
         self.penalty = penalty
         self.loss = loss
         self.dual = dual
@@ -321,6 +341,7 @@ class BaseLibLinear(BaseEstimator):
         self.fit_intercept = fit_intercept
         self.intercept_scaling = intercept_scaling
         self.multi_class = multi_class
+        self.C_scale_n_samples = C_scale_n_samples
 
         # Check that the arguments given are valid:
         self._get_solver_type()
@@ -386,9 +407,13 @@ class BaseLibLinear(BaseEstimator):
                              % type(X))
         y = np.asarray(y, dtype=np.int32, order='C')
 
+        C = self.C
+        if self.C_scale_n_samples:
+            C = C / float(X.shape[0])
+
         self.raw_coef_, self.label_ = liblinear.train_wrap(X, y,
                        self._get_solver_type(), self.tol,
-                       self._get_bias(), self.C,
+                       self._get_bias(), C,
                        self.class_weight_label, self.class_weight)
 
         return self
