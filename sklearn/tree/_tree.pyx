@@ -406,7 +406,7 @@ def _apply_tree(np.ndarray[DTYPE_t, ndim=2] X,
     cdef int i = 0
     cdef int n = X.shape[0]
     cdef int node_id = 0
-    for i from 0 <= i < n:
+    for i in xrange(n):
         node_id = 0
         # While node_id not a leaf
         while left[node_id] != -1 and right[node_id] != -1:
