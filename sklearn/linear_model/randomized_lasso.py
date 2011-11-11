@@ -90,7 +90,7 @@ class BaseRandomizedLinearModel(TransformerMixin):
         n_samples, n_features = X.shape
         y = np.atleast_1d(y)
 
-        X = as_float_array(X, overwrite_X=False)
+        X = as_float_array(X, copy=False)
 
         X, y, X_mean, y_mean, X_std = self._center_data(X, y,
                                                         self.fit_intercept,
