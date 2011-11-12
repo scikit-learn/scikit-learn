@@ -198,15 +198,15 @@ def test_sparse_realdata():
     assert_array_equal(clf.dual_coef_, sp_clf.dual_coef_.todense())
 
 
-def test_SVC_C_scale_n_samples():
+def test_SVC_scale_C():
     """Check that sparse SVC works ok with scaling of C"""
 
-    clf = svm.SVC(kernel='linear', C_scale_n_samples=True).fit(X, Y)
+    clf = svm.SVC(kernel='linear', scale_C=True).fit(X, Y)
 
-    sp_clf = svm.sparse.SVC(kernel='linear', C_scale_n_samples=True).fit(X, Y)
+    sp_clf = svm.sparse.SVC(kernel='linear', scale_C=True).fit(X, Y)
     assert_array_almost_equal(clf.coef_, sp_clf.coef_.todense(), 5)
 
-    sp_clf = svm.sparse.SVC(kernel='linear', C_scale_n_samples=False).fit(X, Y)
+    sp_clf = svm.sparse.SVC(kernel='linear', scale_C=False).fit(X, Y)
     error_with_scale = linalg.norm(clf.coef_
                                    - sp_clf.coef_) / linalg.norm(clf.coef_)
     assert_true(error_with_scale > 1e-3)

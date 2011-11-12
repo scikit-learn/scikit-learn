@@ -37,7 +37,7 @@ class BaseLibSVM(BaseEstimator):
 
     def __init__(self, impl, kernel, degree, gamma, coef0,
                  tol, C, nu, epsilon, shrinking, probability, cache_size,
-                 C_scale_n_samples):
+                 scale_C):
 
         if not impl in LIBSVM_IMPL:
             raise ValueError("impl should be one of %s, %s was given" % (
@@ -58,7 +58,7 @@ class BaseLibSVM(BaseEstimator):
         self.shrinking = shrinking
         self.probability = probability
         self.cache_size = cache_size
-        self.C_scale_n_samples = C_scale_n_samples
+        self.scale_C = scale_C
 
     def predict_log_proba(self, T):
         """Compute the log likehoods each possible outcomes of samples in T.
@@ -169,10 +169,10 @@ class DenseBaseLibSVM(BaseLibSVM):
         self.shape_fit_ = X.shape
 
         params = self._get_params()
-        if 'C_scale_n_samples' in params:
-            if params['C_scale_n_samples']:
+        if 'scale_C' in params:
+            if params['scale_C']:
                 params['C'] = params['C'] / float(X.shape[0])
-            del params['C_scale_n_samples']
+            del params['scale_C']
 
         self.support_, self.support_vectors_, self.n_support_, \
         self.dual_coef_, self.intercept_, self.label_, self.probA_, \
@@ -219,8 +219,8 @@ class DenseBaseLibSVM(BaseLibSVM):
                              (n_features, self.shape_fit_[1]))
 
         params = self._get_params()
-        if 'C_scale_n_samples' in params:
-            del params['C_scale_n_samples']
+        if 'scale_C' in params:
+            del params['scale_C']
 
         svm_type = LIBSVM_IMPL.index(self.impl)
         return libsvm.predict(
@@ -266,8 +266,8 @@ class DenseBaseLibSVM(BaseLibSVM):
                                       "and NuSVC")
 
         params = self._get_params()
-        if 'C_scale_n_samples' in params:
-            del params['C_scale_n_samples']
+        if 'scale_C' in params:
+            del params['scale_C']
 
         svm_type = LIBSVM_IMPL.index(self.impl)
         pprob = libsvm.predict_proba(
@@ -298,7 +298,7 @@ class DenseBaseLibSVM(BaseLibSVM):
         X = self._compute_kernel(X)
 
         params = self._get_params()
-        del params['C_scale_n_samples']
+        del params['scale_C']
 
         dec_func = libsvm.decision_function(
             X, self.support_, self.support_vectors_, self.n_support_,
@@ -332,7 +332,7 @@ class BaseLibLinear(BaseEstimator):
 
     def __init__(self, penalty='l2', loss='l2', dual=True, tol=1e-4, C=1.0,
                  multi_class=False, fit_intercept=True, intercept_scaling=1,
-                 C_scale_n_samples=False):
+                 scale_C=False):
         self.penalty = penalty
         self.loss = loss
         self.dual = dual
@@ -341,7 +341,7 @@ class BaseLibLinear(BaseEstimator):
         self.fit_intercept = fit_intercept
         self.intercept_scaling = intercept_scaling
         self.multi_class = multi_class
-        self.C_scale_n_samples = C_scale_n_samples
+        self.scale_C = scale_C
 
         # Check that the arguments given are valid:
         self._get_solver_type()
@@ -408,7 +408,7 @@ class BaseLibLinear(BaseEstimator):
         y = np.asarray(y, dtype=np.int32, order='C')
 
         C = self.C
-        if self.C_scale_n_samples:
+        if self.scale_C:
             C = C / float(X.shape[0])
 
         self.raw_coef_, self.label_ = liblinear.train_wrap(X, y,
