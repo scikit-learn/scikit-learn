@@ -396,8 +396,7 @@ cdef class MSE(RegressionCriterion):
 
 
 def _apply_tree(np.ndarray[DTYPE_t, ndim=2] X,
-                np.ndarray[np.int32_t, ndim=1] left,
-                np.ndarray[np.int32_t, ndim=1] right,
+                np.ndarray[np.int32_t, ndim=2] children,
                 np.ndarray[np.int32_t, ndim=1] feature,
                 np.ndarray[np.float64_t, ndim=1] threshold,
                 np.ndarray[np.int32_t, ndim=1] out):
@@ -409,11 +408,11 @@ def _apply_tree(np.ndarray[DTYPE_t, ndim=2] X,
     for i in xrange(n):
         node_id = 0
         # While node_id not a leaf
-        while left[node_id] != -1 and right[node_id] != -1:
+        while children[node_id, 0] != -1 and children[node_id, 1] != -1:
             if X[i, feature[node_id]] <= threshold[node_id]:
-                node_id = left[node_id]
+                node_id = children[node_id, 0]
             else:
-                node_id = right[node_id]
+                node_id = children[node_id, 1]
         out[i] = node_id
 
 

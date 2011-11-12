@@ -160,6 +160,10 @@
 
         {% endif %}
 
+        <p style="text-align: center">This documentation is
+        for {{project}} <strong>version {{ release|e }}</strong>
+	&mdash; <a href="http://scikit-learn.org/stable/support.html#documentation-resources">Other versions</a></p>
+
 	{%- if toc|length != 11 %}
         <h3>{{ _('This page') }}</h3>
          {{ toc }}
@@ -201,9 +205,6 @@
 
 {%- block footer %}
     <div class="footer">
-        <p style="text-align: center">This documentation is relative
-        to {{project}} version {{ release|e }}<p>
-
     {%- if show_copyright %}
       {%- if hasdoc('copyright') %}
         {% trans path=pathto('copyright'), copyright=copyright|e %}&copy; {{ copyright }}.{% endtrans %}

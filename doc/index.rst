@@ -95,7 +95,7 @@
 
 .. include:: includes/big_toc_css.rst
 
-This document describes scikit-learn |release|. For other versions and
+Documentation for scikit-learn **version** |release|. For other versions and
 printable format, see :ref:`documentation_resources`.
 
 User Guide
