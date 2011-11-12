@@ -1,5 +1,10 @@
 """
-Ensemble algorithms.
+Ensemble methods
+================
+
+:mod:`sklearn.ensemble` is a module including ensemble-based methods for
+classification and regression.
+
 """
 
 from .forest import RandomForestClassifier

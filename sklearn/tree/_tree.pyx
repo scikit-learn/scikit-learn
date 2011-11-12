@@ -516,6 +516,9 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
     best_t : DTYPE_t
         The split threshold
 
+    best_error : DTYPE_t
+        The split error
+
     initial_error : DTYPE_t
         The initial error contained in the node.
     """
@@ -644,6 +647,9 @@ def _find_best_random_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
 
     best_t : DTYPE_t
         The split threshold
+
+    best_error : DTYPE_t
+        The split error
 
     initial_error : DTYPE_t
         The initial error contained in the node.
