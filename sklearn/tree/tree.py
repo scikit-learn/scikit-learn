@@ -20,7 +20,9 @@ from . import _tree
 
 __all__ = [
     "DecisionTreeClassifier",
-    "DecisionTreeRegressor"
+    "DecisionTreeRegressor",
+    "ExtraTreeClassifier",
+    "ExtraTreeRegressor"
 ]
 
 DTYPE = _tree.DTYPE
@@ -690,3 +692,64 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
                                                     min_density,
                                                     max_features,
                                                     random_state)
+
+class ExtraTreeClassifier(DecisionTreeClassifier):
+    """An extremely randomized tree classifier.
+
+    Extra-trees differ from classic decision trees in the way they are built.
+    When looking for the best split to separate the samples of a node into two
+    groups, random splits are drawn for each of the `max_features` randomly
+    selected features and the best split among those is chosen. When
+    `max_features` is set 1, this amounts to building a totally random
+    decision tree.
+
+    References
+    ----------
+    .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
+           Machine Learning, 63(1), 3-42, 2006.
+    """
+    def __init__(self, criterion="gini",
+                       max_depth=10,
+                       min_split=1,
+                       min_density=0.1,
+                       max_features=None,
+                       random_state=None):
+        super(ExtraTreeClassifier, self).__init__(criterion,
+                                                  max_depth,
+                                                  min_split,
+                                                  min_density,
+                                                  max_features,
+                                                  random_state)
+
+        self.find_split = _tree._find_best_random_split
+
+class ExtraTreeRegressor(DecisionTreeRegressor):
+    """An extremely randomized tree regressor.
+
+    Extra-trees differ from classic decision trees in the way they are built.
+    When looking for the best split to separate the samples of a node into two
+    groups, random splits are drawn for each of the `max_features` randomly
+    selected features and the best split among those is chosen. When
+    `max_features` is set 1, this amounts to building a totally random
+    decision tree.
+
+    References
+    ----------
+    .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
+           Machine Learning, 63(1), 3-42, 2006.
+    """
+    def __init__(self, criterion="mse",
+                       max_depth=10,
+                       min_split=1,
+                       min_density=0.1,
+                       max_features=None,
+                       random_state=None):
+        super(ExtraTreeRegressor, self).__init__(criterion,
+                                                 max_depth,
+                                                 min_split,
+                                                 min_density,
+                                                 max_features,
+                                                 random_state)
+
+        self.find_split = _tree._find_best_random_split
+
