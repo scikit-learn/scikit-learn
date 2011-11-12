@@ -498,13 +498,13 @@ def test_samples_scaling():
             linear_model.LogisticRegression(penalty='l2', tol=1e-6)]
 
     for clf in clfs:
-        clf.set_params(C_scale_n_samples=False)
+        clf.set_params(scale_C=False)
         coef_ = clf.fit(X, y).coef_
         coef2_ = clf.fit(X2, y2).coef_
         error_no_scale = linalg.norm(coef2_ - coef_) / linalg.norm(coef_)
         assert_true(error_no_scale > 1e-3)
 
-        clf.set_params(C_scale_n_samples=True)
+        clf.set_params(scale_C=True)
         coef_ = clf.fit(X, y).coef_
         coef2_ = clf.fit(X2, y2).coef_
         error_with_scale = linalg.norm(coef2_ - coef_) / linalg.norm(coef_)
