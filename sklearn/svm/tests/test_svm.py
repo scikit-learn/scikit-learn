@@ -493,8 +493,6 @@ def test_samples_scaling():
 
     clfs = [svm.SVC(tol=1e-6, kernel='linear', C=0.1),
             svm.SVR(tol=1e-6, kernel='linear', C=100),
-            svm.NuSVR(tol=1e-6, kernel='linear'),
-            # svm.NuSVC(tol=1e-6, kernel='linear'),  # XXX : why no C ?
             svm.LinearSVC(tol=1e-6, C=0.1),
             linear_model.LogisticRegression(penalty='l1', tol=1e-6, C=100),
             linear_model.LogisticRegression(penalty='l2', tol=1e-6)]
