@@ -53,7 +53,7 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, CoefSelectTransformerMixin):
         (and therefore on the intercept) intercept_scaling has to be increased
 
     C_scale_n_samples : bool
-        Scale C with number of samples. It makes the setting of C independant
+        Scale C with number of samples. It makes the setting of C independent
         of the number of samples.
 
     Attributes
