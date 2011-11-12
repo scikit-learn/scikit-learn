@@ -179,10 +179,6 @@ div.related a {
     color: #E2F3CC;
 }
 
-div.rel {
-    text-align: center;
-    margin-top: 20px;
-}
 
 div.sphinxsidebar h3,
 div.sphinxsidebar h4 {
@@ -227,7 +223,6 @@ div.sphinxsidebar ul ul ul {
 
 div.sphinxsidebar {
     width: 200px;
-    overflow: hidden;
     float: left;
     margin-left: 0;
     background-color: inherit;
@@ -424,3 +419,83 @@ div.viewcode-block:target {
     border-top: 1px solid #ac9;
     border-bottom: 1px solid #ac9;
 }
+
+div.rel {
+    text-align: center;
+    margin: 10px 3px 0px 2px;
+    background-color: #ff9c34;
+    color: white;
+    border-radius: 5px;
+    -moz-border-radius: 5px;
+}
+
+div.rel div.spacer  {
+    background-color: white;
+    width: 1px;
+    height: 57px;
+    display: inline-block;
+    margin-bottom: -10px;
+}
+
+div.rel div.rellink  {
+    display: inline-block;
+    padding: 4px 2px 0px 2px;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: auto;
+    width: 28%;
+    vertical-align: top;
+    position: relative
+}
+
+div.rellarge {
+    margin-left: 5px;
+    margin-right: 5px;
+}
+
+div.rellarge div.rellink  {
+    width: 40%;
+    margin-bottom: 0px;
+}
+
+div.rellarge div.spacer  {
+    height: 45px;
+}
+
+div.rel a,
+div.rel a:link,
+div.rel a:visited,
+div.rel a:hover {
+    display: block;
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+div.rel a:hover {
+    color: #EEE;
+}
+
+div.rel span.smallrellink {
+    font-size: 8px;
+    line-height: 10px;
+}
+
+div.rel span.hiddenrellink {
+    display: none;
+    z-index: 100;
+}
+
+div.rellink:hover span.hiddenrellink {
+    display: block;
+    position: absolute;
+    left: -20px; top: 30px;
+    width: 200px;
+    background-color: #ff9c34;
+    padding: 3px;
+    border: 2px solid #3E4349;
+    color: white;
+}
+
+

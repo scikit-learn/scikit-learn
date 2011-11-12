@@ -1,3 +1,5 @@
+.. _naive_bayes:
+
 ===========
 Naive Bayes
 ===========

@@ -128,7 +128,8 @@ class Isomap(BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            training set.
+            training set. If kernel='precomputed', X can be an
+            (n_features, n_features) affinity matrix.
 
         Returns
         -------

@@ -8,6 +8,9 @@
 Changelog
 ---------
 
+   - :ref:`sparse_inverse_covariance` estimation using the graph Lasso, with
+     associated cross-validated estimator, by `Gael Varoquaux`_
+
    - New :ref:`Tree <tree>` module by `Brian Holt`_, `Peter Prettenhofer`_
      and `Satrajit Ghosh`_. The module comes with complete documentation
      and examples.
@@ -19,7 +22,7 @@ Changelog
    - Faster tests by `Fabian Pedregosa`_.
 
    - Silhouette Coefficient cluster analysis evaluation metric added as
-     ``sklearn.metrics.silhouette_score`` by Robert Layton.
+     ``sklearn.metrics.silhouette_score`` by `Robert Layton`_.
 
    - Fixed a bug in `KMeans` in the handling of the `n_init` parameter:
      the clustering algorithm used to be run `n_init` times but the last
@@ -27,6 +30,9 @@ Changelog
 
    - Minor refactoring in :ref:`sgd` module; consolidated dense and sparse
      predict methods.
+
+   - Adjusted Mutual Information metric added as
+     ``sklearn.metrics.adjusted_mutual_info_score`` by `Robert Layton`_.
 
 
 API changes summary

@@ -25,79 +25,6 @@ cdef extern from "float.h":
     cdef extern double DBL_MAX
 
 
-cdef class Node:
-    """A class to store node information in the tree.
-
-    Parameters
-    ----------
-    feature : integer
-        The feature used to split on.
-
-    threshold : float
-        The threshold value to split on.
-
-    error : float
-        The error in the node.  This could be the impurity (calculated using
-        an entropy measure for classification) or the residual regression
-        error (calculated using an estimator).
-
-    samples : integer
-        The number of samples present at this node.
-
-    value : array-like of shape = [n_features], or 1
-        For classification it is a histogram of target values.
-        For regression is it the mean for the region.
-
-    left : Node
-        The left child node.
-
-    right : Node
-        The right child node.
-    """
-
-    cdef public int feature
-    cdef public double threshold
-    cdef public double error
-    cdef public int samples
-    cdef public np.ndarray value
-    cdef public Node left
-    cdef public Node right
-    cdef public bint is_leaf
-
-    def __init__(self, feature, threshold, error, samples,
-                 value, left, right):
-        self.feature = feature
-        self.threshold = threshold
-        self.error = error
-        self.samples = samples
-        self.value = value
-        self.left = left
-        self.right = right
-        self.is_leaf = (left is None) and (right is None)
-
-    def __reduce__(self):
-        return Node, (self.feature, self.threshold, self.error, self.samples,
-                      self.value, self.left, self.right)
-
-
-cdef np.ndarray apply_tree_sample(Node node, np.ndarray[DTYPE_t, ndim=1] x):
-    while True:
-        if node.is_leaf:
-            return node.value
-        elif x[node.feature] <= node.threshold:
-            node = node.left
-        else:
-            node = node.right
-
-
-cpdef np.ndarray apply_tree(Node node, np.ndarray[DTYPE_t, ndim=2] X, int k):
-    cdef np.ndarray y = np.zeros((X.shape[0], k), dtype=np.float64)
-    cdef int i = 0, n = X.shape[0]
-    for 0 <= i < n:
-        y[i] = apply_tree_sample(node, X[i])
-    return y
-
-
 ################################################################################
 # Classification entropy measures
 #
@@ -463,8 +390,47 @@ cdef class MSE(RegressionCriterion):
         assert (self.n_left + self.n_right) == self.n_samples
         return self.var_left + self.var_right
 
-
 ################################################################################
+# Tree functions 
+#
+
+
+def _apply_tree(np.ndarray[DTYPE_t, ndim=2] X,
+                np.ndarray[np.int32_t, ndim=1] left,
+                np.ndarray[np.int32_t, ndim=1] right,
+                np.ndarray[np.int32_t, ndim=1] feature,
+                np.ndarray[np.float64_t, ndim=1] threshold,
+                np.ndarray[np.int32_t, ndim=1] out):
+    """Finds the terminal region (=leaf node) for each sample in
+    `X` and sets the corresponding element in `out` to its node id."""
+    cdef int i = 0
+    cdef int n = X.shape[0]
+    cdef int node_id = 0
+    for i in xrange(n):
+        node_id = 0
+        # While node_id not a leaf
+        while left[node_id] != -1 and right[node_id] != -1:
+            if X[i, feature[node_id]] <= threshold[node_id]:
+                node_id = left[node_id]
+            else:
+                node_id = right[node_id]
+        out[i] = node_id
+
+
+def _error_at_leaf(np.ndarray[DTYPE_t, ndim=1, mode="c"] y,
+                   np.ndarray sample_mask, Criterion criterion,
+                   int n_samples):
+    """Compute criterion error at leaf with terminal region defined
+    by `sample_mask`. """
+    cdef int n_total_samples = y.shape[0]
+    cdef DTYPE_t *y_ptr = <DTYPE_t *>y.data
+    cdef BOOL_t *sample_mask_ptr = <BOOL_t *>sample_mask.data
+    criterion.init(y_ptr, sample_mask_ptr, n_samples, n_total_samples)
+    return criterion.eval()
+    
+
+
+
 cdef int smallest_sample_larger_than(int sample_idx, DTYPE_t *X_i,
                                      int *X_argsorted_i, BOOL_t *sample_mask,
                                      int n_total_samples):
@@ -579,7 +545,7 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
     initial_error = criterion.eval()
 
     if initial_error == 0:  # break early if the node is pure
-        return best_i, best_t, initial_error
+        return best_i, best_t, initial_error, initial_error
 
     best_error = initial_error
 
@@ -627,4 +593,4 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
             # Proceed to the next interval
             a = b
 
-    return best_i, best_t, initial_error
+    return best_i, best_t, best_error, initial_error
