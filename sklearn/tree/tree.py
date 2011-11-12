@@ -18,12 +18,10 @@ from ..utils import array2d, check_random_state
 
 from . import _tree
 
-__all__ = [
-    "DecisionTreeClassifier",
-    "DecisionTreeRegressor",
-    "ExtraTreeClassifier",
-    "ExtraTreeRegressor"
-]
+__all__ = ["DecisionTreeClassifier",
+           "DecisionTreeRegressor",
+           "ExtraTreeClassifier",
+           "ExtraTreeRegressor"]
 
 DTYPE = _tree.DTYPE
 
@@ -693,6 +691,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
                                                     max_features,
                                                     random_state)
 
+
 class ExtraTreeClassifier(DecisionTreeClassifier):
     """An extremely randomized tree classifier.
 
@@ -723,6 +722,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
         self.find_split = _tree._find_best_random_split
 
+
 class ExtraTreeRegressor(DecisionTreeRegressor):
     """An extremely randomized tree regressor.
 
@@ -752,4 +752,3 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
                                                  random_state)
 
         self.find_split = _tree._find_best_random_split
-

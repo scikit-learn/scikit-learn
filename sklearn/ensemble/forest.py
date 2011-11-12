@@ -14,20 +14,22 @@ from ..tree import DecisionTreeClassifier, DecisionTreeRegressor, \
                    ExtraTreeClassifier, ExtraTreeRegressor
 from ..utils import check_random_state
 
-__all__ = [
-    "RandomForestClassifier",
-    "RandomForestRegressor",
-    "ExtraTreesClassifier",
-    "ExtraTreesRegressor"
-]
+__all__ = ["RandomForestClassifier",
+           "RandomForestRegressor",
+           "ExtraTreesClassifier",
+           "ExtraTreesRegressor"]
 
 
 class Forest(BaseEstimator):
     """Base class for forests of trees.
 
-    Warning: This class should not be used directly. Use derived classes instead.
+    Warning: This class should not be used directly. Use derived classes
+    instead.
     """
-    def __init__(self, base_tree, n_trees=10, bootstrap=False, random_state=None):
+    def __init__(self, base_tree,
+                       n_trees=10,
+                       bootstrap=False,
+                       random_state=None):
         self.base_tree = base_tree
         self.n_trees = n_trees
         self.bootstrap = bootstrap
@@ -84,8 +86,13 @@ class Forest(BaseEstimator):
 class ForestClassifier(Forest, ClassifierMixin):
     """Base class for forest of trees-based classifiers.
 
-    Warning: This class should not be used directly. Use derived classes instead."""
-    def __init__(self, base_tree, n_trees=10, bootstrap=False, random_state=None):
+    Warning: This class should not be used directly. Use derived classes
+    instead.
+    """
+    def __init__(self, base_tree,
+                       n_trees=10,
+                       bootstrap=False,
+                       random_state=None):
         super(ForestClassifier, self).__init__(
             base_tree,
             n_trees,
@@ -108,7 +115,8 @@ class ForestClassifier(Forest, ClassifierMixin):
         predictions : array of shape = [n_samples]
             The predicted classes.
         """
-        return self.classes.take(np.argmax(self.predict_proba(X), axis=1), axis=0)
+        return self.classes.take(
+            np.argmax(self.predict_proba(X), axis=1),  axis=0)
 
     def predict_proba(self, X):
         """Predict class probabilities for X.
@@ -156,11 +164,17 @@ class ForestClassifier(Forest, ClassifierMixin):
         """
         return np.log(self.predict_proba(X))
 
+
 class ForestRegressor(Forest, RegressorMixin):
     """Base class for forest of trees-based regressors.
 
-    Warning: This class should not be used directly. Use derived classes instead."""
-    def __init__(self, base_tree, n_trees=10, bootstrap=False, random_state=None):
+    Warning: This class should not be used directly. Use derived classes
+    instead.
+    """
+    def __init__(self, base_tree,
+                       n_trees=10,
+                       bootstrap=False,
+                       random_state=None):
         super(ForestRegressor, self).__init__(
             base_tree,
             n_trees,
@@ -223,7 +237,10 @@ class RandomForestClassifier(ForestClassifier):
     ----------
     .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
     """
-    def __init__(self, n_trees=10, bootstrap=True, random_state=None, **tree_args):
+    def __init__(self, n_trees=10,
+                       bootstrap=True,
+                       random_state=None,
+                       **tree_args):
         super(RandomForestClassifier, self).__init__(
             DecisionTreeClassifier(**tree_args),
             n_trees,
@@ -260,7 +277,10 @@ class RandomForestRegressor(ForestRegressor):
     ----------
     .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
     """
-    def __init__(self, n_trees=10, bootstrap=True, random_state=None, **tree_args):
+    def __init__(self, n_trees=10,
+                       bootstrap=True,
+                       random_state=None,
+                       **tree_args):
         super(RandomForestRegressor, self).__init__(
             DecisionTreeRegressor(**tree_args),
             n_trees,
@@ -298,7 +318,10 @@ class ExtraTreesClassifier(ForestClassifier):
     .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
            Machine Learning, 63(1), 3-42, 2006.
     """
-    def __init__(self, n_trees=10, bootstrap=False, random_state=None, **tree_args):
+    def __init__(self, n_trees=10,
+                       bootstrap=False,
+                       random_state=None,
+                       **tree_args):
         super(ExtraTreesClassifier, self).__init__(
             ExtraTreeClassifier(**tree_args),
             n_trees,
@@ -336,7 +359,10 @@ class ExtraTreesRegressor(ForestRegressor):
     .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
            Machine Learning, 63(1), 3-42, 2006.
     """
-    def __init__(self, n_trees=10, bootstrap=False, random_state=None, **tree_args):
+    def __init__(self, n_trees=10,
+                       bootstrap=False,
+                       random_state=None,
+                       **tree_args):
         super(ExtraTreesRegressor, self).__init__(
             ExtraTreeRegressor(**tree_args),
             n_trees,
