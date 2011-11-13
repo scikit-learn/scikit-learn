@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.base import BaseEstimator
 
 class FourierSampler(BaseEstimator):
-    def fit_transform(self, X):
+    def fit_transform(self, X, y=None):
         return self.fit(X).transform(X)
 
 
@@ -21,7 +21,7 @@ class RBFSampler(FourierSampler):
         self.b = np.random.uniform(0, 2*np.pi, size=self.D)
         return self
 
-    def transform(self, X):
+    def transform(self, X, y=None):
         projection = np.dot(X, self.omega_)
         return np.sqrt(2)/np.sqrt(self.D)*np.cos(projection + self.b)
 
@@ -36,7 +36,7 @@ class SkewedChi2Sampler(FourierSampler):
         self.c = c
         self.D = D
 
-    def fit(self, X):
+    def fit(self, X, y=None):
         """Samples random projection according to feature lenght of X"""
         n_features = X.shape[1]
         uniform = np.random.uniform(size=(n_features, self.D))
@@ -45,7 +45,7 @@ class SkewedChi2Sampler(FourierSampler):
         self.b = np.random.uniform(0, 2*np.pi, size=self.D)
         return self
 
-    def transform(self, X):
+    def transform(self, X, y=None):
         # see paper?
         projection = np.dot(np.log(X + self.c), self.omega_)
         return np.sqrt(2)/np.sqrt(self.D)*np.cos(projection + self.b)
