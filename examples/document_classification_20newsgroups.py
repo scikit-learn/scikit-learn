@@ -11,7 +11,7 @@ and demos various classifiers that can efficiently handle sparse matrices.
 The dataset used in this example is the 20 newsgroups dataset which will be
 automatically downloaded and then cached.
 
-You can adjust the number of categories by giving there name to the dataset
+You can adjust the number of categories by giving their names to the dataset
 loader or setting them to None to get the 20 of them.
 
 """

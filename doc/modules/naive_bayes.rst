@@ -1,3 +1,5 @@
+.. _naive_bayes:
+
 ===========
 Naive Bayes
 ===========
@@ -38,7 +40,7 @@ we can use the following classification rule:
 
    \Downarrow
 
-   \hat{y} = \arg\max_y P(y) \prod_{i=1}^{n} P(f_i \mid y),
+   \hat{y} = \arg\max_y P(y) \prod_{i=1}^{n} P(x_i \mid y),
 
 and we can use Maximum A Posteriori (MAP) estimation to estimate
 :math:`P(y)` and :math:`P(x_i \mid y)`;
@@ -61,6 +63,10 @@ The decoupling of the class conditional feature distributions means that each
 distribution can be independently estimated as a one dimensional distribution.
 This in turn helps to alleviate problems stemming from the curse of
 dimensionality.
+
+On the flip side, although Naive Bayes is known as a decent classifier,
+it is known to be a bad estimator, so the probability outputs from
+``predict_proba`` are not to be taken too seriously.
 
 .. topic:: References:
 
@@ -130,17 +136,27 @@ Bernoulli Naive Bayes
 
 :class:`BernoulliNB` implements the Naive Bayes training and classification
 algorithms for data that is distributed according to multivariate Bernoulli
-distributions. It requires samples to be represented as binary-valued/boolean
-feature vectors; if handed any other kind of data, it binarizes it (depending
-on the ``binarize`` parameter).
+distributions; i.e., there may be multiple features but each one is assumed
+to be a binary-valued (Bernoulli, boolean) variable.
+Therefore, this class requires samples to be represented as binary-valued
+feature vectors; if handed any other kind of data, a ``BernoulliNB`` instance
+may binarizes its input (depending on the ``binarize`` parameter).
+
+The decision rule for Bernoulli Naive Bayes is based on
+
+.. math::
+
+    P(x_i \mid y) = P(i \mid y) x_i \times (1 - P(i \mid y)) (1 - x_i)
+
+which differs from multinomial NB's rule
+in that it explicitly penalizes the non-occurrence of a feature :math:`i`
+that is an indicator for class :math:`y`,
+where the multinomial variant would simply ignore a non-occurring feature.
 
 In the case of text classification, word occurrence vectors (rather than word
 count vectors) may be used to train and use this classifier. ``BernoulliNB``
-might perform better on some datasets, especially those with shorter documents,
-because it explicitly penalizes the non-occurrence of words/features in a
-dataset where ``MultinomialNB`` would only notice a zero count, but for text
-classification ``MultinomialNB`` will generally be better. It is advisable to
-evaluate both models, if time permits.
+might perform better on some datasets, especially those with shorter documents.
+It is advisable to evaluate both models, if time permits.
 
 .. topic:: References:
 

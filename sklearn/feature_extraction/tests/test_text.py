@@ -277,6 +277,10 @@ def test_vectorizer_inverse_transform():
             data_vec = np.sort(np.unique(vectorizer.analyzer.analyze(data[0])))
             inversed_data_vec = np.sort(np.unique(inversed_data[0]))
             assert((data_vec == inversed_data_vec).all())
+    # Test that inverse_transform also works with numpy arrays
+    transformed_data = np.asarray(transformed_data.todense())
+    assert(vectorizer.inverse_transform(transformed_data),
+            inversed_data)
 
 
 def test_dense_vectorizer_pipeline_grid_selection():

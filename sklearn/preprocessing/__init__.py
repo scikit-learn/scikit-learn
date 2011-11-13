@@ -5,6 +5,7 @@
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD
+import warnings
 
 import numpy as np
 import scipy.sparse as sp
@@ -21,7 +22,7 @@ def _mean_and_std(X, axis=0, with_mean=True, with_std=True):
 
     Zero valued std components are reset to 1.0 to avoid NaNs when scaling.
     """
-    X = np.asanyarray(X)
+    X = np.asarray(X)
     Xr = np.rollaxis(X, axis)
 
     if with_mean:
@@ -77,7 +78,10 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     if sp.issparse(X):
         raise NotImplementedError(
             "Scaling is not yet implement for sparse matrices")
-    X = np.asanyarray(X)
+    X = np.asarray(X)
+    if X.dtype.kind in ['i', 'u']:
+        warnings.warn('Data of type %s in scale. '
+                      'Converting to float is recommended' % X.dtype)
     mean_, std_ = _mean_and_std(
         X, axis, with_mean=with_mean, with_std=with_std)
     if copy:
@@ -159,6 +163,10 @@ class Scaler(BaseEstimator, TransformerMixin):
         if sp.issparse(X):
             raise NotImplementedError(
                 "Scaling is not yet implement for sparse matrices")
+        X = np.asarray(X)
+        if X.dtype.kind in ['i', 'u']:
+            warnings.warn('Data of type %s in Scaler.fit. '
+                          'Converting to float is recommended' % X.dtype)
         self.mean_, self.std_ = _mean_and_std(
             X, axis=0, with_mean=self.with_mean, with_std=self.with_std)
         return self
@@ -175,7 +183,10 @@ class Scaler(BaseEstimator, TransformerMixin):
         if sp.issparse(X):
             raise NotImplementedError(
                 "Scaling is not yet implement for sparse matrices")
-        X = np.asanyarray(X)
+        X = np.asarray(X)
+        if X.dtype.kind in ['i', 'u']:
+            warnings.warn('Data of type %s in Scaler.transform. '
+                          'Converting to float is recommended' % X.dtype)
         if copy:
             X = X.copy()
         if self.with_mean:
@@ -196,7 +207,7 @@ class Scaler(BaseEstimator, TransformerMixin):
         if sp.issparse(X):
             raise NotImplementedError(
                 "Scaling is not yet implement for sparse matrices")
-        X = np.asanyarray(X)
+        X = np.asarray(X)
         if copy:
             X = X.copy()
         if self.with_std:
@@ -246,6 +257,9 @@ def normalize(X, norm='l2', axis=1, copy=True):
         raise ValueError("'%d' is not a supported axis" % axis)
 
     X = check_arrays(X, sparse_format=sparse_format, copy=copy)[0]
+    if X.dtype.kind in ['i', 'u']:
+        warnings.warn('Data of type %s in normalize. '
+                      'Converting to float is recommended' % X.dtype)
     if axis == 0:
         X = X.T
 
@@ -514,10 +528,10 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         Y : numpy array of shape [n_samples, n_classes]
         """
 
-        if len(self.classes_) == 2:
-            Y = np.zeros((len(y), 1))
-        else:
+        if self.multilabel or len(self.classes_) > 2:
             Y = np.zeros((len(y), len(self.classes_)))
+        else:
+            Y = np.zeros((len(y), 1))
 
         y_is_multilabel = _is_multilabel(y)
 

@@ -281,10 +281,6 @@ def _build_tree(X, y, is_classification, criterion, max_depth, min_split,
     if sample_mask is None:
         sample_mask = np.ones((X.shape[0],), dtype=np.bool)
 
-    if X_argsorted is None:
-        X_argsorted = np.asfortranarray(
-            np.argsort(X.T, axis=1).astype(np.int32).T)
-
     # create tree structure
     if max_depth <= 10:
         init_capacity = (2 ** (max_depth + 1)) - 1

@@ -104,7 +104,7 @@ class ElasticNet(LinearModel):
             Target
         Xy : array-like, optional
             Xy = np.dot(X.T, y) that can be precomputed. It is useful
-            only when the Gram matrix is precomuted.
+            only when the Gram matrix is precomputed.
         coef_init: ndarray of shape n_features
             The initial coeffients to warm-start the optimization
 
@@ -118,9 +118,8 @@ class ElasticNet(LinearModel):
         To avoid memory re-allocation it is advised to allocate the
         initial data in memory directly using that format.
         """
-        X = np.asanyarray(X, dtype=np.float64)
-        y = np.asanyarray(y, dtype=np.float64)
         X = as_float_array(X, self.copy_X)
+        y = np.asarray(y, dtype=np.float64)
 
         n_samples, n_features = X.shape
 
@@ -295,7 +294,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 
     Xy : array-like, optional
         Xy = np.dot(X.T, y) that can be precomputed. It is useful
-        only when the Gram matrix is precomuted.
+        only when the Gram matrix is precomputed.
 
     fit_intercept : bool
         Fit or not an intercept
@@ -366,7 +365,7 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     Xy : array-like, optional
         Xy = np.dot(X.T, y) that can be precomputed. It is useful
-        only when the Gram matrix is precomuted.
+        only when the Gram matrix is precomputed.
 
     fit_intercept : bool
         Fit or not an intercept
@@ -481,7 +480,7 @@ class LinearModelCV(LinearModel):
 
         """
         X = np.asfortranarray(X, dtype=np.float64)
-        y = np.asanyarray(y, dtype=np.float64)
+        y = np.asarray(y, dtype=np.float64)
 
         # All LinearModelCV parameters except 'cv' are acceptable
         path_params = self._get_params()

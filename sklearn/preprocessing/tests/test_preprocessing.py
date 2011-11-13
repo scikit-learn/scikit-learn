@@ -308,6 +308,19 @@ def test_label_binarizer_multilabel():
     assert_array_equal(expected, got)
     assert_equal(lb.inverse_transform(got), inp)
 
+    # regression test for the two-class multilabel case
+    lb = LabelBinarizer()
+
+    inp = [[1, 0], [0], [1], [0, 1]]
+    expected = np.array([[1, 1],
+                         [1, 0],
+                         [0, 1],
+                         [1, 1]])
+    got = lb.fit_transform(inp)
+    assert_array_equal(expected, got)
+    assert_equal([set(x) for x in lb.inverse_transform(got)],
+                 [set(x) for x in inp])
+
 
 def test_label_binarizer_errors():
     """Check that invalid arguments yield ValueError"""

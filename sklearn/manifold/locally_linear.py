@@ -8,6 +8,7 @@ import numpy as np
 from scipy.linalg import eigh, svd, qr, solve
 from scipy.sparse import eye, csr_matrix
 from ..base import BaseEstimator
+from ..utils import array2d
 from ..utils.arpack import eigsh
 from ..neighbors import NearestNeighbors, BallTree
 
@@ -36,7 +37,9 @@ def barycenter_weights(X, Z, reg=1e-3):
     -----
     See developers note for more information.
     """
-    X, Z = map(np.asanyarray, (X, Z))
+    X = np.asarray(X)
+    Z = np.asarray(Z)
+
     n_samples, n_neighbors = X.shape[0], Z.shape[1]
     if X.dtype.kind == 'i':
         X = X.astype(np.float)
@@ -191,7 +194,7 @@ def locally_linear_embedding(
     max_iter : integer
         maximum number of iterations for the arpack solver.
 
-    method : string ['standard' | 'hessian' | 'modified']
+    method : {'standard', 'hessian', 'modified', 'ltsa'}
         standard : use the standard locally linear embedding algorithm.
                    see reference [1]
         hessian  : use the Hessian eigenmap method.  This method requires
@@ -592,7 +595,7 @@ class LocallyLinearEmbedding(BaseEstimator):
         Because of scaling performed by this method, it is discouraged to use
         it together with methods that are not scale-invariant (like SVMs)
         """
-        X = np.atleast_2d(X)
+        X = array2d(X)
         if not hasattr(self, 'ball_tree_'):
             raise ValueError('The model is not fitted')
         ind = self.ball_tree_.query(X, k=self.n_neighbors,
