@@ -700,6 +700,12 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
     `max_features` is set 1, this amounts to building a totally random
     decision tree.
 
+    Warning: Extra-trees should only be used within ensemble methods.
+
+    See also
+    --------
+    ExtraTreeRegressor, ExtraTreesClassifier, ExtraTreesRegressor
+
     References
     ----------
     .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
@@ -730,6 +736,12 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     selected features and the best split among those is chosen. When
     `max_features` is set 1, this amounts to building a totally random
     decision tree.
+
+    Warning: Extra-trees should only be used within ensemble methods.
+
+    See also
+    --------
+    ExtraTreeClassifier, ExtraTreesClassifier, ExtraTreesRegressor
 
     References
     ----------
