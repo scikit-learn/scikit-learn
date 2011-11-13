@@ -16,7 +16,7 @@ from ..base import RegressorMixin
 from ..utils import check_random_state
 
 from ..tree.tree import _build_tree
-from ..tree._tree import apply_tree
+from ..tree._tree import _find_best_split
 from ..tree._tree import MSE
 from ..tree._tree import DTYPE
 
@@ -106,24 +106,19 @@ class LossFunction(object):
         """Update the terminal regions (=leafs) of the given
         tree. Traverses tree and invokes template method
         `_update_terminal_region`. """
-        if tree.is_leaf:
-            self._update_terminal_region(tree, X, y, residual, y_pred)
+        for leaf in np.where(tree.children[:, 0] == -1)[0]:
+            leaf_terminal_region = np.where(tree.terminal_region == leaf)[0]
+            self._update_terminal_region(tree, leaf, leaf_terminal_region,
+                                         X, y, residual, y_pred)
 
             # update predictions
-            y_pred[tree.terminal_region] += learn_rate * tree.value
+            y_pred[leaf_terminal_region] += learn_rate * tree.value[leaf]
 
-            # Delete terminal_region to save memory
-            del tree.terminal_region
-            tree.terminal_region = None
-        else:
-            #print "%d: fx:%d, thres:%.8f" % (tree.id, tree.feature,
-            #                                 tree.threshold)
-            self.update_terminal_regions(tree.left, X, y, residual, y_pred,
-                                         learn_rate)
-            self.update_terminal_regions(tree.right, X, y, residual, y_pred,
-                                         learn_rate)
+        # save memory
+        del tree.terminal_region
 
-    def _update_terminal_region(self, node, X, y, residual, pred):
+    def _update_terminal_region(self, tree, leaf, terminal_region, X, y,
+                                residual, pred):
         """Template method for updating terminal regions (=leafs). """
         pass
 
@@ -154,33 +149,15 @@ class LeastAbsoluteError(LossFunction):
     def negative_gradient(self, y, pred):
         return np.sign(y - pred)
 
-    def _update_terminal_region(self, node, X, y, residual, pred):
+    def _update_terminal_region(self, tree, leaf, terminal_region, X, y,
+                                residual, pred):
         """LAD updates terminal regions to median estimates. """
-        node.value = np.asanyarray(
-            np.median(y.take(node.terminal_region, axis=0) - \
-                      pred.take(node.terminal_region, axis=0)))
-
-
-## class HuberError(LossFunction):
-##     """Loss function for least absolute deviation (LAD) regression."""
-
-##     def init_estimator(self):
-##         return MedianPredictor()
-
-##     def __call__(self, y, pred):
-##         return np.sum(np.abs(y - pred))
-
-##     def negative_gradient(self, y, pred):
-##         return np.sign(y - pred)
-
-##     def _update_terminal_region(self, node, X, y, residual, pred):
-##         """LAD updates terminal regions to median estimates. """
-##         ## FIXME copied from LAD, still TODO
-##         node.value = np.asanyarray(np.median(y.take(node.terminal_region, axis=0) - \
-##                                              pred.take(node.terminal_region, axis=0)))
+        tree.value[leaf, 0] = np.median(y.take(terminal_region, axis=0) - \
+                                        pred.take(terminal_region, axis=0))
 
 
 class BinomialDeviance(LossFunction):
+    """Binomial deviance loss function for binary classification."""
 
     def init_estimator(self):
         return ClassPriorPredictor()
@@ -193,19 +170,19 @@ class BinomialDeviance(LossFunction):
     def negative_gradient(self, y, pred):
         return y - (1.0 / (1.0 + np.exp(-pred)))
 
-    def _update_terminal_region(self, node, X, y, residual, pred):
+    def _update_terminal_region(self, tree, leaf, terminal_region, X, y,
+                                residual, pred):
         """Make a single Newton-Raphson step. """
-        residual = residual.take(node.terminal_region, axis=0)
-        y = y.take(node.terminal_region, axis=0)
+        residual = residual.take(terminal_region, axis=0)
+        y = y.take(terminal_region, axis=0)
 
         numerator = residual.sum()
         denominator = np.sum((y - residual) * (1.0 - y + residual))
 
         if denominator == 0.0:
-            node.value = np.array(0.0, dtype=np.float64)
+            tree.value[leaf, 0] = 0.0
         else:
-            node.value = np.asanyarray(numerator / denominator,
-                                       dtype=np.float64)
+            tree.value[leaf, 0] = numerator / denominator
 
 
 LOSS_FUNCTIONS = {'ls': LeastSquaresError,
@@ -305,11 +282,12 @@ class BaseGradientBoosting(BaseEstimator):
             residual = loss.negative_gradient(y, y_pred)
 
             # induce regression tree on residuals
-            tree = _build_tree(False, X, residual, MSE(), self.max_depth,
-                               self.min_split, None, 1, self.random_state,
-                               0.0, sample_mask, X_argsorted, True)
+            tree = _build_tree(X, residual, False, MSE(), self.max_depth,
+                               self.min_split, 0.0, None, self.random_state,
+                               1, _find_best_split, sample_mask, X_argsorted,
+                               True)
 
-            assert tree.is_leaf != True
+            assert tree.children.shape[0] > 1
 
             # update tree leafs
             loss.update_terminal_regions(tree, X, y, residual, y_pred,
@@ -341,12 +319,11 @@ class BaseGradientBoosting(BaseEstimator):
         from previous iteration if available.
         """
         if old_pred is not None:
-            return old_pred + self.learn_rate * apply_tree(self.trees[-1],
-                                                           X, 1).ravel()
+            return old_pred + self.learn_rate * self.trees[-1].predict(X)
         else:
             y = self.init.predict(X)
             for tree in self.trees:
-                y += self.learn_rate * apply_tree(tree, X, 1).ravel()
+                y += self.learn_rate * tree.predict(X)
             return y
 
     @property
