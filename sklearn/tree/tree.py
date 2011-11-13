@@ -267,35 +267,15 @@ class Tree(object):
 
 def _build_tree(X, y, is_classification, criterion, max_depth, min_split,
                 min_density, max_features, random_state, n_classes, find_split,
-                sample_mask=None, X_argsorted=None, store_terminal_region=False):
+                sample_mask=None, X_argsorted=None):
     """Build a tree by recursively partitioning the data."""
 
-    # Convert input format
-    if X.dtype != DTYPE or not np.isfortran(X):
-        X = np.asanyarray(X, dtype=DTYPE, order="F")
-
-    if y.dtype != DTYPE or not y.flags.contiguous:
-        y = np.ascontiguousarray(y, dtype=DTYPE)
-
-    # create sample mask and preprocess inputs
-    if sample_mask is None:
-        sample_mask = np.ones((X.shape[0],), dtype=np.bool)
-
-    # create tree structure
     if max_depth <= 10:
         init_capacity = (2 ** (max_depth + 1)) - 1
     else:
         init_capacity = 2047  # num nodes of tree with depth 10
 
     tree = Tree(n_classes, init_capacity)
-
-    # init terminal region if necessary
-    if store_terminal_region:
-        if min_density != 0.0:
-            raise ValueError(
-                "If min_density has to be 0.0 if store_terminal_region")
-        tree.terminal_region = np.empty((X.shape[0], ), dtype=np.int32)
-        tree.terminal_region.fill(-1)
 
     # Recursively partition X
     def recursive_partition(X, X_argsorted, y, sample_mask, depth,
@@ -332,10 +312,7 @@ def _build_tree(X, y, is_classification, criterion, max_depth, min_split,
             # compute error at leaf
             error = _tree._error_at_leaf(y, sample_mask, criterion,
                                          n_node_samples)
-            node_id = tree.add_leaf(parent, is_left_child, value, error,
-                                    n_node_samples)
-            if store_terminal_region:
-                tree.terminal_region[sample_mask] = node_id
+            tree.add_leaf(parent, is_left_child, value, error, n_node_samples)
 
         # Internal node
         else:
@@ -363,6 +340,20 @@ def _build_tree(X, y, is_classification, criterion, max_depth, min_split,
             recursive_partition(X, X_argsorted, y,
                                 ~split & sample_mask,
                                 depth + 1, node_id, False)
+
+    # Launch the construction
+    if X.dtype != DTYPE or not np.isfortran(X):
+        X = np.asanyarray(X, dtype=DTYPE, order="F")
+
+    if y.dtype != DTYPE or not y.flags.contiguous:
+        y = np.ascontiguousarray(y, dtype=DTYPE)
+
+    if sample_mask is None:
+        sample_mask = np.ones((X.shape[0],), dtype=np.bool)
+
+    if X_argsorted is None:
+        X_argsorted = np.asfortranarray(
+            np.argsort(X.T, axis=1).astype(np.int32).T)
 
     recursive_partition(X, X_argsorted, y, sample_mask, 0, -1, False)
 
