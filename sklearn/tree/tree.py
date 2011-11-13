@@ -258,6 +258,7 @@ class Tree(object):
         self.children[node_id, :] = Tree.LEAF
 
         self.node_count += 1
+        return node_id
 
     def predict(self, X):
         out = np.empty((X.shape[0], ), dtype=np.int32)
@@ -267,7 +268,7 @@ class Tree(object):
 
 def _build_tree(X, y, is_classification, criterion, max_depth, min_split,
                 min_density, max_features, random_state, n_classes, find_split,
-                sample_mask=None, X_argsorted=None):
+                sample_mask=None, X_argsorted=None, store_terminal_region=False):
     """Build a tree by recursively partitioning the data."""
 
     if max_depth <= 10:
@@ -276,6 +277,12 @@ def _build_tree(X, y, is_classification, criterion, max_depth, min_split,
         init_capacity = 2047  # num nodes of tree with depth 10
 
     tree = Tree(n_classes, init_capacity)
+
+    if store_terminal_region:
+        if min_density != 0.0:
+            raise ValueError("min_density must be 0.0 if store_terminal_region")
+        tree.terminal_region = np.empty((X.shape[0],), dtype=np.int32)
+        tree.terminal_region.fill(-1)
 
     # Recursively partition X
     def recursive_partition(X, X_argsorted, y, sample_mask, depth,
@@ -312,7 +319,11 @@ def _build_tree(X, y, is_classification, criterion, max_depth, min_split,
             # compute error at leaf
             error = _tree._error_at_leaf(y, sample_mask, criterion,
                                          n_node_samples)
-            tree.add_leaf(parent, is_left_child, value, error, n_node_samples)
+            node_id = tree.add_leaf(parent, is_left_child, value, error,
+                                    n_node_samples)
+
+            if store_terminal_region:
+                tree.terminal_region[sample_mask] = node_id
 
         # Internal node
         else:

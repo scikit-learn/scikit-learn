@@ -28,7 +28,7 @@ np.seterr(invalid='print', under='print', divide='print', over='ignore')
 
 classification_params = {'loss': 'deviance', 'n_iter': 500,
                          'min_split': 1, 'max_depth': 1,
-                         'learn_rate': .6, 'subsample': 1}
+                         'learn_rate': .6, 'subsample': .5}
 
 
 @repeat
@@ -145,8 +145,12 @@ def bench_spam(random_state=None):
     X_train, y_train = X[1536:], y[1536:]
 
     clf = GradientBoostingClassifier(**classification_params)
+    t0 = time()
     clf.fit(X_train, y_train)
+    train_time = time() - t0
+    t0 = time()
     error_rate = (1.0 - clf.score(X_test, y_test))
+    test_time = time() - t0
 
     ## variable_importance = clf.variable_importance
 ##     pos = np.arange(X_train.shape[1]) + .5
@@ -155,7 +159,7 @@ def bench_spam(random_state=None):
 ##     pl.barh(pos, variable_importance[sorted_idx], align='center')
 ##     pl.yticks(pos, feature_names[sorted_idx])
 ##     pl.show()
-    return error_rate
+    return error_rate, train_time, test_time
 
 
 def bench_madelon():
@@ -199,7 +203,7 @@ def bench_boston(random_state=None):
     clf = GradientBoostingRegressor(**regression_params)
     clf.fit(X_train, y_train)
     mse = np.mean((clf.predict(X_test) - y_test) ** 2.0)
-    variable_importance = clf.variable_importance
+    #variable_importance = clf.variable_importance
     return mse
 
 
@@ -238,17 +242,16 @@ def bench_friedman3(random_state=None):
 
 
 if __name__ == "__main__":
-
-##    print "spam", bench_spam()
     
-##     print "Example 10.2 - LC"
-##     random_gaussian_learning_curve(13)
+    ## ##print "Example 10.2 - LC"
+    ## ##random_gaussian_learning_curve(13)
     print "Example 10.2", bench_random_gaussian()
+    print "spam", bench_spam()
 
-##     print "Madelon", bench_madelon()
-##     print "Arcene", bench_arcene()
+    ## print "Madelon", bench_madelon()
+    ## print "Arcene", bench_arcene()
 
-##     print "Boston", bench_boston()
-##     print "Friedman#1", bench_friedman1()
-##     print "Friedman#2", bench_friedman2()
-##     print "Friedman#3", bench_friedman3()
+    ## print "Boston", bench_boston()
+    ## print "Friedman#1", bench_friedman1()
+    ## print "Friedman#2", bench_friedman2()
+    ## print "Friedman#3", bench_friedman3()

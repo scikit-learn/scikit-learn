@@ -103,7 +103,7 @@ class LossFunction(object):
 
     def update_terminal_regions(self, tree, X, y, residual, y_pred,
                                 learn_rate=1.0):
-        """Update the terminal regions (=leafs) of the given
+        """Update the terminal regions (=leaves) of the given
         tree. Traverses tree and invokes template method
         `_update_terminal_region`. """
         for leaf in np.where(tree.children[:, 0] == -1)[0]:
@@ -112,7 +112,7 @@ class LossFunction(object):
                                          X, y, residual, y_pred)
 
             # update predictions
-            y_pred[leaf_terminal_region] += learn_rate * tree.value[leaf]
+            y_pred[leaf_terminal_region] += learn_rate * tree.value[leaf, 0]
 
         # save memory
         del tree.terminal_region
@@ -283,7 +283,7 @@ class BaseGradientBoosting(BaseEstimator):
 
             # induce regression tree on residuals
             tree = _build_tree(X, residual, False, MSE(), self.max_depth,
-                               self.min_split, 0.0, None, self.random_state,
+                               self.min_split, 0.0, -1, self.random_state,
                                1, _find_best_split, sample_mask, X_argsorted,
                                True)
 
@@ -319,11 +319,11 @@ class BaseGradientBoosting(BaseEstimator):
         from previous iteration if available.
         """
         if old_pred is not None:
-            return old_pred + self.learn_rate * self.trees[-1].predict(X)
+            return old_pred + self.learn_rate * self.trees[-1].predict(X).ravel()
         else:
             y = self.init.predict(X)
             for tree in self.trees:
-                y += self.learn_rate * tree.predict(X)
+                y += self.learn_rate * tree.predict(X).ravel()
             return y
 
     @property
