@@ -1,13 +1,12 @@
 """
-================================
-Recognizing hand-written digits
-================================
+==================================================
+Explicit feature map approximation for RBF kernels
+==================================================
 
-An example showing how the scikit-learn can be used to recognize images of
-hand-written digits.
+An example shows how to use RBFSampler to appoximate
+the feature map of an RBF kernel. Results for varying
+amounts of Monte Carlo samplings are shown.
 
-This example is commented in the
-:ref:`tutorial section of the user manual <getting_started>`.
 
 """
 print __doc__
@@ -18,6 +17,7 @@ print __doc__
 
 # Standard scientific Python imports
 import pylab as pl
+import numpy as np
 
 # Import datasets, classifiers and performance metrics
 from sklearn import datasets, svm, metrics, pipeline
@@ -26,20 +26,16 @@ from sklearn.feature_extraction.kernel_approximation import RBFSampler
 # The digits dataset
 digits = datasets.load_digits()
 
-# The data that we are interested in is made of 8x8 images of digits,
-# let's have a look at the first 3 images, stored in the `images`
-# attribute of the dataset. If we were working from image files, we
-# could load them using pylab.imread. For these images know which
-# digit they represent: it is given in the 'target' of the dataset.
-for index, (image, label) in enumerate(zip(digits.images, digits.target)[:4]):
-    pl.subplot(2, 4, index+1)
-    pl.imshow(image, cmap=pl.cm.gray_r)
-    pl.title('Training: %i' % label)
-
 # To apply an classifier on this data, we need to flatten the image, to
 # turn the data in a (samples, feature) matrix:
 n_samples = len(digits.images)
 data = digits.images.reshape((n_samples, -1))
+
+# We learn the digits on the first half of the digits
+data_train, targets_train = data[:n_samples/2], digits.target[:n_samples/2]
+
+# Now predict the value of the digit on the second half:
+data_test, targets_test = data[n_samples/2:], digits.target[n_samples/2:]
 
 # Create a classifier: a support vector classifier
 kernel_svm = svm.SVC(gamma=0.001)
@@ -47,18 +43,28 @@ linear_svm = svm.LinearSVC()
 
 # create pipeline from kernel approximation
 # and linear svm
-feature_map = RBFSampler(gamma=0.001, D=5000)
+feature_map = RBFSampler(gamma=0.001)
 approx_kernel_svm = pipeline.Pipeline([("feature_map", feature_map),
     ("svm", svm.LinearSVC())])
 
-for classifier in [kernel_svm, linear_svm, approx_kernel_svm]:
-    # We learn the digits on the first half of the digits
-    classifier.fit(data[:n_samples/2], digits.target[:n_samples/2])
+# fit and predict using linear and kernel svm:
+kernel_svm.fit(data_train, targets_train)
+kernel_svm_score = kernel_svm.score(data_test, targets_test)
 
-    # Now predict the value of the digit on the second half:
-    expected = digits.target[n_samples/2:]
-    predicted = classifier.predict(data[n_samples/2:])
+linear_svm.fit(data_train, targets_train)
+linear_svm_score = linear_svm.score(data_test, targets_test)
 
-    print "Classification report for classifier %s:\n%s\n" % (
-        classifier, metrics.classification_report(expected, predicted))
-    print "Confusion matrix:\n%s" % metrics.confusion_matrix(expected, predicted)
+sample_sizes = 20*np.arange(1,15)
+approx_kernel_scores = []
+for D in sample_sizes:
+    approx_kernel_svm.set_params(feature_map__D=D)
+    approx_kernel_svm.fit(data_train, targets_train)
+    score = approx_kernel_svm.score(data_test, targets_test)
+    approx_kernel_scores.append(score)
+
+print(linear_svm_score)
+print(kernel_svm_score)
+#pl.plot(sample_sizes, approx_kernel_scores)
+pl.plot([[linear_svm_score, sample_sizes[0]], [linear_svm_score, sample_sizes[-1]]])
+#pl.plot(sample_sizes, kernel_svm_score)
+pl.show()
