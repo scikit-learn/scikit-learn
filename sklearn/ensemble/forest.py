@@ -213,6 +213,11 @@ class RandomForestClassifier(ForestClassifier):
 
     Parameters
     ----------
+    base_tree : object, optional (default=None)
+        The base tree from which the forest is built. If None, a
+        `DecisionTreeClassifier` with parameters defined from **tree_args
+        is used.
+
     n_trees : integer, optional (default=10)
         The number of trees in the forest.
 
@@ -226,8 +231,19 @@ class RandomForestClassifier(ForestClassifier):
         by `np.random`.
 
     **tree_args : key-words parameters
-        The parameters to pass when instantiating decision trees. See the
-        documentation of `DecisionTreeClassifier` for further details.
+        The parameters to set when instantiating the underlying base tree. If
+        none are given, default parameters are used.
+
+    Attributes
+    ----------
+    base_tree : object
+        The underlying tree that is used to generate the forest.
+
+    Notes
+    -----
+    When using grid search to optimize the parameters, use the nested object
+    syntax to set the parameters of the underlying trees (e.g.,
+    `base_tree__max_depth`).
 
     See also
     --------
@@ -237,12 +253,14 @@ class RandomForestClassifier(ForestClassifier):
     ----------
     .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
     """
-    def __init__(self, n_trees=10,
+    def __init__(self, base_tree=None,
+                       n_trees=10,
                        bootstrap=True,
                        random_state=None,
                        **tree_args):
         super(RandomForestClassifier, self).__init__(
-            DecisionTreeClassifier(**tree_args),
+            base_tree if base_tree is not None \
+                      else DecisionTreeClassifier(**tree_args),
             n_trees,
             bootstrap=bootstrap,
             random_state=random_state)
@@ -253,6 +271,11 @@ class RandomForestRegressor(ForestRegressor):
 
     Parameters
     ----------
+    base_tree : object, optional (default=None)
+        The base tree from which the forest is built. If None, a
+        `DecisionTreeRegressor` with parameters defined from **tree_args
+        is used.
+
     n_trees : integer, optional (default=10)
         The number of trees in the forest.
 
@@ -266,8 +289,19 @@ class RandomForestRegressor(ForestRegressor):
         by `np.random`.
 
     **tree_args : key-words parameters
-        The parameters to pass when instantiating regression trees. See the
-        documentation of `DecisionTreeRegressor` for further details.
+        The parameters to set when instantiating the underlying base tree. If
+        none are given, default parameters are used.
+
+    Attributes
+    ----------
+    base_tree : object
+        The underlying tree that is used to generate the forest.
+
+    Notes
+    -----
+    When using grid search to optimize the parameters, use the nested object
+    syntax to set the parameters of the underlying trees (e.g.,
+    `base_tree__max_depth`).
 
     See also
     --------
@@ -277,12 +311,14 @@ class RandomForestRegressor(ForestRegressor):
     ----------
     .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
     """
-    def __init__(self, n_trees=10,
+    def __init__(self, base_tree=None,
+                       n_trees=10,
                        bootstrap=True,
                        random_state=None,
                        **tree_args):
         super(RandomForestRegressor, self).__init__(
-            DecisionTreeRegressor(**tree_args),
+            base_tree if base_tree is not None \
+                      else DecisionTreeRegressor(**tree_args),
             n_trees,
             bootstrap=bootstrap,
             random_state=random_state)
@@ -293,6 +329,11 @@ class ExtraTreesClassifier(ForestClassifier):
 
     Parameters
     ----------
+    base_tree : object, optional (default=None)
+        The base tree from which the forest is built. If None, an
+        `ExtraTreeClassifier` with parameters defined from **tree_args
+        is used.
+
     n_trees : integer, optional (default=10)
         The number of trees in the forest.
 
@@ -306,8 +347,19 @@ class ExtraTreesClassifier(ForestClassifier):
         by `np.random`.
 
     **tree_args : key-words parameters
-        The parameters to pass when instantiating randomized trees. See the
-        documentation of `ExtraTreeClassifier` for further details.
+        The parameters to set when instantiating the underlying base tree. If
+        none are given, default parameters are used.
+
+    Attributes
+    ----------
+    base_tree : object
+        The underlying tree that is used to generate the forest.
+
+    Notes
+    -----
+    When using grid search to optimize the parameters, use the nested object
+    syntax to set the parameters of the underlying trees (e.g.,
+    `base_tree__max_depth`).
 
     See also
     --------
@@ -318,12 +370,14 @@ class ExtraTreesClassifier(ForestClassifier):
     .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
            Machine Learning, 63(1), 3-42, 2006.
     """
-    def __init__(self, n_trees=10,
+    def __init__(self, base_tree=None,
+                       n_trees=10,
                        bootstrap=False,
                        random_state=None,
                        **tree_args):
         super(ExtraTreesClassifier, self).__init__(
-            ExtraTreeClassifier(**tree_args),
+            base_tree if base_tree is not None \
+                      else ExtraTreeClassifier(**tree_args),
             n_trees,
             bootstrap=bootstrap,
             random_state=random_state)
@@ -334,6 +388,11 @@ class ExtraTreesRegressor(ForestRegressor):
 
     Parameters
     ----------
+    base_tree : object, optional (default=None)
+        The base tree from which the forest is built. If None, an
+        `ExtraTreeRegressor` with parameters defined from **tree_args
+        is used.
+
     n_trees : integer, optional (default=10)
         The number of trees in the forest.
 
@@ -347,8 +406,19 @@ class ExtraTreesRegressor(ForestRegressor):
         by `np.random`.
 
     **tree_args : key-words parameters
-        The parameters to pass when instantiating randomized trees. See the
-        documentation of `ExtraTreeRegressor` for further details.
+        The parameters to set when instantiating the underlying base tree. If
+        none are given, default parameters are used.
+
+    Attributes
+    ----------
+    base_tree : object
+        The underlying tree that is used to generate the forest.
+
+    Notes
+    -----
+    When using grid search to optimize the parameters, use the nested object
+    syntax to set the parameters of the underlying trees (e.g.,
+    `base_tree__max_depth`).
 
     See also
     --------
@@ -359,12 +429,14 @@ class ExtraTreesRegressor(ForestRegressor):
     .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
            Machine Learning, 63(1), 3-42, 2006.
     """
-    def __init__(self, n_trees=10,
+    def __init__(self, base_tree=None,
+                       n_trees=10,
                        bootstrap=False,
                        random_state=None,
                        **tree_args):
         super(ExtraTreesRegressor, self).__init__(
-            ExtraTreeRegressor(**tree_args),
+            base_tree if base_tree is not None \
+                      else ExtraTreeRegressor(**tree_args),
             n_trees,
             bootstrap=bootstrap,
             random_state=random_state)
