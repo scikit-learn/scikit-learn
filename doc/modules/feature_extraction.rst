@@ -11,6 +11,12 @@ The :mod:`sklearn.feature_extraction` module can be used to extract
 features in a format supported by machine learning algorithms from datasets
 consisting of formats such as text and image.
 
+Kernel Approximation
+====================
+
+.. currentmodule:: sklearn.feature_extraction.kernel_approximation
+
+TODO
 
 Text feature extraction
 =======================
