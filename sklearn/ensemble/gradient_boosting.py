@@ -127,7 +127,7 @@ class LeastSquaresError(LossFunction):
         return MeanPredictor()
 
     def __call__(self, y, pred):
-        return 0.5 * np.sum((y - pred) ** 2.0)
+        return 0.5 * np.sum((y - pred) ** 2.0) / y.shape[0]
 
     def negative_gradient(self, y, pred):
         return y - pred
@@ -140,7 +140,7 @@ class LeastAbsoluteError(LossFunction):
         return MedianPredictor()
 
     def __call__(self, y, pred):
-        return np.abs(y - pred)
+        return np.abs(y - pred) / y.shape[0]
 
     def negative_gradient(self, y, pred):
         return np.sign(y - pred)
@@ -266,6 +266,8 @@ class BaseGradientBoosting(BaseEstimator):
 
         self.trees = []
         loss = self.loss
+
+        self.train_deviance = np.zeros((self.n_iter,), dtype=np.float64)
         #oob = np.zeros((self.n_iter), dtype=np.float64)
         #obj_func = np.zeros((self.n_iter), dtype=np.float64)
 
@@ -296,6 +298,8 @@ class BaseGradientBoosting(BaseEstimator):
             if self.subsample < 1.0:
                 y_pred[~sample_mask] = self._predict(
                     X[~sample_mask], old_pred=y_pred[~sample_mask])
+
+            self.train_deviance[i] = self.loss(y, y_pred)
 
             if monitor:
                 monitor(self, i)
@@ -375,16 +379,16 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     --------
     >>> samples = [[0, 0, 2], [1, 0, 0]]
     >>> labels = [0, 1]
-    >>> from sklearn.ensemble import GradientBoostingRegressor
-    >>> gb = GradientBoostingRegressor(10)
+    >>> from sklearn.ensemble import GradientBoostingClassifier
+    >>> gb = GradientBoostingClassifier(10)
     >>> gb.fit(samples, labels)
-    GradientBoostingRegressor()
-    >>> print gb.predict([[0, 0, 0]])
-    [1]
+    GradientBoostingClassifier()
+    >>> print gb.predict([[0.5, 0, 0]])
+    [0]
 
     See also
     --------
-    DecisionTreeRegressor, RandomForestRegressor
+    DecisionTreeClassifier, RandomForestClassifier
 
     Discussion
     ----------
