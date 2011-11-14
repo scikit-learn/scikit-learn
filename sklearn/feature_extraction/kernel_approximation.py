@@ -16,7 +16,7 @@ class FourierSampler(BaseEstimator):
 
         Returns
         -------
-        X_new array-like, shape (n_samples, D)
+        X_new array-like, shape (n_samples, n_components)
         """
         return self.fit(X).transform(X)
 
@@ -29,16 +29,16 @@ class RBFSampler(FourierSampler):
     ----------
     gamma: float
         parameter of RBF kernel: exp(-gamma * x**2)
-    D: int
+    n_components: int
         number of Monte Carlo samples per original feature.
         Equals the dimensionality of the computed feature space.
 
     See "Random Features for Large-Scale Kernel Machines" by A, Rahimi and
     Benjamin Recht for details."""
 
-    def __init__(self, gamma=1., D=1.):
+    def __init__(self, gamma=1., n_components=1.):
         self.gamma = gamma
-        self.D = D
+        self.n_components = n_components
 
     def fit(self, X, y=None):
         """Fit the model with X.
@@ -57,8 +57,8 @@ class RBFSampler(FourierSampler):
 
         n_features = X.shape[1]
         self.omega_ = (np.sqrt(self.gamma)
-                * np.random.normal(size=(n_features, self.D)))
-        self.b = np.random.uniform(0, 2 * np.pi, size=self.D)
+                * np.random.normal(size=(n_features, self.n_components)))
+        self.b = np.random.uniform(0, 2 * np.pi, size=self.n_components)
         return self
 
     def transform(self, X, y=None):
@@ -72,10 +72,11 @@ class RBFSampler(FourierSampler):
 
         Returns
         -------
-        X_new array-like, shape (n_samples, D)
+        X_new array-like, shape (n_samples, n_components)
         """
         projection = np.dot(X, self.omega_)
-        return np.sqrt(2.) / np.sqrt(self.D) * np.cos(projection + self.b)
+        return (np.sqrt(2.) / np.sqrt(self.n_components)
+                * np.cos(projection + self.b))
 
 
 class SkewedChi2Sampler(FourierSampler):
@@ -89,7 +90,7 @@ class SkewedChi2Sampler(FourierSampler):
     ----------
     c: float
         "skewedness" parameter of the kernel. Needs to be cross-validated.
-    D: int
+    n_components: int
         number of Monte Carlo samples per original feature.
         Equals the dimensionality of the computed feature space.
 
@@ -98,9 +99,9 @@ class SkewedChi2Sampler(FourierSampler):
     Sminchisescu for details.
     """
 
-    def __init__(self, c, D):
+    def __init__(self, c, n_components):
         self.c = c
-        self.D = D
+        self.n_components = n_components
 
     def fit(self, X, y=None):
         """Fit the model with X.
@@ -117,10 +118,10 @@ class SkewedChi2Sampler(FourierSampler):
             Returns the instance itself
         """
         n_features = X.shape[1]
-        uniform = np.random.uniform(size=(n_features, self.D))
+        uniform = np.random.uniform(size=(n_features, self.n_components))
         # transform by inverse CDF of sech
         self.omega_ = 1. / np.pi * np.log(np.tan(np.pi / 2. * uniform))
-        self.b = np.random.uniform(0, 2 * np.pi, size=self.D)
+        self.b = np.random.uniform(0, 2 * np.pi, size=self.n_components)
         return self
 
     def transform(self, X, y=None):
@@ -134,7 +135,8 @@ class SkewedChi2Sampler(FourierSampler):
 
         Returns
         -------
-        X_new array-like, shape (n_samples, D)
+        X_new array-like, shape (n_samples, n_components)
         """
         projection = np.dot(np.log(X + self.c), self.omega_)
-        return np.sqrt(2.) / np.sqrt(self.D) * np.cos(projection + self.b)
+        return (np.sqrt(2.) / np.sqrt(self.n_components)
+                * np.cos(projection + self.b))
