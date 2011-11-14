@@ -47,7 +47,7 @@ print __doc__
 import numpy as np
 import pylab as pl
 
-from sklearn.covariance import EmpiricalCovariance, MCD
+from sklearn.covariance import EmpiricalCovariance, MinCovDet
 
 n_samples = 125
 n_outliers = 25
@@ -63,7 +63,7 @@ outliers_cov[np.arange(1, n_features), np.arange(1, n_features)] = 7.
 X[-n_outliers:] = np.dot(np.random.randn(n_outliers, n_features), outliers_cov)
 
 # fit a Minimum Covariance Determinant (MCD) robust estimator to data
-robust_cov = MCD().fit(X, reweight=None)
+robust_cov = MinCovDet().fit(X)
 
 # compare estimators learnt from the full data set with true parameters
 emp_cov = EmpiricalCovariance().fit(X)

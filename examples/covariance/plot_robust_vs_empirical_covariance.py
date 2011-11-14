@@ -52,7 +52,7 @@ import numpy as np
 import pylab as pl
 import matplotlib.font_manager
 
-from sklearn.covariance import EmpiricalCovariance, MCD
+from sklearn.covariance import EmpiricalCovariance, MinCovDet
 
 # example settings
 n_samples = 80
@@ -84,12 +84,12 @@ for i, n_outliers in enumerate(range_n_outliers):
         inliers_mask[outliers_index] = False
 
         # fit a Minimum Covariance Determinant (MCD) robust estimator to data
-        S = MCD().fit(X, reweight=None)
+        S = MinCovDet(reweighting=None).fit(X)
         # compare robust estimates with the true location and covariance
         err_loc_mcd[i, j] = np.sum(S.location_ ** 2)
         err_cov_mcd[i, j] = S.error_norm(np.eye(n_features))
-        # fit a reweighted MCD robust estimator to data
-        S = MCD().fit(X)
+        # reweight MCD robust estimator
+        S.reweight(data=X, permanent=True)
         # compare robust estimates with the true location and covariance
         err_loc_mcd_reweighted[i, j] = np.sum(S.location_ ** 2)
         err_cov_mcd_reweighted[i, j] = S.error_norm(np.eye(n_features))

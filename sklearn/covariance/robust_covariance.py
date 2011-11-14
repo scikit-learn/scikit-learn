@@ -242,7 +242,7 @@ def select_candidates(X, h, n_trials, select=1, n_iter=30, verbose=False):
     return best_T, best_S, best_H
 
 
-def fast_mcd(X, correction="empirical", reweight="rousseeuw"):
+def fast_mcd(X, correction="empirical", reweighting="rousseeuw"):
     """Estimates the Minimum Covariance Determinant matrix.
 
     The FastMCD algorithm has been introduced by Rousseuw and Van Driessen
@@ -258,7 +258,7 @@ def fast_mcd(X, correction="empirical", reweight="rousseeuw"):
     ----------
     X: array-like, shape (n_samples, n_features)
       The data matrix, with p features and n samples.
-    reweight: int (0 < reweight < 2)
+    reweighting: str
       Computation of a reweighted estimator:
         - "rousseeuw" (default): Reweight observations using Rousseeuw's
           method (equivalent to deleting outlying observations from the
@@ -312,6 +312,7 @@ def fast_mcd(X, correction="empirical", reweight="rousseeuw"):
         support[np.argsort(np.abs(X - T), axis=0)[:h]] = True
         S = np.asarray([[np.var(X[support])]])
         T = np.array([T])
+        H = support
 
     ### Starting FastMCD algorithm for p-dimensional case
     if (n_samples > 500) and (n_features > 1):
@@ -378,40 +379,128 @@ def fast_mcd(X, correction="empirical", reweight="rousseeuw"):
         H = H_full[0]
 
     ## 4. Obtain consistency at Gaussian models
-    if correction == "empirical":
-        # theoretical correction
-        inliers_ratio = h / float(n_samples)
-        S_corrected = S * (inliers_ratio) \
-            / chi2(n_features + 2).cdf(chi2(n_features).ppf(inliers_ratio))
-    elif correction == "theoretical":
-        # empirical correction
-        X_centered = X - T
-        dist = (np.dot(X_centered, linalg.inv(S)) * X_centered).sum(1)
-        S_corrected = S * (np.median(dist) / chi2(n_features).isf(0.5))
-    else:
-        # no correction
-        S_corrected = S
+    S_corrected = _correct(T, S, H, correction, data=X)
 
     ## 5. Reweight estimate
-    if reweight == "rousseeuw":
-        X_centered = X - T
-        dist = np.sum(
-            np.dot(X_centered, linalg.inv(S_corrected)) * X_centered,
-            1)
-        mask = dist < chi2(n_features).isf(0.025)
-        T_reweighted = X[mask].mean(0)
-        S_reweighted = _nonrobust_covariance(X[mask])
-        support = np.zeros(n_samples).astype(bool)
-        support[mask] = True
-    else:
-        T_reweighted = T
-        S_reweighted = S_corrected
-        support = H
+    T_reweighted, S_reweighted, support = _reweight(T, S_corrected, H,
+                                                    reweighting, data=X)
 
     return T_reweighted, S_reweighted, support
 
 
-class MCD(EmpiricalCovariance):
+def _correct(location, covariance, support, correction="empirical", data=None):
+    """Apply a correction to a raw Minimum Covariance Determinant estimate
+
+    Parameters
+    ----------
+    location: array-like, shape (n_features,)
+      Raw robust location estimate.
+    S: array-like, shape (n_features, n_features)
+      Raw robust covariance estimate.
+    support: array-like, type boolean, shape (n_samples,)
+      A mask of the observations that have been used to compute
+      the raw robust location and covariance estimates.
+    correction: str
+      Improve the covariance estimator consistency at gaussian models
+        - "empirical" (default): correction using the empirical correction
+          factor suggested by Rousseeuw and Van Driessen in [1]
+        - "theoretical": correction using the theoretical correction factor
+          derived in [2]
+        - else: no correction
+    data: array-like, shape (n_samples, n_features)
+      The data matrix, with p features and n samples.
+      The data set must be the one which was used to compute the raw estimates.
+
+    Returns
+    -------
+    S_corrected: array-like, shape (n_features, n_features)
+      Corrected robust covariance estimate.
+
+    """
+    h = support.sum()
+    n_samples = support.size
+    n_features = covariance.shape[0]
+    if correction == "theoretical":
+        # theoretical correction
+        inliers_ratio = h / float(n_samples)
+        S_corrected = covariance * (inliers_ratio) \
+            / chi2(n_features + 2).cdf(chi2(n_features).ppf(inliers_ratio))
+    elif correction == "empirical":
+        if data is None:
+            raise ValueError("Need `data` for empirical correction")
+        else:
+            # empirical correction
+            X_centered = data - location
+            dist = np.sum(
+                    np.dot(X_centered, linalg.pinv(covariance)) * X_centered,
+                    1)
+            S_corrected = covariance * \
+                              (np.median(dist) / chi2(n_features).isf(0.5))
+    else:
+        # no correction
+        S_corrected = covariance
+
+    return S_corrected
+
+
+def _reweight(location, covariance, support,
+              reweighting="rousseeuw", data=None):
+    """Reweight a raw Minimum Covariance Determinant estimate
+
+    Parameters
+    ----------
+    location: array-like, shape (n_features,)
+      Raw robust location estimate.
+    S: array-like, shape (n_features, n_features)
+      Raw robust covariance estimate.
+    support: array-like, type boolean, shape (n_samples,)
+      A mask of the observations that have been used to compute
+      the raw robust location and covariance estimates.
+    reweighting: str
+      Computation of a reweighted estimator:
+        - "rousseeuw" (default): Reweight observations using Rousseeuw's
+          method (equivalent to deleting outlying observations from the
+          data set before computing location and covariance estimates)
+        - else: no reweighting
+    data: array-like, shape (n_samples, n_features)
+      The data matrix, with p features and n samples.
+      The data set must be the one which was used to compute the raw estimates.
+
+    Returns
+    -------
+    T_reweighted: array-like, shape (n_features, )
+      Reweighted robust location estimate.
+    S_reweighted: array-like, shape (n_features, n_features)
+      Reweighted robust covariance estimate.
+    support: array-like, type boolean, shape (n_samples,)
+      A mask of the observations that have been used to compute
+      the reweighted robust location and covariance estimates.
+
+    """
+    n_features = covariance.shape[0]
+    if reweighting == "rousseeuw":
+        if data is None:
+            raise ValueError("Need data for Rousseeuw reweighting")
+        else:
+            n_samples = data.shape[0]
+            X_centered = data - location
+            dist = np.sum(
+                np.dot(X_centered, linalg.pinv(covariance)) * X_centered,
+                1)
+            mask = dist < chi2(n_features).isf(0.025)
+            T_reweighted = data[mask].mean(0)
+            S_reweighted = _nonrobust_covariance(data[mask])
+            support = np.zeros(n_samples).astype(bool)
+            support[mask] = True
+    else:
+        T_reweighted = location
+        S_reweighted = covariance
+        support = support
+
+    return T_reweighted, S_reweighted, support
+
+
+class MinCovDet(EmpiricalCovariance):
     """Minimum Covariance Determinant (MCD) robust estimator of covariance
 
     The Minimum Covariance Determinant estimator is a robust estimator
@@ -460,7 +549,7 @@ class MCD(EmpiricalCovariance):
             derived in [3]
           - else: no correction
 
-    `reweight`: str
+    `reweighting`: str
         Computation of a reweighted MCD estimator:
           - "rousseeuw" (default): Reweight observations using Rousseeuw's
             method (equivalent to deleting outlying observations from the
@@ -477,8 +566,40 @@ class MCD(EmpiricalCovariance):
         The Annals of Statistics, 1993, Vol. 21, No. 3, 1385-1400
 
     """
-    def fit(self, X, assume_centered=False, correction="empirical",
-            reweight="rousseeuw"):
+    def __init__(self, store_precision=True, assume_centered=False,
+                 correction="empirical", reweighting="rousseeuw"):
+        """
+        assume_centered: Boolean
+          If True, the support of robust location and covariance estimates
+          is computed, and a covariance estimate is recomputed from it,
+          without centering the data.
+          Useful to work with data whose mean is significantly equal to
+          zero but is not exactly zero.
+          If False, the robust location and covariance are directly computed
+          with the FastMCD algorithm without additional treatment.
+        reweighting: str
+          Computation of a reweighted estimator:
+            - "rousseeuw" (default): Reweight observations using Rousseeuw's
+              method (equivalent to deleting outlying observations from the
+              data set before computing location and covariance estimates)
+            - else: no re-weighting
+        correction: str
+          Improve the covariance estimator consistency at Gaussian models
+            - "empirical" (default): correction using the empirical correction
+              factor suggested by Rousseeuw and Van Driessen in [1]
+            - "theoretical": correction using the theoretical correction factor
+              derived in [2]
+            - else: no correction
+        shrinkage: float
+          The amount of shrinkage (ridge regularization) for ill-conditionned
+          matrices.
+        """
+        self.store_precision = store_precision
+        self.assume_centered = assume_centered
+        self.reweighting = reweighting
+        self.correction = correction
+
+    def fit(self, X):
         """Fits a Minimum Covariance Determinant with the FastMCD algorithm.
 
         Parameters
@@ -487,31 +608,100 @@ class MCD(EmpiricalCovariance):
           Training data, where n_samples is the number of samples
           and n_features is the number of features.
 
-        assume_centered: Boolean
-          If True, the support of robust location and covariance estimates
-          is computed, and a covariance estimate is recomputed from it,
-          without centering the data.
-          Usefull to work with data whose mean is significantly equal to
-          zero but is not exactly zero.
-          If False, the robust location and covariance are directly computed
-          with the FastMCD algorithm without additional treatment.
-
         Returns
         -------
         self : object
             Returns self.
 
         """
-        location, covariance, support = fast_mcd(
-            X, correction=correction, reweight=reweight)
-        if assume_centered:
-            location = np.zeros(location.shape[0])
-            covariance = _nonrobust_covariance(
-                X[support], assume_centered=True)
-        self._set_estimates(covariance)
-        self.location_ = location
-        self.support_ = support
-        self.reweight = reweight
-        self.correction = correction
+        # compute and store raw estimates
+        raw_location, raw_covariance, raw_support = fast_mcd(
+                X, correction=None, reweighting=None)
+        if self.assume_centered:
+            raw_location = np.zeros(raw_location.shape[0])
+            raw_covariance = _nonrobust_covariance(
+                    X[raw_support], assume_centered=True)
+        self.raw_location_ = raw_location
+        self.raw_covariance_ = raw_covariance
+        self.raw_support_ = raw_support
+        self.location_ = raw_location
+        self.support_ = raw_support
+        # obtain consistency at normal models
+        covariance = self.correct(self.correction, X, permanent=True)
+        # reweight estimator
+        location, covariance, support = self.reweight(
+                self.reweighting, X, permanent=True)
 
         return self
+
+    def correct(self, correction="empirical", data=None, permanent=False):
+        """Apply a correction to raw Minimum Covariance Determinant estimates.
+
+        Parameters
+        ----------
+        correction: str
+          Improve the covariance estimator consistency at gaussian models
+            - "empirical" (default): correction using the empirical correction
+              factor suggested by Rousseeuw and Van Driessen in [1]
+            - "theoretical": correction using the theoretical correction factor
+              derived in [2]
+            - else: no correction
+        data: array-like, shape (n_samples, n_features)
+          The data matrix, with p features and n samples.
+          The data set must be the one which was used to compute
+          the raw estimates.
+        permanent: bool
+          If True, the `reweighting` parameter is taken a the new object's
+          `reweighting` parameter and the reweighting is persistent.
+
+        Returns
+        -------
+        S: array-like, shape (n_features, n_features)
+          Corrected robust covariance estimate.
+
+        """
+        S = _correct(self.raw_location_, self.raw_covariance_,
+                     self.raw_support_, correction, data=data)
+        if permanent:
+            self._set_estimates(S)
+            self.correction = correction
+        return S
+
+    def reweight(self, reweighting="rousseeuw", data=None, permanent=False):
+        """Reweight raw Minimum Covariance Determinant estimates.
+
+        Parameters
+        ----------
+        reweighting: str
+          Computation of a reweighted estimator:
+            - "rousseeuw" (default): Reweight observations using Rousseeuw's
+              method (equivalent to deleting outlying observations from the
+              data set before computing location and covariance estimates)
+            - else: no re-weighting
+        data: array-like, shape (n_samples, n_features)
+          The data matrix, with p features and n samples.
+          The data set must be the one which was used to compute
+          the raw estimates.
+        permanent: bool
+          If True, the `reweighting` parameter is taken a the new object's
+          `reweighting` parameter and the reweighting is persistent.
+
+        Returns
+        -------
+        T: array-like, shape (n_features, )
+          Reweighted robust location estimate.
+        S: array-like, shape (n_features, n_features)
+          Reweighted robust covariance estimate.
+        H: array-like, type boolean, shape (n_samples,)
+          A mask of the observations that have been used to compute
+          the reweighted robust location and covariance estimates.
+
+        """
+        T, S, H = _reweight(self.location_, self.covariance_,
+                            self.support_, reweighting, data=data)
+        if permanent:
+            self._set_estimates(S)
+            self.location_ = T
+            self.support_ = H
+            self.reweighting = reweighting
+        return T, S, H

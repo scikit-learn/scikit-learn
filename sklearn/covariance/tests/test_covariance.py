@@ -11,7 +11,7 @@ import numpy as np
 from sklearn import datasets
 from sklearn.covariance import empirical_covariance, EmpiricalCovariance, \
     ShrunkCovariance, shrunk_covariance, LedoitWolf, ledoit_wolf, OAS, oas, \
-    fast_mcd, MCD
+    fast_mcd, MinCovDet
 
 X = datasets.load_iris().data
 X_1d = X[:, 0]
@@ -228,7 +228,7 @@ def generator_mcd(correction):
     """
     ### Small data set
     # test without outliers (random independant normal data)
-    launch_mcd_on_dataset(100, 5, 0, 0.3, 0.2, 70, correction)
+    launch_mcd_on_dataset(100, 5, 0, 0.3, 0.3, 70, correction)
     # test with a contaminated data set (medium contamination)
     launch_mcd_on_dataset(100, 5, 20, 0.1, 0.2, 65, correction)
     # test with a contaminated data set (strong contamination)
@@ -276,7 +276,7 @@ def launch_mcd_on_dataset(n_samples, n_features, n_outliers,
         assert(emp_cov.error_norm(S) < bad_emp_cov.error_norm(S))
 
     # compute MCD by fitting an object
-    mcd_fit = MCD().fit(data)
+    mcd_fit = MinCovDet().fit(data)
     T = mcd_fit.location_
     S = mcd_fit.covariance_
     H = mcd_fit.support_
