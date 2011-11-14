@@ -16,28 +16,24 @@ from ..base import RegressorMixin
 from ..utils import check_random_state
 
 from ..tree.tree import _build_tree
+from ..tree.tree import Tree
 from ..tree._tree import _find_best_split
 from ..tree._tree import MSE
 from ..tree._tree import DTYPE
 
 
-class VariableImportance(object):
-
-    def __init__(self, n_features):
-        self.variable_importance = np.zeros((n_features), dtype=np.float64)
-
-    def visit_nonterminal_region(self, node):
-        if node.is_leaf:
-            return
+def update_variable_importance(tree, variable_importance):
+    """Computes the variable importance of each feature according to `tree`
+    and adds them to `variable_importance`. """
+    for node_id in xrange(tree.children.shape[0]):
+        if tree.children[node_id, 0] == tree.children[node_id, 1] == Tree.LEAF:
+            continue
         else:
-            feature = node.feature
-            error_improvement = (node.initial_error - node.best_error) \
-                                / node.initial_error
-            self.variable_importance[feature] += error_improvement ** 2.0
-
-            # tail recursion
-            self.visit_nonterminal_region(node.left)
-            self.visit_nonterminal_region(node.right)
+            feature = tree.feature[node_id]
+            error_improvement = (tree.initial_error[node_id] -
+                                 tree.best_error[node_id]) \
+                                / tree.initial_error[node_id]
+            variable_importance[feature] += error_improvement ** 2.0
 
 
 class MedianPredictor(object):
@@ -319,7 +315,8 @@ class BaseGradientBoosting(BaseEstimator):
         from previous iteration if available.
         """
         if old_pred is not None:
-            return old_pred + self.learn_rate * self.trees[-1].predict(X).ravel()
+            return old_pred + self.learn_rate * \
+                   self.trees[-1].predict(X).ravel()
         else:
             y = self.init.predict(X)
             for tree in self.trees:
@@ -333,9 +330,7 @@ class BaseGradientBoosting(BaseEstimator):
                              "call `fit` before `variable_importance`.")
         variable_importance = np.zeros((self.n_features,), dtype=np.float64)
         for tree in self.trees:
-            vi = VariableImportance(self.n_features)
-            vi.visit_nonterminal_region(tree)
-            variable_importance += vi.variable_importance
+            update_variable_importance(tree, variable_importance)
         variable_importance /= len(self.trees)
         variable_importance = 100.0 * (variable_importance /
                                        variable_importance.max())

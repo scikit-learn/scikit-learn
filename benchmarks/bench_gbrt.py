@@ -26,9 +26,9 @@ def repeat(f):
 np.seterr(invalid='print', under='print', divide='print', over='ignore')
 
 
-classification_params = {'loss': 'deviance', 'n_iter': 500,
+classification_params = {'loss': 'deviance', 'n_iter': 200,
                          'min_split': 1, 'max_depth': 1,
-                         'learn_rate': .6, 'subsample': .5}
+                         'learn_rate': .8, 'subsample': 1.0}
 
 
 @repeat
@@ -132,7 +132,7 @@ def random_gaussian_learning_curve(random_state=None):
     pl.show()
 
 
-@repeat
+#@repeat
 def bench_spam(random_state=None):
     X = np.loadtxt("/home/pprett/corpora/spam/spambase.data", delimiter=",")
     y = X[:, -1].ravel()
@@ -152,13 +152,13 @@ def bench_spam(random_state=None):
     error_rate = (1.0 - clf.score(X_test, y_test))
     test_time = time() - t0
 
-    ## variable_importance = clf.variable_importance
-##     pos = np.arange(X_train.shape[1]) + .5
-##     sorted_idx = np.argsort(variable_importance)
+    variable_importance = clf.variable_importance
+    pos = np.arange(X_train.shape[1]) + .5
+    sorted_idx = np.argsort(variable_importance)
 
-##     pl.barh(pos, variable_importance[sorted_idx], align='center')
-##     pl.yticks(pos, feature_names[sorted_idx])
-##     pl.show()
+    pl.barh(pos, variable_importance[sorted_idx], align='center')
+    pl.yticks(pos, feature_names[sorted_idx])
+    pl.show()
     return error_rate, train_time, test_time
 
 
@@ -245,7 +245,7 @@ if __name__ == "__main__":
     
     ## ##print "Example 10.2 - LC"
     ## ##random_gaussian_learning_curve(13)
-    print "Example 10.2", bench_random_gaussian()
+    ##print "Example 10.2", bench_random_gaussian()
     print "spam", bench_spam()
 
     ## print "Madelon", bench_madelon()

@@ -86,7 +86,7 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
     def node_to_str(tree, node_id):
         if tree.children[node_id, 0] == tree.children[node_id, 1] == Tree.LEAF:
             return "error = %s\\nsamples = %s\\nvalue = %s" \
-                % (tree.init_error[node_id], tree.n_samples[node_id],
+                % (tree.initial_error[node_id], tree.n_samples[node_id],
                    tree.value[node_id])
         else:
             if feature_names is not None:
@@ -96,7 +96,7 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
 
             return "%s <= %s\\nerror = %s\\nsamples = %s\\nvalue = %s" \
                    % (feature, tree.threshold[node_id],
-                      tree.init_error[node_id], tree.n_samples[node_id],
+                      tree.initial_error[node_id], tree.n_samples[node_id],
                       tree.value[node_id])
 
     def recurse(tree, node_id):
@@ -163,11 +163,11 @@ class Tree(object):
 
     best_error : np.ndarray of float64
         The error of the (best) split.
-        For leaves `init_error == `best_error`.
+        For leaves `initial_error == `best_error`.
 
-    init_error : np.ndarray of float64
+    initial_error : np.ndarray of float64
         The initial error of the node (before splitting).
-        For leaves `init_error == `best_error`.
+        For leaves `initial_error == `best_error`.
 
     n_samples : np.ndarray of np.int32
         The number of samples at each node.
@@ -189,7 +189,7 @@ class Tree(object):
         self.value = np.empty((capacity, k), dtype=np.float64)
 
         self.best_error = np.empty((capacity,), dtype=np.float32)
-        self.init_error = np.empty((capacity,), dtype=np.float32)
+        self.initial_error = np.empty((capacity,), dtype=np.float32)
         self.n_samples = np.empty((capacity,), dtype=np.int32)
 
     def resize(self, capacity=None):
@@ -205,7 +205,7 @@ class Tree(object):
         self.threshold.resize((capacity,), refcheck=False)
         self.value.resize((capacity, self.value.shape[1]), refcheck=False)
         self.best_error.resize((capacity,), refcheck=False)
-        self.init_error.resize((capacity,), refcheck=False)
+        self.initial_error.resize((capacity,), refcheck=False)
         self.n_samples.resize((capacity,), refcheck=False)
 
         # if capacity smaller than node_count, adjust the counter
@@ -213,7 +213,7 @@ class Tree(object):
             self.node_count = capacity
 
     def add_split_node(self, parent, is_left_child, feature, threshold,
-                       best_error, init_error, n_samples, value):
+                       best_error, initial_error, n_samples, value):
         """Add a splitting node to the tree. The new node registers itself as
         the child of its parent. """
         node_id = self.node_count
@@ -223,7 +223,7 @@ class Tree(object):
         self.feature[node_id] = feature
         self.threshold[node_id] = threshold
 
-        self.init_error[node_id] = init_error
+        self.initial_error[node_id] = initial_error
         self.best_error[node_id] = best_error
         self.n_samples[node_id] = n_samples
         self.value[node_id] = value
@@ -247,7 +247,7 @@ class Tree(object):
 
         self.value[node_id] = value
         self.n_samples[node_id] = n_samples
-        self.init_error[node_id] = error
+        self.initial_error[node_id] = error
         self.best_error[node_id] = error
 
         if is_left_child:
@@ -296,7 +296,7 @@ def _build_tree(X, y, is_classification, criterion, max_depth, min_split,
 
         # Split samples
         if depth < max_depth and n_node_samples >= min_split:
-            feature, threshold, best_error, init_error = find_split(
+            feature, threshold, best_error, initial_error = find_split(
                 X, y, X_argsorted, sample_mask, n_node_samples,
                 max_features, criterion, random_state)
 
@@ -339,7 +339,7 @@ def _build_tree(X, y, is_classification, criterion, max_depth, min_split,
             split = X[:, feature] <= threshold
 
             node_id = tree.add_split_node(parent, is_left_child, feature,
-                                          threshold, best_error, init_error,
+                                          threshold, best_error, initial_error,
                                           n_node_samples, value)
 
             # left child recursion
