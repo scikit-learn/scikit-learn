@@ -237,6 +237,21 @@ Samples generator
 
 .. currentmodule:: sklearn
 
+Kernel Appoximation
+-------------------
+
+.. automodule:: sklearn.feature_extraction.kernel_approximation
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+   feature_extraction.kernel_approximation.RBFSampler
+   feature_extraction.kernel_approximation.SkewedChi2Sampler
+
 From images
 -----------
 
