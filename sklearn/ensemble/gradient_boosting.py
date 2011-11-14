@@ -127,7 +127,7 @@ class LeastSquaresError(LossFunction):
         return MeanPredictor()
 
     def __call__(self, y, pred):
-        return 0.5 * np.sum((y - pred) ** 2.0) / y.shape[0]
+        return np.mean((y - pred) ** 2.0)
 
     def negative_gradient(self, y, pred):
         return y - pred
@@ -140,7 +140,7 @@ class LeastAbsoluteError(LossFunction):
         return MedianPredictor()
 
     def __call__(self, y, pred):
-        return np.abs(y - pred) / y.shape[0]
+        return np.abs(y - pred).mean()
 
     def negative_gradient(self, y, pred):
         return np.sign(y - pred)
@@ -284,8 +284,6 @@ class BaseGradientBoosting(BaseEstimator):
                                self.min_split, 0.0, -1, self.random_state,
                                1, _find_best_split, sample_mask, X_argsorted,
                                True)
-
-            assert tree.children.shape[0] > 1
 
             # update tree leafs
             loss.update_terminal_regions(tree, X, y, residual, y_pred,
