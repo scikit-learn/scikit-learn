@@ -59,7 +59,7 @@ def as_float_array(X, copy=True):
 
 def array2d(X, dtype=None, order=None):
     """Returns at least 2-d array with data from X"""
-    return np.atleast_2d(np.asarray(X, dtype=dtype, order=order))
+    return np.asarray(np.atleast_2d(X), dtype=dtype, order=order)
 
 
 def atleast2d_or_csr(X):
@@ -455,3 +455,7 @@ def gen_even_slices(n, n_packs):
             end = start + this_n
             yield slice(start, end, None)
             start = end
+
+
+class ConvergenceWarning(Warning):
+    "Custom warning to capture convergence problems"

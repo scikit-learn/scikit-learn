@@ -8,6 +8,9 @@
 Changelog
 ---------
 
+   - :ref:`sparse_inverse_covariance` estimation using the graph Lasso, with
+     associated cross-validated estimator, by `Gael Varoquaux`_
+
    - New :ref:`Tree <tree>` module by `Brian Holt`_, `Peter Prettenhofer`_
      and `Satrajit Ghosh`_. The module comes with complete documentation
      and examples.
@@ -19,7 +22,7 @@ Changelog
    - Faster tests by `Fabian Pedregosa`_.
 
    - Silhouette Coefficient cluster analysis evaluation metric added as
-     ``sklearn.metrics.silhouette_score`` by Robert Layton.
+     ``sklearn.metrics.silhouette_score`` by `Robert Layton`_.
 
    - Fixed a bug in `KMeans` in the handling of the `n_init` parameter:
      the clustering algorithm used to be run `n_init` times but the last
@@ -27,6 +30,9 @@ Changelog
 
    - Minor refactoring in :ref:`sgd` module; consolidated dense and sparse
      predict methods.
+
+   - Adjusted Mutual Information metric added as
+     ``sklearn.metrics.adjusted_mutual_info_score`` by `Robert Layton`_.
 
 
 API changes summary
@@ -508,7 +514,7 @@ Changelog
 ---------
 
   - New `stochastic gradient
-    <http://scikit-learn.sourceforge.net/modules/sgd.html>`_ descent
+    <http://scikit-learn.org/stable/modules/sgd.html>`_ descent
     module by Peter Prettenhofer. The module comes with complete
     documentation and examples.
 
@@ -639,9 +645,9 @@ Documentation
     - Improved documentation for many modules, now separating
       narrative documentation from the class reference. As an example,
       see `documentation for the SVM module
-      <http://scikit-learn.sourceforge.net/modules/svm.html>`_ and the
+      <http://scikit-learn.org/stable/modules/svm.html>`_ and the
       complete `class reference
-      <http://scikit-learn.sourceforge.net/modules/classes.html>`_.
+      <http://scikit-learn.org/stable/modules/classes.html>`_.
 
 Fixes
 ~~~~~
@@ -663,7 +669,7 @@ Examples
       :ref:`example_mlcomp_document_classification.py`
 
     - Many more examaples. `See here
-      <http://scikit-learn.sourceforge.net/auto_examples/index.html>`_
+      <http://scikit-learn.org/stable/auto_examples/index.html>`_
       the full list of examples.
 
 

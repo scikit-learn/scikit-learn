@@ -5,10 +5,16 @@ Class reference
 
 .. TODO: put some order here. Alphabetical ?
 
+This is the class and function reference for the scikit-learn. Please
+consult the :ref:`full user guide <user_guide>` and the corresponding
+section for each function, as a function documentation is not enough to
+give guidelines on its uses.
+
 
 Support Vector Machines
 =======================
 
+Please refer to the :ref:`svm` section of the user guide.
 
 .. automodule:: sklearn.svm
    :no-members:
@@ -73,6 +79,7 @@ Low-level methods
 Decision Trees
 ==============
 
+Please refer to the :ref:`tree` section of the user guide.
 
 .. automodule:: sklearn.tree
    :no-members:
@@ -94,6 +101,8 @@ Decision Trees
 
 Generalized Linear Models
 =========================
+
+Please refer to the :ref:`linear_model` section of the user guide.
 
 .. automodule:: sklearn.linear_model
    :no-members:
@@ -158,6 +167,8 @@ For sparse data
 Naive Bayes
 ===========
 
+Please refer to the :ref:`naive_bayes` section of the user guide.
+
 .. automodule:: sklearn.naive_bayes
    :no-members:
    :no-inherited-members:
@@ -175,6 +186,8 @@ Naive Bayes
 
 Nearest Neighbors
 =================
+
+Please refer to the :ref:`neighbors` section of the user guide.
 
 .. automodule:: sklearn.neighbors
    :no-members:
@@ -205,6 +218,8 @@ Nearest Neighbors
 
 Gaussian Processes
 ==================
+
+Please refer to the :ref:`gaussian_process` section of the user guide.
 
 .. automodule:: sklearn.gaussian_process
    :no-members:
@@ -249,6 +264,8 @@ Regression models
 Gaussian Mixture Models
 =======================
 
+Please refer to the :ref:`mixture` section of the user guide.
+
 .. automodule:: sklearn.mixture
    :no-members:
    :no-inherited-members:
@@ -267,6 +284,8 @@ Gaussian Mixture Models
 Hidden Markov Models
 ====================
 
+Please refer to the :ref:`hmm` section of the user guide.
+
 .. automodule:: sklearn.hmm
    :no-members:
    :no-inherited-members:
@@ -284,6 +303,8 @@ Hidden Markov Models
 
 Clustering
 ==========
+
+Please refer to the :ref:`clustering` section of the user guide.
 
 .. automodule:: sklearn.cluster
    :no-members:
@@ -355,6 +376,8 @@ Regression metrics
 Clustering metrics
 ------------------
 
+Please refer to the :ref:`clustering` section of the user guide.
+
 .. automodule:: sklearn.metrics.cluster
    :no-members:
    :no-inherited-members:
@@ -399,6 +422,8 @@ Pairwise metrics
 Covariance Estimators
 =====================
 
+Please refer to the :ref:`covariance` section of the user guide.
+
 .. automodule:: sklearn.covariance
    :no-members:
    :no-inherited-members:
@@ -413,6 +438,8 @@ Covariance Estimators
    covariance.ShrunkCovariance
    covariance.LedoitWolf
    covariance.OAS
+   covariance.GraphLasso
+   covariance.GraphLassoCV
 
 .. autosummary::
    :toctree: generated/
@@ -422,10 +449,13 @@ Covariance Estimators
    covariance.ledoit_wolf
    covariance.shrunk_covariance
    covariance.oas
+   covariance.g_lasso
 
 
 Signal Decomposition
 ====================
+
+Please refer to the :ref:`decompositions` section of the user guide.
 
 .. automodule:: sklearn.decomposition
    :no-members:
@@ -473,6 +503,8 @@ Linear Discriminant Analysis
 Partial Least Squares
 =====================
 
+Please refer to the :ref:`pls` section of the user guide.
+
 .. automodule:: sklearn.pls
    :no-members:
    :no-inherited-members:
@@ -491,6 +523,8 @@ Partial Least Squares
 
 Cross Validation
 ================
+
+Please refer to the :ref:`cross_validation` section of the user guide.
 
 .. automodule:: sklearn.cross_validation
    :no-members:
@@ -515,6 +549,9 @@ Cross Validation
 Grid Search
 ===========
 
+Please refer to the :ref:`grid_search` section of the user guide.
+
+
 .. automodule:: sklearn.grid_search
    :no-members:
    :no-inherited-members:
@@ -531,9 +568,10 @@ Grid Search
 
 .. _feature_selection_ref:
 
-
 Feature Selection
 =================
+
+Please refer to the :ref:`feature_selection` section of the user guide.
 
 .. automodule:: sklearn.feature_selection
    :no-members:
@@ -556,11 +594,13 @@ Feature Selection
    feature_selection.univariate_selection.chi2
 
 
-.. _feature_extraction:
+.. _feature_extraction_ref:
 
 
 Feature Extraction
 ==================
+
+Please refer to the :ref:`feature_extraction` section of the user guide.
 
 .. automodule:: sklearn.feature_extraction
    :no-members:
@@ -615,6 +655,9 @@ From text
 Preprocessing and normalization
 ===============================
 
+Please refer to the :ref:`preprocessing` section of the user guide.
+
+
 .. automodule:: sklearn.preprocessing
    :no-members:
    :no-inherited-members:
@@ -644,6 +687,9 @@ Preprocessing and normalization
 Manifold learning
 =================
 
+Please refer to the :ref:`manifold` section of the user guide.
+
+
 .. autosummary::
     :toctree: generated
     :template: class.rst
@@ -661,6 +707,8 @@ Manifold learning
 
 Datasets
 ========
+
+Please refer to the :ref:`datasets` section of the user guide.
 
 Loaders
 -------

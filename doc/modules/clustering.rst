@@ -95,6 +95,7 @@ the :class:`KMeans` algorithm.
    D. Sculley, *Proceedings of the 19th international conference on World
    wide web* (2010)
 
+.. _affinity_propagation:
 
 Affinity propagation
 ====================
@@ -309,6 +310,8 @@ points below.
    In Proceedings of the 2nd International Conference on Knowledge Discovery
    and Data Mining, Portland, OR, AAAI Press, pp. 226–231. 1996
 
+.. _clustering_evaluation:
+
 Clustering performance evaluation
 =================================
 
@@ -472,6 +475,148 @@ by defining the adjusted Rand index as follows:
    <http://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index>`_
 
 
+Ajusted Mutual Information
+--------------------------
+
+Presentation and usage
+~~~~~~~~~~~~~~~~~~~~~~
+
+Given the knowledge of the ground truth class assignments ``labels_true``
+and our clustering algorithm assignments of the same samples
+``labels_pred``, the **Adjusted Mutual Information** is a function that 
+measures the **agreement** of the two assignements, ignoring permutations
+and **with chance normalization**::
+
+  >>> from sklearn import metrics
+  >>> labels_true = [0, 0, 0, 1, 1, 1]
+  >>> labels_pred = [0, 0, 1, 1, 2, 2]
+
+  >>> metrics.adjusted_mutual_info_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
+  0.22504...
+
+One can permute 0 and 1 in the predicted labels and rename `2` by `3` and get
+the same score::
+
+  >>> labels_pred = [1, 1, 0, 0, 3, 3]
+  >>> metrics.adjusted_mutual_info_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
+  0.22504...
+
+Furthermore, :func:`adjusted_mutual_info_score` is **symmetric**: swapping the
+argument does not change the score. It can thus be used as a **consensus
+measure**::
+
+  >>> metrics.adjusted_mutual_info_score(labels_pred, labels_true)  # doctest: +ELLIPSIS
+  0.22504...
+
+Perfect labeling is scored 1.0::
+
+  >>> labels_pred = labels_true[:]
+  >>> metrics.adjusted_mutual_info_score(labels_true, labels_pred)
+  1.0
+
+Bad (e.g. independent labelings) have non-positive scores::
+
+  >>> labels_true = [0, 1, 2, 0, 3, 4, 5, 1]
+  >>> labels_pred = [1, 1, 0, 0, 2, 2, 2, 2]
+  >>> metrics.adjusted_mutual_info_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
+  -0.10526...
+
+
+Advantages
+~~~~~~~~~~
+
+- **Random (uniform) label assignements have a AMI score close to 0.0**
+  for any value of ``n_clusters`` and ``n_samples`` (which is not the
+  case for raw Mutual Information or the V-measure for instance).
+
+- **Bounded range [0, 1]**:  Values close to zero indicate two label
+  assignments that are largely independent, while values close to one
+  indicate significant agreement. Further, values of exactly 0 indicate
+  **purely** independent label assignments and a AMI of exactly 1 indicates
+  that the two label assignments are equal (with or without permutation).
+
+- **No assumption is made on the cluster structure**: can be used
+  to compare clustering algorithms such as k-means which assumes isotropic
+  blob shapes with results of spectral clustering algorithms which can
+  find cluster with "folded" shapes.
+
+
+Drawbacks
+~~~~~~~~~
+
+- Contrary to inertia, **AMI requires the knowlege of the ground truth
+  classes** while almost never available in practice or requires manual
+  assignment by human annotators (as in the supervised learning setting).
+
+  However AMI can also be useful in purely unsupervised setting as a
+  building block for a Consensus Index that can be used for clustering
+  model selection.
+
+
+.. topic:: Examples:
+
+ * :ref:`example_cluster_plot_adjusted_for_chance_measures.py`: Analysis of
+   the impact of the dataset size on the value of clustering measures
+   for random assignements. This example also includes the Adjusted Rand 
+   Index.
+
+
+Mathematical formulation
+~~~~~~~~~~~~~~~~~~~~~~~~
+Assume two label assignments (of the same data), :math:`U` with :math:`R`
+classes and :math:`V` with :math:`C` classes. The entropy of either is the
+ amount of uncertaintly for an array, and can be calculated as:
+
+.. math:: H(U) = \sum_{i=1}^{|R|}P(i)log(P(i))
+
+Where P(i) is the number of instances in U that are in class :math:`R_i`.
+Likewise, for :math:`V`:
+.. math:: H(V) = \sum_{j=1}^{|C|}P'(j)log(P'(j))
+Where P'(j) is the number of instances in V that are in class :math:`C_j`.
+
+The (non-adjusted) mutual information between :math:`U` and :math:`V` is
+calculated by:
+
+.. math:: MI(U, V) = \sum_{i=1}^{|R|}\sum_{j=1}^{|C|}P(i, j)log(\frac{P(i,j)}{P(i)P'(j)})
+
+Where P(i, j) is the number of instances with label :math:`R_i` 
+and also with label :math:`C_j`.
+
+This value of the mutual information is not adjusted cfor chance and will tend
+to increase as the number of different labels (clusters) increases, regardless
+of the actual amount of "mutual information" between the label assignments.
+
+The expected value for the mutual information can be calculated using the
+following equation, from Vinh, Epps, and Bailey, (2009). In this equation,
+:math:`a_i` is the number of instances with label :math:`U_i` and
+:math:`b_j` is the number of instances with label :math:`V_j`.
+
+
+.. math:: E\{MI(U,V)\}=\sum_{i=1}^R \sum_{j=1}^C \sum_{n_{ij}=(a_i+b_j-N)^+
+   }^{\min(a_i, b_j)} \frac{n_{ij}}{N}\log ( \frac{ N.n_{ij}}{a_i b_j})
+   \frac{a_i!b_j!(N-a_i)!(N-b_j)!}{N!n_{ij}!(a_i-n_{ij})!(b_j-n_{ij})!
+   (N-a_i-b_j+n_{ij})!}
+
+Using the expected value, the adjusted mutual information can then be 
+calculated using a similar form to that of the adjusted Rand index:
+
+.. math:: AMI = \frac{MI - Expected\_MI}{max(H(U), H(V)) - Expected\_MI}
+
+.. topic:: References
+
+ * Vinh, Epps, and Bailey, (2009). "Information theoretic measures 
+   for clusterings comparison". Proceedings of the 26th Annual International
+   Conference on Machine Learning - ICML '09.
+   doi:10.1145/1553374.1553511. ISBN 9781605585161.
+
+ * Vinh, Epps, and Bailey, (2010). Information Theoretic Measures for
+   Clusterings Comparison: Variants, Properties, Normalization and
+   Correction for Chance}, JMLR
+   http://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf
+
+ * `Wikipedia entry for the Adjusted Mutual Information
+   <http://en.wikipedia.org/wiki/Adjusted_Mutual_Information>`_
+
 Homogeneity, completeness and V-measure
 ---------------------------------------
 
@@ -620,6 +765,8 @@ mean of homogeneity and completeness**:
  * `V-Measure: A conditional entropy-based external cluster evaluation
    measure <http://acl.ldc.upenn.edu/D/D07/D07-1043.pdf>`_
    Andrew Rosenberg and Julia Hirschberg, 2007
+
+.. _silhouette_coefficient:
 
 Silhouette Coefficient
 ----------------------

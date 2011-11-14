@@ -79,7 +79,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
         raise NotImplementedError(
             "Scaling is not yet implement for sparse matrices")
     X = np.asarray(X)
-    if X.dtype.kind == 'i':
+    if X.dtype.kind in ['i', 'u']:
         warnings.warn('Data of type %s in scale. '
                       'Converting to float is recommended' % X.dtype)
     mean_, std_ = _mean_and_std(
@@ -164,7 +164,7 @@ class Scaler(BaseEstimator, TransformerMixin):
             raise NotImplementedError(
                 "Scaling is not yet implement for sparse matrices")
         X = np.asarray(X)
-        if X.dtype.kind == 'i':
+        if X.dtype.kind in ['i', 'u']:
             warnings.warn('Data of type %s in Scaler.fit. '
                           'Converting to float is recommended' % X.dtype)
         self.mean_, self.std_ = _mean_and_std(
@@ -184,7 +184,7 @@ class Scaler(BaseEstimator, TransformerMixin):
             raise NotImplementedError(
                 "Scaling is not yet implement for sparse matrices")
         X = np.asarray(X)
-        if X.dtype.kind == 'i':
+        if X.dtype.kind in ['i', 'u']:
             warnings.warn('Data of type %s in Scaler.transform. '
                           'Converting to float is recommended' % X.dtype)
         if copy:
@@ -257,7 +257,7 @@ def normalize(X, norm='l2', axis=1, copy=True):
         raise ValueError("'%d' is not a supported axis" % axis)
 
     X = check_arrays(X, sparse_format=sparse_format, copy=copy)[0]
-    if X.dtype.kind == 'i':
+    if X.dtype.kind in ['i', 'u']:
         warnings.warn('Data of type %s in normalize. '
                       'Converting to float is recommended' % X.dtype)
     if axis == 0:

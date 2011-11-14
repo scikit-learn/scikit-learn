@@ -212,12 +212,13 @@ class GridSearchCV(BaseEstimator):
     `grid_scores_` : dict of any to float
         Contains scores for all parameter combinations in param_grid.
 
-     `best_estimator` : estimator
+    `best_estimator` : estimator
         Estimator that was choosen by grid search, i.e. estimator
         which gave highest score (or smallest loss if specified)
         on the left out data.
 
-     `best_score` : score of best_estimator on the left out data.
+    `best_score` : float
+        score of best_estimator on the left out data.
 
 
     Notes
@@ -272,8 +273,9 @@ class GridSearchCV(BaseEstimator):
             Training vector, where n_samples in the number of samples and
             n_features is the number of features.
 
-        y: array, [n_samples] or None
-            Target vector relative to X, None for unsupervised problems
+        y: array-like, shape = [n_samples], optional
+            Target vector relative to X for classification;
+            None for unsupervised learning.
 
         """
         self._set_params(**params)
@@ -285,10 +287,12 @@ class GridSearchCV(BaseEstimator):
             # support list of unstructured objects on which feature
             # extraction will be applied later in the tranformer chain
             n_samples = len(X)
-        if y is not None and len(y) != n_samples:
-            raise ValueError('Target variable (y) has a different number '
-                    'of samples (%i) than data (X: %i samples)' %
-                        (len(y), n_samples))
+        if y is not None:
+            if len(y) != n_samples:
+                raise ValueError('Target variable (y) has a different number '
+                                 'of samples (%i) than data (X: %i samples)'
+                                 % (len(y), n_samples))
+            y = np.asarray(y)
         cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
 
         grid = IterGrid(self.param_grid)
@@ -338,6 +342,8 @@ class GridSearchCV(BaseEstimator):
 
         if self.refit:
             # fit the best estimator using the entire dataset
+            # clone first to work around broken estimators
+            best_estimator = clone(best_estimator)
             best_estimator.fit(X, y, **self.fit_params)
 
         self.best_estimator = best_estimator
