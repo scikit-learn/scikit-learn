@@ -7,7 +7,6 @@ An example shows how to use RBFSampler to appoximate
 the feature map of an RBF kernel. Results for varying
 amounts of Monte Carlo samplings are shown.
 
-
 """
 print __doc__
 
@@ -20,7 +19,7 @@ import pylab as pl
 import numpy as np
 
 # Import datasets, classifiers and performance metrics
-from sklearn import datasets, svm, metrics, pipeline
+from sklearn import datasets, svm, pipeline
 from sklearn.feature_extraction.kernel_approximation import RBFSampler
 
 # The digits dataset
@@ -62,9 +61,20 @@ for D in sample_sizes:
     score = approx_kernel_svm.score(data_test, targets_test)
     approx_kernel_scores.append(score)
 
-print(linear_svm_score)
-print(kernel_svm_score)
-#pl.plot(sample_sizes, approx_kernel_scores)
-pl.plot([[linear_svm_score, sample_sizes[0]], [linear_svm_score, sample_sizes[-1]]])
-#pl.plot(sample_sizes, kernel_svm_score)
+# plot the results:
+pl.plot(sample_sizes, approx_kernel_scores, label="approximate kernel")
+
+# horizontal lines for exact rbf and linear kernels:
+pl.plot([sample_sizes[0], sample_sizes[-1]], [linear_svm_score, linear_svm_score], label="linear svm")
+pl.plot([sample_sizes[0], sample_sizes[-1]], [kernel_svm_score, kernel_svm_score], label="rbf svm")
+
+# vertical line for dataset dimensionality = 64
+pl.plot([64, 64], [0.7, 1], label="original dimensionality")
+
+# legends and labels
+pl.xlim(sample_sizes[0], sample_sizes[-1])
+pl.ylim(np.min(approx_kernel_scores),1)
+pl.xlabel("Sampling steps = transformed feature dimension")
+pl.ylabel("Classification accuracy")
+pl.legend()
 pl.show()
