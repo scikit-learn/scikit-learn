@@ -51,17 +51,11 @@ class Dendrogram(object):
         self.heights = np.zeros(n_nodes)
         self.children = []
         
-        self.merges = [] # TODO: Get rid of this
-        
-     
     def merge(self, i, j, k, merge_distance):
         self.parent[i] = self.parent[j] = k
         self.heights[k] = merge_distance
         self.children.append([i, j])
-        self.merges.append(((i, j), k))
         
-        
-    # Functions for cutting  hierarchical clustering tree
     def _get_descendent(self, ind, add_intermediate_nodes=False):
         """Function returning all the descendent leaves of a set of nodes.
     
@@ -90,7 +84,6 @@ class Dendrogram(object):
                 ind.extend((ci[0], ci[1]))
         return descendent
     
-    
     def _cut(self, n_clusters):
         """Function cutting the dendrogram for a given number of clusters.
     
@@ -113,7 +106,6 @@ class Dendrogram(object):
         for i, node in enumerate(nodes):
             labels[self._get_descendent([node])] = i
         return labels
-    
     
     def _cut_height(self, max_height):
         """ Function cutting the dendrogram for a given maximal height.
@@ -149,7 +141,7 @@ class Dendrogram(object):
 
 ###############################################################################
               
-def create_dendrogram(X, connectivity, n_components=None, merge_replay=[], 
+def create_dendrogram(X, connectivity, n_components=None, 
                       linkage_criterion=WardsLinkage, linkage_kwargs={}, 
                       copy=True):
     """Hierarchical clustering based on a Feature matrix.
@@ -194,139 +186,123 @@ def create_dendrogram(X, connectivity, n_components=None, merge_replay=[],
         The heights associated to the tree's nodes.
     """
     X = np.asarray(X)
-    n_samples, n_features = X.shape
     if X.ndim == 1:
         X = np.reshape(X, (-1, 1))
-
-    if n_components is None:
-        n_components, _ = cs_graph_components(connectivity)
-    if n_components > 1:
-        warnings.warn("the number of connected components of the"
-        " connectivity matrix is %d > 1. The tree will be stopped early."
-        % n_components)
-
-    # Compute the number of nodes
-    n_nodes = 2 * n_samples - 1
-
+    n_samples, n_features = X.shape
+    
+    # Sanity checks
     if (connectivity.shape[0] != n_samples or
         connectivity.shape[1] != n_samples):
         raise ValueError('Wrong shape for connectivity matrix: %s '
                          'when X is %s' % (connectivity.shape, X.shape))
-    # convert connectivity matrix to LIL eventually with a copy
+        
+    # Compute the number of nodes of the tree
+    # Binary tree with n leaves has 2n-1 nodes...
+    n_nodes = 2 * n_samples - 1
+
+    # convert connectivity matrix to LIL, possibly with a copy
     if sparse.isspmatrix_lil(connectivity) and copy:
         connectivity = connectivity.copy()
     else:
         connectivity = connectivity.tolil()
+    
+    if n_components is None:
+        n_components, _ = cs_graph_components(connectivity)
 
     # Remove diagonal from connectivity matrix
     connectivity.setdiag(np.zeros(connectivity.shape[0]))        
-    # Compute distances between connected nodes
-    linkage = linkage_criterion(X, connectivity, **linkage_kwargs)
-
+    
     # Create the dendrogram
     dendrogram = Dendrogram(n_samples, n_components)
     
+    # Linkage object that manages the distance computations between clusters
+    # distances are updated incrementally during merging of clusters...
+    linkage = linkage_criterion(X, connectivity, **linkage_kwargs)
+    
+    # Array in which open_nodes[i] indicate whether the cluster with index i
+    # has nor yet been merged into a larger cluster
     open_nodes = np.ones(n_nodes, dtype=bool)
     
-    # The indices which are contained in the replayed merges
-    reserved_indices = set([])
-    for (i_, j_), k_ in merge_replay:
-        reserved_indices.add(i_)
-        reserved_indices.add(j_)
-    for (i_, j_), k_ in merge_replay:
-        if k_ in reserved_indices:
-             # Add k_ later since we don't know the new index yet
-            reserved_indices.remove(k_)
-    
-    index_mapping = dict(zip(reserved_indices, reserved_indices))
-    
-    augmentation = None
-    # recursive merge loop
-    replaying = len(merge_replay) > 0
+    # Recursive merge loop
     for k in xrange(n_samples, n_nodes):
-        # Fetch merge that will be reapplied next (if any)
-        if len(merge_replay) > 0:
-            (i_, j_), k_ = merge_replay[0]
-            merge_replay = merge_replay[1:]
-             # Associate indices
-            i = index_mapping[i_]
-            j = index_mapping[j_]
-            # Compute merge distance
-            merge_distance = linkage.get_cluster_distance(i, j)
-            index_mapping[k_] = k
-#            print "Reapply", merge_distance, i, j, k
-        else:  # No merges to be reapplied left
-            if augmentation: 
-                # There are nodes that can be added to cluster created during
-                # replaying 
-                merge_distance, i, j = augmentation
-                augmentation = None
-#                print "Augmentation", merge_distance, i, j, k
-            else:
-                # Identify the merge that will be applied next using the 
-                # standard method
+        # Identify the merge that will be applied next
+        # This is the merge with minimal distance of two cluster that haven't
+        # been merged into a larger cluster yet.
+        merge_distance = np.inf
+        while linkage.has_more_candidates():
+            merge_distance, i, j = linkage.fetch_candidate()
+            if open_nodes[i] and open_nodes[j]:
+                break
+            if not linkage.has_more_candidates():
                 merge_distance = np.inf
-                while linkage.has_more_candidates():
-                    merge_distance, i, j = linkage.fetch_candidate()
-                    if open_nodes[i] and open_nodes[j]:
-                        break
-                    if not linkage.has_more_candidates():
-                        merge_distance = np.inf
-                        break
-                if not linkage.has_more_candidates() \
-                                        and merge_distance == np.inf: 
-                    # Merge unconnected components with height infinity
-                    i = k - 1
-                    desc = set(_hc_get_descendent([i], np.array(children), 
-                                                  n_samples, 
+                break
+            
+        # Check if we have fully merged all connected components
+        if merge_distance == np.inf and not linkage.has_more_candidates(): 
+            # Merge unconnected components with height infinity
+            i = k - 1
+            desc = set(dendrogram._get_descendent([i], 
                                                   add_intermediate_nodes=True))
-                    for j in xrange(k - 2, 0, -1):
-                        if j not in desc:
-                            break      
-#                print "Novel", merge_distance, i, j, k     
-            # Update index mapping
-            if i in index_mapping.values():
-                i_ = index_mapping.keys()[index_mapping.values().index(i)]
-                index_mapping[i_] = k
-            if j in index_mapping.values():
-                j_ = index_mapping.keys()[index_mapping.values().index(j)]
-                index_mapping[j_] = k  
+            for j in xrange(k - 2, 0, -1):
+                if j not in desc:
+                    break      
 
+        # Add one node to dendrogram tree that is the parent of the two
+        # tree nodes i and j. Store the corresponding merge distance as the 
+        # nodes' height 
         dendrogram.merge(i, j, k, merge_distance)
         
-        open_nodes[i], open_nodes[j] = False, False
-        
-        # Add new possible merges and their distances to heap
+        # Update linkage object
         linkage.update(i, j, k, dendrogram.parent)
         
-        # If we are finished with replaying
-        if replaying and len(merge_replay) == 0:
-            # Check for possible augmentations of the clusters created during 
-            # replaying
-            possible_augmentations = []
-            for cluster_root in linkage.get_nontrivial_clusters():
-                for node in linkage.get_nodes_connected_to_clusters(
-                                                            [cluster_root]):
-                    if not open_nodes[node]:
-                        continue
-                    dist = linkage.get_cluster_distance(node, cluster_root)
-                    if dist < heights[cluster_root]:
-                        possible_augmentations.append(
-                                                (dist - heights[cluster_root],
-                                                 heights[cluster_root],
-                                                 node, cluster_root))
-            if len(possible_augmentations) > 0:
-                augmentation = min(possible_augmentations)[1:]
-            else:
-                replaying = False
+        open_nodes[i], open_nodes[j] = False, False
                 
     return dendrogram
 
 def ward_tree(X, connectivity=None, n_components=None, copy=True):
+    """Hierarchical clustering based ward's criterion.
+
+    The height matrix uses a Heapq-based representation.
+
+    This is the structured version, that takes into account a some topological
+    structure between samples.
+
+    Parameters
+    ----------
+    X : array of shape (n_samples, n_features)
+        feature matrix  representing n_samples samples to be clustered
+
+    connectivity : sparse matrix.
+        connectivity matrix. Defines for each sample the neighboring samples
+        following a given structure of the data. The matrix is assumed to
+        be symmetric and only the upper triangular half is used.
+        Default is None, i.e, full connectivity is assumed
+
+    n_components : int (optional)
+        Number of connected components. If None the number of connected
+        components is estimated from the connectivity matrix.
+
+    copy : bool (optional)
+        Make a copy of connectivity or work inplace. If connectivity
+        is not of LIL type there will be a copy in any case.
+
+    Returns
+    -------
+    children : list of pairs. Length of n_nodes
+               list of the children of each nodes.
+               Leaves of the tree have empty list of children.
+
+    n_components : sparse matrix.
+        The number of connected components in the graph.
+
+    n_leaves : int
+        The number of leaves in the tree
+    """
+    # TODO: Contained only for backward compatibility
     if connectivity is not None:    
         dendrogram = create_dendrogram(X, connectivity, n_components, 
-                                       merge_replay=[], 
-                                       linkage_criterion=WardsLinkage, copy=True) 
+                                       linkage_criterion=WardsLinkage, 
+                                       copy=True) 
         return dendrogram.children, dendrogram.n_components, dendrogram.n_samples
     else:
         out = hierarchy.ward(X)
@@ -401,8 +377,6 @@ class HierarchicalClustering(BaseEstimator):
         self.memory = memory
         self.copy = copy
         
-        self.merges = []
-        
     def fit(self, X):
         """Fit the hierarchical clustering on the data
 
@@ -423,7 +397,6 @@ class HierarchicalClustering(BaseEstimator):
         dendrogram = \
             memory.cache(create_dendrogram)(X, self.connectivity,
                                             n_components=self.n_components,
-                                            merge_replay=self.merges,
                                             linkage_criterion=self.linkage_criterion,
                                             linkage_kwargs=self.linkage_kwargs,
                                             copy=self.copy)
@@ -434,19 +407,14 @@ class HierarchicalClustering(BaseEstimator):
         else:
             # based on maximally allowed height
             self.labels_ = dendrogram._cut_height(self.max_height)
-
-        self.merges = dendrogram.merges           
-        # Undo merges in the uppermost part of the tree that have been 
-        # "cut off" by _hc_cut_height or _hc_cut
-        if len(np.unique(self.labels_)) > 1:
-            self.merges = self.merges[:-len(np.unique(self.labels_)) + 1]
             
         return self
 
 
 ###############################################################################
+
 class Ward(HierarchicalClustering):
-    
+    # TODO: Contained only for backward compatibility    
     def __init__(self, *args, **kwargs):
         super(Ward, self).__init__(*args, linkage_criterion=WardsLinkage,
                                    **kwargs)
