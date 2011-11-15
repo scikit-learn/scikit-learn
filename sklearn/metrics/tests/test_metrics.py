@@ -16,6 +16,7 @@ from ..metrics import explained_variance_score
 from ..metrics import r2_score
 from ..metrics import f1_score
 from ..metrics import avg_f1_score
+from ..metrics import matthews_corrcoef
 from ..metrics import mean_square_error
 from ..metrics import precision_recall_curve
 from ..metrics import precision_recall_fscore_support
@@ -151,6 +152,20 @@ def test_confusion_matrix_binary():
 
     cm = confusion_matrix(y_true, y_pred)
     assert_array_equal(cm, [[19, 6], [7, 18]])
+
+    tp = cm[0,0]
+    tn = cm[1,1]
+    fp = cm[0,1]
+    fn = cm[1,0]
+    num = (tp*tn-fp*fn)
+    den = np.sqrt((tp+fp)*(tp+fn)*(tn+fp)*(tn+fn))
+    if den == 0.:
+        true_mcc = 0
+    else:
+        true_mcc = num/den
+    mcc = matthews_corrcoef(y_true, y_pred)
+    assert_array_almost_equal(mcc, true_mcc, decimal=2)
+    assert_array_almost_equal(mcc, 0.48, decimal=2)
 
 
 def test_precision_recall_f1_score_multiclass():

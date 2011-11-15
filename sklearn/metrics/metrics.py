@@ -480,6 +480,39 @@ def avg_f1_score(y_true, y_pred):
     return np.average(f1, weights=support)
 
 
+def matthews_corrcoef(y_true, y_pred):
+    """Returns matthew's correlation coefficient for binary classes
+
+    Only in the binary case does this relate to information about true and false
+    positives and negatives. See references below.
+
+    Parameters
+    ----------
+    y_true : array, shape = [n_samples]
+        true targets
+
+    y_pred : array, shape = [n_samples]
+        estimated targets
+
+    Returns
+    -------
+    mcc : float
+        matthew's correlation coefficient (+1 represents a perfect prediction,
+        0 an average random prediction and -1 and inverse prediction).
+
+    References
+    ----------
+    http://en.wikipedia.org/wiki/Matthews_correlation_coefficient
+    doi: 10.1093/bioinformatics/16.5.412
+
+    """
+    mcc = np.corrcoef(y_true, y_pred)[0,1]
+    if np.isnan(mcc):
+        return 0.
+    else:
+        return mcc
+
+
 def classification_report(y_true, y_pred, labels=None, target_names=None):
     """Build a text report showing the main classification metrics
 
