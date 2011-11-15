@@ -7,6 +7,9 @@ implemented as linkage criteria.
 Authors : Vincent Michel, Bertrand Thirion, Alexandre Gramfort,
           Gael Varoquaux, Jan Hendrik Metzen
 License: BSD 3 clause
+
+.. TODO:: Consider nearest-neighbor chain algorithm for creating dendrogram?
+ (https://secure.wikimedia.org/wikipedia/en/wiki/Nearest-neighbor_chain_algorithm)
 """
 
 import warnings
@@ -43,10 +46,10 @@ def dendrogram(X, connectivity=None, n_components=None, merge_replay=[],
         feature matrix  representing n_samples samples to be clustered
 
     connectivity : sparse matrix.
-        connectivity matrix. Defines for each sample the neigbhoring samples
+        connectivity matrix. Defines for each sample the neighboring samples
         following a given structure of the data. The matrix is assumed to
         be symmetric and only the upper triangular half is used.
-        Default is None, i.e, the Ward algorithm is unstructured.
+        Default is None, i.e, full connectivity is assumed
 
     n_components : int (optional)
         Number of connected components. If None the number of connected
@@ -85,6 +88,9 @@ def dendrogram(X, connectivity=None, n_components=None, merge_replay=[],
             " connectivity matrix is %d > 1. The tree will be stopped early."
             % n_components)
     else:
+        assert linkage_criterion == WardsLinkage, \
+            "Fully connected clustering (connectivity==None) currently "\
+            "only supported by Ward's Linkage."
         out = hierarchy.ward(X)
         children_ = out[:, :2].astype(np.int)
         return children_, 1, n_samples, None
@@ -137,7 +143,7 @@ def dendrogram(X, connectivity=None, n_components=None, merge_replay=[],
             i = index_mapping[i_]
             j = index_mapping[j_]
             # Compute merge distance
-            merge_distance = linkage.compute_distance(i, j)
+            merge_distance = linkage.get_cluster_distance(i, j)
             index_mapping[k_] = k
 #            print "Reapply", merge_distance, i, j, k
         else:  # No merges to be reapplied left
@@ -195,7 +201,7 @@ def dendrogram(X, connectivity=None, n_components=None, merge_replay=[],
                                                             [cluster_root]):
                     if not open_nodes[node]:
                         continue
-                    dist = linkage.compute_distance(node, cluster_root)
+                    dist = linkage.get_cluster_distance(node, cluster_root)
                     if dist < heights[cluster_root]:
                         possible_augmentations.append(
                                                 (dist - heights[cluster_root],
@@ -336,7 +342,7 @@ class HierarchicalClustering(BaseEstimator):
     max_inertia : float or None
         If this value is not None, the max_inertia is used to determine the
         number of returned clusters. In this case, the n_clusters parameter
-        is agnored and may be None.
+        is ignored and may be None.
 
     connectivity : sparse matrix.
         Connectivity matrix. Defines for each sample the neigbhoring
