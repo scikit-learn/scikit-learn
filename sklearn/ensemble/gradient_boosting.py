@@ -5,6 +5,8 @@
 # TODO:
 #      * Multi-class classification
 #      * Huber loss for regression
+#      * Partial-dependency plots
+#      * Routine to find optimal n_iter
 #
 
 from __future__ import division
