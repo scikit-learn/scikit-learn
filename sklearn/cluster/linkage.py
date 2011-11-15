@@ -17,7 +17,7 @@ import numpy as np
 
 from . import _inertia
 
-# TODO: Check which functionality can be merged into dendrogram
+
 class Linkage(object):
     """ Base-class for different linkage criterion for hierarchical clustering.
 

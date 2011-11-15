@@ -1,18 +1,16 @@
 """Hierarchical Agglomerative Clustering
 
-These routines perform some hierarchical agglomerative clustering of some
-input data. Currently, only complete-linkage and ward's criterion are
-implemented as linkage criteria.
+These routines perform hierarchical agglomerative clustering of some
+input data. 
 
 Authors : Vincent Michel, Bertrand Thirion, Alexandre Gramfort,
           Gael Varoquaux, Jan Hendrik Metzen
 License: BSD 3 clause
 
 .. TODO:: Consider nearest-neighbor chain algorithm for creating dendrogram?
- (https://secure.wikimedia.org/wikipedia/en/wiki/Nearest-neighbor_chain_algorithm)
+ (https://secure.wikimedia.org/wikipedia/en/wiki/
+                 Nearest-neighbor_chain_algorithm)
 """
-
-import warnings
 
 import numpy as np
 from scipy import sparse
@@ -25,21 +23,64 @@ from ..externals.joblib import Memory
 from .linkage import WardsLinkage
 from ._feature_agglomeration import AgglomerationTransform
 
+
 class Dendrogram(object):
-    """
+    """ Dendrogram that is constructed during hierarchical clustering.
     
-    heights...
+    The dendrogram encodes the agglomerative clustering process. The dendrogram
+    is a binary tree in which each datapoint of the dataset corresponds to
+    one leaf and each inner node corresponds to one cluster that was formed 
+    during the agglomerative clustering. The cluster associated to a tree node
+    contains exactly those datapoints that are the leaves of the subtree 
+    induced by this node.
+    
+    Each node of the tree has an additional "height" attribute (not to be
+    mistaken as the node's height in the tree) which corresponds to the 
+    distance of its two child nodes. This distance is computed using one of
+    the linkage criteria defined in linkage.py.   
+    
+    Parameters
+    ----------
+    n_samples : int
+        The number of samples in the dataset to be clustered (i.e. the number
+        of leaves of the dendrogram tree)
+    
+    n_components : int
+        The number of connected components in the dataset
+
+    Methods
+    ----------
+    merge:
+        Adds a new tree node corresponding to merging two clusters.
+        
+    _get_descendent:
+        Return all the descendent leaves of a set of nodes.
+    
+    _cut:
+       Cut the dendrogram for a given number of clusters.
+       
+    _cut_height:
+        Cut the dendrogram for a given maximal height.
+        
     
     Attributes
     ----------
-    heights :  list of floats. Length of n_nodes
+    n_samples : int
+        The number of samples in the dataset to be clustered (i.e. the number
+        of leaves of the dendrogram tree)
+    
+    n_components : int
+        The number of connected components in the dataset
+
+    parent : array of floats. Length of n_nodes
+        For tree node with index i, this array contains as i-th entry the index
+        of its parent. Nodes without parents contain themselves as parents. 
+        
+    heights :  array of floats. Length of n_nodes
             The heights associated to the tree's nodes.
     
     children : list of pairs. Length of n_nodes
-        List of the children of each nodes. This is not defined for leaves.
-        
-    n_leaves : int
-            Number of leaves.
+        List of the children of node. This is not defined for leaves.
     """
 
     def __init__(self, n_samples, n_components):
@@ -51,13 +92,34 @@ class Dendrogram(object):
         self.heights = np.zeros(n_nodes)
         self.children = []
         
-    def merge(self, i, j, k, merge_distance):
-        self.parent[i] = self.parent[j] = k
-        self.heights[k] = merge_distance
-        self.children.append([i, j])
+    def merge(self, child_node_1, child_node_2, parent_node, merge_distance):
+        """ Adds a new tree node corresponding to merging two clusters.
+        
+        Create tree node *parent_node* that is the parent of *child_node_1* and 
+        *child_node_2* and gets as its height the *merge_distance*.
+        
+        Parameters
+        ----------
+        child_node_1 : int
+            The index of the first child node
+            
+        child_node_2 : int
+            The index of the second child node
+            
+        parent_node : int
+            The index of the new parent node that connects the two child nodes
+        
+        merge_distance: float
+            The distance of the two child nodes corresponding to the two 
+            clusters.
+            
+        """
+        self.parent[child_node_1] = self.parent[child_node_1] = parent_node
+        self.heights[parent_node] = merge_distance
+        self.children.append([child_node_1, child_node_2])
         
     def _get_descendent(self, ind, add_intermediate_nodes=False):
-        """Function returning all the descendent leaves of a set of nodes.
+        """ Return all the descendent leaves of a set of nodes.
     
         Parameters
         ----------
@@ -75,9 +137,9 @@ class Dendrogram(object):
         descendent = []
         while len(ind) != 0:
             i = ind.pop()
-            if i < self.n_samples: #its a leaf
+            if i < self.n_samples:  # its a leaf
                 descendent.append(i)
-            else: # inner node, go to children
+            else:  # inner node, go to children
                 if add_intermediate_nodes:
                     descendent.append(i)
                 ci = self.children[i - self.n_samples]
@@ -85,7 +147,7 @@ class Dendrogram(object):
         return descendent
     
     def _cut(self, n_clusters):
-        """Function cutting the dendrogram for a given number of clusters.
+        """ Cut the dendrogram for a given number of clusters.
     
         Parameters
         ----------
@@ -108,7 +170,7 @@ class Dendrogram(object):
         return labels
     
     def _cut_height(self, max_height):
-        """ Function cutting the dendrogram for a given maximal height.
+        """ Cut the dendrogram for a given maximal height.
         
         Parameters
         ----------
@@ -140,16 +202,17 @@ class Dendrogram(object):
         return labels
 
 ###############################################################################
-              
+
+
 def create_dendrogram(X, connectivity, n_components=None, 
                       linkage_criterion=WardsLinkage, linkage_kwargs={}, 
                       copy=True):
-    """Hierarchical clustering based on a Feature matrix.
+    """ Hierarchical clustering algorithm that creates a dendrogram.
 
-    The height matrix uses a Heapq-based representation.
-
-    This is the structured version, that takes into account a some topological
-    structure between samples.
+    This is the structured version, that takes into account the topological
+    structure between samples. The linkage is Ward's linkage per default;
+    however one can use any linkage object that implements the Linkage
+    interface (see interface.py)
 
     Parameters
     ----------
@@ -160,11 +223,19 @@ def create_dendrogram(X, connectivity, n_components=None,
         connectivity matrix. Defines for each sample the neighboring samples
         following a given structure of the data. The matrix is assumed to
         be symmetric and only the upper triangular half is used.
-        Default is None, i.e, full connectivity is assumed
 
     n_components : int (optional)
         Number of connected components. If None the number of connected
         components is estimated from the connectivity matrix.
+
+    linkage_criterion : object implementing the Linkage interface
+        The linkage criterion used to determine the distances of two clusters.
+        Defaults to Ward's linkage; however one can pass any object 
+        implementing the Linkage interface.
+        
+    linkage_kwargs : dict
+        Additional keyword arguments that are directly passed to the __init__
+        method of the linkage object.
 
     copy : bool (optional)
         Make a copy of connectivity or work inplace. If connectivity
@@ -172,18 +243,8 @@ def create_dendrogram(X, connectivity, n_components=None,
 
     Returns
     -------
-    children : list of pairs. Length of n_nodes
-               list of the children of each nodes.
-               Leaves of the tree have empty list of children.
-
-    n_components : sparse matrix.
-        The number of connected components in the graph.
-
-    n_leaves : int
-        The number of leaves in the tree
-        
-    heights :  list of floats. Length n_nodes
-        The heights associated to the tree's nodes.
+    dendrogram : instance of Dendrogram
+        The dendrogram that was formed during hierarchical clustering.
     """
     X = np.asarray(X)
     if X.ndim == 1:
@@ -259,13 +320,13 @@ def create_dendrogram(X, connectivity, n_components=None,
                 
     return dendrogram
 
+
 def ward_tree(X, connectivity=None, n_components=None, copy=True):
-    """Hierarchical clustering based ward's criterion.
+    """Hierarchical clustering based on Ward's criterion.
 
-    The height matrix uses a Heapq-based representation.
-
-    This is the structured version, that takes into account a some topological
-    structure between samples.
+    If connectivity is None, the scipy implementation of Ward's algorithm
+    is used. Otherwise, the structured version, that takes into account 
+    the topological structure between samples is used.
 
     Parameters
     ----------
@@ -298,12 +359,14 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
     n_leaves : int
         The number of leaves in the tree
     """
-    # TODO: Contained only for backward compatibility
+    # TODO: Contained only for backward compatibility. Add a deprecation 
+    #       warning?
     if connectivity is not None:    
         dendrogram = create_dendrogram(X, connectivity, n_components, 
                                        linkage_criterion=WardsLinkage, 
                                        copy=True) 
-        return dendrogram.children, dendrogram.n_components, dendrogram.n_samples
+        return dendrogram.children, dendrogram.n_components, \
+                dendrogram.n_samples
     else:
         out = hierarchy.ward(X)
         children_ = out[:, :2].astype(np.int)
@@ -311,13 +374,15 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
 
 ###############################################################################
 
+
 class HierarchicalClustering(BaseEstimator):
-    """Hierarchical clustering: constructs a tree and cuts it.
+    """Hierarchical clustering: constructs a dendrogram and cuts it.
 
     Parameters
     ----------
     n_clusters : int or ndarray or None
-        The number of clusters to find.
+        The number of clusters to find. If None, max_height must be specified 
+        instead.
         
     max_height : float or None
         If this value is not None, the max_height is used to determine the
@@ -341,6 +406,15 @@ class HierarchicalClustering(BaseEstimator):
     n_components : int (optional)
         The number of connected components in the graph defined by the
         connectivity matrix. If not set, it is estimated.
+        
+    linkage_criterion : object implementing the Linkage interface
+        The linkage criterion used to determine the distances of two clusters.
+        Defaults to Ward's linkage; however one can pass any object 
+        implementing the Linkage interface.
+        
+    linkage_kwargs : dict
+        Additional keyword arguments that are directly passed to the __init__
+        method of the linkage object.
 
     Methods
     -------
@@ -349,15 +423,8 @@ class HierarchicalClustering(BaseEstimator):
 
     Attributes
     ----------
-    children_ : array-like, shape = [n_nodes, 2]
-        List of the children of each nodes.
-        Leaves of the tree do not appear.
-
     labels_ : array [n_points]
         cluster labels for each point
-
-    n_leaves_ : int
-        Number of leaves in the hiearchical tree.
 
     """
 
@@ -389,17 +456,13 @@ class HierarchicalClustering(BaseEstimator):
         -------
         self
         """
-        memory = self.memory
-        if isinstance(memory, basestring):
-            memory = Memory(cachedir=memory)
-
         # Construct the tree
         dendrogram = \
-            memory.cache(create_dendrogram)(X, self.connectivity,
-                                            n_components=self.n_components,
-                                            linkage_criterion=self.linkage_criterion,
-                                            linkage_kwargs=self.linkage_kwargs,
-                                            copy=self.copy)
+            create_dendrogram(X, self.connectivity, 
+                              n_components=self.n_components,
+                              linkage_criterion=self.linkage_criterion,
+                              linkage_kwargs=self.linkage_kwargs,
+                              copy=self.copy)
         # Cut the tree ... 
         if self.max_height is None:
             # based on number of desired clusters
@@ -414,7 +477,8 @@ class HierarchicalClustering(BaseEstimator):
 ###############################################################################
 
 class Ward(HierarchicalClustering):
-    # TODO: Contained only for backward compatibility    
+    # TODO: Contained only for backward compatibility. Add a deprecation 
+    #       warning?
     def __init__(self, *args, **kwargs):
         super(Ward, self).__init__(*args, linkage_criterion=WardsLinkage,
                                    **kwargs)
@@ -454,15 +518,8 @@ class WardAgglomeration(AgglomerationTransform, Ward):
 
     Attributes
     ----------
-    children_ : array-like, shape = [n_nodes, 2]
-        List of the children of each nodes.
-        Leaves of the tree do not appear.
-
     labels_ : array [n_points]
         cluster labels for each point
-
-    n_leaves_ : int
-        Number of leaves in the hiearchical tree.
 
     """
 
