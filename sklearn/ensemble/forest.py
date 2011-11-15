@@ -54,6 +54,8 @@ class Forest(BaseEstimator):
             Returns self.
         """
         # Check parameters
+        if not isinstance(self.base_tree, BaseEstimator):
+            raise ValueError("base_tree must be a subclass of BaseEstimator.")
         if self.n_trees <= 0:
             raise ValueError("n_trees must be greater than zero.")
 
