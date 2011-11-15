@@ -15,6 +15,7 @@ from ..metrics import confusion_matrix
 from ..metrics import explained_variance_score
 from ..metrics import r2_score
 from ..metrics import f1_score
+from ..metrics import avg_f1_score
 from ..metrics import mean_square_error
 from ..metrics import precision_recall_curve
 from ..metrics import precision_recall_fscore_support
@@ -139,6 +140,9 @@ def test_precision_recall_f1_score_binary():
 
     fs = f1_score(y_true, y_pred)
     assert_array_almost_equal(fs, 0.74, 2)
+
+    afs = avg_f1_score(y_true, y_pred)
+    assert_array_almost_equal(afs, 0.74, decimal=2)
 
 
 def test_confusion_matrix_binary():

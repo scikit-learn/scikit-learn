@@ -361,7 +361,7 @@ def f1_score(y_true, y_pred, pos_label=1):
     -------
     f1_score : float
         f1_score of the positive class in binary classification or weighted
-        avergage of the f1_scores of each class for the multiclass task
+        average of the f1_scores of each class for the multiclass task
 
     References
     ----------
@@ -458,11 +458,27 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None):
 
     return precision, recall, fscore, support
 
+
 def avg_f1_score(y_true, y_pred):
     """Return the average f1 score
+
+    Parameters
+    ----------
+    y_true : array, shape = [n_samples]
+        true targets
+
+    y_pred : array, shape = [n_samples]
+        estimated targets
+
+    Returns
+    -------
+    avg_f1_score : float
+        average of the f1_scores of each class for the multiclass task
+
     """
-    p, r, f1, support = precision_recall_fscore_support(y_true, y_pred)
+    _, _, f1, support = precision_recall_fscore_support(y_true, y_pred)
     return np.average(f1, weights=support)
+
 
 def classification_report(y_true, y_pred, labels=None, target_names=None):
     """Build a text report showing the main classification metrics
