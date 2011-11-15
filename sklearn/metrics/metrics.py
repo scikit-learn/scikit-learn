@@ -473,7 +473,7 @@ def avg_f1_score(y_true, y_pred):
     Returns
     -------
     avg_f1_score : float
-        average of the f1_scores of each class for the multiclass task
+        average of the f1_scores of all classes
 
     """
     _, _, f1, support = precision_recall_fscore_support(y_true, y_pred)
@@ -483,8 +483,8 @@ def avg_f1_score(y_true, y_pred):
 def matthews_corrcoef(y_true, y_pred):
     """Returns matthew's correlation coefficient for binary classes
 
-    Only in the binary case does this relate to information about true and false
-    positives and negatives. See references below.
+    Only in the binary case does this relate to information about true and
+    false positives and negatives. See references below.
 
     Parameters
     ----------
@@ -506,7 +506,7 @@ def matthews_corrcoef(y_true, y_pred):
     doi: 10.1093/bioinformatics/16.5.412
 
     """
-    mcc = np.corrcoef(y_true, y_pred)[0,1]
+    mcc = np.corrcoef(y_true, y_pred)[0, 1]
     if np.isnan(mcc):
         return 0.
     else:
