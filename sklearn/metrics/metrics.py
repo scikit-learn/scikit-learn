@@ -458,6 +458,11 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None):
 
     return precision, recall, fscore, support
 
+def avg_f1_score(y_true, y_pred):
+    """Return the average f1 score
+    """
+    p, r, f1, support = precision_recall_fscore_support(y_true, y_pred)
+    return np.average(f1, weights=support)
 
 def classification_report(y_true, y_pred, labels=None, target_names=None):
     """Build a text report showing the main classification metrics
