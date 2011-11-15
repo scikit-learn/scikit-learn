@@ -456,20 +456,31 @@ class HierarchicalClustering(BaseEstimator):
         -------
         self
         """
-        # Construct the tree
-        dendrogram = \
-            create_dendrogram(X, self.connectivity, 
-                              n_components=self.n_components,
-                              linkage_criterion=self.linkage_criterion,
-                              linkage_kwargs=self.linkage_kwargs,
-                              copy=self.copy)
-        # Cut the tree ... 
-        if self.max_height is None:
-            # based on number of desired clusters
+        if self.connectivity is not None:
+            # Construct the tree
+            dendrogram = \
+                create_dendrogram(X, self.connectivity, 
+                                  n_components=self.n_components,
+                                  linkage_criterion=self.linkage_criterion,
+                                  linkage_kwargs=self.linkage_kwargs,
+                                  copy=self.copy)
+            # Cut the tree ... 
+            if self.max_height is None:
+                # based on number of desired clusters
+                self.labels_ = dendrogram._cut(self.n_clusters)
+            else:
+                # based on maximally allowed height
+                self.labels_ = dendrogram._cut_height(self.max_height)
+        else:  # Fall back to scipy
+            assert self.n_clusters is not None, \
+                "Unstructured clustering requires the number of clusters to "\
+                "be specified explicitly." 
+            
+            out = hierarchy.ward(X)
+            # Put result into a dendrogram and cut it to get labeling
+            dendrogram = Dendrogram(X.shape[0], 1)
+            dendrogram.children = out[:, :2].astype(np.int)
             self.labels_ = dendrogram._cut(self.n_clusters)
-        else:
-            # based on maximally allowed height
-            self.labels_ = dendrogram._cut_height(self.max_height)
             
         return self
 
