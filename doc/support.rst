@@ -36,11 +36,12 @@ Documentation resources
 This documentation is relative to |release|. Documentation for other
 versions can be found here:
 
-    * `Development version <http://scikit-learn.sf.net/dev/>`_
-    * `0.8 <http://scikit-learn.sf.net/0.8/>`_
-    * `0.7 <http://scikit-learn.sf.net/0.7/>`_
-    * `0.6 <http://scikit-learn.sf.net/0.6/>`_
-    * `0.5 <http://scikit-learn.sf.net/0.5/>`_
+    * `Development version <http://scikit-learn.org/dev/>`_
+    * `0.9 <http://scikit-learn.org/0.9/>`_
+    * `0.8 <http://scikit-learn.org/0.8/>`_
+    * `0.7 <http://scikit-learn.org/0.7/>`_
+    * `0.6 <http://scikit-learn.org/0.6/>`_
+    * `0.5 <http://scikit-learn.org/0.5/>`_
 
 
 Printable pdf version for all versions can be found `here

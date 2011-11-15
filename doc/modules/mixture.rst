@@ -239,7 +239,7 @@ the :meth:`GMM.predict` method.
       density estimation.
 
 Variational Gaussian mixtures: VBGMM classifier
-=============================================
+===============================================
 
 .. currentmodule:: sklearn.mixture
 
