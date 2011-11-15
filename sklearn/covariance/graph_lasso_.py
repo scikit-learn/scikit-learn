@@ -500,7 +500,7 @@ class GraphLassoCV(GraphLasso):
                 covs_init = path[best_index][-1]
             elif best_index == len(path) - 1:
                 alpha_1 = path[best_index][0]
-                alpha_0 = 0.01 * path[best_index + 1][0]
+                alpha_0 = 0.01 * path[best_index][0]
                 covs_init = path[best_index][-1]
             else:
                 alpha_1 = path[best_index - 1][0]

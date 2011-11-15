@@ -410,7 +410,7 @@ Pairwise metrics
    :template: function.rst
 
    metrics.pairwise.euclidean_distances
-   metrics.pairwise.l1_distances
+   metrics.pairwise.manhattan_distances
    metrics.pairwise.linear_kernel
    metrics.pairwise.polynomial_kernel
    metrics.pairwise.rbf_kernel

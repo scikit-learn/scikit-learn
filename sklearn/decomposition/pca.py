@@ -443,17 +443,16 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
             Returns the instance itself.
         """
         self.random_state = check_random_state(self.random_state)
+        X_orig = X
         if not hasattr(X, 'todense'):
+            # not a sparse matrix, ensure this is a 2D array
             X = array2d(X)
 
         n_samples = X.shape[0]
 
-        if self.copy:
-            X = X.copy()
-
         if not hasattr(X, 'todense'):
-            # not a sparse matrix, ensure this is a 2D array
-            X = array2d(X)
+            if self.copy:
+                X = X.copy()
 
             # Center data
             self.mean_ = np.mean(X, axis=0)
