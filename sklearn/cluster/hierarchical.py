@@ -25,17 +25,136 @@ from ..externals.joblib import Memory
 from .linkage import WardsLinkage
 from ._feature_agglomeration import AgglomerationTransform
 
-###############################################################################
-  
-def ward_tree(X, connectivity=None, n_components=None, copy=True):    
-    return dendrogram(X, connectivity=None, n_components=None, merge_replay=[], 
-                      linkage_criterion=WardsLinkage, copy=True)[:3]
+class Dendrogram(object):
+    """
+    
+    heights...
+    
+    Attributes
+    ----------
+    heights :  list of floats. Length of n_nodes
+            The heights associated to the tree's nodes.
+    
+    children : list of pairs. Length of n_nodes
+        List of the children of each nodes. This is not defined for leaves.
+        
+    n_leaves : int
+            Number of leaves.
+    """
+
+    def __init__(self, n_samples, n_components):
+        self.n_samples = n_samples 
+        self.n_components = n_components
+        
+        n_nodes = 2 * self.n_samples - 1
+        self.parent = np.arange(n_nodes, dtype=np.int)
+        self.heights = np.zeros(n_nodes)
+        self.children = []
+        
+        self.merges = [] # TODO: Get rid of this
+        
+     
+    def merge(self, i, j, k, merge_distance):
+        self.parent[i] = self.parent[j] = k
+        self.heights[k] = merge_distance
+        self.children.append([i, j])
+        self.merges.append(((i, j), k))
+        
+        
+    # Functions for cutting  hierarchical clustering tree
+    def _get_descendent(self, ind, add_intermediate_nodes=False):
+        """Function returning all the descendent leaves of a set of nodes.
+    
+        Parameters
+        ----------
+        ind : list of int
+            A list that indicates the nodes for which we want the descendents.
             
-def dendrogram(X, connectivity=None, n_components=None, merge_replay=[], 
-               linkage_criterion=WardsLinkage, copy=True):
+        add_intermediate_nodes : bool
+            If true, leaves and inenr nodes in the subtree are returnd, 
+            otherwise only the leaves. Defaults to False.
+    
+        Return
+        ------
+        descendent : list of int
+        """
+        descendent = []
+        while len(ind) != 0:
+            i = ind.pop()
+            if i < self.n_samples: #its a leaf
+                descendent.append(i)
+            else: # inner node, go to children
+                if add_intermediate_nodes:
+                    descendent.append(i)
+                ci = self.children[i - self.n_samples]
+                ind.extend((ci[0], ci[1]))
+        return descendent
+    
+    
+    def _cut(self, n_clusters):
+        """Function cutting the dendrogram for a given number of clusters.
+    
+        Parameters
+        ----------
+        n_clusters : int or ndarray
+            The number of clusters to form.
+    
+        Return
+        ------
+        labels : array [n_points]
+            cluster labels for each point
+    
+        """
+        nodes = [np.max(self.children[-1]) + 1]
+        for i in xrange(n_clusters - 1):
+            nodes.extend(self.children[np.max(nodes) - self.n_samples])
+            nodes.remove(np.max(nodes))
+        labels = np.zeros(self.n_samples, dtype=np.int)
+        for i, node in enumerate(nodes):
+            labels[self._get_descendent([node])] = i
+        return labels
+    
+    
+    def _cut_height(self, max_height):
+        """ Function cutting the dendrogram for a given maximal height.
+        
+        Parameters
+        ----------
+        max_height : float
+            The maximal height a tree node is allowed to have to form a single
+            cluster. Determines indirectly how many clusters are formed. 
+    
+        Return
+        ------
+        labels : array
+            cluster labels for each point
+    
+        """
+        open_nodes = [len(self.heights) - 1]  # root of the tree
+        cluster_roots = [] 
+        while open_nodes != []:
+            node = open_nodes[0]
+            open_nodes = open_nodes[1:]
+            if self.heights[node] <= max_height: 
+                # This tree node is the root of a cluster
+                cluster_roots.append(node)
+            else:
+                # Tree node induces subtree with too large height; split it
+                open_nodes.extend(self.children[node - self.n_samples])
+                
+        labels = np.zeros(self.n_samples, dtype=np.int)
+        for i, node in enumerate(cluster_roots):
+            labels[self._get_descendent([node])] = i
+        return labels
+
+###############################################################################
+              
+def create_dendrogram(X, connectivity, n_components=None, merge_replay=[], 
+                      linkage_criterion=WardsLinkage, linkage_kwargs={}, 
+                      copy=True):
     """Hierarchical clustering based on a Feature matrix.
 
-    The inertia matrix uses a Heapq-based representation.
+    The height matrix uses a Heapq-based representation.
 
     This is the structured version, that takes into account a some topological
     structure between samples.
@@ -72,29 +191,21 @@ def dendrogram(X, connectivity=None, n_components=None, merge_replay=[],
         The number of leaves in the tree
         
     heights :  list of floats. Length n_nodes
-        The inertias associated to the tree's nodes.
+        The heights associated to the tree's nodes.
     """
     X = np.asarray(X)
     n_samples, n_features = X.shape
     if X.ndim == 1:
         X = np.reshape(X, (-1, 1))
 
-    # Compute the number of nodes
-    if connectivity is not None:
-        if n_components is None:
-            n_components, _ = cs_graph_components(connectivity)
-        if n_components > 1:
-            warnings.warn("the number of connected components of the"
-            " connectivity matrix is %d > 1. The tree will be stopped early."
-            % n_components)
-    else:
-        assert linkage_criterion == WardsLinkage, \
-            "Fully connected clustering (connectivity==None) currently "\
-            "only supported by Ward's Linkage."
-        out = hierarchy.ward(X)
-        children_ = out[:, :2].astype(np.int)
-        return children_, 1, n_samples, None
+    if n_components is None:
+        n_components, _ = cs_graph_components(connectivity)
+    if n_components > 1:
+        warnings.warn("the number of connected components of the"
+        " connectivity matrix is %d > 1. The tree will be stopped early."
+        % n_components)
 
+    # Compute the number of nodes
     n_nodes = 2 * n_samples - 1
 
     if (connectivity.shape[0] != n_samples or
@@ -110,14 +221,12 @@ def dendrogram(X, connectivity=None, n_components=None, merge_replay=[],
     # Remove diagonal from connectivity matrix
     connectivity.setdiag(np.zeros(connectivity.shape[0]))        
     # Compute distances between connected nodes
-    linkage = linkage_criterion(X, connectivity)
+    linkage = linkage_criterion(X, connectivity, **linkage_kwargs)
 
-    # prepare the main fields
-    parent = np.arange(n_nodes, dtype=np.int)
-    heights = np.zeros(n_nodes)
+    # Create the dendrogram
+    dendrogram = Dendrogram(n_samples, n_components)
+    
     open_nodes = np.ones(n_nodes, dtype=bool)
-    children = []
-    merges = []
     
     # The indices which are contained in the replayed merges
     reserved_indices = set([])
@@ -183,13 +292,12 @@ def dendrogram(X, connectivity=None, n_components=None, merge_replay=[],
                 j_ = index_mapping.keys()[index_mapping.values().index(j)]
                 index_mapping[j_] = k  
 
-        parent[i], parent[j], heights[k] = k, k, merge_distance
-        merges.append(((i, j), k))
-        children.append([i, j])
+        dendrogram.merge(i, j, k, merge_distance)
+        
         open_nodes[i], open_nodes[j] = False, False
         
         # Add new possible merges and their distances to heap
-        linkage.update(i, j, k, parent)
+        linkage.update(i, j, k, dendrogram.parent)
         
         # If we are finished with replaying
         if replaying and len(merge_replay) == 0:
@@ -211,125 +319,21 @@ def dendrogram(X, connectivity=None, n_components=None, merge_replay=[],
                 augmentation = min(possible_augmentations)[1:]
             else:
                 replaying = False
+                
+    return dendrogram
 
-    # Separate leaves in children (empty lists up to now)
-    n_leaves = n_samples
-    children = np.array(children)  # return numpy array for efficient caching
-
-    return children, n_components, n_leaves, merges, heights
-
-
-###############################################################################
-# Functions for cutting  hierarchical clustering tree
-
-def _hc_get_descendent(ind, children, n_leaves, add_intermediate_nodes=False):
-    """Function returning all the descendent leaves of a set of nodes.
-
-    Parameters
-    ----------
-    ind : list of int
-        A list that indicates the nodes for which we want the descendents.
-
-    children : list of pairs. Length of n_nodes
-        List of the children of each nodes.
-        This is not defined for leaves.
-
-    n_leaves : int
-        Number of leaves.
-
-    Return
-    ------
-    descendent : list of int
-    """
-    descendent = []
-    while len(ind) != 0:
-        i = ind.pop()
-        if i < n_leaves:
-            descendent.append(i)
-        else:
-            if add_intermediate_nodes:
-                descendent.append(i)
-            ci = children[i - n_leaves]
-            ind.extend((ci[0], ci[1]))
-    return descendent
-
-
-def _hc_cut(n_clusters, children, n_leaves):
-    """Function cutting the ward tree for a given number of clusters.
-
-    Parameters
-    ----------
-    n_clusters : int or ndarray
-        The number of clusters to form.
-
-    children : list of pairs. Length of n_nodes
-        List of the children of each nodes.
-        Leaves have empty list of children and are not stored.
-
-    n_leaves : int
-        Number of leaves of the tree.
-
-    Return
-    ------
-    labels : array [n_points]
-        cluster labels for each point
-
-    """
-    nodes = [np.max(children[-1]) + 1]
-    for i in xrange(n_clusters - 1):
-        nodes.extend(children[np.max(nodes) - n_leaves])
-        nodes.remove(np.max(nodes))
-    labels = np.zeros(n_leaves, dtype=np.int)
-    for i, node in enumerate(nodes):
-        labels[_hc_get_descendent([node], children, n_leaves)] = i
-    return labels
-
-
-def _hc_cut_inertia(max_inertia, children, n_leaves, inertias):
-    """Function cutting the ward tree for a given maximal inertia.
-
-    Parameters
-    ----------
-    max_inertia : float
-        The maximal inertia a cluster is allowed to have. Determines indirectly
-        how many clusters are formed. 
-
-    children : list of pairs. Length of n_nodes
-        List of the children of each nodes.
-        Leaves have empty list of children and are not stored.
-
-    n_leaves : int
-        Number of leaves of the tree.
-        
-    inertias :  list of floats. Length of n_nodes
-        The inertias associated to the tree's nodes.
-
-    Return
-    ------
-    labels : array
-        cluster labels for each point
-
-    """
-    open_nodes = [len(inertias) - 1]  # root of the tree
-    cluster_roots = [] 
-    while open_nodes != []:
-        node = open_nodes[0]
-        open_nodes = open_nodes[1:]
-        if inertias[node] <= max_inertia: 
-            # This tree node is the root of a cluster
-            cluster_roots.append(node)
-        else:
-            # Tree node induces subtree with too large inertia; split it
-            open_nodes.extend(children[node - n_leaves])
-            
-    labels = np.zeros(n_leaves, dtype=np.int)
-    for i, node in enumerate(cluster_roots):
-        labels[_hc_get_descendent([node], children, n_leaves)] = i
-    return labels
-
+def ward_tree(X, connectivity=None, n_components=None, copy=True):
+    if connectivity is not None:    
+        dendrogram = create_dendrogram(X, connectivity, n_components, 
+                                       merge_replay=[], 
+                                       linkage_criterion=WardsLinkage, copy=True) 
+        return dendrogram.children, dendrogram.n_components, dendrogram.n_samples
+    else:
+        out = hierarchy.ward(X)
+        children_ = out[:, :2].astype(np.int)
+        return children_, 1, X.shape[0]
 
 ###############################################################################
-# Class for Hierarchical clustering
 
 class HierarchicalClustering(BaseEstimator):
     """Hierarchical clustering: constructs a tree and cuts it.
@@ -339,8 +343,8 @@ class HierarchicalClustering(BaseEstimator):
     n_clusters : int or ndarray or None
         The number of clusters to find.
         
-    max_inertia : float or None
-        If this value is not None, the max_inertia is used to determine the
+    max_height : float or None
+        If this value is not None, the max_height is used to determine the
         number of returned clusters. In this case, the n_clusters parameter
         is ignored and may be None.
 
@@ -381,18 +385,24 @@ class HierarchicalClustering(BaseEstimator):
 
     """
 
-    def __init__(self, n_clusters=None, max_inertia=None,
+    def __init__(self, n_clusters=None, max_height=None,
                  memory=Memory(cachedir=None, verbose=0), connectivity=None,
-                 copy=True, n_components=None, linkage_criterion=WardsLinkage):
+                 copy=True, n_components=None, linkage_criterion=WardsLinkage,
+                 linkage_kwargs={}):
         self.n_clusters = n_clusters
-        self.max_inertia = max_inertia
+        self.n_components = n_components
+        self.max_height = max_height
+                
+        self.connectivity = connectivity
+        
+        self.linkage_criterion = linkage_criterion
+        self.linkage_kwargs = linkage_kwargs
+        
         self.memory = memory
         self.copy = copy
-        self.n_components = n_components
-        self.connectivity = connectivity
-        self.linkage_criterion = linkage_criterion
+        
         self.merges = []
-
+        
     def fit(self, X):
         """Fit the hierarchical clustering on the data
 
@@ -410,23 +420,24 @@ class HierarchicalClustering(BaseEstimator):
             memory = Memory(cachedir=memory)
 
         # Construct the tree
-        children, n_components, n_leaves, self.merges, inertias = \
-                memory.cache(dendrogram)(X, self.connectivity,
-                                        n_components=self.n_components,
-                                        linkage_criterion = self.linkage_criterion,
-                                        merge_replay=self.merges,
-                                        copy=self.copy)
+        dendrogram = \
+            memory.cache(create_dendrogram)(X, self.connectivity,
+                                            n_components=self.n_components,
+                                            merge_replay=self.merges,
+                                            linkage_criterion=self.linkage_criterion,
+                                            linkage_kwargs=self.linkage_kwargs,
+                                            copy=self.copy)
         # Cut the tree ... 
-        if self.max_inertia is None:
+        if self.max_height is None:
             # based on number of desired clusters
-            self.labels_ = _hc_cut(self.n_clusters, children, n_leaves)
+            self.labels_ = dendrogram._cut(self.n_clusters)
         else:
-            # based on maximally allowed inertia
-            self.labels_ = _hc_cut_inertia(self.max_inertia, children, 
-                                           n_leaves, inertias)
-            
+            # based on maximally allowed height
+            self.labels_ = dendrogram._cut_height(self.max_height)
+
+        self.merges = dendrogram.merges           
         # Undo merges in the uppermost part of the tree that have been 
-        # "cut off" by _hc_cut_inertia or _hc_cut
+        # "cut off" by _hc_cut_height or _hc_cut
         if len(np.unique(self.labels_)) > 1:
             self.merges = self.merges[:-len(np.unique(self.labels_)) + 1]
             

@@ -3,11 +3,11 @@ Several basic tests for hierarchical clustering procedures
 
 Author : Jan Hendrik Metzen, 2011
 """
+
 import numpy as np
 
 from sklearn.neighbors import kneighbors_graph
 from sklearn.cluster.linkage import WardsLinkage, CompleteLinkage
-from sklearn.cluster.hierarchical import _hc_get_descendent
 
 def ward_distance(cluster1, cluster2):
     """ Compute distance of two cluster according to Ward's criterion.

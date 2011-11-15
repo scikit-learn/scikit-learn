@@ -7,8 +7,7 @@ Author : Vincent Michel, 2010
 import numpy as np
 from scipy.cluster import hierarchy
 
-from sklearn.cluster import Ward, WardAgglomeration, ward_tree
-from sklearn.cluster.hierarchical import _hc_cut
+from sklearn.cluster import Ward, WardAgglomeration, ward_tree, Dendrogram
 from sklearn.feature_extraction.image import grid_to_graph
 
 
@@ -109,8 +108,14 @@ def test_scikit_vs_scipy():
         children_ = out[:, :2].astype(np.int)
         children, _, n_leaves = ward_tree(X, connectivity)
 
-        cut = _hc_cut(k, children, n_leaves)
-        cut_ = _hc_cut(k, children_, n_leaves)
+        dendrogram = Dendrogram(n_leaves, 1)
+        
+        dendrogram.children = children
+        cut = dendrogram._cut(k)
+        
+        dendrogram.children = children_
+        cut_ = dendrogram._cut(k)
+
         assess_same_labelling(cut, cut_)
 
 def test_connectivity_popagation():
