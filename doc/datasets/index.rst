@@ -15,7 +15,7 @@ Dataset loading utilities
 .. currentmodule:: sklearn.datasets
 
 The ``sklearn.datasets`` package embeds some small toy datasets
-as introduced in the "Getting Started" section.
+as introduced in the :ref:`Getting Started <loading_example_dataset>` section.
 
 To evaluate the impact of the scale of the dataset (``n_samples`` and
 ``n_features``) while controlling the statistical properties of the data
@@ -34,7 +34,7 @@ require to download any file from some external website.
 
 .. autosummary::
 
-   :toctree: generated/
+   :toctree: ../modules/generated/
    :template: function.rst
 
    load_boston
@@ -82,7 +82,7 @@ can be used to build artifical datasets of controled size and complexity.
 
 .. autosummary::
 
-   :toctree: generated/
+   :toctree: ../modules/generated/
    :template: function.rst
 
    make_classification
@@ -97,7 +97,7 @@ can be used to build artifical datasets of controled size and complexity.
    make_spd_matrix
    make_swiss_roll
    make_s_curve
-
+   make_sparse_spd_matrix
 
 .. _libsvm_loader:
 

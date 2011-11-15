@@ -27,11 +27,12 @@ print __doc__
 
 import numpy as np
 import pylab as pl
+from time import time
 from sklearn import metrics
 
 
 def uniform_labelings_scores(score_func, n_samples, n_clusters_range,
-                             fixed_n_classes=None, n_runs=10, seed=42):
+                             fixed_n_classes=None, n_runs=5, seed=42):
     """Compute score for 2 random uniform cluster labelings.
 
     Both random labelings have the same number of clusters for each value
@@ -58,6 +59,8 @@ def uniform_labelings_scores(score_func, n_samples, n_clusters_range,
 score_funcs = [
     metrics.adjusted_rand_score,
     metrics.v_measure_score,
+    metrics.adjusted_mutual_info_score,
+    metrics.mutual_info_score,
 ]
 
 # 2 independent random clusterings with equal cluster number
@@ -73,9 +76,12 @@ for score_func in score_funcs:
     print "Computing %s for %d values of n_clusters and n_samples=%d" % (
         score_func.__name__, len(n_clusters_range), n_samples)
 
+    t0 = time()
     scores = uniform_labelings_scores(score_func, n_samples, n_clusters_range)
+    print "done in %0.3fs" % (time() - t0)
     plots.append(pl.errorbar(
-        n_clusters_range, scores.mean(axis=1), scores.std(axis=1)))
+    #    n_clusters_range, scores.mean(axis=1), scores.std(axis=1)))
+        n_clusters_range, np.median(scores, axis=1), scores.std(axis=1)))
     names.append(score_func.__name__)
 
 pl.title("Clustering measures for 2 random uniform labelings\n"
@@ -84,7 +90,7 @@ pl.xlabel('Number of clusters (Number of samples is fixed to %d)' % n_samples)
 pl.ylabel('Score value')
 pl.legend(plots, names)
 pl.ylim(ymin=-0.05, ymax=1.05)
-pl.show()
+
 
 # Random labeling with varying n_clusters against ground class labels
 # with fixed number of clusters
@@ -101,8 +107,10 @@ for score_func in score_funcs:
     print "Computing %s for %d values of n_clusters and n_samples=%d" % (
         score_func.__name__, len(n_clusters_range), n_samples)
 
+    t0 = time()
     scores = uniform_labelings_scores(score_func, n_samples, n_clusters_range,
                                       fixed_n_classes=n_classes)
+    print "done in %0.3fs" % (time() - t0)
     plots.append(pl.errorbar(
         n_clusters_range, scores.mean(axis=1), scores.std(axis=1)))
     names.append(score_func.__name__)

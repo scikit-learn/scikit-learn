@@ -17,8 +17,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
                         n_clusters_per_class=2, weights=None, flip_y=0.01,
                         class_sep=1.0, hypercube=True, shift=0.0, scale=1.0,
                         shuffle=True, random_state=None):
-    """
-    Generate a random n-class classification problem.
+    """Generate a random n-class classification problem.
 
     Parameters
     ----------
@@ -227,8 +226,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
 def make_regression(n_samples=100, n_features=100, n_informative=10, bias=0.0,
                     effective_rank=None, tail_strength=0.5, noise=0.0,
                     shuffle=True, coef=False, random_state=None):
-    """
-    Generate a random regression problem.
+    """Generate a random regression problem.
 
     The input set can either be well conditioned (by default) or have a low
     rank-fat tail singular profile. See the `make_low_rank_matrix` for
@@ -342,8 +340,7 @@ def make_regression(n_samples=100, n_features=100, n_informative=10, bias=0.0,
 
 def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
                center_box=(-10.0, 10.0), shuffle=True, random_state=None):
-    """
-    Generate isotropic Gaussian blobs for clustering.
+    """Generate isotropic Gaussian blobs for clustering.
 
     Parameters
     ----------
@@ -353,7 +350,8 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
     n_features : int, optional (default=2)
         The number of features for each sample.
 
-    centers : int or array of shape [n_centers, n_features], optional (default=3)
+    centers : int or array of shape [n_centers, n_features], optional
+        (default=3)
         The number of centers to generate, or the fixed center locations.
 
     cluster_std: float or sequence of floats, optional (default=1.0)
@@ -383,7 +381,8 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
     Examples
     --------
     >>> from sklearn.datasets.samples_generator import make_blobs
-    >>> X, y = make_blobs(n_samples=10, centers=3, n_features=2, random_state=0)
+    >>> X, y = make_blobs(n_samples=10, centers=3, n_features=2,
+    ...                   random_state=0)
     >>> X.shape
     (10, 2)
     >>> y
@@ -425,9 +424,9 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
 
 
 def make_friedman1(n_samples=100, n_features=10, noise=0.0, random_state=None):
-    """
-    Generate the "Friedman #1" regression problem as described in Friedman [1]
-    and Breiman [2].
+    """Generate the "Friedman #1" regression problem
+
+    This dataset is described in Friedman [1] and Breiman [2].
 
     Inputs `X` are independent features uniformly distributed on the interval
     [0, 1]. The output `y` is created according to the formula::
@@ -485,9 +484,9 @@ def make_friedman1(n_samples=100, n_features=10, noise=0.0, random_state=None):
 
 
 def make_friedman2(n_samples=100, noise=0.0, random_state=None):
-    """
-    Generate the "Friedman #2" regression problem as described in Friedman [1]
-    and Breiman [2].
+    """Generate the "Friedman #2" regression problem
+
+    This dataset is described in Friedman [1] and Breiman [2].
 
     Inputs `X` are 4 independent features uniformly distributed on the
     intervals::
@@ -551,9 +550,9 @@ def make_friedman2(n_samples=100, noise=0.0, random_state=None):
 
 
 def make_friedman3(n_samples=100, noise=0.0, random_state=None):
-    """
-    Generate the "Friedman #3" regression problem as described in Friedman [1]
-    and Breiman [2].
+    """Generate the "Friedman #3" regression problem
+
+    This dataset is described in Friedman [1] and Breiman [2].
 
     Inputs `X` are 4 independent features uniformly distributed on the
     intervals::
@@ -617,9 +616,7 @@ def make_friedman3(n_samples=100, noise=0.0, random_state=None):
 
 def make_low_rank_matrix(n_samples=100, n_features=100, effective_rank=10,
                          tail_strength=0.5, random_state=None):
-    """
-    Generate a mostly low rank random matrix with bell-shaped singular
-    values profile.
+    """Generate a mostly low rank matrix with bell-shaped singular values
 
     Most of the variance can be explained by a bell-shaped curve of width
     effective_rank: the low rank part of the singular values profile is::
@@ -637,7 +634,7 @@ def make_low_rank_matrix(n_samples=100, n_features=100, effective_rank=10,
 
     This kind of singular profiles is often seen in practice, for instance:
      - graw level pictures of faces
-     - TF-IDF vectors of text documents crawled from the web
+     - TF-IDF vectors of text documents about a few topics
 
     Parameters
     ----------
@@ -745,9 +742,9 @@ def make_sparse_coded_signal(n_samples, n_components, n_features,
 
 
 def make_sparse_uncorrelated(n_samples=100, n_features=10, random_state=None):
-    """
-    Generate a random regression problem with sparse uncorrelated design as
-    described in Celeux et al [1].::
+    """Generate a random regression problem with sparse uncorrelated design
+
+    This dataset is described in Celeux et al [1]. as::
 
         X ~ N(0, 1)
         y(X) = X[:, 0] + 2 * X[:, 1] - 2 * X[:, 2] - 1.5 * X[:, 3]
@@ -795,8 +792,7 @@ def make_sparse_uncorrelated(n_samples=100, n_features=10, random_state=None):
 
 
 def make_spd_matrix(n_dim, random_state=None):
-    """
-    Generate a random symmetric, positive-definite matrix.
+    """Generate a random symmetric, positive-definite matrix.
 
     Parameters
     ----------
@@ -824,8 +820,7 @@ def make_spd_matrix(n_dim, random_state=None):
 
 
 def make_swiss_roll(n_samples=100, noise=0.0, random_state=None):
-    """
-    Generate a swiss roll dataset.
+    """Generate a swiss roll dataset.
 
     Parameters
     ----------
@@ -876,8 +871,7 @@ def make_swiss_roll(n_samples=100, noise=0.0, random_state=None):
 
 
 def make_s_curve(n_samples=100, noise=0.0, random_state=None):
-    """
-    Generate an S curve dataset.
+    """Generate an S curve dataset.
 
     Parameters
     ----------
@@ -915,3 +909,52 @@ def make_s_curve(n_samples=100, noise=0.0, random_state=None):
     t = np.squeeze(t)
 
     return X, t
+
+
+def make_sparse_spd_matrix(dim=1, alpha=0.95, norm_diag=False,
+                           smallest_coef=.1, largest_coef=.9,
+                           random_state=None):
+    """Generate a sparse symetric definite positive matrix
+
+    Parameters
+    ----------
+    dim: integer
+        The size of the random matrix to generate
+    alpha: float between 0 and 1
+        The probability that a coefficient is non zero (see notes)
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    Returns
+    -------
+    prec: array of shape(dim, dim)
+
+    Notes
+    -----
+    The sparsity is actually imposed on the cholesky factor of the matrix.
+    Thus alpha does not translate directly into the filling fraction of
+    the matrix itself.
+    """
+    random_state = check_random_state(random_state)
+    chol = -np.eye(dim)
+    aux = random_state.rand(dim, dim)
+    aux[aux < alpha] = 0
+    aux[aux > alpha] = (smallest_coef
+                        + (largest_coef - smallest_coef)
+                          * random_state.rand(np.sum(aux > alpha)))
+    aux = np.tril(aux, k=-1)
+    # Permute the lines: we don't want to have assymetries in the final
+    # SPD matrix
+    permutation = random_state.permutation(dim)
+    aux = aux[permutation].T[permutation]
+    chol += aux
+    prec = np.dot(chol.T, chol)
+    if norm_diag:
+        d = np.diag(prec)
+        d = 1. / np.sqrt(d)
+        prec *= d
+        prec *= d[:, np.newaxis]
+    return prec

@@ -29,7 +29,7 @@ def test_gnb():
     assert_array_almost_equal(np.log(y_pred_proba), y_pred_log_proba, 8)
 
 
-# Data is 6 random points in an 100 dimensional space classified to
+# Data is 6 random points in a 100 dimensional space classified to
 # three classes.
 X2 = np.random.randint(5, size=(6, 100))
 y2 = np.array([1, 1, 2, 2, 3, 3])
@@ -58,16 +58,16 @@ def test_mnnb():
 
 
 def test_discretenb_pickle():
-    """Test picklability of discreate naive Bayes classifiers"""
+    """Test picklability of discrete naive Bayes classifiers"""
 
-    clf = MultinomialNB(alpha=2, fit_prior=False).fit(X, y)
-    y_pred = clf.predict(X)
+    clf = MultinomialNB(alpha=2, fit_prior=False).fit(X2, y2)
+    y_pred = clf.predict(X2)
 
     store = StringIO()
     pickle.dump(clf, store)
     clf = pickle.load(StringIO(store.getvalue()))
 
-    assert_array_equal(y_pred, clf.predict(X))
+    assert_array_equal(y_pred, clf.predict(X2))
 
 
 def test_discretenb_predict_proba():
