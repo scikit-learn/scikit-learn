@@ -9,6 +9,7 @@ from numpy.testing import assert_almost_equal
 from numpy.testing import assert_equal
 from nose.tools import assert_raises
 
+from sklearn.grid_search import GridSearchCV
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.ensemble import ExtraTreesClassifier
@@ -123,6 +124,23 @@ def test_probability():
     clf.fit(iris.data, iris.target)
     assert_array_almost_equal(np.sum(clf.predict_proba(iris.data), axis=1), np.ones(iris.data.shape[0]))
     assert_array_almost_equal(clf.predict_proba(iris.data), np.exp(clf.predict_log_proba(iris.data)))
+
+
+def test_gridsearch():
+    """Check that base trees can be grid-searched."""
+    # Random forest
+    forest = RandomForestClassifier()
+    parameters = {'n_estimators': (1,2),
+                  'base_estimator__max_depth': (1,2)}
+    clf = GridSearchCV(forest, parameters)
+    clf.fit(iris.data, iris.target)
+
+    # Extra-trees
+    forest = ExtraTreesClassifier()
+    parameters = {'n_estimators': (1,2),
+                  'base_estimator__max_depth': (1,2)}
+    clf = GridSearchCV(forest, parameters)
+    clf.fit(iris.data, iris.target)
 
 
 def test_error():
