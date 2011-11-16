@@ -1,14 +1,14 @@
 """
-=================================================
-Plot multi-class DecisionTree on the iris dataset
-=================================================
+================================================================
+Plot the decision surface of a decision tree on the iris dataset
+================================================================
 
-Plot decision surface of multi-class :ref:`decision tree <tree>` on iris
-dataset on pairwise selection of features.
+Plot the decision surface of a :ref:`decision tree <tree>` on the iris dataset,
+using pairwise selection of features.
 
-For each pair of iris features, the decision tree learn decision
-boundaries made of combination of simple thresholding rules on the train
-observations.
+For each pair of iris features, the decision tree learns decision
+boundaries made of combinations of simple thresholding rules inferred from
+the training samples.
 """
 print __doc__
 
@@ -57,8 +57,8 @@ for pairidx, pair in enumerate([[0, 1], [0, 2], [0, 3],
 
     Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])
     Z = Z.reshape(xx.shape)
-
     cs = pl.contourf(xx, yy, Z)
+
     pl.xlabel(iris.feature_names[pair[0]])
     pl.ylabel(iris.feature_names[pair[1]])
     pl.axis("tight")
@@ -70,6 +70,6 @@ for pairidx, pair in enumerate([[0, 1], [0, 2], [0, 3],
 
     pl.axis("tight")
 
-pl.suptitle("Decision surface of multi-class decision tree using paired features")
+pl.suptitle("Decision surface of a decision tree using paired features")
 pl.legend()
 pl.show()
