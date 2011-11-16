@@ -127,13 +127,16 @@ def test_probability():
 
 def test_error():
     """Check that proper errors are triggered."""
+    def instantiate(class_name, **params):
+        return class_name(**params)
+
     # Random forest
-    assert_raises(ValueError, RandomForestClassifier(n_trees=-1).fit, X, y)
-    assert_raises(ValueError, RandomForestRegressor(n_trees=-1).fit, X, y)
+    assert_raises(ValueError, instantiate, class_name=RandomForestClassifier, n_trees=-1)
+    assert_raises(ValueError, instantiate, class_name=RandomForestRegressor, n_trees=-1)
 
     # Extra-trees
-    assert_raises(ValueError, ExtraTreesClassifier(n_trees=-1).fit, X, y)
-    assert_raises(ValueError, ExtraTreesRegressor(n_trees=-1).fit, X, y)
+    assert_raises(ValueError, instantiate, class_name=ExtraTreesClassifier, n_trees=-1)
+    assert_raises(ValueError, instantiate, class_name=ExtraTreesRegressor, n_trees=-1)
 
 
 def test_pickle():
