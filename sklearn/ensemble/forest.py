@@ -220,8 +220,8 @@ class RandomForestClassifier(ForestClassifier):
     ----------
     base_estimator : object, optional (default=None)
         The base tree from which the forest is built. If None, a
-        `DecisionTreeClassifier` with parameters defined from **estimator_params
-        is used.
+        `DecisionTreeClassifier` with parameters defined from
+        **estimator_params is used.
 
     n_estimators : integer, optional (default=10)
         The number of trees in the forest.

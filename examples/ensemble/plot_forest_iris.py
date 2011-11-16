@@ -72,18 +72,20 @@ for model in (DecisionTreeClassifier(),
                 Z = Z.reshape(xx.shape)
                 cs = pl.contourf(xx, yy, Z, alpha=0.1)
 
-        pl.xlabel("%s / %s" % (iris.feature_names[pair[0]], model.__class__.__name__))
+        pl.xlabel("%s / %s" % (iris.feature_names[pair[0]],
+                               model.__class__.__name__))
         pl.ylabel(iris.feature_names[pair[1]])
         pl.axis("tight")
 
         # Plot the training points
-        for i, color in zip(xrange(n_classes), plot_colors):
+        for i, c in zip(xrange(n_classes), plot_colors):
             idx = np.where(y == i)
-            pl.scatter(X[idx, 0], X[idx, 1], c=color, label=iris.target_names[i])
+            pl.scatter(X[idx, 0], X[idx, 1], c=c, label=iris.target_names[i])
 
         pl.axis("tight")
 
         plot_idx += 1
 
-pl.suptitle("Decision surfaces of a decision tree, of a random forest, and of an extra-trees classifier")
+pl.suptitle("Decision surfaces of a decision tree, of a random forest, and of "
+            "an extra-trees classifier")
 pl.show()
