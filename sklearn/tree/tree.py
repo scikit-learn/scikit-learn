@@ -121,9 +121,9 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
             recurse(tree, right_child)
 
     if out_file is None:
-        out_file = open("tree.dot", 'w')
+        out_file = open("tree.dot", "w")
     elif isinstance(out_file, basestring):
-        out_file = open(out_file, 'w')
+        out_file = open(out_file, "w")
 
     out_file.write("digraph Tree {\n")
     recurse(decision_tree.tree, 0)
@@ -441,8 +441,6 @@ class BaseDecisionTree(BaseEstimator):
             raise ValueError("max_features must be in (0, n_features]")
 
         # Build tree
-
-
         self.tree = _build_tree(X, y, is_classification, criterion,
                                 max_depth, self.min_split,
                                 self.min_density, max_features,
