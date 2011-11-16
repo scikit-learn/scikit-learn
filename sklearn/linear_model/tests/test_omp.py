@@ -117,7 +117,7 @@ def test_estimator_shapes():
     assert_equal(omp.intercept_.shape, (n_targets,))
     assert count_nonzero(omp.coef_) <= n_targets * n_nonzero_coefs
 
-    omp.fit(X, y, Gram=G, Xy=Xy[:, 0])
+    omp.fit(X, y[:, 0], Gram=G, Xy=Xy[:, 0])
     assert_equal(omp.coef_.shape, (n_features,))
     assert_equal(omp.intercept_.shape, ())
     assert count_nonzero(omp.coef_) <= n_nonzero_coefs
