@@ -253,6 +253,8 @@ class GraphLasso(EmpiricalCovariance):
         self.tol = tol
         self.max_iter = max_iter
         self.verbose = verbose
+        # The base class needs this for the score method
+        self.store_precision = True
 
     def fit(self, X, y=None):
         emp_cov = empirical_covariance(X)
