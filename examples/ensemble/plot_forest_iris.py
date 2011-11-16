@@ -14,6 +14,8 @@ print __doc__
 
 import numpy as np
 import pylab as pl
+
+from sklearn import clone
 from sklearn.datasets import load_iris
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 from sklearn.tree import DecisionTreeClassifier
@@ -28,13 +30,12 @@ pl.set_cmap(pl.cm.Paired)
 # Load data
 iris = load_iris()
 
-plot_idx = 0
-plots = [1, 4, 7, 2, 5, 8, 3, 6, 9]
+plot_idx = 1
 
-for model in (DecisionTreeClassifier(),
-              RandomForestClassifier(n_estimators=n_estimators),
-              ExtraTreesClassifier(n_estimators=n_estimators)):
-    for pair in ([0, 1], [0, 2], [2, 3]):
+for pair in ([0, 1], [0, 2], [2, 3]):
+    for model in (DecisionTreeClassifier(),
+                  RandomForestClassifier(n_estimators=n_estimators),
+                  ExtraTreesClassifier(n_estimators=n_estimators)):
          # We only take the two corresponding features
         X = iris.data[:, pair]
         y = iris.target
@@ -52,10 +53,11 @@ for model in (DecisionTreeClassifier(),
         X = (X - mean) / std
 
         # Train
+        clf = clone(model)
         clf = model.fit(X, y)
 
         # Plot the decision boundary
-        pl.subplot(3, 3, plots[plot_idx])
+        pl.subplot(3, 3, plot_idx)
 
         x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
         y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
