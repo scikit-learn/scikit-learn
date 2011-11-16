@@ -38,6 +38,7 @@ class BaseEnsemble(BaseEstimator):
 
         # Don't instantiate estimators now! Parameters of base_estimator might
         # still change. Eg., when grid-searching with the nested object syntax.
+        # This needs to be filled by the derived classes.
         self.estimators = []
 
     def __len__(self):

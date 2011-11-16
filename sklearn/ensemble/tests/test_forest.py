@@ -44,19 +44,23 @@ def test_classification_toy():
     clf = RandomForestClassifier(n_estimators=10, random_state=1)
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
+    assert_equal(10, len(clf))
 
     clf = RandomForestClassifier(n_estimators=10, max_features=1, random_state=1)
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
+    assert_equal(10, len(clf))
 
     # Extra-trees
     clf = ExtraTreesClassifier(n_estimators=10, random_state=1)
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
+    assert_equal(10, len(clf))
 
     clf = ExtraTreesClassifier(n_estimators=10, max_features=1, random_state=1)
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
+    assert_equal(10, len(clf))
 
 
 def test_iris():
@@ -141,20 +145,6 @@ def test_gridsearch():
                   'base_estimator__max_depth': (1,2)}
     clf = GridSearchCV(forest, parameters)
     clf.fit(iris.data, iris.target)
-
-
-def test_error():
-    """Check that proper errors are triggered."""
-    def instantiate(class_name, **params):
-        return class_name(**params)
-
-    # Random forest
-    assert_raises(ValueError, instantiate, class_name=RandomForestClassifier, n_estimators=-1)
-    assert_raises(ValueError, instantiate, class_name=RandomForestRegressor, n_estimators=-1)
-
-    # Extra-trees
-    assert_raises(ValueError, instantiate, class_name=ExtraTreesClassifier, n_estimators=-1)
-    assert_raises(ValueError, instantiate, class_name=ExtraTreesRegressor, n_estimators=-1)
 
 
 def test_pickle():
