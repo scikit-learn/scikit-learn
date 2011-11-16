@@ -35,7 +35,7 @@ class BaseEnsemble(BaseEstimator):
         self.base_estimator = base_estimator
         self.base_estimator.set_params(**estimator_params)
         self.n_estimators = n_estimators
-        self.estimators = [clone(base_estimator) for i in xrange(n_estimators)]
+        self.estimators = []
 
     def __len__(self):
         """Returns the number of estimators in the ensemble."""

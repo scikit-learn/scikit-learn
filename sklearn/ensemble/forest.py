@@ -8,6 +8,7 @@ forests and extra-trees.
 
 import numpy as np
 
+from ..base import clone
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor, \
                    ExtraTreeClassifier, ExtraTreeRegressor
@@ -27,15 +28,15 @@ class Forest(BaseEnsemble):
     Warning: This class should not be used directly. Use derived classes
     instead.
     """
-    def __init__(self, base_tree,
-                       n_trees=10,
+    def __init__(self, base_estimator,
+                       n_estimators=10,
                        bootstrap=False,
                        random_state=None,
-                       **tree_params):
+                       **estimator_params):
         super(Forest, self).__init__(
-            base_estimator=base_tree,
-            n_estimators=n_trees,
-            **tree_params)
+            base_estimator=base_estimator,
+            n_estimators=n_estimators,
+            **estimator_params)
 
         self.bootstrap = bootstrap
         self.random_state = check_random_state(random_state)
@@ -66,7 +67,8 @@ class Forest(BaseEnsemble):
             self.n_classes = len(self.classes)
             y = np.searchsorted(self.classes, y)
 
-        for tree in self.estimators:
+        for i in xrange(self.n_estimators):
+            tree = clone(self.base_estimator)
             tree.set_params(random_state=self.random_state)
 
             if self.bootstrap:
@@ -77,6 +79,7 @@ class Forest(BaseEnsemble):
                 y = y[indices]
 
             tree.fit(X, y)
+            self.estimators.append(tree)
 
         return self
 
@@ -87,17 +90,17 @@ class ForestClassifier(Forest, ClassifierMixin):
     Warning: This class should not be used directly. Use derived classes
     instead.
     """
-    def __init__(self, base_tree,
-                       n_trees=10,
+    def __init__(self, base_estimator,
+                       n_estimators=10,
                        bootstrap=False,
                        random_state=None,
-                       **tree_params):
+                       **estimator_params):
         super(ForestClassifier, self).__init__(
-            base_tree,
-            n_trees,
+            base_estimator,
+            n_estimators,
             bootstrap=bootstrap,
             random_state=random_state,
-            **tree_params)
+            **estimator_params)
 
     def predict(self, X):
         """Predict class for X.
@@ -171,17 +174,17 @@ class ForestRegressor(Forest, RegressorMixin):
     Warning: This class should not be used directly. Use derived classes
     instead.
     """
-    def __init__(self, base_tree,
-                       n_trees=10,
+    def __init__(self, base_estimator,
+                       n_estimators=10,
                        bootstrap=False,
                        random_state=None,
-                       **tree_params):
+                       **estimator_params):
         super(ForestRegressor, self).__init__(
-            base_tree,
-            n_trees,
+            base_estimator,
+            n_estimators,
             bootstrap=bootstrap,
             random_state=random_state,
-            **tree_params)
+            **estimator_params)
 
     def predict(self, X):
         """Predict regression target for X.
@@ -215,12 +218,12 @@ class RandomForestClassifier(ForestClassifier):
 
     Parameters
     ----------
-    base_tree : object, optional (default=None)
+    base_estimator : object, optional (default=None)
         The base tree from which the forest is built. If None, a
-        `DecisionTreeClassifier` with parameters defined from **tree_params
+        `DecisionTreeClassifier` with parameters defined from **estimator_params
         is used.
 
-    n_trees : integer, optional (default=10)
+    n_estimators : integer, optional (default=10)
         The number of trees in the forest.
 
     bootstrap : boolean, optional (default=True)
@@ -232,20 +235,20 @@ class RandomForestClassifier(ForestClassifier):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    **tree_params : key-words parameters
+    **estimator_params : key-words parameters
         The parameters to set when instantiating the underlying base tree. If
         none are given, default parameters are used.
 
     Attributes
     ----------
-    base_tree : object
+    base_estimator : object
         The underlying tree that is used to generate the forest.
 
     Notes
     -----
     When using grid search to optimize the parameters, use the nested object
     syntax to set the parameters of the underlying trees (e.g.,
-    `base_tree__max_depth`).
+    `base_estimator__max_depth`).
 
     See also
     --------
@@ -255,18 +258,18 @@ class RandomForestClassifier(ForestClassifier):
     ----------
     .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
     """
-    def __init__(self, base_tree=None,
-                       n_trees=10,
+    def __init__(self, base_estimator=None,
+                       n_estimators=10,
                        bootstrap=True,
                        random_state=None,
-                       **tree_params):
+                       **estimator_params):
         super(RandomForestClassifier, self).__init__(
-            base_tree if base_tree is not None \
+            base_estimator if base_estimator is not None \
                       else DecisionTreeClassifier(),
-            n_trees,
+            n_estimators,
             bootstrap=bootstrap,
             random_state=random_state,
-            **tree_params)
+            **estimator_params)
 
 
 class RandomForestRegressor(ForestRegressor):
@@ -274,12 +277,12 @@ class RandomForestRegressor(ForestRegressor):
 
     Parameters
     ----------
-    base_tree : object, optional (default=None)
+    base_estimator : object, optional (default=None)
         The base tree from which the forest is built. If None, a
-        `DecisionTreeRegressor` with parameters defined from **tree_params
+        `DecisionTreeRegressor` with parameters defined from **estimator_params
         is used.
 
-    n_trees : integer, optional (default=10)
+    n_estimators : integer, optional (default=10)
         The number of trees in the forest.
 
     bootstrap : boolean, optional (default=True)
@@ -291,20 +294,20 @@ class RandomForestRegressor(ForestRegressor):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    **tree_params : key-words parameters
+    **estimator_params : key-words parameters
         The parameters to set when instantiating the underlying base tree. If
         none are given, default parameters are used.
 
     Attributes
     ----------
-    base_tree : object
+    base_estimator : object
         The underlying tree that is used to generate the forest.
 
     Notes
     -----
     When using grid search to optimize the parameters, use the nested object
     syntax to set the parameters of the underlying trees (e.g.,
-    `base_tree__max_depth`).
+    `base_estimator__max_depth`).
 
     See also
     --------
@@ -314,18 +317,18 @@ class RandomForestRegressor(ForestRegressor):
     ----------
     .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
     """
-    def __init__(self, base_tree=None,
-                       n_trees=10,
+    def __init__(self, base_estimator=None,
+                       n_estimators=10,
                        bootstrap=True,
                        random_state=None,
-                       **tree_params):
+                       **estimator_params):
         super(RandomForestRegressor, self).__init__(
-            base_tree if base_tree is not None \
+            base_estimator if base_estimator is not None \
                       else DecisionTreeRegressor(),
-            n_trees,
+            n_estimators,
             bootstrap=bootstrap,
             random_state=random_state,
-            **tree_params)
+            **estimator_params)
 
 
 class ExtraTreesClassifier(ForestClassifier):
@@ -333,12 +336,12 @@ class ExtraTreesClassifier(ForestClassifier):
 
     Parameters
     ----------
-    base_tree : object, optional (default=None)
+    base_estimator : object, optional (default=None)
         The base tree from which the forest is built. If None, an
-        `ExtraTreeClassifier` with parameters defined from **tree_params
+        `ExtraTreeClassifier` with parameters defined from **estimator_params
         is used.
 
-    n_trees : integer, optional (default=10)
+    n_estimators : integer, optional (default=10)
         The number of trees in the forest.
 
     bootstrap : boolean, optional (default=True)
@@ -350,20 +353,20 @@ class ExtraTreesClassifier(ForestClassifier):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    **tree_params : key-words parameters
+    **estimator_params : key-words parameters
         The parameters to set when instantiating the underlying base tree. If
         none are given, default parameters are used.
 
     Attributes
     ----------
-    base_tree : object
+    base_estimator : object
         The underlying tree that is used to generate the forest.
 
     Notes
     -----
     When using grid search to optimize the parameters, use the nested object
     syntax to set the parameters of the underlying trees (e.g.,
-    `base_tree__max_depth`).
+    `base_estimator__max_depth`).
 
     See also
     --------
@@ -374,18 +377,18 @@ class ExtraTreesClassifier(ForestClassifier):
     .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
            Machine Learning, 63(1), 3-42, 2006.
     """
-    def __init__(self, base_tree=None,
-                       n_trees=10,
+    def __init__(self, base_estimator=None,
+                       n_estimators=10,
                        bootstrap=False,
                        random_state=None,
-                       **tree_params):
+                       **estimator_params):
         super(ExtraTreesClassifier, self).__init__(
-            base_tree if base_tree is not None \
+            base_estimator if base_estimator is not None \
                       else ExtraTreeClassifier(),
-            n_trees,
+            n_estimators,
             bootstrap=bootstrap,
             random_state=random_state,
-            **tree_params)
+            **estimator_params)
 
 
 class ExtraTreesRegressor(ForestRegressor):
@@ -393,12 +396,12 @@ class ExtraTreesRegressor(ForestRegressor):
 
     Parameters
     ----------
-    base_tree : object, optional (default=None)
+    base_estimator : object, optional (default=None)
         The base tree from which the forest is built. If None, an
-        `ExtraTreeRegressor` with parameters defined from **tree_params
+        `ExtraTreeRegressor` with parameters defined from **estimator_params
         is used.
 
-    n_trees : integer, optional (default=10)
+    n_estimators : integer, optional (default=10)
         The number of trees in the forest.
 
     bootstrap : boolean, optional (default=True)
@@ -410,20 +413,20 @@ class ExtraTreesRegressor(ForestRegressor):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    **tree_params : key-words parameters
+    **estimator_params : key-words parameters
         The parameters to set when instantiating the underlying base tree. If
         none are given, default parameters are used.
 
     Attributes
     ----------
-    base_tree : object
+    base_estimator : object
         The underlying tree that is used to generate the forest.
 
     Notes
     -----
     When using grid search to optimize the parameters, use the nested object
     syntax to set the parameters of the underlying trees (e.g.,
-    `base_tree__max_depth`).
+    `base_estimator__max_depth`).
 
     See also
     --------
@@ -434,15 +437,15 @@ class ExtraTreesRegressor(ForestRegressor):
     .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
            Machine Learning, 63(1), 3-42, 2006.
     """
-    def __init__(self, base_tree=None,
-                       n_trees=10,
+    def __init__(self, base_estimator=None,
+                       n_estimators=10,
                        bootstrap=False,
                        random_state=None,
-                       **tree_params):
+                       **estimator_params):
         super(ExtraTreesRegressor, self).__init__(
-            base_tree if base_tree is not None \
+            base_estimator if base_estimator is not None \
                       else ExtraTreeRegressor(),
-            n_trees,
+            n_estimators,
             bootstrap=bootstrap,
             random_state=random_state,
-            **tree_params)
+            **estimator_params)

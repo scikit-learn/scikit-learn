@@ -40,20 +40,20 @@ boston.target = boston.target[perm]
 def test_classification_toy():
     """Check classification on a toy dataset."""
     # Random forest
-    clf = RandomForestClassifier(n_trees=10, random_state=1)
+    clf = RandomForestClassifier(n_estimators=10, random_state=1)
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
 
-    clf = RandomForestClassifier(n_trees=10, max_features=1, random_state=1)
+    clf = RandomForestClassifier(n_estimators=10, max_features=1, random_state=1)
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
 
     # Extra-trees
-    clf = ExtraTreesClassifier(n_trees=10, random_state=1)
+    clf = ExtraTreesClassifier(n_estimators=10, random_state=1)
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
 
-    clf = ExtraTreesClassifier(n_trees=10, max_features=1, random_state=1)
+    clf = ExtraTreesClassifier(n_estimators=10, max_features=1, random_state=1)
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
 
@@ -62,23 +62,23 @@ def test_iris():
     """Check consistency on dataset iris."""
     for c in ("gini", "entropy"):
         # Random forest
-        clf = RandomForestClassifier(n_trees=10, criterion=c, random_state=1)
+        clf = RandomForestClassifier(n_estimators=10, criterion=c, random_state=1)
         clf.fit(iris.data, iris.target)
         score = clf.score(iris.data, iris.target)
         assert score > 0.9, "Failed with criterion %s and score = %f" % (c, score)
 
-        clf = RandomForestClassifier(n_trees=10, criterion=c, max_features=2, random_state=1)
+        clf = RandomForestClassifier(n_estimators=10, criterion=c, max_features=2, random_state=1)
         clf.fit(iris.data, iris.target)
         score = clf.score(iris.data, iris.target)
         assert score > 0.5, "Failed with criterion %s and score = %f" % (c, score)
 
         # Extra-trees
-        clf = ExtraTreesClassifier(n_trees=10, criterion=c, random_state=1)
+        clf = ExtraTreesClassifier(n_estimators=10, criterion=c, random_state=1)
         clf.fit(iris.data, iris.target)
         score = clf.score(iris.data, iris.target)
         assert score > 0.9, "Failed with criterion %s and score = %f" % (c, score)
 
-        clf = ExtraTreesClassifier(n_trees=10, criterion=c, max_features=2, random_state=1)
+        clf = ExtraTreesClassifier(n_estimators=10, criterion=c, max_features=2, random_state=1)
         clf.fit(iris.data, iris.target)
         score = clf.score(iris.data, iris.target)
         assert score > 0.9, "Failed with criterion %s and score = %f" % (c, score)
@@ -88,23 +88,23 @@ def test_boston():
     """Check consistency on dataset boston house prices."""
     for c in ("mse",):
         # Random forest
-        clf = RandomForestRegressor(n_trees=10, criterion=c, random_state=1)
+        clf = RandomForestRegressor(n_estimators=10, criterion=c, random_state=1)
         clf.fit(boston.data, boston.target)
         score = clf.score(boston.data, boston.target)
         assert score < 3, "Failed with max_features=None, criterion %s and score = %f" % (c, score)
 
-        clf = RandomForestRegressor(n_trees=10, criterion=c, max_features=6, random_state=1)
+        clf = RandomForestRegressor(n_estimators=10, criterion=c, max_features=6, random_state=1)
         clf.fit(boston.data, boston.target)
         score = clf.score(boston.data, boston.target)
         assert score < 3, "Failed with max_features=None, criterion %s and score = %f" % (c, score)
 
         # Extra-trees
-        clf = ExtraTreesRegressor(n_trees=10, criterion=c, random_state=1)
+        clf = ExtraTreesRegressor(n_estimators=10, criterion=c, random_state=1)
         clf.fit(boston.data, boston.target)
         score = clf.score(boston.data, boston.target)
         assert score < 3, "Failed with max_features=None, criterion %s and score = %f" % (c, score)
 
-        clf = ExtraTreesRegressor(n_trees=10, criterion=c, max_features=6, random_state=1)
+        clf = ExtraTreesRegressor(n_estimators=10, criterion=c, max_features=6, random_state=1)
         clf.fit(boston.data, boston.target)
         score = clf.score(boston.data, boston.target)
         assert score < 3, "Failed with max_features=None, criterion %s and score = %f" % (c, score)
@@ -113,13 +113,13 @@ def test_boston():
 def test_probability():
     """Predict probabilities."""
     # Random forest
-    clf = RandomForestClassifier(n_trees=10, random_state=1)
+    clf = RandomForestClassifier(n_estimators=10, random_state=1)
     clf.fit(iris.data, iris.target)
     assert_array_almost_equal(np.sum(clf.predict_proba(iris.data), axis=1), np.ones(iris.data.shape[0]))
     assert_array_almost_equal(clf.predict_proba(iris.data), np.exp(clf.predict_log_proba(iris.data)))
 
     # Extra-trees
-    clf = ExtraTreesClassifier(n_trees=10, random_state=1)
+    clf = ExtraTreesClassifier(n_estimators=10, random_state=1)
     clf.fit(iris.data, iris.target)
     assert_array_almost_equal(np.sum(clf.predict_proba(iris.data), axis=1), np.ones(iris.data.shape[0]))
     assert_array_almost_equal(clf.predict_proba(iris.data), np.exp(clf.predict_log_proba(iris.data)))
@@ -131,12 +131,12 @@ def test_error():
         return class_name(**params)
 
     # Random forest
-    assert_raises(ValueError, instantiate, class_name=RandomForestClassifier, n_trees=-1)
-    assert_raises(ValueError, instantiate, class_name=RandomForestRegressor, n_trees=-1)
+    assert_raises(ValueError, instantiate, class_name=RandomForestClassifier, n_estimators=-1)
+    assert_raises(ValueError, instantiate, class_name=RandomForestRegressor, n_estimators=-1)
 
     # Extra-trees
-    assert_raises(ValueError, instantiate, class_name=ExtraTreesClassifier, n_trees=-1)
-    assert_raises(ValueError, instantiate, class_name=ExtraTreesRegressor, n_trees=-1)
+    assert_raises(ValueError, instantiate, class_name=ExtraTreesClassifier, n_estimators=-1)
+    assert_raises(ValueError, instantiate, class_name=ExtraTreesRegressor, n_estimators=-1)
 
 
 def test_pickle():
