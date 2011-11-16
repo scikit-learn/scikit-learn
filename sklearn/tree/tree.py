@@ -374,10 +374,10 @@ class BaseDecisionTree(BaseEstimator):
                        max_features,
                        random_state):
         self.criterion = criterion
-        self.max_depth = np.inf if max_depth is None else max_depth
+        self.max_depth = max_depth
         self.min_split = min_split
         self.min_density = min_density
-        self.max_features = -1 if max_features is None else max_features
+        self.max_features = max_features
         self.random_state = check_random_state(random_state)
 
         self.n_features = None
@@ -424,23 +424,28 @@ class BaseDecisionTree(BaseEstimator):
         y = np.ascontiguousarray(y, dtype=DTYPE)
 
         # Check parameters
+        max_depth = np.inf if self.max_depth is None else self.max_depth
+        max_features = -1 if self.max_features is None else self.max_features
+
         if len(y) != n_samples:
             raise ValueError("Number of labels=%d does not match "
                              "number of features=%d" % (len(y), n_samples))
         if self.min_split <= 0:
             raise ValueError("min_split must be greater than zero.")
-        if self.max_depth is not None and self.max_depth <= 0:
+        if max_depth <= 0:
             raise ValueError("max_depth must be greater than zero. ")
         if self.min_density < 0.0 or self.min_density > 1.0:
             raise ValueError("min_density must be in [0, 1]")
-        if self.max_features >= 0 and \
-               not (0 < self.max_features <= self.n_features):
+        if max_features >= 0 and \
+               not (0 < max_features <= self.n_features):
             raise ValueError("max_features must be in (0, n_features]")
 
         # Build tree
+
+
         self.tree = _build_tree(X, y, is_classification, criterion,
-                                self.max_depth, self.min_split,
-                                self.min_density, self.max_features,
+                                max_depth, self.min_split,
+                                self.min_density, max_features,
                                 self.random_state, self.n_classes,
                                 self.find_split)
 
