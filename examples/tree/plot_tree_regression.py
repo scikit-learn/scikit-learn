@@ -32,8 +32,14 @@ from sklearn.tree import DecisionTreeRegressor
 
 clf_1 = DecisionTreeRegressor(max_depth=2)
 clf_2 = DecisionTreeRegressor(max_depth=5)
-y_1 = clf_1.fit(X, y).predict(X)
-y_2 = clf_2.fit(X, y).predict(X)
+clf_1.fit(X, y)
+clf_2.fit(X, y)
+
+###############################################################################
+# Predict
+X_test = np.arange(0.0, 5.0, 0.01)[:, np.newaxis]
+y_1 = clf_1.predict(X_test)
+y_2 = clf_2.predict(X_test)
 
 ###############################################################################
 # look at the results
@@ -41,8 +47,8 @@ import pylab as pl
 pl.figure(1, figsize=(5, 4))
 pl.clf()
 pl.scatter(X, y, c='k', label='data')
-pl.plot(X, y_1, c='g', label='max_depth=2', linewidth=2)
-pl.plot(X, y_2, c='r', label='max_depth=5', linewidth=2)
+pl.plot(X_test, y_1, c='g', label='max_depth=2', linewidth=2)
+pl.plot(X_test, y_2, c='r', label='max_depth=5', linewidth=2)
 pl.axis('tight')
 pl.xlabel('data')
 pl.ylabel('target')
