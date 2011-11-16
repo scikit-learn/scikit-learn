@@ -3,8 +3,8 @@
 Plot the decision surface of a decision tree on the iris dataset
 ================================================================
 
-Plot the decision surface of a :ref:`decision tree <tree>` on the iris dataset,
-using pairwise selection of features.
+Plot the decision surface of a :ref:`decision tree <tree>` trained on pairs
+of features of the iris dataset.
 
 For each pair of iris features, the decision tree learns decision
 boundaries made of combinations of simple thresholding rules inferred from

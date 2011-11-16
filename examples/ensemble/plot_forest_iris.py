@@ -3,8 +3,8 @@
 Plot the decision surfaces of ensembles of trees on the iris dataset
 ====================================================================
 
-Plot the decision surfaces of forests of randomized trees on the iris dataset,
-using pairwise selection of features.
+Plot the decision surfaces of forests of randomized trees trained on pairs of
+features of the iris dataset.
 
 This plot compares the decision surfaces learned by a decision tree classifier
 (first column), by a random forest classifier (second column) and by an extra-
