@@ -456,14 +456,20 @@ class HierarchicalClustering(BaseEstimator):
         -------
         self
         """
+        memory = self.memory
+        if isinstance(memory, basestring):
+            memory = Memory(cachedir=memory)
+        
         if self.connectivity is not None:
             # Construct the tree
             dendrogram = \
-                create_dendrogram(X, self.connectivity, 
-                                  n_components=self.n_components,
-                                  linkage_criterion=self.linkage_criterion,
-                                  linkage_kwargs=self.linkage_kwargs,
-                                  copy=self.copy)
+                memory.cache(create_dendrogram)(X, self.connectivity, 
+                                                n_components=self.n_components,
+                                                linkage_criterion=\
+                                                        self.linkage_criterion,
+                                                linkage_kwargs=\
+                                                        self.linkage_kwargs,
+                                                copy=self.copy)
             # Cut the tree ... 
             if self.max_height is None:
                 # based on number of desired clusters
