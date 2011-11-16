@@ -2,8 +2,11 @@
 # License: BSD style
 
 import warnings
+from sys import version_info
 
 import numpy as np
+
+from nose import SkipTest
 from nose.tools import assert_raises
 from numpy.testing import assert_equal, assert_array_almost_equal
 
@@ -17,6 +20,12 @@ y, X, gamma = make_sparse_coded_signal(n_targets, n_features, n_samples,
 G, Xy = np.dot(X.T, X), np.dot(X.T, y)
 # this makes X (n_samples, n_features)
 # and y (n_samples, 3)
+
+
+def check_warnings():
+    if version_info < (2, 6):
+        raise SkipTest("Testing for warnings is not supported in versions \
+        older than Python 2.6")
 
 
 def test_correct_shapes():
@@ -60,6 +69,7 @@ def test_with_without_gram_tol():
 
 
 def test_unreachable_accuracy():
+    check_warnings()  # Skip if unsupported Python version
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter('always')
         assert_array_almost_equal(
@@ -119,6 +129,7 @@ def test_estimator_shapes():
 
 
 def test_identical_regressors():
+    check_warnings()  # Skip if unsupported Python version
     newX = X.copy()
     newX[:, 1] = newX[:, 0]
     gamma = np.zeros(n_features)
