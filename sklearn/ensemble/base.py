@@ -31,10 +31,13 @@ class BaseEnsemble(BaseEstimator):
         if n_estimators <= 0:
             raise ValueError("n_estimators must be greater than zero.")
 
-        # Make clones
+        # Set parameters
         self.base_estimator = base_estimator
         self.base_estimator.set_params(**estimator_params)
         self.n_estimators = n_estimators
+
+        # Don't instantiate estimators now! Parameters of base_estimator might
+        # still change. E.g., When grid-searching with the nested object syntax.
         self.estimators = []
 
     def __len__(self):
