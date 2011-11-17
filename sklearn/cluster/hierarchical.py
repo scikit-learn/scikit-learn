@@ -81,6 +81,9 @@ class Dendrogram(object):
     
     children : list of pairs. Length of n_nodes
         List of the children of node. This is not defined for leaves.
+        
+    next_index : int
+        The index that a new tree node (resulting from merging) will obtain.
     """
 
     def __init__(self, n_samples, n_components):
@@ -92,7 +95,9 @@ class Dendrogram(object):
         self.heights = np.zeros(n_nodes)
         self.children = []
         
-    def merge(self, child_node_1, child_node_2, parent_node, merge_distance):
+        self.next_index = self.n_samples
+        
+    def merge(self, child_node_1, child_node_2, merge_distance):
         """ Adds a new tree node corresponding to merging two clusters.
         
         Create tree node *parent_node* that is the parent of *child_node_1* and 
@@ -105,18 +110,23 @@ class Dendrogram(object):
             
         child_node_2 : int
             The index of the second child node
-            
-        parent_node : int
-            The index of the new parent node that connects the two child nodes
         
         merge_distance: float
             The distance of the two child nodes corresponding to the two 
             clusters.
             
+        Return
+        ------    
+        next_index : int
+            The index of the new parent node that connects the two child nodes
+            
         """
-        self.parent[child_node_1] = self.parent[child_node_1] = parent_node
-        self.heights[parent_node] = merge_distance
+        self.parent[child_node_1] = self.parent[child_node_1] = self.next_index
+        self.heights[self.next_index] = merge_distance
         self.children.append([child_node_1, child_node_2])
+        self.next_index += 1
+        
+        return self.next_index
         
     def _get_descendent(self, ind, add_intermediate_nodes=False):
         """ Return all the descendent leaves of a set of nodes.
@@ -285,7 +295,8 @@ def create_dendrogram(X, connectivity, n_components=None,
     open_nodes = np.ones(n_nodes, dtype=bool)
     
     # Recursive merge loop
-    for k in xrange(n_samples, n_nodes):
+    k = n_samples
+    while k < n_nodes:
         # Identify the merge that will be applied next
         # This is the merge with minimal distance of two cluster that haven't
         # been merged into a larger cluster yet.
@@ -311,10 +322,10 @@ def create_dendrogram(X, connectivity, n_components=None,
         # Add one node to dendrogram tree that is the parent of the two
         # tree nodes i and j. Store the corresponding merge distance as the 
         # nodes' height 
-        dendrogram.merge(i, j, k, merge_distance)
+        k = dendrogram.merge(i, j, merge_distance)
         
         # Update linkage object
-        linkage.update(i, j, k, dendrogram.parent)
+        linkage.update(i, j, k - 1, dendrogram.parent)
         
         open_nodes[i], open_nodes[j] = False, False
                 
