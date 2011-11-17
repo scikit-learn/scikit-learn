@@ -325,6 +325,11 @@ def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
         q_data_ptr = <double *> q.data
     cdef double u = 0.0
 
+    if penalty_type == L2:
+        rho = 1.0
+    elif penalty_type == L1:
+        rho = 0.0
+
     cdef double typw = sqrt(1.0 / sqrt(alpha))
 
     if learning_rate == OPTIMAL:

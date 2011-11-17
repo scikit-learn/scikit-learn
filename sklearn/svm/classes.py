@@ -164,9 +164,9 @@ class SVC(DenseBaseLibSVM, ClassifierMixin):
                  coef0=0.0, shrinking=True, probability=False,
                  tol=1e-3, cache_size=200):
 
-        DenseBaseLibSVM.__init__(self, 'c_svc', kernel, degree, gamma, coef0,
-                                 tol, C, 0., 0., shrinking, probability,
-                                 cache_size)
+        super(SVC, self).__init__('c_svc', kernel, degree, gamma, coef0, tol,
+                                  C, 0., 0., shrinking, probability,
+                                  cache_size)
 
 
 class NuSVC(DenseBaseLibSVM, ClassifierMixin):
@@ -269,9 +269,9 @@ class NuSVC(DenseBaseLibSVM, ClassifierMixin):
                  coef0=0.0, shrinking=True, probability=False,
                  tol=1e-3, cache_size=200):
 
-        DenseBaseLibSVM.__init__(self, 'nu_svc', kernel, degree, gamma,
-                                coef0, tol, 0., nu, 0., shrinking, probability,
-                                cache_size)
+        super(NuSVC, self).__init__('nu_svc', kernel, degree, gamma, coef0,
+                                    tol, 0., nu, 0., shrinking, probability,
+                                    cache_size)
 
 
 class SVR(DenseBaseLibSVM, RegressorMixin):
@@ -359,9 +359,9 @@ class SVR(DenseBaseLibSVM, RegressorMixin):
                  tol=1e-3, C=1.0, epsilon=0.1, shrinking=True,
                  probability=False, cache_size=200):
 
-        DenseBaseLibSVM.__init__(self, 'epsilon_svr', kernel, degree, gamma,
-                                 coef0, tol, C, 0., epsilon, shrinking,
-                                 probability, cache_size)
+        super(SVR, self).__init__('epsilon_svr', kernel, degree, gamma, coef0,
+                                  tol, C, 0., epsilon, shrinking, probability,
+                                  cache_size)
 
     def fit(self, X, y, sample_weight=None, **params):
         """
@@ -384,8 +384,8 @@ class SVR(DenseBaseLibSVM, RegressorMixin):
             Returns self.
         """
         # we copy this method because SVR does not accept class_weight
-        return DenseBaseLibSVM.fit(self, X, y, sample_weight=sample_weight,
-                                  **params)
+        return super(SVR, self).fit(X, y, sample_weight=sample_weight,
+                                    **params)
 
 
 class NuSVR(DenseBaseLibSVM, RegressorMixin):
@@ -473,9 +473,9 @@ class NuSVR(DenseBaseLibSVM, RegressorMixin):
                  gamma=0.0, coef0=0.0, shrinking=True,
                  probability=False, tol=1e-3, cache_size=200):
 
-        DenseBaseLibSVM.__init__(self, 'nu_svr', kernel, degree, gamma, coef0,
-                                 tol, 0, nu, None, shrinking, probability,
-                                 cache_size)
+        super(NuSVR, self).__init__('nu_svr', kernel, degree, gamma, coef0,
+                                    tol, 0, nu, None, shrinking, probability,
+                                    cache_size)
 
     def fit(self, X, y, sample_weight=None, **params):
         """
@@ -495,7 +495,7 @@ class NuSVR(DenseBaseLibSVM, RegressorMixin):
             Returns self.
         """
         # we copy this method because SVR does not accept class_weight
-        return DenseBaseLibSVM.fit(self, X, y, sample_weight=[], **params)
+        return super(NuSVR, self).fit(X, y, sample_weight=[], **params)
 
 
 class OneClassSVM(DenseBaseLibSVM):
@@ -557,9 +557,9 @@ class OneClassSVM(DenseBaseLibSVM):
     """
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
                  tol=1e-3, nu=0.5, shrinking=True, cache_size=200):
-        DenseBaseLibSVM.__init__(self, 'one_class', kernel, degree, gamma,
-                                 coef0, tol, 0., nu, 0., shrinking, False,
-                                 cache_size)
+        super(OneClassSVM, self).__init__('one_class', kernel, degree, gamma,
+                                          coef0, tol, 0., nu, 0., shrinking,
+                                          False, cache_size)
 
     def fit(self, X, class_weight={}, sample_weight=None, **params):
         """
