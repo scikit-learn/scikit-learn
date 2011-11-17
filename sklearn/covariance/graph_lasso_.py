@@ -420,6 +420,8 @@ class GraphLassoCV(GraphLasso):
         self.verbose = verbose
         self.cv = cv
         self.n_jobs = n_jobs
+        # The base class needs this for the score method
+        self.store_precision = True
 
     def fit(self, X, y=None):
         X = np.asarray(X)
