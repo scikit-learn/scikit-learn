@@ -20,6 +20,9 @@ def configuration(parent_package='', top_path=None):
     else:
         cblas_libs = blas_info.pop('libraries', [])
 
+    config.add_extension('arraybuilder',
+                         sources=['arraybuilder.c'])
+
     config.add_extension('arrayfuncs',
                          sources=['arrayfuncs.c'],
                          depends=[join('src', 'cholesky_delete.c')],
