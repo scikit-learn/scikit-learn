@@ -6,18 +6,22 @@ Decision Trees
 
 .. currentmodule:: sklearn.tree
 
-.. image:: ../auto_examples/tree/images/plot_tree_regression_1.png
+**Decision Trees (DTs)** are a non-parametric supervised learning method used
+for :ref:`classification <tree_classification>` and :ref:`regression
+<tree_regression>`. The goal is to create a model that predicts the value of a
+target variable by learning simple decision rules inferred from the data
+features.
+
+For instance, in the example below, decision trees learn from data to
+approximate a sine curve with a set of if-then-else decision rules. The deeper
+the tree, the more complex the decision rules and the fitter the model.
+
+.. figure:: ../auto_examples/tree/images/plot_tree_regression_1.png
    :target: ../auto_examples/tree/plot_tree_regression.html
-   :scale: 50
-   :align: right
+   :scale: 75
+   :align: center
 
-**Decision Trees** are a non-parametric supervised learning method used for
-:ref:`classification <tree_classification>` and :ref:`regression
-<tree_regression>`. They learn simple decision rules combining information from
-the features. For example, on the right, decision trees learn from data to
-approximate a sine curve with a set of horizontal lines.
-
-The advantages of decision trees include:
+Some advantages of decision trees are:
 
     - Simple to understand and to interpret. Trees can be visualised.
 
@@ -79,7 +83,7 @@ The disadvantages of decision trees include:
 Classification
 ==============
 
-:class:`DecisionTreeClassifier` is capable of performing multi-class
+:class:`DecisionTreeClassifier` is a class capable of performing multi-class
 classification on a dataset.
 
 As other classifiers, :class:`DecisionTreeClassifier` take as input two
@@ -111,7 +115,7 @@ Using the Iris dataset, we can construct a tree as follows::
     >>> clf = clf.fit(iris.data, iris.target)
 
 Once trained, we can export the tree in `Graphviz
-<http://www.graphviz.org/>`_ format using the :class:`GraphvizExporter`
+<http://www.graphviz.org/>`_ format using the :func:`export_graphviz`
 exporter. Below is an example export of a tree trained on the entire
 iris dataset::
 
@@ -122,12 +126,12 @@ iris dataset::
 .. only:: html
 
     .. figure:: ../images/iris.svg
-    :align: center
+       :align: center
 
 .. only:: latex
 
     .. figure:: ../images/iris.pdf
-    :align: center
+       :align: center
 
 After being fitted, the model can then be used to predict new values::
 
@@ -137,7 +141,7 @@ After being fitted, the model can then be used to predict new values::
 .. figure:: ../auto_examples/tree/images/plot_iris_1.png
    :target: ../auto_examples/tree/plot_iris.html
    :align: center
-   :scale: 70
+   :scale: 75
 
 .. topic:: Examples:
 
@@ -148,17 +152,17 @@ After being fitted, the model can then be used to predict new values::
 Regression
 ==========
 
-.. image:: ../auto_examples/tree/images/plot_tree_regression_1.png
+.. figure:: ../auto_examples/tree/images/plot_tree_regression_1.png
    :target: ../auto_examples/tree/plot_tree_regression.html
-   :scale: 50
-   :align: right
+   :scale: 75
+   :align: center
 
+Decision trees can also be applied to regression problems, using the
+:class:`DecisionTreeRegressor` class.
 
-Decision trees can be applied to regression problems.
-
-As with classification classes, the fit method will take as
-argument vectors X, y, only that in this case y is expected to have
-floating point values instead of integer values::
+As in the classification setting, the fit method will take as argument arrays X
+and y, only that in this case y is expected to have floating point values
+instead of integer values::
 
     >>> from sklearn import tree
     >>> X = [[0, 0], [2, 2]]
