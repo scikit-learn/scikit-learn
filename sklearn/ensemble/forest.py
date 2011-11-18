@@ -214,7 +214,7 @@ class ForestRegressor(Forest, RegressorMixin):
 
 
 class RandomForestClassifier(ForestClassifier):
-    """A random forest classifier [1].
+    """A random forest classifier.
 
     Parameters
     ----------
@@ -273,7 +273,7 @@ class RandomForestClassifier(ForestClassifier):
 
 
 class RandomForestRegressor(ForestRegressor):
-    """A random forest regressor [1].
+    """A random forest regressor.
 
     Parameters
     ----------
@@ -332,7 +332,7 @@ class RandomForestRegressor(ForestRegressor):
 
 
 class ExtraTreesClassifier(ForestClassifier):
-    """An extra-trees classifier [1].
+    """An extra-trees classifier.
 
     Parameters
     ----------
@@ -392,7 +392,7 @@ class ExtraTreesClassifier(ForestClassifier):
 
 
 class ExtraTreesRegressor(ForestRegressor):
-    """An extra-trees regressor [1].
+    """An extra-trees regressor.
 
     Parameters
     ----------
