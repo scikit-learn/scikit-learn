@@ -279,7 +279,13 @@ class WardsLinkage(Linkage):
             if not visited[l]:
                 visited[l] = True
                 coord_col.append(l)
+                # cluster l is now connected to parent_node instead of 
+                # the two child nodes
                 self.A[l].append(parent_node)
+                if child_node1 in self.A[l]:
+                    self.A[l].remove(child_node1)
+                if child_node2 in self.A[l]:
+                    self.A[l].remove(child_node2)
         self.A.append(coord_col)
         coord_col = np.array(coord_col, dtype=np.int)
         coord_row = np.empty_like(coord_col)
