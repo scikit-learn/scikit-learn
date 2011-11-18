@@ -3,6 +3,7 @@ Ridge regression
 """
 
 # Author: Mathieu Blondel <mathieu@mblondel.org>
+#         Fabian Pedregosa <fabian@fseoane.net>
 # License: Simplified BSD
 
 import numpy as np
@@ -13,37 +14,6 @@ from ..utils import safe_asarray
 from ..preprocessing import LabelBinarizer
 from ..grid_search import GridSearchCV
 
-def _solve(A, b, solver, tol):
-    # helper method for ridge_regression, A is symmetric positive
-
-    if solver == 'auto':
-        if hasattr(A, 'todense'):
-            solver = 'sparse_cg'
-        else:
-            solver = 'dense_cholesky'
-
-    if solver == 'sparse_cg':
-        if b.ndim < 2:
-            from scipy.sparse import linalg as sp_linalg
-            sol, error = sp_linalg.cg(A, b, tol=tol)
-            if error:
-                raise ValueError("Failed with error code %d" % error)
-            return sol
-        else:
-            # sparse_cg cannot handle a 2-d b.
-            sol = []
-            for j in range(b.shape[1]):
-                sol.append(_solve(A, b[:, j], solver="sparse_cg", tol=tol))
-            return np.array(sol).T
-
-    elif solver == 'dense_cholesky':
-        from scipy import linalg
-        if hasattr(A, 'todense'):
-            A = A.todense()
-        return linalg.solve(A, b, sym_pos=True, overwrite_a=True)
-    else:
-        raise NotImplementedError('Solver %s not implemented' % solver)
-
 
 def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto', tol=1e-3):
     """
@@ -51,7 +21,7 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto', tol=1e-3):
 
     Parameters
     ----------
-    X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+    X : {array-like, sparse matrix, LinearOperator}, shape = [n_samples, n_features]
         Training data
 
     y : array-like, shape = [n_samples] or [n_samples, n_responses]
@@ -81,26 +51,56 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto', tol=1e-3):
     """
 
     n_samples, n_features = X.shape
-    is_sparse = False
 
-    if hasattr(X, 'todense'): # lazy import of scipy.sparse
-        from scipy import sparse
-        is_sparse = sparse.issparse(X)
-
-    if is_sparse:
-        if n_features > n_samples or \
-           isinstance(sample_weight, np.ndarray) or \
-           sample_weight != 1.0:
-
-            I = sparse.lil_matrix((n_samples, n_samples))
-            I.setdiag(np.ones(n_samples) * alpha * sample_weight)
-            c = _solve(X * X.T + I, y, solver, tol)
-            coef = X.T * c
+    if solver == 'auto':
+        # cholesky if it's a dense array and cg in
+        # any other case
+        if hasattr(X, '__array__'):
+            solver = 'dense_cholesky'
         else:
-            I = sparse.lil_matrix((n_features, n_features))
-            I.setdiag(np.ones(n_features) * alpha)
-            coef = _solve(X.T * X + I, X.T * y, solver, tol)
+            solver = 'sparse_cg'
+
+    if solver == 'sparse_cg':
+        # gradient descent
+        from scipy.sparse import linalg as sp_linalg
+        X1 = sp_linalg.aslinearoperator(X)
+        if y.ndim == 1:
+            y1 = np.reshape(y, (-1, 1))
+        else:
+            y1 = y
+        coefs = np.empty((y1.shape[1], n_features))
+
+        for i in range(y1.shape[1]):
+            y_column = y1[:, i]
+            if n_features > n_samples:
+                # kernel ridge
+                # w = X.T * inv(X X^t + alpha*Id) y
+                def mv(x):
+                    return X1.matvec(X1.rmatvec(x)) + alpha * x
+                C = sp_linalg.LinearOperator(
+                    (n_samples, n_samples), matvec=mv, dtype=X.dtype)
+                coef, info = sp_linalg.cg(C, y_column, tol=tol)
+                coefs[i] = X1.rmatvec(coef)
+            else:
+                # ridge
+                # w = inv(X^t X + alpha*Id) * X.T y
+                def mv(x):
+                    return X1.rmatvec(X1.matvec(x)) + alpha * x
+                y_column = X1.rmatvec(y_column)
+                C = sp_linalg.LinearOperator(
+                    (n_features, n_features), matvec=mv, dtype=X.dtype)
+                coefs[i], info = sp_linalg.cg(C, y_column, tol=tol)
+            if info != 0:
+                raise ValueError("Failed with error code %d" % info)
+
+        if y.ndim == 1:
+            return np.ravel(coefs)
+        return coefs
     else:
+        # normal equations (cholesky) method
+        from scipy import linalg
+        if hasattr(X, 'todense'):
+            X = X.todense()
         if n_features > n_samples or \
            isinstance(sample_weight, np.ndarray) or \
            sample_weight != 1.0:
@@ -109,13 +109,13 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto', tol=1e-3):
             # w = X.T * inv(X X^t + alpha*Id) y
             A = np.dot(X, X.T)
             A.flat[::n_samples + 1] += alpha * sample_weight
-            coef = np.dot(X.T, _solve(A, y, solver, tol))
+            coef = np.dot(X.T, linalg.solve(A, y, sym_pos=True, overwrite_a=True))
         else:
             # ridge
             # w = inv(X^t X + alpha*Id) * X.T y
             A = np.dot(X.T, X)
             A.flat[::n_features + 1] += alpha
-            coef = _solve(A, np.dot(X.T, y), solver, tol)
+            coef = linalg.solve(A, np.dot(X.T, y), sym_pos=True, overwrite_a=True)
 
     return coef.T
 
