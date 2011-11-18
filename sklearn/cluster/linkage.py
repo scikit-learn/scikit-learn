@@ -150,6 +150,18 @@ class Linkage(object):
             A list of datapoint indices of the cluster.
         """
         return self.cluster_nodes[cluster_root]
+    
+    def get_nontrivial_clusters(self):
+        """ Returns the root nodes of all non-trivial clusters.
+        
+        Return
+        ------
+        _ : list of int
+            A list of tree indices that correspond to non-trivial clusters, i.e.
+            clusters that contain more than one datapoint.        
+        """
+        return [root for root, nodes in self.cluster_nodes.iteritems()
+                            if len(nodes) > 1]
         
 
 class WardsLinkage(Linkage):
