@@ -316,7 +316,7 @@ def create_dendrogram(X, connectivity, n_components=None,
         from .linkage import CompleteLinkage
         linkage_criterion = CompleteLinkage
         
-    # Linkage criterion must be a subclass of linkage. 
+    # Linkage criterion must be a subclass of Linkage. 
     assert (issubclass(linkage_criterion, Linkage)), \
         "linkage_criterion must be a subclass of Linkage or a known " \
         "linkage name."
@@ -472,7 +472,7 @@ class HierarchicalClustering(BaseEstimator):
         The number of connected components in the graph defined by the
         connectivity matrix. If not set, it is estimated.
         
-    linkage_criterion : str or object implementing the Linkage interface
+    linkage_criterion : str or subclass of Linkage
         The linkage criterion used to determine the distances of two clusters.
         In the structured case (connectivity not None), this can be either 
         "ward" or "complete" or an any subclass of the Linkage class.
