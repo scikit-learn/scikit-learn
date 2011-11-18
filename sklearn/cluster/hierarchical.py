@@ -332,7 +332,7 @@ def create_dendrogram(X, connectivity, n_components=None,
     linkage = linkage_criterion(X, connectivity, **linkage_kwargs)
     
     # Array in which open_nodes[i] indicate whether the cluster with index i
-    # has nor yet been merged into a larger cluster
+    # has not yet been merged into a larger cluster
     open_nodes = np.ones(n_nodes, dtype=bool)
     
     # Recursive merge loop
@@ -514,7 +514,7 @@ class HierarchicalClustering(BaseEstimator):
         
         if self.connectivity is not None:
             # Construct the tree
-            dendrogram = \
+            self.dendrogram = \
                 memory.cache(create_dendrogram)(X, self.connectivity, 
                                                 n_components=self.n_components,
                                                 linkage_criterion=\
@@ -525,10 +525,10 @@ class HierarchicalClustering(BaseEstimator):
             # Cut the tree ... 
             if self.max_height is None:
                 # based on number of desired clusters
-                cluster_roots = dendrogram.cut(self.n_clusters)
+                cluster_roots = self.dendrogram.cut(self.n_clusters)
             else:
                 # based on maximally allowed height
-                cluster_roots = dendrogram.cut_height(self.max_height)
+                cluster_roots = self.dendrogram.cut_height(self.max_height)
         else:  # Fall back to scipy
             assert self.n_clusters is not None, \
                 "Unstructured clustering requires the number of clusters to "\
@@ -536,13 +536,13 @@ class HierarchicalClustering(BaseEstimator):
             
             out = hierarchy.ward(X)
             # Put result into a dendrogram and cut it to get labeling
-            dendrogram = Dendrogram(X.shape[0], 1)
-            dendrogram.children = out[:, :2].astype(np.int)
-            cluster_roots = dendrogram.cut(self.n_clusters)
+            self.dendrogram = Dendrogram(X.shape[0], 1)
+            self.dendrogram.children = out[:, :2].astype(np.int)
+            cluster_roots = self.dendrogram.cut(self.n_clusters)
             
         # Determine labeling of datapoints based on the induced subtrees
         # of the cut of the dendrogram
-        self.labels_ = dendrogram.get_labeling(cluster_roots)
+        self.labels_ = self.dendrogram.get_labeling(cluster_roots)
             
         return self
 
