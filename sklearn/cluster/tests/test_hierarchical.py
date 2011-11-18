@@ -111,10 +111,10 @@ def test_scikit_vs_scipy():
         dendrogram = Dendrogram(n_leaves, 1)
         
         dendrogram.children = children
-        cut = dendrogram._cut(k)
+        cut = dendrogram.cut(k)
         
         dendrogram.children = children_
-        cut_ = dendrogram._cut(k)
+        cut_ = dendrogram.cut(k)
 
         assess_same_labelling(cut, cut_)
 

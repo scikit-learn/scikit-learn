@@ -53,13 +53,13 @@ class Dendrogram(object):
     merge:
         Adds a new tree node corresponding to merging two clusters.
         
-    _get_descendent:
+    get_descendent:
         Return all the descendent leaves of a set of nodes.
     
-    _cut:
+    cut:
        Cut the dendrogram for a given number of clusters.
        
-    _cut_height:
+    cut_height:
         Cut the dendrogram for a given maximal height.
         
     
@@ -128,7 +128,7 @@ class Dendrogram(object):
         
         return self.next_index
         
-    def _get_descendent(self, ind, add_intermediate_nodes=False):
+    def get_descendent(self, ind, add_intermediate_nodes=False):
         """ Return all the descendent leaves of a set of nodes.
     
         Parameters
@@ -156,7 +156,7 @@ class Dendrogram(object):
                 ind.extend((ci[0], ci[1]))
         return descendent
     
-    def _cut(self, n_clusters):
+    def cut(self, n_clusters):
         """ Cut the dendrogram for a given number of clusters.
     
         Parameters
@@ -176,10 +176,10 @@ class Dendrogram(object):
             nodes.remove(np.max(nodes))
         labels = np.zeros(self.n_samples, dtype=np.int)
         for i, node in enumerate(nodes):
-            labels[self._get_descendent([node])] = i
+            labels[self.get_descendent([node])] = i
         return labels
     
-    def _cut_height(self, max_height):
+    def cut_height(self, max_height):
         """ Cut the dendrogram for a given maximal height.
         
         Parameters
@@ -208,7 +208,7 @@ class Dendrogram(object):
                 
         labels = np.zeros(self.n_samples, dtype=np.int)
         for i, node in enumerate(cluster_roots):
-            labels[self._get_descendent([node])] = i
+            labels[self.get_descendent([node])] = i
         return labels
 
 ###############################################################################
@@ -313,8 +313,8 @@ def create_dendrogram(X, connectivity, n_components=None,
         if merge_distance == np.inf and not linkage.has_more_candidates(): 
             # Merge unconnected components with height infinity
             i = k - 1
-            desc = set(dendrogram._get_descendent([i], 
-                                                  add_intermediate_nodes=True))
+            desc = set(dendrogram.get_descendent([i], 
+                                                 add_intermediate_nodes=True))
             for j in xrange(k - 2, 0, -1):
                 if j not in desc:
                     break      
@@ -484,10 +484,10 @@ class HierarchicalClustering(BaseEstimator):
             # Cut the tree ... 
             if self.max_height is None:
                 # based on number of desired clusters
-                self.labels_ = dendrogram._cut(self.n_clusters)
+                self.labels_ = dendrogram.cut(self.n_clusters)
             else:
                 # based on maximally allowed height
-                self.labels_ = dendrogram._cut_height(self.max_height)
+                self.labels_ = dendrogram.cut_height(self.max_height)
         else:  # Fall back to scipy
             assert self.n_clusters is not None, \
                 "Unstructured clustering requires the number of clusters to "\
@@ -497,7 +497,7 @@ class HierarchicalClustering(BaseEstimator):
             # Put result into a dendrogram and cut it to get labeling
             dendrogram = Dendrogram(X.shape[0], 1)
             dendrogram.children = out[:, :2].astype(np.int)
-            self.labels_ = dendrogram._cut(self.n_clusters)
+            self.labels_ = dendrogram.cut(self.n_clusters)
             
         return self
 
