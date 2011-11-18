@@ -111,12 +111,12 @@ def test_scikit_vs_scipy():
         dendrogram = Dendrogram(n_leaves, 1)
         
         dendrogram.children = children
-        cut = dendrogram.cut(k)
+        labeling = dendrogram.get_labeling(dendrogram.cut(k))
         
         dendrogram.children = children_
-        cut_ = dendrogram.cut(k)
+        labeling_ = dendrogram.get_labeling(dendrogram.cut(k))
 
-        assess_same_labelling(cut, cut_)
+        assess_same_labelling(labeling, labeling_)
 
 def test_connectivity_popagation():
     """

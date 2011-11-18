@@ -166,33 +166,44 @@ class Dendrogram(object):
     
         Return
         ------
-        labels : array [n_points]
-            cluster labels for each point
+        cluster_roots : list of int
+            A list of tree nodes. Each tree node has a height less than 
+            max_height and is maximal with regard to that criterion (i.e.
+            its parent node in the tree has a height larger than max_height).
+            The induced subtrees of these nodes are disjoint and cover the
+            whole dataset.   
     
         """
-        nodes = [np.max(self.children[-1]) + 1]
+        cluster_roots = [np.max(self.children[-1]) + 1]
         for i in xrange(n_clusters - 1):
-            nodes.extend(self.children[np.max(nodes) - self.n_samples])
-            nodes.remove(np.max(nodes))
-        labels = np.zeros(self.n_samples, dtype=np.int)
-        for i, node in enumerate(nodes):
-            labels[self.get_descendent([node])] = i
-        return labels
+            cluster_roots.extend(self.children[np.max(cluster_roots) 
+                                                        - self.n_samples])
+            cluster_roots.remove(np.max(cluster_roots))
+            
+        return cluster_roots
     
-    def cut_height(self, max_height):
+    def cut_height(self, max_height, prune=False):
         """ Cut the dendrogram for a given maximal height.
         
         Parameters
         ----------
         max_height : float
             The maximal height a tree node is allowed to have to form a single
-            cluster. Determines indirectly how many clusters are formed. 
+            cluster. Determines indirectly how many clusters are formed.
+            
+        prune : bool
+            If True, all tree nodes with an height above max_height are 
+            actually removed. Otherwise, the tree itself is unchanged. 
+            Defaults to False.            
     
         Return
         ------
-        labels : array
-            cluster labels for each point
-    
+        cluster_roots : list of int
+            A list of tree nodes. Each tree node has a height less than 
+            max_height and is maximal with regard to that criterion (i.e.
+            its parent node in the tree has a height larger than max_height).
+            The induced subtrees of these nodes are disjoint and cover the
+            whole dataset.    
         """
         open_nodes = [len(self.heights) - 1]  # root of the tree
         cluster_roots = [] 
@@ -204,12 +215,42 @@ class Dendrogram(object):
                 cluster_roots.append(node)
             else:
                 # Tree node induces subtree with too large height; split it
-                open_nodes.extend(self.children[node - self.n_samples])
+                child_node1, child_node2 = self.children[node - self.n_samples]
+                open_nodes.extend([child_node1, child_node2])
+                open_nodes.sort()
+                # If pruning is enabled, we also remove the parts of the tree
+                # that are "too high"
+                if prune:    
+                    self.parent[child_node1] = child_node1
+                    self.parent[child_node2] = child_node2
+                    self.children.pop(node - self.n_samples)
                 
+        return cluster_roots
+                
+    def get_labeling(self, cluster_roots):
+        """ Return labeling based on the induced subtrees of cluster root nodes. 
+        
+        Parameters
+        ----------
+        cluster_roots : list of int
+            A list of tree nodes. All datapoints that are leaves of the 
+            induced subtree of one of these nodes gets the same label while
+            leaves in different subtree get different labels. For getting a 
+            valid subtree, the induced subtrees of the all passed nodes
+            must be disjoint and cover all datapoints.  
+    
+        Return
+        ------
+        labels : array
+            cluster labels for each point
+    
+        """
+        
         labels = np.zeros(self.n_samples, dtype=np.int)
         for i, node in enumerate(cluster_roots):
             labels[self.get_descendent([node])] = i
         return labels
+        
 
 ###############################################################################
 
@@ -484,10 +525,10 @@ class HierarchicalClustering(BaseEstimator):
             # Cut the tree ... 
             if self.max_height is None:
                 # based on number of desired clusters
-                self.labels_ = dendrogram.cut(self.n_clusters)
+                cluster_roots = dendrogram.cut(self.n_clusters)
             else:
                 # based on maximally allowed height
-                self.labels_ = dendrogram.cut_height(self.max_height)
+                cluster_roots = dendrogram.cut_height(self.max_height)
         else:  # Fall back to scipy
             assert self.n_clusters is not None, \
                 "Unstructured clustering requires the number of clusters to "\
@@ -497,7 +538,11 @@ class HierarchicalClustering(BaseEstimator):
             # Put result into a dendrogram and cut it to get labeling
             dendrogram = Dendrogram(X.shape[0], 1)
             dendrogram.children = out[:, :2].astype(np.int)
-            self.labels_ = dendrogram.cut(self.n_clusters)
+            cluster_roots = dendrogram.cut(self.n_clusters)
+            
+        # Determine labeling of datapoints based on the induced subtrees
+        # of the cut of the dendrogram
+        self.labels_ = dendrogram.get_labeling(cluster_roots)
             
         return self
 
