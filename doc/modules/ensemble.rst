@@ -36,6 +36,12 @@ randomized :ref:`decision trees <tree>`: the RandomForest algorithm and the
 Extra-Trees method. Both algorithms are perturb-and-combine techniques
 specifically designed for trees.
 
+    >>> from sklearn.ensemble import RandomForestClassifier
+    >>> X = [[0, 0], [1, 1]]
+    >>> Y = [0, 1]
+    >>> clf = RandomForestClassifier(n_estimators=10)
+    >>> clf = clf.fit(X, Y)
+
 In random forests (see :class:`RandomForestClassifier` and
 :class:`RandomForestRegressor` classes), each tree in the ensemble is built from
 a bootstrap sample drawn from the training set. In addition, when splitting a
