@@ -9,6 +9,10 @@ features of the iris dataset.
 This plot compares the decision surfaces learned by a decision tree classifier
 (first column), by a random forest classifier (second column) and by an extra-
 trees classifier (third column).
+
+In the first row, the classifiers are built using the sepal width and the sepal
+length features only, on the second row using the petal length and sepal length
+only, and on the third row using the petal width and the petal length only.
 """
 print __doc__
 
@@ -74,9 +78,9 @@ for pair in ([0, 1], [0, 2], [2, 3]):
                 Z = Z.reshape(xx.shape)
                 cs = pl.contourf(xx, yy, Z, alpha=0.1)
 
-        pl.xlabel("%s / %s" % (iris.feature_names[pair[0]],
-                               model.__class__.__name__))
-        pl.ylabel(iris.feature_names[pair[1]])
+        #pl.xlabel("%s / %s" % (iris.feature_names[pair[0]],
+        #                       model.__class__.__name__))
+        #pl.ylabel(iris.feature_names[pair[1]])
         pl.axis("tight")
 
         # Plot the training points

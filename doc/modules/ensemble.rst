@@ -47,12 +47,6 @@ single non-random tree) but, due to averaging, its variance also decreases,
 usually more than compensating for the increase in bias, hence yielding an
 overall better model.
 
-    >>> from sklearn.datasets import load_iris
-    >>> from sklearn.ensemble import RandomForestClassifier
-    >>> iris = load_iris()
-    >>> clf = RandomForestClassifier()
-    >>> clf.fit(iris.data, iris.target)
-
 In extra-trees (see :class:`ExtraTreesClassifier` and
 :class:`ExtraTreesRegressor` classes), randomness goes one step further in the
 way splits are computed. As in random forests, a random subset of candidate
@@ -62,11 +56,24 @@ randomly-generated thresholds is picked as the splitting rule. This usually
 allows to reduce the variance of the model a bit more, at the expense of a
 slightly greater increase in bias.
 
-    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.cross_validation import cross_val_score
+    >>> from sklearn.datasets import make_blobs
+    >>> from sklearn.ensemble import RandomForestClassifier
     >>> from sklearn.ensemble import ExtraTreesClassifier
-    >>> iris = load_iris()
-    >>> clf = ExtraTreesClassifier()
-    >>> clf.fit(iris.data, iris.target)
+    >>> from sklearn.tree import DecisionTreeClassifier
+    >>> X, y = make_blobs(n_samples=10000, n_features=10, centers=100)
+    >>> clf = DecisionTreeClassifier(max_depth=None, min_split=1)
+    >>> scores = cross_val_score(clf, X, y)
+    >>> scores.mean()
+    0.97609967955403809
+    >>> clf = RandomForestClassifier(n_estimators=10, max_depth=None, min_split=1)
+    >>> scores = cross_val_score(clf, X, y)
+    >>> scores.mean()
+    0.99510028987301846
+    >>> clf = ExtraTreesClassifier(n_estimators=10, max_depth=None, min_split=1)
+    >>> scores = cross_val_score(clf, X, y)
+    >>> scores.mean()
+    1.0
 
 The main parameters to adjust when using these methods is ``n_estimators`` and
 ``max_features``. The former is the number of trees in the forest. The  larger

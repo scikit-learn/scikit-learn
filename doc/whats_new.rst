@@ -35,7 +35,7 @@ Changelog
      ``sklearn.metrics.adjusted_mutual_info_score`` by `Robert Layton`_.
 
    - New :ref:`Ensemble Methods <ensemble>` module by `Gilles Louppe`_ and
-     `Brian Holt`_. The module with the random forest algorithm and the
+     `Brian Holt`_. The module comes with the random forest algorithm and the
      extra-trees method, along with documentation and examples.
 
 
