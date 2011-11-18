@@ -217,7 +217,7 @@ class Dendrogram(object):
                 # Tree node induces subtree with too large height; split it
                 child_node1, child_node2 = self.children[node - self.n_samples]
                 open_nodes.extend([child_node1, child_node2])
-                open_nodes.sort()
+                open_nodes.sort(reverse=True)
                 # If pruning is enabled, we also remove the parts of the tree
                 # that are "too high"
                 if prune:    
