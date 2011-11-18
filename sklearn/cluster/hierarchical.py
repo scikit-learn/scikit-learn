@@ -20,7 +20,7 @@ from ..base import BaseEstimator
 from ..utils._csgraph import cs_graph_components
 from ..externals.joblib import Memory
 
-from .linkage import WardsLinkage
+from .linkage import Linkage
 from ._feature_agglomeration import AgglomerationTransform
 
 
@@ -256,7 +256,7 @@ class Dendrogram(object):
 
 
 def create_dendrogram(X, connectivity, n_components=None, 
-                      linkage_criterion=WardsLinkage, linkage_kwargs={}, 
+                      linkage_criterion="ward", linkage_kwargs={}, 
                       copy=True):
     """ Hierarchical clustering algorithm that creates a dendrogram.
 
@@ -307,6 +307,19 @@ def create_dendrogram(X, connectivity, n_components=None,
         connectivity.shape[1] != n_samples):
         raise ValueError('Wrong shape for connectivity matrix: %s '
                          'when X is %s' % (connectivity.shape, X.shape))
+        
+    # Determine linkage class for known linkage names
+    if linkage_criterion == "ward":
+        from .linkage import WardsLinkage
+        linkage_criterion = WardsLinkage
+    elif linkage_criterion == "complete":
+        from .linkage import CompleteLinkage
+        linkage_criterion = CompleteLinkage
+        
+    # Linkage criterion must be a subclass of linkage. 
+    assert (issubclass(linkage_criterion, Linkage)), \
+        "linkage_criterion must be a subclass of Linkage or a known " \
+        "linkage name."
         
     # Compute the number of nodes of the tree
     # Binary tree with n leaves has 2n-1 nodes...
@@ -415,7 +428,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
     #       warning?
     if connectivity is not None:    
         dendrogram = create_dendrogram(X, connectivity, n_components, 
-                                       linkage_criterion=WardsLinkage, 
+                                       linkage_criterion="ward", 
                                        copy=True) 
         return dendrogram.children, dendrogram.n_components, \
                 dendrogram.n_samples
@@ -459,10 +472,13 @@ class HierarchicalClustering(BaseEstimator):
         The number of connected components in the graph defined by the
         connectivity matrix. If not set, it is estimated.
         
-    linkage_criterion : object implementing the Linkage interface
+    linkage_criterion : str or object implementing the Linkage interface
         The linkage criterion used to determine the distances of two clusters.
-        Defaults to Ward's linkage; however one can pass any object 
-        implementing the Linkage interface.
+        In the structured case (connectivity not None), this can be either 
+        "ward" or "complete" or an any subclass of the Linkage class.
+        In the unstructured case (connectivity is None), this can be any of 
+        "average", "centroid", "complete", "median", "single", "ward",
+        or "weighted". Defaults to "ward".
         
     linkage_kwargs : dict
         Additional keyword arguments that are directly passed to the __init__
@@ -479,10 +495,20 @@ class HierarchicalClustering(BaseEstimator):
         cluster labels for each point
 
     """
+    
+    # Mapping from name to scipy implementation of hierarchical cluster
+    # algorithm
+    unstructured_cluster_algorithms = {"average" : hierarchy.average,
+                                       "centroid" : hierarchy.centroid,
+                                       "complete" : hierarchy.complete,
+                                       "median" : hierarchy.median,
+                                       "single" : hierarchy.single,
+                                       "ward" : hierarchy.ward,
+                                       "weighted" : hierarchy.weighted}
 
     def __init__(self, n_clusters=None, max_height=None,
                  memory=Memory(cachedir=None, verbose=0), connectivity=None,
-                 copy=True, n_components=None, linkage_criterion=WardsLinkage,
+                 copy=True, n_components=None, linkage_criterion="ward",
                  linkage_kwargs={}):
         self.n_clusters = n_clusters
         self.n_components = n_components
@@ -490,7 +516,7 @@ class HierarchicalClustering(BaseEstimator):
                 
         self.connectivity = connectivity
         
-        self.linkage_criterion = linkage_criterion
+        self.linkage_criterion = linkage_criterion    
         self.linkage_kwargs = linkage_kwargs
         
         self.memory = memory
@@ -512,7 +538,7 @@ class HierarchicalClustering(BaseEstimator):
         if isinstance(memory, basestring):
             memory = Memory(cachedir=memory)
         
-        if self.connectivity is not None:
+        if self.connectivity is not None:           
             # Construct the tree
             self.dendrogram = \
                 memory.cache(create_dendrogram)(X, self.connectivity, 
@@ -533,8 +559,16 @@ class HierarchicalClustering(BaseEstimator):
             assert self.n_clusters is not None, \
                 "Unstructured clustering requires the number of clusters to "\
                 "be specified explicitly." 
-            
-            out = hierarchy.ward(X)
+
+            assert self.linkage_criterion \
+                        in self.unstructured_cluster_algorithms.keys(), \
+                    "Unknown linkage criterion %s. Must be one of %s." \
+                        % (self.linkage_criterion,
+                           self.unstructured_cluster_algorithms.keys())
+            # Invoke clustering algorithm
+            clustering_algorithm = \
+                self.unstructured_cluster_algorithms[self.linkage_criterion]
+            out = clustering_algorithm(X)
             # Put result into a dendrogram and cut it to get labeling
             self.dendrogram = Dendrogram(X.shape[0], 1)
             self.dendrogram.children = out[:, :2].astype(np.int)
@@ -553,7 +587,7 @@ class Ward(HierarchicalClustering):
     # TODO: Contained only for backward compatibility. Add a deprecation 
     #       warning?
     def __init__(self, *args, **kwargs):
-        super(Ward, self).__init__(*args, linkage_criterion=WardsLinkage,
+        super(Ward, self).__init__(*args, linkage_criterion="ward",
                                    **kwargs)
 
 
