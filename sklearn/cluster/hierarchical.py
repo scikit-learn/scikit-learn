@@ -121,7 +121,7 @@ class Dendrogram(object):
             The index of the new parent node that connects the two child nodes
             
         """
-        self.parent[child_node_1] = self.parent[child_node_1] = self.next_index
+        self.parent[child_node_1] = self.parent[child_node_2] = self.next_index
         self.heights[self.next_index] = merge_distance
         self.children.append([child_node_1, child_node_2])
         self.next_index += 1
