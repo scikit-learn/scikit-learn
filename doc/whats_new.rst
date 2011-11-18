@@ -12,8 +12,8 @@ Changelog
      associated cross-validated estimator, by `Gael Varoquaux`_
 
    - New :ref:`Tree <tree>` module by `Brian Holt`_, `Peter Prettenhofer`_,
-   `Satrajit Ghosh`_ and `Gilles Louppe`_. The module comes with complete documentation
-     and examples.
+     `Satrajit Ghosh`_ and `Gilles Louppe`_. The module comes with complete
+     documentation and examples.
 
    - Fixed a bug in the RFE module by `Gilles Louppe`_ (issue #378).
 
