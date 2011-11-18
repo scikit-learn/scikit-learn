@@ -472,23 +472,15 @@ class CompleteLinkage(Linkage):
         # TODO: We could remember minimal distance and avoid brute force search 
         #       when we are larger anyway
         for connected_cluster in coord_col:
-            # If one of the child clusters was not connected to the connected
-            # cluster, we have to compute its distance now using brute force
-            if not (connected_cluster, child_node1) in self.distance_dict:
-                self.distance_dict[(connected_cluster, child_node1)] = \
-                    self._brute_force_cluster_distance(connected_cluster,
-                                                       child_node1)
-            elif not (connected_cluster, child_node2) in self.distance_dict:
-                self.distance_dict[(connected_cluster, child_node2)] = \
-                    self._brute_force_cluster_distance(connected_cluster,
-                                                       child_node2)
-
+            if connected_cluster in [child_node1, child_node2]:
+                continue
             # The distance of the connected cluster to the the newly formed 
             # parent cluster is the maximum of the distances of the connected
             # cluster to the two child clusters
-            max_dist = \
-                    max(self.distance_dict[(connected_cluster, child_node1)],
-                        self.distance_dict[(connected_cluster, child_node2)])
+            max_dist = max(self.get_cluster_distance(connected_cluster, 
+                                                     child_node1),
+                           self.get_cluster_distance(connected_cluster, 
+                                                     child_node2))
             
             # Update internal structures with the distance of the connected
             # cluster to the parent cluster
@@ -500,9 +492,16 @@ class CompleteLinkage(Linkage):
             # Clean up
             self.distance_dict.pop((connected_cluster, child_node1))
             self.distance_dict.pop((connected_cluster, child_node2))
+            self.distance_dict.pop((child_node1, connected_cluster))
+            self.distance_dict.pop((child_node2, connected_cluster))
                 
     def get_cluster_distance(self, i, j):
         """ Returns the distance of the clusters with indices *i* and *j*."""
+        if not (i, j) in self.distance_dict:
+            # Compute distance between two cluster only when required and then
+            # via brute force computation
+            self.distance_dict[(i, j)] = self.distance_dict[(j, i)] = \
+                                self._brute_force_cluster_distance(i, j)
         return self.distance_dict[(i, j)]
     
     def _brute_force_cluster_distance(self, i, j):
