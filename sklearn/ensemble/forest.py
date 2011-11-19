@@ -1,6 +1,33 @@
-"""
-This module gathers forest of trees-based ensemble methods, including random
-forests and extra-trees.
+"""Forest of trees-based ensemble methods
+
+Those methods include random forests and extremly randomized trees.
+
+The module structure is the following:
+
+- The ``Forest`` base class implements a common ``fit`` method for all
+  the estimators the module. The ``fit`` method of the base ``Forest``
+  class calls the ``fit`` method of each sub-estimator on random samples
+  (with replacement, aka. bootstrap) of the training set.
+
+  The init of the sub-estimator is further delegated to the
+  ``BaseEnsemble`` constructor.
+
+- The ``ForestClassifier`` and ``ForestRegressor`` base classes further
+  implement the prediction logic by computing an average of the predicted
+  outcomes of the sub-estimators.
+
+- The ``RandomForestClassifier`` and ``RandomForestRegressor`` derived
+  classes provide the user with concrete implementations of
+  the forest ensemble method using classical, deterministic
+  ``DecisionTreeClassifier`` and ``DecisionTreeRegressor`` as default
+  sub-estimator implementation.
+
+- The ``ExtraTreesClassifier`` and ``ExtraTreesRegressor`` derived
+  classes provide the user with concrete implementations of the
+  forest ensemble method using the extremly randomized trees
+  ``ExtraTreeClassifier`` and ``ExtraTreeRegressor`` as default
+  sub-estimator implementation.
+
 """
 
 # Authors: Gilles Louppe, Brian Holt
@@ -9,7 +36,7 @@ forests and extra-trees.
 import numpy as np
 
 from ..base import clone
-from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
+from ..base import ClassifierMixin, RegressorMixin
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor, \
                    ExtraTreeClassifier, ExtraTreeRegressor
 from ..utils import check_random_state
