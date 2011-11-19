@@ -16,7 +16,78 @@ Kernel Approximation
 
 .. currentmodule:: sklearn.feature_extraction.kernel_approximation
 
-TODO
+This submodule contains functions that approximate the feature
+mappings that correspond to certain kernels, as they are used
+for example in support vector machines (see :mod:`sklearn.svm`).
+The following feature functions perform non-linear transformations
+of the input, which can serve as a basis for linear classification
+or other algorithms.
+The advantage of using appoximate explicit feature maps compared
+to the kernel trick, which makes use of feature maps implicitly,
+is that explicit mappings can be better suited for online
+learning and can significantly reduce the cost of learning with
+large datasets.
+
+Radial Basis Function Kernel
+----------------------------
+The :class:`RBFSampler` constructes an approximate mapping
+for the radial basis function kernel.
+The mapping relies on a Monte Carlo approximation to the
+kernel values. The :func:`fit` function performs the
+Monte Carlo sampling, whereas the `transform` method
+performs the mapping of the data.
+Because of the inherent randomness of the process,
+results may vary between different calls to the func:`fit`
+function. The `fit` function takes two arguments:
+`n_components`, which is the target dimensionality
+of the feature transform, and `gamma`, the parameter
+of the RBF-kernel.
+A higher `n_components` will result in a better
+approximation of the kernel and will yield results
+more similar to those produced by a kernel SVM.
+Note that "fitting" the feature function does
+not actually depend on the data given
+to the func:`fit` function. Only the dimensionality
+of the data is used.
+
+
+Skewed Chi Squared Kernel
+-------------------------
+The skewed chi squared kernel is given by:
+
+It has properties that are similar to the
+exponentiated chi squared kernel often used in
+computer vision, but allows for a simple 
+Monte Carlo approximation of the feature map.
+The usage of the :class:`SkewedChiSquareSapler`
+is the same as the usage described above for
+the :class:`RBFSampler`. The only difference
+is in the free parameter, that is called `c`.
+
+Examples
+--------
+
+Mathematical Details
+--------------------
+Kernel methods like support vector machines or kernelized
+pca rely on a property of reproducing kernel Hilbert spaces.
+For any positive definite kernel function (so called Mercer kernel),
+it is guaranteed that there exists a mapping phi into a Hilber space,
+such that
+
+If an algorithm, such as a linear support vector machine or PCA,
+relies only on the scalar product of data points, one may use
+the value of k, which corresponds to applying the algorithm
+to the mapped data points.
+The advantage of using k is that the mapping phi never has
+to be calculated explicitly, allowing for arbitrary large
+features (even infinite).
+
+One drawback of kernel
+
+References
+----------
+
 
 Text feature extraction
 =======================
