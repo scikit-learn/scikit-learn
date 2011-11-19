@@ -243,6 +243,10 @@ class ForestRegressor(Forest, RegressorMixin):
 class RandomForestClassifier(ForestClassifier):
     """A random forest classifier.
 
+    A random forest is a meta estimator that fits a number of classifical
+    decision trees on various sub-samples of the dataset and use averaging
+    to improve the predictive accuracy and control over-fitting.
+
     Parameters
     ----------
     base_estimator : object, optional (default=None)
@@ -301,6 +305,10 @@ class RandomForestClassifier(ForestClassifier):
 
 class RandomForestRegressor(ForestRegressor):
     """A random forest regressor.
+
+    A random forest is a meta estimator that fits a number of classifical
+    decision trees on various sub-samples of the dataset and use averaging
+    to improve the predictive accuracy and control over-fitting.
 
     Parameters
     ----------
@@ -361,6 +369,11 @@ class RandomForestRegressor(ForestRegressor):
 class ExtraTreesClassifier(ForestClassifier):
     """An extra-trees classifier.
 
+    This class implements a meta estimator that fits a number of
+    randomized decision trees (a.k.a. extra-trees) on various sub-samples
+    of the dataset and use averaging to improve the predictive accuracy
+    and control over-fitting.
+
     Parameters
     ----------
     base_estimator : object, optional (default=None)
@@ -420,6 +433,11 @@ class ExtraTreesClassifier(ForestClassifier):
 
 class ExtraTreesRegressor(ForestRegressor):
     """An extra-trees regressor.
+
+    This class implements a meta estimator that fits a number of
+    randomized decision trees (a.k.a. extra-trees) on various sub-samples
+    of the dataset and use averaging to improve the predictive accuracy
+    and control over-fitting.
 
     Parameters
     ----------
