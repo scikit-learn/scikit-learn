@@ -25,9 +25,8 @@ from scipy.sparse import issparse
 
 from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize, LabelBinarizer
-from .utils import array2d, atleast2d_or_csr, safe_asarray
+from .utils import array2d, atleast2d_or_csr
 from .utils.extmath import safe_sparse_dot, logsum
-
 
 
 class BaseNB(BaseEstimator, ClassifierMixin):

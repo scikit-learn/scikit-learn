@@ -116,8 +116,8 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
         if not (tree.children[left_child, 0] == tree.children[left_child, 1] \
                 == Tree.LEAF):
             recurse(tree, left_child)
-        if not (tree.children[right_child, 0] == tree.children[right_child, 1] \
-                == Tree.LEAF):
+        if not (tree.children[right_child, 0] == \
+                tree.children[right_child, 1] == Tree.LEAF):
             recurse(tree, right_child)
 
     if out_file is None:

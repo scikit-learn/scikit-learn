@@ -61,7 +61,6 @@ def l1_cross_distances(X):
     return D, ij.astype(np.int)
 
 
-
 class GaussianProcess(BaseEstimator, RegressorMixin):
     """
     The Gaussian Process model class.

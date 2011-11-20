@@ -26,7 +26,8 @@ def _fast_logdet(A):
     It returns -Inf if det(A) is non positive or is not defined.
     """
     # XXX: Should be implemented as in numpy, using ATLAS
-    # http://projects.scipy.org/numpy/browser/trunk/numpy/linalg/linalg.py#L1559
+    # http://projects.scipy.org/numpy/browser/ \
+    #        trunk/numpy/linalg/linalg.py#L1559
     ld = np.sum(np.log(np.diag(A)))
     a = np.exp(ld / A.shape[0])
     d = np.linalg.det(A / a)
