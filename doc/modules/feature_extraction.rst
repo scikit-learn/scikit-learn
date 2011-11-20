@@ -102,6 +102,17 @@ or store training examples.
 
 References
 ----------
+* `"Random features for large-scale kernel machines"
+  <http://webmail.robots.ox.ac.uk/~vgg/rg/papers/randomfeatures.pdf>`_
+  Rahimi, A. and Recht, B. - Advances in neural information processing 2007,
+* `"Random Fourier approximations for skewed multiplicative histogram kernels"
+  <http://sminchisescu.ins.uni-bonn.de/papers/lis_dagm10.pdf>`_
+  Random Fourier approximations for skewed multiplicative histogram kernels
+  - Lecture Notes for Computer Sciencd (DAGM)
+* `"Efficient additive kernels via explicit feature maps"
+  <http://eprints.pascal-network.org/archive/00006964/01/vedaldi10.pdf>`_
+  Vedaldi, A. and Zisserman, A. - Computer Vision and Pattern Recognition 2010
+  
 
 
 Text feature extraction
