@@ -41,5 +41,3 @@ If you have installed the scikit-learn from source, please do not forget
 to build the package before using it: run `python setup.py install` or
 `make` in the source directory.
 %s""" % (e, local_dir, ''.join(dir_content).strip(), msg))
-
-

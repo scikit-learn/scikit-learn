@@ -23,6 +23,7 @@ import numpy as np
 
 from ..utils import check_random_state
 
+
 class Bunch(dict):
     """Container object for datasets: dictionary-like object that
        exposes its keys as attributes."""

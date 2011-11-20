@@ -254,7 +254,6 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
                     print 'Converged to similar centers at iteration', i
                 break
 
-
     if not copy_x:
         X += X_mean
     return best_centers + X_mean, best_labels, best_inertia
