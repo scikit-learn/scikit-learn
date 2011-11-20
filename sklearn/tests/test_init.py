@@ -15,6 +15,7 @@ try:
 except Exception, e:
     _top_import_error = e
 
+
 def test_import_skl():
     """Test either above import has failed for some reason
 

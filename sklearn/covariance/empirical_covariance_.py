@@ -95,7 +95,7 @@ class EmpiricalCovariance(BaseEstimator):
         Params
         ------
         covariance: 2D ndarray, shape (n_features, n_features)
-            Estimated covariance matrix to be stored, and from which precision 
+            Estimated covariance matrix to be stored, and from which precision
             is computed.
 
         """
@@ -148,8 +148,8 @@ class EmpiricalCovariance(BaseEstimator):
         Returns
         -------
         res: float
-            The likelihood of the data set with self.covariance_ as an estimator
-            of its covariance matrix.
+            The likelihood of the data set with self.covariance_ as an
+            estimator of its covariance matrix.
 
         """
         # compute empirical covariance of the test set
@@ -221,7 +221,8 @@ class EmpiricalCovariance(BaseEstimator):
         Parameters
         ----------
         observations: array-like, shape = [n_observations, n_features]
-            The observations, the Mahalanobis distances of the which we compute.
+            The observations, the Mahalanobis distances of the which we
+            compute.
 
         Returns
         -------

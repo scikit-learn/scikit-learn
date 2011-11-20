@@ -83,7 +83,7 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto', tol=1e-3):
     n_samples, n_features = X.shape
     is_sparse = False
 
-    if hasattr(X, 'todense'): # lazy import of scipy.sparse
+    if hasattr(X, 'todense'):  # lazy import of scipy.sparse
         from scipy import sparse
         is_sparse = sparse.issparse(X)
 
