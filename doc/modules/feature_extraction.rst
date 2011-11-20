@@ -51,6 +51,30 @@ similar to those produced by a kernel SVM. Note that "fitting" the feature
 function does not actually depend on the data given to the ``fit`` function.
 Only the dimensionality of the data is used.
 
+Additive Chi Squared Kernel
+-------------------------
+The chi squared kernel is a kernel on histograms, often used in computer vision.
+
+The chi squared kernel is given by
+.. math::
+        k(x, y) = \sum_i \frac{2x_iy_i}{x_i+y_i}
+
+Since the kernel is additive, it is possible to treat all components
+`x_i` separately for embedding. This makes it possible to sample
+the Fourier transform in regular intervals, instead of approximating
+using Monte Carlo sampling.
+
+The class :class:`AdditiveChi2Kernel` implements this component wise
+deterministic sampling. Each component is sampled `n` times, yielding
+`2n+1` dimensions per input dimension (the multiple of two stems
+from the real and complex part of the Fourier transform).
+In the literature, `n` is usually choosen to be `1` or `2`, transforming
+the dataset to size `n_samples x 5 * n_features` (in the case of `n=2`).
+
+The approximate feature map provided by :class:`AdditiveChi2Sampler` can be combined
+with the approimate feature map provided by :class:`RBFSampler` to yield an approximate
+feature map for the exponentiated chi squared kernel.
+See the referenced for details.
 
 Skewed Chi Squared Kernel
 -------------------------
@@ -115,6 +139,9 @@ References
 * `"Efficient additive kernels via explicit feature maps"
   <http://eprints.pascal-network.org/archive/00006964/01/vedaldi10.pdf>`_
   Vedaldi, A. and Zisserman, A. - Computer Vision and Pattern Recognition 2010
+* `"Generalized RBF feature maps for Efficient Detection"
+  <http://eprints.pascal-network.org/archive/00007024/01/inproceedings.pdf.8a865c2a5421e40d.537265656b616e7468313047656e6572616c697a65642e706466.pdf>`_
+  Vempati, S. and Vedaldi, A. and Zisserman, A. and Jawahar, CV - 2010
   
 
 
