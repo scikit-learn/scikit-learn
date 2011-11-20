@@ -40,8 +40,8 @@ Some advantages of decision trees are:
 
     - Uses a white box model. If a given situation is observable in a model,
       the explanation for the condition is easily explained by boolean logic.
-      By constrast, an example of a black box model is an artificial neural
-      network: results are difficult to understand.
+      By constrast, in a black box model (e.g., in an artificial neural
+      network), results may be more difficult to interpret.
 
     - Possible to validate a model using statistical tests. That makes it
       possible to account for the reliability of the model.

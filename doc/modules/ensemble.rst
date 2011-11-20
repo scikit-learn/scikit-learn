@@ -7,8 +7,8 @@ Ensemble methods
 .. currentmodule:: sklearn.ensemble
 
 The goal of **ensemble methods** is to combine the predictions of several
-models built with a given learning algorithm in order to improve with respect
-to the use of a single model.
+models built with a given learning algorithm in order to improve
+generalizability / robustness over a single model.
 
 Two families of ensemble methods are usually distinguished:
 
@@ -89,17 +89,18 @@ slightly greater increase in bias::
     >>> scores.mean() > 0.999
     True
 
-The main parameters to adjust when using these methods is ``n_estimators``
-and ``max_features``. The former is the number of trees in the
-forest. The  larger the better, but also the longer it will take to
-compute. The latter is the size of the random subsets of features to
-consider when splitting a node. The lower the greater the reduction of
-variance, but also the greater the increase in bias. Empiricial good
-default values are ``max_features=n_features`` in random forests, and
-``max_features=sqrt(n_features)`` in extra-trees (where ``n_features``
-is the number of features in the data). The best results are also
-usually reached when setting ``max_depth=None`` in combination with
-``min_split=1`` (i.e., when fully developping the trees).
+The main parameters to adjust when using these methods is ``n_estimators`` and
+``max_features``. The former is the number of trees in the forest. The larger
+the better, but also the longer it will take to compute. In addition, note that
+results will stop getting significantly better beyond a critical number of
+trees. The latter is the size of the random subsets of features to consider when
+splitting a node. The lower the greater the reduction of variance, but also the
+greater the increase in bias. Empiricial good default values are
+``max_features=n_features`` in random forests, and
+``max_features=sqrt(n_features)`` in extra-trees (where ``n_features`` is the
+number of features in the data). The best results are also usually reached when
+setting ``max_depth=None`` in combination with ``min_split=1`` (i.e., when fully
+developping the trees).
 
 Finally, note that bootstrap samples are used by default in random forests
 (``bootstrap=True``) while the default strategy is to use the original
