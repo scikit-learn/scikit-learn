@@ -100,11 +100,9 @@ greater the increase in bias. Empiricial good default values are
 ``max_features=sqrt(n_features)`` in extra-trees (where ``n_features`` is the
 number of features in the data). The best results are also usually reached when
 setting ``max_depth=None`` in combination with ``min_split=1`` (i.e., when fully
-developping the trees).
-
-Finally, note that bootstrap samples are used by default in random forests
-(``bootstrap=True``) while the default strategy is to use the original
-datasets for building extra-trees (``bootstrap=False``).
+developping the trees). Finally, note that bootstrap samples are used by default
+in random forests (``bootstrap=True``) while the default strategy is to use the
+original dataset for building extra-trees (``bootstrap=False``).
 
 .. topic:: Examples:
 
