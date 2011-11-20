@@ -139,3 +139,69 @@ class SkewedChi2Sampler(FourierSampler):
         projection = np.dot(np.log(X + self.c), self.omega_)
         return (np.sqrt(2.) / np.sqrt(self.n_components)
                 * np.cos(projection + self.b))
+
+class AdditiveChi2Sampler(FourierSampler):
+    """Approximate feature map for additive chi^2 kernel.
+    uses sampling the fourier transform of the kernel characteristic
+    at regular intervals L.
+
+    Since the kernel that is to be approximated is additive, the
+    components of the input vectors can be treated separately.
+    Each entry in the original space is transformed into 2n+1
+    features, where n is a parameter of the method.
+    Usually, n is 1, 2 or 3.
+
+    Optimal choices for the sampling interval L for certain
+    data ranges can be computed (see the reference).
+    The default values should be reasonable.
+
+    Parameters
+    ----------
+    n: int,     one of 1, 2 or 3. Gives the number of (complex) sampling points.
+    L: float,   sampling interval
+
+    Reference
+    ---------
+    `"Efficient additive kernels via explicit feature maps"
+    <http://eprints.pascal-network.org/archive/00006964/01/vedaldi10.pdf>`_
+    Vedaldi, A. and Zisserman, A. - Computer Vision and Pattern Recognition 2010"""
+    def __init__(self, n, L=None):
+        self.n = n
+        if L == None:
+            # See reference, figure 2 c)
+            if n == 1:
+                L = 0.8
+            elif n == 2:
+                L = 0.5
+            elif n == 3:
+                L = 0.4
+            else:
+                raise ValueError("If n is not in [1, 2, 3], you need"
+                    "to provide L")
+        self.L = L
+
+    def fit(self, X, y=None):
+        """Does nothing. Provided only for compatablity with pipelining"""
+        pass
+
+    def transform(self, X, y=None):
+        """Apply approximate feature map to X.
+
+        Parameters
+        ----------
+        X array-like, shape (n_samples, n_features)
+
+        Returns
+        -------
+        X_new array-like, shape (n_samples, n_features * (2n + 1))
+        """
+        X_new = []
+        # zeroth component
+        # 1/cosh = sech
+        X_new.append(np.sqrt(X * self.L / np.cosh(0)))
+
+        for j in xrange(1,self.n):
+            factor = np.sqrt(2 * X * self.L / np.cosh(np.pi * j * self.L))
+            X_new.append(factor * np.cos(j * self.L * np.log(X)))
+            X_new.append(factor * np.sin(j * self.L * np.log(X)))
+        return np.hstack(X_new)
