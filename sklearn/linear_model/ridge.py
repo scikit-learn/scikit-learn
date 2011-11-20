@@ -13,6 +13,7 @@ from ..utils import safe_asarray
 from ..preprocessing import LabelBinarizer
 from ..grid_search import GridSearchCV
 
+
 def _solve(A, b, solver, tol):
     # helper method for ridge_regression, A is symmetric positive
 
@@ -333,8 +334,8 @@ class _RidgeGCV(LinearModel):
     http://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf
     """
 
-    def __init__(self, alphas=[0.1, 1.0, 10.0], fit_intercept=True, normalize=False,
-            score_func=None, loss_func=None, copy_X=True):
+    def __init__(self, alphas=[0.1, 1.0, 10.0], fit_intercept=True,
+            normalize=False, score_func=None, loss_func=None, copy_X=True):
         self.alphas = np.asarray(alphas)
         self.fit_intercept = fit_intercept
         self.normalize = normalize
