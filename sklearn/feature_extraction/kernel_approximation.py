@@ -140,6 +140,7 @@ class SkewedChi2Sampler(FourierSampler):
         return (np.sqrt(2.) / np.sqrt(self.n_components)
                 * np.cos(projection + self.b))
 
+
 class AdditiveChi2Sampler(FourierSampler):
     """Approximate feature map for additive chi^2 kernel.
     uses sampling the fourier transform of the kernel characteristic
@@ -157,14 +158,16 @@ class AdditiveChi2Sampler(FourierSampler):
 
     Parameters
     ----------
-    n: int,     one of 1, 2 or 3. Gives the number of (complex) sampling points.
+    n: int,     one of 1, 2 or 3.
+                Gives the number of (complex) sampling points.
     L: float,   sampling interval
 
     Reference
     ---------
     `"Efficient additive kernels via explicit feature maps"
     <http://eprints.pascal-network.org/archive/00006964/01/vedaldi10.pdf>`_
-    Vedaldi, A. and Zisserman, A. - Computer Vision and Pattern Recognition 2010"""
+    Vedaldi, A. and Zisserman, A.
+    - Computer Vision and Pattern Recognition 2010"""
     def __init__(self, n, L=None):
         self.n = n
         if L == None:
@@ -200,7 +203,7 @@ class AdditiveChi2Sampler(FourierSampler):
         # 1/cosh = sech
         X_new.append(np.sqrt(X * self.L / np.cosh(0)))
 
-        for j in xrange(1,self.n):
+        for j in xrange(1, self.n):
             factor = np.sqrt(2 * X * self.L / np.cosh(np.pi * j * self.L))
             X_new.append(factor * np.cos(j * self.L * np.log(X)))
             X_new.append(factor * np.sin(j * self.L * np.log(X)))
