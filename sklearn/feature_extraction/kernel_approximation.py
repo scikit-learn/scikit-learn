@@ -168,7 +168,7 @@ class AdditiveChi2Sampler(FourierSampler):
     <http://eprints.pascal-network.org/archive/00006964/01/vedaldi10.pdf>`_
     Vedaldi, A. and Zisserman, A.
     - Computer Vision and Pattern Recognition 2010"""
-    def __init__(self, n, L=None):
+    def __init__(self, n=2, L=None):
         self.n = n
         if L == None:
             # See reference, figure 2 c)
