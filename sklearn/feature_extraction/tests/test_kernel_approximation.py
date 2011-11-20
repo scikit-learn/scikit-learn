@@ -1,7 +1,8 @@
 import numpy as np
 from scipy.spatial.distance import cdist
 
-from kernel_approximation import RBFSampler, SkewedChi2Sampler
+#from ..kernel_approximation import RBFSampler, SkewedChi2Sampler, AdditiveChi2Sampler
+from sklearn.feature_extraction.kernel_approximation import RBFSampler, SkewedChi2Sampler, AdditiveChi2Sampler
 
 # generate data
 X = np.random.uniform(size=(300, 50))
@@ -9,6 +10,28 @@ Y = np.random.uniform(size=(300, 50))
 X /= X.sum(axis=1)[:, np.newaxis]
 Y /= Y.sum(axis=1)[:, np.newaxis]
 
+def test_additive_chi2_sampler():
+    """test that AdditiveChi2Sampler approximates kernel on random data"""
+
+    # compute exact kernel
+    # appreviations for easier formular
+    X_ = X[:, np.newaxis, :]
+    Y_ = Y[np.newaxis, :, :]
+
+    large_kernel = 2 * X_ * Y_ / (X_ + Y_)
+
+    # reduce to n_samples_x x n_samples_y by summing over features
+    kernel = (large_kernel.sum(axis=2))
+
+    # appoximate kernel mapping
+    transform = AdditiveChi2Sampler(n=3)
+    #X_trans = transform.fit_transform(X)
+    X_trans = transform.transform(X)
+    Y_trans = transform.transform(Y)
+    kernel_approx = np.dot(X_trans, Y_trans.T)
+
+    assert np.mean(np.abs(kernel - kernel_approx)) < 0.03
+    assert np.max(np.abs(kernel - kernel_approx)) < 0.12
 
 def test_skewed_chi2_sampler():
     """test that RBFSampler approximates kernel on random data"""
@@ -27,7 +50,7 @@ def test_skewed_chi2_sampler():
     kernel = np.exp(log_kernel.sum(axis=2))
 
     # appoximate kernel mapping
-    transform = SkewedChi2Sampler(c=c, D=1000)
+    transform = SkewedChi2Sampler(c=c, n_components=1000)
     X_trans = transform.fit_transform(X)
     Y_trans = transform.transform(Y)
     kernel_approx = np.dot(X_trans, Y_trans.T)
@@ -44,7 +67,7 @@ def test_rbf_sampler():
     kernel = np.exp(-gamma * dists ** 2)
 
     # appoximate kernel mapping
-    rbf_transform = RBFSampler(gamma=gamma, D=1000)
+    rbf_transform = RBFSampler(gamma=gamma, n_components=1000)
     X_trans = rbf_transform.fit_transform(X)
     Y_trans = rbf_transform.transform(Y)
     kernel_approx = np.dot(X_trans, Y_trans.T)
@@ -54,5 +77,6 @@ def test_rbf_sampler():
 
 
 if __name__ == "__main__":
+    test_additive_chi2_sampler()
     test_skewed_chi2_sampler()
     test_rbf_sampler()
