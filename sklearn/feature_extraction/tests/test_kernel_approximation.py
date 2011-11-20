@@ -1,14 +1,16 @@
 import numpy as np
 from scipy.spatial.distance import cdist
 
-#from ..kernel_approximation import RBFSampler, SkewedChi2Sampler, AdditiveChi2Sampler
-from sklearn.feature_extraction.kernel_approximation import RBFSampler, SkewedChi2Sampler, AdditiveChi2Sampler
+from ..kernel_approximation import RBFSampler
+from ..kernel_approximation import AdditiveChi2Sampler
+from ..kernel_approximation import SkewedChi2Sampler
 
 # generate data
 X = np.random.uniform(size=(300, 50))
 Y = np.random.uniform(size=(300, 50))
 X /= X.sum(axis=1)[:, np.newaxis]
 Y /= Y.sum(axis=1)[:, np.newaxis]
+
 
 def test_additive_chi2_sampler():
     """test that AdditiveChi2Sampler approximates kernel on random data"""
@@ -32,6 +34,7 @@ def test_additive_chi2_sampler():
 
     assert np.mean(np.abs(kernel - kernel_approx)) < 0.03
     assert np.max(np.abs(kernel - kernel_approx)) < 0.12
+
 
 def test_skewed_chi2_sampler():
     """test that RBFSampler approximates kernel on random data"""
