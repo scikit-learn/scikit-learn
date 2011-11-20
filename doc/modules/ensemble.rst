@@ -34,7 +34,7 @@ Forests of randomized trees
 The ``sklearn.ensemble`` module includes two averaging algorithms based on
 randomized :ref:`decision trees <tree>`: the RandomForest algorithm and the
 Extra-Trees method. Both algorithms are perturb-and-combine techniques
-specifically designed for trees.
+specifically designed for trees::
 
     >>> from sklearn.ensemble import RandomForestClassifier
     >>> X = [[0, 0], [1, 1]]
@@ -60,39 +60,50 @@ features is used, but instead of looking for the most discriminative thresholds,
 thresholds are drawn at random for each candidate feature and the best of these
 randomly-generated thresholds is picked as the splitting rule. This usually
 allows to reduce the variance of the model a bit more, at the expense of a
-slightly greater increase in bias.
+slightly greater increase in bias::
 
     >>> from sklearn.cross_validation import cross_val_score
     >>> from sklearn.datasets import make_blobs
     >>> from sklearn.ensemble import RandomForestClassifier
     >>> from sklearn.ensemble import ExtraTreesClassifier
     >>> from sklearn.tree import DecisionTreeClassifier
-    >>> X, y = make_blobs(n_samples=10000, n_features=10, centers=100)
-    >>> clf = DecisionTreeClassifier(max_depth=None, min_split=1)
-    >>> scores = cross_val_score(clf, X, y)
-    >>> scores.mean()
-    0.97609967955403809
-    >>> clf = RandomForestClassifier(n_estimators=10, max_depth=None, min_split=1)
-    >>> scores = cross_val_score(clf, X, y)
-    >>> scores.mean()
-    0.99510028987301846
-    >>> clf = ExtraTreesClassifier(n_estimators=10, max_depth=None, min_split=1)
-    >>> scores = cross_val_score(clf, X, y)
-    >>> scores.mean()
-    1.0
 
-The main parameters to adjust when using these methods is ``n_estimators`` and
-``max_features``. The former is the number of trees in the forest. The  larger
-the better, but also the longer it will take to compute. The latter is the size
-of the random subsets of features to consider when splitting a node. The lower
-the greater the reduction of variance, but also the greater the increase in
-bias. Empiricial good default values are ``max_features=M`` in random forests,
-and ``max_features=sqrt(M)`` in extra-trees (where ``M`` is the number of
-features in the data). The best results are also usually reached when setting
-``max_depth=None`` in combination with ``min_split=1`` (i.e., when fully
-developping the trees). Finally, note that bootstrap samples are used by default
-in random forests (``bootstrap=True``) while the default strategy is to use the
-original datasets for building extra-trees (``bootstrap=False``).
+    >>> X, y = make_blobs(n_samples=10000, n_features=10, centers=100,
+    ...     random_state=0)
+
+    >>> clf = DecisionTreeClassifier(max_depth=None, min_split=1,
+    ...     random_state=0)
+    >>> scores = cross_val_score(clf, X, y)
+    >>> scores.mean()                             # doctest: +ELLIPSIS
+    0.978...
+
+    >>> clf = RandomForestClassifier(n_estimators=10, max_depth=None,
+    ...     min_split=1, random_state=0)
+    >>> scores = cross_val_score(clf, X, y)
+    >>> scores.mean()                             # doctest: +ELLIPSIS
+    0.992...
+
+    >>> clf = ExtraTreesClassifier(n_estimators=10, max_depth=None,
+    ...     min_split=1, random_state=0)
+    >>> scores = cross_val_score(clf, X, y)
+    >>> scores.mean() > 0.999
+    True
+
+The main parameters to adjust when using these methods is ``n_estimators``
+and ``max_features``. The former is the number of trees in the
+forest. The  larger the better, but also the longer it will take to
+compute. The latter is the size of the random subsets of features to
+consider when splitting a node. The lower the greater the reduction of
+variance, but also the greater the increase in bias. Empiricial good
+default values are ``max_features=n_features`` in random forests, and
+``max_features=sqrt(n_features)`` in extra-trees (where ``n_features``
+is the number of features in the data). The best results are also
+usually reached when setting ``max_depth=None`` in combination with
+``min_split=1`` (i.e., when fully developping the trees).
+
+Finally, note that bootstrap samples are used by default in random forests
+(``bootstrap=True``) while the default strategy is to use the original
+datasets for building extra-trees (``bootstrap=False``).
 
 .. topic:: Examples:
 
