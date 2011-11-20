@@ -250,6 +250,7 @@ Kernel Appoximation
    :toctree: generated/
    :template: class.rst
    feature_extraction.kernel_approximation.RBFSampler
+   feature_extraction.kernel_approximation.AdditiveChi2Sampler
    feature_extraction.kernel_approximation.SkewedChi2Sampler
 
 From images
