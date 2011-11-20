@@ -55,6 +55,9 @@ Only the dimensionality of the data is used.
 Skewed Chi Squared Kernel
 -------------------------
 The skewed chi squared kernel is given by:
+.. math::
+        k(x,y) = \prod_i \frac{2\sqrt{x_i+c}\sqrt{y_i+c}}{x_i + y_i + 2c}
+
 
 It has properties that are similar to the exponentiated chi squared kernel
 often used in computer vision, but allows for a simple Monte Carlo
