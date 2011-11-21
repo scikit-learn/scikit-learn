@@ -19,14 +19,14 @@ The module structure is the following:
 - The ``RandomForestClassifier`` and ``RandomForestRegressor`` derived
   classes provide the user with concrete implementations of
   the forest ensemble method using classical, deterministic
-  ``DecisionTreeClassifier`` and ``DecisionTreeRegressor`` as default
-  sub-estimator implementation.
+  ``DecisionTreeClassifier`` and ``DecisionTreeRegressor`` as
+  sub-estimator implementations.
 
 - The ``ExtraTreesClassifier`` and ``ExtraTreesRegressor`` derived
   classes provide the user with concrete implementations of the
   forest ensemble method using the extremly randomized trees
-  ``ExtraTreeClassifier`` and ``ExtraTreeRegressor`` as default
-  sub-estimator implementation.
+  ``ExtraTreeClassifier`` and ``ExtraTreeRegressor`` as
+  sub-estimator implementations.
 
 """
 
