@@ -43,7 +43,7 @@ X[:, 1] *= .5
 # Compute clustering
 print "Compute unstructured hierarchical clustering..."
 st = time.time()
-hc = HierarchicalClustering(n_clusters=6).fit(X)
+hc = HierarchicalClustering(n_clusters=6, linkage_criterion="ward").fit(X)
 label = hc.labels_
 print "Elapsed time: ", time.time() - st
 print "Number of points: ", label.size
@@ -68,7 +68,8 @@ connectivity = kneighbors_graph(X, n_neighbors=10)
 # Compute clustering
 print "Compute structured hierarchical clustering..."
 st = time.time()
-hc = HierarchicalClustering(n_clusters=6, connectivity=connectivity).fit(X)
+hc = HierarchicalClustering(n_clusters=6, connectivity=connectivity,
+                            linkage_criterion="ward").fit(X)
 label = hc.labels_
 print "Elapsed time: ", time.time() - st
 print "Number of points: ", label.size
