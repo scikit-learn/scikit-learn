@@ -12,10 +12,10 @@ the target value is expected to be a linear combination of the input
 variables. In mathematical notion, if :math:`\hat{y}` is the predicted
 value.
 
-.. math::    \hat{y}(w, x) = w_0 + w_1 x_1 + ... + w_n x_n
+.. math::    \hat{y}(w, x) = w_0 + w_1 x_1 + ... + w_p x_p
 
 Across the module, we designate the vector :math:`w = (w_1,
-..., w_n)` as ``coef_`` and :math:`w_0` as ``intercept_``.
+..., w_p)` as ``coef_`` and :math:`w_0` as ``intercept_``.
 
 To perform classification with generalized linear models, see
 :ref:`Logistic_regression`.
@@ -27,7 +27,7 @@ Ordinary Least Squares
 =======================
 
 :class:`LinearRegression` fits a linear model with coefficients
-:math:`w = (w_1, ..., w_n)` to minimize the residual sum
+:math:`w = (w_1, ..., w_p)` to minimize the residual sum
 of squares between the observed responses in the dataset, and the
 responses predicted by the linear approximation. Mathematically it
 solves a problem of the form:
@@ -68,7 +68,7 @@ Ordinary Least Squares Complexity
 ---------------------------------
 
 This method computes the least squares solution using a singular value
-decomposition of X. If X is a matrix of size (n, p ) this method has a
+decomposition of X. If X is a matrix of size (n, p) this method has a
 cost of :math:`O(n p^2)`, assuming that :math:`n \geq p`.
 
 
