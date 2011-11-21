@@ -123,7 +123,11 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto', tol=1e-3):
 
 class Ridge(LinearModel):
     """
-    Ridge regression.
+    Linear least squares with l2 regularization.
+
+    This model solves a regression model where the loss function is
+    the linear least squares function and regularization is given by
+    the l2-norm. Also known as Ridge Regression or Tikhonov regularization.
 
     Parameters
     ----------
@@ -152,6 +156,10 @@ class Ridge(LinearModel):
 
     coef_: array, shape = [n_features] or [n_responses, n_features]
         Weight vector(s).
+
+    See also
+    --------
+    RidgeClassifier, RidgeCV
 
     Examples
     --------
@@ -239,6 +247,10 @@ class RidgeClassifier(Ridge):
 
     coef_: array, shape = [n_features] or [n_classes, n_features]
         Weight vector(s).
+
+    See also
+    --------
+    Ridge, RidgeClassifierCV
 
     Note
     ----
@@ -471,7 +483,7 @@ class RidgeCV(LinearModel):
 
     See also
     --------
-    Ridge
+    Ridge, RidgeClassifierCV
     """
 
     def __init__(self, alphas=np.array([0.1, 1.0, 10.0]), fit_intercept=True,
@@ -569,5 +581,16 @@ class RidgeClassifierCV(RidgeCV):
         return RidgeCV.predict(self, X)
 
     def predict(self, X):
+        """
+        Predict target values according to the fitted model.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        C : array, shape = [n_samples]
+        """
         Y = self.decision_function(X)
         return self.label_binarizer.inverse_transform(Y)
