@@ -14,6 +14,7 @@ import itertools
 from heapq import heapify, heappop, heappush
 
 import numpy as np
+from scipy.spatial.distance import pdist, squareform
 
 from . import _inertia
 
@@ -331,15 +332,28 @@ class CompleteLinkage(Linkage):
         connectivity matrix. Defines for each sample the neighboring samples
         following a given structure of the data. The matrix is assumed to
         be symmetric and only the upper triangular half is used.
+            
+    base_distance : function or str
+        A metric string that is understood by scipy.spatial.distance.pdist
+        or a binary function that returns for two datapoints their distance.
+        Defaults to "euclidean".
         
-    cache_distances : bool
-        If True, the distance between two datapoints is computed only once
-        and then stored in a cache. This may speed up computations but may 
-        require memory that grow quadratically with the number of samples
-    
-    base_distance : function
-        A function that returns for two datapoints their distance. Defaults
-        to the euclidean distance.
+        Note: it is typically much faster to pass a string than a function
+              when using precompute_distances.
+              
+    distance_matrix: array of shape (n_samples, n_samples) or None
+        A matrix which stores at index (i,j) the distance between X[i,:] and
+        X[j,:]. If this matrix is given, the passed base_distance is ignored.
+        Defaults to None.
+              
+    precompute_distances : bool
+        If True, the distance between two datapoints are computed all initially
+        and then stored in distance_matrix. This is typically faster then
+        computing distances only when required but may require memory that 
+        grows quadratically with the number of samples. Defaults to True.
+        
+        Note: this parameter is ignored if a non-None distance_matrix is 
+              passed.
 
     Methods
     -------
@@ -376,43 +390,54 @@ class CompleteLinkage(Linkage):
        Mapping cluster index to indices of all data points
        that belong to the cluster
        
+    distance_matrix: array of shape (n_samples, n_samples) or None
+        A matrix which stores at index (i,j) the distance between X[i,:] and
+        X[j,:]. 
+               
     distance_dict: dict of (int, int) -> float
        Mapping from indices of two clusters to their distance
     """
 
-    def __init__(self, X, connectivity, cache_distances=False,
-                 base_distance=lambda x, y: np.linalg.norm(x - y), *args):
+    def __init__(self, X, connectivity, base_distance="euclidean",
+                 distance_matrix=None, precompute_distances=True,
+                 *args):
         super(CompleteLinkage, self).__init__(X)
-
-        if cache_distances:
-            self.cache = {}
-            
-            def base_distance_cached(i, j):
-                if not (i, j) in self.cache:
-                    self.cache[(i, j)] = base_distance(self.X[i, :],
-                                                       self.X[j, :])
-                    self.cache[(j, i)] = self.cache[(i, j)]
-                return self.cache[(i, j)]
-            self.base_distance = base_distance_cached
+        
+        # Set up distance matrix or base distance function
+        if distance_matrix is not None:
+            assert X.shape[0] == distance_matrix.shape[0] \
+                    and X.shape[0] == distance_matrix.shape[1], \
+                "distance_matrix must be a square matrix of size "\
+                "n_samples x n_samples."
+            self.distance_matrix = distance_matrix
+        elif precompute_distances:
+            self.distance_matrix = squareform(pdist(X, base_distance))
         else:
-            def base_distance_indices(i, j):
-                return base_distance(self.X[i, :], self.X[j, :])
-            self.base_distance = base_distance_indices
+            self.distance_matrix = None
+            if isinstance(base_distance, basestring):               
+                self.base_distance = lambda i, j: pdist(X[[i, j], :],
+                                                        base_distance)
+            else:
+                assert isinstance(base_distance, type(lambda : None)), \
+                   "base_distance must be either a string that is understood "\
+                   "by pdist or a binary function that returns the distance "\
+                   "of two points."
+                    
+                self.base_distance = lambda i, j: base_distance(self.X[i, :],
+                                                                self.X[j, :])
             
         # Distances between two clusters, represented by their 
         # root node indices 
         self.distance_dict = {}  
-        # Determine distances between all connected nodes 
+        
+        # Determine distances between all connected nodes and create matrix A  
         for ind1, row in enumerate(connectivity.rows):
             self.A.append(row)
             for ind2 in row:
-                if ind1 == ind2: 
+                if ind1 == ind2:
                     continue
-                # Compute distance between two connected nodes
-                dist = self.base_distance(ind1, ind2)
+                dist = self.get_cluster_distance(ind1, ind2)
                 self.distances.append((dist, ind1, ind2))
-                self.distance_dict[(ind1, ind2)] = dist
-                self.distance_dict[(ind2, ind1)] = dist
                 
         # Enforce symmetry of A
         for ind1, row in enumerate(connectivity.rows):
@@ -469,11 +494,9 @@ class CompleteLinkage(Linkage):
         
         # Determine for all connected clusters the distance to the newly formed
         # cluster
-        # TODO: We could remember minimal distance and avoid brute force search 
-        #       when we are larger anyway
         for connected_cluster in coord_col:
             if connected_cluster in [child_node1, child_node2]:
-                continue
+                continue           
             # The distance of the connected cluster to the the newly formed 
             # parent cluster is the maximum of the distances of the connected
             # cluster to the two child clusters
@@ -490,32 +513,31 @@ class CompleteLinkage(Linkage):
                      (max_dist, parent_node, connected_cluster))
             
             # Clean up
-            self.distance_dict.pop((connected_cluster, child_node1))
-            self.distance_dict.pop((connected_cluster, child_node2))
-            self.distance_dict.pop((child_node1, connected_cluster))
-            self.distance_dict.pop((child_node2, connected_cluster))
+            self.distance_dict.pop((connected_cluster, child_node1), None)
+            self.distance_dict.pop((connected_cluster, child_node2), None)
+            self.distance_dict.pop((child_node1, connected_cluster), None)
+            self.distance_dict.pop((child_node2, connected_cluster), None)
                 
     def get_cluster_distance(self, i, j):
         """ Returns the distance of the clusters with indices *i* and *j*."""
+        if i < self.X.shape[0] and j < self.X.shape[0]:
+            # Trivial clusters consisting each of 1 datapoint -> return 
+            # distance of datapoints
+            if self.distance_matrix is not None:
+                return self.distance_matrix[i, j]
+            else:
+                return self.base_distance(i, j)
         if not (i, j) in self.distance_dict:
-            # Compute distance between two cluster only when required and then
-            # via brute force computation
-            self.distance_dict[(i, j)] = self.distance_dict[(j, i)] = \
-                                self._brute_force_cluster_distance(i, j)
+            # Distance of clusters not known -> compute it
+            if self.distance_matrix is not None:
+                dist = \
+                  np.max(self.distance_matrix[self.get_nodes_of_cluster(i), :]
+                                             [:, self.get_nodes_of_cluster(j)])
+            else:
+                dist = max(self.base_distance(k, l)
+                                for k in self.get_nodes_of_cluster(i)
+                                    for l in self.get_nodes_of_cluster(j))
+            self.distance_dict[(i, j)] = dist 
+            self.distance_dict[(j, i)] = dist
+            
         return self.distance_dict[(i, j)]
-    
-    def _brute_force_cluster_distance(self, i, j):
-        """ Compute distance of clusters *i* and *j*.
-        
-        Using brute force computation (i.e. the maximum distance of any
-        pair of nodes in *i* and *j*) to compute the distance between *i* and
-        *j*.
-        """
-        # Find the distance between pair of nodes that are most distant 
-        # in clusters rooted at connected_cluster and parent_node.
-        max_dist = 0.0
-        # Do a brute force search
-        for node1 in self.get_nodes_of_cluster(i):
-            for node2 in self.get_nodes_of_cluster(j):
-                max_dist = max(max_dist, self.base_distance(node1, node2))
-        return max_dist
