@@ -220,7 +220,7 @@ class WardsLinkage(Linkage):
        with index i.       
     """
     
-    def __init__(self, X, connectivity):
+    def __init__(self, X, connectivity, *args, **kwargs):
         super(WardsLinkage, self).__init__(X)
         
         n_samples, n_features = X.shape
@@ -333,7 +333,7 @@ class CompleteLinkage(Linkage):
         following a given structure of the data. The matrix is assumed to
         be symmetric and only the upper triangular half is used.
             
-    base_distance : function or str
+    metric : function or str
         A metric string that is understood by scipy.spatial.distance.pdist
         or a binary function that returns for two datapoints their distance.
         Defaults to "euclidean".
@@ -343,7 +343,7 @@ class CompleteLinkage(Linkage):
               
     distance_matrix: array of shape (n_samples, n_samples) or None
         A matrix which stores at index (i,j) the distance between X[i,:] and
-        X[j,:]. If this matrix is given, the passed base_distance is ignored.
+        X[j,:]. If this matrix is given, the passed metric is ignored.
         Defaults to None.
               
     precompute_distances : bool
@@ -398,9 +398,9 @@ class CompleteLinkage(Linkage):
        Mapping from indices of two clusters to their distance
     """
 
-    def __init__(self, X, connectivity, base_distance="euclidean",
+    def __init__(self, X, connectivity, metric="euclidean",
                  distance_matrix=None, precompute_distances=True,
-                 *args):
+                 *args, **kwargs):
         super(CompleteLinkage, self).__init__(X)
         
         # Set up distance matrix or base distance function
@@ -411,20 +411,18 @@ class CompleteLinkage(Linkage):
                 "n_samples x n_samples."
             self.distance_matrix = distance_matrix
         elif precompute_distances:
-            self.distance_matrix = squareform(pdist(X, base_distance))
+            self.distance_matrix = squareform(pdist(X, metric))
         else:
             self.distance_matrix = None
-            if isinstance(base_distance, basestring):               
-                self.base_distance = lambda i, j: pdist(X[[i, j], :],
-                                                        base_distance)
+            if isinstance(metric, basestring):               
+                self.metric = lambda i, j: pdist(X[[i, j], :], metric)
             else:
-                assert isinstance(base_distance, type(lambda : None)), \
-                   "base_distance must be either a string that is understood "\
+                assert isinstance(metric, type(lambda : None)), \
+                   "metric must be either a string that is understood "\
                    "by pdist or a binary function that returns the distance "\
                    "of two points."
                     
-                self.base_distance = lambda i, j: base_distance(self.X[i, :],
-                                                                self.X[j, :])
+                self.metric = lambda i, j: metric(self.X[i, :], self.X[j, :])
             
         # Distances between two clusters, represented by their 
         # root node indices 
@@ -526,7 +524,7 @@ class CompleteLinkage(Linkage):
             if self.distance_matrix is not None:
                 return self.distance_matrix[i, j]
             else:
-                return self.base_distance(i, j)
+                return self.metric(i, j)
         if not (i, j) in self.distance_dict:
             # Distance of clusters not known -> compute it
             if self.distance_matrix is not None:
@@ -534,7 +532,7 @@ class CompleteLinkage(Linkage):
                   np.max(self.distance_matrix[self.get_nodes_of_cluster(i), :]
                                              [:, self.get_nodes_of_cluster(j)])
             else:
-                dist = max(self.base_distance(k, l)
+                dist = max(self.metric(k, l)
                                 for k in self.get_nodes_of_cluster(i)
                                     for l in self.get_nodes_of_cluster(j))
             self.distance_dict[(i, j)] = dist 

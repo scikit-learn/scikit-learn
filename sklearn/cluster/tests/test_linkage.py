@@ -24,15 +24,15 @@ def ward_distance(cluster1, cluster2):
                         (1.0 / cluster1.shape[0] + 1.0 / cluster2.shape[0])
     return dist
     
-def complete_linkage_distance(cluster1, cluster2, base_distance):
+def complete_linkage_distance(cluster1, cluster2, metric):
     """ Compute complete linkage distance based on brute force search. """
-    if base_distance == "euclidean":
-        base_distance = lambda x, y: np.linalg.norm(x - y)
+    if metric == "euclidean":
+        metric = lambda x, y: np.linalg.norm(x - y)
     nodes = np.vstack((cluster1, cluster2))
     dist = 0.0
     for i in range(nodes.shape[0]):
         for j in range(i + 1, nodes.shape[0]):
-            dist = max(dist, base_distance(nodes[i,:], nodes[j,:]))
+            dist = max(dist, metric(nodes[i,:], nodes[j,:]))
     return dist
     
 def test_wards_linkage():
@@ -72,7 +72,7 @@ def test_wards_linkage():
         k += 1
         
 
-def test_complete_linkage(base_distance="euclidean"):
+def test_complete_linkage(metric="euclidean"):
     """
     Check that complete linkage computes distance of two clusterings correctly.
     """
@@ -85,7 +85,7 @@ def test_complete_linkage(base_distance="euclidean"):
     connectivity = kneighbors_graph(X, n_neighbors=5).tolil()
     complete_linkage = CompleteLinkage(X, connectivity, 
                                        precompute_distances=True,
-                                       base_distance=base_distance)
+                                       metric=metric)
     parent = np.arange(n_nodes, dtype=np.int)
     children = []
     open_nodes = np.ones(n_nodes, dtype=bool)
@@ -99,7 +99,7 @@ def test_complete_linkage(base_distance="euclidean"):
         cluster1 = X[complete_linkage.get_nodes_of_cluster(i), :]
         cluster2 = X[complete_linkage.get_nodes_of_cluster(j), :]
         true_dist = complete_linkage_distance(cluster1, cluster2, 
-                                              base_distance)
+                                              metric)
         
         assert np.allclose([linkage_distance], [true_dist])
                 
@@ -115,9 +115,9 @@ def test_complete_linkage_noneuclidean_distance():
     Check that complete linkage computes distance of two clusterings correctly\
     when the pairwise distance is non-euclidean
     """   
-    base_distance = lambda x, y: random.Random(sum(x+y)).random()
+    metric = lambda x, y: random.Random(sum(x+y)).random()
     
-    test_complete_linkage(base_distance=base_distance)
+    test_complete_linkage(metric=metric)
 
 if __name__ == '__main__':
     import nose

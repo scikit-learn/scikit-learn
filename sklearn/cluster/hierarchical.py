@@ -256,8 +256,8 @@ class Dendrogram(object):
 
 
 def create_dendrogram(X, connectivity, n_components=None, 
-                      linkage_criterion="ward", linkage_kwargs={}, 
-                      copy=True):
+                      linkage_criterion="ward", metric="eucliean",
+                      linkage_kwargs={}, copy=True):
     """ Hierarchical clustering algorithm that creates a dendrogram.
 
     This is the structured version, that takes into account the topological
@@ -342,7 +342,8 @@ def create_dendrogram(X, connectivity, n_components=None,
     
     # Linkage object that manages the distance computations between clusters
     # distances are updated incrementally during merging of clusters...
-    linkage = linkage_criterion(X, connectivity, **linkage_kwargs)
+    linkage = linkage_criterion(X, connectivity, metric=metric,
+                                **linkage_kwargs)
     
     # Array in which open_nodes[i] indicate whether the cluster with index i
     # has not yet been merged into a larger cluster
@@ -509,14 +510,15 @@ class HierarchicalClustering(BaseEstimator):
     def __init__(self, n_clusters=None, max_height=None,
                  memory=Memory(cachedir=None, verbose=0), connectivity=None,
                  copy=True, n_components=None, linkage_criterion="ward",
-                 linkage_kwargs={}):
+                 metric="euclidean", linkage_kwargs={}):
         self.n_clusters = n_clusters
         self.n_components = n_components
         self.max_height = max_height
                 
         self.connectivity = connectivity
         
-        self.linkage_criterion = linkage_criterion    
+        self.linkage_criterion = linkage_criterion
+        self.metric = metric    
         self.linkage_kwargs = linkage_kwargs
         
         self.memory = memory
@@ -545,6 +547,7 @@ class HierarchicalClustering(BaseEstimator):
                                                 n_components=self.n_components,
                                                 linkage_criterion=\
                                                         self.linkage_criterion,
+                                                metric=self.metric,
                                                 linkage_kwargs=\
                                                         self.linkage_kwargs,
                                                 copy=self.copy)
@@ -568,7 +571,7 @@ class HierarchicalClustering(BaseEstimator):
             # Invoke clustering algorithm
             clustering_algorithm = \
                 self.unstructured_cluster_algorithms[self.linkage_criterion]
-            out = clustering_algorithm(X)
+            out = clustering_algorithm(X, metric=self.metric)
             # Put result into a dendrogram and cut it to get labeling
             self.dendrogram = Dendrogram(X.shape[0], 1)
             self.dendrogram.children = out[:, :2].astype(np.int)
