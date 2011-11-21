@@ -20,11 +20,11 @@ class BaseEnsemble(BaseEstimator):
     n_estimators : integer
         The number of estimators in the ensemble.
 
-    **estimator_params : key-words parameters
-        The parameters to set for the underlying estimator. If none are given,
-        default parameters are used.
+    estimator_params : list of strings
+        The list of attributes to use as parameters when instantiating a
+        new base estimator. If none are given, default parameters are used.
     """
-    def __init__(self, base_estimator, n_estimators, **estimator_params):
+    def __init__(self, base_estimator, n_estimators, estimator_params=[]):
         # Check parameters
         if not isinstance(base_estimator, BaseEstimator):
             raise TypeError("estimator must be a subclass of BaseEstimator")
@@ -33,13 +33,22 @@ class BaseEnsemble(BaseEstimator):
 
         # Set parameters
         self.base_estimator = base_estimator
-        self.base_estimator.set_params(**estimator_params)
         self.n_estimators = n_estimators
+        self.estimator_params = estimator_params
 
         # Don't instantiate estimators now! Parameters of base_estimator might
         # still change. Eg., when grid-searching with the nested object syntax.
         # This needs to be filled by the derived classes.
         self.estimators = []
+
+    def make_estimator(self):
+        """Makes, configures and returns a copy of the base estimator."""
+        estimator = clone(self.base_estimator)
+        estimator.set_params(**{p:getattr(self, p)
+                                for p in self.estimator_params})
+        self.estimators.append(estimator)
+
+        return estimator
 
     def __len__(self):
         """Returns the number of estimators in the ensemble."""

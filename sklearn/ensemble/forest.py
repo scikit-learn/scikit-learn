@@ -57,13 +57,13 @@ class Forest(BaseEnsemble):
     """
     def __init__(self, base_estimator,
                        n_estimators=10,
+                       estimator_params=[],
                        bootstrap=False,
-                       random_state=None,
-                       **estimator_params):
+                       random_state=None):
         super(Forest, self).__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
-            **estimator_params)
+            estimator_params=estimator_params)
 
         self.bootstrap = bootstrap
         self.random_state = check_random_state(random_state)
@@ -95,8 +95,7 @@ class Forest(BaseEnsemble):
             y = np.searchsorted(self.classes, y)
 
         for i in xrange(self.n_estimators):
-            tree = clone(self.base_estimator)
-            tree.set_params(random_state=self.random_state)
+            tree = self.make_estimator()
 
             if self.bootstrap:
                 n_samples = X.shape[0]
@@ -106,7 +105,6 @@ class Forest(BaseEnsemble):
                 y = y[indices]
 
             tree.fit(X, y)
-            self.estimators.append(tree)
 
         return self
 
@@ -119,15 +117,15 @@ class ForestClassifier(Forest, ClassifierMixin):
     """
     def __init__(self, base_estimator,
                        n_estimators=10,
+                       estimator_params=[],
                        bootstrap=False,
-                       random_state=None,
-                       **estimator_params):
+                       random_state=None):
         super(ForestClassifier, self).__init__(
             base_estimator,
-            n_estimators,
+            n_estimators=n_estimators,
+            estimator_params=estimator_params,
             bootstrap=bootstrap,
-            random_state=random_state,
-            **estimator_params)
+            random_state=random_state)
 
     def predict(self, X):
         """Predict class for X.
@@ -203,15 +201,15 @@ class ForestRegressor(Forest, RegressorMixin):
     """
     def __init__(self, base_estimator,
                        n_estimators=10,
+                       estimator_params=[],
                        bootstrap=False,
-                       random_state=None,
-                       **estimator_params):
+                       random_state=None):
         super(ForestRegressor, self).__init__(
             base_estimator,
-            n_estimators,
+            n_estimators=n_estimators,
+            estimator_params=estimator_params,
             bootstrap=bootstrap,
-            random_state=random_state,
-            **estimator_params)
+            random_state=random_state)
 
     def predict(self, X):
         """Predict regression target for X.
@@ -249,13 +247,33 @@ class RandomForestClassifier(ForestClassifier):
 
     Parameters
     ----------
-    base_estimator : object, optional (default=None)
-        The base tree from which the forest is built. If None, a
-        `DecisionTreeClassifier` with parameters defined from
-        **estimator_params is used.
-
     n_estimators : integer, optional (default=10)
         The number of trees in the forest.
+
+    criterion : string, optional (default="gini")
+        The function to measure the quality of a split. Supported criteria are
+        "gini" for the Gini impurity and "entropy" for the information gain.
+
+    max_depth : integer or None, optional (default=10)
+        The maximum depth of the tree. If None, then nodes are expanded until
+        all leaves are pure or until all leaves contain less than min_split
+        samples.
+
+    min_split : integer, optional (default=1)
+        The minimum number of samples required to split an internal node.
+
+    min_density : float, optional (default=0.1)
+        The minimum density of the `sample_mask` (i.e. the fraction of samples
+        in the mask). If the density falls below this threshold the mask is
+        recomputed and the input data is packed which results in data copying.
+        If `min_density` equals to one, the partitions are always represented
+        as copies of the original data. Otherwise, partitions are represented
+        as bit masks (aka sample masks).
+
+    max_features : int or None, optional (default=None)
+        The number of features to consider when looking for the best split.
+        If None, all features are considered, otherwise max_features are chosen
+        at random.
 
     bootstrap : boolean, optional (default=True)
         Whether bootstrap samples are used when building trees.
@@ -266,21 +284,6 @@ class RandomForestClassifier(ForestClassifier):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    **estimator_params : key-words parameters
-        The parameters to set when instantiating the underlying base tree. If
-        none are given, default parameters are used.
-
-    Attributes
-    ----------
-    base_estimator : object
-        The underlying tree that is used to generate the forest.
-
-    Notes
-    -----
-    When using grid search to optimize the parameters, use the nested object
-    syntax to set the parameters of the underlying trees (e.g.,
-    `base_estimator__max_depth`).
-
     See also
     --------
     RandomForestRegressor, ExtraTreesClassifier, ExtraTreesRegressor
@@ -289,18 +292,27 @@ class RandomForestClassifier(ForestClassifier):
     ----------
     .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
     """
-    def __init__(self, base_estimator=None,
-                       n_estimators=10,
+    def __init__(self, n_estimators=10,
+                       criterion="gini",
+                       max_depth=10,
+                       min_split=1,
+                       min_density=0.1,
+                       max_features=None,
                        bootstrap=True,
-                       random_state=None,
-                       **estimator_params):
+                       random_state=None):
         super(RandomForestClassifier, self).__init__(
-            base_estimator if base_estimator is not None \
-                           else DecisionTreeClassifier(),
-            n_estimators,
+            base_estimator=DecisionTreeClassifier(),
+            n_estimators=n_estimators,
+            estimator_params=("criterion", "max_depth", "min_split",
+                              "min_density", "max_features", "random_state"),
             bootstrap=bootstrap,
-            random_state=random_state,
-            **estimator_params)
+            random_state=random_state)
+
+        self.criterion = criterion
+        self.max_depth = max_depth
+        self.min_split = min_split
+        self.min_density = min_density
+        self.max_features = max_features
 
 
 class RandomForestRegressor(ForestRegressor):
@@ -312,13 +324,33 @@ class RandomForestRegressor(ForestRegressor):
 
     Parameters
     ----------
-    base_estimator : object, optional (default=None)
-        The base tree from which the forest is built. If None, a
-        `DecisionTreeRegressor` with parameters defined from **estimator_params
-        is used.
-
     n_estimators : integer, optional (default=10)
         The number of trees in the forest.
+
+    criterion : string, optional (default="mse")
+        The function to measure the quality of a split. The only supported
+        criterion is "mse" for the mean squared error.
+
+    max_depth : integer or None, optional (default=10)
+        The maximum depth of the tree. If None, then nodes are expanded until
+        all leaves are pure or until all leaves contain less than min_split
+        samples.
+
+    min_split : integer, optional (default=1)
+        The minimum number of samples required to split an internal node.
+
+    min_density : float, optional (default=0.1)
+        The minimum density of the `sample_mask` (i.e. the fraction of samples
+        in the mask). If the density falls below this threshold the mask is
+        recomputed and the input data is packed which results in data copying.
+        If `min_density` equals to one, the partitions are always represented
+        as copies of the original data. Otherwise, partitions are represented
+        as bit masks (aka sample masks).
+
+    max_features : int or None, optional (default=None)
+        The number of features to consider when looking for the best split.
+        If None, all features are considered, otherwise max_features are chosen
+        at random.
 
     bootstrap : boolean, optional (default=True)
         Whether bootstrap samples are used when building trees.
@@ -329,21 +361,6 @@ class RandomForestRegressor(ForestRegressor):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    **estimator_params : key-words parameters
-        The parameters to set when instantiating the underlying base tree. If
-        none are given, default parameters are used.
-
-    Attributes
-    ----------
-    base_estimator : object
-        The underlying tree that is used to generate the forest.
-
-    Notes
-    -----
-    When using grid search to optimize the parameters, use the nested object
-    syntax to set the parameters of the underlying trees (e.g.,
-    `base_estimator__max_depth`).
-
     See also
     --------
     RandomForestClassifier, ExtraTreesClassifier, ExtraTreesRegressor
@@ -352,18 +369,27 @@ class RandomForestRegressor(ForestRegressor):
     ----------
     .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
     """
-    def __init__(self, base_estimator=None,
-                       n_estimators=10,
+    def __init__(self, n_estimators=10,
+                       criterion="mse",
+                       max_depth=10,
+                       min_split=1,
+                       min_density=0.1,
+                       max_features=None,
                        bootstrap=True,
-                       random_state=None,
-                       **estimator_params):
+                       random_state=None):
         super(RandomForestRegressor, self).__init__(
-            base_estimator if base_estimator is not None \
-                           else DecisionTreeRegressor(),
-            n_estimators,
+            base_estimator=DecisionTreeRegressor(),
+            n_estimators=n_estimators,
+            estimator_params=("criterion", "max_depth", "min_split",
+                              "min_density", "max_features", "random_state"),
             bootstrap=bootstrap,
-            random_state=random_state,
-            **estimator_params)
+            random_state=random_state)
+
+        self.criterion = criterion
+        self.max_depth = max_depth
+        self.min_split = min_split
+        self.min_density = min_density
+        self.max_features = max_features
 
 
 class ExtraTreesClassifier(ForestClassifier):
@@ -376,13 +402,33 @@ class ExtraTreesClassifier(ForestClassifier):
 
     Parameters
     ----------
-    base_estimator : object, optional (default=None)
-        The base tree from which the forest is built. If None, an
-        `ExtraTreeClassifier` with parameters defined from **estimator_params
-        is used.
-
     n_estimators : integer, optional (default=10)
         The number of trees in the forest.
+
+    criterion : string, optional (default="gini")
+        The function to measure the quality of a split. Supported criteria are
+        "gini" for the Gini impurity and "entropy" for the information gain.
+
+    max_depth : integer or None, optional (default=10)
+        The maximum depth of the tree. If None, then nodes are expanded until
+        all leaves are pure or until all leaves contain less than min_split
+        samples.
+
+    min_split : integer, optional (default=1)
+        The minimum number of samples required to split an internal node.
+
+    min_density : float, optional (default=0.1)
+        The minimum density of the `sample_mask` (i.e. the fraction of samples
+        in the mask). If the density falls below this threshold the mask is
+        recomputed and the input data is packed which results in data copying.
+        If `min_density` equals to one, the partitions are always represented
+        as copies of the original data. Otherwise, partitions are represented
+        as bit masks (aka sample masks).
+
+    max_features : int or None, optional (default=None)
+        The number of features to consider when looking for the best split.
+        If None, all features are considered, otherwise max_features are chosen
+        at random.
 
     bootstrap : boolean, optional (default=True)
         Whether bootstrap samples are used when building trees.
@@ -393,21 +439,6 @@ class ExtraTreesClassifier(ForestClassifier):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    **estimator_params : key-words parameters
-        The parameters to set when instantiating the underlying base tree. If
-        none are given, default parameters are used.
-
-    Attributes
-    ----------
-    base_estimator : object
-        The underlying tree that is used to generate the forest.
-
-    Notes
-    -----
-    When using grid search to optimize the parameters, use the nested object
-    syntax to set the parameters of the underlying trees (e.g.,
-    `base_estimator__max_depth`).
-
     See also
     --------
     ExtraTreesRegressor, RandomForestClassifier, RandomForestRegressor
@@ -417,18 +448,27 @@ class ExtraTreesClassifier(ForestClassifier):
     .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
            Machine Learning, 63(1), 3-42, 2006.
     """
-    def __init__(self, base_estimator=None,
-                       n_estimators=10,
-                       bootstrap=False,
-                       random_state=None,
-                       **estimator_params):
+    def __init__(self, n_estimators=10,
+                       criterion="gini",
+                       max_depth=10,
+                       min_split=1,
+                       min_density=0.1,
+                       max_features=None,
+                       bootstrap=True,
+                       random_state=None):
         super(ExtraTreesClassifier, self).__init__(
-            base_estimator if base_estimator is not None \
-                           else ExtraTreeClassifier(),
-            n_estimators,
+            base_estimator=ExtraTreeClassifier(),
+            n_estimators=n_estimators,
+            estimator_params=("criterion", "max_depth", "min_split",
+                              "min_density", "max_features", "random_state"),
             bootstrap=bootstrap,
-            random_state=random_state,
-            **estimator_params)
+            random_state=random_state)
+
+        self.criterion = criterion
+        self.max_depth = max_depth
+        self.min_split = min_split
+        self.min_density = min_density
+        self.max_features = max_features
 
 
 class ExtraTreesRegressor(ForestRegressor):
@@ -441,13 +481,33 @@ class ExtraTreesRegressor(ForestRegressor):
 
     Parameters
     ----------
-    base_estimator : object, optional (default=None)
-        The base tree from which the forest is built. If None, an
-        `ExtraTreeRegressor` with parameters defined from **estimator_params
-        is used.
-
     n_estimators : integer, optional (default=10)
         The number of trees in the forest.
+
+    criterion : string, optional (default="mse")
+        The function to measure the quality of a split. The only supported
+        criterion is "mse" for the mean squared error.
+
+    max_depth : integer or None, optional (default=10)
+        The maximum depth of the tree. If None, then nodes are expanded until
+        all leaves are pure or until all leaves contain less than min_split
+        samples.
+
+    min_split : integer, optional (default=1)
+        The minimum number of samples required to split an internal node.
+
+    min_density : float, optional (default=0.1)
+        The minimum density of the `sample_mask` (i.e. the fraction of samples
+        in the mask). If the density falls below this threshold the mask is
+        recomputed and the input data is packed which results in data copying.
+        If `min_density` equals to one, the partitions are always represented
+        as copies of the original data. Otherwise, partitions are represented
+        as bit masks (aka sample masks).
+
+    max_features : int or None, optional (default=None)
+        The number of features to consider when looking for the best split.
+        If None, all features are considered, otherwise max_features are chosen
+        at random.
 
     bootstrap : boolean, optional (default=True)
         Whether bootstrap samples are used when building trees.
@@ -458,21 +518,6 @@ class ExtraTreesRegressor(ForestRegressor):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    **estimator_params : key-words parameters
-        The parameters to set when instantiating the underlying base tree. If
-        none are given, default parameters are used.
-
-    Attributes
-    ----------
-    base_estimator : object
-        The underlying tree that is used to generate the forest.
-
-    Notes
-    -----
-    When using grid search to optimize the parameters, use the nested object
-    syntax to set the parameters of the underlying trees (e.g.,
-    `base_estimator__max_depth`).
-
     See also
     --------
     ExtraTreesRegressor, RandomForestClassifier, RandomForestRegressor
@@ -482,15 +527,24 @@ class ExtraTreesRegressor(ForestRegressor):
     .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
            Machine Learning, 63(1), 3-42, 2006.
     """
-    def __init__(self, base_estimator=None,
-                       n_estimators=10,
-                       bootstrap=False,
-                       random_state=None,
-                       **estimator_params):
+    def __init__(self, n_estimators=10,
+                       criterion="mse",
+                       max_depth=10,
+                       min_split=1,
+                       min_density=0.1,
+                       max_features=None,
+                       bootstrap=True,
+                       random_state=None):
         super(ExtraTreesRegressor, self).__init__(
-            base_estimator if base_estimator is not None \
-                           else ExtraTreeRegressor(),
-            n_estimators,
+            base_estimator=ExtraTreeRegressor(),
+            n_estimators=n_estimators,
+            estimator_params=("criterion", "max_depth", "min_split",
+                              "min_density", "max_features", "random_state"),
             bootstrap=bootstrap,
-            random_state=random_state,
-            **estimator_params)
+            random_state=random_state)
+
+        self.criterion = criterion
+        self.max_depth = max_depth
+        self.min_split = min_split
+        self.min_density = min_density
+        self.max_features = max_features

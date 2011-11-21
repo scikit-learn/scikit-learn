@@ -13,11 +13,14 @@ from sklearn.tree import DecisionTreeClassifier
 def test_base():
     """Check BaseEnsemble methods."""
     tree = DecisionTreeClassifier()
-    ensemble = BaseEnsemble(base_estimator=tree, n_estimators=1)
-    ensemble.estimators.append(tree)
+    ensemble = BaseEnsemble(base_estimator=tree, n_estimators=3)
 
-    assert_equal(1, len(ensemble))
-    assert_equal(tree, ensemble[0])
+    ensemble.make_estimator()
+    ensemble.make_estimator()
+    ensemble.make_estimator()
+
+    assert_equal(3, len(ensemble))
+    assert_equal(3, len(ensemble.estimators))
 
 
 def test_error():

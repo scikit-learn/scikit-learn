@@ -8,6 +8,7 @@ from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_almost_equal
 from numpy.testing import assert_equal
 from nose.tools import assert_raises
+from nose.tools import assert_true
 
 from sklearn.grid_search import GridSearchCV
 from sklearn.ensemble import RandomForestClassifier
@@ -115,23 +116,6 @@ def test_boston():
         assert score < 3, "Failed with max_features=None, criterion %s and score = %f" % (c, score)
 
 
-def test_base_estimator():
-    """Test base estimators."""
-    # Check that parameters are properly set to the base estimator
-    clf = RandomForestClassifier(n_estimators=10, criterion="entropy", max_depth=20, min_split=5, min_density=0.25, max_features=1)
-    assert_equal("entropy", clf.base_estimator.criterion)
-    assert_equal(20, clf.base_estimator.max_depth)
-    assert_equal(5, clf.base_estimator.min_split)
-    assert_equal(0.25, clf.base_estimator.min_density)
-    assert_equal(1, clf.base_estimator.max_features)
-
-    # Check non-default base estimator
-    from sklearn.tree import DecisionTreeClassifier
-    estimator = DecisionTreeClassifier()
-    clf = RandomForestClassifier(base_estimator=estimator, n_estimators=10)
-    assert_equal(estimator, clf.base_estimator)
-
-
 def test_probability():
     """Predict probabilities."""
     # Random forest
@@ -152,14 +136,14 @@ def test_gridsearch():
     # Random forest
     forest = RandomForestClassifier()
     parameters = {'n_estimators': (1,2),
-                  'base_estimator__max_depth': (1,2)}
+                  'max_depth': (1,2)}
     clf = GridSearchCV(forest, parameters)
     clf.fit(iris.data, iris.target)
 
     # Extra-trees
     forest = ExtraTreesClassifier()
     parameters = {'n_estimators': (1,2),
-                  'base_estimator__max_depth': (1,2)}
+                  'max_depth': (1,2)}
     clf = GridSearchCV(forest, parameters)
     clf.fit(iris.data, iris.target)
 
