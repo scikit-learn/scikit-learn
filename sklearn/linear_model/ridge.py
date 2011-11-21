@@ -300,7 +300,7 @@ class RidgeClassifier(Ridge):
 
         Returns
         -------
-        C : array, shape = [n_samples]
+        y : array, shape = [n_samples]
         """
         Y = self.decision_function(X)
         return self.label_binarizer.inverse_transform(Y)
@@ -590,7 +590,7 @@ class RidgeClassifierCV(RidgeCV):
 
         Returns
         -------
-        C : array, shape = [n_samples]
+        y : array, shape = [n_samples]
         """
         Y = self.decision_function(X)
         return self.label_binarizer.inverse_transform(Y)
