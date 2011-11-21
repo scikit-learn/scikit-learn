@@ -27,9 +27,12 @@ Ordinary Least Squares
 =======================
 
 :class:`LinearRegression` fits a linear model with coefficients
-:math:`\beta = (\beta_1, ..., \beta_D)` to minimize the residual sum
+:math:`w = (w_1, ..., w_D)` to minimize the residual sum
 of squares between the observed responses in the dataset, and the
-responses predicted by the linear approximation.
+responses predicted by the linear approximation. Mathematically it
+solves a problem of the form:
+
+.. math:: \underset{w}{min} {|| X w - y||_2}^2
 
 .. figure:: ../auto_examples/linear_model/images/plot_ols_1.png
    :target: ../auto_examples/linear_model/plot_ols.html
@@ -50,7 +53,7 @@ and will store the coefficients :math:`w` of the linear model in its
 However, coefficient estimates for Ordinary Least Squares rely on the
 independence of the model terms. When terms are correlated and the
 columns of the design matrix :math:`X` have an approximate linear
-dependence, the matrix :math:`X(X^T X)^{-1}` becomes close to singular
+dependence, the design matrix becomes close to singular
 and as a result, the least-squares estimate becomes highly sensitive
 to random errors in the observed response, producing a large
 variance. This situation of *multicollinearity* can arise, for
@@ -162,7 +165,7 @@ and its variants are fundamental to the field of compressed sensing.
 Mathematically, it consists of a linear model trained with L1 prior as
 regularizer. The objective function to minimize is:
 
-.. math::  0.5 * ||X w - y||_2 ^ 2 + \alpha * ||w||_1
+.. math::  \underset{w}{min} { 0.5 * ||X w - y||_2 ^ 2 + \alpha * ||w||_1}
 
 The lasso estimate thus solves the minimization of the
 least-squares penalty with :math:`\alpha * ||w||_1` added, where
@@ -250,7 +253,10 @@ regularizer.
 
 The objective function to minimize is in this case
 
-.. math::        0.5 * ||X w - y||_2 ^ 2 + \alpha * \rho * ||w||_1 + \alpha * (1-\rho) * 0.5 * ||w||_2 ^ 2
+.. math::
+
+    \underset{w}{min} { 0.5 * ||X w - y||_2 ^ 2 + \alpha * \rho * ||w||_1 +
+    \alpha * (1-\rho) * 0.5 * ||w||_2 ^ 2}
 
 
 .. figure:: ../auto_examples/linear_model/images/plot_lasso_coordinate_descent_path_1.png
@@ -456,6 +462,7 @@ By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e^{-6}`,
 .. figure:: ../auto_examples/linear_model/images/plot_bayesian_ridge_1.png
    :target: ../auto_examples/linear_model/plot_bayesian_ridge.html
    :align: center
+   :scale: 50%
 
 
 Bayesian Ridge Regression is used for regression::
@@ -522,6 +529,7 @@ By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e-6`, *i.e.*
 .. figure:: ../auto_examples/linear_model/images/plot_ard_1.png
    :target: ../auto_examples/linear_model/plot_ard.html
    :align: center
+   :scale: 50%
 
 
 .. topic:: Examples:
