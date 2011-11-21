@@ -113,6 +113,7 @@ its `coef\_` member::
 .. topic:: Examples:
 
    * :ref:`example_linear_model_plot_ridge_path.py`
+   * :ref:`example_document_classification_20newsgroups.py`
 
 
 Ridge Complexity
@@ -127,8 +128,8 @@ This method has the same order of complexity than an
 .. between these
 
 
-Setting alpha: generalized Cross-Validation
----------------------------------------------
+Setting the regularization parameter: generalized Cross-Validation
+------------------------------------------------------------------
 
 :class:`RidgeCV` implements ridge regression with built-in
 cross-validation of the alpha parameter.  The object works in the same way
@@ -190,8 +191,8 @@ computes the coefficients along the full path of possible values.
 
   * :ref:`example_linear_model_lasso_and_elasticnet.py`,
 
-Setting `alpha`
------------------
+Setting regularization parameter
+--------------------------------
 
 The `alpha` parameter control the degree of sparsity of the coefficients
 estimated.
@@ -199,7 +200,7 @@ estimated.
 Using cross-validation
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-The scikit exposes objects that set the Lasso `alpha` parameter by
+scikit-learn exposes objects that set the Lasso `alpha` parameter by
 cross-validation: :class:`LassoCV` and :class:`LassoLarsCV`.
 :class:`LassoLarsCV` is based on the :ref:`least_angle_regression` algorithm
 explained below.
@@ -598,7 +599,7 @@ zero) model.
 
 .. topic:: Examples:
 
-  * :ref:`example_logistic_l1_l2_coef.py`
+  * :ref:`example_linear_model_logistic_l1_l2_sparsity.py`
 
   * :ref:`example_linear_model_plot_logistic_path.py`
 
