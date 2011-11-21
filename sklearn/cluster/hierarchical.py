@@ -256,14 +256,14 @@ class Dendrogram(object):
 
 
 def create_dendrogram(X, connectivity, n_components=None, 
-                      linkage_criterion="ward", metric="eucliean",
+                      linkage_criterion="ward", metric="euclidean",
                       linkage_kwargs={}, copy=True):
     """ Hierarchical clustering algorithm that creates a dendrogram.
 
     This is the structured version, that takes into account the topological
     structure between samples. The linkage is Ward's linkage per default;
     however one can use any linkage object that implements the Linkage
-    interface (see interface.py)
+    interface (see linkage.py)
 
     Parameters
     ----------
@@ -279,10 +279,10 @@ def create_dendrogram(X, connectivity, n_components=None,
         Number of connected components. If None the number of connected
         components is estimated from the connectivity matrix.
 
-    linkage_criterion : object implementing the Linkage interface
+    linkage_criterion : str or subclass of Linkage
         The linkage criterion used to determine the distances of two clusters.
-        Defaults to Ward's linkage; however one can pass any object 
-        implementing the Linkage interface.
+        This can be either "ward" or "complete" or an any subclass of the 
+        Linkage class.
         
     linkage_kwargs : dict
         Additional keyword arguments that are directly passed to the __init__
