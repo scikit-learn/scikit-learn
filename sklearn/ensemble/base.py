@@ -39,14 +39,14 @@ class BaseEnsemble(BaseEstimator):
         # Don't instantiate estimators now! Parameters of base_estimator might
         # still change. Eg., when grid-searching with the nested object syntax.
         # This needs to be filled by the derived classes.
-        self.estimators = []
+        self.estimators_ = []
 
     def make_estimator(self):
         """Makes, configures and returns a copy of the base estimator."""
         estimator = clone(self.base_estimator)
         estimator.set_params(**{p:getattr(self, p)
                                 for p in self.estimator_params})
-        self.estimators.append(estimator)
+        self.estimators_.append(estimator)
 
         return estimator
 
@@ -56,4 +56,4 @@ class BaseEnsemble(BaseEstimator):
 
     def __getitem__(self, index):
         """Returns the index'th estimator in the ensemble."""
-        return self.estimators[index]
+        return self.estimators_[index]

@@ -90,9 +90,9 @@ class Forest(BaseEnsemble):
         y = np.atleast_1d(y)
 
         if isinstance(self.base_estimator, ClassifierMixin):
-            self.classes = np.unique(y)
-            self.n_classes = len(self.classes)
-            y = np.searchsorted(self.classes, y)
+            self.classes_ = np.unique(y)
+            self.n_classes_ = len(self.classes_)
+            y = np.searchsorted(self.classes_, y)
 
         for i in xrange(self.n_estimators):
             tree = self.make_estimator()
@@ -143,7 +143,7 @@ class ForestClassifier(Forest, ClassifierMixin):
         predictions : array of shape = [n_samples]
             The predicted classes.
         """
-        return self.classes.take(
+        return self.classes_.take(
             np.argmax(self.predict_proba(X), axis=1),  axis=0)
 
     def predict_proba(self, X):
@@ -164,9 +164,9 @@ class ForestClassifier(Forest, ClassifierMixin):
             ordered by arithmetical order.
         """
         X = np.atleast_2d(X)
-        p = np.zeros((X.shape[0], self.n_classes))
+        p = np.zeros((X.shape[0], self.n_classes_))
 
-        for tree in self.estimators:
+        for tree in self.estimators_:
             p += tree.predict_proba(X)
 
         p /= self.n_estimators
@@ -230,7 +230,7 @@ class ForestRegressor(Forest, RegressorMixin):
         X = np.atleast_2d(X)
         y_hat = np.zeros(X.shape[0])
 
-        for tree in self.estimators:
+        for tree in self.estimators_:
             y_hat += tree.predict(X)
 
         y_hat /= self.n_estimators
