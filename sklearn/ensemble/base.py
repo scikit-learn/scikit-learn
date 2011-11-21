@@ -42,7 +42,13 @@ class BaseEnsemble(BaseEstimator):
         self.estimators_ = []
 
     def make_estimator(self):
-        """Makes, configures and returns a copy of the base estimator."""
+        """Makes, configures and returns a copy of the base estimator.
+
+        Warning: This method should be used to properly instantiate new
+        sub-estimators.
+        """
+        assert len(self.estimators_) < self.n_estimators
+
         estimator = clone(self.base_estimator)
         estimator.set_params(**{p:getattr(self, p)
                                 for p in self.estimator_params})
