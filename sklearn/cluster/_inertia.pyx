@@ -21,7 +21,7 @@ def compute_ward_dist(np.ndarray[DOUBLE, ndim=1] m_1,\
     cluster distance is the increase of within-cluster variance by merging
     two clusters.
     
-    This increase in within-cluster variance  when merging clusters A and B
+    This increase in within-cluster variance when merging clusters A and B
     can be computed efficiently in constant time by using the formula 
     d(A,B) = d(c_a,c_b)**2/(1/n_a + 1/n_b)
     where c_a denotes the centroid of cluster A and n_a the number of elements
@@ -36,9 +36,9 @@ def compute_ward_dist(np.ndarray[DOUBLE, ndim=1] m_1,\
     for i in range(size_max):
         row = coord_row[i]
         col = coord_col[i]
-        n = 1.0 / (1.0 / m_1[row] + 1.0 / m_1[col])
+        n = (m_1[row] * m_1[col]) / (m_1[row] + m_1[col])
         pa = 0.
         for j in range(n_features):
             pa += (m_2[row, j] / m_1[row] - m_2[col, j] / m_1[col])**2
-        res[i] = pa * n 
+        res[i] = pa * n
     return res
