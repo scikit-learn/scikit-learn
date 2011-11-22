@@ -73,7 +73,7 @@ for pair in ([0, 1], [0, 2], [2, 3]):
             Z = Z.reshape(xx.shape)
             cs = pl.contourf(xx, yy, Z)
         else:
-            for tree in model.estimators:
+            for tree in model.estimators_:
                 Z = tree.predict(np.c_[xx.ravel(), yy.ravel()])
                 Z = Z.reshape(xx.shape)
                 cs = pl.contourf(xx, yy, Z, alpha=0.1)
