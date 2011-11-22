@@ -27,4 +27,3 @@ from .logistic import LogisticRegression
 from .omp import orthogonal_mp, orthogonal_mp_gram, OrthogonalMatchingPursuit
 
 from . import sparse
-

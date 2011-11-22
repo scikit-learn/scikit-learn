@@ -41,6 +41,7 @@ TARGET_FILENAME = "olivetti.npy"
 # dataset
 MODULE_DOCS = __doc__
 
+
 def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
                          download_if_missing=True):
     """Loader for the Olivetti faces data-set from AT&T.
