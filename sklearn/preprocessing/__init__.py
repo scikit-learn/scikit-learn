@@ -536,7 +536,8 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         y_is_multilabel = _is_multilabel(y)
 
         if y_is_multilabel and not self.multilabel:
-            raise ValueError("The object was not fitted with multilabel input!")
+            raise ValueError("The object was not " +
+                    "fitted with multilabel input!")
 
         elif self.multilabel:
             if not _is_multilabel(y):
@@ -574,8 +575,8 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
             Target values.
 
         threshold : float
-            Threshold used to decide whether to assign the positive class or the
-            negative class in the binary case. Use 0.5 when Y contains
+            Threshold used to decide whether to assign the positive class or
+            the negative class in the binary case. Use 0.5 when Y contains
             probabilities.
 
         Returns

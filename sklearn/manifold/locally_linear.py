@@ -267,7 +267,7 @@ def locally_linear_embedding(
         # depending on the solver, we'll do this differently
         if M_sparse:
             # the **kwargs syntax is for python2.5 compatibility
-            M = eye(*W.shape, **{'format' : W.format}) - W
+            M = eye(*W.shape, **{'format': W.format}) - W
             M = np.dot(M.T, M).tocsr()
         else:
             M = (np.dot(W.T, W) - (W.T + W)).todense()

@@ -163,7 +163,7 @@ Enthought python distribution
 -----------------------------
 
 The `Enthought Python Distribution
-<http://www.enthought.com/products/epd.php>`_ already ships the latest
+<http://www.enthought.com/products/epd.php>`_ already ships a recent
 version.
 
 

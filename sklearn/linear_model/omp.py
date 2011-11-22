@@ -504,6 +504,8 @@ class OrthogonalMatchingPursuit(LinearModel):
         """
         X = array2d(X)
         y = np.asarray(y)
+        if y.ndim == 1:
+            y = y[:, np.newaxis]
         n_features = X.shape[1]
 
         X, y, X_mean, y_mean, X_std = self._center_data(X, y,
@@ -524,6 +526,7 @@ class OrthogonalMatchingPursuit(LinearModel):
                 Gram = np.asfortranarray(Gram)
 
             copy_Gram = self.copy_Gram
+
             if y.shape[1] > 1:  # subsequent targets will be affected
                 copy_Gram = True
 

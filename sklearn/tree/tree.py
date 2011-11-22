@@ -84,7 +84,7 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
     >>> out_file.close()
     """
     def node_to_str(tree, node_id):
-        if tree.left[node_id] == tree.right[node_id] == Tree.LEAF:
+        if tree.children[node_id, 0] == tree.children[node_id, 1] == Tree.LEAF:
             return "error = %s\\nsamples = %s\\nvalue = %s" \
                 % (tree.init_error[node_id], tree.n_samples[node_id],
                    tree.value[node_id])
@@ -101,8 +101,7 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
 
     def recurse(tree, node_id):
         assert node_id != -1
-        left_child = tree.left[node_id]
-        right_child = tree.right[node_id]
+        left_child, right_child = tree.children[node_id, :]
         node_data = {
             "current": node_id,
             "current_gv": node_to_str(tree, node_id),
@@ -114,9 +113,11 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
 
         out_file.write(GRAPHVIZ_TREE_TEMPLATE % node_data)
 
-        if not (tree.left[left_child] == tree.right[left_child] == Tree.LEAF):
+        if not (tree.children[left_child, 0] == tree.children[left_child, 1] \
+                == Tree.LEAF):
             recurse(tree, left_child)
-        if not (tree.left[right_child] == tree.right[right_child] == Tree.LEAF):
+        if not (tree.children[right_child, 0] == \
+                tree.children[right_child, 1] == Tree.LEAF):
             recurse(tree, right_child)
 
     if out_file is None:
@@ -146,13 +147,10 @@ class Tree(object):
     node_count : int
         Number of nodes (internal nodes + leaves) in the tree.
 
-    left : np.ndarray of int32
-        `left[i]` holds the node id of the left child of node `i`.
-        For leaves `left[i] == Tree.LEAF == -1`.
-
-    right : np.ndarray of int32
-        `right[i]` holds the node id of the right child of node `i`.
-        For leaves `right[i] == Tree.LEAF == -1`.
+    children : np.ndarray, shape=(node_count, 2), dtype=int32
+        `children[i,0]` holds the node id of the left child of node `i`.
+        `children[i,1]` holds the node id of the right child of node `i`.
+        For leaves `children[i,0] == children[i, 1] == Tree.LEAF == -1`.
 
     feature : np.ndarray of int32
         The feature to split on (only for internal nodes).
@@ -181,11 +179,8 @@ class Tree(object):
     def __init__(self, k, capacity=3):
         self.node_count = 0
 
-        self.left = np.empty((capacity,), dtype=np.int32)
-        self.left.fill(Tree.UNDEFINED)
-
-        self.right = np.empty((capacity,), dtype=np.int32)
-        self.right.fill(Tree.UNDEFINED)
+        self.children = np.empty((capacity, 2), dtype=np.int32)
+        self.children.fill(Tree.UNDEFINED)
 
         self.feature = np.empty((capacity,), dtype=np.int32)
         self.feature.fill(Tree.UNDEFINED)
@@ -200,13 +195,12 @@ class Tree(object):
     def resize(self, capacity=None):
         """Resize tree arrays to `capacity`, if `None` double capacity. """
         if capacity is None:
-            capacity = int(self.left.shape[0] * 2.0)
+            capacity = int(self.children.shape[0] * 2.0)
 
-        if capacity == self.left.shape[0]:
+        if capacity == self.children.shape[0]:
             return
 
-        self.left.resize((capacity,), refcheck=False)
-        self.right.resize((capacity,), refcheck=False)
+        self.children.resize((capacity, 2), refcheck=False)
         self.feature.resize((capacity,), refcheck=False)
         self.threshold.resize((capacity,), refcheck=False)
         self.value.resize((capacity, self.value.shape[1]), refcheck=False)
@@ -214,11 +208,16 @@ class Tree(object):
         self.init_error.resize((capacity,), refcheck=False)
         self.n_samples.resize((capacity,), refcheck=False)
 
+        # if capacity smaller than node_count, adjust the counter
+        if capacity < self.node_count:
+            self.node_count = capacity
+
     def add_split_node(self, parent, is_left_child, feature, threshold,
                        best_error, init_error, n_samples, value):
-        """Add a splitting node to the tree. """
+        """Add a splitting node to the tree. The new node registers itself as
+        the child of its parent. """
         node_id = self.node_count
-        if node_id >= self.left.shape[0]:
+        if node_id >= self.children.shape[0]:
             self.resize()
 
         self.feature[node_id] = feature
@@ -232,17 +231,18 @@ class Tree(object):
         # set as left or right child of parent
         if parent > Tree.LEAF:
             if is_left_child:
-                self.left[parent] = node_id
+                self.children[parent, 0] = node_id
             else:
-                self.right[parent] = node_id
+                self.children[parent, 1] = node_id
 
         self.node_count += 1
         return node_id
 
     def add_leaf(self, parent, is_left_child, value, error, n_samples):
-        """Add a leaf to the tree. """
+        """Add a leaf to the tree. The new node registers itself as the
+        child of its parent. """
         node_id = self.node_count
-        if node_id >= self.left.shape[0]:
+        if node_id >= self.children.shape[0]:
             self.resize()
 
         self.value[node_id] = value
@@ -251,19 +251,17 @@ class Tree(object):
         self.best_error[node_id] = error
 
         if is_left_child:
-            self.left[parent] = node_id
+            self.children[parent, 0] = node_id
         else:
-            self.right[parent] = node_id
+            self.children[parent, 1] = node_id
 
-        self.left[node_id] = Tree.LEAF
-        self.right[node_id] = Tree.LEAF
+        self.children[node_id, :] = Tree.LEAF
 
         self.node_count += 1
 
     def predict(self, X):
         out = np.empty((X.shape[0], ), dtype=np.int32)
-        _tree._apply_tree(X, self.left, self.right, self.feature,
-                          self.threshold, out)
+        _tree._apply_tree(X, self.children, self.feature, self.threshold, out)
         return self.value.take(out, axis=0)
 
 

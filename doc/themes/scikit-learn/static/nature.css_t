@@ -422,7 +422,7 @@ div.viewcode-block:target {
 
 div.rel {
     text-align: center;
-    margin: 10px 3px 0px 2px;
+    margin: 5px 3px 0px 2px;
     background-color: #ff9c34;
     color: white;
     border-radius: 5px;

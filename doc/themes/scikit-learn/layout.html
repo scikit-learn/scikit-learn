@@ -66,7 +66,6 @@
 </script>
 
 </div>
-
           </div> <!-- end navbar -->
           {%- endblock -%}
 
@@ -132,6 +131,9 @@
 	    </div>
 	  {%- endif %}
         </div>
+        <p style="text-align: center">This documentation is
+        for {{project}} <strong>version {{ release|e }}</strong>
+	&mdash; <a href="http://scikit-learn.org/stable/support.html#documentation-resources">Other versions</a></p>
         {% else %}
         <h3>News</h3>
 
@@ -158,14 +160,6 @@
         <a href="http://github.com/scikit-learn/scikit-learn/wiki/Upcoming-events">coding sprint</a>. <a href="{{pathto('developers/index')}}">Read More...</a>
         </p>
 
-        {% endif %}
-
-	{%- if toc|length != 11 %}
-        <h3>{{ _('This page') }}</h3>
-         {{ toc }}
-        {% endif %}
-
-        {% if pagename == 'index' %}
         <h3>Funding</h3>
         <p>Generous funding provided
         by <a href="http://www.inria.fr">INRIA</a>,
@@ -177,12 +171,17 @@
         alt="INRIA"/></a></p>
 
         <p><a href="{{pathto('about')}}">Read more ...</a></p>
-        {% endif %}
 
         <h3>Citing</h3>
-        <p>Please consider
+        <p>If you use the software, please consider
 	<a href="about.html#citing-the-scikit-learn">citing the
-	scikit-learn</a>.
+	scikit-learn</a>.</p>
+        {% endif %}
+
+	{%- if (toc|length < 20) and (pagename != 'index') %}
+        <h3>{{ _('This page') }}</h3>
+         {{ toc }}
+        {% endif %}
         </div>
 
       <div class="content">
@@ -201,9 +200,6 @@
 
 {%- block footer %}
     <div class="footer">
-        <p style="text-align: center">This documentation is relative
-        to {{project}} version {{ release|e }}<p>
-
     {%- if show_copyright %}
       {%- if hasdoc('copyright') %}
         {% trans path=pathto('copyright'), copyright=copyright|e %}&copy; {{ copyright }}.{% endtrans %}

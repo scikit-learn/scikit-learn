@@ -212,12 +212,13 @@ class GridSearchCV(BaseEstimator):
     `grid_scores_` : dict of any to float
         Contains scores for all parameter combinations in param_grid.
 
-     `best_estimator` : estimator
+    `best_estimator` : estimator
         Estimator that was choosen by grid search, i.e. estimator
         which gave highest score (or smallest loss if specified)
         on the left out data.
 
-     `best_score` : score of best_estimator on the left out data.
+    `best_score` : float
+        score of best_estimator on the left out data.
 
 
     Notes
