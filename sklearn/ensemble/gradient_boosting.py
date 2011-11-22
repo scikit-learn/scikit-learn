@@ -203,8 +203,8 @@ class BaseGradientBoosting(BaseEstimator):
         self.learn_rate = learn_rate
 
         if loss not in LOSS_FUNCTIONS:
-            raise ValueError("loss not supported")
-        self.loss = LOSS_FUNCTIONS[loss]()
+            raise ValueError("loss '%s' not supported" % loss)
+        self.loss = loss
 
         if min_split <= 0:
             raise ValueError("min_split must be larger than 0.")
@@ -218,12 +218,10 @@ class BaseGradientBoosting(BaseEstimator):
             raise ValueError("max_depth must be larger than 0.")
         self.max_depth = max_depth
 
-        if init is None:
-            self.init = self.loss.init_estimator()
-        else:
+        if init is not None:
             if not hasattr(init, 'fit') or not hasattr(init, 'predict'):
                 raise ValueError("init must be valid estimator")
-            self.init = init
+        self.init = init
 
         self.random_state = check_random_state(random_state)
 
@@ -256,6 +254,10 @@ class BaseGradientBoosting(BaseEstimator):
                              "number of samples.")
         self.n_features = n_features
 
+        loss = LOSS_FUNCTIONS[self.loss]()
+        if self.init is None:
+            self.init = loss.init_estimator()
+
         # create argsorted X for fast tree induction
         X_argsorted = np.asfortranarray(
             np.argsort(X.T, axis=1).astype(np.int32).T)
@@ -267,7 +269,6 @@ class BaseGradientBoosting(BaseEstimator):
         y_pred = self.init.predict(X)
 
         self.trees = []
-        loss = self.loss
 
         self.train_deviance = np.zeros((self.n_iter,), dtype=np.float64)
         #oob = np.zeros((self.n_iter), dtype=np.float64)
@@ -299,7 +300,7 @@ class BaseGradientBoosting(BaseEstimator):
                 y_pred[~sample_mask] = self._predict(
                     X[~sample_mask], old_pred=y_pred[~sample_mask])
 
-            self.train_deviance[i] = self.loss(y, y_pred)
+            self.train_deviance[i] = loss(y, y_pred)
 
             if monitor:
                 monitor(self, i)
@@ -380,7 +381,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     >>> samples = [[0, 0, 2], [1, 0, 0]]
     >>> labels = [0, 1]
     >>> from sklearn.ensemble import GradientBoostingClassifier
-    >>> gb = GradientBoostingClassifier(10)
+    >>> gb = GradientBoostingClassifier()
     >>> gb.fit(samples, labels)
     GradientBoostingClassifier()
     >>> print gb.predict([[0.5, 0, 0]])
@@ -491,7 +492,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     >>> samples = [[0, 0, 2], [1, 0, 0]]
     >>> labels = [0, 1]
     >>> from sklearn.ensemble import GradientBoostingRegressor
-    >>> gb = GradientBoostingRegressor(10)
+    >>> gb = GradientBoostingRegressor()
     >>> gb.fit(samples, labels)
     GradientBoostingRegressor()
     >>> print gb.predict([[0, 0, 0]])
