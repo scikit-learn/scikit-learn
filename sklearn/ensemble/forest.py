@@ -170,7 +170,10 @@ class ForestClassifier(Forest, ClassifierMixin):
                 p += tree.predict_proba(X)
 
             else:
-                print tree.n_classes_
+                proba = tree.predict_proba(X)
+
+                for j, c in enumerate(tree.classes_):
+                    p[:, c] += proba[:, j]
 
         p /= self.n_estimators
 
