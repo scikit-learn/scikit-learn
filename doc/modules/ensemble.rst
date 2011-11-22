@@ -81,7 +81,7 @@ slightly greater increase in bias::
     ...     min_split=1, random_state=0)
     >>> scores = cross_val_score(clf, X, y)
     >>> scores.mean()                             # doctest: +ELLIPSIS
-    0.992...
+    0.999...
 
     >>> clf = ExtraTreesClassifier(n_estimators=10, max_depth=None,
     ...     min_split=1, random_state=0)

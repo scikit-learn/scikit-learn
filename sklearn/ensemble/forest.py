@@ -100,11 +100,10 @@ class Forest(BaseEnsemble):
             if self.bootstrap:
                 n_samples = X.shape[0]
                 indices = self.random_state.randint(0, n_samples, n_samples)
+                tree.fit(X[indices], y[indices])
 
-                X = X[indices]
-                y = y[indices]
-
-            tree.fit(X, y)
+            else:
+                tree.fit(X, y)
 
         return self
 
@@ -167,7 +166,11 @@ class ForestClassifier(Forest, ClassifierMixin):
         p = np.zeros((X.shape[0], self.n_classes_))
 
         for tree in self.estimators_:
-            p += tree.predict_proba(X)
+            if self.n_classes_ == tree.n_classes_:
+                p += tree.predict_proba(X)
+
+            else:
+                print tree.n_classes_
 
         p /= self.n_estimators
 
