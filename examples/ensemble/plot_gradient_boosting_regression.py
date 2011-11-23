@@ -48,7 +48,7 @@ y_pred = clf.init.predict(X_test)
 test_deviance = np.zeros((params['n_iter'],), dtype=np.float64)
 for i, tree in enumerate(clf.trees):
     y_pred += clf.learn_rate * tree.predict(X_test).ravel()
-    test_deviance[i] = clf.loss(y_test, y_pred)
+    test_deviance[i] = clf.loss_(y_test, y_pred)
 
 pl.figure(figsize=(12, 6))
 pl.subplot(1,2,1)

@@ -255,6 +255,10 @@ class BaseGradientBoosting(BaseEstimator):
         self.n_features = n_features
 
         loss = LOSS_FUNCTIONS[self.loss]()
+
+        # store loss object for future use
+        self.loss_ = loss
+        
         if self.init is None:
             self.init = loss.init_estimator()
 
