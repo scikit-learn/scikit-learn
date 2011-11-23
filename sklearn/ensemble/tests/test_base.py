@@ -15,12 +15,12 @@ def test_base():
     tree = DecisionTreeClassifier()
     ensemble = BaseEnsemble(base_estimator=tree, n_estimators=3)
 
-    ensemble.make_estimator()
-    ensemble.make_estimator()
-    ensemble.make_estimator()
+    ensemble._make_estimator()
+    ensemble._make_estimator()
+    ensemble._make_estimator()
 
     assert_equal(3, len(ensemble))
-    assert_equal(3, len(ensemble.estimators))
+    assert_equal(3, len(ensemble.estimators_))
 
 
 def test_error():

@@ -95,7 +95,7 @@ class Forest(BaseEnsemble):
             y = np.searchsorted(self.classes_, y)
 
         for i in xrange(self.n_estimators):
-            tree = self.make_estimator()
+            tree = self._make_estimator()
 
             if self.bootstrap:
                 n_samples = X.shape[0]
@@ -139,7 +139,7 @@ class ForestClassifier(Forest, ClassifierMixin):
 
         Returns
         -------
-        predictions : array of shape = [n_samples]
+        y : array of shape = [n_samples]
             The predicted classes.
         """
         return self.classes_.take(
@@ -230,7 +230,7 @@ class ForestRegressor(Forest, RegressorMixin):
 
         Returns
         -------
-        predictions : array of shape = [n_samples]
+        y: array of shape = [n_samples]
             The predicted values.
         """
         X = np.atleast_2d(X)

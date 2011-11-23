@@ -463,7 +463,7 @@ class BaseDecisionTree(BaseEstimator):
 
         Returns
         -------
-        predictions : array of shape = [n_samples]
+        y : array of shape = [n_samples]
             The predicted classes, or the predict values.
         """
         X = array2d(X, dtype=DTYPE)

@@ -41,7 +41,7 @@ class BaseEnsemble(BaseEstimator):
         # This needs to be filled by the derived classes.
         self.estimators_ = []
 
-    def make_estimator(self):
+    def _make_estimator(self):
         """Makes, configures and returns a copy of the base estimator.
 
         Warning: This method should be used to properly instantiate new
