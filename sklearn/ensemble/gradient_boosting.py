@@ -258,7 +258,7 @@ class BaseGradientBoosting(BaseEstimator):
 
         # store loss object for future use
         self.loss_ = loss
-        
+
         if self.init is None:
             self.init = loss.init_estimator()
 
@@ -385,9 +385,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     >>> samples = [[0, 0, 2], [1, 0, 0]]
     >>> labels = [0, 1]
     >>> from sklearn.ensemble import GradientBoostingClassifier
-    >>> gb = GradientBoostingClassifier()
-    >>> gb.fit(samples, labels)
-    GradientBoostingClassifier()
+    >>> gb = GradientBoostingClassifier().fit(samples, labels)
     >>> print gb.predict([[0.5, 0, 0]])
     [0]
 
@@ -428,7 +426,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         if self.classes.shape[0] != 2:
             raise ValueError("only binary classification supported")
         y = np.searchsorted(self.classes, y)
-        super(GradientBoostingClassifier, self).fit(X, y, monitor=monitor)
+        return super(GradientBoostingClassifier, self).fit(X, y,
+                                                           monitor=monitor)
 
     def predict(self, X):
         X = np.atleast_2d(X)
@@ -496,11 +495,9 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     >>> samples = [[0, 0, 2], [1, 0, 0]]
     >>> labels = [0, 1]
     >>> from sklearn.ensemble import GradientBoostingRegressor
-    >>> gb = GradientBoostingRegressor()
-    >>> gb.fit(samples, labels)
-    GradientBoostingRegressor()
-    >>> print gb.predict([[0, 0, 0]])
-    [1]
+    >>> gb = GradientBoostingRegressor().fit(samples, labels)
+    >>> print gb.predict([[0, 0, 0]])    # doctest: +ELLIPSIS
+    [  1.32806997e-05]
 
     See also
     --------
@@ -510,7 +507,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     ----------
     The optimal algorithm for a given dataset is a complicated choice, and
     depends on a number of factors:
-    
+
     * n_iter vs. learn_rate
         TODO
     * n_iter vs. subsample

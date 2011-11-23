@@ -114,3 +114,25 @@ original dataset for building extra-trees (``bootstrap=False``).
 
  * Pierre Geurts, Damien Ernst., and Louis Wehenkel, "Extremely randomized
    trees", Machine Learning, 63(1), 3-42, 2006.
+
+
+.. _gradient_boosting:
+
+Gradient Boosting
+=================
+
+TODO
+
+.. topic:: Examples:
+
+ * :ref:`example_ensemble_plot_gradient_boosting_regression.py`
+
+.. topic:: References
+
+ * J. Friedman, "Greedy Function Approximation: A Gradient Boosting Machine", 
+   The Annals of Statistics, Vol. 29, No. 5, 2001.
+
+ * J. Friedman, "Stochastic Gradient Boosting", 1999
+
+ * T. Hastie, R. Tibshirani and J. Friedman, "Elements of Statistical Learning 
+   Ed. 2", Springer, 2009.

@@ -50,8 +50,8 @@ for i, tree in enumerate(clf.trees):
     y_pred += clf.learn_rate * tree.predict(X_test).ravel()
     test_deviance[i] = clf.loss_(y_test, y_pred)
 
-pl.figure(figsize=(12, 6))
-pl.subplot(1,2,1)
+pl.figure() #figsize=(12, 6))
+pl.subplot(1, 2, 1)
 pl.title('Deviance')
 pl.plot(np.arange(params['n_iter']) + 1, clf.train_deviance, 'b-',
         label='Training Set Deviance')
@@ -66,7 +66,7 @@ pl.ylabel('Deviance')
 variable_importance = clf.variable_importance
 sorted_idx = np.argsort(variable_importance)
 pos = np.arange(sorted_idx.shape[0]) + .5
-pl.subplot(1,2,2)
+pl.subplot(1, 2, 2)
 pl.barh(pos, variable_importance[sorted_idx], align='center')
 pl.yticks(pos, boston.feature_names[sorted_idx])
 pl.xlabel('Relative Importance')
