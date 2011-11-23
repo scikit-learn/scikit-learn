@@ -35,6 +35,7 @@ from .svmlight_format import dump_svmlight_file
 from .olivetti_faces import fetch_olivetti_faces
 from ..utils import deprecated
 
+
 # backward compatibility
 @deprecated("to be removed in 0.9;"
             " use sklearn.datasets.load_files instead")

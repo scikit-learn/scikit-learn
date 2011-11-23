@@ -98,6 +98,30 @@ Please refer to the :ref:`tree` section of the user guide.
    :toctree: generated/
    :template: function.rst
 
+Ensemble methods
+================
+
+Please refer to the :ref:`ensemble` section of the user guide.
+
+.. automodule:: sklearn.ensemble
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   ensemble.RandomForestClassifier
+   ensemble.RandomForestRegressor
+   ensemble.ExtraTreesClassifier
+   ensemble.ExtraTreesRegressor
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
 
 Generalized Linear Models
 =========================
@@ -466,7 +490,7 @@ Please refer to the :ref:`decompositions` section of the user guide.
 .. autosummary::
    :toctree: generated/
    :template: class.rst
- 
+
    decomposition.PCA
    decomposition.ProbabilisticPCA
    decomposition.ProjectedGradientNMF
@@ -482,7 +506,7 @@ Please refer to the :ref:`decompositions` section of the user guide.
 .. autosummary::
    :toctree: generated/
    :template: function.rst
- 
+
    decomposition.fastica
    decomposition.dict_learning
    decomposition.dict_learning_online

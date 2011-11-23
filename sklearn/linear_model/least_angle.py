@@ -728,13 +728,13 @@ class LarsCV(LARS):
                                                  fill_value=residues.max(),
                                                  axis=0)(all_alphas)
             this_residues **= 2
-            mse_path[:, index] = np.mean(this_residues, axis= -1)
+            mse_path[:, index] = np.mean(this_residues, axis=-1)
 
-        mask = np.all(np.isfinite(mse_path), axis= -1)
+        mask = np.all(np.isfinite(mse_path), axis=-1)
         all_alphas = all_alphas[mask]
         mse_path = mse_path[mask]
         # Select the alpha that minimizes left-out error
-        i_best_alpha = np.argmin(mse_path.mean(axis= -1))
+        i_best_alpha = np.argmin(mse_path.mean(axis=-1))
         best_alpha = all_alphas[i_best_alpha]
 
         # Store our parameters

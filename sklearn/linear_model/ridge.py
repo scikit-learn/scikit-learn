@@ -13,6 +13,7 @@ from ..utils import safe_asarray
 from ..preprocessing import LabelBinarizer
 from ..grid_search import GridSearchCV
 
+
 def _solve(A, b, solver, tol):
     # helper method for ridge_regression, A is symmetric positive
 
@@ -83,7 +84,7 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto', tol=1e-3):
     n_samples, n_features = X.shape
     is_sparse = False
 
-    if hasattr(X, 'todense'): # lazy import of scipy.sparse
+    if hasattr(X, 'todense'):  # lazy import of scipy.sparse
         from scipy import sparse
         is_sparse = sparse.issparse(X)
 
@@ -122,7 +123,11 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto', tol=1e-3):
 
 class Ridge(LinearModel):
     """
-    Ridge regression.
+    Linear least squares with l2 regularization.
+
+    This model solves a regression model where the loss function is
+    the linear least squares function and regularization is given by
+    the l2-norm. Also known as Ridge Regression or Tikhonov regularization.
 
     Parameters
     ----------
@@ -151,6 +156,10 @@ class Ridge(LinearModel):
 
     coef_: array, shape = [n_features] or [n_responses, n_features]
         Weight vector(s).
+
+    See also
+    --------
+    RidgeClassifier, RidgeCV
 
     Examples
     --------
@@ -239,6 +248,10 @@ class RidgeClassifier(Ridge):
     coef_: array, shape = [n_features] or [n_classes, n_features]
         Weight vector(s).
 
+    See also
+    --------
+    Ridge, RidgeClassifierCV
+
     Note
     ----
     For multi-class classification, n_class classifiers are trained in
@@ -287,7 +300,7 @@ class RidgeClassifier(Ridge):
 
         Returns
         -------
-        C : array, shape = [n_samples]
+        y : array, shape = [n_samples]
         """
         Y = self.decision_function(X)
         return self.label_binarizer.inverse_transform(Y)
@@ -333,8 +346,8 @@ class _RidgeGCV(LinearModel):
     http://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf
     """
 
-    def __init__(self, alphas=[0.1, 1.0, 10.0], fit_intercept=True, normalize=False,
-            score_func=None, loss_func=None, copy_X=True):
+    def __init__(self, alphas=[0.1, 1.0, 10.0], fit_intercept=True,
+            normalize=False, score_func=None, loss_func=None, copy_X=True):
         self.alphas = np.asarray(alphas)
         self.fit_intercept = fit_intercept
         self.normalize = normalize
@@ -470,7 +483,7 @@ class RidgeCV(LinearModel):
 
     See also
     --------
-    Ridge
+    Ridge, RidgeClassifierCV
     """
 
     def __init__(self, alphas=np.array([0.1, 1.0, 10.0]), fit_intercept=True,
@@ -568,5 +581,16 @@ class RidgeClassifierCV(RidgeCV):
         return RidgeCV.predict(self, X)
 
     def predict(self, X):
+        """
+        Predict target values according to the fitted model.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        y : array, shape = [n_samples]
+        """
         Y = self.decision_function(X)
         return self.label_binarizer.inverse_transform(Y)

@@ -253,6 +253,8 @@ class GraphLasso(EmpiricalCovariance):
         self.tol = tol
         self.max_iter = max_iter
         self.verbose = verbose
+        # The base class needs this for the score method
+        self.store_precision = True
 
     def fit(self, X, y=None):
         emp_cov = empirical_covariance(X)
@@ -418,6 +420,8 @@ class GraphLassoCV(GraphLasso):
         self.verbose = verbose
         self.cv = cv
         self.n_jobs = n_jobs
+        # The base class needs this for the score method
+        self.store_precision = True
 
     def fit(self, X, y=None):
         X = np.asarray(X)
@@ -500,7 +504,7 @@ class GraphLassoCV(GraphLasso):
                 covs_init = path[best_index][-1]
             elif best_index == len(path) - 1:
                 alpha_1 = path[best_index][0]
-                alpha_0 = 0.01 * path[best_index + 1][0]
+                alpha_0 = 0.01 * path[best_index][0]
                 covs_init = path[best_index][-1]
             else:
                 alpha_1 = path[best_index - 1][0]

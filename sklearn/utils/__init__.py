@@ -64,7 +64,7 @@ def array2d(X, dtype=None, order=None):
 
 def atleast2d_or_csr(X):
     """Like numpy.atleast_2d, but converts sparse matrices to CSR format
-    
+
     Also, converts np.matrix to np.ndarray.
     """
     X = X.tocsr() if sp.issparse(X) else array2d(X)
