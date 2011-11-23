@@ -506,6 +506,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     ----------
     The optimal algorithm for a given dataset is a complicated choice, and
     depends on a number of factors:
+    
     * n_iter vs. learn_rate
         TODO
     * n_iter vs. subsample
