@@ -63,6 +63,16 @@ def test_parameter_checks():
     assert_raises(ValueError, GradientBoostingClassifier, max_depth=-0.1)
     assert_raises(ValueError, GradientBoostingClassifier, max_depth=0)
 
+    assert_raises(ValueError, GradientBoostingClassifier, init={})
+
+    # test fit before variable importance
+    assert_raises(ValueError,
+                  lambda :GradientBoostingClassifier().variable_importance)
+
+    # test value error on multi-class
+    assert_raises(ValueError, lambda X, y:GradientBoostingClassifier().fit(X, y),
+                  X, [0, 0, 1, 1, 2, 2])
+
 
 def test_classification_synthetic():
     """Test GradientBoostingClassifier on synthetic dataset used by
