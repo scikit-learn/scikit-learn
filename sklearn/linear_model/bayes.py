@@ -373,8 +373,8 @@ class ARDRegression(LinearModel):
         n_samples, n_features = X.shape
         coef_ = np.zeros(n_features)
 
-        X, y, X_mean, y_mean, X_std = self._center_data(X, y, self.fit_intercept,
-                self.normalize, self.copy_X)
+        X, y, X_mean, y_mean, X_std = self._center_data(X, y,
+                self.fit_intercept, self.normalize, self.copy_X)
 
         ### Launch the convergence loop
         keep_lambda = np.ones(n_features, dtype=bool)

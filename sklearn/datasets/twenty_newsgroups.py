@@ -60,6 +60,7 @@ CACHE_NAME = "20news-bydate.pkz"
 TRAIN_FOLDER = "20news-bydate-train"
 TEST_FOLDER = "20news-bydate-test"
 
+
 def download_20newsgroups(target_dir, cache_path):
     """ Download the 20Newsgroups data and convert is in a zipped pickle
         storage.
@@ -130,9 +131,9 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
         try:
             cache = pickle.loads(open(cache_path, 'rb').read().decode('zip'))
         except Exception, e:
-            print 80*'_'
+            print 80 * '_'
             print 'Cache loading failed'
-            print 80*'_'
+            print 80 * '_'
             print e
 
     if cache is None:
@@ -193,4 +194,5 @@ def load_20newsgroups(download_if_missing=False, **kwargs):
 
     See fetch_20newsgroups.__doc__ for documentation and parameter list.
     """
-    return fetch_20newsgroups(download_if_missing=download_if_missing, **kwargs)
+    return fetch_20newsgroups(download_if_missing=download_if_missing,
+            **kwargs)

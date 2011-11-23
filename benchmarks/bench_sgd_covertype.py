@@ -3,12 +3,13 @@
 Covertype dataset with dense SGD
 ================================
 
-Benchmark stochastic gradient descent (SGD), Liblinear, and Naive Bayes on
-the forest covertype dataset of Blackard, Jock, and Dean [1]. The dataset
-comprises 581,012 samples. It is low-dimensional with 54 features and a
-sparsity of approx. 23%. Here, we consider the task of predicting class 1
-(spruce/fir). The classification performance of SGD is competitive with
-Liblinear while being two orders of magnitude faster to train::
+Benchmark stochastic gradient descent (SGD), Liblinear, and Naive Bayes, CART
+(decision tree), RandomForest and Extra-Trees on the forest covertype dataset of
+Blackard, Jock, and Dean [1]. The dataset comprises 581,012 samples. It is low-
+dimensional with 54 features and a sparsity of approx. 23%. Here, we consider
+the task of predicting class 1 (spruce/fir). The classification performance of
+SGD is competitive with Liblinear while being two orders of magnitude faster to
+train::
 
     [..]
     Classification performance:
@@ -16,10 +17,12 @@ Liblinear while being two orders of magnitude faster to train::
 
     Classifier   train-time test-time error-rate
     --------------------------------------------
-    Liblinear     10.0171s   0.0213s     0.2305
-    GaussianNB    3.1570s    0.1907s     0.3633
-    SGD           0.2317s    0.0050s     0.2300
-    CART          62.7706s   1.7280s     0.0425
+    Liblinear     11.8977s   0.0285s     0.2305
+    GaussianNB    3.5931s    0.6645s     0.6367
+    SGD           0.2924s    0.0114s     0.2300
+    CART          39.9829s   0.0345s     0.0476
+    RandomForest  794.6232s  1.0526s     0.0249
+    Extra-Trees   1401.7051s 1.1181s     0.0230
 
 The same task has been used in a number of papers including:
 
@@ -59,7 +62,7 @@ from sklearn.svm import LinearSVC
 from sklearn.linear_model import SGDClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble.gradient_boosting import GradientBoostingClassifier
+from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 from sklearn import metrics
 
 ######################################################################
@@ -172,13 +175,25 @@ sgd_parameters = {
 sgd_err, sgd_train_time, sgd_test_time = benchmark(SGDClassifier(
     **sgd_parameters))
 
+######################################################################
+## Train CART model
 cart_err, cart_train_time, cart_test_time = benchmark(
-    DecisionTreeClassifier(min_split=5, max_depth=30))
+    DecisionTreeClassifier(min_split=5,
+                           max_depth=None))
 
-## print("Training GB model")
-## gb_err, gb_train_time, gb_test_time = benchmark(
-##     GradientBoostingClassifier(min_split=5, max_depth=10, n_iter=20,
-##                                learn_rate=.8, subsample=0.5))
+######################################################################
+## Train RandomForest model
+rf_err, rf_train_time, rf_test_time = benchmark(
+    RandomForestClassifier(n_estimators=20,
+                           min_split=5,
+                           max_depth=None))
+
+######################################################################
+## Train Extra-Trees model
+et_err, et_train_time, et_test_time = benchmark(
+    ExtraTreesClassifier(n_estimators=20,
+                         min_split=5,
+                         max_depth=None))
 
 ######################################################################
 ## Print classification performance
@@ -202,6 +217,7 @@ print_row("Liblinear", liblinear_train_time, liblinear_test_time,
 print_row("GaussianNB", gnb_train_time, gnb_test_time, gnb_err)
 print_row("SGD", sgd_train_time, sgd_test_time, sgd_err)
 print_row("CART", cart_train_time, cart_test_time, cart_err)
-## print_row("GB", gb_train_time, gb_test_time, gb_err)
+print_row("RandomForest", rf_train_time, rf_test_time, rf_err)
+print_row("Extra-Trees", et_train_time, et_test_time, et_err)
 print("")
 print("")

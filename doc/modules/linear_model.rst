@@ -12,10 +12,10 @@ the target value is expected to be a linear combination of the input
 variables. In mathematical notion, if :math:`\hat{y}` is the predicted
 value.
 
-.. math::    \hat{y}(w, x) = w_0 + w_1 x_1 + ... + w_n x_n
+.. math::    \hat{y}(w, x) = w_0 + w_1 x_1 + ... + w_p x_p
 
 Across the module, we designate the vector :math:`w = (w_1,
-..., w_n)` as ``coef_`` and :math:`w_0` as ``intercept_``.
+..., w_p)` as ``coef_`` and :math:`w_0` as ``intercept_``.
 
 To perform classification with generalized linear models, see
 :ref:`Logistic_regression`.
@@ -27,9 +27,12 @@ Ordinary Least Squares
 =======================
 
 :class:`LinearRegression` fits a linear model with coefficients
-:math:`\beta = (\beta_1, ..., \beta_D)` to minimize the residual sum
+:math:`w = (w_1, ..., w_p)` to minimize the residual sum
 of squares between the observed responses in the dataset, and the
-responses predicted by the linear approximation.
+responses predicted by the linear approximation. Mathematically it
+solves a problem of the form:
+
+.. math:: \underset{w}{min} {|| X w - y||_2}^2
 
 .. figure:: ../auto_examples/linear_model/images/plot_ols_1.png
    :target: ../auto_examples/linear_model/plot_ols.html
@@ -50,7 +53,7 @@ and will store the coefficients :math:`w` of the linear model in its
 However, coefficient estimates for Ordinary Least Squares rely on the
 independence of the model terms. When terms are correlated and the
 columns of the design matrix :math:`X` have an approximate linear
-dependence, the matrix :math:`X(X^T X)^{-1}` becomes close to singular
+dependence, the design matrix becomes close to singular
 and as a result, the least-squares estimate becomes highly sensitive
 to random errors in the observed response, producing a large
 variance. This situation of *multicollinearity* can arise, for
@@ -65,7 +68,7 @@ Ordinary Least Squares Complexity
 ---------------------------------
 
 This method computes the least squares solution using a singular value
-decomposition of X. If X is a matrix of size (n, p ) this method has a
+decomposition of X. If X is a matrix of size (n, p) this method has a
 cost of :math:`O(n p^2)`, assuming that :math:`n \geq p`.
 
 
@@ -110,6 +113,7 @@ its `coef\_` member::
 .. topic:: Examples:
 
    * :ref:`example_linear_model_plot_ridge_path.py`
+   * :ref:`example_document_classification_20newsgroups.py`
 
 
 Ridge Complexity
@@ -124,8 +128,8 @@ This method has the same order of complexity than an
 .. between these
 
 
-Setting alpha: generalized Cross-Validation
----------------------------------------------
+Setting the regularization parameter: generalized Cross-Validation
+------------------------------------------------------------------
 
 :class:`RidgeCV` implements ridge regression with built-in
 cross-validation of the alpha parameter.  The object works in the same way
@@ -162,7 +166,7 @@ and its variants are fundamental to the field of compressed sensing.
 Mathematically, it consists of a linear model trained with L1 prior as
 regularizer. The objective function to minimize is:
 
-.. math::  0.5 * ||X w - y||_2 ^ 2 + \alpha * ||w||_1
+.. math::  \underset{w}{min} { 0.5 * ||X w - y||_2 ^ 2 + \alpha * ||w||_1}
 
 The lasso estimate thus solves the minimization of the
 least-squares penalty with :math:`\alpha * ||w||_1` added, where
@@ -187,8 +191,8 @@ computes the coefficients along the full path of possible values.
 
   * :ref:`example_linear_model_lasso_and_elasticnet.py`,
 
-Setting `alpha`
------------------
+Setting regularization parameter
+--------------------------------
 
 The `alpha` parameter control the degree of sparsity of the coefficients
 estimated.
@@ -196,7 +200,7 @@ estimated.
 Using cross-validation
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-The scikit exposes objects that set the Lasso `alpha` parameter by
+scikit-learn exposes objects that set the Lasso `alpha` parameter by
 cross-validation: :class:`LassoCV` and :class:`LassoLarsCV`.
 :class:`LassoLarsCV` is based on the :ref:`least_angle_regression` algorithm
 explained below.
@@ -250,7 +254,10 @@ regularizer.
 
 The objective function to minimize is in this case
 
-.. math::        0.5 * ||X w - y||_2 ^ 2 + \alpha * \rho * ||w||_1 + \alpha * (1-\rho) * 0.5 * ||w||_2 ^ 2
+.. math::
+
+    \underset{w}{min} { 0.5 * ||X w - y||_2 ^ 2 + \alpha * \rho * ||w||_1 +
+    \alpha * (1-\rho) * 0.5 * ||w||_2 ^ 2}
 
 
 .. figure:: ../auto_examples/linear_model/images/plot_lasso_coordinate_descent_path_1.png
@@ -456,6 +463,7 @@ By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e^{-6}`,
 .. figure:: ../auto_examples/linear_model/images/plot_bayesian_ridge_1.png
    :target: ../auto_examples/linear_model/plot_bayesian_ridge.html
    :align: center
+   :scale: 50%
 
 
 Bayesian Ridge Regression is used for regression::
@@ -522,6 +530,7 @@ By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e-6`, *i.e.*
 .. figure:: ../auto_examples/linear_model/images/plot_ard_1.png
    :target: ../auto_examples/linear_model/plot_ard.html
    :align: center
+   :scale: 50%
 
 
 .. topic:: Examples:
@@ -590,7 +599,7 @@ zero) model.
 
 .. topic:: Examples:
 
-  * :ref:`example_logistic_l1_l2_coef.py`
+  * :ref:`example_linear_model_logistic_l1_l2_sparsity.py`
 
   * :ref:`example_linear_model_plot_logistic_path.py`
 
