@@ -168,6 +168,8 @@ class BaseSGD(BaseEstimator):
         self._set_penalty_type(self.penalty)
 
         self.alpha = float(alpha)
+        if self.alpha < 0.0:
+            raise ValueError("alpha must be greater than zero")
         self.rho = float(rho)
         if self.rho < 0.0 or self.rho > 1.0:
             raise ValueError("rho must be in [0, 1]")

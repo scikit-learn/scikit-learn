@@ -711,7 +711,7 @@ def _find_best_random_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
             continue
 
         # Draw a random threshold in [a, b)
-        t = X_i[X_argsorted_i[a]] + np.random.rand() * (X_i[X_argsorted_i[b]] - X_i[X_argsorted_i[a]])
+        t = X_i[X_argsorted_i[a]] + random_state.rand() * (X_i[X_argsorted_i[b]] - X_i[X_argsorted_i[a]])
         if t == X_i[X_argsorted_i[b]]:
             t = X_i[X_argsorted_i[a]]
 

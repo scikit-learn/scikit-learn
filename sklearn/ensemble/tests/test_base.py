@@ -2,7 +2,6 @@
 Testing for the base module (sklearn.ensemble.base).
 """
 
-import numpy as np
 from numpy.testing import assert_equal
 from nose.tools import assert_raises
 
@@ -29,8 +28,9 @@ def test_error():
         return class_name(**params)
 
     base_estimator = object()
-    assert_raises(TypeError, instantiate, class_name=BaseEnsemble, base_estimator=base_estimator, n_estimators=1)
+    assert_raises(TypeError, instantiate, class_name=BaseEnsemble,
+                  base_estimator=base_estimator, n_estimators=1)
 
     base_estimator = DecisionTreeClassifier()
-    assert_raises(ValueError, instantiate, class_name=BaseEnsemble, base_estimator=base_estimator, n_estimators=-1)
-
+    assert_raises(ValueError, instantiate, class_name=BaseEnsemble,
+                  base_estimator=base_estimator, n_estimators=-1)

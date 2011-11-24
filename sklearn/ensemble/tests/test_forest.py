@@ -5,10 +5,7 @@ Testing for the forest module (sklearn.ensemble.forest).
 import numpy as np
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
-from numpy.testing import assert_almost_equal
 from numpy.testing import assert_equal
-from nose.tools import assert_raises
-from nose.tools import assert_true
 
 from sklearn.grid_search import GridSearchCV
 from sklearn.ensemble import RandomForestClassifier
@@ -47,7 +44,8 @@ def test_classification_toy():
     assert_array_equal(clf.predict(T), true_result)
     assert_equal(10, len(clf))
 
-    clf = RandomForestClassifier(n_estimators=10, max_features=1, random_state=1)
+    clf = RandomForestClassifier(n_estimators=10, max_features=1,
+                                 random_state=1)
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
     assert_equal(10, len(clf))
@@ -58,7 +56,8 @@ def test_classification_toy():
     assert_array_equal(clf.predict(T), true_result)
     assert_equal(10, len(clf))
 
-    clf = ExtraTreesClassifier(n_estimators=10, max_features=1, random_state=1)
+    clf = ExtraTreesClassifier(n_estimators=10, max_features=1,
+                               random_state=1)
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
     assert_equal(10, len(clf))
@@ -68,52 +67,67 @@ def test_iris():
     """Check consistency on dataset iris."""
     for c in ("gini", "entropy"):
         # Random forest
-        clf = RandomForestClassifier(n_estimators=10, criterion=c, random_state=1)
+        clf = RandomForestClassifier(n_estimators=10, criterion=c,
+                                     random_state=1)
         clf.fit(iris.data, iris.target)
         score = clf.score(iris.data, iris.target)
-        assert score > 0.9, "Failed with criterion %s and score = %f" % (c, score)
+        assert score > 0.9, "Failed with criterion %s and score = %f" % (c,
+                                                                         score)
 
-        clf = RandomForestClassifier(n_estimators=10, criterion=c, max_features=2, random_state=1)
+        clf = RandomForestClassifier(n_estimators=10, criterion=c,
+                                     max_features=2, random_state=1)
         clf.fit(iris.data, iris.target)
         score = clf.score(iris.data, iris.target)
-        assert score > 0.5, "Failed with criterion %s and score = %f" % (c, score)
+        assert score > 0.5, "Failed with criterion %s and score = %f" % (c,
+                                                                         score)
 
         # Extra-trees
-        clf = ExtraTreesClassifier(n_estimators=10, criterion=c, random_state=1)
+        clf = ExtraTreesClassifier(n_estimators=10, criterion=c,
+                                   random_state=1)
         clf.fit(iris.data, iris.target)
         score = clf.score(iris.data, iris.target)
-        assert score > 0.9, "Failed with criterion %s and score = %f" % (c, score)
+        assert score > 0.9, "Failed with criterion %s and score = %f" % (c,
+                                                                         score)
 
-        clf = ExtraTreesClassifier(n_estimators=10, criterion=c, max_features=2, random_state=1)
+        clf = ExtraTreesClassifier(n_estimators=10, criterion=c,
+                                   max_features=2, random_state=1)
         clf.fit(iris.data, iris.target)
         score = clf.score(iris.data, iris.target)
-        assert score > 0.9, "Failed with criterion %s and score = %f" % (c, score)
+        assert score > 0.9, "Failed with criterion %s and score = %f" % (c,
+                                                                         score)
 
 
 def test_boston():
     """Check consistency on dataset boston house prices."""
     for c in ("mse",):
         # Random forest
-        clf = RandomForestRegressor(n_estimators=10, criterion=c, random_state=1)
+        clf = RandomForestRegressor(n_estimators=10, criterion=c,
+                                    random_state=1)
         clf.fit(boston.data, boston.target)
         score = clf.score(boston.data, boston.target)
-        assert score < 3, "Failed with max_features=None, criterion %s and score = %f" % (c, score)
+        assert score < 3, ("Failed with max_features=None, "
+                           "criterion %s and score = %f" % (c, score))
 
-        clf = RandomForestRegressor(n_estimators=10, criterion=c, max_features=6, random_state=1)
+        clf = RandomForestRegressor(n_estimators=10, criterion=c,
+                                    max_features=6, random_state=1)
         clf.fit(boston.data, boston.target)
         score = clf.score(boston.data, boston.target)
-        assert score < 3, "Failed with max_features=None, criterion %s and score = %f" % (c, score)
+        assert score < 3, ("Failed with max_features=None, "
+                           "criterion %s and score = %f" % (c, score))
 
         # Extra-trees
         clf = ExtraTreesRegressor(n_estimators=10, criterion=c, random_state=1)
         clf.fit(boston.data, boston.target)
         score = clf.score(boston.data, boston.target)
-        assert score < 3, "Failed with max_features=None, criterion %s and score = %f" % (c, score)
+        assert score < 3, ("Failed with max_features=None, "
+                           "criterion %s and score = %f" % (c, score))
 
-        clf = ExtraTreesRegressor(n_estimators=10, criterion=c, max_features=6, random_state=1)
+        clf = ExtraTreesRegressor(n_estimators=10, criterion=c, max_features=6,
+                                  random_state=1)
         clf.fit(boston.data, boston.target)
         score = clf.score(boston.data, boston.target)
-        assert score < 3, "Failed with max_features=None, criterion %s and score = %f" % (c, score)
+        assert score < 3, ("Failed with max_features=None, "
+                           "criterion %s and score = %f" % (c, score))
 
 
 def test_probability():
@@ -121,29 +135,33 @@ def test_probability():
     # Random forest
     clf = RandomForestClassifier(n_estimators=10, random_state=1)
     clf.fit(iris.data, iris.target)
-    assert_array_almost_equal(np.sum(clf.predict_proba(iris.data), axis=1), np.ones(iris.data.shape[0]))
-    assert_array_almost_equal(clf.predict_proba(iris.data), np.exp(clf.predict_log_proba(iris.data)))
+    assert_array_almost_equal(np.sum(clf.predict_proba(iris.data), axis=1),
+                              np.ones(iris.data.shape[0]))
+    assert_array_almost_equal(clf.predict_proba(iris.data),
+                              np.exp(clf.predict_log_proba(iris.data)))
 
     # Extra-trees
     clf = ExtraTreesClassifier(n_estimators=10, random_state=1)
     clf.fit(iris.data, iris.target)
-    assert_array_almost_equal(np.sum(clf.predict_proba(iris.data), axis=1), np.ones(iris.data.shape[0]))
-    assert_array_almost_equal(clf.predict_proba(iris.data), np.exp(clf.predict_log_proba(iris.data)))
+    assert_array_almost_equal(np.sum(clf.predict_proba(iris.data), axis=1),
+                              np.ones(iris.data.shape[0]))
+    assert_array_almost_equal(clf.predict_proba(iris.data),
+                              np.exp(clf.predict_log_proba(iris.data)))
 
 
 def test_gridsearch():
     """Check that base trees can be grid-searched."""
     # Random forest
     forest = RandomForestClassifier()
-    parameters = {'n_estimators': (1,2),
-                  'max_depth': (1,2)}
+    parameters = {'n_estimators': (1, 2),
+                  'max_depth': (1, 2)}
     clf = GridSearchCV(forest, parameters)
     clf.fit(iris.data, iris.target)
 
     # Extra-trees
     forest = ExtraTreesClassifier()
-    parameters = {'n_estimators': (1,2),
-                  'max_depth': (1,2)}
+    parameters = {'n_estimators': (1, 2),
+                  'max_depth': (1, 2)}
     clf = GridSearchCV(forest, parameters)
     clf.fit(iris.data, iris.target)
 
