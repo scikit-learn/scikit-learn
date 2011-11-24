@@ -87,7 +87,7 @@ slightly greater increase in bias::
     ...     min_split=1, random_state=0)
     >>> scores = cross_val_score(clf, X, y)
     >>> scores.mean()                             # doctest: +ELLIPSIS
-    0.999...
+    0.9...
 
 The main parameters to adjust when using these methods is ``n_estimators`` and
 ``max_features``. The former is the number of trees in the forest. The larger

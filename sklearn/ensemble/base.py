@@ -50,8 +50,8 @@ class BaseEnsemble(BaseEstimator):
         assert len(self.estimators_) < self.n_estimators
 
         estimator = clone(self.base_estimator)
-        estimator.set_params(**{p:getattr(self, p)
-                                for p in self.estimator_params})
+        estimator.set_params(**dict((p, getattr(self, p))
+                                    for p in self.estimator_params))
         self.estimators_.append(estimator)
 
         return estimator
