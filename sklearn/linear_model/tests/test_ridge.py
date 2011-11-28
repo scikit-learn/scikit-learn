@@ -2,8 +2,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from numpy.testing import assert_almost_equal, assert_array_almost_equal, \
-                          assert_equal, assert_array_equal
-
+                          assert_equal
 from sklearn import datasets
 from sklearn.metrics import mean_square_error
 
