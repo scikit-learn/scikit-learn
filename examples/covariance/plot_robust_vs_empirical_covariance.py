@@ -12,8 +12,8 @@ set.
 The Minimum Covariance Determinant estimator is a robust,
 high-breakdown point (i.e. it can be used to estimate the covariance
 matrix of highly contaminated datasets, up to
-$\frac{n_samples-n_features-1}{2}$ outliers) estimator of
-covariance. The idea is to find $\frac{n_samples+n_features+1}{2}$
+:math:`\frac{n_samples-n_features-1}{2}` outliers) estimator of
+covariance. The idea is to find :math:`\frac{n_samples+n_features+1}{2}`
 observations whose empirical covariance has the smallest determinant,
 yielding a "pure" subset of observations from which to compute
 standards estimates of location and covariance. After a correction
@@ -25,17 +25,11 @@ The Minimum Covariance Determinant estimator (MCD) has been introduced
 by P.J.Rousseuw in [1].
 
 In this example, we compare the estimation errors that are made when
-using four types of location and covariance estimates on contaminated
+using three types of location and covariance estimates on contaminated
 gaussian distributed data sets:
  - The mean and the empirical covariance of the full dataset, which break
    down as soon as there are outliers in the data set
  - The robust MCD, that has a low error provided n_samples > 5 * n_features
- - The robust MCD reweighted according to Rousseeuw's recommandations:
-   observations are given a 0 weight if they are found to be outlying
-   according to their MCD-based Mahalanobis distance. Doing so improve the
-   efficiency of the estimators at gaussian models but it assumes that
-   we perfectly know the distribution of the mahalanobis distances computed
-   from the MCD estimate (see [2] for further details).
  - The mean and the empirical covariance of the observations that are known
    to be good ones. This can be considered as a "perfect" MCD estimation,
    so one can trust our implementation by comparing to this case.
@@ -52,19 +46,20 @@ import numpy as np
 import pylab as pl
 import matplotlib.font_manager
 
-from sklearn.covariance import EmpiricalCovariance, MCD
+from sklearn.covariance import EmpiricalCovariance, MinCovDet
 
 # example settings
 n_samples = 80
 n_features = 5
 repeat = 10
-range_n_outliers = np.arange(0, n_samples / 2, 5)
+
+range_n_outliers = np.concatenate(
+    (np.linspace(0, n_samples / 8, 5),
+     np.linspace(n_samples / 8, n_samples / 2, 5)[1:-1]))
 
 # definition of arrays to store results
 err_loc_mcd = np.zeros((range_n_outliers.size, repeat))
 err_cov_mcd = np.zeros((range_n_outliers.size, repeat))
-err_loc_mcd_reweighted = np.zeros((range_n_outliers.size, repeat))
-err_cov_mcd_reweighted = np.zeros((range_n_outliers.size, repeat))
 err_loc_emp_full = np.zeros((range_n_outliers.size, repeat))
 err_cov_emp_full = np.zeros((range_n_outliers.size, repeat))
 err_loc_emp_pure = np.zeros((range_n_outliers.size, repeat))
@@ -84,15 +79,10 @@ for i, n_outliers in enumerate(range_n_outliers):
         inliers_mask[outliers_index] = False
 
         # fit a Minimum Covariance Determinant (MCD) robust estimator to data
-        S = MCD().fit(X, reweight=None)
-        # compare robust estimates with the true location and covariance
+        S = MinCovDet().fit(X)
+        # compare raw robust estimates with the true location and covariance
         err_loc_mcd[i, j] = np.sum(S.location_ ** 2)
         err_cov_mcd[i, j] = S.error_norm(np.eye(n_features))
-        # fit a reweighted MCD robust estimator to data
-        S = MCD().fit(X)
-        # compare robust estimates with the true location and covariance
-        err_loc_mcd_reweighted[i, j] = np.sum(S.location_ ** 2)
-        err_cov_mcd_reweighted[i, j] = S.error_norm(np.eye(n_features))
         # compare estimators learnt from the full data set with true parameters
         err_loc_emp_full[i, j] = np.sum(X.mean(0) ** 2)
         err_cov_emp_full[i, j] = EmpiricalCovariance().fit(X).error_norm(
@@ -110,10 +100,7 @@ font_prop = matplotlib.font_manager.FontProperties(size=11)
 pl.subplot(2, 1, 1)
 pl.errorbar(range_n_outliers, err_loc_mcd.mean(1),
             yerr=err_loc_mcd.std(1) / np.sqrt(repeat),
-            label="Robust location", color='cyan')
-pl.errorbar(range_n_outliers, err_loc_mcd_reweighted.mean(1),
-            yerr=err_loc_mcd_reweighted.std(1) / np.sqrt(repeat),
-            label="Robust location (reweighted)", color='blue')
+            label="Robust location", color='m')
 pl.errorbar(range_n_outliers, err_loc_emp_full.mean(1),
             yerr=err_loc_emp_full.std(1) / np.sqrt(repeat),
             label="Full data set mean", color='green')
@@ -128,10 +115,7 @@ pl.subplot(2, 1, 2)
 x_size = range_n_outliers.size
 pl.errorbar(range_n_outliers, err_cov_mcd.mean(1),
             yerr=err_cov_mcd.std(1),
-            label="Robust covariance (MCD)", color='cyan')
-pl.errorbar(range_n_outliers, err_cov_mcd_reweighted.mean(1),
-            yerr=err_cov_mcd_reweighted.std(1),
-            label="Robust covariance (reweighted MCD)", color='blue')
+            label="Robust covariance (MCD)", color='m')
 pl.errorbar(range_n_outliers[:(x_size / 5 + 1)],
             err_cov_emp_full.mean(1)[:(x_size / 5 + 1)],
             yerr=err_cov_emp_full.std(1)[:(x_size / 5 + 1)],
@@ -145,6 +129,6 @@ pl.errorbar(range_n_outliers, err_cov_emp_pure.mean(1),
 pl.title("Influence of outliers on the covariance estimation")
 pl.xlabel("Amount of contamination (%)")
 pl.ylabel("RMSE")
-pl.legend(loc="upper right", prop=font_prop)
+pl.legend(loc="upper center", prop=font_prop)
 
 pl.show()
