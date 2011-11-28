@@ -150,19 +150,6 @@ class EllipticEnvelop(OutlierDetectionMixin, MinCovDet):
       MCD estimate. Default is None, which implies that the minimum
       value of h will be used within the algorithm:
       [n_sample + n_features + 1] / 2
-    correction: str
-      Improve the covariance estimator consistency at Gaussian models
-        - "empirical" (default): correction using the empirical correction
-          factor suggested by Rousseeuw and Van Driessen in [1]
-        - "theoretical": correction using the theoretical correction factor
-          derived in [2]
-        - else: no correction
-    reweighting: str
-      Computation of a reweighted estimator:
-        - "rousseeuw" (default): Reweight observations using Rousseeuw's
-          method (equivalent to deleting outlying observations from the
-          data set before computing location and covariance estimates)
-        - else: no re-weighting
     contamination: float, 0. < contamination < 0.5
       The amount of contamination of the data set, i.e. the proportion
       of outliers in the data set.
@@ -179,11 +166,9 @@ class EllipticEnvelop(OutlierDetectionMixin, MinCovDet):
 
     """
     def __init__(self, store_precision=True, assume_centered=False,
-                 h=None, correction="empirical", reweighting=None,
-                 contamination=0.1):
+                 h=None, contamination=0.1):
         MinCovDet.__init__(self, store_precision=store_precision,
-                           assume_centered=assume_centered, h=h,
-                           correction=correction, reweighting=reweighting)
+                           assume_centered=assume_centered, h=h)
         OutlierDetectionMixin.__init__(self, contamination=contamination)
 
     def fit(self, X):

@@ -31,7 +31,7 @@ clusters_distances = [0, 1, 2]
 # define two outlier detection tools to be compared
 classifiers = {
     "One-Class SVM": svm.OneClassSVM(
-        nu=outliers_rate, kernel="rbf", gamma=0.1),
+        nu=0.95 * outliers_rate + 0.05, kernel="rbf", gamma=0.1),
     "robust covariance estimator": EllipticEnvelop(contamination=.1)}
 
 # Compare given classifiers under given settings
