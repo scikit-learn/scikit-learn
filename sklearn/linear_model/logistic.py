@@ -23,7 +23,7 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin,
 
     dual : boolean
         Dual or primal formulation. Dual formulation is only
-        implemented for l2 penalty. Prefer dual=False when 
+        implemented for l2 penalty. Prefer dual=False when
         n_samples > n_features.
 
     C : float
