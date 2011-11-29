@@ -12,13 +12,14 @@ np.seterr(all='warn')
 
 
 def test_log_normalize():
-   v = np.array([0.1, 0.8, 0.01, 0.09])
-   a = np.log(2*v)
-   assert np.allclose(v, log_normalize(a), rtol=0.01)
+    v = np.array([0.1, 0.8, 0.01, 0.09])
+    a = np.log(2 * v)
+    assert np.allclose(v, log_normalize(a), rtol=0.01)
 
 
 def do_model(self, **kwds):
     return VBGMM(verbose=False, **kwds)
+
 
 class DPGMMTester(GMMTester):
     model = DPGMM

@@ -21,6 +21,7 @@ warnings.warn('sklearn.hmm is orphaned, undocumented and has known numerical'
 
 ZEROLOGPROB = -1e200
 
+
 class _BaseHMM(BaseEstimator):
     """Hidden Markov Model base class.
 
@@ -85,7 +86,8 @@ class _BaseHMM(BaseEstimator):
         self.startprob_prior = startprob_prior
 
         if transmat is None:
-            transmat = np.tile(1.0 / n_components, (n_components, n_components))
+            transmat = np.tile(1.0 / n_components,
+                    (n_components, n_components))
         self.transmat = transmat
 
         if transmat_prior is None:
@@ -139,7 +141,7 @@ class _BaseHMM(BaseEstimator):
         # pruned too aggressively.
         posteriors = np.exp(gamma.T - logsum(gamma, axis=1)).T
         posteriors += np.finfo(np.float32).eps
-        posteriors /= np.sum(posteriors, axis=1).reshape((-1,1))
+        posteriors /= np.sum(posteriors, axis=1).reshape((-1, 1))
         return logprob, posteriors
 
     def score(self, obs, maxrank=None, beamlogprob=-np.Inf):
@@ -389,8 +391,10 @@ class _BaseHMM(BaseEstimator):
         return np.exp(self._log_transmat)
 
     def _set_transmat(self, transmat):
-        if np.asarray(transmat).shape != (self.n_components, self.n_components):
-            raise ValueError('transmat must have shape (n_components, n_components)')
+        if (np.asarray(transmat).shape
+                != (self.n_components, self.n_components)):
+            raise ValueError('transmat must have shape ' +
+                    '(n_components, n_components)')
         if not np.all(np.allclose(np.sum(transmat, axis=1), 1.0)):
             raise ValueError('Rows of transmat must sum to 1.0')
 
@@ -649,7 +653,8 @@ class GaussianHMM(_BaseHMM):
         means = np.asarray(means)
         if hasattr(self, 'n_features') and \
                means.shape != (self.n_components, self.n_features):
-            raise ValueError('means must have shape (n_components, n_features)')
+            raise ValueError('means must have shape' +
+                    '(n_components, n_features)')
         self._means = means.copy()
         self.n_features = self._means.shape[1]
 
@@ -668,7 +673,8 @@ class GaussianHMM(_BaseHMM):
 
     def _set_covars(self, covars):
         covars = np.asarray(covars)
-        _validate_covars(covars, self._cvtype, self.n_components, self.n_features)
+        _validate_covars(covars, self._cvtype, self.n_components,
+                self.n_features)
         self._covars = covars.copy()
 
     covars = property(_get_covars, _set_covars)

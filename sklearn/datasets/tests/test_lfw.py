@@ -182,4 +182,3 @@ def test_load_fake_lfw_pairs():
     # the ids and class names are the same as previously
     assert_array_equal(lfw_pairs_train.target, [1, 1, 1, 1, 1, 0, 0, 0, 0, 0])
     assert_array_equal(lfw_pairs_train.target_names, expected_classes)
-

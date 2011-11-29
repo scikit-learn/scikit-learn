@@ -11,6 +11,7 @@ from ...metrics import zero_one
 from ...svm import SVC
 from ...utils import check_random_state
 
+
 def test_rfe():
     generator = check_random_state(0)
 
@@ -29,6 +30,7 @@ def test_rfe():
     assert_array_almost_equal(rfe.predict(X), clf.predict(iris.data))
     assert rfe.score(X, y) == clf.score(iris.data, iris.target)
 
+
 def test_rfecv():
     generator = check_random_state(0)
 
@@ -45,7 +47,8 @@ def test_rfecv():
     assert_array_almost_equal(X_r[:10], iris.data[:10])
 
     # Test using a customized loss function
-    rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, cv=3, loss_func=zero_one)
+    rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, cv=3,
+            loss_func=zero_one)
     rfecv.fit(X, y)
     X_r = rfecv.transform(X)
 

@@ -126,9 +126,9 @@ class DenseSGDClassifierTestCase(unittest.TestCase):
         """Checks intercept_ shape consistency for the warm starts"""
         # Inconsistent intercept_ shape.
         clf = self.factory().fit(X5, Y5)
-        self.factory().fit(X5, Y5, intercept_init = clf.intercept_)
+        self.factory().fit(X5, Y5, intercept_init=clf.intercept_)
         clf = self.factory().fit(X, Y)
-        self.factory().fit(X, Y, intercept_init = clf.intercept_)
+        self.factory().fit(X, Y, intercept_init=clf.intercept_)
 
     @raises(ValueError)
     def test_sgd_at_least_two_labels(self):
@@ -341,7 +341,7 @@ class SparseSGDClassifierTestCase(DenseSGDClassifierTestCase):
     factory = linear_model.sparse.SGDClassifier
 
 
-################################################################################
+###############################################################################
 # Regression Test Case
 
 class DenseSGDRegressorTestCase(unittest.TestCase):

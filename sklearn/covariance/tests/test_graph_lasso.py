@@ -55,4 +55,3 @@ def test_graph_lasso_cv(random_state=1):
         GraphLassoCV(verbose=10, alphas=3).fit(X)
     finally:
         sys.stdout = orig_stdout
-
