@@ -41,7 +41,7 @@ Modules:
 Clustering
 ==========
 
-Please refer to the :ref:`clustering` section of the user guide for further details.
+**User guide:** See the :ref:`clustering` section for further details.
 
 .. automodule:: sklearn.cluster
    :no-members:
@@ -66,7 +66,7 @@ Please refer to the :ref:`clustering` section of the user guide for further deta
 Covariance estimators
 =====================
 
-Please refer to the :ref:`covariance` section of the user guide for further details.
+**User guide:** See the :ref:`covariance` section for further details.
 
 .. automodule:: sklearn.covariance
    :no-members:
@@ -101,7 +101,7 @@ Please refer to the :ref:`covariance` section of the user guide for further deta
 Cross Validation
 ================
 
-Please refer to the :ref:`cross_validation` section of the user guide for further details.
+**User guide:** See the :ref:`cross_validation` section for further details.
 
 .. automodule:: sklearn.cross_validation
    :no-members:
@@ -128,7 +128,7 @@ Please refer to the :ref:`cross_validation` section of the user guide for furthe
 Datasets
 ========
 
-Please refer to the :ref:`datasets` section of the user guide for further details.
+**User guide:** See the :ref:`datasets` section for further details.
 
 Loaders
 -------
@@ -188,7 +188,7 @@ Samples generator
 Signal Decomposition
 ====================
 
-Please refer to the :ref:`decompositions` section of the user guide for further details.
+**User guide:** See the :ref:`decompositions` section for further details.
 
 .. automodule:: sklearn.decomposition
    :no-members:
@@ -228,7 +228,7 @@ Please refer to the :ref:`decompositions` section of the user guide for further 
 Ensemble Methods
 ================
 
-Please refer to the :ref:`ensemble` section of the user guide for further details.
+**User guide:** See the :ref:`ensemble` section for further details.
 
 .. automodule:: sklearn.ensemble
    :no-members:
@@ -255,7 +255,7 @@ Please refer to the :ref:`ensemble` section of the user guide for further detail
 Feature Selection
 =================
 
-Please refer to the :ref:`feature_selection` section of the user guide for further details.
+**User guide:** See the :ref:`feature_selection` section for further details.
 
 .. automodule:: sklearn.feature_selection
    :no-members:
@@ -283,7 +283,7 @@ Please refer to the :ref:`feature_selection` section of the user guide for furth
 Feature Extraction
 ==================
 
-Please refer to the :ref:`feature_extraction` section of the user guide for further details.
+**User guide:** See the :ref:`feature_extraction` section for further details.
 
 .. automodule:: sklearn.feature_extraction
    :no-members:
@@ -339,11 +339,14 @@ From text
 Gaussian Processes
 ==================
 
-Please refer to the :ref:`gaussian_process` section of the user guide for further details.
+**User guide:** See the :ref:`gaussian_process` section for further details.
 
 .. automodule:: sklearn.gaussian_process
    :no-members:
    :no-inherited-members:
+
+Classes
+-------
 
 .. currentmodule:: sklearn
 
@@ -384,8 +387,7 @@ Regression models
 Grid Search
 ===========
 
-Please refer to the :ref:`grid_search` section of the user guide for further details.
-
+**User guide:** See the :ref:`grid_search` section for further details.
 
 .. automodule:: sklearn.grid_search
    :no-members:
@@ -406,7 +408,7 @@ Please refer to the :ref:`grid_search` section of the user guide for further det
 Hidden Markov Models
 ====================
 
-Please refer to the :ref:`hmm` section of the user guide for further details.
+**User guide:** See the :ref:`hmm` section for further details.
 
 .. automodule:: sklearn.hmm
    :no-members:
@@ -440,7 +442,7 @@ Linear Discriminant Analysis
 Generalized Linear Models
 =========================
 
-Please refer to the :ref:`linear_model` section of the user guide for further details.
+**User guide:** See the :ref:`linear_model` section for further details.
 
 .. automodule:: sklearn.linear_model
    :no-members:
@@ -505,8 +507,7 @@ For sparse data
 Manifold learning
 =================
 
-Please refer to the :ref:`manifold` section of the user guide for further details.
-
+**User guide:** See the :ref:`manifold` section for further details.
 
 .. autosummary::
     :toctree: generated
@@ -574,7 +575,7 @@ Regression metrics
 Clustering metrics
 ------------------
 
-Please refer to the :ref:`clustering` section of the user guide for further details.
+See the :ref:`clustering` section of the user guide for further details.
 
 .. automodule:: sklearn.metrics.cluster
    :no-members:
@@ -622,7 +623,7 @@ Pairwise metrics
 Gaussian Mixture Models
 =======================
 
-Please refer to the :ref:`mixture` section of the user guide for further details.
+**User guide:** See the :ref:`mixture` section for further details.
 
 .. automodule:: sklearn.mixture
    :no-members:
@@ -644,7 +645,7 @@ Please refer to the :ref:`mixture` section of the user guide for further details
 Naive Bayes
 ===========
 
-Please refer to the :ref:`naive_bayes` section of the user guide for further details.
+**User guide:** See the :ref:`naive_bayers` section for further details.
 
 .. automodule:: sklearn.naive_bayes
    :no-members:
@@ -666,7 +667,7 @@ Please refer to the :ref:`naive_bayes` section of the user guide for further det
 Nearest Neighbors
 =================
 
-Please refer to the :ref:`neighbors` section of the user guide for further details.
+**User guide:** See the :ref:`neighbors` section for further details.
 
 .. automodule:: sklearn.neighbors
    :no-members:
@@ -700,7 +701,7 @@ Please refer to the :ref:`neighbors` section of the user guide for further detai
 Partial Least Squares
 =====================
 
-Please refer to the :ref:`pls` section of the user guide for further details.
+**User guide:** See the :ref:`pls` section for further details.
 
 .. automodule:: sklearn.pls
    :no-members:
@@ -741,8 +742,7 @@ Pipeline
 Preprocessing and normalization
 ===============================
 
-Please refer to the :ref:`preprocessing` section of the user guide for further details.
-
+**User guide:** See the :ref:`preprocessing` section for further details.
 
 .. automodule:: sklearn.preprocessing
    :no-members:
@@ -760,7 +760,6 @@ Please refer to the :ref:`preprocessing` section of the user guide for further d
    preprocessing.LabelBinarizer
    preprocessing.KernelCenterer
 
-
 .. autosummary::
    :toctree: generated/
    :template: function.rst
@@ -775,7 +774,7 @@ Please refer to the :ref:`preprocessing` section of the user guide for further d
 Support Vector Machines
 =======================
 
-Please refer to the :ref:`svm` section of the user guide for further details.
+**User guide:** See the :ref:`svm` section for further details.
 
 .. automodule:: sklearn.svm
    :no-members:
@@ -839,7 +838,7 @@ Low-level methods
 Decision Trees
 ==============
 
-Please refer to the :ref:`tree` section of the user guide for further details.
+**User guide:** See the :ref:`tree` section for further details.
 
 .. automodule:: sklearn.tree
    :no-members:
