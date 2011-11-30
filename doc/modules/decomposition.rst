@@ -353,6 +353,17 @@ when the data is not readily available from the start, or for when the data
 does not fit into the memory.
 
 
+.. _KMeansCoder
+
+K-Means coder
+-------------
+
+:class:`KMeansCoder` is a dictionary learning method that fills the dictionary
+with centers found by the k-means clustering algorithm. It also implements some
+optimizations for the case when a whitening PCA transform is desired prior to
+decomposition.
+
+
 .. _ICA:
 
 Independent component analysis (ICA)

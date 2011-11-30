@@ -502,6 +502,7 @@ Please refer to the :ref:`decompositions` section of the user guide.
    decomposition.MiniBatchSparsePCA
    decomposition.DictionaryLearning
    decomposition.MiniBatchDictionaryLearning
+   decomposition.KMeansCoder
 
 .. autosummary::
    :toctree: generated/

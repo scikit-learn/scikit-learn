@@ -10,3 +10,4 @@ from .fastica_ import FastICA, fastica
 from .dict_learning import dict_learning, dict_learning_online, \
                            DictionaryLearning, MiniBatchDictionaryLearning, \
                            sparse_encode, sparse_encode_parallel
+from .kmeans_coder import KMeansCoder
