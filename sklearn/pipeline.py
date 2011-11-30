@@ -1,5 +1,6 @@
 """
-Pipeline: chain transforms and estimators to build a composite estimator.
+The :mod:`sklearn.pipeline` module implements utilites to build a composite
+estimator, as a chain of transforms and estimators.
 """
 # Author: Edouard Duchesnay
 #         Gael Varoquaux

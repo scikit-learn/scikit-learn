@@ -1,3 +1,7 @@
+"""
+The :mod:`sklearn.utils` module includes various utilites.
+"""
+
 import numpy as np
 import scipy.sparse as sp
 import warnings

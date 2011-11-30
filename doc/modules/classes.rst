@@ -526,14 +526,14 @@ Manifold learning
 Metrics
 =======
 
-Classification metrics
-----------------------
-
 .. automodule:: sklearn.metrics
    :no-members:
    :no-inherited-members:
 
 .. currentmodule:: sklearn
+
+Classification metrics
+----------------------
 
 .. autosummary::
    :toctree: generated/
@@ -555,12 +555,6 @@ Classification metrics
 
 Regression metrics
 ------------------
-
-.. automodule:: sklearn.metrics
-   :no-members:
-   :no-inherited-members:
-
-.. currentmodule:: sklearn
 
 .. autosummary::
    :toctree: generated/
@@ -773,6 +767,9 @@ Support Vector Machines
 
 **User guide:** See the :ref:`svm` section for further details.
 
+For dense data
+--------------
+
 .. automodule:: sklearn.svm
    :no-members:
    :no-inherited-members:
@@ -852,6 +849,11 @@ Decision Trees
    tree.ExtraTreeClassifier
    tree.ExtraTreeRegressor
 
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   tree.export_graphviz
 
 
 .. _utils_ref:
