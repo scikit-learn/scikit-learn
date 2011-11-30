@@ -680,8 +680,8 @@ class ShuffleSplit(object):
     Examples
     ----------
     >>> from sklearn import cross_validation
-    >>> rs = cross_validation.ShuffleSplit(4, n_iterations=3, test_fraction=.25,
-    ...                             random_state=0)
+    >>> rs = cross_validation.ShuffleSplit(4, n_iterations=3,
+    ...     test_fraction=.25, random_state=0)
     >>> len(rs)
     3
     >>> print rs
