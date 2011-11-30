@@ -6,8 +6,8 @@
 # License: BSD style
 
 """
-A module that implements scalar Gaussian Process based predictions.
-
+The :mod:`sklearn.gaussian_process` module implements scalar Gaussian Process
+based predictions.
 """
 
 from .gaussian_process import GaussianProcess

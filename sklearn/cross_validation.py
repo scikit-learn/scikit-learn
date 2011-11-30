@@ -1,4 +1,7 @@
-"""Utilities for cross validation and performance evaluation"""
+"""
+The :mod:`sklearn.cross_validation` module includes utilities for cross-
+validation and performance evaluation.
+"""
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>,
 #         Gael Varoquaux <gael.varoquaux@normalesup.org>,

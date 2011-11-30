@@ -15,8 +15,8 @@ Modules:
 - ``datasets``: :ref:`datasets_ref`
 - ``decomposition``: :ref:`decomposition_ref`
 - ``ensemble``: :ref:`ensemble_ref`
-- ``feature_selection``: :ref:`feature_selection_ref`
 - ``feature_extraction``: :ref:`feature_extraction_ref`
+- ``feature_selection``: :ref:`feature_selection_ref`
 - ``gaussian_process``: :ref:`gaussian_process_ref`
 - ``grid_search``: :ref:`grid_search_ref`
 - ``hmm``: :ref:`hmm_ref`
@@ -130,12 +130,12 @@ Datasets
 
 **User guide:** See the :ref:`datasets` section for further details.
 
-Loaders
--------
-
 .. automodule:: sklearn.datasets
    :no-members:
    :no-inherited-members:
+
+Loaders
+-------
 
 .. currentmodule:: sklearn
 
@@ -159,10 +159,6 @@ Loaders
 Samples generator
 -----------------
 
-.. automodule:: sklearn.datasets
-   :no-members:
-   :no-inherited-members:
-
 .. currentmodule:: sklearn
 
 .. autosummary::
@@ -185,7 +181,7 @@ Samples generator
 
 .. _decomposition_ref:
 
-Signal Decomposition
+Matrix decomposition
 ====================
 
 **User guide:** See the :ref:`decompositions` section for further details.
@@ -250,34 +246,6 @@ Ensemble Methods
    :template: function.rst
 
 
-.. _feature_selection_ref:
-
-Feature Selection
-=================
-
-**User guide:** See the :ref:`feature_selection` section for further details.
-
-.. automodule:: sklearn.feature_selection
-   :no-members:
-   :no-inherited-members:
-
-.. currentmodule:: sklearn
-
-.. autosummary::
-   :toctree: generated/
-   :template: class.rst
-
-   feature_selection.rfe.RFE
-   feature_selection.rfe.RFECV
-
-
-.. autosummary::
-   :toctree: generated/
-   :template: function.rst
-
-   feature_selection.univariate_selection.chi2
-
-
 .. _feature_extraction_ref:
 
 Feature Extraction
@@ -334,6 +302,40 @@ From text
    feature_extraction.text.Vectorizer
 
 
+.. _feature_selection_ref:
+
+Feature Selection
+=================
+
+**User guide:** See the :ref:`feature_selection` section for further details.
+
+.. automodule:: sklearn.feature_selection
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   feature_selection.SelectPercentile
+   feature_selection.SelectKBest
+   feature_selection.SelectFpr
+   feature_selection.SelectFdr
+   feature_selection.SelectFwe
+   feature_selection.RFE
+   feature_selection.RFECV
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   feature_selection.chi2
+   feature_selection.f_classif
+   feature_selection.f_regression
+
+
 .. _gaussian_process_ref:
 
 Gaussian Processes
@@ -345,9 +347,6 @@ Gaussian Processes
    :no-members:
    :no-inherited-members:
 
-Classes
--------
-
 .. currentmodule:: sklearn
 
 .. autosummary::
@@ -355,9 +354,6 @@ Classes
   :template: class.rst
 
   gaussian_process.GaussianProcess
-
-Correlation models
-------------------
 
 .. autosummary::
    :toctree: generated
@@ -369,14 +365,6 @@ Correlation models
    gaussian_process.correlation_models.pure_nugget
    gaussian_process.correlation_models.cubic
    gaussian_process.correlation_models.linear
-
-Regression models
------------------
-
-.. autosummary::
-   :toctree: generated
-   :template: function.rst
-
    gaussian_process.regression_models.constant
    gaussian_process.regression_models.linear
    gaussian_process.regression_models.quadratic
@@ -430,6 +418,12 @@ Hidden Markov Models
 Linear Discriminant Analysis
 ============================
 
+.. automodule:: sklearn.lda
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: sklearn
+
 .. autosummary::
    :toctree: generated
    :template: class.rst
@@ -443,6 +437,9 @@ Generalized Linear Models
 =========================
 
 **User guide:** See the :ref:`linear_model` section for further details.
+
+For dense data
+--------------
 
 .. automodule:: sklearn.linear_model
    :no-members:
