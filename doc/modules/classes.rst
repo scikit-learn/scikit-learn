@@ -93,7 +93,7 @@ Covariance estimators
    covariance.ledoit_wolf
    covariance.shrunk_covariance
    covariance.oas
-   covariance.g_lasso
+   covariance.graph_lasso
 
 
 .. _cross_validation_ref:
