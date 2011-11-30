@@ -23,4 +23,4 @@
    Dataset loading utilities <datasets/index.rst>
    Preprocessing data <modules/preprocessing.rst>
    modules/feature_extraction.rst
-   Class Reference <modules/classes.rst>
+   Reference <modules/classes.rst>
