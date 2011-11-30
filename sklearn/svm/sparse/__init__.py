@@ -1,10 +1,10 @@
 """
-Support Vector Machine algorithms for sparse matrices.
+The :mod:`sklearn.svm.sparse` module includes Support Vector Machine algorithms
+for sparse matrices.
 
 This module should have the same API as :mod:`sklearn.svm`, except
 that matrices are expected to be in some sparse format supported by
 scipy.sparse.
-
 
 .. note::
 

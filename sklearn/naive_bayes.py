@@ -1,14 +1,9 @@
 # -*- coding: utf-8 -*-
 
 """
-Naive Bayes models
-==================
-
-Naive Bayes algorithms are a set of supervised learning methods based on
-applying Bayes' theorem with strong (naive) feature independence assumptions.
-
-See http://scikit-learn.sourceforge.net/modules/naive_bayes.html for
-complete documentation.
+The :mod:`sklearn.naive_bayes` module implements Naive Bayes algorithms. These
+are supervised learning methods based on applying Bayes' theorem with strong
+(naive) feature independence assumptions.
 """
 
 # Author: Vincent Michel <vincent.michel@inria.fr>

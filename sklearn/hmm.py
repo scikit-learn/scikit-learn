@@ -2,6 +2,14 @@
 #
 # Author: Ron Weiss <ronweiss@gmail.com>
 
+"""
+The :mod:`sklearn.hmm` module implements hidden Markov models.
+
+**Warning:** :mod:`sklearn.hmm` is orphaned, undocumented and has known
+numerical stability issues. If nobody volunteers to write documentation and make
+it more stable, this module will be removed in version 0.11.
+"""
+
 import string
 
 import numpy as np

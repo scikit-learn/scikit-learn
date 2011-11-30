@@ -1,4 +1,7 @@
-"""Tune the parameters of an estimator by cross-validation"""
+"""
+The :mod:`sklearn.grid_search` includes utilities to fine-tune the parameters of
+an estimator.
+"""
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>,
 #         Gael Varoquaux <gael.varoquaux@normalesup.org>
