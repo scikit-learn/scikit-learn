@@ -6,17 +6,8 @@
 # License: BSD style
 
 """
-A module that implements scalar Gaussian Process based prediction (also
-known as Kriging).
-
-Contains
---------
-GaussianProcess: The main class of the module that implements the Gaussian
-                 Process prediction theory.
-
-regression_models: A submodule that contains the built-in regression models.
-
-correlation_models: A submodule that contains the built-in correlation models.
+The :mod:`sklearn.gaussian_process` module implements scalar Gaussian Process
+based predictions.
 """
 
 from .gaussian_process import GaussianProcess

@@ -27,12 +27,13 @@ by P.J.Rousseuw in [1].
 In this example, we compare the estimation errors that are made when
 using three types of location and covariance estimates on contaminated
 gaussian distributed data sets:
- - The mean and the empirical covariance of the full dataset, which break
-   down as soon as there are outliers in the data set
- - The robust MCD, that has a low error provided n_samples > 5 * n_features
- - The mean and the empirical covariance of the observations that are known
-   to be good ones. This can be considered as a "perfect" MCD estimation,
-   so one can trust our implementation by comparing to this case.
+
+- The mean and the empirical covariance of the full dataset, which break
+  down as soon as there are outliers in the data set
+- The robust MCD, that has a low error provided n_samples > 5 * n_features
+- The mean and the empirical covariance of the observations that are known
+  to be good ones. This can be considered as a "perfect" MCD estimation,
+  so one can trust our implementation by comparing to this case.
 
 [1] P. J. Rousseeuw. Least median of squares regression. J. Am
     Stat Ass, 79:871, 1984.

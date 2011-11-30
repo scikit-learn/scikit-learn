@@ -1,4 +1,6 @@
-""" Transformers to perform common preprocessing steps.
+"""
+The :mod:`sklearn.preprocessing` module implements various utilities to perform
+common data preprocessing steps (scaling, normalization, etc).
 """
 
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>

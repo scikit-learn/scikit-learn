@@ -1,11 +1,8 @@
 """
-:mod:`sklearn.linear_model` is a module to fit genelarized linear
-models.  It includes Ridge regression, Bayesian Regression, Lasso and
-Elastic Net estimators computed with Least Angle Regression and
-coordinate descent.
-
-It also implements Stochastic Gradient Descent related algorithms.
-
+The :mod:`sklearn.linear_model` module implements genelarized linear models. It
+includes Ridge regression, Bayesian Regression, Lasso and Elastic Net estimators
+computed with Least Angle Regression and coordinate descent. It also implements
+Stochastic Gradient Descent related algorithms.
 """
 
 # See http://scikit-learn.sourceforge.net/modules/sgd.html and
