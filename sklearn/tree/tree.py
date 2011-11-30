@@ -279,14 +279,13 @@ def _build_tree(X, y, is_classification, criterion, max_depth, min_split,
     tree = Tree(n_classes, init_capacity)
 
     if store_terminal_region:
-        if min_density != 0.0:
-            raise ValueError("min_density must be 0.0 if store_terminal_region")
         tree.terminal_region = np.empty((X.shape[0],), dtype=np.int32)
         tree.terminal_region.fill(-1)
 
+
     # Recursively partition X
     def recursive_partition(X, X_argsorted, y, sample_mask, depth,
-                            parent, is_left_child):
+                            parent, is_left_child, sample_indices):
         # Count samples
         n_node_samples = sample_mask.sum()
 
@@ -323,13 +322,14 @@ def _build_tree(X, y, is_classification, criterion, max_depth, min_split,
                                     n_node_samples)
 
             if store_terminal_region:
-                tree.terminal_region[sample_mask] = node_id
+                tree.terminal_region[sample_indices[sample_mask]] = node_id
 
         # Internal node
         else:
             # Sample mask is too sparse?
             if n_node_samples / X.shape[0] <= min_density:
                 X = X[sample_mask]
+                sample_indices = sample_indices[sample_mask]
                 X_argsorted = np.asfortranarray(
                     np.argsort(X.T, axis=1).astype(np.int32).T)
                 y = current_y
@@ -345,12 +345,12 @@ def _build_tree(X, y, is_classification, criterion, max_depth, min_split,
             # left child recursion
             recursive_partition(X, X_argsorted, y,
                                 split & sample_mask,
-                                depth + 1, node_id, True)
+                                depth + 1, node_id, True, sample_indices)
 
             # right child recursion
             recursive_partition(X, X_argsorted, y,
                                 ~split & sample_mask,
-                                depth + 1, node_id, False)
+                                depth + 1, node_id, False, sample_indices)
 
     # Launch the construction
     if X.dtype != DTYPE or not np.isfortran(X):
@@ -366,7 +366,8 @@ def _build_tree(X, y, is_classification, criterion, max_depth, min_split,
         X_argsorted = np.asfortranarray(
             np.argsort(X.T, axis=1).astype(np.int32).T)
 
-    recursive_partition(X, X_argsorted, y, sample_mask, 0, -1, False)
+    recursive_partition(X, X_argsorted, y, sample_mask, 0, -1, False,
+                        np.arange(X.shape[0]))
 
     tree.resize(tree.node_count)
     return tree

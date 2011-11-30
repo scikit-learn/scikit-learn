@@ -24,6 +24,10 @@ from ..tree._tree import MSE
 from ..tree._tree import DTYPE
 
 
+# ignore overflows due to exp(-pred) in BinomailDeviance
+np.seterr(invalid='raise', under='raise', divide='raise', over='ignore')
+
+
 def update_variable_importance(tree, variable_importance):
     """Computes the variable importance of each feature according to `tree`
     and adds them to `variable_importance`. """
@@ -162,11 +166,19 @@ class BinomialDeviance(LossFunction):
 
     def __call__(self, y, pred):
         """Compute the deviance (= negative log-likelihood). """
-        return -2.0 * np.sum((y * pred) -
-                             np.log(1.0 + np.exp(pred))) / y.shape[0]
+        ## return -2.0 * np.sum(y * pred -
+        ##                      np.log(1.0 + np.exp(pred))) / y.shape[0]
+
+        # logaddexp(0, v) == log(1.0 + exp(v))
+        return -2.0 * np.sum(y * pred -
+                             np.logaddexp(0.0, pred)) / y.shape[0]
 
     def negative_gradient(self, y, pred):
-        return y - (1.0 / (1.0 + np.exp(-pred)))
+        try:
+            return y - 1.0 / (1.0 + np.exp(-pred))
+        except FloatingPointError, e:
+            import IPython
+            IPython.embed()
 
     def _update_terminal_region(self, tree, leaf, terminal_region, X, y,
                                 residual, pred):
@@ -275,20 +287,19 @@ class BaseGradientBoosting(BaseEstimator):
         self.trees = []
 
         self.train_deviance = np.zeros((self.n_iter,), dtype=np.float64)
-        #oob = np.zeros((self.n_iter), dtype=np.float64)
-        #obj_func = np.zeros((self.n_iter), dtype=np.float64)
+        self.oob_deviance = np.zeros((self.n_iter), dtype=np.float64)
 
         # perform boosting iterations
         for i in xrange(self.n_iter):
 
             # subsampling
-            sample_mask = np.random.rand(n_samples) > (1.0 - self.subsample)
+            sample_mask = self.random_state.rand(n_samples) >= (1.0 - self.subsample)
 
             residual = loss.negative_gradient(y, y_pred)
 
             # induce regression tree on residuals
             tree = _build_tree(X, residual, False, MSE(), self.max_depth,
-                               self.min_split, 0.0, -1, self.random_state,
+                               self.min_split, 0.1, -1, self.random_state,
                                1, _find_best_split, sample_mask, X_argsorted,
                                True)
 
@@ -299,23 +310,18 @@ class BaseGradientBoosting(BaseEstimator):
             # add tree to ensemble
             self.trees.append(tree)
 
-            # update OOB predictions
+            # update out-of-bag predictions and deviance
             if self.subsample < 1.0:
                 y_pred[~sample_mask] = self._predict(
                     X[~sample_mask], old_pred=y_pred[~sample_mask])
+                self.oob_deviance[i] = loss(y[~sample_mask], y_pred[~sample_mask])
 
-            self.train_deviance[i] = loss(y, y_pred)
+            self.train_deviance[i] = loss(y[sample_mask], y_pred[sample_mask])
 
             if monitor:
-                monitor(self, i)
-
-            #if self.subsample < 1.0:
-            #    oob[i] = loss.loss(y[~sample_mask], y_pred[~sample_mask])
-            #print "Iteration %d - in %fs" % (i, time() - t0)
-            #print "Obj_func: %.4f     OOB: %.4f" % (obj_func[i], oob[i])
-
-        #self.obj_func = obj_func
-        #self.oob = oob
+                stop = monitor(self, i)
+                if stop:
+                    break
 
         return self
 

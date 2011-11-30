@@ -387,7 +387,6 @@ cdef class MSE(RegressionCriterion):
     """
 
     cdef double eval(self):
-        assert (self.n_left + self.n_right) == self.n_samples
         return self.var_left + self.var_right
 
 ################################################################################

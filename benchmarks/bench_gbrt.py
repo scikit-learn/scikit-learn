@@ -23,12 +23,12 @@ def repeat(f):
 
 
 # ignore overflows due to exp
-np.seterr(invalid='print', under='print', divide='print', over='ignore')
+np.seterr(invalid='raise', under='raise', divide='raise', over='ignore')
 
 
-classification_params = {'loss': 'deviance', 'n_iter': 100,
+classification_params = {'loss': 'deviance', 'n_iter': 500,
                          'min_split': 1, 'max_depth': 1,
-                         'learn_rate': 1.0, 'subsample': 1.0}
+                         'learn_rate': .6, 'subsample': .5}
 
 
 @repeat
@@ -61,6 +61,8 @@ def bench_random_gaussian(random_state=None):
     t0 = time()
     error_rate = (1.0 - gbrt.score(X_test, y_test))
     test_time = time() - t0
+    ## for i in range(10) + [99, 199]:
+    ##    print i+1, gbrt.train_deviance[i]
     return error_rate, train_time, test_time
 
 
@@ -151,7 +153,8 @@ def bench_spam(random_state=None):
     t0 = time()
     error_rate = (1.0 - clf.score(X_test, y_test))
     test_time = time() - t0
-
+    ## for i in range(10) + [99, 199]:
+    ##     print i+1, clf.train_deviance[i]
     ## variable_importance = clf.variable_importance
     ## sorted_idx = np.argsort(variable_importance)[-20:]
     ## pos = np.arange(sorted_idx.shape[0]) + .5
@@ -202,10 +205,13 @@ def bench_boston(random_state=None):
     X_test = X[offset:]
     y_test = y[offset:]
     clf = GradientBoostingRegressor(**regression_params)
+    t0 = time()
     clf.fit(X_train, y_train)
+    train_time = time() - t0
+    t0 = time()
     mse = np.mean((clf.predict(X_test) - y_test) ** 2.0)
-    #variable_importance = clf.variable_importance
-    return mse
+    test_time = time() - t0
+    return mse, train_time, test_time
 
 
 @repeat
@@ -215,9 +221,13 @@ def bench_friedman1(random_state=None):
     X_train, y_train = X[:200], y[:200]
     X_test, y_test = X[200:], y[200:]
     clf = GradientBoostingRegressor(**regression_params)
+    t0 = time()
     clf.fit(X_train, y_train)
+    train_time = time() - t0
+    t0 = time()
     mse = np.mean((clf.predict(X_test) - y_test) ** 2.0)
-    return mse
+    test_time = time() - t0
+    return mse, train_time, test_time
 
 
 @repeat
@@ -226,9 +236,13 @@ def bench_friedman2(random_state=None):
     X_train, y_train = X[:200], y[:200]
     X_test, y_test = X[200:], y[200:]
     clf = GradientBoostingRegressor(**regression_params)
+    t0 = time()
     clf.fit(X_train, y_train)
+    train_time = time() - t0
+    t0 = time()
     mse = np.mean((clf.predict(X_test) - y_test) ** 2.0)
-    return mse
+    test_time = time() - t0
+    return mse, train_time, test_time
 
 
 @repeat
@@ -237,22 +251,26 @@ def bench_friedman3(random_state=None):
     X_train, y_train = X[:200], y[:200]
     X_test, y_test = X[200:], y[200:]
     clf = GradientBoostingRegressor(**regression_params)
+    t0 = time()
     clf.fit(X_train, y_train)
+    train_time = time() - t0
+    t0 = time()
     mse = np.mean((clf.predict(X_test) - y_test) ** 2.0)
-    return mse
+    test_time = time() - t0
+    return mse, train_time, test_time
 
 
 if __name__ == "__main__":
     
     ## ##print "Example 10.2 - LC"
     ## ##random_gaussian_learning_curve(13)
-    ##print "Example 10.2", bench_random_gaussian()
+    print "Example 10.2", bench_random_gaussian()
     print "spam", bench_spam()
 
     ## print "Madelon", bench_madelon()
     ## print "Arcene", bench_arcene()
 
-    ## print "Boston", bench_boston()
-    ## print "Friedman#1", bench_friedman1()
-    ## print "Friedman#2", bench_friedman2()
-    ## print "Friedman#3", bench_friedman3()
+    print "Boston", bench_boston()
+    print "Friedman#1", bench_friedman1()
+    print "Friedman#2", bench_friedman2()
+    print "Friedman#3", bench_friedman3()
