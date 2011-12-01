@@ -210,7 +210,7 @@ class Dendrogram(object):
         while open_nodes != []:
             node = open_nodes[0]
             open_nodes = open_nodes[1:]
-            if self.heights[node] <= max_height: 
+            if self.heights[node] <= max_height or node <= self.n_samples: 
                 # This tree node is the root of a cluster
                 cluster_roots.append(node)
             else:
