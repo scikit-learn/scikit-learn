@@ -137,7 +137,7 @@ class Dendrogram(object):
             A list that indicates the nodes for which we want the descendents.
             
         add_intermediate_nodes : bool
-            If true, leaves and inenr nodes in the subtree are returnd, 
+            If true, leaves and inner nodes in the subtree are returned, 
             otherwise only the leaves. Defaults to False.
     
         Return
@@ -223,7 +223,7 @@ class Dendrogram(object):
                 if prune:    
                     self.parent[child_node1] = child_node1
                     self.parent[child_node2] = child_node2
-                    self.children.pop(node - self.n_samples)
+                    self.children[node - self.n_samples] = None
                 
         return cluster_roots
                 
