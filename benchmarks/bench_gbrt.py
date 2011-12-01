@@ -26,9 +26,9 @@ def repeat(f):
 np.seterr(invalid='raise', under='raise', divide='raise', over='ignore')
 
 
-classification_params = {'loss': 'deviance', 'n_iter': 500,
-                         'min_split': 1, 'max_depth': 1,
-                         'learn_rate': .6, 'subsample': .5}
+classification_params = {'loss': 'deviance', 'n_iter': 250,
+                         'min_split': 5, 'max_depth': 3,
+                         'learn_rate': .6, 'subsample': 1.0}
 
 
 @repeat
@@ -166,31 +166,39 @@ def bench_spam(random_state=None):
     return error_rate, train_time, test_time
 
 
-def bench_madelon():
+@repeat
+def bench_madelon(random_state=None):
     X_train = np.loadtxt("/home/pprett/corpora/madelon/madelon_train.data")
     y_train = np.loadtxt("/home/pprett/corpora/madelon/madelon_train.labels")
     X_test = np.loadtxt("/home/pprett/corpora/madelon/madelon_valid.data")
     y_test = np.loadtxt("/home/pprett/corpora/madelon/madelon_valid.labels")
     clf = GradientBoostingClassifier(**classification_params)
+    t0 = time()
     clf.fit(X_train, y_train)
-    #error_rate = (1.0 - clf.score(X_test, y_test)) * 100.0
-    score = np.mean(clf.predict(X_test) == y_test)
-    return score
+    train_time = time() - t0
+    t0 = time()
+    error_rate = (1.0 - clf.score(X_test, y_test))
+    test_time = time() - t0
+    return error_rate, train_time, test_time
 
 
-def bench_arcene():
+@repeat
+def bench_arcene(random_state=None):
     X_train = np.loadtxt("/home/pprett/corpora/arcene/arcene_train.data")
     y_train = np.loadtxt("/home/pprett/corpora/arcene/arcene_train.labels")
     X_test = np.loadtxt("/home/pprett/corpora/arcene/arcene_valid.data")
     y_test = np.loadtxt("/home/pprett/corpora/arcene/arcene_valid.labels")
     clf = GradientBoostingClassifier(**classification_params)
+    t0 = time()
     clf.fit(X_train, y_train)
-    #error_rate = (1.0 - clf.score(X_test, y_test)) * 100.0
-    score = np.mean(clf.predict(X_test) == y_test)
-    return score
+    train_time = time() - t0
+    t0 = time()
+    error_rate = (1.0 - clf.score(X_test, y_test))
+    test_time = time() - t0
+    return error_rate, train_time, test_time
 
 
-regression_params = {'n_iter': 100, 'max_depth': 4,
+regression_params = {'n_iter': 100, 'max_depth': 1,
                      'min_split': 1, 'learn_rate': 0.1,
                      'loss': 'ls'}
 
@@ -260,17 +268,13 @@ def bench_friedman3(random_state=None):
     return mse, train_time, test_time
 
 
-if __name__ == "__main__":
-    
-    ## ##print "Example 10.2 - LC"
-    ## ##random_gaussian_learning_curve(13)
-    print "Example 10.2", bench_random_gaussian()
-    print "spam", bench_spam()
-
-    ## print "Madelon", bench_madelon()
-    ## print "Arcene", bench_arcene()
-
-    print "Boston", bench_boston()
-    print "Friedman#1", bench_friedman1()
-    print "Friedman#2", bench_friedman2()
-    print "Friedman#3", bench_friedman3()
+gbrt_results = {
+#    "Example 10.2": bench_random_gaussian(),
+#    "Spam": bench_spam(),
+#    "Madelon": bench_madelon(),
+#    "Arcene": bench_arcene(),
+    "Boston": bench_boston(), 
+    "Friedman#1": bench_friedman1(),
+    "Friedman#2": bench_friedman2(),
+    "Friedman#3": bench_friedman3(),
+    }
