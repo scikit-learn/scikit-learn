@@ -40,13 +40,14 @@ events.
 .. image:: images/inria-logo.jpg
 
 `Google <http://code.google.com/opensource/>`_ sponsored David
-Cournapeau with a Summer of Code Scolarship in the summer of 2007 and
+Cournapeau with a Summer of Code Scholarship in the summer of 2007 and
 `Vlad Niculae <http://venefrombucharest.wordpress.com/>`_ in 2011. If
 you would like to participate in the next Google Summer of code
 program, please see `this page
 <http://github.com/scikit-learn/scikit-learn/wiki/SummerOfCode>`_
 
 The `NeuroDebian <http://neuro.debian.net>`_ project providing `Debian
-<http://www.debian.org>`_ packaging and contributions is supported by Dr. James
-V. Haxby (`Dartmouth College <http://www.dartmouth.edu/~psych/>`_).
+<http://www.debian.org>`_ packaging and contributions is supported by
+`Dr. James V. Haxby <http://haxbylab.dartmouth.edu/>`_ (`Dartmouth
+College <http://www.dartmouth.edu/~psych/>`_).
 
