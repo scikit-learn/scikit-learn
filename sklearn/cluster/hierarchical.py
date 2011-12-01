@@ -20,7 +20,7 @@ from ..base import BaseEstimator
 from ..utils._csgraph import cs_graph_components
 from ..externals.joblib import Memory
 
-from .linkage import Linkage
+from .linkage import Linkage, WardsLinkage, CompleteLinkage
 from ._feature_agglomeration import AgglomerationTransform
 
 
@@ -310,10 +310,8 @@ def create_dendrogram(X, connectivity, n_components=None,
         
     # Determine linkage class for known linkage names
     if linkage_criterion == "ward":
-        from .linkage import WardsLinkage
         linkage_criterion = WardsLinkage
     elif linkage_criterion == "complete":
-        from .linkage import CompleteLinkage
         linkage_criterion = CompleteLinkage
         
     # Linkage criterion must be a subclass of Linkage. 
