@@ -35,7 +35,7 @@ class RBFSampler(FourierSampler):
     See "Random Features for Large-Scale Kernel Machines" by A, Rahimi and
     Benjamin Recht for details."""
 
-    def __init__(self, gamma=1., n_components=1.):
+    def __init__(self, gamma=1., n_components=100.):
         self.gamma = gamma
         self.n_components = n_components
 
@@ -98,7 +98,7 @@ class SkewedChi2Sampler(FourierSampler):
     Sminchisescu for details.
     """
 
-    def __init__(self, c, n_components):
+    def __init__(self, c=1., n_components=100):
         self.c = c
         self.n_components = n_components
 
