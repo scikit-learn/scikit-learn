@@ -6,4 +6,4 @@ images.
 
 from .image import img_to_graph, grid_to_graph
 from . import text
-from .kernel_approximation import RBFSampler, SkewedChi2Sampler
+from .kernel_approximation import RBFSampler, SkewedChi2Sampler, AdditiveChi2Sampler
