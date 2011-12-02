@@ -185,7 +185,7 @@ class AdditiveChi2Sampler(FourierSampler):
 
     def fit(self, X, y=None):
         """Does nothing. Provided only for compatablity with pipelining"""
-        pass
+        return self
 
     def transform(self, X, y=None):
         """Apply approximate feature map to X.
