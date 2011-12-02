@@ -116,6 +116,7 @@ class SkewedChi2Sampler(FourierSampler):
         self : object
             Returns the instance itself
         """
+
         n_features = X.shape[1]
         uniform = np.random.uniform(size=(n_features, self.n_components))
         # transform by inverse CDF of sech
@@ -136,6 +137,9 @@ class SkewedChi2Sampler(FourierSampler):
         -------
         X_new array-like, shape (n_samples, n_components)
         """
+        if (X < 0).any():
+            raise ValueError("X may not contain entries smaller than zero.")
+
         projection = np.dot(np.log(X + self.c), self.omega_)
         return (np.sqrt(2.) / np.sqrt(self.n_components)
                 * np.cos(projection + self.b))
@@ -198,6 +202,12 @@ class AdditiveChi2Sampler(FourierSampler):
         -------
         X_new array-like, shape (n_samples, n_features * (2n + 1))
         """
+
+        # check if X has zeros. Doesn't play well with np.log.
+        if (X == 0).any():
+            raise ValueError("X may not contain any exact zeros.")
+        if (X < 0).any():
+            raise ValueError("X may not contain entries smaller than zero.")
         X_new = []
         # zeroth component
         # 1/cosh = sech
