@@ -7,45 +7,20 @@ the :ref:`full user guide <user_guide>` for further details, as the class and
 function raw specifications may not be enough to give full guidelines on their
 uses.
 
-Modules:
-
-- ``cluster``: :ref:`cluster_ref`
-- ``covariance``: :ref:`covariance_ref`
-- ``cross_validation``: :ref:`cross_validation_ref`
-- ``datasets``: :ref:`datasets_ref`
-- ``decomposition``: :ref:`decomposition_ref`
-- ``ensemble``: :ref:`ensemble_ref`
-- ``feature_extraction``: :ref:`feature_extraction_ref`
-- ``feature_selection``: :ref:`feature_selection_ref`
-- ``gaussian_process``: :ref:`gaussian_process_ref`
-- ``grid_search``: :ref:`grid_search_ref`
-- ``hmm``: :ref:`hmm_ref`
-- ``lda``: :ref:`lda_ref`
-- ``linear_model``: :ref:`linear_model_ref`
-- ``manifold``: :ref:`manifold_ref`
-- ``metrics``: :ref:`metrics_ref`
-- ``mixture``: :ref:`mixture_ref`
-- ``naive_bayes``: :ref:`naive_bayes_ref`
-- ``neighbors``: :ref:`neighbors_ref`
-- ``pls``: :ref:`pls_ref`
-- ``pipeline``: :ref:`pipeline_ref`
-- ``preprocessing``: :ref:`preprocessing_ref`
-- ``svm``: :ref:`svm_ref`
-- ``tree``: :ref:`tree_ref`
-- ``utils``: :ref:`utils_ref`
-
+.. contents:: List of modules
+   :local:
 
 
 .. _cluster_ref:
 
-Clustering
-==========
-
-**User guide:** See the :ref:`clustering` section for further details.
+:mod:`sklearn.cluster`: Clustering
+==================================
 
 .. automodule:: sklearn.cluster
    :no-members:
    :no-inherited-members:
+
+**User guide:** See the :ref:`clustering` section for further details.
 
 .. currentmodule:: sklearn
 
@@ -63,14 +38,14 @@ Clustering
 
 .. _covariance_ref:
 
-Covariance estimators
-=====================
-
-**User guide:** See the :ref:`covariance` section for further details.
+:mod:`sklearn.covariance`: Covariance Estimators
+================================================
 
 .. automodule:: sklearn.covariance
    :no-members:
    :no-inherited-members:
+
+**User guide:** See the :ref:`covariance` section for further details.
 
 .. currentmodule:: sklearn
 
@@ -98,14 +73,14 @@ Covariance estimators
 
 .. _cross_validation_ref:
 
-Cross Validation
-================
-
-**User guide:** See the :ref:`cross_validation` section for further details.
+:mod:`sklearn.cross_validation`: Cross Validation
+=================================================
 
 .. automodule:: sklearn.cross_validation
    :no-members:
    :no-inherited-members:
+
+**User guide:** See the :ref:`cross_validation` section for further details.
 
 .. currentmodule:: sklearn
 
@@ -125,14 +100,14 @@ Cross Validation
 
 .. _datasets_ref:
 
-Datasets
-========
-
-**User guide:** See the :ref:`datasets` section for further details.
+:mod:`sklearn.datasets`: Datasets
+=================================
 
 .. automodule:: sklearn.datasets
    :no-members:
    :no-inherited-members:
+
+**User guide:** See the :ref:`datasets` section for further details.
 
 Loaders
 -------
@@ -181,14 +156,14 @@ Samples generator
 
 .. _decomposition_ref:
 
-Matrix decomposition
-====================
-
-**User guide:** See the :ref:`decompositions` section for further details.
+:mod:`sklearn.decomposition`: Matrix Decomposition
+==================================================
 
 .. automodule:: sklearn.decomposition
    :no-members:
    :no-inherited-members:
+
+**User guide:** See the :ref:`decompositions` section for further details.
 
 .. currentmodule:: sklearn
 
@@ -221,14 +196,14 @@ Matrix decomposition
 
 .. _ensemble_ref:
 
-Ensemble Methods
-================
-
-**User guide:** See the :ref:`ensemble` section for further details.
+:mod:`sklearn.ensemble`: Ensemble Methods
+=========================================
 
 .. automodule:: sklearn.ensemble
    :no-members:
    :no-inherited-members:
+
+**User guide:** See the :ref:`ensemble` section for further details.
 
 .. currentmodule:: sklearn
 
@@ -248,14 +223,14 @@ Ensemble Methods
 
 .. _feature_extraction_ref:
 
-Feature Extraction
-==================
-
-**User guide:** See the :ref:`feature_extraction` section for further details.
+:mod:`sklearn.feature_extraction`: Feature Extraction
+=====================================================
 
 .. automodule:: sklearn.feature_extraction
    :no-members:
    :no-inherited-members:
+
+**User guide:** See the :ref:`feature_extraction` section for further details.
 
 .. currentmodule:: sklearn
 
@@ -304,14 +279,14 @@ From text
 
 .. _feature_selection_ref:
 
-Feature Selection
-=================
-
-**User guide:** See the :ref:`feature_selection` section for further details.
+:mod:`sklearn.feature_selection`: Feature Selection
+===================================================
 
 .. automodule:: sklearn.feature_selection
    :no-members:
    :no-inherited-members:
+
+**User guide:** See the :ref:`feature_selection` section for further details.
 
 .. currentmodule:: sklearn
 
@@ -338,14 +313,14 @@ Feature Selection
 
 .. _gaussian_process_ref:
 
-Gaussian Processes
-==================
-
-**User guide:** See the :ref:`gaussian_process` section for further details.
+:mod:`sklearn.gaussian_process`: Gaussian Processes
+===================================================
 
 .. automodule:: sklearn.gaussian_process
    :no-members:
    :no-inherited-members:
+
+**User guide:** See the :ref:`gaussian_process` section for further details.
 
 .. currentmodule:: sklearn
 
@@ -372,14 +347,14 @@ Gaussian Processes
 
 .. _grid_search_ref:
 
-Grid Search
-===========
-
-**User guide:** See the :ref:`grid_search` section for further details.
+:mod:`sklearn.grid_search`: Grid Search
+=======================================
 
 .. automodule:: sklearn.grid_search
    :no-members:
    :no-inherited-members:
+
+**User guide:** See the :ref:`grid_search` section for further details.
 
 .. currentmodule:: sklearn
 
@@ -393,14 +368,14 @@ Grid Search
 
 .. _hmm_ref:
 
-Hidden Markov Models
-====================
-
-**User guide:** See the :ref:`hmm` section for further details.
+:mod:`sklearn.hmm`: Hidden Markov Models
+========================================
 
 .. automodule:: sklearn.hmm
    :no-members:
    :no-inherited-members:
+
+**User guide:** See the :ref:`hmm` section for further details.
 
 .. currentmodule:: sklearn
 
@@ -415,8 +390,8 @@ Hidden Markov Models
 
 .. _lda_ref:
 
-Linear Discriminant Analysis
-============================
+:mod:`sklearn.lda`: Linear Discriminant Analysis
+================================================
 
 .. automodule:: sklearn.lda
    :no-members:
@@ -433,17 +408,17 @@ Linear Discriminant Analysis
 
 .. _linear_model_ref:
 
-Generalized Linear Models
-=========================
+:mod:`sklearn.linear_model`: Generalized Linear Models
+======================================================
+
+.. automodule:: sklearn.linear_model
+   :no-members:
+   :no-inherited-members:
 
 **User guide:** See the :ref:`linear_model` section for further details.
 
 For dense data
 --------------
-
-.. automodule:: sklearn.linear_model
-   :no-members:
-   :no-inherited-members:
 
 .. currentmodule:: sklearn
 
@@ -486,6 +461,8 @@ For sparse data
    :no-members:
    :no-inherited-members:
 
+**User guide:** See the :ref:`linear_model` section for further details.
+
 .. currentmodule:: sklearn
 
 .. autosummary::
@@ -501,10 +478,16 @@ For sparse data
 
 .. _manifold_ref:
 
-Manifold learning
-=================
+:mod:`sklearn.manifold`: Manifold Learning
+==========================================
+
+.. automodule:: sklearn.manifold
+   :no-members:
+   :no-inherited-members:
 
 **User guide:** See the :ref:`manifold` section for further details.
+
+.. currentmodule:: sklearn
 
 .. autosummary::
     :toctree: generated
@@ -512,7 +495,6 @@ Manifold learning
 
     manifold.LocallyLinearEmbedding
     manifold.Isomap
-
 
 .. autosummary::
     :toctree: generated
@@ -523,8 +505,8 @@ Manifold learning
 
 .. _metrics_ref:
 
-Metrics
-=======
+:mod:`sklearn.metrics`: Metrics
+===============================
 
 .. automodule:: sklearn.metrics
    :no-members:
@@ -611,14 +593,14 @@ Pairwise metrics
 
 .. _mixture_ref:
 
-Gaussian Mixture Models
-=======================
-
-**User guide:** See the :ref:`mixture` section for further details.
+:mod:`sklearn.mixture`: Gaussian Mixture Models
+===============================================
 
 .. automodule:: sklearn.mixture
    :no-members:
    :no-inherited-members:
+
+**User guide:** See the :ref:`mixture` section for further details.
 
 .. currentmodule:: sklearn
 
@@ -633,14 +615,14 @@ Gaussian Mixture Models
 
 .. _naive_bayes_ref:
 
-Naive Bayes
-===========
-
-**User guide:** See the :ref:`naive_bayers` section for further details.
+:mod:`sklearn.naive_bayes`: Naive Bayes
+=======================================
 
 .. automodule:: sklearn.naive_bayes
    :no-members:
    :no-inherited-members:
+
+**User guide:** See the :ref:`naive_bayers` section for further details.
 
 .. currentmodule:: sklearn
 
@@ -655,14 +637,14 @@ Naive Bayes
 
 .. _neighbors_ref:
 
-Nearest Neighbors
-=================
-
-**User guide:** See the :ref:`neighbors` section for further details.
+:mod:`sklearn.neighbors`: Nearest Neighbors
+===========================================
 
 .. automodule:: sklearn.neighbors
    :no-members:
    :no-inherited-members:
+
+**User guide:** See the :ref:`neighbors` section for further details.
 
 .. currentmodule:: sklearn
 
@@ -689,14 +671,14 @@ Nearest Neighbors
 
 .. _pls_ref:
 
-Partial Least Squares
-=====================
-
-**User guide:** See the :ref:`pls` section for further details.
+:mod:`sklearn.pls`: Partial Least Squares
+=========================================
 
 .. automodule:: sklearn.pls
    :no-members:
    :no-inherited-members:
+
+**User guide:** See the :ref:`pls` section for further details.
 
 .. currentmodule:: sklearn
 
@@ -712,8 +694,8 @@ Partial Least Squares
 
 .. _pipeline_ref:
 
-Pipeline
-========
+:mod:`sklearn.pipeline`: Pipeline
+=================================
 
 .. automodule:: sklearn.pipeline
    :no-members:
@@ -730,14 +712,14 @@ Pipeline
 
 .. _preprocessing_ref:
 
-Preprocessing and normalization
-===============================
-
-**User guide:** See the :ref:`preprocessing` section for further details.
+:mod:`sklearn.preprocessing`: Preprocessing and Normalization
+=============================================================
 
 .. automodule:: sklearn.preprocessing
    :no-members:
    :no-inherited-members:
+
+**User guide:** See the :ref:`preprocessing` section for further details.
 
 .. currentmodule:: sklearn
 
@@ -762,17 +744,17 @@ Preprocessing and normalization
 
 .. _svm_ref:
 
-Support Vector Machines
-=======================
+:mod:`sklearn.svm`: Support Vector Machines
+===========================================
+
+.. automodule:: sklearn.svm
+   :no-members:
+   :no-inherited-members:
 
 **User guide:** See the :ref:`svm` section for further details.
 
 For dense data
 --------------
-
-.. automodule:: sklearn.svm
-   :no-members:
-   :no-inherited-members:
 
 .. currentmodule:: sklearn
 
@@ -829,14 +811,14 @@ Low-level methods
 
 .. _tree_ref:
 
-Decision Trees
-==============
-
-**User guide:** See the :ref:`tree` section for further details.
+:mod:`sklearn.tree`: Decision Trees
+===================================
 
 .. automodule:: sklearn.tree
    :no-members:
    :no-inherited-members:
+
+**User guide:** See the :ref:`tree` section for further details.
 
 .. currentmodule:: sklearn
 
@@ -858,8 +840,8 @@ Decision Trees
 
 .. _utils_ref:
 
-Utilities
-=========
+:mod:`sklearn.utils`: Utilities
+===============================
 
 .. automodule:: sklearn.utils
    :no-members:
