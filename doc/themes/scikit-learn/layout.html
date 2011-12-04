@@ -77,23 +77,21 @@
 {% block content %}
     <div class="content-wrapper">
 
-    <!-- <div id="blue_tile"></div> -->
+    <div class="sphinxsidebar">
 
-        <div class="sphinxsidebar">
-
-       {%- if pagename != 'index' %}
+    {%- if pagename != 'index' %}
 	{%- if parents %}
-        <div class="rel">
+	<div class="rel">
 	{% else %}
-        <div class="rel rellarge">
-        {% endif %}
-	  <!-- rellinks[1:] is an ugly hack to avoid link to module
-	       index  -->
-          {%- for rellink in rellinks[1:]|reverse %}
-          <div class="rellink">
-	  <a href="{{ pathto(rellink[0]) }}" title="{{ rellink[1]|striptags|e }}"
-             {{ accesskey(rellink[2]) }}>{{ rellink[3]|capitalize }}
-	     <br>
+	<div class="rel rellarge">
+	{% endif %}
+	<!-- rellinks[1:] is an ugly hack to avoid link to module
+	    index  -->
+	{%- for rellink in rellinks[1:]|reverse %}
+	<div class="rellink">
+	<a href="{{ pathto(rellink[0]) }}" title="{{ rellink[1]|striptags|e }}"
+	    {{ accesskey(rellink[2]) }}>{{ rellink[3]|capitalize }}
+	    <br>
 	    <span class="smallrellink">
 	    {{ rellink[1]|striptags|truncate(16, killwords=True) }}
 	    </span>
@@ -101,88 +99,88 @@
 	    <span class="hiddenrellink">
 	    {{ rellink[1]|striptags}}
 	    </span>
-            {% endif %}
+	    {% endif %}
 	    </a>
-	  </div>
-	  {%- if not loop.last %}
+	</div>
+	{%- if not loop.last %}
 	    <div class="spacer">
 	    &nbsp;
 	    </div>
-          {% endif %}
-          {%- endfor %}
-	  <!-- Ad a link to the 'up' page -->
-	  {%- if parents %}
-	    <div class="spacer">
-	    &nbsp;
-	    </div>
-	    <div class="rellink">
-	    <a href="{{ parents[-1].link|e }}" title="{{ parents[-1].title|striptags }}" >
-	    Up
-	    <br>
-	    <span class="smallrellink">
-	    {{ parents[-1].title|striptags|truncate(16, killwords=True) }}
-	    </span>
-	    {%- if parents[-1].title|striptags != '<no title>' %}
-	    <span class="hiddenrellink">
-	    {{ parents[-1].title|striptags }}
-	    </span>
-            {% endif %}
-	    </a>
-	    </div>
-	  {%- endif %}
-        </div>
-        <p style="text-align: center">This documentation is
-        for {{project}} <strong>version {{ release|e }}</strong>
-	&mdash; <a href="http://scikit-learn.org/stable/support.html#documentation-resources">Other versions</a></p>
-        {% else %}
-        <h3>News</h3>
+	{% endif %}
+	{%- endfor %}
+	<!-- Ad a link to the 'up' page -->
+	{%- if parents %}
+	<div class="spacer">
+	&nbsp;
+	</div>
+	<div class="rellink">
+	<a href="{{ parents[-1].link|e }}" title="{{ parents[-1].title|striptags }}" >
+	Up
+	<br>
+	<span class="smallrellink">
+	{{ parents[-1].title|striptags|truncate(16, killwords=True) }}
+	</span>
+	{%- if parents[-1].title|striptags != '<no title>' %}
+	<span class="hiddenrellink">
+	{{ parents[-1].title|striptags }}
+	</span>
+	{% endif %}
+	</a>
+	</div>
+    {%- endif %}
+    </div>
+    <p style="text-align: center">This documentation is
+    for {{project}} <strong>version {{ release|e }}</strong>
+    &mdash; <a href="http://scikit-learn.org/stable/support.html#documentation-resources">Other versions</a></p>
+    {% else %}
+    <h3>News</h3>
 
-       <p>scikit-learn 0.9 is available
-         for <a href="https://sourceforge.net/projects/scikit-learn/files/">download</a>.
-         See <a href="{{pathto('whats_new')}}">what's new</a> and tips
-         on <a href="{{pathto('install')}}">installing</a>.</p>
+    <p>scikit-learn 0.9 is available
+    for <a href="https://sourceforge.net/projects/scikit-learn/files/">download</a>.
+    See <a href="{{pathto('whats_new')}}">what's new</a> and tips
+    on <a href="{{pathto('install')}}">installing</a>.</p>
 
 
-        <h3>Videos</h3>
-        <p>Watch the 2010
-        ICML <a href="http://videolectures.net/icml2010_varaquaux_scik/">Introductory
-        Video</a> by Gaël Varoquaux.</p>
+    <h3>Videos</h3>
+    <p>Watch the 2010
+    ICML <a href="http://videolectures.net/icml2010_varaquaux_scik/">Introductory
+    Video</a> by Gaël Varoquaux.</p>
 
-        <h3>Participate</h3>
+    <h3>Participate</h3>
 
-        <p>Fork
-        the <a href="http://github.com/scikit-learn/scikit-learn">source
-        code</a>, join the
-        <a href="{{pathto('support')}}#mailing-list">mailing
-        lists</a>, report bugs to
-        the <a href="https://github.com/scikit-learn/scikit-learn/issues">issue
-        tracker</a> or participate in the next
-        <a href="http://github.com/scikit-learn/scikit-learn/wiki/Upcoming-events">coding sprint</a>. <a href="{{pathto('developers/index')}}">Read More...</a>
-        </p>
+    <p>Fork
+    the <a href="http://github.com/scikit-learn/scikit-learn">source
+    code</a>, join the
+    <a href="{{pathto('support')}}#mailing-list">mailing
+    lists</a>, report bugs to
+    the <a href="https://github.com/scikit-learn/scikit-learn/issues">issue
+    tracker</a> or participate in the next
+    <a href="http://github.com/scikit-learn/scikit-learn/wiki/Upcoming-events">coding sprint</a>. <a href="{{pathto('developers/index')}}">Read More...</a>
+    </p>
 
-        <h3>Funding</h3>
-        <p>Generous funding provided
-        by <a href="http://www.inria.fr">INRIA</a>,
-        <a href="http://code.google.com/opensource/">Google</a>
-        and others.</p>
-        <p style="text-align: center;"><a href="http://www.inria.fr"><img src="{{pathto('_static',1)}}/inria-small.jpg"
-        alt="INRIA"/></a></p>
-        <p style="text-align: center;"><a href="http://http://code.google.com/opensource/"><img src="{{pathto('_static',1)}}/google-logo.png"
-        alt="INRIA"/></a></p>
+    <h3>Funding</h3>
+    <p>Generous funding provided
+    by <a href="http://www.inria.fr">INRIA</a>,
+    <a href="http://code.google.com/opensource/">Google</a>
+    and others.</p>
+    <p style="text-align: center;"><a href="http://www.inria.fr"><img src="{{pathto('_static',1)}}/inria-small.jpg"
+    alt="INRIA"/></a></p>
+    <p style="text-align: center;"><a href="http://http://code.google.com/opensource/"><img src="{{pathto('_static',1)}}/google-logo.png"
+    alt="INRIA"/></a></p>
 
-        <p><a href="{{pathto('about')}}">Read more ...</a></p>
+    <p><a href="{{pathto('about')}}">Read more ...</a></p>
 
-        <h3>Citing</h3>
-        <p>If you use the software, please consider
-	<a href="about.html#citing-the-scikit-learn">citing the
-	scikit-learn</a>.</p>
-        {% endif %}
+    {% endif %}
+    <h3>Citing</h3>
+    <p>If you use the software, please consider
+    <a href="about.html#citing-the-scikit-learn">citing the
+    scikit-learn</a>.</p>
 
-	{%- if (toc|length < 20) and (pagename != 'index') %}
-        <h3>{{ _('This page') }}</h3>
-         {{ toc }}
-        {% endif %}
-        </div>
+    {%- if (toc|length > 20) and (pagename != 'index') %}
+    <h3>{{ _('This page') }}</h3>
+	{{ toc }}
+    {% endif %}
+    </div>
 
       <div class="content">
           {%- block document %}
