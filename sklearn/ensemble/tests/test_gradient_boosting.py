@@ -9,7 +9,6 @@ from numpy.testing import assert_equal
 from nose.tools import assert_raises
 
 from sklearn.utils import check_random_state
-from sklearn.grid_search import GridSearchCV
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn import datasets
@@ -70,7 +69,8 @@ def test_parameter_checks():
                   lambda :GradientBoostingClassifier().variable_importance)
 
     # test value error on multi-class
-    assert_raises(ValueError, lambda X, y:GradientBoostingClassifier().fit(X, y),
+    assert_raises(ValueError,
+                  lambda X, y:GradientBoostingClassifier().fit(X, y),
                   X, [0, 0, 1, 1, 2, 2])
 
 
@@ -181,3 +181,17 @@ def test_probability():
     # derive predictions from probabilities
     y_pred = clf.classes.take(y_proba.argmax(axis=1), axis=0)
     assert_array_equal(y_pred, true_result)
+
+
+def test_check_inputs():
+    """Test input checks (shape and type of X and y)."""
+    clf = GradientBoostingClassifier(n_iter=100, random_state=1)
+    assert_raises(ValueError, clf.fit, X, y + [0, 1])
+
+    from scipy import sparse
+    X_sparse = sparse.csr_matrix(X)
+    clf = GradientBoostingClassifier(n_iter=100, random_state=1)
+    assert_raises(ValueError, clf.fit, X_sparse, y)
+
+    clf = GradientBoostingClassifier().fit(X, y)
+    assert_raises(ValueError, clf.predict, X_sparse)
