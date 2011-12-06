@@ -836,6 +836,11 @@ class DictionaryLearning(BaseDictionaryLearning):
         the reconstruction error targeted. In this case, it overrides
         `n_nonzero_coefs`.
 
+    split_sign: bool, False by default
+        Whether to split the sparse feature vector into the concatenation of
+        its negative part and its positive part. This can improve the
+        performance of downstream classifiers.
+
     n_jobs: int,
         number of parallel jobs to run
 
@@ -970,6 +975,11 @@ class MiniBatchDictionaryLearning(BaseDictionaryLearning):
         If `algorithm='omp'`, `alpha` is the tolerance parameter: the value of
         the reconstruction error targeted. In this case, it overrides
         `n_nonzero_coefs`.
+
+    split_sign: bool, False by default
+        Whether to split the sparse feature vector into the concatenation of
+        its negative part and its positive part. This can improve the
+        performance of downstream classifiers.
 
     n_jobs: int,
         number of parallel jobs to run
