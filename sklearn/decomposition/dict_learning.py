@@ -708,6 +708,77 @@ class BaseDictionaryLearning(BaseEstimator, TransformerMixin):
         return code
 
 
+class SparseCoder(BaseDictionaryLearning):
+    """ Sparse coding
+
+    Finds a sparse representation of data against a fixed, precomputed
+    dictionary.
+
+    Parameters
+    ----------
+    dictionary: array, [n_atoms, n_features]
+        The dictionary atoms used for sparse coding. Lines are assumed to be
+        normalized to unit norm.
+
+    transform_algorithm: {'lasso_lars', 'lasso_cd', 'lars', 'omp', 'threshold'}
+        Algorithm used to transform the data
+        lars: uses the least angle regression method (linear_model.lars_path)
+        lasso_lars: uses Lars to compute the Lasso solution
+        lasso_cd: uses the coordinate descent method to compute the
+        Lasso solution (linear_model.Lasso). lasso_lars will be faster if
+        the estimated components are sparse.
+        omp: uses orthogonal matching pursuit to estimate the sparse solution
+        threshold: squashes to zero all coefficients less than alpha from
+        the projection X.T * Y
+
+    transform_n_nonzero_coefs: int, 0.1 * n_features by default
+        Number of nonzero coefficients to target in each column of the
+        solution. This is only used by `algorithm='lars'` and `algorithm='omp'`
+        and is overridden by `alpha` in the `omp` case.
+
+    transform_alpha: float, 1. by default
+        If `algorithm='lasso_lars'` or `algorithm='lasso_cd'`, `alpha` is the
+        penalty applied to the L1 norm.
+        If `algorithm='threhold'`, `alpha` is the absolute value of the
+        threshold below which coefficients will be squashed to zero.
+        If `algorithm='omp'`, `alpha` is the tolerance parameter: the value of
+        the reconstruction error targeted. In this case, it overrides
+        `n_nonzero_coefs`.
+
+    split_sign: bool, False by default
+        Whether to split the sparse feature vector into the concatenation of
+        its negative part and its positive part. This can improve the
+        performance of downstream classifiers.
+
+    n_jobs: int,
+        number of parallel jobs to run
+
+    Attributes
+    ----------
+    components_: array, [n_atoms, n_features]
+        The unchanged dictionary atoms
+
+    See also
+    --------
+    :class:`sklearn.decomposition.DictionaryLearning` which also learns the
+    most appropriate dictionary for sparse coding.
+
+    :class:`sklearn.decomposition.SparsePCA` which solves the transposed
+    problem, finding sparse components to represent data.
+    """
+
+    def __init__(self, dictionary, transform_algorithm='omp',
+                 transform_n_nonzero_coefs=None, transform_alpha=None,
+                 split_sign=False, n_jobs=1):
+        self.n_atoms = dictionary.shape[0]
+        self.transform_algorithm = transform_algorithm
+        self.transform_n_nonzero_coefs = transform_n_nonzero_coefs
+        self.transform_alpha = transform_alpha
+        self.split_sign = split_sign
+        self.n_jobs = n_jobs
+        self.components_ = dictionary
+
+
 class DictionaryLearning(BaseDictionaryLearning):
     """ Dictionary learning
 
