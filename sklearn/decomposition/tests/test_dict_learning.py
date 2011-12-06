@@ -4,7 +4,7 @@ from numpy.testing import assert_array_almost_equal, assert_array_equal, \
 
 from .. import DictionaryLearning, MiniBatchDictionaryLearning, \
                dict_learning_online
-from ..dict_learning import sparse_encode, sparse_encode_parallel
+from ..dict_learning import sparse_encode, sparse_encode_parallel, SparseCoder
 
 rng = np.random.RandomState(0)
 n_samples, n_features = 10, 8
@@ -120,3 +120,15 @@ def test_sparse_code():
     assert_equal(est_code_1.shape, real_code.shape)
     assert_equal(est_code_1, est_code_2)
     assert_equal(est_code_1.nonzero(), real_code.nonzero())
+
+
+def test_sparse_coder_estimator():
+    rng = np.random.RandomState(0)
+    dictionary = rng.randn(10, 3)
+    real_code = np.zeros((3, 5))
+    real_code.ravel()[rng.randint(15, size=6)] = 1.0
+    Y = np.dot(dictionary, real_code)
+    coder = SparseCoder(dictionary.T, transform_algorithm='lasso_lars')
+    est_code = coder.transform(Y.T).T
+    assert_equal(est_code.shape, real_code.shape)
+    assert_equal(est_code.nonzero(), real_code.nonzero())
