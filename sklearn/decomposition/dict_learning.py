@@ -137,7 +137,7 @@ def sparse_encode(X, Y, gram=None, cov=None, algorithm='lasso_lars',
 
     elif algorithm == 'lars':
         if n_nonzero_coefs is None:
-            n_nonzero_coefs = n_features / 10
+            n_nonzero_coefs = max(n_features / 10, 1)
         try:
             new_code = np.empty((X.shape[1], n_features))
             err_mgt = np.seterr(all='ignore')
