@@ -129,7 +129,7 @@ def sparse_encode(X, Y, gram=None, cov=None, algorithm='lasso_lars',
                     max_iter=1000)
         for k in xrange(n_features):
             # A huge amount of time is spent in this loop. It needs to be
-            # tight.
+            
             if init is not None:
                 clf.coef_ = init[:, k]  # Init with previous value of Vk
             clf.fit(X, Y[:, k])
@@ -709,7 +709,7 @@ class BaseDictionaryLearning(BaseEstimator, TransformerMixin):
 
 
 class SparseCoder(BaseDictionaryLearning):
-    """ Sparse coding
+    """Sparse coding
 
     Finds a sparse representation of data against a fixed, precomputed
     dictionary.
@@ -780,7 +780,7 @@ class SparseCoder(BaseDictionaryLearning):
 
 
 class DictionaryLearning(BaseDictionaryLearning):
-    """ Dictionary learning
+    """Dictionary learning
 
     Finds a dictionary (a set of atoms) that can best be used to represent data
     using a sparse code.
