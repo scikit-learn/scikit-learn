@@ -1,11 +1,11 @@
 """Forest of trees-based ensemble methods
 
-Those methods include random forests and extremly randomized trees.
+Those methods include random forests and extremely randomized trees.
 
 The module structure is the following:
 
 - The ``Forest`` base class implements a common ``fit`` method for all
-  the estimators the module. The ``fit`` method of the base ``Forest``
+  the estimators in the module. The ``fit`` method of the base ``Forest``
   class calls the ``fit`` method of each sub-estimator on random samples
   (with replacement, a.k.a. bootstrap) of the training set.
 
