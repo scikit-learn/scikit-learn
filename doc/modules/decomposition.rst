@@ -240,6 +240,48 @@ factorization, while larger values shrink many coefficients to zero.
 Dictionary Learning
 ===================
 
+.. _sparse_coder:
+Sparse coding with a precomputed dictionary
+-------------------------------------------
+
+The `SparseCoder` object is an estimator that can be used to transform signals
+into sparse linear combination of atoms from a fixed, precomputed dictionary
+such as a discrete wavelet basis. This object therefore does not
+implement a `fit` method. The transformation amounts
+to a sparse coding problem: finding a representation of the data as a linear
+combination of as few dictionary atoms as possible. All variations of
+dictionary learning implement the following transform methods, controllable via
+the `transform_method` initialization parameter:
+
+* Orthogonal matching pursuit (:ref:`omp`)
+
+* Least-angle regression (:ref:`least_angle_regression`)
+
+* Lasso computed by least-angle regression
+
+* Lasso using coordinate descent (:ref:`lasso`)
+
+* Thresholding
+
+Thresholding is very fast but it does not yield accurate reconstructions.
+They have been shown useful in literature for classification tasks. For image
+reconstruction tasks, orthogonal matching pursuit yields the most accurate,
+unbiased reconstruction.
+
+The dictionary learning objects offer, via the `split_code` parameter, the
+possibility to separate the positive and negative values in the results of
+sparse coding. This is useful when dictionary learning is used for extracting
+features that will be used for supervised learning, because it allows the
+learning algorithm to assign different weights to negative loadings of a
+particular atom, from to the corresponding positive loading.
+
+The split code for a single sample has length `2 * n_atoms`
+and is constructed using the following rule: First, the regular code of length
+`n_atoms` is computed. Then, the first `n_atoms` entries of the split_code are
+filled with the positive part of the regular code vector. The second half of
+the split code is filled with the negative part of the code vector, only with
+a positive sign. Therefore, the split_code is non-negative.
+
 Generic dictionary learning
 ---------------------------
 
@@ -275,42 +317,9 @@ dictionary fixed, and then updating the dictionary to best fit the sparse code.
 .. centered:: |pca_img| |dict_img|
 
 
-After using such a procedure to fit the dictionary, the fitted object can be
-used to transform new data. The transformation amounts to a sparse coding
-problem: finding a representation of the data as a linear combination of as few
-dictionary atoms as possible. All variations of dictionary learning implement
-the following transform methods, controllable via the `transform_method`
-initialization parameter:
-
-
-* Orthogonal matching pursuit (:ref:`omp`)
-
-* Least-angle regression (:ref:`least_angle_regression`)
-
-* Lasso computed by least-angle regression
-
-* Lasso using coordinate descent (:ref:`lasso`)
-
-* Thresholding
-
-Thresholding is very fast but it does not yield accurate reconstructions.
-They have been shown useful in literature for classification tasks. For image
-reconstruction tasks, orthogonal matching pursuit yields the most accurate,
-unbiased reconstruction.
-
-The dictionary learning objects offer, via the `split_code` parameter, the
-possibility to separate the positive and negative values in the results of
-sparse coding. This is useful when dictionary learning is used for extracting
-features that will be used for supervised learning, because it allows the
-learning algorithm to assign different weights to negative loadings of a
-particular atom, from to the corresponding positive loading.
-
-The split code for a single sample has length `2 * n_atoms`
-and is constructed using the following rule: First, the regular code of length
-`n_atoms` is computed. Then, the first `n_atoms` entries of the split_code are
-filled with the positive part of the regular code vector. The second half of
-the split code is filled with the negative part of the code vector, only with
-a positive sign. Therefore, the split_code is non-negative.
+After using such a procedure to fit the dictionary, the transform is simply a
+sparse coding step that shares the same implementation with all dictionary
+learning objects (see :ref:`sparse_coder`).
 
 The following image shows how a dictionary learned from 4x4 pixel image patches
 extracted from part of the image of Lena looks like.
