@@ -779,6 +779,14 @@ class SparseCoder(BaseDictionaryLearning):
         self.n_jobs = n_jobs
         self.components_ = dictionary
 
+    def fit(self, X, y=None):
+        """Do nothing and return the estimator unchanged
+
+        This method is just there to implement the usual API and hence
+        work in pipelines.
+        """
+        return self
+
 
 class DictionaryLearning(BaseDictionaryLearning):
     """Dictionary learning
