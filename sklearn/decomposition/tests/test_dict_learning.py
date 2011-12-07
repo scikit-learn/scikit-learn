@@ -110,25 +110,29 @@ def test_dict_learning_online_partial_fit():
 
 
 def test_sparse_code():
-    rng = np.random.RandomState(0)
-    dictionary = rng.randn(10, 3)
-    real_code = np.zeros((3, 5))
-    real_code.ravel()[rng.randint(15, size=6)] = 1.0
-    Y = np.dot(dictionary, real_code)
-    est_code_1 = sparse_encode(dictionary, Y, alpha=1.0)
-    est_code_2 = sparse_encode_parallel(dictionary, Y, alpha=1.0)
+    n_atoms = 3
+    n_nonzero_atoms = 6
+    dictionary = rng.randn(n_samples, n_atoms)  # api is still sdrawkcab
+    real_code = np.zeros((n_atoms, n_features))
+    real_code.ravel()[rng.randint(
+        n_atoms * n_features, size=n_nonzero_atoms)] = 10.0
+    data = np.dot(dictionary, real_code)
+    est_code_1 = sparse_encode(dictionary, data, alpha=1.0)
+    est_code_2 = sparse_encode_parallel(dictionary, data, alpha=1.0)
     assert_equal(est_code_1.shape, real_code.shape)
     assert_equal(est_code_1, est_code_2)
     assert_equal(est_code_1.nonzero(), real_code.nonzero())
 
 
 def test_sparse_coder_estimator():
-    rng = np.random.RandomState(0)
-    dictionary = rng.randn(10, 3)
-    real_code = np.zeros((3, 5))
-    real_code.ravel()[rng.randint(15, size=6)] = 1.0
-    Y = np.dot(dictionary, real_code)
-    coder = SparseCoder(dictionary.T, transform_algorithm='lasso_lars')
-    est_code = coder.transform(Y.T).T
+    n_atoms = 3
+    n_nonzero_atoms = 6
+    dictionary = rng.randn(n_atoms, n_samples)
+    real_code = np.zeros((n_features, n_atoms))
+    real_code.ravel()[rng.randint(
+        n_atoms * n_features, size=n_nonzero_atoms)] = 10.0
+    data = np.dot(real_code, dictionary)
+    coder = SparseCoder(dictionary, transform_algorithm='lasso_lars')
+    est_code = coder.transform(data)
     assert_equal(est_code.shape, real_code.shape)
-    assert_equal(est_code.nonzero(), real_code.nonzero())
+    assert_equal(np.flatnonzero(est_code), np.flatnonzero(real_code))
