@@ -240,11 +240,12 @@ factorization, while larger values shrink many coefficients to zero.
 Dictionary Learning
 ===================
 
-.. _sparse_coder:
+.. _SparseCoder:
+
 Sparse coding with a precomputed dictionary
 -------------------------------------------
 
-The `SparseCoder` object is an estimator that can be used to transform signals
+The :class:`SparseCoder` object is an estimator that can be used to transform signals
 into sparse linear combination of atoms from a fixed, precomputed dictionary
 such as a discrete wavelet basis. This object therefore does not
 implement a `fit` method. The transformation amounts
@@ -319,7 +320,7 @@ dictionary fixed, and then updating the dictionary to best fit the sparse code.
 
 After using such a procedure to fit the dictionary, the transform is simply a
 sparse coding step that shares the same implementation with all dictionary
-learning objects (see :ref:`sparse_coder`).
+learning objects (see :ref:`SparseCoder`).
 
 The following image shows how a dictionary learned from 4x4 pixel image patches
 extracted from part of the image of Lena looks like.
