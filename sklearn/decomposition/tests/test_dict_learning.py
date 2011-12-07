@@ -2,9 +2,9 @@ import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal, \
                           assert_equal
 
-from .. import DictionaryLearning, MiniBatchDictionaryLearning, \
-               dict_learning_online
-from ..dict_learning import sparse_encode, sparse_encode_parallel, SparseCoder
+from .. import DictionaryLearning, MiniBatchDictionaryLearning, SparseCoder, \
+               dict_learning_online, sparse_encode, sparse_encode_parallel
+
 
 rng = np.random.RandomState(0)
 n_samples, n_features = 10, 8
