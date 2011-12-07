@@ -129,6 +129,7 @@ def sparse_encode(X, Y, gram=None, cov=None, algorithm='lasso_lars',
                     max_iter=1000)
         for k in xrange(n_features):
             # A huge amount of time is spent in this loop. It needs to be
+            # tight
             
             if init is not None:
                 clf.coef_ = init[:, k]  # Init with previous value of Vk
