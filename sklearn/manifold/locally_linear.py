@@ -268,8 +268,7 @@ def locally_linear_embedding(
         # we'll compute M = (I-W)'(I-W)
         # depending on the solver, we'll do this differently
         if M_sparse:
-            # the **kwargs syntax is for python2.5 compatibility
-            M = eye(*W.shape, **{'format': W.format}) - W
+            M = eye(*W.shape, format=W.format) - W
             M = (M.T * M).tocsr()
         else:
             M = (W.T * W - W.T - W).toarray()
