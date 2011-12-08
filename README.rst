@@ -29,7 +29,7 @@ Important links
 Dependencies
 ============
 
-The required dependencies to build the software are Python >= 2.5,
+The required dependencies to build the software are Python >= 2.6,
 setuptools, Numpy >= 1.2, SciPy >= 0.7 and a working C++ compiler.
 
 To run the tests you will also need nose >= 0.10.
