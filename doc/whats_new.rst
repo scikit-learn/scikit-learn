@@ -8,6 +8,9 @@
 Changelog
 ---------
 
+   - Python 2.5 compatibility was dropped; the minimum Python version needed
+     to use scikit-learn is now 2.6.
+
    - :ref:`sparse_inverse_covariance` estimation using the graph Lasso, with
      associated cross-validated estimator, by `Gael Varoquaux`_
 

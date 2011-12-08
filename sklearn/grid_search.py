@@ -8,15 +8,15 @@ an estimator.
 # License: BSD Style.
 
 import copy
+from itertools import product
 import time
 
 import numpy as np
 import scipy.sparse as sp
 
-from .externals.joblib import Parallel, delayed, logger
-from .cross_validation import check_cv
 from .base import BaseEstimator, is_classifier, clone
-from .utils.fixes import product
+from .cross_validation import check_cv
+from .externals.joblib import Parallel, delayed, logger
 
 
 class IterGrid(object):

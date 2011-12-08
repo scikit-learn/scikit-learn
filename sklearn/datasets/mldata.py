@@ -3,7 +3,6 @@
 # Copyright (c) 2011 Pietro Berkes
 # License: Simplified BSD
 
-from __future__ import with_statement
 import os
 from os.path import join, exists
 import re
