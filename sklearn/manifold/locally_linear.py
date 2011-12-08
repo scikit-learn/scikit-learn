@@ -140,8 +140,17 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100):
             eigen_solver = 'dense'
 
     if eigen_solver == 'arpack':
-        eigen_values, eigen_vectors = eigsh(M, k + k_skip, sigma=0.0,
-                                            tol=tol, maxiter=max_iter)
+        try:
+            # arpack in shift-invert mode is usually more robust
+            # but might fail if M contains zero singular values
+            # Relative to scipy v0.10
+            eigen_values, eigen_vectors = eigsh(
+                M, k + k_skip, sigma=0.0, tol=tol, maxiter=max_iter)
+        except:
+            # in non-invert mode (sigma=None) zero eigenvalues are
+            # correctly retrieved
+            eigen_values, eigen_vectors = eigsh(
+                M, k + k_skip, sigma=None, tol=tol, maxiter=max_iter)
 
         return eigen_vectors[:, k_skip:], np.sum(eigen_values[k_skip:])
     elif eigen_solver == 'dense':
