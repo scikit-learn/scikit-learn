@@ -268,10 +268,10 @@ def locally_linear_embedding(
         if M_sparse:
             # the **kwargs syntax is for python2.5 compatibility
             M = eye(*W.shape, **{'format': W.format}) - W
-            M = np.dot(M.T, M).tocsr()
+            M = M.T.dot(M).tocsr()
         else:
-            M = (np.dot(W.T, W) - (W.T + W)).todense()
-            M.flat[::M.shape[0] + 1] += 1  # W = W - I
+            M = (W.T.dot(W) - (W.T + W)).todense()
+            M.flat[::M.shape[0] + 1] += 1  # W = W - I = W - I
 
     elif method == 'hessian':
         dp = out_dim * (out_dim + 1) / 2
