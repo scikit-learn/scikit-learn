@@ -271,7 +271,8 @@ class Dendrogram(object):
 
 def create_dendrogram(X, connectivity, n_components=None, 
                       linkage_criterion="ward", metric="euclidean",
-                      linkage_kwargs={}, propagate_heights=False, copy=True):
+                      linkage_kwargs={}, propagate_heights=False, 
+                      constraints=[], copy=True):
     """ Hierarchical clustering algorithm that creates a dendrogram.
 
     This is the structured version, that takes into account the topological
@@ -309,6 +310,13 @@ def create_dendrogram(X, connectivity, n_components=None,
         propagate_heights is set to True, the height of a tree node is set
         to the maximum of the height provided by the linkage and the maximal
         height of any of its childs. Defaults to False.
+        
+    constraints : list of functions
+        A list of constraints that are checked when merging two clusters.
+        For a merge candidate consisting of two clusters with datapoints with 
+        indices c1 and c2, each constraint is checked. If constraint(c1, c2)
+        is not True, the two clusters are not merged.  
+        Defaults to empty list.
 
     copy : bool (optional)
         Make a copy of connectivity or work inplace. If connectivity
@@ -378,8 +386,19 @@ def create_dendrogram(X, connectivity, n_components=None,
         merge_distance = np.inf
         while linkage.has_more_candidates():
             merge_distance, i, j = linkage.fetch_candidate()
+            # Check if nodes haven't been merged already
             if open_nodes[i] and open_nodes[j]:
-                break
+                break            
+            # Check if all constraints are fulfilled
+            constraints_satisfied = True
+            for constraint in constraints:
+                if not constraint(linkage.get_nodes_of_cluster(i),
+                                  linkage.get_nodes_of_cluster(j)):
+                    constraints_satisfied =False
+                    break
+            if not constraints_satisfied:
+                continue
+            # Check if only unconnected components are left
             if not linkage.has_more_candidates():
                 merge_distance = np.inf
                 break
