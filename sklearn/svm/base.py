@@ -386,6 +386,11 @@ class BaseLibLinear(BaseEstimator):
                              % type(X))
         y = np.asarray(y, dtype=np.int32, order='C')
 
+        if X.shape[0] != y.shape[0]:
+            raise ValueError("X and y have incompatible shapes.\n" +
+                             "X has %s samples, but y has %s." % \
+                             (X.shape[0], y.shape[0]))
+
         self.raw_coef_, self.label_ = liblinear.train_wrap(X, y,
                        self._get_solver_type(), self.tol,
                        self._get_bias(), self.C,
