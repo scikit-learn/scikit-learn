@@ -86,7 +86,6 @@ def c_step(X, h, remaining_iterations=30, initial_estimates=None,
         support[np.argsort(dist)[:h]] = True
         location = X[support].mean(0)
         covariance = cov_computation_method(X[support])
-        det = fast_logdet(covariance)
     previous_det = np.inf
 
     # Iterative procedure for Minimum Covariance Determinant computation
