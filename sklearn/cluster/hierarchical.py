@@ -47,6 +47,14 @@ class Dendrogram(object):
     
     n_components : int
         The number of connected components in the dataset
+        
+    propagate_heights : bool
+        For certain linkages, it is not guaranteed that a tree node gets 
+        assigned a larger height than its child nodes. This may be critical
+        in combination with cutting the dendrogram using cut_height. If
+        propagate_heights is set to True, the height of a tree node is set
+        to the maximum of the height provided by the linkage and the maximal
+        height of any of its childs. Defaults to False.
 
     Methods
     ----------
@@ -86,9 +94,10 @@ class Dendrogram(object):
         The index that a new tree node (resulting from merging) will obtain.
     """
 
-    def __init__(self, n_samples, n_components):
+    def __init__(self, n_samples, n_components, propagate_heights=False):
         self.n_samples = n_samples 
         self.n_components = n_components
+        self.propagate_heights = propagate_heights
         
         n_nodes = 2 * self.n_samples - 1
         self.parent = np.arange(n_nodes, dtype=np.int)
@@ -122,7 +131,12 @@ class Dendrogram(object):
             
         """
         self.parent[child_node_1] = self.parent[child_node_2] = self.next_index
-        self.heights[self.next_index] = merge_distance
+        if self.propagate_heights:
+            self.heights[self.next_index] = \
+                        max(merge_distance, self.heights[child_node_1], 
+                            self.heights[child_node_2])
+        else:
+            self.heights[self.next_index] = merge_distance
         self.children.append([child_node_1, child_node_2])
         self.next_index += 1
         
@@ -257,7 +271,7 @@ class Dendrogram(object):
 
 def create_dendrogram(X, connectivity, n_components=None, 
                       linkage_criterion="ward", metric="euclidean",
-                      linkage_kwargs={}, copy=True):
+                      linkage_kwargs={}, propagate_heights=False, copy=True):
     """ Hierarchical clustering algorithm that creates a dendrogram.
 
     This is the structured version, that takes into account the topological
@@ -287,6 +301,14 @@ def create_dendrogram(X, connectivity, n_components=None,
     linkage_kwargs : dict
         Additional keyword arguments that are directly passed to the __init__
         method of the linkage object.
+        
+    propagate_heights : bool
+        For certain linkages, it is not guaranteed that a tree node gets 
+        assigned a larger height than its child nodes. This could be critical
+        in combination with cutting the dendrogram using cut_height. If
+        propagate_heights is set to True, the height of a tree node is set
+        to the maximum of the height provided by the linkage and the maximal
+        height of any of its childs. Defaults to False.
 
     copy : bool (optional)
         Make a copy of connectivity or work inplace. If connectivity
@@ -336,7 +358,7 @@ def create_dendrogram(X, connectivity, n_components=None,
     connectivity.setdiag(np.zeros(connectivity.shape[0]))        
     
     # Create the dendrogram
-    dendrogram = Dendrogram(n_samples, n_components)
+    dendrogram = Dendrogram(n_samples, n_components, propagate_heights)
     
     # Linkage object that manages the distance computations between clusters
     # distances are updated incrementally during merging of clusters...
@@ -376,12 +398,12 @@ def create_dendrogram(X, connectivity, n_components=None,
         # tree nodes i and j. Store the corresponding merge distance as the 
         # nodes' height 
         k = dendrogram.merge(i, j, merge_distance)
-        
+
         # Update linkage object
         linkage.update(i, j, k - 1, dendrogram.parent)
         
         open_nodes[i], open_nodes[j] = False, False
-                
+
     return dendrogram
 
 
@@ -569,7 +591,7 @@ class HierarchicalClustering(BaseEstimator):
             # Invoke clustering algorithm
             clustering_algorithm = \
                 self.unstructured_cluster_algorithms[self.linkage_criterion]
-            out = clustering_algorithm(X, metric=self.metric)
+            out = clustering_algorithm(X)
             # Put result into a dendrogram and cut it to get labeling
             self.dendrogram = Dendrogram(X.shape[0], 1)
             self.dendrogram.children = out[:, :2].astype(np.int)
