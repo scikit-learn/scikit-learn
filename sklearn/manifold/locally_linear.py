@@ -270,9 +270,9 @@ def locally_linear_embedding(
         if M_sparse:
             # the **kwargs syntax is for python2.5 compatibility
             M = eye(*W.shape, **{'format': W.format}) - W
-            M = M.T.dot(M).tocsr()
+            M = (M.T * M).tocsr()
         else:
-            M = (W.T.dot(W) - (W.T + W)).todense()
+            M = (W.T * W - W.T - W).toarray()
             M.flat[::M.shape[0] + 1] += 1  # W = W - I = W - I
 
     elif method == 'hessian':
