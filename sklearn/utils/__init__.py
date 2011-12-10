@@ -96,6 +96,13 @@ def check_random_state(seed):
                      ' instance' % seed)
 
 
+def _num_samples(x):
+    """Return number of samples in array-like x."""
+    if not hasattr(x, '__len__') and not hasattr(x, 'shape'):
+        raise TypeError("Expected sequence or array-like, got %r" % x)
+    return x.shape[0] if hasattr(x, 'shape') else len(x)
+
+
 def check_arrays(*arrays, **options):
     """Checked that all arrays have consistent first dimensions
 
@@ -123,10 +130,7 @@ def check_arrays(*arrays, **options):
     if len(arrays) == 0:
         return None
 
-    first = arrays[0]
-    if not hasattr(first, '__len__') and not hasattr(first, 'shape'):
-        raise ValueError("Expected python sequence or array, got %r" % first)
-    n_samples = first.shape[0] if hasattr(first, 'shape') else len(first)
+    n_samples = _num_samples(arrays[0])
 
     checked_arrays = []
     for array in arrays:
@@ -136,10 +140,7 @@ def check_arrays(*arrays, **options):
             checked_arrays.append(array)
             continue
 
-        if not hasattr(array, '__len__') and not hasattr(array, 'shape'):
-            raise ValueError("Expected python sequence or array, got %r"
-                             % array)
-        size = array.shape[0] if hasattr(array, 'shape') else len(array)
+        size = _num_samples(array)
 
         if size != n_samples:
             raise ValueError("Found array with dim %d. Expected %d" % (

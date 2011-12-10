@@ -28,11 +28,11 @@ def test_resample_noarg():
     assert resample() is None
 
 
-def test_check_arrays_value_errors():
-    """Check that invalid arguments yield ValueError"""
+def test_check_arrays_exceptions():
+    """Check that invalid arguments raise appropriate exceptions"""
     assert_raises(ValueError, check_arrays, [0], [0, 1])
-    assert_raises(ValueError, check_arrays, 0, [0, 1])
-    assert_raises(ValueError, check_arrays, [0], 0)
+    assert_raises(TypeError, check_arrays, 0, [0, 1])
+    assert_raises(TypeError, check_arrays, [0], 0)
     assert_raises(ValueError, check_arrays, [0, 1], [0, 1], meaning_of_life=42)
     assert_raises(ValueError, check_arrays, [0], [0], sparse_format='fake')
 
