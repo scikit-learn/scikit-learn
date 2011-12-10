@@ -88,11 +88,7 @@ def _graph_laplacian_sparse(graph, normed=False, return_diag=False):
         # we need to fix that
         diag_idx = lap.row[diag_mask]
 
-        try:
-            lap = lap.tolil()
-        except AttributeError:
-            # versions of scipy prior to 0.7 do not implement .tolil()
-            lap = sparse.lil_matrix(lap.tocsr())
+        lap = lap.tolil()
 
         diagonal_holes = list(set(range(n_nodes)).difference(
                                 diag_idx))
