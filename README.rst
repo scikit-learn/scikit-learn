@@ -30,7 +30,8 @@ Dependencies
 ============
 
 The required dependencies to build the software are Python >= 2.6,
-setuptools, Numpy >= 1.2, SciPy >= 0.7 and a working C++ compiler.
+setuptools, Numpy >= 1.3, SciPy >= 0.7 and a working C/C++ compiler.
+This configuration matches the last Ubuntu LTS release from April 2010.
 
 To run the tests you will also need nose >= 0.10.
 
