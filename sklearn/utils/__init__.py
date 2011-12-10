@@ -186,13 +186,6 @@ class deprecated(object):
 
     >>> @deprecated()
     ... def some_function(): pass
-
-    Deprecating a class takes some work, since we want to run on Python
-    versions that do not have class decorators:
-
-    >>> class Foo(object): pass
-    ...
-    >>> Foo = deprecated("Use Bar instead")(Foo)
     """
 
     # Adapted from http://wiki.python.org/moin/PythonDecoratorLibrary,
@@ -229,9 +222,7 @@ class deprecated(object):
     def _decorate_fun(self, fun):
         """Decorate function fun"""
 
-        what = "Function %s" % fun.__name__
-
-        msg = "%s is deprecated" % what
+        msg = "Function %s is deprecated" % fun.__name__
         if self.extra:
             msg += "; %s" % self.extra
 

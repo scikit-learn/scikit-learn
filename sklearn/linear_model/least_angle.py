@@ -510,14 +510,14 @@ class LassoLars(Lars):
 
 
 # Deprecated classes
+@deprecated("Use Lars instead")
 class LARS(Lars):
     pass
-LARS = deprecated("Use Lars instead")(LARS)
 
 
+@deprecated("Use LassoLars instead")
 class LassoLARS(LassoLars):
     pass
-LassoLARS = deprecated("Use LassoLars instead")(LassoLARS)
 
 
 ###############################################################################
