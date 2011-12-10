@@ -9,6 +9,7 @@ import warnings
 
 def assert_all_finite(X):
     """Throw a ValueError if X contains NaN or infinity.
+
     Input MUST be an np.ndarray instance or a scipy.sparse matrix."""
 
     # First try an O(n) time, O(1) space solution for the common case that
@@ -21,6 +22,7 @@ def assert_all_finite(X):
 
 def safe_asarray(X, dtype=None, order=None):
     """Convert X to an array or sparse matrix.
+
     Prevents copying X when possible; sparse matrices are passed through."""
     if not sp.issparse(X):
         X = np.asarray(X, dtype, order)
