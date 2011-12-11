@@ -1,4 +1,4 @@
-from nose.tools import assert_equal, assert_in, assert_raises, assert_true
+from nose.tools import assert_equal, assert_raises, assert_true
 import warnings
 
 import numpy as np
@@ -58,7 +58,7 @@ def test_deprecated():
 
         assert_equal(len(w), 1)
         assert_true(issubclass(w[0].category, DeprecationWarning))
-        assert_in("deprecated", str(w[0].message).lower())
+        assert_true("deprecated" in str(w[0].message).lower())
 
     # ... then a class.
     with warnings.catch_warnings(record=True) as w:
@@ -74,7 +74,7 @@ def test_deprecated():
 
         assert_equal(len(w), 1)
         assert_true(issubclass(w[0].category, DeprecationWarning))
-        assert_in("deprecated", str(w[0].message).lower())
+        assert_true("deprecated" in str(w[0].message).lower())
 
 
 def test_resample_value_errors():
