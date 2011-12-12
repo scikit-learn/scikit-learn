@@ -243,6 +243,8 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
                              for (i, ind) in enumerate(neigh_ind)])
 
 
+@deprecated("""will be removed in v0.11;
+use KNeighborsRegressor or RadiusNeighborsRegressor instead""")
 class NeighborsRegressor(NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin,
                          SupervisedFloatMixin,
                          RegressorMixin):
@@ -356,8 +358,3 @@ class NeighborsRegressor(NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin,
             # compute interpolation on y
             return np.array([np.mean(self._y[ind])
                              for ind in neigh_ind])
-
-NeighborsRegressor = deprecated(
-    "deprecated in v0.9; will be removed in v0.11; "
-    "use KNeighborsRegressor or RadiusNeighborsRegressor instead")(
-    NeighborsRegressor)

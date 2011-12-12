@@ -27,7 +27,7 @@ from . import _k_means
 
 
 ###############################################################################
-# Initialisation heuristic
+# Initialization heuristic
 
 
 def k_init(X, k, n_local_trials=None, random_state=None, x_squared_norms=None):
@@ -128,7 +128,7 @@ def k_init(X, k, n_local_trials=None, random_state=None, x_squared_norms=None):
 
 
 ###############################################################################
-# K-means estimation by EM (expectation maximisation)
+# K-means estimation by EM (expectation maximization)
 
 
 def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
@@ -217,7 +217,7 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
         init -= X_mean
         if not n_init == 1:
             warnings.warn('Explicit initial center position passed: '
-                          'performing only one init in the k-means')
+                          'performing only one init in K-means')
             n_init = 1
 
     # precompute squared norms of data points
@@ -313,7 +313,7 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None):
         number of centroids
 
     init: {'k-means++', 'random' or ndarray or callable} optional
-        Method for initialisation
+        Method for initialization
 
     random_state: integer or numpy.RandomState, optional
         The generator used to initialize the centers. If an integer is

@@ -104,21 +104,21 @@ can be used to build artifical datasets of controled size and complexity.
 Datasets in svmlight / libsvm format
 ====================================
 
-scikit-learn includes a fast utility function, ``load_svmlight_format``,  to load
+scikit-learn includes utility functions for loading
 datasets in the svmlight / libsvm format. In this format, each line
 takes the form ``<label> <feature-id>:<feature-value>
 <feature-id>:<feature-value> ...``. This format is especially suitable for sparse datasets.
-Scipy sparse CSR matrices are used for ``X`` and numpy arrays are used for ``y``.
+In this module, scipy sparse CSR matrices are used for ``X`` and numpy arrays are used for ``y``.
 
-You may load a dataset like this::
+You may load a dataset like as follows::
 
   >>> from sklearn.datasets import load_svmlight_file
   >>> X_train, y_train = load_svmlight_file("/path/to/train_dataset.txt")
   ...                                                         # doctest: +SKIP
 
-You may also load two datasets at once::
+You may also load two (or more) datasets at once::
 
-  >>> X_train, y_train, X_test, y_test = load_svmlight_file(
+  >>> X_train, y_train, X_test, y_test = load_svmlight_files(
   ...     "/path/to/train_dataset.txt",
   ...     "/path/to/test_dataset.txt")                        # doctest: +SKIP
 
@@ -130,9 +130,11 @@ features::
   ...     "/path/to/test_dataset.txt", n_features=X_train.shape[1])
   ...                                                         # doctest: +SKIP
 
-.. topic:: Public datasets:
+.. topic:: Related links:
 
  _`Public datasets in svmlight / libsvm format`: http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/
+
+ _`Faster API-compatible implementation`: https://github.com/mblondel/svmlight-loader
 
 
 .. include:: olivetti_faces.rst 

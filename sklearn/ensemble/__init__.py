@@ -1,10 +1,6 @@
 """
-Ensemble methods
-================
-
-:mod:`sklearn.ensemble` is a module including ensemble-based methods for
+The :mod:`sklearn.ensemble` module includes ensemble-based methods for
 classification and regression.
-
 """
 
 from .base import BaseEnsemble

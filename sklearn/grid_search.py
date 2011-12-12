@@ -1,19 +1,22 @@
-"""Tune the parameters of an estimator by cross-validation"""
+"""
+The :mod:`sklearn.grid_search` includes utilities to fine-tune the parameters of
+an estimator.
+"""
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>,
 #         Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD Style.
 
 import copy
+from itertools import product
 import time
 
 import numpy as np
 import scipy.sparse as sp
 
-from .externals.joblib import Parallel, delayed, logger
-from .cross_validation import check_cv
 from .base import BaseEstimator, is_classifier, clone
-from .utils.fixes import product
+from .cross_validation import check_cv
+from .externals.joblib import Parallel, delayed, logger
 
 
 class IterGrid(object):
@@ -199,13 +202,14 @@ class GridSearchCV(BaseEstimator):
     >>> parameters = {'kernel':('linear', 'rbf'), 'C':[1, 10]}
     >>> svr = svm.SVR()
     >>> clf = grid_search.GridSearchCV(svr, parameters)
-    >>> clf.fit(iris.data, iris.target) # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    >>> clf.fit(iris.data, iris.target)
+    ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     GridSearchCV(cv=None,
-           estimator=SVR(C=1.0, cache_size=..., coef0=..., degree=..., epsilon=..., gamma=...,
-      kernel='rbf', probability=False, shrinking=True, tol=...),
-           fit_params={}, iid=True, loss_func=None, n_jobs=1,
-           param_grid=...,
-           ...)
+        estimator=SVR(C=1.0, cache_size=..., coef0=..., degree=...,
+            epsilon=..., gamma=..., kernel='rbf', probability=False,
+            shrinking=True, tol=...),
+        fit_params={}, iid=True, loss_func=None, n_jobs=1, param_grid=...,
+        ...)
 
     Attributes
     ----------

@@ -1,4 +1,3 @@
-
 .. _linear_model:
 
 =========================
@@ -583,7 +582,7 @@ where :math:`\alpha` is the precision of the noise.
 Logisitic regression
 ======================
 
-If the task at hand is to do choose which class a sample belongs to given
+If the task at hand is to choose which class a sample belongs to given
 a finite (hopefuly small) set of choices, the learning problem is a
 classification, rather than regression. Linear models can be used for
 such a decision, but it is best to use what is called a

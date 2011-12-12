@@ -1,9 +1,9 @@
+from itertools import product
 import numpy as np
 
 from numpy.testing import assert_almost_equal, assert_array_almost_equal
 from sklearn import neighbors, manifold
 from sklearn.manifold.locally_linear import barycenter_kneighbors_graph
-from sklearn.utils.fixes import product
 
 eigen_solvers = ['dense', 'arpack']
 

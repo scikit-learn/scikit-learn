@@ -1,11 +1,15 @@
-"""Utilities for cross validation and performance evaluation"""
+"""
+The :mod:`sklearn.cross_validation` module includes utilities for cross-
+validation and performance evaluation.
+"""
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>,
 #         Gael Varoquaux <gael.varoquaux@normalesup.org>,
 #         Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD Style.
 
-from math import ceil
+from itertools import combinations
+from math import ceil, factorial
 import operator
 
 import numpy as np
@@ -13,7 +17,6 @@ import scipy.sparse as sp
 
 from .base import is_classifier, clone
 from .utils import check_arrays, check_random_state
-from .utils.extmath import factorial, combinations
 from .utils.fixes import unique
 from .externals.joblib import Parallel, delayed
 
@@ -680,8 +683,8 @@ class ShuffleSplit(object):
     Examples
     ----------
     >>> from sklearn import cross_validation
-    >>> rs = cross_validation.ShuffleSplit(4, n_iterations=3, test_fraction=.25,
-    ...                             random_state=0)
+    >>> rs = cross_validation.ShuffleSplit(4, n_iterations=3,
+    ...     test_fraction=.25, random_state=0)
     >>> len(rs)
     3
     >>> print rs

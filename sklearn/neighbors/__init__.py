@@ -1,3 +1,8 @@
+"""
+The :mod:`sklearn.neighbors` module implements the k-nearest neighbors
+algorithm.
+"""
+
 __all__ = ['BallTree',
            'kneighbors_graph', 'radius_neighbors_graph',
            'NearestNeighbors',

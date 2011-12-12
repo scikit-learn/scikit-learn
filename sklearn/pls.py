@@ -1,4 +1,5 @@
-""" Partial Least Squares regression
+"""
+The :mod:`sklearn.pls` module implements Partial Least Squares (PLS).
 """
 
 # Author: Edouard Duchesnay <edouard.duchesnay@cea.fr>

@@ -65,11 +65,11 @@ def test_connect_regions():
 def test_connect_regions_with_grid():
     lena = sp.misc.lena()
     mask = lena > 50
-    graph = grid_to_graph(*lena.shape, **{'mask': mask})
+    graph = grid_to_graph(*lena.shape, mask=mask)
     assert_equal(ndimage.label(mask)[1], cs_graph_components(graph)[0])
 
     mask = lena > 150
-    graph = grid_to_graph(*lena.shape, **{'mask': mask, 'dtype': None})
+    graph = grid_to_graph(*lena.shape, mask=mask, dtype=None)
     assert_equal(ndimage.label(mask)[1], cs_graph_components(graph)[0])
 
 
