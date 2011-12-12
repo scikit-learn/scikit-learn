@@ -101,7 +101,7 @@ class Dendrogram(object):
         
         n_nodes = 2 * self.n_samples - 1
         self.parent = np.arange(n_nodes, dtype=np.int)
-        self.heights = np.zeros(n_nodes)
+        self.heights = -np.inf * np.ones(n_nodes)
         self.children = []
         
         self.next_index = self.n_samples
