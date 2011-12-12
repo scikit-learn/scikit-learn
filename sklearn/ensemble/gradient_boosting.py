@@ -105,10 +105,10 @@ class LossFunction(object):
 
     def update_terminal_regions(self, tree, X, y, residual, y_pred,
                                 learn_rate=1.0):
-        """Update the terminal regions (=leaves) of the given
-        tree. Traverses tree and invokes template method
-        `_update_terminal_region`. """
-        for leaf in np.where(tree.children[:, 0] == -1)[0]:
+        """Update the terminal regions (=leaves) of the given tree and
+        updates the current predictions of the model. Traverses tree
+        and invokes template method `_update_terminal_region`."""
+        for leaf in np.where(tree.children[:, 0] == Tree.LEAF)[0]:
             leaf_terminal_region = np.where(tree.terminal_region == leaf)[0]
             self._update_terminal_region(tree, leaf, leaf_terminal_region,
                                          X, y, residual, y_pred)
@@ -174,11 +174,7 @@ class BinomialDeviance(LossFunction):
                              np.logaddexp(0.0, pred)) / y.shape[0]
 
     def negative_gradient(self, y, pred):
-        try:
-            return y - 1.0 / (1.0 + np.exp(-pred))
-        except FloatingPointError, e:
-            import IPython
-            IPython.embed()
+        return y - 1.0 / (1.0 + np.exp(-pred))
 
     def _update_terminal_region(self, tree, leaf, terminal_region, X, y,
                                 residual, pred):
@@ -293,13 +289,14 @@ class BaseGradientBoosting(BaseEstimator):
         for i in xrange(self.n_iter):
 
             # subsampling
-            sample_mask = self.random_state.rand(n_samples) >= (1.0 - self.subsample)
+            sample_mask = self.random_state.rand(n_samples) \
+                          >= (1.0 - self.subsample)
 
             residual = loss.negative_gradient(y, y_pred)
 
             # induce regression tree on residuals
-            tree = _build_tree(X, residual, False, MSE(), self.max_depth,
-                               self.min_split, 0.1, -1, self.random_state,
+            tree = _build_tree(X, residual, MSE(), self.max_depth,
+                               self.min_split, 1.0, -1, self.random_state,
                                1, _find_best_split, sample_mask, X_argsorted,
                                True)
 
@@ -314,7 +311,8 @@ class BaseGradientBoosting(BaseEstimator):
             if self.subsample < 1.0:
                 y_pred[~sample_mask] = self._predict(
                     X[~sample_mask], old_pred=y_pred[~sample_mask])
-                self.oob_deviance[i] = loss(y[~sample_mask], y_pred[~sample_mask])
+                self.oob_deviance[i] = loss(y[~sample_mask],
+                                            y_pred[~sample_mask])
 
             self.train_deviance[i] = loss(y[sample_mask], y_pred[sample_mask])
 
