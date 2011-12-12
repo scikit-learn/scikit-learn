@@ -2,6 +2,7 @@
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD Style
 
+from abc import ABCMeta, abstractmethod
 import copy
 import inspect
 import numpy as np
@@ -135,6 +136,12 @@ class BaseEstimator(object):
     at the class level in their __init__ as explicit keyword
     arguments (no *args, **kwargs).
     """
+
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def fit(self, X, y=None, *args):
+        """Fit estimator on samples X, with optional labels/output y."""
 
     @classmethod
     def _get_param_names(cls):
