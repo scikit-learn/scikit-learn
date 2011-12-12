@@ -1,6 +1,7 @@
 import numpy as np
 
 from time import time
+from functools import wraps
 
 from sklearn import datasets
 from sklearn.utils import shuffle
@@ -12,14 +13,17 @@ from sklearn.ensemble.gradient_boosting import GradientBoostingRegressor
 
 import pylab as pl
 
-def repeat(f):
-    def wrapper(*args, **kargs):
-        scores = []
-        for i in range(10):
-            scores.append(f(*args, random_state=i, **kargs))
-        scores = np.array(scores)
-        return scores.mean(axis=0), scores.std(axis=0)
-    return wrapper
+
+def repeat(n_repetitions=10):
+    def wrap(f):
+        def wrapper(*args, **kargs):
+            scores = []
+            for i in range(n_repetitions):
+                scores.append(f(*args, random_state=i, **kargs))
+            scores = np.array(scores)
+            return scores.mean(axis=0), scores.std(axis=0)
+        return wraps(f)(wrapper)
+    return wrap
 
 
 # ignore overflows due to exp
@@ -27,11 +31,11 @@ np.seterr(invalid='raise', under='raise', divide='raise', over='ignore')
 
 
 classification_params = {'loss': 'deviance', 'n_iter': 250,
-                         'min_split': 5, 'max_depth': 3,
+                         'min_split': 4, 'max_depth': 1,
                          'learn_rate': .6, 'subsample': 1.0}
 
 
-@repeat
+@repeat()
 def bench_random_gaussian(random_state=None):
     rs = check_random_state(random_state)
     shape = (12000, 10)
@@ -63,6 +67,8 @@ def bench_random_gaussian(random_state=None):
     test_time = time() - t0
     ## for i in range(10) + [99, 199]:
     ##    print i+1, gbrt.train_deviance[i]
+    #avg_splits = np.mean([np.sum(t.children[:,0] != -1) for t in gbrt.trees])
+    #print "Avg. splits: %.4f" % avg_splits
     return error_rate, train_time, test_time
 
 
@@ -134,7 +140,7 @@ def random_gaussian_learning_curve(random_state=None):
     pl.show()
 
 
-@repeat
+@repeat()
 def bench_spam(random_state=None):
     X = np.loadtxt("/home/pprett/corpora/spam/spambase.data", delimiter=",")
     y = X[:, -1].ravel()
@@ -166,7 +172,7 @@ def bench_spam(random_state=None):
     return error_rate, train_time, test_time
 
 
-@repeat
+@repeat(1)
 def bench_madelon(random_state=None):
     X_train = np.loadtxt("/home/pprett/corpora/madelon/madelon_train.data")
     y_train = np.loadtxt("/home/pprett/corpora/madelon/madelon_train.labels")
@@ -182,7 +188,7 @@ def bench_madelon(random_state=None):
     return error_rate, train_time, test_time
 
 
-@repeat
+@repeat(1)
 def bench_arcene(random_state=None):
     X_train = np.loadtxt("/home/pprett/corpora/arcene/arcene_train.data")
     y_train = np.loadtxt("/home/pprett/corpora/arcene/arcene_train.labels")
@@ -198,15 +204,18 @@ def bench_arcene(random_state=None):
     return error_rate, train_time, test_time
 
 
-regression_params = {'n_iter': 100, 'max_depth': 1,
+regression_params = {'n_iter': 500, 'max_depth': 1,
                      'min_split': 1, 'learn_rate': 0.1,
                      'loss': 'ls'}
 
 
-@repeat
+@repeat()
 def bench_boston(random_state=None):
     boston = datasets.load_boston()
     X, y = shuffle(boston.data, boston.target, random_state=random_state)
+    X = X.astype(np.float32)
+    y = y.astype(np.float32)
+    
     offset = int(X.shape[0] * 0.9)
     X_train = X[:offset]
     y_train = y[:offset]
@@ -222,10 +231,13 @@ def bench_boston(random_state=None):
     return mse, train_time, test_time
 
 
-@repeat
+@repeat()
 def bench_friedman1(random_state=None):
     X, y = datasets.make_friedman1(n_samples=1200,
                                    random_state=random_state, noise=1.0)
+    X = X.astype(np.float32)
+    y = y.astype(np.float32)
+    
     X_train, y_train = X[:200], y[:200]
     X_test, y_test = X[200:], y[200:]
     clf = GradientBoostingRegressor(**regression_params)
@@ -238,9 +250,12 @@ def bench_friedman1(random_state=None):
     return mse, train_time, test_time
 
 
-@repeat
+@repeat()
 def bench_friedman2(random_state=None):
     X, y = datasets.make_friedman2(n_samples=1200, random_state=random_state)
+    X = X.astype(np.float32)
+    y = y.astype(np.float32)
+    
     X_train, y_train = X[:200], y[:200]
     X_test, y_test = X[200:], y[200:]
     clf = GradientBoostingRegressor(**regression_params)
@@ -253,9 +268,12 @@ def bench_friedman2(random_state=None):
     return mse, train_time, test_time
 
 
-@repeat
+@repeat()
 def bench_friedman3(random_state=None):
     X, y = datasets.make_friedman3(n_samples=1200, random_state=random_state)
+    X = X.astype(np.float32)
+    y = y.astype(np.float32)
+    
     X_train, y_train = X[:200], y[:200]
     X_test, y_test = X[200:], y[200:]
     clf = GradientBoostingRegressor(**regression_params)
@@ -269,12 +287,14 @@ def bench_friedman3(random_state=None):
 
 
 gbrt_results = {
-#    "Example 10.2": bench_random_gaussian(),
-#    "Spam": bench_spam(),
-#    "Madelon": bench_madelon(),
-#    "Arcene": bench_arcene(),
-    "Boston": bench_boston(), 
-    "Friedman#1": bench_friedman1(),
-    "Friedman#2": bench_friedman2(),
-    "Friedman#3": bench_friedman3(),
+    ## "Example 10.2": bench_random_gaussian(),
+    ## "Spam": bench_spam(),
+    ## "Madelon": bench_madelon(),
+    ## "Arcene": bench_arcene(),
+   "Boston": bench_boston(), 
+   "Friedman#1": bench_friedman1(),
+   "Friedman#2": bench_friedman2(),
+   "Friedman#3": bench_friedman3(),
     }
+
+print gbrt_results
