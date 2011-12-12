@@ -266,7 +266,7 @@ class Tree(object):
         return self.value.take(out, axis=0)
 
 
-def _build_tree(X, y, is_classification, criterion, max_depth, min_split,
+def _build_tree(X, y, criterion, max_depth, min_split,
                 min_density, max_features, random_state, n_classes, find_split,
                 sample_mask=None, X_argsorted=None, store_terminal_region=False):
     """Build a tree by recursively partitioning the data."""
@@ -282,7 +282,6 @@ def _build_tree(X, y, is_classification, criterion, max_depth, min_split,
         tree.terminal_region = np.empty((X.shape[0],), dtype=np.int32)
         tree.terminal_region.fill(-1)
 
-
     # Recursively partition X
     def recursive_partition(X, X_argsorted, y, sample_mask, depth,
                             parent, is_left_child, sample_indices):
@@ -294,18 +293,16 @@ def _build_tree(X, y, is_classification, criterion, max_depth, min_split,
                              "with an empty sample_mask")
 
         # Split samples
-        if depth < max_depth and n_node_samples >= min_split:
+        if depth < max_depth and n_node_samples > min_split:
             feature, threshold, best_error, initial_error = find_split(
                 X, y, X_argsorted, sample_mask, n_node_samples,
                 max_features, criterion, random_state)
-
         else:
             feature = -1
 
-        # Value at this node
         current_y = y[sample_mask]
 
-        if is_classification:
+        if n_classes > 1:
             value = np.zeros((n_classes,))
             t = current_y.max() + 1
             value[:t] = np.bincount(current_y.astype(np.int))
@@ -313,7 +310,7 @@ def _build_tree(X, y, is_classification, criterion, max_depth, min_split,
         else:
             value = np.asarray(np.mean(current_y))
 
-        # Terminal node
+        # Current node is leaf
         if feature == -1:
             # compute error at leaf
             error = _tree._error_at_leaf(y, sample_mask, criterion,
@@ -324,7 +321,7 @@ def _build_tree(X, y, is_classification, criterion, max_depth, min_split,
             if store_terminal_region:
                 tree.terminal_region[sample_indices[sample_mask]] = node_id
 
-        # Internal node
+        # Current node is internal node (= split node)
         else:
             # Sample mask is too sparse?
             if n_node_samples / X.shape[0] <= min_density:
@@ -366,9 +363,13 @@ def _build_tree(X, y, is_classification, criterion, max_depth, min_split,
         X_argsorted = np.asfortranarray(
             np.argsort(X.T, axis=1).astype(np.int32).T)
 
-    recursive_partition(X, X_argsorted, y, sample_mask, 0, -1, False,
-                        np.arange(X.shape[0]))
+    sample_indices = np.arange(X.shape[0])
 
+    # build the tree by recursive partitioning
+    recursive_partition(X, X_argsorted, y, sample_mask, 0, -1, False,
+                        sample_indices)
+
+    # compactify the tree data structure
     tree.resize(tree.node_count)
     return tree
 
@@ -453,7 +454,7 @@ class BaseDecisionTree(BaseEstimator):
             raise ValueError("max_features must be in (0, n_features]")
 
         # Build tree
-        self.tree_ = _build_tree(X, y, is_classification, criterion,
+        self.tree_ = _build_tree(X, y, criterion,
                                 max_depth, self.min_split,
                                 self.min_density, max_features,
                                 self.random_state, self.n_classes_,
@@ -604,7 +605,9 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                              % (self.n_features_, n_features))
 
         P = self.tree_.predict(X)
-        P /= P.sum(axis=1)[:, np.newaxis]
+        normalizer = P.sum(axis=1)[:, np.newaxis]
+        normalizer[normalizer == 0.0] = 1.0
+        P /= normalizer
         return P
 
     def predict_log_proba(self, X):
