@@ -8,7 +8,8 @@ validation and performance evaluation.
 #         Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD Style.
 
-from math import ceil
+from itertools import combinations
+from math import ceil, factorial
 import operator
 
 import numpy as np
@@ -16,7 +17,6 @@ import scipy.sparse as sp
 
 from .base import is_classifier, clone
 from .utils import check_arrays, check_random_state
-from .utils.extmath import factorial, combinations
 from .utils.fixes import unique
 from .externals.joblib import Parallel, delayed
 
