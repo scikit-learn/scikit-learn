@@ -119,8 +119,8 @@ You may load a dataset like as follows::
 You may also load two (or more) datasets at once::
 
   >>> X_train, y_train, X_test, y_test = load_svmlight_files(
-  ...     "/path/to/train_dataset.txt",
-  ...     "/path/to/test_dataset.txt")                        # doctest: +SKIP
+  ...     ("/path/to/train_dataset.txt", "/path/to/test_dataset.txt"))
+  ...                                                         # doctest: +SKIP
 
 In this case, ``X_train`` and ``X_test`` are guaranteed to have the same number
 of features. Another way to achieve the same result is to fix the number of
