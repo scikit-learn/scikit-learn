@@ -89,7 +89,7 @@ this case, replace step 4 by step 5:
      repo::
 
         $ git checkout -b my-feature
-        $ gid add modified_files
+        $ git add modified_files
         $ git commit
         $ git push origin my-feature
 
