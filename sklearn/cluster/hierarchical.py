@@ -381,14 +381,11 @@ def create_dendrogram(X, connectivity, n_components=None,
     k = n_samples
     while k < n_nodes:
         # Identify the merge that will be applied next
-        # This is the merge with minimal distance of two cluster that haven't
-        # been merged into a larger cluster yet.
+        # This is the merge with minimal distance of two cluster that fulfill 
+        # all constraints and haven't been merged into a larger cluster yet. 
         merge_distance = np.inf
         while linkage.has_more_candidates():
             merge_distance, i, j = linkage.fetch_candidate()
-            # Check if nodes haven't been merged already
-            if open_nodes[i] and open_nodes[j]:
-                break            
             # Check if all constraints are fulfilled
             constraints_satisfied = True
             for constraint in constraints:
@@ -397,7 +394,13 @@ def create_dendrogram(X, connectivity, n_components=None,
                     constraints_satisfied =False
                     break
             if not constraints_satisfied:
+                # i and j have merge distance infinity because they violate 
+                # at least one of the constraints
+                merge_distance = np.inf
                 continue
+            # Check if nodes haven't been merged already
+            if open_nodes[i] and open_nodes[j]:
+                break  # i and j can be merged!
             # Check if only unconnected components are left
             if not linkage.has_more_candidates():
                 merge_distance = np.inf
