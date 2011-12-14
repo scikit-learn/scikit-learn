@@ -443,16 +443,8 @@ class KMeans(BaseEstimator):
         given, it fixes the seed. Defaults to the global numpy random
         number generator.
 
-
-    Methods
-    -------
-
-    fit(X):
-        Compute K-Means clustering
-
     Attributes
     ----------
-
     cluster_centers_: array, [n_clusters, n_features]
         Coordinates of cluster centers
 
@@ -465,8 +457,7 @@ class KMeans(BaseEstimator):
 
     Notes
     ------
-
-    The k-means problem is solved using the Lloyd algorithm.
+    The k-means problem is solved using Lloyd's algorithm.
 
     The average complexity is given by O(k n T), were n is the number of
     samples and T is the number of iteration.
@@ -475,7 +466,7 @@ class KMeans(BaseEstimator):
     n = n_samples, p = n_features. (D. Arthur and S. Vassilvitskii,
     'How slow is the k-means method?' SoCG2006)
 
-    In practice, the K-means algorithm is very fast (one of the fastest
+    In practice, the k-means algorithm is very fast (one of the fastest
     clustering algorithms available), but it falls in local minima. That's why
     it can be useful to restart it several times.
     """
