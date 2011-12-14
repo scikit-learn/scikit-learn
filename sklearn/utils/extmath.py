@@ -125,7 +125,8 @@ def fast_svd(M, k, p=None, q=0, transpose='auto', random_state=0):
     ==========
     Finding structure with randomness: Stochastic algorithms for constructing
     approximate matrix decompositions
-    Halko, et al., 2009 (arXiv:909)
+    Halko, et al., 2009
+    http://arxiv.org/abs/arXiv:0909.4061
 
     A randomized algorithm for the decomposition of matrices
     Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
