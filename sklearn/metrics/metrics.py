@@ -546,9 +546,8 @@ def matthews_corrcoef(y_true, y_pred):
     into account true and false positives and negatives and is generally
     regarded as a balanced measure which can be used even if the classes are
     of very different sizes. The MCC is in essence a correlation coefficient
-    between the observed and predicted binary classifications; it returns a
-    value between −1 and +1. A coefficient of +1 represents a perfect
-    prediction, 0 an average random prediction and −1 an inverse prediction.
+    value between -1 and +1. A coefficient of +1 represents a perfect
+    prediction, 0 an average random prediction and -1 an inverse prediction.
     The statistic is also known as the phi coefficient. [source: Wikipedia]
 
     Only in the binary case does this relate to information about true and
