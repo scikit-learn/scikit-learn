@@ -185,7 +185,7 @@ def test_precision_recall_f1_score_multiclass():
 
     # averaging tests
     ps = precision_score(y_true, y_pred, pos_label=None, average='micro')
-    assert_array_almost_equal(ps, 0.62, 2)
+    assert_array_almost_equal(ps, 0.61, 2)
 
     rs = recall_score(y_true, y_pred, pos_label=None, average='micro')
     assert_array_almost_equal(rs, 0.61, 2)
