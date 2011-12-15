@@ -19,7 +19,7 @@ citations to the following paper:
 
    @article{,
     title={{Scikit-learn: Machine Learning in Python }},
-    author={Pedregosa, F. and Varoquaux, G. and Gramfort, A., and Michel, V.
+    author={Pedregosa, F. and Varoquaux, G. and Gramfort, A. and Michel, V.
             and Thirion, B. and Grisel, O. and Blondel, M. and Prettenhofer, P.
             and Weiss, R. and Dubourg, V. and Vanderplas, J. and Passos, A. and
             Cournapeau, D. and Brucher, M. and Perrot, M. and Duchesnay E.},
