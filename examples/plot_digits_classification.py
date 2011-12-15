@@ -31,7 +31,8 @@ digits = datasets.load_digits()
 # digit they represent: it is given in the 'target' of the dataset.
 for index, (image, label) in enumerate(zip(digits.images, digits.target)[:4]):
     pl.subplot(2, 4, index+1)
-    pl.imshow(image, cmap=pl.cm.gray_r)
+    pl.axis('off')
+    pl.imshow(image, cmap=pl.cm.gray_r, interpolation='nearest')
     pl.title('Training: %i' % label)
 
 # To apply an classifier on this data, we need to flatten the image, to
@@ -56,7 +57,8 @@ print "Confusion matrix:\n%s" % metrics.confusion_matrix(expected, predicted)
 for index, (image, prediction) in enumerate(
     zip(digits.images[n_samples/2:], predicted)[:4]):
     pl.subplot(2, 4, index+5)
-    pl.imshow(image, cmap=pl.cm.gray_r)
+    pl.axis('off')
+    pl.imshow(image, cmap=pl.cm.gray_r, interpolation='nearest')
     pl.title('Prediction: %i' % prediction)
 
 pl.show()
