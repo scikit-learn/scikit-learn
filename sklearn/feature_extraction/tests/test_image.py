@@ -54,6 +54,7 @@ def test_grid_to_graph():
     A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask, dtype=np.float)
     assert A.dtype == np.float
 
+
 def test_connect_regions():
     lena = sp.misc.lena()
     for thr in (50, 150):

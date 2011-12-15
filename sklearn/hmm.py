@@ -6,8 +6,8 @@
 The :mod:`sklearn.hmm` module implements hidden Markov models.
 
 **Warning:** :mod:`sklearn.hmm` is orphaned, undocumented and has known
-numerical stability issues. If nobody volunteers to write documentation and make
-it more stable, this module will be removed in version 0.11.
+numerical stability issues. If nobody volunteers to write documentation and
+make it more stable, this module will be removed in version 0.11.
 """
 
 import string
@@ -966,13 +966,10 @@ class GMMHMM(_BaseHMM):
     >>> from sklearn.hmm import GMMHMM
     >>> GMMHMM(n_components=2, n_mix=10, cvtype='diag')
     ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    GMMHMM(cvtype='diag',
-        gmms=[GMM(cvtype='diag', n_components=10), GMM(cvtype='diag', n_components=10)],
-        n_components=2, n_mix=10, startprob=array([ 0.5,  0.5]),
-        startprob_prior=1.0,
-        transmat=array([[ 0.5,  0.5],
-           [ 0.5,  0.5]]),
-        transmat_prior=1.0)
+    GMMHMM(cvtype='diag', gmms=[GMM(cvtype='diag', n_components=10),
+        GMM(cvtype='diag', n_components=10)], n_components=2, n_mix=10,
+        startprob=array([ 0.5,  0.5]), startprob_prior=1.0, transmat=array([[
+            0.5,  0.5], [ 0.5,  0.5]]), transmat_prior=1.0)
 
 
     See Also

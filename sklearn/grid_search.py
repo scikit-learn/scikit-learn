@@ -1,6 +1,6 @@
 """
-The :mod:`sklearn.grid_search` includes utilities to fine-tune the parameters of
-an estimator.
+The :mod:`sklearn.grid_search` includes utilities to fine-tune the parameters
+of an estimator.
 """
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>,
