@@ -483,7 +483,7 @@ def test_liblinear_predict():
     assert_array_equal(clf.predict(X), (H > 0).astype(int))
 
 
-def test_samples_scaling():
+def test_c_samples_scaling():
     """Test C scaling by n_samples
     """
     X = iris.data[iris.target != 2]
@@ -495,7 +495,8 @@ def test_samples_scaling():
             svm.SVR(tol=1e-6, kernel='linear', C=100),
             svm.LinearSVC(tol=1e-6, C=0.1),
             linear_model.LogisticRegression(penalty='l1', tol=1e-6, C=100),
-            linear_model.LogisticRegression(penalty='l2', tol=1e-6)]
+            linear_model.LogisticRegression(penalty='l2', tol=1e-6),
+            svm.NuSVR(tol=1e-6, kernel='linear')]
 
     for clf in clfs:
         clf.set_params(scale_C=False)
@@ -505,6 +506,23 @@ def test_samples_scaling():
         assert_true(error_no_scale > 1e-3)
 
         clf.set_params(scale_C=True)
+        coef_ = clf.fit(X, y).coef_
+        coef2_ = clf.fit(X2, y2).coef_
+        error_with_scale = linalg.norm(coef2_ - coef_) / linalg.norm(coef_)
+        assert_true(error_with_scale < 1e-5)
+
+
+def test_nu_svc_samples_scaling():
+    """Test NuSVC scaling by n_samples
+    """
+    X = iris.data[iris.target != 2]
+    y = iris.target[iris.target != 2]
+    X2 = np.r_[X, X]
+    y2 = np.r_[y, y]
+
+    clfs = [svm.NuSVC(tol=1e-6, kernel='linear')]
+
+    for clf in clfs:
         coef_ = clf.fit(X, y).coef_
         coef2_ = clf.fit(X2, y2).coef_
         error_with_scale = linalg.norm(coef2_ - coef_) / linalg.norm(coef_)
