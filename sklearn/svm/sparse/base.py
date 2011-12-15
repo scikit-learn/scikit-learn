@@ -18,14 +18,11 @@ class SparseBaseLibSVM(BaseLibSVM):
                "%s was given." % (self._kernel_types, kernel)
 
         super(SparseBaseLibSVM, self).__init__(impl, kernel, degree, gamma,
-                                               coef0, tol, C, nu, epsilon,
-                                               shrinking, probability, cache_size)
-
+                coef0, tol, C, nu, epsilon, shrinking, probability, cache_size)
 
     def fit(self, X, y, class_weight=None, sample_weight=None):
         """
-        Fit the SVM model according to the given training data and
-        parameters.
+        Fit the SVM model according to the given training data and parameters.
 
         Parameters
         ----------
@@ -104,7 +101,7 @@ class SparseBaseLibSVM(BaseLibSVM):
         dual_coef_indptr = np.arange(0, dual_coef_indices.size + 1,
                                      dual_coef_indices.size / n_class)
         self.dual_coef_ = scipy.sparse.csr_matrix(
-            (dual_coef_data,dual_coef_indices, dual_coef_indptr),
+            (dual_coef_data, dual_coef_indices, dual_coef_indptr),
             (n_class, n_SV))
         return self
 
