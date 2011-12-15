@@ -295,7 +295,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         return K, W, S.T
     else:
         S = np.dot(W, X)
-        return W, S.T
+        return W, S.T, None
 
 
 class FastICA(BaseEstimator):
