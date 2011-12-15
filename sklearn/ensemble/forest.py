@@ -1,13 +1,13 @@
 """Forest of trees-based ensemble methods
 
-Those methods include random forests and extremly randomized trees.
+Those methods include random forests and extremely randomized trees.
 
 The module structure is the following:
 
 - The ``Forest`` base class implements a common ``fit`` method for all
-  the estimators the module. The ``fit`` method of the base ``Forest``
+  the estimators in the module. The ``fit`` method of the base ``Forest``
   class calls the ``fit`` method of each sub-estimator on random samples
-  (with replacement, aka. bootstrap) of the training set.
+  (with replacement, a.k.a. bootstrap) of the training set.
 
   The init of the sub-estimator is further delegated to the
   ``BaseEnsemble`` constructor.
@@ -35,7 +35,6 @@ The module structure is the following:
 
 import numpy as np
 
-from ..base import clone
 from ..base import ClassifierMixin, RegressorMixin
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor, \
                    ExtraTreeClassifier, ExtraTreeRegressor
@@ -274,7 +273,7 @@ class RandomForestClassifier(ForestClassifier):
         recomputed and the input data is packed which results in data copying.
         If `min_density` equals to one, the partitions are always represented
         as copies of the original data. Otherwise, partitions are represented
-        as bit masks (aka sample masks).
+        as bit masks (a.k.a. sample masks).
 
     max_features : int or None, optional (default=None)
         The number of features to consider when looking for the best split.
@@ -351,7 +350,7 @@ class RandomForestRegressor(ForestRegressor):
         recomputed and the input data is packed which results in data copying.
         If `min_density` equals to one, the partitions are always represented
         as copies of the original data. Otherwise, partitions are represented
-        as bit masks (aka sample masks).
+        as bit masks (a.k.a. sample masks).
 
     max_features : int or None, optional (default=None)
         The number of features to consider when looking for the best split.
@@ -429,7 +428,7 @@ class ExtraTreesClassifier(ForestClassifier):
         recomputed and the input data is packed which results in data copying.
         If `min_density` equals to one, the partitions are always represented
         as copies of the original data. Otherwise, partitions are represented
-        as bit masks (aka sample masks).
+        as bit masks (a.k.a. sample masks).
 
     max_features : int or None, optional (default=None)
         The number of features to consider when looking for the best split.
@@ -508,7 +507,7 @@ class ExtraTreesRegressor(ForestRegressor):
         recomputed and the input data is packed which results in data copying.
         If `min_density` equals to one, the partitions are always represented
         as copies of the original data. Otherwise, partitions are represented
-        as bit masks (aka sample masks).
+        as bit masks (a.k.a. sample masks).
 
     max_features : int or None, optional (default=None)
         The number of features to consider when looking for the best split.

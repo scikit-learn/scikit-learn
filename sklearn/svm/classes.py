@@ -27,7 +27,7 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, CoefSelectTransformerMixin):
 
     dual : bool, (default=True)
         Select the algorithm to either solve the dual or primal
-        optimization problem.
+        optimization problem. Prefer dual=False when n_samples > n_features.
 
     tol: float, optional (default=1e-4)
         Tolerance for stopping criteria

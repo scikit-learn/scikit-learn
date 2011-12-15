@@ -1,6 +1,6 @@
 """
-Metrics module with score functions, performance metrics and
-pairwise metrics or distances computation
+The :mod:`sklearn.metrics` module includes score functions, performance metrics
+and pairwise metrics and distance computations.
 """
 
 from .metrics import confusion_matrix, roc_curve, auc, precision_score, \

@@ -18,7 +18,7 @@ train::
     Classifier   train-time test-time error-rate
     --------------------------------------------
     Liblinear     11.8977s   0.0285s     0.2305
-    GaussianNB    3.5931s    0.6645s     0.6367
+    GaussianNB    3.5931s    0.6645s     0.3633
     SGD           0.2924s    0.0114s     0.2300
     CART          39.9829s   0.0345s     0.0476
     RandomForest  794.6232s  1.0526s     0.0249

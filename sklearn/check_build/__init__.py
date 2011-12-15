@@ -14,7 +14,7 @@ Python version, your operating system and your platform."""
 
 try:
     from ._check_build import check_build
-except ImportError, e:
+except ImportError as e:
     # Raise a comprehensible error and list the contents of the
     # directory to help debugging on the mailing list.
     local_dir = os.path.split(__file__)[0]

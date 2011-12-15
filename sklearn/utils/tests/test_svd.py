@@ -22,7 +22,7 @@ def test_fast_svd_low_rank():
     # generate a matrix X of approximate effective rank `rank` and no noise
     # component (very structured signal):
     X = make_low_rank_matrix(n_samples=n_samples, n_features=n_features,
-                             effective_rank=rank, tail_strength=0.0, random_state=0)
+        effective_rank=rank, tail_strength=0.0, random_state=0)
     assert_equal(X.shape, (n_samples, n_features))
 
     # compute the singular values of X using the slow exact method
@@ -59,14 +59,14 @@ def test_fast_svd_low_rank_with_noise():
     # generate a matrix X wity structure approximate rank `rank` and an
     # important noisy component
     X = make_low_rank_matrix(n_samples=n_samples, n_features=n_features,
-                             effective_rank=rank, tail_strength=0.5, random_state=0)
+        effective_rank=rank, tail_strength=0.5, random_state=0)
     assert_equal(X.shape, (n_samples, n_features))
 
     # compute the singular values of X using the slow exact method
     _, s, _ = linalg.svd(X, full_matrices=False)
 
-    # compute the singular values of X using the fast approximate method without
-    # the iterated power method
+    # compute the singular values of X using the fast approximate method
+    # without the iterated power method
     _, sa, _ = fast_svd(X, k, q=0)
 
     # the approximation does not tolerate the noise:
@@ -90,14 +90,14 @@ def test_fast_svd_infinite_rank():
     # let us try again without 'low_rank component': just regularly but slowly
     # decreasing singular values: the rank of the data matrix is infinite
     X = make_low_rank_matrix(n_samples=n_samples, n_features=n_features,
-                             effective_rank=rank, tail_strength=1.0, random_state=0)
+        effective_rank=rank, tail_strength=1.0, random_state=0)
     assert_equal(X.shape, (n_samples, n_features))
 
     # compute the singular values of X using the slow exact method
     _, s, _ = linalg.svd(X, full_matrices=False)
 
-    # compute the singular values of X using the fast approximate method without
-    # the iterated power method
+    # compute the singular values of X using the fast approximate method
+    # without the iterated power method
     _, sa, _ = fast_svd(X, k, q=0)
 
     # the approximation does not tolerate the noise:
@@ -120,7 +120,7 @@ def test_fast_svd_transpose_consistency():
     k = 10
 
     X = make_low_rank_matrix(n_samples=n_samples, n_features=n_features,
-                             effective_rank=rank, tail_strength=0.5, random_state=0)
+        effective_rank=rank, tail_strength=0.5, random_state=0)
     assert_equal(X.shape, (n_samples, n_features))
 
     U1, s1, V1 = fast_svd(X, k, q=3, transpose=False, random_state=0)
@@ -136,7 +136,6 @@ def test_fast_svd_transpose_consistency():
                         decimal=2)
     assert_almost_equal(np.dot(U2, V2), np.dot(U4[:, :k], V4[:k, :]),
                         decimal=2)
-
 
     # in this case 'auto' is equivalent to transpose
     assert_almost_equal(s2, s3)

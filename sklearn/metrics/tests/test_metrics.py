@@ -224,15 +224,15 @@ def test_confusion_matrix_multiclass():
 
     # compute confusion matrix with default labels introspection
     cm = confusion_matrix(y_true, y_pred)
-    assert_array_equal(cm, [[23,  2,  0],
-                            [ 5,  5, 20],
-                            [ 0,  2, 18]])
+    assert_array_equal(cm, [[23, 2,  0],
+                            [5,  5, 20],
+                            [0,  2, 18]])
 
     # compute confusion matrix with explicit label ordering
     cm = confusion_matrix(y_true, y_pred, labels=[0, 2, 1])
-    assert_array_equal(cm, [[23,  0,  2],
-                            [ 0, 18,  2],
-                            [ 5, 20,  5]])
+    assert_array_equal(cm, [[23, 0,  2],
+                            [0, 18,  2],
+                            [5, 20,  5]])
 
 
 def test_classification_report():

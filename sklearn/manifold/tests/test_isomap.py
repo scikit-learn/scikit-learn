@@ -1,12 +1,12 @@
+from itertools import product
 import numpy as np
-
 from numpy.testing import assert_almost_equal, assert_array_almost_equal
+
 from sklearn import datasets
 from sklearn import manifold
 from sklearn import neighbors
 from sklearn import pipeline
 from sklearn import preprocessing
-from sklearn.utils.fixes import product
 
 eigen_solvers = ['auto', 'dense', 'arpack']
 path_methods = ['auto', 'FW', 'D']
