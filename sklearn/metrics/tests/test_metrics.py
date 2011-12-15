@@ -149,16 +149,16 @@ def test_confusion_matrix_binary():
     cm = confusion_matrix(y_true, y_pred)
     assert_array_equal(cm, [[19, 6], [7, 18]])
 
-    tp = cm[0,0]
-    tn = cm[1,1]
-    fp = cm[0,1]
-    fn = cm[1,0]
-    num = (tp*tn-fp*fn)
-    den = np.sqrt((tp+fp)*(tp+fn)*(tn+fp)*(tn+fn))
+    tp = cm[0, 0]
+    tn = cm[1, 1]
+    fp = cm[0, 1]
+    fn = cm[1, 0]
+    num = (tp * tn - fp * fn)
+    den = np.sqrt((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn))
     if den == 0.:
         true_mcc = 0
     else:
-        true_mcc = num/den
+        true_mcc = num / den
     mcc = matthews_corrcoef(y_true, y_pred)
     assert_array_almost_equal(mcc, true_mcc, decimal=2)
     assert_array_almost_equal(mcc, 0.48, decimal=2)
@@ -179,7 +179,8 @@ def test_precision_recall_f1_score_multiclass():
     # multiclass case the score is the wieghthed average of the individual
     # class values hence f1_score is not necessary between precision_score and
     # recall_score
-    func = lambda : precision_recall_fscore_support(y_true, y_pred, pos_label=1)
+    func = lambda: precision_recall_fscore_support(y_true, y_pred,
+                                                   pos_label=1)
     assert_raises(ValueError, func)
 
     # averaging tests
@@ -228,9 +229,12 @@ def test_zero_precision_recall():
         y_true = np.array([0, 1, 2, 0, 1, 2])
         y_pred = np.array([2, 0, 1, 1, 2, 0])
 
-        assert_almost_equal(precision_score(y_true, y_pred, pos_label=None, average='weighted'), 0.0, 2)
-        assert_almost_equal(recall_score(y_true, y_pred, pos_label=None, average='weighted'), 0.0, 2)
-        assert_almost_equal(f1_score(y_true, y_pred, pos_label=None, average='weighted'), 0.0, 2)
+        assert_almost_equal(precision_score(y_true, y_pred, pos_label=None,
+                                            average='weighted'), 0.0, 2)
+        assert_almost_equal(recall_score(y_true, y_pred, pos_label=None,
+                                         average='weighted'), 0.0, 2)
+        assert_almost_equal(f1_score(y_true, y_pred, pos_label=None,
+                                     average='weighted'), 0.0, 2)
 
     finally:
         np.seterr(**old_error_settings)
