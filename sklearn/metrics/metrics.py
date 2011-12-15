@@ -425,7 +425,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     The support is the number of occurrences of each class in y_true.
 
     If pos_label is None, this function returns the average precision, recall
-    and f-measure. The averaging is either 'micro', 'macro', 'weighted'.
+    and f-measure if `average` is one of 'micro', 'macro', 'weighted'.
 
     Parameters
     ----------
@@ -516,25 +516,26 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
                 fscore[pos_label_idx], support[pos_label_idx])
     else:
         average_options = (None, 'micro', 'macro', 'weighted')
-        if average not in average_options:
-            raise ValueError('average has to be one of ' +
-                             str(average_options))
         if average is None:
             return precision, recall, fscore, support
-        if average == 'micro':
+        elif average == 'micro':
             avg_precision = true_pos.sum() / (true_pos.sum() +
                                               false_pos.sum())
             avg_recall = true_pos.sum() / (true_pos.sum() + false_neg.sum())
             avg_fscore = (1 + beta2) * (avg_precision * avg_recall) / \
                          (beta2 * avg_precision + avg_recall)
-        if average == 'macro':
+        elif average == 'macro':
             avg_precision = np.mean(precision)
             avg_recall = np.mean(recall)
             avg_fscore = np.mean(fscore)
-        if average == 'weighted':
+        elif average == 'weighted':
             avg_precision = np.average(precision, weights=support)
             avg_recall = np.average(recall, weights=support)
             avg_fscore = np.average(fscore, weights=support)
+        else:
+            raise ValueError('average has to be one of ' +
+                             str(average_options))
+
         return avg_precision, avg_recall, avg_fscore, None
 
 
