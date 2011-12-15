@@ -295,7 +295,8 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='micro'):
     return r
 
 
-def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1, average='micro'):
+def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
+                average='micro'):
     """Compute fbeta score
 
     The F_beta score is the weighted harmonic mean of precision and recall,
@@ -508,8 +509,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
             raise ValueError(("pos_label should be set to None for multiclass "
                               "tasks got %d") % pos_label)
         if pos_label not in labels:
-            raise ValueError("pos_label=%d is not a valid label: %r" % (pos_label,
-                                                                        labels))
+            raise ValueError("pos_label=%d is not a valid label: %r" %
+                             (pos_label, labels))
         pos_label_idx = list(labels).index(pos_label)
         return (precision[pos_label_idx], recall[pos_label_idx],
                 fscore[pos_label_idx], support[pos_label_idx])
@@ -521,9 +522,11 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         if average is None:
             return precision, recall, fscore, support
         if average == 'micro':
-            avg_precision = true_pos.sum() / (true_pos.sum() + false_pos.sum())
+            avg_precision = true_pos.sum() / (true_pos.sum() +
+                                              false_pos.sum())
             avg_recall = true_pos.sum() / (true_pos.sum() + false_neg.sum())
-            avg_fscore = (1 + beta2) * (avg_precision * avg_recall) / (beta2 * avg_precision + avg_recall)
+            avg_fscore = (1 + beta2) * (avg_precision * avg_recall) / \
+                         (beta2 * avg_precision + avg_recall)
         if average == 'macro':
             avg_precision = np.mean(precision)
             avg_recall = np.mean(recall)
