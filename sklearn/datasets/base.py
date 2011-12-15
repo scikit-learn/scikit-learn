@@ -400,7 +400,7 @@ def load_sample_images():
         raise ImportError("The Python Imaging Library (PIL)"
                           "is required to load data from jpeg files")
     module_path = join(dirname(__file__), "images")
-    with open(join(module_path, 'README.txt')).read() as f:
+    with open(join(module_path, 'README.txt')) as f:
         descr = f.read()
     filenames = [join(module_path, filename)
                  for filename in os.listdir(module_path)
