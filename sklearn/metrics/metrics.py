@@ -538,6 +538,16 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 def matthews_corrcoef(y_true, y_pred):
     """Returns matthew's correlation coefficient for binary classes
 
+    The Matthews correlation coefficient is used in machine learning as a
+    measure of the quality of binary (two-class) classifications. It takes
+    into account true and false positives and negatives and is generally
+    regarded as a balanced measure which can be used even if the classes are
+    of very different sizes. The MCC is in essence a correlation coefficient
+    between the observed and predicted binary classifications; it returns a
+    value between −1 and +1. A coefficient of +1 represents a perfect
+    prediction, 0 an average random prediction and −1 an inverse prediction.
+    The statistic is also known as the phi coefficient. [source: Wikipedia]
+
     Only in the binary case does this relate to information about true and
     false positives and negatives. See references below.
 
