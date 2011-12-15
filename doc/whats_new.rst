@@ -8,12 +8,15 @@
 Changelog
 ---------
 
+   - Python 2.5 compatibility was dropped; the minimum Python version needed
+     to use scikit-learn is now 2.6.
+
    - :ref:`sparse_inverse_covariance` estimation using the graph Lasso, with
      associated cross-validated estimator, by `Gael Varoquaux`_
 
-   - New :ref:`Tree <tree>` module by `Brian Holt`_, `Peter Prettenhofer`_
-     and `Satrajit Ghosh`_. The module comes with complete documentation
-     and examples.
+   - New :ref:`Tree <tree>` module by `Brian Holt`_, `Peter Prettenhofer`_,
+     `Satrajit Ghosh`_ and `Gilles Louppe`_. The module comes with complete
+     documentation and examples.
 
    - Fixed a bug in the RFE module by `Gilles Louppe`_ (issue #378).
 
@@ -37,6 +40,10 @@ Changelog
    - Models like SVC/SVR/LinearSVC/LogisticRegression from libsvm/liblinear
      now support scaling of C regularization parameter by the number of
      samples by `Alexandre Gramfort`_.
+
+   - New :ref:`Ensemble Methods <ensemble>` module by `Gilles Louppe`_ and
+     `Brian Holt`_. The module comes with the random forest algorithm and the
+     extra-trees method, along with documentation and examples.
 
 
 API changes summary

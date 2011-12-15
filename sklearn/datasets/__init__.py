@@ -1,3 +1,9 @@
+"""
+The :mod:`sklearn.datasets` module includes utilities to load datasets,
+including methods to load and fetch popular reference datasets. It also features
+some artificial data generators.
+"""
+
 from .base import load_diabetes
 from .base import load_digits
 from .base import load_files
@@ -34,6 +40,7 @@ from .svmlight_format import load_svmlight_files
 from .svmlight_format import dump_svmlight_file
 from .olivetti_faces import fetch_olivetti_faces
 from ..utils import deprecated
+
 
 # backward compatibility
 @deprecated("to be removed in 0.9;"

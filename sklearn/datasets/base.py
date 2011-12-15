@@ -23,6 +23,7 @@ import numpy as np
 
 from ..utils import check_random_state
 
+
 class Bunch(dict):
     """Container object for datasets: dictionary-like object that
        exposes its keys as attributes."""
@@ -305,18 +306,17 @@ def load_linnerud():
     data_physiological = np.loadtxt(base_dir + 'linnerud_physiological.csv',
                                     skiprows=1)
     # Read header
-    f = open(base_dir + 'linnerud_exercise.csv')
-    header_exercise = f.readline().split()
-    f.close()
-    f = open(base_dir + 'linnerud_physiological.csv')
-    header_physiological = f.readline().split()
-    f.close()
-    fdescr = open(dirname(__file__) + '/descr/linnerud.rst')
+    with open(base_dir + 'linnerud_exercise.csv') as f:
+        header_exercise = f.readline().split()
+    with open(base_dir + 'linnerud_physiological.csv') as f:
+        header_physiological = f.readline().split()
+    with open(dirname(__file__) + '/descr/linnerud.rst') as f:
+        descr = f.read()
 
     return Bunch(data_exercise=data_exercise, header_exercise=header_exercise,
                  data_physiological=data_physiological,
                  header_physiological=header_physiological,
-                 DESCR=fdescr.read())
+                 DESCR=descr)
 
 
 def load_boston():
@@ -400,7 +400,8 @@ def load_sample_images():
         raise ImportError("The Python Imaging Library (PIL)"
                           "is required to load data from jpeg files")
     module_path = join(dirname(__file__), "images")
-    descr = open(join(module_path, 'README.txt')).read()
+    with open(join(module_path, 'README.txt')).read() as f:
+        descr = f.read()
     filenames = [join(module_path, filename)
                  for filename in os.listdir(module_path)
                  if filename.endswith(".jpg")]

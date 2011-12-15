@@ -157,7 +157,7 @@ class DenseBaseLibSVM(BaseLibSVM):
         solver_type = LIBSVM_IMPL.index(self.impl)
         if solver_type != 2 and X.shape[0] != y.shape[0]:
             raise ValueError("X and y have incompatible shapes.\n" +
-                             "X has %s samples, but y has %s." % \
+                             "X has %s samples, but y has %s." %
                              (X.shape[0], y.shape[0]))
 
         if self.kernel == "precomputed" and X.shape[0] != X.shape[1]:
@@ -406,6 +406,11 @@ class BaseLibLinear(BaseEstimator):
             raise ValueError("Training vectors should be array-like, not %s"
                              % type(X))
         y = np.asarray(y, dtype=np.int32, order='C')
+
+        if X.shape[0] != y.shape[0]:
+            raise ValueError("X and y have incompatible shapes.\n" +
+                             "X has %s samples, but y has %s." % \
+                             (X.shape[0], y.shape[0]))
 
         C = self.C
         if self.scale_C:

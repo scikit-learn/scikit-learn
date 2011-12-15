@@ -9,7 +9,6 @@ from nose.tools import assert_raises
 from nose.tools import assert_true
 
 from ..k_means_ import KMeans, MiniBatchKMeans
-from ...datasets.samples_generator import make_blobs
 from .common import generate_clustered_data
 from ...utils import shuffle
 
@@ -281,6 +280,7 @@ def test_transform():
         for c2 in range(n_clusters):
             if c != c2:
                 assert_true(X_new[c, c2] > 0)
+
 
 def test_n_init():
     """Check that increasing the number of init increases the quality"""

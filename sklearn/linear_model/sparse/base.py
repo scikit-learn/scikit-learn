@@ -6,6 +6,7 @@
 import numpy as np
 from ...base import TransformerMixin
 
+
 class CoefSelectTransformerMixin(TransformerMixin):
     """Mixin for linear models that can find sparse solutions.
     """

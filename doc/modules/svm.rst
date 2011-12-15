@@ -36,32 +36,6 @@ The disadvantages of Support Vector Machines include:
 
 .. TODO: add reference to probability estimates
 
-.. note:: **Avoiding data copy**
-
-    For SVC, SVR, NuSVC and NuSVR, if the data passed to certain
-    methods is not C-ordered contiguous, and double precision,
-    it will be copied before calling the underlying C
-    implementation. You can check whether a give numpy array is
-    C-contiguous by inspecting its `flags` attribute.
-
-    For LinearSVC (and LogisticRegression) any input passed as a
-    numpy array will be copied and converted to the liblinear
-    internal sparse data representation (double precision floats
-    and int 32 indices of non-zero components). If you want to fit
-    a largescale linear classifier without copying a dense numpy
-    C-contiguous double precision array as input we suggest to use
-    the SGDClassifier class instead. The objective function can be
-    configured to be almost the same as the LinearSVC model.
-
-.. note:: **Kernel cache size**
-
-    For SVC, SVR, nuSVC and NuSVR, the size of the kernel cache
-    has a strong impact on run times for larger problems.
-    If you have enough RAM available, it is recommended to set
-    `cache_size` to a higher value than the default of 200(MB),
-    such as 500(MB) or 1000(MB).
-
-
 .. _svm_classification:
 
 Classification
@@ -304,8 +278,32 @@ scale almost linearly to millions of samples and/or features.
 Tips on Practical Use
 =====================
 
-  * Support Vector Machine algorithms are not scale invariant, so it
-    is highly recommended to scale your data. For example, scale each
+
+  * **Avoiding data copy**: For SVC, SVR, NuSVC and NuSVR, if the data
+    passed to certain methods is not C-ordered contiguous, and double
+    precision, it will be copied before calling the underlying C
+    implementation. You can check whether a give numpy array is
+    C-contiguous by inspecting its `flags` attribute.
+
+    For LinearSVC (and LogisticRegression) any input passed as a
+    numpy array will be copied and converted to the liblinear
+    internal sparse data representation (double precision floats
+    and int32 indices of non-zero components). If you want to fit
+    a large-scale linear classifier without copying a dense numpy
+    C-contiguous double precision array as input we suggest to use
+    the SGDClassifier class instead. The objective function can be
+    configured to be almost the same as the LinearSVC model.
+
+
+  * **Kernel cache size**: For SVC, SVR, nuSVC and NuSVR, the size of
+    the kernel cache has a strong impact on run times for larger
+    problems.  If you have enough RAM available, it is recommended to
+    set `cache_size` to a higher value than the default of 200(MB),
+    such as 500(MB) or 1000(MB).
+
+
+  * Support Vector Machine algorithms are not scale invariant, so **it
+    is highly recommended to scale your data**. For example, scale each
     attribute on the input vector X to [0,1] or [-1,+1], or standardize
     it to have mean 0 and variance 1. Note that the *same* scaling
     must be applied to the test vector to obtain meaningful
@@ -319,8 +317,6 @@ Tips on Practical Use
   * In SVC, if data for classification are unbalanced (e.g. many
     positive and few negative), set class_weight='auto' and/or try
     different penalty parameters C.
-
-  * Specify larger cache size (keyword cache) for huge problems.
 
   * The underlying :class:`LinearSVC` implementation uses a random
     number generator to select features when fitting the model. It is

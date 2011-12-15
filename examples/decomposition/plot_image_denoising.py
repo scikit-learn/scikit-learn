@@ -32,8 +32,9 @@ print __doc__
 from time import time
 
 import pylab as pl
-import scipy as sp
 import numpy as np
+
+from scipy.misc import lena
 
 from sklearn.decomposition import MiniBatchDictionaryLearning
 from sklearn.feature_extraction.image import extract_patches_2d
@@ -42,7 +43,7 @@ from sklearn.feature_extraction.image import reconstruct_from_patches_2d
 ###############################################################################
 # Load Lena image and extract patches
 
-lena = sp.lena() / 256.0
+lena = lena() / 256.0
 
 # downsample for higher speed
 lena = lena[::2, ::2] + lena[1::2, ::2] + lena[::2, 1::2] + lena[1::2, 1::2]

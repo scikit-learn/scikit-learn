@@ -65,7 +65,7 @@
       <p class="biglink"><a class="biglink" href="supervised_learning.html">
                 Supervised learning</a><br/>
          <span class="linkdescr">
-                <a href="modules/svm.html">Support Vector Machines</a>, 
+                <a href="modules/svm.html">Support vector machines</a>,
                 <a href="modules/linear_model.html">linear models</a>, 
                 <a href="modules/naive_bayes.html">naives Bayes</a>, 
                 <a href="modules/gaussian_process.html">Gaussian process</a>...
@@ -95,7 +95,7 @@
 
 .. include:: includes/big_toc_css.rst
 
-This document describes scikit-learn |release|. For other versions and
+Documentation for scikit-learn **version** |release|. For other versions and
 printable format, see :ref:`documentation_resources`.
 
 User Guide
