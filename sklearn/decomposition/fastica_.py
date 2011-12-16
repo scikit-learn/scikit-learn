@@ -295,7 +295,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         return K, W, S.T
     else:
         S = np.dot(W, X)
-        return W, S.T, None
+        return None, W, S.T
 
 
 class FastICA(BaseEstimator):
@@ -362,7 +362,10 @@ class FastICA(BaseEstimator):
                         self.algorithm, self.whiten,
                         self.fun, self.fun_prime, self.fun_args, self.max_iter,
                         self.tol, self.w_init)
-        self.unmixing_matrix_ = np.dot(unmixing_, whitening_)
+        if self.whiten == True:
+            self.unmixing_matrix_ = np.dot(unmixing_, whitening_)
+        else:
+            self.unmixing_matrix_ = unmixing_
         self.components_ = sources_
         return self
 
