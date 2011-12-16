@@ -106,7 +106,6 @@ def test_fastica_nowhiten():
     ica.get_mixing_matrix()
 
 
-
 def test_non_square_fastica(add_noise=False):
     """ Test the FastICA algorithm on very simple data.
     """
