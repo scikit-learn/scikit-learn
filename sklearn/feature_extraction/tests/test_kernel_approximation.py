@@ -59,7 +59,7 @@ def test_skewed_chi2_sampler():
     kernel_approx = np.dot(X_trans, Y_trans.T)
 
     assert np.mean(np.abs(kernel - kernel_approx)) < 0.03
-    assert np.max(np.abs(kernel - kernel_approx)) < 0.12
+    assert np.max(np.abs(kernel - kernel_approx)) < 0.15
 
 
 def test_rbf_sampler():
