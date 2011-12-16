@@ -62,7 +62,8 @@ scores = [x[1] for x in score_dict]
 scores = np.array(scores).reshape(len(C_range), len(gamma_range))
 
 # Make a nice figure
-pl.figure(figsize=(10, 10))
+pl.figure(figsize=(8, 6))
+pl.subplots_adjust(left=0.15, right=0.95, bottom=0.15, top=0.95)
 pl.imshow(scores, interpolation='nearest')
 pl.xlabel('gamma')
 pl.ylabel('C')
