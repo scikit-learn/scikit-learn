@@ -28,7 +28,7 @@ from time import time
 
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction.text import Vectorizer
-from sklearn.naive_bayes import BernoulliNB, EMNB, MultinomialNB
+from sklearn.naive_bayes import BernoulliNB, SemisupervisedNB, MultinomialNB
 from sklearn import metrics
 
 
@@ -193,5 +193,5 @@ benchmark(BernoulliNB(alpha=.01), supervised=True)
 
 print 80 * '='
 print "Naive Bayes trained with Expectation Maximization"
-benchmark(EMNB(MultinomialNB(alpha=.01)))
-benchmark(EMNB(BernoulliNB(alpha=.01)))
+benchmark(SemisupervisedNB(MultinomialNB(alpha=.01)))
+benchmark(SemisupervisedNB(BernoulliNB(alpha=.01)))

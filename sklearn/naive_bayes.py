@@ -469,7 +469,7 @@ class BernoulliNB(BaseDiscreteNB):
         return jll + self.intercept_
 
 
-class EMNB(BaseNB):
+class SemisupervisedNB(BaseNB):
     """Semisupervised Naive Bayes using expectation-maximization (EM)
 
     This meta-estimator can be used to train a Naive Bayes model in
