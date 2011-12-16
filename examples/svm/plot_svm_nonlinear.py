@@ -23,13 +23,15 @@ Y = np.logical_xor(X[:,0]>0, X[:,1]>0)
 clf = svm.NuSVC()
 clf.fit(X, Y)
 
-# plot the line, the points, and the nearest vectors to the plane
-Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])
+# plot the decision function for each datapoint on the grid 
+Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
 Z = Z.reshape(xx.shape)
 
-pl.set_cmap(pl.cm.Paired)
+pl.set_cmap(pl.cm.jet)
 pl.pcolormesh(xx, yy, Z)
 pl.scatter(X[:,0], X[:,1], c=Y)
+pl.xticks(())
+pl.yticks(())
 
 pl.axis('tight')
 pl.show()
