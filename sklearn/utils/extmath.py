@@ -4,8 +4,6 @@ Extended math utilities.
 # Authors: G. Varoquaux, A. Gramfort, A. Passos, O. Grisel
 # License: BSD
 
-import math
-
 from . import check_random_state
 import numpy as np
 
