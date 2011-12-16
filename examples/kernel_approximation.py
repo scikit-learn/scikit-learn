@@ -56,7 +56,7 @@ linear_svm_score = linear_svm.score(data_test, targets_test)
 sample_sizes = 20*np.arange(1,15)
 approx_kernel_scores = []
 for D in sample_sizes:
-    approx_kernel_svm.set_params(feature_map__D=D)
+    approx_kernel_svm.set_params(feature_map__n_components=D)
     approx_kernel_svm.fit(data_train, targets_train)
     score = approx_kernel_svm.score(data_test, targets_test)
     approx_kernel_scores.append(score)
