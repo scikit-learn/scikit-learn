@@ -36,8 +36,8 @@ xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
 
 # title for the plots
 titles = ['SVC with linear kernel',
+          'SVC with RBF kernel',
           'SVC with polynomial (degree 3) kernel',
-          'NuSVC with linear kernel',
           'LinearSVC (linear kernel)']
 
 
