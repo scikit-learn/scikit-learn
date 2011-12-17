@@ -53,6 +53,6 @@ pl.pcolormesh(xx, yy, Z)
 # Plot also the training points
 pl.scatter(X[:, 0], X[:, 1], c=Y)
 pl.title('3-Class classification using Support Vector Machine with custom'
-        'kernel')
+        ' kernel')
 pl.axis('tight')
 pl.show()

@@ -7,7 +7,7 @@ This example illustrates the effect of the parameters `gamma`
 and `C` of the rbf kernel SVM.
 
 Intuitively, the `gamma` parameter defines how far the influence
-of a singel training example reaches, with low values meaning 'far'
+of a single training example reaches, with low values meaning 'far'
 and high values meaning 'close'.
 The `C` parameter trades off misclassification of training examples
 against simplicity of the decision surface. A low C makes
@@ -56,7 +56,7 @@ for C in C_range:
         Z = Z.reshape(xx.shape)
 
         pl.subplot(3, 3, k)
-        pl.title("gamma %.2f, C %.2f"%(gamma, C))
+        pl.title("gamma %.1f, C %.2f" % (gamma, C))
         k += 1
         pl.pcolormesh(xx, yy, Z)
         pl.scatter(X[:, 0], X[:, 1], c=y)
@@ -64,4 +64,5 @@ for C in C_range:
         pl.yticks(())
         pl.axis('tight')
 
+pl.subplots_adjust(left=0.05, right=0.95, bottom=0.05, top=0.95)
 pl.show()
