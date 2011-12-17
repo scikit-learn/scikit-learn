@@ -26,6 +26,28 @@ This package also features helpers to fetch larger datasets commonly
 used by the machine learning community to benchmark algorithm on data
 that comes from the 'real world'.
 
+General dataset API
+===================
+There are three distinct kinds of dataset interfaces used at the moment.
+The simplest one is the interface for sample images, which is described
+below in the :ref: _Sample_images section.
+
+The dataset generation functions and the svmlight loader share a simplistic
+interface, returning a tuple ``(X, y)`` consisting of a n_samples x n_features
+numpy array X and an array of length n_samples containing the targets y.
+
+The toy datasets as well as the 'real world' datasets and the datasets
+fetched from mldata.org have more sophisticated structure.
+These functions return a ``bunch`` (which is a dictionary that is
+accessible with the 'dict.key' syntax).
+All datasets have at least two keys, ``data``, containg an array of shape
+``n_samples x n_features`` and ``target``, a numpy array of length ``n_features``,
+containing the targets.
+The datasets also contain a description in ``DESC`` and some contain
+``feature_names`` and ``target_names``.
+See the dataset descriptions below for details.
+
+
 Toy datasets
 ============
 
