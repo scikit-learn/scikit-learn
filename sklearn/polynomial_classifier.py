@@ -5,7 +5,7 @@
 # License: BSD Style.
 
 import numpy as np
-import scipy as sc
+import scipy as sp
 
 class PC:
     """
@@ -20,7 +20,7 @@ class PC:
         N,D = X.shape
 
         ## create polynomials up to desired degree
-        numP = lambda n,p: sc.factorial(n+p)/(sc.factorial(n)*sc.factorial(p)) # number of polynomials
+        numP = lambda n,p: sp.factorial(n+p)/(sp.factorial(n)*sp.factorial(p)) # number of polynomials
         # build up index list to combine features, -1 indicates unused feature 
         I = np.zeros((numP(D, self.degree), self.degree), dtype=int)-1
         for i in range(1, I.shape[0]):
@@ -68,6 +68,8 @@ class PC:
 
         # apply classifier
         D = self.A.T * PX.T
+        d = np.array(np.argmax(D, axis=0))[0]
 
-        return np.array(np.argmax(D, axis=0))[0]
+        # apply class labels
+        return [ self._classes[d[i]] for i in range(len(d)) ]
 
