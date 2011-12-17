@@ -20,34 +20,41 @@ from ..my_exceptions import JoblibException
 
 import nose
 
-################################################################################
+
+###############################################################################
 
 def division(x, y):
-    return x/y
+    return x / y
+
 
 def square(x):
-    return x**2
+    return x ** 2
+
 
 def exception_raiser(x):
     if x == 7:
         raise ValueError
     return x
 
+
 def interrupt_raiser(x):
     time.sleep(.05)
     raise KeyboardInterrupt
+
 
 def f(x, y=0, z=0):
     """ A module-level function so that it can be spawn with
     multiprocessing.
     """
-    return x**2 + y + z
+    return x ** 2 + y + z
 
-################################################################################
+
+###############################################################################
 def test_cpu_count():
     assert cpu_count() > 0
 
-################################################################################
+
+###############################################################################
 # Test parallel
 def test_simple_parallel():
     X = range(10)
@@ -72,7 +79,7 @@ def test_parallel_pickling():
         that cannot be pickled.
     """
     def g(x):
-        return x**2
+        return x ** 2
     nose.tools.assert_raises(PickleError,
                              Parallel(),
                              (delayed(g)(x) for x in range(10))
@@ -129,6 +136,7 @@ def test_dispatch_one_job():
     """ Test that with only one job, Parallel does act as a iterator.
     """
     queue = list()
+
     def producer():
         for i in range(6):
             queue.append('Produced %i' % i)
@@ -154,6 +162,7 @@ def test_dispatch_multiprocessing():
         return
     manager = multiprocessing.Manager()
     queue = manager.list()
+
     def producer():
         for i in range(6):
             queue.append('Produced %i' % i)
@@ -176,7 +185,7 @@ def test_exception_dispatch():
             )
 
 
-################################################################################
+###############################################################################
 # Test helpers
 def test_joblib_exception():
     # Smoke-test the custom exception
@@ -190,4 +199,3 @@ def test_joblib_exception():
 def test_safe_function():
     safe_division = SafeFunction(division)
     nose.tools.assert_raises(JoblibException, safe_division, 1, 0)
-
