@@ -78,13 +78,12 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin,
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
                  fit_intercept=True, intercept_scaling=1):
 
-        super(LogisticRegression, self).__init__(penalty=penalty,
-            dual=dual, loss='lr', tol=tol, C=C,
+        super(LogisticRegression, self).__init__(
+            penalty=penalty, dual=dual, loss='lr', tol=tol, C=C,
             fit_intercept=fit_intercept, intercept_scaling=intercept_scaling)
 
     def predict_proba(self, X):
-        """
-        Probability estimates.
+        """Probability estimates.
 
         The returned estimates for all classes are ordered by the
         label of classes.
@@ -110,8 +109,7 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin,
         return probas[:, np.argsort(self.label_)]
 
     def predict_log_proba(self, X):
-        """
-        Log of Probability estimates.
+        """Log of Probability estimates.
 
         The returned estimates for all classes are ordered by the
         label of classes.
