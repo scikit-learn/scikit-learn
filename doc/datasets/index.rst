@@ -28,7 +28,8 @@ that comes from the 'real world'.
 
 General dataset API
 ===================
-There are three distinct kinds of dataset interfaces used at the moment.
+There are three distinct kinds of dataset interfaces for different types
+of datasets.
 The simplest one is the interface for sample images, which is described
 below in the :ref: _Sample_images section.
 
@@ -41,9 +42,10 @@ fetched from mldata.org have more sophisticated structure.
 These functions return a ``bunch`` (which is a dictionary that is
 accessible with the 'dict.key' syntax).
 All datasets have at least two keys, ``data``, containg an array of shape
-``n_samples x n_features`` and ``target``, a numpy array of length ``n_features``,
-containing the targets.
-The datasets also contain a description in ``DESC`` and some contain
+``n_samples x n_features`` (except for 20newsgroups) and ``target``, a numpy
+array of length ``n_features``, containing the targets.
+
+The datasets also contain a description in ``DESCR`` and some contain
 ``feature_names`` and ``target_names``.
 See the dataset descriptions below for details.
 
