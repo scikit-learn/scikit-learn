@@ -41,6 +41,6 @@ __all__ = ['check_build', 'cross_validation', 'cluster', 'covariance',
            'feature_selection',
            'gaussian_process', 'grid_search', 'hmm', 'lda', 'linear_model',
            'metrics', 'mixture', 'naive_bayes', 'neighbors', 'pipeline',
-           'preprocessing', 'qda', 'svm', 'test', 'clone', 'pls']
+           'preprocessing', 'qda', 'svm', 'test', 'clone', 'pls', 'polynomial_classifier']
 
 __version__ = '0.10-git'
