@@ -69,5 +69,5 @@ class PC:
         # apply classifier
         D = self.A.T * PX.T
 
-        return np.argmax(D, axis=0)
+        return np.array(np.argmax(D, axis=0))[0]
 

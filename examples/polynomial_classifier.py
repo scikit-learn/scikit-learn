@@ -17,6 +17,4 @@ pc = PC(degree=2)
 
 y_pred = pc.fit(X, y).predict(X)
 
-print y_pred
-print y
-
+print "Number of mislabeled points : %d" % (y != y_pred).sum()
