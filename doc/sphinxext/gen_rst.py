@@ -17,7 +17,8 @@ from StringIO import StringIO
 import matplotlib
 matplotlib.use('Agg')
 
-import token, tokenize
+import token
+import tokenize
 
 rst_template = """
 
@@ -67,6 +68,7 @@ SINGLE_IMAGE = """
     :align: center
 """
 
+
 def extract_docstring(filename):
     """ Extract a module-level docstring, if any
     """
@@ -88,11 +90,11 @@ def extract_docstring(filename):
             # If the docstring is formatted with several paragraphs, extract
             # the first one:
             paragraphs = '\n'.join(line.rstrip()
-                                for line in docstring.split('\n')).split('\n\n')
+                              for line in docstring.split('\n')).split('\n\n')
             if len(paragraphs) > 0:
                 first_par = paragraphs[0]
         break
-    return docstring, first_par, erow+1+start_row
+    return docstring, first_par, erow + 1 + start_row
 
 
 def generate_example_rst(app):
@@ -100,7 +102,7 @@ def generate_example_rst(app):
         examples.
     """
     root_dir = os.path.join(app.builder.srcdir, 'auto_examples')
-    example_dir = os.path.abspath(app.builder.srcdir +  '/../' + 'examples')
+    example_dir = os.path.abspath(app.builder.srcdir + '/../' + 'examples')
     try:
         plot_gallery = eval(app.builder.config.plot_gallery)
     except TypeError:
@@ -159,11 +161,11 @@ def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery):
         target_dir = root_dir
         src_dir = example_dir
     if not os.path.exists(os.path.join(src_dir, 'README.txt')):
-        print 80*'_'
+        print 80 * '_'
         print ('Example directory %s does not have a README.txt file'
                         % src_dir)
         print 'Skipping this directory'
-        print 80*'_'
+        print 80 * '_'
         return
     fhindex.write("""
 
@@ -189,7 +191,8 @@ def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery):
             if link_name.startswith('._'):
                 link_name = link_name[2:]
             if dir != '.':
-                fhindex.write('   :target: ./%s/%s.html\n\n' % (dir, fname[:-3]))
+                fhindex.write('   :target: ./%s/%s.html\n\n' % (dir,
+                                                               fname[:-3]))
             else:
                 fhindex.write('   :target: ./%s.html\n\n' % link_name[:-3])
             fhindex.write("""   :ref:`example_%s`
@@ -204,7 +207,7 @@ def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery):
 .. raw:: html
 
     <div style="clear: both"></div>
-    """) # clear at the end of the section
+    """)  # clear at the end of the section
 
 
 def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
@@ -257,13 +260,13 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
             plt.close('all')
             cwd = os.getcwd()
             try:
-                # First CD in the original example dir, so that any file created
-                # by the example get created in this directory
+                # First CD in the original example dir, so that any file
+                # created by the example get created in this directory
                 orig_stdout = sys.stdout
                 os.chdir(os.path.dirname(src_file))
                 my_stdout = StringIO()
                 sys.stdout = my_stdout
-                my_globals = {'pl' : plt}
+                my_globals = {'pl': plt}
                 execfile(os.path.basename(src_file), my_globals)
                 sys.stdout = orig_stdout
                 my_stdout = my_stdout.getvalue()
@@ -287,17 +290,17 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
                 # * iterate over [fig_mngr.num for fig_mngr in
                 #   matplotlib._pylab_helpers.Gcf.get_all_fig_managers()]
                 for fig_num in (fig_mngr.num for fig_mngr in
-                          matplotlib._pylab_helpers.Gcf.get_all_fig_managers()):
+                        matplotlib._pylab_helpers.Gcf.get_all_fig_managers()):
                     # Set the fig_num figure as the current figure as we can't
                     # save a figure that's not the current figure.
                     plt.figure(fig_num)
                     plt.savefig(image_path % fig_num)
                     figure_list.append(image_fname % fig_num)
             except:
-                print 80*'_'
+                print 80 * '_'
                 print '%s is not compiling:' % fname
                 traceback.print_exc()
-                print 80*'_'
+                print 80 * '_'
             finally:
                 os.chdir(cwd)
                 sys.stdout = orig_stdout
@@ -328,7 +331,7 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
         for figure_name in figure_list:
             image_list += HLIST_IMAGE_TEMPLATE % figure_name.lstrip('/')
 
-    f = open(os.path.join(target_dir, fname[:-2] + 'rst'),'w')
+    f = open(os.path.join(target_dir, fname[:-2] + 'rst'), 'w')
     f.write(this_template % locals())
     f.flush()
 
