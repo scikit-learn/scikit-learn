@@ -11,7 +11,12 @@ from sklearn.decomposition import PCA
 import random
 
 def divide_dataset(X,y):
-    """Divide dataset given by X,y into train (2/3) and test set (1/3)"""
+    """Randomly divide dataset given by X,y into train (2/3) and test set (1/3)
+
+    Returns
+    -------
+    X_test, y_test, X_train, y_train : array-like, shape = [n_samples, n_features]
+    """
 
     n_samples, n_features = X.shape
     p = range(n_samples)
@@ -26,6 +31,10 @@ def divide_dataset(X,y):
     return X_test, y_test, X_train, y_train
 
 def pc_apply_datasets():
+    """Apply Polynomial Classifier to 'iris' and 'digits' datasets and prints
+    results on console
+    """
+
     DBs = [('iris', datasets.load_iris()), ('digits', datasets.load_digits())]
 
     for DB_desc, database in DBs:
