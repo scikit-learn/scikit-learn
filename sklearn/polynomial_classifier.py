@@ -29,7 +29,7 @@ class PC(BaseEstimator, ClassifierMixin):
 
     Attributes
     ----------
-    A : matrix, shape = [n_polynomials, n_classes]
+    `A_` : matrix, shape = [n_polynomials, n_classes]
         Estimated parameter matrix.
 
     Notes
