@@ -232,11 +232,15 @@ class SparseBaseLibLinear(BaseLibLinear):
         self.class_weight, self.class_weight_label = \
                      _get_class_weight(class_weight, y)
 
+        C = self.C
+        if self.scale_C:
+            C = C / float(X.shape[0])
+
         self.raw_coef_, self.label_ = \
                        liblinear.csr_train_wrap(X.shape[1], X.data, X.indices,
                        X.indptr, y,
                        self._get_solver_type(),
-                       self.tol, self._get_bias(), self.C,
+                       self.tol, self._get_bias(), C,
                        self.class_weight_label, self.class_weight)
 
         return self

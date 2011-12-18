@@ -81,11 +81,12 @@ class LogisticRegression(SparseBaseLibLinear, ClassifierMixin,
     """
 
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
-                 fit_intercept=True, intercept_scaling=1):
+                 fit_intercept=True, intercept_scaling=1, scale_C=False):
 
         super(LogisticRegression, self).__init__(penalty=penalty,
             dual=dual, loss='lr', tol=tol, C=C,
-            fit_intercept=fit_intercept, intercept_scaling=intercept_scaling)
+            fit_intercept=fit_intercept, intercept_scaling=intercept_scaling,
+            scale_C=scale_C)
 
     def predict_proba(self, X):
         """
