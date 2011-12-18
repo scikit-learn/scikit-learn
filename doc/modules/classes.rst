@@ -237,22 +237,6 @@ Samples generator
 
 .. currentmodule:: sklearn
 
-Kernel Appoximation
--------------------
-
-.. automodule:: sklearn.feature_extraction.kernel_approximation
-   :no-members:
-   :no-inherited-members:
-
-.. currentmodule:: sklearn
-
-.. autosummary::
-   :toctree: generated/
-   :template: class.rst
-   feature_extraction.kernel_approximation.RBFSampler
-   feature_extraction.kernel_approximation.AdditiveChi2Sampler
-   feature_extraction.kernel_approximation.SkewedChi2Sampler
-
 From images
 -----------
 
@@ -523,6 +507,24 @@ For sparse data
 
 
 .. _metrics_ref:
+
+
+:mod:`sklearn.kernel_approximation` Kernel Approximation
+========================================================
+
+.. automodule:: sklearn.kernel_approximation
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   kernel_approximation.RBFSampler
+   kernel_approximation.AdditiveChi2Sampler
+   kernel_approximation.SkewedChi2Sampler
 
 :mod:`sklearn.metrics`: Metrics
 ===============================
