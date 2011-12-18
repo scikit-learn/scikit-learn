@@ -8,7 +8,7 @@
 
     <h1>User guide: contents</h1>
 
-.. _user_guide: User Guide
+.. _user_guide:
 
 .. include:: includes/bigger_toc_css.rst
 
