@@ -51,7 +51,11 @@ class LogisticRegression(SparseBaseLibLinear, ClassifierMixin,
         (and therefore on the intercept) intercept_scaling has to be increased
 
     tol: float, optional
-         tolerance for stopping criteria
+        tolerance for stopping criteria
+
+    scale_C : bool
+        Scale C with number of samples. It makes the setting of C independant
+        of the number of samples.
 
     Attributes
     ----------
