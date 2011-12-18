@@ -33,7 +33,6 @@ y -= 1
 scaler = Scaler()
 X = scaler.fit_transform(X)
 
-#xx, yy = np.meshgrid(np.linspace(-5, 5, 500), np.linspace(-5, 5, 500))
 xx, yy = np.meshgrid(np.linspace(-5, 5, 200), np.linspace(-5, 5, 200))
 
 np.random.seed(0)

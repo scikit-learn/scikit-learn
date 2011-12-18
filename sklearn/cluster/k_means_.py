@@ -17,11 +17,12 @@ import scipy.sparse as sp
 from ..utils.extmath import norm
 from ..base import BaseEstimator
 from ..metrics.pairwise import euclidean_distances
+from ..utils import warn_if_not_float
 from ..utils import check_arrays
 from ..utils import check_random_state
 from ..utils import gen_even_slices
 from ..utils import shuffle
-from ..utils import warn_if_not_float
+from ..utils import as_float_array
 
 from . import _k_means
 
@@ -205,6 +206,7 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
 
     vdata = np.mean(np.var(X, 0))
     best_inertia = np.infty
+    X = as_float_array(X, copy=copy_x)
 
     # subtract of mean of x for more accurate distance computations
     X_mean = X.mean(axis=0)
@@ -494,6 +496,7 @@ class KMeans(BaseEstimator):
         if X.shape[0] < self.k:
             raise ValueError("n_samples=%d should be >= k=%d" % (
                 X.shape[0], self.k))
+        X = as_float_array(X, copy=False)
         return X
 
     def fit(self, X, y=None):
@@ -501,7 +504,6 @@ class KMeans(BaseEstimator):
         self.random_state = check_random_state(self.random_state)
 
         X = self._check_data(X)
-        warn_if_not_float(X, self)
 
         self.cluster_centers_, self.labels_, self.inertia_ = k_means(
             X, k=self.k, init=self.init, n_init=self.n_init,

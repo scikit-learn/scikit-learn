@@ -80,6 +80,7 @@ def _downsampled_lena():
            lena[1::2, 1::2]
     lena = lena[::2, ::2] + lena[1::2, ::2] + lena[::2, 1::2] + \
            lena[1::2, 1::2]
+    lena = lena.astype(np.float)
     lena /= 16.0
     return lena
 
