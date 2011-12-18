@@ -48,11 +48,12 @@ operation on a single array-like dataset::
          [ 1.22...,  0.  ..., -0.26...],
          [-1.22...,  1.22..., -1.06...]])
 
-Scaled data has zero mean and unit variance::
-  .. 
+..   
         >>> import numpy as np
         >>> print_options = np.get_printoptions()
         >>> np.set_printoptions(suppress=True)
+
+Scaled data has zero mean and unit variance::
 
   >>> X_scaled.mean(axis=0)
   array([ 0.,  0.,  0.])
@@ -60,7 +61,7 @@ Scaled data has zero mean and unit variance::
   >>> X_scaled.std(axis=0)
   array([ 1.,  1.,  1.])
 
-  ..    >>> print_options = np.set_printoptions(print_options)
+..    >>> print_options = np.set_printoptions(print_options)
 
 The ``preprocessing`` module further provides a utility class
 :class:`Scaler` that implements the ``Transformer`` API to compute
