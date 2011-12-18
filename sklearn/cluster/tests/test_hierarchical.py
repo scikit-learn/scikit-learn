@@ -119,7 +119,7 @@ def test_scikit_vs_scipy():
         assess_same_labelling(labeling, labeling_)
 
 
-def test_connectivity_popagation():
+def test_connectivity_propagation():
     """
     Check that connectivity in the ward tree is propagated correctly during
     merging.

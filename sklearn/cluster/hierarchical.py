@@ -80,12 +80,12 @@ class Dendrogram(object):
     n_components : int
         The number of connected components in the dataset
 
-    parent : array of floats. Length of n_nodes
+    parent : array, shape = [n_nodes]
         For tree node with index i, this array contains as i-th entry the index
         of its parent. Nodes without parents contain themselves as parents.
 
-    heights :  array of floats. Length of n_nodes
-            The heights associated to the tree's nodes.
+    heights : array, shape = [n_nodes]
+        The heights associated to the tree's nodes.
 
     children : list of pairs. Length of n_nodes
         List of the children of node. This is not defined for leaves.
@@ -551,13 +551,10 @@ class HierarchicalClustering(BaseEstimator):
         self.n_clusters = n_clusters
         self.n_components = n_components
         self.max_height = max_height
-
         self.connectivity = connectivity
-
         self.linkage_criterion = linkage_criterion
         self.metric = metric
         self.linkage_kwargs = linkage_kwargs
-
         self.memory = memory
         self.copy = copy
 
@@ -599,7 +596,7 @@ class HierarchicalClustering(BaseEstimator):
                 "be specified explicitly."
 
             assert self.linkage_criterion \
-                        in self.unstructured_cluster_algorithms.keys(), \
+                        in self.unstructured_cluster_algorithms, \
                     "Unknown linkage criterion %s. Must be one of %s." \
                         % (self.linkage_criterion,
                            self.unstructured_cluster_algorithms.keys())
