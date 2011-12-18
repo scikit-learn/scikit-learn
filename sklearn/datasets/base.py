@@ -180,11 +180,16 @@ def load_files(container_path, description=None, categories=None,
 
 def load_iris():
     """Load and return the iris dataset (classification).
-    Classes: 3
-    Samples per class: 50
-    Samples total: 150
-    Dimensionality: 4
-    Features: real, positive
+
+    :Classes: 3
+
+    :Samples per class: 50
+
+    :Samples total: 150
+
+    :Dimensionality: 4
+
+    :Features: real, positive
 
     The iris dataset is a classic and very easy multi-class classification dataset.
 
