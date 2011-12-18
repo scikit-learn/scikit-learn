@@ -4,6 +4,12 @@ from . import libsvm, liblinear
 from ..base import BaseEstimator
 from ..utils import array2d, safe_asarray
 
+dot = np.dot
+if np.__version__ > '2':
+    # In numpy > 2, np.dot(csr_matrix, csr_matrix) no longer works
+    def dot(A, B):
+        return A.dot(B)
+
 
 LIBSVM_IMPL = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
 
@@ -89,7 +95,7 @@ class BaseLibSVM(BaseEstimator):
         if self.kernel != 'linear':
             raise NotImplementedError('coef_ is only available when using a '
                                       'linear kernel')
-        return np.dot(self.dual_coef_, self.support_vectors_)
+        return dot(self.dual_coef_, self.support_vectors_)
 
 
 class DenseBaseLibSVM(BaseLibSVM):
