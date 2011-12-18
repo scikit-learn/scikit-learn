@@ -38,7 +38,7 @@ def compute_bench(alpha, n_samples, n_features, precompute):
                                           n_informative=n_informative,
                                           noise=0.1, coef=True)
 
-            X /= np.sqrt(np.sum(X**2, axis=0)) # Normalize data
+            X /= np.sqrt(np.sum(X ** 2, axis=0))  # Normalize data
 
             gc.collect()
             print "- benching Lasso"
@@ -61,7 +61,7 @@ if __name__ == '__main__':
     from sklearn.linear_model import Lasso, LassoLars
     import pylab as pl
 
-    alpha = 0.01 # regularization parameter
+    alpha = 0.01  # regularization parameter
 
     n_features = 10
     list_n_samples = np.linspace(100, 1000000, 5).astype(np.int)

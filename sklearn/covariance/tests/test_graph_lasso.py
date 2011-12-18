@@ -32,11 +32,11 @@ def test_graph_lasso(random_state=0):
             # Check that the costs always decrease
             np.testing.assert_array_less(np.diff(costs), 0)
         # Check that the 2 approaches give similar results
-        np.testing.assert_allclose(covs['cd'], covs['lars'])
+        np.testing.assert_array_almost_equal(covs['cd'], covs['lars'])
 
     # Smoke test the estimator
     model = GraphLasso(alpha=.1).fit(X)
-    np.testing.assert_allclose(model.covariance_, covs['cd'])
+    np.testing.assert_array_almost_equal(model.covariance_, covs['cd'])
 
 
 def test_graph_lasso_cv(random_state=1):
@@ -55,4 +55,3 @@ def test_graph_lasso_cv(random_state=1):
         GraphLassoCV(verbose=10, alphas=3).fit(X)
     finally:
         sys.stdout = orig_stdout
-

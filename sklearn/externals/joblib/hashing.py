@@ -13,6 +13,7 @@ import sys
 import cStringIO
 import types
 
+
 class Hasher(pickle.Pickler):
     """ A subclass of pickler, to do cryptographic hashing, rather than
         pickling.
@@ -40,6 +41,7 @@ class Hasher(pickle.Pickler):
             cls = obj.im_class
             obj = (func_name, inst, cls)
         pickle.Pickler.save(self, obj)
+
 
 class NumpyHasher(Hasher):
     """ Special case the hasher for when numpy is loaded.
@@ -112,4 +114,3 @@ def hash(obj, hash_name='md5', coerce_mmap=False):
     else:
         hasher = Hasher(hash_name=hash_name)
     return hasher.hash(obj)
-

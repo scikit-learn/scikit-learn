@@ -2,19 +2,21 @@
 Disk management utilities.
 """
 
-# Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
+# Authors: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
+#          Lars Buitinck <L.J.Buitinck@uva.nl>
 # Copyright (c) 2010 Gael Varoquaux
 # License: BSD Style, 3 clauses.
 
 
-import sys
+import errno
 import os
 import shutil
+import sys
 import time
 
+
 def disk_used(path):
-    """ Return the disk usage in a directory.
-    """
+    """ Return the disk usage in a directory."""
     size = 0
     for file in os.listdir(path) + ['.']:
         stat = os.stat(os.path.join(path, file))
@@ -23,7 +25,7 @@ def disk_used(path):
         else:
             # on some platform st_blocks is not available (e.g., Windows)
             # approximate by rounding to next multiple of 512
-            size += (stat.st_size // 512 + 1) * 512;
+            size += (stat.st_size // 512 + 1) * 512
     # We need to convert to int to avoid having longs on some systems (we
     # don't want longs to avoid problems we SQLite)
     return int(size / 1024.)
@@ -43,9 +45,22 @@ def memstr_to_kbytes(text):
                 )
     return size
 
+
+def mkdirp(d):
+    """Ensure directory d exists (like mkdir -p on Unix)
+    No guarantee that the directory is writable.
+    """
+    try:
+        os.makedirs(d)
+    except OSError, e:
+        if e.errno != errno.EEXIST:
+            raise
+
+
 # if a rmtree operation fails in rm_subdirs, wait for this much time (in secs),
 # then retry once. if it still fails, raise the exception
 RM_SUBDIRS_RETRY_TIME = 0.1
+
 
 def rm_subdirs(path, onerror=None):
     """Remove all subdirectories in this path.
@@ -86,6 +101,7 @@ def rm_subdirs(path, onerror=None):
                         shutil.rmtree(fullname, False, None)
                         break
                     except os.error, err:
-                        if err_count > 0: raise
+                        if err_count > 0:
+                            raise
                         err_count += 1
                         time.sleep(RM_SUBDIRS_RETRY_TIME)

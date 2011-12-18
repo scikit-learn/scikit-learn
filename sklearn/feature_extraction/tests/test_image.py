@@ -54,6 +54,7 @@ def test_grid_to_graph():
     A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask, dtype=np.float)
     assert A.dtype == np.float
 
+
 def test_connect_regions():
     lena = sp.misc.lena()
     for thr in (50, 150):
@@ -65,11 +66,11 @@ def test_connect_regions():
 def test_connect_regions_with_grid():
     lena = sp.misc.lena()
     mask = lena > 50
-    graph = grid_to_graph(*lena.shape, **{'mask': mask})
+    graph = grid_to_graph(*lena.shape, mask=mask)
     assert_equal(ndimage.label(mask)[1], cs_graph_components(graph)[0])
 
     mask = lena > 150
-    graph = grid_to_graph(*lena.shape, **{'mask': mask, 'dtype': None})
+    graph = grid_to_graph(*lena.shape, mask=mask, dtype=None)
     assert_equal(ndimage.label(mask)[1], cs_graph_components(graph)[0])
 
 
@@ -79,6 +80,7 @@ def _downsampled_lena():
            lena[1::2, 1::2]
     lena = lena[::2, ::2] + lena[1::2, ::2] + lena[::2, 1::2] + \
            lena[1::2, 1::2]
+    lena = lena.astype(np.float)
     lena /= 16.0
     return lena
 

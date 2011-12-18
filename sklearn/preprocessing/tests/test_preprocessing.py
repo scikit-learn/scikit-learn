@@ -366,6 +366,7 @@ def test_center_kernel():
     K_pred_centered2 = centerer.transform(K_pred)
     assert_array_almost_equal(K_pred_centered, K_pred_centered2)
 
+
 def test_fit_transform():
     X = np.random.random((5, 4))
     for obj in ((Scaler(), Normalizer(), Binarizer())):

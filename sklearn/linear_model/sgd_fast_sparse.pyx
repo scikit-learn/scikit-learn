@@ -134,12 +134,20 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
     cdef unsigned int epoch = 0
     cdef unsigned int i = 0
     cdef int sample_idx = 0
+
+    # q vector is only used for L1 regularization
     cdef np.ndarray[double, ndim=1, mode="c"] q = None
     cdef double *q_data_ptr = NULL
     if penalty_type != L2:
         q = np.zeros((n_features,), dtype=np.float64, order="c")
         q_data_ptr = <double *> q.data
     cdef double u = 0.0
+
+    if penalty_type == L2:
+        rho = 1.0
+    elif penalty_type == L1:
+        rho = 0.0
+    
     cdef double typw = sqrt(1.0 / sqrt(alpha))
 
     if learning_rate == OPTIMAL:

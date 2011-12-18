@@ -190,7 +190,7 @@ us install ``line-prof`` and wire it to IPython::
 
     $ ipython profile create
 
-  Then create a file named ``~/.ipython/extensions/line_profile_ext`` with
+  Then create a file named ``~/.ipython/extensions/line_profiler_ext.py`` with
   the following content::
 
     import line_profiler

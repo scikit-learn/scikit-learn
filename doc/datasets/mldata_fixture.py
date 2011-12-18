@@ -12,7 +12,6 @@ import scipy as sp
 import shutil
 
 
-
 def globs(globs):
     # setup mock urllib2 module to avoid downloading from mldata.org
     mock_datasets = {

@@ -19,6 +19,7 @@ from ..utils.extmath import safe_sparse_dot
 ######################################################################
 # Scoring functions
 
+
 # The following function is a rewriting of scipy.stats.f_oneway
 # Contrary to the scipy.stats.f_oneway implementation it does not
 # copy the data while keeping the inputs unchanged.
@@ -73,10 +74,11 @@ def f_oneway(*args):
     n_classes = len(args)
     n_samples_per_class = np.array([len(a) for a in args])
     n_samples = np.sum(n_samples_per_class)
-    ss_alldata = reduce(lambda x, y: x+y, [np.sum(a**2, axis=0) for a in args])
+    ss_alldata = reduce(lambda x, y: x + y,
+            [np.sum(a ** 2, axis=0) for a in args])
     sums_args = [np.sum(a, axis=0) for a in args]
-    square_of_sums_alldata = reduce(lambda x, y: x+y, sums_args)**2
-    square_of_sums_args = [s**2 for s in sums_args]
+    square_of_sums_alldata = reduce(lambda x, y: x + y, sums_args) ** 2
+    square_of_sums_args = [s ** 2 for s in sums_args]
     sstot = ss_alldata - square_of_sums_alldata / float(n_samples)
     ssbn = 0
     for k, _ in enumerate(args):
@@ -112,7 +114,7 @@ def f_classif(X, y):
     """
     X = array2d(X)
     y = np.asarray(y).ravel()
-    args = [X[y==k] for k in np.unique(y)]
+    args = [X[y == k] for k in np.unique(y)]
     return f_oneway(*args)
 
 
@@ -194,15 +196,16 @@ def f_regression(X, y, center=True):
         X -= np.mean(X, 0)
 
     # compute the correlation
-    X /= np.sqrt(np.sum(X**2, 0))
-    y /= np.sqrt(np.sum(y**2))
+    X /= np.sqrt(np.sum(X ** 2, 0))
+    y /= np.sqrt(np.sum(y ** 2))
     corr = np.dot(y, X)
 
     # convert to p-value
     dof = y.size - 2
-    F = corr**2 / (1 - corr**2) * dof
+    F = corr ** 2 / (1 - corr ** 2) * dof
     pv = stats.f.sf(F, 1, dof)
     return F, pv
+
 
 ######################################################################
 # General class for filter univariate selection
@@ -284,8 +287,8 @@ class SelectPercentile(_AbstractUnivariateFilter):
 
     def _get_support_mask(self):
         percentile = self.percentile
-        assert percentile<=100, ValueError('percentile should be \
-                            between 0 and 100 (%f given)' %(percentile))
+        assert percentile <= 100, ValueError('percentile should be \
+                            between 0 and 100 (%f given)' % (percentile))
         # Cater for Nans
         if percentile == 100:
             return np.ones(len(self._pvalues), dtype=np.bool)
@@ -316,9 +319,9 @@ class SelectKBest(_AbstractUnivariateFilter):
 
     def _get_support_mask(self):
         k = self.k
-        assert k<=len(self._pvalues), ValueError('cannot select %d features'
+        assert k <= len(self._pvalues), ValueError('cannot select %d features'
                                     ' among %d ' % (k, len(self._pvalues)))
-        alpha = np.sort(self._pvalues)[k-1]
+        alpha = np.sort(self._pvalues)[k - 1]
         return (self._pvalues <= alpha)
 
 
@@ -370,7 +373,7 @@ class SelectFdr(_AbstractUnivariateFilter):
     def _get_support_mask(self):
         alpha = self.alpha
         sv = np.sort(self._pvalues)
-        threshold = sv[sv < alpha*np.arange(len(self._pvalues))].max()
+        threshold = sv[sv < alpha * np.arange(len(self._pvalues))].max()
         return (self._pvalues <= threshold)
 
 
@@ -396,7 +399,7 @@ class SelectFwe(_AbstractUnivariateFilter):
 
     def _get_support_mask(self):
         alpha = self.alpha
-        return (self._pvalues < alpha/len(self._pvalues))
+        return (self._pvalues < alpha / len(self._pvalues))
 
 
 ######################################################################
