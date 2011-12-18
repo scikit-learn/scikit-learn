@@ -124,7 +124,7 @@ def test_k_means_singleton():
     np.random.seed(1)
     my_X = np.array([[1.1, 1.1], [0.9, 1.1], [1.1, 0.9], [0.9, 0.9]])
     array_init = np.array([[1.0, 1.0], [5.0, 5.0]])
-    k_means = KMeans(init=array_init, k=2).fit(my_X)
+    k_means = KMeans(init=array_init, k=2, n_init=1).fit(my_X)
 
     # must be singleton clustering
     assert_equal(np.unique(k_means.labels_).size, 1)
