@@ -58,6 +58,7 @@ def pc_apply_datasets():
         # print info on console
         print "-" * 80
         print pca, clf
+        print "Dataset size: n_samples(Train) = %d, n_samples(Test) = %d" % (X_train.shape[0], X_test.shape[0])
         print "Confusion matrix for '%s' dataset:\n" % DB_desc, cm
 
 if __name__ == '__main__':
