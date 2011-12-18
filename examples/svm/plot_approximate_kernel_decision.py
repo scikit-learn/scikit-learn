@@ -13,7 +13,7 @@ print __doc__
 import numpy as np
 import pylab as pl
 from sklearn import svm, datasets
-from sklearn.feature_extraction.kernel_approximation import RBFSampler
+from sklearn.kernel_approximation import RBFSampler
 from sklearn.pipeline import Pipeline
 
 # import some data to play with
