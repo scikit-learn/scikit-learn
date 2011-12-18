@@ -312,13 +312,18 @@ def load_diabetes():
 def load_linnerud():
     """Load and return the linnerud dataset (multivariate regression).
 
+    Samples total: 20
+    Dimensionality: 3 for both data and targets
+    Features: integer
+    Targets: integer
+
     Return
     ------
     data : Bunch
-        Dictionary-like object, the interesting attributes are:
-        'data_exercise' and 'data_physiological', the two multivariate
-        datasets, as well as 'header_exercise' and
-        'header_physiological', the corresponding headers.
+        Dictionary-like object, the interesting attributes are: 'data' and
+        'targets', the two multivariate datasets, with 'data' corresponding to
+        the exercise and 'targets' corresponding to the physiological
+        measurements, as well as 'feature_names' and 'target_names'.
     """
     base_dir = join(dirname(__file__), 'data/')
     # Read data
@@ -333,9 +338,9 @@ def load_linnerud():
     with open(dirname(__file__) + '/descr/linnerud.rst') as f:
         descr = f.read()
 
-    return Bunch(data_exercise=data_exercise, header_exercise=header_exercise,
-                 data_physiological=data_physiological,
-                 header_physiological=header_physiological,
+    return Bunch(data=data_exercise, feature_names=header_exercise,
+                 target=data_physiological,
+                 target_names=header_physiological,
                  DESCR=descr)
 
 
