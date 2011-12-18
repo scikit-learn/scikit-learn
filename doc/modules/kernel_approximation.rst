@@ -17,7 +17,7 @@ can be better suited for online learning and can significantly reduce the cost
 of learning with large datasets.
 
 Since there has not been much empirical work using approximate embeddings, it
-is advised to compare results against exact kernel methods.
+is advisable to compare results against exact kernel methods.
 
 Radial Basis Function Kernel
 ----------------------------
@@ -28,7 +28,7 @@ The mapping relies on a Monte Carlo approximation to the
 kernel values. The ``fit`` function performs the Monte Carlo sampling, whereas
 the ``transform`` method performs the mapping of the data.  Because of the
 inherent randomness of the process, results may vary between different calls to
-the func:``fit`` function.
+the ``fit`` function.
 
 The ``fit`` function takes two arguments:
 `n_components`, which is the target dimensionality of the feature transform,
@@ -49,7 +49,7 @@ The chi squared kernel is given by
         k(x, y) = \sum_i \frac{2x_iy_i}{x_i+y_i}
 
 Since the kernel is additive, it is possible to treat all components
-`x_i` separately for embedding. This makes it possible to sample
+:math:`x_i` separately for embedding. This makes it possible to sample
 the Fourier transform in regular intervals, instead of approximating
 using Monte Carlo sampling.
 
@@ -102,7 +102,7 @@ Where :math:`< \cdot, \cdot >` denotes the inner product in the
 Hilbert space.
 
 If an algorithm, such as a linear support vector machine or PCA,
-relies only on the scalar product of data points `x_i`, one may use
+relies only on the scalar product of data points :math:`x_i`, one may use
 the value of :math:`k(x_i, x_j)`, which corresponds to applying the algorithm
 to the mapped data points :math:`\phi(x_i)`.
 The advantage of using `k` is that the mapping :math:`\phi` never has
@@ -113,7 +113,7 @@ One drawback of kernel methods is, that it might be nesseccary
 to store many kernel values :math:`k(x_i, x_j)` during optimization.
 If a kernelized classifier is applied to new data :math:`y_j`,
 :math:`k(x_i, y_j)` needs to be computed to make predictions,
-possibly for many different `x_i` in the training set.
+possibly for many different :math:`x_i` in the training set.
 
 The classes in this submodule allow to approximate the embedding
 :math:`\phi`, thereby working explicitly with the representations
