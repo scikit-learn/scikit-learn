@@ -28,10 +28,11 @@ that comes from the 'real world'.
 
 General dataset API
 ===================
+
 There are three distinct kinds of dataset interfaces for different types
 of datasets.
 The simplest one is the interface for sample images, which is described
-below in the :ref: _Sample_images section.
+below in the :ref:`sample_images` section.
 
 The dataset generation functions and the svmlight loader share a simplistic
 interface, returning a tuple ``(X, y)`` consisting of a n_samples x n_features
@@ -71,6 +72,8 @@ These datasets are useful to quickly illustrate the behavior of the
 various algorithms implemented in the scikit. They are however often too
 small to be representative of real world machine learning tasks.
 
+.. _sample_images:
+
 Sample images
 =============
 
@@ -83,7 +86,13 @@ and pipeline on 2D data.
    load_sample_images
    load_sample_image
 
-.. note::
+.. image:: ../auto_examples/cluster/images/plot_color_quantization_1.png
+   :target: ../auto_examples/cluster/plot_color_quantization.html
+   :scale: 30
+   :align: right
+
+
+.. warning::
 
   The default coding of images is based on the ``uint8`` dtype to
   spare memory.  Often machine learning algorithms work best if the
@@ -104,8 +113,9 @@ Sample generators
 In addition, scikit-learn includes various random sample generators that
 can be used to build artifical datasets of controled size and complexity.
 
-.. figure:: ../auto_examples/images/plot_random_dataset_1.png
+.. image:: ../auto_examples/images/plot_random_dataset_1.png
    :target: ../auto_examples/plot_random_dataset.html
+   :scale: 50
    :align: center
 
 .. autosummary::
