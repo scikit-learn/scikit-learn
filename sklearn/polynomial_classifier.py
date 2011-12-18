@@ -1,15 +1,58 @@
 # -*- coding: utf-8 -*-
 
-# Author: Christoph Hermes <hermes@hausmilbe.net>
+"""
+The :mod:`sklearn.polynomial_classifier` module implements Polynomial
+Classifier algorithms. These are supervised learning methods based on
+Schuermann, J.: Pattern Classification: A Unified View of Statistical and
+Neural Approaches, John Wiley & Sons, Inc., 1996
+"""
+
+# Author: Christoph Hermes <hermes(at)hausmilbe(dot)net>
 #
 # License: BSD Style.
 
 import numpy as np
 import scipy as sp
+from base import BaseEstimator, ClassifierMixin
 
-class PC:
-    """
-    Polynomial Classifier.
+class PC(BaseEstimator, ClassifierMixin):
+    """Polynomial Classifier.
+
+    This type of classifier maps features to polynomial space and applies
+    linear regression.
+
+    Parameters
+    ----------
+    degree : int, optional (default=2)
+        Polynomial degree, usual are values from 1 to 3. Higher values support
+        over-training and dramatically increase memory consumption.
+
+    Attributes
+    ----------
+    A : matrix, shape = [n_polynomials, n_classes]
+        Estimated parameter matrix.
+
+    Notes
+    -----
+    Its not uncommon to apply a dimension reduction method (e.g. PCA) to the
+    feature space before using the Polynomial Classifier. This reduces the
+    amount of internal memory by the polynomials.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> X = np.array([[1, 1], [-1, -1], [-1, 1], [1, -1]]) # XOR problem
+    >>> y = np.array([1, 1, 2, 2])
+    >>> clf = PC(degree=2)
+    >>> clf.fit(X, y)
+    >>> print clf.predict([[1, 0.5], [1, -0.5]])
+    [1, 2]
+
+    References
+    ----------
+    Schuermann, J.: Pattern Classification: A Unified View of Statistical and Neural Approaches, John Wiley & Sons, Inc., 1996
+    Niemann, H.: Klassifikation von Mustern, University Erlangen-Nuernberg, 2003
+    http://www5.informatik.uni-erlangen.de/fileadmin/Persons/NiemannHeinrich/klassifikation-von-mustern/m00links.html
     """
 
     def __init__(self, degree=2):
@@ -17,10 +60,28 @@ class PC:
         pass
 
     def _build_pc_features(self, X):
+        """Build polynomial features from X up to self.degree
+
+        Assume Xj = [c1, c2, c3, ..., cD] with cI as the Ith feature of the jth
+        element.
+        Then build polynomial feature list, e.g. for self.degree=2:
+        Pj = [1, c1, c2, ..., cD, c1*c1, c1*c2, ..., cD*cD]
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        Returns
+        -------
+        P : ndarray, shape = [n_samples, (n_features+self.degree)! / (n_features! * self.degree!)]
+            Polynomial features.
+        """
         N,D = X.shape
 
-        ## create polynomials up to desired degree
-        numP = lambda n,p: sp.factorial(n+p)/(sp.factorial(n)*sp.factorial(p)) # number of polynomials
+        # number of polynomials
+        numP = lambda n,p: sp.factorial(n+p)/(sp.factorial(n)*sp.factorial(p))
         # build up index list to combine features, -1 indicates unused feature 
         I = np.zeros((numP(D, self.degree), self.degree), dtype=int)-1
         for i in range(1, I.shape[0]):
@@ -44,11 +105,31 @@ class PC:
         return P
 
     def fit(self, X, y):
+        """Fit polynomials according to X, y
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        y : array-like, shape = [n_samples]
+            Target values.
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+
+        X = np.asarray(X)
+        y = np.asarray(y)
+
         N,D = X.shape
 
         self._classes = np.unique(y)
 
-        ## create discriminant vector Y from y
+        # create discriminant vector Y from y
         Y = np.zeros((N, len(self._classes)))
         for i in range(N):
             Y[i, self._classes==y[i]] = 1
@@ -56,13 +137,27 @@ class PC:
 
         PX = np.matrix(self._build_pc_features(X))
 
-        ## TODO: replace by Gauss-Jordan algorithm
+        ## TODO: replace by Gauss-Jordan algorithm with pivot selection
         # direct computation of A
-        self.A = np.linalg.inv(PX.T * PX / N) * (PX.T * Y / N)
+        self.A = np.linalg.pinv(PX.T * PX / N) * (PX.T * Y / N)
 
         return self
 
     def predict(self, X):
+        """Perform classification on an array of test vectors X.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        C : array, shape = [n_samples]
+            Predicted target values for X
+        """
+
+        X = np.asarray(X)
+
         # build up polynomial features
         PX = np.matrix(self._build_pc_features(X))
 

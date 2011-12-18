@@ -2,6 +2,7 @@
 
 Polynomial Classifier - An example
 
+Author: Christoph Hermes <hermes(at)hausmilbe(dot)net>
 """
 
 # data
