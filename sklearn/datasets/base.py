@@ -180,13 +180,21 @@ def load_files(container_path, description=None, categories=None,
 
 def load_iris():
     """Load and return the iris dataset (classification).
+    Classes: 3
+    Samples per class: 50
+    Samples total: 150
+    Dimensionality: 4
+    Features: real, positive
+
+    The iris dataset is a classic and very easy multi-class classification dataset.
 
     Return
     ------
     data : Bunch
         Dictionary-like object, the interesting attributes are:
         'data', the data to learn, 'target', the classification labels,
-        'target_names', the meaning of the labels, and 'DESCR', the
+        'target_names', the meaning of the labels, 'feature_names', the
+        meaning of the features, and 'DESCR', the
         full description of the dataset.
 
     Examples
@@ -224,6 +232,13 @@ def load_iris():
 
 def load_digits(n_class=10):
     """Load and return the digits dataset (classification).
+    Classes: 10
+    Samples per class: ~180
+    Samples total: 1797
+    Dimensionality: 64
+    Features: integers 0-16
+
+    Each datapoint is a 8x8 image of a digit.
 
     Parameters
     ----------
@@ -234,7 +249,7 @@ def load_digits(n_class=10):
     ------
     data : Bunch
         Dictionary-like object, the interesting attributes are:
-        'data', the data to learn, `images`, the images corresponding
+        'data', the data to learn, 'images', the images corresponding
         to each sample, 'target', the classification labels for each
         sample, 'target_names', the meaning of the labels, and 'DESCR',
         the full description of the dataset.
@@ -276,11 +291,16 @@ def load_digits(n_class=10):
 def load_diabetes():
     """Load and return the diabetes dataset (regression).
 
+    Samples total: 442
+    Dimensionality: 1r03
+    Features: real, -.2 < x < .2
+    Targets: integer 25 - 346
+
     Return
     ------
     data : Bunch
         Dictionary-like object, the interesting attributes are:
-        'data', the data to learn and 'target', the labels for each
+        'data', the data to learn and 'target', the regression target for each
         sample.
     """
     base_dir = join(dirname(__file__), 'data')
@@ -322,11 +342,16 @@ def load_linnerud():
 def load_boston():
     """Load and return the boston house-prices dataset (regression).
 
+    Samples total: 506
+    Dimensionality: 13
+    Features: real, positive
+    Targets: real 5. - 50.
+
     Return
     ------
     data : Bunch
         Dictionary-like object, the interesting attributes are:
-        'data', the data to learn, 'target', the classification labels,
+        'data', the data to learn, 'target', the regression targets,
         'target_names', the meaning of the labels, and 'DESCR', the
         full description of the dataset.
 
@@ -361,14 +386,14 @@ def load_boston():
 
 def load_sample_images():
     """Load sample images for image manipulation.
+    Loads both, ``china`` and ``flower``.
 
     Return
     ------
     data : Bunch
-        Dictionary-like object, the interesting attributes are:
-        'data', the data to learn, `images`, the images corresponding
-        to each sample, 'target', the classification labels for each
-        sample, 'target_names', the meaning of the labels, and 'DESCR',
+        Dictionary-like object with the following attributes :
+        'images', the two sample images, 'filenames', the file
+        names for the images, and 'DESCR'
         the full description of the dataset.
 
     Examples
@@ -400,7 +425,7 @@ def load_sample_images():
         raise ImportError("The Python Imaging Library (PIL)"
                           "is required to load data from jpeg files")
     module_path = join(dirname(__file__), "images")
-    with open(join(module_path, 'README.txt')).read() as f:
+    with open(join(module_path, 'README.txt')) as f:
         descr = f.read()
     filenames = [join(module_path, filename)
                  for filename in os.listdir(module_path)

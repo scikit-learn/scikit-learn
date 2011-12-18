@@ -6,8 +6,8 @@
 The :mod:`sklearn.hmm` module implements hidden Markov models.
 
 **Warning:** :mod:`sklearn.hmm` is orphaned, undocumented and has known
-numerical stability issues. If nobody volunteers to write documentation and make
-it more stable, this module will be removed in version 0.11.
+numerical stability issues. If nobody volunteers to write documentation and
+make it more stable, this module will be removed in version 0.11.
 """
 
 import string
@@ -486,14 +486,15 @@ class _BaseHMM(BaseEstimator):
             nbins = 3 * len(lattice_frame)
 
             lattice_min = lattice_frame[lattice_frame > ZEROLOGPROB].min() - 1
-            hst, cdf = np.histogram(lattice_frame, bins=nbins,
+            hst, bin_edges = np.histogram(lattice_frame, bins=nbins,
                                     range=(lattice_min, lattice_frame.max()))
 
             # Want to look at the high ranks.
             hst = hst[::-1].cumsum()
-            cdf = cdf[::-1]
+            bin_edges = .5*(bin_edges[:-1] + bin_edges[1:])
+            bin_edges = bin_edges[::-1]
 
-            rankthresh = cdf[hst >= min(maxrank, self.n_components)].max()
+            rankthresh = bin_edges[hst >= min(maxrank, self.n_components)].max()
 
             # Only change the threshold if it is stricter than the beam
             # threshold.
@@ -966,13 +967,10 @@ class GMMHMM(_BaseHMM):
     >>> from sklearn.hmm import GMMHMM
     >>> GMMHMM(n_components=2, n_mix=10, cvtype='diag')
     ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    GMMHMM(cvtype='diag',
-        gmms=[GMM(cvtype='diag', n_components=10), GMM(cvtype='diag', n_components=10)],
-        n_components=2, n_mix=10, startprob=array([ 0.5,  0.5]),
-        startprob_prior=1.0,
-        transmat=array([[ 0.5,  0.5],
-           [ 0.5,  0.5]]),
-        transmat_prior=1.0)
+    GMMHMM(cvtype='diag', gmms=[GMM(cvtype='diag', n_components=10),
+        GMM(cvtype='diag', n_components=10)], n_components=2, n_mix=10,
+        startprob=array([ 0.5,  0.5]), startprob_prior=1.0, transmat=array([[
+            0.5,  0.5], [ 0.5,  0.5]]), transmat_prior=1.0)
 
 
     See Also

@@ -167,7 +167,7 @@ def test_cross_val_generator_with_mask():
     skf = cross_validation.StratifiedKFold(y, 2, indices=False)
     lolo = cross_validation.LeaveOneLabelOut(labels, indices=False)
     lopo = cross_validation.LeavePLabelOut(labels, 2, indices=False)
-    ss = cross_validation.ShuffleSplit(2, indices=False)
+    ss = cross_validation.ShuffleSplit(4, indices=False)
     for cv in [loo, lpo, kf, skf, lolo, lopo, ss]:
         for train, test in cv:
             X_train, X_test = X[train], X[test]

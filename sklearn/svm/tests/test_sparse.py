@@ -41,7 +41,8 @@ def test_SVC():
     assert_array_equal(sp_clf.predict(T), true_result)
 
     assert sparse.issparse(sp_clf.support_vectors_)
-    assert_array_almost_equal(clf.support_vectors_, sp_clf.support_vectors_.todense())
+    assert_array_almost_equal(clf.support_vectors_,
+            sp_clf.support_vectors_.todense())
 
     assert sparse.issparse(sp_clf.dual_coef_)
     assert_array_almost_equal(clf.dual_coef_, sp_clf.dual_coef_.todense())
@@ -53,7 +54,8 @@ def test_SVC():
     # refit with a different dataset
     clf.fit(X2, Y2)
     sp_clf.fit(X2, Y2)
-    assert_array_almost_equal(clf.support_vectors_, sp_clf.support_vectors_.todense())
+    assert_array_almost_equal(clf.support_vectors_,
+            sp_clf.support_vectors_.todense())
     assert_array_almost_equal(clf.dual_coef_, sp_clf.dual_coef_.todense())
     assert_array_almost_equal(clf.coef_, sp_clf.coef_.todense())
     assert_array_almost_equal(clf.predict(T2), sp_clf.predict(T2))
@@ -65,7 +67,8 @@ def test_SVC_iris():
         sp_clf = svm.sparse.SVC(kernel=k).fit(iris.data, iris.target)
         clf = svm.SVC(kernel=k).fit(iris.data.todense(), iris.target)
 
-        assert_array_almost_equal(clf.support_vectors_, sp_clf.support_vectors_.todense())
+        assert_array_almost_equal(clf.support_vectors_,
+                sp_clf.support_vectors_.todense())
         assert_array_almost_equal(clf.dual_coef_, sp_clf.dual_coef_.todense())
         assert_array_almost_equal(
             clf.predict(iris.data.todense()), sp_clf.predict(iris.data))
@@ -174,7 +177,7 @@ def test_sparse_realdata():
     sparse format or weights are not correctly initialized.
     """
 
-    data = np.array([ 0.03771744,  0.1003567,  0.01174647,  0.027069  ])
+    data = np.array([0.03771744,  0.1003567,  0.01174647,  0.027069])
     indices = np.array([6, 5, 35, 31])
     indptr = np.array(
         [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -183,7 +186,7 @@ def test_sparse_realdata():
          2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 4, 4])
     X = sparse.csr_matrix((data, indices, indptr))
     y = np.array(
-        [ 1.,  0.,  2.,  2.,  1.,  1.,  1.,  2.,  2.,  0.,  1.,  2.,  2.,
+        [1.,  0.,  2.,  2.,  1.,  1.,  1.,  2.,  2.,  0.,  1.,  2.,  2.,
         0.,  2.,  0.,  3.,  0.,  3.,  0.,  1.,  1.,  3.,  2.,  3.,  2.,
         0.,  3.,  1.,  0.,  2.,  1.,  2.,  0.,  1.,  0.,  2.,  3.,  1.,
         3.,  0.,  1.,  0.,  0.,  2.,  0.,  1.,  2.,  2.,  2.,  3.,  2.,

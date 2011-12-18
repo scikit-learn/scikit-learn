@@ -23,9 +23,9 @@ def test_barycenter_kneighbors_graph():
     A = barycenter_kneighbors_graph(X, 1)
     assert_array_almost_equal(
         A.todense(),
-        [[ 0.,  1.,  0.],
-         [ 1.,  0.,  0.],
-         [ 0.,  1.,  0.]])
+        [[0.,  1.,  0.],
+         [1.,  0.,  0.],
+         [0.,  1.,  0.]])
 
     A = barycenter_kneighbors_graph(X, 2)
     # check that columns sum to one

@@ -25,7 +25,8 @@ def compute_bench(samples_range, features_range, q=3, rank=50):
             print '===================='
             print 'Iteration %03d of %03d' % (it, max_it)
             print '===================='
-            X = make_low_rank_matrix(n_samples, n_features, effective_rank=rank,
+            X = make_low_rank_matrix(n_samples, n_features,
+                                  effective_rank=rank,
                                   tail_strength=0.2)
 
             gc.collect()
@@ -50,7 +51,7 @@ def compute_bench(samples_range, features_range, q=3, rank=50):
 
 
 if __name__ == '__main__':
-    from mpl_toolkits.mplot3d import axes3d # register the 3d projection
+    from mpl_toolkits.mplot3d import axes3d  # register the 3d projection
     import matplotlib.pyplot as plt
 
     samples_range = np.linspace(2, 1000, 4).astype(np.int)

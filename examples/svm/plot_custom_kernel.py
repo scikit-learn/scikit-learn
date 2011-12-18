@@ -15,8 +15,8 @@ from sklearn import svm, datasets
 
 # import some data to play with
 iris = datasets.load_iris()
-X = iris.data[:, :2] # we only take the first two features. We could
-                     # avoid this ugly slicing by using a two-dim dataset
+X = iris.data[:, :2]  # we only take the first two features. We could
+                      # avoid this ugly slicing by using a two-dim dataset
 Y = iris.target
 
 
@@ -32,7 +32,7 @@ def my_kernel(x, y):
     return np.dot(np.dot(x, M), y.T)
 
 
-h=.02 # step size in the mesh
+h = .02  # step size in the mesh
 
 # we create an instance of SVM and fit out data.
 clf = svm.SVC(kernel=my_kernel)
@@ -40,8 +40,8 @@ clf.fit(X, Y)
 
 # Plot the decision boundary. For that, we will asign a color to each
 # point in the mesh [x_min, m_max]x[y_min, y_max].
-x_min, x_max = X[:,0].min()-1, X[:,0].max()+1
-y_min, y_max = X[:,1].min()-1, X[:,1].max()+1
+x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
+y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
 xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
 Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])
 
@@ -51,7 +51,8 @@ pl.set_cmap(pl.cm.Paired)
 pl.pcolormesh(xx, yy, Z)
 
 # Plot also the training points
-pl.scatter(X[:,0], X[:,1], c=Y)
-pl.title('3-Class classification using Support Vector Machine with custom kernel')
+pl.scatter(X[:, 0], X[:, 1], c=Y)
+pl.title('3-Class classification using Support Vector Machine with custom'
+        ' kernel')
 pl.axis('tight')
 pl.show()

@@ -26,6 +26,31 @@ This package also features helpers to fetch larger datasets commonly
 used by the machine learning community to benchmark algorithm on data
 that comes from the 'real world'.
 
+General dataset API
+===================
+
+There are three distinct kinds of dataset interfaces for different types
+of datasets.
+The simplest one is the interface for sample images, which is described
+below in the :ref:`sample_images` section.
+
+The dataset generation functions and the svmlight loader share a simplistic
+interface, returning a tuple ``(X, y)`` consisting of a n_samples x n_features
+numpy array X and an array of length n_samples containing the targets y.
+
+The toy datasets as well as the 'real world' datasets and the datasets
+fetched from mldata.org have more sophisticated structure.
+These functions return a ``bunch`` (which is a dictionary that is
+accessible with the 'dict.key' syntax).
+All datasets have at least two keys, ``data``, containg an array of shape
+``n_samples x n_features`` (except for 20newsgroups) and ``target``, a numpy
+array of length ``n_features``, containing the targets.
+
+The datasets also contain a description in ``DESCR`` and some contain
+``feature_names`` and ``target_names``.
+See the dataset descriptions below for details.
+
+
 Toy datasets
 ============
 
@@ -47,6 +72,8 @@ These datasets are useful to quickly illustrate the behavior of the
 various algorithms implemented in the scikit. They are however often too
 small to be representative of real world machine learning tasks.
 
+.. _sample_images:
+
 Sample images
 =============
 
@@ -59,7 +86,13 @@ and pipeline on 2D data.
    load_sample_images
    load_sample_image
 
-.. note::
+.. image:: ../auto_examples/cluster/images/plot_color_quantization_1.png
+   :target: ../auto_examples/cluster/plot_color_quantization.html
+   :scale: 30
+   :align: right
+
+
+.. warning::
 
   The default coding of images is based on the ``uint8`` dtype to
   spare memory.  Often machine learning algorithms work best if the
@@ -79,6 +112,11 @@ Sample generators
 
 In addition, scikit-learn includes various random sample generators that
 can be used to build artifical datasets of controled size and complexity.
+
+.. image:: ../auto_examples/images/plot_random_dataset_1.png
+   :target: ../auto_examples/plot_random_dataset.html
+   :scale: 50
+   :align: center
 
 .. autosummary::
 

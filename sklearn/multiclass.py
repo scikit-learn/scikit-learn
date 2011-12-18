@@ -253,7 +253,8 @@ def fit_ecoc(estimator, X, y, code_size=1.5, random_state=None):
         Percentage of the number of classes to be used to create the code book.
 
     random_state: numpy.RandomState, optional
-        The generator used to initialize the codebook. Defaults to numpy.random.
+        The generator used to initialize the codebook. Defaults to
+        numpy.random.
 
 
     Returns
@@ -326,7 +327,8 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin):
         than one-vs-the-rest.
 
     random_state: numpy.RandomState, optional
-        The generator used to initialize the codebook. Defaults to numpy.random.
+        The generator used to initialize the codebook. Defaults to
+        numpy.random.
 
     Attributes
     ----------
