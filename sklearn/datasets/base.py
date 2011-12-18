@@ -181,17 +181,16 @@ def load_files(container_path, description=None, categories=None,
 def load_iris():
     """Load and return the iris dataset (classification).
 
-    :Classes: 3
+    The iris dataset is a classic and very easy multi-class classification
+    dataset.
 
-    :Samples per class: 50
-
-    :Samples total: 150
-
-    :Dimensionality: 4
-
-    :Features: real, positive
-
-    The iris dataset is a classic and very easy multi-class classification dataset.
+    =================   ==============
+    Classes                          3
+    Samples per class               50
+    Samples total                  150
+    Dimensionality                   4
+    Features            real, positive
+    =================   ==============
 
     Return
     ------
@@ -237,13 +236,17 @@ def load_iris():
 
 def load_digits(n_class=10):
     """Load and return the digits dataset (classification).
-    Classes: 10
-    Samples per class: ~180
-    Samples total: 1797
-    Dimensionality: 64
-    Features: integers 0-16
 
     Each datapoint is a 8x8 image of a digit.
+
+    =================   ==============
+    Classes                         10
+    Samples per class             ~180
+    Samples total                 1797
+    Dimensionality                  64
+    Features             integers 0-16
+    =================   ==============
+
 
     Parameters
     ----------
@@ -296,10 +299,12 @@ def load_digits(n_class=10):
 def load_diabetes():
     """Load and return the diabetes dataset (regression).
 
-    Samples total: 442
-    Dimensionality: 10
-    Features: real, -.2 < x < .2
-    Targets: integer 25 - 346
+    ==============      ==================
+    Samples total       442
+    Dimensionality      10
+    Features            real, -.2 < x < .2
+    Targets             integer 25 - 346
+    ==============      ==================
 
     Return
     ------
@@ -347,10 +352,12 @@ def load_linnerud():
 def load_boston():
     """Load and return the boston house-prices dataset (regression).
 
-    Samples total: 506
-    Dimensionality: 13
-    Features: real, positive
-    Targets: real 5. - 50.
+    ==============     ==============
+    Samples total                 506
+    Dimensionality                 13
+    Features           real, positive
+    Targets             real 5. - 50.
+    ==============     ==============
 
     Return
     ------
