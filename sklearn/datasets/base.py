@@ -292,7 +292,7 @@ def load_diabetes():
     """Load and return the diabetes dataset (regression).
 
     Samples total: 442
-    Dimensionality: 1r03
+    Dimensionality: 10
     Features: real, -.2 < x < .2
     Targets: integer 25 - 346
 
