@@ -38,6 +38,12 @@ class PC(BaseEstimator, ClassifierMixin):
     feature space before using the Polynomial Classifier. This reduces the
     amount of internal memory by the polynomials.
 
+    To Be Done
+    ----------
+    * replace direct computation of parameter matrix A by Gauss-Jordan
+      algorithm with pivot selection
+    * add rejection of a predicted sample by rad criterion
+
     Examples
     --------
     >>> import numpy as np
@@ -137,7 +143,6 @@ class PC(BaseEstimator, ClassifierMixin):
 
         PX = np.matrix(self._build_pc_features(X))
 
-        ## TODO: replace by Gauss-Jordan algorithm with pivot selection
         # direct computation of A
         self.A = np.linalg.pinv(PX.T * PX / N) * (PX.T * Y / N)
 
