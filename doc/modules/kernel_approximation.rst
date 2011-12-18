@@ -84,7 +84,8 @@ parameter, that is called `c`.
 
 Examples
 --------
-* :ref:`example_kernel_approximation.py`
+* :ref:`example_plot_kernel_approximation.py`
+* :ref:`example_svm_plot_approximate_kernel_decision.py`
 
 Mathematical Details
 --------------------
