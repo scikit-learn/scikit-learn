@@ -20,7 +20,7 @@ import numpy as np
 
 # Import datasets, classifiers and performance metrics
 from sklearn import datasets, svm, pipeline
-from sklearn.feature_extraction.kernel_approximation import RBFSampler
+from sklearn.kernel_approximation import RBFSampler
 
 # The digits dataset
 digits = datasets.load_digits()
