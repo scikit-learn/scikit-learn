@@ -155,7 +155,7 @@ class DPGMM(GMM):
 
     alpha: float, optional
         Real number representing the concentration parameter of
-        the dirichlet process. Intuitively, the Dirichler Process
+        the dirichlet process. Intuitively, the Dirichlet Process
         is as likely to start a new cluster for a point as it is
         to add that point to a cluster with alpha elements. A
         higher alpha means more clusters, as the expected number

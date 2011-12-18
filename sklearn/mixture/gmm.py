@@ -1,5 +1,8 @@
 """
-Gaussian Mixture Models
+Gaussian Mixture Models.
+
+This implementation corresponds to frequentist (non-Bayesian) formulation
+of Gaussian Mixture Models.
 """
 
 # Author: Ron Weiss <ronweiss@gmail.com>
@@ -13,14 +16,24 @@ from ..utils import check_random_state
 from ..utils.extmath import logsumexp
 from .. import cluster
 
+INF_EPS = np.finfo(float).eps
 
-# FIXME this lacks a proper docstring
+
 def normalize(A, axis=None):
     """ Normalize the input array so that it sums to 1.
+    
+    Parameters
+    ----------
+    A: array, shape
+    axis: int, dimension along which normalization is performed
+    
+    Returns
+    -------
+    normalized_A: A with values normalized along the prescribed axis
 
-        WARNING: Modifies inplace the array
+    WARNING: Modifies inplace the array
     """
-    A += np.finfo(float).eps
+    A += INF_EPS
     Asum = A.sum(axis)
     if axis and A.ndim > 1:
         # Make sure we don't divide by zero.
@@ -31,12 +44,12 @@ def normalize(A, axis=None):
     return A / Asum
 
 
-def lmvnpdf(obs, means, covars, cvtype='diag'):
+def lmvnpdf(X, means, covars, cvtype='diag'):
     """Compute the log probability under a multivariate Gaussian distribution.
 
     Parameters
     ----------
-    obs : array_like, shape (O, D)
+    X : array_like, shape (O, D)
         List of D-dimensional data points.  Each row corresponds to a
         single data point.
     means : array_like, shape (C, D)
@@ -57,13 +70,13 @@ def lmvnpdf(obs, means, covars, cvtype='diag'):
     -------
     lpr : array_like, shape (O, C)
         Array containing the log probabilities of each data point in
-        `obs` under each of the C multivariate Gaussian distributions.
+        `X` under each of the C multivariate Gaussian distributions.
     """
     lmvnpdf_dict = {'spherical': _lmvnpdfspherical,
                     'tied': _lmvnpdftied,
                     'diag': _lmvnpdfdiag,
                     'full': _lmvnpdffull}
-    return lmvnpdf_dict[cvtype](obs, means, covars)
+    return lmvnpdf_dict[cvtype](X, means, covars)
 
 
 def sample_gaussian(mean, covar, cvtype='diag', n_samples=1,
@@ -90,7 +103,7 @@ def sample_gaussian(mean, covar, cvtype='diag', n_samples=1,
 
     Returns
     -------
-    obs : array, shape (n_features, n_samples)
+    X : array, shape (n_features, n_samples)
         Randomly generated sample
     """
     rng = check_random_state(random_state)
@@ -280,6 +293,7 @@ class GMM(BaseEstimator):
         return self._means
 
     def _set_means(self, means):
+        """Provide values for means"""
         means = np.asarray(means)
         if hasattr(self, 'n_features') and \
                means.shape != (self.n_components, self.n_features):
@@ -299,6 +313,7 @@ class GMM(BaseEstimator):
         return np.exp(self._log_weights)
 
     def _set_weights(self, weights):
+        """Provide value for micture weights"""
         if len(weights) != self.n_components:
             raise ValueError('weights must have length n_components')
         if not np.allclose(np.sum(weights), 1.0):
@@ -520,67 +535,70 @@ class GMM(BaseEstimator):
         return self
 
     def _do_mstep(self, X, posteriors, params, min_covar=0):
-            w = posteriors.sum(axis=0)
-            avg_obs = np.dot(posteriors.T, X)
-            norm = 1.0 / (w[:, np.newaxis] + 10 * np.finfo(np.float).eps)
+        """ Perform the Mstep of the EM algorithm
+        """
+        weights = posteriors.sum(axis=0)
+        weighted_X_sum = np.dot(posteriors.T, X)
+        
+        inverse_weights = 1.0 / (
+            weights[:, np.newaxis] + 10 * INF_EPS)
+        
+        if 'w' in params:
+            self._log_weights = np.log(
+                weights / (weights.sum() + 10 * INF_EPS) + INF_EPS)
+        if 'm' in params:
+            self._means = weighted_X_sum * inverse_weights
+        if 'c' in params:
+            covar_mstep_func = _covar_mstep_funcs[self._cvtype]
+            self._covars = covar_mstep_func(
+                self, X, posteriors, weighted_X_sum, inverse_weights, min_covar)
 
-            if 'w' in params:
-                self._log_weights = np.log(w /
-                        (w.sum() + 10 * np.finfo(np.float).eps)
-                        + np.finfo(np.float).eps)
-            if 'm' in params:
-                self._means = avg_obs * norm
-            if 'c' in params:
-                covar_mstep_func = _covar_mstep_funcs[self._cvtype]
-                self._covars = covar_mstep_func(self, X, posteriors,
-                                                avg_obs, norm, min_covar)
-
-            return w
+        # FIXME: why return the weights ?
+        return weights
 
 
-##
+#########################################################################
 ## some helper routines
-##
+#########################################################################
 
 
-def _lmvnpdfdiag(obs, means=0.0, covars=1.0):
-    n_obs, n_dim = obs.shape
-    # (x-y).T A (x-y) = x.T A x - 2x.T A y + y.T A y
-    #lpr = -0.5 * (np.tile((np.sum((means**2) / covars, 1)
-    #                  + np.sum(np.log(covars), 1))[np.newaxis,:], (n_obs,1))
+def _lmvnpdfdiag(X, means=0.0, covars=1.0):
+    """Compute Gaussian density at X for a diagonal model"""
+    n_samples, n_dim = X.shape
     lpr = -0.5 * (n_dim * np.log(2 * np.pi) + np.sum(np.log(covars), 1)
                   + np.sum((means ** 2) / covars, 1)
-                  - 2 * np.dot(obs, (means / covars).T)
-                  + np.dot(obs ** 2, (1.0 / covars).T))
+                  - 2 * np.dot(X, (means / covars).T)
+                  + np.dot(X ** 2, (1.0 / covars).T))
     return lpr
 
 
-def _lmvnpdfspherical(obs, means=0.0, covars=1.0):
+def _lmvnpdfspherical(X, means=0.0, covars=1.0):
+    """Compute Gaussian density at X for a spherical model"""
     cv = covars.copy()
     if covars.ndim == 1:
         cv = cv[:, np.newaxis]
-    return _lmvnpdfdiag(obs, means, np.tile(cv, (1, obs.shape[-1])))
+    return _lmvnpdfdiag(X, means, np.tile(cv, (1, X.shape[-1])))
 
 
-def _lmvnpdftied(obs, means, covars):
+def _lmvnpdftied(X, means, covars):
+    """Compute Gaussian density at X for a tied model"""
     from scipy import linalg
-    n_obs, n_dim = obs.shape
-    # (x-y).T A (x-y) = x.T A x - 2x.T A y + y.T A y
+    n_samples, n_dim = X.shape
     icv = linalg.pinv(covars)
     lpr = -0.5 * (n_dim * np.log(2 * np.pi) + np.log(linalg.det(covars) + 0.1)
-                  + np.sum(obs * np.dot(obs, icv), 1)[:, np.newaxis]
-                  - 2 * np.dot(np.dot(obs, icv), means.T)
+                  + np.sum(X * np.dot(X, icv), 1)[:, np.newaxis]
+                  - 2 * np.dot(np.dot(X, icv), means.T)
                   + np.sum(means * np.dot(means, icv), 1))
     return lpr
 
 
-def _lmvnpdffull(obs, means, covars):
-    """
-    Log probability for full covariance matrices.
+def _lmvnpdffull(X, means, covars):
+    """Log probability for full covariance matrices.
 
-    WARNING: In certain cases, this function will modify in-place
+    WARNING
+    -------
+    In certain cases, this function will modify in-place
     some of the covariance matrices
-
     """
     from scipy import linalg
     import itertools
@@ -590,9 +608,9 @@ def _lmvnpdffull(obs, means, covars):
     else:
         # slower, but works
         solve_triangular = linalg.solve
-    n_obs, n_dim = obs.shape
+    n_samples, n_dim = X.shape
     nmix = len(means)
-    log_prob = np.empty((n_obs, nmix))
+    log_prob = np.empty((n_samples, nmix))
     for c, (mu, cv) in enumerate(itertools.izip(means, covars)):
         try:
             cv_chol = linalg.cholesky(cv, lower=True)
@@ -602,7 +620,7 @@ def _lmvnpdffull(obs, means, covars):
             cv[:] = 10 * np.eye(cv.shape[0])
             cv_chol = cv
         cv_log_det = 2 * np.sum(np.log(np.diagonal(cv_chol)))
-        cv_sol = solve_triangular(cv_chol, (obs - mu).T, lower=True).T
+        cv_sol = solve_triangular(cv_chol, (X - mu).T, lower=True).T
         log_prob[:, c] = -.5 * (np.sum(cv_sol ** 2, axis=1) + \
                            n_dim * np.log(2 * np.pi) + cv_log_det)
 
@@ -610,6 +628,8 @@ def _lmvnpdffull(obs, means, covars):
 
 
 def _validate_covars(covars, cvtype, nmix, n_dim):
+    """Do basic checks on matrix covariance sizes
+    """
     from scipy import linalg
     if cvtype == 'spherical':
         if len(covars) != nmix:
@@ -640,6 +660,8 @@ def _validate_covars(covars, cvtype, nmix, n_dim):
 
 
 def _distribute_covar_matrix_to_match_cvtype(tiedcv, cvtype, n_components):
+    """Create all the covariance matrices from a given template 
+    """
     if cvtype == 'spherical':
         cv = np.tile(np.diag(tiedcv).mean(), n_components)
     elif cvtype == 'tied':
@@ -654,33 +676,27 @@ def _distribute_covar_matrix_to_match_cvtype(tiedcv, cvtype, n_components):
     return cv
 
 
-def _covar_mstep_diag(gmm, obs, posteriors, avg_obs, norm, min_covar):
-    # For column vectors:
-    # covars_c = average((obs(t) - means_c) (obs(t) - means_c).T,
-    #                    weights_c)
-    # (obs(t) - means_c) (obs(t) - means_c).T
-    #     = obs(t) obs(t).T - 2 obs(t) means_c.T + means_c means_c.T
-    #
-    # But everything here is a row vector, so all of the
-    # above needs to be transposed.
-    avg_obs2 = np.dot(posteriors.T, obs * obs) * norm
+def _covar_mstep_diag(gmm, X, posteriors, weighted_X_sum, norm, min_covar):
+    """Performing the covariance M step for diagonal cases"""
+    avg_X2 = np.dot(posteriors.T, X * X) * norm
     avg_means2 = gmm._means ** 2
-    avg_obs_means = gmm._means * avg_obs * norm
-    return avg_obs2 - 2 * avg_obs_means + avg_means2 + min_covar
+    avg_X_means = gmm._means * weighted_X_sum * norm
+    return avg_X2 - 2 * avg_X_means + avg_means2 + min_covar
 
 
 def _covar_mstep_spherical(*args):
+    """Performing the covariance M step for spherical cases"""
     return _covar_mstep_diag(*args).mean(axis=1)
 
 
-def _covar_mstep_full(gmm, obs, posteriors, avg_obs, norm, min_covar):
+def _covar_mstep_full(gmm, X, posteriors, weighted_X_sum, norm, min_covar):
+    """Performing the covariance M step for full cases"""
     # Eq. 12 from K. Murphy, "Fitting a Conditional Linear Gaussian
     # Distribution"
     cv = np.empty((gmm.n_components, gmm.n_features, gmm.n_features))
     for c in xrange(gmm.n_components):
         post = posteriors[:, c]
-        avg_cv = np.dot(post * obs.T, obs) / (post.sum() +
-                                10 * np.finfo(np.float).eps)
+        avg_cv = np.dot(post * X.T, X) / (post.sum() + 10 * INF_EPS)
         mu = gmm._means[c][np.newaxis]
         cv[c] = (avg_cv - np.dot(mu.T, mu)
                  + min_covar * np.eye(gmm.n_features))
@@ -691,25 +707,26 @@ def _covar_mstep_tied2(*args):
     return _covar_mstep_full(*args).mean(axis=0)
 
 
-def _covar_mstep_tied(gmm, obs, posteriors, avg_obs, norm, min_covar):
+def _covar_mstep_tied(gmm, X, posteriors, weighted_X_sum, norm, min_covar):
     print "THIS IS BROKEN"
     # Eq. 15 from K. Murphy, "Fitting a Conditional Linear Gaussian
-    avg_obs2 = np.dot(obs.T, obs)
+    avg_X2 = np.dot(X.T, X)
     avg_means2 = np.dot(gmm._means.T, gmm._means)
-    return (avg_obs2 - avg_means2 + min_covar * np.eye(gmm.n_features))
+    return (avg_X2 - avg_means2 + min_covar * np.eye(gmm.n_features))
 
 
-def _covar_mstep_slow(gmm, obs, posteriors, avg_obs, norm, min_covar):
+def _covar_mstep_slow(gmm, X, posteriors, weighted_X_sum, norm, min_covar):
+    """Covariance optimization -- slow method"""
     w = posteriors.sum(axis=0)
     covars = np.zeros(gmm._covars.shape)
     for c in xrange(gmm.n_components):
         mu = gmm._means[c]
         #cv = np.dot(mu.T, mu)
-        avg_obs2 = np.zeros((gmm.n_features, gmm.n_features))
-        for t, o in enumerate(obs):
-            avg_obs2 += posteriors[t, c] * np.outer(o, o)
-        cv = (avg_obs2 / w[c]
-              - 2 * np.outer(avg_obs[c] / w[c], mu)
+        avg_X2 = np.zeros((gmm.n_features, gmm.n_features))
+        for t, o in enumerate(X):
+            avg_X2 += posteriors[t, c] * np.outer(o, o)
+        cv = (avg_X2 / w[c]
+              - 2 * np.outer(weighted_X_sum[c] / w[c], mu)
               + np.outer(mu, mu)
               + min_covar * np.eye(gmm.n_features))
         if gmm.cvtype == 'spherical':
