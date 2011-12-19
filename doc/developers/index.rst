@@ -349,7 +349,7 @@ data-independent parameters (overriding previous parameter values passed
 to ``__init__``). This method is not required for an object to be an
 estimator.
 
-All estimators should inherit from ``scikit.learn.base.BaseEstimator``.
+All estimators should inherit from ``sklearn.base.BaseEstimator``.
 
 Instantiation
 ^^^^^^^^^^^^^
