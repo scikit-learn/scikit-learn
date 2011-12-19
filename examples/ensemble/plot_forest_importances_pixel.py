@@ -10,7 +10,7 @@ the more important.
 print __doc__
 
 from sklearn.datasets import fetch_olivetti_faces
-from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
+from sklearn.ensemble import ExtraTreesClassifier
 
 # Loading the digits dataset
 data = fetch_olivetti_faces()
