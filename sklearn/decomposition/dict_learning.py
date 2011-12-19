@@ -20,26 +20,27 @@ from ..utils.extmath import fast_svd
 from ..linear_model import Lasso, orthogonal_mp_gram, lars_path
 
 
-def sparse_encode(X, Y, gram=None, cov=None, algorithm='lasso_lars',
-                  n_nonzero_coefs=None, alpha=None,
-                  copy_gram=True, copy_cov=True, init=None):
+def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
+                  n_nonzero_coefs=None, alpha=None, copy_gram=True,
+                  copy_cov=True, init=None, max_iter=1000):
     """Generic sparse coding
 
     Each column of the result is the solution to a Lasso problem.
 
     Parameters
     ----------
-    X: array of shape (n_samples, n_components)
-        Dictionary against which to optimize the sparse code.
-
-    Y: array of shape (n_samples, n_features)
+    X: array of shape (n_samples, n_features)
         Data matrix.
 
-    gram: array, shape=(n_components, n_components)
-        Precomputed Gram matrix, X^T * X
+    dictionary: array of shape (n_atoms, n_features)
+        The dictionary matrix against which to solve the sparse coding of
+        the data. Some of the algorithms assume normalized rows.
 
-    cov: array, shape=(n_components, n_features)
-        Precomputed covariance, X^T * Y
+    gram: array, shape=(n_atoms, n_atoms)
+        Precomputed Gram matrix, dictionary * dictionary'
+
+    cov: array, shape=(n_atoms, n_samples)
+        Precomputed covariance, dictionary * X'
 
     algorithm: {'lasso_lars', 'lasso_cd', 'lars', 'omp', 'threshold'}
         lars: uses the least angle regression method (linear_model.lars_path)
@@ -49,7 +50,7 @@ def sparse_encode(X, Y, gram=None, cov=None, algorithm='lasso_lars',
         the estimated components are sparse.
         omp: uses orthogonal matching pursuit to estimate the sparse solution
         threshold: squashes to zero all coefficients less than alpha from
-        the projection X.T * Y
+        the projection dictionary * data'
 
     n_nonzero_coefs: int, 0.1 * n_features by default
         Number of nonzero coefficients to target in each column of the
@@ -65,9 +66,12 @@ def sparse_encode(X, Y, gram=None, cov=None, algorithm='lasso_lars',
         the reconstruction error targeted. In this case, it overrides
         `n_nonzero_coefs`.
 
-    init: array of shape (n_components, n_features)
-        Initialization value of the sparse codes. Only used if
+    init: array of shape (n_samples, n_atoms)
+        Initialization value of the sparse code. Only used if
         `algorithm='lasso_cd'`.
+
+    max_iter: int, 1000 by default
+        Maximum number of iterations to perform if `algorithm='lasso_cd'`.
 
     copy_gram: boolean, optional
         Whether to copy the precomputed Gram matrix; if False, it may be
@@ -87,109 +91,117 @@ def sparse_encode(X, Y, gram=None, cov=None, algorithm='lasso_lars',
     linear_model.lars_path
     linear_model.orthogonal_mp
     linear_model.Lasso
+    decomposition.sparse_encode_parallel
+    decomposition.SparseCoder
     """
     alpha = float(alpha) if alpha is not None else None
+    dictionary = np.asarray(dictionary)
     X = np.asarray(X)
-    Y = np.asarray(Y)
-    if Y.ndim == 1:
-        Y = Y[:, np.newaxis]
-    n_features = Y.shape[1]
+    if X.ndim == 1:
+        X = X[:, np.newaxis]
+    n_samples, n_features = X.shape
+    n_atoms = dictionary.shape[0]
     # This will always use Gram
     if gram is None:
         # I think it's never safe to overwrite Gram when n_features > 1
         # but I'd like to avoid the complicated logic.
         # The parameter could be removed in this case. Discuss.
-        gram = np.dot(X.T, X)
+        gram = np.dot(dictionary, dictionary.T)
     if cov is None and algorithm != 'lasso_cd':
         # overwriting cov is safe
         copy_cov = False
-        cov = np.dot(X.T, Y)
+        cov = np.dot(dictionary, X.T)
 
     if algorithm == 'lasso_lars':
         if alpha is None:
             alpha = 1.
+        alpha /= n_features  # account for scaling
         try:
-            new_code = np.empty((X.shape[1], n_features))
+            new_code = np.empty((n_samples, n_atoms))
             err_mgt = np.seterr(all='ignore')
-            for k in range(n_features):
+            for k in range(n_samples):
                 # A huge amount of time is spent in this loop. It needs to be
                 # tight.
-                _, _, coef_path_ = lars_path(X, Y[:, k], Xy=cov[:, k],
+                _, _, coef_path_ = lars_path(dictionary.T, X[k], Xy=cov[:, k],
                                              Gram=gram, alpha_min=alpha,
                                              method='lasso')
-                new_code[:, k] = coef_path_[:, -1]
+                new_code[k] = coef_path_[:, -1]
         finally:
             np.seterr(**err_mgt)
 
     elif algorithm == 'lasso_cd':
         if alpha is None:
             alpha = 1.
-        new_code = np.empty((X.shape[1], n_features))
+        alpha /= n_features  # account for scaling
+        new_code = np.empty((n_samples, n_atoms))
         clf = Lasso(alpha=alpha, fit_intercept=False, precompute=gram,
                     max_iter=1000)
-        for k in xrange(n_features):
+        for k in xrange(n_samples):
             # A huge amount of time is spent in this loop. It needs to be
             # tight
-            
+
             if init is not None:
-                clf.coef_ = init[:, k]  # Init with previous value of Vk
-            clf.fit(X, Y[:, k])
-            new_code[:, k] = clf.coef_
+                clf.coef_ = init[k]  # Init with previous value of the code
+            clf.fit(dictionary.T, X[k])
+            new_code[k] = clf.coef_
 
     elif algorithm == 'lars':
         if n_nonzero_coefs is None:
             n_nonzero_coefs = max(n_features / 10, 1)
         try:
-            new_code = np.empty((X.shape[1], n_features))
+            new_code = np.empty((n_samples, n_atoms))
             err_mgt = np.seterr(all='ignore')
-            for k in xrange(n_features):
+            for k in xrange(n_samples):
                 # A huge amount of time is spent in this loop. It needs to be
                 # tight.
-                _, _, coef_path_ = lars_path(X, Y[:, k], Xy=cov[:, k],
+                _, _, coef_path_ = lars_path(dictionary.T, X[k], Xy=cov[:, k],
                                              Gram=gram, method='lar',
                                              max_iter=n_nonzero_coefs)
-                new_code[:, k] = coef_path_[:, -1]
+                new_code[k] = coef_path_[:, -1]
         finally:
             np.seterr(**err_mgt)
 
     elif algorithm == 'threshold':
         if alpha is None:
             alpha = 1.
-        new_code = np.sign(cov) * np.maximum(np.abs(cov) - alpha, 0)
+        new_code = (np.sign(cov) * np.maximum(np.abs(cov) - alpha, 0)).T
 
     elif algorithm == 'omp':
         if n_nonzero_coefs is None and alpha is None:
-            n_nonzero_coefs = n_features / 10
-        norms_squared = np.sum((Y ** 2), axis=0)
+            n_nonzero_coefs = max(n_features / 10, 1)
+        norms_squared = np.sum((X ** 2), axis=1)
         new_code = orthogonal_mp_gram(gram, cov, n_nonzero_coefs, alpha,
                                       norms_squared, copy_Xy=copy_cov
-                                      )
+                                      ).T
     else:
         raise NotImplemented('Sparse coding method %s not implemented' %
                              algorithm)
     return new_code
 
 
-def sparse_encode_parallel(X, Y, gram=None, cov=None, algorithm='lasso_lars',
-                  n_nonzero_coefs=None, alpha=None, copy_gram=True,
-                  copy_cov=True, init=None, n_jobs=1):
+def sparse_encode_parallel(X, dictionary, gram=None, cov=None,
+                           algorithm='lasso_lars', n_nonzero_coefs=None,
+                           alpha=None, copy_gram=True, copy_cov=True,
+                           init=None, max_iter=1000, n_jobs=1):
     """Parallel sparse coding using joblib
 
     Each column of the result is the solution to a Lasso problem.
 
     Parameters
     ----------
-    X: array of shape (n_samples, n_components)
-        Dictionary against which to optimize the sparse code.
+    X: array of shape (n_samples, n_features)
+        Data matrix
 
-    Y: array of shape (n_samples, n_features)
-        Data matrix.
+    dictionary: array of shape (n_atoms, n_features)
+        The dictionary matrix against which to solve the sparse coding of
+        the data. Some of the algorithms assume normalized rows for meaningful
+        output.
 
-    gram: array, shape=(n_components, n_components)
-        Precomputed Gram matrix, X^T * X
+    gram: array, shape=(n_atoms, n_atoms)
+        Precomputed Gram matrix, dictionary * dictionary'
 
-    cov: array, shape=(n_components, n_features)
-        Precomputed covariance, X^T * Y
+    cov: array, shape=(n_atoms, n_samples)
+        Precomputed covariance, dictionary' * X
 
     algorithm: {'lasso_lars', 'lasso_cd', 'lars', 'omp', 'threshold'}
         lars: uses the least angle regression method (linear_model.lars_path)
@@ -215,9 +227,12 @@ def sparse_encode_parallel(X, Y, gram=None, cov=None, algorithm='lasso_lars',
         the reconstruction error targeted. In this case, it overrides
         `n_nonzero_coefs`.
 
-    init: array of shape (n_components, n_features)
+    init: array of shape (n_samples, n_atoms)
         Initialization value of the sparse codes. Only used if
         `algorithm='lasso_cd'`.
+
+    max_iter: int, 1000 by default
+        Maximum number of iterations to perform if `algorithm='lasso_cd'`.
 
     copy_gram: boolean, optional
         Whether to copy the precomputed Gram matrix; if False, it may be
@@ -240,30 +255,34 @@ def sparse_encode_parallel(X, Y, gram=None, cov=None, algorithm='lasso_lars',
     linear_model.lars_path
     linear_model.orthogonal_mp
     linear_model.Lasso
+    decomposition.sparse_encode
+    decomposition.SparseCoder
     """
-    n_samples, n_features = Y.shape
-    n_components = X.shape[1]
+    dictionary = np.asarray(dictionary)
+    X = np.asarray(X)
+    n_samples, n_features = X.shape
+    n_atoms = dictionary.shape[0]
     if gram is None:
         copy_gram = False
-        gram = np.dot(X.T, X)
+        gram = np.dot(dictionary, dictionary.T)
     if cov is None and algorithm != 'lasso_cd':
         copy_cov = False
-        cov = np.dot(X.T, Y)
+        cov = np.dot(dictionary, X.T)
     if n_jobs == 1 or algorithm == 'threshold':
-        return sparse_encode(X, Y, gram, cov, algorithm, n_nonzero_coefs,
-                             alpha, copy_gram, copy_cov, init)
-    code = np.empty((n_components, n_features))
-    slices = list(gen_even_slices(n_features, n_jobs))
+        return sparse_encode(X, dictionary, gram, cov, algorithm,
+                             n_nonzero_coefs, alpha, copy_gram, copy_cov, init)
+    code = np.empty((n_samples, n_atoms))
+    slices = list(gen_even_slices(n_atoms, n_jobs))
     code_views = Parallel(n_jobs=n_jobs)(
-                delayed(sparse_encode)(X, Y[:, this_slice], gram,
+                delayed(sparse_encode)(X[this_slice], dictionary, gram,
                                        cov[:, this_slice], algorithm,
                                        n_nonzero_coefs, alpha,
                                        copy_gram, copy_cov,
-                                       init=init[:, this_slice] if init is not
+                                       init=init[this_slice] if init is not
                                        None else None)
                 for this_slice in slices)
     for this_slice, this_view in zip(slices, code_views):
-        code[:, this_slice] = this_view
+        code[this_slice] = this_view
     return code
 
 
@@ -459,10 +478,9 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8,
                     (ii, dt, dt / 60, current_cost))
 
         # Update code
-        code = sparse_encode_parallel(dictionary.T, X.T, algorithm=method,
-                                      alpha=alpha / n_features,
-                                      init=code.T, n_jobs=n_jobs)
-        code = code.T
+        code = sparse_encode_parallel(X, dictionary, algorithm=method,
+                                      alpha=alpha,
+                                      init=code, n_jobs=n_jobs)
         # Update dictionary
         dictionary, residuals = _update_dict(dictionary.T, X.T, code.T,
                                              verbose=verbose, return_r2=True,
@@ -619,8 +637,8 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
                 print ("Iteration % 3i (elapsed time: % 3is, % 4.1fmn)" %
                     (ii, dt, dt / 60))
 
-        this_code = sparse_encode(dictionary, this_X.T, algorithm=method,
-                                  alpha=alpha)
+        this_code = sparse_encode(this_X, dictionary.T, algorithm=method,
+                                  alpha=alpha).T
 
         # Update the auxiliary variables
         if ii < chunk_size - 1:
@@ -649,12 +667,12 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
             print 'Learning code...',
         elif verbose == 1:
             print '|',
-        code = sparse_encode_parallel(dictionary, X.T, algorithm=method,
+        code = sparse_encode_parallel(X, dictionary.T, algorithm=method,
                                       alpha=alpha, n_jobs=n_jobs)
         if verbose > 1:
             dt = (time.time() - t0)
             print 'done (total time: % 3is, % 4.1fmn)' % (dt, dt / 60)
-        return code.T, dictionary.T
+        return code, dictionary.T
 
     return dictionary.T
 
@@ -694,10 +712,9 @@ class BaseDictionaryLearning(BaseEstimator, TransformerMixin):
         n_samples, n_features = X.shape
 
         code = sparse_encode_parallel(
-            self.components_.T, X.T, algorithm=self.transform_algorithm,
+            X, self.components_, algorithm=self.transform_algorithm,
             n_nonzero_coefs=self.transform_n_nonzero_coefs,
             alpha=self.transform_alpha, n_jobs=self.n_jobs)
-        code = code.T
 
         if self.split_sign:
             # feature vector is split into a positive and negative side
