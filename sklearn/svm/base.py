@@ -3,6 +3,7 @@ import numpy as np
 from . import libsvm, liblinear
 from ..base import BaseEstimator
 from ..utils import array2d, safe_asarray
+import warnings
 
 dot = np.dot
 if np.__version__ > '2':
@@ -53,6 +54,11 @@ class BaseLibSVM(BaseEstimator):
             self.kernel = 'precomputed'
         else:
             self.kernel = kernel
+        if not scale_C:
+            warnings.warn('SVM: scale_C will be False by default in '
+                          'scikit-learn 0.11', FutureWarning,
+                          stacklevel=2)
+
         self.impl = impl
         self.degree = degree
         self.gamma = gamma
