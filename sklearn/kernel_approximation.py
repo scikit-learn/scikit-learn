@@ -11,6 +11,7 @@ import numpy as np
 from .base import BaseEstimator
 from .base import TransformerMixin
 from .utils import check_random_state
+from .utils import safe_sparse_dot
 
 
 class RBFSampler(BaseEstimator, TransformerMixin):
@@ -72,7 +73,7 @@ class RBFSampler(BaseEstimator, TransformerMixin):
         -------
         X_new array-like, shape (n_samples, n_components)
         """
-        projection = np.dot(X, self.random_weights_)
+        projection = safe_sparse_dot(X, self.random_weights_)
         return (np.sqrt(2.) / np.sqrt(self.n_components)
                 * np.cos(projection + self.random_offset_))
 
@@ -143,7 +144,9 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
         if (X < 0).any():
             raise ValueError("X may not contain entries smaller than zero.")
 
-        projection = np.dot(np.log(X + self.skewedness), self.random_weights_)
+        projection = safe_sparse_dot(np.log(X + self.skewedness),
+                self.random_weights_)
+
         return (np.sqrt(2.) / np.sqrt(self.n_components)
                 * np.cos(projection + self.random_offset_))
 
