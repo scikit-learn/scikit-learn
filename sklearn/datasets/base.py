@@ -266,14 +266,14 @@ def load_digits(n_class=10):
     --------
     To load the data and visualize the images::
 
-    >>> from sklearn.datasets import load_digits
-    >>> digits = load_digits()
-    >>> digits.data.shape
-    (1797, 64)
-    >>> # import pylab as pl
-    >>> # pl.gray()
-    >>> # pl.matshow(digits.images[0]) # Visualize the first image
-    >>> # pl.show()
+        >>> from sklearn.datasets import load_digits
+        >>> digits = load_digits()
+        >>> digits.data.shape
+        (1797, 64)
+        >>> import pylab as pl # doctest: SKIP
+        >>> pl.gray() # doctest: SKIP
+        >>> pl.matshow(digits.images[0]) # doctest: SKIP
+        >>> pl.show() # doctest: SKIP
     """
     module_path = dirname(__file__)
     data = np.loadtxt(join(module_path, 'data', 'digits.csv.gz'),

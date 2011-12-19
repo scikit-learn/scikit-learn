@@ -150,6 +150,7 @@ Samples generator
    datasets.make_sparse_coded_signal
    datasets.make_sparse_uncorrelated
    datasets.make_spd_matrix
+   datasets.make_sparse_spd_matrix
    datasets.make_swiss_roll
    datasets.make_s_curve
 
@@ -623,7 +624,7 @@ Pairwise metrics
    :no-members:
    :no-inherited-members:
 
-**User guide:** See the :ref:`naive_bayers` section for further details.
+**User guide:** See the :ref:`naive_bayes` section for further details.
 
 .. currentmodule:: sklearn
 

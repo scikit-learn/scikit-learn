@@ -425,6 +425,8 @@ The disadvantages of Bayesian regression include:
     - Inference of the model can be time consuming.
 
 
+.. _bayesian_ridge_regression:
+
 Bayesian Ridge Regression
 -------------------------
 
