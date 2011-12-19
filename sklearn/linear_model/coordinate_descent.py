@@ -20,7 +20,7 @@ from . import cd_fast
 class ElasticNet(LinearModel):
     """Linear Model trained with L1 and L2 prior as regularizer
 
-    rho=1 is the lasso penalty. Currently, rho <= 0.01 is not
+    rho = 1 is the lasso penalty. Currently, rho <= 0.01 is not
     reliable, unless you supply your own sequence of alpha.
 
     Parameters
@@ -66,18 +66,19 @@ class ElasticNet(LinearModel):
 
     The parameter rho corresponds to alpha in the glmnet R package
     while alpha corresponds to the lambda parameter in glmnet.
-    More specifically, the penalty is::
+    More specifically, the objective function is::
 
-        alpha*rho*L1 + 0.5*alpha*(1-rho)*L2
+        1 / (2 * n_samples) * ||y - Xw||^2_2 +
+        + alpha * rho * ||w||_1 + 0.5 * alpha * (1 - rho) * ||w||^2_2
 
     If you are interested in controlling the L1 and L2 penalty
     separately, keep in mind that this is equivalent to::
 
-        a*L1 + b*L2
+        a * L1 + b * L2
 
     for::
 
-        alpha = a + b and rho = a/(a+b)
+        alpha = a + b and rho = a / (a + b)
 
     """
     def __init__(self, alpha=1.0, rho=0.5, fit_intercept=True,
@@ -181,6 +182,10 @@ class ElasticNet(LinearModel):
 class Lasso(ElasticNet):
     """Linear Model trained with L1 prior as regularizer (aka the Lasso)
 
+    The optimization objective for Lasso is::
+
+    (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
+
     Technically the Lasso model is optimizing the same objective function as
     the Elastic Net with rho=1.0 (no L2 penalty).
 
@@ -267,6 +272,10 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
                **params):
     """Compute Lasso path with coordinate descent
 
+    The optimization objective for Lasso is::
+
+    (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
+
     Parameters
     ----------
     X : numpy array of shape [n_samples,n_features]
@@ -333,6 +342,11 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
               normalize=False, copy_X=True, verbose=False,
               **params):
     """Compute Elastic-Net path with coordinate descent
+
+    The Elastic Net optimization function is::
+
+    1 / (2 * n_samples) * ||y - Xw||^2_2 + 
+    + alpha * rho * ||w||_1 + 0.5 * alpha * (1 - rho) * ||w||^2_2
 
     Parameters
     ----------
@@ -530,6 +544,10 @@ class LassoCV(LinearModelCV):
 
     The best model is selected by cross-validation.
 
+    The optimization objective for Lasso is::
+
+    (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
+
     Parameters
     ----------
     eps : float, optional
@@ -633,9 +651,10 @@ class ElasticNetCV(LinearModelCV):
 
     The parameter rho corresponds to alpha in the glmnet R package
     while alpha corresponds to the lambda parameter in glmnet.
-    More specifically, the penalty is::
+    More specifically, the optimization objective is::
 
-        alpha*rho*L1 + alpha*(1-rho)*L2
+        1 / (2 * n_samples) * ||y - Xw||^2_2 +
+        + alpha * rho * ||w||_1 + 0.5 * alpha * (1 - rho) * ||w||^2_2
 
     If you are interested in controlling the L1 and L2 penalty
     separately, keep in mind that this is equivalent to::
@@ -644,7 +663,7 @@ class ElasticNetCV(LinearModelCV):
 
     for::
 
-        alpha = a + b and rho = a/(a+b)
+        alpha = a + b and rho = a / (a + b)
 
     """
     path = staticmethod(enet_path)

@@ -24,7 +24,11 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
               alpha_min=0, method='lar', copy_X=True,
               eps=np.finfo(np.float).eps,
               copy_Gram=True, verbose=False):
-    """Compute Least Angle Regression and LASSO path
+    """Compute Least Angle Regression and Lasso path
+
+    The optimization objective for Lasso is::
+
+    (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
 
     Parameters
     -----------
@@ -435,7 +439,10 @@ class LassoLars(Lars):
     """Lasso model fit with Least Angle Regression a.k.a. Lars
 
     It is a Linear Model trained with an L1 prior as regularizer.
-    lasso).
+
+    The optimization objective for Lasso is::
+
+    (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
 
     Parameters
     ----------
@@ -752,6 +759,10 @@ class LarsCV(LARS):
 class LassoLarsCV(LarsCV):
     """Cross-validated Lasso, using the LARS algorithm
 
+    The optimization objective for Lasso is::
+
+    (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
+
     Parameters
     ----------
     fit_intercept : boolean
@@ -833,6 +844,10 @@ class LassoLarsCV(LarsCV):
 
 class LassoLarsIC(LassoLars):
     """Lasso model fit with Lars using BIC or AIC for model selection
+
+    The optimization objective for Lasso is::
+
+    (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
 
     AIC is the Akaike information criterion and BIC is the Bayes
     Information criterion. Such criteria are useful to select the value
