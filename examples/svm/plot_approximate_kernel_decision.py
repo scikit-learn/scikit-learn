@@ -21,14 +21,14 @@ iris = datasets.load_iris()
 X = iris.data[:, :2]
 Y = iris.target
 
-h=.05 # step size in the mesh
+h=.02 # step size in the mesh
 
 # we create an instance of SVM and fit out data.
-rbf_svc = svm.SVC(kernel='rbf', gamma=4).fit(X, Y)
+rbf_svc = svm.SVC(kernel='rbf', gamma=2, C=10).fit(X, Y)
 
-feature_map = RBFSampler(gamma=4, n_components=500)
+feature_map = RBFSampler(gamma=2, n_components=100)
 approx_kernel_svm = Pipeline([("feature_map", feature_map),
-    ("svm", svm.SVC(kernel='linear'))])
+    ("svm", svm.SVC(kernel='linear', C=10))])
 approx_kernel_svm.fit(X, Y)
 
 # create a mesh to plot in
@@ -39,9 +39,9 @@ xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
 
 # title for the plots
 titles = ['SVC with rbf kernel',
-          'SVC (linear kernel) with rbf feature map']
+          'SVC (linear kernel) with rbf feature map\n n_components=100']
 
-
+pl.figure(figsize=(12,5))
 pl.set_cmap(pl.cm.Paired)
 
 for i, clf in enumerate((rbf_svc, approx_kernel_svm)):
