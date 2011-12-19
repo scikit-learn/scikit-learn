@@ -59,6 +59,12 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems.
 
+    copy_X: bool
+        If False, X is overwritten.
+
+    copy_Gram: bool
+        If False, Gram is overwritten.
+
     Returns
     --------
     alphas: array, shape: (max_features + 1,)
