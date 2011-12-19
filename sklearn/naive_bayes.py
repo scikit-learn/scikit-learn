@@ -1,14 +1,9 @@
 # -*- coding: utf-8 -*-
 
 """
-Naive Bayes models
-==================
-
-Naive Bayes algorithms are a set of supervised learning methods based on
-applying Bayes' theorem with strong (naive) feature independence assumptions.
-
-See http://scikit-learn.sourceforge.net/modules/naive_bayes.html for
-complete documentation.
+The :mod:`sklearn.naive_bayes` module implements Naive Bayes algorithms. These
+are supervised learning methods based on applying Bayes' theorem with strong
+(naive) feature independence assumptions.
 """
 
 # Author: Vincent Michel <vincent.michel@inria.fr>
@@ -20,31 +15,32 @@ complete documentation.
 #
 # License: BSD Style.
 
+from abc import ABCMeta, abstractmethod
+
 import numpy as np
 from scipy.sparse import issparse
 
 from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize, LabelBinarizer
-from .utils import array2d, atleast2d_or_csr, safe_asarray
+from .utils import array2d, atleast2d_or_csr
 from .utils.extmath import safe_sparse_dot, logsum
 
 
-
 class BaseNB(BaseEstimator, ClassifierMixin):
-    """Abstract base class for naive Bayes estimators
+    """Abstract base class for naive Bayes estimators"""
 
-    Any estimator based on this class should provide:
+    __metaclass__ = ABCMeta
 
-    __init__
-    fit(X, y)
-    _joint_log_likelihood(X)
-        Compute the unnormalized posterior log probability of X,
-        i.e. log P(c) + log P(x|c) for all rows x of X,
-        as an array-like of shape [n_classes, n_samples].
+    @abstractmethod
+    def _joint_log_likelihood(self, X):
+        """Compute the unnormalized posterior log probability of X
 
-    Input is passed to _joint_log_likelihood as is by predict, predict_proba
-    and predict_log_proba.
-    """
+        I.e. log P(c) + log P(x|c) for all rows x of X, as an array-like of
+        shape [n_classes, n_samples].
+
+        Input is passed to _joint_log_likelihood as-is by predict,
+        predict_proba and predict_log_proba.
+        """
 
     def predict(self, X):
         """

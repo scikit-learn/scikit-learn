@@ -360,7 +360,7 @@ class _ArpackParams(object):
         num_iter = self.iparam[2]
         try:
             ev, vec = self.extract(True)
-        except ArpackError, err:
+        except ArpackError as err:
             msg = "%s [%s]" % (msg, err)
             ev = np.zeros((0,))
             vec = np.zeros((self.n, 0))
@@ -886,6 +886,7 @@ def _aslinearoperator_with_dtype(m):
         m.dtype = (m * x).dtype
     return m
 
+
 class SpLuInv(LinearOperator):
     """
     SpLuInv:
@@ -905,6 +906,7 @@ class SpLuInv(LinearOperator):
                     + 1j * self.M_lu.solve(np.imag(x)))
         else:
             return self.M_lu.solve(x)
+
 
 class LuInv(LinearOperator):
     """
@@ -993,6 +995,7 @@ class IterOpInv(LinearOperator):
                              "%s did not converge (info = %i)."
                              % (self.ifunc.__name__, info))
         return b
+
 
 def get_inv_matvec(M, symmetric=False, tol=0):
     if isdense(M):

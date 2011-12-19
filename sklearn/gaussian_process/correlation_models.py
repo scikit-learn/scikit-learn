@@ -91,11 +91,11 @@ def squared_exponential(theta, d):
         n_features = 1
 
     if theta.size == 1:
-        return np.exp(- theta[0] * np.sum(d**2, axis=1))
+        return np.exp(-theta[0] * np.sum(d ** 2, axis=1))
     elif theta.size != n_features:
         raise ValueError("Length of theta must be 1 or %s" % n_features)
     else:
-        return np.exp(- np.sum(theta.reshape(1, n_features) * d**2, axis=1))
+        return np.exp(-np.sum(theta.reshape(1, n_features) * d ** 2, axis=1))
 
 
 def generalized_exponential(theta, d):

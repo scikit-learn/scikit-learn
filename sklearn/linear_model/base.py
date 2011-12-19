@@ -164,19 +164,24 @@ class BaseSGD(BaseEstimator):
                  power_t=0.5, class_weight=None):
         self.loss = str(loss)
         self.penalty = str(penalty)
+        self._set_loss_function(self.loss)
+        self._set_penalty_type(self.penalty)
+
         self.alpha = float(alpha)
+        if self.alpha < 0.0:
+            raise ValueError("alpha must be greater than zero")
         self.rho = float(rho)
+        if self.rho < 0.0 or self.rho > 1.0:
+            raise ValueError("rho must be in [0, 1]")
         self.fit_intercept = bool(fit_intercept)
         self.n_iter = int(n_iter)
         if self.n_iter <= 0:
-            raise ValueError("n_iter must be greater than zero.")
+            raise ValueError("n_iter must be greater than zero")
         if not isinstance(shuffle, bool):
             raise ValueError("shuffle must be either True or False")
         self.shuffle = bool(shuffle)
         self.seed = seed
         self.verbose = int(verbose)
-        self._set_loss_function(self.loss)
-        self._set_penalty_type(self.penalty)
 
         self.learning_rate = str(learning_rate)
         self._set_learning_rate(self.learning_rate)
@@ -203,10 +208,6 @@ class BaseSGD(BaseEstimator):
         penalty_types = {"l2": 2, "l1": 1, "elasticnet": 3}
         try:
             self.penalty_type = penalty_types[penalty]
-            if self.penalty_type == 2:
-                self.rho = 1.0
-            elif self.penalty_type == 1:
-                self.rho = 0.0
         except KeyError:
             raise ValueError("Penalty %s is not supported. " % penalty)
 

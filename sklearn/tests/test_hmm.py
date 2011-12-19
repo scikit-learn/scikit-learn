@@ -10,6 +10,7 @@ from sklearn.utils.extmath import logsum
 
 np.seterr(all='warn')
 
+
 class SeedRandomNumberGeneratorTestCase(TestCase):
     seed = 9
 
@@ -184,7 +185,8 @@ class TestBaseHMM(SeedRandomNumberGeneratorTestCase):
         startprob = self.prng.rand(n_components)
         startprob = startprob / startprob.sum()
         transmat = prng.rand(n_components, n_components)
-        transmat /= np.tile(transmat.sum(axis=1)[:, np.newaxis], (1, n_components))
+        transmat /= np.tile(transmat.sum(axis=1)
+                [:, np.newaxis], (1, n_components))
 
         h = self.StubHMM(n_components)
 
@@ -218,6 +220,7 @@ def train_hmm_and_keep_track_of_log_likelihood(hmm, obs, n_iter=1, **kwargs):
 
 prng = np.random.RandomState(10)
 
+
 class GaussianHMMParams(object):
     n_components = 3
     n_features = 3
@@ -227,10 +230,12 @@ class GaussianHMMParams(object):
     transmat /= np.tile(transmat.sum(axis=1)[:, np.newaxis], (1, n_components))
     means = prng.randint(-20, 20, (n_components, n_features))
     covars = {'spherical': (1.0 + 2 * prng.rand(n_components)) ** 2,
-              'tied': (make_spd_matrix(n_features, random_state=0) + np.eye(n_features)),
+              'tied': (make_spd_matrix(n_features, random_state=0)
+                  + np.eye(n_features)),
               'diag': (1.0 + 2 * prng.rand(n_components, n_features)) ** 2,
               'full': np.array(
-                  [make_spd_matrix(n_features, random_state=0) + np.eye(n_features)
+                  [make_spd_matrix(n_features,
+                      random_state=0) + np.eye(n_features)
                    for x in xrange(n_components)])}
     expanded_covars = {'spherical': [np.eye(n_features) * cov
                                      for cov in covars['spherical']],
@@ -317,7 +322,7 @@ class GaussianHMMTester(GaussianHMMParams):
         h = hmm.GaussianHMM(self.n_components, self.cvtype)
         h.startprob = self.startprob
         h.transmat = hmm.normalize(self.transmat
-                                   + np.diag(self.prng.rand(self.n_components)), 1)
+                + np.diag(self.prng.rand(self.n_components)), 1)
         h.means = 20 * self.means
         h.covars = self.covars[self.cvtype]
 
@@ -365,7 +370,7 @@ class GaussianHMMTester(GaussianHMMParams):
         h.startprob = self.startprob
         h.startprob_prior = startprob_prior
         h.transmat = hmm.normalize(self.transmat
-                                   + np.diag(self.prng.rand(self.n_components)), 1)
+                + np.diag(self.prng.rand(self.n_components)), 1)
         h.transmat_prior = transmat_prior
         h.means = 20 * self.means
         h.means_prior = means_prior

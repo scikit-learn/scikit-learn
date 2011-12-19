@@ -1,6 +1,8 @@
 """
-Clustering algorithms
+The :mod:`sklearn.cluster` module gathers popular unsupervised clustering
+algorithms.
 """
+
 from .spectral import spectral_clustering, SpectralClustering
 from .mean_shift_ import mean_shift, MeanShift, estimate_bandwidth, \
      get_bin_seeds
@@ -9,4 +11,3 @@ from .hierarchical import create_dendrogram, ward_tree, HierarchicalClustering,\
                              Ward, WardAgglomeration, Dendrogram
 from .k_means_ import k_means, KMeans, MiniBatchKMeans
 from .dbscan_ import dbscan, DBSCAN
-

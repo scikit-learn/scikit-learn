@@ -113,7 +113,6 @@ def test_graphviz_toy():
 
 def test_iris():
     """Check consistency on dataset iris."""
-
     for c in ('gini', \
               'entropy'):
         clf = tree.DecisionTreeClassifier(criterion=c)\
@@ -157,7 +156,6 @@ def test_boston():
 
 def test_probability():
     """Predict probabilities using DecisionTreeClassifier."""
-
     clf = tree.DecisionTreeClassifier()
     clf.fit(iris.data, iris.target)
 
@@ -171,18 +169,28 @@ def test_probability():
                         np.exp(clf.predict_log_proba(iris.data)), 8)
 
 
+def test_arrayrepr():
+    """Check the array representation."""
+    # Check resize
+    clf = tree.DecisionTreeRegressor(max_depth=None)
+    X = np.arange(10000)[:, np.newaxis]
+    y = np.arange(10000)
+    clf.fit(X, y)
+
+
 def test_numerical_stability():
+    """Check numerical stability."""
     old_settings = np.geterr()
     np.seterr(all="raise")
 
     X = np.array(
-       [[ 152.08097839, 140.40744019, 129.75102234, 159.90493774],
-        [ 142.50700378, 135.8193512, 117.82884979, 162.7578125 ],
-        [ 127.28772736, 140.40744019, 129.75102234, 159.90493774],
-        [ 132.37025452, 143.71923828, 138.35694885, 157.84558105],
-        [ 103.10237122, 143.71928406, 138.35696411, 157.84559631],
-        [ 127.71276855, 143.71923828, 138.35694885, 157.84558105],
-        [ 120.91514587, 140.40744019, 129.75102234, 159.90493774]])
+       [[152.08097839, 140.40744019, 129.75102234, 159.90493774],
+        [142.50700378, 135.81935120, 117.82884979, 162.75781250],
+        [127.28772736, 140.40744019, 129.75102234, 159.90493774],
+        [132.37025452, 143.71923828, 138.35694885, 157.84558105],
+        [103.10237122, 143.71928406, 138.35696411, 157.84559631],
+        [127.71276855, 143.71923828, 138.35694885, 157.84558105],
+        [120.91514587, 140.40744019, 129.75102234, 159.90493774]])
 
     y = np.array(
         [1., 0.70209277, 0.53896582, 0., 0.90914464, 0.48026916,  0.49622521])
@@ -196,19 +204,26 @@ def test_numerical_stability():
 
 def test_error():
     """Test that it gives proper exception on deficient input."""
-    # impossible value of min_split
+    # Invalid values for parameters
     assert_raises(ValueError,
                   tree.DecisionTreeClassifier(min_split=-1).fit,
                   X, y)
 
-    # impossible value of max_depth
     assert_raises(ValueError,
                   tree.DecisionTreeClassifier(max_depth=-1).fit,
                   X, y)
 
-    clf = tree.DecisionTreeClassifier()
+    assert_raises(ValueError,
+                  tree.DecisionTreeClassifier(min_density=2.0).fit,
+                  X, y)
 
-    y2 = y[:-1]  # wrong dimensions for labels
+    assert_raises(ValueError,
+                  tree.DecisionTreeClassifier(max_features=42).fit,
+                  X, y)
+
+    # Wrong dimensions
+    clf = tree.DecisionTreeClassifier()
+    y2 = y[:-1]
     assert_raises(ValueError, clf.fit, X, y2)
 
     # Test with arrays that are non-contiguous.

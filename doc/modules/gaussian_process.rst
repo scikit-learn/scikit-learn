@@ -332,3 +332,6 @@ toolbox.
       <http://www2.imm.dtu.dk/~hbn/dace/>`_ S Lophaven, HB Nielsen, J
       Sondergaard 2002,
 
+    * W.J. Welch, R.J. Buck, J. Sacks, H.P. Wynn, T.J. Mitchell, and M.D.
+      Morris (1992). Screening, predicting, and computer experiments.
+      Technometrics, 34(1) 15--25.

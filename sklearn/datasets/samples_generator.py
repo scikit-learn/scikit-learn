@@ -6,6 +6,7 @@ Generate samples of synthetic data sets.
 #          G. Louppe
 # License: BSD 3 clause
 
+from itertools import product
 import numpy as np
 from scipy import linalg
 
@@ -135,7 +136,6 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     y = np.zeros(n_samples)
 
     # Build the polytope
-    from ..utils.fixes import product
     C = np.array(list(product([-class_sep, class_sep], repeat=n_informative)))
 
     if not hypercube:
