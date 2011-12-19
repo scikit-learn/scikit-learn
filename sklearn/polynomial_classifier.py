@@ -13,6 +13,7 @@ import numpy as np
 import scipy as sp
 from base import BaseEstimator, ClassifierMixin
 
+
 class PC(BaseEstimator, ClassifierMixin):
     """Polynomial Classifier.
 
@@ -54,9 +55,12 @@ class PC(BaseEstimator, ClassifierMixin):
 
     References
     ----------
-    Schuermann, J.: Pattern Classification: A Unified View of Statistical and Neural Approaches, John Wiley & Sons, Inc., 1996
-    Niemann, H.: Klassifikation von Mustern, University Erlangen-Nuernberg, 2003
-    http://www5.informatik.uni-erlangen.de/fileadmin/Persons/NiemannHeinrich/klassifikation-von-mustern/m00links.html
+    Schuermann, J.: Pattern Classification: A Unified View of Statistical and
+    Neural Approaches, John Wiley & Sons, Inc., 1996
+    Niemann, H.: Klassifikation von Mustern, University Erlangen-Nuernberg,
+    2003
+    http://www5.informatik.uni-erlangen.de/fileadmin/Persons/
+    NiemannHeinrich/klassifikation-von-mustern/m00links.html
     """
 
     def __init__(self, degree=2):
@@ -79,32 +83,35 @@ class PC(BaseEstimator, ClassifierMixin):
 
         Returns
         -------
-        P : ndarray, shape = [n_samples, (n_features+self.degree)! / (n_features! * self.degree!)]
+        P : ndarray, shape = [n_samples, n_polynomials]
             Polynomial features.
+            n_polynomials = (n_features+self.degree)! /
+                            (n_features! * self.degree!)
         """
-        N,D = X.shape
+        N, D = X.shape
 
         # number of polynomials
-        numP = lambda n,p: sp.factorial(n+p)/(sp.factorial(n)*sp.factorial(p))
-        # build up index list to combine features, -1 indicates unused feature 
-        I = np.zeros((numP(D, self.degree), self.degree), dtype=int)-1
+        numP = lambda n, p: (sp.factorial(n + p) /
+               (sp.factorial(n) * sp.factorial(p)))
+        # build up index list to combine features, -1 indicates unused feature
+        I = np.zeros((numP(D, self.degree), self.degree), dtype=int) - 1
         for i in range(1, I.shape[0]):
-            I[i,:] = I[i-1,:]
+            I[i, :] = I[i - 1, :]
             for j in range(self.degree):
-                if I[i-1,j]+1 < D:
-                    I[i,j] = I[i-1,j]+1
+                if I[i - 1, j] + 1 < D:
+                    I[i, j] = I[i - 1, j] + 1
                     break
             j -= 1
-            while j>=0:
-                I[i,j] = I[i,j+1]
+            while j >= 0:
+                I[i, j] = I[i, j + 1]
                 j -= 1
 
         # use index list to build combined polynomial features P
         P = np.ones((N, numP(D, self.degree)))
         for i in range(I.shape[0]):
             for d in range(self.degree):
-                if I[i,d] > -1:
-                    P[:,i] = P[:,i] * X[:,I[i,d]]
+                if I[i, d] > -1:
+                    P[:, i] = P[:, i] * X[:, I[i, d]]
 
         return P
 
@@ -129,14 +136,14 @@ class PC(BaseEstimator, ClassifierMixin):
         X = np.asarray(X)
         y = np.asarray(y)
 
-        N,D = X.shape
+        N, D = X.shape
 
         self._classes = np.unique(y)
 
         # create discriminant vector Y from y
         Y = np.zeros((N, len(self._classes)))
         for i in range(N):
-            Y[i, self._classes==y[i]] = 1
+            Y[i, self._classes == y[i]] = 1
         Y = np.matrix(Y)
 
         PX = np.matrix(self._build_pc_features(X))
@@ -169,5 +176,4 @@ class PC(BaseEstimator, ClassifierMixin):
         d = np.array(np.argmax(D, axis=0))[0]
 
         # apply class labels
-        return [ self._classes[d[i]] for i in range(len(d)) ]
-
+        return [self._classes[d[i]] for i in range(len(d))]
