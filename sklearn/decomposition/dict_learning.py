@@ -273,13 +273,13 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
 
     Parameters
     ----------
-    dictionary: array of shape (n_samples, n_components)
+    dictionary: array of shape (n_features, n_atoms)
         Value of the dictionary at the previous iteration.
 
-    Y: array of shape (n_samples, n_features)
+    Y: array of shape (n_features, n_samples)
         Data matrix.
 
-    code: array of shape (n_components, n_features)
+    code: array of shape (n_atoms, n_samples)
         Sparse coding of the data against which to optimize the dictionary.
 
     verbose:
@@ -294,7 +294,7 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
 
     Returns
     -------
-    dictionary: array of shape (n_samples, n_components)
+    dictionary: array of shape (n_features, n_atoms)
         Updated dictionary.
 
     """
