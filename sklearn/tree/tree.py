@@ -445,7 +445,8 @@ class BaseDecisionTree(BaseEstimator):
                                 max_depth, self.min_split,
                                 self.min_density, max_features,
                                 self.random_state, self.n_classes_,
-                                self.find_split_, X_argsorted=X_argsorted)
+                                self.find_split_, sample_mask=sample_mask,
+                                X_argsorted=X_argsorted)
 
         return self
 
