@@ -23,6 +23,6 @@ from .ridge import Ridge, RidgeCV, RidgeClassifier, RidgeClassifierCV, \
 from .logistic import LogisticRegression
 from .omp import orthogonal_mp, orthogonal_mp_gram, OrthogonalMatchingPursuit
 from .perceptron import Perceptron
-from .randomized_lasso import RandomizedLasso, RandomizedLogistic
+from .randomized_l1 import RandomizedLasso, RandomizedLogistic
 
 from . import sparse
