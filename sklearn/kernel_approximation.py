@@ -11,7 +11,7 @@ import numpy as np
 from .base import BaseEstimator
 from .base import TransformerMixin
 from .utils import check_random_state
-from .utils import safe_sparse_dot
+from .utils.extmath import safe_sparse_dot
 
 
 class RBFSampler(BaseEstimator, TransformerMixin):
