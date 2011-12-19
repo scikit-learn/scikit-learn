@@ -481,6 +481,10 @@ class SemisupervisedNB(BaseNB):
         Underlying Naive Bayes estimator.
     n_iter : int, optional
         Maximum number of iterations.
+    relabel_all : bool, optional
+        Whether to re-estimate class memberships for labeled samples as well.
+        Disabling this may result in bad performance, but follows Nigam et al.
+        closely.
     tol : float, optional
         Tolerance, per coefficient, for the convergence criterion.
         Convergence is determined based on the coefficients (log probabilities)
@@ -489,9 +493,11 @@ class SemisupervisedNB(BaseNB):
         Whether to print progress information.
     """
 
-    def __init__(self, estimator, n_iter=10, tol=1e-3, verbose=False):
+    def __init__(self, estimator, n_iter=10, relabel_all=True, tol=1e-3,
+                 verbose=False):
         self.estimator = estimator
         self.n_iter = n_iter
+        self.relabel_all = relabel_all
         self.tol = tol
         self.verbose = verbose
 
@@ -530,9 +536,10 @@ class SemisupervisedNB(BaseNB):
         Y = clf._label_1ofK(y)
 
         labeled = np.where(y != -1)[0]
-        unlabeled = np.where(y == -1)[0]
-        X_unlabeled = X[unlabeled, :]
-        Y_unlabeled = Y[unlabeled, :]
+        if self.relabel_all:
+            unlabeled = np.where(y == -1)[0]
+            X_unlabeled = X[unlabeled, :]
+            Y_unlabeled = Y[unlabeled, :]
 
         n_features = X.shape[1]
         n_classes = Y.shape[1]
@@ -561,7 +568,10 @@ class SemisupervisedNB(BaseNB):
 
             old_coef[:] = clf.coef_
             old_intercept[:] = clf.intercept_
-            Y_unlabeled[:] = clf.predict_proba(X_unlabeled)
+            if self.relabel_all:
+                Y = clf.predict_proba(X)
+            else:
+                Y_unlabeled[:] = clf.predict_proba(X_unlabeled)
 
         return self
 
