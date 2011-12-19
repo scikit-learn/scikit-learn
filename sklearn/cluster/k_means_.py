@@ -834,7 +834,6 @@ class MiniBatchKMeans(KMeans):
         self.n_reinit = n_reinit
         self.init_size = k * 100 if init_size is None else init_size
 
-
     def fit(self, X, y=None):
         """Compute the centroids on X by chunking it into mini-batches.
 
@@ -864,9 +863,9 @@ class MiniBatchKMeans(KMeans):
                 mean_variance = 1.0
             tol = self.tol * mean_variance
 
-            # using tol-based early stopping needs the allocation of a dedicated
-            # before wich can be expensive for high dim data: hence we allocate
-            # it outside of the main loop
+            # using tol-based early stopping needs the allocation of a
+            # dedicated before which can be expensive for high dim data:
+            # hence we allocate it outside of the main loop
             old_center_buffer = np.zeros(n_features, np.double)
         else:
             tol = 0.0
@@ -945,7 +944,6 @@ class MiniBatchKMeans(KMeans):
                     convergence_context.clear()
                     counts[to_reallocate] = 0
                     #counts.fill(0)
-
 
             # Keep only the best cluster centers accross independant inits
             ewa_inertia_min = convergence_context.get('ewa_inertia_min')
