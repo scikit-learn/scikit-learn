@@ -16,7 +16,7 @@ print __doc__
 import numpy as np
 
 from sklearn.datasets import make_classification
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import ExtraTreesClassifier
 
 # Build a classification task using 3 informative features
 X, y = make_classification(n_samples=1000,
@@ -29,7 +29,7 @@ X, y = make_classification(n_samples=1000,
                            shuffle=False)
 
 # Build a forest and compute the feature importances
-forest = RandomForestClassifier(n_estimators=50, random_state=0)
+forest = ExtraTreesClassifier(n_estimators=250, random_state=0)
 forest.fit(X, y)
 importances = forest.feature_importances()
 indices = np.argsort(importances)[::-1]
