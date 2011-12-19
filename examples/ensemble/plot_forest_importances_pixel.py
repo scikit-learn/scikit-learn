@@ -9,6 +9,8 @@ the more important.
 """
 print __doc__
 
+import pylab as pl
+
 from sklearn.datasets import fetch_olivetti_faces
 from sklearn.ensemble import ExtraTreesClassifier
 
@@ -28,7 +30,6 @@ importances = forest.feature_importances()
 importances = importances.reshape(data.images[0].shape)
 
 # Plot pixel importances
-import pylab as pl
 pl.set_cmap(pl.cm.hot)
 pl.matshow(importances)
 pl.colorbar()

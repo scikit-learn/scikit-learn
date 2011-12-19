@@ -49,5 +49,4 @@ for tree in forest.estimators_:
     pl.plot(xrange(10), tree.feature_importances()[indices], "r")
 
 pl.plot(xrange(10), importances[indices], "b")
-
 pl.show()
