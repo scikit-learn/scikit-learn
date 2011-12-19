@@ -110,7 +110,8 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     Y: {array-like, sparse matrix}, shape = [n_samples_2, n_features]
 
     Y_norm_squared: array-like, shape = [n_samples_2], optional
-        Pre-computed dot-products of vectors in Y (e.g., `(Y**2).sum(axis=1)`)
+        Pre-computed dot-products of vectors in Y (e.g., `(Y**2).sum(axis=1)`).
+        Only used if one or more arguments is sparse.
 
     squared: boolean, optional
         Return squared Euclidean distances.
@@ -150,11 +151,14 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
         raise ValueError('Y must have float32 or float64 dtype')
     if issparse(X):
         XX = X.multiply(X).sum(axis=1)
-    else:
+    elif issparse(Y):
         XX = np.sum(X * X, axis=1)[:, np.newaxis]
+    else:
+        # If both arguments are dense, we use the Cython function.
+        XX = None
 
     if X is Y:  # shortcut in the common case euclidean_distances(X, X)
-        YY = XX.T
+        YY = XX.T if XX is not None else None
     elif Y_norm_squared is None:
         if issparse(Y):
             # scipy.sparse matrices don't have element-wise scalar
@@ -162,8 +166,10 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
             YY = Y.copy() if isinstance(Y, csr_matrix) else Y.tocsr()
             YY.data **= 2
             YY = np.asarray(YY.sum(axis=1)).T
-        else:
+        elif issparse(X):
             YY = np.sum(Y ** 2, axis=1)[np.newaxis, :]
+        else:
+            YY = XX
     else:
         YY = atleast2d_or_csr(Y_norm_squared)
         if YY.shape != (1, Y.shape[0]):
