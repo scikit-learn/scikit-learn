@@ -91,9 +91,9 @@ def sample_gaussian(mean, covar, cvtype='diag', n_samples=1,
 
     covars : array_like, optional
         Covariance of the distribution.  The shape depends on `cvtype`:
-            scalar  if 'spherical',
-            (D)     if 'diag',
-            (D, D)  if 'tied', or 'full'
+            scalar if 'spherical',
+            (n_features) if 'diag',
+            (n_features, n_features)  if 'tied', or 'full'
 
     cvtype : string, optional
         Type of the covariance parameters.  Must be one of
@@ -163,21 +163,17 @@ class GMM(BaseEstimator):
     cvtype : string (read-only)
         String describing the type of covariance parameters used by
         the GMM.  Must be one of 'spherical', 'tied', 'diag', 'full'.
-    n_features : int
-        Dimensionality of the Gaussians.
-    n_states : int (read-only)
-        Number of mixture components.
-    weights : array, shape (`n_states`,)
+    weights : array, shape (`n_components`,)
         Mixing weights for each mixture component.
-    means : array, shape (`n_states`, `n_features`)
+    means : array, shape (`n_components`, `n_features`)
         Mean parameters for each mixture component.
     covars : array
         Covariance parameters for each mixture component.  The shape
         depends on `cvtype`:
-            (`n_states`,)                             if 'spherical',
-            (`n_features`, `n_features`)              if 'tied',
-            (`n_states`, `n_features`)                if 'diag',
-            (`n_states`, `n_features`, `n_features`)  if 'full'
+            (n_components,)                        if 'spherical',
+            (n_features, n_features)               if 'tied',
+            (n_components, n_features)             if 'diag',
+            (n_components, n_features, n_features) if 'full'
     converged_ : bool
         True when convergence was reached in fit(), False
         otherwise.
@@ -276,12 +272,11 @@ class GMM(BaseEstimator):
         elif self.cvtype == 'tied':
             return [self.covars_] * self.n_components
         elif self.cvtype == 'spherical':
-            return [np.eye(self.n_features) * f for f in self.covars_]
+            return [np.eye(self.means.shape[1]) * f for f in self.covars_]
 
     def _set_covars(self, covars):
         covars = np.asarray(covars)
-        _validate_covars(covars, self._cvtype, self.n_components,
-                self.n_features)
+        _validate_covars(covars, self._cvtype, self.n_components)
         self.covars_ = covars
 
     covars = property(_get_covars, _set_covars)
@@ -293,12 +288,10 @@ class GMM(BaseEstimator):
     def _set_means(self, means):
         """Provide values for means"""
         means = np.asarray(means)
-        if hasattr(self, 'n_features') and \
-               means.shape != (self.n_components, self.n_features):
+        if means.shape[0] != self.n_components:
             raise ValueError('means must have shape ' +
                     '(n_components, n_features)')
         self.means_ = means.copy()
-        self.n_features = self.means_.shape[1]
 
     means = property(_get_means, _set_means)
 
@@ -417,7 +410,7 @@ class GMM(BaseEstimator):
         weight_pdf = self.weights
         weight_cdf = np.cumsum(weight_pdf)
 
-        X = np.empty((n_samples, self.n_features))
+        X = np.empty((n_samples, self.means.shape[1]))
         rand = random_state.rand(n_samples)
         # decide which component to use for each sample
         comps = weight_cdf.searchsorted(rand)
@@ -467,20 +460,20 @@ class GMM(BaseEstimator):
         """
 
         ## initialization step
-
         X = np.asarray(X)
+        if X.ndim == 1:
+            X = X[:, np.newaxis]
+        if X.shape[0] < self.n_components:
+            raise ValueError('GMM estimation with %s components, but '
+                             'got only %s' % (self.n_components, X.shape[0]))
 
-        if hasattr(self, 'n_features') and self.n_features != X.shape[1]:
-            raise ValueError('Unexpected number of dimensions, got %s but '
-                             'expected %s' % (X.shape[1], self.n_features))
-
-        self.n_features = X.shape[1]
+        n_features = X.shape[1]
 
         if 'm' in init_params:
             self.means_ = cluster.KMeans(
                 k=self.n_components).fit(X).cluster_centers_
         elif not hasattr(self, 'means'):
-                self.means_ = np.zeros((self.n_components, self.n_features))
+                self.means_ = np.zeros((self.n_components, n_features))
 
         if 'w' in init_params or not hasattr(self, 'weights'):
             self.weights = np.tile(1.0 / self.n_components, self.n_components)
@@ -493,7 +486,7 @@ class GMM(BaseEstimator):
                 cv, self._cvtype, self.n_components)
         elif not hasattr(self, 'covars'):
                 self.covars = _distribute_covar_matrix_to_match_cvtype(
-                    np.eye(self.n_features), self.cvtype, self.n_components)
+                    np.eye(n_features), self.cvtype, self.n_components)
 
         # EM algorithm
         logprob = []
@@ -607,31 +600,35 @@ def _log_multivariate_normal_densityfull(X, means, covars):
     return log_prob
 
 
-def _validate_covars(covars, cvtype, nmix, n_dim):
-    """Do basic checks on matrix covariance sizes
+def _validate_covars(covars, cvtype, n_components):
+    """Do basic checks on matrix covariance sizes and values
     """
     from scipy import linalg
     if cvtype == 'spherical':
-        if len(covars) != nmix:
-            raise ValueError("'spherical' covars must have length nmix")
+        if len(covars) != n_components:
+            raise ValueError("'spherical' covars must have length n_components")
         elif np.any(covars <= 0):
             raise ValueError("'spherical' covars must be non-negative")
     elif cvtype == 'tied':
-        if covars.shape != (n_dim, n_dim):
+        if covars.shape[0] != covars.shape[1]: 
             raise ValueError("'tied' covars must have shape (n_dim, n_dim)")
         elif (not np.allclose(covars, covars.T)
               or np.any(linalg.eigvalsh(covars) <= 0)):
             raise ValueError("'tied' covars must be symmetric, "
                              "positive-definite")
     elif cvtype == 'diag':
-        if covars.shape != (nmix, n_dim):
-            raise ValueError("'diag' covars must have shape (nmix, n_dim)")
+        if len(covars.shape) != 2:
+            raise ValueError("'diag' covars must have shape"
+                             "(n_components, n_dim)")
         elif np.any(covars <= 0):
             raise ValueError("'diag' covars must be non-negative")
     elif cvtype == 'full':
-        if covars.shape != (nmix, n_dim, n_dim):
+        if len(covars.shape) != 3:
             raise ValueError("'full' covars must have shape "
-                             "(nmix, n_dim, n_dim)")
+                             "(n_components, n_dim, n_dim)")
+        elif covars.shape[2] != covars.shape[3]:
+            raise ValueError("'full' covars must have shape "
+                             "(n_components, n_dim, n_dim)")
         for n, cv in enumerate(covars):
             if (not np.allclose(cv, cv.T)
                 or np.any(linalg.eigvalsh(cv) <= 0)):
@@ -673,13 +670,15 @@ def _covar_mstep_full(gmm, X, posteriors, weighted_X_sum, norm, min_covar):
     """Performing the covariance M step for full cases"""
     # Eq. 12 from K. Murphy, "Fitting a Conditional Linear Gaussian
     # Distribution"
-    cv = np.empty((gmm.n_components, gmm.n_features, gmm.n_features))
+    n_features = X.shape[1]
+    cv = np.empty((gmm.n_components, n_features, n_features))
     for c in xrange(gmm.n_components):
         post = posteriors[:, c]
+        # Underflow Errors in doing  post * X.T are not important
+        err_mgt = np.seterr(under='ignore')
         avg_cv = np.dot(post * X.T, X) / (post.sum() + 10 * INF_EPS)
         mu = gmm.means_[c][np.newaxis]
-        cv[c] = (avg_cv - np.dot(mu.T, mu)
-                 + min_covar * np.eye(gmm.n_features))
+        cv[c] = (avg_cv - np.dot(mu.T, mu) + min_covar * np.eye(n_features))
     return cv
 
 
@@ -690,25 +689,27 @@ def _covar_mstep_tied2(*args):
 def _covar_mstep_tied(gmm, X, posteriors, weighted_X_sum, norm, min_covar):
     print "THIS IS BROKEN"
     # Eq. 15 from K. Murphy, "Fitting a Conditional Linear Gaussian
+    n_features = X.shape[1]
     avg_X2 = np.dot(X.T, X)
     avg_means2 = np.dot(gmm.means_.T, gmm.means_)
-    return (avg_X2 - avg_means2 + min_covar * np.eye(gmm.n_features))
+    return (avg_X2 - avg_means2 + min_covar * np.eye(n_features))
 
 
 def _covar_mstep_slow(gmm, X, posteriors, weighted_X_sum, norm, min_covar):
     """Covariance optimization -- slow method"""
     w = posteriors.sum(axis=0)
+    n_features = X.shape[1]
     covars = np.zeros(gmm.covars_.shape)
     for c in xrange(gmm.n_components):
         mu = gmm.means_[c]
         #cv = np.dot(mu.T, mu)
-        avg_X2 = np.zeros((gmm.n_features, gmm.n_features))
+        avg_X2 = np.zeros((n_features, n_features))
         for t, o in enumerate(X):
             avg_X2 += posteriors[t, c] * np.outer(o, o)
         cv = (avg_X2 / w[c]
               - 2 * np.outer(weighted_X_sum[c] / w[c], mu)
               + np.outer(mu, mu)
-              + min_covar * np.eye(gmm.n_features))
+              + min_covar * np.eye(n_features))
         if gmm.cvtype == 'spherical':
             covars[c] = np.diag(cv).mean()
         elif gmm.cvtype == 'diag':
