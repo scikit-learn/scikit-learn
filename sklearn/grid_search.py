@@ -1,6 +1,6 @@
 """
-The :mod:`sklearn.grid_search` includes utilities to fine-tune the parameters of
-an estimator.
+The :mod:`sklearn.grid_search` includes utilities to fine-tune the parameters
+of an estimator.
 """
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>,
@@ -8,15 +8,15 @@ an estimator.
 # License: BSD Style.
 
 import copy
+from itertools import product
 import time
 
 import numpy as np
 import scipy.sparse as sp
 
-from .externals.joblib import Parallel, delayed, logger
-from .cross_validation import check_cv
 from .base import BaseEstimator, is_classifier, clone
-from .utils.fixes import product
+from .cross_validation import check_cv
+from .externals.joblib import Parallel, delayed, logger
 
 
 class IterGrid(object):
@@ -217,9 +217,8 @@ class GridSearchCV(BaseEstimator):
         Contains scores for all parameter combinations in param_grid.
 
     `best_estimator` : estimator
-        Estimator that was choosen by grid search, i.e. estimator
-        which gave highest score (or smallest loss if specified)
-        on the left out data.
+        Estimator that was choosen by grid search, i.e. estimator which gave
+        highest score (or smallest loss if specified) on the left out data.
 
     `best_score` : float
         score of best_estimator on the left out data.
@@ -227,10 +226,18 @@ class GridSearchCV(BaseEstimator):
 
     Notes
     ------
-    The parameters selected are those that maximize the score of the
-    left out data, unless an explicit score_func is passed in which
-    case it is used instead. If a loss function loss_func is passed,
-    it overrides the score functions and is minimized.
+    The parameters selected are those that maximize the score of the left out
+    data, unless an explicit score_func is passed in which case it is used
+    instead. If a loss function loss_func is passed, it overrides the score
+    functions and is minimized.
+
+    If `n_jobs` was set to a value higher than one, the data is copied for each
+    point in the grid (and not `n_jobs` times). This is done for efficiency
+    reasons if individual jobs take very little time, but may raise errors if
+    the dataset is large and not enough memory is available.  A workaround in
+    this case is to set `pre_dispatch`. Then, the memory is copied only
+    `pre_dispatch` many times. A reasonable value for `pre_dispatch` is 2 *
+    `n_jobs`.
 
     See Also
     ---------

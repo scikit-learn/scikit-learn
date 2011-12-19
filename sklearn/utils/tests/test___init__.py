@@ -1,4 +1,3 @@
-from __future__ import with_statement
 import numpy as np
 from numpy.testing import assert_array_equal
 import scipy.sparse as sp

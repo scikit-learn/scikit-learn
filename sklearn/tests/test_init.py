@@ -9,7 +9,7 @@ from nose.tools import assert_equal
 try:
     from sklearn import *
     _top_import_error = None
-except Exception, e:
+except Exception as e:
     _top_import_error = e
 
 

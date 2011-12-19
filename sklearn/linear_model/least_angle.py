@@ -346,7 +346,8 @@ class Lars(LinearModel):
     --------
     >>> from sklearn import linear_model
     >>> clf = linear_model.Lars(n_nonzero_coefs=1)
-    >>> clf.fit([[-1, 1], [0, 0], [1, 1]], [-1.1111, 0, -1.1111]) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    >>> clf.fit([[-1, 1], [0, 0], [1, 1]], [-1.1111, 0, -1.1111])
+    ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     Lars(copy_X=True, eps=..., fit_intercept=True, n_nonzero_coefs=1,
        normalize=True, precompute='auto', verbose=False)
     >>> print clf.coef_ # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
@@ -480,7 +481,8 @@ class LassoLars(Lars):
     --------
     >>> from sklearn import linear_model
     >>> clf = linear_model.LassoLars(alpha=0.01)
-    >>> clf.fit([[-1, 1], [0, 0], [1, 1]], [-1, 0, -1]) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    >>> clf.fit([[-1, 1], [0, 0], [1, 1]], [-1, 0, -1])
+    ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     LassoLars(alpha=0.01, copy_X=True, eps=..., fit_intercept=True,
          max_iter=500, normalize=True, precompute='auto', verbose=False)
     >>> print clf.coef_ # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
@@ -510,14 +512,14 @@ class LassoLars(Lars):
 
 
 # Deprecated classes
+@deprecated("Use Lars instead")
 class LARS(Lars):
     pass
-LARS = deprecated("Use Lars instead")(LARS)
 
 
+@deprecated("Use LassoLars instead")
 class LassoLARS(LassoLars):
     pass
-LassoLARS = deprecated("Use LassoLars instead")(LassoLARS)
 
 
 ###############################################################################
@@ -886,7 +888,8 @@ class LassoLarsIC(LassoLars):
     --------
     >>> from sklearn import linear_model
     >>> clf = linear_model.LassoLarsIC(criterion='bic')
-    >>> clf.fit([[-1, 1], [0, 0], [1, 1]], [-1.1111, 0, -1.1111]) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    >>> clf.fit([[-1, 1], [0, 0], [1, 1]], [-1.1111, 0, -1.1111])
+    ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     LassoLarsIC(copy_X=True, criterion='bic', eps=..., fit_intercept=True,
           max_iter=500, normalize=True, precompute='auto',
           verbose=False)

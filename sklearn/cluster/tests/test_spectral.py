@@ -1,11 +1,11 @@
 """Testing for Spectral Clustering methods"""
 
+from cPickle import dumps, loads
+import nose
+
 import numpy as np
 from numpy.testing import assert_equal
 from scipy import sparse
-import nose
-from pickle import loads  # don't use cPickle, compatibility with python2.5
-from cPickle import dumps
 
 from .. import SpectralClustering
 
