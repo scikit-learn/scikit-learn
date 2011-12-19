@@ -8,7 +8,7 @@ import random
 import numpy as np
 
 from sklearn.neighbors import kneighbors_graph
-from sklearn.cluster.linkage import WardsLinkage, CompleteLinkage
+from sklearn.cluster.linkage import WardLinkage, CompleteLinkage
 
 
 def ward_distance(cluster1, cluster2):
@@ -38,7 +38,7 @@ def complete_linkage_distance(cluster1, cluster2, metric):
     return dist
 
 
-def test_wards_linkage():
+def test_ward_linkage():
     """
     Check that linkage based on ward's criterion computes distance of
     two clusterings correctly.
@@ -50,26 +50,26 @@ def test_wards_linkage():
     np.random.seed(0)
     X = np.random.randn(n_samples, n_features)
     connectivity = kneighbors_graph(X, n_neighbors=5).tolil()
-    wards_linkage = WardsLinkage(X, connectivity)
+    ward_linkage = WardLinkage(X, connectivity)
     parent = np.arange(n_nodes, dtype=np.int)
     children = []
     open_nodes = np.ones(n_nodes, dtype=bool)
 
     k = n_samples
-    while wards_linkage.has_more_candidates():
-        linkage_distance, i, j = wards_linkage.fetch_candidate()
+    while ward_linkage.has_more_candidates():
+        linkage_distance, i, j = ward_linkage.fetch_candidate()
         if not open_nodes[i] or not open_nodes[j]:
             continue
-        # Check that merge distance returned by wards_linkage matches the one
+        # Check that merge distance returned by ward_linkage matches the one
         # obtained by explicitly computing it on the two clusters
-        cluster1 = X[wards_linkage.get_nodes_of_cluster(i), :]
-        cluster2 = X[wards_linkage.get_nodes_of_cluster(j), :]
+        cluster1 = X[ward_linkage.get_nodes_of_cluster(i), :]
+        cluster2 = X[ward_linkage.get_nodes_of_cluster(j), :]
         true_dist = ward_distance(cluster1, cluster2)
 
         assert np.allclose([linkage_distance], [true_dist])
 
         # Continue with merging
-        wards_linkage.update(i, j, k, parent)
+        ward_linkage.update(i, j, k, parent)
         parent[i] = parent[j] = k
         children.append([i, j])
         open_nodes[i], open_nodes[j] = False, False
@@ -99,7 +99,7 @@ def test_complete_linkage(metric="euclidean"):
         linkage_distance, i, j = complete_linkage.fetch_candidate()
         if not open_nodes[i] or not open_nodes[j]:
             continue
-        # Check that merge distance returned by wards_linkage matches the one
+        # Check that merge distance returned by ward_linkage matches the one
         # obtained by explicitly computing it on the two clusters
         cluster1 = X[complete_linkage.get_nodes_of_cluster(i), :]
         cluster2 = X[complete_linkage.get_nodes_of_cluster(j), :]

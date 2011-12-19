@@ -165,7 +165,7 @@ class Linkage(object):
                             if len(nodes) > 1]
 
 
-class WardsLinkage(Linkage):
+class WardLinkage(Linkage):
     """ Ward's linkage criterion for hierarchical clustering.
 
     Parameters
@@ -198,7 +198,7 @@ class WardsLinkage(Linkage):
     Attributes
     ----------
     X : array of shape (n_samples, n_features)
-        feature matrix  representing n_samples samples to be clustered
+        feature matrix representing n_samples samples to be clustered
 
     A : dict, mapping int to set of int
         The entry in A with key i contains the indices of all clusters that are
@@ -221,7 +221,7 @@ class WardsLinkage(Linkage):
     """
 
     def __init__(self, X, connectivity, *args, **kwargs):
-        super(WardsLinkage, self).__init__(X)
+        super(WardLinkage, self).__init__(X)
 
         n_samples, n_features = X.shape
         n_nodes = n_samples * 2 - 1
@@ -276,7 +276,7 @@ class WardsLinkage(Linkage):
             cluster (i.e. the cluster it has been merged into). Unmerged
             clusters have themselves as parent.
         """
-        super(WardsLinkage, self).update(child_node1, child_node2, parent_node)
+        super(WardLinkage, self).update(child_node1, child_node2, parent_node)
         # update the moments
         for p in range(2):
             self.moments[p][parent_node] = \
