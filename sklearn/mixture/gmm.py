@@ -427,8 +427,7 @@ class GMM(BaseEstimator):
                     cv = self.covars_[comp]
                 X[comp_in_X] = sample_gaussian(
                     self.means_[comp], cv, self._cvtype, num_comp_in_X,
-                    random_state=random_state
-                ).T
+                    random_state=random_state).T
         return X
 
     def fit(self, X, n_iter=10, thresh=1e-2, params='wmc',
@@ -469,11 +468,9 @@ class GMM(BaseEstimator):
 
         n_features = X.shape[1]
 
-        if 'm' in init_params:
+        if 'm' in init_params or not hasattr(self, 'means'):
             self.means_ = cluster.KMeans(
                 k=self.n_components).fit(X).cluster_centers_
-        elif not hasattr(self, 'means'):
-                self.means_ = np.zeros((self.n_components, n_features))
 
         if 'w' in init_params or not hasattr(self, 'weights'):
             self.weights = np.tile(1.0 / self.n_components, self.n_components)
