@@ -16,10 +16,12 @@ algorithms.
 The advantage of using appoximate explicit feature maps compared to the kernel
 trick, which makes use of feature maps implicitly, is that explicit mappings
 can be better suited for online learning and can significantly reduce the cost
-of learning with large datasets.
+of learning with very large datasets for which kernel methods are infeasible.
+In is particularly the combination of kernel map approximations with
+:class:SGDClassifier can make nonlinear learning on large datasets possible.
 
 Since there has not been much empirical work using approximate embeddings, it
-is advisable to compare results against exact kernel methods.
+is advisable to compare results against exact kernel methods when possible.
 
 
 Radial Basis Function Kernel
@@ -41,6 +43,11 @@ similar to those produced by a kernel SVM. Note that "fitting" the feature
 function does not actually depend on the data given to the ``fit`` function.
 Only the dimensionality of the data is used.
 Details on the method can be found in [RR2007]_.
+
+.. figure:: ../auto_examples/images/plot_kernel_appoximation_2.png
+   :target: ../auto_examples/kernel_approximation.html
+   :scale: 50
+   :align: center
 
 Additive Chi Squared Kernel
 ---------------------------
@@ -89,8 +96,8 @@ For a motivation for this mapping and the mathematical details see [LS2010]_.
 
 .. topic:: Examples:
 
-* :ref:`example_plot_kernel_approximation.py`
-* :ref:`example_svm_plot_approximate_kernel_decision.py`
+    * :ref:`example_plot_kernel_approximation.py`
+    * :ref:`example_svm_plot_approximate_kernel_decision.py`
 
 Mathematical Details
 --------------------
@@ -129,16 +136,16 @@ or store training examples.
 
 .. topic:: References:
 
-.. [RR2007] `"Random features for large-scale kernel machines"
-  <http://webmail.robots.ox.ac.uk/~vgg/rg/papers/randomfeatures.pdf>`_
-  Rahimi, A. and Recht, B. - Advances in neural information processing 2007,
-.. [LS2010] `"Random Fourier approximations for skewed multiplicative histogram kernels"
-  <http://sminchisescu.ins.uni-bonn.de/papers/lis_dagm10.pdf>`_
-  Random Fourier approximations for skewed multiplicative histogram kernels
-  - Lecture Notes for Computer Sciencd (DAGM)
-.. [VZ2010] `"Efficient additive kernels via explicit feature maps"
-  <http://eprints.pascal-network.org/archive/00006964/01/vedaldi10.pdf>`_
-  Vedaldi, A. and Zisserman, A. - Computer Vision and Pattern Recognition 2010
-.. [VVZ2010] `"Generalized RBF feature maps for Efficient Detection"
-  <http://eprints.pascal-network.org/archive/00007024/01/inproceedings.pdf.8a865c2a5421e40d.537265656b616e7468313047656e6572616c697a65642e706466.pdf>`_
-  Vempati, S. and Vedaldi, A. and Zisserman, A. and Jawahar, CV - 2010
+    .. [RR2007] `"Random features for large-scale kernel machines"
+      <http://webmail.robots.ox.ac.uk/~vgg/rg/papers/randomfeatures.pdf>`_
+      Rahimi, A. and Recht, B. - Advances in neural information processing 2007,
+    .. [LS2010] `"Random Fourier approximations for skewed multiplicative histogram kernels"
+      <http://sminchisescu.ins.uni-bonn.de/papers/lis_dagm10.pdf>`_
+      Random Fourier approximations for skewed multiplicative histogram kernels
+      - Lecture Notes for Computer Sciencd (DAGM)
+    .. [VZ2010] `"Efficient additive kernels via explicit feature maps"
+      <http://eprints.pascal-network.org/archive/00006964/01/vedaldi10.pdf>`_
+      Vedaldi, A. and Zisserman, A. - Computer Vision and Pattern Recognition 2010
+    .. [VVZ2010] `"Generalized RBF feature maps for Efficient Detection"
+      <http://eprints.pascal-network.org/archive/00007024/01/inproceedings.pdf.8a865c2a5421e40d.537265656b616e7468313047656e6572616c697a65642e706466.pdf>`_
+      Vempati, S. and Vedaldi, A. and Zisserman, A. and Jawahar, CV - 2010

@@ -17,6 +17,16 @@ SVM and also the approximate kernel SVM could be greatly accelerated by using
 stochastic gradient descent via :class:`SGDClassifier`. This is not easily possible for
 the case of the kernelized SVM.
 
+The second plot visualized the decision surfaces of the RBF kernel SVM and
+the linear SVM with approximate kernel map.
+The plot shows decision surfaces of the classifiers projected onto
+the first two principal components of the data. This visualization should
+be taken with a grain of salt since it is just an interesting slice through
+the decision surface in 64 dimensions. In particular note that
+a datapoint (represented as a dot) does not necessarily be classified
+into the region it is lying in, since it will not lie on the plane
+that the first two principal components span.
+
 The usage of :class:`RBFSampler` is described in detail in :ref:`kernel_approximation`.
 
 """
@@ -34,14 +44,16 @@ from time import time
 # Import datasets, classifiers and performance metrics
 from sklearn import datasets, svm, pipeline
 from sklearn.kernel_approximation import RBFSampler
+from sklearn.decomposition import PCA
 
 # The digits dataset
-digits = datasets.load_digits()
+digits = datasets.load_digits(n_class=9)
 
 # To apply an classifier on this data, we need to flatten the image, to
 # turn the data in a (samples, feature) matrix:
 n_samples = len(digits.data)
 data = digits.data / 16.
+data -= data.mean(axis=0)
 
 # We learn the digits on the first half of the digits
 data_train, targets_train = data[:n_samples / 2], digits.target[:n_samples / 2]
@@ -87,10 +99,6 @@ for D in sample_sizes:
 
 # plot the results:
 accuracy = pl.gca()
-print(kernel_svm_time)
-print(linear_svm_time)
-print(approx_kernel_times)
-print(kernel_svm_score)
 # second y axis for timeings
 timescale = accuracy.twinx()
 
@@ -119,4 +127,49 @@ accuracy.set_xlabel("Sampling steps = transformed feature dimension")
 accuracy.set_ylabel("Classification accuracy")
 timescale.set_ylabel("Training time in seconds (dashed lines)")
 accuracy.legend(loc='best')
+
+# visualize the decision surface, projected down to the first
+# two principal components of the dataset
+pca = PCA(n_components=8).fit(data_train)
+
+X = pca.transform(data_train)
+
+# Gemerate grid along first two principal components
+multiples = np.arange(-2, 2, 0.1)
+# steps along first component
+first = multiples[:, np.newaxis] * pca.components_[0, :]
+# steps along second component
+second = multiples[:, np.newaxis] * pca.components_[1, :]
+# combine
+grid = first[np.newaxis, :, :] + second[:, np.newaxis, :]
+flat_grid = grid.reshape(-1, data.shape[1])
+
+# title for the plots
+titles = ['SVC with rbf kernel',
+          'SVC (linear kernel) with rbf feature map\n n_components=100']
+
+pl.figure(figsize=(12,5))
+pl.set_cmap(pl.cm.Paired)
+
+
+# predict and plot
+for i, clf in enumerate((kernel_svm, approx_kernel_svm)):
+    # Plot the decision boundary. For that, we will asign a color to each
+    # point in the mesh [x_min, m_max]x[y_min, y_max].
+    pl.subplot(1, 2, i+1)
+    Z = clf.predict(flat_grid)
+
+    # Put the result into a color plot
+    Z = Z.reshape(grid.shape[:-1])
+    pl.set_cmap(pl.cm.Paired)
+    pl.contourf(multiples, multiples, Z)
+    #pl.imshow(Z, interpolation='nearest')
+    pl.axis('off')
+
+    # Plot also the training points
+    pl.scatter(X[:,0], X[:,1], c=targets_train)
+
+    pl.title(titles[i])
 pl.show()
+
+
