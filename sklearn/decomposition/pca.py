@@ -455,7 +455,8 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
             self.mean_ = np.mean(X, axis=0)
             X -= self.mean_
 
-        U, S, V = fast_svd(X, self.n_components, q=self.iterated_power,
+        U, S, V = fast_svd(X, self.n_components,
+                           n_iterations=self.iterated_power,
                            random_state=self.random_state)
 
         self.explained_variance_ = (S ** 2) / n_samples
