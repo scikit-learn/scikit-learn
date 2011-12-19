@@ -1,5 +1,5 @@
 """
-Randomized Lasso: feature selection based on lasso
+Randomized Lasso: feature selection based on Lasso
 """
 
 # Author: Gael Varoquaux
@@ -18,7 +18,7 @@ from .logistic import LogisticRegression
 from ..externals.joblib import Memory
 
 
-################################################################################
+###############################################################################
 # Randomized linear model: feature selection
 
 def _resample_model(estimator_func, X, y, a=.5, n_resampling=200,
@@ -96,7 +96,6 @@ class BaseRandomizedLinearModel(TransformerMixin):
                                                         self.fit_intercept,
                                                         self.normalize)
 
-
         estimator_func, params = self._mk_estimator_and_params(X, y)
         memory = self.memory
         if isinstance(memory, basestring):
@@ -145,12 +144,15 @@ class BaseRandomizedLinearModel(TransformerMixin):
         return Xt
 
 
-
-################################################################################
+###############################################################################
 # Randomized lasso: regression settings
 
 def _randomized_lasso(X, y, weights, mask, alpha=1., verbose=False,
+<<<<<<< HEAD
                       precompute=False, eps=np.finfo(np.float).eps,
+=======
+                      precompute=False, eps=np.finfo(np.float).eps,
+>>>>>>> STY: pep8
                       max_iter=500):
     # XXX: should we refit the intercept?
     X = X[mask]
@@ -290,7 +292,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
                     precompute=self.precompute)
 
 
-################################################################################
+###############################################################################
 # Randomized logistic: classification settings
 
 def _randomized_logistic(X, y, weights, mask, C=1., verbose=False,
