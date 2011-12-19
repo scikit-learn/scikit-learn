@@ -565,13 +565,15 @@ Mathematical formulation
 ~~~~~~~~~~~~~~~~~~~~~~~~
 Assume two label assignments (of the same data), :math:`U` with :math:`R`
 classes and :math:`V` with :math:`C` classes. The entropy of either is the
- amount of uncertaintly for an array, and can be calculated as:
+amount of uncertaintly for an array, and can be calculated as:
 
 .. math:: H(U) = \sum_{i=1}^{|R|}P(i)log(P(i))
 
 Where P(i) is the number of instances in U that are in class :math:`R_i`.
 Likewise, for :math:`V`:
+
 .. math:: H(V) = \sum_{j=1}^{|C|}P'(j)log(P'(j))
+
 Where P'(j) is the number of instances in V that are in class :math:`C_j`.
 
 The (non-adjusted) mutual information between :math:`U` and :math:`V` is
