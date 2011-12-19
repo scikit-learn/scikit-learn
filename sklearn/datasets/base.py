@@ -180,13 +180,17 @@ def load_files(container_path, description=None, categories=None,
 
 def load_iris():
     """Load and return the iris dataset (classification).
-    Classes: 3
-    Samples per class: 50
-    Samples total: 150
-    Dimensionality: 4
-    Features: real, positive
 
-    The iris dataset is a classic and very easy multi-class classification dataset.
+    The iris dataset is a classic and very easy multi-class classification
+    dataset.
+
+    =================   ==============
+    Classes                          3
+    Samples per class               50
+    Samples total                  150
+    Dimensionality                   4
+    Features            real, positive
+    =================   ==============
 
     Return
     ------
@@ -232,13 +236,17 @@ def load_iris():
 
 def load_digits(n_class=10):
     """Load and return the digits dataset (classification).
-    Classes: 10
-    Samples per class: ~180
-    Samples total: 1797
-    Dimensionality: 64
-    Features: integers 0-16
 
     Each datapoint is a 8x8 image of a digit.
+
+    =================   ==============
+    Classes                         10
+    Samples per class             ~180
+    Samples total                 1797
+    Dimensionality                  64
+    Features             integers 0-16
+    =================   ==============
+
 
     Parameters
     ----------
@@ -291,10 +299,12 @@ def load_digits(n_class=10):
 def load_diabetes():
     """Load and return the diabetes dataset (regression).
 
-    Samples total: 442
-    Dimensionality: 10
-    Features: real, -.2 < x < .2
-    Targets: integer 25 - 346
+    ==============      ==================
+    Samples total       442
+    Dimensionality      10
+    Features            real, -.2 < x < .2
+    Targets             integer 25 - 346
+    ==============      ==================
 
     Return
     ------
@@ -312,13 +322,18 @@ def load_diabetes():
 def load_linnerud():
     """Load and return the linnerud dataset (multivariate regression).
 
+    Samples total: 20
+    Dimensionality: 3 for both data and targets
+    Features: integer
+    Targets: integer
+
     Return
     ------
     data : Bunch
-        Dictionary-like object, the interesting attributes are:
-        'data_exercise' and 'data_physiological', the two multivariate
-        datasets, as well as 'header_exercise' and
-        'header_physiological', the corresponding headers.
+        Dictionary-like object, the interesting attributes are: 'data' and
+        'targets', the two multivariate datasets, with 'data' corresponding to
+        the exercise and 'targets' corresponding to the physiological
+        measurements, as well as 'feature_names' and 'target_names'.
     """
     base_dir = join(dirname(__file__), 'data/')
     # Read data
@@ -333,19 +348,21 @@ def load_linnerud():
     with open(dirname(__file__) + '/descr/linnerud.rst') as f:
         descr = f.read()
 
-    return Bunch(data_exercise=data_exercise, header_exercise=header_exercise,
-                 data_physiological=data_physiological,
-                 header_physiological=header_physiological,
+    return Bunch(data=data_exercise, feature_names=header_exercise,
+                 target=data_physiological,
+                 target_names=header_physiological,
                  DESCR=descr)
 
 
 def load_boston():
     """Load and return the boston house-prices dataset (regression).
 
-    Samples total: 506
-    Dimensionality: 13
-    Features: real, positive
-    Targets: real 5. - 50.
+    ==============     ==============
+    Samples total                 506
+    Dimensionality                 13
+    Features           real, positive
+    Targets             real 5. - 50.
+    ==============     ==============
 
     Return
     ------
