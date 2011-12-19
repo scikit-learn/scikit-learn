@@ -1,10 +1,11 @@
 import numpy as np
-import scipy.sparse
+from scipy import linalg
+from scipy import sparse
 from sklearn import datasets, svm, linear_model
 from numpy.testing import assert_array_almost_equal, \
      assert_array_equal, assert_equal
 
-from nose.tools import assert_raises
+from nose.tools import assert_raises, assert_true
 from sklearn.datasets.samples_generator import make_classification
 from sklearn.svm.tests import test_svm
 
@@ -28,7 +29,7 @@ perm = np.random.permutation(iris.target.size)
 iris.data = iris.data[perm]
 iris.target = iris.target[perm]
 # sparsify
-iris.data = scipy.sparse.csr_matrix(iris.data)
+iris.data = sparse.csr_matrix(iris.data)
 
 
 def test_SVC():
@@ -39,14 +40,14 @@ def test_SVC():
 
     assert_array_equal(sp_clf.predict(T), true_result)
 
-    assert scipy.sparse.issparse(sp_clf.support_vectors_)
+    assert sparse.issparse(sp_clf.support_vectors_)
     assert_array_almost_equal(clf.support_vectors_,
             sp_clf.support_vectors_.todense())
 
-    assert scipy.sparse.issparse(sp_clf.dual_coef_)
+    assert sparse.issparse(sp_clf.dual_coef_)
     assert_array_almost_equal(clf.dual_coef_, sp_clf.dual_coef_.todense())
 
-    assert scipy.sparse.issparse(sp_clf.coef_)
+    assert sparse.issparse(sp_clf.coef_)
     assert_array_almost_equal(clf.coef_, sp_clf.coef_.todense())
     assert_array_almost_equal(clf.predict(T), sp_clf.predict(T))
 
@@ -139,7 +140,7 @@ def test_weight():
     X_, y_ = make_classification(n_samples=200, n_features=100,
                                  weights=[0.833, 0.167], random_state=0)
 
-    X_ = scipy.sparse.csr_matrix(X_)
+    X_ = sparse.csr_matrix(X_)
     for clf in (linear_model.sparse.LogisticRegression(),
                 svm.sparse.LinearSVC(),
                 svm.sparse.SVC()):
@@ -183,7 +184,7 @@ def test_sparse_realdata():
          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2,
          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
          2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 4, 4])
-    X = scipy.sparse.csr_matrix((data, indices, indptr))
+    X = sparse.csr_matrix((data, indices, indptr))
     y = np.array(
         [1.,  0.,  2.,  2.,  1.,  1.,  1.,  2.,  2.,  0.,  1.,  2.,  2.,
         0.,  2.,  0.,  3.,  0.,  3.,  0.,  1.,  1.,  3.,  2.,  3.,  2.,
@@ -198,6 +199,33 @@ def test_sparse_realdata():
 
     assert_array_equal(clf.support_vectors_, sp_clf.support_vectors_.todense())
     assert_array_equal(clf.dual_coef_, sp_clf.dual_coef_.todense())
+
+
+def test_sparse_scale_C():
+    """Check that sparse LibSVM/LibLinear works ok with scaling of C"""
+
+    params = dict(kernel='linear', C=0.1)
+    klasses = [(svm.SVC, svm.sparse.SVC, params),
+               (svm.SVR, svm.sparse.SVR, params),
+               (svm.NuSVR, svm.sparse.NuSVR, params),
+               (svm.LinearSVC, svm.sparse.LinearSVC, {}),
+               (linear_model.LogisticRegression,
+                    linear_model.sparse.LogisticRegression, {})
+              ]
+
+    for klass, sparse_klass, this_params in klasses:
+        clf = klass(scale_C=True, **this_params).fit(X, Y)
+        clf_no_scale = klass(scale_C=False, **this_params).fit(X, Y)
+        sp_clf = sparse_klass(scale_C=True, **this_params).fit(X, Y)
+
+        sp_clf_coef_ = sp_clf.coef_
+        if sparse.issparse(sp_clf_coef_):
+            sp_clf_coef_ = sp_clf_coef_.todense()
+        assert_array_almost_equal(clf.coef_, sp_clf_coef_, 5)
+
+        error_with_scale = linalg.norm(clf_no_scale.coef_
+                           - sp_clf_coef_) / linalg.norm(clf_no_scale.coef_)
+        assert_true(error_with_scale > 1e-3)
 
 
 if __name__ == '__main__':

@@ -25,7 +25,7 @@ Changelog
    - Faster tests by `Fabian Pedregosa`_.
 
    - Silhouette Coefficient cluster analysis evaluation metric added as
-     ``sklearn.metrics.silhouette_score`` by `Robert Layton`_.
+     ``sklearn.metrics.silhouette_score`` by Robert Layton.
 
    - Fixed a bug in `KMeans` in the handling of the `n_init` parameter:
      the clustering algorithm used to be run `n_init` times but the last
@@ -35,7 +35,11 @@ Changelog
      predict methods.
 
    - Adjusted Mutual Information metric added as
-     ``sklearn.metrics.adjusted_mutual_info_score`` by `Robert Layton`_.
+     ``sklearn.metrics.adjusted_mutual_info_score`` by Robert Layton.
+
+   - Models like SVC/SVR/LinearSVC/LogisticRegression from libsvm/liblinear
+     now support scaling of C regularization parameter by the number of
+     samples by `Alexandre Gramfort`_.
 
    - New :ref:`Ensemble Methods <ensemble>` module by `Gilles Louppe`_ and
      `Brian Holt`_. The module comes with the random forest algorithm and the
@@ -548,7 +552,7 @@ Changelog
 
   - Lots of cool new examples and a new section that uses real-world
     datasets was created. These include:
-    :ref:`example_applications_plot_face_recognition.py`,
+    :ref:`example_applications_face_recognition.py`,
     :ref:`example_applications_plot_species_distribution_modeling.py`,
     :ref:`example_applications_svm_gui.py`,
     :ref:`example_applications_wikipedia_principal_eigenvector.py` and
@@ -625,7 +629,7 @@ New classes
     - New :class:`pipeline.Pipeline` object to compose different estimators.
 
     - Recursive Feature Elimination routines in module
-      :ref:`feature_selection_doc`.
+      :ref:`feature_selection`.
 
     - Addition of various classes capable of cross validation in the
       linear_model module (:class:`linear_model.LassoCV`, :class:`linear_model.ElasticNetCV`,
@@ -673,7 +677,7 @@ Examples
 
     - new examples using some of the mlcomp datasets:
       :ref:`example_mlcomp_sparse_document_classification.py`,
-      :ref:`example_mlcomp_document_classification.py`
+      :ref:`example_document_classification_20newsgroups.py`
 
     - Many more examaples. `See here
       <http://scikit-learn.org/stable/auto_examples/index.html>`_
@@ -824,3 +828,5 @@ of commits):
 .. _David Warde-Farley: http://www-etud.iro.umontreal.ca/~wardefar/
 
 .. _Brian Holt: http://info.ee.surrey.ac.uk/Personal/B.Holt/
+
+.. _Satrajit Ghosh: http://www.mit.edu/~satra/

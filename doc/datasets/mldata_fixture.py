@@ -5,26 +5,27 @@ Mock urllib2 access to mldata.org
 
 from os import makedirs
 from os.path import join
+import numpy as np
+import tempfile
+import shutil
+
 from sklearn import datasets
 from sklearn.utils.testing import mock_urllib2
-import tempfile
-import scipy as sp
-import shutil
 
 
 def globs(globs):
     # setup mock urllib2 module to avoid downloading from mldata.org
-    mock_datasets = {
+    mock_dataset = {
         'mnist-original': {
-            'data': sp.empty((70000, 784)),
-            'label': sp.repeat(sp.arange(10, dtype='d'), 7000),
+            'data': np.empty((70000, 784)),
+            'label': np.repeat(np.arange(10, dtype='d'), 7000),
         },
         'iris': {
-            'data': sp.empty((150, 4)),
+            'data': np.empty((150, 4)),
         },
         'datasets-uci-iris': {
-            'double0': sp.empty((150, 4)),
-            'class': sp.empty((150,)),
+            'double0': np.empty((150, 4)),
+            'class': np.empty((150,)),
         },
     }
 
@@ -36,7 +37,7 @@ def globs(globs):
     global _urllib2_ref
     _urllib2_ref = datasets.mldata.urllib2
     globs['_urllib2_ref'] = _urllib2_ref
-    globs['mock_urllib2'] = mock_urllib2(mock_datasets)
+    datasets.mldata.urllib2 = mock_urllib2(mock_dataset)
     return globs
 
 
