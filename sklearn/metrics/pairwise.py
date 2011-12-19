@@ -144,6 +144,10 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     # well as Y, then you should just pre-compute the output and not even
     # call this function.
     X, Y = check_pairwise_arrays(X, Y)
+    if X.dtype not in (np.float32, np.float64):
+        raise ValueError('X must have float32 or float64 dtype')
+    if Y.dtype not in (np.float32, np.float64):
+        raise ValueError('Y must have float32 or float64 dtype')
     if issparse(X):
         XX = X.multiply(X).sum(axis=1)
     else:
