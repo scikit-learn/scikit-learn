@@ -49,12 +49,12 @@ def log_multivariate_normal_density(X, means, covars, cvtype='diag'):
 
     Parameters
     ----------
-    X : array_like, shape (O, D)
-        List of D-dimensional data points.  Each row corresponds to a
+    X : array_like, shape (n_samples, n_features)
+        List of n_features-dimensional data points.  Each row corresponds to a
         single data point.
-    means : array_like, shape (C, D)
-        List of D-dimensional mean vectors for C Gaussians.  Each row
-        corresponds to a single mean vector.
+    means : array_like, shape (n_components, n_features)
+        List of n_features-dimensional mean vectors for n_components Gaussians.
+        Each row corresponds to a single mean vector.
     covars : array_like
         List of C covariance parameters for each Gaussian.  The shape
         depends on `cvtype`:
@@ -68,9 +68,9 @@ def log_multivariate_normal_density(X, means, covars, cvtype='diag'):
 
     Returns
     -------
-    lpr : array_like, shape (O, C)
+    lpr : array_like, shape (n_samples, n_components)
         Array containing the log probabilities of each data point in
-        X under each of the C multivariate Gaussian distributions.
+        X under each of the n_components multivariate Gaussian distributions.
     """
     log_multivariate_normal_density_dict = {
         'spherical': _log_multivariate_normal_density_spherical,
@@ -184,16 +184,13 @@ class GMM(BaseEstimator):
 
     Methods
     -------
-    decode(X) -> remove
-        Find most likely mixture components for each point in X.
     eval(X) -> predict_proba
         Compute the log likelihood of X under the model and the
         posterior distribution over mixture components.
     fit(X)
         Estimate model parameters from X using the EM algorithm.
     predict(X)
-        Like decode, find most likely mixtures components for each
-        observation in X.
+        Find most likely mixtures components for each observation in X.
     rvs(n=1, random_state=None)
         Generate `n` samples from the model.
     score(X)
@@ -371,25 +368,6 @@ class GMM(BaseEstimator):
         logprob, _ = self.eval(X)
         return logprob
 
-    def decode(self, X):
-        """Find most likely mixture components for each point in X.
-
-        Parameters
-        ----------
-        X : array_like, shape (n, n_features)
-            List of n_features-dimensional data points.  Each row
-            corresponds to a single data point.
-
-        Returns
-        -------
-        logprobs : array_like, shape (n_samples,)
-            Log probability of each point in X under the model.
-        components : array_like, shape (n_samples,)
-            Index of the most likelihod mixture components for each observation
-        """
-        logprob, posteriors = self.eval(X)
-        return logprob, posteriors.argmax(axis=1)
-
     def predict(self, X):
         """Predict label for data.
 
@@ -401,8 +379,8 @@ class GMM(BaseEstimator):
         -------
         C : array, shape = (n_samples,)
         """
-        logprob, components = self.decode(X)
-        return components
+        logprob, posteriors = self.eval(X)
+        return posteriors.argmax(axis=1)
 
     def predict_proba(self, X):
         """Predict posterior probability of data under each Gaussian
