@@ -12,6 +12,8 @@ def test_mean_variance_axis0():
     X[2, 1] = 0
     X[4, 3] = 0
     X_csr = sp.csr_matrix(X)
+    X_csr[1, 0] = 0
+    X[1, 0] = 0
     X_means, X_vars = mean_variance_axis0(X_csr)
 
     assert_array_almost_equal(X_means, np.mean(X, axis=0))
