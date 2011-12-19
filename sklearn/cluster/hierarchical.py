@@ -624,9 +624,7 @@ class HierarchicalClustering(BaseEstimator):
 class Ward(HierarchicalClustering):
     # TODO: Contained only for backward compatibility. Add a deprecation
     #       warning?
-    def __init__(self, *args, **kwargs):
-        super(Ward, self).__init__(*args, linkage_criterion="ward",
-                                   **kwargs)
+    pass
 
 
 # Ward-based feature agglomeration
