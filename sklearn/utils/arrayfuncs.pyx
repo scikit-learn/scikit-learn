@@ -131,7 +131,7 @@ cpdef fast_sqdist_float32(np.ndarray[np.float32_t, ndim=2] X,
     ----------
     X : ndarray, float32, shape = [n_samples_a, n_features]
 
-    Y : ndarray, float32, shape = [n_sample_b, n_features]
+    Y : ndarray, float32, shape = [n_samples_b, n_features]
 
     out : ndarray, float32, shape = [n_samples_a, n_samples_b]
 
@@ -165,7 +165,7 @@ cpdef fast_sqdist_float64(np.ndarray[np.float64_t, ndim=2] X,
     ----------
     X : ndarray, float64, shape = [n_samples_a, n_features]
 
-    Y : ndarray, float64, shape = [n_sample_b, n_features]
+    Y : ndarray, float64, shape = [n_samples_b, n_features]
 
     out : ndarray, float64, shape = [n_samples_a, n_samples_b]
 
