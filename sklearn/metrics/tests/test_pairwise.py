@@ -118,10 +118,20 @@ def callable_rbf_kernel(x, y, **kwds):
 
 def test_euclidean_distances():
     """ Check the pairwise Euclidean distances computation"""
-    X = [[0]]
-    Y = [[1], [2]]
+    X = np.array([[0.]])
+    Y = np.array([[1.], [2.]])
     D = euclidean_distances(X, Y)
     assert_array_almost_equal(D, [[1., 2.]])
+
+
+    D = euclidean_distances(X.astype(np.float64), Y.astype(np.float32))
+    assert_array_almost_equal(D, [[1., 2.]])
+
+    D = euclidean_distances(X, X)
+    assert_array_almost_equal(D, [[0.]])
+
+    D = euclidean_distances(Y, Y)
+    assert_array_almost_equal(D, [[0, 1], [1, 0]])
 
     X = csr_matrix(X)
     Y = csr_matrix(Y)

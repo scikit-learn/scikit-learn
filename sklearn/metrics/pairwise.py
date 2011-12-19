@@ -38,7 +38,7 @@ kernel:
 import numpy as np
 from scipy.spatial import distance
 from scipy.sparse import csr_matrix, issparse
-from ..utils import safe_asarray, atleast2d_or_csr, deprecated
+from ..utils import safe_asarray, atleast2d_or_csr, deprecated, arrayfuncs
 from ..utils.extmath import safe_sparse_dot
 
 
@@ -158,18 +158,39 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
             raise ValueError(
                         "Incompatible dimensions for Y and Y_norm_squared")
 
-    # TODO: a faster Cython implementation would do the clipping of negative
-    # values in a single pass over the output matrix.
-    distances = safe_sparse_dot(X, Y.T, dense_output=True)
-    distances *= -2
-    distances += XX
-    distances += YY
-    np.maximum(distances, 0, distances)
+    # Do specialized faster things for the dense-dense case.
+    if not issparse(X) and not issparse(Y):
+        if X.dtype != Y.dtype:
+            _X = X.astype(np.float64)
+            _Y = Y.astype(np.float64)
+            # TODO: Add note to docs about possible duplication
+            distances = np.empty((X.shape[0], Y.shape[0]), np.float64)
+        else:
+            _X = X
+            _Y = Y
+            distances = np.empty((X.shape[0], Y.shape[0]), X.dtype)
+        if X is Y:
+            if X.dtype is np.float32:
+                arrayfuncs.fast_pair_sqdist_float32(_X, distances)
+            else:
+                arrayfuncs.fast_pair_sqdist_float64(_X, distances)
+        else:
+            if X.dtype is np.float32:
+                arrayfuncs.fast_sqdist_float32(_X, _Y, distances)
+            else:
+                arrayfuncs.fast_sqdist_float64(_X, _Y, distances)
+    else:
+        distances = safe_sparse_dot(X, Y.T, dense_output=True)
+        distances *= -2
+        distances += XX
+        distances += YY
+        np.maximum(distances, 0, distances)
 
-    if X is Y:
-        # Ensure that distances between vectors and themselves are set to 0.0.
-        # This may not be the case due to floating point rounding errors.
-        distances.flat[::distances.shape[0] + 1] = 0.0
+        if X is Y:
+            # Ensure that distances between vectors and themselves are set to
+            # 0.0.  This may not be the case due to floating point rounding
+            # errors.
+            distances.flat[::distances.shape[0] + 1] = 0.0
 
     return distances if squared else np.sqrt(distances)
 
