@@ -1,5 +1,5 @@
 """
-Randomized Lasso: feature selection based on lasso
+Randomized Lasso: feature selection based on Lasso
 """
 
 # Author: Gael Varoquaux
@@ -18,11 +18,11 @@ from .logistic import LogisticRegression
 from ..externals.joblib import Memory
 
 
-################################################################################
+###############################################################################
 # Randomized linear model: feature selection
 
 def _resample_model(estimator_func, X, y, a=.5, n_resampling=200,
-                    n_jobs=1, verbose=False, pre_dispatch='3*n_jobs', 
+                    n_jobs=1, verbose=False, pre_dispatch='3*n_jobs',
                     random_state=None, jacknife_fraction=.75, **params):
     random_state = check_random_state(random_state)
     # We are generating 1 - weights, and not weights
@@ -31,8 +31,8 @@ def _resample_model(estimator_func, X, y, a=.5, n_resampling=200,
     scores_ = np.zeros(n_features)
     for active_set in Parallel(n_jobs=n_jobs, verbose=verbose,
                                pre_dispatch=pre_dispatch)(
-                delayed(estimator_func)(X, y, 
-                        weights=a * random_state.random_integers(0, 
+                delayed(estimator_func)(X, y,
+                        weights=a * random_state.random_integers(0,
                                                     1, size=(n_features,)),
                         mask=(random_state.rand(n_samples) < jacknife_fraction),
                         verbose=max(0, verbose - 1),
@@ -46,7 +46,7 @@ def _resample_model(estimator_func, X, y, a=.5, n_resampling=200,
 
 class BaseRandomizedLinearModel(TransformerMixin):
     """ Base class to implement randomized linear models for feature
-        selection, in the spirit of Meinshausen and Buhlman's: 
+        selection, in the spirit of Meinshausen and Buhlman's:
         stability selection with jacknife, and random reweighting of
         the penalty
     """
@@ -56,7 +56,7 @@ class BaseRandomizedLinearModel(TransformerMixin):
     def __init__(self, jacknife_fraction=.75, n_resampling=200,
                  selection_threshold=.25, fit_intercept=True, verbose=False,
                  normalize=True, random_state=None, n_jobs=1,
-                 pre_dispatch='3*n_jobs', 
+                 pre_dispatch='3*n_jobs',
                  memory=Memory(cachedir=None, verbose=0)):
         self.jacknife_fraction = jacknife_fraction
         self.n_resampling = n_resampling
@@ -96,20 +96,19 @@ class BaseRandomizedLinearModel(TransformerMixin):
                                                         self.fit_intercept,
                                                         self.normalize)
 
-
         estimator_func, params = self._mk_estimator_and_params(X, y)
         memory = self.memory
         if isinstance(memory, basestring):
             memory = Memory(cachedir=memory)
 
-        self.scores_ = memory.cache(_resample_model)(estimator_func, X, y, 
+        self.scores_ = memory.cache(_resample_model)(estimator_func, X, y,
                                     a=self.a,
-                                    n_resampling=self.n_resampling, 
-                                    n_jobs=self.n_jobs, 
-                                    verbose=self.verbose, 
-                                    pre_dispatch=self.pre_dispatch, 
-                                    random_state=self.random_state, 
-                                    jacknife_fraction=self.jacknife_fraction, 
+                                    n_resampling=self.n_resampling,
+                                    n_jobs=self.n_jobs,
+                                    verbose=self.verbose,
+                                    pre_dispatch=self.pre_dispatch,
+                                    random_state=self.random_state,
+                                    jacknife_fraction=self.jacknife_fraction,
                                     **params)
         return self
 
@@ -145,12 +144,15 @@ class BaseRandomizedLinearModel(TransformerMixin):
         return Xt
 
 
-
-################################################################################
+###############################################################################
 # Randomized lasso: regression settings
 
 def _randomized_lasso(X, y, weights, mask, alpha=1., verbose=False,
+<<<<<<< HEAD
                       precompute=False, eps=np.finfo(np.float).eps, 
+=======
+                      precompute=False, eps=np.finfo(np.float).eps,
+>>>>>>> STY: pep8
                       max_iter=500):
     # XXX: should we refit the intercept?
     X = X[mask]
@@ -186,7 +188,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
     normalize : boolean, optional
         If True, the regressors X are normalized
 
-    precompute : True | False | 'auto' 
+    precompute : True | False | 'auto'
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to 'auto' let us decide. The Gram
         matrix can also be passed as argument.
@@ -254,9 +256,9 @@ class RandomizedLasso(BaseRandomizedLinearModel):
                  n_resampling=200,
                  selection_threshold=.25,
                  fit_intercept=True, verbose=False,
-                 normalize=True, precompute='auto', 
-                 max_iter=500, 
-                 eps=np.finfo(np.float).eps, random_state=None, 
+                 normalize=True, precompute='auto',
+                 max_iter=500,
+                 eps=np.finfo(np.float).eps, random_state=None,
                  n_jobs=1, pre_dispatch='3*n_jobs',
                  memory=Memory(cachedir=None, verbose=0)):
         self.alpha = alpha
@@ -279,21 +281,21 @@ class RandomizedLasso(BaseRandomizedLinearModel):
         assert self.precompute in (True, False, None, 'auto')
         alpha = self.alpha
         if alpha in ('aic', 'bic'):
-            model = LassoLarsIC(precompute=self.precompute, 
-                                criterion=self.alpha, 
+            model = LassoLarsIC(precompute=self.precompute,
+                                criterion=self.alpha,
                                 max_iter=self.max_iter,
                                 eps=self.eps)
             model.fit(X, y)
             self.alpha_ = alpha = model.alpha_
-        return _randomized_lasso, dict(alpha=alpha, 
+        return _randomized_lasso, dict(alpha=alpha,
                     max_iter=self.max_iter, eps=self.eps,
                     precompute=self.precompute)
 
 
-################################################################################
+###############################################################################
 # Randomized logistic: classification settings
 
-def _randomized_logistic(X, y, weights, mask, C=1., verbose=False, 
+def _randomized_logistic(X, y, weights, mask, C=1., verbose=False,
                       fit_intercept=True, tol=1e-3):
     X = X[mask]
     y = y[mask]
@@ -312,8 +314,8 @@ class RandomizedLogistic(BaseRandomizedLinearModel):
                  n_resampling=200,
                  selection_threshold=.25, tol=1e-3,
                  fit_intercept=True, verbose=False,
-                 normalize=True, 
-                 random_state=None, 
+                 normalize=True,
+                 random_state=None,
                  n_jobs=1, pre_dispatch='3*n_jobs',
                  memory=Memory(cachedir=None, verbose=0)):
         self.C = C
