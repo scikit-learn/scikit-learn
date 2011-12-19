@@ -18,6 +18,7 @@ are supervised learning methods based on applying Bayes' theorem with strong
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
+from scipy.linalg import norm
 from scipy.sparse import issparse
 
 from .base import BaseEstimator, ClassifierMixin
@@ -566,8 +567,8 @@ class SemisupervisedNB(BaseNB):
             # M
             clf._fit1ofK(X, Y, sample_weight, class_prior)
 
-            d = (np.abs(old_coef - clf.coef_).sum()
-               + np.abs(old_intercept - clf.intercept_).sum())
+            d = (norm(old_coef - clf.coef_, 1)
+               + norm(old_intercept - clf.intercept_, 1))
             if self.verbose:
                 print "diff = %.3g" % d
             if d < tol:
