@@ -26,9 +26,8 @@ def test_additive_chi2_sampler():
     kernel = (large_kernel.sum(axis=2))
 
     # appoximate kernel mapping
-    transform = AdditiveChi2Sampler(n=3)
-    #X_trans = transform.fit_transform(X)
-    X_trans = transform.transform(X)
+    transform = AdditiveChi2Sampler(sample_steps=3)
+    X_trans = transform.fit_transform(X)
     Y_trans = transform.transform(Y)
     kernel_approx = np.dot(X_trans, Y_trans.T)
 
@@ -53,7 +52,7 @@ def test_skewed_chi2_sampler():
     kernel = np.exp(log_kernel.sum(axis=2))
 
     # appoximate kernel mapping
-    transform = SkewedChi2Sampler(c=c, n_components=1000)
+    transform = SkewedChi2Sampler(skewedness=c, n_components=1000, random_state=42)
     X_trans = transform.fit_transform(X)
     Y_trans = transform.transform(Y)
     kernel_approx = np.dot(X_trans, Y_trans.T)
@@ -70,7 +69,7 @@ def test_rbf_sampler():
     kernel = np.exp(-gamma * dists ** 2)
 
     # appoximate kernel mapping
-    rbf_transform = RBFSampler(gamma=gamma, n_components=1000)
+    rbf_transform = RBFSampler(gamma=gamma, n_components=1000, random_state=42)
     X_trans = rbf_transform.fit_transform(X)
     Y_trans = rbf_transform.transform(Y)
     kernel_approx = np.dot(X_trans, Y_trans.T)
