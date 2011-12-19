@@ -24,7 +24,7 @@ The advantages of Gaussian Processes for Machine Learning are:
       region of interest.
 
     - Versatile: different :ref:`linear regression models
-      <linear_regression_models>` and :ref:`correlation models
+      <linear_model>` and :ref:`correlation models
       <correlation_models>` can be specified. Common models are provided, but
       it is also possible to specify custom models provided they are
       stationary.
