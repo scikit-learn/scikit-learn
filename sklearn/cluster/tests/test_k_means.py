@@ -287,6 +287,12 @@ def test_predict():
     assert_array_equal(k_means.predict(X), k_means.labels_)
 
 
+def test_score():
+    s1 = KMeans(k=n_clusters, max_iter=1, random_state=42).fit(X).score(X)
+    s2 = KMeans(k=n_clusters, max_iter=10, random_state=42).fit(X).score(X)
+    assert_true(s2 > s1)
+
+
 def test_predict_minibatch_dense_input():
     mb_k_means = MiniBatchKMeans(k=n_clusters, random_state=40).fit(X)
 
