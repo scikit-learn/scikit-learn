@@ -87,8 +87,8 @@ class Dendrogram(object):
     heights : array, shape = [n_nodes]
         The heights associated to the tree's nodes.
 
-    children : list of pairs. Length of n_nodes
-        List of the children of node. This is not defined for leaves.
+    children : array, shape = [n_samples - 1, 2]
+        Array containing the children of a node. This is not defined for leaves.
 
     next_index : int
         The index that a new tree node (resulting from merging) will obtain.
@@ -102,7 +102,7 @@ class Dendrogram(object):
         n_nodes = 2 * self.n_samples - 1
         self.parent = np.arange(n_nodes, dtype=np.int)
         self.heights = -np.inf * np.ones(n_nodes)
-        self.children = []
+        self.children = np.zeros((self.n_samples - 1, 2), dtype=np.int) - 1
 
         self.next_index = self.n_samples
 
@@ -136,7 +136,8 @@ class Dendrogram(object):
                             self.heights[child_node_2])
         else:
             self.heights[self.next_index] = merge_distance
-        self.children.append([child_node_1, child_node_2])
+        self.children[self.next_index - self.n_samples, 0] = child_node_1
+        self.children[self.next_index - self.n_samples, 1] = child_node_2
         self.next_index += 1
 
         return self.next_index
@@ -165,8 +166,8 @@ class Dendrogram(object):
             else:  # inner node, go to children
                 if add_intermediate_nodes:
                     descendent.append(i)
-                ci = self.children[i - self.n_samples]
-                ind.extend((ci[0], ci[1]))
+                ind.append(self.children[i - self.n_samples, 0])
+                ind.append(self.children[i - self.n_samples, 1])
         return descendent
 
     def cut(self, n_clusters):
@@ -228,15 +229,15 @@ class Dendrogram(object):
                 cluster_roots.append(node)
             else:
                 # Tree node induces subtree with too large height; split it
-                child_node1, child_node2 = self.children[node - self.n_samples]
-                open_nodes.extend([child_node1, child_node2])
+                open_nodes.append(self.children[node - self.n_samples, 0])
+                open_nodes.append(self.children[node - self.n_samples, 1])
                 open_nodes.sort(reverse=True)
                 # If pruning is enabled, we also remove the parts of the tree
                 # that are "too high"
                 if prune:
                     self.parent[child_node1] = child_node1
                     self.parent[child_node2] = child_node2
-                    self.children[node - self.n_samples] = None
+                    self.children[node - self.n_samples] = -1
 
         return cluster_roots
 
