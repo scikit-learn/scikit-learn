@@ -333,7 +333,7 @@ extracted from part of the image of Lena looks like.
     <http://www.di.ens.fr/sierra/pdfs/icml09.pdf>`_
     J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009
 
-.. _MiniBatchDictionaryLearning
+.. _MiniBatchDictionaryLearning:
 
 Mini-batch dictionary learning
 ------------------------------

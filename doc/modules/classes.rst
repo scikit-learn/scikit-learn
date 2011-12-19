@@ -150,6 +150,7 @@ Samples generator
    datasets.make_sparse_coded_signal
    datasets.make_sparse_uncorrelated
    datasets.make_spd_matrix
+   datasets.make_sparse_spd_matrix
    datasets.make_swiss_roll
    datasets.make_s_curve
 
