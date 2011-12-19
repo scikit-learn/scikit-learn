@@ -557,11 +557,12 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
 
     Returns
     -------
+    code: array of shape (n_samples, n_atoms),
+        the sparse code (only returned if `return_code=True`)
+
     dictionary: array of shape (n_atoms, n_features),
         the solutions to the dictionary learning problem
 
-    code: array of shape (n_samples, n_atoms),
-        the sparse code (only returned if `return_code=True`)
     """
     if method not in ('lars', 'cd'):
         raise ValueError('Coding method not supported as a fit algorithm.')
