@@ -68,6 +68,9 @@ polutting ones, called "outliers". Yet, in the case of outlier
 detection, we don't have a clean data set representing the population
 of regular observations that can be used to train any tool.
 
+Fitting an elliptic envelop
+-----------------------------
+
 One common way of performing outlier detection is to assume that the
 regular data come from a known distribution (e.g. data are Gaussian
 distributed). From this assumption, we generaly try to define the
@@ -76,7 +79,15 @@ observations which stand far enough from the fit shape. For instance,
 assuming that the data are Gaussian distributed, it is possible to
 estimate the data location and covariance in a robust way
 (i.e. whithout being influenced by outliers) and use the Mahalanobis
-distances obtained from this estimate to derive a measure of outlyingness.
+distances obtained from this estimate to derive a measure of outlyingness. 
+This strategy is illustrated below.
+
+.. figure:: ../auto_examples/covariance/images/plot_mahalanobis_distances_1.png
+   :target: ../auto_examples/covariance/plot_mahalanobis_distances.html
+   :align: center
+   :scale: 75%
+
+
 
 .. topic:: Examples:
 
@@ -88,11 +99,6 @@ distances obtained from this estimate to derive a measure of outlyingness.
    * See :ref:`example_covariance_plot_outlier_detection.py` for a comparison
      of the :class:`OneClassSVM` (tuned to perform like an outlier detection
      method) and a covariance-based outlier detection with :class:`MinCovDet`.
-
-.. figure:: ../auto_examples/covariance/images/plot_mahalanobis_distances_1.png
-   :target: ../auto_examples/covariance/plot_mahalanobis_distances.html
-   :align: center
-   :scale: 75%
 
 .. figure:: ../auto_examples/covariance/images/plot_outlier_detection_1.png
    :target: ../auto_examples/covariance/plot_outlier_detection.html

@@ -3,18 +3,18 @@
 Outlier detection with several methods.
 ==========================================
 
-This example illustrates two ways of performing outliers detection when
-the amount of contamination is known:
- - using the One-Class SVM and its ability to capture the shape of the
-   data set, hence performing better when two clusters are identifiables;
+This example illustrates two ways of performing :ref:`outliers_detection`
+when the amount of contamination is known:
  - based on a robust estimator of covariance, which is assuming that the
    data are Gaussian distributed and performs better than the One-Class SVM
    in that case.
+ - using the One-Class SVM and its ability to capture the shape of the
+   data set, hence performing better when the data is strongly
+   non-Gaussian, e.. with two well-separated clusters;
 
 The ground truth about inliers and outliers is given by the points colors
 while the orange-filled area indicates which points are reported as outliers
 by each method.
-
 """
 print __doc__
 
@@ -27,12 +27,14 @@ from sklearn.covariance import EllipticEnvelop
 # Example settings
 n_samples = 200
 outliers_rate = 0.1
-clusters_distances = [0, 1, 2]
+clusters_separation = [0, 1, 2]
+
 # define two outlier detection tools to be compared
 classifiers = {
-    "One-Class SVM": svm.OneClassSVM(
-        nu=0.95 * outliers_rate + 0.05, kernel="rbf", gamma=0.1),
-    "robust covariance estimator": EllipticEnvelop(contamination=.1)}
+    "One-Class SVM": svm.OneClassSVM(nu=0.95 * outliers_rate + 0.05,
+                                     kernel="rbf", gamma=0.1),
+    "robust covariance estimator": EllipticEnvelop(contamination=.1),
+    }
 
 # Compare given classifiers under given settings
 xx, yy = np.meshgrid(np.linspace(-7, 7, 500), np.linspace(-7, 7, 500))
@@ -40,7 +42,9 @@ n_inliers = int((1. - outliers_rate) * n_samples)
 n_outliers = int(outliers_rate * n_samples)
 ground_truth = np.ones(n_samples, dtype=int)
 ground_truth[-n_outliers:] = -1
-for i, offset in enumerate(clusters_distances):
+
+# Fit the problem with varying cluster separation
+for i, offset in enumerate(clusters_separation):
     # Data generation
     X1 = 0.3 * np.random.randn(0.5 * n_inliers, 2) - offset
     X2 = 0.3 * np.random.randn(0.5 * n_inliers, 2) + offset
