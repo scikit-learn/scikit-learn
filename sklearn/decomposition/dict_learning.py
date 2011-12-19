@@ -272,7 +272,7 @@ def sparse_encode_parallel(X, dictionary, gram=None, cov=None,
         return sparse_encode(X, dictionary, gram, cov, algorithm,
                              n_nonzero_coefs, alpha, copy_gram, copy_cov, init)
     code = np.empty((n_samples, n_atoms))
-    slices = list(gen_even_slices(n_atoms, n_jobs))
+    slices = list(gen_even_slices(n_samples, n_jobs))
     code_views = Parallel(n_jobs=n_jobs)(
                 delayed(sparse_encode)(X[this_slice], dictionary, gram,
                                        cov[:, this_slice], algorithm,
