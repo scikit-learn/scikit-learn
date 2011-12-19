@@ -39,7 +39,7 @@ function does not actually depend on the data given to the ``fit`` function.
 Only the dimensionality of the data is used.
 
 Additive Chi Squared Kernel
--------------------------
+---------------------------
 The chi squared kernel is a kernel on histograms, often used in computer vision.
 
 The chi squared kernel is given by
