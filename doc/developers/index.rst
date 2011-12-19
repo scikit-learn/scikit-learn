@@ -349,6 +349,7 @@ data-independent parameters (overriding previous parameter values passed
 to ``__init__``). This method is not required for an object to be an
 estimator.
 
+All estimators should inherit from ``scikit.learn.base.BaseEstimator``.
 
 Instantiation
 ^^^^^^^^^^^^^
@@ -377,7 +378,27 @@ correspond to an attribute on the instance**. The scikit relies on this
 to find what are the relevent attributes to set on an estimator when
 doing model selection.
 
-All estimators should inherit from ``scikit.learn.base.BaseEstimator``.
+To summarize, a `__init__` should look like::
+
+    def __init__(self, param1=1, param2=2):
+        self.param1 = param1
+        self.param2 = param2
+
+There should be no logic, and the parameters should not be changed.
+The corresponding logic should be put when the parameters are used. The
+following is wrong::
+
+    def __init__(self, param1=1, param2=2, param3=3):
+        # WRONG: parameters should not be modified
+        if param1 > 1:
+            param2 += 1
+        self.param1 = param1
+        # WRONG: the object's attributes should have exactly the name of
+        # the argument in the constructor
+        self.param3 = param2
+
+The scikit-learn relies on this mechanism to introspect object to set
+their parameters by cross-validation.
 
 
 Fitting
