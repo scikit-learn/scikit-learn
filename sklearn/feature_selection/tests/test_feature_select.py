@@ -12,6 +12,7 @@ from scipy import stats
 from sklearn.datasets.samples_generator import make_classification, \
                                                      make_regression
 
+
 ##############################################################################
 # Test the score functions
 
@@ -37,11 +38,11 @@ def test_f_classif():
                                class_sep=10, shuffle=False, random_state=0)
 
     F, pv = f_classif(X, Y)
-    assert(F>0).all()
-    assert(pv>0).all()
-    assert(pv<1).all()
-    assert(pv[:5]<0.05).all()
-    assert(pv[5:]>1.e-4).all()
+    assert(F > 0).all()
+    assert(pv > 0).all()
+    assert(pv < 1).all()
+    assert(pv[:5] < 0.05).all()
+    assert(pv[5:] > 1.e-4).all()
 
 
 def test_f_regression():
@@ -53,11 +54,11 @@ def test_f_regression():
                            n_informative=5, shuffle=False, random_state=0)
 
     F, pv = f_regression(X, Y)
-    assert(F>0).all()
-    assert(pv>0).all()
-    assert(pv<1).all()
-    assert(pv[:5]<0.05).all()
-    assert(pv[5:]>1.e-4).all()
+    assert(F > 0).all()
+    assert(pv > 0).all()
+    assert(pv < 1).all()
+    assert(pv[:5] < 0.05).all()
+    assert(pv[5:] > 1.e-4).all()
 
 
 def test_f_classif_multi_class():
@@ -72,11 +73,11 @@ def test_f_classif_multi_class():
                                class_sep=10, shuffle=False, random_state=0)
 
     F, pv = f_classif(X, Y)
-    assert(F>0).all()
-    assert(pv>0).all()
-    assert(pv<1).all()
-    assert(pv[:5]<0.05).all()
-    assert(pv[5:]>1.e-5).all()
+    assert(F > 0).all()
+    assert(pv > 0).all()
+    assert(pv < 1).all()
+    assert(pv[:5] < 0.05).all()
+    assert(pv[5:] > 1.e-5).all()
 
 
 def test_select_percentile_classif():
@@ -98,8 +99,9 @@ def test_select_percentile_classif():
     assert_array_equal(X_r, X_r2)
     support = univariate_filter.get_support()
     gtruth = np.zeros(20)
-    gtruth[:5]=1
+    gtruth[:5] = 1
     assert_array_equal(support, gtruth)
+
 
 ##############################################################################
 # Test univariate selection in classification settings
@@ -123,7 +125,7 @@ def test_select_kbest_classif():
     assert_array_equal(X_r, X_r2)
     support = univariate_filter.get_support()
     gtruth = np.zeros(20)
-    gtruth[:5]=1
+    gtruth[:5] = 1
     assert_array_equal(support, gtruth)
 
 
@@ -146,7 +148,7 @@ def test_select_fpr_classif():
     assert_array_equal(X_r, X_r2)
     support = univariate_filter.get_support()
     gtruth = np.zeros(20)
-    gtruth[:5]=1
+    gtruth[:5] = 1
     assert_array_equal(support, gtruth)
 
 
@@ -169,7 +171,7 @@ def test_select_fdr_classif():
     assert_array_equal(X_r, X_r2)
     support = univariate_filter.get_support()
     gtruth = np.zeros(20)
-    gtruth[:5]=1
+    gtruth[:5] = 1
     assert_array_equal(support, gtruth)
 
 
@@ -192,8 +194,8 @@ def test_select_fwe_classif():
     assert_array_equal(X_r, X_r2)
     support = univariate_filter.get_support()
     gtruth = np.zeros(20)
-    gtruth[:5]=1
-    assert(np.sum(np.abs(support-gtruth))<2)
+    gtruth[:5] = 1
+    assert(np.sum(np.abs(support - gtruth)) < 2)
 
 
 ##############################################################################
@@ -215,7 +217,7 @@ def test_select_percentile_regression():
     assert_array_equal(X_r, X_r2)
     support = univariate_filter.get_support()
     gtruth = np.zeros(20)
-    gtruth[:5]=1
+    gtruth[:5] = 1
     assert_array_equal(support, gtruth)
     X_2 = X.copy()
     X_2[:, np.logical_not(support)] = 0
@@ -256,7 +258,7 @@ def test_select_kbest_regression():
     assert_array_equal(X_r, X_r2)
     support = univariate_filter.get_support()
     gtruth = np.zeros(20)
-    gtruth[:5]=1
+    gtruth[:5] = 1
     assert_array_equal(support, gtruth)
 
 
@@ -276,9 +278,9 @@ def test_select_fpr_regression():
     assert_array_equal(X_r, X_r2)
     support = univariate_filter.get_support()
     gtruth = np.zeros(20)
-    gtruth[:5]=1
-    assert(support[:5]==1).all()
-    assert(np.sum(support[5:]==1)<3)
+    gtruth[:5] = 1
+    assert(support[:5] == 1).all()
+    assert(np.sum(support[5:] == 1) < 3)
 
 
 def test_select_fdr_regression():
@@ -297,7 +299,7 @@ def test_select_fdr_regression():
     assert_array_equal(X_r, X_r2)
     support = univariate_filter.get_support()
     gtruth = np.zeros(20)
-    gtruth[:5]=1
+    gtruth[:5] = 1
     assert_array_equal(support, gtruth)
 
 
@@ -317,6 +319,6 @@ def test_select_fwe_regression():
     assert_array_equal(X_r, X_r2)
     support = univariate_filter.get_support()
     gtruth = np.zeros(20)
-    gtruth[:5]=1
-    assert(support[:5]==1).all()
-    assert(np.sum(support[5:]==1)<2)
+    gtruth[:5] = 1
+    assert(support[:5] == 1).all()
+    assert(np.sum(support[5:] == 1) < 2)

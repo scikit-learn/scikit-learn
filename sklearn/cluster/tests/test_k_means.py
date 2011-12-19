@@ -28,7 +28,6 @@ n_samples = 100
 n_clusters, n_features = centers.shape
 X, true_labels = make_blobs(n_samples=n_samples, centers=centers,
                             cluster_std=1., random_state=42)
-
 X_csr = sp.csr_matrix(X)
 
 
@@ -158,6 +157,30 @@ def test_k_means_plus_plus_init():
 def test_k_means_random_init():
     k_means = KMeans(init="random", k=n_clusters, random_state=42).fit(X)
     _check_fitted_model(k_means)
+
+
+def test_k_means_copyx():
+    """Check if copy_x=False returns nearly equal X after de-centering."""
+    my_X = X.copy()
+    k_means = KMeans(copy_x=False, k=n_clusters, random_state=1).fit(my_X)
+    centers = k_means.cluster_centers_
+    assert_equal(centers.shape, (n_clusters, 2))
+
+    labels = k_means.labels_
+    assert_equal(np.unique(labels).size, 3)
+    assert_equal(np.unique(labels[:20]).size, 1)
+    assert_equal(np.unique(labels[20:40]).size, 1)
+    assert_equal(np.unique(labels[40:]).size, 1)
+
+    # check if my_X is centered
+    assert_array_almost_equal(my_X, X)
+
+
+def test_k_means_singleton():
+    """Check k_means with bad initialization and singleton clustering."""
+    my_X = np.array([[1.1, 1.1], [0.9, 1.1], [1.1, 0.9], [0.9, 0.9]])
+    array_init = np.array([[1.0, 1.0], [5.0, 5.0]])
+    k_means = KMeans(init=array_init, k=2, n_init=1, random_state=1).fit(my_X)
 
 
 def test_k_means_perfect_init():
@@ -344,6 +367,7 @@ def test_transform():
         for c2 in range(n_clusters):
             if c != c2:
                 assert_true(X_new[c, c2] > 0)
+
 
 def test_n_init():
     """Check that increasing the number of init increases the quality"""

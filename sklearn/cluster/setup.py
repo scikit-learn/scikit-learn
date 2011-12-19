@@ -17,7 +17,7 @@ def configuration(parent_package='', top_path=None):
     else:
         cblas_libs = blas_info.pop('libraries', [])
 
-    config = Configuration('cluster', parent_package,top_path)
+    config = Configuration('cluster', parent_package, top_path)
     config.add_extension(
         '_inertia',
         sources=['_inertia.c'],
@@ -33,7 +33,6 @@ def configuration(parent_package='', top_path=None):
         extra_compile_args=blas_info.pop('extra_compile_args', []),
         **blas_info
     )
-
     return config
 
 if __name__ == '__main__':

@@ -100,8 +100,8 @@ def test_scikit_vs_scipy():
 
     connectivity = lil_matrix(np.ones((n, n)))
     for i in range(5):
-        X = .1*np.random.normal(size=(n, p))
-        X -= 4*np.arange(n)[:, np.newaxis]
+        X = .1 * np.random.normal(size=(n, p))
+        X -= 4 * np.arange(n)[:, np.newaxis]
         X -= X.mean(axis=1)[:, np.newaxis]
 
         out = hierarchy.ward(X)

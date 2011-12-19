@@ -20,9 +20,9 @@ from sklearn import svm
 np.random.seed(0)
 n_samples_1 = 1000
 n_samples_2 = 100
-X = np.r_[1.5*np.random.randn(n_samples_1, 2),
-          0.5*np.random.randn(n_samples_2, 2) + [2, 2]]
-y = [0]*(n_samples_1) + [1]*(n_samples_2)
+X = np.r_[1.5 * np.random.randn(n_samples_1, 2),
+          0.5 * np.random.randn(n_samples_2, 2) + [2, 2]]
+y = [0] * (n_samples_1) + [1] * (n_samples_2)
 
 # fit the model and get the separating hyperplane
 clf = svm.SVC(kernel='linear')
@@ -46,9 +46,8 @@ wyy = wa * xx - wclf.intercept_[0] / ww[1]
 pl.set_cmap(pl.cm.Paired)
 h0 = pl.plot(xx, yy, 'k-')
 h1 = pl.plot(xx, wyy, 'k--')
-pl.scatter(X[:,0], X[:,1], c=y)
+pl.scatter(X[:, 0], X[:, 1], c=y)
 pl.legend((h0, h1), ('no weights', 'with weights'))
 
 pl.axis('tight')
 pl.show()
-

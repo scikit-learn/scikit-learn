@@ -29,7 +29,7 @@ def assert_raise_message(exception, message, callable, *args, **kwargs):
     try:
         callable(*args, **kwargs)
         raise AssertionError("Should have raised %r" % exception(message))
-    except exception, e:
+    except exception as e:
         assert e.message == message
 
 

@@ -6,6 +6,7 @@ Generate samples of synthetic data sets.
 #          G. Louppe
 # License: BSD 3 clause
 
+from itertools import product
 import numpy as np
 from scipy import linalg
 
@@ -135,7 +136,6 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     y = np.zeros(n_samples)
 
     # Build the polytope
-    from ..utils.fixes import product
     C = np.array(list(product([-class_sep, class_sep], repeat=n_informative)))
 
     if not hypercube:
@@ -633,8 +633,8 @@ def make_low_rank_matrix(n_samples=100, n_features=100, effective_rank=10,
     components (singular vectors).
 
     This kind of singular profiles is often seen in practice, for instance:
-     - graw level pictures of faces
-     - TF-IDF vectors of text documents about a few topics
+     - gray level pictures of faces
+     - TF-IDF vectors of text documents crawled from the web
 
     Parameters
     ----------

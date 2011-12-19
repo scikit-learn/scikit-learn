@@ -65,32 +65,32 @@
       <p class="biglink"><a class="biglink" href="supervised_learning.html">
                 Supervised learning</a><br/>
          <span class="linkdescr">
-                <a href="modules/svm.html">Support Vector Machines</a>, 
-                <a href="modules/linear_model.html">linear models</a>, 
-                <a href="modules/naive_bayes.html">naives Bayes</a>, 
+                <a href="modules/svm.html">Support vector machines</a>,
+                <a href="modules/linear_model.html">linear models</a>,
+                <a href="modules/naive_bayes.html">naives Bayes</a>,
                 <a href="modules/gaussian_process.html">Gaussian process</a>...
          </span></p>
     </td><td align="center" width="32%">
       <p class="biglink"><a class="biglink" href="unsupervised_learning.html">
         Unsupervised learning</a><br/>
          <span class="linkdescr">
-                <a href="modules/clustering.html">Clustering</a>, 
-                <a href="modules/mixture.html">Gaussian mixture models</a>, 
-                <a href="modules/manifold.html">manifold learning</a>, 
-                <a href="modules/decomposition.html">matrix factorization</a>, 
+                <a href="modules/clustering.html">Clustering</a>,
+                <a href="modules/mixture.html">Gaussian mixture models</a>,
+                <a href="modules/manifold.html">manifold learning</a>,
+                <a href="modules/decomposition.html">matrix factorization</a>,
                 <a href="modules/covariance.html">covariance</a>...
          </span></p>
     </td><td align="right" width="30%">
       <p class="biglink"><a class="biglink" href="index.html#user-guide">
         And much more</a><br/>
          <span class="linkdescr">
-                <a href="model_selection.html">Model selection</a>, 
-                <a href="datasets/index.html">datasets</a>, 
-                <a href="modules/feature_extraction.html">feature extraction...</a> 
+                <a href="model_selection.html">Model selection</a>,
+                <a href="datasets/index.html">datasets</a>,
+                <a href="modules/feature_extraction.html">feature extraction...</a>
                 <strong>See below</strong>.</span></p>
     </td></tr>
   </table>
- 
+
 **License:** Open source, commercially usable: **BSD license** (3 clause)
 
 .. include:: includes/big_toc_css.rst
