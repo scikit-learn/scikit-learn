@@ -1,6 +1,6 @@
 import numpy as np
 from numpy.testing import assert_array_almost_equal
-from sklearn.utils.graph_shortest_path import graph_shortest_path
+from sklearn.utils.graph import graph_shortest_path
 
 
 def floyd_warshall_slow(graph, directed=False):
