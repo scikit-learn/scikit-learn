@@ -79,8 +79,8 @@ class Forest(BaseEnsemble):
             The target values (integers that correspond to classes in
             classification, real numbers in regression).
 
-        Return
-        ------
+        Returns
+        -------
         self : object
             Returns self.
         """
@@ -105,6 +105,23 @@ class Forest(BaseEnsemble):
                 tree.fit(X, y)
 
         return self
+
+    def feature_importances(self):
+        """Compute the mean feature importances over the trees in the forest.
+
+        Returns
+        -------
+        importances : array of shape = [n_features]
+            The feature importances.
+        """
+        importances = np.zeros(self.estimators_[0].n_features_)
+
+        for tree in self.estimators_:
+            importances += tree.feature_importances()
+
+        importances /= self.n_estimators
+
+        return importances
 
 
 class ForestClassifier(Forest, ClassifierMixin):

@@ -148,9 +148,9 @@ class Tree(object):
         Number of nodes (internal nodes + leaves) in the tree.
 
     children : np.ndarray, shape=(node_count, 2), dtype=int32
-        `children[i,0]` holds the node id of the left child of node `i`.
-        `children[i,1]` holds the node id of the right child of node `i`.
-        For leaves `children[i,0] == children[i, 1] == Tree.LEAF == -1`.
+        `children[i, 0]` holds the node id of the left child of node `i`.
+        `children[i, 1]` holds the node id of the right child of node `i`.
+        For leaves `children[i, 0] == children[i, 1] == Tree.LEAF == -1`.
 
     feature : np.ndarray of int32
         The feature to split on (only for internal nodes).
@@ -485,6 +485,37 @@ class BaseDecisionTree(BaseEstimator):
             predictions = self.tree_.predict(X).ravel()
 
         return predictions
+
+    def feature_importances(self):
+        """Compute the feature importances of all features.
+
+        The importance I of a feature is computed as the (normalized) total
+        reduction of error brought by that feature.
+
+        .. math::
+
+            I(f) = \sum_{nodes A for which f is used} n_samples(A) * \Delta err
+
+        Returns
+        -------
+        importances : array of shape = [n_features]
+            The feature importances.
+        """
+        tree = self.tree_
+        importances = np.zeros(self.n_features_)
+
+        for node in xrange(tree.node_count):
+            if tree.children[node, 0] == tree.children[node, 1] == Tree.LEAF:
+                continue
+
+            else:
+                importances[tree.feature[node]] += \
+                    tree.n_samples[node] * (tree.init_error[node] -
+                                            tree.best_error[node])
+
+        importances /= np.sum(importances)
+
+        return importances
 
 
 class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
