@@ -131,6 +131,14 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     >>> euclidean_distances(X, [[0, 0]])
     array([[ 1.        ],
            [ 1.41421356]])
+
+    Notes
+    -----
+    If both arguments are dense arrays, both arrays should be of the
+    same dtype in order to avoid unnecessary copies (specifically,
+    if one argument is float32 and the other is float64, the float32
+    argument will be upcast to float64, creating a copy that uses
+    double the memory).
     """
     # should not need X_norm_squared because if you could precompute that as
     # well as Y, then you should just pre-compute the output and not even
@@ -161,8 +169,8 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     # Do specialized faster things for the dense-dense case.
     if not issparse(X) and not issparse(Y):
         if X.dtype != Y.dtype:
-            _X = X.astype(np.float64)
-            _Y = Y.astype(np.float64)
+            _X = X.astype(np.float64) if X.dtype == np.float32 else X
+            _Y = Y.astype(np.float64) if Y.dtype == np.float32 else Y
             # TODO: Add note to docs about possible duplication
             distances = np.empty((X.shape[0], Y.shape[0]), np.float64)
         else:
