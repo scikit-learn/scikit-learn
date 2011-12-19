@@ -3,8 +3,9 @@
 One-class SVM with non-linear kernel (RBF)
 ==========================================
 
-One-class SVM is an unsupervised algorithm that
-estimates outliers in a dataset.
+:ref:`One-class SVM <svm_outlier_detection>` is an unsupervised
+algorithm that learns a decision function for novelty detection:
+classifying new data as similar or different to the training set.
 """
 print __doc__
 
@@ -38,9 +39,10 @@ Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
 Z = Z.reshape(xx.shape)
 
 pl.title("Novelty Detection")
-a = pl.contour(xx, yy, Z, levels=[0], linewidths=2, colors='blue')
-pl.contourf(xx, yy, Z, levels=[Z.min(), 0], colors='#F6D8CE')
-pl.contourf(xx, yy, Z, levels=[0, Z.max()], colors='#D0F5A9')
+pl.contourf(xx, yy, Z, levels=np.linspace(Z.min(), 0, 7), cmap=pl.cm.Blues_r)
+a = pl.contour(xx, yy, Z, levels=[0], linewidths=2, colors='red')
+pl.contourf(xx, yy, Z, levels=[0, Z.max()], colors='orange')
+
 b1 = pl.scatter(X_train[:, 0], X_train[:, 1], c='white')
 b2 = pl.scatter(X_test[:, 0], X_test[:, 1], c='green')
 c = pl.scatter(X_outliers[:, 0], X_outliers[:, 1], c='red')
