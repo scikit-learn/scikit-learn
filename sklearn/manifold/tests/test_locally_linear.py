@@ -90,6 +90,11 @@ def test_lle_manifold():
         assert_lower(np.abs(clf.reconstruction_error_ - reconstruction_error),
                      tol * reconstruction_error, details=details)
 
+def test_singular():
+    """Case when the zero is one of the eigenvalues in the LLE algorithm"""
+    M = [[1, 1, 1], [1, 1, 1], [1, 1, 1]]
+    _, error = manifold.locally_linear_embedding(M, 2, 1, eigen_solver='arpack')
+    assert error < 2.
 
 def test_pipeline():
     # check that LocallyLinearEmbedding works fine as a Pipeline
