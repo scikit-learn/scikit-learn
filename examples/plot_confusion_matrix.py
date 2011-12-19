@@ -22,11 +22,11 @@ p = range(n_samples)
 random.seed(0)
 random.shuffle(p)
 X, y = X[p], y[p]
-half = int(n_samples/2)
+half = int(n_samples / 2)
 
 # Run classifier
 classifier = svm.SVC(kernel='linear')
-y_ = classifier.fit(X[:half],y[:half]).predict(X[half:])
+y_ = classifier.fit(X[:half], y[:half]).predict(X[half:])
 
 # Compute confusion matrix
 cm = confusion_matrix(y[half:], y_)
