@@ -489,8 +489,8 @@ class BaseDecisionTree(BaseEstimator):
     def feature_importances(self):
         """Compute the feature importances of all features.
 
-        The importance I of a feature is computed as the (normalized) total
-        reduction of error brought by that feature.
+        The importance I(f) of a feature f is computed as the (normalized)
+        total reduction of error brought by that feature.
 
         .. math::
 
