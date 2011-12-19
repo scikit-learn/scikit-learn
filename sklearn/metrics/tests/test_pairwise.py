@@ -123,6 +123,8 @@ def test_euclidean_distances():
     D = euclidean_distances(X, Y)
     assert_array_almost_equal(D, [[1., 2.]])
 
+    D = euclidean_distances(X.astype(np.float32), Y.astype(np.float32))
+    assert_array_almost_equal(D, [[1., 2.]])
 
     D = euclidean_distances(X.astype(np.float64), Y.astype(np.float32))
     assert_array_almost_equal(D, [[1., 2.]])
@@ -131,6 +133,35 @@ def test_euclidean_distances():
     assert_array_almost_equal(D, [[0.]])
 
     D = euclidean_distances(Y, Y)
+    assert_array_almost_equal(D, [[0, 1], [1, 0]])
+
+    # Tests with output arguments.
+    out = np.empty((1, 2), dtype=np.float32)
+    D = euclidean_distances(X.astype(np.float32), Y.astype(np.float32),
+                            out=out)
+    assert D is out
+    assert_array_almost_equal(D, [[1., 2.]])
+
+    out = np.empty((1, 2), dtype=np.float64)
+    D = euclidean_distances(X.astype(np.float64), Y.astype(np.float32),
+                            out=out)
+    assert D is out
+    assert_array_almost_equal(D, [[1., 2.]])
+
+    out = np.empty((1, 1), dtype=np.float64)
+    D = euclidean_distances(X, X, out=out)
+    assert D is out
+    assert_array_almost_equal(D, [[0.]])
+
+    out = np.empty((2, 2), dtype=np.float64)
+    D = euclidean_distances(Y, Y, out=out)
+    assert D is out
+    assert_array_almost_equal(D, [[0, 1], [1, 0]])
+
+    out = np.empty((2, 2), dtype=np.float32)
+    D = euclidean_distances(Y.astype(np.float32), Y.astype(np.float32),
+                            out=out)
+    assert D is out
     assert_array_almost_equal(D, [[0, 1], [1, 0]])
 
     X = csr_matrix(X)

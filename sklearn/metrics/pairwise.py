@@ -87,8 +87,25 @@ def check_pairwise_arrays(X, Y):
     return X, Y
 
 
+def _check_euclidean_dtypes(X, Y, out):
+    """
+    Checks that X and Y have sensible (floating point) dtypes and that
+    out array (if passed) has the greater precision dtype.
+    """
+    if X.dtype not in (np.float32, np.float64):
+        raise ValueError('X must have float32 or float64 dtype')
+    if Y.dtype not in (np.float32, np.float64):
+        raise ValueError('Y must have float32 or float64 dtype')
+    if out is not None:
+        if out.dtype == np.float32:
+            if X.dtype == np.float64 or Y.dtype == np.float64:
+                raise ValueError('out argument must have dtype float64 if '
+                                 'either X or Y are float64')
+
+
 # Distances
-def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
+def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
+                        out=None):
     """
     Considering the rows of X (and Y=X) as vectors, compute the
     distance matrix between each pair of vectors.
@@ -115,6 +132,11 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
 
     squared: boolean, optional
         Return squared Euclidean distances.
+
+    out : ndarray, shape = [n_samples_1, n_samples_2], optional
+        Optional pre-allocated output array. Only supported when
+        both X and Y are dense. Should have a float32 dtype if
+        and only if X and Y are both float32, otherwise float64.
 
     Returns
     -------
@@ -145,10 +167,14 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     # well as Y, then you should just pre-compute the output and not even
     # call this function.
     X, Y = check_pairwise_arrays(X, Y)
-    if X.dtype not in (np.float32, np.float64):
-        raise ValueError('X must have float32 or float64 dtype')
-    if Y.dtype not in (np.float32, np.float64):
-        raise ValueError('Y must have float32 or float64 dtype')
+    _check_euclidean_dtypes(X, Y, out)
+    if out is not None:
+        if issparse(X) or issparse(Y):
+            raise ValueError('out argument not supported for sparse X or Y')
+        elif not hasattr(out, '__array__'):
+            raise ValueError('out argument must be an array')
+        elif out.shape != (X.shape[0], Y.shape[0]):
+            raise ValueError('shape mismatch for out argument')
     if issparse(X):
         XX = X.multiply(X).sum(axis=1)
     elif issparse(Y):
@@ -181,19 +207,22 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
         if X.dtype != Y.dtype:
             _X = X.astype(np.float64) if X.dtype == np.float32 else X
             _Y = Y.astype(np.float64) if Y.dtype == np.float32 else Y
-            # TODO: Add note to docs about possible duplication
-            distances = np.empty((X.shape[0], Y.shape[0]), np.float64)
+            out_dtype = np.float64
         else:
             _X = X
             _Y = Y
-            distances = np.empty((X.shape[0], Y.shape[0]), X.dtype)
+            out_dtype = X.dtype
+        if out is None:
+            distances = np.empty((X.shape[0], Y.shape[0]), dtype=out_dtype)
+        else:
+            distances = out
         if X is Y:
-            if X.dtype is np.float32:
+            if X.dtype == np.float32:
                 arrayfuncs.fast_pair_sqdist_float32(_X, distances)
             else:
                 arrayfuncs.fast_pair_sqdist_float64(_X, distances)
         else:
-            if X.dtype is np.float32:
+            if X.dtype == np.float32:
                 arrayfuncs.fast_sqdist_float32(_X, _Y, distances)
             else:
                 arrayfuncs.fast_sqdist_float64(_X, _Y, distances)
@@ -210,7 +239,9 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
             # errors.
             distances.flat[::distances.shape[0] + 1] = 0.0
 
-    return distances if squared else np.sqrt(distances)
+    if not squared:
+        np.sqrt(distances, distances)
+    return distances
 
 
 @deprecated("use euclidean_distances instead")
