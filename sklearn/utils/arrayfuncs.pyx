@@ -129,14 +129,11 @@ cpdef fast_sqdist_float32(np.ndarray[np.float32_t, ndim=2] X,
 
     Parameters
     ----------
-    X : ndarray, 2-dimensional, float32
-        First set of points, indexed along first axis.
-    Y : ndarray, 2-dimensional, float32
-        Second set of points, indexed along first axis. Assumed
-        that X.shape[1] == Y.shape[1].
-    out : ndarray, 2-dimensional, float32
-        Array in which to store the output. Assumed to have shape
-        (X.shape[0], Y.shape[0]).
+    X : ndarray, float32, shape = [n_samples_a, n_features]
+
+    Y : ndarray, float32, shape = [n_sample_b, n_features]
+
+    out : ndarray, float32, shape = [n_samples_a, n_samples_b]
 
     Notes
     -----
@@ -166,14 +163,11 @@ cpdef fast_sqdist_float64(np.ndarray[np.float64_t, ndim=2] X,
 
     Parameters
     ----------
-    X : ndarray, 2-dimensional, float64
-        First set of points, indexed along first axis.
-    Y : ndarray, 2-dimensional, float64
-        Second set of points, indexed along first axis. Assumed
-        that X.shape[1] == Y.shape[1].
-    out : ndarray, 2-dimensional, float64
-        Array in which to store the output. Assumed to have shape
-        (X.shape[0], Y.shape[0]).
+    X : ndarray, float64, shape = [n_samples_a, n_features]
+
+    Y : ndarray, float64, shape = [n_sample_b, n_features]
+
+    out : ndarray, float64, shape = [n_samples_a, n_samples_b]
 
     Notes
     -----
@@ -202,11 +196,9 @@ cpdef fast_pair_sqdist_float32(np.ndarray[np.float32_t, ndim=2] X,
 
     Parameters
     ----------
-    X : ndarray, 2-dimensional, float32
-        The set of points, indexed along first axis.
-    out : ndarray, 2-dimensional, float32
-        Array in which to store the output. Assumed to have shape
-        (X.shape[0], X.shape[0]).
+    X : ndarray, float64, shape = [n_samples, n_features]
+
+    out : ndarray, float64, shape = [n_samples, n_samples]
 
     Notes
     -----
@@ -237,11 +229,9 @@ cpdef fast_pair_sqdist_float64(np.ndarray[np.float64_t, ndim=2] X,
 
     Parameters
     ----------
-    X : ndarray, 2-dimensional, float32
-        The set of points, indexed along first axis.
-    out : ndarray, 2-dimensional, float32
-        Array in which to store the output. Assumed to have shape
-        (X.shape[0], X.shape[0]).
+    X : ndarray, float64, shape = [n_samples, n_features]
+
+    out : ndarray, float64, shape = [n_samples, n_samples]
 
     Notes
     -----

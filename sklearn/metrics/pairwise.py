@@ -33,6 +33,7 @@ kernel:
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Robert Layton <robertlayton@gmail.com>
+#          David Warde-Farley <dwf@dwf.name>
 # License: BSD Style.
 
 import numpy as np
