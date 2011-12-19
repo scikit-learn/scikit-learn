@@ -139,11 +139,10 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
 
     Parameters
     ----------
-    X: ndarray
-        A M by N array of M observations in N dimensions or a length
-        M array of M one-dimensional observations.
+    X: array-like of floats, shape (n_samples, n_features)
+        The observations to cluster.
 
-    k: int or ndarray
+    k: int
         The number of clusters to form as well as the number of
         centroids to generate.
 
@@ -191,16 +190,16 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
 
     Returns
     -------
-    centroid: ndarray
-        A k by N array of centroids found at the last iteration of
-        k-means.
+    centroid: float ndarray with shape (k, n_features)
+        Centroids found at the last iteration of k-means.
 
-    label: ndarray
+    label: integer ndarray with shape (n_samples,)
         label[i] is the code or index of the centroid the
         i'th observation is closest to.
 
     inertia: float
-        The final value of the inertia criterion
+        The final value of the inertia criterion (sum of squared distances to
+        the closest centroid for all observations in the training set).
 
     """
     random_state = check_random_state(random_state)
