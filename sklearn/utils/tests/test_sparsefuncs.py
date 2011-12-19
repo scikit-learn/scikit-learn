@@ -7,6 +7,8 @@ from sklearn.utils.sparsefuncs import mean_variance_axis0
 
 def test_mean_variance_axis0():
     X, _ = make_classification(5, 4, random_state=0)
+    # Sparsify the array a little bit
+    X[0, 0] = 0; X[2, 1] = 0; X[4, 3] = 0
     X_csr = sp.csr_matrix(X)
     X_means, X_vars = mean_variance_axis0(X_csr)
 
