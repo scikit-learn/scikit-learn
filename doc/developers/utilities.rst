@@ -192,8 +192,6 @@ ARPACK
   method.  A limited version of ``svds`` is available in earlier
   scipy versions.
 
-- :func:`fixes.arpack_eigsh` [TODO: remove this from spectral_clustering
-  in favor of the above back-port]
 
 Benchmarking
 ~~~~~~~~~~~~
