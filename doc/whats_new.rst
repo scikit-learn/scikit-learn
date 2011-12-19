@@ -25,7 +25,7 @@ Changelog
    - Faster tests by `Fabian Pedregosa`_.
 
    - Silhouette Coefficient cluster analysis evaluation metric added as
-     ``sklearn.metrics.silhouette_score`` by `Robert Layton`_.
+     ``sklearn.metrics.silhouette_score`` by Robert Layton.
 
    - Fixed a bug in `KMeans` in the handling of the `n_init` parameter:
      the clustering algorithm used to be run `n_init` times but the last
@@ -824,3 +824,5 @@ of commits):
 .. _David Warde-Farley: http://www-etud.iro.umontreal.ca/~wardefar/
 
 .. _Brian Holt: http://info.ee.surrey.ac.uk/Personal/B.Holt/
+
+.. _Satrajit Ghosh: http://www.mit.edu/~satra/
