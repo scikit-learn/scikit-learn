@@ -458,7 +458,7 @@ class ExtraTreesClassifier(ForestClassifier):
         If None, all features are considered, otherwise max_features are chosen
         at random.
 
-    bootstrap : boolean, optional (default=True)
+    bootstrap : boolean, optional (default=False)
         Whether bootstrap samples are used when building trees.
 
     random_state : int, RandomState instance or None, optional (default=None)
@@ -482,7 +482,7 @@ class ExtraTreesClassifier(ForestClassifier):
                        min_split=1,
                        min_density=0.1,
                        max_features=None,
-                       bootstrap=True,
+                       bootstrap=False,
                        random_state=None):
         super(ExtraTreesClassifier, self).__init__(
             base_estimator=ExtraTreeClassifier(),
@@ -537,7 +537,7 @@ class ExtraTreesRegressor(ForestRegressor):
         If None, all features are considered, otherwise max_features are chosen
         at random.
 
-    bootstrap : boolean, optional (default=True)
+    bootstrap : boolean, optional (default=False)
         Whether bootstrap samples are used when building trees.
 
     random_state : int, RandomState instance or None, optional (default=None)
@@ -561,7 +561,7 @@ class ExtraTreesRegressor(ForestRegressor):
                        min_split=1,
                        min_density=0.1,
                        max_features=None,
-                       bootstrap=True,
+                       bootstrap=False,
                        random_state=None):
         super(ExtraTreesRegressor, self).__init__(
             base_estimator=ExtraTreeRegressor(),
