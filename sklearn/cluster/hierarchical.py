@@ -501,7 +501,7 @@ class HierarchicalClustering(BaseEstimator):
     connectivity : sparse matrix.
         Connectivity matrix. Defines for each sample the neigbhoring
         samples following a given structure of the data.
-        Default is None, i.e, the hiearchical clustering algorithm is
+        Default is None, i.e, the hierarchical clustering algorithm is
         unstructured.
 
     memory : Instance of joblib.Memory or string
@@ -550,14 +550,14 @@ class HierarchicalClustering(BaseEstimator):
                                        "ward": hierarchy.ward,
                                        "weighted": hierarchy.weighted}
 
-    def __init__(self, n_clusters=None, max_height=None,
-                 memory=Memory(cachedir=None, verbose=0), connectivity=None,
-                 copy=True, n_components=None, linkage_criterion="ward",
-                 metric="euclidean", linkage_kwargs={}):
+    def __init__(self, n_clusters=None, max_height=None, connectivity=None,
+                 n_components=None, linkage_criterion="ward",
+                 metric="euclidean", linkage_kwargs={}, 
+                 memory=Memory(cachedir=None, verbose=0), copy=True):
         self.n_clusters = n_clusters
-        self.n_components = n_components
         self.max_height = max_height
         self.connectivity = connectivity
+        self.n_components = n_components
         self.linkage_criterion = linkage_criterion
         self.metric = metric
         self.linkage_kwargs = linkage_kwargs
@@ -582,7 +582,7 @@ class HierarchicalClustering(BaseEstimator):
 
         if self.connectivity is not None:
             # Construct the tree
-            self.dendrogram = memory.cache(create_dendrogram)(X,
+            self.dendrogram_ = memory.cache(create_dendrogram)(X,
                                     self.connectivity,
                                     n_components=self.n_components,
                                     linkage_criterion=self.linkage_criterion,
@@ -592,10 +592,10 @@ class HierarchicalClustering(BaseEstimator):
             # Cut the tree ...
             if self.max_height is None:
                 # based on number of desired clusters
-                cluster_roots = self.dendrogram.cut(self.n_clusters)
+                cluster_roots_ = self.dendrogram_.cut(self.n_clusters)
             else:
                 # based on maximally allowed height
-                cluster_roots = self.dendrogram.cut_height(self.max_height)
+                cluster_roots_ = self.dendrogram_.cut_height(self.max_height)
         else:  # Fall back to scipy
             assert self.n_clusters is not None, \
                 "Unstructured clustering requires the number of clusters to "\
@@ -611,13 +611,13 @@ class HierarchicalClustering(BaseEstimator):
                 self.unstructured_cluster_algorithms[self.linkage_criterion]
             out = clustering_algorithm(X)
             # Put result into a dendrogram and cut it to get labeling
-            self.dendrogram = Dendrogram(X.shape[0], 1)
-            self.dendrogram.children = out[:, :2].astype(np.int)
-            cluster_roots = self.dendrogram.cut(self.n_clusters)
+            self.dendrogram_ = Dendrogram(X.shape[0], 1)
+            self.dendrogram_.children = out[:, :2].astype(np.int)
+            cluster_roots_ = self.dendrogram_.cut(self.n_clusters)
 
         # Determine labeling of datapoints based on the induced subtrees
         # of the cut of the dendrogram
-        self.labels_ = self.dendrogram.get_labeling(cluster_roots)
+        self.labels_ = self.dendrogram_.get_labeling(cluster_roots_)
 
         return self
 
