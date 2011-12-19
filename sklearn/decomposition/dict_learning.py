@@ -20,7 +20,7 @@ from ..utils.extmath import fast_svd
 from ..linear_model import Lasso, orthogonal_mp_gram, lars_path
 
 
-def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
+def _sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
                   n_nonzero_coefs=None, alpha=None, copy_gram=True,
                   copy_cov=True, init=None, max_iter=1000):
     """Generic sparse coding
@@ -91,7 +91,6 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
     linear_model.lars_path
     linear_model.orthogonal_mp
     linear_model.Lasso
-    decomposition.sparse_encode_parallel
     decomposition.SparseCoder
     """
     alpha = float(alpha) if alpha is not None else None
@@ -179,11 +178,10 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
     return new_code
 
 
-def sparse_encode_parallel(X, dictionary, gram=None, cov=None,
-                           algorithm='lasso_lars', n_nonzero_coefs=None,
-                           alpha=None, copy_gram=True, copy_cov=True,
-                           init=None, max_iter=1000, n_jobs=1):
-    """Parallel sparse coding using joblib
+def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
+                  n_nonzero_coefs=None, alpha=None, copy_gram=True,
+                  copy_cov=True, init=None, max_iter=1000, n_jobs=1):
+    """Sparse coding
 
     Each column of the result is the solution to a Lasso problem.
 
@@ -255,7 +253,6 @@ def sparse_encode_parallel(X, dictionary, gram=None, cov=None,
     linear_model.lars_path
     linear_model.orthogonal_mp
     linear_model.Lasso
-    decomposition.sparse_encode
     decomposition.SparseCoder
     """
     dictionary = np.asarray(dictionary)
@@ -269,7 +266,7 @@ def sparse_encode_parallel(X, dictionary, gram=None, cov=None,
         copy_cov = False
         cov = np.dot(dictionary, X.T)
     if n_jobs == 1 or algorithm == 'threshold':
-        return sparse_encode(X, dictionary, gram, cov, algorithm,
+        return _sparse_encode(X, dictionary, gram, cov, algorithm,
                              n_nonzero_coefs, alpha, copy_gram, copy_cov, init)
     code = np.empty((n_samples, n_atoms))
     slices = list(gen_even_slices(n_samples, n_jobs))
@@ -478,9 +475,8 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8,
                     (ii, dt, dt / 60, current_cost))
 
         # Update code
-        code = sparse_encode_parallel(X, dictionary, algorithm=method,
-                                      alpha=alpha,
-                                      init=code, n_jobs=n_jobs)
+        code = sparse_encode(X, dictionary, algorithm=method, alpha=alpha,
+                             init=code, n_jobs=n_jobs)
         # Update dictionary
         dictionary, residuals = _update_dict(dictionary.T, X.T, code.T,
                                              verbose=verbose, return_r2=True,
@@ -667,8 +663,8 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
             print 'Learning code...',
         elif verbose == 1:
             print '|',
-        code = sparse_encode_parallel(X, dictionary.T, algorithm=method,
-                                      alpha=alpha, n_jobs=n_jobs)
+        code = sparse_encode(X, dictionary.T, algorithm=method, alpha=alpha,
+                             n_jobs=n_jobs)
         if verbose > 1:
             dt = (time.time() - t0)
             print 'done (total time: % 3is, % 4.1fmn)' % (dt, dt / 60)
@@ -711,7 +707,7 @@ class BaseDictionaryLearning(BaseEstimator, TransformerMixin):
         X = array2d(X)
         n_samples, n_features = X.shape
 
-        code = sparse_encode_parallel(
+        code = sparse_encode(
             X, self.components_, algorithm=self.transform_algorithm,
             n_nonzero_coefs=self.transform_n_nonzero_coefs,
             alpha=self.transform_alpha, n_jobs=self.n_jobs)

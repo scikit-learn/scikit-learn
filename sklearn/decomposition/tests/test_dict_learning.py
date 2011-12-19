@@ -4,7 +4,7 @@ from numpy.testing import assert_array_almost_equal, assert_array_equal, \
 from nose import SkipTest
 
 from .. import DictionaryLearning, MiniBatchDictionaryLearning, SparseCoder, \
-               dict_learning_online, sparse_encode, sparse_encode_parallel
+               dict_learning_online, sparse_encode
 
 
 rng = np.random.RandomState(0)
@@ -117,7 +117,7 @@ def test_sparse_encode_shapes():
     V = rng.randn(n_atoms, n_features)  # random init
     V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
     for algo in ('lasso_lars', 'lasso_cd', 'lars', 'omp', 'threshold'):
-        code = sparse_encode_parallel(X, V, algorithm=algo)
+        code = sparse_encode(X, V, algorithm=algo)
         assert_equal(code.shape, (n_samples, n_atoms))
 
 
@@ -125,11 +125,9 @@ def test_sparse_encode_error():
     n_atoms = 12
     V = rng.randn(n_atoms, n_features)  # random init
     V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
-    code_1 = sparse_encode(X, V, alpha=0.001)
-    code_2 = sparse_encode_parallel(X, V, alpha=0.001)
-    assert_array_almost_equal(code_1, code_2)
-    assert not np.all(code_1 == 0)
-    assert np.sqrt(np.sum((np.dot(code_1, V) - X) ** 2)) < 0.1
+    code = sparse_encode(X, V, alpha=0.001)
+    assert not np.all(code == 0)
+    assert np.sqrt(np.sum((np.dot(code, V) - X) ** 2)) < 0.1
 
 
 def test_sparse_coder_estimator():
