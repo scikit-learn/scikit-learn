@@ -1,11 +1,3 @@
-..
-    For doctests:
-
-    >>> import numpy as np
-    >>> import os
-    >>> from sklearn import datasets
-    >>> datasets.mldata.urllib2 = mock_urllib2
-
 .. _datasets:
 
 =========================
