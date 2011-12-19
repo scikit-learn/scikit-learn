@@ -3,7 +3,7 @@
 Explicit feature map approximation for RBF kernels
 ==================================================
 
-An example shows how to use RBFSampler to appoximate the feature map of an RBF
+An example shows how to use :class:`RBFSampler` to appoximate the feature map of an RBF
 kernel for classification with an SVM on the digits dataset.
 Results using a linear SVM in the original space, a linear SVM using the
 approximate mapping and using a kernelized SVM are compared.
@@ -14,8 +14,11 @@ Sampling more dimensions clearly leads to better classification results, but
 comes at a greater cost. This means there is a tradeoff between runtime and
 accuracy, given by the parameter n_components.  Note that solving the Linear
 SVM and also the approximate kernel SVM could be greatly accelerated by using
-stochastic gradient descent via SGDClassifier. This is not easily possible for
+stochastic gradient descent via :class:`SGDClassifier`. This is not easily possible for
 the case of the kernelized SVM.
+
+The usage of :class:`RBFSampler` is described in detail in :ref:`kernel_approximation`.
+
 """
 print __doc__
 

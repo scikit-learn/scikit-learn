@@ -1,3 +1,5 @@
+.. _kernel_approximation:
+
 Kernel Approximation
 ====================
 
@@ -19,6 +21,7 @@ of learning with large datasets.
 Since there has not been much empirical work using approximate embeddings, it
 is advisable to compare results against exact kernel methods.
 
+
 Radial Basis Function Kernel
 ----------------------------
 The :class:`RBFSampler` constructes an approximate mapping for the radial basis
@@ -37,6 +40,7 @@ result in a better approximation of the kernel and will yield results more
 similar to those produced by a kernel SVM. Note that "fitting" the feature
 function does not actually depend on the data given to the ``fit`` function.
 Only the dimensionality of the data is used.
+Details on the method can be found in [RR2007]_.
 
 Additive Chi Squared Kernel
 ---------------------------
@@ -63,7 +67,7 @@ the dataset to size `n_samples x 5 * n_features` (in the case of `n=2`).
 The approximate feature map provided by :class:`AdditiveChi2Sampler` can be combined
 with the approimate feature map provided by :class:`RBFSampler` to yield an approximate
 feature map for the exponentiated chi squared kernel.
-See the referenced for details.
+See the [VZ2010]_ for details and [VVZ2010]_ for combination with the :class:`RBFSampler`.
 
 Skewed Chi Squared Kernel
 -------------------------
@@ -81,9 +85,10 @@ approximation of the feature map.
 The usage of the :class:`SkewedChi2Sampler` is the same as the usage described
 above for the :class:`RBFSampler`. The only difference is in the free
 parameter, that is called `c`.
+For a motivation for this mapping and the mathematical details see [LS2010]_.
 
-Examples
---------
+.. topic:: Examples:
+
 * :ref:`example_plot_kernel_approximation.py`
 * :ref:`example_svm_plot_approximate_kernel_decision.py`
 
@@ -122,18 +127,18 @@ The classes in this submodule allow to approximate the embedding
 or store training examples.
 
 
-References
-----------
-* `"Random features for large-scale kernel machines"
+.. topic:: References:
+
+.. [RR2007] `"Random features for large-scale kernel machines"
   <http://webmail.robots.ox.ac.uk/~vgg/rg/papers/randomfeatures.pdf>`_
   Rahimi, A. and Recht, B. - Advances in neural information processing 2007,
-* `"Random Fourier approximations for skewed multiplicative histogram kernels"
+.. [LS2010] `"Random Fourier approximations for skewed multiplicative histogram kernels"
   <http://sminchisescu.ins.uni-bonn.de/papers/lis_dagm10.pdf>`_
   Random Fourier approximations for skewed multiplicative histogram kernels
   - Lecture Notes for Computer Sciencd (DAGM)
-* `"Efficient additive kernels via explicit feature maps"
+.. [VZ2010] `"Efficient additive kernels via explicit feature maps"
   <http://eprints.pascal-network.org/archive/00006964/01/vedaldi10.pdf>`_
   Vedaldi, A. and Zisserman, A. - Computer Vision and Pattern Recognition 2010
-* `"Generalized RBF feature maps for Efficient Detection"
+.. [VVZ2010] `"Generalized RBF feature maps for Efficient Detection"
   <http://eprints.pascal-network.org/archive/00007024/01/inproceedings.pdf.8a865c2a5421e40d.537265656b616e7468313047656e6572616c697a65642e706466.pdf>`_
   Vempati, S. and Vedaldi, A. and Zisserman, A. and Jawahar, CV - 2010
