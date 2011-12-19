@@ -23,7 +23,7 @@ from ..externals.joblib import Memory
 
 def _resample_model(estimator_func, X, y, a=.5, n_resampling=200,
                     n_jobs=1, verbose=False, pre_dispatch='3*n_jobs',
-                    random_state=None, jacknife_fraction=.75, **params):
+                    random_state=None, sample_fraction=.75, **params):
     random_state = check_random_state(random_state)
     # We are generating 1 - weights, and not weights
     n_samples, n_features = X.shape
@@ -34,7 +34,7 @@ def _resample_model(estimator_func, X, y, a=.5, n_resampling=200,
                 delayed(estimator_func)(X, y,
                         weights=a * random_state.random_integers(0,
                                                     1, size=(n_features,)),
-                        mask=(random_state.rand(n_samples) < jacknife_fraction),
+                        mask=(random_state.rand(n_samples) < sample_fraction),
                         verbose=max(0, verbose - 1),
                         **params)
                 for _ in range(n_resampling)):
@@ -53,12 +53,12 @@ class BaseRandomizedLinearModel(TransformerMixin):
 
     _center_data = staticmethod(center_data)
 
-    def __init__(self, jacknife_fraction=.75, n_resampling=200,
+    def __init__(self, sample_fraction=.75, n_resampling=200,
                  selection_threshold=.25, fit_intercept=True, verbose=False,
                  normalize=True, random_state=None, n_jobs=1,
                  pre_dispatch='3*n_jobs',
                  memory=Memory(cachedir=None, verbose=0)):
-        self.jacknife_fraction = jacknife_fraction
+        self.sample_fraction = sample_fraction
         self.n_resampling = n_resampling
         self.fit_intercept = fit_intercept
         self.verbose = verbose
@@ -108,7 +108,7 @@ class BaseRandomizedLinearModel(TransformerMixin):
                                     verbose=self.verbose,
                                     pre_dispatch=self.pre_dispatch,
                                     random_state=self.random_state,
-                                    jacknife_fraction=self.jacknife_fraction,
+                                    sample_fraction=self.sample_fraction,
                                     **params)
         return self
 
@@ -160,15 +160,19 @@ def _randomized_lasso(X, y, weights, mask, alpha=1., verbose=False,
     y = y[mask]
     X = (1 - weights) * X
     _, _, coef_ = lars_path(X, y,
-                Gram=precompute, overwrite_X=True,
-                overwrite_Gram=True, alpha_min=alpha,
+                Gram=precompute, copy_X=False,
+                copy_Gram=False, alpha_min=alpha,
                 method='lasso', verbose=verbose,
                 max_iter=max_iter, eps=eps)
     return coef_[:, -1] != 0
 
 
 class RandomizedLasso(BaseRandomizedLinearModel):
-    """TODO
+    """Randomized Lasso
+
+    Randomized Lasso works by resampling the train data and computing
+    a Lasso on each resampling. In short, the features selected more
+    often are good features. It is also known as stability selection.
 
     Parameters
     ----------
@@ -241,18 +245,23 @@ class RandomizedLasso(BaseRandomizedLinearModel):
 
     Examples
     --------
-    TODO
+    >>> from sklearn.linear_model import RandomizedLasso
+    >>> randomized_lasso = RandomizedLasso()
 
     References
     ----------
-    TODO
+    Stability selection
+    Nicolai Meinshausen, Peter Buhlmann
+    Journal of the Royal Statistical Society: Series B (Statistical Methodology)
+    Volume 72, Issue 4, pages 417-473, September 2010
+    DOI: 10.1111/j.1467-9868.2010.00740.x
 
     See also
     --------
-    TODO
+    RandomizedLogistic
     """
 
-    def __init__(self, alpha='aic', a=.5, jacknife_fraction=.75,
+    def __init__(self, alpha='aic', a=.5, sample_fraction=.75,
                  n_resampling=200,
                  selection_threshold=.25,
                  fit_intercept=True, verbose=False,
@@ -263,7 +272,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
                  memory=Memory(cachedir=None, verbose=0)):
         self.alpha = alpha
         self.a = a
-        self.jacknife_fraction = jacknife_fraction
+        self.sample_fraction = sample_fraction
         self.n_resampling = n_resampling
         self.fit_intercept = fit_intercept
         self.max_iter = max_iter
@@ -310,7 +319,7 @@ class RandomizedLogistic(BaseRandomizedLinearModel):
     """ TODO
     """
 
-    def __init__(self, C=1, a=.5, jacknife_fraction=.75,
+    def __init__(self, C=1, a=.5, sample_fraction=.75,
                  n_resampling=200,
                  selection_threshold=.25, tol=1e-3,
                  fit_intercept=True, verbose=False,
@@ -320,7 +329,7 @@ class RandomizedLogistic(BaseRandomizedLinearModel):
                  memory=Memory(cachedir=None, verbose=0)):
         self.C = C
         self.a = a
-        self.jacknife_fraction = jacknife_fraction
+        self.sample_fraction = sample_fraction
         self.n_resampling = n_resampling
         self.fit_intercept = fit_intercept
         self.verbose = verbose
