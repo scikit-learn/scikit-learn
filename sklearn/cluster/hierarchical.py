@@ -229,8 +229,10 @@ class Dendrogram(object):
                 cluster_roots.append(node)
             else:
                 # Tree node induces subtree with too large height; split it
-                open_nodes.append(self.children[node - self.n_samples, 0])
-                open_nodes.append(self.children[node - self.n_samples, 1])
+                child_node1 = self.children[node - self.n_samples, 0]
+                child_node2 = self.children[node - self.n_samples, 1]
+                open_nodes.append(child_node1)
+                open_nodes.append(child_node2)
                 open_nodes.sort(reverse=True)
                 # If pruning is enabled, we also remove the parts of the tree
                 # that are "too high"
