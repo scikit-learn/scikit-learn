@@ -364,7 +364,10 @@ class GMM(BaseEstimator):
         logprob : array_like, shape (n_samples,)
             Log probabilities of each data point in X
         """
+<<<<<<< HEAD
         # We use return_log=True to avoid a useless exponentiation
+=======
+>>>>>>> removed the decode in dpgmm and removed return_log in eval
         logprob, _ = self.eval(X)
         return logprob
 
@@ -516,7 +519,7 @@ class GMM(BaseEstimator):
         return self
 
     def _do_mstep(self, X, posteriors, params, min_covar=0):
-        """ Perform the Mstep of the EM algorithm
+        """ Perform the Mstep of the EM algorithm and return the class weihgts.
         """
         weights = posteriors.sum(axis=0)
         weighted_X_sum = np.dot(posteriors.T, X)
@@ -534,7 +537,6 @@ class GMM(BaseEstimator):
             self.covars_ = covar_mstep_func(
                 self, X, posteriors, weighted_X_sum, inverse_weights, min_covar)
 
-        # FIXME: why return the weights ?
         return weights
 
 
