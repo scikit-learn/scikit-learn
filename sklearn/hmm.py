@@ -1025,7 +1025,7 @@ class GMMHMM(_BaseHMM):
         stats = super(GMMHMM, self)._initialize_sufficient_statistics()
         stats['norm'] = [np.zeros(g.weights.shape) for g in self.gmms]
         stats['means'] = [np.zeros(np.shape(g.means)) for g in self.gmms]
-        stats['covars'] = [np.zeros(np.shape(g._covars)) for g in self.gmms]
+        stats['covars'] = [np.zeros(np.shape(g.covars_)) for g in self.gmms]
         return stats
 
     def _accumulate_sufficient_statistics(self, stats, obs, framelogprob,
@@ -1054,13 +1054,13 @@ class GMMHMM(_BaseHMM):
                 stats['means'][state] += tmp_gmm.means * norm[:, np.newaxis]
             if 'c' in params:
                 if tmp_gmm.cvtype == 'tied':
-                    stats['covars'][state] += tmp_gmm._covars * norm.sum()
+                    stats['covars'][state] += tmp_gmm.covars_ * norm.sum()
                 else:
                     cvnorm = np.copy(norm)
-                    shape = np.ones(tmp_gmm._covars.ndim)
-                    shape[0] = np.shape(tmp_gmm._covars)[0]
+                    shape = np.ones(tmp_gmm.covars_.ndim)
+                    shape[0] = np.shape(tmp_gmm.covars_)[0]
                     cvnorm.shape = shape
-                    stats['covars'][state] += tmp_gmm._covars * cvnorm
+                    stats['covars'][state] += tmp_gmm.covars_ * cvnorm
 
     def _do_mstep(self, stats, params, covars_prior=1e-2, **kwargs):
         super(GMMHMM, self)._do_mstep(stats, params)
@@ -1079,8 +1079,8 @@ class GMMHMM(_BaseHMM):
                                 / norm.sum())
                 else:
                     cvnorm = np.copy(norm)
-                    shape = np.ones(g._covars.ndim)
-                    shape[0] = np.shape(g._covars)[0]
+                    shape = np.ones(g.covars_.ndim)
+                    shape[0] = np.shape(g.covars_)[0]
                     cvnorm.shape = shape
                     if g.cvtype == 'spherical' or g.cvtype == 'diag':
                         g.covars = (stats['covars'][state]

@@ -364,10 +364,6 @@ class GMM(BaseEstimator):
         logprob : array_like, shape (n_samples,)
             Log probabilities of each data point in X
         """
-<<<<<<< HEAD
-        # We use return_log=True to avoid a useless exponentiation
-=======
->>>>>>> removed the decode in dpgmm and removed return_log in eval
         logprob, _ = self.eval(X)
         return logprob
 
