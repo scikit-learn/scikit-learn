@@ -242,6 +242,8 @@ class BaseDiscreteNB(BaseNB):
     def _fit1ofK(self, X, Y, sample_weight, class_prior):
         """Guts of the fit method; takes labels in 1-of-K encoding Y"""
 
+        n_classes = Y.shape[1]
+
         if sample_weight is not None:
             Y *= array2d(sample_weight).T
 
