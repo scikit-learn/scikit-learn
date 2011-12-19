@@ -68,7 +68,7 @@ class ElasticNet(LinearModel):
     while alpha corresponds to the lambda parameter in glmnet.
     More specifically, the penalty is::
 
-        alpha*rho*L1 + alpha*(1-rho)*L2
+        alpha*rho*L1 + 0.5*alpha*(1-rho)*L2
 
     If you are interested in controlling the L1 and L2 penalty
     separately, keep in mind that this is equivalent to::
