@@ -336,7 +336,7 @@ extracted from part of the image of Lena looks like.
 .. _MiniBatchDictionaryLearning
 
 Mini-batch dictionary learning
---------------------------
+------------------------------
 
 :class:`MiniBatchDictionaryLearning` implements a faster, but less accurate
 version of the dictionary learning algorithm that is better suited for large
