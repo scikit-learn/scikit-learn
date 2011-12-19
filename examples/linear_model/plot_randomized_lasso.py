@@ -13,6 +13,7 @@ from scipy.interpolate import interp1d
 from sklearn.linear_model import RandomizedLasso, lars_path, LassoLarsCV
 from sklearn.cross_validation import ShuffleSplit
 from sklearn.datasets import load_diabetes
+from sklearn.feature_selection import f_regression
 from sklearn.preprocessing import Scaler
 
 ###############################################################################
@@ -22,7 +23,7 @@ diabetes = load_diabetes()
 X = diabetes.data
 y = diabetes.target
 
-n_bad_features = 30
+n_bad_features = 15
 n_samples, n_good_features = X.shape
 
 # Some noisy data not correlated
@@ -38,7 +39,7 @@ n_features = n_good_features + n_bad_features
 
 print "Computing regularization path using the LARS ..."
 
-a = 0.2
+a = 0.3
 n_resampling = 200
 rng = np.random.RandomState(42)
 xx_grid = np.linspace(0, 1, 100)
@@ -59,13 +60,15 @@ for k in xrange(n_resampling):
 scores_path /= n_resampling
 
 pl.figure()
-pl.plot(xx_grid, scores_path[:n_good_features].T, 'r')
-pl.plot(xx_grid, scores_path[n_good_features:].T, 'k')
+hg = pl.plot(xx_grid, scores_path[:n_good_features].T, 'r')
+hb = pl.plot(xx_grid, scores_path[n_good_features:].T, 'k')
 ymin, ymax = pl.ylim()
 pl.xlabel('|coef| / max|coef|')
 pl.ylabel('Proportion of times selected')
 pl.title('Stability Scores Path')
 pl.axis('tight')
+pl.legend((hg[0], hb[0]), ('good features', 'bad features'),
+          loc='lower right')
 pl.ylim([0, 1.05])
 
 ###############################################################################
@@ -73,11 +76,16 @@ pl.ylim([0, 1.05])
 
 cv = ShuffleSplit(n_samples, n_iterations=50, test_fraction=0.2)
 alpha_cv = LassoLarsCV(cv=cv).fit(X, y).alpha
-clf = RandomizedLasso(verbose=True, alpha=alpha_cv, random_state=42, a=a)
+clf = RandomizedLasso(verbose=False, alpha=alpha_cv, random_state=42, a=a)
 clf.fit(X, y)
 
+# compare with F-score
+F, _ = f_regression(X, y)
+
 pl.figure()
-pl.plot(clf.scores_)
+pl.plot(clf.scores_, label="Stabiliy selection score")
+pl.plot(F / np.max(F), label="(scaled) F-score")
 pl.xlabel("Features")
-pl.ylabel("Selection score")
+pl.ylabel("Score")
+pl.legend()
 pl.show()
