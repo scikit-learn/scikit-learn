@@ -557,6 +557,13 @@ class SemisupervisedNB(BaseNB):
             if self.verbose:
                 print "Naive Bayes EM, iteration %d," % i,
 
+            # E
+            if self.relabel_all:
+                Y = clf.predict_proba(X)
+            else:
+                Y_unlabeled[:] = clf.predict_proba(X_unlabeled)
+
+            # M
             clf._fit1ofK(X, Y, sample_weight, class_prior)
 
             d = (np.abs(old_coef - clf.coef_).sum()
@@ -570,10 +577,6 @@ class SemisupervisedNB(BaseNB):
 
             old_coef[:] = clf.coef_
             old_intercept[:] = clf.intercept_
-            if self.relabel_all:
-                Y = clf.predict_proba(X)
-            else:
-                Y_unlabeled[:] = clf.predict_proba(X_unlabeled)
 
         return self
 
