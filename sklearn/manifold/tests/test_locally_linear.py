@@ -102,6 +102,15 @@ def test_pipeline():
     assert_lower(.7, clf.score(iris.data, iris.target))
 
 
+# Test the error raised when the weight matrix is singular
+def test_singular_matrix():
+    from nose.tools import assert_raises
+    M = np.ones((4,3))
+
+    assert_raises(ValueError, manifold.locally_linear_embedding,
+                  M, 2, 1, method='standard', eigen_solver='arpack')
+
+
 if __name__ == '__main__':
     import nose
     nose.runmodule()
