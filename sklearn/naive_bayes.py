@@ -247,7 +247,7 @@ class BaseDiscreteNB(BaseNB):
 
         if class_prior:
             assert len(class_prior) == n_classes, \
-                   'Number of priors must match number of classs'
+                   'Number of priors must match number of classes'
             self.class_log_prior_ = np.log(class_prior)
         elif self.fit_prior:
             # empirical prior, with sample_weight taken into account
