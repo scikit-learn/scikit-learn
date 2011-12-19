@@ -162,15 +162,15 @@ with fewer parameter values, effectively reducing the number of variables
 upon which the given solution is dependent. For this reason, the Lasso
 and its variants are fundamental to the field of compressed sensing.
 
-Mathematically, it consists of a linear model trained with L1 prior as
-regularizer. The objective function to minimize is:
+Mathematically, it consists of a linear model trained with :math:`\ell_1` prior
+as regularizer. The objective function to minimize is:
 
-.. math::  \underset{w}{min} { 0.5 * ||X w - y||_2 ^ 2 + \alpha * ||w||_1}
+.. math::  \underset{w}{min} { \frac{1}{2n_{samples}} ||X w - y||_2 ^ 2 + \alpha ||w||_1}
 
 The lasso estimate thus solves the minimization of the
-least-squares penalty with :math:`\alpha * ||w||_1` added, where
-:math:`\alpha` is a constant and :math:`||w||_1` is the L1-norm of the
-parameter vector.
+least-squares penalty with :math:`\alpha ||w||_1` added, where
+:math:`\alpha` is a constant and :math:`||w||_1` is the :math:`\ell_1`-norm of
+the parameter vector.
 
 The implementation in the class :class:`Lasso` uses coordinate descent as
 the algorithm to fit the coefficients. See :ref:`least_angle_regression`
@@ -188,7 +188,7 @@ computes the coefficients along the full path of possible values.
 
 .. topic:: Examples:
 
-  * :ref:`example_linear_model_lasso_and_elasticnet.py`,
+  * :ref:`example_linear_model_lasso_and_elasticnet.py`
 
 Setting regularization parameter
 --------------------------------
