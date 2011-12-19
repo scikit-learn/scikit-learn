@@ -1022,7 +1022,7 @@ class GMMHMM(_BaseHMM):
             params)
 
         for state, g in enumerate(self.gmms):
-            _, lgmm_posteriors = g.eval(obs, return_log=True)
+            _, lgmm_posteriors = g.eval(obs)
             lgmm_posteriors += np.log(posteriors[:, state][:, np.newaxis]
                                       + np.finfo(np.float).eps)
             gmm_posteriors = np.exp(lgmm_posteriors)

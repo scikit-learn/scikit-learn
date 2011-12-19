@@ -304,7 +304,7 @@ class GMM(BaseEstimator):
 
     weights = property(_get_weights, _set_weights)
 
-    def eval(self, obs, return_log=False):
+    def eval(self, obs):
         """Evaluate the model on data
 
         Compute the log probability of `obs` under the model and
@@ -316,8 +316,6 @@ class GMM(BaseEstimator):
         obs: array_like, shape (n_samples, n_features)
             List of n_features-dimensional data points.  Each row
             corresponds to a single data point.
-        return_log: boolean, optional
-            If True, the posteriors returned are log-probabilities
 
         Returns
         -------
@@ -348,8 +346,7 @@ class GMM(BaseEstimator):
         logprob : array_like, shape (n_samples,)
             Log probabilities of each data point in `obs`
         """
-        # We use return_log=True to avoid a useless exponentiation
-        logprob, _ = self.eval(obs, return_log=True)
+        logprob, _ = self.eval(obs)
         return logprob
 
     def decode(self, obs):
