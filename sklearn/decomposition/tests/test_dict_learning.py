@@ -112,7 +112,16 @@ def test_dict_learning_online_partial_fit():
     assert_array_equal(dico1.components_, dico2.components_)
 
 
-def test_sparse_encode():
+def test_sparse_encode_shapes():
+    n_atoms = 12
+    V = rng.randn(n_atoms, n_features)  # random init
+    V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
+    for algo in ('lasso_lars', 'lasso_cd', 'lars', 'omp', 'threshold'):
+        code = sparse_encode_parallel(X, V, algorithm=algo)
+        assert_equal(code.shape, (n_samples, n_atoms))
+
+
+def test_sparse_encode_error():
     n_atoms = 12
     V = rng.randn(n_atoms, n_features)  # random init
     V /= np.sum(V ** 2, axis=1)[:, np.newaxis]

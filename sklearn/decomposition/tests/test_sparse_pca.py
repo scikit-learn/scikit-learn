@@ -50,9 +50,10 @@ def test_correct_shapes():
 
 
 def test_fit_transform():
+    alpha = 100
     rng = np.random.RandomState(0)
     Y, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)  # wide array
-    spca_lars = SparsePCA(n_components=3, method='lars',
+    spca_lars = SparsePCA(n_components=3, method='lars', alpha=alpha,
                           random_state=rng)
     spca_lars.fit(Y)
     U1 = spca_lars.transform(Y)
@@ -62,16 +63,20 @@ def test_fit_transform():
         _mp = joblib_par.multiprocessing
         joblib_par.multiprocessing = None
         try:
-            spca = SparsePCA(n_components=3, n_jobs=2, random_state=rng).fit(Y)
+            spca = SparsePCA(n_components=3, n_jobs=2, random_state=rng,
+                             alpha=alpha).fit(Y)
             U2 = spca.transform(Y)
         finally:
             joblib_par.multiprocessing = _mp
     else:  # we can efficiently use parallelism
-        spca = SparsePCA(n_components=3, n_jobs=2, random_state=rng).fit(Y)
+        spca = SparsePCA(n_components=3, n_jobs=2, method='lars', alpha=alpha,
+                         random_state=rng).fit(Y)
         U2 = spca.transform(Y)
+    assert not np.all(spca_lars.components_ == 0)
     assert_array_almost_equal(U1, U2)
     # Test that CD gives similar results
-    spca_lasso = SparsePCA(n_components=3, method='cd', random_state=rng)
+    spca_lasso = SparsePCA(n_components=3, method='cd', random_state=rng,
+                           alpha=alpha)
     spca_lasso.fit(Y)
     assert_array_almost_equal(spca_lasso.components_, spca_lars.components_)
 
@@ -112,9 +117,11 @@ def test_mini_batch_correct_shapes():
 
 
 def test_mini_batch_fit_transform():
+    alpha = 100
     rng = np.random.RandomState(0)
     Y, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)  # wide array
-    spca_lars = MiniBatchSparsePCA(n_components=3, random_state=rng).fit(Y)
+    spca_lars = MiniBatchSparsePCA(n_components=3, random_state=rng,
+                                   alpha=alpha).fit(Y)
     U1 = spca_lars.transform(Y)
     # Test multiple CPUs
     if sys.platform == 'win32':  # fake parallelism for win32
@@ -122,15 +129,16 @@ def test_mini_batch_fit_transform():
         _mp = joblib_par.multiprocessing
         joblib_par.multiprocessing = None
         try:
-            U2 = MiniBatchSparsePCA(n_components=3, n_jobs=2,
+            U2 = MiniBatchSparsePCA(n_components=3, n_jobs=2, alpha=alpha,
                                     random_state=rng).fit(Y).transform(Y)
         finally:
             joblib_par.multiprocessing = _mp
     else:  # we can efficiently use parallelism
-        U2 = MiniBatchSparsePCA(n_components=3, n_jobs=2,
+        U2 = MiniBatchSparsePCA(n_components=3, n_jobs=2, alpha=alpha,
                                 random_state=rng).fit(Y).transform(Y)
+    assert not np.all(spca_lars.components_ == 0)
     assert_array_almost_equal(U1, U2)
     # Test that CD gives similar results
-    spca_lasso = MiniBatchSparsePCA(n_components=3, method='cd',
+    spca_lasso = MiniBatchSparsePCA(n_components=3, method='cd', alpha=alpha,
                                     random_state=rng).fit(Y)
     assert_array_almost_equal(spca_lasso.components_, spca_lars.components_)
