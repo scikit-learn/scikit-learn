@@ -130,7 +130,7 @@ def k_init(X, k, n_local_trials=None, random_state=None, x_squared_norms=None):
 
 
 ###############################################################################
-# K-means estimation by EM (expectation maximization)
+# K-means batch estimation by EM (expectation maximization)
 
 
 def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
@@ -792,7 +792,8 @@ class MiniBatchKMeans(KMeans):
         Compute K-Means clustering
 
     partial_fit(X):
-        Compute a partial K-Means clustering
+        Compute a partial K-Means clustering for streaming large scale data
+        into the estimator with incremental fitting.
 
     Attributes
     ----------
@@ -817,7 +818,7 @@ class MiniBatchKMeans(KMeans):
     def __init__(self, k=8, init='k-means++', max_iter=100,
                  batch_size=100, verbose=0, compute_labels=True,
                  random_state=None, tol=0.0, max_no_improvement=10,
-                 init_size=None, n_init=1, n_reinit=2, chunk_size=None):
+                 init_size=None, n_init=10, chunk_size=None):
 
         super(MiniBatchKMeans, self).__init__(k=k, init=init,
               max_iter=max_iter, verbose=verbose, random_state=random_state,
@@ -830,7 +831,6 @@ class MiniBatchKMeans(KMeans):
             batch_size = chunk_size
         self.batch_size = batch_size
         self.compute_labels = compute_labels
-        self.n_reinit = n_reinit
         self.init_size = k * 100 if init_size is None else init_size
 
     def fit(self, X, y=None):
@@ -872,12 +872,26 @@ class MiniBatchKMeans(KMeans):
             # disabled
             old_center_buffer = np.zeros(0, np.double)
 
-        best_ewa_inertia_min = None
+        distances = np.zeros(self.batch_size, dtype=np.float64)
+        n_batches = int(np.ceil(float(n_samples) / self.batch_size))
+        n_iterations = int(self.max_iter * n_batches)
 
+        init_size = self.init_size
+        if init_size > n_samples:
+            init_size = n_samples
+
+        validation_indices = self.random_state.random_integers(
+                0, n_samples - 1, init_size)
+        X_valid = X[validation_indices]
+        x_squared_norms_valid = x_squared_norms[validation_indices]
+
+        # perform several inits with random sub-sets
+        best_inertia = None
         for init_idx in range(self.n_init):
             if self.verbose:
                 print "Init %d/%d with method: %s" % (
                     init_idx + 1, self.n_init, self.init)
+            counts = np.zeros(self.k, dtype=np.int32)
 
             # Initialize the centers using only a fraction of the data as we
             # expect n_samples to be very large when using MiniBatchKMeans
@@ -885,72 +899,46 @@ class MiniBatchKMeans(KMeans):
                 X, self.k, self.init,
                 random_state=self.random_state,
                 x_squared_norms=x_squared_norms,
-                init_size=self.init_size)
-            counts = np.zeros(self.k, dtype=np.int32)
-            distances = np.zeros(self.batch_size, dtype=np.float64)
+                init_size=init_size)
 
-            n_batches = int(np.ceil(float(n_samples) / self.batch_size))
-            n_iterations = int(self.max_iter * n_batches)
+            # Compute the label assignement on the init dataset
+            batch_inertia, centers_squared_diff = _mini_batch_step(
+                X_valid, x_squared_norms[validation_indices],
+                cluster_centers, counts, old_center_buffer, False,
+                distances=distances)
 
-            # empty context to be used inplace by the convergence check routine
-            convergence_context = {}
-            reallocation_budget = self.n_reinit
-
-            for iteration_idx in xrange(n_iterations):
-                # Sample the minibatch from the full dataset
-                minibatch_indices = self.random_state.random_integers(
-                    0, n_samples - 1, self.batch_size)
-
-                # Perform the actual update step on the minibatch data
-                batch_inertia, centers_squared_diff = _mini_batch_step(
-                    X[minibatch_indices], x_squared_norms[minibatch_indices],
-                    cluster_centers, counts, old_center_buffer, tol > 0.0,
-                    distances=distances)
-
-                # Monitor the convergence and do early stopping if necessary
-                if _mini_batch_convergence(
-                    self, iteration_idx, n_iterations, tol, n_samples,
-                    centers_squared_diff, batch_inertia, convergence_context,
-                    verbose=self.verbose):
-
-                    # If we can no longer reallocate bad centers, stop here
-                    if reallocation_budget < 1:
-                        break
-
-                    # Reallocate bad centers at samples that are the most
-                    # distant from existing centers
-                    threshold = np.median(counts) / 2
-                    to_reallocate = counts < threshold
-                    n_to_reallocate = np.sum(to_reallocate)
-                    if n_to_reallocate == 0:
-                        break
-
-                    #if self.verbose:
-                    print "Re-allocating %d centers" % n_to_reallocate
-
-                    # Find the most distant portion of the samples and re-init
-                    # bad centers with them
-                    n = int(0.1 * self.batch_size)
-                    reinit_indices = distances.argsort()[-n:]
-                    new_centers = _init_centroids(
-                        X[reinit_indices], n_to_reallocate,
-                        self.init, random_state=self.random_state,
-                        x_squared_norms=x_squared_norms[reinit_indices])
-                    cluster_centers[to_reallocate] = new_centers
-
-                    ## Reset convergence stastics and counts
-                    reallocation_budget -= 1
-                    convergence_context.clear()
-                    counts[to_reallocate] = 0
-                    #counts.fill(0)
-
-            # Keep only the best cluster centers accross independant inits
-            ewa_inertia_min = convergence_context.get('ewa_inertia_min')
-            if (best_ewa_inertia_min is None
-                or ewa_inertia_min < best_ewa_inertia_min):
+            # Keep only the best cluster centers accross independant inits on
+            # the common validation set
+            _, inertia = _labels_inertia(X_valid, x_squared_norms_valid,
+                                         cluster_centers)
+            if best_inertia is None or inertia < best_inertia:
                 self.cluster_centers_ = cluster_centers
                 self.counts_ = counts
-                best_ewa_inertia_min = ewa_inertia_min
+                best_inertia = inertia
+
+        # Empty context to be used inplace by the convergence check routine
+        convergence_context = {}
+
+        # Perform the iterative optimization untill the final convergence
+        # criterion
+        for iteration_idx in xrange(n_iterations):
+
+            # Sample the minibatch from the full dataset
+            minibatch_indices = self.random_state.random_integers(
+                0, n_samples - 1, self.batch_size)
+
+            # Perform the actual update step on the minibatch data
+            batch_inertia, centers_squared_diff = _mini_batch_step(
+                X[minibatch_indices], x_squared_norms[minibatch_indices],
+                self.cluster_centers_, self.counts_,
+                old_center_buffer, tol > 0.0, distances=distances)
+
+            # Monitor the convergence and do early stopping if necessary
+            if _mini_batch_convergence(
+                self, iteration_idx, n_iterations, tol, n_samples,
+                centers_squared_diff, batch_inertia, convergence_context,
+                verbose=self.verbose):
+                break
 
         if self.compute_labels:
             if self.verbose:
@@ -980,7 +968,7 @@ class MiniBatchKMeans(KMeans):
 
         x_squared_norms = _squared_norms(X)
 
-        if (not hasattr(self, 'counts')
+        if (not hasattr(self, 'counts_')
             or not hasattr(self, 'cluster_centers_')):
             # this is the first call partial_fit on this object:
             # initialize the cluster centers
@@ -988,10 +976,10 @@ class MiniBatchKMeans(KMeans):
                 X, self.k, self.init, random_state=self.random_state,
                 x_squared_norms=x_squared_norms, init_size=self.init_size)
 
-            self.counts = np.zeros(self.k, dtype=np.int32)
+            self.counts_ = np.zeros(self.k, dtype=np.int32)
 
         _mini_batch_step(X, x_squared_norms, self.cluster_centers_,
-                         self.counts, np.zeros(0, np.double), 0)
+                         self.counts_, np.zeros(0, np.double), 0)
 
         if self.compute_labels:
             self.labels_, self.inertia_ = _labels_inertia(

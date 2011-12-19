@@ -34,7 +34,7 @@ n_runs = 5
 
 # k-means models can do several random inits so as to be able to trade
 # CPU time for convergence robustness
-n_init_range = np.array([1, 5, 10, 15])
+n_init_range = np.array([1, 5, 10, 15, 20, 25])
 
 # Datasets generation parameters
 n_samples_per_center = 100
@@ -66,10 +66,8 @@ legends = []
 cases = [
     (KMeans, 'k-means++', {}),
     (KMeans, 'random', {}),
-    (MiniBatchKMeans, 'k-means++', {'max_no_improvement': 3, 'n_reinit': 0}),
-    (MiniBatchKMeans, 'k-means++', {'max_no_improvement': 3, 'n_reinit': 2}),
-    (MiniBatchKMeans, 'random', {'max_no_improvement': 3, 'n_reinit': 0}),
-    (MiniBatchKMeans, 'random', {'max_no_improvement': 3, 'n_reinit': 2}),
+    (MiniBatchKMeans, 'k-means++', {'max_no_improvement': 3}),
+    (MiniBatchKMeans, 'random', {'max_no_improvement': 3}),
 ]
 
 for factory, init, params in cases:
@@ -106,7 +104,7 @@ pl.title("Mean inertia for various k-means init accross %d runs" % n_runs)
 # Part 2: qualitative visual inspection of the convergence
 
 X, y = make_data(random_state, n_samples_per_center, grid_size, scale)
-km = MiniBatchKMeans(k=n_clusters, init='random', n_init=1, n_reinit=0,
+km = MiniBatchKMeans(k=n_clusters, init='random', n_init=1,
                      random_state=random_state).fit(X)
 
 fig = pl.figure()
