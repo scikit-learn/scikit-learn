@@ -16,6 +16,7 @@ import scipy.sparse as sp
 
 from ..base import BaseEstimator
 from ..metrics.pairwise import euclidean_distances
+from ..utils.sparsefuncs import mean_variance_axis0
 from ..utils import check_arrays
 from ..utils import check_random_state
 from ..utils import atleast2d_or_csr
@@ -858,8 +859,7 @@ class MiniBatchKMeans(KMeans):
             if not sp.issparse(X):
                 mean_variance = np.mean(np.var(X, 0))
             else:
-                # TODO: implement efficient variance for CSR input
-                mean_variance = 1.0
+                mean_variance = np.mean(mean_variance_axis0(X)[1])
             tol = self.tol * mean_variance
 
             # using tol-based early stopping needs the allocation of a
@@ -892,6 +892,9 @@ class MiniBatchKMeans(KMeans):
                 print "Init %d/%d with method: %s" % (
                     init_idx + 1, self.n_init, self.init)
             counts = np.zeros(self.k, dtype=np.int32)
+
+            # TODO: once the `k_means` function works with sparse input we
+            # should refactor the following init to use it instead.
 
             # Initialize the centers using only a fraction of the data as we
             # expect n_samples to be very large when using MiniBatchKMeans
