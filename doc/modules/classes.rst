@@ -622,7 +622,7 @@ Pairwise metrics
    :no-members:
    :no-inherited-members:
 
-**User guide:** See the :ref:`naive_bayers` section for further details.
+**User guide:** See the :ref:`naive_bayes` section for further details.
 
 .. currentmodule:: sklearn
 
