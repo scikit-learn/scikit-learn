@@ -144,12 +144,11 @@ class PolynomialClassifier(BaseEstimator, ClassifierMixin):
         Y = np.zeros((N, len(self._classes)))
         for i in range(N):
             Y[i, self._classes == y[i]] = 1
-        Y = np.matrix(Y)
 
-        PX = np.matrix(self._build_pc_features(X))
+        PX = self._build_pc_features(X)
 
-        # direct computation of A
-        self.A = np.linalg.pinv(PX.T * PX / N) * (PX.T * Y / N)
+        # direct computation of A = pinv(PX.T * PX / N) * (PX.T * Y / N)
+        self.A = np.linalg.pinv(PX.T.dot(PX) / N).dot(PX.T.dot(Y) / N)
 
         return self
 
@@ -169,11 +168,11 @@ class PolynomialClassifier(BaseEstimator, ClassifierMixin):
         X = np.asarray(X)
 
         # build up polynomial features
-        PX = np.matrix(self._build_pc_features(X))
+        PX = self._build_pc_features(X)
 
         # apply classifier
-        D = self.A.T * PX.T
-        d = np.array(np.argmax(D, axis=0))[0]
+        D = self.A.T.dot(PX.T)
+        d = np.array(np.argmax(D, axis=0))
 
         # apply class labels
-        return [self._classes[d[i]] for i in range(len(d))]
+        return [self._classes[d[i]] for i in range(d.shape[0])]
