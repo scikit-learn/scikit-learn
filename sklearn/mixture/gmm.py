@@ -586,7 +586,7 @@ def _log_multivariate_normal_density_full(X, means, covars):
         except linalg.LinAlgError:
             # The model is most probabily stuck in a component with too
             # few observations, we need to reinitialize this components
-            cv[:] = np.diag(np.var(X, 0))#10 * np.eye(cv.shape[0])
+            cv[:] = np.diag(np.var(X, 0))
             cv_chol = np.diag(np.std(X, 0))
         cv_log_det = 2 * np.sum(np.log(np.diagonal(cv_chol)))
         cv_sol = solve_triangular(cv_chol, (X - mu).T, lower=True).T
@@ -683,43 +683,15 @@ def _covar_mstep_tied2(*args):
 
 
 def _covar_mstep_tied(gmm, X, posteriors, weighted_X_sum, norm, min_covar):
-    print "THIS IS BROKEN"
     # Eq. 15 from K. Murphy, "Fitting a Conditional Linear Gaussian
     n_features = X.shape[1]
     avg_X2 = np.dot(X.T, X)
-    avg_means2 = np.dot(gmm.means_.T, gmm.means_)
-    return (avg_X2 - avg_means2 + min_covar * np.eye(n_features))
-
-
-def _covar_mstep_slow(gmm, X, posteriors, weighted_X_sum, norm, min_covar):
-    """Covariance optimization -- slow method"""
-    w = posteriors.sum(axis=0)
-    n_features = X.shape[1]
-    covars = np.zeros(gmm.covars_.shape)
-    for c in xrange(gmm.n_components):
-        mu = gmm.means_[c]
-        #cv = np.dot(mu.T, mu)
-        avg_X2 = np.zeros((n_features, n_features))
-        for t, o in enumerate(X):
-            avg_X2 += posteriors[t, c] * np.outer(o, o)
-        cv = (avg_X2 / w[c]
-              - 2 * np.outer(weighted_X_sum[c] / w[c], mu)
-              + np.outer(mu, mu)
-              + min_covar * np.eye(n_features))
-        if gmm.cvtype == 'spherical':
-            covars[c] = np.diag(cv).mean()
-        elif gmm.cvtype == 'diag':
-            covars[c] = np.diag(cv)
-        elif gmm.cvtype == 'full':
-            covars[c] = cv
-        elif gmm.cvtype == 'tied':
-            covars += cv / gmm.n_components
-    return covars
+    avg_means2 = np.dot(gmm.means_.T, weighted_X_sum)
+    return (avg_X2 - avg_means2 + min_covar * np.eye(n_features)) / X.shape[0]
 
 
 _covar_mstep_funcs = {'spherical': _covar_mstep_spherical,
                       'diag': _covar_mstep_diag,
-                      #'tied': _covar_mstep_tied,
+                      'tied': _covar_mstep_tied,
                       'full': _covar_mstep_full,
-                      'tied': _covar_mstep_slow,
                       }
