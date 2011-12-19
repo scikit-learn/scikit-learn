@@ -5,7 +5,8 @@ from numpy.testing import assert_almost_equal
 from numpy.testing import assert_equal
 
 from sklearn.linear_model.sparse.coordinate_descent import Lasso as SparseLasso
-from sklearn.linear_model.sparse.coordinate_descent import ElasticNet as SparseENet
+from sklearn.linear_model.sparse.coordinate_descent \
+        import ElasticNet as SparseENet
 from sklearn.linear_model.coordinate_descent import Lasso as DenseLasso
 from sklearn.linear_model.coordinate_descent import ElasticNet as DenseENet
 
