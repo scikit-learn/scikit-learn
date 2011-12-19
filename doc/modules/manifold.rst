@@ -361,3 +361,13 @@ Tips on practical use
   as a bridge between parts of the manifold that would otherwise be
   well-separated.  Manifold learning on noisy and/or incomplete data is
   an active area of research.
+
+* Certain input configurations can lead to singular weight matrices, for
+  example when more than two points in the dataset are identical, or when
+  the data is split into disjointed groups.  In this case, ``method='arpack'``
+  will fail to find the null space.  The easiest way to address this is to
+  use ``method='dense'`` which will work on a singular matrix, though it may
+  be very slow depending on the number of input points.  Alternatively, one
+  can attempt to understand the source of the singularity: if it is due to
+  disjoint sets, increasing ``n_neighbors`` may help.  If it is due to
+  identical points in the dataset, removing these points may help.
