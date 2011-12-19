@@ -44,7 +44,7 @@ def mean_variance_axis0(X):
     cdef unsigned int j
     cdef unsigned int ptr
     cdef unsigned int ind
-    cdef double tmp
+    cdef double diff
 
     # store the means in a 1d-array
     means = np.asarray(X.mean(axis=0))[0]
@@ -61,11 +61,11 @@ def mean_variance_axis0(X):
             ind = X_indices[ptr]
 
             if j != ind:
-                tmp = means[j]
-                variances[j] += tmp * tmp
+                diff = means[j]
+                variances[j] += diff * diff
             else:
-                tmp = X_data[ptr] - means[ind]
-                variances[ind] += tmp * tmp
+                diff = X_data[ptr] - means[ind]
+                variances[ind] += diff * diff
                 ptr += 1
 
     variances /= n_samples
