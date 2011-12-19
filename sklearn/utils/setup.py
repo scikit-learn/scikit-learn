@@ -23,6 +23,9 @@ def configuration(parent_package='', top_path=None):
     config.add_extension('arraybuilder',
          sources=['arraybuilder.c'])
 
+    config.add_extension('sparsefuncs',
+         sources=['sparsefuncs.c'])
+
     config.add_extension('arrayfuncs',
          sources=['arrayfuncs.c'],
          depends=[join('src', 'cholesky_delete.c')],
