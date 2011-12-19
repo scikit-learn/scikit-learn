@@ -49,8 +49,8 @@ class Linkage(object):
     X : array of shape (n_samples, n_features)
         feature matrix  representing n_samples samples to be clustered
 
-    A : list of list of int
-        The i-th entry in A contains the indices of all clusters that are
+    A : dict, mapping int to set of int
+        The entry in A with key i contains the indices of all clusters that are
         connected to the cluster with index i
 
     distances : list (heapified) of tuples (float, int, int)
@@ -66,7 +66,7 @@ class Linkage(object):
     def __init__(self, X):
         self.X = X
 
-        self.A = []
+        self.A = dict()
 
         # Heap of possible cluster merges, sorted by their distances
         self.distances = []
@@ -130,7 +130,7 @@ class Linkage(object):
             The set of all nodes (i.e. cluster indices) that are connected
             to the clusters with the given indices.
         """
-        return set.union(*[set(self.A[cluster_index])
+        return set.union(*[self.A[cluster_index]
                                     for cluster_index in cluster_indices])
 
     def get_nodes_of_cluster(self, cluster_root):
@@ -200,8 +200,8 @@ class WardsLinkage(Linkage):
     X : array of shape (n_samples, n_features)
         feature matrix  representing n_samples samples to be clustered
 
-    A : list of list of int
-        The i-th entry in A contains the indices of all clusters that are
+    A : dict, mapping int to set of int
+        The entry in A with key i contains the indices of all clusters that are
         connected to the cluster with index i
 
     distances : list (heapified) of tuples (float, int, int)
@@ -234,7 +234,7 @@ class WardsLinkage(Linkage):
         coord_row = []
         coord_col = []
         for ind, row in enumerate(connectivity.rows):
-            self.A.append(row)
+            self.A[ind] = set(row)
             # We keep only the upper triangular for the moments
             # Generator expressions are faster than arrays on the following
             row = [i for i in row if i < ind]
@@ -286,7 +286,7 @@ class WardsLinkage(Linkage):
         visited = np.empty(parent.shape[0], dtype=bool)
         visited[:] = False
         visited[parent_node] = True
-        for l in set(self.A[child_node1]).union(self.A[child_node2]):
+        for l in self.A[child_node1].union(self.A[child_node2]):
             while parent[l] != l:
                 l = parent[l]
             if not visited[l]:
@@ -294,12 +294,10 @@ class WardsLinkage(Linkage):
                 coord_col.append(l)
                 # cluster l is now connected to parent_node instead of
                 # the two child nodes
-                self.A[l].append(parent_node)
-                if child_node1 in self.A[l]:
-                    self.A[l].remove(child_node1)
-                if child_node2 in self.A[l]:
-                    self.A[l].remove(child_node2)
-        self.A.append(coord_col)
+                self.A[l].add(parent_node)
+                self.A[l].discard(child_node1)
+                self.A[l].discard(child_node2)
+        self.A[parent_node] = set(coord_col)
         coord_col = np.array(coord_col, dtype=np.int)
         coord_row = np.empty_like(coord_col)
         coord_row.fill(parent_node)
@@ -377,8 +375,8 @@ class CompleteLinkage(Linkage):
     X : array of shape (n_samples, n_features)
         feature matrix  representing n_samples samples to be clustered
 
-    A : list of list of int
-        The i-th entry in A contains the indices of all clusters that are
+    A : dict, mapping int to set of int
+        The entry in A with key i contains the indices of all clusters that are
         connected to the cluster with index i
 
     distances : list (heapified) of tuples (float, int, int)
@@ -430,7 +428,7 @@ class CompleteLinkage(Linkage):
 
         # Determine distances between all connected nodes and create matrix A
         for ind1, row in enumerate(connectivity.rows):
-            self.A.append(row)
+            self.A[ind1] = set(row)
             for ind2 in row:
                 if ind1 == ind2:
                     continue
@@ -441,7 +439,7 @@ class CompleteLinkage(Linkage):
         for ind1, row in enumerate(connectivity.rows):
             for ind2 in row:
                 if ind1 not in self.A[ind2]:
-                    self.A[ind2].append(ind1)
+                    self.A[ind2].add(ind1)
 
         heapify(self.distances)
 
@@ -487,8 +485,12 @@ class CompleteLinkage(Linkage):
             if not visited[l]:
                 visited[l] = True
                 coord_col.append(l)
-                self.A[l].append(parent_node)
-        self.A.append(coord_col)
+                # cluster l is now connected to parent_node instead of
+                # the two child nodes
+                self.A[l].add(parent_node)
+                self.A[l].discard(child_node1)
+                self.A[l].discard(child_node2)
+        self.A[parent_node] = set(coord_col)
 
         # Determine for all connected clusters the distance to the newly formed
         # cluster
