@@ -127,7 +127,7 @@ def test_sparse_encode_error():
     V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
     code_1 = sparse_encode(X, V, alpha=0.001)
     code_2 = sparse_encode_parallel(X, V, alpha=0.001)
-    assert_array_equal(code_1, code_2)
+    assert_array_almost_equal(code_1, code_2)
     assert not np.all(code_1 == 0)
     assert np.sqrt(np.sum((np.dot(code_1, V) - X) ** 2)) < 0.1
 
