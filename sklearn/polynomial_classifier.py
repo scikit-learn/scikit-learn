@@ -14,7 +14,7 @@ import scipy as sp
 from base import BaseEstimator, ClassifierMixin
 
 
-class PC(BaseEstimator, ClassifierMixin):
+class PolynomialClassifier(BaseEstimator, ClassifierMixin):
     """Polynomial Classifier.
 
     This type of classifier maps features to polynomial space and applies

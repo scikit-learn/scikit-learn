@@ -4,7 +4,7 @@ Author: Christoph Hermes <hermes(at)hausmilbe(dot)net>
 """
 
 from sklearn import datasets
-from sklearn.polynomial_classifier import PC
+from sklearn.polynomial_classifier import PolynomialClassifier
 from sklearn.metrics import confusion_matrix
 from sklearn.decomposition import PCA
 
@@ -54,7 +54,7 @@ def pc_apply_datasets():
         pca = PCA(n_components=0.98).fit(X_train)
 
         # apply classifier
-        clf = PC(degree=2)
+        clf = PolynomialClassifier(degree=2)
         X_train_pca = pca.transform(X_train)
         X_test_pca = pca.transform(X_test)
         y_pred = clf.fit(X_train_pca, y_train).predict(X_test_pca)
