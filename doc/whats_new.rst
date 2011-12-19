@@ -35,7 +35,7 @@ Changelog
      predict methods.
 
    - Adjusted Mutual Information metric added as
-     ``sklearn.metrics.adjusted_mutual_info_score`` by `Robert Layton`_.
+     ``sklearn.metrics.adjusted_mutual_info_score`` by Robert Layton.
 
    - Models like SVC/SVR/LinearSVC/LogisticRegression from libsvm/liblinear
      now support scaling of C regularization parameter by the number of
