@@ -356,8 +356,8 @@ def _build_tree(X, y, is_classification, criterion, max_depth, min_split,
             np.argsort(X.T, axis=1).astype(np.int32).T)
 
     recursive_partition(X, X_argsorted, y, sample_mask, 0, -1, False)
-
     tree.resize(tree.node_count)
+
     return tree
 
 
@@ -387,7 +387,7 @@ class BaseDecisionTree(BaseEstimator):
 
         self.tree_ = None
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_mask=None, X_argsorted=None):
         """Build a decision tree from the training set (X, y).
 
         Parameters
@@ -445,7 +445,7 @@ class BaseDecisionTree(BaseEstimator):
                                 max_depth, self.min_split,
                                 self.min_density, max_features,
                                 self.random_state, self.n_classes_,
-                                self.find_split_)
+                                self.find_split_, X_argsorted=X_argsorted)
 
         return self
 

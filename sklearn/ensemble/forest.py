@@ -88,6 +88,10 @@ class Forest(BaseEnsemble):
         X = np.atleast_2d(X)
         y = np.atleast_1d(y)
 
+        sample_mask = np.ones((X.shape[0],), dtype=np.bool)
+        X_argsorted = np.asfortranarray(
+            np.argsort(X.T, axis=1).astype(np.int32).T)
+
         if isinstance(self.base_estimator, ClassifierMixin):
             self.classes_ = np.unique(y)
             self.n_classes_ = len(self.classes_)
@@ -99,10 +103,12 @@ class Forest(BaseEnsemble):
             if self.bootstrap:
                 n_samples = X.shape[0]
                 indices = self.random_state.randint(0, n_samples, n_samples)
-                tree.fit(X[indices], y[indices])
+                tree.fit(X[indices], y[indices],
+                         sample_mask=None, X_argsorted=None)
 
             else:
-                tree.fit(X, y)
+                tree.fit(X, y,
+                         sample_mask=sample_mask, X_argsorted=X_argsorted)
 
         return self
 
