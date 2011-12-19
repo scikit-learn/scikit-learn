@@ -4,9 +4,11 @@ Feature importances with forests of trees
 =========================================
 
 This examples shows the use of forests of trees to evaluate the importance of
-features on an artifical classification task.
+features on an artifical classification task. The red plots are the feature
+importances of each individual tree, and the blue plot is the feature importance
+of the whole forest.
 
-As expected, the knee in the plot suggests that 3 features are informative,
+As expected, the knee in the blue plot suggests that 3 features are informative,
 while the remaining are not.
 """
 print __doc__
@@ -38,9 +40,14 @@ print "Feature ranking:"
 for f in xrange(10):
     print "%d. feature %d (%f)" % (f + 1, indices[f], importances[indices[f]])
 
-# Plot the feature importances
+# Plot the feature importances of the trees and of the forest
 import pylab as pl
 pl.figure()
-pl.title("Sorted feature importances")
-pl.plot(xrange(10), importances[indices])
+pl.title("Feature importances")
+
+for tree in forest.estimators_:
+    pl.plot(xrange(10), tree.feature_importances()[indices], "r")
+
+pl.plot(xrange(10), importances[indices], "b")
+
 pl.show()
