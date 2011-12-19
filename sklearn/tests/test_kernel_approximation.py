@@ -31,8 +31,7 @@ def test_additive_chi2_sampler():
     Y_trans = transform.transform(Y)
     kernel_approx = np.dot(X_trans, Y_trans.T)
 
-    assert np.mean(np.abs(kernel - kernel_approx)) < 0.03
-    assert np.max(np.abs(kernel - kernel_approx)) < 0.12
+    np.testing.assert_array_almost_equal(kernel, kernel_approx, 1)
 
 
 def test_skewed_chi2_sampler():
@@ -56,10 +55,7 @@ def test_skewed_chi2_sampler():
     X_trans = transform.fit_transform(X)
     Y_trans = transform.transform(Y)
     kernel_approx = np.dot(X_trans, Y_trans.T)
-
-    assert np.mean(np.abs(kernel - kernel_approx)) < 0.03
-    assert np.max(np.abs(kernel - kernel_approx)) < 0.15
-
+    np.testing.assert_array_almost_equal(kernel, kernel_approx, 1)
 
 def test_rbf_sampler():
     """test that RBFSampler approximates kernel on random data"""
@@ -74,9 +70,7 @@ def test_rbf_sampler():
     Y_trans = rbf_transform.transform(Y)
     kernel_approx = np.dot(X_trans, Y_trans.T)
 
-    assert np.mean(np.abs(kernel - kernel_approx)) < 0.1
-    assert np.max(np.abs(kernel - kernel_approx)) < 0.2
-
+    np.testing.assert_array_almost_equal(kernel, kernel_approx, 1)
 
 if __name__ == "__main__":
     test_additive_chi2_sampler()
