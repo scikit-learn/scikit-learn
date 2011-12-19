@@ -4,11 +4,11 @@ Extended math utilities.
 # Authors: G. Varoquaux, A. Gramfort, A. Passos, O. Grisel
 # License: BSD
 
-from . import check_random_state
 import numpy as np
-
 from scipy import linalg
 
+from . import check_random_state
+from .fixes import qr_economic
 
 def norm(v):
     v = np.asarray(v)
@@ -79,33 +79,54 @@ def safe_sparse_dot(a, b, dense_output=False):
         return np.dot(a, b)
 
 
-def randomized_range_finder(A, ell, q, random_state):
+def randomized_range_finder(A, size, n_iterations, random_state=None):
     """Computes an orthonormal matrix whose range approximates the range of A.
+
+    Parameters
+    ==========
+    A: 2D array
+        The input data matrix
+    size: integer
+        Size of the return array
+    n_iterations: integer
+        Number of power iterations used to stabilize the result
+    random_state: RandomState or an int seed (0 by default)
+        A random number generator instance
+
+    Returns
+    =======
+    Q: 2D array
+        A (size x size) projection matrix, the range of which
+        approximates well the range of the input matrix A.
+
+    Notes
+    =====
 
     Follows Algorithm 4.3 of
     Finding structure with randomness: Stochastic algorithms for constructing
     approximate matrix decompositions
-    Halko, et al., 2009 (arXiv:909)
+    Halko, et al., 2009 (arXiv:909) http://arxiv.org/pdf/0909.4061
     """
-    # generating random gaussian vectors r with shape: (M.shape[1], k + p)
-    r = random_state.normal(size=(A.shape[1], ell))
+    random_state = check_random_state(random_state)
+
+    # generating random gaussian vectors r with shape: (A.shape[1], size)
+    R = random_state.normal(size=(A.shape[1], size))
 
     # sampling the range of A using by linear projection of r
-    Y = safe_sparse_dot(A, r)
-    del r
+    Y = safe_sparse_dot(A, R)
+    del R
 
     # apply q power iterations on Y to make to further 'imprint' the top
     # singular values of A in Y
-    for i in xrange(q):
+    for i in xrange(n_iterations):
         Y = safe_sparse_dot(A, safe_sparse_dot(A.T, Y))
 
     # extracting an orthonormal basis of the A range samples
-    from .fixes import qr_economic
     Q, R = qr_economic(Y)
     return Q
 
 
-def fast_svd(M, k, p=None, q=0, transpose='auto', random_state=0):
+def fast_svd(M, k, p=None, n_iterations=0, transpose='auto', random_state=0):
     """Computes the k-truncated randomized SVD
 
     Parameters
@@ -120,7 +141,7 @@ def fast_svd(M, k, p=None, q=0, transpose='auto', random_state=0):
         Additional number of samples of the range of M to ensure proper
         conditioning. See the notes below.
 
-    q: int (default is 0)
+    n_iterations: int (default is 0)
         Number of power iterations (can be used to deal with very noisy
         problems).
 
@@ -145,15 +166,14 @@ def fast_svd(M, k, p=None, q=0, transpose='auto', random_state=0):
     checked by ensuring that the lowest extracted singular value is on
     the order of the machine precision of floating points.
 
-    References
-    ==========
-    Finding structure with randomness: Stochastic algorithms for constructing
-    approximate matrix decompositions
-    Halko, et al., 2009
-    http://arxiv.org/abs/arXiv:0909.4061
+    References:
 
-    A randomized algorithm for the decomposition of matrices
-    Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
+    * Finding structure with randomness: Stochastic algorithms for constructing
+      approximate matrix decompositions
+      Halko, et al., 2009 http://arxiv.org/abs/arXiv:0909.4061
+
+    * A randomized algorithm for the decomposition of matrices
+      Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
     """
     if p == None:
         p = k
@@ -167,7 +187,7 @@ def fast_svd(M, k, p=None, q=0, transpose='auto', random_state=0):
         # this implementation is a bit faster with smaller shape[1]
         M = M.T
 
-    Q = randomized_range_finder(M, k+p, q, random_state)
+    Q = randomized_range_finder(M, k+p, n_iterations, random_state)
 
     # project M to the (k + p) dimensional space using the basis vectors
     B = safe_sparse_dot(Q.T, M)
