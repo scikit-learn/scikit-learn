@@ -2,9 +2,7 @@
 
 """
 The :mod:`sklearn.polynomial_classifier` module implements Polynomial
-Classifier algorithms. These are supervised learning methods based on
-Schuermann, J.: Pattern Classification: A Unified View of Statistical and
-Neural Approaches, John Wiley & Sons, Inc., 1996
+Classifier algorithms.
 """
 
 # Author: Christoph Hermes <hermes(at)hausmilbe(dot)net>
