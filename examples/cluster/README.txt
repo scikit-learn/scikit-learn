@@ -3,5 +3,4 @@
 Clustering
 ----------
 
-Examples concerning the `sklearn.cluster` package.
-
+Examples concerning the :mod:`sklearn.cluster` package.

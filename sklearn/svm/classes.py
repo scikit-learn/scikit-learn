@@ -52,6 +52,10 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, CoefSelectTransformerMixin):
         To lessen the effect of regularization on synthetic feature weight
         (and therefore on the intercept) intercept_scaling has to be increased
 
+    scale_C : bool
+        Scale C with number of samples. It makes the setting of C independent
+        of the number of samples.
+
     Attributes
     ----------
     `coef_` : array, shape = [n_features] if n_classes == 2 \
@@ -122,6 +126,10 @@ class SVC(DenseBaseLibSVM, ClassifierMixin):
     cache_size: float, optional
         Specify the size of the kernel cache (in MB)
 
+    scale_C : bool
+        Scale C with number of samples. It makes the setting of C independant
+        of the number of samples.
+
     Attributes
     ----------
     `support_` : array-like, shape = [n_SV]
@@ -152,7 +160,7 @@ class SVC(DenseBaseLibSVM, ClassifierMixin):
     >>> clf = SVC()
     >>> clf.fit(X, y)
     SVC(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma=0.5, kernel='rbf',
-      probability=False, shrinking=True, tol=0.001)
+      probability=False, scale_C=False, shrinking=True, tol=0.001)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
 
@@ -163,11 +171,11 @@ class SVC(DenseBaseLibSVM, ClassifierMixin):
 
     def __init__(self, C=1.0, kernel='rbf', degree=3, gamma=0.0,
                  coef0=0.0, shrinking=True, probability=False,
-                 tol=1e-3, cache_size=200):
+                 tol=1e-3, cache_size=200, scale_C=False):
 
         super(SVC, self).__init__('c_svc', kernel, degree, gamma, coef0, tol,
                                   C, 0., 0., shrinking, probability,
-                                  cache_size)
+                                  cache_size, scale_C)
 
 
 class NuSVC(DenseBaseLibSVM, ClassifierMixin):
@@ -272,7 +280,7 @@ class NuSVC(DenseBaseLibSVM, ClassifierMixin):
 
         super(NuSVC, self).__init__('nu_svc', kernel, degree, gamma, coef0,
                                     tol, 0., nu, 0., shrinking, probability,
-                                    cache_size)
+                                    cache_size, scale_C=None)
 
 
 class SVR(DenseBaseLibSVM, RegressorMixin):
@@ -321,6 +329,10 @@ class SVR(DenseBaseLibSVM, RegressorMixin):
     cache_size: float, optional
         Specify the size of the kernel cache (in MB)
 
+    scale_C : bool
+        Scale C with number of samples. It makes the setting of C independant
+        of the number of samples.
+
     Attributes
     ----------
     `support_` : array-like, shape = [n_SV]
@@ -350,7 +362,8 @@ class SVR(DenseBaseLibSVM, RegressorMixin):
     >>> clf = SVR(C=1.0, epsilon=0.2)
     >>> clf.fit(X, y)
     SVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.2, gamma=0.2,
-      kernel='rbf', probability=False, shrinking=True, tol=0.001)
+      kernel='rbf', probability=False, scale_C=False, shrinking=True,
+      tol=0.001)
 
     See also
     --------
@@ -358,11 +371,11 @@ class SVR(DenseBaseLibSVM, RegressorMixin):
     """
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
                  tol=1e-3, C=1.0, epsilon=0.1, shrinking=True,
-                 probability=False, cache_size=200):
+                 probability=False, cache_size=200, scale_C=False):
 
         super(SVR, self).__init__('epsilon_svr', kernel, degree, gamma, coef0,
                                   tol, C, 0., epsilon, shrinking, probability,
-                                  cache_size)
+                                  cache_size, scale_C)
 
     def fit(self, X, y, sample_weight=None, **params):
         """
@@ -436,6 +449,10 @@ class NuSVR(DenseBaseLibSVM, RegressorMixin):
     cache_size: float, optional
         Specify the size of the kernel cache (in MB)
 
+    scale_C : bool
+        Scale C with number of samples. It makes the setting of C independant
+        of the number of samples.
+
     Attributes
     ----------
     `support_` : array-like, shape = [n_SV]
@@ -465,7 +482,7 @@ class NuSVR(DenseBaseLibSVM, RegressorMixin):
     >>> clf = NuSVR(C=1.0, nu=0.1)
     >>> clf.fit(X, y)
     NuSVR(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma=0.2, kernel='rbf',
-       nu=0.1, probability=False, shrinking=True, tol=0.001)
+       nu=0.1, probability=False, scale_C=False, shrinking=True, tol=0.001)
 
     See also
     --------
@@ -474,11 +491,12 @@ class NuSVR(DenseBaseLibSVM, RegressorMixin):
 
     def __init__(self, nu=0.5, C=1.0, kernel='rbf', degree=3,
                  gamma=0.0, coef0=0.0, shrinking=True,
-                 probability=False, tol=1e-3, cache_size=200):
+                 probability=False, tol=1e-3, cache_size=200,
+                 scale_C=False):
 
         super(NuSVR, self).__init__('nu_svr', kernel, degree, gamma, coef0,
                                     tol, C, nu, None, shrinking, probability,
-                                    cache_size)
+                                    cache_size, scale_C=scale_C)
 
     def fit(self, X, y, sample_weight=None, **params):
         """
@@ -539,6 +557,11 @@ class OneClassSVM(DenseBaseLibSVM):
     cache_size: float, optional
         Specify the size of the kernel cache (in MB)
 
+    scale_C : bool
+        Scale C with number of samples. It makes the setting of C independant
+        of the number of samples.
+
+
     Attributes
     ----------
     `support_` : array-like, shape = [n_SV]
@@ -560,9 +583,10 @@ class OneClassSVM(DenseBaseLibSVM):
     """
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
                  tol=1e-3, nu=0.5, shrinking=True, cache_size=200):
+
         super(OneClassSVM, self).__init__('one_class', kernel, degree, gamma,
                                           coef0, tol, 0., nu, 0., shrinking,
-                                          False, cache_size)
+                                          False, cache_size, scale_C=None)
 
     def fit(self, X, class_weight={}, sample_weight=None, **params):
         """

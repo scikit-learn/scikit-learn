@@ -182,7 +182,7 @@ visualization as 64x64 pixel images. The fact that the components shown below
 appear local is the effect of the inherent structure of the data, which makes
 such local patterns minimize reconstruction error. There exist sparsity-inducing
 norms that take into account adjacency and different kinds of structure; see see
-[Jen09] for a review of such methods. For more details on how to use Sparse PCA,
+[Jen09]_ for a review of such methods. For more details on how to use Sparse PCA,
 see the `Examples` section below.
 
 
@@ -227,10 +227,10 @@ factorization, while larger values shrink many coefficients to zero.
 
 .. topic:: References:
 
-   * [Mrl09] `"Online Dictionary Learning for Sparse Coding"
+  .. [Mrl09] `"Online Dictionary Learning for Sparse Coding"
      <http://www.di.ens.fr/sierra/pdfs/icml09.pdf>`_
      J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009
-   * [Jen09] `"Structured Sparse Principal Component Analysis"
+  .. [Jen09] `"Structured Sparse Principal Component Analysis"
      <www.di.ens.fr/~fbach/sspca_AISTATS2010.pdf>`_
      R. Jenatton, G. Obozinski, F. Bach, 2009
 
@@ -333,10 +333,10 @@ extracted from part of the image of Lena looks like.
     <http://www.di.ens.fr/sierra/pdfs/icml09.pdf>`_
     J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009
 
-.. _MiniBatchDictionaryLearning
+.. _MiniBatchDictionaryLearning:
 
 Mini-batch dictionary learning
---------------------------
+------------------------------
 
 :class:`MiniBatchDictionaryLearning` implements a faster, but less accurate
 version of the dictionary learning algorithm that is better suited for large
