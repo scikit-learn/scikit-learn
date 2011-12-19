@@ -145,7 +145,8 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100):
 
         return eigen_vectors[:, k_skip:], np.sum(eigen_values[k_skip:])
     elif eigen_solver == 'dense':
-        M = np.asarray(M)
+        if hasattr(M, 'toarray'):
+            M = M.toarray()
         eigen_values, eigen_vectors = eigh(
             M, eigvals=(k_skip, k + k_skip - 1), overwrite_a=True)
         index = np.argsort(np.abs(eigen_values))
@@ -247,7 +248,8 @@ def locally_linear_embedding(
         balltree = X
         X = balltree.data
     else:
-        balltree = BallTree(X)
+        X = np.asarray(X)
+        balltree = BallTree(np.asarray(X))
 
     N, d_in = X.shape
 
@@ -266,12 +268,11 @@ def locally_linear_embedding(
         # we'll compute M = (I-W)'(I-W)
         # depending on the solver, we'll do this differently
         if M_sparse:
-            # the **kwargs syntax is for python2.5 compatibility
-            M = eye(*W.shape, **{'format' : W.format}) - W
-            M = np.dot(M.T, M).tocsr()
+            M = eye(*W.shape, format=W.format) - W
+            M = (M.T * M).tocsr()
         else:
-            M = (np.dot(W.T, W) - (W.T + W)).todense()
-            M.flat[::M.shape[0] + 1] += 1  # W = W - I
+            M = (W.T * W - W.T - W).toarray()
+            M.flat[::M.shape[0] + 1] += 1  # W = W - I = W - I
 
     elif method == 'hessian':
         dp = out_dim * (out_dim + 1) / 2
@@ -282,8 +283,6 @@ def locally_linear_embedding(
 
         neighbors = balltree.query(X, k=n_neighbors + 1, return_distance=False)
         neighbors = neighbors[:, 1:]
-
-        X = np.asarray(X)
 
         Yi = np.empty((n_neighbors, 1 + out_dim + dp), dtype=np.float)
         Yi[:, 0] = 1

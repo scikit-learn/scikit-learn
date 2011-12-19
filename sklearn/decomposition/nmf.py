@@ -386,9 +386,9 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
             try:
                 rng = check_random_state(self.init)
                 W = rng.randn(n_samples, self.n_components)
-                # we do not write np.abs(W, out=W) to stay compatible with numpy
-                # 1.5 and earlier where the 'out' keyword is not supported as a
-                # kwarg on ufuncs
+                # we do not write np.abs(W, out=W) to stay compatible with
+                # numpy 1.5 and earlier where the 'out' keyword is not
+                # supported as a kwarg on ufuncs
                 np.abs(W, W)
                 H = rng.randn(self.n_components, n_features)
                 np.abs(H, H)

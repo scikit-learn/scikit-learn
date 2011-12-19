@@ -200,7 +200,7 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
             warnings.warn('graph_lasso: did not converge after %i iteration:'
                             'dual gap: %.3e' % (max_iter, d_gap),
                             ConvergenceWarning)
-    except FloatingPointError, e:
+    except FloatingPointError as e:
         e.args = (e.args[0]
                   + '. The system is too ill-conditioned for this solver',
                  )
@@ -253,6 +253,8 @@ class GraphLasso(EmpiricalCovariance):
         self.tol = tol
         self.max_iter = max_iter
         self.verbose = verbose
+        # The base class needs this for the score method
+        self.store_precision = True
 
     def fit(self, X, y=None):
         emp_cov = empirical_covariance(X)
@@ -418,6 +420,8 @@ class GraphLassoCV(GraphLasso):
         self.verbose = verbose
         self.cv = cv
         self.n_jobs = n_jobs
+        # The base class needs this for the score method
+        self.store_precision = True
 
     def fit(self, X, y=None):
         X = np.asarray(X)

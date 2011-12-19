@@ -1,4 +1,5 @@
-""" Partial Least Squares regression
+"""
+The :mod:`sklearn.pls` module implements Partial Least Squares (PLS).
 """
 
 # Author: Edouard Duchesnay <edouard.duchesnay@cea.fr>
@@ -683,8 +684,9 @@ class CCA(_PLS):
     >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
     >>> cca = CCA(n_components=1)
     >>> cca.fit(X, Y)
-    CCA(algorithm='nipals', copy=True, max_iter=500, n_components=1, scale=True,
-      tol=1e-06)
+    ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    CCA(algorithm='nipals', copy=True, max_iter=500, n_components=1,
+            scale=True, tol=1e-06)
     >>> X_c, Y_c = cca.transform(X, Y)
 
     References

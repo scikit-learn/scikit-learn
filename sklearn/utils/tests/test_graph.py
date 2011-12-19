@@ -6,11 +6,12 @@ from scipy import sparse
 
 from ..graph import graph_laplacian
 
+
 def test_graph_laplacian():
-    for mat in (np.arange(10)*np.arange(10)[:, np.newaxis],
+    for mat in (np.arange(10) * np.arange(10)[:, np.newaxis],
                 np.ones((7, 7)),
                 np.eye(19),
-                np.vander(np.arange(4))+np.vander(np.arange(4)).T,
+                np.vander(np.arange(4)) + np.vander(np.arange(4)).T,
                ):
         sp_mat = sparse.csr_matrix(mat)
         for normed in (True, False):
@@ -23,6 +24,3 @@ def test_graph_laplacian():
                                         laplacian)
             np.testing.assert_array_almost_equal(laplacian,
                             graph_laplacian(sp_mat, normed=normed).todense())
-
-
-

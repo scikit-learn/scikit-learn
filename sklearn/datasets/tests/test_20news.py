@@ -5,6 +5,7 @@ from nose.plugins.skip import SkipTest
 
 from sklearn import datasets
 
+
 def test_20news():
     try:
         data = datasets.fetch_20newsgroups(subset='all',
@@ -31,4 +32,3 @@ def test_20news():
     label = data.target_names.index(category)
     entry2 = data.data[np.where(data.target == label)[0][0]]
     assert_equal(entry1, entry2)
-

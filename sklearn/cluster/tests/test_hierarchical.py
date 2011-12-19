@@ -99,8 +99,8 @@ def test_scikit_vs_scipy():
 
     connectivity = lil_matrix(np.ones((n, n)))
     for i in range(5):
-        X = .1*np.random.normal(size=(n, p))
-        X -= 4*np.arange(n)[:, np.newaxis]
+        X = .1 * np.random.normal(size=(n, p))
+        X -= 4 * np.arange(n)[:, np.newaxis]
         X -= X.mean(axis=1)[:, np.newaxis]
 
         out = hierarchy.ward(X)
@@ -109,16 +109,17 @@ def test_scikit_vs_scipy():
         children, _, n_leaves = ward_tree(X, connectivity)
 
         dendrogram = Dendrogram(n_leaves, 1)
-        
+
         dendrogram.children = children
         labeling = dendrogram.get_labeling(dendrogram.cut(k))
-        
+
         dendrogram.children = children_
         labeling_ = dendrogram.get_labeling(dendrogram.cut(k))
 
         assess_same_labelling(labeling, labeling_)
 
-def test_connectivity_popagation():
+
+def test_connectivity_propagation():
     """
     Check that connectivity in the ward tree is propagated correctly during
     merging.

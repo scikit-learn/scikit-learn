@@ -4,7 +4,10 @@
 #          Lars Buitinck <L.J.Buitinck@uva.nl>
 #
 # License: BSD Style.
-"""Utilities to build feature vectors from text documents"""
+"""
+The :mod:`sklearn.feature_extraction.text` submodule gathers utilities to
+build feature vectors from text documents.
+"""
 
 import re
 import unicodedata

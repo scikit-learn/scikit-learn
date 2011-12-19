@@ -43,7 +43,10 @@ X[:, 1] *= .5
 # Compute clustering
 print "Compute unstructured hierarchical clustering..."
 st = time.time()
-hc = HierarchicalClustering(n_clusters=6, linkage_criterion="ward").fit(X)
+# hc = HierarchicalClustering(n_clusters=6, linkage_criterion="ward").fit(X)
+# linkage_criterion can be "average", "centroid", "complete", "median",
+# "single", "ward" or "weighted"
+hc = HierarchicalClustering(n_clusters=6, linkage_criterion="average").fit(X)
 label = hc.labels_
 print "Elapsed time: ", time.time() - st
 print "Number of points: ", label.size

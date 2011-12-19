@@ -18,10 +18,10 @@ from ..utils import array2d, check_random_state
 
 from . import _tree
 
-__all__ = [
-    "DecisionTreeClassifier",
-    "DecisionTreeRegressor"
-]
+__all__ = ["DecisionTreeClassifier",
+           "DecisionTreeRegressor",
+           "ExtraTreeClassifier",
+           "ExtraTreeRegressor"]
 
 DTYPE = _tree.DTYPE
 
@@ -116,17 +116,17 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
         if not (tree.children[left_child, 0] == tree.children[left_child, 1] \
                 == Tree.LEAF):
             recurse(tree, left_child)
-        if not (tree.children[right_child, 0] == tree.children[right_child, 1] \
-                == Tree.LEAF):
+        if not (tree.children[right_child, 0] == \
+                tree.children[right_child, 1] == Tree.LEAF):
             recurse(tree, right_child)
 
     if out_file is None:
-        out_file = open("tree.dot", 'w')
+        out_file = open("tree.dot", "w")
     elif isinstance(out_file, basestring):
-        out_file = open(out_file, 'w')
+        out_file = open(out_file, "w")
 
     out_file.write("digraph Tree {\n")
-    recurse(decision_tree.tree, 0)
+    recurse(decision_tree.tree_, 0)
     out_file.write("}")
 
     return out_file
@@ -374,18 +374,18 @@ class BaseDecisionTree(BaseEstimator):
                        max_features,
                        random_state):
         self.criterion = criterion
-        self.max_depth = np.inf if max_depth is None else max_depth
+        self.max_depth = max_depth
         self.min_split = min_split
         self.min_density = min_density
-        self.max_features = -1 if max_features is None else max_features
+        self.max_features = max_features
         self.random_state = check_random_state(random_state)
 
-        self.n_features = None
-        self.classes = None
-        self.n_classes = None
-        self.find_split = _tree._find_best_split
+        self.n_features_ = None
+        self.classes_ = None
+        self.n_classes_ = None
+        self.find_split_ = _tree._find_best_split
 
-        self.tree = None
+        self.tree_ = None
 
     def fit(self, X, y):
         """Build a decision tree from the training set (X, y).
@@ -406,43 +406,46 @@ class BaseDecisionTree(BaseEstimator):
         """
         # Convert data
         X = np.asarray(X, dtype=DTYPE, order='F')
-        n_samples, self.n_features = X.shape
+        n_samples, self.n_features_ = X.shape
 
         is_classification = isinstance(self, ClassifierMixin)
 
         if is_classification:
-            self.classes = np.unique(y)
-            self.n_classes = self.classes.shape[0]
-            criterion = CLASSIFICATION[self.criterion](self.n_classes)
-            y = np.searchsorted(self.classes, y)
+            self.classes_ = np.unique(y)
+            self.n_classes_ = self.classes_.shape[0]
+            criterion = CLASSIFICATION[self.criterion](self.n_classes_)
+            y = np.searchsorted(self.classes_, y)
 
         else:
-            self.classes = None
-            self.n_classes = 1
+            self.classes_ = None
+            self.n_classes_ = 1
             criterion = REGRESSION[self.criterion]()
 
         y = np.ascontiguousarray(y, dtype=DTYPE)
 
         # Check parameters
+        max_depth = np.inf if self.max_depth is None else self.max_depth
+        max_features = -1 if self.max_features is None else self.max_features
+
         if len(y) != n_samples:
             raise ValueError("Number of labels=%d does not match "
                              "number of features=%d" % (len(y), n_samples))
         if self.min_split <= 0:
             raise ValueError("min_split must be greater than zero.")
-        if self.max_depth is not None and self.max_depth <= 0:
+        if max_depth <= 0:
             raise ValueError("max_depth must be greater than zero. ")
         if self.min_density < 0.0 or self.min_density > 1.0:
             raise ValueError("min_density must be in [0, 1]")
-        if self.max_features >= 0 and \
-               not (0 < self.max_features <= self.n_features):
+        if max_features >= 0 and \
+               not (0 < max_features <= self.n_features_):
             raise ValueError("max_features must be in (0, n_features]")
 
         # Build tree
-        self.tree = _build_tree(X, y, is_classification, criterion,
-                                self.max_depth, self.min_split,
-                                self.min_density, self.max_features,
-                                self.random_state, self.n_classes,
-                                self.find_split)
+        self.tree_ = _build_tree(X, y, is_classification, criterion,
+                                max_depth, self.min_split,
+                                self.min_density, max_features,
+                                self.random_state, self.n_classes_,
+                                self.find_split_)
 
         return self
 
@@ -460,26 +463,26 @@ class BaseDecisionTree(BaseEstimator):
 
         Returns
         -------
-        predictions : array of shape = [n_samples]
+        y : array of shape = [n_samples]
             The predicted classes, or the predict values.
         """
         X = array2d(X, dtype=DTYPE)
         n_samples, n_features = X.shape
 
-        if self.tree is None:
+        if self.tree_ is None:
             raise Exception("Tree not initialized. Perform a fit first")
 
-        if self.n_features != n_features:
+        if self.n_features_ != n_features:
             raise ValueError("Number of features of the model must "
                              " match the input. Model n_features is %s and "
                              " input n_features is %s "
-                             % (self.n_features, n_features))
+                             % (self.n_features_, n_features))
 
         if isinstance(self, ClassifierMixin):
-            predictions = self.classes.take(np.argmax(
-                self.tree.predict(X), axis=1), axis=0)
+            predictions = self.classes_.take(np.argmax(
+                self.tree_.predict(X), axis=1), axis=0)
         else:
-            predictions = self.tree.predict(X).ravel()
+            predictions = self.tree_.predict(X).ravel()
 
         return predictions
 
@@ -579,16 +582,16 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         X = array2d(X, dtype=DTYPE)
         n_samples, n_features = X.shape
 
-        if self.tree is None:
+        if self.tree_ is None:
             raise Exception("Tree not initialized. Perform a fit first.")
 
-        if self.n_features != n_features:
+        if self.n_features_ != n_features:
             raise ValueError("Number of features of the model must "
                              " match the input. Model n_features is %s and "
                              " input n_features is %s "
-                             % (self.n_features, n_features))
+                             % (self.n_features_, n_features))
 
-        P = self.tree.predict(X)
+        P = self.tree_.predict(X)
         P /= P.sum(axis=1)[:, np.newaxis]
         return P
 
@@ -688,3 +691,77 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
                                                     min_density,
                                                     max_features,
                                                     random_state)
+
+
+class ExtraTreeClassifier(DecisionTreeClassifier):
+    """An extremely randomized tree classifier.
+
+    Extra-trees differ from classic decision trees in the way they are built.
+    When looking for the best split to separate the samples of a node into two
+    groups, random splits are drawn for each of the `max_features` randomly
+    selected features and the best split among those is chosen. When
+    `max_features` is set 1, this amounts to building a totally random
+    decision tree.
+
+    Warning: Extra-trees should only be used within ensemble methods.
+
+    See also
+    --------
+    ExtraTreeRegressor, ExtraTreesClassifier, ExtraTreesRegressor
+
+    References
+    ----------
+    .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
+           Machine Learning, 63(1), 3-42, 2006.
+    """
+    def __init__(self, criterion="gini",
+                       max_depth=10,
+                       min_split=1,
+                       min_density=0.1,
+                       max_features=None,
+                       random_state=None):
+        super(ExtraTreeClassifier, self).__init__(criterion,
+                                                  max_depth,
+                                                  min_split,
+                                                  min_density,
+                                                  max_features,
+                                                  random_state)
+
+        self.find_split_ = _tree._find_best_random_split
+
+
+class ExtraTreeRegressor(DecisionTreeRegressor):
+    """An extremely randomized tree regressor.
+
+    Extra-trees differ from classic decision trees in the way they are built.
+    When looking for the best split to separate the samples of a node into two
+    groups, random splits are drawn for each of the `max_features` randomly
+    selected features and the best split among those is chosen. When
+    `max_features` is set 1, this amounts to building a totally random
+    decision tree.
+
+    Warning: Extra-trees should only be used within ensemble methods.
+
+    See also
+    --------
+    ExtraTreeClassifier, ExtraTreesClassifier, ExtraTreesRegressor
+
+    References
+    ----------
+    .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
+           Machine Learning, 63(1), 3-42, 2006.
+    """
+    def __init__(self, criterion="mse",
+                       max_depth=10,
+                       min_split=1,
+                       min_density=0.1,
+                       max_features=None,
+                       random_state=None):
+        super(ExtraTreeRegressor, self).__init__(criterion,
+                                                 max_depth,
+                                                 min_split,
+                                                 min_density,
+                                                 max_features,
+                                                 random_state)
+
+        self.find_split_ = _tree._find_best_random_split

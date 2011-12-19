@@ -1,5 +1,5 @@
 """
-LDA: Linear Discriminant Analysis
+The :mod:`sklearn.lda` module implements Linear Discriminant Analysis (LDA).
 """
 # Authors: Matthieu Perrot
 #          Mathieu Blondel
