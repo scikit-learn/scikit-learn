@@ -44,7 +44,7 @@ additional utilities.
 Contributing code
 =================
 
-.. note:
+.. note::
 
   To avoid duplicated work it is highly advised to contact the developers
   mailing list before starting work on a non-trivial feature.
@@ -102,6 +102,10 @@ It is recommented to check that your contribution complies with the following
 rules before submitting a pull request:
 
     * Follow the `coding-guidelines`_ (see below).
+
+    * When applicable, use the Validation tools and other code in the
+      ``sklearn.utils`` submodule.  A list of utility routines available
+      for developers can be found in the :ref:`developers-utils` page.
 
     * All public methods should have informative docstrings with sample
       usage presented as doctests when appropriate.
@@ -267,6 +271,7 @@ In addition, we add the following guidelines:
       <https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt>`_
       in all your docstrings.
 
+
 A good example of code that we like can be found `here
 <https://svn.enthought.com/enthought/browser/sandbox/docs/coding_standard.py>`_.
 
@@ -285,6 +290,46 @@ In other cases, be sure to call ``safe_asarray``, ``atleast2d_or_csr``,
 ``as_float_array`` or ``array2d`` on any array-like argument passed to a
 scikit-learn API function. The exact function to use depends mainly on whether
 ``scipy.sparse`` matrices must be accepted.
+
+For more information, refer to the :ref:`developers-utils` page.
+
+Random Numbers
+--------------
+
+If your code depends on a random number generator, do not use 
+``numpy.random.random()`` or similar routines.  To ensure	
+repeatability in error checking, the routine should accept a keyword
+``random_state`` and use this to construct a
+``numpy.random.RandomState`` object.
+See ``sklearn.utils.check_random_state`` in :ref:`developers-utils`.
+
+Here's a simple example of code using some of the above guidelines:
+
+::
+
+    from sklearn.utils import array2d, check_random_state
+
+    def choose_random_sample(X, random_state=0):
+      	"""
+	Choose a random point from X
+
+	Parameters
+	----------
+	X : array-like, shape = (n_samples, n_features)
+	    array representing the data
+        random_state : RandomState or an int seed (0 by default)
+            A random number generator instance to define the state of the
+            random permutations generator.
+
+	Returns
+	-------
+	x : numpy array, shape = (n_features,)
+	    A random point selected from X
+	"""
+    	X = array2d(X)
+        random_state = check_random_state(random_state)
+	i = random_state.randint(X.shape[0])
+	return X[i]
 
 
 APIs of scikit-learn objects
