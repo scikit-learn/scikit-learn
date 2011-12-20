@@ -20,8 +20,8 @@ from .lfw import load_lfw_people
 from .lfw import fetch_lfw_pairs
 from .lfw import fetch_lfw_people
 from .twenty_newsgroups import fetch_20newsgroups
+from .twenty_newsgroups import fetch_20newsgroups_tfidf
 from .twenty_newsgroups import load_20newsgroups
-from .twenty_newsgroups import load_vectorized_20newsgroups
 from .mldata import fetch_mldata, mldata_filename
 from .samples_generator import make_classification
 from .samples_generator import make_regression
