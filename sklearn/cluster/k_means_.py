@@ -237,14 +237,19 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
         if verbose:
             print 'Initialization complete'
 
+        # Allocate memory to store the distances for each sample to it's
+        # closer center for reallocation in case of ties
+        distances = np.zeros(shape=(X.shape[0],), dtype=np.float64)
+
         # iterations
         for i in range(max_iter):
             centers_old = centers.copy()
             # labels assignement is also called the E-step of EM
-            labels, inertia = _labels_inertia(X, x_squared_norms, centers)
+            labels, inertia = _labels_inertia(X, x_squared_norms, centers,
+                                              distances=distances)
 
             # computation of the means is also called the M-step of EM
-            centers = _centers(X, labels, k)
+            centers = _centers(X, labels, k, distances)
 
             if verbose:
                 print 'Iteration %i, inertia %s' % (i, inertia)
@@ -291,7 +296,7 @@ def _labels_inertia(X, x_squared_norms, centers, distances=None):
     centers: float64 array, shape (k, n_features)
         The cluster centers.
 
-    distances: float64 array, shape (k, n_samples)
+    distances: float64 array, shape (n_samples,)
         Distances for each sample to its closest center.
 
     Returns
@@ -306,7 +311,7 @@ def _labels_inertia(X, x_squared_norms, centers, distances=None):
     # set the default value of centers to -1 to be able to detect any anomaly
     # easily
     labels = - np.ones(n_samples, np.int32)
-    if distances == None:
+    if distances is None:
         distances = np.zeros(shape=(0,), dtype=np.float64)
     if sp.issparse(X):
         inertia = _k_means._assign_labels_csr(
@@ -317,7 +322,7 @@ def _labels_inertia(X, x_squared_norms, centers, distances=None):
     return labels, inertia
 
 
-def _centers(X, labels, n_clusters):
+def _centers(X, labels, n_clusters, distances):
     """M step of the K-means EM algorithm
 
     Computation of cluster centers / means.
@@ -342,15 +347,17 @@ def _centers(X, labels, n_clusters):
 
     # TODO: explicit dtype handling
     centers = np.empty((n_clusters, n_features))
-    X_center = None
+    far_from_centers = None
+    reallocated_idx = 0
+
     for center_id in range(n_clusters):
         center_mask = labels == center_id
         if not np.any(center_mask):
-            # The centroid of empty clusters is set to the center of
-            # everything
-            if X_center is None:
-                X_center = X.mean(axis=0)
-            centers[center_id] = X_center
+            # Reassign empty cluster center to sample far from any cluster
+            if far_from_centers is None:
+                far_from_centers = distances.argsort()[::-1]
+            centers[center_id] = X[far_from_centers[reallocated_idx]]
+            reallocated_idx += 1
         else:
             centers[center_id] = np.mean(X[center_mask], axis=0)
     return centers

@@ -5,9 +5,10 @@ from scipy import sparse as sp
 from numpy.testing import assert_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
+from nose.tools import assert_almost_equal
+from nose.tools import assert_greater
 from nose.tools import assert_raises
 from nose.tools import assert_true
-from nose.tools import assert_almost_equal
 
 from sklearn.metrics.cluster import v_measure_score
 from sklearn.cluster import KMeans
@@ -242,15 +243,26 @@ def test_k_means_copyx():
     assert_array_almost_equal(my_X, X)
 
 
-def test_k_means_singleton():
-    """Check k_means with bad initialization and singleton clustering."""
-    my_X = np.array([[1.1, 1.1], [0.9, 1.1], [1.1, 0.9], [0.9, 0.9]])
-    array_init = np.array([[1.0, 1.0], [5.0, 5.0]])
-    k_means = KMeans(init=array_init, k=2, random_state=42, n_init=1)
+def test_k_means_non_collapsed():
+    """Check k_means with a bad initialization does not yield a singleton
+
+    Starting with bad centers that are quickly ignored should not
+    result in a repositioning of the centers to the center of mass that
+    would lead to collapsed centers which in turns make the clustering
+    dependent of the numerical unstabilities.
+    """
+    my_X = np.array([[1.1, 1.1], [0.9, 1.1], [1.1, 0.9], [0.9, 1.1]])
+    array_init = np.array([[1.0, 1.0], [5.0, 5.0], [-5.0, -5.0]])
+    k_means = KMeans(init=array_init, k=3, random_state=42, n_init=1)
     k_means.fit(my_X)
 
-    # must be singleton clustering
-    assert_equal(np.unique(k_means.labels_).size, 1)
+    # centers must not been collapsed
+    assert_equal(len(np.unique(k_means.labels_)), 3)
+
+    centers = k_means.cluster_centers_
+    assert_greater(np.linalg.norm(centers[0] - centers[1]), 0.1)
+    assert_greater(np.linalg.norm(centers[0] - centers[2]), 0.1)
+    assert_greater(np.linalg.norm(centers[1] - centers[2]), 0.1)
 
 
 def test_predict():
