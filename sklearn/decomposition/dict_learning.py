@@ -89,10 +89,10 @@ def _sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
 
     See also
     --------
-    linear_model.lars_path
-    linear_model.orthogonal_mp
-    linear_model.Lasso
-    decomposition.SparseCoder
+    sklearn.linear_model.lars_path
+    sklearn.linear_model.orthogonal_mp
+    sklearn.linear_model.Lasso
+    SparseCoder
     """
     alpha = float(alpha) if alpha is not None else None
     dictionary = np.asarray(dictionary)
@@ -184,7 +184,10 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
                   copy_cov=True, init=None, max_iter=1000, n_jobs=1):
     """Sparse coding
 
-    Each column of the result is the solution to a Lasso problem.
+    Each row of the result is the solution to a sparse coding problem.
+    The goal is to find a sparse array `code` such that::
+
+        X ~= code * dictionary
 
     Parameters
     ----------
@@ -210,7 +213,7 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
         the estimated components are sparse.
         omp: uses orthogonal matching pursuit to estimate the sparse solution
         threshold: squashes to zero all coefficients less than alpha from
-        the projection X.T * Y
+        the projection dictionary * X'
 
     n_nonzero_coefs: int, 0.1 * n_features by default
         Number of nonzero coefficients to target in each column of the
@@ -246,15 +249,15 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
 
     Returns
     -------
-    code: array of shape (n_components, n_features)
+    code: array of shape (n_samples, n_atoms)
         The sparse codes
 
     See also
     --------
-    linear_model.lars_path
-    linear_model.orthogonal_mp
-    linear_model.Lasso
-    decomposition.SparseCoder
+    sklearn.linear_model.lars_path
+    sklearn.linear_model.orthogonal_mp
+    sklearn.linear_model.Lasso
+    SparseCoder
     """
     warnings.warn("Please note: the interface of sparse_encode has changed: "
                   "It now follows the dictionary learning API and it also "
@@ -432,6 +435,13 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8,
     errors: array
         Vector of errors at each iteration.
 
+    See also
+    --------
+    dict_learning_online
+    DictionaryLearning
+    MiniBatchDictionaryLearning
+    SparsePCA
+    MiniBatchSparsePCA
     """
     if method not in ('lars', 'cd'):
         raise ValueError('Coding method not supported as a fit algorithm.')
@@ -587,6 +597,14 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
     dictionary: array of shape (n_atoms, n_features),
         the solutions to the dictionary learning problem
 
+    See also
+    --------
+    dict_learning
+    DictionaryLearning
+    MiniBatchDictionaryLearning
+    SparsePCA
+    MiniBatchSparsePCA
+
     """
     if method not in ('lars', 'cd'):
         raise ValueError('Coding method not supported as a fit algorithm.')
@@ -739,6 +757,11 @@ class SparseCoder(BaseDictionaryLearning):
     Finds a sparse representation of data against a fixed, precomputed
     dictionary.
 
+    Each row of the result is the solution to a sparse coding problem.
+    The goal is to find a sparse array `code` such that::
+
+        X ~= code * dictionary
+
     Parameters
     ----------
     dictionary: array, [n_atoms, n_features]
@@ -754,7 +777,7 @@ class SparseCoder(BaseDictionaryLearning):
         the estimated components are sparse.
         omp: uses orthogonal matching pursuit to estimate the sparse solution
         threshold: squashes to zero all coefficients less than alpha from
-        the projection X.T * Y
+        the projection dictionary * X'
 
     transform_n_nonzero_coefs: int, 0.1 * n_features by default
         Number of nonzero coefficients to target in each column of the
@@ -785,11 +808,11 @@ class SparseCoder(BaseDictionaryLearning):
 
     See also
     --------
-    :class:`sklearn.decomposition.DictionaryLearning` which also learns the
-    most appropriate dictionary for sparse coding.
-
-    :class:`sklearn.decomposition.SparsePCA` which solves the transposed
-    problem, finding sparse components to represent data.
+    DictionaryLearning
+    MiniBatchDictionaryLearning
+    SparsePCA
+    MiniBatchSparsePCA
+    sparse_encode
     """
 
     def __init__(self, dictionary, transform_algorithm='omp',
@@ -818,10 +841,11 @@ class DictionaryLearning(BaseDictionaryLearning):
     Finds a dictionary (a set of atoms) that can best be used to represent data
     using a sparse code.
 
-    Solves the optimization problem:
-    (U^*,V^*) = argmin 0.5 || Y - U V ||_2^2 + alpha * || U ||_1
-                 (U,V)
-                with || V_k ||_2 = 1 for all  0 <= k < n_atoms
+    Solves the optimization problem::
+
+        (U^*,V^*) = argmin 0.5 || Y - U V ||_2^2 + alpha * || U ||_1
+                    (U,V)
+                    with || V_k ||_2 = 1 for all  0 <= k < n_atoms
 
     Parameters
     ----------
@@ -853,7 +877,7 @@ class DictionaryLearning(BaseDictionaryLearning):
         the estimated components are sparse.
         omp: uses orthogonal matching pursuit to estimate the sparse solution
         threshold: squashes to zero all coefficients less than alpha from
-        the projection X.T * Y
+        the projection dictionary * X'
 
     transform_n_nonzero_coefs: int, 0.1 * n_features by default
         Number of nonzero coefficients to target in each column of the
@@ -905,9 +929,10 @@ class DictionaryLearning(BaseDictionaryLearning):
 
     See also
     --------
-    :class:`sklearn.decomposition.SparsePCA` which solves the transposed
-    problem, finding sparse components to represent data.
-
+    SparseCoder
+    MiniBatchDictionaryLearning
+    SparsePCA
+    MiniBatchSparsePCA
     """
     def __init__(self, n_atoms, alpha=1, max_iter=1000, tol=1e-8,
                  fit_algorithm='lars', transform_algorithm='omp',
@@ -961,10 +986,11 @@ class MiniBatchDictionaryLearning(BaseDictionaryLearning):
     Finds a dictionary (a set of atoms) that can best be used to represent data
     using a sparse code.
 
-    Solves the optimization problem:
-    (U^*,V^*) = argmin 0.5 || Y - U V ||_2^2 + alpha * || U ||_1
-                 (U,V)
-                with || V_k ||_2 = 1 for all  0 <= k < n_atoms
+    Solves the optimization problem::
+
+        (U^*,V^*) = argmin 0.5 || Y - U V ||_2^2 + alpha * || U ||_1
+                    (U,V)
+                    with || V_k ||_2 = 1 for all  0 <= k < n_atoms
 
     Parameters
     ----------
@@ -993,7 +1019,7 @@ class MiniBatchDictionaryLearning(BaseDictionaryLearning):
         the estimated components are sparse.
         omp: uses orthogonal matching pursuit to estimate the sparse solution
         threshold: squashes to zero all coefficients less than alpha from
-        the projection X.T * Y
+        the projection dictionary * X'
 
     transform_n_nonzero_coefs: int, 0.1 * n_features by default
         Number of nonzero coefficients to target in each column of the
@@ -1045,8 +1071,10 @@ class MiniBatchDictionaryLearning(BaseDictionaryLearning):
 
     See also
     --------
-    :class:`sklearn.decomposition.SparsePCA` which solves the transposed
-    problem, finding sparse components to represent data.
+    SparseCoder
+    DictionaryLearning
+    SparsePCA
+    MiniBatchSparsePCA
 
     """
     def __init__(self, n_atoms, alpha=1, n_iter=1000,
