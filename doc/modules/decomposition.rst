@@ -283,6 +283,12 @@ filled with the positive part of the regular code vector. The second half of
 the split code is filled with the negative part of the code vector, only with
 a positive sign. Therefore, the split_code is non-negative.
 
+
+.. topic:: Examples:
+
+    * :ref:`example_decomposition_plot_sparse_coding.py`
+
+
 Generic dictionary learning
 ---------------------------
 
