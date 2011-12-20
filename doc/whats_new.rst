@@ -50,7 +50,11 @@ Changelog
 
    - :ref:`kernel_approximation`: a transform implement kernel 
      approximation for fast SGD on non-linear kernels by 
-     `Andreas Müller`_
+     `Andreas Müller`_.
+
+   - Fix a bug due to atom swapping in :ref:`OMP` by `Vlad Niculae`_.
+
+   - :ref:`SparseCoder` by `Vlad Niculae`_. 
 
 API changes summary
 -------------------
@@ -87,6 +91,12 @@ version 0.9:
   - Cross Validation generators now use integer indices (``indices=True``)
     by default instead of boolean masks. This make it more intuitive to
     use with sparse matrix data.
+  
+  - The functions used for sparse coding, ``sparse_encode`` and
+    ``sparse_encode_parallel`` have been combined into
+    :func:`sklearn.decomposition.sparse_encode`, and the shapes of the arrays
+    have been transposed for consistency with the matrix factorization setting,
+    as opposed to the regression setting.
 
   - Fixed an off-by-one error in the SVMlight/LibSVM file format handling;
     files generated using ``sklearn.datasets.dump_svmlight_file`` should be
