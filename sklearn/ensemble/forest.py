@@ -144,7 +144,8 @@ class Forest(BaseEnsemble):
             self.n_classes_ = len(self.classes_)
             y = np.searchsorted(self.classes_, y)
 
-        self.estimators_ = Parallel(n_jobs=self.n_jobs)(
+        self.estimators_ = Parallel(n_jobs=self.n_jobs,
+                                    pre_dispatch="2*n_jobs")(
             delayed(_parallel_build_tree)(
                     self, X, y, sample_mask, X_argsorted,
                     self.random_state.randint(np.iinfo(np.int32).max))
@@ -160,7 +161,8 @@ class Forest(BaseEnsemble):
         importances : array of shape = [n_features]
             The feature importances.
         """
-        all_importances = Parallel(n_jobs=self.n_jobs)(
+        all_importances = Parallel(n_jobs=self.n_jobs,
+                                   pre_dispatch="2*n_jobs")(
             delayed(_parallel_compute_importances)(self[i])
                 for i in xrange(self.n_estimators))
 
@@ -227,7 +229,7 @@ class ForestClassifier(Forest, ClassifierMixin):
         """
         X = np.atleast_2d(X)
 
-        all_p = Parallel(n_jobs=self.n_jobs)(
+        all_p = Parallel(n_jobs=self.n_jobs, pre_dispatch="2*n_jobs")(
             delayed(_parallel_predict_proba)(self[i], X, self.n_classes_)
                 for i in xrange(self.n_estimators))
 
@@ -293,7 +295,7 @@ class ForestRegressor(Forest, RegressorMixin):
         """
         X = np.atleast_2d(X)
 
-        all_y_hat = Parallel(n_jobs=self.n_jobs)(
+        all_y_hat = Parallel(n_jobs=self.n_jobs, pre_dispatch="2*n_jobs")(
             delayed(_parallel_predict_regr)(self[i], X)
                 for i in xrange(self.n_estimators))
 
