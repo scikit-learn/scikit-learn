@@ -34,15 +34,15 @@ def test_20news():
     assert_equal(entry1, entry2)
 
 
-def test_20news_vectorized():
+def test_20news_tfidf():
     # This test is slow.
     raise SkipTest
     categories = ['alt.atheism', 'talk.religion.misc']
     try:
         X_train, y_train, X_test, y_test = \
-            datasets.load_vectorized_20newsgroups(download_if_missing=False,
-                                                  categories=categories,
-                                                  shuffle=False)
+            datasets.fetch_20newsgroups_tfidf(download_if_missing=False,
+                                              categories=categories,
+                                              shuffle=False)
     except IOError:
         raise SkipTest("Download 20 newsgroups to run this test")
 

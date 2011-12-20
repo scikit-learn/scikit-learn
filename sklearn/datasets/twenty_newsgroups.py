@@ -22,14 +22,14 @@ test sets. The compressed dataset size is around 14 Mb compressed. Once
 uncompressed the train set is 52 MB and the test set is 34 MB.
 
 The data is downloaded, extracted and cached in the '~/scikit_learn_data'
-folder. However contrary to other datasets in the scikit, the data is
-not vectorized into numpy arrays but the dataset list the filenames of
-the posts and there categories as target signal.
+folder.
 
-The lack of vector feature extraction is intentional: there is no single
-best way to turn text into vectors. Depending on the task various
-preprocessing and text transformation are useful or not (n-grams,
-lowercasing, stemming, stop-words filtering, TF-IDF weighting...).
+The `fetch_20newsgroups` function will not vectorize the data into numpy
+arrays but the dataset lists the filenames of the posts and their categories
+as target labels.
+
+The `fetch_20newsgroups_tfidf` function will in addition do a simple tf-idf
+vectorization step.
 
 """
 # Copyright (c) 2011 Olivier Grisel <olivier.grisel@ensta.org>
@@ -188,12 +188,16 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
 
     return data
 
-def load_vectorized_20newsgroups(data_home=None,
-                                 categories=None,
-                                 shuffle=True,
-                                 random_state=None,
-                                 download_if_missing=True):
-    """Load the 20 newsgroups dataset in a vectorized form
+
+def fetch_20newsgroups_tfidf(data_home=None, categories=None,
+                             shuffle=True, random_state=None,
+                             download_if_missing=True):
+    """Load the 20 newsgroups dataset and transform it into tf-idf vectors
+
+    This is a convenience function; the tf-idf transformation is done using the
+    default settings for `sklearn.feature_extraction.text.Vectorizer`. For more
+    advanced usage (stopword filtering, n-gram extraction, etc.), combine
+    fetch_20newsgroups with a custom `Vectorizer` or `CountVectorizer`.
 
     Parameters
     ----------
@@ -254,6 +258,7 @@ def load_vectorized_20newsgroups(data_home=None,
     X_test = vectorizer.transform(data_test.data)
 
     return X_train, data_train.target, X_test, data_test.target
+
 
 @deprecated("Use fetch_20newsgroups instead with download_if_missing=False")
 def load_20newsgroups(download_if_missing=False, **kwargs):
