@@ -429,7 +429,7 @@ class GMM(BaseEstimator):
                     random_state=random_state).T
         return X
 
-    def fit(self, X, n_iter=10, thresh=1e-2, params='wmc',
+    def fit(self, X, n_iter=100, n_init=1, thresh=1e-2, params='wmc',
             init_params='wmc'):
         """Estimate model parameters with the expectation-maximization
         algorithm.
@@ -447,6 +447,8 @@ class GMM(BaseEstimator):
             corresponds to a single data point.
         n_iter : int, optional
             Number of EM iterations to perform.
+        n_init : int, optional
+            number of initializations to perform. the best results is kept
         params : string, optional
             Controls which parameters are updated in the training
             process.  Can contain any combination of 'w' for weights,
@@ -464,43 +466,54 @@ class GMM(BaseEstimator):
         if X.shape[0] < self.n_components:
             raise ValueError('GMM estimation with %s components, but '
                              'got only %s' % (self.n_components, X.shape[0]))
-
         n_features = X.shape[1]
+        
+        max_log_prob = - np.infty
+        if n_init < 1:
+            raise ValueError('GMM estimation requires at least one run')
+        for _ in range(n_init):
+            if 'm' in init_params or not hasattr(self, 'means'):
+                self.means_ = cluster.KMeans(
+                    k=self.n_components).fit(X).cluster_centers_
 
-        if 'm' in init_params or not hasattr(self, 'means'):
-            self.means_ = cluster.KMeans(
-                k=self.n_components).fit(X).cluster_centers_
+            if 'w' in init_params or not hasattr(self, 'weights'):
+                self.weights = np.tile(1.0 / self.n_components, 
+                                       self.n_components)
 
-        if 'w' in init_params or not hasattr(self, 'weights'):
-            self.weights = np.tile(1.0 / self.n_components, self.n_components)
+            if 'c' in init_params or not hasattr(self, 'covars'):
+                cv = np.cov(X.T)
+                if not cv.shape:
+                    cv.shape = (1, 1)
+                self.covars_ = _distribute_covar_matrix_to_match_cvtype(
+                    cv, self._cvtype, self.n_components)
 
-        if 'c' in init_params:
-            cv = np.cov(X.T)
-            if not cv.shape:
-                cv.shape = (1, 1)
-            self.covars_ = _distribute_covar_matrix_to_match_cvtype(
-                cv, self._cvtype, self.n_components)
-        elif not hasattr(self, 'covars'):
-                self.covars = _distribute_covar_matrix_to_match_cvtype(
-                    np.eye(n_features), self.cvtype, self.n_components)
+            # EM algorithm
+            log_likelihood = []
+            # reset self.converged_ to False
+            self.converged_ = False
+            for i in xrange(n_iter):
+                # Expectation step
+                curr_log_likelihood, posteriors = self.eval(X)
+                log_likelihood.append(curr_log_likelihood.sum())
 
-        # EM algorithm
-        logprob = []
-        # reset self.converged_ to False
-        self.converged_ = False
-        for i in xrange(n_iter):
-            # Expectation step
-            curr_logprob, posteriors = self.eval(X)
-            logprob.append(curr_logprob.sum())
+                # Check for convergence.
+                if i > 0 and abs(log_likelihood[-1] - log_likelihood[-2]) < \
+                        self.thresh:
+                    self.converged_ = True
+                    break
 
-            # Check for convergence.
-            if i > 0 and abs(logprob[-1] - logprob[-2]) < self.thresh:
-                self.converged_ = True
-                break
+                # Maximization step
+                self._do_mstep(X, posteriors, params, self.min_covar)
 
-            # Maximization step
-            self._do_mstep(X, posteriors, params, self.min_covar)
-
+            # if the results is better, keep it   
+            if log_likelihood[-1] > max_log_prob:
+                max_log_prob = log_likelihood[-1]
+                best_params = {'weights': self.weights, 
+                               'means': self.means_, 
+                               'covars': self.covars_}
+        self.covars_ = best_params['covars']
+        self.means_ = best_params['means']
+        self.weights = best_params['weights']
         return self
 
     def _do_mstep(self, X, posteriors, params, min_covar=0):
