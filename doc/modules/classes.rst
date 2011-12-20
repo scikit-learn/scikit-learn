@@ -390,6 +390,7 @@ From text
    hmm.MultinomialHMM
    hmm.GMMHMM
 
+
 .. _kernel_approximation_ref:
 
 :mod:`sklearn.kernel_approximation` Kernel Approximation
@@ -528,7 +529,6 @@ For sparse data
 
 
 .. _metrics_ref:
-
 
 :mod:`sklearn.metrics`: Metrics
 ===============================

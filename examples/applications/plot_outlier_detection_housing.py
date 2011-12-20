@@ -8,7 +8,7 @@ on a real data set. It is useful both for outlier detection and for
 a better understanding of the data structure.
 
 We selected two sets of two variables from the boston housing data set
-as an illustration of what kind of analysis can be done with severals
+as an illustration of what kind of analysis can be done with several
 outlier detection tools. For the purpose of vizualisation, we are working
 with two-dimensional examples, but one should be aware that things are
 not so trivial in high-dimension, as it will be pointed out.
@@ -95,7 +95,7 @@ plt.title("Outlier detection on a real data set (boston housing)")
 plt.scatter(X1[:, 0], X1[:, 1], color='black')
 bbox_args = dict(boxstyle="round", fc="0.8")
 arrow_args = dict(arrowstyle="->")
-plt.annotate("severals confounded points", xy=(24, 19),
+plt.annotate("several confounded points", xy=(24, 19),
              xycoords="data", textcoords="data",
              xytext=(13, 10), bbox=bbox_args, arrowprops=arrow_args)
 plt.xlim((xx1.min(), xx1.max()))

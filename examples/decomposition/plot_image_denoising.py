@@ -87,6 +87,7 @@ pl.suptitle('Dictionary learned from Lena patches\n' +
             fontsize=16)
 pl.subplots_adjust(0.08, 0.02, 0.92, 0.85, 0.08, 0.23)
 
+
 ###############################################################################
 # Display the distorted image
 
