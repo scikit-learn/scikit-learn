@@ -57,7 +57,8 @@ mbk_means_labels_unique = np.unique(mbk_means_labels)
 ##############################################################################
 # Plot result
 
-fig = pl.figure(figsize=(12,4))
+fig = pl.figure(figsize=(8,3))
+fig.subplots_adjust(left=0.02, right= 0.98, bottom=0.05, top=0.9)
 colors = ['#4EACC5', '#FF9C34', '#4E9A06']
 
 # We want to have the same colors for the same cluster from the
