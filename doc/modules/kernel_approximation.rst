@@ -45,10 +45,10 @@ function does not actually depend on the data given to the ``fit`` function.
 Only the dimensionality of the data is used.
 Details on the method can be found in [RR2007]_.
 
-.. figure:: ../auto_examples/images/plot_kernel_appoximation_2.png
-   :target: ../auto_examples/plot_kernel_approximation.html
-   :scale: 50%
-   :align: center
+.. figure:: ../auto_examples/images/plot_kernel_approximation_2.png
+    :target: ../auto_examples/plot_kernel_approximation.html
+    :scale: 50%
+    :align: center
 
 
 Additive Chi Squared Kernel
