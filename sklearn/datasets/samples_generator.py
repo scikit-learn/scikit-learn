@@ -223,6 +223,79 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     return X, y
 
 
+def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
+                                   n_labels=2, length=50, random_state=None):
+    """Generate a random multilabel classification problem.
+
+    Parameters
+    ----------
+    n_samples : int, optional (default=100)
+        The number of samples.
+
+    n_features : int, optional (default=20)
+        The total number of features.
+
+    n_classes : int, optional (default=5)
+        The number of classes of the classification problem.
+
+    n_labels : int, optional (default=2)
+        The average number of labels per instance.
+
+    length : int, optional (default=50)
+        Sum of the features (number of words if documents).
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    Return
+    ------
+    X : array of shape [n_samples, n_features]
+        The generated samples.
+
+    Y : list of tuples
+        The label sets.
+    """
+    generator = check_random_state(random_state)
+    p_c = generator.rand(n_classes)
+    p_c /= p_c.sum()
+    p_w_c = generator.rand(n_features, n_classes)
+    p_w_c /= np.sum(p_w_c, axis=0)
+
+    def sample_example():
+        _, n_classes = p_w_c.shape
+
+        # pick a number of labels per document
+        # FIXME: use a distribution
+        n = n_labels
+
+        # pick n classes
+        y = []
+        while len(y) != n:
+            # pick a class with probability P(c)
+            c = generator.multinomial(1, p_c).argmax()
+
+            if not c in y:
+                y.append(c)
+
+        # pick a document length
+        k = generator.poisson(length) or 1
+
+        # generate a document of length k words
+        x = np.zeros(n_features, dtype=int)
+        for i in range(k):
+            c = y[generator.randint(len(y))]
+            w = generator.multinomial(1, p_w_c[:,c]).argmax()
+            x[w] += 1
+
+        return x, y
+
+    X, Y = zip(*[sample_example() for i in range(n_samples)])
+    return np.array(X, dtype=np.float64), Y
+
+
 def make_regression(n_samples=100, n_features=100, n_informative=10, bias=0.0,
                     effective_rank=None, tail_strength=0.5, noise=0.0,
                     shuffle=True, coef=False, random_state=None):

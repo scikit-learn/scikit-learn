@@ -3,6 +3,7 @@ from numpy.testing import assert_equal, assert_approx_equal, \
                           assert_array_almost_equal, assert_array_less
 
 from .. import make_classification
+from .. import make_multilabel_classification
 from .. import make_regression
 from .. import make_blobs
 from .. import make_friedman1
@@ -30,6 +31,12 @@ def test_make_classification():
     assert_equal(sum(y == 1), 25, "Unexpected number of samples in class #1")
     assert_equal(sum(y == 2), 65, "Unexpected number of samples in class #2")
 
+
+def test_make_multilabel_classification():
+    X, Y = make_multilabel_classification(n_samples=100, n_features=20,
+                                          n_classes=3)
+    assert_equal(X.shape, (100, 20), "X shape mismatch")
+    assert_equal(max([max(y) for y in Y]), 2)
 
 def test_make_regression():
     X, y, c = make_regression(n_samples=100, n_features=10, n_informative=3,

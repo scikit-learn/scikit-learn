@@ -23,6 +23,7 @@ from .twenty_newsgroups import fetch_20newsgroups
 from .twenty_newsgroups import load_20newsgroups
 from .mldata import fetch_mldata, mldata_filename
 from .samples_generator import make_classification
+from .samples_generator import make_multilabel_classification
 from .samples_generator import make_regression
 from .samples_generator import make_blobs
 from .samples_generator import make_friedman1
