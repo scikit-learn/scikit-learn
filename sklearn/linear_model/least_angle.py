@@ -68,8 +68,8 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
     See also
     --------
-    :ref:`LassoLars`
-    :ref:`Lars`
+    :class:`LassoLars`
+    :class:`Lars`
     decomposition.sparse_encode
     decomposition.sparse_encode_parallel
 
