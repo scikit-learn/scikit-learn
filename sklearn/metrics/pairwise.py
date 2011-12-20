@@ -1,4 +1,6 @@
-""" Utilities to evaluate pairwise distances or affinity of sets of samples.
+"""
+The :mod:`sklearn.metrics.pairwise` submodule implements utilities to evaluate
+pairwise distances or affinity of sets of samples.
 
 This module contains both distance metrics and kernels. A brief summary is
 given on the two here.
@@ -13,7 +15,6 @@ To be a 'true' metric, it must obey the following four conditions:
 2. d(a, b) == 0, if and only if a = b, positive definiteness
 3. d(a, b) == d(b, a), symmetry
 4. d(a, c) <= d(a, b) + d(b, c), the triangle inequality
-
 
 Kernels are measures of similarity, i.e. s(a, b) > s(a, c) if objects a and b
 are considered "more similar" to objects a and c. A kernel must also be

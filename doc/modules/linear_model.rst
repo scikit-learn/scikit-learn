@@ -1,4 +1,3 @@
-
 .. _linear_model:
 
 =========================
@@ -12,10 +11,10 @@ the target value is expected to be a linear combination of the input
 variables. In mathematical notion, if :math:`\hat{y}` is the predicted
 value.
 
-.. math::    \hat{y}(w, x) = w_0 + w_1 x_1 + ... + w_n x_n
+.. math::    \hat{y}(w, x) = w_0 + w_1 x_1 + ... + w_p x_p
 
 Across the module, we designate the vector :math:`w = (w_1,
-..., w_n)` as ``coef_`` and :math:`w_0` as ``intercept_``.
+..., w_p)` as ``coef_`` and :math:`w_0` as ``intercept_``.
 
 To perform classification with generalized linear models, see
 :ref:`Logistic_regression`.
@@ -27,9 +26,12 @@ Ordinary Least Squares
 =======================
 
 :class:`LinearRegression` fits a linear model with coefficients
-:math:`\beta = (\beta_1, ..., \beta_D)` to minimize the residual sum
+:math:`w = (w_1, ..., w_p)` to minimize the residual sum
 of squares between the observed responses in the dataset, and the
-responses predicted by the linear approximation.
+responses predicted by the linear approximation. Mathematically it
+solves a problem of the form:
+
+.. math:: \underset{w}{min\,} {|| X w - y||_2}^2
 
 .. figure:: ../auto_examples/linear_model/images/plot_ols_1.png
    :target: ../auto_examples/linear_model/plot_ols.html
@@ -50,7 +52,7 @@ and will store the coefficients :math:`w` of the linear model in its
 However, coefficient estimates for Ordinary Least Squares rely on the
 independence of the model terms. When terms are correlated and the
 columns of the design matrix :math:`X` have an approximate linear
-dependence, the matrix :math:`X(X^T X)^{-1}` becomes close to singular
+dependence, the design matrix becomes close to singular
 and as a result, the least-squares estimate becomes highly sensitive
 to random errors in the observed response, producing a large
 variance. This situation of *multicollinearity* can arise, for
@@ -65,7 +67,7 @@ Ordinary Least Squares Complexity
 ---------------------------------
 
 This method computes the least squares solution using a singular value
-decomposition of X. If X is a matrix of size (n, p ) this method has a
+decomposition of X. If X is a matrix of size (n, p) this method has a
 cost of :math:`O(n p^2)`, assuming that :math:`n \geq p`.
 
 
@@ -80,7 +82,7 @@ of squares,
 
 .. math::
 
-   \underset{w}{min} {{|| X w - y||_2}^2 + \alpha {||w||_2}^2}
+   \underset{w}{min\,} {{|| X w - y||_2}^2 + \alpha {||w||_2}^2}
 
 
 Here, :math:`\alpha \geq 0` is a complexity parameter that controls the amount
@@ -110,6 +112,7 @@ its `coef\_` member::
 .. topic:: Examples:
 
    * :ref:`example_linear_model_plot_ridge_path.py`
+   * :ref:`example_document_classification_20newsgroups.py`
 
 
 Ridge Complexity
@@ -124,8 +127,8 @@ This method has the same order of complexity than an
 .. between these
 
 
-Setting alpha: generalized Cross-Validation
----------------------------------------------
+Setting the regularization parameter: generalized Cross-Validation
+------------------------------------------------------------------
 
 :class:`RidgeCV` implements ridge regression with built-in
 cross-validation of the alpha parameter.  The object works in the same way
@@ -159,15 +162,15 @@ with fewer parameter values, effectively reducing the number of variables
 upon which the given solution is dependent. For this reason, the Lasso
 and its variants are fundamental to the field of compressed sensing.
 
-Mathematically, it consists of a linear model trained with L1 prior as
-regularizer. The objective function to minimize is:
+Mathematically, it consists of a linear model trained with :math:`\ell_1` prior
+as regularizer. The objective function to minimize is:
 
-.. math::  0.5 * ||X w - y||_2 ^ 2 + \alpha * ||w||_1
+.. math::  \underset{w}{min\,} { \frac{1}{2n_{samples}} ||X w - y||_2 ^ 2 + \alpha ||w||_1}
 
 The lasso estimate thus solves the minimization of the
-least-squares penalty with :math:`\alpha * ||w||_1` added, where
-:math:`\alpha` is a constant and :math:`||w||_1` is the L1-norm of the
-parameter vector.
+least-squares penalty with :math:`\alpha ||w||_1` added, where
+:math:`\alpha` is a constant and :math:`||w||_1` is the :math:`\ell_1`-norm of
+the parameter vector.
 
 The implementation in the class :class:`Lasso` uses coordinate descent as
 the algorithm to fit the coefficients. See :ref:`least_angle_regression`
@@ -185,10 +188,10 @@ computes the coefficients along the full path of possible values.
 
 .. topic:: Examples:
 
-  * :ref:`example_linear_model_lasso_and_elasticnet.py`,
+  * :ref:`example_linear_model_lasso_and_elasticnet.py`
 
-Setting `alpha`
------------------
+Setting regularization parameter
+--------------------------------
 
 The `alpha` parameter control the degree of sparsity of the coefficients
 estimated.
@@ -196,7 +199,7 @@ estimated.
 Using cross-validation
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-The scikit exposes objects that set the Lasso `alpha` parameter by
+scikit-learn exposes objects that set the Lasso `alpha` parameter by
 cross-validation: :class:`LassoCV` and :class:`LassoLarsCV`.
 :class:`LassoLarsCV` is based on the :ref:`least_angle_regression` algorithm
 explained below.
@@ -250,7 +253,10 @@ regularizer.
 
 The objective function to minimize is in this case
 
-.. math::        0.5 * ||X w - y||_2 ^ 2 + \alpha * \rho * ||w||_1 + \alpha * (1-\rho) * 0.5 * ||w||_2 ^ 2
+.. math::
+
+    \underset{w}{min\,} { \frac{1}{2n_{samples}} ||X w - y||_2 ^ 2 + \alpha \rho ||w||_1 +
+    \frac{\alpha(1-\rho)}{2} ||w||_2 ^ 2}
 
 
 .. figure:: ../auto_examples/linear_model/images/plot_lasso_coordinate_descent_path_1.png
@@ -369,12 +375,12 @@ Being a forward feature selection method like :ref:`least_angle_regression`,
 orthogonal matching pursuit can approximate the optimum solution vector with a
 fixed number of non-zero elements:
 
-.. math:: \text{arg\,min} ||y - X\gamma||_2^2 \text{ subject to } ||\gamma||_0 \leq n_{nonzero_coefs}
+.. math:: \text{arg\,min\,} ||y - X\gamma||_2^2 \text{ subject to } ||\gamma||_0 \leq n_{nonzero_coefs}
 
 Alternatively, orthogonal matching pursuit can target a specific error instead
 of a specific number of non-zero coefficients. This can be expressed as:
 
-.. math:: \text{arg\,min} ||\gamma||_0 \text{ subject to } ||y-X\gamma||_2^2 \leq \text{tol}
+.. math:: \text{arg\,min\,} ||\gamma||_0 \text{ subject to } ||y-X\gamma||_2^2 \leq \text{tol}
 
 
 OMP is based on a greedy algorithm that includes at each step the atom most
@@ -419,6 +425,8 @@ The disadvantages of Bayesian regression include:
     - Inference of the model can be time consuming.
 
 
+.. _bayesian_ridge_regression:
+
 Bayesian Ridge Regression
 -------------------------
 
@@ -456,6 +464,7 @@ By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e^{-6}`,
 .. figure:: ../auto_examples/linear_model/images/plot_bayesian_ridge_1.png
    :target: ../auto_examples/linear_model/plot_bayesian_ridge.html
    :align: center
+   :scale: 50%
 
 
 Bayesian Ridge Regression is used for regression::
@@ -522,6 +531,7 @@ By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e-6`, *i.e.*
 .. figure:: ../auto_examples/linear_model/images/plot_ard_1.png
    :target: ../auto_examples/linear_model/plot_ard.html
    :align: center
+   :scale: 50%
 
 
 .. topic:: Examples:
@@ -574,7 +584,7 @@ where :math:`\alpha` is the precision of the noise.
 Logisitic regression
 ======================
 
-If the task at hand is to do choose which class a sample belongs to given
+If the task at hand is to choose which class a sample belongs to given
 a finite (hopefuly small) set of choices, the learning problem is a
 classification, rather than regression. Linear models can be used for
 such a decision, but it is best to use what is called a
@@ -590,7 +600,7 @@ zero) model.
 
 .. topic:: Examples:
 
-  * :ref:`example_logistic_l1_l2_coef.py`
+  * :ref:`example_linear_model_logistic_l1_l2_sparsity.py`
 
   * :ref:`example_linear_model_plot_logistic_path.py`
 

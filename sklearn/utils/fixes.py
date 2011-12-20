@@ -6,6 +6,7 @@ at which the fixe is no longer needed.
 # Authors: Emmanuelle Gouillart <emmanuelle.gouillart@normalesup.org>
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>
 #          Fabian Pedregosa <fpedregosa@acm.org>
+#          Lars Buitinck <L.J.Buitinck@uva.nl>
 # License: BSD
 
 import collections
@@ -14,18 +15,6 @@ from operator import itemgetter
 
 
 # Python < 2.6 does not have product
-try:
-    from itertools import product
-except ImportError:
-    def product(*args, **kwds):
-        pools = map(tuple, args) * kwds.get('repeat', 1)
-        result = [[]]
-        for pool in pools:
-            result = [x + [y] for x in result for y in pool]
-        for prod in result:
-            yield tuple(prod)
-
-
 try:
     Counter = collections.Counter
 except AttributeError:

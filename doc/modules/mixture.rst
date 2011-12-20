@@ -1,5 +1,7 @@
 .. _mixture:
 
+.. _gmm:
+
 ===================================================
 Gaussian mixture models
 ===================================================
@@ -45,7 +47,7 @@ only needs to specify a loose upper bound on this number and a
 concentration parameter.
 
 Expectation-maximization
------------------------
+------------------------
 
 The main difficulty in learning gaussian mixture models from unlabeled
 data is that it is one usually doesn't know which points came from

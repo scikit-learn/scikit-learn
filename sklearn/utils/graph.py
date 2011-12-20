@@ -88,11 +88,7 @@ def _graph_laplacian_sparse(graph, normed=False, return_diag=False):
         # we need to fix that
         diag_idx = lap.row[diag_mask]
 
-        try:
-            lap = lap.tolil()
-        except AttributeError:
-            # versions of scipy prior to 0.7 do not implement .tolil()
-            lap = sparse.lil_matrix(lap.tocsr())
+        lap = lap.tolil()
 
         diagonal_holes = list(set(range(n_nodes)).difference(
                                 diag_idx))
@@ -107,7 +103,7 @@ def _graph_laplacian_sparse(graph, normed=False, return_diag=False):
         w[w_zeros] = 1
         lap.data /= w[lap.row]
         lap.data /= w[lap.col]
-        lap.data[diag_mask] = (1-w_zeros).astype(lap.data.dtype)
+        lap.data[diag_mask] = (1 - w_zeros).astype(lap.data.dtype)
     else:
         lap.data[diag_mask] = w[lap.row[diag_mask]]
     if return_diag:
@@ -118,7 +114,7 @@ def _graph_laplacian_sparse(graph, normed=False, return_diag=False):
 def _graph_laplacian_dense(graph, normed=False, return_diag=False):
     n_nodes = graph.shape[0]
     lap = -graph.copy()
-    lap.flat[::n_nodes+1] = 0
+    lap.flat[::n_nodes + 1] = 0
     w = -lap.sum(axis=0)
     if normed:
         w = np.sqrt(w)
@@ -126,9 +122,9 @@ def _graph_laplacian_dense(graph, normed=False, return_diag=False):
         w[w_zeros] = 1
         lap /= w
         lap /= w[:, np.newaxis]
-        lap.flat[::n_nodes+1] = 1-w_zeros
+        lap.flat[::n_nodes + 1] = 1 - w_zeros
     else:
-        lap.flat[::n_nodes+1] = w
+        lap.flat[::n_nodes + 1] = w
     if return_diag:
         return lap, w
     return lap

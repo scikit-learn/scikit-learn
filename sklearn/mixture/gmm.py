@@ -13,6 +13,7 @@ from ..utils import check_random_state
 from ..utils.extmath import logsum
 from .. import cluster
 
+
 # FIXME this lacks a proper docstring
 def normalize(A, axis=None):
     """ Normalize the input array so that it sums to 1.
@@ -238,7 +239,7 @@ class GMM(BaseEstimator):
         self.random_state = random_state
 
         if not cvtype in ['spherical', 'tied', 'diag', 'full']:
-            raise ValueError('bad cvtype: '+str(cvtype))
+            raise ValueError('bad cvtype: ' + str(cvtype))
 
         self.weights = np.ones(self.n_components) / self.n_components
 
@@ -268,7 +269,8 @@ class GMM(BaseEstimator):
 
     def _set_covars(self, covars):
         covars = np.asarray(covars)
-        _validate_covars(covars, self._cvtype, self.n_components, self.n_features)
+        _validate_covars(covars, self._cvtype, self.n_components,
+                self.n_features)
         self._covars = covars
 
     covars = property(_get_covars, _set_covars)
@@ -281,14 +283,16 @@ class GMM(BaseEstimator):
         means = np.asarray(means)
         if hasattr(self, 'n_features') and \
                means.shape != (self.n_components, self.n_features):
-            raise ValueError('means must have shape (n_components, n_features)')
+            raise ValueError('means must have shape ' +
+                    '(n_components, n_features)')
         self._means = means.copy()
         self.n_features = self._means.shape[1]
 
     means = property(_get_means, _set_means)
 
     def __repr__(self):
-        return "GMM(cvtype='%s', n_components=%s)"%(self._cvtype, self.n_components)
+        return "GMM(cvtype='%s', n_components=%s)" % (self._cvtype,
+                self.n_components)
 
     def _get_weights(self):
         """Mixing weights for each mixture component."""
@@ -304,7 +308,7 @@ class GMM(BaseEstimator):
 
     weights = property(_get_weights, _set_weights)
 
-    def eval(self, obs, return_log=False):
+    def eval(self, obs):
         """Evaluate the model on data
 
         Compute the log probability of `obs` under the model and
@@ -316,8 +320,6 @@ class GMM(BaseEstimator):
         obs: array_like, shape (n_samples, n_features)
             List of n_features-dimensional data points.  Each row
             corresponds to a single data point.
-        return_log: boolean, optional
-            If True, the posteriors returned are log-probabilities
 
         Returns
         -------
@@ -348,8 +350,7 @@ class GMM(BaseEstimator):
         logprob : array_like, shape (n_samples,)
             Log probabilities of each data point in `obs`
         """
-        # We use return_log=True to avoid a useless exponentiation
-        logprob, _ = self.eval(obs, return_log=True)
+        logprob, _ = self.eval(obs)
         return logprob
 
     def decode(self, obs):
@@ -521,11 +522,12 @@ class GMM(BaseEstimator):
     def _do_mstep(self, X, posteriors, params, min_covar=0):
             w = posteriors.sum(axis=0)
             avg_obs = np.dot(posteriors.T, X)
-            norm = 1.0 / (w[:, np.newaxis] + 10*np.finfo(np.float).eps)
+            norm = 1.0 / (w[:, np.newaxis] + 10 * np.finfo(np.float).eps)
 
             if 'w' in params:
-                self._log_weights = np.log(w / (w.sum() + 10*np.finfo(np.float).eps)
-                                           + np.finfo(np.float).eps)
+                self._log_weights = np.log(w /
+                        (w.sum() + 10 * np.finfo(np.float).eps)
+                        + np.finfo(np.float).eps)
             if 'm' in params:
                 self._means = avg_obs * norm
             if 'c' in params:
@@ -565,7 +567,7 @@ def _lmvnpdftied(obs, means, covars):
     n_obs, n_dim = obs.shape
     # (x-y).T A (x-y) = x.T A x - 2x.T A y + y.T A y
     icv = linalg.pinv(covars)
-    lpr = -0.5 * (n_dim * np.log(2 * np.pi) + np.log(linalg.det(covars)+0.1)
+    lpr = -0.5 * (n_dim * np.log(2 * np.pi) + np.log(linalg.det(covars) + 0.1)
                   + np.sum(obs * np.dot(obs, icv), 1)[:, np.newaxis]
                   - 2 * np.dot(np.dot(obs, icv), means.T)
                   + np.sum(means * np.dot(means, icv), 1))
@@ -678,7 +680,7 @@ def _covar_mstep_full(gmm, obs, posteriors, avg_obs, norm, min_covar):
     for c in xrange(gmm.n_components):
         post = posteriors[:, c]
         avg_cv = np.dot(post * obs.T, obs) / (post.sum() +
-                                10*np.finfo(np.float).eps)
+                                10 * np.finfo(np.float).eps)
         mu = gmm._means[c][np.newaxis]
         cv[c] = (avg_cv - np.dot(mu.T, mu)
                  + min_covar * np.eye(gmm.n_features))

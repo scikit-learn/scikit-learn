@@ -10,16 +10,6 @@ The quantity that we use is the daily variation in quote price: quotes
 that are linked tend to cofluctuate during a day.
 
 
-Clustering
-----------
-
-We use clustering to group together quotes that behave similarly. Here,
-amongst the :ref:`various clustering techniques <clustering>` available
-in the scikit-learn, we use :ref:`affinity_propagation` as it does
-not enforce equal-size clusters, and it can choose automatically the
-number of clusters from the data.
-
-
 Learning a graph structure
 --------------------------
 
@@ -29,11 +19,20 @@ covariance gives us a graph, that is a list of connection. For each
 symbol, the symbols that it is connected too are those useful to expain
 its fluctuations.
 
-Note that this gives us a different indication than the clustering. One
-could apply graph clustering techniques (such as
-:ref:`spectral_clustering`) on the corresponding graph, to retrieve a
-clustering consistent with the partial-independence structure.
+Clustering
+----------
 
+We use clustering to group together quotes that behave similarly. Here,
+amongst the :ref:`various clustering techniques <clustering>` available
+in the scikit-learn, we use :ref:`affinity_propagation` as it does
+not enforce equal-size clusters, and it can choose automatically the
+number of clusters from the data.
+
+Note that this gives us a different indication than the graph, as the
+graph reflects conditional relations between variables, while the
+clustering reflects marginal properties: variables clustered together can
+be considered as having a similar impact at the level of the full stock
+market.
 
 Embedding in 2D space
 ---------------------
@@ -157,16 +156,6 @@ close = np.array([q.close for q in quotes]).astype(np.float)
 variation = close - open
 
 ###############################################################################
-# Cluster using affinity propagation
-
-correlations = np.corrcoef(variation)
-_, labels = cluster.affinity_propagation(correlations)
-n_labels = labels.max()
-
-for i in range(n_labels + 1):
-    print 'Cluster %i: %s' % ((i + 1), ', '.join(names[labels == i]))
-
-###############################################################################
 # Learn a graphical structure from the correlations
 edge_model = covariance.GraphLassoCV()
 
@@ -175,6 +164,15 @@ edge_model = covariance.GraphLassoCV()
 X = variation.copy().T
 X /= X.std(axis=0)
 edge_model.fit(X)
+
+###############################################################################
+# Cluster using affinity propagation
+
+_, labels = cluster.affinity_propagation(edge_model.covariance_)
+n_labels = labels.max()
+
+for i in range(n_labels + 1):
+    print 'Cluster %i: %s' % ((i + 1), ', '.join(names[labels == i]))
 
 ###############################################################################
 # Find a low-dimension embedding for visualization: find the best position of

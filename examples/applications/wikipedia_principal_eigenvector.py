@@ -47,7 +47,7 @@ from sklearn.utils.extmath import fast_svd
 from sklearn.externals.joblib import Memory
 
 
-################################################################################
+###############################################################################
 # Where to download the data, if not already on disk
 redirects_url = "http://downloads.dbpedia.org/3.5.1/en/redirects_en.nt.bz2"
 redirects_filename = redirects_url.rsplit("/", 1)[1]
@@ -69,7 +69,7 @@ for url, filename in resources:
         print
 
 
-################################################################################
+###############################################################################
 # Loading the redirect files
 
 memory = Memory(cachedir=".")
@@ -224,4 +224,3 @@ t0 = time()
 scores = centrality_scores(X, max_iter=100, tol=1e-10)
 print "done in %0.3fs" % (time() - t0)
 pprint([names[i] for i in np.abs(scores).argsort()[-10:]])
-

@@ -88,10 +88,13 @@ classification. The likelihood of the features is assumed to be Gaussian:
 The parameters :math:`\sigma_y` and :math:`\mu_y`
 are estimated using maximum likelihood.
 
-.. topic:: Examples:
-
- * :ref:`example_naive_bayes.py`
-
+    >>> from sklearn import datasets
+    >>> iris = datasets.load_iris()
+    >>> from sklearn.naive_bayes import GaussianNB
+    >>> gnb = GaussianNB()
+    >>> y_pred = gnb.fit(iris.data, iris.target).predict(iris.data)
+    >>> print "Number of mislabeled points : %d" % (iris.target != y_pred).sum()
+    Number of mislabeled points : 6
 
 .. _multinomial_naive_bayes:
 

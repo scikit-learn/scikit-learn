@@ -11,6 +11,7 @@ from sklearn.datasets.samples_generator import make_spd_matrix
 
 rng = np.random.RandomState(0)
 
+
 def test_normalize_1D():
     A = rng.rand(2) + 1.0
     for axis in range(1):
@@ -159,12 +160,12 @@ class GMMTester():
     covars = {'spherical': (0.1 + 2 * rng.rand(n_components)) ** 2,
               'tied': make_spd_matrix(n_features, random_state=0) + 5 * I,
               'diag': (0.1 + 2 * rng.rand(n_components, n_features)) ** 2,
-              'full': np.array([make_spd_matrix(n_features, random_state=0) + 5 * I
-                                for x in xrange(n_components)])}
+              'full': np.array([make_spd_matrix(n_features, random_state=0)
+                  + 5 * I for x in xrange(n_components)])}
 
     def test_eval(self):
         if not self.do_test_eval:
-            return # DPGMM does not support setting the means and
+            return  # DPGMM does not support setting the means and
         # covariances before fitting There is no way of fixing this
         # due to the variational parameters being more expressive than
         # covariance matrices
@@ -218,8 +219,8 @@ class GMMTester():
         for iter in xrange(5):
             g.fit(train_obs, n_iter=1, params=params, init_params='')
             trainll.append(self.score(g, train_obs))
-        g.fit(train_obs, n_iter=10, params=params, init_params='') # finish
-                                                                   # fitting
+        g.fit(train_obs, n_iter=10, params=params, init_params='')  # finish
+                                                                    # fitting
 
         # Note that the log likelihood will sometimes decrease by a
         # very small amount after it has more or less converged due to

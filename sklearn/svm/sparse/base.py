@@ -19,15 +19,12 @@ class SparseBaseLibSVM(BaseLibSVM):
                "%s was given." % (self._kernel_types, kernel)
 
         super(SparseBaseLibSVM, self).__init__(impl, kernel, degree, gamma,
-                                               coef0, tol, C, nu, epsilon,
-                                               shrinking, probability,
-                                               cache_size, scale_C)
-
+                coef0, tol, C, nu, epsilon, shrinking, probability, cache_size,
+                scale_C)
 
     def fit(self, X, y, class_weight=None, sample_weight=None):
         """
-        Fit the SVM model according to the given training data and
-        parameters.
+        Fit the SVM model according to the given training data and parameters.
 
         Parameters
         ----------
@@ -110,7 +107,7 @@ class SparseBaseLibSVM(BaseLibSVM):
         dual_coef_indptr = np.arange(0, dual_coef_indices.size + 1,
                                      dual_coef_indices.size / n_class)
         self.dual_coef_ = scipy.sparse.csr_matrix(
-            (dual_coef_data,dual_coef_indices, dual_coef_indptr),
+            (dual_coef_data, dual_coef_indices, dual_coef_indptr),
             (n_class, n_SV))
         return self
 
@@ -232,11 +229,15 @@ class SparseBaseLibLinear(BaseLibLinear):
         self.class_weight, self.class_weight_label = \
                      _get_class_weight(class_weight, y)
 
+        C = self.C
+        if self.scale_C:
+            C = C / float(X.shape[0])
+
         self.raw_coef_, self.label_ = \
                        liblinear.csr_train_wrap(X.shape[1], X.data, X.indices,
                        X.indptr, y,
                        self._get_solver_type(),
-                       self.tol, self._get_bias(), self.C,
+                       self.tol, self._get_bias(), C,
                        self.class_weight_label, self.class_weight)
 
         return self

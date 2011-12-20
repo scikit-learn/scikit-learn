@@ -14,7 +14,7 @@ shrunk_cov = (1-shrinkage)*cov + shrinkage*structured_estimate.
 
 # avoid division truncation
 from __future__ import division
-
+import warnings
 import numpy as np
 
 from .empirical_covariance_ import empirical_covariance, EmpiricalCovariance
@@ -122,8 +122,8 @@ class ShrunkCovariance(EmpiricalCovariance):
             Returns self.
 
         """
-        empirical_cov = empirical_covariance(X,
-                                             assume_centered=assume_centered)
+        empirical_cov = empirical_covariance(
+            X, assume_centered=assume_centered)
         covariance = shrunk_covariance(empirical_cov, self.shrinkage)
         self._set_estimates(covariance)
 
@@ -168,11 +168,18 @@ def ledoit_wolf(X, assume_centered=False):
     """
     X = np.asarray(X)
     # for only one feature, the result is the same whatever the shrinkage
-    if X.ndim == 1:
+    if len(X.shape) == 2 and X.shape[1] == 1:
         if not assume_centered:
             X = X - X.mean()
         return np.atleast_2d((X ** 2).mean()), 0.
-    n_samples, n_features = X.shape
+    if X.ndim == 1:
+        X = np.reshape(X, (1, -1))
+        warnings.warn("Only one sample available. " \
+                          "You may want to reshape your data array")
+        n_samples = 1
+        n_features = X.size
+    else:
+        n_samples, n_features = X.shape
 
     # optionaly center data
     if not assume_centered:
@@ -306,11 +313,18 @@ def oas(X, assume_centered=False):
     """
     X = np.asarray(X)
     # for only one feature, the result is the same whatever the shrinkage
-    if X.ndim == 1:
+    if len(X.shape) == 2 and X.shape[1] == 1:
         if not assume_centered:
             X = X - X.mean()
         return np.atleast_2d((X ** 2).mean()), 0.
-    n_samples, n_features = X.shape
+    if X.ndim == 1:
+        X = np.reshape(X, (1, -1))
+        warnings.warn("Only one sample available. " \
+                          "You may want to reshape your data array")
+        n_samples = 1
+        n_features = X.size
+    else:
+        n_samples, n_features = X.shape
 
     emp_cov = empirical_covariance(X, assume_centered=assume_centered)
     mu = np.trace(emp_cov) / n_features

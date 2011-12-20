@@ -20,20 +20,25 @@ def configuration(parent_package='', top_path=None):
     else:
         cblas_libs = blas_info.pop('libraries', [])
 
-    config.add_extension('arrayfuncs',
-                         sources=['arrayfuncs.c'],
-                         depends=[join('src', 'cholesky_delete.c')],
-                         libraries=cblas_libs,
-                         include_dirs=[join('..', 'src', 'cblas'),
-                                       numpy.get_include(),
-                                       blas_info.pop('include_dirs', [])],
-                         extra_compile_args=blas_info.pop('extra_compile_args', []),
-                         **blas_info
-                         )
+    config.add_extension('arraybuilder',
+         sources=['arraybuilder.c'])
 
+    config.add_extension('sparsefuncs',
+         sources=['sparsefuncs.c'])
+
+    config.add_extension('arrayfuncs',
+         sources=['arrayfuncs.c'],
+         depends=[join('src', 'cholesky_delete.c')],
+         libraries=cblas_libs,
+         include_dirs=[join('..', 'src', 'cblas'),
+                       numpy.get_include(),
+                       blas_info.pop('include_dirs', [])],
+         extra_compile_args=blas_info.pop('extra_compile_args', []),
+         **blas_info
+         )
 
     config.add_extension('graph_shortest_path',
-                         sources=['graph_shortest_path.c'],
-                         include_dirs=[numpy.get_include()])
+         sources=['graph_shortest_path.c'],
+         include_dirs=[numpy.get_include()])
 
     return config

@@ -10,15 +10,26 @@ cimport numpy as np
 import numpy as np
 import scipy.sparse as sp
 
+from ..utils.arraybuilder import ArrayBuilder
+
+
+# csr_matrix.indices and .indptr's dtypes are undocumented. We derive them
+# empirically.
+_temp_csr = sp.csr_matrix(0)
+_INDICES_DTYPE = _temp_csr.indices.dtype
+_INDPTR_DTYPE = _temp_csr.indptr.dtype
+del _temp_csr
+
+
 def _load_svmlight_file(f, n_features, dtype):
     cdef bytes line
     cdef char *hash_ptr, *line_cstr
     cdef Py_ssize_t hash_idx
 
-    data = []
-    indptr = []
-    indices = []
-    labels = []
+    data = ArrayBuilder(dtype=dtype)
+    indptr = ArrayBuilder(dtype=_INDPTR_DTYPE)
+    indices = ArrayBuilder(dtype=_INDICES_DTYPE)
+    labels = ArrayBuilder(dtype=np.double)
 
     for line in f:
         # skip comments
@@ -44,15 +55,15 @@ def _load_svmlight_file(f, n_features, dtype):
             data.append(dtype(value))
 
     indptr.append(len(data))
-    indptr = np.array(indptr, dtype=np.int)
+    indptr = indptr.get()
 
     if n_features is not None:
         shape = (indptr.shape[0] - 1, n_features)
     else:
         shape = None    # inferred
 
-    X = sp.csr_matrix((np.array(data),
-                       np.array(indices, dtype=np.int),
+    X = sp.csr_matrix((np.array(data.get()),
+                       np.array(indices.get(), dtype=np.int),
                        indptr), shape)
 
-    return X, np.array(labels, dtype=np.double)
+    return X, labels.get()

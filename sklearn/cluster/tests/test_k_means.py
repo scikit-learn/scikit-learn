@@ -9,7 +9,6 @@ from nose.tools import assert_raises
 from nose.tools import assert_true
 
 from ..k_means_ import KMeans, MiniBatchKMeans
-from ...datasets.samples_generator import make_blobs
 from .common import generate_clustered_data
 from ...utils import shuffle
 
@@ -125,7 +124,7 @@ def test_k_means_singleton():
     np.random.seed(1)
     my_X = np.array([[1.1, 1.1], [0.9, 1.1], [1.1, 0.9], [0.9, 0.9]])
     array_init = np.array([[1.0, 1.0], [5.0, 5.0]])
-    k_means = KMeans(init=array_init, k=2).fit(my_X)
+    k_means = KMeans(init=array_init, k=2, n_init=1).fit(my_X)
 
     # must be singleton clustering
     assert_equal(np.unique(k_means.labels_).size, 1)
@@ -281,6 +280,7 @@ def test_transform():
         for c2 in range(n_clusters):
             if c != c2:
                 assert_true(X_new[c, c2] > 0)
+
 
 def test_n_init():
     """Check that increasing the number of init increases the quality"""

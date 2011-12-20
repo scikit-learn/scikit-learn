@@ -1,5 +1,5 @@
 """
-:mod:`sklearn.metrics.cluster` is a module containing evaluation metrics for
+The :mod:`sklearn.metrics.cluster` submodule contains evaluation metrics for
 cluster analysis results. There are two forms of evaluation:
 
 - supervised, which uses a ground truth class values for each sample.

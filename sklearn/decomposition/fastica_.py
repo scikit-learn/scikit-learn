@@ -14,7 +14,7 @@ import numpy as np
 from scipy import linalg
 
 from ..base import BaseEstimator
-from ..utils import array2d
+from ..utils import array2d, as_float_array
 
 __all__ = ['fastica', 'FastICA']
 
@@ -160,9 +160,11 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
 
     Returns
     -------
-    K: (n_components, p) array
-        pre-whitening matrix that projects data onto th first n.comp
-        principal components. Returned only if whiten is True
+    K: (n_components, p) array or None.
+        If whiten is 'True', K is the pre-whitening matrix that projects data
+        onto the first n.comp principal components. If whiten is 'False', K is
+        'None'.
+
     W: (n_components, n_components) array
         estimated un-mixing matrix
         The mixing matrix can be obtained by::
@@ -267,7 +269,9 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         # see (13.6) p.267 Here X1 is white and data
         # in X has been projected onto a subspace by PCA
     else:
-        X1 = X.copy()
+        # X must be casted to floats to avoid typing issues with numpy
+        # 2.0 and the line below
+        X1 = as_float_array(X, copy=True)
     X1 *= np.sqrt(p)
 
     if w_init is None:
@@ -295,7 +299,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         return K, W, S.T
     else:
         S = np.dot(W, X)
-        return W, S.T
+        return None, W, S.T
 
 
 class FastICA(BaseEstimator):
@@ -362,7 +366,10 @@ class FastICA(BaseEstimator):
                         self.algorithm, self.whiten,
                         self.fun, self.fun_prime, self.fun_args, self.max_iter,
                         self.tol, self.w_init)
-        self.unmixing_matrix_ = np.dot(unmixing_, whitening_)
+        if self.whiten == True:
+            self.unmixing_matrix_ = np.dot(unmixing_, whitening_)
+        else:
+            self.unmixing_matrix_ = unmixing_
         self.components_ = sources_
         return self
 

@@ -3,6 +3,13 @@ import numpy as np
 from . import libsvm, liblinear
 from ..base import BaseEstimator
 from ..utils import array2d, safe_asarray
+import warnings
+
+dot = np.dot
+if np.__version__ > '2':
+    # In numpy > 2, np.dot(csr_matrix, csr_matrix) no longer works
+    def dot(A, B):
+        return A.dot(B)
 
 
 LIBSVM_IMPL = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
@@ -47,6 +54,11 @@ class BaseLibSVM(BaseEstimator):
             self.kernel = 'precomputed'
         else:
             self.kernel = kernel
+        if not scale_C:
+            warnings.warn('SVM: scale_C will be True by default in '
+                          'scikit-learn 0.11', FutureWarning,
+                          stacklevel=2)
+
         self.impl = impl
         self.degree = degree
         self.gamma = gamma
@@ -91,7 +103,7 @@ class BaseLibSVM(BaseEstimator):
         if self.kernel != 'linear':
             raise NotImplementedError('coef_ is only available when using a '
                                       'linear kernel')
-        return np.dot(self.dual_coef_, self.support_vectors_)
+        return dot(self.dual_coef_, self.support_vectors_)
 
 
 class DenseBaseLibSVM(BaseLibSVM):
@@ -157,7 +169,7 @@ class DenseBaseLibSVM(BaseLibSVM):
         solver_type = LIBSVM_IMPL.index(self.impl)
         if solver_type != 2 and X.shape[0] != y.shape[0]:
             raise ValueError("X and y have incompatible shapes.\n" +
-                             "X has %s samples, but y has %s." % \
+                             "X has %s samples, but y has %s." %
                              (X.shape[0], y.shape[0]))
 
         if self.kernel == "precomputed" and X.shape[0] != X.shape[1]:
@@ -298,7 +310,8 @@ class DenseBaseLibSVM(BaseLibSVM):
         X = self._compute_kernel(X)
 
         params = self._get_params()
-        del params['scale_C']
+        if 'scale_C' in params:
+            del params['scale_C']
 
         dec_func = libsvm.decision_function(
             X, self.support_, self.support_vectors_, self.n_support_,
@@ -406,6 +419,11 @@ class BaseLibLinear(BaseEstimator):
             raise ValueError("Training vectors should be array-like, not %s"
                              % type(X))
         y = np.asarray(y, dtype=np.int32, order='C')
+
+        if X.shape[0] != y.shape[0]:
+            raise ValueError("X and y have incompatible shapes.\n" +
+                             "X has %s samples, but y has %s." % \
+                             (X.shape[0], y.shape[0]))
 
         C = self.C
         if self.scale_C:
