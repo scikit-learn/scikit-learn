@@ -508,6 +508,26 @@ For sparse data
 
 .. _metrics_ref:
 
+
+:mod:`sklearn.kernel_approximation` Kernel Approximation
+========================================================
+
+.. automodule:: sklearn.kernel_approximation
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`kernel_approximation` section for further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   kernel_approximation.RBFSampler
+   kernel_approximation.AdditiveChi2Sampler
+   kernel_approximation.SkewedChi2Sampler
+
 :mod:`sklearn.metrics`: Metrics
 ===============================
 

@@ -186,10 +186,6 @@ norms that take into account adjacency and different kinds of structure; see see
 see the `Examples` section below.
 
 
-.. |pca_img| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_2.png
-   :target: ../auto_examples/decomposition/plot_faces_decomposition.html
-   :scale: 60%
-
 .. |spca_img| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_5.png
    :target: ../auto_examples/decomposition/plot_faces_decomposition.html
    :scale: 60%
