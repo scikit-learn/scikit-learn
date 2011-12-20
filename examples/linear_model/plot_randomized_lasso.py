@@ -3,12 +3,14 @@
 Randomized Lasso: feature selection with Lasso
 ==============================================
 
+Performs feature scoring and selection using a randomized linear
+model (Lasso)
+
 """
 print __doc__
 
 import pylab as pl
 import numpy as np
-from scipy.interpolate import interp1d
 
 from sklearn.linear_model import RandomizedLasso, lars_path, LassoLarsCV
 from sklearn.cross_validation import ShuffleSplit
@@ -17,51 +19,28 @@ from sklearn.feature_selection import f_regression
 from sklearn.preprocessing import Scaler
 
 ###############################################################################
-# Generating simulated data with Gaussian weigthts
-
+# Load diabetes data and add noisy features
 diabetes = load_diabetes()
 X = diabetes.data
 y = diabetes.target
-
 n_bad_features = 15
 n_samples, n_good_features = X.shape
-
-# Some noisy data not correlated
-E = np.random.normal(size=(n_samples, n_bad_features))
-# Add the noisy data to the informative features
-X = np.hstack((X, E))
-X = Scaler().fit_transform(X)
-
 n_features = n_good_features + n_bad_features
+# Noisy data to the informative features
+X = np.hstack((X, np.random.normal(size=(n_samples, n_bad_features))))
+X = Scaler().fit_transform(X)
 
 ###############################################################################
 # Plot stability selection path
 
-print "Computing regularization path using the LARS ..."
+print "Computing stability path using the LARS ..."
 
 a = 0.3
-n_resampling = 200
-rng = np.random.RandomState(42)
-xx_grid = np.linspace(0, 1, 100)
-scores_path = np.zeros((n_features, 100))
-
-for k in xrange(n_resampling):
-    weights = 1. - a * rng.random_integers(0, 1, size=(n_features,))
-    X_r = X * weights[np.newaxis, :]
-    alphas, _, coefs = lars_path(X_r, y, method='lasso', verbose=False)
-
-    xx = np.sum(np.abs(coefs.T), axis=1)
-    xx /= xx[-1]
-
-    interpolator = interp1d(xx, coefs)
-    coefs_grid = interpolator(xx_grid)
-    scores_path += (coefs_grid != 0.0)
-
-scores_path /= n_resampling
+coef_grid, scores_path = lasso_stability_path(X, y, a=a, random_state=42)
 
 pl.figure()
-hg = pl.plot(xx_grid, scores_path[:n_good_features].T, 'r')
-hb = pl.plot(xx_grid, scores_path[n_good_features:].T, 'k')
+hg = pl.plot(coef_grid, scores_path[:n_good_features].T, 'r')
+hb = pl.plot(coef_grid, scores_path[n_good_features:].T, 'k')
 ymin, ymax = pl.ylim()
 pl.xlabel('|coef| / max|coef|')
 pl.ylabel('Proportion of times selected')
