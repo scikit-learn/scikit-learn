@@ -779,7 +779,7 @@ class MiniBatchKMeans(KMeans):
     batch_size: int, optional, default: 100
         Size of the mini batches.
 
-    init_size: int, optional, default: k * 100
+    init_size: int, optional, default: batch_size
         Size of the random sample of the dataset passed to init method
         when calling fit.
 
@@ -837,7 +837,7 @@ class MiniBatchKMeans(KMeans):
     def __init__(self, k=8, init='k-means++', max_iter=100,
                  batch_size=100, verbose=0, compute_labels=True,
                  random_state=None, tol=0.0, max_no_improvement=10,
-                 init_size=None, n_init=10, chunk_size=None):
+                 init_size=None, n_init=3, chunk_size=None):
 
         super(MiniBatchKMeans, self).__init__(k=k, init=init,
               max_iter=max_iter, verbose=verbose, random_state=random_state,
@@ -850,7 +850,7 @@ class MiniBatchKMeans(KMeans):
             batch_size = chunk_size
         self.batch_size = batch_size
         self.compute_labels = compute_labels
-        self.init_size = k * 100 if init_size is None else init_size
+        self.init_size = self.batch_size if init_size is None else init_size
 
     def fit(self, X, y=None):
         """Compute the centroids on X by chunking it into mini-batches.
