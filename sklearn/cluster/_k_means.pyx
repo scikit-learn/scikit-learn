@@ -78,8 +78,9 @@ cpdef DOUBLE _assign_labels_array(np.ndarray[DOUBLE, ndim=2] X,
             if min_dist == -1 or dist < min_dist:
                 min_dist = dist
                 labels[sample_idx] = center_idx
-                if store_distances:
-                    distances[sample_idx] = dist
+
+        if store_distances:
+            distances[sample_idx] = min_dist
         inertia += min_dist
 
     return inertia
