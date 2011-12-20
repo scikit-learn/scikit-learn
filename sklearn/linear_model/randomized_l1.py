@@ -231,12 +231,17 @@ class RandomizedLasso(BaseRandomizedLinearModel):
 
     Attributes
     ----------
-    TODO
+    scores_: array, shape = [n_features]
+        Feature scores between 0 and 1.
 
     Examples
     --------
     >>> from sklearn.linear_model import RandomizedLasso
     >>> randomized_lasso = RandomizedLasso()
+
+    Notes
+    -----
+    See examples/linear_model/plot_randomize_lasso.py for an example.
 
     References
     ----------
@@ -300,15 +305,91 @@ def _randomized_logistic(X, y, weights, mask, C=1., verbose=False,
     y = y[mask]
     X = (1 - weights) * X
     clf = LogisticRegression(C=C, tol=tol, penalty='l1', dual=False,
-                fit_intercept=fit_intercept)
+                fit_intercept=fit_intercept, scale_C=True)
     clf.fit(X, y)
     return np.any(np.abs(clf.coef_) > 10 * np.finfo(np.float).eps, axis=0)
 
 
 class RandomizedLogistic(BaseRandomizedLinearModel):
-    """ TODO
-    """
+    """Randomized Logistic Regression
 
+    Randomized Regression works by resampling the train data and computing
+    a LogisticRegression on each resampling. In short, the features selected
+    more often are good features. It is also known as stability selection.
+
+    Parameters
+    ----------
+    C: float
+        The regularization parameter C parameter in the LogisticRegression.
+
+    fit_intercept : boolean
+        whether to calculate the intercept for this model. If set
+        to false, no intercept will be used in calculations
+        (e.g. data is expected to be already centered).
+
+    verbose : boolean or integer, optional
+        Sets the verbosity amount
+
+    normalize : boolean, optional
+        If True, the regressors X are normalized
+
+    tol: float, optional
+         tolerance for stopping criteria of LogisticRegression
+
+    n_jobs : integer, optional
+        Number of CPUs to use during the resampling. If '-1', use
+        all the CPUs
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    pre_dispatch: int, or string, optional
+        Controls the number of jobs that get dispatched during parallel
+        execution. Reducing this number can be useful to avoid an
+        explosion of memory consumption when more jobs get dispatched
+        than CPUs can process. This parameter can be:
+
+            - None, in which case all the jobs are immediatly
+              created and spawned. Use this for lightweight and
+              fast-running jobs, to avoid delays due to on-demand
+              spawning of the jobs
+
+            - An int, giving the exact number of total jobs that are
+              spawned
+
+            - A string, giving an expression as a function of n_jobs,
+              as in '2*n_jobs'
+
+    memory : Instance of joblib.Memory or string
+        Used to cache the output of the computation of the tree.
+        By default, no caching is done. If a string is given, it is the
+        path to the caching directory.
+
+    Attributes
+    ----------
+    scores_: array, shape = [n_features]
+        Feature scores between 0 and 1.
+
+    Examples
+    --------
+    >>> from sklearn.linear_model import RandomizedLasso
+    >>> randomized_logistic = RandomizedLogistic()
+
+    References
+    ----------
+    Stability selection
+    Nicolai Meinshausen, Peter Buhlmann
+    Journal of the Royal Statistical Society: Series B
+    Volume 72, Issue 4, pages 417-473, September 2010
+    DOI: 10.1111/j.1467-9868.2010.00740.x
+
+    See also
+    --------
+    RandomizedLasso
+    """
     def __init__(self, C=1, a=.5, sample_fraction=.75,
                  n_resampling=200,
                  selection_threshold=.25, tol=1e-3,
