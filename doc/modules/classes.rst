@@ -59,6 +59,7 @@ uses.
    covariance.OAS
    covariance.GraphLasso
    covariance.GraphLassoCV
+   covariance.MinCovDet
 
 .. autosummary::
    :toctree: generated/
@@ -182,6 +183,7 @@ Samples generator
    decomposition.NMF
    decomposition.SparsePCA
    decomposition.MiniBatchSparsePCA
+   decomposition.SparseCoder
    decomposition.DictionaryLearning
    decomposition.MiniBatchDictionaryLearning
 
@@ -193,7 +195,6 @@ Samples generator
    decomposition.dict_learning
    decomposition.dict_learning_online
    decomposition.sparse_encode
-   decomposition.sparse_encode_parallel
 
 
 .. _ensemble_ref:
