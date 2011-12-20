@@ -148,7 +148,7 @@ def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
                            np.ndarray[INT, ndim=1] counts,
                            np.ndarray[INT, ndim=1] nearest_center,
                            np.ndarray[DOUBLE, ndim=1] old_center,
-                           INT compute_squared_diff):
+                           int compute_squared_diff):
     """Incremental update of the centers for sparse MiniBatchKMeans.
 
     Parameters
@@ -167,22 +167,22 @@ def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
     Return
     ------
     inertia: float
-        The inertia of the batch prior to centers update, i.e. the sum distances
-        to the closest center for each sample. This is the objective function
-        being minimized by the k-means algorithm.
+        The inertia of the batch prior to centers update, i.e. the sum
+        distances to the closest center for each sample. This is the objective
+        function being minimized by the k-means algorithm.
 
     squared_diff: float
-        The sum of squared update (squared norm of the centers position change).
-        If compute_squared_diff is 0, this computation is skipped and 0.0 is
-        returned instead.
+        The sum of squared update (squared norm of the centers position
+        change). If compute_squared_diff is 0, this computation is skipped and
+        0.0 is returned instead.
 
     Both squared diff and inertia are commonly used to monitor the convergence
     of the algorithm.
     """
     cdef:
         np.ndarray[DOUBLE, ndim=1] X_data = X.data
-        np.ndarray[INT, ndim=1] X_indices = X.indices
-        np.ndarray[INT, ndim=1] X_indptr = X.indptr
+        np.ndarray[int, ndim=1] X_indices = X.indices
+        np.ndarray[int, ndim=1] X_indptr = X.indptr
         unsigned int n_samples = X.shape[0]
         unsigned int n_clusters = centers.shape[0]
         unsigned int n_features = centers.shape[1]
@@ -254,8 +254,8 @@ def csr_row_norm_l2(X, squared=True):
         np.ndarray[DOUBLE, ndim=1] norms = np.zeros((n_samples,),
                                                     dtype=np.float64)
         np.ndarray[DOUBLE, ndim=1] X_data = X.data
-        np.ndarray[INT, ndim=1] X_indices = X.indices
-        np.ndarray[INT, ndim=1] X_indptr = X.indptr
+        np.ndarray[int, ndim=1] X_indices = X.indices
+        np.ndarray[int, ndim=1] X_indptr = X.indptr
 
         unsigned int i
         unsigned int j
