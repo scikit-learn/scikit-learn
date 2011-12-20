@@ -30,7 +30,7 @@ digits = datasets.load_digits()
 # could load them using pylab.imread. For these images know which
 # digit they represent: it is given in the 'target' of the dataset.
 for index, (image, label) in enumerate(zip(digits.images, digits.target)[:4]):
-    pl.subplot(2, 4, index+1)
+    pl.subplot(2, 4, index + 1)
     pl.axis('off')
     pl.imshow(image, cmap=pl.cm.gray_r, interpolation='nearest')
     pl.title('Training: %i' % label)
@@ -44,19 +44,19 @@ data = digits.images.reshape((n_samples, -1))
 classifier = svm.SVC(gamma=0.001)
 
 # We learn the digits on the first half of the digits
-classifier.fit(data[:n_samples/2], digits.target[:n_samples/2])
+classifier.fit(data[:n_samples / 2], digits.target[:n_samples / 2])
 
 # Now predict the value of the digit on the second half:
-expected = digits.target[n_samples/2:]
-predicted = classifier.predict(data[n_samples/2:])
+expected = digits.target[n_samples / 2:]
+predicted = classifier.predict(data[n_samples / 2:])
 
 print "Classification report for classifier %s:\n%s\n" % (
     classifier, metrics.classification_report(expected, predicted))
 print "Confusion matrix:\n%s" % metrics.confusion_matrix(expected, predicted)
 
 for index, (image, prediction) in enumerate(
-    zip(digits.images[n_samples/2:], predicted)[:4]):
-    pl.subplot(2, 4, index+5)
+    zip(digits.images[n_samples / 2:], predicted)[:4]):
+    pl.subplot(2, 4, index + 5)
     pl.axis('off')
     pl.imshow(image, cmap=pl.cm.gray_r, interpolation='nearest')
     pl.title('Prediction: %i' % prediction)
