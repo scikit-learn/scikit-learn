@@ -33,6 +33,7 @@ The module structure is the following:
 # Authors: Gilles Louppe, Brian Holt
 # License: BSD 3
 
+import itertools
 import numpy as np
 
 from ..base import ClassifierMixin, RegressorMixin
@@ -48,43 +49,62 @@ __all__ = ["RandomForestClassifier",
            "ExtraTreesClassifier",
            "ExtraTreesRegressor"]
 
+MAX_INT = np.iinfo(np.int32).max
 
-def _parallel_build_tree(forest, X, y, sample_mask, X_argsorted, seed):
-    random_state = check_random_state(seed)
 
-    tree = forest._make_estimator(append=False)
-    tree.random_state = check_random_state(seed + 1)
+def _parallel_build_trees(n_trees, forest, X, y,
+                          sample_mask, X_argsorted, seed):
+    trees = []
+    rs = check_random_state(seed)
 
-    if forest.bootstrap:
-        n_samples = X.shape[0]
-        indices = random_state.randint(0, n_samples, n_samples)
-        tree.fit(X[indices], y[indices],
-                 sample_mask=sample_mask, X_argsorted=X_argsorted)
+    for i in xrange(n_trees):
+        tree = forest._make_estimator(append=False)
+        tree.random_state = check_random_state(rs.randint(MAX_INT))
 
-    else:
-        tree.fit(X, y,
-                 sample_mask=sample_mask, X_argsorted=X_argsorted)
+        if forest.bootstrap:
+            n_samples = X.shape[0]
+            indices = rs.randint(0, n_samples, n_samples)
+            tree.fit(X[indices], y[indices],
+                     sample_mask=sample_mask, X_argsorted=X_argsorted)
 
-    return tree
+        else:
+            tree.fit(X, y,
+                     sample_mask=sample_mask, X_argsorted=X_argsorted)
 
-def _parallel_predict_proba(tree, X, n_classes):
-    if n_classes == tree.n_classes_:
-        return tree.predict_proba(X)
+        trees.append(tree)
 
-    else:
-        p = np.zeros((X.shape[0], n_classes))
-        proba = tree.predict_proba(X)
+    return trees
 
-        for j, c in enumerate(tree.classes_):
-            p[:, c] += proba[:, j]
+def _parallel_predict_proba(trees, X, n_classes):
+    p = np.zeros((X.shape[0], n_classes))
 
-        return p
+    for tree in trees:
+        if n_classes == tree.n_classes_:
+            p += tree.predict_proba(X)
 
-def _parallel_predict_regr(tree, X):
-    return tree.predict(X)
+        else:
+            proba = tree.predict_proba(X)
 
-def _parallel_compute_importances(tree):
-    return tree.feature_importances()
+            for j, c in enumerate(tree.classes_):
+                p[:, c] += proba[:, j]
+
+    return p
+
+def _parallel_predict_regr(trees, X):
+    p = trees[0].predict(X)
+
+    for tree in trees[1:]:
+        p += tree.predict(X)
+
+    return p
+
+def _parallel_compute_importances(trees):
+    importances = trees[0].feature_importances()
+
+    for tree in trees[1:]:
+        importances += tree.feature_importances()
+
+    return importances
 
 
 class Forest(BaseEnsemble):
@@ -125,7 +145,7 @@ class Forest(BaseEnsemble):
         self : object
             Returns self.
         """
-        # Build the forest
+        # Precompute some data
         X = np.atleast_2d(X)
         y = np.atleast_1d(y)
 
@@ -143,12 +163,26 @@ class Forest(BaseEnsemble):
             self.n_classes_ = len(self.classes_)
             y = np.searchsorted(self.classes_, y)
 
-        self.estimators_ = Parallel(n_jobs=self.n_jobs,
-                                    pre_dispatch="2*n_jobs")(
-            delayed(_parallel_build_tree)(
-                    self, X, y, sample_mask, X_argsorted,
-                    self.random_state.randint(np.iinfo(np.int32).max))
-                for i in xrange(self.n_estimators))
+        # Assign chunk of trees to jobs
+        n_jobs = min(self.n_jobs, self.n_estimators)
+        n_trees = [self.n_estimators / n_jobs] * n_jobs
+        n_trees[-1] += self.n_estimators % n_jobs
+
+        # Parallel loop
+        all_trees = Parallel(n_jobs=n_jobs,
+                             pre_dispatch="2*n_jobs")(
+            delayed(_parallel_build_trees)(
+                n_trees[i],
+                self,
+                X,
+                y,
+                sample_mask,
+                X_argsorted,
+                self.random_state.randint(MAX_INT))
+            for i in xrange(n_jobs))
+
+        # Reduce
+        self.estimators_ = [tree for tree in itertools.chain(*all_trees)]
 
         return self
 
@@ -160,11 +194,23 @@ class Forest(BaseEnsemble):
         importances : array of shape = [n_features]
             The feature importances.
         """
-        all_importances = Parallel(n_jobs=self.n_jobs,
-                                   pre_dispatch="2*n_jobs")(
-            delayed(_parallel_compute_importances)(self[i])
-                for i in xrange(self.n_estimators))
+        # Assign chunk of trees to jobs
+        n_jobs = min(self.n_jobs, self.n_estimators)
+        n_trees = [self.n_estimators / n_jobs] * n_jobs
+        n_trees[-1] += self.n_estimators % n_jobs
+        starts = [0] * n_jobs
 
+        for i in xrange(1, n_jobs):
+            starts[i] = starts[i - 1] + n_trees[i]
+
+        # Parallel loop
+        all_importances = Parallel(n_jobs=n_jobs,
+                                   pre_dispatch="2*n_jobs")(
+            delayed(_parallel_compute_importances)(
+                self.estimators_[starts[i]:starts[i] + n_trees[i]])
+            for i in xrange(n_jobs))
+
+        # Reduce
         importances = sum(all_importances) / self.n_estimators
 
         return importances
@@ -226,12 +272,28 @@ class ForestClassifier(Forest, ClassifierMixin):
             The class probabilities of the input samples. Classes are
             ordered by arithmetical order.
         """
+        # Check data
         X = np.atleast_2d(X)
 
-        all_p = Parallel(n_jobs=self.n_jobs, pre_dispatch="2*n_jobs")(
-            delayed(_parallel_predict_proba)(self[i], X, self.n_classes_)
-                for i in xrange(self.n_estimators))
+        # Assign chunk of trees to jobs
+        n_jobs = min(self.n_jobs, self.n_estimators)
+        n_trees = [self.n_estimators / n_jobs] * n_jobs
+        n_trees[-1] += self.n_estimators % n_jobs
+        starts = [0] * n_jobs
 
+        for i in xrange(1, n_jobs):
+            starts[i] = starts[i - 1] + n_trees[i]
+
+        # Parallel loop
+        all_p = Parallel(n_jobs=self.n_jobs,
+                         pre_dispatch="2*n_jobs")(
+            delayed(_parallel_predict_proba)(
+                self.estimators_[starts[i]:starts[i] + n_trees[i]],
+                X,
+                self.n_classes_)
+            for i in xrange(n_jobs))
+
+        # Reduce
         p = sum(all_p) / self.n_estimators
 
         return p
@@ -292,12 +354,27 @@ class ForestRegressor(Forest, RegressorMixin):
         y: array of shape = [n_samples]
             The predicted values.
         """
+        # Check data
         X = np.atleast_2d(X)
 
-        all_y_hat = Parallel(n_jobs=self.n_jobs, pre_dispatch="2*n_jobs")(
-            delayed(_parallel_predict_regr)(self[i], X)
-                for i in xrange(self.n_estimators))
+        # Assign chunk of trees to jobs
+        n_jobs = min(self.n_jobs, self.n_estimators)
+        n_trees = [self.n_estimators / n_jobs] * n_jobs
+        n_trees[-1] += self.n_estimators % n_jobs
+        starts = [0] * n_jobs
 
+        for i in xrange(1, n_jobs):
+            starts[i] = starts[i - 1] + n_trees[i]
+
+        # Parallel loop
+        all_y_hat = Parallel(n_jobs=self.n_jobs,
+                             pre_dispatch="2*n_jobs")(
+            delayed(_parallel_predict_regr)(
+                self.estimators_[starts[i]:starts[i] + n_trees[i]],
+                X)
+            for i in xrange(n_jobs))
+
+        # Reduce
         y_hat = sum(all_y_hat) / self.n_estimators
 
         return y_hat
