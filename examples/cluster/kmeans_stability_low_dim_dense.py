@@ -99,7 +99,7 @@ for factory, init, params in cases:
 pl.xlabel('n_init')
 pl.ylabel('inertia')
 pl.legend(plots, legends)
-pl.title("Mean inertia for various k-means init accross %d runs" % n_runs)
+pl.title("Mean inertia for various k-means init across %d runs" % n_runs)
 
 # Part 2: qualitative visual inspection of the convergence
 

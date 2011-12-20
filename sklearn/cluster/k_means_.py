@@ -736,7 +736,7 @@ def _mini_batch_convergence(model, iteration_idx, n_iterations, tol,
                        iteration_idx + 1, n_iterations))
         return True
 
-    # update the convergence context to maintain state accross sucessive calls:
+    # update the convergence context to maintain state across sucessive calls:
     context['ewa_diff'] = ewa_diff
     context['ewa_inertia'] = ewa_inertia
     context['ewa_inertia_min'] = ewa_inertia_min
@@ -928,7 +928,7 @@ class MiniBatchKMeans(KMeans):
                 cluster_centers, counts, old_center_buffer, False,
                 distances=distances)
 
-            # Keep only the best cluster centers accross independant inits on
+            # Keep only the best cluster centers across independant inits on
             # the common validation set
             _, inertia = _labels_inertia(X_valid, x_squared_norms_valid,
                                          cluster_centers)
