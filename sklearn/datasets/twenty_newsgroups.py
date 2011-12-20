@@ -48,6 +48,7 @@ from .base import get_data_home
 from .base import load_files
 from ..utils import check_random_state, deprecated
 from ..utils.fixes import in1d
+from ..feature_extraction.text import Vectorizer
 
 
 logger = logging.getLogger(__name__)
@@ -187,6 +188,72 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
 
     return data
 
+def load_vectorized_20newsgroups(data_home=None,
+                                 categories=None,
+                                 shuffle=True,
+                                 random_state=None,
+                                 download_if_missing=True):
+    """Load the 20 newsgroups dataset in a vectorized form
+
+    Parameters
+    ----------
+
+    data_home: optional, default: None
+        Specify an download and cache folder for the datasets. If None,
+        all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
+
+    categories: None or collection of string or unicode
+        If None (default), load all the categories.
+        If not None, list of category names to load (other categories
+        ignored).
+
+    shuffle: bool, optional
+        Whether or not to shuffle the data: might be important for models that
+        make the assumption that the samples are independent and identically
+        distributed (i.i.d.), such as stochastic gradient descent.
+
+    random_state: numpy random number generator or seed integer
+        Used to shuffle the dataset.
+
+    download_if_missing: optional, True by default
+        If False, raise an IOError if the data is not locally available
+        instead of trying to download the data from the source site.
+
+    Returns
+    -------
+
+    (X_train, y_train, X_test, y_test)
+
+        X_train : sparse matrix, shape = [n_samples_train, n_features]
+            Training vectors.
+        y_train : array-like, shape = [n_samples_train]
+            Training labels.
+
+        X_test : sparse matrix, shape = [n_samples_test, n_features]
+            Test vectors.
+        y_test : array-like, shape = [n_samples_test
+            Test labels.
+    """
+
+    data_train = fetch_20newsgroups(data_home=data_home,
+                                    subset='train',
+                                    categories=categories,
+                                    shuffle=shuffle,
+                                    random_state=random_state,
+                                    download_if_missing=download_if_missing)
+
+    data_test = fetch_20newsgroups(data_home=data_home,
+                                   subset='test',
+                                   categories=categories,
+                                   shuffle=shuffle,
+                                   random_state=random_state,
+                                   download_if_missing=download_if_missing)
+
+    vectorizer = Vectorizer()
+    X_train = vectorizer.fit_transform(data_train.data)
+    X_test = vectorizer.transform(data_test.data)
+
+    return X_train, data_train.target, X_test, data_test.target
 
 @deprecated("Use fetch_20newsgroups instead with download_if_missing=False")
 def load_20newsgroups(download_if_missing=False, **kwargs):

@@ -32,3 +32,21 @@ def test_20news():
     label = data.target_names.index(category)
     entry2 = data.data[np.where(data.target == label)[0][0]]
     assert_equal(entry1, entry2)
+
+
+def test_20news_vectorized():
+    # This test is slow.
+    raise SkipTest
+    categories = ['alt.atheism', 'talk.religion.misc']
+    try:
+        X_train, y_train, X_test, y_test = \
+            datasets.load_vectorized_20newsgroups(download_if_missing=False,
+                                                  categories=categories,
+                                                  shuffle=False)
+    except IOError:
+        raise SkipTest("Download 20 newsgroups to run this test")
+
+    assert_equal(X_train.shape, (857, 16739))
+    assert_equal(y_train.shape[0], 857)
+    assert_equal(X_test.shape, (570, 16739))
+    assert_equal(y_test.shape[0], 570)
