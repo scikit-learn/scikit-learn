@@ -212,6 +212,10 @@ To use this class, construct it with an ordinary Naive Bayes model as follows::
 
 Then use ``clf.fit`` as usual.
 
+.. note::
+
+    EM is not currently supported for Gaussian Naive Bayes estimators.
+
 .. topic:: References:
 
   * K. Nigam, A.K. McCallum, S. Thrun and T. Mitchell (2000).

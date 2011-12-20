@@ -480,8 +480,9 @@ class SemisupervisedNB(BaseNB):
 
     Parameters
     ----------
-    estimator : BaseDiscreteNB
-        Underlying Naive Bayes estimator.
+    estimator : {BernoulliNB, MultinomialNB}
+        Underlying Naive Bayes estimator. `GaussianNB` is not supported at
+        this moment.
     n_iter : int, optional
         Maximum number of iterations.
     relabel_all : bool, optional
