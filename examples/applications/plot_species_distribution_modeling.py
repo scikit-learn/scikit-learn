@@ -35,257 +35,182 @@ References:
    190:231-259, 2006.
 
 """
-from __future__ import division
 
-# Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#
-# License: Simplified BSD
-
-print __doc__
-
+from cStringIO import StringIO
 import os
-from os.path import normpath, split, exists
-from glob import glob
 from time import time
 
-import pylab as pl
 import numpy as np
+import pylab as pl
+from scipy.sparse import csr_matrix
 
+from sklearn.externals import joblib
+from sklearn.datasets.base import Bunch
+from sklearn.datasets.species_distributions import fetch_species_distributions
+from sklearn import svm
+from sklearn.metrics import roc_curve, auc
+
+# if basemap is available, we'll use it.
+# otherwise, we'll improvise later...
 try:
     from mpl_toolkits.basemap import Basemap
     basemap = True
 except ImportError:
     basemap = False
 
-from sklearn import svm
-from sklearn.metrics import roc_curve, auc
-from sklearn.datasets.base import Bunch
 
-###############################################################################
-# Download the data, if not already on disk
-samples_url = "http://www.cs.princeton.edu/~schapire/maxent/datasets/" \
-              "samples.zip"
-coverage_url = "http://www.cs.princeton.edu/~schapire/maxent/datasets/" \
-               "coverages.zip"
-samples_archive_name = "samples.zip"
-coverage_archive_name = "coverages.zip"
+def create_species_bunch(species_name,
+                         train, test,
+                         coverages, xgrid, ygrid):
+    """
+    create a bunch with information about a particular organism
 
+    This will use the test/train record arrays to extract the
+    data specific to the given species name.
+    """
+    bunch = Bunch(name=' '.join(species_name.split("_")[:2]))
 
-def download(url, archive_name):
-    if not exists(archive_name[:-4]):
-        if not exists(archive_name):
-            import urllib
-            print "Downloading data, please wait ..."
-            print url
-            opener = urllib.urlopen(url)
-            open(archive_name, 'wb').write(opener.read())
-            print
+    points = dict(test=test, train=train)
 
-        import zipfile
-        print "Decompressiong the archive: " + archive_name
-        zipfile.ZipFile(archive_name).extractall()
-        # Remove the archive: we don't need it as we have expanded it
-        # to directory
-        os.unlink(archive_name)
+    for label, pts in points.iteritems():
+        # choose points associated with the desired species
+        pts = pts[pts['species'] == species_name]
+        bunch['pts_%s' % label] = pts
+
+        # determine coverage values for each of the training & testing points
+        ix = np.searchsorted(xgrid, pts['dd long'])
+        iy = np.searchsorted(ygrid, pts['dd lat'])
+        bunch['cov_%s' % label] = coverages[:, -iy, ix].T
+
+    return bunch
+            
+
+def plot_species_distribution(species = ["bradypus_variegatus_0",
+                                         "microryzomys_minutus_0"]):
+    """
+    Plot the species distribution.
+    """
+    t0 = time()
+
+    # Load the compressed data
+    B = fetch_species_distributions()
+
+    # Set up the data
+    species_map = dict([(s, i) for i, s in enumerate(species)])
+
+    # x,y coordinates for corner cells
+    xmin = B.x_left_lower_corner + B.grid_size
+    xmax = xmin + (B.Nx * B.grid_size)
+    ymin = B.y_left_lower_corner + B.grid_size
+    ymax = ymin + (B.Ny * B.grid_size)
+
+    # x coordinates of the grid cells
+    xgrid = np.arange(xmin, xmax, B.grid_size)
+    # y coordinates of the grid cells
+    ygrid = np.arange(ymin, ymax, B.grid_size)
+
+    # The grid in x,y coordinates
+    X, Y = np.meshgrid(xgrid, ygrid[::-1])
+    
+    # convert coverages to dense array
+    #coverages = np.asarray([mat.toarray() for mat in B.coverages],
+    #                       dtype=np.float32)
+    coverages = B.coverages
+    
+    # create a bunch for each species
+    BV = create_species_bunch(species[0],
+                              B.train, B.test,
+                              coverages, xgrid, ygrid)
+    MM = create_species_bunch(species[1],
+                              B.train, B.test,
+                              coverages, xgrid, ygrid)
+
+    # background points (grid coordinates) for evaluation
+    np.random.seed(13)
+    background_points = np.c_[np.random.randint(low=0, high=B.Ny,
+                                                size=10000),
+                              np.random.randint(low=0, high=B.Nx,
+                                                size=10000)].T
+
+    # Fit, predict, and plot for each species.
+    for i, species in enumerate([BV, MM]):
+        print "_" * 80
+        print "Modeling distribution of species '%s'" % species.name
         print
+        # Standardize features
+        mean = species.cov_train.mean(axis=0)
+        std = species.cov_train.std(axis=0)
+        train_cover_std = (species.cov_train - mean) / std
 
+        # Fit OneClassSVM
+        print "fit OneClassSVM ... ",
+        clf = svm.OneClassSVM(nu=0.1, kernel="rbf", gamma=0.5)
+        clf.fit(train_cover_std)
+        print "done. "
 
-download(samples_url, samples_archive_name)
-download(coverage_url, coverage_archive_name)
+        # Plot map of South America
+        pl.subplot(121 + i)
+        if basemap:
+            print "plot coastlines using basemap"
+            m = Basemap(projection='cyl', llcrnrlat=ymin,
+                        urcrnrlat=ymax, llcrnrlon=xmin,
+                        urcrnrlon=xmax, resolution='c')
+            m.drawcoastlines()
+            m.drawcountries()
+            m.drawrivers()
+        else:
+            print "plot coastlines from coverage"
+            CS = pl.contour(X, Y, coverages[2], levels=[-9999], colors="k",
+                            linestyles="solid")
+            pl.xticks([])
+            pl.yticks([])
+        
+        print "predict species distribution"
+        
+        # Predict species distribution using the training data
+        Z = np.ones((B.Ny, B.Nx), dtype=np.float64)
+        
+        # find the land points
+        idx = np.where(coverages[2] > -9999)
 
-t0 = time()
+        coverages_land = coverages[:, idx[0], idx[1]].T
 
-###############################################################################
-# Define constants (coordinates, grid cells)
+        pred = clf.decision_function((coverages_land - mean) / std)[:, 0]
+        Z *= pred.min()
+        Z[idx[0], idx[1]] = pred
 
-species = ["bradypus_variegatus_0", "microryzomys_minutus_0"]
-species_map = dict([(s, i) for i, s in enumerate(species)])
+        levels = np.linspace(Z.min(), Z.max(), 25)
+        Z[coverages[2] == -9999] = -9999
 
-# x,y coordinates of study area
-x_left_lower_corner = -94.8
-y_left_lower_corner = -56.05
+        # plot contours of the prediction
+        CS = pl.contourf(X, Y, Z, levels=levels, cmap=pl.cm.Reds)
+        pl.colorbar(format='%.2f')
 
-# number of cells along x axis
-n_cols = 1212
-# number of cells along y axis
-n_rows = 1592
-grid_size = 0.05  # ~5.5 km
+        # scatter training/testing points
+        pl.scatter(species.pts_train['dd long'], species.pts_train['dd lat'],
+                   s=2 ** 2, c='black',
+                   marker='^', label='train')
+        pl.scatter(species.pts_test['dd long'], species.pts_test['dd lat'],
+                   s=2 ** 2, c='black',
+                   marker='x', label='test')
+        pl.legend()
+        pl.title(species.name)
+        pl.axis('equal')
 
-# x,y coordinates for corner cells
-xmin = x_left_lower_corner + grid_size
-xmax = xmin + (n_cols * grid_size)
-ymin = y_left_lower_corner + grid_size
-ymax = ymin + (n_rows * grid_size)
+        # Compute AUC w.r.t. background points
+        pred_background = Z[background_points[0], background_points[1]]
+        pred_test = clf.decision_function((species.cov_test - mean) / std)[:, 0]
+        scores = np.r_[pred_test, pred_background]
+        y = np.r_[np.ones(pred_test.shape), np.zeros(pred_background.shape)]
+        fpr, tpr, thresholds = roc_curve(y, scores)
+        roc_auc = auc(fpr, tpr)
+        pl.text(-35, -70, "AUC: %.3f" % roc_auc, ha="right")
+        print "Area under the ROC curve : %f" % roc_auc
 
-# x coordinates of the grid cells
-xx = np.arange(xmin, xmax, grid_size)
-# y coordinates of the grid cells
-yy = np.arange(ymin, ymax, grid_size)
+    print "time elapsed: %.3fs" % (time() - t0)
 
-# The grid in x,y coordinates
-X, Y = np.meshgrid(xx, yy[::-1])
+    pl.show()
 
-print "Data grid"
-print "---------"
-print "xmin, xmax:", xmin, xmax
-print "ymin, ymax:", ymin, ymax
-print "grid size:", grid_size
-print
-
-
-###############################################################################
-# Load data
-def read_file(fname):
-    """Read coverage grid data; returns array of
-    shape [n_rows, n_cols]. """
-    f = open(fname)
-    # Skip header
-    for i in range(6):
-        f.readline()
-    X = np.fromfile(f, dtype=np.float32, sep=" ", count=-1)
-    f.close()
-    return X.reshape((n_rows, n_cols))
-
-
-def load_dir(directory):
-    """Loads each of the coverage grids and returns a
-    tensor of shape [14, n_rows, n_cols].
-    """
-    data = []
-    for fpath in glob("%s/*.asc" % normpath(directory)):
-        fname = split(fpath)[-1]
-        fname = fname[:fname.index(".")]
-        X = read_file(fpath)
-        data.append(X)
-    return np.array(data, dtype=np.float32)
-
-print "loading data from disk..."
-species2id = lambda s: species_map.get(s, -1)
-train = np.loadtxt('samples/alltrain.csv', converters={0: species2id},
-                   skiprows=1, delimiter=",")
-test = np.loadtxt('samples/alltest.csv', converters={0: species2id},
-                  skiprows=1, delimiter=",")
-# Load env variable grids
-coverage = load_dir("coverages")
-
-# Per species data
-bv = Bunch(name=" ".join(species[0].split("_")[:2]),
-           train=train[train[:, 0] == 0, 1:],
-           test=test[test[:, 0] == 0, 1:])
-mm = Bunch(name=" ".join(species[1].split("_")[:2]),
-           train=train[train[:, 0] == 1, 1:],
-           test=test[test[:, 0] == 1, 1:])
-
-
-def get_coverages(points, coverages, xx, yy):
-    """Get coverages (aka features) for each point.
-    Returns
-    -------
-    array : shape = [points.shape[0], coverages.shape[0]]
-        The feature vectors (coverages) for each data point.
-    """
-    rows = []
-    cols = []
-    for n in range(points.shape[0]):
-        i = np.searchsorted(xx, points[n, 0])
-        j = np.searchsorted(yy, points[n, 1])
-        rows.append(-j)
-        cols.append(i)
-    return coverages[:, rows, cols].T
-
-# Get feature vectors (=coverages)
-bv.train_cover = get_coverages(bv.train, coverage, xx, yy)
-bv.test_cover = get_coverages(bv.test, coverage, xx, yy)
-mm.train_cover = get_coverages(mm.train, coverage, xx, yy)
-mm.test_cover = get_coverages(mm.test, coverage, xx, yy)
-
-# background points (grid coordinates) for evaluation
-np.random.seed(13)
-background_points = np.c_[np.random.randint(low=0, high=n_rows, size=10000),
-                          np.random.randint(low=0, high=n_cols, size=10000)].T
-
-
-###############################################################################
-# Helper functions
-
-
-def predict(clf, mean, std):
-    """Predict the density for each cell under model `clf`.
-    Only evaluates `clf` on land grid cells.
-    Note: Sea grid cells have coverage[2] equals -9999.
-
-    Returns
-    -------
-    array : shape [n_rows, n_cols]
-        A grid of same shape as X and Y which gives the density.
-    """
-    Z = np.ones((n_rows, n_cols), dtype=np.float64)
-    # the land points
-    idx = np.where(coverage[2] > -9999)
-    X = coverage[:, idx[0], idx[1]].T
-    pred = clf.decision_function((X - mean) / std)[:, 0]
-    Z *= pred.min()
-    Z[idx[0], idx[1]] = pred
-    return Z
-
-###############################################################################
-# Fit, predict, and plot for each species.
-for i, species in enumerate([bv, mm]):
-    print "_" * 80
-    print "Modeling distribution of species '%s'" % species.name
-    print
-    # Standardize features
-    mean = species.train_cover.mean(axis=0)
-    std = species.train_cover.std(axis=0)
-    train_cover_std = (species.train_cover - mean) / std
-
-    # Fit OneClassSVM
-    print "fit OneClassSVM ... ",
-    clf = svm.OneClassSVM(nu=0.1, kernel="rbf", gamma=0.5)
-    clf.fit(train_cover_std)
-    print "done. "
-
-    # Plot map of South America
-    pl.subplot(1, 2, i + 1)
-    if basemap:
-        print "plot coastlines using basemap"
-        m = Basemap(projection='cyl', llcrnrlat=ymin,
-                urcrnrlat=ymax, llcrnrlon=xmin,
-                urcrnrlon=xmax, resolution='c')
-        m.drawcoastlines()
-        m.drawcountries()
-        #m.drawrivers()
-    else:
-        print "plot coastlines from coverage"
-        CS = pl.contour(X, Y, coverage[2], levels=[-9999], colors="k",
-                        linestyles="solid")
-        pl.xticks([])
-        pl.yticks([])
-
-    print "predict species distribution"
-    Z = predict(clf, mean, std)
-    levels = np.linspace(Z.min(), Z.max(), 25)
-    Z[coverage[2] == -9999] = -9999
-    CS = pl.contourf(X, Y, Z, levels=levels, cmap=pl.cm.Reds)
-    pl.colorbar(format='%.2f')
-    pl.scatter(species.train[:, 0], species.train[:, 1], s=2 ** 2, c='black',
-               marker='^', label='train')
-    pl.scatter(species.test[:, 0], species.test[:, 1], s=2 ** 2, c='black',
-               marker='x', label='test')
-    pl.legend()
-    pl.title(species.name)
-    pl.axis('equal')
-
-    # Compute AUC w.r.t. background points
-    pred_background = Z[background_points[0], background_points[1]]
-    pred_test = clf.decision_function((species.test_cover - mean) / std)[:, 0]
-    scores = np.r_[pred_test, pred_background]
-    y = np.r_[np.ones(pred_test.shape), np.zeros(pred_background.shape)]
-    fpr, tpr, thresholds = roc_curve(y, scores)
-    roc_auc = auc(fpr, tpr)
-    pl.text(-35, -70, "AUC: %.3f" % roc_auc, ha="right")
-    print "Area under the ROC curve : %f" % roc_auc
-
-print "time elapsed: %.3fs" % (time() - t0)
-
-pl.show()
+if __name__ == '__main__':
+    plot_species_distribution()
+    pl.show()
