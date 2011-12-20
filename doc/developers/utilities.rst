@@ -89,7 +89,8 @@ Efficient Linear Algebra & Array Operations
 - :func:`arrayfuncs.min_pos`: (used in ``sklearn.linear_model.least_angle``)
   Find the minimum of the positive values within an array.
 
-- :func:`extmath.norm`: computes vector norm by directly calling the BLAS
+- :func:`extmath.norm`: computes Euclidean (L2) vector norm
+  by directly calling the BLAS
   ``nrm2`` function.  This is more stable than ``scipy.linalg.norm``.  See
   `Fabian's blog post
   <http://fseoane.net/blog/2011/computing-the-vector-norm/>`_ for a discussion.
@@ -103,9 +104,14 @@ Efficient Linear Algebra & Array Operations
   ``scipy.sparse`` inputs.  If the inputs are dense, it is equivalent to
   ``numpy.dot``.
 
-- :func:`extmath.logsum`: compute the sum of X assuming X is in the log domain.
-  This is equivalent to calling ``np.log(np.sum(np.exp(X)))``, but is
-  robust to overflow/underflow errors.
+- :func:`extmath.logsumexp`: compute the sum of X assuming X is in the log
+  domain. This is equivalent to calling ``np.log(np.sum(np.exp(X)))``, but is
+  robust to overflow/underflow errors.  Note that there is similar
+  functionality in ``np.logaddexp.reduce``, but because of the pairwise nature
+  of this routine, it is slower for large arrays.
+  Scipy has a similar routine in ``scipy.misc.logsumexp`` (In scipy versions
+  < 0.10, this is found in ``scipy.maxentropy.logsumexp``),
+  but the scipy version does not accept an ``axis`` keyword.
 
 - :func:`extmath.weighted_mode`: an extension of ``scipy.stats.mode`` which
   allows each item to have a real-valued weight.
