@@ -99,6 +99,9 @@ zero features)::
   >>> vectors.nnz / vectors.shape[0]
   118
 
+``sklearn.datasets.fetch_20newsgroups_tfidf`` is a function which returns 
+ready-to-use tfidf features instead of file names.
+
 .. _`20 newsgroups website`: http://people.csail.mit.edu/jrennie/20Newsgroups/
 .. _`TF-IDF`: http://en.wikipedia.org/wiki/Tf-idf
 

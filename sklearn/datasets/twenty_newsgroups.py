@@ -97,7 +97,7 @@ def download_20newsgroups(target_dir, cache_path):
 
 def fetch_20newsgroups(data_home=None, subset='train', categories=None,
                       shuffle=True, random_state=42, download_if_missing=True):
-    """Load the filenames of the 20 newsgroups dataset
+    """Load the filenames of the 20 newsgroups dataset.
 
     Parameters
     ----------
@@ -225,6 +225,7 @@ def fetch_20newsgroups_tfidf(subset="train", data_home=None):
     data_home = get_data_home(data_home=data_home)
     mem = Memory(cachedir=data_home, verbose=False)
 
+    # we shuffle but use a fixed seed for the memoization
     data_train = fetch_20newsgroups(data_home=data_home,
                                     subset='train',
                                     categories=None,
