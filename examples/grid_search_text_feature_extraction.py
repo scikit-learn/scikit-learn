@@ -63,7 +63,7 @@ logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(message)s')
 
 
-################################################################################
+###############################################################################
 # Load some categories from the training set
 categories = [
     'alt.atheism',
@@ -80,7 +80,7 @@ print "%d documents" % len(data.filenames)
 print "%d categories" % len(data.target_names)
 print
 
-################################################################################
+###############################################################################
 # define a pipeline combining a text feature extractor with a simple
 # classifier
 pipeline = Pipeline([
@@ -94,7 +94,7 @@ parameters = {
 # increase processing time in a combinatorial way
     'vect__max_df': (0.5, 0.75, 1.0),
 #    'vect__max_features': (None, 5000, 10000, 50000),
-    'vect__analyzer__max_n': (1, 2), # words or bigrams
+    'vect__analyzer__max_n': (1, 2),  # words or bigrams
 #    'tfidf__use_idf': (True, False),
 #    'tfidf__norm': ('l1', 'l2'),
     'clf__alpha': (0.00001, 0.000001),

@@ -6,10 +6,7 @@ cimport numpy as np
 import numpy as np
 cimport cython
 
-
 ctypedef np.float64_t DOUBLE
-ctypedef np.int32_t INTEGER
-
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -33,8 +30,8 @@ def mean_variance_axis0(X):
     cdef unsigned int n_features = X.shape[1]
 
     cdef np.ndarray[DOUBLE, ndim=1] X_data = X.data
-    cdef np.ndarray[INTEGER, ndim=1] X_indices = X.indices
-    cdef np.ndarray[INTEGER, ndim=1] X_indptr = X.indptr
+    cdef np.ndarray[int, ndim=1] X_indices = X.indices
+    cdef np.ndarray[int, ndim=1] X_indptr = X.indptr
 
     # the column indices for row i are stored in:
     #    indices[indptr[i]:indices[i+1]]
