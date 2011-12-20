@@ -55,7 +55,7 @@ class BaseLibSVM(BaseEstimator):
         else:
             self.kernel = kernel
         if not scale_C:
-            warnings.warn('SVM: scale_C will be False by default in '
+            warnings.warn('SVM: scale_C will be True by default in '
                           'scikit-learn 0.11', FutureWarning,
                           stacklevel=2)
 
