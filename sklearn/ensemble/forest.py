@@ -49,12 +49,15 @@ __all__ = ["RandomForestClassifier",
            "ExtraTreesRegressor"]
 
 
-def _parallel_build_tree(forest, X, y, sample_mask, X_argsorted):
+def _parallel_build_tree(forest, X, y, sample_mask, X_argsorted, seed):
+    random_state = check_random_state(seed)
+
     tree = forest._make_estimator(append=False)
+    tree.random_state = check_random_state(seed + 1)
 
     if forest.bootstrap:
         n_samples = X.shape[0]
-        indices = forest.random_state.randint(0, n_samples, n_samples)
+        indices = random_state.randint(0, n_samples, n_samples)
         tree.fit(X[indices], y[indices],
                  sample_mask=sample_mask, X_argsorted=X_argsorted)
 
@@ -142,7 +145,9 @@ class Forest(BaseEnsemble):
             y = np.searchsorted(self.classes_, y)
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
-            delayed(_parallel_build_tree)(self, X, y, sample_mask, X_argsorted)
+            delayed(_parallel_build_tree)(
+                    self, X, y, sample_mask, X_argsorted,
+                    self.random_state.randint(np.iinfo(np.int32).max))
                 for i in xrange(self.n_estimators))
 
         return self
