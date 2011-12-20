@@ -58,7 +58,7 @@ S_ica_ /= S_ica_.std(axis=0)
 # Plot results
 
 def plot_samples(S, axis_list=None):
-    pl.scatter(S[:,0], S[:,1], s=2, marker='o', linewidths=0, zorder=10)
+    pl.scatter(S[:, 0], S[:, 1], s=2, marker='o', linewidths=0, zorder=10)
     if axis_list is not None:
         colors = [(0, 0.6, 0), (0.6, 0, 0)]
         for color, axis in zip(colors, axis_list):

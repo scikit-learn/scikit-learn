@@ -45,6 +45,12 @@ Changelog
      `Brian Holt`_. The module comes with the random forest algorithm and the
      extra-trees method, along with documentation and examples.
 
+   - :ref:`outlier_detection`: outlier and novelty detection, by
+     `VirgileFritsch`_.
+
+   - :ref:`kernel_approximation`: a transform implement kernel 
+     approximation for fast SGD on non-linear kernels by 
+     `Andreas Müller`_
 
 API changes summary
 -------------------
