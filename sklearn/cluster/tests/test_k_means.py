@@ -159,30 +159,6 @@ def test_k_means_random_init():
     _check_fitted_model(k_means)
 
 
-def test_k_means_copyx():
-    """Check if copy_x=False returns nearly equal X after de-centering."""
-    my_X = X.copy()
-    k_means = KMeans(copy_x=False, k=n_clusters, random_state=1).fit(my_X)
-    centers = k_means.cluster_centers_
-    assert_equal(centers.shape, (n_clusters, 2))
-
-    labels = k_means.labels_
-    assert_equal(np.unique(labels).size, 3)
-    assert_equal(np.unique(labels[:20]).size, 1)
-    assert_equal(np.unique(labels[20:40]).size, 1)
-    assert_equal(np.unique(labels[40:]).size, 1)
-
-    # check if my_X is centered
-    assert_array_almost_equal(my_X, X)
-
-
-def test_k_means_singleton():
-    """Check k_means with bad initialization and singleton clustering."""
-    my_X = np.array([[1.1, 1.1], [0.9, 1.1], [1.1, 0.9], [0.9, 0.9]])
-    array_init = np.array([[1.0, 1.0], [5.0, 5.0]])
-    k_means = KMeans(init=array_init, k=2, n_init=1, random_state=1).fit(my_X)
-
-
 def test_k_means_perfect_init():
     k_means = KMeans(init=centers.copy(), k=n_clusters, random_state=42,
                      n_init=1)
@@ -205,14 +181,16 @@ def test_mb_k_means_plus_plus_init_sparse_matrix():
 
 
 def test_minibatch_k_means_random_init_dense_array():
+    # increase n_init to make random init stable enough
     mb_k_means = MiniBatchKMeans(init="random", k=n_clusters,
-                                 random_state=42).fit(X)
+                                 random_state=42, n_init=10).fit(X)
     _check_fitted_model(mb_k_means)
 
 
 def test_minibatch_k_means_random_init_sparse_csr():
+    # increase n_init to make random init stable enough
     mb_k_means = MiniBatchKMeans(init="random", k=n_clusters,
-                                 random_state=42).fit(X_csr)
+                                 random_state=42, n_init=10).fit(X_csr)
     _check_fitted_model(mb_k_means)
 
 

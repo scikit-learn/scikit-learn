@@ -779,7 +779,7 @@ class MiniBatchKMeans(KMeans):
     batch_size: int, optional, default: 100
         Size of the mini batches.
 
-    init_size: int, optional, default: batch_size
+    init_size: int, optional, default: 3 * batch_size
         Size of the random sample of the dataset passed to init method
         when calling fit.
 
@@ -850,7 +850,7 @@ class MiniBatchKMeans(KMeans):
             batch_size = chunk_size
         self.batch_size = batch_size
         self.compute_labels = compute_labels
-        self.init_size = self.batch_size if init_size is None else init_size
+        self.init_size = batch_size if init_size is None else 3 * init_size
 
     def fit(self, X, y=None):
         """Compute the centroids on X by chunking it into mini-batches.
@@ -932,6 +932,9 @@ class MiniBatchKMeans(KMeans):
             # the common validation set
             _, inertia = _labels_inertia(X_valid, x_squared_norms_valid,
                                          cluster_centers)
+            if self.verbose:
+                print "Inertia for init %d/%d: %f" % (
+                    init_idx + 1, self.n_init, inertia)
             if best_inertia is None or inertia < best_inertia:
                 self.cluster_centers_ = cluster_centers
                 self.counts_ = counts

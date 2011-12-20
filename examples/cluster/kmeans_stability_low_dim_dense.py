@@ -34,7 +34,7 @@ n_runs = 5
 
 # k-means models can do several random inits so as to be able to trade
 # CPU time for convergence robustness
-n_init_range = np.array([1, 5, 10, 15, 20, 25])
+n_init_range = np.array([1, 5, 10, 15, 20])
 
 # Datasets generation parameters
 n_samples_per_center = 100
@@ -67,7 +67,7 @@ cases = [
     (KMeans, 'k-means++', {}),
     (KMeans, 'random', {}),
     (MiniBatchKMeans, 'k-means++', {'max_no_improvement': 3}),
-    (MiniBatchKMeans, 'random', {'max_no_improvement': 3}),
+    (MiniBatchKMeans, 'random', {'max_no_improvement': 3, 'init_size': 500}),
 ]
 
 for factory, init, params in cases:
@@ -115,6 +115,7 @@ for k in range(n_clusters):
     cluster_center = km.cluster_centers_[k]
     pl.plot(cluster_center[0], cluster_center[1], 'o',
             markerfacecolor=color, markeredgecolor='k', markersize=6)
-    pl.title("Example cluster allocation with a single random init")
+    pl.title("Example cluster allocation with a single random init\n"
+             "with MiniBatchKMeans")
 
 pl.show()
