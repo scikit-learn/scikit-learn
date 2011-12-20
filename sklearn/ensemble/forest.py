@@ -68,18 +68,17 @@ def _parallel_build_tree(forest, X, y, sample_mask, X_argsorted, seed):
     return tree
 
 def _parallel_predict_proba(tree, X, n_classes):
-    p = np.zeros((X.shape[0], n_classes))
-
     if n_classes == tree.n_classes_:
-        p += tree.predict_proba(X)
+        return tree.predict_proba(X)
 
     else:
+        p = np.zeros((X.shape[0], n_classes))
         proba = tree.predict_proba(X)
 
         for j, c in enumerate(tree.classes_):
             p[:, c] += proba[:, j]
 
-    return p
+        return p
 
 def _parallel_predict_regr(tree, X):
     return tree.predict(X)
