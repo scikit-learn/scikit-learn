@@ -134,7 +134,8 @@ def k_init(X, k, n_local_trials=None, random_state=None, x_squared_norms=None):
 # K-means batch estimation by EM (expectation maximization)
 
 
-def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
+def k_means(X, k, init='k-means++', precompute_distances=True,
+            n_init=10, max_iter=300, verbose=0,
             tol=1e-4, random_state=None, copy_x=True):
     """K-means clustering algorithm.
 
@@ -241,7 +242,8 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
         for i in range(max_iter):
             centers_old = centers.copy()
             # labels assignement is also called the E-step of EM
-            labels, inertia = _labels_inertia(X, x_squared_norms, centers)
+            labels, inertia = _labels_inertia(X, x_squared_norms, centers,
+                                              precompute_distances)
 
             # computation of the means is also called the M-step of EM
             centers = _centers(X, labels, k)
@@ -274,7 +276,25 @@ def _squared_norms(X):
         return (X ** 2).sum(axis=1)
 
 
-def _labels_inertia(X, x_squared_norms, centers, distances=None):
+def _labels_inertia_precompute_dense(X, x_squared_norms, centers):
+    n_samples = X.shape[0]
+    k = centers.shape[0]
+    distances = euclidean_distances(centers, X, x_squared_norms,
+                                    squared=True)
+    labels = np.empty(n_samples, dtype=np.int)
+    labels.fill(-1)
+    mindist = np.empty(n_samples)
+    mindist.fill(np.infty)
+    for center_id in range(k):
+        dist = distances[center_id]
+        labels[dist < mindist] = center_id
+        mindist = np.minimum(dist, mindist)
+    inertia = mindist.sum()
+    return labels, inertia
+
+
+def _labels_inertia(X, x_squared_norms, centers,
+                    precompute_distances=True, distances=None):
     """E step of the K-means EM algorithm
 
     Compute the labels and the inertia of the given samples and centers
@@ -312,6 +332,9 @@ def _labels_inertia(X, x_squared_norms, centers, distances=None):
         inertia = _k_means._assign_labels_csr(
             X, x_squared_norms, centers, labels, distances=distances)
     else:
+        if precompute_distances:
+            return _labels_inertia_precompute_dense(X, x_squared_norms,
+                                                    centers)
         inertia = _k_means._assign_labels_array(
             X, x_squared_norms, centers, labels, distances=distances)
     return labels, inertia
@@ -450,6 +473,9 @@ class KMeans(BaseEstimator):
 
         if init is an 2d array, it is used as a seed for the centroids
 
+    precompute_distances : boolean
+        Precompute distances (faster but takes more memory).
+
     tol: float, optional default: 1e-4
         Relative tolerance w.r.t. inertia to declare convergence
 
@@ -497,7 +523,8 @@ class KMeans(BaseEstimator):
     """
 
     def __init__(self, k=8, init='k-means++', n_init=10, max_iter=300,
-                 tol=1e-4, verbose=0, random_state=None, copy_x=True):
+                 tol=1e-4, precompute_distances=True,
+                 verbose=0, random_state=None, copy_x=True):
 
         if hasattr(init, '__array__'):
             k = init.shape[0]
@@ -507,6 +534,7 @@ class KMeans(BaseEstimator):
         self.init = init
         self.max_iter = max_iter
         self.tol = tol
+        self.precompute_distances = precompute_distances
         self.n_init = n_init
         self.verbose = verbose
         self.random_state = random_state
@@ -545,6 +573,7 @@ class KMeans(BaseEstimator):
         self.cluster_centers_, self.labels_, self.inertia_ = k_means(
             X, k=self.k, init=self.init, n_init=self.n_init,
             max_iter=self.max_iter, verbose=self.verbose,
+            precompute_distances=self.precompute_distances,
             tol=self.tol, random_state=self.random_state, copy_x=self.copy_x)
         return self
 
