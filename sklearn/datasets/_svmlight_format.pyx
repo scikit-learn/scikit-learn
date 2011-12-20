@@ -26,15 +26,12 @@ def _load_svmlight_file(f, n_features, dtype, bint multilabel):
     cdef char *hash_ptr, *line_cstr
     cdef Py_ssize_t hash_idx
 
+    data = ArrayBuilder(dtype=dtype)
+    indptr = ArrayBuilder(dtype=_INDPTR_DTYPE)
+    indices = ArrayBuilder(dtype=_INDICES_DTYPE)
     if multilabel:
-        data = []
-        indptr = []
-        indices = []
         labels = []
     else:
-        data = ArrayBuilder(dtype=dtype)
-        indptr = ArrayBuilder(dtype=_INDPTR_DTYPE)
-        indices = ArrayBuilder(dtype=_INDICES_DTYPE)
         labels = ArrayBuilder(dtype=np.double)
 
     for line in f:
@@ -67,15 +64,11 @@ def _load_svmlight_file(f, n_features, dtype, bint multilabel):
 
     indptr.append(len(data))
 
+    indptr = indptr.get()
+    data = data.get()
+    indices = indices.get()
     if not multilabel:
-        indptr = indptr.get()
-        data = data.get()
-        indices = indices.get()
-        labels = np.array(labels.get(), dtype=np.double)
-
-    indptr = np.array(indptr)
-    indices = np.array(indices, dtype=np.int)
-    data = np.array(data)
+        labels = labels.get()
 
     if n_features is not None:
         shape = (indptr.shape[0] - 1, n_features)
