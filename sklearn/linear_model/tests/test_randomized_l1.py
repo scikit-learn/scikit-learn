@@ -59,7 +59,7 @@ def test_randomized_lasso():
 def test_randomized_logistic():
     """Check randomized sparse logistic regression"""
     iris = load_iris()
-    X = iris.data[:, :3]
+    X = iris.data[:, [0, 2]]
     y = iris.target
     X = X[y != 2]
     y = y[y != 2]
@@ -67,7 +67,7 @@ def test_randomized_logistic():
     F, _ = f_classif(X, y)
 
     a = 0.3
-    clf = RandomizedLogistic(verbose=False, C=1, random_state=42, a=a,
-                             n_resampling=50)
+    clf = RandomizedLogistic(verbose=False, C=1., random_state=42, a=a,
+                             n_resampling=50, tol=1e-3)
     feature_scores = clf.fit(X, y).scores_
     assert_equal(np.argsort(F), np.argsort(feature_scores))
