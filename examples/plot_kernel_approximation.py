@@ -3,6 +3,8 @@
 Explicit feature map approximation for RBF kernels
 ==================================================
 
+.. currentmodule:: sklearn.kernel_approximation
+
 An example shows how to use :class:`RBFSampler` to appoximate the feature map of an RBF
 kernel for classification with an SVM on the digits dataset.
 Results using a linear SVM in the original space, a linear SVM using the
@@ -14,7 +16,7 @@ Sampling more dimensions clearly leads to better classification results, but
 comes at a greater cost. This means there is a tradeoff between runtime and
 accuracy, given by the parameter n_components.  Note that solving the Linear
 SVM and also the approximate kernel SVM could be greatly accelerated by using
-stochastic gradient descent via :class:`SGDClassifier`. This is not easily possible for
+stochastic gradient descent via :class:`sklearn.linear_model.SGDClassifier`. This is not easily possible for
 the case of the kernelized SVM.
 
 The second plot visualized the decision surfaces of the RBF kernel SVM and
@@ -98,35 +100,39 @@ for D in sample_sizes:
     approx_kernel_scores.append(score)
 
 # plot the results:
-accuracy = pl.gca()
+accuracy = pl.subplot(211)
 # second y axis for timeings
-timescale = accuracy.twinx()
+timescale = pl.subplot(212)
 
-accuracy.plot(sample_sizes, approx_kernel_scores, label="approximate kernel")
+accuracy.plot(sample_sizes, approx_kernel_scores, label="approx. kernel")
 timescale.plot(sample_sizes, approx_kernel_times, '--',
-        label='runtime approx. kernel')
+        label='approx. kernel')
 
 # horizontal lines for exact rbf and linear kernels:
 accuracy.plot([sample_sizes[0], sample_sizes[-1]], [linear_svm_score,
     linear_svm_score], label="linear svm")
 timescale.plot([sample_sizes[0], sample_sizes[-1]], [linear_svm_time,
-        linear_svm_time], '--', label='runtime linear')
+        linear_svm_time], '--', label='linear svm')
 
 accuracy.plot([sample_sizes[0], sample_sizes[-1]], [kernel_svm_score,
     kernel_svm_score], label="rbf svm")
 timescale.plot([sample_sizes[0], sample_sizes[-1]], [kernel_svm_time,
-        kernel_svm_time], '--', label='runtime exact kernel')
+        kernel_svm_time], '--', label='rbf svm')
 
 # vertical line for dataset dimensionality = 64
-accuracy.plot([64, 64], [0.7, 1], label="original dimensionality")
+accuracy.plot([64, 64], [0.7, 1], label="n_features")
 
 # legends and labels
+accuracy.set_title("Classification accuracy")
+timescale.set_title("Training times")
 accuracy.set_xlim(sample_sizes[0], sample_sizes[-1])
+accuracy.set_xticks(())
 accuracy.set_ylim(np.min(approx_kernel_scores), 1)
-accuracy.set_xlabel("Sampling steps = transformed feature dimension")
+timescale.set_xlabel("Sampling steps = transformed feature dimension")
 accuracy.set_ylabel("Classification accuracy")
-timescale.set_ylabel("Training time in seconds (dashed lines)")
+timescale.set_ylabel("Training time in seconds")
 accuracy.legend(loc='best')
+timescale.legend(loc='best')
 
 # visualize the decision surface, projected down to the first
 # two principal components of the dataset
