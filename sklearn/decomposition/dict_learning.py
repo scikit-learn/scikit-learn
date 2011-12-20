@@ -261,8 +261,8 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
     """
     warnings.warn("Please note: the interface of sparse_encode has changed: "
                   "It now follows the dictionary learning API and it also "
-                  "handles parallelization. Please read the docstring for more "
-                  "information.")
+                  "handles parallelization. Please read the docstring for "
+                  "more information.")
     dictionary = np.asarray(dictionary)
     X = np.asarray(X)
     n_samples, n_features = X.shape
