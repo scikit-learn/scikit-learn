@@ -16,8 +16,10 @@ The advantage of using approximate explicit feature maps compared to the
 `kernel trick <http://en.wikipedia.org/wiki/Kernel_trick>`_, 
 which makes use of feature maps implicitly, is that explicit mappings
 can be better suited for online learning and can significantly reduce the cost
-of learning with very large datasets for which kernel methods are infeasible.
-In is particularly the combination of kernel map approximations with
+of learning with very large datasets.
+Standard kernelized SVMs do not scale well to large datasets, but using an
+approximate kernel map it is possible to use much more efficient linear SVMs.
+In particularly the combination of kernel map approximations with
 :class:`SGDClassifier` can make nonlinear learning on large datasets possible.
 
 Since there has not been much empirical work using approximate embeddings, it
