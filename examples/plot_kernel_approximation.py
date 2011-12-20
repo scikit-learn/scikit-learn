@@ -5,19 +5,18 @@ Explicit feature map approximation for RBF kernels
 
 .. currentmodule:: sklearn.kernel_approximation
 
-An example shows how to use :class:`RBFSampler` to appoximate the feature map of an RBF
-kernel for classification with an SVM on the digits dataset.
-Results using a linear SVM in the original space, a linear SVM using the
-approximate mapping and using a kernelized SVM are compared.
-Timings and accuracy for varying amounts of Monte Carlo samplings for the
-approximate mapping are shown.
+An example shows how to use :class:`RBFSampler` to appoximate the feature map
+of an RBF kernel for classification with an SVM on the digits dataset.  Results
+using a linear SVM in the original space, a linear SVM using the approximate
+mapping and using a kernelized SVM are compared.  Timings and accuracy for
+varying amounts of Monte Carlo samplings for the approximate mapping are shown.
 
 Sampling more dimensions clearly leads to better classification results, but
 comes at a greater cost. This means there is a tradeoff between runtime and
 accuracy, given by the parameter n_components.  Note that solving the Linear
 SVM and also the approximate kernel SVM could be greatly accelerated by using
-stochastic gradient descent via :class:`sklearn.linear_model.SGDClassifier`. This is not easily possible for
-the case of the kernelized SVM.
+stochastic gradient descent via :class:`sklearn.linear_model.SGDClassifier`.
+This is not easily possible for the case of the kernelized SVM.
 
 The second plot visualized the decision surfaces of the RBF kernel SVM and
 the linear SVM with approximate kernel map.
@@ -29,7 +28,8 @@ a datapoint (represented as a dot) does not necessarily be classified
 into the region it is lying in, since it will not lie on the plane
 that the first two principal components span.
 
-The usage of :class:`RBFSampler` is described in detail in :ref:`kernel_approximation`.
+The usage of :class:`RBFSampler` is described in detail in
+:ref:`kernel_approximation`.
 
 """
 print __doc__
@@ -154,7 +154,7 @@ flat_grid = grid.reshape(-1, data.shape[1])
 titles = ['SVC with rbf kernel',
           'SVC (linear kernel) with rbf feature map\n n_components=100']
 
-pl.figure(figsize=(12,5))
+pl.figure(figsize=(12, 5))
 pl.set_cmap(pl.cm.Paired)
 
 
@@ -162,20 +162,17 @@ pl.set_cmap(pl.cm.Paired)
 for i, clf in enumerate((kernel_svm, approx_kernel_svm)):
     # Plot the decision boundary. For that, we will asign a color to each
     # point in the mesh [x_min, m_max]x[y_min, y_max].
-    pl.subplot(1, 2, i+1)
+    pl.subplot(1, 2, i + 1)
     Z = clf.predict(flat_grid)
 
     # Put the result into a color plot
     Z = Z.reshape(grid.shape[:-1])
     pl.set_cmap(pl.cm.Paired)
     pl.contourf(multiples, multiples, Z)
-    #pl.imshow(Z, interpolation='nearest')
     pl.axis('off')
 
     # Plot also the training points
-    pl.scatter(X[:,0], X[:,1], c=targets_train)
+    pl.scatter(X[:, 0], X[:, 1], c=targets_train)
 
     pl.title(titles[i])
 pl.show()
-
-
