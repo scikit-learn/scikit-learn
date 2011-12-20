@@ -499,6 +499,9 @@ class SemisupervisedNB(BaseNB):
 
     def __init__(self, estimator, n_iter=10, relabel_all=True, tol=1e-5,
                  verbose=False):
+        if not isinstance(estimator, BaseDiscreteNB):
+            raise TypeError("%r is not a supported Naive Bayes classifier"
+                            % (estimator,))
         self.estimator = estimator
         self.n_iter = n_iter
         self.relabel_all = relabel_all

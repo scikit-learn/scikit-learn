@@ -5,7 +5,8 @@ import scipy.sparse
 from numpy.testing import (assert_almost_equal, assert_array_equal,
                            assert_array_almost_equal, assert_equal)
 
-from ..naive_bayes import GaussianNB, BernoulliNB, MultinomialNB
+from ..naive_bayes import (GaussianNB, BernoulliNB, MultinomialNB,
+                           SemisupervisedNB)
 
 # Data is just 6 separable points in the plane
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
@@ -117,3 +118,15 @@ def test_sample_weight():
             sample_weight=[1, 1, 4])
     assert_array_equal(clf.predict([1, 0]), [1])
     assert_array_almost_equal(np.exp(clf.intercept_), [1 / 3., 2 / 3.])
+
+
+def test_semisupervised():
+    X = scipy.sparse.csr_matrix([[4, 3, 1], 
+                                 [5, 2, 1],
+                                 [0, 1, 7],
+                                 [0, 1, 6]])
+    y = np.array([1, -1, -1, 2])
+    for clf in (BernoulliNB(), MultinomialNB()):
+        semi_clf = SemisupervisedNB(clf, n_iter=20, tol=1e6)
+        semi_clf.fit(X, y)
+        assert_array_equal(semi_clf.predict([[5, 0, 0], [1, 1, 4]]), [1, 2])
