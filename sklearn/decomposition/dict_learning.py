@@ -6,6 +6,7 @@
 import time
 import sys
 import itertools
+import warnings
 
 from math import sqrt, floor, ceil
 
@@ -15,7 +16,7 @@ from numpy.lib.stride_tricks import as_strided
 
 from ..base import BaseEstimator, TransformerMixin
 from ..externals.joblib import Parallel, delayed, cpu_count
-from ..utils import array2d, check_random_state, gen_even_slices
+from ..utils import array2d, check_random_state, gen_even_slices, deprecated
 from ..utils.extmath import fast_svd
 from ..linear_model import Lasso, orthogonal_mp_gram, lars_path
 
@@ -255,6 +256,10 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
     linear_model.Lasso
     decomposition.SparseCoder
     """
+    warnings.warn("Please note: the interface of sparse_encode has changed: "
+                  "It now follows the dictionary learning API and it also "
+                  "handles parallelization. Please read the docstring for more "
+                  "information.")
     dictionary = np.asarray(dictionary)
     X = np.asarray(X)
     n_samples, n_features = X.shape
@@ -281,6 +286,11 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
     for this_slice, this_view in zip(slices, code_views):
         code[this_slice] = this_view
     return code
+
+
+@deprecated('Use sparse_encode instead')
+def sparse_encode_parallel():
+    pass
 
 
 def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
