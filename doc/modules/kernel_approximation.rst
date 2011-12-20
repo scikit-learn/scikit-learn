@@ -3,22 +3,22 @@
 Kernel Approximation
 ====================
 
-.. currentmodule:: sklearn.kernel_approximation
-
 This submodule contains functions that approximate the feature mappings that
 correspond to certain kernels, as they are used for example in support vector
 machines (see :ref:`svm`).
-
 The following feature functions perform non-linear transformations of the
 input, which can serve as a basis for linear classification or other
 algorithms.
 
-The advantage of using approximate explicit feature maps compared to the kernel
-trick, which makes use of feature maps implicitly, is that explicit mappings
+.. currentmodule:: sklearn.linear_model
+
+The advantage of using approximate explicit feature maps compared to the 
+`kernel trick <http://en.wikipedia.org/wiki/Kernel_trick>`_, 
+which makes use of feature maps implicitly, is that explicit mappings
 can be better suited for online learning and can significantly reduce the cost
 of learning with very large datasets for which kernel methods are infeasible.
 In is particularly the combination of kernel map approximations with
-:class:SGDClassifier can make nonlinear learning on large datasets possible.
+:class:`SGDClassifier` can make nonlinear learning on large datasets possible.
 
 Since there has not been much empirical work using approximate embeddings, it
 is advisable to compare results against exact kernel methods when possible.
@@ -26,6 +26,8 @@ is advisable to compare results against exact kernel methods when possible.
 
 Radial Basis Function Kernel
 ----------------------------
+
+.. currentmodule:: sklearn.kernel_approximation
 
 The :class:`RBFSampler` constructs an approximate mapping for the radial basis
 function kernel. 
@@ -49,6 +51,13 @@ Details on the method can be found in [RR2007]_.
     :target: ../auto_examples/plot_kernel_approximation.html
     :scale: 50%
     :align: center
+
+    Comparing an exact RBF kernel (left) with the approximation (right)
+
+.. topic:: Examples:
+
+    * :ref:`example_plot_kernel_approximation.py`
+    * :ref:`example_svm_plot_approximate_kernel_decision.py`
 
 
 Additive Chi Squared Kernel
@@ -98,11 +107,6 @@ The usage of the :class:`SkewedChi2Sampler` is the same as the usage described
 above for the :class:`RBFSampler`. The only difference is in the free
 parameter, that is called `c`.
 For a motivation for this mapping and the mathematical details see [LS2010]_.
-
-.. topic:: Examples:
-
-    * :ref:`example_plot_kernel_approximation.py`
-    * :ref:`example_svm_plot_approximate_kernel_decision.py`
 
 
 Mathematical Details
