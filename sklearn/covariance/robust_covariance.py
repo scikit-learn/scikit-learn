@@ -22,17 +22,17 @@ from ..utils.extmath import fast_logdet
 #   1999, American Statistical Association and the American Society
 #   for Quality, TECHNOMETRICS)
 ###############################################################################
-def c_step(X, h, remaining_iterations=30, initial_estimates=None,
+def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
            verbose=False, cov_computation_method=empirical_covariance):
     """C_step procedure described in [1] aiming at computing the MCD
 
     Parameters
     ----------
     X: array-like, shape (n_samples, n_features)
-      Data set in which we look for the h observations whose scatter matrix
-      has minimum determinant
-    h: int, > n_samples / 2
-      Number of observations to compute the ribust estimates of location
+      Data set in which we look for the n_support observations whose
+      scatter matrix has minimum determinant
+    n_support: int, > n_samples / 2
+      Number of observations to compute the robust estimates of location
       and covariance from.
     remaining_iterations: int
       Number of iterations to perform.
@@ -53,8 +53,8 @@ def c_step(X, h, remaining_iterations=30, initial_estimates=None,
     covariance: array-like, shape (n_features, n_features)
       Robust covariance estimates
     support: array-like, shape (n_samples,)
-      A mask for the `h` observations whose scatter matrix has minimum
-      determinant
+      A mask for the `n_support` observations whose scatter matrix has
+      minimum determinant
 
     Notes
     -----
@@ -70,7 +70,7 @@ def c_step(X, h, remaining_iterations=30, initial_estimates=None,
     if initial_estimates is None:
         # compute initial robust estimates from a random subset
         support = np.zeros(n_samples).astype(bool)
-        support[np.random.permutation(n_samples)[:h]] = True
+        support[np.random.permutation(n_samples)[:n_support]] = True
         location = X[support].mean(0)
         covariance = cov_computation_method(X[support])
     else:
@@ -83,7 +83,7 @@ def c_step(X, h, remaining_iterations=30, initial_estimates=None,
         dist = (np.dot(X_centered, precision) * X_centered).sum(1)
         # compute new estimates
         support = np.zeros(n_samples).astype(bool)
-        support[np.argsort(dist)[:h]] = True
+        support[np.argsort(dist)[:n_support]] = True
         location = X[support].mean(0)
         covariance = cov_computation_method(X[support])
     previous_det = np.inf
@@ -102,7 +102,7 @@ def c_step(X, h, remaining_iterations=30, initial_estimates=None,
         previous_support = support
         # compute new estimates
         support = np.zeros(n_samples).astype(bool)
-        support[np.argsort(dist)[:h]] = True
+        support[np.argsort(dist)[:n_support]] = True
         location = X[support].mean(0)
         covariance = cov_computation_method(X[support])
         det = np.log(linalg.det(covariance))
@@ -133,13 +133,14 @@ def c_step(X, h, remaining_iterations=30, initial_estimates=None,
     return results
 
 
-def select_candidates(X, h, n_trials, select=1, n_iter=30, verbose=False,
+def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
+                      verbose=False,
                       cov_computation_method=empirical_covariance):
     """Finds the best pure subset of observations to compute MCD from it.
 
-    The purpose of this function is to find the best sets of h
+    The purpose of this function is to find the best sets of n_support
     observations with respect to a minimization of their covariance
-    matrix determinant. Equivalently, it removes n_samples-h
+    matrix determinant. Equivalently, it removes n_samples-n_support
     observations to construct what we call a pure data set (i.e. not
     containing outliers). The list of the observations of the pure
     data set is referred to as the `support`.
@@ -150,8 +151,8 @@ def select_candidates(X, h, n_trials, select=1, n_iter=30, verbose=False,
     Parameters
     ----------
     X: array-like, shape (n_samples, n_features)
-      Data (sub)set in which we look for the h purest observations
-    h: int, [(n + p + 1)/2] < h < n
+      Data (sub)set in which we look for the n_support purest observations
+    n_support: int, [(n + p + 1)/2] < n_support < n
       The number of samples the pure data set must contain.
     select: int, int > 0
       Number of best candidates results to return.
@@ -210,14 +211,14 @@ def select_candidates(X, h, n_trials, select=1, n_iter=30, verbose=False,
         for j in range(n_trials):
             all_estimates.append(
                 c_step(
-                    X, h, remaining_iterations=n_iter, verbose=verbose,
+                    X, n_support, remaining_iterations=n_iter, verbose=verbose,
                     cov_computation_method=cov_computation_method))
     else:
         # perform computations from every given initial estimates
         for j in range(n_trials):
             initial_estimates = (estimates_list[0][j], estimates_list[1][j])
             all_estimates.append(c_step(
-                    X, h, remaining_iterations=n_iter,
+                    X, n_support, remaining_iterations=n_iter,
                     initial_estimates=initial_estimates, verbose=verbose,
                     cov_computation_method=cov_computation_method))
     all_locations_sub, all_covariances_sub, all_dets_sub, all_supports_sub = \
@@ -231,7 +232,8 @@ def select_candidates(X, h, n_trials, select=1, n_iter=30, verbose=False,
     return best_locations, best_covariances, best_supports
 
 
-def fast_mcd(X, h=None, cov_computation_method=empirical_covariance):
+def fast_mcd(X, support_fraction=None,
+             cov_computation_method=empirical_covariance):
     """Estimates the Minimum Covariance Determinant matrix.
 
     The FastMCD algorithm has been introduced by Rousseuw and Van Driessen
@@ -247,10 +249,10 @@ def fast_mcd(X, h=None, cov_computation_method=empirical_covariance):
     ----------
     X: array-like, shape (n_samples, n_features)
       The data matrix, with p features and n samples.
-    h: float, 0 < h < 1
+    support_fraction: float, 0 < support_fraction < 1
           The proportion of points to be included in the support of the raw
           MCD estimate. Default is None, which implies that the minimum
-          value of h will be used within the algorithm:
+          value of support_fraction will be used within the algorithm:
           [n_sample + n_features + 1] / 2
 
     Notes
@@ -288,10 +290,10 @@ def fast_mcd(X, h=None, cov_computation_method=empirical_covariance):
         n_samples, n_features = X.shape
 
     # minimum breakdown value
-    if h is None:
-        h = int(np.ceil(0.5 * (n_samples + n_features + 1)))
+    if support_fraction is None:
+        n_support = int(np.ceil(0.5 * (n_samples + n_features + 1)))
     else:
-        h = int(h * n_samples)
+        n_support = int(support_fraction * n_samples)
 
     # 1-dimensional case quick computation
     # (Rousseeuw, P. J. and Leroy, A. M. (2005) References, in Robust
@@ -299,13 +301,14 @@ def fast_mcd(X, h=None, cov_computation_method=empirical_covariance):
     if n_features == 1:
         # find the sample shortest halves
         X_sorted = np.sort(np.ravel(X))
-        diff = X_sorted[h:] - X_sorted[:(n_samples - h)]
+        diff = X_sorted[n_support:] - X_sorted[:(n_samples - n_support)]
         halves_start = np.where(diff == np.min(diff))[0]
         # take the middle points' mean to get the robust location estimate
         location = 0.5 * \
-            (X_sorted[h + halves_start] + X_sorted[halves_start]).mean()
+            (X_sorted[n_support + halves_start]
+             + X_sorted[halves_start]).mean()
         support = np.zeros(n_samples).astype(bool)
-        support[np.argsort(np.abs(X - location), axis=0)[:h]] = True
+        support[np.argsort(np.abs(X - location), axis=0)[:n_support]] = True
         covariance = np.asarray([[np.var(X[support])]])
         location = np.array([location])
 
@@ -316,7 +319,7 @@ def fast_mcd(X, h=None, cov_computation_method=empirical_covariance):
         n_subsets = n_samples / 300
         n_samples_subsets = n_samples / n_subsets
         samples_shuffle = np.random.permutation(n_samples)
-        h_subset = np.ceil(n_samples_subsets * (h / float(n_samples)))
+        h_subset = np.ceil(n_samples_subsets * (n_support / float(n_samples)))
         # b. perform a total of 500 trials
         n_trials_tot = 500
         n_trials = n_trials_tot / n_subsets
@@ -339,7 +342,7 @@ def fast_mcd(X, h=None, cov_computation_method=empirical_covariance):
         ## 2. Pool the candidate supports into a merged set
         ##    (possibly the full dataset)
         n_samples_merged = min(1500, n_samples)
-        h_merged = np.ceil(n_samples_merged * (h / float(n_samples)))
+        h_merged = np.ceil(n_samples_merged * (n_support / float(n_samples)))
         if n_samples > 1500:
             n_best_merged = 10
         else:
@@ -361,9 +364,10 @@ def fast_mcd(X, h=None, cov_computation_method=empirical_covariance):
             # select the best couple on the full dataset
             locations_full, covariances_full, supports_full = \
                 select_candidates(
-                X, h, n_trials=(locations_merged, covariances_merged),
-                select=1,
-                cov_computation_method=cov_computation_method)
+                    X, n_support,
+                    n_trials=(locations_merged, covariances_merged),
+                    select=1,
+                    cov_computation_method=cov_computation_method)
             location = locations_full[0]
             covariance = covariances_full[0]
             support = supports_full[0]
@@ -373,12 +377,12 @@ def fast_mcd(X, h=None, cov_computation_method=empirical_covariance):
         n_trials = 30
         n_best = 10
         locations_best, covariances_best, _ = select_candidates(
-            X, h, n_trials=n_trials, select=n_best, n_iter=2,
+            X, n_support, n_trials=n_trials, select=n_best, n_iter=2,
             cov_computation_method=cov_computation_method)
         ## 2. Select the best couple on the full dataset amongst the 10
         locations_full, covariances_full, supports_full = select_candidates(
-            X, h, n_trials=(locations_best, covariances_best), select=1,
-            cov_computation_method=cov_computation_method)
+            X, n_support, n_trials=(locations_best, covariances_best),
+            select=1, cov_computation_method=cov_computation_method)
         location = locations_full[0]
         covariance = covariances_full[0]
         support = supports_full[0]
@@ -387,24 +391,7 @@ def fast_mcd(X, h=None, cov_computation_method=empirical_covariance):
 
 
 class MinCovDet(EmpiricalCovariance):
-    """Minimum Covariance Determinant (MCD) robust estimator of covariance
-
-    The Minimum Covariance Determinant estimator is a robust estimator
-    of a data set's covariance introduced by P.J.Rousseuw in [1].
-    The idea is to find a given proportion (h) of "good" observations which
-    are not outliers and compute their empirical covariance matrix.
-    This empirical covariance matrix is then rescaled to compensate the
-    performed selection of observations ("consistency step").
-    Having computed the Minimum Covariance Determinant estimator, one
-    can give weights to observations according to their Mahalanobis
-    distance, leading the a reweighted estimate of the covariance
-    matrix of the data set.
-
-    Rousseuw and Van Driessen [2] developed the FastMCD algorithm in order
-    to compute the Minimum Covariance Determinant. This algorithm is used
-    when fitting an MCD object to data.
-    The FastMCD algorithm also computes a robust estimate of the data set
-    location at the same time.
+    """Minimum Covariance Determinant (MCD): robust estimator of covariance
 
     Attributes
     ----------
@@ -435,6 +422,7 @@ class MinCovDet(EmpiricalCovariance):
 
     Notes
     -----
+
     References:
     [1] P. J. Rousseeuw. Least median of squares regression. J. Am
         Stat Ass, 79:871, 1984.
@@ -448,7 +436,8 @@ class MinCovDet(EmpiricalCovariance):
     """
     _nonrobust_covariance = staticmethod(empirical_covariance)
 
-    def __init__(self, store_precision=True, assume_centered=False, h=None):
+    def __init__(self, store_precision=True, assume_centered=False,
+                 support_fraction=None):
         """
 
         Parameters
@@ -463,16 +452,16 @@ class MinCovDet(EmpiricalCovariance):
           zero but is not exactly zero.
           If False, the robust location and covariance are directly computed
           with the FastMCD algorithm without additional treatment.
-        h: float, 0 < h < 1
+        support_fraction: float, 0 < support_fraction < 1
           The proportion of points to be included in the support of the raw
           MCD estimate. Default is None, which implies that the minimum
-          value of h will be used within the algorithm:
+          value of support_fraction will be used within the algorithm:
           [n_sample + n_features + 1] / 2
 
         """
         self.store_precision = store_precision
         self.assume_centered = assume_centered
-        self.h = h
+        self.support_fraction = support_fraction
 
     def fit(self, X):
         """Fits a Minimum Covariance Determinant with the FastMCD algorithm.
@@ -492,13 +481,12 @@ class MinCovDet(EmpiricalCovariance):
         n_samples, n_features = X.shape
         # compute and store raw estimates
         raw_location, raw_covariance, raw_support = fast_mcd(
-                X, h=self.h, cov_computation_method=self._nonrobust_covariance)
+                X, support_fraction=self.support_fraction,
+                cov_computation_method=self._nonrobust_covariance)
         if self.assume_centered:
             raw_location = np.zeros(n_features)
             raw_covariance = self._nonrobust_covariance(
                     X[raw_support], assume_centered=True)
-        #if self.h is None:
-        #    self.h_ = int(np.ceil(0.5 * (n_samples + n_features + 1)))
         self.raw_location_ = raw_location
         self.raw_covariance_ = raw_covariance
         self.raw_support_ = raw_support

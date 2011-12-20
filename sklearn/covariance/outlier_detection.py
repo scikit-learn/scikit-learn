@@ -145,10 +145,10 @@ class EllipticEnvelop(OutlierDetectionMixin, MinCovDet):
       zero but is not exactly zero.
       If False, the robust location and covariance are directly computed
       with the FastMCD algorithm without additional treatment.
-    h: float, 0 < h < 1
+    support_fraction: float, 0 < support_fraction < 1
       The proportion of points to be included in the support of the raw
       MCD estimate. Default is None, which implies that the minimum
-      value of h will be used within the algorithm:
+      value of support_fraction will be used within the algorithm:
       [n_sample + n_features + 1] / 2
     contamination: float, 0. < contamination < 0.5
       The amount of contamination of the data set, i.e. the proportion
@@ -166,9 +166,10 @@ class EllipticEnvelop(OutlierDetectionMixin, MinCovDet):
 
     """
     def __init__(self, store_precision=True, assume_centered=False,
-                 h=None, contamination=0.1):
+                 support_fraction=None, contamination=0.1):
         MinCovDet.__init__(self, store_precision=store_precision,
-                           assume_centered=assume_centered, h=h)
+                           assume_centered=assume_centered,
+                           support_fraction=support_fraction)
         OutlierDetectionMixin.__init__(self, contamination=contamination)
 
     def fit(self, X):
