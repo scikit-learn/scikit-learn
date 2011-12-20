@@ -336,6 +336,10 @@ def test_label_binarizer_errors():
     multi_label = [(2, 3), (0,), (0, 2)]
     assert_raises(ValueError, lb.transform, multi_label)
 
+    lb = LabelBinarizer()
+    assert_raises(ValueError, lb.transform, [])
+    assert_raises(ValueError, lb.inverse_transform, [])
+
 
 def test_label_binarizer_iris():
     lb = LabelBinarizer()

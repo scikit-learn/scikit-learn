@@ -497,6 +497,10 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     array([1, 2, 3])
     """
 
+    def _check_fitted(self):
+        if not hasattr(self, "classes_"):
+            raise ValueError("LabelBinarizer was not fitted yet.")
+
     def fit(self, y):
         """Fit label binarizer
 
@@ -538,6 +542,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         -------
         Y : numpy array of shape [n_samples, n_classes]
         """
+        self._check_fitted()
 
         if self.multilabel or len(self.classes_) > 2:
             if _is_label_indicator_matrix(y):
@@ -607,6 +612,8 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         linear model's decision_function method directly as the input
         of inverse_transform.
         """
+        self._check_fitted()
+
         if self.multilabel:
             Y = np.array(Y > threshold, dtype=int)
             # Return the predictions in the same format as in fit
