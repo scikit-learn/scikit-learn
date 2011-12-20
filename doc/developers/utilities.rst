@@ -3,19 +3,22 @@
 ========================
 Utilities for Developers
 ========================
-Scikit-learn contains a number of utilities to help with development.  These
-are located in ``sklearn.utils``, and include tools in a number of categories.
-All the following functions and classes are in the module ``sklearn.utils``.
 
-Please note that these utilities are meant to be used internally within 
+Scikit-learn contains a number of utilities to help with development.  These are
+located in :mod:`sklearn.utils`, and include tools in a number of categories.
+All the following functions and classes are in the module :mod:`sklearn.utils`.
+
+Please note that these utilities are meant to be used internally within
 scikit-learn.  They are not guaranteed to be stable between versions of
 scikit-learn.  Backports, in particular, will be removed as the scikit-learn
 dependencies evolve.
 
+
 .. currentmodule:: sklearn.utils
 
 Validation Tools
-----------------
+================
+
 These are tools used to check and validate input.  When you write a function
 which accepts arrays, matrices, or sparse matrices as arguments, the following
 should be used when applicable.
@@ -30,7 +33,7 @@ should be used when applicable.
 
 - :func:`array2d`: equivalent to ``np.atleast_2d``, but the ``order`` and
   ``dtype`` of the input are maintained.
-  
+
 - :func:`atleast2d_or_csr`: equivalent to ``array2d``, but if a sparse matrix
   is passed, will convert to csr format.  Also calls ``assert_all_finite``.
 
@@ -50,7 +53,7 @@ number generator object.
 
 - :func:`check_random_state`: create a ``np.random.RandomState`` object from
   a parameter ``random_state``.
-  
+
   - If ``random_state`` is ``None`` or ``np.random``, then a
     randomly-initialized ``RandomState`` object is returned.
   - If ``random_state`` is an integer, then it is used to seed a new
@@ -67,7 +70,7 @@ For example:
 
 
 Efficient Linear Algebra & Array Operations
--------------------------------------------
+===========================================
 
 - :func:`extmath.randomized_range_finder`: construct an orthonormal matrix
   whose range approximates the range of the input.  This is used in
@@ -113,12 +116,13 @@ Efficient Linear Algebra & Array Operations
 - :func:`shuffle`: Shuffle arrays or sparse matrices in a consistent way.
   Used in ``sklearn.cluster.k_means``.
 
+
 Graph Routines
---------------
+==============
 
 - :func:`graph.single_source_shortest_path_length`:
   (not currently used in scikit-learn)
-  Return the shortest path from a single source 
+  Return the shortest path from a single source
   to all connected nodes on a graph.  Code is adapted from networkx.
   If this is ever needed again, it would be far faster to use a single
   iteration of Dijkstra's algorithm from ``graph_shortest_path``.
@@ -127,7 +131,7 @@ Graph Routines
   (used in :func:`sklearn.cluster.spectral.spectral_embedding`)
   Return the Laplacian of a given graph.  There is specialized code for
   both dense and sparse connectivity matrices.
-  
+
 - :func:`graph_shortest_path.graph_shortest_path`:
   (used in :class:``sklearn.manifold.Isomap``)
   Return the shortest path between all pairs of connected points on a directed
@@ -135,15 +139,16 @@ Graph Routines
   algorithm are available.  The algorithm is most efficient when the
   connectivity matrix is a ``scipy.sparse.csr_matrix``.
 
+
 Backports
----------
+=========
 
 - :class:`fixes.Counter` (partial backport of ``collections.Counter`` from
   Python 2.7) Used in ``sklearn.feature_extraction.text``.
 
 - :func:`fixes.unique`: (backport of ``np.unique`` from numpy 1.4).  Find the
   unique entries in an array.  In numpy versions < 1.4, ``np.unique`` is less
-  flexible.  Used in ``sklearn.cross_validation``.
+  flexible.  Used in :mod:`sklearn.cross_validation`.
 
 - :func:`fixes.copysign`: (backport of ``np.copysign`` from numpy 1.4).
   Change the sign of ``x1`` to that of ``x2``, element-wise.
@@ -159,20 +164,21 @@ Backports
 
 - :func:`fixes.count_nonzero` (backport of ``np.count_nonzero`` from
   numpy 1.6).  Count the nonzero elements of a matrix.  Used in
-  tests of ``sklearn.linear_model``.
+  tests of :mod:`sklearn.linear_model`.
 
 - :func:`arrayfuncs.solve_triangular`
   (Back-ported from scipy v0.9)  Used in ``sklearn.linear_model.omp``,
-  independent back-ports in ``sklearn.mixture.gmm`` and 
-  ``sklearn.gaussian_process``
+  independent back-ports in ``sklearn.mixture.gmm`` and
+  :mod:`sklearn.gaussian_process`.
 
 - :func:`sparsetools.cs_graph_components`
   (backported from ``scipy.sparse.cs_graph_components`` in scipy 0.9).
   Used in ``sklearn.cluster.hierarchical``, as well as in tests for
-  ``sklearn.feature_extraction``.
+  :mod:`sklearn.feature_extraction`.
+
 
 ARPACK
-~~~~~~
+------
 
 - :func:`arpack.eigs`
   (backported from ``scipy.sparse.linalg.eigs`` in scipy 0.10)
@@ -194,22 +200,24 @@ ARPACK
 
 
 Benchmarking
-~~~~~~~~~~~~
+------------
 
 - :func:`bench.total_seconds` (back-ported from ``timedelta.total_seconds``
-  in Python 2.7).  Used in ``benchmarks/bench_glm.py``
+  in Python 2.7).  Used in ``benchmarks/bench_glm.py``.
+
 
 Testing Functions
------------------
+=================
 
 - :func:`testing.assert_in`: Compare string elements within lists.
-  Used in ``sklearn.datasets`` tests.
+  Used in :mod:`sklearn.datasets` tests.
 
 - :class:`mock_urllib2`: Object which mocks the urllib2 module to fake
-  requests of mldata.  Used in tests of ``sklearn.datasets``.
+  requests of mldata.  Used in tests of :mod:`sklearn.datasets`.
+
 
 Helper Functions
-----------------
+================
 
 - :class:`gen_even_slices`: generator to create ``n``-packs of slices going up
   to ``n``.  Used in ``sklearn.decomposition.dict_learning`` and
@@ -217,12 +225,13 @@ Helper Functions
 
 - :class:`arraybuilder.ArrayBuilder`: Helper class to incrementally build
   a 1-d numpy.ndarray.  Currently used in
-  ``sklearn.datasets._svmlight_format.pyx``
+  ``sklearn.datasets._svmlight_format.pyx``.
+
 
 Warnings and Exceptions
------------------------
+=======================
 
 - :class:`deprecated`: Decorator to mark a function or class as deprecated.
 
 - :class:`ConvergenceWarning`: Custom warning to catch convergence problems.
-  Used in ``sklearn.covariance.graph_lasso``
+  Used in ``sklearn.covariance.graph_lasso``.
