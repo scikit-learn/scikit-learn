@@ -23,19 +23,19 @@ class SVC(SparseBaseLibSVM, ClassifierMixin):
     >>> from sklearn.svm.sparse import SVC
     >>> clf = SVC()
     >>> clf.fit(X, y)
-    SVC(C=1.0, coef0=0.0, degree=3, gamma=0.5, kernel='rbf', probability=False,
-      shrinking=True, tol=0.001)
+    SVC(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma=0.5, kernel='rbf',
+      probability=False, scale_C=False, shrinking=True, tol=0.001)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
     """
 
     def __init__(self, C=1.0, kernel='rbf', degree=3, gamma=0.0,
                  coef0=0.0, shrinking=True, probability=False,
-                 tol=1e-3):
+                 tol=1e-3, cache_size=200, scale_C=False):
 
-        SparseBaseLibSVM.__init__(self, 'c_svc', kernel, degree, gamma, coef0,
-                         tol, C, 0., 0.,
-                         shrinking, probability)
+        super(SVC, self).__init__('c_svc', kernel, degree, gamma, coef0, tol,
+                                  C, 0., 0., shrinking, probability,
+                                  cache_size, scale_C)
 
 
 class NuSVC(SparseBaseLibSVM, ClassifierMixin):
@@ -57,19 +57,19 @@ class NuSVC(SparseBaseLibSVM, ClassifierMixin):
     >>> from sklearn.svm.sparse import NuSVC
     >>> clf = NuSVC()
     >>> clf.fit(X, y)
-    NuSVC(coef0=0.0, degree=3, gamma=0.5, kernel='rbf', nu=0.5, probability=False,
-       shrinking=True, tol=0.001)
+    NuSVC(cache_size=200, coef0=0.0, degree=3, gamma=0.5, kernel='rbf', nu=0.5,
+       probability=False, scale_C=False, shrinking=True, tol=0.001)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
     """
 
     def __init__(self, nu=0.5, kernel='rbf', degree=3, gamma=0.0,
                  coef0=0.0, shrinking=True, probability=False,
-                 tol=1e-3):
+                 tol=1e-3, cache_size=200, scale_C=False):
 
-        SparseBaseLibSVM.__init__(self, 'nu_svc', kernel, degree,
-                         gamma, coef0, tol, 0., nu, 0.,
-                         shrinking, probability)
+        super(NuSVC, self).__init__('nu_svc', kernel, degree, gamma, coef0,
+                                    tol, 0., nu, 0., shrinking, probability,
+                                    cache_size, scale_C)
 
 
 class SVR(SparseBaseLibSVM, RegressorMixin):
@@ -93,17 +93,18 @@ class SVR(SparseBaseLibSVM, RegressorMixin):
     >>> X = np.random.randn(n_samples, n_features)
     >>> clf = SVR(C=1.0, epsilon=0.2)
     >>> clf.fit(X, y)
-    SVR(C=1.0, coef0=0.0, degree=3, epsilon=0.2, gamma=0.2, kernel='rbf', nu=0.5,
-      probability=False, shrinking=True, tol=0.001)
+    SVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.2, gamma=0.2,
+      kernel='rbf', probability=False, scale_C=False, shrinking=True,
+      tol=0.001)
     """
 
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
-                 tol=1e-3, C=1.0, nu=0.5, epsilon=0.1,
-                 shrinking=True, probability=False):
+                 tol=1e-3, C=1.0, epsilon=0.1, shrinking=True,
+                 probability=False, cache_size=200, scale_C=False):
 
-        SparseBaseLibSVM.__init__(self, 'epsilon_svr', kernel,
-                         degree, gamma, coef0, tol, C, nu,
-                         epsilon, shrinking, probability)
+        super(SVR, self).__init__('epsilon_svr', kernel, degree, gamma, coef0,
+                                  tol, C, 0., epsilon, shrinking, probability,
+                                  cache_size, scale_C)
 
 
 class NuSVR(SparseBaseLibSVM, RegressorMixin):
@@ -127,23 +128,24 @@ class NuSVR(SparseBaseLibSVM, RegressorMixin):
     >>> X = np.random.randn(n_samples, n_features)
     >>> clf = NuSVR(nu=0.1, C=1.0)
     >>> clf.fit(X, y)
-    NuSVR(C=1.0, coef0=0.0, degree=3, epsilon=0.1, gamma=0.2, kernel='rbf',
-       nu=0.1, probability=False, shrinking=True, tol=0.001)
+    NuSVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.1, gamma=0.2,
+       kernel='rbf', nu=0.1, probability=False, scale_C=False, shrinking=True,
+       tol=0.001)
     """
 
     def __init__(self, nu=0.5, C=1.0, kernel='rbf', degree=3,
                  gamma=0.0, coef0=0.0, shrinking=True, epsilon=0.1,
-                 probability=False, tol=1e-3):
+                 probability=False, tol=1e-3, cache_size=200, scale_C=False):
 
-        SparseBaseLibSVM.__init__(self, 'nu_svr', kernel,
-                         degree, gamma, coef0, tol, C, nu,
-                         epsilon, shrinking, probability)
+        super(NuSVR, self).__init__('nu_svr', kernel, degree, gamma, coef0,
+                                    tol, C, nu, epsilon, shrinking,
+                                    probability, cache_size, scale_C)
 
 
 class OneClassSVM(SparseBaseLibSVM):
-    """NuSVR for sparse matrices (csr)
+    """OneClassSVM for sparse matrices (csr)
 
-    See :class:`sklearn.svm.NuSVC` for a complete list of parameters
+    See :class:`sklearn.svm.OneClassSVM` for a complete list of parameters
 
     Notes
     -----
@@ -154,11 +156,11 @@ class OneClassSVM(SparseBaseLibSVM):
 
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
                  tol=1e-3, nu=0.5, shrinking=True,
-                 probability=False):
+                 probability=False, cache_size=200, scale_C=False):
 
-        SparseBaseLibSVM.__init__(self, 'one_class', kernel, degree,
-                         gamma, coef0, tol, 0.0, nu, 0.0,
-                         shrinking, probability)
+        super(OneClassSVM, self).__init__('one_class', kernel, degree, gamma,
+                                          coef0, tol, 0.0, nu, 0.0, shrinking,
+                                          probability, cache_size, scale_C)
 
     def fit(self, X, class_weight=None, sample_weight=None):
         super(OneClassSVM, self).fit(
@@ -167,8 +169,7 @@ class OneClassSVM(SparseBaseLibSVM):
 
 class LinearSVC(SparseBaseLibLinear, ClassifierMixin,
                 CoefSelectTransformerMixin):
-    """
-    Linear Support Vector Classification, Sparse Version
+    """Linear Support Vector Classification, Sparse Version
 
     Similar to SVC with parameter kernel='linear', but uses internally
     liblinear rather than libsvm, so it has more flexibility in the

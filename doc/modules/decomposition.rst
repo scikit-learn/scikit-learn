@@ -18,7 +18,7 @@ Exact PCA and probabilistic interpretation
 
 PCA is used to decompose a multivariate dataset in a set of successive
 orthogonal components that explain a maximum amount of the variance. In
-the scikit-learn, :class:`PCA` is implemented as a `transformer` object
+scikit-learn, :class:`PCA` is implemented as a `transformer` object
 that learns n components in its `fit` method, and can be used on new data
 to project it on these components.
 
@@ -182,7 +182,7 @@ visualization as 64x64 pixel images. The fact that the components shown below
 appear local is the effect of the inherent structure of the data, which makes
 such local patterns minimize reconstruction error. There exist sparsity-inducing
 norms that take into account adjacency and different kinds of structure; see see
-[Jen09] for a review of such methods. For more details on how to use Sparse PCA,
+[Jen09]_ for a review of such methods. For more details on how to use Sparse PCA,
 see the `Examples` section below.
 
 
@@ -227,10 +227,10 @@ factorization, while larger values shrink many coefficients to zero.
 
 .. topic:: References:
 
-   * [Mrl09] `"Online Dictionary Learning for Sparse Coding"
+  .. [Mrl09] `"Online Dictionary Learning for Sparse Coding"
      <http://www.di.ens.fr/sierra/pdfs/icml09.pdf>`_
      J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009
-   * [Jen09] `"Structured Sparse Principal Component Analysis"
+  .. [Jen09] `"Structured Sparse Principal Component Analysis"
      <www.di.ens.fr/~fbach/sspca_AISTATS2010.pdf>`_
      R. Jenatton, G. Obozinski, F. Bach, 2009
 
@@ -249,7 +249,7 @@ perform good at sparsely encoding the fitted data.
 
 Representing data as sparse combinations of atoms from an overcomplete
 dictionary is suggested to be the way the mammal primary visual cortex works.
-Consequently, dictionary learning applied on image patches has been shown to 
+Consequently, dictionary learning applied on image patches has been shown to
 give good results in image processing tasks such as image completion,
 inpainting and denoising, as well as for supervised recognition tasks.
 
@@ -275,11 +275,11 @@ dictionary fixed, and then updating the dictionary to best fit the sparse code.
 .. centered:: |pca_img| |dict_img|
 
 
-After using such a procedure to fit the dictionary, the fitted object can be 
+After using such a procedure to fit the dictionary, the fitted object can be
 used to transform new data. The transformation amounts to a sparse coding
 problem: finding a representation of the data as a linear combination of as few
 dictionary atoms as possible. All variations of dictionary learning implement
-the following transform methods, controllable via the `transform_method` 
+the following transform methods, controllable via the `transform_method`
 initialization parameter:
 
 
@@ -299,7 +299,7 @@ reconstruction tasks, orthogonal matching pursuit yields the most accurate,
 unbiased reconstruction.
 
 The dictionary learning objects offer, via the `split_code` parameter, the
-possibility to separate the positive and negative values in the results of 
+possibility to separate the positive and negative values in the results of
 sparse coding. This is useful when dictionary learning is used for extracting
 features that will be used for supervised learning, because it allows the
 learning algorithm to assign different weights to negative loadings of a
@@ -310,7 +310,7 @@ and is constructed using the following rule: First, the regular code of length
 `n_atoms` is computed. Then, the first `n_atoms` entries of the split_code are
 filled with the positive part of the regular code vector. The second half of
 the split code is filled with the negative part of the code vector, only with
-a positive sign. Therefore, the split_code is non-negative. 
+a positive sign. Therefore, the split_code is non-negative.
 
 The following image shows how a dictionary learned from 4x4 pixel image patches
 extracted from part of the image of Lena looks like.
@@ -329,18 +329,18 @@ extracted from part of the image of Lena looks like.
 
 .. topic:: References:
 
-  * `"Online dictionary learning for sparse coding" 
+  * `"Online dictionary learning for sparse coding"
     <http://www.di.ens.fr/sierra/pdfs/icml09.pdf>`_
     J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009
 
-.. _MiniBatchDictionaryLearning
+.. _MiniBatchDictionaryLearning:
 
 Mini-batch dictionary learning
---------------------------
+------------------------------
 
 :class:`MiniBatchDictionaryLearning` implements a faster, but less accurate
 version of the dictionary learning algorithm that is better suited for large
-datasets. 
+datasets.
 
 By default, :class:`MiniBatchDictionaryLearning` divides the data into
 mini-batches and optimizes in an online manner by cycling over the mini-batches

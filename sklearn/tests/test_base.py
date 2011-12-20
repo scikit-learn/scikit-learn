@@ -6,22 +6,26 @@ from nose.tools import assert_true, assert_false, assert_equal, \
     assert_raises
 from ..base import BaseEstimator, clone, is_classifier
 
-################################################################################
+
+#############################################################################
 # A few test classes
 class MyEstimator(BaseEstimator):
 
     def __init__(self, l1=0):
         self.l1 = l1
 
+
 class K(BaseEstimator):
     def __init__(self, c=None, d=None):
         self.c = c
         self.d = d
 
+
 class T(BaseEstimator):
     def __init__(self, a=None, b=None):
         self.a = a
         self.b = b
+
 
 class Buggy(BaseEstimator):
     " A buggy estimator that does not set its parameters right. "
@@ -29,7 +33,8 @@ class Buggy(BaseEstimator):
     def __init__(self, a=None):
         self.a = 1
 
-################################################################################
+
+#############################################################################
 # The tests
 
 def test_clone():
@@ -63,11 +68,13 @@ def test_clone_2():
     new_selector = clone(selector)
     assert_false(hasattr(new_selector, "own_attribute"))
 
+
 def test_clone_buggy():
     """ Check that clone raises an error on buggy estimators """
     buggy = Buggy()
     buggy.a = 2
     assert_raises(AssertionError, clone, buggy)
+
 
 def test_repr():
     """ Smoke test the repr of the
@@ -108,4 +115,3 @@ def test_is_classifier():
     assert_true(is_classifier(Pipeline([('svc', svc)])))
     assert_true(is_classifier(Pipeline([('svc_cv',
                               GridSearchCV(svc, {'C': [0.1, 1]}))])))
-

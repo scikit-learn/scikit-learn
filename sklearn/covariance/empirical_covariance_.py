@@ -11,16 +11,17 @@ Maximum likelihood covariance estimator.
 
 # avoid division truncation
 from __future__ import division
+import warnings
 import numpy as np
 from scipy import linalg
 
 from ..base import BaseEstimator
 from ..utils import array2d
-from ..utils.extmath import fast_logdet as exact_logdet
+from ..utils.extmath import fast_logdet
 
 
 def log_likelihood(emp_cov, precision):
-    """Computes the negative log_likelihood of the data
+    """Computes the log_likelihood of the data
 
     Params
     ------
@@ -30,7 +31,7 @@ def log_likelihood(emp_cov, precision):
       The precision matrix of the covariance model to be tested
 
     """
-    return -np.sum(emp_cov * precision) + exact_logdet(precision)
+    return -np.sum(emp_cov * precision) + fast_logdet(precision)
 
 
 def empirical_covariance(X, assume_centered=False):
@@ -55,7 +56,9 @@ def empirical_covariance(X, assume_centered=False):
     """
     X = np.asarray(X)
     if X.ndim == 1:
-        X = np.atleast_2d(X).T
+        X = np.reshape(X, (1, -1))
+        warnings.warn("Only one sample available. " \
+                          "You may want to reshape your data array")
 
     if assume_centered:
         covariance = np.dot(X.T, X) / X.shape[0]
@@ -95,8 +98,8 @@ class EmpiricalCovariance(BaseEstimator):
         Params
         ------
         covariance: 2D ndarray, shape (n_features, n_features)
-            Estimated covariance matrix to be stored, and from which precision 
-            is computed.
+          Estimated covariance matrix to be stored, and from which precision
+          is computed.
 
         """
         covariance = array2d(covariance)
@@ -148,8 +151,8 @@ class EmpiricalCovariance(BaseEstimator):
         Returns
         -------
         res: float
-            The likelihood of the data set with self.covariance_ as an estimator
-            of its covariance matrix.
+          The likelihood of the data set with self.covariance_ as an
+          estimator of its covariance matrix.
 
         """
         # compute empirical covariance of the test set
@@ -221,7 +224,8 @@ class EmpiricalCovariance(BaseEstimator):
         Parameters
         ----------
         observations: array-like, shape = [n_observations, n_features]
-            The observations, the Mahalanobis distances of the which we compute.
+            The observations, the Mahalanobis distances of the which we
+            compute.
 
         Returns
         -------

@@ -8,15 +8,17 @@ A pickler to save numpy arrays in separate .npy files.
 
 import pickle
 import traceback
-import sys, os
+import sys
+import os
 
 if sys.version_info[0] == 3:
     from pickle import _Unpickler as Unpickler
 else:
     from pickle import Unpickler
 
-################################################################################
+###############################################################################
 # Utility objects for persistence.
+
 
 class NDArrayWrapper(object):
     """ An object to be persisted instead of numpy arrays.
@@ -28,7 +30,7 @@ class NDArrayWrapper(object):
         self.filename = filename
 
 
-################################################################################
+###############################################################################
 # Pickler classes
 
 class NumpyPickler(pickle.Pickler):
@@ -57,7 +59,7 @@ class NumpyPickler(pickle.Pickler):
             self._npy_counter += 1
             try:
                 filename = '%s_%02i.npy' % (self._filename,
-                                            self._npy_counter )
+                                            self._npy_counter)
                 self._filenames.append(filename)
                 self.np.save(filename, obj)
                 obj = NDArrayWrapper(os.path.basename(filename))
@@ -70,7 +72,6 @@ class NumpyPickler(pickle.Pickler):
         pickle.Pickler.save(self, obj)
 
 
-
 class NumpyUnpickler(Unpickler):
     """ A subclass of the Unpickler to unpickle our numpy pickles.
     """
@@ -79,12 +80,11 @@ class NumpyUnpickler(Unpickler):
     def __init__(self, filename, mmap_mode=None):
         self._filename = filename
         self.mmap_mode = mmap_mode
-        self._dirname  = os.path.dirname(filename)
+        self._dirname = os.path.dirname(filename)
         self.file = open(filename, 'rb')
         Unpickler.__init__(self, self.file)
         import numpy as np
         self.np = np
-
 
     def load_build(self):
         """ This method is called to set the state of a knewly created
@@ -107,12 +107,11 @@ class NumpyUnpickler(Unpickler):
                                                 nd_array_wrapper.filename))
             self.stack.append(array)
 
-
     # Be careful to register our new method.
     dispatch[pickle.BUILD] = load_build
 
 
-################################################################################
+###############################################################################
 # Utility functions
 
 def dump(value, filename):
@@ -153,4 +152,3 @@ def load(filename, mmap_mode=None):
         if 'unpickler' in locals() and hasattr(unpickler, 'file'):
             unpickler.file.close()
     return obj
-

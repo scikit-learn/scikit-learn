@@ -38,7 +38,10 @@ The disadvantages of Stochastic Gradient Descent include:
 Classification
 ==============
 
-.. warning:: Make sure you permute (shuffle) your training data before fitting the model or use `shuffle=True` to shuffle after each iterations.
+.. warning::
+
+  Make sure you permute (shuffle) your training data before fitting the
+  model or use `shuffle=True` to shuffle after each iterations.
 
 The class :class:`SGDClassifier` implements a plain stochastic gradient
 descent learning routine which supports different loss functions and
@@ -59,15 +62,15 @@ for the training samples::
     >>> y = [0, 1]
     >>> clf = SGDClassifier(loss="hinge", penalty="l2")
     >>> clf.fit(X, y)
-    SGDClassifier(alpha=0.0001, eta0=0.0, fit_intercept=True,
+    SGDClassifier(alpha=0.0001, class_weight=None, eta0=0.0, fit_intercept=True,
            learning_rate='optimal', loss='hinge', n_iter=5, n_jobs=1,
-           penalty='l2', power_t=0.5, rho=1.0, seed=0, shuffle=False,
+           penalty='l2', power_t=0.5, rho=0.85, seed=0, shuffle=False,
            verbose=0)
 
 After being fitted, the model can then be used to predict new values::
 
     >>> clf.predict([[2., 2.]])
-    array([ 1.])
+    array([1])
 
 SGD fits a linear model to the training data. The member `coef_` holds
 the model parameters::
@@ -337,11 +340,14 @@ is given by
 
 .. math::
 
-    \eta^{(t)} = \frac {1.0}{t+t0}
+    \eta^{(t)} = \frac {1}{\alpha  (t_0 + t)}
 
-where :math:`t0` is the time step (there are a total of `n_samples*epochs` 
-time steps), :math:`t0` is choosen automatically assuming that the norm of
-the training samples is approx. 1. 
+where :math:`t` is the time step (there are a total of `n_samples * epochs` 
+time steps), :math:`t_0` is determined based on a heuristic proposed by Léon Bottou
+such that the expected initial updates are comparable with the expected 
+size of the weights (this assuming that the norm of the training samples is 
+approx. 1). See `"The Tradeoffs of Large Scale Machine Learning" <http://leon.bottou.org/slides/largescale/lstut.pdf>`_ by Léon Bottou for further details.
+
 For regression, the default learning rate schedule, inverse scaling 
 (`learning_rate='invscaling'`), is given by
 
@@ -350,16 +356,17 @@ For regression, the default learning rate schedule, inverse scaling
     \eta^{(t)} = \frac{eta_0}{t^{power\_t}}
 
 where :math:`eta_0` and :math:`power\_t` are hyperparameters choosen by the
-user.
+user via `eta0` and `power_t`, resp.
+
 For a constant learning rate use `learning_rate='constant'` and use `eta0`
 to specify the learning rate. 
 
-The model parameters can be accessed through the members coef\_ and
-intercept\_:
+The model parameters can be accessed through the members `coef\_` and
+`intercept\_`:
 
-     - Member coef\_ holds the weights :math:`w`
+     - Member `coef\_` holds the weights :math:`w`
 
-     - Member intercept\_ holds :math:`b`
+     - Member `intercept\_` holds :math:`b`
 
 .. topic:: References:
 
@@ -394,6 +401,8 @@ The code is written in Cython.
 .. topic:: References:
 
  * `"Stochastic Gradient Descent" <http://leon.bottou.org/projects/sgd>`_ L. Bottou - Website, 2010.
+
+ * `"The Tradeoffs of Large Scale Machine Learning" <http://leon.bottou.org/slides/largescale/lstut.pdf>`_ L. Bottou - Website, 2011.
 
  * `"Pegasos: Primal estimated sub-gradient solver for svm"
    <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.74.8513>`_

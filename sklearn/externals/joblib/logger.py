@@ -16,6 +16,9 @@ import shutil
 import logging
 import pprint
 
+from .disk import mkdirp
+
+
 def _squeeze_time(t):
     """Remove .1s to the time under Windows: this is the time it take to
     stat files. This is needed to make results similar to timings under
@@ -26,20 +29,23 @@ def _squeeze_time(t):
     else:
         return t
 
+
 def format_time(t):
     t = _squeeze_time(t)
-    return "%.1fs, %.1fmin" % (t, t/60.)
+    return "%.1fs, %.1fmin" % (t, t / 60.)
+
 
 def short_format_time(t):
     t = _squeeze_time(t)
     if t > 60:
-        return "%4.1fmin" % (t/60.)
+        return "%4.1fmin" % (t / 60.)
     else:
         return " %5.1fs" % (t)
 
-################################################################################
+
+###############################################################################
 # class `Logger`
-################################################################################
+###############################################################################
 class Logger(object):
     """ Base class for logging messages.
     """
@@ -75,9 +81,9 @@ class Logger(object):
         return out
 
 
-################################################################################
+###############################################################################
 # class `PrintTime`
-################################################################################
+###############################################################################
 class PrintTime(object):
     """ Print and log messages while keeping track of time.
     """
@@ -92,35 +98,32 @@ class PrintTime(object):
             logfile = os.path.join(logdir, 'joblib.log')
         self.logfile = logfile
         if logfile is not None:
-            if not os.path.exists(os.path.dirname(logfile)):
-                os.makedirs(os.path.dirname(logfile))
+            mkdirp(os.path.dirname(logfile))
             if os.path.exists(logfile):
                 # Rotate the logs
-                for i in range(1, 9):
-                    if os.path.exists(logfile+'.%i' % i):
-                        try:
-                            shutil.move(logfile+'.%i' % i,
-                                        logfile+'.%i' % (i+1))
-                        except:
-                            "No reason failing here"
+                for i in xrange(1, 9):
+                    try:
+                        shutil.move(logfile + '.%i' % i,
+                                    logfile + '.%i' % (i + 1))
+                    except:
+                        "No reason failing here"
                 # Use a copy rather than a move, so that a process
                 # monitoring this file does not get lost.
                 try:
-                    shutil.copy(logfile, logfile+'.1')
+                    shutil.copy(logfile, logfile + '.1')
                 except:
                     "No reason failing here"
             try:
-                logfile = file(logfile, 'w')
-                logfile.write('\nLogging joblib python script\n')
-                logfile.write('\n---%s---\n' % time.ctime(self.last_time))
+                with open(logfile, 'w') as logfile:
+                    logfile.write('\nLogging joblib python script\n')
+                    logfile.write('\n---%s---\n' % time.ctime(self.last_time))
             except:
                 """ Multiprocessing writing to files can create race
                     conditions. Rather fail silently than crash the
-                    caculation.
+                    computation.
                 """
                 # XXX: We actually need a debug flag to disable this
                 # silent failure.
-
 
     def __call__(self, msg='', total=False):
         """ Print the time elapsed between the last call and the current
@@ -128,11 +131,12 @@ class PrintTime(object):
         """
         if not total:
             time_lapse = time.time() - self.last_time
-            full_msg = "%s: %s" % (msg, format_time(time_lapse) )
+            full_msg = "%s: %s" % (msg, format_time(time_lapse))
         else:
             # FIXME: Too much logic duplicated
             time_lapse = time.time() - self.start_time
-            full_msg = "%s: %.2fs, %.1f min" % (msg, time_lapse, time_lapse/60)
+            full_msg = "%s: %.2fs, %.1f min" % (msg, time_lapse,
+                                                time_lapse / 60)
         print >> sys.stderr, full_msg
         if self.logfile is not None:
             try:
@@ -145,6 +149,3 @@ class PrintTime(object):
                 # XXX: We actually need a debug flag to disable this
                 # silent failure.
         self.last_time = time.time()
-
-
-

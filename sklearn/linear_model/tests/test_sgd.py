@@ -69,15 +69,6 @@ class DenseSGDClassifierTestCase(unittest.TestCase):
         #assert_almost_equal(clf.coef_[0], clf.coef_[1], decimal=7)
         assert_array_equal(clf.predict(T), true_result)
 
-    def test_sgd_penalties(self):
-        """Check whether penalties and hyperparameters are set properly"""
-        clf = self.factory(penalty='l2')
-        assert clf.rho == 1.0
-        clf = self.factory(penalty='l1')
-        assert clf.rho == 0.0
-        clf = self.factory(penalty='elasticnet', rho=0.85)
-        assert clf.rho == 0.85
-
     @raises(ValueError)
     def test_sgd_bad_penalty(self):
         """Check whether expected ValueError on bad penalty"""
@@ -135,9 +126,9 @@ class DenseSGDClassifierTestCase(unittest.TestCase):
         """Checks intercept_ shape consistency for the warm starts"""
         # Inconsistent intercept_ shape.
         clf = self.factory().fit(X5, Y5)
-        self.factory().fit(X5, Y5, intercept_init = clf.intercept_)
+        self.factory().fit(X5, Y5, intercept_init=clf.intercept_)
         clf = self.factory().fit(X, Y)
-        self.factory().fit(X, Y, intercept_init = clf.intercept_)
+        self.factory().fit(X, Y, intercept_init=clf.intercept_)
 
     @raises(ValueError)
     def test_sgd_at_least_two_labels(self):
@@ -222,7 +213,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase):
         pred = clf.predict(X)
         assert_array_equal(pred, Y)
 
-    def test_class_weight(self):
+    def test_class_weights(self):
         """
         Test class weights.
         """
@@ -230,11 +221,13 @@ class DenseSGDClassifierTestCase(unittest.TestCase):
                       [1.0, 1.0], [1.0, 0.0]])
         y = [1, 1, 1, -1, -1]
 
-        clf = self.factory(alpha=0.1, n_iter=1000, fit_intercept=False)
+        clf = self.factory(alpha=0.1, n_iter=1000, fit_intercept=False,
+                           class_weight=None)
         clf.fit(X, y)
         assert_array_equal(clf.predict([[0.2, -1.0]]), np.array([1]))
 
         # we give a small weights to class 1
+        clf = self.factory(alpha=0.1, n_iter=1000, fit_intercept=False, )
         clf.fit(X, y, class_weight={1: 0.001})
 
         # now the hyperplane should rotate clock-wise and
@@ -245,7 +238,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase):
         """Test if equal class weights approx. equals no class weights. """
         X = [[1, 0], [1, 0], [0, 1], [0, 1]]
         y = [0, 0, 1, 1]
-        clf = self.factory(alpha=0.1, n_iter=1000)
+        clf = self.factory(alpha=0.1, n_iter=1000, class_weight=None)
         clf.fit(X, y)
 
         X = [[1, 0], [0, 1]]
@@ -279,12 +272,13 @@ class DenseSGDClassifierTestCase(unittest.TestCase):
         np.random.shuffle(idx)
         X = X[idx]
         y = y[idx]
-        clf = self.factory(alpha=0.0001, n_iter=1000).fit(X, y)
+        clf = self.factory(alpha=0.0001, n_iter=1000,
+                           class_weight=None).fit(X, y)
         assert_approx_equal(metrics.f1_score(y, clf.predict(X)), 0.96, 2)
 
         # make the same prediction using automated class_weight
-        clf_auto = self.factory(alpha=0.0001,
-                                n_iter=1000).fit(X, y, class_weight="auto")
+        clf_auto = self.factory(alpha=0.0001, n_iter=1000,
+                                class_weight="auto").fit(X, y)
         assert_approx_equal(metrics.f1_score(y, clf_auto.predict(X)), 0.96, 2)
 
         # Make sure that in the balanced case it does not change anything
@@ -299,21 +293,25 @@ class DenseSGDClassifierTestCase(unittest.TestCase):
         y_imbalanced = np.concatenate([y] + [y_0] * 10)
 
         # fit a model on the imbalanced data without class weight info
-        clf = self.factory(n_iter=1000)
+        clf = self.factory(n_iter=1000, class_weight=None)
         clf.fit(X_imbalanced, y_imbalanced)
         y_pred = clf.predict(X)
         assert metrics.f1_score(y, y_pred) < 0.96
 
         # fit a model with auto class_weight enabled
-        clf = self.factory(n_iter=1000)
+        clf = self.factory(n_iter=1000, class_weight="auto")
+        clf.fit(X_imbalanced, y_imbalanced)
+        y_pred = clf.predict(X)
+        assert metrics.f1_score(y, y_pred) > 0.96
+
+        # fit another using a fit parameter override
+        clf = self.factory(n_iter=1000, class_weight=None)
         clf.fit(X_imbalanced, y_imbalanced, class_weight="auto")
         y_pred = clf.predict(X)
         assert metrics.f1_score(y, y_pred) > 0.96
 
     def test_sample_weights(self):
-        """
-        Test weights on individual samples
-        """
+        """Test weights on individual samples"""
         X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
                       [1.0, 1.0], [1.0, 0.0]])
         y = [1, 1, 1, -1, -1]
@@ -343,7 +341,7 @@ class SparseSGDClassifierTestCase(DenseSGDClassifierTestCase):
     factory = linear_model.sparse.SGDClassifier
 
 
-################################################################################
+###############################################################################
 # Regression Test Case
 
 class DenseSGDRegressorTestCase(unittest.TestCase):
@@ -357,15 +355,6 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
                            fit_intercept=False)
         clf.fit([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
         assert clf.coef_[0] == clf.coef_[1]
-
-    def test_sgd_penalties(self):
-        """Check whether penalties and hyperparameters are set properly"""
-        clf = self.factory(penalty='l2')
-        assert clf.rho == 1.0
-        clf = self.factory(penalty='l1')
-        assert clf.rho == 0.0
-        clf = self.factory(penalty='elasticnet', rho=0.85)
-        assert clf.rho == 0.85
 
     @raises(ValueError)
     def test_sgd_bad_penalty(self):

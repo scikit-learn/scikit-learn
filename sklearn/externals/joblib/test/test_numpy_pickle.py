@@ -16,7 +16,7 @@ from .common import np, with_numpy
 # filenames instead of open files as arguments.
 from .. import numpy_pickle
 
-################################################################################
+###############################################################################
 # Define a list of standard types.
 # Borrowed from dill, initial author: Micheal McKerns:
 # http://dev.danse.us/trac/pathos/browser/dill/dill_test2.py
@@ -24,47 +24,75 @@ from .. import numpy_pickle
 typelist = []
 
 # testing types
-_none = None; typelist.append(_none)
-_type = type; typelist.append(_type)
-_bool = bool(1); typelist.append(_bool)
-_int = int(1); typelist.append(_int)
-_long = long(1); typelist.append(_long)
-_float = float(1); typelist.append(_float)
-_complex = complex(1); typelist.append(_complex)
-_string = str(1); typelist.append(_string)
-_unicode = unicode(1); typelist.append(_unicode)
-_tuple = (); typelist.append(_tuple)
-_list = []; typelist.append(_list)
-_dict = {}; typelist.append(_dict)
-_file = file; typelist.append(_file)
-_buffer = buffer; typelist.append(_buffer)
-_builtin = len; typelist.append(_builtin)
+_none = None
+typelist.append(_none)
+_type = type
+typelist.append(_type)
+_bool = bool(1)
+typelist.append(_bool)
+_int = int(1)
+typelist.append(_int)
+_long = long(1)
+typelist.append(_long)
+_float = float(1)
+typelist.append(_float)
+_complex = complex(1)
+typelist.append(_complex)
+_string = str(1)
+typelist.append(_string)
+_unicode = unicode(1)
+typelist.append(_unicode)
+_tuple = ()
+typelist.append(_tuple)
+_list = []
+typelist.append(_list)
+_dict = {}
+typelist.append(_dict)
+_file = file
+typelist.append(_file)
+_buffer = buffer
+typelist.append(_buffer)
+_builtin = len
+typelist.append(_builtin)
+
+
+def _function(x):
+    yield x
+
+
 class _class:
     def _method(self):
         pass
+
+
 class _newclass(object):
     def _method(self):
         pass
+
+
+typelist.append(_function)
 typelist.append(_class)
-typelist.append(_newclass) # <type 'type'>
-_instance = _class(); typelist.append(_instance)
-_object = _newclass(); typelist.append(_object) # <type 'class'>
-def _function(x): yield x; typelist.append(_function)
+typelist.append(_newclass)  # <type 'type'>
+_instance = _class()
+typelist.append(_instance)
+_object = _newclass()
+typelist.append(_object)  # <type 'class'>
 
 
-################################################################################
+###############################################################################
 # Test fixtures
 
 env = dict()
+
 
 def setup_module():
     """ Test setup.
     """
     env['dir'] = mkdtemp()
     env['filename'] = os.path.join(env['dir'], 'test.pkl')
-    print 80*'_'
+    print 80 * '_'
     print 'setup numpy_pickle'
-    print 80*'_'
+    print 80 * '_'
 
 
 def teardown_module():
@@ -73,12 +101,12 @@ def teardown_module():
     shutil.rmtree(env['dir'])
     #del env['dir']
     #del env['filename']
-    print 80*'_'
+    print 80 * '_'
     print 'teardown numpy_pickle'
-    print 80*'_'
+    print 80 * '_'
 
 
-################################################################################
+###############################################################################
 # Tests
 
 def test_standard_types():
@@ -137,5 +165,3 @@ def test_masked_array_persistence():
     numpy_pickle.dump(a, filename)
     b = numpy_pickle.load(filename, mmap_mode='r')
     nose.tools.assert_true, isinstance(b, np.ma.masked_array)
-
-

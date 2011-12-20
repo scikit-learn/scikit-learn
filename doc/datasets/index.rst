@@ -1,11 +1,3 @@
-..
-    For doctests:
-
-    >>> import numpy as np
-    >>> import os
-    >>> from sklearn import datasets
-    >>> datasets.mldata.urllib2 = mock_urllib2
-
 .. _datasets:
 
 =========================
@@ -15,7 +7,7 @@ Dataset loading utilities
 .. currentmodule:: sklearn.datasets
 
 The ``sklearn.datasets`` package embeds some small toy datasets
-as introduced in the "Getting Started" section.
+as introduced in the :ref:`Getting Started <loading_example_dataset>` section.
 
 To evaluate the impact of the scale of the dataset (``n_samples`` and
 ``n_features``) while controlling the statistical properties of the data
@@ -26,6 +18,31 @@ This package also features helpers to fetch larger datasets commonly
 used by the machine learning community to benchmark algorithm on data
 that comes from the 'real world'.
 
+General dataset API
+===================
+
+There are three distinct kinds of dataset interfaces for different types
+of datasets.
+The simplest one is the interface for sample images, which is described
+below in the :ref:`sample_images` section.
+
+The dataset generation functions and the svmlight loader share a simplistic
+interface, returning a tuple ``(X, y)`` consisting of a n_samples x n_features
+numpy array X and an array of length n_samples containing the targets y.
+
+The toy datasets as well as the 'real world' datasets and the datasets
+fetched from mldata.org have more sophisticated structure.
+These functions return a ``bunch`` (which is a dictionary that is
+accessible with the 'dict.key' syntax).
+All datasets have at least two keys, ``data``, containg an array of shape
+``n_samples x n_features`` (except for 20newsgroups) and ``target``, a numpy
+array of length ``n_features``, containing the targets.
+
+The datasets also contain a description in ``DESCR`` and some contain
+``feature_names`` and ``target_names``.
+See the dataset descriptions below for details.
+
+
 Toy datasets
 ============
 
@@ -34,7 +51,7 @@ require to download any file from some external website.
 
 .. autosummary::
 
-   :toctree: generated/
+   :toctree: ../modules/generated/
    :template: function.rst
 
    load_boston
@@ -46,6 +63,8 @@ require to download any file from some external website.
 These datasets are useful to quickly illustrate the behavior of the
 various algorithms implemented in the scikit. They are however often too
 small to be representative of real world machine learning tasks.
+
+.. _sample_images:
 
 Sample images
 =============
@@ -59,7 +78,13 @@ and pipeline on 2D data.
    load_sample_images
    load_sample_image
 
-.. note::
+.. image:: ../auto_examples/cluster/images/plot_color_quantization_1.png
+   :target: ../auto_examples/cluster/plot_color_quantization.html
+   :scale: 30
+   :align: right
+
+
+.. warning::
 
   The default coding of images is based on the ``uint8`` dtype to
   spare memory.  Often machine learning algorithms work best if the
@@ -80,9 +105,14 @@ Sample generators
 In addition, scikit-learn includes various random sample generators that
 can be used to build artifical datasets of controled size and complexity.
 
+.. image:: ../auto_examples/images/plot_random_dataset_1.png
+   :target: ../auto_examples/plot_random_dataset.html
+   :scale: 50
+   :align: center
+
 .. autosummary::
 
-   :toctree: generated/
+   :toctree: ../modules/generated/
    :template: function.rst
 
    make_classification
@@ -97,30 +127,30 @@ can be used to build artifical datasets of controled size and complexity.
    make_spd_matrix
    make_swiss_roll
    make_s_curve
-
+   make_sparse_spd_matrix
 
 .. _libsvm_loader:
 
 Datasets in svmlight / libsvm format
 ====================================
 
-scikit-learn includes a fast utility function, ``load_svmlight_format``,  to load
+scikit-learn includes utility functions for loading
 datasets in the svmlight / libsvm format. In this format, each line
 takes the form ``<label> <feature-id>:<feature-value>
 <feature-id>:<feature-value> ...``. This format is especially suitable for sparse datasets.
-Scipy sparse CSR matrices are used for ``X`` and numpy arrays are used for ``y``.
+In this module, scipy sparse CSR matrices are used for ``X`` and numpy arrays are used for ``y``.
 
-You may load a dataset like this::
+You may load a dataset like as follows::
 
   >>> from sklearn.datasets import load_svmlight_file
   >>> X_train, y_train = load_svmlight_file("/path/to/train_dataset.txt")
   ...                                                         # doctest: +SKIP
 
-You may also load two datasets at once::
+You may also load two (or more) datasets at once::
 
-  >>> X_train, y_train, X_test, y_test = load_svmlight_file(
-  ...     "/path/to/train_dataset.txt",
-  ...     "/path/to/test_dataset.txt")                        # doctest: +SKIP
+  >>> X_train, y_train, X_test, y_test = load_svmlight_files(
+  ...     ("/path/to/train_dataset.txt", "/path/to/test_dataset.txt"))
+  ...                                                         # doctest: +SKIP
 
 In this case, ``X_train`` and ``X_test`` are guaranteed to have the same number
 of features. Another way to achieve the same result is to fix the number of
@@ -130,9 +160,11 @@ features::
   ...     "/path/to/test_dataset.txt", n_features=X_train.shape[1])
   ...                                                         # doctest: +SKIP
 
-.. topic:: Public datasets:
+.. topic:: Related links:
 
  _`Public datasets in svmlight / libsvm format`: http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/
+
+ _`Faster API-compatible implementation`: https://github.com/mblondel/svmlight-loader
 
 
 .. include:: olivetti_faces.rst 

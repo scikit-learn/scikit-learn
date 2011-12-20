@@ -1,3 +1,7 @@
+"""
+The :mod:`sklearn.utils` module includes various utilites.
+"""
+
 import numpy as np
 import scipy.sparse as sp
 import warnings
@@ -5,6 +9,7 @@ import warnings
 
 def assert_all_finite(X):
     """Throw a ValueError if X contains NaN or infinity.
+
     Input MUST be an np.ndarray instance or a scipy.sparse matrix."""
 
     # First try an O(n) time, O(1) space solution for the common case that
@@ -17,6 +22,7 @@ def assert_all_finite(X):
 
 def safe_asarray(X, dtype=None, order=None):
     """Convert X to an array or sparse matrix.
+
     Prevents copying X when possible; sparse matrices are passed through."""
     if not sp.issparse(X):
         X = np.asarray(X, dtype, order)
@@ -59,12 +65,12 @@ def as_float_array(X, copy=True):
 
 def array2d(X, dtype=None, order=None):
     """Returns at least 2-d array with data from X"""
-    return np.atleast_2d(np.asarray(X, dtype=dtype, order=order))
+    return np.asarray(np.atleast_2d(X), dtype=dtype, order=order)
 
 
 def atleast2d_or_csr(X):
     """Like numpy.atleast_2d, but converts sparse matrices to CSR format
-    
+
     Also, converts np.matrix to np.ndarray.
     """
     X = X.tocsr() if sp.issparse(X) else array2d(X)
@@ -88,6 +94,13 @@ def check_random_state(seed):
         return seed
     raise ValueError('%r cannot be used to seed a numpy.random.RandomState'
                      ' instance' % seed)
+
+
+def _num_samples(x):
+    """Return number of samples in array-like x."""
+    if not hasattr(x, '__len__') and not hasattr(x, 'shape'):
+        raise TypeError("Expected sequence or array-like, got %r" % x)
+    return x.shape[0] if hasattr(x, 'shape') else len(x)
 
 
 def check_arrays(*arrays, **options):
@@ -117,10 +130,7 @@ def check_arrays(*arrays, **options):
     if len(arrays) == 0:
         return None
 
-    first = arrays[0]
-    if not hasattr(first, '__len__') and not hasattr(first, 'shape'):
-        raise ValueError("Expected python sequence or array, got %r" % first)
-    n_samples = first.shape[0] if hasattr(first, 'shape') else len(first)
+    n_samples = _num_samples(arrays[0])
 
     checked_arrays = []
     for array in arrays:
@@ -130,10 +140,7 @@ def check_arrays(*arrays, **options):
             checked_arrays.append(array)
             continue
 
-        if not hasattr(array, '__len__') and not hasattr(array, 'shape'):
-            raise ValueError("Expected python sequence or array, got %r"
-                             % array)
-        size = array.shape[0] if hasattr(array, 'shape') else len(array)
+        size = _num_samples(array)
 
         if size != n_samples:
             raise ValueError("Found array with dim %d. Expected %d" % (
@@ -179,13 +186,6 @@ class deprecated(object):
 
     >>> @deprecated()
     ... def some_function(): pass
-
-    Deprecating a class takes some work, since we want to run on Python
-    versions that do not have class decorators:
-
-    >>> class Foo(object): pass
-    ...
-    >>> Foo = deprecated("Use Bar instead")(Foo)
     """
 
     # Adapted from http://wiki.python.org/moin/PythonDecoratorLibrary,
@@ -222,9 +222,7 @@ class deprecated(object):
     def _decorate_fun(self, fun):
         """Decorate function fun"""
 
-        what = "Function %s" % fun.__name__
-
-        msg = "%s is deprecated" % what
+        msg = "Function %s is deprecated" % fun.__name__
         if self.extra:
             msg += "; %s" % self.extra
 
@@ -330,9 +328,7 @@ def resample(*arrays, **options):
         raise ValueError("Cannot sample %d out of arrays with dim %d" % (
             max_n_samples, n_samples))
 
-    # To cope with Python 2.5 syntax limitations
-    kwargs = dict(sparse_format='csr')
-    arrays = check_arrays(*arrays, **kwargs)
+    arrays = check_arrays(*arrays, sparse_format='csr')
 
     if replace:
         indices = random_state.randint(0, n_samples, size=(max_n_samples,))
@@ -440,3 +436,7 @@ def gen_even_slices(n, n_packs):
             end = start + this_n
             yield slice(start, end, None)
             start = end
+
+
+class ConvergenceWarning(Warning):
+    "Custom warning to capture convergence problems"

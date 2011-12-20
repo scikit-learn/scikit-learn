@@ -1,9 +1,9 @@
+from itertools import product
 import numpy as np
 
 from numpy.testing import assert_almost_equal, assert_array_almost_equal
 from sklearn import neighbors, manifold
 from sklearn.manifold.locally_linear import barycenter_kneighbors_graph
-from sklearn.utils.fixes import product
 
 eigen_solvers = ['dense', 'arpack']
 
@@ -23,9 +23,9 @@ def test_barycenter_kneighbors_graph():
     A = barycenter_kneighbors_graph(X, 1)
     assert_array_almost_equal(
         A.todense(),
-        [[ 0.,  1.,  0.],
-         [ 1.,  0.,  0.],
-         [ 0.,  1.,  0.]])
+        [[0.,  1.,  0.],
+         [1.,  0.,  0.],
+         [0.,  1.,  0.]])
 
     A = barycenter_kneighbors_graph(X, 2)
     # check that columns sum to one
@@ -100,6 +100,15 @@ def test_pipeline():
          ('clf', neighbors.NeighborsClassifier())])
     clf.fit(iris.data, iris.target)
     assert_lower(.7, clf.score(iris.data, iris.target))
+
+
+# Test the error raised when the weight matrix is singular
+def test_singular_matrix():
+    from nose.tools import assert_raises
+    M = np.ones((4,3))
+
+    assert_raises(ValueError, manifold.locally_linear_embedding,
+                  M, 2, 1, method='standard', eigen_solver='arpack')
 
 
 if __name__ == '__main__':

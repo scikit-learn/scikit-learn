@@ -7,6 +7,7 @@ from numpy.testing import assert_array_almost_equal
 
 from ..base import LinearRegression
 
+
 def test_LinearRegression():
     """
     Test LinearRegression on a simple dataset.
@@ -31,4 +32,3 @@ def test_LinearRegression():
     assert_array_almost_equal(clf.coef_, [0])
     assert_array_almost_equal(clf.intercept_, [0])
     assert_array_almost_equal(clf.predict(X), [0])
-

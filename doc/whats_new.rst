@@ -5,9 +5,18 @@
 0.10
 ====
 
-   - New :ref:`Tree <tree>` module by `Brian Holt`_, `Peter Prettenhofer`_ 
-     and `Satrajit Ghosh`_. The module comes with complete documentation 
-     and examples.
+Changelog
+---------
+
+   - Python 2.5 compatibility was dropped; the minimum Python version needed
+     to use scikit-learn is now 2.6.
+
+   - :ref:`sparse_inverse_covariance` estimation using the graph Lasso, with
+     associated cross-validated estimator, by `Gael Varoquaux`_
+
+   - New :ref:`Tree <tree>` module by `Brian Holt`_, `Peter Prettenhofer`_,
+     `Satrajit Ghosh`_ and `Gilles Louppe`_. The module comes with complete
+     documentation and examples.
 
    - Fixed a bug in the RFE module by `Gilles Louppe`_ (issue #378).
 
@@ -15,8 +24,26 @@
 
    - Faster tests by `Fabian Pedregosa`_.
 
-   - Silhouette Coefficient cluster analysis evaluation metric added as 
+   - Silhouette Coefficient cluster analysis evaluation metric added as
      ``sklearn.metrics.silhouette_score`` by Robert Layton.
+
+   - Fixed a bug in `KMeans` in the handling of the `n_init` parameter:
+     the clustering algorithm used to be run `n_init` times but the last
+     solution was retained instead of the best solution.
+
+   - Minor refactoring in :ref:`sgd` module; consolidated dense and sparse
+     predict methods.
+
+   - Adjusted Mutual Information metric added as
+     ``sklearn.metrics.adjusted_mutual_info_score`` by Robert Layton.
+
+   - Models like SVC/SVR/LinearSVC/LogisticRegression from libsvm/liblinear
+     now support scaling of C regularization parameter by the number of
+     samples by `Alexandre Gramfort`_.
+
+   - New :ref:`Ensemble Methods <ensemble>` module by `Gilles Louppe`_ and
+     `Brian Holt`_. The module comes with the random forest algorithm and the
+     extra-trees method, along with documentation and examples.
 
 
 API changes summary
@@ -36,26 +63,25 @@ version 0.9:
     longer supports loading two files at once; use ``load_svmlight_files``
     instead. Also, the (unused) ``buffer_mb`` parameter is gone.
 
-  - Sparse estimators in the :ref:`sgd` module use dense parameter vector 
+  - Sparse estimators in the :ref:`sgd` module use dense parameter vector
     ``coef_`` instead of ``sparse_coef_``. This significantly improves
     test time performance.
-  
+
   - The :ref:`covariance` module now has a robust estimator of
     covariance, the Minimum Covariance Determinant estimator.
 
   - Cluster evaluation metrics in ``metrics.cluster.py`` have been refactored
     but the changes are backwards compatible. They have been moved to the
     ``metrics.cluster.supervised``, along with ``metrics.cluster.unsupervised``
-    which contains the Silhouette Coefficient. 
+    which contains the Silhouette Coefficient.
 
   - The permutation_test_score function now behaves the same way as
     cross_val_score (i.e. uses the mean score across the folds.)
 
-Changelog
----------
+  - Cross Validation generators now use integer indices (``indices=True``)
+    by default instead of boolean masks. This make it more intuitive to
+    use with sparse matrix data.
 
-   - Minor refactoring in :ref:`sgd` module; consolidated 
-     dense and sparse predict methods.
 
 .. _changes_0_9:
 
@@ -160,7 +186,7 @@ Changelog
    - Implementation of :class:`linear_model.LassoLarsCV`
      (cross-validated Lasso solver using the Lars algorithm) and
      :class:`linear_model.LassoLarsIC` (BIC/AIC model
-     selection in Lars) by `Gael Varoquaux`_ 
+     selection in Lars) by `Gael Varoquaux`_
      and `Alexandre Gramfort`_
 
    - Scalability improvements to :func:`metrics.roc_curve` by Olivier Hervieu
@@ -499,7 +525,7 @@ Changelog
 ---------
 
   - New `stochastic gradient
-    <http://scikit-learn.sourceforge.net/modules/sgd.html>`_ descent
+    <http://scikit-learn.org/stable/modules/sgd.html>`_ descent
     module by Peter Prettenhofer. The module comes with complete
     documentation and examples.
 
@@ -526,7 +552,7 @@ Changelog
 
   - Lots of cool new examples and a new section that uses real-world
     datasets was created. These include:
-    :ref:`example_applications_plot_face_recognition.py`,
+    :ref:`example_applications_face_recognition.py`,
     :ref:`example_applications_plot_species_distribution_modeling.py`,
     :ref:`example_applications_svm_gui.py`,
     :ref:`example_applications_wikipedia_principal_eigenvector.py` and
@@ -603,7 +629,7 @@ New classes
     - New :class:`pipeline.Pipeline` object to compose different estimators.
 
     - Recursive Feature Elimination routines in module
-      :ref:`feature_selection_doc`.
+      :ref:`feature_selection`.
 
     - Addition of various classes capable of cross validation in the
       linear_model module (:class:`linear_model.LassoCV`, :class:`linear_model.ElasticNetCV`,
@@ -630,9 +656,9 @@ Documentation
     - Improved documentation for many modules, now separating
       narrative documentation from the class reference. As an example,
       see `documentation for the SVM module
-      <http://scikit-learn.sourceforge.net/modules/svm.html>`_ and the
+      <http://scikit-learn.org/stable/modules/svm.html>`_ and the
       complete `class reference
-      <http://scikit-learn.sourceforge.net/modules/classes.html>`_.
+      <http://scikit-learn.org/stable/modules/classes.html>`_.
 
 Fixes
 ~~~~~
@@ -651,10 +677,10 @@ Examples
 
     - new examples using some of the mlcomp datasets:
       :ref:`example_mlcomp_sparse_document_classification.py`,
-      :ref:`example_mlcomp_document_classification.py`
+      :ref:`example_document_classification_20newsgroups.py`
 
     - Many more examaples. `See here
-      <http://scikit-learn.sourceforge.net/auto_examples/index.html>`_
+      <http://scikit-learn.org/stable/auto_examples/index.html>`_
       the full list of examples.
 
 
@@ -802,3 +828,5 @@ of commits):
 .. _David Warde-Farley: http://www-etud.iro.umontreal.ca/~wardefar/
 
 .. _Brian Holt: http://info.ee.surrey.ac.uk/Personal/B.Holt/
+
+.. _Satrajit Ghosh: http://www.mit.edu/~satra/

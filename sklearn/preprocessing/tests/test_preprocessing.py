@@ -336,6 +336,10 @@ def test_label_binarizer_errors():
     multi_label = [(2, 3), (0,), (0, 2)]
     assert_raises(ValueError, lb.transform, multi_label)
 
+    lb = LabelBinarizer()
+    assert_raises(ValueError, lb.transform, [])
+    assert_raises(ValueError, lb.inverse_transform, [])
+
 
 def test_label_binarizer_iris():
     lb = LabelBinarizer()
@@ -371,6 +375,7 @@ def test_center_kernel():
     K_pred_centered = np.dot(X_pred_centered, X_fit_centered.T)
     K_pred_centered2 = centerer.transform(K_pred)
     assert_array_almost_equal(K_pred_centered, K_pred_centered2)
+
 
 def test_fit_transform():
     X = np.random.random((5, 4))

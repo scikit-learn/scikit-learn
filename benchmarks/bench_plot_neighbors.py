@@ -59,7 +59,6 @@ def barplot_neighbors(Nrange=2 ** np.arange(1, 11),
             N_results_build[algorithm][i] = (t1 - t0)
             N_results_query[algorithm][i] = (t2 - t1)
 
-
     #------------------------------------------------------------
     # varying D
     D_results_build = dict([(alg, np.zeros(len(Drange)))
@@ -82,7 +81,6 @@ def barplot_neighbors(Nrange=2 ** np.arange(1, 11),
 
             D_results_build[algorithm][i] = (t1 - t0)
             D_results_query[algorithm][i] = (t2 - t1)
-
 
     #------------------------------------------------------------
     # varying k

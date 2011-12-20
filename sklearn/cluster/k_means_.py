@@ -17,17 +17,18 @@ import scipy.sparse as sp
 from ..utils.extmath import norm
 from ..base import BaseEstimator
 from ..metrics.pairwise import euclidean_distances
+from ..utils import warn_if_not_float
 from ..utils import check_arrays
 from ..utils import check_random_state
 from ..utils import gen_even_slices
 from ..utils import shuffle
-from ..utils import warn_if_not_float
+from ..utils import as_float_array
 
 from . import _k_means
 
 
 ###############################################################################
-# Initialisation heuristic
+# Initialization heuristic
 
 
 def k_init(X, k, n_local_trials=None, random_state=None, x_squared_norms=None):
@@ -128,7 +129,7 @@ def k_init(X, k, n_local_trials=None, random_state=None, x_squared_norms=None):
 
 
 ###############################################################################
-# K-means estimation by EM (expectation maximisation)
+# K-means estimation by EM (expectation maximization)
 
 
 def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
@@ -205,6 +206,7 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
 
     vdata = np.mean(np.var(X, 0))
     best_inertia = np.infty
+    X = as_float_array(X, copy=copy_x)
 
     # subtract of mean of x for more accurate distance computations
     X_mean = X.mean(axis=0)
@@ -217,13 +219,16 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
         init -= X_mean
         if not n_init == 1:
             warnings.warn('Explicit initial center position passed: '
-                          'performing only one init in the k-means')
+                          'performing only one init in K-means')
             n_init = 1
 
     # precompute squared norms of data points
     x_squared_norms = X.copy()
     x_squared_norms **= 2
     x_squared_norms = x_squared_norms.sum(axis=1)
+
+    best_labels, best_inertia, best_centers = None, None, None
+
     for it in range(n_init):
         # init
         centers = _init_centroids(X, k, init, random_state=random_state,
@@ -241,20 +246,16 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
             if verbose:
                 print 'Iteration %i, inertia %s' % (i, inertia)
 
+            if best_inertia is None or inertia < best_inertia:
+                best_labels = labels.copy()
+                best_centers = centers.copy()
+                best_inertia = inertia
+
             if np.sum((centers_old - centers) ** 2) < tol * vdata:
                 if verbose:
                     print 'Converged to similar centers at iteration', i
                 break
 
-            if inertia < best_inertia:
-                best_labels = labels.copy()
-                best_centers = centers.copy()
-                best_inertia = inertia
-
-    else:
-        best_labels = labels
-        best_centers = centers
-        best_inertia = inertia
     if not copy_x:
         X += X_mean
     return best_centers + X_mean, best_labels, best_inertia
@@ -314,7 +315,7 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None):
         number of centroids
 
     init: {'k-means++', 'random' or ndarray or callable} optional
-        Method for initialisation
+        Method for initialization
 
     random_state: integer or numpy.RandomState, optional
         The generator used to initialize the centers. If an integer is
@@ -330,8 +331,8 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None):
     centers: array, shape(k, n_features)
     """
     random_state = check_random_state(random_state)
-
     n_samples = X.shape[0]
+
     if init == 'k-means++':
         if sp.issparse(X):
             raise ValueError("Init method 'k-means++' only for dense X.")
@@ -339,7 +340,7 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None):
                         random_state=random_state,
                         x_squared_norms=x_squared_norms)
     elif init == 'random':
-        seeds = np.argsort(random_state.rand(n_samples))[:k]
+        seeds = random_state.permutation(n_samples)[:k]
         centers = X[seeds]
     elif hasattr(init, '__array__'):
         centers = init
@@ -444,16 +445,8 @@ class KMeans(BaseEstimator):
         given, it fixes the seed. Defaults to the global numpy random
         number generator.
 
-
-    Methods
-    -------
-
-    fit(X):
-        Compute K-Means clustering
-
     Attributes
     ----------
-
     cluster_centers_: array, [n_clusters, n_features]
         Coordinates of cluster centers
 
@@ -466,8 +459,7 @@ class KMeans(BaseEstimator):
 
     Notes
     ------
-
-    The k-means problem is solved using the Lloyd algorithm.
+    The k-means problem is solved using Lloyd's algorithm.
 
     The average complexity is given by O(k n T), were n is the number of
     samples and T is the number of iteration.
@@ -476,7 +468,7 @@ class KMeans(BaseEstimator):
     n = n_samples, p = n_features. (D. Arthur and S. Vassilvitskii,
     'How slow is the k-means method?' SoCG2006)
 
-    In practice, the K-means algorithm is very fast (one of the fastest
+    In practice, the k-means algorithm is very fast (one of the fastest
     clustering algorithms available), but it falls in local minima. That's why
     it can be useful to restart it several times.
     """
@@ -504,6 +496,7 @@ class KMeans(BaseEstimator):
         if X.shape[0] < self.k:
             raise ValueError("n_samples=%d should be >= k=%d" % (
                 X.shape[0], self.k))
+        X = as_float_array(X, copy=False)
         return X
 
     def fit(self, X, y=None):
@@ -511,7 +504,6 @@ class KMeans(BaseEstimator):
         self.random_state = check_random_state(self.random_state)
 
         X = self._check_data(X)
-        warn_if_not_float(X, self)
 
         self.cluster_centers_, self.labels_, self.inertia_ = k_means(
             X, k=self.k, init=self.init, n_init=self.n_init,

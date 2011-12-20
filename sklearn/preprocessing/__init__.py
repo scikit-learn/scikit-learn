@@ -1,10 +1,13 @@
-""" Transformers to perform common preprocessing steps.
+"""
+The :mod:`sklearn.preprocessing` module implements various utilities to perform
+common data preprocessing steps (scaling, normalization, etc).
 """
 
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD
+import warnings
 
 import numpy as np
 import scipy.sparse as sp
@@ -78,6 +81,9 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
         raise NotImplementedError(
             "Scaling is not yet implement for sparse matrices")
     X = np.asarray(X)
+    if X.dtype.kind in ['i', 'u']:
+        warnings.warn('Data of type %s in scale. '
+                      'Converting to float is recommended' % X.dtype)
     mean_, std_ = _mean_and_std(
         X, axis, with_mean=with_mean, with_std=with_std)
     if copy:
@@ -159,6 +165,10 @@ class Scaler(BaseEstimator, TransformerMixin):
         if sp.issparse(X):
             raise NotImplementedError(
                 "Scaling is not yet implement for sparse matrices")
+        X = np.asarray(X)
+        if X.dtype.kind in ['i', 'u']:
+            warnings.warn('Data of type %s in Scaler.fit. '
+                          'Converting to float is recommended' % X.dtype)
         self.mean_, self.std_ = _mean_and_std(
             X, axis=0, with_mean=self.with_mean, with_std=self.with_std)
         return self
@@ -176,6 +186,9 @@ class Scaler(BaseEstimator, TransformerMixin):
             raise NotImplementedError(
                 "Scaling is not yet implement for sparse matrices")
         X = np.asarray(X)
+        if X.dtype.kind in ['i', 'u']:
+            warnings.warn('Data of type %s in Scaler.transform. '
+                          'Converting to float is recommended' % X.dtype)
         if copy:
             X = X.copy()
         if self.with_mean:
@@ -246,6 +259,9 @@ def normalize(X, norm='l2', axis=1, copy=True):
         raise ValueError("'%d' is not a supported axis" % axis)
 
     X = check_arrays(X, sparse_format=sparse_format, copy=copy)[0]
+    if X.dtype.kind in ['i', 'u']:
+        warnings.warn('Data of type %s in normalize. '
+                      'Converting to float is recommended' % X.dtype)
     if axis == 0:
         X = X.T
 
@@ -481,6 +497,10 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     array([1, 2, 3])
     """
 
+    def _check_fitted(self):
+        if not hasattr(self, "classes_"):
+            raise ValueError("LabelBinarizer was not fitted yet.")
+
     def fit(self, y):
         """Fit label binarizer
 
@@ -522,6 +542,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         -------
         Y : numpy array of shape [n_samples, n_classes]
         """
+        self._check_fitted()
 
         if self.multilabel or len(self.classes_) > 2:
             if _is_label_indicator_matrix(y):
@@ -535,7 +556,8 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         y_is_multilabel = _is_multilabel(y)
 
         if y_is_multilabel and not self.multilabel:
-            raise ValueError("The object was not fitted with multilabel input!")
+            raise ValueError("The object was not " +
+                    "fitted with multilabel input!")
 
         elif self.multilabel:
             if not _is_multilabel(y):
@@ -590,6 +612,8 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         linear model's decision_function method directly as the input
         of inverse_transform.
         """
+        self._check_fitted()
+
         if self.multilabel:
             Y = np.array(Y > threshold, dtype=int)
             # Return the predictions in the same format as in fit

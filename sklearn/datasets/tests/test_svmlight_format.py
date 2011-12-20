@@ -13,6 +13,7 @@ datafile = os.path.join(currdir, "data", "svmlight_classification.txt")
 multifile = os.path.join(currdir, "data", "svmlight_multilabel.txt")
 invalidfile = os.path.join(currdir, "data", "svmlight_invalid.txt")
 
+
 def test_load_svmlight_file():
     X, y = load_svmlight_file(datafile)
 
@@ -85,7 +86,7 @@ def test_load_invalid_file():
 
 
 @raises(ValueError)
-def test_load_invalid_file():
+def test_load_invalid_file2():
     load_svmlight_files([datafile, invalidfile, datafile])
 
 

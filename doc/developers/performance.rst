@@ -87,7 +87,7 @@ for interactively exploring the relevant part for the code.
 
 Suppose we want to profile the Non Negative Matrix Factorization module
 of the scikit. Let us setup a new IPython session and load the digits
-dataset and as in the :ref:`example_decomposition_plot_nmf.py` example::
+dataset and as in the :ref:`example_plot_plot_digits_classification.py` example::
 
   In [1]: from sklearn.decomposition import NMF
 
@@ -190,7 +190,7 @@ us install ``line-prof`` and wire it to IPython::
 
     $ ipython profile create
 
-  Then create a file named ``~/.ipython/extensions/line_profile_ext`` with
+  Then create a file named ``~/.ipython/extensions/line_profiler_ext.py`` with
   the following content::
 
     import line_profiler

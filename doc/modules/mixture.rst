@@ -1,5 +1,7 @@
 .. _mixture:
 
+.. _gmm:
+
 ===================================================
 Gaussian mixture models
 ===================================================
@@ -13,9 +15,9 @@ data. Facilities to help determine the appropriate number of
 components are also provided.
 
  .. figure:: ../auto_examples/mixture/images/plot_gmm_pdf_1.png
-   :target: ../auto_examples/cluster/plot_gmm_pdf.html
-   :align: left
-   :scale: 75%
+   :target: ../auto_examples/mixture/plot_gmm_pdf.html
+   :align: center
+   :scale: 50%
 
    **Two-component Gaussian mixture model:** *data points, and equi-probability surfaces of 
    the model.*
@@ -35,7 +37,7 @@ these models that, while not guaranteed to return the optimal
 solution, do converge quickly to a local optimum. To improve the
 quality it is usual to fit these models many times with different
 parameters and choose the best result, as measured by the likelihood
-or some other external criterion. Here in `sklearn` we implement
+or some other external criterion. Here in `scikit-learn` we implement
 two approximate inference algorithms for mixtures of gaussians:
 expectation-maximization and variational inference. We also implement
 a variant of the mixture model, known as the Dirichlet Process prior,
@@ -45,7 +47,7 @@ only needs to specify a loose upper bound on this number and a
 concentration parameter.
 
 Expectation-maximization
------------------------
+------------------------
 
 The main difficulty in learning gaussian mixture models from unlabeled
 data is that it is one usually doesn't know which points came from
@@ -59,7 +61,7 @@ origin) and computes for each point a probability distribution on the
 components it could have been assigned to. Then, one tweaks the
 parameters to maximize the likelihood of the data given those
 assignments. Repeating this process is guaranteed to always converge
-to a local optimum. In the `sklearn` this algorithm in
+to a local optimum. In the `scikit-learn` this algorithm in
 implemented in the :class:`GMM` class.
 
 Advantages of expectation-maximization:
@@ -226,7 +228,7 @@ the :meth:`GMM.predict` method.
     :meth:`GMM.predict_proba` method.
 
 .. figure:: ../auto_examples/mixture/images/plot_gmm_classifier_1.png
-   :target: ../auto_examples/cluster/plot_gmm_classifier.html
+   :target: ../auto_examples/mixture/plot_gmm_classifier.html
    :align: center
    :scale: 75%
 
@@ -239,7 +241,7 @@ the :meth:`GMM.predict` method.
       density estimation.
 
 Variational Gaussian mixtures: VBGMM classifier
-=============================================
+===============================================
 
 .. currentmodule:: sklearn.mixture
 

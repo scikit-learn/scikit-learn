@@ -164,6 +164,7 @@ def test_fit_countvectorizer_twice():
     X2 = cv.fit_transform(ALL_FOOD_DOCS[5:])
     assert_not_equal(X1.shape[1], X2.shape[1])
 
+
 def test_vectorizer():
     # raw documents as an iterator
     train_data = iter(ALL_FOOD_DOCS[:-1])
@@ -277,6 +278,10 @@ def test_vectorizer_inverse_transform():
             data_vec = np.sort(np.unique(vectorizer.analyzer.analyze(data[0])))
             inversed_data_vec = np.sort(np.unique(inversed_data[0]))
             assert((data_vec == inversed_data_vec).all())
+    # Test that inverse_transform also works with numpy arrays
+    transformed_data = np.asarray(transformed_data.todense())
+    assert(vectorizer.inverse_transform(transformed_data),
+            inversed_data)
 
 
 def test_dense_vectorizer_pipeline_grid_selection():

@@ -1,19 +1,22 @@
-"""Tune the parameters of an estimator by cross-validation"""
+"""
+The :mod:`sklearn.grid_search` includes utilities to fine-tune the parameters
+of an estimator.
+"""
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>,
 #         Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD Style.
 
 import copy
+from itertools import product
 import time
 
 import numpy as np
 import scipy.sparse as sp
 
-from .externals.joblib import Parallel, delayed, logger
-from .cross_validation import check_cv
 from .base import BaseEstimator, is_classifier, clone
-from .utils.fixes import product
+from .cross_validation import check_cv
+from .externals.joblib import Parallel, delayed, logger
 
 
 class IterGrid(object):
@@ -199,33 +202,47 @@ class GridSearchCV(BaseEstimator):
     >>> parameters = {'kernel':('linear', 'rbf'), 'C':[1, 10]}
     >>> svr = svm.SVR()
     >>> clf = grid_search.GridSearchCV(svr, parameters)
-    >>> clf.fit(iris.data, iris.target) # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    >>> clf.fit(iris.data, iris.target)
+    ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     GridSearchCV(cv=None,
-           estimator=SVR(C=1.0, coef0=..., degree=..., epsilon=..., gamma=..., kernel='rbf',
-      probability=False, shrinking=True, tol=...),
-           fit_params={}, iid=True, loss_func=None, n_jobs=1,
-           param_grid=...,
-           ...)
+        estimator=SVR(C=1.0, cache_size=..., coef0=..., degree=...,
+            epsilon=..., gamma=..., kernel='rbf', probability=False,
+            scale_C=False, shrinking=True, tol=...),
+        fit_params={}, iid=True, loss_func=None, n_jobs=1,
+            param_grid=...,
+            ...)
 
     Attributes
     ----------
     `grid_scores_` : dict of any to float
         Contains scores for all parameter combinations in param_grid.
 
-     `best_estimator` : estimator
-        Estimator that was choosen by grid search, i.e. estimator
-        which gave highest score (or smallest loss if specified)
-        on the left out data.
+    `best_estimator` : estimator
+        Estimator that was choosen by grid search, i.e. estimator which gave
+        highest score (or smallest loss if specified) on the left out data.
 
-     `best_score` : score of best_estimator on the left out data.
+    `best_score` : float
+        score of best_estimator on the left out data.
 
 
     Notes
     ------
-    The parameters selected are those that maximize the score of the
-    left out data, unless an explicit score_func is passed in which
-    case it is used instead. If a loss function loss_func is passed,
-    it overrides the score functions and is minimized.
+    The parameters selected are those that maximize the score of the left out
+    data, unless an explicit score_func is passed in which case it is used
+    instead. If a loss function loss_func is passed, it overrides the score
+    functions and is minimized.
+
+    If `n_jobs` was set to a value higher than one, the data is copied for each
+    point in the grid (and not `n_jobs` times). This is done for efficiency
+    reasons if individual jobs take very little time, but may raise errors if
+    the dataset is large and not enough memory is available.  A workaround in
+    this case is to set `pre_dispatch`. Then, the memory is copied only
+    `pre_dispatch` many times. A reasonable value for `pre_dispatch` is 2 *
+    `n_jobs`.
+
+    See Also
+    ---------
+    IterGrid
 
     """
 
@@ -268,8 +285,9 @@ class GridSearchCV(BaseEstimator):
             Training vector, where n_samples in the number of samples and
             n_features is the number of features.
 
-        y: array, [n_samples] or None
-            Target vector relative to X, None for unsupervised problems
+        y: array-like, shape = [n_samples], optional
+            Target vector relative to X for classification;
+            None for unsupervised learning.
 
         """
         self._set_params(**params)
@@ -281,10 +299,12 @@ class GridSearchCV(BaseEstimator):
             # support list of unstructured objects on which feature
             # extraction will be applied later in the tranformer chain
             n_samples = len(X)
-        if y is not None and len(y) != n_samples:
-            raise ValueError('Target variable (y) has a different number '
-                    'of samples (%i) than data (X: %i samples)' %
-                        (len(y), n_samples))
+        if y is not None:
+            if len(y) != n_samples:
+                raise ValueError('Target variable (y) has a different number '
+                                 'of samples (%i) than data (X: %i samples)'
+                                 % (len(y), n_samples))
+            y = np.asarray(y)
         cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
 
         grid = IterGrid(self.param_grid)
@@ -334,6 +354,8 @@ class GridSearchCV(BaseEstimator):
 
         if self.refit:
             # fit the best estimator using the entire dataset
+            # clone first to work around broken estimators
+            best_estimator = clone(best_estimator)
             best_estimator.fit(X, y, **self.fit_params)
 
         self.best_estimator = best_estimator

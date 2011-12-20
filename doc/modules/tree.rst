@@ -6,36 +6,42 @@ Decision Trees
 
 .. currentmodule:: sklearn.tree
 
-.. image:: ../auto_examples/tree/images/plot_tree_regression_1.png
+**Decision Trees (DTs)** are a non-parametric supervised learning method used
+for :ref:`classification <tree_classification>` and :ref:`regression
+<tree_regression>`. The goal is to create a model that predicts the value of a
+target variable by learning simple decision rules inferred from the data
+features.
+
+For instance, in the example below, decision trees learn from data to
+approximate a sine curve with a set of if-then-else decision rules. The deeper
+the tree, the more complex the decision rules and the fitter the model.
+
+.. figure:: ../auto_examples/tree/images/plot_tree_regression_1.png
    :target: ../auto_examples/tree/plot_tree_regression.html
-   :scale: 50
-   :align: right
+   :scale: 75
+   :align: center
 
-**Decision Trees** are a non-parametric supervised learning method used
-for :ref:`classification <tree_classification>`, :ref:`regression
-<tree_regression>`. They learn a tree simple decision rules combining
-information from the features. For example, on the right, decision trees
-learn from data to approximate a sine curve be a set of lines.
+Some advantages of decision trees are:
 
-The advantages of Decision Trees are:
-
-    - Simple to understand and interpret. Trees can be visualised.
+    - Simple to understand and to interpret. Trees can be visualised.
 
     - Requires little data preparation. Other techniques often require data
       normalisation, dummy variables need to be created and blank values to
-      be removed. Note that this module does not support missing values.
+      be removed. Note however that this module does not support missing
+      values.
 
-    - The cost of using the tree (predicting data) is logarithmic in the
+    - The cost of using the tree (i.e., predicting data) is logarithmic in the
       number of data points used to train the tree.
 
     - Able to handle both numerical and categorical data. Other techniques
       are usually specialised in analysing datasets that have only one type
-      of variable. See :ref:`algorithms <tree_algorithms>` for more information.
+      of variable. See :ref:`algorithms <tree_algorithms>` for more
+      information.
 
-    - Uses a white box model. If a given situation is observable in a model
+    - Uses a white box model. If a given situation is observable in a model,
       the explanation for the condition is easily explained by boolean logic.
-      An example of a black box model is an artificial neural network since
-      the explanation for the results is difficult to understand.
+      By constrast, in a black box model (e.g., in an artificial neural
+      network), results may be more difficult to interpret.
 
     - Possible to validate a model using statistical tests. That makes it
       possible to account for the reliability of the model.
@@ -43,7 +49,7 @@ The advantages of Decision Trees are:
     - Performs well even if its assumptions are somewhat violated by
       the true model from which the data were generated.
 
-The disadvantages of Decision Trees include:
+The disadvantages of decision trees include:
 
     - Decision-tree learners can create over-complex trees that do not
       generalise the data well. This is called overfitting. Mechanisms
@@ -77,7 +83,7 @@ The disadvantages of Decision Trees include:
 Classification
 ==============
 
-:class:`DecisionTreeClassifier` is capable of performing multi-class
+:class:`DecisionTreeClassifier` is a class capable of performing multi-class
 classification on a dataset.
 
 As other classifiers, :class:`DecisionTreeClassifier` take as input two
@@ -109,7 +115,7 @@ Using the Iris dataset, we can construct a tree as follows::
     >>> clf = clf.fit(iris.data, iris.target)
 
 Once trained, we can export the tree in `Graphviz
-<http://www.graphviz.org/>`_ format using the :class:`GraphvizExporter`
+<http://www.graphviz.org/>`_ format using the :func:`export_graphviz`
 exporter. Below is an example export of a tree trained on the entire
 iris dataset::
 
@@ -117,8 +123,15 @@ iris dataset::
     >>> out = StringIO()
     >>> out = tree.export_graphviz(clf, out_file=out)
 
-.. figure:: ../images/iris.svg
-   :align: center
+.. only:: html
+
+    .. figure:: ../images/iris.svg
+       :align: center
+
+.. only:: latex
+
+    .. figure:: ../images/iris.pdf
+       :align: center
 
 After being fitted, the model can then be used to predict new values::
 
@@ -128,7 +141,7 @@ After being fitted, the model can then be used to predict new values::
 .. figure:: ../auto_examples/tree/images/plot_iris_1.png
    :target: ../auto_examples/tree/plot_iris.html
    :align: center
-   :scale: 70
+   :scale: 75
 
 .. topic:: Examples:
 
@@ -139,19 +152,17 @@ After being fitted, the model can then be used to predict new values::
 Regression
 ==========
 
-.. image:: ../auto_examples/tree/images/plot_tree_regression_1.png
+.. figure:: ../auto_examples/tree/images/plot_tree_regression_1.png
    :target: ../auto_examples/tree/plot_tree_regression.html
-   :scale: 50
-   :align: right
+   :scale: 75
+   :align: center
 
+Decision trees can also be applied to regression problems, using the
+:class:`DecisionTreeRegressor` class.
 
-Decision Trees can be applied to solve regression problems.
-
-Uses Mean Squared Error to find the best fit.
-
-As with classification classes, the fit method will take as
-argument vectors X, y, only that in this case y is expected to have
-floating point values instead of integer values::
+As in the classification setting, the fit method will take as argument arrays X
+and y, only that in this case y is expected to have floating point values
+instead of integer values::
 
     >>> from sklearn import tree
     >>> X = [[0, 0], [2, 2]]
@@ -169,54 +180,54 @@ floating point values instead of integer values::
 Complexity
 ==========
 
-In general, the run time cost to construct a balanced binary
-tree is  :math:`O(n_{samples}n_{features}log(n_{samples}))` and query time
+In general, the run time cost to construct a balanced binary tree is
+:math:`O(n_{samples}n_{features}log(n_{samples}))` and query time
 :math:`O(log(n_{samples}))`.  Although the tree construction algorithm attempts
-to generate balanced trees, they will not always be balanced.  Assuming that
-the subtrees remain approximately balanced, the cost at each node consists of
-searching through :math:`O(n_{features})` to find the feature that offers
-the largest reduction in entropy.  This has a cost of
-:math:`O(n_{features}n_{samples}log(n_{samples}))` at each node, leading to
-a total cost over the entire trees (by summing the cost at each node) of
+to generate balanced trees, they will not always be balanced.  Assuming that the
+subtrees remain approximately balanced, the cost at each node consists of
+searching through :math:`O(n_{features})` to find the feature that offers the
+largest reduction in entropy.  This has a cost of
+:math:`O(n_{features}n_{samples}log(n_{samples}))` at each node, leading to a
+total cost over the entire trees (by summing the cost at each node) of
 :math:`O(n_{features}n_{samples}^{2}log(n_{samples}))`.
 
 Scikit-learn offers a more efficient implementation for the construction of
-Decision Trees.  A naive implementation (as above) would recompute the
-class label histograms (for classification) or the means (for regression) at
-for each new split point along a given feature. By presorting the feature
-over all relevant samples, and retaining a running label count, we reduce
-the complexity at each node to :math:`O(n_{features}log(n_{samples}))`, which
-results in a total cost of :math:`O(n_{features}n_{samples}log(n_{samples}))`.
+decision trees.  A naive implementation (as above) would recompute the class
+label histograms (for classification) or the means (for regression) at for each
+new split point along a given feature. By presorting the feature over all
+relevant samples, and retaining a running label count, we reduce the complexity
+at each node to :math:`O(n_{features}log(n_{samples}))`, which results in a
+total cost of :math:`O(n_{features}n_{samples}log(n_{samples}))`.
 
-This implementation also offers a parameter `min_density` to control the
-trade-off  between memory usage and speed within the tree construction process.
-A sample mask is used to mask data points that are inactive at a given node,
-which avoids the copying of data (important for large datasets or training
-trees within an ensemble). Density is defined as the ratio of 'active' data
-samples to total samples at a given node.  The minimum density parameter
-specifies the level below which fancy indexing (and therefore data copied)
-and the sample mask reset.
+This implementation also offers a parameter `min_density` to control the trade-
+off  between memory usage and speed within the tree construction process. A
+sample mask is used to mask data points that are inactive at a given node, which
+avoids the copying of data (important for large datasets or training trees
+within an ensemble). Density is defined as the ratio of 'active' data samples to
+total samples at a given node.  The minimum density parameter specifies the
+level below which fancy indexing (and therefore data copied) and the sample mask
+reset.
 If `min_density` is 1, then fancy indexing is always used for data partitioning
 during the tree building phase. In this case, the size of memory (as a
-proportion of the input data :math:`a`) required at a node of depth
-:math:`n` can be approximated using a geometric series:
-:math:`size = a \frac{1 - r^n}{1 - r}` where :math:`r` is the ratio of samples
-used at each node.  A best case analysis shows that the lowest memory requirement
-(for an infinitely deep tree) is :math:`2 \times a`, where each partition divides
-the data in half.  A worst case analysis shows that the memory requirement
-can  increase to :math:`n \times a`. In practise it usually requires 3 to 4 times
-:math:`a`.
+proportion of the input data :math:`a`) required at a node of depth :math:`n`
+can be approximated using a geometric series: :math:`size = a \frac{1 - r^n}{1 -
+r}` where :math:`r` is the ratio of samples used at each node.  A best case
+analysis shows that the lowest memory requirement (for an infinitely deep tree)
+is :math:`2 \times a`, where each partition divides the data in half.  A worst
+case analysis shows that the memory requirement can  increase to :math:`n \times
+a`. In practise it usually requires 3 to 4 times :math:`a`.
 Setting `min_density` to 0 will always use the sample mask to select the subset
 of samples at each node.  This results in little to no additional memory being
-allocated, making it appropriate for massive datasets or within ensemble learners,
-but at the expense of being slower when training deep trees.
-The default value for `min_density` is 0.1 which strikes a balance between
-potentially excessive allocation of temporary memory and the long training times.
+allocated, making it appropriate for massive datasets or within ensemble
+learners, but at the expense of being slower when training deep trees. The
+default value for `min_density` is 0.1 which strikes a balance between
+potentially excessive allocation of temporary memory and the long training
+times.
 
-Tips on Practical Use
+Tips on practical use
 =====================
 
-  * Decision trees tend to overfit to data with large number of features.
+  * Decision trees tend to overfit on data with a large number of features.
     Getting the right ratio of samples to number of features is important, since
     a tree with few samples in high dimensional space is very likely to overfit.
 

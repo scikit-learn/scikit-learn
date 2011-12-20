@@ -10,7 +10,7 @@ import numpy as np
 from scipy import linalg
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import array2d, check_random_state
+from ..utils import array2d, check_random_state, as_float_array
 from ..utils.extmath import fast_logdet, fast_svd, safe_sparse_dot
 
 
@@ -158,8 +158,8 @@ class PCA(BaseEstimator, TransformerMixin):
     >>> pca = PCA(n_components=2)
     >>> pca.fit(X)
     PCA(copy=True, n_components=2, whiten=False)
-    >>> print pca.explained_variance_ratio_
-    [ 0.99244289  0.00755711]
+    >>> print pca.explained_variance_ratio_ # doctest: +ELLIPSIS
+    [ 0.99244...  0.00755...]
 
     See also
     --------
@@ -217,8 +217,7 @@ class PCA(BaseEstimator, TransformerMixin):
     def _fit(self, X):
         X = array2d(X)
         n_samples, n_features = X.shape
-        if self.copy:
-            X = X.copy()
+        X = as_float_array(X, copy=self.copy)
         # Center data
         self.mean_ = np.mean(X, axis=0)
         X -= self.mean_
@@ -320,7 +319,7 @@ class ProbabilisticPCA(PCA):
             self.covariance_ += self.explained_variance_[k] * add_cov
         return self
 
-    def score(self, X):
+    def score(self, X, y=None):
         """Return a score associated to new data
 
         Parameters
@@ -335,7 +334,7 @@ class ProbabilisticPCA(PCA):
         """
         Xr = X - self.mean_
         log_like = np.zeros(X.shape[0])
-        self.precision_ = np.linalg.inv(self.covariance_)
+        self.precision_ = linalg.inv(self.covariance_)
         for i in range(X.shape[0]):
             log_like[i] = -.5 * np.dot(np.dot(self.precision_, Xr[i]), Xr[i])
         log_like += fast_logdet(self.precision_) - \
@@ -397,8 +396,8 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
     >>> pca.fit(X)                 # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     RandomizedPCA(copy=True, iterated_power=3, n_components=2,
            random_state=<mtrand.RandomState object at 0x...>, whiten=False)
-    >>> print pca.explained_variance_ratio_
-    [ 0.99244289  0.00755711]
+    >>> print pca.explained_variance_ratio_ # doctest: +ELLIPSIS
+    [ 0.99244...  0.00755...]
 
     See also
     --------
@@ -444,22 +443,20 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         """
         self.random_state = check_random_state(self.random_state)
         if not hasattr(X, 'todense'):
+            # not a sparse matrix, ensure this is a 2D array
             X = array2d(X)
 
         n_samples = X.shape[0]
 
-        if self.copy:
-            X = X.copy()
-
         if not hasattr(X, 'todense'):
-            # not a sparse matrix, ensure this is a 2D array
-            X = array2d(X)
+            X = as_float_array(X, copy=self.copy)
 
             # Center data
             self.mean_ = np.mean(X, axis=0)
             X -= self.mean_
 
-        U, S, V = fast_svd(X, self.n_components, q=self.iterated_power,
+        U, S, V = fast_svd(X, self.n_components,
+                           n_iterations=self.iterated_power,
                            random_state=self.random_state)
 
         self.explained_variance_ = (S ** 2) / n_samples

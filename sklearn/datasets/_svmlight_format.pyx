@@ -10,15 +10,32 @@ cimport numpy as np
 import numpy as np
 import scipy.sparse as sp
 
+from ..utils.arraybuilder import ArrayBuilder
+
+
+# csr_matrix.indices and .indptr's dtypes are undocumented. We derive them
+# empirically.
+_temp_csr = sp.csr_matrix(0)
+_INDICES_DTYPE = _temp_csr.indices.dtype
+_INDPTR_DTYPE = _temp_csr.indptr.dtype
+del _temp_csr
+
+
 def _load_svmlight_file(f, n_features, dtype, bint multilabel):
     cdef bytes line
     cdef char *hash_ptr, *line_cstr
     cdef Py_ssize_t hash_idx
 
-    data = []
-    indptr = []
-    indices = []
-    labels = []
+    if multilabel:
+        data = []
+        indptr = []
+        indices = []
+        labels = []
+    else:
+        data = ArrayBuilder(dtype=dtype)
+        indptr = ArrayBuilder(dtype=_INDPTR_DTYPE)
+        indices = ArrayBuilder(dtype=_INDICES_DTYPE)
+        labels = ArrayBuilder(dtype=np.double)
 
     for line in f:
         # skip comments
@@ -49,18 +66,22 @@ def _load_svmlight_file(f, n_features, dtype, bint multilabel):
             data.append(dtype(value))
 
     indptr.append(len(data))
-    indptr = np.array(indptr, dtype=np.int)
+
+    if not multilabel:
+        indptr = indptr.get()
+        data = data.get()
+        indices = indices.get()
+        labels = np.array(labels.get(), dtype=np.double)
+
+    indptr = np.array(indptr)
+    indices = np.array(indices, dtype=np.int)
+    data = np.array(data)
 
     if n_features is not None:
         shape = (indptr.shape[0] - 1, n_features)
     else:
         shape = None    # inferred
 
-    X = sp.csr_matrix((np.array(data),
-                       np.array(indices, dtype=np.int),
-                       indptr), shape)
-
-    if not multilabel:
-        labels = np.array(labels, dtype=np.double)
+    X = sp.csr_matrix((data, indices, indptr), shape)
 
     return X, labels

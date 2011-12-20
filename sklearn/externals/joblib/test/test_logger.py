@@ -17,9 +17,11 @@ import nose
 
 from ..logger import PrintTime
 
-################################################################################
+
+###############################################################################
 # Test fixtures
 env = dict()
+
 
 def setup():
     """ Test setup.
@@ -37,7 +39,7 @@ def teardown():
     shutil.rmtree(env['dir'])
 
 
-################################################################################
+###############################################################################
 # Tests
 def test_print_time():
     """ A simple smoke test for PrintTime.
@@ -55,10 +57,10 @@ def test_print_time():
         print_time('Foo')
         printed_text = sys.stderr.getvalue()
         # Use regexps to be robust to time variations
-        match = r"Foo: 0\..s, 0\.0min\nFoo: 0\..s, 0.0min\nFoo: .\..s, 0.0min\n"
+        match = r"Foo: 0\..s, 0\.0min\nFoo: 0\..s, 0.0min\nFoo: " + \
+                r".\..s, 0.0min\n"
         if not re.match(match, printed_text):
             raise AssertionError('Excepted %s, got %s' %
                                     (match, printed_text))
     finally:
         sys.stderr = orig_stderr
-
