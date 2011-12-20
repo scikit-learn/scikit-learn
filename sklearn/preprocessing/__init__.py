@@ -15,8 +15,9 @@ import scipy.sparse as sp
 from ..utils import check_arrays
 from ..base import BaseEstimator, TransformerMixin
 
-from ._preprocessing import inplace_csr_row_normalize_l1
-from ._preprocessing import inplace_csr_row_normalize_l2
+from ..utils.sparsefuncs import inplace_csr_row_normalize_l1
+from ..utils.sparsefuncs import inplace_csr_row_normalize_l2
+#from ..utils.sparsefuncs import inplace_csr_column_normalize_l2
 
 
 def _mean_and_std(X, axis=0, with_mean=True, with_std=True):
@@ -71,6 +72,19 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
         copy (if the input is already a numpy array or a scipy.sparse
         CSR matrix and if axis is 1).
 
+    Note
+    ----
+    This implementation will refuse to center scipy.sparse matrices
+    since it would make it non-sparse and would potentially crash the
+    program with memory exhaustion problems.
+
+    Instead the caller is expected to either set explicitly
+    `with_mean=False` (in that case, only variance scaling will be
+    performed on the features of the CSR matrix) or to pass `X.toarray()`
+    if he/she expects the materialized dense array to fit in memory.
+
+    To avoid memory copy the caller should pass a CSR matrix.
+
     See also
     --------
     :class:`sklearn.preprocessing.Scaler` to perform centering and
@@ -78,21 +92,28 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     :class:`sklearn.pipeline.Pipeline`)
     """
     if sp.issparse(X):
-        raise NotImplementedError(
-            "Scaling is not yet implement for sparse matrices")
-    X = np.asarray(X)
-    if X.dtype.kind in ['i', 'u']:
-        warnings.warn('Data of type %s in scale. '
-                      'Converting to float is recommended' % X.dtype)
-    mean_, std_ = _mean_and_std(
-        X, axis, with_mean=with_mean, with_std=with_std)
-    if copy:
-        X = X.copy()
-    Xr = np.rollaxis(X, axis)
-    if with_mean:
-        Xr -= mean_
-    if with_std:
-        Xr /= std_
+        X = X.tocsr()
+        if with_mean:
+            raise ValueError(
+                "Cannot center sparse matrices: pass `with_mean=False` instead"
+                " See docstring for motivation and alternatives.")
+        if copy:
+            X = X.copy()
+        #inplace_csr_column_normalize_l2(X)
+    else:
+        X = np.asarray(X)
+        if X.dtype.kind in ['i', 'u']:
+            warnings.warn('Data of type %s in scale. '
+                          'Converting to float is recommended' % X.dtype)
+        mean_, std_ = _mean_and_std(
+            X, axis, with_mean=with_mean, with_std=with_std)
+        if copy:
+            X = X.copy()
+        Xr = np.rollaxis(X, axis)
+        if with_mean:
+            Xr -= mean_
+        if with_std:
+            Xr /= std_
     return X
 
 
