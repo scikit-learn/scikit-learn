@@ -14,7 +14,6 @@ import numpy as np
 from operator import itemgetter
 
 
-# Python < 2.6 does not have product
 try:
     Counter = collections.Counter
 except AttributeError:
