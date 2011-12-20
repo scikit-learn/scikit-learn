@@ -3,6 +3,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_array_equal
 from nose.tools import assert_equal
 from nose.tools import assert_true
 from nose.tools import assert_raises
@@ -40,6 +41,27 @@ def test_ovr_fit_predict():
     ovr = OneVsRestClassifier(MultinomialNB())
     pred = ovr.fit(iris.data, iris.target).predict(iris.data)
     assert_true(np.mean(iris.target == pred) >= 0.65)
+
+
+def test_ovr_multilabel():
+    X = np.array([[0, 4, 5], [0, 5, 0], [3, 3, 3], [4, 0, 6], [6, 0, 0]])
+    y = [[1, 2], [1], [0, 1, 2], [0, 2], [0]]
+    Y = np.array([[0, 1, 1],
+                  [0, 1, 0],
+                  [1, 1, 1],
+                  [1, 0, 1],
+                  [1, 0, 0]])
+
+    for base_clf in (MultinomialNB(), LinearSVC()):
+        # test input as lists of tuples
+        clf = OneVsRestClassifier(base_clf).fit(X, y)
+        y_pred = clf.predict([[0, 4, 4]])[0]
+        assert_equal(set(y_pred), set([1, 2]))
+
+        # test input as label indicator matrix
+        clf = OneVsRestClassifier(base_clf).fit(X, Y)
+        y_pred = clf.predict([[0, 4, 4]])[0]
+        assert_array_equal(y_pred, [0, 1, 1])
 
 
 def test_ovr_gridsearch():

@@ -10,6 +10,7 @@ from sklearn.datasets import (load_svmlight_file, load_svmlight_files,
 
 currdir = os.path.dirname(os.path.abspath(__file__))
 datafile = os.path.join(currdir, "data", "svmlight_classification.txt")
+multifile = os.path.join(currdir, "data", "svmlight_multilabel.txt")
 invalidfile = os.path.join(currdir, "data", "svmlight_invalid.txt")
 
 
@@ -42,6 +43,11 @@ def test_load_svmlight_file():
 
     # test y
     assert_array_equal(y, [1, 2, 3])
+
+
+def test_load_svmlight_file_multilabel():
+    X, y = load_svmlight_file(multifile, multilabel=True)
+    assert_equal(y, [(0, 1), (2,), (1, 2)])
 
 
 def test_load_svmlight_files():
