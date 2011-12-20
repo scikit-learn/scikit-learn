@@ -17,7 +17,7 @@ from ..base import BaseEstimator, TransformerMixin
 
 from ..utils.sparsefuncs import inplace_csr_row_normalize_l1
 from ..utils.sparsefuncs import inplace_csr_row_normalize_l2
-#from ..utils.sparsefuncs import inplace_csr_column_normalize_l2
+from ..utils.sparsefuncs import inplace_csr_column_normalize_l2
 
 
 def _mean_and_std(X, axis=0, with_mean=True, with_std=True):
@@ -99,7 +99,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
                 " See docstring for motivation and alternatives.")
         if copy:
             X = X.copy()
-        #inplace_csr_column_normalize_l2(X)
+        inplace_csr_column_normalize_l2(X)
     else:
         X = np.asarray(X)
         if X.dtype.kind in ['i', 'u']:

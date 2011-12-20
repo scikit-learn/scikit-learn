@@ -12,7 +12,52 @@ cdef extern from "math.h":
     double sqrt(double f)
 
 ctypedef np.float64_t DOUBLE
-ctypedef np.int32_t INTEGER
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+cdef _mean_variance_axis0(unsigned int n_samples,
+                          unsigned int n_features,
+                          np.ndarray[DOUBLE, ndim=1] X_data,
+                          np.ndarray[int, ndim=1] X_indices,
+                          np.ndarray[int, ndim=1] X_indptr,
+                          np.ndarray[DOUBLE, ndim=1] means,
+                          np.ndarray[DOUBLE, ndim=1] variances):
+    """Compute the mean and variance of a CSR aling axis=0
+
+    This is the private Cython function with pre-allocated meant to be called
+    by the public functions of this module.
+    """
+
+    # the column indices for row i are stored in:
+    #    indices[indptr[i]:indices[i+1]]
+    # and their corresponding values are stored in:
+    #    data[indptr[i]:indptr[i+1]]
+    cdef unsigned int i
+    cdef unsigned int j
+    cdef unsigned int ptr
+    cdef unsigned int ind
+    cdef double diff
+
+    for i in xrange(n_samples):
+        ptr = X_indptr[i]
+
+        # we need to iterate over all features
+        # but CSR matrices do not provide O(1)
+        # access to features
+        for j in xrange(n_features):
+            ind = X_indices[ptr]
+
+            if j != ind:
+                diff = means[j]
+                variances[j] += diff * diff
+            else:
+                diff = X_data[ptr] - means[ind]
+                variances[ind] += diff * diff
+                ptr += 1
+
+    variances /= n_samples
 
 
 @cython.boundscheck(False)
@@ -37,44 +82,17 @@ def mean_variance_axis0(X):
     cdef unsigned int n_features = X.shape[1]
 
     cdef np.ndarray[DOUBLE, ndim=1] X_data = X.data
-    cdef np.ndarray[INTEGER, ndim=1] X_indices = X.indices
-    cdef np.ndarray[INTEGER, ndim=1] X_indptr = X.indptr
-
-    # the column indices for row i are stored in:
-    #    indices[indptr[i]:indices[i+1]]
-    # and their corresponding values are stored in:
-    #    data[indptr[i]:indptr[i+1]]
-    cdef unsigned int i
-    cdef unsigned int j
-    cdef unsigned int ptr
-    cdef unsigned int ind
-    cdef double diff
+    cdef np.ndarray[int, ndim=1] X_indices = X.indices
+    cdef np.ndarray[int, ndim=1] X_indptr = X.indptr
 
     # store the means in a 1d-array
-    means = np.asarray(X.mean(axis=0))[0]
+    cdef np.ndarray[DOUBLE, ndim=1] means = np.asarray(X.mean(axis=0))[0]
+    cdef np.ndarray[DOUBLE, ndim=1] variances = np.zeros_like(means)
 
-    variances = np.zeros_like(means)
-
-    for i in xrange(n_samples):
-        ptr = X_indptr[i]
-
-        # we need to iterate over all features
-        # but CSR matrices do not provide O(1)
-        # access to features
-        for j in xrange(n_features):
-            ind = X_indices[ptr]
-
-            if j != ind:
-                diff = means[j]
-                variances[j] += diff * diff
-            else:
-                diff = X_data[ptr] - means[ind]
-                variances[ind] += diff * diff
-                ptr += 1
-
-    variances /= n_samples
-
+    _mean_variance_axis0(n_samples, n_features, X_data, X_indices, X_indptr,
+                         means, variances)
     return means, variances
+
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -85,8 +103,8 @@ def inplace_csr_row_normalize_l1(X):
     cdef unsigned int n_features = X.shape[1]
 
     cdef np.ndarray[DOUBLE, ndim=1] X_data = X.data
-    cdef np.ndarray[INTEGER, ndim=1] X_indices = X.indices
-    cdef np.ndarray[INTEGER, ndim=1] X_indptr = X.indptr
+    cdef np.ndarray[int, ndim=1] X_indices = X.indices
+    cdef np.ndarray[int, ndim=1] X_indptr = X.indptr
 
     # the column indices for row i are stored in:
     #    indices[indptr[i]:indices[i+1]]
@@ -120,8 +138,8 @@ def inplace_csr_row_normalize_l2(X):
     cdef unsigned int n_features = X.shape[1]
 
     cdef np.ndarray[DOUBLE, ndim=1] X_data = X.data
-    cdef np.ndarray[INTEGER, ndim=1] X_indices = X.indices
-    cdef np.ndarray[INTEGER, ndim=1] X_indptr = X.indptr
+    cdef np.ndarray[int, ndim=1] X_indices = X.indices
+    cdef np.ndarray[int, ndim=1] X_indptr = X.indptr
 
     cdef unsigned int i
     cdef unsigned int j
@@ -142,3 +160,42 @@ def inplace_csr_row_normalize_l2(X):
 
         for j in xrange(X_indptr[i], X_indptr[i + 1]):
             X_data[j] /= sum_
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+def inplace_csr_column_normalize_l2(X):
+    """Inplace column normalize using the l2 norm
+
+    This amounts to dividing each non-zero component by the variance of the
+    feature assuming a (n_samples, n_features) shape.
+
+    Parameters
+    ----------
+    X: CSR matrix with shape (n_samples, n_features)
+        Matrix to normalize using the variance of the features.
+
+    Return
+    ------
+    variances: float array with shape (n_features,)
+    """
+    cdef unsigned int n_samples = X.shape[0]
+    cdef unsigned int n_features = X.shape[1]
+
+    cdef np.ndarray[DOUBLE, ndim=1] X_data = X.data
+    cdef np.ndarray[int, ndim=1] X_indices = X.indices
+    cdef np.ndarray[int, ndim=1] X_indptr = X.indptr
+    cdef np.ndarray[DOUBLE, ndim=1] means = np.zeros(n_features)
+    cdef np.ndarray[DOUBLE, ndim=1] variances = np.zeros(n_features)
+
+    _mean_variance_axis0(n_samples, n_features, X_data, X_indices, X_indptr,
+                         means, variances)
+
+    cdef unsigned int i, j
+    for i in xrange(n_samples):
+        for j in xrange(X_indptr[i], X_indptr[i + 1]):
+            if variances[X_indices[j]] > 0.0:
+                X_data[j] /= variances[X_indices[j]]
+
+    return variances
