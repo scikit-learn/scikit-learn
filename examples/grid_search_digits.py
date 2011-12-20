@@ -24,7 +24,7 @@ from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 from sklearn.svm import SVC
 
-################################################################################
+###############################################################################
 # Loading the Digits dataset
 digits = datasets.load_digits()
 
@@ -37,7 +37,7 @@ y = digits.target
 # split the dataset in two equal part respecting label proportions
 train, test = iter(StratifiedKFold(y, 2)).next()
 
-################################################################################
+###############################################################################
 # Set the parameters by cross-validation
 tuned_parameters = [{'kernel': ['rbf'], 'gamma': [1e-3, 1e-4],
                      'C': [1, 10, 100, 1000]},

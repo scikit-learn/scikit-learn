@@ -393,7 +393,7 @@ def completeness_score(labels_true, labels_pred):
       >>> completeness_score([0, 1, 2, 3], [0, 0, 1, 1])
       1.0
 
-    If classes members are splitted accross different clusters, the
+    If classes members are splitted across different clusters, the
     assignment cannot be complete::
 
       >>> completeness_score([0, 0, 1, 1], [0, 1, 0, 1])
@@ -473,7 +473,7 @@ def v_measure_score(labels_true, labels_pred):
       >>> v_measure_score([0, 0, 1, 1], [0, 1, 2, 3])     # doctest: +ELLIPSIS
       0.66...
 
-    If classes members are completly splitted accross different clusters,
+    If classes members are completly splitted across different clusters,
     the assignment is totally in-complete, hence the v-measure is null::
 
       >>> v_measure_score([0, 0, 0, 0], [0, 1, 2, 3])
@@ -599,7 +599,7 @@ def adjusted_mutual_info_score(labels_true, labels_pred):
       >>> adjusted_mutual_info_score([0, 0, 1, 1], [1, 1, 0, 0])
       1.0
 
-    If classes members are completly splitted accross different clusters,
+    If classes members are completly splitted across different clusters,
     the assignment is totally in-complete, hence the AMI is null::
 
       >>> adjusted_mutual_info_score([0, 0, 0, 0], [0, 1, 2, 3])
