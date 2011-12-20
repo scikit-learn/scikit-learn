@@ -310,7 +310,8 @@ class DenseBaseLibSVM(BaseLibSVM):
         X = self._compute_kernel(X)
 
         params = self._get_params()
-        del params['scale_C']
+        if 'scale_C' in params:
+            del params['scale_C']
 
         dec_func = libsvm.decision_function(
             X, self.support_, self.support_vectors_, self.n_support_,
