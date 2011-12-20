@@ -343,6 +343,9 @@ class RandomForestClassifier(ForestClassifier):
     bootstrap : boolean, optional (default=True)
         Whether bootstrap samples are used when building trees.
 
+    n_jobs : integer, optional (default=1)
+        The number of jobs to run in parallel.
+
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
@@ -421,6 +424,9 @@ class RandomForestRegressor(ForestRegressor):
 
     bootstrap : boolean, optional (default=True)
         Whether bootstrap samples are used when building trees.
+
+    n_jobs : integer, optional (default=1)
+        The number of jobs to run in parallel.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -502,6 +508,9 @@ class ExtraTreesClassifier(ForestClassifier):
     bootstrap : boolean, optional (default=False)
         Whether bootstrap samples are used when building trees.
 
+    n_jobs : integer, optional (default=1)
+        The number of jobs to run in parallel.
+
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
@@ -582,6 +591,9 @@ class ExtraTreesRegressor(ForestRegressor):
 
     bootstrap : boolean, optional (default=False)
         Whether bootstrap samples are used when building trees.
+
+    n_jobs : integer, optional (default=1)
+        The number of jobs to run in parallel.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
