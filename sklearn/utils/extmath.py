@@ -79,7 +79,7 @@ def safe_sparse_dot(a, b, dense_output=False):
         return np.dot(a, b)
 
 
-def randomized_range_finder(A, size, n_iterations, random_state=None):
+def randomized_power_iteration(A, size, n_iterations, random_state=None):
     """Computes an orthonormal matrix whose range approximates the range of A.
 
     Parameters
@@ -187,7 +187,7 @@ def fast_svd(M, k, p=None, n_iterations=0, transpose='auto', random_state=0):
         # this implementation is a bit faster with smaller shape[1]
         M = M.T
 
-    Q = randomized_range_finder(M, k+p, n_iterations, random_state)
+    Q = randomized_power_iteration(M, k+p, n_iterations, random_state)
 
     # project M to the (k + p) dimensional space using the basis vectors
     B = safe_sparse_dot(Q.T, M)

@@ -72,7 +72,7 @@ For example:
 Efficient Linear Algebra & Array Operations
 ===========================================
 
-- :func:`extmath.randomized_range_finder`: construct an orthonormal matrix
+- :func:`extmath.randomized_power_iteration`: construct an orthonormal matrix
   whose range approximates the range of the input.  This is used in
   :func:`extmath.fast_svd`, below.
 
