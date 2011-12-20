@@ -94,7 +94,7 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
         # compute a new support from the full data set mahalanobis distances
         precision = linalg.pinv(covariance)
         X_centered = X - location
-        dist = (np.dot(X_centered, precision) * X_centered).sum(1)
+        dist = (np.dot(X_centered, precision) * X_centered).sum(axis=1)
         # save old estimates values
         previous_location = location
         previous_covariance = covariance
@@ -103,11 +103,11 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
         # compute new estimates
         support = np.zeros(n_samples).astype(bool)
         support[np.argsort(dist)[:n_support]] = True
-        location = X[support].mean(0)
+        location = X[support].mean(axis=0)
         covariance = cov_computation_method(X[support])
-        det = np.log(linalg.det(covariance))
+        det = fast_logdet(covariance)
         # update remaining iterations for early stopping
-        remaining_iterations = remaining_iterations - 1
+        remaining_iterations -= 1
 
     # Check convergence
     if np.allclose(det, previous_det):
@@ -170,8 +170,8 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
       Maximum number of iterations for the c_step procedure.
       (2 is enough to be close to the final solution. "Never" exceeds 20)
 
-    See
-    ---
+    See Also
+    ---------
     `c_step` function
 
     Returns
@@ -202,7 +202,7 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
         estimates_list = n_trials
         n_trials = estimates_list[0].shape[0]
     else:
-        raise Exception('Bad \'n_trials\' parameter (wrong type)')
+        raise Exception("Bad 'n_trials' parameter (wrong type)")
 
     # compute `n_trials` location and shape estimates candidates in the subset
     all_estimates = []
@@ -284,10 +284,7 @@ def fast_mcd(X, support_fraction=None,
         X = np.reshape(X, (1, -1))
         warnings.warn("Only one sample available. " \
                           "You may want to reshape your data array")
-        n_samples = 1
-        n_features = X.size
-    else:
-        n_samples, n_features = X.shape
+    n_samples, n_features = X.shape
 
     # minimum breakdown value
     if support_fraction is None:
@@ -304,9 +301,8 @@ def fast_mcd(X, support_fraction=None,
         diff = X_sorted[n_support:] - X_sorted[:(n_samples - n_support)]
         halves_start = np.where(diff == np.min(diff))[0]
         # take the middle points' mean to get the robust location estimate
-        location = 0.5 * \
-            (X_sorted[n_support + halves_start]
-             + X_sorted[halves_start]).mean()
+        location = 0.5 * (X_sorted[n_support + halves_start]
+                          + X_sorted[halves_start]).mean()
         support = np.zeros(n_samples).astype(bool)
         support[np.argsort(np.abs(X - location), axis=0)[:n_support]] = True
         covariance = np.asarray([[np.var(X[support])]])
