@@ -87,7 +87,7 @@ subfig1.set_xlim(subfig1.get_xlim()[0], 11.)
 subfig1.set_title("Mahalanobis distances of a contaminated data set:")
 subfig1.legend(loc="upper right")
 
-emp_mahal = emp_cov.mahalanobis(X) ** (0.33)
+emp_mahal = emp_cov.mahalanobis(X - np.mean(X, 0)) ** (0.33)
 subfig2 = pl.subplot(2, 2, 3)
 subfig2.boxplot([emp_mahal[:-n_outliers], emp_mahal[-n_outliers:]], widths=.25)
 subfig2.plot(1.26 * np.ones(n_samples - n_outliers),
@@ -98,7 +98,7 @@ subfig2.axes.set_xticklabels(('inliers', 'outliers'), size=11)
 subfig2.set_ylabel(r"$\sqrt[3]{\rm{(Mahal. dist.)}}$")
 subfig2.set_title("1. from non-robust estimates\n(Maximum Likelihood)")
 
-robust_mahal = robust_cov.mahalanobis(X) ** (0.33)
+robust_mahal = robust_cov.mahalanobis(X - robust_cov.location_) ** (0.33)
 subfig3 = pl.subplot(2, 2, 4)
 subfig3.boxplot([robust_mahal[:-n_outliers], robust_mahal[-n_outliers:]],
                 widths=.25)
