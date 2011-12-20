@@ -88,6 +88,11 @@ version 0.9:
     by default instead of boolean masks. This make it more intuitive to
     use with sparse matrix data.
 
+  - Fixed an off-by-one error in the SVMlight/LibSVM file format handling;
+    files generated using ``sklearn.datasets.dump_svmlight_file`` should be
+    re-generated. (They should continue to work, but accidentally had one
+    extra column of zeros prepended.)
+
 
 .. _changes_0_9:
 
