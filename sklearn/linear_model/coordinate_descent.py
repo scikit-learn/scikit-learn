@@ -242,9 +242,12 @@ class Lasso(ElasticNet):
 
     See also
     --------
+    lars_path
+    lasso_path
     LassoLars
-    decomposition.sparse_encode
-    decomposition.sparse_encode_parallel
+    LassoCV
+    LassoLarsCV
+    sklearn.decomposition.sparse_encode
 
     Notes
     -----
@@ -330,6 +333,15 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a fortran contiguous numpy array.
+
+    See also
+    --------
+    lars_path
+    Lasso
+    LassoLars
+    LassoCV
+    LassoLarsCV
+    sklearn.decomposition.sparse_encode
     """
     return enet_path(X, y, rho=1., eps=eps, n_alphas=n_alphas, alphas=alphas,
                      precompute=precompute, Xy=Xy,
@@ -403,6 +415,11 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
     Notes
     -----
     See examples/plot_lasso_coordinate_descent_path.py for an example.
+
+    See also
+    --------
+    ElasticNet
+    ElasticNetCV
     """
     X = as_float_array(X, copy_X)
 
@@ -590,6 +607,14 @@ class LassoCV(LinearModelCV):
 
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a fortran contiguous numpy array.
+
+    See also
+    --------
+    lars_path
+    lasso_path
+    LassoLars
+    Lasso
+    LassoLarsCV
     """
     path = staticmethod(lasso_path)
     estimator = Lasso
@@ -659,11 +684,16 @@ class ElasticNetCV(LinearModelCV):
     If you are interested in controlling the L1 and L2 penalty
     separately, keep in mind that this is equivalent to::
 
-        a*L1 + b*L2
+        a * L1 + b * L2
 
     for::
 
         alpha = a + b and rho = a / (a + b)
+
+    See also
+    --------
+    enet_path
+    ElasticNet
 
     """
     path = staticmethod(enet_path)
