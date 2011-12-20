@@ -701,12 +701,13 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
     return dictionary.T
 
 
-class BaseDictionaryLearning(BaseEstimator, TransformerMixin):
-    """Dictionary learning base class"""
+class SparseCodingMixin(TransformerMixin):
+    """Sparse coding mixin"""
 
-    def __init__(self, n_atoms, transform_algorithm='omp',
-                 transform_n_nonzero_coefs=None, transform_alpha=None,
-                 split_sign=False, n_jobs=1):
+    def _set_sparse_coding_params(self, n_atoms, transform_algorithm='omp',
+                                  transform_n_nonzero_coefs=None,
+                                  transform_alpha=None, split_sign=False,
+                                  n_jobs=1):
         self.n_atoms = n_atoms
         self.transform_algorithm = transform_algorithm
         self.transform_n_nonzero_coefs = transform_n_nonzero_coefs
@@ -751,7 +752,7 @@ class BaseDictionaryLearning(BaseEstimator, TransformerMixin):
         return code
 
 
-class SparseCoder(BaseDictionaryLearning):
+class SparseCoder(BaseEstimator, SparseCodingMixin):
     """Sparse coding
 
     Finds a sparse representation of data against a fixed, precomputed
@@ -818,12 +819,10 @@ class SparseCoder(BaseDictionaryLearning):
     def __init__(self, dictionary, transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,
                  split_sign=False, n_jobs=1):
-        self.n_atoms = dictionary.shape[0]
-        self.transform_algorithm = transform_algorithm
-        self.transform_n_nonzero_coefs = transform_n_nonzero_coefs
-        self.transform_alpha = transform_alpha
-        self.split_sign = split_sign
-        self.n_jobs = n_jobs
+        self._set_sparse_coding_params(dictionary.shape[0],
+                                       transform_algorithm,
+                                       transform_n_nonzero_coefs,
+                                       transform_alpha, split_sign, n_jobs)
         self.components_ = dictionary
 
     def fit(self, X, y=None):
@@ -835,7 +834,7 @@ class SparseCoder(BaseDictionaryLearning):
         return self
 
 
-class DictionaryLearning(BaseDictionaryLearning):
+class DictionaryLearning(BaseEstimator, SparseCodingMixin):
     """Dictionary learning
 
     Finds a dictionary (a set of atoms) that can best be used to represent data
@@ -939,9 +938,9 @@ class DictionaryLearning(BaseDictionaryLearning):
                  transform_n_nonzero_coefs=None, transform_alpha=None,
                  n_jobs=1, code_init=None, dict_init=None, verbose=False,
                  split_sign=False, random_state=None):
-        BaseDictionaryLearning.__init__(self, n_atoms, transform_algorithm,
-                 transform_n_nonzero_coefs, transform_alpha, split_sign,
-                 n_jobs)
+        self._set_sparse_coding_params(n_atoms, transform_algorithm,
+                                       transform_n_nonzero_coefs,
+                                       transform_alpha, split_sign, n_jobs)
         self.alpha = alpha
         self.max_iter = max_iter
         self.tol = tol
@@ -980,7 +979,7 @@ class DictionaryLearning(BaseDictionaryLearning):
         return self
 
 
-class MiniBatchDictionaryLearning(BaseDictionaryLearning):
+class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
     """Mini-batch dictionary learning
 
     Finds a dictionary (a set of atoms) that can best be used to represent data
@@ -1082,9 +1081,10 @@ class MiniBatchDictionaryLearning(BaseDictionaryLearning):
                  shuffle=True, dict_init=None, transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,
                  verbose=False, split_sign=False, random_state=None):
-        BaseDictionaryLearning.__init__(self, n_atoms, transform_algorithm,
-                 transform_n_nonzero_coefs, transform_alpha, split_sign,
-                 n_jobs)
+        
+        self._set_sparse_coding_params(n_atoms, transform_algorithm,
+                                       transform_n_nonzero_coefs,
+                                       transform_alpha, split_sign, n_jobs)
         self.alpha = alpha
         self.n_iter = n_iter
         self.fit_algorithm = fit_algorithm
