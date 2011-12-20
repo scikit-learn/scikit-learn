@@ -26,6 +26,7 @@ from optparse import OptionParser
 import sys
 from time import time
 
+from sklearn.cross_validation import StratifiedKFold
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction.text import Vectorizer
 from sklearn.naive_bayes import BernoulliNB, SemisupervisedNB, MultinomialNB
@@ -44,7 +45,7 @@ op.add_option("--confusion_matrix",
               help="Print the confusion matrix.")
 op.add_option("--labeled",
               action="store", type="float", dest="labeled_fraction",
-              help="Fraction of labels to retain.")
+              help="Fraction of labels to retain (roughly).")
 op.add_option("--report",
               action="store_true", dest="print_report",
               help="Print a detailed classification report.")
@@ -63,11 +64,14 @@ op.print_help()
 print
 
 
-def split_indices(n, fraction):
-    """Randomly split indices"""
-    k = int(fraction * n)
-    a = rng.permutation(np.arange(n))
-    return a[:k], a[k:]
+def split_indices(y, fraction):
+    """Random stratified split of indices into y
+    
+    Returns (unlabeled, labeled)
+    """
+    k = int(round(1 / fraction))
+    folds = list(StratifiedKFold(y, k))
+    return folds[rng.randint(k)]
 
 
 def trim(s):
@@ -131,7 +135,7 @@ print "done in %fs" % (time() - t0)
 print "n_samples: %d, n_features: %d" % X_test.shape
 print
 
-labeled, unlabeled = split_indices(len(y_train), fraction)
+unlabeled, labeled = split_indices(y_train, fraction)
 print "Removing labels of %d random training documents" % len(unlabeled)
 print
 X_labeled = X_train[labeled]

@@ -497,7 +497,7 @@ class SemisupervisedNB(BaseNB):
         Whether to print progress information.
     """
 
-    def __init__(self, estimator, n_iter=10, relabel_all=True, tol=1e-3,
+    def __init__(self, estimator, n_iter=10, relabel_all=True, tol=1e-5,
                  verbose=False):
         self.estimator = estimator
         self.n_iter = n_iter
