@@ -57,7 +57,6 @@ Details on the method can be found in [RR2007]_.
 .. topic:: Examples:
 
     * :ref:`example_plot_kernel_approximation.py`
-    * :ref:`example_svm_plot_approximate_kernel_decision.py`
 
 
 Additive Chi Squared Kernel
