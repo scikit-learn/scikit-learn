@@ -264,15 +264,15 @@ dictionary fixed, and then updating the dictionary to best fit the sparse code.
                 0 \leq k < n_{atoms}
 
 
-.. |pca_img| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_2.png
+.. |pca_img2| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_2.png
    :target: ../auto_examples/decomposition/plot_faces_decomposition.html
    :scale: 60%
 
-.. |dict_img| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_6.png
+.. |dict_img2| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_6.png
    :target: ../auto_examples/decomposition/plot_faces_decomposition.html
    :scale: 60%
 
-.. centered:: |pca_img| |dict_img|
+.. centered:: |pca_img2| |dict_img2|
 
 
 After using such a procedure to fit the dictionary, the fitted object can be
@@ -375,15 +375,15 @@ It is classically used to separate mixed signals (a problem known as
 ICA can also be used as yet another non linear decomposition that finds
 components with some sparsity:
 
-.. |pca_img| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_2.png
+.. |pca_img3| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_2.png
     :target: ../auto_examples/decomposition/plot_faces_decomposition.html
     :scale: 60%
 
-.. |ica_img| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_4.png
+.. |ica_img3| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_4.png
     :target: ../auto_examples/decomposition/plot_faces_decomposition.html
     :scale: 60%
 
-.. centered:: |pca_img| |ica_img|
+.. centered:: |pca_img3| |ica_img3|
 
 .. topic:: Examples:
 
@@ -412,15 +412,15 @@ resulting in interpretable models. The following example displays 16
 sparse components found by :class:`NMF` from the images in the Olivetti
 faces dataset, in comparison with the PCA eigenfaces.
 
-.. |pca_img| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_2.png
+.. |pca_img4| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_2.png
     :target: ../auto_examples/decomposition/plot_faces_decomposition.html
     :scale: 60%
 
-.. |nmf_img| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_3.png
+.. |nmf_img4| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_3.png
     :target: ../auto_examples/decomposition/plot_faces_decomposition.html
     :scale: 60%
 
-.. centered:: |pca_img| |nmf_img|
+.. centered:: |pca_img4| |nmf_img4|
 
 
 The :attr:`init` attribute determines the initialization method applied, which
