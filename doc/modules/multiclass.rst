@@ -14,8 +14,8 @@ This module implements multiclass and multilabel learning algorithms:
 
 Multiclass classification means classification with more than two classes.
 Multilabel classification is a different task, where a classifier is used to
-predict multiple target labels per instance; i.e., the set of target classes
-is not assumed to be disjoint as in ordinary (binary or multiclass)
+predict a set of target labels for each instance; i.e., the set of target
+classes is not assumed to be disjoint as in ordinary (binary or multiclass)
 classification. This is also called any-of classification.
 
 The estimators provided in this module are meta-estimators: they require a base
@@ -32,9 +32,15 @@ improves.
     multiclass classification out-of-the-box. Below is a summary of the
     classifiers supported in scikit-learn grouped by the strategy used.
 
-    - Inherently multiclass: Naive Bayes, LDA.
-    - One-Vs-One: SVC.
-    - One-Vs-All: LinearSVC, LogisticRegression, SGDClassifier, RidgeClassifier.
+    - Inherently multiclass: Naive Bayes, :class:`LDA`.
+    - One-Vs-One: :class:`SVC`.
+    - One-Vs-All: :class:`LinearSVC`, :class:`LogisticRegression`,
+      :class:`SGDClassifier`, :class:`RidgeClassifier`.
+
+.. note::
+
+    Multi-label learning is experimental; it works, but no evaluation metrics
+    are implemented for it.
 
 
 One-Vs-The-Rest
