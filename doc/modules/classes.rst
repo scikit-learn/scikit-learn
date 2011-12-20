@@ -516,6 +516,8 @@ For sparse data
    :no-members:
    :no-inherited-members:
 
+**User guide:** See the :ref:`kernel_approximation` section for further details.
+
 .. currentmodule:: sklearn
 
 .. autosummary::
