@@ -36,6 +36,7 @@ The module structure is the following:
 import numpy as np
 
 from ..base import ClassifierMixin, RegressorMixin
+from ..externals.joblib import Parallel, delayed
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor, \
                    ExtraTreeClassifier, ExtraTreeRegressor
 from ..utils import check_random_state
@@ -48,6 +49,42 @@ __all__ = ["RandomForestClassifier",
            "ExtraTreesRegressor"]
 
 
+def _parallel_build_tree(forest, X, y, sample_mask, X_argsorted):
+    tree = forest._make_estimator(append=False)
+
+    if forest.bootstrap:
+        n_samples = X.shape[0]
+        indices = forest.random_state.randint(0, n_samples, n_samples)
+        tree.fit(X[indices], y[indices],
+                 sample_mask=sample_mask, X_argsorted=X_argsorted)
+
+    else:
+        tree.fit(X, y,
+                 sample_mask=sample_mask, X_argsorted=X_argsorted)
+
+    return tree
+
+def _parallel_predict_proba(tree, X, n_classes):
+    p = np.zeros((X.shape[0], n_classes))
+
+    if n_classes == tree.n_classes_:
+        p += tree.predict_proba(X)
+
+    else:
+        proba = tree.predict_proba(X)
+
+        for j, c in enumerate(tree.classes_):
+            p[:, c] += proba[:, j]
+
+    return p
+
+def _parallel_predict_regr(tree, X):
+    return tree.predict(X)
+
+def _parallel_compute_importances(tree):
+    return tree.feature_importances()
+
+
 class Forest(BaseEnsemble):
     """Base class for forests of trees.
 
@@ -58,6 +95,7 @@ class Forest(BaseEnsemble):
                        n_estimators=10,
                        estimator_params=[],
                        bootstrap=False,
+                       n_jobs=1,
                        random_state=None):
         super(Forest, self).__init__(
             base_estimator=base_estimator,
@@ -65,6 +103,7 @@ class Forest(BaseEnsemble):
             estimator_params=estimator_params)
 
         self.bootstrap = bootstrap
+        self.n_jobs = n_jobs
         self.random_state = check_random_state(random_state)
 
     def fit(self, X, y):
@@ -88,27 +127,23 @@ class Forest(BaseEnsemble):
         X = np.atleast_2d(X)
         y = np.atleast_1d(y)
 
-        sample_mask = np.ones((X.shape[0],), dtype=np.bool)
-        X_argsorted = np.asfortranarray(
-            np.argsort(X.T, axis=1).astype(np.int32).T)
+        if self.bootstrap:
+            sample_mask = None
+            X_argsorted = None
+
+        else:
+            sample_mask = np.ones((X.shape[0],), dtype=np.bool)
+            X_argsorted = np.asfortranarray(
+                np.argsort(X.T, axis=1).astype(np.int32).T)
 
         if isinstance(self.base_estimator, ClassifierMixin):
             self.classes_ = np.unique(y)
             self.n_classes_ = len(self.classes_)
             y = np.searchsorted(self.classes_, y)
 
-        for i in xrange(self.n_estimators):
-            tree = self._make_estimator()
-
-            if self.bootstrap:
-                n_samples = X.shape[0]
-                indices = self.random_state.randint(0, n_samples, n_samples)
-                tree.fit(X[indices], y[indices],
-                         sample_mask=None, X_argsorted=None)
-
-            else:
-                tree.fit(X, y,
-                         sample_mask=sample_mask, X_argsorted=X_argsorted)
+        self.estimators_ = Parallel(n_jobs=self.n_jobs)(
+            delayed(_parallel_build_tree)(self, X, y, sample_mask, X_argsorted)
+                for i in xrange(self.n_estimators))
 
         return self
 
@@ -120,12 +155,11 @@ class Forest(BaseEnsemble):
         importances : array of shape = [n_features]
             The feature importances.
         """
-        importances = np.zeros(self.estimators_[0].n_features_)
+        all_importances = Parallel(n_jobs=self.n_jobs)(
+            delayed(_parallel_compute_importances)(self[i])
+                for i in xrange(self.n_estimators))
 
-        for tree in self.estimators_:
-            importances += tree.feature_importances()
-
-        importances /= self.n_estimators
+        importances = sum(all_importances) / self.n_estimators
 
         return importances
 
@@ -140,12 +174,14 @@ class ForestClassifier(Forest, ClassifierMixin):
                        n_estimators=10,
                        estimator_params=[],
                        bootstrap=False,
+                       n_jobs=1,
                        random_state=None):
         super(ForestClassifier, self).__init__(
             base_estimator,
             n_estimators=n_estimators,
             estimator_params=estimator_params,
             bootstrap=bootstrap,
+            n_jobs=n_jobs,
             random_state=random_state)
 
     def predict(self, X):
@@ -185,19 +221,12 @@ class ForestClassifier(Forest, ClassifierMixin):
             ordered by arithmetical order.
         """
         X = np.atleast_2d(X)
-        p = np.zeros((X.shape[0], self.n_classes_))
 
-        for tree in self.estimators_:
-            if self.n_classes_ == tree.n_classes_:
-                p += tree.predict_proba(X)
+        all_p = Parallel(n_jobs=self.n_jobs)(
+            delayed(_parallel_predict_proba)(self[i], X, self.n_classes_)
+                for i in xrange(self.n_estimators))
 
-            else:
-                proba = tree.predict_proba(X)
-
-                for j, c in enumerate(tree.classes_):
-                    p[:, c] += proba[:, j]
-
-        p /= self.n_estimators
+        p = sum(all_p) / self.n_estimators
 
         return p
 
@@ -231,12 +260,14 @@ class ForestRegressor(Forest, RegressorMixin):
                        n_estimators=10,
                        estimator_params=[],
                        bootstrap=False,
+                       n_jobs=1,
                        random_state=None):
         super(ForestRegressor, self).__init__(
             base_estimator,
             n_estimators=n_estimators,
             estimator_params=estimator_params,
             bootstrap=bootstrap,
+            n_jobs=n_jobs,
             random_state=random_state)
 
     def predict(self, X):
@@ -256,12 +287,12 @@ class ForestRegressor(Forest, RegressorMixin):
             The predicted values.
         """
         X = np.atleast_2d(X)
-        y_hat = np.zeros(X.shape[0])
 
-        for tree in self.estimators_:
-            y_hat += tree.predict(X)
+        all_y_hat = Parallel(n_jobs=self.n_jobs)(
+            delayed(_parallel_predict_regr)(self[i], X)
+                for i in xrange(self.n_estimators))
 
-        y_hat /= self.n_estimators
+        y_hat = sum(all_y_hat) / self.n_estimators
 
         return y_hat
 
@@ -327,6 +358,7 @@ class RandomForestClassifier(ForestClassifier):
                        min_density=0.1,
                        max_features=None,
                        bootstrap=True,
+                       n_jobs=1,
                        random_state=None):
         super(RandomForestClassifier, self).__init__(
             base_estimator=DecisionTreeClassifier(),
@@ -334,6 +366,7 @@ class RandomForestClassifier(ForestClassifier):
             estimator_params=("criterion", "max_depth", "min_split",
                               "min_density", "max_features", "random_state"),
             bootstrap=bootstrap,
+            n_jobs=n_jobs,
             random_state=random_state)
 
         self.criterion = criterion
@@ -404,6 +437,7 @@ class RandomForestRegressor(ForestRegressor):
                        min_density=0.1,
                        max_features=None,
                        bootstrap=True,
+                       n_jobs=1,
                        random_state=None):
         super(RandomForestRegressor, self).__init__(
             base_estimator=DecisionTreeRegressor(),
@@ -411,6 +445,7 @@ class RandomForestRegressor(ForestRegressor):
             estimator_params=("criterion", "max_depth", "min_split",
                               "min_density", "max_features", "random_state"),
             bootstrap=bootstrap,
+            n_jobs=n_jobs,
             random_state=random_state)
 
         self.criterion = criterion
@@ -483,6 +518,7 @@ class ExtraTreesClassifier(ForestClassifier):
                        min_density=0.1,
                        max_features=None,
                        bootstrap=False,
+                       n_jobs=1,
                        random_state=None):
         super(ExtraTreesClassifier, self).__init__(
             base_estimator=ExtraTreeClassifier(),
@@ -490,6 +526,7 @@ class ExtraTreesClassifier(ForestClassifier):
             estimator_params=("criterion", "max_depth", "min_split",
                               "min_density", "max_features", "random_state"),
             bootstrap=bootstrap,
+            n_jobs=n_jobs,
             random_state=random_state)
 
         self.criterion = criterion
@@ -562,6 +599,7 @@ class ExtraTreesRegressor(ForestRegressor):
                        min_density=0.1,
                        max_features=None,
                        bootstrap=False,
+                       n_jobs=1,
                        random_state=None):
         super(ExtraTreesRegressor, self).__init__(
             base_estimator=ExtraTreeRegressor(),
@@ -569,6 +607,7 @@ class ExtraTreesRegressor(ForestRegressor):
             estimator_params=("criterion", "max_depth", "min_split",
                               "min_density", "max_features", "random_state"),
             bootstrap=bootstrap,
+            n_jobs=n_jobs,
             random_state=random_state)
 
         self.criterion = criterion
