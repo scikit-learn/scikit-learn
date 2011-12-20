@@ -30,7 +30,7 @@ np.random.seed(0)
 batch_size = 45
 centers = [[1, 1], [-1, -1], [1, -1]]
 n_clusters = len(centers)
-X, labels_true = make_blobs(n_samples=1200, centers=centers, cluster_std=0.7)
+X, labels_true = make_blobs(n_samples=3000, centers=centers, cluster_std=0.7)
 
 ##############################################################################
 # Compute clustering with Means
@@ -83,7 +83,8 @@ for k, col in zip(range(n_clusters), colors):
 ax.set_title('KMeans')
 ax.set_xticks(())
 ax.set_yticks(())
-pl.text(-3.5, 2.7,  'train time: %.2fs' % t_batch)
+pl.text(-3.5, 2.7,  'train time: %.2fs\ninertia: %f' % (
+    t_batch, k_means.inertia_))
 
 # MiniBatchKMeans
 ax = fig.add_subplot(1, 3, 2)
@@ -97,7 +98,8 @@ for k, col in zip(range(n_clusters), colors):
 ax.set_title('MiniBatchKMeans')
 ax.set_xticks(())
 ax.set_yticks(())
-pl.text(-3.5, 2.7,  'train time: %.2fs' % t_mini_batch)
+pl.text(-3.5, 2.7, 'train time: %.2fs\ninertia: %f' %
+        (t_mini_batch, mbk.inertia_))
 
 # Initialise the different array to all False
 different = (mbk_means_labels == 4)
