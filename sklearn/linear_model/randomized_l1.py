@@ -1,13 +1,15 @@
 """
-Randomized Lasso: feature selection based on Lasso
+Randomized Lasso/Logistic: feature selection based on Lasso and
+sparse Logistic Regression
 """
 
-# Author: Gael Varoquaux
+# Author: Gael Varoquaux, Alexandre Gramfort
 #
 # License: BSD Style.
 
 import numpy as np
 from scipy.sparse import issparse
+from scipy.interpolate import interp1d
 
 from .base import center_data
 from ..base import TransformerMixin
@@ -27,7 +29,11 @@ def _resample_model(estimator_func, X, y, a=.5, n_resampling=200,
     random_state = check_random_state(random_state)
     # We are generating 1 - weights, and not weights
     n_samples, n_features = X.shape
-    a = 1 - a
+
+    if not (0 < a < 1):
+        raise ValueError("Parameter 'a' should be between 0 and 1.")
+
+    a = 1. - a
     scores_ = np.zeros(n_features)
     for active_set in Parallel(n_jobs=n_jobs, verbose=verbose,
                                pre_dispatch=pre_dispatch)(
@@ -53,28 +59,12 @@ class BaseRandomizedLinearModel(TransformerMixin):
 
     _center_data = staticmethod(center_data)
 
-    def __init__(self, sample_fraction=.75, n_resampling=200,
-                 selection_threshold=.25, fit_intercept=True, verbose=False,
-                 normalize=True, random_state=None, n_jobs=1,
-                 pre_dispatch='3*n_jobs',
-                 memory=Memory(cachedir=None, verbose=0)):
-        self.sample_fraction = sample_fraction
-        self.n_resampling = n_resampling
-        self.fit_intercept = fit_intercept
-        self.verbose = verbose
-        self.normalize = normalize
-        self.random_state = random_state
-        self.n_jobs = n_jobs
-        self.selection_threshold = selection_threshold
-        self.pre_dispatch = pre_dispatch
-        self.memory = memory
-
     def fit(self, X, y):
         """Fit the model using X, y as training data.
 
         parameters
         ----------
-        x : array-like, shape = [n_samples, n_features]
+        X : array-like, shape = [n_samples, n_features]
             training data.
 
         y : array-like, shape = [n_samples]
@@ -252,7 +242,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
     ----------
     Stability selection
     Nicolai Meinshausen, Peter Buhlmann
-    Journal of the Royal Statistical Society: Series B (Statistical Methodology)
+    Journal of the Royal Statistical Society: Series B
     Volume 72, Issue 4, pages 417-473, September 2010
     DOI: 10.1111/j.1467-9868.2010.00740.x
 
@@ -305,7 +295,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
 # Randomized logistic: classification settings
 
 def _randomized_logistic(X, y, weights, mask, C=1., verbose=False,
-                      fit_intercept=True, tol=1e-3):
+                         fit_intercept=True, tol=1e-3):
     X = X[mask]
     y = y[mask]
     X = (1 - weights) * X
@@ -352,3 +342,71 @@ class RandomizedLogistic(BaseRandomizedLinearModel):
         X, _, Xmean, _, X_std = center_data(X, y, fit_intercept,
                                                  normalize=normalize)
         return X, y, Xmean, y, X_std
+
+
+###############################################################################
+# Stability paths
+
+def lasso_stability_path(X, y, a=0.5, random_state=None, n_resampling=200,
+                         n_grid=100):
+    """Stabiliy path based on randomized Lasso estimates
+
+    Parameters
+    ----------
+    X : array-like, shape = [n_samples, n_features]
+        training data.
+
+    y : array-like, shape = [n_samples]
+        target values.
+
+    a : float
+        The feature scaling parameter. Should be between 0 and 1.
+
+    random_state: integer or numpy.RandomState, optional
+        The generator used to randomize the design.
+
+    n_resampling : int
+        Number of randomized models.
+
+    n_grid : int
+        Number of grid points. The path is linearly reinterpolated
+        on a grid between 0 and 1 before computing the scores.
+
+    Returns
+    -------
+    coefs_grid : array, shape = [n_grid]
+        The grid points between 0 and 1.
+
+    scores_path : array, shape = [n_features, n_grid]
+        The scores for each feature along the path.
+
+    Notes
+    -----
+    See examples/linear_model/plot_randomize_lasso.py for an example.
+
+    XXX : todo make it run in parallel
+    """
+    rng = check_random_state(random_state)
+
+    if not (0 < a < 1):
+        raise ValueError("Parameter 'a' should be between 0 and 1.")
+
+    n_resampling = 200
+    coef_grid = np.linspace(0, 1, n_grid)
+    n_samples, n_features = X.shape
+    scores_path = np.zeros((n_features, n_grid))
+
+    for k in xrange(n_resampling):
+        weights = 1. - a * rng.random_integers(0, 1, size=(n_features,))
+        X_r = X * weights[np.newaxis, :]
+        alphas, _, coefs = lars_path(X_r, y, method='lasso', verbose=False)
+
+        xx = np.sum(np.abs(coefs.T), axis=1)
+        xx /= xx[-1]
+
+        interpolator = interp1d(xx, coefs)
+        coefs_grid = interpolator(coef_grid)
+        scores_path += (coefs_grid != 0.0)
+
+    scores_path /= n_resampling
+    return coef_grid, scores_path
