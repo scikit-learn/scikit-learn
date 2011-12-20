@@ -37,16 +37,15 @@ def test_20news():
 def test_20news_tfidf():
     # This test is slow.
     raise SkipTest
-    categories = ['alt.atheism', 'talk.religion.misc']
-    try:
-        X_train, y_train, X_test, y_test = \
-            datasets.fetch_20newsgroups_tfidf(download_if_missing=False,
-                                              categories=categories,
-                                              shuffle=False)
-    except IOError:
-        raise SkipTest("Download 20 newsgroups to run this test")
 
-    assert_equal(X_train.shape, (857, 16739))
-    assert_equal(y_train.shape[0], 857)
-    assert_equal(X_test.shape, (570, 16739))
-    assert_equal(y_test.shape[0], 570)
+    bunch = datasets.fetch_20newsgroups_tfidf(subset="train")
+    assert_equal(bunch.data.shape, (11314, 107130))
+    assert_equal(bunch.target.shape[0], 11314)
+
+    bunch = datasets.fetch_20newsgroups_tfidf(subset="test")
+    assert_equal(bunch.data.shape, (7532, 107130))
+    assert_equal(bunch.target.shape[0], 7532)
+
+    bunch = datasets.fetch_20newsgroups_tfidf(subset="all")
+    assert_equal(bunch.data.shape, (11314 + 7532, 107130))
+    assert_equal(bunch.target.shape[0], 11314 + 7532)
