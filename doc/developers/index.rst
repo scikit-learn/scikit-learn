@@ -1,3 +1,9 @@
+.. toctree::
+   :numbered:
+   index.rst
+   performance.rst
+   utilities.rst
+
 ============
 Contributing
 ============
