@@ -215,6 +215,9 @@ def fetch_20newsgroups_tfidf(subset="train", data_home=None):
     -------
 
     bunch : Bunch object
+        bunch.data: sparse matrix, shape [n_samples, n_features]
+        bunch.target: array, shape [n_samples]
+        bunch.target_names: list, length [n_classes]
     """
     def _vectorize(data_train, data_test):
         vectorizer = Vectorizer()
