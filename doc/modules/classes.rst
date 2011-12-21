@@ -872,6 +872,8 @@ Low-level methods
    :no-members:
    :no-inherited-members:
 
+**Developer guide:** See the :ref:`developers-utils` page for further details.
+
 .. currentmodule:: sklearn
 
 .. autosummary::

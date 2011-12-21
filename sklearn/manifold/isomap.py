@@ -6,7 +6,7 @@
 import numpy as np
 from ..base import BaseEstimator
 from ..neighbors import BallTree, kneighbors_graph
-from ..utils.graph_shortest_path import graph_shortest_path
+from ..utils.graph import graph_shortest_path
 from ..decomposition import KernelPCA
 from ..preprocessing import KernelCenterer
 
