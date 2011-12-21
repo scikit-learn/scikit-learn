@@ -149,7 +149,7 @@ class DPGMM(GMM):
     n_components: int, optional
         Number of mixture components. Defaults to 1.
 
-    cvtype: string (read-only), optional
+    covariance_type: string (read-only), optional
         String describing the type of covariance parameters to
         use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
         Defaults to 'diag'.
@@ -167,7 +167,7 @@ class DPGMM(GMM):
 
     Attributes
     ----------
-    cvtype : string (read-only)
+    covariance_type : string (read-only)
         String describing the type of covariance parameters used by
         the DP-GMM.  Must be one of 'spherical', 'tied', 'diag', 'full'.
 
@@ -182,7 +182,7 @@ class DPGMM(GMM):
 
     precisions : array
         Precision (inverse covariance) parameters for each mixture
-        component.  The shape depends on `cvtype`::
+        component.  The shape depends on `covariance_type`::
             (`n_components`,)                             if 'spherical',
             (`n_features`, `n_features`)              if 'tied',
             (`n_components`, `n_features`)                if 'diag',
@@ -217,24 +217,24 @@ class DPGMM(GMM):
 
     """
 
-    def __init__(self, n_components=1, cvtype='diag', alpha=1.0,
+    def __init__(self, n_components=1, covariance_type='diag', alpha=1.0,
                  random_state=None, thresh=1e-2, verbose=False,
                  min_covar=None):
         self.alpha = alpha
         self.verbose = verbose
-        super(DPGMM, self).__init__(n_components, cvtype,
+        super(DPGMM, self).__init__(n_components, covariance_type,
                                     random_state=random_state,
                                     thresh=thresh, min_covar=min_covar)
 
     def _get_precisions(self):
         """Return precisions as a full matrix."""
-        if self.cvtype == 'full':
+        if self.covariance_type == 'full':
             return self.precs_
-        elif self.cvtype == 'diag':
+        elif self.covariance_type == 'diag':
             return [np.diag(cov) for cov in self.precs_]
-        elif self.cvtype == 'tied':
+        elif self.covariance_type == 'tied':
             return [self.precs_] * self.n_components
-        elif self.cvtype == 'spherical':
+        elif self.covariance_type == 'spherical':
             return [np.eye(self.means.shape[1]) * f for f in self.precs_]
 
     def _get_covars(self):
@@ -267,7 +267,7 @@ class DPGMM(GMM):
         -------
         logprob : array_like, shape (n_samples,)
             Log probabilities of each data point in X
-        posteriors: array_like, shape (n_samples, n_components)
+        responsibilities: array_like, shape (n_samples, n_components)
             Posterior probabilities of each mixture component for each
             observation
         """
@@ -288,10 +288,10 @@ class DPGMM(GMM):
         del dgamma1, dgamma2, sd
 
         try:
-            _bound_state_loglik = _BOUND_STATE_LOGLIK_DICT[self.cvtype]
+            _bound_state_loglik = _BOUND_STATE_LOGLIK_DICT[self.covariance_type]
         except KeyError:
             raise NotImplementedError("This ctype is not implemented: %s"
-                                      % self.cvtype)
+                                      % self.covariance_type)
 
         p = _bound_state_loglik(X, self._initial_bound,
                         self._bound_prec, self.precs_, self.means_)
@@ -313,13 +313,13 @@ class DPGMM(GMM):
         """Update the variational distributions for the means"""
         n_features = X.shape[1]
         for k in xrange(self.n_components):
-            if self.cvtype == 'spherical' or self.cvtype == 'diag':
+            if self.covariance_type == 'spherical' or self.covariance_type == 'diag':
                 num = np.sum(z.T[k].reshape((-1, 1)) * X, axis=0)
                 num *= self.precs_[k]
                 den = 1. + self.precs_[k] * np.sum(z.T[k])
                 self.means_[k] = num / den
-            elif self.cvtype == 'tied' or self.cvtype == 'full':
-                if self.cvtype == 'tied':
+            elif self.covariance_type == 'tied' or self.covariance_type == 'full':
+                if self.covariance_type == 'tied':
                     cov = self.precs_
                 else:
                     cov = self.precs_[k]
@@ -331,7 +331,7 @@ class DPGMM(GMM):
     def _update_precisions(self, X, z):
         """Update the variational distributions for the precisions"""
         n_features = X.shape[1]
-        if self.cvtype == 'spherical':
+        if self.covariance_type == 'spherical':
             self._a = 0.5 * n_features * np.sum(z, axis=0)
             for k in xrange(self.n_components):
                 # XXX: how to avoid this huge temporary matrix in memory
@@ -344,7 +344,7 @@ class DPGMM(GMM):
                         digamma(self._a[k]) - np.log(self._b[k])))
             self.precs_ = self._a / self._b
 
-        elif self.cvtype == 'diag':
+        elif self.covariance_type == 'diag':
             for k in xrange(self.n_components):
                 self._a[k].fill(1. + 0.5 * np.sum(z.T[k], axis=0))
                 ddif = (X - self.means_[k])  # see comment above
@@ -357,7 +357,7 @@ class DPGMM(GMM):
                                                     - np.log(self._b[k]))
                 self._bound_prec[k] -= 0.5 * np.sum(self.precs_[k])
 
-        elif self.cvtype == 'tied':
+        elif self.covariance_type == 'tied':
             self._a = 2 + X.shape[0] + n_features
             self._B = (X.shape[0] + 1) * np.identity(n_features)
             for i in xrange(X.shape[0]):
@@ -372,7 +372,7 @@ class DPGMM(GMM):
                 self._a, self._B, self._detB, n_features)
             self._bound_prec -= 0.5 * self._a * np.trace(self._B)
 
-        elif self.cvtype == 'full':
+        elif self.covariance_type == 'full':
             for k in xrange(self.n_components):
                 T = np.sum(z.T[k])
                 self._a[k] = 2 + T + n_features
@@ -401,7 +401,7 @@ class DPGMM(GMM):
             print "Bound after updating %8s: %f" % (n, self.lower_bound(X, z))
             if end == True:
                 print "Cluster proportions:", self._gamma.T[1]
-                print "cvtype:", self._cvtype
+                print "covariance_type:", self._covariance_type
 
     def _do_mstep(self, X, z, params):
         """Maximize the variational lower bound
@@ -458,21 +458,21 @@ class DPGMM(GMM):
 
     def _bound_precisions(self):
         logprior = 0.
-        if self.cvtype == 'spherical':
+        if self.covariance_type == 'spherical':
             for k in xrange(self.n_components):
                 logprior += gammaln(self._a[k])
                 logprior -= (self._a[k] - 1) * digamma(max(0.5, self._a[k]))
                 logprior += - np.log(self._b[k]) + self._a[k] - self.precs_[k]
-        elif self.cvtype == 'diag':
+        elif self.covariance_type == 'diag':
             for k in xrange(self.n_components):
                 for d in xrange(self.means.shape[1]):
                     logprior += gammaln(self._a[k, d])
                     logprior -= (self._a[k, d] - 1) * digamma(self._a[k, d])
                     logprior -= np.log(self._b[k, d])
                     logprior += self._a[k, d] - self.precs_[k, d]
-        elif self.cvtype == 'tied':
+        elif self.covariance_type == 'tied':
             logprior += self._bound_wishart(self._a, self._B, self._detB)
-        elif self.cvtype == 'full':
+        elif self.covariance_type == 'full':
             for k in xrange(self.n_components):
                 logprior += self._bound_wishart(self._a[k],
                                                 self._B[k],
@@ -500,10 +500,10 @@ class DPGMM(GMM):
 
     def lower_bound(self, X, z):
         try:
-            _bound_state_loglik = _BOUND_STATE_LOGLIK_DICT[self.cvtype]
+            _bound_state_loglik = _BOUND_STATE_LOGLIK_DICT[self.covariance_type]
         except KeyError:
             raise NotImplementedError("This ctype is not implemented: %s"
-                                      % self.cvtype)
+                                      % self.covariance_type)
         X = np.asarray(X)
         if X.ndim == 1:
             X = X[:, np.newaxis]
@@ -568,14 +568,14 @@ class DPGMM(GMM):
             self.weights = np.tile(1.0 / self.n_components, self.n_components)
 
         if 'c' in init_params or not hasattr(self, 'covars'):
-            if self.cvtype == 'spherical':
+            if self.covariance_type == 'spherical':
                 self._a = np.ones(self.n_components)
                 self._b = np.ones(self.n_components)
                 self.precs_ = np.ones(self.n_components)
                 self._bound_prec = (0.5 * n_features *
                                      (digamma(self._a) -
                                       np.log(self._b)))
-            elif self.cvtype == 'diag':
+            elif self.covariance_type == 'diag':
                 self._a = 1 + 0.5 * n_features
                 self._a *= np.ones((self.n_components, n_features))
                 self._b = np.ones((self.n_components, n_features))
@@ -585,7 +585,7 @@ class DPGMM(GMM):
                     self._bound_prec[k] = 0.5 * np.sum(digamma(self._a[k])
                                                         - np.log(self._b[k]))
                     self._bound_prec[k] -= 0.5 * np.sum(self.precs_[k])
-            elif self.cvtype == 'tied':
+            elif self.covariance_type == 'tied':
                 self._a = 1.
                 self._B = np.identity(n_features)
                 self.precs_ = np.identity(n_features)
@@ -593,7 +593,7 @@ class DPGMM(GMM):
                 self._bound_prec = 0.5 * detlog_wishart(
                     self._a, self._B, self._detB, n_features)
                 self._bound_prec -= 0.5 * self._a * np.trace(self._B)
-            elif self.cvtype == 'full':
+            elif self.covariance_type == 'full':
                 self._a = (1 + self.n_components + X.shape[0])
                 self._a *= np.ones(self.n_components)
                 self._B = [2 * np.identity(n_features)
@@ -643,7 +643,7 @@ class VBGMM(DPGMM):
     n_components: int, optional
         Number of mixture components. Defaults to 1.
 
-    cvtype: string (read-only), optional
+    covariance_type: string (read-only), optional
         String describing the type of covariance parameters to
         use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
         Defaults to 'diag'.
@@ -658,7 +658,7 @@ class VBGMM(DPGMM):
 
     Attributes
     ----------
-    cvtype : string (read-only)
+    covariance_type : string (read-only)
         String describing the type of covariance parameters used by
         the DP-GMM.  Must be one of 'spherical', 'tied', 'diag', 'full'.
     n_features : int
@@ -671,7 +671,7 @@ class VBGMM(DPGMM):
         Mean parameters for each mixture component.
     precisions : array
         Precision (inverse covariance) parameters for each mixture
-        component.  The shape depends on `cvtype`:
+        component.  The shape depends on `covariance_type`:
             (`n_components`,)                             if 'spherical',
             (`n_features`, `n_features`)              if 'tied',
             (`n_components`, `n_features`)                if 'diag',
@@ -704,11 +704,11 @@ class VBGMM(DPGMM):
     process, fit with a variational algorithm
     """
 
-    def __init__(self, n_components=1, cvtype='diag', alpha=1.0,
+    def __init__(self, n_components=1, covariance_type='diag', alpha=1.0,
                  random_state=None, thresh=1e-2, verbose=False,
                  min_covar=None):
         super(VBGMM, self).__init__(
-            n_components, cvtype, random_state=random_state, thresh=thresh,
+            n_components, covariance_type, random_state=random_state, thresh=thresh,
             verbose=verbose, min_covar=min_covar)
         self.alpha = float(alpha) / n_components
 
@@ -732,7 +732,7 @@ class VBGMM(DPGMM):
         -------
         logprob : array_like, shape (n_samples,)
             Log probabilities of each data point in X
-        posteriors: array_like, shape (n_samples, n_components)
+        responsibilities: array_like, shape (n_samples, n_components)
             Posterior probabilities of each mixture component for each
             observation
         """
@@ -744,10 +744,10 @@ class VBGMM(DPGMM):
         bound = np.zeros(X.shape[0])
         dg = digamma(self._gamma) - digamma(np.sum(self._gamma))
         try:
-            _bound_state_loglik = _BOUND_STATE_LOGLIK_DICT[self.cvtype]
+            _bound_state_loglik = _BOUND_STATE_LOGLIK_DICT[self.covariance_type]
         except KeyError:
             raise NotImplementedError("This ctype is not implemented: %s"
-                                      % self.cvtype)
+                                      % self.covariance_type)
 
         p = _bound_state_loglik(X, self._initial_bound,
                                 self._bound_prec, self.precs_, self.means_)
@@ -793,4 +793,4 @@ class VBGMM(DPGMM):
             print "Bound after updating %8s: %f" % (n, self.lower_bound(X, z))
             if end == True:
                 print "Cluster proportions:", self._gamma
-                print "cvtype:", self._cvtype
+                print "covariance_type:", self._covariance_type

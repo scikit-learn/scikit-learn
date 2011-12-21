@@ -37,7 +37,7 @@ def test_sample_gaussian():
     cv = (rng.rand(n_features) + 1.0) ** 2
 
     samples = mixture.sample_gaussian(
-        mu, cv, cvtype='diag', n_samples=n_samples)
+        mu, cv, covariance_type='diag', n_samples=n_samples)
 
     assert np.allclose(samples.mean(axis), mu, atol=1.3)
     assert np.allclose(samples.var(axis),  cv, atol=1.5)
@@ -45,7 +45,7 @@ def test_sample_gaussian():
     # the same for spherical covariances
     cv = (rng.rand() + 1.0) ** 2
     samples = mixture.sample_gaussian(
-        mu, cv, cvtype='spherical', n_samples=n_samples)
+        mu, cv, covariance_type='spherical', n_samples=n_samples)
 
     assert np.allclose(samples.mean(axis), mu, atol=1.5)
     assert np.allclose(
@@ -55,7 +55,7 @@ def test_sample_gaussian():
     A = rng.randn(n_features, n_features)
     cv = np.dot(A.T, A) + np.eye(n_features)
     samples = mixture.sample_gaussian(
-        mu, cv, cvtype='full', n_samples=n_samples)
+        mu, cv, covariance_type='full', n_samples=n_samples)
     assert np.allclose(samples.mean(axis), mu, atol=1.3)
     assert np.allclose(np.cov(samples), cv, atol=2.5)
 
@@ -115,14 +115,14 @@ def test_lmvnpdf_full():
 
 def test_GMM_attributes():
     n_components, n_features = 10, 4
-    cvtype = 'diag'
-    g = mixture.GMM(n_components, cvtype, random_state=rng)
+    covariance_type = 'diag'
+    g = mixture.GMM(n_components, covariance_type, random_state=rng)
     weights = rng.rand(n_components)
     weights = weights / weights.sum()
     means = rng.randint(-20, 20, (n_components, n_features))
 
     assert g.n_components == n_components
-    assert g.cvtype == cvtype
+    assert g.covariance_type == covariance_type
 
     g.weights = weights
     assert_array_almost_equal(g.weights, weights)
@@ -145,7 +145,8 @@ def test_GMM_attributes():
     assert_raises(ValueError, g.__setattr__, 'covars',
                       np.zeros((n_components - 2, n_features)))
 
-    assert_raises(ValueError, mixture.GMM, n_components=20, cvtype='badcvtype')
+    assert_raises(ValueError, mixture.GMM, n_components=20, 
+                  covariance_type='badcovariance_type')
 
 
 class GMMTester():
@@ -169,46 +170,49 @@ class GMMTester():
         # covariances before fitting There is no way of fixing this
         # due to the variational parameters being more expressive than
         # covariance matrices
-        g = self.model(n_components=self.n_components, cvtype=self.cvtype,
-                       random_state=rng)
-        # Make sure the means are far apart so posteriors.argmax()
+        g = self.model(n_components=self.n_components, 
+                       covariance_type=self.covariance_type, random_state=rng)
+        # Make sure the means are far apart so responsibilities.argmax()
         # picks the actual component used to generate the observations.
         g.means = 20 * self.means
-        g.covars_ = self.covars[self.cvtype]
+        g.covars_ = self.covars[self.covariance_type]
         g.weights = self.weights
 
         gaussidx = np.repeat(range(self.n_components), 5)
         n_samples = len(gaussidx)
         X = rng.randn(n_samples, self.n_features) + g.means[gaussidx]
 
-        ll, posteriors = g.eval(X)
+        ll, responsibilities = g.eval(X)
 
         self.assertEqual(len(ll), n_samples)
-        self.assertEqual(posteriors.shape, (n_samples, self.n_components))
-        assert_array_almost_equal(posteriors.sum(axis=1), np.ones(n_samples))
-        assert_array_equal(posteriors.argmax(axis=1), gaussidx)
+        self.assertEqual(responsibilities.shape, (n_samples, self.n_components))
+        assert_array_almost_equal(responsibilities.sum(axis=1), 
+                                  np.ones(n_samples))
+        assert_array_equal(responsibilities.argmax(axis=1), gaussidx)
 
     def test_rvs(self, n=100):
-        g = self.model(n_components=self.n_components, cvtype=self.cvtype,
-                       random_state=rng)
-        # Make sure the means are far apart so posteriors.argmax()
+        g = self.model(n_components=self.n_components, 
+                       covariance_type=self.covariance_type, random_state=rng)
+        # Make sure the means are far apart so responsibilities.argmax()
         # picks the actual component used to generate the observations.
         g.means = 20 * self.means
-        g.covars_ = np.maximum(self.covars[self.cvtype], 0.1)
+        g.covars_ = np.maximum(self.covars[self.covariance_type], 0.1)
         g.weights = self.weights
 
         samples = g.rvs(n)
         self.assertEquals(samples.shape, (n, self.n_features))
 
     def test_train(self, params='wmc'):
-        g = mixture.GMM(n_components=self.n_components, cvtype=self.cvtype)
+        g = mixture.GMM(n_components=self.n_components, 
+                        covariance_type=self.covariance_type)
         g.weights = self.weights
         g.means = self.means
-        g.covars_ = 20 * self.covars[self.cvtype]
+        g.covars_ = 20 * self.covars[self.covariance_type]
 
         # Create a training set by sampling from the predefined distribution.
         X = g.rvs(n_samples=100)
-        g = self.model(n_components=self.n_components, cvtype=self.cvtype,
+        g = self.model(n_components=self.n_components, 
+                       covariance_type=self.covariance_type,
                        random_state=rng, min_covar=1e-1)
         g.fit(X, n_iter=1, init_params=params)
 
@@ -232,55 +236,68 @@ class GMMTester():
             delta_min > self.threshold,
             "The min nll increase is %f which is lower than the admissible"
             " threshold of %f, for model %s. The likelihoods are %s."
-                % (delta_min, self.threshold, self.cvtype, trainll))
+                % (delta_min, self.threshold, self.covariance_type, trainll))
 
     def test_train_degenerate(self, params='wmc'):
-        """ Train on degenerate data with 0 in some dimensionsx
+        """ Train on degenerate data with 0 in some dimensions
         """
         # Create a training set by sampling from the predefined distribution.
         X = rng.randn(100, self.n_features)
         X.T[1:] = 0
-        g = self.model(n_components=2, cvtype=self.cvtype,
+        g = self.model(n_components=2, covariance_type=self.covariance_type,
                        random_state=rng, min_covar=1e-3)
         g.fit(X, n_iter=5, init_params=params)
-        trainll = self.score(g, X)
-        self.assertTrue(np.abs(trainll / 100 / X.shape[1]) < 5)
+        trainll = g.score(X)
+        self.assertTrue(np.sum(np.abs(trainll / 100 / X.shape[1])) < 5)
  
     def test_train_1d(self, params='wmc'):
         """ Train on 1-D data
         """
         # Create a training set by sampling from the predefined distribution.
-        X = rng.randn(100)
+        X = rng.randn(100,1)
         #X.T[1:] = 0
-        g = self.model(n_components=2, cvtype=self.cvtype,
+        g = self.model(n_components=2, covariance_type=self.covariance_type,
                        random_state=rng, min_covar=1e-7)
         g.fit(X, n_iter=5, init_params=params)
-        trainll = self.score(g, X)
-        self.assertTrue(np.abs(trainll / 100) < 5)
+        trainll = g.score(X)
+        if isinstance(g, mixture.DPGMM):
+            self.assertTrue(np.sum(np.abs(trainll / 100)) < 5)
+        else:
+            self.assertTrue(np.sum(np.abs(trainll / 100)) < 2)
 
     def score(self, g, X):
         return g.score(X).sum()
 
 
 class TestGMMWithSphericalCovars(unittest.TestCase, GMMTester):
-    cvtype = 'spherical'
+    covariance_type = 'spherical'
     model = mixture.GMM
 
 
 class TestGMMWithDiagonalCovars(unittest.TestCase, GMMTester):
-    cvtype = 'diag'
+    covariance_type = 'diag'
     model = mixture.GMM
 
 
 class TestGMMWithTiedCovars(unittest.TestCase, GMMTester):
-    cvtype = 'tied'
+    covariance_type = 'tied'
     model = mixture.GMM
 
 
 class TestGMMWithFullCovars(unittest.TestCase, GMMTester):
-    cvtype = 'full'
+    covariance_type = 'full'
     model = mixture.GMM
 
+def test_multiple_init():
+    """Test that multiple inits do better than a single one"""
+    X = rng.randn(100, 5)
+    g = mixture.GMM(n_components=2, covariance_type='full',
+                    random_state=rng, min_covar=1e-7)
+    train1 = g.fit(X, n_iter=5).score(X).sum()
+    train2 = g.fit(X, n_iter=5, n_init=5).score(X).sum()
+    assert train2 >= train1
+    
+   
 
 if __name__ == '__main__':
     import nose

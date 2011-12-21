@@ -246,15 +246,15 @@ class GaussianHMMParams(object):
 
 class GaussianHMMTester(GaussianHMMParams):
 
-    def test_bad_cvtype(self):
-        hmm.GaussianHMM(20, self.cvtype)
-        self.assertRaises(ValueError, hmm.GaussianHMM, 20, 'badcvtype')
+    def test_bad_covariance_type(self):
+        hmm.GaussianHMM(20, self.covariance_type)
+        self.assertRaises(ValueError, hmm.GaussianHMM, 20, 'badcovariance_type')
 
     def test_attributes(self):
-        h = hmm.GaussianHMM(self.n_components, self.cvtype)
+        h = hmm.GaussianHMM(self.n_components, self.covariance_type)
 
         self.assertEquals(h.n_components, self.n_components)
-        self.assertEquals(h.cvtype, self.cvtype)
+        self.assertEquals(h.covariance_type, self.covariance_type)
 
         h.startprob = self.startprob
         assert_array_almost_equal(h.startprob, self.startprob)
@@ -279,16 +279,16 @@ class GaussianHMMTester(GaussianHMMParams):
         self.assertRaises(ValueError, h.__setattr__, 'means',
                           np.zeros((self.n_components - 2, self.n_features)))
 
-        h.covars = self.covars[self.cvtype]
-        assert_array_almost_equal(h.covars, self.expanded_covars[self.cvtype])
+        h.covars = self.covars[self.covariance_type]
+        assert_array_almost_equal(h.covars, self.expanded_covars[self.covariance_type])
         #self.assertRaises(ValueError, h.__setattr__, 'covars', [])
         #self.assertRaises(ValueError, h.__setattr__, 'covars',
         #                  np.zeros((self.n_components - 2, self.n_features)))
 
     def test_eval_and_decode(self):
-        h = hmm.GaussianHMM(self.n_components, self.cvtype)
+        h = hmm.GaussianHMM(self.n_components, self.covariance_type)
         h.means = self.means
-        h.covars = self.covars[self.cvtype]
+        h.covars = self.covars[self.covariance_type]
 
         # Make sure the means are far apart so posteriors.argmax()
         # picks the actual component used to generate the observations.
@@ -307,11 +307,11 @@ class GaussianHMMTester(GaussianHMMParams):
         assert_array_equal(stateseq, gaussidx)
 
     def test_rvs(self, n=1000):
-        h = hmm.GaussianHMM(self.n_components, self.cvtype)
+        h = hmm.GaussianHMM(self.n_components, self.covariance_type)
         # Make sure the means are far apart so posteriors.argmax()
         # picks the actual component used to generate the observations.
         h.means = 20 * self.means
-        h.covars = np.maximum(self.covars[self.cvtype], 0.1)
+        h.covars = np.maximum(self.covars[self.covariance_type], 0.1)
         h.startprob = self.startprob
 
         samples = h.rvs(n)
@@ -319,12 +319,12 @@ class GaussianHMMTester(GaussianHMMParams):
 
     def test_fit(self, params='stmc', n_iter=25, verbose=False, **kwargs):
         np.random.seed(0)
-        h = hmm.GaussianHMM(self.n_components, self.cvtype)
+        h = hmm.GaussianHMM(self.n_components, self.covariance_type)
         h.startprob = self.startprob
         h.transmat = hmm.normalize(self.transmat
                 + np.diag(self.prng.rand(self.n_components)), 1)
         h.means = 20 * self.means
-        h.covars = self.covars[self.cvtype]
+        h.covars = self.covars[self.covariance_type]
 
         # Create training data by sampling from the HMM.
         train_obs = [h.rvs(n=10) for x in xrange(10)]
@@ -337,20 +337,20 @@ class GaussianHMMTester(GaussianHMMParams):
         if not np.all(np.diff(trainll) > 0) and verbose:
             print
             print ('Test train: %s (%s)\n  %s\n  %s'
-                   % (self.cvtype, params, trainll, np.diff(trainll)))
+                   % (self.covariance_type, params, trainll, np.diff(trainll)))
         delta_min = np.diff(trainll).min()
         self.assertTrue(
             delta_min > -0.8,
             "The min nll increase is %f which is lower than the admissible"
             " threshold of %f, for model %s. The likelihoods are %s."
-                % (delta_min, -0.8, self.cvtype, trainll))
+                % (delta_min, -0.8, self.covariance_type, trainll))
 
     def test_fit_works_on_sequences_of_different_length(self):
         obs = [self.prng.rand(3, self.n_features),
                self.prng.rand(4, self.n_features),
                self.prng.rand(5, self.n_features)]
 
-        h = hmm.GaussianHMM(self.n_components, self.cvtype)
+        h = hmm.GaussianHMM(self.n_components, self.covariance_type)
         # This shouldn't raise
         # ValueError: setting an array element with a sequence.
         h.fit(obs)
@@ -362,11 +362,11 @@ class GaussianHMMTester(GaussianHMMParams):
         means_prior = self.means
         means_weight = 2.0
         covars_weight = 2.0
-        if self.cvtype in ('full', 'tied'):
+        if self.covariance_type in ('full', 'tied'):
             covars_weight += self.n_features
-        covars_prior = self.covars[self.cvtype]
+        covars_prior = self.covars[self.covariance_type]
 
-        h = hmm.GaussianHMM(self.n_components, self.cvtype)
+        h = hmm.GaussianHMM(self.n_components, self.covariance_type)
         h.startprob = self.startprob
         h.startprob_prior = startprob_prior
         h.transmat = hmm.normalize(self.transmat
@@ -375,7 +375,7 @@ class GaussianHMMTester(GaussianHMMParams):
         h.means = 20 * self.means
         h.means_prior = means_prior
         h.means_weight = means_weight
-        h.covars = self.covars[self.cvtype]
+        h.covars = self.covars[self.covariance_type]
         h.covars_prior = covars_prior
         h.covars_weight = covars_weight
 
@@ -390,13 +390,13 @@ class GaussianHMMTester(GaussianHMMParams):
         if not np.all(np.diff(trainll) > 0) and verbose:
             print
             print ('Test MAP train: %s (%s)\n  %s\n  %s'
-                   % (self.cvtype, params, trainll, np.diff(trainll)))
+                   % (self.covariance_type, params, trainll, np.diff(trainll)))
         self.assertTrue(np.all(np.diff(trainll) > -0.5))
 
 
 class TestGaussianHMMWithSphericalCovars(GaussianHMMTester,
                                          SeedRandomNumberGeneratorTestCase):
-    cvtype = 'spherical'
+    covariance_type = 'spherical'
 
     def test_fit_startprob_and_transmat(self):
         self.test_fit('st')
@@ -404,17 +404,17 @@ class TestGaussianHMMWithSphericalCovars(GaussianHMMTester,
 
 class TestGaussianHMMWithDiagonalCovars(GaussianHMMTester,
                                         SeedRandomNumberGeneratorTestCase):
-    cvtype = 'diag'
+    covariance_type = 'diag'
 
 
 class TestGaussianHMMWithTiedCovars(GaussianHMMTester,
                                     SeedRandomNumberGeneratorTestCase):
-    cvtype = 'tied'
+    covariance_type = 'tied'
 
 
 class TestGaussianHMMWithFullCovars(GaussianHMMTester,
                                     SeedRandomNumberGeneratorTestCase):
-    cvtype = 'full'
+    covariance_type = 'full'
 
 
 class MultinomialHMMParams(object):
@@ -526,10 +526,10 @@ class TestMultinomialHMM(MultinomialHMMParams,
         self.test_fit('e')
 
 
-def create_random_gmm(n_mix, n_features, cvtype, prng=prng):
+def create_random_gmm(n_mix, n_features, covariance_type, prng=prng):
     from sklearn import mixture
 
-    g = mixture.GMM(n_mix, cvtype=cvtype)
+    g = mixture.GMM(n_mix, covariance_type=covariance_type)
     g.means = prng.randint(-20, 20, (n_mix, n_features))
     mincv = 0.1
     g.covars = {
@@ -540,7 +540,7 @@ def create_random_gmm(n_mix, n_features, cvtype, prng=prng):
         'full': np.array(
             [make_spd_matrix(n_features, random_state=prng)
              + mincv * np.eye(n_features) for x in xrange(n_mix)])
-    }[cvtype]
+    }[covariance_type]
     g.weights = hmm.normalize(prng.rand(n_mix))
     return g
 
@@ -549,7 +549,7 @@ class GMMHMMParams(object):
     n_components = 3
     n_mix = 2
     n_features = 2
-    cvtype = 'diag'
+    covariance_type = 'diag'
     startprob = prng.rand(n_components)
     startprob = startprob / startprob.sum()
     transmat = prng.rand(n_components, n_components)
@@ -563,10 +563,10 @@ class TestGMMHMM(GMMHMMParams, SeedRandomNumberGeneratorTestCase):
         self.gmms = []
         for state in xrange(self.n_components):
             self.gmms.append(create_random_gmm(
-                self.n_mix, self.n_features, self.cvtype, prng=self.prng))
+                self.n_mix, self.n_features, self.covariance_type, prng=self.prng))
 
     def test_attributes(self):
-        h = hmm.GMMHMM(self.n_components, cvtype=self.cvtype)
+        h = hmm.GMMHMM(self.n_components, covariance_type=self.covariance_type)
 
         self.assertEquals(h.n_components, self.n_components)
 
@@ -606,7 +606,7 @@ class TestGMMHMM(GMMHMMParams, SeedRandomNumberGeneratorTestCase):
         assert_array_equal(stateseq, refstateseq)
 
     def test_rvs(self, n=1000):
-        h = hmm.GMMHMM(self.n_components, self.cvtype,
+        h = hmm.GMMHMM(self.n_components, self.covariance_type,
                        startprob=self.startprob, transmat=self.transmat,
                        gmms=self.gmms)
         samples = h.rvs(n)
@@ -642,14 +642,14 @@ class TestGMMHMM(GMMHMMParams, SeedRandomNumberGeneratorTestCase):
                self.prng.rand(4, self.n_features),
                self.prng.rand(5, self.n_features)]
 
-        h = hmm.GMMHMM(self.n_components, cvtype=self.cvtype)
+        h = hmm.GMMHMM(self.n_components, covariance_type=self.covariance_type)
         # This shouldn't raise
         # ValueError: setting an array element with a sequence.
         h.fit(obs)
 
 
 class TestGMMHMMWithSphericalCovars(TestGMMHMM):
-    cvtype = 'spherical'
+    covariance_type = 'spherical'
 
     def test_fit_startprob_and_transmat(self):
         self.test_fit('st')
@@ -659,8 +659,8 @@ class TestGMMHMMWithSphericalCovars(TestGMMHMM):
 
 
 class TestGMMHMMWithTiedCovars(TestGMMHMM):
-    cvtype = 'tied'
+    covariance_type = 'tied'
 
 
 class TestGMMHMMWithFullCovars(TestGMMHMM):
-    cvtype = 'full'
+    covariance_type = 'full'
