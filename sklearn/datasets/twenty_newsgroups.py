@@ -50,8 +50,9 @@ from .base import Bunch
 from .base import load_files
 from ..utils import check_random_state, deprecated
 from ..utils.fixes import in1d
-from ..feature_extraction.text import Vectorizer
-from sklearn.externals import joblib
+from ..feature_extraction.text import CountVectorizer
+from ..preprocessing import normalize
+from ..externals import joblib
 
 
 logger = logging.getLogger(__name__)
@@ -192,7 +193,7 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
     return data
 
 
-def fetch_20newsgroups_tfidf(subset="train", data_home=None):
+def fetch_20newsgroups_vectorized(subset="train", data_home=None):
     """Load the 20 newsgroups dataset and transform it into tf-idf vectors
 
     This is a convenience function; the tf-idf transformation is done using the
@@ -238,10 +239,17 @@ def fetch_20newsgroups_tfidf(subset="train", data_home=None):
     if os.path.exists(target_file):
         X_train, X_test = joblib.load(target_file)
     else:
-        vectorizer = Vectorizer()
+        vectorizer = CountVectorizer(dtype=np.int16)
         X_train = vectorizer.fit_transform(data_train.data)
         X_test = vectorizer.transform(data_test.data)
         joblib.dump((X_train, X_test), target_file)
+
+    # the data is stored as int16 for compactness
+    # but normalize needs floats
+    X_train = X_train.astype(np.float64)
+    X_test = X_test.astype(np.float64)
+    normalize(X_train, copy=False)
+    normalize(X_test, copy=False)
 
     target_names = data_train.target_names
 

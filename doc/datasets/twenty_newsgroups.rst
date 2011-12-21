@@ -12,7 +12,7 @@ This module contains two loaders. The first one,
 returns a list of the raw text files that can be fed to text feature
 extractors such as :class:`sklearn.feature_extraction.text.Vectorizer`
 with custom parameters so as to extract feature vectors.
-The second one, ``sklearn.datasets.fetch_20newsgroups_tfidf``,
+The second one, ``sklearn.datasets.fetch_20newsgroups_vectorized``,
 returns ready-to-use features, i.e., it is not necessary to use a feature
 extractor.
 
@@ -98,7 +98,7 @@ zero features)::
   >>> vectors.nnz / vectors.shape[0]
   118
 
-``sklearn.datasets.fetch_20newsgroups_tfidf`` is a function which returns 
+``sklearn.datasets.fetch_20newsgroups_vectorized`` is a function which returns 
 ready-to-use tfidf features instead of file names.
 
 .. _`20 newsgroups website`: http://people.csail.mit.edu/jrennie/20Newsgroups/

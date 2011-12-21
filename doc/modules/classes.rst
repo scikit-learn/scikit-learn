@@ -130,7 +130,7 @@ Loaders
    datasets.fetch_lfw_people
    datasets.load_20newsgroups
    datasets.fetch_20newsgroups
-   datasets.fetch_20newsgroups_tfidf
+   datasets.fetch_20newsgroups_vectorized
    datasets.fetch_olivetti_faces
 
 Samples generator
