@@ -683,8 +683,7 @@ class GaussianHMM(_BaseHMM):
 
     def _set_covars(self, covars):
         covars = np.asarray(covars)
-        _validate_covars(covars, self._cvtype, self.n_components,
-                self.n_features)
+        _validate_covars(covars, self._cvtype, self.n_components)
         self._covars = covars.copy()
 
     covars = property(_get_covars, _set_covars)
@@ -1041,13 +1040,14 @@ class GMMHMM(_BaseHMM):
                                       + np.finfo(np.float).eps)
             gmm_posteriors = np.exp(lgmm_posteriors)
             tmp_gmm = GMM(g.n_components, cvtype=g.cvtype)
-            tmp_gmm.n_features = g.n_features
+            n_features = g.means.shape[1]
             tmp_gmm.covars = _distribute_covar_matrix_to_match_cvtype(
-                                np.eye(g.n_features), g.cvtype, g.n_components)
+                                np.eye(n_features), g.cvtype, g.n_components)
             norm = tmp_gmm._do_mstep(obs, gmm_posteriors, params)
-
-            if np.any(np.isnan(tmp_gmm.covars)):
-                raise ValueError
+            
+            if hasattr(tmp_gmm,  'covars'):
+                if np.any(np.isnan(tmp_gmm.covars)):
+                    raise ValueError
 
             stats['norm'][state] += norm
             if 'm' in params:
@@ -1067,6 +1067,7 @@ class GMMHMM(_BaseHMM):
         # All that is left to do is to apply covars_prior to the
         # parameters updated in _accumulate_sufficient_statistics.
         for state, g in enumerate(self.gmms):
+            n_features = g.means.shape[1]
             norm = stats['norm'][state]
             if 'w' in params:
                 g.weights = normalize(norm)
@@ -1075,7 +1076,7 @@ class GMMHMM(_BaseHMM):
             if 'c' in params:
                 if g.cvtype == 'tied':
                     g.covars = ((stats['covars'][state]
-                                 + covars_prior * np.eye(g.n_features))
+                                 + covars_prior * np.eye(n_features))
                                 / norm.sum())
                 else:
                     cvnorm = np.copy(norm)
@@ -1086,7 +1087,7 @@ class GMMHMM(_BaseHMM):
                         g.covars = (stats['covars'][state]
                                     + covars_prior) / cvnorm
                     elif g.cvtype == 'full':
-                        eye = np.eye(g.n_features)
+                        eye = np.eye(n_features)
                         g.covars = ((stats['covars'][state]
                                      + covars_prior * eye[np.newaxis, :, :])
                                     / cvnorm)

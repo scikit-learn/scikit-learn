@@ -506,14 +506,16 @@ class GMM(BaseEstimator):
                 self._do_mstep(X, posteriors, params, self.min_covar)
 
             # if the results is better, keep it   
-            if log_likelihood[-1] > max_log_prob:
-                max_log_prob = log_likelihood[-1]
-                best_params = {'weights': self.weights, 
-                               'means': self.means_, 
-                               'covars': self.covars_}
-        self.covars_ = best_params['covars']
-        self.means_ = best_params['means']
-        self.weights = best_params['weights']
+            if n_iter:
+                if log_likelihood[-1] > max_log_prob:
+                    max_log_prob = log_likelihood[-1]
+                    best_params = {'weights': self.weights, 
+                                   'means': self.means_, 
+                                   'covars': self.covars_}
+        if n_iter:
+            self.covars_ = best_params['covars']
+            self.means_ = best_params['means']
+            self.weights = best_params['weights']
         return self
 
     def _do_mstep(self, X, posteriors, params, min_covar=0):
@@ -635,7 +637,7 @@ def _validate_covars(covars, cvtype, n_components):
         if len(covars.shape) != 3:
             raise ValueError("'full' covars must have shape "
                              "(n_components, n_dim, n_dim)")
-        elif covars.shape[2] != covars.shape[3]:
+        elif covars.shape[1] != covars.shape[2]:
             raise ValueError("'full' covars must have shape "
                              "(n_components, n_dim, n_dim)")
         for n, cv in enumerate(covars):
