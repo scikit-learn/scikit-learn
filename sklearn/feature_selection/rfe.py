@@ -147,8 +147,8 @@ class RFE(BaseEstimator):
         X : array of shape [n_samples, n_features]
             The input samples.
 
-        Return
-        ------
+        Returns
+        -------
         y : array of shape [n_samples]
             The predicted target values.
         """
@@ -176,8 +176,8 @@ class RFE(BaseEstimator):
         X : array of shape [n_samples, n_features]
             The input samples.
 
-        Return
-        ------
+        Returns
+        -------
         X_r : array of shape [n_samples, n_selected_features]
             The input samples with only the features selected during the
             elimination.

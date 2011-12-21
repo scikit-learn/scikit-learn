@@ -29,6 +29,7 @@ cdef extern from "cblas.h":
 cdef inline DOUBLE array_ddot(int n,
                 np.ndarray[DOUBLE, ndim=2] a, int a_idx,
                 np.ndarray[DOUBLE, ndim=2] b, int b_idx):
+    """Fast dot product of rows of 2D arrays with blas"""
     return ddot(n, <DOUBLE*>(a.data + a_idx * n * sizeof(DOUBLE)), 1,
                 <DOUBLE*>(b.data + b_idx * n * sizeof(DOUBLE)), 1)
 
@@ -78,8 +79,9 @@ cpdef DOUBLE _assign_labels_array(np.ndarray[DOUBLE, ndim=2] X,
             if min_dist == -1 or dist < min_dist:
                 min_dist = dist
                 labels[sample_idx] = center_idx
-                if store_distances:
-                    distances[sample_idx] = dist
+
+        if store_distances:
+            distances[sample_idx] = min_dist
         inertia += min_dist
 
     return inertia
@@ -148,7 +150,7 @@ def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
                            np.ndarray[INT, ndim=1] counts,
                            np.ndarray[INT, ndim=1] nearest_center,
                            np.ndarray[DOUBLE, ndim=1] old_center,
-                           INT compute_squared_diff):
+                           int compute_squared_diff):
     """Incremental update of the centers for sparse MiniBatchKMeans.
 
     Parameters
@@ -167,22 +169,22 @@ def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
     Return
     ------
     inertia: float
-        The inertia of the batch prior to centers update, i.e. the sum distances
-        to the closest center for each sample. This is the objective function
-        being minimized by the k-means algorithm.
+        The inertia of the batch prior to centers update, i.e. the sum
+        distances to the closest center for each sample. This is the objective
+        function being minimized by the k-means algorithm.
 
     squared_diff: float
-        The sum of squared update (squared norm of the centers position change).
-        If compute_squared_diff is 0, this computation is skipped and 0.0 is
-        returned instead.
+        The sum of squared update (squared norm of the centers position
+        change). If compute_squared_diff is 0, this computation is skipped and
+        0.0 is returned instead.
 
     Both squared diff and inertia are commonly used to monitor the convergence
     of the algorithm.
     """
     cdef:
         np.ndarray[DOUBLE, ndim=1] X_data = X.data
-        np.ndarray[INT, ndim=1] X_indices = X.indices
-        np.ndarray[INT, ndim=1] X_indptr = X.indptr
+        np.ndarray[int, ndim=1] X_indices = X.indices
+        np.ndarray[int, ndim=1] X_indptr = X.indptr
         unsigned int n_samples = X.shape[0]
         unsigned int n_clusters = centers.shape[0]
         unsigned int n_features = centers.shape[1]
@@ -247,20 +249,24 @@ def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
 @cython.wraparound(False)
 @cython.cdivision(True)
 def csr_row_norm_l2(X, squared=True):
-    """Get L2 norm of each row in CSR matrix X."""
+    """Get L2 norm of each row in CSR matrix X.
+
+    TODO: refactor me in the sklearn.utils.sparsefuncs module once the CSR
+    sklearn.preprocessing.Scaler has been refactored as well.
+    """
     cdef:
         unsigned int n_samples = X.shape[0]
         unsigned int n_features = X.shape[1]
         np.ndarray[DOUBLE, ndim=1] norms = np.zeros((n_samples,),
                                                     dtype=np.float64)
         np.ndarray[DOUBLE, ndim=1] X_data = X.data
-        np.ndarray[INT, ndim=1] X_indices = X.indices
-        np.ndarray[INT, ndim=1] X_indptr = X.indptr
+        np.ndarray[int, ndim=1] X_indices = X.indices
+        np.ndarray[int, ndim=1] X_indptr = X.indptr
 
         unsigned int i
         unsigned int j
         double sum_
-        int withsqrt = not squared
+        int with_sqrt = not squared
 
     for i in range(n_samples):
         sum_ = 0.0
@@ -268,7 +274,7 @@ def csr_row_norm_l2(X, squared=True):
         for j in range(X_indptr[i], X_indptr[i + 1]):
             sum_ += X_data[j] * X_data[j]
 
-        if withsqrt:
+        if with_sqrt:
             sum_ = sqrt(sum_)
 
         norms[i] = sum_

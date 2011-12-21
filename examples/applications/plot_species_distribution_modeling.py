@@ -12,15 +12,18 @@ no unsuccessful observations), we cast this problem as a
 density estimation problem and use the `OneClassSVM` provided
 by the package `sklearn.svm` as our modeling tool.
 The dataset is provided by Phillips et. al. (2006).
-If available, the example uses `basemap <http://matplotlib.sourceforge.net/basemap/doc/html/>`_
+If available, the example uses
+`basemap <http://matplotlib.sourceforge.net/basemap/doc/html/>`_
 to plot the coast lines and national boundaries of South America.
 
 The two species are:
 
- - `Bradypus variegatus <http://www.iucnredlist.org/apps/redlist/details/3038/0>`_ ,
+ - `"Bradypus variegatus"
+   <http://www.iucnredlist.org/apps/redlist/details/3038/0>`_ ,
    the Brown-throated Sloth.
 
- - `Microryzomys minutus <http://www.iucnredlist.org/apps/redlist/details/13408/0>`_ ,
+ - `"Microryzomys minutus"
+   <http://www.iucnredlist.org/apps/redlist/details/13408/0>`_ ,
    also known as the Forest Small Rice Rat, a rodent that lives in Peru,
    Colombia, Ecuador, Peru, and Venezuela.
 
@@ -254,7 +257,7 @@ for i, species in enumerate([bv, mm]):
         #m.drawrivers()
     else:
         print "plot coastlines from coverage"
-        CS = pl.contour(X, Y, coverage[2, :, :], levels=[-9999], colors="k",
+        CS = pl.contour(X, Y, coverage[2], levels=[-9999], colors="k",
                         linestyles="solid")
         pl.xticks([])
         pl.yticks([])
@@ -262,7 +265,7 @@ for i, species in enumerate([bv, mm]):
     print "predict species distribution"
     Z = predict(clf, mean, std)
     levels = np.linspace(Z.min(), Z.max(), 25)
-    Z[coverage[2, :, :] == -9999] = -9999
+    Z[coverage[2] == -9999] = -9999
     CS = pl.contourf(X, Y, Z, levels=levels, cmap=pl.cm.Reds)
     pl.colorbar(format='%.2f')
     pl.scatter(species.train[:, 0], species.train[:, 1], s=2 ** 2, c='black',

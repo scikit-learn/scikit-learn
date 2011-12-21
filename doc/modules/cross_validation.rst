@@ -65,7 +65,7 @@ scoring function, e.g. from the metrics module::
   ...                                                     # doctest: +ELLIPSIS
   array([ 1.  ...,  0.96...,  0.89...,  0.96...,  1.  ...])
 
-In the case of the Iris dataset, the samples are balanced accross target
+In the case of the Iris dataset, the samples are balanced across target
 classes hence the accuracy and the F1-score are almost equal.
 
 When the ``cv`` argument is an integer, :func:`cross_val_score` uses the

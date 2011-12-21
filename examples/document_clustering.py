@@ -24,7 +24,6 @@ from sklearn import metrics
 from sklearn.cluster import MiniBatchKMeans
 
 
-
 # Display progress logs on stdout
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(message)s')
