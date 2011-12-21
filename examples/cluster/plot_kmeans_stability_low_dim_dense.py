@@ -67,6 +67,7 @@ def make_data(random_state, n_samples_per_center, grid_size, scale):
                         for i in range(n_clusters_true)])
     return shuffle(X, y, random_state=random_state)
 
+# Part 1: Quantitative evaluation of various init methods
 
 fig = pl.figure()
 plots = []
@@ -101,7 +102,7 @@ pl.ylabel('inertia')
 pl.legend(plots, legends)
 pl.title("Mean inertia for various k-means init across %d runs" % n_runs)
 
-# Part 2: qualitative visual inspection of the convergence
+# Part 2: Qualitative visual inspection of the convergence
 
 X, y = make_data(random_state, n_samples_per_center, grid_size, scale)
 km = MiniBatchKMeans(k=n_clusters, init='random', n_init=1,
