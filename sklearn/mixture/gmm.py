@@ -76,7 +76,7 @@ def log_multivariate_normal_density(X, means, covars, cvtype='diag'):
         'spherical': _log_multivariate_normal_density_spherical,
         'tied': _log_multivariate_normal_density_tied,
         'diag': _log_multivariate_normal_density_diag,
-        'full': _log_multivariate_normal_densityfull}
+        'full': _log_multivariate_normal_density_full}
     return log_multivariate_normal_density_dict[cvtype](X, means, covars)
 
 
@@ -301,7 +301,7 @@ class GMM(BaseEstimator):
 
     def _get_weights(self):
         """Mixing weights for each mixture component."""
-        return np.exp(self._log_weights)
+        return np.exp(self.log_weights_)
 
     def _set_weights(self, weights):
         """Provide value for micture weights"""
@@ -310,7 +310,7 @@ class GMM(BaseEstimator):
         if not np.allclose(np.sum(weights), 1.0):
             raise ValueError('weights must sum to 1.0')
 
-        self._log_weights = np.log(np.asarray(weights).copy())
+        self.log_weights_ = np.log(np.asarray(weights).copy())
 
     weights = property(_get_weights, _set_weights)
 
@@ -337,9 +337,8 @@ class GMM(BaseEstimator):
         """
         X = np.asarray(X)
         lpr = (log_multivariate_normal_density(
-                X, self._means, self._covars, self._cvtype) + self._log_weights)
+                X, self.means_, self.covars_, self._cvtype) + self.log_weights_)
         logprob = logsumexp(lpr, axis=1)
-
         posteriors = np.exp(lpr - logprob[:, np.newaxis])
         return logprob, posteriors
 
@@ -514,7 +513,7 @@ class GMM(BaseEstimator):
             weights[:, np.newaxis] + 10 * INF_EPS)
         
         if 'w' in params:
-            self._log_weights = np.log(
+            self.log_weights_ = np.log(
                 weights / (weights.sum() + 10 * INF_EPS) + INF_EPS)
         if 'm' in params:
             self.means_ = weighted_X_sum * inverse_weights
@@ -562,7 +561,7 @@ def _log_multivariate_normal_density_tied(X, means, covars):
     return lpr
 
 
-def _log_multivariate_normal_densityfull(X, means, covars):
+def _log_multivariate_normal_density_full(X, means, covars):
     """Log probability for full covariance matrices.
 
     WARNING
@@ -587,8 +586,8 @@ def _log_multivariate_normal_densityfull(X, means, covars):
         except linalg.LinAlgError:
             # The model is most probabily stuck in a component with too
             # few observations, we need to reinitialize this components
-            cv[:] = 10 * np.eye(cv.shape[0])
-            cv_chol = cv
+            cv[:] = np.diag(np.var(X, 0))#10 * np.eye(cv.shape[0])
+            cv_chol = np.diag(np.std(X, 0))
         cv_log_det = 2 * np.sum(np.log(np.diagonal(cv_chol)))
         cv_sol = solve_triangular(cv_chol, (X - mu).T, lower=True).T
         log_prob[:, c] = -.5 * (np.sum(cv_sol ** 2, axis=1) + \
