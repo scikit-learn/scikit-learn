@@ -60,12 +60,12 @@ def test_load_svmlight_files():
 
 
 def test_load_svmlight_file_n_features():
-    X, y = load_svmlight_file(datafile, n_features=14)
+    X, y = load_svmlight_file(datafile, n_features=20)
 
     # test X'shape
     assert_equal(X.indptr.shape[0], 4)
     assert_equal(X.shape[0], 3)
-    assert_equal(X.shape[1], 14)
+    assert_equal(X.shape[1], 20)
 
     # test X's non-zero values
     for i, j, val in ((0, 2, 2.5), (0, 10, -5.2),

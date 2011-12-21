@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 The :mod:`sklearn.kernel_approximation` module implements several
 approximate kernel feature maps base on Fourier transforms.
@@ -22,14 +23,20 @@ class RBFSampler(BaseEstimator, TransformerMixin):
     ----------
     gamma: float
         parameter of RBF kernel: exp(-gamma * x**2)
+
     n_components: int
         number of Monte Carlo samples per original feature.
         Equals the dimensionality of the computed feature space.
 
+    random_state : {int, RandomState}, optional
+        If int, random_state is the seed used by the random number generator;
+        if RandomState instance, random_state is the random number generator.
+
     Notes
     -----
-    For details see "Random Features for Large-Scale Kernel Machines" by A,
-    Rahimi and Benjamin Recht for details."""
+    See "Random Features for Large-Scale Kernel Machines" by A, Rahimi and
+    Benjamin Recht.
+    """
 
     def __init__(self, gamma=1., n_components=100., random_state=None):
         self.gamma = gamma
@@ -38,17 +45,19 @@ class RBFSampler(BaseEstimator, TransformerMixin):
 
     def fit(self, X, y=None):
         """Fit the model with X.
-        Samples random projection according to n_features
+
+        Samples random projection according to n_features.
 
         Parameters
         ----------
         X: array-like, shape (n_samples, n_features)
             Training data, where n_samples in the number of samples
             and n_features is the number of features.
+
         Returns
         -------
         self : object
-            Returns the instance itself
+            Returns the transformer.
         """
 
         self.random_state = check_random_state(self.random_state)
@@ -71,7 +80,7 @@ class RBFSampler(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        X_new array-like, shape (n_samples, n_components)
+        X_new: array-like, shape (n_samples, n_components)
         """
         projection = safe_sparse_dot(X, self.random_weights_)
         return (np.sqrt(2.) / np.sqrt(self.n_components)
@@ -84,17 +93,21 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    c: float
+    skewedness: float
         "skewedness" parameter of the kernel. Needs to be cross-validated.
+
     n_components: int
         number of Monte Carlo samples per original feature.
         Equals the dimensionality of the computed feature space.
 
+    random_state : {int, RandomState}, optional
+        If int, random_state is the seed used by the random number generator;
+        if RandomState instance, random_state is the random number generator.
+
     Notes
     -----
-    See "Random Fourier Approximations for Skewed Multiplicative
-    Histogram Kernels" by Fuxin Li, Catalin Ionescu and Cristian
-    Sminchisescu for details.
+    See "Random Fourier Approximations for Skewed Multiplicative Histogram
+    Kernels" by Fuxin Li, Catalin Ionescu and Cristian Sminchisescu.
     """
 
     def __init__(self, skewedness=1., n_components=100, random_state=None):
@@ -104,17 +117,19 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
 
     def fit(self, X, y=None):
         """Fit the model with X.
-        Samples random projection according to n_features
+
+        Samples random projection according to n_features.
 
         Parameters
         ----------
         X: array-like, shape (n_samples, n_features)
             Training data, where n_samples in the number of samples
             and n_features is the number of features.
+
         Returns
         -------
         self : object
-            Returns the instance itself
+            Returns the transformer.
         """
 
         self.random_state = check_random_state(self.random_state)
@@ -139,7 +154,7 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        X_new array-like, shape (n_samples, n_components)
+        X_new: array-like, shape (n_samples, n_components)
         """
         if (X < 0).any():
             raise ValueError("X may not contain entries smaller than zero.")
@@ -152,30 +167,29 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
 
 
 class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
-    """Approximate feature map for additive chi^2 kernel.
-    uses sampling the fourier transform of the kernel characteristic
-    at regular intervals L.
+    """Approximate feature map for additive chi² kernel.
 
-    Since the kernel that is to be approximated is additive, the
-    components of the input vectors can be treated separately.
-    Each entry in the original space is transformed into 2n+1
-    features, where n is a parameter of the method.
-    Usually, n is 1, 2 or 3.
+    Uses sampling the fourier transform of the kernel characteristic
+    at regular intervals.
 
-    Optimal choices for the sampling interval L for certain
-    data ranges can be computed (see the reference).
-    The default values should be reasonable.
+    Since the kernel that is to be approximated is additive, the components of
+    the input vectors can be treated separately.  Each entry in the original
+    space is transformed into 2×sample_steps+1 features, where sample_steps is
+    a parameter of the method. Typical values of n include 1, 2 and 3.
+
+    Optimal choices for the sampling interval for certain data ranges can be
+    computed (see the reference). The default values should be reasonable.
 
     Parameters
     ----------
-    n: int,     one of 1, 2 or 3.
-                Gives the number of (complex) sampling points.
-    L: float,   sampling interval
+    sample_steps: int, optional
+        Gives the number of (complex) sampling points.
+    sample_interval: float, optional
+        Sampling interval. Must be specified when sample_steps not in {1,2,3}.
 
     Notes
     -----
-    For details on the algorithm see `"Efficient additive kernels via explicit
-    feature maps"
+    See `"Efficient additive kernels via explicit feature maps"
     <http://eprints.pascal-network.org/archive/00006964/01/vedaldi10.pdf>`_
     Vedaldi, A. and Zisserman, A.
     - Computer Vision and Pattern Recognition 2010
@@ -196,8 +210,8 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
             elif self.sample_steps == 3:
                 self.sample_interval = 0.4
             else:
-                raise ValueError("If n is not in [1, 2, 3], you need"
-                    "to provide L")
+                raise ValueError("If sample_steps is not in [1, 2, 3], you need"
+                    "to provide sample_interval")
         return self
 
     def transform(self, X, y=None):
@@ -209,7 +223,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        X_new array-like, shape (n_samples, n_features * (2n + 1))
+        X_new: array-like, shape (n_samples, n_features * (2n + 1))
         """
 
         # check if X has zeros. Doesn't play well with np.log.
