@@ -8,11 +8,13 @@ def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
     config = Configuration('cluster', parent_package, top_path)
     config.add_extension('_inertia',
-                         sources=['_inertia.c'],
-                         include_dirs=[numpy.get_include()])
+         sources=['_inertia.c'],
+         extra_compile_args=["-Wno-unused-function", "-Wno-unused-but-set-variable"],
+         include_dirs=[numpy.get_include()])
     config.add_extension('_k_means',
-                         sources=['_k_means.c'],
-                         include_dirs=[numpy.get_include()]
+         sources=['_k_means.c'],
+         extra_compile_args=["-Wno-unused-function", "-Wno-unused-but-set-variable"],
+         include_dirs=[numpy.get_include()]
                          )
 
     return config
