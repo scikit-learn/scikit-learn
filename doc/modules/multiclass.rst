@@ -77,6 +77,11 @@ To use this feature, feed the classifier a list of tuples containing
 target labels.
 
 
+.. topic:: Examples:
+
+    * :ref:`example_plot_multiclass.py`
+
+
 One-Vs-One
 ==========
 
