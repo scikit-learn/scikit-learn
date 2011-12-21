@@ -169,14 +169,14 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
     """Approximate feature map for additive chi^2 kernel.
 
     Uses sampling the fourier transform of the kernel characteristic
-    at regular intervals L.
+    at regular intervals.
 
     Since the kernel that is to be approximated is additive, the components of
     the input vectors can be treated separately.  Each entry in the original
-    space is transformed into 2n+1 features, where n is a parameter of the
-    method. Typical values of n include 1, 2 and 3.
+    space is transformed into 2×sample_steps+1 features, where sample_steps is
+    a parameter of the method. Typical values of n include 1, 2 and 3.
 
-    Optimal choices for the sampling interval L for certain data ranges can be
+    Optimal choices for the sampling interval for certain data ranges can be
     computed (see the reference). The default values should be reasonable.
 
     Parameters
