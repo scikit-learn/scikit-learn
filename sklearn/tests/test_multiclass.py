@@ -101,8 +101,8 @@ def test_ovr_multilabel_dataset():
     X_test, Y_test = X[80:], Y[80:]
     clf = OneVsRestClassifier(base_clf).fit(X_train, Y_train)
     Y_pred = clf.predict(X_test)
-    assert_almost_equal(multilabel_precision(Y_test, Y_pred), 0.80, places=2)
-    assert_almost_equal(multilabel_recall(Y_test, Y_pred), 0.80, places=2)
+    assert_almost_equal(multilabel_precision(Y_test, Y_pred), 0.74, places=2)
+    assert_almost_equal(multilabel_recall(Y_test, Y_pred), 0.84, places=2)
 
 
 def test_ovr_gridsearch():
