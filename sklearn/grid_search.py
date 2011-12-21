@@ -323,7 +323,7 @@ class GridSearchCV(BaseEstimator):
         n_folds = n_fits // n_grid_points
 
         scores = list()
-        grid_points = list()
+        cv_scores = list()
         for grid_start in range(0, n_fits, n_folds):
             n_test_samples = 0
             score = 0
@@ -338,7 +338,7 @@ class GridSearchCV(BaseEstimator):
             if self.iid:
                 score /= float(n_test_samples)
             scores.append((score, estimator))
-            grid_points.append(these_points)
+            cv_scores.append(these_points)
 
         # Note: we do not use max(out) to make ties deterministic even if
         # comparison on estimator instances is not deterministic
@@ -376,7 +376,7 @@ class GridSearchCV(BaseEstimator):
         self.grid_scores_ = [
             (clf_params, score, all_scores) 
                     for clf_params, (score, _), all_scores
-                    in zip(grid, scores, grid_points)]
+                    in zip(grid, scores, cv_scores)]
         return self
 
     def score(self, X, y=None):
