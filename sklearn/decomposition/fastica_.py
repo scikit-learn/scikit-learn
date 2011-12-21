@@ -198,8 +198,6 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
 
     """
     # make interface compatible with other decompositions
-    warnings.warn("Please note: the interface of fastica has changed: "
-                  "X is now assumed to be of shape [n_samples, n_features]")
     X = array2d(X).T
 
     algorithm_funcs = {'parallel': _ica_par,
