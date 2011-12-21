@@ -69,9 +69,12 @@ def test_lasso_gives_lstsq_solution():
     Test that Lars Lasso gives least square solution at the end
     of the path
     """
-    alphas_, active, coef_path_ = linear_model.lars_path(X, y, method="lasso")
+    alphas_, active, coef_path_, L = linear_model.lars_path(
+        X, y, method="lasso", return_cholesky=True)
     coef_lstsq = np.linalg.lstsq(X, y)[0]
     assert_array_almost_equal(coef_lstsq, coef_path_[:, -1])
+    Xa = X[:, active]
+    assert_array_almost_equal(np.dot(L, L.T), np.dot(Xa.T, Xa))
 
 
 def test_collinearity():

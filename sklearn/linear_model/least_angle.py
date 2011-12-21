@@ -23,7 +23,7 @@ from ..externals.joblib import Parallel, delayed
 def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
               alpha_min=0, method='lar', copy_X=True,
               eps=np.finfo(np.float).eps,
-              copy_Gram=True, verbose=False):
+              copy_Gram=True, verbose=False, return_cholesky=False):
     """Compute Least Angle Regression and Lasso path
 
     The optimization objective for Lasso is::
@@ -58,6 +58,10 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems.
+
+    return_cholesky: boolean, optional
+        Return the cholesky lower triangular factor of (Xa)'(Xa), where Xa
+        is X restricted to columns that have nonzero coefficient.
 
     Returns
     --------
@@ -100,7 +104,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
     # will hold the cholesky factorization. Only lower part is
     # referenced.
-    L = np.empty((max_features, max_features), dtype=X.dtype)
+    L = np.zeros((max_features, max_features), dtype=X.dtype)
     swap, nrm2 = linalg.get_blas_funcs(('swap', 'nrm2'), (X,))
     solve_cholesky, = get_lapack_funcs(('potrs',), (X,))
 
@@ -299,6 +303,8 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
     alphas = alphas[:n_iter + 1]
     coefs = coefs[:n_iter + 1]
 
+    if return_cholesky:
+        return alphas, active, coefs.T, L[:n_active, :n_active]
     return alphas, active, coefs.T
 
 
