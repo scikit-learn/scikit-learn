@@ -105,7 +105,7 @@ def test_pipeline():
 # Test the error raised when the weight matrix is singular
 def test_singular_matrix():
     from nose.tools import assert_raises
-    M = np.ones((4,3))
+    M = np.ones((10,3))
 
     assert_raises(ValueError, manifold.locally_linear_embedding,
                   M, 2, 1, method='standard', eigen_solver='arpack')
