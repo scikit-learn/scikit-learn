@@ -927,11 +927,7 @@ class MiniBatchKMeans(KMeans):
         x_squared_norms = _squared_norms(X)
 
         if self.tol > 0.0:
-            if not sp.issparse(X):
-                mean_variance = np.mean(np.var(X, 0))
-            else:
-                mean_variance = np.mean(mean_variance_axis0(X)[1])
-            tol = self.tol * mean_variance
+            tol = _tolerance(X, self.tol)
 
             # using tol-based early stopping needs the allocation of a
             # dedicated before which can be expensive for high dim data:
