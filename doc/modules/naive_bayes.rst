@@ -199,6 +199,8 @@ Note that this differs from the typical treatment of
 EM for Naive Bayes in the literature,
 where convergence is usually checked by computing
 the log-likelihood of the model given the training samples.
+The resulting algorithm is similar to the more general technique of
+self-training (see Zhu 2008).
 
 ``SemisupervisedNB`` is a meta-estimator that builds upon
 a regular Naive Bayes estimator.
@@ -221,3 +223,6 @@ Then use ``clf.fit`` as usual.
   * K. Nigam, A.K. McCallum, S. Thrun and T. Mitchell (2000).
     Text classification from labeled and unlabeled documents using EM.
     Machine Learning 39(2):103–134.
+  * X. Zhu (2008). `"Semi-supervised learning literature survey"
+    <http://www.cs.wisc.edu/~jerryzhu/pub/ssl_survey.pdf>`_.
+    CS TR 1530, U. Wisconsin-Madison.
