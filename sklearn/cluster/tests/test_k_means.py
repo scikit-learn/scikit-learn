@@ -169,6 +169,13 @@ def test_k_means_random_init_sparse():
     _check_fitted_model(k_means)
 
 
+def test_k_means_random_init_rand_proj():
+    k_means = KMeans(init="random", k=n_clusters,
+                     search_method="random_projection",
+                     random_state=42).fit(X)
+    _check_fitted_model(k_means)
+
+
 def test_k_means_plus_plus_init_not_precomputed():
     k_means = KMeans(init="k-means++", k=n_clusters, random_state=42,
                      precompute_distances=False).fit(X)

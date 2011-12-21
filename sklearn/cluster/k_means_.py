@@ -23,6 +23,7 @@ from ..utils import check_random_state
 from ..utils import atleast2d_or_csr
 from ..utils import as_float_array
 from ..utils import safe_asarray
+from ..utils.extmath import safe_sparse_dot
 from ..utils.sparsefuncs import mean_variance_axis0
 
 from . import _k_means
@@ -147,6 +148,7 @@ def _tolerance(X, tol):
 
 
 def k_means(X, k, init='k-means++', precompute_distances=True,
+            search_method="linear",
             n_init=10, max_iter=300, verbose=0,
             tol=1e-4, random_state=None, copy_x=True):
     """K-means clustering algorithm.
@@ -262,7 +264,9 @@ def k_means(X, k, init='k-means++', precompute_distances=True,
             labels, inertia = \
                     _labels_inertia(X, x_squared_norms, centers,
                                     precompute_distances=precompute_distances,
-                                    distances=distances)
+                                    search_method=search_method,
+                                    distances=distances,
+                                    random_state=random_state)
 
             # computation of the means is also called the M-step of EM
             centers = _centers(X, labels, k, distances)
@@ -315,8 +319,64 @@ def _labels_inertia_precompute_dense(X, x_squared_norms, centers):
     return labels, inertia
 
 
+def _labels_inertia_random_projection(X, centers, random_state):
+    n_features = X.shape[1]
+    n_centers = centers.shape[0]
+
+    v = random_state.rand(n_features)
+    X_proj = safe_sparse_dot(X, v)
+    C_proj = safe_sparse_dot(centers, v)
+
+    order = C_proj.argsort()
+    C_proj = C_proj[order]
+    closest = np.searchsorted(C_proj, X_proj)
+
+    labels = []
+    inertia = []
+
+    # FIXME: 1) Cythonify 2) Support sparse matrices
+    for i, c in enumerate(closest):
+        if c == 0:
+            label = order[c]
+            dist = np.sum((X[i] - centers[label]) ** 2)
+        elif c == n_centers:
+            label = order[c-1]
+            dist = np.sum((X[i] - centers[label]) ** 2)
+        else:
+            a = order[c-1]
+            b = order[c]
+            dist_a = np.sum((X[i] - centers[a]) ** 2)
+            dist_b = np.sum((X[i] - centers[b]) ** 2)
+            if dist_a < dist_b:
+                label = a
+                dist = dist_a
+            else:
+                label = b
+                dist = dist_b
+        labels.append(label)
+        inertia.append(dist)
+
+    return np.array(labels), np.array(inertia).sum()
+
+
+def _labels_inertia_linear(X, x_squared_norms, centers, distances=None):
+    n_samples = X.shape[0]
+    # set the default value of centers to -1 to be able to detect any anomaly
+    # easily
+    labels = - np.ones(n_samples, np.int32)
+    if distances is None:
+        distances = np.zeros(shape=(0,), dtype=np.float64)
+    if sp.issparse(X):
+        inertia = _k_means._assign_labels_csr(
+            X, x_squared_norms, centers, labels, distances=distances)
+    else:
+        inertia = _k_means._assign_labels_array(
+            X, x_squared_norms, centers, labels, distances=distances)
+    return labels, inertia
+
 def _labels_inertia(X, x_squared_norms, centers,
-                    precompute_distances=True, distances=None):
+                    precompute_distances=True, distances=None,
+                    search_method="linear", random_state=None):
     """E step of the K-means EM algorithm
 
     Compute the labels and the inertia of the given samples and centers
@@ -344,22 +404,16 @@ def _labels_inertia(X, x_squared_norms, centers,
     inertia: float
         The value of the inertia criterion with the assignment
     """
-    n_samples = X.shape[0]
-    # set the default value of centers to -1 to be able to detect any anomaly
-    # easily
-    labels = - np.ones(n_samples, np.int32)
-    if distances is None:
-        distances = np.zeros(shape=(0,), dtype=np.float64)
-    if sp.issparse(X):
-        inertia = _k_means._assign_labels_csr(
-            X, x_squared_norms, centers, labels, distances=distances)
+    if search_method == "random_projection":
+        return _labels_inertia_random_projection(X, centers, random_state)
     else:
-        if precompute_distances:
+        if not sp.issparse(X) and precompute_distances:
             return _labels_inertia_precompute_dense(X, x_squared_norms,
                                                     centers)
-        inertia = _k_means._assign_labels_array(
-            X, x_squared_norms, centers, labels, distances=distances)
-    return labels, inertia
+        else:
+            return _labels_inertia_linear(X, x_squared_norms, centers,
+                                          distances)
+
 
 
 def _centers(X, labels, n_clusters, distances):
@@ -549,7 +603,7 @@ class KMeans(BaseEstimator):
     """
 
     def __init__(self, k=8, init='k-means++', n_init=10, max_iter=300,
-                 tol=1e-4, precompute_distances=True,
+                 tol=1e-4, precompute_distances=True, search_method="linear",
                  verbose=0, random_state=None, copy_x=True):
 
         if hasattr(init, '__array__'):
@@ -565,6 +619,7 @@ class KMeans(BaseEstimator):
         self.verbose = verbose
         self.random_state = random_state
         self.copy_x = copy_x
+        self.search_method = search_method
 
     def _check_fit_data(self, X):
         """Verify that the number of samples given is larger than k"""
@@ -598,6 +653,7 @@ class KMeans(BaseEstimator):
             X, k=self.k, init=self.init, n_init=self.n_init,
             max_iter=self.max_iter, verbose=self.verbose,
             precompute_distances=self.precompute_distances,
+            search_method=self.search_method,
             tol=self.tol, random_state=self.random_state, copy_x=self.copy_x)
         return self
 
