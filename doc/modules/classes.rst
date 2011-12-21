@@ -640,6 +640,26 @@ Pairwise metrics
    mixture.VBGMM
 
 
+.. _polynomial_classifier_ref:
+
+:mod:`sklearn.polynomial_classifier`: Polynomial Classifier
+===========================================================
+
+.. automodule:: sklearn.polynomial_classifier
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`polynomial_classifier` section for further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   polynomial_classifier.PC
+
+
 .. _naive_bayes_ref:
 
 :mod:`sklearn.naive_bayes`: Naive Bayes

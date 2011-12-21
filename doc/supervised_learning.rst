@@ -14,6 +14,7 @@ Supervised learning
     modules/gaussian_process
     modules/pls
     modules/naive_bayes
+    modules/polynomial_classifier
     modules/tree
     modules/ensemble
     modules/multiclass
