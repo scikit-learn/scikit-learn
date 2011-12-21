@@ -39,8 +39,8 @@ improves.
 
 .. note::
 
-    Multi-label learning is experimental; it works, but no evaluation metrics
-    are implemented for it.
+    At the moment there are no evaluation metrics implemented for multilabel
+    learnings.
 
 
 One-Vs-The-Rest

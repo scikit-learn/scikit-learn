@@ -116,6 +116,7 @@ can be used to build artifical datasets of controled size and complexity.
    :template: function.rst
 
    make_classification
+   make_multilabel_classification
    make_regression
    make_blobs
    make_friedman1
