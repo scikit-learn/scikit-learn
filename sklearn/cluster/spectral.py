@@ -13,7 +13,7 @@ from ..utils.graph import graph_laplacian
 from .k_means_ import k_means
 
 def spectral_embedding(adjacency, n_components=8, mode=None,
-                       random_state=None):
+                       random_state=None, tol=1e-6):
     """Project the sample on the first eigen vectors of the graph Laplacian
 
     The adjacency matrix is used to compute a normalized graph Laplacian
@@ -47,6 +47,9 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
         A pseudo random number generator used for the initialization of the
         lobpcg eigen vectors decomposition when mode == 'amg'. By default
         arpack is used.
+
+    tol : float
+        Relative accuracy for eigensolver.
 
     Returns
     --------
@@ -102,7 +105,8 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
                 # arpack
                 laplacian = laplacian.tocsr()
 
-        lambdas, diffusion_map = eigsh(-laplacian, k=n_components, sigma=1.)
+        lambdas, diffusion_map = eigsh(
+            -laplacian, k=n_components, sigma=1., tol=tol)
 
         embedding = diffusion_map.T[::-1] * dd
     elif mode == 'amg':
@@ -113,7 +117,7 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
         X = random_state.rand(laplacian.shape[0], n_components)
         X[:, 0] = 1. / dd.ravel()
         M = ml.aspreconditioner()
-        lambdas, diffusion_map = lobpcg(laplacian, X, M=M, tol=1.e-12,
+        lambdas, diffusion_map = lobpcg(laplacian, X, M=M, tol=tol,
                                         largest=False)
         embedding = diffusion_map.T * dd
         if embedding.shape[0] == 1:
@@ -125,7 +129,7 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
 
 
 def spectral_clustering(affinity, k=8, n_components=None, mode=None,
-                        random_state=None, n_init=10):
+                        random_state=None, n_init=10, tol=1e-6):
     """Apply k-means to a projection to the normalized laplacian
 
     In practice Spectral Clustering is very useful when the structure of
@@ -169,6 +173,10 @@ def spectral_clustering(affinity, k=8, n_components=None, mode=None,
         centroid seeds. The final results will be the best output of
         n_init consecutive runs in terms of inertia.
 
+    tol : float
+        Relative accuracy for eigensolver.
+
+
     Returns
     -------
     labels: array of integers, shape: n_samples
@@ -198,7 +206,8 @@ def spectral_clustering(affinity, k=8, n_components=None, mode=None,
     random_state = check_random_state(random_state)
     n_components = k if n_components is None else n_components
     maps = spectral_embedding(affinity, n_components=n_components,
-                              mode=mode, random_state=random_state)
+                              mode=mode, random_state=random_state,
+                              tol=tol)
     maps = maps[1:]
     _, labels, _ = k_means(maps.T, k, random_state=random_state,
                     n_init=n_init)
