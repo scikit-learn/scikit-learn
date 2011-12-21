@@ -689,7 +689,7 @@ cdef class BallTree(object):
         sort_results : boolean (default = False)
             if True, the distances and indices will be sorted before being
             returned.  If False, the results will not be sorted.  If
-            return_distance == False, settinng sort_results = True will
+            return_distance == False, setting sort_results = True will
             result in an error.
 
         Returns
@@ -716,15 +716,15 @@ cdef class BallTree(object):
         --------
         Query for neighbors in a given radius
 
-            # >>> import numpy as np
-            # >>> np.random.seed(0)
-            # >>> X = np.random.random((10,3))  # 10 points in 3 dimensions
-            # >>> ball_tree = BallTree(X, leaf_size=2)
-            # >>> print ball_tree.query_radius(X[0], r=0.3, count_only=True)
-            # 3
-            # >>> ind = ball_tree.query_radius(X[0], r=0.3)
-            # >>> print ind  # indices of neighbors within distance 0.3
-            # [3 0 1]
+        # >>> import numpy as np
+        # >>> np.random.seed(0)
+        # >>> X = np.random.random((10,3))  # 10 points in 3 dimensions
+        # >>> ball_tree = BallTree(X, leaf_size=2)
+        # >>> print ball_tree.query_radius(X[0], r=0.3, count_only=True)
+        # 3
+        # >>> ind = ball_tree.query_radius(X[0], r=0.3)
+        # >>> print ind  # indices of neighbors within distance 0.3
+        # [3 0 1]
         """
         if count_only and return_distance:
             raise ValueError("count_only and return_distance "
