@@ -34,7 +34,7 @@ class LeaveOneOut(object):
     ShuffleSplit.
 
     Parameters
-    ==========
+    ----------
     n: int
         Total number of elements
 
@@ -44,7 +44,7 @@ class LeaveOneOut(object):
         matrices, since those cannot be indexed by boolean masks.
 
     Examples
-    ========
+    --------
     >>> from sklearn import cross_validation
     >>> X = np.array([[1, 2], [3, 4]])
     >>> y = np.array([1, 2])
@@ -836,7 +836,7 @@ def check_cv(cv, X=None, y=None, classifier=False):
     """Input checker utility for building a CV in a user friendly way.
 
     Parameters
-    ===========
+    ----------
     cv: an integer, a cv generator instance, or None
         The input specifying which cv generator to use. It can be an
         integer, in which case it is the number of folds in a KFold,
