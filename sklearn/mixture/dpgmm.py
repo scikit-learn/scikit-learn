@@ -234,13 +234,13 @@ class DPGMM(GMM):
     def _get_precisions(self):
         """Return precisions as a full matrix."""
         if self.cvtype == 'full':
-            return self._precs
+            return self.precs_
         elif self.cvtype == 'diag':
-            return [np.diag(cov) for cov in self._precs]
+            return [np.diag(cov) for cov in self.precs_]
         elif self.cvtype == 'tied':
-            return [self._precs] * self.n_components
+            return [self.precs_] * self.n_components
         elif self.cvtype == 'spherical':
-            return [np.eye(self.n_features) * f for f in self._precs]
+            return [np.eye(self.n_features) * f for f in self.precs_]
 
     def _get_covars(self):
         return [linalg.pinv(c) for c in self._get_precisions()]
@@ -301,7 +301,7 @@ class DPGMM(GMM):
                                       % self.cvtype)
 
         p = _bound_state_loglik(obs, self._initial_bound,
-                        self._bound_prec, self._precs, self._means)
+                        self._bound_prec, self.precs_, self.means_)
         z = p + dgamma
         self._z = z = log_normalize(z, axis=-1)
         bound = np.sum(z * p, axis=-1)
@@ -321,18 +321,18 @@ class DPGMM(GMM):
         for k in xrange(self.n_components):
             if self.cvtype == 'spherical' or self.cvtype == 'diag':
                 num = np.sum(self._z.T[k].reshape((-1, 1)) * self._X, axis=0)
-                num *= self._precs[k]
-                den = 1. + self._precs[k] * np.sum(self._z.T[k])
-                self._means[k] = num / den
+                num *= self.precs_[k]
+                den = 1. + self.precs_[k] * np.sum(self._z.T[k])
+                self.means_[k] = num / den
             elif self.cvtype == 'tied' or self.cvtype == 'full':
                 if self.cvtype == 'tied':
-                    cov = self._precs
+                    cov = self.precs_
                 else:
-                    cov = self._precs[k]
+                    cov = self.precs_[k]
                 den = np.identity(self.n_features) + cov * np.sum(self._z.T[k])
                 num = np.sum(self._z.T[k].reshape((-1, 1)) * self._X, axis=0)
                 num = np.dot(cov, num)
-                self._means[k] = linalg.lstsq(den, num)[0]
+                self.means_[k] = linalg.lstsq(den, num)[0]
 
     def _update_precisions(self):
         """Update the variational distributions for the precisions"""
@@ -340,7 +340,7 @@ class DPGMM(GMM):
             self._a = 0.5 * self.n_features * np.sum(self._z, axis=0)
             for k in xrange(self.n_components):
                 # XXX: how to avoid this huge temporary matrix in memory
-                dif = (self._X - self._means[k])
+                dif = (self._X - self.means_[k])
                 self._b[k] = 1.
                 d = np.sum(dif * dif, axis=1)
                 self._b[k] += 0.5 * np.sum(
@@ -348,31 +348,31 @@ class DPGMM(GMM):
                 self._bound_prec[k] = (
                     0.5 * self.n_features * (
                         digamma(self._a[k]) - np.log(self._b[k])))
-            self._precs = self._a / self._b
+            self.precs_ = self._a / self._b
 
         elif self.cvtype == 'diag':
             for k in xrange(self.n_components):
                 self._a[k].fill(1. + 0.5 * np.sum(self._z.T[k], axis=0))
-                ddif = (self._X - self._means[k])  # see comment above
+                ddif = (self._X - self.means_[k])  # see comment above
                 for d in xrange(self.n_features):
                     self._b[k, d] = 1.
                     dd = ddif.T[d] * ddif.T[d]
                     self._b[k, d] += 0.5 * np.sum(self._z.T[k] * (dd + 1))
-                self._precs[k] = self._a[k] / self._b[k]
+                self.precs_[k] = self._a[k] / self._b[k]
                 self._bound_prec[k] = 0.5 * np.sum(digamma(self._a[k])
                                                     - np.log(self._b[k]))
-                self._bound_prec[k] -= 0.5 * np.sum(self._precs[k])
+                self._bound_prec[k] -= 0.5 * np.sum(self.precs_[k])
 
         elif self.cvtype == 'tied':
             self._a = 2 + self._X.shape[0] + self.n_features
             self._B = (self._X.shape[0] + 1) * np.identity(self.n_features)
             for i in xrange(self._X.shape[0]):
                 for k in xrange(self.n_components):
-                    dif = self._X[i] - self._means[k]
+                    dif = self._X[i] - self.means_[k]
                     self._B += self._z[i, k] * np.dot(dif.reshape((-1, 1)),
                                                       dif.reshape((1, -1)))
             self._B = linalg.pinv(self._B)
-            self._precs = self._a * self._B
+            self.precs_ = self._a * self._B
             self._detB = linalg.det(self._B)
             self._bound_prec = 0.5 * detlog_wishart(
                 self._a, self._B, self._detB, self.n_features)
@@ -384,11 +384,11 @@ class DPGMM(GMM):
                 self._a[k] = 2 + T + self.n_features
                 self._B[k] = (T + 1) * np.identity(self.n_features)
                 for i in xrange(self._X.shape[0]):
-                    dif = self._X[i] - self._means[k]
+                    dif = self._X[i] - self.means_[k]
                     self._B[k] += self._z[i, k] * np.dot(dif.reshape((-1, 1)),
                                                          dif.reshape((1, -1)))
                 self._B[k] = linalg.pinv(self._B[k])
-                self._precs[k] = self._a[k] * self._B[k]
+                self.precs_[k] = self._a[k] * self._B[k]
                 self._detB[k] = linalg.det(self._B[k])
                 self._bound_prec[k] = 0.5 * detlog_wishart(self._a[k],
                                                            self._B[k],
@@ -448,7 +448,7 @@ class DPGMM(GMM):
     def _bound_means(self):
         "The variational lower bound for the mean parameters"
         logprior = 0.
-        logprior -= 0.5 * sqnorm(self._means)
+        logprior -= 0.5 * sqnorm(self.means_)
         logprior -= 0.5 * self.n_features * self.n_components
         return logprior
 
@@ -467,14 +467,14 @@ class DPGMM(GMM):
             for k in xrange(self.n_components):
                 logprior += gammaln(self._a[k])
                 logprior -= (self._a[k] - 1) * digamma(max(0.5, self._a[k]))
-                logprior += - np.log(self._b[k]) + self._a[k] - self._precs[k]
+                logprior += - np.log(self._b[k]) + self._a[k] - self.precs_[k]
         elif self.cvtype == 'diag':
             for k in xrange(self.n_components):
                 for d in xrange(self.n_features):
                     logprior += gammaln(self._a[k, d])
                     logprior -= (self._a[k, d] - 1) * digamma(self._a[k, d])
                     logprior -= np.log(self._b[k, d])
-                    logprior += self._a[k, d] - self._precs[k, d]
+                    logprior += self._a[k, d] - self.precs_[k, d]
         elif self.cvtype == 'tied':
             logprior += self._bound_wishart(self._a, self._B, self._detB)
         elif self.cvtype == 'full':
@@ -511,7 +511,7 @@ class DPGMM(GMM):
                                       % self.cvtype)
 
         c = np.sum(self._z * _bound_state_loglik(self._X, self._initial_bound,
-                        self._bound_prec, self._precs, self._means))
+                        self._bound_prec, self.precs_, self.means_))
 
         return c + self._logprior()
 
@@ -565,7 +565,7 @@ class DPGMM(GMM):
             self._initialize_gamma()
 
         if 'm' in init_params or not hasattr(self, 'means'):
-            self._means = cluster.KMeans(
+            self.means_ = cluster.KMeans(
                 k=self.n_components, random_state=self.random_state
             ).fit(X).cluster_centers_[::-1]
 
@@ -576,7 +576,7 @@ class DPGMM(GMM):
             if self.cvtype == 'spherical':
                 self._a = np.ones(self.n_components)
                 self._b = np.ones(self.n_components)
-                self._precs = np.ones(self.n_components)
+                self.precs_ = np.ones(self.n_components)
                 self._bound_prec = (0.5 * self.n_features *
                                      (digamma(self._a) -
                                       np.log(self._b)))
@@ -584,16 +584,16 @@ class DPGMM(GMM):
                 self._a = 1 + 0.5 * self.n_features
                 self._a *= np.ones((self.n_components, self.n_features))
                 self._b = np.ones((self.n_components, self.n_features))
-                self._precs = np.ones((self.n_components, self.n_features))
+                self.precs_ = np.ones((self.n_components, self.n_features))
                 self._bound_prec = np.zeros(self.n_components)
                 for k in xrange(self.n_components):
                     self._bound_prec[k] = 0.5 * np.sum(digamma(self._a[k])
                                                         - np.log(self._b[k]))
-                    self._bound_prec[k] -= 0.5 * np.sum(self._precs[k])
+                    self._bound_prec[k] -= 0.5 * np.sum(self.precs_[k])
             elif self.cvtype == 'tied':
                 self._a = 1.
                 self._B = np.identity(self.n_features)
-                self._precs = np.identity(self.n_features)
+                self.precs_ = np.identity(self.n_features)
                 self._detB = 1.
                 self._bound_prec = 0.5 * detlog_wishart(
                     self._a, self._B, self._detB, self.n_features)
@@ -603,7 +603,7 @@ class DPGMM(GMM):
                 self._a *= np.ones(self.n_components)
                 self._B = [2 * np.identity(self.n_features)
                            for i in xrange(self.n_components)]
-                self._precs = [np.identity(self.n_features)
+                self.precs_ = [np.identity(self.n_features)
                                 for i in xrange(self.n_components)]
                 self._detB = np.ones(self.n_components)
                 self._bound_prec = np.zeros(self.n_components)
@@ -760,7 +760,7 @@ class VBGMM(DPGMM):
                                       % self.cvtype)
 
         p = _bound_state_loglik(obs, self._initial_bound,
-                                self._bound_prec, self._precs, self._means)
+                                self._bound_prec, self.precs_, self.means_)
         z = p + dg
         self._z = z = log_normalize(z, axis=-1)
         bound = np.sum(z * p, axis=-1)

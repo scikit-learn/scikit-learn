@@ -140,8 +140,8 @@ def test_GMM_attributes():
                       np.zeros((n_components - 2, n_features)))
 
     covars = (0.1 + 2 * rng.rand(n_components, n_features)) ** 2
-    g._covars = covars
-    assert_array_almost_equal(g._covars, covars)
+    g.covars_ = covars
+    assert_array_almost_equal(g.covars_, covars)
     assert_raises(ValueError, g.__setattr__, 'covars', [])
     assert_raises(ValueError, g.__setattr__, 'covars',
                       np.zeros((n_components - 2, n_features)))
@@ -175,7 +175,7 @@ class GMMTester():
         # Make sure the means are far apart so posteriors.argmax()
         # picks the actual component used to generate the observations.
         g.means = 20 * self.means
-        g._covars = self.covars[self.cvtype]
+        g.covars_ = self.covars[self.cvtype]
         g.weights = self.weights
 
         gaussidx = np.repeat(range(self.n_components), 5)
@@ -195,7 +195,7 @@ class GMMTester():
         # Make sure the means are far apart so posteriors.argmax()
         # picks the actual component used to generate the observations.
         g.means = 20 * self.means
-        g._covars = np.maximum(self.covars[self.cvtype], 0.1)
+        g.covars_ = np.maximum(self.covars[self.cvtype], 0.1)
         g.weights = self.weights
 
         samples = g.rvs(n)
@@ -205,7 +205,7 @@ class GMMTester():
         g = mixture.GMM(n_components=self.n_components, cvtype=self.cvtype)
         g.weights = self.weights
         g.means = self.means
-        g._covars = 20 * self.covars[self.cvtype]
+        g.covars_ = 20 * self.covars[self.cvtype]
 
         # Create a training set by sampling from the predefined distribution.
         train_obs = g.rvs(n_samples=100)

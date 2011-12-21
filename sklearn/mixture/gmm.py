@@ -273,25 +273,25 @@ class GMM(BaseEstimator):
     def _get_covars(self):
         """Return covars as a full matrix."""
         if self.cvtype == 'full':
-            return self._covars
+            return self.covars_
         elif self.cvtype == 'diag':
-            return [np.diag(cov) for cov in self._covars]
+            return [np.diag(cov) for cov in self.covars_]
         elif self.cvtype == 'tied':
-            return [self._covars] * self.n_components
+            return [self.covars_] * self.n_components
         elif self.cvtype == 'spherical':
-            return [np.eye(self.n_features) * f for f in self._covars]
+            return [np.eye(self.n_features) * f for f in self.covars_]
 
     def _set_covars(self, covars):
         covars = np.asarray(covars)
         _validate_covars(covars, self._cvtype, self.n_components,
                 self.n_features)
-        self._covars = covars
+        self.covars_ = covars
 
     covars = property(_get_covars, _set_covars)
 
     def _get_means(self):
         """Mean parameters for each mixture component."""
-        return self._means
+        return self.means_
 
     def _set_means(self, means):
         """Provide values for means"""
@@ -300,8 +300,8 @@ class GMM(BaseEstimator):
                means.shape != (self.n_components, self.n_features):
             raise ValueError('means must have shape ' +
                     '(n_components, n_features)')
-        self._means = means.copy()
-        self.n_features = self._means.shape[1]
+        self.means_ = means.copy()
+        self.n_features = self.means_.shape[1]
 
     means = property(_get_means, _set_means)
 
@@ -349,6 +349,7 @@ class GMM(BaseEstimator):
         lpr = (log_multivariate_normal_density(
                 X, self._means, self._covars, self._cvtype) + self._log_weights)
         logprob = logsumexp(lpr, axis=1)
+
         posteriors = np.exp(lpr - logprob[:, np.newaxis])
         return logprob, posteriors
 
@@ -451,11 +452,11 @@ class GMM(BaseEstimator):
             num_comp_in_X = comp_in_X.sum()
             if num_comp_in_X > 0:
                 if self._cvtype == 'tied':
-                    cv = self._covars
+                    cv = self.covars_
                 else:
-                    cv = self._covars[comp]
+                    cv = self.covars_[comp]
                 X[comp_in_X] = sample_gaussian(
-                    self._means[comp], cv, self._cvtype, num_comp_in_X,
+                    self.means_[comp], cv, self._cvtype, num_comp_in_X,
                     random_state=random_state
                 ).T
         return X
@@ -499,10 +500,10 @@ class GMM(BaseEstimator):
         self.n_features = X.shape[1]
 
         if 'm' in init_params:
-            self._means = cluster.KMeans(
+            self.means_ = cluster.KMeans(
                 k=self.n_components).fit(X).cluster_centers_
         elif not hasattr(self, 'means'):
-                self._means = np.zeros((self.n_components, self.n_features))
+                self.means_ = np.zeros((self.n_components, self.n_features))
 
         if 'w' in init_params or not hasattr(self, 'weights'):
             self.weights = np.tile(1.0 / self.n_components, self.n_components)
@@ -511,7 +512,7 @@ class GMM(BaseEstimator):
             cv = np.cov(X.T)
             if not cv.shape:
                 cv.shape = (1, 1)
-            self._covars = _distribute_covar_matrix_to_match_cvtype(
+            self.covars_ = _distribute_covar_matrix_to_match_cvtype(
                 cv, self._cvtype, self.n_components)
         elif not hasattr(self, 'covars'):
                 self.covars = _distribute_covar_matrix_to_match_cvtype(
@@ -549,10 +550,10 @@ class GMM(BaseEstimator):
             self._log_weights = np.log(
                 weights / (weights.sum() + 10 * INF_EPS) + INF_EPS)
         if 'm' in params:
-            self._means = weighted_X_sum * inverse_weights
+            self.means_ = weighted_X_sum * inverse_weights
         if 'c' in params:
             covar_mstep_func = _covar_mstep_funcs[self._cvtype]
-            self._covars = covar_mstep_func(
+            self.covars_ = covar_mstep_func(
                 self, X, posteriors, weighted_X_sum, inverse_weights, min_covar)
 
         # FIXME: why return the weights ?
@@ -682,8 +683,8 @@ def _distribute_covar_matrix_to_match_cvtype(tiedcv, cvtype, n_components):
 def _covar_mstep_diag(gmm, X, posteriors, weighted_X_sum, norm, min_covar):
     """Performing the covariance M step for diagonal cases"""
     avg_X2 = np.dot(posteriors.T, X * X) * norm
-    avg_means2 = gmm._means ** 2
-    avg_X_means = gmm._means * weighted_X_sum * norm
+    avg_means2 = gmm.means_ ** 2
+    avg_X_means = gmm.means_ * weighted_X_sum * norm
     return avg_X2 - 2 * avg_X_means + avg_means2 + min_covar
 
 
@@ -700,7 +701,7 @@ def _covar_mstep_full(gmm, X, posteriors, weighted_X_sum, norm, min_covar):
     for c in xrange(gmm.n_components):
         post = posteriors[:, c]
         avg_cv = np.dot(post * X.T, X) / (post.sum() + 10 * INF_EPS)
-        mu = gmm._means[c][np.newaxis]
+        mu = gmm.means_[c][np.newaxis]
         cv[c] = (avg_cv - np.dot(mu.T, mu)
                  + min_covar * np.eye(gmm.n_features))
     return cv
@@ -714,16 +715,16 @@ def _covar_mstep_tied(gmm, X, posteriors, weighted_X_sum, norm, min_covar):
     print "THIS IS BROKEN"
     # Eq. 15 from K. Murphy, "Fitting a Conditional Linear Gaussian
     avg_X2 = np.dot(X.T, X)
-    avg_means2 = np.dot(gmm._means.T, gmm._means)
+    avg_means2 = np.dot(gmm.means_.T, gmm.means_)
     return (avg_X2 - avg_means2 + min_covar * np.eye(gmm.n_features))
 
 
 def _covar_mstep_slow(gmm, X, posteriors, weighted_X_sum, norm, min_covar):
     """Covariance optimization -- slow method"""
     w = posteriors.sum(axis=0)
-    covars = np.zeros(gmm._covars.shape)
+    covars = np.zeros(gmm.covars_.shape)
     for c in xrange(gmm.n_components):
-        mu = gmm._means[c]
+        mu = gmm.means_[c]
         #cv = np.dot(mu.T, mu)
         avg_X2 = np.zeros((gmm.n_features, gmm.n_features))
         for t, o in enumerate(X):
