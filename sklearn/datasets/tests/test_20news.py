@@ -32,3 +32,23 @@ def test_20news():
     label = data.target_names.index(category)
     entry2 = data.data[np.where(data.target == label)[0][0]]
     assert_equal(entry1, entry2)
+
+
+def test_20news_vectorized():
+    # This test is slow.
+    raise SkipTest
+
+    bunch = datasets.fetch_20newsgroups_vectorized(subset="train")
+    assert_equal(bunch.data.shape, (11314, 107130))
+    assert_equal(bunch.target.shape[0], 11314)
+    assert_equal(bunch.data.dtype, np.float64)
+
+    bunch = datasets.fetch_20newsgroups_vectorized(subset="test")
+    assert_equal(bunch.data.shape, (7532, 107130))
+    assert_equal(bunch.target.shape[0], 7532)
+    assert_equal(bunch.data.dtype, np.float64)
+
+    bunch = datasets.fetch_20newsgroups_vectorized(subset="all")
+    assert_equal(bunch.data.shape, (11314 + 7532, 107130))
+    assert_equal(bunch.target.shape[0], 11314 + 7532)
+    assert_equal(bunch.data.dtype, np.float64)

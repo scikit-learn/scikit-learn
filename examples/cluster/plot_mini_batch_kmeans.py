@@ -30,12 +30,12 @@ np.random.seed(0)
 batch_size = 45
 centers = [[1, 1], [-1, -1], [1, -1]]
 n_clusters = len(centers)
-X, labels_true = make_blobs(n_samples=1200, centers=centers, cluster_std=0.7)
+X, labels_true = make_blobs(n_samples=3000, centers=centers, cluster_std=0.7)
 
 ##############################################################################
 # Compute clustering with Means
 
-k_means = KMeans(init='k-means++', k=3)
+k_means = KMeans(init='k-means++', k=3, n_init=10)
 t0 = time.time()
 k_means.fit(X)
 t_batch = time.time() - t0
@@ -46,7 +46,8 @@ k_means_labels_unique = np.unique(k_means_labels)
 ##############################################################################
 # Compute clustering with MiniBatchKMeans
 
-mbk = MiniBatchKMeans(init='k-means++', k=3, chunk_size=batch_size)
+mbk = MiniBatchKMeans(init='k-means++', k=3, batch_size=batch_size,
+                      n_init=10, max_no_improvement=10, verbose=0)
 t0 = time.time()
 mbk.fit(X)
 t_mini_batch = time.time() - t0
@@ -82,7 +83,8 @@ for k, col in zip(range(n_clusters), colors):
 ax.set_title('KMeans')
 ax.set_xticks(())
 ax.set_yticks(())
-pl.text(-3.5, 2.7,  'train time: %.2fs' % t_batch)
+pl.text(-3.5, 1.8,  'train time: %.2fs\ninertia: %f' % (
+    t_batch, k_means.inertia_))
 
 # MiniBatchKMeans
 ax = fig.add_subplot(1, 3, 2)
@@ -96,7 +98,8 @@ for k, col in zip(range(n_clusters), colors):
 ax.set_title('MiniBatchKMeans')
 ax.set_xticks(())
 ax.set_yticks(())
-pl.text(-3.5, 2.7,  'train time: %.2fs' % t_mini_batch)
+pl.text(-3.5, 1.8, 'train time: %.2fs\ninertia: %f' %
+        (t_mini_batch, mbk.inertia_))
 
 # Initialise the different array to all False
 different = (mbk_means_labels == 4)

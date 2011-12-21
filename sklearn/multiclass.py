@@ -1,6 +1,6 @@
 """
-Multiclass algorithms
-======================
+Multiclass and multilabel classification strategies
+===================================================
 
 This module implements multiclass learning algorithms:
     - one-vs-the-rest / one-vs-all
@@ -27,14 +27,14 @@ from .metrics.pairwise import euclidean_distances
 from .utils import check_random_state
 
 
-def fit_binary(estimator, X, y):
+def _fit_binary(estimator, X, y):
     """Fit a single binary estimator."""
     estimator = clone(estimator)
     estimator.fit(X, y)
     return estimator
 
 
-def predict_binary(estimator, X):
+def _predict_binary(estimator, X):
     """Make predictions using a single binary estimator."""
     if hasattr(estimator, "decision_function"):
         return np.ravel(estimator.decision_function(X))
@@ -43,7 +43,7 @@ def predict_binary(estimator, X):
         return estimator.predict_proba(X)[:, 1]
 
 
-def check_estimator(estimator):
+def _check_estimator(estimator):
     """Make sure that an estimator implements the necessary methods."""
     if not hasattr(estimator, "decision_function") and \
        not hasattr(estimator, "predict_proba"):
@@ -53,22 +53,24 @@ def check_estimator(estimator):
 
 def fit_ovr(estimator, X, y):
     """Fit a one-vs-the-rest strategy."""
-    check_estimator(estimator)
+    _check_estimator(estimator)
 
     lb = LabelBinarizer()
     Y = lb.fit_transform(y)
-    estimators = [fit_binary(estimator, X, Y[:, i]) for i in range(Y.shape[1])]
+    estimators = [_fit_binary(estimator, X, Y[:, i])
+                  for i in range(Y.shape[1])]
     return estimators, lb
 
 
 def predict_ovr(estimators, label_binarizer, X):
     """Make predictions using the one-vs-the-rest strategy."""
-    Y = np.array([predict_binary(e, X) for e in estimators]).T
-    return label_binarizer.inverse_transform(Y)
+    Y = np.array([_predict_binary(e, X) for e in estimators])
+    thresh = 0 if hasattr(estimators[0], "decision_function") else .5
+    return label_binarizer.inverse_transform(Y.T, threshold=thresh)
 
 
 class OneVsRestClassifier(BaseEstimator, ClassifierMixin):
-    """One-vs-the-rest multiclass strategy
+    """One-vs-the-rest (OvR) multiclass/multilabel strategy
 
     Also known as one-vs-all, this strategy consists in fitting one classifier
     per class. For each classifier, the class is fitted against all the other
@@ -76,8 +78,14 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin):
     classifiers are needed), one advantage of this approach is its
     interpretability. Since each class is represented by one and one classifier
     only, it is possible to gain knowledge about the class by inspecting its
-    corresponding classifier. This is the most commonly used strategy and is a
-    fair default choice.
+    corresponding classifier. This is the most commonly used strategy for
+    multiclass classification and is a fair default choice.
+
+    This strategy can also be used for multilabel learning, where a classifier
+    is used to predict multiple labels for instance, by fitting on a sequence
+    of sequences of labels (e.g., a list of tuples) rather than a single
+    target vector. For multilabel learning, the number of classes must be at
+    least three, since otherwise OvR reduces to binary classification.
 
     Parameters
     ----------
@@ -93,6 +101,8 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin):
     label_binarizer_ : LabelBinarizer object
         Object used to transform multiclass labels to binary labels and
         vice-versa.
+    multilabel_ : boolean
+        Whether a OneVsRestClassifier is a multilabel classifier.
     """
 
     def __init__(self, estimator):
@@ -107,7 +117,9 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin):
             Data.
 
         y : array-like, shape = [n_samples]
-            Multi-class targets.
+         or sequence of sequences, len = n_samples
+            Multi-class targets. A sequence of sequences turns on multilabel
+            classification.
 
         Returns
         -------
@@ -134,22 +146,34 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin):
 
         return predict_ovr(self.estimators_, self.label_binarizer_, X)
 
+    @property
+    def multilabel_(self):
+        """Whether this is a multilabel classifier"""
+        return self.label_binarizer_.multilabel
 
-def fit_ovo_binary(estimator, X, y, i, j):
+    def score(self, X, y):
+        if self.multilabel_:
+            raise NotImplementedError(
+                "score is not supported for multilabel classifiers")
+        else:
+            return super(OneVsRestClassifier, self).score(X, y)
+
+
+def _fit_ovo_binary(estimator, X, y, i, j):
     """Fit a single binary estimator (one-vs-one)."""
     cond = np.logical_or(y == i, y == j)
     y = y[cond]
     y[y == i] = 0
     y[y == j] = 1
     ind = np.arange(X.shape[0])
-    return fit_binary(estimator, X[ind[cond]], y)
+    return _fit_binary(estimator, X[ind[cond]], y)
 
 
 def fit_ovo(estimator, X, y):
     """Fit a one-vs-one strategy."""
     classes = np.unique(y)
     n_classes = classes.shape[0]
-    estimators = [fit_ovo_binary(estimator, X, y, classes[i], classes[j])
+    estimators = [_fit_ovo_binary(estimator, X, y, classes[i], classes[j])
                     for i in range(n_classes) for j in range(i + 1, n_classes)]
 
     return estimators, classes
@@ -268,7 +292,7 @@ def fit_ecoc(estimator, X, y, code_size=1.5, random_state=None):
     code_book_: numpy array of shape [n_classes, code_size]
         Binary array containing the code of each class.
     """
-    check_estimator(estimator)
+    _check_estimator(estimator)
     random_state = check_random_state(random_state)
 
     classes = np.unique(y)
@@ -289,15 +313,15 @@ def fit_ecoc(estimator, X, y, code_size=1.5, random_state=None):
 
     Y = np.array([code_book[cls_idx[y[i]]] for i in xrange(X.shape[0])])
 
-    estimators = [fit_binary(estimator, X, Y[:, i])
-                                for i in range(Y.shape[1])]
+    estimators = [_fit_binary(estimator, X, Y[:, i])
+                  for i in range(Y.shape[1])]
 
     return estimators, classes, code_book
 
 
 def predict_ecoc(estimators, classes, code_book, X):
     """Make predictions using the error-correcting output-code strategy."""
-    Y = np.array([predict_binary(e, X) for e in estimators]).T
+    Y = np.array([_predict_binary(e, X) for e in estimators]).T
     pred = euclidean_distances(Y, code_book).argmin(axis=1)
     return classes[pred]
 

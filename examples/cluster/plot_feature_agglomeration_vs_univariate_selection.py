@@ -67,8 +67,8 @@ ward = WardAgglomeration(n_clusters=10, connectivity=A, memory=mem,
                          n_components=1)
 clf = Pipeline([('ward', ward), ('ridge', ridge)])
 # Select the optimal number of parcels with grid search
-clf = GridSearchCV(clf, {'ward__n_clusters': [10, 20, 30]}, n_jobs=1)
-clf.fit(X, y, cv=cv) # set the best parameters
+clf = GridSearchCV(clf, {'ward__n_clusters': [10, 20, 30]}, n_jobs=1, cv=cv)
+clf.fit(X, y) # set the best parameters
 coef_ = clf.best_estimator.steps[-1][1].coef_
 coef_ = clf.best_estimator.steps[0][1].inverse_transform(coef_)
 coef_agglomeration_ = coef_.reshape(size, size)
@@ -78,8 +78,8 @@ f_regression = mem.cache(feature_selection.f_regression) # caching function
 anova = feature_selection.SelectPercentile(f_regression)
 clf = Pipeline([('anova', anova), ('ridge', ridge)])
 # Select the optimal percentage of features with grid search
-clf = GridSearchCV(clf, {'anova__percentile': [5, 10, 20]})
-clf.fit(X, y, cv=cv) # set the best parameters
+clf = GridSearchCV(clf, {'anova__percentile': [5, 10, 20]}, cv=cv)
+clf.fit(X, y) # set the best parameters
 coef_ = clf.best_estimator.steps[-1][1].coef_
 coef_ = clf.best_estimator.steps[0][1].inverse_transform(coef_)
 coef_selection_ = coef_.reshape(size, size)

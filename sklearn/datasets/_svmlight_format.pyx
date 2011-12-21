@@ -21,7 +21,7 @@ _INDPTR_DTYPE = _temp_csr.indptr.dtype
 del _temp_csr
 
 
-def _load_svmlight_file(f, n_features, dtype):
+def _load_svmlight_file(f, n_features, dtype, bint multilabel):
     cdef bytes line
     cdef char *hash_ptr, *line_cstr
     cdef Py_ssize_t hash_idx
@@ -29,7 +29,10 @@ def _load_svmlight_file(f, n_features, dtype):
     data = ArrayBuilder(dtype=dtype)
     indptr = ArrayBuilder(dtype=_INDPTR_DTYPE)
     indices = ArrayBuilder(dtype=_INDICES_DTYPE)
-    labels = ArrayBuilder(dtype=np.double)
+    if multilabel:
+        labels = []
+    else:
+        labels = ArrayBuilder(dtype=np.double)
 
     for line in f:
         # skip comments
@@ -45,8 +48,13 @@ def _load_svmlight_file(f, n_features, dtype):
         if len(line_parts) == 0:
             continue
 
-        y, features = line_parts[0], line_parts[1:]
-        labels.append(float(y))
+        target, features = line_parts[0], line_parts[1:]
+        if multilabel:
+            target = [float(y) for y in target.split(',')]
+            target.sort()
+            labels.append(tuple(target))
+        else:
+            labels.append(float(target))
         indptr.append(len(data))
 
         for i in xrange(1, len(line_parts)):
@@ -60,15 +68,18 @@ def _load_svmlight_file(f, n_features, dtype):
             data.append(dtype(value))
 
     indptr.append(len(data))
+
     indptr = indptr.get()
+    data = data.get()
+    indices = indices.get()
+    if not multilabel:
+        labels = labels.get()
 
     if n_features is not None:
         shape = (indptr.shape[0] - 1, n_features)
     else:
         shape = None    # inferred
 
-    X = sp.csr_matrix((np.array(data.get()),
-                       np.array(indices.get(), dtype=np.int),
-                       indptr), shape)
+    X = sp.csr_matrix((data, indices, indptr), shape)
 
-    return X, labels.get()
+    return X, labels
