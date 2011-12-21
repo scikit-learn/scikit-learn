@@ -227,6 +227,16 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
                                    n_labels=2, length=50, random_state=None):
     """Generate a random multilabel classification problem.
 
+    For each sample, the generative process is:
+        - pick the number of labels: n ~ Poisson(n_labels)
+        - n times, choose a class c: c ~ Multinomial(theta)
+        - pick the document length: k ~ Poisson(length)
+        - k times, choose a word: w ~ Multinomial(theta_c)
+
+    In the above process, rejection sampling is used to make sure that
+    n is never zero or more than `n_classes`, and that the document length
+    is never zero. Likewise, we reject classes which have already been chosen.
+
     Parameters
     ----------
     n_samples : int, optional (default=100)
@@ -239,7 +249,8 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
         The number of classes of the classification problem.
 
     n_labels : int, optional (default=2)
-        The average number of labels per instance.
+        The average number of labels per instance. Number of labels follows
+        a Poisson distribution that never takes the value 0.
 
     length : int, optional (default=50)
         Sum of the features (number of words if documents).
@@ -267,10 +278,10 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
     def sample_example():
         _, n_classes = p_w_c.shape
 
-        # pick a number of labels per document
-        # FIXME: use a distribution
-        n = n_labels
-
+        # pick a nonzero number of labels per document by rejection sampling
+        n = 0
+        while n == 0 or n > n_classes:
+            n = generator.poisson(n_labels)
         # pick n classes
         y = []
         while len(y) != n:
@@ -280,14 +291,16 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
             if not c in y:
                 y.append(c)
 
-        # pick a document length
-        k = generator.poisson(length) or 1
+        # pick a non-zero document length by rejection sampling
+        k = 0
+        while k == 0:
+            k = generator.poisson(length)
 
         # generate a document of length k words
         x = np.zeros(n_features, dtype=int)
         for i in range(k):
             c = y[generator.randint(len(y))]
-            w = generator.multinomial(1, p_w_c[:,c]).argmax()
+            w = generator.multinomial(1, p_w_c[:, c]).argmax()
             x[w] += 1
 
         return x, y

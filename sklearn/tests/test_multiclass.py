@@ -1,8 +1,6 @@
 
 import numpy as np
-import scipy.sparse as sp
 
-from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from nose.tools import assert_equal
 from nose.tools import assert_almost_equal
@@ -104,8 +102,8 @@ def test_ovr_multilabel_dataset():
     clf = OneVsRestClassifier(base_clf).fit(X_train, Y_train)
     Y_pred = clf.predict(X_test)
     assert_true(clf.multilabel_)
-    assert_almost_equal(multilabel_precision(Y_test, Y_pred), 0.80, places=2)
-    assert_almost_equal(multilabel_recall(Y_test, Y_pred), 0.80, places=2)
+    assert_almost_equal(multilabel_precision(Y_test, Y_pred), 0.74, places=2)
+    assert_almost_equal(multilabel_recall(Y_test, Y_pred), 0.84, places=2)
 
 
 def test_ovr_gridsearch():
@@ -125,12 +123,12 @@ def test_ovo_exceptions():
 def test_ovo_fit_predict():
     # A classifier which implements decision_function.
     ovo = OneVsOneClassifier(LinearSVC())
-    pred = ovo.fit(iris.data, iris.target).predict(iris.data)
+    ovo.fit(iris.data, iris.target).predict(iris.data)
     assert_equal(len(ovo.estimators_), n_classes * (n_classes - 1) / 2)
 
     # A classifier which implements predict_proba.
     ovo = OneVsOneClassifier(MultinomialNB())
-    pred = ovo.fit(iris.data, iris.target).predict(iris.data)
+    ovo.fit(iris.data, iris.target).predict(iris.data)
     assert_equal(len(ovo.estimators_), n_classes * (n_classes - 1) / 2)
 
 
@@ -151,12 +149,12 @@ def test_ecoc_exceptions():
 def test_ecoc_fit_predict():
     # A classifier which implements decision_function.
     ecoc = OutputCodeClassifier(LinearSVC(), code_size=2)
-    pred = ecoc.fit(iris.data, iris.target).predict(iris.data)
+    ecoc.fit(iris.data, iris.target).predict(iris.data)
     assert_equal(len(ecoc.estimators_), n_classes * 2)
 
     # A classifier which implements predict_proba.
     ecoc = OutputCodeClassifier(MultinomialNB(), code_size=2)
-    pred = ecoc.fit(iris.data, iris.target).predict(iris.data)
+    ecoc.fit(iris.data, iris.target).predict(iris.data)
     assert_equal(len(ecoc.estimators_), n_classes * 2)
 
 

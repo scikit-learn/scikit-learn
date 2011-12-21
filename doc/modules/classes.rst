@@ -143,6 +143,7 @@ Samples generator
    :template: function.rst
 
    datasets.make_classification
+   datasets.make_multilabel_classification
    datasets.make_regression
    datasets.make_blobs
    datasets.make_friedman1
