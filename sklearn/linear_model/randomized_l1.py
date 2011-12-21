@@ -53,7 +53,7 @@ def _resample_model(estimator_func, X, y, a=.5, n_resampling=200,
 class BaseRandomizedLinearModel(TransformerMixin):
     """ Base class to implement randomized linear models for feature
         selection, in the spirit of Meinshausen and Buhlman's:
-        stability selection with jacknife, and random reweighting of
+        stability selection with jackknife, and random reweighting of
         the penalty
     """
 
