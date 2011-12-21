@@ -49,7 +49,6 @@ print "%d documents" % len(dataset.data)
 print "%d categories" % len(dataset.target_names)
 print
 
-# split a training set and a test set
 labels = dataset.target
 true_k = np.unique(labels).shape[0]
 
@@ -63,10 +62,11 @@ print "n_samples: %d, n_features: %d" % X.shape
 print
 
 ###############################################################################
-# Now sparse MiniBatchKmeans
+# Sparse MiniBatchKmeans
 
-mbkm = MiniBatchKMeans(init="random", k=true_k, max_iter=10, random_state=13,
-                       chunk_size=1000, verbose=0)
+mbkm = MiniBatchKMeans(k=true_k, init='k-means++', n_init=1,
+                       init_size=1000,
+                       batch_size=1000, verbose=1)
 print "Clustering sparse data with %s" % mbkm
 t0 = time()
 mbkm.fit(X)

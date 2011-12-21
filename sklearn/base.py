@@ -172,7 +172,7 @@ class BaseEstimator(object):
         """
         out = dict()
         for key in self._get_param_names():
-            value = getattr(self, key)
+            value = getattr(self, key, None)
             if deep and hasattr(value, '_get_params'):
                 deep_items = value._get_params().items()
                 out.update((key + '__' + k, val) for k, val in deep_items)

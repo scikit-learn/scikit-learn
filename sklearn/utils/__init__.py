@@ -7,6 +7,7 @@ import warnings
 
 from validation import *
 
+
 class deprecated(object):
     """Decorator to mark a function or class as deprecated.
 
