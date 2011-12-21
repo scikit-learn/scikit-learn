@@ -12,7 +12,6 @@ from ..utils import check_random_state
 from ..utils.graph import graph_laplacian
 from .k_means_ import k_means
 
-
 def spectral_embedding(adjacency, n_components=8, mode=None,
                        random_state=None):
     """Project the sample on the first eigen vectors of the graph Laplacian
@@ -102,8 +101,9 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
                 # csr has the fastest matvec and is thus best suited to
                 # arpack
                 laplacian = laplacian.tocsr()
-        lambdas, diffusion_map = eigsh(-laplacian, k=n_components,
-                                        which='LA')
+
+        lambdas, diffusion_map = eigsh(-laplacian, k=n_components, sigma=1.)
+
         embedding = diffusion_map.T[::-1] * dd
     elif mode == 'amg':
         # Use AMG to get a preconditioner and speed up the eigenvalue
