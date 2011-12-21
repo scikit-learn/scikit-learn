@@ -24,7 +24,11 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
               alpha_min=0, method='lar', copy_X=True,
               eps=np.finfo(np.float).eps,
               copy_Gram=True, verbose=False):
-    """Compute Least Angle Regression and LASSO path
+    """Compute Least Angle Regression and Lasso path
+
+    The optimization objective for Lasso is::
+
+    (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
 
     Parameters
     -----------
@@ -68,10 +72,12 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
     See also
     --------
-    :ref:`LassoLars`
-    :ref:`Lars`
-    decomposition.sparse_encode
-    decomposition.sparse_encode_parallel
+    lasso_path
+    LassoLars
+    Lars
+    LassoLarsCV
+    LarsCV
+    sklearn.decomposition.sparse_encode
 
     Notes
     ------
@@ -359,8 +365,8 @@ class Lars(LinearModel):
 
     See also
     --------
-    lars_path, LassoLARS, LarsCV, LassoLarsCV
-    decomposition.sparse_encode, decomposition.sparse_encode_parallel
+    lars_path, LarsCV
+    sklearn.decomposition.sparse_encode
     """
     def __init__(self, fit_intercept=True, verbose=False, normalize=True,
                  precompute='auto', n_nonzero_coefs=500,
@@ -435,7 +441,10 @@ class LassoLars(Lars):
     """Lasso model fit with Least Angle Regression a.k.a. Lars
 
     It is a Linear Model trained with an L1 prior as regularizer.
-    lasso).
+
+    The optimization objective for Lasso is::
+
+    (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
 
     Parameters
     ----------
@@ -494,7 +503,12 @@ class LassoLars(Lars):
 
     See also
     --------
-    lars_path, Lasso
+    lars_path
+    lasso_path
+    Lasso
+    LassoCV
+    LassoLarsCV
+    sklearn.decomposition.sparse_encode
     """
 
     def __init__(self, alpha=1.0, fit_intercept=True, verbose=False,
@@ -752,6 +766,10 @@ class LarsCV(LARS):
 class LassoLarsCV(LarsCV):
     """Cross-validated Lasso, using the LARS algorithm
 
+    The optimization objective for Lasso is::
+
+    (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
+
     Parameters
     ----------
     fit_intercept : boolean
@@ -825,7 +843,7 @@ class LassoLarsCV(LarsCV):
 
     See also
     --------
-    lars_path, LassoLARS, LarsCV, LassoCV
+    lars_path, LassoLars, LarsCV, LassoCV
     """
 
     method = 'lasso'
@@ -833,6 +851,10 @@ class LassoLarsCV(LarsCV):
 
 class LassoLarsIC(LassoLars):
     """Lasso model fit with Lars using BIC or AIC for model selection
+
+    The optimization objective for Lasso is::
+
+    (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
 
     AIC is the Akaike information criterion and BIC is the Bayes
     Information criterion. Such criteria are useful to select the value
@@ -883,6 +905,9 @@ class LassoLarsIC(LassoLars):
 
     `intercept_` : float
         independent term in decision function.
+
+    `alpha_` : float
+        the alpha parameter chosen by the information criterion
 
     Examples
     --------
@@ -988,3 +1013,5 @@ class LassoLarsIC(LassoLars):
         self.coef_ = coef_path_[:, n_best]
         self._set_intercept(Xmean, ymean, Xstd)
         return self
+
+

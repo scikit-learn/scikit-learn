@@ -129,7 +129,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         Number of components to extract. If None no dimension reduction
         is performed.
     algorithm : {'parallel', 'deflation'}, optional
-        Apply an parallel or deflational FASTICA algorithm.
+        Apply a parallel or deflational FASTICA algorithm.
     whiten: boolean, optional
         If true perform an initial whitening of the data. Do not set to
         false unless the data is already white, as you will get incorrect

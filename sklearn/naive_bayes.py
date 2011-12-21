@@ -23,7 +23,7 @@ from scipy.sparse import issparse
 from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize, LabelBinarizer
 from .utils import array2d, atleast2d_or_csr
-from .utils.extmath import safe_sparse_dot, logsum
+from .utils.extmath import safe_sparse_dot, logsumexp
 
 
 class BaseNB(BaseEstimator, ClassifierMixin):
@@ -74,7 +74,7 @@ class BaseNB(BaseEstimator, ClassifierMixin):
         """
         jll = self._joint_log_likelihood(X)
         # normalize by P(x) = P(f_1, ..., f_n)
-        log_prob_x = logsum(jll, axis=1)
+        log_prob_x = logsumexp(jll, axis=1)
         return jll - np.atleast_2d(log_prob_x).T
 
     def predict_proba(self, X):

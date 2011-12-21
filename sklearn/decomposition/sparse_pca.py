@@ -69,7 +69,8 @@ class SparsePCA(BaseEstimator, TransformerMixin):
     See also
     --------
     PCA
-
+    MiniBatchSparsePCA
+    DictionaryLearning
     """
     def __init__(self, n_components, alpha=1, ridge_alpha=0.01, max_iter=1000,
                  tol=1e-8, method='lars', n_jobs=1, U_init=None,
@@ -195,6 +196,19 @@ class MiniBatchSparsePCA(SparsePCA):
     random_state: int or RandomState
         Pseudo number generator state used for random sampling.
 
+    Attributes
+    ----------
+    components_: array, [n_components, n_features]
+        Sparse components extracted from the data.
+
+    error_: array
+        Vector of errors at each iteration.
+
+    See also
+    --------
+    PCA
+    SparsePCA
+    DictionaryLearning
     """
     def __init__(self, n_components, alpha=1, ridge_alpha=0.01, n_iter=100,
                  callback=None, chunk_size=3, verbose=False, shuffle=True,

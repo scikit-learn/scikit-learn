@@ -112,7 +112,7 @@ def test_pipeline():
     iris = datasets.load_iris()
     clf = pipeline.Pipeline(
         [('isomap', manifold.Isomap()),
-         ('neighbors_clf', neighbors.NeighborsClassifier())])
+         ('neighbors_clf', neighbors.KNeighborsClassifier())])
     clf.fit(iris.data, iris.target)
     assert_lower(.7, clf.score(iris.data, iris.target))
 
