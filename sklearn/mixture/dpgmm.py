@@ -271,9 +271,10 @@ class DPGMM(GMM):
             Posterior probabilities of each mixture component for each
             observation
         """
-        
-        z = np.zeros((X.shape[0], self.n_components))
         X = np.asarray(X)
+        if X.ndim == 1:
+            X = X[:, np.newaxis]
+        z = np.zeros((X.shape[0], self.n_components))
         sd = digamma(self._gamma.T[1] + self._gamma.T[2])
         dgamma1 = digamma(self._gamma.T[1]) - sd
         dgamma2 = np.zeros(self.n_components)
@@ -503,7 +504,9 @@ class DPGMM(GMM):
         except KeyError:
             raise NotImplementedError("This ctype is not implemented: %s"
                                       % self.cvtype)
-
+        X = np.asarray(X)
+        if X.ndim == 1:
+            X = X[:, np.newaxis]
         c = np.sum(z * _bound_state_loglik(
                 X, self._initial_bound, self._bound_prec, self.precs_, 
                 self.means_))
@@ -734,6 +737,8 @@ class VBGMM(DPGMM):
             observation
         """
         X = np.asarray(X)
+        if X.ndim == 1:
+            X = X[:, np.newaxis]
         z = np.zeros((X.shape[0], self.n_components))
         p = np.zeros(self.n_components)
         bound = np.zeros(X.shape[0])

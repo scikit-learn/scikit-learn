@@ -336,6 +336,8 @@ class GMM(BaseEstimator):
             observation
         """
         X = np.asarray(X)
+        if X.ndim == 1:
+            X = X[:, np.newaxis]
         lpr = (log_multivariate_normal_density(
                 X, self.means_, self.covars_, self._cvtype) + self.log_weights_)
         logprob = logsumexp(lpr, axis=1)
@@ -466,7 +468,6 @@ class GMM(BaseEstimator):
         if X.shape[0] < self.n_components:
             raise ValueError('GMM estimation with %s components, but '
                              'got only %s' % (self.n_components, X.shape[0]))
-        n_features = X.shape[1]
         
         max_log_prob = - np.infty
         if n_init < 1:
@@ -481,7 +482,7 @@ class GMM(BaseEstimator):
                                        self.n_components)
 
             if 'c' in init_params or not hasattr(self, 'covars'):
-                cv = np.cov(X.T)
+                cv = np.cov(X.T) + self.min_covar * np.eye(X.shape[1])
                 if not cv.shape:
                     cv.shape = (1, 1)
                 self.covars_ = _distribute_covar_matrix_to_match_cvtype(
@@ -659,8 +660,8 @@ def _distribute_covar_matrix_to_match_cvtype(tiedcv, cvtype, n_components):
     elif cvtype == 'full':
         cv = np.tile(tiedcv, (n_components, 1, 1))
     else:
-        raise (ValueError,
-               "cvtype must be one of 'spherical', 'tied', 'diag', 'full'")
+        raise ValueError(
+            "cvtype must be one of 'spherical', 'tied', 'diag', 'full'")
     return cv
 
 

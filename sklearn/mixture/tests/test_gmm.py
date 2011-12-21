@@ -5,7 +5,6 @@ import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal, \
      assert_raises
 from scipy import stats
-
 from sklearn import mixture
 from sklearn.datasets.samples_generator import make_spd_matrix
 
@@ -61,12 +60,12 @@ def test_sample_gaussian():
     assert np.allclose(np.cov(samples), cv, atol=2.5)
 
 
-def _naive_lmvnpdf_diag(obs, mu, cv):
+def _naive_lmvnpdf_diag(X, mu, cv):
     # slow and naive implementation of lmvnpdf
-    ref = np.empty((len(obs), len(mu)))
+    ref = np.empty((len(X), len(mu)))
     stds = np.sqrt(cv)
     for i, (m, std) in enumerate(itertools.izip(mu, stds)):
-        ref[:, i] = np.log(stats.norm.pdf(obs, m, std)).sum(axis=1)
+        ref[:, i] = np.log(stats.norm.pdf(X, m, std)).sum(axis=1)
     return ref
 
 
@@ -76,41 +75,41 @@ def test_lmvnpdf_diag():
     compare it to the vectorized version (mixture.lmvnpdf) to test
     for correctness
     """
-    n_features, n_components, n_obs = 2, 3, 10
+    n_features, n_components, n_samples = 2, 3, 10
     mu = rng.randint(10) * rng.rand(n_components, n_features)
     cv = (rng.rand(n_components, n_features) + 1.0) ** 2
-    obs = rng.randint(10) * rng.rand(n_obs, n_features)
+    X = rng.randint(10) * rng.rand(n_samples, n_features)
 
-    ref = _naive_lmvnpdf_diag(obs, mu, cv)
-    lpr = mixture.log_multivariate_normal_density(obs, mu, cv, 'diag')
+    ref = _naive_lmvnpdf_diag(X, mu, cv)
+    lpr = mixture.log_multivariate_normal_density(X, mu, cv, 'diag')
     assert_array_almost_equal(lpr, ref)
 
 
 def test_lmvnpdf_spherical():
-    n_features, n_components, n_obs = 2, 3, 10
+    n_features, n_components, n_samples = 2, 3, 10
 
     mu = rng.randint(10) * rng.rand(n_components, n_features)
     spherecv = rng.rand(n_components, 1) ** 2 + 1
-    obs = rng.randint(10) * rng.rand(n_obs, n_features)
+    X = rng.randint(10) * rng.rand(n_samples, n_features)
 
     cv = np.tile(spherecv, (n_features, 1))
-    reference = _naive_lmvnpdf_diag(obs, mu, cv)
-    lpr = mixture.log_multivariate_normal_density(obs, mu, spherecv, 
+    reference = _naive_lmvnpdf_diag(X, mu, cv)
+    lpr = mixture.log_multivariate_normal_density(X, mu, spherecv, 
                                                   'spherical')
     assert_array_almost_equal(lpr, reference)
 
 
 def test_lmvnpdf_full():
-    n_features, n_components, n_obs = 2, 3, 10
+    n_features, n_components, n_samples = 2, 3, 10
 
     mu = rng.randint(10) * rng.rand(n_components, n_features)
     cv = (rng.rand(n_components, n_features) + 1.0) ** 2
-    obs = rng.randint(10) * rng.rand(n_obs, n_features)
+    X = rng.randint(10) * rng.rand(n_samples, n_features)
 
     fullcv = np.array([np.diag(x) for x in cv])
 
-    reference = _naive_lmvnpdf_diag(obs, mu, cv)
-    lpr = mixture.log_multivariate_normal_density(obs, mu, fullcv, 'full')
+    reference = _naive_lmvnpdf_diag(X, mu, cv)
+    lpr = mixture.log_multivariate_normal_density(X, mu, fullcv, 'full')
     assert_array_almost_equal(lpr, reference)
 
 
@@ -179,14 +178,14 @@ class GMMTester():
         g.weights = self.weights
 
         gaussidx = np.repeat(range(self.n_components), 5)
-        nobs = len(gaussidx)
-        obs = rng.randn(nobs, self.n_features) + g.means[gaussidx]
+        n_samples = len(gaussidx)
+        X = rng.randn(n_samples, self.n_features) + g.means[gaussidx]
 
-        ll, posteriors = g.eval(obs)
+        ll, posteriors = g.eval(X)
 
-        self.assertEqual(len(ll), nobs)
-        self.assertEqual(posteriors.shape, (nobs, self.n_components))
-        assert_array_almost_equal(posteriors.sum(axis=1), np.ones(nobs))
+        self.assertEqual(len(ll), n_samples)
+        self.assertEqual(posteriors.shape, (n_samples, self.n_components))
+        assert_array_almost_equal(posteriors.sum(axis=1), np.ones(n_samples))
         assert_array_equal(posteriors.argmax(axis=1), gaussidx)
 
     def test_rvs(self, n=100):
@@ -208,19 +207,19 @@ class GMMTester():
         g.covars_ = 20 * self.covars[self.cvtype]
 
         # Create a training set by sampling from the predefined distribution.
-        train_obs = g.rvs(n_samples=100)
+        X = g.rvs(n_samples=100)
         g = self.model(n_components=self.n_components, cvtype=self.cvtype,
                        random_state=rng, min_covar=1e-1)
-        g.fit(train_obs, n_iter=1, init_params=params)
+        g.fit(X, n_iter=1, init_params=params)
 
         # Do one training iteration at a time so we can keep track of
         # the log likelihood to make sure that it increases after each
         # iteration.
         trainll = []
         for iter in xrange(5):
-            g.fit(train_obs, n_iter=1, params=params, init_params='')
-            trainll.append(self.score(g, train_obs))
-        g.fit(train_obs, n_iter=10, params=params, init_params='')  # finish
+            g.fit(X, n_iter=1, params=params, init_params='')
+            trainll.append(self.score(g, X))
+        g.fit(X, n_iter=10, params=params, init_params='')  # finish
                                                                     # fitting
 
         # Note that the log likelihood will sometimes decrease by a
@@ -235,8 +234,32 @@ class GMMTester():
             " threshold of %f, for model %s. The likelihoods are %s."
                 % (delta_min, self.threshold, self.cvtype, trainll))
 
-    def score(self, g, train_obs):
-        return g.score(train_obs).sum()
+    def test_train_degenerate(self, params='wmc'):
+        """ Train on degenerate data with 0 in some dimensionsx
+        """
+        # Create a training set by sampling from the predefined distribution.
+        X = rng.randn(100, self.n_features)
+        X.T[1:] = 0
+        g = self.model(n_components=2, cvtype=self.cvtype,
+                       random_state=rng, min_covar=1e-3)
+        g.fit(X, n_iter=5, init_params=params)
+        trainll = self.score(g, X)
+        self.assertTrue(np.abs(trainll / 100 / X.shape[1]) < 5)
+ 
+    def test_train_1d(self, params='wmc'):
+        """ Train on 1-D data
+        """
+        # Create a training set by sampling from the predefined distribution.
+        X = rng.randn(100)
+        #X.T[1:] = 0
+        g = self.model(n_components=2, cvtype=self.cvtype,
+                       random_state=rng, min_covar=1e-7)
+        g.fit(X, n_iter=5, init_params=params)
+        trainll = self.score(g, X)
+        self.assertTrue(np.abs(trainll / 100) < 5)
+
+    def score(self, g, X):
+        return g.score(X).sum()
 
 
 class TestGMMWithSphericalCovars(unittest.TestCase, GMMTester):
