@@ -42,13 +42,10 @@ References
 # License: BSD Style.
 
 
-from cStringIO import StringIO
-import os
 from time import time
 
 import numpy as np
 import pylab as pl
-from scipy.sparse import csr_matrix
 
 from sklearn.datasets.base import Bunch
 from sklearn.datasets import fetch_species_distributions
@@ -106,15 +103,11 @@ def plot_species_distribution(species=["bradypus_variegatus_0",
     # Load the compressed data
     data = fetch_species_distributions()
 
-    # Set up the data
-    species_map = dict([(s, i) for i, s in enumerate(species)])
-
+    # Set up the data grid
     xgrid, ygrid = construct_grids(data)
 
     # The grid in x,y coordinates
     X, Y = np.meshgrid(xgrid, ygrid[::-1])
-
-    coverages = data.coverages
 
     # create a bunch for each species
     BV_bunch = create_species_bunch(species[0],
@@ -155,16 +148,16 @@ def plot_species_distribution(species=["bradypus_variegatus_0",
         pl.subplot(1, 2, i + 1)
         if basemap:
             print " - plot coastlines using basemap"
-            m = Basemap(projection='cyl', llcrnrlat=ymin,
-                        urcrnrlat=ymax, llcrnrlon=xmin,
-                        urcrnrlon=xmax, resolution='c')
+            m = Basemap(projection='cyl', llcrnrlat=Y.min(),
+                        urcrnrlat=Y.max(), llcrnrlon=X.min(),
+                        urcrnrlon=X.max(), resolution='c')
             m.drawcoastlines()
             m.drawcountries()
         else:
             print " - plot coastlines from coverage"
-            CS = pl.contour(X, Y, land_reference,
-                            levels=[-9999], colors="k",
-                            linestyles="solid")
+            pl.contour(X, Y, land_reference,
+                       levels=[-9999], colors="k",
+                       linestyles="solid")
             pl.xticks([])
             pl.yticks([])
 
@@ -185,7 +178,7 @@ def plot_species_distribution(species=["bradypus_variegatus_0",
         Z[land_reference == -9999] = -9999
 
         # plot contours of the prediction
-        CS = pl.contourf(X, Y, Z, levels=levels, cmap=pl.cm.Reds)
+        pl.contourf(X, Y, Z, levels=levels, cmap=pl.cm.Reds)
         pl.colorbar(format='%.2f')
 
         # scatter training/testing points
@@ -212,7 +205,6 @@ def plot_species_distribution(species=["bradypus_variegatus_0",
 
     print "\ntime elapsed: %.2fs" % (time() - t0)
 
-    pl.show()
 
 if __name__ == '__main__':
     plot_species_distribution()
