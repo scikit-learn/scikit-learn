@@ -113,7 +113,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        X: {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             Data.
 
         y : array-like, shape = [n_samples]
@@ -216,10 +216,10 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin):
 
     Attributes
     ----------
-    estimators_ : list of `n_classes * (n_classes - 1) / 2` estimators
+    `estimators_` : list of `n_classes * (n_classes - 1) / 2` estimators
         Estimators used for predictions.
 
-    classes_ : numpy array of shape [n_classes]
+    `classes_` : numpy array of shape [n_classes]
         Array containing labels.
     """
 
@@ -249,7 +249,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        X: {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             Data.
 
         Returns
@@ -344,25 +344,25 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin):
         An estimator object implementing `fit` and one of `decision_function`
         or `predict_proba`.
 
-    code_size: float
+    code_size : float
         Percentage of the number of classes to be used to create the code book.
         A number between 0 and 1 will require fewer classifiers than
         one-vs-the-rest. A number greater than 1 will require more classifiers
         than one-vs-the-rest.
 
-    random_state: numpy.RandomState, optional
+    random_state : numpy.RandomState, optional
         The generator used to initialize the codebook. Defaults to
         numpy.random.
 
     Attributes
     ----------
-    estimators_ : list of `int(n_classes * code_size)` estimators
+    `estimators_` : list of `int(n_classes * code_size)` estimators
         Estimators used for predictions.
 
-    classes_ : numpy array of shape [n_classes]
+    `classes_` : numpy array of shape [n_classes]
         Array containing labels.
 
-    code_book_: numpy array of shape [n_classes, code_size]
+    `code_book_` : numpy array of shape [n_classes, code_size]
         Binary array containing the code of each class.
 
     Notes

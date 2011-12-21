@@ -133,10 +133,10 @@ class Scaler(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    mean_ : array of floats with shape [n_features]
+    `mean_` : array of floats with shape [n_features]
         The mean value for each feature in the training set.
 
-    std_ : array of floats with shape [n_features]
+    `std_` : array of floats with shape [n_features]
         The standard deviation for each feature in the training set.
 
     See also
@@ -475,7 +475,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    classes_ : array of shape [n_class]
+    `classes_`: array of shape [n_class]
         Holds the label for each class.
 
     Examples
