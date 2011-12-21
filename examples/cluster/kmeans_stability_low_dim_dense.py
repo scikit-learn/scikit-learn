@@ -92,16 +92,9 @@ for factory, init, params in cases:
                          n_init=n_init,
                          **params).fit(X)
             inertia[i, run_id] = km.inertia_
-            print "Inertia for n_init=%02d, run_id=%d: %0.3f" % (
-                n_init, run_id, km.inertia_)
     p = pl.errorbar(n_init_range, inertia.mean(axis=1), inertia.std(axis=1))
     plots.append(p[0])
-    n_reinit = params.get('n_reinit')
-    if n_reinit is not None:
-        legends.append("%s with %s init and %d reinit" % (
-            factory.__name__, init, n_reinit))
-    else:
-        legends.append("%s with %s init" % (factory.__name__, init))
+    legends.append("%s with %s init" % (factory.__name__, init))
 
 pl.xlabel('n_init')
 pl.ylabel('inertia')
