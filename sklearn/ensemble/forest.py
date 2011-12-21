@@ -293,8 +293,6 @@ class RandomForestClassifier(ForestClassifier):
     --------
     RandomForestRegressor, ExtraTreesClassifier, ExtraTreesRegressor
 
-    References
-    ----------
     .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
     """
     def __init__(self, n_estimators=10,
@@ -370,8 +368,6 @@ class RandomForestRegressor(ForestRegressor):
     --------
     RandomForestClassifier, ExtraTreesClassifier, ExtraTreesRegressor
 
-    References
-    ----------
     .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
     """
     def __init__(self, n_estimators=10,
@@ -448,8 +444,6 @@ class ExtraTreesClassifier(ForestClassifier):
     --------
     ExtraTreesRegressor, RandomForestClassifier, RandomForestRegressor
 
-    References
-    ----------
     .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
            Machine Learning, 63(1), 3-42, 2006.
     """
@@ -527,8 +521,6 @@ class ExtraTreesRegressor(ForestRegressor):
     --------
     ExtraTreesRegressor, RandomForestClassifier, RandomForestRegressor
 
-    References
-    ----------
     .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
            Machine Learning, 63(1), 3-42, 2006.
     """

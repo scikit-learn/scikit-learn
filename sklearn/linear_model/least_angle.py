@@ -359,14 +359,12 @@ class Lars(LinearModel):
     >>> print clf.coef_ # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     [ 0. -1.11...]
 
-    References
-    ----------
-    http://en.wikipedia.org/wiki/Least_angle_regression
-
     See also
     --------
     lars_path, LarsCV
     sklearn.decomposition.sparse_encode
+
+    http://en.wikipedia.org/wiki/Least_angle_regression
     """
     def __init__(self, fit_intercept=True, verbose=False, normalize=True,
                  precompute='auto', n_nonzero_coefs=500,
@@ -497,10 +495,6 @@ class LassoLars(Lars):
     >>> print clf.coef_ # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     [ 0.         -0.963257...]
 
-    References
-    ----------
-    http://en.wikipedia.org/wiki/Least_angle_regression
-
     See also
     --------
     lars_path
@@ -509,6 +503,8 @@ class LassoLars(Lars):
     LassoCV
     LassoLarsCV
     sklearn.decomposition.sparse_encode
+
+    http://en.wikipedia.org/wiki/Least_angle_regression
     """
 
     def __init__(self, alpha=1.0, fit_intercept=True, verbose=False,
@@ -921,8 +917,8 @@ class LassoLarsIC(LassoLars):
     >>> print clf.coef_ # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     [ 0.  -1.11...]
 
-    References
-    ----------
+    Notes
+    -----
     The estimation of the number of degrees of freedom is given by:
 
     "On the degrees of freedom of the lasso"

@@ -920,11 +920,12 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
     error_: array
         vector of errors at each iteration
 
-    References
-    ----------
+    Notes
+    -----
+    References:
+
     J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009: Online dictionary learning
     for sparse coding (http://www.di.ens.fr/sierra/pdfs/icml09.pdf)
-
 
     See also
     --------
@@ -1062,11 +1063,12 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
     components_: array, [n_atoms, n_features]
         components extracted from the data
 
-    References
-    ----------
+    Notes
+    -----
+    References:
+
     J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009: Online dictionary learning
     for sparse coding (http://www.di.ens.fr/sierra/pdfs/icml09.pdf)
-
 
     See also
     --------

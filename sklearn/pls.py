@@ -172,13 +172,15 @@ class _PLS(BaseEstimator):
     coefs: array, [p, q]
         The coefficients of the linear model: Y = X coefs + Err
 
-    References
-    ----------
+    Notes
+    -----
+    References:
+
     Jacob A. Wegelin. A survey of Partial Least Squares (PLS) methods, with
     emphasis on the two-block case. Technical Report 371, Department of
     Statistics, University of Washington, Seattle, 2000.
 
-    In french but still a reference:
+    In French but still a reference:
     Tenenhaus, M. (1998). La regression PLS: theorie et pratique. Paris:
     Editions Technic.
 
@@ -475,8 +477,10 @@ class PLSRegression(_PLS):
            scale=True, tol=1e-06)
     >>> Y_pred = pls2.predict(X)
 
-    References
-    ----------
+    Notes
+    -----
+    References:
+
     Jacob A. Wegelin. A survey of Partial Least Squares (PLS) methods, with
     emphasis on the two-block case. Technical Report 371, Department of
     Statistics, University of Washington, Seattle, 2000.
@@ -580,8 +584,10 @@ class PLSCanonical(_PLS):
            scale=True, tol=1e-06)
     >>> X_c, Y_c = plsca.transform(X, Y)
 
-    References
-    ----------
+    Notes
+    -----
+    References:
+
     Jacob A. Wegelin. A survey of Partial Least Squares (PLS) methods, with
     emphasis on the two-block case. Technical Report 371, Department of
     Statistics, University of Washington, Seattle, 2000.
@@ -689,8 +695,10 @@ class CCA(_PLS):
             scale=True, tol=1e-06)
     >>> X_c, Y_c = cca.transform(X, Y)
 
-    References
-    ----------
+    Notes
+    -----
+    References:
+
     Jacob A. Wegelin. A survey of Partial Least Squares (PLS) methods, with
     emphasis on the two-block case. Technical Report 371, Department of
     Statistics, University of Washington, Seattle, 2000.

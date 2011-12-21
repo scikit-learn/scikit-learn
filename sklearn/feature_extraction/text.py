@@ -456,8 +456,10 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         extra document was seen containing every term in the collection
         exactly once. Prevents zero divisions.
 
-    References
-    ----------
+    Notes
+    -----
+    References:
+
     R. Baeza-Yates and B. Ribeiro-Neto (2011). Modern Information Retrieval.
         Addison Wesley, pp. 68–74.
     C.D. Manning, H. Schütze and P. Raghavan (2008). Introduction to

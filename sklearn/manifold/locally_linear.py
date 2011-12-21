@@ -235,8 +235,10 @@ def locally_linear_embedding(
         Reconstruction error for the embedding vectors. Equivalent to
         norm(Y - W Y, 'fro')**2, where W are the reconstruction weights.
 
-    References
-    ----------
+    Notes
+    -----
+    References:
+
       [1] Roweis, S. & Saul, L. Nonlinear dimensionality reduction by
           locally linear embedding.  Science 290:2323 (2000).
       [2] Donoho, D. & Grimes, C. Hessian eigenmaps: Locally linear embedding

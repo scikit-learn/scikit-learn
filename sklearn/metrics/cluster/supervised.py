@@ -147,8 +147,10 @@ def adjusted_rand_score(labels_true, labels_pred):
       >>> adjusted_rand_score([0, 0, 0, 0], [0, 1, 2, 3])
       0.0
 
-    References
-    ----------
+    Notes
+    -----
+    References:
+
     - L. Hubert and P. Arabie, Comparing Partitions,
       Journal of Classification 1985
       http://www.springerlink.com/content/x64124718341j1j0/
@@ -299,8 +301,10 @@ def homogeneity_score(labels_true, labels_pred):
     homogeneity: float
        score between 0.0 and 1.0. 1.0 stands for perfectly homogeneous labeling
 
-    References
-    ----------
+    Notes
+    -----
+    References:
+
     V-Measure: A conditional entropy-based external cluster evaluation measure
     Andrew Rosenberg and Julia Hirschberg, 2007
     http://acl.ldc.upenn.edu/D/D07/D07-1043.pdf
@@ -365,8 +369,10 @@ def completeness_score(labels_true, labels_pred):
     completeness: float
        score between 0.0 and 1.0. 1.0 stands for perfectly complete labeling
 
-    References
-    ----------
+    Notes
+    -----
+    References:
+
     V-Measure: A conditional entropy-based external cluster evaluation measure
     Andrew Rosenberg and Julia Hirschberg, 2007
     http://acl.ldc.upenn.edu/D/D07/D07-1043.pdf
@@ -434,8 +440,10 @@ def v_measure_score(labels_true, labels_pred):
     completeness: float
        score between 0.0 and 1.0. 1.0 stands for perfectly complete labeling
 
-    References
-    ----------
+    Notes
+    -----
+    References:
+
     V-Measure: A conditional entropy-based external cluster evaluation measure
     Andrew Rosenberg and Julia Hirschberg, 2007
     http://acl.ldc.upenn.edu/D/D07/D07-1043.pdf

@@ -930,8 +930,8 @@ def permutation_test_score(estimator, X, y, score_func, cv=None,
         `mean_square_error`) then this is actually the complement of the
         p-value:  1 - p-value.
 
-    References
-    ----------
+    Notes
+    -----
     This function implements Test 1 in:
 
         Ojala and Garriga. Permutation Tests for Studying Classifier

@@ -365,8 +365,10 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin):
     code_book_: numpy array of shape [n_classes, code_size]
         Binary array containing the code of each class.
 
-    References
-    ----------
+    Notes
+    -----
+    References:
+
      * [1] "Solving multiclass learning problems via error-correcting ouput
         codes",
         Dietterich T., Bakiri G.,

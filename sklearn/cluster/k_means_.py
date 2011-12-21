@@ -882,9 +882,9 @@ class MiniBatchKMeans(KMeans):
         defined as the sum of square distances of samples to their nearest
         neighbor.
 
-    References
-    ----------
-    http://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf
+    Notes
+    -----
+    See http://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf
     """
 
     def __init__(self, k=8, init='k-means++', max_iter=100,

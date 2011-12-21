@@ -523,8 +523,10 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    References
-    ----------
+    See also
+    --------
+    DecisionTreeRegressor
+
     .. [1] http://en.wikipedia.org/wiki/Decision_tree_learning
 
     .. [2] L. Breiman, J. Friedman, R. Olshen, and C. Stone, "Classification
@@ -532,10 +534,6 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
     .. [3] T. Hastie, R. Tibshirani and J. Friedman. "Elements of Statistical
            Learning", Springer, 2009.
-
-    See also
-    --------
-    DecisionTreeRegressor
 
     Examples
     --------
@@ -648,8 +646,10 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    References
-    ----------
+    See also
+    --------
+    DecisionTreeClassifier
+
     .. [1] http://en.wikipedia.org/wiki/Decision_tree_learning
 
     .. [2] L. Breiman, J. Friedman, R. Olshen, and C. Stone, "Classification
@@ -657,10 +657,6 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
 
     .. [3] T. Hastie, R. Tibshirani and J. Friedman. "Elements of Statistical
            Learning", Springer, 2009.
-
-    See also
-    --------
-    DecisionTreeClassifier
 
     Examples
     --------
@@ -709,8 +705,6 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
     --------
     ExtraTreeRegressor, ExtraTreesClassifier, ExtraTreesRegressor
 
-    References
-    ----------
     .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
            Machine Learning, 63(1), 3-42, 2006.
     """
@@ -746,8 +740,6 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     --------
     ExtraTreeClassifier, ExtraTreesClassifier, ExtraTreesRegressor
 
-    References
-    ----------
     .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
            Machine Learning, 63(1), 3-42, 2006.
     """
