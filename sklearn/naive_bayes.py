@@ -286,7 +286,6 @@ class BaseDiscreteNB(BaseNB):
             labelbin = LabelBinarizer()
             Y = labelbin.fit_transform(y)
             self._classes = labelbin.classes_
-            n_classes = len(self._classes)
             if Y.shape[1] == 1:
                 Y = np.concatenate((1 - Y, Y), axis=1)
         else:
@@ -549,7 +548,6 @@ class SemisupervisedNB(BaseNB):
             Y_unlabeled = Y[unlabeled, :]
 
         n_features = X.shape[1]
-        n_classes = Y.shape[1]
         tol = self.tol * n_features
 
         clf._fit1ofK(X[labeled, :], Y[labeled, :],
