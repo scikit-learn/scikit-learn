@@ -136,9 +136,10 @@ class Isomap(BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix, BallTree, cKDTree}
-            Training vector, where n_samples in the number of samples
-            and n_features is the number of features.
+        X : {array-like, sparse matrix, BallTree, cKDTree, NearestNeighbors}
+            Sample data, shape = (n_samples, n_features), in the form of a
+            numpy array, sparse array, precomputed tree, or NearestNeighbors
+            object.
 
         Returns
         -------
