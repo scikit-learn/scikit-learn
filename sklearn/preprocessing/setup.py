@@ -10,8 +10,9 @@ def configuration(parent_package='', top_path=None):
     config.add_extension(
         '_preprocessing',
         sources=[join('src', '_preprocessing.c')],
+        extra_compile_args=["-Wno-unused-function", "-Wno-unused-but-set-variable"],
         include_dirs=[numpy.get_include()]
-    )
+        )
 
     return config
 

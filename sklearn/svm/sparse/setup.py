@@ -12,7 +12,8 @@ def configuration(parent_package='', top_path=None):
             sources=libsvm_sparse_sources,
             include_dirs=[numpy.get_include(), join('..', 'src', 'libsvm')],
             depends=[join('..', 'src', 'libsvm', 'svm.h'),
-                join('..', 'src', 'libsvm', 'libsvm_sparse_helper.c')],)
+                join('..', 'src', 'libsvm', 'libsvm_sparse_helper.c')],
+         extra_compile_args=["-Wno-unused-function", "-Wno-unused-but-set-variable"],)
 
     return config
 

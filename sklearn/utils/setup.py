@@ -21,9 +21,11 @@ def configuration(parent_package='', top_path=None):
         cblas_libs = blas_info.pop('libraries', [])
 
     config.add_extension('arraybuilder',
+         extra_compile_args=["-Wno-unused-function", "-Wno-unused-but-set-variable"],
          sources=['arraybuilder.c'])
 
     config.add_extension('sparsefuncs',
+         extra_compile_args=["-Wno-unused-function", "-Wno-unused-but-set-variable"],
          sources=['sparsefuncs.c'])
 
     config.add_extension('arrayfuncs',
@@ -33,12 +35,14 @@ def configuration(parent_package='', top_path=None):
          include_dirs=[join('..', 'src', 'cblas'),
                        numpy.get_include(),
                        blas_info.pop('include_dirs', [])],
-         extra_compile_args=blas_info.pop('extra_compile_args', []),
+         extra_compile_args=blas_info.pop('extra_compile_args', []).extend(
+             ["-Wno-unused-function", "-Wno-unused-but-set-variable"]),
          **blas_info
          )
 
     config.add_extension('graph_shortest_path',
          sources=['graph_shortest_path.c'],
+         extra_compile_args=["-Wno-unused-function", "-Wno-unused-but-set-variable"],
          include_dirs=[numpy.get_include()])
 
     return config

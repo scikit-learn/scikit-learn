@@ -5,8 +5,9 @@ from numpy.distutils.misc_util import Configuration
 def configuration(parent_package="", top_path=None):
     config = Configuration("tree", parent_package, top_path)
     config.add_extension("_tree",
-                         sources=["_tree.c"],
-                         include_dirs=[numpy.get_include()])
+         sources=["_tree.c"],
+         include_dirs=[numpy.get_include()],
+         extra_compile_args=["-Wno-unused-function", "-Wno-unused-but-set-variable"])
 
     config.add_subpackage("tests")
 
