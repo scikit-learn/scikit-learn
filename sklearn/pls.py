@@ -145,28 +145,28 @@ class _PLS(BaseEstimator):
 
     Attributes
     ----------
-    x_weights_: array, [p, n_components]
+    `x_weights_`: array, [p, n_components]
         X block weights vectors.
 
-    y_weights_: array, [q, n_components]
+    `y_weights_`: array, [q, n_components]
         Y block weights vectors.
 
-    x_loadings_: array, [p, n_components]
+    `x_loadings_`: array, [p, n_components]
         X block loadings vectors.
 
-    y_loadings_: array, [q, n_components]
+    `y_loadings_`: array, [q, n_components]
         Y block loadings vectors.
 
-    x_scores_: array, [n_samples, n_components]
+    `x_scores_`: array, [n_samples, n_components]
         X scores.
 
-    y_scores_: array, [n_samples, n_components]
+    `y_scores_`: array, [n_samples, n_components]
         Y scores.
 
-    x_rotations_: array, [p, n_components]
+    `x_rotations_`: array, [p, n_components]
         X block to latents rotations.
 
-    y_rotations_: array, [q, n_components]
+    `y_rotations_`: array, [q, n_components]
         Y block to latents rotations.
 
     coefs: array, [p, q]
@@ -318,23 +318,23 @@ class _PLS(BaseEstimator):
 
     def transform(self, X, Y=None, copy=True):
         """Apply the dimension reduction learned on the train data.
-            Parameters
-            ----------
-            X: array-like of predictors, shape = [n_samples, p]
-                Training vectors, where n_samples in the number of samples and
-                p is the number of predictors.
 
-            Y: array-like of response, shape = [n_samples, q], optional
-                Training vectors, where n_samples in the number of samples and
-                q is the number of response variables.
+        Parameters
+        ----------
+        X: array-like of predictors, shape = [n_samples, p]
+            Training vectors, where n_samples in the number of samples and
+            p is the number of predictors.
 
-            copy: boolean
-                Whether to copy X and Y, or perform in-place normalization.
+        Y: array-like of response, shape = [n_samples, q], optional
+            Training vectors, where n_samples in the number of samples and
+            q is the number of response variables.
 
-            Returns
-            -------
-            x_scores if Y is not given, (x_scores, y_scores) otherwise.
+        copy: boolean
+            Whether to copy X and Y, or perform in-place normalization.
 
+        Returns
+        -------
+        x_scores if Y is not given, (x_scores, y_scores) otherwise.
         """
         # Normalize
         if copy:
@@ -359,19 +359,20 @@ class _PLS(BaseEstimator):
 
     def predict(self, X, copy=True):
         """Apply the dimension reduction learned on the train data.
-            Parameters
-            ----------
-            X: array-like of predictors, shape = [n_samples, p]
-                Training vectors, where n_samples in the number of samples and
-                p is the number of predictors.
 
-            copy: boolean
-                Whether to copy X and Y, or perform in-place normalization.
+        Parameters
+        ----------
+        X: array-like of predictors, shape = [n_samples, p]
+            Training vectors, where n_samples in the number of samples and
+            p is the number of predictors.
 
-            Notes
-            -----
-            This call require the estimation of a p x q matrix, which may
-            be an issue in high dimensional space.
+        copy: boolean
+            Whether to copy X and Y, or perform in-place normalization.
+
+        Notes
+        -----
+        This call require the estimation of a p x q matrix, which may
+        be an issue in high dimensional space.
         """
         # Normalize
         if copy:
@@ -424,28 +425,28 @@ class PLSRegression(_PLS):
 
     Attributes
     ----------
-    x_weights_: array, [p, n_components]
+    `x_weights_`: array, [p, n_components]
         X block weights vectors.
 
-    y_weights_: array, [q, n_components]
+    `y_weights_`: array, [q, n_components]
         Y block weights vectors.
 
-    x_loadings_: array, [p, n_components]
+    `x_loadings_`: array, [p, n_components]
         X block loadings vectors.
 
-    y_loadings_: array, [q, n_components]
+    `y_loadings_`: array, [q, n_components]
         Y block loadings vectors.
 
-    x_scores_: array, [n_samples, n_components]
+    `x_scores_`: array, [n_samples, n_components]
         X scores.
 
-    y_scores_: array, [n_samples, n_components]
+    `y_scores_`: array, [n_samples, n_components]
         Y scores.
 
-    x_rotations_: array, [p, n_components]
+    `x_rotations_`: array, [p, n_components]
         X block to latents rotations.
 
-    y_rotations_: array, [q, n_components]
+    `y_rotations_`: array, [q, n_components]
         Y block to latents rotations.
 
     coefs: array, [p, q]
@@ -454,7 +455,7 @@ class PLSRegression(_PLS):
     Notes
     -----
     For each component k, find weights u, v that optimizes:
-    max corr(Xk u, Yk v) * var(Xk u) var(Yk u), such that |u| = |v| = 1
+    max corr(Xk u, Yk v) * var(Xk u) var(Yk u), such that ``|u| = |v| = 1``
 
     Note that it maximizes both the correlations between the scores and the
     intra-block variances.
@@ -533,34 +534,34 @@ class PLSCanonical(_PLS):
 
     Attributes
     ----------
-    x_weights_: array, shape = [p, n_components]
+    `x_weights_`: array, shape = [p, n_components]
         X block weights vectors.
 
-    y_weights_: array, shape = [q, n_components]
+    `y_weights_`: array, shape = [q, n_components]
         Y block weights vectors.
 
-    x_loadings_: array, shape = [p, n_components]
+    `x_loadings_`: array, shape = [p, n_components]
         X block loadings vectors.
 
-    y_loadings_: array, shape = [q, n_components]
+    `y_loadings_`: array, shape = [q, n_components]
         Y block loadings vectors.
 
-    x_scores_: array, shape = [n_samples, n_components]
+    `x_scores_`: array, shape = [n_samples, n_components]
         X scores.
 
-    y_scores_: array, shape = [n_samples, n_components]
+    `y_scores_`: array, shape = [n_samples, n_components]
         Y scores.
 
-    x_rotations_: array, shape = [p, n_components]
+    `x_rotations_`: array, shape = [p, n_components]
         X block to latents rotations.
 
-    y_rotations_: array, shape = [q, n_components]
+    `y_rotations_`: array, shape = [q, n_components]
         Y block to latents rotations.
 
     Notes
     -----
     For each component k, find weights u, v that optimize::
-    max corr(Xk u, Yk v) * var(Xk u) var(Yk u), such that |u| = |v| = 1
+    max corr(Xk u, Yk v) * var(Xk u) var(Yk u), such that ``|u| = |v| = 1``
 
     Note that it maximizes both the correlations between the scores and the
     intra-block variances.
@@ -646,34 +647,34 @@ class CCA(_PLS):
 
     Attributes
     ----------
-    x_weights_: array, [p, n_components]
+    `x_weights_`: array, [p, n_components]
         X block weights vectors.
 
-    y_weights_: array, [q, n_components]
+    `y_weights_`: array, [q, n_components]
         Y block weights vectors.
 
-    x_loadings_: array, [p, n_components]
+    `x_loadings_`: array, [p, n_components]
         X block loadings vectors.
 
-    y_loadings_: array, [q, n_components]
+    `y_loadings_`: array, [q, n_components]
         Y block loadings vectors.
 
-    x_scores_: array, [n_samples, n_components]
+    `x_scores_`: array, [n_samples, n_components]
         X scores.
 
-    y_scores_: array, [n_samples, n_components]
+    `y_scores_`: array, [n_samples, n_components]
         Y scores.
 
-    x_rotations_: array, [p, n_components]
+    `x_rotations_`: array, [p, n_components]
         X block to latents rotations.
 
-    y_rotations_: array, [q, n_components]
+    `y_rotations_`: array, [q, n_components]
         Y block to latents rotations.
 
     Notes
     -----
     For each component k, find the weights u, v that maximizes
-    max corr(Xk u, Yk v), such that |u| = |v| = 1
+    max corr(Xk u, Yk v), such that ``|u| = |v| = 1``
 
     Note that it maximizes only the correlations between the scores.
 
@@ -746,16 +747,16 @@ class PLSSVD(BaseEstimator):
 
     Attributes
     ----------
-    x_weights_: array, [p, n_components]
+    `x_weights_`: array, [p, n_components]
         X block weights vectors.
 
-    y_weights_: array, [q, n_components]
+    `y_weights_`: array, [q, n_components]
         Y block weights vectors.
 
-    x_scores_: array, [n_samples, n_components]
+    `x_scores_`: array, [n_samples, n_components]
         X scores.
 
-    y_scores_: array, [n_samples, n_components]
+    `y_scores_`: array, [n_samples, n_components]
         Y scores.
 
     See also
