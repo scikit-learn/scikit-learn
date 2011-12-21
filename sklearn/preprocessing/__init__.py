@@ -520,8 +520,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
             if self.indicator_matrix_:
                 self.classes_ = np.arange(y.shape[1])
             else:
-                # concatenation of the sub-sequences
-                self.classes_ = np.unique(reduce(lambda a, b: a + b, y))
+                self.classes_ = np.array(sorted(set.union(*map(set, y))))
         else:
             self.classes_ = np.unique(y)
         return self
