@@ -138,11 +138,7 @@ class BaseRandomizedLinearModel(TransformerMixin):
 # Randomized lasso: regression settings
 
 def _randomized_lasso(X, y, weights, mask, alpha=1., verbose=False,
-<<<<<<< HEAD
                       precompute=False, eps=np.finfo(np.float).eps,
-=======
-                      precompute=False, eps=np.finfo(np.float).eps,
->>>>>>> STY: pep8
                       max_iter=500):
     # XXX: should we refit the intercept?
     X = X[mask]
