@@ -336,8 +336,8 @@ class MultinomialNB(BaseDiscreteNB):
     >>> print clf.predict(X[2])
     [3]
 
-    References
-    ----------
+    Notes
+    -----
     For the rationale behind the names `coef_` and `intercept_`, i.e.
     naive Bayes as a linear classifier, see J. Rennie et al. (2003),
     Tackling the poor assumptions of naive Bayes text classifiers, ICML.
@@ -408,8 +408,10 @@ class BernoulliNB(BaseDiscreteNB):
     >>> print clf.predict(X[2])
     [3]
 
-    References
-    ----------
+    Notes
+    -----
+    References:
+
     C.D. Manning, P. Raghavan and H. Schütze (2008). Introduction to
     Information Retrieval. Cambridge University Press, pp. 234–265.
 

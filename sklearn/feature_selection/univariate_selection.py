@@ -62,8 +62,10 @@ def f_oneway(*args):
     See scipy.stats.f_oneway that should give the same results while
     being less efficient
 
-    References
-    ----------
+    Notes
+    -----
+    References:
+
     .. [1] Lowry, Richard.  "Concepts and Applications of Inferential
            Statistics". Chapter 14.
            http://faculty.vassar.edu/lowry/ch14pt1.html

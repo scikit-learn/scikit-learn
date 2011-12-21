@@ -91,7 +91,7 @@ def resample(*arrays, **options):
 
     Parameters
     ----------
-    *arrays : sequence of arrays or scipy.sparse matrices with same shape[0]
+    `*arrays` : sequence of arrays or scipy.sparse matrices with same shape[0]
 
     replace : boolean, True by default
         Implements resampling with replacement. If False, this will implement
@@ -191,12 +191,12 @@ def resample(*arrays, **options):
 def shuffle(*arrays, **options):
     """Shuffle arrays or sparse matrices in a consistent way
 
-    This is a convenience alias to resample(*arrays, replace=False) to do
+    This is a convenience alias to ``resample(*arrays, replace=False)`` to do
     random permutations of the collections.
 
     Parameters
     ----------
-    *arrays : sequence of arrays or scipy.sparse matrices with same shape[0]
+    `*arrays` : sequence of arrays or scipy.sparse matrices with same shape[0]
 
     random_state : int or RandomState instance
         Control the shuffling for reproducible behavior.

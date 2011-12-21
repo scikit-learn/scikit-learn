@@ -167,13 +167,13 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             normalize=..., nugget=...,
             ...
 
-    Implementation details
-    ----------------------
+    Notes
+    -----
     The presentation implementation is based on a translation of the DACE
     Matlab toolbox, see reference [1].
 
-    References
-    ----------
+    References:
+
     [1] H.B. Nielsen, S.N. Lophaven, H. B. Nielsen and J. Sondergaard (2002).
         DACE - A MATLAB Kriging Toolbox.
         http://www2.imm.dtu.dk/~hbn/dace/dace.pdf

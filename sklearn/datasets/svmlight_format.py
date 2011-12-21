@@ -20,7 +20,8 @@ import numpy as np
 import scipy.sparse as sp
 
 
-def load_svmlight_file(f, n_features=None, dtype=np.float64):
+def load_svmlight_file(f, n_features=None, dtype=np.float64,
+                       multilabel=False):
     """Load datasets in the svmlight / libsvm format into sparse CSR matrix
 
     This format is a text-based format, with one sample per line. It does
@@ -56,20 +57,26 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64):
         every feature, hence the inferred shape might vary from one
         slice to another.
 
+    multilabel: boolean, optional
+        Samples may have several labels each (see
+        http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multilabel.html)
+
     Returns
     -------
     (X, y)
 
     where X is a scipy.sparse matrix of shape (n_samples, n_features),
-          y is a ndarray of shape (n_samples,).
+          y is a ndarray of shape (n_samples,), or, in the multilabel case,
+          a list of tuples of length n_samples.
     """
     if hasattr(f, "read"):
-        return _load_svmlight_file(f, n_features, dtype)
+        return _load_svmlight_file(f, n_features, dtype, multilabel)
     with open(f) as f:
-        return _load_svmlight_file(f, n_features, dtype)
+        return _load_svmlight_file(f, n_features, dtype, multilabel)
 
 
-def load_svmlight_files(files, n_features=None, dtype=np.float64):
+def load_svmlight_files(files, n_features=None, dtype=np.float64,
+                        multilabel=False):
     """Load dataset from multiple files in SVMlight format
 
     This function is equivalent to mapping load_svmlight_file over a list of
@@ -88,6 +95,10 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64):
         subsets of a bigger sliced dataset: each subset might not have
         examples of every feature, hence the inferred shape might vary from
         one slice to another.
+
+    multilabel: boolean, optional
+        Samples may have several labels each (see
+        http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multilabel.html)
 
     Returns
     -------
@@ -111,7 +122,7 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64):
     n_features = result[0].shape[1]
 
     for f in files:
-        result += load_svmlight_file(f, n_features, dtype)
+        result += load_svmlight_file(f, n_features, dtype, multilabel)
 
     return result
 

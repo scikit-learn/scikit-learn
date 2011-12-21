@@ -439,7 +439,7 @@ def load_sample_images():
         except ImportError:
             from scipy.misc.pilutil import imread
     except ImportError:
-        raise ImportError("The Python Imaging Library (PIL)"
+        raise ImportError("The Python Imaging Library (PIL) "
                           "is required to load data from jpeg files")
     module_path = join(dirname(__file__), "images")
     with open(join(module_path, 'README.txt')) as f:

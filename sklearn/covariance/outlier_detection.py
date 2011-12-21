@@ -61,8 +61,10 @@ class OutlierDetectionMixin(ClassifierMixin):
           ensures a compatibility with other outlier detection tools
           such as the One-Class SVM.
 
-        References
-        ----------
+        Notes
+        -----
+        References:
+
         [1] Wilson, E. B., & Hilferty, M. M. (1931).
             The distribution of chi-square.
             Proceedings of the National Academy of Sciences of the
