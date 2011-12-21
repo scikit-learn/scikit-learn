@@ -205,7 +205,7 @@ def auc(x, y):
     return area
 
 
-def precision_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
+def precision_score(y_true, y_pred, labels=None, pos_label=None, average='weighted'):
     """Compute the precision
 
     The precision is the ratio :math:`tp / (tp + fp)` where tp is the
@@ -256,7 +256,7 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'
     return p
 
 
-def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
+def recall_score(y_true, y_pred, labels=None, pos_label=None, average='weighted'):
     """Compute the recall
 
     The recall is the ratio :math:`tp / (tp + fn)` where tp is the number of
@@ -305,7 +305,7 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     return r
 
 
-def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
+def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=None,
                 average='weighted'):
     """Compute fbeta score
 
@@ -366,7 +366,7 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     return f
 
 
-def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
+def f1_score(y_true, y_pred, labels=None, pos_label=None, average='weighted'):
     """Compute f1 score
 
     The F1 score can be interpreted as a weighted average of the precision

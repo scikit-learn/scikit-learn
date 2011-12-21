@@ -136,7 +136,7 @@ def test_precision_recall_f1_score_binary():
     assert_array_almost_equal(ps, 0.75, 2)
 
     rs = recall_score(y_true, y_pred)
-    assert_array_almost_equal(rs, 0.72, 2)
+    assert_array_almost_equal(rs, 0.74, 2)
 
     fs = f1_score(y_true, y_pred)
     assert_array_almost_equal(fs, 0.74, 2)
