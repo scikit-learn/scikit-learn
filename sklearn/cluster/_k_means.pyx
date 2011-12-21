@@ -29,6 +29,7 @@ cdef extern from "cblas.h":
 cdef inline DOUBLE array_ddot(int n,
                 np.ndarray[DOUBLE, ndim=2] a, int a_idx,
                 np.ndarray[DOUBLE, ndim=2] b, int b_idx):
+    """Fast dot product of rows of 2D arrays with blas"""
     return ddot(n, <DOUBLE*>(a.data + a_idx * n * sizeof(DOUBLE)), 1,
                 <DOUBLE*>(b.data + b_idx * n * sizeof(DOUBLE)), 1)
 
@@ -248,7 +249,11 @@ def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
 @cython.wraparound(False)
 @cython.cdivision(True)
 def csr_row_norm_l2(X, squared=True):
-    """Get L2 norm of each row in CSR matrix X."""
+    """Get L2 norm of each row in CSR matrix X.
+
+    TODO: refactor me in the sklearn.utils.sparsefuncs module once the CSR
+    sklearn.preprocessing.Scaler has been refactored as well.
+    """
     cdef:
         unsigned int n_samples = X.shape[0]
         unsigned int n_features = X.shape[1]
@@ -261,7 +266,7 @@ def csr_row_norm_l2(X, squared=True):
         unsigned int i
         unsigned int j
         double sum_
-        int withsqrt = not squared
+        int with_sqrt = not squared
 
     for i in range(n_samples):
         sum_ = 0.0
@@ -269,7 +274,7 @@ def csr_row_norm_l2(X, squared=True):
         for j in range(X_indptr[i], X_indptr[i + 1]):
             sum_ += X_data[j] * X_data[j]
 
-        if withsqrt:
+        if with_sqrt:
             sum_ = sqrt(sum_)
 
         norms[i] = sum_
