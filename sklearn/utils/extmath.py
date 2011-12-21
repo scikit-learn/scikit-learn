@@ -205,7 +205,7 @@ def fast_svd(M, k, p=None, n_iterations=0, transpose='auto', random_state=0):
         return U[:, :k], s[:k], V[:k, :]
 
 
-def logsum(arr, axis=0):
+def logsumexp(arr, axis=0):
     """ Computes the sum of arr assuming arr is in the log domain.
 
     Returns log(sum(exp(arr))) while minimizing the possibility of
@@ -215,11 +215,11 @@ def logsum(arr, axis=0):
     ========
 
     >>> import numpy as np
-    >>> from sklearn.utils.extmath import logsum
+    >>> from sklearn.utils.extmath import logsumexp
     >>> a = np.arange(10)
     >>> np.log(np.sum(np.exp(a)))
     9.4586297444267107
-    >>> logsum(a)
+    >>> logsumexp(a)
     9.4586297444267107
     """
     arr = np.rollaxis(arr, axis)
