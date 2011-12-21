@@ -51,7 +51,7 @@ from .base import load_files
 from ..utils import check_random_state, deprecated
 from ..utils.fixes import in1d
 from ..feature_extraction.text import Vectorizer
-from ..externals.joblib import Memory
+from sklearn.externals import joblib
 
 
 logger = logging.getLogger(__name__)
@@ -219,14 +219,8 @@ def fetch_20newsgroups_tfidf(subset="train", data_home=None):
         bunch.target: array, shape [n_samples]
         bunch.target_names: list, length [n_classes]
     """
-    def _vectorize(data_train, data_test):
-        vectorizer = Vectorizer()
-        X_train = vectorizer.fit_transform(data_train.data)
-        X_test = vectorizer.transform(data_test.data)
-        return X_train, X_test
-
     data_home = get_data_home(data_home=data_home)
-    mem = Memory(cachedir=data_home, verbose=False)
+    target_file = os.path.join(data_home, "20newsgroup_vectorized.pk")
 
     # we shuffle but use a fixed seed for the memoization
     data_train = fetch_20newsgroups(data_home=data_home,
@@ -241,8 +235,13 @@ def fetch_20newsgroups_tfidf(subset="train", data_home=None):
                                    shuffle=True,
                                    random_state=12)
 
-    vectorize = mem.cache(_vectorize)
-    X_train, X_test = vectorize(data_train, data_test)
+    if os.path.exists(target_file):
+        X_train, X_test = joblib.load(target_file)
+    else:
+        vectorizer = Vectorizer()
+        X_train = vectorizer.fit_transform(data_train.data)
+        X_test = vectorizer.transform(data_test.data)
+        joblib.dump((X_train, X_test), target_file)
 
     target_names = data_train.target_names
 
