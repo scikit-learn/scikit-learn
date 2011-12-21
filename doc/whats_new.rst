@@ -46,7 +46,7 @@ Changelog
      extra-trees method, along with documentation and examples.
 
    - :ref:`outlier_detection`: outlier and novelty detection, by
-     `VirgileFritsch`_.
+     `Virgile Fritsch`_.
 
    - :ref:`kernel_approximation`: a transform implement kernel 
      approximation for fast SGD on non-linear kernels by 
