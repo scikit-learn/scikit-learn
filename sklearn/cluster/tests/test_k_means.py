@@ -164,6 +164,11 @@ def test_k_means_random_init():
     _check_fitted_model(k_means)
 
 
+def test_k_means_random_init():
+    k_means = KMeans(init="random", k=n_clusters, random_state=42).fit(X_csr)
+    _check_fitted_model(k_means)
+
+
 def test_k_means_plus_plus_init_not_precomputed():
     k_means = KMeans(init="k-means++", k=n_clusters, random_state=42,
                      precompute_distances=False).fit(X)
