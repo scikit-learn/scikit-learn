@@ -616,3 +616,30 @@ learning. By default:
 The last characteristic implies that the Perceptron is slightly faster to
 train than SGD with the hinge loss and that the resulting models are
 sparser.
+
+.. _randomized_l1:
+
+Randomized sparse linear models
+===============================
+
+Sparse linear have problems recovering the good features when they
+are highly correlated. In a set of correlated good features a Lasso
+or L1-LogisticRegression will select only one or a few of them and will
+also tend to take more features then it should i.e. select some bad
+features. The problem is also addressed but differently with the ElasticNet.
+Randomized linear models are presented in::
+
+    Stability selection
+    Nicolai Meinshausen, Peter Buhlmann
+    Journal of the Royal Statistical Society: Series B
+    Volume 72, Issue 4, pages 417-473, September 2010
+    DOI: 10.1111/j.1467-9868.2010.00740.x
+
+The :class:`RandomizedLogistic` and :class:`RandomizedLasso` class can be used
+to compute stability scores for regression and classification problems.
+To get a full path of stability scores you can use
+:func:`sklearn.linear_model.lasso_stability_path`.
+
+.. topic:: Examples:
+
+* :ref:`example_linear_model_plot_randomized_lasso.py`

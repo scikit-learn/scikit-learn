@@ -162,12 +162,12 @@ class RandomizedLasso(BaseRandomizedLinearModel):
 
     Parameters
     ----------
-    alpha: float, 'aic', or 'bic'
+    alpha : float, 'aic', or 'bic'
         The regularization parameter alpha parameter in the Lasso.
         Warning: this is not the alpha parameter in the stability selection
         article which is scaling.
 
-    scaling: float
+    scaling : float
         The alpha parameter in the stability selection article used to
         randomly scale the features. Should be between 0 and 1.
 
@@ -187,10 +187,10 @@ class RandomizedLasso(BaseRandomizedLinearModel):
         calculations. If set to 'auto' let us decide. The Gram
         matrix can also be passed as argument.
 
-    max_iter: integer, optional
+    max_iter : integer, optional
         Maximum number of iterations to perform in the Lars algorithm.
 
-    eps: float, optional
+    eps : float, optional
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems. Unlike the 'tol' parameter in some iterative
@@ -207,7 +207,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    pre_dispatch: int, or string, optional
+    pre_dispatch : int, or string, optional
         Controls the number of jobs that get dispatched during parallel
         execution. Reducing this number can be useful to avoid an
         explosion of memory consumption when more jobs get dispatched
@@ -231,7 +231,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
 
     Attributes
     ----------
-    scores_: array, shape = [n_features]
+    `scores_` : array, shape = [n_features]
         Feature scores between 0 and 1.
 
     Examples
@@ -318,10 +318,10 @@ class RandomizedLogistic(BaseRandomizedLinearModel):
 
     Parameters
     ----------
-    C: float
+    C : float
         The regularization parameter C parameter in the LogisticRegression.
 
-    scaling: float
+    scaling : float
         The alpha parameter in the stability selection article used to
         randomly scale the features. Should be between 0 and 1.
 
@@ -336,7 +336,7 @@ class RandomizedLogistic(BaseRandomizedLinearModel):
     normalize : boolean, optional
         If True, the regressors X are normalized
 
-    tol: float, optional
+    tol : float, optional
          tolerance for stopping criteria of LogisticRegression
 
     n_jobs : integer, optional
@@ -349,7 +349,7 @@ class RandomizedLogistic(BaseRandomizedLinearModel):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    pre_dispatch: int, or string, optional
+    pre_dispatch : int, or string, optional
         Controls the number of jobs that get dispatched during parallel
         execution. Reducing this number can be useful to avoid an
         explosion of memory consumption when more jobs get dispatched
@@ -373,7 +373,7 @@ class RandomizedLogistic(BaseRandomizedLinearModel):
 
     Attributes
     ----------
-    scores_: array, shape = [n_features]
+    `scores_` : array, shape = [n_features]
         Feature scores between 0 and 1.
 
     Examples
