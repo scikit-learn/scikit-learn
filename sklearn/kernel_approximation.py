@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 The :mod:`sklearn.kernel_approximation` module implements several
 approximate kernel feature maps base on Fourier transforms.
@@ -31,10 +32,10 @@ class RBFSampler(BaseEstimator, TransformerMixin):
         If int, random_state is the seed used by the random number generator;
         if RandomState instance, random_state is the random number generator.
 
-    References
-    ----------
-    "Random Features for Large-Scale Kernel Machines" by A, Rahimi and Benjamin
-    Recht.
+    Notes
+    -----
+    See "Random Features for Large-Scale Kernel Machines" by A, Rahimi and
+    Benjamin Recht.
     """
 
     def __init__(self, gamma=1., n_components=100., random_state=None):
@@ -103,10 +104,10 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
         If int, random_state is the seed used by the random number generator;
         if RandomState instance, random_state is the random number generator.
 
-    References
-    ----------
-    "Random Fourier Approximations for Skewed Multiplicative Histogram Kernels"
-    by Fuxin Li, Catalin Ionescu and Cristian Sminchisescu.
+    Notes
+    -----
+    See "Random Fourier Approximations for Skewed Multiplicative Histogram
+    Kernels" by Fuxin Li, Catalin Ionescu and Cristian Sminchisescu.
     """
 
     def __init__(self, skewedness=1., n_components=100, random_state=None):
@@ -166,7 +167,7 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
 
 
 class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
-    """Approximate feature map for additive chi^2 kernel.
+    """Approximate feature map for additive chi² kernel.
 
     Uses sampling the fourier transform of the kernel characteristic
     at regular intervals.
@@ -186,9 +187,9 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
     sample_interval: float, optional
         Sampling interval. Must be specified when sample_steps not in {1,2,3}.
 
-    References
-    ----------
-    `"Efficient additive kernels via explicit feature maps"
+    Notes
+    -----
+    See `"Efficient additive kernels via explicit feature maps"
     <http://eprints.pascal-network.org/archive/00006964/01/vedaldi10.pdf>`_
     Vedaldi, A. and Zisserman, A.
     - Computer Vision and Pattern Recognition 2010
