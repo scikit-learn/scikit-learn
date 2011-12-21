@@ -59,6 +59,7 @@ uses.
    covariance.OAS
    covariance.GraphLasso
    covariance.GraphLassoCV
+   covariance.MinCovDet
 
 .. autosummary::
    :toctree: generated/
@@ -182,6 +183,7 @@ Samples generator
    decomposition.NMF
    decomposition.SparsePCA
    decomposition.MiniBatchSparsePCA
+   decomposition.SparseCoder
    decomposition.DictionaryLearning
    decomposition.MiniBatchDictionaryLearning
 
@@ -193,7 +195,6 @@ Samples generator
    decomposition.dict_learning
    decomposition.dict_learning_online
    decomposition.sparse_encode
-   decomposition.sparse_encode_parallel
 
 
 .. _ensemble_ref:
@@ -388,6 +389,28 @@ From text
    hmm.GaussianHMM
    hmm.MultinomialHMM
    hmm.GMMHMM
+
+
+.. _kernel_approximation_ref:
+
+:mod:`sklearn.kernel_approximation` Kernel Approximation
+========================================================
+
+.. automodule:: sklearn.kernel_approximation
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`kernel_approximation` section for further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   kernel_approximation.RBFSampler
+   kernel_approximation.AdditiveChi2Sampler
+   kernel_approximation.SkewedChi2Sampler
 
 
 .. _lda_ref:

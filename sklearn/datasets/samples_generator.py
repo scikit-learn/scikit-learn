@@ -86,8 +86,8 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    Return
-    ------
+    Returns
+    -------
     X : array of shape [n_samples, n_features]
         The generated samples.
 
@@ -443,8 +443,8 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    Return
-    ------
+    Returns
+    -------
     X : array of shape [n_samples, n_features]
         The generated samples.
 

@@ -134,7 +134,7 @@ def _dump_svmlight(X, y, f):
     is_sp = int(hasattr(X, "tocsr"))
 
     for i in xrange(X.shape[0]):
-        s = " ".join(["%d:%f" % (j, X[i, j]) for j in X[i].nonzero()[is_sp]])
+        s = " ".join(["%d:%f" % (j + 1, X[i, j]) for j in X[i].nonzero()[is_sp]])
         f.write("%f %s\n" % (y[i], s))
 
 

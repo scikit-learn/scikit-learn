@@ -97,7 +97,7 @@ def test_pipeline():
     iris = datasets.load_iris()
     clf = pipeline.Pipeline(
         [('filter', manifold.LocallyLinearEmbedding()),
-         ('clf', neighbors.NeighborsClassifier())])
+         ('clf', neighbors.KNeighborsClassifier())])
     clf.fit(iris.data, iris.target)
     assert_lower(.7, clf.score(iris.data, iris.target))
 

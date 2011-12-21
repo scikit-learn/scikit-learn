@@ -47,4 +47,3 @@ y_pred_enet = enet.fit(X_train, y_train).predict(X_test)
 print enet
 print "r^2 on test data : %f" % (1 - np.linalg.norm(y_test - y_pred_enet)**2
                                       / np.linalg.norm(y_test)**2)
-
