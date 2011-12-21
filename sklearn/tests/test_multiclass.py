@@ -67,6 +67,7 @@ def test_ovr_fit_predict():
 
 
 def test_ovr_multilabel():
+    # Toy dataset where features correspond directly to labels.
     X = np.array([[0, 4, 5], [0, 5, 0], [3, 3, 3], [4, 0, 6], [6, 0, 0]])
     y = [[1, 2], [1], [0, 1, 2], [0, 2], [0]]
     Y = np.array([[0, 1, 1],
