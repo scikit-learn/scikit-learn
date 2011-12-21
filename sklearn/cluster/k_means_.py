@@ -7,6 +7,7 @@
 #          Nelle Varoquaux
 #          Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #          Olivier Grisel <olivier.grisel@ensta.org>
+#          Mathieu Blondel <mathieu@mblondel.org>
 # License: BSD
 
 import warnings
@@ -21,6 +22,8 @@ from ..utils import check_arrays
 from ..utils import check_random_state
 from ..utils import atleast2d_or_csr
 from ..utils import as_float_array
+from ..utils import safe_asarray
+from ..utils.sparsefuncs import mean_variance_axis0
 
 from . import _k_means
 
@@ -134,6 +137,15 @@ def k_init(X, k, n_local_trials=None, random_state=None, x_squared_norms=None):
 # K-means batch estimation by EM (expectation maximization)
 
 
+def _tolerance(X, tol):
+    """Return a tolerance which is independent of the dataset"""
+    if sp.issparse(X):
+        variances = mean_variance_axis0(X)[1]
+    else:
+        variances = np.var(X, axis=0)
+    return np.mean(variances) * tol
+
+
 def k_means(X, k, init='k-means++', precompute_distances=True,
             n_init=10, max_iter=300, verbose=0,
             tol=1e-4, random_state=None, copy_x=True):
@@ -206,15 +218,16 @@ def k_means(X, k, init='k-means++', precompute_distances=True,
     """
     random_state = check_random_state(random_state)
 
-    mean_variance = np.mean(np.var(X, 0))
     best_inertia = np.infty
     X = as_float_array(X, copy=copy_x)
+    tol = _tolerance(X, tol)
 
     # subtract of mean of x for more accurate distance computations
-    X_mean = X.mean(axis=0)
-    if copy_x:
-        X = X.copy()
-    X -= X_mean
+    if not sp.issparse(X):
+        X_mean = X.mean(axis=0)
+        if copy_x:
+            X = X.copy()
+        X -= X_mean
 
     if hasattr(init, '__array__'):
         init = np.asarray(init).copy()
@@ -262,14 +275,17 @@ def k_means(X, k, init='k-means++', precompute_distances=True,
                 best_centers = centers.copy()
                 best_inertia = inertia
 
-            if np.sum((centers_old - centers) ** 2) < tol * mean_variance:
+            if np.sum((centers_old - centers) ** 2) < tol:
                 if verbose:
                     print 'Converged to similar centers at iteration', i
                 break
 
-    if not copy_x:
-        X += X_mean
-    return best_centers + X_mean, best_labels, best_inertia
+    if not sp.issparse(X):
+        if not copy_x:
+            X += X_mean
+        best_centers += X_mean
+
+    return best_centers, best_labels, best_inertia
 
 
 def _squared_norms(X):
@@ -376,6 +392,8 @@ def _centers(X, labels, n_clusters, distances):
 
     for center_id in range(n_clusters):
         center_mask = labels == center_id
+        if sp.issparse(X):
+            center_mask = np.arange(len(labels))[center_mask]
         if not np.any(center_mask):
             # Reassign empty cluster center to sample far from any cluster
             if far_from_centers is None:
@@ -383,7 +401,7 @@ def _centers(X, labels, n_clusters, distances):
             centers[center_id] = X[far_from_centers[reallocated_idx]]
             reallocated_idx += 1
         else:
-            centers[center_id] = np.mean(X[center_mask], axis=0)
+            centers[center_id] = X[center_mask].mean(axis=0)
     return centers
 
 
@@ -550,9 +568,7 @@ class KMeans(BaseEstimator):
 
     def _check_fit_data(self, X):
         """Verify that the number of samples given is larger than k"""
-        if sp.issparse(X):
-            raise ValueError("K-Means does not support sparse input matrices.")
-        X = np.asarray(X, dtype=np.float64)
+        X = safe_asarray(X, dtype=np.float64)
         if X.shape[0] < self.k:
             raise ValueError("n_samples=%d should be >= k=%d" % (
                 X.shape[0], self.k))
