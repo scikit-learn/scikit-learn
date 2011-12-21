@@ -39,31 +39,27 @@ def mean_variance_axis0(X):
     #    data[indptr[i]:indptr[i+1]]
     cdef unsigned int i
     cdef unsigned int j
-    cdef unsigned int ptr
     cdef unsigned int ind
     cdef double diff
 
-    # store the means in a 1d-array
+    # means[j] contains the mean of feature j
     means = np.asarray(X.mean(axis=0))[0]
 
+    # counts[j] contains the number of samples where feature j is non-zero
+    counts = np.zeros_like(means)
+
+    # variances[j] contains the variance of feature j
     variances = np.zeros_like(means)
 
     for i in xrange(n_samples):
-        ptr = X_indptr[i]
+        for j in xrange(X_indptr[i], X_indptr[i + 1]):
+            ind = X_indices[j]
+            diff = X_data[j] - means[ind]
+            variances[ind] += diff * diff
+            counts[ind] += 1
 
-        # we need to iterate over all features
-        # but CSR matrices do not provide O(1)
-        # access to features
-        for j in xrange(n_features):
-            ind = X_indices[ptr]
-
-            if j != ind:
-                diff = means[j]
-                variances[j] += diff * diff
-            else:
-                diff = X_data[ptr] - means[ind]
-                variances[ind] += diff * diff
-                ptr += 1
+    nz = n_samples - counts
+    variances += nz * means ** 2
 
     variances /= n_samples
 
