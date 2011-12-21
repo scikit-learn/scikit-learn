@@ -155,7 +155,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin):
             raise NotImplementedError(
                 "score is not supported for multilabel classifiers")
         else:
-            super(OneVsRestClassifier, self).score(X, y)
+            return super(OneVsRestClassifier, self).score(X, y)
 
 
 def fit_ovo_binary(estimator, X, y, i, j):
