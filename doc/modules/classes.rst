@@ -28,11 +28,12 @@ uses.
    :toctree: generated/
    :template: class.rst
 
+   cluster.AffinityPropagation
+   cluster.DBSCAN
    cluster.KMeans
    cluster.MiniBatchKMeans
    cluster.MeanShift
    cluster.SpectralClustering
-   cluster.AffinityPropagation
    cluster.Ward
 
 
