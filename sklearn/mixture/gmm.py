@@ -551,7 +551,7 @@ class GMM(BaseEstimator):
 
 
 def _log_multivariate_normal_density_diag(X, means=0.0, covars=1.0):
-    """Compute Gaussian density at X for a diagonal model"""
+    """Compute Gaussian log-density at X for a diagonal model"""
     n_samples, n_dim = X.shape
     lpr = -0.5 * (n_dim * np.log(2 * np.pi) + np.sum(np.log(covars), 1)
                   + np.sum((means ** 2) / covars, 1)
@@ -561,7 +561,7 @@ def _log_multivariate_normal_density_diag(X, means=0.0, covars=1.0):
 
 
 def _log_multivariate_normal_density_spherical(X, means=0.0, covars=1.0):
-    """Compute Gaussian density at X for a spherical model"""
+    """Compute Gaussian log-density at X for a spherical model"""
     cv = covars.copy()
     if covars.ndim == 1:
         cv = cv[:, np.newaxis]
@@ -570,7 +570,7 @@ def _log_multivariate_normal_density_spherical(X, means=0.0, covars=1.0):
 
 
 def _log_multivariate_normal_density_tied(X, means, covars):
-    """Compute Gaussian density at X for a tied model"""
+    """Compute Gaussian log-density at X for a tied model"""
     from scipy import linalg
     n_samples, n_dim = X.shape
     icv = linalg.pinv(covars)
@@ -581,13 +581,8 @@ def _log_multivariate_normal_density_tied(X, means, covars):
     return lpr
 
 
-def _log_multivariate_normal_density_full(X, means, covars):
+def _log_multivariate_normal_density_full(X, means, covars, min_covar=1.e-7):
     """Log probability for full covariance matrices.
-
-    WARNING
-    -------
-    In certain cases, this function will modify in-place
-    some of the covariance matrices
     """
     from scipy import linalg
     import itertools
@@ -606,8 +601,8 @@ def _log_multivariate_normal_density_full(X, means, covars):
         except linalg.LinAlgError:
             # The model is most probabily stuck in a component with too
             # few observations, we need to reinitialize this components
-            cv[:] = np.diag(np.var(X, 0))
-            cv_chol = np.diag(np.std(X, 0))
+            cv_chol = linalg.cholesky(cv + min_covar * np.eye(n_dim), 
+                                      lower=True)
         cv_log_det = 2 * np.sum(np.log(np.diagonal(cv_chol)))
         cv_sol = solve_triangular(cv_chol, (X - mu).T, lower=True).T
         log_prob[:, c] = -.5 * (np.sum(cv_sol ** 2, axis=1) + \
