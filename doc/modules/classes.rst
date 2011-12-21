@@ -472,6 +472,8 @@ For dense data
    linear_model.SGDRegressor
    linear_model.BayesianRidge
    linear_model.ARDRegression
+   linear_model.RandomizedLasso
+   linear_model.RandomizedLogistic
 
 .. autosummary::
    :toctree: generated/

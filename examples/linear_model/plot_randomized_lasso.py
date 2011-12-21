@@ -12,7 +12,8 @@ print __doc__
 import pylab as pl
 import numpy as np
 
-from sklearn.linear_model import RandomizedLasso, lars_path, LassoLarsCV
+from sklearn.linear_model import RandomizedLasso, lasso_stability_path, \
+                                 LassoLarsCV
 from sklearn.cross_validation import ShuffleSplit
 from sklearn.datasets import load_diabetes
 from sklearn.feature_selection import f_regression
@@ -35,8 +36,9 @@ X = Scaler().fit_transform(X)
 
 print "Computing stability path using the LARS ..."
 
-a = 0.3
-coef_grid, scores_path = lasso_stability_path(X, y, a=a, random_state=42)
+scaling = 0.3
+coef_grid, scores_path = lasso_stability_path(X, y, scaling=scaling,
+                                              random_state=42)
 
 pl.figure()
 hg = pl.plot(coef_grid, scores_path[:n_good_features].T, 'r')
@@ -55,7 +57,8 @@ pl.ylim([0, 1.05])
 
 cv = ShuffleSplit(n_samples, n_iterations=50, test_fraction=0.2)
 alpha_cv = LassoLarsCV(cv=cv).fit(X, y).alpha
-clf = RandomizedLasso(verbose=False, alpha=alpha_cv, random_state=42, a=a)
+clf = RandomizedLasso(verbose=False, alpha=alpha_cv, random_state=42,
+                      scaling=scaling)
 clf.fit(X, y)
 
 # compare with F-score
