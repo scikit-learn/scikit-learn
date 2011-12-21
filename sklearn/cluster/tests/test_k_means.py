@@ -164,7 +164,7 @@ def test_k_means_random_init():
     _check_fitted_model(k_means)
 
 
-def test_k_means_random_init():
+def test_k_means_random_init_sparse():
     k_means = KMeans(init="random", k=n_clusters, random_state=42).fit(X_csr)
     _check_fitted_model(k_means)
 
