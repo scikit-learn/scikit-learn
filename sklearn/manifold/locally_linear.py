@@ -270,7 +270,7 @@ def locally_linear_embedding(
         raise ValueError("n_neighbors must be less than number of points")
 
     if n_neighbors <= 0:
-        raise ValueError("n_neighbors must be positive") 
+        raise ValueError("n_neighbors must be positive")
 
     M_sparse = (eigen_solver != 'dense')
 
