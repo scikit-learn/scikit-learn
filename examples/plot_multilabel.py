@@ -68,7 +68,8 @@ plot_hyperplane(classif.estimators_[0], min_x, max_x, 'k--',
                 'Boundary\nfor class 1')
 plot_hyperplane(classif.estimators_[1], min_x, max_x, 'k-.',
                 'Boundary\nfor class 2')
-
+pl.xticks(())
+pl.yticks(())
 pl.legend()
 
 pl.show()

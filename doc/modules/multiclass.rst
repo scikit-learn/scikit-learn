@@ -79,7 +79,7 @@ target labels.
 
 .. topic:: Examples:
 
-    * :ref:`example_plot_multiclass.py`
+    * :ref:`example_plot_multilabel.py`
 
 
 One-Vs-One
