@@ -74,7 +74,13 @@ Multilabel learning with OvR
 
 ``OneVsRestClassifier`` also supports multilabel classification.
 To use this feature, feed the classifier a list of tuples containing
-target labels.
+target labels, like in the example below.
+
+
+.. figure:: ../auto_examples/images/plot_multilabel_1.png
+    :target: ../auto_examples/plot_multilabel.html
+    :align: center
+    :scale: 75%
 
 
 .. topic:: Examples:
