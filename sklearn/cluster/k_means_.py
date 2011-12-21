@@ -137,6 +137,15 @@ def k_init(X, k, n_local_trials=None, random_state=None, x_squared_norms=None):
 # K-means batch estimation by EM (expectation maximization)
 
 
+def _tolerance(X, tol):
+    """Return a tolerance which is independent of the dataset"""
+    if sp.issparse(X):
+        variances = mean_variance_axis0(X)[1]
+    else:
+        variances = np.var(X, axis=0)
+    return np.mean(variances) * tol
+
+
 def k_means(X, k, init='k-means++', precompute_distances=True,
             n_init=10, max_iter=300, verbose=0,
             tol=1e-4, random_state=None, copy_x=True):
