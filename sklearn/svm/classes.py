@@ -22,7 +22,7 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, CoefSelectTransformerMixin):
 
     penalty : string, 'l1' or 'l2' (default='l2')
         Specifies the norm used in the penalization. The 'l2'
-        penalty is the standard used in SVC. The 'l1' leads to ``coef_``
+        penalty is the standard used in SVC. The 'l1' leads to `coef_`
         vectors that are sparse.
 
     dual : bool, (default=True)
