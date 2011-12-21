@@ -300,13 +300,19 @@ def test_label_binarizer():
 def test_label_binarizer_multilabel():
     lb = LabelBinarizer()
 
+    # test input as lists of tuples
     inp = [(2, 3), (1,), (1, 2)]
-    expected = np.array([[0, 1, 1],
-                         [1, 0, 0],
-                         [1, 1, 0]])
+    indicator_mat = np.array([[0, 1, 1],
+                              [1, 0, 0],
+                              [1, 1, 0]])
     got = lb.fit_transform(inp)
-    assert_array_equal(expected, got)
+    assert_array_equal(indicator_mat, got)
     assert_equal(lb.inverse_transform(got), inp)
+
+    # test input as label indicator matrix
+    lb.fit(indicator_mat)
+    assert_array_equal(indicator_mat,
+                       lb.inverse_transform(indicator_mat))
 
     # regression test for the two-class multilabel case
     lb = LabelBinarizer()
@@ -330,6 +336,10 @@ def test_label_binarizer_errors():
     multi_label = [(2, 3), (0,), (0, 2)]
     assert_raises(ValueError, lb.transform, multi_label)
 
+    lb = LabelBinarizer()
+    assert_raises(ValueError, lb.transform, [])
+    assert_raises(ValueError, lb.inverse_transform, [])
+
 
 def test_label_binarizer_iris():
     lb = LabelBinarizer()
@@ -342,6 +352,16 @@ def test_label_binarizer_iris():
     y_pred2 = SGDClassifier().fit(iris.data, iris.target).predict(iris.data)
     accuracy2 = np.mean(iris.target == y_pred2)
     assert_almost_equal(accuracy, accuracy2)
+
+
+def test_label_binarizer_multilabel_unlabeled():
+    """Check that LabelBinarizer can handle an unlabeled sample"""
+    lb = LabelBinarizer()
+    y = [[1, 2], [1], []]
+    Y = np.array([[1, 1],
+                  [1, 0],
+                  [0, 0]])
+    assert_equal(lb.fit_transform(y), Y)
 
 
 def test_center_kernel():

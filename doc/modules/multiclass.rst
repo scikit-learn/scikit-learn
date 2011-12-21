@@ -1,16 +1,22 @@
 
 .. _multiclass:
 
-=====================
-Multiclass algorithms
-=====================
+====================================
+Multiclass and multilabel algorithms
+====================================
 
 .. currentmodule:: sklearn.multiclass
 
-This module implements multiclass learning algorithms:
+This module implements multiclass and multilabel learning algorithms:
     - one-vs-the-rest / one-vs-all
     - one-vs-one
     - error correcting output codes
+
+Multiclass classification means classification with more than two classes.
+Multilabel classification is a different task, where a classifier is used to
+predict a set of target labels for each instance; i.e., the set of target
+classes is not assumed to be disjoint as in ordinary (binary or multiclass)
+classification. This is also called any-of classification.
 
 The estimators provided in this module are meta-estimators: they require a base
 estimator to be provided in their constructor. For example, it is possible to
@@ -26,9 +32,15 @@ improves.
     multiclass classification out-of-the-box. Below is a summary of the
     classifiers supported in scikit-learn grouped by the strategy used.
 
-    - Inherently multiclass: Naive Bayes, LDA.
-    - One-Vs-One: SVC.
-    - One-Vs-All: LinearSVC, LogisticRegression, SGDClassifier, RidgeClassifier.
+    - Inherently multiclass: Naive Bayes, :class:`LDA`.
+    - One-Vs-One: :class:`SVC`.
+    - One-Vs-All: :class:`LinearSVC`, :class:`LogisticRegression`,
+      :class:`SGDClassifier`, :class:`RidgeClassifier`.
+
+.. note::
+
+    At the moment there are no evaluation metrics implemented for multilabel
+    learnings.
 
 
 One-Vs-The-Rest
@@ -56,6 +68,24 @@ fair default choice. Below is an example::
          1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 1, 2, 2, 2, 2,
          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2])
+
+Multilabel learning with OvR
+----------------------------
+
+``OneVsRestClassifier`` also supports multilabel classification.
+To use this feature, feed the classifier a list of tuples containing
+target labels, like in the example below.
+
+
+.. figure:: ../auto_examples/images/plot_multilabel_1.png
+    :target: ../auto_examples/plot_multilabel.html
+    :align: center
+    :scale: 75%
+
+
+.. topic:: Examples:
+
+    * :ref:`example_plot_multilabel.py`
 
 
 One-Vs-One
