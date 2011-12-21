@@ -27,14 +27,20 @@ The two species are:
    also known as the Forest Small Rice Rat, a rodent that lives in Peru,
    Colombia, Ecuador, Peru, and Venezuela.
 
-References:
+References
+----------
 
  * `"Maximum entropy modeling of species geographic distributions"
    <http://www.cs.princeton.edu/~schapire/papers/ecolmod.pdf>`_
    S. J. Phillips, R. P. Anderson, R. E. Schapire - Ecological Modelling,
    190:231-259, 2006.
-
 """
+
+# Authors: Peter Prettenhoer <peter.prettenhofer@gmail.com>
+#          Jake Vanderplas <vanderplas@astro.washington.edu>
+#
+# License: BSD Style.
+
 
 from cStringIO import StringIO
 import os
@@ -44,11 +50,10 @@ import numpy as np
 import pylab as pl
 from scipy.sparse import csr_matrix
 
-from sklearn.externals import joblib
 from sklearn.datasets.base import Bunch
-from sklearn.datasets.species_distributions import fetch_species_distributions
-from sklearn import svm
-from sklearn.metrics import roc_curve, auc
+from sklearn.datasets import fetch_species_distributions
+from sklearn.datasets.species_distributions import construct_grids
+from sklearn import svm, metrics
 
 # if basemap is available, we'll use it.
 # otherwise, we'll improvise later...
@@ -57,6 +62,8 @@ try:
     basemap = True
 except ImportError:
     basemap = False
+
+print __doc__
 
 
 def create_species_bunch(species_name,
@@ -83,104 +90,99 @@ def create_species_bunch(species_name,
         bunch['cov_%s' % label] = coverages[:, -iy, ix].T
 
     return bunch
-            
 
-def plot_species_distribution(species = ["bradypus_variegatus_0",
-                                         "microryzomys_minutus_0"]):
+
+def plot_species_distribution(species=["bradypus_variegatus_0",
+                                       "microryzomys_minutus_0"]):
     """
     Plot the species distribution.
     """
+    if len(species) > 2:
+        print ("Note: when more than two species are provided, only "
+               "the first two will be used")
+
     t0 = time()
 
     # Load the compressed data
-    B = fetch_species_distributions()
+    data = fetch_species_distributions()
 
     # Set up the data
     species_map = dict([(s, i) for i, s in enumerate(species)])
 
-    # x,y coordinates for corner cells
-    xmin = B.x_left_lower_corner + B.grid_size
-    xmax = xmin + (B.Nx * B.grid_size)
-    ymin = B.y_left_lower_corner + B.grid_size
-    ymax = ymin + (B.Ny * B.grid_size)
-
-    # x coordinates of the grid cells
-    xgrid = np.arange(xmin, xmax, B.grid_size)
-    # y coordinates of the grid cells
-    ygrid = np.arange(ymin, ymax, B.grid_size)
+    xgrid, ygrid = construct_grids(data)
 
     # The grid in x,y coordinates
     X, Y = np.meshgrid(xgrid, ygrid[::-1])
-    
-    # convert coverages to dense array
-    #coverages = np.asarray([mat.toarray() for mat in B.coverages],
-    #                       dtype=np.float32)
-    coverages = B.coverages
-    
+
+    coverages = data.coverages
+
     # create a bunch for each species
-    BV = create_species_bunch(species[0],
-                              B.train, B.test,
-                              coverages, xgrid, ygrid)
-    MM = create_species_bunch(species[1],
-                              B.train, B.test,
-                              coverages, xgrid, ygrid)
+    BV_bunch = create_species_bunch(species[0],
+                                    data.train, data.test,
+                                    data.coverages, xgrid, ygrid)
+    MM_bunch = create_species_bunch(species[1],
+                                    data.train, data.test,
+                                    data.coverages, xgrid, ygrid)
 
     # background points (grid coordinates) for evaluation
     np.random.seed(13)
-    background_points = np.c_[np.random.randint(low=0, high=B.Ny,
+    background_points = np.c_[np.random.randint(low=0, high=data.Ny,
                                                 size=10000),
-                              np.random.randint(low=0, high=B.Nx,
+                              np.random.randint(low=0, high=data.Nx,
                                                 size=10000)].T
 
+    # We'll make use of the fact that coverages[6] has measurements at all
+    # land points.  This will help us decide between land and water.
+    land_reference = data.coverages[6]
+
     # Fit, predict, and plot for each species.
-    for i, species in enumerate([BV, MM]):
+    for i, species in enumerate([BV_bunch, MM_bunch]):
         print "_" * 80
         print "Modeling distribution of species '%s'" % species.name
-        print
+
         # Standardize features
         mean = species.cov_train.mean(axis=0)
         std = species.cov_train.std(axis=0)
         train_cover_std = (species.cov_train - mean) / std
 
         # Fit OneClassSVM
-        print "fit OneClassSVM ... ",
+        print " - fit OneClassSVM ... ",
         clf = svm.OneClassSVM(nu=0.1, kernel="rbf", gamma=0.5)
         clf.fit(train_cover_std)
         print "done. "
 
         # Plot map of South America
-        pl.subplot(121 + i)
+        pl.subplot(1, 2, i + 1)
         if basemap:
-            print "plot coastlines using basemap"
+            print " - plot coastlines using basemap"
             m = Basemap(projection='cyl', llcrnrlat=ymin,
                         urcrnrlat=ymax, llcrnrlon=xmin,
                         urcrnrlon=xmax, resolution='c')
             m.drawcoastlines()
             m.drawcountries()
-            m.drawrivers()
         else:
-            print "plot coastlines from coverage"
-            CS = pl.contour(X, Y, coverages[2], levels=[-9999], colors="k",
+            print " - plot coastlines from coverage"
+            CS = pl.contour(X, Y, land_reference,
+                            levels=[-9999], colors="k",
                             linestyles="solid")
             pl.xticks([])
             pl.yticks([])
-        
-        print "predict species distribution"
-        
-        # Predict species distribution using the training data
-        Z = np.ones((B.Ny, B.Nx), dtype=np.float64)
-        
-        # find the land points
-        idx = np.where(coverages[2] > -9999)
 
-        coverages_land = coverages[:, idx[0], idx[1]].T
+        print " - predict species distribution"
+
+        # Predict species distribution using the training data
+        Z = np.ones((data.Ny, data.Nx), dtype=np.float64)
+
+        # We'll predict only for the land points.
+        idx = np.where(land_reference > -9999)
+        coverages_land = data.coverages[:, idx[0], idx[1]].T
 
         pred = clf.decision_function((coverages_land - mean) / std)[:, 0]
         Z *= pred.min()
         Z[idx[0], idx[1]] = pred
 
         levels = np.linspace(Z.min(), Z.max(), 25)
-        Z[coverages[2] == -9999] = -9999
+        Z[land_reference == -9999] = -9999
 
         # plot contours of the prediction
         CS = pl.contourf(X, Y, Z, levels=levels, cmap=pl.cm.Reds)
@@ -199,15 +201,16 @@ def plot_species_distribution(species = ["bradypus_variegatus_0",
 
         # Compute AUC w.r.t. background points
         pred_background = Z[background_points[0], background_points[1]]
-        pred_test = clf.decision_function((species.cov_test - mean) / std)[:, 0]
+        pred_test = clf.decision_function((species.cov_test - mean)
+                                          / std)[:, 0]
         scores = np.r_[pred_test, pred_background]
         y = np.r_[np.ones(pred_test.shape), np.zeros(pred_background.shape)]
-        fpr, tpr, thresholds = roc_curve(y, scores)
-        roc_auc = auc(fpr, tpr)
+        fpr, tpr, thresholds = metrics.roc_curve(y, scores)
+        roc_auc = metrics.auc(fpr, tpr)
         pl.text(-35, -70, "AUC: %.3f" % roc_auc, ha="right")
-        print "Area under the ROC curve : %f" % roc_auc
+        print "\n Area under the ROC curve : %f" % roc_auc
 
-    print "time elapsed: %.3fs" % (time() - t0)
+    print "\ntime elapsed: %.2fs" % (time() - t0)
 
     pl.show()
 

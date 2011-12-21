@@ -39,6 +39,7 @@ from .svmlight_format import load_svmlight_file
 from .svmlight_format import load_svmlight_files
 from .svmlight_format import dump_svmlight_file
 from .olivetti_faces import fetch_olivetti_faces
+from .species_distributions import fetch_species_distributions
 from ..utils import deprecated
 
 
