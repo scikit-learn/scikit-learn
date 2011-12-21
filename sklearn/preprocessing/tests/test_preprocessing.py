@@ -354,6 +354,16 @@ def test_label_binarizer_iris():
     assert_almost_equal(accuracy, accuracy2)
 
 
+def test_label_binarizer_multilabel_unlabeled():
+    """Check that LabelBinarizer can handle an unlabeled sample"""
+    lb = LabelBinarizer()
+    y = [[1, 2], [1], []]
+    Y = np.array([[1, 1],
+                  [1, 0],
+                  [0, 0]])
+    assert_equal(lb.fit_transform(y), Y)
+
+
 def test_center_kernel():
     """Test that KernelCenterer is equivalent to Scaler in feature space"""
     X_fit = np.random.random((5, 4))
