@@ -10,7 +10,7 @@ import numpy as np
 from scipy import linalg, ndimage
 
 from .base import BaseEstimator, ClassifierMixin, TransformerMixin
-from .utils.extmath import logsum
+from .utils.extmath import logsumexp
 
 
 class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
@@ -263,5 +263,5 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         """
         values = self.decision_function(X)
         loglikelihood = (values - values.max(axis=1)[:, np.newaxis])
-        normalization = logsum(loglikelihood, axis=1)
+        normalization = logsumexp(loglikelihood, axis=1)
         return loglikelihood - normalization[:, np.newaxis]
