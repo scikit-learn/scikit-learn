@@ -22,7 +22,7 @@ from scipy import stats
 
 from sklearn.linear_model import ARDRegression, LinearRegression
 
-################################################################################
+###############################################################################
 # Generating simulated data with Gaussian weigthts
 
 # Parameters of the example
@@ -39,19 +39,19 @@ for i in relevant_features:
     w[i] = stats.norm.rvs(loc=0, scale=1. / np.sqrt(lambda_))
 # Create noite with a precision alpha of 50.
 alpha_ = 50.
-noise =  stats.norm.rvs(loc=0, scale=1. / np.sqrt(alpha_), size=n_samples)
+noise = stats.norm.rvs(loc=0, scale=1. / np.sqrt(alpha_), size=n_samples)
 # Create the target
 y = np.dot(X, w) + noise
 
-################################################################################
+###############################################################################
 # Fit the ARD Regression
-clf = ARDRegression(compute_score = True)
+clf = ARDRegression(compute_score=True)
 clf.fit(X, y)
 
 ols = LinearRegression()
 ols.fit(X, y)
 
-################################################################################
+###############################################################################
 # Plot the true weights, the estimated weights and the histogram of the
 # weights
 pl.figure(figsize=(6, 5))
@@ -66,7 +66,7 @@ pl.legend(loc=1)
 pl.figure(figsize=(6, 5))
 pl.title("Histogram of the weights")
 pl.hist(clf.coef_, bins=n_features, log=True)
-pl.plot(clf.coef_[relevant_features], 5*np.ones(len(relevant_features)),
+pl.plot(clf.coef_[relevant_features], 5 * np.ones(len(relevant_features)),
          'ro', label="Relevant features")
 pl.ylabel("Features")
 pl.xlabel("Values of the weights")
@@ -78,4 +78,3 @@ pl.plot(clf.scores_)
 pl.ylabel("Score")
 pl.xlabel("Iterations")
 pl.show()
-

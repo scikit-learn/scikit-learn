@@ -57,7 +57,8 @@ mbk_means_labels_unique = np.unique(mbk_means_labels)
 ##############################################################################
 # Plot result
 
-fig = pl.figure()
+fig = pl.figure(figsize=(8, 3))
+fig.subplots_adjust(left=0.02, right=0.98, bottom=0.05, top=0.9)
 colors = ['#4EACC5', '#FF9C34', '#4E9A06']
 
 # We want to have the same colors for the same cluster from the
@@ -79,6 +80,8 @@ for k, col in zip(range(n_clusters), colors):
     ax.plot(cluster_center[0], cluster_center[1], 'o', markerfacecolor=col,
                                     markeredgecolor='k', markersize=6)
 ax.set_title('KMeans')
+ax.set_xticks(())
+ax.set_yticks(())
 pl.text(-3.5, 2.7,  'train time: %.2fs' % t_batch)
 
 # MiniBatchKMeans
@@ -91,6 +94,8 @@ for k, col in zip(range(n_clusters), colors):
     ax.plot(cluster_center[0], cluster_center[1], 'o', markerfacecolor=col,
                                     markeredgecolor='k', markersize=6)
 ax.set_title('MiniBatchKMeans')
+ax.set_xticks(())
+ax.set_yticks(())
 pl.text(-3.5, 2.7,  'train time: %.2fs' % t_mini_batch)
 
 # Initialise the different array to all False
@@ -106,5 +111,7 @@ ax.plot(X[identic, 0], X[identic, 1], 'w',
 ax.plot(X[different, 0], X[different, 1], 'w',
         markerfacecolor='m', marker='.')
 ax.set_title('Difference')
+ax.set_xticks(())
+ax.set_yticks(())
 
 pl.show()

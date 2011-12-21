@@ -55,7 +55,7 @@ class BaseLibSVM(BaseEstimator):
         else:
             self.kernel = kernel
         if not scale_C:
-            warnings.warn('SVM: scale_C will be False by default in '
+            warnings.warn('SVM: scale_C will be True by default in '
                           'scikit-learn 0.11', FutureWarning,
                           stacklevel=2)
 
@@ -310,7 +310,8 @@ class DenseBaseLibSVM(BaseLibSVM):
         X = self._compute_kernel(X)
 
         params = self._get_params()
-        del params['scale_C']
+        if 'scale_C' in params:
+            del params['scale_C']
 
         dec_func = libsvm.decision_function(
             X, self.support_, self.support_vectors_, self.n_support_,

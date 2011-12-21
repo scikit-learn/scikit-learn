@@ -72,5 +72,5 @@ inverse_vocabulary = dict((v, k) for k, v in vectorizer.vocabulary.iteritems())
 for topic_idx, topic in enumerate(nmf.components_):
     print "Topic #%d:" % topic_idx
     print " ".join([inverse_vocabulary[i]
-                    for i in topic.argsort()[:-n_top_words-1:-1]])
+                    for i in topic.argsort()[:-n_top_words - 1:-1]])
     print

@@ -51,7 +51,12 @@ def _load_svmlight_file(f, n_features, dtype):
 
         for i in xrange(1, len(line_parts)):
             idx, value = line_parts[i].split(":", 1)
-            indices.append(int(idx))
+            # Real programmers count from zero.
+            idx = int(idx)
+            if idx <= 0:
+                raise ValueError(
+                        "invalid index %d in SVMlight/LibSVM data file" % idx)
+            indices.append(idx - 1)
             data.append(dtype(value))
 
     indptr.append(len(data))

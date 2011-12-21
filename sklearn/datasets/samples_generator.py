@@ -86,8 +86,8 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    Return
-    ------
+    Returns
+    -------
     X : array of shape [n_samples, n_features]
         The generated samples.
 
@@ -370,8 +370,8 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    Return
-    ------
+    Returns
+    -------
     X : array of shape [n_samples, n_features]
         The generated samples.
 
@@ -819,6 +819,61 @@ def make_spd_matrix(n_dim, random_state=None):
     return X
 
 
+def make_sparse_spd_matrix(dim=1, alpha=0.95, norm_diag=False,
+                           smallest_coef=.1, largest_coef=.9,
+                           random_state=None):
+    """Generate a sparse symetric definite positive matrix.
+
+    Parameters
+    ----------
+    dim: integer, optional (defaut=1)
+        The size of the random  (matrix to generate.
+
+    alpha: float between 0 and 1, optional (default=0.95)
+        The probability that a coefficient is non zero (see notes).
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    Returns
+    -------
+    prec: array of shape = [dim, dim]
+
+    Notes
+    -----
+    The sparsity is actually imposed on the cholesky factor of the matrix.
+    Thus alpha does not translate directly into the filling fraction of
+    the matrix itself.
+    """
+    random_state = check_random_state(random_state)
+
+    chol = -np.eye(dim)
+    aux = random_state.rand(dim, dim)
+    aux[aux < alpha] = 0
+    aux[aux > alpha] = (smallest_coef
+                        + (largest_coef - smallest_coef)
+                          * random_state.rand(np.sum(aux > alpha)))
+    aux = np.tril(aux, k=-1)
+
+    # Permute the lines: we don't want to have assymetries in the final
+    # SPD matrix
+    permutation = random_state.permutation(dim)
+    aux = aux[permutation].T[permutation]
+    chol += aux
+    prec = np.dot(chol.T, chol)
+
+    if norm_diag:
+        d = np.diag(prec)
+        d = 1. / np.sqrt(d)
+        prec *= d
+        prec *= d[:, np.newaxis]
+
+    return prec
+
+
 def make_swiss_roll(n_samples=100, noise=0.0, random_state=None):
     """Generate a swiss roll dataset.
 
@@ -909,52 +964,3 @@ def make_s_curve(n_samples=100, noise=0.0, random_state=None):
     t = np.squeeze(t)
 
     return X, t
-
-
-def make_sparse_spd_matrix(dim=1, alpha=0.95, norm_diag=False,
-                           smallest_coef=.1, largest_coef=.9,
-                           random_state=None):
-    """Generate a sparse symetric definite positive matrix
-
-    Parameters
-    ----------
-    dim: integer
-        The size of the random matrix to generate
-    alpha: float between 0 and 1
-        The probability that a coefficient is non zero (see notes)
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
-
-    Returns
-    -------
-    prec: array of shape(dim, dim)
-
-    Notes
-    -----
-    The sparsity is actually imposed on the cholesky factor of the matrix.
-    Thus alpha does not translate directly into the filling fraction of
-    the matrix itself.
-    """
-    random_state = check_random_state(random_state)
-    chol = -np.eye(dim)
-    aux = random_state.rand(dim, dim)
-    aux[aux < alpha] = 0
-    aux[aux > alpha] = (smallest_coef
-                        + (largest_coef - smallest_coef)
-                          * random_state.rand(np.sum(aux > alpha)))
-    aux = np.tril(aux, k=-1)
-    # Permute the lines: we don't want to have assymetries in the final
-    # SPD matrix
-    permutation = random_state.permutation(dim)
-    aux = aux[permutation].T[permutation]
-    chol += aux
-    prec = np.dot(chol.T, chol)
-    if norm_diag:
-        d = np.diag(prec)
-        d = 1. / np.sqrt(d)
-        prec *= d
-        prec *= d[:, np.newaxis]
-    return prec
