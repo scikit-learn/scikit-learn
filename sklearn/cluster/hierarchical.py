@@ -7,6 +7,7 @@ Authors : Vincent Michel, Bertrand Thirion, Alexandre Gramfort,
           Gael Varoquaux
 License: BSD 3 clause
 """
+import heapq
 from heapq import heapify, heappop, heappush
 import itertools
 import warnings
@@ -19,7 +20,7 @@ from ..base import BaseEstimator
 from ..utils._csgraph import cs_graph_components
 from ..externals.joblib import Memory
 
-from . import _inertia
+from . import _hierarchical
 from ._feature_agglomeration import AgglomerationTransform
 
 
@@ -118,8 +119,8 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
     moments[0][:n_samples] = 1
     moments[1][:n_samples] = X
     inertia = np.empty(len(coord_row), dtype=np.float)
-    _inertia.compute_ward_dist(moments[0], moments[1],
-                               coord_row, coord_col, inertia)
+    _hierarchical.compute_ward_dist(moments[0], moments[1],
+                             coord_row, coord_col, inertia)
     inertia = zip(inertia, coord_row, coord_col)
     heapify(inertia)
 
@@ -164,7 +165,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
         coord_row.fill(k)
         ini = np.empty(len(coord_row), dtype=np.float)
 
-        _inertia.compute_ward_dist(moments[0], moments[1],
+        _hierarchical.compute_ward_dist(moments[0], moments[1],
                                    coord_row, coord_col, ini)
         for tupl in itertools.izip(ini, coord_row, coord_col):
             heappush(inertia, tupl)
@@ -230,14 +231,25 @@ def _hc_cut(n_clusters, children, n_leaves):
         cluster labels for each point
 
     """
-    nodes = [np.max(children[-1]) + 1]
+    assert n_clusters <= n_leaves, \
+                'Cannot extract more clusters than samples'
+    # In this function, we stores nodes as a heap to avoid recomputing
+    # the max of the nodes: the first element is always the smallest
+    # We use negated indices as heaps work on smallest elements, and we
+    # are interested in largest elements
+    # children[-1] is the root of the tree
+    nodes = [-(max(children[-1]) + 1)]
     for i in range(n_clusters - 1):
-        nodes.extend(children[np.max(nodes) - n_leaves])
-        nodes.remove(np.max(nodes))
-    labels = np.zeros(n_leaves, dtype=np.int)
+        # As we have a heap, nodes[0] is the smallest element 
+        these_children = children[-nodes[0] - n_leaves]
+        # Insert the 2 children and remove the largest node
+        heapq.heappush(nodes, -these_children[0])
+        heapq.heappushpop(nodes, -these_children[1])
+    label = np.zeros(n_leaves, dtype=np.int)
     for i, node in enumerate(nodes):
-        labels[_hc_get_descendent([node], children, n_leaves)] = i
-    return labels
+        label[_hierarchical._hc_get_descendent(-node, 
+                                children, n_leaves)] = i
+    return label
 
 
 ###############################################################################
