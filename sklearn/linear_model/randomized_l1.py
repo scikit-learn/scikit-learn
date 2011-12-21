@@ -23,22 +23,22 @@ from ..externals.joblib import Memory
 ###############################################################################
 # Randomized linear model: feature selection
 
-def _resample_model(estimator_func, X, y, a=.5, n_resampling=200,
+def _resample_model(estimator_func, X, y, scaling=.5, n_resampling=200,
                     n_jobs=1, verbose=False, pre_dispatch='3*n_jobs',
                     random_state=None, sample_fraction=.75, **params):
     random_state = check_random_state(random_state)
     # We are generating 1 - weights, and not weights
     n_samples, n_features = X.shape
 
-    if not (0 < a < 1):
-        raise ValueError("Parameter 'a' should be between 0 and 1.")
+    if not (0 < scaling < 1):
+        raise ValueError("Parameter 'scaling' should be between 0 and 1.")
 
-    a = 1. - a
+    scaling = 1. - scaling
     scores_ = np.zeros(n_features)
     for active_set in Parallel(n_jobs=n_jobs, verbose=verbose,
                                pre_dispatch=pre_dispatch)(
                 delayed(estimator_func)(X, y,
-                        weights=a * random_state.random_integers(0,
+                        weights=scaling * random_state.random_integers(0,
                                                     1, size=(n_features,)),
                         mask=(random_state.rand(n_samples) < sample_fraction),
                         verbose=max(0, verbose - 1),
@@ -92,7 +92,7 @@ class BaseRandomizedLinearModel(TransformerMixin):
             memory = Memory(cachedir=memory)
 
         self.scores_ = memory.cache(_resample_model)(estimator_func, X, y,
-                                    a=self.a,
+                                    scaling=self.scaling,
                                     n_resampling=self.n_resampling,
                                     n_jobs=self.n_jobs,
                                     verbose=self.verbose,
@@ -164,8 +164,12 @@ class RandomizedLasso(BaseRandomizedLinearModel):
     ----------
     alpha: float, 'aic', or 'bic'
         The regularization parameter alpha parameter in the Lasso.
-        Warning: this is not the alpha parameter in the randomized Lasso
-        article
+        Warning: this is not the alpha parameter in the stability selection
+        article which is scaling.
+
+    scaling: float
+        The alpha parameter in the stability selection article used to
+        randomly scale the features. Should be between 0 and 1.
 
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
@@ -252,9 +256,8 @@ class RandomizedLasso(BaseRandomizedLinearModel):
     RandomizedLogistic
     """
 
-    def __init__(self, alpha='aic', a=.5, sample_fraction=.75,
-                 n_resampling=200,
-                 selection_threshold=.25,
+    def __init__(self, alpha='aic', scaling=.5, sample_fraction=.75,
+                 n_resampling=200, selection_threshold=.25,
                  fit_intercept=True, verbose=False,
                  normalize=True, precompute='auto',
                  max_iter=500,
@@ -262,7 +265,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
                  n_jobs=1, pre_dispatch='3*n_jobs',
                  memory=Memory(cachedir=None, verbose=0)):
         self.alpha = alpha
-        self.a = a
+        self.scaling = scaling
         self.sample_fraction = sample_fraction
         self.n_resampling = n_resampling
         self.fit_intercept = fit_intercept
@@ -317,6 +320,10 @@ class RandomizedLogistic(BaseRandomizedLinearModel):
     ----------
     C: float
         The regularization parameter C parameter in the LogisticRegression.
+
+    scaling: float
+        The alpha parameter in the stability selection article used to
+        randomly scale the features. Should be between 0 and 1.
 
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
@@ -386,7 +393,7 @@ class RandomizedLogistic(BaseRandomizedLinearModel):
     --------
     RandomizedLasso
     """
-    def __init__(self, C=1, a=.5, sample_fraction=.75,
+    def __init__(self, C=1, scaling=.5, sample_fraction=.75,
                  n_resampling=200,
                  selection_threshold=.25, tol=1e-3,
                  fit_intercept=True, verbose=False,
@@ -395,7 +402,7 @@ class RandomizedLogistic(BaseRandomizedLinearModel):
                  n_jobs=1, pre_dispatch='3*n_jobs',
                  memory=Memory(cachedir=None, verbose=0)):
         self.C = C
-        self.a = a
+        self.scaling = scaling
         self.sample_fraction = sample_fraction
         self.n_resampling = n_resampling
         self.fit_intercept = fit_intercept
@@ -424,8 +431,8 @@ class RandomizedLogistic(BaseRandomizedLinearModel):
 ###############################################################################
 # Stability paths
 
-def lasso_stability_path(X, y, a=0.5, random_state=None, n_resampling=200,
-                         n_grid=100):
+def lasso_stability_path(X, y, scaling=0.5, random_state=None,
+                         n_resampling=200, n_grid=100):
     """Stabiliy path based on randomized Lasso estimates
 
     Parameters
@@ -436,8 +443,9 @@ def lasso_stability_path(X, y, a=0.5, random_state=None, n_resampling=200,
     y : array-like, shape = [n_samples]
         target values.
 
-    a : float
-        The feature scaling parameter. Should be between 0 and 1.
+    scaling: float
+        The alpha parameter in the stability selection article used to
+        randomly scale the features. Should be between 0 and 1.
 
     random_state: integer or numpy.RandomState, optional
         The generator used to randomize the design.
@@ -465,7 +473,7 @@ def lasso_stability_path(X, y, a=0.5, random_state=None, n_resampling=200,
     """
     rng = check_random_state(random_state)
 
-    if not (0 < a < 1):
+    if not (0 < scaling < 1):
         raise ValueError("Parameter 'a' should be between 0 and 1.")
 
     n_resampling = 200
@@ -474,7 +482,7 @@ def lasso_stability_path(X, y, a=0.5, random_state=None, n_resampling=200,
     scores_path = np.zeros((n_features, n_grid))
 
     for k in xrange(n_resampling):
-        weights = 1. - a * rng.random_integers(0, 1, size=(n_features,))
+        weights = 1. - scaling * rng.random_integers(0, 1, size=(n_features,))
         X_r = X * weights[np.newaxis, :]
         alphas, _, coefs = lars_path(X_r, y, method='lasso', verbose=False)
 
