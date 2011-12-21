@@ -47,13 +47,14 @@ import pylab as pl
 import numpy as np
 
 from sklearn.datasets.base import get_data_home, Bunch
+from sklearn.externals import joblib
 
 DIRECTORY_URL = "http://www.cs.princeton.edu/~schapire/maxent/datasets/"
 
 SAMPLES_URL = join(DIRECTORY_URL, "samples.zip")
 COVERAGES_URL = join(DIRECTORY_URL, "coverages.zip")
 
-DATA_ARCHIVE_NAME = "species_coverage.npz"
+DATA_ARCHIVE_NAME = "species_coverage.pkl"
 
 
 def _load_coverage(F, header_length=6,
@@ -242,18 +243,12 @@ def fetch_species_distributions(data_home=None,
         coverages = np.asarray(coverages,
                                dtype=dtype)
 
-        np.savez(join(data_home, DATA_ARCHIVE_NAME),
-                 coverages=coverages,
-                 test=test,
-                 train=train,
-                 **extra_params)
-
         bunch = Bunch(coverages=coverages,
                       test=test,
                       train=train,
                       **extra_params)
+        joblib.dump(bunch, join(data_home, DATA_ARCHIVE_NAME))
     else:
-        X = np.load(join(data_home, DATA_ARCHIVE_NAME))
-        bunch Bunch(**dict([(f, X[f]) for f in X.files]))
+        bunch = joblib.load(join(data_home, DATA_ARCHIVE_NAME))
 
     return bunch
