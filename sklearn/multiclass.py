@@ -100,6 +100,8 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin):
     label_binarizer_ : LabelBinarizer object
         Object used to transform multiclass labels to binary labels and
         vice-versa.
+    multilabel_ : boolean
+        Whether a OneVsRestClassifier is a multilabel classifier.
     """
 
     def __init__(self, estimator):
@@ -142,6 +144,18 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin):
             raise ValueError("The object hasn't been fitted yet!")
 
         return predict_ovr(self.estimators_, self.label_binarizer_, X)
+
+    @property
+    def multilabel_(self):
+        """Whether this is a multilabel classifier"""
+        return self.label_binarizer_.multilabel
+
+    def score(self, X, y):
+        if self.multilabel_:
+            raise NotImplementedError(
+                "score is not supported for multilabel classifiers")
+        else:
+            super(OneVsRestClassifier, self).score(X, y)
 
 
 def fit_ovo_binary(estimator, X, y, i, j):

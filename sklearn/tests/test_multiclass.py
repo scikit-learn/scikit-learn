@@ -82,15 +82,17 @@ def test_ovr_multilabel():
         clf = OneVsRestClassifier(base_clf).fit(X, y)
         y_pred = clf.predict([[0, 4, 4]])[0]
         assert_equal(set(y_pred), set([1, 2]))
+        assert_true(clf.multilabel_)
 
         # test input as label indicator matrix
         clf = OneVsRestClassifier(base_clf).fit(X, Y)
         y_pred = clf.predict([[0, 4, 4]])[0]
         assert_array_equal(y_pred, [0, 1, 1])
+        assert_true(clf.multilabel_)
 
 
 def test_ovr_multilabel_dataset():
-    base_clf = MultinomialNB()
+    base_clf = MultinomialNB(alpha=1)
     X, Y = datasets.make_multilabel_classification(n_samples=100,
                                                    n_features=20,
                                                    n_classes=5,
@@ -101,6 +103,7 @@ def test_ovr_multilabel_dataset():
     X_test, Y_test = X[80:], Y[80:]
     clf = OneVsRestClassifier(base_clf).fit(X_train, Y_train)
     Y_pred = clf.predict(X_test)
+    assert_true(clf.multilabel_)
     assert_almost_equal(multilabel_precision(Y_test, Y_pred), 0.80, places=2)
     assert_almost_equal(multilabel_recall(Y_test, Y_pred), 0.80, places=2)
 
