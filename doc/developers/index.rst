@@ -71,7 +71,7 @@ repository on
  2. Fork the `project repository
     <http://github.com/scikit-learn/scikit-learn>`__: click on the 'Fork'
     button, at the top, center of the page. This creates a copy of
-    the code on the github server where you can work.
+    the code on the GitHub server where you can work.
 
  3. Clone this copy to your local disk (you need the `git` program to do
     this)::

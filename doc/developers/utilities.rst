@@ -8,10 +8,12 @@ Scikit-learn contains a number of utilities to help with development.  These are
 located in :mod:`sklearn.utils`, and include tools in a number of categories.
 All the following functions and classes are in the module :mod:`sklearn.utils`.
 
-Please note that these utilities are meant to be used internally within
-scikit-learn.  They are not guaranteed to be stable between versions of
-scikit-learn.  Backports, in particular, will be removed as the scikit-learn
-dependencies evolve.
+.. warning ::
+
+   These utilities are meant to be used internally within the scikit-learn
+   package.  They are not guaranteed to be stable between versions of
+   scikit-learn.  Backports, in particular, will be removed as the scikit-learn
+   dependencies evolve.
 
 
 .. currentmodule:: sklearn.utils
