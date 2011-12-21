@@ -44,7 +44,7 @@ def normalize(A, axis=None):
     return A / Asum
 
 
-def lmvnpdf(X, means, covars, cvtype='diag'):
+def log_multivariate_normal_density(X, means, covars, cvtype='diag'):
     """Compute the log probability under a multivariate Gaussian distribution.
 
     Parameters
@@ -70,13 +70,14 @@ def lmvnpdf(X, means, covars, cvtype='diag'):
     -------
     lpr : array_like, shape (O, C)
         Array containing the log probabilities of each data point in
-        `X` under each of the C multivariate Gaussian distributions.
+        X under each of the C multivariate Gaussian distributions.
     """
-    lmvnpdf_dict = {'spherical': _lmvnpdfspherical,
-                    'tied': _lmvnpdftied,
-                    'diag': _lmvnpdfdiag,
-                    'full': _lmvnpdffull}
-    return lmvnpdf_dict[cvtype](X, means, covars)
+    log_multivariate_normal_density_dict = {
+        'spherical': _log_multivariate_normal_density_spherical,
+        'tied': _log_multivariate_normal_density_tied,
+        'diag': _log_multivariate_normal_density_diag,
+        'full': _log_multivariate_normal_densityfull}
+    return log_multivariate_normal_density_dict[cvtype](X, means, covars)
 
 
 def sample_gaussian(mean, covar, cvtype='diag', n_samples=1,
@@ -183,20 +184,20 @@ class GMM(BaseEstimator):
 
     Methods
     -------
-    decode(X)
-        Find most likely mixture components for each point in `X`.
-    eval(X)
-        Compute the log likelihood of `X` under the model and the
+    decode(X) -> remove
+        Find most likely mixture components for each point in X.
+    eval(X) -> predict_proba
+        Compute the log likelihood of X under the model and the
         posterior distribution over mixture components.
     fit(X)
-        Estimate model parameters from `X` using the EM algorithm.
+        Estimate model parameters from X using the EM algorithm.
     predict(X)
         Like decode, find most likely mixtures components for each
-        observation in `X`.
+        observation in X.
     rvs(n=1, random_state=None)
         Generate `n` samples from the model.
     score(X)
-        Compute the log likelihood of `X` under the model.
+        Compute the log likelihood of X under the model.
 
     See Also
     --------
@@ -323,68 +324,69 @@ class GMM(BaseEstimator):
 
     weights = property(_get_weights, _set_weights)
 
-    def eval(self, obs):
+    def eval(self, X):
         """Evaluate the model on data
 
-        Compute the log probability of `obs` under the model and
+        Compute the log probability of X under the model and
         return the posterior distribution (responsibilities) of each
-        mixture component for each element of `obs`.
+        mixture component for each element of X.
 
         Parameters
         ----------
-        obs: array_like, shape (n_samples, n_features)
+        X: array_like, shape (n_samples, n_features)
             List of n_features-dimensional data points.  Each row
             corresponds to a single data point.
 
         Returns
         -------
         logprob: array_like, shape (n_samples,)
-            Log probabilities of each data point in `obs`
+            Log probabilities of each data point in X
         posteriors: array_like, shape (n_samples, n_components)
             Posterior probabilities of each mixture component for each
             observation
         """
-        obs = np.asarray(obs)
-        lpr = (lmvnpdf(obs, self._means, self._covars, self._cvtype)
-               + self._log_weights)
+        X = np.asarray(X)
+        lpr = (log_multivariate_normal_density(
+                X, self._means, self._covars, self._cvtype) + self._log_weights)
         logprob = logsumexp(lpr, axis=1)
         posteriors = np.exp(lpr - logprob[:, np.newaxis])
         return logprob, posteriors
 
-    def score(self, obs):
+    def score(self, X):
         """Compute the log probability under the model.
 
         Parameters
         ----------
-        obs : array_like, shape (n_samples, n_features)
+        X : array_like, shape (n_samples, n_features)
             List of n_features-dimensional data points.  Each row
             corresponds to a single data point.
 
         Returns
         -------
         logprob : array_like, shape (n_samples,)
-            Log probabilities of each data point in `obs`
+            Log probabilities of each data point in X
         """
-        logprob, _ = self.eval(obs)
+        # We use return_log=True to avoid a useless exponentiation
+        logprob, _ = self.eval(X)
         return logprob
 
-    def decode(self, obs):
-        """Find most likely mixture components for each point in `obs`.
+    def decode(self, X):
+        """Find most likely mixture components for each point in X.
 
         Parameters
         ----------
-        obs : array_like, shape (n, n_features)
+        X : array_like, shape (n, n_features)
             List of n_features-dimensional data points.  Each row
             corresponds to a single data point.
 
         Returns
         -------
         logprobs : array_like, shape (n_samples,)
-            Log probability of each point in `obs` under the model.
+            Log probability of each point in X under the model.
         components : array_like, shape (n_samples,)
             Index of the most likelihod mixture components for each observation
         """
-        logprob, posteriors = self.eval(obs)
+        logprob, posteriors = self.eval(X)
         return logprob, posteriors.argmax(axis=1)
 
     def predict(self, X):
@@ -428,7 +430,7 @@ class GMM(BaseEstimator):
 
         Returns
         -------
-        obs : array_like, shape (n_samples, n_features)
+        X : array_like, shape (n_samples, n_features)
             List of samples
         """
         if random_state is None:
@@ -437,26 +439,26 @@ class GMM(BaseEstimator):
         weight_pdf = self.weights
         weight_cdf = np.cumsum(weight_pdf)
 
-        obs = np.empty((n_samples, self.n_features))
+        X = np.empty((n_samples, self.n_features))
         rand = random_state.rand(n_samples)
         # decide which component to use for each sample
         comps = weight_cdf.searchsorted(rand)
         # for each component, generate all needed samples
         for comp in xrange(self.n_components):
-            # occurrences of current component in obs
-            comp_in_obs = (comp == comps)
+            # occurrences of current component in X
+            comp_in_X = (comp == comps)
             # number of those occurrences
-            num_comp_in_obs = comp_in_obs.sum()
-            if num_comp_in_obs > 0:
+            num_comp_in_X = comp_in_X.sum()
+            if num_comp_in_X > 0:
                 if self._cvtype == 'tied':
                     cv = self._covars
                 else:
                     cv = self._covars[comp]
-                obs[comp_in_obs] = sample_gaussian(
-                    self._means[comp], cv, self._cvtype, num_comp_in_obs,
+                X[comp_in_X] = sample_gaussian(
+                    self._means[comp], cv, self._cvtype, num_comp_in_X,
                     random_state=random_state
                 ).T
-        return obs
+        return X
 
     def fit(self, X, n_iter=10, thresh=1e-2, params='wmc',
             init_params='wmc'):
@@ -562,7 +564,7 @@ class GMM(BaseEstimator):
 #########################################################################
 
 
-def _lmvnpdfdiag(X, means=0.0, covars=1.0):
+def _log_multivariate_normal_density_diag(X, means=0.0, covars=1.0):
     """Compute Gaussian density at X for a diagonal model"""
     n_samples, n_dim = X.shape
     lpr = -0.5 * (n_dim * np.log(2 * np.pi) + np.sum(np.log(covars), 1)
@@ -572,15 +574,16 @@ def _lmvnpdfdiag(X, means=0.0, covars=1.0):
     return lpr
 
 
-def _lmvnpdfspherical(X, means=0.0, covars=1.0):
+def _log_multivariate_normal_density_spherical(X, means=0.0, covars=1.0):
     """Compute Gaussian density at X for a spherical model"""
     cv = covars.copy()
     if covars.ndim == 1:
         cv = cv[:, np.newaxis]
-    return _lmvnpdfdiag(X, means, np.tile(cv, (1, X.shape[-1])))
+    return _log_multivariate_normal_density_diag(X, means, 
+                                                 np.tile(cv, (1, X.shape[-1])))
 
 
-def _lmvnpdftied(X, means, covars):
+def _log_multivariate_normal_density_tied(X, means, covars):
     """Compute Gaussian density at X for a tied model"""
     from scipy import linalg
     n_samples, n_dim = X.shape
@@ -592,7 +595,7 @@ def _lmvnpdftied(X, means, covars):
     return lpr
 
 
-def _lmvnpdffull(X, means, covars):
+def _log_multivariate_normal_densityfull(X, means, covars):
     """Log probability for full covariance matrices.
 
     WARNING

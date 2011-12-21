@@ -82,7 +82,7 @@ def test_lmvnpdf_diag():
     obs = rng.randint(10) * rng.rand(n_obs, n_features)
 
     ref = _naive_lmvnpdf_diag(obs, mu, cv)
-    lpr = mixture.lmvnpdf(obs, mu, cv, 'diag')
+    lpr = mixture.log_multivariate_normal_density(obs, mu, cv, 'diag')
     assert_array_almost_equal(lpr, ref)
 
 
@@ -95,7 +95,8 @@ def test_lmvnpdf_spherical():
 
     cv = np.tile(spherecv, (n_features, 1))
     reference = _naive_lmvnpdf_diag(obs, mu, cv)
-    lpr = mixture.lmvnpdf(obs, mu, spherecv, 'spherical')
+    lpr = mixture.log_multivariate_normal_density(obs, mu, spherecv, 
+                                                  'spherical')
     assert_array_almost_equal(lpr, reference)
 
 
@@ -109,7 +110,7 @@ def test_lmvnpdf_full():
     fullcv = np.array([np.diag(x) for x in cv])
 
     reference = _naive_lmvnpdf_diag(obs, mu, cv)
-    lpr = mixture.lmvnpdf(obs, mu, fullcv, 'full')
+    lpr = mixture.log_multivariate_normal_density(obs, mu, fullcv, 'full')
     assert_array_almost_equal(lpr, reference)
 
 

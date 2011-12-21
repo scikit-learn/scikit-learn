@@ -17,8 +17,9 @@ import numpy as np
 from .utils import check_random_state
 from .utils.extmath import logsumexp
 from .base import BaseEstimator
-from .mixture import (GMM, lmvnpdf, normalize, sample_gaussian,
-                 _distribute_covar_matrix_to_match_cvtype, _validate_covars)
+from .mixture import (
+    GMM, log_multivariate_normal_density, normalize, sample_gaussian, 
+    _distribute_covar_matrix_to_match_cvtype, _validate_covars)
 from . import cluster
 import warnings
 warnings.warn('sklearn.hmm is orphaned, undocumented and has known numerical'
@@ -689,7 +690,8 @@ class GaussianHMM(_BaseHMM):
     covars = property(_get_covars, _set_covars)
 
     def _compute_log_likelihood(self, obs):
-        return lmvnpdf(obs, self._means, self._covars, self._cvtype)
+        return log_multivariate_normal_density(
+            obs, self._means, self._covars, self._cvtype)
 
     def _generate_sample_from_state(self, state, random_state=None):
         if self._cvtype == 'tied':
