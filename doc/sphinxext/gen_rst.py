@@ -360,5 +360,4 @@ def setup(app):
     #  on Sphinx 1.0.7
     build_image_dir = '_build/html/_images'
     if os.path.exists(build_image_dir):
-        import shutil
         shutil.rmtree(build_image_dir)
