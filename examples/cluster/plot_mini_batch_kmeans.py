@@ -83,7 +83,7 @@ for k, col in zip(range(n_clusters), colors):
 ax.set_title('KMeans')
 ax.set_xticks(())
 ax.set_yticks(())
-pl.text(-3.5, 2.7,  'train time: %.2fs\ninertia: %f' % (
+pl.text(-3.5, 1.8,  'train time: %.2fs\ninertia: %f' % (
     t_batch, k_means.inertia_))
 
 # MiniBatchKMeans
@@ -98,7 +98,7 @@ for k, col in zip(range(n_clusters), colors):
 ax.set_title('MiniBatchKMeans')
 ax.set_xticks(())
 ax.set_yticks(())
-pl.text(-3.5, 2.7, 'train time: %.2fs\ninertia: %f' %
+pl.text(-3.5, 1.8, 'train time: %.2fs\ninertia: %f' %
         (t_mini_batch, mbk.inertia_))
 
 # Initialise the different array to all False
