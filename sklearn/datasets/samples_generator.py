@@ -227,6 +227,16 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
                                    n_labels=2, length=50, random_state=None):
     """Generate a random multilabel classification problem.
 
+    For each sample, the generative process is:
+        - pick the number of labels: n ~ Poisson(n_labels)
+        - n times, choose a class c: c ~ Multinomial(theta)
+        - pick the document length: k ~ Poisson(length)
+        - k times, choose a word: w ~ Multinomial(theta_c)
+
+    In the above process, rejection sampling is used to make sure that
+    n is never zero or more than `n_classes`, and that the document length
+    is never zero. Likewise, we reject classes which have already been chosen.
+
     Parameters
     ----------
     n_samples : int, optional (default=100)
