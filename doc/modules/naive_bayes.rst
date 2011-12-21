@@ -182,8 +182,8 @@ It is advisable to evaluate both models, if time permits.
 Semisupervised training with EM
 -------------------------------
 
-The class ``SemisupervisedNB`` implements the expectation maximization (EM)
-algorithm for semisupervised training of Naive Bayes models,
+The class :class:`SemisupervisedNB` implements the expectation maximization
+(EM) algorithm for semisupervised training of Naive Bayes models,
 where a part of the training samples are unlabeled.
 Unlabeled data are indicated by a ``-1`` value in the label vector.
 
@@ -202,7 +202,7 @@ the log-likelihood of the model given the training samples.
 The resulting algorithm is similar to the more general technique of
 self-training (see Zhu 2008).
 
-``SemisupervisedNB`` is a meta-estimator that builds upon
+:class:`SemisupervisedNB` is a meta-estimator that builds upon
 a regular Naive Bayes estimator.
 To use this class, construct it with an ordinary Naive Bayes model as follows::
 
