@@ -155,8 +155,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         exponential distribution (log-uniform on [thetaL, thetaU]).
         Default does not use random starting point (random_start = 1).
 
-    Example
-    -------
+    Examples
+    --------
     >>> import numpy as np
     >>> from sklearn.gaussian_process import GaussianProcess
     >>> X = array2d([1., 3., 5., 6., 7., 8.]).T
