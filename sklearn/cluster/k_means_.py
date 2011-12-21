@@ -238,7 +238,7 @@ def k_means(X, k, init='k-means++', precompute_distances=True,
         if verbose:
             print 'Initialization complete'
 
-        # Allocate memory to store the distances for each sample to it's
+        # Allocate memory to store the distances for each sample to its
         # closer center for reallocation in case of ties
         distances = np.zeros(shape=(X.shape[0],), dtype=np.float64)
 
