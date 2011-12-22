@@ -28,6 +28,14 @@ class Pipeline(BaseEstimator):
     using their names and the parameter name separated by a '__',
     as in the example below.
 
+    Parameters
+    ----------
+
+    steps: list
+        List of (name, transform) object (implementing
+        fit/transform) that are chained, in the order in which
+        they are chained, with the last object an estimator.
+
     Attributes
     ----------
     `steps` : list of (name, object)
@@ -57,9 +65,8 @@ class Pipeline(BaseEstimator):
         final estimator. Valid only if the final estimator implements
         score.
 
-
-    Example
-    -------
+    Examples
+    --------
 
     >>> from sklearn import svm
     >>> from sklearn.datasets import samples_generator
@@ -91,14 +98,6 @@ class Pipeline(BaseEstimator):
     # BaseEstimator interface
 
     def __init__(self, steps):
-        """
-        Parameters
-        ----------
-        steps: list
-            List of (name, transform) object (implementing
-            fit/transform) that are chained, in the order in which
-            they are chained, with the last object an estimator.
-        """
         self.named_steps = dict(steps)
         names, estimators = zip(*steps)
         self.steps = steps

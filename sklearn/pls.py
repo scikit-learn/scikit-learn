@@ -113,60 +113,60 @@ class _PLS(BaseEstimator):
 
     Parameters
     ----------
-    X: array-like of predictors, shape = [n_samples, p]
+    X : array-like of predictors, shape = [n_samples, p]
         Training vectors, where n_samples in the number of samples and
         p is the number of predictors.
 
-    Y: array-like of response, shape = [n_samples, q]
+    Y : array-like of response, shape = [n_samples, q]
         Training vectors, where n_samples in the number of samples and
         q is the number of response variables.
 
-    n_components: int, number of components to keep. (default 2).
+    n_components : int, number of components to keep. (default 2).
 
-    deflation_mode: str, "canonical" or "regression". See notes.
+    deflation_mode : str, "canonical" or "regression". See notes.
 
-    mode: "A" classical PLS and "B" CCA. See notes.
+    mode : "A" classical PLS and "B" CCA. See notes.
 
-    scale: boolean, scale data? (default True)
+    scale : boolean, scale data? (default True)
 
-    algorithm: string, "nipals" or "svd"
+    algorithm : string, "nipals" or "svd"
         The algorithm used to estimate the weights. It will be called
         n_components times, i.e. once for each iteration of the outer loop.
 
-    max_iter: an integer, the maximum number of iterations (default 500) of the
+    max_iter : an integer, the maximum number of iterations (default 500) of the
         NIPALS inner loop (used only if algorithm="nipals")
 
-    tol: non-negative real, default 1e-06
+    tol : non-negative real, default 1e-06
         The tolerance used in the iterative algorithm.
 
-    copy: boolean
+    copy : boolean
         Whether the deflation should be done on a copy. Let the default
         value to True unless you don't care about side effects.
 
     Attributes
     ----------
-    `x_weights_`: array, [p, n_components]
+    `x_weights_` : array, [p, n_components]
         X block weights vectors.
 
-    `y_weights_`: array, [q, n_components]
+    `y_weights_` : array, [q, n_components]
         Y block weights vectors.
 
-    `x_loadings_`: array, [p, n_components]
+    `x_loadings_` : array, [p, n_components]
         X block loadings vectors.
 
-    `y_loadings_`: array, [q, n_components]
+    `y_loadings_` : array, [q, n_components]
         Y block loadings vectors.
 
-    `x_scores_`: array, [n_samples, n_components]
+    `x_scores_` : array, [n_samples, n_components]
         X scores.
 
-    `y_scores_`: array, [n_samples, n_components]
+    `y_scores_` : array, [n_samples, n_components]
         Y scores.
 
-    `x_rotations_`: array, [p, n_components]
+    `x_rotations_` : array, [p, n_components]
         X block to latents rotations.
 
-    `y_rotations_`: array, [q, n_components]
+    `y_rotations_` : array, [q, n_components]
         Y block to latents rotations.
 
     coefs: array, [p, q]
@@ -321,15 +321,15 @@ class _PLS(BaseEstimator):
 
         Parameters
         ----------
-        X: array-like of predictors, shape = [n_samples, p]
+        X : array-like of predictors, shape = [n_samples, p]
             Training vectors, where n_samples in the number of samples and
             p is the number of predictors.
 
-        Y: array-like of response, shape = [n_samples, q], optional
+        Y : array-like of response, shape = [n_samples, q], optional
             Training vectors, where n_samples in the number of samples and
             q is the number of response variables.
 
-        copy: boolean
+        copy : boolean
             Whether to copy X and Y, or perform in-place normalization.
 
         Returns
@@ -362,11 +362,11 @@ class _PLS(BaseEstimator):
 
         Parameters
         ----------
-        X: array-like of predictors, shape = [n_samples, p]
+        X : array-like of predictors, shape = [n_samples, p]
             Training vectors, where n_samples in the number of samples and
             p is the number of predictors.
 
-        copy: boolean
+        copy : boolean
             Whether to copy X and Y, or perform in-place normalization.
 
         Notes
@@ -394,59 +394,59 @@ class PLSRegression(_PLS):
 
     Parameters
     ----------
-    X: array-like of predictors, shape = [n_samples, p]
+    X : array-like of predictors, shape = [n_samples, p]
         Training vectors, where n_samples in the number of samples and
         p is the number of predictors.
 
-    Y: array-like of response, shape = [n_samples, q]
+    Y : array-like of response, shape = [n_samples, q]
         Training vectors, where n_samples in the number of samples and
         q is the number of response variables.
 
-    n_components: int, (default 2)
+    n_components : int, (default 2)
         Number of components to keep.
 
-    scale: boolean, (default True)
+    scale : boolean, (default True)
         whether to scale the data
 
-    algorithm: string, "nipals" or "svd"
+    algorithm : string, "nipals" or "svd"
         The algorithm used to estimate the weights. It will be called
         n_components times, i.e. once for each iteration of the outer loop.
 
-    max_iter: an integer, (default 500)
+    max_iter : an integer, (default 500)
         the maximum number of iterations of the NIPALS inner loop (used
         only if algorithm="nipals")
 
-    tol: non-negative real
+    tol : non-negative real
         Tolerance used in the iterative algorithm default 1e-06.
 
-    copy: boolean, default True
+    copy : boolean, default True
         Whether the deflation should be done on a copy. Let the default
         value to True unless you don't care about side effect
 
     Attributes
     ----------
-    `x_weights_`: array, [p, n_components]
+    `x_weights_` : array, [p, n_components]
         X block weights vectors.
 
-    `y_weights_`: array, [q, n_components]
+    `y_weights_` : array, [q, n_components]
         Y block weights vectors.
 
-    `x_loadings_`: array, [p, n_components]
+    `x_loadings_` : array, [p, n_components]
         X block loadings vectors.
 
-    `y_loadings_`: array, [q, n_components]
+    `y_loadings_` : array, [q, n_components]
         Y block loadings vectors.
 
-    `x_scores_`: array, [n_samples, n_components]
+    `x_scores_` : array, [n_samples, n_components]
         X scores.
 
-    `y_scores_`: array, [n_samples, n_components]
+    `y_scores_` : array, [n_samples, n_components]
         Y scores.
 
-    `x_rotations_`: array, [p, n_components]
+    `x_rotations_` : array, [p, n_components]
         X block to latents rotations.
 
-    `y_rotations_`: array, [q, n_components]
+    `y_rotations_` : array, [q, n_components]
         Y block to latents rotations.
 
     coefs: array, [p, q]
@@ -505,57 +505,57 @@ class PLSCanonical(_PLS):
 
     Parameters
     ----------
-    X: array-like of predictors, shape = [n_samples, p]
+    X : array-like of predictors, shape = [n_samples, p]
         Training vectors, where n_samples in the number of samples and
         p is the number of predictors.
 
-    Y: array-like of response, shape = [n_samples, q]
+    Y : array-like of response, shape = [n_samples, q]
         Training vectors, where n_samples in the number of samples and
         q is the number of response variables.
 
-    n_components: int, number of components to keep. (default 2).
+    n_components : int, number of components to keep. (default 2).
 
-    scale: boolean, scale data? (default True)
+    scale : boolean, scale data? (default True)
 
-    algorithm: string, "nipals" or "svd"
+    algorithm : string, "nipals" or "svd"
         The algorithm used to estimate the weights. It will be called
         n_components times, i.e. once for each iteration of the outer loop.
 
-    max_iter: an integer, (default 500)
+    max_iter : an integer, (default 500)
         the maximum number of iterations of the NIPALS inner loop (used
         only if algorithm="nipals")
 
-    tol: non-negative real, default 1e-06
+    tol : non-negative real, default 1e-06
         the tolerance used in the iterative algorithm
 
-    copy: boolean, default True
+    copy : boolean, default True
         Whether the deflation should be done on a copy. Let the default
         value to True unless you don't care about side effect
 
     Attributes
     ----------
-    `x_weights_`: array, shape = [p, n_components]
+    `x_weights_` : array, shape = [p, n_components]
         X block weights vectors.
 
-    `y_weights_`: array, shape = [q, n_components]
+    `y_weights_` : array, shape = [q, n_components]
         Y block weights vectors.
 
-    `x_loadings_`: array, shape = [p, n_components]
+    `x_loadings_` : array, shape = [p, n_components]
         X block loadings vectors.
 
-    `y_loadings_`: array, shape = [q, n_components]
+    `y_loadings_` : array, shape = [q, n_components]
         Y block loadings vectors.
 
-    `x_scores_`: array, shape = [n_samples, n_components]
+    `x_scores_` : array, shape = [n_samples, n_components]
         X scores.
 
-    `y_scores_`: array, shape = [n_samples, n_components]
+    `y_scores_` : array, shape = [n_samples, n_components]
         Y scores.
 
-    `x_rotations_`: array, shape = [p, n_components]
+    `x_rotations_` : array, shape = [p, n_components]
         X block to latents rotations.
 
-    `y_rotations_`: array, shape = [q, n_components]
+    `y_rotations_` : array, shape = [q, n_components]
         Y block to latents rotations.
 
     Notes
@@ -616,59 +616,59 @@ class CCA(_PLS):
 
     Parameters
     ----------
-    X: array-like of predictors, shape = [n_samples, p]
+    X : array-like of predictors, shape = [n_samples, p]
         Training vectors, where n_samples in the number of samples and
         p is the number of predictors.
 
-    Y: array-like of response, shape = [n_samples, q]
+    Y : array-like of response, shape = [n_samples, q]
         Training vectors, where n_samples in the number of samples and
         q is the number of response variables.
 
-    n_components: int, (default 2).
+    n_components : int, (default 2).
         number of components to keep.
 
-    scale: boolean, (default True)
+    scale : boolean, (default True)
         whether to scale the data?
 
-    algorithm: str, "nipals" or "svd"
+    algorithm : str, "nipals" or "svd"
         The algorithm used to estimate the weights. It will be called
         n_components times, i.e. once for each iteration of the outer loop.
 
-    max_iter: an integer, (default 500)
+    max_iter : an integer, (default 500)
         the maximum number of iterations of the NIPALS inner loop (used
         only if algorithm="nipals")
 
-    tol: non-negative real, default 1e-06.
+    tol : non-negative real, default 1e-06.
         the tolerance used in the iterative algorithm
 
-    copy: boolean
+    copy : boolean
         Whether the deflation be done on a copy. Let the default value
         to True unless you don't care about side effects
 
     Attributes
     ----------
-    `x_weights_`: array, [p, n_components]
+    `x_weights_` : array, [p, n_components]
         X block weights vectors.
 
-    `y_weights_`: array, [q, n_components]
+    `y_weights_` : array, [q, n_components]
         Y block weights vectors.
 
-    `x_loadings_`: array, [p, n_components]
+    `x_loadings_` : array, [p, n_components]
         X block loadings vectors.
 
-    `y_loadings_`: array, [q, n_components]
+    `y_loadings_` : array, [q, n_components]
         Y block loadings vectors.
 
-    `x_scores_`: array, [n_samples, n_components]
+    `x_scores_` : array, [n_samples, n_components]
         X scores.
 
-    `y_scores_`: array, [n_samples, n_components]
+    `y_scores_` : array, [n_samples, n_components]
         Y scores.
 
-    `x_rotations_`: array, [p, n_components]
+    `x_rotations_` : array, [p, n_components]
         X block to latents rotations.
 
-    `y_rotations_`: array, [q, n_components]
+    `y_rotations_` : array, [q, n_components]
         Y block to latents rotations.
 
     Notes
@@ -730,33 +730,33 @@ class PLSSVD(BaseEstimator):
 
     Parameters
     ----------
-    X: array-like of predictors, shape = [n_samples, p]
+    X : array-like of predictors, shape = [n_samples, p]
         Training vector, where n_samples in the number of samples and
         p is the number of predictors. X will be centered before any analysis.
 
-    Y: array-like of response, shape = [n_samples, q]
+    Y : array-like of response, shape = [n_samples, q]
         Training vector, where n_samples in the number of samples and
         q is the number of response variables. X will be centered before any
         analysis.
 
-    n_components: int, (default 2).
+    n_components : int, (default 2).
         number of components to keep.
 
-    scale: boolean, (default True)
+    scale : boolean, (default True)
         scale X and Y
 
     Attributes
     ----------
-    `x_weights_`: array, [p, n_components]
+    `x_weights_` : array, [p, n_components]
         X block weights vectors.
 
-    `y_weights_`: array, [q, n_components]
+    `y_weights_` : array, [q, n_components]
         Y block weights vectors.
 
-    `x_scores_`: array, [n_samples, n_components]
+    `x_scores_` : array, [n_samples, n_components]
         X scores.
 
-    `y_scores_`: array, [n_samples, n_components]
+    `y_scores_` : array, [n_samples, n_components]
         Y scores.
 
     See also
