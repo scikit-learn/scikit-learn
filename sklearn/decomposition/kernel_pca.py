@@ -66,13 +66,13 @@ class KernelPCA(BaseEstimator, TransformerMixin):
     Attributes
     ----------
 
-    lambdas_, alphas_:
+    `lambdas_`, `alphas_`:
         Eigenvalues and eigenvectors of the centered kernel matrix
 
-    dual_coef_:
+    `dual_coef_`:
         Inverse transform matrix
 
-    X_transformed_fit_:
+    `X_transformed_fit_`:
         Projection of the fitted data on the kernel principal components
 
     **References**:
