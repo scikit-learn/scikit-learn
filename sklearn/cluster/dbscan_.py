@@ -138,11 +138,6 @@ class DBSCAN(BaseEstimator):
     verbose: boolean, optional
         The verbosity level
 
-    Methods
-    -------
-    fit:
-        Compute the clustering
-
     Attributes
     ----------
     core_sample_indices_: array, shape = [n_core_samples]

@@ -239,12 +239,6 @@ class SpectralClustering(BaseEstimator):
         centroid seeds. The final results will be the best output of
         n_init consecutive runs in terms of inertia.
 
-    Methods
-    -------
-
-    fit(X):
-        Compute spectral clustering
-
     Attributes
     ----------
 

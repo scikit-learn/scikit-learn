@@ -173,11 +173,6 @@ class AffinityPropagation(BaseEstimator):
     copy: boolean, optional
         Make a copy of input data. True by default.
 
-    Methods
-    -------
-
-    fit:
-        Compute the clustering
 
     Attributes
     ----------
@@ -208,7 +203,7 @@ class AffinityPropagation(BaseEstimator):
         self.copy = copy
 
     def fit(self, S, p=None):
-        """compute MeanShift
+        """Compute MeanShift clustering.
 
         Parameters
         ----------

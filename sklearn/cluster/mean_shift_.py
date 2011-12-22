@@ -220,11 +220,6 @@ class MeanShift(BaseEstimator):
         not within any kernel. Orphans are assigned to the nearest kernel.
         If false, then orphans are given cluster label -1.
 
-    Methods
-    -------
-    fit(X):
-        Compute MeanShift clustering
-
     Attributes
     ----------
     cluster_centers_: array, [n_clusters, n_features]

@@ -269,11 +269,6 @@ class Ward(BaseEstimator):
         The number of connected components in the graph defined by the
         connectivity matrix. If not set, it is estimated.
 
-    Methods
-    -------
-    fit:
-        Compute the clustering
-
     Attributes
     ----------
     children_ : array-like, shape = [n_nodes, 2]
@@ -350,11 +345,6 @@ class WardAgglomeration(AgglomerationTransform, Ward):
     n_components : int (optional)
         The number of connected components in the graph defined by the
         connectivity matrix. If not set, it is estimated.
-
-    Methods
-    -------
-    fit:
-        Compute the clustering of features
 
     Attributes
     ----------
