@@ -121,7 +121,7 @@ def test_sample_weight():
 
 
 def test_semisupervised():
-    X = scipy.sparse.csr_matrix([[4, 3, 1], 
+    X = scipy.sparse.csr_matrix([[4, 3, 1],
                                  [5, 2, 1],
                                  [0, 1, 7],
                                  [0, 1, 6]])

@@ -449,6 +449,7 @@ class Binarizer(BaseEstimator, TransformerMixin):
 def _is_label_indicator_matrix(y):
     return hasattr(y, "shape") and len(y.shape) == 2
 
+
 def _is_multilabel(y):
     return isinstance(y[0], tuple) or \
            isinstance(y[0], list) or \
