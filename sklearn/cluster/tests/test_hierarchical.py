@@ -7,8 +7,8 @@ Author : Vincent Michel, 2010
 import numpy as np
 from scipy.cluster import hierarchy
 
-from sklearn.cluster import Ward, WardAgglomeration, ward_tree
-from sklearn.cluster.hierarchical import _hc_cut
+from sklearn.cluster import (Ward, WardAgglomeration, ward_tree, Dendrogram, 
+                             create_dendrogram)
 from sklearn.feature_extraction.image import grid_to_graph
 
 
@@ -92,8 +92,8 @@ def assess_same_labelling(cut1, cut2):
     assert((co_clust[0] == co_clust[1]).all())
 
 
-def test_scikit_vs_scipy():
-    """Test scikit ward with full connectivity (i.e. unstructured) vs scipy
+def test_scikit_vs_scipy_ward_linkage():
+    """Test scikit ward with full connectivity vs scipy
     """
     from scipy.sparse import lil_matrix
     n, p, k = 10, 5, 3
@@ -109,12 +109,44 @@ def test_scikit_vs_scipy():
         children_ = out[:, :2].astype(np.int)
         children, _, n_leaves = ward_tree(X, connectivity)
 
-        cut = _hc_cut(k, children, n_leaves)
-        cut_ = _hc_cut(k, children_, n_leaves)
-        assess_same_labelling(cut, cut_)
+        dendrogram = Dendrogram(n_leaves, 1)
+
+        dendrogram.children = children
+        labeling = dendrogram.get_labeling(dendrogram.cut(k))
+
+        dendrogram.children = children_
+        labeling_ = dendrogram.get_labeling(dendrogram.cut(k))
+
+        assess_same_labelling(labeling, labeling_)
 
 
-def test_connectivity_popagation():
+def test_scikit_vs_scipy_complete_linkage():
+    """Test scikit complete linkage with full connectivity vs scipy
+    """
+    from scipy.sparse import lil_matrix
+    n, p, k = 10, 5, 3
+
+    connectivity = lil_matrix(np.ones((n, n)))
+    for i in range(5):
+        X = .1 * np.random.normal(size=(n, p))
+        X -= 4 * np.arange(n)[:, np.newaxis]
+        X -= X.mean(axis=1)[:, np.newaxis]
+
+        out = hierarchy.complete(X)
+
+        children_ = out[:, :2].astype(np.int)
+        dendrogram = Dendrogram(n, 1)
+        dendrogram.children = children_
+        labeling = dendrogram.get_labeling(dendrogram.cut(k))
+
+        dendrogram = create_dendrogram(X, connectivity,
+                                       linkage_criterion="complete")
+        labeling_ = dendrogram.get_labeling(dendrogram.cut(k))
+
+        assess_same_labelling(labeling, labeling_)
+
+
+def test_connectivity_propagation():
     """
     Check that connectivity in the ward tree is propagated correctly during
     merging.
@@ -125,8 +157,7 @@ def test_connectivity_popagation():
                   (.017, .153), (.017, .153), (.018, .153),
                   (.018, .153), (.018, .153), (.018, .153),
                   (.018, .153), (.018, .153), (.018, .153),
-                  (.018, .152), (.018, .149), (.018, .144),
-                 ])
+                  (.018, .152), (.018, .149), (.018, .144)])
 
     connectivity = kneighbors_graph(X, n_neighbors=10)
     ward = Ward(n_clusters=4, connectivity=connectivity)

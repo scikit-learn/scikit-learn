@@ -4,7 +4,7 @@ Hierarchical clustering: structured vs unstructured ward
 ===========================================================
 
 Example builds a swiss roll dataset and runs
-:ref:`hierarchical_clustering` on their position.
+:ref:`hierarchical_clustering` with ward's linkage on their position.
 
 In a first step, the hierarchical clustering without connectivity
 constraints on structure, solely based on distance, whereas in a second
@@ -28,7 +28,7 @@ import time as time
 import numpy as np
 import pylab as pl
 import mpl_toolkits.mplot3d.axes3d as p3
-from sklearn.cluster import Ward
+from sklearn.cluster import HierarchicalClustering
 from sklearn.datasets.samples_generator import make_swiss_roll
 
 ###############################################################################
@@ -43,8 +43,11 @@ X[:, 1] *= .5
 # Compute clustering
 print "Compute unstructured hierarchical clustering..."
 st = time.time()
-ward = Ward(n_clusters=6).fit(X)
-label = ward.labels_
+# hc = HierarchicalClustering(n_clusters=6, linkage_criterion="ward").fit(X)
+# linkage_criterion can be "average", "centroid", "complete", "median",
+# "single", "ward" or "weighted"
+hc = HierarchicalClustering(n_clusters=6, linkage_criterion="average").fit(X)
+label = hc.labels_
 print "Elapsed time: ", time.time() - st
 print "Number of points: ", label.size
 
@@ -68,8 +71,9 @@ connectivity = kneighbors_graph(X, n_neighbors=10)
 # Compute clustering
 print "Compute structured hierarchical clustering..."
 st = time.time()
-ward = Ward(n_clusters=6, connectivity=connectivity).fit(X)
-label = ward.labels_
+hc = HierarchicalClustering(n_clusters=6, connectivity=connectivity,
+                            linkage_criterion="ward").fit(X)
+label = hc.labels_
 print "Elapsed time: ", time.time() - st
 print "Number of points: ", label.size
 
