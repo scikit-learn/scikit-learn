@@ -109,8 +109,8 @@ def resample(*arrays, **options):
     Sequence of resampled views of the collections. The original arrays are
     not impacted.
 
-    Example
-    -------
+    Examples
+    --------
     It is possible to mix sparse and dense arrays in the same run::
 
       >>> X = [[1., 0.], [2., 1.], [0., 0.]]
@@ -210,8 +210,8 @@ def shuffle(*arrays, **options):
     Sequence of shuffled views of the collections. The original arrays are
     not impacted.
 
-    Example
-    -------
+    Examples
+    --------
     It is possible to mix sparse and dense arrays in the same run::
 
       >>> X = [[1., 0.], [2., 1.], [0., 0.]]
