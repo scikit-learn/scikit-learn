@@ -194,8 +194,8 @@ def _hc_get_descendent(ind, children, n_leaves):
     n_leaves : int
         Number of leaves.
 
-    Return
-    ------
+    Returns
+    -------
     descendent : list of int
     """
     descendent = []
@@ -224,8 +224,8 @@ def _hc_cut(n_clusters, children, n_leaves):
     n_leaves : int
         Number of leaves of the tree.
 
-    Return
-    ------
+    Returns
+    -------
     labels : array [n_points]
         cluster labels for each point
 

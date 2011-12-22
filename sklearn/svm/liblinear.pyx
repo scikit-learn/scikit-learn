@@ -28,7 +28,7 @@ cdef extern from "src/liblinear/liblinear_helper.c":
         char *indices, np.npy_intp *n_indptr, char *indptr, char *Y,
         np.npy_intp n_features, double bias)
     parameter *set_parameter(int, double, double, int, char *, char *)
-                          
+
     model *set_model(parameter *, char *, np.npy_intp *, char *, double)
     int copy_predict(char *, model *, np.npy_intp *, char *)
 
@@ -337,8 +337,8 @@ def predict_prob_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
     -------------------
     See scikits.learn.svm.predict for a complete list of parameters.
 
-    Return
-    ------
+    Returns
+    -------
     dec_values : array
         predicted values.
     """

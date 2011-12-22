@@ -230,8 +230,8 @@ def libsvm_sparse_predict (np.ndarray[np.float64_t, ndim=1, mode='c'] T_data,
     -------------------
     See scikits.learn.svm.predict for a complete list of parameters.
 
-    Return
-    ------
+    Returns
+    -------
     dec_values : array
         predicted values.
     """

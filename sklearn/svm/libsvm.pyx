@@ -97,8 +97,8 @@ def fit(
 
     cache_size : float64
 
-    Return
-    ------
+    Returns
+    -------
     support : array, shape=[n_support]
         index of support vectors
 
@@ -274,8 +274,8 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
         C parameter in C-Support Vector Classification
 
 
-    Return
-    ------
+    Returns
+    -------
     dec_values : array
         predicted values.
 
@@ -352,8 +352,8 @@ def predict_proba(
     -------------------
     See scikits.learn.svm.predict for a complete list of parameters.
 
-    Return
-    ------
+    Returns
+    -------
     dec_values : array
         predicted values.
     """

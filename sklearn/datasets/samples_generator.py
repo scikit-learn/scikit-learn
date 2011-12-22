@@ -261,8 +261,8 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    Return
-    ------
+    Returns
+    -------
     X : array of shape [n_samples, n_features]
         The generated samples.
 

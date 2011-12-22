@@ -179,7 +179,7 @@ def spectral_clustering(affinity, k=8, n_components=None, mode=None,
 
     Notes
     -----
-    References:
+    **References**:
 
     - Normalized cuts and image segmentation, 2000
       Jianbo Shi, Jitendra Malik
@@ -253,7 +253,7 @@ class SpectralClustering(BaseEstimator):
 
     Notes
     -----
-    References:
+    **References**:
 
     - Normalized cuts and image segmentation, 2000
       Jianbo Shi, Jitendra Malik

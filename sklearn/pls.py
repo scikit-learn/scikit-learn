@@ -73,8 +73,8 @@ def _svd_cross_product(X, Y):
 
 def _center_scale_xy(X, Y, scale=True):
     """ Center X, Y and scale if the scale parameter==True
-    Return
-    ------
+    Returns
+    -------
         X, Y, x_mean, y_mean, x_std, y_std
     """
     # center
