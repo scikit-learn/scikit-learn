@@ -339,6 +339,8 @@ def predict_proba(
     We have to reconstruct model and parameters to make sure we stay
     in sync with the python object.
 
+    See scikits.learn.svm.predict for a complete list of parameters.
+
     Parameters
     ----------
     X: array-like, dtype=float
@@ -347,10 +349,6 @@ def predict_proba(
 
     kernel : {'linear', 'rbf', 'poly', 'sigmoid', 'precomputed'}
 
-
-    Optional Parameters
-    -------------------
-    See scikits.learn.svm.predict for a complete list of parameters.
 
     Returns
     -------
