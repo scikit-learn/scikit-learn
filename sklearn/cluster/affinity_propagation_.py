@@ -45,7 +45,7 @@ def affinity_propagation(S, p=None, convit=30, max_iter=200, damping=0.5,
     -----
     See examples/plot_affinity_propagation.py for an example.
 
-    Reference:
+    **References**:
     Brendan J. Frey and Delbert Dueck, "Clustering by Passing Messages
     Between Data Points", Science Feb. 2007
 
@@ -187,7 +187,7 @@ class AffinityPropagation(BaseEstimator):
     -----
     See examples/plot_affinity_propagation.py for an example.
 
-    Reference:
+    **References**:
 
     Brendan J. Frey and Delbert Dueck, "Clustering by Passing Messages
     Between Data Points", Science Feb. 2007

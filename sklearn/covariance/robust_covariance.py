@@ -64,7 +64,7 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
 
     Notes
     -----
-    References:
+    **References**:
     [1] A Fast Algorithm for the Minimum Covariance Determinant Estimator,
         1999, American Statistical Association and the American Society
         for Quality, TECHNOMETRICS
@@ -198,7 +198,7 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
 
     Notes
     -----
-    References:
+    **References**:
     [1] A Fast Algorithm for the Minimum Covariance Determinant Estimator,
         1999, American Statistical Association and the American Society
         for Quality, TECHNOMETRICS
@@ -279,7 +279,7 @@ def fast_mcd(X, support_fraction=None,
     Note that only raw estimates are returned. If one is intersted in the
     correction and reweighting steps described in [1], see the MinCovDet
     object.
-    References:
+    **References**:
     [1] A Fast Algorithm for the Minimum Covariance Determinant Estimator,
         1999, American Statistical Association and the American Society
         for Quality, TECHNOMETRICS
@@ -445,7 +445,7 @@ class MinCovDet(EmpiricalCovariance):
     Notes
     -----
 
-    References:
+    **References**:
     [1] P. J. Rousseeuw. Least median of squares regression. J. Am
         Stat Ass, 79:871, 1984.
     [2] A Fast Algorithm for the Minimum Covariance Determinant Estimator,
@@ -547,7 +547,7 @@ class MinCovDet(EmpiricalCovariance):
 
         Notes
         -----
-        References:
+        **References**:
         [1] A Fast Algorithm for the Minimum Covariance Determinant Estimator,
             1999, American Statistical Association and the American Society
             for Quality, TECHNOMETRICS
@@ -591,7 +591,7 @@ class MinCovDet(EmpiricalCovariance):
 
         Notes
         -----
-        References:
+        **References**:
         [1] A Fast Algorithm for the Minimum Covariance Determinant Estimator,
             1999, American Statistical Association and the American Society
             for Quality, TECHNOMETRICS

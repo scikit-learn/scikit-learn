@@ -70,7 +70,7 @@ class Isomap(BaseEstimator):
 
     Notes
     -----
-    References:
+    **References**:
 
     [1] Tenenbaum, J.B.; De Silva, V.; & Langford, J.C. A global geometric
         framework for nonlinear dimensionality reduction. Science 290 (5500)

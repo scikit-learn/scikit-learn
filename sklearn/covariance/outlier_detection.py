@@ -63,7 +63,7 @@ class OutlierDetectionMixin(ClassifierMixin):
 
         Notes
         -----
-        References:
+        **References**:
 
         [1] Wilson, E. B., & Hilferty, M. M. (1931).
             The distribution of chi-square.

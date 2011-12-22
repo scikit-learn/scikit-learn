@@ -99,7 +99,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     The algorithm is adapted from Guyon [1] and was designed to generate
     the "Madelon" dataset.
 
-    References:
+    **References**:
 
     .. [1] I. Guyon, "Design of experiments for the NIPS 2003 variable
            selection benchmark", 2003.
@@ -552,7 +552,7 @@ def make_friedman1(n_samples=100, n_features=10, noise=0.0, random_state=None):
 
     Notes
     -----
-    References:
+    **References**:
 
     .. [1] J. Friedman, "Multivariate adaptive regression splines", The Annals
            of Statistics 19 (1), pages 1-67, 1991.
@@ -615,7 +615,7 @@ def make_friedman2(n_samples=100, noise=0.0, random_state=None):
 
     Notes
     -----
-    References:
+    **References**:
 
     .. [1] J. Friedman, "Multivariate adaptive regression splines", The Annals
            of Statistics 19 (1), pages 1-67, 1991.
@@ -683,7 +683,7 @@ def make_friedman3(n_samples=100, noise=0.0, random_state=None):
 
     Notes
     -----
-    References:
+    **References**:
 
     .. [1] J. Friedman, "Multivariate adaptive regression splines", The Annals
            of Statistics 19 (1), pages 1-67, 1991.
@@ -868,7 +868,7 @@ def make_sparse_uncorrelated(n_samples=100, n_features=10, random_state=None):
 
     Notes
     -----
-    References:
+    **References**:
 
     .. [1] G. Celeux, M. El Anbari, J.-M. Marin, C. P. Robert,
            "Regularization in regression: comparing Bayesian and frequentist
@@ -998,7 +998,7 @@ def make_swiss_roll(n_samples=100, noise=0.0, random_state=None):
     -----
     The algorithm is from Marsland [1].
 
-    References:
+    **References**:
 
     .. [1] S. Marsland, "Machine Learning: An Algorithmic Perpsective",
            Chapter 10, 2009.
