@@ -42,34 +42,43 @@ def plot_hyperplane(clf, min_x, max_x, linestyle, label):
     pl.plot(xx, yy, linestyle, label=label)
 
 
-X, Y = make_multilabel_classification(n_classes=2, n_labels=1, random_state=42)
-X = PCA(n_components=2).fit_transform(X)
-min_x = np.min(X[:, 0])
-max_x = np.max(X[:, 0])
+pl.figure(figsize=(13, 6))
 
-classif = OneVsRestClassifier(SVC(kernel='linear'))
-classif.fit(X, Y)
+for subplot, allow_unlabeled, title in zip((1, 2),
+                                           (False, True),
+                                           ('with unlabeled samples',
+                                            'without unlabeled samples')):
+    X, Y = make_multilabel_classification(n_classes=2, n_labels=1,
+                                          allow_unlabeled=allow_unlabeled,
+                                          random_state=42)
+    X = PCA(n_components=2).fit_transform(X)
+    min_x = np.min(X[:, 0])
+    max_x = np.max(X[:, 0])
 
-pl.figure()
-pl.title('Multilabel classification example')
-pl.xlabel('First principal component')
-pl.ylabel('Second principal component')
+    classif = OneVsRestClassifier(SVC(kernel='linear'))
+    classif.fit(X, Y)
 
-zero_class = np.where([0 in y for y in Y])
-one_class = np.where([1 in y for y in Y])
-pl.scatter(X[:, 0], X[:, 1], s=40, c='gray')
-pl.scatter(X[zero_class, 0], X[zero_class, 1], s=160, edgecolors='b',
-           facecolors='none', linewidths=2, label='Class 1')
-pl.scatter(X[one_class, 0], X[one_class, 1], s=80, edgecolors='orange',
-           facecolors='none', linewidths=2, label='Class 2')
-pl.axis('tight')
+    pl.subplot(1, 2, subplot)
+    pl.title('Multilabel classification\n(%s)' % title)
+    pl.xlabel('First principal component')
+    pl.ylabel('Second principal component')
 
-plot_hyperplane(classif.estimators_[0], min_x, max_x, 'k--',
-                'Boundary\nfor class 1')
-plot_hyperplane(classif.estimators_[1], min_x, max_x, 'k-.',
-                'Boundary\nfor class 2')
-pl.xticks(())
-pl.yticks(())
-pl.legend()
+    zero_class = np.where([0 in y for y in Y])
+    one_class = np.where([1 in y for y in Y])
+    pl.scatter(X[:, 0], X[:, 1], s=40, c='gray')
+    pl.scatter(X[zero_class, 0], X[zero_class, 1], s=160, edgecolors='b',
+               facecolors='none', linewidths=2, label='Class 1')
+    pl.scatter(X[one_class, 0], X[one_class, 1], s=80, edgecolors='orange',
+               facecolors='none', linewidths=2, label='Class 2')
+    pl.axis('tight')
 
+    plot_hyperplane(classif.estimators_[0], min_x, max_x, 'k--',
+                    'Boundary\nfor class 1')
+    plot_hyperplane(classif.estimators_[1], min_x, max_x, 'k-.',
+                    'Boundary\nfor class 2')
+    pl.xticks(())
+    pl.yticks(())
+    pl.legend()
+
+pl.subplots_adjust(.04, .07, .97, .90, .09, .2)
 pl.show()
