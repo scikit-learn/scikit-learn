@@ -171,6 +171,10 @@ class RandomizedLasso(BaseRandomizedLinearModel):
         The alpha parameter in the stability selection article used to
         randomly scale the features. Should be between 0 and 1.
 
+    sample_fraction : float
+        The fraction of samples to be used in each randomized design.
+        Should be between 0 and 1. If 1, all samples are used.
+
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
@@ -325,6 +329,10 @@ class RandomizedLogistic(BaseRandomizedLinearModel):
         The alpha parameter in the stability selection article used to
         randomly scale the features. Should be between 0 and 1.
 
+    sample_fraction : float
+        The fraction of samples to be used in each randomized design.
+        Should be between 0 and 1. If 1, all samples are used.
+
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
@@ -432,7 +440,8 @@ class RandomizedLogistic(BaseRandomizedLinearModel):
 # Stability paths
 
 def lasso_stability_path(X, y, scaling=0.5, random_state=None,
-                         n_resampling=200, n_grid=100):
+                         n_resampling=200, n_grid=100,
+                         sample_fraction=0.75):
     """Stabiliy path based on randomized Lasso estimates
 
     Parameters
@@ -456,6 +465,10 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
     n_grid : int
         Number of grid points. The path is linearly reinterpolated
         on a grid between 0 and 1 before computing the scores.
+
+    sample_fraction : float
+        The fraction of samples to be used in each randomized design.
+        Should be between 0 and 1. If 1, all samples are used.
 
     Returns
     -------
@@ -484,7 +497,15 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
     for k in xrange(n_resampling):
         weights = 1. - scaling * rng.random_integers(0, 1, size=(n_features,))
         X_r = X * weights[np.newaxis, :]
-        alphas, _, coefs = lars_path(X_r, y, method='lasso', verbose=False)
+
+        if sample_fraction < 1.:
+            mask = rng.rand(n_samples) < sample_fraction
+            X_r = X_r[mask, :]
+            y_r = y[mask]
+        else:
+            y_r = y
+
+        alphas, _, coefs = lars_path(X_r, y_r, method='lasso', verbose=False)
 
         xx = np.sum(np.abs(coefs.T), axis=1)
         xx /= xx[-1]

@@ -38,7 +38,7 @@ print "Computing stability path using the LARS ..."
 
 scaling = 0.3
 coef_grid, scores_path = lasso_stability_path(X, y, scaling=scaling,
-                                              random_state=42)
+                                      random_state=42, sample_fraction=0.75)
 
 pl.figure()
 hg = pl.plot(coef_grid, scores_path[:n_good_features].T, 'r')
