@@ -34,7 +34,7 @@ def test_make_classification():
 
 
 def test_make_multilabel_classification():
-    for allow_unlabeled, min_length in zip((True, False), 0, 1):
+    for allow_unlabeled, min_length in zip((True, False), (0, 1)):
       X, Y = make_multilabel_classification(n_samples=100, n_features=20,
                                             n_classes=3, random_state=0,
                                             allow_unlabeled=allow_unlabeled)
