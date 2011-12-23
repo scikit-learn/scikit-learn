@@ -5,7 +5,7 @@ The :mod:`sklearn.utils` module includes various utilites.
 import numpy as np
 import warnings
 
-from validation import *
+from .validation import *
 
 
 class deprecated(object):
