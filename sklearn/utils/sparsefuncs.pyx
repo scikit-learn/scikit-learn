@@ -28,6 +28,12 @@ cdef _mean_variance_axis0(unsigned int n_samples,
 
     This is the private Cython function with pre-allocated meant to be called
     by the public functions of this module.
+
+    means[j] contains the mean of feature j (must be precomputed by the
+    caller)
+
+    variances[j] contains the variance of feature j (must be set to zero by
+    the caller)
     """
 
     # the column indices for row i are stored in:
@@ -40,23 +46,18 @@ cdef _mean_variance_axis0(unsigned int n_samples,
     cdef unsigned int ind
     cdef double diff
 
+    # counts[j] contains the number of samples where feature j is non-zero
+    counts = np.zeros_like(means)
+
     for i in xrange(n_samples):
-        ptr = X_indptr[i]
+        for j in xrange(X_indptr[i], X_indptr[i + 1]):
+            ind = X_indices[j]
+            diff = X_data[j] - means[ind]
+            variances[ind] += diff * diff
+            counts[ind] += 1
 
-        # we need to iterate over all features
-        # but CSR matrices do not provide O(1)
-        # access to features
-        for j in xrange(n_features):
-            ind = X_indices[ptr]
-
-            if j != ind:
-                diff = means[j]
-                variances[j] += diff * diff
-            else:
-                diff = X_data[ptr] - means[ind]
-                variances[ind] += diff * diff
-                ptr += 1
-
+    nz = n_samples - counts
+    variances += nz * means ** 2
     variances /= n_samples
 
 
@@ -186,9 +187,9 @@ def inplace_csr_column_normalize_l2(X):
     cdef np.ndarray[DOUBLE, ndim=1] X_data = X.data
     cdef np.ndarray[int, ndim=1] X_indices = X.indices
     cdef np.ndarray[int, ndim=1] X_indptr = X.indptr
-    cdef np.ndarray[DOUBLE, ndim=1] means = np.zeros(n_features)
-    cdef np.ndarray[DOUBLE, ndim=1] variances = np.zeros(n_features)
 
+    cdef np.ndarray[DOUBLE, ndim=1] means = np.asarray(X.mean(axis=0))[0]
+    cdef np.ndarray[DOUBLE, ndim=1] variances = np.zeros(n_features)
     _mean_variance_axis0(n_samples, n_features, X_data, X_indices, X_indptr,
                          means, variances)
 

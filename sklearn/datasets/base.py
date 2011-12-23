@@ -126,8 +126,8 @@ def load_files(container_path, description=None, categories=None,
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    Return
-    ------
+    Returns
+    -------
     data : Bunch
         Dictionary-like object, the interesting attributes are: either
         data, the raw text data to learn, or 'filenames', the files
@@ -192,8 +192,8 @@ def load_iris():
     Features            real, positive
     =================   ==============
 
-    Return
-    ------
+    Returns
+    -------
     data : Bunch
         Dictionary-like object, the interesting attributes are:
         'data', the data to learn, 'target', the classification labels,
@@ -253,8 +253,8 @@ def load_digits(n_class=10):
     n_class : integer, between 0 and 10, optional (default=10)
         The number of classes to return.
 
-    Return
-    ------
+    Returns
+    -------
     data : Bunch
         Dictionary-like object, the interesting attributes are:
         'data', the data to learn, 'images', the images corresponding
@@ -306,8 +306,8 @@ def load_diabetes():
     Targets             integer 25 - 346
     ==============      ==================
 
-    Return
-    ------
+    Returns
+    -------
     data : Bunch
         Dictionary-like object, the interesting attributes are:
         'data', the data to learn and 'target', the regression target for each
@@ -327,8 +327,8 @@ def load_linnerud():
     Features: integer
     Targets: integer
 
-    Return
-    ------
+    Returns
+    -------
     data : Bunch
         Dictionary-like object, the interesting attributes are: 'data' and
         'targets', the two multivariate datasets, with 'data' corresponding to
@@ -364,8 +364,8 @@ def load_boston():
     Targets             real 5. - 50.
     ==============     ==============
 
-    Return
-    ------
+    Returns
+    -------
     data : Bunch
         Dictionary-like object, the interesting attributes are:
         'data', the data to learn, 'target', the regression targets,
@@ -405,8 +405,8 @@ def load_sample_images():
     """Load sample images for image manipulation.
     Loads both, ``china`` and ``flower``.
 
-    Return
-    ------
+    Returns
+    -------
     data : Bunch
         Dictionary-like object with the following attributes :
         'images', the two sample images, 'filenames', the file
@@ -439,7 +439,7 @@ def load_sample_images():
         except ImportError:
             from scipy.misc.pilutil import imread
     except ImportError:
-        raise ImportError("The Python Imaging Library (PIL)"
+        raise ImportError("The Python Imaging Library (PIL) "
                           "is required to load data from jpeg files")
     module_path = join(dirname(__file__), "images")
     with open(join(module_path, 'README.txt')) as f:

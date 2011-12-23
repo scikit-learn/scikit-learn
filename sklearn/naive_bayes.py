@@ -23,7 +23,7 @@ from scipy.sparse import issparse
 from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize, LabelBinarizer
 from .utils import array2d, atleast2d_or_csr
-from .utils.extmath import safe_sparse_dot, logsum
+from .utils.extmath import safe_sparse_dot, logsumexp
 
 
 class BaseNB(BaseEstimator, ClassifierMixin):
@@ -74,7 +74,7 @@ class BaseNB(BaseEstimator, ClassifierMixin):
         """
         jll = self._joint_log_likelihood(X)
         # normalize by P(x) = P(f_1, ..., f_n)
-        log_prob_x = logsum(jll, axis=1)
+        log_prob_x = logsumexp(jll, axis=1)
         return jll - np.atleast_2d(log_prob_x).T
 
     def predict_proba(self, X):
@@ -336,8 +336,8 @@ class MultinomialNB(BaseDiscreteNB):
     >>> print clf.predict(X[2])
     [3]
 
-    References
-    ----------
+    Notes
+    -----
     For the rationale behind the names `coef_` and `intercept_`, i.e.
     naive Bayes as a linear classifier, see J. Rennie et al. (2003),
     Tackling the poor assumptions of naive Bayes text classifiers, ICML.
@@ -408,8 +408,10 @@ class BernoulliNB(BaseDiscreteNB):
     >>> print clf.predict(X[2])
     [3]
 
-    References
-    ----------
+    Notes
+    -----
+    References:
+
     C.D. Manning, P. Raghavan and H. Schütze (2008). Introduction to
     Information Retrieval. Cambridge University Press, pp. 234–265.
 

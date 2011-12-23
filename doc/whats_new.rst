@@ -25,17 +25,17 @@ Changelog
    - Faster tests by `Fabian Pedregosa`_.
 
    - Silhouette Coefficient cluster analysis evaluation metric added as
-     ``sklearn.metrics.silhouette_score`` by Robert Layton.
+     :func:`sklearn.metrics.silhouette_score` by Robert Layton.
 
-   - Fixed a bug in `KMeans` in the handling of the `n_init` parameter:
-     the clustering algorithm used to be run `n_init` times but the last
+   - Fixed a bug in :ref:`k_means` in the handling of the ``n_init`` parameter:
+     the clustering algorithm used to be run ``n_init`` times but the last
      solution was retained instead of the best solution.
 
    - Minor refactoring in :ref:`sgd` module; consolidated dense and sparse
      predict methods.
 
    - Adjusted Mutual Information metric added as
-     ``sklearn.metrics.adjusted_mutual_info_score`` by Robert Layton.
+     :func:`sklearn.metrics.adjusted_mutual_info_score` by Robert Layton.
 
    - Models like SVC/SVR/LinearSVC/LogisticRegression from libsvm/liblinear
      now support scaling of C regularization parameter by the number of
@@ -44,6 +44,33 @@ Changelog
    - New :ref:`Ensemble Methods <ensemble>` module by `Gilles Louppe`_ and
      `Brian Holt`_. The module comes with the random forest algorithm and the
      extra-trees method, along with documentation and examples.
+
+   - :ref:`outlier_detection`: outlier and novelty detection, by
+     `Virgile Fritsch`_.
+
+   - :ref:`kernel_approximation`: a transform implement kernel 
+     approximation for fast SGD on non-linear kernels by 
+     `Andreas Müller`_.
+
+   - Fix a bug due to atom swapping in :ref:`OMP` by `Vlad Niculae`_.
+
+   - :ref:`SparseCoder` by `Vlad Niculae`_.
+
+   - :ref:`mini_batch_kmeans` performance improvements by `Olivier Grisel`_.
+
+   - :ref:`k_means` support for sparse matrices by `Mathieu Blondel`_.
+
+   - Improved documentation for developers and for the :mod:`sklearn.utils`
+     module, by `Jake VanderPlas`_.
+
+   - Vectorized 20newsgroups dataset loader
+     (:func:`sklearn.datasets.fetch_20newsgroups_vectorized`) by
+     `Mathieu Blondel`_.
+
+   - :ref:`multiclass` by `Lars Buitinck`_.
+
+   - Utilities for fast computation of mean and variance for sparse matrices
+     by `Mathieu Blondel`_.
 
 
 API changes summary
@@ -56,10 +83,10 @@ version 0.9:
     had ``overwrite_`` parameters; these have been replaced with ``copy_``
     parameters with exactly the opposite meaning.
 
-    This particularly affects some of the estimators in ``linear_models``.
+    This particularly affects some of the estimators in :mod:`linear_model`.
     The default behavior is still to copy everything passed in.
 
-  - The SVMlight dataset loader ``sklearn.datasets.load_svmlight_file`` no
+  - The SVMlight dataset loader :func:`sklearn.datasets.load_svmlight_file` no
     longer supports loading two files at once; use ``load_svmlight_files``
     instead. Also, the (unused) ``buffer_mb`` parameter is gone.
 
@@ -70,17 +97,31 @@ version 0.9:
   - The :ref:`covariance` module now has a robust estimator of
     covariance, the Minimum Covariance Determinant estimator.
 
-  - Cluster evaluation metrics in ``metrics.cluster.py`` have been refactored
+  - Cluster evaluation metrics in :mod:`metrics.cluster` have been refactored
     but the changes are backwards compatible. They have been moved to the
-    ``metrics.cluster.supervised``, along with ``metrics.cluster.unsupervised``
-    which contains the Silhouette Coefficient.
+    :mod:`metrics.cluster.supervised`, along with
+    :mod:`metrics.cluster.unsupervised` which contains the Silhouette
+    Coefficient.
 
-  - The permutation_test_score function now behaves the same way as
-    cross_val_score (i.e. uses the mean score across the folds.)
+  - The ``permutation_test_score`` function now behaves the same way as
+    ``cross_val_score`` (i.e. uses the mean score across the folds.)
 
   - Cross Validation generators now use integer indices (``indices=True``)
     by default instead of boolean masks. This make it more intuitive to
     use with sparse matrix data.
+  
+  - The functions used for sparse coding, ``sparse_encode`` and
+    ``sparse_encode_parallel`` have been combined into
+    :func:`sklearn.decomposition.sparse_encode`, and the shapes of the arrays
+    have been transposed for consistency with the matrix factorization setting,
+    as opposed to the regression setting.
+
+  - Fixed an off-by-one error in the SVMlight/LibSVM file format handling;
+    files generated using :func:`sklearn.datasets.dump_svmlight_file` should be
+    re-generated. (They should continue to work, but accidentally had one
+    extra column of zeros prepended.)
+
+  - ``BaseDictionaryLearning`` class replaced by ``SparseCodingMixin``.
 
 
 .. _changes_0_9:
@@ -310,7 +351,7 @@ People
    - 4  Vincent Schut
    - 3  Alexis Metaireau
    - 3  Bryan Silverthorn
-   - 3  Andreas Mueller
+   - 3  `Andreas Müller`_
    - 2  Minwoo Jake Lee
    - 1  Emmanuelle Gouillart
    - 1  Keith Goodman

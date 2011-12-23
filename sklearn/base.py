@@ -172,7 +172,7 @@ class BaseEstimator(object):
         """
         out = dict()
         for key in self._get_param_names():
-            value = getattr(self, key)
+            value = getattr(self, key, None)
             if deep and hasattr(value, '_get_params'):
                 deep_items = value._get_params().items()
                 out.update((key + '__' + k, val) for k, val in deep_items)
@@ -182,10 +182,10 @@ class BaseEstimator(object):
     def set_params(self, **params):
         """Set the parameters of the estimator.
 
-        The method works on simple estimators as well as on nested
-        objects (such as pipelines). The former have parameters of the
-        form <component>__<parameter> so that it's possible to update
-        each component of a nested object.
+        The method works on simple estimators as well as on nested objects
+        (such as pipelines). The former have parameters of the form
+        ``<component>__<parameter>`` so that it's possible to update each
+        component of a nested object.
 
         Returns
         -------

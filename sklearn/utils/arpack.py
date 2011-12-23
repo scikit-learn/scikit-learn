@@ -1172,8 +1172,10 @@ def eigs(A, k=6, M=None, sigma=None, which='LM', v0=None,
     >>> vecs.shape
     (13, 6)
 
-    References
-    ----------
+    Notes
+    -----
+    References:
+
     .. [1] ARPACK Software, http://www.caam.rice.edu/software/ARPACK/
     .. [2] R. B. Lehoucq, D. C. Sorensen, and C. Yang,  ARPACK USERS GUIDE:
        Solution of Large Scale Eigenvalue Problems by Implicitly Restarted

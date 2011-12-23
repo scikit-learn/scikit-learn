@@ -155,8 +155,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         exponential distribution (log-uniform on [thetaL, thetaU]).
         Default does not use random starting point (random_start = 1).
 
-    Example
-    -------
+    Examples
+    --------
     >>> import numpy as np
     >>> from sklearn.gaussian_process import GaussianProcess
     >>> X = array2d([1., 3., 5., 6., 7., 8.]).T
@@ -167,13 +167,13 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             normalize=..., nugget=...,
             ...
 
-    Implementation details
-    ----------------------
+    Notes
+    -----
     The presentation implementation is based on a translation of the DACE
     Matlab toolbox, see reference [1].
 
-    References
-    ----------
+    References:
+
     [1] H.B. Nielsen, S.N. Lophaven, H. B. Nielsen and J. Sondergaard (2002).
         DACE - A MATLAB Kriging Toolbox.
         http://www2.imm.dtu.dk/~hbn/dace/dace.pdf

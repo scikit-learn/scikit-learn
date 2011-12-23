@@ -10,7 +10,7 @@ from scipy.sparse import eye, csr_matrix
 from ..base import BaseEstimator
 from ..utils import array2d
 from ..utils.arpack import eigsh
-from ..neighbors import NearestNeighbors, BallTree
+from ..neighbors import NearestNeighbors
 
 
 def barycenter_weights(X, Z, reg=1e-3):
@@ -69,9 +69,10 @@ def barycenter_kneighbors_graph(X, n_neighbors, reg=1e-3):
 
     Parameters
     ----------
-    X : array-like or BallTree, shape = [n_samples, n_features]
-        Sample data, in the form of a numpy array or a precomputed
-        :class:`BallTree`.
+    X : {array-like, sparse matrix, BallTree, cKDTree, NearestNeighbors}
+        Sample data, shape = (n_samples, n_features), in the form of a
+        numpy array, sparse array, precomputed tree, or NearestNeighbors
+        object.
 
     n_neighbors : int
         Number of neighbors for each sample.
@@ -175,9 +176,10 @@ def locally_linear_embedding(
 
     Parameters
     ----------
-    X : array-like or BallTree, shape [n_samples, n_features]
-        Input data, in the form of a numpy array or a precomputed
-        :class:`BallTree`.
+    X : {array-like, sparse matrix, BallTree, cKDTree, NearestNeighbors}
+        Sample data, shape = (n_samples, n_features), in the form of a
+        numpy array, sparse array, precomputed tree, or NearestNeighbors
+        object.
 
     n_neighbors : integer
         number of neighbors to consider for each point.
@@ -235,8 +237,10 @@ def locally_linear_embedding(
         Reconstruction error for the embedding vectors. Equivalent to
         norm(Y - W Y, 'fro')**2, where W are the reconstruction weights.
 
-    References
-    ----------
+    Notes
+    -----
+    References:
+
       [1] Roweis, S. & Saul, L. Nonlinear dimensionality reduction by
           locally linear embedding.  Science 290:2323 (2000).
       [2] Donoho, D. & Grimes, C. Hessian eigenmaps: Locally linear embedding
@@ -255,13 +259,9 @@ def locally_linear_embedding(
     if method not in ('standard', 'hessian', 'modified', 'ltsa'):
         raise ValueError("unrecognized method '%s'" % method)
 
-    if hasattr(X, 'query'):
-        # X is a ball tree
-        balltree = X
-        X = balltree.data
-    else:
-        X = np.asarray(X)
-        balltree = BallTree(np.asarray(X))
+    nbrs = NearestNeighbors(n_neighbors=n_neighbors + 1)
+    nbrs.fit(X)
+    X = nbrs._fit_X
 
     N, d_in = X.shape
 
@@ -271,11 +271,14 @@ def locally_linear_embedding(
     if n_neighbors >= N:
         raise ValueError("n_neighbors must be less than number of points")
 
+    if n_neighbors <= 0:
+        raise ValueError("n_neighbors must be positive")
+
     M_sparse = (eigen_solver != 'dense')
 
     if method == 'standard':
         W = barycenter_kneighbors_graph(
-            balltree, n_neighbors=n_neighbors, reg=reg)
+            nbrs, n_neighbors=n_neighbors, reg=reg)
 
         # we'll compute M = (I-W)'(I-W)
         # depending on the solver, we'll do this differently
@@ -293,7 +296,8 @@ def locally_linear_embedding(
             raise ValueError("for method='hessian', n_neighbors must be "
                              "greater than [out_dim * (out_dim + 3) / 2]")
 
-        neighbors = balltree.query(X, k=n_neighbors + 1, return_distance=False)
+        neighbors = nbrs.kneighbors(X, n_neighbors=n_neighbors + 1,
+                                    return_distance=False)
         neighbors = neighbors[:, 1:]
 
         Yi = np.empty((n_neighbors, 1 + out_dim + dp), dtype=np.float)
@@ -339,7 +343,8 @@ def locally_linear_embedding(
         if n_neighbors < out_dim:
             raise ValueError("modified LLE requires n_neighbors >= out_dim")
 
-        neighbors = balltree.query(X, k=n_neighbors + 1, return_distance=False)
+        neighbors = nbrs.kneighbors(X, n_neighbors=n_neighbors + 1,
+                                    return_distance=False)
         neighbors = neighbors[:, 1:]
 
         #find the eigenvectors and eigenvalues of each local covariance
@@ -441,7 +446,8 @@ def locally_linear_embedding(
             M = csr_matrix(M)
 
     elif method == 'ltsa':
-        neighbors = balltree.query(X, k=n_neighbors + 1, return_distance=False)
+        neighbors = nbrs.kneighbors(X, n_neighbors=n_neighbors + 1,
+                                    return_distance=False)
         neighbors = neighbors[:, 1:]
 
         M = np.zeros((N, N))
@@ -488,7 +494,6 @@ class LocallyLinearEmbedding(BaseEstimator):
         regularization constant, multiplies the trace of the local covariance
         matrix of the distances.
 
-
     eigen_solver : string, {'auto', 'arpack', 'dense'}
         auto : algorithm will attempt to choose the best method for input data
         arpack : use arnoldi iteration in shift-invert mode.
@@ -505,6 +510,7 @@ class LocallyLinearEmbedding(BaseEstimator):
 
     max_iter : integer
         maximum number of iterations for the arpack solver.
+        Not used if eigen_solver=='dense'.
 
     method : string ['standard' | 'hessian' | 'modified']
         standard : use the standard locally linear embedding algorithm.
@@ -525,6 +531,10 @@ class LocallyLinearEmbedding(BaseEstimator):
         Tolerance for modified LLE method.
         Only used if method == 'modified'
 
+    neighbors_algorithm : string ['auto'|'brute'|'kd_tree'|'ball_tree']
+        algorithm to use for nearest neighbors search,
+        passed to neighbors.NearestNeighbors instance
+
     Attributes
     ----------
     `embedding_vectors_` : array-like, shape [out_dim, n_samples]
@@ -533,13 +543,15 @@ class LocallyLinearEmbedding(BaseEstimator):
     `reconstruction_error_` : float
         Reconstruction error associated with `embedding_vectors_`
 
-    `ball_tree_` : BallTree object
-        Ball Tree used for nearest neighbors
+    `nbrs_` : NearestNeighbors object
+        Stores nearest neighbors instance, including BallTree or KDtree
+        if applicable.
     """
 
     def __init__(self, n_neighbors=5, out_dim=2, reg=1E-3,
-                 eigen_solver='arpack', tol=1E-6, max_iter=100,
-                 method='standard', hessian_tol=1E-4, modified_tol=1E-12):
+                 eigen_solver='auto', tol=1E-6, max_iter=100,
+                 method='standard', hessian_tol=1E-4, modified_tol=1E-12,
+                 neighbors_algorithm='auto'):
         self.n_neighbors = n_neighbors
         self.out_dim = out_dim
         self.reg = reg
@@ -549,12 +561,14 @@ class LocallyLinearEmbedding(BaseEstimator):
         self.method = method
         self.hessian_tol = hessian_tol
         self.modified_tol = modified_tol
+        self.nbrs_ = NearestNeighbors(n_neighbors,
+                                      algorithm=neighbors_algorithm)
 
     def _fit_transform(self, X):
-        self.ball_tree_ = BallTree(X)
+        self.nbrs_.fit(X)
         self.embedding_, self.reconstruction_error_ = \
             locally_linear_embedding(
-                self.ball_tree_, self.n_neighbors, self.out_dim,
+                self.nbrs_, self.n_neighbors, self.out_dim,
                 eigen_solver=self.eigen_solver, tol=self.tol,
                 max_iter=self.max_iter, method=self.method,
                 hessian_tol=self.hessian_tol, modified_tol=self.modified_tol)
@@ -607,11 +621,9 @@ class LocallyLinearEmbedding(BaseEstimator):
         it together with methods that are not scale-invariant (like SVMs)
         """
         X = array2d(X)
-        if not hasattr(self, 'ball_tree_'):
-            raise ValueError('The model is not fitted')
-        ind = self.ball_tree_.query(X, k=self.n_neighbors,
-                                   return_distance=False)
-        weights = barycenter_weights(X, self.ball_tree_.data[ind],
+        ind = self.nbrs_.kneighbors(X, n_neighbors=self.n_neighbors,
+                                    return_distance=False)
+        weights = barycenter_weights(X, self.nbrs_._fit_X[ind],
                                      reg=self.reg)
         X_new = np.empty((X.shape[0], self.out_dim))
         for i in range(X.shape[0]):

@@ -28,11 +28,12 @@ uses.
    :toctree: generated/
    :template: class.rst
 
+   cluster.AffinityPropagation
+   cluster.DBSCAN
    cluster.KMeans
    cluster.MiniBatchKMeans
    cluster.MeanShift
    cluster.SpectralClustering
-   cluster.AffinityPropagation
    cluster.Ward
 
 
@@ -59,6 +60,7 @@ uses.
    covariance.OAS
    covariance.GraphLasso
    covariance.GraphLassoCV
+   covariance.MinCovDet
 
 .. autosummary::
    :toctree: generated/
@@ -130,6 +132,8 @@ Loaders
    datasets.fetch_lfw_people
    datasets.load_20newsgroups
    datasets.fetch_20newsgroups
+   datasets.fetch_20newsgroups_vectorized
+   datasets.fetch_olivetti_faces
 
 Samples generator
 -----------------
@@ -141,6 +145,7 @@ Samples generator
    :template: function.rst
 
    datasets.make_classification
+   datasets.make_multilabel_classification
    datasets.make_regression
    datasets.make_blobs
    datasets.make_friedman1
@@ -181,6 +186,7 @@ Samples generator
    decomposition.NMF
    decomposition.SparsePCA
    decomposition.MiniBatchSparsePCA
+   decomposition.SparseCoder
    decomposition.DictionaryLearning
    decomposition.MiniBatchDictionaryLearning
 
@@ -192,7 +198,6 @@ Samples generator
    decomposition.dict_learning
    decomposition.dict_learning_online
    decomposition.sparse_encode
-   decomposition.sparse_encode_parallel
 
 
 .. _ensemble_ref:
@@ -389,6 +394,28 @@ From text
    hmm.GMMHMM
 
 
+.. _kernel_approximation_ref:
+
+:mod:`sklearn.kernel_approximation` Kernel Approximation
+========================================================
+
+.. automodule:: sklearn.kernel_approximation
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`kernel_approximation` section for further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   kernel_approximation.RBFSampler
+   kernel_approximation.AdditiveChi2Sampler
+   kernel_approximation.SkewedChi2Sampler
+
+
 .. _lda_ref:
 
 :mod:`sklearn.lda`: Linear Discriminant Analysis
@@ -562,6 +589,7 @@ See the :ref:`clustering` section of the user guide for further details.
    :template: function.rst
 
    metrics.adjusted_rand_score
+   metrics.adjusted_mutual_info_score
    metrics.homogeneity_completeness_v_measure
    metrics.homogeneity_score
    metrics.completeness_score
@@ -612,6 +640,39 @@ Pairwise metrics
    mixture.GMM
    mixture.DPGMM
    mixture.VBGMM
+
+
+.. _multiclass_ref:
+
+:mod:`sklearn.multiclass`: Multiclass and multilabel classification
+===================================================================
+
+.. automodule:: sklearn.multiclass
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`multiclass` section for further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+    :toctree: generated
+    :template: class.rst
+
+    multiclass.OneVsRestClassifier
+    multiclass.OneVsOneClassifier
+    multiclass.OutputCodeClassifier
+
+.. autosummary::
+    :toctree: generated
+    :template: function.rst
+
+    multiclass.fit_ovr
+    multiclass.predict_ovr
+    multiclass.fit_ovo
+    multiclass.predict_ovo
+    multiclass.fit_ecoc
+    multiclass.predict_ecoc
 
 
 .. _naive_bayes_ref:
@@ -847,6 +908,8 @@ Low-level methods
 .. automodule:: sklearn.utils
    :no-members:
    :no-inherited-members:
+
+**Developer guide:** See the :ref:`developers-utils` page for further details.
 
 .. currentmodule:: sklearn
 
