@@ -4,7 +4,7 @@ Those methods include random forests and extremely randomized trees.
 
 The module structure is the following:
 
-- The ``Forest`` base class implements a common ``fit`` method for all
+- The ``BaseForest`` base class implements a common ``fit`` method for all
   the estimators in the module. The ``fit`` method of the base ``Forest``
   class calls the ``fit`` method of each sub-estimator on random samples
   (with replacement, a.k.a. bootstrap) of the training set.
@@ -48,7 +48,7 @@ __all__ = ["RandomForestClassifier",
            "ExtraTreesRegressor"]
 
 
-class Forest(BaseEnsemble):
+class BaseForest(BaseEnsemble):
     """Base class for forests of trees.
 
     Warning: This class should not be used directly. Use derived classes
@@ -59,7 +59,7 @@ class Forest(BaseEnsemble):
                        estimator_params=[],
                        bootstrap=False,
                        random_state=None):
-        super(Forest, self).__init__(
+        super(BaseForest, self).__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
             estimator_params=estimator_params)
@@ -130,7 +130,7 @@ class Forest(BaseEnsemble):
         return importances
 
 
-class ForestClassifier(Forest, ClassifierMixin):
+class ForestClassifier(BaseForest, ClassifierMixin):
     """Base class for forest of trees-based classifiers.
 
     Warning: This class should not be used directly. Use derived classes
@@ -221,7 +221,7 @@ class ForestClassifier(Forest, ClassifierMixin):
         return np.log(self.predict_proba(X))
 
 
-class ForestRegressor(Forest, RegressorMixin):
+class ForestRegressor(BaseForest, RegressorMixin):
     """Base class for forest of trees-based regressors.
 
     Warning: This class should not be used directly. Use derived classes
