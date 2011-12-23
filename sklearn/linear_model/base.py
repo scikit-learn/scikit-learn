@@ -30,9 +30,6 @@ from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
 ### TODO: intercept for all models
 ### We should define a common function to center data instead of
 ### repeating the same code inside each fit method.
-###
-### Also, bayesian_ridge_regression and bayesian_regression_ard
-
 
 ### TODO: bayesian_ridge_regression and bayesian_regression_ard
 ### should be squashed into its respective objects.
@@ -53,7 +50,7 @@ def center_data(X, y, fit_intercept, normalize=False, copy=True):
             X -= X_mean
             if normalize:
                 X_std = np.sqrt(np.sum(X ** 2, axis=0))
-                X_std[X_std==0] = 1
+                X_std[X_std == 0] = 1
                 X /= X_std
             else:
                 X_std = np.ones(X.shape[1])

@@ -33,9 +33,6 @@ X = Scaler().fit_transform(X)
 
 ###############################################################################
 # Plot stability selection path
-
-print "Computing stability path using the LARS ..."
-
 scaling = 0.3
 coef_grid, scores_path = lasso_stability_path(X, y, scaling=scaling,
                                       random_state=42, sample_fraction=0.75)
@@ -54,15 +51,13 @@ pl.ylim([0, 1.05])
 
 ###############################################################################
 # Plot the estimated stability scores for best cross-validated alpha
-
 cv = ShuffleSplit(n_samples, n_iterations=50, test_fraction=0.2)
 alpha_cv = LassoLarsCV(cv=cv).fit(X, y).alpha
 clf = RandomizedLasso(verbose=False, alpha=alpha_cv, random_state=42,
                       scaling=scaling)
 clf.fit(X, y)
 
-# compare with F-score
-F, _ = f_regression(X, y)
+F, _ = f_regression(X, y)  # compare with F-score
 
 pl.figure()
 pl.plot(clf.scores_, label="Stabiliy selection score")
