@@ -387,7 +387,7 @@ class GMM(BaseEstimator):
 
         Returns
         -------
-        T : array-like, shape = (n_samples, n_components)
+        responsibilities : array-like, shape = (n_samples, n_components)
             Returns the probability of the sample for each Gaussian
             (state) in the model.
         """
@@ -541,8 +541,50 @@ class GMM(BaseEstimator):
             self.covars_ = covar_mstep_func(
                 self, X, responsibilities, weighted_X_sum, inverse_weights,
                 min_covar)
-
         return weights
+
+    def _n_parameters(self):
+        """Return the number of free parameters in the model."""
+        ndim = self.means.shape[1]
+        if self._covariance_type == 'full':
+            cov_params = self.n_components * ndim * (ndim + 1) / 2.
+        elif self._covariance_type == 'diag':
+            cov_params = self.n_components * ndim
+        elif self._covariance_type == 'tied':
+            cov_params = ndim * (ndim + 1) / 2.
+        elif self._covariance_type == 'spherical':
+            cov_params = self.n_components
+        mean_params = ndim * self.n_components
+        return  int(cov_params + mean_params + self.n_components - 1)
+
+    def bic(self, X):
+        """Bayesian information criterion for the current model fit 
+        and the proposed data
+        
+        Parameters
+        ----------
+        X : array of shape(n_samples, n_dimensions)
+        
+        Returns
+        -------
+        bic: float (the lower the better)
+        """
+        return (-2 * self.score(X).sum() +  
+                 self._n_parameters() * np.log(X.shape[0]))
+
+    def aic(self, X):
+        """Akaike information criterion for the current model fit 
+        and the proposed data
+        
+        Parameters
+        ----------
+        X : array of shape(n_samples, n_dimensions)
+        
+        Returns
+        -------
+        aic: float (the lower the better)
+        """
+        return -2 * self.score(X).sum() +  2 * self._n_parameters()
 
 
 #########################################################################

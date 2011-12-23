@@ -290,14 +290,42 @@ class TestGMMWithFullCovars(unittest.TestCase, GMMTester):
 
 def test_multiple_init():
     """Test that multiple inits do better than a single one"""
-    X = rng.randn(100, 5)
+    X = rng.randn(30, 5)
     g = mixture.GMM(n_components=2, covariance_type='full',
                     random_state=rng, min_covar=1e-7)
     train1 = g.fit(X, n_iter=5).score(X).sum()
     train2 = g.fit(X, n_iter=5, n_init=5).score(X).sum()
     assert train2 >= train1
     
-   
+def test_n_parameters():
+    """Test that the right number of parameters is estimated"""
+    n_samples, n_dim, n_components = 7, 5, 2
+    X = rng.randn(n_samples, n_dim)
+    n_params = {'spherical': 13, 'diag': 21, 'tied': 26, 'full': 41}
+    for cv_type in ['full', 'tied', 'diag', 'spherical']:
+        g = mixture.GMM(n_components=n_components, covariance_type=cv_type,
+                        random_state=rng, min_covar=1e-7)
+        g.fit(X, n_iter=1)
+        assert g._n_parameters() == n_params[cv_type]
+
+def test_aic():
+    """ Test the aic and bic criteria"""
+    n_samples, n_dim, n_components = 50, 3, 2
+    X = rng.randn(n_samples, n_dim)
+    SGH = 0.5 * ( X.var() + np.log(2 * np.pi)) # standard gaussian entropy
+
+    for cv_type in ['full', 'tied', 'diag', 'spherical']:
+        g = mixture.GMM(n_components=n_components, covariance_type=cv_type,
+                        random_state=rng, min_covar=1e-7)
+        g.fit(X)
+        aic = 2 * n_samples * SGH * n_dim + 2 * g._n_parameters()
+        bic = (2 * n_samples * SGH * n_dim + 
+               np.log(n_samples) * g._n_parameters())
+        bound = n_dim * 3. / np.sqrt(n_samples) 
+        assert np.abs(g.aic(X) - aic) / n_samples < bound 
+        assert np.abs(g.bic(X) - bic) / n_samples < bound
+
+
 
 if __name__ == '__main__':
     import nose
