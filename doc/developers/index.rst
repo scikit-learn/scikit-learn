@@ -1,6 +1,5 @@
 .. toctree::
 
-   index.rst
    performance.rst
    utilities.rst
 
