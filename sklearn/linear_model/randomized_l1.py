@@ -247,7 +247,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
     -----
     See examples/linear_model/plot_randomized_lasso.py for an example.
 
-    References:
+    **References**:
 
     Stability selection
     Nicolai Meinshausen, Peter Buhlmann
@@ -393,7 +393,7 @@ class RandomizedLogistic(BaseRandomizedLinearModel):
     -----
     See examples/linear_model/plot_randomized_lasso.py for an example.
 
-    References:
+    **References**:
 
     Stability selection
     Nicolai Meinshausen, Peter Buhlmann
