@@ -255,7 +255,7 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
 
     length : int, optional (default=50)
         Sum of the features (number of words if documents).
-    
+
     allow_unlabeled : bool, optional (default=True)
         If ``True``, some instances might not belong to any class.
 

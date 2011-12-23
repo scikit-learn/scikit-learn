@@ -475,7 +475,7 @@ class _BaseHMM(BaseEstimator):
 
             # Want to look at the high ranks.
             hst = hst[::-1].cumsum()
-            bin_edges = .5*(bin_edges[:-1] + bin_edges[1:])
+            bin_edges = .5 * (bin_edges[:-1] + bin_edges[1:])
             bin_edges = bin_edges[::-1]
 
             rankthresh = bin_edges[hst >= min(maxrank, self.n_components)].max()

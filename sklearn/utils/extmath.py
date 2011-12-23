@@ -10,6 +10,7 @@ from scipy import linalg
 from . import check_random_state
 from .fixes import qr_economic
 
+
 def norm(v):
     v = np.asarray(v)
     __nrm2, = linalg.get_blas_funcs(['nrm2'], [v])
@@ -187,7 +188,7 @@ def fast_svd(M, k, p=None, n_iterations=0, transpose='auto', random_state=0):
         # this implementation is a bit faster with smaller shape[1]
         M = M.T
 
-    Q = randomized_range_finder(M, k+p, n_iterations, random_state)
+    Q = randomized_range_finder(M, k + p, n_iterations, random_state)
 
     # project M to the (k + p) dimensional space using the basis vectors
     B = safe_sparse_dot(Q.T, M)
