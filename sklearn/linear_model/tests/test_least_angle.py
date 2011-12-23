@@ -84,7 +84,7 @@ def test_collinearity():
     _, _, coef_path_ = linear_model.lars_path(X, y, alpha_min=0.01)
     assert (not np.isnan(coef_path_).any())
     residual = np.dot(X, coef_path_[:, -1]) - y
-    assert (residual ** 2).sum() < 1. # just make sure it's bounded
+    assert (residual ** 2).sum() < 1.  # just make sure it's bounded
 
 
 def test_singular_matrix():
@@ -169,10 +169,11 @@ def test_lars_add_features():
     """
     # Hilbert matrix
     n = 5
-    H = 1. / (np.arange(1, n+1) + np.arange(n)[:, np.newaxis])
+    H = 1. / (np.arange(1, n + 1) + np.arange(n)[:, np.newaxis])
     clf = linear_model.Lars(fit_intercept=False).fit(
         H, np.arange(n))
     assert np.all(np.isfinite(clf.coef_))
+
 
 def test_lars_n_nonzero_coefs(verbose=False):
     lars = linear_model.Lars(n_nonzero_coefs=6, verbose=verbose)

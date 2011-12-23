@@ -1009,5 +1009,3 @@ class LassoLarsIC(LassoLars):
         self.coef_ = coef_path_[:, n_best]
         self._set_intercept(Xmean, ymean, Xstd)
         return self
-
-

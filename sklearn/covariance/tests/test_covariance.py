@@ -216,5 +216,3 @@ def test_oas():
     oa.fit(X)
     assert_almost_equal(oa.score(X), 2.079025, 4)
     assert(oa.precision_ is None)
-
-

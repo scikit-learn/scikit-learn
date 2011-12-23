@@ -210,8 +210,8 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
             elif self.sample_steps == 3:
                 self.sample_interval = 0.4
             else:
-                raise ValueError("If sample_steps is not in [1, 2, 3], you need"
-                    "to provide sample_interval")
+                raise ValueError("If sample_steps is not in [1, 2, 3], you"
+                        "need to provide sample_interval")
         return self
 
     def transform(self, X, y=None):
