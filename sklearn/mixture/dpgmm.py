@@ -613,7 +613,7 @@ class DPGMM(GMM):
         self.converged_ = False
         for i in xrange(n_iter):
             # Expectation step
-            curr_logprob, _ = self.eval(X)
+            curr_logprob, z = self.eval(X)
             logprob.append(curr_logprob.sum() + self._logprior(z))
 
             # Check for convergence.
