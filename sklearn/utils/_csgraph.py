@@ -10,7 +10,7 @@ __all__ = ['cs_graph_components']
 
 import numpy as np
 
-from sparsetools import cs_graph_components as _cs_graph_components
+from .sparsetools import cs_graph_components as _cs_graph_components
 
 from scipy.sparse import csr_matrix
 from scipy.sparse import isspmatrix
