@@ -529,7 +529,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
     Notes
     -----
-    References:
+    **References**:
 
     .. [1] http://en.wikipedia.org/wiki/Decision_tree_learning
 
@@ -656,7 +656,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
 
     Notes
     -----
-    References:
+    **References**:
 
     .. [1] http://en.wikipedia.org/wiki/Decision_tree_learning
 
@@ -715,7 +715,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
     Notes
     -----
-    References:
+    **References**:
 
     .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
            Machine Learning, 63(1), 3-42, 2006.
@@ -754,7 +754,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
     Notes
     -----
-    References:
+    **References**:
 
     .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
            Machine Learning, 63(1), 3-42, 2006.

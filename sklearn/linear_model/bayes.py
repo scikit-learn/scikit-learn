@@ -88,14 +88,6 @@ class BayesianRidge(LinearModel):
     `scores_` : float
         if computed, value of the objective function (to be maximized)
 
-    Methods
-    -------
-    fit(X, y) : self
-        Fit the model
-
-    predict(X) : array
-        Predict using the model.
-
     Examples
     --------
     >>> from sklearn import linear_model
@@ -306,14 +298,6 @@ class ARDRegression(LinearModel):
 
     `scores_` : float
         if computed, value of the objective function (to be maximized)
-
-    Methods
-    -------
-    fit(X, y) : self
-        Fit the model
-
-    predict(X) : array
-        Predict using the model.
 
     Examples
     --------

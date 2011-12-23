@@ -367,7 +367,7 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin):
 
     Notes
     -----
-    References:
+    **References**:
 
      * [1] "Solving multiclass learning problems via error-correcting ouput
         codes",

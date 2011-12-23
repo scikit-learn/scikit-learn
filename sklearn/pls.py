@@ -73,8 +73,8 @@ def _svd_cross_product(X, Y):
 
 def _center_scale_xy(X, Y, scale=True):
     """ Center X, Y and scale if the scale parameter==True
-    Return
-    ------
+    Returns
+    -------
         X, Y, x_mean, y_mean, x_std, y_std
     """
     # center
@@ -174,7 +174,7 @@ class _PLS(BaseEstimator):
 
     Notes
     -----
-    References:
+    **References**:
 
     Jacob A. Wegelin. A survey of Partial Least Squares (PLS) methods, with
     emphasis on the two-block case. Technical Report 371, Department of
@@ -480,7 +480,7 @@ class PLSRegression(_PLS):
 
     Notes
     -----
-    References:
+    **References**:
 
     Jacob A. Wegelin. A survey of Partial Least Squares (PLS) methods, with
     emphasis on the two-block case. Technical Report 371, Department of
@@ -587,7 +587,7 @@ class PLSCanonical(_PLS):
 
     Notes
     -----
-    References:
+    **References**:
 
     Jacob A. Wegelin. A survey of Partial Least Squares (PLS) methods, with
     emphasis on the two-block case. Technical Report 371, Department of
@@ -698,7 +698,7 @@ class CCA(_PLS):
 
     Notes
     -----
-    References:
+    **References**:
 
     Jacob A. Wegelin. A survey of Partial Least Squares (PLS) methods, with
     emphasis on the two-block case. Technical Report 371, Department of

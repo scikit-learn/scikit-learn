@@ -78,7 +78,7 @@ class RFE(BaseEstimator):
 
     Notes
     -----
-    References:
+    **References**:
 
     .. [1] Guyon, I., Weston, J., Barnhill, S., & Vapnik, V., "Gene selection
            for cancer classification using support vector machines",
@@ -255,7 +255,7 @@ class RFECV(RFE):
 
     Notes
     -----
-    References:
+    **References**:
 
     .. [1] Guyon, I., Weston, J., Barnhill, S., & Vapnik, V., "Gene selection
            for cancer classification using support vector machines",

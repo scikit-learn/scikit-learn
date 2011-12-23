@@ -179,7 +179,7 @@ def spectral_clustering(affinity, k=8, n_components=None, mode=None,
 
     Notes
     -----
-    References:
+    **References**:
 
     - Normalized cuts and image segmentation, 2000
       Jianbo Shi, Jitendra Malik
@@ -239,12 +239,6 @@ class SpectralClustering(BaseEstimator):
         centroid seeds. The final results will be the best output of
         n_init consecutive runs in terms of inertia.
 
-    Methods
-    -------
-
-    fit(X):
-        Compute spectral clustering
-
     Attributes
     ----------
 
@@ -253,7 +247,7 @@ class SpectralClustering(BaseEstimator):
 
     Notes
     -----
-    References:
+    **References**:
 
     - Normalized cuts and image segmentation, 2000
       Jianbo Shi, Jitendra Malik

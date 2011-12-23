@@ -239,7 +239,7 @@ def locally_linear_embedding(
 
     Notes
     -----
-    References:
+    **References**:
 
       [1] Roweis, S. & Saul, L. Nonlinear dimensionality reduction by
           locally linear embedding.  Science 290:2323 (2000).

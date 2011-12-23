@@ -64,7 +64,7 @@ def f_oneway(*args):
 
     Notes
     -----
-    References:
+    **References**:
 
     .. [1] Lowry, Richard.  "Concepts and Applications of Inferential
            Statistics". Chapter 14.

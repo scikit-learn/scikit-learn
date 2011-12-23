@@ -42,28 +42,6 @@ class Pipeline(BaseEstimator):
         List of the named object that compose the pipeline, in the \
         order that they are applied on the data.
 
-    Methods
-    -------
-    fit:
-        Fit all the transforms one after the other and transform the
-        data, then fit the transformed data using the final estimator
-    fit_transform:
-        Fit all the transforms one after the other and transform the
-        data, then use fit_transform on transformed data using the final
-        estimator. Valid only if the final estimator implements
-        fit_transform.
-    predict:
-        Applies transforms to the data, and the predict method of the
-        final estimator. Valid only if the final estimator implements
-        predict.
-    transform:
-        Applies transforms to the data, and the transform method of the
-        final estimator. Valid only if the final estimator implements
-        transform.
-    score:
-        Applies transforms to the data, and the score method of the
-        final estimator. Valid only if the final estimator implements
-        score.
 
     Examples
     --------
@@ -144,15 +122,25 @@ class Pipeline(BaseEstimator):
         return Xt, fit_params_steps[self.steps[-1][0]]
 
     def fit(self, X, y=None, **fit_params):
+        """Fit all the transforms one after the other and transform the
+        data, then fit the transformed data using the final estimator.
+        """
         Xt, fit_params = self._pre_transform(X, y, **fit_params)
         self.steps[-1][-1].fit(Xt, y, **fit_params)
         return self
 
     def fit_transform(self, X, y=None, **fit_params):
+        """Fit all the transforms one after the other and transform the
+        data, then use fit_transform on transformed data using the final
+        estimator. Valid only if the final estimator implements
+        fit_transform."""
         Xt, fit_params = self._pre_transform(X, y, **fit_params)
         return self.steps[-1][-1].fit_transform(Xt, y, **fit_params)
 
     def predict(self, X):
+        """Applies transforms to the data, and the predict method of the
+        final estimator. Valid only if the final estimator implements
+        predict."""
         Xt = X
         for name, transform in self.steps[:-1]:
             Xt = transform.transform(Xt)
@@ -171,6 +159,9 @@ class Pipeline(BaseEstimator):
         return self.steps[-1][-1].predict_log_proba(Xt)
 
     def transform(self, X):
+        """Applies transforms to the data, and the transform method of the
+        final estimator. Valid only if the final estimator implements
+        transform."""
         Xt = X
         for name, transform in self.steps[:-1]:
             Xt = transform.transform(Xt)
@@ -185,6 +176,9 @@ class Pipeline(BaseEstimator):
         return Xt
 
     def score(self, X, y=None):
+        """Applies transforms to the data, and the score method of the
+        final estimator. Valid only if the final estimator implements
+        score."""
         Xt = X
         for name, transform in self.steps[:-1]:
             Xt = transform.transform(Xt)

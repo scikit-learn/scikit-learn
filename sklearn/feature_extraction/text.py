@@ -458,7 +458,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
 
     Notes
     -----
-    References:
+    **References**:
 
     R. Baeza-Yates and B. Ribeiro-Neto (2011). Modern Information Retrieval.
         Addison Wesley, pp. 68–74.
