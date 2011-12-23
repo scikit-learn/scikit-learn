@@ -53,7 +53,7 @@ def _resample_model(estimator_func, X, y, scaling=.5, n_resampling=200,
 class BaseRandomizedLinearModel(TransformerMixin):
     """ Base class to implement randomized linear models for feature
         selection, in the spirit of Meinshausen and Buhlman's:
-        stability selection with jackknife, and random reweighting of
+        stability selection with randomized sampling, and random reweighting of
         the penalty
     """
 
@@ -245,10 +245,10 @@ class RandomizedLasso(BaseRandomizedLinearModel):
 
     Notes
     -----
-    See examples/linear_model/plot_randomize_lasso.py for an example.
+    See examples/linear_model/plot_randomized_lasso.py for an example.
 
-    References
-    ----------
+    References:
+
     Stability selection
     Nicolai Meinshausen, Peter Buhlmann
     Journal of the Royal Statistical Society: Series B
@@ -389,8 +389,12 @@ class RandomizedLogistic(BaseRandomizedLinearModel):
     >>> from sklearn.linear_model import RandomizedLasso
     >>> randomized_logistic = RandomizedLogistic()
 
-    References
-    ----------
+    Notes
+    -----
+    See examples/linear_model/plot_randomized_lasso.py for an example.
+
+    References:
+
     Stability selection
     Nicolai Meinshausen, Peter Buhlmann
     Journal of the Royal Statistical Society: Series B
@@ -452,11 +456,11 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
     y : array-like, shape = [n_samples]
         target values.
 
-    scaling: float
+    scaling : float
         The alpha parameter in the stability selection article used to
         randomly scale the features. Should be between 0 and 1.
 
-    random_state: integer or numpy.RandomState, optional
+    random_state : integer or numpy.RandomState, optional
         The generator used to randomize the design.
 
     n_resampling : int

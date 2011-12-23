@@ -24,6 +24,7 @@ from ..utils import atleast2d_or_csr, check_arrays
 
 from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
 
+
 ### TODO: bayesian_ridge_regression and bayesian_regression_ard
 ### should be squashed into its respective objects.
 
@@ -43,7 +44,7 @@ def center_data(X, y, fit_intercept, normalize=False, copy=True):
             X -= X_mean
             if normalize:
                 X_std = np.sqrt(np.sum(X ** 2, axis=0))
-                X_std[X_std==0] = 1
+                X_std[X_std == 0] = 1
                 X /= X_std
             else:
                 X_std = np.ones(X.shape[1])
@@ -54,6 +55,7 @@ def center_data(X, y, fit_intercept, normalize=False, copy=True):
         X_std = np.ones(X.shape[1])
         y_mean = 0.
     return X, y, X_mean, y_mean, X_std
+
 
 class LinearModel(BaseEstimator, RegressorMixin):
     """Base class for Linear Models"""
