@@ -478,7 +478,8 @@ class _BaseHMM(BaseEstimator):
             bin_edges = .5 * (bin_edges[:-1] + bin_edges[1:])
             bin_edges = bin_edges[::-1]
 
-            rankthresh = bin_edges[hst >= min(maxrank, self.n_components)].max()
+            rankthresh = bin_edges[hst >= min(maxrank,
+                                              self.n_components)].max()
 
             # Only change the threshold if it is stricter than the beam
             # threshold.
