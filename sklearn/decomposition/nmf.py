@@ -244,14 +244,14 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    X: {array-like, sparse matrix}, shape = [n_samples, n_features]
+    X : {array-like, sparse matrix}, shape = [n_samples, n_features]
         Data the model will be fit to.
 
-    n_components: int or None
+    n_components : int or None
         Number of components, if n_components is not set all components
         are kept
 
-    init:  'nndsvd' |  'nndsvda' | 'nndsvdar' | int | RandomState
+    init :  'nndsvd' |  'nndsvda' | 'nndsvdar' | int | RandomState
         Method used to initialize the procedure.
         Default: 'nndsvdar'
         Valid options::
@@ -264,32 +264,32 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
                 for when sparsity is not desired)
             int seed or RandomState: non-negative random matrices
 
-    sparseness: 'data' | 'components' | None, default: None
+    sparseness : 'data' | 'components' | None, default: None
         Where to enforce sparsity in the model.
 
-    beta: double, default: 1
+    beta : double, default: 1
         Degree of sparseness, if sparseness is not None. Larger values mean
         more sparseness.
 
-    eta: double, default: 0.1
+    eta : double, default: 0.1
         Degree of correctness to mantain, if sparsity is not None. Smaller
         values mean larger error.
 
-    tol: double, default: 1e-4
+    tol : double, default: 1e-4
         Tolerance value used in stopping conditions.
 
-    max_iter: int, default: 200
+    max_iter : int, default: 200
         Number of iterations to compute.
 
-    nls_max_iter: int, default: 2000
+    nls_max_iter : int, default: 2000
         Number of iterations in NLS subproblem.
 
     Attributes
     ----------
-    components_: array, [n_components, n_features]
+    `components_` : array, [n_components, n_features]
         Non-negative components of the data
 
-    reconstruction_err_: number
+    `reconstruction_err_` : number
         Frobenius norm of the matrix difference between the
         training data and the reconstructed data from the
         fit produced by the model. || X - WH ||_2

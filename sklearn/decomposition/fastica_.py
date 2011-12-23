@@ -305,27 +305,27 @@ class FastICA(BaseEstimator):
     ----------
     n_components : int, optional
         Number of components to use. If none is passed, all are used.
-    algorithm: {'parallel', 'deflation'}
+    algorithm : {'parallel', 'deflation'}
         Apply parallel or deflational algorithm for FastICA
-    whiten: boolean, optional
+    whiten : boolean, optional
         If whiten is false, the data is already considered to be
         whitened, and no whitening is performed.
-    fun: {'logcosh', 'exp', or 'cube'}, or a callable
+    fun : {'logcosh', 'exp', or 'cube'}, or a callable
         The non-linear function used in the FastICA loop to approximate
         negentropy. If a function is passed, it derivative should be
         passed as the 'fun_prime' argument.
-    fun_prime: None or a callable
+    fun_prime : None or a callable
         The derivative of the non-linearity used.
     max_iter : int, optional
         Maximum number of iterations during fit
     tol : float, optional
         Tolerance on update at each iteration
-    w_init: None of an (n_components, n_components) ndarray
+    w_init : None of an (n_components, n_components) ndarray
         The mixing matrix to be used to initialize the algorithm.
 
     Attributes
     ----------
-    unmixing_matrix_ : 2D array, [n_components, n_samples]
+    `unmixing_matrix_` : 2D array, [n_components, n_samples]
         The unmixing matrix
 
     Methods

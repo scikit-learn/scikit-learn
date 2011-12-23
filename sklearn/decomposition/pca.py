@@ -104,7 +104,7 @@ class PCA(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    n_components: int, none or string
+    n_components : int, none or string
         Number of components to keep.
         if n_components is not set all components are kept:
             n_components == min(n_samples, n_features)
@@ -116,11 +116,11 @@ class PCA(BaseEstimator, TransformerMixin):
                                  explained is greater than the percentage
                                  specified by n_components
 
-    copy: bool
+    copy : bool
         If False, data passed to fit are overwritten
 
-    whiten: bool, optional
-        When True (False by default) the components_ vectors are divided
+    whiten : bool, optional
+        When True (False by default) the `components_` vectors are divided
         by n_samples times singular values to ensure uncorrelated outputs
         with unit component-wise variances.
 
@@ -131,10 +131,10 @@ class PCA(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    components_: array, [n_components, n_features]
+    `components_` : array, [n_components, n_features]
         Components with maximum variance.
 
-    explained_variance_ratio_: array, [n_components]
+    `explained_variance_ratio_` : array, [n_components]
         Percentage of variance explained by each of the selected components.
         k is not set then all components are stored and the sum of
         explained variances is equal to 1.0
@@ -274,7 +274,7 @@ class PCA(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_components)
+        X : array-like, shape (n_samples, n_components)
             New data, where n_samples in the number of samples
             and n_components is the number of components.
 
@@ -282,7 +282,7 @@ class PCA(BaseEstimator, TransformerMixin):
         -------
         X_original array-like, shape (n_samples, n_features)
 
-        Note: if whitening is enabled, inverse_transform does not compute the
+        Note : if whitening is enabled, inverse_transform does not compute the
         exact inverse operation as transform.
         """
         return np.dot(X, self.components_) + self.mean_
@@ -297,9 +297,9 @@ class ProbabilisticPCA(PCA):
 
         Parameters
         ----------
-        X: array of shape(n_samples, n_dim)
+        X : array of shape(n_samples, n_dim)
             The data to fit
-        homoscedastic: bool, optional,
+        homoscedastic : bool, optional,
             If True, average variance across remaining dimensions
         """
         PCA.fit(self, X)
@@ -355,17 +355,17 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    n_components: int
+    n_components : int
         Maximum number of components to keep: default is 50.
 
-    copy: bool
+    copy : bool
         If False, data passed to fit are overwritten
 
-    iterated_power: int, optional
+    iterated_power : int, optional
         Number of iteration for the power method. 3 by default.
 
-    whiten: bool, optional
-        When True (False by default) the components_ vectors are divided
+    whiten : bool, optional
+        When True (False by default) the `components_` vectors are divided
         by the singular values to ensure uncorrelated outputs with unit
         component-wise variances.
 
@@ -374,16 +374,16 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         improve the predictive accuracy of the downstream estimators by
         making there data respect some hard-wired assumptions.
 
-    random_state: int or RandomState instance or None (default)
+    random_state : int or RandomState instance or None (default)
         Pseudo Random Number generator seed control. If None, use the
         numpy.random singleton.
 
     Attributes
     ----------
-    components_: array, [n_components, n_features]
+    `components_` : array, [n_components, n_features]
         Components with maximum variance.
 
-    explained_variance_ratio_: array, [n_components]
+    `explained_variance_ratio_` : array, [n_components]
         Percentage of variance explained by each of the selected components.
         k is not set then all components are stored and the sum of
         explained variances is equal to 1.0
@@ -477,7 +477,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array-like or scipy.sparse matrix, shape (n_samples, n_features)
+        X : array-like or scipy.sparse matrix, shape (n_samples, n_features)
             New data, where n_samples in the number of samples
             and n_features is the number of features.
 
@@ -497,7 +497,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array-like or scipy.sparse matrix, shape (n_samples, n_components)
+        X : array-like or scipy.sparse matrix, shape (n_samples, n_components)
             New data, where n_samples in the number of samples
             and n_components is the number of components.
 

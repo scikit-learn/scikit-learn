@@ -163,8 +163,8 @@ class EmpiricalCovariance(BaseEstimator):
 
         Returns
         -------
-        res: float
-          The likelihood of the data set with self.covariance_ as an
+        res : float
+          The likelihood of the data set with `self.covariance_` as an
           estimator of its covariance matrix.
 
         """
@@ -192,7 +192,7 @@ class EmpiricalCovariance(BaseEstimator):
             The type of norm used to compute the error. Available error types:
             - 'frobenius' (default): sqrt(tr(A^t.A))
             - 'spectral': sqrt(max(eigenvalues(A^t.A))
-            where A is the error (comp_cov - self.covariance_).
+            where A is the error ``(comp_cov - self.covariance_)``.
         scaling: bool
             If True (default), the squared error norm is divided by n_features.
             If False, the squared error norm is not rescaled.

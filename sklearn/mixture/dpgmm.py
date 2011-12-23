@@ -190,7 +190,7 @@ class DPGMM(GMM):
             (`n_components`, `n_features`)                if 'diag',
             (`n_components`, `n_features`, `n_features`)  if 'full'
 
-    converged_ : bool
+    `converged_` : bool
         True when convergence was reached in fit(), False
         otherwise.
 
@@ -663,7 +663,7 @@ class VBGMM(DPGMM):
             (`n_features`, `n_features`)              if 'tied',
             (`n_components`, `n_features`)                if 'diag',
             (`n_components`, `n_features`, `n_features`)  if 'full'
-    converged_ : bool
+    `converged_` : bool
         True when convergence was reached in fit(), False
         otherwise.
 

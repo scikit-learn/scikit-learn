@@ -177,10 +177,10 @@ class AffinityPropagation(BaseEstimator):
     Attributes
     ----------
 
-    cluster_centers_indices_ : array, [n_clusters]
+    `cluster_centers_indices_` : array, [n_clusters]
         Indices of cluster centers
 
-    labels_ : array, [n_samples]
+    `labels_` : array, [n_samples]
         Labels of each point
 
     Notes
