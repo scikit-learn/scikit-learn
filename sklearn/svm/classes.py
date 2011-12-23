@@ -237,23 +237,6 @@ class NuSVC(DenseBaseLibSVM, ClassifierMixin):
     `intercept_` : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
 
-    Methods
-    -------
-    fit(X, y) : self
-        Fit the model
-
-    predict(X) : array
-        Predict using the model.
-
-    predict_proba(X) : array
-        Return probability estimates.
-
-    predict_log_proba(X) : array
-        Return log-probability estimates.
-
-    decision_function(X) : array
-        Return distance to predicted margin.
-
     Examples
     --------
     >>> import numpy as np

@@ -220,18 +220,16 @@ def libsvm_sparse_predict (np.ndarray[np.float64_t, ndim=1, mode='c'] T_data,
     We have to reconstruct model and parameters to make sure we stay
     in sync with the python object.
 
-    Parameters
-    ----------
-    X: array-like, dtype=float
-    Y: array
-        target vector
-
-    Optional Parameters
-    -------------------
     See scikits.learn.svm.predict for a complete list of parameters.
 
-    Return
-    ------
+    Parameters
+    ----------
+    X : array-like, dtype=float
+    Y : array
+        target vector
+
+    Returns
+    -------
     dec_values : array
         predicted values.
     """

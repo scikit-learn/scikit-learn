@@ -312,7 +312,7 @@ class TransformerMixin(object):
         X_new : numpy array of shape [n_samples, n_features_new]
             Transformed array.
 
-        Note
+        Notes
         -----
         This method just calls fit and transform consecutively, i.e., it is not
         an optimized implementation of fit_transform, unlike other transformers

@@ -28,11 +28,11 @@ class IterGrid(object):
         The parameter grid to explore, as a dictionary mapping estimator
         parameters to sequences of allowed values.
 
-    Yields
-    ------
+    Returns
+    -------
     params: dict of string to any
-        Dictionaries mapping each estimator parameter to one of its allowed
-        values.
+        **Yields** dictionaries mapping each estimator parameter to one of its
+        allowed values.
 
     Examples
     ---------
