@@ -328,11 +328,6 @@ class FastICA(BaseEstimator):
     `unmixing_matrix_` : 2D array, [n_components, n_samples]
         The unmixing matrix
 
-    Methods
-    -------
-    get_mixing_matrix() :
-        Returns an estimate of the mixing matrix
-
     Notes
     -----
 
