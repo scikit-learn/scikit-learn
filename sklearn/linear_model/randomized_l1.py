@@ -480,14 +480,14 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
 
     Notes
     -----
-    See examples/linear_model/plot_randomize_lasso.py for an example.
+    See examples/linear_model/plot_randomized_lasso.py for an example.
 
     XXX : todo make it run in parallel
     """
     rng = check_random_state(random_state)
 
     if not (0 < scaling < 1):
-        raise ValueError("Parameter 'a' should be between 0 and 1.")
+        raise ValueError("Parameter 'scaling' should be between 0 and 1.")
 
     n_resampling = 200
     coef_grid = np.linspace(0, 1, n_grid)
