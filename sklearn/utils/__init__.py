@@ -5,7 +5,7 @@ The :mod:`sklearn.utils` module includes various utilites.
 import numpy as np
 import warnings
 
-from validation import *
+from .validation import *
 
 
 class deprecated(object):
@@ -104,13 +104,13 @@ def resample(*arrays, **options):
     random_state : int or RandomState instance
         Control the shuffling for reproducible behavior.
 
-    Return
-    ------
+    Returns
+    -------
     Sequence of resampled views of the collections. The original arrays are
     not impacted.
 
-    Example
-    -------
+    Examples
+    --------
     It is possible to mix sparse and dense arrays in the same run::
 
       >>> X = [[1., 0.], [2., 1.], [0., 0.]]
@@ -205,13 +205,13 @@ def shuffle(*arrays, **options):
         Number of samples to generate. If left to None this is
         automatically set to the first dimension of the arrays.
 
-    Return
-    ------
+    Returns
+    -------
     Sequence of shuffled views of the collections. The original arrays are
     not impacted.
 
-    Example
-    -------
+    Examples
+    --------
     It is possible to mix sparse and dense arrays in the same run::
 
       >>> X = [[1., 0.], [2., 1.], [0., 0.]]

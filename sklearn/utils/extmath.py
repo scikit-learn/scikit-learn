@@ -10,6 +10,7 @@ from scipy import linalg
 from . import check_random_state
 from .fixes import qr_economic
 
+
 def norm(v):
     v = np.asarray(v)
     __nrm2, = linalg.get_blas_funcs(['nrm2'], [v])
@@ -83,7 +84,7 @@ def randomized_range_finder(A, size, n_iterations, random_state=None):
     """Computes an orthonormal matrix whose range approximates the range of A.
 
     Parameters
-    ==========
+    ----------
     A: 2D array
         The input data matrix
     size: integer
@@ -94,13 +95,13 @@ def randomized_range_finder(A, size, n_iterations, random_state=None):
         A random number generator instance
 
     Returns
-    =======
+    -------
     Q: 2D array
         A (size x size) projection matrix, the range of which
         approximates well the range of the input matrix A.
 
     Notes
-    =====
+    -----
 
     Follows Algorithm 4.3 of
     Finding structure with randomness: Stochastic algorithms for constructing
@@ -130,7 +131,7 @@ def fast_svd(M, k, p=None, n_iterations=0, transpose='auto', random_state=0):
     """Computes the k-truncated randomized SVD
 
     Parameters
-    ===========
+    ----------
     M: ndarray or sparse matrix
         Matrix to decompose
 
@@ -156,7 +157,7 @@ def fast_svd(M, k, p=None, n_iterations=0, transpose='auto', random_state=0):
         A random number generator instance to make behavior
 
     Notes
-    =====
+    -----
     This algorithm finds the exact truncated singular values decomposition
     using randomization to speed up the computations. It is particularly
     fast on large matrices on which you whish to extract only a small
@@ -166,7 +167,7 @@ def fast_svd(M, k, p=None, n_iterations=0, transpose='auto', random_state=0):
     checked by ensuring that the lowest extracted singular value is on
     the order of the machine precision of floating points.
 
-    References:
+    **References**:
 
     * Finding structure with randomness: Stochastic algorithms for constructing
       approximate matrix decompositions
@@ -187,7 +188,7 @@ def fast_svd(M, k, p=None, n_iterations=0, transpose='auto', random_state=0):
         # this implementation is a bit faster with smaller shape[1]
         M = M.T
 
-    Q = randomized_range_finder(M, k+p, n_iterations, random_state)
+    Q = randomized_range_finder(M, k + p, n_iterations, random_state)
 
     # project M to the (k + p) dimensional space using the basis vectors
     B = safe_sparse_dot(Q.T, M)
@@ -212,7 +213,7 @@ def logsumexp(arr, axis=0):
     over/underflow.
 
     Examples
-    ========
+    --------
 
     >>> import numpy as np
     >>> from sklearn.utils.extmath import logsumexp

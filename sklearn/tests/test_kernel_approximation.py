@@ -51,11 +51,13 @@ def test_skewed_chi2_sampler():
     kernel = np.exp(log_kernel.sum(axis=2))
 
     # appoximate kernel mapping
-    transform = SkewedChi2Sampler(skewedness=c, n_components=1000, random_state=42)
+    transform = SkewedChi2Sampler(skewedness=c, n_components=1000,
+            random_state=42)
     X_trans = transform.fit_transform(X)
     Y_trans = transform.transform(Y)
     kernel_approx = np.dot(X_trans, Y_trans.T)
     np.testing.assert_array_almost_equal(kernel, kernel_approx, 1)
+
 
 def test_rbf_sampler():
     """test that RBFSampler approximates kernel on random data"""

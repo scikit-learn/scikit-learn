@@ -15,8 +15,8 @@ dataset is generated randomly based on the following process:
 
 In the above process, rejection sampling is used to make sure that n is more
 than 2, and that the document length is never zero. Likewise, we reject classes
-which have already been chosen.  The documents that are assigned to both classes
-are plotted surrounded by two colored circles.
+which have already been chosen.  The documents that are assigned to both
+classes are plotted surrounded by two colored circles.
 
 The classification is performed by projecting to the first two principal
 components found by PCA and CCA for visualisation purposes, followed by using
@@ -91,14 +91,14 @@ pl.figure(figsize=(13, 6))
 
 X, Y = make_multilabel_classification(n_classes=2, n_labels=1,
                                       allow_unlabeled=True,
-                                      random_state=42)
+                                      random_state=0)
 
 plot_subfigure(X, Y, 1, "With unlabeled samples + CCA", "cca")
 plot_subfigure(X, Y, 2, "With unlabeled samples + PCA", "pca")
 
 X, Y = make_multilabel_classification(n_classes=2, n_labels=1,
                                       allow_unlabeled=False,
-                                      random_state=42)
+                                      random_state=0)
 
 plot_subfigure(X, Y, 3, "Without unlabeled samples + CCA", "cca")
 plot_subfigure(X, Y, 4, "Without unlabeled samples + PCA", "pca")

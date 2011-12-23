@@ -8,8 +8,6 @@ Independent Component Analysis, by  Hyvarinen et al.
 # Author: Pierre Lafaye de Micheaux, Stefan van der Walt, Gael Varoquaux,
 #         Bertrand Thirion, Alexandre Gramfort
 # License: BSD 3 clause
-
-import warnings
 import numpy as np
 from scipy import linalg
 

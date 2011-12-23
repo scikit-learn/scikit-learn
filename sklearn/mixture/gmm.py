@@ -168,23 +168,6 @@ class GMM(BaseEstimator):
         True when convergence was reached in fit(), False
         otherwise.
 
-    Methods
-    -------
-    decode(X)
-        Find most likely mixture components for each point in `X`.
-    eval(X)
-        Compute the log likelihood of `X` under the model and the
-        posterior distribution over mixture components.
-    fit(X)
-        Estimate model parameters from `X` using the EM algorithm.
-    predict(X)
-        Like decode, find most likely mixtures components for each
-        observation in `X`.
-    rvs(n=1, random_state=None)
-        Generate `n` samples from the model.
-    score(X)
-        Compute the log likelihood of `X` under the model.
-
     See Also
     --------
 

@@ -77,6 +77,7 @@ def atleast2d_or_csr(X):
     assert_all_finite(X)
     return X
 
+
 def _num_samples(x):
     """Return number of samples in array-like x."""
     if not hasattr(x, '__len__') and not hasattr(x, 'shape'):

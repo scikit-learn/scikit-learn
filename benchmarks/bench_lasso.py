@@ -42,15 +42,16 @@ def compute_bench(alpha, n_samples, n_features, precompute):
 
             gc.collect()
             print "- benching Lasso"
-            clf = Lasso(alpha=alpha, fit_intercept=False, precompute=precompute)
+            clf = Lasso(alpha=alpha, fit_intercept=False,
+                        precompute=precompute)
             tstart = time()
             clf.fit(X, Y)
             lasso_results.append(time() - tstart)
 
             gc.collect()
             print "- benching LassoLars"
-            clf = LassoLars(alpha=alpha, fit_intercept=False, 
-		normalize=False, precompute=precompute)
+            clf = LassoLars(alpha=alpha, fit_intercept=False,
+                            normalize=False, precompute=precompute)
             tstart = time()
             clf.fit(X, Y)
             lars_lasso_results.append(time() - tstart)

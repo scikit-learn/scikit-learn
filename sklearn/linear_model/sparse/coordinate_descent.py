@@ -17,7 +17,7 @@ from . import cd_fast_sparse
 class ElasticNet(LinearModel):
     """Linear Model trained with L1 and L2 prior as regularizer
 
-    This implementation works on scipy.sparse X and dense coef_.
+    This implementation works on scipy.sparse X and dense `coef_`.
 
     rho=1 is the lasso penalty. Currently, rho <= 0.01 is not
     reliable, unless you supply your own sequence of alpha.
@@ -28,7 +28,7 @@ class ElasticNet(LinearModel):
         Constant that multiplies the L1 term. Defaults to 1.0
     rho : float
         The ElasticNet mixing parameter, with 0 < rho <= 1.
-    coef_ : ndarray of shape n_features
+    `coef_` : ndarray of shape n_features
         The initial coeffients to warm-start the optimization
     fit_intercept: bool
         Whether the intercept should be estimated or not. If False, the
@@ -130,7 +130,7 @@ class Lasso(ElasticNet):
     ----------
     alpha : float
         Constant that multiplies the L1 term. Defaults to 1.0
-    coef_ : ndarray of shape n_features
+    `coef_` : ndarray of shape n_features
         The initial coeffients to warm-start the optimization
     fit_intercept: bool
         Whether the intercept should be estimated or not. If False, the

@@ -10,7 +10,7 @@ __all__ = ['cs_graph_components']
 
 import numpy as np
 
-from sparsetools import cs_graph_components as _cs_graph_components
+from .sparsetools import cs_graph_components as _cs_graph_components
 
 from scipy.sparse import csr_matrix
 from scipy.sparse import isspmatrix
@@ -26,13 +26,13 @@ def cs_graph_components(x):
     checked.
 
     Parameters
-    -----------
+    ----------
     x: ndarray-like, 2 dimensions, or sparse matrix
         The adjacency matrix of the graph. Only the upper triangular part
         is used.
 
     Returns
-    --------
+    -------
     n_components: int
         The number of connected components.
     label: ndarray (ints, 1 dimension):
@@ -40,14 +40,14 @@ def cs_graph_components(x):
         indicate empty rows: 0 everywhere, including diagonal).
 
     Notes
-    ------
+    -----
 
     The matrix is assumed to be symmetric and the upper triangular part
     of the matrix is used. The matrix is converted to a CSR matrix unless
     it is already a CSR.
 
-    Example
-    -------
+    Examples
+    --------
 
     >>> from scipy.sparse import cs_graph_components
     >>> import numpy as np

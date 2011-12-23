@@ -333,8 +333,8 @@ class Normalizer(BaseEstimator, TransformerMixin):
         copy (if the input is already a numpy array or a scipy.sparse
         CSR matrix).
 
-    Note
-    ----
+    Notes
+    -----
     This estimator is stateless (besides constructor parameters), the
     fit method does nothing but is useful when used in a pipeline.
 
@@ -469,6 +469,7 @@ class Binarizer(BaseEstimator, TransformerMixin):
 
 def _is_label_indicator_matrix(y):
     return hasattr(y, "shape") and len(y.shape) == 2
+
 
 def _is_multilabel(y):
     return isinstance(y[0], tuple) or \
@@ -624,7 +625,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
             Target values. In the multilabel case the nested sequences can
             have variable lengths.
 
-        Note
+        Notes
         -----
         In the case when the binary labels are fractional
         (probabilistic), inverse_transform chooses the class with the

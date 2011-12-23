@@ -172,7 +172,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
     The presentation implementation is based on a translation of the DACE
     Matlab toolbox, see reference [1].
 
-    References:
+    **References**:
 
     [1] H.B. Nielsen, S.N. Lophaven, H. B. Nielsen and J. Sondergaard (2002).
         DACE - A MATLAB Kriging Toolbox.

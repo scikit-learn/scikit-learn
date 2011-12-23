@@ -79,8 +79,8 @@ class Forest(BaseEnsemble):
             The target values (integers that correspond to classes in
             classification, real numbers in regression).
 
-        Return
-        ------
+        Returns
+        -------
         self : object
             Returns self.
         """
