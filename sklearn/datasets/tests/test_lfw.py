@@ -23,7 +23,6 @@ except ImportError:
 
 from sklearn.datasets import load_lfw_pairs
 from sklearn.datasets import load_lfw_people
-from sklearn.datasets import get_data_home
 
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_equal

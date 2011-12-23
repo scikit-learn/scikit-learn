@@ -2,11 +2,6 @@ from os.path import join
 import sys
 import numpy
 
-if sys.version_info[0] < 3:
-    from ConfigParser import ConfigParser
-else:
-    from configparser import ConfigParser
-
 import warnings
 
 

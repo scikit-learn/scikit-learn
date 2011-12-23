@@ -8,7 +8,6 @@
 # License: BSD, (C) INRIA, University of Amsterdam
 
 import numpy as np
-from scipy import linalg
 
 from .base import \
     _get_weights, _check_weights, \

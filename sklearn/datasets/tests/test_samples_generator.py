@@ -1,6 +1,6 @@
 import numpy as np
 from numpy.testing import assert_equal, assert_approx_equal, \
-                          assert_array_almost_equal, assert_array_less
+                          assert_array_almost_equal
 from nose.tools import assert_true
 
 from .. import make_classification
