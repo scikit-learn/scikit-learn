@@ -287,9 +287,9 @@ class _BaseHMM(BaseEstimator):
 
         return np.array(obs)
 
-    def fit(self, obs, n_iter=10, thresh=1e-2, params=string.letters,
-            init_params=string.letters,
-            maxrank=None, beamlogprob=-np.Inf, **kwargs):
+    def fit(self, obs, n_iter=10, thresh=1e-2, params=string.ascii_letters,
+            init_params=string.ascii_letters, maxrank=None,
+            beamlogprob=-np.Inf, **kwargs):
         """Estimate model parameters.
 
         An initialization step is performed before entering the EM
