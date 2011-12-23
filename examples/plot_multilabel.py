@@ -15,8 +15,8 @@ dataset is generated randomly based on the following process:
 
 In the above process, rejection sampling is used to make sure that n is more
 than 2, and that the document length is never zero. Likewise, we reject classes
-which have already been chosen.  The documents that are assigned to both classes
-are plotted surrounded by two colored circles.
+which have already been chosen.  The documents that are assigned to both
+classes are plotted surrounded by two colored circles.
 
 The classification is performed by projecting to the first two principal
 components found by PCA and CCA for visualisation purposes, followed by using
