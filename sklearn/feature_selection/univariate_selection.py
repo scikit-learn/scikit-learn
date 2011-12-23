@@ -141,9 +141,9 @@ def chi2(X, y):
     y : array-like, shape = n_samples
         Target vector (class labels).
 
-    Complexity
+    Notes
     ----------
-    O(n_classes * n_features) space.
+    Complexity of this algorithm is O(n_classes * n_features).
     """
 
     # XXX: we might want to do some of the following in logspace instead for
