@@ -37,13 +37,11 @@ Notes:
 
 from cStringIO import StringIO
 
-import os
 from os import makedirs
-from os.path import join, normpath, split, exists
+from os.path import join, exists
 
 import urllib2
 
-import pylab as pl
 import numpy as np
 
 from sklearn.datasets.base import get_data_home, Bunch
