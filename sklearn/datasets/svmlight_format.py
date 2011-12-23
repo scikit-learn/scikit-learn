@@ -17,7 +17,6 @@ libsvm command line programs.
 
 from _svmlight_format import _load_svmlight_file
 import numpy as np
-import scipy.sparse as sp
 
 
 def load_svmlight_file(f, n_features=None, dtype=np.float64,
