@@ -118,8 +118,8 @@ def adjusted_rand_score(labels_true, labels_pred):
        Similarity score between -1.0 and 1.0. Random labelings have an ARI
        close to 0.0. 1.0 stands for perfect match.
 
-    Example
-    -------
+    Examples
+    --------
 
     Perfectly maching labelings have a score of 1 even
 
@@ -149,7 +149,7 @@ def adjusted_rand_score(labels_true, labels_pred):
 
     Notes
     -----
-    References:
+    **References**:
 
     - L. Hubert and P. Arabie, Comparing Partitions,
       Journal of Classification 1985
@@ -303,7 +303,7 @@ def homogeneity_score(labels_true, labels_pred):
 
     Notes
     -----
-    References:
+    **References**:
 
     V-Measure: A conditional entropy-based external cluster evaluation measure
     Andrew Rosenberg and Julia Hirschberg, 2007
@@ -371,7 +371,7 @@ def completeness_score(labels_true, labels_pred):
 
     Notes
     -----
-    References:
+    **References**:
 
     V-Measure: A conditional entropy-based external cluster evaluation measure
     Andrew Rosenberg and Julia Hirschberg, 2007
@@ -442,7 +442,7 @@ def v_measure_score(labels_true, labels_pred):
 
     Notes
     -----
-    References:
+    **References**:
 
     V-Measure: A conditional entropy-based external cluster evaluation measure
     Andrew Rosenberg and Julia Hirschberg, 2007

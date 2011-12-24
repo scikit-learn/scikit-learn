@@ -182,10 +182,10 @@ class BaseEstimator(object):
     def set_params(self, **params):
         """Set the parameters of the estimator.
 
-        The method works on simple estimators as well as on nested
-        objects (such as pipelines). The former have parameters of the
-        form <component>__<parameter> so that it's possible to update
-        each component of a nested object.
+        The method works on simple estimators as well as on nested objects
+        (such as pipelines). The former have parameters of the form
+        ``<component>__<parameter>`` so that it's possible to update each
+        component of a nested object.
 
         Returns
         -------
@@ -312,7 +312,7 @@ class TransformerMixin(object):
         X_new : numpy array of shape [n_samples, n_features_new]
             Transformed array.
 
-        Note
+        Notes
         -----
         This method just calls fit and transform consecutively, i.e., it is not
         an optimized implementation of fit_transform, unlike other transformers

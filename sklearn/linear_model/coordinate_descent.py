@@ -357,8 +357,8 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     The Elastic Net optimization function is::
 
-    1 / (2 * n_samples) * ||y - Xw||^2_2 + 
-    + alpha * rho * ||w||_1 + 0.5 * alpha * (1 - rho) * ||w||^2_2
+    ``1 / (2 * n_samples) * ||y - Xw||^2_2 +
+    + alpha * rho * ||w||_1 + 0.5 * alpha * (1 - rho) * ||w||^2_2``
 
     Parameters
     ----------

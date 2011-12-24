@@ -28,11 +28,11 @@ class IterGrid(object):
         The parameter grid to explore, as a dictionary mapping estimator
         parameters to sequences of allowed values.
 
-    Yields
-    ------
+    Returns
+    -------
     params: dict of string to any
-        Dictionaries mapping each estimator parameter to one of its allowed
-        values.
+        **Yields** dictionaries mapping each estimator parameter to one of its
+        allowed values.
 
     Examples
     ---------
@@ -374,7 +374,7 @@ class GridSearchCV(BaseEstimator):
         # XXX: the name is too specific, it shouldn't have
         # 'grid' in it. Also, we should be retrieving/storing variance
         self.grid_scores_ = [
-            (clf_params, score, all_scores) 
+            (clf_params, score, all_scores)
                     for clf_params, (score, _), all_scores
                     in zip(grid, scores, cv_scores)]
         return self

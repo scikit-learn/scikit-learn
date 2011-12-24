@@ -50,22 +50,6 @@ class _BaseHMM(BaseEstimator):
     startprob : array, shape ('n_components`,)
         Initial state occupation distribution.
 
-    Methods
-    -------
-    eval(X)
-        Compute the log likelihood of `X` under the HMM.
-    decode(X)
-        Find most likely state sequence for each point in `X` using the
-        Viterbi algorithm.
-    rvs(n=1)
-        Generate `n` samples from the HMM.
-    fit(X)
-        Estimate HMM parameters from `X`.
-    predict(X)
-        Like decode, find most likely state sequence corresponding to `X`.
-    score(X)
-        Compute the log likelihood of `X` under the model.
-
     See Also
     --------
     GMM : Gaussian mixture model
@@ -304,9 +288,9 @@ class _BaseHMM(BaseEstimator):
 
         return np.array(obs)
 
-    def fit(self, obs, n_iter=10, thresh=1e-2, params=string.letters,
-            init_params=string.letters,
-            maxrank=None, beamlogprob=-np.Inf, **kwargs):
+    def fit(self, obs, n_iter=10, thresh=1e-2, params=string.ascii_letters,
+            init_params=string.ascii_letters, maxrank=None,
+            beamlogprob=-np.Inf, **kwargs):
         """Estimate model parameters.
 
         An initialization step is performed before entering the EM
@@ -492,10 +476,11 @@ class _BaseHMM(BaseEstimator):
 
             # Want to look at the high ranks.
             hst = hst[::-1].cumsum()
-            bin_edges = .5*(bin_edges[:-1] + bin_edges[1:])
+            bin_edges = .5 * (bin_edges[:-1] + bin_edges[1:])
             bin_edges = bin_edges[::-1]
 
-            rankthresh = bin_edges[hst >= min(maxrank, self.n_components)].max()
+            rankthresh = bin_edges[hst >= min(maxrank,
+                                              self.n_components)].max()
 
             # Only change the threshold if it is stricter than the beam
             # threshold.
@@ -578,24 +563,6 @@ class GaussianHMM(_BaseHMM):
             (`n_features`, `n_features`)              if 'tied',
             (`n_components`, `n_features`)           if 'diag',
             (`n_components`, `n_features`, `n_features`)  if 'full'
-
-    Methods
-    -------
-    eval(X)
-        Compute the log likelihood of `X` under the HMM.
-    decode(X)
-        Find most likely state sequence for each point in `X` using the
-        Viterbi algorithm.
-    rvs(n=1)
-        Generate `n` samples from the HMM.
-    init(X)
-        Initialize HMM parameters from `X`.
-    fit(X)
-        Estimate HMM parameters from `X` using the Baum-Welch algorithm.
-    predict(X)
-        Like decode, find most likely state sequence corresponding to `X`.
-    score(X)
-        Compute the log likelihood of `X` under the model.
 
     Examples
     --------
@@ -826,24 +793,6 @@ class MultinomialHMM(_BaseHMM):
     emissionprob: array, shape ('n_components`, 'n_symbols`)
         Probability of emitting a given symbol when in each state.
 
-    Methods
-    -------
-    eval(X)
-        Compute the log likelihood of `X` under the HMM.
-    decode(X)
-        Find most likely state sequence for each point in `X` using the
-        Viterbi algorithm.
-    rvs(n=1)
-        Generate `n` samples from the HMM.
-    init(X)
-        Initialize HMM parameters from `X`.
-    fit(X)
-        Estimate HMM parameters from `X` using the Baum-Welch algorithm.
-    predict(X)
-        Like decode, find most likely state sequence corresponding to `X`.
-    score(X)
-        Compute the log likelihood of `X` under the model.
-
     Examples
     --------
     >>> from sklearn.hmm import MultinomialHMM
@@ -944,24 +893,6 @@ class GMMHMM(_BaseHMM):
         Initial state occupation distribution.
     gmms: array of GMM objects, length 'n_components`
         GMM emission distributions for each state
-
-    Methods
-    -------
-    eval(X)
-        Compute the log likelihood of `X` under the HMM.
-    decode(X)
-        Find most likely state sequence for each point in `X` using the
-        Viterbi algorithm.
-    rvs(n=1)
-        Generate `n` samples from the HMM.
-    init(X)
-        Initialize HMM parameters from `X`.
-    fit(X)
-        Estimate HMM parameters from `X` using the Baum-Welch algorithm.
-    predict(X)
-        Like decode, find most likely state sequence corresponding to `X`.
-    score(X)
-        Compute the log likelihood of `X` under the model.
 
     Examples
     --------

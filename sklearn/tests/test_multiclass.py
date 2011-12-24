@@ -92,19 +92,23 @@ def test_ovr_multilabel():
 
 def test_ovr_multilabel_dataset():
     base_clf = MultinomialNB(alpha=1)
-    X, Y = datasets.make_multilabel_classification(n_samples=100,
-                                                   n_features=20,
-                                                   n_classes=5,
-                                                   n_labels=2,
-                                                   length=50,
-                                                   random_state=0)
-    X_train, Y_train = X[:80], Y[:80]
-    X_test, Y_test = X[80:], Y[80:]
-    clf = OneVsRestClassifier(base_clf).fit(X_train, Y_train)
-    Y_pred = clf.predict(X_test)
-    assert_true(clf.multilabel_)
-    assert_almost_equal(multilabel_precision(Y_test, Y_pred), 0.74, places=2)
-    assert_almost_equal(multilabel_recall(Y_test, Y_pred), 0.84, places=2)
+    for au, prec, recall in zip((True, False), (0.65, 0.74), (0.72, 0.84)):
+        X, Y = datasets.make_multilabel_classification(n_samples=100,
+                                                       n_features=20,
+                                                       n_classes=5,
+                                                       n_labels=2,
+                                                       length=50,
+                                                       allow_unlabeled=au,
+                                                       random_state=0)
+        X_train, Y_train = X[:80], Y[:80]
+        X_test, Y_test = X[80:], Y[80:]
+        clf = OneVsRestClassifier(base_clf).fit(X_train, Y_train)
+        Y_pred = clf.predict(X_test)
+        assert_true(clf.multilabel_)
+        assert_almost_equal(multilabel_precision(Y_test, Y_pred), prec,
+                            places=2)
+        assert_almost_equal(multilabel_recall(Y_test, Y_pred), recall,
+                            places=2)
 
 
 def test_ovr_gridsearch():

@@ -79,8 +79,8 @@ class Forest(BaseEnsemble):
             The target values (integers that correspond to classes in
             classification, real numbers in regression).
 
-        Return
-        ------
+        Returns
+        -------
         self : object
             Returns self.
         """
@@ -289,11 +289,13 @@ class RandomForestClassifier(ForestClassifier):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
+    Notes
+    -----
+    .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
+
     See also
     --------
     RandomForestRegressor, ExtraTreesClassifier, ExtraTreesRegressor
-
-    .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
     """
     def __init__(self, n_estimators=10,
                        criterion="gini",
@@ -364,11 +366,13 @@ class RandomForestRegressor(ForestRegressor):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
+    Notes
+    -----
+    .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
+
     See also
     --------
     RandomForestClassifier, ExtraTreesClassifier, ExtraTreesRegressor
-
-    .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
     """
     def __init__(self, n_estimators=10,
                        criterion="mse",
@@ -440,11 +444,13 @@ class ExtraTreesClassifier(ForestClassifier):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
+    Notes
+    -----
+    .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
+
     See also
     --------
     ExtraTreesRegressor, RandomForestClassifier, RandomForestRegressor
-
-    .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
            Machine Learning, 63(1), 3-42, 2006.
     """
     def __init__(self, n_estimators=10,
@@ -517,11 +523,13 @@ class ExtraTreesRegressor(ForestRegressor):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
+    Notes
+    -----
+    .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
+
     See also
     --------
     ExtraTreesRegressor, RandomForestClassifier, RandomForestRegressor
-
-    .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
            Machine Learning, 63(1), 3-42, 2006.
     """
     def __init__(self, n_estimators=10,

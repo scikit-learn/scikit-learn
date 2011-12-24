@@ -99,7 +99,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     The algorithm is adapted from Guyon [1] and was designed to generate
     the "Madelon" dataset.
 
-    References:
+    **References**:
 
     .. [1] I. Guyon, "Design of experiments for the NIPS 2003 variable
            selection benchmark", 2003.
@@ -224,7 +224,8 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
 
 
 def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
-                                   n_labels=2, length=50, random_state=None):
+                                   n_labels=2, length=50,
+                                   allow_unlabeled=True, random_state=None):
     """Generate a random multilabel classification problem.
 
     For each sample, the generative process is:
@@ -255,14 +256,17 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
     length : int, optional (default=50)
         Sum of the features (number of words if documents).
 
+    allow_unlabeled : bool, optional (default=True)
+        If ``True``, some instances might not belong to any class.
+
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    Return
-    ------
+    Returns
+    -------
     X : array of shape [n_samples, n_features]
         The generated samples.
 
@@ -279,9 +283,10 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
         _, n_classes = p_w_c.shape
 
         # pick a nonzero number of labels per document by rejection sampling
-        n = 0
-        while n == 0 or n > n_classes:
+        n = n_classes + 1
+        while (not allow_unlabeled and n == 0) or n > n_classes:
             n = generator.poisson(n_labels)
+
         # pick n classes
         y = []
         while len(y) != n:
@@ -299,8 +304,13 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
         # generate a document of length k words
         x = np.zeros(n_features, dtype=int)
         for i in range(k):
-            c = y[generator.randint(len(y))]
-            w = generator.multinomial(1, p_w_c[:, c]).argmax()
+            if len(y) == 0:
+                # if sample does not belong to any class, generate noise word
+                w = generator.randint(n_features)
+            else:
+                # pick a class and generate an appropriate word
+                c = y[generator.randint(len(y))]
+                w = generator.multinomial(1, p_w_c[:, c]).argmax()
             x[w] += 1
 
         return x, y
@@ -552,7 +562,7 @@ def make_friedman1(n_samples=100, n_features=10, noise=0.0, random_state=None):
 
     Notes
     -----
-    References:
+    **References**:
 
     .. [1] J. Friedman, "Multivariate adaptive regression splines", The Annals
            of Statistics 19 (1), pages 1-67, 1991.
@@ -615,7 +625,7 @@ def make_friedman2(n_samples=100, noise=0.0, random_state=None):
 
     Notes
     -----
-    References:
+    **References**:
 
     .. [1] J. Friedman, "Multivariate adaptive regression splines", The Annals
            of Statistics 19 (1), pages 1-67, 1991.
@@ -683,7 +693,7 @@ def make_friedman3(n_samples=100, noise=0.0, random_state=None):
 
     Notes
     -----
-    References:
+    **References**:
 
     .. [1] J. Friedman, "Multivariate adaptive regression splines", The Annals
            of Statistics 19 (1), pages 1-67, 1991.
@@ -868,7 +878,7 @@ def make_sparse_uncorrelated(n_samples=100, n_features=10, random_state=None):
 
     Notes
     -----
-    References:
+    **References**:
 
     .. [1] G. Celeux, M. El Anbari, J.-M. Marin, C. P. Robert,
            "Regularization in regression: comparing Bayesian and frequentist
@@ -998,7 +1008,7 @@ def make_swiss_roll(n_samples=100, noise=0.0, random_state=None):
     -----
     The algorithm is from Marsland [1].
 
-    References:
+    **References**:
 
     .. [1] S. Marsland, "Machine Learning: An Algorithmic Perpsective",
            Chapter 10, 2009.

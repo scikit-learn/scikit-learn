@@ -5,6 +5,7 @@ from numpy.testing import assert_array_almost_equal
 from sklearn.datasets import make_classification
 from sklearn.utils.sparsefuncs import mean_variance_axis0
 
+
 def test_mean_variance_axis0():
     X, _ = make_classification(5, 4, random_state=0)
     # Sparsify the array a little bit

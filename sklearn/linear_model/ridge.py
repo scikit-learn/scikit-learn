@@ -249,8 +249,8 @@ class RidgeClassifier(Ridge):
     --------
     Ridge, RidgeClassifierCV
 
-    Note
-    ----
+    Notes
+    -----
     For multi-class classification, n_class classifiers are trained in
     a one-versus-all approach.
     """
@@ -334,9 +334,7 @@ class _RidgeGCV(LinearModel):
 
     looe = y - loov = c / diag(G)
 
-    Reference
-    ---------
-
+    **References**:
     http://cbcl.mit.edu/projects/cbcl/publications/ps/MIT-CSAIL-TR-2007-025.pdf
     http://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf
     """

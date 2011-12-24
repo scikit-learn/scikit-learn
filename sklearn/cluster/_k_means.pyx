@@ -166,8 +166,8 @@ def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
          The vector in which we keep track of the numbers of elements in a
          cluster
 
-    Return
-    ------
+    Returns
+    -------
     inertia: float
         The inertia of the batch prior to centers update, i.e. the sum
         distances to the closest center for each sample. This is the objective

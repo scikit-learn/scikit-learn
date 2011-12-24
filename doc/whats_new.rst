@@ -351,7 +351,7 @@ People
    - 4  Vincent Schut
    - 3  Alexis Metaireau
    - 3  Bryan Silverthorn
-   - 3  Andreas Mueller
+   - 3  `Andreas Müller`_
    - 2  Minwoo Jake Lee
    - 1  Emmanuelle Gouillart
    - 1  Keith Goodman

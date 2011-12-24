@@ -448,7 +448,6 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8,
     method = 'lasso_' + method
 
     t0 = time.time()
-    n_features = X.shape[1]
     # Avoid integer division problems
     alpha = float(alpha)
     random_state = check_random_state(random_state)
@@ -922,7 +921,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
 
     Notes
     -----
-    References:
+    **References:**
 
     J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009: Online dictionary learning
     for sparse coding (http://www.di.ens.fr/sierra/pdfs/icml09.pdf)
@@ -1065,7 +1064,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
 
     Notes
     -----
-    References:
+    **References:**
 
     J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009: Online dictionary learning
     for sparse coding (http://www.di.ens.fr/sierra/pdfs/icml09.pdf)
@@ -1083,7 +1082,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
                  shuffle=True, dict_init=None, transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,
                  verbose=False, split_sign=False, random_state=None):
-        
+
         self._set_sparse_coding_params(n_atoms, transform_algorithm,
                                        transform_n_nonzero_coefs,
                                        transform_alpha, split_sign, n_jobs)

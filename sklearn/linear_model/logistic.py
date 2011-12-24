@@ -73,7 +73,7 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin,
     to have slightly different results for the same input data. If
     that happens, try with a smaller tol parameter.
 
-    References:
+    **References**:
 
     LIBLINEAR -- A Library for Large Linear Classification
     http://www.csie.ntu.edu.tw/~cjlin/liblinear/

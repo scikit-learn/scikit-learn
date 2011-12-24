@@ -15,9 +15,8 @@ libsvm command line programs.
 #          Olivier Grisel <olivier.grisel@ensta.org>
 # License: Simple BSD.
 
-from _svmlight_format import _load_svmlight_file
 import numpy as np
-import scipy.sparse as sp
+from ._svmlight_format import _load_svmlight_file
 
 
 def load_svmlight_file(f, n_features=None, dtype=np.float64,
