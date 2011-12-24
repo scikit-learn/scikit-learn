@@ -376,9 +376,9 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8,
     Finds the best dictionary and the corresponding sparse code for
     approximating the data matrix X by solving::
 
-    (U^*, V^*) = argmin 0.5 || X - U V ||_2^2 + alpha * || U ||_1
-                 (U,V)
-                with || V_k ||_2 = 1 for all  0 <= k < n_atoms
+        (U^*, V^*) = argmin 0.5 || X - U V ||_2^2 + alpha * || U ||_1
+                     (U,V)
+                    with || V_k ||_2 = 1 for all  0 <= k < n_atoms
 
     where V is the dictionary and U is the sparse code.
 
@@ -529,11 +529,11 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
     """Solves a dictionary learning matrix factorization problem online.
 
     Finds the best dictionary and the corresponding sparse code for
-    approximating the data matrix X by solving:
+    approximating the data matrix X by solving::
 
-    (U^*, V^*) = argmin 0.5 || X - U V ||_2^2 + alpha * || U ||_1
-                 (U,V)
-                 with || V_k ||_2 = 1 for all  0 <= k < n_atoms
+        (U^*, V^*) = argmin 0.5 || X - U V ||_2^2 + alpha * || U ||_1
+                     (U,V)
+                     with || V_k ||_2 = 1 for all  0 <= k < n_atoms
 
     where V is the dictionary and U is the sparse code. This is
     accomplished by repeatedly iterating over mini-batches by slicing
@@ -923,7 +923,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
     -----
     **References:**
 
-    J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009: Online dictionary learning
+    .. [MBPS2009] J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009: Online dictionary learning
     for sparse coding (http://www.di.ens.fr/sierra/pdfs/icml09.pdf)
 
     See also
@@ -987,7 +987,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
 
     Solves the optimization problem::
 
-        (U^*,V^*) = argmin 0.5 || Y - U V ||_2^2 + alpha * || U ||_1
+       (U^*,V^*) = argmin 0.5 || Y - U V ||_2^2 + alpha * || U ||_1
                     (U,V)
                     with || V_k ||_2 = 1 for all  0 <= k < n_atoms
 
@@ -1066,7 +1066,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
     -----
     **References:**
 
-    J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009: Online dictionary learning
+    .. [MBPS2009] J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009: Online dictionary learning
     for sparse coding (http://www.di.ens.fr/sierra/pdfs/icml09.pdf)
 
     See also
