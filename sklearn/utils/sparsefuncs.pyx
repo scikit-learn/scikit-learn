@@ -17,34 +17,42 @@ ctypedef np.float64_t DOUBLE
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-cdef _mean_variance_axis0(unsigned int n_samples,
-                          unsigned int n_features,
-                          np.ndarray[DOUBLE, ndim=1] X_data,
-                          np.ndarray[int, ndim=1] X_indices,
-                          np.ndarray[int, ndim=1] X_indptr,
-                          np.ndarray[DOUBLE, ndim=1] means,
-                          np.ndarray[DOUBLE, ndim=1] variances):
-    """Compute the mean and variance of a CSR aling axis=0
+def mean_variance_axis0(X):
+    """Compute mean and variance along axis 0 on a CSR matrix
 
-    This is the private Cython function with pre-allocated meant to be called
-    by the public functions of this module.
+    Parameters
+    ----------
+    X: CSR sparse matrix, shape (n_samples, n_features)
+        Input data.
 
-    means[j] contains the mean of feature j (must be precomputed by the
-    caller)
+    Returns
+    -------
 
-    variances[j] contains the variance of feature j (must be set to zero by
-    the caller)
+    means: float array with shape (n_features,)
+        Feature-wise means
+
+    variances: float array with shape (n_features,)
+        Feature-wise variances
+
     """
+    cdef unsigned int n_samples = X.shape[0]
+    cdef unsigned int n_features = X.shape[1]
 
-    # the column indices for row i are stored in:
-    #    indices[indptr[i]:indices[i+1]]
-    # and their corresponding values are stored in:
-    #    data[indptr[i]:indptr[i+1]]
+    cdef np.ndarray[DOUBLE, ndim=1] X_data = X.data
+    cdef np.ndarray[int, ndim=1] X_indices = X.indices
+    cdef np.ndarray[int, ndim=1] X_indptr = X.indptr
+
     cdef unsigned int i
     cdef unsigned int j
     cdef unsigned int ptr
     cdef unsigned int ind
     cdef double diff
+
+    # means[j] contains the mean of feature j
+    cdef np.ndarray[DOUBLE, ndim=1] means = np.asarray(X.mean(axis=0))[0]
+
+    # variances[j] contains the variance of feature j
+    cdef np.ndarray[DOUBLE, ndim=1] variances = np.zeros_like(means)
 
     # counts[j] contains the number of samples where feature j is non-zero
     counts = np.zeros_like(means)
@@ -60,38 +68,6 @@ cdef _mean_variance_axis0(unsigned int n_samples,
     variances += nz * means ** 2
     variances /= n_samples
 
-
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
-def mean_variance_axis0(X):
-    """Compute mean and variance along axis 0
-
-    Parameters
-    ----------
-    X: CSR sparse matrix, shape (n_samples, n_features)
-        Input data.
-
-    Returns
-    -------
-
-    (means, variances):
-        means: np.mean(X, axis=0)
-        variances: np.var(X, axis=0)
-    """
-    cdef unsigned int n_samples = X.shape[0]
-    cdef unsigned int n_features = X.shape[1]
-
-    cdef np.ndarray[DOUBLE, ndim=1] X_data = X.data
-    cdef np.ndarray[int, ndim=1] X_indices = X.indices
-    cdef np.ndarray[int, ndim=1] X_indptr = X.indptr
-
-    # store the means in a 1d-array
-    cdef np.ndarray[DOUBLE, ndim=1] means = np.asarray(X.mean(axis=0))[0]
-    cdef np.ndarray[DOUBLE, ndim=1] variances = np.zeros_like(means)
-
-    _mean_variance_axis0(n_samples, n_features, X_data, X_indices, X_indptr,
-                         means, variances)
     return means, variances
 
 
@@ -166,20 +142,19 @@ def inplace_csr_row_normalize_l2(X):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def inplace_csr_column_normalize_l2(X):
-    """Inplace column normalize using the l2 norm
+def inplace_csr_column_scale(X, np.ndarray[DOUBLE, ndim=1] scale):
+    """Inplace column scaling of a CSR matrix.
 
-    This amounts to dividing each non-zero component by the variance of the
-    feature assuming a (n_samples, n_features) shape.
+    Scale each feature of the data matrix by multiplying with specific scale
+    provided by the caller assuming a (n_samples, n_features) shape.
 
     Parameters
     ----------
     X: CSR matrix with shape (n_samples, n_features)
         Matrix to normalize using the variance of the features.
 
-    Return
-    ------
-    variances: float array with shape (n_features,)
+    scale: float array with shape (n_features,)
+        Array of precomputed feature-wise values to use for scaling.
     """
     cdef unsigned int n_samples = X.shape[0]
     cdef unsigned int n_features = X.shape[1]
@@ -188,15 +163,7 @@ def inplace_csr_column_normalize_l2(X):
     cdef np.ndarray[int, ndim=1] X_indices = X.indices
     cdef np.ndarray[int, ndim=1] X_indptr = X.indptr
 
-    cdef np.ndarray[DOUBLE, ndim=1] means = np.asarray(X.mean(axis=0))[0]
-    cdef np.ndarray[DOUBLE, ndim=1] variances = np.zeros(n_features)
-    _mean_variance_axis0(n_samples, n_features, X_data, X_indices, X_indptr,
-                         means, variances)
-
     cdef unsigned int i, j
     for i in xrange(n_samples):
         for j in xrange(X_indptr[i], X_indptr[i + 1]):
-            if variances[X_indices[j]] > 0.0:
-                X_data[j] /= variances[X_indices[j]]
-
-    return variances
+            X_data[j] *= scale[X_indices[j]]
