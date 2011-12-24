@@ -80,7 +80,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
 
     Instead the caller is expected to either set explicitly
     `with_mean=False` (in that case, only variance scaling will be
-    performed on the features of the CSR matrix) or to pass `X.toarray()`
+    performed on the features of the CSR matrix) or to call `X.toarray()`
     if he/she expects the materialized dense array to fit in memory.
 
     To avoid memory copy the caller should pass a CSR matrix.
