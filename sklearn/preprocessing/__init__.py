@@ -52,7 +52,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
 
     Parameters
     ----------
-    X : array-like
+    X : array-like or CSR matrix.
         The data to center and scale.
 
     axis : int (0 by default)
@@ -97,12 +97,15 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
             raise ValueError(
                 "Cannot center sparse matrices: pass `with_mean=False` instead"
                 " See docstring for motivation and alternatives.")
+        if axis != 0:
+            raise ValueError("Can only scale sparse matrix on axis=0, "
+                             " got axis=%d" % axis)
         warn_if_not_float(X, estimator='The scale function')
         if copy:
             X = X.copy()
         _, var = mean_variance_axis0(X)
         var[var==0.0] = 1.0
-        inplace_csr_column_scale(X, np.sqrt(var))
+        inplace_csr_column_scale(X, 1 / np.sqrt(var))
     else:
         X = np.asarray(X)
         warn_if_not_float(X, estimator='The scale function')
@@ -180,7 +183,7 @@ class Scaler(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like with shape [n_samples, n_features]
+        X : array-like or CSR matrix with shape [n_samples, n_features]
             The data used to compute the mean and standard deviation
             used for later scaling along the features axis.
         """
@@ -193,7 +196,8 @@ class Scaler(BaseEstimator, TransformerMixin):
             warn_if_not_float(X, estimator=self)
             if self.copy:
                 X = X.copy()
-            self.mean_, var = mean_variance_axis0(X)
+            self.mean_ = None
+            _, var = mean_variance_axis0(X)
             self.std_ = np.sqrt(var)
             self.std_[var == 0.0] = 1.0
             inplace_csr_column_scale(X, 1 / self.std_)
@@ -244,7 +248,7 @@ class Scaler(BaseEstimator, TransformerMixin):
             X = X.tocsr()
             if copy:
                 X = X.copy()
-            inplace_csr_column_scale(X, self.std_, divide=False)
+            inplace_csr_column_scale(X, self.std_)
         else:
             X = np.asarray(X)
             if copy:
