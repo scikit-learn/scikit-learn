@@ -313,12 +313,12 @@ class DPGMM(GMM):
         """Update the variational distributions for the means"""
         n_features = X.shape[1]
         for k in xrange(self.n_components):
-            if self.covariance_type == 'spherical' or self.covariance_type == 'diag':
+            if self.covariance_type in ['spherical', 'diag']:
                 num = np.sum(z.T[k].reshape((-1, 1)) * X, axis=0)
                 num *= self.precs_[k]
                 den = 1. + self.precs_[k] * np.sum(z.T[k])
                 self.means_[k] = num / den
-            elif self.covariance_type == 'tied' or self.covariance_type == 'full':
+            elif self.covariance_type in ['tied', 'full']:
                 if self.covariance_type == 'tied':
                     cov = self.precs_
                 else:
