@@ -139,6 +139,13 @@ def test_char_ngram_analyzer():
     assert_equal(cnga.analyze(text)[:5], expected)
 
 
+def test_tfidf_nonnegative():
+    X = np.array([[1.0, 1.0], [1.0, 0.0]])
+    transformer = TfidfTransformer()
+    X_new = transformer.fit_transform(X)
+    assert_false(np.any(X_new.toarray() < 0))
+
+
 def test_countvectorizer_custom_vocabulary():
     what_we_like = ["pizza", "beer"]
     vect = CountVectorizer(vocabulary=what_we_like)
