@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.sparse import csr_matrix
 from scipy.spatial.distance import cdist
 
 from ..kernel_approximation import RBFSampler
@@ -52,7 +53,7 @@ def test_skewed_chi2_sampler():
 
     # appoximate kernel mapping
     transform = SkewedChi2Sampler(skewedness=c, n_components=1000,
-            random_state=42)
+                                  random_state=42)
     X_trans = transform.fit_transform(X)
     Y_trans = transform.transform(Y)
     kernel_approx = np.dot(X_trans, Y_trans.T)
@@ -74,7 +75,23 @@ def test_rbf_sampler():
 
     np.testing.assert_array_almost_equal(kernel, kernel_approx, 1)
 
+
+def test_input_validation():
+    """Regression test: kernel approx. transformers should work on lists
+
+    No assertions; the old versions would simply crash
+    """
+    X = [[1, 2], [3, 4], [5, 6]]
+    AdditiveChi2Sampler().fit(X).transform(X)
+    SkewedChi2Sampler().fit(X).transform(X)
+    RBFSampler().fit(X).transform(X)
+
+    X = csr_matrix(X)
+    RBFSampler().fit(X).transform(X)
+
+
 if __name__ == "__main__":
     test_additive_chi2_sampler()
+    test_input_validation()
     test_skewed_chi2_sampler()
     test_rbf_sampler()

@@ -543,7 +543,7 @@ class Vectorizer(BaseEstimator):
         self.tfidf.fit(X)
         return self
 
-    def fit_transform(self, raw_documents):
+    def fit_transform(self, raw_documents, y=None):
         """
         Learn the representation and return the vectors.
 
