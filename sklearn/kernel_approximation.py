@@ -11,7 +11,7 @@ approximate kernel feature maps base on Fourier transforms.
 import numpy as np
 from .base import BaseEstimator
 from .base import TransformerMixin
-from .utils import check_random_state
+from .utils import array2d, atleast2d_or_csr, check_random_state
 from .utils.extmath import safe_sparse_dot
 
 
@@ -34,7 +34,7 @@ class RBFSampler(BaseEstimator, TransformerMixin):
 
     Notes
     -----
-    See "Random Features for Large-Scale Kernel Machines" by A, Rahimi and
+    See "Random Features for Large-Scale Kernel Machines" by A. Rahimi and
     Benjamin Recht.
     """
 
@@ -50,7 +50,7 @@ class RBFSampler(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_features)
+        X: {array-like, sparse matrix}, shape (n_samples, n_features)
             Training data, where n_samples in the number of samples
             and n_features is the number of features.
 
@@ -60,6 +60,7 @@ class RBFSampler(BaseEstimator, TransformerMixin):
             Returns the transformer.
         """
 
+        X = atleast2d_or_csr(X)
         self.random_state = check_random_state(self.random_state)
         n_features = X.shape[1]
 
@@ -74,7 +75,7 @@ class RBFSampler(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_features)
+        X: {array-like, sparse matrix}, shape (n_samples, n_features)
             New data, where n_samples in the number of samples
             and n_features is the number of features.
 
@@ -82,6 +83,7 @@ class RBFSampler(BaseEstimator, TransformerMixin):
         -------
         X_new: array-like, shape (n_samples, n_components)
         """
+        X = atleast2d_or_csr(X)
         projection = safe_sparse_dot(X, self.random_weights_)
         return (np.sqrt(2.) / np.sqrt(self.n_components)
                 * np.cos(projection + self.random_offset_))
@@ -132,6 +134,7 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
             Returns the transformer.
         """
 
+        X = array2d(X)
         self.random_state = check_random_state(self.random_state)
         n_features = X.shape[1]
         uniform = self.random_state.uniform(size=(n_features,
@@ -156,6 +159,7 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
         -------
         X_new: array-like, shape (n_samples, n_components)
         """
+        X = array2d(X)
         if (X < 0).any():
             raise ValueError("X may not contain entries smaller than zero.")
 
@@ -210,8 +214,8 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
             elif self.sample_steps == 3:
                 self.sample_interval = 0.4
             else:
-                raise ValueError("If sample_steps is not in [1, 2, 3], you"
-                        "need to provide sample_interval")
+                raise ValueError("If sample_steps is not in [1, 2, 3],"
+                    " you need to provide sample_interval")
         return self
 
     def transform(self, X, y=None):
@@ -219,13 +223,14 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X array-like, shape (n_samples, n_features)
+        X: array-like, shape (n_samples, n_features)
 
         Returns
         -------
         X_new: array-like, shape (n_samples, n_features * (2n + 1))
         """
 
+        X = array2d(X)
         # check if X has zeros. Doesn't play well with np.log.
         if (X <= 0).any():
             raise ValueError("Entries of X must be strictly positive.")
