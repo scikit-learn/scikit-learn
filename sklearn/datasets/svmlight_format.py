@@ -46,7 +46,7 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
 
     Parameters
     ----------
-    f: str or file-like
+    f: str or file-like open in binary mode.
         (Path to) a file to load.
 
     n_features: int or None
@@ -70,7 +70,7 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
     """
     if hasattr(f, "read"):
         return _load_svmlight_file(f, n_features, dtype, multilabel)
-    with open(f) as f:
+    with open(f, 'rb') as f:
         return _load_svmlight_file(f, n_features, dtype, multilabel)
 
 
