@@ -497,7 +497,7 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
     y = []
 
     n_centers = centers.shape[0]
-    n_samples_per_center = [int(n_samples / n_centers)] * n_centers
+    n_samples_per_center = [int(n_samples // n_centers)] * n_centers
 
     for i in xrange(n_samples % n_centers):
         n_samples_per_center[i] += 1
