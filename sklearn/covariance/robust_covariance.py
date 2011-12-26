@@ -333,13 +333,13 @@ def fast_mcd(X, support_fraction=None,
     if (n_samples > 500) and (n_features > 1):
         ## 1. Find candidate supports on subsets
         # a. split the set in subsets of size ~ 300
-        n_subsets = n_samples / 300
-        n_samples_subsets = n_samples / n_subsets
+        n_subsets = n_samples // 300
+        n_samples_subsets = n_samples // n_subsets
         samples_shuffle = random_state.permutation(n_samples)
         h_subset = np.ceil(n_samples_subsets * (n_support / float(n_samples)))
         # b. perform a total of 500 trials
         n_trials_tot = 500
-        n_trials = n_trials_tot / n_subsets
+        n_trials = n_trials_tot // n_subsets
         # c. select 10 best (location, covariance) for each subset
         n_best_sub = 10
         n_best_tot = n_subsets * n_best_sub
