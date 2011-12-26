@@ -155,10 +155,10 @@ def dump_svmlight_file(X, y, f):
     y : array-like, shape = [n_samples]
         Target values.
 
-    f : str or file-like
+    f : str or file-like in binary mode
     """
     if hasattr(f, "write"):
         _dump_svmlight(X, y, f)
     else:
-        with open(f, "w") as f:
+        with open(f, "wb") as f:
             _dump_svmlight(X, y, f)
