@@ -56,12 +56,12 @@ def log_multivariate_normal_density(X, means, covars, covariance_type='diag'):
         List of n_features-dimensional mean vectors for n_components Gaussians.
         Each row corresponds to a single mean vector.
     covars : array_like
-        List of C covariance parameters for each Gaussian.  The shape
+        List of n_components covariance parameters for each Gaussian.  The shape
         depends on `covariance_type`:
-            (C,)      if 'spherical',
-            (D, D)    if 'tied',
-            (C, D)    if 'diag',
-            (C, D, D) if 'full'
+            (n_components, n_features)      if 'spherical',
+            (n_features, n_features)    if 'tied',
+            (n_components, n_features)    if 'diag',
+            (n_components, n_features, n_features) if 'full'
     covariance_type : string
         Type of the covariance parameters.  Must be one of
         'spherical', 'tied', 'diag', 'full'.  Defaults to 'diag'.
@@ -259,7 +259,7 @@ class GMM(BaseEstimator):
         elif self.covariance_type == 'tied':
             return [self.covars_] * self.n_components
         elif self.covariance_type == 'spherical':
-            return [np.eye(self.means.shape[1]) * f for f in self.covars_]
+            return [np.diag(cov) for cov in self.covars_]
 
     def _set_covars(self, covars):
         covars = np.asarray(covars)
@@ -412,6 +412,8 @@ class GMM(BaseEstimator):
             if num_comp_in_X > 0:
                 if self._covariance_type == 'tied':
                     cv = self.covars_
+                elif self._covariance_type == 'spherical':
+                    cv = self.covars_[comp][0]
                 else:
                     cv = self.covars_[comp]
                 X[comp_in_X] = sample_gaussian(
@@ -593,8 +595,9 @@ def _log_multivariate_normal_density_spherical(X, means=0.0, covars=1.0):
     cv = covars.copy()
     if covars.ndim == 1:
         cv = cv[:, np.newaxis]
-    return _log_multivariate_normal_density_diag(X, means,
-                                                 np.tile(cv, (1, X.shape[-1])))
+    if covars.shape[1] == 1:
+        cv = np.tile(cv, (1, X.shape[-1]))
+    return _log_multivariate_normal_density_diag(X, means, cv)
 
 
 def _log_multivariate_normal_density_tied(X, means, covars):
@@ -676,17 +679,18 @@ def _validate_covars(covars, covariance_type, n_components):
 
 
 def _distribute_covar_matrix_to_match_covariance_type(
-    tiedcv, covariance_type, n_components):
+    tied_cv, covariance_type, n_components):
     """Create all the covariance matrices from a given template
     """
     if covariance_type == 'spherical':
-        cv = np.tile(np.diag(tiedcv).mean(), n_components)
+        cv = np.tile(tied_cv.mean() * np.ones(tied_cv.shape[1]), 
+                     (n_components, 1))
     elif covariance_type == 'tied':
-        cv = tiedcv
+        cv = tied_cv
     elif covariance_type == 'diag':
-        cv = np.tile(np.diag(tiedcv), (n_components, 1))
+        cv = np.tile(np.diag(tied_cv), (n_components, 1))
     elif covariance_type == 'full':
-        cv = np.tile(tiedcv, (n_components, 1, 1))
+        cv = np.tile(tied_cv, (n_components, 1, 1))
     else:
         raise ValueError("covariance_type must be one of " +
                          "'spherical', 'tied', 'diag', 'full'")
@@ -704,7 +708,8 @@ def _covar_mstep_diag(gmm, X, responsibilities, weighted_X_sum, norm,
 
 def _covar_mstep_spherical(*args):
     """Performing the covariance M step for spherical cases"""
-    return _covar_mstep_diag(*args).mean(axis=1)
+    cv = _covar_mstep_diag(*args)
+    return np.tile(cv.mean(axis=1)[:, np.newaxis], (1, cv.shape[1]))
 
 
 def _covar_mstep_full(gmm, X, responsibilities, weighted_X_sum, norm, 
@@ -722,10 +727,6 @@ def _covar_mstep_full(gmm, X, responsibilities, weighted_X_sum, norm,
         mu = gmm.means_[c][np.newaxis]
         cv[c] = (avg_cv - np.dot(mu.T, mu) + min_covar * np.eye(n_features))
     return cv
-
-
-def _covar_mstep_tied2(*args):
-    return _covar_mstep_full(*args).mean(axis=0)
 
 
 def _covar_mstep_tied(gmm, X, responsibilities, weighted_X_sum, norm, 

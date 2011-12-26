@@ -149,7 +149,7 @@ class DPGMM(GMM):
     n_components: int, optional
         Number of mixture components. Defaults to 1.
 
-    covariance_type: string (read-only), optional
+    covariance_type: string, optional
         String describing the type of covariance parameters to
         use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
         Defaults to 'diag'.
@@ -167,11 +167,11 @@ class DPGMM(GMM):
 
     Attributes
     ----------
-    covariance_type : string (read-only)
+    covariance_type : string
         String describing the type of covariance parameters used by
         the DP-GMM.  Must be one of 'spherical', 'tied', 'diag', 'full'.
 
-    n_components : int (read-only)
+    n_components : int
         Number of mixture components.
 
     weights : array, shape (`n_components`,)
@@ -628,7 +628,7 @@ class VBGMM(DPGMM):
     n_components: int, optional
         Number of mixture components. Defaults to 1.
 
-    covariance_type: string (read-only), optional
+    covariance_type: string, optional
         String describing the type of covariance parameters to
         use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
         Defaults to 'diag'.
@@ -643,12 +643,12 @@ class VBGMM(DPGMM):
 
     Attributes
     ----------
-    covariance_type : string (read-only)
+    covariance_type : string
         String describing the type of covariance parameters used by
         the DP-GMM.  Must be one of 'spherical', 'tied', 'diag', 'full'.
     n_features : int
         Dimensionality of the Gaussians.
-    n_components : int (read-only)
+    n_components : int
         Number of mixture components.
     weights : array, shape (`n_components`,)
         Mixing weights for each mixture component.

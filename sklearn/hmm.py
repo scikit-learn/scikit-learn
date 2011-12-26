@@ -751,11 +751,10 @@ class GaussianHMM(_BaseHMM):
                           - 2 * self._means * stats['obs']
                           + self._means ** 2 * denom)
                 cv_den = max(covars_weight - 1, 0) + denom
+                self._covars = (covars_prior + cv_num) / cv_den
                 if self._covariance_type == 'spherical':
-                    self._covars = (covars_prior / cv_den.mean(axis=1)
-                                   + np.mean(cv_num / cv_den, axis=1))
-                elif self._covariance_type == 'diag':
-                    self._covars = (covars_prior + cv_num) / cv_den
+                    self._covars = np.tile(self._covars.mean(1)[:, np.newaxis], 
+                                           (1, self._covars.shape[1]))
             elif self._covariance_type in ('tied', 'full'):
                 cvnum = np.empty((self.n_components, self.n_features,
                                   self.n_features))
@@ -978,9 +977,8 @@ class GMMHMM(_BaseHMM):
                                 g.n_components)
             norm = tmp_gmm._do_mstep(obs, gmm_posteriors, params)
             
-            if hasattr(tmp_gmm,  'covars'):
-                if np.any(np.isnan(tmp_gmm.covars)):
-                    raise ValueError
+            if np.any(np.isnan(tmp_gmm.covars)):
+                raise ValueError
 
             stats['norm'][state] += norm
             if 'm' in params:
