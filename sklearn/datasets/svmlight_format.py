@@ -128,13 +128,15 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
 
 def _dump_svmlight(X, y, f):
     if X.shape[0] != y.shape[0]:
-        raise ValueError("X.shape[0] and y.shape[0] should be the same.")
+        raise ValueError("X.shape[0] and y.shape[0] should be the same, "
+                         "got: %r and %r instead." % (X.shape[0], y.shape[0]))
 
     is_sp = int(hasattr(X, "tocsr"))
 
     for i in xrange(X.shape[0]):
-        s = " ".join(["%d:%f" % (j + 1, X[i, j]) for j in X[i].nonzero()[is_sp]])
-        f.write("%f %s\n" % (y[i], s))
+        s = u" ".join([u"%d:%f" % (j + 1, X[i, j])
+                       for j in X[i].nonzero()[is_sp]])
+        f.write((u"%f %s\n" % (y[i], s)).encode('ascii'))
 
 
 def dump_svmlight_file(X, y, f):
