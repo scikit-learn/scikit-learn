@@ -249,12 +249,14 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
 
     n_components : int or None
         Number of components, if n_components is not set all components
-        are kept
+        are kept.
 
-    init :  'nndsvd' |  'nndsvda' | 'nndsvdar' | int | RandomState
+    init : 'nndsvd' | 'nndsvda' | 'nndsvdar' | int | RandomState
         Method used to initialize the procedure.
         Default: 'nndsvdar'
+
         Valid options::
+
             'nndsvd': Nonnegative Double Singular Value Decomposition (NNDSVD)
                 initialization (better for sparseness)
             'nndsvda': NNDSVD with zeros filled with the average of X

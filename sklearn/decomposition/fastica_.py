@@ -181,7 +181,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     non-Gaussian (independent) components i.e. X = AS where columns of S
     contain the independent components and A is a linear mixing
     matrix. In short ICA attempts to `un-mix' the data by estimating an
-    un-mixing matrix W where S = W K X.
+    un-mixing matrix W where ``S = W K X.``
 
     This implementation was originally made for data of shape
     [n_features, n_samples]. Now the input is transposed
@@ -189,10 +189,9 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     faster for Fortran-ordered input.
 
     Implemented using FastICA:
-
-    * A. Hyvarinen and E. Oja, Independent Component Analysis:
-      Algorithms and Applications, Neural Networks, 13(4-5), 2000,
-      pp. 411-430
+    `A. Hyvarinen and E. Oja, Independent Component Analysis:
+    Algorithms and Applications, Neural Networks, 13(4-5), 2000,
+    pp. 411-430`
 
     """
     # make interface compatible with other decompositions
@@ -331,10 +330,10 @@ class FastICA(BaseEstimator):
     Notes
     -----
 
-    Implementation based on :
-    A. Hyvarinen and E. Oja, Independent Component Analysis:
+    Implementation based on
+    `A. Hyvarinen and E. Oja, Independent Component Analysis:
     Algorithms and Applications, Neural Networks, 13(4-5), 2000,
-    pp. 411-430
+    pp. 411-430`
 
     """
 
