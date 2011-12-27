@@ -44,7 +44,6 @@ def mean_variance_axis0(X):
 
     cdef unsigned int i
     cdef unsigned int j
-    cdef unsigned int ptr
     cdef unsigned int ind
     cdef double diff
 
