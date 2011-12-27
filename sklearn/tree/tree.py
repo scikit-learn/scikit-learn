@@ -372,12 +372,14 @@ class BaseDecisionTree(BaseEstimator):
                        min_split,
                        min_density,
                        max_features,
+                       compute_importances,
                        random_state):
         self.criterion = criterion
         self.max_depth = max_depth
         self.min_split = min_split
         self.min_density = min_density
         self.max_features = max_features
+        self.compute_importances = compute_importances
         self.random_state = check_random_state(random_state)
 
         self.n_features_ = None
@@ -386,6 +388,7 @@ class BaseDecisionTree(BaseEstimator):
         self.find_split_ = _tree._find_best_split
 
         self.tree_ = None
+        self.feature_importances_ = None
 
     def fit(self, X, y, sample_mask=None, X_argsorted=None):
         """Build a decision tree from the training set (X, y).
@@ -448,6 +451,25 @@ class BaseDecisionTree(BaseEstimator):
                                 self.find_split_, sample_mask=sample_mask,
                                 X_argsorted=X_argsorted)
 
+        # Compute feature importances
+        if self.compute_importances:
+            importances = np.zeros(self.n_features_)
+
+            for node in xrange(self.tree_.node_count):
+                if (self.tree_.children[node, 0]
+                    == self.tree_.children[node, 1]
+                    == Tree.LEAF):
+                    continue
+
+                else:
+                    importances[self.tree_.feature[node]] += \
+                        self.tree_.n_samples[node] * \
+                            (self.tree_.init_error[node] -
+                             self.tree_.best_error[node])
+
+            importances /= np.sum(importances)
+            self.feature_importances_ = importances
+
         return self
 
     def predict(self, X):
@@ -487,43 +509,6 @@ class BaseDecisionTree(BaseEstimator):
 
         return predictions
 
-    def feature_importances(self):
-        """Compute the feature importances of all features.
-
-        The importance I(f) of a feature f is computed as the (normalized)
-        total reduction of error brought by that feature. It is also known as
-        the Gini importance [1].
-
-        .. math::
-
-            I(f) = \sum_{nodes A for which f is used} n_samples(A) * \Delta err
-
-        Returns
-        -------
-        importances : array of shape = [n_features]
-            The feature importances.
-
-        References
-        ----------
-        .. [1] L. Breiman, and A. Cutler, "Random Forests",
-               http://www.stat.berkeley.edu/~breiman/RandomForests
-        """
-        tree = self.tree_
-        importances = np.zeros(self.n_features_)
-
-        for node in xrange(tree.node_count):
-            if tree.children[node, 0] == tree.children[node, 1] == Tree.LEAF:
-                continue
-
-            else:
-                importances[tree.feature[node]] += \
-                    tree.n_samples[node] * (tree.init_error[node] -
-                                            tree.best_error[node])
-
-        importances /= np.sum(importances)
-
-        return importances
-
 
 class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     """A decision tree classifier.
@@ -555,11 +540,30 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         If None, all features are considered, otherwise max_features are chosen
         at random.
 
+    compute_importances : boolean, optional (default=True)
+        Whether feature importances are computed and stored into the
+        ``feature_importances_`` attribute when calling fit.
+
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
+
+    Attributes
+    ----------
+    tree_ : Tree object
+        The underlying Tree object.
+
+    feature_importances_ : array of shape = [n_features]
+        The feature mportances (the higher, the more important the feature).
+        The importance I(f) of a feature f is computed as the (normalized)
+        total reduction of error brought by that feature. It is also known as
+        the Gini importance [4].
+
+        .. math::
+
+            I(f) = \sum_{nodes A for which f is used} n_samples(A) * \Delta err
 
     References
     ----------
@@ -570,6 +574,9 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
     .. [3] T. Hastie, R. Tibshirani and J. Friedman. "Elements of Statistical
            Learning", Springer, 2009.
+
+    .. [4] L. Breiman, and A. Cutler, "Random Forests",
+           http://www.stat.berkeley.edu/~breiman/RandomForests/cc_home.htm
 
     See also
     --------
@@ -595,12 +602,14 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                        min_split=1,
                        min_density=0.1,
                        max_features=None,
+                       compute_importances=True,
                        random_state=None):
         super(DecisionTreeClassifier, self).__init__(criterion,
                                                      max_depth,
                                                      min_split,
                                                      min_density,
                                                      max_features,
+                                                     compute_importances,
                                                      random_state)
 
     def predict_proba(self, X):
@@ -680,11 +689,30 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         If None, all features are considered, otherwise max_features are chosen
         at random.
 
+    compute_importances : boolean, optional (default=True)
+        Whether feature importances are computed and stored into the
+        ``feature_importances_`` attribute when calling fit.
+
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
+
+    Attributes
+    ----------
+    tree_ : Tree object
+        The underlying Tree object.
+
+    feature_importances_ : array of shape = [n_features]
+        The feature mportances (the higher, the more important the feature).
+        The importance I(f) of a feature f is computed as the (normalized)
+        total reduction of error brought by that feature. It is also known as
+        the Gini importance [4].
+
+        .. math::
+
+            I(f) = \sum_{nodes A for which f is used} n_samples(A) * \Delta err
 
     References
     ----------
@@ -695,6 +723,9 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
 
     .. [3] T. Hastie, R. Tibshirani and J. Friedman. "Elements of Statistical
            Learning", Springer, 2009.
+
+    .. [4] L. Breiman, and A. Cutler, "Random Forests",
+           http://www.stat.berkeley.edu/~breiman/RandomForests/cc_home.htm
 
     See also
     --------
@@ -722,12 +753,14 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
                        min_split=1,
                        min_density=0.1,
                        max_features=None,
+                       compute_importances=True,
                        random_state=None):
         super(DecisionTreeRegressor, self).__init__(criterion,
                                                     max_depth,
                                                     min_split,
                                                     min_density,
                                                     max_features,
+                                                    compute_importances,
                                                     random_state)
 
 
@@ -757,12 +790,14 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
                        min_split=1,
                        min_density=0.1,
                        max_features=None,
+                       compute_importances=True,
                        random_state=None):
         super(ExtraTreeClassifier, self).__init__(criterion,
                                                   max_depth,
                                                   min_split,
                                                   min_density,
                                                   max_features,
+                                                  compute_importances,
                                                   random_state)
 
         self.find_split_ = _tree._find_best_random_split
@@ -794,12 +829,14 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
                        min_split=1,
                        min_density=0.1,
                        max_features=None,
+                       compute_importances=True,
                        random_state=None):
         super(ExtraTreeRegressor, self).__init__(criterion,
                                                  max_depth,
                                                  min_split,
                                                  min_density,
                                                  max_features,
+                                                 compute_importances,
                                                  random_state)
 
         self.find_split_ = _tree._find_best_random_split
