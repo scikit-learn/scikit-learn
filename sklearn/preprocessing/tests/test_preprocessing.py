@@ -150,9 +150,19 @@ def test_scaler_without_centering():
 
 def test_scale_sparse_with_mean_raise_exception():
     rng = np.random.RandomState(42)
-    X_csr = sp.csr_matrix(rng.randn(4, 5))
+    X = rng.randn(4, 5)
+    X_csr = sp.csr_matrix(X)
+
+    # check scaling and fit with direct calls on sparse data
     assert_raises(ValueError, scale, X_csr, with_mean=True)
     assert_raises(ValueError, Scaler(with_mean=True).fit, X_csr)
+
+    # check transform and inverse_transform after a fit on a dense array
+    scaler = Scaler(with_mean=True).fit(X)
+    assert_raises(ValueError, scaler.transform, X_csr)
+
+    X_transformed_csr = sp.csr_matrix(scaler.transform(X))
+    assert_raises(ValueError, scaler.inverse_transform, X_transformed_csr)
 
 
 def test_scale_function_without_centering():

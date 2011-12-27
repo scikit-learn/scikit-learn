@@ -75,7 +75,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     Note
     ----
     This implementation will refuse to center scipy.sparse matrices
-    since it would make it non-sparse and would potentially crash the
+    since it would make them non-sparse and would potentially crash the
     program with memory exhaustion problems.
 
     Instead the caller is expected to either set explicitly
@@ -219,6 +219,10 @@ class Scaler(BaseEstimator, TransformerMixin):
         """
         copy = copy if copy is not None else self.copy
         if sp.issparse(X):
+            if self.with_mean:
+                raise ValueError(
+                    "Cannot center sparse matrices: pass `with_mean=False` "
+                    "instead See docstring for motivation and alternatives.")
             warn_if_not_float(X, estimator=self)
             X = X.tocsr()
             if self.copy:
@@ -245,6 +249,10 @@ class Scaler(BaseEstimator, TransformerMixin):
         """
         copy = copy if copy is not None else self.copy
         if sp.issparse(X):
+            if self.with_mean:
+                raise ValueError(
+                    "Cannot uncenter sparse matrices: pass `with_mean=False` "
+                    "instead See docstring for motivation and alternatives.")
             X = X.tocsr()
             if copy:
                 X = X.copy()
