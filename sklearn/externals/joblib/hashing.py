@@ -10,9 +10,16 @@ hashing of numpy arrays.
 import pickle
 import hashlib
 import sys
-import cStringIO
 import types
 
+if sys.version_info[0] == 3:
+    # in python3, StringIO does not accept binary data
+    # see http://packages.python.org/six/
+    import io
+    StringIO = io.BytesIO
+else:
+    import cStringIO
+    StringIO = cStringIO.StringIO
 
 class Hasher(pickle.Pickler):
     """ A subclass of pickler, to do cryptographic hashing, rather than
@@ -20,7 +27,7 @@ class Hasher(pickle.Pickler):
     """
 
     def __init__(self, hash_name='md5'):
-        self.stream = cStringIO.StringIO()
+        self.stream = StringIO()
         pickle.Pickler.__init__(self, self.stream, protocol=2)
         # Initialise the hash obj
         self._hash = hashlib.new(hash_name)
