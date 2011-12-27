@@ -191,12 +191,13 @@ def locally_linear_embedding(
         regularization constant, multiplies the trace of the local covariance
         matrix of the distances.
 
-
     eigen_solver : string, {'auto', 'arpack', 'dense'}
         auto : algorithm will attempt to choose the best method for input data
+
         arpack : use arnoldi iteration in shift-invert mode.
                     For this method, M may be a dense matrix, sparse matrix,
                     or general linear operator.
+
         dense  : use standard dense matrix operations for the eigenvalue
                     decomposition.  For this method, M must be an array
                     or matrix type.  This method should be avoided for
@@ -496,9 +497,11 @@ class LocallyLinearEmbedding(BaseEstimator):
 
     eigen_solver : string, {'auto', 'arpack', 'dense'}
         auto : algorithm will attempt to choose the best method for input data
+
         arpack : use arnoldi iteration in shift-invert mode.
                     For this method, M may be a dense matrix, sparse matrix,
                     or general linear operator.
+
         dense  : use standard dense matrix operations for the eigenvalue
                     decomposition.  For this method, M must be an array
                     or matrix type.  This method should be avoided for
