@@ -70,7 +70,7 @@ print 'done in %.2fs.' % (time() - t0)
 
 print 'Learning the dictionary... '
 t0 = time()
-dico = MiniBatchDictionaryLearning(n_atoms=100, alpha=1e-2, n_iter=500)
+dico = MiniBatchDictionaryLearning(n_atoms=100, alpha=1, n_iter=500)
 V = dico.fit(data).components_
 dt = time() - t0
 print 'done in %.2fs.' % dt
@@ -86,6 +86,7 @@ pl.suptitle('Dictionary learned from Lena patches\n' +
             'Train time %.1fs on %d patches' % (dt, len(data)),
             fontsize=16)
 pl.subplots_adjust(0.08, 0.02, 0.92, 0.85, 0.08, 0.23)
+
 
 ###############################################################################
 # Display the distorted image

@@ -7,6 +7,7 @@ example files.
 Files that generate images should start with 'plot'
 
 """
+from time import time
 import os
 import shutil
 import traceback
@@ -256,6 +257,7 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
                                     os.stat(src_file).st_mtime):
             # We need to execute the code
             print 'plotting %s' % fname
+            t0 = time()
             import matplotlib.pyplot as plt
             plt.close('all')
             cwd = os.getcwd()
@@ -304,6 +306,8 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
             finally:
                 os.chdir(cwd)
                 sys.stdout = orig_stdout
+
+            print " - time elapsed : %.2g sec" % (time() - t0)
         else:
             figure_list = [f[len(image_dir):]
                             for f in glob.glob(image_path % '[1-9]')]
@@ -339,3 +343,21 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
 def setup(app):
     app.connect('builder-inited', generate_example_rst)
     app.add_config_value('plot_gallery', True, 'html')
+
+    # Sphinx hack: sphinx copies generated images to the build directory
+    #  each time the docs are made.  If the desired image name already
+    #  exists, it appends a digit to prevent overwrites.  The problem is,
+    #  the directory is never cleared.  This means that each time you build
+    #  the docs, the number of images in the directory grows.
+    #
+    # This question has been asked on the sphinx development list, but there
+    #  was no response: http://osdir.com/ml/sphinx-dev/2011-02/msg00123.html
+    #
+    # The following is a hack that prevents this behavior by clearing the
+    #  image build directory each time the docs are built.  If sphinx
+    #  changes their layout between versions, this will not work (though
+    #  it should probably not cause a crash).  Tested successfully
+    #  on Sphinx 1.0.7
+    build_image_dir = '_build/html/_images'
+    if os.path.exists(build_image_dir):
+        shutil.rmtree(build_image_dir)

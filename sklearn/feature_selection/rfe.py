@@ -76,8 +76,10 @@ class RFE(BaseEstimator):
     >>> selector.ranking_
     array([1, 1, 1, 1, 1, 6, 4, 3, 2, 5])
 
-    References
-    ----------
+    Notes
+    -----
+    **References**:
+
     .. [1] Guyon, I., Weston, J., Barnhill, S., & Vapnik, V., "Gene selection
            for cancer classification using support vector machines",
            Mach. Learn., 46(1-3), 389--422, 2002.
@@ -147,8 +149,8 @@ class RFE(BaseEstimator):
         X : array of shape [n_samples, n_features]
             The input samples.
 
-        Return
-        ------
+        Returns
+        -------
         y : array of shape [n_samples]
             The predicted target values.
         """
@@ -176,8 +178,8 @@ class RFE(BaseEstimator):
         X : array of shape [n_samples, n_features]
             The input samples.
 
-        Return
-        ------
+        Returns
+        -------
         X_r : array of shape [n_samples, n_selected_features]
             The input samples with only the features selected during the
             elimination.
@@ -251,8 +253,10 @@ class RFECV(RFE):
     >>> selector.ranking_
     array([1, 1, 1, 1, 1, 6, 4, 3, 2, 5])
 
-    References
-    ----------
+    Notes
+    -----
+    **References**:
+
     .. [1] Guyon, I., Weston, J., Barnhill, S., & Vapnik, V., "Gene selection
            for cancer classification using support vector machines",
            Mach. Learn., 46(1-3), 389--422, 2002.

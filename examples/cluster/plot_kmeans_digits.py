@@ -52,9 +52,9 @@ print "n_digits: %d, \t n_samples %d, \t n_features %d" % (n_digits,
                                                         n_samples, n_features)
 
 
-print 79*'_'
-print '% 9s    time  inertia    homo   compl  v-meas     ARI     AMI  silhouette' % (
-    'init')
+print 79 * '_'
+print ('% 9s' % 'init'
+      '    time  inertia    homo   compl  v-meas     ARI     AMI  silhouette')
 
 
 def bench_k_means(estimator, name, data):
@@ -84,7 +84,7 @@ pca = PCA(n_components=n_digits).fit(data)
 bench_k_means(KMeans(init=pca.components_, k=n_digits, n_init=1),
               name="PCA-based",
               data=data)
-print 79*'_'
+print 79 * '_'
 
 ###############################################################################
 # Visualize the results on PCA-reduced data

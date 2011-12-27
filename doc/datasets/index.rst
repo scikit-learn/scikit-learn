@@ -1,11 +1,3 @@
-..
-    For doctests:
-
-    >>> import numpy as np
-    >>> import os
-    >>> from sklearn import datasets
-    >>> datasets.mldata.urllib2 = mock_urllib2
-
 .. _datasets:
 
 =========================
@@ -124,6 +116,7 @@ can be used to build artifical datasets of controled size and complexity.
    :template: function.rst
 
    make_classification
+   make_multilabel_classification
    make_regression
    make_blobs
    make_friedman1

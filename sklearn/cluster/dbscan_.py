@@ -54,7 +54,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='euclidean',
     -----
     See examples/plot_dbscan.py for an example.
 
-    Reference:
+    **References**:
     Ester, M., H. P. Kriegel, J. Sander, and X. Xu, “A Density-Based
     Algorithm for Discovering Clusters in Large Spatial Databases with Noise”.
     In: Proceedings of the 2nd International Conference on Knowledge Discovery
@@ -138,11 +138,6 @@ class DBSCAN(BaseEstimator):
     verbose: boolean, optional
         The verbosity level
 
-    Methods
-    -------
-    fit:
-        Compute the clustering
-
     Attributes
     ----------
     core_sample_indices_: array, shape = [n_core_samples]
@@ -159,7 +154,7 @@ class DBSCAN(BaseEstimator):
     -----
     See examples/plot_dbscan.py for an example.
 
-    Reference:
+    **References**:
     Ester, M., H. P. Kriegel, J. Sander, and X. Xu, “A Density-Based
     Algorithm for Discovering Clusters in Large Spatial Databases with Noise”.
     In: Proceedings of the 2nd International Conference on Knowledge Discovery

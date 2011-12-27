@@ -402,8 +402,8 @@ class BaseDecisionTree(BaseEstimator):
             The target values (integers that correspond to classes in
             classification, real numbers in regression).
 
-        Return
-        ------
+        Returns
+        -------
         self : object
             Returns self.
         """
@@ -565,8 +565,14 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
             I(f) = \sum_{nodes A for which f is used} n_samples(A) * \Delta err
 
-    References
-    ----------
+    See also
+    --------
+    DecisionTreeRegressor
+
+    Notes
+    -----
+    **References**:
+
     .. [1] http://en.wikipedia.org/wiki/Decision_tree_learning
 
     .. [2] L. Breiman, J. Friedman, R. Olshen, and C. Stone, "Classification
@@ -714,8 +720,10 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
 
             I(f) = \sum_{nodes A for which f is used} n_samples(A) * \Delta err
 
-    References
-    ----------
+    Notes
+    -----
+    **References**:
+
     .. [1] http://en.wikipedia.org/wiki/Decision_tree_learning
 
     .. [2] L. Breiman, J. Friedman, R. Olshen, and C. Stone, "Classification
@@ -780,8 +788,10 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
     --------
     ExtraTreeRegressor, ExtraTreesClassifier, ExtraTreesRegressor
 
-    References
-    ----------
+    Notes
+    -----
+    **References**:
+
     .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
            Machine Learning, 63(1), 3-42, 2006.
     """
@@ -819,8 +829,10 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     --------
     ExtraTreeClassifier, ExtraTreesClassifier, ExtraTreesRegressor
 
-    References
-    ----------
+    Notes
+    -----
+    **References**:
+
     .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
            Machine Learning, 63(1), 3-42, 2006.
     """

@@ -1,5 +1,6 @@
+.. _mixture_examples:
 
 Gaussian Mixture Models
 -----------------------
 
-Examples concerning the `sklearn.mixture` package.
+Examples concerning the :mod:`sklearn.mixture` package.

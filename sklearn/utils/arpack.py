@@ -1154,12 +1154,6 @@ def eigs(A, k=6, M=None, sigma=None, which='LM', v0=None,
     eigsh : eigenvalues and eigenvectors for symmetric matrix A
     svds : singular value decomposition for a matrix A
 
-    Notes
-    -----
-    This function is a wrapper to the ARPACK [1]_ SNEUPD, DNEUPD, CNEUPD,
-    ZNEUPD, functions which use the Implicitly Restarted Arnoldi Method to
-    find the eigenvalues and eigenvectors [2]_.
-
     Examples
     --------
     Find 6 eigenvectors of the identity matrix:
@@ -1172,8 +1166,14 @@ def eigs(A, k=6, M=None, sigma=None, which='LM', v0=None,
     >>> vecs.shape
     (13, 6)
 
-    References
-    ----------
+    Notes
+    -----
+    This function is a wrapper to the ARPACK [1]_ SNEUPD, DNEUPD, CNEUPD,
+    ZNEUPD, functions which use the Implicitly Restarted Arnoldi Method to
+    find the eigenvalues and eigenvectors [2]_.
+
+    **References**:
+
     .. [1] ARPACK Software, http://www.caam.rice.edu/software/ARPACK/
     .. [2] R. B. Lehoucq, D. C. Sorensen, and C. Yang,  ARPACK USERS GUIDE:
        Solution of Large Scale Eigenvalue Problems by Implicitly Restarted
@@ -1410,8 +1410,9 @@ def eigsh(A, k=6, M=None, sigma=None, which='LM', v0=None,
     >>> vecs.shape
     (13, 6)
 
-    References
-    ----------
+    Notes
+    -----
+    **References**:
     .. [1] ARPACK Software, http://www.caam.rice.edu/software/ARPACK/
     .. [2] R. B. Lehoucq, D. C. Sorensen, and C. Yang,  ARPACK USERS GUIDE:
        Solution of Large Scale Eigenvalue Problems by Implicitly Restarted
@@ -1553,8 +1554,8 @@ def svds(A, k=6, ncv=None, tol=0):
     tol : float, optional
         Tolerance for singular values. Zero (default) means machine precision.
 
-    Note
-    ----
+    Notes
+    -----
     This is a naive implementation using an eigensolver on A.H * A or
     A * A.H, depending on which one is more efficient.
 

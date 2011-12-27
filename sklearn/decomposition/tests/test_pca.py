@@ -2,8 +2,6 @@ import numpy as np
 from numpy.random import randn
 from nose.tools import assert_true
 from nose.tools import assert_equal
-from nose.tools import assert_raises
-from nose import SkipTest
 
 from scipy.sparse import csr_matrix
 from numpy.testing import assert_almost_equal, assert_array_almost_equal

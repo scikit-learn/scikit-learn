@@ -17,7 +17,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import normalize
 from ..utils.fixes import Counter
 
-ENGLISH_STOP_WORDS = set([
+ENGLISH_STOP_WORDS = frozenset([
     "a", "about", "above", "across", "after", "afterwards", "again", "against",
     "all", "almost", "alone", "along", "already", "also", "although", "always",
     "am", "among", "amongst", "amoungst", "amount", "an", "and", "another",
@@ -108,6 +108,15 @@ DEFAULT_PREPROCESSOR = RomanPreprocessor()
 DEFAULT_TOKEN_PATTERN = r"\b\w\w+\b"
 
 
+def _check_stop_list(stop):
+    if stop == "english":
+        return ENGLISH_STOP_WORDS
+    elif isinstance(stop, str) or isinstance(stop, unicode):
+        raise ValueError("not a built-in stop list: %s" % stop)
+    else:               # assume it's a collection
+        return stop
+
+
 class WordNGramAnalyzer(BaseEstimator):
     """Simple analyzer: transform text document into a sequence of word tokens
 
@@ -117,11 +126,15 @@ class WordNGramAnalyzer(BaseEstimator):
       - token extraction using unicode regexp word bounderies for token of
         minimum size of 2 symbols (by default)
       - output token n-grams (unigram only by default)
+
+    The stop words argument may be "english" for a built-in list of English
+    stop words or a collection of strings. Note that stop word filtering is
+    performed after preprocessing, which may include accent stripping.
     """
 
     def __init__(self, charset='utf-8', min_n=1, max_n=1,
                  preprocessor=DEFAULT_PREPROCESSOR,
-                 stop_words=ENGLISH_STOP_WORDS,
+                 stop_words="english",
                  token_pattern=DEFAULT_TOKEN_PATTERN):
         self.charset = charset
         self.stop_words = stop_words
@@ -443,8 +456,10 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         extra document was seen containing every term in the collection
         exactly once. Prevents zero divisions.
 
-    References
-    ----------
+    Notes
+    -----
+    **References**:
+
     R. Baeza-Yates and B. Ribeiro-Neto (2011). Modern Information Retrieval.
         Addison Wesley, pp. 68–74.
     C.D. Manning, H. Schütze and P. Raghavan (2008). Introduction to
@@ -528,7 +543,7 @@ class Vectorizer(BaseEstimator):
         self.tfidf.fit(X)
         return self
 
-    def fit_transform(self, raw_documents):
+    def fit_transform(self, raw_documents, y=None):
         """
         Learn the representation and return the vectors.
 

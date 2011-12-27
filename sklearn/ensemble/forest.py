@@ -321,13 +321,15 @@ class RandomForestClassifier(ForestClassifier):
     feature_importances_ : array of shape = [n_features]
         The feature mportances (the higher, the more important the feature).
 
+    Notes
+    -----
+    **References**:
+
+    .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
+
     See also
     --------
     RandomForestRegressor, ExtraTreesClassifier, ExtraTreesRegressor
-
-    References
-    ----------
-    .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
     """
     def __init__(self, n_estimators=10,
                        criterion="gini",
@@ -409,13 +411,15 @@ class RandomForestRegressor(ForestRegressor):
     feature_importances_ : array of shape = [n_features]
         The feature mportances (the higher, the more important the feature).
 
+    Notes
+    -----
+    **References**:
+
+    .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
+
     See also
     --------
     RandomForestClassifier, ExtraTreesClassifier, ExtraTreesRegressor
-
-    References
-    ----------
-    .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
     """
     def __init__(self, n_estimators=10,
                        criterion="mse",
@@ -498,14 +502,17 @@ class ExtraTreesClassifier(ForestClassifier):
     feature_importances_ : array of shape = [n_features]
         The feature mportances (the higher, the more important the feature).
 
+    Notes
+    -----
+    **References**:
+
+    .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
+           Machine Learning, 63(1), 3-42, 2006.
+
     See also
     --------
     ExtraTreesRegressor, RandomForestClassifier, RandomForestRegressor
 
-    References
-    ----------
-    .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
-           Machine Learning, 63(1), 3-42, 2006.
     """
     def __init__(self, n_estimators=10,
                        criterion="gini",
@@ -588,14 +595,17 @@ class ExtraTreesRegressor(ForestRegressor):
     feature_importances_ : array of shape = [n_features]
         The feature mportances (the higher, the more important the feature).
 
+    Notes
+    -----
+    **References**:
+
+    .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
+           Machine Learning, 63(1), 3-42, 2006.
+
     See also
     --------
     ExtraTreesRegressor, RandomForestClassifier, RandomForestRegressor
 
-    References
-    ----------
-    .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
-           Machine Learning, 63(1), 3-42, 2006.
     """
     def __init__(self, n_estimators=10,
                        criterion="mse",
