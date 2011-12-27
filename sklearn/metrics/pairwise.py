@@ -9,24 +9,25 @@ Distance metrics are a function d(a, b) such that d(a, b) < d(a, c) if objects
 a and b are considered "more similar" to objects a and c. Two objects exactly
 alike would have a distance of zero.
 One of the most popular examples is Euclidean distance.
-To be a 'true' metric, it must obey the following four conditions:
+To be a 'true' metric, it must obey the following four conditions::
 
-1. d(a, b) >= 0, for all a and b
-2. d(a, b) == 0, if and only if a = b, positive definiteness
-3. d(a, b) == d(b, a), symmetry
-4. d(a, c) <= d(a, b) + d(b, c), the triangle inequality
+1. ``d(a, b) >= 0``, for all a and b
+2. ``d(a, b) == 0``, if and only if ``a = b``, positive definiteness
+3. ``d(a, b) == d(b, a)``, symmetry
+4. ``d(a, c) <= d(a, b) + d(b, c)``, the triangle inequality
 
-Kernels are measures of similarity, i.e. s(a, b) > s(a, c) if objects a and b
+Kernels are measures of similarity, i.e. ``s(a, b) > s(a, c)`` if objects a and b
 are considered "more similar" to objects a and c. A kernel must also be
 positive semi-definite.
 
+dified Locally Linear EmbeddingUsing Multiple Weights
 There are a number of ways to convert between a distance metric and a
 similarity measure, such as a kernel. Let D be the distance, and S be the
 kernel:
 
-1. S = np.exp(-D * gamma), where one heuristic for choosing
-   gamma is 1 / num_features
-2. S = 1. / (D / np.max(D))
+1. ``S = np.exp(-D * gamma)``, where one heuristic for choosing
+   gamma is ``1 / num_features``
+2. ``S = 1. / (D / np.max(D))``
 
 """
 
@@ -110,7 +111,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     Y: {array-like, sparse matrix}, shape = [n_samples_2, n_features]
 
     Y_norm_squared: array-like, shape = [n_samples_2], optional
-        Pre-computed dot-products of vectors in Y (e.g., `(Y**2).sum(axis=1)`)
+        Pre-computed dot-products of vectors in Y (e.g., ``(Y**2).sum(axis=1)``)
 
     squared: boolean, optional
         Return squared Euclidean distances.
@@ -259,9 +260,9 @@ def linear_kernel(X, Y=None):
 
 def polynomial_kernel(X, Y=None, degree=3, gamma=0, coef0=1):
     """
-    Compute the polynomial kernel between X and Y.
+    Compute the polynomial kernel between X and Y::
 
-    K(X, Y) = (gamma <X, Y> + coef0)^degree
+        K(X, Y) = (gamma <X, Y> + coef0)^degree
 
     Parameters
     ----------
@@ -288,9 +289,9 @@ def polynomial_kernel(X, Y=None, degree=3, gamma=0, coef0=1):
 
 def sigmoid_kernel(X, Y=None, gamma=0, coef0=1):
     """
-    Compute the sigmoid kernel between X and Y.
+    Compute the sigmoid kernel between X and Y::
 
-    K(X, Y) = tanh(gamma <X, Y> + coef0)
+        K(X, Y) = tanh(gamma <X, Y> + coef0)
 
     Parameters
     ----------
@@ -317,9 +318,9 @@ def sigmoid_kernel(X, Y=None, gamma=0, coef0=1):
 
 def rbf_kernel(X, Y=None, gamma=0):
     """
-    Compute the rbf (gaussian) kernel between X and Y.
+    Compute the rbf (gaussian) kernel between X and Y::
 
-    K(X, Y) = exp(-gamma ||X-Y||^2)
+        K(X, Y) = exp(-gamma ||X-Y||^2)
 
     Parameters
     ----------

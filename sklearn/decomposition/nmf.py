@@ -325,14 +325,14 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
     Notes
     -----
     This implements C.-J. Lin. Projected gradient methods
-    for non-negative matrix factorization. Neural
-    Computation, 19(2007), 2756-2779.
+    for non-negative matrix factorization. See `Neural
+    Computation, 19(2007), 2756-2779.`
     http://www.csie.ntu.edu.tw/~cjlin/nmf/
 
     NNDSVD is introduced in
-    C. Boutsidis, E. Gallopoulos: SVD based
+    `C. Boutsidis, E. Gallopoulos: SVD based
     initialization: A head start for nonnegative
-    matrix factorization - Pattern Recognition, 2008
+    matrix factorization - Pattern Recognition, 2008`
     http://www.cs.rpi.edu/~boutsc/files/nndsvd.pdf
 
     """

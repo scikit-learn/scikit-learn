@@ -181,7 +181,7 @@ class RFE(BaseEstimator):
         Returns
         -------
         X_r : array of shape [n_samples, n_selected_features]
-            The input samples with only the features selected during the
+            The input samples with only the features selected during the \
             elimination.
         """
         return X[:, self.support_]

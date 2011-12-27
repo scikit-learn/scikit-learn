@@ -722,14 +722,15 @@ class SparseCodingMixin(TransformerMixin):
 
         Parameters
         ----------
-        X: array of shape (n_samples, n_features)
+        X : array of shape (n_samples, n_features)
             Test data to be transformed, must have the same number of
             features as the data used to train the model.
 
         Returns
         -------
-        X_new array, shape (n_samples, n_components)
+        X_new : array, shape (n_samples, n_components)
             Transformed data
+
         """
         # XXX : kwargs is not documented
         X = array2d(X)
@@ -924,7 +925,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
     **References:**
 
     .. [MBPS2009] J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009: Online dictionary learning
-    for sparse coding (http://www.di.ens.fr/sierra/pdfs/icml09.pdf)
+        for sparse coding (http://www.di.ens.fr/sierra/pdfs/icml09.pdf)
 
     See also
     --------
@@ -1067,7 +1068,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
     **References:**
 
     .. [MBPS2009] J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009: Online dictionary learning
-    for sparse coding (http://www.di.ens.fr/sierra/pdfs/icml09.pdf)
+        for sparse coding (http://www.di.ens.fr/sierra/pdfs/icml09.pdf)
 
     See also
     --------

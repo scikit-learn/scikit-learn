@@ -517,11 +517,11 @@ class DPGMM(GMM):
             corresponds to a single data point.
         n_iter : int, optional
              Maximum number of iterations to perform before convergence.
-       params : string, optional
+        params : string, optional
             Controls which parameters are updated in the training
             process.  Can contain any combination of 'w' for weights,
             'm' for means, and 'c' for covars.  Defaults to 'wmc'.
-       init_params : string, optional
+        init_params : string, optional
             Controls which parameters are updated in the initialization
             process.  Can contain any combination of 'w' for weights,
             'm' for means, and 'c' for covars.  Defaults to 'wmc'.
@@ -648,14 +648,19 @@ class VBGMM(DPGMM):
     cvtype : string (read-only)
         String describing the type of covariance parameters used by
         the DP-GMM.  Must be one of 'spherical', 'tied', 'diag', 'full'.
+
     n_features : int
         Dimensionality of the Gaussians.
+
     n_components : int (read-only)
         Number of mixture components.
+
     weights : array, shape (`n_components`,)
         Mixing weights for each mixture component.
+
     means : array, shape (`n_components`, `n_features`)
         Mean parameters for each mixture component.
+
     precisions : array
         Precision (inverse covariance) parameters for each mixture
         component.  The shape depends on `cvtype`:
@@ -663,6 +668,7 @@ class VBGMM(DPGMM):
             (`n_features`, `n_features`)              if 'tied',
             (`n_components`, `n_features`)                if 'diag',
             (`n_components`, `n_features`, `n_features`)  if 'full'
+
     `converged_` : bool
         True when convergence was reached in fit(), False
         otherwise.
@@ -703,6 +709,7 @@ class VBGMM(DPGMM):
         -------
         logprob : array_like, shape (n_samples,)
             Log probabilities of each data point in `obs`
+
         posteriors: array_like, shape (n_samples, n_components)
             Posterior probabilities of each mixture component for each
             observation

@@ -39,9 +39,11 @@ def lmvnpdf(obs, means, covars, cvtype='diag'):
     obs : array_like, shape (O, D)
         List of D-dimensional data points.  Each row corresponds to a
         single data point.
+
     means : array_like, shape (C, D)
         List of D-dimensional mean vectors for C Gaussians.  Each row
         corresponds to a single mean vector.
+
     covars : array_like
         List of C covariance parameters for each Gaussian.  The shape
         depends on `cvtype`:
@@ -49,6 +51,7 @@ def lmvnpdf(obs, means, covars, cvtype='diag'):
             (D, D)    if 'tied',
             (C, D)    if 'diag',
             (C, D, D) if 'full'
+
     cvtype : string
         Type of the covariance parameters.  Must be one of
         'spherical', 'tied', 'diag', 'full'.  Defaults to 'diag'.
@@ -149,14 +152,19 @@ class GMM(BaseEstimator):
     cvtype : string (read-only)
         String describing the type of covariance parameters used by
         the GMM.  Must be one of 'spherical', 'tied', 'diag', 'full'.
+
     n_features : int
         Dimensionality of the Gaussians.
+
     n_states : int (read-only)
         Number of mixture components.
+
     weights : array, shape (`n_states`,)
         Mixing weights for each mixture component.
+
     means : array, shape (`n_states`, `n_features`)
         Mean parameters for each mixture component.
+
     covars : array
         Covariance parameters for each mixture component.  The shape
         depends on `cvtype`:
@@ -164,6 +172,7 @@ class GMM(BaseEstimator):
             (`n_features`, `n_features`)              if 'tied',
             (`n_states`, `n_features`)                if 'diag',
             (`n_states`, `n_features`, `n_features`)  if 'full'
+
     `converged_` : bool
         True when convergence was reached in fit(), False
         otherwise.
@@ -172,12 +181,12 @@ class GMM(BaseEstimator):
     --------
 
     DPGMM : Ininite gaussian mixture model, using the dirichlet
-    process, fit with a variational algorithm
+        process, fit with a variational algorithm
 
 
     VBGMM : Finite gaussian mixture model fit with a variational
-    algorithm, better for situations where there might be too little
-    data to get a good estimate of the covariance matrix.
+        algorithm, better for situations where there might be too little
+        data to get a good estimate of the covariance matrix.
 
     Examples
     --------
@@ -308,6 +317,7 @@ class GMM(BaseEstimator):
         -------
         logprob: array_like, shape (n_samples,)
             Log probabilities of each data point in `obs`
+
         posteriors: array_like, shape (n_samples, n_components)
             Posterior probabilities of each mixture component for each
             observation
@@ -349,6 +359,7 @@ class GMM(BaseEstimator):
         -------
         logprobs : array_like, shape (n_samples,)
             Log probability of each point in `obs` under the model.
+
         components : array_like, shape (n_samples,)
             Index of the most likelihod mixture components for each observation
         """
@@ -442,12 +453,15 @@ class GMM(BaseEstimator):
         X : array_like, shape (n, n_features)
             List of n_features-dimensional data points.  Each row
             corresponds to a single data point.
+
         n_iter : int, optional
             Number of EM iterations to perform.
+
         params : string, optional
             Controls which parameters are updated in the training
             process.  Can contain any combination of 'w' for weights,
             'm' for means, and 'c' for covars.  Defaults to 'wmc'.
+
         init_params : string, optional
             Controls which parameters are updated in the initialization
             process.  Can contain any combination of 'w' for weights,

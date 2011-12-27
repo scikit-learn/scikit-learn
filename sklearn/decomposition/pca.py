@@ -38,8 +38,8 @@ def _assess_dimension_(spectrum, rank, n_samples, dim):
 
     Notes
     -----
-    This implements the method of Thomas P. Minka:
-    Automatic Choice of Dimensionality for PCA. NIPS 2000: 598-604
+    This implements the method of `Thomas P. Minka:
+    Automatic Choice of Dimensionality for PCA. NIPS 2000: 598-604`
     """
     if rank > dim:
         raise ValueError("the dimension cannot exceed dim")
@@ -99,22 +99,21 @@ class PCA(BaseEstimator, TransformerMixin):
     value decomposition. It only works for dense arrays and is not scalable to
     large dimensional data.
 
-    The time complexity of this implementation is O(n ** 3) assuming
+    The time complexity of this implementation is ``O(n ** 3)`` assuming
     n ~ n_samples ~ n_features.
 
     Parameters
     ----------
     n_components : int, none or string
         Number of components to keep.
-        if n_components is not set all components are kept:
+        if n_components is not set all components are kept::
             n_components == min(n_samples, n_features)
 
-        if n_components == 'mle', Minka's MLE is used to guess the dimension
+        if n_components == 'mle', Minka\'s MLE is used to guess the dimension
 
-        if 0 < n_components < 1, select the number of components such that
-                                 the amount of variance that needs to be
-                                 explained is greater than the percentage
-                                 specified by n_components
+        if ``0 < n_components < 1``, select the number of components such that
+        the amount of variance that needs to be explained is greater than the
+        percentage specified by n_components
 
     copy : bool
         If False, data passed to fit are overwritten
@@ -141,8 +140,8 @@ class PCA(BaseEstimator, TransformerMixin):
 
     Notes
     -----
-    For n_components='mle', this class uses the method of Thomas P. Minka:
-    Automatic Choice of Dimensionality for PCA. NIPS 2000: 598-604
+    For n_components='mle', this class uses the method of `Thomas P. Minka:
+    Automatic Choice of Dimensionality for PCA. NIPS 2000: 598-604`
 
     Due to implementation subtleties of the Singular Value Decomposition (SVD),
     which is used in this implementation, running fit twice on the same matrix
@@ -195,13 +194,14 @@ class PCA(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             Training data, where n_samples in the number of samples
             and n_features is the number of features.
 
         Returns
         -------
-        X_new array-like, shape (n_samples, n_components)
+        X_new : array-like, shape (n_samples, n_components)
+
         """
         U, S, V = self._fit(X, **params)
         U = U[:, :self.n_components]
@@ -256,13 +256,14 @@ class PCA(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             New data, where n_samples in the number of samples
             and n_features is the number of features.
 
         Returns
         -------
-        X_new array-like, shape (n_samples, n_components)
+        X_new : array-like, shape (n_samples, n_components)
+
         """
         X_transformed = X - self.mean_
         X_transformed = np.dot(X_transformed, self.components_.T)
@@ -282,7 +283,9 @@ class PCA(BaseEstimator, TransformerMixin):
         -------
         X_original array-like, shape (n_samples, n_features)
 
-        Note : if whitening is enabled, inverse_transform does not compute the
+        Notes
+        -----
+        If whitening is enabled, inverse_transform does not compute the
         exact inverse operation as transform.
         """
         return np.dot(X, self.components_) + self.mean_
@@ -409,13 +412,12 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
     -------
     **References**:
 
-    * Finding structure with randomness: Stochastic algorithms for
+    .. [Halko2009] `Finding structure with randomness: Stochastic algorithms for
       constructing approximate matrix decompositions Halko, et al., 2009
-      (arXiv:909)
+      (arXiv:909)`
 
-    * A randomized algorithm for the decomposition of matrices
-      Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
-
+    .. [MRT] `A randomized algorithm for the decomposition of matrices
+      Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert`
 
     """
 
@@ -483,7 +485,8 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        X_new array-like, shape (n_samples, n_components)
+        X_new : array-like, shape (n_samples, n_components)
+
         """
         if self.mean_ is not None:
             X = X - self.mean_
@@ -505,7 +508,9 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         -------
         X_original array-like, shape (n_samples, n_features)
 
-        Note: if whitening is enabled, inverse_transform does not compute the
+        Notes
+        -----
+        If whitening is enabled, inverse_transform does not compute the
         exact inverse operation as transform.
         """
         X_original = safe_sparse_dot(X, self.components_)
