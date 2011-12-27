@@ -69,6 +69,8 @@ class BaseForest(BaseEnsemble):
         self.compute_importances = compute_importances
         self.random_state = check_random_state(random_state)
 
+        self.feature_importances = None
+
     def fit(self, X, y):
         """Build a forest of trees from the training set (X, y).
 
