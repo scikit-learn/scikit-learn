@@ -491,7 +491,8 @@ class BaseDecisionTree(BaseEstimator):
         """Compute the feature importances of all features.
 
         The importance I(f) of a feature f is computed as the (normalized)
-        total reduction of error brought by that feature.
+        total reduction of error brought by that feature. It is also known as
+        the Gini importance [1].
 
         .. math::
 
@@ -501,6 +502,11 @@ class BaseDecisionTree(BaseEstimator):
         -------
         importances : array of shape = [n_features]
             The feature importances.
+
+        References
+        ----------
+        .. [1] L. Breiman, and A. Cutler, "Random Forests",
+               http://www.stat.berkeley.edu/~breiman/RandomForests
         """
         tree = self.tree_
         importances = np.zeros(self.n_features_)
