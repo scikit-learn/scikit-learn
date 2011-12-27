@@ -107,10 +107,10 @@ class PCA(BaseEstimator, TransformerMixin):
     n_components : int, none or string
         Number of components to keep.
         if n_components is not set all components are kept::
+
             n_components == min(n_samples, n_features)
 
         if n_components == 'mle', Minka\'s MLE is used to guess the dimension
-
         if ``0 < n_components < 1``, select the number of components such that
         the amount of variance that needs to be explained is greater than the
         percentage specified by n_components
@@ -134,9 +134,9 @@ class PCA(BaseEstimator, TransformerMixin):
         Components with maximum variance.
 
     `explained_variance_ratio_` : array, [n_components]
-        Percentage of variance explained by each of the selected components.
-        k is not set then all components are stored and the sum of
-        explained variances is equal to 1.0
+        Percentage of variance explained by each of the selected components. \
+        k is not set then all components are stored and the sum of explained \
+        variances is equal to 1.0
 
     Notes
     -----
@@ -151,6 +151,7 @@ class PCA(BaseEstimator, TransformerMixin):
 
     Examples
     --------
+
     >>> import numpy as np
     >>> from sklearn.decomposition import PCA
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
@@ -302,6 +303,7 @@ class ProbabilisticPCA(PCA):
         ----------
         X : array of shape(n_samples, n_dim)
             The data to fit
+
         homoscedastic : bool, optional,
             If True, average variance across remaining dimensions
         """
@@ -387,9 +389,9 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         Components with maximum variance.
 
     `explained_variance_ratio_` : array, [n_components]
-        Percentage of variance explained by each of the selected components.
-        k is not set then all components are stored and the sum of
-        explained variances is equal to 1.0
+        Percentage of variance explained by each of the selected components. \
+        k is not set then all components are stored and the sum of explained \
+        variances is equal to 1.0
 
     Examples
     --------

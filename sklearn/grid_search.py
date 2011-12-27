@@ -218,8 +218,9 @@ class GridSearchCV(BaseEstimator):
         Contains scores for all parameter combinations in param_grid.
 
     `best_estimator` : estimator
-        Estimator that was choosen by grid search, i.e. estimator which gave
-        highest score (or smallest loss if specified) on the left out data.
+        Estimator that was choosen by grid search, i.e. estimator
+        which gave highest score (or smallest loss if specified)
+        on the left out data.
 
     `best_score` : float
         score of best_estimator on the left out data.
