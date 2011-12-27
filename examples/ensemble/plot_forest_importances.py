@@ -29,9 +29,12 @@ X, y = make_classification(n_samples=1000,
                            shuffle=False)
 
 # Build a forest and compute the feature importances
-forest = ExtraTreesClassifier(n_estimators=250, random_state=0)
+forest = ExtraTreesClassifier(n_estimators=250,
+                              compute_importances=True,
+                              random_state=0)
+
 forest.fit(X, y)
-importances = forest.feature_importances()
+importances = forest.feature_importances_
 indices = np.argsort(importances)[::-1]
 
 # Print the feature ranking
@@ -46,7 +49,7 @@ pl.figure()
 pl.title("Feature importances")
 
 for tree in forest.estimators_:
-    pl.plot(xrange(10), tree.feature_importances()[indices], "r")
+    pl.plot(xrange(10), tree.feature_importances_[indices], "r")
 
 pl.plot(xrange(10), importances[indices], "b")
 pl.show()
