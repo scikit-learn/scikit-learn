@@ -29,7 +29,7 @@ class SelectorMixin(TransformerMixin):
     ``feature_importances_`` or ``coef_`` attribute to evaluate the relative
     importance of individual features for feature selection.
     """
-    def transform(self, X, threshold="mean"):
+    def transform(self, X, threshold=None):
         """Reduce X to its most important features.
 
         Parameters
@@ -37,12 +37,14 @@ class SelectorMixin(TransformerMixin):
         X : array of shape [n_samples, n_features]
             The input samples.
 
-        threshold : string or float, optional (default="median")
+        threshold : string, float or None, optional (default=None)
             The threshold value to use for feature selection. Features whose
             importance is greater or equal are kept while the others are
             discarded. If "median", then the threshold value is the median of
             the feature importances. If "mean", then the threshold value is the
-            mean of the feature importances.
+            mean of the feature importances. If None and if available, the
+            object attribute ``threshold`` is used. Otherwise, "mean" is used
+            by default.
 
         Returns
         -------
@@ -65,6 +67,9 @@ class SelectorMixin(TransformerMixin):
                              " attribute.")
 
         # Retrieve threshold
+        if threshold is None:
+            threshold = getattr(self, "threshold", "mean")
+
         if threshold == "median":
             threshold = np.median(importances)
 

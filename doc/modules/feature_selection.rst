@@ -101,8 +101,8 @@ Linear models penalized with the L1 norm have sparse solutions. When the goal
 is to reduce the dimensionality of the data to use with another classifier, the
 `transform` method of `LogisticRegression` and `LinearSVC` can be used::
 
-  >>> from sklearn.datasets import load_iris
   >>> from sklearn.svm import LinearSVC
+  >>> from sklearn.datasets import load_iris
   >>> iris = load_iris()
   >>> X, y = iris.data, iris.target
   >>> X.shape
@@ -123,9 +123,9 @@ The parameter C controls the sparsity: the smaller the fewer features.
 Tree-based feature selection
 ============================
 
-Tree-based estimators (see :mod:`sklearn.tree` and :mod:`sklearn.ensemble`
-modules) can be used to compute feature importances, which in turn can be
-used to discard irrelevant features::
+Tree-based estimators (see the :mod:`sklearn.tree` module and forest of trees in
+the :mod:`sklearn.ensemble` module) can be used to compute feature importances,
+which in turn can be used to discard irrelevant features::
 
   >>> from sklearn.ensemble import ExtraTreesClassifier
   >>> from sklearn.datasets import load_iris
