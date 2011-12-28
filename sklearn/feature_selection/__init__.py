@@ -57,10 +57,10 @@ class SelectorMixin(TransformerMixin):
 
         elif hasattr(self, "coef_"):
             if self.coef_.ndim == 1:
-                importances = self.coef_ ** 2
+                importances = np.abs(self.coef_)
 
             else:
-                importances = np.sum(self.coef_ ** 2, axis=0)
+                importances = np.sum(np.abs(self.coef_), axis=0)
 
         else:
             raise ValueError("Missing `feature_importances_` or `coef_`"
