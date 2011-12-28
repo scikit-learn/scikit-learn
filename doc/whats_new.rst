@@ -76,8 +76,8 @@ Changelog
      :class:`sklearn.preprocessing.Scaler` work on sparse matrices by
      `Olivier Grisel`_
 
-   - Added feature importances using decision trees or forest of trees, by
-     `Gilles Louppe`_.
+   - Feature importances using decision trees and/or forest of trees,
+     by `Gilles Louppe`_.
 
 
 API changes summary

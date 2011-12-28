@@ -167,7 +167,7 @@ def test_importances():
     assert_equal(importances.shape[0], 10)
     assert_equal(n_important, 3)
 
-    X_new = clf.transform(X)
+    X_new = clf.transform(X, threshold="mean")
     assert 0 < X_new.shape[1] < X.shape[1]
 
 def test_gridsearch():

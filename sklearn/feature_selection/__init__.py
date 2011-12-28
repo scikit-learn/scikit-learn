@@ -40,11 +40,11 @@ class SelectorMixin(TransformerMixin):
         threshold : string, float or None, optional (default=None)
             The threshold value to use for feature selection. Features whose
             importance is greater or equal are kept while the others are
-            discarded. If "median", then the threshold value is the median of
-            the feature importances. If "mean", then the threshold value is the
-            mean of the feature importances. If None and if available, the
-            object attribute ``threshold`` is used. Otherwise, "mean" is used
-            by default.
+            discarded. If "median" (resp. "mean"), then the threshold value is
+            the median (resp. the mean) of the feature importances. A scaling
+            factor (e.g., "1.25*mean") may also be used. If None and if
+            available, the object attribute ``threshold`` is used. Otherwise,
+            "mean" is used by default.
 
         Returns
         -------
@@ -70,14 +70,35 @@ class SelectorMixin(TransformerMixin):
         if threshold is None:
             threshold = getattr(self, "threshold", "mean")
 
-        if threshold == "median":
-            threshold = np.median(importances)
+        if isinstance(threshold, basestring):
+            if "*" in threshold:
+                scale, reference = threshold.split("*")
+                scale = float(scale.strip())
+                reference = reference.strip()
 
-        elif threshold == "mean":
-            threshold = np.mean(importances)
+                if reference == "median":
+                    reference = np.median(importances)
+                elif reference == "mean":
+                    reference = np.mean(importances)
+                else:
+                     raise ValueError("Unknown reference: " + reference)
+
+                threshold = scale * reference
+
+            elif threshold == "median":
+                threshold = np.median(importances)
+
+            elif threshold == "mean":
+                threshold = np.mean(importances)
 
         else:
             threshold = float(threshold)
 
         # Selection
-        return X[:, importances >= threshold]
+        mask = importances >= threshold
+
+        if np.any(mask):
+            return X[:, importances >= threshold]
+
+        else:
+            raise ValueError("Invalid threshold: all features are discarded.")
