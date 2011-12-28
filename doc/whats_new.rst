@@ -72,6 +72,10 @@ Changelog
    - Utilities for fast computation of mean and variance for sparse matrices
      by `Mathieu Blondel`_.
 
+   - Make :func:`sklearn.preprocessing.scale` and
+     :class:`sklearn.preprocessing.Scaler` work on sparse matrices by
+     `Olivier Grisel`_
+
    - Added feature importances using decision trees or forest of trees, by
      `Gilles Louppe`_.
 
