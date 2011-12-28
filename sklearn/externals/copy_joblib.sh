@@ -14,3 +14,5 @@ python setup.py install --prefix $old_pwd/tmp
 cd $old_pwd
 cp -r tmp/lib/python2.7/site-packages/joblib-*.egg/joblib .
 rm -rf tmp
+# Needed to rewrite the doctests
+find joblib -name "*.py" | xargs sed -i "s/from joblib/from sklearn.externals.joblib/"
