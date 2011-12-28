@@ -100,24 +100,25 @@ def test_memory_integration():
         yield test
 
     # Now test clearing
-    memory = Memory(cachedir=env['dir'], verbose=0)
-    # First clear the cache directory, to check that our code can
-    # handle that
-    # NOTE: this line would raise an exception, as the database file is still
-    # open; we ignore the error since we want to test what happens if the
-    # directory disappears
-    shutil.rmtree(env['dir'], ignore_errors=True)
-    g = memory.cache(f)
-    g(1)
-    g.clear(warn=False)
-    current_accumulator = len(accumulator)
-    out = g(1)
-    yield nose.tools.assert_equal, len(accumulator), \
-                current_accumulator + 1
-    # Also, check that Memory.eval works similarly
-    yield nose.tools.assert_equal, memory.eval(f, 1), out
-    yield nose.tools.assert_equal, len(accumulator), \
-                current_accumulator + 1
+    for compress in (False, True):
+        memory = Memory(cachedir=env['dir'], verbose=0, compress=compress)
+        # First clear the cache directory, to check that our code can
+        # handle that
+        # NOTE: this line would raise an exception, as the database file is still
+        # open; we ignore the error since we want to test what happens if the
+        # directory disappears
+        shutil.rmtree(env['dir'], ignore_errors=True)
+        g = memory.cache(f)
+        g(1)
+        g.clear(warn=False)
+        current_accumulator = len(accumulator)
+        out = g(1)
+        yield nose.tools.assert_equal, len(accumulator), \
+                    current_accumulator + 1
+        # Also, check that Memory.eval works similarly
+        yield nose.tools.assert_equal, memory.eval(f, 1), out
+        yield nose.tools.assert_equal, len(accumulator), \
+                    current_accumulator + 1
 
 
 def test_no_memory():
