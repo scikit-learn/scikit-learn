@@ -49,7 +49,11 @@ class SelectorMixin(object):
             importances = self.feature_importances_
 
         elif hasattr(self, "coef_"):
-            importances = np.sum(self.coef_ ** 2, axis=0)
+            if self.coef_.ndim == 1:
+                importances = self.coef_ ** 2
+
+            else:
+                importances = np.sum(self.coef_ ** 2, axis=0)
 
         else:
             raise ValueError("Missing `feature_importances_` or `coef_`"
