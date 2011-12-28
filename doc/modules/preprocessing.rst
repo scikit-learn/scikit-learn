@@ -106,8 +106,8 @@ of :class:`Scaler`.
 .. topic:: Scaling vs Whitening
 
   It is sometimes not enough to center and scale the features
-  independently since downstream model can further make assumption on
-  the linear independence of the features.
+  independently a since downstream model can further make some assumption
+  on the linear independence of the features.
 
   To address this issue you can use :class:`sklearn.decomposition.PCA`
   or :class:`sklearn.decomposition.RandomizedPCA` with ``whiten=True``
@@ -116,7 +116,7 @@ of :class:`Scaler`.
 .. topic:: Sparse input
 
   :func:`scale` and :class:`Scaler` accept ``scipy.sparse`` matrices
-  has input **only when with_mean=False is explicitly passed to the
+  as input **only when with_mean=False is explicitly passed to the
   constructor**. Otherwise a ``ValueError`` will be prevently raised as
   silently centering would break the sparsity and would often crash the
   execution by allocating enormous amounts of memory unintentionally.
