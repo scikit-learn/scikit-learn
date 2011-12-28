@@ -98,7 +98,7 @@ class SelectorMixin(TransformerMixin):
         mask = importances >= threshold
 
         if np.any(mask):
-            return X[:, importances >= threshold]
+            return X[:, mask]
 
         else:
             raise ValueError("Invalid threshold: all features are discarded.")
