@@ -41,9 +41,9 @@ color_iter = itertools.cycle(['r', 'g', 'b', 'c', 'm'])
 
 
 for i, (clf, title) in enumerate([
-        (mixture.GMM(n_components=10, covariance_type='diag'), \
+        (mixture.GMM(n_components=10, covariance_type='full'), \
              "Expectation-maximization"),
-        (mixture.DPGMM(n_components=10, covariance_type='diag', alpha=0.01),
+        (mixture.DPGMM(n_components=10, covariance_type='full', alpha=0.01),
          "Dirichlet Process,alpha=0.01"),
         (mixture.DPGMM(n_components=10, covariance_type='diag', alpha=100.),
          "Dirichlet Process,alpha=100.")
