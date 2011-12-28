@@ -36,6 +36,7 @@ The module structure is the following:
 import numpy as np
 
 from ..base import ClassifierMixin, RegressorMixin
+from ..feature_selection import SelectorMixin
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor, \
                    ExtraTreeClassifier, ExtraTreeRegressor
 from ..utils import check_random_state
@@ -48,7 +49,7 @@ __all__ = ["RandomForestClassifier",
            "ExtraTreesRegressor"]
 
 
-class BaseForest(BaseEnsemble):
+class BaseForest(BaseEnsemble, SelectorMixin):
     """Base class for forests of trees.
 
     Warning: This class should not be used directly. Use derived classes
@@ -59,11 +60,14 @@ class BaseForest(BaseEnsemble):
                        estimator_params=[],
                        bootstrap=False,
                        compute_importances=True,
+                       selector_threshold="median",
                        random_state=None):
-        super(BaseForest, self).__init__(
+        BaseEnsemble.__init__(self,
             base_estimator=base_estimator,
             n_estimators=n_estimators,
             estimator_params=estimator_params)
+        SelectorMixin.__init__(self,
+            selector_threshold=selector_threshold)
 
         self.bootstrap = bootstrap
         self.compute_importances = compute_importances
@@ -139,6 +143,7 @@ class ForestClassifier(BaseForest, ClassifierMixin):
                        estimator_params=[],
                        bootstrap=False,
                        compute_importances=True,
+                       selector_threshold="median",
                        random_state=None):
         super(ForestClassifier, self).__init__(
             base_estimator,
@@ -146,6 +151,7 @@ class ForestClassifier(BaseForest, ClassifierMixin):
             estimator_params=estimator_params,
             bootstrap=bootstrap,
             compute_importances=compute_importances,
+            selector_threshold=selector_threshold,
             random_state=random_state)
 
     def predict(self, X):
@@ -232,6 +238,7 @@ class ForestRegressor(BaseForest, RegressorMixin):
                        estimator_params=[],
                        bootstrap=False,
                        compute_importances=True,
+                       selector_threshold="median",
                        random_state=None):
         super(ForestRegressor, self).__init__(
             base_estimator,
@@ -239,6 +246,7 @@ class ForestRegressor(BaseForest, RegressorMixin):
             estimator_params=estimator_params,
             bootstrap=bootstrap,
             compute_importances=compute_importances,
+            selector_threshold=selector_threshold,
             random_state=random_state)
 
     def predict(self, X):
@@ -341,6 +349,7 @@ class RandomForestClassifier(ForestClassifier):
                        max_features=None,
                        bootstrap=True,
                        compute_importances=True,
+                       selector_threshold="median",
                        random_state=None):
         super(RandomForestClassifier, self).__init__(
             base_estimator=DecisionTreeClassifier(),
@@ -349,6 +358,7 @@ class RandomForestClassifier(ForestClassifier):
                               "min_density", "max_features", "random_state"),
             bootstrap=bootstrap,
             compute_importances=compute_importances,
+            selector_threshold=selector_threshold,
             random_state=random_state)
 
         self.criterion = criterion
@@ -431,6 +441,7 @@ class RandomForestRegressor(ForestRegressor):
                        max_features=None,
                        bootstrap=True,
                        compute_importances=True,
+                       selector_threshold="median",
                        random_state=None):
         super(RandomForestRegressor, self).__init__(
             base_estimator=DecisionTreeRegressor(),
@@ -439,6 +450,7 @@ class RandomForestRegressor(ForestRegressor):
                               "min_density", "max_features", "random_state"),
             bootstrap=bootstrap,
             compute_importances=compute_importances,
+            selector_threshold=selector_threshold,
             random_state=random_state)
 
         self.criterion = criterion
@@ -524,6 +536,7 @@ class ExtraTreesClassifier(ForestClassifier):
                        max_features=None,
                        bootstrap=False,
                        compute_importances=True,
+                       selector_threshold="median",
                        random_state=None):
         super(ExtraTreesClassifier, self).__init__(
             base_estimator=ExtraTreeClassifier(),
@@ -532,6 +545,7 @@ class ExtraTreesClassifier(ForestClassifier):
                               "min_density", "max_features", "random_state"),
             bootstrap=bootstrap,
             compute_importances=compute_importances,
+            selector_threshold=selector_threshold,
             random_state=random_state)
 
         self.criterion = criterion
@@ -617,6 +631,7 @@ class ExtraTreesRegressor(ForestRegressor):
                        max_features=None,
                        bootstrap=False,
                        compute_importances=True,
+                       selector_threshold="median",
                        random_state=None):
         super(ExtraTreesRegressor, self).__init__(
             base_estimator=ExtraTreeRegressor(),
@@ -625,6 +640,7 @@ class ExtraTreesRegressor(ForestRegressor):
                               "min_density", "max_features", "random_state"),
             bootstrap=bootstrap,
             compute_importances=compute_importances,
+            selector_threshold=selector_threshold,
             random_state=random_state)
 
         self.criterion = criterion

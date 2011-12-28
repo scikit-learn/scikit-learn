@@ -14,6 +14,7 @@ from __future__ import division
 import numpy as np
 
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
+from ..feature_selection import SelectorMixin
 from ..utils import array2d, check_random_state
 
 from . import _tree
@@ -361,7 +362,7 @@ def _build_tree(X, y, is_classification, criterion, max_depth, min_split,
     return tree
 
 
-class BaseDecisionTree(BaseEstimator):
+class BaseDecisionTree(BaseEstimator, SelectorMixin):
     """Base class for decision trees.
 
     Warning: This class should not be used directly.
@@ -373,7 +374,11 @@ class BaseDecisionTree(BaseEstimator):
                        min_density,
                        max_features,
                        compute_importances,
+                       selector_threshold,
                        random_state):
+        super(BaseDecisionTree, self).__init__(
+            selector_threshold=selector_threshold)
+
         self.criterion = criterion
         self.max_depth = max_depth
         self.min_split = min_split
@@ -609,6 +614,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                        min_density=0.1,
                        max_features=None,
                        compute_importances=True,
+                       selector_threshold="median",
                        random_state=None):
         super(DecisionTreeClassifier, self).__init__(criterion,
                                                      max_depth,
@@ -616,6 +622,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                                                      min_density,
                                                      max_features,
                                                      compute_importances,
+                                                     selector_threshold,
                                                      random_state)
 
     def predict_proba(self, X):
@@ -762,6 +769,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
                        min_density=0.1,
                        max_features=None,
                        compute_importances=True,
+                       selector_threshold="median",
                        random_state=None):
         super(DecisionTreeRegressor, self).__init__(criterion,
                                                     max_depth,
@@ -769,6 +777,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
                                                     min_density,
                                                     max_features,
                                                     compute_importances,
+                                                    selector_threshold,
                                                     random_state)
 
 
@@ -801,6 +810,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
                        min_density=0.1,
                        max_features=None,
                        compute_importances=True,
+                       selector_threshold="median",
                        random_state=None):
         super(ExtraTreeClassifier, self).__init__(criterion,
                                                   max_depth,
@@ -808,6 +818,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
                                                   min_density,
                                                   max_features,
                                                   compute_importances,
+                                                  selector_threshold,
                                                   random_state)
 
         self.find_split_ = _tree._find_best_random_split
@@ -842,6 +853,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
                        min_density=0.1,
                        max_features=None,
                        compute_importances=True,
+                       selector_threshold="median",
                        random_state=None):
         super(ExtraTreeRegressor, self).__init__(criterion,
                                                  max_depth,
@@ -849,6 +861,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
                                                  min_density,
                                                  max_features,
                                                  compute_importances,
+                                                 selector_threshold,
                                                  random_state)
 
         self.find_split_ = _tree._find_best_random_split
