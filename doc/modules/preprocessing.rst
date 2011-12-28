@@ -106,7 +106,7 @@ of :class:`Scaler`.
 .. topic:: Scaling vs Whitening
 
   It is sometimes not enough to center and scale the features
-  independently a since downstream model can further make some assumption
+  independently, since a downstream model can further make some assumption
   on the linear independence of the features.
 
   To address this issue you can use :class:`sklearn.decomposition.PCA`
