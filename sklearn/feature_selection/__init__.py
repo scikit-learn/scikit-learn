@@ -24,7 +24,7 @@ class SelectorMixin(object):
     """Mixin class for all estimators that expose a ``feature_importances_``
        or ``coef_`` attribute and that can be used for feature selection.
     """
-    def transform(self, X, threshold="median"):
+    def transform(self, X, threshold="mean"):
         """Reduce X to its most important features.
 
         Parameters

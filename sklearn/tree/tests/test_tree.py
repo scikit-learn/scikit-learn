@@ -220,8 +220,8 @@ def test_importances():
     assert_equal(importances.shape[0], 10)
     assert_equal(n_important, 3)
 
-    X2 = clf.transform(X)
-    assert 0 < X2.shape[1] < X.shape[1]
+    X_new = clf.transform(X)
+    assert 0 < X_new.shape[1] < X.shape[1]
 
 
 def test_error():
