@@ -81,7 +81,7 @@ class SelectorMixin(TransformerMixin):
                 elif reference == "mean":
                     reference = np.mean(importances)
                 else:
-                     raise ValueError("Unknown reference: " + reference)
+                    raise ValueError("Unknown reference: " + reference)
 
                 threshold = scale * reference
 
