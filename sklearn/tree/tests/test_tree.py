@@ -220,6 +220,9 @@ def test_importances():
     assert_equal(importances.shape[0], 10)
     assert_equal(n_important, 3)
 
+    X2 = clf.transform(X)
+    assert 0 < X2.shape[1] < X.shape[1]
+
 
 def test_error():
     """Test that it gives proper exception on deficient input."""

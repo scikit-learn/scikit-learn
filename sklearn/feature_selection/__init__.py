@@ -50,10 +50,10 @@ class SelectorMixin(object):
             The input samples with only the selected features.
         """
         # Retrieve importance vector
-        if hasattr(X, "feature_importances_"):
+        if hasattr(self, "feature_importances_"):
             importances = self.feature_importances_
 
-        elif hasattr(X, "coef_"):
+        elif hasattr(self, "coef_"):
             importances = np.sum(self.coef_ ** 2, axis=0)
 
         else:
