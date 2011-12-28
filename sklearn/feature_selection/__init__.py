@@ -23,8 +23,12 @@ from ..base import TransformerMixin
 
 
 class SelectorMixin(TransformerMixin):
-    """Mixin class for all estimators that expose a ``feature_importances_``
-       or ``coef_`` attribute and that can be used for feature selection.
+    """"Transformer mixin class selecting features based on fitted importance
+        weights.
+
+    This implementation can be mixin on any estimator that exposes a
+    ``feature_importances_`` or ``coef_`` attribute to evaluate the relative
+    importance of individual features for feature selection.
     """
     def transform(self, X, threshold="mean"):
         """Reduce X to its most important features.
