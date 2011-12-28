@@ -92,7 +92,6 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     :class:`sklearn.pipeline.Pipeline`)
     """
     if sp.issparse(X):
-        X = X.tocsr()
         if with_mean:
             raise ValueError(
                 "Cannot center sparse matrices: pass `with_mean=False` instead"
@@ -101,6 +100,9 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
             raise ValueError("Can only scale sparse matrix on axis=0, "
                              " got axis=%d" % axis)
         warn_if_not_float(X, estimator='The scale function')
+        if not sp.isspmatrix_csr(X):
+            X = X.tocsr()
+            copy = False
         if copy:
             X = X.copy()
         _, var = mean_variance_axis0(X)
@@ -188,13 +190,16 @@ class Scaler(BaseEstimator, TransformerMixin):
             used for later scaling along the features axis.
         """
         if sp.issparse(X):
-            X = X.tocsr()
             if self.with_mean:
                 raise ValueError(
                     "Cannot center sparse matrices: pass `with_mean=False` "
                     "instead See docstring for motivation and alternatives.")
             warn_if_not_float(X, estimator=self)
-            if self.copy:
+            copy = self.copy
+            if not sp.isspmatrix_csr(X):
+                X = X.tocsr()
+                copy = False
+            if copy:
                 X = X.copy()
             self.mean_ = None
             _, var = mean_variance_axis0(X)
@@ -224,8 +229,10 @@ class Scaler(BaseEstimator, TransformerMixin):
                     "Cannot center sparse matrices: pass `with_mean=False` "
                     "instead See docstring for motivation and alternatives.")
             warn_if_not_float(X, estimator=self)
-            X = X.tocsr()
-            if self.copy:
+            if not sp.isspmatrix_csr(X):
+                X = X.tocsr()
+                copy = False
+            if copy:
                 X = X.copy()
             inplace_csr_column_scale(X, 1 / self.std_)
         else:
@@ -253,7 +260,9 @@ class Scaler(BaseEstimator, TransformerMixin):
                 raise ValueError(
                     "Cannot uncenter sparse matrices: pass `with_mean=False` "
                     "instead See docstring for motivation and alternatives.")
-            X = X.tocsr()
+            if not sp.isspmatrix_csr(X):
+                X = X.tocsr()
+                copy = False
             if copy:
                 X = X.copy()
             inplace_csr_column_scale(X, self.std_)
