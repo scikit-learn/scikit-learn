@@ -23,8 +23,7 @@ from ..base import TransformerMixin
 
 
 class SelectorMixin(TransformerMixin):
-    """"Transformer mixin class selecting features based on fitted importance
-        weights.
+    """"Transformer mixin selecting features based on importance weights.
 
     This implementation can be mixin on any estimator that exposes a
     ``feature_importances_`` or ``coef_`` attribute to evaluate the relative
