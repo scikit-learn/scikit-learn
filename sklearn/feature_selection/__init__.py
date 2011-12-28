@@ -23,26 +23,21 @@ import numpy as np
 class SelectorMixin(object):
     """Mixin class for all estimators that expose a ``feature_importances_``
        or ``coef_`` attribute and that can be used for feature selection.
-
-    Parameters
-    ----------
-    selector_threshold : string or float, optional (default="median")
-        The threshold value to use for feature selection. Features whose
-        importance is greater or equal are kept while the others are discarded.
-        If "median", then the threshold value is the median of the feature
-        importances. If "mean", then the threshold value is the mean of the
-        feature importances.
     """
-    def __init__(self, selector_threshold="median"):
-        self.selector_threshold = selector_threshold
-
-    def transform(self, X):
+    def transform(self, X, threshold="median"):
         """Reduce X to its most important features.
 
         Parameters
         ----------
         X : array of shape [n_samples, n_features]
             The input samples.
+
+        threshold : string or float, optional (default="median")
+            The threshold value to use for feature selection. Features whose
+            importance is greater or equal are kept while the others are
+            discarded. If "median", then the threshold value is the median of
+            the feature importances. If "mean", then the threshold value is the
+            mean of the feature importances.
 
         Returns
         -------
@@ -61,14 +56,14 @@ class SelectorMixin(object):
                              " attribute.")
 
         # Retrieve threshold
-        if self.selector_threshold == "median":
+        if threshold == "median":
             threshold = np.median(importances)
 
-        elif self.selector_threshold == "mean":
+        elif threshold == "mean":
             threshold = np.mean(importances)
 
         else:
-            threshold = float(self.selector_threshold)
+            threshold = float(threshold)
 
         # Selection
         return X[:, importances >= threshold]
