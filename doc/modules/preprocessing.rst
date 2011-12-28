@@ -117,9 +117,9 @@ of :class:`Scaler`.
 
   :func:`scale` and :class:`Scaler` accept ``scipy.sparse`` matrices
   as input **only when with_mean=False is explicitly passed to the
-  constructor**. Otherwise a ``ValueError`` will be prevently raised as
+  constructor**. Otherwise a ``ValueError`` will be raised as
   silently centering would break the sparsity and would often crash the
-  execution by allocating enormous amounts of memory unintentionally.
+  execution by allocating excessive amounts of memory unintentionally.
 
   If the centered data is expected to be small enough, explicitly convert
   the input to an array using the ``toarray`` method of sparse matrices
