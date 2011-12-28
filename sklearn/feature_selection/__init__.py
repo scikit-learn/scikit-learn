@@ -19,8 +19,10 @@ from .rfe import RFECV
 
 import numpy as np
 
+from ..base import TransformerMixin
 
-class SelectorMixin(object):
+
+class SelectorMixin(TransformerMixin):
     """Mixin class for all estimators that expose a ``feature_importances_``
        or ``coef_`` attribute and that can be used for feature selection.
     """
