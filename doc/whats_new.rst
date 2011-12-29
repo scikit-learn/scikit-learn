@@ -79,6 +79,9 @@ Changelog
    - Feature importances using decision trees and/or forest of trees,
      by `Gilles Louppe`_.
 
+   - Parallel implementation of forests of randomized trees by
+     `Gilles Louppe`_.
+
 
 API changes summary
 -------------------
