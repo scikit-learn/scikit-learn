@@ -115,7 +115,7 @@ which in turn can be used to discard irrelevant features::
   >>> X, y = iris.data, iris.target
   >>> X.shape
   (150, 4)
-  >>> X_new = ExtraTreesClassifier().fit(X, y).transform(X)
+  >>> X_new = ExtraTreesClassifier(compute_importances=True).fit(X, y).transform(X)
   >>> X_new.shape
   (150, 2)
 
