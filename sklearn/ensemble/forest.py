@@ -59,7 +59,7 @@ class BaseForest(BaseEnsemble, SelectorMixin):
                        n_estimators=10,
                        estimator_params=[],
                        bootstrap=False,
-                       compute_importances=True,
+                       compute_importances=False,
                        random_state=None):
         super(BaseForest, self).__init__(
             base_estimator=base_estimator,
@@ -70,7 +70,7 @@ class BaseForest(BaseEnsemble, SelectorMixin):
         self.compute_importances = compute_importances
         self.random_state = check_random_state(random_state)
 
-        self.feature_importances = None
+        self.feature_importances_ = None
 
     def fit(self, X, y):
         """Build a forest of trees from the training set (X, y).
@@ -139,7 +139,7 @@ class ForestClassifier(BaseForest, ClassifierMixin):
                        n_estimators=10,
                        estimator_params=[],
                        bootstrap=False,
-                       compute_importances=True,
+                       compute_importances=False,
                        random_state=None):
         super(ForestClassifier, self).__init__(
             base_estimator,
@@ -232,7 +232,7 @@ class ForestRegressor(BaseForest, RegressorMixin):
                        n_estimators=10,
                        estimator_params=[],
                        bootstrap=False,
-                       compute_importances=True,
+                       compute_importances=False,
                        random_state=None):
         super(ForestRegressor, self).__init__(
             base_estimator,
@@ -341,7 +341,7 @@ class RandomForestClassifier(ForestClassifier):
                        min_density=0.1,
                        max_features=None,
                        bootstrap=True,
-                       compute_importances=True,
+                       compute_importances=False,
                        random_state=None):
         super(RandomForestClassifier, self).__init__(
             base_estimator=DecisionTreeClassifier(),
@@ -431,7 +431,7 @@ class RandomForestRegressor(ForestRegressor):
                        min_density=0.1,
                        max_features=None,
                        bootstrap=True,
-                       compute_importances=True,
+                       compute_importances=False,
                        random_state=None):
         super(RandomForestRegressor, self).__init__(
             base_estimator=DecisionTreeRegressor(),
@@ -524,7 +524,7 @@ class ExtraTreesClassifier(ForestClassifier):
                        min_density=0.1,
                        max_features=None,
                        bootstrap=False,
-                       compute_importances=True,
+                       compute_importances=False,
                        random_state=None):
         super(ExtraTreesClassifier, self).__init__(
             base_estimator=ExtraTreeClassifier(),
@@ -617,7 +617,7 @@ class ExtraTreesRegressor(ForestRegressor):
                        min_density=0.1,
                        max_features=None,
                        bootstrap=False,
-                       compute_importances=True,
+                       compute_importances=False,
                        random_state=None):
         super(ExtraTreesRegressor, self).__init__(
             base_estimator=ExtraTreeRegressor(),

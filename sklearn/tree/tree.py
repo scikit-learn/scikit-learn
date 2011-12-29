@@ -609,7 +609,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                        min_split=1,
                        min_density=0.1,
                        max_features=None,
-                       compute_importances=True,
+                       compute_importances=False,
                        random_state=None):
         super(DecisionTreeClassifier, self).__init__(criterion,
                                                      max_depth,
@@ -762,7 +762,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
                        min_split=1,
                        min_density=0.1,
                        max_features=None,
-                       compute_importances=True,
+                       compute_importances=False,
                        random_state=None):
         super(DecisionTreeRegressor, self).__init__(criterion,
                                                     max_depth,
@@ -801,7 +801,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
                        min_split=1,
                        min_density=0.1,
                        max_features=None,
-                       compute_importances=True,
+                       compute_importances=False,
                        random_state=None):
         super(ExtraTreeClassifier, self).__init__(criterion,
                                                   max_depth,
@@ -842,7 +842,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
                        min_split=1,
                        min_density=0.1,
                        max_features=None,
-                       compute_importances=True,
+                       compute_importances=False,
                        random_state=None):
         super(ExtraTreeRegressor, self).__init__(criterion,
                                                  max_depth,
