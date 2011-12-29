@@ -95,12 +95,7 @@ def _parallel_predict_proba(trees, X, n_classes):
 
 
 def _parallel_predict_regr(trees, X):
-    p = trees[0].predict(X)
-
-    for tree in trees[1:]:
-        p += tree.predict(X)
-
-    return p
+    return sum(tree.predict(X) for tree in trees)
 
 
 class BaseForest(BaseEnsemble, SelectorMixin):
