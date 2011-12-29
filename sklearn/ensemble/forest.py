@@ -93,9 +93,10 @@ class BaseForest(BaseEnsemble, SelectorMixin):
         X = np.atleast_2d(X)
         y = np.atleast_1d(y)
 
-        sample_mask = np.ones((X.shape[0],), dtype=np.bool)
-        X_argsorted = np.asfortranarray(
-            np.argsort(X.T, axis=1).astype(np.int32).T)
+        if not self.bootstrap:
+            sample_mask = np.ones((X.shape[0],), dtype=np.bool)
+            X_argsorted = np.asfortranarray(
+                np.argsort(X.T, axis=1).astype(np.int32).T)
 
         if isinstance(self.base_estimator, ClassifierMixin):
             self.classes_ = np.unique(y)
