@@ -563,7 +563,7 @@ def adjusted_mutual_info_score(labels_true, labels_pred):
     clusters, regardless of whether there is actually more information shared.
     For two clusterings U and V, the AMI is given as::
 
-        AMI(U, V) = \frac{MI(U, V) - E(MI(U, V))}{max(H(U), H(V)) - E(MI(U, V))}
+        AMI(U, V) = [MI(U, V) - E(MI(U, V))] / [max(H(U), H(V)) - E(MI(U, V))]
 
     This metric is independent of the absolute values of the labels:
     a permutation of the class or cluster label values won't change the
