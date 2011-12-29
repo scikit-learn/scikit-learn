@@ -129,7 +129,7 @@ which in turn can be used to discard irrelevant features::
 
   >>> from sklearn.ensemble import ExtraTreesClassifier
   >>> from sklearn.datasets import load_iris
-  >>> iris = datasets.load_iris()
+  >>> iris = load_iris()
   >>> X, y = iris.data, iris.target
   >>> X.shape
   (150, 4)
