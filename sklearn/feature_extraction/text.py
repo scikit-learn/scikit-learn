@@ -149,7 +149,7 @@ class WordNGramAnalyzer(BaseEstimator):
             # ducktype for file-like objects
             text_document = text_document.read()
 
-        if isinstance(text_document, str):
+        if hasattr(text_document, 'decode'):
             text_document = text_document.decode(self.charset, 'ignore')
 
         text_document = self.preprocessor.preprocess(text_document)
@@ -201,7 +201,7 @@ class CharNGramAnalyzer(BaseEstimator):
             # ducktype for file-like objects
             text_document = text_document.read()
 
-        if isinstance(text_document, str):
+        if hasattr(text_document, 'decode'):
             text_document = text_document.decode(self.charset, 'ignore')
 
         text_document = self.preprocessor.preprocess(text_document)
