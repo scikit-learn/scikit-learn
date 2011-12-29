@@ -77,6 +77,7 @@ def _parallel_build_trees(n_trees, forest, X, y,
 
     return trees
 
+
 def _parallel_predict_proba(trees, X, n_classes):
     p = np.zeros((X.shape[0], n_classes))
 
@@ -91,6 +92,7 @@ def _parallel_predict_proba(trees, X, n_classes):
                 p[:, c] += proba[:, j]
 
     return p
+
 
 def _parallel_predict_regr(trees, X):
     p = trees[0].predict(X)
@@ -181,14 +183,11 @@ class BaseForest(BaseEnsemble, SelectorMixin):
         # Reduce
         self.estimators_ = [tree for tree in itertools.chain(*all_trees)]
 
-        # Build the importances
+        # Sum the importances
         if self.compute_importances:
-            importances = self.estimators_[0].feature_importances_
-
-            for tree in self.estimators_[1:]:
-                importances += tree.feature_importances_
-
-            self.feature_importances_ = importances / self.n_estimators
+            self.feature_importances_ = \
+                sum(tree.feature_importances_ for tree in self.estimators_) \
+                / self.n_estimators
 
         return self
 
