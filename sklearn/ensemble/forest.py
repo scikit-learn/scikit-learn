@@ -55,17 +55,20 @@ MAX_INT = np.iinfo(np.int32).max
 
 def _parallel_build_trees(n_trees, forest, X, y,
                           sample_mask, X_argsorted, seed):
+    """Private function used to build a batch of trees within a job."""
+    random_state = check_random_state(seed)
     trees = []
-    rs = check_random_state(seed)
 
     for i in xrange(n_trees):
+        seed = random_state.randint(MAX_INT)
+
         tree = forest._make_estimator(append=False)
         tree.set_params(compute_importances=forest.compute_importances)
-        tree.set_params(random_state=check_random_state(rs.randint(MAX_INT)))
+        tree.set_params(random_state=check_random_state(seed))
 
         if forest.bootstrap:
             n_samples = X.shape[0]
-            indices = rs.randint(0, n_samples, n_samples)
+            indices = random_state.randint(0, n_samples, n_samples)
             tree.fit(X[indices], y[indices],
                      sample_mask=sample_mask, X_argsorted=X_argsorted)
 
@@ -79,6 +82,7 @@ def _parallel_build_trees(n_trees, forest, X, y,
 
 
 def _parallel_predict_proba(trees, X, n_classes):
+    """Private function used to compute a batch of predictions within a job."""
     p = np.zeros((X.shape[0], n_classes))
 
     for tree in trees:
@@ -95,6 +99,7 @@ def _parallel_predict_proba(trees, X, n_classes):
 
 
 def _parallel_predict_regr(trees, X):
+    """Private function used to compute a batch of predictions within a job."""
     return sum(tree.predict(X) for tree in trees)
 
 
