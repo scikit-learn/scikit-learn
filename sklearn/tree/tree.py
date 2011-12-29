@@ -458,15 +458,15 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
 
             for node in xrange(self.tree_.node_count):
                 if (self.tree_.children[node, 0]
-                    == self.tree_.children[node, 1]
-                    == Tree.LEAF):
+                        == self.tree_.children[node, 1]
+                        == Tree.LEAF):
                     continue
 
                 else:
-                    importances[self.tree_.feature[node]] += \
-                        self.tree_.n_samples[node] * \
+                    importances[self.tree_.feature[node]] += (
+                        self.tree_.n_samples[node] *
                             (self.tree_.init_error[node] -
-                             self.tree_.best_error[node])
+                             self.tree_.best_error[node]))
 
             importances /= np.sum(importances)
             self.feature_importances_ = importances
