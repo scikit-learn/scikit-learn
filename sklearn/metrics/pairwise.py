@@ -58,16 +58,16 @@ def check_pairwise_arrays(X, Y):
 
     Parameters
     ----------
-    X: {array-like, sparse matrix}, shape = [n_samples_a, n_features]
+    X : {array-like, sparse matrix}, shape = [n_samples_a, n_features]
 
-    Y: {array-like, sparse matrix}, shape = [n_samples_b, n_features]
+    Y : {array-like, sparse matrix}, shape = [n_samples_b, n_features]
 
     Returns
     -------
-    safe_X: {array-like, sparse matrix}, shape = [n_samples_a, n_features]
+    safe_X : {array-like, sparse matrix}, shape = [n_samples_a, n_features]
         An array equal to X, guarenteed to be a numpy array.
 
-    safe_Y: {array-like, sparse matrix}, shape = [n_samples_b, n_features]
+    safe_Y : {array-like, sparse matrix}, shape = [n_samples_b, n_features]
         An array equal to Y if Y was not None, guarenteed to be a numpy array.
         If Y was None, safe_Y will be a pointer to X.
 
@@ -106,19 +106,19 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
 
     Parameters
     ----------
-    X: {array-like, sparse matrix}, shape = [n_samples_1, n_features]
+    X : {array-like, sparse matrix}, shape = [n_samples_1, n_features]
 
-    Y: {array-like, sparse matrix}, shape = [n_samples_2, n_features]
+    Y : {array-like, sparse matrix}, shape = [n_samples_2, n_features]
 
-    Y_norm_squared: array-like, shape = [n_samples_2], optional
+    Y_norm_squared : array-like, shape = [n_samples_2], optional
         Pre-computed dot-products of vectors in Y (e.g., ``(Y**2).sum(axis=1)``)
 
-    squared: boolean, optional
+    squared : boolean, optional
         Return squared Euclidean distances.
 
     Returns
     -------
-    distances: {array, sparse matrix}, shape = [n_samples_1, n_samples_2]
+    distances : {array, sparse matrix}, shape = [n_samples_1, n_samples_2]
 
     Examples
     --------
@@ -188,19 +188,19 @@ def manhattan_distances(X, Y=None, sum_over_features=True):
 
     Parameters
     ----------
-    X: array_like
+    X : array_like
         An array with shape (n_samples_X, n_features).
 
-    Y: array_like, optional
+    Y : array_like, optional
         An array with shape (n_samples_Y, n_features).
 
-    sum_over_features: bool, default=True
+    sum_over_features : bool, default=True
         If True the function returns the pairwise distance matrix
         else it returns the componentwise L1 pairwise-distances.
 
     Returns
     -------
-    D: array
+    D : array
         If sum_over_features is False shape is
         (n_samples_X * n_samples_Y, n_features) and D contains the
         componentwise L1 pairwise-distances (ie. absolute difference),
@@ -246,13 +246,13 @@ def linear_kernel(X, Y=None):
 
     Parameters
     ----------
-    X: array of shape (n_samples_1, n_features)
+    X : array of shape (n_samples_1, n_features)
 
-    Y: array of shape (n_samples_2, n_features)
+    Y : array of shape (n_samples_2, n_features)
 
     Returns
     -------
-    Gram matrix: array of shape (n_samples_1, n_samples_2)
+    Gram matrix : array of shape (n_samples_1, n_samples_2)
     """
     X, Y = check_pairwise_arrays(X, Y)
     return safe_sparse_dot(X, Y.T, dense_output=True)
@@ -266,15 +266,15 @@ def polynomial_kernel(X, Y=None, degree=3, gamma=0, coef0=1):
 
     Parameters
     ----------
-    X: array of shape (n_samples_1, n_features)
+    X : array of shape (n_samples_1, n_features)
 
-    Y: array of shape (n_samples_2, n_features)
+    Y : array of shape (n_samples_2, n_features)
 
-    degree: int
+    degree : int
 
     Returns
     -------
-    Gram matrix: array of shape (n_samples_1, n_samples_2)
+    Gram matrix : array of shape (n_samples_1, n_samples_2)
     """
     X, Y = check_pairwise_arrays(X, Y)
     if gamma == 0:
@@ -295,11 +295,11 @@ def sigmoid_kernel(X, Y=None, gamma=0, coef0=1):
 
     Parameters
     ----------
-    X: array of shape (n_samples_1, n_features)
+    X : array of shape (n_samples_1, n_features)
 
-    Y: array of shape (n_samples_2, n_features)
+    Y : array of shape (n_samples_2, n_features)
 
-    degree: int
+    degree : int
 
     Returns
     -------
@@ -324,15 +324,15 @@ def rbf_kernel(X, Y=None, gamma=0):
 
     Parameters
     ----------
-    X: array of shape (n_samples_1, n_features)
+    X : array of shape (n_samples_1, n_features)
 
-    Y: array of shape (n_samples_2, n_features)
+    Y : array of shape (n_samples_2, n_features)
 
-    gamma: float
+    gamma : float
 
     Returns
     -------
-    Gram matrix: array of shape (n_samples_1, n_samples_2)
+    Gram matrix : array of shape (n_samples_1, n_samples_2)
     """
     X, Y = check_pairwise_arrays(X, Y)
     if gamma == 0:
@@ -364,15 +364,17 @@ def distance_metrics():
     each of the valid strings.
 
     The valid distance metrics, and the function they map to, are:
-      ===========     ====================================
-      metric          Function
-      ===========     ====================================
-      'cityblock'     sklearn.pairwise.manhattan_distances
-      'euclidean'     sklearn.pairwise.euclidean_distances
-      'l1'            sklearn.pairwise.manhattan_distances
-      'l2'            sklearn.pairwise.euclidean_distances
-      'manhattan'     sklearn.pairwise.manhattan_distances
-      ===========     ====================================
+
+    ===========     ====================================
+    metric          Function
+    ===========     ====================================
+    'cityblock'     sklearn.pairwise.manhattan_distances
+    'euclidean'     sklearn.pairwise.euclidean_distances
+    'l1'            sklearn.pairwise.manhattan_distances
+    'l2'            sklearn.pairwise.euclidean_distances
+    'manhattan'     sklearn.pairwise.manhattan_distances
+    ===========     ====================================
+
     """
     return pairwise_distance_functions
 
@@ -395,13 +397,16 @@ def pairwise_distances(X, Y=None, metric="euclidean", **kwds):
     metrics listed in pairwise.pairwise_distance_functions.
 
     Valid values for metric are:
+
     - from scikits.learn: ['euclidean', 'l2', 'l1', 'manhattan', 'cityblock']
+
     - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
       'correlation', 'cosine', 'dice', 'hamming', 'jaccard', 'kulsinski',
       'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto', 'russellrao',
       'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeucludean', 'yule']
       See the documentation for scipy.spatial.distance for details on these
       metrics.
+
     Note in the case of 'euclidean' and 'cityblock' (which are valid
     scipy.spatial.distance metrics), the values will use the scikits.learn
     implementation, which is faster and has support for sparse matrices.
@@ -410,14 +415,14 @@ def pairwise_distances(X, Y=None, metric="euclidean", **kwds):
 
     Parameters
     ----------
-    X: array [n_samples_a, n_samples_a] if metric == "precomputed", or,
+    X : array [n_samples_a, n_samples_a] if metric == "precomputed", or, \
              [n_samples_a, n_features] otherwise
         Array of pairwise distances between samples, or a feature array.
 
-    Y: array [n_samples_b, n_features]
+    Y : array [n_samples_b, n_features]
         A second feature array only if X has shape [n_samples_a, n_features].
 
-    metric: string, or callable
+    metric : string, or callable
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
         allowed by scipy.spatial.distance.pdist for its metric parameter, or
@@ -429,14 +434,14 @@ def pairwise_distances(X, Y=None, metric="euclidean", **kwds):
         should take two arrays from X as input and return a value indicating
         the distance between them.
 
-    **kwds: optional keyword parameters
+    `**kwds` : optional keyword parameters
         Any further parameters are passed directly to the distance function.
         If using a scipy.spatial.distance metric, the parameters are still
         metric dependent. See the scipy docs for usage examples.
 
     Returns
     -------
-    D: array [n_samples_a, n_samples_a] or [n_samples_a, n_samples_b]
+    D : array [n_samples_a, n_samples_a] or [n_samples_a, n_samples_b]
         A distance matrix D such that D_{i, j} is the distance between the
         ith and jth vectors of the given matrix X, if Y is None.
         If Y is not None, then D_{i, j} is the distance between the ith array
@@ -527,19 +532,19 @@ def pairwise_kernels(X, Y=None, metric="linear", **kwds):
     If Y is given (default is None), then the returned matrix is the pairwise
     kernel between the arrays from both X and Y.
 
-    Valid values for metric are:
-    ['rbf', 'sigmoid', 'polynomial', 'poly', 'linear']
+    Valid values for metric are::
+        ['rbf', 'sigmoid', 'polynomial', 'poly', 'linear']
 
     Parameters
     ----------
-    X: array [n_samples_a, n_samples_a] if metric == "precomputed", or,
+    X : array [n_samples_a, n_samples_a] if metric == "precomputed", or, \
              [n_samples_a, n_features] otherwise
         Array of pairwise kernels between samples, or a feature array.
 
-    Y: array [n_samples_b, n_features]
+    Y : array [n_samples_b, n_features]
         A second feature array only if X has shape [n_samples_a, n_features].
 
-    metric: string, or callable
+    metric : string, or callable
         The metric to use when calculating kernel between instances in a
         feature array. If metric is a string, it must be one of the metrics
         in pairwise.pairwise_kernel_functions.
@@ -550,12 +555,12 @@ def pairwise_kernels(X, Y=None, metric="linear", **kwds):
         should take two arrays from X as input and return a value indicating
         the distance between them.
 
-    **kwds: optional keyword parameters
+    `**kwds` : optional keyword parameters
         Any further parameters are passed directly to the kernel function.
 
     Returns
     -------
-    K: array [n_samples_a, n_samples_a] or [n_samples_a, n_samples_b]
+    K : array [n_samples_a, n_samples_a] or [n_samples_a, n_samples_b]
         A kernel matrix K such that K_{i, j} is the kernel between the
         ith and jth vectors of the given matrix X, if Y is None.
         If Y is not None, then K_{i, j} is the kernel between the ith array
