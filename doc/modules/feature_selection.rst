@@ -15,57 +15,39 @@ high-dimensional datasets.
 Univariate feature selection
 ============================
 
-.. currentmodule:: sklearn.feature_selection.univariate_selection
-
 Univariate feature selection works by selecting the best features based on
 univariate statistical tests. It can seen as a preprocessing step
 to an estimator. Scikit-Learn exposes feature selection routines
-a objects that implement the `transform` method. The k-best features
-can be selected based on:
+a objects that implement the `transform` method:
 
-.. autofunction:: SelectKBest
+ * selecting the k-best features :class:`SelectKBest` 
 
-or by setting a percentile of features to keep using
+ * setting a percentile of features to keep :class:`SelectPercentile`
 
-.. autofunction:: SelectPercentile
-
-or using common univariate statistical test for each feature:
-
-.. autofunction:: SelectFpr
-.. autofunction:: SelectFdr
-.. autofunction:: SelectFwe
+ * using common univariate statistical tests for each feature:
+   false positive rate :class:`SelectFpr`, false discovery rate 
+   :class:`SelectFdr`, or family wise error :class:`SelectFwe`.
 
 These objects take as input a scoring function that returns
-univariate p-values.
+univariate p-values:
 
-.. topic:: Examples:
+ * For regression: :func:`f_regression`
 
-    :ref:`example_plot_feature_selection.py`
-
-
-Feature scoring functions
--------------------------
-
-.. warning::
-
-    Beware not to use a regression scoring function with a classification problem.
-
-For classification
-..................
-
-.. autofunction:: chi2
-.. autofunction:: f_classif
+ * For classification: :func:`chi2` or :func:`f_classif`
 
 .. topic:: Feature selection with sparse data
 
    If you use sparse data (i.e. data represented as sparse matrices),
    only :func:`chi2` will deal with the data without making it dense.
 
+.. warning::
 
-For regression
-..............
+    Beware not to use a regression scoring function with a classification
+    problem, you will get useless results.
 
-.. autofunction:: f_regression
+.. topic:: Examples:
+
+    :ref:`example_plot_feature_selection.py`
 
 
 Recursive feature elimination
