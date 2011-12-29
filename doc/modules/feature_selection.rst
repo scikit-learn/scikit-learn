@@ -136,3 +136,14 @@ which in turn can be used to discard irrelevant features::
   >>> X_new = ExtraTreesClassifier().fit(X, y).transform(X)
   >>> X_new.shape
   (150, 2)
+
+.. topic:: Examples:
+
+    * :ref:`example_ensemble_plot_forest_importances.py`: example on
+      synthetic data showing the recovery of the actually meaningful
+      features.
+
+    * :ref:`example_ensemble_plot_forest_importances_faces.py`: example
+      on face recognition data.
+
+
