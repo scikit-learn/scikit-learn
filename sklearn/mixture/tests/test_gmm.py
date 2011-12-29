@@ -289,13 +289,14 @@ class TestGMMWithFullCovars(unittest.TestCase, GMMTester):
     model = mixture.GMM
 
 def test_multiple_init():
-    """Test that multiple inits do better than a single one"""
+    """Test that multiple inits does not much worse than a single one"""
     X = rng.randn(30, 5)
-    g = mixture.GMM(n_components=2, covariance_type='full',
+    X[:10] += 2
+    g = mixture.GMM(n_components=2, covariance_type='spherical',
                     random_state=rng, min_covar=1e-7)
-    train1 = g.fit(X, n_iter=5).score(X).sum()
     train2 = g.fit(X, n_iter=5, n_init=5).score(X).sum()
-    assert train2 >= train1
+    train1 = g.fit(X, n_iter=5).score(X).sum()
+    assert train2 >= train1 - 1.e-2
     
 def test_n_parameters():
     """Test that the right number of parameters is estimated"""

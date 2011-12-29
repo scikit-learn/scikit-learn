@@ -499,6 +499,7 @@ class GMM(BaseEstimator):
 
             # if the results is better, keep it
             if n_iter:
+                print max_log_prob, log_likelihood[-1]
                 if log_likelihood[-1] > max_log_prob:
                     max_log_prob = log_likelihood[-1]
                     best_params = {'weights': self.weights,
