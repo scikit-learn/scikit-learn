@@ -104,7 +104,7 @@ class PCA(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    n_components: int, none or string
+    n_components: int, None or string
         Number of components to keep.
         if n_components is not set all components are kept:
             n_components == min(n_samples, n_features)
@@ -236,7 +236,9 @@ class PCA(BaseEstimator, TransformerMixin):
             self.n_components = _infer_dimension_(self.explained_variance_,
                                             n_samples, X.shape[1])
 
-        elif 0 < self.n_components and self.n_components < 1.0:
+        elif (self.n_components is not None
+              and 0 < self.n_components
+              and self.n_components < 1.0):
             # number of components for which the cumulated explained variance
             # percentage is superior to the desired threshold
             ratio_cumsum = self.explained_variance_ratio_.cumsum()
