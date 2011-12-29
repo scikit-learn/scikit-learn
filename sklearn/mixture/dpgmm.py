@@ -405,7 +405,7 @@ class DPGMM(GMM):
         "The variational lower bound for the mean parameters"
         logprior = 0.
         logprior -= 0.5 * sqnorm(self.means_)
-        logprior -= 0.5 * self.means.shape[1] * self.n_components
+        logprior -= 0.5 * self.means_.shape[1] * self.n_components
         return logprior
 
     def _bound_precisions(self):

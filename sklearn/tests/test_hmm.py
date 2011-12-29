@@ -7,7 +7,7 @@ from sklearn.datasets.samples_generator import make_spd_matrix
 from sklearn import hmm
 from sklearn.utils.extmath import logsumexp
 
-
+rng = np.random.RandomState(0)
 np.seterr(all='warn')
 
 
@@ -666,3 +666,17 @@ class TestGMMHMMWithTiedCovars(TestGMMHMM):
 
 class TestGMMHMMWithFullCovars(TestGMMHMM):
     covariance_type = 'full'
+
+def test_normalize_1D():
+    A = rng.rand(2) + 1.0
+    for axis in range(1):
+        Anorm = hmm.normalize(A, axis)
+        assert np.all(np.allclose(Anorm.sum(axis), 1.0))
+
+
+def test_normalize_3D():
+    A = rng.rand(2, 2, 2) + 1.0
+    for axis in range(3):
+        Anorm = hmm.normalize(A, axis)
+        assert np.all(np.allclose(Anorm.sum(axis), 1.0))
+

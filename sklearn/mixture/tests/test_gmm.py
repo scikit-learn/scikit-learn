@@ -11,20 +11,6 @@ from sklearn.datasets.samples_generator import make_spd_matrix
 rng = np.random.RandomState(0)
 
 
-def test_normalize_1D():
-    A = rng.rand(2) + 1.0
-    for axis in range(1):
-        Anorm = mixture.normalize(A, axis)
-        assert np.all(np.allclose(Anorm.sum(axis), 1.0))
-
-
-def test_normalize_3D():
-    A = rng.rand(2, 2, 2) + 1.0
-    for axis in range(3):
-        Anorm = mixture.normalize(A, axis)
-        assert np.all(np.allclose(Anorm.sum(axis), 1.0))
-
-
 def test_sample_gaussian():
     """
     Test sample generation from mixture.sample_gaussian where covariance

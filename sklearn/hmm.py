@@ -18,7 +18,7 @@ from .utils import check_random_state
 from .utils.extmath import logsumexp
 from .base import BaseEstimator
 from .mixture import (
-    GMM, log_multivariate_normal_density, normalize, sample_gaussian, 
+    GMM, log_multivariate_normal_density, sample_gaussian,
     _distribute_covar_matrix_to_match_covariance_type, _validate_covars)
 from . import cluster
 import warnings
@@ -29,6 +29,34 @@ warnings.warn('sklearn.hmm is orphaned, undocumented and has known numerical'
 
 
 ZEROLOGPROB = -1e200
+INF_EPS = np.finfo(float).eps
+
+def normalize(A, axis=None):
+    """ Normalize the input array so that it sums to 1.
+
+    Parameters
+    ----------
+    A: array, shape (n_samples, n_features)
+       Non-normalized input data
+    axis: int
+          dimension along which normalization is performed
+
+    Returns
+    -------
+    normalized_A: array, shape (n_samples, n_features)
+        A with values normalized (summing to 1) along the prescribed axis
+
+    WARNING: Modifies inplace the array
+    """
+    A += INF_EPS
+    Asum = A.sum(axis)
+    if axis and A.ndim > 1:
+        # Make sure we don't divide by zero.
+        Asum[Asum == 0] = 1
+        shape = list(A.shape)
+        shape[axis] = 1
+        Asum.shape = shape
+    return A / Asum
 
 
 class _BaseHMM(BaseEstimator):

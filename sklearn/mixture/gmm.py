@@ -12,36 +12,11 @@ of Gaussian Mixture Models.
 import numpy as np
 
 from ..base import BaseEstimator
-from ..utils import check_random_state
+from ..utils import check_random_state, deprecated
 from ..utils.extmath import logsumexp
 from .. import cluster
 
 INF_EPS = np.finfo(float).eps
-
-
-def normalize(A, axis=None):
-    """ Normalize the input array so that it sums to 1.
-
-    Parameters
-    ----------
-    A: array, shape
-    axis: int, dimension along which normalization is performed
-
-    Returns
-    -------
-    normalized_A: A with values normalized along the prescribed axis
-
-    WARNING: Modifies inplace the array
-    """
-    A += INF_EPS
-    Asum = A.sum(axis)
-    if axis and A.ndim > 1:
-        # Make sure we don't divide by zero.
-        Asum[Asum == 0] = 1
-        shape = list(A.shape)
-        shape[axis] = 1
-        Asum.shape = shape
-    return A / Asum
 
 
 def log_multivariate_normal_density(X, means, covars, covariance_type='diag'):
@@ -332,6 +307,31 @@ class GMM(BaseEstimator):
         responsibilities = np.exp(lpr - logprob[:, np.newaxis])
         return logprob, responsibilities
 
+    @deprecated("""will be removed in v0.12; 
+    use the score or predict method instead, depending on the question""")
+    def decode(self, X):
+        """Find most likely mixture components for each point in X.
+        
+        DEPRECATED IN VERSION 0.10; WILL BE REMOVED IN VERSION 0.12
+        use the score or predict method instead, depending on the question.
+        
+        Parameters
+        ----------
+        X : array_like, shape (n, n_features)
+            List of n_features-dimensional data points.  Each row
+            corresponds to a single data point.
+
+        Returns
+        -------
+        logprobs : array_like, shape (n_samples,)
+            Log probability of each point in `obs` under the model.
+        components : array_like, shape (n_samples,)
+            Index of the most likelihod mixture components for each observation
+        """
+        
+        logprob, posteriors = self.eval(X)
+        return logprob, posteriors.argmax(axis=1)
+
     def score(self, X):
         """Compute the log probability under the model.
 
@@ -499,7 +499,6 @@ class GMM(BaseEstimator):
 
             # if the results is better, keep it
             if n_iter:
-                print max_log_prob, log_likelihood[-1]
                 if log_likelihood[-1] > max_log_prob:
                     max_log_prob = log_likelihood[-1]
                     best_params = {'weights': self.weights,
