@@ -100,14 +100,6 @@ def _parallel_predict_regr(trees, X):
 
     return p
 
-def _parallel_compute_importances(trees):
-    importances = trees[0].feature_importances_
-
-    for tree in trees[1:]:
-        importances += tree.feature_importances_
-
-    return importances
-
 
 class BaseForest(BaseEnsemble, SelectorMixin):
     """Base class for forests of trees.
@@ -191,21 +183,12 @@ class BaseForest(BaseEnsemble, SelectorMixin):
 
         # Build the importances
         if self.compute_importances:
-            # Assign chunk of trees to jobs
-            starts = [0] * n_jobs
+            importances = self.estimators_[0].feature_importances_
 
-            for i in xrange(1, n_jobs):
-                starts[i] = starts[i - 1] + n_trees[i]
+            for tree in self.estimators_[1:]:
+                importances += tree.feature_importances_
 
-            # Parallel loop
-            all_importances = Parallel(n_jobs=n_jobs)(
-                delayed(_parallel_compute_importances)(
-                    self.estimators_[starts[i]:starts[i] + n_trees[i]])
-                for i in xrange(n_jobs))
-
-            # Reduce
-            importances = sum(all_importances) / self.n_estimators
-            self.feature_importances_ = importances
+            self.feature_importances_ = importances / self.n_estimators
 
         return self
 
