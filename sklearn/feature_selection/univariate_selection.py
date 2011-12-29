@@ -24,7 +24,7 @@ from ..utils.extmath import safe_sparse_dot
 def f_oneway(*args):
     """Performs a 1-way ANOVA.
 
-    The on-way ANOVA tests the null hypothesis that 2 or more groups have
+    The one-way ANOVA tests the null hypothesis that 2 or more groups have
     the same population mean.  The test is applied to samples from two or
     more groups, possibly with differing sizes.
 
