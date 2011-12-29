@@ -169,8 +169,7 @@ class Forest(BaseEnsemble):
         n_trees[-1] += self.n_estimators % n_jobs
 
         # Parallel loop
-        all_trees = Parallel(n_jobs=n_jobs,
-                             pre_dispatch="2*n_jobs")(
+        all_trees = Parallel(n_jobs=n_jobs)(
             delayed(_parallel_build_trees)(
                 n_trees[i],
                 self,
@@ -204,8 +203,7 @@ class Forest(BaseEnsemble):
             starts[i] = starts[i - 1] + n_trees[i]
 
         # Parallel loop
-        all_importances = Parallel(n_jobs=n_jobs,
-                                   pre_dispatch="2*n_jobs")(
+        all_importances = Parallel(n_jobs=n_jobs)(
             delayed(_parallel_compute_importances)(
                 self.estimators_[starts[i]:starts[i] + n_trees[i]])
             for i in xrange(n_jobs))
@@ -285,8 +283,7 @@ class ForestClassifier(Forest, ClassifierMixin):
             starts[i] = starts[i - 1] + n_trees[i]
 
         # Parallel loop
-        all_p = Parallel(n_jobs=self.n_jobs,
-                         pre_dispatch="2*n_jobs")(
+        all_p = Parallel(n_jobs=self.n_jobs)(
             delayed(_parallel_predict_proba)(
                 self.estimators_[starts[i]:starts[i] + n_trees[i]],
                 X,
@@ -367,8 +364,7 @@ class ForestRegressor(Forest, RegressorMixin):
             starts[i] = starts[i - 1] + n_trees[i]
 
         # Parallel loop
-        all_y_hat = Parallel(n_jobs=self.n_jobs,
-                             pre_dispatch="2*n_jobs")(
+        all_y_hat = Parallel(n_jobs=self.n_jobs)(
             delayed(_parallel_predict_regr)(
                 self.estimators_[starts[i]:starts[i] + n_trees[i]],
                 X)
