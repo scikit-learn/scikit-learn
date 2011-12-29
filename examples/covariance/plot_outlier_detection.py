@@ -71,7 +71,7 @@ for i, offset in enumerate(clusters_separation):
         clf.fit(X)
         y_pred = clf.decision_function(X).ravel()
         threshold = stats.scoreatpercentile(y_pred,
-                                            100*outliers_fraction)
+                                            100 * outliers_fraction)
         y_pred = y_pred > threshold
         n_errors = (y_pred != ground_truth).sum()
         # plot the levels lines and the points

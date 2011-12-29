@@ -15,8 +15,8 @@ libsvm command line programs.
 #          Olivier Grisel <olivier.grisel@ensta.org>
 # License: Simple BSD.
 
-from _svmlight_format import _load_svmlight_file
 import numpy as np
+from ._svmlight_format import _load_svmlight_file
 
 
 def load_svmlight_file(f, n_features=None, dtype=np.float64,
@@ -46,7 +46,7 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
 
     Parameters
     ----------
-    f: str or file-like
+    f: str or file-like open in binary mode.
         (Path to) a file to load.
 
     n_features: int or None
@@ -70,7 +70,7 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
     """
     if hasattr(f, "read"):
         return _load_svmlight_file(f, n_features, dtype, multilabel)
-    with open(f) as f:
+    with open(f, 'rb') as f:
         return _load_svmlight_file(f, n_features, dtype, multilabel)
 
 
@@ -128,13 +128,15 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
 
 def _dump_svmlight(X, y, f):
     if X.shape[0] != y.shape[0]:
-        raise ValueError("X.shape[0] and y.shape[0] should be the same.")
+        raise ValueError("X.shape[0] and y.shape[0] should be the same, "
+                         "got: %r and %r instead." % (X.shape[0], y.shape[0]))
 
     is_sp = int(hasattr(X, "tocsr"))
 
     for i in xrange(X.shape[0]):
-        s = " ".join(["%d:%f" % (j + 1, X[i, j]) for j in X[i].nonzero()[is_sp]])
-        f.write("%f %s\n" % (y[i], s))
+        s = u" ".join([u"%d:%f" % (j + 1, X[i, j])
+                       for j in X[i].nonzero()[is_sp]])
+        f.write((u"%f %s\n" % (y[i], s)).encode('ascii'))
 
 
 def dump_svmlight_file(X, y, f):
@@ -155,10 +157,10 @@ def dump_svmlight_file(X, y, f):
     y : array-like, shape = [n_samples]
         Target values.
 
-    f : str or file-like
+    f : str or file-like in binary mode
     """
     if hasattr(f, "write"):
         _dump_svmlight(X, y, f)
     else:
-        with open(f, "w") as f:
+        with open(f, "wb") as f:
             _dump_svmlight(X, y, f)

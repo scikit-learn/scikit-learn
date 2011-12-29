@@ -133,8 +133,8 @@ class _PLS(BaseEstimator):
         The algorithm used to estimate the weights. It will be called
         n_components times, i.e. once for each iteration of the outer loop.
 
-    max_iter : an integer, the maximum number of iterations (default 500) of the
-        NIPALS inner loop (used only if algorithm="nipals")
+    max_iter : an integer, the maximum number of iterations (default 500)
+        of the NIPALS inner loop (used only if algorithm="nipals")
 
     tol : non-negative real, default 1e-06
         The tolerance used in the iterative algorithm.

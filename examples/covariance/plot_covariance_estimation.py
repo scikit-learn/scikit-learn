@@ -79,7 +79,7 @@ pl.loglog(shrinkages, negative_logliks)
 # BUG: hlines(..., linestyle='--') breaks on some older versions of matplotlib
 #pl.hlines(loglik_real, pl.xlim()[0], pl.xlim()[1], color='red',
 #          label="real covariance likelihood", linestyle='--')
-pl.plot(pl.xlim(), 2*[loglik_real], '--r',
+pl.plot(pl.xlim(), 2 * [loglik_real], '--r',
         label="real covariance likelihood")
 
 # adjust view

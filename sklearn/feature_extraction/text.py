@@ -89,7 +89,7 @@ def to_ascii(s):
 
 
 def strip_tags(s):
-    return re.compile(r"<([^>]+)>", flags=re.UNICODE).sub("", s)
+    return re.compile(ur"<([^>]+)>", flags=re.UNICODE).sub(u"", s)
 
 
 class RomanPreprocessor(object):
@@ -105,7 +105,7 @@ class RomanPreprocessor(object):
 
 DEFAULT_PREPROCESSOR = RomanPreprocessor()
 
-DEFAULT_TOKEN_PATTERN = r"\b\w\w+\b"
+DEFAULT_TOKEN_PATTERN = ur"\b\w\w+\b"
 
 
 def _check_stop_list(stop):
@@ -149,7 +149,7 @@ class WordNGramAnalyzer(BaseEstimator):
             # ducktype for file-like objects
             text_document = text_document.read()
 
-        if isinstance(text_document, str):
+        if isinstance(text_document, bytes):
             text_document = text_document.decode(self.charset, 'ignore')
 
         text_document = self.preprocessor.preprocess(text_document)
@@ -186,7 +186,7 @@ class CharNGramAnalyzer(BaseEstimator):
     Because of this, it can be considered a basic morphological analyzer.
     """
 
-    white_spaces = re.compile(r"\s\s+")
+    white_spaces = re.compile(ur"\s\s+")
 
     def __init__(self, charset='utf-8', preprocessor=DEFAULT_PREPROCESSOR,
                  min_n=3, max_n=6):
@@ -201,13 +201,13 @@ class CharNGramAnalyzer(BaseEstimator):
             # ducktype for file-like objects
             text_document = text_document.read()
 
-        if isinstance(text_document, str):
+        if isinstance(text_document, bytes):
             text_document = text_document.decode(self.charset, 'ignore')
 
         text_document = self.preprocessor.preprocess(text_document)
 
         # normalize white spaces
-        text_document = self.white_spaces.sub(" ", text_document)
+        text_document = self.white_spaces.sub(u" ", text_document)
 
         text_len = len(text_document)
         ngrams = []
@@ -543,7 +543,7 @@ class Vectorizer(BaseEstimator):
         self.tfidf.fit(X)
         return self
 
-    def fit_transform(self, raw_documents):
+    def fit_transform(self, raw_documents, y=None):
         """
         Learn the representation and return the vectors.
 

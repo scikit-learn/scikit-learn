@@ -1,6 +1,6 @@
 import numpy as np
 import os.path
-from StringIO import StringIO
+from io import BytesIO
 
 from numpy.testing import assert_equal, assert_array_equal
 from nose.tools import raises
@@ -92,7 +92,9 @@ def test_load_invalid_file2():
 
 @raises(TypeError)
 def test_not_a_filename():
-    load_svmlight_file(1)
+    # in python 3 integers are valid file opening arguments (taken as unix
+    # file descriptors)
+    load_svmlight_file(.42)
 
 
 @raises(IOError)
@@ -105,7 +107,7 @@ def test_dump():
     Xd = Xs.toarray()
 
     for X in (Xs, Xd):
-        f = StringIO()
+        f = BytesIO()
         dump_svmlight_file(X, y, f)
         f.seek(0)
         X2, y2 = load_svmlight_file(f)

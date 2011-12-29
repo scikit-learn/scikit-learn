@@ -1,4 +1,3 @@
-"""sparsetools - a collection of routines for sparse matrix operations
-"""
+"""sparsetools - a collection of routines for sparse matrix operations"""
 
-from csgraph import cs_graph_components
+from .csgraph import cs_graph_components

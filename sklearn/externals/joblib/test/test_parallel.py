@@ -6,12 +6,15 @@ Test the parallel module.
 # Copyright (c) 2010-2011 Gael Varoquaux
 # License: BSD Style, 3 clauses.
 
-import time
+import time, sys
 try:
     import cPickle as pickle
     PickleError = TypeError
 except:
     import pickle
+    PickleError = pickle.PicklingError
+
+if sys.version_info[0] == 3:
     PickleError = pickle.PicklingError
 
 from ..parallel import Parallel, delayed, SafeFunction, WorkerInterrupt, \
@@ -111,11 +114,12 @@ def test_error_capture():
                     [delayed(division)(x, y) for x, y in zip((0, 1), (1, 0))],
                         )
     try:
+        ex = JoblibException
         Parallel(n_jobs=1)(
                     delayed(division)(x, y) for x, y in zip((0, 1), (1, 0)))
-    except Exception, e:
-        pass
-    nose.tools.assert_false(isinstance(e, JoblibException))
+    except Exception as e:
+        ex = e
+    nose.tools.assert_false(isinstance(ex, JoblibException))
 
 
 class Counter(object):

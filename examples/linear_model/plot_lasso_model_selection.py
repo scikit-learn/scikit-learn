@@ -93,7 +93,8 @@ pl.figure()
 plot_ic_criterion(model_aic, 'AIC', 'b')
 plot_ic_criterion(model_bic, 'BIC', 'r')
 pl.legend()
-pl.title('Information-criterion for model selection (training time %.3fs)' % t_bic)
+pl.title('Information-criterion for model selection (training time %.3fs)'
+         % t_bic)
 
 ##############################################################################
 # LassoCV: coordinate descent
@@ -119,8 +120,8 @@ pl.legend()
 
 pl.xlabel('-log(lambda)')
 pl.ylabel('Mean square error')
-pl.title('Mean square error on each fold: coordinate descent (train time: %.2fs)' %
-            t_lasso_cv)
+pl.title('Mean square error on each fold: coordinate descent '
+         '(train time: %.2fs)' % t_lasso_cv)
 pl.axis('tight')
 pl.ylim(ymin, ymax)
 

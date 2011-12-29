@@ -48,8 +48,8 @@ Changelog
    - :ref:`outlier_detection`: outlier and novelty detection, by
      `Virgile Fritsch`_.
 
-   - :ref:`kernel_approximation`: a transform implement kernel 
-     approximation for fast SGD on non-linear kernels by 
+   - :ref:`kernel_approximation`: a transform implement kernel
+     approximation for fast SGD on non-linear kernels by
      `Andreas Müller`_.
 
    - Fix a bug due to atom swapping in :ref:`OMP` by `Vlad Niculae`_.
@@ -71,6 +71,10 @@ Changelog
 
    - Utilities for fast computation of mean and variance for sparse matrices
      by `Mathieu Blondel`_.
+
+   - Make :func:`sklearn.preprocessing.scale` and
+     :class:`sklearn.preprocessing.Scaler` work on sparse matrices by
+     `Olivier Grisel`_
 
 
 API changes summary
@@ -109,7 +113,7 @@ version 0.9:
   - Cross Validation generators now use integer indices (``indices=True``)
     by default instead of boolean masks. This make it more intuitive to
     use with sparse matrix data.
-  
+
   - The functions used for sparse coding, ``sparse_encode`` and
     ``sparse_encode_parallel`` have been combined into
     :func:`sklearn.decomposition.sparse_encode`, and the shapes of the arrays

@@ -48,7 +48,8 @@ class IterGrid(object):
 
     def __iter__(self):
         param_grid = self.param_grid
-        if hasattr(param_grid, 'has_key'):
+        if hasattr(param_grid, 'items'):
+            # wrap dictionary in a singleton list
             param_grid = [param_grid]
         for p in param_grid:
             # Always sort the keys of a dictionary, for reproducibility
