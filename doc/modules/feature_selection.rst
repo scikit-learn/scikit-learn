@@ -7,7 +7,7 @@ Feature selection
 
 .. currentmodule:: sklearn.feature_selection
 
-The classes in the ``sklearn.feature_selection`` module can be used
+The classes in the :mod:`sklearn.feature_selection` module can be used
 for feature selection/dimensionality reduction on sample sets, either to
 improve estimators' accuracy scores or to boost their performance on very
 high-dimensional datasets.
@@ -19,7 +19,7 @@ Univariate feature selection
 
 Univariate feature selection works by selecting the best features based on
 univariate statistical tests. It can seen as a preprocessing step
-to an estimator. The `scikit.learn` exposes feature selection routines
+to an estimator. Scikit-Learn exposes feature selection routines
 a objects that implement the `transform` method. The k-best features
 can be selected based on:
 
@@ -91,6 +91,7 @@ select is eventually reached.
       elimination example with automatic tuning of the number of features
       selected with cross-validation.
 
+
 L1-based feature selection
 ==========================
 
@@ -100,9 +101,9 @@ Linear models penalized with the L1 norm have sparse solutions. When the goal
 is to reduce the dimensionality of the data to use with another classifier, the
 `transform` method of `LogisticRegression` and `LinearSVC` can be used::
 
-  >>> from sklearn import datasets
   >>> from sklearn.svm import LinearSVC
-  >>> iris = datasets.load_iris()
+  >>> from sklearn.datasets import load_iris
+  >>> iris = load_iris()
   >>> X, y = iris.data, iris.target
   >>> X.shape
   (150, 4)
@@ -117,3 +118,21 @@ The parameter C controls the sparsity: the smaller the fewer features.
     * :ref:`example_document_classification_20newsgroups.py`: Comparison
       of different algorithms for document classification including L1-based
       feature selection.
+
+
+Tree-based feature selection
+============================
+
+Tree-based estimators (see the :mod:`sklearn.tree` module and forest of trees in
+the :mod:`sklearn.ensemble` module) can be used to compute feature importances,
+which in turn can be used to discard irrelevant features::
+
+  >>> from sklearn.ensemble import ExtraTreesClassifier
+  >>> from sklearn.datasets import load_iris
+  >>> iris = datasets.load_iris()
+  >>> X, y = iris.data, iris.target
+  >>> X.shape
+  (150, 4)
+  >>> X_new = ExtraTreesClassifier().fit(X, y).transform(X)
+  >>> X_new.shape
+  (150, 2)

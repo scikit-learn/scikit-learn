@@ -52,7 +52,7 @@ Changelog
      approximation for fast SGD on non-linear kernels by
      `Andreas Müller`_.
 
-   - Fix a bug due to atom swapping in :ref:`OMP` by `Vlad Niculae`_.
+   - Fixed a bug due to atom swapping in :ref:`OMP` by `Vlad Niculae`_.
 
    - :ref:`SparseCoder` by `Vlad Niculae`_.
 
@@ -75,6 +75,9 @@ Changelog
    - Make :func:`sklearn.preprocessing.scale` and
      :class:`sklearn.preprocessing.Scaler` work on sparse matrices by
      `Olivier Grisel`_
+
+   - Feature importances using decision trees and/or forest of trees,
+     by `Gilles Louppe`_.
 
 
 API changes summary
