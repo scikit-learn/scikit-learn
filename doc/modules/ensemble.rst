@@ -31,7 +31,7 @@ Two families of ensemble methods are usually distinguished:
 Forests of randomized trees
 ===========================
 
-The ``sklearn.ensemble`` module includes two averaging algorithms based on
+The :mod:`sklearn.ensemble` module includes two averaging algorithms based on
 randomized :ref:`decision trees <tree>`: the RandomForest algorithm and the
 Extra-Trees method. Both algorithms are perturb-and-combine techniques
 specifically designed for trees::
