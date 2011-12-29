@@ -47,17 +47,17 @@ def f_oneway(*args):
 
     1. The samples are independent
     2. Each sample is from a normally distributed population
-    3. The population standard deviations of the groups are all equal.  This
+    3. The population standard deviations of the groups are all equal. This
        property is known as homocedasticity.
 
     If these assumptions are not true for a given set of data, it may still be
     possible to use the Kruskal-Wallis H-test (`stats.kruskal`_) although with
-    some loss of power
+    some loss of power.
 
     The algorithm is from Heiman[2], pp.394-7.
 
-    See scipy.stats.f_oneway that should give the same results while
-    being less efficient
+    See ``scipy.stats.f_oneway`` that should give the same results while
+    being less efficient.
 
     Notes
     -----
