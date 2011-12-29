@@ -27,7 +27,6 @@ y = y[mask]
 forest = ExtraTreesClassifier(n_estimators=1000,
                               max_features=128,
                               compute_importances=True,
-                              n_jobs=2,
                               random_state=0)
 
 forest.fit(X, y)
