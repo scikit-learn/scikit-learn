@@ -35,6 +35,5 @@ importances = importances.reshape(data.images[0].shape)
 
 # Plot pixel importances
 pl.matshow(importances, cmap=pl.cm.hot)
-pl.colorbar()
 pl.title("Pixel importances with forests of trees")
 pl.show()
