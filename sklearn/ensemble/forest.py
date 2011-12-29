@@ -36,7 +36,7 @@ The module structure is the following:
 import numpy as np
 
 from ..base import ClassifierMixin, RegressorMixin
-from ..feature_selection import SelectorMixin
+from ..feature_selection.selector_mixin import SelectorMixin
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor, \
                    ExtraTreeClassifier, ExtraTreeRegressor
 from ..utils import check_random_state
