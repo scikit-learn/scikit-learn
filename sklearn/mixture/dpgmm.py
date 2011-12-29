@@ -63,6 +63,18 @@ def wishart_logz(v, s, dets, n_features):
     z += np.sum(gammaln(0.5 * (v - np.arange(n_features) + 1)))
     return z
 
+def _bound_wishart(a, B, detB):
+    """Returns a function of the dof, scale matrix and its determinant 
+    used as an upper bound in variational approcimation of the evidence"""
+    n_features = B.shape[0]
+    logprior = wishart_logz(a, B, detB, n_features)
+    logprior -= wishart_logz(n_features,
+                             np.identity(n_features),
+                             1, n_features)
+    logprior += 0.5 * (a - 1) * wishart_log_det(a, B, detB, n_features)
+    logprior += 0.5 * a * np.trace(B)
+    return logprior
+
 
 ##############################################################################
 # Variational bound on the log likelihood of each class
@@ -291,11 +303,10 @@ class DPGMM(GMM):
         if self.covariance_type == 'spherical':
             self.dof_ = 0.5 * n_features * np.sum(z, axis=0)
             for k in xrange(self.n_components):
-                # XXX: how to avoid this huge temporary matrix in memory
-                dif = (X - self.means_[k])
+                # could be more memory efficient ?
+                sq_diff = np.sum((X - self.means_[k]) ** 2, axis=1)
                 self.scale_[k] = 1.
-                d = np.sum(dif * dif, axis=1)
-                self.scale_[k] += 0.5 * np.sum(z.T[k] * (d + n_features))
+                self.scale_[k] += 0.5 * np.sum(z.T[k] * (sq_diff + n_features))
                 self.bound_prec_[k] = (
                     0.5 * n_features * (
                         digamma(self.dof_[k]) - np.log(self.scale_[k])))
@@ -304,24 +315,20 @@ class DPGMM(GMM):
         elif self.covariance_type == 'diag':
             for k in xrange(self.n_components):
                 self.dof_[k].fill(1. + 0.5 * np.sum(z.T[k], axis=0))
-                ddif = (X - self.means_[k])  # see comment above
-                for d in xrange(n_features):
-                    self.scale_[k, d] = 1.
-                    dd = ddif.T[d] * ddif.T[d]
-                    self.scale_[k, d] += 0.5 * np.sum(z.T[k] * (dd + 1))
+                sq_diff = (X - self.means_[k]) ** 2  # see comment above
+                self.scale_[k] = np.ones(n_features) + 0.5 * np.dot(
+                    z.T[k], (sq_diff + 1))
                 self.precs_[k] = self.dof_[k] / self.scale_[k]
                 self.bound_prec_[k] = 0.5 * np.sum(digamma(self.dof_[k])
                                                     - np.log(self.scale_[k]))
                 self.bound_prec_[k] -= 0.5 * np.sum(self.precs_[k])
-
+                
         elif self.covariance_type == 'tied':
             self.dof_ = 2 + X.shape[0] + n_features
             self.scale_ = (X.shape[0] + 1) * np.identity(n_features)
-            for i in xrange(X.shape[0]):
-                for k in xrange(self.n_components):
-                    dif = X[i] - self.means_[k]
-                    self.scale_ += z[i, k] * np.dot(dif.reshape((-1, 1)),
-                                                dif.reshape((1, -1)))
+            for k in xrange(self.n_components):
+                    diff = X - self.means_[k]
+                    self.scale_ += np.dot(diff.T, z[:, k:k + 1] * diff)
             self.scale_ = linalg.pinv(self.scale_)
             self.precs_ = self.dof_ * self.scale_
             self.det_scale_ = linalg.det(self.scale_)
@@ -331,21 +338,20 @@ class DPGMM(GMM):
 
         elif self.covariance_type == 'full':
             for k in xrange(self.n_components):
-                T = np.sum(z.T[k])
-                self.dof_[k] = 2 + T + n_features
-                self.scale_[k] = (T + 1) * np.identity(n_features)
-                for i in xrange(X.shape[0]):
-                    dif = X[i] - self.means_[k]
-                    self.scale_[k] += z[i, k] * np.dot(dif.reshape((-1, 1)),
-                                                   dif.reshape((1, -1)))
+                sum_resp = np.sum(z.T[k])
+                self.dof_[k] = 2 + sum_resp + n_features
+                self.scale_[k] = (sum_resp + 1) * np.identity(n_features)
+                diff = X - self.means_[k]
+                self.scale_[k] += np.dot(diff.T, z[:, k:k + 1] * diff)
                 self.scale_[k] = linalg.pinv(self.scale_[k])
                 self.precs_[k] = self.dof_[k] * self.scale_[k]
                 self.det_scale_[k] = linalg.det(self.scale_[k])
                 self.bound_prec_[k] = 0.5 * wishart_log_det(self.dof_[k],
-                                                           self.scale_[k],
-                                                           self.det_scale_[k],
+                                                            self.scale_[k],
+                                                            self.det_scale_[k],
                                                            n_features)
-                self.bound_prec_[k] -= 0.5 * self.dof_[k] * np.trace(self.scale_[k])
+                self.bound_prec_[k] -= 0.5 * self.dof_[k] * np.trace(
+                    self.scale_[k])
 
     def _monitor(self, X, z, n, end=False):
         """Monitor the lower bound during iteration
@@ -379,21 +385,20 @@ class DPGMM(GMM):
         self.gamma_ = self.alpha * np.ones((self.n_components, 3))
 
     def _bound_concentration(self):
-        "The variational lower bound for the concentration parameter."
-        logprior = 0.
-        for k in xrange(self.n_components):
-            logprior = gammaln(self.alpha)
-            logprior += (self.alpha - 1) * (digamma(self.gamma_[k, 2]) -
-                                            digamma(self.gamma_[k, 1] +
-                                                    self.gamma_[k, 2]))
-            logprior += -gammaln(self.gamma_[k, 1] + self.gamma_[k, 2])
-            logprior += gammaln(self.gamma_[k, 1]) + gammaln(self.gamma_[k, 2])
-            logprior -= (self.gamma_[k, 1] - 1) * (digamma(self.gamma_[k, 1]) -
-                                                   digamma(self.gamma_[k, 1] +
-                                                           self.gamma_[k, 2]))
-            logprior -= (self.gamma_[k, 2] - 1) * (digamma(self.gamma_[k, 2]) -
-                                                   digamma(self.gamma_[k, 1] +
-                                                           self.gamma_[k, 2]))
+        """The variational lower bound for the concentration parameter."""
+        logprior = gammaln(self.alpha) * self.n_components
+        logprior += np.sum((self.alpha - 1) * (
+                digamma(self.gamma_.T[2]) - digamma(self.gamma_.T[1] +
+                                                    self.gamma_.T[2])))
+        logprior += np.sum(-gammaln(self.gamma_.T[1] + self.gamma_.T[2]))
+        logprior += np.sum(gammaln(self.gamma_.T[1]) + 
+                           gammaln(self.gamma_.T[2]))
+        logprior -= np.sum((self.gamma_.T[1] - 1) * (
+                digamma(self.gamma_.T[1]) - digamma(self.gamma_.T[1] +
+                                                     self.gamma_.T[2])))
+        logprior -= np.sum((self.gamma_.T[2] - 1) * (
+                digamma(self.gamma_.T[2]) - digamma(self.gamma_.T[1] +
+                                                    self.gamma_.T[2])))
         return logprior
 
     def _bound_means(self):
@@ -403,40 +408,32 @@ class DPGMM(GMM):
         logprior -= 0.5 * self.means.shape[1] * self.n_components
         return logprior
 
-    def _bound_wishart(self, a, B, detB):
-        n_features = self.means.shape[1]
-        logprior = wishart_logz(a, B, detB, n_features)
-        logprior -= wishart_logz(n_features,
-                                 np.identity(n_features),
-                                 1, n_features)
-        logprior += 0.5 * (a - 1) * wishart_log_det(a, B, detB, n_features)
-        logprior += 0.5 * a * np.trace(B)
-        return logprior
-
     def _bound_precisions(self):
+        """Returns the bound term related to precisions"""
         logprior = 0.
         if self.covariance_type == 'spherical':
-            for k in xrange(self.n_components):
-                logprior += gammaln(self.dof_[k])
-                logprior -= (self.dof_[k] - 1) * digamma(max(0.5, self.dof_[k]))
-                logprior += - np.log(self.scale_[k]) + self.dof_[k] - self.precs_[k]
+            logprior += np.sum(gammaln(self.dof_))
+            logprior -= np.sum(
+                (self.dof_ - 1) * digamma(np.maximum(0.5, self.dof_)))
+            logprior += np.sum(
+                - np.log(self.scale_) + self.dof_ - self.precs_)
         elif self.covariance_type == 'diag':
-            for k in xrange(self.n_components):
-                for d in xrange(self.means.shape[1]):
-                    logprior += gammaln(self.dof_[k, d])
-                    logprior -= (self.dof_[k, d] - 1) * digamma(self.dof_[k, d])
-                    logprior -= np.log(self.scale_[k, d])
-                    logprior += self.dof_[k, d] - self.precs_[k, d]
+            logprior += np.sum(gammaln(self.dof_))
+            logprior -= np.sum(
+                (self.dof_ - 1) * digamma(np.maximum(0.5, self.dof_)))
+            logprior += np.sum(
+                - np.log(self.scale_) + self.dof_ - self.precs_)
         elif self.covariance_type == 'tied':
-            logprior += self._bound_wishart(self.dof_, self.scale_, self.det_scale_)
+            logprior += _bound_wishart(self.dof_, self.scale_, self.det_scale_)
         elif self.covariance_type == 'full':
             for k in xrange(self.n_components):
-                logprior += self._bound_wishart(self.dof_[k],
-                                                self.scale_[k],
-                                                self.det_scale_[k])
+                logprior += _bound_wishart(self.dof_[k],
+                                           self.scale_[k],
+                                           self.det_scale_[k])
         return logprior
 
     def _bound_proportions(self, z):
+        """Returns the bound term related to proportions"""
         dg12 = digamma(self.gamma_.T[1] + self.gamma_.T[2])
         dg1 = digamma(self.gamma_.T[1]) - dg12
         dg2 = digamma(self.gamma_.T[2]) - dg12
@@ -456,6 +453,7 @@ class DPGMM(GMM):
         return logprior
 
     def lower_bound(self, X, z):
+        """returns a lower bound on model evidence based on X and membership"""
         if self.covariance_type not in ['full', 'tied', 'diag', 'spherical']:
             raise NotImplementedError("This ctype is not implemented: %s"
                                       % self.covariance_type)
@@ -528,20 +526,16 @@ class DPGMM(GMM):
                 self.dof_ = np.ones(self.n_components)
                 self.scale_ = np.ones(self.n_components)
                 self.precs_ = np.ones(self.n_components)
-                self.bound_prec_ = (
-                    0.5 * n_features * (digamma(self.dof_) 
-                                        - np.log(self.scale_)))
+                self.bound_prec_ = 0.5 * n_features * (
+                    digamma(self.dof_) - np.log(self.scale_))
             elif self.covariance_type == 'diag':
                 self.dof_ = 1 + 0.5 * n_features
                 self.dof_ *= np.ones((self.n_components, n_features))
                 self.scale_ = np.ones((self.n_components, n_features))
                 self.precs_ = np.ones((self.n_components, n_features))
-                self.bound_prec_ = np.zeros(self.n_components)
-                for k in xrange(self.n_components):
-                    self.bound_prec_[k] = (
-                        0.5 * np.sum(digamma(self.dof_[k]) 
-                                     - np.log(self.scale_[k])))
-                    self.bound_prec_[k] -= 0.5 * np.sum(self.precs_[k])
+                self.bound_prec_ = 0.5 * (np.sum(digamma(self.dof_) - 
+                                                 np.log(self.scale_), 1))
+                self.bound_prec_ -= 0.5 * np.sum(self.precs_, 1)
             elif self.covariance_type == 'tied':
                 self.dof_ = 1.
                 self.scale_ = np.identity(n_features)
@@ -565,7 +559,7 @@ class DPGMM(GMM):
                         n_features)
                     self.bound_prec_[k] -= (self.dof_[k] * 
                                             np.trace(self.scale_[k]))
-                    self.bound_prec_[k] *= 0.5
+                self.bound_prec_ *= 0.5
 
         logprob = []
         # reset self.converged_ to False
