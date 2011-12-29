@@ -104,7 +104,7 @@ class PCA(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    n_components: int, none or string
+    n_components: int, None or string
         Number of components to keep.
         if n_components is not set all components are kept:
             n_components == min(n_samples, n_features)
@@ -165,7 +165,8 @@ class PCA(BaseEstimator, TransformerMixin):
     --------
     ProbabilisticPCA
     RandomizedPCA
-
+    KernelPCA
+    SparsePCA
     """
     def __init__(self, n_components=None, copy=True, whiten=False):
         self.n_components = n_components
@@ -235,7 +236,9 @@ class PCA(BaseEstimator, TransformerMixin):
             self.n_components = _infer_dimension_(self.explained_variance_,
                                             n_samples, X.shape[1])
 
-        elif 0 < self.n_components and self.n_components < 1.0:
+        elif (self.n_components is not None
+              and 0 < self.n_components
+              and self.n_components < 1.0):
             # number of components for which the cumulated explained variance
             # percentage is superior to the desired threshold
             ratio_cumsum = self.explained_variance_ratio_.cumsum()
@@ -406,7 +409,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
 
     Notes
     -------
-    References:
+    **References**:
 
     * Finding structure with randomness: Stochastic algorithms for
       constructing approximate matrix decompositions Halko, et al., 2009
@@ -455,7 +458,8 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
             self.mean_ = np.mean(X, axis=0)
             X -= self.mean_
 
-        U, S, V = fast_svd(X, self.n_components, q=self.iterated_power,
+        U, S, V = fast_svd(X, self.n_components,
+                           n_iterations=self.iterated_power,
                            random_state=self.random_state)
 
         self.explained_variance_ = (S ** 2) / n_samples

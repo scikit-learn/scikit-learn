@@ -31,7 +31,7 @@ Two families of ensemble methods are usually distinguished:
 Forests of randomized trees
 ===========================
 
-The ``sklearn.ensemble`` module includes two averaging algorithms based on
+The :mod:`sklearn.ensemble` module includes two averaging algorithms based on
 randomized :ref:`decision trees <tree>`: the RandomForest algorithm and the
 Extra-Trees method. Both algorithms are perturb-and-combine techniques
 specifically designed for trees::
@@ -86,8 +86,8 @@ slightly greater increase in bias::
     >>> clf = ExtraTreesClassifier(n_estimators=10, max_depth=None,
     ...     min_split=1, random_state=0)
     >>> scores = cross_val_score(clf, X, y)
-    >>> scores.mean()                             # doctest: +ELLIPSIS
-    0.999...
+    >>> scores.mean() > 0.999
+    True
 
 The main parameters to adjust when using these methods is ``n_estimators`` and
 ``max_features``. The former is the number of trees in the forest. The larger

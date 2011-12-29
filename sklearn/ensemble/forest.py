@@ -4,7 +4,7 @@ Those methods include random forests and extremely randomized trees.
 
 The module structure is the following:
 
-- The ``Forest`` base class implements a common ``fit`` method for all
+- The ``BaseForest`` base class implements a common ``fit`` method for all
   the estimators in the module. The ``fit`` method of the base ``Forest``
   class calls the ``fit`` method of each sub-estimator on random samples
   (with replacement, a.k.a. bootstrap) of the training set.
@@ -38,6 +38,7 @@ import numpy as np
 
 from ..base import ClassifierMixin, RegressorMixin
 from ..externals.joblib import Parallel, delayed
+from ..feature_selection.selector_mixin import SelectorMixin
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor, \
                    ExtraTreeClassifier, ExtraTreeRegressor
 from ..utils import check_random_state
@@ -59,7 +60,8 @@ def _parallel_build_trees(n_trees, forest, X, y,
 
     for i in xrange(n_trees):
         tree = forest._make_estimator(append=False)
-        tree.random_state = check_random_state(rs.randint(MAX_INT))
+        tree.set_params(compute_importances=forest.compute_importances)
+        tree.set_params(random_state=check_random_state(rs.randint(MAX_INT)))
 
         if forest.bootstrap:
             n_samples = X.shape[0]
@@ -99,15 +101,15 @@ def _parallel_predict_regr(trees, X):
     return p
 
 def _parallel_compute_importances(trees):
-    importances = trees[0].feature_importances()
+    importances = trees[0].feature_importances_
 
     for tree in trees[1:]:
-        importances += tree.feature_importances()
+        importances += tree.feature_importances_
 
     return importances
 
 
-class Forest(BaseEnsemble):
+class BaseForest(BaseEnsemble, SelectorMixin):
     """Base class for forests of trees.
 
     Warning: This class should not be used directly. Use derived classes
@@ -117,16 +119,20 @@ class Forest(BaseEnsemble):
                        n_estimators=10,
                        estimator_params=[],
                        bootstrap=False,
+                       compute_importances=False,
                        n_jobs=1,
                        random_state=None):
-        super(Forest, self).__init__(
+        super(BaseForest, self).__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
             estimator_params=estimator_params)
 
         self.bootstrap = bootstrap
+        self.compute_importances = compute_importances
         self.n_jobs = n_jobs
         self.random_state = check_random_state(random_state)
+
+        self.feature_importances_ = None
 
     def fit(self, X, y):
         """Build a forest of trees from the training set (X, y).
@@ -183,38 +189,28 @@ class Forest(BaseEnsemble):
         # Reduce
         self.estimators_ = [tree for tree in itertools.chain(*all_trees)]
 
+        # Build the importances
+        if self.compute_importances:
+            # Assign chunk of trees to jobs
+            starts = [0] * n_jobs
+
+            for i in xrange(1, n_jobs):
+                starts[i] = starts[i - 1] + n_trees[i]
+
+            # Parallel loop
+            all_importances = Parallel(n_jobs=n_jobs)(
+                delayed(_parallel_compute_importances)(
+                    self.estimators_[starts[i]:starts[i] + n_trees[i]])
+                for i in xrange(n_jobs))
+
+            # Reduce
+            importances = sum(all_importances) / self.n_estimators
+            self.feature_importances_ = importances
+
         return self
 
-    def feature_importances(self):
-        """Compute the mean feature importances over the trees in the forest.
 
-        Returns
-        -------
-        importances : array of shape = [n_features]
-            The feature importances.
-        """
-        # Assign chunk of trees to jobs
-        n_jobs = min(self.n_jobs, self.n_estimators)
-        n_trees = [self.n_estimators / n_jobs] * n_jobs
-        n_trees[-1] += self.n_estimators % n_jobs
-        starts = [0] * n_jobs
-
-        for i in xrange(1, n_jobs):
-            starts[i] = starts[i - 1] + n_trees[i]
-
-        # Parallel loop
-        all_importances = Parallel(n_jobs=n_jobs)(
-            delayed(_parallel_compute_importances)(
-                self.estimators_[starts[i]:starts[i] + n_trees[i]])
-            for i in xrange(n_jobs))
-
-        # Reduce
-        importances = sum(all_importances) / self.n_estimators
-
-        return importances
-
-
-class ForestClassifier(Forest, ClassifierMixin):
+class ForestClassifier(BaseForest, ClassifierMixin):
     """Base class for forest of trees-based classifiers.
 
     Warning: This class should not be used directly. Use derived classes
@@ -224,6 +220,7 @@ class ForestClassifier(Forest, ClassifierMixin):
                        n_estimators=10,
                        estimator_params=[],
                        bootstrap=False,
+                       compute_importances=False,
                        n_jobs=1,
                        random_state=None):
         super(ForestClassifier, self).__init__(
@@ -231,6 +228,7 @@ class ForestClassifier(Forest, ClassifierMixin):
             n_estimators=n_estimators,
             estimator_params=estimator_params,
             bootstrap=bootstrap,
+            compute_importances=compute_importances,
             n_jobs=n_jobs,
             random_state=random_state)
 
@@ -315,7 +313,7 @@ class ForestClassifier(Forest, ClassifierMixin):
         return np.log(self.predict_proba(X))
 
 
-class ForestRegressor(Forest, RegressorMixin):
+class ForestRegressor(BaseForest, RegressorMixin):
     """Base class for forest of trees-based regressors.
 
     Warning: This class should not be used directly. Use derived classes
@@ -325,6 +323,7 @@ class ForestRegressor(Forest, RegressorMixin):
                        n_estimators=10,
                        estimator_params=[],
                        bootstrap=False,
+                       compute_importances=False,
                        n_jobs=1,
                        random_state=None):
         super(ForestRegressor, self).__init__(
@@ -332,6 +331,7 @@ class ForestRegressor(Forest, RegressorMixin):
             n_estimators=n_estimators,
             estimator_params=estimator_params,
             bootstrap=bootstrap,
+            compute_importances=compute_importances,
             n_jobs=n_jobs,
             random_state=random_state)
 
@@ -416,6 +416,10 @@ class RandomForestClassifier(ForestClassifier):
     bootstrap : boolean, optional (default=True)
         Whether bootstrap samples are used when building trees.
 
+    compute_importances : boolean, optional (default=True)
+        Whether feature importances are computed and stored into the
+        ``feature_importances_`` attribute when calling fit.
+
     n_jobs : integer, optional (default=1)
         The number of jobs to run in parallel.
 
@@ -425,13 +429,20 @@ class RandomForestClassifier(ForestClassifier):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
+    Attributes
+    ----------
+    feature_importances_ : array of shape = [n_features]
+        The feature mportances (the higher, the more important the feature).
+
+    Notes
+    -----
+    **References**:
+
+    .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
+
     See also
     --------
     RandomForestRegressor, ExtraTreesClassifier, ExtraTreesRegressor
-
-    References
-    ----------
-    .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
     """
     def __init__(self, n_estimators=10,
                        criterion="gini",
@@ -440,6 +451,7 @@ class RandomForestClassifier(ForestClassifier):
                        min_density=0.1,
                        max_features=None,
                        bootstrap=True,
+                       compute_importances=False,
                        n_jobs=1,
                        random_state=None):
         super(RandomForestClassifier, self).__init__(
@@ -448,6 +460,7 @@ class RandomForestClassifier(ForestClassifier):
             estimator_params=("criterion", "max_depth", "min_split",
                               "min_density", "max_features", "random_state"),
             bootstrap=bootstrap,
+            compute_importances=compute_importances,
             n_jobs=n_jobs,
             random_state=random_state)
 
@@ -498,6 +511,10 @@ class RandomForestRegressor(ForestRegressor):
     bootstrap : boolean, optional (default=True)
         Whether bootstrap samples are used when building trees.
 
+    compute_importances : boolean, optional (default=True)
+        Whether feature importances are computed and stored into the
+        ``feature_importances_`` attribute when calling fit.
+
     n_jobs : integer, optional (default=1)
         The number of jobs to run in parallel.
 
@@ -507,13 +524,20 @@ class RandomForestRegressor(ForestRegressor):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
+    Attributes
+    ----------
+    feature_importances_ : array of shape = [n_features]
+        The feature mportances (the higher, the more important the feature).
+
+    Notes
+    -----
+    **References**:
+
+    .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
+
     See also
     --------
     RandomForestClassifier, ExtraTreesClassifier, ExtraTreesRegressor
-
-    References
-    ----------
-    .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
     """
     def __init__(self, n_estimators=10,
                        criterion="mse",
@@ -522,6 +546,7 @@ class RandomForestRegressor(ForestRegressor):
                        min_density=0.1,
                        max_features=None,
                        bootstrap=True,
+                       compute_importances=False,
                        n_jobs=1,
                        random_state=None):
         super(RandomForestRegressor, self).__init__(
@@ -530,6 +555,7 @@ class RandomForestRegressor(ForestRegressor):
             estimator_params=("criterion", "max_depth", "min_split",
                               "min_density", "max_features", "random_state"),
             bootstrap=bootstrap,
+            compute_importances=compute_importances,
             n_jobs=n_jobs,
             random_state=random_state)
 
@@ -581,6 +607,10 @@ class ExtraTreesClassifier(ForestClassifier):
     bootstrap : boolean, optional (default=False)
         Whether bootstrap samples are used when building trees.
 
+    compute_importances : boolean, optional (default=True)
+        Whether feature importances are computed and stored into the
+        ``feature_importances_`` attribute when calling fit.
+
     n_jobs : integer, optional (default=1)
         The number of jobs to run in parallel.
 
@@ -590,14 +620,22 @@ class ExtraTreesClassifier(ForestClassifier):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
+    Attributes
+    ----------
+    feature_importances_ : array of shape = [n_features]
+        The feature mportances (the higher, the more important the feature).
+
+    Notes
+    -----
+    **References**:
+
+    .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
+           Machine Learning, 63(1), 3-42, 2006.
+
     See also
     --------
     ExtraTreesRegressor, RandomForestClassifier, RandomForestRegressor
 
-    References
-    ----------
-    .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
-           Machine Learning, 63(1), 3-42, 2006.
     """
     def __init__(self, n_estimators=10,
                        criterion="gini",
@@ -606,6 +644,7 @@ class ExtraTreesClassifier(ForestClassifier):
                        min_density=0.1,
                        max_features=None,
                        bootstrap=False,
+                       compute_importances=False,
                        n_jobs=1,
                        random_state=None):
         super(ExtraTreesClassifier, self).__init__(
@@ -614,6 +653,7 @@ class ExtraTreesClassifier(ForestClassifier):
             estimator_params=("criterion", "max_depth", "min_split",
                               "min_density", "max_features", "random_state"),
             bootstrap=bootstrap,
+            compute_importances=compute_importances,
             n_jobs=n_jobs,
             random_state=random_state)
 
@@ -665,6 +705,10 @@ class ExtraTreesRegressor(ForestRegressor):
     bootstrap : boolean, optional (default=False)
         Whether bootstrap samples are used when building trees.
 
+    compute_importances : boolean, optional (default=True)
+        Whether feature importances are computed and stored into the
+        ``feature_importances_`` attribute when calling fit.
+
     n_jobs : integer, optional (default=1)
         The number of jobs to run in parallel.
 
@@ -674,14 +718,22 @@ class ExtraTreesRegressor(ForestRegressor):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
+    Attributes
+    ----------
+    feature_importances_ : array of shape = [n_features]
+        The feature mportances (the higher, the more important the feature).
+
+    Notes
+    -----
+    **References**:
+
+    .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
+           Machine Learning, 63(1), 3-42, 2006.
+
     See also
     --------
     ExtraTreesRegressor, RandomForestClassifier, RandomForestRegressor
 
-    References
-    ----------
-    .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
-           Machine Learning, 63(1), 3-42, 2006.
     """
     def __init__(self, n_estimators=10,
                        criterion="mse",
@@ -690,6 +742,7 @@ class ExtraTreesRegressor(ForestRegressor):
                        min_density=0.1,
                        max_features=None,
                        bootstrap=False,
+                       compute_importances=False,
                        n_jobs=1,
                        random_state=None):
         super(ExtraTreesRegressor, self).__init__(
@@ -698,6 +751,7 @@ class ExtraTreesRegressor(ForestRegressor):
             estimator_params=("criterion", "max_depth", "min_split",
                               "min_density", "max_features", "random_state"),
             bootstrap=bootstrap,
+            compute_importances=compute_importances,
             n_jobs=n_jobs,
             random_state=random_state)
 

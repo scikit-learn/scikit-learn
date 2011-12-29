@@ -11,93 +11,71 @@ estimator, as a chain of transforms and estimators.
 from .base import BaseEstimator
 
 
+# One round of beers on me if someone finds out why the backslash
+# is needed in the Attributes section so as not to upset sphinx.
+
 class Pipeline(BaseEstimator):
     """ Pipeline of transforms with a final estimator
 
-        Sequentialy apply a list of transforms and a final estimator.
-        Intermediate steps of the pipeline must be 'transforms', that
-        is that they must implements fit & transform methods
-        The final estimator need only implements fit.
+    Sequentialy apply a list of transforms and a final estimator.
+    Intermediate steps of the pipeline must be 'transforms', that
+    is that they must implements fit and transform methods
+    The final estimator need only implements fit.
 
-        The purpose of the pipeline is to assemble several steps that can
-        be cross-validated together while setting different parameters.
-        For this, it enables to setting parameters of the various steps
-        using their names and the parameter name separated by a '__',
-        as in the example below.
+    The purpose of the pipeline is to assemble several steps that can
+    be cross-validated together while setting different parameters.
+    For this, it enables to setting parameters of the various steps
+    using their names and the parameter name separated by a '__',
+    as in the example below.
 
-        Attributes
-        ===========
-        steps: list of (names, object)
-            List of the named object that compose the pipeline, in the
-            order that they are applied on the data.
+    Parameters
+    ----------
 
-        Methods
-        =======
-        fit:
-            Fit all the transforms one after the other and transform the
-            data, then fit the transformed data using the final estimator
-        fit_transform:
-            Fit all the transforms one after the other and transform the
-            data, then use fit_transform on transformed data using the final
-            estimator. Valid only if the final estimator implements
-            fit_transform.
-        predict:
-            Applies transforms to the data, and the predict method of the
-            final estimator. Valid only if the final estimator implements
-            predict.
-        transform:
-            Applies transforms to the data, and the transform method of the
-            final estimator. Valid only if the final estimator implements
-            transform.
-        score:
-            Applies transforms to the data, and the score method of the
-            final estimator. Valid only if the final estimator implements
-            score.
+    steps: list
+        List of (name, transform) object (implementing
+        fit/transform) that are chained, in the order in which
+        they are chained, with the last object an estimator.
+
+    Attributes
+    ----------
+    `steps` : list of (name, object)
+        List of the named object that compose the pipeline, in the \
+        order that they are applied on the data.
 
 
-        Example
-        =======
+    Examples
+    --------
 
-        >>> from sklearn import svm
-        >>> from sklearn.datasets import samples_generator
-        >>> from sklearn.feature_selection import SelectKBest
-        >>> from sklearn.feature_selection import f_regression
-        >>> from sklearn.pipeline import Pipeline
+    >>> from sklearn import svm
+    >>> from sklearn.datasets import samples_generator
+    >>> from sklearn.feature_selection import SelectKBest
+    >>> from sklearn.feature_selection import f_regression
+    >>> from sklearn.pipeline import Pipeline
 
-        >>> # generate some data to play with
-        >>> X, y = samples_generator.make_classification(
-        ...     n_informative=5, n_redundant=0, random_state=42)
+    >>> # generate some data to play with
+    >>> X, y = samples_generator.make_classification(
+    ...     n_informative=5, n_redundant=0, random_state=42)
 
-        >>> # ANOVA SVM-C
-        >>> anova_filter = SelectKBest(f_regression, k=5)
-        >>> clf = svm.SVC(kernel='linear')
-        >>> anova_svm = Pipeline([('anova', anova_filter), ('svc', clf)])
+    >>> # ANOVA SVM-C
+    >>> anova_filter = SelectKBest(f_regression, k=5)
+    >>> clf = svm.SVC(kernel='linear')
+    >>> anova_svm = Pipeline([('anova', anova_filter), ('svc', clf)])
 
-        >>> # You can set the parameters using the names issued
-        >>> # For instance, fit using a k of 10 in the SelectKBest
-        >>> # and a parameter 'C' of the svn
-        >>> anova_svm.set_params(anova__k=10, svc__C=.1).fit(X, y)
-        ...                                              # doctest: +ELLIPSIS
-        Pipeline(steps=[...])
+    >>> # You can set the parameters using the names issued
+    >>> # For instance, fit using a k of 10 in the SelectKBest
+    >>> # and a parameter 'C' of the svn
+    >>> anova_svm.set_params(anova__k=10, svc__C=.1).fit(X, y)
+    ...                                              # doctest: +ELLIPSIS
+    Pipeline(steps=[...])
 
-        >>> prediction = anova_svm.predict(X)
-        >>> anova_svm.score(X, y)
-        0.75
+    >>> prediction = anova_svm.predict(X)
+    >>> anova_svm.score(X, y)
+    0.75
     """
 
-    #--------------------------------------------------------------------------
     # BaseEstimator interface
-    #--------------------------------------------------------------------------
 
     def __init__(self, steps):
-        """
-        Parameters
-        ==========
-        steps: list
-            List of (name, transform) object (implementing
-            fit/transform) that are chained, in the order in which
-            they are chained, with the last object an estimator.
-        """
         self.named_steps = dict(steps)
         names, estimators = zip(*steps)
         self.steps = steps
@@ -127,9 +105,7 @@ class Pipeline(BaseEstimator):
                     out['%s__%s' % (name, key)] = value
             return out
 
-    #--------------------------------------------------------------------------
     # Estimator interface
-    #--------------------------------------------------------------------------
 
     def _pre_transform(self, X, y=None, **fit_params):
         fit_params_steps = dict((step, {}) for step, _ in self.steps)
@@ -146,15 +122,25 @@ class Pipeline(BaseEstimator):
         return Xt, fit_params_steps[self.steps[-1][0]]
 
     def fit(self, X, y=None, **fit_params):
+        """Fit all the transforms one after the other and transform the
+        data, then fit the transformed data using the final estimator.
+        """
         Xt, fit_params = self._pre_transform(X, y, **fit_params)
         self.steps[-1][-1].fit(Xt, y, **fit_params)
         return self
 
     def fit_transform(self, X, y=None, **fit_params):
+        """Fit all the transforms one after the other and transform the
+        data, then use fit_transform on transformed data using the final
+        estimator. Valid only if the final estimator implements
+        fit_transform."""
         Xt, fit_params = self._pre_transform(X, y, **fit_params)
         return self.steps[-1][-1].fit_transform(Xt, y, **fit_params)
 
     def predict(self, X):
+        """Applies transforms to the data, and the predict method of the
+        final estimator. Valid only if the final estimator implements
+        predict."""
         Xt = X
         for name, transform in self.steps[:-1]:
             Xt = transform.transform(Xt)
@@ -173,6 +159,9 @@ class Pipeline(BaseEstimator):
         return self.steps[-1][-1].predict_log_proba(Xt)
 
     def transform(self, X):
+        """Applies transforms to the data, and the transform method of the
+        final estimator. Valid only if the final estimator implements
+        transform."""
         Xt = X
         for name, transform in self.steps[:-1]:
             Xt = transform.transform(Xt)
@@ -187,6 +176,9 @@ class Pipeline(BaseEstimator):
         return Xt
 
     def score(self, X, y=None):
+        """Applies transforms to the data, and the score method of the
+        final estimator. Valid only if the final estimator implements
+        score."""
         Xt = X
         for name, transform in self.steps[:-1]:
             Xt = transform.transform(Xt)

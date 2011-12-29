@@ -14,6 +14,7 @@ print __doc__
 
 import numpy as np
 import pylab as pl
+
 from sklearn.datasets import load_iris
 from sklearn.tree import DecisionTreeClassifier
 
@@ -21,6 +22,7 @@ from sklearn.tree import DecisionTreeClassifier
 n_classes = 3
 plot_colors = "bry"
 plot_step = 0.02
+
 pl.set_cmap(pl.cm.Paired)
 
 # Load data

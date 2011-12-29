@@ -194,8 +194,8 @@ def _hc_get_descendent(ind, children, n_leaves):
     n_leaves : int
         Number of leaves.
 
-    Return
-    ------
+    Returns
+    -------
     descendent : list of int
     """
     descendent = []
@@ -224,8 +224,8 @@ def _hc_cut(n_clusters, children, n_leaves):
     n_leaves : int
         Number of leaves of the tree.
 
-    Return
-    ------
+    Returns
+    -------
     labels : array [n_points]
         cluster labels for each point
 
@@ -268,11 +268,6 @@ class Ward(BaseEstimator):
     n_components : int (optional)
         The number of connected components in the graph defined by the
         connectivity matrix. If not set, it is estimated.
-
-    Methods
-    -------
-    fit:
-        Compute the clustering
 
     Attributes
     ----------
@@ -350,11 +345,6 @@ class WardAgglomeration(AgglomerationTransform, Ward):
     n_components : int (optional)
         The number of connected components in the graph defined by the
         connectivity matrix. If not set, it is estimated.
-
-    Methods
-    -------
-    fit:
-        Compute the clustering of features
 
     Attributes
     ----------

@@ -50,8 +50,8 @@ class AgglomerationTransform(TransformerMixin):
         Xred : array of size k
             The values to be assigned to each cluster of samples
 
-        Return
-        ------
+        Returns
+        -------
         X : array of size nb_samples
             A vector of size nb_samples with the values of Xred assigned to
             each of the cluster of samples.

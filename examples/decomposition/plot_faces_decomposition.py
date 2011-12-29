@@ -76,17 +76,18 @@ estimators = [
      False, False),
 
     ('Independent components - FastICA',
-     decomposition.FastICA(n_components=n_components, whiten=True, max_iter=10),
+     decomposition.FastICA(n_components=n_components, whiten=True,
+                           max_iter=10),
      True, True),
 
     ('Sparse comp. - MiniBatchSparsePCA',
-     decomposition.MiniBatchSparsePCA(n_components=n_components, alpha=1e-3,
+     decomposition.MiniBatchSparsePCA(n_components=n_components, alpha=0.8,
                                       n_iter=100, chunk_size=3,
                                       random_state=rng),
      True, False),
 
     ('MiniBatchDictionaryLearning',
-    decomposition.MiniBatchDictionaryLearning(n_atoms=15, alpha=5e-3,
+    decomposition.MiniBatchDictionaryLearning(n_atoms=15, alpha=0.1,
                                               n_iter=50, chunk_size=3,
                                               random_state=rng),
      True, False),

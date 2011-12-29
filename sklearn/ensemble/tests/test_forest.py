@@ -159,13 +159,16 @@ def test_importances():
                                         shuffle=False,
                                         random_state=0)
 
-    clf = RandomForestClassifier(n_estimators=10).fit(X, y)
-    importances = clf.feature_importances()
+    clf = RandomForestClassifier(n_estimators=10, compute_importances=True)
+    clf.fit(X, y)
+    importances = clf.feature_importances_
     n_important = sum(importances > 0.1)
 
     assert_equal(importances.shape[0], 10)
     assert_equal(n_important, 3)
 
+    X_new = clf.transform(X, threshold="mean")
+    assert 0 < X_new.shape[1] < X.shape[1]
 
 def test_gridsearch():
     """Check that base trees can be grid-searched."""

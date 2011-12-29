@@ -24,14 +24,16 @@ X = X[mask]
 y = y[mask]
 
 # Build a forest and compute the pixel importances
-forest = ExtraTreesClassifier(n_estimators=1000, max_features=128)
+forest = ExtraTreesClassifier(n_estimators=1000,
+                              max_features=128,
+                              compute_importances=True,
+                              random_state=0)
+
 forest.fit(X, y)
-importances = forest.feature_importances()
+importances = forest.feature_importances_
 importances = importances.reshape(data.images[0].shape)
 
 # Plot pixel importances
-pl.set_cmap(pl.cm.hot)
-pl.matshow(importances)
-pl.colorbar()
+pl.matshow(importances, cmap=pl.cm.hot)
 pl.title("Pixel importances with forests of trees")
 pl.show()

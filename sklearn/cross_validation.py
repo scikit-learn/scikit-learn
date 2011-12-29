@@ -34,7 +34,7 @@ class LeaveOneOut(object):
     ShuffleSplit.
 
     Parameters
-    ==========
+    ----------
     n: int
         Total number of elements
 
@@ -44,7 +44,7 @@ class LeaveOneOut(object):
         matrices, since those cannot be indexed by boolean masks.
 
     Examples
-    ========
+    --------
     >>> from sklearn import cross_validation
     >>> X = np.array([[1, 2], [3, 4]])
     >>> y = np.array([1, 2])
@@ -681,7 +681,7 @@ class ShuffleSplit(object):
         Pseudo-random number generator state used for random sampling.
 
     Examples
-    ----------
+    --------
     >>> from sklearn import cross_validation
     >>> rs = cross_validation.ShuffleSplit(4, n_iterations=3,
     ...     test_fraction=.25, random_state=0)
@@ -836,7 +836,7 @@ def check_cv(cv, X=None, y=None, classifier=False):
     """Input checker utility for building a CV in a user friendly way.
 
     Parameters
-    ===========
+    ----------
     cv: an integer, a cv generator instance, or None
         The input specifying which cv generator to use. It can be an
         integer, in which case it is the number of folds in a KFold,
@@ -930,8 +930,8 @@ def permutation_test_score(estimator, X, y, score_func, cv=None,
         `mean_square_error`) then this is actually the complement of the
         p-value:  1 - p-value.
 
-    References
-    ----------
+    Notes
+    -----
     This function implements Test 1 in:
 
         Ojala and Garriga. Permutation Tests for Studying Classifier

@@ -8,7 +8,6 @@
 # License: BSD, (C) INRIA, University of Amsterdam
 
 import numpy as np
-from scipy import linalg
 
 from .base import \
     _get_weights, _check_weights, \
@@ -94,8 +93,6 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
     See :ref:`Nearest Neighbors <neighbors>` in the online documentation
     for a discussion of the choice of ``algorithm`` and ``leaf_size``.
 
-    References
-    ----------
     http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
@@ -203,8 +200,6 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
     See :ref:`Nearest Neighbors <neighbors>` in the online documentation
     for a discussion of the choice of ``algorithm`` and ``leaf_size``.
 
-    References
-    ----------
     http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
@@ -315,8 +310,6 @@ class NeighborsRegressor(NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin,
     See :ref:`Nearest Neighbors <neighbors>` in the online documentation
     for a discussion of the choice of ``algorithm`` and ``leaf_size``.
 
-    References
-    ----------
     http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
