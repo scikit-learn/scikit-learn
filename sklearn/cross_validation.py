@@ -681,7 +681,7 @@ class ShuffleSplit(object):
         Pseudo-random number generator state used for random sampling.
 
     Examples
-    ----------
+    --------
     >>> from sklearn import cross_validation
     >>> rs = cross_validation.ShuffleSplit(4, n_iterations=3,
     ...     test_fraction=.25, random_state=0)
