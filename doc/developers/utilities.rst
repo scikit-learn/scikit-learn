@@ -62,7 +62,7 @@ number generator object.
     ``RandomState`` object.
   - If ``random_state`` is a ``RandomState`` object, then it is passed through.
 
-For example:
+For example::
 
     >>> from sklearn.utils import check_random_state
     >>> random_state = 0
@@ -123,6 +123,28 @@ Efficient Linear Algebra & Array Operations
 
 - :func:`shuffle`: Shuffle arrays or sparse matrices in a consistent way.
   Used in ``sklearn.cluster.k_means``.
+
+
+Efficient Routines for Sparse Matrices
+======================================
+
+The ``sklearn.utils.sparsefuncs`` cython module hosts compiled extensions to
+efficiently process ``scipy.sparse`` data.
+
+- :func:`sparsefuncs.mean_variance_axis0`: compute the means and
+  variances along axis 0 of a CSR matrix.
+  Used for normalizing the tolerance stopping criterion in
+  :class:`sklearn.cluster.k_means_.KMeans`.
+
+- :func:`sparsefuncs.inplace_csr_row_normalize_l1` and
+  :func:`sparsefuncs.inplace_csr_row_normalize_l2`: can be used to normalize
+  individual sparse samples to unit l1 or l2 norm as done in
+  :class:`sklearn.preprocessing.Normalizer`.
+
+- :func:`sparsefuncs.inplace_csr_column_scale`: can be used to multiply the
+  columns of a CSR matrix by a constant scale (one scale per column).
+  Used for scaling features to unit standard deviation in
+  :class:`sklearn.preprocessing.Scaler`.
 
 
 Graph Routines

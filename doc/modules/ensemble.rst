@@ -31,7 +31,7 @@ Two families of ensemble methods are usually distinguished:
 Forests of randomized trees
 ===========================
 
-The ``sklearn.ensemble`` module includes two averaging algorithms based on
+The :mod:`sklearn.ensemble` module includes two averaging algorithms based on
 randomized :ref:`decision trees <tree>`: the RandomForest algorithm and the
 Extra-Trees method. Both algorithms are perturb-and-combine techniques
 specifically designed for trees::
@@ -86,8 +86,8 @@ slightly greater increase in bias::
     >>> clf = ExtraTreesClassifier(n_estimators=10, max_depth=None,
     ...     min_split=1, random_state=0)
     >>> scores = cross_val_score(clf, X, y)
-    >>> scores.mean()                             # doctest: +ELLIPSIS
-    0.999...
+    >>> scores.mean() > 0.999
+    True
 
 The main parameters to adjust when using these methods is ``n_estimators`` and
 ``max_features``. The former is the number of trees in the forest. The larger
@@ -100,13 +100,24 @@ greater the increase in bias. Empiricial good default values are
 ``max_features=sqrt(n_features)`` in extra-trees (where ``n_features`` is the
 number of features in the data). The best results are also usually reached when
 setting ``max_depth=None`` in combination with ``min_split=1`` (i.e., when fully
-developping the trees). Finally, note that bootstrap samples are used by default
-in random forests (``bootstrap=True``) while the default strategy is to use the
-original dataset for building extra-trees (``bootstrap=False``).
+developping the trees). In addition, note that bootstrap samples are used by
+default in random forests (``bootstrap=True``) while the default strategy is to
+use the original dataset for building extra-trees (``bootstrap=False``).
+
+Finally, this module also features the parallel construction of the trees and
+the parallel computation of the predictions through the ``n_jobs`` parameter. If
+``n_jobs=k`` then computations are partitioned into ``k`` jobs, and run on ``k``
+cores of the machine. If ``n_jobs=-1`` then all cores available on the machine
+are used. Note that because of inter-process communication overhead, the speedup
+might not be linear (i.e., using ``k`` jobs will unfortunately not be ``k``
+times as fast). Significant speedup can still be achieved though when building a
+large number of trees, or when building a single tree requires a fair amount of
+time (e.g., on large datasets).
 
 .. topic:: Examples:
 
  * :ref:`example_ensemble_plot_forest_iris.py`
+ * :ref:`example_ensemble_plot_forest_importances_faces.py`
 
 .. topic:: References
 

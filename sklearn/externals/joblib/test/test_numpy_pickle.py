@@ -113,9 +113,9 @@ def test_standard_types():
     #""" Test pickling and saving with standard types.
     #"""
     filename = env['filename']
-    for zipped in [True, False]:
+    for compress in [True, False]:
         for member in typelist:
-            numpy_pickle.dump(member, filename, zipped=zipped)
+            numpy_pickle.dump(member, filename, compress=compress)
             _member = numpy_pickle.load(filename)
             # We compare the pickled instance to the reloaded one only if it
             # can be compared to a copied one
@@ -127,10 +127,10 @@ def test_standard_types():
 def test_numpy_persistence():
     filename = env['filename']
     a = np.random.random(10)
-    for zipped in [True, False]:
+    for compress in [True, False]:
         for obj in (a,), (a, a), [a, a, a]:
-            filenames = numpy_pickle.dump(obj, filename, zipped=zipped)
-            if not zipped:
+            filenames = numpy_pickle.dump(obj, filename, compress=compress)
+            if not compress:
                 # Check that one file was created per array
                 yield nose.tools.assert_equal, len(filenames), len(obj) + 1
                 # Check that these files do exist
@@ -151,7 +151,7 @@ def test_numpy_persistence():
 
         # Now test with array subclasses
         obj = np.matrix(np.zeros(10))
-        filenames = numpy_pickle.dump(obj, filename, zipped=zipped)
+        filenames = numpy_pickle.dump(obj, filename, compress=compress)
         obj_ = numpy_pickle.load(filename)
         yield nose.tools.assert_true, isinstance(obj_, np.matrix)
 

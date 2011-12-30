@@ -101,7 +101,10 @@ class NumpyUnpickler(Unpickler):
                 file_handle = open(file_handle, 'rb')
         self.file_handle = file_handle
         Unpickler.__init__(self, self.file_handle)
-        import numpy as np
+        try:
+            import numpy as np
+        except ImportError:
+            np = None
         self.np = np
 
     def _open_file(self, name):
@@ -118,6 +121,9 @@ class NumpyUnpickler(Unpickler):
         """
         Unpickler.load_build(self)
         if isinstance(self.stack[-1], NDArrayWrapper):
+            if self.np is None:
+                raise ImportError('Trying to unpickle an ndarray, '
+                        "but numpy didn't import correctly")
             nd_array_wrapper = self.stack.pop()
             if self.np.__version__ >= '1.3':
                 array = self.np.load(
@@ -162,7 +168,7 @@ class ZipNumpyUnpickler(NumpyUnpickler):
 ###############################################################################
 # Utility functions
 
-def dump(value, filename, zipped=False):
+def dump(value, filename, compress=False):
     """ Persist an arbitrary Python object into a filename, with numpy arrays
         saved as separate .npy files.
 
@@ -172,14 +178,14 @@ def dump(value, filename, zipped=False):
             The object to store to disk
         filename: string
             The name of the file in which it is to be stored
-        zipped: boolean, optional
+        compress: boolean, optional
             Whether to compress the data on the disk or not
 
         Returns
         -------
         filenames: list of strings
-            The list of file names in which the data is stored. If zipped
-            is false, each array is stored in a different file.
+            The list of file names in which the data is stored. If
+            compress is false, each array is stored in a different file.
 
         See Also
         --------
@@ -187,10 +193,10 @@ def dump(value, filename, zipped=False):
 
         Notes
         -----
-        zipped file take extra disk space during the dump, and extra
+        compressed files take extra disk space during the dump, and extra
         memory during the loading.
     """
-    if zipped:
+    if compress:
         return _dump_zipped(value, filename)
     else:
         return _dump(value, filename)
@@ -243,8 +249,8 @@ def load(filename, mmap_mode=None):
             The name of the file from which to load the object
         mmap_mode: {None, 'r+', 'r', 'w+', 'c'}, optional
             If not None, the arrays are memory-mapped from the disk. This
-            mode has not effect for zipped files. Note that in this
-            case the reconstructed object might not longer match exactly 
+            mode has not effect for compressed files. Note that in this
+            case the reconstructed object might not longer match exactly
             the originally pickled object.
 
         Returns

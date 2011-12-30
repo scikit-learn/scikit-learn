@@ -92,7 +92,9 @@ def test_load_invalid_file2():
 
 @raises(TypeError)
 def test_not_a_filename():
-    load_svmlight_file(1)
+    # in python 3 integers are valid file opening arguments (taken as unix
+    # file descriptors)
+    load_svmlight_file(.42)
 
 
 @raises(IOError)
