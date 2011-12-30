@@ -2,6 +2,9 @@
 Testing for the forest module (sklearn.ensemble.forest).
 """
 
+# Authors: Gilles Louppe, Brian Holt
+# License: BSD 3
+
 import numpy as np
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
