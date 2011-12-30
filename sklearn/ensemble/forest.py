@@ -112,13 +112,12 @@ def _partition_trees(forest):
     else:
         n_jobs = min(forest.n_jobs, forest.n_estimators)
 
-    # Compute the number of trees to be assigned to jobs
+    # Partition trees between jobs
     n_trees = [forest.n_estimators / n_jobs] * n_jobs
 
     for i in xrange(forest.n_estimators % n_jobs):
         n_trees[i] += 1
 
-    # ... and the intervals
     starts = [0] * (n_jobs + 1)
 
     for i in xrange(1, n_jobs + 1):
