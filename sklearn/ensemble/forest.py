@@ -37,7 +37,7 @@ import itertools
 import numpy as np
 
 from ..base import ClassifierMixin, RegressorMixin
-from ..externals.joblib import Parallel, delayed
+from ..externals.joblib import Parallel, delayed, cpu_count
 from ..feature_selection.selector_mixin import SelectorMixin
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor, \
                    ExtraTreeClassifier, ExtraTreeRegressor
@@ -98,9 +98,33 @@ def _parallel_predict_proba(trees, X, n_classes):
     return p
 
 
-def _parallel_predict_regr(trees, X):
+def _parallel_predict_regression(trees, X):
     """Private function used to compute a batch of predictions within a job."""
     return sum(tree.predict(X) for tree in trees)
+
+
+def _partition_trees(forest):
+    """Private function used to partition trees between jobs."""
+    # Compute the number of jobs
+    if forest.n_jobs == -1:
+        n_jobs = cpu_count()
+
+    else:
+        n_jobs = min(forest.n_jobs, forest.n_estimators)
+
+    # Compute the number of trees to be assigned to jobs
+    n_trees = [forest.n_estimators / n_jobs] * n_jobs
+
+    for i in xrange(forest.n_estimators % n_jobs):
+        n_trees[i] += 1
+
+    # ... and the intervals
+    starts = [0] * (n_jobs + 1)
+
+    for i in xrange(1, n_jobs + 1):
+        starts[i] = starts[i - 1] + n_trees[i - 1]
+
+    return n_jobs, n_trees, starts
 
 
 class BaseForest(BaseEnsemble, SelectorMixin):
@@ -164,9 +188,7 @@ class BaseForest(BaseEnsemble, SelectorMixin):
             y = np.searchsorted(self.classes_, y)
 
         # Assign chunk of trees to jobs
-        n_jobs = min(self.n_jobs, self.n_estimators)
-        n_trees = [self.n_estimators / n_jobs] * n_jobs
-        n_trees[-1] += self.n_estimators % n_jobs
+        n_jobs, n_trees, _ = _partition_trees(self)
 
         # Parallel loop
         all_trees = Parallel(n_jobs=n_jobs)(
@@ -254,18 +276,12 @@ class ForestClassifier(BaseForest, ClassifierMixin):
         X = np.atleast_2d(X)
 
         # Assign chunk of trees to jobs
-        n_jobs = min(self.n_jobs, self.n_estimators)
-        n_trees = [self.n_estimators / n_jobs] * n_jobs
-        n_trees[-1] += self.n_estimators % n_jobs
-        starts = [0] * n_jobs
-
-        for i in xrange(1, n_jobs):
-            starts[i] = starts[i - 1] + n_trees[i]
+        n_jobs, n_trees, starts = _partition_trees(self)
 
         # Parallel loop
         all_p = Parallel(n_jobs=self.n_jobs)(
             delayed(_parallel_predict_proba)(
-                self.estimators_[starts[i]:starts[i] + n_trees[i]],
+                self.estimators_[starts[i]:starts[i+1]],
                 X,
                 self.n_classes_)
             for i in xrange(n_jobs))
@@ -337,18 +353,12 @@ class ForestRegressor(BaseForest, RegressorMixin):
         X = np.atleast_2d(X)
 
         # Assign chunk of trees to jobs
-        n_jobs = min(self.n_jobs, self.n_estimators)
-        n_trees = [self.n_estimators / n_jobs] * n_jobs
-        n_trees[-1] += self.n_estimators % n_jobs
-        starts = [0] * n_jobs
-
-        for i in xrange(1, n_jobs):
-            starts[i] = starts[i - 1] + n_trees[i]
+        n_jobs, n_trees, starts = _partition_trees(self)
 
         # Parallel loop
         all_y_hat = Parallel(n_jobs=self.n_jobs)(
-            delayed(_parallel_predict_regr)(
-                self.estimators_[starts[i]:starts[i] + n_trees[i]],
+            delayed(_parallel_predict_regression)(
+                self.estimators_[starts[i]:starts[i+1]],
                 X)
             for i in xrange(n_jobs))
 
