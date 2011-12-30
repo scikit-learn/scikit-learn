@@ -1,7 +1,7 @@
 """
-=======================================
-Pixel importances with forests of trees
-=======================================
+=================================================
+Pixel importances with a parallel forest of trees
+=================================================
 
 This example shows the use of forests of trees to evaluate the importance
 of the pixels in an image classification task (faces). The hotter the pixel,
