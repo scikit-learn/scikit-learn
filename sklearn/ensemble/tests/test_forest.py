@@ -170,6 +170,7 @@ def test_importances():
     X_new = clf.transform(X, threshold="mean")
     assert 0 < X_new.shape[1] < X.shape[1]
 
+
 def test_gridsearch():
     """Check that base trees can be grid-searched."""
     # Random forest
@@ -185,6 +186,41 @@ def test_gridsearch():
                   'max_depth': (1, 2)}
     clf = GridSearchCV(forest, parameters)
     clf.fit(iris.data, iris.target)
+
+
+def test_parallel():
+    """Check parallel computations."""
+    # Classification
+    forest = RandomForestClassifier(n_estimators=10,
+                                    n_jobs=3,
+                                    random_state=0)
+
+    forest.fit(iris.data, iris.target)
+    assert 10 == len(forest)
+
+    forest.set_params(n_jobs=1)
+    y1 = forest.predict(iris.data)
+    forest.set_params(n_jobs=2)
+    y2 = forest.predict(iris.data)
+    assert_array_equal(y1, y2)
+
+    # Regression
+    forest = RandomForestClassifier(n_estimators=10,
+                                    n_jobs=3,
+                                    random_state=0)
+
+    forest.fit(boston.data, boston.target)
+    assert 10 == len(forest)
+
+    forest.set_params(n_jobs=1)
+    y1 = forest.predict(boston.data)
+    forest.set_params(n_jobs=2)
+    y2 = forest.predict(boston.data)
+    assert_array_equal(y1, y2)
+
+    # Use all cores
+    forest = RandomForestClassifier(n_jobs=-1)
+    forest.fit(iris.data, iris.target)
 
 
 def test_pickle():

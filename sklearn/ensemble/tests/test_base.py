@@ -17,9 +17,12 @@ def test_base():
     ensemble._make_estimator()
     ensemble._make_estimator()
     ensemble._make_estimator()
+    ensemble._make_estimator(append=False)
 
     assert_equal(3, len(ensemble))
     assert_equal(3, len(ensemble.estimators_))
+
+    assert isinstance(ensemble[0], DecisionTreeClassifier)
 
 
 def test_error():
