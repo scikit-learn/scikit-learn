@@ -1216,3 +1216,92 @@ def make_s_curve(n_samples=100, noise=0.0, random_state=None):
     t = np.squeeze(t)
 
     return X, t
+
+
+def make_gaussian_quantiles(n_samples=100, n_features=2, n_classes=3,
+                            shuffle=True, random_state=None):
+    """Generate isotropic Gaussian and label samples by quantile
+
+    The decision boundaries separating successive classes are
+    nested concentric ten-dimensional spheres [1].
+
+    Parameters
+    ----------
+    n_samples : int, optional (default=100)
+        The total number of points equally divided among classes.
+
+    n_features : int, optional (default=2)
+        The number of features for each sample.
+
+    n_classes : int, optional (default=3)
+        The number of classes
+
+    shuffle : boolean, optional (default=True)
+        Shuffle the samples.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    Returns
+    -------
+    X : array of shape [n_samples, n_features]
+        The generated samples.
+
+    y : array of shape [n_samples]
+        The integer labels for quantile membership of each sample.
+
+    Examples
+    --------
+    >>> from sklearn.datasets.samples_generator import make_gaussian_quantiles
+    >>> X, y = make_gaussian_quantiles(n_samples=10, n_features=5,
+    ...                                n_classes=2, random_state=0)
+    >>> X.shape
+    (10, 5)
+    >>> y
+    array([0, 1, 0, 1, 0, 1, 1, 0, 0, 1])
+
+    Notes
+    -----
+    **References**:
+
+    .. [1] Ji Zhu, Hui Zou, Saharon Rosset, Trevor Hastie.
+           "Multi-class AdaBoost" 2009
+    """
+    if n_samples < n_classes:
+        raise ValueError("n_samples must be at least n_classes")
+
+    generator = check_random_state(random_state)
+
+    # Build multivariate normal distribution
+    cov = np.diag(np.ones(n_features))
+    mean = np.zeros(n_features)
+    X = list(np.random.multivariate_normal(mean, cov, n_samples))
+
+    # Sort by distance from origin
+    X.sort(key=lambda x: sum([x_i**2 for x_i in x]))
+    X = np.array(X)
+
+    # Label by quantile.
+    y = np.empty(n_samples, dtype=np.int)
+    step = n_samples / n_classes
+    begin = 0
+    for i in xrange(n_classes):
+        if i == n_classes - 1:
+            end = n_samples
+        else:
+            end = begin + step
+        y[begin:end] = i
+        begin += step
+
+    y = np.array(y)
+
+    if shuffle:
+        indices = np.arange(n_samples)
+        generator.shuffle(indices)
+        X = X[indices]
+        y = y[indices]
+
+    return X, y

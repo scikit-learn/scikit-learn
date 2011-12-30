@@ -617,6 +617,30 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
             return proba
 
+    def score(self, X, y, sample_weight=None):
+        """Returns the mean accuracy on the given test data and labels.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training set.
+
+        y : array-like, shape = [n_samples]
+            Labels for X.
+
+        sample_weight : array-like, shape = [n_samples], optional
+            Sample weights.
+
+        Returns
+        -------
+        z : float
+
+        """
+        if sample_weight is not None:
+            # weighted average
+            return np.average((self.predict(X) == y), weights=sample_weight)
+        return np.mean(self.predict(X) == y)
+
 
 class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     """A tree regressor.

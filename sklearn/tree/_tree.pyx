@@ -395,6 +395,11 @@ cdef class Tree:
 
         if y.dtype != DOUBLE or not y.flags.contiguous:
             y = np.asarray(y, dtype=DOUBLE, order="C")
+        
+        if sample_weight is not None:
+            if sample_weight.dtype != DOUBLE or not sample_weight.flags.contiguous:
+                sample_weight = np.asarray(
+                        sample_weight, dtype=DOUBLE, order="C")
 
         if sample_weight is not None:
             if sample_weight.dtype != DOUBLE or not sample_weight.flags.contiguous:
@@ -420,6 +425,13 @@ cdef class Tree:
 
         self.resize(init_capacity)
         cdef double* buffer_value = <double*> malloc(self.value_stride * sizeof(double))
+        
+        n_node_samples = np.sum(sample_mask)
+        cdef double weighted_n_node_samples
+        if sample_weight is not None:
+            weighted_n_node_samples = np.sum(sample_weight[sample_mask])
+        else:
+            weighted_n_node_samples = n_node_samples
 
         n_node_samples = np.sum(sample_mask)
         if sample_weight is not None:
@@ -1115,6 +1127,9 @@ cdef class ClassificationCriterion(Criterion):
 
     n_samples : int
         The number of samples.
+    
+    weighted_n_samples : double
+        The weighted number of samples.
 
     weighted_n_samples : double
         The weighted number of samples.
@@ -1146,7 +1161,7 @@ cdef class ClassificationCriterion(Criterion):
 
     weighted_n_right : double
         The weighted number of samples right of splitting point.
-
+    
     References
     ----------
 
@@ -1487,7 +1502,7 @@ cdef class RegressionCriterion(Criterion):
 
     n_samples : int
         The number of samples
-
+    
     weighted_n_samples : double
         The weighted number of samples.
 

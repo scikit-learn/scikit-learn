@@ -251,7 +251,7 @@ class BaseEstimator(object):
 class ClassifierMixin(object):
     """Mixin class for all classifiers in scikit-learn"""
 
-    def score(self, X, y):
+    def score(self, X, y, sample_weight=None):
         """Returns the mean accuracy on the given test data and labels.
 
         Parameters
@@ -262,11 +262,17 @@ class ClassifierMixin(object):
         y : array-like, shape = [n_samples]
             Labels for X.
 
+        sample_weight : array-like, shape = [n_samples], optional
+            Sample weights
+
         Returns
         -------
         z : float
 
         """
+        if sample_weight is not None:
+            return ((self.predict(X) == y) * sample_weight) \
+                    / sample_weight.sum()
         return np.mean(self.predict(X) == y)
 
 

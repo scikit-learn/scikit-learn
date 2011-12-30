@@ -68,7 +68,8 @@ class IterGrid(object):
                 yield params
 
 
-def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
+def fit_grid_point(X, y, sample_weight, base_clf,
+                   clf_params, train, test, loss_func,
                    score_func, verbose, **fit_params):
     """Run fit on one set of parameters
 
@@ -105,21 +106,28 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
             X_train = X[safe_mask(X, train)]
             X_test = X[safe_mask(X, test)]
 
+    score_params = dict()
+    if sample_weight is not None:
+        sample_weight_train = sample_weight[safe_mask(sample_weight, train)]
+        sample_weight_test = sample_weight[safe_mask(sample_weight, test)]
+        fit_params['sample_weight'] = sample_weight_train
+        score_params['sample_weight'] = sample_weight_test
+
     if y is not None:
         y_test = y[safe_mask(y, test)]
         y_train = y[safe_mask(y, train)]
         clf.fit(X_train, y_train, **fit_params)
         if loss_func is not None:
             y_pred = clf.predict(X_test)
-            this_score = -loss_func(y_test, y_pred)
+            this_score = -loss_func(y_test, y_pred, **score_params)
         elif score_func is not None:
             y_pred = clf.predict(X_test)
-            this_score = score_func(y_test, y_pred)
+            this_score = score_func(y_test, y_pred, **score_params)
         else:
-            this_score = clf.score(X_test, y_test)
+            this_score = clf.score(X_test, y_test, **score_params)
     else:
         clf.fit(X_train, **fit_params)
-        this_score = clf.score(X_test)
+        this_score = clf.score(X_test, **score_params)
 
     if verbose > 2:
         msg += ", score=%f" % this_score
@@ -324,7 +332,7 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
         if hasattr(self.best_estimator_, 'predict_proba'):
             self.predict_proba = self.best_estimator_.predict_proba
 
-    def fit(self, X, y=None, **params):
+    def fit(self, X, y=None, sample_weight=None):
         """Run fit with all sets of parameters
 
         Returns the best classifier
@@ -340,6 +348,8 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
             Target vector relative to X for classification;
             None for unsupervised learning.
 
+        sample_weight : array-like, shape = [n_samples], optional
+            Sample weights
         """
         estimator = self.estimator
         cv = self.cv
@@ -366,7 +376,8 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
         out = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                        pre_dispatch=pre_dispatch)(
                            delayed(fit_grid_point)(
-                               X, y, base_clf, clf_params, train, test,
+                               X, y, sample_weight,
+                               base_clf, clf_params, train, test,
                                self.loss_func, self.score_func, self.verbose,
                                **self.fit_params)
                            for clf_params in grid for train, test in cv)
@@ -412,9 +423,17 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
             # clone first to work around broken estimators
             best_estimator = clone(base_clf).set_params(**best_params)
             if y is not None:
-                best_estimator.fit(X, y, **self.fit_params)
+                if sample_weight is not None:
+                    best_estimator.fit(X, y, sample_weight=sample_weight,
+                            **self.fit_params)
+                else:
+                    best_estimator.fit(X, y, **self.fit_params)
             else:
-                best_estimator.fit(X, **self.fit_params)
+                if sample_weight is not None:
+                    best_estimator.fit(X, sample_weight=sample_weight,
+                            **self.fit_params)
+                else:
+                    best_estimator.fit(X, **self.fit_params)
             self.best_estimator_ = best_estimator
             self._set_methods()
 

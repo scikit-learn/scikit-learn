@@ -68,6 +68,15 @@ def test_weighted_classification_toy():
     assert_array_equal(clf.predict(T), true_result)
 
 
+def test_weighted_classification_toy():
+    """Check classification on a weighted toy dataset."""
+    clf = tree.DecisionTreeClassifier()
+    clf.fit(X, y, sample_weight=np.ones(len(X)))
+    assert_array_equal(clf.predict(T), true_result)
+    clf.fit(X, y, sample_weight=np.ones(len(X)) * 0.5)
+    assert_array_equal(clf.predict(T), true_result)
+
+
 def test_regression_toy():
     """Check regression on a toy dataset."""
     # Decision trees
