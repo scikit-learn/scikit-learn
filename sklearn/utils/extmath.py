@@ -18,10 +18,9 @@ def norm(v):
 
 
 def _fast_logdet(A):
-    """
-    Compute log(det(A)) for A symmetric
-    Equivalent to : np.log(np.linalg.det(A))
-    but more robust
+    """Compute log(det(A)) for A symmetric
+
+    Equivalent to : np.log(np.linalg.det(A)) but more robust.
     It returns -Inf if det(A) is non positive or is not defined.
     """
     # XXX: Should be implemented as in numpy, using ATLAS
@@ -37,10 +36,9 @@ def _fast_logdet(A):
 
 
 def _fast_logdet_numpy(A):
-    """
-    Compute log(det(A)) for A symmetric
-    Equivalent to : np.log(nl.det(A))
-    but more robust
+    """Compute log(det(A)) for A symmetric
+
+    Equivalent to : np.log(nl.det(A)) but more robust.
     It returns -Inf if det(A) is non positive or is not defined.
     """
     sign, ld = np.linalg.slogdet(A)
@@ -207,7 +205,7 @@ def fast_svd(M, k, p=None, n_iterations=0, transpose='auto', random_state=0):
 
 
 def logsumexp(arr, axis=0):
-    """ Computes the sum of arr assuming arr is in the log domain.
+    """Computes the sum of arr assuming arr is in the log domain.
 
     Returns log(sum(exp(arr))) while minimizing the possibility of
     over/underflow.
@@ -233,8 +231,7 @@ def logsumexp(arr, axis=0):
 
 
 def weighted_mode(a, w, axis=0):
-    """Returns an array of the weighted modal (most common) value in the
-    passed array.
+    """Returns an array of the weighted modal (most common) value in a
 
     If there is more than one such value, only the first is returned.
     The bin-count for the modal bins is also returned.
