@@ -6,6 +6,9 @@ Pixel importances with forests of trees
 This example shows the use of forests of trees to evaluate the importance
 of the pixels in an image classification task (faces). The hotter the pixel,
 the more important.
+
+The code below also illustrates how the construction and the computation
+of the predictions can be parallelized within multiple jobs.
 """
 print __doc__
 
@@ -33,7 +36,8 @@ t0 = time()
 forest = ExtraTreesClassifier(n_estimators=1000,
                               max_features=128,
                               compute_importances=True,
-                              random_state=0, n_jobs=n_jobs)
+                              n_jobs=n_jobs,
+                              random_state=0)
 
 forest.fit(X, y)
 print "done in %0.3fs" % (time() - t0)

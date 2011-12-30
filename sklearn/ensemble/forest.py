@@ -107,7 +107,7 @@ def _partition_trees(forest):
     """Private function used to partition trees between jobs."""
     # Compute the number of jobs
     if forest.n_jobs == -1:
-        n_jobs = cpu_count()
+        n_jobs = min(cpu_count(), forest.n_estimators)
 
     else:
         n_jobs = min(forest.n_jobs, forest.n_estimators)
@@ -412,7 +412,8 @@ class RandomForestClassifier(ForestClassifier):
         ``feature_importances_`` attribute when calling fit.
 
     n_jobs : integer, optional (default=1)
-        The number of jobs to run in parallel.
+        The number of jobs to run in parallel. If -1, then the number of jobs
+        is set to the number of cores.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -507,7 +508,8 @@ class RandomForestRegressor(ForestRegressor):
         ``feature_importances_`` attribute when calling fit.
 
     n_jobs : integer, optional (default=1)
-        The number of jobs to run in parallel.
+        The number of jobs to run in parallel. If -1, then the number of jobs
+        is set to the number of cores.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -603,7 +605,8 @@ class ExtraTreesClassifier(ForestClassifier):
         ``feature_importances_`` attribute when calling fit.
 
     n_jobs : integer, optional (default=1)
-        The number of jobs to run in parallel.
+        The number of jobs to run in parallel. If -1, then the number of jobs
+        is set to the number of cores.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -701,7 +704,8 @@ class ExtraTreesRegressor(ForestRegressor):
         ``feature_importances_`` attribute when calling fit.
 
     n_jobs : integer, optional (default=1)
-        The number of jobs to run in parallel.
+        The number of jobs to run in parallel. If -1, then the number of jobs
+        is set to the number of cores.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
