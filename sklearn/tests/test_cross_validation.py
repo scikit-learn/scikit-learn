@@ -199,6 +199,15 @@ def test_bootstrap_errors():
     assert_raises(ValueError, cross_validation.Bootstrap, 10, n_test=1.1)
 
 
+def test_shufflesplit_errors():
+    assert_raises(ValueError, cross_validation.ShuffleSplit, 10,
+                  test_fraction=2.0)
+    assert_raises(ValueError, cross_validation.ShuffleSplit, 10,
+                  test_fraction=1.0)
+    assert_raises(ValueError, cross_validation.ShuffleSplit, 10,
+                  test_fraction=0.1, train_fraction=0.95)
+
+
 def test_cross_indices_exception():
     X = coo_matrix(np.array([[1, 2], [3, 4], [5, 6], [7, 8]]))
     y = np.array([1, 1, 2, 2])
