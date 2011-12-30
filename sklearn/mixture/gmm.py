@@ -300,6 +300,11 @@ class GMM(BaseEstimator):
         X = np.asarray(X)
         if X.ndim == 1:
             X = X[:, np.newaxis]
+        if X.size == 0:
+            return np.array([]), np.empty((0, self.n_components))
+        if X.shape[1] != self.means_.shape[1]:
+            raise ValueError('the shape of X  is not compatible with self')
+
         lpr = (log_multivariate_normal_density(
                 X, self.means_, self.covars_, self._covariance_type)
                + self.log_weights_)
@@ -450,14 +455,14 @@ class GMM(BaseEstimator):
             process.  Can contain any combination of 'w' for weights,
             'm' for means, and 'c' for covars.  Defaults to 'wmc'.
         """
-
         ## initialization step
         X = np.asarray(X)
         if X.ndim == 1:
             X = X[:, np.newaxis]
         if X.shape[0] < self.n_components:
-            raise ValueError('GMM estimation with %s components, but '
-                             'got only %s' % (self.n_components, X.shape[0]))
+            raise ValueError(
+                'GMM estimation with %s components, but got only %s samples' % 
+                (self.n_components, X.shape[0]))
 
         max_log_prob = - np.infty
         if n_init < 1:
