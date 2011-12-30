@@ -17,7 +17,7 @@ from numpy.lib.stride_tricks import as_strided
 from ..base import BaseEstimator, TransformerMixin
 from ..externals.joblib import Parallel, delayed, cpu_count
 from ..utils import array2d, check_random_state, gen_even_slices, deprecated
-from ..utils.extmath import fast_svd
+from ..utils.extmath import randomized_svd
 from ..linear_model import Lasso, orthogonal_mp_gram, lars_path
 
 
@@ -622,7 +622,7 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
     if dict_init is not None:
         dictionary = dict_init
     else:
-        _, S, dictionary = fast_svd(X, n_atoms)
+        _, S, dictionary = randomized_svd(X, n_atoms)
         dictionary = S[:, np.newaxis] * dictionary
     r = len(dictionary)
     if n_atoms <= r:

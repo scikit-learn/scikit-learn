@@ -136,6 +136,9 @@ version 0.9:
 
   - ``BaseDictionaryLearning`` class replaced by ``SparseCodingMixin``.
 
+  - :func:`sklearn.utils.extmath.fast_svd` has been renamed
+    :func:`sklearn.utils.extmath.randomized_svd`.
+
 
 .. _changes_0_9:
 
