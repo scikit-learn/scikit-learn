@@ -79,6 +79,9 @@ Changelog
    - Feature importances using decision trees and/or forest of trees,
      by `Gilles Louppe`_.
 
+   - :class:`sklearn.cross_validation.ShuffleSplit` can subsample the train
+     sets as well as the test sets by `Olivier Grisel`_.
+
 
 API changes summary
 -------------------
