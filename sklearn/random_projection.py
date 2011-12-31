@@ -26,7 +26,6 @@ Johnson-Lindenstrauss lemma (quoting Wikipedia):
 # License: Simple BSD
 
 import math
-import warnings
 import random
 
 import numpy as np
