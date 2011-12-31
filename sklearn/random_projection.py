@@ -32,6 +32,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from sklearn.utils import check_random_state
+from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.base import BaseEstimator
 from sklearn.base import TransformerMixin
 
@@ -214,14 +215,19 @@ class SparseRandomProjection(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    n_components: int, optional
+    n_components : int or 'auto', optional
         Dimensionality of the target projection space.
 
-        By default n_components is automatically adjusted according to
-        the number of samples in the dataset and the bound given by the
-        Johnson Lindenstrauss lemma.
+        n_components can be automatically adjusted according to the
+        number of samples in the dataset and the bound given by the
+        Johnson Lindenstrauss lemma. In that case the quality of the
+        embedding is controlled by the ``eps`` parameter.
 
-    density: float in range (0, 1/3], optional
+        It should be noted that Johnson Lindenstrauss lemma can yield
+        very conservative estimated of the required number of components
+        as it makes no assumption on the structure of the dataset.
+
+    density : float in range (0, 1/3], optional
         Ratio of non-zero component in the random projection matrix.
 
         By default the value is set to the minimum density as recommended
@@ -230,7 +236,7 @@ class SparseRandomProjection(BaseEstimator, TransformerMixin):
         Use density = 1 / 3.0 if you want to reproduce the results from
         Achlioptas, 2001.
 
-    eps: strictly positive float, optional, default 0.1
+    eps : strictly positive float, optional, default 0.1
         Parameter to control the quality of the embedding according to
         the Johnson-Lindenstrauss lemma when n_components is set to
         'auto'.
@@ -238,7 +244,18 @@ class SparseRandomProjection(BaseEstimator, TransformerMixin):
         Smaller values lead to better embedding and higher number of
         dimensions (n_components) in the target projection space.
 
-    random_state: integer, RandomState instance or None (default)
+    dense_output : boolean, True by default
+        If True, ensure that the output of the random projection is a
+        dense numpy array even if the input and random projection matrix
+        are both sparse. In practice, if the number of components is
+        small the number of zero components in the projected data will
+        be very small and it will be more CPU and memory efficient to
+        use a dense representation.
+
+        If False, the projected data uses a sparse representation if
+        the input is sparse.
+
+    random_state : integer, RandomState instance or None (default)
         Control the pseudo random number generator used to generate the
         matrix at fit time.
 
@@ -265,10 +282,11 @@ class SparseRandomProjection(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, n_components='auto', density='auto', eps=0.1,
-                 random_state=None):
+                 dense_output=True, random_state=None):
         self.n_components = n_components
         self.density = density
         self.eps = eps
+        self.dense_output = dense_output
         self.random_state = random_state
 
     def fit(self, X, y=None):
@@ -338,4 +356,5 @@ class SparseRandomProjection(BaseEstimator, TransformerMixin):
         """
         if not sp.issparse(X):
             X = np.atleast_2d(X)
-        return X * self.components_.T
+        return safe_sparse_dot(X, self.components_.T,
+                               dense_output=self.dense_output)
