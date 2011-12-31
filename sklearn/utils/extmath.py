@@ -117,8 +117,8 @@ def randomized_range_finder(A, size, n_iterations, random_state=None):
     Y = safe_sparse_dot(A, R)
     del R
 
-    # apply power iterations on Y to make to further 'imprint' the top
-    # singular values of A in Y
+    # perform power iterations with Y to further 'imprint' the top
+    # singular vectors of A in Y
     for i in xrange(n_iterations):
         Y = safe_sparse_dot(A, safe_sparse_dot(A.T, Y))
 
