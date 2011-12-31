@@ -76,9 +76,9 @@ Efficient Linear Algebra & Array Operations
 
 - :func:`extmath.randomized_range_finder`: construct an orthonormal matrix
   whose range approximates the range of the input.  This is used in
-  :func:`extmath.fast_svd`, below.
+  :func:`extmath.randomized_svd`, below.
 
-- :func:`extmath.fast_svd`: compute the k-truncated randomized SVD.
+- :func:`extmath.randomized_svd`: compute the k-truncated randomized SVD.
   This algorithm finds the exact truncated singular values decomposition
   using randomization to speed up the computations. It is particularly
   fast on large matrices on which you wish to extract only a small

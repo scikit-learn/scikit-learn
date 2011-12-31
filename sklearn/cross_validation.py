@@ -108,7 +108,7 @@ class LeavePOut(object):
     datasets one should favor KFold, StratifiedKFold or ShuffleSplit.
 
     Parameters
-    ===========
+    ----------
     n: int
         Total number of elements
 
@@ -121,7 +121,7 @@ class LeavePOut(object):
         matrices, since those cannot be indexed by boolean masks.
 
     Examples
-    ========
+    --------
     >>> from sklearn import cross_validation
     >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
     >>> y = np.array([1, 2, 3, 4])

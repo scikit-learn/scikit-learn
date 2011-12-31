@@ -4,10 +4,12 @@ Extended math utilities.
 # Authors: G. Varoquaux, A. Gramfort, A. Passos, O. Grisel
 # License: BSD
 
+import warnings
 import numpy as np
 from scipy import linalg
 
 from . import check_random_state
+from . import deprecated
 from .fixes import qr_economic
 
 
@@ -115,8 +117,8 @@ def randomized_range_finder(A, size, n_iterations, random_state=None):
     Y = safe_sparse_dot(A, R)
     del R
 
-    # apply q power iterations on Y to make to further 'imprint' the top
-    # singular values of A in Y
+    # perform power iterations with Y to further 'imprint' the top
+    # singular vectors of A in Y
     for i in xrange(n_iterations):
         Y = safe_sparse_dot(A, safe_sparse_dot(A.T, Y))
 
@@ -125,20 +127,22 @@ def randomized_range_finder(A, size, n_iterations, random_state=None):
     return Q
 
 
-def fast_svd(M, k, p=None, n_iterations=0, transpose='auto', random_state=0):
-    """Computes the k-truncated randomized SVD
+def randomized_svd(M, n_components, n_oversamples=10, n_iterations=0,
+                   transpose='auto', random_state=0):
+    """Computes a truncated randomized SVD
 
     Parameters
     ----------
     M: ndarray or sparse matrix
         Matrix to decompose
 
-    k: int
+    n_components: int
         Number of singular values and vectors to extract.
 
-    p: int (default is k)
-        Additional number of samples of the range of M to ensure proper
-        conditioning. See the notes below.
+    n_oversamples: int (default is 10)
+        Additional number of random vectors to sample the range of M so as
+        to ensure proper conditioning. The total number of random vectors
+        used to find the range of M is n_components + n_oversamples.
 
     n_iterations: int (default is 0)
         Number of power iterations (can be used to deal with very noisy
@@ -156,14 +160,10 @@ def fast_svd(M, k, p=None, n_iterations=0, transpose='auto', random_state=0):
 
     Notes
     -----
-    This algorithm finds the exact truncated singular values decomposition
-    using randomization to speed up the computations. It is particularly
-    fast on large matrices on which you whish to extract only a small
-    number of components.
-
-    (k + p) should be strictly higher than the rank of M. This can be
-    checked by ensuring that the lowest extracted singular value is on
-    the order of the machine precision of floating points.
+    This algorithm finds a (usually very good) approximate truncated
+    singular value decomposition using randomization to speed up the
+    computations. It is particularly fast on large matrices on which
+    you wish to extract only a small number of components.
 
     **References**:
 
@@ -174,10 +174,8 @@ def fast_svd(M, k, p=None, n_iterations=0, transpose='auto', random_state=0):
     * A randomized algorithm for the decomposition of matrices
       Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
     """
-    if p == None:
-        p = k
-
     random_state = check_random_state(random_state)
+    n_random = n_components + n_oversamples
     n_samples, n_features = M.shape
 
     if transpose == 'auto' and n_samples > n_features:
@@ -186,7 +184,7 @@ def fast_svd(M, k, p=None, n_iterations=0, transpose='auto', random_state=0):
         # this implementation is a bit faster with smaller shape[1]
         M = M.T
 
-    Q = randomized_range_finder(M, k + p, n_iterations, random_state)
+    Q = randomized_range_finder(M, n_random, n_iterations, random_state)
 
     # project M to the (k + p) dimensional space using the basis vectors
     B = safe_sparse_dot(Q.T, M)
@@ -199,9 +197,16 @@ def fast_svd(M, k, p=None, n_iterations=0, transpose='auto', random_state=0):
 
     if transpose:
         # transpose back the results according to the input convention
-        return V[:k, :].T, s[:k], U[:, :k].T
+        return V[:n_components, :].T, s[:n_components], U[:, :n_components].T
     else:
-        return U[:, :k], s[:k], V[:k, :]
+        return U[:, :n_components], s[:n_components], V[:n_components, :]
+
+
+@deprecated("fast_svd is deprecated in 0.10 and will be removed in 0.12: "
+            "use randomized_svd instead")
+def fast_svd(M, k, p=10, n_iterations=0, transpose='auto', random_state=0):
+    return randomized_svd(M, k, n_oversamples=p, n_iterations=n_iterations,
+                          transpose='auto', random_state=random_state)
 
 
 def logsumexp(arr, axis=0):

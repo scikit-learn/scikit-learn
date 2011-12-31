@@ -72,8 +72,8 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
         copy (if the input is already a numpy array or a scipy.sparse
         CSR matrix and if axis is 1).
 
-    Note
-    ----
+    Notes
+    -----
     This implementation will refuse to center scipy.sparse matrices
     since it would make them non-sparse and would potentially crash the
     program with memory exhaustion problems.

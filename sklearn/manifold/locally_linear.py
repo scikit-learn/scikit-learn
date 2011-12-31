@@ -191,12 +191,13 @@ def locally_linear_embedding(
         regularization constant, multiplies the trace of the local covariance
         matrix of the distances.
 
-
     eigen_solver : string, {'auto', 'arpack', 'dense'}
         auto : algorithm will attempt to choose the best method for input data
+
         arpack : use arnoldi iteration in shift-invert mode.
                     For this method, M may be a dense matrix, sparse matrix,
                     or general linear operator.
+
         dense  : use standard dense matrix operations for the eigenvalue
                     decomposition.  For this method, M must be an array
                     or matrix type.  This method should be avoided for
@@ -211,14 +212,14 @@ def locally_linear_embedding(
 
     method : {'standard', 'hessian', 'modified', 'ltsa'}
         standard : use the standard locally linear embedding algorithm.
-                   see reference [1]
+                   see reference [Roweis2000]_
         hessian  : use the Hessian eigenmap method.  This method requires
                    n_neighbors > out_dim * (1 + (out_dim + 1) / 2.
-                   see reference [2]
+                   see reference [Donoho2003]_
         modified : use the modified locally linear embedding algorithm.
-                   see reference [3]
+                   see reference [Zhang2007]_
         ltsa     : use local tangent space alignment algorithm
-                   see reference [4]
+                   see reference [Zhang2004]_
 
     hessian_tol : float, optional
         Tolerance for Hessian eigenmapping method.
@@ -235,23 +236,23 @@ def locally_linear_embedding(
 
     squared_error : float
         Reconstruction error for the embedding vectors. Equivalent to
-        norm(Y - W Y, 'fro')**2, where W are the reconstruction weights.
+        ``norm(Y - W Y, 'fro')**2``, where W are the reconstruction weights.
 
     Notes
     -----
     **References**:
 
-      [1] Roweis, S. & Saul, L. Nonlinear dimensionality reduction by
-          locally linear embedding.  Science 290:2323 (2000).
-      [2] Donoho, D. & Grimes, C. Hessian eigenmaps: Locally linear embedding
+      .. [Roweis2000] `Roweis, S. & Saul, L. Nonlinear dimensionality reduction by
+          locally linear embedding.  Science 290:2323 (2000).`
+      .. [Donoho2003] `Donoho, D. & Grimes, C. Hessian eigenmaps: Locally linear embedding
           techniques for high-dimensional data. Proc Natl Acad Sci U S A.
-          100:5591 (2003).
-      [3] Zhang, Z. & Wang, J. MLLE: Modified Locally Linear Embedding
-          Using Multiple Weights.
+          100:5591 (2003).`
+      .. [Zhang2007] `Zhang, Z. & Wang, J. MLLE: Modified Locally Linear Embedding
+          Using Multiple Weights.`
           http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.70.382
-      [4] Zhang, Z. & Zha, H. Principal manifolds and nonlinear dimensionality
+      .. [Zhang2004] `Zhang, Z. & Zha, H. Principal manifolds and nonlinear dimensionality
           reduction via tangent space alignment. Journal of Shanghai Univ.
-          8:406 (2004)
+          8:406 (2004)`
     """
     if eigen_solver not in ('auto', 'arpack', 'dense'):
         raise ValueError("unrecognized eigen_solver '%s'" % eigen_solver)
@@ -496,9 +497,11 @@ class LocallyLinearEmbedding(BaseEstimator):
 
     eigen_solver : string, {'auto', 'arpack', 'dense'}
         auto : algorithm will attempt to choose the best method for input data
+
         arpack : use arnoldi iteration in shift-invert mode.
                     For this method, M may be a dense matrix, sparse matrix,
                     or general linear operator.
+
         dense  : use standard dense matrix operations for the eigenvalue
                     decomposition.  For this method, M must be an array
                     or matrix type.  This method should be avoided for

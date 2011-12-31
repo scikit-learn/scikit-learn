@@ -123,7 +123,7 @@ class ElasticNet(LinearModel):
 class Lasso(ElasticNet):
     """Linear Model trained with L1 prior as regularizer
 
-    This implementation works on scipy.sparse X and dense coef_. Technically
+    This implementation works on scipy.sparse X and dense `coef_`. Technically
     this is the same as Elastic Net with the L2 penalty set to zero.
 
     Parameters
