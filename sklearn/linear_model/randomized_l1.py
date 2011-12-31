@@ -31,7 +31,8 @@ def _resample_model(estimator_func, X, y, scaling=.5, n_resampling=200,
     n_samples, n_features = X.shape
 
     if not (0 < scaling < 1):
-        raise ValueError("Parameter 'scaling' should be between 0 and 1.")
+        raise ValueError("Parameter 'scaling' should be between 0 and 1."
+                         " Got %r instead." % scaling)
 
     scaling = 1. - scaling
     scores_ = np.zeros(n_features)
@@ -51,10 +52,11 @@ def _resample_model(estimator_func, X, y, scaling=.5, n_resampling=200,
 
 
 class BaseRandomizedLinearModel(TransformerMixin):
-    """ Base class to implement randomized linear models for feature
-        selection, in the spirit of Meinshausen and Buhlman's:
-        stability selection with randomized sampling, and random reweighting of
-        the penalty
+    """Base class to implement randomized linear models for feature selection
+
+    This implements the strategy by Meinshausen and Buhlman:
+    stability selection with randomized sampling, and random re-weighting of
+    the penalty.
     """
 
     _center_data = staticmethod(center_data)
@@ -75,7 +77,6 @@ class BaseRandomizedLinearModel(TransformerMixin):
         self : object
             returns an instance of self.
         """
-
         X = np.atleast_2d(X)
         n_samples, n_features = X.shape
         y = np.atleast_1d(y)
@@ -86,7 +87,7 @@ class BaseRandomizedLinearModel(TransformerMixin):
                                                         self.fit_intercept,
                                                         self.normalize)
 
-        estimator_func, params = self._mk_estimator_and_params(X, y)
+        estimator_func, params = self._make_estimator_and_params(X, y)
         memory = self.memory
         if isinstance(memory, basestring):
             memory = Memory(cachedir=memory)
@@ -102,35 +103,28 @@ class BaseRandomizedLinearModel(TransformerMixin):
                                     **params)
         return self
 
-    def _mk_estimator_and_params(self, X, y):
-        """ Return the parameters passed to the estimator
-        """
+    def _make_estimator_and_params(self, X, y):
+        """Return the parameters passed to the estimator"""
         raise NotImplementedError
 
     def get_support(self, indices=False):
-        """
-        Return a mask, or list, of the features/indices selected.
-        """
+        """Return a mask, or list, of the features/indices selected."""
         mask = self.scores_ > self.selection_threshold
         return mask if not indices else np.where(mask)[0]
 
     # XXX: the two function below are copy/pasted from feature_selection,
     # Should we add an intermediate base class?
     def transform(self, X):
-        """
-        Transform a new matrix using the selected features
-        """
+        """Transform a new matrix using the selected features"""
         return safe_asarray(X)[:, self.get_support(indices=issparse(X))]
 
     def inverse_transform(self, X):
-        """
-        Transform a new matrix using the selected features
-        """
-        support_ = self.get_support()
+        """Transform a new matrix using the selected features"""
+        support = self.get_support()
         if X.ndim == 1:
             X = X[None, :]
-        Xt = np.zeros((X.shape[0], support_.size))
-        Xt[:, support_] = X
+        Xt = np.zeros((X.shape[0], support.size))
+        Xt[:, support] = X
         return Xt
 
 
@@ -257,9 +251,8 @@ class RandomizedLasso(BaseRandomizedLinearModel):
 
     See also
     --------
-    RandomizedLogistic
+    RandomizedLogistic, LogisticRegression
     """
-
     def __init__(self, alpha='aic', scaling=.5, sample_fraction=.75,
                  n_resampling=200, selection_threshold=.25,
                  fit_intercept=True, verbose=False,
@@ -284,7 +277,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
         self.pre_dispatch = pre_dispatch
         self.memory = memory
 
-    def _mk_estimator_and_params(self, X, y):
+    def _make_estimator_and_params(self, X, y):
         assert self.precompute in (True, False, None, 'auto')
         alpha = self.alpha
         if alpha in ('aic', 'bic'):
@@ -403,7 +396,7 @@ class RandomizedLogistic(BaseRandomizedLinearModel):
 
     See also
     --------
-    RandomizedLasso
+    RandomizedLasso, Lasso, ElasticNet
     """
     def __init__(self, C=1, scaling=.5, sample_fraction=.75,
                  n_resampling=200,
@@ -427,14 +420,13 @@ class RandomizedLogistic(BaseRandomizedLinearModel):
         self.pre_dispatch = pre_dispatch
         self.memory = memory
 
-    def _mk_estimator_and_params(self, X, y):
+    def _make_estimator_and_params(self, X, y):
         params = dict(C=self.C, tol=self.tol,
                       fit_intercept=self.fit_intercept)
         return _randomized_logistic, params
 
     def _center_data(self, X, y, fit_intercept, normalize=False):
-        """ Center the data in X but not in y
-        """
+        """Center the data in X but not in y"""
         X, _, Xmean, _, X_std = center_data(X, y, fit_intercept,
                                                  normalize=normalize)
         return X, y, Xmean, y, X_std
@@ -491,7 +483,8 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
     rng = check_random_state(random_state)
 
     if not (0 < scaling < 1):
-        raise ValueError("Parameter 'scaling' should be between 0 and 1.")
+        raise ValueError("Parameter 'scaling' should be between 0 and 1."
+                         " Got %r instead." % scaling)
 
     n_resampling = 200
     coef_grid = np.linspace(0, 1, n_grid)
