@@ -93,7 +93,7 @@ def roc_curve(y_true, y_score):
         True Positive Rates
 
     thresholds : array, shape = [>2]
-        Thresholds on proba_ used to compute fpr and tpr
+        Thresholds on y_score used to compute fpr and tpr
 
     Examples
     --------
@@ -563,7 +563,7 @@ def precision_recall_curve(y_true, probas_pred):
         Recall values
 
     thresholds : array, shape = [n]
-        Thresholds on proba_ used to compute precision and recall
+        Thresholds on y_score used to compute precision and recall
 
     """
     y_true = y_true.ravel()

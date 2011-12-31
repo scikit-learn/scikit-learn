@@ -280,7 +280,7 @@ now) and :math:`X`.
 The bound for :math:`\sigma_{k,d}` is the same bound for :math:`\sigma_k` and can
 be safelly ommited.
 
-**The bound for* :math:`X` :
+**The bound for** :math:`X` :
 
 The main difference here is that the precision matrix :math:`\bm{\sigma_k}`
 scales the norm, so we have an extra term after computing the
@@ -338,7 +338,7 @@ Hence
 The tied model
 ----------------
 
- The model then is
+The model then is
 .. math::
 
   \begin{array}{rcl}

@@ -88,8 +88,6 @@ numpy and setuptools.
 This package is also expected to work with python(x,y) as of 2.6.5.5.
 
 
-.. _build_on_windows
-
 Building on windows
 -------------------
 
