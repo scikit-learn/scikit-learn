@@ -47,7 +47,8 @@ def test_sparse_random_projection_dimensions():
 
     # the number of components is adjusted from the shape of the training set
     assert_equal(rp.n_components, 1973)
-    assert_equal(rp.density, 0.01)
+    assert_equal(rp.density, 'auto')
+    assert_equal(rp.density_, 0.01)
     assert_equal(rp.components_.shape, (1973, n_features))
 
     projected_1 = rp.transform(data)
