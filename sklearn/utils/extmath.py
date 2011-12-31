@@ -140,7 +140,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iterations=0,
         Number of singular values and vectors to extract.
 
     n_oversamples: int (default is 10)
-        Additional number of random vectors to samples of the range of M
+        Additional number of random vectors to sample the range of M so as
         to ensure proper conditioning. The total number of random vectors
         used to find the range of M is n_components + n_oversamples.
 
