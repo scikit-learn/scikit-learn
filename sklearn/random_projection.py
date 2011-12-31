@@ -304,8 +304,10 @@ class SparseRandomProjection(BaseEstimator, TransformerMixin):
                     "n_components=%d should be smaller than n_features=%d"
                     % (self.n_components, n_features))
 
-        if self.density == 'auto':
-            self.density = min(1 / math.sqrt(n_features), 1 / 3.)
+        if self.density is 'auto':
+            self.density_ = min(1 / math.sqrt(n_features), 1 / 3.)
+        else:
+            self.density_ = self.density
 
         self.components_ = sparse_random_matrix(
             self.n_components, n_features, density=self.density,
