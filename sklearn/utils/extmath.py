@@ -161,9 +161,9 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iterations=0,
     Notes
     -----
     This algorithm finds a (usually very good) approximate truncated
-    singular values decomposition using randomization to speed up the
+    singular value decomposition using randomization to speed up the
     computations. It is particularly fast on large matrices on which
-    you whish to extract only a small number of components.
+    you wish to extract only a small number of components.
 
     **References**:
 
