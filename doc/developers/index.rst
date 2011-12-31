@@ -1,6 +1,5 @@
 .. toctree::
-   :numbered:
-   index.rst
+
    performance.rst
    utilities.rst
 
@@ -233,6 +232,7 @@ articles, link to us from your website, or simply by saying "I use
 it":
 
 .. raw:: html
+
    <script type="text/javascript" src="http://www.ohloh.net/p/480792/widgets/project_users.js?style=rainbow"></script>
 
 

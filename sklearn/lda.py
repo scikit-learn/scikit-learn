@@ -79,7 +79,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
             Target values (integers)
         store_covariance : boolean
             If True the covariance matrix (shared by all classes) is computed
-            and stored in self.covariance_ attribute.
+            and stored in `self.covariance_` attribute.
         """
         X = np.asarray(X)
         y = np.asarray(y)

@@ -255,6 +255,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         Method used to initialize the procedure.
         Default: 'nndsvdar'
         Valid options::
+
             'nndsvd': Nonnegative Double Singular Value Decomposition (NNDSVD)
                 initialization (better for sparseness)
             'nndsvda': NNDSVD with zeros filled with the average of X
@@ -286,13 +287,13 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    components_: array, [n_components, n_features]
+    `components_` : array, [n_components, n_features]
         Non-negative components of the data
 
-    reconstruction_err_: number
+    `reconstruction_err_` : number
         Frobenius norm of the matrix difference between the
         training data and the reconstructed data from the
-        fit produced by the model. || X - WH ||_2
+        fit produced by the model. ``|| X - WH ||_2``
         Not computed for sparse input matrices because it is
         too expensive in terms of memory.
 

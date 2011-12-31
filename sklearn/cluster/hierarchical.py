@@ -266,19 +266,18 @@ class Ward(BaseEstimator):
         Copy the connectivity matrix or work inplace.
 
     n_components : int (optional)
-        The number of connected components in the graph defined by the
+        The number of connected components in the graph defined by the \
         connectivity matrix. If not set, it is estimated.
 
     Attributes
     ----------
-    children_ : array-like, shape = [n_nodes, 2]
-        List of the children of each nodes.
-        Leaves of the tree do not appear.
+    `children_` : array-like, shape = [n_nodes, 2]
+        List of the children of each nodes.  Leaves of the tree do not appear.
 
-    labels_ : array [n_points]
+    `labels_` : array [n_points]
         cluster labels for each point
 
-    n_leaves_ : int
+    `n_leaves_` : int
         Number of leaves in the hiearchical tree.
 
     """
@@ -348,14 +347,14 @@ class WardAgglomeration(AgglomerationTransform, Ward):
 
     Attributes
     ----------
-    children_ : array-like, shape = [n_nodes, 2]
+    `children_` : array-like, shape = [n_nodes, 2]
         List of the children of each nodes.
         Leaves of the tree do not appear.
 
-    labels_ : array [n_points]
+    `labels_` : array [n_points]
         cluster labels for each point
 
-    n_leaves_ : int
+    `n_leaves_` : int
         Number of leaves in the hiearchical tree.
 
     """
