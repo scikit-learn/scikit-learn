@@ -12,7 +12,7 @@ from __future__ import division
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import atleast2d_or_csr, check_random_state
-from ..utils.extmath import fast_svd, safe_sparse_dot
+from ..utils.extmath import randomized_svd, safe_sparse_dot
 
 import numpy as np
 from scipy.optimize import nnls
@@ -106,7 +106,7 @@ def _initialize_nmf(X, n_components, variant=None, eps=1e-6,
     if variant not in (None, 'a', 'ar'):
         raise ValueError("Invalid variant name")
 
-    U, S, V = fast_svd(X, n_components)
+    U, S, V = randomized_svd(X, n_components)
     W, H = np.zeros(U.shape), np.zeros(V.shape)
 
     # The leading singular triplet is non-negative

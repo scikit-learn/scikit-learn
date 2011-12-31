@@ -11,7 +11,9 @@ from scipy import linalg
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import array2d, check_random_state, as_float_array
-from ..utils.extmath import fast_logdet, fast_svd, safe_sparse_dot
+from ..utils.extmath import fast_logdet
+from ..utils.extmath import safe_sparse_dot
+from ..utils.extmath import randomized_svd
 
 
 def _assess_dimension_(spectrum, rank, n_samples, dim):
@@ -458,9 +460,9 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
             self.mean_ = np.mean(X, axis=0)
             X -= self.mean_
 
-        U, S, V = fast_svd(X, self.n_components,
-                           n_iterations=self.iterated_power,
-                           random_state=self.random_state)
+        U, S, V = randomized_svd(X, self.n_components,
+                                 n_iterations=self.iterated_power,
+                                 random_state=self.random_state)
 
         self.explained_variance_ = (S ** 2) / n_samples
         self.explained_variance_ratio_ = self.explained_variance_ / \

@@ -136,6 +136,12 @@ version 0.9:
 
   - ``BaseDictionaryLearning`` class replaced by ``SparseCodingMixin``.
 
+  - :func:`sklearn.utils.extmath.fast_svd` has been renamed
+    :func:`sklearn.utils.extmath.randomized_svd` and the default
+    oversampling is now fixed to 10 additional random vectors instead
+    of doubling the number of components to extract. The new behavior
+    follows the reference paper.
+
 
 .. _changes_0_9:
 
