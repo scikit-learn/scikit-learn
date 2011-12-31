@@ -31,7 +31,6 @@ import pylab as pl
 
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.random_projection import SparseRandomProjection
 from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.linear_model import RidgeClassifier
 from sklearn.svm import LinearSVC
@@ -58,9 +57,6 @@ op.add_option("--report",
 op.add_option("--chi2_select",
               action="store", type="int", dest="select_chi2",
               help="Select some number of features using a chi-squared test")
-op.add_option("--random_project",
-              action="store_true", dest="random_project",
-              help="Randomly project the data to reduce the dimensionality")
 op.add_option("--confusion_matrix",
               action="store_true", dest="print_cm",
               help="Print the confusion matrix.")
@@ -121,7 +117,6 @@ vectorizer = TfidfVectorizer(sublinear_tf=True, max_df=0.5,
 X_train = vectorizer.fit_transform(data_train.data)
 print "done in %fs" % (time() - t0)
 print "n_samples: %d, n_features: %d" % X_train.shape
-print "nonzero features: %d" % X_train.nnz
 print
 
 print "Extracting features from the test dataset using the same vectorizer"
@@ -129,7 +124,6 @@ t0 = time()
 X_test = vectorizer.transform(data_test.data)
 print "done in %fs" % (time() - t0)
 print "n_samples: %d, n_features: %d" % X_test.shape
-print "nonzero features: %d" % X_test.nnz
 print
 
 if opts.select_chi2:
@@ -140,19 +134,6 @@ if opts.select_chi2:
     X_train = ch2.fit_transform(X_train, y_train)
     X_test = ch2.transform(X_test)
     print "done in %fs" % (time() - t0)
-    print
-
-if opts.random_project:
-    print "Reducing the dimensionality of the data"
-    t0 = time()
-    rp = SparseRandomProjection(density='auto', n_components='auto',
-                                random_state=42)
-    X_train = rp.fit_transform(X_train)
-    X_test = rp.transform(X_test)
-    print "done in %fs" % (time() - t0)
-    print "new dimension: %d" % X_train.shape[1]
-    print "nonzero features (train): %d" % X_train.nnz
-    print "nonzero features (test): %d" % X_test.nnz
     print
 
 
@@ -188,7 +169,7 @@ def benchmark(clf):
         print "dimensionality: %d" % clf.coef_.shape[1]
         print "density: %f" % density(clf.coef_)
 
-        if opts.print_top10 and not opts.random_project:
+        if opts.print_top10:
             print "top 10 keywords per class:"
             for i, category in enumerate(categories):
                 top10 = np.argsort(clf.coef_[i])[-10:]
@@ -242,11 +223,10 @@ print "NearestCentroid (aka Rocchio classifier)"
 results.append(benchmark(NearestCentroid()))
 
 # Train sparse Naive Bayes classifiers
-if not opts.random_project:
-  print 80 * '='
-  print "Naive Bayes"
-  results.append(benchmark(MultinomialNB(alpha=.01)))
-  results.append(benchmark(BernoulliNB(alpha=.01)))
+print 80 * '='
+print "Naive Bayes"
+results.append(benchmark(MultinomialNB(alpha=.01)))
+results.append(benchmark(BernoulliNB(alpha=.01)))
 
 
 class L1LinearSVC(LinearSVC):
