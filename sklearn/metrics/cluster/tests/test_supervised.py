@@ -12,6 +12,7 @@ from sklearn.metrics.cluster import expected_mutual_information
 from sklearn.metrics.cluster import contingency_matrix
 from sklearn.metrics.cluster import entropy
 
+from sklearn.utils.testing import assert_raise_message
 from nose.tools import assert_almost_equal
 from nose.tools import assert_equal
 from numpy.testing import assert_array_almost_equal
@@ -25,16 +26,6 @@ score_funcs = [
     adjusted_mutual_info_score,
     normalized_mutual_info_score,
 ]
-
-
-def assert_raise_message(exception, message_start, callable, *args, **kwargs):
-    """Helper function to test error messages in exceptions"""
-    try:
-        callable(*args, **kwargs)
-        raise AssertionError("Should have raised %r..." %
-                             exception(message_start))
-    except exception as e:
-        assert str(e).startswith(message_start)
 
 
 def test_error_messages_on_wrong_input():

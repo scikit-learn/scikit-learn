@@ -2,10 +2,10 @@ from sklearn.metrics import euclidean_distances
 from sklearn.datasets import make_low_rank_matrix
 from sklearn.random_projection import SparseRandomProjection
 
+from sklearn.utils.testing import assert_raise_message
 from numpy.testing import assert_array_equal
 from nose.tools import assert_equal
 from nose.tools import assert_raises
-from nose.tools import assert_almost_equal
 
 
 def assert_lower(a, b, details=None):
@@ -25,32 +25,21 @@ def test_sparse_random_project_invalid_input():
     assert_raises(ValueError, SparseRandomProjection().fit, [0, 1, 2])
 
 
+def test_input_dimension_inconsistency():
+    expected_msg = ("n_components=20000 should be smaller "
+                    "than n_features=10000")
+    rp = SparseRandomProjection(n_components=20000)
+    assert_raise_message(ValueError, expected_msg, rp.fit, data)
+
+
 def test_too_many_samples_to_find_a_safe_embedding():
-    # check that a warning is raised when no safe dim reduction is possible
-
-    # install a monkey patch to collect the warnings
-    collected_warnings = set()
-    def collecting_warn(msg):
-        collected_warnings.add(msg)
-    import warnings
-    warn_original = warnings.warn
-    warnings.warn = collecting_warn
-
-    try:
-
-      data = make_low_rank_matrix(n_samples=1000, n_features=100)
-      rp = SparseRandomProjection().fit(data)
-      assert_equal(rp.n_components, 100)  # no safe dim reduction possible
-
-      expected_warnings = set([
-          'eps=0.100000 and n_samples=1000 lead to a target dimension'
-          ' of 5920 which is larger than the original space with'
-          ' n_features=100'])
-      assert_equal(collected_warnings, expected_warnings)
-
-    finally:
-        # restore the warn function
-        warnings.warn = warn_original
+    data = make_low_rank_matrix(n_samples=1000, n_features=100)
+    expected_msg = (
+        'eps=0.100000 and n_samples=1000 lead to a target dimension'
+        ' of 5920 which is larger than the original space with'
+        ' n_features=100')
+    rp = SparseRandomProjection(n_components='auto')
+    assert_raise_message(ValueError, expected_msg, rp.fit, data)
 
 
 def test_sparse_random_projection_dimensions():
