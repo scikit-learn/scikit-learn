@@ -103,6 +103,9 @@ def sparse_random_matrix(n_components, n_features, density='auto',
     n_components: int
         Dimensionality of the target projection space.
 
+    n_features: int
+        Dimensionality of the original source space.
+
     density: float in range (0, 1/3], optional
         Ratio of non-zero component in the random projection matrix.
 
@@ -274,7 +277,7 @@ class SparseRandomProjection(BaseEstimator, TransformerMixin):
             matrix dimensions based on the theory referenced in the
             afore mentioned papers.
 
-        y : is not used: placehold to allow for usage in a Pipeline.
+        y : is not used: placeholder to allow for usage in a Pipeline.
 
         Returns
         -------
@@ -290,12 +293,16 @@ class SparseRandomProjection(BaseEstimator, TransformerMixin):
             self.n_components = johnson_lindenstrauss_bound(
                 n_samples, eps=self.eps)
             if self.n_components > n_features:
-                warnings.warn(
+                raise ValueError(
                     'eps=%f and n_samples=%d lead to a target dimension of '
                     '%d which is larger than the original space with '
                     'n_features=%d' % (self.eps, n_samples, self.n_components,
                                        n_features))
-                self.n_components = n_features
+        else:
+            if self.n_components > n_features:
+                raise ValueError(
+                    "n_components=%d should be smaller than n_features=%d"
+                    % (self.n_components, n_features))
 
         if self.density == 'auto':
             self.density = min(1 / math.sqrt(n_features), 1 / 3.)
