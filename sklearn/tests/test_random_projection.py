@@ -1,3 +1,6 @@
+import scipy.sparse as sp
+import numpy as np
+
 from sklearn.metrics import euclidean_distances
 from sklearn.datasets import make_low_rank_matrix
 from sklearn.random_projection import SparseRandomProjection
@@ -95,3 +98,21 @@ def test_sparse_projection_embedding_quality():
     # Johnson Lindenstrauss bound
     assert_lower(distances_ratio.max(), 1 + eps)
     assert_lower(1 - eps, distances_ratio.min())
+
+
+def test_output_representation():
+    # by default dense ndarray output is enforced
+    rp = SparseRandomProjection(n_components=100, random_state=0).fit(data)
+    assert isinstance(rp.transform(data), np.ndarray)
+
+    sparse_data = sp.csr_matrix(data)
+    assert isinstance(rp.transform(sparse_data), np.ndarray)
+
+    # this behavior can be disabled:
+    rp = SparseRandomProjection(n_components=100, dense_output=False,
+                                random_state=0).fit(data)
+    # output for dense input will stay dense:
+    assert isinstance(rp.transform(data), np.ndarray)
+
+    # ouput for sparse output will be sparse:
+    assert sp.isspmatrix_csr(rp.transform(sparse_data))
