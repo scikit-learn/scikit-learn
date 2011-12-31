@@ -17,7 +17,6 @@ import sklearn
 from sklearn.base import BaseEstimator
 from .fixes import savemat
 
-
 # Conveniently import all assertions in one place.
 from nose.tools import assert_equal
 from nose.tools import assert_not_equal
@@ -69,6 +68,20 @@ try:
     from nose.tools import assert_greater
 except ImportError:
     assert_greater = _assert_greater
+
+
+def assert_raise_message(exception, message, callable, *args, **kwargs):
+    """Helper function to test error messages in exceptions"""
+    try:
+        callable(*args, **kwargs)
+        raise AssertionError("Should have raised %r" % exception(message))
+    except exception as e:
+        if hasattr(e, 'message'):
+            # python 2.x
+            assert_equal(message, e.message)
+        else:
+            # python 3.x
+            assert_equal(message, e.args[0])
 
 
 def fake_mldata_cache(columns_dict, dataname, matfile, ordering=None):
