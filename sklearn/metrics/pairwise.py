@@ -33,12 +33,13 @@ kernel:
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Robert Layton <robertlayton@gmail.com>
+#          David Warde-Farley <dwf@dwf.name>
 # License: BSD Style.
 
 import numpy as np
 from scipy.spatial import distance
 from scipy.sparse import csr_matrix, issparse
-from ..utils import safe_asarray, atleast2d_or_csr, deprecated
+from ..utils import safe_asarray, atleast2d_or_csr, deprecated, arrayfuncs
 from ..utils.extmath import safe_sparse_dot
 
 
@@ -87,8 +88,25 @@ def check_pairwise_arrays(X, Y):
     return X, Y
 
 
+def _check_euclidean_dtypes(X, Y, out):
+    """
+    Checks that X and Y have sensible (floating point) dtypes and that
+    out array (if passed) has the greater precision dtype.
+    """
+    if X.dtype not in (np.float32, np.float64):
+        raise ValueError('X must have float32 or float64 dtype')
+    if Y.dtype not in (np.float32, np.float64):
+        raise ValueError('Y must have float32 or float64 dtype')
+    if out is not None:
+        if out.dtype == np.float32:
+            if X.dtype == np.float64 or Y.dtype == np.float64:
+                raise ValueError('out argument must have dtype float64 if '
+                                 'either X or Y are float64')
+
+
 # Distances
-def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
+def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
+                        out=None):
     """
     Considering the rows of X (and Y=X) as vectors, compute the
     distance matrix between each pair of vectors.
@@ -110,10 +128,16 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     Y: {array-like, sparse matrix}, shape = [n_samples_2, n_features]
 
     Y_norm_squared: array-like, shape = [n_samples_2], optional
-        Pre-computed dot-products of vectors in Y (e.g., `(Y**2).sum(axis=1)`)
+        Pre-computed dot-products of vectors in Y (e.g., `(Y**2).sum(axis=1)`).
+        Only used if one or more arguments is sparse.
 
     squared: boolean, optional
         Return squared Euclidean distances.
+
+    out : ndarray, shape = [n_samples_1, n_samples_2], optional
+        Optional pre-allocated output array. Only supported when
+        both X and Y are dense. Should have a float32 dtype if
+        and only if X and Y are both float32, otherwise float64.
 
     Returns
     -------
@@ -131,18 +155,37 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     >>> euclidean_distances(X, [[0, 0]])
     array([[ 1.        ],
            [ 1.41421356]])
+
+    Notes
+    -----
+    If both arguments are dense arrays, both arrays should be of the
+    same dtype in order to avoid unnecessary copies (specifically,
+    if one argument is float32 and the other is float64, the float32
+    argument will be upcast to float64, creating a copy that uses
+    double the memory).
     """
     # should not need X_norm_squared because if you could precompute that as
     # well as Y, then you should just pre-compute the output and not even
     # call this function.
     X, Y = check_pairwise_arrays(X, Y)
+    _check_euclidean_dtypes(X, Y, out)
+    if out is not None:
+        if issparse(X) or issparse(Y):
+            raise ValueError('out argument not supported for sparse X or Y')
+        elif not hasattr(out, '__array__'):
+            raise ValueError('out argument must be an array')
+        elif out.shape != (X.shape[0], Y.shape[0]):
+            raise ValueError('shape mismatch for out argument')
     if issparse(X):
         XX = X.multiply(X).sum(axis=1)
-    else:
+    elif issparse(Y):
         XX = np.sum(X * X, axis=1)[:, np.newaxis]
+    else:
+        # If both arguments are dense, we use the Cython function.
+        XX = None
 
     if X is Y:  # shortcut in the common case euclidean_distances(X, X)
-        YY = XX.T
+        YY = XX.T if XX is not None else None
     elif Y_norm_squared is None:
         if issparse(Y):
             # scipy.sparse matrices don't have element-wise scalar
@@ -150,28 +193,56 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
             YY = Y.copy() if isinstance(Y, csr_matrix) else Y.tocsr()
             YY.data **= 2
             YY = np.asarray(YY.sum(axis=1)).T
-        else:
+        elif issparse(X):
             YY = np.sum(Y ** 2, axis=1)[np.newaxis, :]
+        else:
+            YY = XX
     else:
         YY = atleast2d_or_csr(Y_norm_squared)
         if YY.shape != (1, Y.shape[0]):
             raise ValueError(
                         "Incompatible dimensions for Y and Y_norm_squared")
 
-    # TODO: a faster Cython implementation would do the clipping of negative
-    # values in a single pass over the output matrix.
-    distances = safe_sparse_dot(X, Y.T, dense_output=True)
-    distances *= -2
-    distances += XX
-    distances += YY
-    np.maximum(distances, 0, distances)
+    # Do specialized faster things for the dense-dense case.
+    if not issparse(X) and not issparse(Y):
+        if X.dtype != Y.dtype:
+            _X = X.astype(np.float64) if X.dtype == np.float32 else X
+            _Y = Y.astype(np.float64) if Y.dtype == np.float32 else Y
+            out_dtype = np.float64
+        else:
+            _X = X
+            _Y = Y
+            out_dtype = X.dtype
+        if out is None:
+            distances = np.empty((X.shape[0], Y.shape[0]), dtype=out_dtype)
+        else:
+            distances = out
+        if X is Y:
+            if X.dtype == np.float32:
+                arrayfuncs.fast_pair_sqdist_float32(_X, distances)
+            else:
+                arrayfuncs.fast_pair_sqdist_float64(_X, distances)
+        else:
+            if X.dtype == np.float32:
+                arrayfuncs.fast_sqdist_float32(_X, _Y, distances)
+            else:
+                arrayfuncs.fast_sqdist_float64(_X, _Y, distances)
+    else:
+        distances = safe_sparse_dot(X, Y.T, dense_output=True)
+        distances *= -2
+        distances += XX
+        distances += YY
+        np.maximum(distances, 0, distances)
 
-    if X is Y:
-        # Ensure that distances between vectors and themselves are set to 0.0.
-        # This may not be the case due to floating point rounding errors.
-        distances.flat[::distances.shape[0] + 1] = 0.0
+        if X is Y:
+            # Ensure that distances between vectors and themselves are set to
+            # 0.0.  This may not be the case due to floating point rounding
+            # errors.
+            distances.flat[::distances.shape[0] + 1] = 0.0
 
-    return distances if squared else np.sqrt(distances)
+    if not squared:
+        np.sqrt(distances, distances)
+    return distances
 
 
 @deprecated("use euclidean_distances instead")

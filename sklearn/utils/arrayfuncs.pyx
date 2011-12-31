@@ -113,3 +113,138 @@ def cholesky_delete (np.ndarray L, int go_out):
        m = <int> L.strides[0] / sizeof (float)
        float_cholesky_delete (m, n, <float *> L.data, go_out)
 
+# TODO: fast_sqdist_foo and fast_pair_sqdist_foo should be templated
+# for different dtypes, when the templating infrastructure is finally
+# set up.
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cpdef fast_sqdist_float32(np.ndarray[np.float32_t, ndim=2] X,
+                          np.ndarray[np.float32_t, ndim=2] Y,
+                          np.ndarray[np.float32_t, ndim=2] out):
+    """
+    fast_sqdist_float32(X, Y, out)
+
+    Low-level function for computing squared Euclidean distances between
+    two sets of points.
+
+    Parameters
+    ----------
+    X : ndarray, float32, shape = [n_samples_a, n_features]
+
+    Y : ndarray, float32, shape = [n_samples_b, n_features]
+
+    out : ndarray, float32, shape = [n_samples_a, n_samples_b]
+
+    Notes
+    -----
+    In order to achieve maximal speed this function performs no checks of
+    any array metadata. Use the high-level functions defined in the
+    `sklearn.metrics.distance` module unless you really know what you're
+    doing.
+    """
+    cdef np.npy_intp i, j, k
+    for i in range(X.shape[0]):
+        for j in range(Y.shape[0]):
+            out[i, j] = 0
+            for k in range(X.shape[1]):
+                out[i, j] += (X[i, k] - Y[j, k]) ** 2
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cpdef fast_sqdist_float64(np.ndarray[np.float64_t, ndim=2] X,
+                          np.ndarray[np.float64_t, ndim=2] Y,
+                          np.ndarray[np.float64_t, ndim=2] out):
+    """
+    fast_sqdist_float64(X, Y, out)
+
+    Low-level function for computing squared Euclidean distances between
+    two sets of points.
+
+    Parameters
+    ----------
+    X : ndarray, float64, shape = [n_samples_a, n_features]
+
+    Y : ndarray, float64, shape = [n_samples_b, n_features]
+
+    out : ndarray, float64, shape = [n_samples_a, n_samples_b]
+
+    Notes
+    -----
+    In order to achieve maximal speed this function performs no checks of
+    any array metadata. Use the high-level functions defined in the
+    `sklearn.metrics.distance` module unless you really know what you're
+    doing.
+    """
+    cdef np.npy_intp i, j, k
+    for i in range(X.shape[0]):
+        for j in range(Y.shape[0]):
+            out[i, j] = 0
+            for k in range(X.shape[1]):
+                out[i, j] += (X[i, k] - Y[j, k]) ** 2
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cpdef fast_pair_sqdist_float32(np.ndarray[np.float32_t, ndim=2] X,
+                               np.ndarray[np.float32_t, ndim=2] out):
+    """
+    fast_pair_sqdist_float32(X, out)
+
+    Low-level function for computing squared Euclidean distances between
+    every pair of points in a set.
+
+    Parameters
+    ----------
+    X : ndarray, float64, shape = [n_samples, n_features]
+
+    out : ndarray, float64, shape = [n_samples, n_samples]
+
+    Notes
+    -----
+    In order to achieve maximal speed this function performs no checks of
+    any array metadata. Use the high-level functions defined in the
+    `sklearn.metrics.distance` module unless you really know what you're
+    doing.
+    """
+    cdef np.npy_intp i, j, k
+    for i in range(X.shape[0]):
+        out[i, i] = 0
+        for j in range(i + 1, X.shape[0]):
+            out[i, j] = 0
+            for k in range(X.shape[1]):
+                out[i, j] += (X[i, k] - X[j, k]) ** 2
+            out[j, i] = out[i, j]
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cpdef fast_pair_sqdist_float64(np.ndarray[np.float64_t, ndim=2] X,
+                               np.ndarray[np.float64_t, ndim=2] out):
+    """
+    fast_pair_sqdist_float64(X, out)
+
+    Low-level function for computing squared Euclidean distances between
+    every pair of points in a set.
+
+    Parameters
+    ----------
+    X : ndarray, float64, shape = [n_samples, n_features]
+
+    out : ndarray, float64, shape = [n_samples, n_samples]
+
+    Notes
+    -----
+    In order to achieve maximal speed this function performs no checks of
+    any array metadata. Use the high-level functions defined in the
+    `sklearn.metrics.distance` module unless you really know what you're
+    doing.
+    """
+    cdef np.npy_intp i, j, k
+    for i in range(X.shape[0]):
+        out[i, i] = 0
+        for j in range(i + 1, X.shape[0]):
+            out[i, j] = 0
+            for k in range(X.shape[1]):
+                out[i, j] += (X[i, k] - X[j, k]) ** 2
+            out[j, i] = out[i, j]
