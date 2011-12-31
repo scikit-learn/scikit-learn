@@ -46,7 +46,8 @@ def test_sparse_random_projection_dimensions():
     rp = SparseRandomProjection(random_state=0).fit(data)
 
     # the number of components is adjusted from the shape of the training set
-    assert_equal(rp.n_components, 1973)
+    assert_equal(rp.n_components, 'auto')
+    assert_equal(rp.n_components_, 1973)
     assert_equal(rp.density, 'auto')
     assert_equal(rp.density_, 0.01)
     assert_equal(rp.components_.shape, (1973, n_features))
