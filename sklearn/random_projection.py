@@ -248,9 +248,14 @@ class SparseRandomProjection(BaseEstimator, TransformerMixin):
     components_: CSR matrix with shape [n_components, n_features]
         Random matrix used for the projection.
 
+    n_component_: int
+        Concrete number of components computed when n_components="auto".
+
+    density_: float in range 0.0 - 1.0
+        Concrete density computed from when density="auto".
+
     References
     ----------
-
     - Very Sparse Random Projections. Ping Li, Trevor Hastie
       and Kenneth Church, 2006
       http://www.stanford.edu/~hastie/Papers/Ping/KDD06_rp.pdf
@@ -290,19 +295,21 @@ class SparseRandomProjection(BaseEstimator, TransformerMixin):
         n_samples, n_features = X.shape
 
         if self.n_components == 'auto':
-            self.n_components = johnson_lindenstrauss_bound(
+            self.n_components_ = johnson_lindenstrauss_bound(
                 n_samples, eps=self.eps)
-            if self.n_components > n_features:
+
+            if self.n_components_ > n_features:
                 raise ValueError(
                     'eps=%f and n_samples=%d lead to a target dimension of '
                     '%d which is larger than the original space with '
-                    'n_features=%d' % (self.eps, n_samples, self.n_components,
+                    'n_features=%d' % (self.eps, n_samples, self.n_components_,
                                        n_features))
         else:
             if self.n_components > n_features:
                 raise ValueError(
                     "n_components=%d should be smaller than n_features=%d"
                     % (self.n_components, n_features))
+            self.n_components_ = self.n_components
 
         if self.density is 'auto':
             self.density_ = min(1 / math.sqrt(n_features), 1 / 3.)
@@ -310,7 +317,7 @@ class SparseRandomProjection(BaseEstimator, TransformerMixin):
             self.density_ = self.density
 
         self.components_ = sparse_random_matrix(
-            self.n_components, n_features, density=self.density,
+            self.n_components_, n_features, density=self.density,
             random_state=self.random_state)
         return self
 
