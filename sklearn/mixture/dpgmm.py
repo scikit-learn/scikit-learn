@@ -103,13 +103,12 @@ def _bound_state_loglik_tied(X, initial_bound, bound_prec, precs, means):
     bound -= 0.5 * euclidean_distances(X, means, squared=True)
     return bound
 
-# helper function to calculate symmetric quadratic form
-def _sym_quad_form(x,mu,A):
-    """
-    calculate x.T * A * x
-    """
-    q = (cdist(x, mu[np.newaxis], "mahalanobis", VI=A)**2).reshape(-1)
+
+def _sym_quad_form(x, mu, A):
+    """helper function to calculate symmetric quadratic form x.T * A * x"""
+    q = (cdist(x, mu[np.newaxis], "mahalanobis", VI=A) ** 2).reshape(-1)
     return q
+
 
 def _bound_state_loglik_full(X, initial_bound, bound_prec, precs, means):
     n_components, n_features = means.shape
@@ -117,7 +116,7 @@ def _bound_state_loglik_full(X, initial_bound, bound_prec, precs, means):
     bound = np.empty((n_samples, n_components))
     bound[:] = bound_prec + initial_bound
     for k in xrange(n_components):
-        bound[:,k] -= 0.5 * _sym_quad_form(X, means[k], precs[k])
+        bound[:, k] -= 0.5 * _sym_quad_form(X, means[k], precs[k])
     return bound
 
 _BOUND_STATE_LOGLIK_DICT = dict(
@@ -387,7 +386,7 @@ class DPGMM(GMM):
                 self._a[k] = 2 + T + self.n_features
                 self._B[k] = (T + 1) * np.identity(self.n_features)
                 dx = self._X - self._means[k]
-                self._B[k] += np.dot((self._z[:,k] * dx.T), dx)
+                self._B[k] += np.dot((self._z[:, k] * dx.T), dx)
                 self._B[k] = linalg.inv(self._B[k])
                 self._precs[k] = self._a[k] * self._B[k]
                 self._detB[k] = linalg.det(self._B[k])
