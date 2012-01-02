@@ -410,7 +410,7 @@ class CountVectorizer(BaseEstimator):
         X_inv : list of arrays, len = n_samples
             List of arrays of terms.
         """
-        if type(X) is sp.coo_matrix:    # COO matrix is not indexable
+        if sp.isspmatrix_coo(X):  # COO matrix is not indexable
             X = X.tocsr()
         elif not sp.issparse(X):
             # We need to convert X to a matrix, so that the indexing
@@ -422,7 +422,7 @@ class CountVectorizer(BaseEstimator):
         indices = np.array(self.vocabulary.values())
         inverse_vocabulary = terms[np.argsort(indices)]
 
-        return [inverse_vocabulary[X[i, :].nonzero()[1]]
+        return [inverse_vocabulary[X[i, :].nonzero()[1]].ravel()
                 for i in xrange(n_samples)]
 
 
