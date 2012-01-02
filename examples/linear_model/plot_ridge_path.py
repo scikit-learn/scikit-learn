@@ -24,7 +24,7 @@ from sklearn import linear_model
 X = 1. / (np.arange(1, 11) + np.arange(0, 10)[:, np.newaxis])
 y = np.ones(10)
 
-################################################################################
+###############################################################################
 # Compute paths
 
 n_alphas = 200
@@ -37,7 +37,7 @@ for a in alphas:
     clf.fit(X, y)
     coefs.append(clf.coef_)
 
-################################################################################
+###############################################################################
 # Display results
 
 ax = pl.gca()
@@ -45,10 +45,9 @@ ax.set_color_cycle(['b', 'r', 'g', 'c', 'k', 'y', 'm'])
 
 ax.plot(alphas, coefs)
 ax.set_xscale('log')
-ax.set_xlim(ax.get_xlim()[::-1]) # reverse axis
+ax.set_xlim(ax.get_xlim()[::-1])  # reverse axis
 pl.xlabel('alpha')
 pl.ylabel('weights')
 pl.title('Ridge coefficients as a function of the regularization')
 pl.axis('tight')
 pl.show()
-

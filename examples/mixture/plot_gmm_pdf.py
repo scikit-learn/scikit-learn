@@ -27,7 +27,7 @@ x = np.linspace(-20.0, 30.0)
 y = np.linspace(-20.0, 40.0)
 X, Y = np.meshgrid(x, y)
 XX = np.c_[X.ravel(), Y.ravel()]
-Z =  np.log(-clf.eval(XX)[0])
+Z = np.log(-clf.eval(XX)[0])
 Z = Z.reshape(X.shape)
 
 CS = pl.contour(X, Y, Z)
@@ -36,4 +36,3 @@ pl.scatter(X_train[:, 0], X_train[:, 1], .8)
 
 pl.axis('tight')
 pl.show()
-

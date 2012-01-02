@@ -33,7 +33,7 @@ class SGDClassifier(BaseSGDClassifier):
     update is truncated to 0.0 to allow for learning sparse models and achieve
     online feature selection.
 
-    This implementation works on scipy.sparse X and dense coef_.
+    This implementation works on scipy.sparse X and dense `coef_`.
 
     Parameters
     ----------
@@ -123,10 +123,11 @@ class SGDClassifier(BaseSGDClassifier):
     >>> y = np.array([1, 1, 2, 2])
     >>> clf = linear_model.sparse.SGDClassifier()
     >>> clf.fit(X, y)
-    SGDClassifier(alpha=0.0001, class_weight=None, eta0=0.0, fit_intercept=True,
-           learning_rate='optimal', loss='hinge', n_iter=5, n_jobs=1,
-           penalty='l2', power_t=0.5, rho=0.85, seed=0, shuffle=False,
-           verbose=0)
+    ... #doctest: +NORMALIZE_WHITESPACE
+    SGDClassifier(alpha=0.0001, class_weight=None, eta0=0.0,
+            fit_intercept=True, learning_rate='optimal', loss='hinge',
+            n_iter=5, n_jobs=1, penalty='l2', power_t=0.5, rho=0.85, seed=0,
+            shuffle=False, verbose=0)
     >>> print clf.predict([[-0.8, -1]])
     [1]
 

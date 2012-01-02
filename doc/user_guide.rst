@@ -8,7 +8,7 @@
 
     <h1>User guide: contents</h1>
 
-.. _user_guide: User Guide
+.. _user_guide:
 
 .. include:: includes/bigger_toc_css.rst
 
@@ -20,7 +20,6 @@
    supervised_learning.rst
    unsupervised_learning.rst
    model_selection.rst
+   data_transforms.rst
    Dataset loading utilities <datasets/index.rst>
-   Preprocessing data <modules/preprocessing.rst>
-   modules/feature_extraction.rst
    Reference <modules/classes.rst>

@@ -73,8 +73,8 @@ def _svd_cross_product(X, Y):
 
 def _center_scale_xy(X, Y, scale=True):
     """ Center X, Y and scale if the scale parameter==True
-    Return
-    ------
+    Returns
+    -------
         X, Y, x_mean, y_mean, x_std, y_std
     """
     # center
@@ -113,72 +113,74 @@ class _PLS(BaseEstimator):
 
     Parameters
     ----------
-    X: array-like of predictors, shape = [n_samples, p]
+    X : array-like of predictors, shape = [n_samples, p]
         Training vectors, where n_samples in the number of samples and
         p is the number of predictors.
 
-    Y: array-like of response, shape = [n_samples, q]
+    Y : array-like of response, shape = [n_samples, q]
         Training vectors, where n_samples in the number of samples and
         q is the number of response variables.
 
-    n_components: int, number of components to keep. (default 2).
+    n_components : int, number of components to keep. (default 2).
 
-    deflation_mode: str, "canonical" or "regression". See notes.
+    deflation_mode : str, "canonical" or "regression". See notes.
 
-    mode: "A" classical PLS and "B" CCA. See notes.
+    mode : "A" classical PLS and "B" CCA. See notes.
 
-    scale: boolean, scale data? (default True)
+    scale : boolean, scale data? (default True)
 
-    algorithm: string, "nipals" or "svd"
+    algorithm : string, "nipals" or "svd"
         The algorithm used to estimate the weights. It will be called
         n_components times, i.e. once for each iteration of the outer loop.
 
-    max_iter: an integer, the maximum number of iterations (default 500) of the
-        NIPALS inner loop (used only if algorithm="nipals")
+    max_iter : an integer, the maximum number of iterations (default 500)
+        of the NIPALS inner loop (used only if algorithm="nipals")
 
-    tol: non-negative real, default 1e-06
+    tol : non-negative real, default 1e-06
         The tolerance used in the iterative algorithm.
 
-    copy: boolean
+    copy : boolean
         Whether the deflation should be done on a copy. Let the default
         value to True unless you don't care about side effects.
 
     Attributes
     ----------
-    x_weights_: array, [p, n_components]
+    `x_weights_` : array, [p, n_components]
         X block weights vectors.
 
-    y_weights_: array, [q, n_components]
+    `y_weights_` : array, [q, n_components]
         Y block weights vectors.
 
-    x_loadings_: array, [p, n_components]
+    `x_loadings_` : array, [p, n_components]
         X block loadings vectors.
 
-    y_loadings_: array, [q, n_components]
+    `y_loadings_` : array, [q, n_components]
         Y block loadings vectors.
 
-    x_scores_: array, [n_samples, n_components]
+    `x_scores_` : array, [n_samples, n_components]
         X scores.
 
-    y_scores_: array, [n_samples, n_components]
+    `y_scores_` : array, [n_samples, n_components]
         Y scores.
 
-    x_rotations_: array, [p, n_components]
+    `x_rotations_` : array, [p, n_components]
         X block to latents rotations.
 
-    y_rotations_: array, [q, n_components]
+    `y_rotations_` : array, [q, n_components]
         Y block to latents rotations.
 
     coefs: array, [p, q]
         The coefficients of the linear model: Y = X coefs + Err
 
-    References
-    ----------
+    Notes
+    -----
+    **References**:
+
     Jacob A. Wegelin. A survey of Partial Least Squares (PLS) methods, with
     emphasis on the two-block case. Technical Report 371, Department of
     Statistics, University of Washington, Seattle, 2000.
 
-    In french but still a reference:
+    In French but still a reference:
     Tenenhaus, M. (1998). La regression PLS: theorie et pratique. Paris:
     Editions Technic.
 
@@ -316,23 +318,23 @@ class _PLS(BaseEstimator):
 
     def transform(self, X, Y=None, copy=True):
         """Apply the dimension reduction learned on the train data.
-            Parameters
-            ----------
-            X: array-like of predictors, shape = [n_samples, p]
-                Training vectors, where n_samples in the number of samples and
-                p is the number of predictors.
 
-            Y: array-like of response, shape = [n_samples, q], optional
-                Training vectors, where n_samples in the number of samples and
-                q is the number of response variables.
+        Parameters
+        ----------
+        X : array-like of predictors, shape = [n_samples, p]
+            Training vectors, where n_samples in the number of samples and
+            p is the number of predictors.
 
-            copy: boolean
-                Whether to copy X and Y, or perform in-place normalization.
+        Y : array-like of response, shape = [n_samples, q], optional
+            Training vectors, where n_samples in the number of samples and
+            q is the number of response variables.
 
-            Returns
-            -------
-            x_scores if Y is not given, (x_scores, y_scores) otherwise.
+        copy : boolean
+            Whether to copy X and Y, or perform in-place normalization.
 
+        Returns
+        -------
+        x_scores if Y is not given, (x_scores, y_scores) otherwise.
         """
         # Normalize
         if copy:
@@ -357,19 +359,20 @@ class _PLS(BaseEstimator):
 
     def predict(self, X, copy=True):
         """Apply the dimension reduction learned on the train data.
-            Parameters
-            ----------
-            X: array-like of predictors, shape = [n_samples, p]
-                Training vectors, where n_samples in the number of samples and
-                p is the number of predictors.
 
-            copy: boolean
-                Whether to copy X and Y, or perform in-place normalization.
+        Parameters
+        ----------
+        X : array-like of predictors, shape = [n_samples, p]
+            Training vectors, where n_samples in the number of samples and
+            p is the number of predictors.
 
-            Notes
-            -----
-            This call require the estimation of a p x q matrix, which may
-            be an issue in high dimensional space.
+        copy : boolean
+            Whether to copy X and Y, or perform in-place normalization.
+
+        Notes
+        -----
+        This call require the estimation of a p x q matrix, which may
+        be an issue in high dimensional space.
         """
         # Normalize
         if copy:
@@ -391,59 +394,59 @@ class PLSRegression(_PLS):
 
     Parameters
     ----------
-    X: array-like of predictors, shape = [n_samples, p]
+    X : array-like of predictors, shape = [n_samples, p]
         Training vectors, where n_samples in the number of samples and
         p is the number of predictors.
 
-    Y: array-like of response, shape = [n_samples, q]
+    Y : array-like of response, shape = [n_samples, q]
         Training vectors, where n_samples in the number of samples and
         q is the number of response variables.
 
-    n_components: int, (default 2)
+    n_components : int, (default 2)
         Number of components to keep.
 
-    scale: boolean, (default True)
+    scale : boolean, (default True)
         whether to scale the data
 
-    algorithm: string, "nipals" or "svd"
+    algorithm : string, "nipals" or "svd"
         The algorithm used to estimate the weights. It will be called
         n_components times, i.e. once for each iteration of the outer loop.
 
-    max_iter: an integer, (default 500)
+    max_iter : an integer, (default 500)
         the maximum number of iterations of the NIPALS inner loop (used
         only if algorithm="nipals")
 
-    tol: non-negative real
+    tol : non-negative real
         Tolerance used in the iterative algorithm default 1e-06.
 
-    copy: boolean, default True
+    copy : boolean, default True
         Whether the deflation should be done on a copy. Let the default
         value to True unless you don't care about side effect
 
     Attributes
     ----------
-    x_weights_: array, [p, n_components]
+    `x_weights_` : array, [p, n_components]
         X block weights vectors.
 
-    y_weights_: array, [q, n_components]
+    `y_weights_` : array, [q, n_components]
         Y block weights vectors.
 
-    x_loadings_: array, [p, n_components]
+    `x_loadings_` : array, [p, n_components]
         X block loadings vectors.
 
-    y_loadings_: array, [q, n_components]
+    `y_loadings_` : array, [q, n_components]
         Y block loadings vectors.
 
-    x_scores_: array, [n_samples, n_components]
+    `x_scores_` : array, [n_samples, n_components]
         X scores.
 
-    y_scores_: array, [n_samples, n_components]
+    `y_scores_` : array, [n_samples, n_components]
         Y scores.
 
-    x_rotations_: array, [p, n_components]
+    `x_rotations_` : array, [p, n_components]
         X block to latents rotations.
 
-    y_rotations_: array, [q, n_components]
+    `y_rotations_` : array, [q, n_components]
         Y block to latents rotations.
 
     coefs: array, [p, q]
@@ -452,7 +455,7 @@ class PLSRegression(_PLS):
     Notes
     -----
     For each component k, find weights u, v that optimizes:
-    max corr(Xk u, Yk v) * var(Xk u) var(Yk u), such that |u| = |v| = 1
+    max corr(Xk u, Yk v) * var(Xk u) var(Yk u), such that ``|u| = |v| = 1``
 
     Note that it maximizes both the correlations between the scores and the
     intra-block variances.
@@ -475,8 +478,10 @@ class PLSRegression(_PLS):
            scale=True, tol=1e-06)
     >>> Y_pred = pls2.predict(X)
 
-    References
-    ----------
+    Notes
+    -----
+    **References**:
+
     Jacob A. Wegelin. A survey of Partial Least Squares (PLS) methods, with
     emphasis on the two-block case. Technical Report 371, Department of
     Statistics, University of Washington, Seattle, 2000.
@@ -500,63 +505,63 @@ class PLSCanonical(_PLS):
 
     Parameters
     ----------
-    X: array-like of predictors, shape = [n_samples, p]
+    X : array-like of predictors, shape = [n_samples, p]
         Training vectors, where n_samples in the number of samples and
         p is the number of predictors.
 
-    Y: array-like of response, shape = [n_samples, q]
+    Y : array-like of response, shape = [n_samples, q]
         Training vectors, where n_samples in the number of samples and
         q is the number of response variables.
 
-    n_components: int, number of components to keep. (default 2).
+    n_components : int, number of components to keep. (default 2).
 
-    scale: boolean, scale data? (default True)
+    scale : boolean, scale data? (default True)
 
-    algorithm: string, "nipals" or "svd"
+    algorithm : string, "nipals" or "svd"
         The algorithm used to estimate the weights. It will be called
         n_components times, i.e. once for each iteration of the outer loop.
 
-    max_iter: an integer, (default 500)
+    max_iter : an integer, (default 500)
         the maximum number of iterations of the NIPALS inner loop (used
         only if algorithm="nipals")
 
-    tol: non-negative real, default 1e-06
+    tol : non-negative real, default 1e-06
         the tolerance used in the iterative algorithm
 
-    copy: boolean, default True
+    copy : boolean, default True
         Whether the deflation should be done on a copy. Let the default
         value to True unless you don't care about side effect
 
     Attributes
     ----------
-    x_weights_: array, shape = [p, n_components]
+    `x_weights_` : array, shape = [p, n_components]
         X block weights vectors.
 
-    y_weights_: array, shape = [q, n_components]
+    `y_weights_` : array, shape = [q, n_components]
         Y block weights vectors.
 
-    x_loadings_: array, shape = [p, n_components]
+    `x_loadings_` : array, shape = [p, n_components]
         X block loadings vectors.
 
-    y_loadings_: array, shape = [q, n_components]
+    `y_loadings_` : array, shape = [q, n_components]
         Y block loadings vectors.
 
-    x_scores_: array, shape = [n_samples, n_components]
+    `x_scores_` : array, shape = [n_samples, n_components]
         X scores.
 
-    y_scores_: array, shape = [n_samples, n_components]
+    `y_scores_` : array, shape = [n_samples, n_components]
         Y scores.
 
-    x_rotations_: array, shape = [p, n_components]
+    `x_rotations_` : array, shape = [p, n_components]
         X block to latents rotations.
 
-    y_rotations_: array, shape = [q, n_components]
+    `y_rotations_` : array, shape = [q, n_components]
         Y block to latents rotations.
 
     Notes
     -----
     For each component k, find weights u, v that optimize::
-    max corr(Xk u, Yk v) * var(Xk u) var(Yk u), such that |u| = |v| = 1
+    max corr(Xk u, Yk v) * var(Xk u) var(Yk u), such that ``|u| = |v| = 1``
 
     Note that it maximizes both the correlations between the scores and the
     intra-block variances.
@@ -580,8 +585,10 @@ class PLSCanonical(_PLS):
            scale=True, tol=1e-06)
     >>> X_c, Y_c = plsca.transform(X, Y)
 
-    References
-    ----------
+    Notes
+    -----
+    **References**:
+
     Jacob A. Wegelin. A survey of Partial Least Squares (PLS) methods, with
     emphasis on the two-block case. Technical Report 371, Department of
     Statistics, University of Washington, Seattle, 2000.
@@ -609,65 +616,65 @@ class CCA(_PLS):
 
     Parameters
     ----------
-    X: array-like of predictors, shape = [n_samples, p]
+    X : array-like of predictors, shape = [n_samples, p]
         Training vectors, where n_samples in the number of samples and
         p is the number of predictors.
 
-    Y: array-like of response, shape = [n_samples, q]
+    Y : array-like of response, shape = [n_samples, q]
         Training vectors, where n_samples in the number of samples and
         q is the number of response variables.
 
-    n_components: int, (default 2).
+    n_components : int, (default 2).
         number of components to keep.
 
-    scale: boolean, (default True)
+    scale : boolean, (default True)
         whether to scale the data?
 
-    algorithm: str, "nipals" or "svd"
+    algorithm : str, "nipals" or "svd"
         The algorithm used to estimate the weights. It will be called
         n_components times, i.e. once for each iteration of the outer loop.
 
-    max_iter: an integer, (default 500)
+    max_iter : an integer, (default 500)
         the maximum number of iterations of the NIPALS inner loop (used
         only if algorithm="nipals")
 
-    tol: non-negative real, default 1e-06.
+    tol : non-negative real, default 1e-06.
         the tolerance used in the iterative algorithm
 
-    copy: boolean
+    copy : boolean
         Whether the deflation be done on a copy. Let the default value
         to True unless you don't care about side effects
 
     Attributes
     ----------
-    x_weights_: array, [p, n_components]
+    `x_weights_` : array, [p, n_components]
         X block weights vectors.
 
-    y_weights_: array, [q, n_components]
+    `y_weights_` : array, [q, n_components]
         Y block weights vectors.
 
-    x_loadings_: array, [p, n_components]
+    `x_loadings_` : array, [p, n_components]
         X block loadings vectors.
 
-    y_loadings_: array, [q, n_components]
+    `y_loadings_` : array, [q, n_components]
         Y block loadings vectors.
 
-    x_scores_: array, [n_samples, n_components]
+    `x_scores_` : array, [n_samples, n_components]
         X scores.
 
-    y_scores_: array, [n_samples, n_components]
+    `y_scores_` : array, [n_samples, n_components]
         Y scores.
 
-    x_rotations_: array, [p, n_components]
+    `x_rotations_` : array, [p, n_components]
         X block to latents rotations.
 
-    y_rotations_: array, [q, n_components]
+    `y_rotations_` : array, [q, n_components]
         Y block to latents rotations.
 
     Notes
     -----
     For each component k, find the weights u, v that maximizes
-    max corr(Xk u, Yk v), such that |u| = |v| = 1
+    max corr(Xk u, Yk v), such that ``|u| = |v| = 1``
 
     Note that it maximizes only the correlations between the scores.
 
@@ -684,12 +691,15 @@ class CCA(_PLS):
     >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
     >>> cca = CCA(n_components=1)
     >>> cca.fit(X, Y)
-    CCA(algorithm='nipals', copy=True, max_iter=500, n_components=1, scale=True,
-      tol=1e-06)
+    ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    CCA(algorithm='nipals', copy=True, max_iter=500, n_components=1,
+            scale=True, tol=1e-06)
     >>> X_c, Y_c = cca.transform(X, Y)
 
-    References
-    ----------
+    Notes
+    -----
+    **References**:
+
     Jacob A. Wegelin. A survey of Partial Least Squares (PLS) methods, with
     emphasis on the two-block case. Technical Report 371, Department of
     Statistics, University of Washington, Seattle, 2000.
@@ -720,33 +730,33 @@ class PLSSVD(BaseEstimator):
 
     Parameters
     ----------
-    X: array-like of predictors, shape = [n_samples, p]
+    X : array-like of predictors, shape = [n_samples, p]
         Training vector, where n_samples in the number of samples and
         p is the number of predictors. X will be centered before any analysis.
 
-    Y: array-like of response, shape = [n_samples, q]
+    Y : array-like of response, shape = [n_samples, q]
         Training vector, where n_samples in the number of samples and
         q is the number of response variables. X will be centered before any
         analysis.
 
-    n_components: int, (default 2).
+    n_components : int, (default 2).
         number of components to keep.
 
-    scale: boolean, (default True)
+    scale : boolean, (default True)
         scale X and Y
 
     Attributes
     ----------
-    x_weights_: array, [p, n_components]
+    `x_weights_` : array, [p, n_components]
         X block weights vectors.
 
-    y_weights_: array, [q, n_components]
+    `y_weights_` : array, [q, n_components]
         Y block weights vectors.
 
-    x_scores_: array, [n_samples, n_components]
+    `x_scores_` : array, [n_samples, n_components]
         X scores.
 
-    y_scores_: array, [n_samples, n_components]
+    `y_scores_` : array, [n_samples, n_components]
         Y scores.
 
     See also

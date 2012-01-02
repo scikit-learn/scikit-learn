@@ -1,4 +1,8 @@
-"""Compatibility fixes for older version of python, numpy and scipy"""
+"""Compatibility fixes for older version of python, numpy and scipy
+
+If you add content to this file, please give the version of the package
+at which the fixe is no longer needed.
+"""
 # Authors: Emmanuelle Gouillart <emmanuelle.gouillart@normalesup.org>
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>
 #          Fabian Pedregosa <fpedregosa@acm.org>
@@ -128,19 +132,6 @@ def qr_economic(A, **kwargs):
         return scipy.linalg.qr(A, mode='economic', **kwargs)
     else:
         return scipy.linalg.qr(A, econ=True, **kwargs)
-
-
-def arpack_eigsh(A, **kwargs):
-    """Compat function for sparse symmetric eigen vectors decomposition
-
-    Scipy 0.9 renamed eigen_symmetric to eigsh in
-    scipy.sparse.linalg.eigen.arpack
-    """
-    from scipy.sparse.linalg.eigen import arpack
-    if hasattr(arpack, 'eigsh'):
-        return arpack.eigsh(A, **kwargs)
-    else:
-        return arpack.eigen_symmetric(A, **kwargs)
 
 
 def savemat(file_name, mdict, oned_as="column", **kwargs):

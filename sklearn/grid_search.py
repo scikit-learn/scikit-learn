@@ -1,6 +1,6 @@
 """
-The :mod:`sklearn.grid_search` includes utilities to fine-tune the parameters of
-an estimator.
+The :mod:`sklearn.grid_search` includes utilities to fine-tune the parameters
+of an estimator.
 """
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>,
@@ -28,11 +28,11 @@ class IterGrid(object):
         The parameter grid to explore, as a dictionary mapping estimator
         parameters to sequences of allowed values.
 
-    Yields
-    ------
+    Returns
+    -------
     params: dict of string to any
-        Dictionaries mapping each estimator parameter to one of its allowed
-        values.
+        **Yields** dictionaries mapping each estimator parameter to one of its
+        allowed values.
 
     Examples
     ---------
@@ -48,7 +48,8 @@ class IterGrid(object):
 
     def __iter__(self):
         param_grid = self.param_grid
-        if hasattr(param_grid, 'has_key'):
+        if hasattr(param_grid, 'items'):
+            # wrap dictionary in a singleton list
             param_grid = [param_grid]
         for p in param_grid:
             # Always sort the keys of a dictionary, for reproducibility
@@ -207,9 +208,10 @@ class GridSearchCV(BaseEstimator):
     GridSearchCV(cv=None,
         estimator=SVR(C=1.0, cache_size=..., coef0=..., degree=...,
             epsilon=..., gamma=..., kernel='rbf', probability=False,
-            shrinking=True, tol=...),
-        fit_params={}, iid=True, loss_func=None, n_jobs=1, param_grid=...,
-        ...)
+            scale_C=False, shrinking=True, tol=...),
+        fit_params={}, iid=True, loss_func=None, n_jobs=1,
+            param_grid=...,
+            ...)
 
     Attributes
     ----------
@@ -227,10 +229,18 @@ class GridSearchCV(BaseEstimator):
 
     Notes
     ------
-    The parameters selected are those that maximize the score of the
-    left out data, unless an explicit score_func is passed in which
-    case it is used instead. If a loss function loss_func is passed,
-    it overrides the score functions and is minimized.
+    The parameters selected are those that maximize the score of the left out
+    data, unless an explicit score_func is passed in which case it is used
+    instead. If a loss function loss_func is passed, it overrides the score
+    functions and is minimized.
+
+    If `n_jobs` was set to a value higher than one, the data is copied for each
+    point in the grid (and not `n_jobs` times). This is done for efficiency
+    reasons if individual jobs take very little time, but may raise errors if
+    the dataset is large and not enough memory is available.  A workaround in
+    this case is to set `pre_dispatch`. Then, the memory is copied only
+    `pre_dispatch` many times. A reasonable value for `pre_dispatch` is 2 *
+    `n_jobs`.
 
     See Also
     ---------
@@ -315,11 +325,14 @@ class GridSearchCV(BaseEstimator):
         n_folds = n_fits // n_grid_points
 
         scores = list()
+        cv_scores = list()
         for grid_start in range(0, n_fits, n_folds):
             n_test_samples = 0
             score = 0
+            these_points = list()
             for this_score, estimator, this_n_test_samples in \
                                     out[grid_start:grid_start + n_folds]:
+                these_points.append(this_score)
                 if self.iid:
                     this_score *= this_n_test_samples
                 score += this_score
@@ -327,6 +340,7 @@ class GridSearchCV(BaseEstimator):
             if self.iid:
                 score /= float(n_test_samples)
             scores.append((score, estimator))
+            cv_scores.append(these_points)
 
         # Note: we do not use max(out) to make ties deterministic even if
         # comparison on estimator instances is not deterministic
@@ -362,8 +376,9 @@ class GridSearchCV(BaseEstimator):
         # XXX: the name is too specific, it shouldn't have
         # 'grid' in it. Also, we should be retrieving/storing variance
         self.grid_scores_ = [
-            (clf_params, score) for clf_params, (score, _)
-                                in zip(grid, scores)]
+            (clf_params, score, all_scores)
+                    for clf_params, (score, _), all_scores
+                    in zip(grid, scores, cv_scores)]
         return self
 
     def score(self, X, y=None):

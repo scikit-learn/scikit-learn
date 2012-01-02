@@ -4,12 +4,12 @@ Covertype dataset with dense SGD
 ================================
 
 Benchmark stochastic gradient descent (SGD), Liblinear, and Naive Bayes, CART
-(decision tree), RandomForest and Extra-Trees on the forest covertype dataset of
-Blackard, Jock, and Dean [1]. The dataset comprises 581,012 samples. It is low-
-dimensional with 54 features and a sparsity of approx. 23%. Here, we consider
-the task of predicting class 1 (spruce/fir). The classification performance of
-SGD is competitive with Liblinear while being two orders of magnitude faster to
-train::
+(decision tree), RandomForest and Extra-Trees on the forest covertype dataset
+of Blackard, Jock, and Dean [1]. The dataset comprises 581,012 samples. It is
+low dimensional with 54 features and a sparsity of approx. 23%. Here, we
+consider the task of predicting class 1 (spruce/fir). The classification
+performance of SGD is competitive with Liblinear while being two orders of
+magnitude faster to train::
 
     [..]
     Classification performance:

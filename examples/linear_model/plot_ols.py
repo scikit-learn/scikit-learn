@@ -31,4 +31,3 @@ pl.plot(X, clf.predict(X), color='blue', linewidth=3)
 pl.xticks(())
 pl.yticks(())
 pl.show()
-

@@ -88,22 +88,15 @@ class BayesianRidge(LinearModel):
     `scores_` : float
         if computed, value of the objective function (to be maximized)
 
-    Methods
-    -------
-    fit(X, y) : self
-        Fit the model
-
-    predict(X) : array
-        Predict using the model.
-
     Examples
     --------
     >>> from sklearn import linear_model
     >>> clf = linear_model.BayesianRidge()
-    >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2]) # doctest: +NORMALIZE_WHITESPACE
+    >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])
+    ... # doctest: +NORMALIZE_WHITESPACE
     BayesianRidge(alpha_1=1e-06, alpha_2=1e-06, compute_score=False,
-           copy_X=True, fit_intercept=True, lambda_1=1e-06, lambda_2=1e-06,
-           n_iter=300, normalize=False, tol=0.001, verbose=False)
+            copy_X=True, fit_intercept=True, lambda_1=1e-06, lambda_2=1e-06,
+            n_iter=300, normalize=False, tol=0.001, verbose=False)
     >>> clf.predict([[1, 1]])
     array([ 1.])
 
@@ -306,23 +299,16 @@ class ARDRegression(LinearModel):
     `scores_` : float
         if computed, value of the objective function (to be maximized)
 
-    Methods
-    -------
-    fit(X, y) : self
-        Fit the model
-
-    predict(X) : array
-        Predict using the model.
-
     Examples
     --------
     >>> from sklearn import linear_model
     >>> clf = linear_model.ARDRegression()
-    >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])  # doctest: +NORMALIZE_WHITESPACE
+    >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])
+    ... # doctest: +NORMALIZE_WHITESPACE
     ARDRegression(alpha_1=1e-06, alpha_2=1e-06, compute_score=False,
-           copy_X=True, fit_intercept=True, lambda_1=1e-06, lambda_2=1e-06,
-           n_iter=300, normalize=False, threshold_lambda=10000.0, tol=0.001,
-           verbose=False)
+            copy_X=True, fit_intercept=True, lambda_1=1e-06, lambda_2=1e-06,
+            n_iter=300, normalize=False, threshold_lambda=10000.0, tol=0.001,
+            verbose=False)
     >>> clf.predict([[1, 1]])
     array([ 1.])
 

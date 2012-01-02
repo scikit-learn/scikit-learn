@@ -86,8 +86,22 @@ class EmpiricalCovariance(BaseEstimator):
         (stored only if store_precision is True)
 
     """
-    def __init__(self, store_precision=True):
+    def __init__(self, store_precision=True, assume_centered=False):
+        """
+
+        Parameters
+        ----------
+        store_precision: bool
+          Specify if the estimated precision is stored
+        assume_centered: Boolean
+          If True, data are not centered before computation.
+          Useful when working with data whose mean is almost, but not exactly
+          zero.
+          If False, data are centered before computation.
+
+        """
         self.store_precision = store_precision
+        self.assume_centered = assume_centered
 
     def _set_estimates(self, covariance):
         """Saves the covariance and precision estimates
@@ -111,7 +125,7 @@ class EmpiricalCovariance(BaseEstimator):
         else:
             self.precision_ = None
 
-    def fit(self, X, assume_centered=False):
+    def fit(self, X):
         """Fits the Maximum Likelihood Estimator covariance model
         according to the given training data and parameters.
 
@@ -121,19 +135,18 @@ class EmpiricalCovariance(BaseEstimator):
             Training data, where n_samples is the number of samples and
             n_features is the number of features.
 
-        assume_centered: Boolean
-            If True, data are not centered before computation.
-            Useful when working with data whose mean is almost, but not exactly
-            zero.
-            If False, data are centered before computation.
-
         Returns
         -------
         self : object
             Returns self.
 
         """
-        covariance = empirical_covariance(X, assume_centered=assume_centered)
+        if self.assume_centered:
+            self.location_ = np.zeros(X.shape[1])
+        else:
+            self.location_ = X.mean(0)
+        covariance = empirical_covariance(
+            X, assume_centered=self.assume_centered)
         self._set_estimates(covariance)
 
         return self
@@ -150,8 +163,8 @@ class EmpiricalCovariance(BaseEstimator):
 
         Returns
         -------
-        res: float
-          The likelihood of the data set with self.covariance_ as an
+        res : float
+          The likelihood of the data set with `self.covariance_` as an
           estimator of its covariance matrix.
 
         """
@@ -179,7 +192,7 @@ class EmpiricalCovariance(BaseEstimator):
             The type of norm used to compute the error. Available error types:
             - 'frobenius' (default): sqrt(tr(A^t.A))
             - 'spectral': sqrt(max(eigenvalues(A^t.A))
-            where A is the error (comp_cov - self.covariance_).
+            where A is the error ``(comp_cov - self.covariance_)``.
         scaling: bool
             If True (default), the squared error norm is divided by n_features.
             If False, the squared error norm is not rescaled.
@@ -224,8 +237,7 @@ class EmpiricalCovariance(BaseEstimator):
         Parameters
         ----------
         observations: array-like, shape = [n_observations, n_features]
-            The observations, the Mahalanobis distances of the which we
-            compute.
+          The observations, the Mahalanobis distances of the which we compute.
 
         Returns
         -------

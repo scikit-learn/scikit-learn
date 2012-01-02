@@ -51,7 +51,11 @@ class LogisticRegression(SparseBaseLibLinear, ClassifierMixin,
         (and therefore on the intercept) intercept_scaling has to be increased
 
     tol: float, optional
-         tolerance for stopping criteria
+        tolerance for stopping criteria
+
+    scale_C : bool
+        Scale C with number of samples. It makes the setting of C independant
+        of the number of samples.
 
     Attributes
     ----------
@@ -74,18 +78,18 @@ class LogisticRegression(SparseBaseLibLinear, ClassifierMixin,
     to have slightly different results for the same input data. If
     that happens, try with a smaller tol parameter.
 
-    References
-    ----------
+    **References**:
     LIBLINEAR -- A Library for Large Linear Classification
     http://www.csie.ntu.edu.tw/~cjlin/liblinear/
     """
 
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
-                 fit_intercept=True, intercept_scaling=1):
+                 fit_intercept=True, intercept_scaling=1, scale_C=False):
 
         super(LogisticRegression, self).__init__(penalty=penalty,
             dual=dual, loss='lr', tol=tol, C=C,
-            fit_intercept=fit_intercept, intercept_scaling=intercept_scaling)
+            fit_intercept=fit_intercept, intercept_scaling=intercept_scaling,
+            scale_C=scale_C)
 
     def predict_proba(self, X):
         """

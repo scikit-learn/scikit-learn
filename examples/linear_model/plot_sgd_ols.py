@@ -30,4 +30,3 @@ clf.fit(X, Y)
 pl.scatter(X, Y, color='black')
 pl.plot(X, clf.predict(X), color='blue', linewidth=3)
 pl.show()
-

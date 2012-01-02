@@ -4,8 +4,8 @@ from sklearn.datasets import load_linnerud
 from sklearn import pls
 
 d = load_linnerud()
-X = d['data_exercise']
-Y = d['data_physiological']
+X = d.data
+Y = d.target
 
 
 def test_pls():

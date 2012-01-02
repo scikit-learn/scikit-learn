@@ -29,7 +29,7 @@ Computing cross-validated metrics
 =================================
 
 The simplest way to use perform cross-validation in to call the
-:func:`cross_val_score` helper function on the estimator and the dataset::
+:func:`cross_val_score` helper function on the estimator and the dataset.
 
 The following example demonstrates how to estimate the accuracy of a
 linear kernel Support Vector Machine on the iris dataset by splitting
@@ -65,7 +65,7 @@ scoring function, e.g. from the metrics module::
   ...                                                     # doctest: +ELLIPSIS
   array([ 1.  ...,  0.96...,  0.89...,  0.96...,  1.  ...])
 
-In the case of the Iris dataset, the samples are balanced accross target
+In the case of the Iris dataset, the samples are balanced across target
 classes hence the accuracy and the F1-score are almost equal.
 
 When the ``cv`` argument is an integer, :func:`cross_val_score` uses the
@@ -81,7 +81,7 @@ validation iterator instead, for instance::
 
   >>> cross_validation.cross_val_score(clf, iris.data, iris.target, cv=cv)
   ...                                                     # doctest: +ELLIPSIS
-  array([ 0.97...,  0.95...,  0.95...])
+  array([ 0.97...,  0.97...,  1.        ])
 
 The available cross validation iterators are introduced in the following.
 
@@ -323,9 +323,9 @@ Here is a usage example::
   >>> for train_index, test_index in ss:
   ...    print train_index, test_index
   ...
-  [2 0 1] [3 4]
-  [0 2 1] [4 3]
-  [1 3 4] [0 2]
+  [1 3 4] [2 0]
+  [1 4 3] [0 2]
+  [4 0 2] [1 3]
 
 :class:`ShuffleSplit` is thus a good alternative to :class:`KFold` cross
 validation that allows a finer control on the number of iterations and

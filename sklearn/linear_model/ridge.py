@@ -47,8 +47,7 @@ def _solve(A, b, solver, tol):
 
 
 def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto', tol=1e-3):
-    """
-    Solve the ridge equation by the method of normal equations.
+    """Solve the ridge equation by the method of normal equations.
 
     Parameters
     ----------
@@ -122,8 +121,7 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto', tol=1e-3):
 
 
 class Ridge(LinearModel):
-    """
-    Linear least squares with l2 regularization.
+    """Linear least squares with l2 regularization.
 
     This model solves a regression model where the loss function is
     the linear least squares function and regularization is given by
@@ -154,7 +152,7 @@ class Ridge(LinearModel):
     Attributes
     ----------
 
-    coef_: array, shape = [n_features] or [n_responses, n_features]
+    `coef_` : array, shape = [n_features] or [n_responses, n_features]
         Weight vector(s).
 
     See also
@@ -184,8 +182,7 @@ class Ridge(LinearModel):
         self.tol = tol
 
     def fit(self, X, y, sample_weight=1.0, solver='auto'):
-        """
-        Fit Ridge regression model
+        """Fit Ridge regression model
 
         Parameters
         ----------
@@ -245,22 +242,21 @@ class RidgeClassifier(Ridge):
     Attributes
     ----------
 
-    coef_: array, shape = [n_features] or [n_classes, n_features]
+    `coef_` : array, shape = [n_features] or [n_classes, n_features]
         Weight vector(s).
 
     See also
     --------
     Ridge, RidgeClassifierCV
 
-    Note
-    ----
+    Notes
+    -----
     For multi-class classification, n_class classifiers are trained in
     a one-versus-all approach.
     """
 
     def fit(self, X, y, solver='auto'):
-        """
-        Fit Ridge regression model.
+        """Fit Ridge regression model.
 
         Parameters
         ----------
@@ -291,8 +287,7 @@ class RidgeClassifier(Ridge):
         return Ridge.predict(self, X)
 
     def predict(self, X):
-        """
-        Predict target values according to the fitted model.
+        """Predict target values according to the fitted model.
 
         Parameters
         ----------
@@ -307,9 +302,9 @@ class RidgeClassifier(Ridge):
 
 
 class _RidgeGCV(LinearModel):
-    """
-    Ridge regression with built-in Generalized Cross-Validation, i.e.
-    efficient Leave-One-Out cross-validation.
+    """Ridge regression with built-in Generalized Cross-Validation
+
+    It allows efficient Leave-One-Out cross-validation.
 
     This class is not intended to be used directly. Use RidgeCV instead.
 
@@ -339,9 +334,7 @@ class _RidgeGCV(LinearModel):
 
     looe = y - loov = c / diag(G)
 
-    Reference
-    ---------
-
+    **References**:
     http://cbcl.mit.edu/projects/cbcl/publications/ps/MIT-CSAIL-TR-2007-025.pdf
     http://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf
     """
@@ -447,8 +440,7 @@ class _RidgeGCV(LinearModel):
 
 
 class RidgeCV(LinearModel):
-    """
-    Ridge regression with built-in cross-validation.
+    """Ridge regression with built-in cross-validation.
 
     By default, it performs Generalized Cross-Validation, which is a form of
     efficient Leave-One-Out cross-validation. Currently, only the n_features >
@@ -457,11 +449,11 @@ class RidgeCV(LinearModel):
     Parameters
     ----------
     alphas: numpy array of shape [n_alpha]
-            Array of alpha values to try.
-            Small positive values of alpha improve the conditioning of the
-            problem and reduce the variance of the estimates.
-            Alpha corresponds to (2*C)^-1 in other linear models such as
-            LogisticRegression or LinearSVC.
+        Array of alpha values to try.
+        Small positive values of alpha improve the conditioning of the
+        problem and reduce the variance of the estimates.
+        Alpha corresponds to (2*C)^-1 in other linear models such as
+        LogisticRegression or LinearSVC.
 
     fit_intercept : boolean
         Whether to calculate the intercept for this model. If set
@@ -543,8 +535,7 @@ class RidgeCV(LinearModel):
 class RidgeClassifierCV(RidgeCV):
 
     def fit(self, X, y, sample_weight=1.0, class_weight=None):
-        """
-        Fit the ridge classifier.
+        """Fit the ridge classifier.
 
         Parameters
         ----------
@@ -581,8 +572,7 @@ class RidgeClassifierCV(RidgeCV):
         return RidgeCV.predict(self, X)
 
     def predict(self, X):
-        """
-        Predict target values according to the fitted model.
+        """Predict target values according to the fitted model.
 
         Parameters
         ----------
