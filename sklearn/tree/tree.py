@@ -551,12 +551,13 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         The minimum number of samples required to split an internal node.
 
     min_density : float, optional (default=0.1)
-        The minimum density of the `sample_mask` (i.e. the fraction of samples
+        This parameter trades runtime against memory requirement. It controls
+        the minimum density of the `sample_mask` (i.e. the fraction of samples
         in the mask). If the density falls below this threshold the mask is
         recomputed and the input data is packed which results in data copying.
-        If `min_density` equals to one, the partitions are always represented
-        as copies of the original data. Otherwise, partitions are represented
-        as bit masks (aka sample masks).
+        If `min_density` equals to one, the partitions are always represented as
+        copies of the original data. Otherwise, partitions are represented as
+        bit masks (aka sample masks).
 
     max_features : int, string or None, optional (default="auto")
         The number of features to consider when looking for the best split.
@@ -709,12 +710,13 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         The minimum number of samples required to split an internal node.
 
     min_density : float, optional (default=0.1)
-        The minimum density of the `sample_mask` (i.e. the fraction of samples
+        This parameter trades runtime against memory requirement. It controls
+        the minimum density of the `sample_mask` (i.e. the fraction of samples
         in the mask). If the density falls below this threshold the mask is
         recomputed and the input data is packed which results in data copying.
-        If `min_density` equals to one, the partitions are always represented
-        as copies of the original data. Otherwise, partitions are represented
-        as bit masks (aka sample masks).
+        If `min_density` equals to one, the partitions are always represented as
+        copies of the original data. Otherwise, partitions are represented as
+        bit masks (aka sample masks).
 
     max_features : int, string or None, optional (default="auto")
         The number of features to consider when looking for the best split.
