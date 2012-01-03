@@ -445,8 +445,9 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
                 max_features = max(1, int(np.log2(self.n_features_)))
 
             else:
-                raise ValueError("Invalid value for max_features. Allowed string "
-                                 "values are \"auto\", \"sqrt\" or \"log2\".")
+                raise ValueError(
+                    'Invalid value for max_features. Allowed string '
+                    'values are "auto", "sqrt" or "log2".')
 
         elif self.max_features is None:
             max_features = self.n_features_
@@ -551,13 +552,14 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         The minimum number of samples required to split an internal node.
 
     min_density : float, optional (default=0.1)
-        This parameter trades runtime against memory requirement. It controls
-        the minimum density of the `sample_mask` (i.e. the fraction of samples
-        in the mask). If the density falls below this threshold the mask is
-        recomputed and the input data is packed which results in data copying.
-        If `min_density` equals to one, the partitions are always represented as
-        copies of the original data. Otherwise, partitions are represented as
-        bit masks (aka sample masks).
+        This parameter trades runtime against memory requirement. It
+        controls the minimum density of the `sample_mask` (i.e. the
+        fraction of samples in the mask). If the density falls below this
+        threshold the mask is recomputed and the input data is packed
+        which results in data copying.  If `min_density` equals to one,
+        the partitions are always represented as copies of the original
+        data. Otherwise, partitions are represented as bit masks (aka
+        sample masks).
 
     max_features : int, string or None, optional (default=None)
         The number of features to consider when looking for the best split.
@@ -710,13 +712,14 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         The minimum number of samples required to split an internal node.
 
     min_density : float, optional (default=0.1)
-        This parameter trades runtime against memory requirement. It controls
-        the minimum density of the `sample_mask` (i.e. the fraction of samples
-        in the mask). If the density falls below this threshold the mask is
-        recomputed and the input data is packed which results in data copying.
-        If `min_density` equals to one, the partitions are always represented as
-        copies of the original data. Otherwise, partitions are represented as
-        bit masks (aka sample masks).
+        This parameter trades runtime against memory requirement. It
+        controls the minimum density of the `sample_mask` (i.e. the
+        fraction of samples in the mask). If the density falls below this
+        threshold the mask is recomputed and the input data is packed
+        which results in data copying.  If `min_density` equals to one,
+        the partitions are always represented as copies of the original
+        data. Otherwise, partitions are represented as bit masks (aka
+        sample masks).
 
     max_features : int, string or None, optional (default=None)
         The number of features to consider when looking for the best split.
