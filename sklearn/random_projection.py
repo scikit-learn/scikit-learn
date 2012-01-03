@@ -81,7 +81,7 @@ def johnson_lindenstrauss_bound(n_samples, eps=0.1):
 
     """
     denominator = (eps ** 2 / 2) - (eps ** 3 / 3)
-    return int(4 * math.log(n_samples) / denominator)
+    return (4 * np.log(n_samples) / denominator).astype(np.int)
 
 
 def sparse_random_matrix(n_components, n_features, density='auto',
