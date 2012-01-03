@@ -75,7 +75,7 @@ slightly greater increase in bias::
     ...     random_state=0)
     >>> scores = cross_val_score(clf, X, y)
     >>> scores.mean()                             # doctest: +ELLIPSIS
-    0.978...
+    0.973...
 
     >>> clf = RandomForestClassifier(n_estimators=10, max_depth=None,
     ...     min_split=1, random_state=0)
