@@ -155,7 +155,8 @@ def test_k_means_plus_plus_init():
 
 
 def test_k_means_plus_plus_init_sparse():
-    k_means = KMeans(init="k-means++", k=n_clusters, random_state=42).fit(X_csr)
+    k_means = KMeans(init="k-means++", k=n_clusters, random_state=42)
+    k_means.fit(X_csr)
     _check_fitted_model(k_means)
 
 
