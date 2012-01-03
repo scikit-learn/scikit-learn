@@ -105,9 +105,10 @@ The parameter C controls the sparsity: the smaller the fewer features.
 Tree-based feature selection
 ============================
 
-Tree-based estimators (see the :mod:`sklearn.tree` module and forest of trees in
-the :mod:`sklearn.ensemble` module) can be used to compute feature importances,
-which in turn can be used to discard irrelevant features::
+Tree-based estimators (see the :mod:`sklearn.tree` module and forest
+of trees in the :mod:`sklearn.ensemble` module) can be used to compute
+feature importances, which in turn can be used to discard irrelevant
+features::
 
   >>> from sklearn.ensemble import ExtraTreesClassifier
   >>> from sklearn.datasets import load_iris
@@ -115,7 +116,8 @@ which in turn can be used to discard irrelevant features::
   >>> X, y = iris.data, iris.target
   >>> X.shape
   (150, 4)
-  >>> X_new = ExtraTreesClassifier(compute_importances=True).fit(X, y).transform(X)
+  >>> clf = ExtraTreesClassifier(compute_importances=True, random_state=0)
+  >>> X_new = clf.fit(X, y).transform(X)
   >>> X_new.shape
   (150, 2)
 
