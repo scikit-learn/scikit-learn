@@ -96,7 +96,7 @@ results will stop getting significantly better beyond a critical number of
 trees. The latter is the size of the random subsets of features to consider when
 splitting a node. The lower the greater the reduction of variance, but also the
 greater the increase in bias. Empiricial good default values are
-``max_features=n_features`` for regression problemes, and
+``max_features=n_features`` for regression problems, and
 ``max_features=sqrt(n_features)`` for classification tasks (where ``n_features``
 is the number of features in the data). The best results are also usually
 reached when setting ``max_depth=None`` in combination with ``min_split=1``
