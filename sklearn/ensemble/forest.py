@@ -382,27 +382,36 @@ class RandomForestClassifier(ForestClassifier):
     criterion : string, optional (default="gini")
         The function to measure the quality of a split. Supported criteria are
         "gini" for the Gini impurity and "entropy" for the information gain.
+        Note: this parameter is tree-specific.
 
-    max_depth : integer or None, optional (default=10)
+    max_depth : integer or None, optional (default=None)
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than min_split
         samples.
+        Note: this parameter is tree-specific.
 
     min_split : integer, optional (default=1)
         The minimum number of samples required to split an internal node.
+        Note: this parameter is tree-specific.
 
     min_density : float, optional (default=0.1)
-        The minimum density of the `sample_mask` (i.e. the fraction of samples
+        This parameter trades runtime against memory requirement. It controls
+        the minimum density of the `sample_mask` (i.e. the fraction of samples
         in the mask). If the density falls below this threshold the mask is
         recomputed and the input data is packed which results in data copying.
-        If `min_density` equals to one, the partitions are always represented
-        as copies of the original data. Otherwise, partitions are represented
-        as bit masks (a.k.a. sample masks).
+        If `min_density` equals to one, the partitions are always represented as
+        copies of the original data. Otherwise, partitions are represented as
+        bit masks (aka sample masks).
+        Note: this parameter is tree-specific.
 
-    max_features : int or None, optional (default=None)
+    max_features : int, string or None, optional (default="auto")
         The number of features to consider when looking for the best split.
-        If None, all features are considered, otherwise max_features are chosen
-        at random.
+        If "auto", then `max_features=sqrt(n_features)` on classification
+        tasks and `max_features=n_features` on regression problems. If "sqrt",
+        then `max_features=sqrt(n_features)`. If "log2", then
+        `max_features=log2(n_features)`. If None, then
+        `max_features=n_features`.
+        Note: this parameter is tree-specific.
 
     bootstrap : boolean, optional (default=True)
         Whether bootstrap samples are used when building trees.
@@ -438,10 +447,10 @@ class RandomForestClassifier(ForestClassifier):
     """
     def __init__(self, n_estimators=10,
                        criterion="gini",
-                       max_depth=10,
+                       max_depth=None,
                        min_split=1,
                        min_density=0.1,
-                       max_features=None,
+                       max_features="auto",
                        bootstrap=True,
                        compute_importances=False,
                        n_jobs=1,
@@ -478,27 +487,36 @@ class RandomForestRegressor(ForestRegressor):
     criterion : string, optional (default="mse")
         The function to measure the quality of a split. The only supported
         criterion is "mse" for the mean squared error.
+        Note: this parameter is tree-specific.
 
-    max_depth : integer or None, optional (default=10)
+    max_depth : integer or None, optional (default=None)
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than min_split
         samples.
+        Note: this parameter is tree-specific.
 
     min_split : integer, optional (default=1)
         The minimum number of samples required to split an internal node.
+        Note: this parameter is tree-specific.
 
     min_density : float, optional (default=0.1)
-        The minimum density of the `sample_mask` (i.e. the fraction of samples
+        This parameter trades runtime against memory requirement. It controls
+        the minimum density of the `sample_mask` (i.e. the fraction of samples
         in the mask). If the density falls below this threshold the mask is
         recomputed and the input data is packed which results in data copying.
-        If `min_density` equals to one, the partitions are always represented
-        as copies of the original data. Otherwise, partitions are represented
-        as bit masks (a.k.a. sample masks).
+        If `min_density` equals to one, the partitions are always represented as
+        copies of the original data. Otherwise, partitions are represented as
+        bit masks (aka sample masks).
+        Note: this parameter is tree-specific.
 
-    max_features : int or None, optional (default=None)
+    max_features : int, string or None, optional (default="auto")
         The number of features to consider when looking for the best split.
-        If None, all features are considered, otherwise max_features are chosen
-        at random.
+        If "auto", then `max_features=sqrt(n_features)` on classification
+        tasks and `max_features=n_features` on regression problems. If "sqrt",
+        then `max_features=sqrt(n_features)`. If "log2", then
+        `max_features=log2(n_features)`. If None, then
+        `max_features=n_features`.
+        Note: this parameter is tree-specific.
 
     bootstrap : boolean, optional (default=True)
         Whether bootstrap samples are used when building trees.
@@ -534,10 +552,10 @@ class RandomForestRegressor(ForestRegressor):
     """
     def __init__(self, n_estimators=10,
                        criterion="mse",
-                       max_depth=10,
+                       max_depth=None,
                        min_split=1,
                        min_density=0.1,
-                       max_features=None,
+                       max_features="auto",
                        bootstrap=True,
                        compute_importances=False,
                        n_jobs=1,
@@ -575,27 +593,36 @@ class ExtraTreesClassifier(ForestClassifier):
     criterion : string, optional (default="gini")
         The function to measure the quality of a split. Supported criteria are
         "gini" for the Gini impurity and "entropy" for the information gain.
+        Note: this parameter is tree-specific.
 
-    max_depth : integer or None, optional (default=10)
+    max_depth : integer or None, optional (default=None)
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than min_split
         samples.
+        Note: this parameter is tree-specific.
 
     min_split : integer, optional (default=1)
         The minimum number of samples required to split an internal node.
+        Note: this parameter is tree-specific.
 
     min_density : float, optional (default=0.1)
-        The minimum density of the `sample_mask` (i.e. the fraction of samples
+        This parameter trades runtime against memory requirement. It controls
+        the minimum density of the `sample_mask` (i.e. the fraction of samples
         in the mask). If the density falls below this threshold the mask is
         recomputed and the input data is packed which results in data copying.
-        If `min_density` equals to one, the partitions are always represented
-        as copies of the original data. Otherwise, partitions are represented
-        as bit masks (a.k.a. sample masks).
+        If `min_density` equals to one, the partitions are always represented as
+        copies of the original data. Otherwise, partitions are represented as
+        bit masks (aka sample masks).
+        Note: this parameter is tree-specific.
 
-    max_features : int or None, optional (default=None)
+    max_features : int, string or None, optional (default="auto")
         The number of features to consider when looking for the best split.
-        If None, all features are considered, otherwise max_features are chosen
-        at random.
+        If "auto", then `max_features=sqrt(n_features)` on classification
+        tasks and `max_features=n_features` on regression problems. If "sqrt",
+        then `max_features=sqrt(n_features)`. If "log2", then
+        `max_features=log2(n_features)`. If None, then
+        `max_features=n_features`.
+        Note: this parameter is tree-specific.
 
     bootstrap : boolean, optional (default=False)
         Whether bootstrap samples are used when building trees.
@@ -633,10 +660,10 @@ class ExtraTreesClassifier(ForestClassifier):
     """
     def __init__(self, n_estimators=10,
                        criterion="gini",
-                       max_depth=10,
+                       max_depth=None,
                        min_split=1,
                        min_density=0.1,
-                       max_features=None,
+                       max_features="auto",
                        bootstrap=False,
                        compute_importances=False,
                        n_jobs=1,
@@ -674,30 +701,40 @@ class ExtraTreesRegressor(ForestRegressor):
     criterion : string, optional (default="mse")
         The function to measure the quality of a split. The only supported
         criterion is "mse" for the mean squared error.
+        Note: this parameter is tree-specific.
 
-    max_depth : integer or None, optional (default=10)
+    max_depth : integer or None, optional (default=None)
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than min_split
         samples.
+        Note: this parameter is tree-specific.
 
     min_split : integer, optional (default=1)
         The minimum number of samples required to split an internal node.
+        Note: this parameter is tree-specific.
 
     min_density : float, optional (default=0.1)
-        The minimum density of the `sample_mask` (i.e. the fraction of samples
+        This parameter trades runtime against memory requirement. It controls
+        the minimum density of the `sample_mask` (i.e. the fraction of samples
         in the mask). If the density falls below this threshold the mask is
         recomputed and the input data is packed which results in data copying.
-        If `min_density` equals to one, the partitions are always represented
-        as copies of the original data. Otherwise, partitions are represented
-        as bit masks (a.k.a. sample masks).
+        If `min_density` equals to one, the partitions are always represented as
+        copies of the original data. Otherwise, partitions are represented as
+        bit masks (aka sample masks).
+        Note: this parameter is tree-specific.
 
-    max_features : int or None, optional (default=None)
+    max_features : int, string or None, optional (default="auto")
         The number of features to consider when looking for the best split.
-        If None, all features are considered, otherwise max_features are chosen
-        at random.
+        If "auto", then `max_features=sqrt(n_features)` on classification
+        tasks and `max_features=n_features` on regression problems. If "sqrt",
+        then `max_features=sqrt(n_features)`. If "log2", then
+        `max_features=log2(n_features)`. If None, then
+        `max_features=n_features`.
+        Note: this parameter is tree-specific.
 
     bootstrap : boolean, optional (default=False)
         Whether bootstrap samples are used when building trees.
+        Note: this parameter is tree-specific.
 
     compute_importances : boolean, optional (default=True)
         Whether feature importances are computed and stored into the
@@ -732,10 +769,10 @@ class ExtraTreesRegressor(ForestRegressor):
     """
     def __init__(self, n_estimators=10,
                        criterion="mse",
-                       max_depth=10,
+                       max_depth=None,
                        min_split=1,
                        min_density=0.1,
-                       max_features=None,
+                       max_features="auto",
                        bootstrap=False,
                        compute_importances=False,
                        n_jobs=1,
