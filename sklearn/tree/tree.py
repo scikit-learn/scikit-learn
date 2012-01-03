@@ -445,8 +445,8 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
                 max_features = max(1, int(np.log2(self.n_features_)))
 
             else:
-                ValueError("Invalid value for max_features. Allowed string "
-                           "values are \"auto\", \"sqrt\" or \"log2\".")
+                raise ValueError("Invalid value for max_features. Allowed string "
+                                 "values are \"auto\", \"sqrt\" or \"log2\".")
 
         elif self.max_features is None:
             max_features = self.n_features_
@@ -456,7 +456,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
 
         if len(y) != n_samples:
             raise ValueError("Number of labels=%d does not match "
-                             "number of features=%d" % (len(y), n_samples))
+                             "number of samples=%d" % (len(y), n_samples))
         if self.min_split <= 0:
             raise ValueError("min_split must be greater than zero.")
         if max_depth <= 0:

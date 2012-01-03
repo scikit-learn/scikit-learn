@@ -265,10 +265,18 @@ def test_error():
 
    # use values of max_features that are invalid
     clf = tree.DecisionTreeClassifier(max_features=10)
-    assert_raises(ValueError, clf.fit, X, y2)
+    assert_raises(ValueError, clf.fit, X, y)
+
+    clf = tree.DecisionTreeClassifier(max_features=-1)
+    assert_raises(ValueError, clf.fit, X, y)
 
     clf = tree.DecisionTreeClassifier(max_features="foobar")
-    assert_raises(ValueError, clf.fit, X, y2)
+    assert_raises(ValueError, clf.fit, X, y)
+
+    tree.DecisionTreeClassifier(max_features="auto").fit(X, y)
+    tree.DecisionTreeClassifier(max_features="sqrt").fit(X, y)
+    tree.DecisionTreeClassifier(max_features="log2").fit(X, y)
+    tree.DecisionTreeClassifier(max_features=None).fit(X, y)
 
     # predict before fit
     clf = tree.DecisionTreeClassifier()
