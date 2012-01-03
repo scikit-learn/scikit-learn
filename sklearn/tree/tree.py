@@ -559,7 +559,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         copies of the original data. Otherwise, partitions are represented as
         bit masks (aka sample masks).
 
-    max_features : int, string or None, optional (default="auto")
+    max_features : int, string or None, optional (default=None)
         The number of features to consider when looking for the best split.
         If "auto", then `max_features=sqrt(n_features)` on classification
         tasks and `max_features=n_features` on regression problems. If "sqrt",
@@ -634,7 +634,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                        max_depth=None,
                        min_split=1,
                        min_density=0.1,
-                       max_features="auto",
+                       max_features=None,
                        compute_importances=False,
                        random_state=None):
         super(DecisionTreeClassifier, self).__init__(criterion,
@@ -718,7 +718,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         copies of the original data. Otherwise, partitions are represented as
         bit masks (aka sample masks).
 
-    max_features : int, string or None, optional (default="auto")
+    max_features : int, string or None, optional (default=None)
         The number of features to consider when looking for the best split.
         If "auto", then `max_features=sqrt(n_features)` on classification
         tasks and `max_features=n_features` on regression problems. If "sqrt",
@@ -791,7 +791,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
                        max_depth=None,
                        min_split=1,
                        min_density=0.1,
-                       max_features="auto",
+                       max_features=None,
                        compute_importances=False,
                        random_state=None):
         super(DecisionTreeRegressor, self).__init__(criterion,
