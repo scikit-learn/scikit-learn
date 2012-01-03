@@ -429,7 +429,30 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
 
         # Check parameters
         max_depth = np.inf if self.max_depth is None else self.max_depth
-        max_features = -1 if self.max_features is None else self.max_features
+
+        if isinstance(self.max_features, basestring):
+            if self.max_features == "auto":
+                if is_classification:
+                    max_features = max(1, int(np.sqrt(self.n_features_)))
+
+                else:
+                    max_features = self.n_features_
+
+            elif self.max_features == "sqrt":
+                max_features = max(1, int(np.sqrt(self.n_features_)))
+
+            elif self.max_features == "log2":
+                max_features = max(1, int(np.log2(self.n_features_)))
+
+            else:
+                ValueError("Invalid value for max_features. Allowed string "
+                           "values are \"auto\", \"sqrt\" or \"log2\".")
+
+        elif self.max_features is None:
+            max_features = self.n_features_
+
+        else:
+            max_features = self.max_features
 
         if len(y) != n_samples:
             raise ValueError("Number of labels=%d does not match "
@@ -440,8 +463,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
             raise ValueError("max_depth must be greater than zero. ")
         if self.min_density < 0.0 or self.min_density > 1.0:
             raise ValueError("min_density must be in [0, 1]")
-        if max_features >= 0 and \
-               not (0 < max_features <= self.n_features_):
+        if not (0 < max_features <= self.n_features_):
             raise ValueError("max_features must be in (0, n_features]")
 
         # Build tree
@@ -520,7 +542,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         The function to measure the quality of a split. Supported criteria are
         "gini" for the Gini impurity and "entropy" for the information gain.
 
-    max_depth : integer or None, optional (default=10)
+    max_depth : integer or None, optional (default=None)
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than min_split
         samples.
@@ -536,10 +558,13 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         as copies of the original data. Otherwise, partitions are represented
         as bit masks (aka sample masks).
 
-    max_features : int or None, optional (default=None)
+    max_features : int, string or None, optional (default="auto")
         The number of features to consider when looking for the best split.
-        If None, all features are considered, otherwise max_features are chosen
-        at random.
+        If "auto", then `max_features=sqrt(n_features)` on classification
+        tasks and `max_features=n_features` on regression problems. If "sqrt",
+        then `max_features=sqrt(n_features)`. If "log2", then
+        `max_features=log2(n_features)`. If None, then
+        `max_features=n_features`.
 
     compute_importances : boolean, optional (default=True)
         Whether feature importances are computed and stored into the
@@ -605,10 +630,10 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             0.93...,  0.93...,  1.     ,  0.93...,  1.      ])
     """
     def __init__(self, criterion="gini",
-                       max_depth=10,
+                       max_depth=None,
                        min_split=1,
                        min_density=0.1,
-                       max_features=None,
+                       max_features="auto",
                        compute_importances=False,
                        random_state=None):
         super(DecisionTreeClassifier, self).__init__(criterion,
@@ -675,7 +700,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         The function to measure the quality of a split. The only supported
         criterion is "mse" for the mean squared error.
 
-    max_depth : integer or None, optional (default=10)
+    max_depth : integer or None, optional (default=None)
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than min_split
         samples.
@@ -691,10 +716,13 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         as copies of the original data. Otherwise, partitions are represented
         as bit masks (aka sample masks).
 
-    max_features : int or None, optional (default=None)
+    max_features : int, string or None, optional (default="auto")
         The number of features to consider when looking for the best split.
-        If None, all features are considered, otherwise max_features are chosen
-        at random.
+        If "auto", then `max_features=sqrt(n_features)` on classification
+        tasks and `max_features=n_features` on regression problems. If "sqrt",
+        then `max_features=sqrt(n_features)`. If "log2", then
+        `max_features=log2(n_features)`. If None, then
+        `max_features=n_features`.
 
     compute_importances : boolean, optional (default=True)
         Whether feature importances are computed and stored into the
@@ -758,10 +786,10 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
             0.07..., 0.29..., 0.33..., -1.42..., -1.77...])
     """
     def __init__(self, criterion="mse",
-                       max_depth=10,
+                       max_depth=None,
                        min_split=1,
                        min_density=0.1,
-                       max_features=None,
+                       max_features="auto",
                        compute_importances=False,
                        random_state=None):
         super(DecisionTreeRegressor, self).__init__(criterion,
@@ -797,10 +825,10 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
            Machine Learning, 63(1), 3-42, 2006.
     """
     def __init__(self, criterion="gini",
-                       max_depth=10,
+                       max_depth=None,
                        min_split=1,
                        min_density=0.1,
-                       max_features=None,
+                       max_features="auto",
                        compute_importances=False,
                        random_state=None):
         super(ExtraTreeClassifier, self).__init__(criterion,
@@ -838,10 +866,10 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
            Machine Learning, 63(1), 3-42, 2006.
     """
     def __init__(self, criterion="mse",
-                       max_depth=10,
+                       max_depth=None,
                        min_split=1,
                        min_density=0.1,
-                       max_features=None,
+                       max_features="auto",
                        compute_importances=False,
                        random_state=None):
         super(ExtraTreeRegressor, self).__init__(criterion,

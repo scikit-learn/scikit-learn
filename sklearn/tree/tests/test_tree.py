@@ -267,6 +267,9 @@ def test_error():
     clf = tree.DecisionTreeClassifier(max_features=10)
     assert_raises(ValueError, clf.fit, X, y2)
 
+    clf = tree.DecisionTreeClassifier(max_features="foobar")
+    assert_raises(ValueError, clf.fit, X, y2)
+
     # predict before fit
     clf = tree.DecisionTreeClassifier()
     assert_raises(Exception, clf.predict_proba, X)
