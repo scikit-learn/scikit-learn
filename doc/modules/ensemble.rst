@@ -100,10 +100,11 @@ greater the increase in bias. Empiricial good default values are
 ``max_features=sqrt(n_features)`` for classification tasks (where ``n_features``
 is the number of features in the data). The best results are also usually
 reached when setting ``max_depth=None`` in combination with ``min_split=1``
-(i.e., when fully developping the trees). In addition, note that bootstrap
-samples are used by default in random forests (``bootstrap=True``) while the
-default strategy is to use the original dataset for building extra-trees
-(``bootstrap=False``).
+(i.e., when fully developping the trees). Bear in mind though that these values
+are usually not optimal. The best parameter values should always be cross-
+validated. In addition, note that bootstrap samples are used by default in
+random forests (``bootstrap=True``) while the default strategy is to use the
+original dataset for building extra-trees (``bootstrap=False``).
 
 Finally, this module also features the parallel construction of the trees and
 the parallel computation of the predictions through the ``n_jobs`` parameter. If
