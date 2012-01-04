@@ -581,7 +581,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
     Attributes
     ----------
-    tree_ : Tree object
+    `tree_` : Tree object
         The underlying Tree object.
 
     feature_importances_ : array of shape = [n_features]
@@ -741,7 +741,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
 
     Attributes
     ----------
-    tree_ : Tree object
+    `tree_` : Tree object
         The underlying Tree object.
 
     feature_importances_ : array of shape = [n_features]
