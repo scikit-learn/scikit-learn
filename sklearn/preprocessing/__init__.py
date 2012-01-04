@@ -106,7 +106,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
         if copy:
             X = X.copy()
         _, var = mean_variance_axis0(X)
-        var[var==0.0] = 1.0
+        var[var == 0.0] = 1.0
         inplace_csr_column_scale(X, 1 / np.sqrt(var))
     else:
         X = np.asarray(X)

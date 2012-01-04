@@ -769,8 +769,9 @@ class SparseCoder(BaseEstimator, SparseCodingMixin):
         The dictionary atoms used for sparse coding. Lines are assumed to be
         normalized to unit norm.
 
-    transform_algorithm : {'lasso_lars', 'lasso_cd', 'lars', 'omp', 'threshold'}
-        Algorithm used to transform the data
+    transform_algorithm : {'lasso_lars', 'lasso_cd', 'lars', 'omp',
+                           'threshold'}
+        Algorithm used to transform the data:
         lars: uses the least angle regression method (linear_model.lars_path)
         lasso_lars: uses Lars to compute the Lasso solution
         lasso_cd: uses the coordinate descent method to compute the
@@ -867,7 +868,8 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
 
-    transform_algorithm : {'lasso_lars', 'lasso_cd', 'lars', 'omp', 'threshold'}
+    transform_algorithm : {'lasso_lars', 'lasso_cd', 'lars', 'omp',
+                           'threshold'}
         Algorithm used to transform the data
         lars: uses the least angle regression method (linear_model.lars_path)
         lasso_lars: uses Lars to compute the Lasso solution
@@ -1010,7 +1012,8 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
 
-    transform_algorithm : {'lasso_lars', 'lasso_cd', 'lars', 'omp', 'threshold'}
+    transform_algorithm : {'lasso_lars', 'lasso_cd', 'lars', 'omp',
+                           'threshold'}
         Algorithm used to transform the data.
         lars: uses the least angle regression method (linear_model.lars_path)
         lasso_lars: uses Lars to compute the Lasso solution

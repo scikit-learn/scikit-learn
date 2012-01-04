@@ -66,9 +66,9 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
     -----
     **References**:
 
-    .. [Rouseeuw1999] A Fast Algorithm for the Minimum Covariance Determinant Estimator,
-        1999, American Statistical Association and the American Society
-        for Quality, TECHNOMETRICS
+    .. [Rouseeuw1999] A Fast Algorithm for the Minimum Covariance Determinant
+       Estimator, 1999, American Statistical Association and the American
+       Society for Quality, TECHNOMETRICS
 
     """
     random_state = check_random_state(random_state)
@@ -155,7 +155,8 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
     data set is referred to as the `support`.
 
     Starting from a random support, the pure data set is found by the
-    c_step procedure introduced by Rousseeuw and Van Driessen in [Rouseeuw1999].
+    c_step procedure introduced by Rousseeuw and Van Driessen in
+    [Rouseeuw1999].
 
     Parameters
     ----------
@@ -200,9 +201,9 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
     Notes
     -----
     **References**:
-    .. [Rouseeuw1999] A Fast Algorithm for the Minimum Covariance Determinant Estimator,
-        1999, American Statistical Association and the American Society
-        for Quality, TECHNOMETRICS
+    .. [Rouseeuw1999] A Fast Algorithm for the Minimum Covariance Determinant
+       Estimator, 1999, American Statistical Association and the American
+       Society for Quality, TECHNOMETRICS
 
     """
     random_state = check_random_state(random_state)
@@ -277,18 +278,19 @@ def fast_mcd(X, support_fraction=None,
     Depending on the size of the initial sample, we have one, two or three
     such computation levels.
 
-    Note that only raw estimates are returned. If one is intersted in the
-    correction and reweighting steps described in [Rouseeuw1999], see the MinCovDet
-    object.
+    Note that only raw estimates are returned. If one is intersted in
+    the correction and reweighting steps described in [Rouseeuw1999],
+    see the MinCovDet object.
 
     **References**:
 
-    .. [Rouseeuw1999] A Fast Algorithm for the Minimum Covariance Determinant Estimator,
-        1999, American Statistical Association and the American Society
-        for Quality, TECHNOMETRICS
+    .. [Rouseeuw1999] A Fast Algorithm for the Minimum Covariance
+       Determinant Estimator, 1999, American Statistical Association
+       and the American Society for Quality, TECHNOMETRICS
+
     .. [Butler1993] R. W. Butler, P. L. Davies and M. Jhun,
-        Asymptotics For The Minimum Covariance Determinant Estimator,
-        The Annals of Statistics, 1993, Vol. 21, No. 3, 1385-1400
+       Asymptotics For The Minimum Covariance Determinant Estimator,
+       The Annals of Statistics, 1993, Vol. 21, No. 3, 1385-1400
 
     Returns
     -------
@@ -471,14 +473,14 @@ class MinCovDet(EmpiricalCovariance):
 
     **References**:
 
-    .. [Rouseeuw1984] `P. J. Rousseeuw. Least median of squares regression. J. Am
-        Stat Ass, 79:871, 1984.`
-    .. [Rouseeuw1999] `A Fast Algorithm for the Minimum Covariance Determinant Estimator,
-        1999, American Statistical Association and the American Society
-        for Quality, TECHNOMETRICS`
+    .. [Rouseeuw1984] `P. J. Rousseeuw. Least median of squares regression.
+       J. Am Stat Ass, 79:871, 1984.`
+    .. [Rouseeuw1999] `A Fast Algorithm for the Minimum Covariance Determinant
+       Estimator, 1999, American Statistical Association and the American
+       Society for Quality, TECHNOMETRICS`
     .. [Butler1993] `R. W. Butler, P. L. Davies and M. Jhun,
-        Asymptotics For The Minimum Covariance Determinant Estimator,
-        The Annals of Statistics, 1993, Vol. 21, No. 3, 1385-1400`
+       Asymptotics For The Minimum Covariance Determinant Estimator,
+       The Annals of Statistics, 1993, Vol. 21, No. 3, 1385-1400`
 
     """
     _nonrobust_covariance = staticmethod(empirical_covariance)
