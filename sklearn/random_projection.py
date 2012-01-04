@@ -40,8 +40,9 @@ from sklearn.base import TransformerMixin
 def johnson_lindenstrauss_bound(n_samples, eps=0.1):
     """Find a 'safe' number of components to randomly project to
 
-    Minimum dimensionality of a random projection eps-embedding such
-    that with good probability:
+    The distortion introduced by a random projection `p` is asserted by
+    the fact that `p` is defining an eps-embedding with good probability
+    as defined by:
 
       (1 - eps) ||u - v||^2 < ||p(u) - p(v)||^2 < (1 + eps) ||u - v||^2
 
@@ -49,7 +50,7 @@ def johnson_lindenstrauss_bound(n_samples, eps=0.1):
     n_features] and p is a projection by a random gaussian N(0, 1) matrix
     with shape [n_components, n_features] (or a sparse Achlioptas matrix).
 
-    The minimum number of components to guarantee the embedding is
+    The minimum number of components to guarantees the eps-embedding is
     given by:
 
       n_components >= 4 log(n_samples) / (eps^2 / 2 - eps^3 / 3)
