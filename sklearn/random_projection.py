@@ -66,11 +66,11 @@ def johnson_lindenstrauss_bound(n_samples, eps=0.1):
     >>> johnson_lindenstrauss_bound(1e6, eps=0.5)
     663
 
-    >>> johnson_lindenstrauss_bound(1e6, eps=0.1)
-    11841
+    >>> johnson_lindenstrauss_bound(1e6, eps=[0.5, 0.1, 0.01])
+    array([    663,   11841, 1112658])
 
-    >>> johnson_lindenstrauss_bound(1e6, eps=0.01)
-    1112658
+    >>> johnson_lindenstrauss_bound([1e4, 1e5, 1e6], eps=0.1)
+    array([ 7894,  9868, 11841])
 
     References
     ----------
@@ -81,6 +81,7 @@ def johnson_lindenstrauss_bound(n_samples, eps=0.1):
       http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.45.3654
 
     """
+    eps = np.asarray(eps)
     denominator = (eps ** 2 / 2) - (eps ** 3 / 3)
     return (4 * np.log(n_samples) / denominator).astype(np.int)
 
