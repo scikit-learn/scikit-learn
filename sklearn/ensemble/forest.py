@@ -404,14 +404,14 @@ class RandomForestClassifier(ForestClassifier):
         Note: this parameter is tree-specific.
 
     max_features : int, string or None, optional (default="auto")
-        The number of features to consider when looking for the best
-        split:
+        The number of features to consider when looking for the best split:
           - If "auto", then `max_features=sqrt(n_features)` on
             classification tasks and `max_features=n_features` on regression
             problems.
           - If "sqrt", then `max_features=sqrt(n_features)`.
           - If "log2", then `max_features=log2(n_features)`.
           - If None, then `max_features=n_features`.
+
         Note: this parameter is tree-specific.
 
     bootstrap : boolean, optional (default=True)
@@ -512,12 +512,14 @@ class RandomForestRegressor(ForestRegressor):
         Note: this parameter is tree-specific.
 
     max_features : int, string or None, optional (default="auto")
-        The number of features to consider when looking for the best split.
-        If "auto", then `max_features=sqrt(n_features)` on classification
-        tasks and `max_features=n_features` on regression problems. If "sqrt",
-        then `max_features=sqrt(n_features)`. If "log2", then
-        `max_features=log2(n_features)`. If None, then
-        `max_features=n_features`.
+        The number of features to consider when looking for the best split:
+          - If "auto", then `max_features=sqrt(n_features)` on
+            classification tasks and `max_features=n_features`
+            on regression problems.
+          - If "sqrt", then `max_features=sqrt(n_features)`.
+          - If "log2", then `max_features=log2(n_features)`.
+          - If None, then `max_features=n_features`.
+
         Note: this parameter is tree-specific.
 
     bootstrap : boolean, optional (default=True)
@@ -620,11 +622,13 @@ class ExtraTreesClassifier(ForestClassifier):
 
     max_features : int, string or None, optional (default="auto")
         The number of features to consider when looking for the best split.
-        If "auto", then `max_features=sqrt(n_features)` on classification
-        tasks and `max_features=n_features` on regression problems. If "sqrt",
-        then `max_features=sqrt(n_features)`. If "log2", then
-        `max_features=log2(n_features)`. If None, then
-        `max_features=n_features`.
+          - If "auto", then `max_features=sqrt(n_features)` on
+            classification tasks and `max_features=n_features`
+            on regression problems.
+          - If "sqrt", then `max_features=sqrt(n_features)`.
+          - If "log2", then `max_features=log2(n_features)`.
+          - If None, then `max_features=n_features`.
+
         Note: this parameter is tree-specific.
 
     bootstrap : boolean, optional (default=False)
@@ -735,6 +739,7 @@ class ExtraTreesRegressor(ForestRegressor):
           - If "sqrt", then `max_features=sqrt(n_features)`.
           - If "log2", then `max_features=log2(n_features)`.
           - If None, then `max_features=n_features`.
+
         Note: this parameter is tree-specific.
 
     bootstrap : boolean, optional (default=False)

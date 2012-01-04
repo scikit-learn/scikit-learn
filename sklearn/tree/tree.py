@@ -584,7 +584,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     `tree_` : Tree object
         The underlying Tree object.
 
-    feature_importances_ : array of shape = [n_features]
+    `feature_importances_` : array of shape = [n_features]
         The feature mportances (the higher, the more important the feature).
         The importance I(f) of a feature f is computed as the (normalized)
         total reduction of error brought by that feature. It is also known as
@@ -744,7 +744,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     `tree_` : Tree object
         The underlying Tree object.
 
-    feature_importances_ : array of shape = [n_features]
+    `feature_importances_` : array of shape = [n_features]
         The feature mportances (the higher, the more important the feature).
         The importance I(f) of a feature f is computed as the (normalized)
         total reduction of error brought by that feature. It is also known as
@@ -861,7 +861,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
     See also
     --------
-    ExtraTreeClassifier, ExtraTreesClassifier, ExtraTreesRegressor
+    ExtraTreeClassifier, sklearn.ensemble.ExtraTreesClassifier, sklearn.ensemble.ExtraTreesRegressor
 
     Notes
     -----
