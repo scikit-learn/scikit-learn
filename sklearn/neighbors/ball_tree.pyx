@@ -454,10 +454,8 @@ cdef class BallTree(object):
         >>> ball_tree = BallTree(X, leaf_size=2)              # doctest: +SKIP
         >>> dist, ind = ball_tree.query(X[0], n_neighbors=3)  # doctest: +SKIP
         >>> print ind  # indices of 3 closest neighbors
-        ... # doctest: + SKIP
         [0 3 1]
         >>> print dist  # distances to 3 closest neighbors
-        ... # doctest: + SKIP
         [ 0.          0.19662693  0.29473397]
 
     Pickle and Unpickle a ball tree (using protocol = 2).  Note that the
@@ -473,10 +471,8 @@ cdef class BallTree(object):
         >>> ball_tree_copy = pickle.loads(s)              # doctest: +SKIP
         >>> dist, ind = ball_tree_copy.query(X[0], k=3)   # doctest: +SKIP
         >>> print ind  # indices of 3 closest neighbors   
-        ... # doctest: + SKIP
         [0 3 1]
         >>> print dist  # distances to 3 closest neighbors
-        ... # doctest: + SKIP
         [ 0.          0.19662693  0.29473397]
     """
     cdef readonly np.ndarray data
@@ -728,11 +724,9 @@ cdef class BallTree(object):
         >>> X = np.random.random((10,3))  # 10 points in 3 dimensions
         >>> ball_tree = BallTree(X, leaf_size=2)        # doctest: +SKIP
         >>> print ball_tree.query_radius(X[0], r=0.3, count_only=True)
-        ... # doctest: + SKIP
         3
         >>> ind = ball_tree.query_radius(X[0], r=0.3)  # doctest: +SKIP
         >>> print ind  # indices of neighbors within distance 0.3
-        ... # doctest: +SKIP
         [3 0 1]
         """
         if count_only and return_distance:
