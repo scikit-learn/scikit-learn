@@ -49,7 +49,7 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
 
     This function generates a GraphViz representation of the decision tree,
     which is then written into `out_file`. Once exported, graphical renderings
-    can be generated using, for example,::
+    can be generated using, for example::
 
         $ dot -Tps tree.dot -o tree.ps      (PostScript format)
         $ dot -Tpng tree.dot -o tree.png    (PNG format)
@@ -81,7 +81,7 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
 
     >>> clf = clf.fit(iris.data, iris.target)
     >>> import tempfile
-    >>> out_file = export_graphviz(clf, out_file=tempfile.TemporaryFile())
+    >>> out_file = tree.export_graphviz(clf, out_file=tempfile.TemporaryFile())
     >>> out_file.close()
     """
     def node_to_str(tree, node_id):
