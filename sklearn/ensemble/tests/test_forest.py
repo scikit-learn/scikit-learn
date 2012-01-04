@@ -194,9 +194,7 @@ def test_gridsearch():
 def test_parallel():
     """Check parallel computations."""
     # Classification
-    forest = RandomForestClassifier(n_estimators=10,
-                                    n_jobs=3,
-                                    random_state=0)
+    forest = RandomForestClassifier(n_estimators=10, n_jobs=3, random_state=0)
 
     forest.fit(iris.data, iris.target)
     assert 10 == len(forest)
@@ -208,9 +206,7 @@ def test_parallel():
     assert_array_equal(y1, y2)
 
     # Regression
-    forest = RandomForestClassifier(n_estimators=10,
-                                    n_jobs=3,
-                                    random_state=0)
+    forest = RandomForestRegressor(n_estimators=10, n_jobs=3, random_state=0)
 
     forest.fit(boston.data, boston.target)
     assert 10 == len(forest)
@@ -219,10 +215,10 @@ def test_parallel():
     y1 = forest.predict(boston.data)
     forest.set_params(n_jobs=2)
     y2 = forest.predict(boston.data)
-    assert_array_equal(y1, y2)
+    assert_array_almost_equal(y1, y2, 10)
 
     # Use all cores
-    forest = RandomForestClassifier(n_jobs=-1)
+    forest = RandomForestRegressor(n_jobs=-1)
     forest.fit(iris.data, iris.target)
 
 
