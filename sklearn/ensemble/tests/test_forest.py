@@ -217,8 +217,8 @@ def test_parallel():
     y2 = forest.predict(boston.data)
     assert_array_almost_equal(y1, y2, 10)
 
-    # Use all cores
-    forest = RandomForestRegressor(n_jobs=-1)
+    # Use all cores on the classification dataset
+    forest = RandomForestClassifier(n_jobs=-1)
     forest.fit(iris.data, iris.target)
 
 
