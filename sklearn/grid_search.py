@@ -12,6 +12,7 @@ from itertools import product
 import time
 
 import numpy as np
+import random
 import scipy.sparse as sp
 
 from .base import BaseEstimator, is_classifier, clone
@@ -147,6 +148,11 @@ class GridSearchCV(BaseEstimator):
         Dictionary with parameters names (string) as keys and lists of
         parameter settings to try as values.
 
+    budget: int, optional
+        If set, a maximum limit on the number of points in the grid
+        to be evaluated. If set, the grid is explored randomly rather
+        than in any deterministic order.
+
     loss_func: callable, optional
         function that takes 2 arguments and compares them in
         order to evaluate the performance of prediciton (small is good)
@@ -205,7 +211,7 @@ class GridSearchCV(BaseEstimator):
     >>> clf = grid_search.GridSearchCV(svr, parameters)
     >>> clf.fit(iris.data, iris.target)
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    GridSearchCV(cv=None,
+    GridSearchCV(budget=None, cv=None,
         estimator=SVR(C=1.0, cache_size=..., coef0=..., degree=...,
             epsilon=..., gamma=..., kernel='rbf', probability=False,
             scale_C=False, shrinking=True, tol=...),
@@ -248,9 +254,9 @@ class GridSearchCV(BaseEstimator):
 
     """
 
-    def __init__(self, estimator, param_grid, loss_func=None, score_func=None,
-                 fit_params=None, n_jobs=1, iid=True, refit=True, cv=None,
-                 verbose=0, pre_dispatch='2*n_jobs',
+    def __init__(self, estimator, param_grid, budget=None, loss_func=None, 
+                 score_func=None, fit_params=None, n_jobs=1, iid=True, 
+                 refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs',
                 ):
         assert hasattr(estimator, 'fit') and (hasattr(estimator, 'predict')
                         or hasattr(estimator, 'score')), (
@@ -265,6 +271,13 @@ class GridSearchCV(BaseEstimator):
 
         self.estimator = estimator
         self.param_grid = param_grid
+        self.budget = budget
+        if self.budget:
+            self.rolled_out_grid = list(IterGrid(param_grid))
+            random.shuffle(self.rolled_out_grid)
+            self.rolled_out_grid = self.rolled_out_grid[:self.budget]
+        else:
+            self.rolled_out_grid = None
         self.loss_func = loss_func
         self.score_func = score_func
         self.n_jobs = n_jobs
@@ -308,8 +321,11 @@ class GridSearchCV(BaseEstimator):
                                  % (len(y), n_samples))
             y = np.asarray(y)
         cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
-
-        grid = IterGrid(self.param_grid)
+        
+        if self.budget:
+            grid = self.rolled_out_grid
+        else:
+            grid = IterGrid(self.param_grid)
         base_clf = clone(self.estimator)
         pre_dispatch = self.pre_dispatch
         out = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
