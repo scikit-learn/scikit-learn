@@ -5,6 +5,8 @@ About us
 
 .. include:: ../AUTHORS.rst
 
+.. _citing-scikit-learn:
+
 Citing scikit-learn
 -------------------
 
@@ -17,7 +19,7 @@ citations to the following paper:
 
  Bibtex entry::
 
-   @article{,
+   @article{scikit-learn,
     title={{Scikit-learn: Machine Learning in Python }},
     author={Pedregosa, F. and Varoquaux, G. and Gramfort, A. and Michel, V.
             and Thirion, B. and Grisel, O. and Blondel, M. and Prettenhofer, P.
