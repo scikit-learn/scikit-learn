@@ -2,6 +2,9 @@
 Base class for ensemble-based estimators.
 """
 
+# Authors: Gilles Louppe
+# License: BSD 3
+
 from ..base import clone
 from ..base import BaseEstimator
 
@@ -41,24 +44,24 @@ class BaseEnsemble(BaseEstimator):
         # This needs to be filled by the derived classes.
         self.estimators_ = []
 
-    def _make_estimator(self):
+    def _make_estimator(self, append=True):
         """Makes, configures and returns a copy of the base estimator.
 
         Warning: This method should be used to properly instantiate new
         sub-estimators.
         """
-        assert len(self.estimators_) < self.n_estimators
-
         estimator = clone(self.base_estimator)
         estimator.set_params(**dict((p, getattr(self, p))
                                     for p in self.estimator_params))
-        self.estimators_.append(estimator)
+
+        if append:
+            self.estimators_.append(estimator)
 
         return estimator
 
     def __len__(self):
         """Returns the number of estimators in the ensemble."""
-        return self.n_estimators
+        return len(self.estimators_)
 
     def __getitem__(self, index):
         """Returns the index'th estimator in the ensemble."""

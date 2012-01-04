@@ -43,7 +43,7 @@ import numpy as np
 
 from scipy import sparse
 
-from sklearn.utils.extmath import fast_svd
+from sklearn.utils.extmath import randomized_svd
 from sklearn.externals.joblib import Memory
 
 
@@ -170,9 +170,9 @@ X, redirects, index_map = get_adjacency_matrix(
     redirects_filename, page_links_filename, limit=5000000)
 names = dict((i, name) for name, i in index_map.iteritems())
 
-print "Computing the principal singular vectors using fast_svd"
+print "Computing the principal singular vectors using randomized_svd"
 t0 = time()
-U, s, V = fast_svd(X, 5, q=3)
+U, s, V = randomized_svd(X, 5, q=3)
 print "done in %0.3fs" % (time() - t0)
 
 # print the names of the wikipedia related strongest compenents of the the

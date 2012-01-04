@@ -184,7 +184,7 @@ class Lasso(ElasticNet):
 
     The optimization objective for Lasso is::
 
-    (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
+        (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
 
     Technically the Lasso model is optimizing the same objective function as
     the Elastic Net with rho=1.0 (no L2 penalty).
@@ -277,7 +277,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 
     The optimization objective for Lasso is::
 
-    (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
+        (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
 
     Parameters
     ----------
@@ -357,8 +357,8 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     The Elastic Net optimization function is::
 
-    ``1 / (2 * n_samples) * ||y - Xw||^2_2 +
-    + alpha * rho * ||w||_1 + 0.5 * alpha * (1 - rho) * ||w||^2_2``
+        1 / (2 * n_samples) * ||y - Xw||^2_2 +
+        + alpha * rho * ||w||_1 + 0.5 * alpha * (1 - rho) * ||w||^2_2
 
     Parameters
     ----------
@@ -563,7 +563,7 @@ class LassoCV(LinearModelCV):
 
     The optimization objective for Lasso is::
 
-    (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
+        (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
 
     Parameters
     ----------

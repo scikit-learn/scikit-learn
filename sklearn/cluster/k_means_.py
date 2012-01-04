@@ -511,13 +511,13 @@ class KMeans(BaseEstimator):
 
     Attributes
     ----------
-    cluster_centers_: array, [n_clusters, n_features]
+    `cluster_centers_`: array, [n_clusters, n_features]
         Coordinates of cluster centers
 
-    labels_:
+    `labels_`:
         Labels of each point
 
-    inertia_: float
+    `inertia_`: float
         The value of the inertia criterion associated with the chosen
         partition.
 
@@ -859,13 +859,13 @@ class MiniBatchKMeans(KMeans):
     Attributes
     ----------
 
-    cluster_centers_: array, [n_clusters, n_features]
+    `cluster_centers_`: array, [n_clusters, n_features]
         Coordinates of cluster centers
 
-    labels_:
+    `labels_`:
         Labels of each point (if compute_labels is set to True).
 
-    inertia_: float
+    `inertia_`: float
         The value of the inertia criterion associated with the chosen
         partition (if compute_labels is set to True). The inertia is
         defined as the sum of square distances of samples to their nearest

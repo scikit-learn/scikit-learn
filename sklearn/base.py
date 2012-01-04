@@ -250,7 +250,7 @@ class ClassifierMixin(object):
     """Mixin class for all classifiers in scikit-learn"""
 
     def score(self, X, y):
-        """Returns the mean error rate on the given test data and labels.
+        """Returns the mean accuracy on the given test data and labels.
 
         Parameters
         ----------

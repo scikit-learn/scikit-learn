@@ -729,7 +729,7 @@ class LarsCV(LARS):
                             max_iter=self.max_iter,
                             eps=self.eps)
                     for train, test in cv)
-        all_alphas = np.concatenate(zip(*cv_paths)[0])
+        all_alphas = np.concatenate(list(zip(*cv_paths))[0])
         all_alphas.sort()
 
         mse_path = np.empty((len(all_alphas), len(cv_paths)))

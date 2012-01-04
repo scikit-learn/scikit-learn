@@ -48,7 +48,8 @@ class IterGrid(object):
 
     def __iter__(self):
         param_grid = self.param_grid
-        if hasattr(param_grid, 'has_key'):
+        if hasattr(param_grid, 'items'):
+            # wrap dictionary in a singleton list
             param_grid = [param_grid]
         for p in param_grid:
             # Always sort the keys of a dictionary, for reproducibility
@@ -200,13 +201,13 @@ class GridSearchCV(BaseEstimator):
     >>> from sklearn import svm, grid_search, datasets
     >>> iris = datasets.load_iris()
     >>> parameters = {'kernel':('linear', 'rbf'), 'C':[1, 10]}
-    >>> svr = svm.SVR()
+    >>> svr = svm.SVC()
     >>> clf = grid_search.GridSearchCV(svr, parameters)
     >>> clf.fit(iris.data, iris.target)
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     GridSearchCV(cv=None,
-        estimator=SVR(C=1.0, cache_size=..., coef0=..., degree=...,
-            epsilon=..., gamma=..., kernel='rbf', probability=False,
+        estimator=SVC(C=1.0, cache_size=..., coef0=..., degree=...,
+            gamma=..., kernel='rbf', probability=False,
             scale_C=False, shrinking=True, tol=...),
         fit_params={}, iid=True, loss_func=None, n_jobs=1,
             param_grid=...,
@@ -218,8 +219,9 @@ class GridSearchCV(BaseEstimator):
         Contains scores for all parameter combinations in param_grid.
 
     `best_estimator` : estimator
-        Estimator that was choosen by grid search, i.e. estimator which gave
-        highest score (or smallest loss if specified) on the left out data.
+        Estimator that was choosen by grid search, i.e. estimator
+        which gave highest score (or smallest loss if specified)
+        on the left out data.
 
     `best_score` : float
         score of best_estimator on the left out data.

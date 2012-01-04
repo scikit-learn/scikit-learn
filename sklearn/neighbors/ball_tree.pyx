@@ -421,11 +421,14 @@ cdef class BallTree(object):
         the case that ``n_samples < leaf_size``.
 
     p : distance metric for the BallTree.  ``p`` encodes the Minkowski
-        p-distance:
+        p-distance::
+
             D = sum((X[i] - X[j]) ** p) ** (1. / p)
+
         p must be greater than or equal to 1, so that the triangle
         inequality will hold.  If ``p == np.inf``, then the distance is
-        equivalent to
+        equivalent to::
+
             D = max(X[i] - X[j])
 
     Attributes

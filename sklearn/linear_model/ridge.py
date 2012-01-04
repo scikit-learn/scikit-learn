@@ -152,7 +152,7 @@ class Ridge(LinearModel):
     Attributes
     ----------
 
-    coef_: array, shape = [n_features] or [n_responses, n_features]
+    `coef_` : array, shape = [n_features] or [n_responses, n_features]
         Weight vector(s).
 
     See also
@@ -242,7 +242,7 @@ class RidgeClassifier(Ridge):
     Attributes
     ----------
 
-    coef_: array, shape = [n_features] or [n_classes, n_features]
+    `coef_` : array, shape = [n_features] or [n_classes, n_features]
         Weight vector(s).
 
     See also

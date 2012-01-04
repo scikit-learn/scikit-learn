@@ -242,7 +242,7 @@ class SpectralClustering(BaseEstimator):
     Attributes
     ----------
 
-    labels_:
+    `labels_` :
         Labels of each point
 
     Notes

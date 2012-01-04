@@ -105,11 +105,10 @@ ready-to-use tfidf features instead of file names.
 .. _`TF-IDF`: http://en.wikipedia.org/wiki/Tf-idf
 
 
-Examples
---------
+.. topic:: Examples
 
-:ref:`example_grid_search_text_feature_extraction.py`
+   * :ref:`example_grid_search_text_feature_extraction.py`
 
-:ref:`example_document_classification_20newsgroups.py`
+   * :ref:`example_document_classification_20newsgroups.py`
 
 

@@ -240,8 +240,8 @@ def fetch_20newsgroups_vectorized(subset="train", data_home=None):
         X_train, X_test = joblib.load(target_file)
     else:
         vectorizer = CountVectorizer(dtype=np.int16)
-        X_train = vectorizer.fit_transform(data_train.data)
-        X_test = vectorizer.transform(data_test.data)
+        X_train = vectorizer.fit_transform(data_train.data).tocsr()
+        X_test = vectorizer.transform(data_test.data).tocsr()
         joblib.dump((X_train, X_test), target_file)
 
     # the data is stored as int16 for compactness
@@ -260,10 +260,11 @@ def fetch_20newsgroups_vectorized(subset="train", data_home=None):
         data = X_test
         target = data_test.target
     elif subset == "all":
-        data = sp.vstack((X_train, X_test))
+        data = sp.vstack((X_train, X_test)).tocsr()
         target = np.concatenate((data_train.target, data_test.target))
     else:
-        raise ValueError
+        raise ValueError("%r is not a valid subset: should be one of "
+                         "['train', 'test', 'all']" % subset)
 
     return Bunch(data=data, target=target, target_names=target_names)
 

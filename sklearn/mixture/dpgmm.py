@@ -11,12 +11,13 @@ Dirichlet Process Gaussian Mixture Models"""
 import numpy as np
 from scipy.special import digamma as _digamma, gammaln as _gammaln
 from scipy import linalg
+from scipy.spatial.distance import cdist
 
 from ..utils import check_random_state
 from ..utils.extmath import norm
 from .. import cluster
 from ..metrics import euclidean_distances
-from . gmm import GMM
+from .gmm import GMM
 
 
 def sqnorm(v):
@@ -81,6 +82,12 @@ def _bound_wishart(a, B, detB):
 ##############################################################################
 
 
+def _sym_quad_form(x, mu, A):
+    """helper function to calculate symmetric quadratic form x.T * A * x"""
+    q = (cdist(x, mu[np.newaxis], "mahalanobis", VI=A) ** 2).reshape(-1)
+    return q
+
+
 def _bound_state_log_lik(X, initial_bound, precs, means, covariance_type):
     """Update the bound with likelihood terms, for standard covariance types"""
     n_components, n_features = means.shape
@@ -102,14 +109,16 @@ def _bound_state_log_lik(X, initial_bound, precs, means, covariance_type):
         bound -= 0.5 * euclidean_distances(X, means, squared=True)
     elif covariance_type == 'full':
         for k in xrange(n_components):
-            d = X - means[k]
-            # not: choleksy is useless here
-            sqrt_cov = linalg.cholesky(precs[k])
-            d = np.dot(d, sqrt_cov.T)
-            d **= 2
-            bound[:, k] -= 0.5 * d.sum(axis=-1)
+            bound[:, k] -= 0.5 * _sym_quad_form(X, means[k], precs[k])
+            #d = X - means[k]
+            ## not: choleksy is useless here
+            #sqrt_cov = linalg.cholesky(precs[k])
+            #d = np.dot(d, sqrt_cov.T)
+            #d **= 2
+            #bound[:, k] -= 0.5 * d.sum(axis=-1)
     
     return bound
+
 
 
 class DPGMM(GMM):
@@ -125,7 +134,7 @@ class DPGMM(GMM):
     Stick-breaking Representation of a Gaussian mixture model
     probability distribution. This class allows for easy and efficient
     inference of an approximate posterior distribution over the
-    parameters of a gaussian mixture model with a variable number of
+    parameters of a Gaussian mixture model with a variable number of
     components (smaller than the truncation parameter n_components).
 
     Initialization is with normally-distributed means and identity
@@ -147,7 +156,7 @@ class DPGMM(GMM):
         is as likely to start a new cluster for a point as it is
         to add that point to a cluster with alpha elements. A
         higher alpha means more clusters, as the expected number
-        of clusters is alpha*log(N). Defaults to 1.
+        of clusters is ``alpha*log(N)``. Defaults to 1.
 
     thresh : float, optional
         Convergence threshold.
@@ -170,20 +179,19 @@ class DPGMM(GMM):
     precisions : array
         Precision (inverse covariance) parameters for each mixture
         component.  The shape depends on `covariance_type`::
-            (`n_components`,)                             if 'spherical',
-            (`n_features`, `n_features`)              if 'tied',
+            (`n_components`, 'n_features')                if 'spherical',
+            (`n_features`, `n_features`)                  if 'tied',
             (`n_components`, `n_features`)                if 'diag',
             (`n_components`, `n_features`, `n_features`)  if 'full'
 
-    converged_ : bool
-        True when convergence was reached in fit(), False
-        otherwise.
+    `converged_` : bool
+        True when convergence was reached in fit(), False otherwise.
 
     See Also
     --------
-    GMM : Finite gaussian mixture model fit with EM
+    GMM : Finite Gaussian mixture model fit with EM
 
-    VBGMM : Finite gaussian mixture model fit with a variational
+    VBGMM : Finite Gaussian mixture model fit with a variational
     algorithm, better for situations where there might be too little
     data to get a good estimate of the covariance matrix.
 
@@ -487,11 +495,11 @@ class DPGMM(GMM):
             corresponds to a single data point.
         n_iter : int, optional
              Maximum number of iterations to perform before convergence.
-       params : string, optional
+        params : string, optional
             Controls which parameters are updated in the training
             process.  Can contain any combination of 'w' for weights,
             'm' for means, and 'c' for covars.  Defaults to 'wmc'.
-       init_params : string, optional
+        init_params : string, optional
             Controls which parameters are updated in the initialization
             process.  Can contain any combination of 'w' for weights,
             'm' for means, and 'c' for covars.  Defaults to 'wmc'.
@@ -586,7 +594,7 @@ class VBGMM(DPGMM):
     Variational inference for a Gaussian mixture model probability
     distribution. This class allows for easy and efficient inference
     of an approximate posterior distribution over the parameters of a
-    gaussian mixture model with a fixed number of components.
+    Gaussian mixture model with a fixed number of components.
 
     Initialization is with normally-distributed means and identity
     covariance, for proper convergence.
@@ -605,7 +613,7 @@ class VBGMM(DPGMM):
         Real number representing the concentration parameter of
         the dirichlet distribution. Intuitively, the higher the
         value of alpha the more likely the variational mixture of
-        gaussians model will use all components it can. Defaults
+        Gaussians model will use all components it can. Defaults
         to 1.
 
 
@@ -614,30 +622,35 @@ class VBGMM(DPGMM):
     covariance_type : string
         String describing the type of covariance parameters used by
         the DP-GMM.  Must be one of 'spherical', 'tied', 'diag', 'full'.
+
     n_features : int
         Dimensionality of the Gaussians.
-    n_components : int
+
+    n_components : int (read-only)
         Number of mixture components.
+
     weights : array, shape (`n_components`,)
         Mixing weights for each mixture component.
+
     means : array, shape (`n_components`, `n_features`)
         Mean parameters for each mixture component.
+
     precisions : array
         Precision (inverse covariance) parameters for each mixture
         component.  The shape depends on `covariance_type`:
-            (`n_components`,)                             if 'spherical',
-            (`n_features`, `n_features`)              if 'tied',
+            (`n_components`, 'n_features')                if 'spherical',
+            (`n_features`, `n_features`)                  if 'tied',
             (`n_components`, `n_features`)                if 'diag',
             (`n_components`, `n_features`, `n_features`)  if 'full'
-    converged_ : bool
+
+    `converged_` : bool
         True when convergence was reached in fit(), False
         otherwise.
 
     See Also
     --------
-    GMM : Finite gaussian mixture model fit with EM
-
-    DPGMM : Ininite gaussian mixture model, using the dirichlet
+    GMM : Finite Gaussian mixture model fit with EM
+    DPGMM : Ininite Gaussian mixture model, using the dirichlet
     process, fit with a variational algorithm
     """
 

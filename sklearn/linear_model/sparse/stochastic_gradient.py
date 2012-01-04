@@ -33,7 +33,7 @@ class SGDClassifier(BaseSGDClassifier):
     update is truncated to 0.0 to allow for learning sparse models and achieve
     online feature selection.
 
-    This implementation works on scipy.sparse X and dense coef_.
+    This implementation works on scipy.sparse X and dense `coef_`.
 
     Parameters
     ----------

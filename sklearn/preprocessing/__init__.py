@@ -7,16 +7,17 @@ common data preprocessing steps (scaling, normalization, etc).
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD
-import warnings
-
 import numpy as np
 import scipy.sparse as sp
 
 from ..utils import check_arrays
+from ..utils import warn_if_not_float
 from ..base import BaseEstimator, TransformerMixin
 
-from ._preprocessing import inplace_csr_row_normalize_l1
-from ._preprocessing import inplace_csr_row_normalize_l2
+from ..utils.sparsefuncs import inplace_csr_row_normalize_l1
+from ..utils.sparsefuncs import inplace_csr_row_normalize_l2
+from ..utils.sparsefuncs import inplace_csr_column_scale
+from ..utils.sparsefuncs import mean_variance_axis0
 
 
 def _mean_and_std(X, axis=0, with_mean=True, with_std=True):
@@ -51,7 +52,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
 
     Parameters
     ----------
-    X : array-like
+    X : array-like or CSR matrix.
         The data to center and scale.
 
     axis : int (0 by default)
@@ -71,6 +72,19 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
         copy (if the input is already a numpy array or a scipy.sparse
         CSR matrix and if axis is 1).
 
+    Notes
+    -----
+    This implementation will refuse to center scipy.sparse matrices
+    since it would make them non-sparse and would potentially crash the
+    program with memory exhaustion problems.
+
+    Instead the caller is expected to either set explicitly
+    `with_mean=False` (in that case, only variance scaling will be
+    performed on the features of the CSR matrix) or to call `X.toarray()`
+    if he/she expects the materialized dense array to fit in memory.
+
+    To avoid memory copy the caller should pass a CSR matrix.
+
     See also
     --------
     :class:`sklearn.preprocessing.Scaler` to perform centering and
@@ -78,21 +92,34 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     :class:`sklearn.pipeline.Pipeline`)
     """
     if sp.issparse(X):
-        raise NotImplementedError(
-            "Scaling is not yet implement for sparse matrices")
-    X = np.asarray(X)
-    if X.dtype.kind in ['i', 'u']:
-        warnings.warn('Data of type %s in scale. '
-                      'Converting to float is recommended' % X.dtype)
-    mean_, std_ = _mean_and_std(
-        X, axis, with_mean=with_mean, with_std=with_std)
-    if copy:
-        X = X.copy()
-    Xr = np.rollaxis(X, axis)
-    if with_mean:
-        Xr -= mean_
-    if with_std:
-        Xr /= std_
+        if with_mean:
+            raise ValueError(
+                "Cannot center sparse matrices: pass `with_mean=False` instead"
+                " See docstring for motivation and alternatives.")
+        if axis != 0:
+            raise ValueError("Can only scale sparse matrix on axis=0, "
+                             " got axis=%d" % axis)
+        warn_if_not_float(X, estimator='The scale function')
+        if not sp.isspmatrix_csr(X):
+            X = X.tocsr()
+            copy = False
+        if copy:
+            X = X.copy()
+        _, var = mean_variance_axis0(X)
+        var[var == 0.0] = 1.0
+        inplace_csr_column_scale(X, 1 / np.sqrt(var))
+    else:
+        X = np.asarray(X)
+        warn_if_not_float(X, estimator='The scale function')
+        mean_, std_ = _mean_and_std(
+            X, axis, with_mean=with_mean, with_std=with_std)
+        if copy:
+            X = X.copy()
+        Xr = np.rollaxis(X, axis)
+        if with_mean:
+            Xr -= mean_
+        if with_std:
+            Xr /= std_
     return X
 
 
@@ -158,20 +185,34 @@ class Scaler(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like with shape [n_samples, n_features]
+        X : array-like or CSR matrix with shape [n_samples, n_features]
             The data used to compute the mean and standard deviation
             used for later scaling along the features axis.
         """
         if sp.issparse(X):
-            raise NotImplementedError(
-                "Scaling is not yet implement for sparse matrices")
-        X = np.asarray(X)
-        if X.dtype.kind in ['i', 'u']:
-            warnings.warn('Data of type %s in Scaler.fit. '
-                          'Converting to float is recommended' % X.dtype)
-        self.mean_, self.std_ = _mean_and_std(
-            X, axis=0, with_mean=self.with_mean, with_std=self.with_std)
-        return self
+            if self.with_mean:
+                raise ValueError(
+                    "Cannot center sparse matrices: pass `with_mean=False` "
+                    "instead See docstring for motivation and alternatives.")
+            warn_if_not_float(X, estimator=self)
+            copy = self.copy
+            if not sp.isspmatrix_csr(X):
+                X = X.tocsr()
+                copy = False
+            if copy:
+                X = X.copy()
+            self.mean_ = None
+            _, var = mean_variance_axis0(X)
+            self.std_ = np.sqrt(var)
+            self.std_[var == 0.0] = 1.0
+            inplace_csr_column_scale(X, 1 / self.std_)
+            return self
+        else:
+            X = np.asarray(X)
+            warn_if_not_float(X, estimator=self)
+            self.mean_, self.std_ = _mean_and_std(
+                X, axis=0, with_mean=self.with_mean, with_std=self.with_std)
+            return self
 
     def transform(self, X, y=None, copy=None):
         """Perform standardization by centering and scaling
@@ -183,18 +224,26 @@ class Scaler(BaseEstimator, TransformerMixin):
         """
         copy = copy if copy is not None else self.copy
         if sp.issparse(X):
-            raise NotImplementedError(
-                "Scaling is not yet implement for sparse matrices")
-        X = np.asarray(X)
-        if X.dtype.kind in ['i', 'u']:
-            warnings.warn('Data of type %s in Scaler.transform. '
-                          'Converting to float is recommended' % X.dtype)
-        if copy:
-            X = X.copy()
-        if self.with_mean:
-            X -= self.mean_
-        if self.with_std:
-            X /= self.std_
+            if self.with_mean:
+                raise ValueError(
+                    "Cannot center sparse matrices: pass `with_mean=False` "
+                    "instead See docstring for motivation and alternatives.")
+            warn_if_not_float(X, estimator=self)
+            if not sp.isspmatrix_csr(X):
+                X = X.tocsr()
+                copy = False
+            if copy:
+                X = X.copy()
+            inplace_csr_column_scale(X, 1 / self.std_)
+        else:
+            X = np.asarray(X)
+            warn_if_not_float(X, estimator=self)
+            if copy:
+                X = X.copy()
+            if self.with_mean:
+                X -= self.mean_
+            if self.with_std:
+                X /= self.std_
         return X
 
     def inverse_transform(self, X, copy=None):
@@ -207,15 +256,24 @@ class Scaler(BaseEstimator, TransformerMixin):
         """
         copy = copy if copy is not None else self.copy
         if sp.issparse(X):
-            raise NotImplementedError(
-                "Scaling is not yet implement for sparse matrices")
-        X = np.asarray(X)
-        if copy:
-            X = X.copy()
-        if self.with_std:
-            X *= self.std_
-        if self.with_mean:
-            X += self.mean_
+            if self.with_mean:
+                raise ValueError(
+                    "Cannot uncenter sparse matrices: pass `with_mean=False` "
+                    "instead See docstring for motivation and alternatives.")
+            if not sp.isspmatrix_csr(X):
+                X = X.tocsr()
+                copy = False
+            if copy:
+                X = X.copy()
+            inplace_csr_column_scale(X, self.std_)
+        else:
+            X = np.asarray(X)
+            if copy:
+                X = X.copy()
+            if self.with_std:
+                X *= self.std_
+            if self.with_mean:
+                X += self.mean_
         return X
 
 
@@ -259,9 +317,7 @@ def normalize(X, norm='l2', axis=1, copy=True):
         raise ValueError("'%d' is not a supported axis" % axis)
 
     X = check_arrays(X, sparse_format=sparse_format, copy=copy)[0]
-    if X.dtype.kind in ['i', 'u']:
-        warnings.warn('Data of type %s in normalize. '
-                      'Converting to float is recommended' % X.dtype)
+    warn_if_not_float(X, 'The normalize function')
     if axis == 0:
         X = X.T
 

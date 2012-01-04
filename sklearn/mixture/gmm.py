@@ -136,6 +136,7 @@ class GMM(BaseEstimator):
 
     Attributes
     ----------
+<<<<<<< HEAD
     covariance_type : string (read-only)
         String describing the type of covariance parameters used by
         the GMM.  Must be one of 'spherical', 'tied', 'diag', 'full'.
@@ -150,28 +151,37 @@ class GMM(BaseEstimator):
             (n_features, n_features)               if 'tied',
             (n_components, n_features)             if 'diag',
             (n_components, n_features, n_features) if 'full'
-    converged_ : bool
+    `converged_` : bool
         True when convergence was reached in fit(), False
         otherwise.
+
+    weights : property - this string will be replaced
+
+    means : property - this string will be replaced
+
+    cvtype : property - this string will be replaced
+
+    covars : property - this string will be replaced
+
 
     See Also
     --------
 
     DPGMM : Ininite gaussian mixture model, using the dirichlet
-    process, fit with a variational algorithm
+        process, fit with a variational algorithm
 
 
     VBGMM : Finite gaussian mixture model fit with a variational
-    algorithm, better for situations where there might be too little
-    data to get a good estimate of the covariance matrix.
+        algorithm, better for situations where there might be too little
+        data to get a good estimate of the covariance matrix.
 
     Examples
     --------
+
     >>> import numpy as np
     >>> from sklearn import mixture
     >>> np.random.seed(1)
     >>> g = mixture.GMM(n_components=2)
-
     >>> # Generate random observations with two modes centered on 0
     >>> # and 10 to use for training.
     >>> obs = np.concatenate((np.random.randn(100, 1),
@@ -190,13 +200,13 @@ class GMM(BaseEstimator):
     array([1, 1, 0, 0])
     >>> np.round(g.score([[0], [2], [9], [10]]), 2)
     array([-2.19, -4.58, -1.75, -1.21])
-
     >>> # Refit the model on new data (initial parameters remain the
     >>> # same), this time with an even split between the two modes.
     >>> g.fit(20 * [[0]] +  20 * [[10]])
     GMM(covariance_type='diag', n_components=2)
     >>> np.round(g.weights, 2)
     array([ 0.5,  0.5])
+
     """
 
     def __init__(self, n_components=1, covariance_type='diag',
@@ -220,13 +230,20 @@ class GMM(BaseEstimator):
     @property
     def covariance_type(self):
         """Covariance type of the model.
-
-        Must be one of 'spherical', 'tied', 'diag', 'full'.
+        String describing the type of covariance parameters used by
+        the GMM.  Must be one of 'spherical', 'tied', 'diag', 'full'.
         """
         return self._covariance_type
 
     def _get_covars(self):
-        """Return covars as a full matrix."""
+        """Covariance parameters for each mixture component.
+        The shape depends on `cvtype`::
+
+            (`n_states`, 'n_features')                if 'spherical',
+            (`n_features`, `n_features`)              if 'tied',
+            (`n_states`, `n_features`)                if 'diag',
+            (`n_states`, `n_features`, `n_features`)  if 'full'
+            """
         if self.covariance_type == 'full':
             return self.covars_
         elif self.covariance_type == 'diag':
@@ -244,7 +261,8 @@ class GMM(BaseEstimator):
     covars = property(_get_covars, _set_covars)
 
     def _get_means(self):
-        """Mean parameters for each mixture component."""
+        """Mean parameters for each mixture component 
+        array, shape ``(n_states, n_features)``."""
         return self.means_
 
     def _set_means(self, means):
@@ -262,7 +280,8 @@ class GMM(BaseEstimator):
             (self._covariance_type, self.n_components)
 
     def _get_weights(self):
-        """Mixing weights for each mixture component."""
+        """Mixing weights for each mixture component.      
+        array, shape ``(n_states,)``"""
         return np.exp(self.log_weights_)
 
     def _set_weights(self, weights):
@@ -442,14 +461,18 @@ class GMM(BaseEstimator):
         X : array_like, shape (n, n_features)
             List of n_features-dimensional data points.  Each row
             corresponds to a single data point.
+
         n_iter : int, optional
             Number of EM iterations to perform.
+
         n_init : int, optional
             number of initializations to perform. the best results is kept
+
         params : string, optional
             Controls which parameters are updated in the training
             process.  Can contain any combination of 'w' for weights,
             'm' for means, and 'c' for covars.  Defaults to 'wmc'.
+
         init_params : string, optional
             Controls which parameters are updated in the initialization
             process.  Can contain any combination of 'w' for weights,
