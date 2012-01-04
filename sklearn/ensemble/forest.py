@@ -433,7 +433,7 @@ class RandomForestClassifier(ForestClassifier):
 
     Attributes
     ----------
-    feature_importances_ : array of shape = [n_features]
+    `feature_importances_` : array of shape = [n_features]
         The feature mportances (the higher, the more important the feature).
 
     Notes
@@ -539,7 +539,7 @@ class RandomForestRegressor(ForestRegressor):
 
     Attributes
     ----------
-    feature_importances_ : array of shape = [n_features]
+    `feature_importances_` : array of shape = [n_features]
         The feature mportances (the higher, the more important the feature).
 
     Notes
@@ -646,7 +646,7 @@ class ExtraTreesClassifier(ForestClassifier):
 
     Attributes
     ----------
-    feature_importances_ : array of shape = [n_features]
+    `feature_importances_` : array of shape = [n_features]
         The feature mportances (the higher, the more important the feature).
 
     Notes
@@ -757,7 +757,7 @@ class ExtraTreesRegressor(ForestRegressor):
 
     Attributes
     ----------
-    feature_importances_ : array of shape = [n_features]
+    `feature_importances_` : array of shape = [n_features]
         The feature mportances (the higher, the more important the feature).
 
     Notes
