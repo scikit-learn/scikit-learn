@@ -30,8 +30,12 @@ import time
 import tokenize
 import traceback
 import types
+try:                           # Python 2
+    generate_tokens = tokenize.generate_tokens
+except AttributeError:         # Python 3
+    generate_tokens = tokenize.tokenize
 
-
+PY3 = (sys.version[0] == '3')
 INDENT = ' ' * 8
 
 
@@ -271,14 +275,16 @@ def format_records(records):   # , print_globals=False):
         try:
             # This builds the names list in-place by capturing it from the
             # enclosing scope.
-            tokenize.tokenize(linereader, tokeneater)
-        except IndexError:
+            for token in generate_tokens(linereader):
+                tokeneater(*token)
+        except (IndexError, UnicodeDecodeError):
             # signals exit of tokenizer
             pass
-        except tokenize.TokenError, msg:
-            print ("An unexpected error occurred while tokenizing input\n"
-                    "The following traceback may be corrupted or invalid\n"
-                    "The error message is: %s\n" % msg)
+        except tokenize.TokenError,msg:
+            _m = ("An unexpected error occurred while tokenizing input\n"
+                  "The following traceback may be corrupted or invalid\n"
+                  "The error message is: %s\n" % msg)
+            error(_m)
 
         # prune names list of duplicates, but keep the right order
         unique_names = uniq_stable(names)
@@ -341,7 +347,7 @@ def format_exc(etype, evalue, etb, context=5, tb_offset=0):
         pass
 
     # Header with the exception type, python version, and date
-    pyver = 'Python ' + string.split(sys.version)[0] + ': ' + sys.executable
+    pyver = 'Python ' + sys.version.split()[0] + ': ' + sys.executable
     date = time.ctime(time.time())
     pid = 'PID: %i' % os.getpid()
 
@@ -370,7 +376,7 @@ def format_exc(etype, evalue, etb, context=5, tb_offset=0):
         etype_str, evalue_str = map(str, (etype, evalue))
     # ... and format it
     exception = ['%s: %s' % (etype_str, evalue_str)]
-    if type(evalue) is types.InstanceType:
+    if (not PY3) and type(evalue) is types.InstanceType:
         try:
             names = [w for w in dir(evalue) if isinstance(w, basestring)]
         except:

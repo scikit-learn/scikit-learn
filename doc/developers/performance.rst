@@ -282,8 +282,6 @@ project.
 TODO: html report, type declarations, bound checks, division by zero checks,
 memory alignement, direct blas calls...
 
-.. _cython:: http://cython.org
-
 - http://www.euroscipy.org/file/3696?vid=download
 - http://conference.scipy.org/proceedings/SciPy2009/paper_1/
 - http://conference.scipy.org/proceedings/SciPy2009/paper_2/

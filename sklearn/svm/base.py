@@ -1,3 +1,5 @@
+from abc import ABCMeta, abstractmethod
+
 import numpy as np
 
 from . import libsvm, liblinear
@@ -39,8 +41,9 @@ class BaseLibSVM(BaseEstimator):
     """Base class for estimators that use libsvm as backing library
 
     This implements support vector machine classification and regression.
-    Should not be used directly, use derived classes instead
     """
+
+    __metaclass__ = ABCMeta
 
     def __init__(self, impl, kernel, degree, gamma, coef0,
                  tol, C, nu, epsilon, shrinking, probability, cache_size,
@@ -71,6 +74,18 @@ class BaseLibSVM(BaseEstimator):
         self.probability = probability
         self.cache_size = cache_size
         self.scale_C = scale_C
+
+    @abstractmethod
+    def fit(self, X, y, class_weight=None, sample_weight=None):
+        pass
+
+    @abstractmethod
+    def predict(self, X):
+        pass
+
+    @abstractmethod
+    def predict_proba(self, X):
+        pass
 
     def predict_log_proba(self, T):
         """Compute the log likehoods each possible outcomes of samples in T.

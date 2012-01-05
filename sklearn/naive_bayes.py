@@ -287,13 +287,15 @@ class MultinomialNB(BaseDiscreteNB):
     Attributes
     ----------
     `intercept_`, `class_log_prior_` : array, shape = [n_classes]
-        Log probability of each class (smoothed).
+        Smoothed empirical log probability for each class.
 
     `feature_log_prob_`, `coef_` : array, shape = [n_classes, n_features]
-        Empirical log probability of features given a class, P(x_i|y).
+        Empirical log probability of features
+        given a class, P(x_i|y).
 
-        (`intercept_` and `coef_` are properties referring to
-        `class_log_prior_` and `feature_log_prob_`, respectively.)
+        (`intercept_` and `coef_` are properties
+        referring to `class_log_prior_` and
+        `feature_log_prob_`, respectively.)
 
     Examples
     --------

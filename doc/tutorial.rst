@@ -31,18 +31,18 @@ We can separate learning problems in a few large categories:
       categories.
 
     * **regression**: if the desired output consists of one or more
-        continuous variables, then the task is called *regression*. An
-        example of a regression problem would be the prediction of the
-        length of a salmon as a function of its age and weight.
+      continuous variables, then the task is called *regression*. An
+      example of a regression problem would be the prediction of the
+      length of a salmon as a function of its age and weight.
 
  * **unsupervised learning**, in which the training data consists of a
-     set of input vectors x without any corresponding target
-     values. The goal in such problems may be to discover groups of
-     similar examples within the data, where it is called
-     *clustering*, or to determine the distribution of data within the
-     input space, known as *density estimation*, or to project the data
-     from a high-dimensional space down to two or thee dimensions for
-     the purpose of *visualization*.
+   set of input vectors x without any corresponding target
+   values. The goal in such problems may be to discover groups of
+   similar examples within the data, where it is called
+   *clustering*, or to determine the distribution of data within the
+   input space, known as *density estimation*, or to project the data
+   from a high-dimensional space down to two or thee dimensions for
+   the purpose of *visualization*.
 
 .. topic:: Training set and testing set
 

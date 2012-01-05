@@ -5,6 +5,8 @@ About us
 
 .. include:: ../AUTHORS.rst
 
+.. _citing-scikit-learn:
+
 Citing scikit-learn
 -------------------
 
@@ -17,7 +19,7 @@ citations to the following paper:
 
  Bibtex entry::
 
-   @article{,
+   @article{scikit-learn,
     title={{Scikit-learn: Machine Learning in Python }},
     author={Pedregosa, F. and Varoquaux, G. and Gramfort, A. and Michel, V.
             and Thirion, B. and Grisel, O. and Blondel, M. and Prettenhofer, P.
@@ -41,7 +43,7 @@ events.
 
 `Google <http://code.google.com/opensource/>`_ sponsored David
 Cournapeau with a Summer of Code Scholarship in the summer of 2007 and
-`Vlad Niculae <http://venefrombucharest.wordpress.com/>`_ in 2011. If
+`Vlad Niculae`_ in 2011. If
 you would like to participate in the next Google Summer of code
 program, please see `this page
 <http://github.com/scikit-learn/scikit-learn/wiki/SummerOfCode>`_

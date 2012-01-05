@@ -21,6 +21,10 @@ _INDPTR_DTYPE = _temp_csr.indptr.dtype
 del _temp_csr
 
 
+cdef bytes COMMA = u','.encode('ascii')
+cdef bytes COLON = u':'.encode('ascii')
+
+
 def _load_svmlight_file(f, n_features, dtype, bint multilabel):
     cdef bytes line
     cdef char *hash_ptr, *line_cstr
@@ -50,7 +54,7 @@ def _load_svmlight_file(f, n_features, dtype, bint multilabel):
 
         target, features = line_parts[0], line_parts[1:]
         if multilabel:
-            target = [float(y) for y in target.split(',')]
+            target = [float(y) for y in target.split(COMMA)]
             target.sort()
             labels.append(tuple(target))
         else:
@@ -58,7 +62,7 @@ def _load_svmlight_file(f, n_features, dtype, bint multilabel):
         indptr.append(len(data))
 
         for i in xrange(1, len(line_parts)):
-            idx, value = line_parts[i].split(":", 1)
+            idx, value = line_parts[i].split(COLON, 1)
             # Real programmers count from zero.
             idx = int(idx)
             if idx <= 0:
