@@ -13,6 +13,8 @@ Generalized Linear models.
 
 import numpy as np
 import scipy.sparse as sp
+from scipy import linalg
+import scipy.sparse.linalg as sp_linalg
 
 from ..base import BaseEstimator
 from ..base import RegressorMixin
@@ -138,14 +140,19 @@ class LinearRegression(LinearModel):
         -------
         self : returns an instance of self.
         """
-        X = np.asarray(X)
+        X = safe_asarray(X)
         y = np.asarray(y)
 
         X, y, X_mean, y_mean, X_std = self._center_data(X, y,
                 self.fit_intercept, self.normalize, self.copy_X)
 
-        self.coef_, self.residues_, self.rank_, self.singular_ = \
-                np.linalg.lstsq(X, y)
+        if sp.issparse(X):
+            out = sp_linalg.lsqr(X, y)
+            self.coef_ = out[0]
+            self.residues_ = out[3]
+        else:
+            self.coef_, self.residues_, self.rank_, self.singular_ = \
+                    linalg.lstsq(X, y)
 
         self._set_intercept(X_mean, y_mean, X_std)
         return self
