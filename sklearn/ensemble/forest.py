@@ -280,9 +280,8 @@ class ForestClassifier(BaseForest, ClassifierMixin):
         # Parallel loop
         all_p = Parallel(n_jobs=self.n_jobs)(
             delayed(_parallel_predict_proba)(
-                self.estimators_[starts[i]:starts[i+1]],
-                X,
-                self.n_classes_)
+                self.estimators_[starts[i]:starts[i + 1]],
+                X, self.n_classes_)
             for i in xrange(n_jobs))
 
         # Reduce
@@ -357,8 +356,7 @@ class ForestRegressor(BaseForest, RegressorMixin):
         # Parallel loop
         all_y_hat = Parallel(n_jobs=self.n_jobs)(
             delayed(_parallel_predict_regression)(
-                self.estimators_[starts[i]:starts[i+1]],
-                X)
+                self.estimators_[starts[i]:starts[i + 1]], X)
             for i in xrange(n_jobs))
 
         # Reduce
@@ -395,22 +393,25 @@ class RandomForestClassifier(ForestClassifier):
         Note: this parameter is tree-specific.
 
     min_density : float, optional (default=0.1)
-        This parameter trades runtime against memory requirement. It controls
-        the minimum density of the `sample_mask` (i.e. the fraction of samples
-        in the mask). If the density falls below this threshold the mask is
-        recomputed and the input data is packed which results in data copying.
-        If `min_density` equals to one, the partitions are always represented as
-        copies of the original data. Otherwise, partitions are represented as
-        bit masks (aka sample masks).
+        This parameter trades runtime against memory requirement. It
+        controls the minimum density of the `sample_mask` (i.e. the
+        fraction of samples in the mask). If the density falls below this
+        threshold the mask is recomputed and the input data is packed
+        which results in data copying.  If `min_density` equals to one,
+        the partitions are always represented as copies of the original
+        data. Otherwise, partitions are represented as bit masks (aka
+        sample masks).
         Note: this parameter is tree-specific.
 
     max_features : int, string or None, optional (default="auto")
-        The number of features to consider when looking for the best split.
-        If "auto", then `max_features=sqrt(n_features)` on classification
-        tasks and `max_features=n_features` on regression problems. If "sqrt",
-        then `max_features=sqrt(n_features)`. If "log2", then
-        `max_features=log2(n_features)`. If None, then
-        `max_features=n_features`.
+        The number of features to consider when looking for the best split:
+          - If "auto", then `max_features=sqrt(n_features)` on
+            classification tasks and `max_features=n_features` on regression
+            problems.
+          - If "sqrt", then `max_features=sqrt(n_features)`.
+          - If "log2", then `max_features=log2(n_features)`.
+          - If None, then `max_features=n_features`.
+
         Note: this parameter is tree-specific.
 
     bootstrap : boolean, optional (default=True)
@@ -432,7 +433,7 @@ class RandomForestClassifier(ForestClassifier):
 
     Attributes
     ----------
-    feature_importances_ : array of shape = [n_features]
+    `feature_importances_` : array of shape = [n_features]
         The feature mportances (the higher, the more important the feature).
 
     Notes
@@ -500,22 +501,25 @@ class RandomForestRegressor(ForestRegressor):
         Note: this parameter is tree-specific.
 
     min_density : float, optional (default=0.1)
-        This parameter trades runtime against memory requirement. It controls
-        the minimum density of the `sample_mask` (i.e. the fraction of samples
-        in the mask). If the density falls below this threshold the mask is
-        recomputed and the input data is packed which results in data copying.
-        If `min_density` equals to one, the partitions are always represented as
-        copies of the original data. Otherwise, partitions are represented as
-        bit masks (aka sample masks).
+        This parameter trades runtime against memory requirement. It
+        controls the minimum density of the `sample_mask` (i.e. the
+        fraction of samples in the mask). If the density falls below this
+        threshold the mask is recomputed and the input data is packed
+        which results in data copying.  If `min_density` equals to one,
+        the partitions are always represented as copies of the original
+        data. Otherwise, partitions are represented as bit masks (aka
+        sample masks).
         Note: this parameter is tree-specific.
 
     max_features : int, string or None, optional (default="auto")
-        The number of features to consider when looking for the best split.
-        If "auto", then `max_features=sqrt(n_features)` on classification
-        tasks and `max_features=n_features` on regression problems. If "sqrt",
-        then `max_features=sqrt(n_features)`. If "log2", then
-        `max_features=log2(n_features)`. If None, then
-        `max_features=n_features`.
+        The number of features to consider when looking for the best split:
+          - If "auto", then `max_features=sqrt(n_features)` on
+            classification tasks and `max_features=n_features`
+            on regression problems.
+          - If "sqrt", then `max_features=sqrt(n_features)`.
+          - If "log2", then `max_features=log2(n_features)`.
+          - If None, then `max_features=n_features`.
+
         Note: this parameter is tree-specific.
 
     bootstrap : boolean, optional (default=True)
@@ -537,7 +541,7 @@ class RandomForestRegressor(ForestRegressor):
 
     Attributes
     ----------
-    feature_importances_ : array of shape = [n_features]
+    `feature_importances_` : array of shape = [n_features]
         The feature mportances (the higher, the more important the feature).
 
     Notes
@@ -606,22 +610,25 @@ class ExtraTreesClassifier(ForestClassifier):
         Note: this parameter is tree-specific.
 
     min_density : float, optional (default=0.1)
-        This parameter trades runtime against memory requirement. It controls
-        the minimum density of the `sample_mask` (i.e. the fraction of samples
-        in the mask). If the density falls below this threshold the mask is
-        recomputed and the input data is packed which results in data copying.
-        If `min_density` equals to one, the partitions are always represented as
-        copies of the original data. Otherwise, partitions are represented as
-        bit masks (aka sample masks).
+        This parameter trades runtime against memory requirement. It
+        controls the minimum density of the `sample_mask` (i.e. the
+        fraction of samples in the mask). If the density falls below this
+        threshold the mask is recomputed and the input data is packed
+        which results in data copying.  If `min_density` equals to one,
+        the partitions are always represented as copies of the original
+        data. Otherwise, partitions are represented as bit masks (aka
+        sample masks).
         Note: this parameter is tree-specific.
 
     max_features : int, string or None, optional (default="auto")
         The number of features to consider when looking for the best split.
-        If "auto", then `max_features=sqrt(n_features)` on classification
-        tasks and `max_features=n_features` on regression problems. If "sqrt",
-        then `max_features=sqrt(n_features)`. If "log2", then
-        `max_features=log2(n_features)`. If None, then
-        `max_features=n_features`.
+          - If "auto", then `max_features=sqrt(n_features)` on
+            classification tasks and `max_features=n_features`
+            on regression problems.
+          - If "sqrt", then `max_features=sqrt(n_features)`.
+          - If "log2", then `max_features=log2(n_features)`.
+          - If None, then `max_features=n_features`.
+
         Note: this parameter is tree-specific.
 
     bootstrap : boolean, optional (default=False)
@@ -643,7 +650,7 @@ class ExtraTreesClassifier(ForestClassifier):
 
     Attributes
     ----------
-    feature_importances_ : array of shape = [n_features]
+    `feature_importances_` : array of shape = [n_features]
         The feature mportances (the higher, the more important the feature).
 
     Notes
@@ -714,22 +721,25 @@ class ExtraTreesRegressor(ForestRegressor):
         Note: this parameter is tree-specific.
 
     min_density : float, optional (default=0.1)
-        This parameter trades runtime against memory requirement. It controls
-        the minimum density of the `sample_mask` (i.e. the fraction of samples
-        in the mask). If the density falls below this threshold the mask is
-        recomputed and the input data is packed which results in data copying.
-        If `min_density` equals to one, the partitions are always represented as
-        copies of the original data. Otherwise, partitions are represented as
-        bit masks (aka sample masks).
+        This parameter trades runtime against memory requirement. It
+        controls the minimum density of the `sample_mask` (i.e. the
+        fraction of samples in the mask). If the density falls below this
+        threshold the mask is recomputed and the input data is packed
+        which results in data copying.  If `min_density` equals to one,
+        the partitions are always represented as copies of the original
+        data. Otherwise, partitions are represented as bit masks (aka
+        sample masks).
         Note: this parameter is tree-specific.
 
     max_features : int, string or None, optional (default="auto")
-        The number of features to consider when looking for the best split.
-        If "auto", then `max_features=sqrt(n_features)` on classification
-        tasks and `max_features=n_features` on regression problems. If "sqrt",
-        then `max_features=sqrt(n_features)`. If "log2", then
-        `max_features=log2(n_features)`. If None, then
-        `max_features=n_features`.
+        The number of features to consider when looking for the best split:
+          - If "auto", then `max_features=sqrt(n_features)` on
+            classification tasks and `max_features=n_features`
+            on regression problems.
+          - If "sqrt", then `max_features=sqrt(n_features)`.
+          - If "log2", then `max_features=log2(n_features)`.
+          - If None, then `max_features=n_features`.
+
         Note: this parameter is tree-specific.
 
     bootstrap : boolean, optional (default=False)
@@ -752,7 +762,7 @@ class ExtraTreesRegressor(ForestRegressor):
 
     Attributes
     ----------
-    feature_importances_ : array of shape = [n_features]
+    `feature_importances_` : array of shape = [n_features]
         The feature mportances (the higher, the more important the feature).
 
     Notes

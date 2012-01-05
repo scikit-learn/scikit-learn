@@ -49,7 +49,7 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
 
     This function generates a GraphViz representation of the decision tree,
     which is then written into `out_file`. Once exported, graphical renderings
-    can be generated using, for example,::
+    can be generated using, for example::
 
         $ dot -Tps tree.dot -o tree.ps      (PostScript format)
         $ dot -Tpng tree.dot -o tree.png    (PNG format)
@@ -81,7 +81,7 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
 
     >>> clf = clf.fit(iris.data, iris.target)
     >>> import tempfile
-    >>> out_file = export_graphviz(clf, out_file=tempfile.TemporaryFile())
+    >>> out_file = tree.export_graphviz(clf, out_file=tempfile.TemporaryFile())
     >>> out_file.close()
     """
     def node_to_str(tree, node_id):
@@ -445,8 +445,9 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
                 max_features = max(1, int(np.log2(self.n_features_)))
 
             else:
-                raise ValueError("Invalid value for max_features. Allowed string "
-                                 "values are \"auto\", \"sqrt\" or \"log2\".")
+                raise ValueError(
+                    'Invalid value for max_features. Allowed string '
+                    'values are "auto", "sqrt" or "log2".')
 
         elif self.max_features is None:
             max_features = self.n_features_
@@ -551,13 +552,14 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         The minimum number of samples required to split an internal node.
 
     min_density : float, optional (default=0.1)
-        This parameter trades runtime against memory requirement. It controls
-        the minimum density of the `sample_mask` (i.e. the fraction of samples
-        in the mask). If the density falls below this threshold the mask is
-        recomputed and the input data is packed which results in data copying.
-        If `min_density` equals to one, the partitions are always represented as
-        copies of the original data. Otherwise, partitions are represented as
-        bit masks (aka sample masks).
+        This parameter trades runtime against memory requirement. It
+        controls the minimum density of the `sample_mask` (i.e. the
+        fraction of samples in the mask). If the density falls below this
+        threshold the mask is recomputed and the input data is packed
+        which results in data copying.  If `min_density` equals to one,
+        the partitions are always represented as copies of the original
+        data. Otherwise, partitions are represented as bit masks (aka
+        sample masks).
 
     max_features : int, string or None, optional (default=None)
         The number of features to consider when looking for the best split.
@@ -579,10 +581,10 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
     Attributes
     ----------
-    tree_ : Tree object
+    `tree_` : Tree object
         The underlying Tree object.
 
-    feature_importances_ : array of shape = [n_features]
+    `feature_importances_` : array of shape = [n_features]
         The feature mportances (the higher, the more important the feature).
         The importance I(f) of a feature f is computed as the (normalized)
         total reduction of error brought by that feature. It is also known as
@@ -710,13 +712,14 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         The minimum number of samples required to split an internal node.
 
     min_density : float, optional (default=0.1)
-        This parameter trades runtime against memory requirement. It controls
-        the minimum density of the `sample_mask` (i.e. the fraction of samples
-        in the mask). If the density falls below this threshold the mask is
-        recomputed and the input data is packed which results in data copying.
-        If `min_density` equals to one, the partitions are always represented as
-        copies of the original data. Otherwise, partitions are represented as
-        bit masks (aka sample masks).
+        This parameter trades runtime against memory requirement. It
+        controls the minimum density of the `sample_mask` (i.e. the
+        fraction of samples in the mask). If the density falls below this
+        threshold the mask is recomputed and the input data is packed
+        which results in data copying.  If `min_density` equals to one,
+        the partitions are always represented as copies of the original
+        data. Otherwise, partitions are represented as bit masks (aka
+        sample masks).
 
     max_features : int, string or None, optional (default=None)
         The number of features to consider when looking for the best split.
@@ -738,10 +741,10 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
 
     Attributes
     ----------
-    tree_ : Tree object
+    `tree_` : Tree object
         The underlying Tree object.
 
-    feature_importances_ : array of shape = [n_features]
+    `feature_importances_` : array of shape = [n_features]
         The feature mportances (the higher, the more important the feature).
         The importance I(f) of a feature f is computed as the (normalized)
         total reduction of error brought by that feature. It is also known as
@@ -858,7 +861,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
     See also
     --------
-    ExtraTreeClassifier, ExtraTreesClassifier, ExtraTreesRegressor
+    ExtraTreeClassifier, sklearn.ensemble.ExtraTreesClassifier, sklearn.ensemble.ExtraTreesRegressor
 
     Notes
     -----

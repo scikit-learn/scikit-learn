@@ -147,8 +147,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
             'fmin_cobyla', 'Welch'
 
-        'Welch' optimizer is dued to Welch et al., see reference [WBSWM1992]_. It
-        consists in iterating over several one-dimensional optimizations
+        'Welch' optimizer is dued to Welch et al., see reference [WBSWM1992]_.
+        It consists in iterating over several one-dimensional optimizations
         instead of running one single multi-dimensional optimization.
 
     random_start : int, optional
@@ -163,6 +163,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
     --------
     >>> import numpy as np
     >>> from sklearn.gaussian_process import GaussianProcess
+    >>> from sklearn.utils import array2d
     >>> X = array2d([1., 3., 5., 6., 7., 8.]).T
     >>> y = (X * np.sin(X)).ravel()
     >>> gp = GaussianProcess(theta0=0.1, thetaL=.001, thetaU=1.)
@@ -182,8 +183,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         DACE - A MATLAB Kriging Toolbox.`
         http://www2.imm.dtu.dk/~hbn/dace/dace.pdf
 
-    .. [WBSWM1992] `W.J. Welch, R.J. Buck, J. Sacks, H.P. Wynn, T.J. Mitchell, and M.D.
-        Morris (1992). Screening, predicting, and computer experiments.
+    .. [WBSWM1992] `W.J. Welch, R.J. Buck, J. Sacks, H.P. Wynn, T.J. Mitchell,
+        and M.D.  Morris (1992). Screening, predicting, and computer experiments.
         Technometrics, 34(1) 15--25.`
         http://www.jstor.org/pss/1269548
     """
