@@ -17,6 +17,9 @@ from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import normalize
 from ..utils.fixes import Counter
 
+# This list of English stop words is taken from the "Glasgow Information
+# Retrieval Group". The original list can be found at
+# http://ir.dcs.gla.ac.uk/resources/linguistic_utils/stop_words
 ENGLISH_STOP_WORDS = frozenset([
     "a", "about", "above", "across", "after", "afterwards", "again", "against",
     "all", "almost", "alone", "along", "already", "also", "although", "always",
@@ -460,10 +463,12 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     -----
     **References**:
 
-    .. [Yates2011] `R. Baeza-Yates and B. Ribeiro-Neto (2011). Modern Information Retrieval.
-        Addison Wesley, pp. 68–74.`
-    .. [MSR2008] `C.D. Manning, H. Schütze and P. Raghavan (2008). Introduction to
-        Information Retrieval. Cambridge University Press, pp. 121–125.`
+    .. [Yates2011] `R. Baeza-Yates and B. Ribeiro-Neto (2011). Modern
+                   Information Retrieval. Addison Wesley, pp. 68–74.`
+
+    .. [MSR2008] `C.D. Manning, H. Schütze and P. Raghavan (2008). Introduction
+                 to Information Retrieval. Cambridge University Press,
+                 pp. 121–125.`
     """
 
     def __init__(self, norm='l2', use_idf=True, smooth_idf=True):
