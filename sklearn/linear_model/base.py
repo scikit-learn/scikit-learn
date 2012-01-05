@@ -107,6 +107,15 @@ class LinearRegression(LinearModel):
     `intercept_` : array
         Independent term in the linear model.
 
+    Parameters
+    ----------
+    fit_intercept : boolean, optional
+        wether to calculate the intercept for this model. If set
+        to false, no intercept will be used in calculations
+        (e.g. data is expected to be already centered).
+    normalize : boolean, optional
+        If True, the regressors X are normalized
+
     Notes
     -----
     From the implementation point of view, this is just plain Ordinary
@@ -125,17 +134,10 @@ class LinearRegression(LinearModel):
 
         Parameters
         ----------
-        X : numpy array of shape [n_samples,n_features]
+        X : numpy array or sparse matrix of shape [n_samples,n_features]
             Training data
         y : numpy array of shape [n_samples]
             Target values
-        fit_intercept : boolean, optional
-            wether to calculate the intercept for this model. If set
-            to false, no intercept will be used in calculations
-            (e.g. data is expected to be already centered).
-        normalize : boolean, optional
-            If True, the regressors X are normalized
-
         Returns
         -------
         self : returns an instance of self.
