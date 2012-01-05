@@ -523,8 +523,8 @@ class RidgeCV(LinearModel):
             gs = GridSearchCV(Ridge(fit_intercept=self.fit_intercept),
                               parameters, fit_params=fit_params, cv=self.cv)
             gs.fit(X, y)
-            estimator = gs.best_estimator
-            self.best_alpha = gs.best_estimator.alpha
+            estimator = gs.best_estimator_
+            self.best_alpha = gs.best_estimator_.alpha
 
         self.coef_ = estimator.coef_
         self.intercept_ = estimator.intercept_
