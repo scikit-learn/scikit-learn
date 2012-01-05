@@ -396,7 +396,7 @@ previously chosen dictionary elements.
 
 .. topic:: References:
 
- * http://www.cs.technion.ac.il/~ronrubin/Publications/KSVX-OMP-v2.pdf
+ * http://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
 
  * `Matching pursuits with time-frequency dictionaries
    <http://blanche.polytechnique.fr/~mallat/papiers/MallatPursuit93.pdf>`_,
