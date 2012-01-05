@@ -58,6 +58,9 @@ def configuration(parent_package='', top_path=None):
     # add the test directory
     config.add_subpackage('tests')
 
+    # Generate __config__.py file: this helps handle inplace issues
+    config.make_config_py()
+
     return config
 
 if __name__ == '__main__':

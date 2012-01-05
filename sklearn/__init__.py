@@ -44,3 +44,11 @@ __all__ = ['check_build', 'cross_validation', 'cluster', 'covariance',
            'preprocessing', 'qda', 'svm', 'test', 'clone', 'pls']
 
 __version__ = '0.10-git'
+
+try:
+    from sklearn.__config__ import show as show_config
+except ImportError:
+    msg = """Error importing scikit-learn: you cannot import sklearn while
+    being in scikit-learn source directory; please exit the source
+    tree first, and relaunch your python intepreter."""
+    raise ImportError(msg)
