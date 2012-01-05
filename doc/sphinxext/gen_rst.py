@@ -242,7 +242,7 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
     stdout_path = os.path.join(image_dir,
                                'stdout_%s.txt' % base_image_name)
     thumb_file = os.path.join(thumb_dir, fname[:-3] + '.png')
-    if plot_gallery and fname.startswith('plot'):
+    if False:#plot_gallery and fname.startswith('plot'):
         # generate the plot as png image if file name
         # starts with plot and if it is more recent than an
         # existing image.
@@ -360,4 +360,7 @@ def setup(app):
     #  on Sphinx 1.0.7
     build_image_dir = '_build/html/_images'
     if os.path.exists(build_image_dir):
-        shutil.rmtree(build_image_dir)
+        filelist = os.listdir(build_image_dir)
+        for filename in filelist:
+            if filename.endswith('png'):
+                os.remove(os.path.join(build_image_dir, filename))
