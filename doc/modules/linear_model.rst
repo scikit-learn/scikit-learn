@@ -409,9 +409,21 @@ Bayesian regression techniques can be used to include regularization
 parameters in the estimation procedure: the regularization parameter is
 not set in a hard sense but tuned to the data at hand.
 
-This can be done by introducing some prior knowledge over the parameters.
-For example, penalization by weighted :math:`\ell_{2}` norm is equivalent
-to setting Gaussian priors on the weights.
+This can be done by introducing `uninformative priors <http://en.wikipedia.org/wiki/Non-informative_prior#Uninformative_priors>`__ over the parameters
+hyper parameters of the model.
+The :math:`\ell_{2}` regularization used in `Ridge Regression`_ is equivalent
+to finding a maximum a-postiori solution under a Gaussian prior over the
+parameters :math:`w` with precision :math:`\lambda^-1`.
+Instead of setting `\lambda` manually, it is possible to treat it as
+a random variable to be estimated from the data.
+
+To obtain a fully probabilistic model, the output :math:`y` is assumed
+to be Gaussian distributed around :math:`X w`:
+
+.. math::  p(y|X,w,\alpha) = \mathcal{N}(y|X w,\alpha)
+
+Alpha is again treated as a random variable that is to be estimated from the
+data.
 
 The advantages of Bayesian Regression are:
 
@@ -425,40 +437,40 @@ The disadvantages of Bayesian regression include:
     - Inference of the model can be time consuming.
 
 
+.. topic:: References
+
+ * A good introduction to Bayesian methods is given in C. Bishop: Pattern
+   Recognition and Machine learning 
+
+ * Original Algorithm is detailed in the  book `Bayesian learning for neural
+   networks` by Radford M. Neal
+
 .. _bayesian_ridge_regression:
 
 Bayesian Ridge Regression
 -------------------------
 
-:class:`BayesianRidge` tries to avoid the overfit issue of
-:ref:`ordinary_least_squares`, by adding the following prior on
-:math:`\beta`:
+:class:`BayesianRidge` estimates a probabilistic model of the
+regression problem as described above.
+The prior for the parameter :math:`w` is given by a spherical Gaussian:
 
-.. math:: p(\beta|\lambda) =
-    \mathcal{N}(\beta|0,\lambda^{-1}\bold{I_{p}})
+.. math:: p(w|\lambda) =
+    \mathcal{N}(w|0,\lambda^{-1}\bold{I_{p}})
+
+The priors over :math:`\alpha` and :math:`\lambda` are choosen to
+be `gamma distributions <http://en.wikipedia.org/wiki/Gamma_distribution>`__,
+the conjugate prior for the precision of the Gaussian.
 
 The resulting model is called *Bayesian Ridge Regression*, it is
-similar to the classical :class:`Ridge`.  :math:`\lambda` is a
-*hyper-parameter* and the prior over :math:`\beta` performs a
-shrinkage or regularization, by constraining the values of the weights
-to be small. Indeed, with a large value of :math:`\lambda`, the
-Gaussian is narrowed around 0 which does not allow large values of
-:math:`\beta`, and with low value of :math:`\lambda`, the Gaussian is
-very flattened which allows values of :math:`\beta`.  Here, we use a
-*non-informative* prior for :math:`\lambda`.
+similar to the classical :class:`Ridge`. 
+The parameters :math:`w`, :math:`\alpha` and :math:`\lambda` are
+estimated jointly during the fit of the model.
+The remaining hyperparameters are the parameters of the gamma
+priors over :math:`\alpha` and :math:`\lambda`.
+These are usually choosen to be *non-informative*.
 The parameters are estimated by maximizing the *marginal log likelihood*.
-There is also a Gamma prior for :math:`\lambda` and :math:`\alpha`:
 
-.. math:: g(\alpha|\alpha_1,\alpha_2) = \frac{\alpha_2^{\alpha_1}}
-    {\Gamma(\alpha_1)} \alpha^{\alpha_1-1} e^{-\alpha_2 {\alpha}}
-
-
-.. math:: g(\lambda|\lambda_1,\lambda_2) = \frac{\lambda_2^{\lambda_1}}
-    {\Gamma(\lambda_1)} \lambda^{\lambda_1-1} e^{-\lambda_2 {\lambda}}
-
-By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e^{-6}`,
-*i.e.* very slightly informative priors.
-
+By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e^{-6}`.
 
 
 .. figure:: ../auto_examples/linear_model/images/plot_bayesian_ridge_1.png
@@ -484,7 +496,7 @@ After being fitted, the model can then be used to predict new values::
     array([ 0.50000013])
 
 
-The weights :math:`\beta` of the model can be access::
+The weights :math:`w` of the model can be access::
 
     >>> clf.coef_
     array([ 0.49999993,  0.49999993])
@@ -505,28 +517,26 @@ Regression is more robust to ill-posed problem.
 
 
 Automatic Relevance Determination - ARD
-=======================================
+---------------------------------------
 
-:class:`ARDRegression` adds a more sophisticated prior :math:`\beta`,
-where we assume that each weight :math:`\beta_{i}` is drawn in a
+:class:`ARDRegression` is very similar to `Bayesian Ridge Regression`_,
+but poses a different prior over :math:`w`, by dropping the assuption
+of the Gaussian being spherical.
+
+Instead, the distribution over :math:`w` is assumed to be an axis-parallel,
+elliptical Gaussian distribution.
+This means each weight :math:`w_{i}` is drawn from a
 Gaussian distribution, centered on zero and with a precision
 :math:`\lambda_{i}`:
 
-.. math:: p(\beta|\lambda) = \mathcal{N}(\beta|0,A^{-1})
+.. math:: p(w|\lambda) = \mathcal{N}(w|0,A^{-1})
 
 with :math:`diag \; (A) = \lambda = \{\lambda_{1},...,\lambda_{p}\}`.
-There is also a Gamma prior for :math:`\lambda` and :math:`\alpha`:
 
-.. math:: g(\alpha|\alpha_1,\alpha_2) = \frac{\alpha_2^{\alpha_1}}
-    {\Gamma(\alpha_1)} \alpha^{\alpha_1-1} e^{-\alpha_2 {\alpha}}
-
-
-.. math:: g(\lambda|\lambda_1,\lambda_2) = \frac{\lambda_2^{\lambda_1}}
-    {\Gamma(\lambda_1)} \lambda^{\lambda_1-1} e^{-\lambda_2 {\lambda}}
-
-By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e-6`, *i.e.*
- very slightly informative priors.
-
+In constrast to `Bayesian Ridge Regression`_, each coordinate of :math:`w_{i}`
+has its own standard deviation :math:`\lambda_i`. The prior over all
+:math:`\lambda_i` is choosen to be the same gamma distribution given by
+hyperparameters :math:`\lambda_1` and :math:`\lambda_2`.
 
 .. figure:: ../auto_examples/linear_model/images/plot_ard_1.png
    :target: ../auto_examples/linear_model/plot_ard.html
@@ -538,46 +548,7 @@ By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e-6`, *i.e.*
 
   * :ref:`example_linear_model_plot_ard.py`
 
-Mathematical formulation
-------------------------
 
-A prior is introduced as a distribution :math:`p(\theta)` over the parameters.
-This distribution is set before processing the data. The parameters of a prior
-distribution are called *hyper-parameters*. This description is based on the
-Bayes theorem :
-
-.. math:: p(\theta|\{X,y\})
-   = \frac{p(\{X,y\}|\theta)p(\theta)}{p(\{X,y\})}
-
-With :
-    - :math:`p({X, y}|\theta)` the likelihood : it expresses how probable it is
-      to observe :math:`{X,y}` given :math:`\theta`.
-
-    - :math:`p({X, y})` the marginal probability of the data : it can be
-      considered as a normalizing constant, and is computed by integrating
-      :math:`p({X, y}|\theta)` with respect to :math:`\theta`.
-
-    - :math:`p(\theta)` the prior over the parameters : it expresses the
-      knowledge that we can have about :math:`\theta` before processing the
-      data.
-
-    - :math:`p(\theta|{X, y})` the conditional probability (or posterior
-      probability) : it expresses the uncertainty in :math:`\theta`  after
-      observing the data.
-
-
-All the following regressions are based on the following Gaussian
-assumption:
-
-.. math::  p(y|X,w,\alpha) = \mathcal{N}(y|X w,\alpha)
-
-where :math:`\alpha` is the precision of the noise.
-
-
-.. topic:: References
-
- * Original Algorithm is detailed in the  book *Bayesian learning for neural
-   networks* by Radford M. Neal
 
 .. _Logistic_regression:
 
