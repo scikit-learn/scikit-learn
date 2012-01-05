@@ -487,8 +487,9 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
             if df.shape[0] < n_features:
                 # bincount might return fewer bins than there are features
                 df = np.concatenate([df, np.zeros(n_features - df.shape[0])])
+
             df += int(self.smooth_idf)
-            self.idf_ = np.log(float(n_samples + int(self.smooth_idf)) / df)
+            self.idf_ = np.log(int(self.smooth_idf) + float(n_samples) / df)
 
         return self
 

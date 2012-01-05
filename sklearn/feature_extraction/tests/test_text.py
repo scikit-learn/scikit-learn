@@ -140,10 +140,10 @@ def test_char_ngram_analyzer():
 
 
 def test_tfidftransformer():
-    X = np.array([[1.0, 1.0], [1.0, 0.0]])
+    X = np.array([[1.0, 1.0], [1.0, 1.0]])
     transformer = TfidfTransformer()
     X_new = transformer.fit_transform(X)
-    assert_false(np.any(X_new.todense() < 0))
+    assert_false(np.any(X_new.todense() <= 0))
 
 
 def test_countvectorizer_custom_vocabulary():
