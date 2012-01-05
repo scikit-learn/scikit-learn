@@ -806,8 +806,10 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, n_jobs=1,
         supervised learning.
 
     score_func: callable, optional
-        callable taking as arguments the test target (y_test) if y is
-        not None and values predicted by the estimator (y_pred).
+        callable, has priority over the score function in the estimator.
+        In a non-supervised setting, where y is None, it takes the test
+        data (X_test) as its only argument. In a supervised setting it takes
+        the test target (y_true) and the test prediction (y_pred) as arguments.
 
     cv: cross-validation generator, optional
         A cross-validation generator. If None, a 3-fold cross
