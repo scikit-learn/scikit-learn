@@ -114,7 +114,7 @@ clf = GridSearchCV(SVC(kernel='rbf'), param_grid,
 clf = clf.fit(X_train_pca, y_train)
 print "done in %0.3fs" % (time() - t0)
 print "Best estimator found by grid search:"
-print clf.best_estimator
+print clf.best_estimator_
 
 
 ###############################################################################

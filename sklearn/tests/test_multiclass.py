@@ -116,7 +116,7 @@ def test_ovr_gridsearch():
     Cs = [0.1, 0.5, 0.8]
     cv = GridSearchCV(ovr, {'estimator__C': Cs})
     cv.fit(iris.data, iris.target)
-    best_C = cv.best_estimator.estimators_[0].C
+    best_C = cv.best_estimator_.estimators_[0].C
     assert_true(best_C in Cs)
 
 
@@ -142,7 +142,7 @@ def test_ovo_gridsearch():
     Cs = [0.1, 0.5, 0.8]
     cv = GridSearchCV(ovo, {'estimator__C': Cs})
     cv.fit(iris.data, iris.target)
-    best_C = cv.best_estimator.estimators_[0].C
+    best_C = cv.best_estimator_.estimators_[0].C
     assert_true(best_C in Cs)
 
 
@@ -168,5 +168,5 @@ def test_ecoc_gridsearch():
     Cs = [0.1, 0.5, 0.8]
     cv = GridSearchCV(ecoc, {'estimator__C': Cs})
     cv.fit(iris.data, iris.target)
-    best_C = cv.best_estimator.estimators_[0].C
+    best_C = cv.best_estimator_.estimators_[0].C
     assert_true(best_C in Cs)

@@ -17,6 +17,7 @@ import scipy.sparse as sp
 from .base import BaseEstimator, is_classifier, clone
 from .cross_validation import check_cv
 from .externals.joblib import Parallel, delayed, logger
+from .utils import deprecated
 
 
 class IterGrid(object):
@@ -218,12 +219,12 @@ class GridSearchCV(BaseEstimator):
     `grid_scores_` : dict of any to float
         Contains scores for all parameter combinations in param_grid.
 
-    `best_estimator` : estimator
+    `best_estimator_` : estimator
         Estimator that was choosen by grid search, i.e. estimator
         which gave highest score (or smallest loss if specified)
         on the left out data.
 
-    `best_score` : float
+    `best_score_` : float
         score of best_estimator on the left out data.
 
 
@@ -356,7 +357,7 @@ class GridSearchCV(BaseEstimator):
 
         if best_score is None:
             raise ValueError('Best score could not be found')
-        self.best_score = best_score
+        self.best_score_ = best_score
 
         if self.refit:
             # fit the best estimator using the entire dataset
@@ -364,13 +365,13 @@ class GridSearchCV(BaseEstimator):
             best_estimator = clone(best_estimator)
             best_estimator.fit(X, y, **self.fit_params)
 
-        self.best_estimator = best_estimator
+        self.best_estimator_ = best_estimator
         if hasattr(best_estimator, 'predict'):
             self.predict = best_estimator.predict
         if hasattr(best_estimator, 'predict_proba'):
             self.predict_proba = best_estimator.predict_proba
         if hasattr(best_estimator, 'score'):
-            self.score = best_estimator.score
+            self.score_ = best_estimator.score
 
         # Store the computed scores
         # XXX: the name is too specific, it shouldn't have
@@ -386,3 +387,18 @@ class GridSearchCV(BaseEstimator):
         # found has a score function.
         y_predicted = self.predict(X)
         return self.score_func(y, y_predicted)
+
+    @property
+    @deprecated('GridSearchCV.best_estimator is deprecated'
+                ' and will be removed in version 0.12.'
+                ' Please use GridSearchCV.best_estimator_ instead.')
+    def best_estimator(self):
+        return self.best_estimator_
+
+    @property
+    @deprecated('GridSearchCV.best_score is deprecated'
+                ' and will be removed in version 0.12.'
+                ' Please use GridSearchCV.best_score_ instead.')
+    def best_score(self):
+        return self.best_score_
+
