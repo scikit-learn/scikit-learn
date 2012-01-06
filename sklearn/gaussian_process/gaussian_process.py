@@ -163,8 +163,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
     --------
     >>> import numpy as np
     >>> from sklearn.gaussian_process import GaussianProcess
-    >>> from sklearn.utils import array2d
-    >>> X = array2d([1., 3., 5., 6., 7., 8.]).T
+    >>> X = np.array([[1., 3., 5., 6., 7., 8.]]).T
     >>> y = (X * np.sin(X)).ravel()
     >>> gp = GaussianProcess(theta0=0.1, thetaL=.001, thetaU=1.)
     >>> gp.fit(X, y) # doctest: +ELLIPSIS
