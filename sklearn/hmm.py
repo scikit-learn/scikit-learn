@@ -29,6 +29,12 @@ warnings.warn('sklearn.hmm is orphaned, undocumented and has known numerical'
 
 ZEROLOGPROB = -1e200
 
+try:
+    from . import _hmmc
+    print "cython extension module imported"
+except:
+    _hmmc = None
+
 
 class _BaseHMM(BaseEstimator):
     """Hidden Markov Model base class.
@@ -363,6 +369,7 @@ class _BaseHMM(BaseEstimator):
                     bwdlattice, params)
             logprob.append(curr_logprob)
 
+            print curr_logprob
             # Check for convergence.
             if i > 0 and abs(logprob[-1] - logprob[-2]) < thresh:
                 break
@@ -406,62 +413,84 @@ class _BaseHMM(BaseEstimator):
 
     def _do_viterbi_pass(self, framelogprob, maxrank=None,
                          beamlogprob=-np.Inf):
-        nobs = len(framelogprob)
-        lattice = np.zeros((nobs, self.n_components))
-        traceback = np.zeros((nobs, self.n_components), dtype=np.int)
+        if _hmmc:
+            T, N = framelogprob.shape
+            reverse_state_sequence, logprob = _hmmc._viterbi_c(T, N,
+                self._log_startprob, self._log_transmat, framelogprob)
+        else:
+            nobs = len(framelogprob)
+            lattice = np.zeros((nobs, self.n_components))
+            traceback = np.zeros((nobs, self.n_components), dtype=np.int)
 
-        lattice[0] = self._log_startprob + framelogprob[0]
-        for n in xrange(1, nobs):
-            idx = self._prune_states(lattice[n - 1], maxrank, beamlogprob)
-            pr = self._log_transmat[idx].T + lattice[n - 1, idx]
-            lattice[n] = np.max(pr, axis=1) + framelogprob[n]
-            traceback[n] = np.argmax(pr, axis=1)
-        lattice[lattice <= ZEROLOGPROB] = -np.Inf
+            lattice[0] = self._log_startprob + framelogprob[0]
+            for n in xrange(1, nobs):
+                idx = self._prune_states(lattice[n - 1],
+                                          maxrank, beamlogprob)
+                pr = self._log_transmat[idx].T + lattice[n - 1, idx]
+                lattice[n] = np.max(pr, axis=1) + framelogprob[n]
+                traceback[n] = np.argmax(pr, axis=1)
+            lattice[lattice <= ZEROLOGPROB] = -np.Inf
 
-        # Do traceback.
-        reverse_state_sequence = []
-        s = lattice[-1].argmax()
-        logprob = lattice[-1, s]
-        for frame in reversed(traceback):
-            reverse_state_sequence.append(s)
-            s = frame[s]
+            # Do traceback.
+            reverse_state_sequence = []
+            s = lattice[-1].argmax()
+            logprob = lattice[-1, s]
+            for frame in reversed(traceback):
+                reverse_state_sequence.append(s)
+                s = frame[s]
 
-        reverse_state_sequence.reverse()
+            reverse_state_sequence.reverse()
+
         return logprob, np.array(reverse_state_sequence)
 
     def _do_forward_pass(self, framelogprob, maxrank=None,
                          beamlogprob=-np.Inf):
+
         nobs = len(framelogprob)
         fwdlattice = np.zeros((nobs, self.n_components))
 
-        fwdlattice[0] = self._log_startprob + framelogprob[0]
-        for n in xrange(1, nobs):
-            idx = self._prune_states(fwdlattice[n - 1], maxrank, beamlogprob)
-            fwdlattice[n] = (logsumexp(self._log_transmat[idx].T
-                                    + fwdlattice[n - 1, idx], axis=1)
-                             + framelogprob[n])
+        if _hmmc:
+            T, N = framelogprob.shape
+            _hmmc._forward_c(T, N, self._log_startprob, self._log_transmat,
+                    framelogprob, fwdlattice)
+        else:
+            fwdlattice[0] = self._log_startprob + framelogprob[0]
+            for n in xrange(1, nobs):
+                idx = self._prune_states(
+                    fwdlattice[n - 1], maxrank, beamlogprob)
+                fwdlattice[n] = (logsumexp(self._log_transmat[idx].T
+                                        + fwdlattice[n - 1, idx], axis=1)
+                                 + framelogprob[n])
+
         fwdlattice[fwdlattice <= ZEROLOGPROB] = -np.Inf
 
         return logsumexp(fwdlattice[-1]), fwdlattice
 
     def _do_backward_pass(self, framelogprob, fwdlattice, maxrank=None,
                           beamlogprob=-np.Inf):
+
         nobs = len(framelogprob)
         bwdlattice = np.zeros((nobs, self.n_components))
 
-        for n in xrange(nobs - 1, 0, -1):
-            # Do HTK style pruning (p. 137 of HTK Book version 3.4).
-            # Don't bother computing backward probability if
-            # fwdlattice * bwdlattice is more than a certain distance
-            # from the total log likelihood.
-            idx = self._prune_states(bwdlattice[n] + fwdlattice[n], None,
-                                     -50)
-                                     #beamlogprob)
-                                     #-np.Inf)
-            bwdlattice[n - 1] = logsumexp(self._log_transmat[:, idx] +
-                                       bwdlattice[n, idx] +
-                                       framelogprob[n, idx],
-                                       axis=1)
+        if _hmmc:
+            T, N = framelogprob.shape
+            _hmmc._backward_c(T, N, self._log_startprob, self._log_transmat,
+                    framelogprob, bwdlattice)
+        else:
+            for n in xrange(nobs - 1, 0, -1):
+                # Do HTK style pruning (p. 137 of HTK Book version 3.4).
+                # Don't bother computing backward probability if
+                # fwdlattice * bwdlattice is more than a certain distance
+                # from the total log likelihood.
+                idx = self._prune_states(
+                    bwdlattice[n] + fwdlattice[n], None, -50)
+                                         #beamlogprob)
+                                         #-np.Inf)
+                bwdlattice[n - 1] = logsumexp(self._log_transmat[:, idx] +
+                                           bwdlattice[n, idx] +
+                                           framelogprob[n, idx],
+                                           axis=1)
+
         bwdlattice[bwdlattice <= ZEROLOGPROB] = -np.Inf
 
         return bwdlattice
@@ -524,10 +553,19 @@ class _BaseHMM(BaseEstimator):
         if 's' in params:
             stats['start'] += posteriors[0]
         if 't' in params:
-            for t in xrange(len(framelogprob)):
-                zeta = (fwdlattice[t - 1][:, np.newaxis] + self._log_transmat
-                        + framelogprob[t] + bwdlattice[t])
-                stats['trans'] += np.exp(zeta - logsumexp(zeta))
+            if _hmmc:
+                T, N = framelogprob.shape
+                lneta = np.zeros((T - 1, N, N))
+                lnP = logsumexp(fwdlattice[-1])
+                _hmmc._compute_lneta_c(T, N, fwdlattice, self._log_transmat,
+                    bwdlattice, framelogprob, lnP, lneta)
+                stats["trans"] = np.exp(logsumexp(lneta, 0))
+            else:
+                for t in xrange(len(framelogprob)):
+                    zeta = (fwdlattice[t - 1][:, np.newaxis]
+                            + self._log_transmat + framelogprob[t]
+                            + bwdlattice[t])
+                    stats['trans'] += np.exp(zeta - logsumexp(zeta))
 
     def _do_mstep(self, stats, params, **kwargs):
         # Based on Huang, Acero, Hon, "Spoken Language Processing",
