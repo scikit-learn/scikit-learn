@@ -59,9 +59,6 @@ cdef class Criterion:
         """Evaluate the criteria (aka the split error)."""
         pass
 
-    cpdef value(self, np.ndarray out):
-        pass
-
 
 cdef class ClassificationCriterion(Criterion):
     """Abstract criterion for classification.
@@ -238,10 +235,9 @@ cdef class Entropy(ClassificationCriterion):
         return e1 + e2
 
 
-cdef class MSE(Criterion):
-    """Mean squared error impurity criterion.
-
-    MSE = var_left + var_right    
+cdef class RegressionCriterion(Criterion):
+    """Abstract criterion for regression. Computes variance of the
+       target values left and right of the split point.
 
     Computation is linear in `n_samples` by using ::
 
@@ -381,8 +377,18 @@ cdef class MSE(Criterion):
         return self.n_left
 
     cdef double eval(self):
-        return self.var_left + self.var_right
+        pass
 
+
+cdef class MSE(RegressionCriterion):
+    """Mean squared error impurity criterion.
+
+    MSE = var_left + var_right
+    """
+
+    cdef double eval(self):
+        assert (self.n_left + self.n_right) == self.n_samples
+        return self.var_left + self.var_right
 
 ################################################################################
 # Tree functions
@@ -442,7 +448,10 @@ cdef int smallest_sample_larger_than(int sample_idx, DTYPE_t *X_i,
         -1 if no such element exists.
     """
     cdef int idx = 0, j
-    cdef DTYPE_t threshold = X_i[X_argsorted_i[sample_idx]]
+    cdef DTYPE_t threshold = -DBL_MAX
+
+    if sample_idx > -1:
+        threshold = X_i[X_argsorted_i[sample_idx]]
 
     for idx from sample_idx < idx < n_total_samples:
         j = X_argsorted_i[idx]
@@ -488,8 +497,6 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
 
     max_features : int
         The number of features to consider when looking for the best split.
-        If max_features < 0, all features are considered, otherwise max_features
-        are chosen at random.
 
     criterion : Criterion
         The criterion function to be minimized.
@@ -517,7 +524,7 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
     cdef int n_features = X.shape[1]
     cdef int i, a, b, best_i = -1
     cdef DTYPE_t t, initial_error, error
-    cdef DTYPE_t best_error = np.inf, best_t = np.nan
+    cdef DTYPE_t best_error = np.inf, best_t = np.inf
     cdef DTYPE_t *y_ptr = <DTYPE_t *>y.data
     cdef DTYPE_t *X_i = NULL
     cdef int *X_argsorted_i = NULL
@@ -540,7 +547,7 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
     if initial_error == 0:  # break early if the node is pure
         return best_i, best_t, initial_error, initial_error
 
-    best_error = np.inf ##initial_error
+    best_error = initial_error
 
     # Features to consider
     if max_features < 0 or max_features == n_features:
@@ -620,8 +627,6 @@ def _find_best_random_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
 
     max_features : int
         The number of features to consider when looking for the best split.
-        If max_features < 0, all features are considered, otherwise max_features
-        are chosen at random.
 
     criterion : Criterion
         The criterion function to be minimized.
@@ -675,7 +680,7 @@ def _find_best_random_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
     best_error = initial_error
 
     # Features to consider
-    if max_features < 0 or max_features == n_features:
+    if max_features == n_features:
         features = np.arange(n_features)
     else:
         features = random_state.permutation(n_features)[:max_features]

@@ -36,9 +36,9 @@ def update_variable_importance(tree, variable_importance):
             continue
         else:
             feature = tree.feature[node_id]
-            error_improvement = (tree.initial_error[node_id] -
+            error_improvement = (tree.init_error[node_id] -
                                  tree.best_error[node_id]) \
-                                / tree.initial_error[node_id]
+                                / tree.init_error[node_id]
             variable_importance[feature] += error_improvement ** 2.0
 
 
