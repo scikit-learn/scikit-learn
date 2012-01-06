@@ -162,7 +162,7 @@ def test_importances():
                                         shuffle=False,
                                         random_state=0)
 
-    clf = RandomForestClassifier(n_estimators=10, compute_importances=True)
+    clf = RandomForestClassifier(n_estimators=10)
     clf.fit(X, y)
     importances = clf.feature_importances_
     n_important = sum(importances > 0.1)

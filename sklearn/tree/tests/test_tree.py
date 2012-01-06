@@ -212,7 +212,7 @@ def test_importances():
                                         shuffle=False,
                                         random_state=0)
 
-    clf = tree.DecisionTreeClassifier(compute_importances=True)
+    clf = tree.DecisionTreeClassifier()
     clf.fit(X, y)
     importances = clf.feature_importances_
     n_important = sum(importances > 0.1)
