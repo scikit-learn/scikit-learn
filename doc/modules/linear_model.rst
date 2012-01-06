@@ -375,12 +375,14 @@ Being a forward feature selection method like :ref:`least_angle_regression`,
 orthogonal matching pursuit can approximate the optimum solution vector with a
 fixed number of non-zero elements:
 
-.. math:: \text{arg\,min\,} ||y - X\gamma||_2^2 \text{ subject to } ||\gamma||_0 \leq n_{nonzero_coefs}
+.. math:: \text{arg\,min\,} ||y - X\gamma||_2^2 \text{ subject to } \
+    ||\gamma||_0 \leq n_{nonzero_coefs}
 
 Alternatively, orthogonal matching pursuit can target a specific error instead
 of a specific number of non-zero coefficients. This can be expressed as:
 
-.. math:: \text{arg\,min\,} ||\gamma||_0 \text{ subject to } ||y-X\gamma||_2^2 \leq \text{tol}
+.. math:: \text{arg\,min\,} ||\gamma||_0 \text{ subject to } ||y-X\gamma||_2^2 \ 
+    \leq \text{tol}
 
 
 OMP is based on a greedy algorithm that includes at each step the atom most
@@ -409,13 +411,14 @@ Bayesian regression techniques can be used to include regularization
 parameters in the estimation procedure: the regularization parameter is
 not set in a hard sense but tuned to the data at hand.
 
-This can be done by introducing `uninformative priors <http://en.wikipedia.org/wiki/Non-informative_prior#Uninformative_priors>`__ over the parameters
-hyper parameters of the model.
+This can be done by introducing `uninformative priors
+<http://en.wikipedia.org/wiki/Non-informative_prior#Uninformative_priors>`__
+over the parameters hyper parameters of the model.
 The :math:`\ell_{2}` regularization used in `Ridge Regression`_ is equivalent
 to finding a maximum a-postiori solution under a Gaussian prior over the
-parameters :math:`w` with precision :math:`\lambda^-1`.
-Instead of setting `\lambda` manually, it is possible to treat it as
-a random variable to be estimated from the data.
+parameters :math:`w` with precision :math:`\lambda^-1`.  Instead of setting
+`\lambda` manually, it is possible to treat it as a random variable to be
+estimated from the data.
 
 To obtain a fully probabilistic model, the output :math:`y` is assumed
 to be Gaussian distributed around :math:`X w`:
@@ -457,18 +460,17 @@ The prior for the parameter :math:`w` is given by a spherical Gaussian:
 .. math:: p(w|\lambda) =
     \mathcal{N}(w|0,\lambda^{-1}\bold{I_{p}})
 
-The priors over :math:`\alpha` and :math:`\lambda` are choosen to
-be `gamma distributions <http://en.wikipedia.org/wiki/Gamma_distribution>`__,
-the conjugate prior for the precision of the Gaussian.
+The priors over :math:`\alpha` and :math:`\lambda` are choosen to be `gamma
+distributions <http://en.wikipedia.org/wiki/Gamma_distribution>`__, the
+conjugate prior for the precision of the Gaussian.
 
-The resulting model is called *Bayesian Ridge Regression*, it is
-similar to the classical :class:`Ridge`. 
-The parameters :math:`w`, :math:`\alpha` and :math:`\lambda` are
-estimated jointly during the fit of the model.
-The remaining hyperparameters are the parameters of the gamma
-priors over :math:`\alpha` and :math:`\lambda`.
-These are usually choosen to be *non-informative*.
-The parameters are estimated by maximizing the *marginal log likelihood*.
+The resulting model is called *Bayesian Ridge Regression*, and is similar to the
+classical :class:`Ridge`.  The parameters :math:`w`, :math:`\alpha` and
+:math:`\lambda` are estimated jointly during the fit of the model.  The
+remaining hyperparameters are the parameters of the gamma priors over
+:math:`\alpha` and :math:`\lambda`.  These are usually choosen to be
+*non-informative*.  The parameters are estimated by maximizing the *marginal
+log likelihood*.
 
 By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e^{-6}`.
 
@@ -502,8 +504,8 @@ The weights :math:`w` of the model can be access::
     array([ 0.49999993,  0.49999993])
 
 Due to the Bayesian framework, the weights found are slightly different to the
-ones found by :ref:`ordinary_least_squares`. However, Bayesian Ridge
-Regression is more robust to ill-posed problem.
+ones found by :ref:`ordinary_least_squares`. However, Bayesian Ridge Regression
+is more robust to ill-posed problem.
 
 .. topic:: Examples:
 
@@ -511,7 +513,8 @@ Regression is more robust to ill-posed problem.
 
 .. topic:: References
 
-  * More details can be found in the article `Bayesian Interpolation <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.27.9072&rep=rep1&type=pdf>`_
+  * More details can be found in the article `Bayesian Interpolation
+    <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.27.9072&rep=rep1&type=pdf>`_
     by MacKay, David J. C.
 
 
@@ -520,14 +523,15 @@ Automatic Relevance Determination - ARD
 ---------------------------------------
 
 :class:`ARDRegression` is very similar to `Bayesian Ridge Regression`_,
-but poses a different prior over :math:`w`, by dropping the assuption
-of the Gaussian being spherical.
+but can lead to sparser weights :math:`w`.
+:class:`ARDRegression` poses a different prior over :math:`w`, by dropping the
+assuption of the Gaussian being spherical.
 
 Instead, the distribution over :math:`w` is assumed to be an axis-parallel,
 elliptical Gaussian distribution.
-This means each weight :math:`w_{i}` is drawn from a
-Gaussian distribution, centered on zero and with a precision
-:math:`\lambda_{i}`:
+
+This means each weight :math:`w_{i}` is drawn from a Gaussian distribution,
+centered on zero and with a precision :math:`\lambda_{i}`:
 
 .. math:: p(w|\lambda) = \mathcal{N}(w|0,A^{-1})
 
