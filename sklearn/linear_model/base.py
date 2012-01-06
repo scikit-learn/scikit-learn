@@ -149,9 +149,14 @@ class LinearRegression(LinearModel):
                 self.fit_intercept, self.normalize, self.copy_X)
 
         if sp.issparse(X):
-            out = sp_linalg.lsqr(X, y)
-            self.coef_ = out[0]
-            self.residues_ = out[3]
+            if hasattr(sp_linalg, 'lsqr'):
+                out = sp_linalg.lsqr(X, y)
+                self.coef_ = out[0]
+                self.residues_ = out[3]
+            else:
+                # Old versions of scipy
+                self.coef_ = sp_linalg.spsolve(X, y)
+                self.residues_ = y - safe_sparse_dot(X, self.coef_)
         else:
             self.coef_, self.residues_, self.rank_, self.singular_ = \
                     linalg.lstsq(X, y)
