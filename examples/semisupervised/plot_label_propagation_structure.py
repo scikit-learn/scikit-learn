@@ -11,11 +11,11 @@ propagate correctly around the circle.
 """
 print __doc__
 
-from scikits.learn import label_propagation
+from sklearn import label_propagation
 import numpy as np
 import pylab as pl
 
-from scikits.learn import svm, datasets
+from sklearn import svm, datasets
 
 label_spread = label_propagation.LabelSpreading(gamma=20, alpha=1.0)
 

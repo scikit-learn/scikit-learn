@@ -25,7 +25,7 @@ Kernel:
 
 Example
 -------
->>> from scikits.learn import datasets
+>>> from sklearn import datasets
 >>> label_prop_model = LabelPropagation()
 >>> iris = datasets.load_iris()
 >>> random_unlabeled_points = np.where(np.random.random_integers(0, 1,
@@ -42,6 +42,7 @@ References:
 [1] Yoshua Bengio, Olivier Delalleau, Nicolas Le Roux. In Semi-Supervised
 Learning (2006), pp. 193-216
 """
+
 import numpy as np
 from .base import BaseEstimator, ClassifierMixin
 from .metrics.pairwise import rbf_kernel
@@ -219,7 +220,7 @@ class LabelPropagation(BaseLabelPropagation):
 
     Examples
     --------
-    >>> from scikits.learn import datasets
+    >>> from sklearn import datasets
     >>> label_prop_model = LabelPropagation()
     >>> iris = datasets.load_iris()
     >>> random_unlabeled_points = np.where(np.random.random_integers(0, 1,
@@ -271,7 +272,7 @@ class LabelSpreading(BaseLabelPropagation):
 
     Examples
     --------
-    >>> from scikits.learn import datasets
+    >>> from sklearn import datasets
     >>> label_prop_model = LabelSpreading()
     >>> iris = datasets.load_iris()
     >>> random_unlabeled_points = np.where(np.random.random_integers(0, 1,

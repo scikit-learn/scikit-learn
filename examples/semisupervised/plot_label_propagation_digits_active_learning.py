@@ -24,11 +24,11 @@ import pylab as pl
 
 from scipy import stats
 
-from scikits.learn import datasets
-from scikits.learn import label_propagation
+from sklearn import datasets
+from sklearn import label_propagation
 
-from scikits.learn.metrics import metrics
-from scikits.learn.metrics.metrics import confusion_matrix
+from sklearn.metrics import metrics
+from sklearn.metrics.metrics import confusion_matrix
 
 np.random.RandomState(42)
 
