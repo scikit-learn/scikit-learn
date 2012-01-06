@@ -64,13 +64,13 @@ def test_parameter_checks():
 
     assert_raises(ValueError, GradientBoostingClassifier, init={})
 
-    # test fit before variable importance
+    # test fit before feature importance
     assert_raises(ValueError,
-                  lambda :GradientBoostingClassifier().variable_importance)
+                  lambda :GradientBoostingClassifier().feature_importances_)
 
     # test value error on multi-class
     assert_raises(ValueError,
-                  lambda X, y:GradientBoostingClassifier().fit(X, y),
+                  lambda X, y: GradientBoostingClassifier().fit(X, y),
                   X, [0, 0, 1, 1, 2, 2])
 
 
@@ -152,16 +152,16 @@ def test_regression_synthetic():
     assert mse < 0.015, "Failed on Friedman3 with mse = %.4f" % mse
 
 
-def test_variable_importance():
+def test_feature_importances():
     clf = GradientBoostingRegressor(n_iter=100, max_depth=4,
                                     min_split=1, random_state=1)
     clf.fit(boston.data, boston.target)
-    variable_importance = clf.variable_importance
+    feature_importances = clf.feature_importances_
 
     # true feature importance ranking
-    true_ranking = np.array([3, 9, 8, 10, 2, 1, 4, 11, 12, 7, 6, 5, 0])
+    true_ranking = np.array([ 3,  1,  8, 10,  2,  9,  4, 11,  0,  6,  7,  5, 12])
 
-    assert_array_equal(true_ranking, variable_importance.argsort())
+    assert_array_equal(true_ranking, feature_importances.argsort())
 
 
 def test_probability():

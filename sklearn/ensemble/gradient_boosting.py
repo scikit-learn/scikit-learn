@@ -18,6 +18,7 @@ from ..base import RegressorMixin
 from ..utils import check_random_state
 
 from ..tree.tree import _build_tree
+from ..tree.tree import compute_feature_importances
 from ..tree.tree import Tree
 from ..tree._tree import _find_best_split
 from ..tree._tree import MSE
@@ -26,20 +27,6 @@ from ..tree._tree import DTYPE
 
 # ignore overflows due to exp(-pred) in BinomailDeviance
 np.seterr(invalid='raise', under='raise', divide='raise', over='ignore')
-
-
-def update_variable_importance(tree, variable_importance):
-    """Computes the variable importance of each feature according to `tree`
-    and adds them to `variable_importance`. """
-    for node_id in xrange(tree.children.shape[0]):
-        if tree.children[node_id, 0] == tree.children[node_id, 1] == Tree.LEAF:
-            continue
-        else:
-            feature = tree.feature[node_id]
-            error_improvement = (tree.init_error[node_id] -
-                                 tree.best_error[node_id]) \
-                                / tree.init_error[node_id]
-            variable_importance[feature] += error_improvement ** 2.0
 
 
 class MedianPredictor(object):
@@ -296,9 +283,9 @@ class BaseGradientBoosting(BaseEstimator):
 
             # induce regression tree on residuals
             tree = _build_tree(X, residual, MSE(), self.max_depth,
-                               self.min_split, 1.0, -1, self.random_state,
-                               1, _find_best_split, sample_mask, X_argsorted,
-                               True)
+                               self.min_split, 1.0, n_features,
+                               self.random_state, 1, _find_best_split,
+                               sample_mask, X_argsorted, True)
 
             # update tree leafs
             loss.update_terminal_regions(tree, X, y, residual, y_pred,
@@ -337,17 +324,15 @@ class BaseGradientBoosting(BaseEstimator):
             return y
 
     @property
-    def variable_importance(self):
+    def feature_importances_(self):
         if not self.trees or len(self.trees) == 0:
             raise ValueError("Estimator not fitted, " \
-                             "call `fit` before `variable_importance`.")
-        variable_importance = np.zeros((self.n_features,), dtype=np.float64)
-        for tree in self.trees:
-            update_variable_importance(tree, variable_importance)
-        variable_importance /= len(self.trees)
-        variable_importance = 100.0 * (variable_importance /
-                                       variable_importance.max())
-        return variable_importance
+                             "call `fit` before `feature_importances_`.")
+        importances = sum(compute_feature_importances(tree, self.n_features,
+                                                      method='squared')
+                          for tree in self.trees) / len(self.trees)
+        importances = 100.0 * (importances / importances.max())
+        return importances
 
 
 class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):

@@ -204,7 +204,7 @@ def bench_arcene(random_state=None):
     return error_rate, train_time, test_time
 
 
-regression_params = {'n_iter': 500, 'max_depth': 1,
+regression_params = {'n_iter': 100, 'max_depth': 1,
                      'min_split': 1, 'learn_rate': 0.1,
                      'loss': 'ls'}
 
@@ -287,14 +287,15 @@ def bench_friedman3(random_state=None):
 
 
 gbrt_results = {
-    ## "Example 10.2": bench_random_gaussian(),
-    ## "Spam": bench_spam(),
-    ## "Madelon": bench_madelon(),
-    ## "Arcene": bench_arcene(),
+    "Example 10.2": bench_random_gaussian(),
+    "Spam": bench_spam(),
+    "Madelon": bench_madelon(),
+    "Arcene": bench_arcene(),
    "Boston": bench_boston(), 
    "Friedman#1": bench_friedman1(),
    "Friedman#2": bench_friedman2(),
    "Friedman#3": bench_friedman3(),
     }
 
-print gbrt_results
+from pprint import pprint
+pprint(gbrt_results)

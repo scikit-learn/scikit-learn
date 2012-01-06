@@ -133,10 +133,33 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
     return out_file
 
 
-def compute_feature_importances(tree, n_features):
+def compute_feature_importances(tree, n_features, method='gini'):
     """Computes the importance of each feature (aka variable).
-    The importance of a feature is the sum of the error reduction of each
-    of its splits. """
+
+    The following `method`s are supported:
+
+      * 'gini' : The difference of the initial error and the error of the
+                 split times the number of samples that passed the node.
+      * 'squared' : The empirical improvement in squared error.
+
+    Parameters
+    ----------
+    tree : tree.Tree
+        A `Tree` object.
+    n_features : int
+        The number of features.
+    method : str
+        The method to estimate the importance of a feature. Either 'gini'
+        or 'mse'. 
+    """
+    gini = lambda tree, node: (tree.n_samples[node] * \
+                               (tree.init_error[node] - tree.best_error[node]))
+    squared = lambda tree, node: (tree.init_error[node] - \
+                                  tree.best_error[node])**2.0
+    method = {
+        'gini': gini,
+        'squared': squared
+        }[method]
     importances = np.zeros((n_features,), dtype=np.float64)
     for node in xrange(tree.node_count):
         if (tree.children[node, 0]
@@ -144,10 +167,7 @@ def compute_feature_importances(tree, n_features):
             == Tree.LEAF):
             continue
         else:
-            importances[tree.feature[node]] += (
-                tree.n_samples[node] *
-                (tree.init_error[node] -
-                 tree.best_error[node]))
+            importances[tree.feature[node]] += method(tree, node)
 
     importances /= np.sum(importances)
     return importances

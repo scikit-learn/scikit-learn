@@ -6,7 +6,7 @@ Gradient Boosting regression
 Demonstrate Gradient Boosting on the boston housing dataset.
 
 This example fits a Gradient Boosting model with least squares loss and
-100 regression trees of depth 4. 
+100 regression trees of depth 4.
 """
 print __doc__
 
@@ -19,7 +19,6 @@ import pylab as pl
 from sklearn import ensemble
 from sklearn import datasets
 from sklearn.utils import shuffle
-from sklearn import cross_validation
 
 ###############################################################################
 # Load data
@@ -50,7 +49,7 @@ for i, tree in enumerate(clf.trees):
     y_pred += clf.learn_rate * tree.predict(X_test).ravel()
     test_deviance[i] = clf.loss_(y_test, y_pred)
 
-pl.figure() #figsize=(12, 6))
+pl.figure()  #figsize=(12, 6))
 pl.subplot(1, 2, 1)
 pl.title('Deviance')
 pl.plot(np.arange(params['n_iter']) + 1, clf.train_deviance, 'b-',
@@ -62,12 +61,12 @@ pl.xlabel('Boosting Iterations')
 pl.ylabel('Deviance')
 
 ################################################################################
-# Plot variable importance
-variable_importance = clf.variable_importance
-sorted_idx = np.argsort(variable_importance)
+# Plot feature importance
+feature_importance = clf.feature_importances_
+sorted_idx = np.argsort(feature_importance)
 pos = np.arange(sorted_idx.shape[0]) + .5
 pl.subplot(1, 2, 2)
-pl.barh(pos, variable_importance[sorted_idx], align='center')
+pl.barh(pos, feature_importance[sorted_idx], align='center')
 pl.yticks(pos, boston.feature_names[sorted_idx])
 pl.xlabel('Relative Importance')
 pl.title('Variable Importance')
