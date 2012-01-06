@@ -39,7 +39,7 @@ def make_ellipses(gmm, ax):
     for n, color in enumerate('rgb'):
         v, w = np.linalg.eigh(gmm.covars[n][:2, :2])
         u = w[0] / np.linalg.norm(w[0])
-        angle = np.arctan(u[1] / u[0])
+        angle = np.arctan2(u[1], u[0])
         angle = 180 * angle / np.pi  # convert to degrees
         v *= 9
         ell = mpl.patches.Ellipse(gmm.means[n, :2], v[0], v[1], 180 + angle,
