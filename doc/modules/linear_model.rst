@@ -413,7 +413,7 @@ not set in a hard sense but tuned to the data at hand.
 
 This can be done by introducing `uninformative priors
 <http://en.wikipedia.org/wiki/Non-informative_prior#Uninformative_priors>`__
-over the parameters hyper parameters of the model.
+over the hyper parameters of the model.
 The :math:`\ell_{2}` regularization used in `Ridge Regression`_ is equivalent
 to finding a maximum a-postiori solution under a Gaussian prior over the
 parameters :math:`w` with precision :math:`\lambda^-1`.  Instead of setting
