@@ -131,7 +131,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         ary = np.atleast_2d(X)
         return self._get_kernel(self._X, ary).T * self.y_
 
-    def fit(self, X, y, **params):
+    def fit(self, X, y):
         """
         Fit a semi-supervised label propagation model based on input data
         matrix X and corresponding label matrix Y.
@@ -149,7 +149,6 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         -------
         updated LabelPropagation object with a new transduction results
         """
-        self._set_params(**params)
         self._X = np.asanyarray(X)
 
         # actual graph construction (implementations should override this)
