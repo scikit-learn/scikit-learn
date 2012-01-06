@@ -105,11 +105,11 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
 
     Returns
     -------
-    covariance_: 2D ndarray, shape (n_features, n_features)
+    covariance : 2D ndarray, shape (n_features, n_features)
         The estimated covariance matrix
-    precision_: 2D ndarray, shape (n_features, n_features)
+    precision : 2D ndarray, shape (n_features, n_features)
         The estimated (sparse) precision matrix
-    costs: list of (objective, dual_gap) pairs
+    costs : list of (objective, dual_gap) pairs
         The list of values of the objective function and the dual gap at
         each iteration. Returned only if return_costs is True
 

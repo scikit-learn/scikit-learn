@@ -173,10 +173,10 @@
     {% endif %}
     <h3>Citing</h3>
     <p>If you use the software, please consider
-    <a href="about.html#citing-the-scikit-learn">citing the
-    scikit-learn</a>.</p>
+    <a href="about.html#citing-scikit-learn">citing scikit-learn</a>.</p>
 
-    {%- if (toc|length > 20) and (pagename != 'index') %}
+    <!-- it's 11 when it's empty (?) -->
+    {%- if (toc|length == 11) and (pagename != 'index') %}
     <h3>{{ _('This page') }}</h3>
 	{{ toc }}
     {% endif %}

@@ -5,8 +5,8 @@
 
 import numpy as np
 from ..base import BaseEstimator
-from ..neighbors import BallTree, kneighbors_graph
-from ..utils.graph_shortest_path import graph_shortest_path
+from ..neighbors import NearestNeighbors, kneighbors_graph
+from ..utils.graph import graph_shortest_path
 from ..decomposition import KernelPCA
 from ..preprocessing import KernelCenterer
 
@@ -47,6 +47,10 @@ class Isomap(BaseEstimator):
         'FW' : Floyd-Warshall algorithm
         'D' : Dijkstra algorithm with Fibonacci Heaps
 
+    neighbors_algorithm : string ['auto'|'brute'|'kd_tree'|'ball_tree']
+        algorithm to use for nearest neighbors search,
+        passed to neighbors.NearestNeighbors instance
+
     Attributes
     ----------
     `embedding_` : array-like, shape (n_samples, out_dim)
@@ -57,37 +61,44 @@ class Isomap(BaseEstimator):
     `training_data_` : array-like, shape (n_samples, n_features)
         Stores the training data
 
-    `ball_tree_` : sklearn.neighbors.BallTree instance
-        Stores ball tree of training data for faster transform
+    `nbrs_` : sklearn.neighbors.NearestNeighbors instance
+        Stores nearest neighbors instance, including BallTree or KDtree
+        if applicable.
 
     `dist_matrix_` : array-like, shape (n_samples, n_samples)
         Stores the geodesic distance matrix of training data
 
-    References
-    ----------
+    Notes
+    -----
+    **References**:
+
     [1] Tenenbaum, J.B.; De Silva, V.; & Langford, J.C. A global geometric
         framework for nonlinear dimensionality reduction. Science 290 (5500)
     """
 
     def __init__(self, n_neighbors=5, out_dim=2,
                  eigen_solver='auto', tol=0,
-                 max_iter=None, path_method='auto'):
+                 max_iter=None, path_method='auto',
+                 neighbors_algorithm='auto'):
         self.n_neighbors = n_neighbors
         self.out_dim = out_dim
         self.eigen_solver = eigen_solver
         self.tol = tol
         self.max_iter = max_iter
         self.path_method = path_method
+        self.neighbors_algorithm = neighbors_algorithm
+        self.nbrs_ = NearestNeighbors(n_neighbors=n_neighbors,
+                                      algorithm=neighbors_algorithm)
 
     def _fit_transform(self, X):
-        self.training_data_ = X
+        self.nbrs_.fit(X)
+        self.training_data_ = self.nbrs_._fit_X
         self.kernel_pca_ = KernelPCA(n_components=self.out_dim,
                                      kernel="precomputed",
                                      eigen_solver=self.eigen_solver,
                                      tol=self.tol, max_iter=self.max_iter)
 
-        self.ball_tree_ = BallTree(X)
-        kng = kneighbors_graph(self.ball_tree_, self.n_neighbors,
+        kng = kneighbors_graph(self.nbrs_, self.n_neighbors,
                                mode='distance')
 
         self.dist_matrix_ = graph_shortest_path(kng,
@@ -105,17 +116,17 @@ class Isomap(BaseEstimator):
         -------
         reconstruction_error : float
 
-        Details
+        Notes
         -------
         The cost function of an isomap embedding is
 
-            E = frobenius_norm[K(D) - K(D_fit)] / n_samples
+        ``E = frobenius_norm[K(D) - K(D_fit)] / n_samples``
 
         Where D is the matrix of distances for the input data X,
         D_fit is the matrix of distances for the output embedding X_fit,
         and K is the isomap kernel:
 
-            K(D) = -0.5 * (I - 1/n_samples) * D^2 * (I - 1/n_samples)
+        ``K(D) = -0.5 * (I - 1/n_samples) * D^2 * (I - 1/n_samples)``
         """
         G = -0.5 * self.dist_matrix_ ** 2
         G_center = KernelCenterer().fit_transform(G)
@@ -127,9 +138,10 @@ class Isomap(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-            training set. If kernel='precomputed', X can be an
-            (n_features, n_features) affinity matrix.
+        X : {array-like, sparse matrix, BallTree, cKDTree, NearestNeighbors}
+            Sample data, shape = (n_samples, n_features), in the form of a
+            numpy array, sparse array, precomputed tree, or NearestNeighbors
+            object.
 
         Returns
         -------
@@ -143,7 +155,7 @@ class Isomap(BaseEstimator):
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_features)
+        X: {array-like, sparse matrix, BallTree, cKDTree}
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
 
@@ -173,7 +185,7 @@ class Isomap(BaseEstimator):
         -------
         X_new: array-like, shape (n_samples, out_dim)
         """
-        distances, indices = self.ball_tree_.query(X, return_distance=True)
+        distances, indices = self.nbrs_.kneighbors(X, return_distance=True)
 
         #Create the graph of shortest distances from X to self.training_data_
         # via the nearest neighbors of X.

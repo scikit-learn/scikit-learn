@@ -177,9 +177,6 @@ cdef class Huber(Regression):
     Variant of the SquaredLoss that is robust to outliers (quadratic near zero,
     linear in for large errors).
 
-    References
-    ----------
-
     http://en.wikipedia.org/wiki/Huber_Loss_Function
     """
 

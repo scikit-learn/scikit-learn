@@ -1,6 +1,5 @@
 from os.path import join
-from numpy.distutils.system_info import get_info, get_standard_file, \
-     BlasNotFoundError
+from numpy.distutils.system_info import get_info
 
 
 def configuration(parent_package='', top_path=None):
@@ -22,6 +21,9 @@ def configuration(parent_package='', top_path=None):
 
     config.add_extension('arraybuilder',
          sources=['arraybuilder.c'])
+
+    config.add_extension('sparsefuncs',
+         sources=['sparsefuncs.c'])
 
     config.add_extension('arrayfuncs',
          sources=['arrayfuncs.c'],

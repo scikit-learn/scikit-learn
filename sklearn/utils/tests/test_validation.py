@@ -1,9 +1,15 @@
+"""
+Tests for input validation functions
+"""
+
 import numpy as np
 from numpy.testing import assert_array_equal
 import scipy.sparse as sp
 from tempfile import NamedTemporaryFile
+from nose.tools import assert_raises
 
-from .. import array2d, as_float_array, atleast2d_or_csr, safe_asarray
+from .. import (array2d, as_float_array, atleast2d_or_csr, check_arrays,
+                safe_asarray)
 
 
 def test_as_float_array():
@@ -25,6 +31,15 @@ def test_as_float_array():
     # Here, X is of the right type, it shouldn't be modified
     X = np.ones((3, 2), dtype=np.float32)
     assert as_float_array(X, copy=False) is X
+
+
+def test_check_arrays_exceptions():
+    """Check that invalid arguments raise appropriate exceptions"""
+    assert_raises(ValueError, check_arrays, [0], [0, 1])
+    assert_raises(TypeError, check_arrays, 0, [0, 1])
+    assert_raises(TypeError, check_arrays, [0], 0)
+    assert_raises(ValueError, check_arrays, [0, 1], [0, 1], meaning_of_life=42)
+    assert_raises(ValueError, check_arrays, [0], [0], sparse_format='fake')
 
 
 def test_np_matrix():

@@ -13,6 +13,8 @@ Generalized Linear models.
 
 import numpy as np
 import scipy.sparse as sp
+from scipy import linalg
+import scipy.sparse.linalg as sp_linalg
 
 from ..base import BaseEstimator
 from ..base import RegressorMixin
@@ -105,6 +107,15 @@ class LinearRegression(LinearModel):
     `intercept_` : array
         Independent term in the linear model.
 
+    Parameters
+    ----------
+    fit_intercept : boolean, optional
+        wether to calculate the intercept for this model. If set
+        to false, no intercept will be used in calculations
+        (e.g. data is expected to be already centered).
+    normalize : boolean, optional
+        If True, the regressors X are normalized
+
     Notes
     -----
     From the implementation point of view, this is just plain Ordinary
@@ -123,29 +134,32 @@ class LinearRegression(LinearModel):
 
         Parameters
         ----------
-        X : numpy array of shape [n_samples,n_features]
+        X : numpy array or sparse matrix of shape [n_samples,n_features]
             Training data
         y : numpy array of shape [n_samples]
             Target values
-        fit_intercept : boolean, optional
-            wether to calculate the intercept for this model. If set
-            to false, no intercept will be used in calculations
-            (e.g. data is expected to be already centered).
-        normalize : boolean, optional
-            If True, the regressors X are normalized
-
         Returns
         -------
         self : returns an instance of self.
         """
-        X = np.asarray(X)
+        X = safe_asarray(X)
         y = np.asarray(y)
 
         X, y, X_mean, y_mean, X_std = self._center_data(X, y,
                 self.fit_intercept, self.normalize, self.copy_X)
 
-        self.coef_, self.residues_, self.rank_, self.singular_ = \
-                np.linalg.lstsq(X, y)
+        if sp.issparse(X):
+            if hasattr(sp_linalg, 'lsqr'):
+                out = sp_linalg.lsqr(X, y)
+                self.coef_ = out[0]
+                self.residues_ = out[3]
+            else:
+                # Old versions of scipy
+                self.coef_ = sp_linalg.spsolve(X, y)
+                self.residues_ = y - safe_sparse_dot(X, self.coef_)
+        else:
+            self.coef_, self.residues_, self.rank_, self.singular_ = \
+                    linalg.lstsq(X, y)
 
         self._set_intercept(X_mean, y_mean, X_std)
         return self

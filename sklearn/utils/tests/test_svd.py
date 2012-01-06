@@ -8,12 +8,12 @@ from scipy import linalg
 from numpy.testing import assert_equal
 from numpy.testing import assert_almost_equal
 
-from sklearn.utils.extmath import fast_svd
+from sklearn.utils.extmath import randomized_svd
 from sklearn.datasets.samples_generator import make_low_rank_matrix
 
 
-def test_fast_svd_low_rank():
-    """Check that extmath.fast_svd is consistent with linalg.svd"""
+def test_randomized_svd_low_rank():
+    """Check that extmath.randomized_svd is consistent with linalg.svd"""
     n_samples = 100
     n_features = 500
     rank = 5
@@ -29,7 +29,7 @@ def test_fast_svd_low_rank():
     U, s, V = linalg.svd(X, full_matrices=False)
 
     # compute the singular values of X using the fast approximate method
-    Ua, sa, Va = fast_svd(X, k)
+    Ua, sa, Va = randomized_svd(X, k)
     assert_equal(Ua.shape, (n_samples, k))
     assert_equal(sa.shape, (k,))
     assert_equal(Va.shape, (k, n_features))
@@ -45,12 +45,12 @@ def test_fast_svd_low_rank():
     X = sparse.csr_matrix(X)
 
     # compute the singular values of X using the fast approximate method
-    Ua, sa, Va = fast_svd(X, k)
+    Ua, sa, Va = randomized_svd(X, k)
     assert_almost_equal(s[:rank], sa[:rank])
 
 
-def test_fast_svd_low_rank_with_noise():
-    """Check that extmath.fast_svd can handle noisy matrices"""
+def test_randomized_svd_low_rank_with_noise():
+    """Check that extmath.randomized_svd can handle noisy matrices"""
     n_samples = 100
     n_features = 500
     rank = 5
@@ -67,21 +67,21 @@ def test_fast_svd_low_rank_with_noise():
 
     # compute the singular values of X using the fast approximate method
     # without the iterated power method
-    _, sa, _ = fast_svd(X, k, q=0)
+    _, sa, _ = randomized_svd(X, k, n_iterations=0)
 
     # the approximation does not tolerate the noise:
     assert np.abs(s[:k] - sa).max() > 0.05
 
     # compute the singular values of X using the fast approximate method with
     # iterated power method
-    _, sap, _ = fast_svd(X, k, q=5)
+    _, sap, _ = randomized_svd(X, k, n_iterations=5)
 
     # the iterated power method is helping getting rid of the noise:
     assert_almost_equal(s[:k], sap, decimal=3)
 
 
-def test_fast_svd_infinite_rank():
-    """Check that extmath.fast_svd can handle noisy matrices"""
+def test_randomized_svd_infinite_rank():
+    """Check that extmath.randomized_svd can handle noisy matrices"""
     n_samples = 100
     n_features = 500
     rank = 5
@@ -98,21 +98,21 @@ def test_fast_svd_infinite_rank():
 
     # compute the singular values of X using the fast approximate method
     # without the iterated power method
-    _, sa, _ = fast_svd(X, k, q=0)
+    _, sa, _ = randomized_svd(X, k, n_iterations=0)
 
     # the approximation does not tolerate the noise:
     assert np.abs(s[:k] - sa).max() > 0.1
 
     # compute the singular values of X using the fast approximate method with
     # iterated power method
-    _, sap, _ = fast_svd(X, k, q=5)
+    _, sap, _ = randomized_svd(X, k, n_iterations=5)
 
     # the iterated power method is still managing to get most of the structure
     # at the requested rank
     assert_almost_equal(s[:k], sap, decimal=3)
 
 
-def test_fast_svd_transpose_consistency():
+def test_randomized_svd_transpose_consistency():
     """Check that transposing the design matrix has limit impact"""
     n_samples = 100
     n_features = 500
@@ -123,9 +123,12 @@ def test_fast_svd_transpose_consistency():
         effective_rank=rank, tail_strength=0.5, random_state=0)
     assert_equal(X.shape, (n_samples, n_features))
 
-    U1, s1, V1 = fast_svd(X, k, q=3, transpose=False, random_state=0)
-    U2, s2, V2 = fast_svd(X, k, q=3, transpose=True, random_state=0)
-    U3, s3, V3 = fast_svd(X, k, q=3, transpose='auto', random_state=0)
+    U1, s1, V1 = randomized_svd(X, k, n_iterations=3, transpose=False,
+                                random_state=0)
+    U2, s2, V2 = randomized_svd(X, k, n_iterations=3, transpose=True,
+                                random_state=0)
+    U3, s3, V3 = randomized_svd(X, k, n_iterations=3, transpose='auto',
+                                random_state=0)
     U4, s4, V4 = linalg.svd(X, full_matrices=False)
 
     assert_almost_equal(s1, s4[:k], decimal=3)

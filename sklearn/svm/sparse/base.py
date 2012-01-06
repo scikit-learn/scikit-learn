@@ -11,21 +11,20 @@ class SparseBaseLibSVM(BaseLibSVM):
     _kernel_types = ['linear', 'poly', 'rbf', 'sigmoid', 'precomputed']
 
     def __init__(self, impl, kernel, degree, gamma, coef0,
-                 tol, C, nu, epsilon, shrinking, probability, cache_size):
+                 tol, C, nu, epsilon, shrinking, probability, cache_size,
+                 scale_C):
 
         assert kernel in self._kernel_types, \
                "kernel should be one of %s, "\
                "%s was given." % (self._kernel_types, kernel)
 
         super(SparseBaseLibSVM, self).__init__(impl, kernel, degree, gamma,
-                                               coef0, tol, C, nu, epsilon,
-                                               shrinking, probability, cache_size)
-
+                coef0, tol, C, nu, epsilon, shrinking, probability, cache_size,
+                scale_C)
 
     def fit(self, X, y, class_weight=None, sample_weight=None):
         """
-        Fit the SVM model according to the given training data and
-        parameters.
+        Fit the SVM model according to the given training data and parameters.
 
         Parameters
         ----------
@@ -88,12 +87,16 @@ class SparseBaseLibSVM(BaseLibSVM):
             # if custom gamma is not provided ...
             self.gamma = 1.0 / X.shape[1]
 
+        C = self.C
+        if self.scale_C:
+            C = C / float(X.shape[0])
+
         self.support_vectors_, dual_coef_data, self.intercept_, self.label_, \
             self.n_support_, self.probA_, self.probB_ = \
             libsvm.libsvm_sparse_train(
                  X.shape[1], X.data, X.indices, X.indptr, y, solver_type,\
                  kernel_type, self.degree, self.gamma, self.coef0, self.tol,\
-                 self.C, self.class_weight_label, self.class_weight,\
+                 C, self.class_weight_label, self.class_weight,\
                  sample_weight, self.nu, self.cache_size, self.epsilon,\
                  int(self.shrinking), int(self.probability))
 
@@ -104,7 +107,7 @@ class SparseBaseLibSVM(BaseLibSVM):
         dual_coef_indptr = np.arange(0, dual_coef_indices.size + 1,
                                      dual_coef_indices.size / n_class)
         self.dual_coef_ = scipy.sparse.csr_matrix(
-            (dual_coef_data,dual_coef_indices, dual_coef_indptr),
+            (dual_coef_data, dual_coef_indices, dual_coef_indptr),
             (n_class, n_SV))
         return self
 
@@ -226,11 +229,15 @@ class SparseBaseLibLinear(BaseLibLinear):
         self.class_weight, self.class_weight_label = \
                      _get_class_weight(class_weight, y)
 
+        C = self.C
+        if self.scale_C:
+            C = C / float(X.shape[0])
+
         self.raw_coef_, self.label_ = \
                        liblinear.csr_train_wrap(X.shape[1], X.data, X.indices,
                        X.indptr, y,
                        self._get_solver_type(),
-                       self.tol, self._get_bias(), self.C,
+                       self.tol, self._get_bias(), C,
                        self.class_weight_label, self.class_weight)
 
         return self

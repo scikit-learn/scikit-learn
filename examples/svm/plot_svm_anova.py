@@ -13,7 +13,7 @@ import pylab as pl
 from sklearn import svm, datasets, feature_selection, cross_validation
 from sklearn.pipeline import Pipeline
 
-################################################################################
+###############################################################################
 # Import some data to play with
 digits = datasets.load_digits()
 y = digits.target
@@ -23,9 +23,9 @@ X = digits.data[:200]
 n_samples = len(y)
 X = X.reshape((n_samples, -1))
 # add 200 non-informative features
-X = np.hstack((X, 2*np.random.random((n_samples, 200))))
+X = np.hstack((X, 2 * np.random.random((n_samples, 200))))
 
-################################################################################
+###############################################################################
 # Create a feature-selection transform and an instance of SVM that we
 # combine together to have an full-blown estimator
 
@@ -33,10 +33,10 @@ transform = feature_selection.SelectPercentile(feature_selection.f_classif)
 
 clf = Pipeline([('anova', transform), ('svc', svm.SVC())])
 
-################################################################################
+###############################################################################
 # Plot the cross-validation score as a function of percentile of features
 score_means = list()
-score_stds  = list()
+score_stds = list()
 percentiles = (1, 3, 6, 10, 15, 20, 30, 40, 60, 80, 100)
 
 for percentile in percentiles:

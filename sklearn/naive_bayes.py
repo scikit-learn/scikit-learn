@@ -23,7 +23,7 @@ from scipy.sparse import issparse
 from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize, LabelBinarizer
 from .utils import array2d, atleast2d_or_csr
-from .utils.extmath import safe_sparse_dot, logsum
+from .utils.extmath import safe_sparse_dot, logsumexp
 
 
 class BaseNB(BaseEstimator, ClassifierMixin):
@@ -74,7 +74,7 @@ class BaseNB(BaseEstimator, ClassifierMixin):
         """
         jll = self._joint_log_likelihood(X)
         # normalize by P(x) = P(f_1, ..., f_n)
-        log_prob_x = logsum(jll, axis=1)
+        log_prob_x = logsumexp(jll, axis=1)
         return jll - np.atleast_2d(log_prob_x).T
 
     def predict_proba(self, X):
@@ -117,21 +117,6 @@ class GaussianNB(BaseNB):
 
     sigma : array, shape = [n_classes, n_features]
         variance of each feature per class
-
-    Methods
-    -------
-    fit(X, y) : self
-        Fit the model
-
-    predict(X) : array
-        Predict using the model.
-
-    predict_proba(X) : array
-        Predict the probability of each class using the model.
-
-    predict_log_proba(X) : array
-        Predict the log-probability of each class using the model.
-
 
     Examples
     --------
@@ -247,7 +232,7 @@ class BaseDiscreteNB(BaseNB):
 
         if class_prior:
             assert len(class_prior) == n_classes, \
-                   'Number of priors must match number of classs'
+                   'Number of priors must match number of classes'
             self.class_log_prior_ = np.log(class_prior)
         elif self.fit_prior:
             # empirical prior, with sample_weight taken into account
@@ -299,30 +284,18 @@ class MultinomialNB(BaseDiscreteNB):
         Whether to learn class prior probabilities or not.
         If false, a uniform prior will be used.
 
-    Methods
-    -------
-    fit(X, y) : self
-        Fit the model
-
-    predict(X) : array
-        Predict using the model.
-
-    predict_proba(X) : array
-        Predict the probability of each class using the model.
-
-    predict_log_proba(X) : array
-        Predict the log probability of each class using the model.
-
     Attributes
     ----------
     `intercept_`, `class_log_prior_` : array, shape = [n_classes]
-        Log probability of each class (smoothed).
+        Smoothed empirical log probability for each class.
 
     `feature_log_prob_`, `coef_` : array, shape = [n_classes, n_features]
-        Empirical log probability of features given a class, P(x_i|y).
+        Empirical log probability of features
+        given a class, P(x_i|y).
 
-        (`intercept_` and `coef_` are properties referring to
-        `class_log_prior_` and `feature_log_prob_`, respectively.)
+        (`intercept_` and `coef_` are properties
+        referring to `class_log_prior_` and
+        `feature_log_prob_`, respectively.)
 
     Examples
     --------
@@ -336,8 +309,8 @@ class MultinomialNB(BaseDiscreteNB):
     >>> print clf.predict(X[2])
     [3]
 
-    References
-    ----------
+    Notes
+    -----
     For the rationale behind the names `coef_` and `intercept_`, i.e.
     naive Bayes as a linear classifier, see J. Rennie et al. (2003),
     Tackling the poor assumptions of naive Bayes text classifiers, ICML.
@@ -374,20 +347,6 @@ class BernoulliNB(BaseDiscreteNB):
         Whether to learn class prior probabilities or not.
         If false, a uniform prior will be used.
 
-    Methods
-    -------
-    fit(X, y) : self
-        Fit the model
-
-    predict(X) : array
-        Predict using the model.
-
-    predict_proba(X) : array
-        Predict the probability of each class using the model.
-
-    predict_log_proba(X) : array
-        Predict the log probability of each class using the model.
-
     Attributes
     ----------
     `class_log_prior_` : array, shape = [n_classes]
@@ -408,8 +367,10 @@ class BernoulliNB(BaseDiscreteNB):
     >>> print clf.predict(X[2])
     [3]
 
-    References
-    ----------
+    Notes
+    -----
+    **References**:
+
     C.D. Manning, P. Raghavan and H. Schütze (2008). Introduction to
     Information Retrieval. Cambridge University Press, pp. 234–265.
 

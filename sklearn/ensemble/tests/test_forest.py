@@ -2,6 +2,9 @@
 Testing for the forest module (sklearn.ensemble.forest).
 """
 
+# Authors: Gilles Louppe, Brian Holt
+# License: BSD 3
+
 import numpy as np
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
@@ -149,6 +152,28 @@ def test_probability():
                               np.exp(clf.predict_log_proba(iris.data)))
 
 
+def test_importances():
+    """Check variable importances."""
+    X, y = datasets.make_classification(n_samples=1000,
+                                        n_features=10,
+                                        n_informative=3,
+                                        n_redundant=0,
+                                        n_repeated=0,
+                                        shuffle=False,
+                                        random_state=0)
+
+    clf = RandomForestClassifier(n_estimators=10)
+    clf.fit(X, y)
+    importances = clf.feature_importances_
+    n_important = sum(importances > 0.1)
+
+    assert_equal(importances.shape[0], 10)
+    assert_equal(n_important, 3)
+
+    X_new = clf.transform(X, threshold="mean")
+    assert 0 < X_new.shape[1] < X.shape[1]
+
+
 def test_gridsearch():
     """Check that base trees can be grid-searched."""
     # Random forest
@@ -164,6 +189,37 @@ def test_gridsearch():
                   'max_depth': (1, 2)}
     clf = GridSearchCV(forest, parameters)
     clf.fit(iris.data, iris.target)
+
+
+def test_parallel():
+    """Check parallel computations."""
+    # Classification
+    forest = RandomForestClassifier(n_estimators=10, n_jobs=3, random_state=0)
+
+    forest.fit(iris.data, iris.target)
+    assert 10 == len(forest)
+
+    forest.set_params(n_jobs=1)
+    y1 = forest.predict(iris.data)
+    forest.set_params(n_jobs=2)
+    y2 = forest.predict(iris.data)
+    assert_array_equal(y1, y2)
+
+    # Regression
+    forest = RandomForestRegressor(n_estimators=10, n_jobs=3, random_state=0)
+
+    forest.fit(boston.data, boston.target)
+    assert 10 == len(forest)
+
+    forest.set_params(n_jobs=1)
+    y1 = forest.predict(boston.data)
+    forest.set_params(n_jobs=2)
+    y2 = forest.predict(boston.data)
+    assert_array_almost_equal(y1, y2, 10)
+
+    # Use all cores on the classification dataset
+    forest = RandomForestClassifier(n_jobs=-1)
+    forest.fit(iris.data, iris.target)
 
 
 def test_pickle():

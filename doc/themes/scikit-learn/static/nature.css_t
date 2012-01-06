@@ -498,4 +498,6 @@ div.rellink:hover span.hiddenrellink {
     color: white;
 }
 
-
+th.field-name {
+    white-space: nowrap;
+}

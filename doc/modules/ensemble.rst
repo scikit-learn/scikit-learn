@@ -31,7 +31,7 @@ Two families of ensemble methods are usually distinguished:
 Forests of randomized trees
 ===========================
 
-The ``sklearn.ensemble`` module includes two averaging algorithms based on
+The :mod:`sklearn.ensemble` module includes two averaging algorithms based on
 randomized :ref:`decision trees <tree>`: the RandomForest algorithm and the
 Extra-Trees method. Both algorithms are perturb-and-combine techniques
 specifically designed for trees::
@@ -44,14 +44,14 @@ specifically designed for trees::
 
 In random forests (see :class:`RandomForestClassifier` and
 :class:`RandomForestRegressor` classes), each tree in the ensemble is built from
-a bootstrap sample drawn from the training set. In addition, when splitting a
-node during the construction of the tree, the split that is chosen is no longer
-the best split among all features. Instead, the split that is picked is the best
-split among a random subset of the features. As a result of this randomness, the
-bias of the forest usually slightly increases (with respect to the bias of a
-single non-random tree) but, due to averaging, its variance also decreases,
-usually more than compensating for the increase in bias, hence yielding an
-overall better model.
+a sample drawn with replacement (i.e., a bootstrap sample) from the training
+set. In addition, when splitting a node during the construction of the tree, the
+split that is chosen is no longer the best split among all features. Instead,
+the split that is picked is the best split among a random subset of the
+features. As a result of this randomness, the bias of the forest usually
+slightly increases (with respect to the bias of a single non-random tree) but,
+due to averaging, its variance also decreases, usually more than compensating
+for the increase in bias, hence yielding an overall better model.
 
 In extra-trees (see :class:`ExtraTreesClassifier` and
 :class:`ExtraTreesRegressor` classes), randomness goes one step further in the
@@ -86,8 +86,8 @@ slightly greater increase in bias::
     >>> clf = ExtraTreesClassifier(n_estimators=10, max_depth=None,
     ...     min_split=1, random_state=0)
     >>> scores = cross_val_score(clf, X, y)
-    >>> scores.mean()                             # doctest: +ELLIPSIS
-    0.999...
+    >>> scores.mean() > 0.999
+    True
 
 The main parameters to adjust when using these methods is ``n_estimators`` and
 ``max_features``. The former is the number of trees in the forest. The larger
@@ -96,17 +96,30 @@ results will stop getting significantly better beyond a critical number of
 trees. The latter is the size of the random subsets of features to consider when
 splitting a node. The lower the greater the reduction of variance, but also the
 greater the increase in bias. Empiricial good default values are
-``max_features=n_features`` in random forests, and
-``max_features=sqrt(n_features)`` in extra-trees (where ``n_features`` is the
-number of features in the data). The best results are also usually reached when
-setting ``max_depth=None`` in combination with ``min_split=1`` (i.e., when fully
-developping the trees). Finally, note that bootstrap samples are used by default
-in random forests (``bootstrap=True``) while the default strategy is to use the
+``max_features=n_features`` for regression problems, and
+``max_features=sqrt(n_features)`` for classification tasks (where ``n_features``
+is the number of features in the data). The best results are also usually
+reached when setting ``max_depth=None`` in combination with ``min_split=1``
+(i.e., when fully developping the trees). Bear in mind though that these values
+are usually not optimal. The best parameter values should always be cross-
+validated. In addition, note that bootstrap samples are used by default in
+random forests (``bootstrap=True``) while the default strategy is to use the
 original dataset for building extra-trees (``bootstrap=False``).
+
+Finally, this module also features the parallel construction of the trees and
+the parallel computation of the predictions through the ``n_jobs`` parameter. If
+``n_jobs=k`` then computations are partitioned into ``k`` jobs, and run on ``k``
+cores of the machine. If ``n_jobs=-1`` then all cores available on the machine
+are used. Note that because of inter-process communication overhead, the speedup
+might not be linear (i.e., using ``k`` jobs will unfortunately not be ``k``
+times as fast). Significant speedup can still be achieved though when building a
+large number of trees, or when building a single tree requires a fair amount of
+time (e.g., on large datasets).
 
 .. topic:: Examples:
 
  * :ref:`example_ensemble_plot_forest_iris.py`
+ * :ref:`example_ensemble_plot_forest_importances_faces.py`
 
 .. topic:: References
 

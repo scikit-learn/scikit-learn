@@ -1,6 +1,6 @@
 """
-The :mod:`sklearn.grid_search` includes utilities to fine-tune the parameters of
-an estimator.
+The :mod:`sklearn.grid_search` includes utilities to fine-tune the parameters
+of an estimator.
 """
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>,
@@ -17,6 +17,7 @@ import scipy.sparse as sp
 from .base import BaseEstimator, is_classifier, clone
 from .cross_validation import check_cv
 from .externals.joblib import Parallel, delayed, logger
+from .utils import deprecated
 
 
 class IterGrid(object):
@@ -28,11 +29,11 @@ class IterGrid(object):
         The parameter grid to explore, as a dictionary mapping estimator
         parameters to sequences of allowed values.
 
-    Yields
-    ------
+    Returns
+    -------
     params: dict of string to any
-        Dictionaries mapping each estimator parameter to one of its allowed
-        values.
+        **Yields** dictionaries mapping each estimator parameter to one of its
+        allowed values.
 
     Examples
     ---------
@@ -48,7 +49,8 @@ class IterGrid(object):
 
     def __iter__(self):
         param_grid = self.param_grid
-        if hasattr(param_grid, 'has_key'):
+        if hasattr(param_grid, 'items'):
+            # wrap dictionary in a singleton list
             param_grid = [param_grid]
         for p in param_grid:
             # Always sort the keys of a dictionary, for reproducibility
@@ -200,37 +202,46 @@ class GridSearchCV(BaseEstimator):
     >>> from sklearn import svm, grid_search, datasets
     >>> iris = datasets.load_iris()
     >>> parameters = {'kernel':('linear', 'rbf'), 'C':[1, 10]}
-    >>> svr = svm.SVR()
+    >>> svr = svm.SVC()
     >>> clf = grid_search.GridSearchCV(svr, parameters)
     >>> clf.fit(iris.data, iris.target)
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     GridSearchCV(cv=None,
-        estimator=SVR(C=1.0, cache_size=..., coef0=..., degree=...,
-            epsilon=..., gamma=..., kernel='rbf', probability=False,
-            shrinking=True, tol=...),
-        fit_params={}, iid=True, loss_func=None, n_jobs=1, param_grid=...,
-        ...)
+        estimator=SVC(C=1.0, cache_size=..., coef0=..., degree=...,
+            gamma=..., kernel='rbf', probability=False,
+            scale_C=False, shrinking=True, tol=...),
+        fit_params={}, iid=True, loss_func=None, n_jobs=1,
+            param_grid=...,
+            ...)
 
     Attributes
     ----------
     `grid_scores_` : dict of any to float
         Contains scores for all parameter combinations in param_grid.
 
-    `best_estimator` : estimator
+    `best_estimator_` : estimator
         Estimator that was choosen by grid search, i.e. estimator
         which gave highest score (or smallest loss if specified)
         on the left out data.
 
-    `best_score` : float
+    `best_score_` : float
         score of best_estimator on the left out data.
 
 
     Notes
     ------
-    The parameters selected are those that maximize the score of the
-    left out data, unless an explicit score_func is passed in which
-    case it is used instead. If a loss function loss_func is passed,
-    it overrides the score functions and is minimized.
+    The parameters selected are those that maximize the score of the left out
+    data, unless an explicit score_func is passed in which case it is used
+    instead. If a loss function loss_func is passed, it overrides the score
+    functions and is minimized.
+
+    If `n_jobs` was set to a value higher than one, the data is copied for each
+    point in the grid (and not `n_jobs` times). This is done for efficiency
+    reasons if individual jobs take very little time, but may raise errors if
+    the dataset is large and not enough memory is available.  A workaround in
+    this case is to set `pre_dispatch`. Then, the memory is copied only
+    `pre_dispatch` many times. A reasonable value for `pre_dispatch` is 2 *
+    `n_jobs`.
 
     See Also
     ---------
@@ -315,11 +326,14 @@ class GridSearchCV(BaseEstimator):
         n_folds = n_fits // n_grid_points
 
         scores = list()
+        cv_scores = list()
         for grid_start in range(0, n_fits, n_folds):
             n_test_samples = 0
             score = 0
+            these_points = list()
             for this_score, estimator, this_n_test_samples in \
                                     out[grid_start:grid_start + n_folds]:
+                these_points.append(this_score)
                 if self.iid:
                     this_score *= this_n_test_samples
                 score += this_score
@@ -327,6 +341,7 @@ class GridSearchCV(BaseEstimator):
             if self.iid:
                 score /= float(n_test_samples)
             scores.append((score, estimator))
+            cv_scores.append(these_points)
 
         # Note: we do not use max(out) to make ties deterministic even if
         # comparison on estimator instances is not deterministic
@@ -342,7 +357,7 @@ class GridSearchCV(BaseEstimator):
 
         if best_score is None:
             raise ValueError('Best score could not be found')
-        self.best_score = best_score
+        self.best_score_ = best_score
 
         if self.refit:
             # fit the best estimator using the entire dataset
@@ -350,20 +365,21 @@ class GridSearchCV(BaseEstimator):
             best_estimator = clone(best_estimator)
             best_estimator.fit(X, y, **self.fit_params)
 
-        self.best_estimator = best_estimator
+        self.best_estimator_ = best_estimator
         if hasattr(best_estimator, 'predict'):
             self.predict = best_estimator.predict
         if hasattr(best_estimator, 'predict_proba'):
             self.predict_proba = best_estimator.predict_proba
         if hasattr(best_estimator, 'score'):
-            self.score = best_estimator.score
+            self.score_ = best_estimator.score
 
         # Store the computed scores
         # XXX: the name is too specific, it shouldn't have
         # 'grid' in it. Also, we should be retrieving/storing variance
         self.grid_scores_ = [
-            (clf_params, score) for clf_params, (score, _)
-                                in zip(grid, scores)]
+            (clf_params, score, all_scores)
+                    for clf_params, (score, _), all_scores
+                    in zip(grid, scores, cv_scores)]
         return self
 
     def score(self, X, y=None):
@@ -371,3 +387,18 @@ class GridSearchCV(BaseEstimator):
         # found has a score function.
         y_predicted = self.predict(X)
         return self.score_func(y, y_predicted)
+
+    @property
+    @deprecated('GridSearchCV.best_estimator is deprecated'
+                ' and will be removed in version 0.12.'
+                ' Please use GridSearchCV.best_estimator_ instead.')
+    def best_estimator(self):
+        return self.best_estimator_
+
+    @property
+    @deprecated('GridSearchCV.best_score is deprecated'
+                ' and will be removed in version 0.12.'
+                ' Please use GridSearchCV.best_score_ instead.')
+    def best_score(self):
+        return self.best_score_
+
