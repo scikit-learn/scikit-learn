@@ -523,7 +523,7 @@ Automatic Relevance Determination - ARD
 ---------------------------------------
 
 :class:`ARDRegression` is very similar to `Bayesian Ridge Regression`_,
-but can lead to sparser weights :math:`w`.
+but can lead to sparser weights :math:`w` [1]_.
 :class:`ARDRegression` poses a different prior over :math:`w`, by dropping the
 assuption of the Gaussian being spherical.
 
@@ -552,7 +552,9 @@ hyperparameters :math:`\lambda_1` and :math:`\lambda_2`.
 
   * :ref:`example_linear_model_plot_ard.py`
 
+.. topic:: References:
 
+    .. [1] David Wipf and Srikantan Nagarajan: `A new view of automatic relevance determination. <http://books.nips.cc/papers/files/nips20/NIPS2007_0976.pdf>`_
 
 .. _Logistic_regression:
 
