@@ -37,7 +37,7 @@ from sklearn.base import BaseEstimator
 from sklearn.base import TransformerMixin
 
 
-def johnson_lindenstrauss_bound(n_samples, eps=0.1):
+def johnson_lindenstrauss_min_dim(n_samples, eps=0.1):
     """Find a 'safe' number of components to randomly project to
 
     The distortion introduced by a random projection `p` is asserted by
@@ -63,13 +63,13 @@ def johnson_lindenstrauss_bound(n_samples, eps=0.1):
     Examples
     --------
 
-    >>> johnson_lindenstrauss_bound(1e6, eps=0.5)
+    >>> johnson_lindenstrauss_min_dim(1e6, eps=0.5)
     663
 
-    >>> johnson_lindenstrauss_bound(1e6, eps=[0.5, 0.1, 0.01])
+    >>> johnson_lindenstrauss_min_dim(1e6, eps=[0.5, 0.1, 0.01])
     array([    663,   11841, 1112658])
 
-    >>> johnson_lindenstrauss_bound([1e4, 1e5, 1e6], eps=0.1)
+    >>> johnson_lindenstrauss_min_dim([1e4, 1e5, 1e6], eps=0.1)
     array([ 7894,  9868, 11841])
 
     References
@@ -84,6 +84,13 @@ def johnson_lindenstrauss_bound(n_samples, eps=0.1):
     eps = np.asarray(eps)
     denominator = (eps ** 2 / 2) - (eps ** 3 / 3)
     return (4 * np.log(n_samples) / denominator).astype(np.int)
+
+
+def johnson_lindenstrauss_distortion(n_components, n_samples):
+    """Expected JL bound on the distortion of the squared pairwise distances
+
+    TODO: write me
+    """
 
 
 def sparse_random_matrix(n_components, n_features, density='auto',
@@ -314,7 +321,7 @@ class SparseRandomProjection(BaseEstimator, TransformerMixin):
         n_samples, n_features = X.shape
 
         if self.n_components == 'auto':
-            self.n_components_ = johnson_lindenstrauss_bound(
+            self.n_components_ = johnson_lindenstrauss_min_dim(
                 n_samples, eps=self.eps)
 
             if self.n_components_ > n_features:
