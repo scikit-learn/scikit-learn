@@ -432,7 +432,7 @@ Sub-process traceback:
             raise ValueError('This Parallel instance is already running')
         n_jobs = self.n_jobs
         if n_jobs < 0 and multiprocessing is not None:
-            n_jobs = min(multiprocessing.cpu_count() + 1 + n_jobs, 1)
+            n_jobs = max(multiprocessing.cpu_count() + 1 + n_jobs, 1)
 
         # The list of exceptions that we will capture
         self.exceptions = [TransportableException]

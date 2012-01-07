@@ -125,6 +125,11 @@ def test_standard_types():
                 yield nose.tools.assert_equal, member, _member
 
 
+def test_value_error():
+    # Test inverting the input arguments to dump
+    nose.tools.assert_raises(ValueError, numpy_pickle.dump, 'foo',
+                             dict())
+
 @with_numpy
 def test_numpy_persistence():
     filename = env['filename']
@@ -155,12 +160,23 @@ def test_numpy_persistence():
                                                 np.array(obj_)))
 
         # Now test with array subclasses
-        obj = np.matrix(np.zeros(10))
-        this_filename = filename + str(random.randint(0, 1000))
-        filenames = numpy_pickle.dump(obj, this_filename, compress=compress,
-                                      cache_size=cache_size)
-        obj_ = numpy_pickle.load(this_filename)
-        nose.tools.assert_true(isinstance(obj_, np.matrix))
+        for obj in (
+                    np.matrix(np.zeros(10)),
+                    np.core.multiarray._reconstruct(np.memmap, (), np.float)
+                   ):
+            this_filename = filename + str(random.randint(0, 1000))
+            filenames = numpy_pickle.dump(obj, this_filename,
+                                          compress=compress,
+                                          cache_size=cache_size)
+            obj_ = numpy_pickle.load(this_filename)
+            if type(obj) is not np.memmap:
+                # We don't reconstruct memmaps
+                nose.tools.assert_true(isinstance(obj_, type(obj)))
+
+    # Finally smoke test the warning in case of compress + mmap_mode
+    this_filename = filename + str(random.randint(0, 1000))
+    numpy_pickle.dump(a, this_filename, compress=1)
+    numpy_pickle.load(this_filename, mmap_mode='r')
 
 
 @with_numpy

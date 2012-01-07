@@ -284,7 +284,7 @@ def format_records(records):   # , print_globals=False):
             _m = ("An unexpected error occurred while tokenizing input\n"
                   "The following traceback may be corrupted or invalid\n"
                   "The error message is: %s\n" % msg)
-            error(_m)
+            print(_m)
 
         # prune names list of duplicates, but keep the right order
         unique_names = uniq_stable(names)

@@ -304,7 +304,7 @@ class ZipNumpyUnpickler(NumpyUnpickler):
 # Utility functions
 
 def dump(value, filename, compress=0, cache_size=100):
-    """Fast persistence of an arbitrary Python object into a files, with 
+    """Fast persistence of an arbitrary Python object into a files, with
     dedicated storage for numpy arrays.
 
     Parameters
@@ -341,6 +341,13 @@ def dump(value, filename, compress=0, cache_size=100):
     addition, compressed files take extra extra memory during
     dump and load.
     """
+    if not isinstance(filename, basestring):
+        # People keep inverting arguments, and the resulting error is
+        # incomprehensible
+        raise ValueError(
+              'Second argument should be a filename, %s (type %s) was given'
+              % (filename, type(filename))
+            )
     try:
         pickler = NumpyPickler(filename, compress=compress,
                                cache_size=cache_size)
