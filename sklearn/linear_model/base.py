@@ -154,7 +154,7 @@ class LinearRegression(LinearModel):
                 self.coef_ = out[0]
                 self.residues_ = out[3]
             else:
-                # Old versions of scipy
+                # DEPENDENCY: scipy 0.7
                 self.coef_ = sp_linalg.spsolve(X, y)
                 self.residues_ = y - safe_sparse_dot(X, self.coef_)
         else:
