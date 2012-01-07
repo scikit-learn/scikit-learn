@@ -544,7 +544,7 @@ class BaseLibLinear(BaseEstimator):
         # as coef_ is readonly property, mark the returned value as immutable
         # to avoid silencing potential bugs
         if len(self.label_) <= 2:
-            ret = -ret
+            ret *= -1
             ret.flags.writeable = False
             return ret
         else:
