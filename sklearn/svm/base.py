@@ -1,10 +1,13 @@
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
+import scipy.sparse as sp
 
 from . import libsvm, liblinear
 from ..base import BaseEstimator
-from ..utils import array2d, safe_asarray
+from ..utils import array2d
+from ..utils import safe_asarray
+from ..utils.extmath import safe_sparse_dot
 import warnings
 
 dot = np.dot
@@ -118,10 +121,15 @@ class BaseLibSVM(BaseEstimator):
         if self.kernel != 'linear':
             raise NotImplementedError('coef_ is only available when using a '
                                       'linear kernel')
-        coef = dot(self.dual_coef_, self.support_vectors_)
+        coef = safe_sparse_dot(self.dual_coef_, self.support_vectors_)
         # coef_ being a read-only property it's better to mark the value as
         # immutable to avoid hiding potential bugs for the unsuspecting user
-        coef.flags.writeable = False
+        if sp.issparse(coef):
+            # sparse matrix do not have global flags
+            coef.data.flags.writeable = False
+        else:
+            # regular dense array
+            coef.flags.writeable = False
         return coef
 
 
