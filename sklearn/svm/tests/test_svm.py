@@ -543,6 +543,8 @@ def test_immutable_coef_property():
         svm.sparse.NuSVC(kernel='linear').fit(iris.data, iris.target),
         svm.sparse.SVR(kernel='linear').fit(iris.data, iris.target),
         svm.sparse.NuSVR(kernel='linear').fit(iris.data, iris.target),
+        svm.LinearSVC().fit(iris.data, iris.target),
+        linear_model.LogisticRegression().fit(iris.data, iris.target),
     ]
     for clf in svms:
         assert_raises(AttributeError, clf.__setattr__, 'coef_', np.arange(3))

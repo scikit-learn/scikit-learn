@@ -537,12 +537,18 @@ class BaseLibLinear(BaseEstimator):
     @property
     def coef_(self):
         if self.fit_intercept:
-            ret = self.raw_coef_[:, : -1]
+            ret = self.raw_coef_[:, : -1].copy()
         else:
-            ret = self.raw_coef_
+            ret = self.raw_coef_.copy()
+
+        # as coef_ is readonly property, mark the returned value as immutable
+        # to avoid silencing potential bugs
         if len(self.label_) <= 2:
-            return -ret
+            ret = -ret
+            ret.flags.writeable = False
+            return ret
         else:
+            ret.flags.writeable = False
             return ret
 
     def _get_bias(self):
