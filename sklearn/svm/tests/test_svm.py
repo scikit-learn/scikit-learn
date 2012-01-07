@@ -531,6 +531,20 @@ def test_nu_svc_samples_scaling():
         assert_true(error_with_scale < 1e-5)
 
 
+def test_immutable_coef_property():
+    """Check that primal coef modification are not silently ignored"""
+    svms = [
+        svm.SVC(kernel='linear').fit(iris.data, iris.target),
+        svm.NuSVC(kernel='linear').fit(iris.data, iris.target),
+        svm.SVR(kernel='linear').fit(iris.data, iris.target),
+        svm.NuSVR(kernel='linear').fit(iris.data, iris.target),
+        svm.OneClassSVM(kernel='linear').fit(iris.data),
+    ]
+    for clf in svms:
+        assert_raises(AttributeError, clf.__setattr__, 'coef_', np.arange(3))
+        assert_raises(RuntimeError, clf.coef_.__setitem__, (0, 0), 0)
+
+
 if __name__ == '__main__':
     import nose
     nose.runmodule()

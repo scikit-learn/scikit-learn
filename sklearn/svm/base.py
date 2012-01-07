@@ -118,7 +118,11 @@ class BaseLibSVM(BaseEstimator):
         if self.kernel != 'linear':
             raise NotImplementedError('coef_ is only available when using a '
                                       'linear kernel')
-        return dot(self.dual_coef_, self.support_vectors_)
+        coef = dot(self.dual_coef_, self.support_vectors_)
+        # coef_ being a read-only property it's better to mark the value as
+        # immutable to avoid hiding potential bugs for the unsuspecting user
+        coef.flags.writeable = False
+        return coef
 
 
 class DenseBaseLibSVM(BaseLibSVM):

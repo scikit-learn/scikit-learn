@@ -146,6 +146,9 @@ class SVC(DenseBaseLibSVM, ClassifierMixin):
         Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
+        `coef_` is readonly property derived from `dual_coef_` and
+        `support_vectors_`
+
     `intercept_` : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
 
@@ -233,6 +236,9 @@ class NuSVC(DenseBaseLibSVM, ClassifierMixin):
     `coef_` : array, shape = [n_classes-1, n_features]
         Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
+
+        `coef_` is readonly property derived from `dual_coef_` and
+        `support_vectors_`
 
     `intercept_` : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
@@ -328,6 +334,9 @@ class SVR(DenseBaseLibSVM, RegressorMixin):
     `coef_` : array, shape = [n_classes-1, n_features]
         Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
+
+        `coef_` is readonly property derived from `dual_coef_` and
+        `support_vectors_`
 
     `intercept_` : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
@@ -449,6 +458,9 @@ class NuSVR(DenseBaseLibSVM, RegressorMixin):
         Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
+        `coef_` is readonly property derived from `dual_coef_` and
+        `support_vectors_`
+
     `intercept_` : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
 
@@ -558,6 +570,9 @@ class OneClassSVM(DenseBaseLibSVM):
         Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
+        `coef_` is readonly property derived from `dual_coef_` and
+        `support_vectors_`
+
     `intercept_` : array, shape = [n_classes-1]
         Constants in decision function.
 
@@ -592,3 +607,4 @@ class OneClassSVM(DenseBaseLibSVM):
         super(OneClassSVM, self).fit(
             X, [], class_weight=class_weight, sample_weight=sample_weight,
             **params)
+        return self
