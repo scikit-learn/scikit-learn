@@ -369,7 +369,6 @@ class _BaseHMM(BaseEstimator):
                     bwdlattice, params)
             logprob.append(curr_logprob)
 
-            print curr_logprob
             # Check for convergence.
             if i > 0 and abs(logprob[-1] - logprob[-2]) < thresh:
                 break
@@ -414,9 +413,9 @@ class _BaseHMM(BaseEstimator):
     def _do_viterbi_pass(self, framelogprob, maxrank=None,
                          beamlogprob=-np.Inf):
         if _hmmc:
-            n_samples, n_states = framelogprob.shape
-            reverse_state_sequence, logprob = _hmmc._viterbi_c(
-                    n_samples, n_states, self._log_startprob,
+            n_observations, n_components = framelogprob.shape
+            state_sequence, logprob = _hmmc._viterbi_c(
+                    n_observations, n_components, self._log_startprob,
                     self._log_transmat, framelogprob)
         else:
             nobs = len(framelogprob)
@@ -440,9 +439,9 @@ class _BaseHMM(BaseEstimator):
                 reverse_state_sequence.append(s)
                 s = frame[s]
 
-            reverse_state_sequence.reverse()
+            state_sequence = np.array(reversed(reverse_state_sequence))
 
-        return logprob, np.array(reverse_state_sequence)
+        return logprob, state_sequence
 
     def _do_forward_pass(self, framelogprob, maxrank=None,
                          beamlogprob=-np.Inf):
@@ -451,8 +450,8 @@ class _BaseHMM(BaseEstimator):
         fwdlattice = np.zeros((nobs, self.n_components))
 
         if _hmmc:
-            n_samples, n_states = framelogprob.shape
-            _hmmc._forward_c(n_samples, n_states, self._log_startprob,
+            n_observations, n_components = framelogprob.shape
+            _hmmc._forward_c(n_observations, n_components, self._log_startprob,
                     self._log_transmat, framelogprob, fwdlattice)
         else:
             fwdlattice[0] = self._log_startprob + framelogprob[0]
@@ -474,9 +473,10 @@ class _BaseHMM(BaseEstimator):
         bwdlattice = np.zeros((nobs, self.n_components))
 
         if _hmmc:
-            n_samples, n_states = framelogprob.shape
-            _hmmc._backward_c(n_samples, n_states, self._log_startprob,
-                    self._log_transmat, framelogprob, bwdlattice)
+            n_observations, n_components = framelogprob.shape
+            _hmmc._backward_c(n_observations, n_components,
+                    self._log_startprob, self._log_transmat,
+                    framelogprob, bwdlattice)
         else:
             for n in xrange(nobs - 1, 0, -1):
                 # Do HTK style pruning (p. 137 of HTK Book version 3.4).
@@ -555,11 +555,13 @@ class _BaseHMM(BaseEstimator):
             stats['start'] += posteriors[0]
         if 't' in params:
             if _hmmc:
-                n_samples, n_states = framelogprob.shape
-                lneta = np.zeros((T - 1, N, N))
+                n_observations, n_components = framelogprob.shape
+                lneta = np.zeros((n_observations - 1,
+                            n_components, n_components))
                 lnP = logsumexp(fwdlattice[-1])
-                _hmmc._compute_lneta_c(n_samples, n_states, fwdlattice,
-                      self._log_transmat, bwdlattice, framelogprob, lnP, lneta)
+                _hmmc._compute_lneta_c(n_observations, n_components,
+                        fwdlattice, self._log_transmat, bwdlattice,
+                        framelogprob, lnP, lneta)
                 stats["trans"] = np.exp(logsumexp(lneta, 0))
             else:
                 for t in xrange(len(framelogprob)):

@@ -21,100 +21,103 @@ def _logsum(int N, np.ndarray[dtype_t, ndim=1] X):
 
 
 @cython.boundscheck(False)
-def _forward_c(int T, int N, \
-        np.ndarray[dtype_t, ndim=1] lnpi, \
-        np.ndarray[dtype_t, ndim=2] lnA, \
-        np.ndarray[dtype_t, ndim=2] lnf, \
-        np.ndarray[dtype_t, ndim=2] lnalpha):
+def _forward_c(int n_observations, int n_components, \
+        np.ndarray[dtype_t, ndim=1] log_startprob, \
+        np.ndarray[dtype_t, ndim=2] log_transmat, \
+        np.ndarray[dtype_t, ndim=2] framelogprob, \
+        np.ndarray[dtype_t, ndim=2] fwdlattice):
 
     cdef int t, i, j
-    cdef double lnP
-    cdef np.ndarray[dtype_t, ndim = 1] temp
-    temp = np.zeros(N)
+    cdef double logprob
+    cdef np.ndarray[dtype_t, ndim = 1] work_buffer
+    work_buffer = np.zeros(n_components)
 
-    for i in xrange(N):
-        lnalpha[0, i] = lnpi[i] + lnf[0, i]
+    for i in xrange(n_components):
+        fwdlattice[0, i] = log_startprob[i] + framelogprob[0, i]
 
-    for t in xrange(1, T):
-        for j in xrange(N):
-            for i in xrange(N):
-                temp[i] = lnalpha[t - 1, i] + lnA[i, j]
-            lnalpha[t, j] = _logsum(N, temp) + lnf[t, j]
+    for t in xrange(1, n_observations):
+        for j in xrange(n_components):
+            for i in xrange(n_components):
+                work_buffer[i] = fwdlattice[t - 1, i] + log_transmat[i, j]
+            fwdlattice[t, j] = _logsum(n_components, work_buffer) \
+                + framelogprob[t, j]
 
 
 @cython.boundscheck(False)
-def _backward_c(int T, int N, \
-        np.ndarray[dtype_t, ndim=1] lnpi, \
-        np.ndarray[dtype_t, ndim=2] lnA, \
-        np.ndarray[dtype_t, ndim=2] lnf, \
-        np.ndarray[dtype_t, ndim=2] lnbeta):
+def _backward_c(int n_observations, int n_components, \
+        np.ndarray[dtype_t, ndim=1] log_startprob, \
+        np.ndarray[dtype_t, ndim=2] log_transmat, \
+        np.ndarray[dtype_t, ndim=2] framelogprob, \
+        np.ndarray[dtype_t, ndim=2] bwdlattice):
 
     cdef int t, i, j
-    cdef double lnP
-    cdef np.ndarray[dtype_t, ndim = 1] temp
-    temp = np.zeros(N)
+    cdef double logprob
+    cdef np.ndarray[dtype_t, ndim = 1] work_buffer
+    work_buffer = np.zeros(n_components)
 
-    for i in xrange(N):
-        lnbeta[T - 1, i] = 0.0
+    for i in xrange(n_components):
+        bwdlattice[n_observations - 1, i] = 0.0
 
-    for t in xrange(T - 2, -1, -1):
-        for i in xrange(N):
-            for j in xrange(N):
-                temp[j] = lnA[i, j] + lnf[t + 1, j] + lnbeta[t + 1, j]
-            lnbeta[t, i] = _logsum(N, temp)
+    for t in xrange(n_observations - 2, -1, -1):
+        for i in xrange(n_components):
+            for j in xrange(n_components):
+                work_buffer[j] = log_transmat[i, j] + framelogprob[t + 1, j] \
+                    + bwdlattice[t + 1, j]
+            bwdlattice[t, i] = _logsum(n_components, work_buffer)
 
 
 @cython.boundscheck(False)
-def _compute_lneta_c(int T, int N, \
-        np.ndarray[dtype_t, ndim=2] lnalpha, \
-        np.ndarray[dtype_t, ndim=2] lnA, \
-        np.ndarray[dtype_t, ndim=2] lnbeta, \
-        np.ndarray[dtype_t, ndim=2] lnf, \
-        double lnP_f, \
+def _compute_lneta_c(int n_observations, int n_components, \
+        np.ndarray[dtype_t, ndim=2] fwdlattice, \
+        np.ndarray[dtype_t, ndim=2] log_transmat, \
+        np.ndarray[dtype_t, ndim=2] bwdlattice, \
+        np.ndarray[dtype_t, ndim=2] framelogprob, \
+        double logprob, \
         np.ndarray[dtype_t, ndim=3] lneta):
 
     cdef int i, j, t
-    for t in xrange(T - 1):
-        for i in xrange(N):
-            for j in xrange(N):
-                lneta[t, i, j] = lnalpha[t, i] + lnA[i, j] + lnf[t + 1, j] \
-                        + lnbeta[t + 1, j] - lnP_f
+    for t in xrange(n_observations - 1):
+        for i in xrange(n_components):
+            for j in xrange(n_components):
+                lneta[t, i, j] = fwdlattice[t, i] + log_transmat[i, j] \
+                    + framelogprob[t + 1, j] + bwdlattice[t + 1, j] - logprob
 
 
 @cython.boundscheck(False)
-def _viterbi_c(int T, int N, \
-        np.ndarray[dtype_t, ndim=1] lnpi, \
-        np.ndarray[dtype_t, ndim=2] lnA, \
-        np.ndarray[dtype_t, ndim=2] lnf):
+def _viterbi_c(int n_observations, int n_components, \
+        np.ndarray[dtype_t, ndim=1] log_startprob, \
+        np.ndarray[dtype_t, ndim=2] log_transmat, \
+        np.ndarray[dtype_t, ndim=2] framelogprob):
 
-    cdef int i, j, t, imax
-    cdef np.ndarray[dtype_t, ndim = 2] lndelta
-    cdef np.ndarray[np.int_t, ndim = 1] z
-    cdef double lnP
-    cdef np.ndarray[dtype_t, ndim = 1] temp
+    cdef int i, j, t, max_pos
+    cdef np.ndarray[dtype_t, ndim = 2] viterbi_lattice
+    cdef np.ndarray[np.int_t, ndim = 1] state_sequence
+    cdef double logprob
+    cdef np.ndarray[dtype_t, ndim = 1] work_buffer
 
-    # Initialization
-    z = np.zeros(T, dtype=np.int)
-    temp = np.zeros(N)
-    lndelta = np.zeros((T, N))
+    # Initialistate_sequenceation
+    state_sequence = np.zeros(n_observations, dtype=np.int)
+    work_buffer = np.zeros(n_components)
+    viterbi_lattice = np.zeros((n_observations, n_components))
 
-    # lndelta[0,:] = lnpi[:] + lnf[0,:]
-    for i in xrange(N):
-        lndelta[0, i] = lnpi[i] + lnf[0, i]
+    # viterbi_lattice[0,:] = log_startprob[:] + framelogprob[0,:]
+    for i in xrange(n_components):
+        viterbi_lattice[0, i] = log_startprob[i] + framelogprob[0, i]
 
     # Induction
-    for t in xrange(1, T):
-        for j in xrange(N):
-            temp[:] = lndelta[t - 1, :] + lnA[:, j]
-            lndelta[t, j] = np.max(temp[:]) + lnf[t, j]
+    for t in xrange(1, n_observations):
+        for j in xrange(n_components):
+            work_buffer[:] = viterbi_lattice[t - 1, :] + log_transmat[:, j]
+            viterbi_lattice[t, j] = np.max(work_buffer[:]) + framelogprob[t, j]
 
-    # Traceback
-    imax = np.argmax(lndelta[T - 1, :])
-    z[T - 1] = imax
-    lnP = lndelta[T - 1, imax]
+    # n_observationsraceback
+    max_pos = np.argmax(viterbi_lattice[n_observations - 1, :])
+    state_sequence[n_observations - 1] = max_pos
+    logprob = viterbi_lattice[n_observations - 1, max_pos]
 
-    for t in xrange(T - 2, 0, -1):
-        imax = np.argmax(lndelta[t, :] + lnA[:, z[t + 1]])
-        z[t] = imax
+    for t in xrange(n_observations - 2, 0, -1):
+        max_pos = np.argmax(viterbi_lattice[t, :] \
+                + log_transmat[:, state_sequence[t + 1]])
+        state_sequence[t] = max_pos
 
-    return z, lnP
+    return state_sequence, logprob
