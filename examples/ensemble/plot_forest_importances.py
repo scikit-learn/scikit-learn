@@ -28,9 +28,8 @@ X, y = make_classification(n_samples=1000,
                            random_state=0,
                            shuffle=False)
 
-# Build a forest and compute the feature importances
+# Build a forest
 forest = ExtraTreesClassifier(n_estimators=250,
-                              compute_importances=True,
                               random_state=0)
 
 forest.fit(X, y)

@@ -26,16 +26,15 @@ data = fetch_olivetti_faces()
 X = data.images.reshape((len(data.images), -1))
 y = data.target
 
-mask = y < 5 # Limit to 5 classes
+mask = y < 5  # Limit to 5 classes
 X = X[mask]
 y = y[mask]
 
-# Build a forest and compute the pixel importances
+# Build a forest
 print "Fitting ExtraTreesClassifier on faces data with %d cores..." % n_jobs
 t0 = time()
 forest = ExtraTreesClassifier(n_estimators=1000,
                               max_features=128,
-                              compute_importances=True,
                               n_jobs=n_jobs,
                               random_state=0)
 
