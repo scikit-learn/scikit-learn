@@ -24,6 +24,7 @@ from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize, LabelBinarizer
 from .utils import array2d, atleast2d_or_csr
 from .utils.extmath import safe_sparse_dot, logsumexp
+from .utils import deprecated
 
 
 class BaseNB(BaseEstimator, ClassifierMixin):
@@ -35,7 +36,7 @@ class BaseNB(BaseEstimator, ClassifierMixin):
     def _joint_log_likelihood(self, X):
         """Compute the unnormalized posterior log probability of X
 
-        I.e. log P(c) + log P(x|c) for all rows x of X, as an array-like of
+        I.e. ``log P(c) + log P(x|c)`` for all rows x of X, as an array-like of
         shape [n_classes, n_samples].
 
         Input is passed to _joint_log_likelihood as-is by predict,
@@ -109,13 +110,13 @@ class GaussianNB(BaseNB):
 
     Attributes
     ----------
-    class_prior : array, shape = [n_classes]
+    `class_prior_` : array, shape = [n_classes]
         probability of each class.
 
-    theta : array, shape = [n_classes, n_features]
+    `theta_` : array, shape = [n_classes, n_features]
         mean of each feature per class
 
-    sigma : array, shape = [n_classes, n_features]
+    `sigma_` : array, shape = [n_classes, n_features]
         variance of each feature per class
 
     Examples
@@ -156,26 +157,47 @@ class GaussianNB(BaseNB):
         n_classes = unique_y.shape[0]
         _, n_features = X.shape
 
-        self.theta = np.empty((n_classes, n_features))
-        self.sigma = np.empty((n_classes, n_features))
-        self.class_prior = np.empty(n_classes)
+        self.theta_ = np.empty((n_classes, n_features))
+        self.sigma_ = np.empty((n_classes, n_features))
+        self.class_prior_ = np.empty(n_classes)
         for i, y_i in enumerate(unique_y):
-            self.theta[i, :] = np.mean(X[y == y_i, :], axis=0)
-            self.sigma[i, :] = np.var(X[y == y_i, :], axis=0)
-            self.class_prior[i] = np.float(np.sum(y == y_i)) / n_classes
+            self.theta_[i, :] = np.mean(X[y == y_i, :], axis=0)
+            self.sigma_[i, :] = np.var(X[y == y_i, :], axis=0)
+            self.class_prior_[i] = np.float(np.sum(y == y_i)) / n_classes
         return self
 
     def _joint_log_likelihood(self, X):
         X = array2d(X)
         joint_log_likelihood = []
         for i in xrange(np.size(self._classes)):
-            jointi = np.log(self.class_prior[i])
+            jointi = np.log(self.class_prior_[i])
             n_ij = - 0.5 * np.sum(np.log(np.pi * self.sigma[i, :]))
             n_ij -= 0.5 * np.sum(((X - self.theta[i, :]) ** 2) / \
                                     (self.sigma[i, :]), 1)
             joint_log_likelihood.append(jointi + n_ij)
         joint_log_likelihood = np.array(joint_log_likelihood).T
         return joint_log_likelihood
+
+    @property
+    @deprecated('GaussianNB.class_prior is deprecated'
+                ' and will be removed in version 0.12.'
+                ' Please use GaussianNB.class_prior_ instead.')
+    def class_prior(self):
+        return self.class_prior_
+
+    @property
+    @deprecated('GaussianNB.theta is deprecated'
+                ' and will be removed in version 0.12.'
+                ' Please use GaussianNB.theta_ instead.')
+    def theta(self):
+        return self.theta_
+
+    @property
+    @deprecated('GaussianNB.sigma is deprecated'
+                ' and will be removed in version 0.12.'
+                ' Please use GaussianNB.sigma_ instead.')
+    def sigma(self):
+        return self.sigma_
 
 
 class BaseDiscreteNB(BaseNB):
