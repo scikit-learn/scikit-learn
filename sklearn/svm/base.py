@@ -1,10 +1,13 @@
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
+import scipy.sparse as sp
 
 from . import libsvm, liblinear
 from ..base import BaseEstimator
-from ..utils import array2d, safe_asarray
+from ..utils import array2d
+from ..utils import safe_asarray
+from ..utils.extmath import safe_sparse_dot
 import warnings
 
 dot = np.dot
@@ -118,7 +121,16 @@ class BaseLibSVM(BaseEstimator):
         if self.kernel != 'linear':
             raise NotImplementedError('coef_ is only available when using a '
                                       'linear kernel')
-        return dot(self.dual_coef_, self.support_vectors_)
+        coef = safe_sparse_dot(self.dual_coef_, self.support_vectors_)
+        # coef_ being a read-only property it's better to mark the value as
+        # immutable to avoid hiding potential bugs for the unsuspecting user
+        if sp.issparse(coef):
+            # sparse matrix do not have global flags
+            coef.data.flags.writeable = False
+        else:
+            # regular dense array
+            coef.flags.writeable = False
+        return coef
 
 
 class DenseBaseLibSVM(BaseLibSVM):
@@ -525,12 +537,18 @@ class BaseLibLinear(BaseEstimator):
     @property
     def coef_(self):
         if self.fit_intercept:
-            ret = self.raw_coef_[:, : -1]
+            ret = self.raw_coef_[:, : -1].copy()
         else:
-            ret = self.raw_coef_
+            ret = self.raw_coef_.copy()
+
+        # as coef_ is readonly property, mark the returned value as immutable
+        # to avoid silencing potential bugs
         if len(self.label_) <= 2:
-            return -ret
+            ret *= -1
+            ret.flags.writeable = False
+            return ret
         else:
+            ret.flags.writeable = False
             return ret
 
     def _get_bias(self):
