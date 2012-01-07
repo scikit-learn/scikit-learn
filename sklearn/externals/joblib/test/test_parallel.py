@@ -61,9 +61,17 @@ def test_cpu_count():
 # Test parallel
 def test_simple_parallel():
     X = range(10)
-    for n_jobs in (1, 2, -1):
+    for n_jobs in (1, 2, -1, -2):
         yield (nose.tools.assert_equal, [square(x) for x in X],
                         Parallel(n_jobs=-1)(delayed(square)(x) for x in X))
+
+
+def nested_loop():
+    Parallel(n_jobs=2)(delayed(square)(.01) for _ in range(2))
+
+
+def test_nested_loop():
+    Parallel(n_jobs=2)(delayed(nested_loop)() for _ in range(2))
 
 
 def test_parallel_kwargs():
