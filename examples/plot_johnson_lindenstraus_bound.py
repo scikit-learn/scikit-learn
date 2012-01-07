@@ -57,7 +57,7 @@ and the distances are well preserved by the random projection.
 """
 import numpy as np
 import pylab as pl
-from sklearn.random_projection import johnson_lindenstrauss_bound
+from sklearn.random_projection import johnson_lindenstrauss_min_dim
 from sklearn.random_projection import SparseRandomProjection
 from sklearn.datasets import fetch_olivetti_faces
 from sklearn.metrics.pairwise import euclidean_distances
@@ -74,7 +74,7 @@ n_samples_range = np.logspace(1, 9, 9)
 
 pl.figure()
 for eps, color in zip(eps_range, colors):
-    min_n_components = johnson_lindenstrauss_bound(n_samples_range, eps=eps)
+    min_n_components = johnson_lindenstrauss_min_dim(n_samples_range, eps=eps)
     pl.loglog(n_samples_range, min_n_components, color=color)
 
 pl.legend(["eps = %0.1f" % eps for eps in eps_range], loc="lower right")
