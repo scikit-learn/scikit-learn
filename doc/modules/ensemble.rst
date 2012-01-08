@@ -134,7 +134,11 @@ time (e.g., on large datasets).
 Gradient Boosting
 =================
 
-TODO
+Gradient boosting is a generalization of boosting to arbitrary differentiable loss functions. Similar to other boosting algorithms it builds the additive model in a forward stagewise fashion. Gradient boosting considers additive models of the following form::
+
+  ...
+
+where h(x) are the basis functions which are called weak learners in the context of boosting.
 
 .. topic:: Examples:
 
