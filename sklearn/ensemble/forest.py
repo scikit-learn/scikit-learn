@@ -71,6 +71,7 @@ def _parallel_build_trees(n_trees, forest, X, y,
             indices = random_state.randint(0, n_samples, n_samples)
             tree.fit(X[indices], y[indices],
                      sample_mask=sample_mask, X_argsorted=X_argsorted)
+            tree.indices_ = indices
 
         else:
             tree.fit(X, y,
