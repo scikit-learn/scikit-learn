@@ -113,8 +113,8 @@ class BaseLibSVM(BaseEstimator):
     @property
     def coef_(self):
         if self.kernel != 'linear':
-            raise NotImplementedError('coef_ is only available when using a '
-                                      'linear kernel')
+            raise ValueError('coef_ is only available when using a '
+                             'linear kernel')
         coef = safe_sparse_dot(self.dual_coef_, self.support_vectors_)
         # coef_ being a read-only property it's better to mark the value as
         # immutable to avoid hiding potential bugs for the unsuspecting user
