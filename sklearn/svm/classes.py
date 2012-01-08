@@ -603,7 +603,7 @@ class OneClassSVM(DenseBaseLibSVM):
             Returns self.
 
         Notes
-        ------
+        -----
         If X is not a C-ordered contiguous array, it is copied.
 
         """
