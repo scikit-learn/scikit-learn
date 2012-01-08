@@ -63,6 +63,7 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True):
 
     alpha = np.dot(X.T, y)
     residual = y
+    gamma = np.empty(0)
     n_active = 0
     indices = range(X.shape[1])  # keeping track of swapping
 
@@ -157,6 +158,7 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
     alpha = Xy
     tol_curr = tol_0
     delta = 0
+    gamma = np.empty(0)
     n_active = 0
 
     max_features = len(Gram) if tol is not None else n_nonzero_coefs
