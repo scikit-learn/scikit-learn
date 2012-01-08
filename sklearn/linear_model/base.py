@@ -11,6 +11,8 @@ Generalized Linear models.
 #
 # License: BSD Style.
 
+from abc import ABCMeta, abstractmethod
+
 import numpy as np
 import scipy.sparse as sp
 from scipy import linalg
@@ -172,6 +174,8 @@ class LinearRegression(LinearModel):
 class BaseSGD(BaseEstimator):
     """Base class for dense and sparse SGD."""
 
+    __metaclass__ = ABCMeta
+
     def __init__(self, loss, penalty='l2', alpha=0.0001,
                  rho=0.85, fit_intercept=True, n_iter=5, shuffle=False,
                  verbose=0, seed=0, learning_rate="optimal", eta0=0.0,
@@ -205,6 +209,14 @@ class BaseSGD(BaseEstimator):
             if eta0 <= 0.0:
                 raise ValueError("eta0 must be greater than 0.0")
         self.class_weight = class_weight
+
+    @abstractmethod
+    def fit(self, X, y):
+        """Fit model."""
+
+    @abstractmethod
+    def predict(self, X):
+        """Predict using model."""
 
     def _set_learning_rate(self, learning_rate):
         learning_rate_codes = {"constant": 1, "optimal": 2, "invscaling": 3}
@@ -290,6 +302,8 @@ class BaseSGD(BaseEstimator):
 
 class BaseSGDClassifier(BaseSGD, ClassifierMixin):
     """Base class for dense and sparse classification using SGD."""
+
+    __metaclass__ = ABCMeta
 
     def __init__(self, loss="hinge", penalty='l2', alpha=0.0001,
                  rho=0.85, fit_intercept=True, n_iter=5, shuffle=False,
@@ -401,11 +415,13 @@ class BaseSGDClassifier(BaseSGD, ClassifierMixin):
         # return self for chaining fit and predict calls
         return self
 
+    @abstractmethod
     def _fit_binary(self, X, y):
-        raise NotImplementedError("BaseSGDClassifier is an abstract class.")
+        """Fit binary classifier."""
 
+    @abstractmethod
     def _fit_multiclass(self, X, y):
-        raise NotImplementedError("BaseSGDClassifier is an abstract class.")
+        """Fit multiclass classifier."""
 
     def decision_function(self, X):
         """Predict signed 'distance' to the hyperplane (aka confidence score)
@@ -473,6 +489,9 @@ class BaseSGDClassifier(BaseSGD, ClassifierMixin):
 
 class BaseSGDRegressor(BaseSGD, RegressorMixin):
     """Base class for dense and sparse regression using SGD."""
+
+    __metaclass__ = ABCMeta
+
     def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
                  rho=0.85, fit_intercept=True, n_iter=5, shuffle=False,
                  verbose=0, p=0.1, seed=0, learning_rate="invscaling",
@@ -535,8 +554,9 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         self._fit_regressor(X, y)
         return self
 
+    @abstractmethod
     def _fit_regressor(self, X, y):
-        raise NotImplementedError("BaseSGDRegressor is an abstract class.")
+        """Fit regression model."""
 
     def predict(self, X):
         """Predict using the linear model
