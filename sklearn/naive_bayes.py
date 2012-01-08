@@ -181,21 +181,21 @@ class GaussianNB(BaseNB):
     @property
     @deprecated('GaussianNB.class_prior is deprecated'
                 ' and will be removed in version 0.12.'
-                ' Please use GaussianNB.class_prior_ instead.')
+                ' Please use ``GaussianNB.class_prior_`` instead.')
     def class_prior(self):
         return self.class_prior_
 
     @property
     @deprecated('GaussianNB.theta is deprecated'
                 ' and will be removed in version 0.12.'
-                ' Please use GaussianNB.theta_ instead.')
+                ' Please use ``GaussianNB.theta_`` instead.')
     def theta(self):
         return self.theta_
 
     @property
     @deprecated('GaussianNB.sigma is deprecated'
                 ' and will be removed in version 0.12.'
-                ' Please use GaussianNB.sigma_ instead.')
+                ' Please use ``GaussianNB.sigma_`` instead.')
     def sigma(self):
         return self.sigma_
 
