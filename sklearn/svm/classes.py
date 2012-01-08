@@ -76,12 +76,14 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, CoefSelectTransformerMixin):
     to have slightly different results for the same input data. If
     that happens, try with a smaller tol parameter.
 
+    **References:**
+    `LIBLINEAR: A Library for Large Linear Classification
+    <http://www.csie.ntu.edu.tw/~cjlin/liblinear/>`__
+
     See also
     --------
     SVC
 
-    LIBLINEAR -- A Library for Large Linear Classification
-    http://www.csie.ntu.edu.tw/~cjlin/liblinear/
 
     """
 
