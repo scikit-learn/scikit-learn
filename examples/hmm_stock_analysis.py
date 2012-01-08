@@ -5,7 +5,7 @@ Gaussian HMM of stock data
 
 This script shows how to use Gaussian HMM.
 It uses stock price data, which can be obtained from yahoo finance.
-For more information on how to get stock price by matplitlib, please refer
+For more information on how to get stock prices with matplotlib, please refer
 to date_demo1.py of matplotlib.
 """
 print __doc__
@@ -33,7 +33,7 @@ volume = np.array([q[2] for q in quotes])[1:]
 
 # take diff of close value
 # this makes len(diff) = len(close_t) - 1
-# therefore, others quontity also need to be shifted
+# therefore, others quantity also need to be shifted
 diff = close_v[1:] - close_v[:-1]
 dates = dates[1:]
 close_v = close_v[1:]
