@@ -414,7 +414,7 @@ class _BaseHMM(BaseEstimator):
                          beamlogprob=-np.Inf):
         if _hmmc:
             n_observations, n_components = framelogprob.shape
-            state_sequence, logprob = _hmmc._viterbi_c(
+            state_sequence, logprob = _hmmc._viterbi(
                     n_observations, n_components, self._log_startprob,
                     self._log_transmat, framelogprob)
         else:
@@ -451,7 +451,7 @@ class _BaseHMM(BaseEstimator):
 
         if _hmmc:
             n_observations, n_components = framelogprob.shape
-            _hmmc._forward_c(n_observations, n_components, self._log_startprob,
+            _hmmc._forward(n_observations, n_components, self._log_startprob,
                     self._log_transmat, framelogprob, fwdlattice)
         else:
             fwdlattice[0] = self._log_startprob + framelogprob[0]
@@ -474,7 +474,7 @@ class _BaseHMM(BaseEstimator):
 
         if _hmmc:
             n_observations, n_components = framelogprob.shape
-            _hmmc._backward_c(n_observations, n_components,
+            _hmmc._backward(n_observations, n_components,
                     self._log_startprob, self._log_transmat,
                     framelogprob, bwdlattice)
         else:
@@ -559,7 +559,7 @@ class _BaseHMM(BaseEstimator):
                 lneta = np.zeros((n_observations - 1,
                             n_components, n_components))
                 lnP = logsumexp(fwdlattice[-1])
-                _hmmc._compute_lneta_c(n_observations, n_components,
+                _hmmc._compute_lneta(n_observations, n_components,
                         fwdlattice, self._log_transmat, bwdlattice,
                         framelogprob, lnP, lneta)
                 stats["trans"] = np.exp(logsumexp(lneta, 0))

@@ -21,7 +21,7 @@ def _logsum(int N, np.ndarray[dtype_t, ndim=1] X):
 
 
 @cython.boundscheck(False)
-def _forward_c(int n_observations, int n_components, \
+def _forward(int n_observations, int n_components, \
         np.ndarray[dtype_t, ndim=1] log_startprob, \
         np.ndarray[dtype_t, ndim=2] log_transmat, \
         np.ndarray[dtype_t, ndim=2] framelogprob, \
@@ -44,7 +44,7 @@ def _forward_c(int n_observations, int n_components, \
 
 
 @cython.boundscheck(False)
-def _backward_c(int n_observations, int n_components, \
+def _backward(int n_observations, int n_components, \
         np.ndarray[dtype_t, ndim=1] log_startprob, \
         np.ndarray[dtype_t, ndim=2] log_transmat, \
         np.ndarray[dtype_t, ndim=2] framelogprob, \
@@ -67,7 +67,7 @@ def _backward_c(int n_observations, int n_components, \
 
 
 @cython.boundscheck(False)
-def _compute_lneta_c(int n_observations, int n_components, \
+def _compute_lneta(int n_observations, int n_components, \
         np.ndarray[dtype_t, ndim=2] fwdlattice, \
         np.ndarray[dtype_t, ndim=2] log_transmat, \
         np.ndarray[dtype_t, ndim=2] bwdlattice, \
@@ -84,7 +84,7 @@ def _compute_lneta_c(int n_observations, int n_components, \
 
 
 @cython.boundscheck(False)
-def _viterbi_c(int n_observations, int n_components, \
+def _viterbi(int n_observations, int n_components, \
         np.ndarray[dtype_t, ndim=1] log_startprob, \
         np.ndarray[dtype_t, ndim=2] log_transmat, \
         np.ndarray[dtype_t, ndim=2] framelogprob):
