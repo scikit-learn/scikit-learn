@@ -137,7 +137,7 @@ class SGDClassifier(BaseSGDClassifier):
 
     """
 
-    def _fit_binary(self, X, y):
+    def _fit_binary(self, X, y, sample_weight):
         """Fit a binary classifier."""
         X = _tocsr(X)
 
@@ -165,7 +165,7 @@ class SGDClassifier(BaseSGDClassifier):
                                       int(self.seed),
                                       self._expanded_class_weight[1],
                                       self._expanded_class_weight[0],
-                                      self.sample_weight,
+                                      sample_weight,
                                       self.learning_rate_code,
                                       self.eta0, self.power_t)
 
@@ -173,7 +173,7 @@ class SGDClassifier(BaseSGDClassifier):
         self._set_coef(coef_)
         self.intercept_ = np.asarray(intercept_)
 
-    def _fit_multiclass(self, X, y):
+    def _fit_multiclass(self, X, y, sample_weight):
         """Fit a multi-class classifier as a combination of binary classifiers
 
         Each binary classifier predicts one class versus all others
@@ -197,7 +197,7 @@ class SGDClassifier(BaseSGDClassifier):
                                                self.verbose, self.shuffle,
                                                self.seed,
                                                self._expanded_class_weight[i],
-                                               self.sample_weight,
+                                               sample_weight,
                                                self.learning_rate_code,
                                                self.eta0, self.power_t)
             for i, c in enumerate(self.classes))
@@ -330,8 +330,8 @@ class SGDRegressor(BaseSGDRegressor):
 
     """
 
-    def _fit_regressor(self, X, y):
-        # interprete X as CSR matrix
+    def _fit_regressor(self, X, y, sample_weight):
+        # interpret X as CSR matrix
         X = _tocsr(X)
 
         # get sparse matrix datastructures
@@ -352,7 +352,7 @@ class SGDRegressor(BaseSGDRegressor):
                                       int(self.shuffle),
                                       int(self.seed),
                                       1.0, 1.0,
-                                      self.sample_weight,
+                                      sample_weight,
                                       self.learning_rate_code,
                                       self.eta0, self.power_t)
 

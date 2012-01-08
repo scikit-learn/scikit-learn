@@ -237,16 +237,16 @@ class BaseSGD(BaseEstimator):
         except KeyError:
             raise ValueError("Penalty %s is not supported. " % penalty)
 
-    def _set_sample_weight(self, sample_weight, n_samples):
+    def _validate_sample_weight(self, sample_weight, n_samples):
         """Set the sample weight array."""
         if sample_weight == None:
             sample_weight = np.ones(n_samples, dtype=np.float64, order='C')
         else:
             sample_weight = np.asarray(sample_weight, dtype=np.float64,
                                        order="C")
-        self.sample_weight = sample_weight
-        if self.sample_weight.shape[0] != n_samples:
+        if sample_weight.shape[0] != n_samples:
             raise ValueError("Shapes of X and sample_weight do not match.")
+        return sample_weight
 
     def _set_coef(self, coef_):
         """Make sure that coef_ is 2d. """
@@ -400,15 +400,15 @@ class BaseSGDClassifier(BaseSGD, ClassifierMixin):
 
         # Allocate datastructures from input arguments
         self._set_class_weight(class_weight, self.classes, y)
-        self._set_sample_weight(sample_weight, n_samples)
+        sample_weight = self._validate_sample_weight(sample_weight, n_samples)
         self._allocate_parameter_mem(n_classes, n_features,
                                      coef_init, intercept_init)
 
         # delegate to concrete training procedure
         if n_classes > 2:
-            self._fit_multiclass(X, y)
+            self._fit_multiclass(X, y, sample_weight)
         elif n_classes == 2:
-            self._fit_binary(X, y)
+            self._fit_binary(X, y, sample_weight)
         else:
             raise ValueError("The number of class labels must be "
                              "greater than one.")
@@ -416,11 +416,11 @@ class BaseSGDClassifier(BaseSGD, ClassifierMixin):
         return self
 
     @abstractmethod
-    def _fit_binary(self, X, y):
+    def _fit_binary(self, X, y, sample_weight):
         """Fit binary classifier."""
 
     @abstractmethod
-    def _fit_multiclass(self, X, y):
+    def _fit_multiclass(self, X, y, sample_weight):
         """Fit multiclass classifier."""
 
     def decision_function(self, X):
@@ -547,15 +547,15 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         n_samples, n_features = X.shape
 
         # Allocate datastructures from input arguments
-        self._set_sample_weight(sample_weight, n_samples)
+        sample_weight = self._validate_sample_weight(sample_weight, n_samples)
         self._allocate_parameter_mem(1, n_features,
                                      coef_init, intercept_init)
 
-        self._fit_regressor(X, y)
+        self._fit_regressor(X, y, sample_weight)
         return self
 
     @abstractmethod
-    def _fit_regressor(self, X, y):
+    def _fit_regressor(self, X, y, sample_weight):
         """Fit regression model."""
 
     def predict(self, X):

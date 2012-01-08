@@ -125,7 +125,7 @@ class SGDClassifier(BaseSGDClassifier):
 
     """
 
-    def _fit_binary(self, X, y):
+    def _fit_binary(self, X, y, sample_weight):
         """Fit a single binary classifier"""
         # interprete X as dense array
         X = np.asarray(X, dtype=np.float64, order='C')
@@ -148,14 +148,14 @@ class SGDClassifier(BaseSGDClassifier):
                                       self.seed,
                                       self._expanded_class_weight[1],
                                       self._expanded_class_weight[0],
-                                      self.sample_weight,
+                                      sample_weight,
                                       self.learning_rate_code, self.eta0,
                                       self.power_t)
 
         self._set_coef(coef_)
         self.intercept_ = np.asarray(intercept_)
 
-    def _fit_multiclass(self, X, y):
+    def _fit_multiclass(self, X, y, sample_weight):
         """Fit a multi-class classifier by combining binary classifiers
 
         Each binary classifier predicts one class versus all others. This
@@ -174,7 +174,7 @@ class SGDClassifier(BaseSGDClassifier):
                                                self.verbose, self.shuffle,
                                                self.seed,
                                                self._expanded_class_weight[i],
-                                               self.sample_weight,
+                                               sample_weight,
                                                self.learning_rate_code,
                                                self.eta0, self.power_t)
             for i, c in enumerate(self.classes))
@@ -301,7 +301,7 @@ class SGDRegressor(BaseSGDRegressor):
 
     """
 
-    def _fit_regressor(self, X, y):
+    def _fit_regressor(self, X, y, sample_weight):
         X = np.asarray(X, dtype=np.float64, order='C')
         coef_, intercept_ = plain_sgd(self.coef_,
                                       self.intercept_,
@@ -315,7 +315,7 @@ class SGDRegressor(BaseSGDRegressor):
                                       int(self.shuffle),
                                       self.seed,
                                       1.0, 1.0,
-                                      self.sample_weight,
+                                      sample_weight,
                                       self.learning_rate_code,
                                       self.eta0, self.power_t)
 
