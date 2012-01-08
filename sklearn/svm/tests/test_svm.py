@@ -179,7 +179,7 @@ def test_oneclass():
     assert_array_almost_equal(clf.dual_coef_,
                               [[0.632, 0.233, 0.633, 0.234, 0.632, 0.633]],
                               decimal=3)
-    assert_raises(NotImplementedError, lambda: clf.coef_)
+    assert_raises(ValueError, lambda: clf.coef_)
 
 
 def test_tweak_params():
