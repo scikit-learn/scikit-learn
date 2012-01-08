@@ -172,7 +172,7 @@ def bench_spam(random_state=None):
     return error_rate, train_time, test_time
 
 
-@repeat(1)
+@repeat()
 def bench_madelon(random_state=None):
     X_train = np.loadtxt("/home/pprett/corpora/madelon/madelon_train.data")
     y_train = np.loadtxt("/home/pprett/corpora/madelon/madelon_train.labels")
@@ -188,7 +188,7 @@ def bench_madelon(random_state=None):
     return error_rate, train_time, test_time
 
 
-@repeat(1)
+@repeat()
 def bench_arcene(random_state=None):
     X_train = np.loadtxt("/home/pprett/corpora/arcene/arcene_train.data")
     y_train = np.loadtxt("/home/pprett/corpora/arcene/arcene_train.labels")
@@ -204,7 +204,7 @@ def bench_arcene(random_state=None):
     return error_rate, train_time, test_time
 
 
-regression_params = {'n_iter': 100, 'max_depth': 1,
+regression_params = {'n_iter': 250, 'max_depth': 1,
                      'min_split': 1, 'learn_rate': 0.1,
                      'loss': 'ls'}
 

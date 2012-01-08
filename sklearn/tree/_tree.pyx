@@ -59,6 +59,10 @@ cdef class Criterion:
         """Evaluate the criteria (aka the split error)."""
         pass
 
+    cpdef np.ndarray init_value(self):
+        """Get the init value of the criterion - `init` must be called before."""
+        pass
+
 
 cdef class ClassificationCriterion(Criterion):
     """Abstract criterion for classification.
@@ -169,6 +173,9 @@ cdef class ClassificationCriterion(Criterion):
 
     cdef double eval(self):
         pass
+
+    cpdef np.ndarray init_value(self):
+        return self.ndarray_label_count_init
 
 
 cdef class Gini(ClassificationCriterion):
@@ -379,6 +386,9 @@ cdef class RegressionCriterion(Criterion):
     cdef double eval(self):
         pass
 
+    cpdef np.ndarray init_value(self):
+        return np.asarray(self.mean_init)
+
 
 cdef class MSE(RegressionCriterion):
     """Mean squared error impurity criterion.
@@ -425,8 +435,6 @@ def _error_at_leaf(np.ndarray[DTYPE_t, ndim=1, mode="c"] y,
     cdef BOOL_t *sample_mask_ptr = <BOOL_t *>sample_mask.data
     criterion.init(y_ptr, sample_mask_ptr, n_samples, n_total_samples)
     return criterion.eval()
-
-
 
 
 cdef int smallest_sample_larger_than(int sample_idx, DTYPE_t *X_i,

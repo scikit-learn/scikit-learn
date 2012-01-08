@@ -150,12 +150,12 @@ def compute_feature_importances(tree, n_features, method='gini'):
         The number of features.
     method : str
         The method to estimate the importance of a feature. Either 'gini'
-        or 'mse'. 
+        or 'mse'.
     """
     gini = lambda tree, node: (tree.n_samples[node] * \
                                (tree.init_error[node] - tree.best_error[node]))
     squared = lambda tree, node: (tree.init_error[node] - \
-                                  tree.best_error[node])**2.0
+                                  tree.best_error[node]) ** 2.0
     method = {
         'gini': gini,
         'squared': squared
@@ -319,10 +319,6 @@ def _build_tree(X, y, criterion, max_depth, min_split,
 
     tree = Tree(n_classes, init_capacity)
 
-    if store_terminal_region:
-        tree.terminal_region = np.empty((X.shape[0],), dtype=np.int32)
-        tree.terminal_region.fill(-1)
-
     # Recursively partition X
     def recursive_partition(X, X_argsorted, y, sample_mask, depth,
                             parent, is_left_child, sample_indices):
@@ -340,23 +336,18 @@ def _build_tree(X, y, criterion, max_depth, min_split,
                 max_features, criterion, random_state)
         else:
             feature = -1
-
-        current_y = y[sample_mask]
+            init_error = _tree._error_at_leaf(y, sample_mask, criterion,
+                                              n_node_samples)
 
         if n_classes > 1:
-            value = np.zeros((n_classes,))
-            t = current_y.max() + 1
-            value[:t] = np.bincount(current_y.astype(np.int))
+            value = criterion.init_value()
 
         else:
-            value = np.asarray(np.mean(current_y))
+            value = criterion.init_value()
 
         # Current node is leaf
-        if feature == -1:
-            # compute error at leaf
-            error = _tree._error_at_leaf(y, sample_mask, criterion,
-                                         n_node_samples)
-            node_id = tree.add_leaf(parent, is_left_child, value, error,
+        if feature == -1:            
+            node_id = tree.add_leaf(parent, is_left_child, value, init_error,
                                     n_node_samples)
 
             if store_terminal_region:
@@ -370,7 +361,7 @@ def _build_tree(X, y, criterion, max_depth, min_split,
                 sample_indices = sample_indices[sample_mask]
                 X_argsorted = np.asfortranarray(
                     np.argsort(X.T, axis=1).astype(np.int32).T)
-                y = current_y
+                y = y[sample_mask]
                 sample_mask = np.ones((X.shape[0],), dtype=np.bool)
 
             # Split and and recurse
@@ -390,7 +381,10 @@ def _build_tree(X, y, criterion, max_depth, min_split,
                                 ~split & sample_mask,
                                 depth + 1, node_id, False, sample_indices)
 
-    # Launch the construction
+    if store_terminal_region:
+        tree.terminal_region = np.empty((X.shape[0],), dtype=np.int32)
+        tree.terminal_region.fill(-1)
+
     if X.dtype != DTYPE or not np.isfortran(X):
         X = np.asanyarray(X, dtype=DTYPE, order="F")
 

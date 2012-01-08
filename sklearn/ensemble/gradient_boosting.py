@@ -94,20 +94,19 @@ class LossFunction(object):
                                 learn_rate=1.0):
         """Update the terminal regions (=leaves) of the given tree and
         updates the current predictions of the model. Traverses tree
-        and invokes template method `_update_terminal_region`."""
-        for leaf in np.where(tree.children[:, 0] == Tree.LEAF)[0]:
-            leaf_terminal_region = np.where(tree.terminal_region == leaf)[0]
-            self._update_terminal_region(tree, leaf, leaf_terminal_region,
-                                         X, y, residual, y_pred)
+        and invokes template method `_update_terminal_region`."""    
+        for leaf in np.where(tree.children[:, 0] == Tree.LEAF)[0]:            
+            self._update_terminal_region(tree, leaf, X, y, residual, y_pred)
 
-            # update predictions
-            y_pred[leaf_terminal_region] += learn_rate * tree.value[leaf, 0]
+        # update predictions
+        mask = tree.terminal_region != -1
+        y_pred[mask] += learn_rate * \
+                        tree.value[:,0].take(tree.terminal_region[mask], axis=0)
 
         # save memory
         del tree.terminal_region
 
-    def _update_terminal_region(self, tree, leaf, terminal_region, X, y,
-                                residual, pred):
+    def _update_terminal_region(self, tree, leaf, X, y, residual, pred):
         """Template method for updating terminal regions (=leafs). """
         pass
 
@@ -138,9 +137,9 @@ class LeastAbsoluteError(LossFunction):
     def negative_gradient(self, y, pred):
         return np.sign(y - pred)
 
-    def _update_terminal_region(self, tree, leaf, terminal_region, X, y,
-                                residual, pred):
+    def _update_terminal_region(self, tree, leaf, X, y, residual, pred):
         """LAD updates terminal regions to median estimates. """
+        terminal_region = np.where(tree.terminal_region == leaf)[0]
         tree.value[leaf, 0] = np.median(y.take(terminal_region, axis=0) - \
                                         pred.take(terminal_region, axis=0))
 
@@ -163,9 +162,9 @@ class BinomialDeviance(LossFunction):
     def negative_gradient(self, y, pred):
         return y - 1.0 / (1.0 + np.exp(-pred))
 
-    def _update_terminal_region(self, tree, leaf, terminal_region, X, y,
-                                residual, pred):
+    def _update_terminal_region(self, tree, leaf, X, y, residual, pred):
         """Make a single Newton-Raphson step. """
+        terminal_region = np.where(tree.terminal_region == leaf)[0]
         residual = residual.take(terminal_region, axis=0)
         y = y.take(terminal_region, axis=0)
 
@@ -272,18 +271,21 @@ class BaseGradientBoosting(BaseEstimator):
         self.train_deviance = np.zeros((self.n_iter,), dtype=np.float64)
         self.oob_deviance = np.zeros((self.n_iter), dtype=np.float64)
 
+        sample_mask = np.ones((n_samples,), dtype=np.bool)
+
         # perform boosting iterations
         for i in xrange(self.n_iter):
 
             # subsampling
-            sample_mask = self.random_state.rand(n_samples) \
-                          >= (1.0 - self.subsample)
-
+            if self.subsample < 1.0:
+                sample_mask = self.random_state.rand(n_samples) \
+                              >= (1.0 - self.subsample)
+    
             residual = loss.negative_gradient(y, y_pred)
 
             # induce regression tree on residuals
             tree = _build_tree(X, residual, MSE(), self.max_depth,
-                               self.min_split, 1.0, n_features,
+                               self.min_split, 0.0, n_features,
                                self.random_state, 1, _find_best_split,
                                sample_mask, X_argsorted, True)
 
