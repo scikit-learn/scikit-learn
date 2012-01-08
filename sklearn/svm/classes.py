@@ -63,7 +63,7 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, CoefSelectTransformerMixin):
         Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
-        `coef_` is readonly property derived from `raw_coef_` that
+        `coef_` is readonly property derived from `raw_coef_` that \
         follows the internal memory layout of liblinear.
 
     `intercept_` : array, shape = [1] if n_classes == 2 else [n_classes]
