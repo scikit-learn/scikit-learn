@@ -111,10 +111,6 @@ class SGDClassifier(BaseSGDClassifier):
     `intercept_` : array, shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.
 
-    `sparse_coef_` : sparse.csr_matrix, , shape = [1, n_features]
-    if n_classes == 2 else [n_classes, n_features]
-        Weights represented as Row Compressed Matrix.
-
     Examples
     --------
     >>> import numpy as np
@@ -169,7 +165,6 @@ class SGDClassifier(BaseSGDClassifier):
                                       self.learning_rate_code,
                                       self.eta0, self.power_t)
 
-        # update self.coef_ and self.sparse_coef_ consistently
         self._set_coef(coef_)
         self.intercept_ = np.asarray(intercept_)
 
@@ -356,6 +351,5 @@ class SGDRegressor(BaseSGDRegressor):
                                       self.learning_rate_code,
                                       self.eta0, self.power_t)
 
-        # update self.coef_ and self.sparse_coef_ consistently
         self.coef_ = coef_
         self.intercept_ = np.asarray(intercept_)
