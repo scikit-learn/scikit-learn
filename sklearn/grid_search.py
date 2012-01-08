@@ -401,4 +401,3 @@ class GridSearchCV(BaseEstimator):
                 ' Please use GridSearchCV.best_score_ instead.')
     def best_score(self):
         return self.best_score_
-
