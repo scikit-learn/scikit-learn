@@ -562,7 +562,7 @@ class _BaseHMM(BaseEstimator):
                 _hmmc._compute_lneta(n_observations, n_components,
                         fwdlattice, self._log_transmat, bwdlattice,
                         framelogprob, lnP, lneta)
-                stats["trans"] = np.exp(logsumexp(lneta, 0))
+                stats["trans"] += np.exp(logsumexp(lneta, 0))
             else:
                 for t in xrange(len(framelogprob)):
                     zeta = (fwdlattice[t - 1][:, np.newaxis]
