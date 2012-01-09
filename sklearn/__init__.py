@@ -33,7 +33,7 @@ try:
             This will run the test suite and stop at the first failing
             example
             >>> from sklearn import test
-            >>> sklearn.test(extra_argv=['-x']) #doctest: +SKIP
+            >>> test(extra_argv=['-x']) #doctest: +SKIP
             """
             return super(NoseTester, self).test(label=label, verbose=verbose,
                                     extra_argv=extra_argv,
