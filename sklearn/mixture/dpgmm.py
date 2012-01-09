@@ -16,7 +16,6 @@ from scipy.spatial.distance import cdist
 from ..utils import check_random_state
 from ..utils.extmath import norm
 from .. import cluster
-from ..metrics import euclidean_distances
 from .gmm import GMM
 
 
@@ -94,20 +93,13 @@ def _bound_state_log_lik(X, initial_bound, precs, means, covariance_type):
     n_samples = X.shape[0]
     bound = np.empty((n_samples, n_components))
     bound[:] = initial_bound
-    if covariance_type == 'diag':
+    if covariance_type in ['diag', 'spherical']:
         for k in xrange(n_components):
             d = X - means[k]
             bound[:, k] -= 0.5 * np.sum(d * d * precs[k], axis=1)
-    elif covariance_type == 'spherical':
-        for k in xrange(n_components):
-            bound[:, k] -= 0.5 * precs[k] * (((X - means[k]) ** 2).sum(axis=-1)
-                                             + n_features)
     elif covariance_type == 'tied':
-        # FIXME: suboptimal
-        sqrt_cov = linalg.cholesky(precs)
-        means = np.dot(means, sqrt_cov.T)
-        X = np.dot(X, sqrt_cov.T)
-        bound -= 0.5 * euclidean_distances(X, means, squared=True)
+        for k in xrange(n_components):
+            bound[:, k] -= 0.5 * _sym_quad_form(X, means[k], precs)
     elif covariance_type == 'full':
         for k in xrange(n_components):
             bound[:, k] -= 0.5 * _sym_quad_form(X, means[k], precs[k])
@@ -189,7 +181,6 @@ class DPGMM(GMM):
     VBGMM : Finite Gaussian mixture model fit with a variational
     algorithm, better for situations where there might be too little
     data to get a good estimate of the covariance matrix.
-
     """
 
     def __init__(self, n_components=1, covariance_type='diag', alpha=1.0,
@@ -205,13 +196,13 @@ class DPGMM(GMM):
         """Return precisions as a full matrix."""
         if self.covariance_type == 'full':
             return self.precs_
-        elif self.covariance_type == 'diag':
+        elif self.covariance_type in ['diag', 'spherical']:
             return [np.diag(cov) for cov in self.precs_]
         elif self.covariance_type == 'tied':
             return [self.precs_] * self.n_components
-        elif self.covariance_type == 'spherical':
-            # fixme: should not require self.means_ to be defined
-            return [np.eye(self.means_.shape[1]) * f for f in self.precs_]
+        #elif self.covariance_type == 'spherical':
+        #    # fixme: should not require self.means_ to be defined
+        #    return [np.eye(self.means_.shape[1]) * f for f in self.precs_]
 
     def _get_covars(self):
         return [linalg.pinv(c) for c in self._get_precisions()]
@@ -219,9 +210,6 @@ class DPGMM(GMM):
     def _set_covars(self, covars):
         raise NotImplementedError("""The variational algorithm does
         not support setting the covariance parameters.""")
-
-    precisions = property(_get_precisions, _set_covars)
-    covars = property(_get_covars, _set_covars)
 
     def eval(self, X):
         """Evaluate the model on data
@@ -314,8 +302,8 @@ class DPGMM(GMM):
                 self.bound_prec_[k] = (
                     0.5 * n_features * (
                         digamma(self.dof_[k]) - np.log(self.scale_[k])))
-            self.precs_ = self.dof_ / self.scale_
-
+            self.precs_ = np.tile(self.dof_ / self.scale_, [n_features, 1]).T
+            
         elif self.covariance_type == 'diag':
             for k in xrange(self.n_components):
                 self.dof_[k].fill(1. + 0.5 * np.sum(z.T[k], axis=0))
@@ -420,7 +408,7 @@ class DPGMM(GMM):
             logprior -= np.sum(
                 (self.dof_ - 1) * digamma(np.maximum(0.5, self.dof_)))
             logprior += np.sum(
-                - np.log(self.scale_) + self.dof_ - self.precs_)
+                - np.log(self.scale_) + self.dof_ - self.precs_[:, 0])
         elif self.covariance_type == 'diag':
             logprior += np.sum(gammaln(self.dof_))
             logprior -= np.sum(
@@ -514,23 +502,23 @@ class DPGMM(GMM):
         self._initial_bound = -0.5 * n_features * np.log(2 * np.pi)
         self._initial_bound -= np.log(2 * np.pi * np.e)
 
-        if init_params != '':
+        if (init_params != '') or not hasattr(self, 'gamma_'):
             self._initialize_gamma()
-
+        
         if 'm' in init_params or not hasattr(self, 'means_'):
             self.means_ = cluster.KMeans(
                 k=self.n_components, random_state=self.random_state
             ).fit(X).cluster_centers_[::-1]
 
-        if 'w' in init_params or not hasattr(self, 'weights_'):
+        if 'w' in init_params or not hasattr(self, 'log_weights_'): # fixme
             self._set_weights(np.tile(1.0 / self.n_components, 
                                       self.n_components))
 
-        if 'c' in init_params or not hasattr(self, 'covars_'):
+        if 'c' in init_params or not hasattr(self, 'precs_'):
             if self.covariance_type == 'spherical':
                 self.dof_ = np.ones(self.n_components)
                 self.scale_ = np.ones(self.n_components)
-                self.precs_ = np.ones(self.n_components)
+                self.precs_ = np.ones((self.n_components, n_features))
                 self.bound_prec_ = 0.5 * n_features * (
                     digamma(self.dof_) - np.log(self.scale_))
             elif self.covariance_type == 'diag':
