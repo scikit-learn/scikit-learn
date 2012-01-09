@@ -249,8 +249,8 @@ class BaseSGD(BaseEstimator):
         return sample_weight
 
     def _set_coef(self, coef_):
-        """Make sure that coef_ is 2d. """
-        self.coef_ = array2d(coef_)
+        """Make sure that coef_ is fortran-style and 2d. """
+        self.coef_ = np.asfortranarray(array2d(coef_))
 
     def _allocate_parameter_mem(self, n_classes, n_features, coef_init=None,
                                 intercept_init=None):
