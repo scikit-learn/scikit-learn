@@ -52,7 +52,7 @@ for i, (clf, title) in enumerate([(gmm, 'GMM'),
                                   (dpgmm, 'Dirichlet Process GMM')]):
     splot = pl.subplot(2, 1, 1 + i)
     Y_ = clf.predict(X)
-    for i, (mean, covar, color) in enumerate(zip(clf.means, clf.covars,
+    for i, (mean, covar, color) in enumerate(zip(clf.means_, clf.covars_,
                                                  color_iter)):
         v, w = linalg.eigh(covar)
         u = w[0] / linalg.norm(w[0])

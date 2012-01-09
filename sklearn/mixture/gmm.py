@@ -136,15 +136,14 @@ class GMM(BaseEstimator):
 
     Attributes
     ----------
-<<<<<<< HEAD
     covariance_type : string (read-only)
         String describing the type of covariance parameters used by
         the GMM.  Must be one of 'spherical', 'tied', 'diag', 'full'.
-    weights : array, shape (`n_components`,)
-        Mixing weights for each mixture component.
-    means : array, shape (`n_components`, `n_features`)
+    log_weights_ : array, shape (`n_components`,)
+        log of mixing weights for each mixture component.
+    means_ : array, shape (`n_components`, `n_features`)
         Mean parameters for each mixture component.
-    covars : array
+    covars_ : array
         Covariance parameters for each mixture component.  The shape
         depends on `covariance_type`:
             (n_components,)                        if 'spherical',
@@ -155,13 +154,6 @@ class GMM(BaseEstimator):
         True when convergence was reached in fit(), False
         otherwise.
 
-    weights : property - this string will be replaced
-
-    means : property - this string will be replaced
-
-    cvtype : property - this string will be replaced
-
-    covars : property - this string will be replaced
 
 
     See Also
@@ -190,10 +182,10 @@ class GMM(BaseEstimator):
     GMM(covariance_type='diag', n_components=2)
     >>> np.round(g.weights, 2)
     array([ 0.75,  0.25])
-    >>> np.round(g.means, 2)
+    >>> np.round(g.means_, 2)
     array([[ 10.05],
            [  0.06]])
-    >>> np.round(g.covars, 2) #doctest: +SKIP
+    >>> np.round(g.covars_, 2) #doctest: +SKIP
     array([[[ 1.02]],
            [[ 0.96]]])
     >>> g.predict([[0], [2], [9], [10]])
@@ -220,7 +212,8 @@ class GMM(BaseEstimator):
         if not covariance_type in ['spherical', 'tied', 'diag', 'full']:
             raise ValueError('bad covariance_type: ' + str(covariance_type))
 
-        self.weights = np.ones(self.n_components) / self.n_components
+        self.log_weights_ = - np.ones(self.n_components) * \
+            np.log(self.n_components)
 
         # flag to indicate exit status of fit() method: converged (True) or
         # n_iter reached (False)
@@ -254,11 +247,10 @@ class GMM(BaseEstimator):
             return [np.diag(cov) for cov in self.covars_]
 
     def _set_covars(self, covars):
+        """Provide values for covariance"""
         covars = np.asarray(covars)
         _validate_covars(covars, self._covariance_type, self.n_components)
         self.covars_ = covars
-
-    covars = property(_get_covars, _set_covars)
 
     def _get_means(self):
         """Mean parameters for each mixture component 
@@ -272,8 +264,6 @@ class GMM(BaseEstimator):
             raise ValueError('means must have shape ' +
                     '(n_components, n_features)')
         self.means_ = means.copy()
-
-    means = property(_get_means, _set_means)
 
     def __repr__(self):
         return "GMM(covariance_type='%s', n_components=%s)" % \
@@ -290,10 +280,7 @@ class GMM(BaseEstimator):
             raise ValueError('weights must have length n_components')
         if not np.allclose(np.sum(weights), 1.0):
             raise ValueError('weights must sum to 1.0')
-
         self.log_weights_ = np.log(np.asarray(weights).copy())
-
-    weights = property(_get_weights, _set_weights)
 
     def eval(self, X):
         """Evaluate the model on data
@@ -420,10 +407,10 @@ class GMM(BaseEstimator):
         if random_state is None:
             random_state = self.random_state
         random_state = check_random_state(random_state)
-        weight_pdf = self.weights
+        weight_pdf = np.exp(self.log_weights_)
         weight_cdf = np.cumsum(weight_pdf)
 
-        X = np.empty((n_samples, self.means.shape[1]))
+        X = np.empty((n_samples, self.means_.shape[1]))
         rand = random_state.rand(n_samples)
         # decide which component to use for each sample
         comps = weight_cdf.searchsorted(rand)
@@ -490,16 +477,17 @@ class GMM(BaseEstimator):
         max_log_prob = - np.infty
         if n_init < 1:
             raise ValueError('GMM estimation requires at least one run')
+
         for _ in range(n_init):
-            if 'm' in init_params or not hasattr(self, 'means'):
+            if 'm' in init_params or not hasattr(self, 'means_'):
                 self.means_ = cluster.KMeans(
                     k=self.n_components).fit(X).cluster_centers_
 
-            if 'w' in init_params or not hasattr(self, 'weights'):
-                self.weights = np.tile(1.0 / self.n_components,
-                                       self.n_components)
+            if 'w' in init_params or not hasattr(self, 'weights_'):
+                self._set_weights(np.tile(1.0 / self.n_components,
+                                          self.n_components))
 
-            if 'c' in init_params or not hasattr(self, 'covars'):
+            if 'c' in init_params or not hasattr(self, 'covars_'):
                 cv = np.cov(X.T) + self.min_covar * np.eye(X.shape[1])
                 if not cv.shape:
                     cv.shape = (1, 1)
@@ -507,7 +495,7 @@ class GMM(BaseEstimator):
                     _distribute_covar_matrix_to_match_covariance_type(
                     cv, self._covariance_type, self.n_components)
 
-            # EM algorithm
+            # EM algorithms
             log_likelihood = []
             # reset self.converged_ to False
             self.converged_ = False
@@ -529,13 +517,13 @@ class GMM(BaseEstimator):
             if n_iter:
                 if log_likelihood[-1] > max_log_prob:
                     max_log_prob = log_likelihood[-1]
-                    best_params = {'weights': self.weights,
+                    best_params = {'weights': self._get_weights(),
                                    'means': self.means_,
                                    'covars': self.covars_}
         if n_iter:
             self.covars_ = best_params['covars']
             self.means_ = best_params['means']
-            self.weights = best_params['weights']
+            self._set_weights(best_params['weights'])
         return self
 
     def _do_mstep(self, X, responsibilities, params, min_covar=0):
@@ -543,9 +531,7 @@ class GMM(BaseEstimator):
         """
         weights = responsibilities.sum(axis=0)
         weighted_X_sum = np.dot(responsibilities.T, X)
-
-        inverse_weights = 1.0 / (
-            weights[:, np.newaxis] + 10 * INF_EPS)
+        inverse_weights = 1.0 / (weights[:, np.newaxis] + 10 * INF_EPS)
 
         if 'w' in params:
             self.log_weights_ = np.log(
@@ -561,7 +547,7 @@ class GMM(BaseEstimator):
 
     def _n_parameters(self):
         """Return the number of free parameters in the model."""
-        ndim = self.means.shape[1]
+        ndim = self.means_.shape[1]
         if self._covariance_type == 'full':
             cov_params = self.n_components * ndim * (ndim + 1) / 2.
         elif self._covariance_type == 'diag':
@@ -585,7 +571,7 @@ class GMM(BaseEstimator):
         -------
         bic: float (the lower the better)
         """
-        return (-2 * self.score(X).sum() +  
+        return (- 2 * self.score(X).sum() +  
                  self._n_parameters() * np.log(X.shape[0]))
 
     def aic(self, X):
@@ -600,7 +586,7 @@ class GMM(BaseEstimator):
         -------
         aic: float (the lower the better)
         """
-        return -2 * self.score(X).sum() +  2 * self._n_parameters()
+        return - 2 * self.score(X).sum() +  2 * self._n_parameters()
 
 
 #########################################################################

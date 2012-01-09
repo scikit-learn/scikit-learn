@@ -110,26 +110,25 @@ def test_GMM_attributes():
     assert g.n_components == n_components
     assert g.covariance_type == covariance_type
 
-    g.weights = weights
-    assert_array_almost_equal(g.weights, weights)
-    assert_raises(ValueError, g.__setattr__, 'weights',
-                      2 * weights)
-    assert_raises(ValueError, g.__setattr__, 'weights', [])
-    assert_raises(ValueError, g.__setattr__, 'weights',
+    g.weights_ = weights
+    assert_array_almost_equal(g.weights_, weights)
+    assert_raises(ValueError, g._set_weights, 2 * weights)
+    assert_raises(ValueError, g._set_weights, [])
+    assert_raises(ValueError, g._set_weights,
                       np.zeros((n_components - 2, n_features)))
-
-    g.means = means
-    assert_array_almost_equal(g.means, means)
-    assert_raises(ValueError, g.__setattr__, 'means', [])
-    assert_raises(ValueError, g.__setattr__, 'means',
+    
+    g.means_ = means
+    assert_array_almost_equal(g.means_, means)
+    assert_raises(ValueError, g._set_means, [])
+    assert_raises(ValueError, g._set_means,
                       np.zeros((n_components - 2, n_features)))
 
     covars = (0.1 + 2 * rng.rand(n_components, n_features)) ** 2
     g.covars_ = covars
     assert_array_almost_equal(g.covars_, covars)
-    assert_raises(ValueError, g.__setattr__, 'covars', [])
-    assert_raises(ValueError, g.__setattr__, 'covars',
-                      np.zeros((n_components - 2, n_features)))
+    assert_raises(ValueError, g._set_covars, [])
+    assert_raises(ValueError, g._set_covars, 
+                  np.zeros((n_components - 2, n_features)))
 
     assert_raises(ValueError, mixture.GMM, n_components=20, 
                   covariance_type='badcovariance_type')
@@ -160,13 +159,13 @@ class GMMTester():
                        covariance_type=self.covariance_type, random_state=rng)
         # Make sure the means are far apart so responsibilities.argmax()
         # picks the actual component used to generate the observations.
-        g.means = 20 * self.means
+        g.means_ = 20 * self.means
         g.covars_ = self.covars[self.covariance_type]
-        g.weights = self.weights
+        g._set_weights(self.weights)
 
         gaussidx = np.repeat(range(self.n_components), 5)
         n_samples = len(gaussidx)
-        X = rng.randn(n_samples, self.n_features) + g.means[gaussidx]
+        X = rng.randn(n_samples, self.n_features) + g.means_[gaussidx]
 
         ll, responsibilities = g.eval(X)
 
@@ -181,9 +180,9 @@ class GMMTester():
                        covariance_type=self.covariance_type, random_state=rng)
         # Make sure the means are far apart so responsibilities.argmax()
         # picks the actual component used to generate the observations.
-        g.means = 20 * self.means
+        g.means_ = 20 * self.means
         g.covars_ = np.maximum(self.covars[self.covariance_type], 0.1)
-        g.weights = self.weights
+        g._set_weights(self.weights)
 
         samples = g.rvs(n)
         self.assertEquals(samples.shape, (n, self.n_features))
@@ -191,8 +190,8 @@ class GMMTester():
     def test_train(self, params='wmc'):
         g = mixture.GMM(n_components=self.n_components, 
                         covariance_type=self.covariance_type)
-        g.weights = self.weights
-        g.means = self.means
+        g._set_weights(self.weights)
+        g.means_ = self.means
         g.covars_ = 20 * self.covars[self.covariance_type]
 
         # Create a training set by sampling from the predefined distribution.
@@ -209,8 +208,7 @@ class GMMTester():
         for iter in xrange(5):
             g.fit(X, n_iter=1, params=params, init_params='')
             trainll.append(self.score(g, X))
-        g.fit(X, n_iter=10, params=params, init_params='')  # finish
-                                                                    # fitting
+        g.fit(X, n_iter=10, params=params, init_params='') # finish fitting
 
         # Note that the log likelihood will sometimes decrease by a
         # very small amount after it has more or less converged due to
@@ -222,7 +220,7 @@ class GMMTester():
             delta_min > self.threshold,
             "The min nll increase is %f which is lower than the admissible"
             " threshold of %f, for model %s. The likelihoods are %s."
-                % (delta_min, self.threshold, self.covariance_type, trainll))
+            % (delta_min, self.threshold, self.covariance_type, trainll))
 
     def test_train_degenerate(self, params='wmc'):
         """ Train on degenerate data with 0 in some dimensions

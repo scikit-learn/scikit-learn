@@ -103,6 +103,7 @@ def _bound_state_log_lik(X, initial_bound, precs, means, covariance_type):
             bound[:, k] -= 0.5 * precs[k] * (((X - means[k]) ** 2).sum(axis=-1)
                                              + n_features)
     elif covariance_type == 'tied':
+        # FIXME: suboptimal
         sqrt_cov = linalg.cholesky(precs)
         means = np.dot(means, sqrt_cov.T)
         X = np.dot(X, sqrt_cov.T)
@@ -110,12 +111,6 @@ def _bound_state_log_lik(X, initial_bound, precs, means, covariance_type):
     elif covariance_type == 'full':
         for k in xrange(n_components):
             bound[:, k] -= 0.5 * _sym_quad_form(X, means[k], precs[k])
-            #d = X - means[k]
-            ## not: choleksy is useless here
-            #sqrt_cov = linalg.cholesky(precs[k])
-            #d = np.dot(d, sqrt_cov.T)
-            #d **= 2
-            #bound[:, k] -= 0.5 * d.sum(axis=-1)
     
     return bound
 
@@ -170,13 +165,13 @@ class DPGMM(GMM):
     n_components : int
         Number of mixture components.
 
-    weights : array, shape (`n_components`,)
+    weights_ : array, shape (`n_components`,)
         Mixing weights for each mixture component.
 
-    means : array, shape (`n_components`, `n_features`)
+    means_ : array, shape (`n_components`, `n_features`)
         Mean parameters for each mixture component.
 
-    precisions : array
+    precisions_ : array
         Precision (inverse covariance) parameters for each mixture
         component.  The shape depends on `covariance_type`::
             (`n_components`, 'n_features')                if 'spherical',
@@ -215,7 +210,8 @@ class DPGMM(GMM):
         elif self.covariance_type == 'tied':
             return [self.precs_] * self.n_components
         elif self.covariance_type == 'spherical':
-            return [np.eye(self.means.shape[1]) * f for f in self.precs_]
+            # fixme: should not require self.means_ to be defined
+            return [np.eye(self.means_.shape[1]) * f for f in self.precs_]
 
     def _get_covars(self):
         return [linalg.pinv(c) for c in self._get_precisions()]
@@ -521,15 +517,16 @@ class DPGMM(GMM):
         if init_params != '':
             self._initialize_gamma()
 
-        if 'm' in init_params or not hasattr(self, 'means'):
+        if 'm' in init_params or not hasattr(self, 'means_'):
             self.means_ = cluster.KMeans(
                 k=self.n_components, random_state=self.random_state
             ).fit(X).cluster_centers_[::-1]
 
-        if 'w' in init_params or not hasattr(self, 'weights'):
-            self.weights = np.tile(1.0 / self.n_components, self.n_components)
+        if 'w' in init_params or not hasattr(self, 'weights_'):
+            self._set_weights(np.tile(1.0 / self.n_components, 
+                                      self.n_components))
 
-        if 'c' in init_params or not hasattr(self, 'covars'):
+        if 'c' in init_params or not hasattr(self, 'covars_'):
             if self.covariance_type == 'spherical':
                 self.dof_ = np.ones(self.n_components)
                 self.scale_ = np.ones(self.n_components)
@@ -629,13 +626,13 @@ class VBGMM(DPGMM):
     n_components : int (read-only)
         Number of mixture components.
 
-    weights : array, shape (`n_components`,)
+    weights_ : array, shape (`n_components`,)
         Mixing weights for each mixture component.
 
-    means : array, shape (`n_components`, `n_features`)
+    means_ : array, shape (`n_components`, `n_features`)
         Mean parameters for each mixture component.
 
-    precisions : array
+    precisions_ : array
         Precision (inverse covariance) parameters for each mixture
         component.  The shape depends on `covariance_type`:
             (`n_components`, 'n_features')                if 'spherical',
