@@ -518,8 +518,6 @@ class BaseLibLinear(BaseEstimator):
     def intercept_(self):
         if self.fit_intercept:
             ret = self.intercept_scaling * self.raw_coef_[:, -1]
-            if len(self.label_) <= 2:
-                ret *= -1
             return ret
         return 0.0
 
@@ -532,13 +530,8 @@ class BaseLibLinear(BaseEstimator):
 
         # as coef_ is readonly property, mark the returned value as immutable
         # to avoid silencing potential bugs
-        if len(self.label_) <= 2:
-            ret *= -1
-            ret.flags.writeable = False
-            return ret
-        else:
-            ret.flags.writeable = False
-            return ret
+        ret.flags.writeable = False
+        return ret
 
     def _get_bias(self):
         if self.fit_intercept:
