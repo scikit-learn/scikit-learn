@@ -32,7 +32,8 @@ Changelog
      solution was retained instead of the best solution.
 
    - Minor refactoring in :ref:`sgd` module; consolidated dense and sparse
-     predict methods.
+     predict methods; Enhanced test time performance by converting model
+     paramters to fortran-style arrays after fitting (only multi-class).
 
    - Adjusted Mutual Information metric added as
      :func:`sklearn.metrics.adjusted_mutual_info_score` by Robert Layton.
