@@ -116,7 +116,7 @@ features::
   >>> X, y = iris.data, iris.target
   >>> X.shape
   (150, 4)
-  >>> clf = ExtraTreesClassifier(random_state=0)
+  >>> clf = ExtraTreesClassifier(random_state=0, compute_importances=True)
   >>> X_new = clf.fit(X, y).transform(X)
   >>> X_new.shape
   (150, 2)
