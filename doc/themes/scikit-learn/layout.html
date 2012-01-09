@@ -175,8 +175,7 @@
     <p>If you use the software, please consider
     <a href="about.html#citing-scikit-learn">citing scikit-learn</a>.</p>
 
-    <!-- it's 11 when it's empty (?) -->
-    {%- if (toc|length == 11) and (pagename != 'index') %}
+    {%- if (pagename != 'index') %}
     <h3>{{ _('This page') }}</h3>
 	{{ toc }}
     {% endif %}

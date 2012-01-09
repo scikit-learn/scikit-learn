@@ -642,10 +642,6 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     .. [4] L. Breiman, and A. Cutler, "Random Forests",
            http://www.stat.berkeley.edu/~breiman/RandomForests/cc_home.htm
 
-    See also
-    --------
-    DecisionTreeRegressor
-
     Examples
     --------
     >>> from sklearn.datasets import load_iris
@@ -779,6 +775,10 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
 
             I(f) = \sum_{nodes A for which f is used} n_samples(A) * \Delta err
 
+    See also
+    --------
+    DecisionTreeClassifier
+
     Notes
     -----
     **References**:
@@ -793,10 +793,6 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
 
     .. [4] L. Breiman, and A. Cutler, "Random Forests",
            http://www.stat.berkeley.edu/~breiman/RandomForests/cc_home.htm
-
-    See also
-    --------
-    DecisionTreeClassifier
 
     Examples
     --------

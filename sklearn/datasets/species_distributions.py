@@ -53,7 +53,7 @@ DIRECTORY_URL = "http://www.cs.princeton.edu/~schapire/maxent/datasets/"
 SAMPLES_URL = join(DIRECTORY_URL, "samples.zip")
 COVERAGES_URL = join(DIRECTORY_URL, "coverages.zip")
 
-DATA_ARCHIVE_NAME = "species_coverage.pkl"
+DATA_ARCHIVE_NAME = "species_coverage.pkz"
 
 
 def _load_coverage(F, header_length=6,
@@ -246,7 +246,7 @@ def fetch_species_distributions(data_home=None,
                       test=test,
                       train=train,
                       **extra_params)
-        joblib.dump(bunch, join(data_home, DATA_ARCHIVE_NAME))
+        joblib.dump(bunch, join(data_home, DATA_ARCHIVE_NAME), compress=9)
     else:
         bunch = joblib.load(join(data_home, DATA_ARCHIVE_NAME))
 

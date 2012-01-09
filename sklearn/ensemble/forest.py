@@ -434,7 +434,7 @@ class RandomForestClassifier(ForestClassifier):
 
     See also
     --------
-    RandomForestRegressor, ExtraTreesClassifier, ExtraTreesRegressor
+    DecisionTreeClassifier, ExtraTreesClassifier
     """
     def __init__(self, n_estimators=10,
                        criterion="gini",
@@ -536,7 +536,7 @@ class RandomForestRegressor(ForestRegressor):
 
     See also
     --------
-    RandomForestClassifier, ExtraTreesClassifier, ExtraTreesRegressor
+    DecisionTreeRegressor, ExtraTreesRegressor
     """
     def __init__(self, n_estimators=10,
                        criterion="mse",
@@ -640,8 +640,7 @@ class ExtraTreesClassifier(ForestClassifier):
 
     See also
     --------
-    ExtraTreesRegressor, RandomForestClassifier, RandomForestRegressor
-
+    ExtraTreeClassifier, RandomForestClassifier
     """
     def __init__(self, n_estimators=10,
                        criterion="gini",
@@ -746,8 +745,7 @@ class ExtraTreesRegressor(ForestRegressor):
 
     See also
     --------
-    ExtraTreesRegressor, RandomForestClassifier, RandomForestRegressor
-
+    ExtraTreeRegressor, RandomForestRegressor
     """
     def __init__(self, n_estimators=10,
                        criterion="mse",
