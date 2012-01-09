@@ -119,16 +119,15 @@ class ElasticNet(LinearModel):
         To avoid memory re-allocation it is advised to allocate the
         initial data in memory directly using that format.
         """
-        X = as_float_array(X, self.copy_X)
+        # X and y must be of type float64
+        X = np.asanyarray(X, dtype=np.float64)
         y = np.asarray(y, dtype=np.float64)
 
         n_samples, n_features = X.shape
 
         X_init = X
         X, y, X_mean, y_mean, X_std = self._center_data(X, y,
-                                                        self.fit_intercept,
-                                                        self.normalize,
-                                                        copy=False)
+                self.fit_intercept, self.normalize, copy=self.copy_X)
         precompute = self.precompute
         if X_init is not X and hasattr(precompute, '__array__'):
             precompute = 'auto'  # recompute Gram
