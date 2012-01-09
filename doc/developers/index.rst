@@ -1,7 +1,4 @@
-.. toctree::
-
-   performance.rst
-   utilities.rst
+.. _contributing:
 
 ============
 Contributing
@@ -12,6 +9,7 @@ contribute.
 
 The project is hosted on http://github.com/scikit-learn/scikit-learn
 
+
 Submitting a bug report
 =======================
 
@@ -21,8 +19,8 @@ to submit a ticket to the
 
 You are also welcome to post there feature requests or links to pull-requests.
 
-.. _git_repo:
 
+.. _git_repo:
 
 Retrieving the latest code
 ==========================
