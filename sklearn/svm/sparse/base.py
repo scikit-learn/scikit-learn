@@ -294,11 +294,6 @@ class SparseBaseLibLinear(BaseLibLinear):
             self.class_weight_label, self.class_weight, self.label_,
             self._get_bias())
 
-        if len(self.label_) <= 2:
-            # in the two-class case, the decision sign needs be flipped
-            # due to liblinear's design
-            return -dec_func
-        else:
-            return dec_func
+        return dec_func
 
 libsvm.set_verbosity_wrap(0)

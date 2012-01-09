@@ -192,6 +192,11 @@ def decision_function_wrap(
     if copy_predict_values(T.data, model, T.shape, dec_values.data, n_class) < 0:
         raise MemoryError("We've run out of of memory")
 
+    if n_class <= 2:
+        # in the two-class case, the decision sign needs be flipped
+        # due to liblinear's design
+        dec_values *= -1
+
     ### FREE
     free_parameter(param)
     free_and_destroy_model(&model)
@@ -235,6 +240,11 @@ def csr_decision_function_wrap(
         T_indices.data, T_indptr.shape, T_indptr.data, model,
         dec_values.data, n_class) < 0:
         raise MemoryError("We've run out of of memory")
+
+    if n_class <= 2:
+        # in the two-class case, the decision sign needs be flipped
+        # due to liblinear's design
+        dec_values *= -1
 
     ### FREE
     free_parameter(param)
