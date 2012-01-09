@@ -139,8 +139,8 @@ class GMM(BaseEstimator):
     covariance_type : string (read-only)
         String describing the type of covariance parameters used by
         the GMM.  Must be one of 'spherical', 'tied', 'diag', 'full'.
-    log_weights_ : array, shape (`n_components`,)
-        log of mixing weights for each mixture component.
+    weights_ : array, shape (`n_components`,)
+        Mixing weights for each mixture component.
     means_ : array, shape (`n_components`, `n_features`)
         Mean parameters for each mixture component.
     covars_ : array
@@ -212,8 +212,7 @@ class GMM(BaseEstimator):
         if not covariance_type in ['spherical', 'tied', 'diag', 'full']:
             raise ValueError('bad covariance_type: ' + str(covariance_type))
 
-        self.log_weights_ = - np.ones(self.n_components) * \
-            np.log(self.n_components)
+        self.weights_ = np.ones(self.n_components) / self.n_components
 
         # flag to indicate exit status of fit() method: converged (True) or
         # n_iter reached (False)
@@ -272,7 +271,7 @@ class GMM(BaseEstimator):
     def _get_weights(self):
         """Mixing weights for each mixture component.      
         array, shape ``(n_states,)``"""
-        return np.exp(self.log_weights_)
+        return self.weights_ 
 
     def _set_weights(self, weights):
         """Provide value for micture weights"""
@@ -280,7 +279,7 @@ class GMM(BaseEstimator):
             raise ValueError('weights must have length n_components')
         if not np.allclose(np.sum(weights), 1.0):
             raise ValueError('weights must sum to 1.0')
-        self.log_weights_ = np.log(np.asarray(weights).copy())
+        self.weights_ = np.asarray(weights).copy()
 
     def eval(self, X):
         """Evaluate the model on data
@@ -310,10 +309,10 @@ class GMM(BaseEstimator):
             return np.array([]), np.empty((0, self.n_components))
         if X.shape[1] != self.means_.shape[1]:
             raise ValueError('the shape of X  is not compatible with self')
-
+        
         lpr = (log_multivariate_normal_density(
                 X, self.means_, self.covars_, self._covariance_type)
-               + self.log_weights_)
+               + np.log(self.weights_))
         logprob = logsumexp(lpr, axis=1)
         responsibilities = np.exp(lpr - logprob[:, np.newaxis])
         return logprob, responsibilities
@@ -407,8 +406,7 @@ class GMM(BaseEstimator):
         if random_state is None:
             random_state = self.random_state
         random_state = check_random_state(random_state)
-        weight_pdf = np.exp(self.log_weights_)
-        weight_cdf = np.cumsum(weight_pdf)
+        weight_cdf = np.cumsum(self.weights_)
 
         X = np.empty((n_samples, self.means_.shape[1]))
         rand = random_state.rand(n_samples)
@@ -484,8 +482,8 @@ class GMM(BaseEstimator):
                     k=self.n_components).fit(X).cluster_centers_
 
             if 'w' in init_params or not hasattr(self, 'weights_'):
-                self._set_weights(np.tile(1.0 / self.n_components,
-                                          self.n_components))
+                self.weights_ = np.tile(1.0 / self.n_components,
+                                        self.n_components)
 
             if 'c' in init_params or not hasattr(self, 'covars_'):
                 cv = np.cov(X.T) + self.min_covar * np.eye(X.shape[1])
@@ -517,13 +515,13 @@ class GMM(BaseEstimator):
             if n_iter:
                 if log_likelihood[-1] > max_log_prob:
                     max_log_prob = log_likelihood[-1]
-                    best_params = {'weights': self._get_weights(),
+                    best_params = {'weights': self.weights_,
                                    'means': self.means_,
                                    'covars': self.covars_}
         if n_iter:
             self.covars_ = best_params['covars']
             self.means_ = best_params['means']
-            self._set_weights(best_params['weights'])
+            self.weights_ = best_params['weights']
         return self
 
     def _do_mstep(self, X, responsibilities, params, min_covar=0):
@@ -534,8 +532,8 @@ class GMM(BaseEstimator):
         inverse_weights = 1.0 / (weights[:, np.newaxis] + 10 * INF_EPS)
 
         if 'w' in params:
-            self.log_weights_ = np.log(
-                weights / (weights.sum() + 10 * INF_EPS) + INF_EPS)
+            self.weights_ = (weights / (weights.sum() + 10 * INF_EPS) + 
+                                 INF_EPS)            
         if 'm' in params:
             self.means_ = weighted_X_sum * inverse_weights
         if 'c' in params:

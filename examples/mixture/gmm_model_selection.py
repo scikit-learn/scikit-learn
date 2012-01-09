@@ -64,7 +64,7 @@ spl.legend([b[0] for b in bars], cv_types)
 # Plot the winner
 splot = pl.subplot(2, 1, 2)
 Y_ = clf.predict(X)
-for i, (mean, covar, color) in enumerate(zip(clf.means, clf.covars,
+for i, (mean, covar, color) in enumerate(zip(clf.means_, clf.covars_,
                                              color_iter)):
     v, w = linalg.eigh(covar)
     if not np.any(Y_ == i):

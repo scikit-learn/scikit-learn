@@ -57,8 +57,7 @@ def wishart_logz(v, s, dets, n_features):
     "The logarithm of the normalization constant for the wishart distribution"
     z = 0.
     z += 0.5 * v * n_features * np.log(2)
-    z += (0.25 * (n_features * (n_features - 1))
-          * np.log(np.pi))
+    z += (0.25 * (n_features * (n_features - 1)) * np.log(np.pi))
     z += 0.5 * v * np.log(dets)
     z += np.sum(gammaln(0.5 * (v - np.arange(n_features) + 1)))
     return z
@@ -499,7 +498,7 @@ class DPGMM(GMM):
         z = np.ones((X.shape[0], self.n_components))
         z /= self.n_components
 
-        self._initial_bound = -0.5 * n_features * np.log(2 * np.pi)
+        self._initial_bound = - 0.5 * n_features * np.log(2 * np.pi)
         self._initial_bound -= np.log(2 * np.pi * np.e)
 
         if (init_params != '') or not hasattr(self, 'gamma_'):
@@ -510,7 +509,7 @@ class DPGMM(GMM):
                 k=self.n_components, random_state=self.random_state
             ).fit(X).cluster_centers_[::-1]
 
-        if 'w' in init_params or not hasattr(self, 'log_weights_'): # fixme
+        if 'w' in init_params or not hasattr(self, 'weights_'):
             self._set_weights(np.tile(1.0 / self.n_components, 
                                       self.n_components))
 
