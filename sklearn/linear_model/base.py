@@ -249,7 +249,12 @@ class BaseSGD(BaseEstimator):
         return sample_weight
 
     def _set_coef(self, coef_):
-        """Make sure that coef_ is fortran-style and 2d. """
+        """Make sure that coef_ is fortran-style and 2d.
+        
+        Fortran-style memory layout is needed to ensure that computing
+        the dot product between input ``X`` and ``coef_`` does not trigger
+        a memory copy.
+        """
         self.coef_ = np.asfortranarray(array2d(coef_))
 
     def _allocate_parameter_mem(self, n_classes, n_features, coef_init=None,
