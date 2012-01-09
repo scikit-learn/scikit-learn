@@ -346,7 +346,7 @@ def _build_tree(X, y, criterion, max_depth, min_split,
             value = criterion.init_value()
 
         # Current node is leaf
-        if feature == -1:            
+        if feature == -1:
             node_id = tree.add_leaf(parent, is_left_child, value, init_error,
                                     n_node_samples)
 
@@ -417,16 +417,18 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
     Use derived classes instead.
     """
     def __init__(self, criterion,
-                       max_depth,
-                       min_split,
-                       min_density,
-                       max_features,
-                       random_state):
+                 max_depth,
+                 min_split,
+                 min_density,
+                 max_features,
+                 compute_importances,
+                 random_state):
         self.criterion = criterion
         self.max_depth = max_depth
         self.min_split = min_split
         self.min_density = min_density
         self.max_features = max_features
+        self.compute_importances = compute_importances
         self.random_state = check_random_state(random_state)
 
         self.n_features_ = None
@@ -435,6 +437,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
         self.find_split_ = _tree._find_best_split
 
         self.tree_ = None
+        self.feature_importances_ = None
 
     def fit(self, X, y, sample_mask=None, X_argsorted=None):
         """Build a decision tree from the training set (X, y).
@@ -520,6 +523,13 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
                                 self.find_split_, sample_mask=sample_mask,
                                 X_argsorted=X_argsorted)
 
+        if self.compute_importances:
+            if not self.tree_:
+                raise ValueError("Estimator not fitted, " \
+                                 "call `fit` before `feature_importances_`.")
+            self.feature_importances_ = compute_feature_importances(
+                self.tree_, self.n_features_)
+
         return self
 
     def predict(self, X):
@@ -559,13 +569,6 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
 
         return predictions
 
-    @property
-    def feature_importances_(self):
-        if not self.tree_:
-            raise ValueError("Estimator not fitted, " \
-                             "call `fit` before `feature_importances_`.")
-        return compute_feature_importances(self.tree_, self.n_features_)
-
 
 class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     """A decision tree classifier.
@@ -601,6 +604,10 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         then `max_features=sqrt(n_features)`. If "log2", then
         `max_features=log2(n_features)`. If None, then
         `max_features=n_features`.
+
+    compute_importances : boolean, optional (default=True)
+        Whether feature importances are computed and stored into the
+        ``feature_importances_`` attribute when calling fit.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -658,16 +665,18 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             0.93...,  0.93...,  1.     ,  0.93...,  1.      ])
     """
     def __init__(self, criterion="gini",
-                       max_depth=None,
-                       min_split=1,
-                       min_density=0.1,
-                       max_features=None,
-                       random_state=None):
+                 max_depth=None,
+                 min_split=1,
+                 min_density=0.1,
+                 max_features=None,
+                 compute_importances=False,
+                 random_state=None):
         super(DecisionTreeClassifier, self).__init__(criterion,
                                                      max_depth,
                                                      min_split,
                                                      min_density,
                                                      max_features,
+                                                     compute_importances,
                                                      random_state)
 
     def predict_proba(self, X):
@@ -754,6 +763,10 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         `max_features=log2(n_features)`. If None, then
         `max_features=n_features`.
 
+    compute_importances : boolean, optional (default=True)
+        Whether feature importances are computed and stored into the
+        ``feature_importances_`` attribute when calling fit.
+
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
@@ -812,16 +825,18 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
             0.07..., 0.29..., 0.33..., -1.42..., -1.77...])
     """
     def __init__(self, criterion="mse",
-                       max_depth=None,
-                       min_split=1,
-                       min_density=0.1,
-                       max_features=None,
-                       random_state=None):
+                 max_depth=None,
+                 min_split=1,
+                 min_density=0.1,
+                 max_features=None,
+                 compute_importances=False,
+                 random_state=None):
         super(DecisionTreeRegressor, self).__init__(criterion,
                                                     max_depth,
                                                     min_split,
                                                     min_density,
                                                     max_features,
+                                                    compute_importances,
                                                     random_state)
 
 
@@ -849,16 +864,18 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
            Machine Learning, 63(1), 3-42, 2006.
     """
     def __init__(self, criterion="gini",
-                       max_depth=None,
-                       min_split=1,
-                       min_density=0.1,
-                       max_features="auto",
-                       random_state=None):
+                 max_depth=None,
+                 min_split=1,
+                 min_density=0.1,
+                 max_features="auto",
+                 compute_importances=False,
+                 random_state=None):
         super(ExtraTreeClassifier, self).__init__(criterion,
                                                   max_depth,
                                                   min_split,
                                                   min_density,
                                                   max_features,
+                                                  compute_importances,
                                                   random_state)
 
         self.find_split_ = _tree._find_best_random_split
@@ -888,16 +905,18 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
            Machine Learning, 63(1), 3-42, 2006.
     """
     def __init__(self, criterion="mse",
-                       max_depth=None,
-                       min_split=1,
-                       min_density=0.1,
-                       max_features="auto",
-                       random_state=None):
+                 max_depth=None,
+                 min_split=1,
+                 min_density=0.1,
+                 max_features="auto",
+                 compute_importances=False,
+                 random_state=None):
         super(ExtraTreeRegressor, self).__init__(criterion,
                                                  max_depth,
                                                  min_split,
                                                  min_density,
                                                  max_features,
+                                                 compute_importances,
                                                  random_state)
 
         self.find_split_ = _tree._find_best_random_split
