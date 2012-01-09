@@ -94,14 +94,15 @@ class LossFunction(object):
                                 learn_rate=1.0):
         """Update the terminal regions (=leaves) of the given tree and
         updates the current predictions of the model. Traverses tree
-        and invokes template method `_update_terminal_region`."""    
-        for leaf in np.where(tree.children[:, 0] == Tree.LEAF)[0]:            
+        and invokes template method `_update_terminal_region`."""
+        for leaf in np.where(tree.children[:, 0] == Tree.LEAF)[0]:
             self._update_terminal_region(tree, leaf, X, y, residual, y_pred)
 
         # update predictions
         mask = tree.terminal_region != -1
         y_pred[mask] += learn_rate * \
-                        tree.value[:,0].take(tree.terminal_region[mask], axis=0)
+                        tree.value[:, 0].take(tree.terminal_region[mask],
+                                              axis=0)
 
         # save memory
         del tree.terminal_region
@@ -152,9 +153,6 @@ class BinomialDeviance(LossFunction):
 
     def __call__(self, y, pred):
         """Compute the deviance (= negative log-likelihood). """
-        ## return -2.0 * np.sum(y * pred -
-        ##                      np.log(1.0 + np.exp(pred))) / y.shape[0]
-
         # logaddexp(0, v) == log(1.0 + exp(v))
         return -2.0 * np.sum(y * pred -
                              np.logaddexp(0.0, pred)) / y.shape[0]
@@ -226,7 +224,8 @@ class BaseGradientBoosting(BaseEstimator):
         ----------
         X : array-like, shape = [n_samples, n_features]
             Training vectors, where n_samples is the number of samples
-            and n_features is the number of features.
+            and n_features is the number of features. Use fortran-style
+            to avoid memory copies.
 
         y : array-like, shape = [n_samples]
             Target values (integers in classification, real numbers in
@@ -280,7 +279,7 @@ class BaseGradientBoosting(BaseEstimator):
             if self.subsample < 1.0:
                 sample_mask = self.random_state.rand(n_samples) \
                               >= (1.0 - self.subsample)
-    
+
             residual = loss.negative_gradient(y, y_pred)
 
             # induce regression tree on residuals
@@ -413,6 +412,26 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             random_state)
 
     def fit(self, X, y, monitor=None):
+        """Fit the gradient boosting model.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples
+            and n_features is the number of features. Use fortran-style
+            to avoid memory copies.
+
+        y : array-like, shape = [n_samples]
+            Target values (integers in classification, real numbers in
+            regression)
+            For classification, labels must correspond to classes
+            0, 1, ..., n_classes-1
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
         self.classes = np.unique(y)
         if self.classes.shape[0] != 2:
             raise ValueError("only binary classification supported")
