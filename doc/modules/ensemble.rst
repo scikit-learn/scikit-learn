@@ -131,14 +131,48 @@ time (e.g., on large datasets).
 
 .. _gradient_boosting:
 
-Gradient Boosting
-=================
+Gradient Tree Boosting
+======================
 
-Gradient boosting is a generalization of boosting to arbitrary differentiable loss functions. Similar to other boosting algorithms it builds the additive model in a forward stagewise fashion. Gradient boosting considers additive models of the following form::
+`Gradient Tree Boosting <http://en.wikipedia.org/wiki/Gradient_boosting>`_ or Gradient Boosted Regression Trees (GBRT) is a generalization of boosting to arbitrary differentiable loss functions. GBRT is an accurate and effective off-the-shelf procedure that can be used for both regression and classification problems. Gradient Tree Boosting models are used in a variety of areas including Web search ranking and ecology.
 
-  ...
+The advantages of GBRT are:
 
-where h(x) are the basis functions which are called weak learners in the context of boosting.
+  + Natural handling of data of mixed type (=heterogeneous features)
+
+  + Predictive power
+
+  + Robustness to outliers in input space (via robust loss functions)
+
+The disadvantages of GBRT are:
+
+  + Scalability, due to the sequential nature of boosting it can hardly be parallelized.
+
+GBRT considers additive models of the following form:
+
+  .. math::
+
+    F(x) = \sum_{i=1}^{M} \gamma_i h_i(x)
+
+where :math:`h_i(x)` are the basis functions which are usually called *weak learners* in the context of boosting. Gradient Tree Boosting uses :ref:`decision trees <tree>` of fixed size as weak learners. Decision trees have a number of abilities that make them valuable for boosting, namely the ability to handle data of mixed type and the ability to model complex functions. 
+
+Similar to other boosting algorithms GBRT builds the additive model in a forward stagewise fashion: At each stage the decision tree :math:`h_m(x)` is choosen that maximally reduces the loss function :math:`L` given the current model :math:`F_{m-1}` and its fit :math:`F_{m-1}(x_i)`
+
+  .. math::
+
+    F_m(x) = F_{m-1}(x) + \arg_min_{h}  \sum_{i=1}^{n} L(y_i, F_{m-1}(x_i) - h(x))
+
+
+TODO steepest descent - predict negative gradient of loss function w.r.t the current 
+
+TODO table loss function - negative gradient - line search
+
+TODO Shrinkage
+
+TODO Stochastic Gradient Boosting
+
+TODO Discussion - parameter tuning - other implementations
+
 
 .. topic:: Examples:
 
