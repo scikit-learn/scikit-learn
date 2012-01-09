@@ -130,7 +130,10 @@ class ElasticNet(LinearModel):
                 self.fit_intercept, self.normalize, copy=self.copy_X)
         precompute = self.precompute
         if X_init is not X and hasattr(precompute, '__array__'):
-            precompute = 'auto'  # recompute Gram
+            # recompute Gram
+            # FIXME: it could be updated from precompute and X_mean
+            # instead of recomputed
+            precompute = 'auto'
         if X_init is not X and Xy is not None:
             Xy = None  # recompute Xy
 
@@ -145,7 +148,7 @@ class ElasticNet(LinearModel):
         X = np.asfortranarray(X)  # make data contiguous in memory
 
         # precompute if n_samples > n_features
-        if hasattr(self.precompute, '__array__'):
+        if hasattr(precompute, '__array__'):
             Gram = precompute
         elif precompute == True or \
                (precompute == 'auto' and n_samples > n_features):
