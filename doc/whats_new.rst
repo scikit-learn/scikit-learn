@@ -149,35 +149,35 @@ People
 
 The folling people contributed to scikit-learn since last release:
 
-   * 246  Andreas Mueller
-   * 242  Olivier Grisel
-   * 220  Gilles Louppe
-   * 183  Brian Holt
-   * 166  Gael Varoquaux
-   * 144  Lars Buitinck
-   *  73  Vlad Niculae
-   *  65  Peter Prettenhofer
-   *  64  Fabian Pedregosa
+   * 246  `Andreas Müller`_
+   * 242  `Olivier Grisel`_
+   * 220  `Gilles Louppe`_
+   * 183  `Brian Holt`_
+   * 166  `Gael Varoquaux`_
+   * 144  `Lars Buitinck`_
+   *  73  `Vlad Niculae`_
+   *  65  `Peter Prettenhofer`_
+   *  64  `Fabian Pedregosa`_
    *  60  Robert Layton
-   *  55  Mathieu Blondel
-   *  52  Jake Vanderplas
+   *  55  `Mathieu Blondel`_
+   *  52  `Jake Vanderplas`_
    *  44  Noel Dawe
-   *  38  Alexandre Gramfort
-   *  24  Virgile Fritsch
-   *  23  Satrajit Ghosh
+   *  38  `Alexandre Gramfort`_
+   *  24  `Virgile Fritsch`_
+   *  23  `Satrajit Ghosh`_
    *   3  Jan Hendrik Metzen
    *   3  Kenneth C. Arnold
    *   3  Shiqiao Du
    *   3  Tim Sheerman-Chase
-   *   3  Yaroslav Halchenko
+   *   3  `Yaroslav Halchenko`_
    *   2  Bala Subrahmanyam Varanasi
    *   2  DraXus
-   *   2  Michael EICKENBERG
+   *   2  Michael Eickenberg
    *   1  Bogdan Trach
    *   1  Félix-Antoine Fortin
    *   1  Juan Manuel Caicedo Carvajal
    *   1  Nelle Varoquaux
-   *   1  Nicolas Pinto
+   *   1  `Nicolas Pinto`_
    *   1  Tiziano Zito
    *   1  Xinfan Meng
 
