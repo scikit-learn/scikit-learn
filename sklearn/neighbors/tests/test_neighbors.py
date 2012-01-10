@@ -1,3 +1,4 @@
+import warnings
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 from numpy.testing import assert_raises
@@ -18,6 +19,48 @@ SPARSE_TYPES = (bsr_matrix, coo_matrix, csc_matrix, csr_matrix, dok_matrix,
 SPARSE_OR_DENSE = SPARSE_TYPES + (np.asarray,)
 
 ALGORITHMS = ('ball_tree', 'brute', 'kd_tree', 'auto')
+
+
+def test_warn_on_equidistant(n_samples=100, n_features=3, k=3):
+    """test the production of a warning if equidistant points are discarded"""
+    X = np.random.random(size=(n_samples, n_features))
+    q = np.random.random(size=n_features)
+
+    neigh = neighbors.NearestNeighbors(n_neighbors=k)
+    neigh.fit(X[:-1])
+    ind = neigh.kneighbors(q, return_distance=False)
+
+    # make the last point identical to the furthest neighbor
+    # querying this should set warning_flag to True
+    X[-1] = X[ind[0, k - 1]]
+
+    y = np.zeros(X.shape[0])
+
+    # change warnings.warn to catch the message
+    warn_queue = []
+    warnings_warn = warnings.warn
+    warnings.warn = lambda msg: warn_queue.append(msg)
+
+    expected_message = ("kneighbors: neighbor k+1 and neighbor k "
+                        "have the same distance: results will be "
+                        "dependent on data order.")
+
+    algorithms = ('ball_tree', 'brute')
+    estimators = (neighbors.KNeighborsClassifier,
+                  neighbors.KNeighborsRegressor)
+
+    for algorithm in algorithms:
+        for estimator in estimators:
+            neigh = estimator(n_neighbors=k, algorithm=algorithm)
+            neigh.fit(X, y)
+            neigh.predict(q)
+
+            assert len(warn_queue) == 1
+            assert warn_queue[0] == expected_message
+            warn_queue = []
+
+    # restore default behavior
+    warnings.warn = warnings_warn
 
 
 def test_unsupervised_kneighbors(n_samples=20, n_features=5,
@@ -243,7 +286,6 @@ def test_kneighbors_regressor_sparse(n_samples=40,
         knn = neighbors.KNeighborsRegressor(n_neighbors=n_neighbors,
                                             algorithm='auto')
         knn.fit(sparsemat(X), y)
-        epsilon = 1e-5 * (2 * rng.rand(1, n_features) - 1)
         for sparsev in SPARSE_OR_DENSE:
             X2 = sparsev(X)
             assert (np.mean(knn.predict(X2).round() == y)
@@ -285,24 +327,24 @@ def test_kneighbors_graph():
     A = neighbors.kneighbors_graph(X, 1, mode='distance')
     assert_array_almost_equal(
         A.todense(),
-        [[ 0.        ,  1.01      ,  0.        ],
-         [ 1.01      ,  0.        ,  0.        ],
-         [ 0.        ,  1.40716026,  0.        ]])
+        [[0.00,  1.01,        0.],
+         [1.01,  0.,          0.],
+         [0.00,  1.40716026,  0.]])
 
     # n_neighbors = 2
     A = neighbors.kneighbors_graph(X, 2, mode='connectivity')
     assert_array_equal(
         A.todense(),
-        [[ 1.,  1.,  0.],
-         [ 1.,  1.,  0.],
-         [ 0.,  1.,  1.]])
+        [[1.,  1.,  0.],
+         [1.,  1.,  0.],
+         [0.,  1.,  1.]])
 
     A = neighbors.kneighbors_graph(X, 2, mode='distance')
     assert_array_almost_equal(
         A.todense(),
-        [[ 0.        ,  1.01      ,  2.23606798],
-         [ 1.01      ,  0.        ,  1.40716026],
-         [ 2.23606798,  1.40716026,  0.        ]])
+        [[0.,          1.01,        2.23606798],
+         [1.01,        0.,          1.40716026],
+         [2.23606798,  1.40716026,  0.]])
 
     # n_neighbors = 3
     A = neighbors.kneighbors_graph(X, 3, mode='connectivity')
@@ -318,16 +360,16 @@ def test_radius_neighbors_graph():
     A = neighbors.radius_neighbors_graph(X, 1.5, mode='connectivity')
     assert_array_equal(
         A.todense(),
-        [[ 1.,  1.,  0.],
-         [ 1.,  1.,  1.],
-         [ 0.,  1.,  1.]])
+        [[1.,  1.,  0.],
+         [1.,  1.,  1.],
+         [0.,  1.,  1.]])
 
     A = neighbors.radius_neighbors_graph(X, 1.5, mode='distance')
     assert_array_almost_equal(
         A.todense(),
-        [[ 0.        ,  1.01      ,  0.        ],
-         [ 1.01      ,  0.        ,  1.40716026],
-         [ 0.        ,  1.40716026,  0.        ]])
+        [[0.,   1.01,       0.],
+         [1.01, 0.,         1.40716026],
+         [0.,   1.40716026, 0.]])
 
 
 def test_neighbors_badargs():

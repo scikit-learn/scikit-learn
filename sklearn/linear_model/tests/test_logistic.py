@@ -55,11 +55,19 @@ def test_predict_iris():
 
 
 def test_inconsistent_input():
-    """Test that an exception is raised on inconsistent input to predict"""
+    """Test that an exception is raised on inconsistent input"""
     X_ = np.random.random((5, 10))
     y_ = np.ones(X_.shape[0])
+
+    clf = logistic.LogisticRegression()
+
+    # Wrong dimensions for training data
+    y_wrong = y_[:-1]
+    assert_raises(ValueError, clf.fit, X, y_wrong)
+
+    # Wrong dimensions for test data
     assert_raises(ValueError,
-                  logistic.LogisticRegression().fit(X_, y_).predict,
+                  clf.fit(X_, y_).predict,
                   np.random.random((3, 12)))
 
 

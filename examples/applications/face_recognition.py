@@ -48,7 +48,7 @@ from sklearn.svm import SVC
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
 
 
-################################################################################
+###############################################################################
 # Download the data, if not already on disk and load it as numpy arrays
 
 lfw_people = fetch_lfw_people(min_faces_per_person=70, resize=0.4)
@@ -71,7 +71,7 @@ print "n_features: %d" % n_features
 print "n_classes: %d" % n_classes
 
 
-################################################################################
+###############################################################################
 # Split into a training set and a test set using a stratified k fold
 
 # split into a training and testing set
@@ -80,7 +80,7 @@ X_train, X_test = X[train], X[test]
 y_train, y_test = y[train], y[test]
 
 
-################################################################################
+###############################################################################
 # Compute a PCA (eigenfaces) on the face dataset (treated as unlabeled
 # dataset): unsupervised feature extraction / dimensionality reduction
 n_components = 150
@@ -100,7 +100,7 @@ X_test_pca = pca.transform(X_test)
 print "done in %0.3fs" % (time() - t0)
 
 
-################################################################################
+###############################################################################
 # Train a SVM classification model
 
 print "Fitting the classifier to the training set"
@@ -114,10 +114,10 @@ clf = GridSearchCV(SVC(kernel='rbf'), param_grid,
 clf = clf.fit(X_train_pca, y_train)
 print "done in %0.3fs" % (time() - t0)
 print "Best estimator found by grid search:"
-print clf.best_estimator
+print clf.best_estimator_
 
 
-################################################################################
+###############################################################################
 # Quantitative evaluation of the model quality on the test set
 
 print "Predicting the people names on the testing set"
@@ -129,7 +129,7 @@ print classification_report(y_test, y_pred, target_names=target_names)
 print confusion_matrix(y_test, y_pred, labels=range(n_classes))
 
 
-################################################################################
+###############################################################################
 # Qualitative evaluation of the predictions using matplotlib
 
 def plot_gallery(images, titles, h, w, n_row=3, n_col=4):
@@ -142,6 +142,7 @@ def plot_gallery(images, titles, h, w, n_row=3, n_col=4):
         pl.title(titles[i], size=12)
         pl.xticks(())
         pl.yticks(())
+
 
 # plot the result of the prediction on a portion of the test set
 
@@ -161,4 +162,3 @@ eigenface_titles = ["eigenface %d" % i for i in range(eigenfaces.shape[0])]
 plot_gallery(eigenfaces, eigenface_titles, h, w)
 
 pl.show()
-

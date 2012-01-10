@@ -60,6 +60,14 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         required to store the tree.  The optimal value depends on the
         nature of the problem.
 
+    warn_on_equidistant : boolean, optional.  Defaults to True.
+        Generate a warning if equidistant neighbors are discarded.
+        For classification or regression based on k-neighbors, if
+        neighbor k and neighbor k+1 have identical distances but
+        different labels, then the result will be dependent on the
+        ordering of the training data.
+        If the fit method is ``'kd_tree'``, no warnings will be generated.
+
     Examples
     --------
     >>> X = [[0], [1], [2], [3]]
@@ -83,17 +91,17 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
     See :ref:`Nearest Neighbors <neighbors>` in the online documentation
     for a discussion of the choice of ``algorithm`` and ``leaf_size``.
 
-    References
-    ----------
     http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
     def __init__(self, n_neighbors=5,
                  weights='uniform',
-                 algorithm='auto', leaf_size=30):
+                 algorithm='auto', leaf_size=30,
+                 warn_on_equidistant=True):
         self._init_params(n_neighbors=n_neighbors,
                           algorithm=algorithm,
-                          leaf_size=leaf_size)
+                          leaf_size=leaf_size,
+                          warn_on_equidistant=warn_on_equidistant)
         self.weights = _check_weights(weights)
 
     def predict(self, X):
@@ -189,8 +197,6 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
     See :ref:`Nearest Neighbors <neighbors>` in the online documentation
     for a discussion of the choice of ``algorithm`` and ``leaf_size``.
 
-    References
-    ----------
     http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
@@ -232,6 +238,8 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         return mode.flatten().astype(np.int)
 
 
+@deprecated("""to be removed in v0.11;
+use KNeighborsClassifier or RadiusNeighborsClassifier instead""")
 class NeighborsClassifier(NeighborsBase, KNeighborsMixin,
                           RadiusNeighborsMixin, SupervisedIntegerMixin,
                           ClassifierMixin):
@@ -298,8 +306,6 @@ class NeighborsClassifier(NeighborsBase, KNeighborsMixin,
     See :ref:`Nearest Neighbors <neighbors>` in the online documentation
     for a discussion of the choice of ``algorithm`` and ``leaf_size``.
 
-    References
-    ----------
     http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
@@ -339,9 +345,3 @@ class NeighborsClassifier(NeighborsBase, KNeighborsMixin,
             pred_labels = [self._y[ind] for ind in neigh_ind]
             return np.asarray([stats.mode(pi) for pi in pred_labels],
                               dtype=np.int)
-
-NeighborsClassifier = deprecated(
-    "deprecated in v0.9; will be removed in v0.11; "
-    "use KNeighborsClassifier or RadiusNeighborsClassifier instead")(
-    NeighborsClassifier)
-

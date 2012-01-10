@@ -83,9 +83,7 @@ def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
             if download_if_missing:
                 url = BASE_URL + target_filename
                 logger.warn("Downloading LFW metadata: %s", url)
-                downloader = urllib.urlopen(BASE_URL + target_filename)
-                data = downloader.read()
-                open(target_filepath, 'wb').write(data)
+                urllib.urlretrieve(url, target_filepath)
             else:
                 raise IOError("%s is missing" % target_filepath)
 
@@ -94,10 +92,7 @@ def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
         if not exists(archive_path):
             if download_if_missing:
                 logger.warn("Downloading LFW data (~200MB): %s", archive_url)
-                downloader = urllib.urlopen(archive_url)
-                data = downloader.read()
-                # don't open file until download is complete
-                open(archive_path, 'wb').write(data)
+                urllib.urlretrieve(archive_url, archive_path)
             else:
                 raise IOError("%s is missing" % target_filepath)
 
@@ -268,7 +263,7 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
 
     # wrap the loader in a memoizing function that will return memmaped data
     # arrays for optimal memory usage
-    m = Memory(cachedir=lfw_home, mmap_mode='c', verbose=0)
+    m = Memory(cachedir=lfw_home, compress=6, verbose=0)
     load_func = m.cache(_fetch_lfw_people)
 
     # load and memoize the pairs as np arrays
@@ -294,9 +289,9 @@ def _fetch_lfw_pairs(index_file_path, data_folder_path, slice_=None,
     """
     # parse the index file to find the number of pairs to be able to allocate
     # the right amount of memory before starting to decode the jpeg files
-    splitted_lines = [l.strip().split('\t')
-                      for l in open(index_file_path, 'rb').readlines()]
-    pair_specs = [sl for sl in splitted_lines if len(sl) > 2]
+    with open(index_file_path, 'rb') as index_file:
+        split_lines = [ln.strip().split('\t') for ln in index_file]
+    pair_specs = [sl for sl in split_lines if len(sl) > 2]
     n_pairs = len(pair_specs)
 
     # interating over the metadata lines for each pair to find the filename to
@@ -406,7 +401,7 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
 
     # wrap the loader in a memoizing function that will return memmaped data
     # arrays for optimal memory usage
-    m = Memory(cachedir=lfw_home, mmap_mode='c', verbose=0)
+    m = Memory(cachedir=lfw_home, compress=6, verbose=0)
     load_func = m.cache(_fetch_lfw_pairs)
 
     # select the right metadata file according to the requested subset

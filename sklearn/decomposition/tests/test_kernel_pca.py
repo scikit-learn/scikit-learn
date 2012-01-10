@@ -4,7 +4,6 @@ import scipy.sparse as sp
 from numpy.testing import assert_array_almost_equal
 from nose.tools import assert_equal
 from nose.tools import assert_raises
-from nose import SkipTest
 
 from .. import PCA, KernelPCA
 
@@ -32,6 +31,7 @@ def test_kernel_pca():
             # inverse transform
             X_pred2 = kpca.inverse_transform(X_pred_transformed)
             assert_equal(X_pred2.shape, X_pred.shape)
+
 
 def test_kernel_pca_sparse():
     rng = np.random.RandomState(0)

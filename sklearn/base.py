@@ -127,14 +127,13 @@ def _pprint(params, offset=0, printer=repr):
 
 ###############################################################################
 class BaseEstimator(object):
-    """Base class for all estimators in the scikit learn
+    """Base class for all estimators in scikit-learn
 
     Notes
     -----
     All estimators should specify all the parameters that can be set
     at the class level in their __init__ as explicit keyword
     arguments (no *args, **kwargs).
-
     """
 
     @classmethod
@@ -173,7 +172,7 @@ class BaseEstimator(object):
         """
         out = dict()
         for key in self._get_param_names():
-            value = getattr(self, key)
+            value = getattr(self, key, None)
             if deep and hasattr(value, '_get_params'):
                 deep_items = value._get_params().items()
                 out.update((key + '__' + k, val) for k, val in deep_items)
@@ -183,10 +182,10 @@ class BaseEstimator(object):
     def set_params(self, **params):
         """Set the parameters of the estimator.
 
-        The method works on simple estimators as well as on nested
-        objects (such as pipelines). The former have parameters of the
-        form <component>__<parameter> so that it's possible to update
-        each component of a nested object.
+        The method works on simple estimators as well as on nested objects
+        (such as pipelines). The former have parameters of the form
+        ``<component>__<parameter>`` so that it's possible to update each
+        component of a nested object.
 
         Returns
         -------
@@ -251,7 +250,7 @@ class ClassifierMixin(object):
     """Mixin class for all classifiers in scikit-learn"""
 
     def score(self, X, y):
-        """Returns the mean error rate on the given test data and labels.
+        """Returns the mean accuracy on the given test data and labels.
 
         Parameters
         ----------
@@ -271,10 +270,16 @@ class ClassifierMixin(object):
 
 ###############################################################################
 class RegressorMixin(object):
-    """Mixin class for all regression estimators in the scikit learn"""
+    """Mixin class for all regression estimators in scikit-learn"""
 
     def score(self, X, y):
-        """Returns the coefficient of determination of the prediction
+        """Returns the coefficient of determination R^2 of the prediction.
+
+        The coefficient R^2 is defined as (1 - u/v), where u is the
+        regression sum of squares ((y - y_pred) ** 2).sum() and v is the
+        residual sum of squares ((y_true - y_true.mean()) ** 2).sum().
+        Best possible score is 1.0, lower values are worse.
+
 
         Parameters
         ----------
@@ -292,7 +297,7 @@ class RegressorMixin(object):
 
 ###############################################################################
 class TransformerMixin(object):
-    """Mixin class for all transformers in the scikit learn"""
+    """Mixin class for all transformers in scikit-learn"""
 
     def fit_transform(self, X, y=None, **fit_params):
         """Fit to data, then transform it
@@ -313,7 +318,7 @@ class TransformerMixin(object):
         X_new : numpy array of shape [n_samples, n_features_new]
             Transformed array.
 
-        Note
+        Notes
         -----
         This method just calls fit and transform consecutively, i.e., it is not
         an optimized implementation of fit_transform, unlike other transformers

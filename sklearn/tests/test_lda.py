@@ -41,6 +41,7 @@ def test_lda_predict():
     # LDA shouldn't be able to separate those
     assert_true(np.any(y_pred3 != y3))
 
+
 def test_lda_transform():
     clf = lda.LDA()
     X_transformed = clf.fit(X, y).transform(X)

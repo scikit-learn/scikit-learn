@@ -1,6 +1,7 @@
 """ Non-negative matrix factorization
 """
 # Author: Vlad Niculae
+#         Lars Buitinck <L.J.Buitinck@uva.nl>
 # Author: Chih-Jen Lin, National Taiwan University (original projected gradient
 #     NMF implementation)
 # Author: Anthony Di Franco (original Python and NumPy port)
@@ -8,38 +9,52 @@
 
 
 from __future__ import division
-import warnings
+
+from ..base import BaseEstimator, TransformerMixin
+from ..utils import atleast2d_or_csr, check_random_state
+from ..utils.extmath import randomized_svd, safe_sparse_dot
 
 import numpy as np
-from ..base import BaseEstimator, TransformerMixin
-from ..utils.extmath import fast_svd
+from scipy.optimize import nnls
+import scipy.sparse as sp
+import warnings
 
 
 def _pos(x):
-    """Postive part of a vector / matrix"""
+    """Positive part of a vector / matrix"""
     return (x >= 0) * x
 
 
 def _neg(x):
     """Negative part of a vector / matrix"""
-    return (x < 0) * (-x)
+    neg_x = -x
+    neg_x *= x < 0
+    return neg_x
 
 
 def norm(x):
-    """Dot product based Euclidean norm implementation
+    """Dot product-based Euclidean norm implementation
 
     See: http://fseoane.net/blog/2011/computing-the-vector-norm/
     """
-    return np.sqrt(np.dot(x.flatten().T, x.flatten()))
+    x = x.ravel()
+    return np.sqrt(np.dot(x.T, x))
 
 
 def _sparseness(x):
     """Hoyer's measure of sparsity for a vector"""
-    n = len(x)
-    return (np.sqrt(n) - np.linalg.norm(x, 1) / norm(x)) / (np.sqrt(n) - 1)
+    sqrt_n = np.sqrt(len(x))
+    return (sqrt_n - np.linalg.norm(x, 1) / norm(x)) / (sqrt_n - 1)
 
 
-def _initialize_nmf(X, n_components, variant=None, eps=1e-6, random_state=None):
+def check_non_negative(X, whom):
+    X = X.data if sp.issparse(X) else X
+    if (X < 0).any():
+        raise ValueError("Negative values in data passed to %s" % whom)
+
+
+def _initialize_nmf(X, n_components, variant=None, eps=1e-6,
+                    random_state=None):
     """NNDSVD algorithm for NMF initialization.
 
     Computes a good initial guess for the non-negative
@@ -87,12 +102,11 @@ def _initialize_nmf(X, n_components, variant=None, eps=1e-6, random_state=None):
 
     http://www.cs.rpi.edu/~boutsc/files/nndsvd.pdf
     """
-    if (X < 0).any():
-        raise ValueError("Negative values in data passed to initialization")
+    check_non_negative(X, "NMF initialization")
     if variant not in (None, 'a', 'ar'):
         raise ValueError("Invalid variant name")
 
-    U, S, V = fast_svd(X, n_components)
+    U, S, V = randomized_svd(X, n_components)
     W, H = np.zeros(U.shape), np.zeros(V.shape)
 
     # The leading singular triplet is non-negative
@@ -135,12 +149,7 @@ def _initialize_nmf(X, n_components, variant=None, eps=1e-6, random_state=None):
         W[W == 0] = avg
         H[H == 0] = avg
     elif variant == "ar":
-        if random_state is None:
-            random_state = np.random
-        elif isinstance(random_state, int):
-            random_state = np.random.mtrand.RandomState(random_state)
-        elif not isinstance(random_state, np.random.mtrand.RandomState):
-            raise ValueError('Invalid random state in _nmf_initialize_')
+        random_state = check_random_state(random_state)
         avg = X.mean()
         W[W == 0] = abs(avg * random_state.randn(len(W[W == 0])) / 100)
         H[H == 0] = abs(avg * random_state.randn(len(H[H == 0])) / 100)
@@ -186,8 +195,8 @@ def _nls_subproblem(V, W, H_init, tol, max_iter):
         raise ValueError("Negative values in H_init passed to NLS solver.")
 
     H = H_init
-    WtV = np.dot(W.T, V)
-    WtW = np.dot(W.T, W)
+    WtV = safe_sparse_dot(W.T, V, dense_output=True)
+    WtW = safe_sparse_dot(W.T, W, dense_output=True)
 
     # values justified in the paper
     alpha = 1
@@ -216,14 +225,13 @@ def _nls_subproblem(V, W, H_init, tol, max_iter):
                     H = Hn
                     break
                 else:
-                    alpha = alpha * beta
+                    alpha *= beta
+            elif not suff_decr or (Hp == Hn).all():
+                H = Hp
+                break
             else:
-                if not suff_decr or (Hp == Hn).all():
-                    H = Hp
-                    break
-                else:
-                    alpha = alpha / beta
-                    Hp = Hn
+                alpha /= beta
+                Hp = Hn
 
     if n_iter == max_iter:
         warnings.warn("Iteration limit reached in nls subproblem.")
@@ -236,7 +244,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    X: array, [n_samples, n_features]
+    X: {array-like, sparse matrix}, shape = [n_samples, n_features]
         Data the model will be fit to.
 
     n_components: int or None
@@ -247,6 +255,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         Method used to initialize the procedure.
         Default: 'nndsvdar'
         Valid options::
+
             'nndsvd': Nonnegative Double Singular Value Decomposition (NNDSVD)
                 initialization (better for sparseness)
             'nndsvda': NNDSVD with zeros filled with the average of X
@@ -278,13 +287,15 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    components_: array, [n_components, n_features]
+    `components_` : array, [n_components, n_features]
         Non-negative components of the data
 
-    reconstruction_err_: number
+    `reconstruction_err_` : number
         Frobenius norm of the matrix difference between the
         training data and the reconstructed data from the
-        fit produced by the model. || X - WH ||_2
+        fit produced by the model. ``|| X - WH ||_2``
+        Not computed for sparse input matrices because it is
+        too expensive in terms of memory.
 
     Examples
     --------
@@ -294,9 +305,8 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
     >>> from sklearn.decomposition import ProjectedGradientNMF
     >>> model = ProjectedGradientNMF(n_components=2, init=0)
     >>> model.fit(X) #doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    ProjectedGradientNMF(beta=1, eta=0.1,
-               init=<mtrand.RandomState object at 0x...>, max_iter=200,
-               n_components=2, nls_max_iter=2000, sparseness=None, tol=0.0001)
+    ProjectedGradientNMF(beta=1, eta=0.1, init=0, max_iter=200, n_components=2,
+                         nls_max_iter=2000, sparseness=None, tol=0.0001)
     >>> model.components_
     array([[ 0.77032744,  0.11118662],
            [ 0.38526873,  0.38228063]])
@@ -305,10 +315,8 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
     >>> model = ProjectedGradientNMF(n_components=2, init=0,
     ...                              sparseness='components')
     >>> model.fit(X) #doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    ProjectedGradientNMF(beta=1, eta=0.1,
-               init=<mtrand.RandomState object at 0x...>, max_iter=200,
-               n_components=2, nls_max_iter=2000, sparseness='components',
-               tol=0.0001)
+    ProjectedGradientNMF(beta=1, eta=0.1, init=0, max_iter=200, n_components=2,
+               nls_max_iter=2000, sparseness='components', tol=0.0001)
     >>> model.components_
     array([[ 1.67481991,  0.29614922],
            [-0.        ,  0.4681982 ]])
@@ -317,12 +325,19 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
 
     Notes
     -----
-    This implements C.-J. Lin. Projected gradient methods
+    This implements
+
+    C.-J. Lin. Projected gradient methods
     for non-negative matrix factorization. Neural
     Computation, 19(2007), 2756-2779.
     http://www.csie.ntu.edu.tw/~cjlin/nmf/
 
+    P. Hoyer. Non-negative Matrix Factorization with
+    Sparseness Constraints. Journal of Machine Learning
+    Research 2004.
+
     NNDSVD is introduced in
+
     C. Boutsidis, E. Gallopoulos: SVD based
     initialization: A head start for nonnegative
     matrix factorization - Pattern Recognition, 2008
@@ -345,6 +360,75 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         self.max_iter = max_iter
         self.nls_max_iter = nls_max_iter
 
+    def _init(self, X):
+        n_samples, n_features = X.shape
+
+        if self.init == 'nndsvd':
+            W, H = _initialize_nmf(X, self.n_components)
+        elif self.init == 'nndsvda':
+            W, H = _initialize_nmf(X, self.n_components, variant='a')
+        elif self.init == 'nndsvdar':
+            W, H = _initialize_nmf(X, self.n_components, variant='ar')
+        else:
+            try:
+                rng = check_random_state(self.init)
+                W = rng.randn(n_samples, self.n_components)
+                # we do not write np.abs(W, out=W) to stay compatible with
+                # numpy 1.5 and earlier where the 'out' keyword is not
+                # supported as a kwarg on ufuncs
+                np.abs(W, W)
+                H = rng.randn(self.n_components, n_features)
+                np.abs(H, H)
+            except ValueError:
+                raise ValueError(
+                    'Invalid init parameter: got %r instead of one of %r' %
+                    (self.init, (None, 'nndsvd', 'nndsvda', 'nndsvdar',
+                                 int, np.random.RandomState)))
+
+        return W, H
+
+    def _update_W(self, X, H, W, tolW):
+        n_samples, n_features = X.shape
+
+        if self.sparseness == None:
+            W, gradW, iterW = _nls_subproblem(X.T, H.T, W.T, tolW,
+                                              self.nls_max_iter)
+        elif self.sparseness == 'data':
+            W, gradW, iterW = _nls_subproblem(
+                    np.r_[X.T, np.zeros((1, n_samples))],
+                    np.r_[H.T, np.sqrt(self.beta) *
+                          np.ones((1, self.n_components))],
+                    W.T, tolW, self.nls_max_iter)
+        elif self.sparseness == 'components':
+            W, gradW, iterW = _nls_subproblem(
+                    np.r_[X.T, np.zeros((self.n_components, n_samples))],
+                    np.r_[H.T, np.sqrt(self.eta) *
+                          np.eye(self.n_components)],
+                    W.T, tolW, self.nls_max_iter)
+
+        return W, gradW, iterW
+
+    def _update_H(self, X, H, W, tolH):
+        n_samples, n_features = X.shape
+
+        if self.sparseness == None:
+            H, gradH, iterH = _nls_subproblem(X, W, H, tolH,
+                                              self.nls_max_iter)
+        elif self.sparseness == 'data':
+            H, gradH, iterH = _nls_subproblem(
+                    np.r_[X, np.zeros((self.n_components, n_features))],
+                    np.r_[W, np.sqrt(self.eta) *
+                          np.eye(self.n_components)],
+                    H, tolH, self.nls_max_iter)
+        elif self.sparseness == 'components':
+            H, gradH, iterH = _nls_subproblem(
+                    np.r_[X, np.zeros((1, n_features))],
+                    np.r_[W, np.sqrt(self.beta) *
+                          np.ones((1, self.n_components))],
+                    H, tolH, self.nls_max_iter)
+
+        return H, gradH, iterH
+
     def fit_transform(self, X, y=None):
         """Learn a NMF model for the data X and returns the transformed data.
 
@@ -353,7 +437,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         Parameters
         ----------
 
-        X: array, [n_samples, n_features]
+        X: {array-like, sparse matrix}, shape = [n_samples, n_features]
             Data matrix to be decomposed
 
         Returns
@@ -361,37 +445,20 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         data: array, [n_samples, n_components]
             Transformed data
         """
-        X = np.atleast_2d(X)
-        if (X < 0).any():
-            raise ValueError("Negative data passed to NMF.fit.")
+        X = atleast2d_or_csr(X)
+        check_non_negative(X, "NMF.fit")
 
         n_samples, n_features = X.shape
 
         if not self.n_components:
             self.n_components = n_features
 
-        if self.init == None:
-            self.init = np.random.RandomState()
-        elif isinstance(self.init, int):
-            self.init = np.random.RandomState(self.init)
+        W, H = self._init(X)
 
-        if isinstance(self.init, np.random.RandomState):
-            W = np.abs(self.init.randn(n_samples, self.n_components))
-            H = np.abs(self.init.randn(self.n_components, n_features))
-        elif self.init == 'nndsvd':
-            W, H = _initialize_nmf(X, self.n_components)
-        elif self.init == 'nndsvda':
-            W, H = _initialize_nmf(X, self.n_components, variant='a')
-        elif self.init == 'nndsvdar':
-            W, H = _initialize_nmf(X, self.n_components, variant='ar')
-        else:
-            raise ValueError(
-                'Invalid init parameter: got %r instead of one of %r' %
-                (self.init, (None, 'nndsvd', 'nndsvda', 'nndsvdar',
-                             int, np.random.RandomState)))
-
-        gradW = np.dot(W, np.dot(H, H.T)) - np.dot(X, H.T)
-        gradH = np.dot(np.dot(W.T, W), H) - np.dot(W.T, X)
+        gradW = (np.dot(W, np.dot(H, H.T))
+                 - safe_sparse_dot(X, H.T, dense_output=True))
+        gradH = (np.dot(np.dot(W.T, W), H)
+                 - safe_sparse_dot(W.T, X, dense_output=True))
         init_grad = norm(np.r_[gradW, gradH.T])
         tolW = max(0.001, self.tol) * init_grad  # why max?
         tolH = tolW
@@ -405,21 +472,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
                 break
 
             # update W
-            if self.sparseness == None:
-                W, gradW, iterW = _nls_subproblem(X.T, H.T, W.T, tolW,
-                                                  self.nls_max_iter)
-            elif self.sparseness == 'data':
-                W, gradW, iterW = _nls_subproblem(
-                        np.r_[X.T, np.zeros((1, n_samples))],
-                        np.r_[H.T, np.sqrt(self.beta) *
-                              np.ones((1, self.n_components))],
-                        W.T, tolW, self.nls_max_iter)
-            elif self.sparseness == 'components':
-                W, gradW, iterW = _nls_subproblem(
-                        np.r_[X.T, np.zeros((self.n_components, n_samples))],
-                        np.r_[H.T, np.sqrt(self.eta) *
-                              np.eye(self.n_components)],
-                        W.T, tolW, self.nls_max_iter)
+            W, gradW, iterW = self._update_W(X, H, W, tolW)
 
             W = W.T
             gradW = gradW.T
@@ -427,30 +480,22 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
                 tolW = 0.1 * tolW
 
             # update H
-            if self.sparseness == None:
-                H, gradH, iterH = _nls_subproblem(X, W, H, tolH,
-                                                  self.nls_max_iter)
-            elif self.sparseness == 'data':
-                H, gradH, iterH = _nls_subproblem(
-                        np.r_[X, np.zeros((self.n_components, n_features))],
-                        np.r_[W, np.sqrt(self.eta) *
-                              np.eye(self.n_components)],
-                        H, tolH, self.nls_max_iter)
-            elif self.sparseness == 'components':
-                H, gradH, iterH = _nls_subproblem(
-                        np.r_[X, np.zeros((1, n_features))],
-                        np.r_[W, np.sqrt(self.beta) *
-                              np.ones((1, self.n_components))],
-                        H, tolH, self.nls_max_iter)
+            H, gradH, iterH = self._update_H(X, H, W, tolH)
+
             if iterH == 1:
                 tolH = 0.1 * tolH
-            self.comp_sparseness_ = _sparseness(H.flatten())
-            self.data_sparseness_ = _sparseness(W.flatten())
-            self.reconstruction_err_ = norm(X - np.dot(W, H))
+
+            self.comp_sparseness_ = _sparseness(H.ravel())
+            self.data_sparseness_ = _sparseness(W.ravel())
+
+            if not sp.issparse(X):
+                self.reconstruction_err_ = norm(X - np.dot(W, H))
+
             self.components_ = H
 
         if n_iter == self.max_iter:
             warnings.warn("Iteration limit reached during fit")
+
         return W
 
     def fit(self, X, y=None, **params):
@@ -459,7 +504,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         Parameters
         ----------
 
-        X: array, [n_samples, n_features]
+        X: {array-like, sparse matrix}, shape = [n_samples, n_features]
             Data matrix to be decomposed
 
         Returns
@@ -475,7 +520,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         Parameters
         ----------
 
-        X: array, [n_samples, n_features]
+        X: {array-like, sparse matrix}, shape = [n_samples, n_features]
             Data matrix to be transformed by the model
 
         Returns
@@ -483,8 +528,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         data: array, [n_samples, n_components]
             Transformed data
         """
-        from scipy.optimize import nnls
-        X = np.atleast_2d(X)
+        X = atleast2d_or_csr(X)
         H = np.zeros((X.shape[0], self.n_components))
         for j in xrange(0, X.shape[0]):
             H[j, :], _ = nnls(self.components_.T, X[j, :])
