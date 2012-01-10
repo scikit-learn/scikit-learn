@@ -1,3 +1,12 @@
+scikit-learn (0.10.0~pre1-1) unstable; urgency=low
+
+  * Snapshot of upstream release branch
+  * Dropping .dfsg suffix since it is not adequate.  Sources are
+    repackaged only to remove joblib shipped in a separate package in Debian
+    main
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 10 Jan 2012 17:52:27 -0500
+
 scikit-learn (0.9.0.dfsg-1) unstable; urgency=low
 
   * New upstream release:
