@@ -15,6 +15,7 @@ See http://scikit-learn.sourceforge.net for complete documentation.
 
 from . import check_build
 from .base import clone
+import warnings
 
 
 try:
@@ -53,3 +54,11 @@ __all__ = ['check_build', 'cross_validation', 'cluster', 'covariance',
            'preprocessing', 'qda', 'svm', 'test', 'clone', 'pls']
 
 __version__ = '0.10-git'
+
+try:
+    from sklearn.__config__ import show as show_config
+except ImportError:
+    warnings.warn("Warning: importing sklearn from within the scikit-learn "
+                  "source directory.  This can cause problems: please exit "
+                  "the source tree first, and relaunch your python "
+                  "intepreter.")
