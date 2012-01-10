@@ -38,7 +38,7 @@ class SelectorMixin(TransformerMixin):
             importances = self.feature_importances_
             if importances is None:
                 raise ValueError("Importance weights not computed. Please  "
-                    "make sure the model is properly fitted.")
+                    "Set the compute_importances parameter before fit.")
 
         elif hasattr(self, "coef_"):
             if self.coef_.ndim == 1:
