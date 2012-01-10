@@ -144,6 +144,45 @@ version 0.9:
     follows the reference paper.
 
 
+People
+------
+
+The folling people contributed to scikit-learn since last release:
+
+   * 246  Andreas Mueller
+   * 242  Olivier Grisel
+   * 220  Gilles Louppe
+   * 183  Brian Holt
+   * 166  Gael Varoquaux
+   * 144  Lars Buitinck
+   *  73  Vlad Niculae
+   *  65  Peter Prettenhofer
+   *  64  Fabian Pedregosa
+   *  60  Robert Layton
+   *  55  Mathieu Blondel
+   *  52  Jake Vanderplas
+   *  44  Noel Dawe
+   *  38  Alexandre Gramfort
+   *  24  Virgile Fritsch
+   *  23  Satrajit Ghosh
+   *   3  Jan Hendrik Metzen
+   *   3  Kenneth C. Arnold
+   *   3  Shiqiao Du
+   *   3  Tim Sheerman-Chase
+   *   3  Yaroslav Halchenko
+   *   2  Bala Subrahmanyam Varanasi
+   *   2  DraXus
+   *   2  Michael EICKENBERG
+   *   1  Bogdan Trach
+   *   1  Félix-Antoine Fortin
+   *   1  Juan Manuel Caicedo Carvajal
+   *   1  Nelle Varoquaux
+   *   1  Nicolas Pinto
+   *   1  Tiziano Zito
+   *   1  Xinfan Meng
+
+
+
 .. _changes_0_9:
 
 0.9
