@@ -5,6 +5,7 @@ scikit-learn (0.10.0~pre1-1) unstable; urgency=low
     repackaged only to remove joblib shipped in a separate package in Debian
     main
   * Adjusted dfsg and other rules to operate on sklearn directory
+  * Dropping cherry-picked fix up_release_sv_coef_memory
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 10 Jan 2012 17:52:27 -0500
 
