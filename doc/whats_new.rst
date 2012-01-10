@@ -22,7 +22,7 @@ Changelog
 
    - Fixed a memory leak in in :ref:`svm` module by `Brian Holt`_ (issue #367).
 
-   - Faster tests by `Fabian Pedregosa`_.
+   - Faster tests by `Fabian Pedregosa`_ and others.
 
    - Silhouette Coefficient cluster analysis evaluation metric added as
      :func:`sklearn.metrics.silhouette_score` by Robert Layton.
