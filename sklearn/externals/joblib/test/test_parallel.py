@@ -13,6 +13,10 @@ try:
 except:
     import pickle
     PickleError = pickle.PicklingError
+try:
+    from io import BytesIO
+except:
+    from cStringIO import StringIO as BytesIO
 
 if sys.version_info[0] == 3:
     PickleError = pickle.PicklingError
@@ -60,10 +64,39 @@ def test_cpu_count():
 ###############################################################################
 # Test parallel
 def test_simple_parallel():
-    X = range(10)
-    for n_jobs in (1, 2, -1):
+    X = range(5)
+    for n_jobs in (1, 2, -1, -2):
         yield (nose.tools.assert_equal, [square(x) for x in X],
-                        Parallel(n_jobs=-1)(delayed(square)(x) for x in X))
+                Parallel(n_jobs=-1)(
+                        delayed(square)(x) for x in X))
+    try:
+        # To smoke-test verbosity, we capture stdout
+        orig_stdout = sys.stdout
+        sys.stdout = BytesIO()
+        orig_stderr = sys.stdout
+        sys.stderr = BytesIO()
+        for verbose in (2, 11, 100):
+                Parallel(n_jobs=-1, verbose=verbose)(
+                        delayed(square)(x) for x in X)
+                Parallel(n_jobs=1, verbose=verbose)(
+                        delayed(square)(x) for x in X)
+                Parallel(n_jobs=2, verbose=verbose, pre_dispatch=2)(
+                        delayed(square)(x) for x in X)
+    except Exception, e:
+        print sys.stdout.getvalue()
+        print sys.stderr.getvalue()
+        raise e
+    finally:
+        sys.stdout = orig_stdout
+        sys.stderr = orig_stderr
+
+
+def nested_loop():
+    Parallel(n_jobs=2)(delayed(square)(.01) for _ in range(2))
+
+
+def test_nested_loop():
+    Parallel(n_jobs=2)(delayed(nested_loop)() for _ in range(2))
 
 
 def test_parallel_kwargs():

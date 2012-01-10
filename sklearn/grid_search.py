@@ -391,14 +391,13 @@ class GridSearchCV(BaseEstimator):
     @property
     @deprecated('GridSearchCV.best_estimator is deprecated'
                 ' and will be removed in version 0.12.'
-                ' Please use GridSearchCV.best_estimator_ instead.')
+                ' Please use ``GridSearchCV.best_estimator_`` instead.')
     def best_estimator(self):
         return self.best_estimator_
 
     @property
     @deprecated('GridSearchCV.best_score is deprecated'
                 ' and will be removed in version 0.12.'
-                ' Please use GridSearchCV.best_score_ instead.')
+                ' Please use ``GridSearchCV.best_score_`` instead.')
     def best_score(self):
         return self.best_score_
-

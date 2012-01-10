@@ -26,6 +26,15 @@ try:
 
         def test(self, label='fast', verbose=1, extra_argv=['--exe'],
                         doctests=True, coverage=False):
+            """Run the full test suite
+
+            Examples
+            --------
+            This will run the test suite and stop at the first failing
+            example
+            >>> from sklearn import test
+            >>> test(extra_argv=['--exe', '-sx']) #doctest: +SKIP
+            """
             return super(NoseTester, self).test(label=label, verbose=verbose,
                                     extra_argv=extra_argv,
                                     doctests=doctests, coverage=coverage)

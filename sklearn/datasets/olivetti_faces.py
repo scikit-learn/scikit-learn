@@ -32,10 +32,11 @@ from scipy.io.matlab import loadmat
 
 from .base import get_data_home, Bunch
 from ..utils import check_random_state
+from ..externals import joblib
 
 
 DATA_URL = "http://cs.nyu.edu/~roweis/data/olivettifaces.mat"
-TARGET_FILENAME = "olivetti.npy"
+TARGET_FILENAME = "olivetti.pkz"
 
 # Grab the module-level docstring to use as a description of the
 # dataset
@@ -87,11 +88,11 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
         fhandle = urllib2.urlopen(DATA_URL)
         buf = StringIO(fhandle.read())
         mfile = loadmat(buf)
-        np.save(join(data_home, TARGET_FILENAME), mfile['faces'].T)
         faces = mfile['faces'].T.copy()
+        joblib.dump(faces, join(data_home, TARGET_FILENAME), compress=6)
         del mfile
     else:
-        faces = np.load(join(data_home, TARGET_FILENAME))
+        faces = joblib.load(join(data_home, TARGET_FILENAME))
     # We want floating point data, but float32 is enough (there is only
     # one byte of precision in the original uint8s anyway)
     faces = np.float32(faces)

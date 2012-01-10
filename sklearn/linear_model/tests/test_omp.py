@@ -154,3 +154,12 @@ def test_swapped_regressors():
     gamma_hat_gram = orthogonal_mp_gram(G, new_Xy, 2)
     assert_equal(np.flatnonzero(gamma_hat), [0, 21])
     assert_equal(np.flatnonzero(gamma_hat_gram), [0, 21])
+
+
+def test_no_atoms():
+    y_empty = np.zeros_like(y)
+    Xy_empty = np.dot(X.T, y_empty)
+    gamma_empty = orthogonal_mp(X, y_empty, 1)
+    gamma_empty_gram = orthogonal_mp_gram(G, Xy_empty, 1)
+    assert_equal(np.all(gamma_empty == 0), True)
+    assert_equal(np.all(gamma_empty_gram == 0), True)
