@@ -193,15 +193,12 @@ class DPGMM(GMM):
 
     def _get_precisions(self):
         """Return precisions as a full matrix."""
-        if self.covariance_type == 'full':
+        if self._covariance_type == 'full':
             return self.precs_
-        elif self.covariance_type in ['diag', 'spherical']:
+        elif self._covariance_type in ['diag', 'spherical']:
             return [np.diag(cov) for cov in self.precs_]
-        elif self.covariance_type == 'tied':
+        elif self._covariance_type == 'tied':
             return [self.precs_] * self.n_components
-        #elif self.covariance_type == 'spherical':
-        #    # fixme: should not require self.means_ to be defined
-        #    return [np.eye(self.means_.shape[1]) * f for f in self.precs_]
 
     def _get_covars(self):
         return [linalg.pinv(c) for c in self._get_precisions()]
@@ -250,11 +247,12 @@ class DPGMM(GMM):
         # Free memory and developers cognitive load:
         del dgamma1, dgamma2, sd
 
-        if self.covariance_type not in ['full', 'tied', 'diag', 'spherical']:
+        if self._covariance_type not in ['full', 'tied', 'diag', 'spherical']:
             raise NotImplementedError("This ctype is not implemented: %s"
-                                      % self.covariance_type)
+                                      % self._covariance_type)
         p = _bound_state_log_lik(X, self._initial_bound + self.bound_prec_, 
-                                 self.precs_, self.means_, self.covariance_type)
+                                 self.precs_, self.means_, 
+                                 self._covariance_type)
         z = p + dgamma
         z = log_normalize(z, axis=-1)
         bound = np.sum(z * p, axis=-1)
@@ -273,13 +271,13 @@ class DPGMM(GMM):
         """Update the variational distributions for the means"""
         n_features = X.shape[1]
         for k in xrange(self.n_components):
-            if self.covariance_type in ['spherical', 'diag']:
+            if self._covariance_type in ['spherical', 'diag']:
                 num = np.sum(z.T[k].reshape((-1, 1)) * X, axis=0)
                 num *= self.precs_[k]
                 den = 1. + self.precs_[k] * np.sum(z.T[k])
                 self.means_[k] = num / den
-            elif self.covariance_type in ['tied', 'full']:
-                if self.covariance_type == 'tied':
+            elif self._covariance_type in ['tied', 'full']:
+                if self._covariance_type == 'tied':
                     cov = self.precs_
                 else:
                     cov = self.precs_[k]
@@ -291,7 +289,7 @@ class DPGMM(GMM):
     def _update_precisions(self, X, z):
         """Update the variational distributions for the precisions"""
         n_features = X.shape[1]
-        if self.covariance_type == 'spherical':
+        if self._covariance_type == 'spherical':
             self.dof_ = 0.5 * n_features * np.sum(z, axis=0)
             for k in xrange(self.n_components):
                 # could be more memory efficient ?
@@ -303,7 +301,7 @@ class DPGMM(GMM):
                         digamma(self.dof_[k]) - np.log(self.scale_[k])))
             self.precs_ = np.tile(self.dof_ / self.scale_, [n_features, 1]).T
             
-        elif self.covariance_type == 'diag':
+        elif self._covariance_type == 'diag':
             for k in xrange(self.n_components):
                 self.dof_[k].fill(1. + 0.5 * np.sum(z.T[k], axis=0))
                 sq_diff = (X - self.means_[k]) ** 2  # see comment above
@@ -314,7 +312,7 @@ class DPGMM(GMM):
                                                     - np.log(self.scale_[k]))
                 self.bound_prec_[k] -= 0.5 * np.sum(self.precs_[k])
                 
-        elif self.covariance_type == 'tied':
+        elif self._covariance_type == 'tied':
             self.dof_ = 2 + X.shape[0] + n_features
             self.scale_ = (X.shape[0] + 1) * np.identity(n_features)
             for k in xrange(self.n_components):
@@ -327,7 +325,7 @@ class DPGMM(GMM):
                 self.dof_, self.scale_, self.det_scale_, n_features)
             self.bound_prec_ -= 0.5 * self.dof_ * np.trace(self.scale_)
 
-        elif self.covariance_type == 'full':
+        elif self._covariance_type == 'full':
             for k in xrange(self.n_components):
                 sum_resp = np.sum(z.T[k])
                 self.dof_[k] = 2 + sum_resp + n_features
@@ -402,21 +400,21 @@ class DPGMM(GMM):
     def _bound_precisions(self):
         """Returns the bound term related to precisions"""
         logprior = 0.
-        if self.covariance_type == 'spherical':
+        if self._covariance_type == 'spherical':
             logprior += np.sum(gammaln(self.dof_))
             logprior -= np.sum(
                 (self.dof_ - 1) * digamma(np.maximum(0.5, self.dof_)))
             logprior += np.sum(
                 - np.log(self.scale_) + self.dof_ - self.precs_[:, 0])
-        elif self.covariance_type == 'diag':
+        elif self._covariance_type == 'diag':
             logprior += np.sum(gammaln(self.dof_))
             logprior -= np.sum(
                 (self.dof_ - 1) * digamma(np.maximum(0.5, self.dof_)))
             logprior += np.sum(
                 - np.log(self.scale_) + self.dof_ - self.precs_)
-        elif self.covariance_type == 'tied':
+        elif self._covariance_type == 'tied':
             logprior += _bound_wishart(self.dof_, self.scale_, self.det_scale_)
-        elif self.covariance_type == 'full':
+        elif self._covariance_type == 'full':
             for k in xrange(self.n_components):
                 logprior += _bound_wishart(self.dof_[k],
                                            self.scale_[k],
@@ -445,16 +443,16 @@ class DPGMM(GMM):
 
     def lower_bound(self, X, z):
         """returns a lower bound on model evidence based on X and membership"""
-        if self.covariance_type not in ['full', 'tied', 'diag', 'spherical']:
+        if self._covariance_type not in ['full', 'tied', 'diag', 'spherical']:
             raise NotImplementedError("This ctype is not implemented: %s"
-                                      % self.covariance_type)
+                                      % self._covariance_type)
 
         X = np.asarray(X)
         if X.ndim == 1:
             X = X[:, np.newaxis]
         c = np.sum(z * _bound_state_log_lik(
                 X, self._initial_bound + self.bound_prec_, 
-                self.precs_, self.means_, self.covariance_type))
+                self.precs_, self.means_, self._covariance_type))
 
         return c + self._logprior(z)
 
@@ -514,13 +512,13 @@ class DPGMM(GMM):
                                       self.n_components))
 
         if 'c' in init_params or not hasattr(self, 'precs_'):
-            if self.covariance_type == 'spherical':
+            if self._covariance_type == 'spherical':
                 self.dof_ = np.ones(self.n_components)
                 self.scale_ = np.ones(self.n_components)
                 self.precs_ = np.ones((self.n_components, n_features))
                 self.bound_prec_ = 0.5 * n_features * (
                     digamma(self.dof_) - np.log(self.scale_))
-            elif self.covariance_type == 'diag':
+            elif self._covariance_type == 'diag':
                 self.dof_ = 1 + 0.5 * n_features
                 self.dof_ *= np.ones((self.n_components, n_features))
                 self.scale_ = np.ones((self.n_components, n_features))
@@ -528,7 +526,7 @@ class DPGMM(GMM):
                 self.bound_prec_ = 0.5 * (np.sum(digamma(self.dof_) - 
                                                  np.log(self.scale_), 1))
                 self.bound_prec_ -= 0.5 * np.sum(self.precs_, 1)
-            elif self.covariance_type == 'tied':
+            elif self._covariance_type == 'tied':
                 self.dof_ = 1.
                 self.scale_ = np.identity(n_features)
                 self.precs_ = np.identity(n_features)
@@ -536,7 +534,7 @@ class DPGMM(GMM):
                 self.bound_prec_ = 0.5 * wishart_log_det(
                     self.dof_, self.scale_, self.det_scale_, n_features)
                 self.bound_prec_ -= 0.5 * self.dof_ * np.trace(self.scale_)
-            elif self.covariance_type == 'full':
+            elif self._covariance_type == 'full':
                 self.dof_ = (1 + self.n_components + X.shape[0])
                 self.dof_ *= np.ones(self.n_components)
                 self.scale_ = [2 * np.identity(n_features)
@@ -678,12 +676,12 @@ class VBGMM(DPGMM):
         bound = np.zeros(X.shape[0])
         dg = digamma(self.gamma_) - digamma(np.sum(self.gamma_))
 
-        if self.covariance_type not in ['full', 'tied', 'diag', 'spherical']:
+        if self._covariance_type not in ['full', 'tied', 'diag', 'spherical']:
             raise NotImplementedError("This ctype is not implemented: %s"
-                                      % self.covariance_type)
+                                      % self._covariance_type)
         p = _bound_state_log_lik(
                 X, self._initial_bound + self.bound_prec_, 
-                self.precs_, self.means_, self.covariance_type)
+                self.precs_, self.means_, self._covariance_type)
  
         z = p + dg
         z = log_normalize(z, axis=-1)

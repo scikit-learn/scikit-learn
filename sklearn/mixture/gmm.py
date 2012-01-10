@@ -180,7 +180,7 @@ class GMM(BaseEstimator):
     ...                       10 + np.random.randn(300, 1)))
     >>> g.fit(obs)
     GMM(covariance_type='diag', n_components=2)
-    >>> np.round(g.weights, 2)
+    >>> np.round(g.weights_, 2)
     array([ 0.75,  0.25])
     >>> np.round(g.means_, 2)
     array([[ 10.05],
@@ -196,7 +196,7 @@ class GMM(BaseEstimator):
     >>> # same), this time with an even split between the two modes.
     >>> g.fit(20 * [[0]] +  20 * [[10]])
     GMM(covariance_type='diag', n_components=2)
-    >>> np.round(g.weights, 2)
+    >>> np.round(g.weights_, 2)
     array([ 0.5,  0.5])
 
     """
@@ -218,15 +218,6 @@ class GMM(BaseEstimator):
         # n_iter reached (False)
         self.converged_ = False
 
-    # Read-only properties.
-    @property
-    def covariance_type(self):
-        """Covariance type of the model.
-        String describing the type of covariance parameters used by
-        the GMM.  Must be one of 'spherical', 'tied', 'diag', 'full'.
-        """
-        return self._covariance_type
-
     def _get_covars(self):
         """Covariance parameters for each mixture component.
         The shape depends on `cvtype`::
@@ -236,13 +227,13 @@ class GMM(BaseEstimator):
             (`n_states`, `n_features`)                if 'diag',
             (`n_states`, `n_features`, `n_features`)  if 'full'
             """
-        if self.covariance_type == 'full':
+        if self._covariance_type == 'full':
             return self.covars_
-        elif self.covariance_type == 'diag':
+        elif self._covariance_type == 'diag':
             return [np.diag(cov) for cov in self.covars_]
-        elif self.covariance_type == 'tied':
+        elif self._covariance_type == 'tied':
             return [self.covars_] * self.n_components
-        elif self.covariance_type == 'spherical':
+        elif self._covariance_type == 'spherical':
             return [np.diag(cov) for cov in self.covars_]
 
     def _set_covars(self, covars):
