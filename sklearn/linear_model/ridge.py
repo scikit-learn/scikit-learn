@@ -284,7 +284,7 @@ class RidgeClassifier(Ridge):
         return self
 
     def decision_function(self, X):
-        return Ridge.predict(self, X)
+        return Ridge.decision_function(self, X)
 
     def predict(self, X):
         """Predict target values according to the fitted model.
@@ -569,7 +569,7 @@ class RidgeClassifierCV(RidgeCV):
         return self
 
     def decision_function(self, X):
-        return RidgeCV.predict(self, X)
+        return RidgeCV.decision_function(self, X)
 
     def predict(self, X):
         """Predict target values according to the fitted model.
