@@ -28,7 +28,7 @@ cdef extern from "src/liblinear/liblinear_helper.c":
         char *indices, np.npy_intp *n_indptr, char *indptr, char *Y,
         np.npy_intp n_features, double bias)
     parameter *set_parameter(int, double, double, int, char *, char *)
-                          
+
     model *set_model(parameter *, char *, np.npy_intp *, char *, double)
     int copy_predict(char *, model *, np.npy_intp *, char *)
 
@@ -327,18 +327,16 @@ def predict_prob_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
     We have to reconstruct model and parameters to make sure we stay
     in sync with the python object. predict_wrap skips this step.
 
+    See scikits.learn.svm.predict for a complete list of parameters.
+
     Parameters
     ----------
     X: array-like, dtype=float
     Y: array
         target vector
 
-    Optional Parameters
-    -------------------
-    See scikits.learn.svm.predict for a complete list of parameters.
-
-    Return
-    ------
+    Returns
+    -------
     dec_values : array
         predicted values.
     """

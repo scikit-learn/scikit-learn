@@ -13,6 +13,7 @@ import scipy as sp
 
 tmpdir = None
 
+
 def setup_tmpdata():
     # create temporary dir
     global tmpdir

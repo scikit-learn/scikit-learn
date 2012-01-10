@@ -63,10 +63,10 @@ def plot_embedding(X, title=None):
 N = 20
 img = np.zeros((10 * N, 10 * N))
 for i in range(N):
-    ix = 10*i + 1
+    ix = 10 * i + 1
     for j in range(N):
         iy = 10 * j + 1
-        img[ix:ix + 8, iy:iy + 8] = X[i*N+j].reshape((8,8))
+        img[ix:ix + 8, iy:iy + 8] = X[i * N + j].reshape((8, 8))
 pl.imshow(img, cmap=pl.cm.binary)
 pl.xticks([])
 pl.yticks([])

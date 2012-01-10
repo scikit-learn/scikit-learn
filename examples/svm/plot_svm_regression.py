@@ -13,12 +13,12 @@ print __doc__
 # Generate sample data
 import numpy as np
 
-X = np.sort(5*np.random.rand(40, 1), axis=0)
+X = np.sort(5 * np.random.rand(40, 1), axis=0)
 y = np.sin(X).ravel()
 
 ###############################################################################
 # Add noise to targets
-y[::5] += 3*(0.5 - np.random.rand(8))
+y[::5] += 3 * (0.5 - np.random.rand(8))
 
 ###############################################################################
 # Fit regression model

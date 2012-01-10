@@ -7,15 +7,14 @@ and the other one for testing (or for performance evaluation). The split
 between the train and test set is based upon a messages posted before
 and after a specific date.
 
-The 20 newsgroups dataset is also available through the generic
-``mldata`` dataset loader introduced earlier. However mldata
-provides a version where the data is already vectorized.
-
-This is not the case for this loader. Instead, it returns the list of
-the raw text files that can be fed to  text feature extractors such as
-:class:`sklearn.feature_extraction.text.Vectorizer` with custom
-parameters so as to extract feature vectors.
-
+This module contains two loaders. The first one, 
+``sklearn.datasets.fetch_20newsgroups``,
+returns a list of the raw text files that can be fed to text feature
+extractors such as :class:`sklearn.feature_extraction.text.Vectorizer`
+with custom parameters so as to extract feature vectors.
+The second one, ``sklearn.datasets.fetch_20newsgroups_vectorized``,
+returns ready-to-use features, i.e., it is not necessary to use a feature
+extractor.
 
 Usage
 -----
@@ -99,15 +98,17 @@ zero features)::
   >>> vectors.nnz / vectors.shape[0]
   118
 
+``sklearn.datasets.fetch_20newsgroups_vectorized`` is a function which returns 
+ready-to-use tfidf features instead of file names.
+
 .. _`20 newsgroups website`: http://people.csail.mit.edu/jrennie/20Newsgroups/
 .. _`TF-IDF`: http://en.wikipedia.org/wiki/Tf-idf
 
 
-Examples
---------
+.. topic:: Examples
 
-:ref:`example_grid_search_text_feature_extraction.py`
+   * :ref:`example_grid_search_text_feature_extraction.py`
 
-:ref:`example_document_classification_20newsgroups.py`
+   * :ref:`example_document_classification_20newsgroups.py`
 
 

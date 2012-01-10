@@ -23,7 +23,6 @@ except ImportError:
 
 from sklearn.datasets import load_lfw_pairs
 from sklearn.datasets import load_lfw_people
-from sklearn.datasets import get_data_home
 
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_equal
@@ -76,35 +75,31 @@ def setup_module():
                 raise SkipTest
 
     # add some random file pollution to test robustness
-    f = open(os.path.join(LFW_HOME, 'lfw_funneled', '.test.swp'), 'wb')
-    f.write('Text file to be ignored by the dataset loader.')
-    f.close()
+    with open(os.path.join(LFW_HOME, 'lfw_funneled', '.test.swp'), 'wb') as f:
+        f.write('Text file to be ignored by the dataset loader.')
 
     # generate some pairing metadata files using the same format as LFW
-    f = open(os.path.join(LFW_HOME, 'pairsDevTrain.txt'), 'wb')
-    f.write("10\n")
-    more_than_two = [name for name, count in counts.iteritems()
-                     if count >= 2]
-    for i in range(5):
-        name = random_state.choice(more_than_two)
-        first, second = random_state.sample(range(counts[name]), 2)
-        f.write('%s\t%d\t%d\n' % (name, first, second))
+    with open(os.path.join(LFW_HOME, 'pairsDevTrain.txt'), 'wb') as f:
+        f.write("10\n")
+        more_than_two = [name for name, count in counts.iteritems()
+                         if count >= 2]
+        for i in range(5):
+            name = random_state.choice(more_than_two)
+            first, second = random_state.sample(range(counts[name]), 2)
+            f.write('%s\t%d\t%d\n' % (name, first, second))
 
-    for i in range(5):
-        first_name, second_name = random_state.sample(FAKE_NAMES, 2)
-        first_index = random_state.choice(range(counts[first_name]))
-        second_index = random_state.choice(range(counts[second_name]))
-        f.write('%s\t%d\t%s\t%d\n' % (first_name, first_index,
-                                      second_name, second_index))
-    f.close()
+        for i in range(5):
+            first_name, second_name = random_state.sample(FAKE_NAMES, 2)
+            first_index = random_state.choice(range(counts[first_name]))
+            second_index = random_state.choice(range(counts[second_name]))
+            f.write('%s\t%d\t%s\t%d\n' % (first_name, first_index,
+                                          second_name, second_index))
 
-    f = open(os.path.join(LFW_HOME, 'pairsDevTest.txt'), 'wb')
-    f.write("Fake place holder that won't be tested")
-    f.close()
+    with open(os.path.join(LFW_HOME, 'pairsDevTest.txt'), 'wb') as f:
+        f.write("Fake place holder that won't be tested")
 
-    f = open(os.path.join(LFW_HOME, 'pairs.txt'), 'wb')
-    f.write("Fake place holder that won't be tested")
-    f.close()
+    with open(os.path.join(LFW_HOME, 'pairs.txt'), 'wb') as f:
+        f.write("Fake place holder that won't be tested")
 
 
 def teardown_module():
@@ -182,4 +177,3 @@ def test_load_fake_lfw_pairs():
     # the ids and class names are the same as previously
     assert_array_equal(lfw_pairs_train.target, [1, 1, 1, 1, 1, 0, 0, 0, 0, 0])
     assert_array_equal(lfw_pairs_train.target_names, expected_classes)
-

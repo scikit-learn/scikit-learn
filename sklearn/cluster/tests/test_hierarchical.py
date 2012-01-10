@@ -100,8 +100,8 @@ def test_scikit_vs_scipy():
 
     connectivity = lil_matrix(np.ones((n, n)))
     for i in range(5):
-        X = .1*np.random.normal(size=(n, p))
-        X -= 4*np.arange(n)[:, np.newaxis]
+        X = .1 * np.random.normal(size=(n, p))
+        X -= 4 * np.arange(n)[:, np.newaxis]
         X -= X.mean(axis=1)[:, np.newaxis]
 
         out = hierarchy.ward(X)
@@ -112,6 +112,27 @@ def test_scikit_vs_scipy():
         cut = _hc_cut(k, children, n_leaves)
         cut_ = _hc_cut(k, children_, n_leaves)
         assess_same_labelling(cut, cut_)
+
+
+def test_connectivity_popagation():
+    """
+    Check that connectivity in the ward tree is propagated correctly during
+    merging.
+    """
+    from sklearn.neighbors import kneighbors_graph
+
+    X = np.array([(.014, .120), (.014, .099), (.014, .097),
+                  (.017, .153), (.017, .153), (.018, .153),
+                  (.018, .153), (.018, .153), (.018, .153),
+                  (.018, .153), (.018, .153), (.018, .153),
+                  (.018, .152), (.018, .149), (.018, .144),
+                 ])
+
+    connectivity = kneighbors_graph(X, n_neighbors=10)
+    ward = Ward(n_clusters=4, connectivity=connectivity)
+    # If changes are not propagated correctly, fit crashes with an
+    # IndexError
+    ward.fit(X)
 
 if __name__ == '__main__':
     import nose

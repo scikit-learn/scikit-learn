@@ -14,7 +14,6 @@ to select the best classifier).
 print __doc__
 
 from pprint import pprint
-import numpy as np
 
 from sklearn import datasets
 from sklearn.cross_validation import StratifiedKFold
@@ -24,7 +23,7 @@ from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 from sklearn.svm import SVC
 
-################################################################################
+###############################################################################
 # Loading the Digits dataset
 digits = datasets.load_digits()
 
@@ -37,7 +36,7 @@ y = digits.target
 # split the dataset in two equal part respecting label proportions
 train, test = iter(StratifiedKFold(y, 2)).next()
 
-################################################################################
+###############################################################################
 # Set the parameters by cross-validation
 tuned_parameters = [{'kernel': ['rbf'], 'gamma': [1e-3, 1e-4],
                      'C': [1, 10, 100, 1000]},
@@ -54,7 +53,7 @@ for score_name, score_func in scores:
     y_true, y_pred = y[test], clf.predict(X[test])
 
     print "Classification report for the best estimator: "
-    print clf.best_estimator
+    print clf.best_estimator_
     print "Tuned for '%s' with optimal value: %0.3f" % (
         score_name, score_func(y_true, y_pred))
     print classification_report(y_true, y_pred)

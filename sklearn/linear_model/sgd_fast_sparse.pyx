@@ -15,7 +15,7 @@ cimport numpy as np
 cimport cython
 cimport sgd_fast
 
-from sgd_fast cimport LossFunction, exp, log, sqrt, pow
+from sgd_fast cimport LossFunction, log, sqrt, pow
 
 # Penalty constants
 DEF L1 = 1
@@ -134,12 +134,20 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
     cdef unsigned int epoch = 0
     cdef unsigned int i = 0
     cdef int sample_idx = 0
+
+    # q vector is only used for L1 regularization
     cdef np.ndarray[double, ndim=1, mode="c"] q = None
-    cdef double *q_data_ptr
+    cdef double *q_data_ptr = NULL
     if penalty_type != L2:
         q = np.zeros((n_features,), dtype=np.float64, order="c")
         q_data_ptr = <double *> q.data
     cdef double u = 0.0
+
+    if penalty_type == L2:
+        rho = 1.0
+    elif penalty_type == L1:
+        rho = 0.0
+    
     cdef double typw = sqrt(1.0 / sqrt(alpha))
 
     if learning_rate == OPTIMAL:
@@ -155,12 +163,12 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
         t = 1.0
 
     t_start = time()
-    for epoch from 0 <= epoch < n_iter:
+    for epoch in xrange(n_iter):
         if verbose > 0:
             print("-- Epoch %d" % (epoch + 1))
         if shuffle:
             np.random.RandomState(seed).shuffle(index)
-        for i from 0 <= i < n_samples:
+        for i in xrange(n_samples):
             sample_idx = index_data_ptr[i]
             offset = X_indptr_ptr[sample_idx]
             xnnz = X_indptr_ptr[sample_idx + 1] - offset
@@ -226,7 +234,7 @@ cdef double dot(double *w_data_ptr, double *X_data_ptr, int *X_indices_ptr,
                 int offset, int xnnz):
     cdef double sum = 0.0
     cdef int j
-    for j from 0 <= j < xnnz:
+    for j in xrange(xnnz):
         sum += w_data_ptr[X_indices_ptr[offset + j]] * X_data_ptr[offset + j]
     return sum
 
@@ -239,7 +247,7 @@ cdef double add(double *w_data_ptr, double wscale, double *X_data_ptr,
     cdef double val
     cdef double innerprod = 0.0
     cdef double xsqnorm = 0.0
-    for j from 0 <= j < xnnz:
+    for j in xrange(xnnz):
         idx = X_indices_ptr[offset + j]
         val = X_data_ptr[offset + j]
         innerprod += (w_data_ptr[idx] * val)
@@ -258,7 +266,7 @@ cdef void l1penalty(double *w_data_ptr, double wscale, double *q_data_ptr,
     cdef double z = 0.0
     cdef int j = 0
     cdef int idx = 0
-    for j from 0 <= j < xnnz:
+    for j in xrange(xnnz):
         idx = X_indices_ptr[offset + j]
         z = w_data_ptr[idx]
         if (wscale * w_data_ptr[idx]) > 0.0:

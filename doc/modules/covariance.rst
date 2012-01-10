@@ -16,9 +16,8 @@ has a large influence on the estimation's quality. The
 an accurate estimation of a population's covariance matrix under
 various settings.
 
-The package does not include robust tools yet, so we assume that the
-data sets do not contain any outlying data. We also assume that the
-observations are independent and identically distributed (i.i.d.).
+We assume that the observations are independent and identically
+distributed (i.i.d.).
 
 
 Empirical covariance
@@ -150,5 +149,162 @@ from the MATLAB program available from the author's webpage
 
 .. figure:: ../auto_examples/covariance/images/plot_lw_vs_oas_1.png
    :target: ../auto_examples/covariance/plot_lw_vs_oas.html
+   :align: center
+   :scale: 75%
+
+.. _sparse_inverse_covariance:
+
+Sparse inverse covariance
+==========================
+
+The matrix inverse of the covariance matrix, often called the precision
+matrix, is proportional to the partial correlation matrix. It gives the
+partial independence relationship. In other words, if two features are
+independent conditionally on the others, the corresponding coefficient in
+the precision matrix will be zero. This is why it makes sense to estimate
+a sparse precision matrix: by learning independence relations from the
+data, the estimation of the covariance matrix is better conditioned. This
+is known as *covariance selection*.
+
+In the small-samples situation, in which `n_samples` is on the order of magnitude
+of `n_features` or smaller, sparse inverse covariance estimators tend to work
+better than shrunk covariance estimators. However, in the opposite
+situation, or for very correlated data, they can be numerically unstable.
+In addition, unlike shrinkage estimators, sparse estimators are able to
+recover off-diagonal structure.
+
+The :class:`GraphLasso` estimator uses an l1 penalty to enforce sparsity on
+the precision matrix: the higher its `alpha` parameter, the more sparse
+the precision matrix. The corresponding :class:`GraphLassoCV` object uses
+cross-validation to automatically set the `alpha` parameter.
+
+.. figure:: ../auto_examples/covariance/images/plot_sparse_cov_1.png
+   :target: ../auto_examples/covariance/plot_sparse_cov.html
+   :align: center
+   :scale: 60%
+
+   *A comparison of maximum likelihood, shrinkage and sparse estimates of
+   the covariance and precision matrix in the very small samples
+   settings.*
+
+.. note:: **Structure recovery**
+
+   Recovering a graphical structure from correlations in the data is a
+   challenging thing. If you are interested in such recovery keep in mind
+   that:
+
+   * Recovery is easier from a correlation matrix than a covariance
+     matrix: standardize your observations before running :class:`GraphLasso`
+
+   * If the underlying graph has nodes with much more connections than
+     the average node, the algorithm will miss some of these connections.
+
+   * If your number of observations is not large compared to the number
+     of edges in your underlying graph, you will not recover it.
+
+   * Even if you are in favorable recovery conditions, the alpha
+     parameter chosen by cross-validation (e.g. using the
+     :class:`GraphLassoCV` object) will lead to selecting too many edges.
+     However, the relevant edges will have heavier weights than the
+     irrelevant ones.
+
+The mathematical formulation is the following:
+
+.. math::    
+   
+    \hat{K} = \mathrm{argmin}_K \big(
+                \mathrm{tr} S K - \mathrm{log} \mathrm{det} K
+                + \alpha \|K\|_1
+                \big)
+
+Where `K` is the precision matrix to be estimated, and `S` is the sample
+covariance matrix. :math:`\|K\|_1` is the sum of the absolute values of
+off-diagonal coefficients of `K`. The algorithm employed to solve this
+problem is the GLasso algorithm, from the Friedman 2008 Biostatistics
+paper. It is the same algorithm as in the R `glasso` package.
+
+
+.. topic:: Examples:
+
+   * :ref:`example_covariance_plot_sparse_cov.py`: example on synthetic
+     data showing some recovery of a structure, and comparing to other
+     covariance estimators.
+
+   * :ref:`example_applications_plot_stock_market.py`: example on real
+     stock market data, finding which symbols are most linked.
+
+.. topic:: References:
+
+   * Friedman et al, `"Sparse inverse covariance estimation with the 
+     graphical lasso" <http://biostatistics.oxfordjournals.org/content/9/3/432.short>`_,
+     Biostatistics 9, pp 432, 2008
+
+
+Robust Covariance Estimation
+============================
+
+Real data set are often subjects to measurement or recording
+errors. Regular but uncommon observations may also appear for a variety
+of reason. Every observation which is very uncommon is called an
+outlier.
+The empirical covariance estimator and the shrunk covariance
+estimators presented above are very sensitive to the presence of
+outlying observations in the data. Therefore, one should use robust
+covariance estimators to estimate the covariance of its real data
+sets. Alternatively, robust covariance estimators can be used to
+perform outlier detection and discard/downweight some observations
+according to further processing of the data.
+
+The `sklearn.covariance` package implements a robust estimator of covariance,
+the Minimum Covariance Determinant [3].
+
+
+Minimum Covariance Determinant
+------------------------------
+
+The Minimum Covariance Determinant estimator is a robust estimator of
+a data set's covariance introduced by P.J.Rousseuw in [3].  The idea
+is to find a given proportion (h) of "good" observations which are not
+outliers and compute their empirical covariance matrix.  This
+empirical covariance matrix is then rescaled to compensate the
+performed selection of observations ("consistency step").  Having
+computed the Minimum Covariance Determinant estimator, one can give
+weights to observations according to their Mahalanobis distance,
+leading the a reweighted estimate of the covariance matrix of the data
+set ("reweighting step").
+
+Rousseuw and Van Driessen [4] developed the FastMCD algorithm in order
+to compute the Minimum Covariance Determinant. This algorithm is used
+in scikit-learn when fitting an MCD object to data. The FastMCD
+algorithm also computes a robust estimate of the data set location at
+the same time.
+
+Raw estimates can be accessed as `raw_location_` and `raw_covariance_`
+attributes of a :class:`MinCovDet` robust covariance estimator object.
+
+[3] P. J. Rousseeuw. Least median of squares regression.
+    J. Am Stat Ass, 79:871, 1984.
+[4] A Fast Algorithm for the Minimum Covariance Determinant Estimator,
+    1999, American Statistical Association and the American Society
+    for Quality, TECHNOMETRICS.
+
+.. topic:: Examples:
+
+   * See :ref:`example_covariance_plot_robust_vs_empirical_covariance.py` for
+     an example on how to fit a :class:`MinCovDet` object to data and see how
+     the estimate remains accurate despite the presence of outliers.
+
+   * See :ref:`example_covariance_plot_mahalanobis_distances.py` to 
+     visualize the difference between :class:`EmpiricalCovariance` and
+     :class:`MinCovDet` covariance estimators in terms of Mahalanobis distance
+     (so we get a better estimate of the precision matrix too).
+
+.. figure:: ../auto_examples/covariance/images/plot_robust_vs_empirical_covariance_1.png
+   :target: ../auto_examples/covariance/plot_robust_vs_empirical_covariance.html
+   :align: center
+   :scale: 75%
+
+.. figure:: ../auto_examples/covariance/images/plot_mahalanobis_distances_1.png
+   :target: ../auto_examples/covariance/plot_mahalanobis_distances.html
    :align: center
    :scale: 75%
