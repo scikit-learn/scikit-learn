@@ -304,12 +304,10 @@ Tips on Practical Use
 
   * Support Vector Machine algorithms are not scale invariant, so **it
     is highly recommended to scale your data**. For example, scale each
-    attribute on the input vector X to [0,1] or [-1,+1], or standardize
-    it to have mean 0 and variance 1. Note that the *same* scaling
-    must be applied to the test vector to obtain meaningful
-    results. See `The CookBook
-    <https://sourceforge.net/apps/trac/scikit-learn/wiki/CookBook>`_
-    for some examples on scaling.
+    attribute on the input vector X to [0,1] or [-1,+1], or standardize it
+    to have mean 0 and variance 1. Note that the *same* scaling must be
+    applied to the test vector to obtain meaningful results. See section
+    :ref:`preprocessing` for more details on scaling and normalization.
 
   * Parameter nu in NuSVC/OneClassSVM/NuSVR approximates the fraction
     of training errors and support vectors.

@@ -242,7 +242,7 @@ def fetch_20newsgroups_vectorized(subset="train", data_home=None):
         vectorizer = CountVectorizer(dtype=np.int16)
         X_train = vectorizer.fit_transform(data_train.data).tocsr()
         X_test = vectorizer.transform(data_test.data).tocsr()
-        joblib.dump((X_train, X_test), target_file)
+        joblib.dump((X_train, X_test), target_file, compress=9)
 
     # the data is stored as int16 for compactness
     # but normalize needs floats

@@ -417,19 +417,15 @@ def load_sample_images():
     --------
     To load the data and visualize the images::
 
-    # >>> from sklearn.datasets import load_sample_images
-    # >>> dataset = load_sample_images()
-    # >>> len(dataset.images)
-    # 2
-    # >>> first_img_data = dataset.images[0]
-    # >>> first_img_data.shape
-    # (427, 640, 3)
-    # >>> first_img_data.dtype
-    # dtype('uint8')
-    # >>> import pylab as pl
-    # >>> pl.gray()
-    # >>> pl.matshow(dataset.images[0]) # Visualize the first image
-    # >>> pl.show()
+    >>> from sklearn.datasets import load_sample_images
+    >>> dataset = load_sample_images()     #doctest: +SKIP
+    >>> len(dataset.images)                #doctest: +SKIP
+    2
+    >>> first_img_data = dataset.images[0] #doctest: +SKIP
+    >>> first_img_data.shape               #doctest: +SKIP
+    (427, 640, 3)
+    >>> first_img_data.dtype               #doctest: +SKIP
+    dtype('uint8')
     """
     # Try to import imread from scipy. We do this lazily here to prevent
     # this module from depending on PIL.
