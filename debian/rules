@@ -82,7 +82,7 @@ override_dh_compress:
 
 
 ## to prepare next Debian upstream source tarball
-dfsg: dfsg-master
+dfsg: dfsg-releases
 dfsg-%:
 	git checkout dfsg
 	-git merge --no-commit $*
