@@ -34,12 +34,6 @@ Example
 >>> labels = np.copy(iris.target)
 >>> labels[random_unlabeled_points] = -1
 >>> label_prop_model.fit(iris.data, labels)
-... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-LabelPropagation(alpha=1, gamma=20, kernel='rbf', max_iters=30, n_neighbors=7,
-         tol=0.001, unlabeled_identifier=-1)
-
-=======
->>> label_prop_model.fit(iris.data, labels, unlabeled_identifier=-1)
 ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
 LabelPropagation(...)
 
@@ -79,19 +73,17 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
       parameter for rbf kernel
     alpha : float
       clamping factor
-
     unlabeled_identifier : any object, same class as label objects
       a special identifier label that represents unlabeled examples
       in the training set
-
     max_iters : float
       change maximum number of iterations allowed
     tol : float
       threshold to consider the system at steady state
     """
 
-    def __init__(self, kernel='rbf', gamma=20, alpha=1,
-            unlabeled_identifier=-1, max_iters=30, n_neighbors=2,
+    def __init__(self, kernel='rbf', gamma=20, n_neighbors=7,
+            alpha=1, unlabeled_identifier=-1, max_iters=30,
             tol=1e-3):
         self.max_iters = max_iters
         self.tol = tol
@@ -348,7 +340,7 @@ class LabelSpreading(BaseLabelPropagation):
     ...    size=len(iris.target)))
     >>> labels = np.copy(iris.target)
     >>> labels[random_unlabeled_points] = -1
-    >>> label_prop_model.fit(iris.data, labels, unlabeled_identifier=-1)
+    >>> label_prop_model.fit(iris.data, labels)
     ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     LabelSpreading(...)
 
@@ -363,12 +355,13 @@ class LabelSpreading(BaseLabelPropagation):
     Label Propagation : Unregularized graph based semi-supervised learning
     """
 
-    def __init__(self, kernel='rbf', gamma=20, alpha=0.2,
+    def __init__(self, kernel='rbf', gamma=20, n_neighbors=7, alpha=0.2,
             unlabeled_identifier=-1, max_iters=30, tol=1e-3):
         # this one has different base parameters
         super(LabelSpreading, self).__init__(kernel=kernel, gamma=gamma,
-                alpha=alpha, unlabeled_identifier=unlabeled_identifier,
-                max_iters=max_iters, tol=tol)
+                n_neighbors=n_neighbors, alpha=alpha,
+                unlabeled_identifier=unlabeled_identifier, max_iters=max_iters,
+                tol=tol)
 
     def _build_graph(self):
         """Graph matrix for Label Spreading computes the graph laplacian"""
