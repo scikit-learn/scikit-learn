@@ -10,6 +10,7 @@ from scipy import linalg, optimize, rand
 
 from ..base import BaseEstimator, RegressorMixin
 from ..metrics.pairwise import manhattan_distances
+from ..utils import array2d
 from . import regression_models as regression
 from . import correlation_models as correlation
 
@@ -44,7 +45,7 @@ def l1_cross_distances(X):
         The indices i and j of the vectors in X associated to the cross-
         distances in D: D[k] = np.abs(X[ij[k, 0]] - Y[ij[k, 1]]).
     """
-    X = np.atleast_2d(X)
+    X = array2d(X)
     n_samples, n_features = X.shape
     n_nonzero_cross_dist = n_samples * (n_samples - 1) / 2
     ij = np.zeros((n_nonzero_cross_dist, 2), dtype=np.int)
@@ -60,7 +61,6 @@ def l1_cross_distances(X):
     return D, ij.astype(np.int)
 
 
-
 class GaussianProcess(BaseEstimator, RegressorMixin):
     """
     The Gaussian Process model class.
@@ -72,14 +72,16 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         regression functional basis. The number of observations n_samples
         should be greater than the size p of this basis.
         Default assumes a simple constant regression trend.
-        Here is the list of built-in regression models:
+        Available built-in regression models are::
+
             'constant', 'linear', 'quadratic'
 
     corr : string or callable, optional
         A stationary autocorrelation function returning the autocorrelation
         between two points x and x'.
         Default assumes a squared-exponential autocorrelation model.
-        Here is the list of built-in correlation models:
+        Built-in correlation models are::
+
             'absolute_exponential', 'squared_exponential',
             'generalized_exponential', 'cubic', 'linear'
 
@@ -141,10 +143,12 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
     optimizer : string, optional
         A string specifying the optimization algorithm to be used.
         Default uses 'fmin_cobyla' algorithm from scipy.optimize.
-        Here is the list of available optimizers:
+        Available optimizers are::
+
             'fmin_cobyla', 'Welch'
-        'Welch' optimizer is dued to Welch et al., see reference [2]. It
-        consists in iterating over several one-dimensional optimizations
+
+        'Welch' optimizer is dued to Welch et al., see reference [WBSWM1992]_.
+        It consists in iterating over several one-dimensional optimizations
         instead of running one single multi-dimensional optimization.
 
     random_start : int, optional
@@ -155,11 +159,12 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         exponential distribution (log-uniform on [thetaL, thetaU]).
         Default does not use random starting point (random_start = 1).
 
-    Example
-    -------
+    Examples
+    --------
     >>> import numpy as np
     >>> from sklearn.gaussian_process import GaussianProcess
-    >>> X = np.atleast_2d([1., 3., 5., 6., 7., 8.]).T
+    >>> from sklearn.utils import array2d
+    >>> X = array2d([1., 3., 5., 6., 7., 8.]).T
     >>> y = (X * np.sin(X)).ravel()
     >>> gp = GaussianProcess(theta0=0.1, thetaL=.001, thetaU=1.)
     >>> gp.fit(X, y) # doctest: +ELLIPSIS
@@ -167,20 +172,20 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             normalize=..., nugget=...,
             ...
 
-    Implementation details
-    ----------------------
+    Notes
+    -----
     The presentation implementation is based on a translation of the DACE
-    Matlab toolbox, see reference [1].
+    Matlab toolbox, see reference [NLNS2002]_.
 
-    References
-    ----------
-    [1] H.B. Nielsen, S.N. Lophaven, H. B. Nielsen and J. Sondergaard (2002).
-        DACE - A MATLAB Kriging Toolbox.
+    **References**:
+
+    .. [NLNS2002] `H.B. Nielsen, S.N. Lophaven, H. B. Nielsen and J. Sondergaard (2002).
+        DACE - A MATLAB Kriging Toolbox.`
         http://www2.imm.dtu.dk/~hbn/dace/dace.pdf
 
-    [2] W.J. Welch, R.J. Buck, J. Sacks, H.P. Wynn, T.J. Mitchell, and M.D.
-        Morris (1992). Screening, predicting, and computer experiments.
-        Technometrics, 34(1) 15--25.
+    .. [WBSWM1992] `W.J. Welch, R.J. Buck, J. Sacks, H.P. Wynn, T.J. Mitchell,
+        and M.D.  Morris (1992). Screening, predicting, and computer experiments.
+        Technometrics, 34(1) 15--25.`
         http://www.jstor.org/pss/1269548
     """
 
@@ -247,8 +252,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         self._check_params()
 
         # Force data to 2D numpy.array
-        X = np.atleast_2d(X)
-        y = np.asanyarray(y).ravel()[:, np.newaxis]
+        X = array2d(np.asarray(X))
+        y = np.asarray(y).ravel()[:, np.newaxis]
 
         # Check shapes of DOE & observations
         n_samples_X, n_features = X.shape
@@ -391,7 +396,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         self._check_params()
 
         # Check input shapes
-        X = np.atleast_2d(X)
+        X = array2d(X)
         n_eval, n_features_X = X.shape
         n_samples, n_features = self.X.shape
 
@@ -520,14 +525,20 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             A dictionary containing the requested Gaussian Process model
             parameters:
 
-            par['sigma2'] : Gaussian Process variance.
-            par['beta'] : Generalized least-squares regression weights for
-                          Universal Kriging or given beta0 for Ordinary
-                          Kriging.
-            par['gamma'] : Gaussian Process weights.
-            par['C'] : Cholesky decomposition of the correlation matrix [R].
-            par['Ft'] : Solution of the linear equation system : [R] x Ft = F
-            par['G'] : QR decomposition of the matrix Ft.
+                sigma2
+                        Gaussian Process variance.
+                beta
+                        Generalized least-squares regression weights for
+                        Universal Kriging or given beta0 for Ordinary
+                        Kriging.
+                gamma
+                        Gaussian Process weights.
+                C
+                        Cholesky decomposition of the correlation matrix [R].
+                Ft
+                        Solution of the linear equation system : [R] x Ft = F
+                G
+                        QR decomposition of the matrix Ft.
         """
 
         if theta is None:
@@ -723,9 +734,9 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             # Initialize under isotropy assumption
             if verbose:
                 print("Initialize under isotropy assumption...")
-            self.theta0 = np.atleast_2d(self.theta0.min())
-            self.thetaL = np.atleast_2d(self.thetaL.min())
-            self.thetaU = np.atleast_2d(self.thetaU.max())
+            self.theta0 = array2d(self.theta0.min())
+            self.thetaL = array2d(self.thetaL.min())
+            self.thetaU = array2d(self.thetaU.max())
             theta_iso, optimal_rlf_value_iso, par_iso = \
                 self.arg_max_reduced_likelihood_function()
             optimal_theta = theta_iso + np.zeros(theta0.shape)
@@ -736,12 +747,12 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             for i in np.random.permutation(range(theta0.size)):
                 if verbose:
                     print "Proceeding along dimension %d..." % (i + 1)
-                self.theta0 = np.atleast_2d(theta_iso)
-                self.thetaL = np.atleast_2d(thetaL[0, i])
-                self.thetaU = np.atleast_2d(thetaU[0, i])
+                self.theta0 = array2d(theta_iso)
+                self.thetaL = array2d(thetaL[0, i])
+                self.thetaU = array2d(thetaU[0, i])
 
                 def corr_cut(t, d):
-                    return corr(np.atleast_2d(np.hstack([
+                    return corr(array2d(np.hstack([
                          optimal_theta[0][0:i],
                          t[0],
                          optimal_theta[0][(i + 1)::]])), d)
@@ -777,7 +788,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         # Check regression weights if given (Ordinary Kriging)
         if self.beta0 is not None:
-            self.beta0 = np.atleast_2d(self.beta0)
+            self.beta0 = array2d(self.beta0)
             if self.beta0.shape[1] != 1:
                 # Force to column vector
                 self.beta0 = self.beta0.T
@@ -797,12 +808,12 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                            + "'light', %s was given." % self.storage_mode)
 
         # Check correlation parameters
-        self.theta0 = np.atleast_2d(self.theta0)
+        self.theta0 = array2d(self.theta0)
         lth = self.theta0.size
 
         if self.thetaL is not None and self.thetaU is not None:
-            self.thetaL = np.atleast_2d(self.thetaL)
-            self.thetaU = np.atleast_2d(self.thetaU)
+            self.thetaL = array2d(self.thetaL)
+            self.thetaU = array2d(self.thetaU)
             if self.thetaL.size != lth or self.thetaU.size != lth:
                 raise ValueError("theta0, thetaL and thetaU must have the "
                                + "same length.")

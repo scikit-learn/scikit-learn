@@ -16,11 +16,11 @@ import numpy as np
 def absolute_exponential(theta, d):
     """
     Absolute exponential autocorrelation model.
-    (Ornstein-Uhlenbeck stochastic process)
+    (Ornstein-Uhlenbeck stochastic process)::
 
-                                        n
-    theta, dx --> r(theta, dx) = exp(  sum  - theta_i * |dx_i| )
-                                      i = 1
+                                            n
+        theta, dx --> r(theta, dx) = exp(  sum  - theta_i * |dx_i| )
+                                          i = 1
 
     Parameters
     ----------
@@ -39,8 +39,8 @@ def absolute_exponential(theta, d):
         An array with shape (n_eval, ) containing the values of the
         autocorrelation model.
     """
-    theta = np.asanyarray(theta, dtype=np.float)
-    d = np.abs(np.asanyarray(d, dtype=np.float))
+    theta = np.asarray(theta, dtype=np.float)
+    d = np.abs(np.asarray(d, dtype=np.float))
 
     if d.ndim > 1:
         n_features = d.shape[1]
@@ -58,11 +58,11 @@ def absolute_exponential(theta, d):
 def squared_exponential(theta, d):
     """
     Squared exponential correlation model (Radial Basis Function).
-    (Infinitely differentiable stochastic process, very smooth)
+    (Infinitely differentiable stochastic process, very smooth)::
 
-                                        n
-    theta, dx --> r(theta, dx) = exp(  sum  - theta_i * (dx_i)^2 )
-                                      i = 1
+                                            n
+        theta, dx --> r(theta, dx) = exp(  sum  - theta_i * (dx_i)^2 )
+                                          i = 1
 
     Parameters
     ----------
@@ -82,8 +82,8 @@ def squared_exponential(theta, d):
         autocorrelation model.
     """
 
-    theta = np.asanyarray(theta, dtype=np.float)
-    d = np.asanyarray(d, dtype=np.float)
+    theta = np.asarray(theta, dtype=np.float)
+    d = np.asarray(d, dtype=np.float)
 
     if d.ndim > 1:
         n_features = d.shape[1]
@@ -91,22 +91,22 @@ def squared_exponential(theta, d):
         n_features = 1
 
     if theta.size == 1:
-        return np.exp(- theta[0] * np.sum(d**2, axis=1))
+        return np.exp(-theta[0] * np.sum(d ** 2, axis=1))
     elif theta.size != n_features:
         raise ValueError("Length of theta must be 1 or %s" % n_features)
     else:
-        return np.exp(- np.sum(theta.reshape(1, n_features) * d**2, axis=1))
+        return np.exp(-np.sum(theta.reshape(1, n_features) * d ** 2, axis=1))
 
 
 def generalized_exponential(theta, d):
     """
     Generalized exponential correlation model.
     (Useful when one does not know the smoothness of the function to be
-    predicted.)
+    predicted.)::
 
-                                        n
-    theta, dx --> r(theta, dx) = exp(  sum  - theta_i * |dx_i|^p )
-                                      i = 1
+                                            n
+        theta, dx --> r(theta, dx) = exp(  sum  - theta_i * |dx_i|^p )
+                                          i = 1
 
     Parameters
     ----------
@@ -126,8 +126,8 @@ def generalized_exponential(theta, d):
         model.
     """
 
-    theta = np.asanyarray(theta, dtype=np.float)
-    d = np.asanyarray(d, dtype=np.float)
+    theta = np.asarray(theta, dtype=np.float)
+    d = np.asarray(d, dtype=np.float)
 
     if d.ndim > 1:
         n_features = d.shape[1]
@@ -151,12 +151,12 @@ def generalized_exponential(theta, d):
 def pure_nugget(theta, d):
     """
     Spatial independence correlation model (pure nugget).
-    (Useful when one wants to solve an ordinary least squares problem!)
+    (Useful when one wants to solve an ordinary least squares problem!)::
 
-                                         n
-    theta, dx --> r(theta, dx) = 1 if   sum |dx_i| == 0
-                                       i = 1
-                                 0 otherwise
+                                             n
+        theta, dx --> r(theta, dx) = 1 if   sum |dx_i| == 0
+                                           i = 1
+                                     0 otherwise
 
     Parameters
     ----------
@@ -175,8 +175,8 @@ def pure_nugget(theta, d):
         model.
     """
 
-    theta = np.asanyarray(theta, dtype=np.float)
-    d = np.asanyarray(d, dtype=np.float)
+    theta = np.asarray(theta, dtype=np.float)
+    d = np.asarray(d, dtype=np.float)
 
     n_eval = d.shape[0]
     r = np.zeros(n_eval)
@@ -187,12 +187,12 @@ def pure_nugget(theta, d):
 
 def cubic(theta, d):
     """
-    Cubic correlation model.
+    Cubic correlation model::
 
-    theta, dx --> r(theta, dx) =
-          n
-        prod max(0, 1 - 3(theta_j*d_ij)^2 + 2(theta_j*d_ij)^3) ,  i = 1,...,m
-        j = 1
+        theta, dx --> r(theta, dx) =
+              n
+            prod max(0, 1 - 3(theta_j*d_ij)^2 + 2(theta_j*d_ij)^3) ,  i = 1,...,m
+            j = 1
 
     Parameters
     ----------
@@ -212,8 +212,8 @@ def cubic(theta, d):
         model.
     """
 
-    theta = np.asanyarray(theta, dtype=np.float)
-    d = np.asanyarray(d, dtype=np.float)
+    theta = np.asarray(theta, dtype=np.float)
+    d = np.asarray(d, dtype=np.float)
 
     if d.ndim > 1:
         n_features = d.shape[1]
@@ -237,12 +237,12 @@ def cubic(theta, d):
 
 def linear(theta, d):
     """
-    Linear correlation model.
+    Linear correlation model::
 
-    theta, dx --> r(theta, dx) =
-          n
-        prod max(0, 1 - theta_j*d_ij) ,  i = 1,...,m
-        j = 1
+        theta, dx --> r(theta, dx) =
+              n
+            prod max(0, 1 - theta_j*d_ij) ,  i = 1,...,m
+            j = 1
 
     Parameters
     ----------
@@ -262,8 +262,8 @@ def linear(theta, d):
         model.
     """
 
-    theta = np.asanyarray(theta, dtype=np.float)
-    d = np.asanyarray(d, dtype=np.float)
+    theta = np.asarray(theta, dtype=np.float)
+    d = np.asarray(d, dtype=np.float)
 
     if d.ndim > 1:
         n_features = d.shape[1]

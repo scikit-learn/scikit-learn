@@ -1,3 +1,5 @@
+.. _cross_validation:
+
 ================
 Cross-Validation
 ================
@@ -27,7 +29,7 @@ Computing cross-validated metrics
 =================================
 
 The simplest way to use perform cross-validation in to call the
-:func:`cross_val_score` helper function on the estimator and the dataset::
+:func:`cross_val_score` helper function on the estimator and the dataset.
 
 The following example demonstrates how to estimate the accuracy of a
 linear kernel Support Vector Machine on the iris dataset by splitting
@@ -63,7 +65,7 @@ scoring function, e.g. from the metrics module::
   ...                                                     # doctest: +ELLIPSIS
   array([ 1.  ...,  0.96...,  0.89...,  0.96...,  1.  ...])
 
-In the case of the Iris dataset, the samples are balanced accross target
+In the case of the Iris dataset, the samples are balanced across target
 classes hence the accuracy and the F1-score are almost equal.
 
 When the ``cv`` argument is an integer, :func:`cross_val_score` uses the
@@ -79,7 +81,7 @@ validation iterator instead, for instance::
 
   >>> cross_validation.cross_val_score(clf, iris.data, iris.target, cv=cv)
   ...                                                     # doctest: +ELLIPSIS
-  array([ 0.97...,  0.95...,  0.95...])
+  array([ 0.97...,  0.97...,  1.        ])
 
 The available cross validation iterators are introduced in the following.
 
@@ -100,6 +102,19 @@ that can be used to generate dataset splits according to different cross
 validation strategies.
 
 
+.. topic:: Boolean mask vs integer indices
+
+   Most cross validators support generating both boolean masks or integer
+   indices to select the samples from a given fold.
+
+   When the data matrix is sparse, only the integer indices will work as
+   expected. Integer indexing is hence the default behavior (since version
+   0.10).
+
+   You can explicitly pass ``indices=False`` to the constructor of the
+   CV object (when supported) to use the boolean mask method instead.
+
+
 K-fold
 ------
 
@@ -115,7 +130,7 @@ Example of 2-fold::
   >>> X = np.array([[0., 0.], [1., 1.], [-1., -1.], [2., 2.]])
   >>> Y = np.array([0, 1, 0, 1])
 
-  >>> kf = KFold(len(Y), 2)
+  >>> kf = KFold(len(Y), 2, indices=False)
   >>> print kf
   sklearn.cross_validation.KFold(n=4, k=2)
 
@@ -154,7 +169,13 @@ percentage for each target class as in the complete set.
 Example of stratified 2-fold::
 
   >>> from sklearn.cross_validation import StratifiedKFold
-  >>> X = [[0., 0.], [1., 1.], [-1., -1.], [2., 2.], [3., 3.], [4., 4.], [0., 1.]]
+  >>> X = [[0., 0.],
+  ...      [1., 1.],
+  ...      [-1., -1.],
+  ...      [2., 2.],
+  ...      [3., 3.],
+  ...      [4., 4.],
+  ...      [0., 1.]]
   >>> Y = [0, 0, 0, 1, 1, 1, 0]
 
   >>> skf = StratifiedKFold(Y, 2)
@@ -163,8 +184,8 @@ Example of stratified 2-fold::
 
   >>> for train, test in skf:
   ...     print train, test
-  [False  True False False  True False  True] [ True False  True  True False  True False]
-  [ True False  True  True False  True False] [False  True False False  True False  True]
+  [1 4 6] [0 2 3 5]
+  [0 2 3 5] [1 4 6]
 
 
 Leave-One-Out - LOO
@@ -186,10 +207,10 @@ not waste much data as only one sample is removed from the learning set::
 
   >>> for train, test in loo:
   ...    print train, test
-  [False  True  True  True] [ True False False False]
-  [ True False  True  True] [False  True False False]
-  [ True  True False  True] [False False  True False]
-  [ True  True  True False] [False False False  True]
+  [1 2 3] [0]
+  [0 2 3] [1]
+  [0 1 3] [2]
+  [0 1 2] [3]
 
 
 Leave-P-Out - LPO
@@ -210,12 +231,12 @@ Example of Leave-2-Out::
 
   >>> for train, test in lpo:
   ...     print train, test
-  [False False  True  True] [ True  True False False]
-  [False  True False  True] [ True False  True False]
-  [False  True  True False] [ True False False  True]
-  [ True False False  True] [False  True  True False]
-  [ True False  True False] [False  True False  True]
-  [ True  True False False] [False False  True  True]
+  [2 3] [0 1]
+  [1 3] [0 2]
+  [1 2] [0 3]
+  [0 3] [1 2]
+  [0 2] [1 3]
+  [0 1] [2 3]
 
 
 Leave-One-Label-Out - LOLO
@@ -244,8 +265,8 @@ a training set using the samples of all the experiments except one::
 
   >>> for train, test in lolo:
   ...     print train, test
-  [False False  True  True] [ True  True False False]
-  [ True  True False False] [False False  True  True]
+  [2 3] [0 1]
+  [0 1] [2 3]
 
 Another common application is to use time information: for instance the
 labels could be the year of collection of the samples and thus allow
@@ -271,9 +292,9 @@ Example of Leave-2-Label Out::
 
   >>> for train, test in lplo:
   ...     print train, test
-  [False False False False  True  True] [ True  True  True  True False False]
-  [False False  True  True False False] [ True  True False False  True  True]
-  [ True  True False False False False] [False False  True  True  True  True]
+  [4 5] [0 1 2 3]
+  [2 3] [0 1 4 5]
+  [0 1] [2 3 4 5]
 
 .. _ShuffleSplit:
 
@@ -297,14 +318,14 @@ Here is a usage example::
   >>> len(ss)
   3
   >>> print ss                                            # doctest: +ELLIPSIS
-  ShuffleSplit(5, n_iterations=3, test_fraction=0.25, indices=False, ...)
+  ShuffleSplit(5, n_iterations=3, test_fraction=0.25, indices=True, ...)
 
   >>> for train_index, test_index in ss:
   ...    print train_index, test_index
   ...
-  [ True  True  True False False] [False False False  True  True]
-  [ True  True  True False False] [False False False  True  True]
-  [False  True False  True  True] [ True False  True False False]
+  [1 3 4] [2 0]
+  [1 4 3] [0 2]
+  [4 0 2] [1 3]
 
 :class:`ShuffleSplit` is thus a good alternative to :class:`KFold` cross
 validation that allows a finer control on the number of iterations and

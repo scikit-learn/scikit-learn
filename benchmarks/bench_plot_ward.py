@@ -29,7 +29,7 @@ for i, n in enumerate(n_samples):
         hierarchy.ward(X)
         scipy_time[j, i] = time.time() - t0
 
-ratio = scikits_time/scipy_time
+ratio = scikits_time / scipy_time
 
 pl.clf()
 pl.imshow(np.log(ratio), aspect='auto', origin="lower")

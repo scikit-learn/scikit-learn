@@ -2,12 +2,20 @@
 #
 # Author: Ron Weiss <ronweiss@gmail.com>
 
+"""
+The :mod:`sklearn.hmm` module implements hidden Markov models.
+
+**Warning:** :mod:`sklearn.hmm` is orphaned, undocumented and has known
+numerical stability issues. If nobody volunteers to write documentation and
+make it more stable, this module will be removed in version 0.11.
+"""
+
 import string
 
 import numpy as np
 
 from .utils import check_random_state
-from .utils.extmath import logsum
+from .utils.extmath import logsumexp
 from .base import BaseEstimator
 from .mixture import (GMM, lmvnpdf, normalize, sample_gaussian,
                  _distribute_covar_matrix_to_match_cvtype, _validate_covars)
@@ -20,6 +28,7 @@ warnings.warn('sklearn.hmm is orphaned, undocumented and has known numerical'
 
 
 ZEROLOGPROB = -1e200
+
 
 class _BaseHMM(BaseEstimator):
     """Hidden Markov Model base class.
@@ -35,26 +44,12 @@ class _BaseHMM(BaseEstimator):
     ----------
     n_components : int (read-only)
         Number of states in the model.
+
     transmat : array, shape (`n_components`, `n_components`)
         Matrix of transition probabilities between states.
+
     startprob : array, shape ('n_components`,)
         Initial state occupation distribution.
-
-    Methods
-    -------
-    eval(X)
-        Compute the log likelihood of `X` under the HMM.
-    decode(X)
-        Find most likely state sequence for each point in `X` using the
-        Viterbi algorithm.
-    rvs(n=1)
-        Generate `n` samples from the HMM.
-    fit(X)
-        Estimate HMM parameters from `X`.
-    predict(X)
-        Like decode, find most likely state sequence corresponding to `X`.
-    score(X)
-        Compute the log likelihood of `X` under the model.
 
     See Also
     --------
@@ -85,7 +80,8 @@ class _BaseHMM(BaseEstimator):
         self.startprob_prior = startprob_prior
 
         if transmat is None:
-            transmat = np.tile(1.0 / n_components, (n_components, n_components))
+            transmat = np.tile(1.0 / n_components,
+                    (n_components, n_components))
         self.transmat = transmat
 
         if transmat_prior is None:
@@ -126,7 +122,7 @@ class _BaseHMM(BaseEstimator):
         score : Compute the log probability under the model
         decode : Find most likely state sequence corresponding to a `obs`
         """
-        obs = np.asanyarray(obs)
+        obs = np.asarray(obs)
         framelogprob = self._compute_log_likelihood(obs)
         logprob, fwdlattice = self._do_forward_pass(framelogprob, maxrank,
                                                     beamlogprob)
@@ -137,9 +133,9 @@ class _BaseHMM(BaseEstimator):
         # all frames, unless we do approximate inference using pruning.
         # So, we will normalize each frame explicitly in case we
         # pruned too aggressively.
-        posteriors = np.exp(gamma.T - logsum(gamma, axis=1)).T
+        posteriors = np.exp(gamma.T - logsumexp(gamma, axis=1)).T
         posteriors += np.finfo(np.float32).eps
-        posteriors /= np.sum(posteriors, axis=1).reshape((-1,1))
+        posteriors /= np.sum(posteriors, axis=1).reshape((-1, 1))
         return logprob, posteriors
 
     def score(self, obs, maxrank=None, beamlogprob=-np.Inf):
@@ -170,7 +166,7 @@ class _BaseHMM(BaseEstimator):
         eval : Compute the log probability under the model and posteriors
         decode : Find most likely state sequence corresponding to a `obs`
         """
-        obs = np.asanyarray(obs)
+        obs = np.asarray(obs)
         framelogprob = self._compute_log_likelihood(obs)
         logprob, fwdlattice = self._do_forward_pass(framelogprob, maxrank,
                                                     beamlogprob)
@@ -208,7 +204,7 @@ class _BaseHMM(BaseEstimator):
         eval : Compute the log probability under the model and posteriors
         score : Compute the log probability under the model
         """
-        obs = np.asanyarray(obs)
+        obs = np.asarray(obs)
         framelogprob = self._compute_log_likelihood(obs)
         logprob, state_sequence = self._do_viterbi_pass(framelogprob, maxrank,
                                                         beamlogprob)
@@ -293,9 +289,9 @@ class _BaseHMM(BaseEstimator):
 
         return np.array(obs)
 
-    def fit(self, obs, n_iter=10, thresh=1e-2, params=string.letters,
-            init_params=string.letters,
-            maxrank=None, beamlogprob=-np.Inf, **kwargs):
+    def fit(self, obs, n_iter=10, thresh=1e-2, params=string.ascii_letters,
+            init_params=string.ascii_letters, maxrank=None,
+            beamlogprob=-np.Inf, **kwargs):
         """Estimate model parameters.
 
         An initialization step is performed before entering the EM
@@ -308,25 +304,31 @@ class _BaseHMM(BaseEstimator):
         ----------
         obs : list
             List of array-like observation sequences (shape (n_i, n_features)).
+
         n_iter : int, optional
             Number of iterations to perform.
+
         thresh : float, optional
             Convergence threshold.
+
         params : string, optional
             Controls which parameters are updated in the training
             process.  Can contain any combination of 's' for startprob,
             't' for transmat, 'm' for means, and 'c' for covars, etc.
             Defaults to all parameters.
+
         init_params : string, optional
             Controls which parameters are initialized prior to
             training.  Can contain any combination of 's' for
             startprob, 't' for transmat, 'm' for means, and 'c' for
             covars, etc.  Defaults to all parameters.
+
         maxrank : int, optional
             Maximum rank to evaluate for rank pruning.  If not None,
             only consider the top `maxrank` states in the inner
             sum of the forward algorithm recursion.  Defaults to None
             (no rank pruning).  See "The HTK Book" for more details.
+
         beamlogprob : float, optional
             Width of the beam-pruning beam in log-probability units.
             Defaults to -numpy.Inf (no beam pruning).  See "The HTK
@@ -354,7 +356,7 @@ class _BaseHMM(BaseEstimator):
                 bwdlattice = self._do_backward_pass(framelogprob, fwdlattice,
                                                    maxrank, beamlogprob)
                 gamma = fwdlattice + bwdlattice
-                posteriors = np.exp(gamma.T - logsum(gamma, axis=1)).T
+                posteriors = np.exp(gamma.T - logsumexp(gamma, axis=1)).T
                 curr_logprob += lpr
                 self._accumulate_sufficient_statistics(
                     stats, seq, framelogprob, posteriors, fwdlattice,
@@ -380,7 +382,7 @@ class _BaseHMM(BaseEstimator):
         if not np.allclose(np.sum(startprob), 1.0):
             raise ValueError('startprob must sum to 1.0')
 
-        self._log_startprob = np.log(np.asanyarray(startprob).copy())
+        self._log_startprob = np.log(np.asarray(startprob).copy())
 
     startprob = property(_get_startprob, _set_startprob)
 
@@ -389,12 +391,14 @@ class _BaseHMM(BaseEstimator):
         return np.exp(self._log_transmat)
 
     def _set_transmat(self, transmat):
-        if np.asanyarray(transmat).shape != (self.n_components, self.n_components):
-            raise ValueError('transmat must have shape (n_components, n_components)')
+        if (np.asarray(transmat).shape
+                != (self.n_components, self.n_components)):
+            raise ValueError('transmat must have shape ' +
+                    '(n_components, n_components)')
         if not np.all(np.allclose(np.sum(transmat, axis=1), 1.0)):
             raise ValueError('Rows of transmat must sum to 1.0')
 
-        self._log_transmat = np.log(np.asanyarray(transmat).copy())
+        self._log_transmat = np.log(np.asarray(transmat).copy())
         underflow_idx = np.isnan(self._log_transmat)
         self._log_transmat[underflow_idx] = -np.Inf
 
@@ -433,12 +437,12 @@ class _BaseHMM(BaseEstimator):
         fwdlattice[0] = self._log_startprob + framelogprob[0]
         for n in xrange(1, nobs):
             idx = self._prune_states(fwdlattice[n - 1], maxrank, beamlogprob)
-            fwdlattice[n] = (logsum(self._log_transmat[idx].T
+            fwdlattice[n] = (logsumexp(self._log_transmat[idx].T
                                     + fwdlattice[n - 1, idx], axis=1)
                              + framelogprob[n])
         fwdlattice[fwdlattice <= ZEROLOGPROB] = -np.Inf
 
-        return logsum(fwdlattice[-1]), fwdlattice
+        return logsumexp(fwdlattice[-1]), fwdlattice
 
     def _do_backward_pass(self, framelogprob, fwdlattice, maxrank=None,
                           beamlogprob=-np.Inf):
@@ -454,7 +458,7 @@ class _BaseHMM(BaseEstimator):
                                      -50)
                                      #beamlogprob)
                                      #-np.Inf)
-            bwdlattice[n - 1] = logsum(self._log_transmat[:, idx] +
+            bwdlattice[n - 1] = logsumexp(self._log_transmat[:, idx] +
                                        bwdlattice[n, idx] +
                                        framelogprob[n, idx],
                                        axis=1)
@@ -467,21 +471,23 @@ class _BaseHMM(BaseEstimator):
         after rank and beam pruning.
         """
         # Beam pruning
-        threshlogprob = logsum(lattice_frame) + beamlogprob
+        threshlogprob = logsumexp(lattice_frame) + beamlogprob
         # Rank pruning
         if maxrank:
             # How big should our rank pruning histogram be?
             nbins = 3 * len(lattice_frame)
 
             lattice_min = lattice_frame[lattice_frame > ZEROLOGPROB].min() - 1
-            hst, cdf = np.histogram(lattice_frame, bins=nbins,
+            hst, bin_edges = np.histogram(lattice_frame, bins=nbins,
                                     range=(lattice_min, lattice_frame.max()))
 
             # Want to look at the high ranks.
             hst = hst[::-1].cumsum()
-            cdf = cdf[::-1]
+            bin_edges = .5 * (bin_edges[:-1] + bin_edges[1:])
+            bin_edges = bin_edges[::-1]
 
-            rankthresh = cdf[hst >= min(maxrank, self.n_components)].max()
+            rankthresh = bin_edges[hst >= min(maxrank,
+                                              self.n_components)].max()
 
             # Only change the threshold if it is stricter than the beam
             # threshold.
@@ -521,7 +527,7 @@ class _BaseHMM(BaseEstimator):
             for t in xrange(len(framelogprob)):
                 zeta = (fwdlattice[t - 1][:, np.newaxis] + self._log_transmat
                         + framelogprob[t] + bwdlattice[t])
-                stats['trans'] += np.exp(zeta - logsum(zeta))
+                stats['trans'] += np.exp(zeta - logsumexp(zeta))
 
     def _do_mstep(self, stats, params, **kwargs):
         # Based on Huang, Acero, Hon, "Spoken Language Processing",
@@ -542,46 +548,44 @@ class GaussianHMM(_BaseHMM):
     This class allows for easy evaluation of, sampling from, and
     maximum-likelihood estimation of the parameters of a HMM.
 
+    Parameters
+    ----------
+    n_components : int
+        Number of states.
+
+    cvtype : string
+        String describing the type of covariance parameters to
+        use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
+        Defaults to 'diag'.
+
     Attributes
     ----------
-    cvtype : string (read-only)
+    cvtype : string
         String describing the type of covariance parameters used by
         the model.  Must be one of 'spherical', 'tied', 'diag', 'full'.
-    n_features : int (read-only)
+
+    n_features : int
         Dimensionality of the Gaussian emissions.
-    n_components : int (read-only)
+
+    n_components : int
         Number of states in the model.
+
     transmat : array, shape (`n_components`, `n_components`)
         Matrix of transition probabilities between states.
+
     startprob : array, shape ('n_components`,)
         Initial state occupation distribution.
+
     means : array, shape (`n_components`, `n_features`)
         Mean parameters for each state.
+
     covars : array
         Covariance parameters for each state.  The shape depends on
-        `cvtype`:
+        `cvtype`::
             (`n_components`,)                   if 'spherical',
             (`n_features`, `n_features`)              if 'tied',
             (`n_components`, `n_features`)           if 'diag',
             (`n_components`, `n_features`, `n_features`)  if 'full'
-
-    Methods
-    -------
-    eval(X)
-        Compute the log likelihood of `X` under the HMM.
-    decode(X)
-        Find most likely state sequence for each point in `X` using the
-        Viterbi algorithm.
-    rvs(n=1)
-        Generate `n` samples from the HMM.
-    init(X)
-        Initialize HMM parameters from `X`.
-    fit(X)
-        Estimate HMM parameters from `X` using the Baum-Welch algorithm.
-    predict(X)
-        Like decode, find most likely state sequence corresponding to `X`.
-    score(X)
-        Compute the log likelihood of `X` under the model.
 
     Examples
     --------
@@ -604,20 +608,6 @@ class GaussianHMM(_BaseHMM):
                  transmat=None, startprob_prior=None, transmat_prior=None,
                  means_prior=None, means_weight=0,
                  covars_prior=1e-2, covars_weight=1):
-        """Create a hidden Markov model with Gaussian emissions.
-
-        Initializes parameters such that every state has zero mean and
-        identity covariance.
-
-        Parameters
-        ----------
-        n_components : int
-            Number of states.
-        cvtype : string
-            String describing the type of covariance parameters to
-            use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
-            Defaults to 'diag'.
-        """
         super(GaussianHMM, self).__init__(n_components, startprob, transmat,
                                           startprob_prior=startprob_prior,
                                           transmat_prior=transmat_prior)
@@ -646,10 +636,11 @@ class GaussianHMM(_BaseHMM):
         return self._means
 
     def _set_means(self, means):
-        means = np.asanyarray(means)
+        means = np.asarray(means)
         if hasattr(self, 'n_features') and \
                means.shape != (self.n_components, self.n_features):
-            raise ValueError('means must have shape (n_components, n_features)')
+            raise ValueError('means must have shape' +
+                    '(n_components, n_features)')
         self._means = means.copy()
         self.n_features = self._means.shape[1]
 
@@ -667,8 +658,9 @@ class GaussianHMM(_BaseHMM):
             return [np.eye(self.n_features) * f for f in self._covars]
 
     def _set_covars(self, covars):
-        covars = np.asanyarray(covars)
-        _validate_covars(covars, self._cvtype, self.n_components, self.n_features)
+        covars = np.asarray(covars)
+        _validate_covars(covars, self._cvtype, self.n_components,
+                self.n_features)
         self._covars = covars.copy()
 
     covars = property(_get_covars, _set_covars)
@@ -799,34 +791,20 @@ class MultinomialHMM(_BaseHMM):
 
     Attributes
     ----------
-    n_components : int (read-only)
+    n_components : int
         Number of states in the model.
+
     n_symbols : int
         Number of possible symbols emitted by the model (in the observations).
+
     transmat : array, shape (`n_components`, `n_components`)
         Matrix of transition probabilities between states.
+
     startprob : array, shape ('n_components`,)
         Initial state occupation distribution.
-    emissionprob: array, shape ('n_components`, 'n_symbols`)
-        Probability of emitting a given symbol when in each state.
 
-    Methods
-    -------
-    eval(X)
-        Compute the log likelihood of `X` under the HMM.
-    decode(X)
-        Find most likely state sequence for each point in `X` using the
-        Viterbi algorithm.
-    rvs(n=1)
-        Generate `n` samples from the HMM.
-    init(X)
-        Initialize HMM parameters from `X`.
-    fit(X)
-        Estimate HMM parameters from `X` using the Baum-Welch algorithm.
-    predict(X)
-        Like decode, find most likely state sequence corresponding to `X`.
-    score(X)
-        Compute the log likelihood of `X` under the model.
+    emissionprob : array, shape ('n_components`, 'n_symbols`)
+        Probability of emitting a given symbol when in each state.
 
     Examples
     --------
@@ -862,7 +840,7 @@ class MultinomialHMM(_BaseHMM):
         return np.exp(self._log_emissionprob)
 
     def _set_emissionprob(self, emissionprob):
-        emissionprob = np.asanyarray(emissionprob)
+        emissionprob = np.asarray(emissionprob)
         if hasattr(self, 'n_symbols') and \
                emissionprob.shape != (self.n_components, self.n_symbols):
             raise ValueError('emissionprob must have shape '
@@ -920,46 +898,27 @@ class GMMHMM(_BaseHMM):
 
     Attributes
     ----------
-    n_components : int (read-only)
+    n_components : int
         Number of states in the model.
+
     transmat : array, shape (`n_components`, `n_components`)
         Matrix of transition probabilities between states.
+
     startprob : array, shape ('n_components`,)
         Initial state occupation distribution.
-    gmms: array of GMM objects, length 'n_components`
-        GMM emission distributions for each state
 
-    Methods
-    -------
-    eval(X)
-        Compute the log likelihood of `X` under the HMM.
-    decode(X)
-        Find most likely state sequence for each point in `X` using the
-        Viterbi algorithm.
-    rvs(n=1)
-        Generate `n` samples from the HMM.
-    init(X)
-        Initialize HMM parameters from `X`.
-    fit(X)
-        Estimate HMM parameters from `X` using the Baum-Welch algorithm.
-    predict(X)
-        Like decode, find most likely state sequence corresponding to `X`.
-    score(X)
-        Compute the log likelihood of `X` under the model.
+    gmms : array of GMM objects, length `n_components`
+        GMM emission distributions for each state.
 
     Examples
     --------
     >>> from sklearn.hmm import GMMHMM
     >>> GMMHMM(n_components=2, n_mix=10, cvtype='diag')
     ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    GMMHMM(cvtype='diag',
-        gmms=[GMM(cvtype='diag', n_components=10), GMM(cvtype='diag', n_components=10)],
-        n_components=2, n_mix=10, startprob=array([ 0.5,  0.5]),
-        startprob_prior=1.0,
-        transmat=array([[ 0.5,  0.5],
-           [ 0.5,  0.5]]),
-        transmat_prior=1.0)
-
+    GMMHMM(cvtype='diag', gmms=[GMM(cvtype='diag', n_components=10),
+        GMM(cvtype='diag', n_components=10)], n_components=2, n_mix=10,
+        startprob=array([ 0.5,  0.5]), startprob_prior=1.0, transmat=array([[
+            0.5,  0.5], [ 0.5,  0.5]]), transmat_prior=1.0)
 
     See Also
     --------
@@ -1022,7 +981,7 @@ class GMMHMM(_BaseHMM):
             params)
 
         for state, g in enumerate(self.gmms):
-            _, lgmm_posteriors = g.eval(obs, return_log=True)
+            _, lgmm_posteriors = g.eval(obs)
             lgmm_posteriors += np.log(posteriors[:, state][:, np.newaxis]
                                       + np.finfo(np.float).eps)
             gmm_posteriors = np.exp(lgmm_posteriors)

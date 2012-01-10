@@ -91,8 +91,6 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
     See :ref:`Nearest Neighbors <neighbors>` in the online documentation
     for a discussion of the choice of ``algorithm`` and ``leaf_size``.
 
-    References
-    ----------
     http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
@@ -199,8 +197,6 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
     See :ref:`Nearest Neighbors <neighbors>` in the online documentation
     for a discussion of the choice of ``algorithm`` and ``leaf_size``.
 
-    References
-    ----------
     http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
@@ -242,6 +238,8 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         return mode.flatten().astype(np.int)
 
 
+@deprecated("""to be removed in v0.11;
+use KNeighborsClassifier or RadiusNeighborsClassifier instead""")
 class NeighborsClassifier(NeighborsBase, KNeighborsMixin,
                           RadiusNeighborsMixin, SupervisedIntegerMixin,
                           ClassifierMixin):
@@ -308,8 +306,6 @@ class NeighborsClassifier(NeighborsBase, KNeighborsMixin,
     See :ref:`Nearest Neighbors <neighbors>` in the online documentation
     for a discussion of the choice of ``algorithm`` and ``leaf_size``.
 
-    References
-    ----------
     http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
@@ -349,8 +345,3 @@ class NeighborsClassifier(NeighborsBase, KNeighborsMixin,
             pred_labels = [self._y[ind] for ind in neigh_ind]
             return np.asarray([stats.mode(pi) for pi in pred_labels],
                               dtype=np.int)
-
-NeighborsClassifier = deprecated(
-    "deprecated in v0.9; will be removed in v0.11; "
-    "use KNeighborsClassifier or RadiusNeighborsClassifier instead")(
-    NeighborsClassifier)

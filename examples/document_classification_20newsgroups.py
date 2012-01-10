@@ -11,7 +11,7 @@ and demos various classifiers that can efficiently handle sparse matrices.
 The dataset used in this example is the 20 newsgroups dataset which will be
 automatically downloaded and then cached.
 
-You can adjust the number of categories by giving there name to the dataset
+You can adjust the number of categories by giving their names to the dataset
 loader or setting them to None to get the 20 of them.
 
 """
@@ -137,7 +137,6 @@ def trim(s):
     return s if len(s) <= 80 else s[:77] + "..."
 
 
-
 ###############################################################################
 # Benchmark classifiers
 def benchmark(clf):
@@ -164,7 +163,7 @@ def benchmark(clf):
         if opts.print_top10:
             print "top 10 keywords per class:"
             for i, category in enumerate(categories):
-                top10 = np.argsort(clf.coef_[i, :])[-10:]
+                top10 = np.argsort(clf.coef_[i])[-10:]
                 print trim("%s: %s" % (category, " ".join(vocabulary[top10])))
         print
 
@@ -209,6 +208,7 @@ print "Naive Bayes"
 mnnb_results = benchmark(MultinomialNB(alpha=.01))
 bnb_result = benchmark(BernoulliNB(alpha=.01))
 
+
 class L1LinearSVC(LinearSVC):
 
     def fit(self, X, y):
@@ -226,5 +226,3 @@ class L1LinearSVC(LinearSVC):
 print 80 * '='
 print "LinearSVC with L1-based feature selection"
 l1linearsvc_results = benchmark(L1LinearSVC())
-
-

@@ -1,6 +1,5 @@
 """
-Testing for Tree module (sklearn.tree)
-
+Testing for the tree module (sklearn.tree).
 """
 
 import numpy as np
@@ -37,7 +36,6 @@ boston.target = boston.target[perm]
 
 def test_classification_toy():
     """Check classification on a toy dataset."""
-
     clf = tree.DecisionTreeClassifier()
     clf.fit(X, y)
 
@@ -115,7 +113,6 @@ def test_graphviz_toy():
 
 def test_iris():
     """Check consistency on dataset iris."""
-
     for c in ('gini', \
               'entropy'):
         clf = tree.DecisionTreeClassifier(criterion=c)\
@@ -159,7 +156,6 @@ def test_boston():
 
 def test_probability():
     """Predict probabilities using DecisionTreeClassifier."""
-
     clf = tree.DecisionTreeClassifier()
     clf.fit(iris.data, iris.target)
 
@@ -173,18 +169,28 @@ def test_probability():
                         np.exp(clf.predict_log_proba(iris.data)), 8)
 
 
+def test_arrayrepr():
+    """Check the array representation."""
+    # Check resize
+    clf = tree.DecisionTreeRegressor(max_depth=None)
+    X = np.arange(10000)[:, np.newaxis]
+    y = np.arange(10000)
+    clf.fit(X, y)
+
+
 def test_numerical_stability():
+    """Check numerical stability."""
     old_settings = np.geterr()
     np.seterr(all="raise")
 
     X = np.array(
-       [[ 152.08097839, 140.40744019, 129.75102234, 159.90493774],
-        [ 142.50700378, 135.8193512, 117.82884979, 162.7578125 ],
-        [ 127.28772736, 140.40744019, 129.75102234, 159.90493774],
-        [ 132.37025452, 143.71923828, 138.35694885, 157.84558105],
-        [ 103.10237122, 143.71928406, 138.35696411, 157.84559631],
-        [ 127.71276855, 143.71923828, 138.35694885, 157.84558105],
-        [ 120.91514587, 140.40744019, 129.75102234, 159.90493774]])
+       [[152.08097839, 140.40744019, 129.75102234, 159.90493774],
+        [142.50700378, 135.81935120, 117.82884979, 162.75781250],
+        [127.28772736, 140.40744019, 129.75102234, 159.90493774],
+        [132.37025452, 143.71923828, 138.35694885, 157.84558105],
+        [103.10237122, 143.71928406, 138.35696411, 157.84559631],
+        [127.71276855, 143.71923828, 138.35694885, 157.84558105],
+        [120.91514587, 140.40744019, 129.75102234, 159.90493774]])
 
     y = np.array(
         [1., 0.70209277, 0.53896582, 0., 0.90914464, 0.48026916,  0.49622521])
@@ -196,21 +202,50 @@ def test_numerical_stability():
     np.seterr(**old_settings)
 
 
+def test_importances():
+    """Check variable importances."""
+    X, y = datasets.make_classification(n_samples=1000,
+                                        n_features=10,
+                                        n_informative=3,
+                                        n_redundant=0,
+                                        n_repeated=0,
+                                        shuffle=False,
+                                        random_state=0)
+
+    clf = tree.DecisionTreeClassifier(compute_importances=True)
+    clf.fit(X, y)
+    importances = clf.feature_importances_
+    n_important = sum(importances > 0.1)
+
+    assert_equal(importances.shape[0], 10)
+    assert_equal(n_important, 3)
+
+    X_new = clf.transform(X, threshold="mean")
+    assert 0 < X_new.shape[1] < X.shape[1]
+
+
 def test_error():
     """Test that it gives proper exception on deficient input."""
-    # impossible value of min_split
+    # Invalid values for parameters
     assert_raises(ValueError,
                   tree.DecisionTreeClassifier(min_split=-1).fit,
                   X, y)
 
-    # impossible value of max_depth
     assert_raises(ValueError,
                   tree.DecisionTreeClassifier(max_depth=-1).fit,
                   X, y)
 
-    clf = tree.DecisionTreeClassifier()
+    assert_raises(ValueError,
+                  tree.DecisionTreeClassifier(min_density=2.0).fit,
+                  X, y)
 
-    y2 = y[:-1]  # wrong dimensions for labels
+    assert_raises(ValueError,
+                  tree.DecisionTreeClassifier(max_features=42).fit,
+                  X, y)
+
+    # Wrong dimensions
+    clf = tree.DecisionTreeClassifier()
+    y2 = y[:-1]
     assert_raises(ValueError, clf.fit, X, y2)
 
     # Test with arrays that are non-contiguous.
@@ -219,28 +254,29 @@ def test_error():
     clf.fit(Xf, y)
     assert_array_equal(clf.predict(T), true_result)
 
-    # use values of max_features that are invalid
-    clf = tree.DecisionTreeClassifier(max_features=-1)
-    assert_raises(ValueError, clf.fit, X, y2)
-
-    clf = tree.DecisionTreeClassifier(max_features=10)
-    assert_raises(ValueError, clf.fit, X, y2)
-
-    clf = tree.DecisionTreeClassifier()
     # predict before fitting
+    clf = tree.DecisionTreeClassifier()
     assert_raises(Exception, clf.predict, T)
 
     # predict on vector with different dims
     clf.fit(X, y)
-    t = np.asanyarray(T)
+    t = np.asarray(T)
     assert_raises(ValueError, clf.predict, t[:, 1:])
 
-    # max_features invalid
+   # use values of max_features that are invalid
+    clf = tree.DecisionTreeClassifier(max_features=10)
+    assert_raises(ValueError, clf.fit, X, y)
+
     clf = tree.DecisionTreeClassifier(max_features=-1)
     assert_raises(ValueError, clf.fit, X, y)
 
-    clf = tree.DecisionTreeClassifier(max_features=3)
+    clf = tree.DecisionTreeClassifier(max_features="foobar")
     assert_raises(ValueError, clf.fit, X, y)
+
+    tree.DecisionTreeClassifier(max_features="auto").fit(X, y)
+    tree.DecisionTreeClassifier(max_features="sqrt").fit(X, y)
+    tree.DecisionTreeClassifier(max_features="log2").fit(X, y)
+    tree.DecisionTreeClassifier(max_features=None).fit(X, y)
 
     # predict before fit
     clf = tree.DecisionTreeClassifier()
@@ -268,28 +304,28 @@ def test_pickle():
     # classification
     obj = tree.DecisionTreeClassifier()
     obj.fit(iris.data, iris.target)
-    score = np.mean(obj.predict(iris.data) == iris.target)
+    score = obj.score(iris.data, iris.target)
     s = pickle.dumps(obj)
 
     obj2 = pickle.loads(s)
     assert_equal(type(obj2), obj.__class__)
-    score2 = np.mean(obj2.predict(iris.data) == iris.target)
+    score2 = obj2.score(iris.data, iris.target)
     assert score == score2, "Failed to generate same score " + \
             " after pickling (classification) "
 
     # regression
     obj = tree.DecisionTreeRegressor()
     obj.fit(boston.data, boston.target)
-    score = np.mean(np.power(obj.predict(boston.data) - boston.target, 2))
+    score = obj.score(boston.data, boston.target)
     s = pickle.dumps(obj)
 
     obj2 = pickle.loads(s)
     assert_equal(type(obj2), obj.__class__)
-    score2 = np.mean(np.power(obj2.predict(boston.data) - boston.target, 2))
+    score2 = obj2.score(boston.data, boston.target)
     assert score == score2, "Failed to generate same score " + \
             " after pickling (regression) "
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import nose
     nose.runmodule()

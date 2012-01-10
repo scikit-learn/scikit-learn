@@ -36,24 +36,6 @@ The disadvantages of Support Vector Machines include:
 
 .. TODO: add reference to probability estimates
 
-.. note:: **Avoiding data copy**
-
-    For SVC, SVR, NuSVC and NuSVR, if the data passed to certain
-    methods is not C-ordered contiguous, and double precision,
-    it will be copied before calling the underlying C
-    implementation. You can check whether a give numpy array is
-    C-contiguous by inspecting its `flags` attribute.
-
-    For LinearSVC (and LogisticRegression) any input passed as a
-    numpy array will be copied and converted to the liblinear
-    internal sparse data representation (double precision floats
-    and int 32 indices of non-zero components). If you want to fit
-    a largescale linear classifier without copying a dense numpy
-    C-contiguous double precision array as input we suggest to use
-    the SGDClassifier class instead. The objective function can be
-    configured to be almost the same as the LinearSVC model.
-
-
 .. _svm_classification:
 
 Classification
@@ -89,8 +71,8 @@ training samples::
     >>> Y = [0, 1]
     >>> clf = svm.SVC()
     >>> clf.fit(X, Y)
-    SVC(C=1.0, coef0=0.0, degree=3, gamma=0.5, kernel='rbf', probability=False,
-      shrinking=True, tol=0.001)
+    SVC(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma=0.5, kernel='rbf',
+      probability=False, scale_C=False, shrinking=True, tol=0.001)
 
 After being fitted, the model can then be used to predict new values::
 
@@ -126,8 +108,8 @@ classifiers are constructed and each one trains data from two classes::
     >>> Y = [0, 1, 2, 3]
     >>> clf = svm.SVC()
     >>> clf.fit(X, Y)
-    SVC(C=1.0, coef0=0.0, degree=3, gamma=1.0, kernel='rbf', probability=False,
-      shrinking=True, tol=0.001)
+    SVC(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma=1.0, kernel='rbf',
+      probability=False, scale_C=False, shrinking=True, tol=0.001)
     >>> dec = clf.decision_function([[1]])
     >>> dec.shape[1] # 4 classes: 4*3/2 = 6
     6
@@ -139,7 +121,7 @@ two classes, only one model is trained::
     >>> lin_clf = svm.LinearSVC()
     >>> lin_clf.fit(X, Y)
     LinearSVC(C=1.0, dual=True, fit_intercept=True, intercept_scaling=1,
-         loss='l2', multi_class=False, penalty='l2', tol=0.0001)
+         loss='l2', multi_class=False, penalty='l2', scale_C=False, tol=0.0001)
     >>> dec = lin_clf.decision_function([[1]])
     >>> dec.shape[1]
     4
@@ -215,8 +197,9 @@ floating point values instead of integer values::
     >>> y = [0.5, 2.5]
     >>> clf = svm.SVR()
     >>> clf.fit(X, y)
-    SVR(C=1.0, coef0=0.0, degree=3, epsilon=0.1, gamma=0.5, kernel='rbf',
-      probability=False, shrinking=True, tol=0.001)
+    SVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.1, gamma=0.5,
+      kernel='rbf', probability=False, scale_C=False, shrinking=True,
+      tol=0.001)
     >>> clf.predict([[1, 1]])
     array([ 1.5])
 
@@ -227,18 +210,18 @@ floating point values instead of integer values::
 
 .. _svm_outlier_detection:
 
-Density estimation, outliers detection
+Density estimation, novelty detection
 =======================================
 
-One-class SVM is used for outliers detection, that is, given a set of
+One-class SVM is used for novelty detection, that is, given a set of
 samples, it will detect the soft boundary of that set so as to
 classify new points as belonging to that set or not. The class that
-implements this is called :class:`OneClassSVM`
-
+implements this is called :class:`OneClassSVM`. 
 
 In this case, as it is a type of unsupervised learning, the fit method
 will only take as input an array X, as there are no class labels.
 
+See, section :ref:`outlier_detection` for more details on this usage.
 
 .. figure:: ../auto_examples/svm/images/plot_oneclass_1.png
    :target: ../auto_examples/svm/plot_oneclass.html
@@ -295,8 +278,32 @@ scale almost linearly to millions of samples and/or features.
 Tips on Practical Use
 =====================
 
-  * Support Vector Machine algorithms are not scale invariant, so it
-    is highly recommended to scale your data. For example, scale each
+
+  * **Avoiding data copy**: For SVC, SVR, NuSVC and NuSVR, if the data
+    passed to certain methods is not C-ordered contiguous, and double
+    precision, it will be copied before calling the underlying C
+    implementation. You can check whether a give numpy array is
+    C-contiguous by inspecting its `flags` attribute.
+
+    For LinearSVC (and LogisticRegression) any input passed as a
+    numpy array will be copied and converted to the liblinear
+    internal sparse data representation (double precision floats
+    and int32 indices of non-zero components). If you want to fit
+    a large-scale linear classifier without copying a dense numpy
+    C-contiguous double precision array as input we suggest to use
+    the SGDClassifier class instead. The objective function can be
+    configured to be almost the same as the LinearSVC model.
+
+
+  * **Kernel cache size**: For SVC, SVR, nuSVC and NuSVR, the size of
+    the kernel cache has a strong impact on run times for larger
+    problems.  If you have enough RAM available, it is recommended to
+    set `cache_size` to a higher value than the default of 200(MB),
+    such as 500(MB) or 1000(MB).
+
+
+  * Support Vector Machine algorithms are not scale invariant, so **it
+    is highly recommended to scale your data**. For example, scale each
     attribute on the input vector X to [0,1] or [-1,+1], or standardize
     it to have mean 0 and variance 1. Note that the *same* scaling
     must be applied to the test vector to obtain meaningful
@@ -310,8 +317,6 @@ Tips on Practical Use
   * In SVC, if data for classification are unbalanced (e.g. many
     positive and few negative), set class_weight='auto' and/or try
     different penalty parameters C.
-
-  * Specify larger cache size (keyword cache) for huge problems.
 
   * The underlying :class:`LinearSVC` implementation uses a random
     number generator to select features when fitting the model. It is
@@ -389,18 +394,31 @@ instance that will use that kernel::
     ...
     >>> clf = svm.SVC(kernel=my_kernel)
 
-Using the Gram matrix
-~~~~~~~~~~~~~~~~~~~~~
-
-Set kernel='precomputed' and pass the Gram matrix instead of X in the
-fit method.
-
-.. TODO: inline example
-
 .. topic:: Examples:
 
  * :ref:`example_svm_plot_custom_kernel.py`.
 
+Using the Gram matrix
+~~~~~~~~~~~~~~~~~~~~~
+
+Set kernel='precomputed' and pass the Gram matrix instead of X in the
+fit method. At the moment, the kernel values between `all` training
+vectors and the test vectors must be provided.
+
+    >>> import numpy as np
+    >>> from sklearn import svm
+    >>> X = np.array([[0, 0], [1, 1]])
+    >>> y = [0, 1]
+    >>> clf = svm.SVC(kernel='precomputed')
+    >>> # linear kernel computation
+    >>> gram = np.dot(X, X.T)
+    >>> clf.fit(gram, y)
+    SVC(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma=0.0,
+      kernel='precomputed', probability=False, scale_C=False, shrinking=True,
+      tol=0.001)
+    >>> # predict on training examples
+    >>> clf.predict(gram)
+    array([ 0.,  1.])
 
 .. _svm_mathematical_formulation:
 
@@ -487,6 +505,9 @@ We introduce a new parameter :math:`\nu` which controls the number of
 support vectors and training errors. The parameter :math:`\nu \in (0,
 1]` is an upper bound on the fraction of training errors and a lower
 bound of the fraction of support vectors.
+
+It can be shown that the `\nu`-SVC formulation is a reparametrization
+of the `C`-SVC and therefore mathematically equivalent.
 
 
 Implementation details

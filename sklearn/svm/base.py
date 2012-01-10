@@ -1,8 +1,17 @@
+from abc import ABCMeta, abstractmethod
+
 import numpy as np
 
 from . import libsvm, liblinear
 from ..base import BaseEstimator
-from ..utils import safe_asanyarray
+from ..utils import array2d, safe_asarray
+import warnings
+
+dot = np.dot
+if np.__version__ > '2':
+    # In numpy > 2, np.dot(csr_matrix, csr_matrix) no longer works
+    def dot(A, B):
+        return A.dot(B)
 
 
 LIBSVM_IMPL = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
@@ -32,11 +41,13 @@ class BaseLibSVM(BaseEstimator):
     """Base class for estimators that use libsvm as backing library
 
     This implements support vector machine classification and regression.
-    Should not be used directly, use derived classes instead
     """
 
+    __metaclass__ = ABCMeta
+
     def __init__(self, impl, kernel, degree, gamma, coef0,
-                 tol, C, nu, epsilon, shrinking, probability):
+                 tol, C, nu, epsilon, shrinking, probability, cache_size,
+                 scale_C):
 
         if not impl in LIBSVM_IMPL:
             raise ValueError("impl should be one of %s, %s was given" % (
@@ -46,6 +57,11 @@ class BaseLibSVM(BaseEstimator):
             self.kernel = 'precomputed'
         else:
             self.kernel = kernel
+        if not scale_C:
+            warnings.warn('SVM: scale_C will be True by default in '
+                          'scikit-learn 0.11', FutureWarning,
+                          stacklevel=2)
+
         self.impl = impl
         self.degree = degree
         self.gamma = gamma
@@ -56,6 +72,20 @@ class BaseLibSVM(BaseEstimator):
         self.epsilon = epsilon
         self.shrinking = shrinking
         self.probability = probability
+        self.cache_size = cache_size
+        self.scale_C = scale_C
+
+    @abstractmethod
+    def fit(self, X, y, class_weight=None, sample_weight=None):
+        pass
+
+    @abstractmethod
+    def predict(self, X):
+        pass
+
+    @abstractmethod
+    def predict_proba(self, X):
+        pass
 
     def predict_log_proba(self, T):
         """Compute the log likehoods each possible outcomes of samples in T.
@@ -88,7 +118,7 @@ class BaseLibSVM(BaseEstimator):
         if self.kernel != 'linear':
             raise NotImplementedError('coef_ is only available when using a '
                                       'linear kernel')
-        return np.dot(self.dual_coef_, self.support_vectors_)
+        return dot(self.dual_coef_, self.support_vectors_)
 
 
 class DenseBaseLibSVM(BaseLibSVM):
@@ -97,12 +127,11 @@ class DenseBaseLibSVM(BaseLibSVM):
         if hasattr(self, 'kernel_function'):
             # in the case of precomputed kernel given as a function, we
             # have to compute explicitly the kernel matrix
-            X = np.asanyarray(self.kernel_function(X, self.__Xfit),
-                               dtype=np.float64, order='C')
+            X = np.asarray(self.kernel_function(X, self.__Xfit),
+                           dtype=np.float64, order='C')
         return X
 
-    def fit(self, X, y, class_weight=None, sample_weight=None,
-            cache_size=100.):
+    def fit(self, X, y, class_weight=None, sample_weight=None):
         """Fit the SVM model according to the given training data.
 
         Parameters
@@ -125,9 +154,6 @@ class DenseBaseLibSVM(BaseLibSVM):
         sample_weight : array-like, shape = [n_samples], optional
             Weights applied to individual samples (1. for unweighted).
 
-        cache_size: float, optional
-            Specify the size of the cache (in MB)
-
         Returns
         -------
         self : object
@@ -140,10 +166,10 @@ class DenseBaseLibSVM(BaseLibSVM):
 
         """
 
-        X = np.asanyarray(X, dtype=np.float64, order='C')
-        y = np.asanyarray(y, dtype=np.float64, order='C')
-        sample_weight = np.asanyarray([] if sample_weight is None
-                                         else sample_weight, dtype=np.float64)
+        X = np.asarray(X, dtype=np.float64, order='C')
+        y = np.asarray(y, dtype=np.float64, order='C')
+        sample_weight = np.asarray([] if sample_weight is None
+                                      else sample_weight, dtype=np.float64)
 
         if hasattr(self, 'kernel_function'):
             # you must store a reference to X to compute the kernel in predict
@@ -158,7 +184,7 @@ class DenseBaseLibSVM(BaseLibSVM):
         solver_type = LIBSVM_IMPL.index(self.impl)
         if solver_type != 2 and X.shape[0] != y.shape[0]:
             raise ValueError("X and y have incompatible shapes.\n" +
-                             "X has %s samples, but y has %s." % \
+                             "X has %s samples, but y has %s." %
                              (X.shape[0], y.shape[0]))
 
         if self.kernel == "precomputed" and X.shape[0] != X.shape[1]:
@@ -169,13 +195,19 @@ class DenseBaseLibSVM(BaseLibSVM):
             self.gamma = 1.0 / X.shape[1]
         self.shape_fit_ = X.shape
 
+        params = self._get_params()
+        if 'scale_C' in params:
+            if params['scale_C']:
+                params['C'] = params['C'] / float(X.shape[0])
+            del params['scale_C']
+
         self.support_, self.support_vectors_, self.n_support_, \
         self.dual_coef_, self.intercept_, self.label_, self.probA_, \
         self.probB_ = libsvm.fit(X, y,
             svm_type=solver_type, sample_weight=sample_weight,
             class_weight=class_weight,
             class_weight_label=class_weight_label,
-            **self._get_params())
+            **params)
 
         return self
 
@@ -196,7 +228,7 @@ class DenseBaseLibSVM(BaseLibSVM):
         -------
         C : array, shape = [n_samples]
         """
-        X = np.asanyarray(X, dtype=np.float64, order='C')
+        X = np.asarray(X, dtype=np.float64, order='C')
         if X.ndim == 1:
             # don't use np.atleast_2d, it doesn't guarantee C-contiguity
             X = np.reshape(X, (1, -1), order='C')
@@ -213,12 +245,16 @@ class DenseBaseLibSVM(BaseLibSVM):
                              "the number of features at training time" %
                              (n_features, self.shape_fit_[1]))
 
+        params = self._get_params()
+        if 'scale_C' in params:
+            del params['scale_C']
+
         svm_type = LIBSVM_IMPL.index(self.impl)
         return libsvm.predict(
             X, self.support_, self.support_vectors_, self.n_support_,
             self.dual_coef_, self.intercept_,
             self.label_, self.probA_, self.probB_,
-            svm_type=svm_type, **self._get_params())
+            svm_type=svm_type, **params)
 
     def predict_proba(self, X):
         """Compute the likehoods each possible outcomes of samples in T.
@@ -247,7 +283,7 @@ class DenseBaseLibSVM(BaseLibSVM):
         if not self.probability:
             raise ValueError(
                     "probability estimates must be enabled to use this method")
-        X = np.asanyarray(X, dtype=np.float64, order='C')
+        X = np.asarray(X, dtype=np.float64, order='C')
         if X.ndim == 1:
             # don't use np.atleast_2d, it doesn't guarantee C-contiguity
             X = np.reshape(X, (1, -1), order='C')
@@ -256,12 +292,16 @@ class DenseBaseLibSVM(BaseLibSVM):
             raise NotImplementedError("predict_proba only implemented for SVC "
                                       "and NuSVC")
 
+        params = self._get_params()
+        if 'scale_C' in params:
+            del params['scale_C']
+
         svm_type = LIBSVM_IMPL.index(self.impl)
         pprob = libsvm.predict_proba(
             X, self.support_, self.support_vectors_, self.n_support_,
             self.dual_coef_, self.intercept_, self.label_,
             self.probA_, self.probB_,
-            svm_type=svm_type, **self._get_params())
+            svm_type=svm_type, **params)
 
         return pprob
 
@@ -278,18 +318,22 @@ class DenseBaseLibSVM(BaseLibSVM):
             Returns the decision function of the sample for each class
             in the model.
         """
-        X = np.asanyarray(X, dtype=np.float64, order='C')
+        X = np.asarray(X, dtype=np.float64, order='C')
         if X.ndim == 1:
             # don't use np.atleast_2d, it doesn't guarantee C-contiguity
             X = np.reshape(X, (1, -1), order='C')
         X = self._compute_kernel(X)
+
+        params = self._get_params()
+        if 'scale_C' in params:
+            del params['scale_C']
 
         dec_func = libsvm.decision_function(
             X, self.support_, self.support_vectors_, self.n_support_,
             self.dual_coef_, self.intercept_, self.label_,
             self.probA_, self.probB_,
             svm_type=LIBSVM_IMPL.index(self.impl),
-            **self._get_params())
+            **params)
 
         if self.impl != 'one_class':
             # libsvm has the convention of returning negative values for
@@ -315,7 +359,8 @@ class BaseLibLinear(BaseEstimator):
         }
 
     def __init__(self, penalty='l2', loss='l2', dual=True, tol=1e-4, C=1.0,
-                 multi_class=False, fit_intercept=True, intercept_scaling=1):
+                 multi_class=False, fit_intercept=True, intercept_scaling=1,
+                 scale_C=False):
         self.penalty = penalty
         self.loss = loss
         self.dual = dual
@@ -324,6 +369,7 @@ class BaseLibLinear(BaseEstimator):
         self.fit_intercept = fit_intercept
         self.intercept_scaling = intercept_scaling
         self.multi_class = multi_class
+        self.scale_C = scale_C
 
         # Check that the arguments given are valid:
         self._get_solver_type()
@@ -383,15 +429,24 @@ class BaseLibLinear(BaseEstimator):
         self.class_weight, self.class_weight_label = \
                      _get_class_weight(class_weight, y)
 
-        X = safe_asanyarray(X, dtype=np.float64, order='C')
+        X = safe_asarray(X, dtype=np.float64, order='C')
         if not isinstance(X, np.ndarray):   # sparse X passed in by user
             raise ValueError("Training vectors should be array-like, not %s"
                              % type(X))
-        y = np.asanyarray(y, dtype=np.int32, order='C')
+        y = np.asarray(y, dtype=np.int32, order='C')
+
+        if X.shape[0] != y.shape[0]:
+            raise ValueError("X and y have incompatible shapes.\n" +
+                             "X has %s samples, but y has %s." % \
+                             (X.shape[0], y.shape[0]))
+
+        C = self.C
+        if self.scale_C:
+            C = C / float(X.shape[0])
 
         self.raw_coef_, self.label_ = liblinear.train_wrap(X, y,
                        self._get_solver_type(), self.tol,
-                       self._get_bias(), self.C,
+                       self._get_bias(), C,
                        self.class_weight_label, self.class_weight)
 
         return self
@@ -407,8 +462,7 @@ class BaseLibLinear(BaseEstimator):
         -------
         C : array, shape = [n_samples]
         """
-        X = np.asanyarray(X, dtype=np.float64, order='C')
-        X = np.atleast_2d(X)
+        X = array2d(X, dtype=np.float64, order='C')
         self._check_n_features(X)
 
         coef = self.raw_coef_
@@ -433,7 +487,7 @@ class BaseLibLinear(BaseEstimator):
             Returns the decision function of the sample for each class
             in the model.
         """
-        X = np.asanyarray(X, dtype=np.float64, order='C')
+        X = np.asarray(X, dtype=np.float64, order='C')
         if X.ndim == 1:
             # don't use np.atleast_2d, it doesn't guarantee C-contiguity
             X = np.reshape(X, (1, -1), order='C')

@@ -12,6 +12,7 @@ from scipy import linalg
 from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
+from ..utils import array2d
 from ..utils.arrayfuncs import solve_triangular
 
 premature = """ Orthogonal matching pursuit ended prematurely due to linear
@@ -63,7 +64,7 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True):
     alpha = np.dot(X.T, y)
     residual = y
     n_active = 0
-    idx = []
+    indices = range(X.shape[1])  # keeping track of swapping
 
     max_features = X.shape[1] if tol is not None else n_nonzero_coefs
     L = np.empty((max_features, max_features), dtype=X.dtype)
@@ -84,9 +85,9 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True):
                 warn(premature)
                 break
             L[n_active, n_active] = np.sqrt(1 - v)
-        idx.append(lam)
         X.T[n_active], X.T[lam] = swap(X.T[n_active], X.T[lam])
         alpha[n_active], alpha[lam] = alpha[lam], alpha[n_active]
+        indices[n_active], indices[lam] = indices[lam], indices[n_active]
         n_active += 1
         # solves LL'x = y as a composition of two triangular systems
         gamma, _ = potrs(L[:n_active, :n_active], alpha[:n_active], lower=True,
@@ -98,7 +99,7 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True):
         elif n_active == max_features:
             break
 
-    return gamma, idx
+    return gamma, indices[:n_active]
 
 
 def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
@@ -152,7 +153,7 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
     nrm2, swap = linalg.get_blas_funcs(('nrm2', 'swap'), (Gram,))
     potrs, = get_lapack_funcs(('potrs',), (Gram,))
 
-    idx = []
+    indices = range(len(Gram))  # keeping track of swapping
     alpha = Xy
     tol_curr = tol_0
     delta = 0
@@ -176,9 +177,9 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
                 warn(premature)
                 break
             L[n_active, n_active] = np.sqrt(1 - v)
-        idx.append(lam)
         Gram[n_active], Gram[lam] = swap(Gram[n_active], Gram[lam])
         Gram.T[n_active], Gram.T[lam] = swap(Gram.T[n_active], Gram.T[lam])
+        indices[n_active], indices[lam] = indices[lam], indices[n_active]
         Xy[n_active], Xy[lam] = Xy[lam], Xy[n_active]
         n_active += 1
         # solves LL'x = y as a composition of two triangular systems
@@ -196,7 +197,7 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
         elif n_active == max_features:
             break
 
-    return gamma, idx
+    return gamma, indices[:n_active]
 
 
 def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute_gram=False,
@@ -260,10 +261,11 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute_gram=False,
     This implementation is based on Rubinstein, R., Zibulevsky, M. and Elad,
     M., Efficient Implementation of the K-SVD Algorithm using Batch Orthogonal
     Matching Pursuit Technical Report - CS Technion, April 2008.
-    http://www.cs.technion.ac.il/~ronrubin/Publications/KSVX-OMP-v2.pdf
+    http://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
 
     """
-    X, y = map(np.asanyarray, (X, y))
+    X = np.asarray(X)
+    y = np.asarray(y)
     if y.ndim == 1:
         y = y[:, np.newaxis]
     if copy_X:
@@ -361,10 +363,11 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
     This implementation is based on Rubinstein, R., Zibulevsky, M. and Elad,
     M., Efficient Implementation of the K-SVD Algorithm using Batch Orthogonal
     Matching Pursuit Technical Report - CS Technion, April 2008.
-    http://www.cs.technion.ac.il/~ronrubin/Publications/KSVX-OMP-v2.pdf
+    http://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
 
     """
-    Gram, Xy = map(np.asanyarray, (Gram, Xy))
+    Gram = np.asarray(Gram)
+    Xy = np.asarray(Xy)
     if Xy.ndim == 1:
         Xy = Xy[:, np.newaxis]
         if tol is not None:
@@ -396,48 +399,48 @@ class OrthogonalMatchingPursuit(LinearModel):
 
     Parameters
     ----------
-    n_nonzero_coefs: int, optional
+    n_nonzero_coefs : int, optional
         Desired number of non-zero entries in the solution. If None (by
         default) this value is set to 10% of n_features.
 
-    tol: float, optional
+    tol : float, optional
         Maximum norm of the residual. If not None, overrides n_nonzero_coefs.
 
-    fit_intercept: boolean, optional
+    fit_intercept : boolean, optional
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
-    normalize: boolean, optional
+    normalize : boolean, optional
         If False, the regressors X are assumed to be already normalized.
 
-    precompute_gram: {True, False, 'auto'},
+    precompute_gram : {True, False, 'auto'},
         Whether to use a precomputed Gram and Xy matrix to speed up
         calculations. Improves performance when `n_targets` or `n_samples` is
         very large. Note that if you already have such matrices, you can pass
         them directly to the fit method.
 
-    copy_X: bool, optional
+    copy_X : bool, optional
         Whether the design matrix X must be copied by the algorithm. A false
         value is only helpful if X is already Fortran-ordered, otherwise a
         copy is made anyway.
 
-    copy_Gram: bool, optional
+    copy_Gram : bool, optional
         Whether the gram matrix must be copied by the algorithm. A false
         value is only helpful if X is already Fortran-ordered, otherwise a
         copy is made anyway.
 
-    copy_Xy: bool, optional
+    copy_Xy : bool, optional
         Whether the covariance vector Xy must be copied by the algorithm.
         If False, it may be overwritten.
 
 
     Attributes
     ----------
-    coef_: array, shape = (n_features,) or (n_features, n_targets)
+    `coef_` : array, shape = (n_features,) or (n_features, n_targets)
         parameter vector (w in the fomulation formula)
 
-    intercept_: float or array, shape =(n_targets,)
+    `intercept_` : float or array, shape =(n_targets,)
         independent term in decision function.
 
     Notes
@@ -450,7 +453,7 @@ class OrthogonalMatchingPursuit(LinearModel):
     This implementation is based on Rubinstein, R., Zibulevsky, M. and Elad,
     M., Efficient Implementation of the K-SVD Algorithm using Batch Orthogonal
     Matching Pursuit Technical Report - CS Technion, April 2008.
-    http://www.cs.technion.ac.il/~ronrubin/Publications/KSVX-OMP-v2.pdf
+    http://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
 
     See also
     --------
@@ -499,8 +502,10 @@ class OrthogonalMatchingPursuit(LinearModel):
         self: object
             returns an instance of self.
         """
-        X = np.atleast_2d(X)
-        y = np.atleast_1d(y)
+        X = array2d(X)
+        y = np.asarray(y)
+        if y.ndim == 1:
+            y = y[:, np.newaxis]
         n_features = X.shape[1]
 
         X, y, X_mean, y_mean, X_std = self._center_data(X, y,
@@ -512,7 +517,7 @@ class OrthogonalMatchingPursuit(LinearModel):
             self.n_nonzero_coefs = int(0.1 * n_features)
 
         if Gram is not None:
-            Gram = np.atleast_2d(Gram)
+            Gram = array2d(Gram)
 
             if self.copy_Gram:
                 copy_Gram = False
@@ -521,6 +526,7 @@ class OrthogonalMatchingPursuit(LinearModel):
                 Gram = np.asfortranarray(Gram)
 
             copy_Gram = self.copy_Gram
+
             if y.shape[1] > 1:  # subsequent targets will be affected
                 copy_Gram = True
 

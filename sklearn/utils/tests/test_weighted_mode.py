@@ -1,12 +1,12 @@
 import numpy as np
-from numpy.testing import assert_array_almost_equal
 from sklearn.utils.extmath import weighted_mode
 
 from scipy import stats
 
+
 def test_uniform_weights():
     # with uniform weights, results should be identical to stats.mode
-    x = np.random.randint(10, size=(10,5))
+    x = np.random.randint(10, size=(10, 5))
     weights = np.ones(x.shape)
 
     for axis in (None, 0, 1):
@@ -15,6 +15,7 @@ def test_uniform_weights():
 
         assert np.all(mode == mode2)
         assert np.all(score == score2)
+
 
 def test_random_weights():
     # set this up so that each row should have a weighted mode of 6,

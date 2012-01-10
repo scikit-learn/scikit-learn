@@ -48,7 +48,7 @@ n_features = 1000
 n_topics = 10
 n_top_words = 20
 
-# Load the 20 newsgroups dataset and vectorizer it using the most common word
+# Load the 20 newsgroups dataset and vectorize it using the most common word
 # frequency with TF-IDF weighting (without top 5% stop words)
 
 t0 = time()
@@ -72,5 +72,5 @@ inverse_vocabulary = dict((v, k) for k, v in vectorizer.vocabulary.iteritems())
 for topic_idx, topic in enumerate(nmf.components_):
     print "Topic #%d:" % topic_idx
     print " ".join([inverse_vocabulary[i]
-                    for i in topic.argsort()[:-n_top_words:-1]])
+                    for i in topic.argsort()[:-n_top_words - 1:-1]])
     print

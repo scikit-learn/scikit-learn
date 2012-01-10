@@ -32,8 +32,9 @@ print __doc__
 from time import time
 
 import pylab as pl
-import scipy as sp
 import numpy as np
+
+from scipy.misc import lena
 
 from sklearn.decomposition import MiniBatchDictionaryLearning
 from sklearn.feature_extraction.image import extract_patches_2d
@@ -42,7 +43,7 @@ from sklearn.feature_extraction.image import reconstruct_from_patches_2d
 ###############################################################################
 # Load Lena image and extract patches
 
-lena = sp.lena() / 256.0
+lena = lena() / 256.0
 
 # downsample for higher speed
 lena = lena[::2, ::2] + lena[1::2, ::2] + lena[::2, 1::2] + lena[1::2, 1::2]
@@ -69,7 +70,7 @@ print 'done in %.2fs.' % (time() - t0)
 
 print 'Learning the dictionary... '
 t0 = time()
-dico = MiniBatchDictionaryLearning(n_atoms=100, alpha=1e-2, n_iter=500)
+dico = MiniBatchDictionaryLearning(n_atoms=100, alpha=1, n_iter=500)
 V = dico.fit(data).components_
 dt = time() - t0
 print 'done in %.2fs.' % dt
@@ -85,6 +86,7 @@ pl.suptitle('Dictionary learned from Lena patches\n' +
             'Train time %.1fs on %d patches' % (dt, len(data)),
             fontsize=16)
 pl.subplots_adjust(0.08, 0.02, 0.92, 0.85, 0.08, 0.23)
+
 
 ###############################################################################
 # Display the distorted image

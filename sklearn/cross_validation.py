@@ -1,18 +1,22 @@
-"""Utilities for cross validation and performance evaluation"""
+"""
+The :mod:`sklearn.cross_validation` module includes utilities for cross-
+validation and performance evaluation.
+"""
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>,
 #         Gael Varoquaux <gael.varoquaux@normalesup.org>,
 #         Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD Style.
 
-from math import ceil
+from itertools import combinations
+from math import ceil, floor, factorial
 import operator
 
 import numpy as np
+import scipy.sparse as sp
 
 from .base import is_classifier, clone
 from .utils import check_arrays, check_random_state
-from .utils.extmath import factorial, combinations
 from .utils.fixes import unique
 from .externals.joblib import Parallel, delayed
 
@@ -30,17 +34,17 @@ class LeaveOneOut(object):
     ShuffleSplit.
 
     Parameters
-    ==========
+    ----------
     n: int
         Total number of elements
 
-    indices: boolean, optional (default False)
-        Return train/test split with integer indices or boolean mask.
-        Integer indices are useful when dealing with sparse matrices
-        that cannot be indexed by boolean masks.
+    indices: boolean, optional (default True)
+        Return train/test split as arrays of indices, rather than a boolean
+        mask array. Integer indices are required when dealing with sparse
+        matrices, since those cannot be indexed by boolean masks.
 
     Examples
-    ========
+    --------
     >>> from sklearn import cross_validation
     >>> X = np.array([[1, 2], [3, 4]])
     >>> y = np.array([1, 2])
@@ -54,9 +58,9 @@ class LeaveOneOut(object):
     ...    X_train, X_test = X[train_index], X[test_index]
     ...    y_train, y_test = y[train_index], y[test_index]
     ...    print X_train, X_test, y_train, y_test
-    TRAIN: [False  True] TEST: [ True False]
+    TRAIN: [1] TEST: [0]
     [[3 4]] [[1 2]] [2] [1]
-    TRAIN: [ True False] TEST: [False  True]
+    TRAIN: [0] TEST: [1]
     [[1 2]] [[3 4]] [1] [2]
 
     See also
@@ -65,7 +69,7 @@ class LeaveOneOut(object):
     domain-specific stratification of the dataset.
     """
 
-    def __init__(self, n, indices=False):
+    def __init__(self, n, indices=True):
         self.n = n
         self.indices = indices
 
@@ -104,20 +108,20 @@ class LeavePOut(object):
     datasets one should favor KFold, StratifiedKFold or ShuffleSplit.
 
     Parameters
-    ===========
+    ----------
     n: int
         Total number of elements
 
     p: int
         Size of the test sets
 
-    indices: boolean, optional (default False)
-        Return train/test split with integer indices or boolean mask.
-        Integer indices are useful when dealing with sparse matrices
-        that cannot be indexed by boolean masks.
+    indices: boolean, optional (default True)
+        Return train/test split as arrays of indices, rather than a boolean
+        mask array. Integer indices are required when dealing with sparse
+        matrices, since those cannot be indexed by boolean masks.
 
     Examples
-    ========
+    --------
     >>> from sklearn import cross_validation
     >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
     >>> y = np.array([1, 2, 3, 4])
@@ -130,15 +134,15 @@ class LeavePOut(object):
     ...    print "TRAIN:", train_index, "TEST:", test_index
     ...    X_train, X_test = X[train_index], X[test_index]
     ...    y_train, y_test = y[train_index], y[test_index]
-    TRAIN: [False False  True  True] TEST: [ True  True False False]
-    TRAIN: [False  True False  True] TEST: [ True False  True False]
-    TRAIN: [False  True  True False] TEST: [ True False False  True]
-    TRAIN: [ True False False  True] TEST: [False  True  True False]
-    TRAIN: [ True False  True False] TEST: [False  True False  True]
-    TRAIN: [ True  True False False] TEST: [False False  True  True]
+    TRAIN: [2 3] TEST: [0 1]
+    TRAIN: [1 3] TEST: [0 2]
+    TRAIN: [1 2] TEST: [0 3]
+    TRAIN: [0 3] TEST: [1 2]
+    TRAIN: [0 2] TEST: [1 3]
+    TRAIN: [0 1] TEST: [2 3]
     """
 
-    def __init__(self, n, p, indices=False):
+    def __init__(self, n, p, indices=True):
         self.n = n
         self.p = p
         self.indices = indices
@@ -187,10 +191,10 @@ class KFold(object):
     k: int
         Number of folds
 
-    indices: boolean, optional (default False)
-        Return train/test split with integer indices or boolean mask.
-        Integer indices are useful when dealing with sparse matrices
-        that cannot be indexed by boolean masks.
+    indices: boolean, optional (default True)
+        Return train/test split as arrays of indices, rather than a boolean
+        mask array. Integer indices are required when dealing with sparse
+        matrices, since those cannot be indexed by boolean masks.
 
     Examples
     --------
@@ -206,8 +210,8 @@ class KFold(object):
     ...    print "TRAIN:", train_index, "TEST:", test_index
     ...    X_train, X_test = X[train_index], X[test_index]
     ...    y_train, y_test = y[train_index], y[test_index]
-    TRAIN: [False False  True  True] TEST: [ True  True False False]
-    TRAIN: [ True  True False False] TEST: [False False  True  True]
+    TRAIN: [2 3] TEST: [0 1]
+    TRAIN: [0 1] TEST: [2 3]
 
     Notes
     -----
@@ -221,7 +225,7 @@ class KFold(object):
     classification tasks).
     """
 
-    def __init__(self, n, k, indices=False):
+    def __init__(self, n, k, indices=True):
         assert k > 0, ValueError('Cannot have number of folds k below 1.')
         assert k <= n, ValueError('Cannot have number of folds k=%d, '
                                   'greater than the number '
@@ -277,10 +281,10 @@ class StratifiedKFold(object):
     k: int
         Number of folds
 
-    indices: boolean, optional (default False)
-        Return train/test split with integer indices or boolean mask.
-        Integer indices are useful when dealing with sparse matrices
-        that cannot be indexed by boolean masks.
+    indices: boolean, optional (default True)
+        Return train/test split as arrays of indices, rather than a boolean
+        mask array. Integer indices are required when dealing with sparse
+        matrices, since those cannot be indexed by boolean masks.
 
     Examples
     --------
@@ -296,8 +300,8 @@ class StratifiedKFold(object):
     ...    print "TRAIN:", train_index, "TEST:", test_index
     ...    X_train, X_test = X[train_index], X[test_index]
     ...    y_train, y_test = y[train_index], y[test_index]
-    TRAIN: [False  True False  True] TEST: [ True False  True False]
-    TRAIN: [ True False  True False] TEST: [False  True False  True]
+    TRAIN: [1 3] TEST: [0 2]
+    TRAIN: [0 2] TEST: [1 3]
 
     Notes
     -----
@@ -305,8 +309,8 @@ class StratifiedKFold(object):
     complementary.
     """
 
-    def __init__(self, y, k, indices=False):
-        y = np.asanyarray(y)
+    def __init__(self, y, k, indices=True):
+        y = np.asarray(y)
         n = y.shape[0]
         assert k > 0, ValueError('Cannot have number of folds k below 1.')
         assert k <= n, ValueError('Cannot have number of folds k=%d, '
@@ -365,10 +369,10 @@ class LeaveOneLabelOut(object):
         Arbitrary domain-specific stratification of the data to be used
         to draw the splits.
 
-    indices: boolean, optional (default False)
-        Return train/test split with integer indices or boolean mask.
-        Integer indices are useful when dealing with sparse matrices
-        that cannot be indexed by boolean masks.
+    indices: boolean, optional (default True)
+        Return train/test split as arrays of indices, rather than a boolean
+        mask array. Integer indices are required when dealing with sparse
+        matrices, since those cannot be indexed by boolean masks.
 
     Examples
     ----------
@@ -386,18 +390,18 @@ class LeaveOneLabelOut(object):
     ...    X_train, X_test = X[train_index], X[test_index]
     ...    y_train, y_test = y[train_index], y[test_index]
     ...    print X_train, X_test, y_train, y_test
-    TRAIN: [False False  True  True] TEST: [ True  True False False]
+    TRAIN: [2 3] TEST: [0 1]
     [[5 6]
      [7 8]] [[1 2]
      [3 4]] [1 2] [1 2]
-    TRAIN: [ True  True False False] TEST: [False False  True  True]
+    TRAIN: [0 1] TEST: [2 3]
     [[1 2]
      [3 4]] [[5 6]
      [7 8]] [1 2] [1 2]
 
     """
 
-    def __init__(self, labels, indices=False):
+    def __init__(self, labels, indices=True):
         self.labels = labels
         self.n_unique_labels = unique(labels).size
         self.indices = indices
@@ -450,10 +454,10 @@ class LeavePLabelOut(object):
     p : int
         Number of samples to leave out in the test split.
 
-    indices: boolean, optional (default False)
-        Return train/test split with integer indices or boolean mask.
-        Integer indices are useful when dealing with sparse matrices
-        that cannot be indexed by boolean masks.
+    indices: boolean, optional (default True)
+        Return train/test split as arrays of indices, rather than a boolean
+        mask array. Integer indices are required when dealing with sparse
+        matrices, since those cannot be indexed by boolean masks.
 
     Examples
     ----------
@@ -471,18 +475,18 @@ class LeavePLabelOut(object):
     ...    X_train, X_test = X[train_index], X[test_index]
     ...    y_train, y_test = y[train_index], y[test_index]
     ...    print X_train, X_test, y_train, y_test
-    TRAIN: [False False  True] TEST: [ True  True False]
+    TRAIN: [2] TEST: [0 1]
     [[5 6]] [[1 2]
      [3 4]] [1] [1 2]
-    TRAIN: [False  True False] TEST: [ True False  True]
+    TRAIN: [1] TEST: [0 2]
     [[3 4]] [[1 2]
      [5 6]] [2] [1 1]
-    TRAIN: [ True False False] TEST: [False  True  True]
+    TRAIN: [0] TEST: [1 2]
     [[1 2]] [[3 4]
      [5 6]] [1] [2 1]
     """
 
-    def __init__(self, labels, p, indices=False):
+    def __init__(self, labels, p, indices=True):
         self.labels = labels
         self.unique_labels = unique(self.labels)
         self.n_unique_labels = self.unique_labels.size
@@ -587,6 +591,9 @@ class Bootstrap(object):
     ShuffleSplit: cross validation using random permutations.
     """
 
+    # Static marker to be able to introspect the CV type
+    indices = True
+
     def __init__(self, n, n_bootstraps=3, n_train=0.5, n_test=None,
                  random_state=None):
         self.n = n
@@ -665,30 +672,44 @@ class ShuffleSplit(object):
         Should be between 0.0 and 1.0 and represent the proportion of
         the dataset to include in the test split.
 
-    indices : boolean, optional (default False)
-        Return train/test split with integer indices or boolean mask.
-        Integer indices are useful when dealing with sparse matrices
-        that cannot be indexed by boolean masks.
+    train_fraction : float or None (default is None)
+        Should be between 0.0 and 1.0 and represent the proportion of
+        the dataset to include in the train split. If None, the value is
+        automatically set to the complement of the test fraction.
+
+    indices : boolean, optional (default True)
+        Return train/test split as arrays of indices, rather than a boolean
+        mask array. Integer indices are required when dealing with sparse
+        matrices, since those cannot be indexed by boolean masks.
 
     random_state : int or RandomState
         Pseudo-random number generator state used for random sampling.
 
     Examples
-    ----------
+    --------
     >>> from sklearn import cross_validation
-    >>> rs = cross_validation.ShuffleSplit(4, n_iterations=3, test_fraction=.25,
-    ...                             random_state=0)
+    >>> rs = cross_validation.ShuffleSplit(4, n_iterations=3,
+    ...     test_fraction=.25, random_state=0)
     >>> len(rs)
     3
     >>> print rs
     ... # doctest: +ELLIPSIS
-    ShuffleSplit(4, n_iterations=3, test_fraction=0.25, indices=False, ...)
+    ShuffleSplit(4, n_iterations=3, test_fraction=0.25, indices=True, ...)
     >>> for train_index, test_index in rs:
     ...    print "TRAIN:", train_index, "TEST:", test_index
     ...
-    TRAIN: [False  True  True  True] TEST: [ True False False False]
-    TRAIN: [ True  True  True False] TEST: [False False False  True]
-    TRAIN: [ True False  True  True] TEST: [False  True False False]
+    TRAIN: [3 1 0] TEST: [2]
+    TRAIN: [2 1 3] TEST: [0]
+    TRAIN: [0 2 1] TEST: [3]
+
+    >>> rs = cross_validation.ShuffleSplit(4, n_iterations=3,
+    ...     train_fraction=0.5, test_fraction=.25, random_state=0)
+    >>> for train_index, test_index in rs:
+    ...    print "TRAIN:", train_index, "TEST:", test_index
+    ...
+    TRAIN: [3 1] TEST: [2]
+    TRAIN: [2 1] TEST: [0]
+    TRAIN: [0 2] TEST: [3]
 
     See also
     --------
@@ -696,21 +717,35 @@ class ShuffleSplit(object):
     """
 
     def __init__(self, n, n_iterations=10, test_fraction=0.1,
-                 indices=False, random_state=None):
+                 train_fraction=None, indices=True, random_state=None):
         self.n = n
         self.n_iterations = n_iterations
         self.test_fraction = test_fraction
+        self.train_fraction = train_fraction
         self.random_state = random_state
         self.indices = indices
+        if test_fraction >= 1.0:
+            raise ValueError(
+                "test_fraction=%f should be smaller than 1.0" % test_fraction)
+        if (train_fraction is not None
+            and train_fraction + test_fraction > 1.0):
+            raise ValueError(
+                'The sum of train_fraction=%f and test_fraction=%f '
+                'should be smaller or equal than 1.0' %
+                (train_fraction, test_fraction))
 
     def __iter__(self):
         rng = self.random_state = check_random_state(self.random_state)
         n_test = ceil(self.test_fraction * self.n)
+        if self.train_fraction is None:
+            n_train = self.n - n_test
+        else:
+            n_train = floor(self.train_fraction * self.n)
         for i in range(self.n_iterations):
             # random partition
             permutation = rng.permutation(self.n)
-            ind_train = permutation[:-n_test]
-            ind_test = permutation[-n_test:]
+            ind_test = permutation[:n_test]
+            ind_train = permutation[n_test:n_test + n_train]
 
             if self.indices:
                 yield ind_train, ind_test
@@ -771,9 +806,10 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, n_jobs=1,
         supervised learning.
 
     score_func: callable, optional
-        callable taking as arguments the fitted estimator, the
-        test data (X_test) and the test target (y_test) if y is
-        not None.
+        callable, has priority over the score function in the estimator.
+        In a non-supervised setting, where y is None, it takes the test
+        data (X_test) as its only argument. In a supervised setting it takes
+        the test target (y_true) and the test prediction (y_pred) as arguments.
 
     cv: cross-validation generator, optional
         A cross-validation generator. If None, a 3-fold cross
@@ -805,12 +841,12 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, n_jobs=1,
 
 def _permutation_test_score(estimator, X, y, cv, score_func):
     """Auxilary function for permutation_test_score"""
-    y_test = list()
-    y_pred = list()
+    avg_score = []
     for train, test in cv:
-        y_test.append(y[test])
-        y_pred.append(estimator.fit(X[train], y[train]).predict(X[test]))
-    return score_func(np.ravel(y_test), np.ravel(y_pred))
+        avg_score.append(score_func(y[test],
+                                    estimator.fit(X[train],
+                                                  y[train]).predict(X[test])))
+    return np.mean(avg_score)
 
 
 def _shuffle(y, labels, random_state):
@@ -829,7 +865,7 @@ def check_cv(cv, X=None, y=None, classifier=False):
     """Input checker utility for building a CV in a user friendly way.
 
     Parameters
-    ===========
+    ----------
     cv: an integer, a cv generator instance, or None
         The input specifying which cv generator to use. It can be an
         integer, in which case it is the number of folds in a KFold,
@@ -846,10 +882,10 @@ def check_cv(cv, X=None, y=None, classifier=False):
         whether the task is a classification task, in which case
         stratified KFold will be used.
     """
+    is_sparse = sp.issparse(X)
     if cv is None:
         cv = 3
     if operator.isNumberType(cv):
-        is_sparse = hasattr(X, 'tocsr')
         if classifier:
             cv = StratifiedKFold(y, cv, indices=is_sparse)
         else:
@@ -858,6 +894,9 @@ def check_cv(cv, X=None, y=None, classifier=False):
             else:
                 n_samples = X.shape[0]
             cv = KFold(n_samples, cv, indices=is_sparse)
+    if is_sparse and not getattr(cv, "indices", True):
+        raise ValueError("Sparse data require indices-based cross validation"
+                         " generator, got: %r", cv)
     return cv
 
 
@@ -914,13 +953,14 @@ def permutation_test_score(estimator, X, y, score_func, cv=None,
         The scores obtained for each permutations.
 
     pvalue: float
-        The returned value equals p-value if `score_func` returns bigger numbers
-        for better scores (e.g., zero_one). If `score_func` is rather a loss
-        function (i.e. when lower is better such as with `mean_square_error`)
-        then this is actually the complement of the p-value:  1 - p-value.
+        The returned value equals p-value if `score_func` returns bigger
+        numbers for better scores (e.g., zero_one). If `score_func` is rather a
+        loss function (i.e. when lower is better such as with
+        `mean_square_error`) then this is actually the complement of the
+        p-value:  1 - p-value.
 
-    References
-    ----------
+    Notes
+    -----
     This function implements Test 1 in:
 
         Ojala and Garriga. Permutation Tests for Studying Classifier

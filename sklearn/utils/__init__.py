@@ -1,152 +1,11 @@
+"""
+The :mod:`sklearn.utils` module includes various utilites.
+"""
+
 import numpy as np
-import scipy.sparse as sp
 import warnings
 
-
-def assert_all_finite(X):
-    """Throw a ValueError if X contains NaN or infinity.
-    Input MUST be an np.ndarray instance or a scipy.sparse matrix."""
-
-    # First try an O(n) time, O(1) space solution for the common case that
-    # there everything is finite; fall back to O(n) space np.isfinite to
-    # prevent false positives from overflow in sum method.
-    if X.dtype.char in np.typecodes['AllFloat'] and not np.isfinite(X.sum()) \
-      and not np.isfinite(X).all():
-            raise ValueError("array contains NaN or infinity")
-
-
-def safe_asanyarray(X, dtype=None, order=None):
-    if not sp.issparse(X):
-        X = np.asanyarray(X, dtype, order)
-    assert_all_finite(X)
-    return X
-
-
-def as_float_array(X, copy=True):
-    """Converts a numpy array to an array of floats
-
-    The new dtype will be np.float32 or np.float64, depending on the original
-    type. The function can create a copy or modify the argument depending
-    on the argument copy.
-
-    Parameters
-    ----------
-    X : array
-
-    copy : bool, optional
-        If True, a copy of X will be created. If False, a copy may still be
-        returned if X's dtype is not a floating point type.
-
-    Returns
-    -------
-    X : array
-        An array of type np.float
-    """
-    if X.dtype in [np.float32, np.float64]:
-        return X.copy() if copy else X
-    if X.dtype == np.int32:
-        X = X.astype(np.float32)
-    else:
-        X = X.astype(np.float64)
-    return X
-
-
-def atleast2d_or_csr(X):
-    """Like numpy.atleast_2d, but converts sparse matrices to CSR format"""
-    X = X.tocsr() if sp.issparse(X) else np.atleast_2d(X)
-    assert_all_finite(X)
-    return X
-
-
-def check_random_state(seed):
-    """Turn seed into a np.random.RandomState instance
-
-    If seed is None, return the RandomState singleton used by np.random.
-    If seed is an int, return a new RandomState instance seeded with seed.
-    If seed is already a RandomState instance, return it.
-    Otherwise raise ValueError.
-    """
-    if seed is None or seed is np.random:
-        return np.random.mtrand._rand
-    if isinstance(seed, int):
-        return np.random.RandomState(seed)
-    if isinstance(seed, np.random.RandomState):
-        return seed
-    raise ValueError('%r cannot be used to seed a numpy.random.RandomState'
-                     ' instance' % seed)
-
-
-def check_arrays(*arrays, **options):
-    """Checked that all arrays have consistent first dimensions
-
-    Parameters
-    ----------
-    *arrays : sequence of arrays or scipy.sparse matrices with same shape[0]
-        Python lists or tuples occurring in arrays are converted to 1D numpy
-        arrays.
-
-    sparse_format : 'csr' or 'csc', None by default
-        If not None, any scipy.sparse matrix is converted to
-        Compressed Sparse Rows or Compressed Sparse Columns representations.
-
-    copy : boolean, False by default
-        If copy is True, ensure that returned arrays are copies of the original
-        (if not already converted to another format earlier in the process).
-    """
-    sparse_format = options.pop('sparse_format', None)
-    if sparse_format not in (None, 'csr', 'csc'):
-        raise ValueError('Unexpected sparse format: %r' % sparse_format)
-    copy = options.pop('copy', False)
-    if options:
-        raise ValueError("Unexpected kw arguments: %r" % options.keys())
-
-    if len(arrays) == 0:
-        return None
-
-    first = arrays[0]
-    if not hasattr(first, '__len__') and not hasattr(first, 'shape'):
-        raise ValueError("Expected python sequence or array, got %r" % first)
-    n_samples = first.shape[0] if hasattr(first, 'shape') else len(first)
-
-    checked_arrays = []
-    for array in arrays:
-        array_orig = array
-        if array is None:
-            # special case: ignore optional y=None kwarg pattern
-            checked_arrays.append(array)
-            continue
-
-        if not hasattr(array, '__len__') and not hasattr(array, 'shape'):
-            raise ValueError("Expected python sequence or array, got %r"
-                             % array)
-        size = array.shape[0] if hasattr(array, 'shape') else len(array)
-
-        if size != n_samples:
-            raise ValueError("Found array with dim %d. Expected %d" % (
-                size, n_samples))
-
-        if sp.issparse(array):
-            if sparse_format == 'csr':
-                array = array.tocsr()
-            elif sparse_format == 'csc':
-                array = array.tocsc()
-        else:
-            array = np.asanyarray(array)
-
-        if copy and array is array_orig:
-            array = array.copy()
-        checked_arrays.append(array)
-
-    return checked_arrays
-
-
-def warn_if_not_float(X, estimator='This algorithm'):
-    """Warning utility function to check that data type is floating point"""
-    if not isinstance(estimator, basestring):
-        estimator = estimator.__class__.__name__
-    if X.dtype.kind != 'f':
-        warnings.warn("%s assumes floating point values as input, "
-                      "got %s" % (estimator, X.dtype))
+from .validation import *
 
 
 class deprecated(object):
@@ -165,13 +24,6 @@ class deprecated(object):
 
     >>> @deprecated()
     ... def some_function(): pass
-
-    Deprecating a class takes some work, since we want to run on Python
-    versions that do not have class decorators:
-
-    >>> class Foo(object): pass
-    ...
-    >>> Foo = deprecated("Use Bar instead")(Foo)
     """
 
     # Adapted from http://wiki.python.org/moin/PythonDecoratorLibrary,
@@ -208,9 +60,7 @@ class deprecated(object):
     def _decorate_fun(self, fun):
         """Decorate function fun"""
 
-        what = "Function %s" % fun.__name__
-
-        msg = "%s is deprecated" % what
+        msg = "Function %s is deprecated" % fun.__name__
         if self.extra:
             msg += "; %s" % self.extra
 
@@ -241,7 +91,7 @@ def resample(*arrays, **options):
 
     Parameters
     ----------
-    *arrays : sequence of arrays or scipy.sparse matrices with same shape[0]
+    `*arrays` : sequence of arrays or scipy.sparse matrices with same shape[0]
 
     replace : boolean, True by default
         Implements resampling with replacement. If False, this will implement
@@ -254,13 +104,13 @@ def resample(*arrays, **options):
     random_state : int or RandomState instance
         Control the shuffling for reproducible behavior.
 
-    Return
-    ------
+    Returns
+    -------
     Sequence of resampled views of the collections. The original arrays are
     not impacted.
 
-    Example
-    -------
+    Examples
+    --------
     It is possible to mix sparse and dense arrays in the same run::
 
       >>> X = [[1., 0.], [2., 1.], [0., 0.]]
@@ -316,9 +166,7 @@ def resample(*arrays, **options):
         raise ValueError("Cannot sample %d out of arrays with dim %d" % (
             max_n_samples, n_samples))
 
-    # To cope with Python 2.5 syntax limitations
-    kwargs = dict(sparse_format='csr')
-    arrays = check_arrays(*arrays, **kwargs)
+    arrays = check_arrays(*arrays, sparse_format='csr')
 
     if replace:
         indices = random_state.randint(0, n_samples, size=(max_n_samples,))
@@ -343,12 +191,12 @@ def resample(*arrays, **options):
 def shuffle(*arrays, **options):
     """Shuffle arrays or sparse matrices in a consistent way
 
-    This is a convenience alias to resample(*arrays, replace=False) to do
+    This is a convenience alias to ``resample(*arrays, replace=False)`` to do
     random permutations of the collections.
 
     Parameters
     ----------
-    *arrays : sequence of arrays or scipy.sparse matrices with same shape[0]
+    `*arrays` : sequence of arrays or scipy.sparse matrices with same shape[0]
 
     random_state : int or RandomState instance
         Control the shuffling for reproducible behavior.
@@ -357,13 +205,13 @@ def shuffle(*arrays, **options):
         Number of samples to generate. If left to None this is
         automatically set to the first dimension of the arrays.
 
-    Return
-    ------
+    Returns
+    -------
     Sequence of shuffled views of the collections. The original arrays are
     not impacted.
 
-    Example
-    -------
+    Examples
+    --------
     It is possible to mix sparse and dense arrays in the same run::
 
       >>> X = [[1., 0.], [2., 1.], [0., 0.]]
@@ -426,3 +274,7 @@ def gen_even_slices(n, n_packs):
             end = start + this_n
             yield slice(start, end, None)
             start = end
+
+
+class ConvergenceWarning(Warning):
+    "Custom warning to capture convergence problems"

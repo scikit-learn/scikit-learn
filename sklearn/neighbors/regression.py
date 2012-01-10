@@ -8,7 +8,6 @@
 # License: BSD, (C) INRIA, University of Amsterdam
 
 import numpy as np
-from scipy import linalg
 
 from .base import \
     _get_weights, _check_weights, \
@@ -94,8 +93,6 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
     See :ref:`Nearest Neighbors <neighbors>` in the online documentation
     for a discussion of the choice of ``algorithm`` and ``leaf_size``.
 
-    References
-    ----------
     http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
@@ -203,8 +200,6 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
     See :ref:`Nearest Neighbors <neighbors>` in the online documentation
     for a discussion of the choice of ``algorithm`` and ``leaf_size``.
 
-    References
-    ----------
     http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
@@ -243,6 +238,8 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
                              for (i, ind) in enumerate(neigh_ind)])
 
 
+@deprecated("""will be removed in v0.11;
+use KNeighborsRegressor or RadiusNeighborsRegressor instead""")
 class NeighborsRegressor(NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin,
                          SupervisedFloatMixin,
                          RegressorMixin):
@@ -313,8 +310,6 @@ class NeighborsRegressor(NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin,
     See :ref:`Nearest Neighbors <neighbors>` in the online documentation
     for a discussion of the choice of ``algorithm`` and ``leaf_size``.
 
-    References
-    ----------
     http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
@@ -356,8 +351,3 @@ class NeighborsRegressor(NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin,
             # compute interpolation on y
             return np.array([np.mean(self._y[ind])
                              for ind in neigh_ind])
-
-NeighborsRegressor = deprecated(
-    "deprecated in v0.9; will be removed in v0.11; "
-    "use KNeighborsRegressor or RadiusNeighborsRegressor instead")(
-    NeighborsRegressor)

@@ -1,6 +1,6 @@
 """
-Metrics module with score functions, performance metrics and
-pairwise metrics or distances computation
+The :mod:`sklearn.metrics` module includes score functions, performance metrics
+and pairwise metrics and distance computations.
 """
 
 from .metrics import confusion_matrix, roc_curve, auc, precision_score, \
@@ -16,4 +16,6 @@ from .cluster import homogeneity_score
 from .cluster import completeness_score
 from .cluster import v_measure_score
 from .cluster import silhouette_score
+from .cluster import mutual_info_score
+from .cluster import adjusted_mutual_info_score
 from .pairwise import euclidean_distances, pairwise_distances, pairwise_kernels

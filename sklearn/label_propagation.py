@@ -1,30 +1,15 @@
-# encoding=UTF-8
-"""Graph based semi-supervised learning with label propagation algorithms
-
+#coding=utf8
+"""
 Label propagation in the context of this module refers to a set of
-semi-supervised classification algorithms. In the high level, these algorithms
+semisupervised classification algorithms. In the high level, these algorithms
 work by forming a fully-connected graph between all points given and solving
-for the steady-state distribution of labels at each point. Using these
-algorithms assumes that the data can be clustered across a lower dimensional
-manifold.
+for the steady-state distribution of labels at each point.
 
 These algorithms perform very well in practice. The cost of running can be very
 expensive, at approximately O(N^3) where N is the number of (labeled and
 unlabeled) points. The theory (why they perform so well) is motivated by
 intuitions from random walk algorithms and geometric relationships in the data.
 For more information see the references below.
-
-This algorithm solves a convex optimization problem and will converge to one
-global solution. The ordering of input labels will not change the solution.
-
-The algorithms assume maximum entropy priors for unlabeled data in each case
-of these algorithms. It may be desired to incorporate prior information in
-light of some domain information.
-
-LabelSpreading is recommended for a good general case semi-supervised solution.
-LabelPropagation much easier to understand and intuitive, so it may be good
-for debugging, feature selection, and graph analysis, but in the most general
-case it will be outperformed by LabelSpreading.
 
 Model Features
 --------------
@@ -37,8 +22,7 @@ Label clamping:
 
 Kernel:
   A function which projects a vector into some higher dimensional space. See
-  the documentation for SVMs for more info on kernels. Only RBF kernels are
-  currently supported.
+  the documentation for SVMs for more info on kernels.
 
 Example
 -------
@@ -51,9 +35,13 @@ Example
 >>> labels[random_unlabeled_points] = -1
 >>> label_prop_model.fit(iris.data, labels)
 ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-LabelPropagation(alpha=1, gamma=20, kernel='rbf', max_iter=30, n_neighbors=7,
+LabelPropagation(alpha=1, gamma=20, kernel='rbf', max_iters=30, n_neighbors=7,
          tol=0.001, unlabeled_identifier=-1)
 
+=======
+>>> label_prop_model.fit(iris.data, labels, unlabeled_identifier=-1)
+... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+LabelPropagation(...)
 
 Notes
 -----
@@ -61,6 +49,7 @@ References:
 [1] Yoshua Bengio, Olivier Delalleau, Nicolas Le Roux. In Semi-Supervised
 Learning (2006), pp. 193-216
 """
+
 import numpy as np
 from scipy import sparse
 
@@ -69,58 +58,42 @@ from .metrics.pairwise import rbf_kernel
 from .neighbors.graph import kneighbors_graph
 from .utils.graph import graph_laplacian
 from .utils.fixes import divide_out
+
+from neighbors.unsupervised import NearestNeighbors
+
 # Authors: Clay Woolam <clay@woolam.org>
-# License: BSD
+
+EPSILON = 1e-9
 
 
 class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
-    """Base class for label propagation module.
+    """
+    Base class for label propagation module.
 
     Parameters
     ----------
     kernel : string
-        string identifier for kernel function to use
-        only 'rbf' kernel is currently supported
-
+      string identifier for kernel function to use
+      only 'rbf' kernel is currently supported
     gamma : float
-        parameter for rbf kernel
-
+      parameter for rbf kernel
     alpha : float
-        clamping factor
+      clamping factor
 
     unlabeled_identifier : any object, same class as label objects
-        a special identifier label that represents unlabeled examples
-        in the training set
+      a special identifier label that represents unlabeled examples
+      in the training set
 
-    max_iter : float
-        change maximum number of iterations allowed
-
+    max_iters : float
+      change maximum number of iterations allowed
     tol : float
-        threshold to consider the system at steady state
-
-    Attributes
-    ----------
-    `X_` : array, shape = [n_samples, n_features]
-        Input data points gauranteed to be a numpy object. Needed for
-        inference done with predict and predict_proba
-
-    `label_distributions_` : array, shape = [n_samples, n_classes]
-        Learned probability distributions for all input data points
-
-    `unique_labels_` : array, shape = [n_classes]
-        Mapping of class labels to fields in a probability distribution
-        vector
-
-    `transduction_` : array, shape = [n_samples]
-        Highest probability assigned class label for each point in the
-        input data set
+      threshold to consider the system at steady state
     """
 
-    def __init__(self, kernel='rbf', gamma=20, n_neighbors=2,
-            alpha=1, unlabeled_identifier=-1, max_iter=30,
+    def __init__(self, kernel='rbf', gamma=20, alpha=1,
+            unlabeled_identifier=-1, max_iters=30, n_neighbors=2,
             tol=1e-3):
-
-        self.max_iter = max_iter
+        self.max_iters = max_iters
         self.tol = tol
 
         # object referring to a point that is unlabeled
@@ -144,7 +117,6 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
             if y is None:
                 return kneighbors_graph(X, self.n_neighbors)
             else:
-                from neighbors.unsupervised import NearestNeighbors
                 return NearestNeighbors(self.n_neighbors).fit(X).kneighbors(y, return_distance=False)
         else:
             raise ValueError("%s is not a valid kernel. Only rbf \
@@ -201,7 +173,9 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         return inference
 
     def fit(self, X, y):
-        """Fit a semi-supervised label propagation model on X and y.
+        """
+        Fit a semi-supervised label propagation model based on input data
+        matrix X and corresponding label matrix Y.
 
         Parameters
         ----------
@@ -209,14 +183,13 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
           A {n_samples by n_samples} size matrix will be created from this
           (keep dataset fewer than 2000 points)
 
-        y : array_like, shape = [n_samples]
-          Signal to predict with unlabeled points marked with a special
-          identifier. All unlabeled samples will be transductively assigned
-          labels
+        y : array_like, shape = [n_labeled_samples]
+          n_labeled_samples (unlabeled points marked with a special identifier)
+          All unlabeled samples will be transductively assigned labels
 
         Returns
         -------
-        Updated LabelPropagation object with a new transduction results
+        updated LabelPropagation object with a new transduction results
         """
         self.X_ = np.asanyarray(X)
 
@@ -250,7 +223,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         l_previous = np.zeros((self.X_.shape[0], n_classes))
         self.label_distributions_.resize((self.X_.shape[0], n_classes))
 
-        remaining_iter = self.max_iter
+        remaining_iter = self.max_iters
         if sparse.isspmatrix(graph_matrix):
             graph_matrix = graph_matrix.tocsr()
         while (_not_converged(self.label_distributions_, l_previous, self.tol)
@@ -278,33 +251,25 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
 
 
 class LabelPropagation(BaseLabelPropagation):
-    """Semi-supervised learning using Label Spreading strategy.
-
-    Baseline semi-supervised estimator using a stochastic affinity
-    matrix and hard clamping.
-
-    Samples with missing label information must be assigned a special
-    marker (the -1 integer by default) instead of the usual label value.
+    """
+    Computes a stochastic affinity matrix and uses hard clamping.
 
     Parameters
     ----------
     kernel : string
-      String identifier for kernel function to use.  Only 'rbf' kernel
-      is currently supported
-
+      string identifier for kernel function to use
+      only 'rbf' kernel is currently supported
     gamma : float
       parameter for rbf kernel
-
+    n_neighbors : integer > 0
+      parameter for knn kernel
     alpha : float
       clamping factor
-
     unlabeled_identifier : any object, same class as label objects
       a special identifier label that represents unlabeled examples
       in the training set
-
-    max_iter : float
+    max_iters : float
       change maximum number of iterations allowed
-
     tol : float
       threshold to consider the system at steady state
 
@@ -318,9 +283,8 @@ class LabelPropagation(BaseLabelPropagation):
     >>> labels = np.copy(iris.target)
     >>> labels[random_unlabeled_points] = -1
     >>> label_prop_model.fit(iris.data, labels)
-    ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    LabelPropagation(alpha=1, gamma=20, kernel='rbf', max_iter=30, n_neighbors=7,
-                 tol=0.001, unlabeled_identifier=-1)
+    ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    LabelPropagation(...)
 
     References
     ----------
@@ -350,34 +314,26 @@ class LabelPropagation(BaseLabelPropagation):
 
 
 class LabelSpreading(BaseLabelPropagation):
-    """Semi-supervised learning using Label Spreading strategy.
-
+    """
     Similar to the basic Label Propgation algorithm, but uses affinity matrix
-    based on the graph laplacian and soft clamping accross the labels. Will be
-    more robust to noise & uncertainty in the input labeling.
-
-    Samples with missing label information must be assigned a special
-    marker (the -1 integer by default) instead of the usual label value.
+    based on the graph laplacian and soft clamping accross the labels.
 
     Parameters
     ----------
     kernel : string
       string identifier for kernel function to use
       only 'rbf' kernel is currently supported
-
     gamma : float
       parameter for rbf kernel
-
+    n_neighbors : integer > 0
+      parameter for knn kernel
     alpha : float
       clamping factor
-
     unlabeled_identifier : any object, same class as label objects
       a special identifier label that represents unlabeled examples
       in the training set
-
-    max_iter : float
+    max_iters : float
       change maximum number of iterations allowed
-
     tol : float
       threshold to consider the system at steady state
 
@@ -390,10 +346,9 @@ class LabelSpreading(BaseLabelPropagation):
     ...    size=len(iris.target)))
     >>> labels = np.copy(iris.target)
     >>> labels[random_unlabeled_points] = -1
-    >>> label_prop_model.fit(iris.data, labels)
-    ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    LabelSpreading(alpha=0.2, gamma=20, kernel='rbf', max_iter=30, tol=0.001,
-           unlabeled_identifier=-1)
+    >>> label_prop_model.fit(iris.data, labels, unlabeled_identifier=-1)
+    ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    LabelSpreading(...)
 
     References
     ----------
@@ -407,11 +362,11 @@ class LabelSpreading(BaseLabelPropagation):
     """
 
     def __init__(self, kernel='rbf', gamma=20, alpha=0.2,
-            unlabeled_identifier=-1, max_iter=30, tol=1e-3):
+            unlabeled_identifier=-1, max_iters=30, tol=1e-3):
         # this one has different base parameters
         super(LabelSpreading, self).__init__(kernel=kernel, gamma=gamma,
                 alpha=alpha, unlabeled_identifier=unlabeled_identifier,
-                max_iter=max_iter, tol=tol)
+                max_iters=max_iters, tol=tol)
 
     def _build_graph(self):
         """Graph matrix for Label Spreading computes the graph laplacian"""

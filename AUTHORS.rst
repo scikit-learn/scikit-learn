@@ -11,14 +11,16 @@ This project was started in 2007 as a Google Summer of Code project by
 David Cournapeau. Later that year, Matthieu Brucher started work on
 this project as part of his thesis.
 
-In 2010 Fabian Pedregosa, Gael Varoquaux, Alexandre Gramfort and
-Vincent Michel took leadership of the project and made the first
-public release, February the 1st 2010. Since then, several releases
-have appeard following a ~3 month cycle.
+In 2010 Fabian Pedregosa, Gael Varoquaux, Alexandre Gramfort and Vincent
+Michel of INRIA took leadership of the project and made the first public
+release, February the 1st 2010. Since then, several releases have appeard
+following a ~3 month cycle, and a striving international community has
+been leading the development.
 
 People
 ------
 
+.. hlist::
 
   * David Cournapeau
 
@@ -94,6 +96,9 @@ People
   * Robert Layton
 
   * `Gilles Louppe <http://www.montefiore.ulg.ac.be/~glouppe>`_
+
+  * `Andreas Müller <http://www.ais.uni-bonn.de/~amueller/>`_
+
 
 If I forgot anyone, do not hesitate to send me an email to
 fabian.pedregosa@inria.fr and I'll include you in the list.

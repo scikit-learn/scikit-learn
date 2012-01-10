@@ -14,10 +14,11 @@ shrunk_cov = (1-shrinkage)*cov + shrinkage*structured_estimate.
 
 # avoid division truncation
 from __future__ import division
-
+import warnings
 import numpy as np
 
 from .empirical_covariance_ import empirical_covariance, EmpiricalCovariance
+from ..utils import array2d
 
 
 ###############################################################################
@@ -50,7 +51,7 @@ def shrunk_covariance(emp_cov, shrinkage=0.1):
     where mu = trace(cov) / n_features
 
     """
-    emp_cov = np.atleast_2d(emp_cov)
+    emp_cov = array2d(emp_cov)
     n_features = emp_cov.shape[0]
 
     mu = np.trace(emp_cov) / n_features
@@ -121,8 +122,8 @@ class ShrunkCovariance(EmpiricalCovariance):
             Returns self.
 
         """
-        empirical_cov = empirical_covariance(X,
-                                             assume_centered=assume_centered)
+        empirical_cov = empirical_covariance(
+            X, assume_centered=assume_centered)
         covariance = shrunk_covariance(empirical_cov, self.shrinkage)
         self._set_estimates(covariance)
 
@@ -165,13 +166,20 @@ def ledoit_wolf(X, assume_centered=False):
     where mu = trace(cov) / n_features
 
     """
-    X = np.asanyarray(X)
+    X = np.asarray(X)
     # for only one feature, the result is the same whatever the shrinkage
-    if X.ndim == 1:
+    if len(X.shape) == 2 and X.shape[1] == 1:
         if not assume_centered:
             X = X - X.mean()
         return np.atleast_2d((X ** 2).mean()), 0.
-    n_samples, n_features = X.shape
+    if X.ndim == 1:
+        X = np.reshape(X, (1, -1))
+        warnings.warn("Only one sample available. " \
+                          "You may want to reshape your data array")
+        n_samples = 1
+        n_features = X.size
+    else:
+        n_samples, n_features = X.shape
 
     # optionaly center data
     if not assume_centered:
@@ -229,10 +237,9 @@ class LedoitWolf(EmpiricalCovariance):
                 + shrinkage*mu*np.identity(n_features)
 
     where mu = trace(cov) / n_features
-    and shinkage is given by the Ledoit and Wolf formula (see Reference)
+    and shinkage is given by the Ledoit and Wolf formula (see References)
 
-    Reference
-    ---------
+    **References**:
     "A Well-Conditioned Estimator for Large-Dimensional Covariance Matrices",
     Ledoit and Wolf, Journal of Multivariate Analysis, Volume 88, Issue 2,
     February 2004, pages 365-411.
@@ -303,13 +310,20 @@ def oas(X, assume_centered=False):
     where mu = trace(cov) / n_features
 
     """
-    X = np.asanyarray(X)
+    X = np.asarray(X)
     # for only one feature, the result is the same whatever the shrinkage
-    if X.ndim == 1:
+    if len(X.shape) == 2 and X.shape[1] == 1:
         if not assume_centered:
             X = X - X.mean()
         return np.atleast_2d((X ** 2).mean()), 0.
-    n_samples, n_features = X.shape
+    if X.ndim == 1:
+        X = np.reshape(X, (1, -1))
+        warnings.warn("Only one sample available. " \
+                          "You may want to reshape your data array")
+        n_samples = 1
+        n_features = X.size
+    else:
+        n_samples, n_features = X.shape
 
     emp_cov = empirical_covariance(X, assume_centered=assume_centered)
     mu = np.trace(emp_cov) / n_features
@@ -364,10 +378,9 @@ class OAS(EmpiricalCovariance):
                 + shrinkage*mu*np.identity(n_features)
 
     where mu = trace(cov) / n_features
-    and shinkage is given by the OAS formula (see Reference)
+    and shinkage is given by the OAS formula (see References)
 
-    Reference
-    ---------
+    **References**:
     "Shrinkage Algorithms for MMSE Covariance Estimation"
     Chen et al., IEEE Trans. on Sign. Proc., Volume 58, Issue 10, October 2010.
 

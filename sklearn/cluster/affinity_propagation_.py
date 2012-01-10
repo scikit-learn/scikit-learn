@@ -10,6 +10,7 @@ clustering.
 import numpy as np
 
 from ..base import BaseEstimator
+from ..utils import as_float_array
 
 
 def affinity_propagation(S, p=None, convit=30, max_iter=200, damping=0.5,
@@ -44,16 +45,12 @@ def affinity_propagation(S, p=None, convit=30, max_iter=200, damping=0.5,
     -----
     See examples/plot_affinity_propagation.py for an example.
 
-    Reference:
+    **References**:
     Brendan J. Frey and Delbert Dueck, "Clustering by Passing Messages
     Between Data Points", Science Feb. 2007
 
     """
-    if copy:
-        # Copy the affinity matrix to avoid modifying it inplace
-        S = np.array(S, copy=True, dtype=np.float)
-    else:
-        S = np.asanyarray(S, dtype=np.float)
+    S = as_float_array(S, copy=copy)
 
     n_points = S.shape[0]
 
@@ -176,26 +173,21 @@ class AffinityPropagation(BaseEstimator):
     copy: boolean, optional
         Make a copy of input data. True by default.
 
-    Methods
-    -------
-
-    fit:
-        Compute the clustering
 
     Attributes
     ----------
 
-    cluster_centers_indices_ : array, [n_clusters]
+    `cluster_centers_indices_` : array, [n_clusters]
         Indices of cluster centers
 
-    labels_ : array, [n_samples]
+    `labels_` : array, [n_samples]
         Labels of each point
 
     Notes
     -----
     See examples/plot_affinity_propagation.py for an example.
 
-    Reference:
+    **References**:
 
     Brendan J. Frey and Delbert Dueck, "Clustering by Passing Messages
     Between Data Points", Science Feb. 2007
@@ -211,7 +203,7 @@ class AffinityPropagation(BaseEstimator):
         self.copy = copy
 
     def fit(self, S, p=None):
-        """compute MeanShift
+        """Compute MeanShift clustering.
 
         Parameters
         ----------

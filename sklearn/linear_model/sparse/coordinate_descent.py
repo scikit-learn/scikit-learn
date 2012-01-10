@@ -9,6 +9,7 @@ import warnings
 import numpy as np
 import scipy.sparse as sp
 
+from ...utils.extmath import safe_sparse_dot
 from ..base import LinearModel
 from . import cd_fast_sparse
 
@@ -16,7 +17,7 @@ from . import cd_fast_sparse
 class ElasticNet(LinearModel):
     """Linear Model trained with L1 and L2 prior as regularizer
 
-    This implementation works on scipy.sparse X and dense coef_.
+    This implementation works on scipy.sparse X and dense `coef_`.
 
     rho=1 is the lasso penalty. Currently, rho <= 0.01 is not
     reliable, unless you supply your own sequence of alpha.
@@ -27,7 +28,7 @@ class ElasticNet(LinearModel):
         Constant that multiplies the L1 term. Defaults to 1.0
     rho : float
         The ElasticNet mixing parameter, with 0 < rho <= 1.
-    coef_ : ndarray of shape n_features
+    `coef_` : ndarray of shape n_features
         The initial coeffients to warm-start the optimization
     fit_intercept: bool
         Whether the intercept should be estimated or not. If False, the
@@ -68,7 +69,7 @@ class ElasticNet(LinearModel):
         sparse matrix in CSC format (scipy.sparse.csc_matrix)
         """
         X = sp.csc_matrix(X)
-        y = np.asanyarray(y, dtype=np.float64)
+        y = np.asarray(y, dtype=np.float64)
 
         if X.shape[0] != y.shape[0]:
             raise ValueError("X and y have incompatible shapes.\n" +
@@ -115,24 +116,21 @@ class ElasticNet(LinearModel):
         -------
         array, shape = [n_samples] with the predicted real values
         """
-        # np.dot only works correctly if both arguments are sparse matrices
-        if not sp.issparse(X):
-            X = sp.csr_matrix(X)
-        return np.ravel(np.dot(self.sparse_coef_, X.T).todense()
-                        + self.intercept_)
+        return np.ravel(safe_sparse_dot(self.sparse_coef_, X.T,
+                                        dense_output=True) + self.intercept_)
 
 
 class Lasso(ElasticNet):
     """Linear Model trained with L1 prior as regularizer
 
-    This implementation works on scipy.sparse X and dense coef_. Technically
+    This implementation works on scipy.sparse X and dense `coef_`. Technically
     this is the same as Elastic Net with the L2 penalty set to zero.
 
     Parameters
     ----------
     alpha : float
         Constant that multiplies the L1 term. Defaults to 1.0
-    coef_ : ndarray of shape n_features
+    `coef_` : ndarray of shape n_features
         The initial coeffients to warm-start the optimization
     fit_intercept: bool
         Whether the intercept should be estimated or not. If False, the

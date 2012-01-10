@@ -5,9 +5,10 @@ TODO: remove hard coded numerical results when possible
 """
 
 import numpy as np
+from scipy import linalg
 from numpy.testing import assert_array_equal, assert_array_almost_equal, \
                           assert_almost_equal
-from nose.tools import assert_raises
+from nose.tools import assert_raises, assert_true
 
 from sklearn import svm, linear_model, datasets, metrics
 from sklearn.datasets.samples_generator import make_classification
@@ -57,7 +58,7 @@ def test_libsvm_iris():
 
     model = svm.libsvm.fit(iris.data,
             iris.target.astype(np.float64), kernel='linear')
-    pred = svm.libsvm.predict(iris.data, *model, **{'kernel': 'linear'})
+    pred = svm.libsvm.predict(iris.data, *model, kernel='linear')
     assert np.mean(pred == iris.target) > .95
 
     pred = svm.libsvm.cross_validation(iris.data,
@@ -156,8 +157,10 @@ def test_SVR():
 
     diabetes = datasets.load_diabetes()
     for clf in (svm.NuSVR(kernel='linear', nu=.4),
+                svm.NuSVR(kernel='linear', nu=.4, C=10.),
                 svm.SVR(kernel='linear', C=10.),
                 svm.sparse.NuSVR(kernel='linear', nu=.4),
+                svm.sparse.NuSVR(kernel='linear', nu=.4, C=10.),
                 svm.sparse.SVR(kernel='linear', C=10.)):
         clf.fit(diabetes.data, diabetes.target)
         assert clf.score(diabetes.data, diabetes.target) > 0.02
@@ -358,7 +361,6 @@ def test_LinearSVC_parameters():
     """
     Test possible parameter combinations in LinearSVC
     """
-    s = 'Not supported set of arguments: '
     # generate list of possible parameter combinations
     params = [(dual, loss, penalty) for dual in [True, False]
             for loss in ['l1', 'l2', 'lr'] for penalty in ['l1', 'l2']]
@@ -481,6 +483,53 @@ def test_liblinear_predict():
     bias = clf.intercept_
     H = np.dot(X, weights) + bias
     assert_array_equal(clf.predict(X), (H > 0).astype(int))
+
+
+def test_c_samples_scaling():
+    """Test C scaling by n_samples
+    """
+    X = iris.data[iris.target != 2]
+    y = iris.target[iris.target != 2]
+    X2 = np.r_[X, X]
+    y2 = np.r_[y, y]
+
+    clfs = [svm.SVC(tol=1e-6, kernel='linear', C=0.1),
+            svm.SVR(tol=1e-6, kernel='linear', C=100),
+            svm.LinearSVC(tol=1e-6, C=0.1),
+            linear_model.LogisticRegression(penalty='l1', tol=1e-6, C=100),
+            linear_model.LogisticRegression(penalty='l2', tol=1e-6),
+            svm.NuSVR(tol=1e-6, kernel='linear')]
+
+    for clf in clfs:
+        clf.set_params(scale_C=False)
+        coef_ = clf.fit(X, y).coef_
+        coef2_ = clf.fit(X2, y2).coef_
+        error_no_scale = linalg.norm(coef2_ - coef_) / linalg.norm(coef_)
+        assert_true(error_no_scale > 1e-3)
+
+        clf.set_params(scale_C=True)
+        coef_ = clf.fit(X, y).coef_
+        coef2_ = clf.fit(X2, y2).coef_
+        error_with_scale = linalg.norm(coef2_ - coef_) / linalg.norm(coef_)
+        assert_true(error_with_scale < 1e-5)
+
+
+def test_nu_svc_samples_scaling():
+    """Test NuSVC scaling by n_samples
+    """
+    X = iris.data[iris.target != 2]
+    y = iris.target[iris.target != 2]
+    X2 = np.r_[X, X]
+    y2 = np.r_[y, y]
+
+    clfs = [svm.NuSVC(tol=1e-6, kernel='linear')]
+
+    for clf in clfs:
+        coef_ = clf.fit(X, y).coef_
+        coef2_ = clf.fit(X2, y2).coef_
+        error_with_scale = linalg.norm(coef2_ - coef_) / linalg.norm(coef_)
+        assert_true(error_with_scale < 1e-5)
+
 
 if __name__ == '__main__':
     import nose

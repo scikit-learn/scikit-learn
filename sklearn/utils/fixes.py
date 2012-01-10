@@ -1,24 +1,17 @@
-"""Compatibility fixes for older version of python, numpy and scipy"""
+"""Compatibility fixes for older version of python, numpy and scipy
+
+If you add content to this file, please give the version of the package
+at which the fixe is no longer needed.
+"""
 # Authors: Emmanuelle Gouillart <emmanuelle.gouillart@normalesup.org>
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>
 #          Fabian Pedregosa <fpedregosa@acm.org>
+#          Lars Buitinck <L.J.Buitinck@uva.nl>
 # License: BSD
 
 import collections
 import numpy as np
 from operator import itemgetter
-
-
-try:
-    from itertools import product
-except ImportError:
-    def product(*args, **kwds):
-        pools = map(tuple, args) * kwds.get('repeat', 1)
-        result = [[]]
-        for pool in pools:
-            result = [x + [y] for x in result for y in pool]
-        for prod in result:
-            yield tuple(prod)
 
 
 try:
@@ -56,7 +49,7 @@ def _unique(ar, return_index=False, return_inverse=False):
             items = sorted(set(ar))
             return np.asarray(items)
         else:
-            ar = np.asanyarray(ar).flatten()
+            ar = np.asarray(ar).flatten()
 
     if ar.size == 0:
         if return_inverse and return_index:
@@ -139,19 +132,6 @@ def qr_economic(A, **kwargs):
         return scipy.linalg.qr(A, mode='economic', **kwargs)
     else:
         return scipy.linalg.qr(A, econ=True, **kwargs)
-
-
-def arpack_eigsh(A, **kwargs):
-    """Compat function for sparse symmetric eigen vectors decomposition
-
-    Scipy 0.9 renamed eigen_symmetric to eigsh in
-    scipy.sparse.linalg.eigen.arpack
-    """
-    from scipy.sparse.linalg.eigen import arpack
-    if hasattr(arpack, 'eigsh'):
-        return arpack.eigsh(A, **kwargs)
-    else:
-        return arpack.eigen_symmetric(A, **kwargs)
 
 
 def savemat(file_name, mdict, oned_as="column", **kwargs):

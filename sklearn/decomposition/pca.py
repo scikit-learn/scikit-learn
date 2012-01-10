@@ -10,10 +10,10 @@ import numpy as np
 from scipy import linalg
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import check_random_state
+from ..utils import array2d, check_random_state, as_float_array
 from ..utils.extmath import fast_logdet
-from ..utils.extmath import fast_svd
 from ..utils.extmath import safe_sparse_dot
+from ..utils.extmath import randomized_svd
 
 
 def _assess_dimension_(spectrum, rank, n_samples, dim):
@@ -40,8 +40,8 @@ def _assess_dimension_(spectrum, rank, n_samples, dim):
 
     Notes
     -----
-    This implements the method of Thomas P. Minka:
-    Automatic Choice of Dimensionality for PCA. NIPS 2000: 598-604
+    This implements the method of `Thomas P. Minka:
+    Automatic Choice of Dimensionality for PCA. NIPS 2000: 598-604`
     """
     if rank > dim:
         raise ValueError("the dimension cannot exceed dim")
@@ -101,28 +101,27 @@ class PCA(BaseEstimator, TransformerMixin):
     value decomposition. It only works for dense arrays and is not scalable to
     large dimensional data.
 
-    The time complexity of this implementation is O(n ** 3) assuming
+    The time complexity of this implementation is ``O(n ** 3)`` assuming
     n ~ n_samples ~ n_features.
 
     Parameters
     ----------
-    n_components: int, none or string
+    n_components : int, None or string
         Number of components to keep.
-        if n_components is not set all components are kept:
+        if n_components is not set all components are kept::
+
             n_components == min(n_samples, n_features)
 
-        if n_components == 'mle', Minka's MLE is used to guess the dimension
+        if n_components == 'mle', Minka\'s MLE is used to guess the dimension
+        if ``0 < n_components < 1``, select the number of components such that
+        the amount of variance that needs to be explained is greater than the
+        percentage specified by n_components
 
-        if 0 < n_components < 1, select the number of components such that
-                                 the amount of variance that needs to be
-                                 explained is greater than the percentage
-                                 specified by n_components
-
-    copy: bool
+    copy : bool
         If False, data passed to fit are overwritten
 
-    whiten: bool, optional
-        When True (False by default) the components_ vectors are divided
+    whiten : bool, optional
+        When True (False by default) the `components_` vectors are divided
         by n_samples times singular values to ensure uncorrelated outputs
         with unit component-wise variances.
 
@@ -133,18 +132,18 @@ class PCA(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    components_: array, [n_components, n_features]
+    `components_` : array, [n_components, n_features]
         Components with maximum variance.
 
-    explained_variance_ratio_: array, [n_components]
-        Percentage of variance explained by each of the selected components.
-        k is not set then all components are stored and the sum of
-        explained variances is equal to 1.0
+    `explained_variance_ratio_` : array, [n_components]
+        Percentage of variance explained by each of the selected components. \
+        k is not set then all components are stored and the sum of explained \
+        variances is equal to 1.0
 
     Notes
     -----
-    For n_components='mle', this class uses the method of Thomas P. Minka:
-    Automatic Choice of Dimensionality for PCA. NIPS 2000: 598-604
+    For n_components='mle', this class uses the method of `Thomas P. Minka:
+    Automatic Choice of Dimensionality for PCA. NIPS 2000: 598-604`
 
     Due to implementation subtleties of the Singular Value Decomposition (SVD),
     which is used in this implementation, running fit twice on the same matrix
@@ -154,20 +153,22 @@ class PCA(BaseEstimator, TransformerMixin):
 
     Examples
     --------
+
     >>> import numpy as np
     >>> from sklearn.decomposition import PCA
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> pca = PCA(n_components=2)
     >>> pca.fit(X)
     PCA(copy=True, n_components=2, whiten=False)
-    >>> print pca.explained_variance_ratio_
-    [ 0.99244289  0.00755711]
+    >>> print pca.explained_variance_ratio_ # doctest: +ELLIPSIS
+    [ 0.99244...  0.00755...]
 
     See also
     --------
     ProbabilisticPCA
     RandomizedPCA
-
+    KernelPCA
+    SparsePCA
     """
     def __init__(self, n_components=None, copy=True, whiten=False):
         self.n_components = n_components
@@ -196,13 +197,14 @@ class PCA(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             Training data, where n_samples in the number of samples
             and n_features is the number of features.
 
         Returns
         -------
-        X_new array-like, shape (n_samples, n_components)
+        X_new : array-like, shape (n_samples, n_components)
+
         """
         U, S, V = self._fit(X, **params)
         U = U[:, :self.n_components]
@@ -217,10 +219,9 @@ class PCA(BaseEstimator, TransformerMixin):
         return U
 
     def _fit(self, X):
-        X = np.atleast_2d(X)
+        X = array2d(X)
         n_samples, n_features = X.shape
-        if self.copy:
-            X = X.copy()
+        X = as_float_array(X, copy=self.copy)
         # Center data
         self.mean_ = np.mean(X, axis=0)
         X -= self.mean_
@@ -238,7 +239,9 @@ class PCA(BaseEstimator, TransformerMixin):
             self.n_components = _infer_dimension_(self.explained_variance_,
                                             n_samples, X.shape[1])
 
-        elif 0 < self.n_components and self.n_components < 1.0:
+        elif (self.n_components is not None
+              and 0 < self.n_components
+              and self.n_components < 1.0):
             # number of components for which the cumulated explained variance
             # percentage is superior to the desired threshold
             ratio_cumsum = self.explained_variance_ratio_.cumsum()
@@ -258,13 +261,14 @@ class PCA(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             New data, where n_samples in the number of samples
             and n_features is the number of features.
 
         Returns
         -------
-        X_new array-like, shape (n_samples, n_components)
+        X_new : array-like, shape (n_samples, n_components)
+
         """
         X_transformed = X - self.mean_
         X_transformed = np.dot(X_transformed, self.components_.T)
@@ -276,7 +280,7 @@ class PCA(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_components)
+        X : array-like, shape (n_samples, n_components)
             New data, where n_samples in the number of samples
             and n_components is the number of components.
 
@@ -284,7 +288,9 @@ class PCA(BaseEstimator, TransformerMixin):
         -------
         X_original array-like, shape (n_samples, n_features)
 
-        Note: if whitening is enabled, inverse_transform does not compute the
+        Notes
+        -----
+        If whitening is enabled, inverse_transform does not compute the
         exact inverse operation as transform.
         """
         return np.dot(X, self.components_) + self.mean_
@@ -299,9 +305,10 @@ class ProbabilisticPCA(PCA):
 
         Parameters
         ----------
-        X: array of shape(n_samples, n_dim)
+        X : array of shape(n_samples, n_dim)
             The data to fit
-        homoscedastic: bool, optional,
+
+        homoscedastic : bool, optional,
             If True, average variance across remaining dimensions
         """
         PCA.fit(self, X)
@@ -322,7 +329,7 @@ class ProbabilisticPCA(PCA):
             self.covariance_ += self.explained_variance_[k] * add_cov
         return self
 
-    def score(self, X):
+    def score(self, X, y=None):
         """Return a score associated to new data
 
         Parameters
@@ -337,7 +344,7 @@ class ProbabilisticPCA(PCA):
         """
         Xr = X - self.mean_
         log_like = np.zeros(X.shape[0])
-        self.precision_ = np.linalg.inv(self.covariance_)
+        self.precision_ = linalg.inv(self.covariance_)
         for i in range(X.shape[0]):
             log_like[i] = -.5 * np.dot(np.dot(self.precision_, Xr[i]), Xr[i])
         log_like += fast_logdet(self.precision_) - \
@@ -357,17 +364,17 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    n_components: int
+    n_components : int
         Maximum number of components to keep: default is 50.
 
-    copy: bool
+    copy : bool
         If False, data passed to fit are overwritten
 
-    iterated_power: int, optional
+    iterated_power : int, optional
         Number of iteration for the power method. 3 by default.
 
-    whiten: bool, optional
-        When True (False by default) the components_ vectors are divided
+    whiten : bool, optional
+        When True (False by default) the `components_` vectors are divided
         by the singular values to ensure uncorrelated outputs with unit
         component-wise variances.
 
@@ -376,19 +383,19 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         improve the predictive accuracy of the downstream estimators by
         making there data respect some hard-wired assumptions.
 
-    random_state: int or RandomState instance or None (default)
+    random_state : int or RandomState instance or None (default)
         Pseudo Random Number generator seed control. If None, use the
         numpy.random singleton.
 
     Attributes
     ----------
-    components_: array, [n_components, n_features]
+    `components_` : array, [n_components, n_features]
         Components with maximum variance.
 
-    explained_variance_ratio_: array, [n_components]
-        Percentage of variance explained by each of the selected components.
-        k is not set then all components are stored and the sum of
-        explained variances is equal to 1.0
+    `explained_variance_ratio_` : array, [n_components]
+        Percentage of variance explained by each of the selected components. \
+        k is not set then all components are stored and the sum of explained \
+        variances is equal to 1.0
 
     Examples
     --------
@@ -399,8 +406,8 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
     >>> pca.fit(X)                 # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     RandomizedPCA(copy=True, iterated_power=3, n_components=2,
            random_state=<mtrand.RandomState object at 0x...>, whiten=False)
-    >>> print pca.explained_variance_ratio_
-    [ 0.99244289  0.00755711]
+    >>> print pca.explained_variance_ratio_ # doctest: +ELLIPSIS
+    [ 0.99244...  0.00755...]
 
     See also
     --------
@@ -409,15 +416,14 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
 
     Notes
     -------
-    References:
+    **References**:
 
-    * Finding structure with randomness: Stochastic algorithms for
+    .. [Halko2009] `Finding structure with randomness: Stochastic algorithms for
       constructing approximate matrix decompositions Halko, et al., 2009
-      (arXiv:909)
+      (arXiv:909)`
 
-    * A randomized algorithm for the decomposition of matrices
-      Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
-
+    .. [MRT] `A randomized algorithm for the decomposition of matrices
+      Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert`
 
     """
 
@@ -446,23 +452,21 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         """
         self.random_state = check_random_state(self.random_state)
         if not hasattr(X, 'todense'):
-            X = np.atleast_2d(X)
+            # not a sparse matrix, ensure this is a 2D array
+            X = array2d(X)
 
         n_samples = X.shape[0]
 
-        if self.copy:
-            X = X.copy()
-
         if not hasattr(X, 'todense'):
-            # not a sparse matrix, ensure this is a 2D array
-            X = np.atleast_2d(X)
+            X = as_float_array(X, copy=self.copy)
 
             # Center data
             self.mean_ = np.mean(X, axis=0)
             X -= self.mean_
 
-        U, S, V = fast_svd(X, self.n_components, q=self.iterated_power,
-                           random_state=self.random_state)
+        U, S, V = randomized_svd(X, self.n_components,
+                                 n_iterations=self.iterated_power,
+                                 random_state=self.random_state)
 
         self.explained_variance_ = (S ** 2) / n_samples
         self.explained_variance_ratio_ = self.explained_variance_ / \
@@ -481,13 +485,14 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array-like or scipy.sparse matrix, shape (n_samples, n_features)
+        X : array-like or scipy.sparse matrix, shape (n_samples, n_features)
             New data, where n_samples in the number of samples
             and n_features is the number of features.
 
         Returns
         -------
-        X_new array-like, shape (n_samples, n_components)
+        X_new : array-like, shape (n_samples, n_components)
+
         """
         if self.mean_ is not None:
             X = X - self.mean_
@@ -501,7 +506,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array-like or scipy.sparse matrix, shape (n_samples, n_components)
+        X : array-like or scipy.sparse matrix, shape (n_samples, n_components)
             New data, where n_samples in the number of samples
             and n_components is the number of components.
 
@@ -509,7 +514,9 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         -------
         X_original array-like, shape (n_samples, n_features)
 
-        Note: if whitening is enabled, inverse_transform does not compute the
+        Notes
+        -----
+        If whitening is enabled, inverse_transform does not compute the
         exact inverse operation as transform.
         """
         X_original = safe_sparse_dot(X, self.components_)

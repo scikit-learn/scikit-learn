@@ -5,6 +5,10 @@ from sklearn.metrics.cluster import homogeneity_score
 from sklearn.metrics.cluster import completeness_score
 from sklearn.metrics.cluster import v_measure_score
 from sklearn.metrics.cluster import homogeneity_completeness_v_measure
+from sklearn.metrics.cluster import adjusted_mutual_info_score
+from sklearn.metrics.cluster import mutual_info_score
+from sklearn.metrics.cluster import expected_mutual_information
+from sklearn.metrics.cluster import contingency_matrix
 
 from nose.tools import assert_almost_equal
 from nose.tools import assert_equal
@@ -16,6 +20,7 @@ score_funcs = [
     homogeneity_score,
     completeness_score,
     v_measure_score,
+    adjusted_mutual_info_score,
 ]
 
 
@@ -24,8 +29,13 @@ def assert_raise_message(exception, message, callable, *args, **kwargs):
     try:
         callable(*args, **kwargs)
         raise AssertionError("Should have raised %r" % exception(message))
-    except exception, e:
-        assert e.message == message
+    except exception as e:
+        if hasattr(e, 'message'):
+            # python 2.x
+            assert e.message == message
+        else:
+            # python 3.x
+            assert e.args[0] == message
 
 
 def test_error_messages_on_wrong_input():
@@ -128,3 +138,28 @@ def test_adjustment_for_chance():
 
     max_abs_scores = np.abs(scores).max(axis=1)
     assert_array_almost_equal(max_abs_scores, [0.02, 0.03, 0.03, 0.02], 2)
+
+
+def test_adjusted_mutual_info_score():
+    """Compute the Adjusted Mutual Information and test against known values"""
+    labels_a = np.array([1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3])
+    labels_b = np.array([1, 1, 1, 1, 2, 1, 2, 2, 2, 2, 3, 1, 3, 3, 3, 2, 2])
+    # Mutual information
+    mi = mutual_info_score(labels_a, labels_b)
+    assert_almost_equal(mi, 0.41022, 5)
+    # Expected mutual information
+    C = contingency_matrix(labels_a, labels_b)
+    n_samples = np.sum(C)
+    emi = expected_mutual_information(C, n_samples)
+    assert_almost_equal(emi, 0.15042, 5)
+    # Adjusted mutual information
+    ami = adjusted_mutual_info_score(labels_a, labels_b)
+    assert_almost_equal(ami, 0.27502, 5)
+    ami = adjusted_mutual_info_score([1, 1, 2, 2], [2, 2, 3, 3])
+    assert_equal(ami, 1.0)
+    # Test with a very large array
+    a110 = np.array([list(labels_a) * 110]).flatten()
+    b110 = np.array([list(labels_b) * 110]).flatten()
+    ami = adjusted_mutual_info_score(a110, b110)
+    # This is not accurate to more than 2 places
+    assert_almost_equal(ami, 0.37, 2)

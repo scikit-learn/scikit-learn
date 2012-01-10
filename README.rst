@@ -4,7 +4,7 @@ About
 =====
 
 scikit-learn is a Python module for machine learning built on top of
-SciPy.
+SciPy and distributed under the 3-Clause BSD license.
 
 The project was started in 2007 by David Cournapeau as a Google Summer
 of Code project, and since then many volunteers have contributed. See
@@ -19,8 +19,8 @@ Important links
 ===============
 
 - Official source code repo: https://github.com/scikit-learn/scikit-learn
-- HTML documentation (stable release): http://scikit-learn.sourceforge.net/
-- HTML documentation (development version): http://scikit-learn.sourceforge.net/dev/
+- HTML documentation (stable release): http://scikit-learn.org
+- HTML documentation (development version): http://scikit-learn.org/dev/
 - Download releases: http://sourceforge.net/projects/scikit-learn/files/
 - Issue tracker: https://github.com/scikit-learn/scikit-learn/issues
 - Mailing list: https://lists.sourceforge.net/lists/listinfo/scikit-learn-general
@@ -29,8 +29,9 @@ Important links
 Dependencies
 ============
 
-The required dependencies to build the software are Python >= 2.5,
-setuptools, Numpy >= 1.2, SciPy >= 0.7 and a working C++ compiler.
+The required dependencies to build the software are Python >= 2.6,
+setuptools, Numpy >= 1.3, SciPy >= 0.7 and a working C/C++ compiler.
+This configuration matches the Ubuntu 10.04 LTS release from April 2010.
 
 To run the tests you will also need nose >= 0.10.
 

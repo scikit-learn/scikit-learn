@@ -15,8 +15,7 @@ from scipy import linalg, interpolate
 from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
-from ..utils import arrayfuncs
-from ..utils import deprecated
+from ..utils import array2d, arrayfuncs, deprecated
 from ..cross_validation import check_cv
 from ..externals.joblib import Parallel, delayed
 
@@ -25,7 +24,11 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
               alpha_min=0, method='lar', copy_X=True,
               eps=np.finfo(np.float).eps,
               copy_Gram=True, verbose=False):
-    """Compute Least Angle Regression and LASSO path
+    """Compute Least Angle Regression and Lasso path
+
+    The optimization objective for Lasso is::
+
+    (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
 
     Parameters
     -----------
@@ -69,10 +72,12 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
     See also
     --------
-    :ref:`LassoLars`
-    :ref:`Lars`
-    decomposition.sparse_encode
-    decomposition.sparse_encode_parallel
+    lasso_path
+    LassoLars
+    Lars
+    LassoLarsCV
+    LarsCV
+    sklearn.decomposition.sparse_encode
 
     Notes
     ------
@@ -97,7 +102,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
     # referenced.
     L = np.empty((max_features, max_features), dtype=X.dtype)
     swap, nrm2 = linalg.get_blas_funcs(('swap', 'nrm2'), (X,))
-    potrs, = get_lapack_funcs(('potrs',), (X,))
+    solve_cholesky, = get_lapack_funcs(('potrs',), (X,))
 
     if Gram is None:
         if copy_X:
@@ -120,7 +125,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
     if verbose:
         print "Step\t\tAdded\t\tDropped\t\tActive set size\t\tC"
 
-    while 1:
+    while True:
         if Cov.size:
             C_idx = np.argmax(np.abs(Cov))
             C_ = Cov[C_idx]
@@ -146,13 +151,14 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
         if not drop:
 
-            # Update the Cholesky factorization of (Xa * Xa') #
-            #                                                 #
-            #            ( L   0 )                            #
-            #     L  ->  (       )  , where L * w = b         #
-            #            ( w   z )    z = 1 - ||w||           #
-            #                                                 #
-            #   where u is the last added to the active set   #
+            ##########################################################
+            # Append x_j to the Cholesky factorization of (Xa * Xa') #
+            #                                                        #
+            #            ( L   0 )                                   #
+            #     L  ->  (       )  , where L * w = Xa' x_j          #
+            #            ( w   z )    and z = ||x_j||                #
+            #                                                        #
+            ##########################################################
 
             sign_active[n_active] = np.sign(C_)
             m, n = n_active, C_idx + n_active
@@ -179,7 +185,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                                         L[n_active, :n_active])
             v = np.dot(L[n_active, :n_active], L[n_active, :n_active])
             diag = max(np.sqrt(np.abs(c - v)), eps)
-            L[n_active,  n_active] = diag
+            L[n_active, n_active] = diag
 
             active.append(indices[n_active])
             n_active += 1
@@ -189,7 +195,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                                                             n_active, C)
 
         # least squares solution
-        least_squares, info = potrs(L[:n_active, :n_active],
+        least_squares, info = solve_cholesky(L[:n_active, :n_active],
                                sign_active[:n_active], lower=True)
 
         # is this really needed ?
@@ -215,7 +221,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
         # TODO: better names for these variables: z
         drop = False
-        z = - coefs[n_iter, active] / least_squares
+        z = -coefs[n_iter, active] / least_squares
         z_pos = arrayfuncs.min_pos(z)
         if z_pos < gamma_:
             # some coefficients have changed sign
@@ -255,7 +261,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                 # propagate dropped variable
                 for i in range(idx, n_active):
                     X.T[i], X.T[i + 1] = swap(X.T[i], X.T[i + 1])
-                    indices[i], indices[i + 1] =  \
+                    indices[i], indices[i + 1] = \
                             indices[i + 1], indices[i]  # yeah this is stupid
 
                 # TODO: this could be updated
@@ -266,7 +272,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                 Cov = np.r_[temp, Cov]
             else:
                 for i in range(idx, n_active):
-                    indices[i], indices[i + 1] =  \
+                    indices[i], indices[i + 1] = \
                                 indices[i + 1], indices[i]
                     Gram[i], Gram[i + 1] = swap(Gram[i], Gram[i + 1])
                     Gram[:, i], Gram[:, i + 1] = swap(Gram[:, i],
@@ -346,20 +352,19 @@ class Lars(LinearModel):
     --------
     >>> from sklearn import linear_model
     >>> clf = linear_model.Lars(n_nonzero_coefs=1)
-    >>> clf.fit([[-1, 1], [0, 0], [1, 1]], [-1.1111, 0, -1.1111]) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    >>> clf.fit([[-1, 1], [0, 0], [1, 1]], [-1.1111, 0, -1.1111])
+    ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     Lars(copy_X=True, eps=..., fit_intercept=True, n_nonzero_coefs=1,
        normalize=True, precompute='auto', verbose=False)
     >>> print clf.coef_ # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     [ 0. -1.11...]
 
-    References
-    ----------
-    http://en.wikipedia.org/wiki/Least_angle_regression
-
     See also
     --------
-    lars_path, LassoLARS, LarsCV, LassoLarsCV
-    decomposition.sparse_encode, decomposition.sparse_encode_parallel
+    lars_path, LarsCV
+    sklearn.decomposition.sparse_encode
+
+    http://en.wikipedia.org/wiki/Least_angle_regression
     """
     def __init__(self, fit_intercept=True, verbose=False, normalize=True,
                  precompute='auto', n_nonzero_coefs=500,
@@ -385,7 +390,7 @@ class Lars(LinearModel):
             Gram = None
         return Gram
 
-    def fit(self, X, y, copy_X=True):
+    def fit(self, X, y):
         """Fit the model using X, y as training data.
 
         parameters
@@ -401,9 +406,8 @@ class Lars(LinearModel):
         self : object
             returns an instance of self.
         """
-
-        X = np.atleast_2d(X)
-        y = np.atleast_1d(y)
+        X = array2d(X)
+        y = np.asarray(y)
 
         X, y, X_mean, y_mean, X_std = self._center_data(X, y,
                                                         self.fit_intercept,
@@ -435,7 +439,10 @@ class LassoLars(Lars):
     """Lasso model fit with Least Angle Regression a.k.a. Lars
 
     It is a Linear Model trained with an L1 prior as regularizer.
-    lasso).
+
+    The optimization objective for Lasso is::
+
+    (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
 
     Parameters
     ----------
@@ -481,19 +488,23 @@ class LassoLars(Lars):
     --------
     >>> from sklearn import linear_model
     >>> clf = linear_model.LassoLars(alpha=0.01)
-    >>> clf.fit([[-1, 1], [0, 0], [1, 1]], [-1, 0, -1]) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    >>> clf.fit([[-1, 1], [0, 0], [1, 1]], [-1, 0, -1])
+    ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     LassoLars(alpha=0.01, copy_X=True, eps=..., fit_intercept=True,
          max_iter=500, normalize=True, precompute='auto', verbose=False)
     >>> print clf.coef_ # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     [ 0.         -0.963257...]
 
-    References
-    ----------
-    http://en.wikipedia.org/wiki/Least_angle_regression
-
     See also
     --------
-    lars_path, Lasso
+    lars_path
+    lasso_path
+    Lasso
+    LassoCV
+    LassoLarsCV
+    sklearn.decomposition.sparse_encode
+
+    http://en.wikipedia.org/wiki/Least_angle_regression
     """
 
     def __init__(self, alpha=1.0, fit_intercept=True, verbose=False,
@@ -511,14 +522,14 @@ class LassoLars(Lars):
 
 
 # Deprecated classes
+@deprecated("Use Lars instead")
 class LARS(Lars):
     pass
-LARS = deprecated("Use Lars instead")(LARS)
 
 
+@deprecated("Use LassoLars instead")
 class LassoLARS(LassoLars):
     pass
-LassoLARS = deprecated("Use LassoLars instead")(LassoLARS)
 
 
 ###############################################################################
@@ -701,9 +712,8 @@ class LarsCV(LARS):
         self : object
             returns an instance of self.
         """
-        X = np.asanyarray(X)
+        X = np.asarray(X)
 
-        n_samples, n_features = X.shape
         # init cross-validation generator
         cv = check_cv(self.cv, X, y, classifier=False)
 
@@ -719,7 +729,7 @@ class LarsCV(LARS):
                             max_iter=self.max_iter,
                             eps=self.eps)
                     for train, test in cv)
-        all_alphas = np.concatenate(zip(*cv_paths)[0])
+        all_alphas = np.concatenate(list(zip(*cv_paths))[0])
         all_alphas.sort()
 
         mse_path = np.empty((len(all_alphas), len(cv_paths)))
@@ -751,6 +761,10 @@ class LarsCV(LARS):
 
 class LassoLarsCV(LarsCV):
     """Cross-validated Lasso, using the LARS algorithm
+
+    The optimization objective for Lasso is::
+
+    (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
 
     Parameters
     ----------
@@ -825,7 +839,7 @@ class LassoLarsCV(LarsCV):
 
     See also
     --------
-    lars_path, LassoLARS, LarsCV, LassoCV
+    lars_path, LassoLars, LarsCV, LassoCV
     """
 
     method = 'lasso'
@@ -833,6 +847,10 @@ class LassoLarsCV(LarsCV):
 
 class LassoLarsIC(LassoLars):
     """Lasso model fit with Lars using BIC or AIC for model selection
+
+    The optimization objective for Lasso is::
+
+    (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
 
     AIC is the Akaike information criterion and BIC is the Bayes
     Information criterion. Such criteria are useful to select the value
@@ -884,19 +902,23 @@ class LassoLarsIC(LassoLars):
     `intercept_` : float
         independent term in decision function.
 
+    `alpha_` : float
+        the alpha parameter chosen by the information criterion
+
     Examples
     --------
     >>> from sklearn import linear_model
     >>> clf = linear_model.LassoLarsIC(criterion='bic')
-    >>> clf.fit([[-1, 1], [0, 0], [1, 1]], [-1.1111, 0, -1.1111]) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    >>> clf.fit([[-1, 1], [0, 0], [1, 1]], [-1.1111, 0, -1.1111])
+    ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     LassoLarsIC(copy_X=True, criterion='bic', eps=..., fit_intercept=True,
           max_iter=500, normalize=True, precompute='auto',
           verbose=False)
     >>> print clf.coef_ # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     [ 0.  -1.11...]
 
-    References
-    ----------
+    Notes
+    -----
     The estimation of the number of degrees of freedom is given by:
 
     "On the degrees of freedom of the lasso"
@@ -940,8 +962,8 @@ class LassoLarsIC(LassoLars):
         self : object
             returns an instance of self.
         """
-        X = np.atleast_2d(X)
-        y = np.atleast_1d(y)
+        X = array2d(X)
+        y = np.asarray(y)
 
         X, y, Xmean, ymean, Xstd = LinearModel._center_data(X, y,
                                                     self.fit_intercept,
