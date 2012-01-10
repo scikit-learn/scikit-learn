@@ -182,20 +182,22 @@ Loss Functions
 The following loss functions are supported and can be specified using the parameter ``loss``: 
 
   * Regression
-    - Least squares (``'ls'``): The natural choice for regression due to its superior computational properties.
-    - Least absolute deviation (``'lad'``): A robust loss function for regression.
+
+    * Least squares (``'ls'``): The natural choice for regression due to its superior computational properties.
+    * Least absolute deviation (``'lad'``): A robust loss function for regression.
+
   * Classification
-    - Binomial deviance (``'deviance'``): The negative binomial log-likelihood loss function commonly used for binary classification (provides probability estimates).
+    * Binomial deviance (``'deviance'``): The negative binomial log-likelihood loss function commonly used for binary classification (provides probability estimates).
 
 The table below summarizes the ingredients of the Gradient Boosting algorithm for each of the three loss functions above. 
 
 +----------+-------------------------+----------------------------+-------------+
-|          | Loss function           | Gradi ent                  | Line search |
-+====================================+============================+=============+
+|          | Loss function           | Gradient                   | Line search |
++==========+=========================+============================+=============+
 | LS       | :math:`(y_i - f(x_i)^2` | :math:`y_i - f(x_i)`       |             |
-+------------------------------------+----------------------------+-------------+
++----------+-------------------------+----------------------------+-------------+
 | LAD      | :math:`|y_i - f(x_i)|`  | :math:`sign(y_i - f(x_i))` |             |
-+------------------------------------+----------------------------+-------------+
++----------+-------------------------+----------------------------+-------------+
 | Deviance | :math:`|y_i - f(x_i)|`  |                            |             |
 +----------+-------------------------+----------------------------+-------------+
 
