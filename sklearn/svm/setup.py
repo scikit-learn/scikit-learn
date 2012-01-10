@@ -2,11 +2,6 @@ from os.path import join
 import sys
 import numpy
 
-if sys.version_info[0] < 3:
-    from ConfigParser import ConfigParser
-else:
-    from configparser import ConfigParser
-
 import warnings
 
 
@@ -69,7 +64,7 @@ def configuration(parent_package='', top_path=None):
                                        blas_info.pop('include_dirs', [])],
                          depends=liblinear_depends,
                          # extra_compile_args=['-O0 -fno-inline'],
-                         **blas_info)
+                         ** blas_info)
 
     ## end liblinear module
 

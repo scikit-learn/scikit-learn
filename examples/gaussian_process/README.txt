@@ -3,5 +3,5 @@
 Gaussian Process for Machine Learning
 -------------------------------------
 
-Examples concerning the `sklearn.gaussian_process` package.
+Examples concerning the :mod:`sklearn.gaussian_process` package.
 

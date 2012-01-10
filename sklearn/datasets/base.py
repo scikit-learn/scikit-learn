@@ -23,6 +23,7 @@ import numpy as np
 
 from ..utils import check_random_state
 
+
 class Bunch(dict):
     """Container object for datasets: dictionary-like object that
        exposes its keys as attributes."""
@@ -63,7 +64,7 @@ def clear_data_home(data_home=None):
 
 
 def load_files(container_path, description=None, categories=None,
-               load_content=True, shuffle=True, random_state=None):
+               load_content=True, shuffle=True, random_state=0):
     """Load text files with categories as subfolder names.
 
     Individual samples are assumed to be files stored a two levels folder
@@ -119,14 +120,14 @@ def load_files(container_path, description=None, categories=None,
         make the assumption that the samples are independent and identically
         distributed (i.i.d.), such as stochastic gradient descent.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance or None, optional (default=0)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    Return
-    ------
+    Returns
+    -------
     data : Bunch
         Dictionary-like object, the interesting attributes are: either
         data, the raw text data to learn, or 'filenames', the files
@@ -180,12 +181,24 @@ def load_files(container_path, description=None, categories=None,
 def load_iris():
     """Load and return the iris dataset (classification).
 
-    Return
-    ------
+    The iris dataset is a classic and very easy multi-class classification
+    dataset.
+
+    =================   ==============
+    Classes                          3
+    Samples per class               50
+    Samples total                  150
+    Dimensionality                   4
+    Features            real, positive
+    =================   ==============
+
+    Returns
+    -------
     data : Bunch
         Dictionary-like object, the interesting attributes are:
         'data', the data to learn, 'target', the classification labels,
-        'target_names', the meaning of the labels, and 'DESCR', the
+        'target_names', the meaning of the labels, 'feature_names', the
+        meaning of the features, and 'DESCR', the
         full description of the dataset.
 
     Examples
@@ -211,8 +224,8 @@ def load_iris():
     target = np.empty((n_samples,), dtype=np.int)
 
     for i, ir in enumerate(data_file):
-        data[i] = np.asanyarray(ir[:-1], dtype=np.float)
-        target[i] = np.asanyarray(ir[-1], dtype=np.int)
+        data[i] = np.asarray(ir[:-1], dtype=np.float)
+        target[i] = np.asarray(ir[-1], dtype=np.int)
 
     return Bunch(data=data, target=target,
                  target_names=target_names,
@@ -224,16 +237,27 @@ def load_iris():
 def load_digits(n_class=10):
     """Load and return the digits dataset (classification).
 
+    Each datapoint is a 8x8 image of a digit.
+
+    =================   ==============
+    Classes                         10
+    Samples per class             ~180
+    Samples total                 1797
+    Dimensionality                  64
+    Features             integers 0-16
+    =================   ==============
+
+
     Parameters
     ----------
     n_class : integer, between 0 and 10, optional (default=10)
         The number of classes to return.
 
-    Return
-    ------
+    Returns
+    -------
     data : Bunch
         Dictionary-like object, the interesting attributes are:
-        'data', the data to learn, `images`, the images corresponding
+        'data', the data to learn, 'images', the images corresponding
         to each sample, 'target', the classification labels for each
         sample, 'target_names', the meaning of the labels, and 'DESCR',
         the full description of the dataset.
@@ -242,14 +266,14 @@ def load_digits(n_class=10):
     --------
     To load the data and visualize the images::
 
-    >>> from sklearn.datasets import load_digits
-    >>> digits = load_digits()
-    >>> digits.data.shape
-    (1797, 64)
-    >>> # import pylab as pl
-    >>> # pl.gray()
-    >>> # pl.matshow(digits.images[0]) # Visualize the first image
-    >>> # pl.show()
+        >>> from sklearn.datasets import load_digits
+        >>> digits = load_digits()
+        >>> digits.data.shape
+        (1797, 64)
+        >>> import pylab as pl #doctest: +SKIP
+        >>> pl.gray() #doctest: +SKIP
+        >>> pl.matshow(digits.images[0]) #doctest: +SKIP
+        >>> pl.show() #doctest: +SKIP
     """
     module_path = dirname(__file__)
     data = np.loadtxt(join(module_path, 'data', 'digits.csv.gz'),
@@ -275,11 +299,18 @@ def load_digits(n_class=10):
 def load_diabetes():
     """Load and return the diabetes dataset (regression).
 
-    Return
-    ------
+    ==============      ==================
+    Samples total       442
+    Dimensionality      10
+    Features            real, -.2 < x < .2
+    Targets             integer 25 - 346
+    ==============      ==================
+
+    Returns
+    -------
     data : Bunch
         Dictionary-like object, the interesting attributes are:
-        'data', the data to learn and 'target', the labels for each
+        'data', the data to learn and 'target', the regression target for each
         sample.
     """
     base_dir = join(dirname(__file__), 'data')
@@ -291,13 +322,18 @@ def load_diabetes():
 def load_linnerud():
     """Load and return the linnerud dataset (multivariate regression).
 
-    Return
-    ------
+    Samples total: 20
+    Dimensionality: 3 for both data and targets
+    Features: integer
+    Targets: integer
+
+    Returns
+    -------
     data : Bunch
-        Dictionary-like object, the interesting attributes are:
-        'data_exercise' and 'data_physiological', the two multivariate
-        datasets, as well as 'header_exercise' and
-        'header_physiological', the corresponding headers.
+        Dictionary-like object, the interesting attributes are: 'data' and
+        'targets', the two multivariate datasets, with 'data' corresponding to
+        the exercise and 'targets' corresponding to the physiological
+        measurements, as well as 'feature_names' and 'target_names'.
     """
     base_dir = join(dirname(__file__), 'data/')
     # Read data
@@ -305,28 +341,34 @@ def load_linnerud():
     data_physiological = np.loadtxt(base_dir + 'linnerud_physiological.csv',
                                     skiprows=1)
     # Read header
-    f = open(base_dir + 'linnerud_exercise.csv')
-    header_exercise = f.readline().split()
-    f.close()
-    f = open(base_dir + 'linnerud_physiological.csv')
-    header_physiological = f.readline().split()
-    f.close()
-    fdescr = open(dirname(__file__) + '/descr/linnerud.rst')
+    with open(base_dir + 'linnerud_exercise.csv') as f:
+        header_exercise = f.readline().split()
+    with open(base_dir + 'linnerud_physiological.csv') as f:
+        header_physiological = f.readline().split()
+    with open(dirname(__file__) + '/descr/linnerud.rst') as f:
+        descr = f.read()
 
-    return Bunch(data_exercise=data_exercise, header_exercise=header_exercise,
-                 data_physiological=data_physiological,
-                 header_physiological=header_physiological,
-                 DESCR=fdescr.read())
+    return Bunch(data=data_exercise, feature_names=header_exercise,
+                 target=data_physiological,
+                 target_names=header_physiological,
+                 DESCR=descr)
 
 
 def load_boston():
     """Load and return the boston house-prices dataset (regression).
 
-    Return
-    ------
+    ==============     ==============
+    Samples total                 506
+    Dimensionality                 13
+    Features           real, positive
+    Targets             real 5. - 50.
+    ==============     ==============
+
+    Returns
+    -------
     data : Bunch
         Dictionary-like object, the interesting attributes are:
-        'data', the data to learn, 'target', the classification labels,
+        'data', the data to learn, 'target', the regression targets,
         'target_names', the meaning of the labels, and 'DESCR', the
         full description of the dataset.
 
@@ -350,8 +392,8 @@ def load_boston():
     feature_names = np.array(temp)
 
     for i, d in enumerate(data_file):
-        data[i] = np.asanyarray(d[:-1], dtype=np.float)
-        target[i] = np.asanyarray(d[-1], dtype=np.float)
+        data[i] = np.asarray(d[:-1], dtype=np.float)
+        target[i] = np.asarray(d[-1], dtype=np.float)
 
     return Bunch(data=data,
                  target=target,
@@ -361,33 +403,29 @@ def load_boston():
 
 def load_sample_images():
     """Load sample images for image manipulation.
+    Loads both, ``china`` and ``flower``.
 
-    Return
-    ------
+    Returns
+    -------
     data : Bunch
-        Dictionary-like object, the interesting attributes are:
-        'data', the data to learn, `images`, the images corresponding
-        to each sample, 'target', the classification labels for each
-        sample, 'target_names', the meaning of the labels, and 'DESCR',
+        Dictionary-like object with the following attributes :
+        'images', the two sample images, 'filenames', the file
+        names for the images, and 'DESCR'
         the full description of the dataset.
 
     Examples
     --------
     To load the data and visualize the images::
 
-    # >>> from sklearn.datasets import load_sample_images
-    # >>> dataset = load_sample_images()
-    # >>> len(dataset.images)
-    # 2
-    # >>> first_img_data = dataset.images[0]
-    # >>> first_img_data.shape
-    # (427, 640, 3)
-    # >>> first_img_data.dtype
-    # dtype('uint8')
-    # >>> import pylab as pl
-    # >>> pl.gray()
-    # >>> pl.matshow(dataset.images[0]) # Visualize the first image
-    # >>> pl.show()
+    >>> from sklearn.datasets import load_sample_images
+    >>> dataset = load_sample_images()     #doctest: +SKIP
+    >>> len(dataset.images)                #doctest: +SKIP
+    2
+    >>> first_img_data = dataset.images[0] #doctest: +SKIP
+    >>> first_img_data.shape               #doctest: +SKIP
+    (427, 640, 3)
+    >>> first_img_data.dtype               #doctest: +SKIP
+    dtype('uint8')
     """
     # Try to import imread from scipy. We do this lazily here to prevent
     # this module from depending on PIL.
@@ -397,10 +435,11 @@ def load_sample_images():
         except ImportError:
             from scipy.misc.pilutil import imread
     except ImportError:
-        raise ImportError("The Python Imaging Library (PIL)"
+        raise ImportError("The Python Imaging Library (PIL) "
                           "is required to load data from jpeg files")
     module_path = join(dirname(__file__), "images")
-    descr = open(join(module_path, 'README.txt')).read()
+    with open(join(module_path, 'README.txt')) as f:
+        descr = f.read()
     filenames = [join(module_path, filename)
                  for filename in os.listdir(module_path)
                  if filename.endswith(".jpg")]
@@ -414,6 +453,19 @@ def load_sample_images():
 
 def load_sample_image(image_name):
     """Load the numpy array of a single sample image
+
+    Parameters
+    -----------
+    image_name: {`china.jpg`, `flower.jpg`}
+        The name of the sample image loaded
+
+    Returns
+    -------
+    img: 3D array
+        The image as a numpy array: height x width x color
+
+    Examples
+    ---------
 
     # >>> from sklearn.datasets import load_sample_image
     # >>> china = load_sample_image('china.jpg')

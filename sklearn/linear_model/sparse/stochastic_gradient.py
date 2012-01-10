@@ -14,6 +14,11 @@ from ..sgd_fast_sparse import plain_sgd
 ##
 
 
+def _tocsr(X):
+    """Convert X to CSR matrix, preventing a copy if possible"""
+    return X.tocsr() if sp.issparse(X) else sp.csr_matrix(X)
+
+
 class SGDClassifier(BaseSGDClassifier):
     """Linear model fitted by minimizing a regularized empirical loss with SGD
 
@@ -28,7 +33,7 @@ class SGDClassifier(BaseSGDClassifier):
     update is truncated to 0.0 to allow for learning sparse models and achieve
     online feature selection.
 
-    This implementation works on scipy.sparse X and dense coef_.
+    This implementation works on scipy.sparse X and dense `coef_`.
 
     Parameters
     ----------
@@ -88,6 +93,14 @@ class SGDClassifier(BaseSGDClassifier):
     power_t : double, optional
         The exponent for inverse scaling learning rate [default 0.25].
 
+    class_weight : dict, {class_label : weight} or "auto" or None, optional
+        Preset for the class_weight fit parameter.
+
+        Weights associated with classes. If not given, all classes
+        are supposed to have weight one.
+
+        The "auto" mode uses the values of y to automatically adjust
+        weights inversely proportional to class frequencies.
 
     Attributes
     ----------
@@ -98,10 +111,6 @@ class SGDClassifier(BaseSGDClassifier):
     `intercept_` : array, shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.
 
-    `sparse_coef_` : sparse.csr_matrix, , shape = [1, n_features]
-    if n_classes == 2 else [n_classes, n_features]
-        Weights represented as Row Compressed Matrix.
-
     Examples
     --------
     >>> import numpy as np
@@ -110,12 +119,13 @@ class SGDClassifier(BaseSGDClassifier):
     >>> y = np.array([1, 1, 2, 2])
     >>> clf = linear_model.sparse.SGDClassifier()
     >>> clf.fit(X, y)
-    SGDClassifier(alpha=0.0001, eta0=0.0, fit_intercept=True,
-           learning_rate='optimal', loss='hinge', n_iter=5, n_jobs=1,
-           penalty='l2', power_t=0.5, rho=1.0, seed=0, shuffle=False,
-           verbose=0)
+    ... #doctest: +NORMALIZE_WHITESPACE
+    SGDClassifier(alpha=0.0001, class_weight=None, eta0=0.0,
+            fit_intercept=True, learning_rate='optimal', loss='hinge',
+            n_iter=5, n_jobs=1, penalty='l2', power_t=0.5, rho=0.85, seed=0,
+            shuffle=False, verbose=0)
     >>> print clf.predict([[-0.8, -1]])
-    [ 1.]
+    [1]
 
     See also
     --------
@@ -123,19 +133,9 @@ class SGDClassifier(BaseSGDClassifier):
 
     """
 
-    def _set_coef(self, coef_):
-        self.coef_ = coef_
-        if coef_ is None:
-            self.sparse_coef_ = None
-        else:
-            # sparse representation of the fitted coef for the predict method
-            self.sparse_coef_ = sp.csr_matrix(coef_)
-
-    def _fit_binary(self, X, y):
-        """Fit a binary classifier.
-        """
-        # interprete X as CSR matrix
-        X = sp.csr_matrix(X)
+    def _fit_binary(self, X, y, sample_weight):
+        """Fit a binary classifier."""
+        X = _tocsr(X)
 
         # encode original class labels as 1 (classes[1]) or -1 (classes[0]).
         y_new = np.ones(y.shape, dtype=np.float64, order="C") * -1.0
@@ -143,9 +143,9 @@ class SGDClassifier(BaseSGDClassifier):
         y = y_new
 
         # get sparse matrix datastructures
-        X_data = np.array(X.data, dtype=np.float64, order="C")
-        X_indices = np.array(X.indices, dtype=np.int32, order="C")
-        X_indptr = np.array(X.indptr, dtype=np.int32, order="C")
+        X_data = np.asarray(X.data, dtype=np.float64, order="C")
+        X_indices = np.asarray(X.indices, dtype=np.int32, order="C")
+        X_indptr = np.asarray(X.indptr, dtype=np.int32, order="C")
 
         coef_, intercept_ = plain_sgd(self.coef_,
                                       self.intercept_,
@@ -159,28 +159,27 @@ class SGDClassifier(BaseSGDClassifier):
                                       int(self.verbose),
                                       int(self.shuffle),
                                       int(self.seed),
-                                      self.class_weight[1],
-                                      self.class_weight[0],
-                                      self.sample_weight,
+                                      self._expanded_class_weight[1],
+                                      self._expanded_class_weight[0],
+                                      sample_weight,
                                       self.learning_rate_code,
                                       self.eta0, self.power_t)
 
-        # update self.coef_ and self.sparse_coef_ consistently
-        self._set_coef(np.atleast_2d(self.coef_))
+        self._set_coef(coef_)
         self.intercept_ = np.asarray(intercept_)
 
-    def _fit_multiclass(self, X, y):
-        """Fit a multi-class classifier with a combination
-        of binary classifiers, each predicts one class versus
-        all others (OVA: One Versus All).
+    def _fit_multiclass(self, X, y, sample_weight):
+        """Fit a multi-class classifier as a combination of binary classifiers
+
+        Each binary classifier predicts one class versus all others
+        (OVA: One Versus All).
         """
-        # interprete X as CSR matrix
-        X = sp.csr_matrix(X)
+        X = _tocsr(X)
 
         # get sparse matrix datastructures
-        X_data = np.array(X.data, dtype=np.float64, order="C")
-        X_indices = np.array(X.indices, dtype=np.int32, order="C")
-        X_indptr = np.array(X.indptr, dtype=np.int32, order="C")
+        X_data = np.asarray(X.data, dtype=np.float64, order="C")
+        X_indices = np.asarray(X.indices, dtype=np.int32, order="C")
+        X_indptr = np.asarray(X.indptr, dtype=np.int32, order="C")
 
         res = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
                 delayed(_train_ova_classifier)(i, c, X_data, X_indices,
@@ -192,8 +191,8 @@ class SGDClassifier(BaseSGDClassifier):
                                                self.fit_intercept,
                                                self.verbose, self.shuffle,
                                                self.seed,
-                                               self.class_weight[i],
-                                               self.sample_weight,
+                                               self._expanded_class_weight[i],
+                                               sample_weight,
                                                self.learning_rate_code,
                                                self.eta0, self.power_t)
             for i, c in enumerate(self.classes))
@@ -203,29 +202,6 @@ class SGDClassifier(BaseSGDClassifier):
             self.intercept_[i] = intercept
 
         self._set_coef(self.coef_)
-        self.intercept_ = self.intercept_
-
-    def decision_function(self, X):
-        """Predict signed 'distance' to the hyperplane (aka confidence score).
-
-        Parameters
-        ----------
-        X : scipy.sparse matrix of shape [n_samples, n_features]
-
-        Returns
-        -------
-        array, shape = [n_samples] if n_classes == 2 else [n_samples,n_classes]
-          The signed 'distances' to the hyperplane(s).
-        """
-        # np.dot only works correctly if both arguments are sparse matrices
-        if not sp.issparse(X):
-            X = sp.csr_matrix(X)
-        scores = np.asarray(np.dot(X, self.sparse_coef_.T).todense()
-                            + self.intercept_)
-        if self.classes.shape[0] == 2:
-            return np.ravel(scores)
-        else:
-            return scores
 
 
 def _train_ova_classifier(i, c, X_data, X_indices, X_indptr, y, coef_,
@@ -340,7 +316,7 @@ class SGDRegressor(BaseSGDRegressor):
     >>> clf.fit(X, y)
     SGDRegressor(alpha=0.0001, eta0=0.01, fit_intercept=True,
            learning_rate='invscaling', loss='squared_loss', n_iter=5, p=0.1,
-           penalty='l2', power_t=0.25, rho=1.0, seed=0, shuffle=False,
+           penalty='l2', power_t=0.25, rho=0.85, seed=0, shuffle=False,
            verbose=0)
 
     See also
@@ -349,17 +325,9 @@ class SGDRegressor(BaseSGDRegressor):
 
     """
 
-    def _set_coef(self, coef_):
-        self.coef_ = coef_
-        if coef_ is None:
-            self.sparse_coef_ = None
-        else:
-            # sparse representation of the fitted coef for the predict method
-            self.sparse_coef_ = sp.csr_matrix(coef_)
-
-    def _fit_regressor(self, X, y):
-        # interprete X as CSR matrix
-        X = sp.csr_matrix(X)
+    def _fit_regressor(self, X, y, sample_weight):
+        # interpret X as CSR matrix
+        X = _tocsr(X)
 
         # get sparse matrix datastructures
         X_data = np.array(X.data, dtype=np.float64, order="C")
@@ -379,31 +347,9 @@ class SGDRegressor(BaseSGDRegressor):
                                       int(self.shuffle),
                                       int(self.seed),
                                       1.0, 1.0,
-                                      self.sample_weight,
+                                      sample_weight,
                                       self.learning_rate_code,
                                       self.eta0, self.power_t)
 
-        # update self.coef_ and self.sparse_coef_ consistently
-        self._set_coef(self.coef_)
+        self.coef_ = coef_
         self.intercept_ = np.asarray(intercept_)
-
-    def predict(self, X):
-        """Predict using the linear model
-
-        Parameters
-        ----------
-        X : array or scipy.sparse matrix of shape [n_samples, n_features]
-           Whether the numpy.array or scipy.sparse matrix is accepted dependes
-           on the actual implementation
-
-        Returns
-        -------
-        array, shape = [n_samples]
-           Array containing the predicted class labels.
-        """
-        # np.dot only works correctly if both arguments are sparse matrices
-        if not sp.issparse(X):
-            X = sp.csr_matrix(X)
-        scores = np.asarray(np.dot(X, self.sparse_coef_.T).todense()
-                            + self.intercept_).ravel()
-        return scores

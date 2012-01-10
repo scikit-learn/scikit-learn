@@ -40,13 +40,14 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
         The dimension of the projection subspace.
 
     mode: {None, 'arpack' or 'amg'}
-        The eigenvalue decomposition strategy to use. AMG (Algebraic
-        MultiGrid) is much faster, but requires pyamg to be
-        installed.
+        The eigenvalue decomposition strategy to use. AMG requires pyamg
+        to be installed. It can be faster on very large, sparse problems,
+        but may also lead to instabilities
 
     random_state: int seed, RandomState instance, or None (default)
         A pseudo random number generator used for the initialization of the
-        lobpcg eigen vectors decomposition when mode == 'amg'.
+        lobpcg eigen vectors decomposition when mode == 'amg'. By default
+        arpack is used.
 
     Returns
     --------
@@ -60,7 +61,7 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
     """
 
     from scipy import sparse
-    from ..utils.fixes import arpack_eigsh
+    from ..utils.arpack import eigsh
     from scipy.sparse.linalg import lobpcg
     try:
         from pyamg import smoothed_aggregation_solver
@@ -75,7 +76,7 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
     if not amg_loaded:
         warnings.warn('pyamg not available, using scipy.sparse')
     if mode is None:
-        mode = ('amg' if amg_loaded else 'arpack')
+        mode = 'arpack'
     laplacian, dd = graph_laplacian(adjacency,
                                     normed=True, return_diag=True)
     if (mode == 'arpack'
@@ -101,11 +102,11 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
                 # csr has the fastest matvec and is thus best suited to
                 # arpack
                 laplacian = laplacian.tocsr()
-        lambdas, diffusion_map = arpack_eigsh(-laplacian, k=n_components,
-                                              which='LA')
+        lambdas, diffusion_map = eigsh(-laplacian, k=n_components,
+                                        which='LA')
         embedding = diffusion_map.T[::-1] * dd
     elif mode == 'amg':
-        # Use AMG to get a preconditionner and speed up the eigenvalue
+        # Use AMG to get a preconditioner and speed up the eigenvalue
         # problem.
         laplacian = laplacian.astype(np.float)  # lobpcg needs native floats
         ml = smoothed_aggregation_solver(laplacian.tocsr())
@@ -154,9 +155,9 @@ def spectral_clustering(affinity, k=8, n_components=None, mode=None,
         Number of eigen vectors to use for the spectral embedding
 
     mode: {None, 'arpack' or 'amg'}
-        The eigenvalue decomposition strategy to use. AMG (Algebraic
-        MultiGrid) is much faster, but requires pyamg to be
-        installed.
+        The eigenvalue decomposition strategy to use. AMG requires pyamg
+        to be installed. It can be faster on very large, sparse problems,
+        but may also lead to instabilities
 
     random_state: int seed, RandomState instance, or None (default)
         A pseudo random number generator used for the initialization
@@ -176,8 +177,10 @@ def spectral_clustering(affinity, k=8, n_components=None, mode=None,
     centers: array of integers, shape: k
         The indices of the cluster centers
 
-    References
-    ----------
+    Notes
+    -----
+    **References**:
+
     - Normalized cuts and image segmentation, 2000
       Jianbo Shi, Jitendra Malik
       http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.160.2324
@@ -222,8 +225,9 @@ class SpectralClustering(BaseEstimator):
         The dimension of the projection subspace.
 
     mode: {None, 'arpack' or 'amg'}
-        The eigenvalue decomposition strategy to use. AMG (Algebraic
-        MultiGrid) is much faster, but requires pyamg to be installed.
+        The eigenvalue decomposition strategy to use. AMG requires pyamg
+        to be installed. It can be faster on very large, sparse problems,
+        but may also lead to instabilities
 
     random_state: int seed, RandomState instance, or None (default)
         A pseudo random number generator used for the initialization
@@ -235,20 +239,16 @@ class SpectralClustering(BaseEstimator):
         centroid seeds. The final results will be the best output of
         n_init consecutive runs in terms of inertia.
 
-    Methods
-    -------
-
-    fit(X):
-        Compute spectral clustering
-
     Attributes
     ----------
 
-    labels_:
+    `labels_` :
         Labels of each point
 
-    References
-    ----------
+    Notes
+    -----
+    **References**:
+
     - Normalized cuts and image segmentation, 2000
       Jianbo Shi, Jitendra Malik
       http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.160.2324

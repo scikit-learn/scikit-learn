@@ -30,10 +30,16 @@ import time
 import tokenize
 import traceback
 import types
+try:                           # Python 2
+    generate_tokens = tokenize.generate_tokens
+except AttributeError:         # Python 3
+    generate_tokens = tokenize.tokenize
 
-INDENT        = ' '*8
+PY3 = (sys.version[0] == '3')
+INDENT = ' ' * 8
 
-################################################################################
+
+###############################################################################
 # some internal-use functions
 def safe_repr(value):
     """Hopefully pretty robust repr equivalent."""
@@ -63,11 +69,12 @@ def safe_repr(value):
             except:
                 return 'UNRECOVERABLE REPR FAILURE'
 
+
 def eq_repr(value, repr=safe_repr):
     return '=%s' % repr(value)
 
 
-################################################################################
+###############################################################################
 def uniq_stable(elems):
     """uniq_stable(elems) -> list
 
@@ -89,7 +96,7 @@ def uniq_stable(elems):
     return unique
 
 
-################################################################################
+###############################################################################
 def fix_frame_records_filenames(records):
     """Try to fix the filenames in each record from inspect.getinnerframes().
 
@@ -106,14 +113,15 @@ def fix_frame_records_filenames(records):
             # __file__. It might also be None if the error occurred during
             # import.
             filename = better_fn
-        fixed_records.append((frame, filename, line_no, func_name, lines, index))
+        fixed_records.append((frame, filename, line_no, func_name, lines,
+                              index))
     return fixed_records
 
 
 def _fixed_getframes(etb, context=1, tb_offset=0):
-    LNUM_POS, LINES_POS, INDEX_POS =  2, 4, 5
+    LNUM_POS, LINES_POS, INDEX_POS = 2, 4, 5
 
-    records  = fix_frame_records_filenames(inspect.getinnerframes(etb, context))
+    records = fix_frame_records_filenames(inspect.getinnerframes(etb, context))
 
     # If the error is at the console, don't build any context, since it would
     # otherwise produce 5 blank lines printed out (there is no file at the
@@ -128,10 +136,10 @@ def _fixed_getframes(etb, context=1, tb_offset=0):
 
     aux = traceback.extract_tb(etb)
     assert len(records) == len(aux)
-    for i, (file, lnum, _, _) in  enumerate(aux):
-        maybeStart = lnum-1 - context//2
-        start =  max(maybeStart, 0)
-        end   = start + context
+    for i, (file, lnum, _, _) in enumerate(aux):
+        maybeStart = lnum - 1 - context // 2
+        start = max(maybeStart, 0)
+        end = start + context
         lines = linecache.getlines(file)[start:end]
         # pad with empty lines if necessary
         if maybeStart < 0:
@@ -156,7 +164,7 @@ def _format_traceback_lines(lnum, index, lines, lvals=None):
             # This is the line with the error
             pad = numbers_width - len(str(i))
             if pad >= 3:
-                marker = '-'*(pad-3) + '-> '
+                marker = '-' * (pad - 3) + '-> '
             elif pad == 2:
                 marker = '> '
             elif pad == 1:
@@ -165,8 +173,8 @@ def _format_traceback_lines(lnum, index, lines, lvals=None):
                 marker = ''
             num = marker + str(i)
         else:
-            num = '%*s' % (numbers_width,i)
-        line = '%s %s' %(num, line)
+            num = '%*s' % (numbers_width, i)
+        line = '%s %s' % (num, line)
 
         res.append(line)
         if lvals and i == lnum:
@@ -175,7 +183,7 @@ def _format_traceback_lines(lnum, index, lines, lvals=None):
     return res
 
 
-def format_records(records):   #, print_globals=False):
+def format_records(records):   # , print_globals=False):
     # Loop over all records printing context and info
     frames = []
     abspath = os.path.abspath
@@ -202,9 +210,9 @@ def format_records(records):   #, print_globals=False):
         else:
             # Decide whether to include variable details or not
             try:
-                call = 'in %s%s' % (func,inspect.formatargvalues(args,
-                                            varargs, varkw,
-                                            locals, formatvalue=eq_repr))
+                call = 'in %s%s' % (func, inspect.formatargvalues(args,
+                                            varargs, varkw, locals,
+                                            formatvalue=eq_repr))
             except KeyError:
                 # Very odd crash from inspect.formatargvalues().  The
                 # scenario under which it appeared was a call to
@@ -267,14 +275,16 @@ def format_records(records):   #, print_globals=False):
         try:
             # This builds the names list in-place by capturing it from the
             # enclosing scope.
-            tokenize.tokenize(linereader, tokeneater)
-        except IndexError:
+            for token in generate_tokens(linereader):
+                tokeneater(*token)
+        except (IndexError, UnicodeDecodeError):
             # signals exit of tokenizer
             pass
         except tokenize.TokenError,msg:
-            print ("An unexpected error occurred while tokenizing input\n"
-                    "The following traceback may be corrupted or invalid\n"
-                    "The error message is: %s\n" % msg)
+            _m = ("An unexpected error occurred while tokenizing input\n"
+                  "The following traceback may be corrupted or invalid\n"
+                  "The error message is: %s\n" % msg)
+            print(_m)
 
         # prune names list of duplicates, but keep the right order
         unique_names = uniq_stable(names)
@@ -282,17 +292,17 @@ def format_records(records):   #, print_globals=False):
         # Start loop over vars
         lvals = []
         for name_full in unique_names:
-            name_base = name_full.split('.',1)[0]
+            name_base = name_full.split('.', 1)[0]
             if name_base in frame.f_code.co_varnames:
-                if locals.has_key(name_base):
+                if name_base in locals.keys():
                     try:
-                        value = repr(eval(name_full,locals))
+                        value = repr(eval(name_full, locals))
                     except:
                         value = "undefined"
                 else:
                     value = "undefined"
                 name = name_full
-                lvals.append('%s = %s' % (name,value))
+                lvals.append('%s = %s' % (name, value))
             #elif print_globals:
             #    if frame.f_globals.has_key(name_base):
             #        try:
@@ -308,18 +318,18 @@ def format_records(records):   #, print_globals=False):
         else:
             lvals = ''
 
-        level = '%s\n%s %s\n' % (75*'.', link, call)
+        level = '%s\n%s %s\n' % (75 * '.', link, call)
 
         if index is None:
             frames.append(level)
         else:
-            frames.append('%s%s' % (level,''.join(
+            frames.append('%s%s' % (level, ''.join(
                 _format_traceback_lines(lnum, index, lines, lvals))))
 
     return frames
 
 
-################################################################################
+###############################################################################
 def format_exc(etype, evalue, etb, context=5, tb_offset=0):
     """ Return a nice text document describing the traceback.
 
@@ -337,12 +347,12 @@ def format_exc(etype, evalue, etb, context=5, tb_offset=0):
         pass
 
     # Header with the exception type, python version, and date
-    pyver = 'Python ' + string.split(sys.version)[0] + ': ' + sys.executable
+    pyver = 'Python ' + sys.version.split()[0] + ': ' + sys.executable
     date = time.ctime(time.time())
     pid = 'PID: %i' % os.getpid()
 
-    head = '%s%s%s\n%s%s%s' % (etype, ' '*(75-len(str(etype))-len(date)),
-                           date, pid, ' '*(75-len(str(pid))-len(pyver)),
+    head = '%s%s%s\n%s%s%s' % (etype, ' ' * (75 - len(str(etype)) - len(date)),
+                           date, pid, ' ' * (75 - len(str(pid)) - len(pyver)),
                            pyver)
 
     # Flush cache before calling inspect.  This helps alleviate some of the
@@ -353,19 +363,20 @@ def format_exc(etype, evalue, etb, context=5, tb_offset=0):
         records = _fixed_getframes(etb, context, tb_offset)
     except:
         raise
-        print '\nUnfortunately, your original traceback can not be constructed.\n'
+        print '\nUnfortunately, your original traceback can not be ' + \
+              'constructed.\n'
         return ''
 
     # Get (safely) a string form of the exception info
     try:
-        etype_str,evalue_str = map(str,(etype,evalue))
+        etype_str, evalue_str = map(str, (etype, evalue))
     except:
         # User exception is improperly defined.
-        etype,evalue = str,sys.exc_info()[:2]
-        etype_str,evalue_str = map(str,(etype,evalue))
+        etype, evalue = str, sys.exc_info()[:2]
+        etype_str, evalue_str = map(str, (etype, evalue))
     # ... and format it
     exception = ['%s: %s' % (etype_str, evalue_str)]
-    if type(evalue) is types.InstanceType:
+    if (not PY3) and type(evalue) is types.InstanceType:
         try:
             names = [w for w in dir(evalue) if isinstance(w, basestring)]
         except:
@@ -375,7 +386,7 @@ def format_exc(etype, evalue, etb, context=5, tb_offset=0):
             exception.append(
                     'Exception reporting error (object with broken dir()):'
                     )
-            etype_str, evalue_str = map(str,sys.exc_info()[:2])
+            etype_str, evalue_str = map(str, sys.exc_info()[:2])
             exception.append('%s: %s' % (etype_str, evalue_str))
             names = []
         for name in names:
@@ -383,13 +394,13 @@ def format_exc(etype, evalue, etb, context=5, tb_offset=0):
             exception.append('\n%s%s = %s' % (INDENT, name, value))
 
     frames = format_records(records)
-    return '%s\n%s\n%s' % (head,'\n'.join(frames),''.join(exception[0]) )
+    return '%s\n%s\n%s' % (head, '\n'.join(frames), ''.join(exception[0]))
 
 
-################################################################################
+###############################################################################
 def format_outer_frames(context=5, stack_start=None, stack_end=None,
                         ignore_ipython=True):
-    LNUM_POS, LINES_POS, INDEX_POS =  2, 4, 5
+    LNUM_POS, LINES_POS, INDEX_POS = 2, 4, 5
     records = inspect.getouterframes(inspect.currentframe())
     output = list()
 
@@ -410,9 +421,9 @@ def format_outer_frames(context=5, stack_start=None, stack_end=None,
             if (os.path.basename(filename) == 'iplib.py'
                         and func_name in ('safe_execfile', 'runcode')):
                 break
-        maybeStart = line_no -1 - context//2
-        start =  max(maybeStart, 0)
-        end   = start + context
+        maybeStart = line_no - 1 - context // 2
+        start = max(maybeStart, 0)
+        end = start + context
         lines = linecache.getlines(filename)[start:end]
         # pad with empty lines if necessary
         if maybeStart < 0:
@@ -425,6 +436,3 @@ def format_outer_frames(context=5, stack_start=None, stack_end=None,
         buf[LINES_POS] = lines
         output.append(tuple(buf))
     return '\n'.join(format_records(output[stack_end:stack_start:-1]))
-
-
-

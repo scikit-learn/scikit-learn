@@ -29,10 +29,8 @@ class RFE(BaseEstimator):
     ----------
     estimator : object
         A supervised learning estimator with a `fit` method that updates a
-        `coef_` attribute that holds the fitted parameters. The first
-        dimension of the `coef_` array must be equal to the number of features
-        of the input dataset of the estimator. Important features must
-        correspond to high absolute values in the `coef_` array.
+        `coef_` attribute that holds the fitted parameters. Important features
+        must correspond to high absolute values in the `coef_` array.
 
         For instance, this is the case for most supervised learning
         algorithms such as Support Vector Classifiers and Generalized
@@ -56,8 +54,8 @@ class RFE(BaseEstimator):
         The mask of selected features.
 
     `ranking_` : array of shape [n_features]
-        The feature ranking, such that `ranking_[i]` corresponds to the ranking
-        position of the i-th feature. Selected (i.e., estimated best) features
+        The feature ranking, such that `ranking_[i]` corresponds to the ranking \
+        position of the i-th feature. Selected (i.e., estimated best) features \
         are assigned rank 1.
 
     Examples
@@ -78,8 +76,10 @@ class RFE(BaseEstimator):
     >>> selector.ranking_
     array([1, 1, 1, 1, 1, 6, 4, 3, 2, 5])
 
-    References
-    ----------
+    Notes
+    -----
+    **References**:
+
     .. [1] Guyon, I., Weston, J., Barnhill, S., & Vapnik, V., "Gene selection
            for cancer classification using support vector machines",
            Mach. Learn., 46(1-3), 389--422, 2002.
@@ -121,7 +121,11 @@ class RFE(BaseEstimator):
             # Rank the remaining features
             estimator = clone(self.estimator)
             estimator.fit(X[:, features], y)
-            ranks = np.argsort(np.sum(estimator.coef_ ** 2, axis=0))
+
+            if estimator.coef_.ndim > 1:
+                ranks = np.argsort(np.sum(estimator.coef_ ** 2, axis=0))
+            else:
+                ranks = np.argsort(estimator.coef_ ** 2)
 
             # Eliminate the worse features
             threshold = min(step, np.sum(support_) - self.n_features_to_select)
@@ -145,8 +149,8 @@ class RFE(BaseEstimator):
         X : array of shape [n_samples, n_features]
             The input samples.
 
-        Return
-        ------
+        Returns
+        -------
         y : array of shape [n_samples]
             The predicted target values.
         """
@@ -174,10 +178,10 @@ class RFE(BaseEstimator):
         X : array of shape [n_samples, n_features]
             The input samples.
 
-        Return
-        ------
+        Returns
+        -------
         X_r : array of shape [n_samples, n_selected_features]
-            The input samples with only the features selected during the
+            The input samples with only the features selected during the \
             elimination.
         """
         return X[:, self.support_]
@@ -191,10 +195,8 @@ class RFECV(RFE):
     ----------
     estimator : object
         A supervised learning estimator with a `fit` method that updates a
-        `coef_` attribute that holds the fitted parameters. The first
-        dimension of the `coef_` array must be equal to the number of features
-        of the input dataset of the estimator. Important features must
-        correspond to high absolute values in the `coef_` array.
+        `coef_` attribute that holds the fitted parameters. Important features
+        must correspond to high absolute values in the `coef_` array.
 
         For instance, this is the case for most supervised learning
         algorithms such as Support Vector Classifiers and Generalized
@@ -220,17 +222,19 @@ class RFECV(RFE):
     ----------
     `n_features_` : int
         The number of selected features with cross-validation.
-
     `support_` : array of shape [n_features]
         The mask of selected features.
 
     `ranking_` : array of shape [n_features]
-        The feature ranking, such that `ranking_[i]` corresponds to the ranking
-        position of the i-th feature. Selected (i.e., estimated best) features
-        are assigned rank 1.
+        The feature ranking, such that `ranking_[i]`
+        corresponds to the ranking
+        position of the i-th feature.
+        Selected (i.e., estimated best)
+        features are assigned rank 1.
 
-    `cv_scores_`: array of shape [n_subsets_of_features]
-        The cross-validation scores such that `cv_scores_[i]` corresponds to
+    `cv_scores_` : array of shape [n_subsets_of_features]
+        The cross-validation scores such that
+        `cv_scores_[i]` corresponds to
         the CV score of the i-th subset of features.
 
     Examples
@@ -251,8 +255,10 @@ class RFECV(RFE):
     >>> selector.ranking_
     array([1, 1, 1, 1, 1, 6, 4, 3, 2, 5])
 
-    References
-    ----------
+    Notes
+    -----
+    **References**:
+
     .. [1] Guyon, I., Weston, J., Barnhill, S., & Vapnik, V., "Gene selection
            for cancer classification using support vector machines",
            Mach. Learn., 46(1-3), 389--422, 2002.

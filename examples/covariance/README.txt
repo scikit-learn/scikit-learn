@@ -1,4 +1,6 @@
+.. _covariance_examples:
+
 Covariance estimation
 ---------------------
 
-Examples concerning the `sklearn.covariance` package.
+Examples concerning the :mod:`sklearn.covariance` package.

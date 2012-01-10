@@ -78,8 +78,8 @@ class QDA(BaseEstimator, ClassifierMixin):
             If True the covariance matrices are computed and stored in the
             self.covariances_ attribute.
         """
-        X = np.asanyarray(X)
-        y = np.asanyarray(y)
+        X = np.asarray(X)
+        y = np.asarray(y)
         if X.ndim != 2:
             raise ValueError('X must be a 2D array')
         if X.shape[0] != y.shape[0]:
@@ -150,7 +150,7 @@ class QDA(BaseEstimator, ClassifierMixin):
         C : array, shape = [n_samples, n_classes]
             Decision function values related to each class, per sample.
         """
-        X = np.asanyarray(X)
+        X = np.asarray(X)
         norm2 = []
         for i in range(len(self.classes)):
             R = self.rotations[i]
