@@ -51,8 +51,9 @@ Example
 >>> labels[random_unlabeled_points] = -1
 >>> label_prop_model.fit(iris.data, labels)
 ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-LabelPropagation(alpha=1, gamma=20, kernel='rbf', max_iter=30, tol=0.001,
-        unlabeled_identifier=-1)
+LabelPropagation(alpha=1, gamma=20, kernel='rbf', max_iter=30, n_neighbors=7,
+         tol=0.001, unlabeled_identifier=-1)
+
 
 Notes
 -----
@@ -67,7 +68,7 @@ from .base import BaseEstimator, ClassifierMixin
 from .metrics.pairwise import rbf_kernel
 from .neighbors.graph import kneighbors_graph
 from .utils.graph import graph_laplacian
-
+from .utils.fixes import divide_out
 # Authors: Clay Woolam <clay@woolam.org>
 # License: BSD
 
@@ -115,7 +116,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         input data set
     """
 
-    def __init__(self, kernel='rbf', gamma=20, n_neighbors=7,
+    def __init__(self, kernel='rbf', gamma=20, n_neighbors=2,
             alpha=1, unlabeled_identifier=-1, max_iter=30,
             tol=1e-3):
 
@@ -133,11 +134,18 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         # clamping factor
         self.alpha = alpha
 
-    def _get_kernel(self, X, y):
+    def _get_kernel(self, X, y=None):
         if self.kernel == "rbf":
-            return rbf_kernel(X, y, gamma=self.gamma)
+            if y is None:
+                return rbf_kernel(X, X, gamma=self.gamma)
+            else:
+                return rbf_kernel(X, y, gamma=self.gamma)
         elif self.kernel == "knn":
-            return kneighbors_graph(X, self.n_neighbors)
+            if y is None:
+                return kneighbors_graph(X, self.n_neighbors)
+            else:
+                from neighbors.unsupervised import NearestNeighbors
+                return NearestNeighbors(self.n_neighbors).fit(X).kneighbors(y, return_distance=False)
         else:
             raise ValueError("%s is not a valid kernel. Only rbf \
                              supported at this time" % self.kernel)
@@ -178,10 +186,18 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         labels
         """
         X_2d = np.atleast_2d(X)
-        inference = np.dot(self._get_kernel(self.X_, X_2d).T,
-                self.label_distributions_)
+        weight_matrices = self._get_kernel(self.X_, X_2d)
+        if self.kernel == 'knn':
+            inference = []
+            for weight_matrix in weight_matrices:
+                ine = np.sum(self.label_distributions_[weight_matrix], axis=0)
+                inference.append(ine)
+            inference = np.array(inference)
+        else:
+            weight_matrices = weight_matrices.T
+            inference = np.dot(weight_matrices, self.label_distributions_)
         normalizer = np.atleast_2d(np.sum(inference, axis=1)).T
-        np.divide(inference, normalizer, out=inference)
+        divide_out(inference, normalizer, out=inference)
         return inference
 
     def fit(self, X, y):
@@ -252,7 +268,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
             remaining_iter -= 1
 
         normalizer = np.sum(self.label_distributions_, axis=1)[:, np.newaxis]
-        np.divide(self.label_distributions_, normalizer,
+        divide_out(self.label_distributions_, normalizer,
                   out=self.label_distributions_)
         # set the transduction item
         transduction = self.unique_labels_[np.argmax(self.label_distributions_,
@@ -303,8 +319,8 @@ class LabelPropagation(BaseLabelPropagation):
     >>> labels[random_unlabeled_points] = -1
     >>> label_prop_model.fit(iris.data, labels)
     ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    LabelPropagation(alpha=1, gamma=20, kernel='rbf', max_iter=30, tol=0.001,
-            unlabeled_identifier=-1)
+    LabelPropagation(alpha=1, gamma=20, kernel='rbf', max_iter=30, n_neighbors=7,
+                 tol=0.001, unlabeled_identifier=-1)
 
     References
     ----------
@@ -324,8 +340,12 @@ class LabelPropagation(BaseLabelPropagation):
         This basic implementation creates a non-stochastic affinity matrix, so
         class distributions will exceed 1 (normalization may be desired)
         """
-        affinity_matrix = self._get_kernel(self.X_, self.X_)
-        affinity_matrix /= np.sum(affinity_matrix, axis=0)[:, np.newaxis]
+        affinity_matrix = self._get_kernel(self.X_)
+        normalizer = affinity_matrix.sum(axis=0)
+        if sparse.isspmatrix(affinity_matrix):
+            affinity_matrix.data /= np.diag(np.array(normalizer))
+        else:
+            divide_out(affinity_matrix, normalizer[:, np.newaxis], out=affinity_matrix)
         return affinity_matrix
 
 
@@ -397,7 +417,7 @@ class LabelSpreading(BaseLabelPropagation):
         """Graph matrix for Label Spreading computes the graph laplacian"""
         # compute affinity matrix (or gram matrix)
         n_samples = self.X_.shape[0]
-        affinity_matrix = self._get_kernel(self.X_, self.X_)
+        affinity_matrix = self._get_kernel(self.X_)
         laplacian = graph_laplacian(affinity_matrix, normed=True)
         laplacian = -laplacian
         if sparse.isspmatrix(laplacian):

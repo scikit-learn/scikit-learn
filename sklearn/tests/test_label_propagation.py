@@ -8,26 +8,26 @@ from numpy.testing import assert_array_equal
 
 
 ESTIMATORS = [
-    (label_propagation.LabelPropagation, 'rbf'),
-    (label_propagation.LabelPropagation, 'knn'),
-    (label_propagation.LabelSpreading, 'rbf'),
-    (label_propagation.LabelSpreading, 'knn'),
+    (label_propagation.LabelPropagation, {'kernel': 'rbf'}),
+    (label_propagation.LabelPropagation, {'kernel': 'knn'}),
+    (label_propagation.LabelSpreading, {'kernel': 'rbf'}),
+    (label_propagation.LabelSpreading, {'kernel': 'knn'})
 ]
 
 
 def test_fit_transduction():
     samples = [[1., 0.], [0., 2.], [1., 3.]]
     labels = [0, 1, -1]
-    for estimator, kernel in ESTIMATORS:
-        clf = estimator(kernel=kernel).fit(samples, labels)
+    for estimator, parameters in ESTIMATORS:
+        clf = estimator(**parameters).fit(samples, labels)
         assert clf.transduction_[2] == 1
 
 
 def test_string_labels():
     samples = [[1., 0.], [0., 2.], [1., 3.]]
     labels = ['banana', 'orange', 'unlabeled']
-    for estimator, kernel in ESTIMATORS:
-        clf = estimator(kernel=kernel, unlabeled_identifier='unlabeled')\
+    for estimator, parameters in ESTIMATORS:
+        clf = estimator(unlabeled_identifier='unlabeled', **parameters)\
                 .fit(samples, labels)
         assert clf.transduction_[2] == 'orange'
 
@@ -35,26 +35,29 @@ def test_string_labels():
 def test_distribution():
     samples = [[1., 0.], [0., 1.], [1., 1.]]
     labels = [0, 1, -1]
-    for estimator, kernel in ESTIMATORS:
-        clf = estimator(kernel=kernel).fit(samples, labels)
-        assert_array_almost_equal(np.asarray(clf.label_distributions_[2]),
-                np.array([.5, .5]), 2)
+    for estimator, parameters in ESTIMATORS:
+        clf = estimator(**parameters).fit(samples, labels)
+        if parameters['kernel'] == 'knn':
+            assert_array_almost_equal(clf.predict_proba([[1., 0.0]]),
+                    np.array([[1., 0.]]), 2)
+        else:
+            assert_array_almost_equal(np.asarray(clf.label_distributions_[2]),
+                    np.array([.5, .5]), 2)
 
 
 def test_predict():
     samples = [[1., 0.], [0., 2.], [1., 3.]]
     labels = [0, 1, -1]
-    for estimator, kernel in ESTIMATORS:
-        clf = estimator(kernel=kernel).fit(samples, labels)
+    for estimator, parameters in ESTIMATORS:
+        clf = estimator(**parameters).fit(samples, labels)
         assert_array_equal(clf.predict([[0.5, 2.5]]), np.array([1]))
 
 
 def test_predict_proba():
     samples = [[1., 0.], [0., 1.], [1., 2.5]]
     labels = [0, 1, -1]
-
-    for estimator, kernel in ESTIMATORS:
-        clf = estimator(kernel=kernel).fit(samples, labels)
+    for estimator, parameters in ESTIMATORS:
+        clf = estimator(**parameters).fit(samples, labels)
         assert_array_almost_equal(clf.predict_proba([[1., 1.]]),
                 np.array([[0.5, 0.5]]))
 
