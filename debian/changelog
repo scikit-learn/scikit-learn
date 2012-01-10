@@ -4,6 +4,7 @@ scikit-learn (0.10.0~pre1-1) unstable; urgency=low
   * Dropping .dfsg suffix since it is not adequate.  Sources are
     repackaged only to remove joblib shipped in a separate package in Debian
     main
+  * Adjusted dfsg and other rules to operate on sklearn directory
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 10 Jan 2012 17:52:27 -0500
 

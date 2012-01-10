@@ -14,7 +14,7 @@ PYVER = $(shell pyversions  -vd)
 
 
 override_dh_clean:
-	rm -rf build doc/_build doc/auto_examples *-stamp scikits.learn.egg-info scikits/learn/datasets/__config__.py
+	rm -rf build doc/_build doc/auto_examples *-stamp *.egg-info sklearn/datasets/__config__.py
 	dh_clean
 
 
@@ -86,7 +86,7 @@ dfsg: dfsg-releases
 dfsg-%:
 	git checkout dfsg
 	-git merge --no-commit $*
-	-git rm -rf scikits/learn/externals/joblib
-	# -git rm -f ./scikits/learn/svm/src/libsvm/svm.*
+	-git rm -rf sklearn/externals/joblib
+	# -git rm -f ./sklearn/svm/src/libsvm/svm.*
 	git commit -m "Merge $* into DFSG (pruning externals: joblib)" -a
 	git checkout debian
