@@ -452,8 +452,8 @@ class RandomForestClassifier(ForestClassifier):
                        min_split=1,
                        min_density=0.1,
                        max_features="auto",
-                       compute_importances=False,
                        bootstrap=True,
+                       compute_importances=False,
                        n_jobs=1,
                        random_state=None):
         super(RandomForestClassifier, self).__init__(
