@@ -156,16 +156,49 @@ GBRT considers additive models of the following form:
 
 where :math:`h_i(x)` are the basis functions which are usually called *weak learners* in the context of boosting. Gradient Tree Boosting uses :ref:`decision trees <tree>` of fixed size as weak learners. Decision trees have a number of abilities that make them valuable for boosting, namely the ability to handle data of mixed type and the ability to model complex functions. 
 
-Similar to other boosting algorithms GBRT builds the additive model in a forward stagewise fashion: At each stage the decision tree :math:`h_m(x)` is choosen that maximally reduces the loss function :math:`L` given the current model :math:`F_{m-1}` and its fit :math:`F_{m-1}(x_i)`
+Similar to other boosting algorithms GBRT builds the additive model in a forward stagewise fashion: At each stage the decision tree :math:`h_m(x)` is choosen that minimizes the loss function :math:`L` given the current model :math:`F_{m-1}` and its fit :math:`F_{m-1}(x_i)`
 
   .. math::
 
     F_m(x) = F_{m-1}(x) + \arg_min_{h}  \sum_{i=1}^{n} L(y_i, F_{m-1}(x_i) - h(x))
 
+Gradient Boosting attempts to solve this minimization problem numerically via steepest descent: The steepest descent direction is the negative gradient of the loss function evaluated at the current model :math:`F_{m-1}` which can be calculated for any differentialble loss function: 
 
-TODO steepest descent - predict negative gradient of loss function w.r.t the current 
+  .. math::
 
-TODO table loss function - negative gradient - line search
+    F_m(x) = F_{m-1}(x) + \gamma_m \sum_{i=1}^{n} \nabla_F L(y_i, F_{m-1}(x_i))
+
+Where the step length :math:`\gamma_m` is choosen using line search:
+
+  .. math::
+
+    \gamma_m = \arg_min_{\gamma} \sum_{i=1}^{n} L(y_i, F_{m-1}(x_i) \frac{\partial L(y_i, F_{m-1}(x_i))}{\partial F_{m-1}(x_i)})
+
+The module :mod:`gradient_boosting` provides classes for regression (:class:`GradientBoostingRegressor`) and classification (:class:`GradientBoostingClassifier`) using Gradient Boosted Regression Trees. The algorithms for regression and classification only differ in the concrete loss function used. 
+
+Loss Functions
+??????????????
+
+The following loss functions are supported and can be specified using the parameter ``loss``: 
+
+  * Regression
+    - Least squares (``'ls'``): The natural choice for regression due to its superior computational properties.
+    - Least absolute deviation (``'lad'``): A robust loss function for regression.
+  * Classification
+    - Binomial deviance (``'deviance'``): The negative binomial log-likelihood loss function commonly used for binary classification (provides probability estimates).
+
+The table below summarizes the ingredients of the Gradient Boosting algorithm for each of the three loss functions above. 
+
++----------+-------------------------+----------------------------+-------------+
+|          | Loss function           | Gradi ent                  | Line search |
++====================================+============================+=============+
+| LS       | :math:`(y_i - f(x_i)^2` | :math:`y_i - f(x_i)`       |             |
++------------------------------------+----------------------------+-------------+
+| LAD      | :math:`|y_i - f(x_i)|`  | :math:`sign(y_i - f(x_i))` |             |
++------------------------------------+----------------------------+-------------+
+| Deviance | :math:`|y_i - f(x_i)|`  |                            |             |
++----------+-------------------------+----------------------------+-------------+
+
 
 TODO Shrinkage
 
