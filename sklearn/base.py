@@ -273,7 +273,13 @@ class RegressorMixin(object):
     """Mixin class for all regression estimators in scikit-learn"""
 
     def score(self, X, y):
-        """Returns the coefficient of determination of the prediction
+        """Returns the coefficient of determination R^2 of the prediction.
+
+        The coefficient R^2 is defined as (1 - u/v), where u is the
+        regression sum of squares ((y - y_pred) ** 2).sum() and v is the
+        residual sum of squares ((y_true - y_true.mean()) ** 2).sum().
+        Best possible score is 1.0, lower values are worse.
+
 
         Parameters
         ----------

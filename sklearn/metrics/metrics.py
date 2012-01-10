@@ -624,16 +624,20 @@ def r2_score(y_true, y_pred):
 
     Best possible score is 1.0, lower values are worse.
 
-    Note: not a symmetric function.
-
-    return the R^2 score
-
     Parameters
     ----------
     y_true : array-like
 
     y_pred : array-like
 
+    Returns
+    -------
+    z : float
+        The R^2 score
+
+    Notes
+    -----
+    This is not a symmetric function.
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
     numerator = ((y_true - y_pred) ** 2).sum()
