@@ -117,7 +117,8 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
             if y is None:
                 return kneighbors_graph(X, self.n_neighbors)
             else:
-                return NearestNeighbors(self.n_neighbors).fit(X).kneighbors(y, return_distance=False)
+                return NearestNeighbors(self.n_neighbors).fit(X)\
+                        .kneighbors(y, return_distance=False)
         else:
             raise ValueError("%s is not a valid kernel. Only rbf \
                              supported at this time" % self.kernel)
@@ -309,7 +310,8 @@ class LabelPropagation(BaseLabelPropagation):
         if sparse.isspmatrix(affinity_matrix):
             affinity_matrix.data /= np.diag(np.array(normalizer))
         else:
-            divide_out(affinity_matrix, normalizer[:, np.newaxis], out=affinity_matrix)
+            divide_out(affinity_matrix, normalizer[:, np.newaxis],
+                    out=affinity_matrix)
         return affinity_matrix
 
 
