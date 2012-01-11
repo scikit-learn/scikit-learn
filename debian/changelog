@@ -1,6 +1,7 @@
 scikit-learn (0.10.0~pre1-1) unstable; urgency=low
 
   * Snapshot of upstream release branch
+    - Python 2.5 compatibility dropped
   * Dropping .dfsg suffix since it is not adequate.  Sources are
     repackaged only to remove joblib shipped in a separate package in Debian
     main
