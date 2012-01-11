@@ -12,6 +12,7 @@ from sklearn.multiclass import OneVsOneClassifier
 from sklearn.multiclass import OutputCodeClassifier
 from sklearn.svm import LinearSVC
 from sklearn.naive_bayes import MultinomialNB
+from sklearn.linear_model import LinearRegression, Lasso, ElasticNet, Ridge
 from sklearn.grid_search import GridSearchCV
 from sklearn import datasets
 
@@ -76,7 +77,9 @@ def test_ovr_multilabel():
                   [1, 0, 1],
                   [1, 0, 0]])
 
-    for base_clf in (MultinomialNB(), LinearSVC()):
+    for base_clf in (MultinomialNB(), LinearSVC(),
+                     LinearRegression(), Ridge(),
+                     ElasticNet(), Lasso(alpha=0.5)):
         # test input as lists of tuples
         clf = OneVsRestClassifier(base_clf).fit(X, y)
         y_pred = clf.predict([[0, 4, 4]])[0]

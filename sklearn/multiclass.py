@@ -21,7 +21,7 @@ improves.
 
 import numpy as np
 
-from .base import BaseEstimator, ClassifierMixin, clone
+from .base import BaseEstimator, ClassifierMixin, clone, is_classifier
 from .preprocessing import LabelBinarizer
 from .metrics.pairwise import euclidean_distances
 from .utils import check_random_state
@@ -65,7 +65,8 @@ def fit_ovr(estimator, X, y):
 def predict_ovr(estimators, label_binarizer, X):
     """Make predictions using the one-vs-the-rest strategy."""
     Y = np.array([_predict_binary(e, X) for e in estimators])
-    thresh = 0 if hasattr(estimators[0], "decision_function") else .5
+    e = estimators[0]
+    thresh = 0 if hasattr(e, "decision_function") and is_classifier(e) else .5
     return label_binarizer.inverse_transform(Y.T, threshold=thresh)
 
 
