@@ -147,7 +147,7 @@ version 0.9:
 People
 ------
 
-The folling people contributed to scikit-learn since last release:
+The following people contributed to scikit-learn since last release:
 
    * 246  `Andreas Müller`_
    * 242  `Olivier Grisel`_
