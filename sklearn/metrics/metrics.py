@@ -193,8 +193,11 @@ def auc(x, y):
 
     """
     x, y = check_arrays(x, y)
-    assert x.shape[0] == y.shape[0]
-    assert x.shape[0] >= 3
+    assert x.shape[0] == y.shape[0], ('x and y should have the same shape '
+        'to compute area under curve, but x.shape = %s and y.shape =  %s.'
+        % (x.shape, y.shape))
+    assert x.shape[0] >= 3, ('At least 3 points are needed to compute '
+        'area under curve, but x.shape = %s' % x.shape)
 
     # reorder the data points according to the x axis
     order = np.argsort(x)
