@@ -72,18 +72,10 @@ class LeaveOneOut(object):
     def __init__(self, n, indices=True):
         self.n = n
         self.indices = indices
+        self._idx = 0
 
     def __iter__(self):
-        n = self.n
-        for i in xrange(n):
-            test_index = np.zeros(n, dtype=np.bool)
-            test_index[i] = True
-            train_index = np.logical_not(test_index)
-            if self.indices:
-                ind = np.arange(n)
-                train_index = ind[train_index]
-                test_index = ind[test_index]
-            yield train_index, test_index
+        return self
 
     def __repr__(self):
         return '%s.%s(n=%i)' % (
@@ -94,6 +86,20 @@ class LeaveOneOut(object):
 
     def __len__(self):
         return self.n
+
+    def next(self):
+        if self._idx >= self.n:
+            raise StopIteration
+        test_index = np.zeros(self.n, dtype=np.bool)
+        train_index = np.logical_not(test_index)
+        test_index[self._idx] = True
+        if self.indices:
+            ind = np.arange(self.n)
+            train_index = ind[train_index]
+            test_index = ind[test_index]
+        self._idx += 1
+        return train_index, test_index
+
 
 
 class LeavePOut(object):
@@ -146,20 +152,11 @@ class LeavePOut(object):
         self.n = n
         self.p = p
         self.indices = indices
+        self._combinations = combinations(range(n), p)
+        self._idx = 0
 
     def __iter__(self):
-        n = self.n
-        p = self.p
-        comb = combinations(range(n), p)
-        for idx in comb:
-            test_index = np.zeros(n, dtype=np.bool)
-            test_index[np.array(idx)] = True
-            train_index = np.logical_not(test_index)
-            if self.indices:
-                ind = np.arange(n)
-                train_index = ind[train_index]
-                test_index = ind[test_index]
-            yield train_index, test_index
+        return self
 
     def __repr__(self):
         return '%s.%s(n=%i, p=%i)' % (
@@ -173,6 +170,18 @@ class LeavePOut(object):
         return (factorial(self.n) / factorial(self.n - self.p)
                 / factorial(self.p))
 
+    def next(self):
+        if self._idx >= self.n:
+            raise StopIteration
+        test_index = np.zeros(self.n, dtype=np.bool)
+        test_index[np.array(self._idx)] = True
+        train_index = np.logical_not(test_index)
+        if self.indices:
+            ind = np.arange(self.n)
+            train_index = ind[train_index]
+            test_index = ind[test_index]
+        self._idx += 1
+        return train_index, test_index
 
 class KFold(object):
     """K-Folds cross validation iterator
@@ -403,21 +412,16 @@ class LeaveOneLabelOut(object):
 
     def __init__(self, labels, indices=True):
         self.labels = labels
-        self.n_unique_labels = unique(labels).size
+        self.unique_labels = unique(labels)
+        # TODO: deprecate n_unique labels, it's redundant with
+        # self.unique_labels
+        self.n_unique_labels = self.unique_labels.size
         self.indices = indices
+        self._idx = 0
 
     def __iter__(self):
-        # We make a copy here to avoid side-effects during iteration
-        labels = np.array(self.labels, copy=True)
-        for i in unique(labels):
-            test_index = np.zeros(len(labels), dtype=np.bool)
-            test_index[labels == i] = True
-            train_index = np.logical_not(test_index)
-            if self.indices:
-                ind = np.arange(len(labels))
-                train_index = ind[train_index]
-                test_index = ind[test_index]
-            yield train_index, test_index
+        return self
+
 
     def __repr__(self):
         return '%s.%s(labels=%s)' % (
@@ -428,6 +432,23 @@ class LeaveOneLabelOut(object):
 
     def __len__(self):
         return self.n_unique_labels
+
+
+    def next(self):
+        # We make a copy here to avoid side-effects during iteration
+        labels = np.array(self.labels, copy=True)
+        if self._idx >= self.unique_labels.size:
+            raise StopIteration
+        i = self.unique_labels[self._idx]
+        test_index = np.zeros(len(labels), dtype=np.bool)
+        test_index[labels == i] = True
+        train_index = np.logical_not(test_index)
+        if self.indices:
+            ind = np.arange(len(labels))
+            train_index = ind[train_index]
+            test_index = ind[test_index]
+        self._idx += 1
+        return train_index, test_index
 
 
 class LeavePLabelOut(object):
@@ -491,25 +512,11 @@ class LeavePLabelOut(object):
         self.unique_labels = unique(self.labels)
         self.n_unique_labels = self.unique_labels.size
         self.p = p
+        self.combinations = combinations(range(self.n_unique_labels), self.p)
         self.indices = indices
 
     def __iter__(self):
-        # We make a copy here to avoid side-effects during iteration
-        labels = np.array(self.labels, copy=True)
-        unique_labels = unique(labels)
-        comb = combinations(range(self.n_unique_labels), self.p)
-
-        for idx in comb:
-            test_index = np.zeros(labels.size, dtype=np.bool)
-            idx = np.array(idx)
-            for l in unique_labels[idx]:
-                test_index[labels == l] = True
-            train_index = np.logical_not(test_index)
-            if self.indices:
-                ind = np.arange(labels.size)
-                train_index = ind[train_index]
-                test_index = ind[test_index]
-            yield train_index, test_index
+        return self
 
     def __repr__(self):
         return '%s.%s(labels=%s, p=%s)' % (
@@ -523,6 +530,22 @@ class LeavePLabelOut(object):
         return (factorial(self.n_unique_labels) /
                 factorial(self.n_unique_labels - self.p) /
                 factorial(self.p))
+
+    def next(self):
+        # We make a copy here to avoid side-effects during iteration
+        labels = np.array(self.labels, copy=True)
+        test_index = np.zeros(labels.size, dtype=np.bool)
+        # combinations.next() will raise StopIteration when needed
+        comb = np.array(self.combinations.next())
+        for l in self.unique_labels[comb]:
+            test_index[labels == l] = True
+            train_index = np.logical_not(test_index)
+        if self.indices:
+            ind = np.arange(labels.size)
+            train_index = ind[train_index]
+            test_index = ind[test_index]
+        return train_index, test_index
+
 
 
 class Bootstrap(object):
