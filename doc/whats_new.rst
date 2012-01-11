@@ -49,7 +49,7 @@ Changelog
    - :ref:`outlier_detection`: outlier and novelty detection, by
      `Virgile Fritsch`_.
 
-   - :ref:`kernel_approximation`: a transform implement kernel
+   - :ref:`kernel_approximation`: a transform implementing kernel
      approximation for fast SGD on non-linear kernels by
      `Andreas Müller`_.
 
