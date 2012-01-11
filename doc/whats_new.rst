@@ -2,6 +2,18 @@
 
 .. _changes_0_10:
 
+0.11
+====
+
+API changes summary
+-------------------
+
+   - `NeighborsClassifier` and `NeighborsRegressor` are gone in the module
+     :ref:`neighbors`. Use the classes :class:`KNeighborsClassifier`,
+     :class:`RadiusNeighborsClassifier`, :class:`KNeighborsRegressor`
+     and/or :class:`RadiusNeighborsRegressor` instead.
+
+
 0.10
 ====
 
