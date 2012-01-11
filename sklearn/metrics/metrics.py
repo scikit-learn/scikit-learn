@@ -193,11 +193,14 @@ def auc(x, y):
 
     """
     x, y = check_arrays(x, y)
-    assert x.shape[0] == y.shape[0], ('x and y should have the same shape '
-        'to compute area under curve, but x.shape = %s and y.shape =  %s.'
-        % (x.shape, y.shape))
-    assert x.shape[0] >= 3, ('At least 3 points are needed to compute '
-        'area under curve, but x.shape = %s' % x.shape)
+    if x.shape[0] != y.shape[0]:
+        raise ValueError('x and y should have the same shape'
+                         ' to compute area under curve,'
+                         ' but x.shape = %s and y.shape = %s.'
+                         % (x.shape, y.shape))
+    if x.shape[0] < 3:
+        raise ValueError('At least 3 points are needed to compute'
+                         ' area under curve, but x.shape = %s' % x.shape)
 
     # reorder the data points according to the x axis
     order = np.argsort(x)
@@ -393,7 +396,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None):
     value at 1 and worst score at 0.
 
     The F_beta score weights recall beta as much as precision. beta = 1.0 means
-    recall and precsion are as important.
+    recall and precsion are equally important.
 
     The support is the number of occurrences of each class in y_true.
 
@@ -421,8 +424,10 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None):
     http://en.wikipedia.org/wiki/Precision_and_recall
 
     """
+    if beta <= 0:
+        raise ValueError("beta should be >0 in the F-beta score")
+
     y_true, y_pred = check_arrays(y_true, y_pred)
-    assert(beta > 0)
     if labels is None:
         labels = unique_labels(y_true, y_pred)
     else:
