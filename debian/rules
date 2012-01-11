@@ -4,7 +4,7 @@
 PACKAGE_NAME = python-sklearn
 PACKAGE_ROOT_DIR = debian/${PACKAGE_NAME}
 
-PYVERS = $(shell pyversions -vs)
+PYVERS = $(shell pyversions -vr)
 PYVER = $(shell pyversions  -vd)
 
 # Mega rule

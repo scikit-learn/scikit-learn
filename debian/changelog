@@ -7,6 +7,7 @@ scikit-learn (0.10.0~pre1-1) unstable; urgency=low
     main
   * Adjusted dfsg and other rules to operate on sklearn directory
   * Dropping cherry-picked fix up_release_sv_coef_memory
+  * Operate on 'requested' not all supported Python versions
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 10 Jan 2012 17:52:27 -0500
 
