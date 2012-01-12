@@ -129,6 +129,10 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin):
         self.estimators_, self.label_binarizer_ = fit_ovr(self.estimator, X, y)
         return self
 
+    def _check_is_fitted(self):
+        if not hasattr(self, "estimators_"):
+            raise ValueError("The object hasn't been fitted yet!")
+
     def predict(self, X):
         """Predict multi-class targets using underlying estimators.
 
@@ -142,8 +146,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin):
         y : array-like, shape = [n_samples]
             Predicted multi-class targets.
         """
-        if not hasattr(self, "estimators_"):
-            raise ValueError("The object hasn't been fitted yet!")
+        self._check_is_fitted()
 
         return predict_ovr(self.estimators_, self.label_binarizer_, X)
 
@@ -158,6 +161,13 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin):
                 "score is not supported for multilabel classifiers")
         else:
             return super(OneVsRestClassifier, self).score(X, y)
+
+    @property
+    def coef_(self):
+        self._check_is_fitted()
+        if not hasattr(self.estimators_[0], "coef_"):
+            raise ValueError("Base estimator doesn't have a coef_ property.")
+        return np.array([e.coef_.ravel() for e in self.estimators_])
 
 
 def _fit_ovo_binary(estimator, X, y, i, j):
