@@ -29,10 +29,11 @@ solving the Lasso problem. Because of the large size of the data, a sparse
 matrix is used to store the projection operator.
 
 The reconstruction with L1 penalization gives a result with zero error (all
-pixels are successfully labeled with 0 or 1). In comparison, we have shown the
-result of an L2 penalization (:class:`Ridge` class), that produces a large
-number of labeling errors for the pixels. Important artifacts are observed on
-the reconstructed image, contrary to the L1 penalization. 
+pixels are successfully labeled with 0 or 1), even if noise was added to the
+projections. In comparison, we have shown the result of an L2 penalization 
+(:class:`Ridge` class), that produces a large number of labeling errors for 
+the pixels. Important artifacts are observed on the reconstructed image, 
+contrary to the L1 penalization. 
 """
 
 
@@ -46,16 +47,16 @@ import matplotlib.pyplot as plt
 
 def _weights(x, dx=1, orig=0):
     x = np.ravel(x)
-    floor_x = np.floor((x - orig)/dx)
-    alpha = (x - orig - floor_x*dx)/dx
-    return np.hstack((floor_x, floor_x+1)), np.hstack((1 - alpha, alpha))
+    floor_x = np.floor((x - orig) / dx)
+    alpha = (x - orig - floor_x * dx) / dx
+    return np.hstack((floor_x, floor_x + 1)), np.hstack((1 - alpha, alpha))
 
 def _generate_center_coordinates(l_x):
     l_x = float(l_x)
     X, Y = np.mgrid[:l_x, :l_x]
-    center = l_x/2.
+    center = l_x / 2.
     X += 0.5 - center
-    Y += 0.5 -center
+    Y += 0.5 - center
     return X, Y
 
 def build_projection_operator(l_x, n_dir):
