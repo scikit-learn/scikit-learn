@@ -166,8 +166,17 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin):
     def coef_(self):
         self._check_is_fitted()
         if not hasattr(self.estimators_[0], "coef_"):
-            raise ValueError("Base estimator doesn't have a coef_ property.")
+            raise AttributeError(
+                "Base estimator doesn't have a coef_ attribute.")
         return np.array([e.coef_.ravel() for e in self.estimators_])
+
+    @property
+    def intercept_(self):
+        self._check_is_fitted()
+        if not hasattr(self.estimators_[0], "intercept_"):
+            raise AttributeError(
+                "Base estimator doesn't have an intercept_ attribute.")
+        return np.array([e.intercept_.ravel() for e in self.estimators_])
 
 
 def _fit_ovo_binary(estimator, X, y, i, j):

@@ -141,7 +141,7 @@ def test_ovr_coef_exceptions():
     # Doesn't have coef_ exception!
     ovr = OneVsRestClassifier(DecisionTreeClassifier())
     ovr.fit(iris.data, iris.target)
-    assert_raises(ValueError, lambda x: ovr.coef_, None)
+    assert_raises(AttributeError, lambda x: ovr.coef_, None)
 
 
 def test_ovo_exceptions():
