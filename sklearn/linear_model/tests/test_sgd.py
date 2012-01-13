@@ -7,7 +7,7 @@ from sklearn import preprocessing
 
 import unittest
 from nose.tools import raises
-from nose.tools import assert_raises, assert_true
+from nose.tools import assert_raises, assert_true, assert_equal
 
 
 ##
@@ -77,13 +77,13 @@ class DenseSGDClassifierTestCase(unittest.TestCase):
     def test_sgd_losses(self):
         """Check whether losses and hyperparameters are set properly"""
         clf = self.factory(loss='hinge')
-        assert isinstance(clf.loss_function, linear_model.Hinge)
+        assert_true(isinstance(clf.loss_function, linear_model.Hinge))
 
         clf = self.factory(loss='log')
-        assert isinstance(clf.loss_function, linear_model.Log)
+        assert_true(isinstance(clf.loss_function, linear_model.Log))
 
         clf = self.factory(loss='modified_huber')
-        assert isinstance(clf.loss_function, linear_model.ModifiedHuber)
+        assert_true(isinstance(clf.loss_function, linear_model.ModifiedHuber))
 
     @raises(ValueError)
     def test_sgd_bad_loss(self):
@@ -138,9 +138,9 @@ class DenseSGDClassifierTestCase(unittest.TestCase):
     def test_sgd_multiclass(self):
         """Multi-class test case"""
         clf = self.factory(alpha=0.01, n_iter=20).fit(X2, Y2)
-        assert clf.coef_.shape == (3, 2)
-        assert clf.intercept_.shape == (3,)
-        assert clf.decision_function([0, 0]).shape == (1, 3)
+        assert_equal(clf.coef_.shape, (3, 2))
+        assert_equal(clf.intercept_.shape, (3,))
+        assert_equal(clf.decision_function([0, 0]).shape, (1, 3))
         pred = clf.predict(T2)
         assert_array_equal(pred, true_result2)
 
@@ -149,17 +149,17 @@ class DenseSGDClassifierTestCase(unittest.TestCase):
         clf = self.factory(alpha=0.01, n_iter=20)
         clf.fit(X2, Y2, coef_init=np.zeros((3, 2)),
                 intercept_init=np.zeros(3))
-        assert clf.coef_.shape == (3, 2)
-        assert clf.intercept_.shape == (3,)
+        assert_equal(clf.coef_.shape, (3, 2))
+        assert_true(clf.intercept_.shape, (3,))
         pred = clf.predict(T2)
         assert_array_equal(pred, true_result2)
 
     def test_sgd_multiclass_njobs(self):
         """Multi-class test case with multi-core support"""
         clf = self.factory(alpha=0.01, n_iter=20, n_jobs=2).fit(X2, Y2)
-        assert clf.coef_.shape == (3, 2)
-        assert clf.intercept_.shape == (3,)
-        assert clf.decision_function([0, 0]).shape == (1, 3)
+        assert_equal(clf.coef_.shape, (3, 2))
+        assert_equal(clf.intercept_.shape, (3,))
+        assert_equal(clf.decision_function([0, 0]).shape, (1, 3))
         pred = clf.predict(T2)
         assert_array_equal(pred, true_result2)
 
@@ -191,9 +191,9 @@ class DenseSGDClassifierTestCase(unittest.TestCase):
         # log loss implements the logistic regression prob estimate
         clf = self.factory(loss="log", alpha=0.01, n_iter=10).fit(X, Y)
         p = clf.predict_proba([3, 2])
-        assert p > 0.5
+        assert_true(p > 0.5)
         p = clf.predict_proba([-1, -1])
-        assert p < 0.5
+        assert_true(p < 0.5)
 
     def test_sgd_l1(self):
         """Test L1 regularization"""
@@ -296,19 +296,19 @@ class DenseSGDClassifierTestCase(unittest.TestCase):
         clf = self.factory(n_iter=1000, class_weight=None)
         clf.fit(X_imbalanced, y_imbalanced)
         y_pred = clf.predict(X)
-        assert metrics.f1_score(y, y_pred) < 0.96
+        assert_true(metrics.f1_score(y, y_pred) < 0.96)
 
         # fit a model with auto class_weight enabled
         clf = self.factory(n_iter=1000, class_weight="auto")
         clf.fit(X_imbalanced, y_imbalanced)
         y_pred = clf.predict(X)
-        assert metrics.f1_score(y, y_pred) > 0.96
+        assert_true(metrics.f1_score(y, y_pred) > 0.96)
 
         # fit another using a fit parameter override
         clf = self.factory(n_iter=1000, class_weight=None)
         clf.fit(X_imbalanced, y_imbalanced, class_weight="auto")
         y_pred = clf.predict(X)
-        assert metrics.f1_score(y, y_pred) > 0.96
+        assert_true(metrics.f1_score(y, y_pred) > 0.96)
 
     def test_sample_weights(self):
         """Test weights on individual samples"""
@@ -345,9 +345,9 @@ class DenseSGDClassifierTestCase(unittest.TestCase):
         classes = np.unique(Y)
 
         clf.partial_fit(X[:third], Y[:third], classes=classes)
-        assert clf.coef_.shape == (1, X.shape[1])
-        assert clf.intercept_.shape == (1,)
-        assert clf.decision_function([0, 0]).shape == (1, )
+        assert_equal(clf.coef_.shape, (1, X.shape[1]))
+        assert_equal(clf.intercept_.shape, (1,))
+        assert_equal(clf.decision_function([0, 0]).shape, (1, ))
         id1 = id(clf.coef_.data)
 
         clf.partial_fit(X[third:], Y[third:])
@@ -375,7 +375,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
         clf = self.factory(alpha=0.1, n_iter=2,
                            fit_intercept=False)
         clf.fit([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
-        assert clf.coef_[0] == clf.coef_[1]
+        assert_equal(clf.coef_[0], clf.coef_[1])
 
     @raises(ValueError)
     def test_sgd_bad_penalty(self):
@@ -385,11 +385,11 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
     def test_sgd_losses(self):
         """Check whether losses and hyperparameters are set properly"""
         clf = self.factory(loss='squared_loss')
-        assert isinstance(clf.loss_function, linear_model.SquaredLoss)
+        assert_true(isinstance(clf.loss_function, linear_model.SquaredLoss))
 
         clf = self.factory(loss='huber', p=0.5)
-        assert isinstance(clf.loss_function, linear_model.Huber)
-        assert clf.p == 0.5
+        assert_true(isinstance(clf.loss_function, linear_model.Huber))
+        assert_equal(clf.p, 0.5)
 
     @raises(ValueError)
     def test_sgd_bad_loss(self):
@@ -408,7 +408,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
                            fit_intercept=False)
         clf.fit(X, y)
         score = clf.score(X, y)
-        assert  score > 0.99
+        assert_true(score > 0.99)
 
         # simple linear function with noise
         y = 0.5 * X.ravel() \
@@ -418,7 +418,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
                            fit_intercept=False)
         clf.fit(X, y)
         score = clf.score(X, y)
-        assert  score > 0.5
+        assert_true(score > 0.5)
 
     def test_sgd_huber_fit(self):
         xmin, xmax = -5, 5
@@ -432,7 +432,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
                            fit_intercept=False)
         clf.fit(X, y)
         score = clf.score(X, y)
-        assert  score > 0.99
+        assert_true(score > 0.99)
 
         # simple linear function with noise
         y = 0.5 * X.ravel() \
@@ -442,7 +442,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
                            fit_intercept=False)
         clf.fit(X, y)
         score = clf.score(X, y)
-        assert  score > 0.5
+        assert_true(score > 0.5)
 
     def test_elasticnet_convergence(self):
         """Check that the SGD ouput is consistent with coordinate descent"""
