@@ -147,7 +147,7 @@ class SGDClassifier(BaseSGDClassifier):
         X_indices = np.asarray(X.indices, dtype=np.int32, order="C")
         X_indptr = np.asarray(X.indptr, dtype=np.int32, order="C")
 
-        coef_, intercept_ = plain_sgd(self.coef_,
+        coef_, intercept_ = plain_sgd(self.coef_.ravel(),
                                       self.intercept_[0],
                                       self.loss_function,
                                       self.penalty_type,
@@ -165,7 +165,8 @@ class SGDClassifier(BaseSGDClassifier):
                                       self.learning_rate_code,
                                       self.eta0, self.power_t)
 
-        self._set_coef(coef_)
+        # need to be 2d
+        self.coef_ = coef_.reshape(1, -1)
         # intercept is a float, need to convert it to an array of length 1
         self.intercept_ = np.asarray([intercept_], dtype=np.float64)
 

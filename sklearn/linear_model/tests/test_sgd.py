@@ -7,7 +7,7 @@ from sklearn import preprocessing
 
 import unittest
 from nose.tools import raises
-from nose.tools import assert_raises
+from nose.tools import assert_raises, assert_true
 
 
 ##
@@ -347,13 +347,13 @@ class DenseSGDClassifierTestCase(unittest.TestCase):
         clf.partial_fit(X[:third], Y[:third], classes=classes)
         assert clf.coef_.shape == (1, X.shape[1])
         assert clf.intercept_.shape == (1,)
-        #assert clf.decision_function([0, 0]).shape == (1, 6)
+        assert clf.decision_function([0, 0]).shape == (1, )
         id1 = id(clf.coef_.data)
 
-        #clf.partial_fit(X[third:], Y[third:])
-        #id2 = id(clf.coef_.data)
-        ## check that coef_ haven't been re-allocated
-        #assert_true(id1, id2)
+        clf.partial_fit(X[third:], Y[third:])
+        id2 = id(clf.coef_.data)
+        # check that coef_ haven't been re-allocated
+        assert_true(id1, id2)
 
 
 class SparseSGDClassifierTestCase(DenseSGDClassifierTestCase):

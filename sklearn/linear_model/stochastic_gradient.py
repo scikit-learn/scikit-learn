@@ -127,15 +127,12 @@ class SGDClassifier(BaseSGDClassifier):
 
     def _fit_binary(self, X, y, sample_weight):
         """Fit a single binary classifier"""
-        # interprete X as dense array
-        X = np.asarray(X, dtype=np.float64, order='C')
-
         # encode original class labels as 1 (classes[1]) or -1 (classes[0]).
         y_new = np.ones(y.shape, dtype=np.float64, order='C') * -1.0
         y_new[y == self.classes[1]] = 1.0
         y = y_new
 
-        coef_, intercept_ = plain_sgd(self.coef_,
+        coef_, intercept_ = plain_sgd(self.coef_.ravel(),
                                       self.intercept_[0],
                                       self.loss_function,
                                       self.penalty_type,
@@ -152,7 +149,7 @@ class SGDClassifier(BaseSGDClassifier):
                                       self.learning_rate_code, self.eta0,
                                       self.power_t)
 
-        self._set_coef(coef_)
+        self.coef_ = coef_.reshape(1, -1)
         # intercept is a float, need to convert it to an array of length 1
         self.intercept_ = np.asarray([intercept_], dtype=np.float64)
 
@@ -162,8 +159,6 @@ class SGDClassifier(BaseSGDClassifier):
         Each binary classifier predicts one class versus all others. This
         strategy is called OVA: One Versus All.
         """
-        X = np.asarray(X, dtype=np.float64, order='C')
-
         # Use joblib to run OVA in parallel.
         res = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
                 delayed(_train_ova_classifier)(i, c, X, y, self.coef_[i],
@@ -183,8 +178,6 @@ class SGDClassifier(BaseSGDClassifier):
         for i, coef, intercept in res:
             self.coef_[i] = coef
             self.intercept_[i] = intercept
-
-        self._set_coef(self.coef_)
 
 
 def _train_ova_classifier(i, c, X, y, coef_, intercept_, loss_function,

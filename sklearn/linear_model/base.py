@@ -426,8 +426,8 @@ class BaseSGDClassifier(BaseSGD, ClassifierMixin):
         -------
         self : returns an instance of self.
         """
-        X = safe_asarray(X)
-        y = np.asarray(y)
+        X = safe_asarray(X, dtype=np.float64, order="C")
+        y = np.asarray(y, dtype=np.float64)
 
         n_samples, n_features = X.shape
         self._check_fit_data(X, y)
@@ -496,8 +496,8 @@ class BaseSGDClassifier(BaseSGD, ClassifierMixin):
         -------
         self : returns an instance of self.
         """
-        X = safe_asarray(X)
-        y = np.asarray(y)
+        X = safe_asarray(X, dtype=np.float64, order="C")
+        y = np.asarray(y, dtype=np.float64)
 
         n_samples, n_features = X.shape
         self._check_fit_data(X, y)
@@ -510,10 +510,16 @@ class BaseSGDClassifier(BaseSGD, ClassifierMixin):
         self._allocate_parameter_mem(n_classes, n_features,
                                      coef_init, intercept_init)
 
-        return self.partial_fit(X, y,
-                                classes=classes,
-                                sample_weight=sample_weight,
-                                class_weight=class_weight)
+        self.partial_fit(X, y,
+                         classes=classes,
+                         sample_weight=sample_weight,
+                         class_weight=class_weight)
+
+        # fitting is over, we can now transform coef_ to fortran order
+        # for faster predictions
+        self._set_coef(self.coef_)
+
+        return self
 
     @abstractmethod
     def _fit_binary(self, X, y, sample_weight):
