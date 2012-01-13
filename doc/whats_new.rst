@@ -1,9 +1,14 @@
 .. currentmodule:: sklearn
 
-.. _changes_0_10:
+.. _changes_0_11:
 
 0.11
 ====
+   - Merged dense and sparse implementations and added partial_fit to the
+     :ref:`sgd` module by `Mathieu Blondel`_.
+
+   - Regressors can now be used as base estimator in the :ref:`multiclass`
+     module by `Mathieu 
 
 API changes summary
 -------------------
@@ -12,7 +17,10 @@ API changes summary
      :ref:`neighbors`. Use the classes :class:`KNeighborsClassifier`,
      :class:`RadiusNeighborsClassifier`, :class:`KNeighborsRegressor`
      and/or :class:`RadiusNeighborsRegressor` instead.
+     
+   - Sparse classes in the :ref:`sgd` module are now deprecated.
 
+.. _changes_0_10:
 
 0.10
 ====
@@ -41,7 +49,7 @@ Changelog
 
    - Fixed a bug in :ref:`k_means` in the handling of the ``n_init`` parameter:
      the clustering algorithm used to be run ``n_init`` times but the last
-     solution was retained instead of the best solution.
+     solution was retained instead of the best solution by `Olivier Grisel`_.
 
    - Minor refactoring in :ref:`sgd` module; consolidated dense and sparse
      predict methods; Enhanced test time performance by converting model
