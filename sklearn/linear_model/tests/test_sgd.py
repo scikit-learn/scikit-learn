@@ -476,7 +476,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
         clf.partial_fit(X[:third], Y[:third])
         assert_equal(clf.coef_.shape, (X.shape[1], ))
         assert_equal(clf.intercept_.shape, (1,))
-        #assert_equal(clf.decision_function([0, 0]).shape, (1, ))
+        assert_equal(clf.decision_function([0, 0]).shape, (1, ))
         id1 = id(clf.coef_.data)
 
         clf.partial_fit(X[third:], Y[third:])

@@ -698,7 +698,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
     def _fit_regressor(self, X, y, sample_weight):
         """Fit regression model."""
 
-    def predict(self, X):
+    def decision_function(self, X):
         """Predict using the linear model
 
         Parameters
@@ -715,6 +715,22 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         X = atleast2d_or_csr(X)
         scores = safe_sparse_dot(X, self.coef_) + self.intercept_
         return scores.ravel()
+
+    def predict(self, X):
+        """Predict using the linear model
+
+        Parameters
+        ----------
+        X : array or scipy.sparse matrix of shape [n_samples, n_features]
+           Whether the numpy.array or scipy.sparse matrix is accepted depends
+           on the actual implementation.
+
+        Returns
+        -------
+        array, shape = [n_samples]
+           Array containing the predicted class labels.
+        """
+        return self.decision_function(X)
 
 
 class CoefSelectTransformerMixin(TransformerMixin):
