@@ -198,8 +198,8 @@ def auc(x, y):
                          ' to compute area under curve,'
                          ' but x.shape = %s and y.shape = %s.'
                          % (x.shape, y.shape))
-    if x.shape[0] < 3:
-        raise ValueError('At least 3 points are needed to compute'
+    if x.shape[0] < 2:
+        raise ValueError('At least 2 points are needed to compute'
                          ' area under curve, but x.shape = %s' % x.shape)
 
     # reorder the data points according to the x axis
