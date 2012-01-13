@@ -1,4 +1,4 @@
-scikit-learn (0.10.0~pre1-1) unstable; urgency=low
+scikit-learn (0.10.0-1) unstable; urgency=low
 
   * Snapshot of upstream release branch
     - Python 2.5 compatibility dropped
@@ -8,8 +8,11 @@ scikit-learn (0.10.0~pre1-1) unstable; urgency=low
   * Adjusted dfsg and other rules to operate on sklearn directory
   * Dropping cherry-picked fix up_release_sv_coef_memory
   * Operate on 'requested' not all supported Python versions
+  * Added 'set -e' to composite cmdline constructs in debian/rules to
+    prevent swallowing errors. Thanks to Jakub Wilk for citing me the relevant
+    exerpt from Debian policy ;-)
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 10 Jan 2012 17:52:27 -0500
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 12 Jan 2012 22:42:03 -0500
 
 scikit-learn (0.9.0.dfsg-1) unstable; urgency=low
 

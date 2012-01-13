@@ -57,6 +57,7 @@ override_dh_installchangelogs:
 ## move binary libraries into -lib
 override_dh_pysupport:
 	: # Move platform-specific libraries into -lib
+	set -e; \
 	for lib in $$(find $(PACKAGE_ROOT_DIR)/usr -name '*.so'); do \
 	   sdir=$$(dirname $$lib) ; \
 	   tdir=$(PACKAGE_ROOT_DIR)-lib/$${sdir#*$(PACKAGE_NAME)/} ; \
@@ -68,6 +69,7 @@ override_dh_pysupport:
 	: # Prune scikits/__init__.py to avoid conflicts
 	find debian -wholename \*scikits/__init__.py -delete
 	: # Move scikits. space into a compatibility package
+	set -e; \
 	find debian -wholename \*scikits -type d | while read skd; do \
 		skbd=$$(dirname $$skd); \
 		skbd_=$$(echo $$skbd | sed -e 's/sklearn/scikits-learn/g'); \
