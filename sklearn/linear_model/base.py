@@ -23,7 +23,7 @@ from ..base import RegressorMixin
 from ..base import ClassifierMixin
 from ..base import TransformerMixin
 from ..utils.extmath import safe_sparse_dot
-from ..utils import array2d, as_float_array
+from ..utils import array2d, as_float_array, safe_asarray
 
 ###
 ### TODO: intercept for all models
