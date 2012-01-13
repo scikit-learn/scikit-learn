@@ -105,8 +105,8 @@ class ElasticNet(LinearModel):
         # return self for chaining fit and predict calls
         return self
 
-    def predict(self, X):
-        """Predict using the linear model
+    def decision_function(self, X):
+        """Decision function of the linear model
 
         Parameters
         ----------

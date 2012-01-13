@@ -41,8 +41,8 @@ from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
 class LinearModel(BaseEstimator, RegressorMixin):
     """Base class for Linear Models"""
 
-    def predict(self, X):
-        """Predict using the linear model
+    def decision_function(self, X):
+        """Decision function of the linear model
 
         Parameters
         ----------
@@ -55,6 +55,20 @@ class LinearModel(BaseEstimator, RegressorMixin):
         """
         X = safe_asarray(X)
         return safe_sparse_dot(X, self.coef_.T) + self.intercept_
+
+    def predict(self, X):
+        """Predict using the linear model
+
+        Parameters
+        ----------
+        X : numpy array of shape [n_samples, n_features]
+
+        Returns
+        -------
+        C : array, shape = [n_samples]
+            Returns predicted values.
+        """
+        return self.decision_function(X)
 
     @staticmethod
     def _center_data(X, y, fit_intercept, normalize=False, copy=True):
@@ -249,8 +263,13 @@ class BaseSGD(BaseEstimator):
         return sample_weight
 
     def _set_coef(self, coef_):
-        """Make sure that coef_ is 2d. """
-        self.coef_ = array2d(coef_)
+        """Make sure that coef_ is fortran-style and 2d.
+
+        Fortran-style memory layout is needed to ensure that computing
+        the dot product between input ``X`` and ``coef_`` does not trigger
+        a memory copy.
+        """
+        self.coef_ = np.asfortranarray(array2d(coef_))
 
     def _allocate_parameter_mem(self, n_classes, n_features, coef_init=None,
                                 intercept_init=None):

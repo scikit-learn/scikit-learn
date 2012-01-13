@@ -21,7 +21,7 @@ improves.
 
 import numpy as np
 
-from .base import BaseEstimator, ClassifierMixin, clone
+from .base import BaseEstimator, ClassifierMixin, clone, is_classifier
 from .preprocessing import LabelBinarizer
 from .metrics.pairwise import euclidean_distances
 from .utils import check_random_state
@@ -65,7 +65,8 @@ def fit_ovr(estimator, X, y):
 def predict_ovr(estimators, label_binarizer, X):
     """Make predictions using the one-vs-the-rest strategy."""
     Y = np.array([_predict_binary(e, X) for e in estimators])
-    thresh = 0 if hasattr(estimators[0], "decision_function") else .5
+    e = estimators[0]
+    thresh = 0 if hasattr(e, "decision_function") and is_classifier(e) else .5
     return label_binarizer.inverse_transform(Y.T, threshold=thresh)
 
 
@@ -128,6 +129,10 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin):
         self.estimators_, self.label_binarizer_ = fit_ovr(self.estimator, X, y)
         return self
 
+    def _check_is_fitted(self):
+        if not hasattr(self, "estimators_"):
+            raise ValueError("The object hasn't been fitted yet!")
+
     def predict(self, X):
         """Predict multi-class targets using underlying estimators.
 
@@ -141,8 +146,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin):
         y : array-like, shape = [n_samples]
             Predicted multi-class targets.
         """
-        if not hasattr(self, "estimators_"):
-            raise ValueError("The object hasn't been fitted yet!")
+        self._check_is_fitted()
 
         return predict_ovr(self.estimators_, self.label_binarizer_, X)
 
@@ -157,6 +161,22 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin):
                 "score is not supported for multilabel classifiers")
         else:
             return super(OneVsRestClassifier, self).score(X, y)
+
+    @property
+    def coef_(self):
+        self._check_is_fitted()
+        if not hasattr(self.estimators_[0], "coef_"):
+            raise AttributeError(
+                "Base estimator doesn't have a coef_ attribute.")
+        return np.array([e.coef_.ravel() for e in self.estimators_])
+
+    @property
+    def intercept_(self):
+        self._check_is_fitted()
+        if not hasattr(self.estimators_[0], "intercept_"):
+            raise AttributeError(
+                "Base estimator doesn't have an intercept_ attribute.")
+        return np.array([e.intercept_.ravel() for e in self.estimators_])
 
 
 def _fit_ovo_binary(estimator, X, y, i, j):

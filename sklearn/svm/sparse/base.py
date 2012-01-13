@@ -197,7 +197,6 @@ class SparseBaseLibSVM(BaseLibSVM):
 
 
 class SparseBaseLibLinear(BaseLibLinear):
-
     def fit(self, X, y, class_weight=None):
         """
         Fit the model using X, y as training data.
@@ -215,8 +214,6 @@ class SparseBaseLibLinear(BaseLibLinear):
         self : object
             Returns an instance of self.
         """
-
-        import scipy.sparse
         X = scipy.sparse.csr_matrix(X)
         y = np.asarray(y, dtype=np.int32, order='C')
         if X.shape[0] != y.shape[0]:
@@ -254,7 +251,6 @@ class SparseBaseLibLinear(BaseLibLinear):
         -------
         C : array, shape = [n_samples]
         """
-        import scipy.sparse
         X = scipy.sparse.csr_matrix(X)
         self._check_n_features(X)
         X.data = np.asarray(X.data, dtype=np.float64, order='C')
@@ -283,7 +279,6 @@ class SparseBaseLibLinear(BaseLibLinear):
             Returns the decision function of the sample for each class
             in the model.
         """
-        import scipy.sparse
         X = scipy.sparse.csr_matrix(X)
         self._check_n_features(X)
         X.data = np.asarray(X.data, dtype=np.float64, order='C')
