@@ -518,9 +518,7 @@ class BaseLibLinear(BaseEstimator):
         if X.shape[1] != n_features:
             raise ValueError("X.shape[1] should be %d, not %d." % (n_features,
                                                                    X.shape[1]))
-
-    @property
-    def intercept_(self):
+    def _get_intercept_(self):
         if self.fit_intercept:
             ret = self.intercept_scaling * self.raw_coef_[:, -1]
             if len(self.label_) <= 2:
@@ -528,14 +526,26 @@ class BaseLibLinear(BaseEstimator):
             return ret
         return 0.0
 
-    @property
-    def coef_(self):
+    def _set_intercept_(self, intercept):
+        self.fit_intercept = True
+
+        if len(self.label_) <= 2:
+            intercept = intercept * -1
+
+        intercept /= self.intercept_scaling
+        intercept = intercept.reshape(-1, 1)
+
+        self.raw_coef_ = np.hstack((self.raw_coef_[:, : -1], intercept))
+
+    intercept_ = property(_get_intercept_, _set_intercept_)
+
+    def _get_coef_(self):
         if self.fit_intercept:
             ret = self.raw_coef_[:, : -1].copy()
         else:
             ret = self.raw_coef_.copy()
 
-        # as coef_ is readonly property, mark the returned value as immutable
+        # mark the returned value as immutable
         # to avoid silencing potential bugs
         if len(self.label_) <= 2:
             ret *= -1
@@ -544,6 +554,19 @@ class BaseLibLinear(BaseEstimator):
         else:
             ret.flags.writeable = False
             return ret
+
+    def _set_coef_(self, coef):
+        if len(self.label_) <= 2:
+            coef = coef * -1
+
+        raw_intercept = self.raw_coef_[:, -1].reshape(-1, 1)
+
+        self.raw_coef_ = coef
+
+        if self.fit_intercept:
+            self.raw_coef_ = np.hstack((self.raw_coef_, raw_intercept))
+
+    coef_ = property(_get_coef_, _set_coef_)
 
     def _get_bias(self):
         if self.fit_intercept:
