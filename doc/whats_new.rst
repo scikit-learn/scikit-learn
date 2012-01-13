@@ -49,7 +49,7 @@ Changelog
    - :ref:`outlier_detection`: outlier and novelty detection, by
      `Virgile Fritsch`_.
 
-   - :ref:`kernel_approximation`: a transform implement kernel
+   - :ref:`kernel_approximation`: a transform implementing kernel
      approximation for fast SGD on non-linear kernels by
      `Andreas Müller`_.
 
@@ -85,6 +85,8 @@ Changelog
 
    - :class:`sklearn.cross_validation.ShuffleSplit` can subsample the train
      sets as well as the test sets by `Olivier Grisel`_.
+
+   - Errors in the build of the documentation fixed by `Andreas Müller`_.
 
 
 API changes summary
