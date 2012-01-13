@@ -528,8 +528,6 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
             self.coef_[i] = coef
             self.intercept_[i] = intercept
 
-        self._set_coef(self.coef_)
-
 
 def _train_ova_classifier_ds(i, c, X, y, coef_, intercept_, loss_function,
                              penalty_type, alpha, rho, n_iter, fit_intercept,
