@@ -337,6 +337,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase):
     @raises(ValueError)
     def test_partial_fit_exception(self):
         clf = self.factory(alpha=0.01)
+        # classes was not specified
         clf.partial_fit(X3, Y3)
 
     def test_partial_fit_binary(self):
@@ -354,6 +355,28 @@ class DenseSGDClassifierTestCase(unittest.TestCase):
         id2 = id(clf.coef_.data)
         # check that coef_ haven't been re-allocated
         assert_true(id1, id2)
+
+        y_pred = clf.predict(T)
+        assert_array_equal(y_pred, true_result)
+
+    def test_partial_fit_multiclass(self):
+        third = X2.shape[0] / 3
+        clf = self.factory(alpha=0.01)
+        classes = np.unique(Y2)
+
+        clf.partial_fit(X2[:third], Y2[:third], classes=classes)
+        assert_equal(clf.coef_.shape, (3, X2.shape[1]))
+        assert_equal(clf.intercept_.shape, (3,))
+        assert_equal(clf.decision_function([0, 0]).shape, (1, 3))
+        id1 = id(clf.coef_.data)
+
+        clf.partial_fit(X2[third:], Y2[third:])
+        id2 = id(clf.coef_.data)
+        # check that coef_ haven't been re-allocated
+        assert_true(id1, id2)
+
+        #y_pred = clf.predict(T2)
+        #assert_array_equal(y_pred, true_result2)
 
 
 class SparseSGDClassifierTestCase(DenseSGDClassifierTestCase):
