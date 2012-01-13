@@ -109,7 +109,7 @@ The distribution is parametrized by vectors
 :math:`\theta_y = (\theta_{y1},\ldots,\theta_{yn})`
 for each class :math:`y`, where :math:`n` is the number of features
 (in text classification, the size of the vocabulary)
-and :math:`\theta_{yi}` is the probability :math:`P(y \mid x_i)`
+and :math:`\theta_{yi}` is the probability :math:`P(x_i \mid y)`
 of feature :math:`i` appearing in a sample belonging to class :math:`y`.
 
 The parameters :math:`\theta_y` is estimated by a smoothed

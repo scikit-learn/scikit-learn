@@ -83,6 +83,28 @@ class deprecated(object):
         return newdoc
 
 
+def safe_mask(X, mask):
+    """Return a mask which is safe to use on X.
+
+    Parameters
+    ----------
+        X : {array-like, sparse matrix}
+            Data on which to apply mask.
+
+        mask: array
+            Mask to be used on X.
+
+    Returns
+    -------
+        mask
+    """
+    mask = np.asanyarray(mask)
+    if hasattr(X, "toarray"):
+        ind = np.arange(mask.shape[0])
+        mask = ind[mask]
+    return mask
+
+
 def resample(*arrays, **options):
     """Resample arrays or sparse matrices in a consistent way
 

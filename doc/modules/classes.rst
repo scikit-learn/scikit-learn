@@ -717,10 +717,8 @@ Pairwise metrics
    neighbors.NearestNeighbors
    neighbors.KNeighborsClassifier
    neighbors.RadiusNeighborsClassifier
-   neighbors.NeighborsClassifier
    neighbors.KNeighborsRegressor
    neighbors.RadiusNeighborsRegressor
-   neighbors.NeighborsRegressor
    neighbors.BallTree
 
 .. autosummary::
