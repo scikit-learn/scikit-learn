@@ -254,8 +254,10 @@ class BaseSGD(BaseEstimator):
     def _validate_sample_weight(self, sample_weight, n_samples):
         """Set the sample weight array."""
         if sample_weight == None:
+            # uniform sample weights
             sample_weight = np.ones(n_samples, dtype=np.float64, order='C')
         else:
+            # user-provided array
             sample_weight = np.asarray(sample_weight, dtype=np.float64,
                                        order="C")
         if sample_weight.shape[0] != n_samples:
@@ -318,6 +320,11 @@ class BaseSGD(BaseEstimator):
             else:
                 self.intercept_ = np.zeros(1, dtype=np.float64, order="C")
 
+    def _check_fit_data(self, X, y):
+        n_samples, _ = X.shape
+        if n_samples != y.shape[0]:
+            raise ValueError("Shapes of X and y do not match.")
+
 
 class BaseSGDClassifier(BaseSGD, ClassifierMixin):
     """Base class for dense and sparse classification using SGD."""
@@ -353,14 +360,18 @@ class BaseSGDClassifier(BaseSGD, ClassifierMixin):
     def _set_class_weight(self, class_weight, classes, y):
         """Estimate class weights for unbalanced datasets."""
         if class_weight is None:
+            # keep the old class_weight if none provided
             class_weight = self.class_weight
         if class_weight is None or len(class_weight) == 0:
+            # uniform class weights
             weight = np.ones(classes.shape[0], dtype=np.float64, order='C')
         elif class_weight == 'auto':
+            # proportional to the number of samples in the class
             weight = np.array([1.0 / np.sum(y == i) for i in classes],
                               dtype=np.float64, order='C')
             weight *= classes.shape[0] / np.sum(weight)
         else:
+            # user-defined dictionary
             weight = np.ones(classes.shape[0], dtype=np.float64, order='C')
             if not isinstance(class_weight, dict):
                 raise ValueError("class_weight must be dict, 'auto', or None,"
@@ -373,6 +384,77 @@ class BaseSGDClassifier(BaseSGD, ClassifierMixin):
                     weight[i] = class_weight[c]
 
         self._expanded_class_weight = weight
+
+    def partial_fit(self, X, y, classes=None,
+            class_weight=None, sample_weight=None):
+        """Fit linear model with Stochastic Gradient Descent.
+
+        Parameters
+        ----------
+        X : numpy array of shape [n_samples, n_features]
+            Subset of the training data
+
+        y : numpy array of shape [n_samples]
+            Subset of the target values
+
+        classes : array, shape = [n_classes]
+            Classes to be used for multiclass classification.
+            Not required for binary classification or if
+            the subset X contains all possible labels in the entire
+            dataset. `classes` can be obtained via `np.unique(y)`.
+
+        class_weight : dict, {class_label : weight} or "auto"
+            Weights associated with classes.
+
+            The "auto" mode uses the values of y to automatically adjust
+            weights inversely proportional to class frequencies.
+
+            If None, values defined in the previous call to partial_fit
+            will be used. If partial_fit was never called before,
+            uniform weights are assumed.
+
+        sample_weight : array-like, shape = [n_samples], optional
+            Weights applied to individual samples (1. for unweighted).
+            If not provided, uniform weights are assumed.
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        X = safe_asarray(X)
+        y = np.asarray(y)
+
+        n_samples, n_features = X.shape
+        self._check_fit_data(X, y)
+
+        if self.classes is None:
+            # sort in asc order; largest class id is positive class
+            self.classes = np.unique(y) if classes is None else classes
+        elif classes is not None:
+            if not np.array_equal(self.classes, np.unique(classes)):
+                raise ValueError("`classes` is not the same as last call to "
+                                 "partial_fit.")
+
+        n_classes = self.classes.shape[0]
+
+        # Allocate datastructures from input arguments
+        self._set_class_weight(class_weight, self.classes, y)
+        sample_weight = self._validate_sample_weight(sample_weight, n_samples)
+
+        if self.coef_ is None:
+            self._allocate_parameter_mem(n_classes, n_features,
+                                         coef_init=None, intercept_init=None)
+
+        # delegate to concrete training procedure
+        if n_classes > 2:
+            self._fit_multiclass(X, y, sample_weight)
+        elif n_classes == 2:
+            self._fit_binary(X, y, sample_weight)
+        else:
+            raise ValueError("The number of class labels must be "
+                             "greater than one.")
+
+        return self
 
     def fit(self, X, y, coef_init=None, intercept_init=None,
             class_weight=None, sample_weight=None):
@@ -410,29 +492,17 @@ class BaseSGDClassifier(BaseSGD, ClassifierMixin):
         y = np.asarray(y)
 
         n_samples, n_features = X.shape
-        if n_samples != y.shape[0]:
-            raise ValueError("Shapes of X and y do not match.")
+        self._check_fit_data(X, y)
 
-        # sort in asc order; largest class id is positive class
         self.classes = np.unique(y)
         n_classes = self.classes.shape[0]
 
         # Allocate datastructures from input arguments
-        self._set_class_weight(class_weight, self.classes, y)
-        sample_weight = self._validate_sample_weight(sample_weight, n_samples)
         self._allocate_parameter_mem(n_classes, n_features,
                                      coef_init, intercept_init)
 
-        # delegate to concrete training procedure
-        if n_classes > 2:
-            self._fit_multiclass(X, y, sample_weight)
-        elif n_classes == 2:
-            self._fit_binary(X, y, sample_weight)
-        else:
-            raise ValueError("The number of class labels must be "
-                             "greater than one.")
-        # return self for chaining fit and predict calls
-        return self
+        return self.partial_fit(X, y, sample_weight=sample_weight,
+                                class_weight=class_weight)
 
     @abstractmethod
     def _fit_binary(self, X, y, sample_weight):
@@ -564,6 +634,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         y = np.asarray(y, dtype=np.float64, order="C")
 
         n_samples, n_features = X.shape
+        self._check_fit_data(X, y)
 
         # Allocate datastructures from input arguments
         sample_weight = self._validate_sample_weight(sample_weight, n_samples)
