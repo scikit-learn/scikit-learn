@@ -257,7 +257,7 @@ Helper Functions
   a 1-d numpy.ndarray.  Currently used in
   ``sklearn.datasets._svmlight_format.pyx``.
 
-- :func:`safe_mask`: Help function to convert a mask to the format expected
+- :func:`safe_mask`: Helper function to convert a mask to the format expected
   by the numpy array or scipy sparse matrix on which to use it (sparse
   matrices support integer indices only while numpy arrays support both
   boolean masks and integer indices).

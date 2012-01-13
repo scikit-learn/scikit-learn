@@ -84,12 +84,12 @@ class deprecated(object):
 
 
 def safe_mask(X, mask):
-    """Return a mask which is safe for X.
+    """Return a mask which is safe to use on X.
 
     Parameters
     ----------
         X : {array-like, sparse matrix}
-            Data on which to apply X.
+            Data on which to apply mask.
 
         mask: array
             Mask to be used on X.
