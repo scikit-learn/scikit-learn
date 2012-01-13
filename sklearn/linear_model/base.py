@@ -414,7 +414,7 @@ class BaseSGDClassifier(BaseSGD, ClassifierMixin):
             uniform weights are assumed.
 
         sample_weight : array-like, shape = [n_samples], optional
-            Weights applied to individual samples (1. for unweighted).
+            Weights applied to individual samples.
             If not provided, uniform weights are assumed.
 
         Returns
@@ -482,7 +482,8 @@ class BaseSGDClassifier(BaseSGD, ClassifierMixin):
             weights inversely proportional to class frequencies.
 
         sample_weight : array-like, shape = [n_samples], optional
-            Weights applied to individual samples (1. for unweighted).
+            Weights applied to individual samples.
+            If not provided, uniform weights are assumed.
 
         Returns
         -------
@@ -605,6 +606,41 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         except KeyError:
             raise ValueError("The loss %s is not supported. " % loss)
 
+    def partial_fit(self, X, y, sample_weight=None):
+        """Fit linear model with Stochastic Gradient Descent.
+
+        Parameters
+        ----------
+        X : numpy array of shape [n_samples,n_features]
+            Subset of training data
+
+        y : numpy array of shape [n_samples]
+            Subset of target values
+
+        sample_weight : array-like, shape = [n_samples], optional
+            Weights applied to individual samples.
+            If not provided, uniform weights are assumed.
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        X, y = check_arrays(X, y, sparse_format="csr", copy=False)
+        y = np.asarray(y, dtype=np.float64, order="C")
+
+        n_samples, n_features = X.shape
+        self._check_fit_data(X, y)
+
+        # Allocate datastructures from input arguments
+        sample_weight = self._validate_sample_weight(sample_weight, n_samples)
+
+        if self.coef_ is None:
+            self._allocate_parameter_mem(1, n_features,
+                                         coef_init, intercept_init)
+
+        self._fit_regressor(X, y, sample_weight)
+        return self
+
     def fit(self, X, y, coef_init=None, intercept_init=None,
             sample_weight=None):
         """Fit linear model with Stochastic Gradient Descent.
@@ -637,12 +673,10 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         self._check_fit_data(X, y)
 
         # Allocate datastructures from input arguments
-        sample_weight = self._validate_sample_weight(sample_weight, n_samples)
         self._allocate_parameter_mem(1, n_features,
                                      coef_init, intercept_init)
 
-        self._fit_regressor(X, y, sample_weight)
-        return self
+        return self.partial_fit(X, y, sample_weight)
 
     @abstractmethod
     def _fit_regressor(self, X, y, sample_weight):
