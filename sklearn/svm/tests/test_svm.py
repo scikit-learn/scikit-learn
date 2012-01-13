@@ -233,32 +233,22 @@ def test_decision_function():
     Sanity check, test that decision_function implemented in python
     returns the same as the one in libsvm
 
-    TODO: proabably could be simplified
     """
+    # multi class:
     clf = svm.SVC(kernel='linear').fit(iris.data, iris.target)
 
-    data = iris.data[0]
+    dec = np.dot(iris.data, clf.coef_.T) + clf.intercept_
 
-    sv_start = np.r_[0, np.cumsum(clf.n_support_)]
-    n_class = 3
-
-    kvalue = np.dot(data, clf.support_vectors_.T)
-
-    dec = np.empty(n_class * (n_class - 1) / 2)
-    p = 0
-    for i in range(n_class):
-        for j in range(i + 1, n_class):
-            coef1 = clf.dual_coef_[j - 1]
-            coef2 = clf.dual_coef_[i]
-            idx1 = slice(sv_start[i], sv_start[i + 1])
-            idx2 = slice(sv_start[j], sv_start[j + 1])
-            s = np.dot(coef1[idx1],  kvalue[idx1]) + \
-                np.dot(coef2[idx2], kvalue[idx2]) + \
-                clf.intercept_[p]
-            dec[p] = s
-            p += 1
-
-    assert_array_almost_equal(-dec, np.ravel(clf.decision_function(data)))
+    assert_array_almost_equal(dec, clf.decision_function(iris.data))
+    # binary:
+    X = [[2, 1],
+         [3, 1],
+         [1, 3],
+         [2, 3]]
+    y = [0, 0, 1, 1]
+    clf.fit(X, y)
+    dec = np.dot(X, clf.coef_.T) + clf.intercept_
+    assert_array_almost_equal(dec, clf.decision_function(X))
 
 
 def test_weight():

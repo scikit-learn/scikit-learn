@@ -115,7 +115,42 @@ class BaseLibSVM(BaseEstimator):
         if self.kernel != 'linear':
             raise ValueError('coef_ is only available when using a '
                              'linear kernel')
-        coef = safe_sparse_dot(self.dual_coef_, self.support_vectors_)
+        if self.dual_coef_.shape[0] == 1:
+            # binary classifier
+            coef = safe_sparse_dot(self.dual_coef_, self.support_vectors_)
+        else:
+            # 1vs1 classifier
+            # get 1vs1 weights for all n*(n-1) classifiers.
+            # this is somewhat messy.
+            # shape of dual_coef_ is nSV * (n_classes -1)
+            # see docs for details
+            n_class = self.dual_coef_.shape[0] + 1
+            
+            # XXX we could do preallocation of coef but
+            # would have to take care in the sparse case
+            coef = []
+            sv_locs = np.cumsum(np.hstack([[0], self.n_support_]))
+            for class1 in xrange(n_class):
+                # SVs for class1:
+                sv1 = self.support_vectors_[sv_locs[class1]:sv_locs[class1 + 1], :]
+                for class2 in xrange(class1 + 1, n_class):
+                    # SVs for class1:
+                    sv2 = self.support_vectors_[sv_locs[class2]:sv_locs[class2 + 1], :]
+
+                    # dual coef for class1 SVs:
+                    alpha1 = self.dual_coef_[class2 - 1, sv_locs[class1]:sv_locs[class1 + 1]]
+                    # dual coef for class2 SVs:
+                    alpha2 = self.dual_coef_[class1, sv_locs[class2]:sv_locs[class2 + 1]]
+                    # build weight for class1 vs class2
+
+                    coef.append(safe_sparse_dot(alpha1, sv1)
+                            + safe_sparse_dot(alpha2, sv2))
+
+            if sp.issparse(coef[0]):
+                coef = sp.vstack(coef).tocsr()
+            else:
+                coef = np.vstack(coef)
+
         # coef_ being a read-only property it's better to mark the value as
         # immutable to avoid hiding potential bugs for the unsuspecting user
         if sp.issparse(coef):
@@ -341,13 +376,7 @@ class DenseBaseLibSVM(BaseLibSVM):
             svm_type=LIBSVM_IMPL.index(self.impl),
             **params)
 
-        if self.impl != 'one_class':
-            # libsvm has the convention of returning negative values for
-            # rightmost labels, so we invert the sign since our label_ is
-            # sorted by increasing order
-            return - dec_func
-        else:
-            return dec_func
+        return dec_func
 
 
 class BaseLibLinear(BaseEstimator):
