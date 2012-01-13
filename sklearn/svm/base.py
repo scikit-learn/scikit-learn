@@ -522,9 +522,6 @@ class BaseLibLinear(BaseEstimator):
     def _set_intercept_(self, intercept):
         self.fit_intercept = True
 
-        if len(self.label_) <= 2:
-            intercept = intercept * -1
-
         intercept /= self.intercept_scaling
         intercept = intercept.reshape(-1, 1)
 
@@ -544,9 +541,6 @@ class BaseLibLinear(BaseEstimator):
         return ret
 
     def _set_coef_(self, coef):
-        if len(self.label_) <= 2:
-            coef = coef * -1
-
         raw_intercept = self.raw_coef_[:, -1].reshape(-1, 1)
 
         self.raw_coef_ = coef
