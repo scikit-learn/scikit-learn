@@ -469,6 +469,21 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
                 assert_almost_equal(cd.coef_, sgd.coef_, decimal=2,
                                     err_msg=err_msg)
 
+    def test_partial_fit(self):
+        third = X.shape[0] / 3
+        clf = self.factory(alpha=0.01)
+
+        clf.partial_fit(X[:third], Y[:third])
+        assert_equal(clf.coef_.shape, (X.shape[1], ))
+        assert_equal(clf.intercept_.shape, (1,))
+        #assert_equal(clf.decision_function([0, 0]).shape, (1, ))
+        id1 = id(clf.coef_.data)
+
+        clf.partial_fit(X[third:], Y[third:])
+        id2 = id(clf.coef_.data)
+        # check that coef_ haven't been re-allocated
+        assert_true(id1, id2)
+
 
 class SparseSGDRegressorTestCase(DenseSGDRegressorTestCase):
     """Run exactly the same tests using the sparse representation variant"""

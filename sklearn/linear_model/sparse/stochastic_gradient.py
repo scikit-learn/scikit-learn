@@ -354,4 +354,4 @@ class SGDRegressor(BaseSGDRegressor):
                                       self.eta0, self.power_t)
 
         self.coef_ = coef_
-        self.intercept_ = np.asarray(intercept_)
+        self.intercept_ = np.asarray([intercept_], dtype=np.float64)

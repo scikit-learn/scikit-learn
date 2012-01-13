@@ -652,7 +652,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
 
         if self.coef_ is None:
             self._allocate_parameter_mem(1, n_features,
-                                         coef_init, intercept_init)
+                                         coef_init=None, intercept_init=None)
 
         self._fit_regressor(X, y, sample_weight)
         return self

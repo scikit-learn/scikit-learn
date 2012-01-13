@@ -149,6 +149,7 @@ class SGDClassifier(BaseSGDClassifier):
                                       self.learning_rate_code, self.eta0,
                                       self.power_t)
 
+        # need to be 2d
         self.coef_ = coef_.reshape(1, -1)
         # intercept is a float, need to convert it to an array of length 1
         self.intercept_ = np.asarray([intercept_], dtype=np.float64)
@@ -300,7 +301,7 @@ class SGDRegressor(BaseSGDRegressor):
     def _fit_regressor(self, X, y, sample_weight):
         X = np.asarray(X, dtype=np.float64, order='C')
         coef_, intercept_ = plain_sgd(self.coef_,
-                                      self.intercept_,
+                                      self.intercept_[0],
                                       self.loss_function,
                                       self.penalty_type,
                                       self.alpha, self.rho,
@@ -316,4 +317,4 @@ class SGDRegressor(BaseSGDRegressor):
                                       self.eta0, self.power_t)
 
         self.coef_ = coef_
-        self.intercept_ = np.asarray(intercept_)
+        self.intercept_ = np.asarray([intercept_], dtype=np.float64)
