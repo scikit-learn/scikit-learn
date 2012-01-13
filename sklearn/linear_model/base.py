@@ -223,6 +223,7 @@ class BaseSGD(BaseEstimator):
             if eta0 <= 0.0:
                 raise ValueError("eta0 must be greater than 0.0")
         self.class_weight = class_weight
+        self.coef_ = None
 
     @abstractmethod
     def fit(self, X, y):
@@ -343,6 +344,7 @@ class BaseSGDClassifier(BaseSGD, ClassifierMixin):
                                                 learning_rate=learning_rate,
                                                 eta0=eta0, power_t=power_t,
                                                 class_weight=class_weight)
+        self.classes = None
         self.n_jobs = int(n_jobs)
 
     def _set_loss_function(self, loss):
@@ -398,10 +400,13 @@ class BaseSGDClassifier(BaseSGD, ClassifierMixin):
             Subset of the target values
 
         classes : array, shape = [n_classes]
-            Classes to be used for multiclass classification.
-            Not required for binary classification or if
-            the subset X contains all possible labels in the entire
-            dataset. `classes` can be obtained via `np.unique(y)`.
+            Classes across all calls to partial_fit.
+            Can be obtained by via `np.unique(y_all)`, where y_all is the
+            target vector of the entire dataset.
+            This argument is required for the first call to partial_fit
+            and can be omitted in the subsequent calls.
+            Note that y doesn't need to contain all labels in `classes`.
+
 
         class_weight : dict, {class_label : weight} or "auto"
             Weights associated with classes.
@@ -427,13 +432,15 @@ class BaseSGDClassifier(BaseSGD, ClassifierMixin):
         n_samples, n_features = X.shape
         self._check_fit_data(X, y)
 
-        if self.classes is None:
-            # sort in asc order; largest class id is positive class
-            self.classes = np.unique(y) if classes is None else classes
-        elif classes is not None:
+        if self.classes is None and classes is None:
+            raise ValueError("classes must be passed on the first call "
+                             "to partial_fit.")
+        elif classes is not None and self.classes is not None:
             if not np.array_equal(self.classes, np.unique(classes)):
-                raise ValueError("`classes` is not the same as last call to "
-                                 "partial_fit.")
+                raise ValueError("`classes` is not the same as on last call "
+                                 "to partial_fit.")
+        elif classes is not None:
+            self.classes = classes
 
         n_classes = self.classes.shape[0]
 
@@ -495,14 +502,17 @@ class BaseSGDClassifier(BaseSGD, ClassifierMixin):
         n_samples, n_features = X.shape
         self._check_fit_data(X, y)
 
-        self.classes = np.unique(y)
-        n_classes = self.classes.shape[0]
+        # sort in asc order; largest class id is positive class
+        classes = np.unique(y)
+        n_classes = classes.shape[0]
 
         # Allocate datastructures from input arguments
         self._allocate_parameter_mem(n_classes, n_features,
                                      coef_init, intercept_init)
 
-        return self.partial_fit(X, y, sample_weight=sample_weight,
+        return self.partial_fit(X, y,
+                                classes=classes,
+                                sample_weight=sample_weight,
                                 class_weight=class_weight)
 
     @abstractmethod

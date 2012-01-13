@@ -136,7 +136,7 @@ class SGDClassifier(BaseSGDClassifier):
         y = y_new
 
         coef_, intercept_ = plain_sgd(self.coef_,
-                                      self.intercept_,
+                                      self.intercept_[0],
                                       self.loss_function,
                                       self.penalty_type,
                                       self.alpha, self.rho,
@@ -153,7 +153,8 @@ class SGDClassifier(BaseSGDClassifier):
                                       self.power_t)
 
         self._set_coef(coef_)
-        self.intercept_ = np.asarray(intercept_)
+        # intercept is a float, need to convert it to an array of length 1
+        self.intercept_ = np.asarray([intercept_], dtype=np.float64)
 
     def _fit_multiclass(self, X, y, sample_weight):
         """Fit a multi-class classifier by combining binary classifiers

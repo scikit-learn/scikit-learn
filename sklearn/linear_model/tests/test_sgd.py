@@ -334,6 +334,27 @@ class DenseSGDClassifierTestCase(unittest.TestCase):
         # provided sample_weight too long
         clf.fit(X, Y, sample_weight=range(7))
 
+    @raises(ValueError)
+    def test_partial_fit_exception(self):
+        clf = self.factory(alpha=0.01)
+        clf.partial_fit(X3, Y3)
+
+    def test_partial_fit_binary(self):
+        third = X.shape[0] / 3
+        clf = self.factory(alpha=0.01)
+        classes = np.unique(Y)
+
+        clf.partial_fit(X[:third], Y[:third], classes=classes)
+        assert clf.coef_.shape == (1, X.shape[1])
+        assert clf.intercept_.shape == (1,)
+        #assert clf.decision_function([0, 0]).shape == (1, 6)
+        id1 = id(clf.coef_.data)
+
+        #clf.partial_fit(X[third:], Y[third:])
+        #id2 = id(clf.coef_.data)
+        ## check that coef_ haven't been re-allocated
+        #assert_true(id1, id2)
+
 
 class SparseSGDClassifierTestCase(DenseSGDClassifierTestCase):
     """Run exactly the same tests using the sparse representation variant"""
