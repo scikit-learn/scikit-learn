@@ -201,7 +201,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
 
         Parameters
         ----------
-        X : numpy array of shape [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             Subset of the training data
 
         y : numpy array of shape [n_samples]
@@ -277,7 +277,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
 
         Parameters
         ----------
-        X : numpy array of shape [n_samples,n_features]
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             Training data
 
         y : numpy array of shape [n_samples]
@@ -334,7 +334,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
 
         Parameters
         ----------
-        X : array, shape [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
 
         Returns
         -------
@@ -353,9 +353,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
 
         Parameters
         ----------
-        X : array or scipy.sparse matrix of shape [n_samples, n_features]
-           Whether the numpy.array or scipy.sparse matrix is accepted depends
-           on the actual implementation
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
 
         Returns
         -------
@@ -374,7 +372,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
 
         Parameters
         ----------
-        X : array or scipy.sparse matrix of shape [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
 
         Returns
         -------
@@ -699,7 +697,7 @@ class SGDRegressor(BaseSGD, RegressorMixin):
 
         Parameters
         ----------
-        X : numpy array of shape [n_samples,n_features]
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             Subset of training data
 
         y : numpy array of shape [n_samples]
@@ -735,7 +733,7 @@ class SGDRegressor(BaseSGD, RegressorMixin):
 
         Parameters
         ----------
-        X : numpy array of shape [n_samples,n_features]
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             Training data
 
         y : numpy array of shape [n_samples]
@@ -771,9 +769,7 @@ class SGDRegressor(BaseSGD, RegressorMixin):
 
         Parameters
         ----------
-        X : array or scipy.sparse matrix of shape [n_samples, n_features]
-           Whether the numpy.array or scipy.sparse matrix is accepted depends
-           on the actual implementation.
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
 
         Returns
         -------
@@ -789,9 +785,7 @@ class SGDRegressor(BaseSGD, RegressorMixin):
 
         Parameters
         ----------
-        X : array or scipy.sparse matrix of shape [n_samples, n_features]
-           Whether the numpy.array or scipy.sparse matrix is accepted depends
-           on the actual implementation.
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
 
         Returns
         -------
