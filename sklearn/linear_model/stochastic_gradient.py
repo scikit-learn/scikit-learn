@@ -802,9 +802,9 @@ class SGDRegressor(BaseSGD, RegressorMixin):
 
     def _fit_regressor(self, X, y, sample_weight):
         if sp.issparse(X):
-            self._fit_regressor_dense(X, y, sample_weight)
-        else:
             self._fit_regressor_sparse(X, y, sample_weight)
+        else:
+            self._fit_regressor_dense(X, y, sample_weight)
 
     def _fit_regressor_dense(self, X, y, sample_weight):
         X = np.asarray(X, dtype=np.float64, order='C')

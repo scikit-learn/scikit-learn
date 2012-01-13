@@ -1,14 +1,44 @@
 import numpy as np
+import scipy.sparse as sp
+
 from numpy.testing import assert_array_equal, assert_approx_equal
 from numpy.testing import assert_almost_equal, assert_array_almost_equal
 
 from sklearn import linear_model, datasets, metrics
 from sklearn import preprocessing
+from sklearn.linear_model import SGDClassifier, SGDRegressor
 
 import unittest
 from nose.tools import raises
 from nose.tools import assert_raises, assert_true, assert_equal
 
+class SparseSGDClassifier(SGDClassifier):
+
+    def fit(self, X, y, *args, **kw):
+        X = sp.csr_matrix(X)
+        return SGDClassifier.fit(self, X, y, *args, **kw)
+
+    def partial_fit(self, X, y, *args, **kw):
+        X = sp.csr_matrix(X)
+        return SGDClassifier.partial_fit(self, X, y, *args, **kw)
+
+    def decision_function(self, X, *args, **kw):
+        X = sp.csr_matrix(X)
+        return SGDClassifier.decision_function(self, X, *args, **kw)
+
+class SparseSGDRegressor(SGDRegressor):
+
+    def fit(self, X, y, *args, **kw):
+        X = sp.csr_matrix(X)
+        return SGDRegressor.fit(self, X, y, *args, **kw)
+
+    def partial_fit(self, X, y, *args, **kw):
+        X = sp.csr_matrix(X)
+        return SGDRegressor.partial_fit(self, X, y, *args, **kw)
+
+    def decision_function(self, X, *args, **kw):
+        X = sp.csr_matrix(X)
+        return SGDRegressor.decision_function(self, X, *args, **kw)
 
 ##
 ## Test Data
@@ -58,7 +88,7 @@ true_result5 = [0, 1, 1]
 class DenseSGDClassifierTestCase(unittest.TestCase):
     """Test suite for the dense representation variant of SGD"""
 
-    factory = linear_model.SGDClassifier
+    factory = SGDClassifier
 
     def test_sgd(self):
         """Check that SGD gives any results :-)"""
@@ -382,7 +412,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase):
 class SparseSGDClassifierTestCase(DenseSGDClassifierTestCase):
     """Run exactly the same tests using the sparse representation variant"""
 
-    factory = linear_model.sparse.SGDClassifier
+    factory = SparseSGDClassifier
 
 
 ###############################################################################
@@ -391,7 +421,7 @@ class SparseSGDClassifierTestCase(DenseSGDClassifierTestCase):
 class DenseSGDRegressorTestCase(unittest.TestCase):
     """Test suite for the dense representation variant of SGD"""
 
-    factory = linear_model.SGDRegressor
+    factory = SGDRegressor
 
     def test_sgd(self):
         """Check that SGD gives any results."""
@@ -511,4 +541,4 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
 class SparseSGDRegressorTestCase(DenseSGDRegressorTestCase):
     """Run exactly the same tests using the sparse representation variant"""
 
-    factory = linear_model.sparse.SGDRegressor
+    factory = SparseSGDRegressor
