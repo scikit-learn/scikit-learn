@@ -195,8 +195,47 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
 
         self._expanded_class_weight = weight
 
+    def _partial_fit(self, X, y, n_iter, classes=None,
+                     class_weight=None, sample_weight=None):
+        X = safe_asarray(X, dtype=np.float64, order="C")
+        y = np.asarray(y, dtype=np.float64)
+
+        n_samples, n_features = X.shape
+        self._check_fit_data(X, y)
+
+        if self.classes is None and classes is None:
+            raise ValueError("classes must be passed on the first call "
+                             "to partial_fit.")
+        elif classes is not None and self.classes is not None:
+            if not np.array_equal(self.classes, np.unique(classes)):
+                raise ValueError("`classes` is not the same as on last call "
+                                 "to partial_fit.")
+        elif classes is not None:
+            self.classes = classes
+
+        n_classes = self.classes.shape[0]
+
+        # Allocate datastructures from input arguments
+        self._set_class_weight(class_weight, self.classes, y)
+        sample_weight = self._validate_sample_weight(sample_weight, n_samples)
+
+        if self.coef_ is None:
+            self._allocate_parameter_mem(n_classes, n_features,
+                                         coef_init=None, intercept_init=None)
+
+        # delegate to concrete training procedure
+        if n_classes > 2:
+            self._fit_multiclass(X, y, sample_weight, n_iter)
+        elif n_classes == 2:
+            self._fit_binary(X, y, sample_weight, n_iter)
+        else:
+            raise ValueError("The number of class labels must be "
+                             "greater than one.")
+
+        return self
+
     def partial_fit(self, X, y, classes=None,
-            class_weight=None, sample_weight=None):
+                     class_weight=None, sample_weight=None):
         """Fit linear model with Stochastic Gradient Descent.
 
         Parameters
@@ -234,42 +273,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
         -------
         self : returns an instance of self.
         """
-        X = safe_asarray(X, dtype=np.float64, order="C")
-        y = np.asarray(y, dtype=np.float64)
-
-        n_samples, n_features = X.shape
-        self._check_fit_data(X, y)
-
-        if self.classes is None and classes is None:
-            raise ValueError("classes must be passed on the first call "
-                             "to partial_fit.")
-        elif classes is not None and self.classes is not None:
-            if not np.array_equal(self.classes, np.unique(classes)):
-                raise ValueError("`classes` is not the same as on last call "
-                                 "to partial_fit.")
-        elif classes is not None:
-            self.classes = classes
-
-        n_classes = self.classes.shape[0]
-
-        # Allocate datastructures from input arguments
-        self._set_class_weight(class_weight, self.classes, y)
-        sample_weight = self._validate_sample_weight(sample_weight, n_samples)
-
-        if self.coef_ is None:
-            self._allocate_parameter_mem(n_classes, n_features,
-                                         coef_init=None, intercept_init=None)
-
-        # delegate to concrete training procedure
-        if n_classes > 2:
-            self._fit_multiclass(X, y, sample_weight)
-        elif n_classes == 2:
-            self._fit_binary(X, y, sample_weight)
-        else:
-            raise ValueError("The number of class labels must be "
-                             "greater than one.")
-
-        return self
+        return self._partial_fit(X, y, 1, classes, class_weight, sample_weight)
 
     def fit(self, X, y, coef_init=None, intercept_init=None,
             class_weight=None, sample_weight=None):
@@ -318,10 +322,10 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
         self._allocate_parameter_mem(n_classes, n_features,
                                      coef_init, intercept_init)
 
-        self.partial_fit(X, y,
-                         classes=classes,
-                         sample_weight=sample_weight,
-                         class_weight=class_weight)
+        self._partial_fit(X, y, self.n_iter,
+                          classes=classes,
+                          sample_weight=sample_weight,
+                          class_weight=class_weight)
 
         # fitting is over, we can now transform coef_ to fortran order
         # for faster predictions
@@ -390,19 +394,19 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
 
         return 1.0 / (1.0 + np.exp(-self.decision_function(X)))
 
-    def _fit_binary(self, X, y, sample_weight):
+    def _fit_binary(self, X, y, sample_weight, n_iter):
         if sp.issparse(X):
-            self._fit_binary_sparse(X, y, sample_weight)
+            self._fit_binary_sparse(X, y, sample_weight, n_iter)
         else:
-            self._fit_binary_dense(X, y, sample_weight)
+            self._fit_binary_dense(X, y, sample_weight, n_iter)
 
-    def _fit_multiclass(self, X, y, sample_weight):
+    def _fit_multiclass(self, X, y, sample_weight, n_iter):
         if sp.issparse(X):
-            self._fit_multiclass_sparse(X, y, sample_weight)
+            self._fit_multiclass_sparse(X, y, sample_weight, n_iter)
         else:
-            self._fit_multiclass_dense(X, y, sample_weight)
+            self._fit_multiclass_dense(X, y, sample_weight, n_iter)
 
-    def _fit_binary_dense(self, X, y, sample_weight):
+    def _fit_binary_dense(self, X, y, sample_weight, n_iter):
         """Fit a single binary classifier"""
         # encode original class labels as 1 (classes[1]) or -1 (classes[0]).
         y_new = np.ones(y.shape, dtype=np.float64, order='C') * -1.0
@@ -415,7 +419,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
                                             self.penalty_type,
                                             self.alpha, self.rho,
                                             X, y,
-                                            self.n_iter,
+                                            n_iter,
                                             int(self.fit_intercept),
                                             int(self.verbose),
                                             int(self.shuffle),
@@ -432,7 +436,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
         # intercept is a float, need to convert it to an array of length 1
         self.intercept_ = np.asarray([intercept_], dtype=np.float64)
 
-    def _fit_multiclass_dense(self, X, y, sample_weight):
+    def _fit_multiclass_dense(self, X, y, sample_weight, n_iter):
         """Fit a multi-class classifier by combining binary classifiers
 
         Each binary classifier predicts one class versus all others. This
@@ -444,7 +448,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
                                               self.intercept_[i],
                                               self.loss_function,
                                               self.penalty_type, self.alpha,
-                                              self.rho, self.n_iter,
+                                              self.rho, n_iter,
                                               self.fit_intercept,
                                               self.verbose, self.shuffle,
                                               self.seed,
@@ -458,7 +462,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
             self.coef_[i] = coef
             self.intercept_[i] = intercept
 
-    def _fit_binary_sparse(self, X, y, sample_weight):
+    def _fit_binary_sparse(self, X, y, sample_weight, n_iter):
         """Fit a binary classifier."""
         X = _tocsr(X)
 
@@ -479,7 +483,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
                                              self.alpha, self.rho,
                                              X_data,
                                              X_indices, X_indptr, y,
-                                             self.n_iter,
+                                             n_iter,
                                              int(self.fit_intercept),
                                              int(self.verbose),
                                              int(self.shuffle),
@@ -495,7 +499,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
         # intercept is a float, need to convert it to an array of length 1
         self.intercept_ = np.asarray([intercept_], dtype=np.float64)
 
-    def _fit_multiclass_sparse(self, X, y, sample_weight):
+    def _fit_multiclass_sparse(self, X, y, sample_weight, n_iter):
         """Fit a multi-class classifier as a combination of binary classifiers
 
         Each binary classifier predicts one class versus all others
@@ -514,7 +518,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
                                               self.intercept_[i],
                                               self.loss_function,
                                               self.penalty_type, self.alpha,
-                                              self.rho, self.n_iter,
+                                              self.rho, n_iter,
                                               self.fit_intercept,
                                               self.verbose, self.shuffle,
                                               self.seed,
