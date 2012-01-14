@@ -20,8 +20,24 @@ from . import cd_fast
 class ElasticNet(LinearModel):
     """Linear Model trained with L1 and L2 prior as regularizer
 
-    rho = 1 is the lasso penalty. Currently, rho <= 0.01 is not
-    reliable, unless you supply your own sequence of alpha.
+    Minimizes the objective function::
+
+            1 / (2 * n_samples) * ||y - Xw||^2_2 +
+            + alpha * rho * ||w||_1 + 0.5 * alpha * (1 - rho) * ||w||^2_2
+
+    If you are interested in controlling the L1 and L2 penalty
+    separately, keep in mind that this is equivalent to::
+
+            a * L1 + b * L2
+
+    where::
+
+            alpha = a + b and rho = a / (a + b)
+
+    The parameter rho corresponds to alpha in the glmnet R package while
+    alpha corresponds to the lambda parameter in glmnet. Specifically, rho =
+    1 is the lasso penalty. Currently, rho <= 0.01 is not reliable, unless
+    you supply your own sequence of alpha.
 
     Parameters
     ----------
@@ -63,23 +79,6 @@ class ElasticNet(LinearModel):
     -----
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a fortran contiguous numpy array.
-
-    The parameter rho corresponds to alpha in the glmnet R package
-    while alpha corresponds to the lambda parameter in glmnet.
-    More specifically, the objective function is::
-
-        1 / (2 * n_samples) * ||y - Xw||^2_2 +
-        + alpha * rho * ||w||_1 + 0.5 * alpha * (1 - rho) * ||w||^2_2
-
-    If you are interested in controlling the L1 and L2 penalty
-    separately, keep in mind that this is equivalent to::
-
-        a * L1 + b * L2
-
-    for::
-
-        alpha = a + b and rho = a / (a + b)
-
     """
     def __init__(self, alpha=1.0, rho=0.5, fit_intercept=True,
                  normalize=False, precompute='auto', max_iter=1000,
@@ -119,19 +118,21 @@ class ElasticNet(LinearModel):
         To avoid memory re-allocation it is advised to allocate the
         initial data in memory directly using that format.
         """
-        X = as_float_array(X, self.copy_X)
+        # X and y must be of type float64
+        X = np.asanyarray(X, dtype=np.float64)
         y = np.asarray(y, dtype=np.float64)
 
         n_samples, n_features = X.shape
 
         X_init = X
         X, y, X_mean, y_mean, X_std = self._center_data(X, y,
-                                                        self.fit_intercept,
-                                                        self.normalize,
-                                                        copy=False)
+                self.fit_intercept, self.normalize, copy=self.copy_X)
         precompute = self.precompute
         if X_init is not X and hasattr(precompute, '__array__'):
-            precompute = 'auto'  # recompute Gram
+            # recompute Gram
+            # FIXME: it could be updated from precompute and X_mean
+            # instead of recomputed
+            precompute = 'auto'
         if X_init is not X and Xy is not None:
             Xy = None  # recompute Xy
 
@@ -146,7 +147,7 @@ class ElasticNet(LinearModel):
         X = np.asfortranarray(X)  # make data contiguous in memory
 
         # precompute if n_samples > n_features
-        if hasattr(self.precompute, '__array__'):
+        if hasattr(precompute, '__array__'):
             Gram = precompute
         elif precompute == True or \
                (precompute == 'auto' and n_samples > n_features):

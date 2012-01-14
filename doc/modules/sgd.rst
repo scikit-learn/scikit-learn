@@ -206,9 +206,6 @@ For maximum efficiency, use the CSR matrix format as defined in
 <http://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.html>`_.
 
 Implemented classes are :class:`SGDClassifier` and :class:`SGDRegressor`.
-During training both classes maintain a dense representation of the model
-parameters. After training has completed you can obtain a sparse representation
-of the model parameters via the attribute `sparse_coef_`.
 
 .. topic:: Examples:
 

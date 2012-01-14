@@ -194,7 +194,7 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
 
 
 def fetch_20newsgroups_vectorized(subset="train", data_home=None):
-    """Load the 20 newsgroups dataset and transform it into tf-idf vectors
+    """Load the 20 newsgroups dataset and transform it into tf-idf vectors.
 
     This is a convenience function; the tf-idf transformation is done using the
     default settings for `sklearn.feature_extraction.text.Vectorizer`. For more

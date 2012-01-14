@@ -11,6 +11,8 @@ Generalized Linear models.
 #
 # License: BSD Style.
 
+from abc import ABCMeta, abstractmethod
+
 import numpy as np
 import scipy.sparse as sp
 from scipy import linalg
@@ -39,8 +41,8 @@ from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
 class LinearModel(BaseEstimator, RegressorMixin):
     """Base class for Linear Models"""
 
-    def predict(self, X):
-        """Predict using the linear model
+    def decision_function(self, X):
+        """Decision function of the linear model
 
         Parameters
         ----------
@@ -53,6 +55,20 @@ class LinearModel(BaseEstimator, RegressorMixin):
         """
         X = safe_asarray(X)
         return safe_sparse_dot(X, self.coef_.T) + self.intercept_
+
+    def predict(self, X):
+        """Predict using the linear model
+
+        Parameters
+        ----------
+        X : numpy array of shape [n_samples, n_features]
+
+        Returns
+        -------
+        C : array, shape = [n_samples]
+            Returns predicted values.
+        """
+        return self.decision_function(X)
 
     @staticmethod
     def _center_data(X, y, fit_intercept, normalize=False, copy=True):
@@ -172,6 +188,8 @@ class LinearRegression(LinearModel):
 class BaseSGD(BaseEstimator):
     """Base class for dense and sparse SGD."""
 
+    __metaclass__ = ABCMeta
+
     def __init__(self, loss, penalty='l2', alpha=0.0001,
                  rho=0.85, fit_intercept=True, n_iter=5, shuffle=False,
                  verbose=0, seed=0, learning_rate="optimal", eta0=0.0,
@@ -206,6 +224,14 @@ class BaseSGD(BaseEstimator):
                 raise ValueError("eta0 must be greater than 0.0")
         self.class_weight = class_weight
 
+    @abstractmethod
+    def fit(self, X, y):
+        """Fit model."""
+
+    @abstractmethod
+    def predict(self, X):
+        """Predict using model."""
+
     def _set_learning_rate(self, learning_rate):
         learning_rate_codes = {"constant": 1, "optimal": 2, "invscaling": 3}
         try:
@@ -225,20 +251,25 @@ class BaseSGD(BaseEstimator):
         except KeyError:
             raise ValueError("Penalty %s is not supported. " % penalty)
 
-    def _set_sample_weight(self, sample_weight, n_samples):
+    def _validate_sample_weight(self, sample_weight, n_samples):
         """Set the sample weight array."""
         if sample_weight == None:
             sample_weight = np.ones(n_samples, dtype=np.float64, order='C')
         else:
             sample_weight = np.asarray(sample_weight, dtype=np.float64,
                                        order="C")
-        self.sample_weight = sample_weight
-        if self.sample_weight.shape[0] != n_samples:
+        if sample_weight.shape[0] != n_samples:
             raise ValueError("Shapes of X and sample_weight do not match.")
+        return sample_weight
 
     def _set_coef(self, coef_):
-        """Make sure that coef_ is 2d. """
-        self.coef_ = array2d(coef_)
+        """Make sure that coef_ is fortran-style and 2d.
+
+        Fortran-style memory layout is needed to ensure that computing
+        the dot product between input ``X`` and ``coef_`` does not trigger
+        a memory copy.
+        """
+        self.coef_ = np.asfortranarray(array2d(coef_))
 
     def _allocate_parameter_mem(self, n_classes, n_features, coef_init=None,
                                 intercept_init=None):
@@ -290,6 +321,8 @@ class BaseSGD(BaseEstimator):
 
 class BaseSGDClassifier(BaseSGD, ClassifierMixin):
     """Base class for dense and sparse classification using SGD."""
+
+    __metaclass__ = ABCMeta
 
     def __init__(self, loss="hinge", penalty='l2', alpha=0.0001,
                  rho=0.85, fit_intercept=True, n_iter=5, shuffle=False,
@@ -386,26 +419,28 @@ class BaseSGDClassifier(BaseSGD, ClassifierMixin):
 
         # Allocate datastructures from input arguments
         self._set_class_weight(class_weight, self.classes, y)
-        self._set_sample_weight(sample_weight, n_samples)
+        sample_weight = self._validate_sample_weight(sample_weight, n_samples)
         self._allocate_parameter_mem(n_classes, n_features,
                                      coef_init, intercept_init)
 
         # delegate to concrete training procedure
         if n_classes > 2:
-            self._fit_multiclass(X, y)
+            self._fit_multiclass(X, y, sample_weight)
         elif n_classes == 2:
-            self._fit_binary(X, y)
+            self._fit_binary(X, y, sample_weight)
         else:
             raise ValueError("The number of class labels must be "
                              "greater than one.")
         # return self for chaining fit and predict calls
         return self
 
-    def _fit_binary(self, X, y):
-        raise NotImplementedError("BaseSGDClassifier is an abstract class.")
+    @abstractmethod
+    def _fit_binary(self, X, y, sample_weight):
+        """Fit binary classifier."""
 
-    def _fit_multiclass(self, X, y):
-        raise NotImplementedError("BaseSGDClassifier is an abstract class.")
+    @abstractmethod
+    def _fit_multiclass(self, X, y, sample_weight):
+        """Fit multiclass classifier."""
 
     def decision_function(self, X):
         """Predict signed 'distance' to the hyperplane (aka confidence score)
@@ -473,6 +508,9 @@ class BaseSGDClassifier(BaseSGD, ClassifierMixin):
 
 class BaseSGDRegressor(BaseSGD, RegressorMixin):
     """Base class for dense and sparse regression using SGD."""
+
+    __metaclass__ = ABCMeta
+
     def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
                  rho=0.85, fit_intercept=True, n_iter=5, shuffle=False,
                  verbose=0, p=0.1, seed=0, learning_rate="invscaling",
@@ -528,15 +566,16 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         n_samples, n_features = X.shape
 
         # Allocate datastructures from input arguments
-        self._set_sample_weight(sample_weight, n_samples)
+        sample_weight = self._validate_sample_weight(sample_weight, n_samples)
         self._allocate_parameter_mem(1, n_features,
                                      coef_init, intercept_init)
 
-        self._fit_regressor(X, y)
+        self._fit_regressor(X, y, sample_weight)
         return self
 
-    def _fit_regressor(self, X, y):
-        raise NotImplementedError("BaseSGDRegressor is an abstract class.")
+    @abstractmethod
+    def _fit_regressor(self, X, y, sample_weight):
+        """Fit regression model."""
 
     def predict(self, X):
         """Predict using the linear model

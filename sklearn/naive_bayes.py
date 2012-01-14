@@ -171,9 +171,9 @@ class GaussianNB(BaseNB):
         joint_log_likelihood = []
         for i in xrange(np.size(self._classes)):
             jointi = np.log(self.class_prior_[i])
-            n_ij = - 0.5 * np.sum(np.log(np.pi * self.sigma[i, :]))
-            n_ij -= 0.5 * np.sum(((X - self.theta[i, :]) ** 2) / \
-                                    (self.sigma[i, :]), 1)
+            n_ij = - 0.5 * np.sum(np.log(np.pi * self.sigma_[i, :]))
+            n_ij -= 0.5 * np.sum(((X - self.theta_[i, :]) ** 2) / \
+                                    (self.sigma_[i, :]), 1)
             joint_log_likelihood.append(jointi + n_ij)
         joint_log_likelihood = np.array(joint_log_likelihood).T
         return joint_log_likelihood
@@ -181,21 +181,21 @@ class GaussianNB(BaseNB):
     @property
     @deprecated('GaussianNB.class_prior is deprecated'
                 ' and will be removed in version 0.12.'
-                ' Please use GaussianNB.class_prior_ instead.')
+                ' Please use ``GaussianNB.class_prior_`` instead.')
     def class_prior(self):
         return self.class_prior_
 
     @property
     @deprecated('GaussianNB.theta is deprecated'
                 ' and will be removed in version 0.12.'
-                ' Please use GaussianNB.theta_ instead.')
+                ' Please use ``GaussianNB.theta_`` instead.')
     def theta(self):
         return self.theta_
 
     @property
     @deprecated('GaussianNB.sigma is deprecated'
                 ' and will be removed in version 0.12.'
-                ' Please use GaussianNB.sigma_ instead.')
+                ' Please use ``GaussianNB.sigma_`` instead.')
     def sigma(self):
         return self.sigma_
 

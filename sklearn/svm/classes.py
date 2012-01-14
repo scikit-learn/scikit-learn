@@ -63,7 +63,7 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, CoefSelectTransformerMixin):
         Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
-        `coef_` is readonly property derived from `raw_coef_` that
+        `coef_` is readonly property derived from `raw_coef_` that \
         follows the internal memory layout of liblinear.
 
     `intercept_` : array, shape = [1] if n_classes == 2 else [n_classes]
@@ -76,12 +76,14 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, CoefSelectTransformerMixin):
     to have slightly different results for the same input data. If
     that happens, try with a smaller tol parameter.
 
+    **References:**
+    `LIBLINEAR: A Library for Large Linear Classification
+    <http://www.csie.ntu.edu.tw/~cjlin/liblinear/>`__
+
     See also
     --------
     SVC
 
-    LIBLINEAR -- A Library for Large Linear Classification
-    http://www.csie.ntu.edu.tw/~cjlin/liblinear/
 
     """
 
@@ -603,7 +605,7 @@ class OneClassSVM(DenseBaseLibSVM):
             Returns self.
 
         Notes
-        ------
+        -----
         If X is not a C-ordered contiguous array, it is copied.
 
         """

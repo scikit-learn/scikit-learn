@@ -75,7 +75,7 @@ def test_connect_regions_with_grid():
 
 
 def _downsampled_lena():
-    lena = sp.misc.lena()
+    lena = sp.misc.lena().astype(np.float32)
     lena = lena[::2, ::2] + lena[1::2, ::2] + lena[::2, 1::2] + \
            lena[1::2, 1::2]
     lena = lena[::2, ::2] + lena[1::2, ::2] + lena[::2, 1::2] + \
