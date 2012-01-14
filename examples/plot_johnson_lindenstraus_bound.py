@@ -4,9 +4,11 @@ The Johnson-Lindenstrauss bound for embedding with random projections
 =====================================================================
 
 
-The Johnson-Lindenstrauss states that any high dimensional dataset can
-be randomly projected into a lower dimensional Euclidean space while
-controlling the distortion in the pairwise distances.
+The `Johnson-Lindenstrauss lemma`_ states that any high dimensional
+dataset can be randomly projected into a lower dimensional Euclidean
+space while controlling the distortion in the pairwise distances.
+
+.. _`Johnson-Lindenstrauss lemma`: http://en.wikipedia.org/wiki/Johnson%E2%80%93Lindenstrauss_lemma
 
 
 Theoretical bounds
@@ -28,9 +30,10 @@ given by:
   n_components >= 4 log(n_samples) / (eps^2 / 2 - eps^3 / 3)
 
 
-The first plot gives a visualization of the minimum number dimensions
-(n_components) on the number of samples (n_samples) to embed through
-random projections various values of the admissible distorion eps.
+The first two plots gives a visualization of the minimum number
+dimensions ``n_components`` on the number of samples ``n_samples``
+to embed through random projections various values of the admissible
+distorion eps according to the lemma.
 
 
 Empirical validation
@@ -80,11 +83,26 @@ for eps, color in zip(eps_range, colors):
 pl.legend(["eps = %0.1f" % eps for eps in eps_range], loc="lower right")
 pl.xlabel("Number of observations to eps-embed")
 pl.ylabel("Minimum number of dimensions")
-pl.title("Johnson-Lindenstrauss bounds")
+pl.title("Johnson-Lindenstrauss bounds:\nn_samples vs n_components")
 
-#
-# Todo plot here eps vs n_components for a fixed value of n_samples
-#
+
+# range of admissible distortions
+eps_range = np.linspace(0.01, 1.0, 100)
+
+# range of number of samples (observation) to embed
+n_samples_range = np.logspace(2, 6, 5)
+colors = pl.cm.Blues(np.linspace(0.3, 1.0, len(n_samples_range)))
+
+pl.figure()
+for n_samples, color in zip(n_samples_range, colors):
+    min_n_components = johnson_lindenstrauss_min_dim(n_samples, eps=eps_range)
+    pl.semilogy(eps_range, min_n_components, color=color)
+
+pl.legend(["n_samples = %d" % n for n in n_samples_range], loc="upper right")
+pl.xlabel("Distortion eps")
+pl.ylabel("Minimum number of dimensions")
+pl.title("Johnson-Lindenstrauss bounds:\nn_components vs eps")
+
 
 # Part 2: perform sparse random projection of the faces dataset
 
@@ -93,7 +111,7 @@ n_samples, n_features = faces_data.shape
 print "Embedding %d faces with dim %d using various random projections" % (
     n_samples, n_features)
 
-n_components_range = np.array([30, 100, 300])
+n_components_range = np.array([50, 200, 1000])
 dists = euclidean_distances(faces_data, squared=True).ravel()
 
 # select only non-identical samples pairs
