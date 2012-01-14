@@ -25,6 +25,7 @@ Johnson-Lindenstrauss lemma (quoting Wikipedia):
 # Authors: Olivier Grisel <olivier.grisel@ensta.org>
 # License: Simple BSD
 
+from __future__ import division
 import math
 import random
 
@@ -82,15 +83,11 @@ def johnson_lindenstrauss_min_dim(n_samples, eps=0.1):
 
     """
     eps = np.asarray(eps)
+    if np.any(eps <= 0.0) or np.any(eps > 1):
+        raise ValueError(
+            "The JL bound is defined for eps in (0, 1]: got %r" % eps)
     denominator = (eps ** 2 / 2) - (eps ** 3 / 3)
     return (4 * np.log(n_samples) / denominator).astype(np.int)
-
-
-def johnson_lindenstrauss_distortion(n_components, n_samples):
-    """Expected JL bound on the distortion of the squared pairwise distances
-
-    TODO: write me
-    """
 
 
 def sparse_random_matrix(n_components, n_features, density='auto',
