@@ -355,8 +355,6 @@ class BernoulliNB(BaseDiscreteNB):
     difference is that while MultinomialNB works with occurrence counts,
     BernoulliNB is designed for binary/boolean features.
 
-    Note: this class does not check whether features are actually boolean.
-
     Parameters
     ----------
     alpha: float, optional (default=1.0)
