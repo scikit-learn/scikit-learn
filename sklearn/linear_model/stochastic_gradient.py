@@ -273,7 +273,9 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
         -------
         self : returns an instance of self.
         """
-        return self._partial_fit(X, y, 1, classes, class_weight, sample_weight)
+        return self._partial_fit(X, y, n_iter=1, classes=classes,
+                                 class_weight=class_weight,
+                                 sample_weight=sample_weight)
 
     def fit(self, X, y, coef_init=None, intercept_init=None,
             class_weight=None, sample_weight=None):
