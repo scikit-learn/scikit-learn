@@ -8,7 +8,7 @@
      :ref:`sgd` module by `Mathieu Blondel`_.
 
    - Regressors can now be used as base estimator in the :ref:`multiclass`
-     module by `Mathieu 
+     module by `Mathieu Blondel`_.
 
 API changes summary
 -------------------
