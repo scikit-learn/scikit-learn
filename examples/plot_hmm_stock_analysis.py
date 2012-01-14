@@ -58,14 +58,14 @@ print "done\n"
 ###############################################################################
 # print trained parameters and plot
 print "Transition matrix"
-print model.transmat
+print model.transmat_
 print ""
 
 print "means and vars of each hidden state"
 for i in xrange(n_components):
     print "%dth hidden state" % i
-    print "mean = ", model.means[i]
-    print "var = ", np.diag(model.covars[i])
+    print "mean = ", model.means_[i]
+    print "var = ", np.diag(model.covars_[i])
     print ""
 
 years = YearLocator()   # every year
