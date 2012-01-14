@@ -98,6 +98,8 @@ Changelog
    - :class:`sklearn.cross_validation.ShuffleSplit` can subsample the train
      sets as well as the test sets by `Olivier Grisel`_.
 
+   - Errors in the build of the documentation fixed by `Andreas Müller`_.
+
 
 API changes summary
 -------------------

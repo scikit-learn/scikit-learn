@@ -415,7 +415,7 @@ def load_sample_images():
 
     Examples
     --------
-    To load the data and visualize the images::
+    To load the data and visualize the images:
 
     >>> from sklearn.datasets import load_sample_images
     >>> dataset = load_sample_images()     #doctest: +SKIP
@@ -467,17 +467,17 @@ def load_sample_image(image_name):
     Examples
     ---------
 
-    # >>> from sklearn.datasets import load_sample_image
-    # >>> china = load_sample_image('china.jpg')
-    # >>> china.dtype
-    # dtype('uint8')
-    # >>> china.shape
-    # (427, 640, 3)
-    # >>> flower = load_sample_image('flower.jpg') # doctest: +SKIP
-    # >>> flower.dtype
-    # dtype('uint8')
-    # >>> flower.shape
-    # (427, 640, 3)
+    >>> from sklearn.datasets import load_sample_image
+    >>> china = load_sample_image('china.jpg')   # doctest: +SKIP
+    >>> china.dtype                              # doctest: +SKIP
+    dtype('uint8')
+    >>> china.shape                              # doctest: +SKIP
+    (427, 640, 3)
+    >>> flower = load_sample_image('flower.jpg') # doctest: +SKIP
+    >>> flower.dtype                             # doctest: +SKIP
+    dtype('uint8')
+    >>> flower.shape                             # doctest: +SKIP
+    (427, 640, 3)
     """
     images = load_sample_images()
     index = None
