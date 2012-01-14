@@ -696,6 +696,23 @@ class SGDRegressor(BaseSGD, RegressorMixin):
         except KeyError:
             raise ValueError("The loss %s is not supported. " % loss)
 
+    def _partial_fit(self, X, y, n_iter, sample_weight=None):
+        X, y = check_arrays(X, y, sparse_format="csr", copy=False)
+        y = np.asarray(y, dtype=np.float64, order="C")
+
+        n_samples, n_features = X.shape
+        self._check_fit_data(X, y)
+
+        # Allocate datastructures from input arguments
+        sample_weight = self._validate_sample_weight(sample_weight, n_samples)
+
+        if self.coef_ is None:
+            self._allocate_parameter_mem(1, n_features,
+                                         coef_init=None, intercept_init=None)
+
+        self._fit_regressor(X, y, sample_weight, n_iter)
+        return self
+
     def partial_fit(self, X, y, sample_weight=None):
         """Fit linear model with Stochastic Gradient Descent.
 
@@ -715,21 +732,7 @@ class SGDRegressor(BaseSGD, RegressorMixin):
         -------
         self : returns an instance of self.
         """
-        X, y = check_arrays(X, y, sparse_format="csr", copy=False)
-        y = np.asarray(y, dtype=np.float64, order="C")
-
-        n_samples, n_features = X.shape
-        self._check_fit_data(X, y)
-
-        # Allocate datastructures from input arguments
-        sample_weight = self._validate_sample_weight(sample_weight, n_samples)
-
-        if self.coef_ is None:
-            self._allocate_parameter_mem(1, n_features,
-                                         coef_init=None, intercept_init=None)
-
-        self._fit_regressor(X, y, sample_weight)
-        return self
+        return self._partial_fit(X, y, n_iter=1, sample_weight=sample_weight)
 
     def fit(self, X, y, coef_init=None, intercept_init=None,
             sample_weight=None):
@@ -766,7 +769,7 @@ class SGDRegressor(BaseSGD, RegressorMixin):
         self._allocate_parameter_mem(1, n_features,
                                      coef_init, intercept_init)
 
-        return self.partial_fit(X, y, sample_weight)
+        return self._partial_fit(X, y, self.n_iter, sample_weight)
 
     def decision_function(self, X):
         """Predict using the linear model
@@ -798,13 +801,13 @@ class SGDRegressor(BaseSGD, RegressorMixin):
         """
         return self.decision_function(X)
 
-    def _fit_regressor(self, X, y, sample_weight):
+    def _fit_regressor(self, X, y, sample_weight, n_iter):
         if sp.issparse(X):
-            self._fit_regressor_sparse(X, y, sample_weight)
+            self._fit_regressor_sparse(X, y, sample_weight, n_iter)
         else:
-            self._fit_regressor_dense(X, y, sample_weight)
+            self._fit_regressor_dense(X, y, sample_weight, n_iter)
 
-    def _fit_regressor_dense(self, X, y, sample_weight):
+    def _fit_regressor_dense(self, X, y, sample_weight, n_iter):
         X = np.asarray(X, dtype=np.float64, order='C')
         coef_, intercept_ = plain_sgd_dense(self.coef_,
                                             self.intercept_[0],
@@ -812,7 +815,7 @@ class SGDRegressor(BaseSGD, RegressorMixin):
                                             self.penalty_type,
                                             self.alpha, self.rho,
                                             X, y,
-                                            self.n_iter,
+                                            n_iter,
                                             int(self.fit_intercept),
                                             int(self.verbose),
                                             int(self.shuffle),
@@ -825,7 +828,7 @@ class SGDRegressor(BaseSGD, RegressorMixin):
         self.coef_ = coef_
         self.intercept_ = np.asarray([intercept_], dtype=np.float64)
 
-    def _fit_regressor_sparse(self, X, y, sample_weight):
+    def _fit_regressor_sparse(self, X, y, sample_weight, n_iter):
         # interpret X as CSR matrix
         X = _tocsr(X)
 
@@ -841,7 +844,7 @@ class SGDRegressor(BaseSGD, RegressorMixin):
                                              self.alpha, self.rho,
                                              X_data,
                                              X_indices, X_indptr, y,
-                                             self.n_iter,
+                                             n_iter,
                                              int(self.fit_intercept),
                                              int(self.verbose),
                                              int(self.shuffle),
