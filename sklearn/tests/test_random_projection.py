@@ -4,6 +4,7 @@ import numpy as np
 from sklearn.metrics import euclidean_distances
 from sklearn.datasets import make_low_rank_matrix
 from sklearn.random_projection import SparseRandomProjection
+from sklearn.random_projection import johnson_lindenstrauss_min_dim
 
 from sklearn.utils.testing import assert_raise_message
 from numpy.testing import assert_array_equal
@@ -21,6 +22,12 @@ def assert_lower(a, b, details=None):
 n_samples, n_features = (10, 10000)
 data = make_low_rank_matrix(n_samples=n_samples, n_features=n_features,
                             random_state=0)
+
+
+def test_invalid_jl_domain():
+    assert_raises(ValueError, johnson_lindenstrauss_min_dim, 100, 1.1)
+    assert_raises(ValueError, johnson_lindenstrauss_min_dim, 100, 0.0)
+    assert_raises(ValueError, johnson_lindenstrauss_min_dim, 100, -0.1)
 
 
 def test_sparse_random_project_invalid_input():
