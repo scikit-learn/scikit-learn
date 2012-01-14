@@ -405,8 +405,24 @@ class DenseSGDClassifierTestCase(unittest.TestCase):
         # check that coef_ haven't been re-allocated
         assert_true(id1, id2)
 
-        #y_pred = clf.predict(T2)
-        #assert_array_equal(y_pred, true_result2)
+    def test_partial_fit_equal_fit(self):
+        for lr in ("constant", ):
+            for X_, Y_, T_ in ((X, Y, T), (X2, Y2, T2)):
+                clf = self.factory(alpha=0.01, eta0=0.01, n_iter=20,
+                                   learning_rate=lr, shuffle=False)
+                clf.fit(X_, Y_)
+                y_pred = clf.predict(T_)
+                t = clf.t_
+
+                classes = np.unique(Y_)
+                clf = self.factory(alpha=0.01, eta0=0.01, learning_rate=lr,
+                                   shuffle=False)
+                for i in range(20):
+                    clf.partial_fit(X_, Y_, classes=classes)
+                y_pred2 = clf.predict(T_)
+
+                assert_equal(clf.t_, t)
+                assert_array_equal(y_pred, y_pred2)
 
 
 class SparseSGDClassifierTestCase(DenseSGDClassifierTestCase):
@@ -536,6 +552,23 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
         id2 = id(clf.coef_.data)
         # check that coef_ haven't been re-allocated
         assert_true(id1, id2)
+
+    def test_partial_fit_equal_fit(self):
+        for lr in ("constant", ):
+            clf = self.factory(alpha=0.01, n_iter=20, eta0=0.01,
+                               learning_rate=lr, shuffle=False)
+            clf.fit(X, Y)
+            y_pred = clf.predict(T)
+            t = clf.t_
+
+            clf = self.factory(alpha=0.01, eta0=0.01,
+                               learning_rate=lr, shuffle=False)
+            for i in range(20):
+                clf.partial_fit(X, Y)
+            y_pred2 = clf.predict(T)
+
+            assert_equal(clf.t_, t)
+            assert_array_almost_equal(y_pred, y_pred2)
 
 
 class SparseSGDRegressorTestCase(DenseSGDRegressorTestCase):

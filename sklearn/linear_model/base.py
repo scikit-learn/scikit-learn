@@ -218,6 +218,7 @@ class BaseSGD(BaseEstimator):
             if eta0 <= 0.0:
                 raise ValueError("eta0 must be greater than 0.0")
         self.coef_ = None
+        self.t_ = 1.0
 
     @abstractmethod
     def fit(self, X, y):

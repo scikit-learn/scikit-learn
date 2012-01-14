@@ -232,6 +232,8 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
             raise ValueError("The number of class labels must be "
                              "greater than one.")
 
+        self.t_ += n_iter * n_samples
+
         return self
 
     def partial_fit(self, X, y, classes=None,
@@ -431,7 +433,8 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
                                             sample_weight,
                                             self.learning_rate_code,
                                             self.eta0,
-                                            self.power_t)
+                                            self.power_t,
+                                            self.t_)
 
         # need to be 2d
         self.coef_ = coef_.reshape(1, -1)
@@ -457,7 +460,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
                                               self._expanded_class_weight[i],
                                               sample_weight,
                                               self.learning_rate_code,
-                                              self.eta0, self.power_t)
+                                              self.eta0, self.power_t, self.t_)
             for i, c in enumerate(self.classes))
 
         for i, coef, intercept in res:
@@ -494,7 +497,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
                                              self._expanded_class_weight[0],
                                              sample_weight,
                                              self.learning_rate_code,
-                                             self.eta0, self.power_t)
+                                             self.eta0, self.power_t, self.t_)
 
         # need to be 2d
         self.coef_ = coef_.reshape(1, -1)
@@ -527,7 +530,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
                                               self._expanded_class_weight[i],
                                               sample_weight,
                                               self.learning_rate_code,
-                                              self.eta0, self.power_t)
+                                              self.eta0, self.power_t, self.t_)
             for i, c in enumerate(self.classes))
 
         for i, coef, intercept in res:
@@ -538,7 +541,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
 def _train_ova_classifier_ds(i, c, X, y, coef_, intercept_, loss_function,
                              penalty_type, alpha, rho, n_iter, fit_intercept,
                              verbose, shuffle, seed, class_weight_pos,
-                             sample_weight, learning_rate, eta0, power_t):
+                             sample_weight, learning_rate, eta0, power_t, t):
     """Inner loop for one-vs-all scheme."""
     y_i = np.ones(y.shape, dtype=np.float64, order='C') * -1.0
     y_i[y == c] = 1.0
@@ -548,7 +551,7 @@ def _train_ova_classifier_ds(i, c, X, y, coef_, intercept_, loss_function,
                                       verbose, shuffle, seed,
                                       class_weight_pos, 1.0,
                                       sample_weight, learning_rate, eta0,
-                                      power_t)
+                                      power_t, t)
     return (i, coef, intercept)
 
 
@@ -556,7 +559,7 @@ def _train_ova_classifier_sp(i, c, X_data, X_indices, X_indptr, y, coef_,
                              intercept_, loss_function, penalty_type, alpha,
                              rho, n_iter, fit_intercept, verbose, shuffle,
                              seed, class_weight_pos, sample_weight,
-                             learning_rate, eta0, power_t):
+                             learning_rate, eta0, power_t, t):
     """Inner loop for One-vs.-All scheme"""
     y_i = np.ones(y.shape, dtype=np.float64, order='C') * -1.0
     y_i[y == c] = 1.0
@@ -568,7 +571,7 @@ def _train_ova_classifier_sp(i, c, X_data, X_indices, X_indptr, y, coef_,
                                        int(shuffle), int(seed),
                                        class_weight_pos, 1.0,
                                        sample_weight, learning_rate, eta0,
-                                       power_t)
+                                       power_t, t)
     return (i, coef, intercept)
 
 
@@ -711,6 +714,9 @@ class SGDRegressor(BaseSGD, RegressorMixin):
                                          coef_init=None, intercept_init=None)
 
         self._fit_regressor(X, y, sample_weight, n_iter)
+
+        self.t_ += n_iter * n_samples
+
         return self
 
     def partial_fit(self, X, y, sample_weight=None):

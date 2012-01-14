@@ -51,7 +51,7 @@ cdef class LossFunction:
     cpdef double dloss(self, double p, double y):
         """Evaluate the derivative of the loss function with respect to
         the prediction `p`.
-        
+
         Parameters
         ----------
         p : double
@@ -220,7 +220,8 @@ def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
               double weight_pos, double weight_neg,
               np.ndarray[np.float64_t, ndim=1, mode='c'] sample_weight,
               int learning_rate, double eta0,
-              double power_t):
+              double power_t,
+              double t0=1.0):
     """Cython impl. of SGD for generic loss functions and penalties
 
     This implementation assumes X represented as a dense array of floats.
@@ -269,6 +270,8 @@ def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
         The initial learning rate.
     power_t : double
         The exponent for inverse scaling learning rate.
+    t0 : double
+        Initial value for t.
 
     Returns
     -------
@@ -306,7 +309,7 @@ def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
     cdef double update = 0.0
     cdef double sumloss = 0.0
     cdef double wnorm = 0.0
-    cdef double t = 0.0
+    cdef double t = t0
     cdef double y = 0.0
     cdef double class_weight = 1.0
     cdef unsigned int count = 0
@@ -335,11 +338,9 @@ def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
     else:
         eta = eta0
 
-    if learning_rate == OPTIMAL:
+    if learning_rate == OPTIMAL and t == 1.0:
         # initialize t such that eta at first example equals eta0
         t = 1.0 / (eta0 * alpha)
-    else:
-        t = 1.0
 
     t_start = time()
     for epoch in xrange(n_iter):
