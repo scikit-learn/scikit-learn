@@ -219,6 +219,10 @@ class BaseSGD(BaseEstimator):
                 raise ValueError("eta0 must be greater than 0.0")
         self.coef_ = None
         self.t_ = 1.0
+        if learning_rate == "optimal":
+            typw = np.sqrt(1.0 / np.sqrt(self.alpha))
+            self.eta0 = typw / max(1.0, self.loss_function.dloss(-typw, 1.0))
+            self.t_ = 1.0 / (self.eta0 * self.alpha)
 
     @abstractmethod
     def fit(self, X, y):

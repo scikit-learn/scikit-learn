@@ -829,7 +829,7 @@ class SGDRegressor(BaseSGD, RegressorMixin):
                                             1.0, 1.0,
                                             sample_weight,
                                             self.learning_rate_code,
-                                            self.eta0, self.power_t)
+                                            self.eta0, self.power_t, self.t_)
 
         self.coef_ = coef_
         self.intercept_ = np.asarray([intercept_], dtype=np.float64)
@@ -858,7 +858,7 @@ class SGDRegressor(BaseSGD, RegressorMixin):
                                              1.0, 1.0,
                                              sample_weight,
                                              self.learning_rate_code,
-                                             self.eta0, self.power_t)
+                                             self.eta0, self.power_t, self.t_)
 
         self.coef_ = coef_
         self.intercept_ = np.asarray([intercept_], dtype=np.float64)

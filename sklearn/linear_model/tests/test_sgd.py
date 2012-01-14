@@ -405,25 +405,33 @@ class DenseSGDClassifierTestCase(unittest.TestCase):
         # check that coef_ haven't been re-allocated
         assert_true(id1, id2)
 
-    def test_partial_fit_equal_fit(self):
-        for lr in ("constant", ):
-            for X_, Y_, T_ in ((X, Y, T), (X2, Y2, T2)):
-                clf = self.factory(alpha=0.01, eta0=0.01, n_iter=20,
-                                   learning_rate=lr, shuffle=False)
-                clf.fit(X_, Y_)
-                y_pred = clf.predict(T_)
-                t = clf.t_
 
-                classes = np.unique(Y_)
-                clf = self.factory(alpha=0.01, eta0=0.01, learning_rate=lr,
-                                   shuffle=False)
-                for i in range(20):
-                    clf.partial_fit(X_, Y_, classes=classes)
-                y_pred2 = clf.predict(T_)
+    def _test_partial_fit_equal_fit(self, lr):
+        for X_, Y_, T_ in ((X, Y, T), (X2, Y2, T2)):
+            clf = self.factory(alpha=0.01, eta0=0.01, n_iter=2,
+                               learning_rate=lr, shuffle=False)
+            clf.fit(X_, Y_)
+            y_pred = clf.decision_function(T_)
+            t = clf.t_
 
-                assert_equal(clf.t_, t)
-                assert_array_equal(y_pred, y_pred2)
+            classes = np.unique(Y_)
+            clf = self.factory(alpha=0.01, eta0=0.01, learning_rate=lr,
+                               shuffle=False)
+            for i in range(2):
+                clf.partial_fit(X_, Y_, classes=classes)
+            y_pred2 = clf.decision_function(T_)
 
+            assert_equal(clf.t_, t)
+            assert_array_almost_equal(y_pred, y_pred2, decimal=2)
+
+    def test_partial_fit_equal_fit_constant(self):
+        self._test_partial_fit_equal_fit("constant")
+
+    def test_partial_fit_equal_fit_optimal(self):
+        self._test_partial_fit_equal_fit("optimal")
+
+    def test_partial_fit_equal_fit_invscaling(self):
+        self._test_partial_fit_equal_fit("invscaling")
 
 class SparseSGDClassifierTestCase(DenseSGDClassifierTestCase):
     """Run exactly the same tests using the sparse representation variant"""
@@ -553,22 +561,30 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
         # check that coef_ haven't been re-allocated
         assert_true(id1, id2)
 
-    def test_partial_fit_equal_fit(self):
-        for lr in ("constant", ):
-            clf = self.factory(alpha=0.01, n_iter=20, eta0=0.01,
-                               learning_rate=lr, shuffle=False)
-            clf.fit(X, Y)
-            y_pred = clf.predict(T)
-            t = clf.t_
+    def _test_partial_fit_equal_fit(self, lr):
+        clf = self.factory(alpha=0.01, n_iter=2, eta0=0.01,
+                           learning_rate=lr, shuffle=False)
+        clf.fit(X, Y)
+        y_pred = clf.predict(T)
+        t = clf.t_
 
-            clf = self.factory(alpha=0.01, eta0=0.01,
-                               learning_rate=lr, shuffle=False)
-            for i in range(20):
-                clf.partial_fit(X, Y)
-            y_pred2 = clf.predict(T)
+        clf = self.factory(alpha=0.01, eta0=0.01,
+                           learning_rate=lr, shuffle=False)
+        for i in range(2):
+            clf.partial_fit(X, Y)
+        y_pred2 = clf.predict(T)
 
-            assert_equal(clf.t_, t)
-            assert_array_almost_equal(y_pred, y_pred2)
+        assert_equal(clf.t_, t)
+        assert_array_almost_equal(y_pred, y_pred2, decimal=2)
+
+    def test_partial_fit_equal_fit_constant(self):
+        self._test_partial_fit_equal_fit("constant")
+
+    def test_partial_fit_equal_fit_optimal(self):
+        self._test_partial_fit_equal_fit("optimal")
+
+    def test_partial_fit_equal_fit_invscaling(self):
+        self._test_partial_fit_equal_fit("invscaling")
 
 
 class SparseSGDRegressorTestCase(DenseSGDRegressorTestCase):

@@ -330,17 +330,7 @@ def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
     elif penalty_type == L1:
         rho = 0.0
 
-    cdef double typw = sqrt(1.0 / sqrt(alpha))
-
-    if learning_rate == OPTIMAL:
-        # computing eta0, the initial learning rate
-        eta0 = typw / max(1.0, loss.dloss(-typw, 1.0))
-    else:
-        eta = eta0
-
-    if learning_rate == OPTIMAL and t == 1.0:
-        # initialize t such that eta at first example equals eta0
-        t = 1.0 / (eta0 * alpha)
+    eta = eta0
 
     t_start = time()
     for epoch in xrange(n_iter):
