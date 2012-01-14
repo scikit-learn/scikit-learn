@@ -326,6 +326,9 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
         self._allocate_parameter_mem(n_classes, n_features,
                                      coef_init, intercept_init)
 
+        # Need to re-initialize in case of multiple call to fit.
+        self._init_t()
+
         self._partial_fit(X, y, self.n_iter,
                           classes=classes,
                           sample_weight=sample_weight,
@@ -774,6 +777,9 @@ class SGDRegressor(BaseSGD, RegressorMixin):
         # Allocate datastructures from input arguments
         self._allocate_parameter_mem(1, n_features,
                                      coef_init, intercept_init)
+
+        # Need to re-initialize in case of multiple call to fit.
+        self._init_t()
 
         return self._partial_fit(X, y, self.n_iter, sample_weight)
 

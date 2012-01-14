@@ -218,11 +218,8 @@ class BaseSGD(BaseEstimator):
             if eta0 <= 0.0:
                 raise ValueError("eta0 must be greater than 0.0")
         self.coef_ = None
-        self.t_ = 1.0
-        if learning_rate == "optimal":
-            typw = np.sqrt(1.0 / np.sqrt(self.alpha))
-            self.eta0 = typw / max(1.0, self.loss_function.dloss(-typw, 1.0))
-            self.t_ = 1.0 / (self.eta0 * self.alpha)
+
+        self._init_t()
 
     @abstractmethod
     def fit(self, X, y):
@@ -231,6 +228,13 @@ class BaseSGD(BaseEstimator):
     @abstractmethod
     def predict(self, X):
         """Predict using model."""
+
+    def _init_t(self):
+        self.t_ = 1.0
+        if self.learning_rate == "optimal":
+            typw = np.sqrt(1.0 / np.sqrt(self.alpha))
+            self.eta0 = typw / max(1.0, self.loss_function.dloss(-typw, 1.0))
+            self.t_ = 1.0 / (self.eta0 * self.alpha)
 
     def _set_learning_rate(self, learning_rate):
         learning_rate_codes = {"constant": 1, "optimal": 2, "invscaling": 3}
