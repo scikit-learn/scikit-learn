@@ -39,7 +39,7 @@
 
     .. |banner5| image:: auto_examples/svm/images/plot_svm_nonlinear_1.png
        :height: 140
-       :target: auto_examples/svm/plot_svm_non_linear.html
+       :target: auto_examples/svm/plot_svm_nonlinear.html
 
     .. |banner6| image:: auto_examples/applications/images/plot_species_distribution_modeling_1.png
        :height: 140
