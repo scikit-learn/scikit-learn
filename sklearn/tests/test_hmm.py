@@ -227,7 +227,8 @@ class GaussianHMMParams(object):
     startprob_ = prng.rand(n_components)
     startprob_ = startprob_ / startprob_.sum()
     transmat_ = np.random.rand(n_components, n_components)
-    transmat_ /= np.tile(transmat_.sum(axis=1)[:, np.newaxis], (1, n_components))
+    transmat_ /= np.tile(transmat_.sum(axis=1)[:, np.newaxis],
+            (1, n_components))
     means_ = prng.randint(-20, 20, (n_components, n_features))
     covars_ = {'spherical': (1.0 + 2 * prng.rand(n_components)) ** 2,
               'tied': (make_spd_matrix(n_features, random_state=0)
@@ -306,7 +307,7 @@ class GaussianHMMTester(GaussianHMMParams):
         viterbi_ll, stateseq = h.decode(obs)
         assert_array_equal(stateseq, gaussidx)
 
-    def test_rvs(self, n=1000):
+    def test_sample(self, n=1000):
         h = hmm.GaussianHMM(self.n_components, self.cvtype)
         # Make sure the means are far apart so posteriors.argmax()
         # picks the actual component used to generate the observations.
@@ -314,7 +315,7 @@ class GaussianHMMTester(GaussianHMMParams):
         h.covars_ = np.maximum(self.covars_[self.cvtype], 0.1)
         h.startprob_ = self.startprob_
 
-        samples = h.rvs(n)
+        samples = h.sample(n)
         self.assertEquals(samples.shape, (n, self.n_features))
 
     def test_fit(self, params='stmc', n_iter=25, verbose=False, **kwargs):
@@ -327,7 +328,7 @@ class GaussianHMMTester(GaussianHMMParams):
         h.covars_ = self.covars_[self.cvtype]
 
         # Create training data by sampling from the HMM.
-        train_obs = [h.rvs(n=10) for x in xrange(10)]
+        train_obs = [h.sample(n=10) for x in xrange(10)]
 
         # Mess up the parameters and see if we can re-learn them.
         h.fit(train_obs, n_iter=0)
@@ -380,7 +381,7 @@ class GaussianHMMTester(GaussianHMMParams):
         h.covars_weight = covars_weight
 
         # Create training data by sampling from the HMM.
-        train_obs = [h.rvs(n=10) for x in xrange(10)]
+        train_obs = [h.sample(n=10) for x in xrange(10)]
 
         # Mess up the parameters and see if we can re-learn them.
         h.fit(train_obs[:1], n_iter=0)
@@ -488,12 +489,12 @@ class TestMultinomialHMM(MultinomialHMMParams,
         self.assertEqual(posteriors.shape, (nobs, self.n_components))
         assert_array_almost_equal(posteriors.sum(axis=1), np.ones(nobs))
 
-    def test_rvs(self, n=1000):
+    def test_sample(self, n=1000):
         h = hmm.MultinomialHMM(self.n_components,
                                startprob=self.startprob_,
                                transmat=self.transmat_)
         h.emissionprob_ = self.emissionprob_
-        samples = h.rvs(n)
+        samples = h.sample(n)
         self.assertEquals(len(samples), n)
         self.assertEquals(len(np.unique(samples)), self.n_symbols)
 
@@ -505,7 +506,7 @@ class TestMultinomialHMM(MultinomialHMMParams,
         h.emissionprob_ = self.emissionprob_
 
         # Create training data by sampling from the HMM.
-        train_obs = [h.rvs(n=10) for x in xrange(10)]
+        train_obs = [h.sample(n=10) for x in xrange(10)]
 
         # Mess up the parameters and see if we can re-learn them.
         h.startprob_ = hmm.normalize(self.prng.rand(self.n_components))
@@ -553,7 +554,8 @@ class GMMHMMParams(object):
     startprob_ = prng.rand(n_components)
     startprob_ = startprob_ / startprob_.sum()
     transmat_ = prng.rand(n_components, n_components)
-    transmat_ /= np.tile(transmat_.sum(axis=1)[:, np.newaxis], (1, n_components))
+    transmat_ /= np.tile(transmat_.sum(axis=1)[:, np.newaxis],
+            (1, n_components))
 
 
 class TestGMMHMM(GMMHMMParams, SeedRandomNumberGeneratorTestCase):
@@ -605,11 +607,11 @@ class TestGMMHMM(GMMHMMParams, SeedRandomNumberGeneratorTestCase):
         viterbi_ll, stateseq = h.decode(obs)
         assert_array_equal(stateseq, refstateseq)
 
-    def test_rvs(self, n=1000):
+    def test_sample(self, n=1000):
         h = hmm.GMMHMM(self.n_components, self.cvtype,
                        startprob=self.startprob_, transmat=self.transmat_,
                        gmms=self.gmms)
-        samples = h.rvs(n)
+        samples = h.sample(n)
         self.assertEquals(samples.shape, (n, self.n_features))
 
     def test_fit(self, params='stmwc', n_iter=5, verbose=False, **kwargs):
@@ -620,7 +622,8 @@ class TestGMMHMM(GMMHMMParams, SeedRandomNumberGeneratorTestCase):
         h.gmms = self.gmms
 
         # Create training data by sampling from the HMM.
-        train_obs = [h.rvs(n=10, random_state=self.prng) for x in xrange(10)]
+        train_obs = [h.sample(n=10,
+            random_state=self.prng) for x in xrange(10)]
 
         # Mess up the parameters and see if we can re-learn them.
         h.fit(train_obs, n_iter=0)

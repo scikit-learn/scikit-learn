@@ -26,6 +26,7 @@ warnings.warn('sklearn.hmm is orphaned, undocumented and has known numerical'
               ' and make it more stable, this module will be removed in'
               ' version 0.11.')
 
+from .utils import deprecated
 
 ZEROLOGPROB = -1e200
 
@@ -268,7 +269,7 @@ class _BaseHMM(BaseEstimator):
         logprob, posteriors = self.eval(obs, maxrank, beamlogprob)
         return posteriors
 
-    def rvs(self, n=1, random_state=None):
+    def sample(self, n=1, random_state=None):
         """Generate random samples from the model.
 
         Parameters
@@ -301,6 +302,11 @@ class _BaseHMM(BaseEstimator):
                 currstate, random_state=random_state))
 
         return np.array(obs)
+
+    @deprecated("rvs is deprecated in 0.11 will be removed in 0.13:"
+            + " use sample instead")
+    def rvs(self, n=1, random_state=None):
+        return self.sample(n, random_state)
 
     def fit(self, obs, n_iter=10, thresh=1e-2, params=string.ascii_letters,
             init_params=string.ascii_letters, maxrank=None,
