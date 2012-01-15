@@ -837,9 +837,9 @@ class SGDRegressor(BaseSGD, RegressorMixin):
         X = _tocsr(X)
 
         # get sparse matrix datastructures
-        X_data = np.array(X.data, dtype=np.float64, order="C")
-        X_indices = np.array(X.indices, dtype=np.int32, order="C")
-        X_indptr = np.array(X.indptr, dtype=np.int32, order="C")
+        X_data = np.asarray(X.data, dtype=np.float64, order="C")
+        X_indices = np.asarray(X.indices, dtype=np.int32, order="C")
+        X_indptr = np.asarray(X.indptr, dtype=np.int32, order="C")
 
         return plain_sgd_sparse(self.coef_,
                                 self.intercept_,
