@@ -403,15 +403,26 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
 
     def _fit_binary(self, X, y, sample_weight, n_iter):
         if sp.issparse(X):
-            self._fit_binary_sparse(X, y, sample_weight, n_iter)
+            fit_binary = self._fit_binary_sparse
         else:
-            self._fit_binary_dense(X, y, sample_weight, n_iter)
+            fit_binary = self._fit_binary_dense
+
+        coef, intercept = fit_binary(X, y, sample_weight, n_iter)
+
+        # need to be 2d
+        self.coef_ = coef.reshape(1, -1)
+        # intercept is a float, need to convert it to an array of length 1
+        self.intercept_ = np.atleast_1d(intercept)
 
     def _fit_multiclass(self, X, y, sample_weight, n_iter):
         if sp.issparse(X):
-            self._fit_multiclass_sparse(X, y, sample_weight, n_iter)
+            fit_multi = self._fit_multiclass_sparse
         else:
-            self._fit_multiclass_dense(X, y, sample_weight, n_iter)
+            fit_multi = self._fit_multiclass_dense
+
+        for i, coef, intercept in fit_multi(X, y, sample_weight, n_iter):
+            self.coef_[i] = coef
+            self.intercept_[i] = intercept
 
     def _fit_binary_dense(self, X, y, sample_weight, n_iter):
         """Fit a single binary classifier"""
@@ -420,29 +431,24 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
         y_new[y == self.classes[1]] = 1.0
         y = y_new
 
-        coef_, intercept_ = plain_sgd_dense(self.coef_.ravel(),
-                                            self.intercept_[0],
-                                            self.loss_function,
-                                            self.penalty_type,
-                                            self.alpha, self.rho,
-                                            X, y,
-                                            n_iter,
-                                            int(self.fit_intercept),
-                                            int(self.verbose),
-                                            int(self.shuffle),
-                                            self.seed,
-                                            self._expanded_class_weight[1],
-                                            self._expanded_class_weight[0],
-                                            sample_weight,
-                                            self.learning_rate_code,
-                                            self.eta0,
-                                            self.power_t,
-                                            self.t_)
-
-        # need to be 2d
-        self.coef_ = coef_.reshape(1, -1)
-        # intercept is a float, need to convert it to an array of length 1
-        self.intercept_ = np.asarray([intercept_], dtype=np.float64)
+        return plain_sgd_dense(self.coef_.ravel(),
+                               self.intercept_[0],
+                               self.loss_function,
+                               self.penalty_type,
+                               self.alpha, self.rho,
+                               X, y,
+                               n_iter,
+                               int(self.fit_intercept),
+                               int(self.verbose),
+                               int(self.shuffle),
+                               self.seed,
+                               self._expanded_class_weight[1],
+                               self._expanded_class_weight[0],
+                               sample_weight,
+                               self.learning_rate_code,
+                               self.eta0,
+                               self.power_t,
+                               self.t_)
 
     def _fit_multiclass_dense(self, X, y, sample_weight, n_iter):
         """Fit a multi-class classifier by combining binary classifiers
@@ -451,7 +457,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
         strategy is called OVA: One Versus All.
         """
         # Use joblib to run OVA in parallel.
-        res = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
+        return Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
             delayed(_train_ova_classifier_ds)(i, c, X, y, self.coef_[i],
                                               self.intercept_[i],
                                               self.loss_function,
@@ -465,10 +471,6 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
                                               self.learning_rate_code,
                                               self.eta0, self.power_t, self.t_)
             for i, c in enumerate(self.classes))
-
-        for i, coef, intercept in res:
-            self.coef_[i] = coef
-            self.intercept_[i] = intercept
 
     def _fit_binary_sparse(self, X, y, sample_weight, n_iter):
         """Fit a binary classifier."""
@@ -484,28 +486,22 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
         X_indices = np.asarray(X.indices, dtype=np.int32, order="C")
         X_indptr = np.asarray(X.indptr, dtype=np.int32, order="C")
 
-        coef_, intercept_ = plain_sgd_sparse(self.coef_.ravel(),
-                                             self.intercept_[0],
-                                             self.loss_function,
-                                             self.penalty_type,
-                                             self.alpha, self.rho,
-                                             X_data,
-                                             X_indices, X_indptr, y,
-                                             n_iter,
-                                             int(self.fit_intercept),
-                                             int(self.verbose),
-                                             int(self.shuffle),
-                                             int(self.seed),
-                                             self._expanded_class_weight[1],
-                                             self._expanded_class_weight[0],
-                                             sample_weight,
-                                             self.learning_rate_code,
-                                             self.eta0, self.power_t, self.t_)
-
-        # need to be 2d
-        self.coef_ = coef_.reshape(1, -1)
-        # intercept is a float, need to convert it to an array of length 1
-        self.intercept_ = np.asarray([intercept_], dtype=np.float64)
+        return plain_sgd_sparse(self.coef_.ravel(),
+                                self.intercept_[0],
+                                self.loss_function,
+                                self.penalty_type,
+                                self.alpha, self.rho,
+                                X_data, X_indices, X_indptr, y,
+                                n_iter,
+                                int(self.fit_intercept),
+                                int(self.verbose),
+                                int(self.shuffle),
+                                int(self.seed),
+                                self._expanded_class_weight[1],
+                                self._expanded_class_weight[0],
+                                sample_weight,
+                                self.learning_rate_code,
+                                self.eta0, self.power_t, self.t_)
 
     def _fit_multiclass_sparse(self, X, y, sample_weight, n_iter):
         """Fit a multi-class classifier as a combination of binary classifiers
@@ -520,7 +516,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
         X_indices = np.asarray(X.indices, dtype=np.int32, order="C")
         X_indptr = np.asarray(X.indptr, dtype=np.int32, order="C")
 
-        res = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
+        return Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
             delayed(_train_ova_classifier_sp)(i, c, X_data, X_indices,
                                               X_indptr, y, self.coef_[i],
                                               self.intercept_[i],
@@ -535,10 +531,6 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
                                               self.learning_rate_code,
                                               self.eta0, self.power_t, self.t_)
             for i, c in enumerate(self.classes))
-
-        for i, coef, intercept in res:
-            self.coef_[i] = coef
-            self.intercept_[i] = intercept
 
 
 def _train_ova_classifier_ds(i, c, X, y, coef_, intercept_, loss_function,
@@ -815,30 +807,30 @@ class SGDRegressor(BaseSGD, RegressorMixin):
 
     def _fit_regressor(self, X, y, sample_weight, n_iter):
         if sp.issparse(X):
-            self._fit_regressor_sparse(X, y, sample_weight, n_iter)
+            fit_regr = self._fit_regressor_sparse
         else:
-            self._fit_regressor_dense(X, y, sample_weight, n_iter)
+            fit_regr = self._fit_regressor_dense
+
+        self.coef_, intercept = fit_regr(X, y, sample_weight, n_iter)
+        self.intercept_ = np.atleast_1d(intercept)
 
     def _fit_regressor_dense(self, X, y, sample_weight, n_iter):
         X = np.asarray(X, dtype=np.float64, order='C')
-        coef_, intercept_ = plain_sgd_dense(self.coef_,
-                                            self.intercept_[0],
-                                            self.loss_function,
-                                            self.penalty_type,
-                                            self.alpha, self.rho,
-                                            X, y,
-                                            n_iter,
-                                            int(self.fit_intercept),
-                                            int(self.verbose),
-                                            int(self.shuffle),
-                                            self.seed,
-                                            1.0, 1.0,
-                                            sample_weight,
-                                            self.learning_rate_code,
-                                            self.eta0, self.power_t, self.t_)
-
-        self.coef_ = coef_
-        self.intercept_ = np.asarray([intercept_], dtype=np.float64)
+        return plain_sgd_dense(self.coef_,
+                               self.intercept_[0],
+                               self.loss_function,
+                               self.penalty_type,
+                               self.alpha, self.rho,
+                               X, y,
+                               n_iter,
+                               int(self.fit_intercept),
+                               int(self.verbose),
+                               int(self.shuffle),
+                               self.seed,
+                               1.0, 1.0,
+                               sample_weight,
+                               self.learning_rate_code,
+                               self.eta0, self.power_t, self.t_)
 
     def _fit_regressor_sparse(self, X, y, sample_weight, n_iter):
         # interpret X as CSR matrix
@@ -849,22 +841,18 @@ class SGDRegressor(BaseSGD, RegressorMixin):
         X_indices = np.array(X.indices, dtype=np.int32, order="C")
         X_indptr = np.array(X.indptr, dtype=np.int32, order="C")
 
-        coef_, intercept_ = plain_sgd_sparse(self.coef_,
-                                             self.intercept_,
-                                             self.loss_function,
-                                             self.penalty_type,
-                                             self.alpha, self.rho,
-                                             X_data,
-                                             X_indices, X_indptr, y,
-                                             n_iter,
-                                             int(self.fit_intercept),
-                                             int(self.verbose),
-                                             int(self.shuffle),
-                                             int(self.seed),
-                                             1.0, 1.0,
-                                             sample_weight,
-                                             self.learning_rate_code,
-                                             self.eta0, self.power_t, self.t_)
-
-        self.coef_ = coef_
-        self.intercept_ = np.asarray([intercept_], dtype=np.float64)
+        return plain_sgd_sparse(self.coef_,
+                                self.intercept_,
+                                self.loss_function,
+                                self.penalty_type,
+                                self.alpha, self.rho,
+                                X_data, X_indices, X_indptr, y,
+                                n_iter,
+                                int(self.fit_intercept),
+                                int(self.verbose),
+                                int(self.shuffle),
+                                int(self.seed),
+                                1.0, 1.0,
+                                sample_weight,
+                                self.learning_rate_code,
+                                self.eta0, self.power_t, self.t_)
