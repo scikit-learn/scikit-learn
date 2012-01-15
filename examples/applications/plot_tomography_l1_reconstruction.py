@@ -122,18 +122,14 @@ proj += 0.15 * np.random.randn(*proj.shape)
 # Reconstruction with L2 (Ridge) penalization
 rgr_ridge = Ridge(alpha=0.2)
 rgr_ridge.fit(proj_operator, proj.ravel())
-rec_l2 = rgr_ridge.coef_
-rec_l2.shape = (l, l)
-binary_rec_l2 = rec_l2 > 0.5
+rec_l2 = rgr_ridge.coef_.reshape(l, l)
 
 # Reconstruction with L1 (Lasso) penalization
 # the best value of alpha was determined using cross validation
 # with LassoCV
 rgr_lasso = Lasso(alpha=0.001)
 rgr_lasso.fit(proj_operator, proj.ravel())
-rec_l1 = rgr_lasso.coef_
-rec_l1.shape = (l, l)
-binary_rec_l1 = rec_l1 > 0.5
+rec_l1 = rgr_lasso.coef_.reshape(l, l)
 
 plt.figure(figsize=(8, 3.3))
 plt.subplot(131)
