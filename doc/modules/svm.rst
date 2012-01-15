@@ -170,13 +170,13 @@ This might be made more clear by an example:
     +------------------------+------------------------+                  |
     |:math:`\alpha^{2}_{0,1}`|:math:`\alpha^{2}_{0,2}`|of class 0        |
     +------------------------+------------------------+------------------+
-    |:math:`\alpha^{0}_{0,1}`|:math:`\alpha^{0}_{1,2}`|Coefficients      |
+    |:math:`\alpha^{0}_{1,0}`|:math:`\alpha^{0}_{1,2}`|Coefficients      |
     +------------------------+------------------------+                  |
-    |:math:`\alpha^{1}_{0,1}`|:math:`\alpha^{1}_{1,2}`|for SVs of class 1|
+    |:math:`\alpha^{1}_{1,0}`|:math:`\alpha^{1}_{1,2}`|for SVs of class 1|
     +------------------------+------------------------+------------------+
-    |:math:`\alpha^{0}_{0,2}`|:math:`\alpha^{0}_{1,2}`|Coefficients      |
+    |:math:`\alpha^{0}_{2,0}`|:math:`\alpha^{0}_{2,1}`|Coefficients      |
     +------------------------+------------------------+                  |
-    |:math:`\alpha^{1}_{0,2}`|:math:`\alpha^{1}_{1,2}`|for SVs of class 2|
+    |:math:`\alpha^{1}_{2,0}`|:math:`\alpha^{1}_{2,1}`|for SVs of class 2|
     +------------------------+------------------------+------------------+
 
     
