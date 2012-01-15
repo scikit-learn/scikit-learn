@@ -47,28 +47,50 @@ def clone(estimator, safe=True):
         new_object_params[name] = clone(param, safe=False)
     new_object = klass(**new_object_params)
     params_set = new_object._get_params(deep=False)
+
+    # quick sanity check of the parameters of the clone
     for name in new_object_params:
         param1 = new_object_params[name]
         param2 = params_set[name]
         if isinstance(param1, np.ndarray):
-            # For ndarrays, we do not test for complete equality
-            equality_test = (param1.shape == param2.shape
-                             and param1.dtype == param2.dtype
-                             and param1[0] == param2[0]
-                             and param1[-1] == param2[-1])
+            # For most ndarrays, we do not test for complete equality
+            if (param1.ndim > 0
+                and param1.shape[0] > 0
+                and isinstance(param2, np.ndarray)
+                and param2.ndim > 0
+                and param2.shape[0] > 0):
+                equality_test = (
+                    param1.shape == param2.shape
+                    and param1.dtype == param2.dtype
+                    and param1[0] == param2[0]
+                    and param1[-1] == param2[-1]
+                )
+            else:
+                equality_test = np.all(param1 == param2)
         elif sparse.issparse(param1):
             # For sparse matrices equality doesn't work
-            equality_test = (param1.__class__ == param2.__class__
-                             and param1.data[0] == param2.data[0]
-                             and param1.data[-1] == param2.data[-1]
-                             and param1.nnz == param2.nnz
-                             and param1.shape == param2.shape)
+            if not sparse.issparse(param2):
+                equality_test = False
+            elif param1.size == 0 or param2.size == 0:
+                equality_test = (
+                    param1.__class__ == param2.__class__
+                    and param1.size == 0
+                    and param2.size == 0
+                )
+            else:
+                equality_test = (
+                    param1.__class__ == param2.__class__
+                    and param1.data[0] == param2.data[0]
+                    and param1.data[-1] == param2.data[-1]
+                    and param1.nnz == param2.nnz
+                    and param1.shape == param2.shape
+                )
         else:
             equality_test = new_object_params[name] == params_set[name]
         assert equality_test, (
-                'Cannot clone object %s, as the constructor does not '
-                'seem to set parameter %s' % (estimator, name)
-            )
+            'Cannot clone object %s, as the constructor does not '
+            'seem to set parameter %s' % (estimator, name)
+        )
 
     return new_object
 
