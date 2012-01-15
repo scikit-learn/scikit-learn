@@ -34,6 +34,39 @@ def _get_class_weight(class_weight, y):
     return weight, weight_label
 
 
+def _one_vs_one_coef(dual_coef, n_support, support_vectors):
+    """Generate primal coefficients from dual coefficients
+    for the one-vs-one multi class LibSVM in the case
+    of a linear kernel."""
+
+    # get 1vs1 weights for all n*(n-1) classifiers.
+    # this is somewhat messy.
+    # shape of dual_coef_ is nSV * (n_classes -1)
+    # see docs for details
+    n_class = dual_coef.shape[0] + 1
+
+    # XXX we could do preallocation of coef but
+    # would have to take care in the sparse case
+    coef = []
+    sv_locs = np.cumsum(np.hstack([[0], n_support]))
+    for class1 in xrange(n_class):
+        # SVs for class1:
+        sv1 = support_vectors[sv_locs[class1]:sv_locs[class1 + 1], :]
+        for class2 in xrange(class1 + 1, n_class):
+            # SVs for class1:
+            sv2 = support_vectors[sv_locs[class2]:sv_locs[class2 + 1], :]
+
+            # dual coef for class1 SVs:
+            alpha1 = dual_coef[class2 - 1, sv_locs[class1]:sv_locs[class1 + 1]]
+            # dual coef for class2 SVs:
+            alpha2 = dual_coef[class1, sv_locs[class2]:sv_locs[class2 + 1]]
+            # build weight for class1 vs class2
+
+            coef.append(safe_sparse_dot(alpha1, sv1)
+                    + safe_sparse_dot(alpha2, sv2))
+    return coef
+
+
 class BaseLibSVM(BaseEstimator):
     """Base class for estimators that use libsvm as backing library
 
@@ -120,31 +153,8 @@ class BaseLibSVM(BaseEstimator):
             coef = safe_sparse_dot(self.dual_coef_, self.support_vectors_)
         else:
             # 1vs1 classifier
-            # get 1vs1 weights for all n*(n-1) classifiers.
-            # this is somewhat messy.
-            # shape of dual_coef_ is nSV * (n_classes -1)
-            # see docs for details
-            n_class = self.dual_coef_.shape[0] + 1
-            
-            # XXX we could do preallocation of coef but
-            # would have to take care in the sparse case
-            coef = []
-            sv_locs = np.cumsum(np.hstack([[0], self.n_support_]))
-            for class1 in xrange(n_class):
-                # SVs for class1:
-                sv1 = self.support_vectors_[sv_locs[class1]:sv_locs[class1 + 1], :]
-                for class2 in xrange(class1 + 1, n_class):
-                    # SVs for class1:
-                    sv2 = self.support_vectors_[sv_locs[class2]:sv_locs[class2 + 1], :]
-
-                    # dual coef for class1 SVs:
-                    alpha1 = self.dual_coef_[class2 - 1, sv_locs[class1]:sv_locs[class1 + 1]]
-                    # dual coef for class2 SVs:
-                    alpha2 = self.dual_coef_[class1, sv_locs[class2]:sv_locs[class2 + 1]]
-                    # build weight for class1 vs class2
-
-                    coef.append(safe_sparse_dot(alpha1, sv1)
-                            + safe_sparse_dot(alpha2, sv2))
+            coef = _one_vs_one_coef(self.dual_coef_, self.n_support_,
+                    self.support_vectors_)
 
             if sp.issparse(coef[0]):
                 coef = sp.vstack(coef).tocsr()
@@ -542,6 +552,7 @@ class BaseLibLinear(BaseEstimator):
         if X.shape[1] != n_features:
             raise ValueError("X.shape[1] should be %d, not %d." % (n_features,
                                                                    X.shape[1]))
+
     def _get_intercept_(self):
         if self.fit_intercept:
             ret = self.intercept_scaling * self.raw_coef_[:, -1]
