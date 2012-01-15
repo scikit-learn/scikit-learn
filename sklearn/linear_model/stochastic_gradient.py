@@ -458,18 +458,9 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
         """
         # Use joblib to run OVA in parallel.
         return Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
-            delayed(_train_ova_classifier_ds)(i, c, X, y, self.coef_[i],
-                                              self.intercept_[i],
-                                              self.loss_function,
-                                              self.penalty_type, self.alpha,
-                                              self.rho, n_iter,
-                                              self.fit_intercept,
-                                              self.verbose, self.shuffle,
-                                              self.seed,
+            delayed(_train_ova_classifier_ds)(i, c, X, y, self, n_iter,
                                               self._expanded_class_weight[i],
-                                              sample_weight,
-                                              self.learning_rate_code,
-                                              self.eta0, self.power_t, self.t_)
+                                              sample_weight)
             for i, c in enumerate(self.classes))
 
     def _fit_binary_sparse(self, X, y, sample_weight, n_iter):
@@ -518,55 +509,42 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
 
         return Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
             delayed(_train_ova_classifier_sp)(i, c, X_data, X_indices,
-                                              X_indptr, y, self.coef_[i],
-                                              self.intercept_[i],
-                                              self.loss_function,
-                                              self.penalty_type, self.alpha,
-                                              self.rho, n_iter,
-                                              self.fit_intercept,
-                                              self.verbose, self.shuffle,
-                                              self.seed,
+                                              X_indptr, y, self, n_iter,
                                               self._expanded_class_weight[i],
-                                              sample_weight,
-                                              self.learning_rate_code,
-                                              self.eta0, self.power_t, self.t_)
+                                              sample_weight)
             for i, c in enumerate(self.classes))
 
 
-def _train_ova_classifier_ds(i, c, X, y, coef_, intercept_, loss_function,
-                             penalty_type, alpha, rho, n_iter, fit_intercept,
-                             verbose, shuffle, seed, class_weight_pos,
-                             sample_weight, learning_rate, eta0, power_t, t):
+def _train_ova_classifier_ds(i, c, X, y, est, n_iter,
+                             class_weight_pos, sample_weight):
     """Inner loop for one-vs-all scheme."""
     y_i = np.ones(y.shape, dtype=np.float64, order='C') * -1.0
     y_i[y == c] = 1.0
-    coef, intercept = plain_sgd_dense(coef_, intercept_, loss_function,
-                                      penalty_type, alpha, rho,
-                                      X, y_i, n_iter, fit_intercept,
-                                      verbose, shuffle, seed,
-                                      class_weight_pos, 1.0,
-                                      sample_weight, learning_rate, eta0,
-                                      power_t, t)
+    coef, intercept = plain_sgd_dense(est.coef_[i], est.intercept_[i],
+                                      est.loss_function, est.penalty_type,
+                                      est.alpha, est.rho,
+                                      X, y_i, n_iter, est.fit_intercept,
+                                      est.verbose, est.shuffle, est.seed,
+                                      class_weight_pos, 1.0, sample_weight,
+                                      est.learning_rate_code, est.eta0,
+                                      est.power_t, est.t_)
     return (i, coef, intercept)
 
 
-def _train_ova_classifier_sp(i, c, X_data, X_indices, X_indptr, y, coef_,
-                             intercept_, loss_function, penalty_type, alpha,
-                             rho, n_iter, fit_intercept, verbose, shuffle,
-                             seed, class_weight_pos, sample_weight,
-                             learning_rate, eta0, power_t, t):
+def _train_ova_classifier_sp(i, c, X_data, X_indices, X_indptr, y, est,
+                             n_iter, class_weight_pos, sample_weight):
     """Inner loop for One-vs.-All scheme"""
     y_i = np.ones(y.shape, dtype=np.float64, order='C') * -1.0
     y_i[y == c] = 1.0
-    coef, intercept = plain_sgd_sparse(coef_, intercept_,
-                                       loss_function, penalty_type,
-                                       alpha, rho, X_data, X_indices,
+    coef, intercept = plain_sgd_sparse(est.coef_[i], est.intercept_[i],
+                                       est.loss_function, est.penalty_type,
+                                       est.alpha, est.rho, X_data, X_indices,
                                        X_indptr, y_i, n_iter,
-                                       int(fit_intercept), int(verbose),
-                                       int(shuffle), int(seed),
+                                       est.fit_intercept, est.verbose,
+                                       est.shuffle, est.seed,
                                        class_weight_pos, 1.0,
-                                       sample_weight, learning_rate, eta0,
-                                       power_t, t)
+                                       sample_weight, est.learning_rate_code,
+                                       est.eta0, est.power_t, est.t_)
     return (i, coef, intercept)
 
 
