@@ -107,10 +107,10 @@ fitting a :class:`LedoitWolf` object to the same sample.
      for visualizing the performances of the Ledoit-Wolf estimator in
      terms of likelihood.
 
-.. figure:: ../auto_examples/covariance/images/plot_covariance_estimation_-1.png
+.. figure:: ../auto_examples/covariance/images/plot_covariance_estimation_1.png
    :target: ../auto_examples/covariance/plot_covariance_estimation.html
    :align: center
-   :scale: 75%
+   :scale: 65%
 
 
 .. _oracle_approximating_shrinkage:
