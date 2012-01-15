@@ -145,17 +145,11 @@ class SVC(DenseBaseLibSVM, ClassifierMixin):
         number of support vector for each class.
 
     `dual_coef_` : array, shape = [n_class-1, n_SV]
-        Coefficients of the support vector in the decision function.
-        For multiclass, coefficient for all 1-vs-1 classifiers.
-        The layout of the coefficients in the multiclass case
-        is somewhat non-trivial.
-        Think of the ``[n_class-1, n_SV]`` array best of a
-        stack of ``[n_class-1, n_support[i]]`` arrays for each
-        class `i`. Each class is involved in ``n_class-1``
-        classifiers. Each column of a ``[n_class-1, n_support[i]]``
-        block contains the coefficients for the ``n_support[i]`` many
-        support vectors of this class for one of these classifiers.
-        
+        Coefficients of the support vector in the decision function. \
+        For multiclass, coefficient for all 1-vs-1 classifiers. \
+        The layout of the coefficients in the multiclass case is somewhat non-trivial. \
+        See the section about multi-class classification in the SVM section of \
+        the User Guide for details.
 
     `coef_` : array, shape = [n_class-1, n_features]
         Weights asigned to the features (coefficients in the primal
@@ -245,10 +239,14 @@ class NuSVC(DenseBaseLibSVM, ClassifierMixin):
     `n_support_` : array-like, dtype=int32, shape = [n_class]
         number of support vector for each class.
 
-    `dual_coef_` : array, shape = [n_classes-1, n_SV]
-        Coefficients of the support vector in the decision function.
+    `dual_coef_` : array, shape = [n_class-1, n_SV]
+        Coefficients of the support vector in the decision function. \
+        For multiclass, coefficient for all 1-vs-1 classifiers. \
+        The layout of the coefficients in the multiclass case is somewhat non-trivial. \
+        See the section about multi-class classification in the SVM section of \
+        the User Guide for details.
 
-    `coef_` : array, shape = [n_classes-1, n_features]
+    `coef_` : array, shape = [n_class-1, n_features]
         Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
