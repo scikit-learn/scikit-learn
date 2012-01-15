@@ -65,6 +65,17 @@
        :height: 140
        :target: auto_examples/cluster/plot_kmeans_digits.html
 
+    .. |banner12| image:: auto_examples/decomposition/images/plot_faces_decomposition_2.png
+       :height: 140
+       :target: auto_examples/decomposition/plot_faces_decomposition.html
+
+    .. |banner13| image:: auto_examples/decomposition/images/plot_faces_decomposition_3.png
+       :height: 140
+       :target: auto_examples/decomposition/plot_faces_decomposition.html
+
+    .. |banner14| image:: auto_examples/images/plot_lda_vs_qda_1.png
+       :height: 140
+       :target: auto_examples/plot_lda_vs_qda.html
 
     .. |center-div| raw:: html
 
@@ -95,7 +106,7 @@
         shuffle ($('#banner a.external'));
         </SCRIPT>
 
-    |center-div| |banner1| |banner2| |banner3| |banner4| |banner5| |banner6| |banner7| |banner8| |banner9| |banner10| |banner11| |end-div|
+    |center-div| |banner1| |banner2| |banner3| |banner4| |banner5| |banner6| |banner7| |banner8| |banner9| |banner10| |banner11| |banner12| |banner13| |banner14| |end-div|
 
 
 .. topic:: Easy-to-use and general-purpose machine learning in Python
