@@ -2,7 +2,7 @@
 ..
     We are putting the title as a raw HTML so that it doesn't appear in
     the contents
-
+    
 .. raw:: html
 
     <h1>scikit-learn: machine learning in Python</h1>
@@ -14,6 +14,10 @@
         color:  #3E4349 ;
     }
     </style>
+
+..  
+   Here we are building a banner: a javascript selects randomly 4 images in 
+   the list
 
 .. only:: html
 
@@ -33,16 +37,65 @@
        :height: 150
        :target: auto_examples/cluster/plot_lena_ward_segmentation.html
 
+    .. |banner5| image:: auto_examples/svm/images/plot_svm_nonlinear_1.png
+       :height: 150
+       :target: auto_examples/svm/plot_svm_non_linear.html
+
+    .. |banner6| image:: auto_examples/applications/images/plot_species_distribution_modeling_1.png
+       :height: 150
+       :target: auto_examples/applications/plot_species_distribution_modeling.html
+
+    .. |banner7| image:: auto_examples/gaussian_process/images/plot_gp_probabilistic_classification_after_regression_1.png
+       :height: 150
+       :target: auto_examples/gaussian_process/plot_gp_probabilistic_classification_after_regression.html
+
+    .. |banner8| image:: auto_examples/ensemble/images/plot_forest_importances_faces_1.png
+       :height: 150
+       :target: auto_examples/ensemble/plot_forest_importances_faces.html
+
+    .. |banner9| image:: auto_examples/svm/images/plot_weighted_samples_1.png
+       :height: 150
+       :target: auto_examples/svm/plot_weighted_samples.html
+
+    .. |banner10| image:: auto_examples/linear_model/images/plot_sgd_weighted_samples_1.png
+       :height: 150
+       :target: auto_examples/linear_model/plot_sgd_weighted_samples.html
+
+    .. |banner11| image:: auto_examples/cluster/images/plot_kmeans_digits_1.png
+       :height: 150
+       :target: auto_examples/cluster/plot_kmeans_digits.html
+
+
     .. |center-div| raw:: html
 
-        <div style="text-align: center; margin: -7px 0 -13px 0;">
+        <div style="text-align: center; margin: -7px 0 -10px 0;" id="banner">
 
     .. |end-div| raw:: html
 
         </div>
 
+        <SCRIPT>
+        // Function to select 4 imgs in random order from a div
+        function shuffle(e) {       // pass the divs to the function
+          var replace = $('<div>');
+          var size = 4;
+          var num_choices = e.size();
 
-    |center-div| |banner1| |banner2| |banner3| |banner4| |end-div|
+          while (size >= 1) {
+            var rand = Math.floor(Math.random() * num_choices);
+            var temp = e.get(rand);      // grab a random div from our set
+            replace.append(temp);        // add the selected div to our new set
+            e = e.not(temp); // remove our selected div from the main set
+            size--;
+            num_choices--;
+          }
+          $('#banner').html(replace.html() ); // update our container div 
+                                              // with the new, randomized divs
+        }
+        shuffle ($('#banner a.external'));
+        </SCRIPT>
+
+    |center-div| |banner1| |banner2| |banner3| |banner4| |banner5| |banner6| |banner7| |banner8| |banner9| |banner10| |banner11| |end-div|
 
 
 .. topic:: Easy-to-use and general-purpose machine learning in Python
