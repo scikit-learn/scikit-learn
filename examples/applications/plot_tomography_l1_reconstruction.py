@@ -1,42 +1,41 @@
 """
-=====================================================
-Tomography reconstruction with L1 prior (Lasso)
-=====================================================
+======================================================================
+Compressive sensing: tomography reconstruction with L1 prior (Lasso)
+======================================================================
 
 This example shows the reconstruction of an image from a set of parallel
 projections, acquired along different angles. Such a dataset is acquired in
-**computed tomography** (CT), where the image to reconstruct from the
-projections is the absorption of the sample.
+**computed tomography** (CT).
 
-Without any prior information on the sample, the number of projections required
-to reconstruct the image is of the order of the linear size ``l`` of the image
-(in pixels). We consider here a sparse image, where only pixels on the boundary
-of objects have a non-zero value. Such synthetic data could correspond for
-example to a cellular material. A more classical situation is that the image is
-sparse is a different basis, such as the Haar basis: this is the case of
-piecewise-constant images, that is frequently encountered in materials science.
-For simplicity, we only study here the case of a sparse image. Only ``l/7``
-projections are acquired, therefore it is necessary to use prior
-information available on the sample (its sparsity): this is an example of
-**compressive sensing**.
+Without any prior information on the sample, the number of projections
+required to reconstruct the image is of the order of the linear size
+``l`` of the image (in pixels). For simplicity we consider here a sparse
+image, where only pixels on the boundary of objects have a non-zero
+value. Such data could correspond for example to a cellular material.
+Note however that most images are sparse in a different basis, such as
+the Haar wavelets. Only ``l/7`` projections are acquired, therefore it is
+necessary to use prior information available on the sample (its
+sparsity): this is an example of **compressive sensing**.
 
-The tomography projection operation is a linear transformation. In addition to
-the data-fidelity term corresponding to a linear regression, we penalize the L1
-norm of the image to account for its sparsity. The resulting optimization
-problem is called the :ref:`lasso`. We use the class :class:`Lasso` in
-``sklearn.linear_model.sparse``, that uses the coordinate descent method for
-solving the Lasso problem. Because of the large size of the data, a sparse
-matrix is used to store the projection operator.
+The tomography projection operation is a linear transformation. In
+addition to the data-fidelity term corresponding to a linear regression,
+we penalize the L1 norm of the image to account for its sparsity. The
+resulting optimization problem is called the :ref:`lasso`. We use the
+class :class:`sklearn.linear_model.sparse.Lasso`, that uses the
+coordinate descent algorithm. Importantly, this implementation is more
+computationally efficient on a sparse matrix, as the projection operator
+used here.
 
-The reconstruction with L1 penalization gives a result with zero error (all
-pixels are successfully labeled with 0 or 1), even if noise was added to the
-projections. In comparison, we have shown the result of an L2 penalization
-(:class:`Ridge` class), that produces a large number of labeling errors for
-the pixels. Important artifacts are observed on the reconstructed image,
-contrary to the L1 penalization. Note in particular the circular artifact
-separating the pixels in the corners, that have contributed to fewer
-projections than the central disk.
+The reconstruction with L1 penalization gives a result with zero error
+(all pixels are successfully labeled with 0 or 1), even if noise was
+added to the projections. In comparison, an L2 penalization
+(:class:`sklearn.linear_model.Ridge`) produces a large number of labeling
+errors for the pixels. Important artifacts are observed on the
+reconstructed image, contrary to the L1 penalization. Note in particular
+the circular artifact separating the pixels in the corners, that have
+contributed to fewer projections than the central disk.
 """
+
 print __doc__
 
 # Author: Emmanuelle Gouillart <emmanuelle.gouillart@nsup.org>
@@ -67,8 +66,7 @@ def _generate_center_coordinates(l_x):
 
 
 def build_projection_operator(l_x, n_dir):
-    """
-    Compute the tomography design matrix.
+    """ Compute the tomography design matrix.
 
     Parameters
     ----------
@@ -101,9 +99,7 @@ def build_projection_operator(l_x, n_dir):
 
 
 def generate_synthetic_data():
-    """
-    Synthetic binary data
-     """
+    """ Synthetic binary data """
     rs = np.random.RandomState(0)
     n_pts = 36.
     x, y = np.ogrid[0:l, 0:l]
