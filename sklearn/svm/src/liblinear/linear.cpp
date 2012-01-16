@@ -3,6 +3,10 @@
 
    - Make labels sorted in group_classes, Dan Yamins.
    
+   Modified 2012:
+
+   - Changes roles of +1 and -1 to match scikit API, Andreas Mueller
+   
  */
 
 #include <math.h>
