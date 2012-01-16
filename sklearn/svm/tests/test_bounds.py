@@ -6,7 +6,6 @@ from scipy import sparse as sp
 from sklearn.svm.bounds import l1_min_c
 from sklearn.svm import LinearSVC
 from sklearn.linear_model.logistic import LogisticRegression
-from sklearn.svm.sparse import LinearSVC as SparseSVC
 from sklearn.linear_model.sparse.logistic import LogisticRegression as \
                                                        SparseLogRegression
 
@@ -44,7 +43,7 @@ def check_l1_min_c(X, y, loss, fit_intercept=True, intercept_scaling=None):
         ('log', False): LogisticRegression(penalty='l1'),
         ('log', True):  SparseLogRegression(penalty='l1'),
         ('l2', False):  LinearSVC(loss='l2', penalty='l1', dual=False),
-        ('l2', True):   SparseSVC(loss='l2', penalty='l1', dual=False),
+        ('l2', True):   LinearSVC(loss='l2', penalty='l1', dual=False),
     }[loss, sp.issparse(X)]
 
     clf.fit_intercept = fit_intercept

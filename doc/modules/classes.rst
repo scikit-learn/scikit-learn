@@ -853,7 +853,7 @@ For sparse data
    svm.sparse.SVR
    svm.sparse.NuSVR
    svm.sparse.OneClassSVM
-   svm.sparse.LinearSVC
+   svm.LinearSVC
 
 Low-level methods
 -----------------

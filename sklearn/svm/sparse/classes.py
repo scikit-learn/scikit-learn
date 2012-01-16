@@ -1,7 +1,9 @@
+from .. import LinearSVC
 from ...base import ClassifierMixin, RegressorMixin
 from ..base import BaseLibLinear
 from .base import SparseBaseLibSVM
 from ...linear_model.base import CoefSelectTransformerMixin
+from ...utils import deprecated
 
 
 class SVC(SparseBaseLibSVM, ClassifierMixin):
@@ -167,20 +169,7 @@ class OneClassSVM(SparseBaseLibSVM):
             X, [], class_weight=class_weight, sample_weight=sample_weight)
 
 
-class LinearSVC(BaseLibLinear, ClassifierMixin, CoefSelectTransformerMixin):
-    """Linear Support Vector Classification, Sparse Version
-
-    Similar to SVC with parameter kernel='linear', but uses internally
-    liblinear rather than libsvm, so it has more flexibility in the
-    choice of penalties and loss functions and should be faster for
-    huge datasets.
-
-    See :class:`sklearn.svm.SVC` for a complete list of parameters
-
-    Notes
-    -----
-    For best results, this accepts a matrix in csr format
-    (scipy.sparse.csr), but should be able to convert from any array-like
-    object (including other sparse representations).
-    """
+@deprecated("""to be removed in v0.12;
+use sklearn.svm.LinearSVC instead""")
+class LinearSVC(LinearSVC):
     pass

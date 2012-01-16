@@ -33,7 +33,7 @@ from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction.text import Vectorizer
 from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.linear_model import RidgeClassifier
-from sklearn.svm.sparse import LinearSVC
+from sklearn.svm import LinearSVC
 from sklearn.linear_model.sparse import SGDClassifier
 from sklearn.naive_bayes import BernoulliNB, MultinomialNB
 from sklearn.neighbors import KNeighborsClassifier

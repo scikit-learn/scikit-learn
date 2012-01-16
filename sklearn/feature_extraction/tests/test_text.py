@@ -9,7 +9,7 @@ from sklearn.feature_extraction.text import Vectorizer
 
 from sklearn.grid_search import GridSearchCV
 from sklearn.pipeline import Pipeline
-from sklearn.svm.sparse import LinearSVC as LinearSVC
+from sklearn.svm import LinearSVC as LinearSVC
 
 import numpy as np
 from nose.tools import assert_equal, assert_equals, \

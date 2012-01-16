@@ -100,7 +100,7 @@ def test_LinearSVC():
     Similar to test_SVC
     """
     clf = svm.LinearSVC().fit(X, Y)
-    sp_clf = svm.sparse.LinearSVC().fit(X, Y)
+    sp_clf = svm.LinearSVC().fit(X, Y)
 
     assert sp_clf.fit_intercept
 
@@ -117,7 +117,7 @@ def test_LinearSVC():
 def test_LinearSVC_iris():
     """Test the sparse LinearSVC with the iris dataset"""
 
-    sp_clf = svm.sparse.LinearSVC().fit(iris.data, iris.target)
+    sp_clf = svm.LinearSVC().fit(iris.data, iris.target)
     clf = svm.LinearSVC().fit(iris.data.todense(), iris.target)
 
     assert_array_almost_equal(clf.label_, sp_clf.label_)
@@ -142,7 +142,7 @@ def test_weight():
 
     X_ = sparse.csr_matrix(X_)
     for clf in (linear_model.sparse.LogisticRegression(),
-                svm.sparse.LinearSVC(),
+                svm.LinearSVC(),
                 svm.sparse.SVC()):
         clf.fit(X_[:180], y_[:180], class_weight={0: 5})
         y_pred = clf.predict(X_[180:])
@@ -166,7 +166,7 @@ def test_sparse_liblinear_intercept_handling():
     """
     Test that sparse liblinear honours intercept_scaling param
     """
-    test_svm.test_dense_liblinear_intercept_handling(svm.sparse.LinearSVC)
+    test_svm.test_dense_liblinear_intercept_handling(svm.LinearSVC)
 
 
 def test_sparse_realdata():
@@ -208,7 +208,7 @@ def test_sparse_scale_C():
     klasses = [(svm.SVC, svm.sparse.SVC, params),
                (svm.SVR, svm.sparse.SVR, params),
                (svm.NuSVR, svm.sparse.NuSVR, params),
-               (svm.LinearSVC, svm.sparse.LinearSVC, {}),
+               (svm.LinearSVC, svm.LinearSVC, {}),
                (linear_model.LogisticRegression,
                     linear_model.sparse.LogisticRegression, {})
               ]
