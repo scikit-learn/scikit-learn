@@ -45,8 +45,7 @@ pages 244-261 of the latter.
 The Boston house-price data has been used in many machine learning papers that address regression
 problems.   
      
-References
-----------
+**References**
 
    - Belsley, Kuh & Welsch, 'Regression diagnostics: Identifying Influential Data and Sources of Collinearity', Wiley, 1980. 244-261.
    - Quinlan,R. (1993). Combining Instance-Based and Model-Based Learning. In Proceedings on the Tenth International Conference of Machine Learning, 236-243, University of Massachusetts, Amherst. Morgan Kaufmann.

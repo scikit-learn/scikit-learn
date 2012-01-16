@@ -111,12 +111,13 @@ class SGDClassifier(BaseSGDClassifier):
     >>> Y = np.array([1, 1, 2, 2])
     >>> clf = linear_model.SGDClassifier()
     >>> clf.fit(X, Y)
-    SGDClassifier(alpha=0.0001, class_weight=None, eta0=0.0, fit_intercept=True,
-           learning_rate='optimal', loss='hinge', n_iter=5, n_jobs=1,
-           penalty='l2', power_t=0.5, rho=1.0, seed=0, shuffle=False,
-           verbose=0)
+    ... #doctest: +NORMALIZE_WHITESPACE
+    SGDClassifier(alpha=0.0001, class_weight=None, eta0=0.0,
+            fit_intercept=True, learning_rate='optimal', loss='hinge',
+            n_iter=5, n_jobs=1, penalty='l2', power_t=0.5, rho=0.85, seed=0,
+            shuffle=False, verbose=0)
     >>> print clf.predict([[-0.8, -1]])
-    [ 1.]
+    [1]
 
     See also
     --------
@@ -124,7 +125,7 @@ class SGDClassifier(BaseSGDClassifier):
 
     """
 
-    def _fit_binary(self, X, y):
+    def _fit_binary(self, X, y, sample_weight):
         """Fit a single binary classifier"""
         # interprete X as dense array
         X = np.asarray(X, dtype=np.float64, order='C')
@@ -147,14 +148,14 @@ class SGDClassifier(BaseSGDClassifier):
                                       self.seed,
                                       self._expanded_class_weight[1],
                                       self._expanded_class_weight[0],
-                                      self.sample_weight,
+                                      sample_weight,
                                       self.learning_rate_code, self.eta0,
                                       self.power_t)
 
         self._set_coef(coef_)
         self.intercept_ = np.asarray(intercept_)
 
-    def _fit_multiclass(self, X, y):
+    def _fit_multiclass(self, X, y, sample_weight):
         """Fit a multi-class classifier by combining binary classifiers
 
         Each binary classifier predicts one class versus all others. This
@@ -173,7 +174,7 @@ class SGDClassifier(BaseSGDClassifier):
                                                self.verbose, self.shuffle,
                                                self.seed,
                                                self._expanded_class_weight[i],
-                                               self.sample_weight,
+                                               sample_weight,
                                                self.learning_rate_code,
                                                self.eta0, self.power_t)
             for i, c in enumerate(self.classes))
@@ -181,6 +182,8 @@ class SGDClassifier(BaseSGDClassifier):
         for i, coef, intercept in res:
             self.coef_[i] = coef
             self.intercept_[i] = intercept
+
+        self._set_coef(self.coef_)
 
 
 def _train_ova_classifier(i, c, X, y, coef_, intercept_, loss_function,
@@ -291,7 +294,7 @@ class SGDRegressor(BaseSGDRegressor):
     >>> clf.fit(X, y)
     SGDRegressor(alpha=0.0001, eta0=0.01, fit_intercept=True,
            learning_rate='invscaling', loss='squared_loss', n_iter=5, p=0.1,
-           penalty='l2', power_t=0.25, rho=1.0, seed=0, shuffle=False,
+           penalty='l2', power_t=0.25, rho=0.85, seed=0, shuffle=False,
            verbose=0)
 
     See also
@@ -300,7 +303,7 @@ class SGDRegressor(BaseSGDRegressor):
 
     """
 
-    def _fit_regressor(self, X, y):
+    def _fit_regressor(self, X, y, sample_weight):
         X = np.asarray(X, dtype=np.float64, order='C')
         coef_, intercept_ = plain_sgd(self.coef_,
                                       self.intercept_,
@@ -314,7 +317,7 @@ class SGDRegressor(BaseSGDRegressor):
                                       int(self.shuffle),
                                       self.seed,
                                       1.0, 1.0,
-                                      self.sample_weight,
+                                      sample_weight,
                                       self.learning_rate_code,
                                       self.eta0, self.power_t)
 

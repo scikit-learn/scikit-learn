@@ -23,7 +23,8 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin,
 
     dual : boolean
         Dual or primal formulation. Dual formulation is only
-        implemented for l2 penalty.
+        implemented for l2 penalty. Prefer dual=False when
+        n_samples > n_features.
 
     C : float
         Specifies the strength of the regularization. The smaller it is
@@ -47,11 +48,18 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin,
     tol: float, optional
          tolerance for stopping criteria
 
+    scale_C : bool
+        Scale C with number of samples. It makes the setting of C independant
+        of the number of samples.
+
     Attributes
     ----------
 
     `coef_` : array, shape = [n_classes-1, n_features]
         Coefficient of the features in the decision function.
+
+        `coef_` is readonly property derived from `raw_coef_` that \
+        follows the internal memory layout of liblinear.
 
     `intercept_` : array, shape = [n_classes-1]
         intercept (a.k.a. bias) added to the decision function.
@@ -68,22 +76,23 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin,
     to have slightly different results for the same input data. If
     that happens, try with a smaller tol parameter.
 
-    References
-    ----------
+    **References**:
+
     LIBLINEAR -- A Library for Large Linear Classification
     http://www.csie.ntu.edu.tw/~cjlin/liblinear/
     """
 
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
-                 fit_intercept=True, intercept_scaling=1):
+                 fit_intercept=True, intercept_scaling=1,
+                 scale_C=False):
 
         super(LogisticRegression, self).__init__(penalty=penalty,
             dual=dual, loss='lr', tol=tol, C=C,
-            fit_intercept=fit_intercept, intercept_scaling=intercept_scaling)
+            fit_intercept=fit_intercept, intercept_scaling=intercept_scaling,
+            scale_C=scale_C)
 
     def predict_proba(self, X):
-        """
-        Probability estimates.
+        """Probability estimates.
 
         The returned estimates for all classes are ordered by the
         label of classes.
@@ -109,8 +118,7 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin,
         return probas[:, np.argsort(self.label_)]
 
     def predict_log_proba(self, X):
-        """
-        Log of Probability estimates.
+        """Log of Probability estimates.
 
         The returned estimates for all classes are ordered by the
         label of classes.

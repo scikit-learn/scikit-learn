@@ -45,4 +45,3 @@ for C in (0.1, 1, 10):
     print "C=%f" % C
     print "Sparsity with L1 penalty: %f" % sparsity_l1_LR
     print "Sparsity with L2 penalty: %f" % sparsity_l2_LR
-

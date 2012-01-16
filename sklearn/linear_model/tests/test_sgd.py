@@ -69,15 +69,6 @@ class DenseSGDClassifierTestCase(unittest.TestCase):
         #assert_almost_equal(clf.coef_[0], clf.coef_[1], decimal=7)
         assert_array_equal(clf.predict(T), true_result)
 
-    def test_sgd_penalties(self):
-        """Check whether penalties and hyperparameters are set properly"""
-        clf = self.factory(penalty='l2')
-        assert clf.rho == 1.0
-        clf = self.factory(penalty='l1')
-        assert clf.rho == 0.0
-        clf = self.factory(penalty='elasticnet', rho=0.85)
-        assert clf.rho == 0.85
-
     @raises(ValueError)
     def test_sgd_bad_penalty(self):
         """Check whether expected ValueError on bad penalty"""
@@ -135,9 +126,9 @@ class DenseSGDClassifierTestCase(unittest.TestCase):
         """Checks intercept_ shape consistency for the warm starts"""
         # Inconsistent intercept_ shape.
         clf = self.factory().fit(X5, Y5)
-        self.factory().fit(X5, Y5, intercept_init = clf.intercept_)
+        self.factory().fit(X5, Y5, intercept_init=clf.intercept_)
         clf = self.factory().fit(X, Y)
-        self.factory().fit(X, Y, intercept_init = clf.intercept_)
+        self.factory().fit(X, Y, intercept_init=clf.intercept_)
 
     @raises(ValueError)
     def test_sgd_at_least_two_labels(self):
@@ -350,7 +341,7 @@ class SparseSGDClassifierTestCase(DenseSGDClassifierTestCase):
     factory = linear_model.sparse.SGDClassifier
 
 
-################################################################################
+###############################################################################
 # Regression Test Case
 
 class DenseSGDRegressorTestCase(unittest.TestCase):
@@ -364,15 +355,6 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
                            fit_intercept=False)
         clf.fit([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
         assert clf.coef_[0] == clf.coef_[1]
-
-    def test_sgd_penalties(self):
-        """Check whether penalties and hyperparameters are set properly"""
-        clf = self.factory(penalty='l2')
-        assert clf.rho == 1.0
-        clf = self.factory(penalty='l1')
-        assert clf.rho == 0.0
-        clf = self.factory(penalty='elasticnet', rho=0.85)
-        assert clf.rho == 0.85
 
     @raises(ValueError)
     def test_sgd_bad_penalty(self):

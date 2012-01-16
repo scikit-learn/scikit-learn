@@ -47,28 +47,50 @@ def clone(estimator, safe=True):
         new_object_params[name] = clone(param, safe=False)
     new_object = klass(**new_object_params)
     params_set = new_object._get_params(deep=False)
+
+    # quick sanity check of the parameters of the clone
     for name in new_object_params:
         param1 = new_object_params[name]
         param2 = params_set[name]
         if isinstance(param1, np.ndarray):
-            # For ndarrays, we do not test for complete equality
-            equality_test = (param1.shape == param2.shape
-                             and param1.dtype == param2.dtype
-                             and param1[0] == param2[0]
-                             and param1[-1] == param2[-1])
+            # For most ndarrays, we do not test for complete equality
+            if (param1.ndim > 0
+                and param1.shape[0] > 0
+                and isinstance(param2, np.ndarray)
+                and param2.ndim > 0
+                and param2.shape[0] > 0):
+                equality_test = (
+                    param1.shape == param2.shape
+                    and param1.dtype == param2.dtype
+                    and param1[0] == param2[0]
+                    and param1[-1] == param2[-1]
+                )
+            else:
+                equality_test = np.all(param1 == param2)
         elif sparse.issparse(param1):
             # For sparse matrices equality doesn't work
-            equality_test = (param1.__class__ == param2.__class__
-                             and param1.data[0] == param2.data[0]
-                             and param1.data[-1] == param2.data[-1]
-                             and param1.nnz == param2.nnz
-                             and param1.shape == param2.shape)
+            if not sparse.issparse(param2):
+                equality_test = False
+            elif param1.size == 0 or param2.size == 0:
+                equality_test = (
+                    param1.__class__ == param2.__class__
+                    and param1.size == 0
+                    and param2.size == 0
+                )
+            else:
+                equality_test = (
+                    param1.__class__ == param2.__class__
+                    and param1.data[0] == param2.data[0]
+                    and param1.data[-1] == param2.data[-1]
+                    and param1.nnz == param2.nnz
+                    and param1.shape == param2.shape
+                )
         else:
             equality_test = new_object_params[name] == params_set[name]
         assert equality_test, (
-                'Cannot clone object %s, as the constructor does not '
-                'seem to set parameter %s' % (estimator, name)
-            )
+            'Cannot clone object %s, as the constructor does not '
+            'seem to set parameter %s' % (estimator, name)
+        )
 
     return new_object
 
@@ -172,7 +194,7 @@ class BaseEstimator(object):
         """
         out = dict()
         for key in self._get_param_names():
-            value = getattr(self, key)
+            value = getattr(self, key, None)
             if deep and hasattr(value, '_get_params'):
                 deep_items = value._get_params().items()
                 out.update((key + '__' + k, val) for k, val in deep_items)
@@ -182,10 +204,10 @@ class BaseEstimator(object):
     def set_params(self, **params):
         """Set the parameters of the estimator.
 
-        The method works on simple estimators as well as on nested
-        objects (such as pipelines). The former have parameters of the
-        form <component>__<parameter> so that it's possible to update
-        each component of a nested object.
+        The method works on simple estimators as well as on nested objects
+        (such as pipelines). The former have parameters of the form
+        ``<component>__<parameter>`` so that it's possible to update each
+        component of a nested object.
 
         Returns
         -------
@@ -250,7 +272,7 @@ class ClassifierMixin(object):
     """Mixin class for all classifiers in scikit-learn"""
 
     def score(self, X, y):
-        """Returns the mean error rate on the given test data and labels.
+        """Returns the mean accuracy on the given test data and labels.
 
         Parameters
         ----------
@@ -273,7 +295,13 @@ class RegressorMixin(object):
     """Mixin class for all regression estimators in scikit-learn"""
 
     def score(self, X, y):
-        """Returns the coefficient of determination of the prediction
+        """Returns the coefficient of determination R^2 of the prediction.
+
+        The coefficient R^2 is defined as (1 - u/v), where u is the
+        regression sum of squares ((y - y_pred) ** 2).sum() and v is the
+        residual sum of squares ((y_true - y_true.mean()) ** 2).sum().
+        Best possible score is 1.0, lower values are worse.
+
 
         Parameters
         ----------
@@ -312,7 +340,7 @@ class TransformerMixin(object):
         X_new : numpy array of shape [n_samples, n_features_new]
             Transformed array.
 
-        Note
+        Notes
         -----
         This method just calls fit and transform consecutively, i.e., it is not
         an optimized implementation of fit_transform, unlike other transformers

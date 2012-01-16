@@ -177,9 +177,6 @@ cdef class Huber(Regression):
     Variant of the SquaredLoss that is robust to outliers (quadratic near zero,
     linear in for large errors).
 
-    References
-    ----------
-
     http://en.wikipedia.org/wiki/Huber_Loss_Function
     """
 
@@ -324,6 +321,11 @@ def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
         q = np.zeros((n_features,), dtype=np.float64, order="c")
         q_data_ptr = <double *> q.data
     cdef double u = 0.0
+
+    if penalty_type == L2:
+        rho = 1.0
+    elif penalty_type == L1:
+        rho = 0.0
 
     cdef double typw = sqrt(1.0 / sqrt(alpha))
 

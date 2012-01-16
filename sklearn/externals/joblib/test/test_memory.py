@@ -19,17 +19,19 @@ import nose
 from ..memory import Memory, MemorizedFunc
 from .common import with_numpy, np
 
-################################################################################
+
+###############################################################################
 # Module-level variables for the tests
 def f(x, y=1):
     """ A module-level function for testing purposes.
     """
-    return x**2 + y
+    return x ** 2 + y
 
 
-################################################################################
+###############################################################################
 # Test fixtures
 env = dict()
+
 
 def setup_module():
     """ Test setup.
@@ -39,29 +41,30 @@ def setup_module():
     env['dir'] = cachedir
     if os.path.exists(cachedir):
         shutil.rmtree(cachedir)
-    # Don't make the cachedir, Memory should be able to do that on the
-    # fly
-    print 80*'_'
+    # Don't make the cachedir, Memory should be able to do that on the fly
+    print 80 * '_'
     print 'test_memory setup'
-    print 80*'_'
+    print 80 * '_'
+
 
 def _rmtree_onerror(func, path, excinfo):
-    print '!'*79
+    print '!' * 79
     print 'os function failed:', repr(func)
     print 'file to be removed:', path
     print 'exception was:', excinfo[1]
-    print '!'*79
+    print '!' * 79
+
 
 def teardown_module():
     """ Test teardown.
     """
     shutil.rmtree(env['dir'], False, _rmtree_onerror)
-    print 80*'_'
+    print 80 * '_'
     print 'test_memory teardown'
-    print 80*'_'
+    print 80 * '_'
 
 
-################################################################################
+###############################################################################
 # Helper function for the tests
 def check_identity_lazy(func, accumulator):
     """ Given a function and an accumulator (a list that grows every
@@ -79,7 +82,7 @@ def check_identity_lazy(func, accumulator):
             yield nose.tools.assert_equal, len(accumulator), i + 1
 
 
-################################################################################
+###############################################################################
 # Tests
 def test_memory_integration():
     """ Simple test of memory lazy evaluation.
@@ -88,6 +91,7 @@ def test_memory_integration():
     # Rmk: this function has the same name than a module-level function,
     # thus it serves as a test to see that both are identified
     # as different.
+
     def f(l):
         accumulator.append(1)
         return l
@@ -96,33 +100,35 @@ def test_memory_integration():
         yield test
 
     # Now test clearing
-    memory = Memory(cachedir=env['dir'], verbose=0)
-    # First clear the cache directory, to check that our code can
-    # handle that
-    # NOTE: this line would raise an exception, as the database file is still
-    # open; we ignore the error since we want to test what happens if the
-    # directory disappears
-    shutil.rmtree(env['dir'], ignore_errors=True)
-    g = memory.cache(f)
-    g(1)
-    g.clear(warn=False)
-    current_accumulator = len(accumulator)
-    out = g(1)
-    yield nose.tools.assert_equal, len(accumulator), \
-                current_accumulator + 1
-    # Also, check that Memory.eval works similarly
-    yield nose.tools.assert_equal, memory.eval(f, 1), out
-    yield nose.tools.assert_equal, len(accumulator), \
-                current_accumulator + 1
+    for compress in (False, True):
+        memory = Memory(cachedir=env['dir'], verbose=0, compress=compress)
+        # First clear the cache directory, to check that our code can
+        # handle that
+        # NOTE: this line would raise an exception, as the database file is still
+        # open; we ignore the error since we want to test what happens if the
+        # directory disappears
+        shutil.rmtree(env['dir'], ignore_errors=True)
+        g = memory.cache(f)
+        g(1)
+        g.clear(warn=False)
+        current_accumulator = len(accumulator)
+        out = g(1)
+        yield nose.tools.assert_equal, len(accumulator), \
+                    current_accumulator + 1
+        # Also, check that Memory.eval works similarly
+        yield nose.tools.assert_equal, memory.eval(f, 1), out
+        yield nose.tools.assert_equal, len(accumulator), \
+                    current_accumulator + 1
 
 
 def test_no_memory():
-    """ Test memory with cachedir=None: no memoize
-    """
+    """ Test memory with cachedir=None: no memoize """
     accumulator = list()
+
     def ff(l):
         accumulator.append(1)
         return l
+
     mem = Memory(cachedir=None, verbose=0)
     gg = mem.cache(ff)
     for _ in range(4):
@@ -135,6 +141,7 @@ def test_no_memory():
 def test_memory_kwarg():
     " Test memory with a function with keyword arguments."
     accumulator = list()
+
     def g(l=None, m=1):
         accumulator.append(1)
         return l
@@ -151,6 +158,7 @@ def test_memory_kwarg():
 def test_memory_lambda():
     " Test memory with a function with a lambda."
     accumulator = list()
+
     def helper(x):
         """ A helper function to define l as a lambda.
         """
@@ -202,7 +210,7 @@ def test_memory_warning_lambda_collisions():
     memory = Memory(cachedir=env['dir'], verbose=0)
     a = lambda x: x
     a = memory.cache(a)
-    b = lambda x: x+1
+    b = lambda x: x + 1
     b = memory.cache(b)
 
     if not hasattr(warnings, 'catch_warnings'):
@@ -248,6 +256,7 @@ def test_memory_warning_collision_detection():
 def test_memory_partial():
     " Test memory with functools.partial."
     accumulator = list()
+
     def func(x, y):
         """ A helper function to define l as a lambda.
         """
@@ -280,6 +289,7 @@ def count_and_append(x=[]):
     x.append(None)
     return len_x
 
+
 def test_argument_change():
     """ Check that if a function has a side effect in its arguments, it
         should use the hash of changing arguments.
@@ -300,6 +310,7 @@ def test_memory_numpy():
     # Check with memmapping and without.
     for mmap_mode in (None, 'r'):
         accumulator = list()
+
         def n(l=None):
             accumulator.append(1)
             return l
@@ -319,6 +330,7 @@ def test_memory_exception():
     """ Smoketest the exception handling of Memory.
     """
     memory = Memory(cachedir=env['dir'], verbose=0)
+
     class MyException(Exception):
         pass
 
@@ -383,7 +395,6 @@ def test_func_dir():
     yield nose.tools.assert_equal, a, g(1)
 
 
-
 def test_persistence():
     """ Test the memorized functions can be pickled and restored.
     """
@@ -415,4 +426,3 @@ def test_format_signature():
 def test_format_signature_numpy():
     """ Test the format signature formatting with numpy.
     """
-

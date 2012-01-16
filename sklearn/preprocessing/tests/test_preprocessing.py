@@ -9,6 +9,7 @@ from numpy.testing import assert_equal
 
 from nose.tools import assert_raises
 
+from sklearn.utils.sparsefuncs import mean_variance_axis0
 from sklearn.preprocessing import Binarizer
 from sklearn.preprocessing import KernelCenterer
 from sklearn.preprocessing import LabelBinarizer
@@ -31,10 +32,10 @@ def toarray(a):
     return a
 
 
-def test_scaler():
-    """Test scaling of dataset along all axis"""
-    # First test with 1D data
-    X = np.random.randn(5)
+def test_scaler_1d():
+    """Test scaling of dataset along single axis"""
+    rng = np.random.RandomState(0)
+    X = rng.randn(5)
     X_orig_copy = X.copy()
 
     scaler = Scaler()
@@ -57,8 +58,11 @@ def test_scaler():
     assert_array_almost_equal(X_scaled.mean(axis=0), 0.0)
     assert_array_almost_equal(X_scaled.std(axis=0), 1.0)
 
-    # Test with 2D data
-    X = np.random.randn(4, 5)
+
+def test_scaler_2d_arrays():
+    """Test scaling of 2d array along first axis"""
+    rng = np.random.RandomState(0)
+    X = rng.randn(4, 5)
     X[:, 0] = 0.0  # first feature is always of zero
 
     scaler = Scaler()
@@ -93,7 +97,7 @@ def test_scaler():
     # Check that X has not been copied
     assert X_scaled is X
 
-    X = np.random.randn(4, 5)
+    X = rng.randn(4, 5)
     X[:, 0] = 1.0  # first feature is a constant, non zero feature
     scaler = Scaler()
     X_scaled = scaler.fit(X).transform(X, copy=True)
@@ -108,35 +112,80 @@ def test_scaler_without_centering():
     rng = np.random.RandomState(42)
     X = rng.randn(4, 5)
     X[:, 0] = 0.0  # first feature is always of zero
+    X_csr = sp.csr_matrix(X)
 
-    scaler = Scaler(with_mean=False)
-    X_scaled = scaler.fit(X).transform(X, copy=True)
+    scaler = Scaler(with_mean=False).fit(X)
+    X_scaled = scaler.transform(X, copy=True)
     assert not np.any(np.isnan(X_scaled))
+
+    scaler_csr = Scaler(with_mean=False).fit(X_csr)
+    X_csr_scaled = scaler_csr.transform(X_csr, copy=True)
+    assert not np.any(np.isnan(X_csr_scaled.data))
+
+    assert_equal(scaler.mean_, scaler_csr.mean_)
+    assert_array_almost_equal(scaler.std_, scaler_csr.std_)
 
     assert_array_almost_equal(
         X_scaled.mean(axis=0), [0., -0.01,  2.24, -0.35, -0.78], 2)
     assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
-    # Check that X has not been copied
+
+    X_csr_scaled_mean, X_csr_scaled_std = mean_variance_axis0(X_csr_scaled)
+    assert_array_almost_equal(X_csr_scaled_mean, X_scaled.mean(axis=0))
+    assert_array_almost_equal(X_csr_scaled_std, X_scaled.std(axis=0))
+
+    # Check that X has not been modified (copy)
     assert X_scaled is not X
+    assert X_csr_scaled is not X_csr
 
     X_scaled_back = scaler.inverse_transform(X_scaled)
     assert X_scaled_back is not X
     assert X_scaled_back is not X_scaled
     assert_array_almost_equal(X_scaled_back, X)
+
+    X_csr_scaled_back = scaler_csr.inverse_transform(X_csr_scaled)
+    assert X_csr_scaled_back is not X_csr
+    assert X_csr_scaled_back is not X_csr_scaled
+    assert_array_almost_equal(X_scaled_back, X)
+
+
+def test_scale_sparse_with_mean_raise_exception():
+    rng = np.random.RandomState(42)
+    X = rng.randn(4, 5)
+    X_csr = sp.csr_matrix(X)
+
+    # check scaling and fit with direct calls on sparse data
+    assert_raises(ValueError, scale, X_csr, with_mean=True)
+    assert_raises(ValueError, Scaler(with_mean=True).fit, X_csr)
+
+    # check transform and inverse_transform after a fit on a dense array
+    scaler = Scaler(with_mean=True).fit(X)
+    assert_raises(ValueError, scaler.transform, X_csr)
+
+    X_transformed_csr = sp.csr_matrix(scaler.transform(X))
+    assert_raises(ValueError, scaler.inverse_transform, X_transformed_csr)
+
+
+def test_scale_function_without_centering():
+    rng = np.random.RandomState(42)
+    X = rng.randn(4, 5)
+    X[:, 0] = 0.0  # first feature is always of zero
+    X_csr = sp.csr_matrix(X)
 
     X_scaled = scale(X, with_mean=False)
     assert not np.any(np.isnan(X_scaled))
 
+    X_csr_scaled = scale(X_csr, with_mean=False)
+    assert not np.any(np.isnan(X_csr_scaled.data))
+
     assert_array_almost_equal(
         X_scaled.mean(axis=0), [0., -0.01,  2.24, -0.35, -0.78], 2)
     assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
     # Check that X has not been copied
     assert X_scaled is not X
 
-    X_scaled_back = scaler.inverse_transform(X_scaled)
-    assert X_scaled_back is not X
-    assert X_scaled_back is not X_scaled
-    assert_array_almost_equal(X_scaled_back, X)
+    X_csr_scaled_mean, X_csr_scaled_std = mean_variance_axis0(X_csr_scaled)
+    assert_array_almost_equal(X_csr_scaled_mean, X_scaled.mean(axis=0))
+    assert_array_almost_equal(X_csr_scaled_std, X_scaled.std(axis=0))
 
 
 def test_normalizer_l1():
@@ -300,13 +349,19 @@ def test_label_binarizer():
 def test_label_binarizer_multilabel():
     lb = LabelBinarizer()
 
+    # test input as lists of tuples
     inp = [(2, 3), (1,), (1, 2)]
-    expected = np.array([[0, 1, 1],
-                         [1, 0, 0],
-                         [1, 1, 0]])
+    indicator_mat = np.array([[0, 1, 1],
+                              [1, 0, 0],
+                              [1, 1, 0]])
     got = lb.fit_transform(inp)
-    assert_array_equal(expected, got)
+    assert_array_equal(indicator_mat, got)
     assert_equal(lb.inverse_transform(got), inp)
+
+    # test input as label indicator matrix
+    lb.fit(indicator_mat)
+    assert_array_equal(indicator_mat,
+                       lb.inverse_transform(indicator_mat))
 
     # regression test for the two-class multilabel case
     lb = LabelBinarizer()
@@ -330,6 +385,10 @@ def test_label_binarizer_errors():
     multi_label = [(2, 3), (0,), (0, 2)]
     assert_raises(ValueError, lb.transform, multi_label)
 
+    lb = LabelBinarizer()
+    assert_raises(ValueError, lb.transform, [])
+    assert_raises(ValueError, lb.inverse_transform, [])
+
 
 def test_label_binarizer_iris():
     lb = LabelBinarizer()
@@ -342,6 +401,16 @@ def test_label_binarizer_iris():
     y_pred2 = SGDClassifier().fit(iris.data, iris.target).predict(iris.data)
     accuracy2 = np.mean(iris.target == y_pred2)
     assert_almost_equal(accuracy, accuracy2)
+
+
+def test_label_binarizer_multilabel_unlabeled():
+    """Check that LabelBinarizer can handle an unlabeled sample"""
+    lb = LabelBinarizer()
+    y = [[1, 2], [1], []]
+    Y = np.array([[1, 1],
+                  [1, 0],
+                  [0, 0]])
+    assert_equal(lb.fit_transform(y), Y)
 
 
 def test_center_kernel():
@@ -365,6 +434,7 @@ def test_center_kernel():
     K_pred_centered = np.dot(X_pred_centered, X_fit_centered.T)
     K_pred_centered2 = centerer.transform(K_pred)
     assert_array_almost_equal(K_pred_centered, K_pred_centered2)
+
 
 def test_fit_transform():
     X = np.random.random((5, 4))

@@ -19,9 +19,9 @@ from ..func_inspect import filter_args
 from ..memory import Memory
 from .common import np, with_numpy
 
-from test_memory import env as test_memory_env
-from test_memory import setup_module as test_memory_setup_func
-from test_memory import teardown_module as test_memory_teardown_func
+from .test_memory import env as test_memory_env
+from .test_memory import setup_module as test_memory_setup_func
+from .test_memory import teardown_module as test_memory_teardown_func
 
 
 ###############################################################################

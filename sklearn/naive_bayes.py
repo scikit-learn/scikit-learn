@@ -1,14 +1,9 @@
 # -*- coding: utf-8 -*-
 
 """
-Naive Bayes models
-==================
-
-Naive Bayes algorithms are a set of supervised learning methods based on
-applying Bayes' theorem with strong (naive) feature independence assumptions.
-
-See http://scikit-learn.sourceforge.net/modules/naive_bayes.html for
-complete documentation.
+The :mod:`sklearn.naive_bayes` module implements Naive Bayes algorithms. These
+are supervised learning methods based on applying Bayes' theorem with strong
+(naive) feature independence assumptions.
 """
 
 # Author: Vincent Michel <vincent.michel@inria.fr>
@@ -20,32 +15,33 @@ complete documentation.
 #
 # License: BSD Style.
 
+from abc import ABCMeta, abstractmethod
+
 import numpy as np
 from scipy.sparse import issparse
 
 from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize, LabelBinarizer
-from .utils import array2d, atleast2d_or_csr, safe_asarray
-from .utils.extmath import safe_sparse_dot, logsum
-from .utils.fixes import unique
-
+from .utils import array2d, atleast2d_or_csr
+from .utils.extmath import safe_sparse_dot, logsumexp
+from .utils import deprecated
 
 
 class BaseNB(BaseEstimator, ClassifierMixin):
-    """Abstract base class for naive Bayes estimators
+    """Abstract base class for naive Bayes estimators"""
 
-    Any estimator based on this class should provide:
+    __metaclass__ = ABCMeta
 
-    __init__
-    fit(X, y)
-    _joint_log_likelihood(X)
-        Compute the unnormalized posterior log probability of X,
-        i.e. log P(c) + log P(x|c) for all rows x of X,
-        as an array-like of shape [n_classes, n_samples].
+    @abstractmethod
+    def _joint_log_likelihood(self, X):
+        """Compute the unnormalized posterior log probability of X
 
-    Input is passed to _joint_log_likelihood as is by predict, predict_proba
-    and predict_log_proba.
-    """
+        I.e. ``log P(c) + log P(x|c)`` for all rows x of X, as an array-like of
+        shape [n_classes, n_samples].
+
+        Input is passed to _joint_log_likelihood as-is by predict,
+        predict_proba and predict_log_proba.
+        """
 
     def predict(self, X):
         """
@@ -79,7 +75,7 @@ class BaseNB(BaseEstimator, ClassifierMixin):
         """
         jll = self._joint_log_likelihood(X)
         # normalize by P(x) = P(f_1, ..., f_n)
-        log_prob_x = logsum(jll, axis=1)
+        log_prob_x = logsumexp(jll, axis=1)
         return jll - np.atleast_2d(log_prob_x).T
 
     def predict_proba(self, X):
@@ -114,29 +110,14 @@ class GaussianNB(BaseNB):
 
     Attributes
     ----------
-    class_prior : array, shape = [n_classes]
+    `class_prior_` : array, shape = [n_classes]
         probability of each class.
 
-    theta : array, shape = [n_classes, n_features]
+    `theta_` : array, shape = [n_classes, n_features]
         mean of each feature per class
 
-    sigma : array, shape = [n_classes, n_features]
+    `sigma_` : array, shape = [n_classes, n_features]
         variance of each feature per class
-
-    Methods
-    -------
-    fit(X, y) : self
-        Fit the model
-
-    predict(X) : array
-        Predict using the model.
-
-    predict_proba(X) : array
-        Predict the probability of each class using the model.
-
-    predict_log_proba(X) : array
-        Predict the log-probability of each class using the model.
-
 
     Examples
     --------
@@ -176,26 +157,47 @@ class GaussianNB(BaseNB):
         n_classes = unique_y.shape[0]
         _, n_features = X.shape
 
-        self.theta = np.empty((n_classes, n_features))
-        self.sigma = np.empty((n_classes, n_features))
-        self.class_prior = np.empty(n_classes)
+        self.theta_ = np.empty((n_classes, n_features))
+        self.sigma_ = np.empty((n_classes, n_features))
+        self.class_prior_ = np.empty(n_classes)
         for i, y_i in enumerate(unique_y):
-            self.theta[i, :] = np.mean(X[y == y_i, :], axis=0)
-            self.sigma[i, :] = np.var(X[y == y_i, :], axis=0)
-            self.class_prior[i] = np.float(np.sum(y == y_i)) / n_classes
+            self.theta_[i, :] = np.mean(X[y == y_i, :], axis=0)
+            self.sigma_[i, :] = np.var(X[y == y_i, :], axis=0)
+            self.class_prior_[i] = np.float(np.sum(y == y_i)) / n_classes
         return self
 
     def _joint_log_likelihood(self, X):
         X = array2d(X)
         joint_log_likelihood = []
         for i in xrange(np.size(self._classes)):
-            jointi = np.log(self.class_prior[i])
-            n_ij = - 0.5 * np.sum(np.log(np.pi * self.sigma[i, :]))
-            n_ij -= 0.5 * np.sum(((X - self.theta[i, :]) ** 2) / \
-                                    (self.sigma[i, :]), 1)
+            jointi = np.log(self.class_prior_[i])
+            n_ij = - 0.5 * np.sum(np.log(np.pi * self.sigma_[i, :]))
+            n_ij -= 0.5 * np.sum(((X - self.theta_[i, :]) ** 2) / \
+                                    (self.sigma_[i, :]), 1)
             joint_log_likelihood.append(jointi + n_ij)
         joint_log_likelihood = np.array(joint_log_likelihood).T
         return joint_log_likelihood
+
+    @property
+    @deprecated('GaussianNB.class_prior is deprecated'
+                ' and will be removed in version 0.12.'
+                ' Please use ``GaussianNB.class_prior_`` instead.')
+    def class_prior(self):
+        return self.class_prior_
+
+    @property
+    @deprecated('GaussianNB.theta is deprecated'
+                ' and will be removed in version 0.12.'
+                ' Please use ``GaussianNB.theta_`` instead.')
+    def theta(self):
+        return self.theta_
+
+    @property
+    @deprecated('GaussianNB.sigma is deprecated'
+                ' and will be removed in version 0.12.'
+                ' Please use ``GaussianNB.sigma_`` instead.')
+    def sigma(self):
+        return self.sigma_
 
 
 class BaseDiscreteNB(BaseNB):
@@ -232,28 +234,27 @@ class BaseDiscreteNB(BaseNB):
             Returns self.
         """
         X = atleast2d_or_csr(X)
-        y = safe_asarray(y)
 
-        if X.shape[0] != y.shape[0]:
+        labelbin = LabelBinarizer()
+        Y = labelbin.fit_transform(y)
+        self._classes = labelbin.classes_
+        n_classes = len(self._classes)
+        if Y.shape[1] == 1:
+            Y = np.concatenate((1 - Y, Y), axis=1)
+
+        if X.shape[0] != Y.shape[0]:
             msg = "X and y have incompatible shapes."
             if issparse(X):
                 msg += "\nNote: Sparse matrices cannot be indexed w/ boolean \
                 masks (use `indices=True` in CV)."
             raise ValueError(msg)
 
-        self._classes, inv_y_ind = unique(y, return_inverse=True)
-        n_classes = self._classes.size
-
-        Y = LabelBinarizer().fit_transform(y)
-        if Y.shape[1] == 1:
-            Y = np.concatenate((1 - Y, Y), axis=1)
-
         if sample_weight is not None:
             Y *= array2d(sample_weight).T
 
         if class_prior:
             assert len(class_prior) == n_classes, \
-                   'Number of priors must match number of classs'
+                   'Number of priors must match number of classes'
             self.class_log_prior_ = np.log(class_prior)
         elif self.fit_prior:
             # empirical prior, with sample_weight taken into account
@@ -305,30 +306,18 @@ class MultinomialNB(BaseDiscreteNB):
         Whether to learn class prior probabilities or not.
         If false, a uniform prior will be used.
 
-    Methods
-    -------
-    fit(X, y) : self
-        Fit the model
-
-    predict(X) : array
-        Predict using the model.
-
-    predict_proba(X) : array
-        Predict the probability of each class using the model.
-
-    predict_log_proba(X) : array
-        Predict the log probability of each class using the model.
-
     Attributes
     ----------
     `intercept_`, `class_log_prior_` : array, shape = [n_classes]
-        Log probability of each class (smoothed).
+        Smoothed empirical log probability for each class.
 
     `feature_log_prob_`, `coef_` : array, shape = [n_classes, n_features]
-        Empirical log probability of features given a class, P(x_i|y).
+        Empirical log probability of features
+        given a class, P(x_i|y).
 
-        (`intercept_` and `coef_` are properties referring to
-        `class_log_prior_` and `feature_log_prob_`, respectively.)
+        (`intercept_` and `coef_` are properties
+        referring to `class_log_prior_` and
+        `feature_log_prob_`, respectively.)
 
     Examples
     --------
@@ -342,8 +331,8 @@ class MultinomialNB(BaseDiscreteNB):
     >>> print clf.predict(X[2])
     [3]
 
-    References
-    ----------
+    Notes
+    -----
     For the rationale behind the names `coef_` and `intercept_`, i.e.
     naive Bayes as a linear classifier, see J. Rennie et al. (2003),
     Tackling the poor assumptions of naive Bayes text classifiers, ICML.
@@ -366,8 +355,6 @@ class BernoulliNB(BaseDiscreteNB):
     difference is that while MultinomialNB works with occurrence counts,
     BernoulliNB is designed for binary/boolean features.
 
-    Note: this class does not check whether features are actually boolean.
-
     Parameters
     ----------
     alpha: float, optional (default=1.0)
@@ -379,20 +366,6 @@ class BernoulliNB(BaseDiscreteNB):
     fit_prior: boolean
         Whether to learn class prior probabilities or not.
         If false, a uniform prior will be used.
-
-    Methods
-    -------
-    fit(X, y) : self
-        Fit the model
-
-    predict(X) : array
-        Predict using the model.
-
-    predict_proba(X) : array
-        Predict the probability of each class using the model.
-
-    predict_log_proba(X) : array
-        Predict the log probability of each class using the model.
 
     Attributes
     ----------
@@ -414,8 +387,10 @@ class BernoulliNB(BaseDiscreteNB):
     >>> print clf.predict(X[2])
     [3]
 
-    References
-    ----------
+    Notes
+    -----
+    **References**:
+
     C.D. Manning, P. Raghavan and H. Schütze (2008). Introduction to
     Information Retrieval. Cambridge University Press, pp. 234–265.
 

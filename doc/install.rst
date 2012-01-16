@@ -1,6 +1,6 @@
-===============================
+=========================
 Installing `scikit-learn`
-===============================
+=========================
 
 There are different ways to get scikit-learn installed:
 
@@ -32,7 +32,7 @@ Installing from source
 
 Installing from source requires you to have installed numpy,
 scipy, setuptools, python development headers and a working C++
-compiler. Under debian-like systems you can get all this by executing
+compiler. Under Debian-based systems you can get all this by executing
 with root privileges::
 
     sudo apt-get install python-dev python-numpy python-numpy-dev python-setuptools python-numpy-dev python-scipy libatlas-dev g++
@@ -88,8 +88,6 @@ numpy and setuptools.
 This package is also expected to work with python(x,y) as of 2.6.5.5.
 
 
-.. _build_on_windows
-
 Building on windows
 -------------------
 
@@ -129,7 +127,7 @@ This will create an installable binary under directory ``dist/``.
 .. _install_by_distribution:
 
 Third party distributions of scikit-learn
-==========================================
+=========================================
 
 Some third-party distributions are now providing versions of
 scikit-learn integrated with their package-management systems.
@@ -138,18 +136,23 @@ These can make installation and upgrading much easier for users since
 the integration includes the ability to automatically install
 dependencies (numpy, scipy) that scikit-learn requires.
 
-The following is a list of linux distributions that provide their own
+The following is a list of Linux distributions that provide their own
 version of scikit-learn:
 
 
 Debian and derivatives (Ubuntu)
 -------------------------------
 
-The Debian package is named python-scikits-learn and can be install
-using the following commands with root privileges::
+The Debian package is named python-sklearn (formerly
+python-scikits-learn) and can be installed using the following
+commands with root privileges::
 
-      apt-get install python-scikits-learn
+      apt-get install python-sklearn
 
+Additionally, backport builds of the most recent release of
+scikit-learn for existing releases of Debian and Ubuntu are available
+from `NeuroDebian repository
+<http://neuro.debian.net/pkgs/python-scikits-learn.html>`__ .
 
 Python(x, y)
 ------------
@@ -159,11 +162,11 @@ be found in the `Additional plugins <http://code.google.com/p/pythonxy/wiki/Addi
 page.
 
 
-Enthought python distribution
+Enthought Python distribution
 -----------------------------
 
 The `Enthought Python Distribution
-<http://www.enthought.com/products/epd.php>`_ already ships the latest
+<http://www.enthought.com/products/epd.php>`_ already ships a recent
 version.
 
 
@@ -220,9 +223,9 @@ source directory::
 
 Test can now be run using nosetest::
 
-     nosetests sklearn/
+    nosetests sklearn/
 
-If you are running the deveopment version, this is automated in the
+If you are running the development version, this is automated in the
 commands `make in` and `make test`.
 
 .. warning::

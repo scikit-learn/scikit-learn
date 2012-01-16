@@ -13,22 +13,7 @@ machine-learning as a versatile tool for science and engineering.
 See http://scikit-learn.sourceforge.net for complete documentation.
 """
 
-try:
-    from . import check_build
-except ImportError, e:
-    raise ImportError(
-"""%s
-___________________________________________________________________________
-It seems that the scikit-learn has not been built correctly.
-
-If you have installed the scikit-learn from source, please do not forget
-to build the package before using it: run `python setup.py install` or
-`make` in the source directory.
-
-If you have used an installer, please check that it is suited for your
-Python version, your operating system and your platform.
-""" % e)
-
+from . import check_build
 from .base import clone
 
 
@@ -41,6 +26,15 @@ try:
 
         def test(self, label='fast', verbose=1, extra_argv=['--exe'],
                         doctests=True, coverage=False):
+            """Run the full test suite
+
+            Examples
+            --------
+            This will run the test suite and stop at the first failing
+            example
+            >>> from sklearn import test
+            >>> test(extra_argv=['--exe', '-sx']) #doctest: +SKIP
+            """
             return super(NoseTester, self).test(label=label, verbose=verbose,
                                     extra_argv=extra_argv,
                                     doctests=doctests, coverage=coverage)
@@ -58,4 +52,4 @@ __all__ = ['check_build', 'cross_validation', 'cluster', 'covariance',
            'metrics', 'mixture', 'naive_bayes', 'neighbors', 'pipeline',
            'preprocessing', 'qda', 'svm', 'test', 'clone', 'pls']
 
-__version__ = '0.10-git'
+__version__ = '0.11-git'
