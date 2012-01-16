@@ -36,15 +36,9 @@ def configuration(parent_package='', top_path=None):
          **blas_info
          )
 
-    config.add_library(
-        'MurmurHash3',
-        sources=[join('src', 'MurmurHash3.cpp')],
-        depends=[join('src', 'MurmurHash3.h')])
-
     config.add_extension(
         'murmurhash',
-        sources=['murmurhash.c'],
-        libraries=['MurmurHash3'],
+        sources=['murmurhash.c', join('src', 'MurmurHash3.cpp')],
         include_dirs=['src'])
 
     config.add_extension('graph_shortest_path',
@@ -52,3 +46,8 @@ def configuration(parent_package='', top_path=None):
          include_dirs=[numpy.get_include()])
 
     return config
+
+
+if __name__ == '__main__':
+    from numpy.distutils.core import setup
+    setup(**configuration(top_path='').todict())
