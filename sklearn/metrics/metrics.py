@@ -69,6 +69,75 @@ def confusion_matrix(y_true, y_pred, labels=None):
     return CM
 
 
+def mcc_score(y_true, y_pred, labels=None):
+    """ Compute Matthews correlation coefficient
+
+    The Matthews correlation coefficient is used in machine learning
+    as a measure of the quality of binary (two-class)
+    classifications. It takes into account true and false positives
+    and negatives and is generally regarded as a balanced measure
+    which can be used even if the classes are of very different
+    sizes. The MCC is in essence a correlation coefficient between the
+    observed and predicted binary classifications; it returns a value
+    between -1 and +1.
+
+    A coefficient of +1 represents a perfect prediction, 0 an average
+    random prediction and -1 an inverse prediction.
+
+    Parameters
+    ----------
+    y_true : array, shape = [n_samples]
+        true targets
+
+    y_pred : array, shape = [n_samples]
+        estimated targets
+
+    Returns
+    -------
+    mcc : float
+
+    Notes
+    -----
+    **References**:
+    http://en.wikipedia.org/wiki/Matthews_correlation_coefficient
+
+    """
+
+    y_true, y_pred = check_arrays(y_true, y_pred)
+
+    y_true = np.ravel(y_true)
+    classes = np.unique(y_true)
+
+    # MCC only for binary classification
+    # This is checked similarly to ROC - though if all labels are the same
+    # (even if # of classes is 2) this check will fail
+    # However, this is probably a good thing because in that case
+    # confusion matrix will be size 1,1
+    if classes.shape[0] != 2:
+        raise ValueError("MCC is defined for binary classification only")
+
+    y_pred = np.ravel(y_pred)
+
+    CM = confusion_matrix(y_true, y_pred, labels)
+
+    tp = CM[1, 1]
+    tn = CM[0, 0]
+    fp = CM[0, 1]
+    fn = CM[1, 0]
+
+    #If any of the four sums in the denominator is zero, the
+    #denominator can be arbitrarily set to one; this results in a
+    #Matthews correlation coefficient of zero, which can be shown to
+    #be the correct limiting value.
+    denom = np.sqrt((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn))
+    if denom == 0:
+        return 0.
+
+    mcc = (tp * tn - fp * fn) / denom
+
+    return mcc
+
+
 def roc_curve(y_true, y_score):
     """compute Receiver operating characteristic (ROC)
 
