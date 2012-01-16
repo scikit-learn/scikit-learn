@@ -233,8 +233,10 @@ class BaseSGD(BaseEstimator):
         self.t_ = 1.0
         if self.learning_rate == "optimal":
             typw = np.sqrt(1.0 / np.sqrt(self.alpha))
-            self.eta0 = typw / max(1.0, self.loss_function.dloss(-typw, 1.0))
-            self.t_ = 1.0 / (self.eta0 * self.alpha)
+            # computing eta0, the initial learning rate
+            eta0 = typw / max(1.0, self.loss_function.dloss(-typw, 1.0))
+            # initialize t such that eta at first example equals eta0
+            self.t_ = 1.0 / (eta0 * self.alpha)
 
     def _set_learning_rate(self, learning_rate):
         learning_rate_codes = {"constant": 1, "optimal": 2, "invscaling": 3}

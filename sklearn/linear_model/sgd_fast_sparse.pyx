@@ -46,7 +46,7 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
               np.ndarray[double, ndim=1] sample_weight,
               int learning_rate, double eta0,
               double power_t,
-              double t0=1.0):
+              double t=1.0):
     """Cython impl. of SGD with different loss functions and penalties
 
     This representation assumes X represented using the Compressed Sparse Row
@@ -97,8 +97,10 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
         The initial learning rate.
     power_t : double
         The exponent for inverse scaling learning rate.
-    t0 : double
-        Initial value for t.
+    t : double
+        Initial state of the learning rate. This value is equal to the
+        iteration count except when the learning rate is set to `optimal`.
+        Default: 1.0.
 
     Returns
     -------
@@ -130,7 +132,6 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
     cdef double update = 0.0
     cdef double sumloss = 0.0
     cdef double wnorm = 0.0
-    cdef double t = t0
     cdef double y = 0.0
     cdef double class_weight = 1.0
     cdef unsigned int count = 0

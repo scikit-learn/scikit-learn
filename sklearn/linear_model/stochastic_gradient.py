@@ -15,6 +15,7 @@ from .base import BaseSGD
 from ..utils import atleast2d_or_csr, check_arrays
 from ..utils.extmath import safe_sparse_dot
 from ..utils import safe_asarray
+from ..utils import deprecated
 
 from .sgd_fast import plain_sgd as plain_sgd_dense
 from .sgd_fast_sparse import plain_sgd as plain_sgd_sparse
@@ -152,8 +153,13 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
                                             learning_rate=learning_rate,
                                             eta0=eta0, power_t=power_t)
         self.class_weight = class_weight
-        self.classes = None
+        self.classes_ = None
         self.n_jobs = int(n_jobs)
+
+    @property
+    @deprecated("to be removed in v0.12; use classes_ instead.")
+    def classes(self):
+        return self.classes_
 
     def _set_loss_function(self, loss):
         """Set concrete LossFunction."""
@@ -203,20 +209,20 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
         n_samples, n_features = X.shape
         self._check_fit_data(X, y)
 
-        if self.classes is None and classes is None:
+        if self.classes_ is None and classes is None:
             raise ValueError("classes must be passed on the first call "
                              "to partial_fit.")
-        elif classes is not None and self.classes is not None:
-            if not np.array_equal(self.classes, np.unique(classes)):
+        elif classes is not None and self.classes_ is not None:
+            if not np.array_equal(self.classes_, np.unique(classes)):
                 raise ValueError("`classes` is not the same as on last call "
                                  "to partial_fit.")
         elif classes is not None:
-            self.classes = classes
+            self.classes_ = classes
 
-        n_classes = self.classes.shape[0]
+        n_classes = self.classes_.shape[0]
 
         # Allocate datastructures from input arguments
-        self._set_class_weight(class_weight, self.classes, y)
+        self._set_class_weight(class_weight, self.classes_, y)
         sample_weight = self._validate_sample_weight(sample_weight, n_samples)
 
         if self.coef_ is None:
@@ -313,7 +319,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
         self : returns an instance of self.
         """
         X = safe_asarray(X, dtype=np.float64, order="C")
-        y = np.asarray(y, dtype=np.float64)
+        y = np.asarray(y, dtype=np.int)
 
         n_samples, n_features = X.shape
         self._check_fit_data(X, y)
@@ -354,7 +360,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
         """
         X = atleast2d_or_csr(X)
         scores = safe_sparse_dot(X, self.coef_.T) + self.intercept_
-        if self.classes.shape[0] == 2:
+        if self.classes_.shape[0] == 2:
             return np.ravel(scores)
         else:
             return scores
@@ -372,11 +378,11 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
            Array containing the predicted class labels.
         """
         scores = self.decision_function(X)
-        if self.classes.shape[0] == 2:
+        if self.classes_.shape[0] == 2:
             indices = np.array(scores > 0, dtype=np.int)
         else:
             indices = scores.argmax(axis=1)
-        return self.classes[np.ravel(indices)]
+        return self.classes_[np.ravel(indices)]
 
     def predict_proba(self, X):
         """Predict class membership probability
@@ -392,7 +398,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
             Contains the membership probabilities of the positive class.
 
         """
-        if len(self.classes) != 2:
+        if len(self.classes_) != 2:
             raise NotImplementedError("predict_(log_)proba only supported"
                                       " for binary classification")
         elif not isinstance(self.loss_function, Log):
@@ -428,7 +434,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
         """Fit a single binary classifier"""
         # encode original class labels as 1 (classes[1]) or -1 (classes[0]).
         y_new = np.ones(y.shape, dtype=np.float64, order='C') * -1.0
-        y_new[y == self.classes[1]] = 1.0
+        y_new[y == self.classes_[1]] = 1.0
         y = y_new
 
         return plain_sgd_dense(self.coef_.ravel(),
@@ -461,7 +467,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
             delayed(_train_ova_classifier_ds)(i, c, X, y, self, n_iter,
                                               self._expanded_class_weight[i],
                                               sample_weight)
-            for i, c in enumerate(self.classes))
+            for i, c in enumerate(self.classes_))
 
     def _fit_binary_sparse(self, X, y, sample_weight, n_iter):
         """Fit a binary classifier."""
@@ -469,7 +475,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
 
         # encode original class labels as 1 (classes[1]) or -1 (classes[0]).
         y_new = np.ones(y.shape, dtype=np.float64, order="C") * -1.0
-        y_new[y == self.classes[1]] = 1.0
+        y_new[y == self.classes_[1]] = 1.0
         y = y_new
 
         # get sparse matrix datastructures
@@ -512,7 +518,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
                                               X_indptr, y, self, n_iter,
                                               self._expanded_class_weight[i],
                                               sample_weight)
-            for i, c in enumerate(self.classes))
+            for i, c in enumerate(self.classes_))
 
 
 def _train_ova_classifier_ds(i, c, X, y, est, n_iter,

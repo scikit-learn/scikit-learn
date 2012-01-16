@@ -17,7 +17,7 @@ API changes summary
      :ref:`neighbors`. Use the classes :class:`KNeighborsClassifier`,
      :class:`RadiusNeighborsClassifier`, :class:`KNeighborsRegressor`
      and/or :class:`RadiusNeighborsRegressor` instead.
-     
+
    - Sparse classes in the :ref:`sgd` module are now deprecated.
 
 .. _changes_0_10:
