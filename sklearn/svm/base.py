@@ -447,21 +447,12 @@ class BaseLibLinear(BaseEstimator):
         if self.scale_C:
             C = C / float(X.shape[0])
 
-        solver = self._get_solver_type()
-        bias = self._get_bias()
-
-        if self._sparse:
-            self.raw_coef_, self.label_ = \
-                liblinear.csr_train_wrap(X.shape[1], X.data, X.indices,
-                                         X.indptr, y,
-                                         solver, self.tol, bias, C,
-                                         self.class_weight_label,
-                                         self.class_weight)
-        else:
-            self.raw_coef_, self.label_ = \
-                liblinear.train_wrap(X, y, solver, self.tol, bias, C,
-                                     self.class_weight_label,
-                                     self.class_weight)
+        train = liblinear.csr_train_wrap if self._sparse \
+                                         else liblinear.train_wrap
+        self.raw_coef_, self.label_ = train(X, y, self._get_solver_type(),
+                                            self.tol, self._get_bias(), C,
+                                            self.class_weight_label,
+                                            self.class_weight)
 
         return self
 
@@ -479,22 +470,11 @@ class BaseLibLinear(BaseEstimator):
         X = self._validate_for_predict(X)
         self._check_n_features(X)
 
-        solver = self._get_solver_type()
-
-        if self._sparse:
-            return liblinear.csr_predict_wrap(X.shape[1],
-                                              X.data, X.indices, X.indptr,
-                                              self.raw_coef_, solver,
-                                              self.tol, self.C,
-                                              self.class_weight_label,
-                                              self.class_weight, self.label_,
-                                              self._get_bias())
-        else:
-            return liblinear.predict_wrap(X, self.raw_coef_, solver,
-                                          self.tol, self.C,
-                                          self.class_weight_label,
-                                          self.class_weight, self.label_,
-                                          self._get_bias())
+        predict = liblinear.csr_predict_wrap if self._sparse \
+                                             else liblinear.predict_wrap
+        return predict(X, self.raw_coef_, self._get_solver_type(), self.tol,
+                       self.C, self.class_weight_label, self.class_weight,
+                       self.label_, self._get_bias())
 
     def decision_function(self, X):
         """Decision function value for X according to the trained model.
@@ -512,20 +492,13 @@ class BaseLibLinear(BaseEstimator):
         X = self._validate_for_predict(X)
         self._check_n_features(X)
 
-        solver = self._get_solver_type()
+        dfunc_wrap = liblinear.csr_decision_function_wrap \
+                       if self._sparse \
+                       else liblinear.decision_function_wrap
 
-        if self._sparse:
-            dec_func = liblinear.csr_decision_function_wrap(
-                           X.shape[1], X.data, X.indices, X.indptr,
-                           self.raw_coef_, solver, self.tol, self.C,
-                           self.class_weight_label, self.class_weight,
-                           self.label_, self._get_bias())
-
-        else:
-            dec_func = liblinear.decision_function_wrap(
-                           X, self.raw_coef_, solver, self.tol,
-                           self.C, self.class_weight_label, self.class_weight,
-                           self.label_, self._get_bias())
+        dec_func = dfunc_wrap(X, self.raw_coef_, self._get_solver_type(),
+                              self.tol, self.C, self.class_weight_label,
+                              self.class_weight, self.label_, self._get_bias())
 
         if len(self.label_) <= 2:
             # in the two-class case, the decision sign needs be flipped
