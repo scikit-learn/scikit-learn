@@ -1,4 +1,6 @@
-cimport murmurhash
+cdef extern from "MurmurHash3.h":
+    void MurmurHash3_x86_32(void* key, int len, unsigned int seed,
+                            void* out)
 
 
 cpdef unsigned int murmurhash3_int(int key, unsigned int seed):
