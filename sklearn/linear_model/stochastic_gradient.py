@@ -765,17 +765,12 @@ class SGDRegressor(BaseSGD, RegressorMixin):
         # interpret X as CSR matrix
         X = _tocsr(X)
 
-        # get sparse matrix datastructures
-        X_data = np.asarray(X.data, dtype=np.float64, order="C")
-        X_indices = np.asarray(X.indices, dtype=np.int32, order="C")
-        X_indptr = np.asarray(X.indptr, dtype=np.int32, order="C")
-
         return plain_sgd_sparse(self.coef_,
                                 self.intercept_,
                                 self.loss_function,
                                 self.penalty_type,
                                 self.alpha, self.rho,
-                                X_data, X_indices, X_indptr, y,
+                                X.data, X.indices, X.indptr, y,
                                 n_iter,
                                 int(self.fit_intercept),
                                 int(self.verbose),
