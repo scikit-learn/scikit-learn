@@ -133,8 +133,7 @@ def mcc_score(y_true, y_pred, labels=None):
     if denom == 0:
         return 0.
 
-    mcc = (tp * tn - fp * fn) \
-          / np.sqrt((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn))
+    mcc = (tp * tn - fp * fn) / denom
 
     return mcc
 
