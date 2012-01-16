@@ -207,7 +207,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
     def _partial_fit(self, X, y, n_iter, classes=None,
                      class_weight=None, sample_weight=None):
         X = safe_asarray(X, dtype=np.float64, order="C")
-        y = np.asarray(y, dtype=np.float64)
+        y = np.asarray(y)
 
         n_samples, n_features = X.shape
         self._check_fit_data(X, y)
@@ -216,7 +216,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
             raise ValueError("classes must be passed on the first call "
                              "to partial_fit.")
         elif classes is not None and self.classes_ is not None:
-            if not np.array_equal(self.classes_, np.unique(classes)):
+            if not np.all(self.classes_ == np.unique(classes)):
                 raise ValueError("`classes` is not the same as on last call "
                                  "to partial_fit.")
         elif classes is not None:
@@ -321,13 +321,13 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
         self : returns an instance of self.
         """
         X = safe_asarray(X, dtype=np.float64, order="C")
-        y = np.asarray(y, dtype=np.float64)
+        y = np.asarray(y)
 
         n_samples, n_features = X.shape
         self._check_fit_data(X, y)
 
-        # sort in asc order; largest class id is positive class
-        classes = np.unique(y).astype(np.int)
+        # np.unique sorts in asc order; largest class id is positive class
+        classes = np.unique(y)
         n_classes = classes.shape[0]
 
         # Allocate datastructures from input arguments
