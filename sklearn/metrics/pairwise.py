@@ -577,8 +577,6 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False, **kwds):
 
     """
     if metric == "precomputed":
-        if X.shape[0] != X.shape[1]:
-            raise ValueError("X is not square!")
         return X
     elif metric in pairwise_kernel_functions:
         if filter_params:
