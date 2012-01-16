@@ -141,7 +141,7 @@ def test_weight():
                                  weights=[0.833, 0.167], random_state=0)
 
     X_ = sparse.csr_matrix(X_)
-    for clf in (linear_model.sparse.LogisticRegression(),
+    for clf in (linear_model.LogisticRegression(),
                 svm.LinearSVC(),
                 svm.sparse.SVC()):
         clf.fit(X_[:180], y_[:180], class_weight={0: 5})
@@ -210,7 +210,7 @@ def test_sparse_scale_C():
                (svm.NuSVR, svm.sparse.NuSVR, params),
                (svm.LinearSVC, svm.LinearSVC, {}),
                (linear_model.LogisticRegression,
-                    linear_model.sparse.LogisticRegression, {})
+                    linear_model.LogisticRegression, {})
               ]
 
     for klass, sparse_klass, this_params in klasses:

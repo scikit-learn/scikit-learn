@@ -3,21 +3,23 @@ import numpy as np
 from ..base import ClassifierMixin
 from ..linear_model.base import CoefSelectTransformerMixin
 from ..svm.base import BaseLibLinear
-from ..svm import liblinear
+from ..svm.liblinear import csr_predict_prob, predict_prob_wrap
 
 
 class LogisticRegression(BaseLibLinear, ClassifierMixin,
                          CoefSelectTransformerMixin):
-    """Logistic Regression classifier.
+    """Logistic Regression (aka logit, MaxEnt) classifier.
 
     In the multiclass case, the training algorithm uses a one-vs.-all (OvA)
-    scheme, rather than the "true" multinomial LR (aka maximum entropy/MaxEnt).
+    scheme, rather than the "true" multinomial LR.
+
     This class implements L1 and L2 regularized logistic regression using the
-    `liblinear` library.
+    `liblinear` library. It can handle both dense and sparse input. Use
+    C-ordered arrays or CSR matrices containing 64-bit floats for optimal
+    performance; any other input format will be converted (and copied).
 
     Parameters
     ----------
-
     penalty : string, 'l1' or 'l2'
         Used to specify the norm used in the penalization
 
@@ -54,7 +56,6 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin,
 
     Attributes
     ----------
-
     `coef_` : array, shape = [n_classes-1, n_features]
         Coefficient of the features in the decision function.
 
@@ -108,13 +109,21 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin,
             the model, where classes are ordered by arithmetical
             order.
         """
-        X = np.asarray(X, dtype=np.float64, order='C')
-        probas = liblinear.predict_prob_wrap(X, self.raw_coef_,
-                                      self._get_solver_type(),
-                                      self.tol, self.C,
+        X = self._validate_for_predict(X)
+
+        solver = self._get_solver_type()
+
+        if self._sparse:
+            probas = csr_predict_prob(X.shape[1], X.data, X.indices, X.indptr,
+                                      self.raw_coef_, solver, self.tol, self.C,
                                       self.class_weight_label,
-                                      self.class_weight, self.label_,
-                                      self._get_bias())
+                                      self.class_weight,
+                                      self.label_, self._get_bias())
+        else:
+            probas = predict_prob_wrap(X, self.raw_coef_, solver, self.tol,
+                                       self.C, self.class_weight_label,
+                                       self.class_weight, self.label_,
+                                       self._get_bias())
         return probas[:, np.argsort(self.label_)]
 
     def predict_log_proba(self, X):
