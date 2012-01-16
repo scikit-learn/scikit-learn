@@ -458,6 +458,7 @@ For dense data
 
    linear_model.LinearRegression
    linear_model.Ridge
+   linear_model.RidgeClassifier
    linear_model.RidgeCV
    linear_model.Lasso
    linear_model.LassoCV
