@@ -12,6 +12,7 @@ import unittest
 from nose.tools import raises
 from nose.tools import assert_raises, assert_true, assert_equal
 
+
 class SparseSGDClassifier(SGDClassifier):
 
     def fit(self, X, y, *args, **kw):
@@ -25,6 +26,7 @@ class SparseSGDClassifier(SGDClassifier):
     def decision_function(self, X, *args, **kw):
         X = sp.csr_matrix(X)
         return SGDClassifier.decision_function(self, X, *args, **kw)
+
 
 class SparseSGDRegressor(SGDRegressor):
 
@@ -405,7 +407,6 @@ class DenseSGDClassifierTestCase(unittest.TestCase):
         # check that coef_ haven't been re-allocated
         assert_true(id1, id2)
 
-
     def _test_partial_fit_equal_fit(self, lr):
         for X_, Y_, T_ in ((X, Y, T), (X2, Y2, T2)):
             clf = self.factory(alpha=0.01, eta0=0.01, n_iter=2,
@@ -432,6 +433,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase):
 
     def test_partial_fit_equal_fit_invscaling(self):
         self._test_partial_fit_equal_fit("invscaling")
+
 
 class SparseSGDClassifierTestCase(DenseSGDClassifierTestCase):
     """Run exactly the same tests using the sparse representation variant"""

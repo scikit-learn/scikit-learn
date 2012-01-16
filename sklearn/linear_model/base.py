@@ -34,6 +34,7 @@ from ..utils import array2d, as_float_array, safe_asarray
 ### should be squashed into its respective objects.
 ###
 
+
 class LinearModel(BaseEstimator, RegressorMixin):
     """Base class for Linear Models"""
 
@@ -179,6 +180,7 @@ class LinearRegression(LinearModel):
 ##
 ## Stochastic Gradient Descent (SGD) abstract base class
 ##
+
 
 class BaseSGD(BaseEstimator):
     """Base class for dense and sparse SGD."""
