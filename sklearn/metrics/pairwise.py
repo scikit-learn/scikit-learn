@@ -516,7 +516,15 @@ def kernel_metrics():
     return pairwise_kernel_functions
 
 
-def pairwise_kernels(X, Y=None, metric="linear", **kwds):
+kernel_params = {
+    "rbf": set(("gamma",)),
+    "sigmoid": set(("gamma", "coef0")),
+    "polynomial": set(("gamma", "degree", "coef0")),
+    "linear": ()
+}
+
+
+def pairwise_kernels(X, Y=None, metric="linear", filter_params=False, **kwds):
     """ Compute the kernel between arrays X and optional array Y.
 
     This method takes either a vector array or a kernel matrix, and returns
@@ -553,6 +561,9 @@ def pairwise_kernels(X, Y=None, metric="linear", **kwds):
         should take two arrays from X as input and return a value indicating
         the distance between them.
 
+    filter_params: boolean
+        Whether to filter invalid parameters or not.
+
     `**kwds` : optional keyword parameters
         Any further parameters are passed directly to the kernel function.
 
@@ -570,6 +581,9 @@ def pairwise_kernels(X, Y=None, metric="linear", **kwds):
             raise ValueError("X is not square!")
         return X
     elif metric in pairwise_kernel_functions:
+        if filter_params:
+            kwds = dict((k, kwds[k]) for k in kwds \
+                                        if k in kernel_params[metric])
         return pairwise_kernel_functions[metric](X, Y, **kwds)
     elif callable(metric):
         # Check matrices first (this is usually done by the metric).
