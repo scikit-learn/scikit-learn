@@ -520,6 +520,7 @@ kernel_params = {
     "rbf": set(("gamma",)),
     "sigmoid": set(("gamma", "coef0")),
     "polynomial": set(("gamma", "degree", "coef0")),
+    "poly": set(("gamma", "degree", "coef0")),
     "linear": ()
 }
 
