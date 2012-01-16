@@ -36,6 +36,17 @@ def configuration(parent_package='', top_path=None):
          **blas_info
          )
 
+    config.add_library(
+        'MurmurHash3',
+        sources=[join('src', 'MurmurHash3.cpp')],
+        depends=[join('src', 'MurmurHash3.h')])
+
+    config.add_extension(
+        'murmurhash',
+        sources=['murmurhash.c'],
+        libraries=['MurmurHash3'],
+        include_dirs=['src'])
+
     config.add_extension('graph_shortest_path',
          sources=['graph_shortest_path.c'],
          include_dirs=[numpy.get_include()])
