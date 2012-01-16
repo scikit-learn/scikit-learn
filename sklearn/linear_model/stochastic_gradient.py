@@ -24,7 +24,10 @@ from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
 
 def _tocsr(X):
     """Convert X to CSR matrix, preventing a copy if possible"""
-    return X.tocsr() if sp.issparse(X) else sp.csr_matrix(X)
+    if sp.isspmatrix_csr(X) and X.dtype == np.float64:
+        return X
+    else:
+        return sp.csr_matrix(X, dtype=np.float64)
 
 
 class SGDClassifier(BaseSGD, ClassifierMixin):
@@ -204,7 +207,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
     def _partial_fit(self, X, y, n_iter, classes=None,
                      class_weight=None, sample_weight=None):
         X = safe_asarray(X, dtype=np.float64, order="C")
-        y = np.asarray(y, dtype=np.float64)
+        y = np.asarray(y)
 
         n_samples, n_features = X.shape
         self._check_fit_data(X, y)
@@ -213,7 +216,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
             raise ValueError("classes must be passed on the first call "
                              "to partial_fit.")
         elif classes is not None and self.classes_ is not None:
-            if not np.array_equal(self.classes_, np.unique(classes)):
+            if not np.all(self.classes_ == np.unique(classes)):
                 raise ValueError("`classes` is not the same as on last call "
                                  "to partial_fit.")
         elif classes is not None:
@@ -261,7 +264,6 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
             This argument is required for the first call to partial_fit
             and can be omitted in the subsequent calls.
             Note that y doesn't need to contain all labels in `classes`.
-
 
         class_weight : dict, {class_label : weight} or "auto"
             Weights associated with classes.
@@ -319,13 +321,13 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
         self : returns an instance of self.
         """
         X = safe_asarray(X, dtype=np.float64, order="C")
-        y = np.asarray(y, dtype=np.float64)
+        y = np.asarray(y)
 
         n_samples, n_features = X.shape
         self._check_fit_data(X, y)
 
-        # sort in asc order; largest class id is positive class
-        classes = np.unique(y).astype(np.int)
+        # np.unique sorts in asc order; largest class id is positive class
+        classes = np.unique(y)
         n_classes = classes.shape[0]
 
         # Allocate datastructures from input arguments
@@ -396,7 +398,6 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
         array, shape = [n_samples] if n_classes == 2 else [n_samples,
         n_classes]
             Contains the membership probabilities of the positive class.
-
         """
         if len(self.classes_) != 2:
             raise NotImplementedError("predict_(log_)proba only supported"
@@ -409,11 +410,15 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
 
     def _fit_binary(self, X, y, sample_weight, n_iter):
         if sp.issparse(X):
-            fit_binary = self._fit_binary_sparse
+            X = _tocsr(X)
+            fit_binary = _fit_binary_sparse
         else:
-            fit_binary = self._fit_binary_dense
+            fit_binary = _fit_binary_dense
 
-        coef, intercept = fit_binary(X, y, sample_weight, n_iter)
+        coef, intercept = fit_binary(self, 1, X, y, n_iter,
+                                     self._expanded_class_weight[1],
+                                     self._expanded_class_weight[0],
+                                     sample_weight)
 
         # need to be 2d
         self.coef_ = coef.reshape(1, -1)
@@ -421,137 +426,77 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
         self.intercept_ = np.atleast_1d(intercept)
 
     def _fit_multiclass(self, X, y, sample_weight, n_iter):
-        if sp.issparse(X):
-            fit_multi = self._fit_multiclass_sparse
-        else:
-            fit_multi = self._fit_multiclass_dense
-
-        for i, coef, intercept in fit_multi(X, y, sample_weight, n_iter):
-            self.coef_[i] = coef
-            self.intercept_[i] = intercept
-
-    def _fit_binary_dense(self, X, y, sample_weight, n_iter):
-        """Fit a single binary classifier"""
-        # encode original class labels as 1 (classes[1]) or -1 (classes[0]).
-        y_new = np.ones(y.shape, dtype=np.float64, order='C') * -1.0
-        y_new[y == self.classes_[1]] = 1.0
-        y = y_new
-
-        return plain_sgd_dense(self.coef_.ravel(),
-                               self.intercept_[0],
-                               self.loss_function,
-                               self.penalty_type,
-                               self.alpha, self.rho,
-                               X, y,
-                               n_iter,
-                               int(self.fit_intercept),
-                               int(self.verbose),
-                               int(self.shuffle),
-                               self.seed,
-                               self._expanded_class_weight[1],
-                               self._expanded_class_weight[0],
-                               sample_weight,
-                               self.learning_rate_code,
-                               self.eta0,
-                               self.power_t,
-                               self.t_)
-
-    def _fit_multiclass_dense(self, X, y, sample_weight, n_iter):
         """Fit a multi-class classifier by combining binary classifiers
 
         Each binary classifier predicts one class versus all others. This
         strategy is called OVA: One Versus All.
         """
-        # Use joblib to run OVA in parallel.
-        return Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
-            delayed(_train_ova_classifier_ds)(i, c, X, y, self, n_iter,
-                                              self._expanded_class_weight[i],
-                                              sample_weight)
-            for i, c in enumerate(self.classes_))
+        if sp.issparse(X):
+            X = _tocsr(X)
+            fit_binary = _fit_binary_sparse
+        else:
+            fit_binary = _fit_binary_dense
 
-    def _fit_binary_sparse(self, X, y, sample_weight, n_iter):
-        """Fit a binary classifier."""
-        X = _tocsr(X)
+        # Use joblib to fit OvA in parallel
+        result = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
+            delayed(fit_binary)(self, i, X, y, n_iter,
+                                self._expanded_class_weight[i], 1.,
+                                sample_weight)
+            for i in xrange(len(self.classes)))
 
-        # encode original class labels as 1 (classes[1]) or -1 (classes[0]).
-        y_new = np.ones(y.shape, dtype=np.float64, order="C") * -1.0
-        y_new[y == self.classes_[1]] = 1.0
-        y = y_new
-
-        # get sparse matrix datastructures
-        X_data = np.asarray(X.data, dtype=np.float64, order="C")
-        X_indices = np.asarray(X.indices, dtype=np.int32, order="C")
-        X_indptr = np.asarray(X.indptr, dtype=np.int32, order="C")
-
-        return plain_sgd_sparse(self.coef_.ravel(),
-                                self.intercept_[0],
-                                self.loss_function,
-                                self.penalty_type,
-                                self.alpha, self.rho,
-                                X_data, X_indices, X_indptr, y,
-                                n_iter,
-                                int(self.fit_intercept),
-                                int(self.verbose),
-                                int(self.shuffle),
-                                int(self.seed),
-                                self._expanded_class_weight[1],
-                                self._expanded_class_weight[0],
-                                sample_weight,
-                                self.learning_rate_code,
-                                self.eta0, self.power_t, self.t_)
-
-    def _fit_multiclass_sparse(self, X, y, sample_weight, n_iter):
-        """Fit a multi-class classifier as a combination of binary classifiers
-
-        Each binary classifier predicts one class versus all others
-        (OVA: One Versus All).
-        """
-        X = _tocsr(X)
-
-        # get sparse matrix datastructures
-        X_data = np.asarray(X.data, dtype=np.float64, order="C")
-        X_indices = np.asarray(X.indices, dtype=np.int32, order="C")
-        X_indptr = np.asarray(X.indptr, dtype=np.int32, order="C")
-
-        return Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
-            delayed(_train_ova_classifier_sp)(i, c, X_data, X_indices,
-                                              X_indptr, y, self, n_iter,
-                                              self._expanded_class_weight[i],
-                                              sample_weight)
-            for i, c in enumerate(self.classes_))
+        for i, (coef, intercept) in enumerate(result):
+            self.coef_[i] = coef
+            self.intercept_[i] = intercept
 
 
-def _train_ova_classifier_ds(i, c, X, y, est, n_iter,
-                             class_weight_pos, sample_weight):
-    """Inner loop for one-vs-all scheme."""
-    y_i = np.ones(y.shape, dtype=np.float64, order='C') * -1.0
-    y_i[y == c] = 1.0
-    coef, intercept = plain_sgd_dense(est.coef_[i], est.intercept_[i],
-                                      est.loss_function, est.penalty_type,
-                                      est.alpha, est.rho,
-                                      X, y_i, n_iter, est.fit_intercept,
-                                      est.verbose, est.shuffle, est.seed,
-                                      class_weight_pos, 1.0, sample_weight,
-                                      est.learning_rate_code, est.eta0,
-                                      est.power_t, est.t_)
-    return (i, coef, intercept)
+def _prepare_fit_binary(est, y, i):
+    """Common initialization for _fit_binary_{dense,sparse}.
+
+    Returns y, coef, intercept.
+    """
+    y_i = np.ones(y.shape, dtype=np.float64, order="C")
+    y_i[y != est.classes[i]] = -1.0
+
+    if len(est.classes) == 2:
+        coef = est.coef_.ravel()
+        intercept = est.intercept_[0]
+    else:
+        coef = est.coef_[i]
+        intercept = est.intercept_[i]
+
+    return y_i, coef, intercept
 
 
-def _train_ova_classifier_sp(i, c, X_data, X_indices, X_indptr, y, est,
-                             n_iter, class_weight_pos, sample_weight):
-    """Inner loop for One-vs.-All scheme"""
-    y_i = np.ones(y.shape, dtype=np.float64, order='C') * -1.0
-    y_i[y == c] = 1.0
-    coef, intercept = plain_sgd_sparse(est.coef_[i], est.intercept_[i],
-                                       est.loss_function, est.penalty_type,
-                                       est.alpha, est.rho, X_data, X_indices,
-                                       X_indptr, y_i, n_iter,
-                                       est.fit_intercept, est.verbose,
-                                       est.shuffle, est.seed,
-                                       class_weight_pos, 1.0,
-                                       sample_weight, est.learning_rate_code,
-                                       est.eta0, est.power_t, est.t_)
-    return (i, coef, intercept)
+def _fit_binary_dense(est, i, X, y, n_iter, pos_weight, neg_weight,
+                      sample_weight):
+    """Fit a single binary classifier.
+
+    The i'th class is considered the "positive" class.
+    """
+    y_i, coef, intercept = _prepare_fit_binary(est, y, i)
+    return plain_sgd_dense(coef, intercept, est.loss_function,
+                           est.penalty_type, est.alpha, est.rho,
+                           X, y_i, n_iter, est.fit_intercept,
+                           est.verbose, est.shuffle, est.seed,
+                           pos_weight, neg_weight, sample_weight,
+                           est.learning_rate_code, est.eta0,
+                           est.power_t, est.t_)
+
+
+def _fit_binary_sparse(est, i, X, y, n_iter, pos_weight, neg_weight,
+                      sample_weight):
+    """Fit a single binary classifier.
+
+    The i'th class is considered the "positive" class.
+    """
+    y_i, coef, intercept = _prepare_fit_binary(est, y, i)
+    return plain_sgd_sparse(coef, intercept, est.loss_function,
+                            est.penalty_type, est.alpha, est.rho,
+                            X.data, X.indices, X.indptr, y_i, n_iter,
+                            est.fit_intercept, est.verbose, est.shuffle,
+                            est.seed, pos_weight, neg_weight, sample_weight,
+                            est.learning_rate_code, est.eta0,
+                            est.power_t, est.t_)
 
 
 class SGDRegressor(BaseSGD, RegressorMixin):
@@ -820,17 +765,12 @@ class SGDRegressor(BaseSGD, RegressorMixin):
         # interpret X as CSR matrix
         X = _tocsr(X)
 
-        # get sparse matrix datastructures
-        X_data = np.asarray(X.data, dtype=np.float64, order="C")
-        X_indices = np.asarray(X.indices, dtype=np.int32, order="C")
-        X_indptr = np.asarray(X.indptr, dtype=np.int32, order="C")
-
         return plain_sgd_sparse(self.coef_,
                                 self.intercept_,
                                 self.loss_function,
                                 self.penalty_type,
                                 self.alpha, self.rho,
-                                X_data, X_indices, X_indptr, y,
+                                X.data, X.indices, X.indptr, y,
                                 n_iter,
                                 int(self.fit_intercept),
                                 int(self.verbose),

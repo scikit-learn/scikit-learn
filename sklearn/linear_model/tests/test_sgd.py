@@ -53,13 +53,13 @@ Y = [1, 1, 1, 2, 2, 2]
 T = np.array([[-1, -1], [2, 2], [3, 2]])
 true_result = [1, 2, 2]
 
-# test sample 2
+# test sample 2; string class labels
 X2 = np.array([[-1, 1], [-0.75, 0.5], [-1.5, 1.5],
                [1, 1], [0.75, 0.5], [1.5, 1.5],
                [-1, -1], [0, -0.5], [1, -1]])
-Y2 = [1, 1, 1, 2, 2, 2, 3, 3, 3]
+Y2 = ["one"] * 3 + ["two"] * 3 + ["three"] * 3
 T2 = np.array([[-1.5, 0.5], [1, 2], [0, -2]])
-true_result2 = [1, 2, 3]
+true_result2 = ["one", "two", "three"]
 
 # test sample 3
 X3 = np.array([[1, 1, 0, 0, 0, 0], [1, 1, 0, 0, 0, 0],
