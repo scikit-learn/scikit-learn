@@ -1,6 +1,6 @@
-
 from ...base import ClassifierMixin, RegressorMixin
-from .base import SparseBaseLibSVM, SparseBaseLibLinear
+from ..base import BaseLibLinear
+from .base import SparseBaseLibSVM
 from ...linear_model.sparse.base import CoefSelectTransformerMixin
 
 
@@ -167,8 +167,7 @@ class OneClassSVM(SparseBaseLibSVM):
             X, [], class_weight=class_weight, sample_weight=sample_weight)
 
 
-class LinearSVC(SparseBaseLibLinear, ClassifierMixin,
-                CoefSelectTransformerMixin):
+class LinearSVC(BaseLibLinear, ClassifierMixin, CoefSelectTransformerMixin):
     """Linear Support Vector Classification, Sparse Version
 
     Similar to SVC with parameter kernel='linear', but uses internally

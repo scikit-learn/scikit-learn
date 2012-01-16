@@ -9,12 +9,12 @@ import numpy as np
 import scipy.sparse as sp
 
 from ...base import ClassifierMixin
-from ...svm.sparse.base import SparseBaseLibLinear
+from ...svm.base import BaseLibLinear
 from ...linear_model.sparse.base import CoefSelectTransformerMixin
 from ...svm.liblinear import csr_predict_prob
 
 
-class LogisticRegression(SparseBaseLibLinear, ClassifierMixin,
+class LogisticRegression(BaseLibLinear, ClassifierMixin,
                          CoefSelectTransformerMixin):
     """
     Logistic Regression.
