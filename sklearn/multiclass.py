@@ -96,13 +96,13 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin):
 
     Attributes
     ----------
-    estimators_ : list of `n_classes` estimators
+    `estimators_` : list of `n_classes` estimators
         Estimators used for predictions.
 
-    label_binarizer_ : LabelBinarizer object
+    `label_binarizer_` : LabelBinarizer object
         Object used to transform multiclass labels to binary labels and
         vice-versa.
-    multilabel_ : boolean
+    `multilabel_` : boolean
         Whether a OneVsRestClassifier is a multilabel classifier.
     """
 
@@ -309,7 +309,7 @@ def fit_ecoc(estimator, X, y, code_size=1.5, random_state=None):
     classes : numpy array of shape [n_classes]
         Array containing labels.
 
-    code_book_: numpy array of shape [n_classes, code_size]
+    `code_book_`: numpy array of shape [n_classes, code_size]
         Binary array containing the code of each class.
     """
     _check_estimator(estimator)

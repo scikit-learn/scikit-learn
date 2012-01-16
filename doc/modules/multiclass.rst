@@ -32,10 +32,13 @@ improves.
     multiclass classification out-of-the-box. Below is a summary of the
     classifiers supported in scikit-learn grouped by the strategy used.
 
-    - Inherently multiclass: Naive Bayes, :class:`LDA`.
-    - One-Vs-One: :class:`SVC`.
-    - One-Vs-All: :class:`LinearSVC`, :class:`LogisticRegression`,
-      :class:`SGDClassifier`, :class:`RidgeClassifier`.
+    - Inherently multiclass: :ref:`Naive Bayes <naive_bayes>`, :class:`sklearn.lda.LDA`,
+      :ref:`Decision Trees <tree>`, :ref:`Random Forests <forest>`
+    - One-Vs-One: :class:`sklearn.svm.SVC`.
+    - One-Vs-All: :class:`sklearn.svm.LinearSVC`,
+      :class:`sklearn.linear_model.LogisticRegression`,
+      :class:`sklearn.linear_model.SGDClassifier`,
+      :class:`sklearn.linear_model.RidgeClassifier`.
 
 .. note::
 
@@ -72,7 +75,7 @@ fair default choice. Below is an example::
 Multilabel learning with OvR
 ----------------------------
 
-``OneVsRestClassifier`` also supports multilabel classification.
+:class:`OneVsRestClassifier` also supports multilabel classification.
 To use this feature, feed the classifier a list of tuples containing
 target labels, like in the example below.
 
