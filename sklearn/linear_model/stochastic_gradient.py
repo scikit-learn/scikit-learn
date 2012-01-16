@@ -319,13 +319,13 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
         self : returns an instance of self.
         """
         X = safe_asarray(X, dtype=np.float64, order="C")
-        y = np.asarray(y, dtype=np.int)
+        y = np.asarray(y, dtype=np.float64)
 
         n_samples, n_features = X.shape
         self._check_fit_data(X, y)
 
         # sort in asc order; largest class id is positive class
-        classes = np.unique(y)
+        classes = np.unique(y).astype(np.int)
         n_classes = classes.shape[0]
 
         # Allocate datastructures from input arguments
