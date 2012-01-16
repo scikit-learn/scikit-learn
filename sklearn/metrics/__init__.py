@@ -8,7 +8,7 @@ from .metrics import confusion_matrix, roc_curve, auc, precision_score, \
                 precision_recall_fscore_support, classification_report, \
                 precision_recall_curve, explained_variance_score, r2_score, \
                 zero_one, mean_square_error, hinge_loss, \
-                matthews_correlation_coefficient
+                mcc_score
 
 from . import cluster
 from .cluster import adjusted_rand_score

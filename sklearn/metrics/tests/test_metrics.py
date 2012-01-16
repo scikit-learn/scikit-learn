@@ -23,7 +23,7 @@ from ..metrics import recall_score
 from ..metrics import roc_curve
 from ..metrics import zero_one
 from ..metrics import hinge_loss
-
+from ..metrics import mcc_score
 
 def make_prediction(dataset=None, binary=False):
     """Make some classification predictions on a toy dataset using a SVC
@@ -84,6 +84,13 @@ def test_roc_curve_multi():
     y_true, _, probas_pred = make_prediction(binary=False)
 
     fpr, tpr, thresholds = roc_curve(y_true, probas_pred)
+
+@raises(ValueError)
+def test_mcc_score_multi():
+    """mcc_score not applicable for multi-class problems"""
+    y_true, y_pred, _ = make_prediction(binary=False)
+
+    mcc = mcc_score(y_true, y_pred)
 
 
 def test_roc_curve_confidence():
@@ -289,13 +296,19 @@ def test_losses():
     assert_almost_equal(r2_score(y_true, y_pred), -0.04, 2)
     assert_almost_equal(r2_score(y_true, y_true), 1.00, 2)
 
+    assert_almost_equal(mcc_score(y_true, y_pred), 0.48, 2)
+    assert_almost_equal(mcc_score(y_true, y_true), 1.00, 2)
+
 
 def test_losses_at_limits():
     # test limit cases
     assert_almost_equal(mean_square_error([0.], [0.]), 0.00, 2)
     assert_almost_equal(explained_variance_score([0.], [0.]), 1.00, 2)
     assert_almost_equal(r2_score([0.], [0.]), 1.00, 2)
+    assert_almost_equal(mcc_score([0., 1.], [1., 0.]), -1.00, 2)
 
+    # assymetry, tp + fp = 0 will trigger zero in denominator
+    assert_almost_equal(mcc_score([1, 0, 1], [0, 0, 0]), 0., 2)
 
 def test_symmetry():
     """Test the symmetry of score and loss functions"""
