@@ -10,7 +10,7 @@ import scipy.sparse as sp
 
 from ...base import ClassifierMixin
 from ...svm.base import BaseLibLinear
-from ...linear_model.sparse.base import CoefSelectTransformerMixin
+from ...linear_model.base import CoefSelectTransformerMixin
 from ...svm.liblinear import csr_predict_prob
 
 
