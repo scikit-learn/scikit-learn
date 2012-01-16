@@ -12,18 +12,18 @@ generalizability / robustness over a single model.
 
 Two families of ensemble methods are usually distinguished:
 
-  - In *averaging methods*, the driving principle is to build several models
-    independently and then to average their predictions. On average, the
-    combined model is usually better than any of the single model because
-    its variance is reduced.
+- In *averaging methods*, the driving principle is to build several models
+  independently and then to average their predictions. On average, the
+  combined model is usually better than any of the single model because
+  its variance is reduced.
 
-    **Examples:** Bagging methods, :ref:`Forests of randomized trees <forest>`, ...
+  **Examples:** Bagging methods, :ref:`Forests of randomized trees <forest>`, ...
 
-  - By contrast, in *boosting methods*, models are built sequentially and one
-    tries to reduce the bias of the combined model. The motivation is to combine
-    several weak models to produce a powerful ensemble.
+- By contrast, in *boosting methods*, models are built sequentially and one
+  tries to reduce the bias of the combined model. The motivation is to combine
+  several weak models to produce a powerful ensemble.
 
-    **Examples:** AdaBoost, Least Squares Boosting, Gradient Tree Boosting, ...
+  **Examples:** AdaBoost, Least Squares Boosting, Gradient Tree Boosting, ...
 
 
 .. _forest:
@@ -106,9 +106,14 @@ slightly greater increase in bias::
     >>> scores.mean() > 0.999
     True
 
+.. figure:: ../auto_examples/ensemble/images/plot_forest_iris_1.png
+    :target: ../auto_examples/ensemble/plot_forest_iris.html
+    :align: center
+    :scale: 75%
 
 Parameters
 ----------
+
 The main parameters to adjust when using these methods is ``n_estimators`` and
 ``max_features``. The former is the number of trees in the forest. The larger
 the better, but also the longer it will take to compute. In addition, note that
@@ -151,9 +156,9 @@ time (e.g., on large datasets).
 
 .. topic:: References
 
-.. [B2001] Leo Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
+ .. [B2001] Leo Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
 
-.. [B1998] Leo Breiman, "Arcing Classifiers", Annals of Statistics 1998.
+ .. [B1998] Leo Breiman, "Arcing Classifiers", Annals of Statistics 1998.
 
-.. [GEW2006] Pierre Geurts, Damien Ernst., and Louis Wehenkel, "Extremely randomized
+ .. [GEW2006] Pierre Geurts, Damien Ernst., and Louis Wehenkel, "Extremely randomized
    trees", Machine Learning, 63(1), 3-42, 2006.
