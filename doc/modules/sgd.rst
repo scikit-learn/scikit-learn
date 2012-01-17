@@ -81,7 +81,7 @@ the model parameters::
 Member `intercept_` holds the intercept (aka offset or bias)::
 
     >>> clf.intercept_                                    # doctest: +ELLIPSIS
-    array(-9.990...)
+    array([-9.990...])
 
 Whether or not the model should use an intercept, i.e. a biased
 hyperplane, is controlled by the parameter `fit_intercept`.
