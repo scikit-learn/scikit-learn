@@ -5,6 +5,7 @@
 import numpy as np
 from sklearn.utils.murmurhash import murmurhash3_32
 from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_array_equal
 from nose.tools import assert_equal
 
 
@@ -20,6 +21,25 @@ def test_mmhash3_int():
     assert_equal(murmurhash3_32(3, positive=True), 847579505L)
     assert_equal(murmurhash3_32(3, seed=0, positive=True), 847579505L)
     assert_equal(murmurhash3_32(3, seed=42, positive=True), 2471885347L)
+
+
+def test_mmhash3_int_array():
+    rng = np.random.RandomState(42)
+    keys = rng.randint(-5342534, 345345, size=3 * 2 * 1).astype(np.int32)
+    keys = keys.reshape((3, 2, 1))
+
+    for seed in [0, 42]:
+        expected = np.array([murmurhash3_32(int(k), seed)
+                             for k in keys.flat])
+        expected = expected.reshape(keys.shape)
+        assert_array_equal(murmurhash3_32(keys, seed), expected)
+
+    for seed in [0, 42]:
+        expected = np.array([murmurhash3_32(int(k), seed, positive=True)
+                             for k in keys.flat])
+        expected = expected.reshape(keys.shape)
+        assert_array_equal(murmurhash3_32(keys, seed, positive=True),
+                           expected)
 
 
 def test_mmhash3_bytes():
@@ -42,8 +62,8 @@ def test_no_collision_on_byte_range():
     previous_hashes = set()
     for i in range(100):
         h = murmurhash3_32(' ' * i, 0)
-        assert (h not in previous_hashes,
-                "Found collision on growing empty string")
+        assert h not in previous_hashes, \
+                "Found collision on growing empty string"
 
 
 def test_uniform_distribution():
