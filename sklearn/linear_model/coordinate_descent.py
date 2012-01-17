@@ -515,7 +515,7 @@ class LinearModelCV(LinearModel):
         y = np.asarray(y, dtype=np.float64)
 
         # All LinearModelCV parameters except 'cv' are acceptable
-        path_params = self._get_params()
+        path_params = self.get_params()
         del path_params['cv']
 
         # Start to compute path on full data

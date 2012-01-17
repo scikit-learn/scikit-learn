@@ -242,11 +242,11 @@ roll.
 
 .. |unstructured| image:: ../auto_examples/cluster/images/plot_ward_structured_vs_unstructured_1.png
         :target: ../auto_examples/cluster/plot_ward_structured_vs_unstructured.html
-        :scale: 50
+        :scale: 49
 
 .. |structured| image:: ../auto_examples/cluster/images/plot_ward_structured_vs_unstructured_2.png
         :target: ../auto_examples/cluster/plot_ward_structured_vs_unstructured.html
-        :scale: 50
+        :scale: 49
 
 .. centered:: |unstructured| |structured|
 

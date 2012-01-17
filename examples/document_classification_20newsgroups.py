@@ -34,7 +34,7 @@ from sklearn.feature_extraction.text import Vectorizer
 from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.linear_model import RidgeClassifier
 from sklearn.svm import LinearSVC
-from sklearn.linear_model.sparse import SGDClassifier
+from sklearn.linear_model import SGDClassifier
 from sklearn.naive_bayes import BernoulliNB, MultinomialNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.utils.extmath import density

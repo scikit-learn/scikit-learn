@@ -147,7 +147,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         if rank < n_features:
             warnings.warn("Variables are collinear")
         # Scaling of within covariance is: V' 1/S
-        scaling = (scaling * V.T[:, :rank].T).T / S[:rank]
+        scaling = (scaling * V[:rank]).T / S[:rank]
 
         ## ----------------------------
         ## 3) Between variance scaling

@@ -200,7 +200,7 @@ class DenseBaseLibSVM(BaseLibSVM):
             self.gamma = 1.0 / X.shape[1]
         self.shape_fit_ = X.shape
 
-        params = self._get_params()
+        params = self.get_params()
         if 'scale_C' in params:
             if params['scale_C']:
                 params['C'] = params['C'] / float(X.shape[0])
@@ -250,7 +250,7 @@ class DenseBaseLibSVM(BaseLibSVM):
                              "the number of features at training time" %
                              (n_features, self.shape_fit_[1]))
 
-        params = self._get_params()
+        params = self.get_params()
         if 'scale_C' in params:
             del params['scale_C']
 
@@ -297,7 +297,7 @@ class DenseBaseLibSVM(BaseLibSVM):
             raise NotImplementedError("predict_proba only implemented for SVC "
                                       "and NuSVC")
 
-        params = self._get_params()
+        params = self.get_params()
         if 'scale_C' in params:
             del params['scale_C']
 
@@ -329,7 +329,7 @@ class DenseBaseLibSVM(BaseLibSVM):
             X = np.reshape(X, (1, -1), order='C')
         X = self._compute_kernel(X)
 
-        params = self._get_params()
+        params = self.get_params()
         if 'scale_C' in params:
             del params['scale_C']
 
