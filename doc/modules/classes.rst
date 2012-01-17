@@ -504,7 +504,7 @@ For sparse data
    linear_model.sparse.ElasticNet
    linear_model.sparse.SGDClassifier
    linear_model.sparse.SGDRegressor
-   linear_model.sparse.LogisticRegression
+   linear_model.LogisticRegression
 
 
 .. _manifold_ref:
@@ -856,7 +856,7 @@ For sparse data
    svm.sparse.SVR
    svm.sparse.NuSVR
    svm.sparse.OneClassSVM
-   svm.sparse.LinearSVC
+   svm.LinearSVC
 
 Low-level methods
 -----------------

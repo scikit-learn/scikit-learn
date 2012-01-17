@@ -345,4 +345,9 @@ class CoefSelectTransformerMixin(TransformerMixin):
             # multi-class case
             coef = np.mean(self.coef_, axis=0)
 
-        return X[:, coef > threshold]
+        if sp.isspmatrix(X):
+            X = X.tocsc()
+            ind = np.arange(X.shape[1])
+            return X[:, ind[coef > threshold]]
+        else:
+            return X[:, coef > threshold]
