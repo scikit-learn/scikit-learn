@@ -57,7 +57,7 @@ def test_clone():
     selector = SelectFpr(f_classif, alpha=0.1)
     new_selector = clone(selector)
     assert_true(selector is not new_selector)
-    assert_equal(selector._get_params(), new_selector._get_params())
+    assert_equal(selector.get_params(), new_selector.get_params())
 
 
 def test_clone_2():
@@ -113,8 +113,8 @@ def test_str():
 def test_get_params():
     test = T(K(), K())
 
-    assert_true('a__d' in test._get_params(deep=True))
-    assert_true('a__d' not in test._get_params(deep=False))
+    assert_true('a__d' in test.get_params(deep=True))
+    assert_true('a__d' not in test.get_params(deep=False))
 
     test.set_params(a__d=2)
     assert test.a.d == 2
