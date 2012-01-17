@@ -442,7 +442,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
             delayed(fit_binary)(self, i, X, y, n_iter,
                                 self._expanded_class_weight[i], 1.,
                                 sample_weight)
-            for i in xrange(len(self.classes)))
+            for i in xrange(len(self.classes_)))
 
         for i, (coef, intercept) in enumerate(result):
             self.coef_[i] = coef
@@ -455,9 +455,9 @@ def _prepare_fit_binary(est, y, i):
     Returns y, coef, intercept.
     """
     y_i = np.ones(y.shape, dtype=np.float64, order="C")
-    y_i[y != est.classes[i]] = -1.0
+    y_i[y != est.classes_[i]] = -1.0
 
-    if len(est.classes) == 2:
+    if len(est.classes_) == 2:
         coef = est.coef_.ravel()
         intercept = est.intercept_[0]
     else:
