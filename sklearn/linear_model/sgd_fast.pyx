@@ -51,7 +51,7 @@ cdef class LossFunction:
     cpdef double dloss(self, double p, double y):
         """Evaluate the derivative of the loss function with respect to
         the prediction `p`.
-        
+
         Parameters
         ----------
         p : double
@@ -220,7 +220,8 @@ def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
               double weight_pos, double weight_neg,
               np.ndarray[np.float64_t, ndim=1, mode='c'] sample_weight,
               int learning_rate, double eta0,
-              double power_t):
+              double power_t,
+              double t=1.0):
     """Cython impl. of SGD for generic loss functions and penalties
 
     This implementation assumes X represented as a dense array of floats.
@@ -269,6 +270,10 @@ def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
         The initial learning rate.
     power_t : double
         The exponent for inverse scaling learning rate.
+    t : double
+        Initial state of the learning rate. This value is equal to the
+        iteration count except when the learning rate is set to `optimal`.
+        Default: 1.0.
 
     Returns
     -------
@@ -306,7 +311,6 @@ def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
     cdef double update = 0.0
     cdef double sumloss = 0.0
     cdef double wnorm = 0.0
-    cdef double t = 0.0
     cdef double y = 0.0
     cdef double class_weight = 1.0
     cdef unsigned int count = 0
@@ -327,19 +331,7 @@ def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
     elif penalty_type == L1:
         rho = 0.0
 
-    cdef double typw = sqrt(1.0 / sqrt(alpha))
-
-    if learning_rate == OPTIMAL:
-        # computing eta0, the initial learning rate
-        eta0 = typw / max(1.0, loss.dloss(-typw, 1.0))
-    else:
-        eta = eta0
-
-    if learning_rate == OPTIMAL:
-        # initialize t such that eta at first example equals eta0
-        t = 1.0 / (eta0 * alpha)
-    else:
-        t = 1.0
+    eta = eta0
 
     t_start = time()
     for epoch in xrange(n_iter):
