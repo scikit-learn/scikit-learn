@@ -6,6 +6,7 @@
    Modified 2012:
 
    - Changes roles of +1 and -1 to match scikit API, Andreas Mueller
+        See issue 546: https://github.com/scikit-learn/scikit-learn/pull/546
    
  */
 
