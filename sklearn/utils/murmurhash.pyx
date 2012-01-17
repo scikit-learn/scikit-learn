@@ -15,11 +15,6 @@ and can be found here:
 # License: BSD Style.
 
 
-cdef extern from "MurmurHash3.h":
-    void MurmurHash3_x86_32(void* key, int len, unsigned int seed,
-                            void* out)
-
-
 cpdef unsigned int murmurhash3_32_int_uint(int key, unsigned int seed):
     cdef unsigned int out
     MurmurHash3_x86_32(&key, sizeof(int), seed, &out)
