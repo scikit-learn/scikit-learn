@@ -12,7 +12,6 @@ from sklearn.base import BaseEstimator
 from sklearn.grid_search import GridSearchCV
 from sklearn.datasets.samples_generator import make_classification
 from sklearn.svm import LinearSVC
-from sklearn.svm.sparse import LinearSVC as SparseLinearSVC
 from sklearn.metrics import f1_score, precision_score
 
 
@@ -71,7 +70,7 @@ def test_grid_search_sparse():
     C = cv.best_estimator_.C
 
     X_ = sp.csr_matrix(X_)
-    clf = SparseLinearSVC()
+    clf = LinearSVC()
     cv = GridSearchCV(clf, {'C': [0.1, 1.0]})
     cv.fit(X_[:180], y_[:180])
     y_pred2 = cv.predict(X_[180:])
@@ -92,7 +91,7 @@ def test_grid_search_sparse_score_func():
     C = cv.best_estimator_.C
 
     X_ = sp.csr_matrix(X_)
-    clf = SparseLinearSVC()
+    clf = LinearSVC()
     cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, score_func=f1_score)
     # XXX: set refit to False due to a random bug when True (default)
     cv.set_params(refit=False).fit(X_[:180], y_[:180])

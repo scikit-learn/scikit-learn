@@ -332,8 +332,7 @@ def test_bad_input():
     assert_raises(ValueError, clf.fit, X, Y2)
 
     # Test with arrays that are non-contiguous.
-    for clf in (svm.SVC(), svm.LinearSVC(), svm.sparse.SVC(),
-                svm.sparse.LinearSVC()):
+    for clf in (svm.SVC(), svm.LinearSVC(), svm.sparse.SVC()):
         Xf = np.asfortranarray(X)
         assert Xf.flags['C_CONTIGUOUS'] == False
         yf = np.ascontiguousarray(np.tile(Y, (2, 1)).T)

@@ -4,8 +4,12 @@
 
 0.11
 ====
-   - Merged dense and sparse implementations and added partial_fit to the
-     :ref:`sgd` module by `Mathieu Blondel`_.
+   - Merged dense and sparse implementations and added `partial_fit` (support
+     for online/minibatch learning) to the :ref:`sgd` module by
+     `Mathieu Blondel`_.
+
+   - Dense and sparse implementations of :class:`svm.LinearSVC` and
+     :class:`linear_model.LogisticRegression` merged by `Lars Buitinck`_.
 
    - Regressors can now be used as base estimator in the :ref:`multiclass`
      module by `Mathieu Blondel`_.
