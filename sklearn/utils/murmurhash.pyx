@@ -80,7 +80,7 @@ def murmurhash3_32(key, seed=0, positive=False):
 
     Parameters
     ----------
-    key: int32, bytes or unicode
+    key: int32, bytes, unicode or ndarray with dtype int32
         the physical object to hash
 
     seed: int, optional default is 0
