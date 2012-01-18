@@ -42,6 +42,7 @@ from ..feature_selection.selector_mixin import SelectorMixin
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor, \
                    ExtraTreeClassifier, ExtraTreeRegressor
 from ..utils import check_random_state
+from ..metrics import r2_score
 
 from .base import BaseEnsemble
 
@@ -164,6 +165,10 @@ class BaseForest(BaseEnsemble, SelectorMixin):
             The target values (integers that correspond to classes in
             classification, real numbers in regression).
 
+        oob_score : bool
+            Whether to use out-of-bag samples to estimate
+            the generalization error.
+
         Returns
         -------
         self : object
@@ -211,15 +216,30 @@ class BaseForest(BaseEnsemble, SelectorMixin):
 
         # Calculate out of bag predictions and score
         if oob_score:
-            predictions = np.zeros((X.shape[0], self.n_classes_))
-            for estimator in self.estimators_:
-                mask = np.ones(X.shape[0], dtype=np.bool)
-                mask[estimator.indices_] = False
-                predictions[mask, :] += estimator.predict_proba(X[mask, :])
+            if isinstance(self, ClassifierMixin):
+                predictions = np.zeros((X.shape[0], self.n_classes_))
+                for estimator in self.estimators_:
+                    mask = np.ones(X.shape[0], dtype=np.bool)
+                    mask[estimator.indices_] = False
+                    predictions[mask, :] += estimator.predict_proba(X[mask, :])
 
-            self.oob_decision_function_ = (predictions
-                    / predictions.sum(axis=1)[:, np.newaxis])
-            self.oob_score_ = np.mean(y == np.argmax(predictions, axis=1))
+                self.oob_decision_function_ = (predictions
+                        / predictions.sum(axis=1)[:, np.newaxis])
+                self.oob_score_ = np.mean(y == np.argmax(predictions, axis=1))
+
+            else:
+                # Regression:
+                predictions = np.zeros(X.shape[0])
+                n_predictions = np.zeros(X.shape[0])
+                for estimator in self.estimators_:
+                    mask = np.ones(X.shape[0], dtype=np.bool)
+                    mask[estimator.indices_] = False
+                    predictions[mask] += estimator.predict(X[mask, :])
+                    n_predictions[mask] += 1
+                predictions /= n_predictions
+
+                self.oob_prediction_ = predictions
+                self.oob_score_ = r2_score(y, predictions)
 
         # Sum the importances
         if self.compute_importances:
@@ -450,8 +470,15 @@ class RandomForestClassifier(ForestClassifier):
 
     Attributes
     ----------
-    `feature_importances_` : array of shape = [n_features]
-        The feature mportances (the higher, the more important the feature).
+    `feature_importances_` : array, shape = [n_features]
+        The feature importances (the higher, the more important the feature).
+
+    `oob_score_` : float
+        Score of the training dataset obtained using an out-of-bag estimate.
+
+     `oob_decision_function_` : array, shape = [n_samples, n_classes]
+        Decision function computed with out-of-bag estimate on the training set.
+
 
     Notes
     -----
@@ -561,6 +588,14 @@ class RandomForestRegressor(ForestRegressor):
     `feature_importances_` : array of shape = [n_features]
         The feature mportances (the higher, the more important the feature).
 
+    `oob_score_` : float
+        Score of the training dataset obtained using an out-of-bag estimate.
+
+     `oob_prediction_` : array, shape = [n_samples, n_classes]
+        Decision function computed with out-of-bag estimate on the training set.
+
+
+
     Notes
     -----
     **References**:
@@ -669,6 +704,12 @@ class ExtraTreesClassifier(ForestClassifier):
     ----------
     `feature_importances_` : array of shape = [n_features]
         The feature mportances (the higher, the more important the feature).
+
+    `oob_score_` : float
+        Score of the training dataset obtained using an out-of-bag estimate.
+
+     `oob_decision_function_` : array, shape = [n_samples, n_classes]
+        Decision function computed with out-of-bag estimate on the training set.
 
     Notes
     -----
@@ -780,6 +821,12 @@ class ExtraTreesRegressor(ForestRegressor):
     ----------
     `feature_importances_` : array of shape = [n_features]
         The feature mportances (the higher, the more important the feature).
+
+    `oob_score_` : float
+        Score of the training dataset obtained using an out-of-bag estimate.
+
+     `oob_prediction_` : array, shape = [n_samples, n_classes]
+        Decision function computed with out-of-bag estimate on the training set.
 
     Notes
     -----
