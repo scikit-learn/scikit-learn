@@ -253,13 +253,15 @@ class GridSearchCV(BaseEstimator):
                  fit_params=None, n_jobs=1, iid=True, refit=True, cv=None,
                  verbose=0, pre_dispatch='2*n_jobs',
                 ):
-        assert hasattr(estimator, 'fit') and (hasattr(estimator, 'predict')
-                        or hasattr(estimator, 'score')), (
-            "estimator should a be an estimator implementing 'fit' and "
-            "'predict' or 'score' methods, %s (type %s) was passed" %
-                    (estimator, type(estimator)))
+        if not hasattr(estimator, 'fit') or \
+           not (hasattr(estimator, 'predict') or hasattr(estimator, 'score')):
+            raise TypeError("estimator should a be an estimator implementing"
+                            " 'fit' and 'predict' or 'score' methods,"
+                            " %s (type %s) was passed" %
+                            (estimator, type(estimator)))
         if loss_func is None and score_func is None:
-            assert hasattr(estimator, 'score'), ValueError(
+            if not hasattr(estimator, 'score'):
+                raise TypeError(
                     "If no loss_func is specified, the estimator passed "
                     "should have a 'score' method. The estimator %s "
                     "does not." % estimator)

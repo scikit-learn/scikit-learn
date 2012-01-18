@@ -174,6 +174,14 @@ class LeavePOut(object):
                 / factorial(self.p))
 
 
+def _validate_kfold(k, n_samples):
+    if k <= 0:
+        raise ValueError("Cannot have number of folds k below 1.")
+    if k > n_samples:
+        raise ValueError("Cannot have number of folds k=%d greater than"
+                         " the number of samples: %d." % (k, n_samples))
+
+
 class KFold(object):
     """K-Folds cross validation iterator
 
@@ -226,10 +234,7 @@ class KFold(object):
     """
 
     def __init__(self, n, k, indices=True):
-        assert k > 0, ValueError('Cannot have number of folds k below 1.')
-        assert k <= n, ValueError('Cannot have number of folds k=%d, '
-                                  'greater than the number '
-                                  'of samples: %d.' % (k, n))
+        _validate_kfold(k, n)
         self.n = n
         self.k = k
         self.indices = indices
@@ -312,15 +317,14 @@ class StratifiedKFold(object):
     def __init__(self, y, k, indices=True):
         y = np.asarray(y)
         n = y.shape[0]
-        assert k > 0, ValueError('Cannot have number of folds k below 1.')
-        assert k <= n, ValueError('Cannot have number of folds k=%d, '
-                                  'greater than the number '
-                                  'of samples: %d.' % (k, n))
+        _validate_kfold(k, n)
         _, y_sorted = unique(y, return_inverse=True)
         min_labels = np.min(np.bincount(y_sorted))
-        assert k <= min_labels, ValueError(
-            'Cannot have number of folds k=%d, smaller than %d, the minimum '
-            'number of labels for any class.' % (k, min_labels))
+        if k > min_labels:
+            raise ValueError("Cannot have number of folds k=%d"
+                             " smaller than %d, the minimum"
+                             " number of labels for any class."
+                             % (k, min_labels))
         self.y = y
         self.k = k
         self.indices = indices
@@ -826,7 +830,8 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, n_jobs=1,
     X, y = check_arrays(X, y, sparse_format='csr')
     cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
     if score_func is None:
-        assert hasattr(estimator, 'score'), ValueError(
+        if not hasattr(estimator, 'score'):
+            raise TypeError(
                 "If no score_func is specified, the estimator passed "
                 "should have a 'score' method. The estimator %s "
                 "does not." % estimator)

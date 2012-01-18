@@ -253,8 +253,9 @@ class BaseDiscreteNB(BaseNB):
             Y *= array2d(sample_weight).T
 
         if class_prior:
-            assert len(class_prior) == n_classes, \
-                   'Number of priors must match number of classes'
+            if len(class_prior) != n_classes:
+                raise ValueError(
+                        "Number of priors must match number of classes")
             self.class_log_prior_ = np.log(class_prior)
         elif self.fit_prior:
             # empirical prior, with sample_weight taken into account
