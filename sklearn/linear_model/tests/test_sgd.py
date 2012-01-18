@@ -97,7 +97,9 @@ class CommonTest(object):
 
         clf2 = self.factory(alpha=0.001, eta0=0.01, n_iter=5, shuffle=False,
                             learning_rate=lr)
-        clf2.fit(X, Y, coef_init=clf.coef_, intercept_init=clf.intercept_)
+        clf2.fit(X, Y,
+                 coef_init=clf.coef_.copy(),
+                 intercept_init=clf.intercept_.copy())
 
         #... and implicit warm restart are equivalent.
         clf3 = self.factory(alpha=0.01, eta0=0.01, n_iter=5, shuffle=False,

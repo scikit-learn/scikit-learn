@@ -291,7 +291,7 @@ class BaseSGD(BaseEstimator):
                 coef_init = np.asarray(coef_init)
                 if coef_init.shape != (n_classes, n_features):
                     raise ValueError("Provided coef_ does not match dataset. ")
-                self.coef_ = coef_init.copy()
+                self.coef_ = coef_init
             else:
                 self.coef_ = np.zeros((n_classes, n_features),
                                       dtype=np.float64, order="C")
@@ -302,7 +302,7 @@ class BaseSGD(BaseEstimator):
                 if intercept_init.shape != (n_classes, ):
                     raise ValueError("Provided intercept_init " \
                                      "does not match dataset.")
-                self.intercept_ = intercept_init.copy()
+                self.intercept_ = intercept_init
             else:
                 self.intercept_ = np.zeros(n_classes, dtype=np.float64,
                                            order="C")
@@ -315,7 +315,7 @@ class BaseSGD(BaseEstimator):
                 if coef_init.shape != (n_features,):
                     raise ValueError("Provided coef_init does not " \
                                      "match dataset.")
-                self.coef_ = coef_init.copy()
+                self.coef_ = coef_init
             else:
                 self.coef_ = np.zeros(n_features, dtype=np.float64, order="C")
 
@@ -325,7 +325,7 @@ class BaseSGD(BaseEstimator):
                 if intercept_init.shape != (1,) and intercept_init.shape != ():
                     raise ValueError("Provided intercept_init " \
                                  "does not match dataset.")
-                self.intercept_ = intercept_init.reshape(1,).copy()
+                self.intercept_ = intercept_init.reshape(1,)
             else:
                 self.intercept_ = np.zeros(1, dtype=np.float64, order="C")
 
