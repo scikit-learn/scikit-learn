@@ -107,10 +107,10 @@ fitting a :class:`LedoitWolf` object to the same sample.
      for visualizing the performances of the Ledoit-Wolf estimator in
      terms of likelihood.
 
-.. figure:: ../auto_examples/covariance/images/plot_covariance_estimation_-1.png
+.. figure:: ../auto_examples/covariance/images/plot_covariance_estimation_1.png
    :target: ../auto_examples/covariance/plot_covariance_estimation.html
    :align: center
-   :scale: 75%
+   :scale: 65%
 
 
 .. _oracle_approximating_shrinkage:
@@ -299,12 +299,24 @@ attributes of a :class:`MinCovDet` robust covariance estimator object.
      :class:`MinCovDet` covariance estimators in terms of Mahalanobis distance
      (so we get a better estimate of the precision matrix too).
 
-.. figure:: ../auto_examples/covariance/images/plot_robust_vs_empirical_covariance_1.png
+.. |robust_vs_emp| image:: ../auto_examples/covariance/images/plot_robust_vs_empirical_covariance_1.png
    :target: ../auto_examples/covariance/plot_robust_vs_empirical_covariance.html
-   :align: center
-   :scale: 75%
+   :scale: 49%
 
-.. figure:: ../auto_examples/covariance/images/plot_mahalanobis_distances_1.png
+.. |mahalanobis| image:: ../auto_examples/covariance/images/plot_mahalanobis_distances_1.png
    :target: ../auto_examples/covariance/plot_mahalanobis_distances.html
-   :align: center
-   :scale: 75%
+   :scale: 49%
+
+
+
+____
+
+.. list-table::
+    :header-rows: 1
+
+    * - Influence of outliers on location and covariance estimates
+      - Separating inliers from outliers using a Mahalonis distance
+
+    * - |robust_vs_emp|
+      - |mahalanobis|
+

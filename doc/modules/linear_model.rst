@@ -161,6 +161,9 @@ It is useful in some contexts due to its tendency to prefer solutions
 with fewer parameter values, effectively reducing the number of variables
 upon which the given solution is dependent. For this reason, the Lasso
 and its variants are fundamental to the field of compressed sensing.
+Under certain conditions, it can recover the exact set of non-zero
+weights (see
+:ref:`example_applications_plot_tomography_l1_reconstruction.py`).
 
 Mathematically, it consists of a linear model trained with :math:`\ell_1` prior
 as regularizer. The objective function to minimize is:
@@ -189,6 +192,7 @@ computes the coefficients along the full path of possible values.
 .. topic:: Examples:
 
   * :ref:`example_linear_model_lasso_and_elasticnet.py`
+  * :ref:`example_applications_plot_tomography_l1_reconstruction.py`
 
 Setting regularization parameter
 --------------------------------

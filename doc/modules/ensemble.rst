@@ -12,18 +12,18 @@ generalizability / robustness over a single model.
 
 Two families of ensemble methods are usually distinguished:
 
-  - In *averaging methods*, the driving principle is to build several models
-    independently and then to average their predictions. On average, the
-    combined model is usually better than any of the single model because
-    its variance is reduced.
+- In *averaging methods*, the driving principle is to build several models
+  independently and then to average their predictions. On average, the
+  combined model is usually better than any of the single model because
+  its variance is reduced.
 
-    **Examples:** Bagging methods, :ref:`Forests of randomized trees <forest>`, ...
+  **Examples:** Bagging methods, :ref:`Forests of randomized trees <forest>`, ...
 
-  - By contrast, in *boosting methods*, models are built sequentially and one
-    tries to reduce the bias of the combined model. The motivation is to combine
-    several weak models to produce a powerful ensemble.
+- By contrast, in *boosting methods*, models are built sequentially and one
+  tries to reduce the bias of the combined model. The motivation is to combine
+  several weak models to produce a powerful ensemble.
 
-    **Examples:** AdaBoost, Least Squares Boosting, Gradient Tree Boosting, ...
+  **Examples:** AdaBoost, Least Squares Boosting, Gradient Tree Boosting, ...
 
 
 .. _forest:
@@ -33,8 +33,16 @@ Forests of randomized trees
 
 The :mod:`sklearn.ensemble` module includes two averaging algorithms based on
 randomized :ref:`decision trees <tree>`: the RandomForest algorithm and the
-Extra-Trees method. Both algorithms are perturb-and-combine techniques
-specifically designed for trees::
+Extra-Trees method. Both algorithms are perturb-and-combine techniques [B1998]_
+specifically designed for trees. This means a diverse set of classifiers
+is created by introducing randomness in the classifier construction.
+The prediction of the ensemble is given as the averaged prediction of
+the individual classifiers.
+
+As other classifiers, forest classifiers have to be fitted with two arrays: an
+array X of size ``[n_samples, n_features]`` holding the training samples, and an
+array Y of size ``[n_samples]`` holding the target values (class labels) for the
+training samples::
 
     >>> from sklearn.ensemble import RandomForestClassifier
     >>> X = [[0, 0], [1, 1]]
@@ -42,6 +50,8 @@ specifically designed for trees::
     >>> clf = RandomForestClassifier(n_estimators=10)
     >>> clf = clf.fit(X, Y)
 
+Random Forests
+--------------
 In random forests (see :class:`RandomForestClassifier` and
 :class:`RandomForestRegressor` classes), each tree in the ensemble is built from
 a sample drawn with replacement (i.e., a bootstrap sample) from the training
@@ -53,7 +63,14 @@ slightly increases (with respect to the bias of a single non-random tree) but,
 due to averaging, its variance also decreases, usually more than compensating
 for the increase in bias, hence yielding an overall better model.
 
-In extra-trees (see :class:`ExtraTreesClassifier` and
+In contrast to the original publication [B2001]_, the scikit-learn
+implementation combines classifiers by averaging their probabilistic
+prediction, instead of letting each classifier vote for a single class.
+
+
+Extremely Randomized Trees
+--------------------------
+In extremely randomized trees (see :class:`ExtraTreesClassifier` and
 :class:`ExtraTreesRegressor` classes), randomness goes one step further in the
 way splits are computed. As in random forests, a random subset of candidate
 features is used, but instead of looking for the most discriminative thresholds,
@@ -89,6 +106,14 @@ slightly greater increase in bias::
     >>> scores.mean() > 0.999
     True
 
+.. figure:: ../auto_examples/ensemble/images/plot_forest_iris_1.png
+    :target: ../auto_examples/ensemble/plot_forest_iris.html
+    :align: center
+    :scale: 75%
+
+Parameters
+----------
+
 The main parameters to adjust when using these methods is ``n_estimators`` and
 ``max_features``. The former is the number of trees in the forest. The larger
 the better, but also the longer it will take to compute. In addition, note that
@@ -106,6 +131,14 @@ validated. In addition, note that bootstrap samples are used by default in
 random forests (``bootstrap=True``) while the default strategy is to use the
 original dataset for building extra-trees (``bootstrap=False``).
 
+When training on large datasets, where runtime and memory requirements
+are important, it might also be beneficial to adjust the ``min_density`` parameter,
+that controls a heuristic for speeding up computations in each tree.
+See :ref:`Complexity of trees<tree_complexity>` for details.
+
+
+Parallelization
+---------------
 Finally, this module also features the parallel construction of the trees and
 the parallel computation of the predictions through the ``n_jobs`` parameter. If
 ``n_jobs=k`` then computations are partitioned into ``k`` jobs, and run on ``k``
@@ -123,7 +156,9 @@ time (e.g., on large datasets).
 
 .. topic:: References
 
- * Leo Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
+ .. [B2001] Leo Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
 
- * Pierre Geurts, Damien Ernst., and Louis Wehenkel, "Extremely randomized
+ .. [B1998] Leo Breiman, "Arcing Classifiers", Annals of Statistics 1998.
+
+ .. [GEW2006] Pierre Geurts, Damien Ernst., and Louis Wehenkel, "Extremely randomized
    trees", Machine Learning, 63(1), 3-42, 2006.
