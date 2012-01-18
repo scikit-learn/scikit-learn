@@ -174,6 +174,17 @@ def test_importances():
     assert 0 < X_new.shape[1] < X.shape[1]
 
 
+def test_oob_predictions():
+    """Check that oob prediction is the same as
+    usual prediction on toy data.
+    Not really a good test that prediction is independent."""
+    clf = RandomForestClassifier()
+    clf.fit(X, y)
+    prediction = clf.predict(X)
+    prediction_oob = clf.predict_oob(X)
+    assert_array_equal(prediction, prediction_oob)
+
+
 def test_gridsearch():
     """Check that base trees can be grid-searched."""
     # Random forest
