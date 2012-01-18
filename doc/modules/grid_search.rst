@@ -84,11 +84,11 @@ Out of Bag Estimates
 When using ensemble methods base upon bagging, i.e. generating new training
 sets using sampling with replacement, part of the training set remains unused.
 For each classifier in the ensemble, a different part of the training set is
-left out. If the ensemble is big enough, it is possible to obtain robust
-predictions for all training examples, using only the estimator for which a
-given example was left out.  Predictions obtained in this way can be used for
-model selection, as each estimator in the ensemble was only evaluated on
-training examples not used during training.
+left out.
+This left out portion can be used to estimate the generalization error without
+having to rely on a separate validation set.
+This estimate comes "for free" as no addictional data is needed and
+can be used for model selection.
 
 This is currently implemented in the following classes:
 .. autosummary::
