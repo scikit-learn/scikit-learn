@@ -370,8 +370,6 @@ class GridSearchCV(BaseEstimator):
             self.predict = best_estimator.predict
         if hasattr(best_estimator, 'predict_proba'):
             self.predict_proba = best_estimator.predict_proba
-        if hasattr(best_estimator, 'score'):
-            self.score_ = best_estimator.score
 
         # Store the computed scores
         # XXX: the name is too specific, it shouldn't have
@@ -383,8 +381,12 @@ class GridSearchCV(BaseEstimator):
         return self
 
     def score(self, X, y=None):
-        # This method is overridden during the fit if the best estimator
-        # found has a score function.
+        if hasattr(self.best_estimator, 'score'):
+             return self.best_estimator.score(X, y)
+        if self.score_func is None:
+            raise ValueError("No score function explicitly defined, "
+                             "and the estimator doesn't provide one %s"
+                             % self.best_estimator)
         y_predicted = self.predict(X)
         return self.score_func(y, y_predicted)
 

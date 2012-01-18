@@ -41,12 +41,15 @@ y = np.array([1, 1, 2, 2])
 def test_grid_search():
     """Test that the best estimator contains the right value for foo_param"""
     clf = MockClassifier()
-    cross_validation = GridSearchCV(clf, {'foo_param': [1, 2, 3]})
+    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]})
     # make sure it selects the smallest parameter in case of ties
-    assert_equal(cross_validation.fit(X, y).best_estimator_.foo_param, 2)
+    grid_search.fit(X, y)
+    assert_equal(grid_search.best_estimator_.foo_param, 2)
 
     for i, foo_i in enumerate([1, 2, 3]):
-        assert cross_validation.grid_scores_[i][0] == {'foo_param': foo_i}
+        assert grid_search.grid_scores_[i][0] == {'foo_param': foo_i}
+    # Smoke test the score:
+    grid_search.score(X, y)
 
 
 def test_grid_search_error():
@@ -100,6 +103,9 @@ def test_grid_search_sparse_score_func():
 
     assert_array_equal(y_pred, y_pred2)
     assert_equal(C, C2)
+    # Smoke test the score
+    #np.testing.assert_allclose(f1_score(cv.predict(X_[:180]), y[:180]),
+    #                        cv.score(X_[:180], y[:180]))
 
 
 class BrokenClassifier(BaseEstimator):
