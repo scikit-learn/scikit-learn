@@ -176,3 +176,53 @@ It is advisable to evaluate both models, if time permits.
    <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.61.5542>`_
    3rd Conf. on Email and Anti-Spam (CEAS).
 
+
+.. _semisupervised_naive_bayes:
+
+Semisupervised training with EM
+-------------------------------
+
+The class :class:`SemisupervisedNB` implements the expectation maximization
+(EM) algorithm for semisupervised training of Naive Bayes models,
+where a part of the training samples are unlabeled.
+Unlabeled data are indicated by a ``-1`` value in the label vector.
+
+This EM algorithm fits an initial model, then iteratively
+
+ * uses the current to predict fractional class memberships;
+ * fits a new model on its own predictions
+
+until convergence.
+Convergence is determined by measuring the difference
+between subsequent models' parameter vectors.
+Note that this differs from the typical treatment of
+EM for Naive Bayes in the literature,
+where convergence is usually checked by computing
+the log-likelihood of the model given the training samples.
+The resulting algorithm is similar to the more general technique of
+self-training (see Zhu 2008).
+
+:class:`SemisupervisedNB` is a meta-estimator that builds upon
+a regular Naive Bayes estimator.
+To use this class, construct it with an ordinary Naive Bayes model as follows::
+
+    >>> from sklearn.naive_bayes import MultinomialNB, SemisupervisedNB
+    >>> clf = SemisupervisedNB(MultinomialNB())
+    >>> clf
+    SemisupervisedNB(estimator=MultinomialNB(alpha=1.0, fit_prior=True),
+             n_iter=10, relabel_all=True, tol=0.001, verbose=False)
+
+Then use ``clf.fit`` as usual.
+
+.. note::
+
+    EM is not currently supported for Gaussian Naive Bayes estimators.
+
+.. topic:: References:
+
+  * K. Nigam, A.K. McCallum, S. Thrun and T. Mitchell (2000).
+    Text classification from labeled and unlabeled documents using EM.
+    Machine Learning 39(2):103–134.
+  * X. Zhu (2008). `"Semi-supervised learning literature survey"
+    <http://www.cs.wisc.edu/~jerryzhu/pub/ssl_survey.pdf>`_.
+    CS TR 1530, U. Wisconsin-Madison.
