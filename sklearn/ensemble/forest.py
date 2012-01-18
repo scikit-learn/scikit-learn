@@ -310,9 +310,13 @@ class ForestClassifier(BaseForest, ClassifierMixin):
         return np.log(self.predict_proba(X))
 
     def predict_oob(self, X):
-        """Predict on the left out samples (aka out of bag) for model
-        selection.  Only available if bootstrap=True. X needs to be the
-        training data!"""
+        """Predict on the left out samples for model selection.
+        
+        Out of Bag (OOB) prediction error is an estimate of the generalization
+        error of the fitted model
+
+        This function can only be used if the classifier was trained with
+        bootstrap=True and X is the training data!"""
 
         # Check data
         X = np.atleast_2d(X)
