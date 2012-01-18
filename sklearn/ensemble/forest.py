@@ -317,7 +317,7 @@ class ForestClassifier(BaseForest, ClassifierMixin):
         # Check data
         X = np.atleast_2d(X)
 
-        if self.bootstrap == False:
+        if not self.bootstrap:
             raise ValueError("Out of bag estimation only available"
                     " if bootstrap=True")
 
