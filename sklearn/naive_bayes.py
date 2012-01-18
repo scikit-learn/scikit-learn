@@ -284,8 +284,18 @@ class BaseDiscreteNB(BaseNB):
 
         return N_c, N_c_i
 
-    intercept_ = property(lambda self: self.class_log_prior_)
-    coef_ = property(lambda self: self.feature_log_prob_)
+    # XXX The following is a stopgap measure; we need to set the dimensions
+    # of class_log_prior_ and feature_log_prob_ correctly.
+    def _get_coef(self):
+        return self.feature_log_prob_[1] if len(self._classes) == 2 \
+                                         else self.feature_log_prob_
+
+    def _get_intercept(self):
+        return self.class_log_prior_[1] if len(self._classes) == 2 \
+                                        else self.class_log_prior_
+
+    coef_ = property(_get_coef)
+    intercept_ = property(_get_intercept)
 
 
 class MultinomialNB(BaseDiscreteNB):
@@ -345,7 +355,8 @@ class MultinomialNB(BaseDiscreteNB):
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
         X = atleast2d_or_csr(X)
-        return safe_sparse_dot(X, self.coef_.T) + self.intercept_
+        return (safe_sparse_dot(X, self.feature_log_prob_.T)
+               + self.class_log_prior_)
 
 
 class BernoulliNB(BaseDiscreteNB):
@@ -431,6 +442,6 @@ class BernoulliNB(BaseDiscreteNB):
         # Compute  neg_prob · (1 - X).T  as  ∑neg_prob - X · neg_prob
         X_neg_prob = (neg_prob.sum(axis=1)
                     - safe_sparse_dot(X, neg_prob.T))
-        jll = safe_sparse_dot(X, self.coef_.T) + X_neg_prob
+        jll = safe_sparse_dot(X, self.feature_log_prob_.T) + X_neg_prob
 
-        return jll + self.intercept_
+        return jll + self.class_log_prior_
