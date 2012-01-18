@@ -449,14 +449,10 @@ class BaseLibLinear(BaseEstimator):
 
         train = liblinear.csr_train_wrap if self._sparse \
                                          else liblinear.train_wrap
-        try:
-            self.raw_coef_, self.label_ = train(X, y, self._get_solver_type(),
-                                                self.tol, self._get_bias(), C,
-                                                self.class_weight_label,
-                                                self.class_weight)
-        except:
-            print X.flags
-            raise
+        self.raw_coef_, self.label_ = train(X, y, self._get_solver_type(),
+                                            self.tol, self._get_bias(), C,
+                                            self.class_weight_label,
+                                            self.class_weight)
 
         return self
 
