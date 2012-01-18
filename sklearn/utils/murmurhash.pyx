@@ -95,9 +95,6 @@ def murmurhash3_32(key, seed=0, positive=False):
           from -(2 ** 31) to 2 ** 31 - 1
 
     """
-    if isinstance(key, np.int32):
-        key = int(key)
-
     if isinstance(key, bytes):
         if positive:
             return murmurhash3_bytes_uint(key, seed)
@@ -108,7 +105,7 @@ def murmurhash3_32(key, seed=0, positive=False):
             return murmurhash3_bytes_uint(key.encode('utf-8'), seed)
         else:
             return murmurhash3_bytes_int(key.encode('utf-8'), seed)
-    elif isinstance(key, int):
+    elif isinstance(key, int) or isinstance(key, np.int32):
         if positive:
             return murmurhash3_int_uint(key, seed)
         else:
