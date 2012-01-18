@@ -82,7 +82,7 @@ class ElasticNet(LinearModel):
     """
     def __init__(self, alpha=1.0, rho=0.5, fit_intercept=True,
                  normalize=False, precompute='auto', max_iter=1000,
-                 copy_X=True, tol=1e-4):
+                 copy_X=True, tol=1e-4, warm_start=False):
         self.alpha = alpha
         self.rho = rho
         self.coef_ = None
@@ -92,6 +92,7 @@ class ElasticNet(LinearModel):
         self.max_iter = max_iter
         self.copy_X = copy_X
         self.tol = tol
+        self.warm_start = warm_start
 
     def fit(self, X, y, Xy=None, coef_init=None):
         """Fit Elastic Net model with coordinate descent
@@ -137,7 +138,8 @@ class ElasticNet(LinearModel):
             Xy = None  # recompute Xy
 
         if coef_init is None:
-            self.coef_ = np.zeros(n_features, dtype=np.float64)
+            if not self.warm_start or self.coef_ is None:
+                self.coef_ = np.zeros(n_features, dtype=np.float64)
         else:
             self.coef_ = coef_init
 
@@ -260,11 +262,11 @@ class Lasso(ElasticNet):
 
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  precompute='auto', copy_X=True, max_iter=1000,
-                 tol=1e-4):
+                 tol=1e-4, warm_start=False):
         super(Lasso, self).__init__(alpha=alpha, rho=1.0,
                             fit_intercept=fit_intercept, normalize=normalize,
                             precompute=precompute, copy_X=copy_X,
-                            max_iter=max_iter, tol=tol)
+                            max_iter=max_iter, tol=tol, warm_start=warm_start)
 
 
 ###############################################################################
