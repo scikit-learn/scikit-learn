@@ -89,7 +89,7 @@ true_result5 = [0, 1, 1]
 
 class CommonTest(object):
 
-    def _test_warm_restart(self, lr):
+    def _test_warm_start(self, lr):
         # Test that explicit warm restart...
         clf = self.factory(alpha=0.01, eta0=0.01, n_iter=5, shuffle=False,
                            learning_rate=lr)
@@ -101,7 +101,7 @@ class CommonTest(object):
 
         #... and implicit warm restart are equivalent.
         clf3 = self.factory(alpha=0.01, eta0=0.01, n_iter=5, shuffle=False,
-                            warm_restart=True, learning_rate=lr)
+                            warm_start=True, learning_rate=lr)
         clf3.fit(X, Y)
 
         assert_equal(clf3.t_, clf.t_)
@@ -113,14 +113,14 @@ class CommonTest(object):
         assert_equal(clf3.t_, clf2.t_)
         assert_array_almost_equal(clf3.coef_, clf2.coef_)
 
-    def test_warm_restart_constant(self):
-        self._test_warm_restart("constant")
+    def test_warm_start_constant(self):
+        self._test_warm_start("constant")
 
-    def test_warm_restart_invscaling(self):
-        self._test_warm_restart("invscaling")
+    def test_warm_start_invscaling(self):
+        self._test_warm_start("invscaling")
 
-    def test_warm_restart_optimal(self):
-        self._test_warm_restart("optimal")
+    def test_warm_start_optimal(self):
+        self._test_warm_start("optimal")
 
 
 class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
