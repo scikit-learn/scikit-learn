@@ -88,16 +88,14 @@ def test_grid_search_sparse_score_func():
 
     clf = LinearSVC()
     cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, score_func=f1_score)
-    # XXX: set refit to False due to a random bug when True (default)
-    cv.set_params(refit=False).fit(X_[:180], y_[:180])
+    cv.fit(X_[:180], y_[:180])
     y_pred = cv.predict(X_[180:])
     C = cv.best_estimator_.C
 
     X_ = sp.csr_matrix(X_)
     clf = LinearSVC()
     cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, score_func=f1_score)
-    # XXX: set refit to False due to a random bug when True (default)
-    cv.set_params(refit=False).fit(X_[:180], y_[:180])
+    cv.fit(X_[:180], y_[:180])
     y_pred2 = cv.predict(X_[180:])
     C2 = cv.best_estimator_.C
 
