@@ -33,6 +33,8 @@ import numpy as np
 import scipy.sparse as sp
 
 from sklearn.utils import check_random_state
+from sklearn.utils import murmurhash3_32
+from sklearn.utils import atleast2d_or_csr
 from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.base import BaseEstimator
 from sklearn.base import TransformerMixin
@@ -204,6 +206,33 @@ def sparse_random_matrix(n_components, n_features, density='auto',
     return math.sqrt(1 / density) / math.sqrt(n_components) * r
 
 
+def hashing_dot(A, n_components, density, seed=0, dense_output=True):
+    """Implicit dot product by a random sparse matrix using a hash function"""
+    max_hash_pos = density * float(np.iinfo(np.uint32).max)
+    max_hash_neg = max_hash_pos / 2
+    weight = math.sqrt(1 / density) / math.sqrt(n_components)
+    # TODO: avoid conversion of sparse matrices to CSR by adding support for
+    # other formats?
+    A = atleast2d_or_csr(A)
+    n_samples, n_features = A.shape
+
+    if not sp.issparse(A):
+        out = np.zeros((n_samples, n_components), A.dtype)
+        for i in range(n_samples):
+            seed_i = murmurhash3_32(i, seed=seed, positive=True)
+            for j in range(n_features):
+                h = murmurhash3_32(j, seed=seed_i, positive=True)
+                out_row = h % n_samples
+                out_col = h % n_components
+                if h < max_hash_neg:
+                    out[out_row, out_col] -= weight * A[i, j]
+                elif h < max_hash_pos:
+                    out[out_row, out_col] += weight * A[i, j]
+
+    # TODO: handle sparse input
+    return out
+
+
 class SparseRandomProjection(BaseEstimator, TransformerMixin):
     """Transformer to reduce the dimensionality with sparse random projection
 
@@ -211,7 +240,9 @@ class SparseRandomProjection(BaseEstimator, TransformerMixin):
     similar embedding quality while being much more memory efficient
     and allowing faster computation of the projected data.
 
-    The implementation uses a CSR matrix internally.
+    The implementation uses either a materialized random CSR matrix or
+    a simulated dot product by a random matrix implicitly defined by a
+    hashing function and a seed.
 
     If we note `s = 1 / density` the components of the random matrix are:
 
@@ -242,6 +273,11 @@ class SparseRandomProjection(BaseEstimator, TransformerMixin):
         Use density = 1 / 3.0 if you want to reproduce the results from
         Achlioptas, 2001.
 
+    materialize : boolean, optional, True by default
+        If materialize is True a CSR sparse matrix is allocated in
+        memory. If false, the dot product by the sparse matrix is
+        implicitly simulated using hash functions.
+
     eps : strictly positive float, optional, default 0.1
         Parameter to control the quality of the embedding according to
         the Johnson-Lindenstrauss lemma when n_components is set to
@@ -267,11 +303,11 @@ class SparseRandomProjection(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    components_: CSR matrix with shape [n_components, n_features]
-        Random matrix used for the projection.
-
     n_component_: int
         Concrete number of components computed when n_components="auto".
+
+    components_: CSR matrix with shape [n_components, n_features]
+        Random matrix used for the projection if materialize=True.
 
     density_: float in range 0.0 - 1.0
         Concrete density computed from when density="auto".
@@ -288,12 +324,13 @@ class SparseRandomProjection(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, n_components='auto', density='auto', eps=0.1,
-                 dense_output=True, random_state=None):
+                 materialize=True, dense_output=True, random_state=None):
         self.n_components = n_components
         self.density = density
         self.eps = eps
         self.dense_output = dense_output
         self.random_state = random_state
+        self.materialize = materialize
 
     def fit(self, X, y=None):
         """Generate a sparse random projection matrix
@@ -339,9 +376,12 @@ class SparseRandomProjection(BaseEstimator, TransformerMixin):
         else:
             self.density_ = self.density
 
-        self.components_ = sparse_random_matrix(
-            self.n_components_, n_features, density=self.density,
-            random_state=self.random_state)
+        if self.materialize:
+            self.components_ = sparse_random_matrix(
+                self.n_components_, n_features, density=self.density,
+                random_state=self.random_state)
+        else:
+            self.seed_ = self.random_state.randint(np.iinfo(np.int32).max)
         return self
 
     def transform(self, X, y=None):
@@ -362,5 +402,9 @@ class SparseRandomProjection(BaseEstimator, TransformerMixin):
         """
         if not sp.issparse(X):
             X = np.atleast_2d(X)
-        return safe_sparse_dot(X, self.components_.T,
-                               dense_output=self.dense_output)
+        if self.materialize:
+            return safe_sparse_dot(X, self.components_.T,
+                                   dense_output=self.dense_output)
+        else:
+            return hashing_dot(X, self.n_components_, self.density_,
+                               self.seed_, dense_output=self.dense_output)
