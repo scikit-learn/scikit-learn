@@ -152,7 +152,7 @@ class BaseForest(BaseEnsemble, SelectorMixin):
 
         self.feature_importances_ = None
 
-    def fit(self, X, y):
+    def fit(self, X, y, oob_score=False):
         """Build a forest of trees from the training set (X, y).
 
         Parameters
@@ -178,6 +178,10 @@ class BaseForest(BaseEnsemble, SelectorMixin):
             X_argsorted = None
 
         else:
+            if oob_score:
+                raise ValueError("Out of bag estimation only available"
+                        " if bootstrap=True")
+
             sample_mask = np.ones((X.shape[0],), dtype=np.bool)
             X_argsorted = np.asfortranarray(
                 np.argsort(X.T, axis=1).astype(np.int32).T)
@@ -204,6 +208,18 @@ class BaseForest(BaseEnsemble, SelectorMixin):
 
         # Reduce
         self.estimators_ = [tree for tree in itertools.chain(*all_trees)]
+
+        # Calculate out of bag predictions and score
+        if oob_score:
+            predictions = np.zeros((X.shape[0], self.n_classes_))
+            for estimator in self.estimators_:
+                mask = np.ones(X.shape[0], dtype=np.bool)
+                mask[estimator.indices_] = False
+                predictions[mask, :] += estimator.predict_proba(X[mask, :])
+
+            self.oob_decision_function_ = (predictions
+                    / predictions.sum(axis=1)[:, np.newaxis])
+            self.oob_score_ = np.mean(y == np.argmax(predictions, axis=1))
 
         # Sum the importances
         if self.compute_importances:
@@ -308,31 +324,6 @@ class ForestClassifier(BaseForest, ClassifierMixin):
             ordered by arithmetical order.
         """
         return np.log(self.predict_proba(X))
-
-    def predict_oob(self, X):
-        """Predict on the left out samples for model selection.
-        
-        Out of Bag (OOB) prediction error is an estimate of the generalization
-        error of the fitted model
-
-        This function can only be used if the classifier was trained with
-        bootstrap=True and X is the training data!"""
-
-        # Check data
-        X = np.atleast_2d(X)
-
-        if not self.bootstrap:
-            raise ValueError("Out of bag estimation only available"
-                    " if bootstrap=True")
-
-        predictions = np.zeros((X.shape[0], self.n_classes_))
-        for estimator in self.estimators_:
-            mask = np.ones(X.shape[0], dtype=np.bool)
-            mask[estimator.indices_] = False
-            predictions[mask, :] += estimator.predict_proba(X[mask, :])
-
-        return self.classes_.take(np.argmax(predictions, axis=1))
-
 
 
 class ForestRegressor(BaseForest, RegressorMixin):

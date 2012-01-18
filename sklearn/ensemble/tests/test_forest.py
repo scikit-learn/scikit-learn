@@ -9,6 +9,7 @@ import numpy as np
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_equal
+from numpy.testing import assert_almost_equal
 
 from sklearn.grid_search import GridSearchCV
 from sklearn.ensemble import RandomForestClassifier
@@ -179,10 +180,9 @@ def test_oob_predictions():
     usual prediction on toy data.
     Not really a good test that prediction is independent."""
     clf = RandomForestClassifier()
-    clf.fit(X, y)
-    prediction = clf.predict(X)
-    prediction_oob = clf.predict_oob(X)
-    assert_array_equal(prediction, prediction_oob)
+    clf.fit(X, y, oob_score=True)
+    training_score = clf.score(X, y)
+    assert_almost_equal(training_score, clf.oob_score_)
 
 
 def test_gridsearch():
