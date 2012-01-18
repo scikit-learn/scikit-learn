@@ -309,6 +309,23 @@ class ForestClassifier(BaseForest, ClassifierMixin):
         """
         return np.log(self.predict_proba(X))
 
+    def predict_oob(self, X,):
+        """Predict on the left out samples for model selection.
+        Only available if bootstrap=True. X needs to be the training data!"""
+
+        if self.bootstrap == False:
+            raise ValueError("Out of bag estimation only available"
+                    " if bootstrap=True")
+
+        predictions = np.zeros((X.shape[0], self.n_classes_))
+        for estimator in self.estimators_:
+            mask = np.ones(X.shape[0], dtype=np.bool)
+            mask[estimator.indices_] = False
+            predictions[mask, :] += estimator.predict_proba(X[mask, :])
+
+        return np.argmax(predictions, axis=1)
+
+
 
 class ForestRegressor(BaseForest, RegressorMixin):
     """Base class for forest of trees-based regressors.
