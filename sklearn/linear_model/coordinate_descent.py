@@ -75,6 +75,10 @@ class ElasticNet(LinearModel):
         dual gap for optimality and continues until it is smaller
         than tol.
 
+    warm_start : bool, optional
+        When set to True, reuse the solution of the previous call to fit as
+        initialization, otherwise, just erase the previous solution.
+
     Notes
     -----
     To avoid unnecessary memory duplication the X argument of the fit method
@@ -221,6 +225,10 @@ class Lasso(ElasticNet):
         smaller than 'tol', the optimization code checks the
         dual gap for optimality and continues until it is smaller
         than tol.
+
+    warm_start : bool, optional
+        When set to True, reuse the solution of the previous call to fit as
+        initialization, otherwise, just erase the previous solution.
 
 
     Attributes
