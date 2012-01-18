@@ -6,6 +6,7 @@ import numpy as np
 import warnings
 
 from .validation import *
+from .murmurhash import murmurhash3_32
 
 
 class deprecated(object):
