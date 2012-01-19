@@ -114,6 +114,10 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
         The "auto" mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies.
 
+    warm_start : bool, optional
+        When set to True, reuse the solution of the previous call to fit as
+        initialization, otherwise, just erase the previous solution.
+
     Attributes
     ----------
     `coef_` : array, shape = [1, n_features] if n_classes == 2 else [n_classes,
@@ -135,7 +139,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
     SGDClassifier(alpha=0.0001, class_weight=None, eta0=0.0,
             fit_intercept=True, learning_rate='optimal', loss='hinge',
             n_iter=5, n_jobs=1, penalty='l2', power_t=0.5, rho=0.85, seed=0,
-            shuffle=False, verbose=0)
+            shuffle=False, verbose=0, warm_start=False)
     >>> print clf.predict([[-0.8, -1]])
     [1]
 
@@ -147,14 +151,15 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
     def __init__(self, loss="hinge", penalty='l2', alpha=0.0001,
                 rho=0.85, fit_intercept=True, n_iter=5, shuffle=False,
                 verbose=0, n_jobs=1, seed=0, learning_rate="optimal",
-                eta0=0.0, power_t=0.5, class_weight=None):
+                eta0=0.0, power_t=0.5, class_weight=None, warm_start=False):
         super(SGDClassifier, self).__init__(loss=loss, penalty=penalty,
                                             alpha=alpha, rho=rho,
                                             fit_intercept=fit_intercept,
                                             n_iter=n_iter, shuffle=shuffle,
                                             verbose=verbose, seed=seed,
                                             learning_rate=learning_rate,
-                                            eta0=eta0, power_t=power_t)
+                                            eta0=eta0, power_t=power_t,
+                                            warm_start=warm_start)
         self.class_weight = class_weight
         self.classes_ = None
         self.n_jobs = int(n_jobs)
@@ -330,7 +335,13 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
         classes = np.unique(y)
         n_classes = classes.shape[0]
 
-        # Allocate datastructures from input arguments
+        if self.warm_start and self.coef_ is not None:
+            if coef_init is None:
+                coef_init = self.coef_
+            if intercept_init is None:
+                intercept_init = self.intercept_
+
+        # Allocate datastructures from input arguments.
         self._allocate_parameter_mem(n_classes, n_features,
                                      coef_init, intercept_init)
 
@@ -571,6 +582,10 @@ class SGDRegressor(BaseSGD, RegressorMixin):
     power_t : double, optional
         The exponent for inverse scaling learning rate [default 0.25].
 
+    warm_start : bool, optional
+        When set to True, reuse the solution of the previous call to fit as
+        initialization, otherwise, just erase the previous solution.
+
     Attributes
     ----------
     `coef_` : array, shape = [n_features]
@@ -592,7 +607,7 @@ class SGDRegressor(BaseSGD, RegressorMixin):
     SGDRegressor(alpha=0.0001, eta0=0.01, fit_intercept=True,
            learning_rate='invscaling', loss='squared_loss', n_iter=5, p=0.1,
            penalty='l2', power_t=0.25, rho=0.85, seed=0, shuffle=False,
-           verbose=0)
+           verbose=0, warm_start=False)
 
     See also
     --------
@@ -602,7 +617,7 @@ class SGDRegressor(BaseSGD, RegressorMixin):
     def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
                  rho=0.85, fit_intercept=True, n_iter=5, shuffle=False,
                  verbose=0, p=0.1, seed=0, learning_rate="invscaling",
-                 eta0=0.01, power_t=0.25):
+                 eta0=0.01, power_t=0.25, warm_start=False):
         self.p = float(p)
         super(SGDRegressor, self).__init__(loss=loss, penalty=penalty,
                                            alpha=alpha, rho=rho,
@@ -610,7 +625,8 @@ class SGDRegressor(BaseSGD, RegressorMixin):
                                            n_iter=n_iter, shuffle=shuffle,
                                            verbose=verbose, seed=seed,
                                            learning_rate=learning_rate,
-                                           eta0=eta0, power_t=power_t)
+                                           eta0=eta0, power_t=power_t,
+                                           warm_start=False)
 
     def _set_loss_function(self, loss):
         """Get concrete LossFunction"""
@@ -695,6 +711,12 @@ class SGDRegressor(BaseSGD, RegressorMixin):
         n_samples, n_features = X.shape
         self._check_fit_data(X, y)
 
+        if self.warm_start and self.coef_ is not None:
+            if coef_init is None:
+                coef_init = self.coef_
+            if intercept_init is None:
+                intercept_init = self.intercept_
+
         # Allocate datastructures from input arguments
         self._allocate_parameter_mem(1, n_features,
                                      coef_init, intercept_init)
@@ -766,7 +788,7 @@ class SGDRegressor(BaseSGD, RegressorMixin):
         X = _tocsr(X)
 
         return plain_sgd_sparse(self.coef_,
-                                self.intercept_,
+                                self.intercept_[0],
                                 self.loss_function,
                                 self.penalty_type,
                                 self.alpha, self.rho,

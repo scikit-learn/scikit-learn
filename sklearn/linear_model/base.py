@@ -190,7 +190,7 @@ class BaseSGD(BaseEstimator):
     def __init__(self, loss, penalty='l2', alpha=0.0001,
                  rho=0.85, fit_intercept=True, n_iter=5, shuffle=False,
                  verbose=0, seed=0, learning_rate="optimal", eta0=0.0,
-                 power_t=0.5):
+                 power_t=0.5, warm_start=False):
         self.loss = str(loss)
         self.penalty = str(penalty)
         self._set_loss_function(self.loss)
@@ -220,6 +220,7 @@ class BaseSGD(BaseEstimator):
             if eta0 <= 0.0:
                 raise ValueError("eta0 must be greater than 0.0")
         self.coef_ = None
+        self.warm_start = warm_start
 
         self._init_t()
 
