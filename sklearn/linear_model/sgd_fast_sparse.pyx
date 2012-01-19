@@ -28,9 +28,25 @@ DEF OPTIMAL = 2
 DEF INVSCALING = 3
 
 
-def plain_sgd(w, intercept, loss, penalty_type, alpha, rho, X, Y, n_iter,
-              fit_intercept, verbose, shuffle, seed, weight_pos, weight_neg,
-              sample_weight, learning_rate, eta0, power_t, t):
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+def plain_sgd(np.ndarray[double, ndim=1] w,
+              double intercept,
+              LossFunction loss,
+              int penalty_type,
+              double alpha, double rho,
+              np.ndarray[double, ndim=1] X_data,
+              np.ndarray[int, ndim=1] X_indices,
+              np.ndarray[int, ndim=1] X_indptr,
+              np.ndarray[double, ndim=1] Y,
+              int n_iter, int fit_intercept,
+              int verbose, int shuffle, int seed,
+              double weight_pos, double weight_neg,
+              np.ndarray[double, ndim=1] sample_weight,
+              int learning_rate, double eta0,
+              double power_t,
+              double t=1.0):
     """Cython impl. of SGD with different loss functions and penalties
 
     This representation assumes X represented using the Compressed Sparse Row
@@ -63,13 +79,13 @@ def plain_sgd(w, intercept, loss, penalty_type, alpha, rho, X, Y, n_iter,
         Print verbose output; 0 for quite.
     shuffle : int
         Whether to shuffle the training data before each epoch.
-    seed : int
-        The seed of the pseudo random number generator to use when
-        shuffling the data.
     weight_pos : float
         The weight of the positive class.
     weight_neg : float
         The weight of the negative class.
+    seed : int
+        The seed of the pseudo random number generator to use when
+        shuffling the data
     sample_weight : array, shape = [n_samples]
         The importance weight of each sample.
     learning_rate : int
@@ -93,30 +109,6 @@ def plain_sgd(w, intercept, loss, penalty_type, alpha, rho, X, Y, n_iter,
     intercept : float
         The fitted intercept term.
     """
-    return _plain_sgd(w, intercept, loss, penalty_type, alpha, rho, X.data,
-                      X.indices, X.indptr, Y, n_iter, fit_intercept, verbose,
-                      shuffle, seed, weight_pos, weight_neg, sample_weight,
-                      learning_rate, eta0, power_t, t)
-
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
-cdef _plain_sgd(np.ndarray[double, ndim=1] w,
-              double intercept,
-              LossFunction loss,
-              int penalty_type,
-              double alpha, double rho,
-              np.ndarray[double, ndim=1] X_data,
-              np.ndarray[int, ndim=1] X_indices,
-              np.ndarray[int, ndim=1] X_indptr,
-              np.ndarray[double, ndim=1] Y,
-              int n_iter, int fit_intercept,
-              int verbose, int shuffle, int seed,
-              double weight_pos, double weight_neg,
-              np.ndarray[double, ndim=1] sample_weight,
-              int learning_rate, double eta0,
-              double power_t,
-              double t=1.0):
     # get the data information into easy vars
     cdef unsigned int n_samples = Y.shape[0]
     cdef unsigned int n_features = w.shape[0]
