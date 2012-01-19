@@ -20,8 +20,24 @@ from . import cd_fast
 class ElasticNet(LinearModel):
     """Linear Model trained with L1 and L2 prior as regularizer
 
-    rho = 1 is the lasso penalty. Currently, rho <= 0.01 is not
-    reliable, unless you supply your own sequence of alpha.
+    Minimizes the objective function::
+
+            1 / (2 * n_samples) * ||y - Xw||^2_2 +
+            + alpha * rho * ||w||_1 + 0.5 * alpha * (1 - rho) * ||w||^2_2
+
+    If you are interested in controlling the L1 and L2 penalty
+    separately, keep in mind that this is equivalent to::
+
+            a * L1 + b * L2
+
+    where::
+
+            alpha = a + b and rho = a / (a + b)
+
+    The parameter rho corresponds to alpha in the glmnet R package while
+    alpha corresponds to the lambda parameter in glmnet. Specifically, rho =
+    1 is the lasso penalty. Currently, rho <= 0.01 is not reliable, unless
+    you supply your own sequence of alpha.
 
     Parameters
     ----------
@@ -63,23 +79,6 @@ class ElasticNet(LinearModel):
     -----
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a fortran contiguous numpy array.
-
-    The parameter rho corresponds to alpha in the glmnet R package
-    while alpha corresponds to the lambda parameter in glmnet.
-    More specifically, the objective function is::
-
-        1 / (2 * n_samples) * ||y - Xw||^2_2 +
-        + alpha * rho * ||w||_1 + 0.5 * alpha * (1 - rho) * ||w||^2_2
-
-    If you are interested in controlling the L1 and L2 penalty
-    separately, keep in mind that this is equivalent to::
-
-        a * L1 + b * L2
-
-    for::
-
-        alpha = a + b and rho = a / (a + b)
-
     """
     def __init__(self, alpha=1.0, rho=0.5, fit_intercept=True,
                  normalize=False, precompute='auto', max_iter=1000,
@@ -516,7 +515,7 @@ class LinearModelCV(LinearModel):
         y = np.asarray(y, dtype=np.float64)
 
         # All LinearModelCV parameters except 'cv' are acceptable
-        path_params = self._get_params()
+        path_params = self.get_params()
         del path_params['cv']
 
         # Start to compute path on full data

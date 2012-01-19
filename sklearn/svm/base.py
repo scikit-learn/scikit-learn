@@ -5,8 +5,7 @@ import scipy.sparse as sp
 
 from . import libsvm, liblinear
 from ..base import BaseEstimator
-from ..utils import array2d
-from ..utils import safe_asarray
+from ..utils import array2d, atleast2d_or_csr
 from ..utils.extmath import safe_sparse_dot
 import warnings
 
@@ -201,7 +200,7 @@ class DenseBaseLibSVM(BaseLibSVM):
             self.gamma = 1.0 / X.shape[1]
         self.shape_fit_ = X.shape
 
-        params = self._get_params()
+        params = self.get_params()
         if 'scale_C' in params:
             if params['scale_C']:
                 params['C'] = params['C'] / float(X.shape[0])
@@ -251,7 +250,7 @@ class DenseBaseLibSVM(BaseLibSVM):
                              "the number of features at training time" %
                              (n_features, self.shape_fit_[1]))
 
-        params = self._get_params()
+        params = self.get_params()
         if 'scale_C' in params:
             del params['scale_C']
 
@@ -298,7 +297,7 @@ class DenseBaseLibSVM(BaseLibSVM):
             raise NotImplementedError("predict_proba only implemented for SVC "
                                       "and NuSVC")
 
-        params = self._get_params()
+        params = self.get_params()
         if 'scale_C' in params:
             del params['scale_C']
 
@@ -330,7 +329,7 @@ class DenseBaseLibSVM(BaseLibSVM):
             X = np.reshape(X, (1, -1), order='C')
         X = self._compute_kernel(X)
 
-        params = self._get_params()
+        params = self.get_params()
         if 'scale_C' in params:
             del params['scale_C']
 
@@ -415,7 +414,7 @@ class BaseLibLinear(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             Training vector, where n_samples in the number of samples and
             n_features is the number of features.
 
@@ -432,14 +431,12 @@ class BaseLibLinear(BaseEstimator):
             Returns self.
         """
 
+        X = atleast2d_or_csr(X, dtype=np.float64, order="C")
+        y = np.asarray(y, dtype=np.int32).ravel()
+        self._sparse = sp.isspmatrix(X)
+
         self.class_weight, self.class_weight_label = \
                      _get_class_weight(class_weight, y)
-
-        X = safe_asarray(X, dtype=np.float64, order='C')
-        if not isinstance(X, np.ndarray):   # sparse X passed in by user
-            raise ValueError("Training vectors should be array-like, not %s"
-                             % type(X))
-        y = np.asarray(y, dtype=np.int32, order='C')
 
         if X.shape[0] != y.shape[0]:
             raise ValueError("X and y have incompatible shapes.\n" +
@@ -450,10 +447,12 @@ class BaseLibLinear(BaseEstimator):
         if self.scale_C:
             C = C / float(X.shape[0])
 
-        self.raw_coef_, self.label_ = liblinear.train_wrap(X, y,
-                       self._get_solver_type(), self.tol,
-                       self._get_bias(), C,
-                       self.class_weight_label, self.class_weight)
+        train = liblinear.csr_train_wrap if self._sparse \
+                                         else liblinear.train_wrap
+        self.raw_coef_, self.label_ = train(X, y, self._get_solver_type(),
+                                            self.tol, self._get_bias(), C,
+                                            self.class_weight_label,
+                                            self.class_weight)
 
         return self
 
@@ -462,23 +461,20 @@ class BaseLibLinear(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
 
         Returns
         -------
         C : array, shape = [n_samples]
         """
-        X = array2d(X, dtype=np.float64, order='C')
+        X = self._validate_for_predict(X)
         self._check_n_features(X)
 
-        coef = self.raw_coef_
-
-        return liblinear.predict_wrap(X, coef,
-                                      self._get_solver_type(),
-                                      self.tol, self.C,
-                                      self.class_weight_label,
-                                      self.class_weight, self.label_,
-                                      self._get_bias())
+        predict = liblinear.csr_predict_wrap if self._sparse \
+                                             else liblinear.predict_wrap
+        return predict(X, self.raw_coef_, self._get_solver_type(), self.tol,
+                       self.C, self.class_weight_label, self.class_weight,
+                       self.label_, self._get_bias())
 
     def decision_function(self, X):
         """Decision function value for X according to the trained model.
@@ -493,16 +489,16 @@ class BaseLibLinear(BaseEstimator):
             Returns the decision function of the sample for each class
             in the model.
         """
-        X = np.asarray(X, dtype=np.float64, order='C')
-        if X.ndim == 1:
-            # don't use np.atleast_2d, it doesn't guarantee C-contiguity
-            X = np.reshape(X, (1, -1), order='C')
+        X = self._validate_for_predict(X)
         self._check_n_features(X)
 
-        dec_func = liblinear.decision_function_wrap(
-            X, self.raw_coef_, self._get_solver_type(), self.tol,
-            self.C, self.class_weight_label, self.class_weight,
-            self.label_, self._get_bias())
+        dfunc_wrap = liblinear.csr_decision_function_wrap \
+                       if self._sparse \
+                       else liblinear.decision_function_wrap
+
+        dec_func = dfunc_wrap(X, self.raw_coef_, self._get_solver_type(),
+                              self.tol, self.C, self.class_weight_label,
+                              self.class_weight, self.label_, self._get_bias())
 
         if len(self.label_) <= 2:
             # in the two-class case, the decision sign needs be flipped
@@ -519,8 +515,17 @@ class BaseLibLinear(BaseEstimator):
             raise ValueError("X.shape[1] should be %d, not %d." % (n_features,
                                                                    X.shape[1]))
 
-    @property
-    def intercept_(self):
+    def _validate_for_predict(self, X):
+        X = atleast2d_or_csr(X, dtype=np.float64, order="C")
+        if self._sparse and not sp.isspmatrix(X):
+            X = sp.csr_matrix(X)
+        elif sp.isspmatrix(X) and not self._sparse:
+            raise ValueError(
+                "cannot pass sparse input to %r trained on dense data"
+                % type(self).__name__)
+        return X
+
+    def _get_intercept_(self):
         if self.fit_intercept:
             ret = self.intercept_scaling * self.raw_coef_[:, -1]
             if len(self.label_) <= 2:
@@ -528,14 +533,26 @@ class BaseLibLinear(BaseEstimator):
             return ret
         return 0.0
 
-    @property
-    def coef_(self):
+    def _set_intercept_(self, intercept):
+        self.fit_intercept = True
+
+        if len(self.label_) <= 2:
+            intercept = intercept * -1
+
+        intercept /= self.intercept_scaling
+        intercept = intercept.reshape(-1, 1)
+
+        self.raw_coef_ = np.hstack((self.raw_coef_[:, : -1], intercept))
+
+    intercept_ = property(_get_intercept_, _set_intercept_)
+
+    def _get_coef_(self):
         if self.fit_intercept:
             ret = self.raw_coef_[:, : -1].copy()
         else:
             ret = self.raw_coef_.copy()
 
-        # as coef_ is readonly property, mark the returned value as immutable
+        # mark the returned value as immutable
         # to avoid silencing potential bugs
         if len(self.label_) <= 2:
             ret *= -1
@@ -544,6 +561,19 @@ class BaseLibLinear(BaseEstimator):
         else:
             ret.flags.writeable = False
             return ret
+
+    def _set_coef_(self, coef):
+        if len(self.label_) <= 2:
+            coef = coef * -1
+
+        raw_intercept = self.raw_coef_[:, -1].reshape(-1, 1)
+
+        self.raw_coef_ = coef
+
+        if self.fit_intercept:
+            self.raw_coef_ = np.hstack((self.raw_coef_, raw_intercept))
+
+    coef_ = property(_get_coef_, _set_coef_)
 
     def _get_bias(self):
         if self.fit_intercept:

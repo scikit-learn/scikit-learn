@@ -588,7 +588,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         The minimum number of samples required to split an internal node.
 
     min_density : float, optional (default=0.1)
-        This parameter trades runtime against memory requirement. It
+        This parameter controls a trade-off in an optimization heuristic. It
         controls the minimum density of the `sample_mask` (i.e. the
         fraction of samples in the mask). If the density falls below this
         threshold the mask is recomputed and the input data is packed
@@ -746,7 +746,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         The minimum number of samples required to split an internal node.
 
     min_density : float, optional (default=0.1)
-        This parameter trades runtime against memory requirement. It
+        This parameter controls a trade-off in an optimization heuristic. It
         controls the minimum density of the `sample_mask` (i.e. the
         fraction of samples in the mask). If the density falls below this
         threshold the mask is recomputed and the input data is packed

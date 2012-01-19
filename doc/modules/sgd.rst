@@ -81,7 +81,7 @@ the model parameters::
 Member `intercept_` holds the intercept (aka offset or bias)::
 
     >>> clf.intercept_                                    # doctest: +ELLIPSIS
-    array(-9.990...)
+    array([-9.990...])
 
 Whether or not the model should use an intercept, i.e. a biased
 hyperplane, is controlled by the parameter `fit_intercept`.
@@ -195,17 +195,10 @@ Stochastic Gradient Descent for sparse data
   than the dense implementation due to a shrunk learning rate for the
   intercept.
 
-There is support for sparse data given in any matrix in a format
-supported by scipy.sparse. Classes have the same name, just prefixed
-by the `sparse` namespace, and take the same arguments, with the
-exception of training and test data, which is expected to be in a
-matrix format defined in scipy.sparse.
-
-For maximum efficiency, use the CSR matrix format as defined in
-`scipy.sparse.csr_matrix
+There is built-in support for sparse data given in any matrix in a format
+supported by scipy.sparse. For maximum efficiency, however, use the CSR
+matrix format as defined in `scipy.sparse.csr_matrix
 <http://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.html>`_.
-
-Implemented classes are :class:`SGDClassifier` and :class:`SGDRegressor`.
 
 .. topic:: Examples:
 

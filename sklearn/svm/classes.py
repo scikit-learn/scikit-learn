@@ -6,10 +6,13 @@ from .base import BaseLibLinear, DenseBaseLibSVM
 class LinearSVC(BaseLibLinear, ClassifierMixin, CoefSelectTransformerMixin):
     """Linear Support Vector Classification.
 
-    Similar to SVC with parameter kernel='linear', but uses internally
-    liblinear rather than libsvm, so it has more flexibility in the
-    choice of penalties and loss functions and should be faster for
-    huge datasets.
+    Similar to SVC with parameter kernel='linear', but implemented in terms of
+    liblinear rather than libsvm, so it has more flexibility in the choice of
+    penalties and loss functions and should scale better.
+
+    This class supports both dense and sparse input. Use C-ordered arrays or
+    CSR matrices containing 64-bit floats for optimal performance; any other
+    input format will be converted (and copied).
 
     Parameters
     ----------
@@ -83,8 +86,6 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, CoefSelectTransformerMixin):
     See also
     --------
     SVC
-
-
     """
 
     # all the implementation is provided by the mixins

@@ -22,7 +22,8 @@ The classification is performed by projecting to the first two principal
 components found by PCA and CCA for visualisation purposes, followed by using
 the :class:`sklearn.multiclass.OneVsRestClassifier` metaclassifier using two
 SVCs with linear kernels to learn a discriminative model for each class.
-Note that PCA is an unsupervised algorithm, while CCA is supervised.
+Note that PCA is used to perform an unsupervised dimensionality reduction,
+while CCA is used to perform a supervised one.
 """
 print __doc__
 
@@ -41,7 +42,7 @@ def plot_hyperplane(clf, min_x, max_x, linestyle, label):
     # get the separating hyperplane
     w = clf.coef_[0]
     a = -w[0] / w[1]
-    xx = np.linspace(min_x, max_x)
+    xx = np.linspace(min_x - 5, max_x + 5)  # make sure the line is long enough
     yy = a * xx - (clf.intercept_[0]) / w[1]
     pl.plot(xx, yy, linestyle, label=label)
 
@@ -81,27 +82,28 @@ def plot_subfigure(X, Y, subplot, title, transform):
     pl.xticks(())
     pl.yticks(())
 
-    if subplot == 1:
+    if subplot == 2:
+        pl.xlim(min_x - 5, max_x)
         pl.xlabel('First principal component')
         pl.ylabel('Second principal component')
-        pl.legend(loc="upper right")
+        pl.legend(loc="upper left")
 
 
-pl.figure(figsize=(13, 6))
+pl.figure(figsize=(8, 6))
 
 X, Y = make_multilabel_classification(n_classes=2, n_labels=1,
                                       allow_unlabeled=True,
-                                      random_state=0)
+                                      random_state=1)
 
 plot_subfigure(X, Y, 1, "With unlabeled samples + CCA", "cca")
 plot_subfigure(X, Y, 2, "With unlabeled samples + PCA", "pca")
 
 X, Y = make_multilabel_classification(n_classes=2, n_labels=1,
                                       allow_unlabeled=False,
-                                      random_state=0)
+                                      random_state=1)
 
 plot_subfigure(X, Y, 3, "Without unlabeled samples + CCA", "cca")
 plot_subfigure(X, Y, 4, "Without unlabeled samples + PCA", "pca")
 
-pl.subplots_adjust(.04, .07, .97, .90, .09, .2)
+pl.subplots_adjust(.04, .02, .97, .94, .09, .2)
 pl.show()

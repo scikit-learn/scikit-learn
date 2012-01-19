@@ -332,8 +332,7 @@ def test_bad_input():
     assert_raises(ValueError, clf.fit, X, Y2)
 
     # Test with arrays that are non-contiguous.
-    for clf in (svm.SVC(), svm.LinearSVC(), svm.sparse.SVC(),
-                svm.sparse.LinearSVC()):
+    for clf in (svm.SVC(), svm.LinearSVC(), svm.sparse.SVC()):
         Xf = np.asfortranarray(X)
         assert Xf.flags['C_CONTIGUOUS'] == False
         yf = np.ascontiguousarray(np.tile(Y, (2, 1)).T)
@@ -485,6 +484,29 @@ def test_liblinear_predict():
     assert_array_equal(clf.predict(X), (H > 0).astype(int))
 
 
+def test_liblinear_set_coef():
+    # multi-class case
+    clf = svm.LinearSVC().fit(iris.data, iris.target)
+    values = clf.decision_function(iris.data)
+    clf.coef_ = clf.coef_.copy()
+    clf.intercept_ = clf.intercept_.copy()
+    values2 = clf.decision_function(iris.data)
+    assert_array_equal(values, values2)
+
+    # binary-class case
+    X = [[2, 1],
+         [3, 1],
+         [1, 3],
+         [2, 3]]
+    y = [0, 0, 1, 1]
+
+    clf = svm.LinearSVC().fit(X, y)
+    values = clf.decision_function(X)
+    clf.coef_ = clf.coef_.copy()
+    clf.intercept_ = clf.intercept_.copy()
+    values2 = clf.decision_function(X)
+    assert_array_equal(values, values2)
+
 def test_c_samples_scaling():
     """Test C scaling by n_samples
     """
@@ -543,8 +565,6 @@ def test_immutable_coef_property():
         svm.sparse.NuSVC(kernel='linear').fit(iris.data, iris.target),
         svm.sparse.SVR(kernel='linear').fit(iris.data, iris.target),
         svm.sparse.NuSVR(kernel='linear').fit(iris.data, iris.target),
-        svm.LinearSVC().fit(iris.data, iris.target),
-        linear_model.LogisticRegression().fit(iris.data, iris.target),
     ]
     for clf in svms:
         assert_raises(AttributeError, clf.__setattr__, 'coef_', np.arange(3))

@@ -95,13 +95,13 @@ class Pipeline(BaseEstimator):
                 "'%s' (type %s) doesn't)" % (estimator, type(estimator))
             )
 
-    def _get_params(self, deep=True):
+    def get_params(self, deep=True):
         if not deep:
-            return super(Pipeline, self)._get_params(deep=False)
+            return super(Pipeline, self).get_params(deep=False)
         else:
             out = self.named_steps.copy()
             for name, step in self.named_steps.iteritems():
-                for key, value in step._get_params(deep=True).iteritems():
+                for key, value in step.get_params(deep=True).iteritems():
                     out['%s__%s' % (name, key)] = value
             return out
 

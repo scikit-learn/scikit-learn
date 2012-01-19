@@ -61,7 +61,7 @@ def test_pipeline_init():
     # Smoke test with only an estimator
     clf = T()
     pipe = Pipeline([('svc', clf)])
-    assert_equal(pipe._get_params(deep=True),
+    assert_equal(pipe.get_params(deep=True),
                  dict(svc__a=None, svc__b=None, svc=clf))
 
     # Check that params are set
@@ -89,8 +89,8 @@ def test_pipeline_init():
     assert_false(pipe.named_steps['svc'] is pipe2.named_steps['svc'])
 
     # Check that appart from estimators, the parameters are the same
-    params = pipe._get_params()
-    params2 = pipe2._get_params()
+    params = pipe.get_params()
+    params2 = pipe2.get_params()
     # Remove estimators that where copied
     params.pop('svc')
     params.pop('anova')

@@ -51,9 +51,9 @@ y = np.arange(10) / 2
 
 def test_kfold():
     # Check that errors are raise if there is not enough samples
-    assert_raises(AssertionError, cross_validation.KFold, 3, 4)
+    assert_raises(ValueError, cross_validation.KFold, 3, 4)
     y = [0, 0, 1, 1, 2]
-    assert_raises(AssertionError, cross_validation.StratifiedKFold, y, 3)
+    assert_raises(ValueError, cross_validation.StratifiedKFold, y, 3)
 
 
 def test_cross_val_score():

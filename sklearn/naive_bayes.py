@@ -253,8 +253,9 @@ class BaseDiscreteNB(BaseNB):
             Y *= array2d(sample_weight).T
 
         if class_prior:
-            assert len(class_prior) == n_classes, \
-                   'Number of priors must match number of classes'
+            if len(class_prior) != n_classes:
+                raise ValueError(
+                        "Number of priors must match number of classes")
             self.class_log_prior_ = np.log(class_prior)
         elif self.fit_prior:
             # empirical prior, with sample_weight taken into account
@@ -284,8 +285,18 @@ class BaseDiscreteNB(BaseNB):
 
         return N_c, N_c_i
 
-    intercept_ = property(lambda self: self.class_log_prior_)
-    coef_ = property(lambda self: self.feature_log_prob_)
+    # XXX The following is a stopgap measure; we need to set the dimensions
+    # of class_log_prior_ and feature_log_prob_ correctly.
+    def _get_coef(self):
+        return self.feature_log_prob_[1] if len(self._classes) == 2 \
+                                         else self.feature_log_prob_
+
+    def _get_intercept(self):
+        return self.class_log_prior_[1] if len(self._classes) == 2 \
+                                        else self.class_log_prior_
+
+    coef_ = property(_get_coef)
+    intercept_ = property(_get_intercept)
 
 
 class MultinomialNB(BaseDiscreteNB):
@@ -345,7 +356,8 @@ class MultinomialNB(BaseDiscreteNB):
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
         X = atleast2d_or_csr(X)
-        return safe_sparse_dot(X, self.coef_.T) + self.intercept_
+        return (safe_sparse_dot(X, self.feature_log_prob_.T)
+               + self.class_log_prior_)
 
 
 class BernoulliNB(BaseDiscreteNB):
@@ -354,8 +366,6 @@ class BernoulliNB(BaseDiscreteNB):
     Like MultinomialNB, this classifier is suitable for discrete data. The
     difference is that while MultinomialNB works with occurrence counts,
     BernoulliNB is designed for binary/boolean features.
-
-    Note: this class does not check whether features are actually boolean.
 
     Parameters
     ----------
@@ -433,6 +443,6 @@ class BernoulliNB(BaseDiscreteNB):
         # Compute  neg_prob · (1 - X).T  as  ∑neg_prob - X · neg_prob
         X_neg_prob = (neg_prob.sum(axis=1)
                     - safe_sparse_dot(X, neg_prob.T))
-        jll = safe_sparse_dot(X, self.coef_.T) + X_neg_prob
+        jll = safe_sparse_dot(X, self.feature_log_prob_.T) + X_neg_prob
 
-        return jll + self.intercept_
+        return jll + self.class_log_prior_
