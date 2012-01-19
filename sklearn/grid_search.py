@@ -347,15 +347,11 @@ class GridSearchCV(BaseEstimator):
 
         # Note: we do not use max(out) to make ties deterministic even if
         # comparison on estimator instances is not deterministic
-        best_score = None
+        best_score = -np.inf
         for score, estimator in scores:
-            if best_score is None:
+            if score > best_score:
                 best_score = score
                 best_estimator = estimator
-            else:
-                if score > best_score:
-                    best_score = score
-                    best_estimator = estimator
 
         if best_score is None:
             raise ValueError('Best score could not be found')
