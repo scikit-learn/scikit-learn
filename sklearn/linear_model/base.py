@@ -288,7 +288,7 @@ class BaseSGD(BaseEstimator):
         if n_classes > 2:
             # allocate coef_ for multi-class
             if coef_init is not None:
-                coef_init = np.asarray(coef_init)
+                coef_init = np.asarray(coef_init, order="C")
                 if coef_init.shape != (n_classes, n_features):
                     raise ValueError("Provided coef_ does not match dataset. ")
                 self.coef_ = coef_init
@@ -298,7 +298,7 @@ class BaseSGD(BaseEstimator):
 
             # allocate intercept_ for multi-class
             if intercept_init is not None:
-                intercept_init = np.asarray(intercept_init)
+                intercept_init = np.asarray(intercept_init, order="C")
                 if intercept_init.shape != (n_classes, ):
                     raise ValueError("Provided intercept_init " \
                                      "does not match dataset.")
