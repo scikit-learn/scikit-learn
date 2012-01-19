@@ -1,6 +1,6 @@
 from ..base import ClassifierMixin, RegressorMixin
 from ..feature_selection.selector_mixin import SelectorMixin
-from .base import BaseLibLinear, DenseBaseLibSVM
+from .base import BaseLibLinear, BaseLibSVM
 
 
 class LinearSVC(BaseLibLinear, ClassifierMixin, SelectorMixin):
@@ -92,7 +92,7 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, SelectorMixin):
     pass
 
 
-class SVC(DenseBaseLibSVM, ClassifierMixin):
+class SVC(BaseLibSVM, ClassifierMixin):
     """C-Support Vector Classification.
 
     Parameters
@@ -185,7 +185,7 @@ class SVC(DenseBaseLibSVM, ClassifierMixin):
                                   cache_size, scale_C)
 
 
-class NuSVC(DenseBaseLibSVM, ClassifierMixin):
+class NuSVC(BaseLibSVM, ClassifierMixin):
     """Nu-Support Vector Classification.
 
     Parameters
@@ -276,7 +276,7 @@ class NuSVC(DenseBaseLibSVM, ClassifierMixin):
                                     cache_size, scale_C=None)
 
 
-class SVR(DenseBaseLibSVM, RegressorMixin):
+class SVR(BaseLibSVM, RegressorMixin):
     """epsilon-Support Vector Regression.
 
     The free parameters in the model are C and epsilon.
@@ -398,7 +398,7 @@ class SVR(DenseBaseLibSVM, RegressorMixin):
                                     **params)
 
 
-class NuSVR(DenseBaseLibSVM, RegressorMixin):
+class NuSVR(BaseLibSVM, RegressorMixin):
     """Nu Support Vector Regression.
 
     Similar to NuSVC, for regression, uses a parameter nu to control
@@ -518,7 +518,7 @@ class NuSVR(DenseBaseLibSVM, RegressorMixin):
         return super(NuSVR, self).fit(X, y, sample_weight=[], **params)
 
 
-class OneClassSVM(DenseBaseLibSVM):
+class OneClassSVM(BaseLibSVM):
     """Unsupervised Outliers Detection.
 
     Estimate the support of a high-dimensional distribution.
