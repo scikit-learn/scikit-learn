@@ -14,7 +14,6 @@ from ..base import ClassifierMixin
 from .base import BaseSGD
 from ..utils import atleast2d_or_csr, check_arrays
 from ..utils.extmath import safe_sparse_dot
-from ..utils import safe_asarray
 from ..utils import deprecated
 
 from .sgd_fast import plain_sgd as plain_sgd_dense
@@ -206,7 +205,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
 
     def _partial_fit(self, X, y, n_iter, classes=None,
                      class_weight=None, sample_weight=None):
-        X = safe_asarray(X, dtype=np.float64, order="C")
+        X = atleast2d_or_csr(X, dtype=np.float64, order="C")
         y = np.asarray(y)
 
         n_samples, n_features = X.shape
@@ -320,7 +319,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
         -------
         self : returns an instance of self.
         """
-        X = safe_asarray(X, dtype=np.float64, order="C")
+        X = atleast2d_or_csr(X, dtype=np.float64, order="C")
         y = np.asarray(y)
 
         n_samples, n_features = X.shape
@@ -409,16 +408,10 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
         return 1.0 / (1.0 + np.exp(-self.decision_function(X)))
 
     def _fit_binary(self, X, y, sample_weight, n_iter):
-        if sp.issparse(X):
-            X = _tocsr(X)
-            fit_binary = _fit_binary_sparse
-        else:
-            fit_binary = _fit_binary_dense
-
-        coef, intercept = fit_binary(self, 1, X, y, n_iter,
-                                     self._expanded_class_weight[1],
-                                     self._expanded_class_weight[0],
-                                     sample_weight)
+        coef, intercept = _fit_binary(self, 1, X, y, n_iter,
+                                      self._expanded_class_weight[1],
+                                      self._expanded_class_weight[0],
+                                      sample_weight)
 
         # need to be 2d
         self.coef_ = coef.reshape(1, -1)
@@ -431,17 +424,11 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
         Each binary classifier predicts one class versus all others. This
         strategy is called OVA: One Versus All.
         """
-        if sp.issparse(X):
-            X = _tocsr(X)
-            fit_binary = _fit_binary_sparse
-        else:
-            fit_binary = _fit_binary_dense
-
         # Use joblib to fit OvA in parallel
         result = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
-            delayed(fit_binary)(self, i, X, y, n_iter,
-                                self._expanded_class_weight[i], 1.,
-                                sample_weight)
+            delayed(_fit_binary)(self, i, X, y, n_iter,
+                                 self._expanded_class_weight[i], 1.,
+                                 sample_weight)
             for i in xrange(len(self.classes_)))
 
         for i, (coef, intercept) in enumerate(result):
@@ -449,10 +436,13 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
             self.intercept_[i] = intercept
 
 
-def _prepare_fit_binary(est, y, i):
-    """Common initialization for _fit_binary_{dense,sparse}.
+# This is a free-standing function because of joblib.
+def _fit_binary(est, i, X, y, n_iter, pos_weight, neg_weight, sample_weight):
+    """Fit a single binary classifier.
 
-    Returns y, coef, intercept.
+    The i'th class is considered the "positive" class.
+
+    X, if sparse, must be in CSR format.
     """
     y_i = np.ones(y.shape, dtype=np.float64, order="C")
     y_i[y != est.classes_[i]] = -1.0
@@ -464,39 +454,13 @@ def _prepare_fit_binary(est, y, i):
         coef = est.coef_[i]
         intercept = est.intercept_[i]
 
-    return y_i, coef, intercept
+    plain_sgd = plain_sgd_sparse if sp.issparse(X) else plain_sgd_dense
 
-
-def _fit_binary_dense(est, i, X, y, n_iter, pos_weight, neg_weight,
-                      sample_weight):
-    """Fit a single binary classifier.
-
-    The i'th class is considered the "positive" class.
-    """
-    y_i, coef, intercept = _prepare_fit_binary(est, y, i)
-    return plain_sgd_dense(coef, intercept, est.loss_function,
-                           est.penalty_type, est.alpha, est.rho,
-                           X, y_i, n_iter, est.fit_intercept,
-                           est.verbose, est.shuffle, est.seed,
-                           pos_weight, neg_weight, sample_weight,
-                           est.learning_rate_code, est.eta0,
-                           est.power_t, est.t_)
-
-
-def _fit_binary_sparse(est, i, X, y, n_iter, pos_weight, neg_weight,
-                      sample_weight):
-    """Fit a single binary classifier.
-
-    The i'th class is considered the "positive" class.
-    """
-    y_i, coef, intercept = _prepare_fit_binary(est, y, i)
-    return plain_sgd_sparse(coef, intercept, est.loss_function,
-                            est.penalty_type, est.alpha, est.rho,
-                            X.data, X.indices, X.indptr, y_i, n_iter,
-                            est.fit_intercept, est.verbose, est.shuffle,
-                            est.seed, pos_weight, neg_weight, sample_weight,
-                            est.learning_rate_code, est.eta0,
-                            est.power_t, est.t_)
+    return plain_sgd(coef, intercept, est.loss_function, est.penalty_type,
+                     est.alpha, est.rho, X, y_i, n_iter, est.fit_intercept,
+                     est.verbose, est.shuffle, est.seed, pos_weight,
+                     neg_weight, sample_weight, est.learning_rate_code,
+                     est.eta0, est.power_t, est.t_)
 
 
 class SGDRegressor(BaseSGD, RegressorMixin):
@@ -735,48 +699,22 @@ class SGDRegressor(BaseSGD, RegressorMixin):
         return self.decision_function(X)
 
     def _fit_regressor(self, X, y, sample_weight, n_iter):
-        if sp.issparse(X):
-            fit_regr = self._fit_regressor_sparse
-        else:
-            fit_regr = self._fit_regressor_dense
+        X = atleast2d_or_csr(X, dtype=np.float64, order="C")
+        plain_sgd = plain_sgd_sparse if sp.issparse(X) else plain_sgd_dense
 
-        self.coef_, intercept = fit_regr(X, y, sample_weight, n_iter)
+        self.coef_, intercept = plain_sgd(self.coef_, self.intercept_[0],
+                                          self.loss_function,
+                                          self.penalty_type,
+                                          self.alpha, self.rho,
+                                          X, y,
+                                          n_iter,
+                                          int(self.fit_intercept),
+                                          int(self.verbose),
+                                          int(self.shuffle),
+                                          self.seed,
+                                          1.0, 1.0,
+                                          sample_weight,
+                                          self.learning_rate_code,
+                                          self.eta0, self.power_t, self.t_)
+
         self.intercept_ = np.atleast_1d(intercept)
-
-    def _fit_regressor_dense(self, X, y, sample_weight, n_iter):
-        X = np.asarray(X, dtype=np.float64, order='C')
-        return plain_sgd_dense(self.coef_,
-                               self.intercept_[0],
-                               self.loss_function,
-                               self.penalty_type,
-                               self.alpha, self.rho,
-                               X, y,
-                               n_iter,
-                               int(self.fit_intercept),
-                               int(self.verbose),
-                               int(self.shuffle),
-                               self.seed,
-                               1.0, 1.0,
-                               sample_weight,
-                               self.learning_rate_code,
-                               self.eta0, self.power_t, self.t_)
-
-    def _fit_regressor_sparse(self, X, y, sample_weight, n_iter):
-        # interpret X as CSR matrix
-        X = _tocsr(X)
-
-        return plain_sgd_sparse(self.coef_,
-                                self.intercept_,
-                                self.loss_function,
-                                self.penalty_type,
-                                self.alpha, self.rho,
-                                X.data, X.indices, X.indptr, y,
-                                n_iter,
-                                int(self.fit_intercept),
-                                int(self.verbose),
-                                int(self.shuffle),
-                                int(self.seed),
-                                1.0, 1.0,
-                                sample_weight,
-                                self.learning_rate_code,
-                                self.eta0, self.power_t, self.t_)
