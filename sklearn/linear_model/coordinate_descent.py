@@ -75,6 +75,10 @@ class ElasticNet(LinearModel):
         dual gap for optimality and continues until it is smaller
         than tol.
 
+    warm_start : bool, optional
+        When set to True, reuse the solution of the previous call to fit as
+        initialization, otherwise, just erase the previous solution.
+
     Notes
     -----
     To avoid unnecessary memory duplication the X argument of the fit method
@@ -82,7 +86,7 @@ class ElasticNet(LinearModel):
     """
     def __init__(self, alpha=1.0, rho=0.5, fit_intercept=True,
                  normalize=False, precompute='auto', max_iter=1000,
-                 copy_X=True, tol=1e-4):
+                 copy_X=True, tol=1e-4, warm_start=False):
         self.alpha = alpha
         self.rho = rho
         self.coef_ = None
@@ -92,6 +96,7 @@ class ElasticNet(LinearModel):
         self.max_iter = max_iter
         self.copy_X = copy_X
         self.tol = tol
+        self.warm_start = warm_start
 
     def fit(self, X, y, Xy=None, coef_init=None):
         """Fit Elastic Net model with coordinate descent
@@ -137,7 +142,8 @@ class ElasticNet(LinearModel):
             Xy = None  # recompute Xy
 
         if coef_init is None:
-            self.coef_ = np.zeros(n_features, dtype=np.float64)
+            if not self.warm_start or self.coef_ is None:
+                self.coef_ = np.zeros(n_features, dtype=np.float64)
         else:
             self.coef_ = coef_init
 
@@ -220,6 +226,10 @@ class Lasso(ElasticNet):
         dual gap for optimality and continues until it is smaller
         than tol.
 
+    warm_start : bool, optional
+        When set to True, reuse the solution of the previous call to fit as
+        initialization, otherwise, just erase the previous solution.
+
 
     Attributes
     ----------
@@ -235,7 +245,7 @@ class Lasso(ElasticNet):
     >>> clf = linear_model.Lasso(alpha=0.1)
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])
     Lasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
-       normalize=False, precompute='auto', tol=0.0001)
+       normalize=False, precompute='auto', tol=0.0001, warm_start=False)
     >>> print clf.coef_
     [ 0.85  0.  ]
     >>> print clf.intercept_
@@ -260,11 +270,11 @@ class Lasso(ElasticNet):
 
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  precompute='auto', copy_X=True, max_iter=1000,
-                 tol=1e-4):
+                 tol=1e-4, warm_start=False):
         super(Lasso, self).__init__(alpha=alpha, rho=1.0,
                             fit_intercept=fit_intercept, normalize=normalize,
                             precompute=precompute, copy_X=copy_X,
-                            max_iter=max_iter, tol=tol)
+                            max_iter=max_iter, tol=tol, warm_start=warm_start)
 
 
 ###############################################################################
