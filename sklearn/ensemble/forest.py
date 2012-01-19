@@ -591,8 +591,8 @@ class RandomForestRegressor(ForestRegressor):
     `oob_score_` : float
         Score of the training dataset obtained using an out-of-bag estimate.
 
-     `oob_prediction_` : array, shape = [n_samples, n_classes]
-        Decision function computed with out-of-bag estimate on the training set.
+    `oob_prediction_` : array, shape = [n_samples]
+        Prediction computed with out-of-bag estimate on the training set.
 
 
 
@@ -825,8 +825,8 @@ class ExtraTreesRegressor(ForestRegressor):
     `oob_score_` : float
         Score of the training dataset obtained using an out-of-bag estimate.
 
-     `oob_prediction_` : array, shape = [n_samples, n_classes]
-        Decision function computed with out-of-bag estimate on the training set.
+    `oob_prediction_` : array, shape = [n_samples]
+        Prediction computed with out-of-bag estimate on the training set.
 
     Notes
     -----
