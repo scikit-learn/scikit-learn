@@ -15,7 +15,7 @@ class SparseBaseLibSVM(BaseLibSVM):
 
         super(SparseBaseLibSVM, self).__init__(impl, kernel, degree, gamma,
                 coef0, tol, C, nu, epsilon, shrinking, probability, cache_size,
-                scale_C)
+                scale_C, sparse=True)
 
     def fit(self, X, y, class_weight=None, sample_weight=None):
         X = scipy.sparse.csr_matrix(X, dtype=np.float64)

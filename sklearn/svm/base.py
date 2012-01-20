@@ -42,7 +42,7 @@ class BaseLibSVM(BaseEstimator):
 
     def __init__(self, impl, kernel, degree, gamma, coef0,
                  tol, C, nu, epsilon, shrinking, probability, cache_size,
-                 scale_C):
+                 scale_C, sparse):
 
         if not impl in LIBSVM_IMPL:
             raise ValueError("impl should be one of %s, %s was given" % (
@@ -69,6 +69,7 @@ class BaseLibSVM(BaseEstimator):
         self.probability = probability
         self.cache_size = cache_size
         self.scale_C = scale_C
+        self.sparse = sparse
 
     def fit(self, X, y, class_weight=None, sample_weight=None):
         """Fit the SVM model according to the given training data.
@@ -106,7 +107,7 @@ class BaseLibSVM(BaseEstimator):
         If X is a dense array, then the other methods will not support sparse
         matrices as input.
         """
-        self._sparse = sp.isspmatrix(X)
+        self._sparse = sp.isspmatrix(X) if self.sparse == "auto" else self.sparse
         fit = self._sparse_fit if self._sparse else self._dense_fit
         fit(X, y, class_weight, sample_weight)
         return self
@@ -146,6 +147,8 @@ class BaseLibSVM(BaseEstimator):
             if params['scale_C']:
                 params['C'] = params['C'] / float(X.shape[0])
             del params['scale_C']
+        if 'sparse' in params:
+            del params['sparse']
 
         self.support_, self.support_vectors_, self.n_support_, \
         self.dual_coef_, self.intercept_, self.label_, self.probA_, \
@@ -285,6 +288,8 @@ class BaseLibSVM(BaseEstimator):
         params = self.get_params()
         if 'scale_C' in params:
             del params['scale_C']
+        if "sparse" in params:
+            del params["sparse"]
 
         svm_type = LIBSVM_IMPL.index(self.impl)
         return libsvm.predict(
@@ -353,6 +358,8 @@ class BaseLibSVM(BaseEstimator):
         params = self.get_params()
         if 'scale_C' in params:
             del params['scale_C']
+        if "sparse" in params:
+            del params["sparse"]
 
         svm_type = LIBSVM_IMPL.index(self.impl)
         pprob = libsvm.predict_proba(
@@ -436,6 +443,8 @@ class BaseLibSVM(BaseEstimator):
         params = self.get_params()
         if 'scale_C' in params:
             del params['scale_C']
+        if "sparse" in params:
+            del params["sparse"]
 
         dec_func = libsvm.decision_function(
             X, self.support_, self.support_vectors_, self.n_support_,
