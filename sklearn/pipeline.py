@@ -79,21 +79,20 @@ class Pipeline(BaseEstimator):
         self.named_steps = dict(steps)
         names, estimators = zip(*steps)
         self.steps = steps
-        assert len(self.named_steps) == len(steps), ("Names provided are "
-            "not unique: %s" % names)
+        if len(self.named_steps) != len(steps):
+            raise ValueError("Names provided are not unique: %s" % names)
         transforms = estimators[:-1]
         estimator = estimators[-1]
         for t in  transforms:
-            assert (hasattr(t, "fit") or hasattr(t, "fit_transform")) and \
-                    hasattr(t, "transform"), ValueError(
-                "All intermediate steps a the chain should be transforms "
-                "and implement fit and transform",
-                "'%s' (type %s) doesn't)" % (t, type(t))
-            )
-        assert hasattr(estimator, "fit"), \
-            ("Last step of chain should implement fit",
-                "'%s' (type %s) doesn't)" % (estimator, type(estimator))
-            )
+            if not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not \
+                    hasattr(t, "transform"):
+                raise TypeError("All intermediate steps a the chain should "
+                        "be transforms and implement fit and transform"
+                        "'%s' (type %s) doesn't)" % (t, type(t)))
+
+        if not hasattr(estimator, "fit"):
+            raise TypeError("Last step of chain should implement fit "
+                "'%s' (type %s) doesn't)" % (estimator, type(estimator)))
 
     def get_params(self, deep=True):
         if not deep:

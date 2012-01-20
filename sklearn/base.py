@@ -38,7 +38,7 @@ def clone(estimator, safe=True):
         if not safe:
             return copy.deepcopy(estimator)
         else:
-            raise ValueError("Cannot clone object '%s' (type %s): "
+            raise TypeError("Cannot clone object '%s' (type %s): "
                     "it does not seem to be a scikit-learn estimator as "
                     "it does not implement a 'get_params' methods."
                     % (repr(estimator), type(estimator)))
@@ -88,10 +88,9 @@ def clone(estimator, safe=True):
                 )
         else:
             equality_test = new_object_params[name] == params_set[name]
-        assert equality_test, (
-            'Cannot clone object %s, as the constructor does not '
-            'seem to set parameter %s' % (estimator, name)
-        )
+        if not equality_test:
+            raise RuntimeError('Cannot clone object %s, as the constructor '
+                'does not seem to set parameter %s' % (estimator, name))
 
     return new_object
 
@@ -170,10 +169,10 @@ class BaseEstimator(object):
             # introspect the constructor arguments to find the model parameters
             # to represent
             args, varargs, kw, default = inspect.getargspec(init)
-            assert varargs is None, (
-                'scikit learn estimators should always specify their '
-                'parameters in the signature of their init (no varargs).'
-            )
+            if not varargs is None:
+                raise RuntimeError('scikit learn estimators should always '
+                        'specify their parameters in the signature of '
+                        'their init (no varargs).')
             # Remove 'self'
             # XXX: This is going to fail if the init is a staticmethod, but
             # who would do this?
@@ -183,7 +182,6 @@ class BaseEstimator(object):
             args = []
         args.sort()
         return args
-
 
     @deprecated("to be removed in v0.12; use get_params() instead")
     def _get_params(self, deep=True):
@@ -228,11 +226,12 @@ class BaseEstimator(object):
             if len(split) > 1:
                 # nested objects case
                 name, sub_name = split
-                assert name in valid_params, ('Invalid parameter %s '
-                                              'for estimator %s' %
-                                             (name, self))
+                if not name in valid_params:
+                    raise ValueError('Invalid parameter %s for estimator %s'
+                            % (name, self))
                 sub_object = valid_params[name]
-                assert hasattr(sub_object, 'get_params'), (
+                if not hasattr(sub_object, 'get_params'):
+                    raise TypeError(
                     'Parameter %s of %s is not an estimator, cannot set '
                     'sub parameter %s' %
                         (sub_name, self.__class__.__name__, sub_name)
@@ -240,9 +239,9 @@ class BaseEstimator(object):
                 sub_object.set_params(**{sub_name: value})
             else:
                 # simple objects case
-                assert key in valid_params, ('Invalid parameter %s '
-                                              'for estimator %s' %
-                                             (key, self.__class__.__name__))
+                if not key in valid_params:
+                    raise ValueError('Invalid parameter %s ' 'for estimator %s'
+                            % (key, self.__class__.__name__))
                 setattr(self, key, value)
         return self
 
