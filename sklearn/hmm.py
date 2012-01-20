@@ -74,12 +74,6 @@ class _BaseHMM(BaseEstimator):
     n_components : int (read-only)
         Number of states in the model.
 
-    transmat : array, shape (`n_components`, `n_components`)
-        Matrix of transition probabilities between states.
-
-    startprob : array, shape ('n_components`,)
-        Initial state occupation distribution.
-
     See Also
     --------
     GMM : Gaussian mixture model
@@ -831,11 +825,8 @@ class MultinomialHMM(_BaseHMM):
     >>> from sklearn.hmm import MultinomialHMM
     >>> MultinomialHMM(n_components=2)
     ...                             #doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    MultinomialHMM(n_components=2, startprob=array([ 0.5,  0.5]),
-            startprob_prior=1.0,
-            transmat=array([[ 0.5,  0.5],
-           [ 0.5,  0.5]]),
-            transmat_prior=1.0)
+    MultinomialHMM(n_components=2, startprob=None, startprob_prior=1.0,
+             transmat=None, transmat_prior=1.0)
 
     See Also
     --------
