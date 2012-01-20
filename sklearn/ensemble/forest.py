@@ -139,6 +139,7 @@ class BaseForest(BaseEnsemble, SelectorMixin):
                        estimator_params=[],
                        bootstrap=False,
                        compute_importances=False,
+                       oob_score=False,
                        n_jobs=1,
                        random_state=None):
         super(BaseForest, self).__init__(
@@ -148,12 +149,13 @@ class BaseForest(BaseEnsemble, SelectorMixin):
 
         self.bootstrap = bootstrap
         self.compute_importances = compute_importances
+        self.oob_score = oob_score
         self.n_jobs = n_jobs
         self.random_state = check_random_state(random_state)
 
         self.feature_importances_ = None
 
-    def fit(self, X, y, oob_score=False):
+    def fit(self, X, y):
         """Build a forest of trees from the training set (X, y).
 
         Parameters
@@ -164,10 +166,6 @@ class BaseForest(BaseEnsemble, SelectorMixin):
         y : array-like, shape = [n_samples]
             The target values (integers that correspond to classes in
             classification, real numbers in regression).
-
-        oob_score : bool
-            Whether to use out-of-bag samples to estimate
-            the generalization error.
 
         Returns
         -------
@@ -183,7 +181,7 @@ class BaseForest(BaseEnsemble, SelectorMixin):
             X_argsorted = None
 
         else:
-            if oob_score:
+            if self.oob_score:
                 raise ValueError("Out of bag estimation only available"
                         " if bootstrap=True")
 
@@ -215,7 +213,7 @@ class BaseForest(BaseEnsemble, SelectorMixin):
         self.estimators_ = [tree for tree in itertools.chain(*all_trees)]
 
         # Calculate out of bag predictions and score
-        if oob_score:
+        if self.oob_score:
             if isinstance(self, ClassifierMixin):
                 predictions = np.zeros((X.shape[0], self.n_classes_))
                 for estimator in self.estimators_:
@@ -261,6 +259,7 @@ class ForestClassifier(BaseForest, ClassifierMixin):
                        estimator_params=[],
                        bootstrap=False,
                        compute_importances=False,
+                       oob_score=False,
                        n_jobs=1,
                        random_state=None):
         super(ForestClassifier, self).__init__(
@@ -269,6 +268,7 @@ class ForestClassifier(BaseForest, ClassifierMixin):
             estimator_params=estimator_params,
             bootstrap=bootstrap,
             compute_importances=compute_importances,
+            oob_score=oob_score,
             n_jobs=n_jobs,
             random_state=random_state)
 
@@ -357,6 +357,7 @@ class ForestRegressor(BaseForest, RegressorMixin):
                        estimator_params=[],
                        bootstrap=False,
                        compute_importances=False,
+                       oob_score=False,
                        n_jobs=1,
                        random_state=None):
         super(ForestRegressor, self).__init__(
@@ -365,6 +366,7 @@ class ForestRegressor(BaseForest, RegressorMixin):
             estimator_params=estimator_params,
             bootstrap=bootstrap,
             compute_importances=compute_importances,
+            oob_score=oob_score,
             n_jobs=n_jobs,
             random_state=random_state)
 
@@ -458,6 +460,10 @@ class RandomForestClassifier(ForestClassifier):
         Whether feature importances are computed and stored into the
         ``feature_importances_`` attribute when calling fit.
 
+    oob_score : bool
+        Whether to use out-of-bag samples to estimate
+        the generalization error.
+
     n_jobs : integer, optional (default=1)
         The number of jobs to run in parallel. If -1, then the number of jobs
         is set to the number of cores.
@@ -498,6 +504,7 @@ class RandomForestClassifier(ForestClassifier):
                        max_features="auto",
                        bootstrap=True,
                        compute_importances=False,
+                       oob_score=False,
                        n_jobs=1,
                        random_state=None):
         super(RandomForestClassifier, self).__init__(
@@ -507,6 +514,7 @@ class RandomForestClassifier(ForestClassifier):
                               "min_density", "max_features", "random_state"),
             bootstrap=bootstrap,
             compute_importances=compute_importances,
+            oob_score=oob_score,
             n_jobs=n_jobs,
             random_state=random_state)
 
@@ -573,6 +581,10 @@ class RandomForestRegressor(ForestRegressor):
         Whether feature importances are computed and stored into the
         ``feature_importances_`` attribute when calling fit.
 
+    oob_score : bool
+        whether to use out-of-bag samples to estimate
+        the generalization error.
+
     n_jobs : integer, optional (default=1)
         The number of jobs to run in parallel. If -1, then the number of jobs
         is set to the number of cores.
@@ -614,6 +626,7 @@ class RandomForestRegressor(ForestRegressor):
                        max_features="auto",
                        bootstrap=True,
                        compute_importances=False,
+                       oob_score=False,
                        n_jobs=1,
                        random_state=None):
         super(RandomForestRegressor, self).__init__(
@@ -623,6 +636,7 @@ class RandomForestRegressor(ForestRegressor):
                               "min_density", "max_features", "random_state"),
             bootstrap=bootstrap,
             compute_importances=compute_importances,
+            oob_score=oob_score,
             n_jobs=n_jobs,
             random_state=random_state)
 
@@ -690,6 +704,10 @@ class ExtraTreesClassifier(ForestClassifier):
         Whether feature importances are computed and stored into the
         ``feature_importances_`` attribute when calling fit.
 
+    oob_score : bool
+        Whether to use out-of-bag samples to estimate
+        the generalization error.
+
     n_jobs : integer, optional (default=1)
         The number of jobs to run in parallel. If -1, then the number of jobs
         is set to the number of cores.
@@ -730,6 +748,7 @@ class ExtraTreesClassifier(ForestClassifier):
                        max_features="auto",
                        bootstrap=False,
                        compute_importances=False,
+                       oob_score=False,
                        n_jobs=1,
                        random_state=None):
         super(ExtraTreesClassifier, self).__init__(
@@ -739,6 +758,7 @@ class ExtraTreesClassifier(ForestClassifier):
                               "min_density", "max_features", "random_state"),
             bootstrap=bootstrap,
             compute_importances=compute_importances,
+            oob_score=oob_score,
             n_jobs=n_jobs,
             random_state=random_state)
 
@@ -807,6 +827,10 @@ class ExtraTreesRegressor(ForestRegressor):
         Whether feature importances are computed and stored into the
         ``feature_importances_`` attribute when calling fit.
 
+    oob_score : bool
+        Whether to use out-of-bag samples to estimate
+        the generalization error.
+
     n_jobs : integer, optional (default=1)
         The number of jobs to run in parallel. If -1, then the number of jobs
         is set to the number of cores.
@@ -847,6 +871,7 @@ class ExtraTreesRegressor(ForestRegressor):
                        max_features="auto",
                        bootstrap=False,
                        compute_importances=False,
+                       oob_score=False,
                        n_jobs=1,
                        random_state=None):
         super(ExtraTreesRegressor, self).__init__(
@@ -856,6 +881,7 @@ class ExtraTreesRegressor(ForestRegressor):
                               "min_density", "max_features", "random_state"),
             bootstrap=bootstrap,
             compute_importances=compute_importances,
+            oob_score=oob_score,
             n_jobs=n_jobs,
             random_state=random_state)
 
