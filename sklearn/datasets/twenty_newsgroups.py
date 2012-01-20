@@ -153,13 +153,16 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
     elif subset == 'all':
         data_lst = list()
         target = list()
+        filenames = list()
         for subset in ('train', 'test'):
             data = cache[subset]
             data_lst.extend(data.data)
             target.extend(data.target)
+            filenames.extend(data.filenames)
 
         data.data = data_lst
         data.target = np.array(target)
+        data.filenames = np.array(filenames)
         data.description = 'the 20 newsgroups by date dataset'
     else:
         raise ValueError(
@@ -171,6 +174,7 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
         labels.sort()
         labels, categories = zip(*labels)
         mask = in1d(data.target, labels)
+        data.filenames = data.filenames[mask]
         data.target = data.target[mask]
         # searchsorted to have continuous labels
         data.target = np.searchsorted(labels, data.target)
@@ -184,6 +188,7 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
         random_state = check_random_state(random_state)
         indices = np.arange(data.target.shape[0])
         random_state.shuffle(indices)
+        data.filenames = data.filenames[indices]
         data.target = data.target[indices]
         # Use an object array to shuffle: avoids memory copy
         data_lst = np.array(data.data, dtype=object)
