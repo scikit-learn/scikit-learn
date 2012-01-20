@@ -5,6 +5,13 @@
 0.11
 ====
 
+Changelog
+---------
+
+    - :ref:`out_of_bag` of generalization error for :ref:`ensemble`
+      by `Andreas Müller`_.
+
+
 API changes summary
 -------------------
 

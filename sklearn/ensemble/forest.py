@@ -482,7 +482,7 @@ class RandomForestClassifier(ForestClassifier):
     `oob_score_` : float
         Score of the training dataset obtained using an out-of-bag estimate.
 
-     `oob_decision_function_` : array, shape = [n_samples, n_classes]
+    `oob_decision_function_` : array, shape = [n_samples, n_classes]
         Decision function computed with out-of-bag estimate on the training set.
 
 
@@ -726,7 +726,7 @@ class ExtraTreesClassifier(ForestClassifier):
     `oob_score_` : float
         Score of the training dataset obtained using an out-of-bag estimate.
 
-     `oob_decision_function_` : array, shape = [n_samples, n_classes]
+    `oob_decision_function_` : array, shape = [n_samples, n_classes]
         Decision function computed with out-of-bag estimate on the training set.
 
     Notes

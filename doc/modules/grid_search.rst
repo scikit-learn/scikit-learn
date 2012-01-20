@@ -78,6 +78,8 @@ model selection:
    linear_model.LassoLarsIC
 
 
+.. _out_of_bag:
+
 Out of Bag Estimates
 --------------------
 
@@ -91,9 +93,12 @@ This estimate comes "for free" as no addictional data is needed and
 can be used for model selection.
 
 This is currently implemented in the following classes:
+
 .. autosummary::
    :toctree: generated/
    :template: class.rst
 
     ensemble.RandomForestClassifier
+    ensemble.RandomForestRegressor
     ensemble.ExtraTreesClassifier
+    ensemble.ExtraTreesRegressor
