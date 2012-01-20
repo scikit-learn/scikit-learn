@@ -182,7 +182,7 @@ for another implementation::
     >>> clf = linear_model.Lasso(alpha = 0.1)
     >>> clf.fit([[0, 0], [1, 1]], [0, 1])
     Lasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
-       normalize=False, precompute='auto', tol=0.0001)
+       normalize=False, precompute='auto', tol=0.0001, warm_start=False)
     >>> clf.predict([[1, 1]])
     array([ 0.8])
 
@@ -385,7 +385,7 @@ fixed number of non-zero elements:
 Alternatively, orthogonal matching pursuit can target a specific error instead
 of a specific number of non-zero coefficients. This can be expressed as:
 
-.. math:: \text{arg\,min\,} ||\gamma||_0 \text{ subject to } ||y-X\gamma||_2^2 \ 
+.. math:: \text{arg\,min\,} ||\gamma||_0 \text{ subject to } ||y-X\gamma||_2^2 \
     \leq \text{tol}
 
 
@@ -447,7 +447,7 @@ The disadvantages of Bayesian regression include:
 .. topic:: References
 
  * A good introduction to Bayesian methods is given in C. Bishop: Pattern
-   Recognition and Machine learning 
+   Recognition and Machine learning
 
  * Original Algorithm is detailed in the  book `Bayesian learning for neural
    networks` by Radford M. Neal
