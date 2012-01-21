@@ -417,6 +417,20 @@ From text
    kernel_approximation.AdditiveChi2Sampler
    kernel_approximation.SkewedChi2Sampler
 
+Label propagation
+=================
+
+.. automodule:: scikits.learn.label_propagation
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: scikits.learn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+   label_propagation.LabelPropagation
+   label_propagation.LabelSpreading
 
 .. _lda_ref:
 
