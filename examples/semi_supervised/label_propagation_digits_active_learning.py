@@ -42,14 +42,14 @@ for i in range(5):
     y_train = np.copy(y)
     y_train[unlabeled_indices] = -1
 
-    lp_model = label_propagation.LabelSpreading(gamma=0.25, max_iter=5)
+    lp_model = label_propagation.LabelSpreading(gamma=0.25, max_iters=5)
     lp_model.fit(X, y_train)
 
     predicted_labels = lp_model.transduction_[unlabeled_indices]
     true_labels = y[unlabeled_indices]
 
     cm = confusion_matrix(true_labels, predicted_labels,
-            labels=lp_model.unique_labels_)
+            labels=lp_model.classes_)
 
     print "Label Spreading model: %d labeled & %d unlabeled (%d total)" %\
         (n_labeled_points, n_total_samples - n_labeled_points, n_total_samples)

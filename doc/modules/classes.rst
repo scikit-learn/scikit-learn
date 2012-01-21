@@ -415,14 +415,14 @@ From text
    kernel_approximation.AdditiveChi2Sampler
    kernel_approximation.SkewedChi2Sampler
 
-Label propagation
-=================
+:mode:`sklearn.label_propagation` Label propagation
+===================================================
 
-.. automodule:: scikits.learn.label_propagation
+.. automodule:: sklearn.label_propagation
    :no-members:
    :no-inherited-members:
 
-.. currentmodule:: scikits.learn
+.. currentmodule:: sklearn
 
 .. autosummary::
    :toctree: generated/

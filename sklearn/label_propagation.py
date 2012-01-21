@@ -53,6 +53,8 @@ from .neighbors.graph import kneighbors_graph
 from .utils.graph import graph_laplacian
 from .utils.fixes import divide_out
 
+from .utils.extmath import safe_sparse_dot
+
 from neighbors.unsupervised import NearestNeighbors
 
 # Authors: Clay Woolam <clay@woolam.org>
@@ -132,7 +134,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
             Predictions for input data
         """
         probas = self.predict_proba(X)
-        return self.unique_labels_[np.argmax(probas, axis=1)].flatten()
+        return self.classes_[np.argmax(probas, axis=1)].ravel()
 
     def predict_proba(self, X):
         """Predict probability for each possible outcome.
@@ -184,33 +186,33 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         -------
         updated LabelPropagation object with a new transduction results
         """
-        self.X_ = np.asanyarray(X)
+        self.X_ = np.asarray(X)
 
         # actual graph construction (implementations should override this)
         graph_matrix = self._build_graph()
 
         # label construction
         # construct a categorical distribution for classification only
-        unique_labels = np.unique(y)
-        unique_labels = (unique_labels[unique_labels !=
+        classes = np.unique(y)
+        classes = (classes[classes !=
                                                     self.unlabeled_identifier])
-        self.unique_labels_ = unique_labels
+        self.classes_ = classes
 
-        n_samples, n_classes = len(y), len(unique_labels)
+        n_samples, n_classes = len(y), len(classes)
 
-        y = np.asanyarray(y)
+        y = np.asarray(y)
         unlabeled = y == self.unlabeled_identifier
         clamp_weights = np.ones((n_samples, 1))
         clamp_weights[unlabeled, 0] = self.alpha
 
         # initialize distributions
         self.label_distributions_ = np.zeros((n_samples, n_classes))
-        for label in unique_labels:
-            self.label_distributions_[y == label, unique_labels == label] = 1
+        for label in classes:
+            self.label_distributions_[y == label, classes == label] = 1
 
         y_static = np.copy(self.label_distributions_)
         if self.alpha > 0.:
-            y_static = y_static * (1 - self.alpha)
+            y_static *= 1 - self.alpha
         y_static[unlabeled] = 0
 
         l_previous = np.zeros((self.X_.shape[0], n_classes))
@@ -222,12 +224,8 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         while (_not_converged(self.label_distributions_, l_previous, self.tol)
                 and remaining_iter > 1):
             l_previous = self.label_distributions_
-            if sparse.isspmatrix(graph_matrix):
-                self.label_distributions_ = graph_matrix *\
-                        self.label_distributions_
-            else:
-                self.label_distributions_ = np.dot(graph_matrix,
-                        self.label_distributions_)
+            self.label_distributions_ = safe_sparse_dot(graph_matrix,
+                    self.label_distributions_)
             # clamp
             self.label_distributions_ = np.multiply(clamp_weights,
                     self.label_distributions_) + y_static
@@ -237,9 +235,9 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         divide_out(self.label_distributions_, normalizer,
                   out=self.label_distributions_)
         # set the transduction item
-        transduction = self.unique_labels_[np.argmax(self.label_distributions_,
+        transduction = self.classes_[np.argmax(self.label_distributions_,
                 axis=1)]
-        self.transduction_ = transduction.flatten()
+        self.transduction_ = transduction.ravel()
         return self
 
 
