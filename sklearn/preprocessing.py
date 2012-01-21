@@ -5,14 +5,14 @@
 import numpy as np
 import scipy.sparse as sp
 
-from ..utils import check_arrays
-from ..utils import warn_if_not_float
-from ..base import BaseEstimator, TransformerMixin
+from .utils import check_arrays
+from .utils import warn_if_not_float
+from .base import BaseEstimator, TransformerMixin
 
-from ..utils.sparsefuncs import inplace_csr_row_normalize_l1
-from ..utils.sparsefuncs import inplace_csr_row_normalize_l2
-from ..utils.sparsefuncs import inplace_csr_column_scale
-from ..utils.sparsefuncs import mean_variance_axis0
+from .utils.sparsefuncs import inplace_csr_row_normalize_l1
+from .utils.sparsefuncs import inplace_csr_row_normalize_l2
+from .utils.sparsefuncs import inplace_csr_column_scale
+from .utils.sparsefuncs import mean_variance_axis0
 
 
 def _mean_and_std(X, axis=0, with_mean=True, with_std=True):
