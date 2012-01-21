@@ -75,9 +75,6 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
       parameter for rbf kernel
     alpha : float
       clamping factor
-    unlabeled_identifier : any object, same class as label objects
-      a special identifier label that represents unlabeled examples
-      in the training set
     max_iters : float
       change maximum number of iterations allowed
     tol : float
@@ -85,13 +82,9 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
     """
 
     def __init__(self, kernel='rbf', gamma=20, n_neighbors=7,
-            alpha=1, unlabeled_identifier=-1, max_iters=30,
-            tol=1e-3):
+            alpha=1, max_iters=30, tol=1e-3):
         self.max_iters = max_iters
         self.tol = tol
-
-        # object referring to a point that is unlabeled
-        self.unlabeled_identifier = unlabeled_identifier
 
         # kernel parameters
         self.kernel = kernel
@@ -178,7 +171,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
           A {n_samples by n_samples} size matrix will be created from this
 
         y : array_like, shape = [n_labeled_samples]
-          n_labeled_samples (unlabeled points marked with a special identifier)
+          n_labeled_samples (unlabeled points are marked as -1)
           All unlabeled samples will be transductively assigned labels
 
         Returns
@@ -193,14 +186,13 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         # label construction
         # construct a categorical distribution for classification only
         classes = np.unique(y)
-        classes = (classes[classes !=
-                                                    self.unlabeled_identifier])
+        classes = (classes[classes != -1])
         self.classes_ = classes
 
         n_samples, n_classes = len(y), len(classes)
 
         y = np.asarray(y)
-        unlabeled = y == self.unlabeled_identifier
+        unlabeled = y == -1
         clamp_weights = np.ones((n_samples, 1))
         clamp_weights[unlabeled, 0] = self.alpha
 
@@ -255,9 +247,6 @@ class LabelPropagation(BaseLabelPropagation):
       parameter for knn kernel
     alpha : float
       clamping factor
-    unlabeled_identifier : any object, same class as label objects
-      a special identifier label that represents unlabeled examples
-      in the training set
     max_iters : float
       change maximum number of iterations allowed
     tol : float
@@ -320,9 +309,6 @@ class LabelSpreading(BaseLabelPropagation):
       parameter for knn kernel
     alpha : float
       clamping factor
-    unlabeled_identifier : any object, same class as label objects
-      a special identifier label that represents unlabeled examples
-      in the training set
     max_iters : float
       change maximum number of iterations allowed
     tol : float
@@ -353,12 +339,11 @@ class LabelSpreading(BaseLabelPropagation):
     """
 
     def __init__(self, kernel='rbf', gamma=20, n_neighbors=7, alpha=0.2,
-            unlabeled_identifier=-1, max_iters=30, tol=1e-3):
+            max_iters=30, tol=1e-3):
         # this one has different base parameters
         super(LabelSpreading, self).__init__(kernel=kernel, gamma=gamma,
                 n_neighbors=n_neighbors, alpha=alpha,
-                unlabeled_identifier=unlabeled_identifier, max_iters=max_iters,
-                tol=tol)
+                max_iters=max_iters, tol=tol)
 
     def _build_graph(self):
         """Graph matrix for Label Spreading computes the graph laplacian"""

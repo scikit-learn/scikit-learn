@@ -26,15 +26,15 @@ all_xs = np.append(outer_circ_xs, inner_circ_xs)
 all_ys = np.append(outer_circ_ys, inner_circ_ys)
 data = np.vstack((np.append(outer_circ_xs, inner_circ_xs),\
        np.append(outer_circ_ys, inner_circ_ys))).T
-labels = ['outer'] + \
-         ['unlabeled' for x in range(0, n_samples_per_circle - 1)] + \
-         ['inner'] + \
-         ['unlabeled' for x in range(0, n_samples_per_circle - 1)]
+outer, inner = 0, 1
+labels = [outer] + \
+         [-1 for x in range(0, n_samples_per_circle - 1)] + \
+         [inner] + \
+         [-1 for x in range(0, n_samples_per_circle - 1)]
 
 ###############################################################################
 # Learn with LabelSpreading
-label_spread = label_propagation.LabelSpreading(kernel='knn', alpha=1.0,
-                                            unlabeled_identifier='unlabeled')
+label_spread = label_propagation.LabelSpreading(kernel='knn', alpha=1.0)
 label_spread.fit(data, labels)
 
 ###############################################################################
@@ -54,13 +54,13 @@ pl.title("Raw data (2 classes=red and blue)")
 
 pl.subplot(2, 1, 2)
 output_label_array = np.asarray(output_labels)
-outer_numbers = np.where(output_label_array == 'outer')
-inner_numbers = np.where(output_label_array == 'inner')
+outer_numbers = np.where(output_label_array == outer)
+inner_numbers = np.where(output_label_array == inner)
 plot_outer, = pl.plot(all_xs[outer_numbers], all_ys[outer_numbers], 'rs')
 plot_inner, = pl.plot(all_xs[inner_numbers], all_ys[inner_numbers], 'bs')
 pl.legend((plot_outer, plot_inner), ('Outer Learned', 'Inner Learned'),
           'upper left', numpoints=1, shadow=False)
-pl.title("Labels learned with Label Spreading")
+pl.title("Labels learned with Label Spreading (KNN)")
 
 pl.subplots_adjust(0.12, 0.03, 0.9, 0.96, 0.2, 0.2)
 pl.show()
