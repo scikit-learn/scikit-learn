@@ -149,23 +149,23 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
 
         Return
         ------
-        inference : array of normalized probability distributions across class
-        labels
+        probabilities : array of normalized probability distributions across
+        class labels
         """
         X_2d = np.atleast_2d(X)
         weight_matrices = self._get_kernel(self.X_, X_2d)
         if self.kernel == 'knn':
-            inference = []
+            probabilities = []
             for weight_matrix in weight_matrices:
                 ine = np.sum(self.label_distributions_[weight_matrix], axis=0)
-                inference.append(ine)
-            inference = np.array(inference)
+                probabilities.append(ine)
+            probabilities = np.array(probabilities)
         else:
             weight_matrices = weight_matrices.T
-            inference = np.dot(weight_matrices, self.label_distributions_)
-        normalizer = np.atleast_2d(np.sum(inference, axis=1)).T
-        divide_out(inference, normalizer, out=inference)
-        return inference
+            probabilities = np.dot(weight_matrices, self.label_distributions_)
+        normalizer = np.atleast_2d(np.sum(probabilities, axis=1)).T
+        divide_out(probabilities, normalizer, out=probabilities)
+        return probabilities
 
     def fit(self, X, y):
         """
@@ -176,7 +176,6 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         ----------
         X : array-like, shape = [n_samples, n_freatures]
           A {n_samples by n_samples} size matrix will be created from this
-          (keep dataset fewer than 2000 points)
 
         y : array_like, shape = [n_labeled_samples]
           n_labeled_samples (unlabeled points marked with a special identifier)
