@@ -108,7 +108,8 @@ class RFE(BaseEstimator):
             step = int(self.step * n_features)
         else:
             step = int(self.step)
-        assert step > 0
+        if step <= 0:
+            raise ValueError("Step must be >0")
 
         support_ = np.ones(n_features, dtype=np.bool)
         ranking_ = np.ones(n_features, dtype=np.int)

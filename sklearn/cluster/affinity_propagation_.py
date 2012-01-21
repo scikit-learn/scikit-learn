@@ -54,7 +54,8 @@ def affinity_propagation(S, p=None, convit=30, max_iter=200, damping=0.5,
 
     n_points = S.shape[0]
 
-    assert S.shape[0] == S.shape[1]
+    if S.shape[0] != S.shape[1]:
+        raise ValueError("S must be a square array (shape=%r)" % S.shape)
 
     if p is None:
         p = np.median(S)

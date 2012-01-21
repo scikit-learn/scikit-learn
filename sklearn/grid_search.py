@@ -253,13 +253,15 @@ class GridSearchCV(BaseEstimator):
                  fit_params=None, n_jobs=1, iid=True, refit=True, cv=None,
                  verbose=0, pre_dispatch='2*n_jobs',
                 ):
-        assert hasattr(estimator, 'fit') and (hasattr(estimator, 'predict')
-                        or hasattr(estimator, 'score')), (
-            "estimator should a be an estimator implementing 'fit' and "
-            "'predict' or 'score' methods, %s (type %s) was passed" %
-                    (estimator, type(estimator)))
+        if not hasattr(estimator, 'fit') or \
+           not (hasattr(estimator, 'predict') or hasattr(estimator, 'score')):
+            raise TypeError("estimator should a be an estimator implementing"
+                            " 'fit' and 'predict' or 'score' methods,"
+                            " %s (type %s) was passed" %
+                            (estimator, type(estimator)))
         if loss_func is None and score_func is None:
-            assert hasattr(estimator, 'score'), ValueError(
+            if not hasattr(estimator, 'score'):
+                raise TypeError(
                     "If no loss_func is specified, the estimator passed "
                     "should have a 'score' method. The estimator %s "
                     "does not." % estimator)
@@ -345,15 +347,11 @@ class GridSearchCV(BaseEstimator):
 
         # Note: we do not use max(out) to make ties deterministic even if
         # comparison on estimator instances is not deterministic
-        best_score = None
+        best_score = -np.inf
         for score, estimator in scores:
-            if best_score is None:
+            if score > best_score:
                 best_score = score
                 best_estimator = estimator
-            else:
-                if score > best_score:
-                    best_score = score
-                    best_estimator = estimator
 
         if best_score is None:
             raise ValueError('Best score could not be found')
@@ -370,8 +368,6 @@ class GridSearchCV(BaseEstimator):
             self.predict = best_estimator.predict
         if hasattr(best_estimator, 'predict_proba'):
             self.predict_proba = best_estimator.predict_proba
-        if hasattr(best_estimator, 'score'):
-            self.score_ = best_estimator.score
 
         # Store the computed scores
         # XXX: the name is too specific, it shouldn't have
@@ -383,8 +379,12 @@ class GridSearchCV(BaseEstimator):
         return self
 
     def score(self, X, y=None):
-        # This method is overridden during the fit if the best estimator
-        # found has a score function.
+        if hasattr(self.best_estimator_, 'score'):
+             return self.best_estimator_.score(X, y)
+        if self.score_func is None:
+            raise ValueError("No score function explicitly defined, "
+                             "and the estimator doesn't provide one %s"
+                             % self.best_estimator_)
         y_predicted = self.predict(X)
         return self.score_func(y, y_predicted)
 

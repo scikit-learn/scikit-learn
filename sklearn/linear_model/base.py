@@ -190,7 +190,7 @@ class BaseSGD(BaseEstimator):
     def __init__(self, loss, penalty='l2', alpha=0.0001,
                  rho=0.85, fit_intercept=True, n_iter=5, shuffle=False,
                  verbose=0, seed=0, learning_rate="optimal", eta0=0.0,
-                 power_t=0.5):
+                 power_t=0.5, warm_start=False):
         self.loss = str(loss)
         self.penalty = str(penalty)
         self._set_loss_function(self.loss)
@@ -220,6 +220,7 @@ class BaseSGD(BaseEstimator):
             if eta0 <= 0.0:
                 raise ValueError("eta0 must be greater than 0.0")
         self.coef_ = None
+        self.warm_start = warm_start
 
         self._init_t()
 
@@ -287,7 +288,7 @@ class BaseSGD(BaseEstimator):
         if n_classes > 2:
             # allocate coef_ for multi-class
             if coef_init is not None:
-                coef_init = np.asarray(coef_init)
+                coef_init = np.asarray(coef_init, order="C")
                 if coef_init.shape != (n_classes, n_features):
                     raise ValueError("Provided coef_ does not match dataset. ")
                 self.coef_ = coef_init
@@ -297,7 +298,7 @@ class BaseSGD(BaseEstimator):
 
             # allocate intercept_ for multi-class
             if intercept_init is not None:
-                intercept_init = np.asarray(intercept_init)
+                intercept_init = np.asarray(intercept_init, order="C")
                 if intercept_init.shape != (n_classes, ):
                     raise ValueError("Provided intercept_init " \
                                      "does not match dataset.")
