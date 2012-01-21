@@ -49,7 +49,6 @@ from scipy import sparse
 
 from .base import BaseEstimator, ClassifierMixin
 from .metrics.pairwise import rbf_kernel
-from .neighbors.graph import kneighbors_graph
 from .utils.graph import graph_laplacian
 from .utils.fixes import divide_out
 
@@ -101,11 +100,13 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
             else:
                 return rbf_kernel(X, y, gamma=self.gamma)
         elif self.kernel == "knn":
+            if self.nn_fit is None:
+                self.nn_fit = NearestNeighbors(self.n_neighbors).fit(X)
             if y is None:
-                return kneighbors_graph(X, self.n_neighbors)
+                return self.nn_fit.kneighbors_graph(self.nn_fit._fit_X,
+                        self.n_neighbors, mode='connectivity')
             else:
-                return NearestNeighbors(self.n_neighbors).fit(X)\
-                        .kneighbors(y, return_distance=False)
+                return self.nn_fit.kneighbors(y, return_distance=False)
         else:
             raise ValueError("%s is not a valid kernel. Only rbf \
                              supported at this time" % self.kernel)
@@ -283,6 +284,8 @@ class LabelPropagation(BaseLabelPropagation):
         This basic implementation creates a non-stochastic affinity matrix, so
         class distributions will exceed 1 (normalization may be desired)
         """
+        if self.kernel == 'knn':
+            self.nn_fit = None
         affinity_matrix = self._get_kernel(self.X_)
         normalizer = affinity_matrix.sum(axis=0)
         if sparse.isspmatrix(affinity_matrix):
@@ -348,6 +351,8 @@ class LabelSpreading(BaseLabelPropagation):
     def _build_graph(self):
         """Graph matrix for Label Spreading computes the graph laplacian"""
         # compute affinity matrix (or gram matrix)
+        if self.kernel == 'knn':
+            self.nn_fit = None
         n_samples = self.X_.shape[0]
         affinity_matrix = self._get_kernel(self.X_)
         laplacian = graph_laplacian(affinity_matrix, normed=True)
