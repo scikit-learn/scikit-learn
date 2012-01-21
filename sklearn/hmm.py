@@ -289,8 +289,9 @@ class _BaseHMM(BaseEstimator):
 
         Returns
         -------
-        obs : array_like, length `n`
-            List of samples
+        (obs, hidden_states) 
+        obs : array_like, length `n` List of samples
+        hidden_states : array_like, length `n` List of hidden states
         """
         random_state = check_random_state(random_state)
 
@@ -302,16 +303,18 @@ class _BaseHMM(BaseEstimator):
         # Initial state.
         rand = random_state.rand()
         currstate = (startprob_cdf > rand).argmax()
+        hidden_states = [currstate]
         obs = [self._generate_sample_from_state(
             currstate, random_state=random_state)]
 
         for x in xrange(n - 1):
             rand = random_state.rand()
             currstate = (transmat_cdf[currstate] > rand).argmax()
+            hidden_states.append(currstate)
             obs.append(self._generate_sample_from_state(
                 currstate, random_state=random_state))
 
-        return np.array(obs)
+        return np.array(obs), np.array(hidden_states, dtype=int)
 
     def fit(self, obs, n_iter=10, thresh=1e-2, params=string.ascii_letters,
             init_params=string.ascii_letters, maxrank=None,
