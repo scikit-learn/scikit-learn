@@ -29,14 +29,14 @@ y = iris.target
 h = .02
 
 y_30 = np.copy(y)
-y_30[rng.rand(len(y)) < 0.3] = 3
+y_30[rng.rand(len(y)) < 0.3] = -1
 y_50 = np.copy(y)
-y_50[rng.rand(len(y)) < 0.5] = 3
+y_50[rng.rand(len(y)) < 0.5] = -1
 # we create an instance of SVM and fit out data. We do not scale our
 # data since we want to plot the support vectors
-ls30 = (label_propagation.LabelSpreading(unlabeled_identifier=3).fit(X, y_30),
+ls30 = (label_propagation.LabelSpreading().fit(X, y_30),
         y_30)
-ls50 = (label_propagation.LabelSpreading(unlabeled_identifier=3).fit(X, y_50),
+ls50 = (label_propagation.LabelSpreading().fit(X, y_50),
         y_50)
 ls100 = (label_propagation.LabelSpreading().fit(X, y), y)
 rbf_svc = (svm.SVC(kernel='rbf').fit(X, y), y)
