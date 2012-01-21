@@ -32,7 +32,6 @@ ZEROLOGPROB = -1e200
 
 try:
     from . import _hmmc
-    print "cython extension module imported"
 except:
     _hmmc = None
 
