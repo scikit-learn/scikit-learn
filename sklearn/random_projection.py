@@ -29,6 +29,7 @@ from __future__ import division
 import warnings
 import math
 import random
+from itertools import izip
 
 import numpy as np
 import scipy.sparse as sp
@@ -209,7 +210,6 @@ def sparse_random_matrix(n_components, n_features, density='auto',
 def hashing_dot(A, n_components, density, seed=0, dense_output=True):
     """Implicit dot product by a random sparse matrix using a hash function"""
     half_uint32_max = np.iinfo(np.uint32).max / 2
-    weight = math.sqrt(1 / density) / math.sqrt(n_components)
 
     # TODO: avoid conversion of sparse matrices to CSR by adding support for
     # other formats?
@@ -235,13 +235,40 @@ def hashing_dot(A, n_components, density, seed=0, dense_output=True):
                                seed=feature_idx, positive=True)
             nnz_components = h % n_components
 
+            # TODO: find a vectorized implementation that is faster than the
+            # for loop or refactor as cython code?
             for component_idx in nnz_components[h < half_uint32_max]:
                 out[:, component_idx] += A[:, feature_idx]
 
             for component_idx in nnz_components[h >= half_uint32_max]:
                 out[:, component_idx] -= A[:, feature_idx]
 
-    # TODO: handle sparse input
+    elif sp.isspmatrix_csr(A) and dense_output:
+        # TODO: rewrite the following nested for loops in cython
+        # TODO: precompute the list hashed component indices out of the sample
+        # loop?
+        out = np.zeros((n_samples, n_components), A.dtype)
+        for sample_idx in xrange(n_samples):
+            for k in xrange(A.indptr[sample_idx], A.indptr[sample_idx + 1]):
+                feature_idx = A.indices[k]
+                h = murmurhash3_32(base[:nonzeros[feature_idx]],
+                                   seed=feature_idx, positive=True)
+                nnz_components = h % n_components
+                for component_idx in nnz_components[h < half_uint32_max]:
+                    out[sample_idx, component_idx] += A.data[k]
+
+                for component_idx in nnz_components[h >= half_uint32_max]:
+                    out[sample_idx, component_idx] -= A.data[k]
+
+    elif sp.isspmatrix_csr(A) and not dense_output:
+        raise NotImplementedError("TODO")
+
+    else:
+        raise TypeError(
+            "hashing_dot is not supported for input with type %s "
+            "and dense_output=%r" % (type(A), dense_output))
+
+    weight = math.sqrt(1 / density) / math.sqrt(n_components)
     return out * weight
 
 
