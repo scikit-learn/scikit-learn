@@ -19,57 +19,55 @@ cimport numpy as np
 import numpy as np
 
 
-cpdef unsigned int murmurhash3_int_uint(int key, unsigned int seed):
+cpdef np.uint32_t murmurhash3_int_u32(int key, unsigned int seed):
     """Compute the 32bit murmurhash3 of a int key at seed."""
-    cdef unsigned int out
+    cdef np.uint32_t out
     MurmurHash3_x86_32(&key, sizeof(int), seed, &out)
     return out
 
 
-cpdef int murmurhash3_int_int(int key, unsigned int seed):
+cpdef np.int32_t murmurhash3_int_s32(int key, unsigned int seed):
     """Compute the 32bit murmurhash3 of a int key at seed."""
-    cdef int out
+    cdef np.int32_t out
     MurmurHash3_x86_32(&key, sizeof(int), seed, &out)
     return out
 
 
-cpdef unsigned int murmurhash3_bytes_uint(bytes key, unsigned int seed):
+cpdef np.uint32_t murmurhash3_bytes_u32(bytes key, unsigned int seed):
     """Compute the 32bit murmurhash3 of a bytes key at seed."""
-    cdef unsigned int out
+    cdef np.uint32_t out
     MurmurHash3_x86_32(<char*> key, len(key), seed, &out)
     return out
 
 
-cpdef int murmurhash3_bytes_int(bytes key, unsigned int seed):
+cpdef np.int32_t murmurhash3_bytes_s32(bytes key, unsigned int seed):
     """Compute the 32bit murmurhash3 of a bytes key at seed."""
-    cdef int out
+    cdef np.int32_t out
     MurmurHash3_x86_32(<char*> key, len(key), seed, &out)
     return out
 
 
 @cython.boundscheck(False)
-cpdef np.ndarray[unsigned int, ndim=1] murmurhash3_bytes_array_uint(
-    np.ndarray[int] key, unsigned int seed):
+cpdef np.ndarray[np.uint32_t, ndim=1] murmurhash3_bytes_array_u32(
+    np.ndarray[np.int32_t] key, unsigned int seed):
     """Compute 32bit murmurhash3 hashes of a key int array at seed."""
     # TODO make it possible to pass preallocated ouput array
-    cdef np.ndarray[unsigned int, ndim=1] out = np.zeros(
-        key.size, np.uint32)
-    cdef int i
+    cdef np.ndarray[np.uint32_t, ndim=1] out = np.zeros(key.size, np.uint32)
+    cdef Py_ssize_t i
     for i in range(key.shape[0]):
-        out[i] = murmurhash3_int_uint(key[i], seed)
+        out[i] = murmurhash3_int_u32(key[i], seed)
     return out
 
 
 @cython.boundscheck(False)
-cpdef np.ndarray[int, ndim=1] murmurhash3_bytes_array_int(
-    np.ndarray[int] key, unsigned int seed):
+cpdef np.ndarray[np.int32_t, ndim=1] murmurhash3_bytes_array_s32(
+    np.ndarray[np.int32_t] key, unsigned int seed):
     """Compute 32bit murmurhash3 hashes of a key int array at seed."""
     # TODO make it possible to pass preallocated ouput array
-    cdef np.ndarray[int, ndim=1] out = np.zeros(
-        key.size, np.int32)
-    cdef int i
+    cdef np.ndarray[np.int32_t, ndim=1] out = np.zeros(key.size, np.int32)
+    cdef Py_ssize_t i
     for i in range(key.shape[0]):
-        out[i] = murmurhash3_int_int(key[i], seed)
+        out[i] = murmurhash3_int_s32(key[i], seed)
     return out
 
 
@@ -97,30 +95,30 @@ def murmurhash3_32(key, seed=0, positive=False):
     """
     if isinstance(key, bytes):
         if positive:
-            return murmurhash3_bytes_uint(key, seed)
+            return murmurhash3_bytes_u32(key, seed)
         else:
-            return murmurhash3_bytes_int(key, seed)
+            return murmurhash3_bytes_s32(key, seed)
     elif isinstance(key, unicode):
         if positive:
-            return murmurhash3_bytes_uint(key.encode('utf-8'), seed)
+            return murmurhash3_bytes_u32(key.encode('utf-8'), seed)
         else:
-            return murmurhash3_bytes_int(key.encode('utf-8'), seed)
+            return murmurhash3_bytes_s32(key.encode('utf-8'), seed)
     elif isinstance(key, int) or isinstance(key, np.int32):
         if positive:
-            return murmurhash3_int_uint(key, seed)
+            return murmurhash3_int_u32(<np.int32_t>key, seed)
         else:
-            return murmurhash3_int_int(key, seed)
+            return murmurhash3_int_s32(<np.int32_t>key, seed)
     elif isinstance(key, np.ndarray):
         if key.dtype != np.int32:
-            raise ValueError(
+            raise TypeError(
                 "key.dtype should be int32, got %s" % key.dtype)
         if positive:
-            return murmurhash3_bytes_array_uint(
-                key.ravel(), seed).reshape(key.shape)
+            return murmurhash3_bytes_array_u32(key.ravel(),
+                                               seed).reshape(key.shape)
         else:
-            return murmurhash3_bytes_array_int(
-                key.ravel(), seed).reshape(key.shape)
+            return murmurhash3_bytes_array_s32(key.ravel(),
+                                               seed).reshape(key.shape)
     else:
-        raise ValueError(
+        raise TypeError(
             "key %r with type %s is not supported. "
             "Explicit conversion to bytes is required" % (key, type(key)))
