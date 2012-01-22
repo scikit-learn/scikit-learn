@@ -2,13 +2,13 @@ import scipy.sparse as sp
 import numpy as np
 
 from sklearn.metrics import euclidean_distances
-from sklearn.datasets import make_low_rank_matrix
 from sklearn.random_projection import SparseRandomProjection
 from sklearn.random_projection import johnson_lindenstrauss_min_dim
 from sklearn.random_projection import hashing_dot
 
 from sklearn.utils.testing import assert_raise_message
 from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_almost_equal
 from nose.tools import assert_equal
 from nose.tools import assert_almost_equal
 from nose.tools import assert_raises
@@ -21,9 +21,21 @@ def assert_lower(a, b, details=None):
     assert a < b, message
 
 
+# Make a some random data with uniformly located non zero entries with
+# gaussian distributed values
+def make_sparse_random_data(n_samples, n_features, n_nonzeros):
+    rng = np.random.RandomState(0)
+    data_coo = sp.coo_matrix(
+        (rng.randn(n_nonzeros),
+         (rng.randint(n_samples, size=n_nonzeros),
+          rng.randint(n_features, size=n_nonzeros))),
+        shape=(n_samples, n_features))
+    return data_coo.toarray(), data_coo.tocsr()
+
+
 n_samples, n_features = (10, 10000)
-data = make_low_rank_matrix(n_samples=n_samples, n_features=n_features,
-                            random_state=0)
+n_nonzeros = n_samples * n_features / 100.
+data, data_csr = make_sparse_random_data(n_samples, n_features, n_nonzeros)
 
 
 def test_invalid_jl_domain():
@@ -33,13 +45,22 @@ def test_invalid_jl_domain():
 
 
 def test_hashing_dot():
-    n_components = 100
+    n_components = 300
     density = 0.01
-    projected = hashing_dot(data, n_components, density, seed=0,
-                            dense_output=True)
 
-    assert_equal(projected.shape, (n_samples, n_components))
-    assert_almost_equal(projected.mean(), 0.0, 2)
+    # random dot with dense array input (and output)
+    projected_array_array = hashing_dot(data, n_components, density, seed=0)
+    assert_equal(projected_array_array.shape, (n_samples, n_components))
+    assert_almost_equal(projected_array_array.mean(), 0.0, 2)
+
+    # random dot with CSR input and dense array output
+    data_csr = sp.csr_matrix(data)
+    projected_csr_array = hashing_dot(data_csr, n_components, density, seed=0,
+                                      dense_output=True)
+    assert_equal(projected_csr_array.shape, (n_samples, n_components))
+
+    # check that the projections are identical
+    assert_array_almost_equal(projected_array_array, projected_csr_array)
 
 
 def test_sparse_random_project_invalid_input():
@@ -55,7 +76,7 @@ def test_input_dimension_inconsistency():
 
 
 def test_too_many_samples_to_find_a_safe_embedding():
-    data = make_low_rank_matrix(n_samples=1000, n_features=100)
+    data, data_csr = make_sparse_random_data(1000, 100, 1000)
     expected_msg = (
         'eps=0.100000 and n_samples=1000 lead to a target dimension'
         ' of 5920 which is larger than the original space with'
