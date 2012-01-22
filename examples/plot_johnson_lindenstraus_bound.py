@@ -144,6 +144,8 @@ for n_components in n_components_range:
     cb.set_label('Sample pairs counts')
 
     rates = projected_dists / dists
+    print "Mean distances rate: %0.2f (%0.2f)" % (
+        np.mean(rates), np.std(rates))
 
     pl.figure()
     pl.hist(rates, bins=50, normed=True, range=(0., 2.))

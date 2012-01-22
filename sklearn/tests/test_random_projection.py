@@ -34,7 +34,7 @@ def test_invalid_jl_domain():
 
 def test_hashing_dot():
     n_components = 100
-    density = 0.1
+    density = 0.01
     projected = hashing_dot(data, n_components, density, seed=0,
                             dense_output=True)
 
