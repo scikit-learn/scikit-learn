@@ -622,11 +622,19 @@ sparser.
 Randomized sparse linear models
 ===============================
 
-Sparse linear have problems recovering the good features when they
-are highly correlated. In a set of correlated good features a Lasso
+A motivation for using sparse linear models is that they achieve
+in one step a feature selection and the optimization of the prediction.
+Indeed only a few features will have a non-zero coefficient.
+However sparse linear models can have problems recovering the true informative
+features. This is typically the case when some features are highly correlated.
+In a set of correlated informative features a Lasso
 or L1-LogisticRegression will select only one or a few of them and will
-also tend to take more features then it should i.e. select some bad
-features. The problem is also addressed but differently with the ElasticNet.
+also tend to take more features then it should. The wrongly selected features
+are known as type-1 errors or false positives.
+Randomized sparse linear models address the problem
+by running many model estimations by subsampling the data
+and scaling the features. The features that are selected the more
+often are more likely to be truly informative.
 Randomized linear models are presented in::
 
     Stability selection
