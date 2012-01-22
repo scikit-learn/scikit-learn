@@ -211,21 +211,19 @@ def hashing_dot(A, n_components, density, seed=0, dense_output=True):
     half_uint32_max = np.iinfo(np.uint32).max / 2
     weight = math.sqrt(1 / density) / math.sqrt(n_components)
 
-    # approximate the random sparse matrix by assuming that each feature have
-    # the same number of non-zero components activated (instead of sampling
-    # from a binomial for each feature)
-    nnz_per_feature = density * n_components
-    if (nnz_per_feature < 1):
-        warnings.warn("Expected non zero components by feature is %f: "
-                      "setting it to 1 instead." % nnz_per_feature)
-        nnz_per_feature = 1
-    else:
-        nnz_per_feature = int(nnz_per_feature)
-
     # TODO: avoid conversion of sparse matrices to CSR by adding support for
     # other formats?
     A = atleast2d_or_csr(A)
     n_samples, n_features = A.shape
+
+    # find the number of non-zero component in the random matrix
+    # to simulate for each feature
+    nonzeros = np.random.RandomState(seed).binomial(
+        n_components, density, size=n_features)
+
+    # pre-allocate an array of indices to be sliced and hashed to find the
+    # actual non zero component indices for each feature
+    base = np.arange(n_components, dtype=np.int32)
 
     if not sp.issparse(A):
         out = np.zeros((n_samples, n_components), A.dtype)
@@ -233,14 +231,15 @@ def hashing_dot(A, n_components, density, seed=0, dense_output=True):
             # use the hash function to retrieve the indices of the
             # components in the random matrix that have a non-zero value
             # for the current feature
-            seed_i = murmurhash3_32(feature_idx, seed=seed, positive=True)
-            for k in xrange(nnz_per_feature):
-                h = murmurhash3_32(k, seed=seed_i, positive=True)
-                component_idx = h % n_components
-                if h < half_uint32_max:
-                    out[:, component_idx] -= A[:, feature_idx]
-                else:
-                    out[:, component_idx] += A[:, feature_idx]
+            h = murmurhash3_32(base[:nonzeros[feature_idx]],
+                               seed=feature_idx, positive=True)
+            nnz_components = h % n_components
+
+            for component_idx in nnz_components[h < half_uint32_max]:
+                out[:, component_idx] += A[:, feature_idx]
+
+            for component_idx in nnz_components[h >= half_uint32_max]:
+                out[:, component_idx] -= A[:, feature_idx]
 
     # TODO: handle sparse input
     return out * weight
