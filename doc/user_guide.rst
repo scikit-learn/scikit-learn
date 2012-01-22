@@ -21,5 +21,5 @@
    unsupervised_learning.rst
    model_selection.rst
    data_transforms.rst
-   Dataset loading utilities <datasets/index.rst>
+   Dataset loading utilities <modules/datasets.rst>
    Reference <modules/classes.rst>
