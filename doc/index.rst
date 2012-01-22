@@ -149,7 +149,7 @@
         And much more</a><br/>
          <span class="linkdescr">
                 <a href="model_selection.html">Model selection</a>,
-                <a href="datasets/index.html">datasets</a>,
+                <a href="modules/datasets.html">datasets</a>,
                 <a href="modules/feature_extraction.html">feature extraction...</a>
                 <strong>See below</strong>.</span></p>
     </td></tr>
