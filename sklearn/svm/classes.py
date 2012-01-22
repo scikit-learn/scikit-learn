@@ -493,7 +493,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
                  scale_C=False):
 
         super(NuSVR, self).__init__('nu_svr', kernel, degree, gamma, coef0,
-                                    tol, C, nu, None, shrinking, probability,
+                                    tol, C, nu, 0., shrinking, probability,
                                     cache_size, scale_C, sparse="auto")
 
     def fit(self, X, y, sample_weight=None, **params):

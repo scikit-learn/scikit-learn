@@ -225,15 +225,15 @@ class BaseLibSVM(BaseEstimator):
 
         C = self.C
         if self.scale_C:
-            C = C / float(X.shape[0])
+            C /= float(X.shape[0])
 
         self.support_vectors_, dual_coef_data, self.intercept_, self.label_, \
             self.n_support_, self.probA_, self.probB_ = \
             libsvm_sparse.libsvm_sparse_train(
-                 X.shape[1], X.data, X.indices, X.indptr, y, solver_type,\
-                 kernel_type, self.degree, self.gamma, self.coef0, self.tol,\
-                 C, self.class_weight_label, self.class_weight,\
-                 sample_weight, self.nu, self.cache_size, self.epsilon,\
+                 X.shape[1], X.data, X.indices, X.indptr, y, solver_type,
+                 kernel_type, self.degree, self.gamma, self.coef0, self.tol,
+                 C, self.class_weight_label, self.class_weight,
+                 sample_weight, self.nu, self.cache_size, self.epsilon,
                  int(self.shrinking), int(self.probability))
 
         n_class = len(self.label_) - 1
