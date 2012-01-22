@@ -105,8 +105,8 @@ class ElasticNet(LinearModel):
         # return self for chaining fit and predict calls
         return self
 
-    def predict(self, X):
-        """Predict using the linear model
+    def decision_function(self, X):
+        """Decision function of the linear model
 
         Parameters
         ----------
@@ -123,7 +123,7 @@ class ElasticNet(LinearModel):
 class Lasso(ElasticNet):
     """Linear Model trained with L1 prior as regularizer
 
-    This implementation works on scipy.sparse X and dense coef_. Technically
+    This implementation works on scipy.sparse X and dense `coef_`. Technically
     this is the same as Elastic Net with the L2 penalty set to zero.
 
     Parameters

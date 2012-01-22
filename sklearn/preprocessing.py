@@ -1,8 +1,3 @@
-"""
-The :mod:`sklearn.preprocessing` module implements various utilities to perform
-common data preprocessing steps (scaling, normalization, etc).
-"""
-
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Olivier Grisel <olivier.grisel@ensta.org>
@@ -10,14 +5,14 @@ common data preprocessing steps (scaling, normalization, etc).
 import numpy as np
 import scipy.sparse as sp
 
-from ..utils import check_arrays
-from ..utils import warn_if_not_float
-from ..base import BaseEstimator, TransformerMixin
+from .utils import check_arrays
+from .utils import warn_if_not_float
+from .base import BaseEstimator, TransformerMixin
 
-from ..utils.sparsefuncs import inplace_csr_row_normalize_l1
-from ..utils.sparsefuncs import inplace_csr_row_normalize_l2
-from ..utils.sparsefuncs import inplace_csr_column_scale
-from ..utils.sparsefuncs import mean_variance_axis0
+from .utils.sparsefuncs import inplace_csr_row_normalize_l1
+from .utils.sparsefuncs import inplace_csr_row_normalize_l2
+from .utils.sparsefuncs import inplace_csr_column_scale
+from .utils.sparsefuncs import mean_variance_axis0
 
 
 def _mean_and_std(X, axis=0, with_mean=True, with_std=True):
@@ -72,8 +67,8 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
         copy (if the input is already a numpy array or a scipy.sparse
         CSR matrix and if axis is 1).
 
-    Note
-    ----
+    Notes
+    -----
     This implementation will refuse to center scipy.sparse matrices
     since it would make them non-sparse and would potentially crash the
     program with memory exhaustion problems.
@@ -106,7 +101,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
         if copy:
             X = X.copy()
         _, var = mean_variance_axis0(X)
-        var[var==0.0] = 1.0
+        var[var == 0.0] = 1.0
         inplace_csr_column_scale(X, 1 / np.sqrt(var))
     else:
         X = np.asarray(X)

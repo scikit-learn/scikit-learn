@@ -93,7 +93,7 @@ def roc_curve(y_true, y_score):
         True Positive Rates
 
     thresholds : array, shape = [>2]
-        Thresholds on proba_ used to compute fpr and tpr
+        Thresholds on y_score used to compute fpr and tpr
 
     Examples
     --------
@@ -396,7 +396,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None):
     value at 1 and worst score at 0.
 
     The F_beta score weights recall beta as much as precision. beta = 1.0 means
-    recall and precsion are as important.
+    recall and precsion are equally important.
 
     The support is the number of occurrences of each class in y_true.
 
@@ -424,8 +424,10 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None):
     http://en.wikipedia.org/wiki/Precision_and_recall
 
     """
+    if beta <= 0:
+        raise ValueError("beta should be >0 in the F-beta score")
+
     y_true, y_pred = check_arrays(y_true, y_pred)
-    assert(beta > 0)
     if labels is None:
         labels = unique_labels(y_true, y_pred)
     else:
@@ -569,7 +571,7 @@ def precision_recall_curve(y_true, probas_pred):
         Recall values
 
     thresholds : array, shape = [n]
-        Thresholds on proba_ used to compute precision and recall
+        Thresholds on y_score used to compute precision and recall
 
     """
     y_true = y_true.ravel()
@@ -630,16 +632,20 @@ def r2_score(y_true, y_pred):
 
     Best possible score is 1.0, lower values are worse.
 
-    Note: not a symmetric function.
-
-    return the R^2 score
-
     Parameters
     ----------
     y_true : array-like
 
     y_pred : array-like
 
+    Returns
+    -------
+    z : float
+        The R^2 score
+
+    Notes
+    -----
+    This is not a symmetric function.
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
     numerator = ((y_true - y_pred) ** 2).sum()

@@ -1,8 +1,4 @@
-.. toctree::
-   :numbered:
-   index.rst
-   performance.rst
-   utilities.rst
+.. _contributing:
 
 ============
 Contributing
@@ -13,6 +9,7 @@ contribute.
 
 The project is hosted on http://github.com/scikit-learn/scikit-learn
 
+
 Submitting a bug report
 =======================
 
@@ -22,8 +19,8 @@ to submit a ticket to the
 
 You are also welcome to post there feature requests or links to pull-requests.
 
-.. _git_repo:
 
+.. _git_repo:
 
 Retrieving the latest code
 ==========================
@@ -233,6 +230,7 @@ articles, link to us from your website, or simply by saying "I use
 it":
 
 .. raw:: html
+
    <script type="text/javascript" src="http://www.ohloh.net/p/480792/widgets/project_users.js?style=rainbow"></script>
 
 

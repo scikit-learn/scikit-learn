@@ -17,6 +17,9 @@ from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import normalize
 from ..utils.fixes import Counter
 
+# This list of English stop words is taken from the "Glasgow Information
+# Retrieval Group". The original list can be found at
+# http://ir.dcs.gla.ac.uk/resources/linguistic_utils/stop_words
 ENGLISH_STOP_WORDS = frozenset([
     "a", "about", "above", "across", "after", "afterwards", "again", "against",
     "all", "almost", "alone", "along", "already", "also", "although", "always",
@@ -258,9 +261,12 @@ class CountVectorizer(BaseEstimator):
         Type of the matrix returned by fit_transform() or transform().
     """
 
-    def __init__(self, analyzer=DEFAULT_ANALYZER, vocabulary=None, max_df=1.0,
+    def __init__(self, analyzer=None, vocabulary=None, max_df=1.0,
                  max_features=None, dtype=long):
-        self.analyzer = analyzer
+        if analyzer:
+            self.analyzer = analyzer
+        else:
+            self.analyzer = DEFAULT_ANALYZER
         self.fit_vocabulary = vocabulary is None
         if vocabulary is not None and not isinstance(vocabulary, dict):
             vocabulary = dict((t, i) for i, t in enumerate(vocabulary))
@@ -410,7 +416,7 @@ class CountVectorizer(BaseEstimator):
         X_inv : list of arrays, len = n_samples
             List of arrays of terms.
         """
-        if type(X) is sp.coo_matrix:    # COO matrix is not indexable
+        if sp.isspmatrix_coo(X):  # COO matrix is not indexable
             X = X.tocsr()
         elif not sp.issparse(X):
             # We need to convert X to a matrix, so that the indexing
@@ -422,7 +428,7 @@ class CountVectorizer(BaseEstimator):
         indices = np.array(self.vocabulary.values())
         inverse_vocabulary = terms[np.argsort(indices)]
 
-        return [inverse_vocabulary[X[i, :].nonzero()[1]]
+        return [inverse_vocabulary[X[i, :].nonzero()[1]].ravel()
                 for i in xrange(n_samples)]
 
 
@@ -460,10 +466,12 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     -----
     **References**:
 
-    R. Baeza-Yates and B. Ribeiro-Neto (2011). Modern Information Retrieval.
-        Addison Wesley, pp. 68–74.
-    C.D. Manning, H. Schütze and P. Raghavan (2008). Introduction to
-        Information Retrieval. Cambridge University Press, pp. 121–125.
+    .. [Yates2011] `R. Baeza-Yates and B. Ribeiro-Neto (2011). Modern
+                   Information Retrieval. Addison Wesley, pp. 68–74.`
+
+    .. [MSR2008] `C.D. Manning, H. Schütze and P. Raghavan (2008). Introduction
+                 to Information Retrieval. Cambridge University Press,
+                 pp. 121–125.`
     """
 
     def __init__(self, norm='l2', use_idf=True, smooth_idf=True):
@@ -529,8 +537,10 @@ class Vectorizer(BaseEstimator):
     Equivalent to CountVectorizer followed by TfidfTransformer.
     """
 
-    def __init__(self, analyzer=DEFAULT_ANALYZER, max_df=1.0,
+    def __init__(self, analyzer=None, max_df=1.0,
                  max_features=None, norm='l2', use_idf=True, smooth_idf=True):
+        if analyzer is None:
+            analyzer = DEFAULT_ANALYZER
         self.tc = CountVectorizer(analyzer, max_df=max_df,
                                   max_features=max_features,
                                   dtype=np.float64)

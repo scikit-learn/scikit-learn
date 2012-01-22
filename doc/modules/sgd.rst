@@ -65,7 +65,7 @@ for the training samples::
     SGDClassifier(alpha=0.0001, class_weight=None, eta0=0.0, fit_intercept=True,
            learning_rate='optimal', loss='hinge', n_iter=5, n_jobs=1,
            penalty='l2', power_t=0.5, rho=0.85, seed=0, shuffle=False,
-           verbose=0)
+           verbose=0, warm_start=False)
 
 After being fitted, the model can then be used to predict new values::
 
@@ -81,7 +81,7 @@ the model parameters::
 Member `intercept_` holds the intercept (aka offset or bias)::
 
     >>> clf.intercept_                                    # doctest: +ELLIPSIS
-    array(-9.990...)
+    array([-9.990...])
 
 Whether or not the model should use an intercept, i.e. a biased
 hyperplane, is controlled by the parameter `fit_intercept`.
@@ -146,7 +146,7 @@ indexed in ascending order (see attribute `classes`).
 
 :class:`SGDClassifier` supports both weighted classes and weighted
 instances via the fit parameters `class_weight` and `sample_weight`. See
-the examples below and the doc string of :meth:`SGDClassifier.fit` for 
+the examples below and the doc string of :meth:`SGDClassifier.fit` for
 further information.
 
 .. topic:: Examples:
@@ -177,8 +177,8 @@ parameter. :class:`SGDRegressor` supports the following loss functions:
   * `loss="squared_loss"`: Ordinary least squares.
   * `loss="huber"`: Huber loss for robust regression.
 
-The Huber loss function is an epsilon insensitive loss function for 
-robust regression. The width of the insensitive region has to be 
+The Huber loss function is an epsilon insensitive loss function for
+robust regression. The width of the insensitive region has to be
 specified via the parameter `epsilon`.
 
 .. topic:: Examples:
@@ -195,20 +195,10 @@ Stochastic Gradient Descent for sparse data
   than the dense implementation due to a shrunk learning rate for the
   intercept.
 
-There is support for sparse data given in any matrix in a format
-supported by scipy.sparse. Classes have the same name, just prefixed
-by the `sparse` namespace, and take the same arguments, with the
-exception of training and test data, which is expected to be in a
-matrix format defined in scipy.sparse.
-
-For maximum efficiency, use the CSR matrix format as defined in
-`scipy.sparse.csr_matrix
+There is built-in support for sparse data given in any matrix in a format
+supported by scipy.sparse. For maximum efficiency, however, use the CSR
+matrix format as defined in `scipy.sparse.csr_matrix
 <http://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.html>`_.
-
-Implemented classes are :class:`SGDClassifier` and :class:`SGDRegressor`.
-During training both classes maintain a dense representation of the model
-parameters. After training has completed you can obtain a sparse representation
-of the model parameters via the attribute `sparse_coef_`.
 
 .. topic:: Examples:
 
@@ -242,11 +232,11 @@ Tips on Practical Use
       X_train = scaler.transform(X_train)
       X_test = scaler.transform(X_test)  # apply same transformation to test data
 
-    If your attributes have an intrinsic scale (e.g. word frequencies or 
+    If your attributes have an intrinsic scale (e.g. word frequencies or
     indicator features) scaling is not needed.
 
   * Finding a reasonable regularization term :math:`\alpha` is
-    best done using :class:`GridSearchCV`, usually in the 
+    best done using :class:`GridSearchCV`, usually in the
     range `10.0**-np.arange(1,7)`.
 
   * Empirically, we found that SGD converges after observing
@@ -257,7 +247,7 @@ Tips on Practical Use
   * If you apply SGD to features extracted using PCA we found that
     it is often wise to scale the feature values by some constant `c`
     such that the average L2 norm of the training data equals one.
-    
+
 
 .. topic:: References:
 
@@ -335,20 +325,20 @@ the parameter space.  The intercept :math:`b` is updated similarly but
 without regularization.
 
 The learning rate :math:`\eta` can be either constant or gradually decaying. For
-classification, the default learning rate schedule (`learning_rate='optimal'`) 
+classification, the default learning rate schedule (`learning_rate='optimal'`)
 is given by
 
 .. math::
 
     \eta^{(t)} = \frac {1}{\alpha  (t_0 + t)}
 
-where :math:`t` is the time step (there are a total of `n_samples * epochs` 
+where :math:`t` is the time step (there are a total of `n_samples * epochs`
 time steps), :math:`t_0` is determined based on a heuristic proposed by Léon Bottou
-such that the expected initial updates are comparable with the expected 
-size of the weights (this assuming that the norm of the training samples is 
+such that the expected initial updates are comparable with the expected
+size of the weights (this assuming that the norm of the training samples is
 approx. 1). See `"The Tradeoffs of Large Scale Machine Learning" <http://leon.bottou.org/slides/largescale/lstut.pdf>`_ by Léon Bottou for further details.
 
-For regression, the default learning rate schedule, inverse scaling 
+For regression, the default learning rate schedule, inverse scaling
 (`learning_rate='invscaling'`), is given by
 
 .. math::
@@ -359,7 +349,7 @@ where :math:`eta_0` and :math:`power\_t` are hyperparameters choosen by the
 user via `eta0` and `power_t`, resp.
 
 For a constant learning rate use `learning_rate='constant'` and use `eta0`
-to specify the learning rate. 
+to specify the learning rate.
 
 The model parameters can be accessed through the members `coef\_` and
 `intercept\_`:

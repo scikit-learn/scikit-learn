@@ -39,9 +39,11 @@ def lmvnpdf(obs, means, covars, cvtype='diag'):
     obs : array_like, shape (O, D)
         List of D-dimensional data points.  Each row corresponds to a
         single data point.
+
     means : array_like, shape (C, D)
         List of D-dimensional mean vectors for C Gaussians.  Each row
         corresponds to a single mean vector.
+
     covars : array_like
         List of C covariance parameters for each Gaussian.  The shape
         depends on `cvtype`:
@@ -49,6 +51,7 @@ def lmvnpdf(obs, means, covars, cvtype='diag'):
             (D, D)    if 'tied',
             (C, D)    if 'diag',
             (C, D, D) if 'full'
+
     cvtype : string
         Type of the covariance parameters.  Must be one of
         'spherical', 'tied', 'diag', 'full'.  Defaults to 'diag'.
@@ -146,46 +149,44 @@ class GMM(BaseEstimator):
 
     Attributes
     ----------
-    cvtype : string (read-only)
-        String describing the type of covariance parameters used by
-        the GMM.  Must be one of 'spherical', 'tied', 'diag', 'full'.
+
     n_features : int
         Dimensionality of the Gaussians.
+
     n_states : int (read-only)
         Number of mixture components.
-    weights : array, shape (`n_states`,)
-        Mixing weights for each mixture component.
-    means : array, shape (`n_states`, `n_features`)
-        Mean parameters for each mixture component.
-    covars : array
-        Covariance parameters for each mixture component.  The shape
-        depends on `cvtype`:
-            (`n_states`,)                             if 'spherical',
-            (`n_features`, `n_features`)              if 'tied',
-            (`n_states`, `n_features`)                if 'diag',
-            (`n_states`, `n_features`, `n_features`)  if 'full'
-    converged_ : bool
+
+    `converged_` : bool
         True when convergence was reached in fit(), False
         otherwise.
+
+    weights : property - this string will be replaced
+
+    means : property - this string will be replaced
+
+    cvtype : property - this string will be replaced
+
+    covars : property - this string will be replaced
+
 
     See Also
     --------
 
     DPGMM : Ininite gaussian mixture model, using the dirichlet
-    process, fit with a variational algorithm
+        process, fit with a variational algorithm
 
 
     VBGMM : Finite gaussian mixture model fit with a variational
-    algorithm, better for situations where there might be too little
-    data to get a good estimate of the covariance matrix.
+        algorithm, better for situations where there might be too little
+        data to get a good estimate of the covariance matrix.
 
     Examples
     --------
+
     >>> import numpy as np
     >>> from sklearn import mixture
     >>> np.random.seed(1)
     >>> g = mixture.GMM(n_components=2)
-
     >>> # Generate random observations with two modes centered on 0
     >>> # and 10 to use for training.
     >>> obs = np.concatenate((np.random.randn(100, 1),
@@ -204,13 +205,13 @@ class GMM(BaseEstimator):
     array([1, 1, 0, 0])
     >>> np.round(g.score([[0], [2], [9], [10]]), 2)
     array([-2.19, -4.58, -1.75, -1.21])
-
     >>> # Refit the model on new data (initial parameters remain the
     >>> # same), this time with an even split between the two modes.
     >>> g.fit(20 * [[0]] +  20 * [[10]])
     GMM(cvtype='diag', n_components=2)
     >>> np.round(g.weights, 2)
     array([ 0.5,  0.5])
+
     """
 
     def __init__(self, n_components=1, cvtype='diag', random_state=None,
@@ -234,13 +235,21 @@ class GMM(BaseEstimator):
     @property
     def cvtype(self):
         """Covariance type of the model.
-
-        Must be one of 'spherical', 'tied', 'diag', 'full'.
+        String describing the type of covariance parameters used by
+        the GMM.  Must be one of 'spherical', 'tied', 'diag', 'full'.
         """
         return self._cvtype
 
     def _get_covars(self):
-        """Return covars as a full matrix."""
+        """Covariance parameters for each mixture component.
+        The shape depends on `cvtype`::
+
+            (`n_states`,)                             if 'spherical',
+            (`n_features`, `n_features`)              if 'tied',
+            (`n_states`, `n_features`)                if 'diag',
+            (`n_states`, `n_features`, `n_features`)  if 'full'
+
+        """
         if self.cvtype == 'full':
             return self._covars
         elif self.cvtype == 'diag':
@@ -259,7 +268,9 @@ class GMM(BaseEstimator):
     covars = property(_get_covars, _set_covars)
 
     def _get_means(self):
-        """Mean parameters for each mixture component."""
+        """Mean parameters for each mixture component.
+        array, shape ``(n_states, n_features)``.
+        """
         return self._means
 
     def _set_means(self, means):
@@ -278,7 +289,9 @@ class GMM(BaseEstimator):
                 self.n_components)
 
     def _get_weights(self):
-        """Mixing weights for each mixture component."""
+        """Mixing weights for each mixture component.
+        array, shape ``(n_states,)``
+        """
         return np.exp(self._log_weights)
 
     def _set_weights(self, weights):
@@ -308,6 +321,7 @@ class GMM(BaseEstimator):
         -------
         logprob: array_like, shape (n_samples,)
             Log probabilities of each data point in `obs`
+
         posteriors: array_like, shape (n_samples, n_components)
             Posterior probabilities of each mixture component for each
             observation
@@ -349,6 +363,7 @@ class GMM(BaseEstimator):
         -------
         logprobs : array_like, shape (n_samples,)
             Log probability of each point in `obs` under the model.
+
         components : array_like, shape (n_samples,)
             Index of the most likelihod mixture components for each observation
         """
@@ -442,12 +457,15 @@ class GMM(BaseEstimator):
         X : array_like, shape (n, n_features)
             List of n_features-dimensional data points.  Each row
             corresponds to a single data point.
+
         n_iter : int, optional
             Number of EM iterations to perform.
+
         params : string, optional
             Controls which parameters are updated in the training
             process.  Can contain any combination of 'w' for weights,
             'm' for means, and 'c' for covars.  Defaults to 'wmc'.
+
         init_params : string, optional
             Controls which parameters are updated in the initialization
             process.  Can contain any combination of 'w' for weights,

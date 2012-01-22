@@ -63,6 +63,7 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True):
 
     alpha = np.dot(X.T, y)
     residual = y
+    gamma = np.empty(0)
     n_active = 0
     indices = range(X.shape[1])  # keeping track of swapping
 
@@ -157,6 +158,7 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
     alpha = Xy
     tol_curr = tol_0
     delta = 0
+    gamma = np.empty(0)
     n_active = 0
 
     max_features = len(Gram) if tol is not None else n_nonzero_coefs
@@ -261,7 +263,7 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute_gram=False,
     This implementation is based on Rubinstein, R., Zibulevsky, M. and Elad,
     M., Efficient Implementation of the K-SVD Algorithm using Batch Orthogonal
     Matching Pursuit Technical Report - CS Technion, April 2008.
-    http://www.cs.technion.ac.il/~ronrubin/Publications/KSVX-OMP-v2.pdf
+    http://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
 
     """
     X = np.asarray(X)
@@ -363,7 +365,7 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
     This implementation is based on Rubinstein, R., Zibulevsky, M. and Elad,
     M., Efficient Implementation of the K-SVD Algorithm using Batch Orthogonal
     Matching Pursuit Technical Report - CS Technion, April 2008.
-    http://www.cs.technion.ac.il/~ronrubin/Publications/KSVX-OMP-v2.pdf
+    http://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
 
     """
     Gram = np.asarray(Gram)
@@ -453,7 +455,7 @@ class OrthogonalMatchingPursuit(LinearModel):
     This implementation is based on Rubinstein, R., Zibulevsky, M. and Elad,
     M., Efficient Implementation of the K-SVD Algorithm using Batch Orthogonal
     Matching Pursuit Technical Report - CS Technion, April 2008.
-    http://www.cs.technion.ac.il/~ronrubin/Publications/KSVX-OMP-v2.pdf
+    http://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
 
     See also
     --------

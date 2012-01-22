@@ -27,7 +27,7 @@ from ..utils import check_random_state
 def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
            verbose=False, cov_computation_method=empirical_covariance,
            random_state=None):
-    """C_step procedure described in [1] aiming at computing the MCD
+    """C_step procedure described in [Rouseeuw1984] aiming at computing the MCD
 
     Parameters
     ----------
@@ -39,7 +39,7 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
       and covariance from.
     remaining_iterations: int
       Number of iterations to perform.
-      According to Rousseeuw [1], two iterations are sufficient to get close
+      According to [Rouseeuw1999], two iterations are sufficient to get close
       to the minimum, and we never need more than 30 to reach convergence.
     initial_estimates: 2-tuple
       Initial estimates of location and shape from which to run the c_step
@@ -65,9 +65,10 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
     Notes
     -----
     **References**:
-    [1] A Fast Algorithm for the Minimum Covariance Determinant Estimator,
-        1999, American Statistical Association and the American Society
-        for Quality, TECHNOMETRICS
+
+    .. [Rouseeuw1999] A Fast Algorithm for the Minimum Covariance Determinant
+       Estimator, 1999, American Statistical Association and the American
+       Society for Quality, TECHNOMETRICS
 
     """
     random_state = check_random_state(random_state)
@@ -154,7 +155,8 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
     data set is referred to as the `support`.
 
     Starting from a random support, the pure data set is found by the
-    c_step procedure introduced by Rousseeuw and Van Driessen in [1].
+    c_step procedure introduced by Rousseeuw and Van Driessen in
+    [Rouseeuw1999].
 
     Parameters
     ----------
@@ -199,9 +201,9 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
     Notes
     -----
     **References**:
-    [1] A Fast Algorithm for the Minimum Covariance Determinant Estimator,
-        1999, American Statistical Association and the American Society
-        for Quality, TECHNOMETRICS
+    .. [Rouseeuw1999] A Fast Algorithm for the Minimum Covariance Determinant
+       Estimator, 1999, American Statistical Association and the American
+       Society for Quality, TECHNOMETRICS
 
     """
     random_state = check_random_state(random_state)
@@ -276,16 +278,19 @@ def fast_mcd(X, support_fraction=None,
     Depending on the size of the initial sample, we have one, two or three
     such computation levels.
 
-    Note that only raw estimates are returned. If one is intersted in the
-    correction and reweighting steps described in [1], see the MinCovDet
-    object.
+    Note that only raw estimates are returned. If one is intersted in
+    the correction and reweighting steps described in [Rouseeuw1999],
+    see the MinCovDet object.
+
     **References**:
-    [1] A Fast Algorithm for the Minimum Covariance Determinant Estimator,
-        1999, American Statistical Association and the American Society
-        for Quality, TECHNOMETRICS
-    [2] R. W. Butler, P. L. Davies and M. Jhun,
-        Asymptotics For The Minimum Covariance Determinant Estimator,
-        The Annals of Statistics, 1993, Vol. 21, No. 3, 1385-1400
+
+    .. [Rouseeuw1999] A Fast Algorithm for the Minimum Covariance
+       Determinant Estimator, 1999, American Statistical Association
+       and the American Society for Quality, TECHNOMETRICS
+
+    .. [Butler1993] R. W. Butler, P. L. Davies and M. Jhun,
+       Asymptotics For The Minimum Covariance Determinant Estimator,
+       The Annals of Statistics, 1993, Vol. 21, No. 3, 1385-1400
 
     Returns
     -------
@@ -415,6 +420,27 @@ def fast_mcd(X, support_fraction=None,
 class MinCovDet(EmpiricalCovariance):
     """Minimum Covariance Determinant (MCD): robust estimator of covariance
 
+    Parameters
+    ----------
+    store_precision: bool
+      Specify if the estimated precision is stored
+    assume_centered: Boolean
+      If True, the support of robust location and covariance estimates
+      is computed, and a covariance estimate is recomputed from it,
+      without centering the data.
+      Useful to work with data whose mean is significantly equal to
+      zero but is not exactly zero.
+      If False, the robust location and covariance are directly computed
+      with the FastMCD algorithm without additional treatment.
+    support_fraction: float, 0 < support_fraction < 1
+      The proportion of points to be included in the support of the raw
+      MCD estimate. Default is None, which implies that the minimum
+      value of support_fraction will be used within the algorithm:
+      [n_sample + n_features + 1] / 2
+    random_state: integer or numpy.RandomState, optional
+        The random generator used. If an integer is given, it fixes the
+        seed. Defaults to the global numpy random number generator.
+
     Attributes
     ----------
     `raw_location_`: array-like, shape (n_features,)
@@ -446,44 +472,21 @@ class MinCovDet(EmpiricalCovariance):
     -----
 
     **References**:
-    [1] P. J. Rousseeuw. Least median of squares regression. J. Am
-        Stat Ass, 79:871, 1984.
-    [2] A Fast Algorithm for the Minimum Covariance Determinant Estimator,
-        1999, American Statistical Association and the American Society
-        for Quality, TECHNOMETRICS
-    [3] R. W. Butler, P. L. Davies and M. Jhun,
-        Asymptotics For The Minimum Covariance Determinant Estimator,
-        The Annals of Statistics, 1993, Vol. 21, No. 3, 1385-1400
+
+    .. [Rouseeuw1984] `P. J. Rousseeuw. Least median of squares regression.
+       J. Am Stat Ass, 79:871, 1984.`
+    .. [Rouseeuw1999] `A Fast Algorithm for the Minimum Covariance Determinant
+       Estimator, 1999, American Statistical Association and the American
+       Society for Quality, TECHNOMETRICS`
+    .. [Butler1993] `R. W. Butler, P. L. Davies and M. Jhun,
+       Asymptotics For The Minimum Covariance Determinant Estimator,
+       The Annals of Statistics, 1993, Vol. 21, No. 3, 1385-1400`
 
     """
     _nonrobust_covariance = staticmethod(empirical_covariance)
 
     def __init__(self, store_precision=True, assume_centered=False,
                  support_fraction=None, random_state=None):
-        """
-
-        Parameters
-        ----------
-        store_precision: bool
-          Specify if the estimated precision is stored
-        assume_centered: Boolean
-          If True, the support of robust location and covariance estimates
-          is computed, and a covariance estimate is recomputed from it,
-          without centering the data.
-          Useful to work with data whose mean is significantly equal to
-          zero but is not exactly zero.
-          If False, the robust location and covariance are directly computed
-          with the FastMCD algorithm without additional treatment.
-        support_fraction: float, 0 < support_fraction < 1
-          The proportion of points to be included in the support of the raw
-          MCD estimate. Default is None, which implies that the minimum
-          value of support_fraction will be used within the algorithm:
-          [n_sample + n_features + 1] / 2
-        random_state: integer or numpy.RandomState, optional
-            The random generator used. If an integer is given, it fixes the
-            seed. Defaults to the global numpy random number generator.
-
-        """
         self.store_precision = store_precision
         self.assume_centered = assume_centered
         self.support_fraction = support_fraction
@@ -531,7 +534,7 @@ class MinCovDet(EmpiricalCovariance):
         """Apply a correction to raw Minimum Covariance Determinant estimates.
 
         Correction using the empirical correction factor suggested
-        by Rousseeuw and Van Driessen in [1].
+        by Rousseeuw and Van Driessen in [Rouseeuw1984]_.
 
         Parameters
         ----------
@@ -544,16 +547,6 @@ class MinCovDet(EmpiricalCovariance):
         -------
         covariance_corrected: array-like, shape (n_features, n_features)
           Corrected robust covariance estimate.
-
-        Notes
-        -----
-        **References**:
-        [1] A Fast Algorithm for the Minimum Covariance Determinant Estimator,
-            1999, American Statistical Association and the American Society
-            for Quality, TECHNOMETRICS
-        [2] R. W. Butler, P. L. Davies and M. Jhun,
-            Asymptotics For The Minimum Covariance Determinant Estimator,
-            The Annals of Statistics, 1993, Vol. 21, No. 3, 1385-1400
 
         """
         X_centered = data - self.raw_location_
@@ -570,7 +563,7 @@ class MinCovDet(EmpiricalCovariance):
 
         Reweight observations using Rousseeuw's method (equivalent to
         deleting outlying observations from the data set before
-        computing location and covariance estimates). [1]
+        computing location and covariance estimates). [Rouseeuw1984]_
 
         Parameters
         ----------
@@ -588,13 +581,6 @@ class MinCovDet(EmpiricalCovariance):
         support_reweighted: array-like, type boolean, shape (n_samples,)
           A mask of the observations that have been used to compute
           the reweighted robust location and covariance estimates.
-
-        Notes
-        -----
-        **References**:
-        [1] A Fast Algorithm for the Minimum Covariance Determinant Estimator,
-            1999, American Statistical Association and the American Society
-            for Quality, TECHNOMETRICS
 
         """
         n_samples, n_features = data.shape

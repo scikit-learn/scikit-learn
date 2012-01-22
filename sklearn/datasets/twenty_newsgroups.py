@@ -153,13 +153,16 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
     elif subset == 'all':
         data_lst = list()
         target = list()
+        filenames = list()
         for subset in ('train', 'test'):
             data = cache[subset]
             data_lst.extend(data.data)
             target.extend(data.target)
+            filenames.extend(data.filenames)
 
         data.data = data_lst
         data.target = np.array(target)
+        data.filenames = np.array(filenames)
         data.description = 'the 20 newsgroups by date dataset'
     else:
         raise ValueError(
@@ -171,6 +174,7 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
         labels.sort()
         labels, categories = zip(*labels)
         mask = in1d(data.target, labels)
+        data.filenames = data.filenames[mask]
         data.target = data.target[mask]
         # searchsorted to have continuous labels
         data.target = np.searchsorted(labels, data.target)
@@ -184,6 +188,7 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
         random_state = check_random_state(random_state)
         indices = np.arange(data.target.shape[0])
         random_state.shuffle(indices)
+        data.filenames = data.filenames[indices]
         data.target = data.target[indices]
         # Use an object array to shuffle: avoids memory copy
         data_lst = np.array(data.data, dtype=object)
@@ -194,7 +199,7 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
 
 
 def fetch_20newsgroups_vectorized(subset="train", data_home=None):
-    """Load the 20 newsgroups dataset and transform it into tf-idf vectors
+    """Load the 20 newsgroups dataset and transform it into tf-idf vectors.
 
     This is a convenience function; the tf-idf transformation is done using the
     default settings for `sklearn.feature_extraction.text.Vectorizer`. For more
@@ -240,9 +245,9 @@ def fetch_20newsgroups_vectorized(subset="train", data_home=None):
         X_train, X_test = joblib.load(target_file)
     else:
         vectorizer = CountVectorizer(dtype=np.int16)
-        X_train = vectorizer.fit_transform(data_train.data)
-        X_test = vectorizer.transform(data_test.data)
-        joblib.dump((X_train, X_test), target_file)
+        X_train = vectorizer.fit_transform(data_train.data).tocsr()
+        X_test = vectorizer.transform(data_test.data).tocsr()
+        joblib.dump((X_train, X_test), target_file, compress=9)
 
     # the data is stored as int16 for compactness
     # but normalize needs floats
@@ -260,10 +265,11 @@ def fetch_20newsgroups_vectorized(subset="train", data_home=None):
         data = X_test
         target = data_test.target
     elif subset == "all":
-        data = sp.vstack((X_train, X_test))
+        data = sp.vstack((X_train, X_test)).tocsr()
         target = np.concatenate((data_train.target, data_test.target))
     else:
-        raise ValueError
+        raise ValueError("%r is not a valid subset: should be one of "
+                         "['train', 'test', 'all']" % subset)
 
     return Bunch(data=data, target=target, target_names=target_names)
 

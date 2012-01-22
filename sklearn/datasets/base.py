@@ -415,21 +415,17 @@ def load_sample_images():
 
     Examples
     --------
-    To load the data and visualize the images::
+    To load the data and visualize the images:
 
-    # >>> from sklearn.datasets import load_sample_images
-    # >>> dataset = load_sample_images()
-    # >>> len(dataset.images)
-    # 2
-    # >>> first_img_data = dataset.images[0]
-    # >>> first_img_data.shape
-    # (427, 640, 3)
-    # >>> first_img_data.dtype
-    # dtype('uint8')
-    # >>> import pylab as pl
-    # >>> pl.gray()
-    # >>> pl.matshow(dataset.images[0]) # Visualize the first image
-    # >>> pl.show()
+    >>> from sklearn.datasets import load_sample_images
+    >>> dataset = load_sample_images()     #doctest: +SKIP
+    >>> len(dataset.images)                #doctest: +SKIP
+    2
+    >>> first_img_data = dataset.images[0] #doctest: +SKIP
+    >>> first_img_data.shape               #doctest: +SKIP
+    (427, 640, 3)
+    >>> first_img_data.dtype               #doctest: +SKIP
+    dtype('uint8')
     """
     # Try to import imread from scipy. We do this lazily here to prevent
     # this module from depending on PIL.
@@ -471,17 +467,17 @@ def load_sample_image(image_name):
     Examples
     ---------
 
-    # >>> from sklearn.datasets import load_sample_image
-    # >>> china = load_sample_image('china.jpg')
-    # >>> china.dtype
-    # dtype('uint8')
-    # >>> china.shape
-    # (427, 640, 3)
-    # >>> flower = load_sample_image('flower.jpg') # doctest: +SKIP
-    # >>> flower.dtype
-    # dtype('uint8')
-    # >>> flower.shape
-    # (427, 640, 3)
+    >>> from sklearn.datasets import load_sample_image
+    >>> china = load_sample_image('china.jpg')   # doctest: +SKIP
+    >>> china.dtype                              # doctest: +SKIP
+    dtype('uint8')
+    >>> china.shape                              # doctest: +SKIP
+    (427, 640, 3)
+    >>> flower = load_sample_image('flower.jpg') # doctest: +SKIP
+    >>> flower.dtype                             # doctest: +SKIP
+    dtype('uint8')
+    >>> flower.shape                             # doctest: +SKIP
+    (427, 640, 3)
     """
     images = load_sample_images()
     index = None

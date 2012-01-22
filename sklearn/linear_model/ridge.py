@@ -126,6 +126,8 @@ class Ridge(LinearModel):
     This model solves a regression model where the loss function is
     the linear least squares function and regularization is given by
     the l2-norm. Also known as Ridge Regression or Tikhonov regularization.
+    This estimator has built-in support for multi-variate regression
+    (i.e., when y is a 2d-array of shape [n_samples, n_responses]).
 
     Parameters
     ----------
@@ -152,7 +154,7 @@ class Ridge(LinearModel):
     Attributes
     ----------
 
-    coef_: array, shape = [n_features] or [n_responses, n_features]
+    `coef_` : array, shape = [n_features] or [n_responses, n_features]
         Weight vector(s).
 
     See also
@@ -221,14 +223,14 @@ class Ridge(LinearModel):
 
 
 class RidgeClassifier(Ridge):
-    """Classifier using Ridge regression
+    """Classifier using Ridge regression.
 
     Parameters
     ----------
     alpha : float
         Small positive values of alpha improve the conditioning of the
         problem and reduce the variance of the estimates.
-        Alpha corresponds to (2*C)^-1 in other linear models such as
+        Alpha corresponds to ``(2*C)^-1`` in other linear models such as
         LogisticRegression or LinearSVC.
 
     fit_intercept : boolean
@@ -242,7 +244,7 @@ class RidgeClassifier(Ridge):
     Attributes
     ----------
 
-    coef_: array, shape = [n_features] or [n_classes, n_features]
+    `coef_` : array, shape = [n_features] or [n_classes, n_features]
         Weight vector(s).
 
     See also
@@ -252,7 +254,8 @@ class RidgeClassifier(Ridge):
     Notes
     -----
     For multi-class classification, n_class classifiers are trained in
-    a one-versus-all approach.
+    a one-versus-all approach. Concretely, this is implemented by taking
+    advantage of the multi-variate response support in Ridge.
     """
 
     def fit(self, X, y, solver='auto'):
@@ -284,7 +287,7 @@ class RidgeClassifier(Ridge):
         return self
 
     def decision_function(self, X):
-        return Ridge.predict(self, X)
+        return Ridge.decision_function(self, X)
 
     def predict(self, X):
         """Predict target values according to the fitted model.
@@ -523,8 +526,8 @@ class RidgeCV(LinearModel):
             gs = GridSearchCV(Ridge(fit_intercept=self.fit_intercept),
                               parameters, fit_params=fit_params, cv=self.cv)
             gs.fit(X, y)
-            estimator = gs.best_estimator
-            self.best_alpha = gs.best_estimator.alpha
+            estimator = gs.best_estimator_
+            self.best_alpha = gs.best_estimator_.alpha
 
         self.coef_ = estimator.coef_
         self.intercept_ = estimator.intercept_
@@ -569,7 +572,7 @@ class RidgeClassifierCV(RidgeCV):
         return self
 
     def decision_function(self, X):
-        return RidgeCV.predict(self, X)
+        return RidgeCV.decision_function(self, X)
 
     def predict(self, X):
         """Predict target values according to the fitted model.

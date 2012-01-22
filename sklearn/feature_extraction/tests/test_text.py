@@ -9,7 +9,7 @@ from sklearn.feature_extraction.text import Vectorizer
 
 from sklearn.grid_search import GridSearchCV
 from sklearn.pipeline import Pipeline
-from sklearn.svm.sparse import LinearSVC as LinearSVC
+from sklearn.svm import LinearSVC
 
 import numpy as np
 from nose.tools import assert_equal, assert_equals, \
@@ -275,13 +275,15 @@ def test_vectorizer_inverse_transform():
         transformed_data = vectorizer.fit_transform(data)
         inversed_data = vectorizer.inverse_transform(transformed_data)
         for i, doc in enumerate(data):
-            data_vec = np.sort(np.unique(vectorizer.analyzer.analyze(data[0])))
-            inversed_data_vec = np.sort(np.unique(inversed_data[0]))
-            assert((data_vec == inversed_data_vec).all())
+            terms = np.sort(np.unique(vectorizer.analyzer.analyze(doc)))
+            inversed_terms = np.sort(np.unique(inversed_data[i]))
+            assert_array_equal(terms, inversed_terms)
+
     # Test that inverse_transform also works with numpy arrays
-    transformed_data = np.asarray(transformed_data.todense())
-    assert(vectorizer.inverse_transform(transformed_data),
-            inversed_data)
+    transformed_data = transformed_data.toarray()
+    inversed_data2 = vectorizer.inverse_transform(transformed_data)
+    for terms, terms2 in zip(inversed_data, inversed_data2):
+        assert_array_equal(terms, terms2)
 
 
 def test_dense_vectorizer_pipeline_grid_selection():
@@ -317,8 +319,8 @@ def test_dense_vectorizer_pipeline_grid_selection():
     # on this toy dataset bigram representation which is used in the last of
     # the grid_search is considered the best estimator since they all converge
     # to 100% accuracy models
-    assert_equal(grid_search.best_score, 1.0)
-    best_vectorizer = grid_search.best_estimator.named_steps['vect']
+    assert_equal(grid_search.best_score_, 1.0)
+    best_vectorizer = grid_search.best_estimator_.named_steps['vect']
     assert_equal(best_vectorizer.analyzer.max_n, 1)
 
 

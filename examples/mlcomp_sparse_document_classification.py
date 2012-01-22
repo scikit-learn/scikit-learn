@@ -47,7 +47,7 @@ import pylab as pl
 
 from sklearn.datasets import load_mlcomp
 from sklearn.feature_extraction.text import Vectorizer
-from sklearn.linear_model.sparse import SGDClassifier
+from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import classification_report
 from sklearn.naive_bayes import MultinomialNB

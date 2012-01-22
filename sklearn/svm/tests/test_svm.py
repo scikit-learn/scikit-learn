@@ -157,8 +157,10 @@ def test_SVR():
 
     diabetes = datasets.load_diabetes()
     for clf in (svm.NuSVR(kernel='linear', nu=.4),
+                svm.NuSVR(kernel='linear', nu=.4, C=10.),
                 svm.SVR(kernel='linear', C=10.),
                 svm.sparse.NuSVR(kernel='linear', nu=.4),
+                svm.sparse.NuSVR(kernel='linear', nu=.4, C=10.),
                 svm.sparse.SVR(kernel='linear', C=10.)):
         clf.fit(diabetes.data, diabetes.target)
         assert clf.score(diabetes.data, diabetes.target) > 0.02
@@ -177,7 +179,7 @@ def test_oneclass():
     assert_array_almost_equal(clf.dual_coef_,
                               [[0.632, 0.233, 0.633, 0.234, 0.632, 0.633]],
                               decimal=3)
-    assert_raises(NotImplementedError, lambda: clf.coef_)
+    assert_raises(ValueError, lambda: clf.coef_)
 
 
 def test_tweak_params():
@@ -330,8 +332,7 @@ def test_bad_input():
     assert_raises(ValueError, clf.fit, X, Y2)
 
     # Test with arrays that are non-contiguous.
-    for clf in (svm.SVC(), svm.LinearSVC(), svm.sparse.SVC(),
-                svm.sparse.LinearSVC()):
+    for clf in (svm.SVC(), svm.LinearSVC(), svm.sparse.SVC()):
         Xf = np.asfortranarray(X)
         assert Xf.flags['C_CONTIGUOUS'] == False
         yf = np.ascontiguousarray(np.tile(Y, (2, 1)).T)
@@ -483,6 +484,29 @@ def test_liblinear_predict():
     assert_array_equal(clf.predict(X), (H > 0).astype(int))
 
 
+def test_liblinear_set_coef():
+    # multi-class case
+    clf = svm.LinearSVC().fit(iris.data, iris.target)
+    values = clf.decision_function(iris.data)
+    clf.coef_ = clf.coef_.copy()
+    clf.intercept_ = clf.intercept_.copy()
+    values2 = clf.decision_function(iris.data)
+    assert_array_equal(values, values2)
+
+    # binary-class case
+    X = [[2, 1],
+         [3, 1],
+         [1, 3],
+         [2, 3]]
+    y = [0, 0, 1, 1]
+
+    clf = svm.LinearSVC().fit(X, y)
+    values = clf.decision_function(X)
+    clf.coef_ = clf.coef_.copy()
+    clf.intercept_ = clf.intercept_.copy()
+    values2 = clf.decision_function(X)
+    assert_array_equal(values, values2)
+
 def test_c_samples_scaling():
     """Test C scaling by n_samples
     """
@@ -527,6 +551,24 @@ def test_nu_svc_samples_scaling():
         coef2_ = clf.fit(X2, y2).coef_
         error_with_scale = linalg.norm(coef2_ - coef_) / linalg.norm(coef_)
         assert_true(error_with_scale < 1e-5)
+
+
+def test_immutable_coef_property():
+    """Check that primal coef modification are not silently ignored"""
+    svms = [
+        svm.SVC(kernel='linear').fit(iris.data, iris.target),
+        svm.NuSVC(kernel='linear').fit(iris.data, iris.target),
+        svm.SVR(kernel='linear').fit(iris.data, iris.target),
+        svm.NuSVR(kernel='linear').fit(iris.data, iris.target),
+        svm.OneClassSVM(kernel='linear').fit(iris.data),
+        svm.sparse.SVC(kernel='linear').fit(iris.data, iris.target),
+        svm.sparse.NuSVC(kernel='linear').fit(iris.data, iris.target),
+        svm.sparse.SVR(kernel='linear').fit(iris.data, iris.target),
+        svm.sparse.NuSVR(kernel='linear').fit(iris.data, iris.target),
+    ]
+    for clf in svms:
+        assert_raises(AttributeError, clf.__setattr__, 'coef_', np.arange(3))
+        assert_raises(RuntimeError, clf.coef_.__setitem__, (0, 0), 0)
 
 
 if __name__ == '__main__':

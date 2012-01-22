@@ -54,8 +54,8 @@ class RFE(BaseEstimator):
         The mask of selected features.
 
     `ranking_` : array of shape [n_features]
-        The feature ranking, such that `ranking_[i]` corresponds to the ranking
-        position of the i-th feature. Selected (i.e., estimated best) features
+        The feature ranking, such that `ranking_[i]` corresponds to the ranking \
+        position of the i-th feature. Selected (i.e., estimated best) features \
         are assigned rank 1.
 
     Examples
@@ -108,7 +108,8 @@ class RFE(BaseEstimator):
             step = int(self.step * n_features)
         else:
             step = int(self.step)
-        assert step > 0
+        if step <= 0:
+            raise ValueError("Step must be >0")
 
         support_ = np.ones(n_features, dtype=np.bool)
         ranking_ = np.ones(n_features, dtype=np.int)
@@ -181,7 +182,7 @@ class RFE(BaseEstimator):
         Returns
         -------
         X_r : array of shape [n_samples, n_selected_features]
-            The input samples with only the features selected during the
+            The input samples with only the features selected during the \
             elimination.
         """
         return X[:, self.support_]
@@ -222,17 +223,19 @@ class RFECV(RFE):
     ----------
     `n_features_` : int
         The number of selected features with cross-validation.
-
     `support_` : array of shape [n_features]
         The mask of selected features.
 
     `ranking_` : array of shape [n_features]
-        The feature ranking, such that `ranking_[i]` corresponds to the ranking
-        position of the i-th feature. Selected (i.e., estimated best) features
-        are assigned rank 1.
+        The feature ranking, such that `ranking_[i]`
+        corresponds to the ranking
+        position of the i-th feature.
+        Selected (i.e., estimated best)
+        features are assigned rank 1.
 
-    `cv_scores_`: array of shape [n_subsets_of_features]
-        The cross-validation scores such that `cv_scores_[i]` corresponds to
+    `cv_scores_` : array of shape [n_subsets_of_features]
+        The cross-validation scores such that
+        `cv_scores_[i]` corresponds to
         the CV score of the i-th subset of features.
 
     Examples

@@ -17,7 +17,7 @@ from numpy.lib.stride_tricks import as_strided
 from ..base import BaseEstimator, TransformerMixin
 from ..externals.joblib import Parallel, delayed, cpu_count
 from ..utils import array2d, check_random_state, gen_even_slices, deprecated
-from ..utils.extmath import fast_svd
+from ..utils.extmath import randomized_svd
 from ..linear_model import Lasso, orthogonal_mp_gram, lars_path
 
 
@@ -376,9 +376,9 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8,
     Finds the best dictionary and the corresponding sparse code for
     approximating the data matrix X by solving::
 
-    (U^*, V^*) = argmin 0.5 || X - U V ||_2^2 + alpha * || U ||_1
-                 (U,V)
-                with || V_k ||_2 = 1 for all  0 <= k < n_atoms
+        (U^*, V^*) = argmin 0.5 || X - U V ||_2^2 + alpha * || U ||_1
+                     (U,V)
+                    with || V_k ||_2 = 1 for all  0 <= k < n_atoms
 
     where V is the dictionary and U is the sparse code.
 
@@ -529,11 +529,11 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
     """Solves a dictionary learning matrix factorization problem online.
 
     Finds the best dictionary and the corresponding sparse code for
-    approximating the data matrix X by solving:
+    approximating the data matrix X by solving::
 
-    (U^*, V^*) = argmin 0.5 || X - U V ||_2^2 + alpha * || U ||_1
-                 (U,V)
-                 with || V_k ||_2 = 1 for all  0 <= k < n_atoms
+        (U^*, V^*) = argmin 0.5 || X - U V ||_2^2 + alpha * || U ||_1
+                     (U,V)
+                     with || V_k ||_2 = 1 for all  0 <= k < n_atoms
 
     where V is the dictionary and U is the sparse code. This is
     accomplished by repeatedly iterating over mini-batches by slicing
@@ -622,7 +622,7 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
     if dict_init is not None:
         dictionary = dict_init
     else:
-        _, S, dictionary = fast_svd(X, n_atoms)
+        _, S, dictionary = randomized_svd(X, n_atoms)
         dictionary = S[:, np.newaxis] * dictionary
     r = len(dictionary)
     if n_atoms <= r:
@@ -722,14 +722,15 @@ class SparseCodingMixin(TransformerMixin):
 
         Parameters
         ----------
-        X: array of shape (n_samples, n_features)
+        X : array of shape (n_samples, n_features)
             Test data to be transformed, must have the same number of
             features as the data used to train the model.
 
         Returns
         -------
-        X_new array, shape (n_samples, n_components)
+        X_new : array, shape (n_samples, n_components)
             Transformed data
+
         """
         # XXX : kwargs is not documented
         X = array2d(X)
@@ -764,12 +765,13 @@ class SparseCoder(BaseEstimator, SparseCodingMixin):
 
     Parameters
     ----------
-    dictionary: array, [n_atoms, n_features]
+    dictionary : array, [n_atoms, n_features]
         The dictionary atoms used for sparse coding. Lines are assumed to be
         normalized to unit norm.
 
-    transform_algorithm: {'lasso_lars', 'lasso_cd', 'lars', 'omp', 'threshold'}
-        Algorithm used to transform the data
+    transform_algorithm : {'lasso_lars', 'lasso_cd', 'lars', 'omp', \
+    'threshold'}
+        Algorithm used to transform the data:
         lars: uses the least angle regression method (linear_model.lars_path)
         lasso_lars: uses Lars to compute the Lasso solution
         lasso_cd: uses the coordinate descent method to compute the
@@ -777,14 +779,14 @@ class SparseCoder(BaseEstimator, SparseCodingMixin):
         the estimated components are sparse.
         omp: uses orthogonal matching pursuit to estimate the sparse solution
         threshold: squashes to zero all coefficients less than alpha from
-        the projection dictionary * X'
+        the projection ``dictionary * X'``
 
-    transform_n_nonzero_coefs: int, 0.1 * n_features by default
+    transform_n_nonzero_coefs : int, ``0.1 * n_features`` by default
         Number of nonzero coefficients to target in each column of the
         solution. This is only used by `algorithm='lars'` and `algorithm='omp'`
         and is overridden by `alpha` in the `omp` case.
 
-    transform_alpha: float, 1. by default
+    transform_alpha : float, 1. by default
         If `algorithm='lasso_lars'` or `algorithm='lasso_cd'`, `alpha` is the
         penalty applied to the L1 norm.
         If `algorithm='threshold'`, `alpha` is the absolute value of the
@@ -793,17 +795,17 @@ class SparseCoder(BaseEstimator, SparseCodingMixin):
         the reconstruction error targeted. In this case, it overrides
         `n_nonzero_coefs`.
 
-    split_sign: bool, False by default
+    split_sign : bool, False by default
         Whether to split the sparse feature vector into the concatenation of
         its negative part and its positive part. This can improve the
         performance of downstream classifiers.
 
-    n_jobs: int,
+    n_jobs : int,
         number of parallel jobs to run
 
     Attributes
     ----------
-    components_: array, [n_atoms, n_features]
+    `components_` : array, [n_atoms, n_features]
         The unchanged dictionary atoms
 
     See also
@@ -847,26 +849,27 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
 
     Parameters
     ----------
-    n_atoms: int,
+    n_atoms : int,
         number of dictionary elements to extract
 
-    alpha: int,
+    alpha : int,
         sparsity controlling parameter
 
-    max_iter: int,
+    max_iter : int,
         maximum number of iterations to perform
 
-    tol: float,
+    tol : float,
         tolerance for numerical error
 
-    fit_algorithm: {'lars', 'cd'}
+    fit_algorithm : {'lars', 'cd'}
         lars: uses the least angle regression method to solve the lasso problem
         (linear_model.lars_path)
         cd: uses the coordinate descent method to compute the
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
 
-    transform_algorithm: {'lasso_lars', 'lasso_cd', 'lars', 'omp', 'threshold'}
+    transform_algorithm : {'lasso_lars', 'lasso_cd', 'lars', 'omp', \
+    'threshold'}
         Algorithm used to transform the data
         lars: uses the least angle regression method (linear_model.lars_path)
         lasso_lars: uses Lars to compute the Lasso solution
@@ -875,14 +878,14 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
         the estimated components are sparse.
         omp: uses orthogonal matching pursuit to estimate the sparse solution
         threshold: squashes to zero all coefficients less than alpha from
-        the projection dictionary * X'
+        the projection ``dictionary * X'``
 
-    transform_n_nonzero_coefs: int, 0.1 * n_features by default
+    transform_n_nonzero_coefs : int, ``0.1 * n_features`` by default
         Number of nonzero coefficients to target in each column of the
         solution. This is only used by `algorithm='lars'` and `algorithm='omp'`
         and is overridden by `alpha` in the `omp` case.
 
-    transform_alpha: float, 1. by default
+    transform_alpha : float, 1. by default
         If `algorithm='lasso_lars'` or `algorithm='lasso_cd'`, `alpha` is the
         penalty applied to the L1 norm.
         If `algorithm='threshold'`, `alpha` is the absolute value of the
@@ -891,32 +894,32 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
         the reconstruction error targeted. In this case, it overrides
         `n_nonzero_coefs`.
 
-    split_sign: bool, False by default
+    split_sign : bool, False by default
         Whether to split the sparse feature vector into the concatenation of
         its negative part and its positive part. This can improve the
         performance of downstream classifiers.
 
-    n_jobs: int,
+    n_jobs : int,
         number of parallel jobs to run
 
-    code_init: array of shape (n_samples, n_atoms),
+    code_init : array of shape (n_samples, n_atoms),
         initial value for the code, for warm restart
 
-    dict_init: array of shape (n_atoms, n_features),
+    dict_init : array of shape (n_atoms, n_features),
         initial values for the dictionary, for warm restart
 
-    verbose:
+    verbose :
         degree of verbosity of the printed output
 
-    random_state: int or RandomState
+    random_state : int or RandomState
         Pseudo number generator state used for random sampling.
 
     Attributes
     ----------
-    components_: array, [n_atoms, n_features]
+    `components_` : array, [n_atoms, n_features]
         dictionary atoms extracted from the data
 
-    error_: array
+    `error_` : array
         vector of errors at each iteration
 
     Notes
@@ -987,29 +990,30 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
 
     Solves the optimization problem::
 
-        (U^*,V^*) = argmin 0.5 || Y - U V ||_2^2 + alpha * || U ||_1
+       (U^*,V^*) = argmin 0.5 || Y - U V ||_2^2 + alpha * || U ||_1
                     (U,V)
                     with || V_k ||_2 = 1 for all  0 <= k < n_atoms
 
     Parameters
     ----------
-    n_atoms: int,
+    n_atoms : int,
         number of dictionary elements to extract
 
-    alpha: int,
+    alpha : int,
         sparsity controlling parameter
 
-    n_iter: int,
+    n_iter : int,
         total number of iterations to perform
 
-    fit_algorithm: {'lars', 'cd'}
+    fit_algorithm : {'lars', 'cd'}
         lars: uses the least angle regression method to solve the lasso problem
         (linear_model.lars_path)
         cd: uses the coordinate descent method to compute the
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
 
-    transform_algorithm: {'lasso_lars', 'lasso_cd', 'lars', 'omp', 'threshold'}
+    transform_algorithm : {'lasso_lars', 'lasso_cd', 'lars', 'omp', \
+    'threshold'}
         Algorithm used to transform the data.
         lars: uses the least angle regression method (linear_model.lars_path)
         lasso_lars: uses Lars to compute the Lasso solution
@@ -1020,12 +1024,12 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         threshold: squashes to zero all coefficients less than alpha from
         the projection dictionary * X'
 
-    transform_n_nonzero_coefs: int, 0.1 * n_features by default
+    transform_n_nonzero_coefs : int, ``0.1 * n_features`` by default
         Number of nonzero coefficients to target in each column of the
         solution. This is only used by `algorithm='lars'` and `algorithm='omp'`
         and is overridden by `alpha` in the `omp` case.
 
-    transform_alpha: float, 1. by default
+    transform_alpha : float, 1. by default
         If `algorithm='lasso_lars'` or `algorithm='lasso_cd'`, `alpha` is the
         penalty applied to the L1 norm.
         If `algorithm='threshold'`, `alpha` is the absolute value of the
@@ -1034,32 +1038,32 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         the reconstruction error targeted. In this case, it overrides
         `n_nonzero_coefs`.
 
-    split_sign: bool, False by default
+    split_sign : bool, False by default
         Whether to split the sparse feature vector into the concatenation of
         its negative part and its positive part. This can improve the
         performance of downstream classifiers.
 
-    n_jobs: int,
+    n_jobs : int,
         number of parallel jobs to run
 
-    dict_init: array of shape (n_atoms, n_features),
+    dict_init : array of shape (n_atoms, n_features),
         initial value of the dictionary for warm restart scenarios
 
-    verbose:
+    verbose :
         degree of verbosity of the printed output
 
-    chunk_size: int,
+    chunk_size : int,
         number of samples in each mini-batch
 
-    shuffle: bool,
+    shuffle : bool,
         whether to shuffle the samples before forming batches
 
-    random_state: int or RandomState
+    random_state : int or RandomState
         Pseudo number generator state used for random sampling.
 
     Attributes
     ----------
-    components_: array, [n_atoms, n_features]
+    `components_` : array, [n_atoms, n_features]
         components extracted from the data
 
     Notes

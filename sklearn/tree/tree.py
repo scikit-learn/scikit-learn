@@ -14,6 +14,7 @@ from __future__ import division
 import numpy as np
 
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
+from ..feature_selection.selector_mixin import SelectorMixin
 from ..utils import array2d, check_random_state
 
 from . import _tree
@@ -48,7 +49,7 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
 
     This function generates a GraphViz representation of the decision tree,
     which is then written into `out_file`. Once exported, graphical renderings
-    can be generated using, for example,::
+    can be generated using, for example::
 
         $ dot -Tps tree.dot -o tree.ps      (PostScript format)
         $ dot -Tpng tree.dot -o tree.png    (PNG format)
@@ -80,7 +81,7 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
 
     >>> clf = clf.fit(iris.data, iris.target)
     >>> import tempfile
-    >>> out_file = export_graphviz(clf, out_file=tempfile.TemporaryFile())
+    >>> out_file = tree.export_graphviz(clf, out_file=tempfile.TemporaryFile())
     >>> out_file.close()
     """
     def node_to_str(tree, node_id):
@@ -100,7 +101,8 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
                       tree.value[node_id])
 
     def recurse(tree, node_id):
-        assert node_id != -1
+        if node_id == 1:
+            raise ValueError("Invalid node_id -1")
         left_child, right_child = tree.children[node_id, :]
         node_data = {
             "current": node_id,
@@ -148,9 +150,9 @@ class Tree(object):
         Number of nodes (internal nodes + leaves) in the tree.
 
     children : np.ndarray, shape=(node_count, 2), dtype=int32
-        `children[i,0]` holds the node id of the left child of node `i`.
-        `children[i,1]` holds the node id of the right child of node `i`.
-        For leaves `children[i,0] == children[i, 1] == Tree.LEAF == -1`.
+        `children[i, 0]` holds the node id of the left child of node `i`.
+        `children[i, 1]` holds the node id of the right child of node `i`.
+        For leaves `children[i, 0] == children[i, 1] == Tree.LEAF == -1`.
 
     feature : np.ndarray of int32
         The feature to split on (only for internal nodes).
@@ -356,12 +358,12 @@ def _build_tree(X, y, is_classification, criterion, max_depth, min_split,
             np.argsort(X.T, axis=1).astype(np.int32).T)
 
     recursive_partition(X, X_argsorted, y, sample_mask, 0, -1, False)
-
     tree.resize(tree.node_count)
+
     return tree
 
 
-class BaseDecisionTree(BaseEstimator):
+class BaseDecisionTree(BaseEstimator, SelectorMixin):
     """Base class for decision trees.
 
     Warning: This class should not be used directly.
@@ -372,12 +374,14 @@ class BaseDecisionTree(BaseEstimator):
                        min_split,
                        min_density,
                        max_features,
+                       compute_importances,
                        random_state):
         self.criterion = criterion
         self.max_depth = max_depth
         self.min_split = min_split
         self.min_density = min_density
         self.max_features = max_features
+        self.compute_importances = compute_importances
         self.random_state = check_random_state(random_state)
 
         self.n_features_ = None
@@ -386,8 +390,9 @@ class BaseDecisionTree(BaseEstimator):
         self.find_split_ = _tree._find_best_split
 
         self.tree_ = None
+        self.feature_importances_ = None
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_mask=None, X_argsorted=None):
         """Build a decision tree from the training set (X, y).
 
         Parameters
@@ -425,19 +430,42 @@ class BaseDecisionTree(BaseEstimator):
 
         # Check parameters
         max_depth = np.inf if self.max_depth is None else self.max_depth
-        max_features = -1 if self.max_features is None else self.max_features
+
+        if isinstance(self.max_features, basestring):
+            if self.max_features == "auto":
+                if is_classification:
+                    max_features = max(1, int(np.sqrt(self.n_features_)))
+
+                else:
+                    max_features = self.n_features_
+
+            elif self.max_features == "sqrt":
+                max_features = max(1, int(np.sqrt(self.n_features_)))
+
+            elif self.max_features == "log2":
+                max_features = max(1, int(np.log2(self.n_features_)))
+
+            else:
+                raise ValueError(
+                    'Invalid value for max_features. Allowed string '
+                    'values are "auto", "sqrt" or "log2".')
+
+        elif self.max_features is None:
+            max_features = self.n_features_
+
+        else:
+            max_features = self.max_features
 
         if len(y) != n_samples:
             raise ValueError("Number of labels=%d does not match "
-                             "number of features=%d" % (len(y), n_samples))
+                             "number of samples=%d" % (len(y), n_samples))
         if self.min_split <= 0:
             raise ValueError("min_split must be greater than zero.")
         if max_depth <= 0:
             raise ValueError("max_depth must be greater than zero. ")
         if self.min_density < 0.0 or self.min_density > 1.0:
             raise ValueError("min_density must be in [0, 1]")
-        if max_features >= 0 and \
-               not (0 < max_features <= self.n_features_):
+        if not (0 < max_features <= self.n_features_):
             raise ValueError("max_features must be in (0, n_features]")
 
         # Build tree
@@ -445,7 +473,27 @@ class BaseDecisionTree(BaseEstimator):
                                 max_depth, self.min_split,
                                 self.min_density, max_features,
                                 self.random_state, self.n_classes_,
-                                self.find_split_)
+                                self.find_split_, sample_mask=sample_mask,
+                                X_argsorted=X_argsorted)
+
+        # Compute feature importances
+        if self.compute_importances:
+            importances = np.zeros(self.n_features_)
+
+            for node in xrange(self.tree_.node_count):
+                if (self.tree_.children[node, 0]
+                        == self.tree_.children[node, 1]
+                        == Tree.LEAF):
+                    continue
+
+                else:
+                    importances[self.tree_.feature[node]] += (
+                        self.tree_.n_samples[node] *
+                            (self.tree_.init_error[node] -
+                             self.tree_.best_error[node]))
+
+            importances /= np.sum(importances)
+            self.feature_importances_ = importances
 
         return self
 
@@ -496,7 +544,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         The function to measure the quality of a split. Supported criteria are
         "gini" for the Gini impurity and "entropy" for the information gain.
 
-    max_depth : integer or None, optional (default=10)
+    max_depth : integer or None, optional (default=None)
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than min_split
         samples.
@@ -505,23 +553,47 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         The minimum number of samples required to split an internal node.
 
     min_density : float, optional (default=0.1)
-        The minimum density of the `sample_mask` (i.e. the fraction of samples
-        in the mask). If the density falls below this threshold the mask is
-        recomputed and the input data is packed which results in data copying.
-        If `min_density` equals to one, the partitions are always represented
-        as copies of the original data. Otherwise, partitions are represented
-        as bit masks (aka sample masks).
+        This parameter controls a trade-off in an optimization heuristic. It
+        controls the minimum density of the `sample_mask` (i.e. the
+        fraction of samples in the mask). If the density falls below this
+        threshold the mask is recomputed and the input data is packed
+        which results in data copying.  If `min_density` equals to one,
+        the partitions are always represented as copies of the original
+        data. Otherwise, partitions are represented as bit masks (aka
+        sample masks).
 
-    max_features : int or None, optional (default=None)
+    max_features : int, string or None, optional (default=None)
         The number of features to consider when looking for the best split.
-        If None, all features are considered, otherwise max_features are chosen
-        at random.
+        If "auto", then `max_features=sqrt(n_features)` on classification
+        tasks and `max_features=n_features` on regression problems. If "sqrt",
+        then `max_features=sqrt(n_features)`. If "log2", then
+        `max_features=log2(n_features)`. If None, then
+        `max_features=n_features`.
+
+    compute_importances : boolean, optional (default=True)
+        Whether feature importances are computed and stored into the
+        ``feature_importances_`` attribute when calling fit.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
+
+    Attributes
+    ----------
+    `tree_` : Tree object
+        The underlying Tree object.
+
+    `feature_importances_` : array of shape = [n_features]
+        The feature mportances (the higher, the more important the feature).
+        The importance I(f) of a feature f is computed as the (normalized)
+        total reduction of error brought by that feature. It is also known as
+        the Gini importance [4].
+
+        .. math::
+
+            I(f) = \sum_{nodes A for which f is used} n_samples(A) * \Delta err
 
     See also
     --------
@@ -539,6 +611,9 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     .. [3] T. Hastie, R. Tibshirani and J. Friedman. "Elements of Statistical
            Learning", Springer, 2009.
 
+    .. [4] L. Breiman, and A. Cutler, "Random Forests",
+           http://www.stat.berkeley.edu/~breiman/RandomForests/cc_home.htm
+
     Examples
     --------
     >>> from sklearn.datasets import load_iris
@@ -555,16 +630,18 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             0.93...,  0.93...,  1.     ,  0.93...,  1.      ])
     """
     def __init__(self, criterion="gini",
-                       max_depth=10,
+                       max_depth=None,
                        min_split=1,
                        min_density=0.1,
                        max_features=None,
+                       compute_importances=False,
                        random_state=None):
         super(DecisionTreeClassifier, self).__init__(criterion,
                                                      max_depth,
                                                      min_split,
                                                      min_density,
                                                      max_features,
+                                                     compute_importances,
                                                      random_state)
 
     def predict_proba(self, X):
@@ -623,7 +700,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         The function to measure the quality of a split. The only supported
         criterion is "mse" for the mean squared error.
 
-    max_depth : integer or None, optional (default=10)
+    max_depth : integer or None, optional (default=None)
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than min_split
         samples.
@@ -632,23 +709,47 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         The minimum number of samples required to split an internal node.
 
     min_density : float, optional (default=0.1)
-        The minimum density of the `sample_mask` (i.e. the fraction of samples
-        in the mask). If the density falls below this threshold the mask is
-        recomputed and the input data is packed which results in data copying.
-        If `min_density` equals to one, the partitions are always represented
-        as copies of the original data. Otherwise, partitions are represented
-        as bit masks (aka sample masks).
+        This parameter controls a trade-off in an optimization heuristic. It
+        controls the minimum density of the `sample_mask` (i.e. the
+        fraction of samples in the mask). If the density falls below this
+        threshold the mask is recomputed and the input data is packed
+        which results in data copying.  If `min_density` equals to one,
+        the partitions are always represented as copies of the original
+        data. Otherwise, partitions are represented as bit masks (aka
+        sample masks).
 
-    max_features : int or None, optional (default=None)
+    max_features : int, string or None, optional (default=None)
         The number of features to consider when looking for the best split.
-        If None, all features are considered, otherwise max_features are chosen
-        at random.
+        If "auto", then `max_features=sqrt(n_features)` on classification
+        tasks and `max_features=n_features` on regression problems. If "sqrt",
+        then `max_features=sqrt(n_features)`. If "log2", then
+        `max_features=log2(n_features)`. If None, then
+        `max_features=n_features`.
+
+    compute_importances : boolean, optional (default=True)
+        Whether feature importances are computed and stored into the
+        ``feature_importances_`` attribute when calling fit.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
+
+    Attributes
+    ----------
+    `tree_` : Tree object
+        The underlying Tree object.
+
+    `feature_importances_` : array of shape = [n_features]
+        The feature mportances (the higher, the more important the feature).
+        The importance I(f) of a feature f is computed as the (normalized)
+        total reduction of error brought by that feature. It is also known as
+        the Gini importance [4].
+
+        .. math::
+
+            I(f) = \sum_{nodes A for which f is used} n_samples(A) * \Delta err
 
     See also
     --------
@@ -665,6 +766,9 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
 
     .. [3] T. Hastie, R. Tibshirani and J. Friedman. "Elements of Statistical
            Learning", Springer, 2009.
+
+    .. [4] L. Breiman, and A. Cutler, "Random Forests",
+           http://www.stat.berkeley.edu/~breiman/RandomForests/cc_home.htm
 
     Examples
     --------
@@ -684,16 +788,18 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
             0.07..., 0.29..., 0.33..., -1.42..., -1.77...])
     """
     def __init__(self, criterion="mse",
-                       max_depth=10,
+                       max_depth=None,
                        min_split=1,
                        min_density=0.1,
                        max_features=None,
+                       compute_importances=False,
                        random_state=None):
         super(DecisionTreeRegressor, self).__init__(criterion,
                                                     max_depth,
                                                     min_split,
                                                     min_density,
                                                     max_features,
+                                                    compute_importances,
                                                     random_state)
 
 
@@ -721,16 +827,18 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
            Machine Learning, 63(1), 3-42, 2006.
     """
     def __init__(self, criterion="gini",
-                       max_depth=10,
+                       max_depth=None,
                        min_split=1,
                        min_density=0.1,
-                       max_features=None,
+                       max_features="auto",
+                       compute_importances=False,
                        random_state=None):
         super(ExtraTreeClassifier, self).__init__(criterion,
                                                   max_depth,
                                                   min_split,
                                                   min_density,
                                                   max_features,
+                                                  compute_importances,
                                                   random_state)
 
         self.find_split_ = _tree._find_best_random_split
@@ -750,7 +858,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
     See also
     --------
-    ExtraTreeClassifier, ExtraTreesClassifier, ExtraTreesRegressor
+    ExtraTreeClassifier, sklearn.ensemble.ExtraTreesClassifier, sklearn.ensemble.ExtraTreesRegressor
 
     Notes
     -----
@@ -760,16 +868,18 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
            Machine Learning, 63(1), 3-42, 2006.
     """
     def __init__(self, criterion="mse",
-                       max_depth=10,
+                       max_depth=None,
                        min_split=1,
                        min_density=0.1,
-                       max_features=None,
+                       max_features="auto",
+                       compute_importances=False,
                        random_state=None):
         super(ExtraTreeRegressor, self).__init__(criterion,
                                                  max_depth,
                                                  min_split,
                                                  min_density,
                                                  max_features,
+                                                 compute_importances,
                                                  random_state)
 
         self.find_split_ = _tree._find_best_random_split

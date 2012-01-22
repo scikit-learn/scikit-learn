@@ -44,8 +44,10 @@ class _BaseHMM(BaseEstimator):
     ----------
     n_components : int (read-only)
         Number of states in the model.
+
     transmat : array, shape (`n_components`, `n_components`)
         Matrix of transition probabilities between states.
+
     startprob : array, shape ('n_components`,)
         Initial state occupation distribution.
 
@@ -302,25 +304,31 @@ class _BaseHMM(BaseEstimator):
         ----------
         obs : list
             List of array-like observation sequences (shape (n_i, n_features)).
+
         n_iter : int, optional
             Number of iterations to perform.
+
         thresh : float, optional
             Convergence threshold.
+
         params : string, optional
             Controls which parameters are updated in the training
             process.  Can contain any combination of 's' for startprob,
             't' for transmat, 'm' for means, and 'c' for covars, etc.
             Defaults to all parameters.
+
         init_params : string, optional
             Controls which parameters are initialized prior to
             training.  Can contain any combination of 's' for
             startprob, 't' for transmat, 'm' for means, and 'c' for
             covars, etc.  Defaults to all parameters.
+
         maxrank : int, optional
             Maximum rank to evaluate for rank pruning.  If not None,
             only consider the top `maxrank` states in the inner
             sum of the forward algorithm recursion.  Defaults to None
             (no rank pruning).  See "The HTK Book" for more details.
+
         beamlogprob : float, optional
             Width of the beam-pruning beam in log-probability units.
             Defaults to -numpy.Inf (no beam pruning).  See "The HTK
@@ -540,24 +548,40 @@ class GaussianHMM(_BaseHMM):
     This class allows for easy evaluation of, sampling from, and
     maximum-likelihood estimation of the parameters of a HMM.
 
+    Parameters
+    ----------
+    n_components : int
+        Number of states.
+
+    cvtype : string
+        String describing the type of covariance parameters to
+        use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
+        Defaults to 'diag'.
+
     Attributes
     ----------
-    cvtype : string (read-only)
+    cvtype : string
         String describing the type of covariance parameters used by
         the model.  Must be one of 'spherical', 'tied', 'diag', 'full'.
-    n_features : int (read-only)
+
+    n_features : int
         Dimensionality of the Gaussian emissions.
-    n_components : int (read-only)
+
+    n_components : int
         Number of states in the model.
+
     transmat : array, shape (`n_components`, `n_components`)
         Matrix of transition probabilities between states.
+
     startprob : array, shape ('n_components`,)
         Initial state occupation distribution.
+
     means : array, shape (`n_components`, `n_features`)
         Mean parameters for each state.
+
     covars : array
         Covariance parameters for each state.  The shape depends on
-        `cvtype`:
+        `cvtype`::
             (`n_components`,)                   if 'spherical',
             (`n_features`, `n_features`)              if 'tied',
             (`n_components`, `n_features`)           if 'diag',
@@ -584,20 +608,6 @@ class GaussianHMM(_BaseHMM):
                  transmat=None, startprob_prior=None, transmat_prior=None,
                  means_prior=None, means_weight=0,
                  covars_prior=1e-2, covars_weight=1):
-        """Create a hidden Markov model with Gaussian emissions.
-
-        Initializes parameters such that every state has zero mean and
-        identity covariance.
-
-        Parameters
-        ----------
-        n_components : int
-            Number of states.
-        cvtype : string
-            String describing the type of covariance parameters to
-            use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
-            Defaults to 'diag'.
-        """
         super(GaussianHMM, self).__init__(n_components, startprob, transmat,
                                           startprob_prior=startprob_prior,
                                           transmat_prior=transmat_prior)
@@ -781,15 +791,19 @@ class MultinomialHMM(_BaseHMM):
 
     Attributes
     ----------
-    n_components : int (read-only)
+    n_components : int
         Number of states in the model.
+
     n_symbols : int
         Number of possible symbols emitted by the model (in the observations).
+
     transmat : array, shape (`n_components`, `n_components`)
         Matrix of transition probabilities between states.
+
     startprob : array, shape ('n_components`,)
         Initial state occupation distribution.
-    emissionprob: array, shape ('n_components`, 'n_symbols`)
+
+    emissionprob : array, shape ('n_components`, 'n_symbols`)
         Probability of emitting a given symbol when in each state.
 
     Examples
@@ -884,14 +898,17 @@ class GMMHMM(_BaseHMM):
 
     Attributes
     ----------
-    n_components : int (read-only)
+    n_components : int
         Number of states in the model.
+
     transmat : array, shape (`n_components`, `n_components`)
         Matrix of transition probabilities between states.
+
     startprob : array, shape ('n_components`,)
         Initial state occupation distribution.
-    gmms: array of GMM objects, length 'n_components`
-        GMM emission distributions for each state
+
+    gmms : array of GMM objects, length `n_components`
+        GMM emission distributions for each state.
 
     Examples
     --------
@@ -902,7 +919,6 @@ class GMMHMM(_BaseHMM):
         GMM(cvtype='diag', n_components=10)], n_components=2, n_mix=10,
         startprob=array([ 0.5,  0.5]), startprob_prior=1.0, transmat=array([[
             0.5,  0.5], [ 0.5,  0.5]]), transmat_prior=1.0)
-
 
     See Also
     --------
