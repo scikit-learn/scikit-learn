@@ -26,6 +26,7 @@ Johnson-Lindenstrauss lemma (quoting Wikipedia):
 # License: Simple BSD
 
 from __future__ import division
+import warnings
 import math
 import random
 
@@ -174,10 +175,9 @@ def sparse_random_matrix(n_components, n_features, density='auto',
     offset = 0
     indptr = [offset]
 
-    prob_nonzero = density
     for i in xrange(n_components):
         # find the indices of the non-zero components for row i
-        n_nonzero_i = random_state.binomial(n_features, prob_nonzero)
+        n_nonzero_i = random_state.binomial(n_features, density)
 
         # Use the python rng to perform reservoir sampling without
         # replacement and without exhausting the memory.
@@ -208,9 +208,20 @@ def sparse_random_matrix(n_components, n_features, density='auto',
 
 def hashing_dot(A, n_components, density, seed=0, dense_output=True):
     """Implicit dot product by a random sparse matrix using a hash function"""
-    max_hash_pos = density * float(np.iinfo(np.uint32).max)
-    max_hash_neg = max_hash_pos / 2
+    half_uint32_max = np.iinfo(np.uint32).max / 2
     weight = math.sqrt(1 / density) / math.sqrt(n_components)
+
+    # approximate the random sparse matrix by assuming that each feature have
+    # the same number of non-zero components activated (instead of sampling
+    # from a binomial for each feature)
+    nnz_per_feature = density * n_components
+    if (nnz_per_feature < 1):
+        warnings.warn("Expected non zero components by feature is %f: "
+                      "setting it to 1 instead." % nnz_per_feature)
+        nnz_per_feature = 1
+    else:
+        nnz_per_feature = int(nnz_per_feature)
+
     # TODO: avoid conversion of sparse matrices to CSR by adding support for
     # other formats?
     A = atleast2d_or_csr(A)
@@ -218,19 +229,21 @@ def hashing_dot(A, n_components, density, seed=0, dense_output=True):
 
     if not sp.issparse(A):
         out = np.zeros((n_samples, n_components), A.dtype)
-        for i in range(n_samples):
-            seed_i = murmurhash3_32(i, seed=seed, positive=True)
-            for j in range(n_features):
-                h = murmurhash3_32(j, seed=seed_i, positive=True)
-                out_row = h % n_samples
-                out_col = h % n_components
-                if h < max_hash_neg:
-                    out[out_row, out_col] -= weight * A[i, j]
-                elif h < max_hash_pos:
-                    out[out_row, out_col] += weight * A[i, j]
+        for feature_idx in xrange(n_features):
+            # use the hash function to retrieve the indices of the
+            # components in the random matrix that have a non-zero value
+            # for the current feature
+            seed_i = murmurhash3_32(feature_idx, seed=seed, positive=True)
+            for k in xrange(nnz_per_feature):
+                h = murmurhash3_32(k, seed=seed_i, positive=True)
+                component_idx = h % n_components
+                if h < half_uint32_max:
+                    out[:, component_idx] -= A[:, feature_idx]
+                else:
+                    out[:, component_idx] += A[:, feature_idx]
 
     # TODO: handle sparse input
-    return out
+    return out * weight
 
 
 class SparseRandomProjection(BaseEstimator, TransformerMixin):

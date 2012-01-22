@@ -58,6 +58,7 @@ while for larger values of n_components the distortion is controlled
 and the distances are well preserved by the random projection.
 
 """
+from time import time
 import numpy as np
 import pylab as pl
 from sklearn.random_projection import johnson_lindenstrauss_min_dim
@@ -119,8 +120,17 @@ nonzero = dists != 0
 dists = dists[nonzero]
 
 for n_components in n_components_range:
-    rp = SparseRandomProjection(n_components=n_components)
+    t0 = time()
+    rp = SparseRandomProjection(n_components=n_components, materialize=True)
     projected_data = rp.fit_transform(faces_data)
+    print "Projected %d samples from %d to %d in %0.3fs" % (
+        n_samples, n_features, n_components, time() - t0)
+    if hasattr(rp, 'components_'):
+        n_bytes = rp.components_.data.nbytes
+        n_bytes += rp.components_.indices.nbytes
+        print "Materialized random matrix with size: %0.3fMB" % (
+            n_bytes / 1e6)
+
     projected_dists = euclidean_distances(
         projected_data, squared=True).ravel()[nonzero]
 

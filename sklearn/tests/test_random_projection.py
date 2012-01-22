@@ -3,15 +3,14 @@ import numpy as np
 
 from sklearn.metrics import euclidean_distances
 from sklearn.datasets import make_low_rank_matrix
-from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.random_projection import SparseRandomProjection
 from sklearn.random_projection import johnson_lindenstrauss_min_dim
 from sklearn.random_projection import hashing_dot
-from sklearn.random_projection import sparse_random_matrix
 
 from sklearn.utils.testing import assert_raise_message
 from numpy.testing import assert_array_equal
 from nose.tools import assert_equal
+from nose.tools import assert_almost_equal
 from nose.tools import assert_raises
 
 
@@ -34,18 +33,13 @@ def test_invalid_jl_domain():
 
 
 def test_hashing_dot():
-    """Compare explicit random dot product with implicit hashing variant"""
     n_components = 100
     density = 0.1
-    random_matrix = sparse_random_matrix(n_components, data.shape[1],
-                                         density=density, random_state=0)
-    explicit = safe_sparse_dot(data, random_matrix.T)
-    implicit = hashing_dot(data, n_components, 0.1, seed=0, dense_output=True)
+    projected = hashing_dot(data, n_components, density, seed=0,
+                            dense_output=True)
 
-    assert_equal(explicit.shape, (n_samples, n_components))
-    assert_equal(implicit.shape, (n_samples, n_components))
-    # TODO: fix me with some tolerance
-    #assert_equal(np.mean(explicit != 0), np.mean(implicit !=0))
+    assert_equal(projected.shape, (n_samples, n_components))
+    assert_almost_equal(projected.mean(), 0.0, 2)
 
 
 def test_sparse_random_project_invalid_input():
