@@ -26,7 +26,7 @@ from ..tree._tree import DTYPE
 
 
 # ignore overflows due to exp(-pred) in BinomailDeviance
-np.seterr(invalid='raise', under='raise', divide='raise', over='ignore')
+#np.seterr(invalid='raise', under='raise', divide='raise', over='ignore')
 
 
 class MedianPredictor(object):
