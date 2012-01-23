@@ -192,13 +192,13 @@ class RandomForestClassifier(ForestClassifier):
     bootstrap : boolean, optional (default=True)
         Whether bootstrap samples are used when building trees.
 
-    compute_importances : boolean, optional (default=True)
-        Whether feature importances are computed and stored into the
-        ``feature_importances_`` attribute when calling fit.
-
     oob_score : bool
         Whether to use out-of-bag samples to estimate
         the generalization error.
+
+    compute_importances : boolean, optional (default=True)
+        Whether feature importances are computed and stored into the
+        ``feature_importances_`` attribute when calling fit.
 
     n_jobs : integer, optional (default=1)
         The number of jobs to run in parallel. If -1, then the number of jobs
@@ -240,8 +240,8 @@ class RandomForestClassifier(ForestClassifier):
                        min_density=0.1,
                        max_features="auto",
                        bootstrap=True,
-                       compute_importances=False,
                        oob_score=False,
+                       compute_importances=False,
                        n_jobs=1,
                        random_state=None):
         super(RandomForestClassifier, self).__init__(
@@ -250,8 +250,8 @@ class RandomForestClassifier(ForestClassifier):
             estimator_params=("criterion", "max_depth", "min_split",
                               "min_density", "max_features", "random_state"),
             bootstrap=bootstrap,
-            compute_importances=compute_importances,
             oob_score=oob_score,
+            compute_importances=compute_importances,
             n_jobs=n_jobs,
             random_state=random_state)
 
@@ -314,13 +314,13 @@ class RandomForestRegressor(ForestRegressor):
     bootstrap : boolean, optional (default=True)
         Whether bootstrap samples are used when building trees.
 
-    compute_importances : boolean, optional (default=True)
-        Whether feature importances are computed and stored into the
-        ``feature_importances_`` attribute when calling fit.
-
     oob_score : bool
         whether to use out-of-bag samples to estimate
         the generalization error.
+
+    compute_importances : boolean, optional (default=True)
+        Whether feature importances are computed and stored into the
+        ``feature_importances_`` attribute when calling fit.
 
     n_jobs : integer, optional (default=1)
         The number of jobs to run in parallel. If -1, then the number of jobs
@@ -362,8 +362,8 @@ class RandomForestRegressor(ForestRegressor):
                        min_density=0.1,
                        max_features="auto",
                        bootstrap=True,
-                       compute_importances=False,
                        oob_score=False,
+                       compute_importances=False,
                        n_jobs=1,
                        random_state=None):
         super(RandomForestRegressor, self).__init__(
@@ -372,8 +372,8 @@ class RandomForestRegressor(ForestRegressor):
             estimator_params=("criterion", "max_depth", "min_split",
                               "min_density", "max_features", "random_state"),
             bootstrap=bootstrap,
-            compute_importances=compute_importances,
             oob_score=oob_score,
+            compute_importances=compute_importances,
             n_jobs=n_jobs,
             random_state=random_state)
 
@@ -437,13 +437,13 @@ class ExtraTreesClassifier(ForestClassifier):
     bootstrap : boolean, optional (default=False)
         Whether bootstrap samples are used when building trees.
 
-    compute_importances : boolean, optional (default=True)
-        Whether feature importances are computed and stored into the
-        ``feature_importances_`` attribute when calling fit.
-
     oob_score : bool
         Whether to use out-of-bag samples to estimate
         the generalization error.
+
+    compute_importances : boolean, optional (default=True)
+        Whether feature importances are computed and stored into the
+        ``feature_importances_`` attribute when calling fit.
 
     n_jobs : integer, optional (default=1)
         The number of jobs to run in parallel. If -1, then the number of jobs
@@ -487,8 +487,8 @@ class ExtraTreesClassifier(ForestClassifier):
                        min_density=0.1,
                        max_features="auto",
                        bootstrap=False,
-                       compute_importances=False,
                        oob_score=False,
+                       compute_importances=False,
                        n_jobs=1,
                        random_state=None):
         super(ExtraTreesClassifier, self).__init__(
@@ -497,8 +497,8 @@ class ExtraTreesClassifier(ForestClassifier):
             estimator_params=("criterion", "max_depth", "min_split",
                               "min_density", "max_features", "random_state"),
             bootstrap=bootstrap,
-            compute_importances=compute_importances,
             oob_score=oob_score,
+            compute_importances=compute_importances,
             n_jobs=n_jobs,
             random_state=random_state)
 
@@ -563,13 +563,13 @@ class ExtraTreesRegressor(ForestRegressor):
         Whether bootstrap samples are used when building trees.
         Note: this parameter is tree-specific.
 
-    compute_importances : boolean, optional (default=True)
-        Whether feature importances are computed and stored into the
-        ``feature_importances_`` attribute when calling fit.
-
     oob_score : bool
         Whether to use out-of-bag samples to estimate
         the generalization error.
+
+    compute_importances : boolean, optional (default=True)
+        Whether feature importances are computed and stored into the
+        ``feature_importances_`` attribute when calling fit.
 
     n_jobs : integer, optional (default=1)
         The number of jobs to run in parallel. If -1, then the number of jobs
@@ -611,8 +611,8 @@ class ExtraTreesRegressor(ForestRegressor):
                        min_density=0.1,
                        max_features="auto",
                        bootstrap=False,
-                       compute_importances=False,
                        oob_score=False,
+                       compute_importances=False,
                        n_jobs=1,
                        random_state=None):
         super(ExtraTreesRegressor, self).__init__(
@@ -621,8 +621,8 @@ class ExtraTreesRegressor(ForestRegressor):
             estimator_params=("criterion", "max_depth", "min_split",
                               "min_density", "max_features", "random_state"),
             bootstrap=bootstrap,
-            compute_importances=compute_importances,
             oob_score=oob_score,
+            compute_importances=compute_importances,
             n_jobs=n_jobs,
             random_state=random_state)
 

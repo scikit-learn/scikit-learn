@@ -98,8 +98,8 @@ class BaseBagging(BaseEnsemble):
     def __init__(self, base_estimator,
                        n_estimators=10,
                        estimator_params=[],
-                       bootstrap=False,
-                       oob_score=False,
+                       bootstrap=True,
+                       oob_score=True,
                        n_jobs=1,
                        random_state=None):
         super(BaseBagging, self).__init__(
@@ -210,8 +210,8 @@ class BaggedClassifier(BaseBagging, ClassifierMixin):
     def __init__(self, base_estimator,
                        n_estimators=10,
                        estimator_params=[],
-                       bootstrap=False,
-                       oob_score=False,
+                       bootstrap=True,
+                       oob_score=True,
                        n_jobs=1,
                        random_state=None):
         super(BaggedClassifier, self).__init__(
@@ -308,8 +308,8 @@ class BaggedRegressor(BaseBagging, RegressorMixin):
     def __init__(self, base_estimator,
                        n_estimators=10,
                        estimator_params=[],
-                       bootstrap=False,
-                       oob_score=False,
+                       bootstrap=True,
+                       oob_score=True,
                        n_jobs=1,
                        random_state=None):
         super(BaggedRegressor, self).__init__(
