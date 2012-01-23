@@ -15,31 +15,29 @@ import numpy as np
 from sklearn.linear_model import RandomizedLasso, lasso_stability_path, \
                                  LassoLarsCV
 from sklearn.cross_validation import ShuffleSplit
-from sklearn.datasets import load_diabetes
+from sklearn import datasets
 from sklearn.feature_selection import f_regression
 from sklearn.preprocessing import Scaler
 
 ###############################################################################
 # Load diabetes data and add noisy features
-diabetes = load_diabetes()
-X = diabetes.data
-y = diabetes.target
-n_bad_features = 15
-n_samples, n_good_features = X.shape
-n_features = n_good_features + n_bad_features
-# Noisy data to the informative features
-X = np.hstack((X, np.random.normal(size=(n_samples, n_bad_features))))
+n_samples = 30
+n_features = 100
+n_good_features = 10
+X, y, coef = datasets.make_regression(n_samples=n_samples,
+                    n_features=n_features, n_informative=n_good_features,
+                    coef=True)
 X = Scaler().fit_transform(X)
 
 ###############################################################################
 # Plot stability selection path
-scaling = 0.3
+scaling = .3
 coef_grid, scores_path = lasso_stability_path(X, y, scaling=scaling,
-                                      random_state=42, sample_fraction=0.75)
+                                      random_state=42)
 
 pl.figure()
-hg = pl.plot(coef_grid, scores_path[:n_good_features].T, 'r')
-hb = pl.plot(coef_grid, scores_path[n_good_features:].T, 'k')
+hg = pl.plot(coef_grid[:-1], scores_path[coef != 0].T[:-1], 'r')
+hb = pl.plot(coef_grid[:-1], scores_path[coef == 0].T[:-1], 'k')
 ymin, ymax = pl.ylim()
 pl.xlabel('|coef| / max|coef|')
 pl.ylabel('Proportion of times selected')
@@ -51,18 +49,27 @@ pl.ylim([0, 1.05])
 
 ###############################################################################
 # Plot the estimated stability scores for best cross-validated alpha
+
+# First find the best alpha:
 cv = ShuffleSplit(n_samples, n_iterations=50, test_fraction=0.2)
 alpha_cv = LassoLarsCV(cv=cv).fit(X, y).alpha
+pl.axvline(alpha_cv, color='.3')
+
+# Then run the RandomizedLasso
 clf = RandomizedLasso(verbose=False, alpha=alpha_cv, random_state=42,
+                      #n_resampling=1000,
                       scaling=scaling)
 clf.fit(X, y)
 
 F, _ = f_regression(X, y)  # compare with F-score
 
 pl.figure()
-pl.plot(clf.scores_, label="Stabiliy selection score")
-pl.plot(F / np.max(F), label="(scaled) F-score")
+score_plot = pl.plot(clf.scores_ / np.max(clf.scores_))
+f_plot = pl.plot(F / np.max(F))
+ground_truth = pl.plot(np.where(coef != 0), .5, 'ro')
 pl.xlabel("Features")
 pl.ylabel("Score")
-pl.legend()
+pl.legend((score_plot, f_plot, ground_truth[0]), 
+            ("Stability-selection score", "(scaled) F-score", 
+             "Ground truth"))
 pl.show()
