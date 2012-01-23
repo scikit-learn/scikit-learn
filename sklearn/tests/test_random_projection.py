@@ -54,13 +54,19 @@ def test_hashing_dot():
     assert_almost_equal(projected_array_array.mean(), 0.0, 2)
 
     # random dot with CSR input and dense array output
-    data_csr = sp.csr_matrix(data)
     projected_csr_array = hashing_dot(data_csr, n_components, density, seed=0,
                                       dense_output=True)
     assert_equal(projected_csr_array.shape, (n_samples, n_components))
 
+    # random dot with CSR input and sparse matrix output
+    projected_csr_coo = hashing_dot(data_csr, n_components, density, seed=0,
+                                      dense_output=False)
+    assert_equal(projected_csr_coo.shape, (n_samples, n_components))
+
     # check that the projections are identical
     assert_array_almost_equal(projected_array_array, projected_csr_array)
+    assert_array_almost_equal(projected_array_array,
+                              projected_csr_coo.toarray())
 
 
 def test_sparse_random_project_invalid_input():
