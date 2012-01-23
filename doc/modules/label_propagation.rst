@@ -4,7 +4,7 @@
 Label Propagation
 ===================================================
 
-`sklearn.semisupervised.label_propagation` contains a few variations of semi-supervised
+`sklearn.semi_supervised.label_propagation` contains a few variations of semi-supervised
 graph inference algorithms. In the semi-supervised classification setting, the
 learning algorithm is fed both labeled and unlabeled data. With the addition of
 unlabeled data in the training model, the algorithm can better learn the total
@@ -59,8 +59,8 @@ which can drastically reduce running times.
 
 Examples
 ========
-  * :ref:`example_label_propagation_plot_label_propagation_versus_svm_iris.py`
-  * :ref:`example_label_propagation_structure.py`
+  * :ref:`example_semi_supervised_plot_label_propagation_versus_svm_iris.py`
+  * :ref:`example_semi_supervised_plot_label_propagation_structure.py`
 
 
 References

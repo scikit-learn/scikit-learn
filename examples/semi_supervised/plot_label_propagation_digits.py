@@ -22,14 +22,19 @@ import pylab as pl
 from scipy import stats
 
 from sklearn import datasets
-from sklearn import label_propagation
+from sklearn.semi_supervised import label_propagation
 
 from sklearn.metrics import metrics
 from sklearn.metrics.metrics import confusion_matrix
 
 digits = datasets.load_digits()
-X = digits.data[:330]
-y = digits.target[:330]
+rng = np.random.RandomState(0)
+indices = np.arange(len(digits.data))
+rng.shuffle(indices)
+
+X = digits.data[indices[:330]]
+y = digits.target[indices[:330]]
+images = digits.images[indices[:330]]
 
 n_total_samples = len(y)
 n_labeled_points = 30
@@ -70,7 +75,7 @@ uncertainty_index = np.argsort(pred_entropies)[-10:]
 # plot
 f = pl.figure(figsize=(7, 5))
 for index, image_index in enumerate(uncertainty_index):
-    image = digits.images[image_index]
+    image = images[image_index]
 
     sub = f.add_subplot(2, 5, index + 1)
     sub.imshow(image, cmap=pl.cm.gray_r)

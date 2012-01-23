@@ -16,7 +16,7 @@ import numpy as np
 import pylab as pl
 from sklearn import datasets
 from sklearn import svm
-from sklearn import label_propagation
+from sklearn.semi_supervised import label_propagation
 
 rng = np.random.RandomState(0)
 

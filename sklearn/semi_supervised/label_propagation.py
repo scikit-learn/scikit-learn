@@ -50,13 +50,13 @@ Learning (2006), pp. 193-216
 import numpy as np
 from scipy import sparse
 
-from .base import BaseEstimator, ClassifierMixin
-from .metrics.pairwise import rbf_kernel
-from .utils.graph import graph_laplacian
+from ..base import BaseEstimator, ClassifierMixin
+from ..metrics.pairwise import rbf_kernel
+from ..utils.graph import graph_laplacian
 
-from .utils.extmath import safe_sparse_dot
+from ..utils.extmath import safe_sparse_dot
 
-from neighbors.unsupervised import NearestNeighbors
+from ..neighbors.unsupervised import NearestNeighbors
 
 # Authors: Clay Woolam <clay@woolam.org>
 

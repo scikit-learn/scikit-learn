@@ -23,7 +23,7 @@ import pylab as pl
 from scipy import stats
 
 from sklearn import datasets
-from sklearn import label_propagation
+from sklearn.semi_supervised import label_propagation
 
 from sklearn.metrics import metrics
 from sklearn.metrics.metrics import confusion_matrix
