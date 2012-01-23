@@ -108,7 +108,6 @@ class BaseBagging(BaseEnsemble):
             estimator_params=estimator_params)
 
         self.bootstrap = bootstrap
-        self.compute_importances = compute_importances
         self.oob_score = oob_score
         self.n_jobs = n_jobs
         self.random_state = check_random_state(random_state)
