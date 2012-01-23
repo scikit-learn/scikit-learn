@@ -212,7 +212,8 @@ def hashing_dot(A, n_components, density, seed=0, dense_output=True):
     half_uint32_max = np.iinfo(np.uint32).max / 2
 
     # TODO: avoid conversion of sparse matrices to CSR by adding support for
-    # other formats?
+    # other formats? Especially CSC would be interesting as faster to hash
+    # feature-wise.
     A = atleast2d_or_csr(A)
     n_samples, n_features = A.shape
 
@@ -245,8 +246,6 @@ def hashing_dot(A, n_components, density, seed=0, dense_output=True):
 
     elif sp.isspmatrix_csr(A) and dense_output:
         # TODO: rewrite the following nested for loops in cython
-        # TODO: precompute the list hashed component indices out of the sample
-        # loop?
         out = np.zeros((n_samples, n_components), A.dtype)
         for sample_idx in xrange(n_samples):
             for k in xrange(A.indptr[sample_idx], A.indptr[sample_idx + 1]):
@@ -259,6 +258,32 @@ def hashing_dot(A, n_components, density, seed=0, dense_output=True):
 
                 for component_idx in nnz_components[h >= half_uint32_max]:
                     out[sample_idx, component_idx] -= A.data[k]
+
+    elif sp.isspmatrix_csr(A) and not dense_output:
+        # TODO: rewrite the following nested for loops in cython
+        # TODO: using python (unboxed) lists can have large memory overhead
+        # w.r.t. extendable numpy arrays with a fixed dtype
+        values = []
+        rows = []
+        cols = []
+        for sample_idx in xrange(n_samples):
+            for k in xrange(A.indptr[sample_idx], A.indptr[sample_idx + 1]):
+                feature_idx = A.indices[k]
+                h = murmurhash3_32(base[:nonzeros[feature_idx]],
+                                   seed=feature_idx, positive=True)
+                nnz_components = h % n_components
+
+                rows.extend([sample_idx] * nnz_components.shape[0])
+                for component_idx in nnz_components[h < half_uint32_max]:
+                    values.append(A.data[k])
+                    cols.append(component_idx)
+
+                for component_idx in nnz_components[h >= half_uint32_max]:
+                    values.append(-A.data[k])
+                    cols.append(component_idx)
+
+        out = sp.coo_matrix((values, (rows, cols)),
+                            shape=(n_samples, n_components))
 
     elif sp.isspmatrix_csr(A) and not dense_output:
         raise NotImplementedError("TODO")
