@@ -77,3 +77,28 @@ model selection:
 
    linear_model.LassoLarsIC
 
+
+.. _out_of_bag:
+
+Out of Bag Estimates
+--------------------
+
+When using ensemble methods base upon bagging, i.e. generating new training
+sets using sampling with replacement, part of the training set remains unused.
+For each classifier in the ensemble, a different part of the training set is
+left out.
+This left out portion can be used to estimate the generalization error without
+having to rely on a separate validation set.
+This estimate comes "for free" as no addictional data is needed and
+can be used for model selection.
+
+This is currently implemented in the following classes:
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+    ensemble.RandomForestClassifier
+    ensemble.RandomForestRegressor
+    ensemble.ExtraTreesClassifier
+    ensemble.ExtraTreesRegressor

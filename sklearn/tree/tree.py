@@ -101,7 +101,8 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
                       tree.value[node_id])
 
     def recurse(tree, node_id):
-        assert node_id != -1
+        if node_id == 1:
+            raise ValueError("Invalid node_id -1")
         left_child, right_child = tree.children[node_id, :]
         node_data = {
             "current": node_id,

@@ -9,6 +9,7 @@ import numpy as np
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_equal
+from numpy.testing import assert_almost_equal
 from nose.tools import assert_true
 
 from sklearn.grid_search import GridSearchCV
@@ -178,6 +179,25 @@ def test_importances():
     clf.fit(X, y)
     assert_true(clf.feature_importances_ is None)
 
+
+def test_oob_score_classification():
+    """Check that oob prediction is as acurate as
+    usual prediction on the training set.
+    Not really a good test that prediction is independent."""
+    clf = RandomForestClassifier(oob_score=True)
+    clf.fit(X, y)
+    training_score = clf.score(X, y)
+    assert_almost_equal(training_score, clf.oob_score_)
+
+def test_oob_score_regression():
+    """Check that oob prediction is pessimistic estimate.
+    Not really a good test that prediction is independent."""
+    clf = RandomForestRegressor(n_estimators=30, oob_score=True)
+    n_samples = boston.data.shape[0]
+    clf.fit(boston.data[:n_samples / 2, :], boston.target[:n_samples / 2])
+    test_score = clf.score(boston.data[n_samples / 2:, :], boston.target[n_samples / 2:])
+    assert(test_score > clf.oob_score_)
+    assert(clf.oob_score_ > .8)
 
 def test_gridsearch():
     """Check that base trees can be grid-searched."""

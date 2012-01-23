@@ -14,6 +14,13 @@
    - Regressors can now be used as base estimator in the :ref:`multiclass`
      module by `Mathieu Blondel`_.
 
+Changelog
+---------
+
+    - :ref:`out_of_bag` of generalization error for :ref:`ensemble`
+      by `Andreas Müller`_.
+
+
 API changes summary
 -------------------
 

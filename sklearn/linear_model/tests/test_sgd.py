@@ -28,6 +28,7 @@ class SparseSGDClassifier(SGDClassifier):
         return SGDClassifier.decision_function(self, X, *args, **kw)
 
 
+
 class SparseSGDRegressor(SGDRegressor):
 
     def fit(self, X, y, *args, **kw):
@@ -86,8 +87,45 @@ true_result5 = [0, 1, 1]
 ## Classification Test Case
 ##
 
+class CommonTest(object):
 
-class DenseSGDClassifierTestCase(unittest.TestCase):
+    def _test_warm_start(self, lr):
+        # Test that explicit warm restart...
+        clf = self.factory(alpha=0.01, eta0=0.01, n_iter=5, shuffle=False,
+                           learning_rate=lr)
+        clf.fit(X, Y)
+
+        clf2 = self.factory(alpha=0.001, eta0=0.01, n_iter=5, shuffle=False,
+                            learning_rate=lr)
+        clf2.fit(X, Y,
+                 coef_init=clf.coef_.copy(),
+                 intercept_init=clf.intercept_.copy())
+
+        #... and implicit warm restart are equivalent.
+        clf3 = self.factory(alpha=0.01, eta0=0.01, n_iter=5, shuffle=False,
+                            warm_start=True, learning_rate=lr)
+        clf3.fit(X, Y)
+
+        assert_equal(clf3.t_, clf.t_)
+        assert_array_almost_equal(clf3.coef_, clf.coef_)
+
+        clf3.set_params(alpha=0.001)
+        clf3.fit(X, Y)
+
+        assert_equal(clf3.t_, clf2.t_)
+        assert_array_almost_equal(clf3.coef_, clf2.coef_)
+
+    def test_warm_start_constant(self):
+        self._test_warm_start("constant")
+
+    def test_warm_start_invscaling(self):
+        self._test_warm_start("invscaling")
+
+    def test_warm_start_optimal(self):
+        self._test_warm_start("optimal")
+
+
+class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
     """Test suite for the dense representation variant of SGD"""
 
     factory = SGDClassifier
