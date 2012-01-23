@@ -47,6 +47,7 @@ def test_classification_toy():
     assert_array_equal(clf.predict(T), true_result)
     assert_equal(10, len(clf))
 
+
 def test_iris():
     """Check consistency on dataset iris."""
     clf = BaggedClassifier(base_estimator=DecisionTreeClassifier(), n_estimators=10, random_state=1)
@@ -84,5 +85,3 @@ def test_oob_score_regression():
             boston.target[n_samples / 2:])
     assert(test_score > clf.oob_score_)
     assert(clf.oob_score_ > .8)
-
-

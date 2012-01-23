@@ -152,15 +152,15 @@ class BaseBagging(BaseEnsemble):
                 self,
                 X,
                 y,
-                self._pre_fit(),
+                self._pre_fit(X, y),
                 self.random_state.randint(MAX_INT))
             for i in xrange(n_jobs))
 
         # Reduce
-        self.estimators_ = [estimator for estimator in itertools.chain(*all_estimators)]
+        self.estimators_ = [e for e in itertools.chain(*all_estimators)]
 
         # Post-fit
-        self._post_fit()
+        self._post_fit(X, y)
 
         # Calculate out of bag predictions and score
         if self.oob_score:
@@ -194,10 +194,10 @@ class BaseBagging(BaseEnsemble):
 
         return self
 
-    def _pre_fit(self):
+    def _pre_fit(self, X, y):
         return {}
 
-    def _post_fit(self):
+    def _post_fit(self, X, y):
         pass
 
 
@@ -246,7 +246,8 @@ class BaggedClassifier(BaseBagging, ClassifierMixin):
         """Predict class probabilities for X.
 
         The predicted class probabilities of an input sample is computed as
-        the mean predicted class probabilities of the estimators in the ensemble.
+        the mean predicted class probabilities of the estimators in the
+        ensemble.
 
         Parameters
         ----------
@@ -281,7 +282,8 @@ class BaggedClassifier(BaseBagging, ClassifierMixin):
         """Predict class log-probabilities for X.
 
         The predicted class log-probabilities of an input sample is computed as
-        the mean predicted class log-probabilities of the estimators in the ensemble.
+        the mean predicted class log-probabilities of the estimators in the
+        ensemble.
 
         Parameters
         ----------
