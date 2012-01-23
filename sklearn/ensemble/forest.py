@@ -48,6 +48,25 @@ __all__ = ["RandomForestClassifier",
            "ExtraTreesRegressor"]
 
 
+def _pre_fit(forest, X, y):
+    if forest.bootstrap:
+        sample_mask = None
+        X_argsorted = None
+
+    else:
+        sample_mask = np.ones((X.shape[0],), dtype=np.bool)
+        X_argsorted = np.asfortranarray(
+            np.argsort(X.T, axis=1).astype(np.int32).T)
+
+    return {"X_argsorted": X_argsorted, "sample_mask": sample_mask}
+
+def _post_fit(forest, X, y):
+    if forest.compute_importances:
+        forest.feature_importances_ = \
+            sum(tree.feature_importances_ for tree in forest.estimators_) \
+            / forest.n_estimators
+
+
 class ForestClassifier(BaggedClassifier, SelectorMixin):
     """Base class for forest of trees-based classifiers.
 
@@ -55,15 +74,20 @@ class ForestClassifier(BaggedClassifier, SelectorMixin):
     instead.
     """
     def __init__(self, base_estimator,
-                       n_estimators=10,
-                       estimator_params=[],
-                       bootstrap=False,
-                       oob_score=False,
-                       compute_importances=False,
-                       n_jobs=1,
-                       random_state=None):
+                       n_estimators,
+                       estimator_params,
+                       bootstrap,
+                       oob_score,
+                       n_jobs,
+                       random_state,
+                       criterion,
+                       max_depth,
+                       min_split,
+                       min_density,
+                       max_features,
+                       compute_importances):
         super(ForestClassifier, self).__init__(
-            base_estimator,
+            base_estimator=base_estimator,
             n_estimators=n_estimators,
             estimator_params=estimator_params,
             bootstrap=bootstrap,
@@ -71,28 +95,20 @@ class ForestClassifier(BaggedClassifier, SelectorMixin):
             n_jobs=n_jobs,
             random_state=random_state)
 
+        self.criterion = criterion
+        self.max_depth = max_depth
+        self.min_split = min_split
+        self.min_density = min_density
+        self.max_features = max_features
         self.compute_importances = compute_importances
+
         self.feature_importances_ = None
 
     def _pre_fit(self, X, y):
-        self.base_estimator.set_params(compute_importances=self.compute_importances)
-
-        if self.bootstrap:
-            sample_mask = None
-            X_argsorted = None
-
-        else:
-            sample_mask = np.ones((X.shape[0],), dtype=np.bool)
-            X_argsorted = np.asfortranarray(
-                np.argsort(X.T, axis=1).astype(np.int32).T)
-
-        return {"X_argsorted": X_argsorted, "sample_mask": sample_mask}
+        return _pre_fit(self, X, y)
 
     def _post_fit(self, X, y):
-        if self.compute_importances:
-            self.feature_importances_ = \
-                sum(tree.feature_importances_ for tree in self.estimators_) \
-                / self.n_estimators
+        return _post_fit(self, X, y)
 
 
 class ForestRegressor(BaggedRegressor, SelectorMixin):
@@ -102,15 +118,20 @@ class ForestRegressor(BaggedRegressor, SelectorMixin):
     instead.
     """
     def __init__(self, base_estimator,
-                       n_estimators=10,
-                       estimator_params=[],
-                       bootstrap=False,
-                       oob_score=False,
-                       compute_importances=False,
-                       n_jobs=1,
-                       random_state=None):
+                       n_estimators,
+                       estimator_params,
+                       bootstrap,
+                       oob_score,
+                       n_jobs,
+                       random_state,
+                       criterion,
+                       max_depth,
+                       min_split,
+                       min_density,
+                       max_features,
+                       compute_importances):
         super(ForestRegressor, self).__init__(
-            base_estimator,
+            base_estimator=base_estimator,
             n_estimators=n_estimators,
             estimator_params=estimator_params,
             bootstrap=bootstrap,
@@ -118,26 +139,20 @@ class ForestRegressor(BaggedRegressor, SelectorMixin):
             n_jobs=n_jobs,
             random_state=random_state)
 
+        self.criterion = criterion
+        self.max_depth = max_depth
+        self.min_split = min_split
+        self.min_density = min_density
+        self.max_features = max_features
         self.compute_importances = compute_importances
+
         self.feature_importances_ = None
 
     def _pre_fit(self, X, y):
-        if self.bootstrap:
-            sample_mask = None
-            X_argsorted = None
-
-        else:
-            sample_mask = np.ones((X.shape[0],), dtype=np.bool)
-            X_argsorted = np.asfortranarray(
-                np.argsort(X.T, axis=1).astype(np.int32).T)
-
-        return {"X_argsorted": X_argsorted, "sample_mask": sample_mask}
+        return _pre_fit(self, X, y)
 
     def _post_fit(self, X, y):
-        if self.compute_importances:
-            self.feature_importances_ = \
-                sum(tree.feature_importances_ for tree in self.estimators_) \
-                / self.n_estimators
+        return _post_fit(self, X, y)
 
 
 class RandomForestClassifier(ForestClassifier):
@@ -222,7 +237,6 @@ class RandomForestClassifier(ForestClassifier):
         Decision function computed with out-of-bag estimate on the training
         set.
 
-
     Notes
     -----
     **References**:
@@ -248,18 +262,18 @@ class RandomForestClassifier(ForestClassifier):
             base_estimator=DecisionTreeClassifier(),
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_split",
-                              "min_density", "max_features", "random_state"),
+                              "min_density", "max_features",
+                              "compute_importances", "random_state"),
             bootstrap=bootstrap,
             oob_score=oob_score,
-            compute_importances=compute_importances,
             n_jobs=n_jobs,
-            random_state=random_state)
-
-        self.criterion = criterion
-        self.max_depth = max_depth
-        self.min_split = min_split
-        self.min_density = min_density
-        self.max_features = max_features
+            random_state=random_state,
+            criterion=criterion,
+            max_depth=max_depth,
+            min_split=min_split,
+            min_density=min_density,
+            max_features=max_features,
+            compute_importances=compute_importances)
 
 
 class RandomForestRegressor(ForestRegressor):
@@ -343,8 +357,6 @@ class RandomForestRegressor(ForestRegressor):
     `oob_prediction_` : array, shape = [n_samples]
         Prediction computed with out-of-bag estimate on the training set.
 
-
-
     Notes
     -----
     **References**:
@@ -370,18 +382,18 @@ class RandomForestRegressor(ForestRegressor):
             base_estimator=DecisionTreeRegressor(),
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_split",
-                              "min_density", "max_features", "random_state"),
+                              "min_density", "max_features",
+                              "compute_importances", "random_state"),
             bootstrap=bootstrap,
             oob_score=oob_score,
-            compute_importances=compute_importances,
             n_jobs=n_jobs,
-            random_state=random_state)
-
-        self.criterion = criterion
-        self.max_depth = max_depth
-        self.min_split = min_split
-        self.min_density = min_density
-        self.max_features = max_features
+            random_state=random_state,
+            criterion=criterion,
+            max_depth=max_depth,
+            min_split=min_split,
+            min_density=min_density,
+            max_features=max_features,
+            compute_importances=compute_importances)
 
 
 class ExtraTreesClassifier(ForestClassifier):
@@ -495,18 +507,18 @@ class ExtraTreesClassifier(ForestClassifier):
             base_estimator=ExtraTreeClassifier(),
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_split",
-                              "min_density", "max_features", "random_state"),
+                              "min_density", "max_features",
+                              "compute_importances", "random_state"),
             bootstrap=bootstrap,
             oob_score=oob_score,
-            compute_importances=compute_importances,
             n_jobs=n_jobs,
-            random_state=random_state)
-
-        self.criterion = criterion
-        self.max_depth = max_depth
-        self.min_split = min_split
-        self.min_density = min_density
-        self.max_features = max_features
+            random_state=random_state,
+            criterion=criterion,
+            max_depth=max_depth,
+            min_split=min_split,
+            min_density=min_density,
+            max_features=max_features,
+            compute_importances=compute_importances)
 
 
 class ExtraTreesRegressor(ForestRegressor):
@@ -619,15 +631,15 @@ class ExtraTreesRegressor(ForestRegressor):
             base_estimator=ExtraTreeRegressor(),
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_split",
-                              "min_density", "max_features", "random_state"),
+                              "min_density", "max_features",
+                              "compute_importances", "random_state"),
             bootstrap=bootstrap,
             oob_score=oob_score,
-            compute_importances=compute_importances,
             n_jobs=n_jobs,
-            random_state=random_state)
-
-        self.criterion = criterion
-        self.max_depth = max_depth
-        self.min_split = min_split
-        self.min_density = min_density
-        self.max_features = max_features
+            random_state=random_state,
+            criterion=criterion,
+            max_depth=max_depth,
+            min_split=min_split,
+            min_density=min_density,
+            max_features=max_features,
+            compute_importances=compute_importances)
