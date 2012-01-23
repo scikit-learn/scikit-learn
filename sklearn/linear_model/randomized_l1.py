@@ -31,8 +31,9 @@ def _resample_model(estimator_func, X, y, scaling=.5, n_resampling=200,
     n_samples, n_features = X.shape
 
     if not (0 < scaling < 1):
-        raise ValueError("Parameter 'scaling' should be between 0 and 1."
-                         " Got %r instead." % scaling)
+        raise ValueError(
+             "'scaling' should be between 0 and 1. Got %r instead." % scaling)
+
 
     scaling = 1. - scaling
     scores_ = np.zeros(n_features)
@@ -64,7 +65,7 @@ class BaseRandomizedLinearModel(TransformerMixin):
     def fit(self, X, y):
         """Fit the model using X, y as training data.
 
-        parameters
+        Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
             training data.
@@ -72,7 +73,7 @@ class BaseRandomizedLinearModel(TransformerMixin):
         y : array-like, shape = [n_samples]
             target values.
 
-        returns
+        Returns
         -------
         self : object
             returns an instance of self.
@@ -223,9 +224,8 @@ class RandomizedLasso(BaseRandomizedLinearModel):
               as in '2*n_jobs'
 
     memory : Instance of joblib.Memory or string
-        Used to cache the output of the computation of the tree.
-        By default, no caching is done. If a string is given, it is the
-        path to the caching directory.
+        Used for internal caching. By default, no caching is done.
+        If a string is given, it is thepath to the caching directory.
 
     Attributes
     ----------
@@ -316,7 +316,7 @@ class RandomizedLogistic(BaseRandomizedLinearModel):
     Parameters
     ----------
     C : float
-        The regularization parameter C parameter in the LogisticRegression.
+        The regularization parameter C in the LogisticRegression.
 
     scaling : float
         The alpha parameter in the stability selection article used to
@@ -368,9 +368,8 @@ class RandomizedLogistic(BaseRandomizedLinearModel):
               as in '2*n_jobs'
 
     memory : Instance of joblib.Memory or string
-        Used to cache the output of the computation of the tree.
-        By default, no caching is done. If a string is given, it is the
-        path to the caching directory.
+        Used for internal caching. By default, no caching is done.
+        If a string is given, it is thepath to the caching directory.
 
     Attributes
     ----------
