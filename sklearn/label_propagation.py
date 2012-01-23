@@ -21,8 +21,11 @@ Label clamping:
   Hard clamp is the same as soft clamping with alpha set to 1.
 
 Kernel:
-  A function which projects a vector into some higher dimensional space. See
-  the documentation for SVMs for more info on kernels.
+  A function which projects a vector into some higher dimensional space. This
+  implementation supprots RBF and KNN kernels. Using the RBF kernel generates
+  a dense matrix of size O(N^2). KNN kernel will generate a sparse matrix of
+  size O(k*N) which will run much faster. See the documentation for SVMs for
+  more info on kernels.
 
 Example
 -------
