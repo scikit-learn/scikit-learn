@@ -118,7 +118,7 @@ def test_pairwise_kernels_filter_param():
     X = rng.random_sample((5, 4))
     Y = rng.random_sample((2, 4))
     K = rbf_kernel(X, Y, gamma=0.1)
-    params = {"gamma":0.1, "blabla": ":)"}
+    params = {"gamma": 0.1, "blabla": ":)"}
     K2 = pairwise_kernels(X, Y, metric="rbf", filter_params=True, **params)
     assert_array_almost_equal(K, K2)
 

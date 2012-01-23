@@ -109,7 +109,8 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     Y : {array-like, sparse matrix}, shape = [n_samples_2, n_features]
 
     Y_norm_squared : array-like, shape = [n_samples_2], optional
-        Pre-computed dot-products of vectors in Y (e.g., ``(Y**2).sum(axis=1)``)
+        Pre-computed dot-products of vectors in Y (e.g.,
+        ``(Y**2).sum(axis=1)``)
 
     squared : boolean, optional
         Return squared Euclidean distances.

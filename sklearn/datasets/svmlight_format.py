@@ -159,7 +159,7 @@ def dump_svmlight_file(X, y, f):
 
     f : str or file-like in binary mode
         If string it specifies the path that will contain the data.
-		If f is a file-like then data will be written to f.
+        If f is a file-like then data will be written to f.
     """
     if hasattr(f, "write"):
         _dump_svmlight(X, y, f)

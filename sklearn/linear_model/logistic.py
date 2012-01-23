@@ -115,7 +115,8 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin,
             order.
         """
         X = self._validate_for_predict(X)
-        prob_wrap = csr_predict_prob_wrap if self._sparse else predict_prob_wrap
+        prob_wrap = (csr_predict_prob_wrap if self._sparse else
+                predict_prob_wrap)
         probas = prob_wrap(X, self.raw_coef_, self._get_solver_type(),
                            self.tol, self.C, self.class_weight_label,
                            self.class_weight, self.label_, self._get_bias())

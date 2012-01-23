@@ -858,7 +858,11 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
     See also
     --------
-    ExtraTreeClassifier, sklearn.ensemble.ExtraTreesClassifier, sklearn.ensemble.ExtraTreesRegressor
+    ExtraTreeClassifier : A classifier base on extremely randomized trees
+    sklearn.ensemble.ExtraTreesClassifier : An ensemble of extra-trees for
+        classification
+    sklearn.ensemble.ExtraTreesRegressor : An ensemble of extra-trees for
+        regression
 
     Notes
     -----
