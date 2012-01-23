@@ -29,7 +29,18 @@
 
 #else	// defined(_MSC_VER)
 
-#define	FORCE_INLINE __attribute__((always_inline))
+#if defined(GNUC) && ((GNUC > 4) || (GNUC == 4 && GNUC_MINOR >= 4))
+
+/* gcc version >= 4.4 4.1 = RHEL 5, 4.4 = RHEL 6.
+ * Don't inline for RHEL 5 gcc which is 4.1 */
+#define FORCE_INLINE attribute((always_inline))
+
+#else
+
+#define FORCE_INLINE
+
+#endif
+
 
 inline uint32_t rotl32 ( uint32_t x, int8_t r )
 {

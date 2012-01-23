@@ -380,7 +380,7 @@ class GridSearchCV(BaseEstimator):
 
     def score(self, X, y=None):
         if hasattr(self.best_estimator_, 'score'):
-             return self.best_estimator_.score(X, y)
+            return self.best_estimator_.score(X, y)
         if self.score_func is None:
             raise ValueError("No score function explicitly defined, "
                              "and the estimator doesn't provide one %s"

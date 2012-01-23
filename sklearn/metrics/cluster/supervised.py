@@ -444,8 +444,8 @@ def v_measure_score(labels_true, labels_pred):
     -----
     **References**:
 
-    .. [Rosenberg2007] `V-Measure: A conditional entropy-based external cluster evaluation measure
-        Andrew Rosenberg and Julia Hirschberg, 2007`
+    .. [Rosenberg2007] `V-Measure: A conditional entropy-based external cluster
+        evaluation measure Andrew Rosenberg and Julia Hirschberg, 2007`
         http://acl.ldc.upenn.edu/D/D07/D07-1043.pdf
 
     See also
