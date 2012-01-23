@@ -135,10 +135,13 @@ class BaseRandomizedLinearModel(TransformerMixin):
 def _randomized_lasso(X, y, weights, mask, alpha=1., verbose=False,
                       precompute=False, eps=np.finfo(np.float).eps,
                       max_iter=500):
-    # XXX: should we refit the intercept?
     X = X[mask]
-    X -= X.mean(axis=0)
     y = y[mask]
+
+    # Center X and y to avoid fit the intercept
+    X -= X.mean(axis=0)
+    y -= y.mean()
+
     X = (1 - weights) * X
     _, _, coef_ = lars_path(X, y,
                 Gram=precompute, copy_X=False,
