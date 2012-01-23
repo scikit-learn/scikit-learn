@@ -1,3 +1,4 @@
+.. currentmodule:: sklearn.feature_selection
 
 .. _feature_selection:
 
@@ -5,7 +6,6 @@
 Feature selection
 =================
 
-.. currentmodule:: sklearn.feature_selection
 
 The classes in the :mod:`sklearn.feature_selection` module can be used
 for feature selection/dimensionality reduction on sample sets, either to
@@ -53,10 +53,8 @@ univariate p-values:
 Recursive feature elimination
 =============================
 
-.. currentmodule:: sklearn.feature_selection.rfe
-
 Given an external estimator that assigns weights to features (e.g., the
-coefficients of a linear model), the goal of recursive feature elimination (RFE)
+coefficients of a linear model), recursive feature elimination (:class:`RFE`)
 is to select features by recursively considering smaller and smaller sets of
 features.  First, the estimator is trained on the initial set of features and
 weights are assigned to each one of them. Then, features whose absolute weights
@@ -77,11 +75,19 @@ select is eventually reached.
 L1-based feature selection
 ==========================
 
-.. currentmodule:: sklearn.feature_selection
+.. currentmodule:: sklearn
 
-Linear models penalized with the L1 norm have sparse solutions. When the goal
-is to reduce the dimensionality of the data to use with another classifier, the
-`transform` method of `LogisticRegression` and `LinearSVC` can be used::
+Selecting non-zero coefficients
+---------------------------------
+
+:ref:`Linear models <linear_model>` penalized with the L1 norm have 
+sparse solutions: many of their estimated coefficients are zero. When the goal
+is to reduce the dimensionality of the data to use with another classifier, 
+they expose a `transform` method to select the non-zero coefficient. In
+particular, sparse estimators useful for this purpose are the
+:class:`linear_model.Lasso` for regression, and 
+of :class:`linear_model.LogisticRegression` and :class:`svm.LinearSVC`
+for classification::
 
   >>> from sklearn.svm import LinearSVC
   >>> from sklearn.datasets import load_iris
@@ -93,7 +99,9 @@ is to reduce the dimensionality of the data to use with another classifier, the
   >>> X_new.shape
   (150, 3)
 
-The parameter C controls the sparsity: the smaller the fewer features.
+With SVM's and logistic-regression, the parameter C controls the sparsity: 
+the smaller C the fewer features selected. With Lasso, the higher the
+alpha parameter, the fewer features selected.
 
 .. topic:: Examples:
 
@@ -101,6 +109,34 @@ The parameter C controls the sparsity: the smaller the fewer features.
       of different algorithms for document classification including L1-based
       feature selection.
 
+Randomized sparse models
+-------------------------
+
+The limitation of L1-based sparse models is that faced with a group of
+very correlated features, they will select only one. To mitigate this
+problem, it is possible to use randomization techniques, reestimating the
+sparse model many times perturbing the design matrix or sub-sampling data
+and counting how many times a given regressor is selected.
+
+.. currentmodule:: sklearn.linear_model
+
+:class:`RandomizedLasso` implements this strategy for regression
+settings, using the Lasso, while :class:`RandomizedLogistic` uses the
+logistic regression and is suitable for classification tasks.
+
+.. topic:: Examples:
+
+   * :ref:`example_linear_model_plot_randomized_lasso.py`: Randomized
+     Lasso: feature selection with Lasso
+
+.. topic:: References:
+
+   * N. Meinshausen, P. Buhlmann, "Stability selection", 
+     Journal of the Royal Statistical Society, 72 (2010)
+     http://arxiv.org/pdf/0809.2932
+
+   * F. Bach, "Model-Consistent Sparse Estimation through the Bootstrap"
+     http://hal.inria.fr/hal-00354771/
 
 Tree-based feature selection
 ============================
