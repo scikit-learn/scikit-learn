@@ -50,7 +50,6 @@ from scipy import sparse
 from .base import BaseEstimator, ClassifierMixin
 from .metrics.pairwise import rbf_kernel
 from .utils.graph import graph_laplacian
-from .utils.fixes import divide_out
 
 from .utils.extmath import safe_sparse_dot
 
@@ -141,7 +140,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         ----------
         X : array_like, shape = (n_features, n_features)
 
-        Return
+        Returns
         ------
         probabilities : array of normalized probability distributions across
         class labels
@@ -158,7 +157,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
             weight_matrices = weight_matrices.T
             probabilities = np.dot(weight_matrices, self.label_distributions_)
         normalizer = np.atleast_2d(np.sum(probabilities, axis=1)).T
-        divide_out(probabilities, normalizer, out=probabilities)
+        np.divide(probabilities, normalizer, out=probabilities)
         return probabilities
 
     def fit(self, X, y):
@@ -208,7 +207,6 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         y_static[unlabeled] = 0
 
         l_previous = np.zeros((self.X_.shape[0], n_classes))
-        self.label_distributions_.resize((self.X_.shape[0], n_classes))
 
         remaining_iter = self.max_iters
         if sparse.isspmatrix(graph_matrix):
@@ -224,7 +222,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
             remaining_iter -= 1
 
         normalizer = np.sum(self.label_distributions_, axis=1)[:, np.newaxis]
-        divide_out(self.label_distributions_, normalizer,
+        np.divide(self.label_distributions_, normalizer,
                   out=self.label_distributions_)
         # set the transduction item
         transduction = self.classes_[np.argmax(self.label_distributions_,
@@ -291,7 +289,7 @@ class LabelPropagation(BaseLabelPropagation):
         if sparse.isspmatrix(affinity_matrix):
             affinity_matrix.data /= np.diag(np.array(normalizer))
         else:
-            divide_out(affinity_matrix, normalizer[:, np.newaxis],
+            np.divide(affinity_matrix, normalizer[:, np.newaxis],
                     out=affinity_matrix)
         return affinity_matrix
 
@@ -369,4 +367,4 @@ class LabelSpreading(BaseLabelPropagation):
 
 def _not_converged(y_truth, y_prediction, tol=1e-3):
     """basic convergence check"""
-    return np.sum(np.abs(np.asarray(y_truth - y_prediction))) > tol
+    return np.abs(y_truth - y_prediction).sum() > tol

@@ -53,6 +53,8 @@ titles = ['Label Spreading 30% data',
           'Label Spreading 100% data',
           'SVC with rbf kernel']
 
+color_map = {-1: (1, 1, 1), 0: (0, 0, .9), 1: (1, 0, 0), 2: (.8, .6, 0)}
+
 pl.set_cmap(pl.cm.Paired)
 
 for i, (clf, y_train) in enumerate((ls30, ls50, ls100, rbf_svc)):
@@ -68,8 +70,10 @@ for i, (clf, y_train) in enumerate((ls30, ls50, ls100, rbf_svc)):
     pl.axis('off')
 
     # Plot also the training points
-    pl.scatter(X[:, 0], X[:, 1], c=(y_train))
+    colors = [color_map[y] for y in y_train]
+    pl.scatter(X[:, 0], X[:, 1], c=colors)
 
     pl.title(titles[i])
 
+pl.text(.90, 0, "Unlabeled points are colored white")
 pl.show()

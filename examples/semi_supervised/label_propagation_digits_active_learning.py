@@ -29,8 +29,13 @@ from sklearn.metrics import metrics
 from sklearn.metrics.metrics import confusion_matrix
 
 digits = datasets.load_digits()
-X = digits.data[:330]
-y = digits.target[:330]
+rng = np.random.RandomState(0)
+indices = np.arange(len(digits.data))
+rng.shuffle(indices)
+
+X = digits.data[indices[:330]]
+y = digits.target[indices[:330]]
+images = digits.images[indices[:330]]
 
 n_total_samples = len(y)
 n_labeled_points = 10
@@ -72,7 +77,7 @@ for i in range(5):
     f.text(.05, (1 - (i + 1) * .183),
            "model %d\n\nfit with\n%d labels" % ((i + 1), i * 5 + 10), size=10)
     for index, image_index in enumerate(uncertainty_index):
-        image = digits.images[image_index]
+        image = images[image_index]
 
         sub = f.add_subplot(5, 5, index + 1 + (5 * i))
         sub.imshow(image, cmap=pl.cm.gray_r)
