@@ -34,9 +34,8 @@ def _resample_model(estimator_func, X, y, scaling=.5, n_resampling=200,
         raise ValueError(
              "'scaling' should be between 0 and 1. Got %r instead." % scaling)
 
-
     scaling = 1. - scaling
-    scores_ = np.zeros(n_features)
+    scores_ = 0.0
     for active_set in Parallel(n_jobs=n_jobs, verbose=verbose,
                                pre_dispatch=pre_dispatch)(
                 delayed(estimator_func)(X, y,
@@ -46,7 +45,7 @@ def _resample_model(estimator_func, X, y, scaling=.5, n_resampling=200,
                         verbose=max(0, verbose - 1),
                         **params)
                 for _ in range(n_resampling)):
-        scores_ += active_set
+        scores_ += active_set.astype(np.float)
 
     scores_ /= n_resampling
     return scores_
@@ -93,7 +92,7 @@ class BaseRandomizedLinearModel(TransformerMixin):
         if isinstance(memory, basestring):
             memory = Memory(cachedir=memory)
 
-        self.scores_ = memory.cache(_resample_model)(estimator_func, X, y,
+        scores_ = memory.cache(_resample_model)(estimator_func, X, y,
                                     scaling=self.scaling,
                                     n_resampling=self.n_resampling,
                                     n_jobs=self.n_jobs,
@@ -102,6 +101,11 @@ class BaseRandomizedLinearModel(TransformerMixin):
                                     random_state=self.random_state,
                                     sample_fraction=self.sample_fraction,
                                     **params)
+
+        if scores_.ndim == 1:
+            scores_ = scores_[:, np.newaxis]
+        self.all_scores_ = scores_
+        self.scores_ = np.max(self.all_scores_, axis=1)
         return self
 
     def _make_estimator_and_params(self, X, y):
@@ -142,13 +146,25 @@ def _randomized_lasso(X, y, weights, mask, alpha=1., verbose=False,
     X -= X.mean(axis=0)
     y -= y.mean()
 
+    alpha = np.atleast_1d(np.asarray(alpha, dtype=np.float))
+
     X = (1 - weights) * X
-    _, _, coef_ = lars_path(X, y,
+    alphas_, _, coef_ = lars_path(X, y,
                 Gram=precompute, copy_X=False,
-                copy_Gram=False, alpha_min=alpha,
+                copy_Gram=False, alpha_min=np.min(alpha),
                 method='lasso', verbose=verbose,
                 max_iter=max_iter, eps=eps)
-    return coef_[:, -1] != 0
+
+    if len(alpha) > 1:
+        if len(alphas_) > 1:  # np.min(alpha) < alpha_min
+            interpolator = interp1d(alphas_[::-1], coef_[:, ::-1],
+                                    bounds_error=False, fill_value=0.)
+            scores = (interpolator(alpha[::-1]) != 0.0)[:, ::-1] # XXX
+        else:
+            scores = np.zeros((X.shape[1], len(alpha)), dtype=np.bool)
+    else:
+        scores = coef_[:, -1] != 0.0
+    return scores
 
 
 class RandomizedLasso(BaseRandomizedLinearModel):
@@ -235,6 +251,11 @@ class RandomizedLasso(BaseRandomizedLinearModel):
     `scores_` : array, shape = [n_features]
         Feature scores between 0 and 1.
 
+    `all_scores_` : array, shape = [n_features, n_reg_parameter]
+        Feature scores between 0 and 1 for all values of the regularization
+        parameter. The reference article suggests scores_ is the max
+        of all_scores_.
+
     Examples
     --------
     >>> from sklearn.linear_model import RandomizedLasso
@@ -303,10 +324,18 @@ def _randomized_logistic(X, y, weights, mask, C=1., verbose=False,
     X = X[mask]
     y = y[mask]
     X = (1 - weights) * X
-    clf = LogisticRegression(C=C, tol=tol, penalty='l1', dual=False,
-                fit_intercept=fit_intercept, scale_C=True)
-    clf.fit(X, y)
-    return np.any(np.abs(clf.coef_) > 10 * np.finfo(np.float).eps, axis=0)
+
+    C = np.atleast_1d(np.asarray(C, dtype=np.float))
+    scores = np.zeros((X.shape[1], len(C)), dtype=np.bool)
+
+    for this_C, this_scores in zip(C, scores.T):
+        # XXX : would be great to do it with a warm_start ...
+        clf = LogisticRegression(C=this_C, tol=tol, penalty='l1', dual=False,
+                    fit_intercept=fit_intercept, scale_C=True)
+        clf.fit(X, y)
+        this_scores[:] = np.any(
+                    np.abs(clf.coef_) > 10 * np.finfo(np.float).eps, axis=0)
+    return scores
 
 
 class RandomizedLogistic(BaseRandomizedLinearModel):
@@ -378,6 +407,11 @@ class RandomizedLogistic(BaseRandomizedLinearModel):
     ----------
     `scores_` : array, shape = [n_features]
         Feature scores between 0 and 1.
+
+    `all_scores_` : array, shape = [n_features, n_reg_parameter]
+        Feature scores between 0 and 1 for all values of the regularization
+        parameter. The reference article suggests scores_ is the max
+        of all_scores_.
 
     Examples
     --------
