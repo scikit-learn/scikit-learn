@@ -487,6 +487,7 @@ For dense data
    linear_model.lars_path
    linear_model.orthogonal_mp
    linear_model.orthogonal_mp_gram
+   linear_model.lasso_stability_path
 
 For sparse data
 ---------------
