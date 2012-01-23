@@ -35,9 +35,18 @@ def test_randomized_lasso():
     """Check randomized lasso"""
     scaling = 0.3
     selection_threshold = 0.5
+
+    # or with 1 alpha
     clf = RandomizedLasso(verbose=False, alpha=1, random_state=42,
                     scaling=scaling, selection_threshold=selection_threshold)
     feature_scores = clf.fit(X, y).scores_
+    assert_equal(np.argsort(F)[-3:], np.argsort(feature_scores)[-3:])
+
+    # or with many alphas
+    clf = RandomizedLasso(verbose=False, alpha=[1, 0.8], random_state=42,
+                    scaling=scaling, selection_threshold=selection_threshold)
+    feature_scores = clf.fit(X, y).scores_
+    assert_equal(clf.all_scores_.shape, (X.shape[1], 2))
     assert_equal(np.argsort(F)[-3:], np.argsort(feature_scores)[-3:])
 
     X_r = clf.transform(X)
@@ -69,6 +78,11 @@ def test_randomized_logistic():
 
     scaling = 0.3
     clf = RandomizedLogistic(verbose=False, C=1., random_state=42,
+                                scaling=scaling, n_resampling=50, tol=1e-3)
+    feature_scores = clf.fit(X, y).scores_
+    assert_equal(np.argsort(F), np.argsort(feature_scores))
+
+    clf = RandomizedLogistic(verbose=False, C=[1., 0.5], random_state=42,
                                 scaling=scaling, n_resampling=50, tol=1e-3)
     feature_scores = clf.fit(X, y).scores_
     assert_equal(np.argsort(F), np.argsort(feature_scores))
