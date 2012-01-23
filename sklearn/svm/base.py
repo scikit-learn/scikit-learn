@@ -5,7 +5,7 @@ import scipy.sparse as sp
 
 from . import libsvm, liblinear
 from ..base import BaseEstimator
-from ..utils import array2d, atleast2d_or_csr
+from ..utils import atleast2d_or_csr
 from ..utils.extmath import safe_sparse_dot
 import warnings
 

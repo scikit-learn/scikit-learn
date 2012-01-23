@@ -1,9 +1,8 @@
 import numpy as np
 import scipy.sparse
 
-from ..base import BaseLibSVM, BaseLibLinear, LIBSVM_IMPL, _get_class_weight
+from ..base import BaseLibSVM, LIBSVM_IMPL, _get_class_weight
 from . import libsvm
-from .. import liblinear
 
 
 class SparseBaseLibSVM(BaseLibSVM):
