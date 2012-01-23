@@ -159,7 +159,7 @@ def _randomized_lasso(X, y, weights, mask, alpha=1., verbose=False,
         if len(alphas_) > 1:  # np.min(alpha) < alpha_min
             interpolator = interp1d(alphas_[::-1], coef_[:, ::-1],
                                     bounds_error=False, fill_value=0.)
-            scores = (interpolator(alpha[::-1]) != 0.0)[:, ::-1] # XXX
+            scores = (interpolator(alpha) != 0.0)
         else:
             scores = np.zeros((X.shape[1], len(alpha)), dtype=np.bool)
     else:
