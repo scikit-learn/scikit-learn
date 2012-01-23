@@ -522,7 +522,6 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
         raise ValueError("Parameter 'scaling' should be between 0 and 1."
                          " Got %r instead." % scaling)
 
-    n_resampling = 200
     coef_grid = np.linspace(0, 1, n_grid)
     n_samples, n_features = X.shape
     scores_path = np.zeros((n_features, n_grid))
