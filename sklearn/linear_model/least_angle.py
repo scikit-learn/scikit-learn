@@ -817,6 +817,10 @@ class LassoLarsCV(LarsCV):
         see sklearn.cross_validation module. If None is passed, default to
         a 5-fold strategy
 
+    max_n_alphas : integer, optional
+        The maximum number of points on the path used to compute the
+        residuals in the cross-validation
+
     n_jobs : integer, optional
         Number of CPUs to use during the cross validation. If '-1', use
         all the CPUs
