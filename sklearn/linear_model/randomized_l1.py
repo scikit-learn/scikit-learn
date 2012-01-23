@@ -12,7 +12,7 @@ from scipy.sparse import issparse
 from scipy.interpolate import interp1d
 
 from .base import center_data
-from ..base import TransformerMixin
+from ..base import BaseEstimator, TransformerMixin
 from ..utils import as_float_array, check_random_state, safe_asarray
 from ..externals.joblib import Parallel, delayed
 from .least_angle import lars_path, LassoLarsIC
@@ -51,7 +51,7 @@ def _resample_model(estimator_func, X, y, scaling=.5, n_resampling=200,
     return scores_
 
 
-class BaseRandomizedLinearModel(TransformerMixin):
+class BaseRandomizedLinearModel(BaseEstimator, TransformerMixin):
     """Base class to implement randomized linear models for feature selection
 
     This implements the strategy by Meinshausen and Buhlman:
