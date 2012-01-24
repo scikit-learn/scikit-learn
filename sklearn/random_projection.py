@@ -369,7 +369,7 @@ class SparseRandomProjection(BaseEstimator, TransformerMixin):
         Smaller values lead to better embedding and higher number of
         dimensions (n_components) in the target projection space.
 
-    dense_output : boolean, True by default
+    dense_output : boolean, False by default
         If True, ensure that the output of the random projection is a
         dense numpy array even if the input and random projection matrix
         are both sparse. In practice, if the number of components is
@@ -407,7 +407,7 @@ class SparseRandomProjection(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, n_components='auto', density='auto', eps=0.5,
-                 materialize=True, dense_output=True, random_state=None):
+                 materialize=True, dense_output=False, random_state=None):
         self.n_components = n_components
         self.density = density
         self.eps = eps
