@@ -172,14 +172,18 @@ class MaterializedRandomProjection(unittest.TestCase):
         assert_lower(1 - eps, distances_ratio.min())
 
     def test_output_representation(self):
-        # by default dense ndarray output is enforced
-        self.rp.fit(data)
-        assert isinstance(self.rp.transform(data), np.ndarray)
+        # when using sparse input, the projected data can be forced to be a
+        # dense numpy array
+        rp = SparseRandomProjection(n_components=100, dense_output=True,
+                                    materialize=self.materialize,
+                                    random_state=0)
+        rp.fit(data)
+        assert isinstance(rp.transform(data), np.ndarray)
 
         sparse_data = sp.csr_matrix(data)
-        assert isinstance(self.rp.transform(sparse_data), np.ndarray)
+        assert isinstance(rp.transform(sparse_data), np.ndarray)
 
-        # this behavior can be disabled:
+        # the output can be left to a sparse matrix instead
         rp = SparseRandomProjection(n_components=100, dense_output=False,
                                     materialize=self.materialize,
                                     random_state=0)
