@@ -94,6 +94,16 @@ def johnson_lindenstrauss_min_dim(n_samples, eps=0.1):
     return (4 * np.log(n_samples) / denominator).astype(np.int)
 
 
+def _check_density(density, n_features):
+    """Factorize density check according to Li et al."""
+    if density is 'auto':
+        density = min(1 / math.sqrt(n_features), 1 / 3.)
+    elif density <= 0 or density > 1 / float(3):
+        raise ValueError("Expected density in range (0, 1/3], got: %r"
+                         % density)
+    return density
+
+
 def sparse_random_matrix(n_components, n_features, density='auto',
                          random_state=None):
     """Generalized Achlioptas random sparse matrix for random projection
@@ -159,16 +169,14 @@ def sparse_random_matrix(n_components, n_features, density='auto',
       http://www.cs.ucsc.edu/~optas/papers/jl.pdf
 
     """
+    if n_components <= 0:
+        raise ValueError("n_components must be strictly positive, got %d" %
+                         n_components)
     # seed numpy and python pseudo random number generators from one another
     # to ensure reproducible executions
     random_state = check_random_state(random_state)
     py_random_state = random.Random(random_state.rand())
-
-    if density is 'auto':
-        density = min(1 / math.sqrt(n_features), 1 / 3.)
-    elif density <= 0 or density > 1 / float(3):
-        raise ValueError("Expected density in range (0, 1/3], got: %r"
-                         % density)
+    density = _check_density(density, n_features)
 
     # placeholders for the CSR datastructure
     indices = []
@@ -190,10 +198,10 @@ def sparse_random_matrix(n_components, n_features, density='auto',
         # http://mail.scipy.org/pipermail/numpy-discussion/2010-December/
         # 054289.html
         indices_i = py_random_state.sample(xrange(n_features), n_nonzero_i)
-        indices.append(np.array(indices_i))
+        indices.append(np.array(indices_i, dtype=np.int))
 
         # among non zero components the probability of the sign is 50%/50%
-        data_i = np.ones(n_nonzero_i)
+        data_i = np.ones(n_nonzero_i, dtype=np.float)
         u = random_state.uniform(size=n_nonzero_i)
         data_i[u < 0.5] *= -1
         data.append(data_i)
@@ -207,8 +215,15 @@ def sparse_random_matrix(n_components, n_features, density='auto',
     return math.sqrt(1 / density) / math.sqrt(n_components) * r
 
 
-def hashing_dot(A, n_components, density, seed=0, dense_output=True):
-    """Implicit dot product by a random sparse matrix using a hash function"""
+def hashing_dot(A, n_components, density='auto', seed=0, dense_output=True):
+    """Implicit dot product by a random sparse matrix using a hash function
+
+
+    TODO: write me + document parameters
+    """
+    if n_components <= 0:
+        raise ValueError("n_components must be strictly positive, got %d" %
+                         n_components)
     half_uint32_max = np.iinfo(np.uint32).max / 2
 
     # TODO: avoid conversion of sparse matrices to CSR by adding support for
@@ -216,6 +231,7 @@ def hashing_dot(A, n_components, density, seed=0, dense_output=True):
     # feature-wise.
     A = atleast2d_or_csr(A)
     n_samples, n_features = A.shape
+    density = _check_density(density, n_features)
 
     # find the number of non-zero component in the random matrix
     # to simulate for each feature
@@ -387,7 +403,7 @@ class SparseRandomProjection(BaseEstimator, TransformerMixin):
 
     """
 
-    def __init__(self, n_components='auto', density='auto', eps=0.1,
+    def __init__(self, n_components='auto', density='auto', eps=0.5,
                  materialize=True, dense_output=True, random_state=None):
         self.n_components = n_components
         self.density = density
@@ -422,7 +438,12 @@ class SparseRandomProjection(BaseEstimator, TransformerMixin):
             self.n_components_ = johnson_lindenstrauss_min_dim(
                 n_samples, eps=self.eps)
 
-            if self.n_components_ > n_features:
+            if self.n_components_ <= 0:
+                raise ValueError(
+                    'eps=%f and n_samples=%d lead to a target dimension of '
+                    '%d which is invalid' % (
+                        self.eps, n_samples, self.n_components_))
+            elif self.n_components_ > n_features:
                 raise ValueError(
                     'eps=%f and n_samples=%d lead to a target dimension of '
                     '%d which is larger than the original space with '
@@ -435,16 +456,16 @@ class SparseRandomProjection(BaseEstimator, TransformerMixin):
                     % (self.n_components, n_features))
             self.n_components_ = self.n_components
 
-        if self.density is 'auto':
-            self.density_ = min(1 / math.sqrt(n_features), 1 / 3.)
-        else:
-            self.density_ = self.density
+        self.density_ = _check_density(self.density, n_features)
 
         if self.materialize:
             self.components_ = sparse_random_matrix(
                 self.n_components_, n_features, density=self.density,
                 random_state=self.random_state)
         else:
+            # fix the seed to be reused at each call to transform (must be
+            # frozen once and for all to simulate the same random matrix
+            # across repeated calls)
             self.seed_ = self.random_state.randint(np.iinfo(np.int32).max)
         return self
 
