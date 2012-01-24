@@ -173,7 +173,7 @@ Gradient Tree Boosting
 
 The advantages of GBRT are:
 
-  + Natural handling of data of mixed type (=heterogeneous features)
+  + Natural handling of data of mixed type (= heterogeneous features)
 
   + Predictive power
 
@@ -183,13 +183,56 @@ The disadvantages of GBRT are:
 
   + Scalability, due to the sequential nature of boosting it can hardly be parallelized.
 
+Classification
+==============
+
+:class:`GradientBoostingClassifier` supports binary classification via the binomial deviance loss function. The following example shows how to fit a gradient boosting classifier
+with 100 decision stumps as weak learners.
+
+    >>> from sklearn.datasets import make_hastie_10_2
+    >>> from sklearn.ensemble import GradientBoostingClassifier
+
+    >>> X, y = make_hastie_10_2(random_state=0)
+    >>> X_train, X_test = X[:2000], X[2000:]
+    >>> y_train, y_test = y[:2000], y[2000:]
+
+    >>> clf = GradientBoostingClassifier(n_estimators=100, learn_rate=1.0,
+    ...     max_depth=1, random_state=0).fit(X_train, y_train)
+    >>> clf.score(X_test, y_test)                 # doctest: +ELLIPSIS
+    0.913...
+
+The number of weak learners (i.e. regression trees) is controlled by the
+parameter ``n_estimators``; The maximum depth of each tree is controlled via
+``max_depth``. ``Learn_rate`` is a hyper-parameter in the range (0.0, 1.0]
+that controls overfitting via shrinkage.
+
+Regression
+==========
+
+:class:`GradientBoostingRegressor` ...
+
+    >>> from sklearn.datasets import make_friedman1
+    >>> from sklearn.ensemble import GradientBoostingRegressor
+    >>> X, y = datasets.make_friedman1(n_samples=1200,
+            random_state=0, noise=1.0)
+    >>> X_train, X_test = X[:200], X[200:]
+    >>> y_train, y_test = y[:200], y[200:]
+
+    >>> clf = GradientBoostingRegressor(n_estimators=100, learn_rate=1.0,
+    ...     max_depth=1, random_state=0).fit(X_train, y_train)
+    >>> np.mean((y_test - clf.predict(X_test)) ** 2.0)    # doctest: +ELLIPSIS
+    3.695...
+
+Mathematical formulation
+========================
+
 GBRT considers additive models of the following form:
 
   .. math::
 
     F(x) = \sum_{i=1}^{M} \gamma_i h_i(x)
 
-where :math:`h_i(x)` are the basis functions which are usually called *weak learners* in the context of boosting. Gradient Tree Boosting uses :ref:`decision trees <tree>` of fixed size as weak learners. Decision trees have a number of abilities that make them valuable for boosting, namely the ability to handle data of mixed type and the ability to model complex functions. 
+where :math:`h_i(x)` are the basis functions which are usually called *weak learners* in the context of boosting. Gradient Tree Boosting uses :ref:`decision trees <tree>` of fixed size as weak learners. Decision trees have a number of abilities that make them valuable for boosting, namely the ability to handle data of mixed type and the ability to model complex functions.
 
 Similar to other boosting algorithms GBRT builds the additive model in a forward stagewise fashion: At each stage the decision tree :math:`h_m(x)` is choosen that minimizes the loss function :math:`L` given the current model :math:`F_{m-1}` and its fit :math:`F_{m-1}(x_i)`
 
@@ -197,7 +240,7 @@ Similar to other boosting algorithms GBRT builds the additive model in a forward
 
     F_m(x) = F_{m-1}(x) + \arg_min_{h}  \sum_{i=1}^{n} L(y_i, F_{m-1}(x_i) - h(x))
 
-Gradient Boosting attempts to solve this minimization problem numerically via steepest descent: The steepest descent direction is the negative gradient of the loss function evaluated at the current model :math:`F_{m-1}` which can be calculated for any differentialble loss function: 
+Gradient Boosting attempts to solve this minimization problem numerically via steepest descent: The steepest descent direction is the negative gradient of the loss function evaluated at the current model :math:`F_{m-1}` which can be calculated for any differentialble loss function:
 
   .. math::
 
@@ -209,12 +252,12 @@ Where the step length :math:`\gamma_m` is choosen using line search:
 
     \gamma_m = \arg_min_{\gamma} \sum_{i=1}^{n} L(y_i, F_{m-1}(x_i) \frac{\partial L(y_i, F_{m-1}(x_i))}{\partial F_{m-1}(x_i)})
 
-The module :mod:`gradient_boosting` provides classes for regression (:class:`GradientBoostingRegressor`) and classification (:class:`GradientBoostingClassifier`) using Gradient Boosted Regression Trees. The algorithms for regression and classification only differ in the concrete loss function used. 
+The module :mod:`gradient_boosting` provides classes for regression (:class:`GradientBoostingRegressor`) and classification (:class:`GradientBoostingClassifier`) using Gradient Boosted Regression Trees. The algorithms for regression and classification only differ in the concrete loss function used.
 
 Loss Functions
 ??????????????
 
-The following loss functions are supported and can be specified using the parameter ``loss``: 
+The following loss functions are supported and can be specified using the parameter ``loss``:
 
   * Regression
 
@@ -222,9 +265,9 @@ The following loss functions are supported and can be specified using the parame
     * Least absolute deviation (``'lad'``): A robust loss function for regression.
 
   * Classification
-    * Binomial deviance (``'deviance'``): The negative binomial log-likelihood loss function commonly used for binary classification (provides probability estimates).
+    * Binomial deviance (``'deviance'``): The negative binomial log-likelihood loss function for binary classification (provides probability estimates).
 
-The table below summarizes the ingredients of the Gradient Boosting algorithm for each of the three loss functions above. 
+The table below summarizes the ingredients of the Gradient Boosting algorithm for each of the three loss functions above.
 
 +----------+-------------------------+----------------------------+-------------+
 |          | Loss function           | Gradient                   | Line search |
@@ -250,10 +293,10 @@ TODO Discussion - parameter tuning - other implementations
 
 .. topic:: References
 
- * J. Friedman, "Greedy Function Approximation: A Gradient Boosting Machine", 
+ * J. Friedman, "Greedy Function Approximation: A Gradient Boosting Machine",
    The Annals of Statistics, Vol. 29, No. 5, 2001.
 
  * J. Friedman, "Stochastic Gradient Boosting", 1999
 
- * T. Hastie, R. Tibshirani and J. Friedman, "Elements of Statistical Learning 
+ * T. Hastie, R. Tibshirani and J. Friedman, "Elements of Statistical Learning
    Ed. 2", Springer, 2009.
