@@ -12,7 +12,7 @@
 from __future__ import division
 import numpy as np
 
-from ..base import BaseEstimator
+from .base import BaseEnsemble
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..utils import check_random_state
@@ -180,10 +180,8 @@ LOSS_FUNCTIONS = {'ls': LeastSquaresError,
                   'deviance': BinomialDeviance}
 
 
-class BaseGradientBoosting(BaseEstimator):
+class BaseGradientBoosting(BaseEnsemble):
     """Abstract base class for Gradient Boosting. """
-
-    estimators = []
 
     def __init__(self, loss, learn_rate, n_estimators, min_split, max_depth, init,
                  subsample, random_state):
@@ -217,6 +215,8 @@ class BaseGradientBoosting(BaseEstimator):
         self.init = init
 
         self.random_state = check_random_state(random_state)
+
+        self.estimators_ = []
 
     def fit(self, X, y, monitor=None):
         """Fit the gradient boosting model.
@@ -266,7 +266,7 @@ class BaseGradientBoosting(BaseEstimator):
         # init predictions
         y_pred = self.init.predict(X)
 
-        self.estimators = []
+        self.estimators_ = []
 
         self.train_deviance = np.zeros((self.n_estimators,), dtype=np.float64)
         self.oob_deviance = np.zeros((self.n_estimators), dtype=np.float64)
@@ -294,7 +294,7 @@ class BaseGradientBoosting(BaseEstimator):
                                          self.learn_rate)
 
             # add tree to ensemble
-            self.estimators.append(tree)
+            self.estimators_.append(tree)
 
             # update out-of-bag predictions and deviance
             if self.subsample < 1.0:
@@ -318,21 +318,24 @@ class BaseGradientBoosting(BaseEstimator):
         """
         if old_pred is not None:
             return old_pred + self.learn_rate * \
-                   self.estimators[-1].predict(X).ravel()
+                   self.estimators_[-1].predict(X).ravel()
         else:
             y = self.init.predict(X)
-            for tree in self.estimators:
+            for tree in self.estimators_:
                 y += self.learn_rate * tree.predict(X).ravel()
             return y
 
+    def _make_estimator(self, append=True):
+        raise NotImplementedError()
+
     @property
     def feature_importances_(self):
-        if not self.estimators or len(self.estimators) == 0:
+        if not self.estimators_ or len(self.estimators_) == 0:
             raise ValueError("Estimator not fitted, " \
                              "call `fit` before `feature_importances_`.")
         importances = sum(compute_feature_importances(tree, self.n_features,
                                                       method='squared')
-                          for tree in self.estimators) / len(self.estimators)
+                          for tree in self.estimators_) / len(self.estimators_)
         importances = 100.0 * (importances / importances.max())
         return importances
 
@@ -443,7 +446,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     def predict(self, X):
         X = np.atleast_2d(X)
         X = X.astype(DTYPE)
-        if len(self.estimators) == 0:
+        if len(self.estimators_) == 0:
             raise ValueError("Estimator not fitted, " \
                              "call `fit` before `predict`.")
         f = self._predict(X)
@@ -452,7 +455,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     def predict_proba(self, X):
         X = np.atleast_2d(X)
         X = X.astype(DTYPE)
-        if len(self.estimators) == 0:
+        if len(self.estimators_) == 0:
             raise ValueError("Estimator not fitted, " \
                              "call `fit` before `predict_proba`.")
         f = self._predict(X)
@@ -545,7 +548,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     def predict(self, X):
         X = np.atleast_2d(X)
         X = X.astype(DTYPE)
-        if len(self.estimators) == 0:
+        if len(self.estimators_) == 0:
             raise ValueError("Estimator not fitted, " \
                              "call `fit` before `predict`.")
         y = self._predict(X)

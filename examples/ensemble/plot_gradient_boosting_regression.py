@@ -45,7 +45,7 @@ print("MSE: %.4f" % mse)
 # compute test set deviance
 y_pred = clf.init.predict(X_test)
 test_deviance = np.zeros((params['n_estimators'],), dtype=np.float64)
-for i, tree in enumerate(clf.estimators):
+for i, tree in enumerate(clf.estimators_):
     y_pred += clf.learn_rate * tree.predict(X_test).ravel()
     test_deviance[i] = clf.loss_(y_test, y_pred)
 

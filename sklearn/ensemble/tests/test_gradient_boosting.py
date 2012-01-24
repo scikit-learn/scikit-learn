@@ -35,7 +35,7 @@ def test_classification_toy():
 
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
-    assert_equal(100, len(clf.estimators))
+    assert_equal(100, len(clf.estimators_))
 
     deviance_decrease = (clf.train_deviance[:-1] - clf.train_deviance[1:])
     assert np.any(deviance_decrease >= 0.0), \

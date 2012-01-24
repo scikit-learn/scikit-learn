@@ -67,7 +67,7 @@ def bench_random_gaussian(random_state=None):
     test_time = time() - t0
     ## for i in range(10) + [99, 199]:
     ##    print i+1, gbrt.train_deviance[i]
-    #avg_splits = np.mean([np.sum(t.children[:,0] != -1) for t in gbrt.trees])
+    #avg_splits = np.mean([np.sum(t.children[:,0] != -1) for t in gbrt.estimators_])
     #print "Avg. splits: %.4f" % avg_splits
     return error_rate, train_time, test_time
 
@@ -85,7 +85,7 @@ def random_gaussian_learning_curve(random_state=None):
 
     n_iter = 2000
     max_depth = 2
-    
+
     deviance = np.zeros((n_iter,), dtype=np.float64)
     error_rate = np.zeros((n_iter,), dtype=np.float64)
     y_pred = np.empty((X_test.shape[0],), dtype=np.float64)
@@ -136,7 +136,7 @@ def random_gaussian_learning_curve(random_state=None):
     pl.xlabel("Boosting Iterations")
     pl.ylabel("Test Set Deviance")
     pl.legend()
-    
+
     pl.show()
 
 
@@ -215,7 +215,7 @@ def bench_boston(random_state=None):
     X, y = shuffle(boston.data, boston.target, random_state=random_state)
     X = X.astype(np.float32)
     y = y.astype(np.float32)
-    
+
     offset = int(X.shape[0] * 0.9)
     X_train = X[:offset]
     y_train = y[:offset]
@@ -237,7 +237,7 @@ def bench_friedman1(random_state=None):
                                    random_state=random_state, noise=1.0)
     X = X.astype(np.float32)
     y = y.astype(np.float32)
-    
+
     X_train, y_train = X[:200], y[:200]
     X_test, y_test = X[200:], y[200:]
     clf = GradientBoostingRegressor(**regression_params)
@@ -255,7 +255,7 @@ def bench_friedman2(random_state=None):
     X, y = datasets.make_friedman2(n_samples=1200, random_state=random_state)
     X = X.astype(np.float32)
     y = y.astype(np.float32)
-    
+
     X_train, y_train = X[:200], y[:200]
     X_test, y_test = X[200:], y[200:]
     clf = GradientBoostingRegressor(**regression_params)
@@ -273,7 +273,7 @@ def bench_friedman3(random_state=None):
     X, y = datasets.make_friedman3(n_samples=1200, random_state=random_state)
     X = X.astype(np.float32)
     y = y.astype(np.float32)
-    
+
     X_train, y_train = X[:200], y[:200]
     X_test, y_test = X[200:], y[200:]
     clf = GradientBoostingRegressor(**regression_params)
@@ -291,7 +291,7 @@ gbrt_results = {
     "Spam": bench_spam(),
     "Madelon": bench_madelon(),
     "Arcene": bench_arcene(),
-   "Boston": bench_boston(), 
+   "Boston": bench_boston(),
    "Friedman#1": bench_friedman1(),
    "Friedman#2": bench_friedman2(),
    "Friedman#3": bench_friedman3(),
