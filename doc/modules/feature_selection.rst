@@ -124,6 +124,19 @@ and counting how many times a given regressor is selected.
 settings, using the Lasso, while :class:`RandomizedLogistic` uses the
 logistic regression and is suitable for classification tasks.
 
+.. figure:: ../auto_examples/linear_model/images/plot_randomized_lasso_2.png
+   :target: ../auto_examples/linear_model/plot_randomized_lasso.html
+   :align: center
+   :scale: 60
+
+   Comparison of scores given by F-test based feature selection and
+   randomized lasso
+
+Note that for randomized sparse models to be more powerful than standard
+F statistics at detecting non-zero features, the ground truth model
+should be sparse, in other words, there should be only a small fraction
+of features non zero.
+
 .. topic:: Examples:
 
    * :ref:`example_linear_model_plot_randomized_lasso.py`: Randomized
