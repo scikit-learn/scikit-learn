@@ -45,6 +45,13 @@ def test_make_multilabel_classification():
         assert_true(max([len(y) for y in Y]) <= 3)
 
 
+def test_make_hastie_10_2():
+    X, y = make_hastie_10_2(n_samples=100, random_state=0)
+    assert_equal(X.shape, (100, 20), "X shape mismatch")
+    assert_equal(y.shape, (100,), "y shape mismatch")
+    assert_equal(np.unique(y).shape, (2,), "Unexpected number of classes")
+
+
 def test_make_regression():
     X, y, c = make_regression(n_samples=100, n_features=10, n_informative=3,
                               effective_rank=5, coef=True, bias=0.0,
