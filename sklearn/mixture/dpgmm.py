@@ -1,4 +1,4 @@
-"""Bayesian Gaussian Mixture Models and 
+"""Bayesian Gaussian Mixture Models and
 Dirichlet Process Gaussian Mixture Models"""
 
 # Author: Alexandre Passos (alexandre.tp@gmail.com)
@@ -62,8 +62,9 @@ def wishart_logz(v, s, dets, n_features):
     z += np.sum(gammaln(0.5 * (v - np.arange(n_features) + 1)))
     return z
 
+
 def _bound_wishart(a, B, detB):
-    """Returns a function of the dof, scale matrix and its determinant 
+    """Returns a function of the dof, scale matrix and its determinant
     used as an upper bound in variational approcimation of the evidence"""
     n_features = B.shape[0]
     logprior = wishart_logz(a, B, detB, n_features)
@@ -102,9 +103,7 @@ def _bound_state_log_lik(X, initial_bound, precs, means, covariance_type):
     elif covariance_type == 'full':
         for k in xrange(n_components):
             bound[:, k] -= 0.5 * _sym_quad_form(X, means[k], precs[k])
-    
     return bound
-
 
 
 class DPGMM(GMM):
@@ -250,8 +249,8 @@ class DPGMM(GMM):
         if self._covariance_type not in ['full', 'tied', 'diag', 'spherical']:
             raise NotImplementedError("This ctype is not implemented: %s"
                                       % self._covariance_type)
-        p = _bound_state_log_lik(X, self._initial_bound + self.bound_prec_, 
-                                 self.precs_, self.means_, 
+        p = _bound_state_log_lik(X, self._initial_bound + self.bound_prec_,
+                                 self.precs_, self.means_,
                                  self._covariance_type)
         z = p + dgamma
         z = log_normalize(z, axis=-1)
@@ -300,7 +299,7 @@ class DPGMM(GMM):
                     0.5 * n_features * (
                         digamma(self.dof_[k]) - np.log(self.scale_[k])))
             self.precs_ = np.tile(self.dof_ / self.scale_, [n_features, 1]).T
-            
+
         elif self._covariance_type == 'diag':
             for k in xrange(self.n_components):
                 self.dof_[k].fill(1. + 0.5 * np.sum(z.T[k], axis=0))
@@ -311,7 +310,7 @@ class DPGMM(GMM):
                 self.bound_prec_[k] = 0.5 * np.sum(digamma(self.dof_[k])
                                                     - np.log(self.scale_[k]))
                 self.bound_prec_[k] -= 0.5 * np.sum(self.precs_[k])
-                
+
         elif self._covariance_type == 'tied':
             self.dof_ = 2 + X.shape[0] + n_features
             self.scale_ = (X.shape[0] + 1) * np.identity(n_features)
@@ -379,8 +378,8 @@ class DPGMM(GMM):
         logprior += np.sum((self.alpha - 1) * (
                 digamma(self.gamma_.T[2]) - digamma(self.gamma_.T[1] +
                                                     self.gamma_.T[2])))
-        logprior += np.sum(-gammaln(self.gamma_.T[1] + self.gamma_.T[2]))
-        logprior += np.sum(gammaln(self.gamma_.T[1]) + 
+        logprior += np.sum(- gammaln(self.gamma_.T[1] + self.gamma_.T[2]))
+        logprior += np.sum(gammaln(self.gamma_.T[1]) +
                            gammaln(self.gamma_.T[2]))
         logprior -= np.sum((self.gamma_.T[1] - 1) * (
                 digamma(self.gamma_.T[1]) - digamma(self.gamma_.T[1] +
@@ -404,14 +403,13 @@ class DPGMM(GMM):
             logprior += np.sum(gammaln(self.dof_))
             logprior -= np.sum(
                 (self.dof_ - 1) * digamma(np.maximum(0.5, self.dof_)))
-            logprior += np.sum(
-                - np.log(self.scale_) + self.dof_ - self.precs_[:, 0])
+            logprior += np.sum(- np.log(self.scale_) + self.dof_ -\
+                                     self.precs_[:, 0])
         elif self._covariance_type == 'diag':
             logprior += np.sum(gammaln(self.dof_))
             logprior -= np.sum(
                 (self.dof_ - 1) * digamma(np.maximum(0.5, self.dof_)))
-            logprior += np.sum(
-                - np.log(self.scale_) + self.dof_ - self.precs_)
+            logprior += np.sum(- np.log(self.scale_) + self.dof_ - self.precs_)
         elif self._covariance_type == 'tied':
             logprior += _bound_wishart(self.dof_, self.scale_, self.det_scale_)
         elif self._covariance_type == 'full':
@@ -451,7 +449,7 @@ class DPGMM(GMM):
         if X.ndim == 1:
             X = X[:, np.newaxis]
         c = np.sum(z * _bound_state_log_lik(
-                X, self._initial_bound + self.bound_prec_, 
+                X, self._initial_bound + self.bound_prec_,
                 self.precs_, self.means_, self._covariance_type))
 
         return c + self._logprior(z)
@@ -501,14 +499,14 @@ class DPGMM(GMM):
 
         if (init_params != '') or not hasattr(self, 'gamma_'):
             self._initialize_gamma()
-        
+
         if 'm' in init_params or not hasattr(self, 'means_'):
             self.means_ = cluster.KMeans(
-                k=self.n_components, random_state=self.random_state
-            ).fit(X).cluster_centers_[::-1]
+                k=self.n_components,
+                random_state=self.random_state).fit(X).cluster_centers_[::-1]
 
         if 'w' in init_params or not hasattr(self, 'weights_'):
-            self._set_weights(np.tile(1.0 / self.n_components, 
+            self._set_weights(np.tile(1.0 / self.n_components,
                                       self.n_components))
 
         if 'c' in init_params or not hasattr(self, 'precs_'):
@@ -523,7 +521,7 @@ class DPGMM(GMM):
                 self.dof_ *= np.ones((self.n_components, n_features))
                 self.scale_ = np.ones((self.n_components, n_features))
                 self.precs_ = np.ones((self.n_components, n_features))
-                self.bound_prec_ = 0.5 * (np.sum(digamma(self.dof_) - 
+                self.bound_prec_ = 0.5 * (np.sum(digamma(self.dof_) -
                                                  np.log(self.scale_), 1))
                 self.bound_prec_ -= 0.5 * np.sum(self.precs_, 1)
             elif self._covariance_type == 'tied':
@@ -545,9 +543,9 @@ class DPGMM(GMM):
                 self.bound_prec_ = np.zeros(self.n_components)
                 for k in xrange(self.n_components):
                     self.bound_prec_[k] = wishart_log_det(
-                        self.dof_[k],self.scale_[k], self.det_scale_[k], 
+                        self.dof_[k], self.scale_[k], self.det_scale_[k],
                         n_features)
-                    self.bound_prec_[k] -= (self.dof_[k] * 
+                    self.bound_prec_[k] -= (self.dof_[k] *
                                             np.trace(self.scale_[k]))
                 self.bound_prec_ *= 0.5
 
@@ -640,7 +638,7 @@ class VBGMM(DPGMM):
                  random_state=None, thresh=1e-2, verbose=False,
                  min_covar=None):
         super(VBGMM, self).__init__(
-            n_components, covariance_type, random_state=random_state, 
+            n_components, covariance_type, random_state=random_state,
             thresh=thresh, verbose=verbose, min_covar=min_covar)
         self.alpha = float(alpha) / n_components
 
@@ -680,9 +678,9 @@ class VBGMM(DPGMM):
             raise NotImplementedError("This ctype is not implemented: %s"
                                       % self._covariance_type)
         p = _bound_state_log_lik(
-                X, self._initial_bound + self.bound_prec_, 
+                X, self._initial_bound + self.bound_prec_,
                 self.precs_, self.means_, self._covariance_type)
- 
+
         z = p + dg
         z = log_normalize(z, axis=-1)
         bound = np.sum(z * p, axis=-1)

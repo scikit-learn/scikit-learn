@@ -26,7 +26,7 @@ class DPGMMTester(GMMTester):
     do_test_eval = False
 
     def score(self, g, train_obs):
-        _, z = g.eval(train_obs) 
+        _, z = g.eval(train_obs)
         return g.lower_bound(train_obs, z)
 
 
@@ -51,7 +51,7 @@ class VBGMMTester(GMMTester):
     do_test_eval = False
 
     def score(self, g, train_obs):
-        _, z = g.eval(train_obs) 
+        _, z = g.eval(train_obs)
         return g.lower_bound(train_obs, z)
 
 
