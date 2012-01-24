@@ -65,12 +65,11 @@ clf.fit(X, y)
 F, _ = f_regression(X, y)  # compare with F-score
 
 pl.figure()
-score_plot = pl.plot(clf.scores_ / np.max(clf.scores_))
-f_plot = pl.plot(F / np.max(F))
-ground_truth = pl.plot(np.where(coef != 0), .5, 'ro')
+pl.plot(clf.scores_ / np.max(clf.scores_), label="Stability-selection score")
+pl.plot(F / np.max(F), label="(scaled) F-score")
+pl.plot(np.where(coef != 0)[0], [.5] * n_good_features, 'ro',
+        label="Ground truth")
 pl.xlabel("Features")
 pl.ylabel("Score")
-pl.legend((score_plot, f_plot, ground_truth[0]),
-            ("Stability-selection score", "(scaled) F-score",
-             "Ground truth"))
+pl.legend()
 pl.show()
