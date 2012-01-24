@@ -10,7 +10,12 @@ and the number of components in the model.
 In that case, AIC also provides the right result (not shown to save time),
 but BIC is better suited if the problem is to identify the right model.
 Unlike Bayesian procedures, such inferences are prior-free.
+
+In that case, the full model with 2 componnets 
+(which corresponds to the true generative model) is selected.
 """
+print __doc__
+
 import itertools
 
 import numpy as np
@@ -32,7 +37,7 @@ X = np.r_[np.dot(np.random.randn(n_samples, 2), C),
 lowest_bic = np.infty
 bic = []
 n_components_range = range(1, 7)
-cv_types = ['spherical', 'diag', 'tied', 'full']
+cv_types = ['spherical', 'tied', 'diag', 'full']
 for cv_type in cv_types:
     for n_components in n_components_range:
         # Fit a mixture of gaussians with EM
@@ -58,6 +63,9 @@ for i, (cv_type, color) in enumerate(zip(cv_types, color_iter)):
 pl.xticks(n_components_range)
 pl.ylim([bic.min() * 1.01 - .01 * bic.max(), bic.max()])
 pl.title('BIC score per model')
+xpos = np.mod(bic.argmin(), len(n_components_range)) + .65 +\
+    .2 * np.floor(bic.argmin() / len(n_components_range))
+pl.text(xpos, bic.min() * 0.97 + .03 * bic.max(), '*', fontsize=14)
 spl.set_xlabel('Number of components')
 spl.legend([b[0] for b in bars], cv_types)
 
@@ -84,6 +92,6 @@ pl.xlim(-10, 10)
 pl.ylim(-3, 6)
 pl.xticks(())
 pl.yticks(())
-pl.title('Selected GMM')
+pl.title('Selected GMM: full model, 2 components')
 pl.subplots_adjust(hspace=.35, bottom=.02)
 pl.show()

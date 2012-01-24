@@ -42,7 +42,7 @@ def make_ellipses(gmm, ax):
         angle = np.arctan2(u[1], u[0])
         angle = 180 * angle / np.pi  # convert to degrees
         v *= 9
-        ell = mpl.patches.Ellipse(gmm._get_means()[n, :2], v[0], v[1], 
+        ell = mpl.patches.Ellipse(gmm._get_means()[n, :2], v[0], v[1],
                                   180 + angle, color=color)
         ell.set_clip_box(ax.bbox)
         ell.set_alpha(0.5)
@@ -78,9 +78,9 @@ pl.subplots_adjust(bottom=.01, top=0.95, hspace=.15, wspace=.05,
 for index, (name, classifier) in enumerate(classifiers.iteritems()):
     # Since we have class labels for the training data, we can
     # initialize the GMM parameters in a supervised manner.
-    classifier.means_ = np.array([X_train[y_train == i, :].mean(axis=0)
+    classifier.means_ = np.array([X_train[y_train == i].mean(axis=0)
                                   for i in xrange(n_classes)])
-    
+
     # Train the other parameters using the EM algorithm.
     classifier.fit(X_train, init_params='wc', n_iter=20)
 
