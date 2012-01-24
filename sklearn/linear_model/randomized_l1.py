@@ -504,7 +504,7 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
         Should be between 0 and 1. If 1, all samples are used.
 
     eps : float
-        Smallest value of alpha /alpha_max considered
+        Smallest value of alpha / alpha_max considered
 
     Returns
     -------
@@ -541,14 +541,17 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
         else:
             y_r = y
 
-        alphas, _, coefs = lars_path(X_r, y_r, method='lasso', verbose=False)
+        alpha_max = np.max(np.abs(np.dot(X_r.T, y_r))) / X.shape[0]
+        alpha_min = eps * alpha_max  # set for early stopping in path
+        alphas, _, coefs = lars_path(X_r, y_r, method='lasso', verbose=False,
+                                     alpha_min=alpha_min)
         # Scale alpha by alpha_max
         alphas /= alphas[0]
         # Sort alphas in assending order
         alphas = alphas[::-1]
         coefs = coefs[:, ::-1]
         # Get rid of the alphas that are too small
-        mask = alphas > eps
+        mask = alphas >= eps
         # We also want to keep the first one: it should be close to the OLS
         # solution
         mask[0] = True
