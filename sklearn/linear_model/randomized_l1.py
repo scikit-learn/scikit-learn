@@ -473,7 +473,8 @@ class RandomizedLogistic(BaseRandomizedLinearModel):
 
 def lasso_stability_path(X, y, scaling=0.5, random_state=None,
                          n_resampling=200, n_grid=100,
-                         sample_fraction=0.75):
+                         sample_fraction=0.75,
+                         eps=4*np.finfo(np.float).eps):
     """Stabiliy path based on randomized Lasso estimates
 
     Parameters
@@ -502,10 +503,13 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
         The fraction of samples to be used in each randomized design.
         Should be between 0 and 1. If 1, all samples are used.
 
+    eps : float
+        Smallest value of alpha /alpha_max considered
+
     Returns
     -------
-    coefs_grid : array, shape = [n_grid]
-        The grid points between 0 and 1.
+    alphas_grid : array, shape ~ [n_grid]
+        The grid points between 0 and 1: alpha/alpha_max
 
     scores_path : array, shape = [n_features, n_grid]
         The scores for each feature along the path.
@@ -522,10 +526,10 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
         raise ValueError("Parameter 'scaling' should be between 0 and 1."
                          " Got %r instead." % scaling)
 
-    coef_grid = np.linspace(0, 1, n_grid)
     n_samples, n_features = X.shape
-    scores_path = np.zeros((n_features, n_grid))
 
+    paths = list()
+    all_alphas = set()
     for k in xrange(n_resampling):
         weights = 1. - scaling * rng.random_integers(0, 1, size=(n_features,))
         X_r = X * weights[np.newaxis, :]
@@ -538,13 +542,40 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
             y_r = y
 
         alphas, _, coefs = lars_path(X_r, y_r, method='lasso', verbose=False)
+        # Scale alpha by alpha_max
+        alphas /= alphas[0]
+        # Sort alphas in assending order
+        alphas = alphas[::-1]
+        coefs = coefs[:, ::-1]
+        # Get rid of the alphas that are too small
+        mask = alphas > eps
+        # We also want to keep the first one: it should be close to the OLS
+        # solution
+        mask[0] = True
+        alphas = alphas[mask]
+        coefs  = coefs[:, mask]
+        paths.append((alphas, coefs))
+        all_alphas = all_alphas.union(list(alphas))
 
-        xx = np.sum(np.abs(coefs.T), axis=1)
-        xx /= xx[-1]
+    all_alphas = sorted(list(all_alphas))
+    # Take approximately n_grid values
+    stride = int(max(1, int(len(all_alphas) / float(n_grid))))
+    all_alphas = all_alphas[::stride]
+    if not all_alphas[-1] == 1:
+        all_alphas.append(1.)
+    all_alphas = np.array(all_alphas)
+    scores_path = np.zeros((n_features, len(all_alphas)))
 
-        interpolator = interp1d(xx, coefs)
-        coefs_grid = interpolator(coef_grid)
-        scores_path += (coefs_grid != 0.0)
+    for alphas, coefs in paths:
+        if alphas[0] != 0:
+            alphas = np.r_[0, alphas]
+            coefs = np.c_[np.ones((n_features, 1)), coefs]
+        if alphas[-1] != all_alphas[-1]:
+            alphas = np.r_[alphas, all_alphas[-1]]
+            coefs = np.c_[coefs, np.zeros((n_features, 1))]
+        scores_path += (interp1d(alphas, coefs,
+                        kind='nearest', bounds_error=False,
+                        fill_value=0, axis=-1)(all_alphas) != 0)
 
     scores_path /= n_resampling
-    return coef_grid, scores_path
+    return all_alphas, scores_path
