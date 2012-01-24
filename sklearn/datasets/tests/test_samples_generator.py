@@ -5,6 +5,7 @@ from nose.tools import assert_true
 
 from .. import make_classification
 from .. import make_multilabel_classification
+from .. import make_hastie_10_2
 from .. import make_regression
 from .. import make_blobs
 from .. import make_friedman1
@@ -47,7 +48,7 @@ def test_make_multilabel_classification():
 
 def test_make_hastie_10_2():
     X, y = make_hastie_10_2(n_samples=100, random_state=0)
-    assert_equal(X.shape, (100, 20), "X shape mismatch")
+    assert_equal(X.shape, (100, 10), "X shape mismatch")
     assert_equal(y.shape, (100,), "y shape mismatch")
     assert_equal(np.unique(y).shape, (2,), "Unexpected number of classes")
 
