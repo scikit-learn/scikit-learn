@@ -215,7 +215,8 @@ def sparse_random_matrix(n_components, n_features, density='auto',
     return math.sqrt(1 / density) / math.sqrt(n_components) * r
 
 
-def hashing_dot(A, n_components, density='auto', seed=0, dense_output=True):
+def hashing_dot(A, n_components, density='auto', random_state=None,
+                dense_output=False):
     """Implicit dot product by a random sparse matrix using a hash function
 
 
@@ -235,7 +236,9 @@ def hashing_dot(A, n_components, density='auto', seed=0, dense_output=True):
 
     # find the number of non-zero component in the random matrix
     # to simulate for each feature
-    nonzeros = np.random.RandomState(seed).binomial(
+    random_state = check_random_state(random_state)
+    seed = random_state.randint(np.iinfo(np.int32).max)
+    nonzeros = random_state.binomial(
         n_components, density, size=n_features)
 
     # pre-allocate an array of indices to be sliced and hashed to find the
@@ -249,7 +252,7 @@ def hashing_dot(A, n_components, density='auto', seed=0, dense_output=True):
             # components in the random matrix that have a non-zero value
             # for the current feature
             h = murmurhash3_32(base[:nonzeros[feature_idx]],
-                               seed=feature_idx, positive=True)
+                               seed=feature_idx ^ seed, positive=True)
             nnz_components = h % n_components
 
             # TODO: find a vectorized implementation that is faster than the
@@ -267,7 +270,7 @@ def hashing_dot(A, n_components, density='auto', seed=0, dense_output=True):
             for k in xrange(A.indptr[sample_idx], A.indptr[sample_idx + 1]):
                 feature_idx = A.indices[k]
                 h = murmurhash3_32(base[:nonzeros[feature_idx]],
-                                   seed=feature_idx, positive=True)
+                                   seed=feature_idx ^ seed, positive=True)
                 nnz_components = h % n_components
                 for component_idx in nnz_components[h < half_uint32_max]:
                     out[sample_idx, component_idx] += A.data[k]
@@ -286,7 +289,7 @@ def hashing_dot(A, n_components, density='auto', seed=0, dense_output=True):
             for k in xrange(A.indptr[sample_idx], A.indptr[sample_idx + 1]):
                 feature_idx = A.indices[k]
                 h = murmurhash3_32(base[:nonzeros[feature_idx]],
-                                   seed=feature_idx, positive=True)
+                                   seed=feature_idx ^ seed, positive=True)
                 nnz_components = h % n_components
 
                 rows.extend([sample_idx] * nnz_components.shape[0])
@@ -492,4 +495,5 @@ class SparseRandomProjection(BaseEstimator, TransformerMixin):
                                    dense_output=self.dense_output)
         else:
             return hashing_dot(X, self.n_components_, self.density_,
-                               self.seed_, dense_output=self.dense_output)
+                               random_state=self.seed_,
+                               dense_output=self.dense_output)
