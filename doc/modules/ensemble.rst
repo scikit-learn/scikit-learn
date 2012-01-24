@@ -216,6 +216,7 @@ Regression
 
 :class:`GradientBoostingRegressor` ...
 
+    >>> import numpy as np
     >>> from sklearn.datasets import make_friedman1
     >>> from sklearn.ensemble import GradientBoostingRegressor
     >>> X, y = datasets.make_friedman1(n_samples=1200,
