@@ -29,13 +29,13 @@ boston.target = boston.target[perm]
 
 def test_classification_toy():
     """Check classification on a toy dataset."""
-    clf = GradientBoostingClassifier(n_iter=100, random_state=1)
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
 
     assert_raises(ValueError, clf.predict, T)
 
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
-    assert_equal(100, len(clf.trees))
+    assert_equal(100, len(clf.estimators))
 
     deviance_decrease = (clf.train_deviance[:-1] - clf.train_deviance[1:])
     assert np.any(deviance_decrease >= 0.0), \
@@ -44,8 +44,8 @@ def test_classification_toy():
 
 def test_parameter_checks():
     """Check input parameter validation."""
-    assert_raises(ValueError, GradientBoostingClassifier, n_iter=0)
-    assert_raises(ValueError, GradientBoostingClassifier, n_iter=-1)
+    assert_raises(ValueError, GradientBoostingClassifier, n_estimators=0)
+    assert_raises(ValueError, GradientBoostingClassifier, n_estimators=-1)
 
     assert_raises(ValueError, GradientBoostingClassifier, learn_rate=0.0)
     assert_raises(ValueError, GradientBoostingClassifier, learn_rate=-1.0)
@@ -86,14 +86,14 @@ def test_classification_synthetic():
     X_train, X_test = X[:2000], X[2000:]
     y_train, y_test = y[:2000], y[2000:]
 
-    gbrt = GradientBoostingClassifier(n_iter=100, min_split=1, max_depth=1,
+    gbrt = GradientBoostingClassifier(n_estimators=100, min_split=1, max_depth=1,
                                       learn_rate=1.0, random_state=0)
     gbrt.fit(X_train, y_train)
     error_rate = (1.0 - gbrt.score(X_test, y_test))
     assert error_rate < 0.085, \
            "GB failed with error %.4f" % error_rate
 
-    gbrt = GradientBoostingClassifier(n_iter=200, min_split=1, max_depth=1,
+    gbrt = GradientBoostingClassifier(n_estimators=200, min_split=1, max_depth=1,
                                       learn_rate=1.0, subsample=0.5,
                                       random_state=0)
     gbrt.fit(X_train, y_train)
@@ -106,7 +106,7 @@ def test_boston():
     """Check consistency on dataset boston house prices with least squares
     and least absolute deviation. """
     for loss in ("ls", "lad"):
-        clf = GradientBoostingRegressor(n_iter=100, loss=loss, max_depth=4,
+        clf = GradientBoostingRegressor(n_estimators=100, loss=loss, max_depth=4,
                                         min_split=1, random_state=1)
         assert_raises(ValueError, clf.predict, boston.data)
         clf.fit(boston.data, boston.target)
@@ -119,7 +119,7 @@ def test_regression_synthetic():
     """Test on synthetic regression datasets used in Leo Breiman,
     `Bagging Predictors?. Machine Learning 24(2): 123-140 (1996). """
     random_state = check_random_state(1)
-    regression_params = {'n_iter': 100, 'max_depth': 4,
+    regression_params = {'n_estimators': 100, 'max_depth': 4,
                          'min_split': 1, 'learn_rate': 0.1,
                          'loss': 'ls'}
 
@@ -153,20 +153,20 @@ def test_regression_synthetic():
 
 
 def test_feature_importances():
-    clf = GradientBoostingRegressor(n_iter=100, max_depth=4,
+    clf = GradientBoostingRegressor(n_estimators=100, max_depth=4,
                                     min_split=1, random_state=1)
     clf.fit(boston.data, boston.target)
     feature_importances = clf.feature_importances_
 
     # true feature importance ranking
-    true_ranking = np.array([ 3,  1,  8, 10,  2,  9,  4, 11,  0,  6,  7,  5, 12])
+    true_ranking = np.array([3,  1,  8, 10,  2,  9,  4, 11,  0,  6,  7,  5, 12])
 
     assert_array_equal(true_ranking, feature_importances.argsort())
 
 
 def test_probability():
     """Predict probabilities."""
-    clf = GradientBoostingClassifier(n_iter=100, random_state=1)
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
 
     assert_raises(ValueError, clf.predict_proba, T)
 
@@ -185,12 +185,12 @@ def test_probability():
 
 def test_check_inputs():
     """Test input checks (shape and type of X and y)."""
-    clf = GradientBoostingClassifier(n_iter=100, random_state=1)
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
     assert_raises(ValueError, clf.fit, X, y + [0, 1])
 
     from scipy import sparse
     X_sparse = sparse.csr_matrix(X)
-    clf = GradientBoostingClassifier(n_iter=100, random_state=1)
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
     assert_raises(ValueError, clf.fit, X_sparse, y)
 
     clf = GradientBoostingClassifier().fit(X, y)

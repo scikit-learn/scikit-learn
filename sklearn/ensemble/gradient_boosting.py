@@ -6,7 +6,7 @@
 #      * Multi-class classification
 #      * Huber loss for regression
 #      * Partial-dependency plots
-#      * Routine to find optimal n_iter
+#      * Routine to find optimal n_estimators
 #
 
 from __future__ import division
@@ -181,14 +181,15 @@ LOSS_FUNCTIONS = {'ls': LeastSquaresError,
 
 
 class BaseGradientBoosting(BaseEstimator):
+    """Abstract base class for Gradient Boosting. """
 
-    trees = []
+    estimators = []
 
-    def __init__(self, loss, learn_rate, n_iter, min_split, max_depth, init,
+    def __init__(self, loss, learn_rate, n_estimators, min_split, max_depth, init,
                  subsample, random_state):
-        if n_iter <= 0:
-            raise ValueError("n_iter must be greater than 0")
-        self.n_iter = n_iter
+        if n_estimators <= 0:
+            raise ValueError("n_estimators must be greater than 0")
+        self.n_estimators = n_estimators
 
         if learn_rate <= 0.0:
             raise ValueError("learn_rate must be greater than 0")
@@ -265,15 +266,15 @@ class BaseGradientBoosting(BaseEstimator):
         # init predictions
         y_pred = self.init.predict(X)
 
-        self.trees = []
+        self.estimators = []
 
-        self.train_deviance = np.zeros((self.n_iter,), dtype=np.float64)
-        self.oob_deviance = np.zeros((self.n_iter), dtype=np.float64)
+        self.train_deviance = np.zeros((self.n_estimators,), dtype=np.float64)
+        self.oob_deviance = np.zeros((self.n_estimators), dtype=np.float64)
 
         sample_mask = np.ones((n_samples,), dtype=np.bool)
 
         # perform boosting iterations
-        for i in xrange(self.n_iter):
+        for i in xrange(self.n_estimators):
 
             # subsampling
             if self.subsample < 1.0:
@@ -293,7 +294,7 @@ class BaseGradientBoosting(BaseEstimator):
                                          self.learn_rate)
 
             # add tree to ensemble
-            self.trees.append(tree)
+            self.estimators.append(tree)
 
             # update out-of-bag predictions and deviance
             if self.subsample < 1.0:
@@ -317,21 +318,21 @@ class BaseGradientBoosting(BaseEstimator):
         """
         if old_pred is not None:
             return old_pred + self.learn_rate * \
-                   self.trees[-1].predict(X).ravel()
+                   self.estimators[-1].predict(X).ravel()
         else:
             y = self.init.predict(X)
-            for tree in self.trees:
+            for tree in self.estimators:
                 y += self.learn_rate * tree.predict(X).ravel()
             return y
 
     @property
     def feature_importances_(self):
-        if not self.trees or len(self.trees) == 0:
+        if not self.estimators or len(self.estimators) == 0:
             raise ValueError("Estimator not fitted, " \
                              "call `fit` before `feature_importances_`.")
         importances = sum(compute_feature_importances(tree, self.n_features,
                                                       method='squared')
-                          for tree in self.trees) / len(self.trees)
+                          for tree in self.estimators) / len(self.estimators)
         importances = 100.0 * (importances / importances.max())
         return importances
 
@@ -345,17 +346,17 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
     Parameters
     ----------
-    n_iter : int
+    n_estimators : int (default=100)
         The number of boosting stages to perform. Gradient boosting
         is fairly robust to over-fitting so a large number usually
         results in better performance.
 
     learn_rate : float, optional (default=0.1)
         learning rate shrinks the contribution of each tree by `learn_rate`.
-        There is a trade-off between learn_rate and n_iter (see Discussion).
+        There is a trade-off between learn_rate and n_estimators (see Discussion).
 
     max_depth : integer, optional (default=3)
-        maximum depth of the individual regression trees. The maximum
+        maximum depth of the individual regression estimators. The maximum
         depth limits the number of nodes in the tree. Tune this parameter
         for best performance; the best value depends on the interaction
         of the input variables.
@@ -367,7 +368,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     subsample : float, optional (default=1.0)
         The fraction of samples to be used for fitting the individual base
         learners. If smaller than 1.0 this results in Stochastic Gradient
-        Boosting. `subsample` interacts with the parameter `n_iter`
+        Boosting. `subsample` interacts with the parameter `n_estimators`
         (see Discussion).
 
     Examples
@@ -387,9 +388,9 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     ----------
     The optimal algorithm for a given dataset is a complicated choice, and
     depends on a number of factors:
-    * n_iter vs. learn_rate
+    * n_estimators vs. learn_rate
         TODO
-    * n_iter vs. subsample
+    * n_estimators vs. subsample
         TODO
 
     References
@@ -403,12 +404,12 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     Elements of Statistical Learning Ed. 2, Springer, 2009.
     """
 
-    def __init__(self, loss='deviance', learn_rate=0.1, n_iter=100,
+    def __init__(self, loss='deviance', learn_rate=0.1, n_estimators=100,
                  subsample=1.0, min_split=1, max_depth=3,
                  init=None, random_state=None):
 
         super(GradientBoostingClassifier, self).__init__(
-            loss, learn_rate, n_iter, min_split, max_depth, init, subsample,
+            loss, learn_rate, n_estimators, min_split, max_depth, init, subsample,
             random_state)
 
     def fit(self, X, y, monitor=None):
@@ -442,7 +443,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     def predict(self, X):
         X = np.atleast_2d(X)
         X = X.astype(DTYPE)
-        if len(self.trees) == 0:
+        if len(self.estimators) == 0:
             raise ValueError("Estimator not fitted, " \
                              "call `fit` before `predict`.")
         f = self._predict(X)
@@ -451,7 +452,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     def predict_proba(self, X):
         X = np.atleast_2d(X)
         X = X.astype(DTYPE)
-        if len(self.trees) == 0:
+        if len(self.estimators) == 0:
             raise ValueError("Estimator not fitted, " \
                              "call `fit` before `predict_proba`.")
         f = self._predict(X)
@@ -469,14 +470,14 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
     Parameters
     ----------
-    n_iter : int
+    n_estimators : int (default=100)
         The number of boosting stages to perform. Gradient boosting
         is fairly robust to over-fitting so a large number usually
         results in better performance.
 
     learn_rate : float, optional (default=0.1)
         learning rate shrinks the contribution of each tree by `learn_rate`.
-        There is a trade-off between learn_rate and n_iter (see Discussion).
+        There is a trade-off between learn_rate and n_estimators (see Discussion).
 
     loss : {'ls', 'lad'}, optional
         loss function to be optimized. 'ls' refers to least squares
@@ -485,7 +486,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         variables.
 
     max_depth : integer, optional (default=3)
-        maximum depth of the individual regression trees. The maximum
+        maximum depth of the individual regression estimators. The maximum
         depth limits the number of nodes in the tree. Tune this parameter
         for best performance; the best value depends on the interaction
         of the input variables.
@@ -497,7 +498,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     subsample : float, optional (default=1.0)
         The fraction of samples to be used for fitting the individual base
         learners. If smaller than 1.0 this results in Stochastic Gradient
-        Boosting. `subsample` interacts with the parameter `n_iter`
+        Boosting. `subsample` interacts with the parameter `n_estimators`
         (see Discussion).
 
     Examples
@@ -518,9 +519,9 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     The optimal algorithm for a given dataset is a complicated choice, and
     depends on a number of factors:
 
-    * n_iter vs. learn_rate
+    * n_estimators vs. learn_rate
         TODO
-    * n_iter vs. subsample
+    * n_estimators vs. subsample
         TODO
 
     References
@@ -534,17 +535,17 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     Elements of Statistical Learning Ed. 2, Springer, 2009.
     """
 
-    def __init__(self, loss='ls', learn_rate=0.1, n_iter=100, subsample=1.0,
+    def __init__(self, loss='ls', learn_rate=0.1, n_estimators=100, subsample=1.0,
                  min_split=1, max_depth=3, init=None, random_state=None):
 
         super(GradientBoostingRegressor, self).__init__(
-            loss, learn_rate, n_iter, min_split, max_depth, init, subsample,
+            loss, learn_rate, n_estimators, min_split, max_depth, init, subsample,
             random_state)
 
     def predict(self, X):
         X = np.atleast_2d(X)
         X = X.astype(DTYPE)
-        if len(self.trees) == 0:
+        if len(self.estimators) == 0:
             raise ValueError("Estimator not fitted, " \
                              "call `fit` before `predict`.")
         y = self._predict(X)

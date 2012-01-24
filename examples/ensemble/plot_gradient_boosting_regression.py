@@ -31,7 +31,7 @@ X_test, y_test = X[offset:], y[offset:]
 
 ################################################################################
 # Fit regression model
-params = {'n_iter': 500, 'max_depth': 4, 'min_split': 1, 'learn_rate': 0.01,
+params = {'n_estimators': 500, 'max_depth': 4, 'min_split': 1, 'learn_rate': 0.01,
           'loss': 'ls'}
 clf = ensemble.GradientBoostingRegressor(**params)
 
@@ -44,17 +44,17 @@ print("MSE: %.4f" % mse)
 
 # compute test set deviance
 y_pred = clf.init.predict(X_test)
-test_deviance = np.zeros((params['n_iter'],), dtype=np.float64)
-for i, tree in enumerate(clf.trees):
+test_deviance = np.zeros((params['n_estimators'],), dtype=np.float64)
+for i, tree in enumerate(clf.estimators):
     y_pred += clf.learn_rate * tree.predict(X_test).ravel()
     test_deviance[i] = clf.loss_(y_test, y_pred)
 
 pl.figure()  #figsize=(12, 6))
 pl.subplot(1, 2, 1)
 pl.title('Deviance')
-pl.plot(np.arange(params['n_iter']) + 1, clf.train_deviance, 'b-',
+pl.plot(np.arange(params['n_estimators']) + 1, clf.train_deviance, 'b-',
         label='Training Set Deviance')
-pl.plot(np.arange(params['n_iter']) + 1, test_deviance, 'r-',
+pl.plot(np.arange(params['n_estimators']) + 1, test_deviance, 'r-',
         label='Test Set Deviance')
 pl.legend(loc='upper right')
 pl.xlabel('Boosting Iterations')
