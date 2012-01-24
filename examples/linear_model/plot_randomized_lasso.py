@@ -34,7 +34,7 @@ X = Scaler().fit_transform(X)
 # Plot stability selection path
 scaling = .3
 alpha_grid, scores_path = lasso_stability_path(X, y, scaling=scaling,
-                                      random_state=42)
+                                      random_state=42, eps=0.01)
 
 pl.figure()
 hg = pl.plot((alpha_grid[1:])**(.333), scores_path[coef != 0].T[1:], 'r')
