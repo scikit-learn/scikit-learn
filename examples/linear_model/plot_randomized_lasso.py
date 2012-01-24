@@ -37,10 +37,10 @@ alpha_grid, scores_path = lasso_stability_path(X, y, scaling=scaling,
                                       random_state=42)
 
 pl.figure()
-hg = pl.plot(-np.log10(alpha_grid[1:]), scores_path[coef != 0].T[1:], 'r')
-hb = pl.plot(-np.log10(alpha_grid[1:]), scores_path[coef == 0].T[1:], 'k')
+hg = pl.plot((alpha_grid[1:])**(.333), scores_path[coef != 0].T[1:], 'r')
+hb = pl.plot((alpha_grid[1:])**(.333), scores_path[coef == 0].T[1:], 'k')
 ymin, ymax = pl.ylim()
-pl.xlabel(r'$-log_{10}(\alpha / \alpha_{max})$')
+pl.xlabel(r'$(\alpha / \alpha_{max})^{1/3}$')
 pl.ylabel('Proportion of times selected')
 pl.title('Stability Scores Path')
 pl.axis('tight')
@@ -54,11 +54,11 @@ pl.ylim([0, 1.05])
 
 # First find the best alpha:
 cv = ShuffleSplit(n_samples, n_iterations=10, test_fraction=0.25)
-alpha_cv = LassoLarsCV().fit(X, y).alpha
+ms = LassoLarsCV().fit(X, y)
+alpha_cv = ms.alpha
 
 # Then run the RandomizedLasso
 clf = RandomizedLasso(verbose=False, alpha=alpha_cv, random_state=42,
-                      #n_resampling=1000,
                       scaling=scaling)
 clf.fit(X, y)
 
