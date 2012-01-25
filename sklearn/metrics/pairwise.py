@@ -174,7 +174,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     return distances if squared else np.sqrt(distances)
 
 
-@deprecated("use euclidean_distances instead")
+@deprecated("to be deprecated in v0.11; use euclidean_distances instead")
 def euclidian_distances(*args, **kwargs):
     return euclidean_distances(*args, **kwargs)
 
