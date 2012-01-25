@@ -1,8 +1,9 @@
 """Random Projection transformers
 
-Random Projections are an efficient way to reduce the dimensionality
-of the data by trading a controlled amount of accuracy (as additional
-variance) for faster processing times and smaller model sizes.
+Random Projections are a simple and computationally efficient way to
+reduce the dimensionality of the data by trading a controlled amount
+of accuracy (as additional variance) for faster processing times and
+smaller model sizes.
 
 The dimensions and distribution of Random Projections matrices are
 controlled so as to preserve the pairwise distances between any two
@@ -26,10 +27,8 @@ Johnson-Lindenstrauss lemma (quoting Wikipedia):
 # License: Simple BSD
 
 from __future__ import division
-import warnings
 import math
 import random
-from itertools import izip
 
 import numpy as np
 import scipy.sparse as sp
@@ -215,14 +214,41 @@ def sparse_random_matrix(n_components, n_features, density='auto',
     return math.sqrt(1 / density) / math.sqrt(n_components) * r
 
 
-def hashing_dot(A, n_components, density='auto', random_state=None,
-                dense_output=False, out=None):
-    """Implicit dot product by a random sparse matrix using a hash function
+def random_dot(A, n_components, density='auto', random_state=None,
+               dense_output=False, out=None):
+    """Implicit dot product by a random sparse matrix
 
+    Calling this function is equivalent (up to a random seed shift) to::
 
-    TODO: write me + document parameters
+        safe_sparse_dot(A, sparse_random_matrix(n_features, n_components)
 
-    TODO: make it possible to pass a preallocated ``out`` argument.
+    The difference is that random matrix is never fully allocated in
+    memory but instead generated on the fly using a hash function.
+
+    Parameters
+    ==========
+    A: array or sparse matrix with shape (n_samples, n_features)
+        The input data to randomly project.
+
+    n_components: int
+        The dimension of the target space.
+
+    density: "auto" or float in range (0, 1/3)
+        The density (ratio of non-zeros) of the simulated sparse random matrix.
+
+    random_state: RandomState instance, int or None
+        The PRNG used to seed the hash functions.
+
+    dense_ouput: boolean, False by default
+        Force the output to be a dense numpy array even if the input is sparse.
+
+    out: array or None
+        Preallocated numpy ndarray to store the result.
+
+    Returns
+    =======
+    out: array or scipy sparse COO matrix
+        Result of the dot product of A by a sparse random matrix.
     """
     if n_components <= 0:
         raise ValueError("n_components must be strictly positive, got %d" %
@@ -318,7 +344,7 @@ def hashing_dot(A, n_components, density='auto', random_state=None,
 
     else:
         raise TypeError(
-            "hashing_dot is not supported for input with type %s "
+            "random_dot is not supported for input with type %s "
             "and dense_output=%r" % (type(A), dense_output))
 
     weight = math.sqrt(1 / density) / math.sqrt(n_components)
@@ -330,9 +356,10 @@ def hashing_dot(A, n_components, density='auto', random_state=None,
 class SparseRandomProjection(BaseEstimator, TransformerMixin):
     """Transformer to reduce the dimensionality with sparse random projection
 
-    Alternative to the dense Gaussian Random matrix that guarantees
-    similar embedding quality while being much more memory efficient
-    and allowing faster computation of the projected data.
+    Sparse random matrix is an alternative to the dense Gaussian
+    random matrix that guarantees similar embedding quality while being
+    much more memory efficient and allowing faster computation of the
+    projected data.
 
     The implementation uses either a materialized random CSR matrix or
     a simulated dot product by a random matrix implicitly defined by a
@@ -370,7 +397,17 @@ class SparseRandomProjection(BaseEstimator, TransformerMixin):
     materialize : boolean, optional, True by default
         If materialize is True a CSR sparse matrix is allocated in
         memory. If false, the dot product by the sparse matrix is
-        implicitly simulated using hash functions.
+        implicitly simulated using a family of hash functions.
+
+        ``materialize == True`` will incur a slower fit time and allocate
+        memory proportionally to ``n_components * n_features * density``
+        but on the other hand ``predict`` will be computed faster.
+
+        ``materialize == False`` will incur slower ``predict`` calls
+        but will not allocate any additional memory during fit.
+
+        In practice, ``materialize == False`` is interesting for high-dim
+        sparse data with ``n_components >> 10000``.
 
     eps : strictly positive float, optional, default 0.1
         Parameter to control the quality of the embedding according to
@@ -505,6 +542,6 @@ class SparseRandomProjection(BaseEstimator, TransformerMixin):
             return safe_sparse_dot(X, self.components_.T,
                                    dense_output=self.dense_output)
         else:
-            return hashing_dot(X, self.n_components_, self.density_,
-                               random_state=self.seed_,
-                               dense_output=self.dense_output)
+            return random_dot(X, self.n_components_, self.density_,
+                              random_state=self.seed_,
+                              dense_output=self.dense_output)
