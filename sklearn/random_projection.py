@@ -216,11 +216,13 @@ def sparse_random_matrix(n_components, n_features, density='auto',
 
 
 def hashing_dot(A, n_components, density='auto', random_state=None,
-                dense_output=False):
+                dense_output=False, out=None):
     """Implicit dot product by a random sparse matrix using a hash function
 
 
     TODO: write me + document parameters
+
+    TODO: make it possible to pass a preallocated ``out`` argument.
     """
     if n_components <= 0:
         raise ValueError("n_components must be strictly positive, got %d" %
@@ -234,6 +236,13 @@ def hashing_dot(A, n_components, density='auto', random_state=None,
     n_samples, n_features = A.shape
     density = _check_density(density, n_features)
 
+    if out is not None:
+        dense_output = True
+        if out.shape != (n_samples, n_components):
+            raise ValueError("out should have shape (%d, %d), got %r" %
+                             (n_samples, n_components, out.shape))
+        out.fill(0)
+
     # find the number of non-zero component in the random matrix
     # to simulate for each feature
     random_state = check_random_state(random_state)
@@ -246,7 +255,8 @@ def hashing_dot(A, n_components, density='auto', random_state=None,
     base = np.arange(n_components, dtype=np.int32)
 
     if not sp.issparse(A):
-        out = np.zeros((n_samples, n_components), A.dtype)
+        if out is None:
+            out = np.zeros((n_samples, n_components), A.dtype)
         for feature_idx in xrange(n_features):
             # use the hash function to retrieve the indices of the
             # components in the random matrix that have a non-zero value
@@ -264,8 +274,8 @@ def hashing_dot(A, n_components, density='auto', random_state=None,
                 out[:, component_idx] -= A[:, feature_idx]
 
     elif sp.isspmatrix_csr(A) and dense_output:
-        # TODO: rewrite the following nested for loops in cython
-        out = np.zeros((n_samples, n_components), A.dtype)
+        if out is None:
+            out = np.zeros((n_samples, n_components), A.dtype)
         for sample_idx in xrange(n_samples):
             for k in xrange(A.indptr[sample_idx], A.indptr[sample_idx + 1]):
                 feature_idx = A.indices[k]
@@ -304,8 +314,7 @@ def hashing_dot(A, n_components, density='auto', random_state=None,
         out = sp.coo_matrix((values, (rows, cols)),
                             shape=(n_samples, n_components))
 
-    elif sp.isspmatrix_csr(A) and not dense_output:
-        raise NotImplementedError("TODO")
+    # TODO: implement support for CSC here
 
     else:
         raise TypeError(
@@ -313,7 +322,9 @@ def hashing_dot(A, n_components, density='auto', random_state=None,
             "and dense_output=%r" % (type(A), dense_output))
 
     weight = math.sqrt(1 / density) / math.sqrt(n_components)
-    return out * weight
+    # inplace modification of out necessary if out was passed as an argument
+    out *= weight
+    return out
 
 
 class SparseRandomProjection(BaseEstimator, TransformerMixin):
