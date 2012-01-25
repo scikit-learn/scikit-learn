@@ -967,7 +967,7 @@ class GMMHMM(_BaseHMM):
         return np.array([g.score(obs) for g in self.gmms]).T
 
     def _generate_sample_from_state(self, state, random_state=None):
-        return self.gmms[state].rvs(1, random_state=random_state).flatten()
+        return self.gmms[state].sample(1, random_state=random_state).flatten()
 
     def _init(self, obs, params='stwmc'):
         super(GMMHMM, self)._init(obs, params=params)

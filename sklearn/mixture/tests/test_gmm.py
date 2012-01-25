@@ -176,7 +176,7 @@ class GMMTester():
                                   np.ones(n_samples))
         assert_array_equal(responsibilities.argmax(axis=1), gaussidx)
 
-    def test_rvs(self, n=100):
+    def test_sample(self, n=100):
         g = self.model(n_components=self.n_components,
                        covariance_type=self.covariance_type, random_state=rng)
         # Make sure the means are far apart so responsibilities.argmax()
@@ -185,7 +185,7 @@ class GMMTester():
         g.covars_ = np.maximum(self.covars[self.covariance_type], 0.1)
         g._set_weights(self.weights)
 
-        samples = g.rvs(n)
+        samples = g.sample(n)
         self.assertEquals(samples.shape, (n, self.n_features))
 
     def test_train(self, params='wmc'):
@@ -196,7 +196,7 @@ class GMMTester():
         g.covars_ = 20 * self.covars[self.covariance_type]
 
         # Create a training set by sampling from the predefined distribution.
-        X = g.rvs(n_samples=100)
+        X = g.sample(n_samples=100)
         g = self.model(n_components=self.n_components,
                        covariance_type=self.covariance_type,
                        random_state=rng, min_covar=1e-1)

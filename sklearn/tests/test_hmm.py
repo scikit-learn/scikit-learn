@@ -599,7 +599,7 @@ class TestGMMHMM(GMMHMMParams, SeedRandomNumberGeneratorTestCase):
 
         refstateseq = np.repeat(range(self.n_components), 5)
         nobs = len(refstateseq)
-        obs = [h.gmms[x].rvs(1).flatten() for x in refstateseq]
+        obs = [h.gmms[x].sample(1).flatten() for x in refstateseq]
 
         ll, posteriors = h.eval(obs)
 

@@ -2,6 +2,7 @@
 Dirichlet Process Gaussian Mixture Models"""
 
 # Author: Alexandre Passos (alexandre.tp@gmail.com)
+#         Bertrand Thirion <bertrand.thirion@inria.fr>
 #
 # Based on mixture.py by:
 #         Ron Weiss <ronweiss@gmail.com>
@@ -155,13 +156,13 @@ class DPGMM(GMM):
     n_components : int
         Number of mixture components.
 
-    weights_ : array, shape (`n_components`,)
+    `weights_` : array, shape (`n_components`,)
         Mixing weights for each mixture component.
 
-    means_ : array, shape (`n_components`, `n_features`)
+    `means_` : array, shape (`n_components`, `n_features`)
         Mean parameters for each mixture component.
 
-    precisions_ : array
+    `precisions_` : array
         Precision (inverse covariance) parameters for each mixture
         component.  The shape depends on `covariance_type`::
             (`n_components`, 'n_features')                if 'spherical',
@@ -609,13 +610,13 @@ class VBGMM(DPGMM):
     n_components : int (read-only)
         Number of mixture components.
 
-    weights_ : array, shape (`n_components`,)
+    `weights_` : array, shape (`n_components`,)
         Mixing weights for each mixture component.
 
-    means_ : array, shape (`n_components`, `n_features`)
+    `means_` : array, shape (`n_components`, `n_features`)
         Mean parameters for each mixture component.
 
-    precisions_ : array
+    `precisions_` : array
         Precision (inverse covariance) parameters for each mixture
         component.  The shape depends on `covariance_type`:
             (`n_components`, 'n_features')                if 'spherical',

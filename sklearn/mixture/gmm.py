@@ -7,7 +7,7 @@ of Gaussian Mixture Models.
 
 # Author: Ron Weiss <ronweiss@gmail.com>
 #         Fabian Pedregosa <fabian.pedregosa@inria.fr>
-#
+#         Bertrand Thirion <bertrand.thirion@inria.fr>
 
 import numpy as np
 
@@ -139,11 +139,11 @@ class GMM(BaseEstimator):
     covariance_type : string (read-only)
         String describing the type of covariance parameters used by
         the GMM.  Must be one of 'spherical', 'tied', 'diag', 'full'.
-    weights_ : array, shape (`n_components`,)
+    `weights_` : array, shape (`n_components`,)
         Mixing weights for each mixture component.
-    means_ : array, shape (`n_components`, `n_features`)
+    `means_` : array, shape (`n_components`, `n_features`)
         Mean parameters for each mixture component.
-    covars_ : array
+    `covars_` : array
         Covariance parameters for each mixture component.  The shape
         depends on `covariance_type`:
             (n_components,)                        if 'spherical',
@@ -380,7 +380,7 @@ class GMM(BaseEstimator):
         logprob, responsibilities = self.eval(X)
         return responsibilities
 
-    def rvs(self, n_samples=1, random_state=None):
+    def sample(self, n_samples=1, random_state=None):
         """Generate random samples from the model.
 
         Parameters
