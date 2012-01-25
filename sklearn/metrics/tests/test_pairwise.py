@@ -15,6 +15,7 @@ from ..pairwise import sigmoid_kernel
 from .. import pairwise_distances, pairwise_kernels
 from ..pairwise import pairwise_kernel_functions
 from ..pairwise import check_pairwise_arrays
+from ..pairwise import _parallel_pairwise
 
 np.random.seed(0)
 
@@ -75,6 +76,20 @@ def test_pairwise_distances():
     assert_raises(TypeError, pairwise_distances, X_sparse, metric="minkowski")
     assert_raises(TypeError, pairwise_distances, X, Y_sparse,
                   metric="minkowski")
+
+def test_pairwise_parallel():
+    rng = np.random.RandomState(0)
+    for func in (np.array, csr_matrix):
+        X = func(rng.random_sample((5, 4)))
+        Y = func(rng.random_sample((3, 4)))
+
+        S = euclidean_distances(X)
+        S2 = _parallel_pairwise(X, None, euclidean_distances, n_jobs=-1)
+        assert_array_almost_equal(S, S2)
+
+        S = euclidean_distances(X, Y)
+        S2 = _parallel_pairwise(X, Y, euclidean_distances, n_jobs=-1)
+        assert_array_almost_equal(S, S2)
 
 
 def test_pairwise_kernels():
