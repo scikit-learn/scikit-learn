@@ -2,6 +2,7 @@
 import numpy as np
 
 from ..base import TransformerMixin
+from ..utils import safe_mask
 
 
 class SelectorMixin(TransformerMixin):
@@ -16,7 +17,7 @@ class SelectorMixin(TransformerMixin):
 
         Parameters
         ----------
-        X : array of shape [n_samples, n_features]
+        X : array or scipy sparse matrix of shape [n_samples, n_features]
             The input samples.
 
         threshold : string, float or None, optional (default=None)
@@ -84,7 +85,7 @@ class SelectorMixin(TransformerMixin):
         mask = importances >= threshold
 
         if np.any(mask):
+            mask = safe_mask(X, mask)
             return X[:, mask]
-
         else:
             raise ValueError("Invalid threshold: all features are discarded.")

@@ -332,22 +332,3 @@ class BaseSGD(BaseEstimator):
         n_samples, _ = X.shape
         if n_samples != y.shape[0]:
             raise ValueError("Shapes of X and y do not match.")
-
-
-class CoefSelectTransformerMixin(TransformerMixin):
-    """Mixin for linear models that can find sparse solutions."""
-
-    def transform(self, X, threshold=1e-10):
-        if len(self.coef_.shape) == 1 or self.coef_.shape[1] == 1:
-            # 2-class case
-            coef = np.ravel(self.coef_)
-        else:
-            # multi-class case
-            coef = np.mean(self.coef_, axis=0)
-
-        if sp.isspmatrix(X):
-            X = X.tocsc()
-            ind = np.arange(X.shape[1])
-            return X[:, ind[coef > threshold]]
-        else:
-            return X[:, coef > threshold]

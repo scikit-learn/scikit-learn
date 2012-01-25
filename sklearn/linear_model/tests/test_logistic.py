@@ -100,15 +100,5 @@ def test_nan():
     logistic.LogisticRegression().fit(Xnan, Y1)
 
 
-def test_transform():
-    clf = logistic.LogisticRegression(penalty="l1")
-    clf.fit(iris.data, iris.target)
-    X_new = clf.transform(iris.data)
-    clf = logistic.LogisticRegression()
-    clf.fit(X_new, iris.target)
-    pred = clf.predict(X_new)
-    assert np.mean(pred == iris.target) >= 0.75
-
-
 if __name__ == '__main__':
     nose.runmodule()
