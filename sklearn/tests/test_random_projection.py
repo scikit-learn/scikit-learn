@@ -5,7 +5,7 @@ import numpy as np
 from sklearn.metrics import euclidean_distances
 from sklearn.random_projection import SparseRandomProjection
 from sklearn.random_projection import johnson_lindenstrauss_min_dim
-from sklearn.random_projection import hashing_dot
+from sklearn.random_projection import random_dot
 
 from sklearn.utils.testing import assert_raise_message
 from numpy.testing import assert_array_equal
@@ -46,23 +46,23 @@ def test_invalid_jl_domain():
     assert_raises(ValueError, johnson_lindenstrauss_min_dim, 100, -0.1)
 
 
-def test_hashing_dot():
+def test_random_dot():
     n_components = 300
     density = 0.01
 
     # random dot with dense array input (and output)
-    projected_array_array = hashing_dot(data, n_components, density,
+    projected_array_array = random_dot(data, n_components, density,
                                         random_state=0)
     assert_equal(projected_array_array.shape, (n_samples, n_components))
     assert_almost_equal(projected_array_array.mean(), 0.0, 2)
 
     # random dot with CSR input and dense array output
-    projected_csr_array = hashing_dot(data_csr, n_components, density,
+    projected_csr_array = random_dot(data_csr, n_components, density,
                                       random_state=0, dense_output=True)
     assert_equal(projected_csr_array.shape, (n_samples, n_components))
 
     # random dot with CSR input and sparse matrix output
-    projected_csr_coo = hashing_dot(data_csr, n_components, density,
+    projected_csr_coo = random_dot(data_csr, n_components, density,
                                     random_state=0, dense_output=False)
     assert_equal(projected_csr_coo.shape, (n_samples, n_components))
 
@@ -72,26 +72,26 @@ def test_hashing_dot():
                               projected_csr_coo.toarray())
 
 
-def test_hashing_dot_invalid_input():
-    assert_raises(ValueError, hashing_dot, data, -10)
+def test_random_dot_invalid_input():
+    assert_raises(ValueError, random_dot, data, -10)
 
 
-def test_hashing_dot_preallocated_out():
+def test_random_dot_preallocated_out():
     n_components = 10
     # check value error on invalid output shape
-    assert_raises(ValueError, hashing_dot, data, n_components, out=data)
+    assert_raises(ValueError, random_dot, data, n_components, out=data)
 
     # compare out and no out
-    array_no_out = hashing_dot(data, n_components, random_state=0)
+    array_no_out = random_dot(data, n_components, random_state=0)
 
     array_out = np.ones((data.shape[0], n_components), dtype=data.dtype)
-    hashing_dot(data, n_components, random_state=0, out=array_out)
+    random_dot(data, n_components, random_state=0, out=array_out)
 
     assert_array_almost_equal(array_no_out, array_out)
 
     # check with sparse input as well
     array_out.fill(1.0)
-    hashing_dot(data_csr, n_components, random_state=0, out=array_out)
+    random_dot(data_csr, n_components, random_state=0, out=array_out)
     assert_array_almost_equal(array_no_out, array_out)
 
 
