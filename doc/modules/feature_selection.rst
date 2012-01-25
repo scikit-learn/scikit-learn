@@ -89,7 +89,7 @@ is to reduce the dimensionality of the data to use with another classifier, the
   >>> X, y = iris.data, iris.target
   >>> X.shape
   (150, 4)
-  >>> X_new = LinearSVC(C=1, penalty="l1", dual=False).fit_transform(X, y)
+  >>> X_new = LinearSVC(C=0.01, penalty="l1", dual=False).fit_transform(X, y)
   >>> X_new.shape
   (150, 3)
 

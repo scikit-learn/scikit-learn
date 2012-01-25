@@ -55,7 +55,11 @@ class SelectorMixin(TransformerMixin):
 
         # Retrieve threshold
         if threshold is None:
-            threshold = getattr(self, "threshold", "mean")
+            if hasattr(self, "penalty") and self.penalty == "l1":
+                # the natural default threshold is 0 when l1 penalty was used
+                threshold = getattr(self, "threshold", 1e-5)
+            else:
+                threshold = getattr(self, "threshold", "mean")
 
         if isinstance(threshold, basestring):
             if "*" in threshold:
