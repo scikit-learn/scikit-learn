@@ -72,6 +72,29 @@ def test_hashing_dot():
                               projected_csr_coo.toarray())
 
 
+def test_hashing_dot_invalid_input():
+    assert_raises(ValueError, hashing_dot, data, -10)
+
+
+def test_hashing_dot_preallocated_out():
+    n_components = 10
+    # check value error on invalid output shape
+    assert_raises(ValueError, hashing_dot, data, n_components, out=data)
+
+    # compare out and no out
+    array_no_out = hashing_dot(data, n_components, random_state=0)
+
+    array_out = np.ones((data.shape[0], n_components), dtype=data.dtype)
+    hashing_dot(data, n_components, random_state=0, out=array_out)
+
+    assert_array_almost_equal(array_no_out, array_out)
+
+    # check with sparse input as well
+    array_out.fill(1.0)
+    hashing_dot(data_csr, n_components, random_state=0, out=array_out)
+    assert_array_almost_equal(array_no_out, array_out)
+
+
 class MaterializedRandomProjection(unittest.TestCase):
 
     materialize = True
@@ -86,6 +109,9 @@ class MaterializedRandomProjection(unittest.TestCase):
             density=0.8, materialize=self.materialize)
         assert_raises(ValueError, rp_08.fit, data)
         assert_raises(ValueError, self.rp.fit, [0, 1, 2])
+
+        rp = SparseRandomProjection(n_components=-10)
+        assert_raises(ValueError, rp.fit, data)
 
     def test_input_dimension_inconsistency(self):
         expected_msg = ("n_components=20000 should be smaller "
