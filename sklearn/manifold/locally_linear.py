@@ -242,17 +242,17 @@ def locally_linear_embedding(
     -----
     **References**:
 
-      .. [Roweis2000] `Roweis, S. & Saul, L. Nonlinear dimensionality reduction by
-          locally linear embedding.  Science 290:2323 (2000).`
-      .. [Donoho2003] `Donoho, D. & Grimes, C. Hessian eigenmaps: Locally linear embedding
-          techniques for high-dimensional data. Proc Natl Acad Sci U S A.
-          100:5591 (2003).`
-      .. [Zhang2007] `Zhang, Z. & Wang, J. MLLE: Modified Locally Linear Embedding
-          Using Multiple Weights.`
+      .. [Roweis2000] `Roweis, S. & Saul, L. Nonlinear dimensionality reduction
+          by locally linear embedding.  Science 290:2323 (2000).`
+      .. [Donoho2003] `Donoho, D. & Grimes, C. Hessian eigenmaps: Locally
+          linear embedding techniques for high-dimensional data.
+          Proc Natl Acad Sci U S A.  100:5591 (2003).`
+      .. [Zhang2007] `Zhang, Z. & Wang, J. MLLE: Modified Locally Linear
+          Embedding Using Multiple Weights.`
           http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.70.382
-      .. [Zhang2004] `Zhang, Z. & Zha, H. Principal manifolds and nonlinear dimensionality
-          reduction via tangent space alignment. Journal of Shanghai Univ.
-          8:406 (2004)`
+      .. [Zhang2004] `Zhang, Z. & Zha, H. Principal manifolds and nonlinear
+          dimensionality reduction via tangent space alignment.
+          Journal of Shanghai Univ.  8:406 (2004)`
     """
     if eigen_solver not in ('auto', 'arpack', 'dense'):
         raise ValueError("unrecognized eigen_solver '%s'" % eigen_solver)

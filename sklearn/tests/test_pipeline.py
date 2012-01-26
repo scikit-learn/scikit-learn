@@ -56,7 +56,7 @@ def test_pipeline_init():
     assert_raises(TypeError, Pipeline)
     # Check that we can't instantiate pipelines with objects without fit
     # method
-    pipe = assert_raises(AssertionError, Pipeline,
+    pipe = assert_raises(TypeError, Pipeline,
                         [('svc', IncorrectT)])
     # Smoke test with only an estimator
     clf = T()
@@ -82,7 +82,7 @@ def test_pipeline_init():
     repr(pipe)
 
     # Check that params are not set when naming them wrong
-    assert_raises(AssertionError, pipe.set_params, anova__C=0.1)
+    assert_raises(ValueError, pipe.set_params, anova__C=0.1)
 
     # Test clone
     pipe2 = clone(pipe)

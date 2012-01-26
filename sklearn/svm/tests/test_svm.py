@@ -507,6 +507,7 @@ def test_liblinear_set_coef():
     values2 = clf.decision_function(X)
     assert_array_equal(values, values2)
 
+
 def test_c_samples_scaling():
     """Test C scaling by n_samples
     """

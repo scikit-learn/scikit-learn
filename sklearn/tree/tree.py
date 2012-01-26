@@ -101,7 +101,8 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
                       tree.value[node_id])
 
     def recurse(tree, node_id):
-        assert node_id != -1
+        if node_id == 1:
+            raise ValueError("Invalid node_id -1")
         left_child, right_child = tree.children[node_id, :]
         node_data = {
             "current": node_id,
@@ -857,7 +858,11 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
     See also
     --------
-    ExtraTreeClassifier, sklearn.ensemble.ExtraTreesClassifier, sklearn.ensemble.ExtraTreesRegressor
+    ExtraTreeClassifier : A classifier base on extremely randomized trees
+    sklearn.ensemble.ExtraTreesClassifier : An ensemble of extra-trees for
+        classification
+    sklearn.ensemble.ExtraTreesRegressor : An ensemble of extra-trees for
+        regression
 
     Notes
     -----

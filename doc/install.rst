@@ -30,10 +30,10 @@ Installing an official release
 Installing from source
 ----------------------
 
-Installing from source requires you to have installed numpy,
-scipy, setuptools, python development headers and a working C++
-compiler. Under Debian-based systems you can get all this by executing
-with root privileges::
+Installing from source requires you to have installed python (>= 2.6), numpy
+(>= 1.3), scipy (>= 0.7), setuptools, python development headers and a working
+C++ compiler. Under Debian-based systems you can get all this by executing with
+root privileges::
 
     sudo apt-get install python-dev python-numpy python-numpy-dev python-setuptools python-numpy-dev python-scipy libatlas-dev g++
 

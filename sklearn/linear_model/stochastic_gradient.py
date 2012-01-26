@@ -11,6 +11,7 @@ from ..externals.joblib import Parallel, delayed
 
 from ..base import RegressorMixin
 from ..base import ClassifierMixin
+from ..feature_selection.selector_mixin import SelectorMixin
 from .base import BaseSGD
 from ..utils import atleast2d_or_csr, check_arrays
 from ..utils.extmath import safe_sparse_dot
@@ -30,7 +31,7 @@ def _tocsr(X):
         return sp.csr_matrix(X, dtype=np.float64)
 
 
-class SGDClassifier(BaseSGD, ClassifierMixin):
+class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
     """Linear model fitted by minimizing a regularized empirical loss with SGD.
 
     SGD stands for Stochastic Gradient Descent: the gradient of the loss is
@@ -165,7 +166,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin):
         self.n_jobs = int(n_jobs)
 
     @property
-    @deprecated("to be removed in v0.12; use classes_ instead.")
+    @deprecated("to be removed in v0.12; use ``classes_`` instead.")
     def classes(self):
         return self.classes_
 
@@ -510,7 +511,7 @@ def _fit_binary_sparse(est, i, X, y, n_iter, pos_weight, neg_weight,
                             est.power_t, est.t_)
 
 
-class SGDRegressor(BaseSGD, RegressorMixin):
+class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
     """Linear model fitted by minimizing a regularized empirical loss with SGD
 
     SGD stands for Stochastic Gradient Descent: the gradient of the loss is
