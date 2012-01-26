@@ -72,7 +72,8 @@ def test_lle_manifold():
     X = np.array(list(product(range(20), repeat=2)))
     X = np.c_[X, X[:, 0] ** 2 / 20]
     out_dim = 2
-    clf = manifold.LocallyLinearEmbedding(n_neighbors=5, out_dim=out_dim)
+    clf = manifold.LocallyLinearEmbedding(n_neighbors=5, out_dim=out_dim,
+                                          random_state=0)
     tol = 1.5
 
     N = barycenter_kneighbors_graph(X, clf.n_neighbors).toarray()
