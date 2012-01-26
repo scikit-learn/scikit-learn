@@ -585,6 +585,7 @@ class LocallyLinearEmbedding(BaseEstimator):
                                       algorithm=neighbors_algorithm)
 
     def _fit_transform(self, X):
+        self.random_state = check_random_state(self.random_state)
         self.nbrs_.fit(X)
         self.embedding_, self.reconstruction_error_ = \
             locally_linear_embedding(
