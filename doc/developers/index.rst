@@ -25,10 +25,8 @@ You are also welcome to post there feature requests or links to pull-requests.
 Retrieving the latest code
 ==========================
 
-Before you get started, you will need a program called `git`. If you 
-are unfamiliar with it, see `this link 
-<http://progit.org/book/ch1-0.html>`_ for a very good tutorial 
-on installing it, as well as using it.
+We use `Git <http://git-scm.com/>`_ for version control and
+`GitHub <http://github.com/>`_ for hosting our main repository.
 
 You can check the latest sources with the command::
 
@@ -65,10 +63,10 @@ How to contribute
 
 The prefered way to contribute to Scikit-Learn is to fork the main
 repository on
-`github <http://github.com/scikit-learn/scikit-learn/>`__:
+`GitHub <http://github.com/scikit-learn/scikit-learn/>`__:
 
  1. `Create an account <https://github.com/signup/free>`_ on
-    github if you don't have one already.
+    GitHub if you don't have one already.
 
  2. Fork the `project repository
     <http://github.com/scikit-learn/scikit-learn>`__: click on the 'Fork'
@@ -104,6 +102,9 @@ When you are ready, and you have pushed your changes on your github repo, go
 the web page of the repo, and click on 'Pull request' to send us a pull
 request. This will send an email to the commiters, but might also send an
 email to the mailing list in order to get more visibility.
+
+(If any of the above seems like magic to you, then look up the
+`Git documentation <http://git-scm.com/documentation>`_ on the web.)
 
 It is recommented to check that your contribution complies with the following
 rules before submitting a pull request:
