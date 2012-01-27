@@ -25,6 +25,8 @@ You are also welcome to post there feature requests or links to pull-requests.
 Retrieving the latest code
 ==========================
 
+Before you get started, you will need a program called `git`. If you are unfamiliar with it, see `this link <http://progit.org/book/ch1-0.html>`_ for a very good tutorial on installing it, as well as using it.
+
 You can check the latest sources with the command::
 
     git clone git://github.com/scikit-learn/scikit-learn.git
@@ -70,8 +72,7 @@ repository on
     button, at the top, center of the page. This creates a copy of
     the code on the GitHub server where you can work.
 
- 3. Clone this copy to your local disk (you need the `git` program to do
-    this)::
+ 3. Clone this copy to your local disk::
 
         $ git clone git@github.com:YourLogin/scikit-learn.git
 
