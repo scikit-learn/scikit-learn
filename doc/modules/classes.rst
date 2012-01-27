@@ -838,26 +838,6 @@ For dense data
 
    svm.l1_min_c
 
-For sparse data
----------------
-
-.. automodule:: sklearn.svm.sparse
-   :no-members:
-   :no-inherited-members:
-
-.. currentmodule:: sklearn
-
-.. autosummary::
-   :toctree: generated/
-   :template: class.rst
-
-   svm.sparse.SVC
-   svm.sparse.NuSVC
-   svm.sparse.SVR
-   svm.sparse.NuSVR
-   svm.sparse.OneClassSVM
-   svm.LinearSVC
-
 Low-level methods
 -----------------
 
