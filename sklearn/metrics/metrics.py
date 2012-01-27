@@ -212,7 +212,7 @@ def auc(x, y):
     return area
 
 
-def precision_score(y_true, y_pred, labels=None, pos_label=None, average='weighted'):
+def precision_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     """Compute the precision
 
     The precision is the ratio :math:`tp / (tp + fp)` where tp is the
@@ -263,7 +263,7 @@ def precision_score(y_true, y_pred, labels=None, pos_label=None, average='weight
     return p
 
 
-def recall_score(y_true, y_pred, labels=None, pos_label=None, average='weighted'):
+def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     """Compute the recall
 
     The recall is the ratio :math:`tp / (tp + fn)` where tp is the number of
@@ -312,7 +312,7 @@ def recall_score(y_true, y_pred, labels=None, pos_label=None, average='weighted'
     return r
 
 
-def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=None,
+def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
                 average='weighted'):
     """Compute fbeta score
 
@@ -373,7 +373,7 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=None,
     return f
 
 
-def f1_score(y_true, y_pred, labels=None, pos_label=None, average='weighted'):
+def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     """Compute f1 score
 
     The F1 score can be interpreted as a weighted average of the precision
@@ -431,7 +431,7 @@ def f1_score(y_true, y_pred, labels=None, pos_label=None, average='weighted'):
 
 
 def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
-                                    pos_label=None, average=None):
+                                    pos_label=1, average="weighted"):
     """Compute precisions, recalls, f-measures and support for each class
 
     The precision is the ratio :math:`tp / (tp + fp)` where tp is the number of
@@ -540,10 +540,10 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     finally:
         np.seterr(**old_err_settings)
 
-    if pos_label is not None:
-        if precision.shape[0] != 2:
-            raise ValueError(("pos_label should be set to None for multiclass "
-                              "tasks got %d") % pos_label)
+    if n_labels == 2:
+        if not average:
+            return precision, recall, fscore, support
+
         if pos_label not in labels:
             raise ValueError("pos_label=%d is not a valid label: %r" %
                              (pos_label, labels))
@@ -552,7 +552,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
                 fscore[pos_label_idx], support[pos_label_idx])
     else:
         average_options = (None, 'micro', 'macro', 'weighted')
-        if average is None:
+        if not average:
             return precision, recall, fscore, support
         elif average == 'micro':
             avg_precision = true_pos.sum() / (true_pos.sum() +
@@ -666,7 +666,9 @@ def classification_report(y_true, y_pred, labels=None, target_names=None):
     report += '\n'
 
     p, r, f1, s = precision_recall_fscore_support(y_true, y_pred,
-                                                  labels=labels)
+                                                  labels=labels,
+                                                  average=None)
+
     for i, label in enumerate(labels):
         values = [target_names[i]]
         for v in (p[i], r[i], f1[i]):

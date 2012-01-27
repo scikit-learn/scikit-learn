@@ -139,7 +139,7 @@ def test_precision_recall_f1_score_binary():
     y_true, y_pred, _ = make_prediction(binary=True)
 
     # detailed measures for each class
-    p, r, f, s = precision_recall_fscore_support(y_true, y_pred)
+    p, r, f, s = precision_recall_fscore_support(y_true, y_pred, average=None)
     assert_array_almost_equal(p, [0.73, 0.75], 2)
     assert_array_almost_equal(r, [0.76, 0.72], 2)
     assert_array_almost_equal(f, [0.75, 0.74], 2)
@@ -152,7 +152,7 @@ def test_precision_recall_f1_score_binary():
     assert_array_almost_equal(ps, 0.75, 2)
 
     rs = recall_score(y_true, y_pred)
-    assert_array_almost_equal(rs, 0.74, 2)
+    assert_array_almost_equal(rs, 0.72, 2)
 
     fs = f1_score(y_true, y_pred)
     assert_array_almost_equal(fs, 0.74, 2)
@@ -185,51 +185,43 @@ def test_precision_recall_f1_score_multiclass():
     y_true, y_pred, _ = make_prediction(binary=False)
 
     # compute scores with default labels introspection
-    p, r, f, s = precision_recall_fscore_support(y_true, y_pred)
+    p, r, f, s = precision_recall_fscore_support(y_true, y_pred, average=None)
     assert_array_almost_equal(p, [0.82, 0.55, 0.47], 2)
     assert_array_almost_equal(r, [0.92, 0.17, 0.90], 2)
     assert_array_almost_equal(f, [0.87, 0.26, 0.62], 2)
     assert_array_equal(s, [25, 30, 20])
 
-    # individual scoring function that can be used for grid search: in the
-    # multiclass case the score is the wieghthed average of the individual
-    # class values hence f1_score is not necessary between precision_score and
-    # recall_score
-    func = lambda: precision_recall_fscore_support(y_true, y_pred,
-                                                   pos_label=1)
-    assert_raises(ValueError, func)
-
     # averaging tests
-    ps = precision_score(y_true, y_pred, pos_label=None, average='micro')
+    ps = precision_score(y_true, y_pred, pos_label=1, average='micro')
     assert_array_almost_equal(ps, 0.61, 2)
 
-    rs = recall_score(y_true, y_pred, pos_label=None, average='micro')
+    rs = recall_score(y_true, y_pred, average='micro')
     assert_array_almost_equal(rs, 0.61, 2)
 
-    fs = f1_score(y_true, y_pred, pos_label=None, average='micro')
+    fs = f1_score(y_true, y_pred, average='micro')
     assert_array_almost_equal(fs, 0.61, 2)
 
-    ps = precision_score(y_true, y_pred, pos_label=None, average='macro')
+    ps = precision_score(y_true, y_pred, average='macro')
     assert_array_almost_equal(ps, 0.62, 2)
 
-    rs = recall_score(y_true, y_pred, pos_label=None, average='macro')
+    rs = recall_score(y_true, y_pred, average='macro')
     assert_array_almost_equal(rs, 0.66, 2)
 
-    fs = f1_score(y_true, y_pred, pos_label=None, average='macro')
+    fs = f1_score(y_true, y_pred, average='macro')
     assert_array_almost_equal(fs, 0.58, 2)
 
-    ps = precision_score(y_true, y_pred, pos_label=None, average='weighted')
+    ps = precision_score(y_true, y_pred, average='weighted')
     assert_array_almost_equal(ps, 0.62, 2)
 
-    rs = recall_score(y_true, y_pred, pos_label=None, average='weighted')
+    rs = recall_score(y_true, y_pred, average='weighted')
     assert_array_almost_equal(rs, 0.61, 2)
 
-    fs = f1_score(y_true, y_pred, pos_label=None, average='weighted')
+    fs = f1_score(y_true, y_pred, average='weighted')
     assert_array_almost_equal(fs, 0.55, 2)
 
     # same prediction but with and explicit label ordering
     p, r, f, s = precision_recall_fscore_support(
-        y_true, y_pred, labels=[0, 2, 1])
+        y_true, y_pred, labels=[0, 2, 1], average=None)
     assert_array_almost_equal(p, [0.82, 0.47, 0.55], 2)
     assert_array_almost_equal(r, [0.92, 0.90, 0.17], 2)
     assert_array_almost_equal(f, [0.87, 0.62, 0.26], 2)
@@ -245,12 +237,12 @@ def test_zero_precision_recall():
         y_true = np.array([0, 1, 2, 0, 1, 2])
         y_pred = np.array([2, 0, 1, 1, 2, 0])
 
-        assert_almost_equal(precision_score(y_true, y_pred, pos_label=None,
-                                            average='weighted'), 0.0, 2)
-        assert_almost_equal(recall_score(y_true, y_pred, pos_label=None,
-                                         average='weighted'), 0.0, 2)
-        assert_almost_equal(f1_score(y_true, y_pred, pos_label=None,
-                                     average='weighted'), 0.0, 2)
+        assert_almost_equal(precision_score(y_true, y_pred, average='weighted'),
+                            0.0, 2)
+        assert_almost_equal(recall_score(y_true, y_pred, average='weighted'),
+                            0.0, 2)
+        assert_almost_equal(f1_score(y_true, y_pred, average='weighted'),
+                            0.0, 2)
 
     finally:
         np.seterr(**old_error_settings)
