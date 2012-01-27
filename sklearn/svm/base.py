@@ -43,7 +43,7 @@ class BaseLibSVM(BaseEstimator):
 
     def __init__(self, impl, kernel, degree, gamma, coef0,
                  tol, C, nu, epsilon, shrinking, probability, cache_size,
-                 scale_C):
+                 scale_C, class_weight=None):
 
         if not impl in LIBSVM_IMPL:
             raise ValueError("impl should be one of %s, %s was given" % (
@@ -70,6 +70,7 @@ class BaseLibSVM(BaseEstimator):
         self.probability = probability
         self.cache_size = cache_size
         self.scale_C = scale_C
+        self.class_weight = class_weight
 
     @abstractmethod
     def fit(self, X, y, class_weight=None, sample_weight=None):
@@ -181,6 +182,9 @@ class DenseBaseLibSVM(BaseLibSVM):
             # TODO: add keyword copy to copy on demand
             self.__Xfit = X
             X = self._compute_kernel(X)
+
+        if class_weight == None:
+            class_weight == self.class_weight
 
         class_weight, class_weight_label = \
                      _get_class_weight(class_weight, y)
@@ -365,7 +369,7 @@ class BaseLibLinear(BaseEstimator):
 
     def __init__(self, penalty='l2', loss='l2', dual=True, tol=1e-4, C=1.0,
                  multi_class=False, fit_intercept=True, intercept_scaling=1,
-                 scale_C=False):
+                 scale_C=False, class_weight=None):
         self.penalty = penalty
         self.loss = loss
         self.dual = dual
@@ -375,6 +379,7 @@ class BaseLibLinear(BaseEstimator):
         self.intercept_scaling = intercept_scaling
         self.multi_class = multi_class
         self.scale_C = scale_C
+        self.class_weight = class_weight
 
         # Check that the arguments given are valid:
         self._get_solver_type()

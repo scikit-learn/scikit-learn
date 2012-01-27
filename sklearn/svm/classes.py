@@ -59,6 +59,14 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, SelectorMixin):
         Scale C with number of samples. It makes the setting of C independent
         of the number of samples.
 
+    class_weight : {dict, 'auto'}, optional
+        Set the parameter C of class i to class_weight[i]*C for
+        SVC. If not given, all classes are supposed to have
+        weight one. The 'auto' mode uses the values of y to
+        automatically adjust weights inversely proportional to
+        class frequencies.
+
+
     Attributes
     ----------
     `coef_` : array, shape = [n_features] if n_classes == 2 \
@@ -133,6 +141,13 @@ class SVC(DenseBaseLibSVM, ClassifierMixin):
     scale_C : bool
         Scale C with number of samples. It makes the setting of C independant
         of the number of samples.
+
+    class_weight : {dict, 'auto'}, optional
+        Set the parameter C of class i to class_weight[i]*C for
+        SVC. If not given, all classes are supposed to have
+        weight one. The 'auto' mode uses the values of y to
+        automatically adjust weights inversely proportional to
+        class frequencies.
 
     Attributes
     ----------
@@ -224,6 +239,13 @@ class NuSVC(DenseBaseLibSVM, ClassifierMixin):
 
     cache_size: float, optional
         Specify the size of the kernel cache (in MB)
+
+    class_weight : {dict, 'auto'}, optional
+        Set the parameter C of class i to class_weight[i]*C for
+        SVC. If not given, all classes are supposed to have
+        weight one. The 'auto' mode uses the values of y to
+        automatically adjust weights inversely proportional to
+        class frequencies.
 
     Attributes
     ----------
