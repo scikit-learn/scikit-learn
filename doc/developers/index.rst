@@ -25,7 +25,10 @@ You are also welcome to post there feature requests or links to pull-requests.
 Retrieving the latest code
 ==========================
 
-Before you get started, you will need a program called `git`. If you are unfamiliar with it, see `this link <http://progit.org/book/ch1-0.html>`_ for a very good tutorial on installing it, as well as using it.
+Before you get started, you will need a program called `git`. If you 
+are unfamiliar with it, see `this link 
+<http://progit.org/book/ch1-0.html>`_ for a very good tutorial 
+on installing it, as well as using it.
 
 You can check the latest sources with the command::
 
