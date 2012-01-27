@@ -5,7 +5,7 @@
 0.11
 ====
    - Merged dense and sparse implementations and added `partial_fit` (support
-     for online/minibatch learning) to the :ref:`sgd` module by
+     for online/minibatch learning) and warm_start to the :ref:`sgd` module by
      `Mathieu Blondel`_.
 
    - Dense and sparse implementations of :class:`svm.LinearSVC` and
@@ -13,6 +13,15 @@
 
    - Regressors can now be used as base estimator in the :ref:`multiclass`
      module by `Mathieu Blondel`_.
+
+   - Added Matthews correlation coefficient (:func:`metrics.matthews_corrcoef`)
+     and added macro and micro average options to
+     :func:`metrics.precision_score`, :func:`metrics.recall_score` and
+     :func:`metrics.f1_score` by `Satrajit Ghosh`_.
+
+   - Added n_jobs option to :func:`metrics.pairwise.pairwise_distances`
+     and :func:`metrics.pairwise.pairwise_kernels` for parallel computation,
+     by `Mathieu Blondel`_.
 
 Changelog
 ---------
