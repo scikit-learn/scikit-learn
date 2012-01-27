@@ -8,7 +8,7 @@
      for online/minibatch learning) and warm_start to the :ref:`sgd` module by
      `Mathieu Blondel`_.
 
-   - Dense and sparse implementations of :class:`svm.LinearSVC` and
+   - Dense and sparse implementations of :ref:`svm` classes and
      :class:`linear_model.LogisticRegression` merged by `Lars Buitinck`_.
 
    - Regressors can now be used as base estimator in the :ref:`multiclass`
