@@ -72,14 +72,16 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         regression functional basis. The number of observations n_samples
         should be greater than the size p of this basis.
         Default assumes a simple constant regression trend.
-        Here is the list of built-in regression models:
+        Available built-in regression models are::
+
             'constant', 'linear', 'quadratic'
 
     corr : string or callable, optional
         A stationary autocorrelation function returning the autocorrelation
         between two points x and x'.
         Default assumes a squared-exponential autocorrelation model.
-        Here is the list of built-in correlation models:
+        Built-in correlation models are::
+
             'absolute_exponential', 'squared_exponential',
             'generalized_exponential', 'cubic', 'linear'
 
@@ -141,10 +143,12 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
     optimizer : string, optional
         A string specifying the optimization algorithm to be used.
         Default uses 'fmin_cobyla' algorithm from scipy.optimize.
-        Here is the list of available optimizers:
+        Available optimizers are::
+
             'fmin_cobyla', 'Welch'
-        'Welch' optimizer is dued to Welch et al., see reference [2]. It
-        consists in iterating over several one-dimensional optimizations
+
+        'Welch' optimizer is dued to Welch et al., see reference [WBSWM1992]_.
+        It consists in iterating over several one-dimensional optimizations
         instead of running one single multi-dimensional optimization.
 
     random_start : int, optional
@@ -155,11 +159,11 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         exponential distribution (log-uniform on [thetaL, thetaU]).
         Default does not use random starting point (random_start = 1).
 
-    Example
-    -------
+    Examples
+    --------
     >>> import numpy as np
     >>> from sklearn.gaussian_process import GaussianProcess
-    >>> X = array2d([1., 3., 5., 6., 7., 8.]).T
+    >>> X = np.array([[1., 3., 5., 6., 7., 8.]]).T
     >>> y = (X * np.sin(X)).ravel()
     >>> gp = GaussianProcess(theta0=0.1, thetaL=.001, thetaU=1.)
     >>> gp.fit(X, y) # doctest: +ELLIPSIS
@@ -167,20 +171,20 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             normalize=..., nugget=...,
             ...
 
-    Implementation details
-    ----------------------
+    Notes
+    -----
     The presentation implementation is based on a translation of the DACE
-    Matlab toolbox, see reference [1].
+    Matlab toolbox, see reference [NLNS2002]_.
 
-    References
-    ----------
-    [1] H.B. Nielsen, S.N. Lophaven, H. B. Nielsen and J. Sondergaard (2002).
-        DACE - A MATLAB Kriging Toolbox.
+    **References**:
+
+    .. [NLNS2002] `H.B. Nielsen, S.N. Lophaven, H. B. Nielsen and J.
+        Sondergaard.  DACE - A MATLAB Kriging Toolbox.` (2002)
         http://www2.imm.dtu.dk/~hbn/dace/dace.pdf
 
-    [2] W.J. Welch, R.J. Buck, J. Sacks, H.P. Wynn, T.J. Mitchell, and M.D.
-        Morris (1992). Screening, predicting, and computer experiments.
-        Technometrics, 34(1) 15--25.
+    .. [WBSWM1992] `W.J. Welch, R.J. Buck, J. Sacks, H.P. Wynn, T.J. Mitchell,
+        and M.D.  Morris (1992). Screening, predicting, and computer
+        experiments.  Technometrics, 34(1) 15--25.`
         http://www.jstor.org/pss/1269548
     """
 
@@ -520,14 +524,20 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             A dictionary containing the requested Gaussian Process model
             parameters:
 
-            par['sigma2'] : Gaussian Process variance.
-            par['beta'] : Generalized least-squares regression weights for
-                          Universal Kriging or given beta0 for Ordinary
-                          Kriging.
-            par['gamma'] : Gaussian Process weights.
-            par['C'] : Cholesky decomposition of the correlation matrix [R].
-            par['Ft'] : Solution of the linear equation system : [R] x Ft = F
-            par['G'] : QR decomposition of the matrix Ft.
+                sigma2
+                        Gaussian Process variance.
+                beta
+                        Generalized least-squares regression weights for
+                        Universal Kriging or given beta0 for Ordinary
+                        Kriging.
+                gamma
+                        Gaussian Process weights.
+                C
+                        Cholesky decomposition of the correlation matrix [R].
+                Ft
+                        Solution of the linear equation system : [R] x Ft = F
+                G
+                        QR decomposition of the matrix Ft.
         """
 
         if theta is None:

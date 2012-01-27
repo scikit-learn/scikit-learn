@@ -30,10 +30,10 @@ Installing an official release
 Installing from source
 ----------------------
 
-Installing from source requires you to have installed numpy,
-scipy, setuptools, python development headers and a working C++
-compiler. Under Debian-based systems you can get all this by executing
-with root privileges::
+Installing from source requires you to have installed python (>= 2.6), numpy
+(>= 1.3), scipy (>= 0.7), setuptools, python development headers and a working
+C++ compiler. Under Debian-based systems you can get all this by executing with
+root privileges::
 
     sudo apt-get install python-dev python-numpy python-numpy-dev python-setuptools python-numpy-dev python-scipy libatlas-dev g++
 
@@ -68,7 +68,7 @@ these commands.
 From source package
 ~~~~~~~~~~~~~~~~~~~
 
-Download the package from http://sourceforge.net/projects/scikit-learn/files
+Download the package from http://pypi.python.org/pypi/scikit-learn/
 , unpack the sources and cd into archive.
 
 This packages uses distutils, which is the default way of installing
@@ -87,8 +87,6 @@ numpy and setuptools.
 
 This package is also expected to work with python(x,y) as of 2.6.5.5.
 
-
-.. _build_on_windows
 
 Building on windows
 -------------------

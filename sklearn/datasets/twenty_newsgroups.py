@@ -22,14 +22,14 @@ test sets. The compressed dataset size is around 14 Mb compressed. Once
 uncompressed the train set is 52 MB and the test set is 34 MB.
 
 The data is downloaded, extracted and cached in the '~/scikit_learn_data'
-folder. However contrary to other datasets in the scikit, the data is
-not vectorized into numpy arrays but the dataset list the filenames of
-the posts and there categories as target signal.
+folder.
 
-The lack of vector feature extraction is intentional: there is no single
-best way to turn text into vectors. Depending on the task various
-preprocessing and text transformation are useful or not (n-grams,
-lowercasing, stemming, stop-words filtering, TF-IDF weighting...).
+The `fetch_20newsgroups` function will not vectorize the data into numpy
+arrays but the dataset lists the filenames of the posts and their categories
+as target labels.
+
+The `fetch_20newsgroups_tfidf` function will in addition do a simple tf-idf
+vectorization step.
 
 """
 # Copyright (c) 2011 Olivier Grisel <olivier.grisel@ensta.org>
@@ -43,11 +43,16 @@ import pickle
 import shutil
 
 import numpy as np
+import scipy.sparse as sp
 
 from .base import get_data_home
+from .base import Bunch
 from .base import load_files
 from ..utils import check_random_state, deprecated
 from ..utils.fixes import in1d
+from ..feature_extraction.text import CountVectorizer
+from ..preprocessing import normalize
+from ..externals import joblib
 
 
 logger = logging.getLogger(__name__)
@@ -93,7 +98,7 @@ def download_20newsgroups(target_dir, cache_path):
 
 def fetch_20newsgroups(data_home=None, subset='train', categories=None,
                       shuffle=True, random_state=42, download_if_missing=True):
-    """Load the filenames of the 20 newsgroups dataset
+    """Load the filenames of the 20 newsgroups dataset.
 
     Parameters
     ----------
@@ -148,13 +153,16 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
     elif subset == 'all':
         data_lst = list()
         target = list()
+        filenames = list()
         for subset in ('train', 'test'):
             data = cache[subset]
             data_lst.extend(data.data)
             target.extend(data.target)
+            filenames.extend(data.filenames)
 
         data.data = data_lst
         data.target = np.array(target)
+        data.filenames = np.array(filenames)
         data.description = 'the 20 newsgroups by date dataset'
     else:
         raise ValueError(
@@ -166,6 +174,7 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
         labels.sort()
         labels, categories = zip(*labels)
         mask = in1d(data.target, labels)
+        data.filenames = data.filenames[mask]
         data.target = data.target[mask]
         # searchsorted to have continuous labels
         data.target = np.searchsorted(labels, data.target)
@@ -179,6 +188,7 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
         random_state = check_random_state(random_state)
         indices = np.arange(data.target.shape[0])
         random_state.shuffle(indices)
+        data.filenames = data.filenames[indices]
         data.target = data.target[indices]
         # Use an object array to shuffle: avoids memory copy
         data_lst = np.array(data.data, dtype=object)
@@ -186,6 +196,82 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
         data.data = data_lst.tolist()
 
     return data
+
+
+def fetch_20newsgroups_vectorized(subset="train", data_home=None):
+    """Load the 20 newsgroups dataset and transform it into tf-idf vectors.
+
+    This is a convenience function; the tf-idf transformation is done using the
+    default settings for `sklearn.feature_extraction.text.Vectorizer`. For more
+    advanced usage (stopword filtering, n-gram extraction, etc.), combine
+    fetch_20newsgroups with a custom `Vectorizer` or `CountVectorizer`.
+
+    Parameters
+    ----------
+
+    subset: 'train' or 'test', 'all', optional
+        Select the dataset to load: 'train' for the training set, 'test'
+        for the test set, 'all' for both, with shuffled ordering.
+
+    data_home: optional, default: None
+        Specify an download and cache folder for the datasets. If None,
+        all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
+
+    Returns
+    -------
+
+    bunch : Bunch object
+        bunch.data: sparse matrix, shape [n_samples, n_features]
+        bunch.target: array, shape [n_samples]
+        bunch.target_names: list, length [n_classes]
+    """
+    data_home = get_data_home(data_home=data_home)
+    target_file = os.path.join(data_home, "20newsgroup_vectorized.pk")
+
+    # we shuffle but use a fixed seed for the memoization
+    data_train = fetch_20newsgroups(data_home=data_home,
+                                    subset='train',
+                                    categories=None,
+                                    shuffle=True,
+                                    random_state=12)
+
+    data_test = fetch_20newsgroups(data_home=data_home,
+                                   subset='test',
+                                   categories=None,
+                                   shuffle=True,
+                                   random_state=12)
+
+    if os.path.exists(target_file):
+        X_train, X_test = joblib.load(target_file)
+    else:
+        vectorizer = CountVectorizer(dtype=np.int16)
+        X_train = vectorizer.fit_transform(data_train.data).tocsr()
+        X_test = vectorizer.transform(data_test.data).tocsr()
+        joblib.dump((X_train, X_test), target_file, compress=9)
+
+    # the data is stored as int16 for compactness
+    # but normalize needs floats
+    X_train = X_train.astype(np.float64)
+    X_test = X_test.astype(np.float64)
+    normalize(X_train, copy=False)
+    normalize(X_test, copy=False)
+
+    target_names = data_train.target_names
+
+    if subset == "train":
+        data = X_train
+        target = data_train.target
+    elif subset == "test":
+        data = X_test
+        target = data_test.target
+    elif subset == "all":
+        data = sp.vstack((X_train, X_test)).tocsr()
+        target = np.concatenate((data_train.target, data_test.target))
+    else:
+        raise ValueError("%r is not a valid subset: should be one of "
+                         "['train', 'test', 'all']" % subset)
+
+    return Bunch(data=data, target=target, target_names=target_names)
 
 
 @deprecated("Use fetch_20newsgroups instead with download_if_missing=False")

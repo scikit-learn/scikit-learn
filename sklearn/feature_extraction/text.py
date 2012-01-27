@@ -17,7 +17,10 @@ from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import normalize
 from ..utils.fixes import Counter
 
-ENGLISH_STOP_WORDS = set([
+# This list of English stop words is taken from the "Glasgow Information
+# Retrieval Group". The original list can be found at
+# http://ir.dcs.gla.ac.uk/resources/linguistic_utils/stop_words
+ENGLISH_STOP_WORDS = frozenset([
     "a", "about", "above", "across", "after", "afterwards", "again", "against",
     "all", "almost", "alone", "along", "already", "also", "although", "always",
     "am", "among", "amongst", "amoungst", "amount", "an", "and", "another",
@@ -89,7 +92,7 @@ def to_ascii(s):
 
 
 def strip_tags(s):
-    return re.compile(r"<([^>]+)>", flags=re.UNICODE).sub("", s)
+    return re.compile(ur"<([^>]+)>", flags=re.UNICODE).sub(u"", s)
 
 
 class RomanPreprocessor(object):
@@ -105,7 +108,16 @@ class RomanPreprocessor(object):
 
 DEFAULT_PREPROCESSOR = RomanPreprocessor()
 
-DEFAULT_TOKEN_PATTERN = r"\b\w\w+\b"
+DEFAULT_TOKEN_PATTERN = ur"\b\w\w+\b"
+
+
+def _check_stop_list(stop):
+    if stop == "english":
+        return ENGLISH_STOP_WORDS
+    elif isinstance(stop, str) or isinstance(stop, unicode):
+        raise ValueError("not a built-in stop list: %s" % stop)
+    else:               # assume it's a collection
+        return stop
 
 
 class WordNGramAnalyzer(BaseEstimator):
@@ -117,11 +129,15 @@ class WordNGramAnalyzer(BaseEstimator):
       - token extraction using unicode regexp word bounderies for token of
         minimum size of 2 symbols (by default)
       - output token n-grams (unigram only by default)
+
+    The stop words argument may be "english" for a built-in list of English
+    stop words or a collection of strings. Note that stop word filtering is
+    performed after preprocessing, which may include accent stripping.
     """
 
     def __init__(self, charset='utf-8', min_n=1, max_n=1,
                  preprocessor=DEFAULT_PREPROCESSOR,
-                 stop_words=ENGLISH_STOP_WORDS,
+                 stop_words="english",
                  token_pattern=DEFAULT_TOKEN_PATTERN):
         self.charset = charset
         self.stop_words = stop_words
@@ -136,7 +152,7 @@ class WordNGramAnalyzer(BaseEstimator):
             # ducktype for file-like objects
             text_document = text_document.read()
 
-        if isinstance(text_document, str):
+        if isinstance(text_document, bytes):
             text_document = text_document.decode(self.charset, 'ignore')
 
         text_document = self.preprocessor.preprocess(text_document)
@@ -173,7 +189,7 @@ class CharNGramAnalyzer(BaseEstimator):
     Because of this, it can be considered a basic morphological analyzer.
     """
 
-    white_spaces = re.compile(r"\s\s+")
+    white_spaces = re.compile(ur"\s\s+")
 
     def __init__(self, charset='utf-8', preprocessor=DEFAULT_PREPROCESSOR,
                  min_n=3, max_n=6):
@@ -188,13 +204,13 @@ class CharNGramAnalyzer(BaseEstimator):
             # ducktype for file-like objects
             text_document = text_document.read()
 
-        if isinstance(text_document, str):
+        if isinstance(text_document, bytes):
             text_document = text_document.decode(self.charset, 'ignore')
 
         text_document = self.preprocessor.preprocess(text_document)
 
         # normalize white spaces
-        text_document = self.white_spaces.sub(" ", text_document)
+        text_document = self.white_spaces.sub(u" ", text_document)
 
         text_len = len(text_document)
         ngrams = []
@@ -245,9 +261,12 @@ class CountVectorizer(BaseEstimator):
         Type of the matrix returned by fit_transform() or transform().
     """
 
-    def __init__(self, analyzer=DEFAULT_ANALYZER, vocabulary=None, max_df=1.0,
+    def __init__(self, analyzer=None, vocabulary=None, max_df=1.0,
                  max_features=None, dtype=long):
-        self.analyzer = analyzer
+        if analyzer:
+            self.analyzer = analyzer
+        else:
+            self.analyzer = DEFAULT_ANALYZER
         self.fit_vocabulary = vocabulary is None
         if vocabulary is not None and not isinstance(vocabulary, dict):
             vocabulary = dict((t, i) for i, t in enumerate(vocabulary))
@@ -397,7 +416,7 @@ class CountVectorizer(BaseEstimator):
         X_inv : list of arrays, len = n_samples
             List of arrays of terms.
         """
-        if type(X) is sp.coo_matrix:    # COO matrix is not indexable
+        if sp.isspmatrix_coo(X):  # COO matrix is not indexable
             X = X.tocsr()
         elif not sp.issparse(X):
             # We need to convert X to a matrix, so that the indexing
@@ -409,7 +428,7 @@ class CountVectorizer(BaseEstimator):
         indices = np.array(self.vocabulary.values())
         inverse_vocabulary = terms[np.argsort(indices)]
 
-        return [inverse_vocabulary[X[i, :].nonzero()[1]]
+        return [inverse_vocabulary[X[i, :].nonzero()[1]].ravel()
                 for i in xrange(n_samples)]
 
 
@@ -443,12 +462,16 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         extra document was seen containing every term in the collection
         exactly once. Prevents zero divisions.
 
-    References
-    ----------
-    R. Baeza-Yates and B. Ribeiro-Neto (2011). Modern Information Retrieval.
-        Addison Wesley, pp. 68–74.
-    C.D. Manning, H. Schütze and P. Raghavan (2008). Introduction to
-        Information Retrieval. Cambridge University Press, pp. 121–125.
+    Notes
+    -----
+    **References**:
+
+    .. [Yates2011] `R. Baeza-Yates and B. Ribeiro-Neto (2011). Modern
+                   Information Retrieval. Addison Wesley, pp. 68–74.`
+
+    .. [MSR2008] `C.D. Manning, H. Schütze and P. Raghavan (2008). Introduction
+                 to Information Retrieval. Cambridge University Press,
+                 pp. 121–125.`
     """
 
     def __init__(self, norm='l2', use_idf=True, smooth_idf=True):
@@ -514,8 +537,10 @@ class Vectorizer(BaseEstimator):
     Equivalent to CountVectorizer followed by TfidfTransformer.
     """
 
-    def __init__(self, analyzer=DEFAULT_ANALYZER, max_df=1.0,
+    def __init__(self, analyzer=None, max_df=1.0,
                  max_features=None, norm='l2', use_idf=True, smooth_idf=True):
+        if analyzer is None:
+            analyzer = DEFAULT_ANALYZER
         self.tc = CountVectorizer(analyzer, max_df=max_df,
                                   max_features=max_features,
                                   dtype=np.float64)
@@ -528,7 +553,7 @@ class Vectorizer(BaseEstimator):
         self.tfidf.fit(X)
         return self
 
-    def fit_transform(self, raw_documents):
+    def fit_transform(self, raw_documents, y=None):
         """
         Learn the representation and return the vectors.
 

@@ -99,6 +99,13 @@ def test_fastica(add_noise=False):
     ica.get_mixing_matrix()
 
 
+def test_fastica_nowhiten():
+    m = [[0, 1], [1, 0]]
+    ica = FastICA(whiten=False)
+    ica.fit(m)
+    ica.get_mixing_matrix()
+
+
 def test_non_square_fastica(add_noise=False):
     """ Test the FastICA algorithm on very simple data.
     """

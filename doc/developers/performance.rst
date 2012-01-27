@@ -87,7 +87,7 @@ for interactively exploring the relevant part for the code.
 
 Suppose we want to profile the Non Negative Matrix Factorization module
 of the scikit. Let us setup a new IPython session and load the digits
-dataset and as in the :ref:`example_decomposition_plot_nmf.py` example::
+dataset and as in the :ref:`example_plot_digits_classification.py` example::
 
   In [1]: from sklearn.decomposition import NMF
 
@@ -281,8 +281,6 @@ project.
 
 TODO: html report, type declarations, bound checks, division by zero checks,
 memory alignement, direct blas calls...
-
-.. _cython:: http://cython.org
 
 - http://www.euroscipy.org/file/3696?vid=download
 - http://conference.scipy.org/proceedings/SciPy2009/paper_1/

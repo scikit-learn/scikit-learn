@@ -23,7 +23,8 @@ from scipy.sparse import issparse
 from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize, LabelBinarizer
 from .utils import array2d, atleast2d_or_csr
-from .utils.extmath import safe_sparse_dot, logsum
+from .utils.extmath import safe_sparse_dot, logsumexp
+from .utils import deprecated
 
 
 class BaseNB(BaseEstimator, ClassifierMixin):
@@ -35,7 +36,7 @@ class BaseNB(BaseEstimator, ClassifierMixin):
     def _joint_log_likelihood(self, X):
         """Compute the unnormalized posterior log probability of X
 
-        I.e. log P(c) + log P(x|c) for all rows x of X, as an array-like of
+        I.e. ``log P(c) + log P(x|c)`` for all rows x of X, as an array-like of
         shape [n_classes, n_samples].
 
         Input is passed to _joint_log_likelihood as-is by predict,
@@ -74,7 +75,7 @@ class BaseNB(BaseEstimator, ClassifierMixin):
         """
         jll = self._joint_log_likelihood(X)
         # normalize by P(x) = P(f_1, ..., f_n)
-        log_prob_x = logsum(jll, axis=1)
+        log_prob_x = logsumexp(jll, axis=1)
         return jll - np.atleast_2d(log_prob_x).T
 
     def predict_proba(self, X):
@@ -109,29 +110,14 @@ class GaussianNB(BaseNB):
 
     Attributes
     ----------
-    class_prior : array, shape = [n_classes]
+    `class_prior_` : array, shape = [n_classes]
         probability of each class.
 
-    theta : array, shape = [n_classes, n_features]
+    `theta_` : array, shape = [n_classes, n_features]
         mean of each feature per class
 
-    sigma : array, shape = [n_classes, n_features]
+    `sigma_` : array, shape = [n_classes, n_features]
         variance of each feature per class
-
-    Methods
-    -------
-    fit(X, y) : self
-        Fit the model
-
-    predict(X) : array
-        Predict using the model.
-
-    predict_proba(X) : array
-        Predict the probability of each class using the model.
-
-    predict_log_proba(X) : array
-        Predict the log-probability of each class using the model.
-
 
     Examples
     --------
@@ -171,26 +157,47 @@ class GaussianNB(BaseNB):
         n_classes = unique_y.shape[0]
         _, n_features = X.shape
 
-        self.theta = np.empty((n_classes, n_features))
-        self.sigma = np.empty((n_classes, n_features))
-        self.class_prior = np.empty(n_classes)
+        self.theta_ = np.empty((n_classes, n_features))
+        self.sigma_ = np.empty((n_classes, n_features))
+        self.class_prior_ = np.empty(n_classes)
         for i, y_i in enumerate(unique_y):
-            self.theta[i, :] = np.mean(X[y == y_i, :], axis=0)
-            self.sigma[i, :] = np.var(X[y == y_i, :], axis=0)
-            self.class_prior[i] = np.float(np.sum(y == y_i)) / n_classes
+            self.theta_[i, :] = np.mean(X[y == y_i, :], axis=0)
+            self.sigma_[i, :] = np.var(X[y == y_i, :], axis=0)
+            self.class_prior_[i] = np.float(np.sum(y == y_i)) / n_classes
         return self
 
     def _joint_log_likelihood(self, X):
         X = array2d(X)
         joint_log_likelihood = []
         for i in xrange(np.size(self._classes)):
-            jointi = np.log(self.class_prior[i])
-            n_ij = - 0.5 * np.sum(np.log(np.pi * self.sigma[i, :]))
-            n_ij -= 0.5 * np.sum(((X - self.theta[i, :]) ** 2) / \
-                                    (self.sigma[i, :]), 1)
+            jointi = np.log(self.class_prior_[i])
+            n_ij = - 0.5 * np.sum(np.log(np.pi * self.sigma_[i, :]))
+            n_ij -= 0.5 * np.sum(((X - self.theta_[i, :]) ** 2) / \
+                                    (self.sigma_[i, :]), 1)
             joint_log_likelihood.append(jointi + n_ij)
         joint_log_likelihood = np.array(joint_log_likelihood).T
         return joint_log_likelihood
+
+    @property
+    @deprecated('GaussianNB.class_prior is deprecated'
+                ' and will be removed in version 0.12.'
+                ' Please use ``GaussianNB.class_prior_`` instead.')
+    def class_prior(self):
+        return self.class_prior_
+
+    @property
+    @deprecated('GaussianNB.theta is deprecated'
+                ' and will be removed in version 0.12.'
+                ' Please use ``GaussianNB.theta_`` instead.')
+    def theta(self):
+        return self.theta_
+
+    @property
+    @deprecated('GaussianNB.sigma is deprecated'
+                ' and will be removed in version 0.12.'
+                ' Please use ``GaussianNB.sigma_`` instead.')
+    def sigma(self):
+        return self.sigma_
 
 
 class BaseDiscreteNB(BaseNB):
@@ -246,8 +253,9 @@ class BaseDiscreteNB(BaseNB):
             Y *= array2d(sample_weight).T
 
         if class_prior:
-            assert len(class_prior) == n_classes, \
-                   'Number of priors must match number of classs'
+            if len(class_prior) != n_classes:
+                raise ValueError(
+                        "Number of priors must match number of classes")
             self.class_log_prior_ = np.log(class_prior)
         elif self.fit_prior:
             # empirical prior, with sample_weight taken into account
@@ -277,8 +285,18 @@ class BaseDiscreteNB(BaseNB):
 
         return N_c, N_c_i
 
-    intercept_ = property(lambda self: self.class_log_prior_)
-    coef_ = property(lambda self: self.feature_log_prob_)
+    # XXX The following is a stopgap measure; we need to set the dimensions
+    # of class_log_prior_ and feature_log_prob_ correctly.
+    def _get_coef(self):
+        return self.feature_log_prob_[1] if len(self._classes) == 2 \
+                                         else self.feature_log_prob_
+
+    def _get_intercept(self):
+        return self.class_log_prior_[1] if len(self._classes) == 2 \
+                                        else self.class_log_prior_
+
+    coef_ = property(_get_coef)
+    intercept_ = property(_get_intercept)
 
 
 class MultinomialNB(BaseDiscreteNB):
@@ -299,30 +317,18 @@ class MultinomialNB(BaseDiscreteNB):
         Whether to learn class prior probabilities or not.
         If false, a uniform prior will be used.
 
-    Methods
-    -------
-    fit(X, y) : self
-        Fit the model
-
-    predict(X) : array
-        Predict using the model.
-
-    predict_proba(X) : array
-        Predict the probability of each class using the model.
-
-    predict_log_proba(X) : array
-        Predict the log probability of each class using the model.
-
     Attributes
     ----------
     `intercept_`, `class_log_prior_` : array, shape = [n_classes]
-        Log probability of each class (smoothed).
+        Smoothed empirical log probability for each class.
 
     `feature_log_prob_`, `coef_` : array, shape = [n_classes, n_features]
-        Empirical log probability of features given a class, P(x_i|y).
+        Empirical log probability of features
+        given a class, P(x_i|y).
 
-        (`intercept_` and `coef_` are properties referring to
-        `class_log_prior_` and `feature_log_prob_`, respectively.)
+        (`intercept_` and `coef_` are properties
+        referring to `class_log_prior_` and
+        `feature_log_prob_`, respectively.)
 
     Examples
     --------
@@ -336,8 +342,8 @@ class MultinomialNB(BaseDiscreteNB):
     >>> print clf.predict(X[2])
     [3]
 
-    References
-    ----------
+    Notes
+    -----
     For the rationale behind the names `coef_` and `intercept_`, i.e.
     naive Bayes as a linear classifier, see J. Rennie et al. (2003),
     Tackling the poor assumptions of naive Bayes text classifiers, ICML.
@@ -350,7 +356,8 @@ class MultinomialNB(BaseDiscreteNB):
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
         X = atleast2d_or_csr(X)
-        return safe_sparse_dot(X, self.coef_.T) + self.intercept_
+        return (safe_sparse_dot(X, self.feature_log_prob_.T)
+               + self.class_log_prior_)
 
 
 class BernoulliNB(BaseDiscreteNB):
@@ -359,8 +366,6 @@ class BernoulliNB(BaseDiscreteNB):
     Like MultinomialNB, this classifier is suitable for discrete data. The
     difference is that while MultinomialNB works with occurrence counts,
     BernoulliNB is designed for binary/boolean features.
-
-    Note: this class does not check whether features are actually boolean.
 
     Parameters
     ----------
@@ -373,20 +378,6 @@ class BernoulliNB(BaseDiscreteNB):
     fit_prior: boolean
         Whether to learn class prior probabilities or not.
         If false, a uniform prior will be used.
-
-    Methods
-    -------
-    fit(X, y) : self
-        Fit the model
-
-    predict(X) : array
-        Predict using the model.
-
-    predict_proba(X) : array
-        Predict the probability of each class using the model.
-
-    predict_log_proba(X) : array
-        Predict the log probability of each class using the model.
 
     Attributes
     ----------
@@ -408,8 +399,10 @@ class BernoulliNB(BaseDiscreteNB):
     >>> print clf.predict(X[2])
     [3]
 
-    References
-    ----------
+    Notes
+    -----
+    **References**:
+
     C.D. Manning, P. Raghavan and H. Schütze (2008). Introduction to
     Information Retrieval. Cambridge University Press, pp. 234–265.
 
@@ -450,6 +443,6 @@ class BernoulliNB(BaseDiscreteNB):
         # Compute  neg_prob · (1 - X).T  as  ∑neg_prob - X · neg_prob
         X_neg_prob = (neg_prob.sum(axis=1)
                     - safe_sparse_dot(X, neg_prob.T))
-        jll = safe_sparse_dot(X, self.coef_.T) + X_neg_prob
+        jll = safe_sparse_dot(X, self.feature_log_prob_.T) + X_neg_prob
 
-        return jll + self.intercept_
+        return jll + self.class_log_prior_

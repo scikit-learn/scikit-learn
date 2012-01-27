@@ -182,13 +182,9 @@ visualization as 64x64 pixel images. The fact that the components shown below
 appear local is the effect of the inherent structure of the data, which makes
 such local patterns minimize reconstruction error. There exist sparsity-inducing
 norms that take into account adjacency and different kinds of structure; see see
-[Jen09] for a review of such methods. For more details on how to use Sparse PCA,
+[Jen09]_ for a review of such methods. For more details on how to use Sparse PCA,
 see the `Examples` section below.
 
-
-.. |pca_img| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_2.png
-   :target: ../auto_examples/decomposition/plot_faces_decomposition.html
-   :scale: 60%
 
 .. |spca_img| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_5.png
    :target: ../auto_examples/decomposition/plot_faces_decomposition.html
@@ -227,10 +223,10 @@ factorization, while larger values shrink many coefficients to zero.
 
 .. topic:: References:
 
-   * [Mrl09] `"Online Dictionary Learning for Sparse Coding"
+  .. [Mrl09] `"Online Dictionary Learning for Sparse Coding"
      <http://www.di.ens.fr/sierra/pdfs/icml09.pdf>`_
      J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009
-   * [Jen09] `"Structured Sparse Principal Component Analysis"
+  .. [Jen09] `"Structured Sparse Principal Component Analysis"
      <www.di.ens.fr/~fbach/sspca_AISTATS2010.pdf>`_
      R. Jenatton, G. Obozinski, F. Bach, 2009
 
@@ -240,48 +236,19 @@ factorization, while larger values shrink many coefficients to zero.
 Dictionary Learning
 ===================
 
-Generic dictionary learning
----------------------------
+.. _SparseCoder:
 
-Dictionary learning (:class:`DictionaryLearning`) is a matrix factorization
-problem that amounts to finding a (usually overcomplete) dictionary that will
-perform good at sparsely encoding the fitted data.
+Sparse coding with a precomputed dictionary
+-------------------------------------------
 
-Representing data as sparse combinations of atoms from an overcomplete
-dictionary is suggested to be the way the mammal primary visual cortex works.
-Consequently, dictionary learning applied on image patches has been shown to
-give good results in image processing tasks such as image completion,
-inpainting and denoising, as well as for supervised recognition tasks.
-
-Dictionary learning is an optimization problem solved by alternatively updating
-the sparse code, as a solution to multiple Lasso problems, considering the
-dictionary fixed, and then updating the dictionary to best fit the sparse code.
-
-.. math::
-   (U^*, V^*) = \underset{U, V}{\operatorname{arg\,min\,}} & \frac{1}{2}
-                ||X-UV||_2^2+\alpha||U||_1 \\
-                \text{subject to\,} & ||V_k||_2 = 1 \text{ for all }
-                0 \leq k < n_{atoms}
-
-
-.. |pca_img| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_2.png
-   :target: ../auto_examples/decomposition/plot_faces_decomposition.html
-   :scale: 60%
-
-.. |dict_img| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_6.png
-   :target: ../auto_examples/decomposition/plot_faces_decomposition.html
-   :scale: 60%
-
-.. centered:: |pca_img| |dict_img|
-
-
-After using such a procedure to fit the dictionary, the fitted object can be
-used to transform new data. The transformation amounts to a sparse coding
-problem: finding a representation of the data as a linear combination of as few
-dictionary atoms as possible. All variations of dictionary learning implement
-the following transform methods, controllable via the `transform_method`
-initialization parameter:
-
+The :class:`SparseCoder` object is an estimator that can be used to transform signals
+into sparse linear combination of atoms from a fixed, precomputed dictionary
+such as a discrete wavelet basis. This object therefore does not
+implement a `fit` method. The transformation amounts
+to a sparse coding problem: finding a representation of the data as a linear
+combination of as few dictionary atoms as possible. All variations of
+dictionary learning implement the following transform methods, controllable via
+the `transform_method` initialization parameter:
 
 * Orthogonal matching pursuit (:ref:`omp`)
 
@@ -312,6 +279,51 @@ filled with the positive part of the regular code vector. The second half of
 the split code is filled with the negative part of the code vector, only with
 a positive sign. Therefore, the split_code is non-negative.
 
+
+.. topic:: Examples:
+
+    * :ref:`example_decomposition_plot_sparse_coding.py`
+
+
+Generic dictionary learning
+---------------------------
+
+Dictionary learning (:class:`DictionaryLearning`) is a matrix factorization
+problem that amounts to finding a (usually overcomplete) dictionary that will
+perform good at sparsely encoding the fitted data.
+
+Representing data as sparse combinations of atoms from an overcomplete
+dictionary is suggested to be the way the mammal primary visual cortex works.
+Consequently, dictionary learning applied on image patches has been shown to
+give good results in image processing tasks such as image completion,
+inpainting and denoising, as well as for supervised recognition tasks.
+
+Dictionary learning is an optimization problem solved by alternatively updating
+the sparse code, as a solution to multiple Lasso problems, considering the
+dictionary fixed, and then updating the dictionary to best fit the sparse code.
+
+.. math::
+   (U^*, V^*) = \underset{U, V}{\operatorname{arg\,min\,}} & \frac{1}{2}
+                ||X-UV||_2^2+\alpha||U||_1 \\
+                \text{subject to\,} & ||V_k||_2 = 1 \text{ for all }
+                0 \leq k < n_{atoms}
+
+
+.. |pca_img2| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_2.png
+   :target: ../auto_examples/decomposition/plot_faces_decomposition.html
+   :scale: 60%
+
+.. |dict_img2| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_6.png
+   :target: ../auto_examples/decomposition/plot_faces_decomposition.html
+   :scale: 60%
+
+.. centered:: |pca_img2| |dict_img2|
+
+
+After using such a procedure to fit the dictionary, the transform is simply a
+sparse coding step that shares the same implementation with all dictionary
+learning objects (see :ref:`SparseCoder`).
+
 The following image shows how a dictionary learned from 4x4 pixel image patches
 extracted from part of the image of Lena looks like.
 
@@ -333,10 +345,10 @@ extracted from part of the image of Lena looks like.
     <http://www.di.ens.fr/sierra/pdfs/icml09.pdf>`_
     J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009
 
-.. _MiniBatchDictionaryLearning
+.. _MiniBatchDictionaryLearning:
 
 Mini-batch dictionary learning
---------------------------
+------------------------------
 
 :class:`MiniBatchDictionaryLearning` implements a faster, but less accurate
 version of the dictionary learning algorithm that is better suited for large
@@ -375,15 +387,15 @@ It is classically used to separate mixed signals (a problem known as
 ICA can also be used as yet another non linear decomposition that finds
 components with some sparsity:
 
-.. |pca_img| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_2.png
+.. |pca_img3| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_2.png
     :target: ../auto_examples/decomposition/plot_faces_decomposition.html
     :scale: 60%
 
-.. |ica_img| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_4.png
+.. |ica_img3| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_4.png
     :target: ../auto_examples/decomposition/plot_faces_decomposition.html
     :scale: 60%
 
-.. centered:: |pca_img| |ica_img|
+.. centered:: |pca_img3| |ica_img3|
 
 .. topic:: Examples:
 
@@ -412,15 +424,15 @@ resulting in interpretable models. The following example displays 16
 sparse components found by :class:`NMF` from the images in the Olivetti
 faces dataset, in comparison with the PCA eigenfaces.
 
-.. |pca_img| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_2.png
+.. |pca_img4| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_2.png
     :target: ../auto_examples/decomposition/plot_faces_decomposition.html
     :scale: 60%
 
-.. |nmf_img| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_3.png
+.. |nmf_img4| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_3.png
     :target: ../auto_examples/decomposition/plot_faces_decomposition.html
     :scale: 60%
 
-.. centered:: |pca_img| |nmf_img|
+.. centered:: |pca_img4| |nmf_img4|
 
 
 The :attr:`init` attribute determines the initialization method applied, which

@@ -28,11 +28,12 @@ uses.
    :toctree: generated/
    :template: class.rst
 
+   cluster.AffinityPropagation
+   cluster.DBSCAN
    cluster.KMeans
    cluster.MiniBatchKMeans
    cluster.MeanShift
    cluster.SpectralClustering
-   cluster.AffinityPropagation
    cluster.Ward
 
 
@@ -59,6 +60,7 @@ uses.
    covariance.OAS
    covariance.GraphLasso
    covariance.GraphLassoCV
+   covariance.MinCovDet
 
 .. autosummary::
    :toctree: generated/
@@ -118,18 +120,22 @@ Loaders
    :toctree: generated/
    :template: function.rst
 
+   datasets.load_20newsgroups
+   datasets.fetch_20newsgroups
+   datasets.fetch_20newsgroups_vectorized
    datasets.load_boston
-   datasets.load_files
    datasets.load_diabetes
    datasets.load_digits
+   datasets.load_files
    datasets.load_iris
-   datasets.load_linnerud
    datasets.load_lfw_pairs
    datasets.fetch_lfw_pairs
    datasets.load_lfw_people
    datasets.fetch_lfw_people
-   datasets.load_20newsgroups
-   datasets.fetch_20newsgroups
+   datasets.load_linnerud
+   datasets.fetch_olivetti_faces
+   datasets.load_sample_image
+   datasets.load_sample_images
 
 Samples generator
 -----------------
@@ -140,18 +146,20 @@ Samples generator
    :toctree: generated/
    :template: function.rst
 
-   datasets.make_classification
-   datasets.make_regression
    datasets.make_blobs
+   datasets.make_classification
    datasets.make_friedman1
    datasets.make_friedman2
    datasets.make_friedman3
    datasets.make_low_rank_matrix
+   datasets.make_multilabel_classification
+   datasets.make_regression
+   datasets.make_s_curve
    datasets.make_sparse_coded_signal
+   datasets.make_sparse_spd_matrix
    datasets.make_sparse_uncorrelated
    datasets.make_spd_matrix
    datasets.make_swiss_roll
-   datasets.make_s_curve
 
 
 .. _decomposition_ref:
@@ -180,6 +188,7 @@ Samples generator
    decomposition.NMF
    decomposition.SparsePCA
    decomposition.MiniBatchSparsePCA
+   decomposition.SparseCoder
    decomposition.DictionaryLearning
    decomposition.MiniBatchDictionaryLearning
 
@@ -191,7 +200,6 @@ Samples generator
    decomposition.dict_learning
    decomposition.dict_learning_online
    decomposition.sparse_encode
-   decomposition.sparse_encode_parallel
 
 
 .. _ensemble_ref:
@@ -388,6 +396,28 @@ From text
    hmm.GMMHMM
 
 
+.. _kernel_approximation_ref:
+
+:mod:`sklearn.kernel_approximation` Kernel Approximation
+========================================================
+
+.. automodule:: sklearn.kernel_approximation
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`kernel_approximation` section for further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   kernel_approximation.RBFSampler
+   kernel_approximation.AdditiveChi2Sampler
+   kernel_approximation.SkewedChi2Sampler
+
+
 .. _lda_ref:
 
 :mod:`sklearn.lda`: Linear Discriminant Analysis
@@ -428,6 +458,7 @@ For dense data
 
    linear_model.LinearRegression
    linear_model.Ridge
+   linear_model.RidgeClassifier
    linear_model.RidgeCV
    linear_model.Lasso
    linear_model.LassoCV
@@ -473,7 +504,7 @@ For sparse data
    linear_model.sparse.ElasticNet
    linear_model.sparse.SGDClassifier
    linear_model.sparse.SGDRegressor
-   linear_model.sparse.LogisticRegression
+   linear_model.LogisticRegression
 
 
 .. _manifold_ref:
@@ -561,6 +592,7 @@ See the :ref:`clustering` section of the user guide for further details.
    :template: function.rst
 
    metrics.adjusted_rand_score
+   metrics.adjusted_mutual_info_score
    metrics.homogeneity_completeness_v_measure
    metrics.homogeneity_score
    metrics.completeness_score
@@ -613,6 +645,39 @@ Pairwise metrics
    mixture.VBGMM
 
 
+.. _multiclass_ref:
+
+:mod:`sklearn.multiclass`: Multiclass and multilabel classification
+===================================================================
+
+.. automodule:: sklearn.multiclass
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`multiclass` section for further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+    :toctree: generated
+    :template: class.rst
+
+    multiclass.OneVsRestClassifier
+    multiclass.OneVsOneClassifier
+    multiclass.OutputCodeClassifier
+
+.. autosummary::
+    :toctree: generated
+    :template: function.rst
+
+    multiclass.fit_ovr
+    multiclass.predict_ovr
+    multiclass.fit_ovo
+    multiclass.predict_ovo
+    multiclass.fit_ecoc
+    multiclass.predict_ecoc
+
+
 .. _naive_bayes_ref:
 
 :mod:`sklearn.naive_bayes`: Naive Bayes
@@ -622,7 +687,7 @@ Pairwise metrics
    :no-members:
    :no-inherited-members:
 
-**User guide:** See the :ref:`naive_bayers` section for further details.
+**User guide:** See the :ref:`naive_bayes` section for further details.
 
 .. currentmodule:: sklearn
 
@@ -655,10 +720,8 @@ Pairwise metrics
    neighbors.NearestNeighbors
    neighbors.KNeighborsClassifier
    neighbors.RadiusNeighborsClassifier
-   neighbors.NeighborsClassifier
    neighbors.KNeighborsRegressor
    neighbors.RadiusNeighborsRegressor
-   neighbors.NeighborsRegressor
    neighbors.BallTree
 
 .. autosummary::
@@ -793,7 +856,7 @@ For sparse data
    svm.sparse.SVR
    svm.sparse.NuSVR
    svm.sparse.OneClassSVM
-   svm.sparse.LinearSVC
+   svm.LinearSVC
 
 Low-level methods
 -----------------
@@ -846,6 +909,8 @@ Low-level methods
 .. automodule:: sklearn.utils
    :no-members:
    :no-inherited-members:
+
+**Developer guide:** See the :ref:`developers-utils` page for further details.
 
 .. currentmodule:: sklearn
 

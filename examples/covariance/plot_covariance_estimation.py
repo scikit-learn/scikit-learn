@@ -68,15 +68,20 @@ loglik_real = -log_likelihood(emp_cov, linalg.inv(real_cov))
 
 ###############################################################################
 # Plot results
-pl.figure(-1)
+pl.figure()
 pl.title("Regularized covariance: likelihood and shrinkage coefficient")
 pl.xlabel('Shrinkage')
 pl.ylabel('Negative log-likelihood')
 # range shrinkage curve
 pl.loglog(shrinkages, negative_logliks)
+
 # real likelihood reference
-pl.hlines(loglik_real, pl.xlim()[0], pl.xlim()[1], color='red',
-          label="real covariance likelihood", linestyle='--')
+# BUG: hlines(..., linestyle='--') breaks on some older versions of matplotlib
+#pl.hlines(loglik_real, pl.xlim()[0], pl.xlim()[1], color='red',
+#          label="real covariance likelihood", linestyle='--')
+pl.plot(pl.xlim(), 2 * [loglik_real], '--r',
+        label="real covariance likelihood")
+
 # adjust view
 lik_max = np.amax(negative_logliks)
 lik_min = np.amin(negative_logliks)

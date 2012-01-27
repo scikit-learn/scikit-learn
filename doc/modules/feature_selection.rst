@@ -7,7 +7,7 @@ Feature selection
 
 .. currentmodule:: sklearn.feature_selection
 
-The classes in the ``sklearn.feature_selection`` module can be used
+The classes in the :mod:`sklearn.feature_selection` module can be used
 for feature selection/dimensionality reduction on sample sets, either to
 improve estimators' accuracy scores or to boost their performance on very
 high-dimensional datasets.
@@ -15,57 +15,39 @@ high-dimensional datasets.
 Univariate feature selection
 ============================
 
-.. currentmodule:: sklearn.feature_selection.univariate_selection
-
 Univariate feature selection works by selecting the best features based on
 univariate statistical tests. It can seen as a preprocessing step
-to an estimator. The `scikit.learn` exposes feature selection routines
-a objects that implement the `transform` method. The k-best features
-can be selected based on:
+to an estimator. Scikit-Learn exposes feature selection routines
+a objects that implement the `transform` method:
 
-.. autofunction:: SelectKBest
+ * selecting the k-best features :class:`SelectKBest`
 
-or by setting a percentile of features to keep using
+ * setting a percentile of features to keep :class:`SelectPercentile`
 
-.. autofunction:: SelectPercentile
-
-or using common univariate statistical test for each feature:
-
-.. autofunction:: SelectFpr
-.. autofunction:: SelectFdr
-.. autofunction:: SelectFwe
+ * using common univariate statistical tests for each feature:
+   false positive rate :class:`SelectFpr`, false discovery rate
+   :class:`SelectFdr`, or family wise error :class:`SelectFwe`.
 
 These objects take as input a scoring function that returns
-univariate p-values.
+univariate p-values:
 
-.. topic:: Examples:
+ * For regression: :func:`f_regression`
 
-    :ref:`example_plot_feature_selection.py`
-
-
-Feature scoring functions
--------------------------
-
-.. warning::
-
-    Beware not to use a regression scoring function with a classification problem.
-
-For classification
-..................
-
-.. autofunction:: chi2
-.. autofunction:: f_classif
+ * For classification: :func:`chi2` or :func:`f_classif`
 
 .. topic:: Feature selection with sparse data
 
    If you use sparse data (i.e. data represented as sparse matrices),
    only :func:`chi2` will deal with the data without making it dense.
 
+.. warning::
 
-For regression
-..............
+    Beware not to use a regression scoring function with a classification
+    problem, you will get useless results.
 
-.. autofunction:: f_regression
+.. topic:: Examples:
+
+    :ref:`example_plot_feature_selection.py`
 
 
 Recursive feature elimination
@@ -91,6 +73,7 @@ select is eventually reached.
       elimination example with automatic tuning of the number of features
       selected with cross-validation.
 
+
 L1-based feature selection
 ==========================
 
@@ -100,15 +83,15 @@ Linear models penalized with the L1 norm have sparse solutions. When the goal
 is to reduce the dimensionality of the data to use with another classifier, the
 `transform` method of `LogisticRegression` and `LinearSVC` can be used::
 
-  >>> from sklearn import datasets
   >>> from sklearn.svm import LinearSVC
-  >>> iris = datasets.load_iris()
+  >>> from sklearn.datasets import load_iris
+  >>> iris = load_iris()
   >>> X, y = iris.data, iris.target
   >>> X.shape
   (150, 4)
-  >>> X_new = LinearSVC(C=1, penalty="l1", dual=False).fit_transform(X, y)
+  >>> X_new = LinearSVC(C=0.01, penalty="l1", dual=False).fit_transform(X, y)
   >>> X_new.shape
-  (150, 2)
+  (150, 3)
 
 The parameter C controls the sparsity: the smaller the fewer features.
 
@@ -117,3 +100,34 @@ The parameter C controls the sparsity: the smaller the fewer features.
     * :ref:`example_document_classification_20newsgroups.py`: Comparison
       of different algorithms for document classification including L1-based
       feature selection.
+
+
+Tree-based feature selection
+============================
+
+Tree-based estimators (see the :mod:`sklearn.tree` module and forest
+of trees in the :mod:`sklearn.ensemble` module) can be used to compute
+feature importances, which in turn can be used to discard irrelevant
+features::
+
+  >>> from sklearn.ensemble import ExtraTreesClassifier
+  >>> from sklearn.datasets import load_iris
+  >>> iris = load_iris()
+  >>> X, y = iris.data, iris.target
+  >>> X.shape
+  (150, 4)
+  >>> clf = ExtraTreesClassifier(compute_importances=True, random_state=0)
+  >>> X_new = clf.fit(X, y).transform(X)
+  >>> X_new.shape
+  (150, 2)
+
+.. topic:: Examples:
+
+    * :ref:`example_ensemble_plot_forest_importances.py`: example on
+      synthetic data showing the recovery of the actually meaningful
+      features.
+
+    * :ref:`example_ensemble_plot_forest_importances_faces.py`: example
+      on face recognition data.
+
+

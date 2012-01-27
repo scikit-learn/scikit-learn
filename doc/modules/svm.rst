@@ -72,7 +72,7 @@ training samples::
     >>> clf = svm.SVC()
     >>> clf.fit(X, Y)
     SVC(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma=0.5, kernel='rbf',
-      probability=False, shrinking=True, tol=0.001)
+      probability=False, scale_C=False, shrinking=True, tol=0.001)
 
 After being fitted, the model can then be used to predict new values::
 
@@ -109,7 +109,7 @@ classifiers are constructed and each one trains data from two classes::
     >>> clf = svm.SVC()
     >>> clf.fit(X, Y)
     SVC(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma=1.0, kernel='rbf',
-      probability=False, shrinking=True, tol=0.001)
+      probability=False, scale_C=False, shrinking=True, tol=0.001)
     >>> dec = clf.decision_function([[1]])
     >>> dec.shape[1] # 4 classes: 4*3/2 = 6
     6
@@ -121,7 +121,7 @@ two classes, only one model is trained::
     >>> lin_clf = svm.LinearSVC()
     >>> lin_clf.fit(X, Y)
     LinearSVC(C=1.0, dual=True, fit_intercept=True, intercept_scaling=1,
-         loss='l2', multi_class=False, penalty='l2', tol=0.0001)
+         loss='l2', multi_class=False, penalty='l2', scale_C=False, tol=0.0001)
     >>> dec = lin_clf.decision_function([[1]])
     >>> dec.shape[1]
     4
@@ -198,7 +198,8 @@ floating point values instead of integer values::
     >>> clf = svm.SVR()
     >>> clf.fit(X, y)
     SVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.1, gamma=0.5,
-      kernel='rbf', probability=False, shrinking=True, tol=0.001)
+      kernel='rbf', probability=False, scale_C=False, shrinking=True,
+      tol=0.001)
     >>> clf.predict([[1, 1]])
     array([ 1.5])
 
@@ -209,18 +210,18 @@ floating point values instead of integer values::
 
 .. _svm_outlier_detection:
 
-Density estimation, outliers detection
+Density estimation, novelty detection
 =======================================
 
-One-class SVM is used for outliers detection, that is, given a set of
+One-class SVM is used for novelty detection, that is, given a set of
 samples, it will detect the soft boundary of that set so as to
 classify new points as belonging to that set or not. The class that
-implements this is called :class:`OneClassSVM`
-
+implements this is called :class:`OneClassSVM`. 
 
 In this case, as it is a type of unsupervised learning, the fit method
 will only take as input an array X, as there are no class labels.
 
+See, section :ref:`outlier_detection` for more details on this usage.
 
 .. figure:: ../auto_examples/svm/images/plot_oneclass_1.png
    :target: ../auto_examples/svm/plot_oneclass.html
@@ -303,12 +304,10 @@ Tips on Practical Use
 
   * Support Vector Machine algorithms are not scale invariant, so **it
     is highly recommended to scale your data**. For example, scale each
-    attribute on the input vector X to [0,1] or [-1,+1], or standardize
-    it to have mean 0 and variance 1. Note that the *same* scaling
-    must be applied to the test vector to obtain meaningful
-    results. See `The CookBook
-    <https://sourceforge.net/apps/trac/scikit-learn/wiki/CookBook>`_
-    for some examples on scaling.
+    attribute on the input vector X to [0,1] or [-1,+1], or standardize it
+    to have mean 0 and variance 1. Note that the *same* scaling must be
+    applied to the test vector to obtain meaningful results. See section
+    :ref:`preprocessing` for more details on scaling and normalization.
 
   * Parameter nu in NuSVC/OneClassSVM/NuSVR approximates the fraction
     of training errors and support vectors.
@@ -413,7 +412,8 @@ vectors and the test vectors must be provided.
     >>> gram = np.dot(X, X.T)
     >>> clf.fit(gram, y)
     SVC(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma=0.0,
-      kernel='precomputed', probability=False, shrinking=True, tol=0.001)
+      kernel='precomputed', probability=False, scale_C=False, shrinking=True,
+      tol=0.001)
     >>> # predict on training examples
     >>> clf.predict(gram)
     array([ 0.,  1.])
@@ -503,6 +503,9 @@ We introduce a new parameter :math:`\nu` which controls the number of
 support vectors and training errors. The parameter :math:`\nu \in (0,
 1]` is an upper bound on the fraction of training errors and a lower
 bound of the fraction of support vectors.
+
+It can be shown that the `\nu`-SVC formulation is a reparametrization
+of the `C`-SVC and therefore mathematically equivalent.
 
 
 Implementation details

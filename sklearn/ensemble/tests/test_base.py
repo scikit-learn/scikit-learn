@@ -2,6 +2,9 @@
 Testing for the base module (sklearn.ensemble.base).
 """
 
+# Authors: Gilles Louppe
+# License: BSD 3
+
 from numpy.testing import assert_equal
 from nose.tools import assert_raises
 
@@ -17,9 +20,12 @@ def test_base():
     ensemble._make_estimator()
     ensemble._make_estimator()
     ensemble._make_estimator()
+    ensemble._make_estimator(append=False)
 
     assert_equal(3, len(ensemble))
     assert_equal(3, len(ensemble.estimators_))
+
+    assert isinstance(ensemble[0], DecisionTreeClassifier)
 
 
 def test_error():

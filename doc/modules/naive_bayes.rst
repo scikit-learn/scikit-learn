@@ -88,10 +88,13 @@ classification. The likelihood of the features is assumed to be Gaussian:
 The parameters :math:`\sigma_y` and :math:`\mu_y`
 are estimated using maximum likelihood.
 
-.. topic:: Examples:
-
- * :ref:`example_naive_bayes.py`
-
+    >>> from sklearn import datasets
+    >>> iris = datasets.load_iris()
+    >>> from sklearn.naive_bayes import GaussianNB
+    >>> gnb = GaussianNB()
+    >>> y_pred = gnb.fit(iris.data, iris.target).predict(iris.data)
+    >>> print "Number of mislabeled points : %d" % (iris.target != y_pred).sum()
+    Number of mislabeled points : 6
 
 .. _multinomial_naive_bayes:
 
@@ -106,7 +109,7 @@ The distribution is parametrized by vectors
 :math:`\theta_y = (\theta_{y1},\ldots,\theta_{yn})`
 for each class :math:`y`, where :math:`n` is the number of features
 (in text classification, the size of the vocabulary)
-and :math:`\theta_{yi}` is the probability :math:`P(y \mid x_i)`
+and :math:`\theta_{yi}` is the probability :math:`P(x_i \mid y)`
 of feature :math:`i` appearing in a sample belonging to class :math:`y`.
 
 The parameters :math:`\theta_y` is estimated by a smoothed

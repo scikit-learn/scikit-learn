@@ -1,3 +1,5 @@
+.. _contributing:
+
 ============
 Contributing
 ============
@@ -7,6 +9,7 @@ contribute.
 
 The project is hosted on http://github.com/scikit-learn/scikit-learn
 
+
 Submitting a bug report
 =======================
 
@@ -15,6 +18,7 @@ to submit a ticket to the
 `Bug Tracker <http://github.com/scikit-learn/scikit-learn/issues>`_.
 
 You are also welcome to post there feature requests or links to pull-requests.
+
 
 .. _git_repo:
 
@@ -44,28 +48,27 @@ additional utilities.
 Contributing code
 =================
 
-.. note:
+.. note::
 
   To avoid duplicated work it is highly advised to contact the developers
   mailing list before starting work on a non-trivial feature.
 
   https://lists.sourceforge.net/lists/listinfo/scikit-learn-general
 
-
 How to contribute
 -----------------
 
-The prefered way to contribute to `scikit-learn` is to fork the main
+The prefered way to contribute to Scikit-Learn is to fork the main
 repository on
 `github <http://github.com/scikit-learn/scikit-learn/>`__:
 
  1. `Create an account <https://github.com/signup/free>`_ on
     github if you don't have one already.
 
- 2. Fork the `scikit-learn repo
+ 2. Fork the `project repository
     <http://github.com/scikit-learn/scikit-learn>`__: click on the 'Fork'
     button, at the top, center of the page. This creates a copy of
-    the code on the github server where you can work.
+    the code on the GitHub server where you can work.
 
  3. Clone this copy to your local disk (you need the `git` program to do
     this)::
@@ -102,6 +105,10 @@ It is recommented to check that your contribution complies with the following
 rules before submitting a pull request:
 
     * Follow the `coding-guidelines`_ (see below).
+
+    * When applicable, use the Validation tools and other code in the
+      ``sklearn.utils`` submodule.  A list of utility routines available
+      for developers can be found in the :ref:`developers-utils` page.
 
     * All public methods should have informative docstrings with sample
       usage presented as doctests when appropriate.
@@ -144,7 +151,6 @@ You can also check for common programming errors with the following tools:
         $ pip install pep8
         $ pep8 path/to/module.py
 
-
 Bonus points for contributions that include a performance analysis with
 a benchmark script and profiling output (please report on the mailing
 list or on the github wiki).
@@ -158,7 +164,6 @@ details on profiling and cython optimizations.
   all of those guidelines but we expect that enforcing those constraints
   on all new contributions will get the overall code base quality in the
   right direction.
-
 
 EasyFix Issues
 --------------
@@ -225,6 +230,7 @@ articles, link to us from your website, or simply by saying "I use
 it":
 
 .. raw:: html
+
    <script type="text/javascript" src="http://www.ohloh.net/p/480792/widgets/project_users.js?style=rainbow"></script>
 
 
@@ -267,24 +273,66 @@ In addition, we add the following guidelines:
       <https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt>`_
       in all your docstrings.
 
+
 A good example of code that we like can be found `here
 <https://svn.enthought.com/enthought/browser/sandbox/docs/coding_standard.py>`_.
-
 
 Input validation
 ----------------
 
-The module ``sklearn.utils`` contains various functions for doing input
+.. currentmodule:: sklearn.utils
+
+The module :mod:`sklearn.utils` contains various functions for doing input
 validation/conversion. Sometimes, ``np.asarray`` suffices for validation;
 do `not` use ``np.asanyarray`` or ``np.atleast_2d``, since those let NumPy's
 ``np.matrix`` through, which has a different API
 (e.g., ``*`` means dot product on ``np.matrix``,
 but Hadamard product on ``np.ndarray``).
 
-In other cases, be sure to call ``safe_asarray``, ``atleast2d_or_csr``,
-``as_float_array`` or ``array2d`` on any array-like argument passed to a
+In other cases, be sure to call :func:`safe_asarray`, :func:`atleast2d_or_csr`,
+:func:`as_float_array` or :func:`array2d` on any array-like argument passed to a
 scikit-learn API function. The exact function to use depends mainly on whether
 ``scipy.sparse`` matrices must be accepted.
+
+For more information, refer to the :ref:`developers-utils` page.
+
+Random Numbers
+--------------
+
+If your code depends on a random number generator, do not use
+``numpy.random.random()`` or similar routines.  To ensure
+repeatability in error checking, the routine should accept a keyword
+``random_state`` and use this to construct a
+``numpy.random.RandomState`` object.
+See :func:`sklearn.utils.check_random_state` in :ref:`developers-utils`.
+
+Here's a simple example of code using some of the above guidelines:
+
+::
+
+    from sklearn.utils import array2d, check_random_state
+
+    def choose_random_sample(X, random_state=0):
+      	"""
+	Choose a random point from X
+
+	Parameters
+	----------
+	X : array-like, shape = (n_samples, n_features)
+	    array representing the data
+        random_state : RandomState or an int seed (0 by default)
+            A random number generator instance to define the state of the
+            random permutations generator.
+
+	Returns
+	-------
+	x : numpy array, shape = (n_features,)
+	    A random point selected from X
+	"""
+    	X = array2d(X)
+        random_state = check_random_state(random_state)
+	i = random_state.randint(X.shape[0])
+	return X[i]
 
 
 APIs of scikit-learn objects
@@ -294,7 +342,6 @@ To have a uniform API, we try to have a common basic API for all the
 objects. In addition, to avoid the proliferation of framework code, we
 try to adopt simple conventions and limit to a minimum the number of
 methods an object has to implement.
-
 
 Different objects
 -----------------
@@ -333,7 +380,6 @@ multiple interfaces):
 
       score = obj.score(data)
 
-
 Estimators
 ----------
 
@@ -349,6 +395,7 @@ data-independent parameters (overriding previous parameter values passed
 to ``__init__``). This method is not required for an object to be an
 estimator.
 
+All estimators should inherit from ``sklearn.base.BaseEstimator``.
 
 Instantiation
 ^^^^^^^^^^^^^
@@ -377,8 +424,27 @@ correspond to an attribute on the instance**. The scikit relies on this
 to find what are the relevent attributes to set on an estimator when
 doing model selection.
 
-All estimators should inherit from ``scikit.learn.base.BaseEstimator``.
+To summarize, a `__init__` should look like::
 
+    def __init__(self, param1=1, param2=2):
+        self.param1 = param1
+        self.param2 = param2
+
+There should be no logic, and the parameters should not be changed.
+The corresponding logic should be put when the parameters are used. The
+following is wrong::
+
+    def __init__(self, param1=1, param2=2, param3=3):
+        # WRONG: parameters should not be modified
+        if param1 > 1:
+            param2 += 1
+        self.param1 = param1
+        # WRONG: the object's attributes should have exactly the name of
+        # the argument in the constructor
+        self.param3 = param2
+
+Scikit-Learn relies on this mechanism to introspect object to set
+their parameters by cross-validation.
 
 Fitting
 ^^^^^^^
@@ -435,13 +501,11 @@ Any attribute that ends with ``_`` is expected to be overridden when
 you call ``fit`` a second time without taking any previous value into
 account: **fit should be idempotent**.
 
-
 Optional Arguments
 ^^^^^^^^^^^^^^^^^^
 
 In iterative algorithms, number of iterations should be specified by
 an int called ``n_iter``.
-
 
 Unresolved API issues
 ----------------------
@@ -452,14 +516,12 @@ Some things are must still be decided:
     * which exception should be raised when arrays' shape do not match
       in fit() ?
 
-
 Working notes
 ---------------
 
 For unresolved issues, TODOs, remarks on ongoing work, developers are
 adviced to maintain notes on the github wiki:
 https://github.com/scikit-learn/scikit-learn/wiki
-
 
 Specific models
 -----------------

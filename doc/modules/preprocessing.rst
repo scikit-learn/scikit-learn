@@ -33,6 +33,7 @@ order. If a feature has a variance that is orders of magnitude larger
 that others, it might dominate the objective function and make the
 estimator unable to learn from other features correctly as expected.
 
+
 The function :func:`scale` provides a quick and easy way to perform this
 operation on a single array-like dataset::
 
@@ -47,6 +48,11 @@ operation on a single array-like dataset::
          [ 1.22...,  0.  ..., -0.26...],
          [-1.22...,  1.22..., -1.06...]])
 
+..
+        >>> import numpy as np
+        >>> print_options = np.get_printoptions()
+        >>> np.set_printoptions(suppress=True)
+
 Scaled data has zero mean and unit variance::
 
   >>> X_scaled.mean(axis=0)
@@ -54,6 +60,8 @@ Scaled data has zero mean and unit variance::
 
   >>> X_scaled.std(axis=0)
   array([ 1.,  1.,  1.])
+
+..    >>> print_options = np.set_printoptions(print_options)
 
 The ``preprocessing`` module further provides a utility class
 :class:`Scaler` that implements the ``Transformer`` API to compute
@@ -95,18 +103,32 @@ of :class:`Scaler`.
   available on this FAQ: `Should I normalize/standardize/rescale the data?
   <http://www.faqs.org/faqs/ai-faq/neural-nets/part2/section-16.html>`_
 
-.. topic:: Notes
+.. topic:: Scaling vs Whitening
 
-  It is sometimes not enough to center and scale the features independently
-  since downstream model can further make assumption on the linear independence
-  of the features.
+  It is sometimes not enough to center and scale the features
+  independently, since a downstream model can further make some assumption
+  on the linear independence of the features.
 
   To address this issue you can use :class:`sklearn.decomposition.PCA`
   or :class:`sklearn.decomposition.RandomizedPCA` with ``whiten=True``
   to further remove the linear correlation across features.
 
-  Also note that the current implementation of :func:`scale` and
-  :class:`Scaler` **do not yet work with scipy.sparse matrices**.
+.. topic:: Sparse input
+
+  :func:`scale` and :class:`Scaler` accept ``scipy.sparse`` matrices
+  as input **only when with_mean=False is explicitly passed to the
+  constructor**. Otherwise a ``ValueError`` will be raised as
+  silently centering would break the sparsity and would often crash the
+  execution by allocating excessive amounts of memory unintentionally.
+
+  If the centered data is expected to be small enough, explicitly convert
+  the input to an array using the ``toarray`` method of sparse matrices
+  instead.
+
+  For sparse input the data is **converted to the Compressed Sparse Rows
+  representation** (see ``scipy.sparse.csr_matrix``).
+  To avoid unnecessary memory copies, it is recommended to choose the CSR
+  representation upstream.
 
 
 Normalization
@@ -159,7 +181,7 @@ The normalizer instance can then be used on sample vectors as any transformer::
   array([[-0.70...,  0.70...,  0.  ...]])
 
 
-.. topic:: Notes
+.. topic:: Sparse input
 
   :func:`normalize` and :class:`Normalizer` accept **both dense array-like
   and sparse matrices from scipy.sparse as input**.
@@ -220,7 +242,7 @@ As for the :class:`Scaler` and :class:`Normalizer` classes, the
 preprocessing module provides a companion function :func:`binarize`
 to be used when the transformer API is not necessary.
 
-.. topic:: Notes
+.. topic:: Sparse input
 
   :func:`binarize` and :class:`Binarizer` accept **both dense array-like
   and sparse matrices from scipy.sparse as input**.

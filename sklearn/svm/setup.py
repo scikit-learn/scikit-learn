@@ -1,19 +1,12 @@
 from os.path import join
-import sys
 import numpy
-
-if sys.version_info[0] < 3:
-    from ConfigParser import ConfigParser
-else:
-    from configparser import ConfigParser
 
 import warnings
 
 
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
-    from numpy.distutils.system_info import get_info, get_standard_file, \
-         BlasNotFoundError
+    from numpy.distutils.system_info import get_info, BlasNotFoundError
 
     config = Configuration('svm', parent_package, top_path)
 

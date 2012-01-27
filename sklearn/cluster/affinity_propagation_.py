@@ -45,7 +45,7 @@ def affinity_propagation(S, p=None, convit=30, max_iter=200, damping=0.5,
     -----
     See examples/plot_affinity_propagation.py for an example.
 
-    Reference:
+    **References**:
     Brendan J. Frey and Delbert Dueck, "Clustering by Passing Messages
     Between Data Points", Science Feb. 2007
 
@@ -54,7 +54,8 @@ def affinity_propagation(S, p=None, convit=30, max_iter=200, damping=0.5,
 
     n_points = S.shape[0]
 
-    assert S.shape[0] == S.shape[1]
+    if S.shape[0] != S.shape[1]:
+        raise ValueError("S must be a square array (shape=%r)" % S.shape)
 
     if p is None:
         p = np.median(S)
@@ -173,26 +174,21 @@ class AffinityPropagation(BaseEstimator):
     copy: boolean, optional
         Make a copy of input data. True by default.
 
-    Methods
-    -------
-
-    fit:
-        Compute the clustering
 
     Attributes
     ----------
 
-    cluster_centers_indices_ : array, [n_clusters]
+    `cluster_centers_indices_` : array, [n_clusters]
         Indices of cluster centers
 
-    labels_ : array, [n_samples]
+    `labels_` : array, [n_samples]
         Labels of each point
 
     Notes
     -----
     See examples/plot_affinity_propagation.py for an example.
 
-    Reference:
+    **References**:
 
     Brendan J. Frey and Delbert Dueck, "Clustering by Passing Messages
     Between Data Points", Science Feb. 2007
@@ -208,7 +204,7 @@ class AffinityPropagation(BaseEstimator):
         self.copy = copy
 
     def fit(self, S, p=None):
-        """compute MeanShift
+        """Compute MeanShift clustering.
 
         Parameters
         ----------

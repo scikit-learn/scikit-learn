@@ -33,8 +33,8 @@ from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction.text import Vectorizer
 from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.linear_model import RidgeClassifier
-from sklearn.svm.sparse import LinearSVC
-from sklearn.linear_model.sparse import SGDClassifier
+from sklearn.svm import LinearSVC
+from sklearn.linear_model import SGDClassifier
 from sklearn.naive_bayes import BernoulliNB, MultinomialNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.utils.extmath import density
@@ -137,7 +137,6 @@ def trim(s):
     return s if len(s) <= 80 else s[:77] + "..."
 
 
-
 ###############################################################################
 # Benchmark classifiers
 def benchmark(clf):
@@ -164,7 +163,7 @@ def benchmark(clf):
         if opts.print_top10:
             print "top 10 keywords per class:"
             for i, category in enumerate(categories):
-                top10 = np.argsort(clf.coef_[i, :])[-10:]
+                top10 = np.argsort(clf.coef_[i])[-10:]
                 print trim("%s: %s" % (category, " ".join(vocabulary[top10])))
         print
 
@@ -209,6 +208,7 @@ print "Naive Bayes"
 mnnb_results = benchmark(MultinomialNB(alpha=.01))
 bnb_result = benchmark(BernoulliNB(alpha=.01))
 
+
 class L1LinearSVC(LinearSVC):
 
     def fit(self, X, y):
@@ -226,5 +226,3 @@ class L1LinearSVC(LinearSVC):
 print 80 * '='
 print "LinearSVC with L1-based feature selection"
 l1linearsvc_results = benchmark(L1LinearSVC())
-
-

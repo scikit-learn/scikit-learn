@@ -27,9 +27,9 @@ div.header-wrapper {
     min-height: 50px;
     margin-left: auto;
     margin-right: auto;
-    border-radius: 15px;
-    -moz-border-radius: 15px;
-    margin-top: 10px;
+    border-radius: 0 0 15px 15px;
+    -moz-border-radius: 0 15px 0 15px;
+    margin-top: 0px;
 }
 
 ul.horizontal, ul.horizontal li {
@@ -498,4 +498,6 @@ div.rellink:hover span.hiddenrellink {
     color: white;
 }
 
-
+th.field-name {
+    white-space: nowrap;
+}

@@ -118,8 +118,8 @@ def adjusted_rand_score(labels_true, labels_pred):
        Similarity score between -1.0 and 1.0. Random labelings have an ARI
        close to 0.0. 1.0 stands for perfect match.
 
-    Example
-    -------
+    Examples
+    --------
 
     Perfectly maching labelings have a score of 1 even
 
@@ -147,13 +147,15 @@ def adjusted_rand_score(labels_true, labels_pred):
       >>> adjusted_rand_score([0, 0, 0, 0], [0, 1, 2, 3])
       0.0
 
-    References
-    ----------
-    - L. Hubert and P. Arabie, Comparing Partitions,
-      Journal of Classification 1985
+    Notes
+    -----
+    **References**:
+
+    .. [Hubert1985] `L. Hubert and P. Arabie, Comparing Partitions,
+      Journal of Classification 1985`
       http://www.springerlink.com/content/x64124718341j1j0/
 
-    - http://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index
+    .. [wk] http://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index
 
     See also
     --------
@@ -299,11 +301,13 @@ def homogeneity_score(labels_true, labels_pred):
     homogeneity: float
        score between 0.0 and 1.0. 1.0 stands for perfectly homogeneous labeling
 
-    References
-    ----------
-    V-Measure: A conditional entropy-based external cluster evaluation measure
-    Andrew Rosenberg and Julia Hirschberg, 2007
-    http://acl.ldc.upenn.edu/D/D07/D07-1043.pdf
+    Notes
+    -----
+    **References**:
+
+    `V-Measure: A conditional entropy-based external cluster evaluation measure
+        Andrew Rosenberg and Julia Hirschberg, 2007`
+        http://acl.ldc.upenn.edu/D/D07/D07-1043.pdf
 
     See also
     --------
@@ -365,11 +369,13 @@ def completeness_score(labels_true, labels_pred):
     completeness: float
        score between 0.0 and 1.0. 1.0 stands for perfectly complete labeling
 
-    References
-    ----------
-    V-Measure: A conditional entropy-based external cluster evaluation measure
-    Andrew Rosenberg and Julia Hirschberg, 2007
-    http://acl.ldc.upenn.edu/D/D07/D07-1043.pdf
+    Notes
+    -----
+    **References**:
+
+    `V-Measure: A conditional entropy-based external cluster evaluation measure
+        Andrew Rosenberg and Julia Hirschberg, 2007`
+        http://acl.ldc.upenn.edu/D/D07/D07-1043.pdf
 
     See also
     --------
@@ -393,7 +399,7 @@ def completeness_score(labels_true, labels_pred):
       >>> completeness_score([0, 1, 2, 3], [0, 0, 1, 1])
       1.0
 
-    If classes members are splitted accross different clusters, the
+    If classes members are splitted across different clusters, the
     assignment cannot be complete::
 
       >>> completeness_score([0, 0, 1, 1], [0, 1, 0, 1])
@@ -434,11 +440,13 @@ def v_measure_score(labels_true, labels_pred):
     completeness: float
        score between 0.0 and 1.0. 1.0 stands for perfectly complete labeling
 
-    References
-    ----------
-    V-Measure: A conditional entropy-based external cluster evaluation measure
-    Andrew Rosenberg and Julia Hirschberg, 2007
-    http://acl.ldc.upenn.edu/D/D07/D07-1043.pdf
+    Notes
+    -----
+    **References**:
+
+    .. [Rosenberg2007] `V-Measure: A conditional entropy-based external cluster
+        evaluation measure Andrew Rosenberg and Julia Hirschberg, 2007`
+        http://acl.ldc.upenn.edu/D/D07/D07-1043.pdf
 
     See also
     --------
@@ -473,7 +481,7 @@ def v_measure_score(labels_true, labels_pred):
       >>> v_measure_score([0, 0, 1, 1], [0, 1, 2, 3])     # doctest: +ELLIPSIS
       0.66...
 
-    If classes members are completly splitted accross different clusters,
+    If classes members are completly splitted across different clusters,
     the assignment is totally in-complete, hence the v-measure is null::
 
       >>> v_measure_score([0, 0, 0, 0], [0, 1, 2, 3])
@@ -490,15 +498,15 @@ def v_measure_score(labels_true, labels_pred):
 
 
 def mutual_info_score(labels_true, labels_pred, contingency=None):
-    """Adjusted Mutual Information between two clusterings
+    """Mutual Information between two clusterings
 
     The Mutual Information is a measure of the similarity between two labels
     of the same data. Where P(i) is the probability of a random sample occuring
     in cluster U_i and P'(j) is the probability of a random sample occuring in
     cluster V_j, the Mutual information  between clusterings U and V is given
-    as:
+    as::
 
-      MI(U,V)=\sum_{i=1}^R \sum_{j=1}^C P(i,j)\log \frac{P(i,j)}{P(i)P'(j)}
+        MI(U,V)=\sum_{i=1}^R \sum_{j=1}^C P(i,j)\log \frac{P(i,j)}{P(i)P'(j)}
 
     This metric is independent of the absolute values of the labels:
     a permutation of the class or cluster label values won't change the
@@ -553,9 +561,9 @@ def adjusted_mutual_info_score(labels_true, labels_pred):
     Information (MI) score to account for chance. It accounts for the fact that
     the MI is generally higher for two clusterings with a larger number of
     clusters, regardless of whether there is actually more information shared.
-    For two clusterings U and V, the AMI is given as:
+    For two clusterings U and V, the AMI is given as::
 
-      AMI(U, V) = \frac{MI(U, V) - E(MI(U, V))}{max(H(U), H(V)) - E(MI(U, V))}
+        AMI(U, V) = [MI(U, V) - E(MI(U, V))] / [max(H(U), H(V)) - E(MI(U, V))]
 
     This metric is independent of the absolute values of the labels:
     a permutation of the class or cluster label values won't change the
@@ -599,7 +607,7 @@ def adjusted_mutual_info_score(labels_true, labels_pred):
       >>> adjusted_mutual_info_score([0, 0, 1, 1], [1, 1, 0, 0])
       1.0
 
-    If classes members are completly splitted accross different clusters,
+    If classes members are completly splitted across different clusters,
     the assignment is totally in-complete, hence the AMI is null::
 
       >>> adjusted_mutual_info_score([0, 0, 0, 0], [0, 1, 2, 3])

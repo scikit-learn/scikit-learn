@@ -118,6 +118,22 @@ def test_roc_curve_hard():
     assert_array_almost_equal(roc_auc, 0.74, decimal=2)
 
 
+def test_auc():
+    """Test Area Under Curve (AUC) computation"""
+    x = [0, 1]
+    y = [0, 1]
+    assert_array_almost_equal(auc(x, y), 0.5)
+    x = [1, 0]
+    y = [0, 1]
+    assert_array_almost_equal(auc(x, y), 0.5)
+    x = [0, 1]
+    y = [1, 1]
+    assert_array_almost_equal(auc(x, y), 1)
+    x = [0, 0.5, 1]
+    y = [0, 0.5, 1]
+    assert_array_almost_equal(auc(x, y), 0.5)
+
+
 def test_precision_recall_f1_score_binary():
     """Test Precision Recall and F1 Score for binary classification task"""
     y_true, y_pred, _ = make_prediction(binary=True)

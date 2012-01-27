@@ -4,12 +4,12 @@ Extended math utilities.
 # Authors: G. Varoquaux, A. Gramfort, A. Passos, O. Grisel
 # License: BSD
 
-import math
+import numpy as np
+from scipy import linalg
 
 from . import check_random_state
-import numpy as np
-
-from scipy import linalg
+from . import deprecated
+from .fixes import qr_economic
 
 
 def norm(v):
@@ -19,10 +19,9 @@ def norm(v):
 
 
 def _fast_logdet(A):
-    """
-    Compute log(det(A)) for A symmetric
-    Equivalent to : np.log(np.linalg.det(A))
-    but more robust
+    """Compute log(det(A)) for A symmetric
+
+    Equivalent to : np.log(np.linalg.det(A)) but more robust.
     It returns -Inf if det(A) is non positive or is not defined.
     """
     # XXX: Should be implemented as in numpy, using ATLAS
@@ -38,10 +37,9 @@ def _fast_logdet(A):
 
 
 def _fast_logdet_numpy(A):
-    """
-    Compute log(det(A)) for A symmetric
-    Equivalent to : np.log(nl.det(A))
-    but more robust
+    """Compute log(det(A)) for A symmetric
+
+    Equivalent to : np.log(nl.det(A)) but more robust.
     It returns -Inf if det(A) is non positive or is not defined.
     """
     sign, ld = np.linalg.slogdet(A)
@@ -81,22 +79,71 @@ def safe_sparse_dot(a, b, dense_output=False):
         return np.dot(a, b)
 
 
-def fast_svd(M, k, p=None, q=0, transpose='auto', random_state=0):
-    """Computes the k-truncated randomized SVD
+def randomized_range_finder(A, size, n_iterations, random_state=None):
+    """Computes an orthonormal matrix whose range approximates the range of A.
 
     Parameters
-    ===========
+    ----------
+    A: 2D array
+        The input data matrix
+    size: integer
+        Size of the return array
+    n_iterations: integer
+        Number of power iterations used to stabilize the result
+    random_state: RandomState or an int seed (0 by default)
+        A random number generator instance
+
+    Returns
+    -------
+    Q: 2D array
+        A (size x size) projection matrix, the range of which
+        approximates well the range of the input matrix A.
+
+    Notes
+    -----
+
+    Follows Algorithm 4.3 of
+    Finding structure with randomness: Stochastic algorithms for constructing
+    approximate matrix decompositions
+    Halko, et al., 2009 (arXiv:909) http://arxiv.org/pdf/0909.4061
+    """
+    random_state = check_random_state(random_state)
+
+    # generating random gaussian vectors r with shape: (A.shape[1], size)
+    R = random_state.normal(size=(A.shape[1], size))
+
+    # sampling the range of A using by linear projection of r
+    Y = safe_sparse_dot(A, R)
+    del R
+
+    # perform power iterations with Y to further 'imprint' the top
+    # singular vectors of A in Y
+    for i in xrange(n_iterations):
+        Y = safe_sparse_dot(A, safe_sparse_dot(A.T, Y))
+
+    # extracting an orthonormal basis of the A range samples
+    Q, R = qr_economic(Y)
+    return Q
+
+
+def randomized_svd(M, n_components, n_oversamples=10, n_iterations=0,
+                   transpose='auto', random_state=0):
+    """Computes a truncated randomized SVD
+
+    Parameters
+    ----------
     M: ndarray or sparse matrix
         Matrix to decompose
 
-    k: int
+    n_components: int
         Number of singular values and vectors to extract.
 
-    p: int (default is k)
-        Additional number of samples of the range of M to ensure proper
-        conditioning. See the notes below.
+    n_oversamples: int (default is 10)
+        Additional number of random vectors to sample the range of M so as
+        to ensure proper conditioning. The total number of random vectors
+        used to find the range of M is n_components + n_oversamples.
 
-    q: int (default is 0)
+    n_iterations: int (default is 0)
         Number of power iterations (can be used to deal with very noisy
         problems).
 
@@ -111,30 +158,23 @@ def fast_svd(M, k, p=None, q=0, transpose='auto', random_state=0):
         A random number generator instance to make behavior
 
     Notes
-    =====
-    This algorithm finds the exact truncated singular values decomposition
-    using randomization to speed up the computations. It is particularly
-    fast on large matrices on which you whish to extract only a small
-    number of components.
+    -----
+    This algorithm finds a (usually very good) approximate truncated
+    singular value decomposition using randomization to speed up the
+    computations. It is particularly fast on large matrices on which
+    you wish to extract only a small number of components.
 
-    (k + p) should be strictly higher than the rank of M. This can be
-    checked by ensuring that the lowest extracted singular value is on
-    the order of the machine precision of floating points.
+    **References**:
 
-    References
-    ==========
-    Finding structure with randomness: Stochastic algorithms for constructing
-    approximate matrix decompositions
-    Halko, et al., 2009
-    http://arxiv.org/abs/arXiv:0909.4061
+    * Finding structure with randomness: Stochastic algorithms for constructing
+      approximate matrix decompositions
+      Halko, et al., 2009 http://arxiv.org/abs/arXiv:0909.4061
 
-    A randomized algorithm for the decomposition of matrices
-    Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
+    * A randomized algorithm for the decomposition of matrices
+      Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
     """
-    if p == None:
-        p = k
-
     random_state = check_random_state(random_state)
+    n_random = n_components + n_oversamples
     n_samples, n_features = M.shape
 
     if transpose == 'auto' and n_samples > n_features:
@@ -143,22 +183,7 @@ def fast_svd(M, k, p=None, q=0, transpose='auto', random_state=0):
         # this implementation is a bit faster with smaller shape[1]
         M = M.T
 
-   # generating random gaussian vectors r with shape: (M.shape[1], k + p)
-    r = random_state.normal(size=(M.shape[1], k + p))
-
-    # sampling the range of M using by linear projection of r
-    Y = safe_sparse_dot(M, r)
-    del r
-
-    # apply q power iterations on Y to make to further 'imprint' the top
-    # singular values of M in Y
-    for i in xrange(q):
-        Y = safe_sparse_dot(M, safe_sparse_dot(M.T, Y))
-
-    # extracting an orthonormal basis of the M range samples
-    from .fixes import qr_economic
-    Q, R = qr_economic(Y)
-    del R
+    Q = randomized_range_finder(M, n_random, n_iterations, random_state)
 
     # project M to the (k + p) dimensional space using the basis vectors
     B = safe_sparse_dot(Q.T, M)
@@ -171,26 +196,33 @@ def fast_svd(M, k, p=None, q=0, transpose='auto', random_state=0):
 
     if transpose:
         # transpose back the results according to the input convention
-        return V[:k, :].T, s[:k], U[:, :k].T
+        return V[:n_components, :].T, s[:n_components], U[:, :n_components].T
     else:
-        return U[:, :k], s[:k], V[:k, :]
+        return U[:, :n_components], s[:n_components], V[:n_components, :]
 
 
-def logsum(arr, axis=0):
-    """ Computes the sum of arr assuming arr is in the log domain.
+@deprecated("fast_svd is deprecated in 0.10 and will be removed in 0.12: "
+            "use randomized_svd instead")
+def fast_svd(M, k, p=10, n_iterations=0, transpose='auto', random_state=0):
+    return randomized_svd(M, k, n_oversamples=p, n_iterations=n_iterations,
+                          transpose='auto', random_state=random_state)
+
+
+def logsumexp(arr, axis=0):
+    """Computes the sum of arr assuming arr is in the log domain.
 
     Returns log(sum(exp(arr))) while minimizing the possibility of
     over/underflow.
 
     Examples
-    ========
+    --------
 
     >>> import numpy as np
-    >>> from sklearn.utils.extmath import logsum
+    >>> from sklearn.utils.extmath import logsumexp
     >>> a = np.arange(10)
     >>> np.log(np.sum(np.exp(a)))
     9.4586297444267107
-    >>> logsum(a)
+    >>> logsumexp(a)
     9.4586297444267107
     """
     arr = np.rollaxis(arr, axis)
@@ -203,8 +235,7 @@ def logsum(arr, axis=0):
 
 
 def weighted_mode(a, w, axis=0):
-    """Returns an array of the weighted modal (most common) value in the
-    passed array.
+    """Returns an array of the weighted modal (most common) value in a
 
     If there is more than one such value, only the first is returned.
     The bin-count for the modal bins is also returned.

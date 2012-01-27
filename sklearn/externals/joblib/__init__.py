@@ -13,7 +13,7 @@ data and has specific optimizations for `numpy` arrays. It is
 **BSD-licensed**.
 
 
-    ============================== ==============================================
+    ============================== ============================================
     **User documentation**:        http://packages.python.org/joblib
 
     **Download packages**:         http://pypi.python.org/pypi/joblib#downloads
@@ -21,7 +21,7 @@ data and has specific optimizations for `numpy` arrays. It is
     **Source code**:               http://github.com/joblib/joblib
 
     **Report issues**:             http://github.com/joblib/joblib/issues
-    ============================== ==============================================
+    ============================== ============================================
 
 
 Vision
@@ -38,14 +38,15 @@ solution.
     issue is error-prone and often leads to unreproducible results
 
  *  **Persist to disk transparently**: persisting in an efficient way
-    arbitrary objects containing large data is hard. In addition,
-    hand-written persistence does not link easily the file on disk to the
-    execution context of the original Python object. As a result, it is
-    challenging to resume a application status or computational job, eg
+    arbitrary objects containing large data is hard. Using
+    joblib's caching mechanism avoids hand-written persistence and
+    implicitely links the file on disk to the execution context of
+    the original Python object. As a result, joblib's persistence is
+    good for resuming an application status or computational job, eg
     after a crash.
 
-It strives to address these problems while **leaving your code and your
-flow control as unmodified as possible** (no framework, no new
+Joblib strives to address these problems while **leaving your code and
+your flow control as unmodified as possible** (no framework, no new
 paradigms).
 
 Main features
@@ -64,19 +65,19 @@ Main features
       >>> import numpy as np
       >>> a = np.vander(np.arange(3))
       >>> square = mem.cache(np.square)
-      >>> b = square(a)
+      >>> b = square(a)                                   # doctest: +ELLIPSIS
       ________________________________________________________________________________
       [Memory] Calling square...
       square(array([[0, 0, 1],
              [1, 1, 1],
              [4, 2, 1]]))
-      ___________________________________________________________square - 0.0s, 0.0min
+      ___________________________________________________________square - 0...s, 0.0min
 
       >>> c = square(a)
       >>> # The above call did not trigger an evaluation
 
 2) **Embarrassingly parallel helper:** to make is easy to write readable
-   parallel code and debug it quickly:
+   parallel code and debug it quickly::
 
       >>> from sklearn.externals.joblib import Parallel, delayed
       >>> from math import sqrt
@@ -91,17 +92,24 @@ Main features
    display streams, and provide a way of compiling a report.
    We want to be able to quickly inspect what has been run.
 
+4) **Fast compressed Persistence**: a replacement for pickle to work
+   efficiently on Python objects containing large data (
+   *joblib.dump* & *joblib.load* ).
+
 ..
     >>> import shutil ; shutil.rmtree('/tmp/joblib/')
 
 """
 
-__version__ = '0.5.3'
+__version__ = '0.6.0b2'
 
 
 from .memory import Memory
-from .logger import PrintTime, Logger
+from .logger import PrintTime
+from .logger import Logger
 from .hashing import hash
-from .numpy_pickle import dump, load
-from .parallel import Parallel, delayed, cpu_count
-
+from .numpy_pickle import dump
+from .numpy_pickle import load
+from .parallel import Parallel
+from .parallel import delayed
+from .parallel import cpu_count

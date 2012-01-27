@@ -65,7 +65,7 @@ transform method of a trained model of :class:`KMeans`.
 Mini Batch K-Means
 ------------------
 
-The :class:`MiniBatchKMeans` is a variant of the :class:`K-Means` algorithm
+The :class:`MiniBatchKMeans` is a variant of the :class:`KMeans` algorithm
 using mini-batches, random subset of the dataset, to compute the centroids.
 
 Althought the :class:`MiniBatchKMeans` converge faster than the KMeans
@@ -114,7 +114,7 @@ will have difficulties scaling to thousands of samples.
  * :ref:`example_cluster_plot_affinity_propagation.py`: Affinity
    Propagation on a synthetic 2D datasets with 3 classes.
 
- * :ref:`example_applications_stock_market.py` Affinity Propagation on
+ * :ref:`example_applications_plot_stock_market.py` Affinity Propagation on
    Financial time series to find groups of companies
 
 
@@ -242,11 +242,11 @@ roll.
 
 .. |unstructured| image:: ../auto_examples/cluster/images/plot_ward_structured_vs_unstructured_1.png
         :target: ../auto_examples/cluster/plot_ward_structured_vs_unstructured.html
-        :scale: 50
+        :scale: 49
 
 .. |structured| image:: ../auto_examples/cluster/images/plot_ward_structured_vs_unstructured_2.png
         :target: ../auto_examples/cluster/plot_ward_structured_vs_unstructured.html
-        :scale: 50
+        :scale: 49
 
 .. centered:: |unstructured| |structured|
 
@@ -565,13 +565,15 @@ Mathematical formulation
 ~~~~~~~~~~~~~~~~~~~~~~~~
 Assume two label assignments (of the same data), :math:`U` with :math:`R`
 classes and :math:`V` with :math:`C` classes. The entropy of either is the
- amount of uncertaintly for an array, and can be calculated as:
+amount of uncertaintly for an array, and can be calculated as:
 
 .. math:: H(U) = \sum_{i=1}^{|R|}P(i)log(P(i))
 
 Where P(i) is the number of instances in U that are in class :math:`R_i`.
 Likewise, for :math:`V`:
+
 .. math:: H(V) = \sum_{j=1}^{|C|}P'(j)log(P'(j))
+
 Where P'(j) is the number of instances in V that are in class :math:`C_j`.
 
 The (non-adjusted) mutual information between :math:`U` and :math:`V` is

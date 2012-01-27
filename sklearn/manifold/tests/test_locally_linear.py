@@ -23,9 +23,9 @@ def test_barycenter_kneighbors_graph():
     A = barycenter_kneighbors_graph(X, 1)
     assert_array_almost_equal(
         A.todense(),
-        [[ 0.,  1.,  0.],
-         [ 1.,  0.,  0.],
-         [ 0.,  1.,  0.]])
+        [[0.,  1.,  0.],
+         [1.,  0.,  0.],
+         [0.,  1.,  0.]])
 
     A = barycenter_kneighbors_graph(X, 2)
     # check that columns sum to one
@@ -72,7 +72,8 @@ def test_lle_manifold():
     X = np.array(list(product(range(20), repeat=2)))
     X = np.c_[X, X[:, 0] ** 2 / 20]
     out_dim = 2
-    clf = manifold.LocallyLinearEmbedding(n_neighbors=5, out_dim=out_dim)
+    clf = manifold.LocallyLinearEmbedding(n_neighbors=5, out_dim=out_dim,
+                                          random_state=0)
     tol = 1.5
 
     N = barycenter_kneighbors_graph(X, clf.n_neighbors).toarray()
@@ -97,9 +98,18 @@ def test_pipeline():
     iris = datasets.load_iris()
     clf = pipeline.Pipeline(
         [('filter', manifold.LocallyLinearEmbedding()),
-         ('clf', neighbors.NeighborsClassifier())])
+         ('clf', neighbors.KNeighborsClassifier())])
     clf.fit(iris.data, iris.target)
     assert_lower(.7, clf.score(iris.data, iris.target))
+
+
+# Test the error raised when the weight matrix is singular
+def test_singular_matrix():
+    from nose.tools import assert_raises
+    M = np.ones((10, 3))
+
+    assert_raises(ValueError, manifold.locally_linear_embedding,
+                  M, 2, 1, method='standard', eigen_solver='arpack')
 
 
 if __name__ == '__main__':

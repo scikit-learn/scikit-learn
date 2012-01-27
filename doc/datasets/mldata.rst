@@ -1,3 +1,8 @@
+..
+    For doctests:
+
+    >>> import numpy as np
+    >>> import os
 
 .. _mldata:
 

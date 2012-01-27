@@ -61,7 +61,7 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
     """
 
     from scipy import sparse
-    from ..utils.fixes import arpack_eigsh
+    from ..utils.arpack import eigsh
     from scipy.sparse.linalg import lobpcg
     try:
         from pyamg import smoothed_aggregation_solver
@@ -102,8 +102,8 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
                 # csr has the fastest matvec and is thus best suited to
                 # arpack
                 laplacian = laplacian.tocsr()
-        lambdas, diffusion_map = arpack_eigsh(-laplacian, k=n_components,
-                                              which='LA')
+        lambdas, diffusion_map = eigsh(-laplacian, k=n_components,
+                                        which='LA')
         embedding = diffusion_map.T[::-1] * dd
     elif mode == 'amg':
         # Use AMG to get a preconditioner and speed up the eigenvalue
@@ -177,8 +177,10 @@ def spectral_clustering(affinity, k=8, n_components=None, mode=None,
     centers: array of integers, shape: k
         The indices of the cluster centers
 
-    References
-    ----------
+    Notes
+    -----
+    **References**:
+
     - Normalized cuts and image segmentation, 2000
       Jianbo Shi, Jitendra Malik
       http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.160.2324
@@ -237,20 +239,16 @@ class SpectralClustering(BaseEstimator):
         centroid seeds. The final results will be the best output of
         n_init consecutive runs in terms of inertia.
 
-    Methods
-    -------
-
-    fit(X):
-        Compute spectral clustering
-
     Attributes
     ----------
 
-    labels_:
+    `labels_` :
         Labels of each point
 
-    References
-    ----------
+    Notes
+    -----
+    **References**:
+
     - Normalized cuts and image segmentation, 2000
       Jianbo Shi, Jitendra Malik
       http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.160.2324

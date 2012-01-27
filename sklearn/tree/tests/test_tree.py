@@ -202,6 +202,28 @@ def test_numerical_stability():
     np.seterr(**old_settings)
 
 
+def test_importances():
+    """Check variable importances."""
+    X, y = datasets.make_classification(n_samples=1000,
+                                        n_features=10,
+                                        n_informative=3,
+                                        n_redundant=0,
+                                        n_repeated=0,
+                                        shuffle=False,
+                                        random_state=0)
+
+    clf = tree.DecisionTreeClassifier(compute_importances=True)
+    clf.fit(X, y)
+    importances = clf.feature_importances_
+    n_important = sum(importances > 0.1)
+
+    assert_equal(importances.shape[0], 10)
+    assert_equal(n_important, 3)
+
+    X_new = clf.transform(X, threshold="mean")
+    assert 0 < X_new.shape[1] < X.shape[1]
+
+
 def test_error():
     """Test that it gives proper exception on deficient input."""
     # Invalid values for parameters
@@ -243,7 +265,18 @@ def test_error():
 
    # use values of max_features that are invalid
     clf = tree.DecisionTreeClassifier(max_features=10)
-    assert_raises(ValueError, clf.fit, X, y2)
+    assert_raises(ValueError, clf.fit, X, y)
+
+    clf = tree.DecisionTreeClassifier(max_features=-1)
+    assert_raises(ValueError, clf.fit, X, y)
+
+    clf = tree.DecisionTreeClassifier(max_features="foobar")
+    assert_raises(ValueError, clf.fit, X, y)
+
+    tree.DecisionTreeClassifier(max_features="auto").fit(X, y)
+    tree.DecisionTreeClassifier(max_features="sqrt").fit(X, y)
+    tree.DecisionTreeClassifier(max_features="log2").fit(X, y)
+    tree.DecisionTreeClassifier(max_features=None).fit(X, y)
 
     # predict before fit
     clf = tree.DecisionTreeClassifier()

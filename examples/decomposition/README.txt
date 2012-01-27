@@ -1,7 +1,7 @@
 .. _decomposition_examples:
 
-Decomposition 
+Decomposition
 -------------
 
-Examples concerning the `sklearn.decomposition` package.
+Examples concerning the :mod:`sklearn.decomposition` package.
 

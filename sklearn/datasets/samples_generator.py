@@ -86,8 +86,8 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    Return
-    ------
+    Returns
+    -------
     X : array of shape [n_samples, n_features]
         The generated samples.
 
@@ -99,18 +99,23 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     The algorithm is adapted from Guyon [1] and was designed to generate
     the "Madelon" dataset.
 
-    References
-    ----------
+    **References**:
+
     .. [1] I. Guyon, "Design of experiments for the NIPS 2003 variable
            selection benchmark", 2003.
     """
     generator = check_random_state(random_state)
 
     # Count features, clusters and samples
-    assert n_informative + n_redundant + n_repeated <= n_features
-    assert 2 ** n_informative >= n_classes * n_clusters_per_class
-    assert weights is None or (len(weights) == n_classes or
-                               len(weights) == (n_classes - 1))
+    if n_informative + n_redundant + n_repeated > n_features:
+        raise ValueError("Number of informative, redundant and repeated "
+            "features must sum to less than the number of total features")
+    if 2 ** n_informative < n_classes * n_clusters_per_class:
+        raise ValueError("n_classes * n_clusters_per_class must"
+            "be smaller or equal 2 ** n_informative")
+    if weights and len(weights) not in [n_classes, n_classes - 1]:
+        raise ValueError("Weights specified but incompatible with number "
+                "of classes.")
 
     n_useless = n_features - n_informative - n_redundant - n_repeated
     n_clusters = n_classes * n_clusters_per_class
@@ -221,6 +226,102 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
         X[:, :] = X[:, indices]
 
     return X, y
+
+
+def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
+                                   n_labels=2, length=50,
+                                   allow_unlabeled=True, random_state=None):
+    """Generate a random multilabel classification problem.
+
+    For each sample, the generative process is:
+        - pick the number of labels: n ~ Poisson(n_labels)
+        - n times, choose a class c: c ~ Multinomial(theta)
+        - pick the document length: k ~ Poisson(length)
+        - k times, choose a word: w ~ Multinomial(theta_c)
+
+    In the above process, rejection sampling is used to make sure that
+    n is never zero or more than `n_classes`, and that the document length
+    is never zero. Likewise, we reject classes which have already been chosen.
+
+    Parameters
+    ----------
+    n_samples : int, optional (default=100)
+        The number of samples.
+
+    n_features : int, optional (default=20)
+        The total number of features.
+
+    n_classes : int, optional (default=5)
+        The number of classes of the classification problem.
+
+    n_labels : int, optional (default=2)
+        The average number of labels per instance. Number of labels follows
+        a Poisson distribution that never takes the value 0.
+
+    length : int, optional (default=50)
+        Sum of the features (number of words if documents).
+
+    allow_unlabeled : bool, optional (default=True)
+        If ``True``, some instances might not belong to any class.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    Returns
+    -------
+    X : array of shape [n_samples, n_features]
+        The generated samples.
+
+    Y : list of tuples
+        The label sets.
+    """
+    generator = check_random_state(random_state)
+    p_c = generator.rand(n_classes)
+    p_c /= p_c.sum()
+    p_w_c = generator.rand(n_features, n_classes)
+    p_w_c /= np.sum(p_w_c, axis=0)
+
+    def sample_example():
+        _, n_classes = p_w_c.shape
+
+        # pick a nonzero number of labels per document by rejection sampling
+        n = n_classes + 1
+        while (not allow_unlabeled and n == 0) or n > n_classes:
+            n = generator.poisson(n_labels)
+
+        # pick n classes
+        y = []
+        while len(y) != n:
+            # pick a class with probability P(c)
+            c = generator.multinomial(1, p_c).argmax()
+
+            if not c in y:
+                y.append(c)
+
+        # pick a non-zero document length by rejection sampling
+        k = 0
+        while k == 0:
+            k = generator.poisson(length)
+
+        # generate a document of length k words
+        x = np.zeros(n_features, dtype=int)
+        for i in range(k):
+            if len(y) == 0:
+                # if sample does not belong to any class, generate noise word
+                w = generator.randint(n_features)
+            else:
+                # pick a class and generate an appropriate word
+                c = y[generator.randint(len(y))]
+                w = generator.multinomial(1, p_w_c[:, c]).argmax()
+            x[w] += 1
+
+        return x, y
+
+    X, Y = zip(*[sample_example() for i in range(n_samples)])
+    return np.array(X, dtype=np.float64), Y
 
 
 def make_regression(n_samples=100, n_features=100, n_informative=10, bias=0.0,
@@ -370,8 +471,8 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    Return
-    ------
+    Returns
+    -------
     X : array of shape [n_samples, n_features]
         The generated samples.
 
@@ -401,7 +502,7 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
     y = []
 
     n_centers = centers.shape[0]
-    n_samples_per_center = [n_samples / n_centers] * n_centers
+    n_samples_per_center = [int(n_samples // n_centers)] * n_centers
 
     for i in xrange(n_samples % n_centers):
         n_samples_per_center[i] += 1
@@ -464,15 +565,18 @@ def make_friedman1(n_samples=100, n_features=10, noise=0.0, random_state=None):
     y : array of shape [n_samples]
         The output values.
 
-    References
-    ----------
+    Notes
+    -----
+    **References**:
+
     .. [1] J. Friedman, "Multivariate adaptive regression splines", The Annals
            of Statistics 19 (1), pages 1-67, 1991.
 
     .. [2] L. Breiman, "Bagging predictors", Machine Learning 24,
            pages 123-140, 1996.
     """
-    assert n_features >= 5
+    if n_features < 5:
+        raise ValueError("n_features must be at least five.")
 
     generator = check_random_state(random_state)
 
@@ -525,8 +629,10 @@ def make_friedman2(n_samples=100, noise=0.0, random_state=None):
     y : array of shape [n_samples]
         The output values.
 
-    References
-    ----------
+    Notes
+    -----
+    **References**:
+
     .. [1] J. Friedman, "Multivariate adaptive regression splines", The Annals
            of Statistics 19 (1), pages 1-67, 1991.
 
@@ -591,8 +697,10 @@ def make_friedman3(n_samples=100, noise=0.0, random_state=None):
     y : array of shape [n_samples]
         The output values.
 
-    References
-    ----------
+    Notes
+    -----
+    **References**:
+
     .. [1] J. Friedman, "Multivariate adaptive regression splines", The Annals
            of Statistics 19 (1), pages 1-67, 1991.
 
@@ -633,8 +741,8 @@ def make_low_rank_matrix(n_samples=100, n_features=100, effective_rank=10,
     components (singular vectors).
 
     This kind of singular profiles is often seen in practice, for instance:
-     - graw level pictures of faces
-     - TF-IDF vectors of text documents about a few topics
+     - gray level pictures of faces
+     - TF-IDF vectors of text documents crawled from the web
 
     Parameters
     ----------
@@ -774,8 +882,10 @@ def make_sparse_uncorrelated(n_samples=100, n_features=10, random_state=None):
     y : array of shape [n_samples]
         The output values.
 
-    References
-    ----------
+    Notes
+    -----
+    **References**:
+
     .. [1] G. Celeux, M. El Anbari, J.-M. Marin, C. P. Robert,
            "Regularization in regression: comparing Bayesian and frequentist
            methods in a poorly informative situation", 2009.
@@ -819,6 +929,61 @@ def make_spd_matrix(n_dim, random_state=None):
     return X
 
 
+def make_sparse_spd_matrix(dim=1, alpha=0.95, norm_diag=False,
+                           smallest_coef=.1, largest_coef=.9,
+                           random_state=None):
+    """Generate a sparse symetric definite positive matrix.
+
+    Parameters
+    ----------
+    dim: integer, optional (default=1)
+        The size of the random  (matrix to generate.
+
+    alpha: float between 0 and 1, optional (default=0.95)
+        The probability that a coefficient is non zero (see notes).
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    Returns
+    -------
+    prec: array of shape = [dim, dim]
+
+    Notes
+    -----
+    The sparsity is actually imposed on the cholesky factor of the matrix.
+    Thus alpha does not translate directly into the filling fraction of
+    the matrix itself.
+    """
+    random_state = check_random_state(random_state)
+
+    chol = -np.eye(dim)
+    aux = random_state.rand(dim, dim)
+    aux[aux < alpha] = 0
+    aux[aux > alpha] = (smallest_coef
+                        + (largest_coef - smallest_coef)
+                          * random_state.rand(np.sum(aux > alpha)))
+    aux = np.tril(aux, k=-1)
+
+    # Permute the lines: we don't want to have assymetries in the final
+    # SPD matrix
+    permutation = random_state.permutation(dim)
+    aux = aux[permutation].T[permutation]
+    chol += aux
+    prec = np.dot(chol.T, chol)
+
+    if norm_diag:
+        d = np.diag(prec)
+        d = 1. / np.sqrt(d)
+        prec *= d
+        prec *= d[:, np.newaxis]
+
+    return prec
+
+
 def make_swiss_roll(n_samples=100, noise=0.0, random_state=None):
     """Generate a swiss roll dataset.
 
@@ -849,8 +1014,8 @@ def make_swiss_roll(n_samples=100, noise=0.0, random_state=None):
     -----
     The algorithm is from Marsland [1].
 
-    References
-    ----------
+    **References**:
+
     .. [1] S. Marsland, "Machine Learning: An Algorithmic Perpsective",
            Chapter 10, 2009.
            http://www-ist.massey.ac.nz/smarsland/Code/10/lle.py
@@ -909,52 +1074,3 @@ def make_s_curve(n_samples=100, noise=0.0, random_state=None):
     t = np.squeeze(t)
 
     return X, t
-
-
-def make_sparse_spd_matrix(dim=1, alpha=0.95, norm_diag=False,
-                           smallest_coef=.1, largest_coef=.9,
-                           random_state=None):
-    """Generate a sparse symetric definite positive matrix
-
-    Parameters
-    ----------
-    dim: integer
-        The size of the random matrix to generate
-    alpha: float between 0 and 1
-        The probability that a coefficient is non zero (see notes)
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
-
-    Returns
-    -------
-    prec: array of shape(dim, dim)
-
-    Notes
-    -----
-    The sparsity is actually imposed on the cholesky factor of the matrix.
-    Thus alpha does not translate directly into the filling fraction of
-    the matrix itself.
-    """
-    random_state = check_random_state(random_state)
-    chol = -np.eye(dim)
-    aux = random_state.rand(dim, dim)
-    aux[aux < alpha] = 0
-    aux[aux > alpha] = (smallest_coef
-                        + (largest_coef - smallest_coef)
-                          * random_state.rand(np.sum(aux > alpha)))
-    aux = np.tril(aux, k=-1)
-    # Permute the lines: we don't want to have assymetries in the final
-    # SPD matrix
-    permutation = random_state.permutation(dim)
-    aux = aux[permutation].T[permutation]
-    chol += aux
-    prec = np.dot(chol.T, chol)
-    if norm_diag:
-        d = np.diag(prec)
-        d = 1. / np.sqrt(d)
-        prec *= d
-        prec *= d[:, np.newaxis]
-    return prec

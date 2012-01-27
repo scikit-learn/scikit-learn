@@ -47,8 +47,9 @@ def confusion_matrix(y_true, y_pred, labels=None):
     CM : array, shape = [n_classes, n_classes]
         confusion matrix
 
-    References
-    ----------
+    Notes
+    -----
+    **References**:
     http://en.wikipedia.org/wiki/Confusion_matrix
 
     """
@@ -92,7 +93,7 @@ def roc_curve(y_true, y_score):
         True Positive Rates
 
     thresholds : array, shape = [>2]
-        Thresholds on proba_ used to compute fpr and tpr
+        Thresholds on y_score used to compute fpr and tpr
 
     Examples
     --------
@@ -104,9 +105,9 @@ def roc_curve(y_true, y_score):
     >>> fpr
     array([ 0. ,  0.5,  0.5,  1. ])
 
-
-    References
-    ----------
+    Notes
+    -----
+    **References**:
     http://en.wikipedia.org/wiki/Receiver_operating_characteristic
 
     """
@@ -192,8 +193,14 @@ def auc(x, y):
 
     """
     x, y = check_arrays(x, y)
-    assert x.shape[0] == y.shape[0]
-    assert x.shape[0] >= 3
+    if x.shape[0] != y.shape[0]:
+        raise ValueError('x and y should have the same shape'
+                         ' to compute area under curve,'
+                         ' but x.shape = %s and y.shape = %s.'
+                         % (x.shape, y.shape))
+    if x.shape[0] < 2:
+        raise ValueError('At least 2 points are needed to compute'
+                         ' area under curve, but x.shape = %s' % x.shape)
 
     # reorder the data points according to the x axis
     order = np.argsort(x)
@@ -413,8 +420,9 @@ def f1_score(y_true, y_pred, labels=None, pos_label=None, average='weighted'):
         f1_score of the positive class in binary classification or weighted
         average of the f1_scores of each class for the multiclass task
 
-    References
-    ----------
+    Notes
+    -----
+    **References**:
     http://en.wikipedia.org/wiki/F1_score
 
     """
@@ -440,7 +448,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     value at 1 and worst score at 0.
 
     The F_beta score weights recall beta as much as precision. beta = 1.0 means
-    recall and precsion are as important.
+    recall and precsion are equally important.
 
     The support is the number of occurrences of each class in y_true.
 
@@ -483,13 +491,16 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     f1_score: array, shape = [n_unique_labels], dtype = np.double
     support: array, shape = [n_unique_labels], dtype = np.long
 
-    References
-    ----------
+    Notes
+    -----
+    **References**:
     http://en.wikipedia.org/wiki/Precision_and_recall
 
     """
+    if beta <= 0:
+        raise ValueError("beta should be >0 in the F-beta score")
+
     y_true, y_pred = check_arrays(y_true, y_pred)
-    assert(beta > 0)
     if labels is None:
         labels = unique_labels(y_true, y_pred)
     else:
@@ -707,16 +718,16 @@ def precision_recall_curve(y_true, probas_pred):
         Recall values
 
     thresholds : array, shape = [n]
-        Thresholds on proba_ used to compute precision and recall
+        Thresholds on y_score used to compute precision and recall
 
     """
     y_true = y_true.ravel()
     labels = np.unique(y_true)
     if np.all(labels == np.array([-1, 1])):
         # convert {-1, 1} to boolean {0, 1} repr
+        y_true = y_true.copy()
         y_true[y_true == -1] = 0
-        labels = np.array([0, 1])
-    if not np.all(labels == np.array([0, 1])):
+    elif not np.all(labels == np.array([0, 1])):
         raise ValueError("y_true contains non binary labels: %r" % labels)
 
     probas_pred = probas_pred.ravel()
@@ -725,8 +736,7 @@ def precision_recall_curve(y_true, probas_pred):
     precision = np.empty(n_thresholds)
     recall = np.empty(n_thresholds)
     for i, t in enumerate(thresholds):
-        y_pred = np.ones(len(y_true))
-        y_pred[probas_pred < t] = 0
+        y_pred = (probas_pred >= t).astype(np.int)
         p, r, _, _ = precision_recall_fscore_support(y_true, y_pred)
         precision[i] = p[1]
         recall[i] = r[1]
@@ -769,16 +779,20 @@ def r2_score(y_true, y_pred):
 
     Best possible score is 1.0, lower values are worse.
 
-    Note: not a symmetric function.
-
-    return the R^2 score
-
     Parameters
     ----------
     y_true : array-like
 
     y_pred : array-like
 
+    Returns
+    -------
+    z : float
+        The R^2 score
+
+    Notes
+    -----
+    This is not a symmetric function.
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
     numerator = ((y_true - y_pred) ** 2).sum()

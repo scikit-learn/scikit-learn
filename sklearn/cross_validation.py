@@ -9,7 +9,7 @@ validation and performance evaluation.
 # License: BSD Style.
 
 from itertools import combinations
-from math import ceil, factorial
+from math import ceil, floor, factorial
 import operator
 
 import numpy as np
@@ -34,7 +34,7 @@ class LeaveOneOut(object):
     ShuffleSplit.
 
     Parameters
-    ==========
+    ----------
     n: int
         Total number of elements
 
@@ -44,7 +44,7 @@ class LeaveOneOut(object):
         matrices, since those cannot be indexed by boolean masks.
 
     Examples
-    ========
+    --------
     >>> from sklearn import cross_validation
     >>> X = np.array([[1, 2], [3, 4]])
     >>> y = np.array([1, 2])
@@ -108,7 +108,7 @@ class LeavePOut(object):
     datasets one should favor KFold, StratifiedKFold or ShuffleSplit.
 
     Parameters
-    ===========
+    ----------
     n: int
         Total number of elements
 
@@ -121,7 +121,7 @@ class LeavePOut(object):
         matrices, since those cannot be indexed by boolean masks.
 
     Examples
-    ========
+    --------
     >>> from sklearn import cross_validation
     >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
     >>> y = np.array([1, 2, 3, 4])
@@ -172,6 +172,14 @@ class LeavePOut(object):
     def __len__(self):
         return (factorial(self.n) / factorial(self.n - self.p)
                 / factorial(self.p))
+
+
+def _validate_kfold(k, n_samples):
+    if k <= 0:
+        raise ValueError("Cannot have number of folds k below 1.")
+    if k > n_samples:
+        raise ValueError("Cannot have number of folds k=%d greater than"
+                         " the number of samples: %d." % (k, n_samples))
 
 
 class KFold(object):
@@ -226,25 +234,26 @@ class KFold(object):
     """
 
     def __init__(self, n, k, indices=True):
-        assert k > 0, ValueError('Cannot have number of folds k below 1.')
-        assert k <= n, ValueError('Cannot have number of folds k=%d, '
-                                  'greater than the number '
-                                  'of samples: %d.' % (k, n))
-        self.n = n
-        self.k = k
+        _validate_kfold(k, n)
+        if abs(n - int(n)) >= np.finfo('f').eps:
+            raise ValueError("n must be an integer")
+        self.n = int(n)
+        if abs(k - int(k)) >= np.finfo('f').eps:
+            raise ValueError("k must be an integer")
+        self.k = int(k)
         self.indices = indices
 
     def __iter__(self):
         n = self.n
         k = self.k
-        j = ceil(n / k)
+        fold_size = n // k
 
         for i in xrange(k):
             test_index = np.zeros(n, dtype=np.bool)
             if i < k - 1:
-                test_index[i * j:(i + 1) * j] = True
+                test_index[i * fold_size:(i + 1) * fold_size] = True
             else:
-                test_index[i * j:] = True
+                test_index[i * fold_size:] = True
             train_index = np.logical_not(test_index)
             if self.indices:
                 ind = np.arange(n)
@@ -312,15 +321,14 @@ class StratifiedKFold(object):
     def __init__(self, y, k, indices=True):
         y = np.asarray(y)
         n = y.shape[0]
-        assert k > 0, ValueError('Cannot have number of folds k below 1.')
-        assert k <= n, ValueError('Cannot have number of folds k=%d, '
-                                  'greater than the number '
-                                  'of samples: %d.' % (k, n))
+        _validate_kfold(k, n)
         _, y_sorted = unique(y, return_inverse=True)
         min_labels = np.min(np.bincount(y_sorted))
-        assert k <= min_labels, ValueError(
-            'Cannot have number of folds k=%d, smaller than %d, the minimum '
-            'number of labels for any class.' % (k, min_labels))
+        if k > min_labels:
+            raise ValueError("Cannot have number of folds k=%d"
+                             " smaller than %d, the minimum"
+                             " number of labels for any class."
+                             % (k, min_labels))
         self.y = y
         self.k = k
         self.indices = indices
@@ -672,6 +680,11 @@ class ShuffleSplit(object):
         Should be between 0.0 and 1.0 and represent the proportion of
         the dataset to include in the test split.
 
+    train_fraction : float or None (default is None)
+        Should be between 0.0 and 1.0 and represent the proportion of
+        the dataset to include in the train split. If None, the value is
+        automatically set to the complement of the test fraction.
+
     indices : boolean, optional (default True)
         Return train/test split as arrays of indices, rather than a boolean
         mask array. Integer indices are required when dealing with sparse
@@ -681,7 +694,7 @@ class ShuffleSplit(object):
         Pseudo-random number generator state used for random sampling.
 
     Examples
-    ----------
+    --------
     >>> from sklearn import cross_validation
     >>> rs = cross_validation.ShuffleSplit(4, n_iterations=3,
     ...     test_fraction=.25, random_state=0)
@@ -693,9 +706,18 @@ class ShuffleSplit(object):
     >>> for train_index, test_index in rs:
     ...    print "TRAIN:", train_index, "TEST:", test_index
     ...
-    TRAIN: [2 3 1] TEST: [0]
+    TRAIN: [3 1 0] TEST: [2]
+    TRAIN: [2 1 3] TEST: [0]
     TRAIN: [0 2 1] TEST: [3]
-    TRAIN: [3 0 2] TEST: [1]
+
+    >>> rs = cross_validation.ShuffleSplit(4, n_iterations=3,
+    ...     train_fraction=0.5, test_fraction=.25, random_state=0)
+    >>> for train_index, test_index in rs:
+    ...    print "TRAIN:", train_index, "TEST:", test_index
+    ...
+    TRAIN: [3 1] TEST: [2]
+    TRAIN: [2 1] TEST: [0]
+    TRAIN: [0 2] TEST: [3]
 
     See also
     --------
@@ -703,21 +725,35 @@ class ShuffleSplit(object):
     """
 
     def __init__(self, n, n_iterations=10, test_fraction=0.1,
-                 indices=True, random_state=None):
+                 train_fraction=None, indices=True, random_state=None):
         self.n = n
         self.n_iterations = n_iterations
         self.test_fraction = test_fraction
+        self.train_fraction = train_fraction
         self.random_state = random_state
         self.indices = indices
+        if test_fraction >= 1.0:
+            raise ValueError(
+                "test_fraction=%f should be smaller than 1.0" % test_fraction)
+        if (train_fraction is not None
+            and train_fraction + test_fraction > 1.0):
+            raise ValueError(
+                'The sum of train_fraction=%f and test_fraction=%f '
+                'should be smaller or equal than 1.0' %
+                (train_fraction, test_fraction))
 
     def __iter__(self):
         rng = self.random_state = check_random_state(self.random_state)
         n_test = ceil(self.test_fraction * self.n)
+        if self.train_fraction is None:
+            n_train = self.n - n_test
+        else:
+            n_train = floor(self.train_fraction * self.n)
         for i in range(self.n_iterations):
             # random partition
             permutation = rng.permutation(self.n)
-            ind_train = permutation[:-n_test]
-            ind_test = permutation[-n_test:]
+            ind_test = permutation[:n_test]
+            ind_train = permutation[n_test:n_test + n_train]
 
             if self.indices:
                 yield ind_train, ind_test
@@ -778,9 +814,10 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, n_jobs=1,
         supervised learning.
 
     score_func: callable, optional
-        callable taking as arguments the fitted estimator, the
-        test data (X_test) and the test target (y_test) if y is
-        not None.
+        callable, has priority over the score function in the estimator.
+        In a non-supervised setting, where y is None, it takes the test
+        data (X_test) as its only argument. In a supervised setting it takes
+        the test target (y_true) and the test prediction (y_pred) as arguments.
 
     cv: cross-validation generator, optional
         A cross-validation generator. If None, a 3-fold cross
@@ -797,7 +834,8 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, n_jobs=1,
     X, y = check_arrays(X, y, sparse_format='csr')
     cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
     if score_func is None:
-        assert hasattr(estimator, 'score'), ValueError(
+        if not hasattr(estimator, 'score'):
+            raise TypeError(
                 "If no score_func is specified, the estimator passed "
                 "should have a 'score' method. The estimator %s "
                 "does not." % estimator)
@@ -836,7 +874,7 @@ def check_cv(cv, X=None, y=None, classifier=False):
     """Input checker utility for building a CV in a user friendly way.
 
     Parameters
-    ===========
+    ----------
     cv: an integer, a cv generator instance, or None
         The input specifying which cv generator to use. It can be an
         integer, in which case it is the number of folds in a KFold,
@@ -930,8 +968,8 @@ def permutation_test_score(estimator, X, y, score_func, cv=None,
         `mean_square_error`) then this is actually the complement of the
         p-value:  1 - p-value.
 
-    References
-    ----------
+    Notes
+    -----
     This function implements Test 1 in:
 
         Ojala and Garriga. Permutation Tests for Studying Classifier

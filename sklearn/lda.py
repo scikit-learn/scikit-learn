@@ -10,7 +10,7 @@ import numpy as np
 from scipy import linalg, ndimage
 
 from .base import BaseEstimator, ClassifierMixin, TransformerMixin
-from .utils.extmath import logsum
+from .utils.extmath import logsumexp
 
 
 class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
@@ -79,7 +79,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
             Target values (integers)
         store_covariance : boolean
             If True the covariance matrix (shared by all classes) is computed
-            and stored in self.covariance_ attribute.
+            and stored in `self.covariance_` attribute.
         """
         X = np.asarray(X)
         y = np.asarray(y)
@@ -147,7 +147,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         if rank < n_features:
             warnings.warn("Variables are collinear")
         # Scaling of within covariance is: V' 1/S
-        scaling = (scaling * V.T[:, :rank].T).T / S[:rank]
+        scaling = (scaling * V[:rank]).T / S[:rank]
 
         ## ----------------------------
         ## 3) Between variance scaling
@@ -263,5 +263,5 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         """
         values = self.decision_function(X)
         loglikelihood = (values - values.max(axis=1)[:, np.newaxis])
-        normalization = logsum(loglikelihood, axis=1)
+        normalization = logsumexp(loglikelihood, axis=1)
         return loglikelihood - normalization[:, np.newaxis]

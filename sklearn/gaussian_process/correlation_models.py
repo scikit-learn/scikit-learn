@@ -16,11 +16,11 @@ import numpy as np
 def absolute_exponential(theta, d):
     """
     Absolute exponential autocorrelation model.
-    (Ornstein-Uhlenbeck stochastic process)
+    (Ornstein-Uhlenbeck stochastic process)::
 
-                                        n
-    theta, dx --> r(theta, dx) = exp(  sum  - theta_i * |dx_i| )
-                                      i = 1
+                                            n
+        theta, dx --> r(theta, dx) = exp(  sum  - theta_i * |dx_i| )
+                                          i = 1
 
     Parameters
     ----------
@@ -58,11 +58,11 @@ def absolute_exponential(theta, d):
 def squared_exponential(theta, d):
     """
     Squared exponential correlation model (Radial Basis Function).
-    (Infinitely differentiable stochastic process, very smooth)
+    (Infinitely differentiable stochastic process, very smooth)::
 
-                                        n
-    theta, dx --> r(theta, dx) = exp(  sum  - theta_i * (dx_i)^2 )
-                                      i = 1
+                                            n
+        theta, dx --> r(theta, dx) = exp(  sum  - theta_i * (dx_i)^2 )
+                                          i = 1
 
     Parameters
     ----------
@@ -102,11 +102,11 @@ def generalized_exponential(theta, d):
     """
     Generalized exponential correlation model.
     (Useful when one does not know the smoothness of the function to be
-    predicted.)
+    predicted.)::
 
-                                        n
-    theta, dx --> r(theta, dx) = exp(  sum  - theta_i * |dx_i|^p )
-                                      i = 1
+                                            n
+        theta, dx --> r(theta, dx) = exp(  sum  - theta_i * |dx_i|^p )
+                                          i = 1
 
     Parameters
     ----------
@@ -151,12 +151,12 @@ def generalized_exponential(theta, d):
 def pure_nugget(theta, d):
     """
     Spatial independence correlation model (pure nugget).
-    (Useful when one wants to solve an ordinary least squares problem!)
+    (Useful when one wants to solve an ordinary least squares problem!)::
 
-                                         n
-    theta, dx --> r(theta, dx) = 1 if   sum |dx_i| == 0
-                                       i = 1
-                                 0 otherwise
+                                             n
+        theta, dx --> r(theta, dx) = 1 if   sum |dx_i| == 0
+                                           i = 1
+                                     0 otherwise
 
     Parameters
     ----------
@@ -187,9 +187,9 @@ def pure_nugget(theta, d):
 
 def cubic(theta, d):
     """
-    Cubic correlation model.
+    Cubic correlation model::
 
-    theta, dx --> r(theta, dx) =
+        theta, dx --> r(theta, dx) =
           n
         prod max(0, 1 - 3(theta_j*d_ij)^2 + 2(theta_j*d_ij)^3) ,  i = 1,...,m
         j = 1
@@ -237,12 +237,12 @@ def cubic(theta, d):
 
 def linear(theta, d):
     """
-    Linear correlation model.
+    Linear correlation model::
 
-    theta, dx --> r(theta, dx) =
-          n
-        prod max(0, 1 - theta_j*d_ij) ,  i = 1,...,m
-        j = 1
+        theta, dx --> r(theta, dx) =
+              n
+            prod max(0, 1 - theta_j*d_ij) ,  i = 1,...,m
+            j = 1
 
     Parameters
     ----------
