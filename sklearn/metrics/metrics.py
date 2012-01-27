@@ -540,10 +540,10 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     finally:
         np.seterr(**old_err_settings)
 
-    if n_labels == 2:
-        if not average:
-            return precision, recall, fscore, support
+    if not average:
+        return precision, recall, fscore, support
 
+    elif n_labels == 2:
         if pos_label not in labels:
             raise ValueError("pos_label=%d is not a valid label: %r" %
                              (pos_label, labels))
@@ -552,9 +552,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
                 fscore[pos_label_idx], support[pos_label_idx])
     else:
         average_options = (None, 'micro', 'macro', 'weighted')
-        if not average:
-            return precision, recall, fscore, support
-        elif average == 'micro':
+        if average == 'micro':
             avg_precision = true_pos.sum() / (true_pos.sum() +
                                               false_pos.sum())
             avg_recall = true_pos.sum() / (true_pos.sum() + false_neg.sum())
