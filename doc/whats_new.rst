@@ -4,6 +4,10 @@
 
 0.11
 ====
+
+Changelog
+---------
+
    - Merged dense and sparse implementations and added `partial_fit` (support
      for online/minibatch learning) and warm_start to the :ref:`sgd` module by
      `Mathieu Blondel`_.
@@ -22,9 +26,6 @@
    - Added n_jobs option to :func:`metrics.pairwise.pairwise_distances`
      and :func:`metrics.pairwise.pairwise_kernels` for parallel computation,
      by `Mathieu Blondel`_.
-
-Changelog
----------
 
     - :ref:`out_of_bag` of generalization error for :ref:`ensemble`
       by `Andreas Müller`_.
