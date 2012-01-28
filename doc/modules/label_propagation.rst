@@ -21,9 +21,9 @@ A few features available in this model:
     labeled data when training the model with the `fit` method.
 
 This module provides two label propagation models: :class:`LabelPropagation` and
-:class:`LabelSpreading`. Both work by forming a fully connected graph for each
-item in the input dataset. They differ only in modifications to the graph matrix
-that graph and the clamp effect on the label distributions.
+:class:`LabelSpreading`. Both work by constructing a similarity graph over all
+items in the input dataset. They differ in modifications to the similarity
+matrix that graph and the clamping effect on the label distributions.
 
 Clamping
 ========
@@ -38,11 +38,11 @@ change it's confidence of the distribution within 20 percent.
 Graph Laplacian
 ===============
 
-:class:`LabelPropagation` uses the raw gram matrix constructed from the
+:class:`LabelPropagation` uses the raw similarity matrix constructed from the
 data with no modifications. In contrast, :class:`LabelSpreading` minimizes a
 loss function that has regularization properties. The algorithm iterates on
 a modified version of the original graph and normalizing the edge weights by
-computing the normalized graph Laplacian matrix. This procedure is used in
+computing the normalized graph Laplacian matrix. This procedure is also used in
 :class:`SpectralClustering`.
 
 
