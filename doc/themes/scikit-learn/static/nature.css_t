@@ -508,11 +508,6 @@ th.field-name {
 div.warning-wrapper {
     background-color: #ffaaaa;
     max-width: auto;
-    min-height: 20px;
-    margin-left: 0px;
-    margin-right: 0px;
-    /*border-radius: 0 0 15px 15px;*/
-    /*-moz-border-radius: 15px 15px 15px 15px;*/
-    margin-top: 0px;
+    margin: 0 0 0 0;
     text-align: center;
 }
