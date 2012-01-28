@@ -22,10 +22,8 @@ A few features available in this model:
 
 This module provides two label propagation models: :class:`LabelPropagation` and
 :class:`LabelSpreading`. Both work by forming a fully connected graph for each
-item in the input dataset. They differ only in the definition of the matrix
-that represents the graph and the clamp effect on the label distributions.
-:class:`LabelPropagation` is far more intuitive than :class:`LabelSpreading`
-which is motivatived by deeper mathematics.
+item in the input dataset. They differ only in modifications to the graph matrix
+that graph and the clamp effect on the label distributions.
 
 Clamping
 ========
@@ -36,6 +34,17 @@ clamping of input labels, which means :math:`\alpha=1`. This clamping factor
 can be relaxed, to say :math:`\alpha=0.8`, which means that we will always
 retain 80 percent of our original label distribution, but the algorithm gets to
 change it's confidence of the distribution within 20 percent.
+
+Graph Laplacian
+===============
+
+:class:`LabelPropagation` uses the raw gram matrix constructed from the
+data with no modifications. In contrast, :class:`LabelSpreading` minimizes a
+loss function that has regularization properties. The algorithm iterates on
+a modified version of the original graph and normalizing the edge weights by
+computing the normalized graph Laplacian matrix. This procedure is used in
+:class:`SpectralClustering`.
+
 
 Kernel Functions
 ================
