@@ -107,6 +107,7 @@ can be found in members `support_vectors_`, `support_` and
     >>> clf.n_support_ # doctest: +ELLIPSIS
     array([1, 1]...)
 
+.. _svm_multi_class:
 
 Multi-class classification
 --------------------------
@@ -141,7 +142,56 @@ two classes, only one model is trained::
 See :ref:`svm_mathematical_formulation` for a complete description of
 the decision function.
 
+For "one-vs-rest" :class:`LinearSVC` the attributes ``coef_`` and ``intercept_``
+have the shape ``[n_class, n_features]`` and ``[n_class]`` respectively.
+Each row of the coefficients corresponds to one of the ``n_class`` many
+"one-vs-rest" classifiers and simliar for the interecepts, in the
+order of the "one" class.
 
+In the case of "one-vs-one" :class:`SVC`, the layout of the attributes
+is a little more involved. In the case of having a linear kernel,
+The layout of ``coef_`` and ``intercept_`` is similar to the one
+described for :class:`LinearSVC` described above, except that
+the shape of ``coef_`` is ``[n_class * (n_class - 1) / 2``,
+corresponding to as many binary classifiers. The order for classes
+0 to n is "0 vs 1", "0 vs 2" , ... "0 vs n", "1 vs 2", "1 vs 3", "1 vs n", . .
+. "n-1 vs n".
+
+The shape of ``dual_coef_`` is ``[n_class-1, n_SV]`` with
+a somewhat hard to grasp layout.
+The columns correspond to the support vectors involved in any
+of the ``n_class * (n_class - 1) / 2`` "one-vs-one" classifiers.
+Each of the support vectors is used in ``n_class - 1`` classifiers.
+The ``n_class - 1`` entries in each row correspond to the dual coefficients
+for these classifiers.
+
+This might be made more clear by an example:
+
+    Consider a three class problem with with class 0 having 3 support vectors
+    :math:`v^{0}_0, v^{1}_0, v^{2}_0` and class 1 and 2 having two support
+    vectors :math:`v^{0}_1, v^{1}_1` and :math:`v^{0}_1, v^{1}_1` respectively.
+    For each support vector :math:`v^{j}_i`, there are 2 dual coefficients.
+    Let's call the coefficient of support vector :math:`v^{j}_i` in the
+    classifier between classes `i` and `k` :math:`\alpha^{j}_{i,k}`.
+    Then ``dual_coef_`` looks like this:
+
+    +------------------------+------------------------+------------------+
+    |:math:`\alpha^{0}_{0,1}`|:math:`\alpha^{0}_{0,2}`|Coefficients      |
+    +------------------------+------------------------+                  |
+    |:math:`\alpha^{1}_{0,1}`|:math:`\alpha^{1}_{0,2}`|for SVs           |
+    +------------------------+------------------------+                  |
+    |:math:`\alpha^{2}_{0,1}`|:math:`\alpha^{2}_{0,2}`|of class 0        |
+    +------------------------+------------------------+------------------+
+    |:math:`\alpha^{0}_{1,0}`|:math:`\alpha^{0}_{1,2}`|Coefficients      |
+    +------------------------+------------------------+                  |
+    |:math:`\alpha^{1}_{1,0}`|:math:`\alpha^{1}_{1,2}`|for SVs of class 1|
+    +------------------------+------------------------+------------------+
+    |:math:`\alpha^{0}_{2,0}`|:math:`\alpha^{0}_{2,1}`|Coefficients      |
+    +------------------------+------------------------+                  |
+    |:math:`\alpha^{1}_{2,0}`|:math:`\alpha^{1}_{2,1}`|for SVs of class 2|
+    +------------------------+------------------------+------------------+
+
+    
 Unbalanced problems
 --------------------
 
