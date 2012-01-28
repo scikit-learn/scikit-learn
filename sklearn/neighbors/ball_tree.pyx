@@ -633,6 +633,12 @@ cdef class BallTree(object):
                                              dtype=DTYPE)
         cdef np.ndarray idx_array = np.empty((X.shape[0], n_neighbors),
                                              dtype=ITYPE)
+
+        # initialize arrays.  This is only needed for correct behavior of
+        # the warning flag.
+        distances.fill(-9999)
+        idx_array.fill(-9999)
+
         cdef np.ndarray Xi
 
         distances[:] = np.inf

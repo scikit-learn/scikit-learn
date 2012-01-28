@@ -1,5 +1,7 @@
 """Export fast murmurhash C/C++ routines + cython wrappers"""
 
+cimport numpy as np
+
 cdef extern from "MurmurHash3.h":
     void MurmurHash3_x86_32(void* key, int len, unsigned int seed,
                             void* out)
@@ -11,13 +13,7 @@ cdef extern from "MurmurHash3.h":
                              void* out)
 
 
-cpdef unsigned int murmurhash3_int_uint(int key, unsigned int seed)
-
-
-cpdef int murmurhash3_int_int(int key, unsigned int seed)
-
-
-cpdef unsigned int murmurhash3_bytes_uint(bytes key, unsigned int seed)
-
-
-cpdef int murmurhash3_bytes_int(bytes key, unsigned int seed)
+cpdef np.uint32_t murmurhash3_int_u32(int key, unsigned int seed)
+cpdef np.int32_t murmurhash3_int_s32(int key, unsigned int seed)
+cpdef np.uint32_t murmurhash3_bytes_u32(bytes key, unsigned int seed)
+cpdef np.int32_t murmurhash3_bytes_s32(bytes key, unsigned int seed)

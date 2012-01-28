@@ -107,10 +107,15 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     generator = check_random_state(random_state)
 
     # Count features, clusters and samples
-    assert n_informative + n_redundant + n_repeated <= n_features
-    assert 2 ** n_informative >= n_classes * n_clusters_per_class
-    assert weights is None or (len(weights) == n_classes or
-                               len(weights) == (n_classes - 1))
+    if n_informative + n_redundant + n_repeated > n_features:
+        raise ValueError("Number of informative, redundant and repeated "
+            "features must sum to less than the number of total features")
+    if 2 ** n_informative < n_classes * n_clusters_per_class:
+        raise ValueError("n_classes * n_clusters_per_class must"
+            "be smaller or equal 2 ** n_informative")
+    if weights and len(weights) not in [n_classes, n_classes - 1]:
+        raise ValueError("Weights specified but incompatible with number "
+                "of classes.")
 
     n_useless = n_features - n_informative - n_redundant - n_repeated
     n_clusters = n_classes * n_clusters_per_class
@@ -570,7 +575,8 @@ def make_friedman1(n_samples=100, n_features=10, noise=0.0, random_state=None):
     .. [2] L. Breiman, "Bagging predictors", Machine Learning 24,
            pages 123-140, 1996.
     """
-    assert n_features >= 5
+    if n_features < 5:
+        raise ValueError("n_features must be at least five.")
 
     generator = check_random_state(random_state)
 

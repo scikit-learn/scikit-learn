@@ -54,9 +54,9 @@ class RFE(BaseEstimator):
         The mask of selected features.
 
     `ranking_` : array of shape [n_features]
-        The feature ranking, such that `ranking_[i]` corresponds to the ranking \
-        position of the i-th feature. Selected (i.e., estimated best) features \
-        are assigned rank 1.
+        The feature ranking, such that `ranking_[i]` corresponds to the \
+        ranking position of the i-th feature. Selected (i.e., estimated \
+        best) features are assigned rank 1.
 
     Examples
     --------
@@ -108,7 +108,8 @@ class RFE(BaseEstimator):
             step = int(self.step * n_features)
         else:
             step = int(self.step)
-        assert step > 0
+        if step <= 0:
+            raise ValueError("Step must be >0")
 
         support_ = np.ones(n_features, dtype=np.bool)
         ranking_ = np.ones(n_features, dtype=np.int)

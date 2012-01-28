@@ -79,7 +79,7 @@ def test_clone_buggy():
     """Check that clone raises an error on buggy estimators."""
     buggy = Buggy()
     buggy.a = 2
-    assert_raises(AssertionError, clone, buggy)
+    assert_raises(RuntimeError, clone, buggy)
 
 
 def test_clone_empty_array():
@@ -118,7 +118,7 @@ def test_get_params():
 
     test.set_params(a__d=2)
     assert test.a.d == 2
-    assert_raises(AssertionError, test.set_params, a__a=2)
+    assert_raises(ValueError, test.set_params, a__a=2)
 
 
 def test_is_classifier():
