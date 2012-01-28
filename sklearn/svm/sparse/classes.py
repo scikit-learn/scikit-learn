@@ -1,8 +1,6 @@
 from .. import LinearSVC
 from ...base import ClassifierMixin, RegressorMixin
-from ..base import BaseLibLinear
 from .base import SparseBaseLibSVM
-from ...linear_model.base import CoefSelectTransformerMixin
 from ...utils import deprecated
 
 

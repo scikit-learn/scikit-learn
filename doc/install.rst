@@ -19,7 +19,10 @@ There are different ways to get scikit-learn installed:
     latest-and-greatest features and aren't afraid of running
     brand-new code.
 
+.. note::
 
+    If you wish to contribute to the project, it's recommended you
+    :ref:`install the latest development version<install_bleeding_edge>`.
 
 .. _install_official_release:
 
@@ -68,7 +71,7 @@ these commands.
 From source package
 ~~~~~~~~~~~~~~~~~~~
 
-Download the package from http://sourceforge.net/projects/scikit-learn/files
+Download the package from http://pypi.python.org/pypi/scikit-learn/
 , unpack the sources and cd into archive.
 
 This packages uses distutils, which is the default way of installing
