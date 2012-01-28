@@ -1,23 +1,24 @@
 import numpy as np
 
 from ..base import ClassifierMixin
-from ..linear_model.base import CoefSelectTransformerMixin
+from ..feature_selection.selector_mixin import SelectorMixin
 from ..svm.base import BaseLibLinear
-from ..svm import liblinear
+from ..svm.liblinear import csr_predict_prob_wrap, predict_prob_wrap
 
 
-class LogisticRegression(BaseLibLinear, ClassifierMixin,
-                         CoefSelectTransformerMixin):
-    """Logistic Regression classifier.
+class LogisticRegression(BaseLibLinear, ClassifierMixin, SelectorMixin):
+    """Logistic Regression (aka logit, MaxEnt) classifier.
 
     In the multiclass case, the training algorithm uses a one-vs.-all (OvA)
-    scheme, rather than the "true" multinomial LR (aka maximum entropy/MaxEnt).
+    scheme, rather than the "true" multinomial LR.
+
     This class implements L1 and L2 regularized logistic regression using the
-    `liblinear` library.
+    `liblinear` library. It can handle both dense and sparse input. Use
+    C-ordered arrays or CSR matrices containing 64-bit floats for optimal
+    performance; any other input format will be converted (and copied).
 
     Parameters
     ----------
-
     penalty : string, 'l1' or 'l2'
         Used to specify the norm used in the penalization
 
@@ -54,7 +55,6 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin,
 
     Attributes
     ----------
-
     `coef_` : array, shape = [n_classes-1, n_features]
         Coefficient of the features in the decision function.
 
@@ -76,10 +76,15 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin,
     to have slightly different results for the same input data. If
     that happens, try with a smaller tol parameter.
 
-    **References**:
+    References:
 
     LIBLINEAR -- A Library for Large Linear Classification
-    http://www.csie.ntu.edu.tw/~cjlin/liblinear/
+        http://www.csie.ntu.edu.tw/~cjlin/liblinear/
+
+    Hsiang-Fu Yu, Fang-Lan Huang, Chih-Jen Lin (2011). Dual coordinate descent
+        methods for logistic regression and maximum entropy models.
+        Machine Learning 85(1-2):41-75.
+        http://www.csie.ntu.edu.tw/~cjlin/papers/maxent_dual.pdf
     """
 
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
@@ -108,13 +113,12 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin,
             the model, where classes are ordered by arithmetical
             order.
         """
-        X = np.asarray(X, dtype=np.float64, order='C')
-        probas = liblinear.predict_prob_wrap(X, self.raw_coef_,
-                                      self._get_solver_type(),
-                                      self.tol, self.C,
-                                      self.class_weight_label,
-                                      self.class_weight, self.label_,
-                                      self._get_bias())
+        X = self._validate_for_predict(X)
+        prob_wrap = (csr_predict_prob_wrap if self._sparse else
+                predict_prob_wrap)
+        probas = prob_wrap(X, self.raw_coef_, self._get_solver_type(),
+                           self.tol, self.C, self.class_weight_label,
+                           self.class_weight, self.label_, self._get_bias())
         return probas[:, np.argsort(self.label_)]
 
     def predict_log_proba(self, X):

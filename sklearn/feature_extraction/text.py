@@ -261,9 +261,12 @@ class CountVectorizer(BaseEstimator):
         Type of the matrix returned by fit_transform() or transform().
     """
 
-    def __init__(self, analyzer=DEFAULT_ANALYZER, vocabulary=None, max_df=1.0,
+    def __init__(self, analyzer=None, vocabulary=None, max_df=1.0,
                  max_features=None, dtype=long):
-        self.analyzer = analyzer
+        if analyzer:
+            self.analyzer = analyzer
+        else:
+            self.analyzer = DEFAULT_ANALYZER
         self.fit_vocabulary = vocabulary is None
         if vocabulary is not None and not isinstance(vocabulary, dict):
             vocabulary = dict((t, i) for i, t in enumerate(vocabulary))
@@ -534,8 +537,10 @@ class Vectorizer(BaseEstimator):
     Equivalent to CountVectorizer followed by TfidfTransformer.
     """
 
-    def __init__(self, analyzer=DEFAULT_ANALYZER, max_df=1.0,
+    def __init__(self, analyzer=None, max_df=1.0,
                  max_features=None, norm='l2', use_idf=True, smooth_idf=True):
+        if analyzer is None:
+            analyzer = DEFAULT_ANALYZER
         self.tc = CountVectorizer(analyzer, max_df=max_df,
                                   max_features=max_features,
                                   dtype=np.float64)

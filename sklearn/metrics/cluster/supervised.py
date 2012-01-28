@@ -444,8 +444,8 @@ def v_measure_score(labels_true, labels_pred):
     -----
     **References**:
 
-    .. [Rosenberg2007] `V-Measure: A conditional entropy-based external cluster evaluation measure
-        Andrew Rosenberg and Julia Hirschberg, 2007`
+    .. [Rosenberg2007] `V-Measure: A conditional entropy-based external cluster
+        evaluation measure Andrew Rosenberg and Julia Hirschberg, 2007`
         http://acl.ldc.upenn.edu/D/D07/D07-1043.pdf
 
     See also
@@ -498,7 +498,7 @@ def v_measure_score(labels_true, labels_pred):
 
 
 def mutual_info_score(labels_true, labels_pred, contingency=None):
-    """Adjusted Mutual Information between two clusterings
+    """Mutual Information between two clusterings
 
     The Mutual Information is a measure of the similarity between two labels
     of the same data. Where P(i) is the probability of a random sample occuring

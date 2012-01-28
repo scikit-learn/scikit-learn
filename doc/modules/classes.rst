@@ -120,20 +120,22 @@ Loaders
    :toctree: generated/
    :template: function.rst
 
+   datasets.load_20newsgroups
+   datasets.fetch_20newsgroups
+   datasets.fetch_20newsgroups_vectorized
    datasets.load_boston
-   datasets.load_files
    datasets.load_diabetes
    datasets.load_digits
+   datasets.load_files
    datasets.load_iris
-   datasets.load_linnerud
    datasets.load_lfw_pairs
    datasets.fetch_lfw_pairs
    datasets.load_lfw_people
    datasets.fetch_lfw_people
-   datasets.load_20newsgroups
-   datasets.fetch_20newsgroups
-   datasets.fetch_20newsgroups_vectorized
+   datasets.load_linnerud
    datasets.fetch_olivetti_faces
+   datasets.load_sample_image
+   datasets.load_sample_images
 
 Samples generator
 -----------------
@@ -144,20 +146,20 @@ Samples generator
    :toctree: generated/
    :template: function.rst
 
-   datasets.make_classification
-   datasets.make_multilabel_classification
-   datasets.make_regression
    datasets.make_blobs
+   datasets.make_classification
    datasets.make_friedman1
    datasets.make_friedman2
    datasets.make_friedman3
    datasets.make_low_rank_matrix
+   datasets.make_multilabel_classification
+   datasets.make_regression
+   datasets.make_s_curve
    datasets.make_sparse_coded_signal
+   datasets.make_sparse_spd_matrix
    datasets.make_sparse_uncorrelated
    datasets.make_spd_matrix
-   datasets.make_sparse_spd_matrix
    datasets.make_swiss_roll
-   datasets.make_s_curve
 
 
 .. _decomposition_ref:
@@ -456,6 +458,7 @@ For dense data
 
    linear_model.LinearRegression
    linear_model.Ridge
+   linear_model.RidgeClassifier
    linear_model.RidgeCV
    linear_model.Lasso
    linear_model.LassoCV
@@ -501,7 +504,7 @@ For sparse data
    linear_model.sparse.ElasticNet
    linear_model.sparse.SGDClassifier
    linear_model.sparse.SGDRegressor
-   linear_model.sparse.LogisticRegression
+   linear_model.LogisticRegression
 
 
 .. _manifold_ref:
@@ -834,26 +837,6 @@ For dense data
    :template: function.rst
 
    svm.l1_min_c
-
-For sparse data
----------------
-
-.. automodule:: sklearn.svm.sparse
-   :no-members:
-   :no-inherited-members:
-
-.. currentmodule:: sklearn
-
-.. autosummary::
-   :toctree: generated/
-   :template: class.rst
-
-   svm.sparse.SVC
-   svm.sparse.NuSVC
-   svm.sparse.SVR
-   svm.sparse.NuSVR
-   svm.sparse.OneClassSVM
-   svm.sparse.LinearSVC
 
 Low-level methods
 -----------------

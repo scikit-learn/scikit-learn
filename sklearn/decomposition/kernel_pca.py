@@ -9,10 +9,7 @@ from scipy import linalg
 from ..utils.arpack import eigsh
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import KernelCenterer
-from ..metrics.pairwise import linear_kernel
-from ..metrics.pairwise import polynomial_kernel
-from ..metrics.pairwise import rbf_kernel
-from ..metrics.pairwise import sigmoid_kernel
+from ..metrics.pairwise import pairwise_kernels
 
 
 class KernelPCA(BaseEstimator, TransformerMixin):
@@ -99,25 +96,13 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         self.centerer = KernelCenterer()
 
     def _get_kernel(self, X, Y=None):
-        if Y is None:
-            Y = X
-
-        if self.kernel == "precomputed":
-            return X
-        elif self.kernel == "rbf":
-            return rbf_kernel(X, Y, gamma=self.gamma)
-        elif self.kernel == "poly":
-            return polynomial_kernel(X, Y,
-                                     gamma=self.gamma,
-                                     degree=self.degree,
-                                     coef0=self.coef0)
-        elif self.kernel == "sigmoid":
-            return sigmoid_kernel(X, Y,
-                                  gamma=self.gamma,
-                                  coef0=self.coef0)
-        elif self.kernel == "linear":
-            return linear_kernel(X, Y)
-        else:
+        params = {"gamma": self.gamma,
+                  "degree": self.degree,
+                  "coef0": self.coef0}
+        try:
+            return pairwise_kernels(X, Y, metric=self.kernel,
+                                    filter_params=True, **params)
+        except AttributeError:
             raise ValueError("%s is not a valid kernel. Valid kernels are: "
                              "rbf, poly, sigmoid, linear and precomputed."
                              % self.kernel)
