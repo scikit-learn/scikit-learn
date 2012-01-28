@@ -4,7 +4,7 @@ import numpy as np
 from nose.tools import raises
 from nose.tools import assert_true
 from numpy.testing import assert_array_almost_equal
-from numpy.testing import assert_array_equal, assert_raises
+from numpy.testing import assert_array_equal
 from numpy.testing import assert_equal, assert_almost_equal
 
 from ... import datasets

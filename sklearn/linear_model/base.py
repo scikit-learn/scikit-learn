@@ -20,7 +20,6 @@ import scipy.sparse.linalg as sp_linalg
 
 from ..base import BaseEstimator
 from ..base import RegressorMixin
-from ..base import TransformerMixin
 from ..utils.extmath import safe_sparse_dot
 from ..utils import array2d, as_float_array, safe_asarray
 
