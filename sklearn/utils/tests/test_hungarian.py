@@ -3,7 +3,7 @@
 
 import numpy as np
 
-from scikits.learn.utils.hungarian import _Hungarian, find_permutation
+from sklearn.utils.hungarian import _Hungarian, find_permutation
 
 def test_hungarian():
     matrices = [
