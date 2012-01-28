@@ -72,6 +72,8 @@ select is eventually reached.
       selected with cross-validation.
 
 
+.. _l1_feature_selection:
+
 L1-based feature selection
 ==========================
 
@@ -109,6 +111,8 @@ alpha parameter, the fewer features selected.
       of different algorithms for document classification including L1-based
       feature selection.
 
+.. _randomized_l1:
+
 Randomized sparse models
 -------------------------
 
@@ -123,6 +127,8 @@ and counting how many times a given regressor is selected.
 :class:`RandomizedLasso` implements this strategy for regression
 settings, using the Lasso, while :class:`RandomizedLogistic` uses the
 logistic regression and is suitable for classification tasks.
+To get a full path of stability scores you can use
+:func:`lasso_stability_path`.
 
 .. figure:: ../auto_examples/linear_model/images/plot_randomized_lasso_2.png
    :target: ../auto_examples/linear_model/plot_randomized_lasso.html
