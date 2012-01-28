@@ -24,8 +24,6 @@ There are different ways to get scikit-learn installed:
     If you wish to contribute to the project, it's recommended you
     :ref:`install the latest development version<install_bleeding_edge>`.
 
-.. note::
-
 .. _install_official_release:
 
 Installing an official release

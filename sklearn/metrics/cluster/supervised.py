@@ -324,7 +324,7 @@ def homogeneity_score(labels_true, labels_pred):
       1.0
 
     Non-pefect labelings that futher split classes into more clusters can be
-    perfectly homogeneous:
+    perfectly homogeneous::
 
       >>> homogeneity_score([0, 0, 1, 1], [0, 0, 1, 2])
       1.0
@@ -392,7 +392,7 @@ def completeness_score(labels_true, labels_pred):
       1.0
 
     Non-pefect labelings that assign all classes members to the same clusters
-    are still complete:
+    are still complete::
 
       >>> completeness_score([0, 0, 1, 1], [0, 0, 0, 0])
       1.0
@@ -414,9 +414,9 @@ def completeness_score(labels_true, labels_pred):
 def v_measure_score(labels_true, labels_pred):
     """V-Measure cluster labeling given a ground truth
 
-    The V-Measure is the hormonic mean between homogeneity and completeness:
+    The V-Measure is the hormonic mean between homogeneity and completeness::
 
-      v = 2 * (homogeneity * completeness) / (homogeneity + completeness)
+        v = 2 * (homogeneity * completeness) / (homogeneity + completeness)
 
     This metric is independent of the absolute values of the labels:
     a permutation of the class or cluster label values won't change the
