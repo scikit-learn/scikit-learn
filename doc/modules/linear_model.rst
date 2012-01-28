@@ -194,6 +194,14 @@ computes the coefficients along the full path of possible values.
   * :ref:`example_linear_model_lasso_and_elasticnet.py`
   * :ref:`example_applications_plot_tomography_l1_reconstruction.py`
 
+
+.. note:: **Feature selection with Lasso**
+
+      As the Lasso regression yields sparse models, it can
+      thus be used to perform feature selection, as detailed in
+      :ref:`l1_feature_selection`.
+
+
 Setting regularization parameter
 --------------------------------
 
@@ -585,6 +593,12 @@ zero) model.
 
   * :ref:`example_linear_model_plot_logistic_path.py`
 
+.. note:: **Feature selection with sparse logistic regression**
+
+   A logistic regression with L1 penalty yields sparse models, and can
+   thus be used to perform feature selection, as detailed in
+   :ref:`l1_feature_selection`.
+
 Stochastic Gradient Descent - SGD
 =================================
 
@@ -617,37 +631,3 @@ The last characteristic implies that the Perceptron is slightly faster to
 train than SGD with the hinge loss and that the resulting models are
 sparser.
 
-.. _randomized_l1:
-
-Randomized sparse linear models
-===============================
-
-A motivation for using sparse linear models is that they achieve
-in one step a feature selection and the optimization of the prediction.
-Indeed only a few features will have a non-zero coefficient.
-However sparse linear models can have problems recovering the true informative
-features. This is typically the case when some features are highly correlated.
-In a set of correlated informative features a Lasso
-or L1-LogisticRegression will select only one or a few of them and will
-also tend to take more features then it should. The wrongly selected features
-are known as type-1 errors or false positives.
-Randomized sparse linear models address the problem
-by running many model estimations by subsampling the data
-and scaling the features. The features that are selected the more
-often are more likely to be truly informative.
-Randomized linear models are presented in::
-
-    Stability selection
-    Nicolai Meinshausen, Peter Buhlmann
-    Journal of the Royal Statistical Society: Series B
-    Volume 72, Issue 4, pages 417-473, September 2010
-    DOI: 10.1111/j.1467-9868.2010.00740.x
-
-The :class:`RandomizedLogistic` and :class:`RandomizedLasso` class can be used
-to compute stability scores for regression and classification problems.
-To get a full path of stability scores you can use
-:func:`sklearn.linear_model.lasso_stability_path`.
-
-.. topic:: Examples:
-
-* :ref:`example_linear_model_plot_randomized_lasso.py`
