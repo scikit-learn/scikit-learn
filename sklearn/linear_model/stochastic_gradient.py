@@ -173,7 +173,8 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
     def _set_loss_function(self, loss):
         """Set concrete LossFunction."""
         loss_functions = {
-            "hinge": Hinge(),
+            "hinge": Hinge(1.0),
+            "perceptron": Hinge(0.0),
             "log": Log(),
             "modified_huber": ModifiedHuber(),
         }
