@@ -474,7 +474,7 @@ class RandomizedLogistic(BaseRandomizedLinearModel):
 def lasso_stability_path(X, y, scaling=0.5, random_state=None,
                          n_resampling=200, n_grid=100,
                          sample_fraction=0.75,
-                         eps=4*np.finfo(np.float).eps):
+                         eps=4 * np.finfo(np.float).eps):
     """Stabiliy path based on randomized Lasso estimates
 
     Parameters
@@ -556,7 +556,7 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
         # solution
         mask[0] = True
         alphas = alphas[mask]
-        coefs  = coefs[:, mask]
+        coefs = coefs[:, mask]
         paths.append((alphas, coefs))
         all_alphas = all_alphas.union(list(alphas))
 
