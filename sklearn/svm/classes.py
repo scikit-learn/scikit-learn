@@ -146,7 +146,11 @@ class SVC(BaseLibSVM, ClassifierMixin):
         number of support vector for each class.
 
     `dual_coef_` : array, shape = [n_class-1, n_SV]
-        Coefficients of the support vector in the decision function.
+        Coefficients of the support vector in the decision function. \
+        For multiclass, coefficient for all 1-vs-1 classifiers. \
+        The layout of the coefficients in the multiclass case is somewhat non-trivial. \
+        See the section about multi-class classification in the SVM section of \
+        the User Guide for details.
 
     `coef_` : array, shape = [n_class-1, n_features]
         Weights asigned to the features (coefficients in the primal
@@ -236,10 +240,14 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
     `n_support_` : array-like, dtype=int32, shape = [n_class]
         number of support vector for each class.
 
-    `dual_coef_` : array, shape = [n_classes-1, n_SV]
-        Coefficients of the support vector in the decision function.
+    `dual_coef_` : array, shape = [n_class-1, n_SV]
+        Coefficients of the support vector in the decision function. \
+        For multiclass, coefficient for all 1-vs-1 classifiers. \
+        The layout of the coefficients in the multiclass case is somewhat non-trivial. \
+        See the section about multi-class classification in the SVM section of \
+        the User Guide for details.
 
-    `coef_` : array, shape = [n_classes-1, n_features]
+    `coef_` : array, shape = [n_class-1, n_features]
         Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
