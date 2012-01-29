@@ -146,8 +146,8 @@ def _tolerance(X, tol):
 
 
 def k_means(X, k, init='k-means++', precompute_distances=True,
-            n_init=10, max_iter=300, verbose=0,
-            tol=1e-4, random_state=None, copy_x=True):
+            n_init=10, max_iter=300, verbose=False,
+            tol=1e-4, random_state=None, copy_x=True, n_jobs=1):
     """K-means clustering algorithm.
 
     Parameters
@@ -187,7 +187,7 @@ def k_means(X, k, init='k-means++', precompute_distances=True,
         The relative increment in the results before declaring convergence.
 
     verbose: boolean, optional
-        Terbosity mode
+        Verbosity mode
 
     random_state: integer or numpy.RandomState, optional
         The generator used to initialize the centers. If an integer is
@@ -200,6 +200,16 @@ def k_means(X, k, init='k-means++', precompute_distances=True,
         modified.  If False, the original data is modified, and put back before
         the function returns, but small numerical differences may be introduced
         by subtracting and then adding the data mean.
+
+    n_jobs: int
+        The number of jobs to use for the computation. This works by breaking
+        down the pairwise matrix into n_jobs even slices and computing them in
+        parallel.
+
+        If -1 all CPUs are used. If 1 is given, no parallel computing code is
+        used at all, which is useful for debuging. For n_jobs below -1,
+        (n_cpus + 1 - n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
+        are used.
 
     Returns
     -------
@@ -244,40 +254,16 @@ def k_means(X, k, init='k-means++', precompute_distances=True,
     best_labels, best_inertia, best_centers = None, None, None
 
     for it in range(n_init):
-        # init
-        centers = _init_centroids(X, k, init, random_state=random_state,
-                                  x_squared_norms=x_squared_norms)
-        if verbose:
-            print 'Initialization complete'
-
-        # Allocate memory to store the distances for each sample to its
-        # closer center for reallocation in case of ties
-        distances = np.zeros(shape=(X.shape[0],), dtype=np.float64)
-
-        # iterations
-        for i in range(max_iter):
-            centers_old = centers.copy()
-            # labels assignement is also called the E-step of EM
-            labels, inertia = \
-                    _labels_inertia(X, x_squared_norms, centers,
-                                    precompute_distances=precompute_distances,
-                                    distances=distances)
-
-            # computation of the means is also called the M-step of EM
-            centers = _centers(X, labels, k, distances)
-
-            if verbose:
-                print 'Iteration %i, inertia %s' % (i, inertia)
-
-            if best_inertia is None or inertia < best_inertia:
-                best_labels = labels.copy()
-                best_centers = centers.copy()
-                best_inertia = inertia
-
-            if np.sum((centers_old - centers) ** 2) < tol:
-                if verbose:
-                    print 'Converged to similar centers at iteration', i
-                break
+        # run a k-means once
+        labels, inertia, centers = _kmeans_single(
+            X, k, max_iter=max_iter, init=init, verbose=verbose,
+            precompute_distances=precompute_distances, tol=tol,
+            x_squared_norms=x_squared_norms, random_state=random_state)
+        # determine if these results are the best so far
+        if best_inertia is None or inertia < best_inertia:
+            best_labels = labels.copy()
+            best_centers = centers.copy()
+            best_inertia = inertia
 
     if not sp.issparse(X):
         if not copy_x:
@@ -285,6 +271,104 @@ def k_means(X, k, init='k-means++', precompute_distances=True,
         best_centers += X_mean
 
     return best_centers, best_labels, best_inertia
+
+
+def _kmeans_single(X, k, max_iter=300, init='k-means++', verbose=False,
+                   x_squared_norms=None, random_state=None, tol=1e-4,
+                   precompute_distances=True):
+    """A single run of k-means, assumes preparation completed prior.
+    X: array-like of floats, shape (n_samples, n_features)
+        The observations to cluster.
+
+    k: int
+        The number of clusters to form as well as the number of
+        centroids to generate.
+
+    max_iter: int, optional, default 300
+        Maximum number of iterations of the k-means algorithm to run.
+
+    init: {'k-means++', 'random', or ndarray, or a callable}, optional
+        Method for initialization, default to 'k-means++':
+
+        'k-means++' : selects initial cluster centers for k-mean
+        clustering in a smart way to speed up convergence. See section
+        Notes in k_init for more details.
+
+        'random': generate k centroids from a Gaussian with mean and
+        variance estimated from the data.
+
+        If an ndarray is passed, it should be of shape (k, p) and gives
+        the initial centers.
+
+        If a callable is passed, it should take arguments X, k and
+        and a random state and return an initialization.
+
+    tol: float, optional
+        The relative increment in the results before declaring convergence.
+    
+    verbose: boolean, optional
+        Verbosity mode
+
+    x_squared_norms: array, optional
+        Precomputed x_squared_norms. Calculated if not given.
+        
+    random_state: integer or numpy.RandomState, optional
+        The generator used to initialize the centers. If an integer is
+        given, it fixes the seed. Defaults to the global numpy random
+        number generator.
+
+    Returns
+    -------
+    centroid: float ndarray with shape (k, n_features)
+        Centroids found at the last iteration of k-means.
+
+    label: integer ndarray with shape (n_samples,)
+        label[i] is the code or index of the centroid the
+        i'th observation is closest to.
+
+    inertia: float
+        The final value of the inertia criterion (sum of squared distances to
+        the closest centroid for all observations in the training set).
+    """
+    random_state = check_random_state(random_state)
+    if x_squared_norms is None:
+        x_squared_norms = _squared_norms(X)
+    best_labels, best_inertia, best_centers = None, None, None
+    # init
+    centers = _init_centroids(X, k, init, random_state=random_state,
+                              x_squared_norms=x_squared_norms)
+    if verbose:
+        print 'Initialization complete'
+
+    # Allocate memory to store the distances for each sample to its
+    # closer center for reallocation in case of ties
+    distances = np.zeros(shape=(X.shape[0],), dtype=np.float64)
+
+    # iterations
+    for i in range(max_iter):
+        centers_old = centers.copy()
+        # labels assignement is also called the E-step of EM
+        labels, inertia = \
+                _labels_inertia(X, x_squared_norms, centers,
+                                precompute_distances=precompute_distances,
+                                distances=distances)
+
+        # computation of the means is also called the M-step of EM
+        centers = _centers(X, labels, k, distances)
+
+        if verbose:
+            print 'Iteration %i, inertia %s' % (i, inertia)
+
+        if best_inertia is None or inertia < best_inertia:
+            best_labels = labels.copy()
+            best_centers = centers.copy()
+            best_inertia = inertia
+
+        if np.sum((centers_old - centers) ** 2) < tol:
+            if verbose:
+                print 'Converged to similar centers at iteration', i
+            break
+    return best_labels, best_inertia, best_centers
 
 
 def _squared_norms(X):
