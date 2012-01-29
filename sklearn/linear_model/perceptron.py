@@ -9,6 +9,13 @@ class Perceptron(SGDClassifier):
     Parameters
     ----------
 
+    penalty : None, 'l2' or 'l1' or 'elasticnet'
+        The penalty (aka regularization term) to be used. Defaults to None.
+
+    alpha : float
+        Constant that multiplies the regularization term if regularization is
+        used. Defaults to 0.0001
+
     fit_intercept: bool
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered. Defaults to True.
@@ -32,6 +39,9 @@ class Perceptron(SGDClassifier):
         The number of CPUs to use to do the OVA (One Versus All, for
         multi-class problems) computation. -1 means 'all CPUs'. Defaults
         to 1.
+
+    eta0 : double
+        Constant by which the updates are multiplied. Defaults to 1.
 
     class_weight : dict, {class_label : weight} or "auto" or None, optional
         Preset for the class_weight fit parameter.
@@ -72,18 +82,19 @@ class Perceptron(SGDClassifier):
 
     http://en.wikipedia.org/wiki/Perceptron and references therein.
     """
-    def __init__(self, fit_intercept=True, n_iter=5, shuffle=False, verbose=0,
+    def __init__(self, penalty=None, alpha=0.0001, fit_intercept=True,
+                 n_iter=5, shuffle=False, verbose=0, eta0=1.0,
                  n_jobs=1, seed=0, class_weight=None, warm_start=False):
         super(Perceptron, self).__init__(loss="perceptron",
-                                         penalty=None,
-                                         alpha=0, rho=0,
+                                         penalty=penalty,
+                                         alpha=alpha, rho=0,
                                          fit_intercept=fit_intercept,
                                          n_iter=n_iter,
                                          shuffle=shuffle,
                                          verbose=verbose,
                                          seed=seed,
                                          learning_rate="constant",
-                                         eta0=1.0,
+                                         eta0=eta0,
                                          power_t=0.5,
                                          warm_start=warm_start,
                                          class_weight=class_weight,
