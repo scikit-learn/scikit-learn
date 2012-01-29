@@ -483,7 +483,8 @@ class RandomForestClassifier(ForestClassifier):
         Score of the training dataset obtained using an out-of-bag estimate.
 
     `oob_decision_function_` : array, shape = [n_samples, n_classes]
-        Decision function computed with out-of-bag estimate on the training set.
+        Decision function computed with out-of-bag estimate on the training
+        set.
 
 
     Notes
@@ -727,7 +728,8 @@ class ExtraTreesClassifier(ForestClassifier):
         Score of the training dataset obtained using an out-of-bag estimate.
 
     `oob_decision_function_` : array, shape = [n_samples, n_classes]
-        Decision function computed with out-of-bag estimate on the training set.
+        Decision function computed with out-of-bag estimate on the training
+        set.
 
     Notes
     -----
@@ -738,7 +740,9 @@ class ExtraTreesClassifier(ForestClassifier):
 
     See also
     --------
-    ExtraTreeClassifier, RandomForestClassifier
+    sklearn.tree.ExtraTreeClassifier : Base classifier for this ensemble.
+    RandomForestClassifier : Ensemble Classifier based on trees with optimal
+        splits.
     """
     def __init__(self, n_estimators=10,
                        criterion="gini",
@@ -861,7 +865,8 @@ class ExtraTreesRegressor(ForestRegressor):
 
     See also
     --------
-    ExtraTreeRegressor, RandomForestRegressor
+    sklearn.tree.ExtraTreeRegressor: Base estimator for this ensemble.
+    RandomForestRegressor: Ensemble regressor using trees with optimal splits.
     """
     def __init__(self, n_estimators=10,
                        criterion="mse",

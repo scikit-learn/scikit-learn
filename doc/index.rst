@@ -187,4 +187,5 @@ Development
    developers/index
    developers/performance
    developers/utilities
+   developers/debugging
    about

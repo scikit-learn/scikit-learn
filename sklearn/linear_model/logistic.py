@@ -1,13 +1,12 @@
 import numpy as np
 
 from ..base import ClassifierMixin
-from ..linear_model.base import CoefSelectTransformerMixin
+from ..feature_selection.selector_mixin import SelectorMixin
 from ..svm.base import BaseLibLinear
 from ..svm.liblinear import csr_predict_prob_wrap, predict_prob_wrap
 
 
-class LogisticRegression(BaseLibLinear, ClassifierMixin,
-                         CoefSelectTransformerMixin):
+class LogisticRegression(BaseLibLinear, ClassifierMixin, SelectorMixin):
     """Logistic Regression (aka logit, MaxEnt) classifier.
 
     In the multiclass case, the training algorithm uses a one-vs.-all (OvA)
@@ -115,7 +114,8 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin,
             order.
         """
         X = self._validate_for_predict(X)
-        prob_wrap = csr_predict_prob_wrap if self._sparse else predict_prob_wrap
+        prob_wrap = (csr_predict_prob_wrap if self._sparse else
+                predict_prob_wrap)
         probas = prob_wrap(X, self.raw_coef_, self._get_solver_type(),
                            self.tol, self.C, self.class_weight_label,
                            self.class_weight, self.label_, self._get_bias())

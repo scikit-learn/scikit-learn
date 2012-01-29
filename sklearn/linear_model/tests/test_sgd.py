@@ -28,7 +28,6 @@ class SparseSGDClassifier(SGDClassifier):
         return SGDClassifier.decision_function(self, X, *args, **kw)
 
 
-
 class SparseSGDRegressor(SGDRegressor):
 
     def fit(self, X, y, *args, **kw):
@@ -86,6 +85,7 @@ true_result5 = [0, 1, 1]
 ##
 ## Classification Test Case
 ##
+
 
 class CommonTest(object):
 
