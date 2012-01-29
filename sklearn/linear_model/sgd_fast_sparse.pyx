@@ -211,7 +211,9 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
            or np.isnan(intercept) or np.isinf(intercept):
             raise ValueError("floating-point under-/overflow occured.")
 
-    w *= wscale
+    if wscale != 1.0:
+        w *= wscale
+
     return w, intercept
 
 
