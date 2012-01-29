@@ -6,16 +6,16 @@ Label Propagation
 
 `sklearn.semi_supervised.label_propagation` contains a few variations of semi-supervised
 graph inference algorithms. In the semi-supervised classification setting, the
-learning algorithm is fed both labeled and unlabeled data. With the addition of
-unlabeled data in the training model, the algorithm can better learn the total
-structure of the data. These algorithms generally do very well in practice even
-when faced with far fewer labeled points than ordinary classification models.
+learning algorithm is fed both labeled and unlabeled data. The algorithm can better
+learn the total structure of the data by knowing how the unlabeled data is distributed.
+These algorithms can perform well when we have a very small amount of labeled points
+and a large amount of unlabeled points.
 
 A few features available in this model:
   * Can be used for classification and regression tasks
   * Kernel methods to project data into alternate dimensional spaces
 
-.. currentmodule:: sklearn.label_propagation
+.. currentmodule:: sklearn.semi_supervised.label_propagation
 .. topic:: Input labels for semi-supervised learning
     It is important to assign an identifier to unlabeled points along with the
     labeled data when training the model with the `fit` method.

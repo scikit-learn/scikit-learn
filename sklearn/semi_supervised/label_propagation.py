@@ -1,4 +1,4 @@
-#coding=utf8
+
 """
 Label propagation in the context of this module refers to a set of
 semisupervised classification algorithms. In the high level, these algorithms
@@ -64,22 +64,25 @@ EPSILON = 1e-9
 
 
 class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
-    """
-    Base class for label propagation module.
+    """Base class for label propagation module.
 
     Parameters
     ----------
     kernel : string
-      string identifier for kernel function to use
-      only 'rbf' kernel is currently supported
+        String identifier for kernel function to use.
+        Only 'rbf' kernel is currently supported..
+
     gamma : float
-      parameter for rbf kernel
+        Parameter for rbf kernel
+
     alpha : float
-      clamping factor
+        Clamping factor
+
     max_iters : float
-      change maximum number of iterations allowed
+        Change maximum number of iterations allowed
+
     tol : float
-      threshold to consider the system at steady state
+        Threshold to consider the system at steady state
     """
 
     def __init__(self, kernel='rbf', gamma=20, n_neighbors=7,
@@ -141,12 +144,13 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        X : array_like, shape = (n_features, n_features)
+        X : array_like, shape = [n_samples, n_features]
 
         Returns
-        ------
-        probabilities : array of normalized probability distributions across
-        class labels
+        -------
+        probabilities : array, shape = [n_samples, n_classes]
+            Normalized probability distributions across
+            class labels
         """
         X_2d = np.atleast_2d(X)
         weight_matrices = self._get_kernel(self.X_, X_2d)
@@ -170,16 +174,16 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_freatures]
-          A {n_samples by n_samples} size matrix will be created from this
+        X : array-like, shape = [n_samples, n_features]
+            A {n_samples by n_samples} size matrix will be created from this
 
         y : array_like, shape = [n_labeled_samples]
-          n_labeled_samples (unlabeled points are marked as -1)
-          All unlabeled samples will be transductively assigned labels
+            n_labeled_samples (unlabeled points are marked as -1)
+            All unlabeled samples will be transductively assigned labels
 
         Returns
         -------
-        updated LabelPropagation object with a new transduction results
+        self : returns an instance of self.
         """
         self.X_ = np.asarray(X)
 
@@ -235,8 +239,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
 
 
 class LabelPropagation(BaseLabelPropagation):
-    """
-    Computes a stochastic affinity matrix and uses hard clamping.
+    """Label Propagation classifier
 
     Parameters
     ----------
@@ -300,7 +303,8 @@ class LabelPropagation(BaseLabelPropagation):
 class LabelSpreading(BaseLabelPropagation):
     """
     Similar to the basic Label Propgation algorithm, but uses affinity matrix
-    based on the graph laplacian and soft clamping accross the labels.
+    based on the normalized graph Laplacian and soft clamping across the
+    labels.
 
     Parameters
     ----------
