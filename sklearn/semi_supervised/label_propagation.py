@@ -1,4 +1,4 @@
-
+# coding=utf8
 """
 Label propagation in the context of this module refers to a set of
 semisupervised classification algorithms. In the high level, these algorithms

@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from skleanr.semi_supervised import label_propagation
+from sklearn.semi_supervised import label_propagation
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 
