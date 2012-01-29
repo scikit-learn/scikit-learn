@@ -14,6 +14,7 @@ import warnings
 
 import numpy as np
 import scipy.sparse as sp
+import operator
 
 from ..base import BaseEstimator
 from ..metrics.pairwise import euclidean_distances
@@ -23,6 +24,9 @@ from ..utils import check_random_state
 from ..utils import atleast2d_or_csr
 from ..utils import as_float_array
 from ..utils import safe_asarray
+from ..externals.joblib import Parallel
+from ..externals.joblib import delayed
+from ..externals.joblib.parallel import cpu_count
 
 from . import _k_means
 
@@ -147,7 +151,7 @@ def _tolerance(X, tol):
 
 def k_means(X, k, init='k-means++', precompute_distances=True,
             n_init=10, max_iter=300, verbose=False,
-            tol=1e-4, random_state=None, copy_x=True, n_jobs=1):
+            tol=1e-4, random_state=None, copy_x=True, n_jobs=-1):
     """K-means clustering algorithm.
 
     Parameters
@@ -252,19 +256,31 @@ def k_means(X, k, init='k-means++', precompute_distances=True,
     x_squared_norms = _squared_norms(X)
 
     best_labels, best_inertia, best_centers = None, None, None
-
-    for it in range(n_init):
-        # run a k-means once
-        labels, inertia, centers = _kmeans_single(
-            X, k, max_iter=max_iter, init=init, verbose=verbose,
-            precompute_distances=precompute_distances, tol=tol,
-            x_squared_norms=x_squared_norms, random_state=random_state)
-        # determine if these results are the best so far
-        if best_inertia is None or inertia < best_inertia:
-            best_labels = labels.copy()
-            best_centers = centers.copy()
-            best_inertia = inertia
-
+    if n_jobs == 1:
+        for it in range(n_init):
+            # run a k-means once
+            labels, inertia, centers = _kmeans_single(
+                X, k, max_iter=max_iter, init=init, verbose=verbose,
+                precompute_distances=precompute_distances, tol=tol,
+                x_squared_norms=x_squared_norms, random_state=random_state)
+            # determine if these results are the best so far
+            if best_inertia is None or inertia < best_inertia:
+                best_labels = labels.copy()
+                best_centers = centers.copy()
+                best_inertia = inertia
+    else: # parallelisation of k-means runs
+        if n_jobs < 0:
+            n_jobs = max(cpu_count() + 1 + n_jobs, 1)
+        results = Parallel(n_jobs=n_jobs, verbose=0)(
+            delayed(_kmeans_single)(X, k, max_iter=max_iter, init=init,
+                                    verbose=verbose, tol=tol,
+                                    precompute_distances=precompute_distances,
+                                    x_squared_norms=x_squared_norms,
+                                    random_state=random_state)
+            for i in range(n_init))
+        # Get results with the lowest inertia
+        best_results = sorted(results, key=operator.itemgetter(1))[0]
+        best_labels, best_inertia, best_centers = best_results
     if not sp.issparse(X):
         if not copy_x:
             X += X_mean

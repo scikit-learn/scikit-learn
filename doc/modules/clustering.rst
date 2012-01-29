@@ -814,7 +814,7 @@ cluster analysis.
   >>> labels = kmeans_model.labels_
   >>> metrics.silhouette_score(X, labels, metric='euclidean')  
   ...                                                      # doctest: +ELLIPSIS
-  0.5525...
+  0.55...
 
 .. topic:: References
 
