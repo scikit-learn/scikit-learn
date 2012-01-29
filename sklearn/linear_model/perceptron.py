@@ -85,4 +85,6 @@ class Perceptron(SGDClassifier):
                                          learning_rate="constant",
                                          eta0=1.0,
                                          power_t=0.5,
-                                         warm_start=warm_start)
+                                         warm_start=warm_start,
+                                         class_weight=class_weight,
+                                         n_jobs=n_jobs)
