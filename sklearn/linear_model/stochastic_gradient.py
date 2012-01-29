@@ -146,7 +146,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
 
     See also
     --------
-    LinearSVC, LogisticRegression
+    LinearSVC, LogisticRegression, Perceptron
 
     """
     def __init__(self, loss="hinge", penalty='l2', alpha=0.0001,
