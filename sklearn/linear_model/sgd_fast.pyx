@@ -118,7 +118,15 @@ cdef class ModifiedHuber(Classification):
 
 
 cdef class Hinge(Classification):
-    """SVM loss for binary classification tasks with y in {-1,1}"""
+    """Hinge loss for binary classification tasks with y in {-1,1}
+
+    Parameters
+    ----------
+
+    t : float > 0.0
+        Margin threshold. When t=1.0, one gets the loss used by SVM.
+        When t=0.0, one gets the loss used by the Perceptron.
+    """
 
     def __init__(self, double t):
         self.t = t
