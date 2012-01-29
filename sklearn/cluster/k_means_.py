@@ -268,7 +268,8 @@ def k_means(X, k, init='k-means++', precompute_distances=True,
                 best_labels = labels.copy()
                 best_centers = centers.copy()
                 best_inertia = inertia
-    else: # parallelisation of k-means runs
+    else:
+        # parallelisation of k-means runs
         if n_jobs < 0:
             n_jobs = max(cpu_count() + 1 + n_jobs, 1)
         results = Parallel(n_jobs=n_jobs, verbose=0)(
@@ -321,13 +322,13 @@ def _kmeans_single(X, k, max_iter=300, init='k-means++', verbose=False,
 
     tol: float, optional
         The relative increment in the results before declaring convergence.
-    
+
     verbose: boolean, optional
         Verbosity mode
 
     x_squared_norms: array, optional
         Precomputed x_squared_norms. Calculated if not given.
-        
+
     random_state: integer or numpy.RandomState, optional
         The generator used to initialize the centers. If an integer is
         given, it fixes the seed. Defaults to the global numpy random
