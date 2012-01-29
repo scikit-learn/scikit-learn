@@ -993,7 +993,7 @@ class LassoLarsIC(LassoLars):
 
         df = np.zeros(coef_path_.shape[1], dtype=np.int)  # Degrees of freedom
         for k, coef in enumerate(coef_path_.T):
-            mask = coef != 0
+            mask = np.abs(coef) > np.finfo(coef.dtype).eps
             if not np.any(mask):
                 continue
             # get the number of degrees of freedom equal to:
