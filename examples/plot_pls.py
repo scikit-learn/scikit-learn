@@ -24,7 +24,7 @@ import numpy as np
 import pylab as pl
 from sklearn.pls import PLSCanonical, PLSRegression, CCA
 
-################################################################################
+###############################################################################
 # Dataset based latent variables model
 
 n = 500
@@ -33,20 +33,20 @@ l1 = np.random.normal(size=n)
 l2 = np.random.normal(size=n)
 
 latents = np.array([l1, l1, l2, l2]).T
-X = latents + np.random.normal(size=4*n).reshape((n, 4))
-Y = latents + np.random.normal(size=4*n).reshape((n, 4))
+X = latents + np.random.normal(size=4 * n).reshape((n, 4))
+Y = latents + np.random.normal(size=4 * n).reshape((n, 4))
 
-X_train = X[:n/2, :]
-Y_train = Y[:n/2, :]
-X_test = X[n/2:, :]
-Y_test = Y[n/2:, :]
+X_train = X[:n / 2]
+Y_train = Y[:n / 2]
+X_test = X[n / 2:]
+Y_test = Y[n / 2:]
 
 print "Corr(X)"
 print np.round(np.corrcoef(X.T), 2)
 print "Corr(Y)"
 print np.round(np.corrcoef(Y.T), 2)
 
-################################################################################
+###############################################################################
 # Canonical (symetric) PLS
 
 # Transform data
@@ -95,7 +95,7 @@ pl.title('Y, corr = %.2f' % np.corrcoef(Y_test_r[:, 0], Y_test_r[:, 1])[0, 1])
 pl.legend()
 pl.show()
 
-################################################################################
+###############################################################################
 # PLS regression, with multivariate response, a.k.a. PLS2
 
 n = 1000
@@ -115,12 +115,12 @@ print "Estimated B"
 print np.round(pls2.coefs, 1)
 pls2.predict(X)
 
-################################################################################
+###############################################################################
 # PLS regression, with univariate response, a.k.a. PLS1
 
 n = 1000
 p = 10
-X = np.random.normal(size=n*p).reshape((n, p))
+X = np.random.normal(size=n * p).reshape((n, p))
 y = X[:, 0] + 2 * X[:, 1] + np.random.normal(size=n * 1) + 5
 pls1 = PLSRegression(n_components=3)
 pls1.fit(X, y)
@@ -128,11 +128,10 @@ pls1.fit(X, y)
 print "Estimated betas"
 print np.round(pls1.coefs, 1)
 
-################################################################################
+###############################################################################
 # CCA (PLS mode B with symetric deflation)
 
 cca = CCA(n_components=2)
 cca.fit(X_train, Y_train)
 X_train_r, Y_train_r = plsca.transform(X_train, Y_train)
 X_test_r, Y_test_r = plsca.transform(X_test, Y_test)
-

@@ -9,11 +9,11 @@ a digit classification task.
 print __doc__
 
 from sklearn.svm import SVC
-from sklearn import datasets
+from sklearn.datasets import load_digits
 from sklearn.feature_selection import RFE
 
-# Loading the Digits dataset
-digits = datasets.load_digits()
+# Load the digits dataset
+digits = load_digits()
 X = digits.images.reshape((len(digits.images), -1))
 y = digits.target
 

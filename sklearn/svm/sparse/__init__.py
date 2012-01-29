@@ -1,10 +1,10 @@
 """
-Support Vector Machine algorithms for sparse matrices.
+The :mod:`sklearn.svm.sparse` module includes Support Vector Machine algorithms
+for sparse matrices.
 
 This module should have the same API as :mod:`sklearn.svm`, except
 that matrices are expected to be in some sparse format supported by
 scipy.sparse.
-
 
 .. note::
 
@@ -19,4 +19,4 @@ scipy.sparse.
 # License: New BSD, (C) INRIA 2010
 
 from .classes import SVC, NuSVC, SVR, NuSVR, OneClassSVM, LinearSVC
-from . import libsvm
+from .. import libsvm_sparse as libsvm

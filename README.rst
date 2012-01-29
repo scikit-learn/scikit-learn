@@ -1,7 +1,7 @@
 .. -*- mode: rst -*-
 
-About
-=====
+scikit-learn
+============
 
 scikit-learn is a Python module for machine learning built on top of
 SciPy and distributed under the 3-Clause BSD license.
@@ -29,8 +29,9 @@ Important links
 Dependencies
 ============
 
-The required dependencies to build the software are Python >= 2.5,
-setuptools, Numpy >= 1.2, SciPy >= 0.7 and a working C++ compiler.
+The required dependencies to build the software are Python >= 2.6,
+setuptools, Numpy >= 1.3, SciPy >= 0.7 and a working C/C++ compiler.
+This configuration matches the Ubuntu 10.04 LTS release from April 2010.
 
 To run the tests you will also need nose >= 0.10.
 

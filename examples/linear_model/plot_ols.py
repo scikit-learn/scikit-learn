@@ -28,5 +28,6 @@ clf.fit(X, Y)
 # and plot the result
 pl.scatter(X, Y, color='black')
 pl.plot(X, clf.predict(X), color='blue', linewidth=3)
+pl.xticks(())
+pl.yticks(())
 pl.show()
-

@@ -13,6 +13,7 @@ from ..utils import safe_asarray
 from ..preprocessing import LabelBinarizer
 from ..grid_search import GridSearchCV
 
+
 def _solve(A, b, solver, tol):
     # helper method for ridge_regression, A is symmetric positive
 
@@ -46,8 +47,7 @@ def _solve(A, b, solver, tol):
 
 
 def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto', tol=1e-3):
-    """
-    Solve the ridge equation by the method of normal equations.
+    """Solve the ridge equation by the method of normal equations.
 
     Parameters
     ----------
@@ -83,7 +83,7 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto', tol=1e-3):
     n_samples, n_features = X.shape
     is_sparse = False
 
-    if hasattr(X, 'todense'): # lazy import of scipy.sparse
+    if hasattr(X, 'todense'):  # lazy import of scipy.sparse
         from scipy import sparse
         is_sparse = sparse.issparse(X)
 
@@ -121,8 +121,13 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto', tol=1e-3):
 
 
 class Ridge(LinearModel):
-    """
-    Ridge regression.
+    """Linear least squares with l2 regularization.
+
+    This model solves a regression model where the loss function is
+    the linear least squares function and regularization is given by
+    the l2-norm. Also known as Ridge Regression or Tikhonov regularization.
+    This estimator has built-in support for multi-variate regression
+    (i.e., when y is a 2d-array of shape [n_samples, n_responses]).
 
     Parameters
     ----------
@@ -149,8 +154,12 @@ class Ridge(LinearModel):
     Attributes
     ----------
 
-    coef_: array, shape = [n_features] or [n_responses, n_features]
+    `coef_` : array, shape = [n_features] or [n_responses, n_features]
         Weight vector(s).
+
+    See also
+    --------
+    RidgeClassifier, RidgeCV
 
     Examples
     --------
@@ -175,8 +184,7 @@ class Ridge(LinearModel):
         self.tol = tol
 
     def fit(self, X, y, sample_weight=1.0, solver='auto'):
-        """
-        Fit Ridge regression model
+        """Fit Ridge regression model
 
         Parameters
         ----------
@@ -215,14 +223,14 @@ class Ridge(LinearModel):
 
 
 class RidgeClassifier(Ridge):
-    """Classifier using Ridge regression
+    """Classifier using Ridge regression.
 
     Parameters
     ----------
     alpha : float
         Small positive values of alpha improve the conditioning of the
         problem and reduce the variance of the estimates.
-        Alpha corresponds to (2*C)^-1 in other linear models such as
+        Alpha corresponds to ``(2*C)^-1`` in other linear models such as
         LogisticRegression or LinearSVC.
 
     fit_intercept : boolean
@@ -236,18 +244,22 @@ class RidgeClassifier(Ridge):
     Attributes
     ----------
 
-    coef_: array, shape = [n_features] or [n_classes, n_features]
+    `coef_` : array, shape = [n_features] or [n_classes, n_features]
         Weight vector(s).
 
-    Note
-    ----
+    See also
+    --------
+    Ridge, RidgeClassifierCV
+
+    Notes
+    -----
     For multi-class classification, n_class classifiers are trained in
-    a one-versus-all approach.
+    a one-versus-all approach. Concretely, this is implemented by taking
+    advantage of the multi-variate response support in Ridge.
     """
 
     def fit(self, X, y, solver='auto'):
-        """
-        Fit Ridge regression model.
+        """Fit Ridge regression model.
 
         Parameters
         ----------
@@ -275,11 +287,10 @@ class RidgeClassifier(Ridge):
         return self
 
     def decision_function(self, X):
-        return Ridge.predict(self, X)
+        return Ridge.decision_function(self, X)
 
     def predict(self, X):
-        """
-        Predict target values according to the fitted model.
+        """Predict target values according to the fitted model.
 
         Parameters
         ----------
@@ -287,16 +298,16 @@ class RidgeClassifier(Ridge):
 
         Returns
         -------
-        C : array, shape = [n_samples]
+        y : array, shape = [n_samples]
         """
         Y = self.decision_function(X)
         return self.label_binarizer.inverse_transform(Y)
 
 
 class _RidgeGCV(LinearModel):
-    """
-    Ridge regression with built-in Generalized Cross-Validation, i.e.
-    efficient Leave-One-Out cross-validation.
+    """Ridge regression with built-in Generalized Cross-Validation
+
+    It allows efficient Leave-One-Out cross-validation.
 
     This class is not intended to be used directly. Use RidgeCV instead.
 
@@ -326,15 +337,13 @@ class _RidgeGCV(LinearModel):
 
     looe = y - loov = c / diag(G)
 
-    Reference
-    ---------
-
+    **References**:
     http://cbcl.mit.edu/projects/cbcl/publications/ps/MIT-CSAIL-TR-2007-025.pdf
     http://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf
     """
 
-    def __init__(self, alphas=[0.1, 1.0, 10.0], fit_intercept=True, normalize=False,
-            score_func=None, loss_func=None, copy_X=True):
+    def __init__(self, alphas=[0.1, 1.0, 10.0], fit_intercept=True,
+            normalize=False, score_func=None, loss_func=None, copy_X=True):
         self.alphas = np.asarray(alphas)
         self.fit_intercept = fit_intercept
         self.normalize = normalize
@@ -434,8 +443,7 @@ class _RidgeGCV(LinearModel):
 
 
 class RidgeCV(LinearModel):
-    """
-    Ridge regression with built-in cross-validation.
+    """Ridge regression with built-in cross-validation.
 
     By default, it performs Generalized Cross-Validation, which is a form of
     efficient Leave-One-Out cross-validation. Currently, only the n_features >
@@ -444,11 +452,11 @@ class RidgeCV(LinearModel):
     Parameters
     ----------
     alphas: numpy array of shape [n_alpha]
-            Array of alpha values to try.
-            Small positive values of alpha improve the conditioning of the
-            problem and reduce the variance of the estimates.
-            Alpha corresponds to (2*C)^-1 in other linear models such as
-            LogisticRegression or LinearSVC.
+        Array of alpha values to try.
+        Small positive values of alpha improve the conditioning of the
+        problem and reduce the variance of the estimates.
+        Alpha corresponds to (2*C)^-1 in other linear models such as
+        LogisticRegression or LinearSVC.
 
     fit_intercept : boolean
         Whether to calculate the intercept for this model. If set
@@ -470,7 +478,7 @@ class RidgeCV(LinearModel):
 
     See also
     --------
-    Ridge
+    Ridge, RidgeClassifierCV
     """
 
     def __init__(self, alphas=np.array([0.1, 1.0, 10.0]), fit_intercept=True,
@@ -518,8 +526,8 @@ class RidgeCV(LinearModel):
             gs = GridSearchCV(Ridge(fit_intercept=self.fit_intercept),
                               parameters, fit_params=fit_params, cv=self.cv)
             gs.fit(X, y)
-            estimator = gs.best_estimator
-            self.best_alpha = gs.best_estimator.alpha
+            estimator = gs.best_estimator_
+            self.best_alpha = gs.best_estimator_.alpha
 
         self.coef_ = estimator.coef_
         self.intercept_ = estimator.intercept_
@@ -530,8 +538,7 @@ class RidgeCV(LinearModel):
 class RidgeClassifierCV(RidgeCV):
 
     def fit(self, X, y, sample_weight=1.0, class_weight=None):
-        """
-        Fit the ridge classifier.
+        """Fit the ridge classifier.
 
         Parameters
         ----------
@@ -565,8 +572,18 @@ class RidgeClassifierCV(RidgeCV):
         return self
 
     def decision_function(self, X):
-        return RidgeCV.predict(self, X)
+        return RidgeCV.decision_function(self, X)
 
     def predict(self, X):
+        """Predict target values according to the fitted model.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        y : array, shape = [n_samples]
+        """
         Y = self.decision_function(X)
         return self.label_binarizer.inverse_transform(Y)

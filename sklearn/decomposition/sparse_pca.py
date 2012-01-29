@@ -19,57 +19,58 @@ class SparsePCA(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    n_components: int,
+    n_components : int,
         Number of sparse atoms to extract.
 
-    alpha: float,
+    alpha : float,
         Sparsity controlling parameter. Higher values lead to sparser
         components.
 
-    ridge_alpha: float,
+    ridge_alpha : float,
         Amount of ridge shrinkage to apply in order to improve
         conditioning when calling the transform method.
 
-    max_iter: int,
+    max_iter : int,
         Maximum number of iterations to perform.
 
-    tol: float,
+    tol : float,
         Tolerance for the stopping condition.
 
-    method: {'lars', 'cd'}
+    method : {'lars', 'cd'}
         lars: uses the least angle regression method to solve the lasso problem
         (linear_model.lars_path)
         cd: uses the coordinate descent method to compute the
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
 
-    n_jobs: int,
+    n_jobs : int,
         Number of parallel jobs to run.
 
-    U_init: array of shape (n_samples, n_atoms),
+    U_init : array of shape (n_samples, n_atoms),
         Initial values for the loadings for warm restart scenarios.
 
-    V_init: array of shape (n_atoms, n_features),
+    V_init : array of shape (n_atoms, n_features),
         Initial values for the components for warm restart scenarios.
 
-    verbose:
+    verbose :
         Degree of verbosity of the printed output.
 
-    random_state: int or RandomState
+    random_state : int or RandomState
         Pseudo number generator state used for random sampling.
 
     Attributes
     ----------
-    components_: array, [n_components, n_features]
+    `components_` : array, [n_components, n_features]
         Sparse components extracted from the data.
 
-    error_: array
+    `error_` : array
         Vector of errors at each iteration.
 
     See also
     --------
     PCA
-
+    MiniBatchSparsePCA
+    DictionaryLearning
     """
     def __init__(self, n_components, alpha=1, ridge_alpha=0.01, max_iter=1000,
                  tol=1e-8, method='lars', n_jobs=1, U_init=None,
@@ -156,45 +157,58 @@ class MiniBatchSparsePCA(SparsePCA):
 
     Parameters
     ----------
-    n_components: int,
+    n_components : int,
         number of sparse atoms to extract
 
-    alpha: int,
+    alpha : int,
         Sparsity controlling parameter. Higher values lead to sparser
         components.
 
-    ridge_alpha: float,
+    ridge_alpha : float,
         Amount of ridge shrinkage to apply in order to improve
         conditioning when calling the transform method.
 
-    n_iter: int,
+    n_iter : int,
         number of iterations to perform for each mini batch
 
-    callback: callable,
+    callback : callable,
         callable that gets invoked every five iterations
 
-    chunk_size: int,
+    chunk_size : int,
         the number of features to take in each mini batch
 
-    verbose:
+    verbose :
         degree of output the procedure will print
 
-    shuffle: boolean,
+    shuffle : boolean,
         whether to shuffle the data before splitting it in batches
 
-    n_jobs: int,
+    n_jobs : int,
         number of parallel jobs to run, or -1 to autodetect.
 
-    method: {'lars', 'cd'}
+    method : {'lars', 'cd'}
         lars: uses the least angle regression method to solve the lasso problem
         (linear_model.lars_path)
         cd: uses the coordinate descent method to compute the
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
 
-    random_state: int or RandomState
+    random_state : int or RandomState
         Pseudo number generator state used for random sampling.
 
+    Attributes
+    ----------
+    `components_` : array, [n_components, n_features]
+        Sparse components extracted from the data.
+
+    `error_` : array
+        Vector of errors at each iteration.
+
+    See also
+    --------
+    PCA
+    SparsePCA
+    DictionaryLearning
     """
     def __init__(self, n_components, alpha=1, ridge_alpha=0.01, n_iter=100,
                  callback=None, chunk_size=3, verbose=False, shuffle=True,

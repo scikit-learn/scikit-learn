@@ -5,9 +5,10 @@ TODO: remove hard coded numerical results when possible
 """
 
 import numpy as np
+from scipy import linalg
 from numpy.testing import assert_array_equal, assert_array_almost_equal, \
                           assert_almost_equal
-from nose.tools import assert_raises
+from nose.tools import assert_raises, assert_true
 
 from sklearn import svm, linear_model, datasets, metrics
 from sklearn.datasets.samples_generator import make_classification
@@ -57,7 +58,7 @@ def test_libsvm_iris():
 
     model = svm.libsvm.fit(iris.data,
             iris.target.astype(np.float64), kernel='linear')
-    pred = svm.libsvm.predict(iris.data, *model, **{'kernel': 'linear'})
+    pred = svm.libsvm.predict(iris.data, *model, kernel='linear')
     assert np.mean(pred == iris.target) > .95
 
     pred = svm.libsvm.cross_validation(iris.data,
@@ -156,8 +157,10 @@ def test_SVR():
 
     diabetes = datasets.load_diabetes()
     for clf in (svm.NuSVR(kernel='linear', nu=.4),
+                svm.NuSVR(kernel='linear', nu=.4, C=10.),
                 svm.SVR(kernel='linear', C=10.),
                 svm.sparse.NuSVR(kernel='linear', nu=.4),
+                svm.sparse.NuSVR(kernel='linear', nu=.4, C=10.),
                 svm.sparse.SVR(kernel='linear', C=10.)):
         clf.fit(diabetes.data, diabetes.target)
         assert clf.score(diabetes.data, diabetes.target) > 0.02
@@ -176,7 +179,7 @@ def test_oneclass():
     assert_array_almost_equal(clf.dual_coef_,
                               [[0.632, 0.233, 0.633, 0.234, 0.632, 0.633]],
                               decimal=3)
-    assert_raises(NotImplementedError, lambda: clf.coef_)
+    assert_raises(ValueError, lambda: clf.coef_)
 
 
 def test_tweak_params():
@@ -230,32 +233,22 @@ def test_decision_function():
     Sanity check, test that decision_function implemented in python
     returns the same as the one in libsvm
 
-    TODO: proabably could be simplified
     """
+    # multi class:
     clf = svm.SVC(kernel='linear').fit(iris.data, iris.target)
 
-    data = iris.data[0]
+    dec = np.dot(iris.data, clf.coef_.T) + clf.intercept_
 
-    sv_start = np.r_[0, np.cumsum(clf.n_support_)]
-    n_class = 3
-
-    kvalue = np.dot(data, clf.support_vectors_.T)
-
-    dec = np.empty(n_class * (n_class - 1) / 2)
-    p = 0
-    for i in range(n_class):
-        for j in range(i + 1, n_class):
-            coef1 = clf.dual_coef_[j - 1]
-            coef2 = clf.dual_coef_[i]
-            idx1 = slice(sv_start[i], sv_start[i + 1])
-            idx2 = slice(sv_start[j], sv_start[j + 1])
-            s = np.dot(coef1[idx1],  kvalue[idx1]) + \
-                np.dot(coef2[idx2], kvalue[idx2]) + \
-                clf.intercept_[p]
-            dec[p] = s
-            p += 1
-
-    assert_array_almost_equal(-dec, np.ravel(clf.decision_function(data)))
+    assert_array_almost_equal(dec, clf.decision_function(iris.data))
+    # binary:
+    X = [[2, 1],
+         [3, 1],
+         [1, 3],
+         [2, 3]]
+    y = [0, 0, 1, 1]
+    clf.fit(X, y)
+    dec = np.dot(X, clf.coef_.T) + clf.intercept_
+    assert_array_almost_equal(dec, clf.decision_function(X))
 
 
 def test_weight():
@@ -329,8 +322,7 @@ def test_bad_input():
     assert_raises(ValueError, clf.fit, X, Y2)
 
     # Test with arrays that are non-contiguous.
-    for clf in (svm.SVC(), svm.LinearSVC(), svm.sparse.SVC(),
-                svm.sparse.LinearSVC()):
+    for clf in (svm.SVC(), svm.LinearSVC(), svm.sparse.SVC()):
         Xf = np.asfortranarray(X)
         assert Xf.flags['C_CONTIGUOUS'] == False
         yf = np.ascontiguousarray(np.tile(Y, (2, 1)).T)
@@ -480,6 +472,95 @@ def test_liblinear_predict():
     bias = clf.intercept_
     H = np.dot(X, weights) + bias
     assert_array_equal(clf.predict(X), (H > 0).astype(int))
+
+
+def test_liblinear_set_coef():
+    # multi-class case
+    clf = svm.LinearSVC().fit(iris.data, iris.target)
+    values = clf.decision_function(iris.data)
+    clf.coef_ = clf.coef_.copy()
+    clf.intercept_ = clf.intercept_.copy()
+    values2 = clf.decision_function(iris.data)
+    assert_array_equal(values, values2)
+
+    # binary-class case
+    X = [[2, 1],
+         [3, 1],
+         [1, 3],
+         [2, 3]]
+    y = [0, 0, 1, 1]
+
+    clf = svm.LinearSVC().fit(X, y)
+    values = clf.decision_function(X)
+    clf.coef_ = clf.coef_.copy()
+    clf.intercept_ = clf.intercept_.copy()
+    values2 = clf.decision_function(X)
+    assert_array_equal(values, values2)
+
+
+def test_c_samples_scaling():
+    """Test C scaling by n_samples
+    """
+    X = iris.data[iris.target != 2]
+    y = iris.target[iris.target != 2]
+    X2 = np.r_[X, X]
+    y2 = np.r_[y, y]
+
+    clfs = [svm.SVC(tol=1e-6, kernel='linear', C=0.1),
+            svm.SVR(tol=1e-6, kernel='linear', C=100),
+            svm.LinearSVC(tol=1e-6, C=0.1),
+            linear_model.LogisticRegression(penalty='l1', tol=1e-6, C=100),
+            linear_model.LogisticRegression(penalty='l2', tol=1e-6),
+            svm.NuSVR(tol=1e-6, kernel='linear')]
+
+    for clf in clfs:
+        clf.set_params(scale_C=False)
+        coef_ = clf.fit(X, y).coef_
+        coef2_ = clf.fit(X2, y2).coef_
+        error_no_scale = linalg.norm(coef2_ - coef_) / linalg.norm(coef_)
+        assert_true(error_no_scale > 1e-3)
+
+        clf.set_params(scale_C=True)
+        coef_ = clf.fit(X, y).coef_
+        coef2_ = clf.fit(X2, y2).coef_
+        error_with_scale = linalg.norm(coef2_ - coef_) / linalg.norm(coef_)
+        assert_true(error_with_scale < 1e-5)
+
+
+def test_nu_svc_samples_scaling():
+    """Test NuSVC scaling by n_samples
+    """
+    X = iris.data[iris.target != 2]
+    y = iris.target[iris.target != 2]
+    X2 = np.r_[X, X]
+    y2 = np.r_[y, y]
+
+    clfs = [svm.NuSVC(tol=1e-6, kernel='linear')]
+
+    for clf in clfs:
+        coef_ = clf.fit(X, y).coef_
+        coef2_ = clf.fit(X2, y2).coef_
+        error_with_scale = linalg.norm(coef2_ - coef_) / linalg.norm(coef_)
+        assert_true(error_with_scale < 1e-5)
+
+
+def test_immutable_coef_property():
+    """Check that primal coef modification are not silently ignored"""
+    svms = [
+        svm.SVC(kernel='linear').fit(iris.data, iris.target),
+        svm.NuSVC(kernel='linear').fit(iris.data, iris.target),
+        svm.SVR(kernel='linear').fit(iris.data, iris.target),
+        svm.NuSVR(kernel='linear').fit(iris.data, iris.target),
+        svm.OneClassSVM(kernel='linear').fit(iris.data),
+        svm.sparse.SVC(kernel='linear').fit(iris.data, iris.target),
+        svm.sparse.NuSVC(kernel='linear').fit(iris.data, iris.target),
+        svm.sparse.SVR(kernel='linear').fit(iris.data, iris.target),
+        svm.sparse.NuSVR(kernel='linear').fit(iris.data, iris.target),
+    ]
+    for clf in svms:
+        assert_raises(AttributeError, clf.__setattr__, 'coef_', np.arange(3))
+        assert_raises(RuntimeError, clf.coef_.__setitem__, (0, 0), 0)
+
 
 if __name__ == '__main__':
     import nose

@@ -1,4 +1,3 @@
-
 .. _linear_model:
 
 =========================
@@ -12,10 +11,10 @@ the target value is expected to be a linear combination of the input
 variables. In mathematical notion, if :math:`\hat{y}` is the predicted
 value.
 
-.. math::    \hat{y}(w, x) = w_0 + w_1 x_1 + ... + w_n x_n
+.. math::    \hat{y}(w, x) = w_0 + w_1 x_1 + ... + w_p x_p
 
 Across the module, we designate the vector :math:`w = (w_1,
-..., w_n)` as ``coef_`` and :math:`w_0` as ``intercept_``.
+..., w_p)` as ``coef_`` and :math:`w_0` as ``intercept_``.
 
 To perform classification with generalized linear models, see
 :ref:`Logistic_regression`.
@@ -27,9 +26,12 @@ Ordinary Least Squares
 =======================
 
 :class:`LinearRegression` fits a linear model with coefficients
-:math:`\beta = (\beta_1, ..., \beta_D)` to minimize the residual sum
+:math:`w = (w_1, ..., w_p)` to minimize the residual sum
 of squares between the observed responses in the dataset, and the
-responses predicted by the linear approximation.
+responses predicted by the linear approximation. Mathematically it
+solves a problem of the form:
+
+.. math:: \underset{w}{min\,} {|| X w - y||_2}^2
 
 .. figure:: ../auto_examples/linear_model/images/plot_ols_1.png
    :target: ../auto_examples/linear_model/plot_ols.html
@@ -50,7 +52,7 @@ and will store the coefficients :math:`w` of the linear model in its
 However, coefficient estimates for Ordinary Least Squares rely on the
 independence of the model terms. When terms are correlated and the
 columns of the design matrix :math:`X` have an approximate linear
-dependence, the matrix :math:`X(X^T X)^{-1}` becomes close to singular
+dependence, the design matrix becomes close to singular
 and as a result, the least-squares estimate becomes highly sensitive
 to random errors in the observed response, producing a large
 variance. This situation of *multicollinearity* can arise, for
@@ -65,7 +67,7 @@ Ordinary Least Squares Complexity
 ---------------------------------
 
 This method computes the least squares solution using a singular value
-decomposition of X. If X is a matrix of size (n, p ) this method has a
+decomposition of X. If X is a matrix of size (n, p) this method has a
 cost of :math:`O(n p^2)`, assuming that :math:`n \geq p`.
 
 
@@ -80,7 +82,7 @@ of squares,
 
 .. math::
 
-   \underset{w}{min} {{|| X w - y||_2}^2 + \alpha {||w||_2}^2}
+   \underset{w}{min\,} {{|| X w - y||_2}^2 + \alpha {||w||_2}^2}
 
 
 Here, :math:`\alpha \geq 0` is a complexity parameter that controls the amount
@@ -110,6 +112,7 @@ its `coef\_` member::
 .. topic:: Examples:
 
    * :ref:`example_linear_model_plot_ridge_path.py`
+   * :ref:`example_document_classification_20newsgroups.py`
 
 
 Ridge Complexity
@@ -124,8 +127,8 @@ This method has the same order of complexity than an
 .. between these
 
 
-Setting alpha: generalized Cross-Validation
----------------------------------------------
+Setting the regularization parameter: generalized Cross-Validation
+------------------------------------------------------------------
 
 :class:`RidgeCV` implements ridge regression with built-in
 cross-validation of the alpha parameter.  The object works in the same way
@@ -158,16 +161,19 @@ It is useful in some contexts due to its tendency to prefer solutions
 with fewer parameter values, effectively reducing the number of variables
 upon which the given solution is dependent. For this reason, the Lasso
 and its variants are fundamental to the field of compressed sensing.
+Under certain conditions, it can recover the exact set of non-zero
+weights (see
+:ref:`example_applications_plot_tomography_l1_reconstruction.py`).
 
-Mathematically, it consists of a linear model trained with L1 prior as
-regularizer. The objective function to minimize is:
+Mathematically, it consists of a linear model trained with :math:`\ell_1` prior
+as regularizer. The objective function to minimize is:
 
-.. math::  0.5 * ||X w - y||_2 ^ 2 + \alpha * ||w||_1
+.. math::  \underset{w}{min\,} { \frac{1}{2n_{samples}} ||X w - y||_2 ^ 2 + \alpha ||w||_1}
 
 The lasso estimate thus solves the minimization of the
-least-squares penalty with :math:`\alpha * ||w||_1` added, where
-:math:`\alpha` is a constant and :math:`||w||_1` is the L1-norm of the
-parameter vector.
+least-squares penalty with :math:`\alpha ||w||_1` added, where
+:math:`\alpha` is a constant and :math:`||w||_1` is the :math:`\ell_1`-norm of
+the parameter vector.
 
 The implementation in the class :class:`Lasso` uses coordinate descent as
 the algorithm to fit the coefficients. See :ref:`least_angle_regression`
@@ -176,7 +182,7 @@ for another implementation::
     >>> clf = linear_model.Lasso(alpha = 0.1)
     >>> clf.fit([[0, 0], [1, 1]], [0, 1])
     Lasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
-       normalize=False, precompute='auto', tol=0.0001)
+       normalize=False, precompute='auto', tol=0.0001, warm_start=False)
     >>> clf.predict([[1, 1]])
     array([ 0.8])
 
@@ -185,10 +191,11 @@ computes the coefficients along the full path of possible values.
 
 .. topic:: Examples:
 
-  * :ref:`example_linear_model_lasso_and_elasticnet.py`,
+  * :ref:`example_linear_model_lasso_and_elasticnet.py`
+  * :ref:`example_applications_plot_tomography_l1_reconstruction.py`
 
-Setting `alpha`
------------------
+Setting regularization parameter
+--------------------------------
 
 The `alpha` parameter control the degree of sparsity of the coefficients
 estimated.
@@ -196,7 +203,7 @@ estimated.
 Using cross-validation
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-The scikit exposes objects that set the Lasso `alpha` parameter by
+scikit-learn exposes objects that set the Lasso `alpha` parameter by
 cross-validation: :class:`LassoCV` and :class:`LassoLarsCV`.
 :class:`LassoLarsCV` is based on the :ref:`least_angle_regression` algorithm
 explained below.
@@ -250,7 +257,10 @@ regularizer.
 
 The objective function to minimize is in this case
 
-.. math::        0.5 * ||X w - y||_2 ^ 2 + \alpha * \rho * ||w||_1 + \alpha * (1-\rho) * 0.5 * ||w||_2 ^ 2
+.. math::
+
+    \underset{w}{min\,} { \frac{1}{2n_{samples}} ||X w - y||_2 ^ 2 + \alpha \rho ||w||_1 +
+    \frac{\alpha(1-\rho)}{2} ||w||_2 ^ 2}
 
 
 .. figure:: ../auto_examples/linear_model/images/plot_lasso_coordinate_descent_path_1.png
@@ -369,12 +379,14 @@ Being a forward feature selection method like :ref:`least_angle_regression`,
 orthogonal matching pursuit can approximate the optimum solution vector with a
 fixed number of non-zero elements:
 
-.. math:: \text{arg\,min} ||y - X\gamma||_2^2 \text{ subject to } ||\gamma||_0 \leq n_{nonzero_coefs}
+.. math:: \text{arg\,min\,} ||y - X\gamma||_2^2 \text{ subject to } \
+    ||\gamma||_0 \leq n_{nonzero_coefs}
 
 Alternatively, orthogonal matching pursuit can target a specific error instead
 of a specific number of non-zero coefficients. This can be expressed as:
 
-.. math:: \text{arg\,min} ||\gamma||_0 \text{ subject to } ||y-X\gamma||_2^2 \leq \text{tol}
+.. math:: \text{arg\,min\,} ||\gamma||_0 \text{ subject to } ||y-X\gamma||_2^2 \
+    \leq \text{tol}
 
 
 OMP is based on a greedy algorithm that includes at each step the atom most
@@ -390,7 +402,7 @@ previously chosen dictionary elements.
 
 .. topic:: References:
 
- * http://www.cs.technion.ac.il/~ronrubin/Publications/KSVX-OMP-v2.pdf
+ * http://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
 
  * `Matching pursuits with time-frequency dictionaries
    <http://blanche.polytechnique.fr/~mallat/papiers/MallatPursuit93.pdf>`_,
@@ -403,9 +415,22 @@ Bayesian regression techniques can be used to include regularization
 parameters in the estimation procedure: the regularization parameter is
 not set in a hard sense but tuned to the data at hand.
 
-This can be done by introducing some prior knowledge over the parameters.
-For example, penalization by weighted :math:`\ell_{2}` norm is equivalent
-to setting Gaussian priors on the weights.
+This can be done by introducing `uninformative priors
+<http://en.wikipedia.org/wiki/Non-informative_prior#Uninformative_priors>`__
+over the hyper parameters of the model.
+The :math:`\ell_{2}` regularization used in `Ridge Regression`_ is equivalent
+to finding a maximum a-postiori solution under a Gaussian prior over the
+parameters :math:`w` with precision :math:`\lambda^-1`.  Instead of setting
+`\lambda` manually, it is possible to treat it as a random variable to be
+estimated from the data.
+
+To obtain a fully probabilistic model, the output :math:`y` is assumed
+to be Gaussian distributed around :math:`X w`:
+
+.. math::  p(y|X,w,\alpha) = \mathcal{N}(y|X w,\alpha)
+
+Alpha is again treated as a random variable that is to be estimated from the
+data.
 
 The advantages of Bayesian Regression are:
 
@@ -419,43 +444,45 @@ The disadvantages of Bayesian regression include:
     - Inference of the model can be time consuming.
 
 
+.. topic:: References
+
+ * A good introduction to Bayesian methods is given in C. Bishop: Pattern
+   Recognition and Machine learning
+
+ * Original Algorithm is detailed in the  book `Bayesian learning for neural
+   networks` by Radford M. Neal
+
+.. _bayesian_ridge_regression:
+
 Bayesian Ridge Regression
 -------------------------
 
-:class:`BayesianRidge` tries to avoid the overfit issue of
-:ref:`ordinary_least_squares`, by adding the following prior on
-:math:`\beta`:
+:class:`BayesianRidge` estimates a probabilistic model of the
+regression problem as described above.
+The prior for the parameter :math:`w` is given by a spherical Gaussian:
 
-.. math:: p(\beta|\lambda) =
-    \mathcal{N}(\beta|0,\lambda^{-1}\bold{I_{p}})
+.. math:: p(w|\lambda) =
+    \mathcal{N}(w|0,\lambda^{-1}\bold{I_{p}})
 
-The resulting model is called *Bayesian Ridge Regression*, it is
-similar to the classical :class:`Ridge`.  :math:`\lambda` is a
-*hyper-parameter* and the prior over :math:`\beta` performs a
-shrinkage or regularization, by constraining the values of the weights
-to be small. Indeed, with a large value of :math:`\lambda`, the
-Gaussian is narrowed around 0 which does not allow large values of
-:math:`\beta`, and with low value of :math:`\lambda`, the Gaussian is
-very flattened which allows values of :math:`\beta`.  Here, we use a
-*non-informative* prior for :math:`\lambda`.
-The parameters are estimated by maximizing the *marginal log likelihood*.
-There is also a Gamma prior for :math:`\lambda` and :math:`\alpha`:
+The priors over :math:`\alpha` and :math:`\lambda` are choosen to be `gamma
+distributions <http://en.wikipedia.org/wiki/Gamma_distribution>`__, the
+conjugate prior for the precision of the Gaussian.
 
-.. math:: g(\alpha|\alpha_1,\alpha_2) = \frac{\alpha_2^{\alpha_1}}
-    {\Gamma(\alpha_1)} \alpha^{\alpha_1-1} e^{-\alpha_2 {\alpha}}
+The resulting model is called *Bayesian Ridge Regression*, and is similar to the
+classical :class:`Ridge`.  The parameters :math:`w`, :math:`\alpha` and
+:math:`\lambda` are estimated jointly during the fit of the model.  The
+remaining hyperparameters are the parameters of the gamma priors over
+:math:`\alpha` and :math:`\lambda`.  These are usually choosen to be
+*non-informative*.  The parameters are estimated by maximizing the *marginal
+log likelihood*.
 
-
-.. math:: g(\lambda|\lambda_1,\lambda_2) = \frac{\lambda_2^{\lambda_1}}
-    {\Gamma(\lambda_1)} \lambda^{\lambda_1-1} e^{-\lambda_2 {\lambda}}
-
-By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e^{-6}`,
-*i.e.* very slightly informative priors.
-
+By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e^{-6}`.
 
 
 .. figure:: ../auto_examples/linear_model/images/plot_bayesian_ridge_1.png
    :target: ../auto_examples/linear_model/plot_bayesian_ridge.html
    :align: center
+   :scale: 50%
 
 
 Bayesian Ridge Regression is used for regression::
@@ -475,14 +502,14 @@ After being fitted, the model can then be used to predict new values::
     array([ 0.50000013])
 
 
-The weights :math:`\beta` of the model can be access::
+The weights :math:`w` of the model can be access::
 
     >>> clf.coef_
     array([ 0.49999993,  0.49999993])
 
 Due to the Bayesian framework, the weights found are slightly different to the
-ones found by :ref:`ordinary_least_squares`. However, Bayesian Ridge
-Regression is more robust to ill-posed problem.
+ones found by :ref:`ordinary_least_squares`. However, Bayesian Ridge Regression
+is more robust to ill-posed problem.
 
 .. topic:: Examples:
 
@@ -490,91 +517,55 @@ Regression is more robust to ill-posed problem.
 
 .. topic:: References
 
-  * More details can be found in the article `Bayesian Interpolation <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.27.9072&rep=rep1&type=pdf>`_
+  * More details can be found in the article `Bayesian Interpolation
+    <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.27.9072&rep=rep1&type=pdf>`_
     by MacKay, David J. C.
 
 
 
 Automatic Relevance Determination - ARD
-=======================================
+---------------------------------------
 
-:class:`ARDRegression` adds a more sophisticated prior :math:`\beta`,
-where we assume that each weight :math:`\beta_{i}` is drawn in a
-Gaussian distribution, centered on zero and with a precision
-:math:`\lambda_{i}`:
+:class:`ARDRegression` is very similar to `Bayesian Ridge Regression`_,
+but can lead to sparser weights :math:`w` [1]_.
+:class:`ARDRegression` poses a different prior over :math:`w`, by dropping the
+assuption of the Gaussian being spherical.
 
-.. math:: p(\beta|\lambda) = \mathcal{N}(\beta|0,A^{-1})
+Instead, the distribution over :math:`w` is assumed to be an axis-parallel,
+elliptical Gaussian distribution.
+
+This means each weight :math:`w_{i}` is drawn from a Gaussian distribution,
+centered on zero and with a precision :math:`\lambda_{i}`:
+
+.. math:: p(w|\lambda) = \mathcal{N}(w|0,A^{-1})
 
 with :math:`diag \; (A) = \lambda = \{\lambda_{1},...,\lambda_{p}\}`.
-There is also a Gamma prior for :math:`\lambda` and :math:`\alpha`:
 
-.. math:: g(\alpha|\alpha_1,\alpha_2) = \frac{\alpha_2^{\alpha_1}}
-    {\Gamma(\alpha_1)} \alpha^{\alpha_1-1} e^{-\alpha_2 {\alpha}}
-
-
-.. math:: g(\lambda|\lambda_1,\lambda_2) = \frac{\lambda_2^{\lambda_1}}
-    {\Gamma(\lambda_1)} \lambda^{\lambda_1-1} e^{-\lambda_2 {\lambda}}
-
-By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e-6`, *i.e.*
- very slightly informative priors.
-
+In constrast to `Bayesian Ridge Regression`_, each coordinate of :math:`w_{i}`
+has its own standard deviation :math:`\lambda_i`. The prior over all
+:math:`\lambda_i` is choosen to be the same gamma distribution given by
+hyperparameters :math:`\lambda_1` and :math:`\lambda_2`.
 
 .. figure:: ../auto_examples/linear_model/images/plot_ard_1.png
    :target: ../auto_examples/linear_model/plot_ard.html
    :align: center
+   :scale: 50%
 
 
 .. topic:: Examples:
 
   * :ref:`example_linear_model_plot_ard.py`
 
-Mathematical formulation
-------------------------
+.. topic:: References:
 
-A prior is introduced as a distribution :math:`p(\theta)` over the parameters.
-This distribution is set before processing the data. The parameters of a prior
-distribution are called *hyper-parameters*. This description is based on the
-Bayes theorem :
-
-.. math:: p(\theta|\{X,y\})
-   = \frac{p(\{X,y\}|\theta)p(\theta)}{p(\{X,y\})}
-
-With :
-    - :math:`p({X, y}|\theta)` the likelihood : it expresses how probable it is
-      to observe :math:`{X,y}` given :math:`\theta`.
-
-    - :math:`p({X, y})` the marginal probability of the data : it can be
-      considered as a normalizing constant, and is computed by integrating
-      :math:`p({X, y}|\theta)` with respect to :math:`\theta`.
-
-    - :math:`p(\theta)` the prior over the parameters : it expresses the
-      knowledge that we can have about :math:`\theta` before processing the
-      data.
-
-    - :math:`p(\theta|{X, y})` the conditional probability (or posterior
-      probability) : it expresses the uncertainty in :math:`\theta`  after
-      observing the data.
-
-
-All the following regressions are based on the following Gaussian
-assumption:
-
-.. math::  p(y|X,w,\alpha) = \mathcal{N}(y|X w,\alpha)
-
-where :math:`\alpha` is the precision of the noise.
-
-
-.. topic:: References
-
- * Original Algorithm is detailed in the  book *Bayesian learning for neural
-   networks* by Radford M. Neal
+    .. [1] David Wipf and Srikantan Nagarajan: `A new view of automatic relevance determination. <http://books.nips.cc/papers/files/nips20/NIPS2007_0976.pdf>`_
 
 .. _Logistic_regression:
 
 Logisitic regression
 ======================
 
-If the task at hand is to do choose which class a sample belongs to given
+If the task at hand is to choose which class a sample belongs to given
 a finite (hopefuly small) set of choices, the learning problem is a
 classification, rather than regression. Linear models can be used for
 such a decision, but it is best to use what is called a
@@ -590,7 +581,7 @@ zero) model.
 
 .. topic:: Examples:
 
-  * :ref:`example_logistic_l1_l2_coef.py`
+  * :ref:`example_linear_model_logistic_l1_l2_sparsity.py`
 
   * :ref:`example_linear_model_plot_logistic_path.py`
 

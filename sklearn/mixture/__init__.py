@@ -1,5 +1,5 @@
 """
-Mixture modeling algorithms
+The :mod:`sklearn.mixture` module implements mixture modeling algorithms.
 """
 
 from .gmm import normalize, sample_gaussian, lmvnpdf
