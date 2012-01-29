@@ -76,3 +76,6 @@ References
 ==========
 [1] Yoshua Bengio, Olivier Delalleau, Nicolas Le Roux. In Semi-Supervised
 Learning (2006), pp. 193-216
+
+[2] Olivier Delalleau, Yoshua Bengio, Nicolas Le Roux. Efficient
+Non-Parametric Function Induction in Semi-Supervised Learning. AISTAT 2005
