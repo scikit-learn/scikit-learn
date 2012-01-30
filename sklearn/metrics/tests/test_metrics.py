@@ -299,13 +299,18 @@ avg / total       0.62      0.61      0.56        75
     assert_equal(report, expected_report)
 
 
-def _test_precision_recall_curve():
+def test_precision_recall_curve():
     """Test Precision-Recall and aread under PR curve"""
     y_true, _, probas_pred = make_prediction(binary=True)
 
     p, r, thresholds = precision_recall_curve(y_true, probas_pred)
     precision_recall_auc = auc(r, p)
     assert_array_almost_equal(precision_recall_auc, 0.82, 2)
+    # Smoke test in the case of proba having only one value
+    p, r, thresholds = precision_recall_curve(y_true,
+                                              np.zeros_like(probas_pred))
+    precision_recall_auc = auc(r, p)
+    assert_array_almost_equal(precision_recall_auc, 0.75, 3)
 
 
 def test_losses():

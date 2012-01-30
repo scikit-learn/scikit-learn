@@ -760,8 +760,8 @@ def precision_recall_curve(y_true, probas_pred):
     for i, t in enumerate(thresholds):
         y_pred = (probas_pred >= t).astype(np.int)
         p, r, _, _ = precision_recall_fscore_support(y_true, y_pred)
-        precision[i] = p[1]
-        recall[i] = r[1]
+        precision[i] = p
+        recall[i] = r
     precision[-1] = 1.0
     recall[-1] = 0.0
     return precision, recall, thresholds
