@@ -257,6 +257,8 @@ def k_means(X, k, init='k-means++', precompute_distances=True,
 
     best_labels, best_inertia, best_centers = None, None, None
     if n_jobs == 1:
+        # For a single thread, less memory is needed if we just store one set
+        # of the best results (as opposed to one set per run per thread).
         for it in range(n_init):
             # run a k-means once
             labels, inertia, centers = _kmeans_single(
@@ -270,18 +272,22 @@ def k_means(X, k, init='k-means++', precompute_distances=True,
                 best_inertia = inertia
     else:
         # parallelisation of k-means runs
-        if n_jobs < 0:
-            n_jobs = max(cpu_count() + 1 + n_jobs, 1)
+        seed_max = np.iinfo(np.int).max
+        seed = random_state.randint(seed_max)
         results = Parallel(n_jobs=n_jobs, verbose=0)(
             delayed(_kmeans_single)(X, k, max_iter=max_iter, init=init,
                                     verbose=verbose, tol=tol,
                                     precompute_distances=precompute_distances,
                                     x_squared_norms=x_squared_norms,
-                                    random_state=random_state)
+                                    # Change seed to ensure variety
+                                    random_state=np.random.RandomState(seed+i))
             for i in range(n_init))
         # Get results with the lowest inertia
-        best_results = sorted(results, key=operator.itemgetter(1))[0]
-        best_labels, best_inertia, best_centers = best_results
+        labels, inertia, centers = zip(*results)
+        best = np.argmin(inertia)
+        best_labels = labels[best]
+        best_inertia = inertia[best]
+        best_centers = centers[best]
     if not sp.issparse(X):
         if not copy_x:
             X += X_mean
@@ -294,6 +300,9 @@ def _kmeans_single(X, k, max_iter=300, init='k-means++', verbose=False,
                    x_squared_norms=None, random_state=None, tol=1e-4,
                    precompute_distances=True):
     """A single run of k-means, assumes preparation completed prior.
+
+    Parameters
+    ----------
     X: array-like of floats, shape (n_samples, n_features)
         The observations to cluster.
 
