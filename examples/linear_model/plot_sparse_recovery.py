@@ -1,45 +1,42 @@
 """
-==============================================
-Randomized Lasso: feature selection with Lasso
-==============================================
-
-Performs feature scoring and selection using a :ref:`randomized sparse
-linear model <randomized_l1>` (Lasso).
+============================================================
+Sparse recovery: feature selection for sparse linear models
+============================================================
 
 Given a small number of observations, we want to recover which features
-of X are relevant to explain y. For this we use the Lasso and randomized
-Lasso, which can outperform standard statistical tests if the true model
-is sparse, i.e. if a small fraction of the features are relevant.
-
-In the first figure, we vary the alpha parameter setting the sparsity of
-the model and look at the stability score of the randomized Lasso as a
-function of it. This analysis, knowing the ground truth, shows an optimal
-regime in which relevant features stand out from the irrelevant ones. If
-alpha is chosen too small, non-relevant variables enter the model. On the
-opposite, if alpha is selected too large, the Lasso is equivalent to
-stepwise regression, and thus brings no advantage over a univariate
-F-test.
-
-In a second time, we set alpha and compare the performance of different
-feature selection methods, with use the area under curve (AUC) of the
-precision-recall.
+of X are relevant to explain y. For this :ref:`sparse linear models
+<l1_feature_selection>` can outperform standard statistical tests if the
+true model is sparse, i.e. if a small fraction of the features are
+relevant.
 
 As detailed in :ref:`the compressive sensing notes
 <compressive_sensing>`, the ability of L1-based approach to identify the
 relevant variables depends on the sparsity of the ground truth, the
 number of samples, the number of features, the conditionning of the
 design matrix on the signal subspace, the amount of noise, and the
-absolute value of the smallest non-zero coefficient [Wainwright2006].
+absolute value of the smallest non-zero coefficient [Wainwright2006]
+(http://statistics.berkeley.edu/tech-reports/709.pdf).
 
 Here we keep all parameters constant and vary the conditionning of the
-design matrix. For a well-conditionned design matrix (mutual incoherence
-close to one) we are exactly in compressive sensing conditions (i.i.d
+design matrix. For a well-conditionned design matrix (small mutual
+incoherence) we are exactly in compressive sensing conditions (i.i.d
 Gaussian sensing matrix), and L1-recovery with the Lasso performs very
-well. For an ill-conditionned matrix, regressors are very correlated, and
-the Lasso randomly selects one. However, randomized-Lasso can recover the
-ground truth well.
+well. For an ill-conditionned matrix (high mutual incoherence),
+regressors are very correlated, and the Lasso randomly selects one.
+However, randomized-Lasso can recover the ground truth well.
 
-[Wainwright2006] http://statistics.berkeley.edu/tech-reports/709.pdf
+In each situation, we first vary the alpha parameter setting the sparsity
+of the estimated model and look at the stability scores of the randomized
+Lasso. This analysis, knowing the ground truth, shows an optimal regime
+in which relevant features stand out from the irrelevant ones. If alpha
+is chosen too small, non-relevant variables enter the model. On the
+opposite, if alpha is selected too large, the Lasso is equivalent to
+stepwise regression, and thus brings no advantage over a univariate
+F-test.
+
+In a second time, we set alpha and compare the performance of different
+feature selection methods, using the area under curve (AUC) of the
+precision-recall.
 """
 print __doc__
 
@@ -52,11 +49,12 @@ from sklearn.linear_model import RandomizedLasso, lasso_stability_path, \
 from sklearn.feature_selection import f_regression
 from sklearn.preprocessing import Scaler
 from sklearn.metrics import auc, precision_recall_curve
+from sklearn.ensemble import ExtraTreesRegressor
 
 
 def mutual_incoherence(X_relevant, X_irelevant):
-    """ Mutual incoherence, as defined by formula (26a) of
-        [Wainwright2006].
+    """Mutual incoherence, as defined by formula (26a) of
+       [Wainwright2006].
     """
     projector = np.dot(
                     np.dot(X_irelevant.T, X_relevant),
@@ -93,9 +91,9 @@ for conditionning in (1, 1e-4):
     # Our design
     X = rng.normal(size=(n_samples, n_features))
     X = np.dot(X, corr)
+    # Keep [Wainwright2006] (26c) constant
     X[:n_relevant_features] /= np.abs(
             linalg.svdvals(X[:n_relevant_features])).max()
-    # Keep [Wainwright2006] (26c] constant
     X = Scaler().fit_transform(X.copy())
 
     # The output variable
@@ -122,7 +120,7 @@ for conditionning in (1, 1e-4):
     ymin, ymax = pl.ylim()
     pl.xlabel(r'$(\alpha / \alpha_{max})^{1/3}$')
     pl.ylabel('Stability score: proportion of times selected')
-    pl.title('Stability Scores Path, mutual incoherence: %.1e' % mi)
+    pl.title('Stability Scores Path - Mutual incoherence: %.1f' % mi)
     pl.axis('tight')
     pl.legend((hg[0], hb[0]), ('relevant features', 'irrelevant features'),
               loc='best')
@@ -139,13 +137,16 @@ for conditionning in (1, 1e-4):
     # the model
     alphas = np.linspace(lars_cv.alphas_[0], .1 * lars_cv.alphas_[0], 6)
     clf = RandomizedLasso(alpha=alphas, random_state=42).fit(X, y)
+    trees = ExtraTreesRegressor(100, compute_importances=True).fit(X, y)
     # Compare with F-score
     F, _ = f_regression(X, y)
 
     pl.figure()
     for name, score in [('F-test', F),
                 ('Stability selection', clf.scores_),
-                ('Lasso coefs', np.abs(lars_cv.coef_))]:
+                ('Lasso coefs', np.abs(lars_cv.coef_)),
+                ('Trees', trees.feature_importances_),
+                ]:
         precision, recall, thresholds = precision_recall_curve(coef != 0,
                                                                score)
         pl.semilogy(np.maximum(score / np.max(score), 1e-4),
@@ -158,7 +159,7 @@ for conditionning in (1, 1e-4):
     # Plot only the 100 first coefficients
     pl.xlim(0, 100)
     pl.legend(loc='best')
-    pl.title('Feature selection scores, mutual incoherence: %.1e'
+    pl.title('Feature selection scores - Mutual incoherence: %.1f'
              % mi)
 
 pl.show()
