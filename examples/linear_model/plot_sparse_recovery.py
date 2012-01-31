@@ -53,8 +53,7 @@ from sklearn.ensemble import ExtraTreesRegressor
 
 
 def mutual_incoherence(X_relevant, X_irelevant):
-    """Mutual incoherence, as defined by formula (26a) of
-       [Wainwright2006].
+    """Mutual incoherence, as defined by formula (26a) of [Wainwright2006].
     """
     projector = np.dot(
                     np.dot(X_irelevant.T, X_relevant),
