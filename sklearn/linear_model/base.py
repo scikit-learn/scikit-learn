@@ -190,7 +190,7 @@ class BaseSGD(BaseEstimator):
                  verbose=0, seed=0, learning_rate="optimal", eta0=0.0,
                  power_t=0.5, warm_start=False):
         self.loss = str(loss)
-        self.penalty = str(penalty)
+        self.penalty = str(penalty).lower()
         self._set_loss_function(self.loss)
         self._set_penalty_type(self.penalty)
 
@@ -252,7 +252,7 @@ class BaseSGD(BaseEstimator):
         raise NotImplementedError("BaseSGD is an abstract class.")
 
     def _set_penalty_type(self, penalty):
-        penalty_types = {"l2": 2, "l1": 1, "elasticnet": 3}
+        penalty_types = {"none": 0, "l2": 2, "l1": 1, "elasticnet": 3}
         try:
             self.penalty_type = penalty_types[penalty]
         except KeyError:

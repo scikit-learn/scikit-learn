@@ -18,6 +18,7 @@ cimport sgd_fast
 from sgd_fast cimport LossFunction, log, sqrt, pow
 
 # Penalty constants
+DEF NO_PENALTY = 0
 DEF L1 = 1
 DEF L2 = 2
 DEF ELASTICNET = 3
@@ -142,7 +143,7 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
     # q vector is only used for L1 regularization
     cdef np.ndarray[double, ndim=1, mode="c"] q = None
     cdef double *q_data_ptr = NULL
-    if penalty_type != L2:
+    if penalty_type == L1 or penalty_type == ELASTICNET:
         q = np.zeros((n_features,), dtype=np.float64, order="c")
         q_data_ptr = <double *> q.data
     cdef double u = 0.0
@@ -183,7 +184,7 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
                     offset, xnnz, -update)
                 if fit_intercept == 1:
                     intercept -= update * 0.01
-            if penalty_type != L1:
+            if penalty_type >= L2:
                 wscale *= (1.0 - (rho * eta * alpha))
                 if wscale < 1e-9:
                     w *= wscale
@@ -210,7 +211,9 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
            or np.isnan(intercept) or np.isinf(intercept):
             raise ValueError("floating-point under-/overflow occured.")
 
-    w *= wscale
+    if wscale != 1.0:
+        w *= wscale
+
     return w, intercept
 
 

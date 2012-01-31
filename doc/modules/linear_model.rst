@@ -600,3 +600,19 @@ using different (convex) loss functions and different penalties.
 .. topic:: References
 
  * :ref:`sgd`
+
+Perceptron
+==========
+
+The :class:`Perceptron` is another simple algorithm suitable for large scale
+learning. By default:
+
+    - It does not require a learning rate.
+
+    - It is not regularized (penalized).
+
+    - It updates its model only on mistakes.
+
+The last characteristic implies that the Perceptron is slightly faster to
+train than SGD with the hinge loss and that the resulting models are
+sparser.
