@@ -5,7 +5,7 @@ import numpy as np
 from numpy.testing import assert_equal, assert_raises
 
 from sklearn.linear_model.randomized_l1 import lasso_stability_path, \
-                                        RandomizedLasso, RandomizedLogistic
+        RandomizedLasso, RandomizedLogisticRegression
 from sklearn.datasets import load_diabetes, load_iris
 from sklearn.feature_selection import f_regression, f_classif
 from sklearn.preprocessing import Scaler
@@ -77,12 +77,12 @@ def test_randomized_logistic():
     F, _ = f_classif(X, y)
 
     scaling = 0.3
-    clf = RandomizedLogistic(verbose=False, C=1., random_state=42,
+    clf = RandomizedLogisticRegression(verbose=False, C=1., random_state=42,
                                 scaling=scaling, n_resampling=50, tol=1e-3)
     feature_scores = clf.fit(X, y).scores_
     assert_equal(np.argsort(F), np.argsort(feature_scores))
 
-    clf = RandomizedLogistic(verbose=False, C=[1., 0.5], random_state=42,
-                                scaling=scaling, n_resampling=50, tol=1e-3)
+    clf = RandomizedLogisticRegression(verbose=False, C=[1., 0.5],
+            random_state=42, scaling=scaling, n_resampling=50, tol=1e-3)
     feature_scores = clf.fit(X, y).scores_
     assert_equal(np.argsort(F), np.argsort(feature_scores))
