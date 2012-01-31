@@ -16,6 +16,7 @@ from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
 from ..utils import array2d, arrayfuncs, deprecated
+from ..utils.extmath import norm
 from ..cross_validation import check_cv
 from ..externals.joblib import Parallel, delayed
 
@@ -58,6 +59,12 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems.
+
+    copy_X: bool
+        If False, X is overwritten.
+
+    copy_Gram: bool
+        If False, Gram is overwritten.
 
     Returns
     --------
@@ -655,6 +662,10 @@ class LarsCV(LARS):
         see sklearn.cross_validation module. If None is passed, default to
         a 5-fold strategy
 
+    max_n_alphas : integer, optional
+        The maximum number of points on the path used to compute the
+        residuals in the cross-validation
+
     n_jobs : integer, optional
         Number of CPUs to use during the cross validation. If '-1', use
         all the CPUs
@@ -684,8 +695,9 @@ class LarsCV(LARS):
     method = 'lar'
 
     def __init__(self, fit_intercept=True, verbose=False, max_iter=500,
-                 normalize=True, precompute='auto', cv=None, n_jobs=1,
-                 eps=np.finfo(np.float).eps, copy_X=True):
+                 normalize=True, precompute='auto', cv=None,
+                 max_n_alphas=1000, n_jobs=1, eps=np.finfo(np.float).eps,
+                 copy_X=True):
         self.fit_intercept = fit_intercept
         self.max_iter = max_iter
         self.verbose = verbose
@@ -693,6 +705,7 @@ class LarsCV(LARS):
         self.precompute = precompute
         self.copy_X = copy_X
         self.cv = cv
+        self.max_n_alphas = max_n_alphas
         self.n_jobs = n_jobs
         self.eps = eps
 
@@ -719,6 +732,9 @@ class LarsCV(LARS):
 
         Gram = 'auto' if self.precompute else None
 
+        # Scaling factor for the residues, to avoid overflows
+        X_norm = norm(X)
+
         cv_paths = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
                     delayed(_lars_path_residues)(X[train], y[train],
                             X[test], y[test], Gram=Gram,
@@ -731,14 +747,24 @@ class LarsCV(LARS):
                     for train, test in cv)
         all_alphas = np.concatenate(list(zip(*cv_paths))[0])
         all_alphas.sort()
+        # Take at most max_n_alphas values
+        stride = int(max(1, int(len(all_alphas) / float(self.max_n_alphas))))
+        all_alphas = all_alphas[::stride]
 
         mse_path = np.empty((len(all_alphas), len(cv_paths)))
         for index, (alphas, active, coefs, residues) in enumerate(cv_paths):
-            this_residues = interpolate.interp1d(alphas[::-1],
-                                                 residues[::-1],
-                                                 bounds_error=False,
-                                                 fill_value=residues.max(),
+            alphas = alphas[::-1]
+            residues = residues[::-1]
+            if alphas[0] != 0:
+                alphas = np.r_[0, alphas]
+                residues = np.r_[residues[0, np.newaxis], residues]
+            if alphas[-1] != all_alphas[-1]:
+                alphas = np.r_[alphas, all_alphas[-1]]
+                residues = np.r_[residues, residues[-1, np.newaxis]]
+            this_residues = interpolate.interp1d(alphas,
+                                                 residues,
                                                  axis=0)(all_alphas)
+            this_residues /= X_norm
             this_residues **= 2
             mse_path[:, index] = np.mean(this_residues, axis=-1)
 
@@ -790,6 +816,10 @@ class LassoLarsCV(LarsCV):
     cv : crossvalidation generator, optional
         see sklearn.cross_validation module. If None is passed, default to
         a 5-fold strategy
+
+    max_n_alphas : integer, optional
+        The maximum number of points on the path used to compute the
+        residuals in the cross-validation
 
     n_jobs : integer, optional
         Number of CPUs to use during the cross validation. If '-1', use
