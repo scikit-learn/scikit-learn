@@ -65,8 +65,8 @@ class Perceptron(SGDClassifier):
     `intercept_` : array, shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.
 
-    Note
-    ----
+    Notes
+    -----
 
     `Perceptron` and `SGDClassifier` share the same underlying implementation.
     In fact, `Perceptron()` is equivalent to `SGDClassifier(loss="perceptron",

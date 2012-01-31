@@ -477,7 +477,7 @@ For dense data
    linear_model.BayesianRidge
    linear_model.ARDRegression
    linear_model.RandomizedLasso
-   linear_model.RandomizedLogistic
+   linear_model.RandomizedLogisticRegression
 
 .. autosummary::
    :toctree: generated/
