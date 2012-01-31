@@ -6,43 +6,42 @@ Randomized Lasso: feature selection with Lasso
 Performs feature scoring and selection using a :ref:`randomized sparse
 linear model <randomized_l1>` (Lasso).
 
-The problem here is, given a small number of observations, to recover
-which features of X are relevant to explain y. For this we use the
-randomized lasso, which can outperform standard statistical tests if the
-true model is sparse, i.e. if a small fraction of the features are
-relevant. The output of this procedure is a stability score for each
-feature: the higher, the more likely the feature is to be relevant.
+Given a small number of observations, we want to recover which features
+of X are relevant to explain y. For this we use the Lasso and randomized
+Lasso, which can outperform standard statistical tests if the true model
+is sparse, i.e. if a small fraction of the features are relevant.
 
-The use of the randomized lasso requires the choice of the alpha
-parameter setting the sparsity of the model estimated. In the first
-figure, we vary this parameter and look at the stability score as a
-function of it. This analysis, knowing the ground truth shows an optimal
-regime in which relevant features stand out from the irrelevant ones.
+In the first figure, we vary the alpha parameter setting the sparsity of
+the model and look at the stability score of the randomized Lasso as a
+function of it. This analysis, knowing the ground truth, shows an optimal
+regime in which relevant features stand out from the irrelevant ones. If
+alpha is chosen too small, non-relevant variables enter the model. On the
+opposite, if alpha is selected too large, the Lasso is equivalent to
+stepwise regression, and thus brings no advantage over a univariate
+F-test.
 
-Here, we set alpha by cross-validation. Although this choice may not lead
-to a optimal choice to separate relevant from irrelevant features, the
-stability score of the randomized lasso still outperforms standard
-statistics, as shown on the second figure. To quantify the performance of
-different feature selection methods, with use the area under curve (AUC)
-of the precision-recall.
+In a second time, we set alpha and compare the performance of different
+feature selection methods, with use the area under curve (AUC) of the
+precision-recall.
 
-Note, without knowing the ground truth, setting the value of alpha is
-challenging. Choosing alpha by cross-validation to minimize left-out
-residuals leads to under-penalized models: including a small number of
-non-relevant variables is not detrimental to prediction score. For very
-noisy data, or very few samples, it may be useful to use AIC to set
-alpha, which tends, on the opposite, to set high values of alpha.
-However, if alpha is too high, the LARS is similar to a step-wise
-regression, and it will not display any gain over univariate
-feature selection.
+As detailed in :ref:`the compressive sensing notes
+<compressive_sensing>`, the ability of L1-based approach to identify the
+relevant variables depends on the sparsity of the ground truth, the
+number of samples, the number of features, the conditionning of the
+design matrix on the signal subspace, the amount of noise, and the
+absolute value of the smallest non-zero coefficient [Wainwright2006].
 
-XXX: discuss the parameters in the choice of the simulation
+Here we keep all parameters constant and vary the conditionning of the
+design matrix. For a well-conditionned design matrix (mutual incoherence
+close to one) we are exactly in compressive sensing conditions (i.i.d
+Gaussian sensing matrix), and L1-recovery with the Lasso performs very
+well. For an ill-conditionned matrix, regressors are very correlated, and
+the Lasso randomly selects one. However, randomized-Lasso can recover the
+ground truth well.
 
-* Sparsity, n_samples, n_features
-* Conditionning of the design matrix on the signal subspace
-* Amount of noise
+[Wainwright2006] http://statistics.berkeley.edu/tech-reports/709.pdf
 """
-#print __doc__
+print __doc__
 
 import pylab as pl
 import numpy as np
@@ -50,102 +49,116 @@ from scipy import linalg
 
 from sklearn.linear_model import RandomizedLasso, lasso_stability_path, \
                                  LassoLarsCV
-from sklearn.cross_validation import ShuffleSplit
 from sklearn.feature_selection import f_regression
 from sklearn.preprocessing import Scaler
 from sklearn.metrics import auc, precision_recall_curve
 
-###############################################################################
-# Simulate regression data with a correlated design
-n_features = 201 # Use a multiple of 3
-n_relevant_features = 10
-noise_level = .1
-coef_min = 1
-# The Donoho-Tanner phase transition is around n_samples=35: below we
-# will completely fail to recover in the well-conditionned case
-n_samples = 40
-conditionning = 1e-4
-block_size = 5
 
-rng = np.random.RandomState(42)
-
-# The coefficients of our model
-coef = np.zeros(n_features)
-coef[:n_relevant_features] = coef_min + rng.rand(n_relevant_features)
-
-# The correlation of our design: variables correlated by blocs of 3
-corr = np.zeros((n_features, n_features))
-for i in range(0, n_features, block_size):
-    corr[i:i + block_size, i:i + block_size] = 1 - conditionning
-corr.flat[::n_features + 1] = 1
-corr = linalg.cholesky(corr)
-
-# Our design
-X = rng.normal(size=(n_samples, n_features))
-X = np.dot(X, corr)
-X = Scaler().fit_transform(X.copy())
-
-# The output variable
-y = np.dot(X, coef)
-y -= np.mean(y)
-y /= np.std(y)
-# We scale the added noise as a function of the average correlation
-# between the design and the output variable
-y += noise_level * rng.normal(size=n_samples)
+def mutual_incoherence(X_relevant, X_irelevant):
+    """ Mutual incoherence, as defined by formula (26a) of
+        [Wainwright2006].
+    """
+    projector = np.dot(
+                    np.dot(X_irelevant.T, X_relevant),
+                    linalg.pinv(np.dot(X_relevant.T, X_relevant))
+                    )
+    return np.max(np.abs(projector).sum(axis=1))
 
 
-###############################################################################
-# Plot stability selection path
-alpha_grid, scores_path = lasso_stability_path(X, y,
-                                               random_state=42, eps=0.01)
+for conditionning in (1, 1e-4):
+    ###########################################################################
+    # Simulate regression data with a correlated design
+    n_features = 501
+    n_relevant_features = 3
+    noise_level = .2
+    coef_min = .2
+    # The Donoho-Tanner phase transition is around n_samples=25: below we
+    # will completely fail to recover in the well-conditionned case
+    n_samples = 25
+    block_size = n_relevant_features
 
-pl.figure()
-# We plot the path as a function of alpha/alpha_max to the power 1/3: the
-# power 1/3 scales the path less brutally than the log, and enables to
-# see the progression along the path
-hg = pl.plot(alpha_grid[1:] ** .333, scores_path[coef != 0].T[1:], 'r')
-hb = pl.plot(alpha_grid[1:] ** .333, scores_path[coef == 0].T[1:], 'k')
-ymin, ymax = pl.ylim()
-pl.xlabel(r'$(\alpha / \alpha_{max})^{1/3}$')
-pl.ylabel('Stability score: proportion of times selected')
-pl.title('Stability Scores Path')
-pl.axis('tight')
-pl.legend((hg[0], hb[0]), ('relevant features', 'irrelevant features'),
-          loc='best')
-pl.title('Conditionning %e' % conditionning)
+    rng = np.random.RandomState(42)
 
-###############################################################################
-# Plot the estimated stability scores for best cross-validated alpha
+    # The coefficients of our model
+    coef = np.zeros(n_features)
+    coef[:n_relevant_features] = coef_min + rng.rand(n_relevant_features)
 
-# First find the best alpha:
-cv = ShuffleSplit(n_samples, test_fraction=.25, random_state=42)
-lars_cv = LassoLarsCV(cv=cv).fit(X, y)
-alpha_2 = lars_cv.alphas_[0]
-alpha_1 = .1*alpha_2
-alphas = np.linspace(alpha_1, alpha_2, 6)
-# Then run the RandomizedLasso
-clf = RandomizedLasso(alpha=alphas, random_state=42)
-clf.fit(X, y)
+    # The correlation of our design: variables correlated by blocs of 3
+    corr = np.zeros((n_features, n_features))
+    for i in range(0, n_features, block_size):
+        corr[i:i + block_size, i:i + block_size] = 1 - conditionning
+    corr.flat[::n_features + 1] = 1
+    corr = linalg.cholesky(corr)
 
-F, _ = f_regression(X, y)  # compare with F-score
+    # Our design
+    X = rng.normal(size=(n_samples, n_features))
+    X = np.dot(X, corr)
+    X[:n_relevant_features] /= np.abs(
+            linalg.svdvals(X[:n_relevant_features])).max()
+    # Keep [Wainwright2006] (26c] constant
+    X = Scaler().fit_transform(X.copy())
 
-pl.figure()
-for name, score in [('F-score', F), ('Stability selection (max)', clf.scores_),
-                ('Stability selection (mean)', clf.all_scores_.mean(axis=-1)),
-                ('L1 coefs', np.abs(lars_cv.coef_))]:
-    precision, recall, thresholds = precision_recall_curve(coef != 0,
-                score)
-    area = auc(recall, precision)
-    pl.semilogy(np.maximum(score / np.max(score), 1e-4),
-            label="%s. AUC: %.3f" % (name, area))
+    # The output variable
+    y = np.dot(X, coef)
+    y /= np.std(y)
+    # We scale the added noise as a function of the average correlation
+    # between the design and the output variable
+    y += noise_level * rng.normal(size=n_samples)
+    mi = mutual_incoherence(X[:, :n_relevant_features],
+                            X[:, n_relevant_features:])
 
-pl.plot(np.where(coef != 0)[0], [2e-4] * n_relevant_features, 'mo',
-        label="Ground truth")
-pl.xlabel("Features")
-pl.ylabel("Score")
-# Plot only the 100 first coefficients
-pl.xlim(0, 100)
-pl.legend(loc='lower right')
-pl.title('Conditionning %e' % conditionning)
+    ###########################################################################
+    # Plot stability selection path, using a high eps for early stopping
+    # of the path, to save computation time
+    alpha_grid, scores_path = lasso_stability_path(X, y,
+                                            random_state=42, eps=0.05)
+
+    pl.figure()
+    # We plot the path as a function of alpha/alpha_max to the power 1/3: the
+    # power 1/3 scales the path less brutally than the log, and enables to
+    # see the progression along the path
+    hg = pl.plot(alpha_grid[1:] ** .333, scores_path[coef != 0].T[1:], 'r')
+    hb = pl.plot(alpha_grid[1:] ** .333, scores_path[coef == 0].T[1:], 'k')
+    ymin, ymax = pl.ylim()
+    pl.xlabel(r'$(\alpha / \alpha_{max})^{1/3}$')
+    pl.ylabel('Stability score: proportion of times selected')
+    pl.title('Stability Scores Path, mutual incoherence: %.1e' % mi)
+    pl.axis('tight')
+    pl.legend((hg[0], hb[0]), ('relevant features', 'irrelevant features'),
+              loc='best')
+
+    ###########################################################################
+    # Plot the estimated stability scores for a given alpha
+
+    # Use 6-fold cross-validation rather than the default 3-fold: it leads to
+    # a better choice of alpha:
+    lars_cv = LassoLarsCV(cv=6).fit(X, y)
+
+    # Run the RandomizedLasso: we use a paths going down to .1*alpha_max
+    # to avoid exploring the regime in which very noisy variables enter
+    # the model
+    alphas = np.linspace(lars_cv.alphas_[0], .1 * lars_cv.alphas_[0], 6)
+    clf = RandomizedLasso(alpha=alphas, random_state=42).fit(X, y)
+    # Compare with F-score
+    F, _ = f_regression(X, y)
+
+    pl.figure()
+    for name, score in [('F-test', F),
+                ('Stability selection', clf.scores_),
+                ('Lasso coefs', np.abs(lars_cv.coef_))]:
+        precision, recall, thresholds = precision_recall_curve(coef != 0,
+                                                               score)
+        pl.semilogy(np.maximum(score / np.max(score), 1e-4),
+                    label="%s. AUC: %.3f" % (name, auc(recall, precision)))
+
+    pl.plot(np.where(coef != 0)[0], [2e-4] * n_relevant_features, 'mo',
+            label="Ground truth")
+    pl.xlabel("Features")
+    pl.ylabel("Score")
+    # Plot only the 100 first coefficients
+    pl.xlim(0, 100)
+    pl.legend(loc='best')
+    pl.title('Feature selection scores, mutual incoherence: %.1e'
+             % mi)
+
 pl.show()
-

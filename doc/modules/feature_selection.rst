@@ -111,18 +111,44 @@ alpha parameter, the fewer features selected.
       of different algorithms for document classification including L1-based
       feature selection.
 
+.. _compressive_sensing:
+
+.. topic:: **L1-recovery and compressive sensing**
+
+   For a good choice of alpha, the :ref:`lasso` can fully recover the
+   exact set of non-zero variables using only few observations, provided
+   certain specific conditions are met. In paraticular, the number of
+   samples should be "sufficiently large", or L1 models will perform at
+   random, where "sufficiently large" depends on the number of non-zero
+   coefficients, the logarithm of the number of features, the amount of
+   noise, the smallest absolute value of non-zero coefficients, and the
+   structure of the design matrix X. In addition, the design matrix must
+   display certain specific properties, such as not being too correlated.
+
+   There is no general rule to select an alpha parameter for recovery of
+   non-zero coefficients. It can by set by cross-validation
+   (:class:`LassoCV` or :class:`LassoLarsCV`), though this may lead to
+   under-penalized models: including a small number of non-relevant
+   variables is not detrimental to prediction score. BIC
+   (:class:`LassoLarsIC`) tends, on the opposite, to set high values of
+   alpha.
+
+   **Reference** Richard G. Baraniuk `Compressive Sensing`, IEEE Signal
+   Processing Magazine [120] July 2007
+   http://dsp.rice.edu/files/cs/baraniukCSlecture07.pdf 
+
 .. _randomized_l1:
 
 Randomized sparse models
 -------------------------
+
+.. currentmodule:: sklearn.linear_model
 
 The limitation of L1-based sparse models is that faced with a group of
 very correlated features, they will select only one. To mitigate this
 problem, it is possible to use randomization techniques, reestimating the
 sparse model many times perturbing the design matrix or sub-sampling data
 and counting how many times a given regressor is selected.
-
-.. currentmodule:: sklearn.linear_model
 
 :class:`RandomizedLasso` implements this strategy for regression
 settings, using the Lasso, while :class:`RandomizedLogistic` uses the
@@ -135,18 +161,16 @@ To get a full path of stability scores you can use
    :align: center
    :scale: 60
 
-   Comparison of scores given by F-test based feature selection and
-   randomized lasso
-
 Note that for randomized sparse models to be more powerful than standard
 F statistics at detecting non-zero features, the ground truth model
 should be sparse, in other words, there should be only a small fraction
-of features non zero.
+of features non zero. 
 
 .. topic:: Examples:
 
-   * :ref:`example_linear_model_plot_randomized_lasso.py`: Randomized
-     Lasso: feature selection with Lasso
+   * :ref:`example_linear_model_plot_randomized_lasso.py`: An example
+     comparing different feature selection approaches and discussing in
+     which situation each approach is to be favored.
 
 .. topic:: References:
 
