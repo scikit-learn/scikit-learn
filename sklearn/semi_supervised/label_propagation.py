@@ -155,7 +155,10 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
             Normalized probability distributions across
             class labels
         """
-        X_2d = np.atleast_2d(X)
+        if sparse.isspmatrix(X):
+            X_2d = X
+        else:
+            X_2d = np.atleast_2d(X)
         weight_matrices = self._get_kernel(self.X_, X_2d)
         if self.kernel == 'knn':
             probabilities = []
@@ -180,7 +183,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         X : array-like, shape = [n_samples, n_features]
             A {n_samples by n_samples} size matrix will be created from this
 
-        y : array_like, shape = [n_labeled_samples]
+        y : array_like, shape = [n_samples]
             n_labeled_samples (unlabeled points are marked as -1)
             All unlabeled samples will be transductively assigned labels
 
@@ -188,7 +191,10 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         -------
         self : returns an instance of self.
         """
-        self.X_ = np.asarray(X)
+        if sparse.isspmatrix(X):
+            self.X_ = X
+        else:
+            self.X_ = np.asarray(X)
 
         # actual graph construction (implementations should override this)
         graph_matrix = self._build_graph()
