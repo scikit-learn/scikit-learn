@@ -235,21 +235,25 @@ class KFold(object):
 
     def __init__(self, n, k, indices=True):
         _validate_kfold(k, n)
-        self.n = n
-        self.k = k
+        if abs(n - int(n)) >= np.finfo('f').eps:
+            raise ValueError("n must be an integer")
+        self.n = int(n)
+        if abs(k - int(k)) >= np.finfo('f').eps:
+            raise ValueError("k must be an integer")
+        self.k = int(k)
         self.indices = indices
 
     def __iter__(self):
         n = self.n
         k = self.k
-        j = ceil(n / k)
+        fold_size = n // k
 
         for i in xrange(k):
             test_index = np.zeros(n, dtype=np.bool)
             if i < k - 1:
-                test_index[i * j:(i + 1) * j] = True
+                test_index[i * fold_size:(i + 1) * fold_size] = True
             else:
-                test_index[i * j:] = True
+                test_index[i * fold_size:] = True
             train_index = np.logical_not(test_index)
             if self.indices:
                 ind = np.arange(n)

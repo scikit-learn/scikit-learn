@@ -189,6 +189,7 @@ def test_oob_score_classification():
     training_score = clf.score(X, y)
     assert_almost_equal(training_score, clf.oob_score_)
 
+
 def test_oob_score_regression():
     """Check that oob prediction is pessimistic estimate.
     Not really a good test that prediction is independent."""
@@ -199,6 +200,7 @@ def test_oob_score_regression():
                            boston.target[n_samples / 2:])
     assert(test_score > clf.oob_score_)
     assert(clf.oob_score_ > .8)
+
 
 def test_gridsearch():
     """Check that base trees can be grid-searched."""

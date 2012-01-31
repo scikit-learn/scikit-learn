@@ -194,6 +194,14 @@ computes the coefficients along the full path of possible values.
   * :ref:`example_linear_model_lasso_and_elasticnet.py`
   * :ref:`example_applications_plot_tomography_l1_reconstruction.py`
 
+
+.. note:: **Feature selection with Lasso**
+
+      As the Lasso regression yields sparse models, it can
+      thus be used to perform feature selection, as detailed in
+      :ref:`l1_feature_selection`.
+
+
 Setting regularization parameter
 --------------------------------
 
@@ -585,6 +593,12 @@ zero) model.
 
   * :ref:`example_linear_model_plot_logistic_path.py`
 
+.. note:: **Feature selection with sparse logistic regression**
+
+   A logistic regression with L1 penalty yields sparse models, and can
+   thus be used to perform feature selection, as detailed in
+   :ref:`l1_feature_selection`.
+
 Stochastic Gradient Descent - SGD
 =================================
 
@@ -600,3 +614,20 @@ using different (convex) loss functions and different penalties.
 .. topic:: References
 
  * :ref:`sgd`
+
+Perceptron
+==========
+
+The :class:`Perceptron` is another simple algorithm suitable for large scale
+learning. By default:
+
+    - It does not require a learning rate.
+
+    - It is not regularized (penalized).
+
+    - It updates its model only on mistakes.
+
+The last characteristic implies that the Perceptron is slightly faster to
+train than SGD with the hinge loss and that the resulting models are
+sparser.
+

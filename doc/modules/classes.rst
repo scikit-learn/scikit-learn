@@ -471,10 +471,13 @@ For dense data
    linear_model.LassoLarsIC
    linear_model.LogisticRegression
    linear_model.OrthogonalMatchingPursuit
+   linear_model.Perceptron
    linear_model.SGDClassifier
    linear_model.SGDRegressor
    linear_model.BayesianRidge
    linear_model.ARDRegression
+   linear_model.RandomizedLasso
+   linear_model.RandomizedLogistic
 
 .. autosummary::
    :toctree: generated/
@@ -484,6 +487,7 @@ For dense data
    linear_model.lars_path
    linear_model.orthogonal_mp
    linear_model.orthogonal_mp_gram
+   linear_model.lasso_stability_path
 
 For sparse data
 ---------------
@@ -837,26 +841,6 @@ For dense data
    :template: function.rst
 
    svm.l1_min_c
-
-For sparse data
----------------
-
-.. automodule:: sklearn.svm.sparse
-   :no-members:
-   :no-inherited-members:
-
-.. currentmodule:: sklearn
-
-.. autosummary::
-   :toctree: generated/
-   :template: class.rst
-
-   svm.sparse.SVC
-   svm.sparse.NuSVC
-   svm.sparse.SVR
-   svm.sparse.NuSVR
-   svm.sparse.OneClassSVM
-   svm.LinearSVC
 
 Low-level methods
 -----------------
