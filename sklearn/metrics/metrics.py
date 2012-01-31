@@ -449,7 +449,7 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
 
 
 def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
-                                    pos_label=1, average="weighted"):
+                                    pos_label=1, average=None):
     """Compute precisions, recalls, f-measures and support for each class
 
     The precision is the ratio :math:`tp / (tp + fp)` where tp is the number of
@@ -760,8 +760,8 @@ def precision_recall_curve(y_true, probas_pred):
     for i, t in enumerate(thresholds):
         y_pred = (probas_pred >= t).astype(np.int)
         p, r, _, _ = precision_recall_fscore_support(y_true, y_pred)
-        precision[i] = p
-        recall[i] = r
+        precision[i] = p[1]
+        recall[i] = r[1]
     precision[-1] = 1.0
     recall[-1] = 0.0
     return precision, recall, thresholds
