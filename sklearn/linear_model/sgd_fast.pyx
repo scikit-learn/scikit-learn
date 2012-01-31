@@ -123,28 +123,28 @@ cdef class Hinge(Classification):
     Parameters
     ----------
 
-    t : float > 0.0
-        Margin threshold. When t=1.0, one gets the loss used by SVM.
-        When t=0.0, one gets the loss used by the Perceptron.
+    threshold : float > 0.0
+        Margin threshold. When threshold=1.0, one gets the loss used by SVM.
+        When threshold=0.0, one gets the loss used by the Perceptron.
     """
 
-    def __init__(self, double t):
-        self.t = t
+    def __init__(self, double threshold):
+        self.threshold = threshold
 
     cpdef double loss(self, double p, double y):
         cdef double z = p * y
-        if z <= self.t:
-            return (self.t - z)
+        if z <= self.threshold:
+            return (self.threshold - z)
         return 0.0
 
     cpdef double dloss(self, double p, double y):
         cdef double z = p * y
-        if z <= self.t:
+        if z <= self.threshold:
             return -y
         return 0.0
 
     def __reduce__(self):
-        return Hinge, (self.t,)
+        return Hinge, (self.threshold,)
 
 
 cdef class Log(Classification):

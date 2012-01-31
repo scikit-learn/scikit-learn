@@ -34,7 +34,7 @@ cdef class ModifiedHuber(Classification):
     cpdef double dloss(self, double p, double y)
 
 cdef class Hinge(Classification):
-    cdef double t
+    cdef double threshold
     cpdef double loss(self, double p, double y)
     cpdef double dloss(self, double p, double y)
 
