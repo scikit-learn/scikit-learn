@@ -6,7 +6,7 @@ from nose.tools import assert_true
 
 from sklearn.utils import check_random_state
 from sklearn.datasets import load_iris
-from sklearn.linear_model import Perceptron, SGDClassifier
+from sklearn.linear_model import Perceptron
 
 iris = load_iris()
 random_state = check_random_state(12)
