@@ -212,7 +212,8 @@ def auc(x, y):
     return area
 
 
-def precision_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
+def precision_score(y_true, y_pred, labels=None, pos_label=1,
+                    average='weighted'):
     """Compute the precision
 
     The precision is the ratio :math:`tp / (tp + fp)` where tp is the
