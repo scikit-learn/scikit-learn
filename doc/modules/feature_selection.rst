@@ -101,7 +101,7 @@ for classification::
   >>> X_new.shape
   (150, 3)
 
-With SVM's and logistic-regression, the parameter C controls the sparsity: 
+With SVMs and logistic-regression, the parameter C controls the sparsity: 
 the smaller C the fewer features selected. With Lasso, the higher the
 alpha parameter, the fewer features selected.
 
@@ -156,8 +156,8 @@ logistic regression and is suitable for classification tasks.
 To get a full path of stability scores you can use
 :func:`lasso_stability_path`.
 
-.. figure:: ../auto_examples/linear_model/images/plot_randomized_lasso_2.png
-   :target: ../auto_examples/linear_model/plot_randomized_lasso.html
+.. figure:: ../auto_examples/linear_model/images/plot_sparse_recovery_2.png
+   :target: ../auto_examples/linear_model/plot_sparse_recovery.html
    :align: center
    :scale: 60
 
@@ -168,7 +168,7 @@ of features non zero.
 
 .. topic:: Examples:
 
-   * :ref:`example_linear_model_plot_randomized_lasso.py`: An example
+   * :ref:`example_linear_model_plot_sparse_recovery.py`: An example
      comparing different feature selection approaches and discussing in
      which situation each approach is to be favored.
 

@@ -275,7 +275,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
 
     See also
     --------
-    RandomizedLogistic, LogisticRegression
+    RandomizedLogisticRegression, LogisticRegression
     """
     def __init__(self, alpha='aic', scaling=.5, sample_fraction=.75,
                  n_resampling=200, selection_threshold=.25,
@@ -338,7 +338,7 @@ def _randomized_logistic(X, y, weights, mask, C=1., verbose=False,
     return scores
 
 
-class RandomizedLogistic(BaseRandomizedLinearModel):
+class RandomizedLogisticRegression(BaseRandomizedLinearModel):
     """Randomized Logistic Regression
 
     Randomized Regression works by resampling the train data and computing
@@ -415,8 +415,8 @@ class RandomizedLogistic(BaseRandomizedLinearModel):
 
     Examples
     --------
-    >>> from sklearn.linear_model import RandomizedLasso
-    >>> randomized_logistic = RandomizedLogistic()
+    >>> from sklearn.linear_model import RandomizedLogisticRegression
+    >>> randomized_logistic = RandomizedLogisticRegression()
 
     Notes
     -----
