@@ -151,10 +151,9 @@ sparse model many times perturbing the design matrix or sub-sampling data
 and counting how many times a given regressor is selected.
 
 :class:`RandomizedLasso` implements this strategy for regression
-settings, using the Lasso, while :class:`RandomizedLogistic` uses the
-logistic regression and is suitable for classification tasks.
-To get a full path of stability scores you can use
-:func:`lasso_stability_path`.
+settings, using the Lasso, while :class:`RandomizedLogisticRegression` uses the
+logistic regression and is suitable for classification tasks.  To get a full
+path of stability scores you can use :func:`lasso_stability_path`.
 
 .. figure:: ../auto_examples/linear_model/images/plot_sparse_recovery_2.png
    :target: ../auto_examples/linear_model/plot_sparse_recovery.html

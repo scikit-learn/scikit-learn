@@ -16,7 +16,7 @@ from ..metrics import explained_variance_score
 from ..metrics import r2_score
 from ..metrics import f1_score
 from ..metrics import matthews_corrcoef
-from ..metrics import mean_square_error
+from ..metrics import mean_squared_error
 from ..metrics import precision_recall_curve
 from ..metrics import precision_recall_fscore_support
 from ..metrics import precision_score
@@ -57,7 +57,7 @@ def make_prediction(dataset=None, binary=False):
     X = np.c_[X, np.random.randn(n_samples, 200 * n_features)]
 
     # run classifier, get class probabilities and label predictions
-    clf = svm.SVC(kernel='linear', probability=True)
+    clf = svm.SVC(kernel='linear', probability=True, scale_C=False)
     probas_pred = clf.fit(X[:half], y[:half]).predict_proba(X[half:])
 
     if binary:
@@ -316,10 +316,11 @@ def test_precision_recall_curve():
 def test_losses():
     """Test loss functions"""
     y_true, y_pred, _ = make_prediction(binary=True)
+    n = y_true.shape[0]
 
     assert_equal(zero_one(y_true, y_pred), 13)
-    assert_almost_equal(mean_square_error(y_true, y_pred), 12.999, 2)
-    assert_almost_equal(mean_square_error(y_true, y_true), 0.00, 2)
+    assert_almost_equal(mean_squared_error(y_true, y_pred), 12.999 / n, 2)
+    assert_almost_equal(mean_squared_error(y_true, y_true), 0.00, 2)
 
     assert_almost_equal(explained_variance_score(y_true, y_pred), -0.04, 2)
     assert_almost_equal(explained_variance_score(y_true, y_true), 1.00, 2)
@@ -330,7 +331,7 @@ def test_losses():
 
 def test_losses_at_limits():
     # test limit cases
-    assert_almost_equal(mean_square_error([0.], [0.]), 0.00, 2)
+    assert_almost_equal(mean_squared_error([0.], [0.]), 0.00, 2)
     assert_almost_equal(explained_variance_score([0.], [0.]), 1.00, 2)
     assert_almost_equal(r2_score([0.], [0.]), 1.00, 2)
 
@@ -342,8 +343,8 @@ def test_symmetry():
     # symmetric
     assert_equal(zero_one(y_true, y_pred),
                  zero_one(y_pred, y_true))
-    assert_almost_equal(mean_square_error(y_true, y_pred),
-                        mean_square_error(y_pred, y_true))
+    assert_almost_equal(mean_squared_error(y_true, y_pred),
+                        mean_squared_error(y_pred, y_true))
     # not symmetric
     assert_true(explained_variance_score(y_true, y_pred) != \
             explained_variance_score(y_pred, y_true))
