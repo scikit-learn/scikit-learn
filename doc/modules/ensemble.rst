@@ -232,7 +232,6 @@ outliers. See [F2001]_ for detailed information.
     >>> X, y = make_friedman1(n_samples=1200, random_state=0, noise=1.0)
     >>> X_train, X_test = X[:200], X[200:]
     >>> y_train, y_test = y[:200], y[200:]
-
     >>> clf = GradientBoostingRegressor(n_estimators=100, learn_rate=1.0,
     ...     max_depth=1, random_state=0, loss='ls').fit(X_train, y_train)
     >>> mean_squared_error(y_test, clf.predict(X_test))    # doctest: +ELLIPSIS
