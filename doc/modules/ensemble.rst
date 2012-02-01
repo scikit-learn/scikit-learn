@@ -274,7 +274,7 @@ The initial model :math:`F_{0}` is problem specific, for least-squares
 regression one usually chooses the mean of the target values.
 
 .. note:: The initial model can also be specified via the ``init``
-argument. The passed object has to implement ``fit`` and ``predict``.
+          argument. The passed object has to implement ``fit`` and ``predict``.
 
 Gradient Boosting attempts to solve this minimization problem
 numerically via steepest descent: The steepest descent direction is
@@ -342,7 +342,7 @@ The parameter ``learn_rate`` strongly interacts with the parameter
 ``n_estimators``, the number of weak learners to fit. Smaller values
 of ``learn_rate`` require larger numbers of weak learners to maintain
 a constant training error. Empirical evidence suggests that small
-values of ``learn_rate`` favor better test error. [HFT2009]_
+values of ``learn_rate`` favor better test error. [HTF2009]_
 recommend to set the learning rate to a small constant
 (e.g. ``learn_rate <= 0.1``) and choose ``n_estimators`` by early
 stopping. For a more detailed discussion of the interaction between
