@@ -130,6 +130,11 @@ of :class:`Scaler`.
   To avoid unnecessary memory copies, it is recommended to choose the CSR
   representation upstream.
 
+.. topic:: Scaling target variables in regression
+
+    :func:`scale` and :class:`Scaler` work out-of-the-box with 1d arrays.
+    This is very useful for scaling the target / response variables used
+    for regression.
 
 Normalization
 =============
