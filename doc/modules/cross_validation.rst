@@ -40,7 +40,7 @@ data for testing (evaluating) our classifier::
   >>> X_test.shape, y_test.shape
   ((60, 4), (60,))
 
-  >>> clf = svm.SVC(kernel='linear').fit(X_train, y_train)
+  >>> clf = svm.SVC(kernel='linear', C=100).fit(X_train, y_train)
   >>> clf.score(X_test, y_test)                           # doctest: +ELLIPSIS
   0.96...
 
@@ -68,7 +68,7 @@ linear kernel Support Vector Machine on the iris dataset by splitting
 the data and fitting a model and computing the score 5 consecutive times
 (with different splits each time)::
 
-  >>> clf = svm.SVC(kernel='linear')
+  >>> clf = svm.SVC(kernel='linear', C=100)
   >>> scores = cross_validation.cross_val_score(
   ...    clf, iris.data, iris.target, cv=5)
   ...
@@ -107,7 +107,7 @@ validation iterator instead, for instance::
 
   >>> cross_validation.cross_val_score(clf, iris.data, iris.target, cv=cv)
   ...                                                     # doctest: +ELLIPSIS
-  array([ 0.97...,  0.97...,  1.        ])
+  array([ 0.97...,  1.        ,  1.        ])
 
 The available cross validation iterators are introduced in the following.
 

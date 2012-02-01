@@ -89,7 +89,7 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin, SelectorMixin):
 
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
                  fit_intercept=True, intercept_scaling=1,
-                 scale_C=False):
+                 scale_C=True):
 
         super(LogisticRegression, self).__init__(penalty=penalty,
             dual=dual, loss='lr', tol=tol, C=C,

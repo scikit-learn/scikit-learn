@@ -84,7 +84,7 @@ training samples::
     >>> clf = svm.SVC()
     >>> clf.fit(X, Y)
     SVC(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma=0.5, kernel='rbf',
-      probability=False, scale_C=None, shrinking=True, tol=0.001)
+      probability=False, scale_C=True, shrinking=True, tol=0.001)
 
 After being fitted, the model can then be used to predict new values::
 
@@ -122,7 +122,7 @@ classifiers are constructed and each one trains data from two classes::
     >>> clf = svm.SVC()
     >>> clf.fit(X, Y)
     SVC(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma=1.0, kernel='rbf',
-      probability=False, scale_C=None, shrinking=True, tol=0.001)
+      probability=False, scale_C=True, shrinking=True, tol=0.001)
     >>> dec = clf.decision_function([[1]])
     >>> dec.shape[1] # 4 classes: 4*3/2 = 6
     6
@@ -134,7 +134,7 @@ two classes, only one model is trained::
     >>> lin_clf = svm.LinearSVC()
     >>> lin_clf.fit(X, Y)
     LinearSVC(C=1.0, dual=True, fit_intercept=True, intercept_scaling=1,
-         loss='l2', multi_class=False, penalty='l2', scale_C=None, tol=0.0001)
+         loss='l2', multi_class=False, penalty='l2', scale_C=True, tol=0.0001)
     >>> dec = lin_clf.decision_function([[1]])
     >>> dec.shape[1]
     4
@@ -260,7 +260,7 @@ floating point values instead of integer values::
     >>> clf = svm.SVR()
     >>> clf.fit(X, y)
     SVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.1, gamma=0.5,
-      kernel='rbf', probability=False, scale_C=None, shrinking=True, tol=0.001)
+      kernel='rbf', probability=False, scale_C=True, shrinking=True, tol=0.001)
     >>> clf.predict([[1, 1]])
     array([ 1.5])
 
@@ -453,7 +453,7 @@ vectors and the test vectors must be provided.
     >>> gram = np.dot(X, X.T)
     >>> clf.fit(gram, y)
     SVC(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma=0.0,
-      kernel='precomputed', probability=False, scale_C=None, shrinking=True,
+      kernel='precomputed', probability=False, scale_C=True, shrinking=True,
       tol=0.001)
     >>> # predict on training examples
     >>> clf.predict(gram)

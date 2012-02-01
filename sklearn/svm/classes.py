@@ -171,7 +171,7 @@ class SVC(BaseLibSVM, ClassifierMixin):
     >>> clf = SVC()
     >>> clf.fit(X, y)
     SVC(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma=0.5, kernel='rbf',
-      probability=False, scale_C=None, shrinking=True, tol=0.001)
+      probability=False, scale_C=True, shrinking=True, tol=0.001)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
 
@@ -182,7 +182,7 @@ class SVC(BaseLibSVM, ClassifierMixin):
 
     def __init__(self, C=1.0, kernel='rbf', degree=3, gamma=0.0,
                  coef0=0.0, shrinking=True, probability=False,
-                 tol=1e-3, cache_size=200, scale_C=None):
+                 tol=1e-3, cache_size=200, scale_C=True):
 
         super(SVC, self).__init__('c_svc', kernel, degree, gamma, coef0, tol,
                                   C, 0., 0., shrinking, probability,
@@ -281,7 +281,7 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
 
         super(NuSVC, self).__init__('nu_svc', kernel, degree, gamma, coef0,
                                     tol, 0., nu, 0., shrinking, probability,
-                                    cache_size, scale_C=False, sparse="auto")
+                                    cache_size, scale_C=True, sparse="auto")
 
 
 class SVR(BaseLibSVM, RegressorMixin):
@@ -366,7 +366,7 @@ class SVR(BaseLibSVM, RegressorMixin):
     >>> clf = SVR(C=1.0, epsilon=0.2)
     >>> clf.fit(X, y)
     SVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.2, gamma=0.2,
-      kernel='rbf', probability=False, scale_C=None, shrinking=True, tol=0.001)
+      kernel='rbf', probability=False, scale_C=True, shrinking=True, tol=0.001)
 
     See also
     --------
@@ -374,7 +374,7 @@ class SVR(BaseLibSVM, RegressorMixin):
     """
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
                  tol=1e-3, C=1.0, epsilon=0.1, shrinking=True,
-                 probability=False, cache_size=200, scale_C=None):
+                 probability=False, cache_size=200, scale_C=True):
 
         super(SVR, self).__init__('epsilon_svr', kernel, degree, gamma, coef0,
                                   tol, C, 0., epsilon, shrinking, probability,
@@ -487,7 +487,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     >>> clf = NuSVR(C=1.0, nu=0.1)
     >>> clf.fit(X, y)
     NuSVR(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma=0.2, kernel='rbf',
-       nu=0.1, probability=False, scale_C=None, shrinking=True, tol=0.001)
+       nu=0.1, probability=False, scale_C=True, shrinking=True, tol=0.001)
 
     See also
     --------
@@ -497,7 +497,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     def __init__(self, nu=0.5, C=1.0, kernel='rbf', degree=3,
                  gamma=0.0, coef0=0.0, shrinking=True,
                  probability=False, tol=1e-3, cache_size=200,
-                 scale_C=None):
+                 scale_C=True):
 
         super(NuSVR, self).__init__('nu_svr', kernel, degree, gamma, coef0,
                                     tol, C, nu, 0., shrinking, probability,
@@ -593,7 +593,7 @@ class OneClassSVM(BaseLibSVM):
 
         super(OneClassSVM, self).__init__('one_class', kernel, degree, gamma,
                                           coef0, tol, 0., nu, 0., shrinking,
-                                          False, cache_size, scale_C=None,
+                                          False, cache_size, scale_C=True,
                                           sparse="auto")
 
     def fit(self, X, class_weight={}, sample_weight=None, **params):
