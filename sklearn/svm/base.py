@@ -175,21 +175,26 @@ class BaseLibSVM(BaseEstimator):
             self.gamma = 1.0 / X.shape[1]
         self.shape_fit_ = X.shape
 
-        params = self.get_params()
-        if 'scale_C' in params:
-            if params['scale_C']:
-                params['C'] = params['C'] / float(X.shape[0])
-            del params['scale_C']
-        if 'sparse' in params:
-            del params['sparse']
+        # set default parameters
+        C = self.C
+        if getattr(self, 'scale_C', False):
+            C = self.C / float(X.shape[0])
+        epsilon = self.epsilon
+        if epsilon is None:
+            epsilon = 0.1
 
+        # we don't pass **self.get_params() to allow subclasses to
+        # add other parameters to __init__
         self.support_, self.support_vectors_, self.n_support_, \
         self.dual_coef_, self.intercept_, self.label_, self.probA_, \
         self.probB_ = libsvm.fit(X, y,
             svm_type=solver_type, sample_weight=sample_weight,
             class_weight=class_weight,
             class_weight_label=class_weight_label,
-            **params)
+            kernel=self.kernel, C=C, nu=self.nu,
+            probability=self.probability, degree=self.degree,
+            shrinking=self.shrinking, tol=self.tol, cache_size=self.cache_size,
+            coef0=self.coef0, gamma=self.gamma, epsilon=epsilon)
 
     def _sparse_fit(self, X, y, class_weight=None, sample_weight=None):
         """
