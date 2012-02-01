@@ -480,7 +480,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
     learn_rate : float, optional (default=0.1)
         learning rate shrinks the contribution of each tree by `learn_rate`.
-        There is a trade-off between learn_rate and n_estimators (see Discussion).
+        There is a trade-off between learn_rate and n_estimators.
 
     loss : {'ls', 'lad'}, optional
         loss function to be optimized. 'ls' refers to least squares
@@ -516,16 +516,6 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     See also
     --------
     DecisionTreeRegressor, RandomForestRegressor
-
-    Discussion
-    ----------
-    The optimal algorithm for a given dataset is a complicated choice, and
-    depends on a number of factors:
-
-    * n_estimators vs. learn_rate
-        TODO
-    * n_estimators vs. subsample
-        TODO
 
     References
     ----------

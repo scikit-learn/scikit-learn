@@ -19,6 +19,7 @@ import pylab as pl
 from sklearn import ensemble
 from sklearn import datasets
 from sklearn.utils import shuffle
+from sklearn.metrics import mean_squared_error
 
 ###############################################################################
 # Load data
@@ -36,7 +37,7 @@ params = {'n_estimators': 500, 'max_depth': 4, 'min_split': 1, 'learn_rate': 0.0
 clf = ensemble.GradientBoostingRegressor(**params)
 
 clf.fit(X_train, y_train)
-mse = np.mean((clf.predict(X_test) - y_test) ** 2.0)
+mse = mean_squared_error(y_test, clf.predict(X_test))
 print("MSE: %.4f" % mse)
 
 ################################################################################

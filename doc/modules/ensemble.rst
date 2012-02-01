@@ -217,6 +217,7 @@ Regression
 :class:`GradientBoostingRegressor` ...
 
     >>> import numpy as np
+    >>> from sklearn.metrics import mean_squared_error
     >>> from sklearn.datasets import make_friedman1
     >>> from sklearn.ensemble import GradientBoostingRegressor
     >>> X, y = datasets.make_friedman1(n_samples=1200,
@@ -226,8 +227,8 @@ Regression
 
     >>> clf = GradientBoostingRegressor(n_estimators=100, learn_rate=1.0,
     ...     max_depth=1, random_state=0).fit(X_train, y_train)
-    >>> np.mean((y_test - clf.predict(X_test)) ** 2.0)    # doctest: +ELLIPSIS
-    3.695...
+    >>> mean_squared_error(y_test, clf.predict(X_test))    # doctest: +ELLIPSIS
+    0.786...
 
 Mathematical formulation
 ========================
