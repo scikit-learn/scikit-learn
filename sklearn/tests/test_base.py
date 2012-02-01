@@ -59,6 +59,11 @@ def test_clone():
     assert_true(selector is not new_selector)
     assert_equal(selector.get_params(), new_selector.get_params())
 
+    selector = SelectFpr(f_classif, alpha=np.zeros((10, 2)))
+    new_selector = clone(selector)
+    assert_true(selector is not new_selector)
+
+
 
 def test_clone_2():
     """Tests that clone doesn't copy everything.
