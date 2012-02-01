@@ -106,7 +106,8 @@ email to the mailing list in order to get more visibility.
 .. note::
 
   In the above setup, your ``origin`` remote-repository points to 
-  YourLogin/scikit-learn.git. If you wish to `fetch/merge` from the main repository instead of your `forked` one, you'll need 
+  YourLogin/scikit-learn.git. If you wish to `fetch/merge` from the main 
+  repository instead of your `forked` one, you'll need 
   to add another remote to use instead of ``origin``. If we choose the name
   ``upstream`` for it, the command will be::
   
