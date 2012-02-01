@@ -103,6 +103,17 @@ the web page of the repo, and click on 'Pull request' to send us a pull
 request. This will send an email to the commiters, but might also send an
 email to the mailing list in order to get more visibility.
 
+.. note::
+
+  In the above setup, your ``origin`` remote-repository points to 
+  YourLogin/scikit-learn.git. If you wish to `fetch/merge` from the main 
+  repository instead of your `forked` one, you'll need 
+  to add another remote to use instead of ``origin``. If we choose the name
+  ``upstream`` for it, the command will be::
+  
+	$ git remote add upstream git@github.com:scikit-learn/scikit-learn.git
+
+
 (If any of the above seems like magic to you, then look up the
 `Git documentation <http://git-scm.com/documentation>`_ on the web.)
 
