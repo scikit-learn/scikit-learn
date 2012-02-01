@@ -561,6 +561,17 @@ def test_immutable_coef_property():
         assert_raises(AttributeError, clf.__setattr__, 'coef_', np.arange(3))
         assert_raises(RuntimeError, clf.coef_.__setitem__, (0, 0), 0)
 
+def test_inheritance():
+    # check that SVC classes can do inheritance
+    class ChildSVC(svm.SVC):
+        def __init__(self, foo=0):
+            self.foo = foo
+            svm.SVC.__init__(self)
+
+    clf = ChildSVC()
+    clf.fit(iris.data, iris.target)
+    clf.predict(iris.data[-1])
+    clf.decision_function(iris.data[-1])
 
 if __name__ == '__main__':
     import nose

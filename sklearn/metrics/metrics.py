@@ -15,6 +15,7 @@ better
 import numpy as np
 
 from ..utils import check_arrays
+from ..utils import deprecated
 
 
 def unique_labels(*lists_of_labels):
@@ -212,7 +213,8 @@ def auc(x, y):
     return area
 
 
-def precision_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
+def precision_score(y_true, y_pred, labels=None, pos_label=1,
+                    average='weighted'):
     """Compute the precision
 
     The precision is the ratio :math:`tp / (tp + fp)` where tp is the
@@ -449,7 +451,7 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
 
 
 def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
-                                    pos_label=1, average="weighted"):
+                                    pos_label=1, average=None):
     """Compute precisions, recalls, f-measures and support for each class
 
     The precision is the ratio :math:`tp / (tp + fp)` where tp is the number of
@@ -760,8 +762,8 @@ def precision_recall_curve(y_true, probas_pred):
     for i, t in enumerate(thresholds):
         y_pred = (probas_pred >= t).astype(np.int)
         p, r, _, _ = precision_recall_fscore_support(y_true, y_pred)
-        precision[i] = p
-        recall[i] = r
+        precision[i] = p[1]
+        recall[i] = r[1]
     precision[-1] = 1.0
     recall[-1] = 0.0
     return precision, recall, thresholds
@@ -878,8 +880,29 @@ def zero_one(y_true, y_pred):
     return np.sum(y_pred != y_true)
 
 
+def mean_squared_error(y_true, y_pred):
+    """Mean squared error regression loss
+
+    Return a a positive floating point value (the best value is 0.0).
+
+    Parameters
+    ----------
+    y_true : array-like
+
+    y_pred : array-like
+
+    Returns
+    -------
+    loss : float
+    """
+    y_true, y_pred = check_arrays(y_true, y_pred)
+    return np.mean((y_pred - y_true) ** 2)
+
+
+@deprecated("""Incorrectly returns the cumulated error: use mean_squared_error
+            instead; to be removed in v0.12""")
 def mean_square_error(y_true, y_pred):
-    """Mean square error regression loss
+    """Cumulated square error regression loss
 
     Positive floating point value: the best value is 0.0.
 
