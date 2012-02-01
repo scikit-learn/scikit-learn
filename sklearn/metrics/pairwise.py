@@ -566,7 +566,7 @@ kernel_params = {
 
 
 def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
-                     n_jobs=1,**kwds):
+                     n_jobs=1, **kwds):
     """ Compute the kernel between arrays X and optional array Y.
 
     This method takes either a vector array or a kernel matrix, and returns
