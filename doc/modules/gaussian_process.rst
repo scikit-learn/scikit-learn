@@ -86,24 +86,27 @@ parameters or alternatively it uses the given parameters.
 Fitting Noisy Data
 ------------------
 
-When the data to be fit includes noise, the gaussian process model can be
+When the data to be fit includes noise, the Gaussian process model can be
 used by specifying the variance of the noise for each point.
-:class:`GaussianProcess` takes a parameter ``nugget`` which represents a
-variance value added to the diagonal of the correlation matrix.
-**Note that to use nugget as a variance,** ``corr='squared_exponential'``
-**should be used**.
+:class:`GaussianProcess` takes a parameter ``nugget`` which 
+is added to the diagonal of the correlation matrix between training points:
+in general this is a type of Tikhonov regularization.  In the special case
+of a squared-exponential correlation function, this normalization is 
+equivalent to specifying a fractional variance in the input.  That is
+
+.. math::
+   \mathrm{nugget}_i = \left[\frac{\sigma_i}{y_i}\right]^2
+
 With ``nugget`` and ``corr`` properly set, Gaussian Processes can be
 used to robustly recover an underlying function from noisy data:
 
-.. figure:: ../auto_examples/gaussian_process/images/plot_gp_regression_noise_1.png
-   :target: ../auto_examples/gaussian_process/plot_gp_regression_noise.html
+.. figure:: ../auto_examples/gaussian_process/images/plot_gp_regression_2.png
+   :target: ../auto_examples/gaussian_process/plot_gp_regression.html
    :align: center
 
 .. topic:: Other examples
 
   * :ref:`example_gaussian_process_plot_gp_probabilistic_classification_after_regression.py`
-
-  * :ref:`example_gaussian_process_plot_gp_regression.py`
 
 
 

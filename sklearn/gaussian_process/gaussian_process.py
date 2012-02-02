@@ -138,9 +138,10 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         Introduce a nugget effect to allow smooth predictions from noisy
         data.  If nugget is an ndarray, it must be the same length as the
         number of data points used for the fit.
-        If the squared exponential correlation function is used, then
-        specifying a nugget is equivalent to specifying a variance
-        for each input point.
+        The nugget is added to the diagonal of the assumed training covariance;
+        in this way it acts as a Tikhonov regularization in the problem.  In
+        the special case of the squared exponential correlation function, the
+        nugget mathematically represents the variance of the input values.
         Default assumes a nugget close to machine precision for the sake of
         robustness (nugget = 10. * MACHINE_EPSILON).
 
