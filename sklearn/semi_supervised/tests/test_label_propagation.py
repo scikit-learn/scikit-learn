@@ -21,7 +21,7 @@ def test_fit_transduction():
     labels = [0, 1, -1]
     for estimator, parameters in ESTIMATORS:
         clf = estimator(**parameters).fit(samples, labels)
-        nose.tools.assert_equ(clf.transduction_[2], 1)
+        nose.tools.assert_equal(clf.transduction_[2], 1)
 
 
 def test_distribution():
