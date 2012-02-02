@@ -75,7 +75,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
 
     Parameters
     ----------
-    kernel : {'knn', 'rbg'}
+    kernel : {'knn', 'rbf'}
         String identifier for kernel function to use.
         Only 'rbf' and 'knn' kernels are currently supported..
 
@@ -121,12 +121,12 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
             else:
                 return self.nn_fit.kneighbors(y, return_distance=False)
         else:
-            raise ValueError("%s is not a valid kernel. Only rbf \
-                             supported at this time" % self.kernel)
+            raise ValueError("%s is not a valid kernel. Only rbf and knn"
+                             " are supported at this time" % self.kernel)
 
     def _build_graph(self):
-        raise NotImplementedError("Graph construction must be implemented \
-                to fit a label propagation model.")
+        raise NotImplementedError("Graph construction must be implemented"
+                                  " to fit a label propagation model.")
 
     def predict(self, X):
         """Performs inductive inference across the model.
@@ -179,9 +179,11 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         return probabilities
 
     def fit(self, X, y):
-        """
-        Fit a semi-supervised label propagation model based on input data
-        matrix X and corresponding label matrix Y.
+        """Fit a semi-supervised label propagation model based
+
+        All the input data is provided matrix X (labeled and unlabeled)
+        and corresponding label matrix y with a dedicated marker value for
+        unlabeled samples.
 
         Parameters
         ----------
@@ -256,7 +258,7 @@ class LabelPropagation(BaseLabelPropagation):
 
     Parameters
     ----------
-    kernel : {'knn', 'rbg'}
+    kernel : {'knn', 'rbf'}
         String identifier for kernel function to use.
         Only 'rbf' and 'knn' kernels are currently supported..
     gamma : float
@@ -295,12 +297,10 @@ class LabelPropagation(BaseLabelPropagation):
     LabelSpreading : Alternate label proagation strategy more robust to noise
     """
     def _build_graph(self):
-        """
-        Builds a matrix representing a fully connected graph between each point
-        in the dataset.
+        """Matrix representing a fully connected graph between each sample
 
         This basic implementation creates a non-stochastic affinity matrix, so
-        class distributions will exceed 1 (normalization may be desired)
+        class distributions will exceed 1 (normalization may be desired).
         """
         if self.kernel == 'knn':
             self.nn_fit = None
@@ -314,16 +314,17 @@ class LabelPropagation(BaseLabelPropagation):
 
 
 class LabelSpreading(BaseLabelPropagation):
-    """
-    Similar to the basic Label Propgation algorithm, but uses affinity matrix
-    based on the normalized graph Laplacian and soft clamping across the
-    labels.
+    """LabelSpreading model for semi-supervised learning
+
+    This model is similar to the basic Label Propgation algorithm,
+    but uses affinity matrix based on the normalized graph Laplacian
+    and soft clamping across the labels.
 
     Parameters
     ----------
-    kernel : {'knn', 'rbg'}
+    kernel : {'knn', 'rbf'}
         String identifier for kernel function to use.
-        Only 'rbf' and 'knn' kernels are currently supported..
+        Only 'rbf' and 'knn' kernels are currently supported.
     gamma : float
       parameter for rbf kernel
     n_neighbors : integer > 0
