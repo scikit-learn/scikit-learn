@@ -242,35 +242,9 @@ class GMM(BaseEstimator):
         _validate_covars(covars, self._covariance_type, self.n_components)
         self.covars_ = covars
 
-    def _get_means(self):
-        """Mean parameters for each mixture component
-        array, shape ``(n_states, n_features)``."""
-        return self.means_
-
-    def _set_means(self, means):
-        """Provide values for means"""
-        means = np.asarray(means)
-        if means.shape[0] != self.n_components:
-            raise ValueError('means must have shape ' +
-                    '(n_components, n_features)')
-        self.means_ = means.copy()
-
     def __repr__(self):
         return "GMM(covariance_type='%s', n_components=%s)" % \
             (self._covariance_type, self.n_components)
-
-    def _get_weights(self):
-        """Mixing weights for each mixture component.
-        array, shape ``(n_states,)``"""
-        return self.weights_
-
-    def _set_weights(self, weights):
-        """Provide value for micture weights"""
-        if len(weights) != self.n_components:
-            raise ValueError('weights must have length n_components')
-        if not np.allclose(np.sum(weights), 1.0):
-            raise ValueError('weights must sum to 1.0')
-        self.weights_ = np.asarray(weights).copy()
 
     def eval(self, X):
         """Evaluate the model on data

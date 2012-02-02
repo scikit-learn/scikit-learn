@@ -42,7 +42,7 @@ def make_ellipses(gmm, ax):
         angle = np.arctan2(u[1], u[0])
         angle = 180 * angle / np.pi  # convert to degrees
         v *= 9
-        ell = mpl.patches.Ellipse(gmm._get_means()[n, :2], v[0], v[1],
+        ell = mpl.patches.Ellipse(gmm.means_[n, :2], v[0], v[1],
                                   180 + angle, color=color)
         ell.set_clip_box(ax.bbox)
         ell.set_alpha(0.5)

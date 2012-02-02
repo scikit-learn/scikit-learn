@@ -507,8 +507,7 @@ class DPGMM(GMM):
                 random_state=self.random_state).fit(X).cluster_centers_[::-1]
 
         if 'w' in init_params or not hasattr(self, 'weights_'):
-            self._set_weights(np.tile(1.0 / self.n_components,
-                                      self.n_components))
+            self.weights_ = np.tile(1.0 / self.n_components, self.n_components)
 
         if 'c' in init_params or not hasattr(self, 'precs_'):
             if self._covariance_type == 'spherical':

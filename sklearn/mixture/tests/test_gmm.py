@@ -112,16 +112,8 @@ def test_GMM_attributes():
 
     g.weights_ = weights
     assert_array_almost_equal(g.weights_, weights)
-    assert_raises(ValueError, g._set_weights, 2 * weights)
-    assert_raises(ValueError, g._set_weights, [])
-    assert_raises(ValueError, g._set_weights,
-                      np.zeros((n_components - 2, n_features)))
-
     g.means_ = means
     assert_array_almost_equal(g.means_, means)
-    assert_raises(ValueError, g._set_means, [])
-    assert_raises(ValueError, g._set_means,
-                      np.zeros((n_components - 2, n_features)))
 
     covars = (0.1 + 2 * rng.rand(n_components, n_features)) ** 2
     g.covars_ = covars
@@ -161,7 +153,7 @@ class GMMTester():
         # picks the actual component used to generate the observations.
         g.means_ = 20 * self.means
         g.covars_ = self.covars[self.covariance_type]
-        g._set_weights(self.weights)
+        g.weights_ = self.weights
 
         gaussidx = np.repeat(range(self.n_components), 5)
         n_samples = len(gaussidx)
@@ -183,7 +175,7 @@ class GMMTester():
         # picks the actual component used to generate the observations.
         g.means_ = 20 * self.means
         g.covars_ = np.maximum(self.covars[self.covariance_type], 0.1)
-        g._set_weights(self.weights)
+        g.weights_ = self.weights
 
         samples = g.sample(n)
         self.assertEquals(samples.shape, (n, self.n_features))
@@ -191,7 +183,7 @@ class GMMTester():
     def test_train(self, params='wmc'):
         g = mixture.GMM(n_components=self.n_components,
                         covariance_type=self.covariance_type)
-        g._set_weights(self.weights)
+        g.weights_ = self.weights
         g.means_ = self.means
         g.covars_ = 20 * self.covars[self.covariance_type]
 

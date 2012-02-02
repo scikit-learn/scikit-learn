@@ -650,19 +650,6 @@ class GaussianHMM(_BaseHMM):
         """
         return self._covariance_type
 
-    def _get_means(self):
-        """Mean parameters for each state."""
-        return self._means
-
-    def _set_means(self, means):
-        means = np.asarray(means)
-        if hasattr(self, 'n_features') and \
-               means.shape != (self.n_components, self.n_features):
-            raise ValueError('means must have shape' +
-                    '(n_components, n_features)')
-        self._means = means.copy()
-        self.n_features = self._means.shape[1]
-
     def _get_covars(self):
         """Return covars as a full matrix."""
         if self.covariance_type == 'full':
