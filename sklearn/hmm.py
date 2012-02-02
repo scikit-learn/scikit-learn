@@ -574,7 +574,7 @@ class GaussianHMM(_BaseHMM):
     n_components : int
         Number of states.
 
-    cvtype : string
+    _covariance_type : string
         String describing the type of covariance parameters to
         use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
         Defaults to 'diag'.
@@ -602,7 +602,7 @@ class GaussianHMM(_BaseHMM):
 
     covars : array
         Covariance parameters for each state.  The shape depends on
-        `covariance_type`::
+        `_covariance_type`::
             (`n_components`,)                   if 'spherical',
             (`n_features`, `n_features`)              if 'tied',
             (`n_components`, `n_features`)           if 'diag',
@@ -612,13 +612,12 @@ class GaussianHMM(_BaseHMM):
     --------
     >>> from sklearn.hmm import GaussianHMM
     >>> GaussianHMM(n_components=2)
-    GaussianHMM(covars_prior=0.01, covars_weight=1, covariance_type='diag',
-          means_prior=None, means_weight=0, n_components=2,
-          startprob=array([ 0.5,  0.5]), startprob_prior=1.0,
-          transmat=array([[ 0.5,  0.5],
-           [ 0.5,  0.5]]),
-          transmat_prior=1.0)
-
+    ...                             #doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+    GaussianHMM(covariance_type='diag', n_components=2, covars_prior=0.01, 
+    covars_weight=1, means_prior=None, means_weight=0, startprob=[ 0.5  0.5], 
+    transmat=[[ 0.5  0.5]
+    [ 0.5  0.5]], startprob_prior=1.0, transmat_prior=1.0)
+ 
 
     See Also
     --------
@@ -643,22 +642,28 @@ class GaussianHMM(_BaseHMM):
         self.covars_prior = covars_prior
         self.covars_weight = covars_weight
 
-    def covariance_type(self):
-        """Covariance type of the model.
-
-        Must be one of 'spherical', 'tied', 'diag', 'full'.
-        """
-        return self._covariance_type
+    def __repr__(self):
+        startprob = str(self._get_startprob())
+        transmat = str(self._get_transmat())
+        return "GaussianHMM(covariance_type='%s', n_components=%s, " %\
+            (self._covariance_type, self.n_components) +\
+            "covars_prior=%s, " % self.covars_prior +\
+            "covars_weight=%s, " % self.covars_weight +\
+            "means_prior=%s, " % self.means_prior +\
+            "means_weight=%s, " % self.means_weight +\
+            "startprob=%s, transmat=%s, " % (startprob, transmat) +\
+            "startprob_prior=%s, " % self.startprob_prior +\
+            "transmat_prior=%s)" % self.transmat_prior
 
     def _get_covars(self):
         """Return covars as a full matrix."""
-        if self.covariance_type == 'full':
+        if self._covariance_type == 'full':
             return self._covars
-        elif self.covariance_type == 'diag':
+        elif self._covariance_type == 'diag':
             return [np.diag(cov) for cov in self._covars]
-        elif self.covariance_type == 'tied':
+        elif self._covariance_type == 'tied':
             return [self._covars] * self.n_components
-        elif self.covariance_type == 'spherical':
+        elif self._covariance_type == 'spherical':
             return [np.eye(self.n_features) * f for f in self._covars]
 
     def _set_covars(self, covars):
@@ -911,11 +916,9 @@ class GMMHMM(_BaseHMM):
     >>> from sklearn.hmm import GMMHMM
     >>> GMMHMM(n_components=2, n_mix=10, covariance_type='diag')
     ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    GMMHMM(covariance_type='diag', gmms=[gmm._covariance_type='diag', 
-           n_components=10),
-        GMM(covariance_type='diag', n_components=10)], n_components=2, n_mix=10,
-        startprob=array([ 0.5,  0.5]), startprob_prior=1.0, transmat=array([[
-            0.5,  0.5], [ 0.5,  0.5]]), transmat_prior=1.0)
+    GMMHMM(covariance_type='diag', n_components=2, n_mix=10, 
+    startprob=[ 0.5  0.5], transmat=[[ 0.5  0.5]
+    [ 0.5  0.5]], startprob_prior=1.0, transmat_prior=1.0)
 
     See Also
     --------
@@ -939,7 +942,7 @@ class GMMHMM(_BaseHMM):
         # XXX: Hotfit for n_mix that is incompatible with the scikit's
         # BaseEstimator API
         self.n_mix = n_mix
-        self.covariance_type = covariance_type
+        self._covariance_type = covariance_type
         if gmms is None:
             gmms = []
             for x in xrange(self.n_components):
@@ -949,6 +952,15 @@ class GMMHMM(_BaseHMM):
                     g = GMM(n_mix, covariance_type=covariance_type)
                 gmms.append(g)
         self.gmms = gmms
+
+    def __repr__(self):
+        startprob = str(self._get_startprob())
+        transmat = str(self._get_transmat())
+        return "GMMHMM(covariance_type='%s', n_components=%s, n_mix=%s, " %\
+            (self._covariance_type, self.n_components, self.n_mix) +\
+            "startprob=%s, transmat=%s, " %(startprob, transmat) +\
+            "startprob_prior=%s, " % self.startprob_prior +\
+            "transmat_prior=%s)" % self.transmat_prior
 
     def _compute_log_likelihood(self, obs):
         return np.array([g.score(obs) for g in self.gmms]).T
