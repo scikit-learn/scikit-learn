@@ -40,8 +40,8 @@ label_spread.fit(data, labels)
 ###############################################################################
 # Plot output labels
 output_labels = label_spread.transduction_
-pl.figure(figsize=(4.5, 8))
-pl.subplot(2, 1, 1)
+pl.figure(figsize=(8.5, 4))
+pl.subplot(1, 2, 1)
 plot_outer_labeled, = pl.plot(outer_circ_xs[0], outer_circ_ys[0], 'rs')
 plot_unlabeled, = pl.plot(np.append(outer_circ_xs[1:], inner_circ_xs[1:]),
                           np.append(outer_circ_ys[1:], inner_circ_ys[1:]),
@@ -52,7 +52,7 @@ pl.legend((plot_outer_labeled, plot_inner_labeled, plot_unlabeled),
           numpoints=1, shadow=False)
 pl.title("Raw data (2 classes=red and blue)")
 
-pl.subplot(2, 1, 2)
+pl.subplot(1, 2, 2)
 output_label_array = np.asarray(output_labels)
 outer_numbers = np.where(output_label_array == outer)
 inner_numbers = np.where(output_label_array == inner)
@@ -62,5 +62,5 @@ pl.legend((plot_outer, plot_inner), ('Outer Learned', 'Inner Learned'),
           'upper left', numpoints=1, shadow=False)
 pl.title("Labels learned with Label Spreading (KNN)")
 
-pl.subplots_adjust(0.12, 0.03, 0.9, 0.96, 0.2, 0.2)
+pl.subplots_adjust(left=0.07, bottom=0.07, right=0.93, top=0.92)
 pl.show()
