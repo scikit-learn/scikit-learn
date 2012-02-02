@@ -90,15 +90,20 @@ uses.
    :toctree: generated/
    :template: class.rst
 
-   cross_validation.LeaveOneOut
-   cross_validation.LeavePOut
-   cross_validation.KFold
-   cross_validation.StratifiedKFold
-   cross_validation.LeaveOneLabelOut
-   cross_validation.LeavePLabelOut
    cross_validation.Bootstrap
+   cross_validation.KFold
+   cross_validation.LeaveOneLabelOut
+   cross_validation.LeaveOneOut
+   cross_validation.LeavePLabelOut
+   cross_validation.LeavePOut
+   cross_validation.StratifiedKFold
    cross_validation.ShuffleSplit
 
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   cross_validation.cross_val_score
 
 .. _datasets_ref:
 
