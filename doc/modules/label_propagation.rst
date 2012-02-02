@@ -1,8 +1,11 @@
-.. _label_propagation:
+.. _semi_supervised:
 
 ===================================================
-Label Propagation
+Semi-Supervised
 ===================================================
+
+Label Propagation
+=================
 
 `sklearn.semi_supervised.label_propagation` contains a few variations of semi-supervised
 graph inference algorithms. In the semi-supervised classification setting, the
@@ -19,15 +22,13 @@ A few features available in this model:
 .. topic:: Input labels
 
     It is important to assign an identifier to unlabeled points along with the
-    labeled data when training the model with the `fit` method.
+    labeled data when training the model with the `fit` method. The identifier
+    that this implementation uses the integer value :math:`-1`.
 
 This module provides two label propagation models: :class:`LabelPropagation` and
 :class:`LabelSpreading`. Both work by constructing a similarity graph over all
 items in the input dataset. They differ in modifications to the similarity
 matrix that graph and the clamping effect on the label distributions.
-
-Clamping
-========
 
 Clamping allows the algorithm to change the weight of the true ground labeled
 data to some degree. The :class:`LabelPropagation` algorithm performs hard
@@ -36,19 +37,12 @@ can be relaxed, to say :math:`\alpha=0.8`, which means that we will always
 retain 80 percent of our original label distribution, but the algorithm gets to
 change it's confidence of the distribution within 20 percent.
 
-Graph Laplacian
-===============
-
 :class:`LabelPropagation` uses the raw similarity matrix constructed from the
 data with no modifications. In contrast, :class:`LabelSpreading` minimizes a
 loss function that has regularization properties. The algorithm iterates on
 a modified version of the original graph and normalizes the edge weights by
 computing the normalized graph Laplacian matrix. This procedure is also used in
 :class:`sklearn.cluster.SpectralClustering`.
-
-
-Kernel Functions
-================
 
 Label propagation models have two built-in kernel methods. Choice of kernel
 effects both scalability and performance of the algorithms. The following are
@@ -67,16 +61,16 @@ algorithm can lead to prohibitively long running times. On the other hand,
 the KNN kernel will produce a much more memory friendly sparse matrix
 which can drastically reduce running times.
 
-Examples
-========
+.. topic:: Examples
+
   * :ref:`example_semi_supervised_plot_label_propagation_versus_svm_iris.py`
   * :ref:`example_semi_supervised_plot_label_propagation_structure.py`
 
 
-References
-==========
-[1] Yoshua Bengio, Olivier Delalleau, Nicolas Le Roux. In Semi-Supervised
-Learning (2006), pp. 193-216
+.. topic:: References
 
-[2] Olivier Delalleau, Yoshua Bengio, Nicolas Le Roux. Efficient
-Non-Parametric Function Induction in Semi-Supervised Learning. AISTAT 2005
+    [1] Yoshua Bengio, Olivier Delalleau, Nicolas Le Roux. In Semi-Supervised
+    Learning (2006), pp. 193-216
+
+    [2] Olivier Delalleau, Yoshua Bengio, Nicolas Le Roux. Efficient
+    Non-Parametric Function Induction in Semi-Supervised Learning. AISTAT 2005
