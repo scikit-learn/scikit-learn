@@ -33,6 +33,10 @@ Changelog
     - :ref:`randomized_1`: Randomized sparse linear models for feature
       selection, by `Alexandre Gramfort`_ and `Gael Varoquaux`_
 
+    - :ref:`label_propagation` for semi-supervised learning, by Clay
+      Woolam. **Note** the semi-supervised API is still work in progress,
+      and may change.
+
 API changes summary
 -------------------
 
