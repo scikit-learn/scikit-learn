@@ -7,7 +7,7 @@ from numpy.testing import assert_almost_equal
 
 from scipy import stats
 
-from .. import FastICA, fastica
+from .. import FastICA, fastica, PCA
 from ..fastica_ import _gs_decorrelation
 
 
@@ -70,11 +70,18 @@ def test_fastica(add_noise=False):
     algorithm = ['parallel', 'deflation']
     non_linearity = ['logcosh', 'exp', 'cube']
     for nl in non_linearity:
+      for whiten in True, False:
         for algo in algorithm:
-            k_, mixing_, s_ = fastica(m.T, fun=nl, algorithm=algo)
+            if whiten:
+                k_, mixing_, s_ = fastica(m.T, fun=nl, algorithm=algo)
+            else:
+                X = PCA(n_components=2, whiten=True).fit_transform(m.T)
+                k_, mixing_, s_ = fastica(X, fun=nl, algorithm=algo,
+                                         whiten=False)
             s_ = s_.T
             # Check that the mixing model described in the docstring holds:
-            assert_almost_equal(s_, np.dot(np.dot(mixing_, k_), m))
+            if whiten:
+                assert_almost_equal(s_, np.dot(np.dot(mixing_, k_), m))
 
             center_and_norm(s_)
             s1_, s2_ = s_
