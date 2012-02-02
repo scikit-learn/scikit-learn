@@ -12,6 +12,9 @@ even with a small amount of labeled data.
 """
 print __doc__
 
+# Authors: Clay Woolam <clay@woolam.org>
+# Licence: BSD
+
 import numpy as np
 import pylab as pl
 from sklearn import datasets

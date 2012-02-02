@@ -17,6 +17,9 @@ model with their true labels.
 """
 print __doc__
 
+# Authors: Clay Woolam <clay@woolam.org>
+# Licence: BSD
+
 import numpy as np
 import pylab as pl
 from scipy import stats

@@ -62,6 +62,7 @@ from ..utils.extmath import safe_sparse_dot
 from ..neighbors.unsupervised import NearestNeighbors
 
 # Authors: Clay Woolam <clay@woolam.org>
+# Licence: BSD
 
 EPSILON = 1e-9
 
