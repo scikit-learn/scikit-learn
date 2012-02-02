@@ -415,7 +415,7 @@ From text
    kernel_approximation.AdditiveChi2Sampler
    kernel_approximation.SkewedChi2Sampler
 
-:mode:`sklearn.semi_supervised` Semi-Supervised Learning
+:mod:`sklearn.semi_supervised` Semi-Supervised Learning
 ========================================================
 
 .. automodule:: sklearn.semi_supervised
@@ -427,6 +427,7 @@ From text
 .. autosummary::
    :toctree: generated/
    :template: class.rst
+
    semi_supervised.LabelPropagation
    semi_supervised.LabelSpreading
 

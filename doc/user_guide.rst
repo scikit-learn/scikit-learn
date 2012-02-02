@@ -19,6 +19,7 @@
    tutorial
    supervised_learning.rst
    unsupervised_learning.rst
+   semi_supervised_learning.rst
    model_selection.rst
    data_transforms.rst
    Dataset loading utilities <datasets/index.rst>

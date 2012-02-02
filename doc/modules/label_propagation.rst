@@ -15,8 +15,9 @@ A few features available in this model:
   * Can be used for classification and regression tasks
   * Kernel methods to project data into alternate dimensional spaces
 
-.. currentmodule:: sklearn.semi_supervised.label_propagation
-.. topic:: Input labels for semi-supervised learning
+.. currentmodule:: sklearn.semi_supervised
+.. topic:: Input labels
+
     It is important to assign an identifier to unlabeled points along with the
     labeled data when training the model with the `fit` method.
 
@@ -41,9 +42,9 @@ Graph Laplacian
 :class:`LabelPropagation` uses the raw similarity matrix constructed from the
 data with no modifications. In contrast, :class:`LabelSpreading` minimizes a
 loss function that has regularization properties. The algorithm iterates on
-a modified version of the original graph and normalizing the edge weights by
+a modified version of the original graph and normalizes the edge weights by
 computing the normalized graph Laplacian matrix. This procedure is also used in
-:class:`SpectralClustering`.
+:class:`sklearn.cluster.SpectralClustering`.
 
 
 Kernel Functions
@@ -53,7 +54,7 @@ Label propagation models have two built-in kernel methods. Choice of kernel
 effects both scalability and performance of the algorithms. The following are
 available:
 
-  * rbf (:math:`exp(-\gamma |x-x'|^2), \gamma > 0`). :math:`\gamma` is
+  * rbf (:math:`\exp(-\gamma |x-y|^2), \gamma > 0`). :math:`\gamma` is
     specified by keyword gamma.
 
   * knn (:math:`1[x' \in kNN(x)]`). :math:`k` is specified by keyword

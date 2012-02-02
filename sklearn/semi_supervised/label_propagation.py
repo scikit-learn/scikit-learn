@@ -352,7 +352,7 @@ class LabelSpreading(BaseLabelPropagation):
 
     See Also
     --------
-    Label Propagation : Unregularized graph based semi-supervised learning
+    LabelPropagation : Unregularized graph based semi-supervised learning
     """
 
     def __init__(self, kernel='rbf', gamma=20, n_neighbors=7, alpha=0.2,
