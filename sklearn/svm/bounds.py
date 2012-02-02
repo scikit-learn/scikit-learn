@@ -38,8 +38,9 @@ def l1_min_c(X, y, loss='l2', fit_intercept=True, intercept_scaling=1.0,
         It must match the fit() method parameter.
 
     scale_C : bool
-        Scale C with number of samples. It makes the setting of C independant
+        Scale C with number of samples. It makes the setting of C independent
         of the number of samples.
+        WARNING: This parameter will disappear in v0.12.
 
     Returns
     -------

@@ -58,6 +58,7 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, SelectorMixin):
     scale_C : bool
         Scale C with number of samples. It makes the setting of C independent
         of the number of samples.
+        WARNING: This parameter will disappear in v0.12.
 
     Attributes
     ----------
@@ -131,8 +132,9 @@ class SVC(BaseLibSVM, ClassifierMixin):
         Specify the size of the kernel cache (in MB)
 
     scale_C : bool
-        Scale C with number of samples. It makes the setting of C independant
+        Scale C with number of samples. It makes the setting of C independent
         of the number of samples.
+        WARNING: This parameter will disappear in v0.12.
 
     Attributes
     ----------
@@ -331,8 +333,9 @@ class SVR(BaseLibSVM, RegressorMixin):
         Specify the size of the kernel cache (in MB)
 
     scale_C : bool
-        Scale C with number of samples. It makes the setting of C independant
+        Scale C with number of samples. It makes the setting of C independent
         of the number of samples.
+        WARNING: This parameter will disappear in v0.12.
 
     Attributes
     ----------
@@ -452,8 +455,9 @@ class NuSVR(BaseLibSVM, RegressorMixin):
         Specify the size of the kernel cache (in MB)
 
     scale_C : bool
-        Scale C with number of samples. It makes the setting of C independant
+        Scale C with number of samples. It makes the setting of C independent
         of the number of samples.
+        WARNING: This parameter will disappear in v0.12.
 
     Attributes
     ----------
@@ -563,8 +567,9 @@ class OneClassSVM(BaseLibSVM):
         Specify the size of the kernel cache (in MB)
 
     scale_C : bool
-        Scale C with number of samples. It makes the setting of C independant
+        Scale C with number of samples. It makes the setting of C independent
         of the number of samples.
+        WARNING: This parameter will disappear in v0.12.
 
     Attributes
     ----------
