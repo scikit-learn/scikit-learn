@@ -252,7 +252,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
 
     if whiten:
         # Centering the columns (ie the variables)
-        X = X - X.mean(axis= -1)[:, np.newaxis]
+        X = X - X.mean(axis=-1)[:, np.newaxis]
 
         # Whitening and preprocessing by PCA
         u, d, _ = linalg.svd(X, full_matrices=False)
@@ -268,7 +268,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         # X must be casted to floats to avoid typing issues with numpy
         # 2.0 and the line below
         X1 = as_float_array(X, copy=True)
-    
+
     if w_init is None:
         w_init = np.random.normal(size=(n_components, n_components))
     else:
