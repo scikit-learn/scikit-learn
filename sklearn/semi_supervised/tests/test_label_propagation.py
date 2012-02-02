@@ -52,4 +52,3 @@ def test_predict_proba():
         clf = estimator(**parameters).fit(samples, labels)
         assert_array_almost_equal(clf.predict_proba([[1., 1.]]),
                 np.array([[0.5, 0.5]]))
-

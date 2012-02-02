@@ -64,7 +64,6 @@ def test_clone():
     assert_true(selector is not new_selector)
 
 
-
 def test_clone_2():
     """Tests that clone doesn't copy everything.
 
