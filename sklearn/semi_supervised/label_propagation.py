@@ -175,7 +175,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
             weight_matrices = weight_matrices.T
             probabilities = np.dot(weight_matrices, self.label_distributions_)
         normalizer = np.atleast_2d(np.sum(probabilities, axis=1)).T
-        np.divide(probabilities, normalizer, out=probabilities)
+        probabilities /= normalizer
         return probabilities
 
     def fit(self, X, y):
@@ -243,8 +243,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
             remaining_iter -= 1
 
         normalizer = np.sum(self.label_distributions_, axis=1)[:, np.newaxis]
-        np.divide(self.label_distributions_, normalizer,
-                  out=self.label_distributions_)
+        self.label_distributions_ /= normalizer
         # set the transduction item
         transduction = self.classes_[np.argmax(self.label_distributions_,
                 axis=1)]
@@ -310,8 +309,7 @@ class LabelPropagation(BaseLabelPropagation):
         if sparse.isspmatrix(affinity_matrix):
             affinity_matrix.data /= np.diag(np.array(normalizer))
         else:
-            np.divide(affinity_matrix, normalizer[:, np.newaxis],
-                    out=affinity_matrix)
+            affinity_matrix /= normalizer[:, np.newaxis]
         return affinity_matrix
 
 
