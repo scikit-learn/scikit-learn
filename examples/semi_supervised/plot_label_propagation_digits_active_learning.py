@@ -19,14 +19,11 @@ print __doc__
 
 import numpy as np
 import pylab as pl
-
 from scipy import stats
 
 from sklearn import datasets
 from sklearn.semi_supervised import label_propagation
-
-from sklearn.metrics import metrics
-from sklearn.metrics.metrics import confusion_matrix
+from sklearn.metrics import classification_report, confusion_matrix
 
 digits = datasets.load_digits()
 rng = np.random.RandomState(0)
@@ -56,17 +53,18 @@ for i in range(5):
     cm = confusion_matrix(true_labels, predicted_labels,
             labels=lp_model.classes_)
 
+    print ('Iteration %i ' + 70*'_') % i
     print "Label Spreading model: %d labeled & %d unlabeled (%d total)" %\
         (n_labeled_points, n_total_samples - n_labeled_points, n_total_samples)
 
-    print metrics.classification_report(true_labels, predicted_labels)
+    print classification_report(true_labels, predicted_labels)
 
     print "Confusion matrix"
     print cm
 
     # compute the entropies of transduced label distributions
     pred_entropies = stats.distributions.entropy(
-            lp_model.label_distributions_.T)
+                            lp_model.label_distributions_.T)
 
     # select five digit examples that the classifier is most uncertain about
     uncertainty_index = uncertainty_index = np.argsort(pred_entropies)[-5:]

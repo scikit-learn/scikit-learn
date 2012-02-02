@@ -422,6 +422,8 @@ From text
    :no-members:
    :no-inherited-members:
 
+**User guide:** See the :ref:`semi_supervised` section for further details.
+
 .. currentmodule:: sklearn
 
 .. autosummary::

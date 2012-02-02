@@ -4,32 +4,50 @@
 Semi-Supervised
 ===================================================
 
-Label Propagation
-=================
-
-`sklearn.semi_supervised.label_propagation` contains a few variations of semi-supervised
-graph inference algorithms. In the semi-supervised classification setting, the
-learning algorithm is fed both labeled and unlabeled data. The algorithm can better
-learn the total structure of the data by knowing how the unlabeled data is distributed.
-These algorithms can perform well when we have a very small amount of labeled points
-and a large amount of unlabeled points.
-
-A few features available in this model:
-  * Can be used for classification and regression tasks
-  * Kernel methods to project data into alternate dimensional spaces
-
 .. currentmodule:: sklearn.semi_supervised
-.. topic:: Input labels
+
+`Semi-supervised learning
+<http://en.wikipedia.org/wiki/Semi-supervised_learning>`_ is a situation
+in which in your training data some of the samples are not labeled. The
+semi-supervised estimators, in :mod:`sklean.semi_supervised` are able to
+make use of this addition unlabeled data to capture better the shape of
+the underlying data distribution and generalize better to new samples.
+These algorithms can perform well when we have a very small amount of
+labeled points and a large amount of unlabeled points.
+
+.. topic:: Unlabeled entries in `y`
 
     It is important to assign an identifier to unlabeled points along with the
     labeled data when training the model with the `fit` method. The identifier
     that this implementation uses the integer value :math:`-1`.
 
-This module provides two label propagation models: :class:`LabelPropagation` and
-:class:`LabelSpreading`. Both work by constructing a similarity graph over all
-items in the input dataset. They differ in modifications to the similarity
-matrix that graph and the clamping effect on the label distributions.
+Label Propagation
+=================
 
+Label propagation denote a few variations of semi-supervised graph
+inference algorithms. 
+
+A few features available in this model:
+  * Can be used for classification and regression tasks
+  * Kernel methods to project data into alternate dimensional spaces
+
+`scikit-learn` provides two label propagation models:
+:class:`LabelPropagation` and :class:`LabelSpreading`. Both work by
+constructing a similarity graph over all items in the input dataset. 
+
+.. figure:: ../auto_examples/semi_supervised/images/plot_label_propagation_structure_1.png
+    :target: ../auto_examples/semi_supervised/plot_label_propagation_structure.html
+    :align: center
+    :scale: 60%
+
+    **An illustration of label-propagation:** *the structure of unlabeled
+    observations is consistent with the class structure, and thus the
+    class label can be propagated to the unlabeled observations of the
+    training set.*
+
+:class:`LabelPropagation` and :class:`LabelSpreading`
+differ in modifications to the similarity matrix that graph and the
+clamping effect on the label distributions.
 Clamping allows the algorithm to change the weight of the true ground labeled
 data to some degree. The :class:`LabelPropagation` algorithm performs hard
 clamping of input labels, which means :math:`\alpha=1`. This clamping factor
@@ -42,7 +60,7 @@ data with no modifications. In contrast, :class:`LabelSpreading` minimizes a
 loss function that has regularization properties. The algorithm iterates on
 a modified version of the original graph and normalizes the edge weights by
 computing the normalized graph Laplacian matrix. This procedure is also used in
-:class:`sklearn.cluster.SpectralClustering`.
+:ref:`spectral_clustering`.
 
 Label propagation models have two built-in kernel methods. Choice of kernel
 effects both scalability and performance of the algorithms. The following are
@@ -65,7 +83,8 @@ which can drastically reduce running times.
 
   * :ref:`example_semi_supervised_plot_label_propagation_versus_svm_iris.py`
   * :ref:`example_semi_supervised_plot_label_propagation_structure.py`
-
+  * :ref:`example_semi_supervised_plot_label_propagation_versus_svm_iris.py`
+  * :ref:`example_semi_supervised_plot_label_propagation_digits_active_learning.py`
 
 .. topic:: References
 
@@ -74,3 +93,5 @@ which can drastically reduce running times.
 
     [2] Olivier Delalleau, Yoshua Bengio, Nicolas Le Roux. Efficient
     Non-Parametric Function Induction in Semi-Supervised Learning. AISTAT 2005
+    http://research.microsoft.com/en-us/people/nicolasl/efficient_ssl.pdf
+
