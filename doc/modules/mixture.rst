@@ -84,8 +84,8 @@ Disadvantages of expectation-maximization:
    or information theoretical criteria to decide how many components to use 
    in the absence of external cues.
 
- .. figure:: ../auto_examples/mixture/images/plot_gmm_model_selection_1.png
-   :target: ../auto_examples/mixture/plot_gmm_model_selection.html
+ .. figure:: ../auto_examples/mixture/images/plot_gmm_selection_1.png
+   :target: ../auto_examples/mixture/plot_gmm_selection.html
    :align: center
    :scale: 50%
 
