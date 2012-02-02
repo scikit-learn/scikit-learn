@@ -50,21 +50,24 @@ Learning (2006), pp. 193-216
 Non-Parametric Function Induction in Semi-Supervised Learning. AISTAT 2005
 """
 
+# Authors: Clay Woolam <clay@woolam.org>
+# Licence: BSD
+
 import numpy as np
 from scipy import sparse
 
 from ..base import BaseEstimator, ClassifierMixin
 from ..metrics.pairwise import rbf_kernel
 from ..utils.graph import graph_laplacian
-
 from ..utils.extmath import safe_sparse_dot
-
 from ..neighbors.unsupervised import NearestNeighbors
 
-# Authors: Clay Woolam <clay@woolam.org>
-# Licence: BSD
 
-EPSILON = 1e-9
+### Helper functions
+
+def _not_converged(y_truth, y_prediction, tol=1e-3):
+    """basic convergence check"""
+    return np.abs(y_truth - y_prediction).sum() > tol
 
 
 class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
@@ -72,9 +75,9 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
 
     Parameters
     ----------
-    kernel : string
+    kernel : {'knn', 'rbg'}
         String identifier for kernel function to use.
-        Only 'rbf' kernel is currently supported..
+        Only 'rbf' and 'knn' kernels are currently supported..
 
     gamma : float
         Parameter for rbf kernel
@@ -86,11 +89,12 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         Change maximum number of iterations allowed
 
     tol : float
-        Threshold to consider the system at steady state
+        Convergence tolerance: threshold to consider the system at steady
+        state
     """
 
     def __init__(self, kernel='rbf', gamma=20, n_neighbors=7,
-            alpha=1, max_iters=30, tol=1e-3):
+                 alpha=1, max_iters=30, tol=1e-3):
         self.max_iters = max_iters
         self.tol = tol
 
@@ -253,9 +257,9 @@ class LabelPropagation(BaseLabelPropagation):
 
     Parameters
     ----------
-    kernel : string
-      string identifier for kernel function to use
-      only 'rbf' kernel is currently supported
+    kernel : {'knn', 'rbg'}
+        String identifier for kernel function to use.
+        Only 'rbf' and 'knn' kernels are currently supported..
     gamma : float
       parameter for rbf kernel
     n_neighbors : integer > 0
@@ -265,7 +269,8 @@ class LabelPropagation(BaseLabelPropagation):
     max_iters : float
       change maximum number of iterations allowed
     tol : float
-      threshold to consider the system at steady state
+      Convergence tolerance: threshold to consider the system at steady
+      state
 
     Examples
     --------
@@ -318,9 +323,9 @@ class LabelSpreading(BaseLabelPropagation):
 
     Parameters
     ----------
-    kernel : string
-      string identifier for kernel function to use
-      only 'rbf' kernel is currently supported
+    kernel : {'knn', 'rbg'}
+        String identifier for kernel function to use.
+        Only 'rbf' and 'knn' kernels are currently supported..
     gamma : float
       parameter for rbf kernel
     n_neighbors : integer > 0
@@ -328,9 +333,10 @@ class LabelSpreading(BaseLabelPropagation):
     alpha : float
       clamping factor
     max_iters : float
-      change maximum number of iterations allowed
+      maximum number of iterations allowed
     tol : float
-      threshold to consider the system at steady state
+      Convergence tolerance: threshold to consider the system at steady
+      state
 
     Examples
     --------
@@ -357,7 +363,7 @@ class LabelSpreading(BaseLabelPropagation):
     """
 
     def __init__(self, kernel='rbf', gamma=20, n_neighbors=7, alpha=0.2,
-            max_iters=30, tol=1e-3):
+                 max_iters=30, tol=1e-3):
         # this one has different base parameters
         super(LabelSpreading, self).__init__(kernel=kernel, gamma=gamma,
                 n_neighbors=n_neighbors, alpha=alpha,
@@ -378,10 +384,3 @@ class LabelSpreading(BaseLabelPropagation):
         else:
             laplacian.flat[::n_samples + 1] = 0.0  # set diag to 0.0
         return laplacian
-
-
-### Helper functions
-
-def _not_converged(y_truth, y_prediction, tol=1e-3):
-    """basic convergence check"""
-    return np.abs(y_truth - y_prediction).sum() > tol
