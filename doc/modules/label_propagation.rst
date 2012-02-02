@@ -55,12 +55,13 @@ can be relaxed, to say :math:`\alpha=0.8`, which means that we will always
 retain 80 percent of our original label distribution, but the algorithm gets to
 change it's confidence of the distribution within 20 percent.
 
-:class:`LabelPropagation` uses the raw similarity matrix constructed from the
-data with no modifications. In contrast, :class:`LabelSpreading` minimizes a
-loss function that has regularization properties. The algorithm iterates on
-a modified version of the original graph and normalizes the edge weights by
-computing the normalized graph Laplacian matrix. This procedure is also used in
-:ref:`spectral_clustering`.
+:class:`LabelPropagation` uses the raw similarity matrix constructed from
+the data with no modifications. In contrast, :class:`LabelSpreading`
+minimizes a loss function that has regularization properties, as such it
+is often more robust to noise. The algorithm iterates on a modified
+version of the original graph and normalizes the edge weights by
+computing the normalized graph Laplacian matrix. This procedure is also
+used in :ref:`spectral_clustering`.
 
 Label propagation models have two built-in kernel methods. Choice of kernel
 effects both scalability and performance of the algorithms. The following are
