@@ -1,5 +1,6 @@
 """ test the label propagation module """
 
+import nose
 import numpy as np
 
 from sklearn.semi_supervised import label_propagation
@@ -20,7 +21,7 @@ def test_fit_transduction():
     labels = [0, 1, -1]
     for estimator, parameters in ESTIMATORS:
         clf = estimator(**parameters).fit(samples, labels)
-        assert clf.transduction_[2] == 1
+        nose.tools.assert_equ(clf.transduction_[2], 1)
 
 
 def test_distribution():
@@ -52,6 +53,3 @@ def test_predict_proba():
         assert_array_almost_equal(clf.predict_proba([[1., 1.]]),
                 np.array([[0.5, 0.5]]))
 
-
-if __name__ == '__main__':
-    import nose
