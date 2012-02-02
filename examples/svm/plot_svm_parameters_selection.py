@@ -64,7 +64,7 @@ scores = np.array(scores).reshape(len(C_range), len(gamma_range))
 # Make a nice figure
 pl.figure(figsize=(8, 6))
 pl.subplots_adjust(left=0.15, right=0.95, bottom=0.15, top=0.95)
-pl.imshow(scores, interpolation='nearest', cmap=pl.cm.spectral)
+pl.imshow(scores, interpolation='nearest', cmap=pl.cm.autumn)
 pl.xlabel('gamma')
 pl.ylabel('C')
 pl.colorbar()

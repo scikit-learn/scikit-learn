@@ -10,6 +10,7 @@ from sklearn.svm import LinearSVC
 
 iris = load_iris()
 
+
 def test_transform_linear_model():
     for clf in (LogisticRegression(C=0.1),
                 LinearSVC(C=0.01, dual=False),

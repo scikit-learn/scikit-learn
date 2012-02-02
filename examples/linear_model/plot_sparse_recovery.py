@@ -40,6 +40,9 @@ precision-recall.
 """
 print __doc__
 
+# Author: Alexandre Gramfort and Gael Varoquaux
+# License: BSD
+
 import pylab as pl
 import numpy as np
 from scipy import linalg

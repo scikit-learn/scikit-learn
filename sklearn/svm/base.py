@@ -85,7 +85,7 @@ class BaseLibSVM(BaseEstimator):
             self.kernel = 'precomputed'
         else:
             self.kernel = kernel
-        if not scale_C:
+        if scale_C is None:
             warnings.warn('SVM: scale_C will be True by default in '
                           'scikit-learn 0.11', FutureWarning,
                           stacklevel=2)
@@ -175,21 +175,26 @@ class BaseLibSVM(BaseEstimator):
             self.gamma = 1.0 / X.shape[1]
         self.shape_fit_ = X.shape
 
-        params = self.get_params()
-        if 'scale_C' in params:
-            if params['scale_C']:
-                params['C'] = params['C'] / float(X.shape[0])
-            del params['scale_C']
-        if 'sparse' in params:
-            del params['sparse']
+        # set default parameters
+        C = self.C
+        if getattr(self, 'scale_C', False):
+            C = self.C / float(X.shape[0])
+        epsilon = self.epsilon
+        if epsilon is None:
+            epsilon = 0.1
 
+        # we don't pass **self.get_params() to allow subclasses to
+        # add other parameters to __init__
         self.support_, self.support_vectors_, self.n_support_, \
         self.dual_coef_, self.intercept_, self.label_, self.probA_, \
         self.probB_ = libsvm.fit(X, y,
             svm_type=solver_type, sample_weight=sample_weight,
             class_weight=class_weight,
             class_weight_label=class_weight_label,
-            **params)
+            kernel=self.kernel, C=C, nu=self.nu,
+            probability=self.probability, degree=self.degree,
+            shrinking=self.shrinking, tol=self.tol, cache_size=self.cache_size,
+            coef0=self.coef0, gamma=self.gamma, epsilon=epsilon)
 
     def _sparse_fit(self, X, y, class_weight=None, sample_weight=None):
         """
@@ -318,18 +323,20 @@ class BaseLibSVM(BaseEstimator):
                              "the number of features at training time" %
                              (n_features, self.shape_fit_[1]))
 
-        params = self.get_params()
-        if 'scale_C' in params:
-            del params['scale_C']
-        if "sparse" in params:
-            del params["sparse"]
+        epsilon = self.epsilon
+        if epsilon == None:
+            epsilon = 0.1
 
         svm_type = LIBSVM_IMPL.index(self.impl)
         return libsvm.predict(
             X, self.support_, self.support_vectors_, self.n_support_,
             self.dual_coef_, self.intercept_,
             self.label_, self.probA_, self.probB_,
-            svm_type=svm_type, **params)
+            svm_type=svm_type,
+            kernel=self.kernel, C=self.C, nu=self.nu,
+            probability=self.probability, degree=self.degree,
+            shrinking=self.shrinking, tol=self.tol, cache_size=self.cache_size,
+            coef0=self.coef0, gamma=self.gamma, epsilon=epsilon)
 
     def _sparse_predict(self, X):
         X = sp.csr_matrix(X, dtype=np.float64)
@@ -388,18 +395,19 @@ class BaseLibSVM(BaseEstimator):
     def _dense_predict_proba(self, X):
         X = self._compute_kernel(X)
 
-        params = self.get_params()
-        if 'scale_C' in params:
-            del params['scale_C']
-        if "sparse" in params:
-            del params["sparse"]
+        epsilon = self.epsilon
+        if epsilon == None:
+            epsilon = 0.1
 
         svm_type = LIBSVM_IMPL.index(self.impl)
         pprob = libsvm.predict_proba(
             X, self.support_, self.support_vectors_, self.n_support_,
             self.dual_coef_, self.intercept_, self.label_,
             self.probA_, self.probB_,
-            svm_type=svm_type, **params)
+            svm_type=svm_type, kernel=self.kernel, C=self.C, nu=self.nu,
+            probability=self.probability, degree=self.degree,
+            shrinking=self.shrinking, tol=self.tol, cache_size=self.cache_size,
+            coef0=self.coef0, gamma=self.gamma, epsilon=epsilon)
 
         return pprob
 
@@ -473,18 +481,18 @@ class BaseLibSVM(BaseEstimator):
 
         X = array2d(X, dtype=np.float64, order="C")
 
-        params = self.get_params()
-        if 'scale_C' in params:
-            del params['scale_C']
-        if "sparse" in params:
-            del params["sparse"]
-
+        epsilon = self.epsilon
+        if epsilon == None:
+            epsilon = 0.1
         dec_func = libsvm.decision_function(
             X, self.support_, self.support_vectors_, self.n_support_,
             self.dual_coef_, self.intercept_, self.label_,
             self.probA_, self.probB_,
             svm_type=LIBSVM_IMPL.index(self.impl),
-            **params)
+            kernel=self.kernel, C=self.C, nu=self.nu,
+            probability=self.probability, degree=self.degree,
+            shrinking=self.shrinking, tol=self.tol, cache_size=self.cache_size,
+            coef0=self.coef0, gamma=self.gamma, epsilon=epsilon)
 
         return dec_func
 
@@ -543,7 +551,7 @@ class BaseLibLinear(BaseEstimator):
 
     def __init__(self, penalty='l2', loss='l2', dual=True, tol=1e-4, C=1.0,
                  multi_class=False, fit_intercept=True, intercept_scaling=1,
-                 scale_C=False):
+                 scale_C=None):
         self.penalty = penalty
         self.loss = loss
         self.dual = dual
@@ -553,6 +561,11 @@ class BaseLibLinear(BaseEstimator):
         self.intercept_scaling = intercept_scaling
         self.multi_class = multi_class
         self.scale_C = scale_C
+
+        if scale_C is None:
+            warnings.warn('LinearSVC: scale_C will be True by default in '
+                          'scikit-learn 0.11', FutureWarning,
+                          stacklevel=2)
 
         # Check that the arguments given are valid:
         self._get_solver_type()

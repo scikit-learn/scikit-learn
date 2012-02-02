@@ -417,6 +417,23 @@ From text
    kernel_approximation.AdditiveChi2Sampler
    kernel_approximation.SkewedChi2Sampler
 
+:mod:`sklearn.semi_supervised` Semi-Supervised Learning
+========================================================
+
+.. automodule:: sklearn.semi_supervised
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`semi_supervised` section for further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   semi_supervised.LabelPropagation
+   semi_supervised.LabelSpreading
 
 .. _lda_ref:
 
