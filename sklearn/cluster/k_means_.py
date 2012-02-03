@@ -272,15 +272,13 @@ def k_means(X, k, init='k-means++', precompute_distances=True,
                 best_inertia = inertia
     else:
         # parallelisation of k-means runs
-        seed_max = np.iinfo(np.int).max
-        seed = random_state.randint(seed_max)
         results = Parallel(n_jobs=n_jobs, verbose=0)(
             delayed(_kmeans_single)(X, k, max_iter=max_iter, init=init,
                                     verbose=verbose, tol=tol,
                                     precompute_distances=precompute_distances,
                                     x_squared_norms=x_squared_norms,
                                     # Change seed to ensure variety
-                                    random_state=np.random.RandomState(seed+i))
+                                    random_state=update_state(random_state))
             for i in range(n_init))
         # Get results with the lowest inertia
         labels, inertia, centers = zip(*results)
@@ -294,6 +292,11 @@ def k_means(X, k, init='k-means++', precompute_distances=True,
         best_centers += X_mean
 
     return best_centers, best_labels, best_inertia
+
+
+def update_state(random_state):
+    random_state.randint(np.iinfo(np.int).max)
+    return random_state
 
 
 def _kmeans_single(X, k, max_iter=300, init='k-means++', verbose=False,
