@@ -354,6 +354,16 @@ class GMM(BaseEstimator):
         logprob, responsibilities = self.eval(X)
         return responsibilities
 
+    @deprecated("""will be removed in v0.12;
+    use the score or predict method instead, depending on the question""")
+    def rvs(self, n_samples=1, random_state=None):
+        """Generate random samples from the model.
+
+        DEPRECATED IN VERSION 0.11; WILL BE REMOVED IN VERSION 0.12
+        use sample instead
+        """
+        return self.sample(n_samples, random_state)
+
     def sample(self, n_samples=1, random_state=None):
         """Generate random samples from the model.
 
